@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  1998/12/05 23:04:21  warmerda
+ * Use EQUALN() instead of strincmp() which doesn't exist on Linux.
+ *
  * Revision 1.2  1998/12/04 21:40:42  danmo
  * Added more Name=Value manipulation fuctions
  *
@@ -650,7 +653,7 @@ char **CSLFetchNameValueMultiple(char **papszStrList, const char *pszName)
     nLen = strlen(pszName);
     while(*papszStrList != NULL)
     {
-        if (strnicmp(*papszStrList, pszName, nLen) == 0
+        if (EQUALN(*papszStrList, pszName, nLen)
             && ( (*papszStrList)[nLen] == '=' || 
                  (*papszStrList)[nLen] == ':' ) )
         {
@@ -715,7 +718,7 @@ char **CSLSetNameValue(char **papszList,
     papszPtr = papszList;
     while(*papszPtr != NULL)
     {
-        if (strnicmp(*papszPtr, pszName, nLen) == 0
+        if (EQUALN(*papszPtr, pszName, nLen)
             && ( (*papszPtr)[nLen] == '=' || 
                  (*papszPtr)[nLen] == ':' ) )
         {
