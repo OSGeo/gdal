@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.5  2002/11/16 20:39:34  warmerda
+# added CXT_Literal
+#
 # Revision 1.4  2002/06/27 15:41:49  warmerda
 # added minixml read/write stuff
 #
@@ -91,5 +94,6 @@ CXT_Element=0
 CXT_Text=1
 CXT_Attribute=2
 CXT_Comment=3
+CXT_Literal=4
 
 
