@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2003/04/08 21:21:29  warmerda
+ * added OGRGetDriverByName
+ *
  * Revision 1.35  2003/04/08 19:31:32  warmerda
  * added CopyLayer and CopyDataSource entry points
  *
@@ -342,6 +345,7 @@ class CPL_DLL OGRSFDriverRegistrar
 
     int         GetDriverCount( void );
     OGRSFDriver *GetDriver( int );
+    OGRSFDriver *GetDriverByName( const char * );
 
     int         GetOpenDSCount() { return nOpenDSCount; } 
     OGRDataSource *GetOpenDS( int );

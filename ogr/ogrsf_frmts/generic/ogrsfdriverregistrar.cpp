@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/04/08 21:23:33  warmerda
+ * added OGRGetDriverByName
+ *
  * Revision 1.11  2003/03/20 19:12:15  warmerda
  * added debug messages
  *
@@ -515,4 +518,31 @@ OGRSFDriverH OGRGetDriver( int iDriver )
 
 {
     return (OGRSFDriverH) poRegistrar->GetDriver( iDriver );
+}
+
+/************************************************************************/
+/*                          GetDriverByName()                           */
+/************************************************************************/
+
+OGRSFDriver *OGRSFDriverRegistrar::GetDriverByName( const char * pszName )
+
+{
+    for( int i = 0; i < nDrivers; i++ )
+    {
+        if( papoDrivers[i] != NULL 
+            && EQUAL(papoDrivers[i]->GetName(),pszName) )
+            return papoDrivers[i];
+    }
+
+    return NULL;
+}
+
+/************************************************************************/
+/*                         OGRGetDriverByName()                         */
+/************************************************************************/
+
+OGRSFDriverH OGRGetDriverByName( const char *pszName )
+
+{
+    return (OGRSFDriverH) poRegistrar->GetDriverByName( pszName );
 }
