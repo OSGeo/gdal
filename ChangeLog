@@ -1,3 +1,8 @@
+2004-04-23  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* frmts/mrsid/mrsiddataset.cpp: Implemented support for LizardTech
+	MrSID DSDK version 4.0.x. The whole driver significally rewritten.
+
 2004-02-20  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* Const correctness improvements to OGRPoint methods as per
