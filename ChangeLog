@@ -1,3 +1,7 @@
+2000-11-27  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Added Japanese DEM format (frmts/jdem).
+
 2000-11-27  Bernhard Reiter <bernhard@intevation.de>
 
 	* Enable the use of the --exec-prefix and --libdir etc configure 
