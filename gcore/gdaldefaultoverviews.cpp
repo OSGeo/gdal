@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/06/20 16:08:54  warmerda
+ * GDALDefaultOverviews now remembers ovr filename, and allows explicit setting
+ *
  * Revision 1.3  2000/06/19 18:48:49  warmerda
  * fixed message
  *
@@ -51,6 +54,7 @@ GDALDefaultOverviews::GDALDefaultOverviews()
 {
     poDS = NULL;
     poODS = NULL;
+    pszOvrFilename = NULL;
 }
 
 /************************************************************************/
@@ -65,6 +69,7 @@ GDALDefaultOverviews::~GDALDefaultOverviews()
         poODS->FlushCache();
         delete poODS;
     }
+    CPLFree( pszOvrFilename );
 }
 
 /************************************************************************/
@@ -72,10 +77,10 @@ GDALDefaultOverviews::~GDALDefaultOverviews()
 /************************************************************************/
 
 void GDALDefaultOverviews::Initialize( GDALDataset *poDS,
-                                       const char * pszBasename )
+                                       const char * pszBasename,
+                                       int bNameIsOVR )
 
 {
-    char * pszTIFFFilename;
     VSIStatBuf sStatBuf;
 
 /* -------------------------------------------------------------------- */
@@ -95,13 +100,15 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDS,
     if( pszBasename == NULL )
         pszBasename = poDS->GetDescription();
 
-    pszTIFFFilename = (char *) CPLMalloc(strlen(pszBasename)+5);
-    sprintf( pszTIFFFilename, "%s.ovr", pszBasename );
+    CPLFree( pszOvrFilename );
+    pszOvrFilename = (char *) CPLMalloc(strlen(pszBasename)+5);
+    if( bNameIsOVR )
+        strcpy( pszOvrFilename, pszBasename );
+    else
+        sprintf( pszOvrFilename, "%s.ovr", pszBasename );
 
-    if( VSIStat( pszTIFFFilename, &sStatBuf ) == 0 )
-        poODS = (GDALDataset *) GDALOpen( pszTIFFFilename, poDS->GetAccess() );
-
-    CPLFree( pszTIFFFilename );
+    if( VSIStat( pszOvrFilename, &sStatBuf ) == 0 )
+        poODS = (GDALDataset *) GDALOpen( pszOvrFilename, poDS->GetAccess() );
 }
 
 /************************************************************************/
@@ -161,7 +168,6 @@ GDALDefaultOverviews::BuildOverviews(
     GDALProgressFunc pfnProgress, void * pProgressData)
 
 {
-    char * pszTIFFFilename;
     GDALRasterBand **pahBands;
     CPLErr       eErr;
     int          i;
@@ -180,18 +186,18 @@ GDALDefaultOverviews::BuildOverviews(
     }
 
 /* -------------------------------------------------------------------- */
-/*      By default we assume that the dataset name is a suitable        */
-/*      filesystem object to associate with if nothing is provided.     */
+/*      If a basename is provided, use it to override the internal      */
+/*      overview filename.                                              */
 /* -------------------------------------------------------------------- */
-    if( pszBasename == NULL )
+    if( pszBasename == NULL && pszOvrFilename == NULL )
         pszBasename = poDS->GetDescription();
 
-/* -------------------------------------------------------------------- */
-/*      Generate the TIFF filename.  This approach may not work well    */
-/*      on Windows.                                                     */
-/* -------------------------------------------------------------------- */
-    pszTIFFFilename = (char *) CPLMalloc(strlen(pszBasename)+5);
-    sprintf( pszTIFFFilename, "%s.ovr", pszBasename );
+    if( pszBasename != NULL )
+    {
+        CPLFree( pszOvrFilename );
+        pszOvrFilename = (char *) CPLMalloc(strlen(pszBasename)+5);
+        sprintf( pszOvrFilename, "%s.ovr", pszBasename );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Establish which of the overview levels we already have, and     */
@@ -243,7 +249,7 @@ GDALDefaultOverviews::BuildOverviews(
 /*      Build new overviews.                                            */
 /* -------------------------------------------------------------------- */
 
-    eErr = GTIFFBuildOverviews( pszTIFFFilename, nBands, pahBands, 
+    eErr = GTIFFBuildOverviews( pszOvrFilename, nBands, pahBands, 
                                 nNewOverviews, panNewOverviewList, 
                                 pszResampling, pfnProgress, pProgressData );
 
@@ -254,7 +260,7 @@ GDALDefaultOverviews::BuildOverviews(
 
     if( eErr == CE_None )
     {
-        poODS = (GDALDataset *) GDALOpen( pszTIFFFilename, GA_Update );
+        poODS = (GDALDataset *) GDALOpen( pszOvrFilename, GA_Update );
         if( poODS == NULL )
             eErr = CE_Failure;
     }
@@ -301,7 +307,6 @@ GDALDefaultOverviews::BuildOverviews(
     CPLFree( papoOverviewBands );
     CPLFree( panNewOverviewList );
     CPLFree( pahBands );
-    CPLFree( pszTIFFFilename );
 
     return eErr;
 }

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2001/06/20 16:08:54  warmerda
+ * GDALDefaultOverviews now remembers ovr filename, and allows explicit setting
+ *
  * Revision 1.23  2001/02/06 16:30:21  warmerda
  * Added gdal_frmts.h
  *
@@ -181,11 +184,14 @@ class GDALDefaultOverviews
     GDALDataset *poDS;
     GDALDataset *poODS;
     
+    char	*pszOvrFilename;
+    
   public:
                GDALDefaultOverviews();
                ~GDALDefaultOverviews();
 
-    void       Initialize( GDALDataset *, const char * = NULL );
+    void       Initialize( GDALDataset *poDS, const char *pszName = NULL, 
+                           int bNameIsOVR = FALSE );
     int        IsInitialized() { return poDS != NULL; }
 
     int        GetOverviewCount(int);
