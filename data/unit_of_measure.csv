@@ -1,6 +1,6 @@
 "UOM_CODE","UNIT_OF_MEAS_NAME","UNIT_OF_MEAS_TYPE","TARGET_UOM_CODE","FACTOR_B","FACTOR_C","REMARKS","INFORMATION_SOURCE","DATA_SOURCE","REVISION_DATE","CHANGE_ID","DEPRECATED"
-9001,metre,length,9001,1.0,1.0,Also known as International metre.,ISO 1000.,EPSG,1995-06-02 00:00:00,,0
-9002,foot,length,9001,0.3048,1.0,,ISO; 1958,EPSG,1995-06-02 00:00:00,,0
+9001,metre,length,9001,1.0,1.0,Also known as International metre. SI standard unit.,ISO 1000.,EPSG,1995-06-02 00:00:00,,0
+9002,foot,length,9001,0.3048,1.0,,ISO 1000; 1958,EPSG,1995-06-02 00:00:00,,0
 9003,US survey foot,length,9001,12.0,39.37,Used in USA.,EPSG,EPSG,2000-05-07 00:00:00,99.99,0
 9005,Clarke's foot,length,9001,0.304797265,1.0,"Assumes Clarke's 1865 ratio of 1 British foot = 0.304797265 French legal metres applies to the international metre.   Used in older Australian, southern African & British West Indian mapping.",Australian Land Information Group  www.auslig.gov.au/geodesy/histry.htm,EPSG,2001-01-21 00:00:00,97.234 99.99  2000.05,0
 9014,fathom,length,9001,1.8288,1.0,= 6 feet.,,EPSG,1995-06-02 00:00:00,,0
@@ -36,21 +36,30 @@
 9087,Indian yard (1975),length,9001,0.9143985,1.0,Indian Foot = 0.99999566 British feet (A.R.Clarke 1865).  British yard (3 feet) taken to be J.S. Clark's 1865 value of 0.9144025m. Rounded to 8 significant figures as 1 Ind ft=0.3048995m.  Used in India since metrication.,"G. Bomford; ""Geodesy""; 3rd edition 1975",EPSG,2000-05-07 00:00:00,97.231  99.99,0
 9093,Statute mile,length,9001,1609.344,1.0,=5280 feet,EPSG,EPSG,2000-03-07 00:00:00,,0
 9094,Gold Coast foot,length,9001,6378300.0,20926201.0,"Used in Ghana and some adjacent parts of British west Africa prior to metrication, except for the metrication of projection defining parameters when British foot (Sears 1922) used.",Ordnance Survey International,EPSG,2001-01-21 00:00:00,2000.86,0
-9101,radian,angle,9101,1.0,1.0,SI standard unit.,ISO 1000.,EPSG,1995-06-02 00:00:00,,0
-9102,degree,angle,9101,3.14159265358979,180.0,=pi/180,,EPSG,1996-10-18 00:00:00,96.22,0
-9103,arc-minute,angle,9101,3.14159265358979,10800.0,1/60th degree.  =(pi/180) / 60,,EPSG,1996-10-18 00:00:00,96.22,0
-9104,arc-second,angle,9101,3.14159265358979,648000.0,1/60th arc-minute.  =(pi/180) / 3600,,EPSG,1996-10-18 00:00:00,96.22,0
-9105,grad,angle,9101,3.14159265358979,200.0,"=pi/200.  In France also abbreviated as ""gr"".",,EPSG,1996-10-18 00:00:00,96.22  99.05,0
-9106,gon,angle,9101,3.14159265358979,200.0,=pi/200,,EPSG,1996-10-18 00:00:00,96.22,0
-9107,degree minute second,angle,9101,,,"Format: sign - degrees (integer) - symbol - arc-minutes (integer) - symbol - arc-seconds (real, any precision). Different symbol sets are in use as separators for example º ' "". Convert to degrees using formula. Not recommended for data storage.",EPSG,EPSG,2002-07-13 00:00:00,96.19 2002.07,0
-9108,degree minute second hemisphere,angle,9101,,,Format: degrees (integer) - symbol - arc-minutes (integer) - symbol - arc-seconds (real) - symbol - hemisphere (single character N S E or W). Different symbol sets are in use as separators. Convert to deg using formula. Not recommended for data storage.,EPSG,EPSG,2002-07-13 00:00:00,96.19 2002.07,0
+9095,British foot (1936),length,9001,0.3048007491,1.0,For the 1936 retriangulation OSGB defines the relationship of feet of 1796 to the International metre through log(1.48401603) exactly [=0.3048007491...]. Also used for metric conversions in Ireland.,"1. ""The Retriangulation of Great Britain"", Ordnance Survey of Great Britain.
+2. ""The Irish Grid - A Description of the Co-ordinate Reference System"" published by Ordnance Survey of Ireland, Dublin and Ordnance Survey of Northern Ireland, Belfast.",EPSG,2003-06-27 00:00:00,2002.621,0
+9101,radian,angle,9101,1.0,1.0,SI standard unit.,ISO 1000:1992,EPSG,1995-06-02 00:00:00,,0
+9102,degree,angle,9101,3.14159265358979,180.0,= pi/180 radians,,EPSG,2002-11-18 00:00:00,96.22 2002.86,0
+9103,arc-minute,angle,9101,3.14159265358979,10800.0,1/60th degree = ((pi/180) / 60) radians,,EPSG,2002-11-18 00:00:00,96.22 2002.86,0
+9104,arc-second,angle,9101,3.14159265358979,648000.0,1/60th arc-minute = ((pi/180) / 3600) radians,,EPSG,2002-11-18 00:00:00,96.22 2002.86,0
+9105,grad,angle,9101,3.14159265358979,200.0,=pi/200 radians.,,EPSG,2002-11-18 00:00:00,96.22  99.05 2002.86,0
+9106,gon,angle,9101,3.14159265358979,200.0,=pi/200 radians,,EPSG,2002-11-18 00:00:00,96.22 2002.86,0
+9107,degree minute second,angle,9102,,,"Degree representation. Format: signed degrees (integer) - arc-minutes (integer) - arc-seconds (real, any precision). Different symbol sets are in use as field separators, for example º ' "". Convert to degrees using algorithm.",EPSG,EPSG,2002-11-22 00:00:00,96.19 2002.07 2002.78,0
+9108,degree minute second hemisphere,angle,9102,,,"Degree representation. Format: degrees (integer) - arc-minutes (integer) - arc-seconds (real) - hemisphere abbreviation (single character N S E or W). Different symbol sets are in use as field separators for example º ' "". Convert to deg using algorithm.",EPSG,EPSG,2002-11-22 00:00:00,96.19 2002.07 2002.78,0
 9109,microradian,angle,9101,1.0,1000000.0,rad * 10E-6,ISO 1000.,EPSG,1996-10-18 00:00:00,99.05,0
-9110,sexagesimal DMS,angle,9101,,,Format: sign - degrees - decimal point - minutes (two digits) - integer seconds (two digits) - fraction of seconds (any precision). Must include leading zero in minutes and seconds and exclude decimal point for seconds. Convert to degrees using formula.,EPSG,EPSG,2002-07-13 00:00:00,2002.27,0
-9111,sexagesimal DM,angle,9101,,,Format: sign - degrees - decimal point - integer minutes (two digits) - fraction of minutes (any precision).  Must include leading zero in integer minutes.  Must exclude decimal point for minutes.  Convert to degrees using formula.  Not recommended.,EPSG,EPSG,2002-06-22 00:00:00,2002.07,0
-9112,centesimal minute,angle,9101,3.14159265358979,20000.0,1/100 of a grad and gon.  =(pi/200) / 100,http://www.geodesy.matav.hu/xgonmil.htm,EPSG,1999-10-20 00:00:00,98.48  99.51,0
-9113,centesimal second,angle,9101,3.14159265358979,2000000.0,"1/100 of a centesimal minute or 1/10,000th of a grad and gon.  =(pi/200) / 10000",http://www.geodesy.matav.hu/xgonmil.htm,EPSG,1999-10-20 00:00:00,99.51,0
+9110,sexagesimal DMS,angle,9102,,,Pseudo unit format: signed degrees - period - minutes (two digits) - integer seconds (two digits) - fraction of seconds (any precision). Must include leading zero in minutes and seconds and exclude decimal point for seconds. Convert to deg using formula.,EPSG,EPSG,2002-11-22 00:00:00,2002.27 2002.78,0
+9111,sexagesimal DM,angle,9102,,,Pseudo unit. Format: sign - degrees - decimal point - integer minutes (two digits) - fraction of minutes (any precision).  Must include leading zero in integer minutes.  Must exclude decimal point for minutes.  Convert to deg using algorithm.,EPSG,EPSG,2002-11-22 00:00:00,2002.07 2002.78,0
+9112,centesimal minute,angle,9101,3.14159265358979,20000.0,1/100 of a grad and gon = ((pi/200) / 100) radians,http://www.geodesy.matav.hu/xgonmil.htm,EPSG,2002-11-18 00:00:00,98.48  99.51 2002.86,0
+9113,centesimal second,angle,9101,3.14159265358979,2000000.0,"1/100 of a centesimal minute or 1/10,000th of a grad and gon = ((pi/200) / 10000) radians",http://www.geodesy.matav.hu/xgonmil.htm,EPSG,2002-11-18 00:00:00,99.51 2002.86,0
 9114,mil_6400,angle,9101,3.14159265358979,3200.0,Angle subtended by 1/6400 part of a circle.  Approximates to 1/1000th radian.  Note that other approximations (notably 1/6300 circle and 1/6000 circle) also exist.,http://www.geodesy.matav.hu/xgonmil.htm,EPSG,1999-10-20 00:00:00,99.51,0
-9115,degree minute,angle,9101,,,"Format: sign - degrees (integer) - symbol - arc-minutes (real, any precision) - symbol. Different symbol sets are in use as separators for example º '. Convert to degrees using formula. Not recommended for data storage.",EPSG,EPSG,2002-07-13 00:00:00,,0
+9115,degree minute,angle,9102,,,"Degree representation. Format: signed degrees (integer)  - arc-minutes (real, any precision). Different symbol sets are in use as field separators, for example º '. Convert to degrees using algorithm.",EPSG,EPSG,2002-11-22 00:00:00,2002.78,0
+9116,degree hemisphere,angle,9102,,,"Degree representation. Format: degrees (real, any precision) - hemisphere abbreviation (single character N S E or W). Convert to degrees using algorithm.",EPSG,EPSG,2002-11-22 00:00:00,,0
+9117,hemisphere degree,angle,9102,,,"Degree representation. Format: hemisphere abbreviation (single character N S E or W) - degrees (real, any precision). Convert to degrees using algorithm.",EPSG,EPSG,2002-11-22 00:00:00,,0
+9118,degree minute hemisphere,angle,9102,,,"Degree representation. Format: degrees (integer) - arc-minutes (real, any precision) - hemisphere abbreviation (single character N S E or W). Different symbol sets are in use as field separators, for example º '. Convert to degrees using algorithm.",EPSG,EPSG,2002-11-22 00:00:00,,0
+9119,hemisphere degree minute,angle,9102,,,"Degree representation. Format:  hemisphere abbreviation (single character N S E or W) - degrees (integer) - arc-minutes (real, any precision). Different symbol sets are in use as field separators, for example º '. Convert to degrees using algorithm.",EPSG,EPSG,2002-11-22 00:00:00,,0
+9120,hemisphere degree minute second,angle,9102,,,"Degree representation. Format: hemisphere abbreviation (single character N S E or W) - degrees (integer) - arc-minutes (integer) - arc-seconds (real). Different symbol sets are in use as field separators for example º ' "". Convert to deg using algorithm.",EPSG,EPSG,2002-11-22 00:00:00,,0
+9121,sexagesimal DMS.s,angle,9102,,,"Pseudo unit. Format: signed degrees - minutes (two digits) - seconds (real, any precision). Must include leading zero in minutes and seconds where value is under 10 and include decimal separator for seconds. Convert to degree using algorithm.",ISO 6709:1983.,EPSG,2002-11-22 00:00:00,,0
+9122,degree (supplier to define representation),angle,9101,3.14159265358979,180.0,"= pi/180 radians. The degree representation (e.g. decimal, DMSH, etc.) must be clarified by suppliers of data associated with this code.",EPSG,EPSG,2004-01-05 00:00:00,,0
 9201,unity,scale,9201,1.0,1.0,,,EPSG,1996-09-12 00:00:00,,0
 9202,parts per million,scale,9201,1.0,1000000.0,,,EPSG,1996-09-12 00:00:00,,0
 9203,coefficient,scale,9201,,,Used when parameters are coefficients.  They inherently take the units which depend upon the term to which the coefficient applies.,EPSG,EPSG,2000-03-07 00:00:00,,0
