@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/02/06 03:21:04  warmerda
+ * Modified ExpandFormat() to dynamically allocate the target buffer. It was
+ * overrunning the 400 character szDest buffer on some files, such as
+ * the data/sdts/gainsville/BEDRCATD.DDF dataset.
+ *
  * Revision 1.8  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -396,13 +401,14 @@ char *DDFFieldDefn::ExtractSubstring( const char * pszSrc )
 char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
 
 {
-    char        szDest[400];
+    int         nDestMax = 32;
+    char       *pszDest = (char *) CPLMalloc(nDestMax+1);
     int         iSrc, iDst;
     int         nRepeat = 0;
 
     iSrc = 0;
     iDst = 0;
-    szDest[0] = '\0';
+    pszDest[0] = '\0';
 
     while( pszSrc[iSrc] != '\0' )
     {
@@ -415,8 +421,15 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
             char       *pszContents = ExtractSubstring( pszSrc+iSrc );
             char       *pszExpandedContents = ExpandFormat( pszContents );
 
-            strcat( szDest, pszExpandedContents );
-            iDst = strlen(szDest);
+            if( (int) (strlen(pszExpandedContents) + strlen(pszDest))
+                > nDestMax )
+            {
+                nDestMax = 2 * (strlen(pszExpandedContents) + strlen(pszDest));
+                pszDest = (char *) CPLRealloc(pszDest,nDestMax);
+            }
+
+            strcat( pszDest, pszExpandedContents );
+            iDst = strlen(pszDest);
             
             iSrc = iSrc + strlen(pszContents) + 2;
 
@@ -440,12 +453,20 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
                 
             for( int i = 0; i < nRepeat; i++ )
             {
-                strcat( szDest, pszExpandedContents );
+                if( (int) (strlen(pszExpandedContents) + strlen(pszDest))
+                    > nDestMax )
+                {
+                    nDestMax = 
+                        2 * (strlen(pszExpandedContents) + strlen(pszDest));
+                    pszDest = (char *) CPLRealloc(pszDest,nDestMax);
+                }
+
+                strcat( pszDest, pszExpandedContents );
                 if( i < nRepeat-1 )
-                    strcat( szDest, "," );
+                    strcat( pszDest, "," );
             }
 
-            iDst = strlen(szDest);
+            iDst = strlen(pszDest);
             
             if( pszNext[0] == '(' )
                 iSrc = iSrc + strlen(pszContents) + 2;
@@ -457,12 +478,18 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
         }
         else
         {
-            szDest[iDst++] = pszSrc[iSrc++];
-            szDest[iDst] = '\0';
+            if( iDst+1 >= nDestMax )
+            {
+                nDestMax = 2 * iDst;
+                pszDest = (char *) CPLRealloc(pszDest,nDestMax);
+            }
+
+            pszDest[iDst++] = pszSrc[iSrc++];
+            pszDest[iDst] = '\0';
         }
     }
 
-    return CPLStrdup( szDest );
+    return pszDest;
 }
                                  
 /************************************************************************/
