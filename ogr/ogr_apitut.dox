@@ -20,6 +20,8 @@ This is normally accomplished by calling OGRRegisterAll() which registers
 all format drivers built into GDAL/OGR.  
 
 \code
+#include "ogrsf_frmts.h"
+
 int main()
 
 {
@@ -40,7 +42,7 @@ we report an error.
     poDS = OGRSFDriverRegistrar::Open( "point.shp", FALSE );
     if( poDS == NULL )
     {
-	printf( "Open failed.\n%s", CPLGetLastErrorMsg() );
+	printf( "Open failed.\n" );
 	exit( 1 );
     }
 \endcode
@@ -153,13 +155,15 @@ Once again we do this with a custom delete method to avoid special win32
 heap issus. 
 
 \code
-    OGRSFDriverRegistrar::ReleaseDataSource( poDS );
+    OGRDataSource::DestroyDataSource( poDS );
 }
 \endcode
 
 All together our program looks like this.
 
 \code
+#include "ogrsf_frmts.h"
+
 int main()
 
 {
@@ -170,7 +174,7 @@ int main()
     poDS = OGRSFDriverRegistrar::Open( "point.shp", FALSE );
     if( poDS == NULL )
     {
-	printf( "Open failed.\n%s", CPLGetLastErrorMsg() );
+	printf( "Open failed.\n%s" );
 	exit( 1 );
     }
 
@@ -217,13 +221,233 @@ int main()
    	OGRFeature::DestroyFeature( poFeature );
     }
 
-    OGRSFDriverRegistrar::ReleaseDataSource( poDS );
+    OGRDataSource::DestroyDataSource( poDS );
 }
 \endcode
 
 <h2>Writing To OGR</h2>
 
-to be continued ...
+As an example of writing through OGR, we will do roughly the opposite of the
+above.  A short program that reads comma seperated values from input text
+will be written to a point shapefile via OGR. 
 
+As usual, we start by registering all the drivers, and then fetch the 
+Shapefile driver as we will need it to create our output file. 
+
+\code
+#include "ogrsf_frmts.h"
+
+int main()
+{
+    const char *pszDriverName = "ESRI Shapefile";
+    OGRSFDriver *poDriver;
+
+    OGRRegisterAll();
+
+    poDriver = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName(
+		pszDriverName );
+    if( poDriver == NULL )
+    {
+	printf( "%s driver not available.\n", pszDriverName );
+	exit( 1 );
+    }
+\endcode
+
+Next we create the datasource.  The ESRI Shapefile driver allows us to create
+a directory full of shapefiles, or a single shapefile as a datasource.  In
+this case we will explicitly create a single file by including the extension
+in the name.  Other drivers behave differently.  The second argument to 
+the call is a list of option values, but we will just be using defaults in
+this case.  Details of the options supported are also format specific. 
+
+\code
+    OGRDataSource *poDS;
+
+    poDS = poDriver->CreateDataSource( "point_out.shp", NULL );
+    if( poDS == NULL )
+    {
+	printf( "Creation of output file failed.\n" );
+	exit( 1 );
+    }
+\endcode
+
+Now we create the output layer.  In this case since the datasource is a 
+single file, we can only have one layer.  We pass wkbPoint to specify the
+type of geometry supported by this layer.  In this case we aren't passing
+any coordinate system information or other special layer creation options.
+
+\code
+    OGRLayer *poLayer;
+
+    poLayer = poDS->CreateLayer( "point_out", NULL, wkbPoint, NULL );
+    if( poLayer == NULL )
+    {
+	printf( "Layer creation failed.\n" );
+	exit( 1 );
+    }
+\endcode
+
+Now that the layer exists, we need to create any attribute fields that should
+appear on the layer.  Fields must be added to the layer before any features
+are written.  To create a field we initialize an OGRField object with the
+information about the field.  In the case of Shapefiles, the field width and
+precision is significant in the creation of the output .dbf file, so we 
+set it specifically, though generally the defaults are OK.  For this example
+we will just have one attribute, a name string associated with the x,y point.
+
+Note that the template OGRField we pass to CreateField() is copied internally.
+We retain ownership of the object.
+
+\code
+    OGRFieldDefn oField( "Name", OFTString );
+
+    oField.SetWidth(32);
+
+    if( poLayer->CreateField( &oField ) != OGRERR_NONE )
+    {
+	printf( "Creating Name field failed.\n" );
+        exit( 1 );
+    }
+\encode
+
+The following snipping loops reading lines of the form "x,y,name" from stdin, 
+and parsing them.  
+
+\code
+    double x, y;
+    char szName[33];
+
+    while( !feof(stdin) 
+           && fscanf( stdin, "%lf,%lf,%32s", &x, &y, szName ) == 3 )
+    {
+\endcode
+
+To write a feature to disk, we must create a local OGRFeature, set attributes
+and attach geometry before trying to write it to the layer.  It is 
+imperative that this feature be instantiated from the OGRFeatureDefn 
+associated with the layer it will be written to.
+
+\code
+	OGRFeature *poFeature;
+
+	poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+        poFeature->SetField( "Name", szName );
+\endcode
+
+We create a local geometry object, and assign it directly to the feature.
+The OGRFeature::SetGeometryDirectly() differs from OGRFeature::SetGeometry()
+in that the direct method gives ownership of the geometry to the feature. 
+This is generally more efficient as it avoids an extra deep object copy
+of the geometry.
+
+\code
+	OGRPoint *poPoint = new OGRPoint();
+	
+  	poPoint->setX( x );
+        poPoint->setY( y );
+ 
+        poFeature->SetGeometryDirectly( poPoint ); 
+\endcode
+
+Now we create a feature in the file.  The OGRLayer::CreateFeature() does not
+take ownership of our feature so we clean it up when done with it. 
+
+\code
+	if( poLayer->CreateFeature( poFeature ) != OGRERR_NONE )
+        {
+	   printf( "Failed to create feature in shapefile.\n" );
+           exit( 1 );
+        }
+
+        delete poFeature;
+   }
+\endcode
+
+Finally we need to close down the datasource in order to ensure headers
+are written out in an orderly way and all resources are recovered.
+
+\code
+    OGRDataSource::DestroyDataSource( poDS );
+}
+\endcode
+
+The same program all in one block looks like this:
+
+\code
+#include "ogrsf_frmts.h"
+
+int main()
+{
+    const char *pszDriverName = "ESRI Shapefile";
+    OGRSFDriver *poDriver;
+
+    OGRRegisterAll();
+
+    poDriver = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName(
+		pszDriverName );
+    if( poDriver == NULL )
+    {
+	printf( "%s driver not available.\n", pszDriverName );
+	exit( 1 );
+    }
+
+    OGRDataSource *poDS;
+
+    poDS = poDriver->CreateDataSource( "point_out.shp", NULL );
+    if( poDS == NULL )
+    {
+	printf( "Creation of output file failed.\n" );
+	exit( 1 );
+    }
+
+    OGRLayer *poLayer;
+
+    poLayer = poDS->CreateLayer( "point_out", NULL, wkbPoint, NULL );
+    if( poLayer == NULL )
+    {
+	printf( "Layer creation failed.\n" );
+	exit( 1 );
+    }
+
+    OGRFieldDefn oField( "Name", OFTString );
+
+    oField.SetWidth(32);
+
+    if( poLayer->CreateField( &oField ) != OGRERR_NONE )
+    {
+	printf( "Creating Name field failed.\n" );
+        exit( 1 );
+    }
+
+    double x, y;
+    char szName[33];
+
+    while( !feof(stdin) 
+           && fscanf( stdin, "%lf,%lf,%32s", &x, &y, szName ) == 3 )
+    {
+	OGRFeature *poFeature;
+
+	poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+        poFeature->SetField( "Name", szName );
+
+	OGRPoint *poPoint = new OGRPoint();
+	
+  	poPoint->setX( x );
+        poPoint->setY( y );
+ 
+        poFeature->SetGeometryDirectly( poPoint ); 
+
+	if( poLayer->CreateFeature( poFeature ) != OGRERR_NONE )
+        {
+	   printf( "Failed to create feature in shapefile.\n" );
+           exit( 1 );
+        }
+
+        delete poFeature;
+    }
+
+    OGRDataSource::DestroyDataSource( poDS );
+}
+\endcode
 
 */
