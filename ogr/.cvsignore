@@ -19,6 +19,7 @@ spatialreferenceidl_p.c
 *.pdb
 *.ilk
 *.lib
+*.exp
 sdts2mi
 epsgtest
 
