@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.46  2002/09/19 14:49:41  warmerda
+ * added jpeg2000
+ *
  * Revision 1.45  2002/08/13 16:59:53  dron
  * New driver: EOSAT FAST format
  *
@@ -309,6 +312,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_fit
     GDALRegister_FIT();
+#endif
+
+#ifdef FRMT_jpeg2000
+    GDALRegister_JPEG2000();
 #endif
 
 #ifdef FRMT_fast

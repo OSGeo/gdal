@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/09/19 14:49:54  warmerda
+ * added jpeg2000
+ *
  * Revision 1.15  2002/08/13 16:59:53  dron
  * New driver: EOSAT FAST format
  *
@@ -104,6 +107,7 @@ void CPL_DLL GDALRegister_MFF(void);
 void CPL_DLL GDALRegister_HKV(void);
 void CPL_DLL GDALRegister_PNG(void);
 void CPL_DLL GDALRegister_JPEG(void);
+void CPL_DLL GDALRegister_JPEG2000(void);
 void CPL_DLL GDALRegister_MEM(void);
 void CPL_DLL GDALRegister_JDEM(void);
 void CPL_DLL GDALRegister_GRASS(void);
