@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/10/29 16:47:38  warmerda
+ * Improved width/precision handling for real numbers.
+ *
  * Revision 1.3  2003/10/08 16:00:16  warmerda
  * provide default GetFeature(int) implementation
  *
@@ -125,10 +128,14 @@ CPLErr OGRODBCLayer::BuildFeatureDefn( const char *pszLayerName,
             break;
 
           case SQL_DECIMAL:
+            oField.SetType( OFTReal );
+            break;
+
           case SQL_FLOAT:
           case SQL_REAL:
           case SQL_DOUBLE:
             oField.SetType( OFTReal );
+            oField.SetWidth( 0 );
             break;
 
           default:
