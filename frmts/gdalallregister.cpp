@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.31  2001/03/12 15:17:32  warmerda
+ * added aaigrid
+ *
  * Revision 1.30  2001/03/06 03:53:44  sperkins
  * Added FITS format support.
  *
@@ -185,6 +188,10 @@ void GDALAllRegister()
 #ifdef FRMT_aigrid
     GDALRegister_AIGrid2();
     GDALRegister_AIGrid();
+#endif
+
+#ifdef FRMT_aaigrid
+    GDALRegister_AAIGrid();
 #endif
 
 #ifdef FRMT_sdts

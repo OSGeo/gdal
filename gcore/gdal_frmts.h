@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/03/12 15:17:03  warmerda
+ * added aaigrid
+ *
  * Revision 1.2  2001/03/06 03:53:44  sperkins
  * Added FITS format support.
  *
@@ -47,6 +50,7 @@ void CPL_DLL GDALRegister_GTiff(void);
 void CPL_DLL GDALRegister_GXF(void);
 void CPL_DLL GDALRegister_OGDI(void);
 void CPL_DLL GDALRegister_HFA(void);
+void CPL_DLL GDALRegister_AAIGrid(void);
 void CPL_DLL GDALRegister_AIGrid(void);
 void CPL_DLL GDALRegister_AIGrid2(void);
 void CPL_DLL GDALRegister_CEOS(void);

@@ -1,3 +1,11 @@
+2001-03-12  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* pymod/numpydataset.cpp captures and holds projection and
+	geotransform.
+
+	* Added frmts/aaigrid (ASCII Arc/Info Grid read support) at the
+	request of Ben Discoe. 
+
 2001-03-11  Simon Perkins  <simes@genie.lanl.gov>
 
 	* Added FITS support for "byte scaled" files.
