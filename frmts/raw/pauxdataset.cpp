@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/09/15 15:14:12  warmerda
+ * fixed geotransform[5] calculation
+ *
  * Revision 1.7  2000/09/15 14:09:56  warmerda
  * Added support for geotransforms.
  *
@@ -141,7 +144,7 @@ CPLErr PAuxDataset::GetGeoTransform( double * padfGeoTransform )
         padfGeoTransform[2] = 0.0;
         padfGeoTransform[3] = dfUpLeftY;
         padfGeoTransform[4] = 0.0;
-        padfGeoTransform[5] = (dfUpLeftY - dfLoRightY) / GetRasterYSize();
+        padfGeoTransform[5] = (dfLoRightY - dfUpLeftY) / GetRasterYSize();
 
         return CE_None;
     }
