@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  OpenGIS Simple Features Reference Implementation
+ * Project:  OGDI Bridge
  * Purpose:  Implements OGROGDILayer class.
  * Author:   Daniel Morissette, danmo@videotron.ca
  *           (Based on some code contributed by Frank Warmerdam :)
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/08/30 01:36:57  danmo
+ * Added GetSpatialRef() support
+ *
  * Revision 1.1  2000/08/24 04:16:19  danmo
  * Initial revision
  *
@@ -43,7 +46,8 @@
 /************************************************************************/
 
 OGROGDILayer::OGROGDILayer( int nNewClientID, const char * pszName,
-                            ecs_Family eFamily, ecs_Region *sGlobalBounds )
+                            ecs_Family eFamily, ecs_Region *sGlobalBounds,
+                            OGRSpatialReference *poSpatialRef)
 {
     m_nClientID = nNewClientID;
     m_eFamily = eFamily;
@@ -55,7 +59,11 @@ OGROGDILayer::OGROGDILayer( int nNewClientID, const char * pszName,
 
     m_iNextShapeId = 0;
     m_nTotalShapeCount = -1;
-    
+    m_poFeatureDefn = NULL;
+
+    // Keep a reference on the SpatialRef (owned by the dataset).
+    m_poSpatialRef = poSpatialRef;
+
     // Select layer and feature family.
     ResetReading();
 
@@ -76,6 +84,8 @@ OGROGDILayer::~OGROGDILayer()
 
     if( m_poFilterGeom != NULL )
         delete m_poFilterGeom;
+
+    // Note: we do not delete m_poSpatialRef since it is owned by the dataset
 }
 
 /************************************************************************/

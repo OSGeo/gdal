@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  OpenGIS Simple Features Reference Implementation
+ * Project:  OGDI Bridge
  * Purpose:  Implements OGROGDIDataSource class.
  * Author:   Daniel Morissette, danmo@videotron.ca
  *           (Based on some code contributed by Frank Warmerdam :)
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/08/30 01:36:57  danmo
+ * Added GetSpatialRef() support
+ *
  * Revision 1.1  2000/08/24 04:16:19  danmo
  * Initial revision
  *
@@ -51,7 +54,7 @@ OGROGDIDataSource::OGROGDIDataSource()
     m_papoLayers = NULL;
     m_nLayers = 0;
     m_nClientID = -1;
-    m_pszProjection = NULL;
+    m_poSpatialRef = NULL;
 }
 
 /************************************************************************/
@@ -64,7 +67,6 @@ OGROGDIDataSource::~OGROGDIDataSource()
     CPLFree(m_pszFullName );
     CPLFree(m_pszURL);
     CPLFree(m_pszOGDILayerName);
-    CPLFree(m_pszProjection );
 
     for( int i = 0; i < m_nLayers; i++ )
         delete m_papoLayers[i];
@@ -72,6 +74,9 @@ OGROGDIDataSource::~OGROGDIDataSource()
 
     if (m_nClientID != -1)
         cln_DestroyClient( m_nClientID );
+
+    if (m_poSpatialRef)
+        delete m_poSpatialRef;
 }
 
 /************************************************************************/
@@ -165,7 +170,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Capture some information from the file that is of interest.     */
+/*      Capture some information from the file.                         */
 /* -------------------------------------------------------------------- */
     psResult = cln_GetGlobalBound( m_nClientID );
     if( ECSERROR(psResult) )
@@ -184,7 +189,17 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
                   "%s", psResult->message );
         return FALSE;
     }
-    m_pszProjection = CPLStrdup( ECSTEXT(psResult) );
+
+    m_poSpatialRef = new OGRSpatialReference;
+
+    if( m_poSpatialRef->importFromProj4( ECSTEXT(psResult) ) != OGRERR_NONE )
+    {
+        CPLError( CE_Warning, CPLE_NotSupported,
+                  "untranslatable PROJ.4 projection: %s\n", 
+                  ECSTEXT(psResult) );
+        delete m_poSpatialRef;
+        m_poSpatialRef = NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Select the global region.                                       */
@@ -208,7 +223,8 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
 
     m_papoLayers[m_nLayers++] = new OGROGDILayer(m_nClientID, 
                                                  m_pszOGDILayerName,
-                                                 m_eFamily, &m_sGlobalBounds);
+                                                 m_eFamily, &m_sGlobalBounds,
+                                                 m_poSpatialRef);
 
     return TRUE;
 }

@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  OpenGIS Simple Features Reference Implementation
+ * Project:  OGDI Bridge
  * Purpose:  Private definitions within the OGDI driver to implement
  *           integration with OGR.
  * Author:   Daniel Morissette, danmo@videotron.ca
@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/08/30 01:36:56  danmo
+ * Added GetSpatialRef() support
+ *
  * Revision 1.1  2000/08/24 04:16:19  danmo
  * Initial revision
  *
@@ -53,6 +56,7 @@ class OGROGDILayer : public OGRLayer
     ecs_Family          m_eFamily;
 
     OGRFeatureDefn     *m_poFeatureDefn;
+    OGRSpatialReference *m_poSpatialRef;
     ecs_Region          m_sFilterBounds;
     OGRGeometry        *m_poFilterGeom;
 
@@ -61,7 +65,8 @@ class OGROGDILayer : public OGRLayer
 
   public:
                         OGROGDILayer( int nClientID, const char * pszName,
-                                      ecs_Family eFamily, ecs_Region *sBounds);
+                                      ecs_Family eFamily, ecs_Region *sBounds,
+                                      OGRSpatialReference *poSpatialRef);
                         ~OGROGDILayer();
 
     OGRGeometry *       GetSpatialFilter() { return m_poFilterGeom; }
@@ -77,6 +82,8 @@ class OGROGDILayer : public OGRLayer
     int                 GetFeatureCount( int );
 
     int                 TestCapability( const char * );
+
+    OGRSpatialReference *GetSpatialRef()  { return m_poSpatialRef; }
 
   private:
     void                BuildFeatureDefn();
@@ -98,7 +105,7 @@ class OGROGDIDataSource : public OGRDataSource
     ecs_Family          m_eFamily;
 
     ecs_Region          m_sGlobalBounds;
-    char               *m_pszProjection;
+    OGRSpatialReference *m_poSpatialRef;
 
   public:
                         OGROGDIDataSource();

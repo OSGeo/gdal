@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  OpenGIS Simple Features Reference Implementation
+ * Project:  OGDI Bridge
  * Purpose:  Implements OGROGDIDriver class.
  * Author:   Daniel Morissette, danmo@videotron.ca
  *           (Based on some code contributed by Frank Warmerdam :)
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/08/30 01:36:57  danmo
+ * Added GetSpatialRef() support
+ *
  * Revision 1.1  2000/08/24 04:16:19  danmo
  * Initial revision
  *
