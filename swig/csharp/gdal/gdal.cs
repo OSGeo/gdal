@@ -9,7 +9,7 @@
 
 using System.Runtime.InteropServices;
 using System.Reflection;
-[assembly: AssemblyKeyFile( "bin/release/gdal_csharp.snk" )]
+[assembly: AssemblyKeyFile( "gdal.snk" )]
 
 namespace GDALInterop
 {
