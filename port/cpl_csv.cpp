@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/07/18 12:45:18  warmerda
+ * added GDALDefaultCSVFilename
+ *
  * Revision 1.8  2003/05/21 03:04:14  warmerda
  * fixed bFinderInitialized
  *
@@ -64,6 +67,10 @@
 #include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
+
+CPL_C_START
+const char * GDALDefaultCSVFilename( const char *pszBasename );
+CPL_C_END
 
 /* ==================================================================== */
 /*      The CSVTable is a persistant set of info about an open CSV      */
@@ -880,6 +887,56 @@ const char *CSVGetField( const char * pszFilename,
 }
 
 /************************************************************************/
+/*                       GDALDefaultCSVFilename()                       */
+/************************************************************************/
+
+const char * GDALDefaultCSVFilename( const char *pszBasename )
+
+{
+    static char         szPath[512];
+    FILE    *fp = NULL;
+    const char *pszResult;
+    static int bFinderInitialized = FALSE;
+
+    pszResult = CPLFindFile( "epsg_csv", pszBasename );
+
+    if( pszResult != NULL )
+        return pszResult;
+
+    if( !bFinderInitialized )
+    {
+        bFinderInitialized = TRUE;
+
+        if( CPLGetConfigOption("GEOTIFF_CSV",NULL) != NULL )
+            CPLPushFinderLocation( CPLGetConfigOption("GEOTIFF_CSV",NULL));
+            
+        if( CPLGetConfigOption("GDAL_DATA",NULL) != NULL )
+            CPLPushFinderLocation( CPLGetConfigOption("GDAL_DATA",NULL) );
+
+        pszResult = CPLFindFile( "epsg_csv", pszBasename );
+
+        if( pszResult != NULL )
+            return pszResult;
+    }
+            
+    if( (fp = fopen( "csv/horiz_cs.csv", "rt" )) != NULL )
+    {
+        sprintf( szPath, "csv/%s", pszBasename );
+    }
+    else
+    {
+        sprintf( szPath, "/usr/local/share/epsg_csv/%s", pszBasename );
+        if( (fp = fopen( szPath, "rt" )) == NULL )
+            strcpy( szPath, pszBasename );
+    }
+
+    if( fp != NULL )
+        fclose( fp );
+        
+    return( szPath );
+}
+
+/************************************************************************/
 /*                            CSVFilename()                             */
 /*                                                                      */
 /*      Return the full path to a particular CSV file.  This will       */
@@ -891,51 +948,8 @@ static const char *(*pfnCSVFilenameHook)(const char *) = NULL;
 const char * CSVFilename( const char *pszBasename )
 
 {
-    static char         szPath[512];
-
     if( pfnCSVFilenameHook == NULL )
-    {
-        FILE    *fp = NULL;
-        const char *pszResult;
-        static int bFinderInitialized = FALSE;
-
-        pszResult = CPLFindFile( "epsg_csv", pszBasename );
-
-        if( pszResult != NULL )
-            return pszResult;
-
-        if( !bFinderInitialized )
-        {
-            bFinderInitialized = TRUE;
-
-            if( CPLGetConfigOption("GEOTIFF_CSV",NULL) != NULL )
-                CPLPushFinderLocation( CPLGetConfigOption("GEOTIFF_CSV",NULL));
-            
-            if( CPLGetConfigOption("GDAL_DATA",NULL) != NULL )
-                CPLPushFinderLocation( CPLGetConfigOption("GDAL_DATA",NULL) );
-
-            pszResult = CPLFindFile( "epsg_csv", pszBasename );
-
-            if( pszResult != NULL )
-                return pszResult;
-        }
-            
-        if( (fp = fopen( "csv/horiz_cs.csv", "rt" )) != NULL )
-        {
-            sprintf( szPath, "csv/%s", pszBasename );
-        }
-        else
-        {
-            sprintf( szPath, "/usr/local/share/epsg_csv/%s", pszBasename );
-            if( (fp = fopen( szPath, "rt" )) == NULL )
-                strcpy( szPath, pszBasename );
-        }
-
-        if( fp != NULL )
-            fclose( fp );
-        
-        return( szPath );
-    }
+        return GDALDefaultCSVFilename( pszBasename );
     else
         return( pfnCSVFilenameHook( pszBasename ) );
 }
