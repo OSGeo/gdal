@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/10/07 15:50:18  fwarmerdam
+ * added preliminary alpha band support
+ *
  * Revision 1.17  2004/03/28 21:21:23  warmerda
  * fixed bug in setting values in Int32 working buffer
  *
@@ -803,6 +806,9 @@ static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
       default:
         return FALSE;
     }
+
+    if( poWK->pafDstDensity != NULL )
+        poWK->pafDstDensity[iDstOffset] = dfDensity;
 
     return TRUE;
 }
@@ -2451,6 +2457,9 @@ static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
 /* -------------------------------------------------------------------- */
 /*      Don't generate output pixels for which the destination valid    */
 /*      mask exists and is already set.                                 */
+/*                                                                      */
+/*      -- NFW -- FIXME: I think this test is in error.  We should,     */
+/*      generally, be pasteing over existing valid data.                */
 /* -------------------------------------------------------------------- */
             iDstOffset = iDstX + iDstY * nDstXSize;
             if( poWK->panDstValid != NULL
@@ -2462,11 +2471,11 @@ static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
 /*      Loop processing each band.                                      */
 /* ==================================================================== */
             int iBand;
+            double  dfDensity = 0.0;
 
             for( iBand = 0; iBand < poWK->nBands; iBand++ )
             {
                 GByte   bValue = 0;
-                double  dfDensity = 0.0;
 
 /* -------------------------------------------------------------------- */
 /*      Collect the source value.                                       */
@@ -2474,9 +2483,21 @@ static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
                 if ( GWKGetPixelByte( poWK, iBand, iSrcOffset, &dfDensity,
                                       &bValue ) )
                 {
-                    // FIXME: process density value here
+                    // FIXME: Address density?
                     poWK->papabyDstImage[iBand][iDstOffset] = bValue;
                 }
+            }
+
+/* -------------------------------------------------------------------- */
+/*      Mark this pixel valid/opaque in the output.                     */
+/* -------------------------------------------------------------------- */
+            if( poWK->pafDstDensity != NULL )
+                poWK->pafDstDensity[iDstOffset] = dfDensity;
+
+            if( poWK->panDstValid != NULL )
+            {
+                poWK->panDstValid[iDstOffset>>5] |= 
+                    0x01 << (iDstOffset & 0x1f);
             }
         }
 
@@ -3155,11 +3176,11 @@ static CPLErr GWKNearestShort( GDALWarpKernel *poWK )
 /*      Loop processing each band.                                      */
 /* ==================================================================== */
             int iBand;
+            double  dfDensity = 0.0;
 
             for( iBand = 0; iBand < poWK->nBands; iBand++ )
             {
                 GInt16  iValue = 0;
-                double  dfDensity = 0.0;
 
 /* -------------------------------------------------------------------- */
 /*      Collect the source value.                                       */
@@ -3170,6 +3191,18 @@ static CPLErr GWKNearestShort( GDALWarpKernel *poWK )
                     // FIXME: process density value here
                     ((GInt16 *)poWK->papabyDstImage[iBand])[iDstOffset] = iValue;
                 }
+            }
+
+/* -------------------------------------------------------------------- */
+/*      Mark this pixel valid/opaque in the output.                     */
+/* -------------------------------------------------------------------- */
+            if( poWK->pafDstDensity != NULL )
+                poWK->pafDstDensity[iDstOffset] = dfDensity;
+
+            if( poWK->panDstValid != NULL )
+            {
+                poWK->panDstValid[iDstOffset>>5] |= 
+                    0x01 << (iDstOffset & 0x1f);
             }
         }
 
@@ -3439,11 +3472,11 @@ static CPLErr GWKNearestFloat( GDALWarpKernel *poWK )
 /*      Loop processing each band.                                      */
 /* ==================================================================== */
             int iBand;
+            double  dfDensity = 0.0;
 
             for( iBand = 0; iBand < poWK->nBands; iBand++ )
             {
                 float   fValue = 0;
-                double  dfDensity = 0.0;
 
 /* -------------------------------------------------------------------- */
 /*      Collect the source value.                                       */
@@ -3454,6 +3487,18 @@ static CPLErr GWKNearestFloat( GDALWarpKernel *poWK )
                     // FIXME: process density value here
                     ((float *)poWK->papabyDstImage[iBand])[iDstOffset] = fValue;
                 }
+            }
+
+/* -------------------------------------------------------------------- */
+/*      Mark this pixel valid/opaque in the output.                     */
+/* -------------------------------------------------------------------- */
+            if( poWK->pafDstDensity != NULL )
+                poWK->pafDstDensity[iDstOffset] = dfDensity;
+
+            if( poWK->panDstValid != NULL )
+            {
+                poWK->panDstValid[iDstOffset>>5] |= 
+                    0x01 << (iDstOffset & 0x1f);
             }
         }
 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2004/10/07 15:53:42  fwarmerdam
+ * added preliminary alpha band support
+ *
  * Revision 1.9  2004/08/31 19:58:57  warmerda
  * Added error check if dst srs given but no source srs available.
  * http://208.24.120.44/show_bug.cgi?id=603
@@ -110,6 +113,7 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
 static double	       dfMinX=0.0, dfMinY=0.0, dfMaxX=0.0, dfMaxY=0.0;
 static double	       dfXRes=0.0, dfYRes=0.0;
 static int             nForcePixels=0, nForceLines=0, bQuiet = FALSE;
+static int             bEnableDstAlpha = FALSE;
 
 static int             bVRT = FALSE;
 
@@ -125,7 +129,7 @@ static void Usage()
         "    [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]\n"
         "    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
         "    [-wo \"NAME=VALUE\"] [-ot Byte/Int16/...] [-wt Byte/Int16]\n"
-        "    [-srcnodata value [value...]] [-dstnodata value [value...]]\n" 
+        "    [-srcnodata value [value...]] [-dstnodata value [value...]] -dstalpha\n" 
         "    [-rn] [-rb] [-rc] [-rcs] [-wm memory_in_mb] [-multi] [-q]\n"
         "    [-of format] [-co \"NAME=VALUE\"]* srcfile dstfile\n" );
     exit( 1 );
@@ -211,6 +215,10 @@ int main( int argc, char ** argv )
         {
             bQuiet = TRUE;
         }   
+        else if( EQUAL(argv[i],"-dstalpha") )
+        {
+            bEnableDstAlpha = TRUE;
+        }
         else if( EQUAL(argv[i],"-of") && i < argc-1 )
         {
             pszFormat = argv[++i];
@@ -463,6 +471,9 @@ int main( int argc, char ** argv )
 
     if( dfWarpMemoryLimit != 0.0 )
         psWO->dfWarpMemoryLimit = dfWarpMemoryLimit;
+
+    if( bEnableDstAlpha )
+        psWO->nDstAlphaBand = GDALGetRasterCount(hDstDS);
 
 /* -------------------------------------------------------------------- */
 /*      Setup band mapping.                                             */
@@ -750,14 +761,21 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Do we want to generate an alpha band in the output file?        */
+/* -------------------------------------------------------------------- */
+    int nDstBandCount = GDALGetRasterCount(hSrcDS);
+
+    if( bEnableDstAlpha )
+        nDstBandCount++;
+
+/* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
     if( !bQuiet )
         printf( "Creating output file is that %dP x %dL.\n", nPixels, nLines );
 
     hDstDS = GDALCreate( hDriver, pszFilename, nPixels, nLines, 
-                         GDALGetRasterCount(hSrcDS), eDT,
-                         papszCreateOptions );
+                         nDstBandCount, eDT, papszCreateOptions );
     
     if( hDstDS == NULL )
         return NULL;
@@ -767,6 +785,17 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
 /* -------------------------------------------------------------------- */
     GDALSetProjection( hDstDS, pszTargetSRS );
     GDALSetGeoTransform( hDstDS, adfDstGeoTransform );
+
+/* -------------------------------------------------------------------- */
+/*      Try to set color interpretation of output file alpha band.      */
+/*      TODO: We should likely try to copy the other bands too.         */
+/* -------------------------------------------------------------------- */
+    if( bEnableDstAlpha )
+    {
+        GDALSetRasterColorInterpretation( 
+            GDALGetRasterBand( hDstDS, nDstBandCount ), 
+            GCI_AlphaBand );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Copy the color table, if required.                              */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2004/10/07 15:50:18  fwarmerdam
+ * added preliminary alpha band support
+ *
  * Revision 1.20  2004/08/09 14:38:27  warmerda
  * added serialize/deserialize support for warpoptions and transformers
  *
@@ -397,6 +400,16 @@ int GDALWarpOperation::ValidateOptions()
             return FALSE;
         }
     }
+
+    if( psOptions->nDstAlphaBand > 0 
+        && psOptions->pfnDstDensityMaskFunc != NULL )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg, 
+               "GDALWarpOptions.Validate()\n"
+               "  pfnDstDensityMaskFunc provided as well as a DstAlphaBand." );
+        return FALSE;
+    }
+
     return TRUE;
 }
 
@@ -1348,12 +1361,33 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 /* -------------------------------------------------------------------- */
     
     /* TODO */
+
+/* -------------------------------------------------------------------- */
+/*      Generate a destination density mask if we have a destination    */
+/*      alpha band.                                                     */
+/* -------------------------------------------------------------------- */
+    if( eErr == CE_None && psOptions->nDstAlphaBand > 0 )
+    {
+        CPLAssert( oWK.pafDstDensity == NULL );
+
+        eErr = CreateKernelMask( &oWK, i, "DstDensity" );
+        
+        if( eErr == CE_None )
+            eErr = 
+                GDALWarpDstAlphaMasker( psOptions, 
+                                        psOptions->nBandCount, 
+                                        psOptions->eWorkingDataType,
+                                        oWK.nDstXOff, oWK.nDstYOff, 
+                                        oWK.nDstXSize, oWK.nDstYSize,
+                                        oWK.papabyDstImage,
+                                        TRUE, oWK.pafDstDensity );
+    }
     
 /* -------------------------------------------------------------------- */
 /*      If we have source nodata values create, or update the           */
 /*      validity mask.                                                  */
 /* -------------------------------------------------------------------- */
-    if( psOptions->padfSrcNoDataReal != NULL )
+    if( eErr == CE_None && psOptions->padfSrcNoDataReal != NULL )
     {
         for( i = 0; i < psOptions->nBandCount && eErr == CE_None; i++ )
         {
@@ -1427,6 +1461,21 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
         }
     }
         
+/* -------------------------------------------------------------------- */
+/*      Write destination alpha if available.                           */
+/* -------------------------------------------------------------------- */
+    if( eErr == CE_None && psOptions->nDstAlphaBand > 0 )
+    {
+        eErr = 
+            GDALWarpDstAlphaMasker( psOptions, 
+                                    -psOptions->nBandCount, 
+                                    psOptions->eWorkingDataType,
+                                    oWK.nDstXOff, oWK.nDstYOff, 
+                                    oWK.nDstXSize, oWK.nDstYSize,
+                                    oWK.papabyDstImage,
+                                    TRUE, oWK.pafDstDensity );
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
