@@ -32,6 +32,8 @@ subdirs:
 	$(MAKE) /f makefile.vc
 	cd ..\gxf
 	$(MAKE) /f makefile.vc
+	cd ..\zlib
+	$(MAKE) /f makefile.vc
 	cd ..
 
 o\gdalallregister.obj:	gdalallregister.cpp
@@ -61,6 +63,8 @@ clean:
 	cd ..\ceos2
 	$(MAKE) /f makefile.vc clean
 	cd ..\ceos
+	$(MAKE) /f makefile.vc clean
+	cd ..\zlib
 	$(MAKE) /f makefile.vc clean
 	cd ..
 
