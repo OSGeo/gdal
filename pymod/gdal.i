@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.74  2003/09/22 05:48:50  warmerda
+ * added GML geometry support
+ *
  * Revision 1.73  2003/08/27 15:40:05  warmerda
  * added OGRSetGenerate_DB2_V72_BYTE_ORDER()
  *
@@ -2269,6 +2272,8 @@ int    OGR_G_WkbSize( OGRGeometryH hGeom );
 OGRwkbGeometryType OGR_G_GetGeometryType( OGRGeometryH );
 const char *OGR_G_GetGeometryName( OGRGeometryH );
 void   OGR_G_FlattenTo2D( OGRGeometryH );
+char  *OGR_G_ExportToGML( OGRGeometryH );
+OGRGeometryH OGR_G_CreateFromGML( const char * );
 
 void   OGR_G_AssignSpatialReference( OGRGeometryH, OGRSpatialReferenceH );
 OGRSpatialReferenceH OGR_G_GetSpatialReference( OGRGeometryH );

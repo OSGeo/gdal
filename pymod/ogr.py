@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.16  2003/09/22 05:48:50  warmerda
+# added GML geometry support
+#
 # Revision 1.15  2003/09/13 04:57:06  warmerda
 # fixed up NULL support for spatial references
 #
@@ -640,6 +643,10 @@ def CreateGeometryFromWkt( string, srs = None ):
     _obj = _gdal.OGR_G_CreateFromWkt( string, srs_o )
     return Geometry( obj = _obj )
 
+def CreateGeometryFromGML( string ):
+    _obj = _gdal.OGR_G_CreateFromGML( string )
+    return Geometry( obj = _obj )
+
 class Geometry:
     def __init__(self, type=None, obj=None):
         if obj is not None:
@@ -660,6 +667,9 @@ class Geometry:
 
     def ExportToWkt( self):
         return _gdal.OGR_G_ExportToWkt( self._o )
+
+    def ExportToGML( self):
+        return _gdal.OGR_G_ExportToGML( self._o )
 
     def GetDimension( self ):
         return _gdal.OGR_G_GetDimension( self._o )
