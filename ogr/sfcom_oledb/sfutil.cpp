@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/06/22 16:59:55  kshih
+ * Modified GetFilenames to return previous filename if NULL is provided.
+ *
  * Revision 1.2  1999/06/22 16:17:11  warmerda
  * added ogrcomdebug
  *
@@ -41,8 +44,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
-#include "shapefil.h"
 #include "cpl_conv.h"
+#include "shapefil.h"
+
+
+static char szSFile[MAX_PATH] ="";
+static char szDFile[MAX_PATH] ="";
 
 /************************************************************************/
 /*                           SFGetFilenames()                           */
@@ -52,16 +59,23 @@
 void	SFGetFilenames(const char *pszFileIn, char **ppszSHPFile, 
 					   char **ppszDBFFile)
 {
-    static char szSFile[MAX_PATH];
-    static char szDFile[MAX_PATH];
 
-    char szDrive[_MAX_DRIVE];   
-    char szDir[_MAX_DIR];
-    char szFname[_MAX_FNAME];   
-    char szExt[_MAX_EXT];
+	char szDrive[_MAX_DRIVE];   
+	char szDir[_MAX_DIR];
+  	char szFname[_MAX_FNAME];   
+	char szExt[_MAX_EXT];
 
-    _splitpath(pszFileIn,szDrive,szDir,szFname,szExt);
-	
+
+	if (pszFileIn == NULL)
+	{
+		if (ppszSHPFile)
+			*ppszSHPFile = szSFile;
+
+		if (ppszDBFFile)
+			*ppszDBFFile = szDFile;
+		return;
+	}
+	_splitpath(pszFileIn,szDrive,szDir,szFname,szExt);
 
     // Shape file
 
@@ -136,11 +150,88 @@ DBFHandle	SFGetDBFHandle(const char *pszName)
 {
     char *pszDBFFile;
 
-    SFGetFilenames(pszName,&pszDBFFile, NULL);
+        SFGetFilenames(pszName,NULL,&pszDBFFile);
 
-    return DBFOpen(pszDBFFile,"r");
+	return DBFOpen(pszDBFFile,"r");
 }
 
+#ifdef NOTDEF
+/************************************************************************/
+/*                         GetInitDataSource()                          */
+/*  Returns char * to allocated string.  Caller responsible for freeing */
+/************************************************************************/
+static char *GetInitDataSource(CSFRowset *pRowset)
+{
+	IRowsetInfo *pRInfo;
+	HRESULT		hr;
+	char		*pszDataSource = NULL;
+
+// Temporary hack to allow Frank to continue.
+	return GetHackedInitDataSource();
+
+   OGRComDebug( "Info", "In GetInitDataSource\n" );
+
+	hr = pRowset->QueryInterface(IID_IRowsetInfo,(void **) &pRInfo);
+	if (SUCCEEDED(hr))
+	{
+        OGRComDebug( "Info", "Got IRowsetInfo\n" );
+		IGetDataSource	*pIGetDataSource;
+		hr = pRInfo->GetSpecification(IID_IGetDataSource, (IUnknown **) &pIGetDataSource);
+		pRInfo->Release();
+
+		if (SUCCEEDED(hr))
+		{
+			IDBProperties *pIDBProp;
+
+            OGRComDebug( "Info", "Got IGetDataSource\n" );
+			hr = pIGetDataSource->GetDataSource(IID_IDBProperties, (IUnknown **) &pIDBProp);
+			pIGetDataSource->Release();
+
+			if (SUCCEEDED(hr))
+			{
+				DBPROPIDSET sPropIdSets[1];
+				DBPROPID	rgPropIds[1];
+
+				ULONG		nPropSets;
+				DBPROPSET	*rgPropSets;
+
+                                OGRComDebug( "Info", "Got Properties\n" );
+				rgPropIds[0] = DBPROP_INIT_DATASOURCE;
+
+				sPropIdSets[0].cPropertyIDs = 1;
+				sPropIdSets[0].guidPropertySet = DBPROPSET_DBINIT;
+				sPropIdSets[0].rgPropertyIDs = rgPropIds;
+
+				pIDBProp->GetProperties(1,sPropIdSets,&nPropSets,&rgPropSets);
+
+				if (rgPropSets)
+				{
+					USES_CONVERSION;
+					char *pszSource = (char *)  OLE2A(rgPropSets[0].rgProperties[0].vValue.bstrVal);
+					pszDataSource = (char *) malloc(1+strlen(pszSource));
+					strcpy(pszDataSource,pszSource);
+                                        OGRComDebug( "Info", 
+                                                     "Got rgPropSets\n" );
+				}
+
+				if (rgPropSets)
+				{
+					int i;
+					for (i=0; i < nPropSets; i++)
+					{
+						CoTaskMemFree(rgPropSets[i].rgProperties);
+					}
+					CoTaskMemFree(rgPropSets);
+				}
+
+				pIDBProp->Release();
+			}
+		}
+	}
+
+	return pszDataSource;
+}
+#endif
 /************************************************************************/
 /*                            OGRComDebug()                             */
 /************************************************************************/
