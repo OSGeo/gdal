@@ -3,6 +3,7 @@
  *
  * Project:  GeoTIFF Driver
  * Purpose:  Code to build overviews of external databases as a TIFF file. 
+ *           Only used by the GDALDefaultOverviews::BuildOverviews() method.
  * Author:   Frank Warmerdam, warmerda@home.com
  *
  ******************************************************************************
@@ -28,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/06/19 18:47:24  warmerda
+ * fixed header
+ *
  * Revision 1.1  2000/04/21 21:53:15  warmerda
  * New
  *
@@ -38,6 +42,10 @@
 #include "geotiff.h"
 #include "gdal_priv.h"
 #include "tif_ovrcache.h"
+
+/************************************************************************/
+/*                        GTIFFBuildOverviews()                         */
+/************************************************************************/
 
 CPLErr 
 GTIFFBuildOverviews( const char * pszFilename,
