@@ -1526,6 +1526,22 @@ export EXE_EXT
 AC_SUBST(EXE_EXT,$EXE_EXT)
 
 dnl ---------------------------------------------------------------------------
+dnl Which "true" program should we use? 
+dnl ---------------------------------------------------------------------------
+BINTRUE = /bin/true
+
+if test -f /bin/true.exe ; then
+  BINTRUE = /bin/true.exe
+fi
+if test -f /usr/bin/true ; then
+  BINTRUE = /usr/bin/true
+fi
+
+export BINTRUE
+
+AC_SUBST(BINTRUE,$BINTRUE)
+
+dnl ---------------------------------------------------------------------------
 dnl If datadir is set to @prefix@/share, the modify it to be 
 dnl @prefix@/share/gdal.  I wish we could default this.
 dnl ---------------------------------------------------------------------------
