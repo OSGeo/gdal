@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2003/04/09 21:32:02  dron
+ * Memory leak fixed.
+ *
  * Revision 1.6  2002/11/23 18:54:17  warmerda
  * added CREATIONDATATYPES metadata for drivers
  *
@@ -186,6 +189,8 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
                                 TRUE );
     poBand->SetColorTable( poCT );
     poDS->SetBand( 1, poBand );
+
+    delete poCT;
 
 #ifdef notdef
 /* -------------------------------------------------------------------- */
