@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/03/10 18:06:11  warmerda
+ * Avoid size_t casting warnings.
+ *
  * Revision 1.19  2003/04/30 17:13:48  warmerda
  * added docs for many C functions
  *
@@ -151,7 +154,7 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn )
 
             if( fp != NULL )
             {
-                nHeaderBytes = VSIFRead( pabyHeader, 1, 1024, fp );
+                nHeaderBytes = (int) VSIFRead( pabyHeader, 1, 1024, fp );
 
                 VSIRewind( fp );
             } 
@@ -160,7 +163,7 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn )
                 fp = VSIFOpenL( pszFilename, "rb" );
                 if( fp != NULL )
                 {
-                    nHeaderBytes = VSIFRead( pabyHeader, 1, 1024, fp );
+                    nHeaderBytes = (int) VSIFRead( pabyHeader, 1, 1024, fp );
                     VSIFCloseL( fp );
                     fp = NULL;
                 }
