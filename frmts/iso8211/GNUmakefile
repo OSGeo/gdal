@@ -4,7 +4,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 VERSION =	0.1
 DISTDIR =	iso8211lib-$(VERSION)
-WEB_DIR =	/usr/local/WebDocuments/projects/iso8211
+WEB_DIR =	/u/www/projects/iso8211
 
 INCLUDE	=	-I. -I$(GDAL_ROOT)/port
 
@@ -70,7 +70,7 @@ dist:	docs
 update-web:	dist docs
 	cp html/* $(WEB_DIR)
 	cp $(DISTDIR).tar.gz $(WEB_DIR)
-	cp $(DISTDIR).tar.gz /home/ftp/pub/outgoing
+	cp $(DISTDIR).tar.gz /u/ftp/pub/outgoing
 
 
 test:	8211dump
