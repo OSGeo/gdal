@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/01/13 03:24:54  fwarmerdam
+ * changed type of m_panColSize, per ODBC 3.52 requirements
+ *
  * Revision 1.10  2004/06/23 16:11:30  warmerda
  * just testing cvs commits
  *
@@ -80,6 +83,17 @@
 
 class CPLODBCStatement;
 
+
+#ifdef SQLULEN
+/* ODBC types to support 64 bit compilation */
+#  define _SQLULEN SQLULEN
+#  define _SQLLEN  SQLLEN
+#else
+#  define _SQLULEN SQLUINTEGER
+#  define _SQLLEN  SQLINTEGER
+#endif	/* ifdef SQLULEN */
+
+
 /**
  * A class representing an ODBC database session. 
  *
@@ -126,7 +140,7 @@ class CPL_DLL CPLODBCStatement {
     short          m_nColCount;
     char         **m_papszColNames;
     short         *m_panColType;
-    SQLUINTEGER   *m_panColSize;
+    _SQLULEN       *m_panColSize;
     short         *m_panColPrecision;
     short         *m_panColNullable;
 
