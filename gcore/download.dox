@@ -12,11 +12,11 @@ full set of GDAL libraries, utilities, python support and documentation
 along with lots of other stuff (includig the OpenEV viewer).  It can be
 downloaded from:
 
-<a href="ftp://ftp.remotesensing.org/pub/gdal/openev/">ftp://ftp.remotesensing.org/pub/gdal/openev</a><p>
+<a href="ftp://ftp.remotesensing.org/pub/gdal/openev/">ftp://ftp.remotesensing.org/pub/gdal/openev</a>
 
 or
 
-<a href="http://gdal.maptools.org/dl/openev">http://gdal.maptools.org/dl/openev</a><p>
+<a href="http://gdal.maptools.org/dl/openev">http://gdal.maptools.org/dl/openev</a>
 
 Note, the regular OpenEV releases (also mirror in these locations) do not
 include the full suite of GDAL utilities nor as many built-in format drivers.
