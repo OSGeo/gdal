@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.75  2005/03/02 17:55:38  hobu
+# CreateAndReprojectImage needs dst_filename to be a NULLableString
+#
 # Revision 1.74  2005/02/21 04:10:32  fwarmerdam
 # added SetRasterColorInterpretation
 #
@@ -443,6 +446,7 @@ def CreateAndReprojectImage( src_ds, dst_filename,
         
     src_wkt = ToNULLableString( src_wkt )
     dst_wkt = ToNULLableString( dst_wkt )
+    dst_filename = ToNULLableString( dst_filename )
     options_strlist = _gdal.ListToStringList( create_options )
     
     err = _gdal.GDALCreateAndReprojectImage(
@@ -453,6 +457,7 @@ def CreateAndReprojectImage( src_ds, dst_filename,
     
     FreeNULLableString( src_wkt )                                        
     FreeNULLableString( dst_wkt )
+    FreeNULLableString( dst_filename )
     _gdal.CSLDestroy( options_strlist )
 
     return err
