@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/04/16 14:00:25  warmerda
+ * added GDALVersionInfo
+ *
  * Revision 1.6  2001/07/18 05:05:12  warmerda
  * added CPL_CSVID
  *
@@ -60,7 +63,7 @@ static void Usage()
 
 {
     printf( "Usage: gdaladdo [-r {nearest,average,average_mp,average_magphase,mode}]\n"
-            "                filename levels\n"
+            "                [--version] filename levels\n"
             "\n"
             "Example:\n"
             " %% gdaladdo -r average abc.tif 2 4 8 16\n" );
@@ -91,6 +94,8 @@ int main( int nArgc, char ** papszArgv )
             pszFilename = papszArgv[iArg];
         else if( atoi(papszArgv[iArg]) > 0 )
             anLevels[nLevelCount++] = atoi(papszArgv[iArg]);
+        else if( EQUAL(papszArgv[iArg],"--version") )
+            printf( "%s\n", GDALVersionInfo( "--version" ) );
         else
             Usage();
     }

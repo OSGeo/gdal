@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2002/04/16 13:59:33  warmerda
+ * added GDALVersionInfo
+ *
  * Revision 1.29  2001/12/07 20:04:21  warmerda
  * fixed serious bug in random sampler
  *
@@ -1146,6 +1149,50 @@ int GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
         CSLDestroy(papszLines);
         return FALSE;
     }
+}
+
+/************************************************************************/
+/*                          GDALVersionInfo()                           */
+/************************************************************************/
+
+/**
+ * Get runtime version information.
+ *
+ * Available pszRequest values:
+ * <ul>
+ * <li> "VERSION_NUM": Returns GDAL_VERSION_NUM formatted as a string.  ie. "1170"
+ * <li> "RELEASE_DATE": Returns GDAL_RELEASE_DATE formatted as a string.  
+ * ie. "20020416".
+ * <li> "RELEASE_NAME": Returns the GDAL_RELEASE_NAME. ie. "1.1.7"
+ * <li> "--version": Returns one line version message suitable for use in 
+ * response to --version requests.  ie. "GDAL 1.1.7, released 2002/04/16"
+ * </ul>
+ *
+ * @param pszRequest the type of version info desired, as listed above.
+ *
+ * @return an internal string containing the requested information.
+ */
+
+const char *GDALVersionInfo( const char *pszRequest )
+
+{
+    static char szResult[128];
+
+    
+    if( pszRequest == NULL || EQUAL(pszRequest,"VERSION_NUM") )
+        sprintf( szResult, "%d", GDAL_VERSION_NUM );
+    else if( EQUAL(pszRequest,"RELEASE_DATE") )
+        sprintf( szResult, "%d", GDAL_RELEASE_DATE );
+    else if( EQUAL(pszRequest,"RELEASE_NAME") )
+        sprintf( szResult, "%s", GDAL_RELEASE_NAME );
+    else // --version
+        sprintf( szResult, "GDAL %s, released %d/%02d/%02d",
+                 GDAL_RELEASE_NAME, 
+                 GDAL_RELEASE_DATE / 10000, 
+                 (GDAL_RELEASE_DATE % 10000) / 100,
+                 GDAL_RELEASE_DATE % 100 );
+
+    return szResult;
 }
 
 /************************************************************************/

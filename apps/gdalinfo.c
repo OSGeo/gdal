@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.24  2002/04/16 14:00:25  warmerda
+ * added GDALVersionInfo
+ *
  * Revision 1.23  2002/03/25 13:50:07  warmerda
  * only report min/max values if fetch successfully
  *
@@ -122,7 +125,7 @@ int main( int argc, char ** argv )
 
     if( argc < 2 )
     {
-        printf( "Usage: gdalinfo [-mm] datasetname\n" );
+        printf( "Usage: gdalinfo [--version] [-mm] datasetname\n" );
         exit( 10 );
     }
 
@@ -130,6 +133,12 @@ int main( int argc, char ** argv )
     {
         bComputeMinMax = TRUE;
         argv++;
+    }
+
+    if( EQUAL(argv[1],"--version") )
+    {
+        printf( "%s\n", GDALVersionInfo( "--version" ) );
+        exit( 0 );
     }
 
     if( EQUAL(argv[1],"-sample") )

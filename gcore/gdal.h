@@ -7,7 +7,7 @@
  * Author:   Frank Warmerdam, warmerda@home.com
  *
  ******************************************************************************
- * Copyright (c) 1998, Frank Warmerdam
+ * Copyright (c) 1998, 2002 Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2002/04/16 13:59:33  warmerda
+ * added GDALVersionInfo
+ *
  * Revision 1.43  2002/04/16 13:26:08  warmerda
  * upgrade to version 1.1.7
  *
@@ -456,6 +459,8 @@ int GDALReadWorldFile( const char *pszBaseFilename,
                        double * padfGeoTransform );
 
 const char CPL_DLL *GDALDecToDMS( double, const char *, int );
+
+const char CPL_DLL *GDALVersionInfo( const char * );
 
 /* ==================================================================== */
 /*      Color tables.                                                   */
