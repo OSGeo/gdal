@@ -8,7 +8,7 @@ default:	gdalinfo gdal_translate
 
 lib-depend:
 	(cd ../core ; $(MAKE) )
-	(cd ../frmts ; $(MAKE) )
+	(cd ../port ; $(MAKE) )
 
 gdalinfo:	gdalinfo.o lib-depend
 	$(CC) $(LNK_FLAGS) gdalinfo.o $(GDAL_LIBS) $(LIBS) -o gdalinfo
