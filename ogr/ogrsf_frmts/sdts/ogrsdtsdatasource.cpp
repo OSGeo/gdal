@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/02/20 21:17:56  warmerda
+ * added projection support
+ *
  * Revision 1.2  1999/11/04 21:12:31  warmerda
  * added TestCapability() support
  *
@@ -51,6 +54,7 @@ OGRSDTSDataSource::OGRSDTSDataSource()
     papoLayers = NULL;
 
     pszName = NULL;
+    poSRS = NULL;
 }
 
 /************************************************************************/
@@ -148,6 +152,37 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
     }
 
 /* -------------------------------------------------------------------- */
+/*	Initialize the projection.					*/
+/* -------------------------------------------------------------------- */
+    SDTS_XREF	*poXREF = poTransfer->GetXREF();
+
+    poSRS = new OGRSpatialReference();
+
+    if( EQUAL(poXREF->pszSystemName,"UTM") )
+    {
+        poSRS->SetUTM( poXREF->nZone, TRUE );
+    }
+
+    if( EQUAL(poXREF->pszDatum,"NAS") )
+        poSRS->SetGeogCS("NAD27", "North_American_Datum_1927",
+                         "Clarke 1866", 6378206.4, 294.978698213901 );
+    
+    else if( EQUAL(poXREF->pszDatum,"NAX") )
+        poSRS->SetGeogCS("NAD83", "North_American_Datum_1983",
+                         "GRS 1980", 6378137, 298.257222101 );
+    
+    else if( EQUAL(poXREF->pszDatum,"WGC") )
+        poSRS->SetGeogCS("WGS 72", "WGS_1972", "NWL 10D", 6378135, 298.26 );
+    
+    else if( EQUAL(poXREF->pszDatum,"WGE") )
+        poSRS->SetGeogCS("WGS 84", "WGS_1984",
+                         "WGS 84", 6378137, 298.257223563 );
+
+    else
+        poSRS->SetGeogCS("WGS 84", "WGS_1984",
+                         "WGS 84", 6378137, 298.257223563 );
+
+/* -------------------------------------------------------------------- */
 /*      Initialize a layer for each source dataset layer.               */
 /* -------------------------------------------------------------------- */
     for( int iLayer = 0; iLayer < poTransfer->GetLayerCount(); iLayer++ )
@@ -163,7 +198,7 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
         
         papoLayers = (OGRSDTSLayer **)
             CPLRealloc( papoLayers, sizeof(void*) * ++nLayers );
-        papoLayers[nLayers-1] = new OGRSDTSLayer( poTransfer, iLayer );
+        papoLayers[nLayers-1] = new OGRSDTSLayer( poTransfer, iLayer, this );
     }
     
     return TRUE;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/02/20 21:17:56  warmerda
+ * added projection support
+ *
  * Revision 1.3  2000/02/15 13:59:30  warmerda
  * Actually lookup and copy attributes
  *
@@ -50,10 +53,12 @@
 /*      OGRFeatureDefn object.                                          */
 /************************************************************************/
 
-OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn )
+OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
+                            OGRSDTSDataSource * poDSIn )
 
 {
     poFilterGeom = NULL;
+    poDS = poDSIn;
 
     poTransfer = poTransferIn;
     iLayer = iLayerIn;
@@ -402,6 +407,9 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
     poFeature->SetFID( poSDTSFeature->oModId.nRecord );
     poFeature->SetField( 0, (int) poSDTSFeature->oModId.nRecord );
+    if( poFeature->GetGeometryRef() != NULL )
+        poFeature->GetGeometryRef()->assignSpatialReference(
+            poDS->GetSpatialRef() );
 
     if( !poReader->IsIndexed() )
         delete poSDTSFeature;
@@ -462,3 +470,13 @@ int OGRSDTSLayer::TestCapability( const char * pszCap )
         return FALSE;
 }
 
+
+/************************************************************************/
+/*                           GetSpatialRef()                            */
+/************************************************************************/
+
+OGRSpatialReference * OGRSDTSLayer::GetSpatialRef()
+
+{
+    return poDS->GetSpatialRef();
+}

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/02/20 21:17:56  warmerda
+ * added projection support
+ *
  * Revision 1.2  1999/11/04 21:12:31  warmerda
  * added TestCapability() support
  *
@@ -46,6 +49,8 @@
 #include "sdts_al.h"
 #include "ogrsf_frmts.h"
 
+class OGRSDTSDataSource;
+
 /************************************************************************/
 /*                             OGRSDTSLayer                             */
 /************************************************************************/
@@ -59,13 +64,15 @@ class OGRSDTSLayer : public OGRLayer
     int			iLayer;
     SDTSIndexedReader  *poReader;
 
+    OGRSDTSDataSource  *poDS;
+
     OGRFeature	       *GetNextUnfilteredFeature();
 
     void		BuildPolygons();
     int			bPolygonsBuilt;
     
   public:
-    			OGRSDTSLayer( SDTSTransfer *, int );
+    			OGRSDTSLayer( SDTSTransfer *, int, OGRSDTSDataSource*);
     			~OGRSDTSLayer();
 
     OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
@@ -80,6 +87,8 @@ class OGRSDTSLayer : public OGRLayer
 
 //    int                 GetFeatureCount( int );
 
+    OGRSpatialReference *GetSpatialRef();
+    
     int                 TestCapability( const char * );
 };
 
@@ -94,6 +103,8 @@ class OGRSDTSDataSource : public OGRDataSource
 
     int			nLayers;
     OGRSDTSLayer	**papoLayers;
+
+    OGRSpatialReference *poSRS;
     
   public:
     			OGRSDTSDataSource();
@@ -105,6 +116,8 @@ class OGRSDTSDataSource : public OGRDataSource
     int			GetLayerCount() { return nLayers; }
     OGRLayer		*GetLayer( int );
     int                 TestCapability( const char * );
+
+    OGRSpatialReference *GetSpatialRef() { return poSRS; }
 };
 
 /************************************************************************/
