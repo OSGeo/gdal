@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/01/16 18:12:18  warmerda
+ * keep color table in DGNInfo
+ *
  * Revision 1.4  2001/01/10 16:12:18  warmerda
  * added extents capture
  *
@@ -65,6 +68,9 @@ typedef struct {
     int         index_built;
     int	        element_count;
     DGNElementInfo *element_index;
+
+    int         got_color_table;
+    GByte	color_table[256][3];
 
     int         got_bounds;
     GUInt32	min_x;
