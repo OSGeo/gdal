@@ -30,6 +30,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/09/12 17:18:52  warmerda
+ * Reorganized attributes for address point layers.  Fixed landline point
+ * orient precision.
+ *
  * Revision 1.2  1999/08/30 16:48:25  warmerda
  * Added several product types
  *
@@ -166,14 +170,20 @@ static OGRFeature *TranslateAddressPoint( NTFFileReader *poReader,
     // POINT_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
+    // CHG_TYPE
+    poFeature->SetField( 17, papoGroup[0]->GetField( 22, 22 ) );
+
+    // CHG_DATE
+    poFeature->SetField( 18, papoGroup[0]->GetField( 23, 28 ) );
+
     // Geometry
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1]));
 
     // Attributes
     poReader->ApplyAttributeValues( poFeature, papoGroup,
-                                    "OA", 1, "DP", 2, "PB", 3, "ON", 4,
-                                    "BN", 5, "SB", 6, "BD", 7, "TN", 8,
-                                    "DR", 9, "PT", 10, "DL", 11, "DD", 12,
+                                    "OA", 1, "ON", 2, "DP", 3, "PB", 4,
+                                    "SB", 5, "BD", 6, "BN", 7, "DR", 8,
+                                    "TN", 9, "DD", 10, "DL", 11, "PT", 12,
                                     "CN", 13, "PC", 14, "SF", 15, "RV", 16,
                                     NULL );
 
@@ -1100,7 +1110,7 @@ static OGRFeature *TranslateLandlinePoint( NTFFileReader *poReader,
     poFeature->SetField( 1, atoi(papoGroup[0]->GetField( 17, 20 )) );
 
     // ORIENT
-    poFeature->SetField( 2, atof(papoGroup[0]->GetField( 11, 16 )) );
+    poFeature->SetField( 2, atoi(papoGroup[0]->GetField( 11, 16 )) * 0.1 );
 
     // DISTANCE
     poReader->ApplyAttributeValues( poFeature, papoGroup,
@@ -1629,21 +1639,23 @@ void NTFFileReader::EstablishLayers()
                         TranslateAddressPoint, NRT_POINTREC,
                         "POINT_ID", OFTInteger, 6, 0,
                         "OSAPR", OFTString, 18, 0,
+                        "ORGANISATION_NAME", OFTString, 0, 0,
                         "DEPARTMENT_NAME", OFTString, 0, 0,
                         "PO_BOX", OFTString, 6, 0,
-                        "ORGANIZATION_NAME", OFTString, 0, 0,
-                        "BUILDING_NUMBER", OFTInteger, 4, 0,
                         "SUBBUILDING_NAME", OFTString, 0, 0,
                         "BUILDING_NAME", OFTString, 0, 0,
-                        "THOROUGHFARE_NAME", OFTString, 0, 0,
+                        "BUILDING_NUMBER", OFTInteger, 4, 0,
                         "DEPENDENT_THOROUGHFARE_NAME", OFTString, 0, 0,
-                        "POST_TOWN_NAME", OFTString, 0, 0,
-                        "DEPENDENT_LOCALITY_NAME", OFTString, 0, 0,
+                        "THOROUGHFARE_NAME", OFTString, 0, 0,
                         "DOUBLE_DEPENDENT_LOCALITY_NAME", OFTString, 0, 0,
+                        "DEPENDENT_LOCALITY_NAME", OFTString, 0, 0,
+                        "POST_TOWN_NAME", OFTString, 0, 0,
                         "COUNTY_NAME", OFTString, 0, 0,
                         "POSTCODE", OFTString, 7, 0,
                         "STATUS_FLAG", OFTString, 4, 0,
-                        "RM_VERSION_DATE", OFTString, 8, 0, 
+                        "RM_VERSION_DATE", OFTString, 8, 0,
+                        "CHG_TYPE", OFTString, 1, 0,
+                        "CHG_DATE", OFTString, 6, 0, 
                         NULL );
     }
     else if( GetProductId() == NPC_CODE_POINT )
