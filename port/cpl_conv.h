@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/03/02 04:44:38  warmerda
+ * added CPLStringToComplex
+ *
  * Revision 1.18  2002/12/13 06:00:54  warmerda
  * added CPLProjectRelativeFilename() and CPLIsFilenameRelative()
  *
@@ -148,6 +151,9 @@ int CPL_DLL     CPLStat( const char *, VSIStatBuf * );
 double CPL_DLL CPLDMSToDec( const char *is );
 const char CPL_DLL *CPLDecToDMS( double dfAngle, const char * pszAxis,
                                  int nPrecision );
+
+void CPL_DLL CPLStringToComplex( const char *pszString, 
+                                 double *pdfReal, double *pdfImag );
 
 CPL_C_END
 

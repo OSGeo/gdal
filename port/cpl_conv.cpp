@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/03/02 04:44:38  warmerda
+ * added CPLStringToComplex
+ *
  * Revision 1.19  2003/02/14 22:12:07  warmerda
  * expand tabs
  *
@@ -585,3 +588,37 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
     return( szBuffer );
 }
 
+/************************************************************************/
+/*                         CPLStringToComplex()                         */
+/************************************************************************/
+
+void CPL_DLL CPLStringToComplex( const char *pszString, 
+                                 double *pdfReal, double *pdfImag )
+
+{
+    int  i;
+    int  iPlus = -1, iImagEnd = -1;
+
+    while( *pszString == ' ' )
+        pszString++;
+
+    *pdfReal = atof(pszString);
+    *pdfImag = 0.0;
+
+    for( i = 0; pszString[i] != '\0' && pszString[i] != ' ' && i < 100; i++ )
+    {
+        if( pszString[i] == '+' && i > 0 )
+            iPlus = i;
+        if( pszString[i] == '-' && i > 0 )
+            iPlus = i;
+        if( pszString[i] == 'i' )
+            iImagEnd = i;
+    }
+
+    if( iPlus > -1 && iImagEnd > -1 && iPlus < iImagEnd )
+    {
+        *pdfImag = atof(pszString + iPlus);
+    }
+
+    return;
+}
