@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/08/25 20:03:40  warmerda
+ * added more entry points
+ *
  * Revision 1.6  1999/09/17 03:18:08  warmerda
  * change to search for a list of GDAL .so/.dll files
  *
@@ -57,12 +60,14 @@
 #ifdef _WIN32
 #define PATH_SEP '\\'
 static const char *papszSOFilenames[] = {
-	 "gdal.1.0.dll"
+	 "gdal11.dll"
+	,"gdal.1.0.dll"
 	, NULL };
 #else
 #define PATH_SEP '/'
 static const char *papszSOFilenames[] = {
-	 "gdal.1.0.so"
+	 "libgdal.1.1.so"
+	,"gdal.1.0.so"
 	,"gdal.so.1.0"
 	,"libgdal.so.1"
 	, NULL };
@@ -178,6 +183,21 @@ int GDALBridgeInitialize( const char * pszTargetDir )
     GDALWriteBlock = (CPLErr (*)(GDALRasterBandH, int, int, void *))
         GBGetSymbol( szPath, "GDALWriteBlock" );
 
+    GDALGetOverviewCount = (int (*)(GDALRasterBandH))
+        GBGetSymbol( szPath, "GDALGetOverviewCount" );
+
+    GDALGetOverview = (GDALRasterBandH (*)(GDALRasterBandH, int))
+        GBGetSymbol( szPath, "GDALGetOverview" );
+
+    GDALGetRasterColorInterpretation = (GDALColorInterp (*)(GDALRasterBandH))
+        GBGetSymbol( szPath, "GDALGetRasterColorInterpretation" );
+
+    GDALGetColorInterpretationName = (const char *(*)(GDALColorInterp))
+        GBGetSymbol( szPath, "GDALGetColorInterpretationName" );
+
+    GDALGetRasterColorTable = (GDALColorTableH (*)(GDALRasterBandH))
+        GBGetSymbol( szPath, "GDALGetRasterColorTable" );
+
     GDALCreateProjDef = (GDALProjDefH (*)(const char *))
         GBGetSymbol( szPath, "GDALCreateProjDef" );
 
@@ -187,11 +207,30 @@ int GDALBridgeInitialize( const char * pszTargetDir )
     GDALReprojectFromLongLat = (CPLErr (*)(GDALProjDefH, double *, double *))
         GBGetSymbol( szPath, "GDALReprojectFromLongLat" );
 
-    GDALDestroyProjDef = (void (*)(GDALProjDefH *))
+    GDALDestroyProjDef = (void (*)(GDALProjDefH))
         GBGetSymbol( szPath, "GDALDestroyProjDef" );
 
     GDALDecToDMS = (const char *(*)(double, const char *, int ))
         GBGetSymbol( szPath, "GDALDecToDMS" );
+
+    GDALGetPaletteInterpretation = (GDALPaletteInterp (*)(GDALColorTableH))
+        GBGetSymbol( szPath, "GDALGetPaletteInterpretation" );
+
+    GDALGetPaletteInterpretationName = (const char *(*)(GDALPaletteInterp))
+        GBGetSymbol( szPath, "GDALGetPaletteInterpretationName" );
+
+    GDALGetColorEntryCount = (int (*)(GDALColorTableH))
+        GBGetSymbol( szPath, "GDALGetColorEntryCount" );
+
+    GDALGetColorEntry = (const GDALColorEntry *(*)(GDALColorTableH,int))
+        GBGetSymbol( szPath, "GDALGetColorEntry" );
+
+    GDALGetColorEntryAsRGB = (int (*)(GDALColorTableH,int,
+                                      const GDALColorEntry*))
+        GBGetSymbol( szPath, "GDALGetColorEntryAsRGB" );
+    
+    GDALSetColorEntry = (void (*)(GDALColorTableH, int, const GDALColorEntry*))
+        GBGetSymbol( szPath, "GDALSetColorEntry" );
 
     return TRUE;
 }

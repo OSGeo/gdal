@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/08/25 20:03:40  warmerda
+ * added more entry points
+ *
  * Revision 1.1  1999/04/21 23:01:31  warmerda
  * New
  *
@@ -108,7 +111,35 @@ int main( int argc, char ** argv )
     for( i = 0; i < GDALGetRasterCount( hDataset ); i++ )
     {
         hBand = GDALGetRasterBand( hDataset, i+1 );
-        printf( "Band %d Type = %d\n", i+1, GDALGetRasterDataType( hBand ) );
+        printf( "Band %d Type=%d,ColorInterp=%s\n", i+1, 
+                GDALGetRasterDataType( hBand ),
+                GDALGetColorInterpretationName(
+                    GDALGetRasterColorInterpretation(hBand)) );
+
+        if( GDALGetRasterColorInterpretation(hBand) == GCI_PaletteIndex )
+        {
+            GDALColorTableH	hTable;
+            int			i;
+
+            hTable = GDALGetRasterColorTable( hBand );
+            printf( "  Color Table (%s with %d entries)\n", 
+                    GDALGetPaletteInterpretationName(
+                        GDALGetPaletteInterpretation( hTable )), 
+                    GDALGetColorEntryCount( hTable ) );
+
+            for( i = 0; i < GDALGetColorEntryCount( hTable ); i++ )
+            {
+                GDALColorEntry	sEntry;
+
+                GDALGetColorEntryAsRGB( hTable, i, &sEntry );
+                printf( "  %3d: %d,%d,%d,%d\n", 
+                        i, 
+                        sEntry.c1,
+                        sEntry.c2,
+                        sEntry.c3,
+                        sEntry.c4 );
+            }
+        }
     }
 
     GDALClose( hDataset );

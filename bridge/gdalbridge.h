@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/08/25 20:03:40  warmerda
+ * added more entry points
+ *
  * Revision 1.4  1999/09/17 03:18:37  warmerda
  * added name indirection for function pointer names for libtool
  *
@@ -82,15 +85,21 @@ typedef int             GBool;
 /*      Significant constants.                                          */
 /* -------------------------------------------------------------------- */
 
+/*! Pixel data types */
 typedef enum {
     GDT_Unknown = 0,
-    GDT_Byte = 1,
-    GDT_UInt16 = 2,
-    GDT_Int16 = 3,
-    GDT_UInt32 = 4,
-    GDT_Int32 = 5,
-    GDT_Float32 = 6,
-    GDT_Float64 = 7
+    /*! Eight bit unsigned integer */ 		GDT_Byte = 1,
+    /*! Sixteen bit unsigned integer */         GDT_UInt16 = 2,
+    /*! Sixteen bit signed integer */           GDT_Int16 = 3,
+    /*! Thirty two bit unsigned integer */      GDT_UInt32 = 4,
+    /*! Thirty two bit signed integer */        GDT_Int32 = 5,
+    /*! Thirty two bit floating point */        GDT_Float32 = 6,
+    /*! Sixty four bit floating point */        GDT_Float64 = 7,
+    /*! Complex Int16 */                        GDT_CInt16 = 8,
+    /*! Complex Int32 */                        GDT_CInt32 = 9,
+    /*! Complex Float32 */                      GDT_CFloat32 = 10,
+    /*! Complex Float64 */                      GDT_CFloat64 = 11,
+    GDT_TypeCount = 12		/* maximum type # + 1 */
 } GDALDataType;
 
 GDAL_ENTRY int	(*pfnGDALGetDataTypeSize)( GDALDataType ) GDAL_NULL;
@@ -105,6 +114,34 @@ typedef enum {
     GF_Read = 0,
     GF_Write = 1
 } GDALRWFlag;
+
+/*! Types of color interpretation for raster bands. */
+typedef enum
+{
+    GCI_Undefined=0,
+    /*! Greyscale */                                      GCI_GrayIndex=1,
+    /*! Paletted (see associated color table) */          GCI_PaletteIndex=2,
+    /*! Red band of RGBA image */                         GCI_RedBand=3,
+    /*! Green band of RGBA image */                       GCI_GreenBand=4,
+    /*! Blue band of RGBA image */                        GCI_BlueBand=5,
+    /*! Alpha (0=transparent, 255=opaque) */              GCI_AlphaBand=6,
+    /*! Hue band of HLS image */                          GCI_HueBand=7,
+    /*! Saturation band of HLS image */                   GCI_SaturationBand=8,
+    /*! Lightness band of HLS image */                    GCI_LightnessBand=9,
+    /*! Cyan band of CMYK image */                        GCI_CyanBand=10,
+    /*! Magenta band of CMYK image */                     GCI_MagentaBand=11,
+    /*! Yellow band of CMYK image */                      GCI_YellowBand=12,
+    /*! Black band of CMLY image */                       GCI_BlackBand=13
+} GDALColorInterp;
+
+/*! Types of color interpretations for a GDALColorTable. */
+typedef enum 
+{
+  /*! Grayscale (in GDALColorEntry.c1) */                      GPI_Gray=0,
+  /*! Red, Green, Blue and Alpha in (in c1, c2, c3 and c4) */  GPI_RGB=1,
+  /*! Cyan, Magenta, Yellow and Black (in c1, c2, c3 and c4)*/ GPI_CMYK=2,
+  /*! Hue, Lightness and Saturation (in c1, c2, and c3) */     GPI_HLS=3
+} GDALPaletteInterp;
 
 /* -------------------------------------------------------------------- */
 /*      GDAL Specific error codes.                                      */
@@ -141,6 +178,7 @@ typedef void *GDALDatasetH;
 typedef void *GDALRasterBandH;
 typedef void *GDALDriverH;
 typedef void *GDALProjDefH;
+typedef void *GDALColorTableH;
 
 /* ==================================================================== */
 /*      Registration/driver related.                                    */
@@ -225,7 +263,60 @@ GDAL_ENTRY CPLErr (*pGDALWriteBlock)( GDALRasterBandH,
                                       int, int, void * ) GDAL_NULL;
 #define GDALWriteBlock pGDALWriteBlock
 
-/* need to add functions related to block cache */
+GDAL_ENTRY int (*pGDALGetOverviewCount)( GDALRasterBandH ) GDAL_NULL;
+#define GDALGetOverviewCount pGDALGetOverviewCount
+
+GDAL_ENTRY GDALRasterBandH (*pGDALGetOverview)( GDALRasterBandH, int ) GDAL_NULL;
+#define GDALGetOverview pGDALGetOverview
+
+GDAL_ENTRY GDALColorInterp (*pGDALGetRasterColorInterpretation)
+						( GDALRasterBandH ) GDAL_NULL;
+#define GDALGetRasterColorInterpretation pGDALGetRasterColorInterpretation
+
+GDAL_ENTRY const char *(*pGDALGetColorInterpretationName)( GDALColorInterp ) GDAL_NULL;
+#define GDALGetColorInterpretationName pGDALGetColorInterpretationName
+
+GDAL_ENTRY GDALColorTableH (*pGDALGetRasterColorTable)( GDALRasterBandH ) GDAL_NULL;
+#define GDALGetRasterColorTable pGDALGetRasterColorTable
+
+/* ==================================================================== */
+/*      Color tables.                                                   */
+/* ==================================================================== */
+/** Color tuple */
+typedef struct
+{
+    /*! gray, red, cyan or hue */
+    short      c1;      
+
+    /*! green, magenta, or lightness */    
+    short      c2;      
+
+    /*! blue, yellow, or saturation */
+    short      c3;      
+
+    /*! alpha or blackband */
+    short      c4;      
+} GDALColorEntry;
+
+GDAL_ENTRY GDALPaletteInterp (*pGDALGetPaletteInterpretation)( GDALColorTableH ) GDAL_NULL;
+#define GDALGetPaletteInterpretation pGDALGetPaletteInterpretation
+
+GDAL_ENTRY const char *(*pGDALGetPaletteInterpretationName)(GDALPaletteInterp) GDAL_NULL;
+#define GDALGetPaletteInterpretationName pGDALGetPaletteInterpretationName
+
+GDAL_ENTRY int (*pGDALGetColorEntryCount)( GDALColorTableH ) GDAL_NULL;
+#define GDALGetColorEntryCount pGDALGetColorEntryCount
+
+GDAL_ENTRY const GDALColorEntry *(*pGDALGetColorEntry)( GDALColorTableH, int ) GDAL_NULL;
+#define GDALGetColorEntry pGDALGetColorEntry
+
+GDAL_ENTRY int (*pGDALGetColorEntryAsRGB)( GDALColorTableH, int, 
+                                           GDALColorEntry *) GDAL_NULL;
+#define GDALGetColorEntryAsRGB pGDALGetColorEntryAsRGB
+
+GDAL_ENTRY void (*pGDALSetColorEntry)( GDALColorTableH, int, 
+                                       const GDALColorEntry * ) GDAL_NULL;
+#define GDALSetColorEntry pGDALSetColorEntry
 
 /* ==================================================================== */
 /*      Projections                                                     */
