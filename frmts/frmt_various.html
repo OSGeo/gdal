@@ -272,12 +272,8 @@ required.<p>
 
 Projection and georeferencing information is read though some projections
 (ie. Meteosat, and Hammer-Aitoff) are not supported.  When writing IDA files
-the projection must have a false easting and false northing of zero and the
-center of the image must be at (0,0) for the projection selected.  In essence
-this makes it hard to write images to IDA without careful arrangement of the
-georeferencing to match IDA epectations.<p>
-
-The support coordinate systems in IDA are Geographic, Lambert Conformal Conic,
+the projection must have a false easting and false northing of zero. The 
+support coordinate systems in IDA are Geographic, Lambert Conformal Conic,
 Lambert Azimuth Equal Area, Albers Equal-Area Conic and Goodes Homolosine.<p>
 
 IDA files typically contain values scaled to 8bit via a slope and offset.  
