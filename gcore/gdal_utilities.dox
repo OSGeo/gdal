@@ -144,6 +144,9 @@ and exit.
 <!-- ====================================================================== -->
 
 \if man
+*/
+/*! \page gdalinfo 
+
 lists information about a raster dataset
 \section synopsis SYNOPSIS
 \endif
@@ -237,8 +240,11 @@ Band 1 Block=512x16 Type=Byte, ColorInterp=Gray
 <!-- ====================================================================== -->
 
 \if man
-\section author AUTHOR
+\section author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>
+Silke Reimer <silke@intevation.de>
+*/
+/*! \page gdal_translate
 
 converts raster data between different formats
 \section tsynopsis SYNOPSIS
@@ -328,9 +334,11 @@ gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
 <!-- ====================================================================== -->
 
 \if man
-\section tauthor AUTHOR
+\section tauthor AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>
-
+Silke Reimer <silke@intevation.de>
+*/
+/*! \page gdaladdo
 builds or rebuilds overview images
 \section asynopsis SYNOPSIS
 \endif
@@ -400,9 +408,11 @@ gdaladdo --config COMPRESS_OVERVIEW DEFLATE erdas.img 2 4 8 16
 <!-- ====================================================================== -->
 
 \if man
-\section aauthor AUTHOR
+\section aauthor AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>
-
+Silke Reimer <silke@intevation.de>
+*/
+/*! \page gdalwarp
 simple image reprojection and warping utility
 \section wsynopsis SYNOPSIS
 \endif
@@ -513,8 +523,11 @@ gdalwarp HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 pg-PR1B0000-20020
 <!-- ====================================================================== -->
 
 \if man
-\section wauthor AUTHOR
+\section wauthor AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>
+Silke Reimer <silke@intevation.de>
+*/
+/*! \page gdaltindex
 
 builds a shapefile as a raster tileindex
 \section isynopsis SYNOPSIS
@@ -642,9 +655,11 @@ gdal_contour -a elev dem.tif contour.shp 10.0
 <!-- ====================================================================== -->
 
 \if man
-\section iauthor AUTHOR
+\section iauthor AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>
-
+Silke Reimer <silke@intevation.de>
+*/
+/*! \page rgb2pct.py
 converts an image into a pseudo-colored image
 \section rsynopsis SYNOPSIS
 \endif
@@ -723,9 +738,11 @@ with Python support.
 <!-- ====================================================================== -->
 
 \if man
-\section rauthor AUTHOR
+\section rauthor AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>
-
+Silke Reimer <silke@intevation.de>
+*/
+/*! \page gdal_merge.py
  mosaics a set of images
 \section msynopsis SYNOPSIS
 \endif
@@ -789,8 +806,11 @@ with Python support.
 <!-- ====================================================================== -->
 
 \if man
-\section mauthor AUTHOR
+\section mauthor AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>
+Silke Reimer <silke@intevation.de>
+*/
+/*! \page gdal-config
 
 determines various information about a GDAL installation
 \section csynopsis SYNOPSIS
