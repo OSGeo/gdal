@@ -122,9 +122,10 @@ reg-test2:
 	fi
 
 ifeq ($(OGR_ENABLED),yes)
-install-full:	ogrinfo ogr2ogr
+install-full:	ogrinfo ogr2ogr ogrtindex
 	$(INSTALL) ogr2ogr $(INST_BIN)
 	$(INSTALL) ogrinfo $(INST_BIN)
+	$(INSTALL) ogrtindex $(INST_BIN)
 	$(INSTALL) $(OGRFRMTS_LIB) $(INST_LIB)
 else
 install-full:
