@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2003/09/09 16:43:02  warmerda
+ * added writer class
+ *
  * Revision 1.23  2003/09/05 19:12:05  warmerda
  * added RETURN_PRIMITIVES support to get low level prims
  *
@@ -372,6 +375,42 @@ class S57Reader
     OGRFeatureDefn  *GenerateVectorPrimitiveFeatureDefn( int );
 
     OGRErr              GetExtent( OGREnvelope *psExtent, int bForce );
+};
+
+/************************************************************************/
+/*                              S57Writer                               */
+/************************************************************************/
+
+class S57Writer
+{
+public:
+                        S57Writer();
+                        ~S57Writer();
+
+    int                 CreateS57File( const char *pszFilename );
+    int                 Close();
+
+    int                 WriteGeometry( DDFRecord *, int, double *, double *,
+                                       double * );
+    int                 WritePrimitive( OGRFeature *poFeature );
+    int                 WriteCompleteFeature( OGRFeature *poFeature );
+    int                 WriteDSID( const char *pszDSNM = NULL, 
+                                   const char *pszISDT = NULL, 
+                                   const char *pszSTED = NULL,
+                                   int nAGEN = 0,
+                                   const char *pszCOMT = NULL );
+    int                 WriteDSPM( int nScale = 0 );
+
+private:
+    DDFModule 		*poModule;
+    S57ClassRegistrar   *poRegistrar;
+
+    int                 nNext0001Index;
+
+    DDFRecord           *MakeRecord();
+
+    int                 nCOMF;  /* Coordinate multiplier */
+    int                 nSOMF;  /* Vertical (sounding) multiplier */
 };
 
 #endif /* ndef _S57_H_INCLUDED */
