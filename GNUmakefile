@@ -1,5 +1,5 @@
 
-default:
+default:	GDALmake.opt
 	(cd port; $(MAKE))
 	(cd core; $(MAKE))
 	(cd frmts; $(MAKE))
@@ -12,4 +12,16 @@ clean:
 	(cd frmts; $(MAKE) clean)
 	(cd apps; $(MAKE) clean)
 	(cd viewer; $(MAKE) clean)
+
+dist-clean:	clean
+	rm configure GDALmake.opt.in port/cpl_config.h
+
+config:	configure
+	./configure
+
+configure:	configure.in
+	autoconf
+
+GDALmake.opt:	GDALmake.opt.in config.status
+	config.status
 
