@@ -8,7 +8,8 @@ default:	GDALmake.opt lib py-target apps-target
 lib:	port-target core-target frmts-target ogr-target force-lib
 
 force-lib:	
-	ar r $(GDAL_LIB) $(GDAL_OBJ)
+	$(AR) r $(GDAL_LIB) $(GDAL_OBJ)
+	$(RANLIB) $(GDAL_LIB)
 	$(LD_SHARED) $(GDAL_OBJ) $(GDAL_LIBS) $(LIBS) -o $(GDAL_SLIB)
 
 #	If you really want proper SO files that will work in /usr/lib
