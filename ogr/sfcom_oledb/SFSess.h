@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/10/15 15:20:28  warmerda
+ * allow nulling of SRS fields
+ *
  * Revision 1.12  2001/05/28 19:41:58  warmerda
  * lots of changes
  *
@@ -64,6 +67,8 @@
 #include "SFRS.h"
 #include "oledbgis.h"
 #include "cpl_error.h"
+#include "ICRRowsetImpl.h"
+#include "CCRRowsetImpl.h"
 
 class CSFSessionTRSchemaRowset;
 class CSFSessionColSchemaRowset;
@@ -512,9 +517,30 @@ class OGISSpat_Row
 
 
 class CSFSessionSchemaSpatRef:
-public CRowsetImpl<CSFSessionSchemaSpatRef,OGISSpat_Row,CSFSession>
+public CCRRowsetImpl<CSFSessionSchemaSpatRef,OGISSpat_Row,CSFSession>
 {
   public:
+    DBSTATUS GetRCDBStatus(CSimpleRow* poRC,
+                           ATLCOLUMNINFO*poColInfo,
+                           void *pSrcData)
+        {
+            OGISSpat_Row      *poRow = (OGISSpat_Row *) pSrcData;
+
+            if( lstrcmpW(poColInfo->pwszName,L"AUTHORITY_NAME") == 0
+                ||lstrcmpW(poColInfo->pwszName,L"AUTHORITY_ID") == 0 )
+            {
+                if( lstrcmpW(poRow->m_szAuthorityName,L"") == 0 )
+                    return DBSTATUS_S_ISNULL;
+            }
+            if( lstrcmpW(poColInfo->pwszName,L"SPATIAL_REF_SYSTEM_WKT") == 0 )
+            {
+                if( lstrcmpW(poRow->m_pszSpatialRefSystem,L"") == 0 )
+                    return DBSTATUS_S_ISNULL;
+            }
+            
+            return DBSTATUS_S_OK;
+        }
+
     HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
 	{
             USES_CONVERSION;
@@ -575,11 +601,10 @@ public CRowsetImpl<CSFSessionSchemaSpatRef,OGISSpat_Row,CSFSession>
             {
                 OGISSpat_Row trData;
 
-                trData.m_nAuthorityId = 1;
+                trData.m_nAuthorityId = 0;
                 trData.m_nSpatialRefId = poDS->GetLayerCount() + 1;
-                lstrcpyW(trData.m_szAuthorityName,A2OLE("EPSG"));
-		lstrcpyW(trData.m_pszSpatialRefSystem,
-                         L"PROJCS[\"unknown\"]" );
+                lstrcpyW(trData.m_szAuthorityName,A2OLE(""));
+		lstrcpyW(trData.m_pszSpatialRefSystem,L"" );
 			
                 m_rgRowData.Add(trData);	
             }
