@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.21  2004/04/23 22:18:40  warmerda
+ * Another memory leak.
+ *
  * Revision 1.20  2004/04/23 22:18:07  warmerda
  * Avoid argument, and creation option memory leak.
  *
@@ -581,6 +584,9 @@ int main( int argc, char ** argv )
         GDALDumpOpenDatasets( stderr );
         GDALDestroyDriverManager();
     
+        CSLDestroy( argv );
+        CSLDestroy( papszCreateOptions );
+
         exit( hOutDS == NULL );
     }
 
