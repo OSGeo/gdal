@@ -145,7 +145,7 @@ JPEG_SUPPORTED = 1
 # Uncomment the following lines to link PROJ.4 library statically. Otherwise
 # it will be linked dynamically during runtime.
 #PROJ_FLAGS = -DPROJ_STATIC
-#PROJ_INCLUDE = d:\projects\proj.4\src
+#PROJ_INCLUDE = -Id:\projects\proj.4\src
 #PROJ_LIB = d:\projects\proj.4\src
 
 !IFDEF ORACLE_HOME
