@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/04/08 19:30:56  warmerda
+ * added CopyLayer and CopyDataSource entry points
+ *
  * Revision 1.11  2003/03/19 20:28:20  warmerda
  * added shared access, and reference counting apis
  *
@@ -289,6 +292,8 @@ OGRErr    CPL_DLL OGR_DS_DeleteLayer( OGRDataSourceH, int );
 OGRLayerH CPL_DLL OGR_DS_CreateLayer( OGRDataSourceH, const char *, 
                                       OGRSpatialReferenceH, OGRwkbGeometryType,
                                       char ** );
+OGRLayerH CPL_DLL OGR_DS_CopyLayer( OGRDataSourceH, OGRLayerH, const char *,
+                                    char ** );
 int    CPL_DLL OGR_DS_TestCapability( OGRDataSourceH, const char * );
 OGRLayerH CPL_DLL OGR_DS_ExecuteSQL( OGRDataSourceH, const char *,
                                      OGRGeometryH, const char * );
@@ -305,6 +310,8 @@ OGRDataSourceH CPL_DLL OGR_Dr_Open( OGRSFDriverH, const char *, int );
 int CPL_DLL OGR_Dr_TestCapability( OGRSFDriverH, const char * );
 OGRDataSourceH CPL_DLL OGR_Dr_CreateDataSource( OGRSFDriverH, const char *,
                                                 char ** );
+OGRDataSourceH CPL_DLL OGR_Dr_CopyDataSource( OGRSFDriverH,  OGRDataSourceH, 
+                                              const char *, char ** );
 OGRErr CPL_DLL OGR_Dr_DeleteDataSource( OGRSFDriverH, const char * );
 
 /* OGRSFDriverRegistrar */

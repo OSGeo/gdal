@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/04/08 19:31:58  warmerda
+ * added CopyLayer and CopyDataSource entry points
+ *
  * Revision 1.15  2003/03/20 20:21:40  warmerda
  * implement DROP INDEX command
  *
@@ -235,6 +238,104 @@ OGRLayerH OGR_DS_CreateLayer( OGRDataSourceH hDS,
 {
     return ((OGRDataSource *)hDS)->CreateLayer( 
         pszName, (OGRSpatialReference *) hSpatialRef, eType, papszOptions );
+}
+
+/************************************************************************/
+/*                             CopyLayer()                              */
+/************************************************************************/
+
+OGRLayer *OGRDataSource::CopyLayer( OGRLayer *poSrcLayer, 
+                                    const char *pszNewName, 
+                                    char **papszOptions )
+
+{
+    OGRFeatureDefn *poSrcDefn = poSrcLayer->GetLayerDefn();
+    OGRLayer *poDstLayer = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Create the layer.                                               */
+/* -------------------------------------------------------------------- */
+    if( !TestCapability( ODsCCreateLayer ) )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "This datasource does not support creation of layers." );
+        return NULL;
+    }
+
+    CPLErrorReset();
+    poDstLayer = CreateLayer( pszNewName, poSrcLayer->GetSpatialRef(),
+                              poSrcDefn->GetGeomType(), papszOptions );
+    
+    if( poDstLayer == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Add fields.  Default to copy all field.                         */
+/*      If only a subset of all fields requested, then output only      */
+/*      the selected fields, and in the order that they were            */
+/*      selected.                                                       */
+/* -------------------------------------------------------------------- */
+    int         iField;
+    
+    for( iField = 0; iField < poSrcDefn->GetFieldCount(); iField++ )
+        poDstLayer->CreateField( poSrcDefn->GetFieldDefn(iField) );
+
+/* -------------------------------------------------------------------- */
+/*      Transfer features.                                              */
+/* -------------------------------------------------------------------- */
+    OGRFeature  *poFeature;
+    
+    poSrcLayer->ResetReading();
+
+    while( TRUE )
+    {
+        OGRFeature      *poDstFeature = NULL;
+
+        poFeature = poSrcLayer->GetNextFeature();
+        
+        if( poFeature == NULL )
+            break;
+
+        CPLErrorReset();
+        poDstFeature = OGRFeature::CreateFeature( poDstLayer->GetLayerDefn() );
+
+        if( poDstFeature->SetFrom( poFeature, TRUE ) != OGRERR_NONE )
+        {
+            delete poFeature;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Unable to translate feature %d from layer %s.\n",
+                      poFeature->GetFID(), poSrcDefn->GetName() );
+            return poDstLayer;
+        }
+
+        poDstFeature->SetFID( poFeature->GetFID() );
+
+        OGRFeature::DestroyFeature( poFeature );
+
+        CPLErrorReset();
+        if( poDstLayer->CreateFeature( poDstFeature ) != OGRERR_NONE )
+        {
+            OGRFeature::DestroyFeature( poDstFeature );
+            return poDstLayer;
+        }
+
+        OGRFeature::DestroyFeature( poDstFeature );
+    }
+
+    return poDstLayer;
+}
+
+/************************************************************************/
+/*                          OGR_DS_CopyLayer()                          */
+/************************************************************************/
+
+OGRLayerH OGR_DS_CopyLayer( OGRDataSourceH hDS, 
+                            OGRLayerH hSrcLayer, const char *pszNewName,
+                            char **papszOptions )
+
+{
+    return ((OGRDataSource *) hDS)->CopyLayer( (OGRLayer *) hSrcLayer, 
+                                               pszNewName, papszOptions );
 }
 
 /************************************************************************/
