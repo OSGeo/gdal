@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.82  2004/01/31 09:54:28  dron
+ * Fixed projection parameters number mismatch in PCI import/export functions.
+ *
  * Revision 1.81  2004/01/30 09:58:32  dron
  * Wrapper for OSRExportToPCI() function.
  *
@@ -1706,7 +1709,7 @@ py_OSRImportFromPCI(PyObject *self, PyObject *args) {
 
     if (py_parms)
     {
-        parms = CPLMalloc(16 * sizeof(double));
+        parms = CPLMalloc(17 * sizeof(double));
         for( i = 0; i < PyTuple_Size(py_parms); i++ )
         {
             if( !PyArg_Parse( PyTuple_GET_ITEM(py_parms,i), "d", &parms[i] ) )
@@ -1772,7 +1775,7 @@ py_OSRExportToPCI(PyObject *self, PyObject *args) {
     OGRSpatialReferenceH _arg0;
     char *_argc0 = NULL;
     char *proj = NULL, *units = NULL;
-    double *params;
+    double *parms;
     int err;
     PyObject *ret;
 
@@ -1789,7 +1792,7 @@ py_OSRExportToPCI(PyObject *self, PyObject *args) {
         }
     }
 	
-    err = OSRExportToPCI( _arg0, &proj, &units, &params );
+    err = OSRExportToPCI( _arg0, &proj, &units, &parms );
     if( err != OGRERR_NONE )
     {
         PyErr_SetString(PyExc_TypeError,
@@ -1797,14 +1800,14 @@ py_OSRExportToPCI(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    ret = Py_BuildValue( "(ss(dddddddddddddddd))", proj, units,
-                         params[0], params[1], params[2], params[3],
-                         params[4], params[5], params[6], params[7],
-                         params[8], params[9], params[10], params[11],
-                         params[12],params[13],params[14], params[15] );
+    ret = Py_BuildValue( "(ss(ddddddddddddddddd))", proj, units,
+                         parms[0], parms[1], parms[2], parms[3], parms[4],
+                         parms[5], parms[6], parms[7], parms[8], parms[9],
+                         parms[10], parms[11], parms[12], parms[13],
+                         parms[14], parms[15], parms[16] );
     CPLFree( proj );
     CPLFree( units );
-    CPLFree( params );
+    CPLFree( parms );
     return ret;
 }
 %}

@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.34  2004/01/31 09:54:28  dron
+# Fixed projection parameters number mismatch in PCI import/export functions.
+#
 # Revision 1.33  2004/01/30 09:58:32  dron
 # Wrapper for OSRExportToPCI() function.
 #
@@ -203,7 +206,7 @@ class SpatialReference:
 	
 	proj --- string	representing projection definition in PCI format,
 	units --- grid units code ("DEGREE" or "METRE", later is default),
-	proj_parms --- tuple of 16 coordinate system parameters (double
+	proj_parms --- tuple of 17 coordinate system parameters (double
 	precition floating point values). None by default (i.e., all values
 	zeroed). See OGRSpatialReference::importFromPCI() C++ function for
 	details.
@@ -231,7 +234,7 @@ class SpatialReference:
 	Returns tuple (proj, units, (proj_parms)) where proj is a string
 	representing projection definition in PCI format, units is a string
 	containing grid units code ("METRE" or "DEGREE") and (proj_parms)
-	is a tuple of 16 double precition floating point values with
+	is a tuple of 17 double precition floating point values with
 	projection parameters. See description of
 	OGRSpatialReference::exportToPCI() C++ function for details."""
         return _gdal.OSRExportToPCI( self._o )
