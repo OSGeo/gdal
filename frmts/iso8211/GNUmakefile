@@ -52,6 +52,9 @@ dist:	docs
 	mkdir $(DISTDIR)
 	mkdir $(DISTDIR)/html
 	cp html/* $(DISTDIR)/html
+	mkdir $(DISTDIR)/testdata
+	cp testdata/*.* $(DISTDIR)/testdata
+	cp teststream.sh teststream.out $(DISTDIR)
 	autoconf
 	cp *.cpp *.h configure Makefile.in $(DISTDIR)
 	rm configure
@@ -66,8 +69,8 @@ update-web:	dist docs
 	cp $(DISTDIR).tar.gz /home/ftp/pub/outgoing
 
 
-test:
-	@./teststream.sh >& t1.out
+test:	8211dump
+	@./teststream.sh > t1.out
 	@if test "`diff t1.out teststream.out`" = '' ; then \
 	    echo "******* Stream 1 Succeeded *********"; \
 	    rm t1.out; \
