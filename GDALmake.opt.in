@@ -104,8 +104,13 @@ XERCES_INCLUDE	=	@XERCES_INCLUDE@
 #
 # FMEObjects
 #
+ifeq ($(FME_HOME),)
 HAVE_FME        =       no
 FME_INCLUDE	=	
+else
+HAVE_FME        =       yes
+FME_INCLUDE	=	$(FME_HOME)/fmeobjects/cpp
+endif
 
 
 OGDI_INCLUDE	=	@OGDI_INCLUDE@
