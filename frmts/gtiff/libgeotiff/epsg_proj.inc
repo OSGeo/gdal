@@ -10,6 +10,12 @@
 #include old_proj.inc
 #endif /* OLD Codes */
 
+/* New codes */
+
+ValuePair(Proj_Stereo_70,19926)
+
+/* old codes */
+
 ValuePair(Proj_Alabama_CS27_East,	10101)
 ValuePair(Proj_Alabama_CS27_West,	10102)
 ValuePair(Proj_Alabama_CS83_East,	10131)

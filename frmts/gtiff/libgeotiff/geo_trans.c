@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_trans.c,v 1.4 1999/09/17 01:19:51 warmerda Exp $
+ * $Id: geo_trans.c,v 1.9 2001/11/28 14:20:30 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to abstract translation between pixel/line and PCS
@@ -29,6 +29,21 @@
  ******************************************************************************
  *
  * $Log: geo_trans.c,v $
+ * Revision 1.9  2001/11/28 14:20:30  warmerda
+ * fixed transform memory leak in GTIFPCSToImage
+ *
+ * Revision 1.8  2001/04/06 16:56:22  warmerda
+ * added support for PCSToImage with matrix
+ *
+ * Revision 1.7  2001/03/05 03:25:23  warmerda
+ * restructure cleanup, and apply to GTIFPCSToImage()
+ *
+ * Revision 1.6  2001/03/04 22:37:39  warmerda
+ * fixed memory leak for fields fetched with gt_methods.get - Alan Gray
+ *
+ * Revision 1.5  2000/08/22 03:32:46  warmerda
+ * removed GTIFTiepointTranslate code
+ *
  * Revision 1.4  1999/09/17 01:19:51  warmerda
  * Fixed bug in use of transform matrix.
  *
@@ -51,6 +66,42 @@
 #include "geokeys.h"
 
 /************************************************************************/
+/*                          inv_geotransform()                          */
+/*                                                                      */
+/*      Invert a 6 term geotransform style matrix.                      */
+/************************************************************************/
+
+static int inv_geotransform( double *gt_in, double *gt_out )
+
+{
+    double	det, inv_det;
+
+    /* we assume a 3rd row that is [0 0 1] */
+
+    /* Compute determinate */
+
+    det = gt_in[0] * gt_in[4] - gt_in[1] * gt_in[3];
+
+    if( fabs(det) < 0.000000000000001 )
+        return 0;
+
+    inv_det = 1.0 / det;
+
+    /* compute adjoint, and devide by determinate */
+
+    gt_out[0] =  gt_in[4] * inv_det;
+    gt_out[3] = -gt_in[3] * inv_det;
+
+    gt_out[1] = -gt_in[1] * inv_det;
+    gt_out[4] =  gt_in[0] * inv_det;
+
+    gt_out[2] = ( gt_in[1] * gt_in[5] - gt_in[2] * gt_in[4]) * inv_det;
+    gt_out[5] = (-gt_in[0] * gt_in[5] + gt_in[2] * gt_in[3]) * inv_det;
+
+    return 1;
+}
+
+/************************************************************************/
 /*                       GTIFTiepointTranslate()                        */
 /************************************************************************/
 
@@ -59,62 +110,9 @@ int GTIFTiepointTranslate( int gcp_count, double * gcps_in, double * gcps_out,
                            double *x_out, double *y_out )
 
 {
-    int		i;
-    double	sum, epsilon = 1e-15;
-
-#define X_IN(i)  (gcps_in[(i) * 6])    
-#define Y_IN(i)  (gcps_in[(i) * 6 + 1])    
-#define X_OUT(i) (gcps_in[(i) * 6 + 3])    
-#define Y_OUT(i) (gcps_in[(i) * 6 + 4])    
-    
-/* -------------------------------------------------------------------- */
-/*      Compute a sum of the inverse distances to gcps so that we       */
-/*      can use them in a weighted average.  If we find an exact hit    */
-/*      we will just return it immediately to avoid divide by zero      */
-/*      errors.                                                         */
-/* -------------------------------------------------------------------- */
-    sum = 0.0;
-    for( i = 0; i < gcp_count; i++ )
-    {
-        double 		x_dist, y_dist, distance;
-        
-        x_dist = ABS(X_IN(i) - x_in);
-        y_dist = ABS(Y_IN(i) - y_in);
-        distance = sqrt( x_dist * x_dist + y_dist * y_dist );
-
-        if( distance < epsilon )
-        {
-            *x_out = X_OUT(i);
-            *y_out = Y_OUT(i);
-            return TRUE;
-        }
-
-        sum += 1.0 / distance;
-    }
-    
-/* -------------------------------------------------------------------- */
-/*      Apply the vector to each GCP in proportion to it's              */
-/*      contribution to the sum of inverse distances.                   */
-/* -------------------------------------------------------------------- */
-    *x_out = 0.0;
-    *y_out = 0.0;
-       
-    
-    for( i = 0; i < gcp_count; i++ )
-    {
-        double 		x_dist, y_dist, distance, ratio;
-        
-        x_dist = ABS(X_IN(i) - x_in);
-        y_dist = ABS(Y_IN(i) - y_in);
-        distance = sqrt( x_dist * x_dist + y_dist * y_dist );
-
-        ratio = (1.0/distance) / sum;
-
-        *x_out += X_OUT(i) * ratio;
-        *y_out += Y_OUT(i) * ratio;
-    }
-
-    return TRUE;
+    /* I would appreciate a _brief_ block of code for doing second order
+       polynomial regression here! */
+    return FALSE;
 }
 
 
@@ -124,6 +122,10 @@ int GTIFTiepointTranslate( int gcp_count, double * gcps_in, double * gcps_out,
 
 /**
  * Translate a pixel/line coordinate to projection coordinates.
+ *
+ * At this time this function does not support image to PCS translations for
+ * tiepoints-only definitions,  only pixelscale and transformation matrix
+ * formulations.
  *
  * @param gtif The handle from GTIFNew() indicating the target file.
  * @param x A pointer to the double containing the pixel offset on input,
@@ -139,12 +141,113 @@ int GTIFTiepointTranslate( int gcp_count, double * gcps_in, double * gcps_out,
 int GTIFImageToPCS( GTIF *gtif, double *x, double *y )
 
 {
-    double 	*tiepoints;
-    int 	tiepoint_count, count, transform_count;
-    double	*pixel_scale;
+    int     res = FALSE;
+    int     tiepoint_count, count, transform_count;
     tiff_t *tif=gtif->gt_tif;
-    double      *transform;
+    double *tiepoints   = 0;
+    double *pixel_scale = 0;
+    double *transform   = 0;
 
+
+    if (!(gtif->gt_methods.get)(tif, GTIFF_TIEPOINTS,
+                              &tiepoint_count, &tiepoints ))
+        tiepoint_count = 0;
+
+    if (!(gtif->gt_methods.get)(tif, GTIFF_PIXELSCALE, &count, &pixel_scale ))
+        count = 0;
+
+    if (!(gtif->gt_methods.get)(tif, GTIFF_TRANSMATRIX,
+                                &transform_count, &transform ))
+        transform_count = 0;
+
+/* -------------------------------------------------------------------- */
+/*      If the pixelscale count is zero, but we have tiepoints use      */
+/*      the tiepoint based approach.                                    */
+/* -------------------------------------------------------------------- */
+    if( tiepoint_count > 6 && count == 0 ) 
+    {
+        res = GTIFTiepointTranslate( tiepoint_count / 6,
+                                     tiepoints, tiepoints + 3,
+                                     *x, *y, x, y );
+    }
+
+/* -------------------------------------------------------------------- */
+/*	If we have a transformation matrix, use it. 			*/
+/* -------------------------------------------------------------------- */
+    else if( transform_count == 16 ) 
+    {
+        double x_in = *x, y_in = *y;
+
+        *x = x_in * transform[0] + y_in * transform[1] + transform[3];
+        *y = x_in * transform[4] + y_in * transform[5] + transform[7];
+        
+        res = TRUE;
+    } 
+
+/* -------------------------------------------------------------------- */
+/*      For now we require one tie point, and a valid pixel scale.      */
+/* -------------------------------------------------------------------- */
+    else if( count < 3 || tiepoint_count < 6 ) 
+    {
+        res = FALSE;
+    } 
+
+    else 
+    {
+        *x = (*x - tiepoints[0]) * pixel_scale[0] + tiepoints[3];
+        *y = (*y - tiepoints[1]) * (-1 * pixel_scale[1]) + tiepoints[4];
+
+        res = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    if(tiepoints)   
+        _GTIFFree(tiepoints);
+    if(pixel_scale)
+        _GTIFFree(pixel_scale);
+    if(transform)  
+        _GTIFFree(transform);
+
+    return res;
+}
+
+/************************************************************************/
+/*                           GTIFPCSToImage()                           */
+/************************************************************************/
+
+/**
+ * Translate a projection coordinate to pixel/line coordinates.
+ *
+ * At this time this function does not support PCS to image translations for
+ * tiepoints-only based definitions, only matrix and pixelscale/tiepoints 
+ * formulations are supposed.
+ *
+ * @param gtif The handle from GTIFNew() indicating the target file.
+ * @param x A pointer to the double containing the pixel offset on input,
+ * and into which the easting/longitude will be put on completion.
+ * @param y A pointer to the double containing the line offset on input,
+ * and into which the northing/latitude will be put on completion.
+ *
+ * @return TRUE if the transformation succeeds, or FALSE if it fails.  It may
+ * fail if the file doesn't have properly setup transformation information,
+ * or it is in a form unsupported by this function.
+ */
+
+int GTIFPCSToImage( GTIF *gtif, double *x, double *y )
+
+{
+    double 	*tiepoints = NULL;
+    int 	tiepoint_count, count, transform_count = 0;
+    double	*pixel_scale = NULL;
+    double 	*transform   = NULL;
+    tiff_t 	*tif=gtif->gt_tif;
+    int		result = FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Fetch tiepoints and pixel scale.                                */
+/* -------------------------------------------------------------------- */
     if (!(gtif->gt_methods.get)(tif, GTIFF_TIEPOINTS,
                               &tiepoint_count, &tiepoints ))
         tiepoint_count = 0;
@@ -162,75 +265,59 @@ int GTIFImageToPCS( GTIF *gtif, double *x, double *y )
 /* -------------------------------------------------------------------- */
     if( tiepoint_count > 6 && count == 0 )
     {
-        return GTIFTiepointTranslate( tiepoint_count / 6,
-                                      tiepoints, tiepoints + 3,
-                                      *x, *y, x, y );
+        result = GTIFTiepointTranslate( tiepoint_count / 6,
+                                        tiepoints + 3, tiepoints,
+                                        *x, *y, x, y );
     }
-    
-/* -------------------------------------------------------------------- */
-/*	If we have a transformation matrix, use it. 			*/
-/* -------------------------------------------------------------------- */
-    if( transform_count == 16 )
-    {
-        double		x_in = *x, y_in = *y;
 
-        *x = x_in * transform[0] + y_in * transform[1] + transform[3];
-        *y = x_in * transform[4] + y_in * transform[5] + transform[7];
+/* -------------------------------------------------------------------- */
+/*      Handle matrix - convert to "geotransform" format, invert and    */
+/*      apply.                                                          */
+/* -------------------------------------------------------------------- */
+    else if( transform_count == 16 )
+    {
+        double  x_in = *x, y_in = *y;
+        double	gt_in[6], gt_out[6];
         
-        return TRUE;
+        gt_in[0] = transform[0];
+        gt_in[1] = transform[1];
+        gt_in[2] = transform[3];
+        gt_in[3] = transform[4];
+        gt_in[4] = transform[5];
+        gt_in[5] = transform[7];
+
+        if( !inv_geotransform( gt_in, gt_out ) )
+            result = FALSE;
+        else
+        {
+            *x = x_in * gt_out[0] + y_in * gt_out[1] + gt_out[2];
+            *y = x_in * gt_out[3] + y_in * gt_out[4] + gt_out[5];
+            
+            result = TRUE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
 /*      For now we require one tie point, and a valid pixel scale.      */
 /* -------------------------------------------------------------------- */
-    if( count < 3 || tiepoint_count < 6 )
-        return FALSE;
-
-    *x = (*x - tiepoints[0]) * pixel_scale[0] + tiepoints[3];
-    *y = (*y - tiepoints[1]) * (-1 * pixel_scale[1]) + tiepoints[4];
-
-    return TRUE;
-}
-
-/************************************************************************/
-/*                           GTIFPCSToImage()                           */
-/************************************************************************/
-
-int GTIFPCSToImage( GTIF *gtif, double *x, double *y )
-
-{
-    double 	*tiepoints;
-    int 	tiepoint_count, count;
-    double	*pixel_scale;
-    tiff_t *tif=gtif->gt_tif;
-
-    if (!(gtif->gt_methods.get)(tif, GTIFF_TIEPOINTS,
-                              &tiepoint_count, &tiepoints ))
-        tiepoint_count = 0;
-
-    if (!(gtif->gt_methods.get)(tif, GTIFF_PIXELSCALE, &count, &pixel_scale ))
-        count = 0;
-
-/* -------------------------------------------------------------------- */
-/*      If the pixelscale count is zero, but we have tiepoints use      */
-/*      the tiepoint based approach.                                    */
-/* -------------------------------------------------------------------- */
-    if( tiepoint_count > 6 && count == 0 )
+    else if( count >= 3 && tiepoint_count >= 6 )
     {
-        return GTIFTiepointTranslate( tiepoint_count / 6,
-                                      tiepoints + 3, tiepoints,
-                                      *x, *y, x, y );
+        *x = (*x - tiepoints[3]) / pixel_scale[0] + tiepoints[0];
+        *y = (*y - tiepoints[4]) / (-1 * pixel_scale[1]) + tiepoints[1];
+
+        result = TRUE;
     }
-    
-/* -------------------------------------------------------------------- */
-/*      For now we require one tie point, and a valid pixel scale.      */
-/* -------------------------------------------------------------------- */
-    if( count < 3 || tiepoint_count < 6 )
-        return FALSE;
 
-    *x = (*x - tiepoints[3]) / pixel_scale[0] + tiepoints[0];
-    *y = (*y - tiepoints[4]) / (-1 * pixel_scale[1]) + tiepoints[1];
+/* -------------------------------------------------------------------- */
+/*      Cleanup.                                                        */
+/* -------------------------------------------------------------------- */
+    if(tiepoints)   
+        _GTIFFree(tiepoints);
+    if(pixel_scale)
+        _GTIFFree(pixel_scale);
+    if(transform)  
+        _GTIFFree(transform);
 
-    return TRUE;
+    return result;
 }
 

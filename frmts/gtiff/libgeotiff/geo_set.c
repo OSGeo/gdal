@@ -10,6 +10,12 @@
  *  notice accompanies any products derived therefrom.
  *
  * $Log: geo_set.c,v $
+ * Revision 1.7  2001/05/02 16:48:22  warmerda
+ * fixed a couple bugs in delete code
+ *
+ * Revision 1.6  2001/05/02 13:54:34  warmerda
+ * updated geo_set.c to support deleting tags
+ *
  * Revision 1.5  1999/05/04 03:09:33  warmerda
  * avoid warnings
  *
@@ -55,8 +61,6 @@ for this geokey to offset. Should normally be zero.
 to read.  At this time all keys except for strings have only one value,
 so <b>index</b> should be zero, and <b>count</b> should be one.<p>
 
-
-
 The <b>key</b> indicates the key name to be written to the
 file and should from the geokey_t enumeration 
 (eg. <tt>ProjectedCSTypeGeoKey</tt>).  The full list of possible geokey_t
@@ -67,13 +71,14 @@ The <b>type</b> should be one of TYPE_SHORT, TYPE_ASCII, or TYPE_DOUBLE and
 will indicate the type of value being passed at the end of the argument
 list (the key value).  The <b>count</b> should be one except for strings
 when it should be the length of the string (or zero to for this to be
-computed internally).<p>
+computed internally).  As a special case a <b>count</b> of -1 can be
+used to request an existing key be deleted, in which no value is passed.<p>
 
 The actual value is passed at the end of the argument list, and should be
 a short, a double, or a char * value.  Note that short and double values
 are passed as is, not as pointers.<p>
 
-Note that key values aren't actually flushed to the file untill
+Note that key values aren't actually flushed to the file until
 GTIFWriteKeys() is called.  Till then 
 the new values are just kept with the GTIF structure.<p>
 
@@ -101,7 +106,34 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
 
 	va_start(ap, count);
 	/* pass singleton keys by value */
-	if (count>1 && type!=TYPE_ASCII) val = va_arg(ap, char*);
+	if (count>1 && type!=TYPE_ASCII) 
+        {
+            val = va_arg(ap, char*);
+        }
+        else if( count == -1 )
+        {
+            /* delete the indicated tag */
+            va_end(ap);
+
+            if( index < 1 )
+                return 0;
+
+            while( index < gtif->gt_num_keys )
+            {
+                _GTIFmemcpy( gtif->gt_keys + index, 
+                             gtif->gt_keys + index + 1, 
+                             sizeof(GeoKey) );
+                gtif->gt_keyindex[gtif->gt_keys[index].gk_key] = index;
+                index++;
+            }
+
+            gtif->gt_num_keys--;
+            gtif->gt_nshorts -= sizeof(KeyEntry)/sizeof(pinfo_t);
+            gtif->gt_keyindex[keyID] = 0;
+            gtif->gt_flags |= FLAG_FILE_MODIFIED;
+
+            return 1;
+        }
 	else switch (type)
 	{
 	    case TYPE_SHORT:  sval=va_arg(ap, int); val=(char *)&sval;     break;

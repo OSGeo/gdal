@@ -10,6 +10,18 @@
 #include old_pcs.inc
 #endif /* OLD Codes */
 
+/* New PCS */
+ValuePair(PCS_GGRS87_Greek_Grid,2100)
+ValuePair(PCS_KKJ_Finland_zone_1,2391)
+ValuePair(PCS_KKJ_Finland_zone_2,2392)
+ValuePair(PCS_KKJ_Finland_zone_3,2393)
+ValuePair(PCS_KKJ_Finland_zone_4,2394)
+ValuePair(PCS_RT90_2_5_gon_W,2400)
+ValuePair(PCS_Lietuvos_Koordinoei_Sistema_1994,2600)
+ValuePair(PCS_Estonian_Coordinate_System_of_1992,3300)
+ValuePair(PCS_HD72_EOV,23700)
+ValuePair(PCS_Dealul_Piscului_1970_Stereo_70,31700)
+
 ValuePair(PCS_Adindan_UTM_zone_37N,	20137)
 ValuePair(PCS_Adindan_UTM_zone_38N,	20138)
 ValuePair(PCS_AGD66_AMG_zone_48,	20248)
