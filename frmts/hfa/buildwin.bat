@@ -1,7 +1,6 @@
 if exist port\cpl_config.h.vc del port\cpl_config.h
-if exist port\cpl_config.h.vc rename port\cpl_config.h.vc port\cpl_config.h
+if exist port\cpl_config.h.vc move port\cpl_config.h.vc port\cpl_config.h
 
-cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport geoextra.c
 cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport imggeotiff.c
 cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport hfa/hfaband.cpp
 cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport hfa/hfadictionary.cpp
@@ -15,6 +14,9 @@ cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport port/cpl_conv.cpp
 cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport port/cpl_error.cpp
 cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport port/cpl_string.cpp
 cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport port/cpl_vsisimple.cpp
+cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport port/cpl_vsil_win32.cpp
+cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport port/cpl_path.cpp
+cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport libgeotiff/geo_extra.c
 cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport libgeotiff/geo_free.c
 cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport libgeotiff/geo_get.c
 cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport libgeotiff/geo_names.c
@@ -52,7 +54,7 @@ cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport libtiff/tif_strip.c
 cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport libtiff/tif_swab.c
 cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport libtiff/tif_thunder.c
 cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport libtiff/tif_tile.c
-cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport libtiff/tif_unix.c
+cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport libtiff/tif_vsi.c
 cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport libtiff/tif_version.c
 cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport libtiff/tif_warning.c
 cl /c /Ihfa /Ilibtiff /Ilibgeotiff /Iport libtiff/tif_write.c
