@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/03/02 14:40:33  fwarmerdam
+ * Fixed up TARGET validation.
+ *
  * Revision 1.12  2005/02/25 17:01:47  fwarmerdam
  * initialize adfGeoTransform in case GetGeoTransform fails
  *
@@ -436,11 +439,11 @@ CPLErr GDALECWCompressor::Initialize(
         fTargetCompression = (float) 
             atof(CSLFetchNameValue(papszOptions, "TARGET"));
         
-        if( fTargetCompression < 1.0 || fTargetCompression > 100.0 )
+        if( fTargetCompression < 0.0 || fTargetCompression > 99.0 )
         {
             CPLError( CE_Failure, CPLE_NotSupported, 
                       "TARGET compression of %.3f invalid, should be a\n"
-                      "value between 1 and 100 percent.\n", 
+                      "value between 0 and 99 percent.\n", 
                       (double) fTargetCompression );
             return CE_Failure;
         }
