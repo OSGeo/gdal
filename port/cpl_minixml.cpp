@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.24  2003/11/05 20:14:21  warmerda
+ * added lots of documentation
+ *
  * Revision 1.23  2003/05/21 03:32:43  warmerda
  * expand tabs
  *
@@ -508,6 +511,29 @@ static void AttachNode( ParseContext *psContext, CPLXMLNode *psNode )
 /*                         CPLParseXMLString()                          */
 /************************************************************************/
 
+/**
+ * Parse an XML string into tree form.
+ *
+ * The passed document is parsed into a CPLXMLNode tree representation. 
+ * If the document is not well formed XML then NULL is returned, and errors
+ * are reported via CPLError().  No validation beyond wellformedness is
+ * done.  The CPLParseXMLFile() convenience function can be used to parse
+ * from a file. 
+ *
+ * The returned document tree is is owned by the caller and should be freed
+ * with CPLDestroyXMLNode() when no longer needed.
+ *
+ * If the document has more than one "root level" element then those after the 
+ * first will be attached to the first as siblings (via the psNext pointers)
+ * even though there is no common parent.  A document with no XML structure
+ * (no angle brackets for instance) would be considered well formed, and 
+ * returned as a single CXT_Text node.  
+ * 
+ * @param pszString the document to parse. 
+ *
+ * @return parsed tree or NULL on error. 
+ */
+
 CPLXMLNode *CPLParseXMLString( const char *pszString )
 
 {
@@ -932,6 +958,20 @@ CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent,
 /*                        CPLSerializeXMLTree()                         */
 /************************************************************************/
 
+/**
+ * Convert tree into string document.
+ *
+ * This function converts a CPLXMLNode tree representation of a document
+ * into a flat string representation.  White space indentation is used
+ * visually preserve the tree structure of the document.  The returned 
+ * document becomes owned by the caller and should be freed with CPLFree()
+ * when no longer needed.
+ *
+ * @param psNode
+ *
+ * @return the document on success or NULL on failure. 
+ */
+
 char *CPLSerializeXMLTree( CPLXMLNode *psNode )
 
 {
@@ -951,6 +991,18 @@ char *CPLSerializeXMLTree( CPLXMLNode *psNode )
 /************************************************************************/
 /*                          CPLCreateXMLNode()                          */
 /************************************************************************/
+
+/**
+ * Create an document tree item.
+ *
+ * Create a single CPLXMLNode object with the desired value and type, and
+ * attach it as a child of the indicated parent.  
+ *
+ * @param poParent the parent to which this node should be attached as a 
+ * child.  May be NULL to keep as free standing. 
+ *
+ * @return the newly created node, now owned by the caller (or parent node).
+ */
 
 CPLXMLNode *CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType, 
                               const char *pszText )
@@ -991,6 +1043,15 @@ CPLXMLNode *CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType,
 /*                         CPLDestroyXMLNode()                          */
 /************************************************************************/
 
+/**
+ * Destroy a tree. 
+ *
+ * This function frees resources associated with a CPLXMLNode and all its
+ * children nodes.  
+ *
+ * @param psNode the tree to free.
+ */
+
 void CPLDestroyXMLNode( CPLXMLNode *psNode )
 
 {
@@ -1008,19 +1069,45 @@ void CPLDestroyXMLNode( CPLXMLNode *psNode )
 /*                           CPLGetXMLNode()                            */
 /************************************************************************/
 
-CPLXMLNode *CPLGetXMLNode( CPLXMLNode *poRoot, const char *pszPath )
+/**
+ * Find node by path.
+ *
+ * Searches the document or subdocument indicated by psRoot for an element 
+ * (or attribute) with the given path.  The path should consist of a set of
+ * element names separated by dots, not including the name of the root 
+ * element (psRoot).  If the requested element is not found NULL is returned.
+ *
+ * Attribute names may only appear as the last item in the path. 
+ *
+ * The search is dont from the root nodes children, but all intermediate
+ * nodes in the path must be specified.  Seaching for "name" would only find
+ * a name element or attribute if it is a direct child of the root, not at any
+ * level in the subdocument. 
+ *
+ * @param psRoot the subtree in which to search.  This should be a node of 
+ * type CXT_Element.  NULL is safe. 
+ *
+ * @param pszPath the list of element names in the path (dot separated). 
+ *
+ * @return the requested element node, or NULL if not found. 
+ */
+
+CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
 
 {
     char        **papszTokens;
     int         iToken = 0;
 
+    if( psRoot == NULL )
+        return NULL;
+
     papszTokens = CSLTokenizeStringComplex( pszPath, ".", FALSE, FALSE );
 
-    while( papszTokens[iToken] != NULL && poRoot != NULL )
+    while( papszTokens[iToken] != NULL && psRoot != NULL )
     {
         CPLXMLNode *psChild;
 
-        for( psChild = poRoot->psChild; psChild != NULL; 
+        for( psChild = psRoot->psChild; psChild != NULL; 
              psChild = psChild->psNext ) 
         {
             if( psChild->eType != CXT_Text 
@@ -1030,21 +1117,46 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *poRoot, const char *pszPath )
 
         if( psChild == NULL )
         {
-            poRoot = NULL;
+            psRoot = NULL;
             break;
         }
 
-        poRoot = psChild;
+        psRoot = psChild;
         iToken++;
     }
 
     CSLDestroy( papszTokens );
-    return poRoot;
+    return psRoot;
 }
 
 /************************************************************************/
 /*                           CPLGetXMLValue()                           */
 /************************************************************************/
+
+/**
+ * Fetch element/attribute value. 
+ *
+ * Searches the document for the element/attribute value associated with
+ * the path.  The corresponding node is internally found with CPLGetXMLNode()
+ * (see there for details on path handling).  Once found, the value is 
+ * considered to be the first CXT_Text child of the node.
+ *
+ * If the attribute/element search fails, or if the found node has not
+ * value then the passed default value is returned. 
+ *
+ * The returned value points to memory within the document tree, and should
+ * not be altered or freed. 
+ *
+ * @param psRoot the subtree in which to search.  This should be a node of 
+ * type CXT_Element.  NULL is safe. 
+ *
+ * @param pszPath the list of element names in the path (dot separated). 
+ *
+ * @param pszDefault the value to return if a corresponding value is not
+ * found, may be NULL.
+ *
+ * @return the requested value or pszDefault if not found.
+ */
 
 const char *CPLGetXMLValue( CPLXMLNode *poRoot, const char *pszPath, 
                             const char *pszDefault )
@@ -1077,10 +1189,24 @@ const char *CPLGetXMLValue( CPLXMLNode *poRoot, const char *pszPath,
 
 /************************************************************************/
 /*                           CPLAddXMLChild()                           */
-/*                                                                      */
-/*      Add a node as a child of another.  Ensure that attributes       */
-/*      are inserted ahead of element children, or Text data.           */
 /************************************************************************/
+
+/**
+ * Add child node to parent. 
+ *
+ * The passed child is added to the list of children of the indicated
+ * parent.  Normally the child is added at the end of the parents child
+ * list, but attributes (CXT_Attribute) will be inserted after any other
+ * attributes but before any other element type.  Ownership of the child
+ * node is effectively assumed by the parent node.   If the child has
+ * siblings (it's psNext is not NULL) they will be trimmed, but if the child
+ * has children they are carried with it. 
+ *
+ * @param psParent the node to attach the child to.  May not be NULL.
+ *
+ * @param psChild the child to add to the parent.  May not be NULL.  Should 
+ * not be a child of any other parent. 
+ */
 
 void CPLAddXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
 
@@ -1128,6 +1254,27 @@ void CPLAddXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
 /*                    CPLCreateXMLElementAndValue()                     */
 /************************************************************************/
 
+/**
+ * Create an element and text value.
+ *
+ * This is function is a convenient short form for:
+ *
+ *     return CPLCreateXMLNode( 
+ *        CPLCreateXMLNode( psParent, CXT_Element, pszName ),
+ *        CXT_Text, pszValue );
+ *
+ * It creates a CXT_Element node, with a CXT_Text child, and
+ * attaches the element to the passed parent.
+ *
+ * @param psParent the parent node to which the resulting node should
+ * be attached.  May be NULL to keep as freestanding. 
+ *
+ * @param pszName the element name to create.
+ * @param pszValue the text to attach to the element. Must not be NULL. 
+ *
+ * @return the pointer to the new element node.
+ */
+
 CPLXMLNode *CPLCreateXMLElementAndValue( CPLXMLNode *psParent, 
                                          const char *pszName, 
                                          const char *pszValue )
@@ -1140,12 +1287,17 @@ CPLXMLNode *CPLCreateXMLElementAndValue( CPLXMLNode *psParent,
 
 /************************************************************************/
 /*                          CPLCloneXMLTree()                           */
-/*                                                                      */
-/*      Clone an XML Tree.  We use recursion to handle children, but    */
-/*      we do siblings by looping.  This means we can handle very       */
-/*      long lists of elements, but great depth may cause stack         */
-/*      overflow problems on some systems.                              */
 /************************************************************************/
+
+/**
+ * Copy tree.
+ *
+ * Creates a deep copy of a CPLXMLNode tree.  
+ *
+ * @param psTree the tree to duplicate. 
+ *
+ * @return a copy of the whole tree. 
+ */
 
 CPLXMLNode *CPLCloneXMLTree( CPLXMLNode *psTree )
 
@@ -1175,11 +1327,33 @@ CPLXMLNode *CPLCloneXMLTree( CPLXMLNode *psTree )
 
 /************************************************************************/
 /*                           CPLSetXMLValue()                           */
-/*                                                                      */
-/*      Set the text value of an XML element to the suggested           */
-/*      value.  Intermediate element nodes are created if               */
-/*      an existing component is missing.                               */
 /************************************************************************/
+
+/**
+ * Set element value by path. 
+ *
+ * Find (or create) the target element or attribute specified in the
+ * path, and assign it the indicated value. 
+ *
+ * Any path elements that do not already exist will be created.  The target
+ * nodes value (the first CXT_Text child) will be replaced with the provided
+ * value.  
+ *
+ * If the target node is an attribute instead of an element, the last separator
+ * should be a "#" instead of the normal period path separator. 
+ *
+ * Example:
+ *   CPLSetXMLValue( "Citation.Id.Description", "DOQ dataset" );
+ *   CPLSetXMLValue( "Citation.Id.Description#name", "doq" );
+ *
+ * @param psRoot the subdocument to be updated. 
+ *
+ * @param pszPath the dot seperated path to the target element/attribute.
+ *
+ * @param pszValue the text value to assign. 
+ *
+ * @return TRUE on success.
+ */
 
 int CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
                     const char *pszValue )
@@ -1247,6 +1421,24 @@ int CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
 /*                        CPLStripXMLNamespace()                        */
 /************************************************************************/
 
+/**
+ * Strip indicated namespaces. 
+ *
+ * The subdocument (psRoot) is recursively examined, and any elements
+ * with the indicated namespace prefix will have the namespace prefix
+ * stripped from the element names.  If the passed namespace is NULL, then
+ * all namespace prefixes will be stripped. 
+ *
+ * Nodes other than elements should remain unaffected.  The changes are
+ * made "in place", and should not alter any node locations, only the 
+ * pszValue field of affected nodes. 
+ *
+ * @param psRoot the document to operate on.
+ * @param pszNamespace the name space prefix (not including colon), or NULL.
+ * @param bRecurse TRUE to recurse over whole document, or FALSE to only
+ * operate on the passed node.
+ */
+
 void CPLStripXMLNamespace( CPLXMLNode *psRoot, 
                            const char *pszNamespace, 
                            int bRecurse )
@@ -1297,6 +1489,18 @@ void CPLStripXMLNamespace( CPLXMLNode *psRoot,
 /************************************************************************/
 /*                          CPLParseXMLFile()                           */
 /************************************************************************/
+
+/**
+ * Parse XML file into tree.
+ *
+ * The named file is opened, loaded into memory as a big string, and
+ * parsed with CPLParseXMLString().  Errors in reading the file or parsing
+ * the XML will be reported by CPLError(). 
+ *
+ * @param pszFilename the file to open. 
+ *
+ * @return NULL on failure, or the document tree on success.
+ */
 
 CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
 
@@ -1354,6 +1558,18 @@ CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
 /************************************************************************/
 /*                     CPLSerializeXMLTreeToFile()                      */
 /************************************************************************/
+
+/**
+ * Write document tree to a file. 
+ *
+ * The passed document tree is converted into one big string (with 
+ * CPLSerializeXMLTree()) and then written to the named file.  Errors writing
+ * the file will be reported by CPLError().  The source document tree is
+ * not altered.  If the output file already exists it will be overwritten. 
+ *
+ * @param psTree the document tree to write. 
+ * @param pszFilename the name of the file to write to. 
+ */
 
 int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
 
