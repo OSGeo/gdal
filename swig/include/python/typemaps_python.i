@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.8  2005/02/15 20:53:11  kruland
+ * Added typemap(in) char ** from PyString which allows the pointer (to char*)
+ * to change but assumes the contents do not change.
+ *
  * Revision 1.7  2005/02/15 19:49:42  kruland
  * Added typemaps for arbitrary char* buffers with length.
  *
@@ -303,3 +307,13 @@ ARRAY_TYPEMAP(c_transform, 6);
   CSLDestroy( $1 );
 }
 
+/*
+ * Typemaps map mutable char ** arguments from PyStrings.  Does not
+ * return the modified argument
+ */
+%typemap(in) (char **ignorechange) ( char *val )
+{
+  /* %typemap(in) (char **ignorechange) */
+  PyArg_Parse( $input, "s", &val );
+  $1 = &val;
+}
