@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2001/11/09 15:02:40  warmerda
+ * dump render style
+ *
  * Revision 1.19  2001/11/01 16:54:16  warmerda
  * added DestroyFeature
  *
@@ -1214,6 +1217,9 @@ void OGRFeature::DumpReadable( FILE * fpOut )
             fprintf( fpOut, "(null)\n" );
             
     }
+
+    if( GetStyleString() != NULL )
+        fprintf( fpOut, "  Style = %s\n", GetStyleString() );
     
     if( poGeometry != NULL )
         poGeometry->dumpReadable( fpOut, "  " );
