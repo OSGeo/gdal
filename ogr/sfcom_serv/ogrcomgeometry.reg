@@ -1,0 +1,4 @@
+REGEDIT
+HKEY_CLASSES_ROOT\CLSID\{bc518ff0-08dd-11d3-b3f9-0080c8e62564} = OGRComClassFactory
+HKEY_CLASSES_ROOT\CLSID\{bc518ff0-08dd-11d3-b3f9-0080c8e62564}\InprocServer32 = F:\opengis\ogr\sfcom_serv\ogrcomgeometry.dll
+HKEY_CLASSES_ROOT\CLSID\{bc518ff0-08dd-11d3-b3f9-0080c8e62564}\NotInsertable
