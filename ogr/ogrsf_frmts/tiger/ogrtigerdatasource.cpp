@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/12/26 00:20:19  mbp
+ * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
+ * first round implementation of TIGER_2002 support
+ *
  * Revision 1.15  2001/12/12 17:25:07  warmerda
  * Use CPLStat instead of VSIStat.
  *
@@ -109,6 +113,28 @@ TigerVersion TigerClassifyVersion( int nVersionCode )
     TigerVersion        nVersion;
     int                 nYear, nMonth;
 
+/*
+** TIGER Versions
+**
+** 0000           TIGER/Line Precensus Files, 1990 
+** 0002           TIGER/Line Initial Voting District Codes Files, 1990 
+** 0003           TIGER/Line Files, 1990 
+** 0005           TIGER/Line Files, 1992 
+** 0021           TIGER/Line Files, 1994 
+** 0024           TIGER/Line Files, 1995 
+** 9706 to 9810   TIGER/Line Files, 1997 
+** 9812 to 9904   TIGER/Line Files, 1998 
+** 0006 to 0008   TIGER/Line Files, 1999 
+** 0010 to 0011   TIGER/Line Files, Redistricting Census 2000
+** 0103 to 0108	  TIGER/Line Files, Census 2000
+**
+** 0203 to 0205   TIGER/Line Files, UA 2000
+** ????    ????
+**
+** 0206 & higher  TIGER/Line Files, 2002
+** ????
+*/
+
     nVersion = TIGER_Unknown;
     if( nVersionCode == 0 )
         nVersion = TIGER_1990_Precensus;
@@ -134,13 +160,38 @@ TigerVersion TigerClassifyVersion( int nVersionCode )
         nVersion = TIGER_1997;
     else if( nVersionCode >= 9812 && nVersionCode <= 9904 )
         nVersion = TIGER_1998;
-    else if( nVersionCode >= 6 /*0006*/ && nVersionCode <= 8 /*0008*/ )
+    else if( nVersionCode >=    6 /*0006*/ && nVersionCode <=    8 /*0008*/ )
         nVersion = TIGER_1999;
-    else if( nVersionCode >= 10 /*0010*/ && nVersionCode <= 11 /*0011*/ )
+    else if( nVersionCode >=   10 /*0010*/ && nVersionCode <=   11 /*0011*/ )
         nVersion = TIGER_2000_Redistricting;
+    else if( nVersionCode >=  103 /*0103*/ && nVersionCode <=  108 /*0108*/ )
+        nVersion = TIGER_2000_Census;
+    else if( nVersionCode >=  203 /*0203*/ && nVersionCode <=  205 /*0205*/ )
+        nVersion = TIGER_UA2000;
+    else if( nVersionCode >=  206 /*0206*/ )
+        nVersion = TIGER_2002;
 
     return nVersion;
 }
+
+char * TigerVersionString( TigerVersion nVersion )
+{
+
+  if (nVersion == TIGER_1990_Precensus) { return "TIGER_1990_Precensus"; }
+  if (nVersion == TIGER_1990) { return "TIGER_1990"; }
+  if (nVersion == TIGER_1992) { return "TIGER_1992"; }
+  if (nVersion == TIGER_1994) { return "TIGER_1994"; }
+  if (nVersion == TIGER_1995) { return "TIGER_1995"; }
+  if (nVersion == TIGER_1997) { return "TIGER_1997"; }
+  if (nVersion == TIGER_1998) { return "TIGER_1998"; }
+  if (nVersion == TIGER_1999) { return "TIGER_1999"; }
+  if (nVersion == TIGER_2000_Redistricting) { return "TIGER_2000_Redistricting"; }
+  if (nVersion == TIGER_UA2000) { return "TIGER_UA2000"; }
+  if (nVersion == TIGER_2002) { return "TIGER_2002"; }
+  if (nVersion == TIGER_Unknown) { return "TIGER_Unknown"; }
+  return "???";
+}
+  
 
 /************************************************************************/
 /*                         OGRTigerDataSource()                         */
@@ -359,10 +410,14 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
             nVersionCode = atoi(TigerFileBase::GetField( szHeader, 2, 5 ));
             nVersion = TigerClassifyVersion( nVersionCode );
 
-            if( nVersionCode != 0 && nVersionCode != 2 && nVersionCode != 3
-                && nVersionCode != 5 && nVersionCode != 21 
+            if(    nVersionCode !=  0
+		&& nVersionCode !=  2
+		&& nVersionCode !=  3
+                && nVersionCode !=  5
+		&& nVersionCode != 21 
                 && nVersionCode != 24
-                && szHeader[3] != '9' && szHeader[3] != '0' )
+                && szHeader[3]  != '9'
+		&& szHeader[3]  != '0' )
                 continue;
 
             // we could (and should) add a bunch more validation here.
@@ -381,59 +436,102 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 /* -------------------------------------------------------------------- */
 /*      Create the layers which appear to exist.                        */
 /* -------------------------------------------------------------------- */
+    // RT1, RT2, RT3
     AddLayer( new OGRTigerLayer( this,
                                  new TigerCompleteChain( this,
                                                          papszModules[0]) ));
 
     /* should we have kept track of whether we encountered an RT4 file? */
+    // RT4
     AddLayer( new OGRTigerLayer( this,
                                  new TigerAltName( this,
                                                    papszModules[0]) ));
-    
+
+    // RT5
     AddLayer( new OGRTigerLayer( this,
                                  new TigerFeatureIds( this,
                                                       papszModules[0]) ));
-    
+
+    // RT6
     AddLayer( new OGRTigerLayer( this,
                                  new TigerZipCodes( this,
                                                     papszModules[0]) ));
-    
+    // RT7
     AddLayer( new OGRTigerLayer( this,
                                  new TigerLandmarks( this,
                                                      papszModules[0]) ));
     
+    // RT8
     AddLayer( new OGRTigerLayer( this,
                                  new TigerAreaLandmarks( this,
                                                      papszModules[0]) ));
+
+    // RT9
+    if (nVersion < TIGER_2002) {
+      AddLayer( new OGRTigerLayer( this,
+				   new TigerKeyFeatures( this,
+							 papszModules[0]) ));
+    }
     
-    AddLayer( new OGRTigerLayer( this,
-                                 new TigerKeyFeatures( this,
-                                                       papszModules[0]) ));
-    
+    // RTA, RTS
     AddLayer( new OGRTigerLayer( this,
                                  new TigerPolygon( this,
                                                    papszModules[0]) ));
+
+    // RTB
+    if (nVersion >= TIGER_2002) {
+      AddLayer( new OGRTigerLayer( this,
+				   new TigerPolygonCorrections( this,
+								papszModules[0]) ));
+    }
     
+    // RTC
     AddLayer( new OGRTigerLayer( this,
                                  new TigerEntityNames( this,
                                                        papszModules[0]) ));
-    
+
+    // RTE
+    if (nVersion >= TIGER_2002) {
+      AddLayer( new OGRTigerLayer( this,
+				   new TigerPolygonEconomic( this,
+							     papszModules[0]) ));
+    }
+
+    // RTH
     AddLayer( new OGRTigerLayer( this,
                                  new TigerIDHistory( this,
                                                      papszModules[0]) ));
     
+    // RTI
     AddLayer( new OGRTigerLayer( this,
                                  new TigerPolyChainLink( this,
                                                        papszModules[0]) ));
     
+    // RTP
     AddLayer( new OGRTigerLayer( this,
                                  new TigerPIP( this,
                                                papszModules[0]) ));
     
+    // RTR
     AddLayer( new OGRTigerLayer( this,
                                  new TigerTLIDRange( this,
                                                      papszModules[0]) ));
     
+    // RTT
+    if (nVersion >= TIGER_2002) {
+      AddLayer( new OGRTigerLayer( this,
+				   new TigerZeroCellID( this,
+							papszModules[0]) ));
+    }
+
+    // RTU
+    if (nVersion >= TIGER_2002) {
+      AddLayer( new OGRTigerLayer( this,
+				   new TigerOverUnder( this,
+						       papszModules[0]) ));
+    }
+
+    // RTZ
     AddLayer( new OGRTigerLayer( this,
                                  new TigerZipPlus4( this,
                                                      papszModules[0]) ));
@@ -594,7 +692,8 @@ int OGRTigerDataSource::Create( const char *pszNameIn, char **papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Work out the version.                                           */
 /* -------------------------------------------------------------------- */
-    nVersionCode = 1000; /* census 2000 */
+//    nVersionCode = 1000; /* census 2000 */
+    nVersionCode = 1102; /* census 2002 */
     if( GetOption("VERSION") != NULL )
     {
         nVersionCode = atoi(GetOption("VERSION"));
@@ -699,6 +798,30 @@ OGRLayer *OGRTigerDataSource::CreateLayer( const char *pszLayerName,
     {
         poLayer = new OGRTigerLayer( this,
                                      new TigerPolygon( this, NULL ) );
+    }
+
+    else if( EQUAL(pszLayerName,"PolygonCorrections") )
+    {
+        poLayer = new OGRTigerLayer( this,
+                                     new TigerPolygonCorrections( this, NULL ) );
+    }
+
+    else if( EQUAL(pszLayerName,"PolygonEconomic") )
+    {
+        poLayer = new OGRTigerLayer( this,
+                                     new TigerPolygonEconomic( this, NULL ) );
+    }
+
+    else if( EQUAL(pszLayerName,"ZeroCellID") )
+    {
+        poLayer = new OGRTigerLayer( this,
+                                     new TigerZeroCellID( this, NULL ) );
+    }
+
+    else if( EQUAL(pszLayerName,"OverUnder") )
+    {
+        poLayer = new OGRTigerLayer( this,
+                                     new TigerOverUnder( this, NULL ) );
     }
 
     if( poLayer == NULL )

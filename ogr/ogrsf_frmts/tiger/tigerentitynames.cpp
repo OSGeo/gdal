@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/12/26 00:20:19  mbp
+ * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
+ * first round implementation of TIGER_2002 support
+ *
  * Revision 1.7  2001/07/19 16:05:49  warmerda
  * clear out tabs
  *
@@ -58,6 +62,86 @@ CPL_CVSID("$Id$");
 
 #define FILE_CODE "C"
 
+static TigerFieldInfo rtC_2002_fields[] = {
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
+  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
+  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
+  { "DATAYR",     'L', 'A', OFTString,    11,  14,   4,       1,   1,     1 },
+  { "FIPS",       'L', 'N', OFTInteger,   15,  19,   5,       1,   1,     1 },
+  { "FIPSCC",     'L', 'A', OFTString,    20,  21,   2,       1,   1,     1 },
+  { "PLACEDC",    'L', 'A', OFTString,    22,  22,   1,       1,   1,     1 },
+  { "LSADC",      'L', 'A', OFTString,    23,  24,   2,       1,   1,     1 },
+  { "ENTITY",     'L', 'A', OFTString,    25,  25,   1,       1,   1,     1 },
+  { "MA",         'L', 'N', OFTInteger,   26,  29,   4,       1,   1,     1 },
+  { "SD",         'L', 'N', OFTInteger,   30,  34,   5,       1,   1,     1 },
+  { "AIANHH",     'L', 'N', OFTInteger,   35,  38,   4,       1,   1,     1 },
+  { "VTDTRACT",   'R', 'A', OFTString,    39,  44,   6,       1,   1,     1 },
+  { "UAUGA",      'L', 'N', OFTInteger,   45,  49,   5,       1,   1,     1 },
+  { "AITSCE",     'L', 'N', OFTInteger,   50,  52,   3,       1,   1,     1 },
+  { "RS-C1",      'L', 'N', OFTInteger,   53,  54,   2,       1,   1,     1 },
+  { "RS-C2",      'L', 'N', OFTInteger,   55,  62,   8,       1,   1,     1 },
+  { "NAME",       'L', 'A', OFTString,    63, 122,  60,       1,   1,     1 },
+};
+static TigerRecordInfo rtC_2002_info =
+  {
+    rtC_2002_fields,
+    sizeof(rtC_2002_fields) / sizeof(TigerFieldInfo),
+    122
+  };
+
+static TigerFieldInfo rtC_2000_Redistricting_fields[] = {
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
+  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
+  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
+  { "FIPSYR",     'L', 'N', OFTString,    11,  14,   4,       1,   1,     1 },  //  otype mismatch
+  { "FIPS",       'L', 'N', OFTInteger,   15,  19,   5,       1,   1,     1 },
+  { "FIPSCC",     'L', 'A', OFTString,    20,  21,   2,       1,   1,     1 },
+  { "PDC",        'L', 'A', OFTString,    22,  22,   1,       1,   1,     1 },
+  { "LASAD",      'L', 'A', OFTString,    23,  24,   2,       1,   1,     1 },
+  { "ENTITY",     'L', 'A', OFTString,    25,  25,   1,       1,   1,     1 },
+  { "MA",         'L', 'N', OFTInteger,   26,  29,   4,       1,   1,     1 },
+  { "SD",         'L', 'N', OFTInteger,   30,  34,   5,       1,   1,     1 },
+  { "AIR",        'L', 'N', OFTInteger,   35,  38,   4,       1,   1,     1 },
+  { "VTD",        'R', 'A', OFTString,    39,  44,   6,       1,   1,     1 },
+  { "UA",         'L', 'N', OFTInteger,   45,  49,   4,       1,   1,     1 },
+  { "AITSCE",     'L', 'N', OFTInteger,   50,  52,   3,       1,   1,     1 },
+  { "NAME",       'L', 'A', OFTString,    53, 112,  66,       1,   1,     1 }
+};
+static TigerRecordInfo rtC_2000_Redistricting_info =
+  {
+    rtC_2000_Redistricting_fields,
+    sizeof(rtC_2000_Redistricting_fields) / sizeof(TigerFieldInfo),
+    112
+  };
+
+static TigerFieldInfo rtC_fields[] = {
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
+  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
+  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
+  { "FIPSYR",     'L', 'N', OFTString,    11,  12,   4,       1,   1,     1 },  //  otype mismatch
+  { "FIPS",       'L', 'N', OFTInteger,   13,  17,   5,       1,   1,     1 },
+  { "FIPSCC",     'L', 'A', OFTString,    18,  19,   2,       1,   1,     1 },
+  { "PDC",        'L', 'A', OFTString,    20,  20,   1,       1,   1,     1 },
+  { "LASAD",      'L', 'A', OFTString,    21,  22,   2,       1,   1,     1 },
+  { "ENTITY",     'L', 'A', OFTString,    23,  23,   1,       1,   1,     1 },
+  { "MA",         'L', 'N', OFTInteger,   24,  27,   4,       1,   1,     1 },
+  { "SD",         'L', 'N', OFTInteger,   28,  32,   5,       1,   1,     1 },
+  { "AIR",        'L', 'N', OFTInteger,   33,  36,   4,       1,   1,     1 },
+  { "VTD",        'R', 'A', OFTString,    37,  42,   6,       1,   1,     1 },
+  { "UA",         'L', 'N', OFTInteger,   43,  46,   4,       1,   1,     1 },
+  { "NAME",       'L', 'A', OFTString,    47, 112,  66,       1,   1,     1 }
+};
+static TigerRecordInfo rtC_info =
+  {
+    rtC_fields,
+    sizeof(rtC_fields) / sizeof(TigerFieldInfo),
+    112
+  };
+
+
 /************************************************************************/
 /*                          TigerEntityNames()                          */
 /************************************************************************/
@@ -66,62 +150,19 @@ TigerEntityNames::TigerEntityNames( OGRTigerDataSource * poDSIn,
                             const char * pszPrototypeModule )
 
 {
-    OGRFieldDefn        oField("",OFTInteger);
-
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "EntityNames" );
     poFeatureDefn->SetGeomType( wkbPoint );
 
-/* -------------------------------------------------------------------- */
-/*      Fields from type 9 record.                                      */
-/* -------------------------------------------------------------------- */
-    oField.Set( "MODULE", OFTString, 8 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "STATE", OFTInteger, 2 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "COUNTY", OFTInteger, 3 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FIPSYR", OFTString, 4 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FIPS", OFTInteger, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FIPSCC", OFTString, 2 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "PDC", OFTString, 1 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "LASAD", OFTString, 2 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "ENTITY", OFTString, 1 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "MA", OFTInteger, 4 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "SD", OFTInteger, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "AIR", OFTInteger, 4 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "VTD", OFTString, 6 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "UA", OFTInteger, 4 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "AITSCE", OFTInteger, 3 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "NAME", OFTString, 66 );
-    poFeatureDefn->AddFieldDefn( &oField );
+    if( GetVersion() >= TIGER_2002 ) {
+      psRTCInfo = &rtC_2002_info;
+    } else if( GetVersion() >= TIGER_2000_Redistricting ) {
+      psRTCInfo = &rtC_2000_Redistricting_info;
+    } else {
+      psRTCInfo = &rtC_info;
+    }
+
+    AddFieldDefns( psRTCInfo, poFeatureDefn );
 }
 
 /************************************************************************/
@@ -155,7 +196,7 @@ int TigerEntityNames::SetModule( const char * pszModule )
 OGRFeature *TigerEntityNames::GetFeature( int nRecordId )
 
 {
-    char        achRecord[112];
+    char        achRecord[OGR_TIGER_RECBUF_LEN];
 
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
@@ -165,9 +206,10 @@ OGRFeature *TigerEntityNames::GetFeature( int nRecordId )
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Read the raw record data from the file.                         */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Read the raw record data from the file.                         */
+    /* -------------------------------------------------------------------- */
+
     if( fpPrimary == NULL )
         return NULL;
 
@@ -179,7 +221,7 @@ OGRFeature *TigerEntityNames::GetFeature( int nRecordId )
         return NULL;
     }
 
-    if( VSIFRead( achRecord, sizeof(achRecord), 1, fpPrimary ) != 1 )
+    if( VSIFRead( achRecord, psRTCInfo->reclen, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %sC",
@@ -187,44 +229,13 @@ OGRFeature *TigerEntityNames::GetFeature( int nRecordId )
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set fields.                                                     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set fields.                                                     */
+    /* -------------------------------------------------------------------- */
+
     OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
-    SetField( poFeature, "STATE", achRecord, 6, 7 );
-    SetField( poFeature, "COUNTY", achRecord, 8, 10 );
-    if( GetVersion() < TIGER_2000_Redistricting )
-    {
-        SetField( poFeature, "FIPSYR", achRecord, 11, 12 );
-        SetField( poFeature, "FIPS", achRecord, 13, 17 );
-        SetField( poFeature, "FIPSCC", achRecord, 18, 19 );
-        SetField( poFeature, "PDC", achRecord, 20, 20 );
-        SetField( poFeature, "LASAD", achRecord, 21, 22 );
-        SetField( poFeature, "ENTITY", achRecord, 23, 23 );
-        SetField( poFeature, "MA", achRecord, 24, 27 );
-        SetField( poFeature, "SD", achRecord, 28, 32 );
-        SetField( poFeature, "AIR", achRecord, 33, 36 );
-        SetField( poFeature, "VTD", achRecord, 37, 42 );
-        SetField( poFeature, "UA", achRecord, 43, 46 );
-        SetField( poFeature, "NAME", achRecord, 47, 112 );
-    }
-    else
-    {
-        SetField( poFeature, "FIPSYR", achRecord, 11, 14 );
-        SetField( poFeature, "FIPS", achRecord, 15, 19 );
-        SetField( poFeature, "FIPSCC", achRecord, 20, 21 );
-        SetField( poFeature, "PDC", achRecord, 22, 22 );
-        SetField( poFeature, "LASAD", achRecord, 23, 24 );
-        SetField( poFeature, "ENTITY", achRecord, 25, 25 );
-        SetField( poFeature, "MA", achRecord, 26, 29 );
-        SetField( poFeature, "SD", achRecord, 30, 34 );
-        SetField( poFeature, "AIR", achRecord, 35, 38 );
-        SetField( poFeature, "VTD", achRecord, 39, 44 );
-        SetField( poFeature, "UA", achRecord, 45, 49 );
-        SetField( poFeature, "AITSCE", achRecord, 50, 52 );
-        SetField( poFeature, "NAME", achRecord, 53, 112 );
-    }
+    SetFields( psRTCInfo, poFeature, achRecord );
 
     return poFeature;
 }
@@ -233,35 +244,19 @@ OGRFeature *TigerEntityNames::GetFeature( int nRecordId )
 /*                           CreateFeature()                            */
 /************************************************************************/
 
-#define WRITE_REC_LEN 112
-
 OGRErr TigerEntityNames::CreateFeature( OGRFeature *poFeature )
 
 {
-    char        szRecord[WRITE_REC_LEN+1];
+    char        szRecord[OGR_TIGER_RECBUF_LEN];
 
-    if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
+    if( !SetWriteModule( FILE_CODE, psRTCInfo->reclen+2, poFeature ) )
         return OGRERR_FAILURE;
 
-    memset( szRecord, ' ', WRITE_REC_LEN );
+    memset( szRecord, ' ', psRTCInfo->reclen );
 
-    WriteField( poFeature, "STATE", szRecord, 6, 7, 'L', 'N' );
-    WriteField( poFeature, "COUNTY", szRecord, 8, 10, 'L', 'N' );
-    WriteField( poFeature, "FIPSYR", szRecord, 11, 14, 'L', 'N' );
-    WriteField( poFeature, "FIPS", szRecord, 15, 19, 'L', 'N' );
-    WriteField( poFeature, "FIPSCC", szRecord, 20, 21, 'L', 'A' );
-    WriteField( poFeature, "PDC", szRecord, 22, 22, 'L', 'A' );
-    WriteField( poFeature, "LASAD", szRecord, 23, 24, 'L', 'A' );
-    WriteField( poFeature, "ENTITY", szRecord, 25, 25, 'L', 'A' );
-    WriteField( poFeature, "MA", szRecord, 26, 29, 'L', 'N' );
-    WriteField( poFeature, "SD", szRecord, 30, 34, 'L', 'N' );
-    WriteField( poFeature, "AIR", szRecord, 35, 38, 'L', 'N' );
-    WriteField( poFeature, "VTD", szRecord, 39, 44, 'R', 'A' );
-    WriteField( poFeature, "UA", szRecord, 45, 49, 'L', 'N' );
-    WriteField( poFeature, "AITSCE", szRecord, 50, 52, 'L', 'N' );
-    WriteField( poFeature, "NAME", szRecord, 53, 112, 'L', 'A' );
+    WriteFields( psRTCInfo, poFeature, szRecord );
 
-    WriteRecord( szRecord, WRITE_REC_LEN, FILE_CODE );
+    WriteRecord( szRecord, psRTCInfo->reclen, FILE_CODE );
 
     return OGRERR_NONE;
 }

@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/12/26 00:20:19  mbp
+ * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
+ * first round implementation of TIGER_2002 support
+ *
  * Revision 1.7  2001/07/19 16:05:49  warmerda
  * clear out tabs
  *
@@ -58,6 +62,27 @@ CPL_CVSID("$Id$");
 
 #define FILE_CODE "H"
 
+static TigerFieldInfo rtH_fields[] = {
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
+  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       1,   1,     1 },  //  otype mismatch
+  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
+  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
+  { "TLID",       'R', 'N', OFTInteger,   11,  20,  10,       1,   1,     1 },
+  { "HIST",       'L', 'A', OFTString,    21,  21,   1,       1,   1,     1 },
+  { "SOURCE",     'L', 'A', OFTString,    22,  22,   1,       1,   1,     1 },
+  { "TLIDFR1",    'R', 'N', OFTInteger,   23,  32,  10,       1,   1,     1 },
+  { "TLIDFR2",    'R', 'N', OFTInteger,   33,  42,  10,       1,   1,     1 },
+  { "TLIDTO1",    'R', 'N', OFTInteger,   43,  52,  10,       1,   1,     1 },
+  { "TLIDTO2",    'R', 'N', OFTInteger,   53,  62,  10,       1,   1,     1 }
+};
+static TigerRecordInfo rtH_info =
+  {
+    rtH_fields,
+    sizeof(rtH_fields) / sizeof(TigerFieldInfo),
+    62
+  };
+
 /************************************************************************/
 /*                           TigerIDHistory()                           */
 /************************************************************************/
@@ -72,41 +97,13 @@ TigerIDHistory::TigerIDHistory( OGRTigerDataSource * poDSIn,
     poFeatureDefn = new OGRFeatureDefn( "IDHistory" );
     poFeatureDefn->SetGeomType( wkbNone );
 
-/* -------------------------------------------------------------------- */
-/*      Fields from record.                                             */
-/* -------------------------------------------------------------------- */
-    oField.Set( "MODULE", OFTString, 8 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FILE", OFTString, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "STATE", OFTInteger, 2 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "COUNTY", OFTInteger, 3 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "TLID", OFTInteger, 10 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "HIST", OFTString, 1 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "SOURCE", OFTString, 1 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "TLIDFR1", OFTInteger, 10 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "TLIDFR2", OFTInteger, 10 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "TLIDTO1", OFTInteger, 10 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "TLIDTO2", OFTInteger, 10 );
-    poFeatureDefn->AddFieldDefn( &oField );
+    psRTHInfo = &rtH_info;
+
+    /* -------------------------------------------------------------------- */
+    /*      Fields from record type H                                       */
+    /* -------------------------------------------------------------------- */
+
+    AddFieldDefns(psRTHInfo, poFeatureDefn);
 }
 
 /************************************************************************/
@@ -140,7 +137,7 @@ int TigerIDHistory::SetModule( const char * pszModule )
 OGRFeature *TigerIDHistory::GetFeature( int nRecordId )
 
 {
-    char        achRecord[62];
+    char        achRecord[OGR_TIGER_RECBUF_LEN];
 
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
@@ -164,7 +161,7 @@ OGRFeature *TigerIDHistory::GetFeature( int nRecordId )
         return NULL;
     }
 
-    if( VSIFRead( achRecord, sizeof(achRecord), 1, fpPrimary ) != 1 )
+    if( VSIFRead( achRecord, psRTHInfo->reclen, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %sH",
@@ -177,16 +174,7 @@ OGRFeature *TigerIDHistory::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
     OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
-    SetField( poFeature, "FILE", achRecord, 6, 10 );
-    SetField( poFeature, "STATE", achRecord, 6, 7 );
-    SetField( poFeature, "COUNTY", achRecord, 8, 10 );
-    SetField( poFeature, "TLID", achRecord, 11, 20 );
-    SetField( poFeature, "HIST", achRecord, 21, 21 );
-    SetField( poFeature, "SOURCE", achRecord, 22, 22 );
-    SetField( poFeature, "TLIDFR1", achRecord, 23, 32 );
-    SetField( poFeature, "TLIDFR2", achRecord, 33, 42 );
-    SetField( poFeature, "TLIDTO1", achRecord, 43, 52 );
-    SetField( poFeature, "TLIDTO2", achRecord, 53, 62 );
+    SetFields( psRTHInfo, poFeature, achRecord );
 
     return poFeature;
 }
@@ -195,30 +183,19 @@ OGRFeature *TigerIDHistory::GetFeature( int nRecordId )
 /*                           CreateFeature()                            */
 /************************************************************************/
 
-#define WRITE_REC_LEN 62
-
 OGRErr TigerIDHistory::CreateFeature( OGRFeature *poFeature )
 
 {
-    char        szRecord[WRITE_REC_LEN+1];
+    char        szRecord[OGR_TIGER_RECBUF_LEN];
 
-    if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
+    if( !SetWriteModule( FILE_CODE, psRTHInfo->reclen+2, poFeature ) )
         return OGRERR_FAILURE;
 
-    memset( szRecord, ' ', WRITE_REC_LEN );
+    memset( szRecord, ' ', psRTHInfo->reclen );
 
-    WriteField( poFeature, "FILE", szRecord, 6, 10, 'L', 'N' );
-    WriteField( poFeature, "STATE", szRecord, 6, 7, 'L', 'N' );
-    WriteField( poFeature, "COUNTY", szRecord, 8, 10, 'L', 'N' );
-    WriteField( poFeature, "TLID", szRecord, 11, 20, 'R', 'N' );
-    WriteField( poFeature, "HIST", szRecord, 21, 21, 'L', 'A' );
-    WriteField( poFeature, "SOURCE", szRecord, 22, 22, 'L', 'A' );
-    WriteField( poFeature, "TLIDFR1", szRecord, 23, 32, 'R', 'N' );
-    WriteField( poFeature, "TLIDFR2", szRecord, 33, 42, 'R', 'N' );
-    WriteField( poFeature, "TLIDTO1", szRecord, 43, 52, 'R', 'N' );
-    WriteField( poFeature, "TLIDTO2", szRecord, 53, 62, 'R', 'N' );
+    WriteFields( psRTHInfo, poFeature, szRecord );
 
-    WriteRecord( szRecord, WRITE_REC_LEN, FILE_CODE );
+    WriteRecord( szRecord, psRTHInfo->reclen, FILE_CODE );
 
     return OGRERR_NONE;
 }

@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/12/26 00:20:19  mbp
+ * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
+ * first round implementation of TIGER_2002 support
+ *
  * Revision 1.11  2001/07/24 18:04:43  warmerda
  * Avoid crash if fp is NULL in establish record length.
  *
@@ -385,8 +389,14 @@ int TigerFileBase::WriteRecord( char *pachRecord, int nRecLen,
 
     pachRecord[0] = *pszType;
 
-    /* for some reason type 5 files lack version, otherwise set to Cen2000 */
-    if( !EQUAL(pszType, "5") )
+
+    /*
+     * Prior to TIGER_2002, type 5 files lacked the version.  So write
+     * the version in the record iff we're using TIGER_2002 or higher,
+     * or if this is not type "5"
+     */
+    if ( (poDS->GetVersion() >= TIGER_2002) ||
+	 (!EQUAL(pszType, "5")) )
     {
         char    szVersion[5];
         sprintf( szVersion, "%04d", poDS->GetVersionCode() );
@@ -468,4 +478,54 @@ int TigerFileBase::SetWriteModule( const char *pszExtension, int nRecLen,
     pszModule = CPLStrdup( szFullModule );
 
     return TRUE;
+}
+
+void TigerFileBase::AddFieldDefns(TigerRecordInfo *psRTInfo,
+				  OGRFeatureDefn  *poFeatureDefn)
+{
+  OGRFieldDefn        oField("",OFTInteger);
+  int i;
+  for (i=0; i<psRTInfo->nfields; ++i) {
+    if (psRTInfo->fields[i].bDefine) {
+      oField.Set( psRTInfo->fields[i].fieldname,
+		  psRTInfo->fields[i].OGRtype,
+		  psRTInfo->fields[i].len );
+      poFeatureDefn->AddFieldDefn( &oField );
+    }
+  }
+}
+
+
+void TigerFileBase::SetFields(TigerRecordInfo *psRTInfo,
+			      OGRFeature      *poFeature,
+			      char            *achRecord)
+{
+  int i;
+  for (i=0; i<psRTInfo->nfields; ++i) {
+    if (psRTInfo->fields[i].bSet) {
+      SetField( poFeature,
+		psRTInfo->fields[i].fieldname,
+		achRecord, 
+		psRTInfo->fields[i].beg,
+		psRTInfo->fields[i].end );
+    }
+  }
+}
+
+void TigerFileBase::WriteFields(TigerRecordInfo *psRTInfo,
+				OGRFeature      *poFeature,
+				char            *szRecord)
+{
+  int i;
+  for (i=0; i<psRTInfo->nfields; ++i) {
+    if (psRTInfo->fields[i].bWrite) {
+      WriteField( poFeature,
+		  psRTInfo->fields[i].fieldname,
+		  szRecord, 
+		  psRTInfo->fields[i].beg,
+		  psRTInfo->fields[i].end,
+		  psRTInfo->fields[i].fmt,
+		  psRTInfo->fields[i].type );
+    }
+  }
 }

@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/12/26 00:20:19  mbp
+ * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
+ * first round implementation of TIGER_2002 support
+ *
  * Revision 1.3  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -54,6 +58,8 @@
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+#include "ogr_tiger.h"
 
 CPL_CVSID("$Id$");
 
@@ -141,9 +147,15 @@ int main( int nArgc, char ** papszArgv )
 /*      Some information messages.                                      */
 /* -------------------------------------------------------------------- */
     if( bVerbose )
+    {
         printf( "INFO: Open of `%s'\n"
                 "using driver `%s' successful.\n",
                 pszDataSource, poDriver->GetName() );
+	printf("Tiger Version: %s\n", 
+	       TigerVersionString(((OGRTigerDataSource*)poDS)->GetVersion()));
+    }
+
+
 
     if( bVerbose && !EQUAL(pszDataSource,poDS->GetName()) )
     {
@@ -151,6 +163,7 @@ int main( int nArgc, char ** papszArgv )
                 "      different from user name `%s'.\n",
                 poDS->GetName(), pszDataSource );
     }
+
 
 /* -------------------------------------------------------------------- */
 /*      Process each data source layer.                                 */

@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/12/26 00:20:19  mbp
+ * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
+ * first round implementation of TIGER_2002 support
+ *
  * Revision 1.7  2001/07/19 16:05:49  warmerda
  * clear out tabs
  *
@@ -56,6 +60,230 @@
 
 CPL_CVSID("$Id$");
 
+static TigerFieldInfo rtA_2002_fields[] = {
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
+  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
+  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1,     1 },
+  { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       1,   1,     1 },
+  { "STATECU",    'L', 'N', OFTInteger,   26,  27,   2,       1,   1,     1 },
+  { "COUNTYCU",   'L', 'N', OFTInteger,   28,  30,   3,       1,   1,     1 },
+
+  { "TRACT",      'L', 'N', OFTInteger,   31,  36,   6,       1,   1,     1 },
+  { "BLOCK",      'L', 'N', OFTInteger,   37,  40,   4,       1,   1,     1 },
+  { "BLOCKSUFCU", 'L', 'A', OFTString,    41,  41,   1,       1,   1,     1 },
+
+  { "RS-A1",      'L', 'A', OFTString,    42,  42,   1,       1,   1,     1 },
+  { "AIANHHFPCU", 'L', 'N', OFTInteger,   43,  47,   5,       1,   1,     1 },
+  { "AIANHHCU",   'L', 'N', OFTInteger,   48,  51,   4,       1,   1,     1 },
+  { "AIHHTLICU",  'L', 'A', OFTString,    52,  52,   1,       1,   1,     1 },
+  { "ANRCCU",     'L', 'N', OFTInteger,   53,  57,   5,       1,   1,     1 },
+  { "AITSCECU",   'L', 'N', OFTInteger,   58,  60,   3,       1,   1,     1 },
+  { "AITSCU",     'L', 'N', OFTInteger,   61,  65,   5,       1,   1,     1 },
+  { "CONCITCU",   'L', 'N', OFTInteger,   66,  70,   5,       1,   1,     1 },
+  { "COUSUBCU",   'L', 'N', OFTInteger,   71,  75,   5,       1,   1,     1 },
+  { "SUBMCDCU",   'L', 'N', OFTInteger,   76,  80,   5,       1,   1,     1 },
+  { "PLACECU",    'L', 'N', OFTInteger,   81,  85,   5,       1,   1,     1 },
+  { "SDELMCU",    'L', 'A', OFTString,    86,  90,   5,       1,   1,     1 },
+  { "SDSECCU",    'L', 'A', OFTString,    91,  95,   5,       1,   1,     1 },
+  { "SDUNICU",    'L', 'A', OFTString,    96, 100,   5,       1,   1,     1 },
+  { "MSACMSACU",  'L', 'N', OFTInteger,  101, 104,   4,       1,   1,     1 },
+  { "PMSACU",     'L', 'N', OFTInteger,  105, 108,   4,       1,   1,     1 },
+  { "NECMACU",    'L', 'N', OFTInteger,  109, 112,   4,       1,   1,     1 },
+  { "CDCU",       'R', 'N', OFTInteger,  113, 114,   2,       1,   1,     1 },
+  { "RS-A2",      'L', 'A', OFTString,   115, 119,   5,       1,   1,     1 },
+  { "RS-A3",      'R', 'A', OFTString,   120, 122,   3,       1,   1,     1 },
+  { "RS-A4",      'R', 'A', OFTString,   123, 128,   6,       1,   1,     1 },
+  { "RS-A5",      'R', 'A', OFTString,   129, 131,   3,       1,   1,     1 },
+  { "RS-A6",      'R', 'A', OFTString,   132, 134,   3,       1,   1,     1 },
+  { "RS-A7",      'R', 'A', OFTString,   135, 139,   5,       1,   1,     1 },
+  { "RS-A8",      'R', 'A', OFTString,   140, 145,   6,       1,   1,     1 },
+  { "RS-A9",      'L', 'A', OFTString,   146, 151,   6,       1,   1,     1 },
+  { "RS-A10",     'L', 'A', OFTString,   152, 157,   6,       1,   1,     1 },
+  { "RS-A11",     'L', 'A', OFTString,   158, 163,   6,       1,   1,     1 },
+  { "RS-A12",     'L', 'A', OFTString,   164, 169,   6,       1,   1,     1 },
+  { "RS-A13",     'L', 'A', OFTString,   170, 175,   6,       1,   1,     1 },
+  { "RS-A14",     'L', 'A', OFTString,   176, 181,   6,       1,   1,     1 },
+  { "RS-A15",     'L', 'A', OFTString,   182, 186,   5,       1,   1,     1 },
+  { "RS-A16",     'L', 'A', OFTString,   187, 187,   1,       1,   1,     1 },
+  { "RS-A17",     'L', 'A', OFTString,   188, 193,   6,       1,   1,     1 },
+  { "RS-A18",     'L', 'A', OFTString,   194, 199,   6,       1,   1,     1 },
+  { "RS-A19",     'L', 'A', OFTString,   200, 210,  11,       1,   1,     1 },
+};
+static TigerRecordInfo rtA_2002_info =
+  {
+    rtA_2002_fields,
+    sizeof(rtA_2002_fields) / sizeof(TigerFieldInfo),
+    210
+  };
+
+
+static TigerFieldInfo rtA_fields[] = {
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
+  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       1,   1,     1 },  //  otype mismatch
+  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
+  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
+  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1,     1 },
+  { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       1,   1,     1 },
+  { "FAIR",       'L', 'N', OFTInteger,   26,  30,   5,       1,   1,     1 },
+  { "FMCD",       'L', 'N', OFTInteger,   31,  35,   5,       1,   1,     1 },  //  beg mismatch,end mismatch
+  { "FPL",        'L', 'N', OFTInteger,   36,  40,   5,       1,   1,     1 },
+  { "CTBNA90",    'L', 'N', OFTInteger,   41,  46,   6,       1,   1,     1 },
+  { "BLK90",      'L', 'A', OFTString,    47,  50,   4,       1,   1,     1 },
+  { "CD106",      'L', 'N', OFTInteger,   51,  52,   2,       1,   1,     1 },
+  { "CD108",      'L', 'N', OFTInteger,   53,  54,   2,       1,   1,     1 },
+  { "SDELM",      'L', 'A', OFTString,    55,  59,   5,       1,   1,     1 },
+  { "SDSEC",      'L', 'N', OFTString,    65,  69,   5,       1,   1,     1 },  //  otype mismatch
+  { "SDUNI",      'L', 'A', OFTString,    70,  74,   5,       1,   1,     1 },
+  { "TAZ",        'R', 'A', OFTString,    75,  80,   6,       1,   1,     1 },
+  { "UA",         'L', 'N', OFTInteger,   81,  84,   4,       1,   1,     1 },
+  { "URBFLAG",    'L', 'A', OFTString,    85,  85,   1,       1,   1,     1 },
+  { "CTPP",       'L', 'A', OFTString,    86,  89,   4,       1,   1,     1 },
+  { "STATE90",    'L', 'N', OFTInteger,   90,  91,   2,       1,   1,     1 },
+  { "COUN90",     'L', 'N', OFTInteger,   92,  94,   3,       1,   1,     1 },
+  { "AIR90",      'L', 'N', OFTInteger,   95,  98,   4,       1,   1,     1 }
+};
+
+static TigerRecordInfo rtA_info =
+  {
+    rtA_fields,
+    sizeof(rtA_fields) / sizeof(TigerFieldInfo),
+    98
+  };
+
+
+static TigerFieldInfo rtS_2002_fields[] = {
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
+  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       0,   0,     1 },
+  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       0,   0,     1 },
+  { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       0,   0,     1 },
+  { "STATE",      'L', 'N', OFTInteger,   26,  27,   2,       1,   1,     1 },
+  { "COUNTY",     'L', 'N', OFTInteger,   28,  30,   3,       1,   1,     1 },
+  { "TRACT",      'L', 'N', OFTInteger,   31,  36,   6,       0,   0,     1 },
+  { "BLOCK",      'L', 'N', OFTInteger,   37,  40,   4,       0,   0,     1 },
+  { "BLKGRP",     'L', 'N', OFTInteger,   41,  41,   1,       1,   1,     1 },
+  { "AIANHHFP",   'L', 'N', OFTInteger,   42,  46,   5,       1,   1,     1 },
+  { "AIANHH",     'L', 'N', OFTInteger,   47,  50,   4,       1,   1,     1 },
+  { "AIHHTLI",    'L', 'A', OFTString,    51,  51,   1,       1,   1,     1 },
+  { "ANRC",       'L', 'N', OFTInteger,   52,  56,   5,       1,   1,     1 },
+  { "AITSCE",     'L', 'N', OFTInteger,   57,  59,   3,       1,   1,     1 },
+  { "AITS",       'L', 'N', OFTInteger,   60,  64,   5,       1,   1,     1 },
+  { "CONCIT",     'L', 'N', OFTInteger,   65,  69,   5,       1,   1,     1 },
+  { "COUSUB",     'L', 'N', OFTInteger,   70,  74,   5,       1,   1,     1 },
+  { "SUBMCD",     'L', 'N', OFTInteger,   75,  79,   5,       1,   1,     1 },
+  { "PLACE",      'L', 'N', OFTInteger,   80,  84,   5,       1,   1,     1 },
+  { "SDELM",      'L', 'N', OFTInteger,   85,  89,   5,       1,   1,     1 },
+  { "SDSEC",      'L', 'N', OFTInteger,   90,  94,   5,       1,   1,     1 },
+  { "SDUNI",      'L', 'N', OFTInteger,   95,  99,   5,       1,   1,     1 },
+  { "MSACMSA",    'L', 'N', OFTInteger,  100, 103,   4,       1,   1,     1 },
+  { "PMSA",       'L', 'N', OFTInteger,  104, 107,   4,       1,   1,     1 },
+  { "NECMA",      'L', 'N', OFTInteger,  108, 111,   4,       1,   1,     1 },
+  { "CD106",      'L', 'N', OFTInteger,  112, 113,   2,       1,   1,     1 },
+  // Note: spec has CD106 with 'R', but sample data file (08005) seems to
+  // have been written with 'L', so I'm using 'L' here.  mbp Tue Dec 24 19:03:40 2002
+  { "CD108",      'R', 'N', OFTInteger,  114, 115,   2,       1,   1,     1 },
+  { "PUMA5",      'L', 'N', OFTInteger,  116, 120,   5,       1,   1,     1 },
+  { "PUMA1",      'L', 'N', OFTInteger,  121, 125,   5,       1,   1,     1 },
+  { "ZCTA5",      'L', 'A', OFTString,   126, 130,   5,       1,   1,     1 },
+  { "ZCTA3",      'L', 'A', OFTString,   131, 133,   3,       1,   1,     1 },
+  { "TAZ",        'L', 'A', OFTString,   134, 139,   6,       1,   1,     1 },
+  { "TAZCOMB",    'L', 'A', OFTString,   140, 145,   6,       1,   1,     1 },
+  { "UA",         'L', 'N', OFTInteger,  146, 150,   5,       1,   1,     1 },
+  { "UR",         'L', 'A', OFTString,   151, 151,   1,       1,   1,     1 },
+  { "VTD",        'R', 'A', OFTString,   152, 157,   6,       1,   1,     1 },
+  { "SLDU",       'R', 'A', OFTString,   158, 160,   3,       1,   1,     1 },
+  { "SLDL",       'R', 'A', OFTString,   161, 163,   3,       1,   1,     1 },
+  { "UGA",        'L', 'A', OFTString,   164, 168,   5,       1,   1,     1 },
+};
+static TigerRecordInfo rtS_2002_info =
+  {
+    rtS_2002_fields,
+    sizeof(rtS_2002_fields) / sizeof(TigerFieldInfo),
+    168
+  };
+
+
+static TigerFieldInfo rtS_2000_Redistricting_fields[] = {
+  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       0,   0,     1 },  //  otype mismatch
+  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       0,   0,     1 },
+  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       0,   0,     1 },
+  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       0,   0,     1 },
+  { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       0,   0,     1 },
+  { "WATER",      'L', 'N', OFTString,    26,  26,   1,       1,   1,     1 },  //  otype mismatch
+  { "CMSAMSA",    'L', 'N', OFTInteger,   27,  30,   4,       1,   1,     1 },
+  { "PMSA",       'L', 'N', OFTInteger,   31,  34,   4,       1,   1,     1 },
+  { "AIANHH",     'L', 'N', OFTInteger,   35,  39,   5,       1,   1,     1 },
+  { "AIR",        'L', 'N', OFTInteger,   40,  43,   4,       1,   1,     1 },
+  { "TRUST",      'L', 'A', OFTString,    44,  44,   1,       1,   1,     1 },
+  { "ANRC",       'L', 'A', OFTInteger,   45,  46,   2,       1,   1,     1 },  //  otype mismatch
+  { "STATECU",    'L', 'N', OFTInteger,   47,  48,   2,       1,   1,     1 },
+  { "COUNTYCU",   'L', 'N', OFTInteger,   49,  51,   3,       1,   1,     1 },
+  { "FCCITY",     'L', 'N', OFTInteger,   52,  56,   5,       1,   1,     1 },
+  { "FMCD",       'L', 'N', OFTInteger,   57,  61,   5,       0,   0,     1 },
+  { "FSMCD",      'L', 'N', OFTInteger,   62,  66,   5,       1,   1,     1 },
+  { "PLACE",      'L', 'N', OFTInteger,   67,  71,   5,       1,   1,     1 },
+  { "CTBNA00",    'L', 'N', OFTInteger,   72,  77,   6,       1,   1,     1 },
+  { "BLK00",      'L', 'N', OFTString,    78,  81,   4,       1,   1,     1 },  //  otype mismatch
+  { "RS10",       'R', 'N', OFTInteger,   82,  82,   0,       0,   1,     1 },  //  otype mismatch
+  { "CDCU",       'L', 'N', OFTInteger,   83,  84,   2,       1,   1,     1 },
+
+  { "SLDU",       'R', 'A', OFTString,    85,  87,   3,       1,   1,     1 },
+  { "SLDL",       'R', 'A', OFTString,    88,  90,   3,       1,   1,     1 },
+  { "UGA",        'L', 'A', OFTString,    91,  96,   5,       1,   1,     1 },
+  { "BLKGRP",     'L', 'N', OFTInteger,   97, 102,   1,       1,   1,     1 },
+  { "VTD",        'R', 'A', OFTString,    97, 102,   6,       1,   1,     1 },
+  { "STATECOL",   'L', 'N', OFTInteger,  103, 104,   2,       1,   1,     1 },
+  { "COUNTYCOL",  'L', 'N', OFTInteger,  105, 107,   3,       1,   1,     1 },
+  { "BLOCKCOL",   'R', 'N', OFTInteger,  108, 112,   5,       1,   1,     1 },
+  { "BLKSUFCOL",  'L', 'A', OFTString,   113, 113,   1,       1,   1,     1 },
+  { "ZCTA5",      'L', 'A', OFTString,   114, 118,   5,       1,   1,     1 }
+
+};
+
+static TigerRecordInfo rtS_2000_Redistricting_info =
+  {
+    rtS_2000_Redistricting_fields,
+    sizeof(rtS_2000_Redistricting_fields) / sizeof(TigerFieldInfo),
+    120
+  };
+
+static TigerFieldInfo rtS_fields[] = {
+  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       0,   0,     1 },  //  otype mismatch
+  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       0,   0,     1 },
+  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       0,   0,     1 },
+  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       0,   0,     1 },
+  { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       0,   0,     1 },
+
+  { "WATER",      'L', 'N', OFTString,    26,  26,   1,       1,   1,     1 },  //  otype mismatch
+  { "CMSAMSA",    'L', 'N', OFTInteger,   27,  30,   4,       1,   1,     1 },
+  { "PMSA",       'L', 'N', OFTInteger,   31,  34,   4,       1,   1,     1 },
+  { "AIANHH",     'L', 'N', OFTInteger,   35,  39,   5,       1,   1,     1 },
+  { "AIR",        'L', 'N', OFTInteger,   40,  43,   4,       1,   1,     1 },
+  { "TRUST",      'L', 'A', OFTString,    44,  44,   1,       1,   1,     1 },
+  { "ANRC",       'L', 'A', OFTInteger,   45,  46,   2,       1,   1,     1 },  //  otype mismatch
+  { "STATECU",    'L', 'N', OFTInteger,   47,  48,   2,       1,   1,     1 },
+  { "COUNTYCU",   'L', 'N', OFTInteger,   49,  51,   3,       1,   1,     1 },
+  { "FCCITY",     'L', 'N', OFTInteger,   52,  56,   5,       1,   1,     1 },
+  { "FMCD",       'L', 'N', OFTInteger,   57,  61,   5,       0,   0,     1 },
+  { "FSMCD",      'L', 'N', OFTInteger,   62,  66,   5,       1,   1,     1 },
+  { "PLACE",      'L', 'N', OFTInteger,   67,  71,   5,       1,   1,     1 },
+  { "CTBNA00",    'L', 'N', OFTInteger,   72,  77,   6,       1,   1,     1 },
+  { "BLK00",      'L', 'N', OFTString,    78,  81,   4,       1,   1,     1 },  //  otype mismatch
+  { "RS10",       'R', 'N', OFTInteger,   82,  82,   0,       0,   1,     1 },  //  otype mismatch
+  { "CDCU",       'L', 'N', OFTInteger,   83,  84,   2,       1,   1,     1 },
+
+  { "STSENATE",   'L', 'A', OFTString,    85,  90,   6,       1,   1,     1 },
+  { "STHOUSE",    'L', 'A', OFTString,    91,  96,   6,       1,   1,     1 },
+  { "VTD00",      'L', 'A', OFTString,    97, 102,   6,       1,   1,     1 }
+};
+static TigerRecordInfo rtS_info =
+  {
+    rtS_fields,
+    sizeof(rtS_fields) / sizeof(TigerFieldInfo),
+    120
+  };
+
 /************************************************************************/
 /*                            TigerPolygon()                            */
 /************************************************************************/
@@ -64,7 +292,7 @@ TigerPolygon::TigerPolygon( OGRTigerDataSource * poDSIn,
                                   const char * pszPrototypeModule )
 
 {
-    OGRFieldDefn        oField("",OFTInteger);
+  //    OGRFieldDefn        oField("",OFTInteger);
 
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "Polygon" );
@@ -73,171 +301,32 @@ TigerPolygon::TigerPolygon( OGRTigerDataSource * poDSIn,
     fpRTS = NULL;
     bUsingRTS = TRUE;
 
-/* -------------------------------------------------------------------- */
-/*      Fields from type 9 record.                                      */
-/* -------------------------------------------------------------------- */
-    oField.Set( "MODULE", OFTString, 8 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FILE", OFTString, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "STATE", OFTInteger, 2 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "COUNTY", OFTInteger, 3 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "CENID", OFTString, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "POLYID", OFTInteger, 10 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FAIR", OFTInteger, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FMCD", OFTInteger, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FPL", OFTInteger, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "CTBNA90", OFTInteger, 6 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "BLK90", OFTString, 4 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "CD106", OFTInteger, 2 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "CD108", OFTInteger, 2 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "SDELM", OFTString, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "SDSEC", OFTString, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "SDUNI", OFTString, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "TAZ", OFTString, 6 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "UA", OFTInteger, 4 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "URBFLAG", OFTString, 1 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "CTPP", OFTString, 4 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "STATE90", OFTInteger, 2 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "COUN90", OFTInteger, 3 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "AIR90", OFTInteger, 4 );
-    poFeatureDefn->AddFieldDefn( &oField );
+    if( poDS->GetVersion() >= TIGER_2002 ) {
+      psRTAInfo = &rtA_2002_info;
+    } else {
+      psRTAInfo = &rtA_info;
+    }
 
-/* -------------------------------------------------------------------- */
-/*      Add the RTS records if it is available.                         */
-/* -------------------------------------------------------------------- */
-    if( bUsingRTS )
-    {
-        oField.Set( "WATER", OFTString, 1 );
-        poFeatureDefn->AddFieldDefn( &oField );
+    if( poDS->GetVersion() >= TIGER_2002 ) {
+      psRTSInfo = &rtS_2002_info;
+    } else if( poDS->GetVersion() >= TIGER_2000_Redistricting ) {
+      psRTSInfo = &rtS_2000_Redistricting_info;
+    } else {
+      psRTSInfo = &rtS_info;
+    }
 
-        oField.Set( "CMSAMSA", OFTInteger, 4 );
-        poFeatureDefn->AddFieldDefn( &oField );
+    /* -------------------------------------------------------------------- */
+    /*      Fields from type A record.                                      */
+    /* -------------------------------------------------------------------- */
 
-        oField.Set( "PMSA", OFTInteger, 4 );
-        poFeatureDefn->AddFieldDefn( &oField );
+    AddFieldDefns(psRTAInfo, poFeatureDefn);
 
-        oField.Set( "AIANHH", OFTInteger, 5 );
-        poFeatureDefn->AddFieldDefn( &oField );
-    
-        oField.Set( "AIR", OFTInteger, 4 );
-        poFeatureDefn->AddFieldDefn( &oField );
+    /* -------------------------------------------------------------------- */
+    /*      Add the RTS records if it is available.                         */
+    /* -------------------------------------------------------------------- */
 
-        oField.Set( "TRUST", OFTString, 1 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "ANRC", OFTInteger, 2 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "STATECU", OFTInteger, 2 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "COUNTYCU", OFTInteger, 3 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "FCCITY", OFTInteger, 5 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "FSMCD", OFTInteger, 5 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "PLACE", OFTInteger, 5 );
-        poFeatureDefn->AddFieldDefn( &oField );
-    
-        oField.Set( "CTBNA00", OFTInteger, 6 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "BLK00", OFTString, 4 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "CDCU", OFTInteger, 2 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        if( poDS->GetVersion() < TIGER_2000_Redistricting )
-        {
-            oField.Set( "STSENATE", OFTString, 6 );
-            poFeatureDefn->AddFieldDefn( &oField );
-            
-            oField.Set( "STHOUSE", OFTString, 6 );
-            poFeatureDefn->AddFieldDefn( &oField );
-            
-            oField.Set( "VTD00", OFTString, 6 );
-            poFeatureDefn->AddFieldDefn( &oField );
-        }
-        else
-        {
-            oField.Set( "SLDU", OFTString, 3 );
-            poFeatureDefn->AddFieldDefn( &oField );
-            
-            oField.Set( "SLDL", OFTString, 3 );
-            poFeatureDefn->AddFieldDefn( &oField );
-            
-            oField.Set( "UGA", OFTString, 5 );
-            poFeatureDefn->AddFieldDefn( &oField );
-            
-            oField.Set( "BLKGRP", OFTInteger, 1 );
-            poFeatureDefn->AddFieldDefn( &oField );
-            
-            oField.Set( "VTD", OFTString, 6 );
-            poFeatureDefn->AddFieldDefn( &oField );
-            
-            oField.Set( "STATECOL", OFTInteger, 2 );
-            poFeatureDefn->AddFieldDefn( &oField );
-            
-            oField.Set( "COUNTYCOL", OFTInteger, 3 );
-            poFeatureDefn->AddFieldDefn( &oField );
-            
-            oField.Set( "BLOCKCOL", OFTInteger, 5 );
-            poFeatureDefn->AddFieldDefn( &oField );
-            
-            oField.Set( "BLKSUFCOL", OFTString, 1 );
-            poFeatureDefn->AddFieldDefn( &oField );
-            
-            oField.Set( "ZCTA5", OFTString, 5 );
-            poFeatureDefn->AddFieldDefn( &oField );
-        }
+    if( bUsingRTS ) {
+      AddFieldDefns(psRTSInfo, poFeatureDefn);
     }
 }
 
@@ -299,7 +388,7 @@ int TigerPolygon::SetModule( const char * pszModule )
 OGRFeature *TigerPolygon::GetFeature( int nRecordId )
 
 {
-    char        achRecord[98+2];
+  char        achRecord[OGR_TIGER_RECBUF_LEN];
 
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
@@ -331,40 +420,21 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set fields.                                                     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set fields.                                                     */
+    /* -------------------------------------------------------------------- */
+
     OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
-    SetField( poFeature, "FILE", achRecord, 6, 10 );
-    SetField( poFeature, "STATE", achRecord, 6, 7 );
-    SetField( poFeature, "COUNTY", achRecord, 8, 10 );
-    SetField( poFeature, "CENID", achRecord, 11, 15 );
-    SetField( poFeature, "POLYID", achRecord, 16, 25 );
-    SetField( poFeature, "FAIR", achRecord, 26, 30 );
-    SetField( poFeature, "FMCD", achRecord, 31, 35 );
-    SetField( poFeature, "FPL", achRecord, 36, 40 );
-    SetField( poFeature, "CTBNA90", achRecord, 41, 46 );
-    SetField( poFeature, "BLK90", achRecord, 47, 50 );
-    SetField( poFeature, "CD106", achRecord, 51, 52 );
-    SetField( poFeature, "CD108", achRecord, 53, 54 );
-    SetField( poFeature, "SDELM", achRecord, 55, 59 );
-    SetField( poFeature, "SDSEC", achRecord, 65, 69 );
-    SetField( poFeature, "SDUNI", achRecord, 70, 74 );
-    SetField( poFeature, "TAZ", achRecord, 75, 80 );
-    SetField( poFeature, "UA", achRecord, 81, 84 );
-    SetField( poFeature, "URBFLAG", achRecord, 85, 85 );
-    SetField( poFeature, "CTPP", achRecord, 86, 89 );
-    SetField( poFeature, "STATE90", achRecord, 90, 91 );
-    SetField( poFeature, "COUN90", achRecord, 92, 94 );
-    SetField( poFeature, "AIR90", achRecord, 95, 98 );
+    SetFields( psRTAInfo, poFeature, achRecord );
 
-/* -------------------------------------------------------------------- */
-/*      Read RTS record, and apply fields.                              */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Read RTS record, and apply fields.                              */
+    /* -------------------------------------------------------------------- */
+
     if( fpRTS != NULL )
     {
-        char    achRTSRec[120];
+        char    achRTSRec[OGR_TIGER_RECBUF_LEN];
 
         if( VSIFSeek( fpRTS, nRecordId * nRTSRecLen, SEEK_SET ) != 0 )
         {
@@ -374,7 +444,7 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
             return NULL;
         }
 
-        if( VSIFRead( achRTSRec, 120, 1, fpRTS ) != 1 )
+        if( VSIFRead( achRTSRec, psRTSInfo->reclen, 1, fpRTS ) != 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to read record %d of %sS",
@@ -382,42 +452,8 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
             return NULL;
         }
 
-        SetField( poFeature, "WATER", achRTSRec, 26, 26 );
-        SetField( poFeature, "CMSAMSA", achRTSRec, 27, 30 );
-        SetField( poFeature, "PMSA", achRTSRec, 31, 34 );
-        SetField( poFeature, "AIANHH", achRTSRec, 35, 39 );
-        SetField( poFeature, "AIR", achRTSRec, 40, 43 );
-        SetField( poFeature, "TRUST", achRTSRec, 44, 44 );
-        SetField( poFeature, "ANRC", achRTSRec, 45, 46 );
-        SetField( poFeature, "STATECU", achRTSRec, 47, 48 );
-        SetField( poFeature, "COUNTYCU", achRTSRec, 49, 51 );
-        SetField( poFeature, "FCCITY", achRTSRec, 52, 56 );
-        SetField( poFeature, "FSMCD", achRTSRec, 62, 66 );
-        SetField( poFeature, "PLACE", achRTSRec, 67, 71 );
-        SetField( poFeature, "CTBNA00", achRTSRec, 72, 77 );
-        SetField( poFeature, "BLK00", achRTSRec, 78, 81 );
-        SetField( poFeature, "RS10", achRTSRec, 82, 82 );
-        SetField( poFeature, "CDCU", achRTSRec, 83, 84 );
+	SetFields( psRTSInfo, poFeature, achRTSRec );
 
-        if( GetVersion() < TIGER_2000_Redistricting )
-        {
-            SetField( poFeature, "STSENATE", achRTSRec, 85, 90 );
-            SetField( poFeature, "STHOUSE", achRTSRec, 91, 96 );
-            SetField( poFeature, "VTD00", achRTSRec, 97, 102 );
-        }
-        else
-        {
-            SetField( poFeature, "SLDU", achRTSRec, 85, 87 );
-            SetField( poFeature, "SLDL", achRTSRec, 88, 90 );
-            SetField( poFeature, "UGA", achRTSRec, 91, 96 );
-            SetField( poFeature, "BLKGRP", achRTSRec, 97, 102 );
-            SetField( poFeature, "VTD", achRTSRec, 97, 102 );
-            SetField( poFeature, "STATECOL", achRTSRec, 103, 104 );
-            SetField( poFeature, "COUNTYCOL", achRTSRec, 105, 107 );
-            SetField( poFeature, "BLOCKCOL", achRTSRec, 108, 112 );
-            SetField( poFeature, "BLKSUFCOL", achRTSRec, 113, 113 );
-            SetField( poFeature, "ZCTA5", achRTSRec, 114, 118 );
-        }
     }
     
     return poFeature;
@@ -467,98 +503,32 @@ int TigerPolygon::SetWriteModule( const char *pszFileCode, int nRecLen,
 /*                           CreateFeature()                            */
 /************************************************************************/
 
-#define WRITE_REC_LEN_RTA 98
-#define WRITE_REC_LEN_RTS 120
-
-/* max of above */
-#define WRITE_REC_LEN WRITE_REC_LEN_RTS
-
 OGRErr TigerPolygon::CreateFeature( OGRFeature *poFeature )
 
 {
-    char        szRecord[WRITE_REC_LEN+1];
+    char        szRecord[OGR_TIGER_RECBUF_LEN];
 
 /* -------------------------------------------------------------------- */
 /*      Write basic data record ("RTA")                                 */
 /* -------------------------------------------------------------------- */
 
-    if( !SetWriteModule( "A", WRITE_REC_LEN_RTA+2, poFeature ) )
+    if( !SetWriteModule( "A", psRTAInfo->reclen+2, poFeature ) )
         return OGRERR_FAILURE;
 
-    memset( szRecord, ' ', WRITE_REC_LEN_RTA );
+    memset( szRecord, ' ', psRTAInfo->reclen );
 
-    WriteField( poFeature, "FILE", szRecord, 6, 10, 'L', 'N' );
-    WriteField( poFeature, "STATE", szRecord, 6, 7, 'L', 'N' );
-    WriteField( poFeature, "COUNTY", szRecord, 8, 10, 'L', 'N' );
-    WriteField( poFeature, "CENID", szRecord, 11, 15, 'L', 'A' );
-    WriteField( poFeature, "POLYID", szRecord, 16, 25, 'R', 'N' );
-    WriteField( poFeature, "FAIR", szRecord, 26, 30, 'L', 'N' );
-    WriteField( poFeature, "FMCD", szRecord, 31, 35, 'L', 'N' );
-    WriteField( poFeature, "FPL", szRecord, 36, 40, 'L', 'N' );
-    WriteField( poFeature, "CTBNA90", szRecord, 41, 46, 'L', 'N' );
-    WriteField( poFeature, "BLK90", szRecord, 47, 50, 'L', 'A' );
-    WriteField( poFeature, "CD106", szRecord, 51, 52, 'L', 'N' );
-    WriteField( poFeature, "CD108", szRecord, 53, 54, 'L', 'N' );
-    WriteField( poFeature, "SDELM", szRecord, 55, 59, 'L', 'A' );
-    WriteField( poFeature, "SDSEC", szRecord, 65, 69, 'L', 'N' );
-    WriteField( poFeature, "SDUNI", szRecord, 70, 74, 'L', 'A' );
-    WriteField( poFeature, "TAZ", szRecord, 75, 80, 'R', 'A' );
-    WriteField( poFeature, "UA", szRecord, 81, 84, 'L', 'N' );
-    WriteField( poFeature, "URBFLAG", szRecord, 85, 85, 'L', 'A' );
-    WriteField( poFeature, "CTPP", szRecord, 86, 89, 'L', 'A' );
-    WriteField( poFeature, "STATE90", szRecord, 90, 91, 'L', 'N' );
-    WriteField( poFeature, "COUN90", szRecord, 92, 94, 'L', 'N' );
-    WriteField( poFeature, "AIR90", szRecord, 95, 98, 'L', 'N' );
-
-    WriteRecord( szRecord, WRITE_REC_LEN_RTA, "A" );
+    WriteFields( psRTAInfo, poFeature, szRecord );
+    WriteRecord( szRecord, psRTAInfo->reclen, "A" );
 
 /* -------------------------------------------------------------------- */
 /*      Prepare S record.                                               */
 /* -------------------------------------------------------------------- */
 
-    memset( szRecord, ' ', WRITE_REC_LEN_RTS );
+    memset( szRecord, ' ', psRTSInfo->reclen );
 
-    WriteField( poFeature, "FILE", szRecord, 6, 10, 'L', 'N' );
-    WriteField( poFeature, "STATE", szRecord, 6, 7, 'L', 'N' );
-    WriteField( poFeature, "COUNTY", szRecord, 8, 10, 'L', 'N' );
-    WriteField( poFeature, "CENID", szRecord, 11, 15, 'L', 'A' );
-    WriteField( poFeature, "POLYID", szRecord, 16, 25, 'R', 'N' );
-    WriteField( poFeature, "WATER", szRecord, 26, 26, 'L', 'N' );
-    WriteField( poFeature, "CMSAMSA", szRecord, 27, 30, 'L', 'N' );
-    WriteField( poFeature, "PMSA", szRecord, 31, 34, 'L', 'N' );
-    WriteField( poFeature, "AIANHH", szRecord, 35, 39, 'L', 'N' );
-    WriteField( poFeature, "AIR", szRecord, 40, 43, 'L', 'N' );
-    WriteField( poFeature, "TRUST", szRecord, 44, 44, 'L', 'A' );
-    WriteField( poFeature, "ANRC", szRecord, 45, 46, 'L', 'A' );
-    WriteField( poFeature, "STATECU", szRecord, 47, 48, 'L', 'N' );
-    WriteField( poFeature, "COUNTYCU", szRecord, 49, 51, 'L', 'N' );
-    WriteField( poFeature, "FCCITY", szRecord, 52, 56, 'L', 'N' );
-    WriteField( poFeature, "FMCD", szRecord, 57, 61, 'L', 'N' );
-    WriteField( poFeature, "FSMCD", szRecord, 62, 66, 'L', 'N' );
-    WriteField( poFeature, "PLACE", szRecord, 67, 71, 'L', 'N' );
-    WriteField( poFeature, "CTBNA00", szRecord, 72, 77, 'L', 'N' );
-    WriteField( poFeature, "BLK00", szRecord, 78, 81, 'L', 'N' );
-    WriteField( poFeature, "RS10", szRecord, 82, 82, 'R', 'N' );
-    WriteField( poFeature, "CDCU", szRecord, 83, 84, 'L', 'N' );
+    WriteFields( psRTSInfo, poFeature, szRecord );
+    WriteRecord( szRecord, psRTSInfo->reclen, "S", fpRTS );
 
-    /* Pre 2000 */
-    WriteField( poFeature, "STSENATE", szRecord, 85, 90, 'L', 'A' );
-    WriteField( poFeature, "STHOUSE", szRecord, 91, 96, 'L', 'A' );
-    WriteField( poFeature, "VTD00", szRecord, 97, 102, 'L', 'A' );
-        
-    /* Census 2000 */
-    WriteField( poFeature, "SLDU", szRecord, 85, 87, 'R', 'A' );
-    WriteField( poFeature, "SLDL", szRecord, 88, 90, 'R', 'A' );
-    WriteField( poFeature, "UGA", szRecord, 91, 96, 'L', 'A' );
-    WriteField( poFeature, "BLKGRP", szRecord, 97, 102, 'L', 'N' );
-    WriteField( poFeature, "VTD", szRecord, 97, 102, 'R', 'A' );
-    WriteField( poFeature, "STATECOL", szRecord, 103, 104, 'L', 'N' );
-    WriteField( poFeature, "COUNTYCOL", szRecord, 105, 107, 'L', 'N' );
-    WriteField( poFeature, "BLOCKCOL", szRecord, 108, 112, 'R', 'N' );
-    WriteField( poFeature, "BLKSUFCOL", szRecord, 113, 113, 'L', 'A' );
-    WriteField( poFeature, "ZCTA5", szRecord, 114, 118, 'L', 'A' );
-
-    WriteRecord( szRecord, WRITE_REC_LEN_RTS, "S", fpRTS );
 
     return OGRERR_NONE;
 }

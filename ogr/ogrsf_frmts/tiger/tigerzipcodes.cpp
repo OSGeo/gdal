@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/12/26 00:20:19  mbp
+ * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
+ * first round implementation of TIGER_2002 support
+ *
  * Revision 1.7  2001/07/19 16:05:49  warmerda
  * clear out tabs
  *
@@ -58,6 +62,29 @@ CPL_CVSID("$Id$");
 
 #define FILE_CODE "6"
 
+static TigerFieldInfo rt6_fields[] = {
+  // fieldname    fmt  type OFTType     beg  end  len  bDefine bSet bWrite
+  { "MODULE",     ' ', ' ', OFTString,    0,   0,   8,       1,   0,     0 },
+  { "TLID",       'R', 'N', OFTInteger,   6,  15,  10,       1,   1,     1 },
+  { "RTSQ",       'R', 'N', OFTInteger,  16,  18,   3,       1,   1,     1 },
+  { "FRADDL",     'R', 'A', OFTString,   19,  29,  11,       1,   1,     1 },
+  { "TOADDL",     'R', 'A', OFTString,   30,  40,  11,       1,   1,     1 },
+  { "FRADDR",     'R', 'A', OFTString,   41,  51,  11,       1,   1,     1 },
+  { "TOADDR",     'R', 'A', OFTString,   52,  62,  11,       1,   1,     1 },
+  { "FRIADDL",    'L', 'A', OFTString,   63,  63,   1,       1,   1,     1 }, // otype mismatch
+  { "TOIADDL",    'L', 'A', OFTString,   64,  64,   1,       1,   1,     1 }, // otype mismatch
+  { "FRIADDR",    'L', 'A', OFTString,   65,  65,   1,       1,   1,     1 }, // otype mismatch
+  { "TOIADDR",    'L', 'A', OFTString,   66,  66,   1,       1,   1,     1 }, // otype mismatch
+  { "ZIPL",       'L', 'N', OFTInteger,  67,  71,   5,       1,   1,     1 },
+  { "ZIPR",       'L', 'N', OFTInteger,  72,  76,   5,       1,   1,     1 }
+};
+static TigerRecordInfo rt6_info =
+  {
+    rt6_fields,
+    sizeof(rt6_fields) / sizeof(TigerFieldInfo),
+    76
+  };
+
 /************************************************************************/
 /*                            TigerZipCodes()                           */
 /************************************************************************/
@@ -72,47 +99,13 @@ TigerZipCodes::TigerZipCodes( OGRTigerDataSource * poDSIn,
     poFeatureDefn = new OGRFeatureDefn( "ZipCodes" );
     poFeatureDefn->SetGeomType( wkbNone );
 
-/* -------------------------------------------------------------------- */
-/*      Fields from type 5 record.                                      */
-/* -------------------------------------------------------------------- */
-    oField.Set( "MODULE", OFTString, 8 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "TLID", OFTInteger, 10 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "RTSQ", OFTInteger, 3 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FRADDL", OFTString, 11 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "TOADDL", OFTString, 11 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FRADDR", OFTString, 11 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "TOADDR", OFTString, 11 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FRIADDL", OFTInteger, 1 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "TOIADDL", OFTInteger, 1 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FRIADDR", OFTInteger, 1 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "TOIADDR", OFTInteger, 1 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "ZIPL", OFTInteger, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "ZIPR", OFTInteger, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
+    psRT6Info = &rt6_info;
+
+    /* -------------------------------------------------------------------- */
+    /*      Fields from type 5 record.                                      */
+    /* -------------------------------------------------------------------- */
+
+    AddFieldDefns( psRT6Info, poFeatureDefn );
 }
 
 /************************************************************************/
@@ -146,7 +139,7 @@ int TigerZipCodes::SetModule( const char * pszModule )
 OGRFeature *TigerZipCodes::GetFeature( int nRecordId )
 
 {
-    char        achRecord[76];
+    char        achRecord[OGR_TIGER_RECBUF_LEN];
 
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
@@ -170,7 +163,7 @@ OGRFeature *TigerZipCodes::GetFeature( int nRecordId )
         return NULL;
     }
 
-    if( VSIFRead( achRecord, 76, 1, fpPrimary ) != 1 )
+    if( VSIFRead( achRecord, psRT6Info->reclen, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %s6",
@@ -178,23 +171,13 @@ OGRFeature *TigerZipCodes::GetFeature( int nRecordId )
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set fields.                                                     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set fields.                                                     */
+    /* -------------------------------------------------------------------- */
+
     OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
-    SetField( poFeature, "TLID", achRecord, 6, 15 );
-    SetField( poFeature, "RTSQ", achRecord, 16, 18 );
-    SetField( poFeature, "FRADDL", achRecord, 19, 29 );
-    SetField( poFeature, "TOADDL", achRecord, 30, 40 );
-    SetField( poFeature, "FRADDR", achRecord, 41, 51 );
-    SetField( poFeature, "TOADDR", achRecord, 52, 62 );
-    SetField( poFeature, "FRIADDL", achRecord, 63, 63 );
-    SetField( poFeature, "TOIADDL", achRecord, 64, 64 );
-    SetField( poFeature, "FRIADDR", achRecord, 65, 65 );
-    SetField( poFeature, "TOIADDR", achRecord, 66, 66 );
-    SetField( poFeature, "ZIPL", achRecord, 67, 71 );
-    SetField( poFeature, "ZIPR", achRecord, 72, 76 );
+    SetFields( psRT6Info, poFeature, achRecord );
 
     return poFeature;
 }
@@ -203,32 +186,19 @@ OGRFeature *TigerZipCodes::GetFeature( int nRecordId )
 /*                           CreateFeature()                            */
 /************************************************************************/
 
-#define WRITE_REC_LEN 76
-
 OGRErr TigerZipCodes::CreateFeature( OGRFeature *poFeature )
 
 {
-    char        szRecord[WRITE_REC_LEN+1];
+  char  szRecord[OGR_TIGER_RECBUF_LEN];
 
-    if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
+    if( !SetWriteModule( FILE_CODE, psRT6Info->reclen+2, poFeature ) )
         return OGRERR_FAILURE;
 
-    memset( szRecord, ' ', WRITE_REC_LEN );
+    memset( szRecord, ' ', psRT6Info->reclen );
 
-    WriteField( poFeature, "TLID", szRecord, 6, 15, 'R', 'N' );
-    WriteField( poFeature, "RTSQ", szRecord, 16, 18, 'R', 'N' );
-    WriteField( poFeature, "FRADDL", szRecord, 19, 29, 'R', 'A' );
-    WriteField( poFeature, "TOADDL", szRecord, 30, 40, 'R', 'A' );
-    WriteField( poFeature, "FRADDR", szRecord, 41, 51, 'R', 'A' );
-    WriteField( poFeature, "TOADDR", szRecord, 52, 62, 'R', 'A' );
-    WriteField( poFeature, "FRIADDL", szRecord, 63, 63, 'L', 'A' );
-    WriteField( poFeature, "TOIADDL", szRecord, 64, 64, 'L', 'A' );
-    WriteField( poFeature, "FRIADDR", szRecord, 65, 65, 'L', 'A' );
-    WriteField( poFeature, "TOIADDR", szRecord, 66, 66, 'L', 'A' );
-    WriteField( poFeature, "ZIPL", szRecord, 67, 71, 'L', 'N' );
-    WriteField( poFeature, "ZIPR", szRecord, 72, 76, 'L', 'N' );
+    WriteFields( psRT6Info, poFeature, szRecord);
 
-    WriteRecord( szRecord, WRITE_REC_LEN, FILE_CODE );
+    WriteRecord( szRecord, psRT6Info->reclen, FILE_CODE );
 
     return OGRERR_NONE;
 }

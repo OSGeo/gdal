@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/12/26 00:20:19  mbp
+ * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
+ * first round implementation of TIGER_2002 support
+ *
  * Revision 1.7  2001/07/19 16:05:49  warmerda
  * clear out tabs
  *
@@ -58,6 +62,45 @@ CPL_CVSID("$Id$");
 
 #define FILE_CODE "R"
 
+static TigerFieldInfo rtR_2002_fields[] = {
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
+  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
+  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1,     1 },
+  { "TLMAXID",    'R', 'N', OFTInteger,   16,  25,  10,       1,   1,     1 },
+  { "TLMINID",    'R', 'N', OFTInteger,   26,  35,  10,       1,   1,     1 },
+  { "TLIGHID",    'R', 'N', OFTInteger,   36,  45,  10,       1,   1,     1 },
+  { "TZMAXID",    'R', 'N', OFTInteger,   46,  55,  10,       1,   1,     1 },
+  { "TZMINID",    'R', 'N', OFTInteger,   56,  65,  10,       1,   1,     1 },
+  { "TZHIGHID",   'R', 'N', OFTInteger,   66,  75,  10,       1,   1,     1 },
+  { "FILLER",     'L', 'A', OFTString,    76,  76,   1,       1,   1,     1 },
+};
+static TigerRecordInfo rtR_2002_info =
+  {
+    rtR_2002_fields,
+    sizeof(rtR_2002_fields) / sizeof(TigerFieldInfo),
+    76
+  };
+
+static TigerFieldInfo rtR_fields[] = {
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
+  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       1,   1,     1 },  //  otype mismatch
+  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
+  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
+  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1,     1 },
+  { "MAXID",      'R', 'N', OFTInteger,   16,  25,  10,       1,   1,     1 },
+  { "MINID",      'R', 'N', OFTInteger,   26,  35,  10,       1,   1,     1 },
+  { "HIGHID",     'R', 'N', OFTInteger,   36,  45,  10,       1,   1,     1 }
+};
+
+static TigerRecordInfo rtR_info =
+  {
+    rtR_fields,
+    sizeof(rtR_fields) / sizeof(TigerFieldInfo),
+    46
+  };
+
 /************************************************************************/
 /*                           TigerTLIDRange()                           */
 /************************************************************************/
@@ -72,32 +115,18 @@ TigerTLIDRange::TigerTLIDRange( OGRTigerDataSource * poDSIn,
     poFeatureDefn = new OGRFeatureDefn( "TLIDRange" );
     poFeatureDefn->SetGeomType( wkbNone );
 
-/* -------------------------------------------------------------------- */
-/*      Fields from type R record.                                      */
-/* -------------------------------------------------------------------- */
-    oField.Set( "MODULE", OFTString, 8 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FILE", OFTString, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "STATE", OFTInteger, 2 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "COUNTY", OFTInteger, 3 );
-    poFeatureDefn->AddFieldDefn( &oField );
+    if (poDS->GetVersion() >= TIGER_2002) {
+      psRTRInfo = &rtR_2002_info;
+    } else {
+      psRTRInfo = &rtR_info;
+    }
 
-    oField.Set( "CENID", OFTString, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "MAXID", OFTInteger, 10 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "MINID", OFTInteger, 10 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "HIGHID", OFTInteger, 10 );
-    poFeatureDefn->AddFieldDefn( &oField );
+    /* -------------------------------------------------------------------- */
+    /*      Fields from type R record.                                      */
+    /* -------------------------------------------------------------------- */
+
+    AddFieldDefns( psRTRInfo, poFeatureDefn );
+
 }
 
 /************************************************************************/
@@ -131,7 +160,7 @@ int TigerTLIDRange::SetModule( const char * pszModule )
 OGRFeature *TigerTLIDRange::GetFeature( int nRecordId )
 
 {
-    char        achRecord[46];
+    char        achRecord[OGR_TIGER_RECBUF_LEN];
 
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
@@ -155,7 +184,7 @@ OGRFeature *TigerTLIDRange::GetFeature( int nRecordId )
         return NULL;
     }
 
-    if( VSIFRead( achRecord, sizeof(achRecord), 1, fpPrimary ) != 1 )
+    if( VSIFRead( achRecord, psRTRInfo->reclen, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %sR",
@@ -163,18 +192,13 @@ OGRFeature *TigerTLIDRange::GetFeature( int nRecordId )
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set fields.                                                     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set fields.                                                     */
+    /* -------------------------------------------------------------------- */
+
     OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
-    SetField( poFeature, "FILE", achRecord, 6, 10 );
-    SetField( poFeature, "STATE", achRecord, 6, 7 );
-    SetField( poFeature, "COUNTY", achRecord, 8, 10 );
-    SetField( poFeature, "CENID", achRecord, 11, 15 );
-    SetField( poFeature, "MAXID", achRecord, 16, 25 );
-    SetField( poFeature, "MINID", achRecord, 26, 35 );
-    SetField( poFeature, "HIGHID", achRecord, 36, 45 );
+    SetFields( psRTRInfo, poFeature, achRecord );
 
     return poFeature;
 }
@@ -183,27 +207,19 @@ OGRFeature *TigerTLIDRange::GetFeature( int nRecordId )
 /*                           CreateFeature()                            */
 /************************************************************************/
 
-#define WRITE_REC_LEN 46
-
 OGRErr TigerTLIDRange::CreateFeature( OGRFeature *poFeature )
 
 {
-    char        szRecord[WRITE_REC_LEN+1];
+    char        szRecord[OGR_TIGER_RECBUF_LEN];
 
-    if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
+    if( !SetWriteModule( FILE_CODE, psRTRInfo->reclen+2, poFeature ) )
         return OGRERR_FAILURE;
 
-    memset( szRecord, ' ', WRITE_REC_LEN );
+    memset( szRecord, ' ', psRTRInfo->reclen );
 
-    WriteField( poFeature, "FILE", szRecord, 6, 10, 'L', 'N' );
-    WriteField( poFeature, "STATE", szRecord, 6, 7, 'L', 'N' );
-    WriteField( poFeature, "COUNTY", szRecord, 8, 10, 'L', 'N' );
-    WriteField( poFeature, "CENID", szRecord, 11, 15, 'L', 'A' );
-    WriteField( poFeature, "MAXID", szRecord, 16, 25, 'R', 'N' );
-    WriteField( poFeature, "MINID", szRecord, 26, 35, 'R', 'N' );
-    WriteField( poFeature, "HIGHID", szRecord, 36, 45, 'R', 'N' );
+    WriteFields( psRTRInfo, poFeature, szRecord );
 
-    WriteRecord( szRecord, WRITE_REC_LEN, FILE_CODE );
+    WriteRecord( szRecord, psRTRInfo->reclen, FILE_CODE );
 
     return OGRERR_NONE;
 }
