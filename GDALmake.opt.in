@@ -102,6 +102,7 @@ OGDI_SETTING	=	@HAVE_OGDI@
 
 GDAL_LIBS	=	$(GDAL_LIB) $(OGR_LIB) \
 			$(GDAL_LIB) $(CPL_LIB)
+GDALA_DEP	=	$(OGR_LIB)
 GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/core/*.o \
 			$(GDAL_ROOT)/port/*.o \
@@ -115,6 +116,7 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 
 ifeq ($(OGR_ENABLED),yes)
 GDAL_LIBS := $(OGRFRMTS_LIB) $(PG_LIB) $(GDAL_LIBS) 
+GDALA_DEP := $(GDAL_DEP) $(OGRFRMTS_LIB)
 
 GDAL_OBJ := $(GDAL_OBJ) $(GDAL_ROOT)/ogr/ogrsf_frmts/generic/ogrregisterall.o \
 		$(GDAL_ROOT)/ogr/ogrfeaturestyle.o

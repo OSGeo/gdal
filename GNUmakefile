@@ -5,7 +5,7 @@ include GDALmake.opt
 
 default:	GDALmake.opt lib py-target apps-target
 
-lib:	port-target core-target frmts-target ogr-target force-lib
+lib:	port-target core-target frmts-target ogr-target check-lib
 
 force-lib:	
 	$(AR) r $(GDAL_LIB) $(GDAL_OBJ)
@@ -17,6 +17,19 @@ force-lib:
 #
 #	$(CXX) -shared -Wl,-soname,gdal.so.1 -o $(GDAL_SLIB) \
 #		$(GDAL_OBJ) $(GDAL_LIBS) $(LIBS)
+
+$(GDAL_LIB):	$(GDAL_OBJ)
+	$(AR) r $(GDAL_LIB) $(GDAL_OBJ)
+	$(RANLIB) $(GDAL_LIB)
+
+$(GDAL_SLIB):	$(GDAL_LIB) $(GDALA_DEP)
+	$(LD_SHARED) $(GDAL_OBJ) $(GDAL_LIBS) $(LIBS) -o $(GDAL_SLIB)
+
+check-lib:
+	$(MAKE) $(GDAL_LIB)
+ifeq ($(HAVE_LD_SHARED),yes)
+	$(MAKE) $(GDAL_SLIB)
+endif
 
 port-target:
 	(cd port; $(MAKE))
