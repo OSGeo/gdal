@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/02/06 16:53:48  warmerda
+ * Improved text bounding box calcuation from Mart Kelder.
+ *
  * Revision 1.6  2003/01/20 20:06:55  warmerda
  * added cell header creation
  *
@@ -1107,8 +1110,9 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
     DGNElemText *psText;
     DGNElemCore *psCore;
     DGNInfo *psDGN = (DGNInfo *) hDGN;
-    DGNPoint sMin, sMax;
+    DGNPoint sMin, sMax, sLowLeft, sLowRight, sUpLeft, sUpRight;
     GInt32 nIntValue;
+    double length, height, diagonal;
 
     CPLAssert( psDGN->dimension == 2 );
 
@@ -1164,9 +1168,37 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
     
 /* -------------------------------------------------------------------- */
 /*      Set the core raw data, including the bounds.                    */
+/*                                                                      */
+/*      Code contributed by Mart Kelder.                                */
 /* -------------------------------------------------------------------- */
     DGNUpdateElemCoreExtended( hDGN, psCore );
 
+    //calculate bounds if rotation is 0
+    sMin.x = dfOriginX;
+    sMin.y = dfOriginY;
+    sMin.z = 0.0;
+    sMax.x = dfOriginX + dfLengthMult * strlen(pszText);
+    sMax.y = dfOriginY + dfHeightMult;
+    sMax.z = 0.0;
+
+    //calculate rotated bounding box coordinates
+    length = sMax.x-sMin.x;
+    height = sMax.y-sMin.y;
+    diagonal=sqrt(length*length+height*height);
+    sLowLeft.x=sMin.x;
+    sLowLeft.y=sMin.y;
+    sLowRight.x=sMin.x+cos(psText->rotation*PI/180.0)*length;
+    sLowRight.y=sMin.y+sin(psText->rotation*PI/180.0)*length;
+    sUpRight.x=sMin.x+cos((psText->rotation*PI/180.0)+atan(height/length))*diagonal;
+    sUpRight.y=sMin.y+sin((psText->rotation*PI/180.0)+atan(height/length))*diagonal;
+    sUpLeft.x=sMin.x+cos((psText->rotation+90.0)*PI/180.0)*height;
+    sUpLeft.y=sMin.y+sin((psText->rotation+90.0)*PI/180.0)*height;
+
+    //calculate new values for bounding box
+    sMin.x=MIN(sLowLeft.x,MIN(sLowRight.x,MIN(sUpLeft.x,sUpRight.x)));
+    sMin.y=MIN(sLowLeft.y,MIN(sLowRight.y,MIN(sUpLeft.y,sUpRight.y)));
+    sMax.x=MAX(sLowLeft.x,MAX(sLowRight.x,MAX(sUpLeft.x,sUpRight.x)));
+    sMax.y=MAX(sLowLeft.y,MAX(sLowRight.y,MAX(sUpLeft.y,sUpRight.y)));
     sMin.x = dfOriginX - dfLengthMult * strlen(pszText);
     sMin.y = dfOriginY - dfHeightMult;
     sMin.z = 0.0;
