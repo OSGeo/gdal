@@ -2,7 +2,7 @@ GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	ecwdataset.o ecwcreatecopy.o
+OBJ	=	ecwdataset.o ecwcreatecopy.o jp2userbox.o
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) -DFRMT_ecw $(CPPFLAGS)
 
