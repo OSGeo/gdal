@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.17  2002/07/13 04:16:39  warmerda
+ * added WORLDFILE support
+ *
  * Revision 1.16  2002/06/18 02:49:23  warmerda
  * fixed multiline string constants
  *
@@ -955,8 +958,7 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Do we need a world file?                                          */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue(papszOptions,"WORLDFILE")  != NULL
-        || CSLFindString( papszOptions, "WORLDFILE") != -1 )
+    if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
     {
     	double      adfGeoTransform[6];
 	

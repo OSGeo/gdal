@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.11  2002/07/13 04:16:39  warmerda
+ * added WORLDFILE support
+ *
  * Revision 1.10  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -589,6 +592,17 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Do we need a world file?                                          */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
+    {
+    	double      adfGeoTransform[6];
+	
+	poSrcDS->GetGeoTransform( adfGeoTransform );
+	GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform );
+    }
+
     return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 }
 
@@ -612,6 +626,12 @@ void GDALRegister_GIF()
                                    "frmt_gif.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gif" );
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/gif" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+"<CreationOptionList>\n"
+"   <Option name='INTERLACING' type='boolean'/>\n"
+"   <Option name='WORLDFILE' type='boolean'/>\n"
+"</CreationOptionList>\n" );
 
         poDriver->pfnOpen = GIFDataset::Open;
         poDriver->pfnCreateCopy = GIFCreateCopy;

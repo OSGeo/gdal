@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.69  2002/07/13 04:16:39  warmerda
+ * added WORLDFILE support
+ *
  * Revision 1.68  2002/06/25 13:56:54  warmerda
  * fixed bug generating high overview levels
  *
@@ -2428,8 +2431,8 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Do we need a TFW file?                                          */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue(papszParmList,"TFW")  != NULL
-        || CSLFindString( papszParmList, "TFW") != -1 )
+    if( CSLFetchBoolean( papszParmList, "TFW", FALSE ) 
+        || CSLFetchBoolean( papszParmList, "WORLDFILE", FALSE ) )
         poDS->SetupTFW( pszFilename );
 
 /* -------------------------------------------------------------------- */
@@ -2599,38 +2602,10 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Do we need a TFW file?                                          */
 /* -------------------------------------------------------------------- */
-        if( CSLFetchNameValue(papszOptions,"TFW")  != NULL 
-            || CSLFindString( papszOptions, "TFW") != -1 )
-        {
-            char	*pszPath, *pszTFWFilename;
-            char	*pszBasename;
-            FILE	*fp;
-
-            pszPath = CPLStrdup( CPLGetPath(pszFilename) );
-            pszBasename = CPLStrdup( CPLGetBasename(pszFilename) );
-        
-            pszTFWFilename = 
-                CPLStrdup( CPLFormFilename(pszPath,pszBasename,"tfw") );
-        
-            CPLFree( pszPath );
-            CPLFree( pszBasename );
-
-            fp = VSIFOpen( pszTFWFilename, "wt" );
-        
-            fprintf( fp, "%.10f\n", adfGeoTransform[1] );
-            fprintf( fp, "%.10f\n", adfGeoTransform[4] );
-            fprintf( fp, "%.10f\n", adfGeoTransform[2] );
-            fprintf( fp, "%.10f\n", adfGeoTransform[5] );
-            fprintf( fp, "%.10f\n", adfGeoTransform[0] 
-                     + 0.5 * adfGeoTransform[1]
-                     + 0.5 * adfGeoTransform[2] );
-            fprintf( fp, "%.10f\n", adfGeoTransform[3]
-                     + 0.5 * adfGeoTransform[4]
-                     + 0.5 * adfGeoTransform[5] );
-            VSIFClose( fp );
-
-            CPLFree( pszTFWFilename );
-        }
+        if( CSLFetchBoolean( papszOptions, "TFW", FALSE ) )
+            GDALWriteWorldFile( pszFilename, "tfw", adfGeoTransform );
+        else if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
+            GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform );
     }
 
 /* -------------------------------------------------------------------- */
