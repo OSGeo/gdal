@@ -28,9 +28,11 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.42  2003/05/06 05:20:38  sperkins
+ * cleaned up comments
+ *
  * Revision 1.41  2003/05/06 05:13:36  sperkins
- * 	* core/gdalrasterband.cpp: Added C++ Fill() method and
- * 	corresponding C GDALFillRaster() method.
+ * added Fill() and GDALFillRaster()
  *
  * Revision 1.40  2003/05/02 19:47:57  warmerda
  * added C GetBandNumber and GetBandDataset entry points
