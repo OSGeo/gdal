@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/01/29 21:01:03  warmerda
+ * added sequences within sequences support
+ *
  * Revision 1.2  2004/01/22 21:15:36  warmerda
  * parse url into components
  *
@@ -89,6 +92,7 @@ public:
     char *pszFieldScope;
     int  iFieldIndex;
     char *pszFieldValue;
+    char *pszPathToSequence;
 };
 
 /************************************************************************/
@@ -116,9 +120,7 @@ class OGRDODSLayer : public OGRLayer
 
     char               *pszTarget;
 
-    int                *panFieldMapping;
-
-    int                 BuildFields( BaseType *, const char * );
+    OGRDODSFieldDefn  **papoFields;
 
     int                 ProvideDataDDS();
     int                 bDataLoaded;
@@ -167,8 +169,12 @@ private:
     OGRDODSFieldDefn    oZField;
 
     double              GetFieldValueAsDouble( OGRDODSFieldDefn *, int );
-    BaseType           *GetFieldValue( OGRDODSFieldDefn *, int );
+    BaseType           *GetFieldValue( OGRDODSFieldDefn *, int,
+                                       Sequence * );
     
+    int                 BuildFields( BaseType *, const char *, 
+                                     const char * );
+
 public:
                         OGRDODSSequenceLayer( OGRDODSDataSource *poDS, 
                                               const char *pszTarget,

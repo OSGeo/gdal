@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/01/29 21:01:03  warmerda
+ * added sequences within sequences support
+ *
  * Revision 1.3  2004/01/27 16:50:49  warmerda
  * added check for .asc
  *
@@ -54,6 +57,7 @@ OGRDODSDataSource::OGRDODSDataSource()
     pszName = NULL;
     papoLayers = NULL;
     nLayers = 0;
+    poConnection = NULL;
 }
 
 /************************************************************************/
@@ -71,6 +75,9 @@ OGRDODSDataSource::~OGRDODSDataSource()
         delete papoLayers[i];
     
     CPLFree( papoLayers );
+
+    if( poConnection != NULL )
+        delete poConnection;
 }
 
 /************************************************************************/

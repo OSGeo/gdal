@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/01/29 21:01:03  warmerda
+ * added sequences within sequences support
+ *
  * Revision 1.2  2004/01/22 21:15:50  warmerda
  * parse url into components
  *
@@ -58,7 +61,7 @@ OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
     poSRS = NULL;
     iNextShapeId = 0;
     pszTarget = CPLStrdup( pszTargetIn );
-    panFieldMapping = NULL;
+    papoFields = NULL;
 
     bDataLoaded = FALSE;
     poConnection = NULL;
@@ -113,6 +116,16 @@ OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
 OGRDODSLayer::~OGRDODSLayer()
 
 {
+    if( papoFields != NULL )
+    {
+        int iField;
+
+        for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+            delete papoFields[iField];
+
+        CPLFree( papoFields );
+    }
+
     if( poFilterGeom != NULL )
         delete poFilterGeom;
 
@@ -125,69 +138,12 @@ OGRDODSLayer::~OGRDODSLayer()
     CPLFree( pszFIDColumn );
     pszFIDColumn = NULL;
 
-    CPLFree( panFieldMapping );
-
     CPLFree( pszTarget );
     pszTarget = NULL;
 
     if( poConnection != NULL )
         delete poConnection;
-}
 
-/************************************************************************/
-/*                            BuildFields()                             */
-/*                                                                      */
-/*      Build the field definition or definitions corresponding to      */
-/*      the passed variable and it's children (if it has them).         */
-/************************************************************************/
-
-int OGRDODSLayer::BuildFields( BaseType *poTargetVar, 
-                               const char *pszPathToVar )
-
-{
-    OGRFieldDefn oField( poTargetVar->name().c_str(), OFTInteger );
-
-/* -------------------------------------------------------------------- */
-/*      Capture this field definition.                                  */
-/* -------------------------------------------------------------------- */
-    switch( poTargetVar->type() )
-    {
-      case dods_byte_c:
-      case dods_int16_c:
-      case dods_uint16_c:
-      case dods_int32_c:
-      case dods_uint32_c:
-        oField.SetType( OFTInteger );
-        break;
-
-      case dods_float32_c:
-      case dods_float64_c:
-        oField.SetType( OFTReal );
-        break;
-
-      case dods_str_c:
-      case dods_url_c:
-        oField.SetType( OFTString );
-        break;
-
-      case dods_sequence_c:
-        return TRUE;
-
-      default:
-        return FALSE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Add field to feature defn, and capture mapping.                 */
-/* -------------------------------------------------------------------- */
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    panFieldMapping = (int *) 
-        CPLRealloc( panFieldMapping, 
-                    sizeof(int) * poFeatureDefn->GetFieldCount() );
-    panFieldMapping[poFeatureDefn->GetFieldCount()-1] = -1;
-
-    return TRUE;
 }
 
 /************************************************************************/
