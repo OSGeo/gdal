@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.12  2004/02/17 08:05:45  dron
+ * Do not calculate projection definition if corner coordinates are not set.
+ *
  * Revision 1.11  2004/02/03 20:38:50  dron
  * Fixes in coordinate hadling; recognize more projections.
  *
@@ -222,6 +225,12 @@ FASTDataset::FASTDataset()
     fpHeader = NULL;
     pszDirname = NULL;
     pszProjection = CPLStrdup( "" );
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
     nBands = 0;
 }
 
@@ -570,17 +579,16 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     OGRSpatialReference oSRS;
     long        iProjSys, iZone, iDatum;
     // Coordinates of pixel's centers
-    double	dfULX = 0.5, dfULY = 0.5;
-    double	dfURX = poDS->nRasterXSize - 0.5, dfURY = 0.5;
-    double	dfLLX = 0.5, dfLLY = poDS->nRasterYSize - 0.5;
-    double	dfLRX = poDS->nRasterXSize - 0.5,
-                dfLRY = poDS->nRasterYSize - 0.5;
+    double	dfULX = 0.0, dfULY = 0.0;
+    double	dfURX = 0.0, dfURY = 0.0;
+    double	dfLLX = 0.0, dfLLY = 0.0;
+    double	dfLRX = 0.0, dfLRY = 0.0;
     double      adfProjParms[15];
 
     // Read projection name
     pszTemp = GetValue( pszHeader, PROJECTION_NAME,
                         PROJECTION_NAME_SIZE, FALSE );
-    if ( pszTemp )
+    if ( pszTemp && !EQUAL( pszTemp, "" ) )
         iProjSys = USGSMnemonicToCode( pszTemp );
     else
         iProjSys = 1;   // UTM by default
@@ -588,7 +596,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Read ellipsoid name
     pszTemp = GetValue( pszHeader, ELLIPSOID_NAME, ELLIPSOID_NAME_SIZE, FALSE );
-    if ( pszTemp )
+    if ( pszTemp && !EQUAL( pszTemp, "" ) )
         iDatum = USGSEllipsoidToCode( pszTemp );
     else
         iDatum = 12;    // WGS84 by default
@@ -596,7 +604,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Read zone number
     pszTemp = GetValue( pszHeader, ZONE_NUMBER, ZONE_NUMBER_SIZE, FALSE );
-    if ( pszTemp )
+    if ( pszTemp && !EQUAL( pszTemp, "" ) )
         iZone = atoi( pszTemp );
     else
         iZone = 0L;
@@ -606,7 +614,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     for ( i = 0; i < 15; i++ )
         adfProjParms[i] = 0.0;
     pszTemp = strstr( pszHeader, USGS_PARAMETERS );
-    if ( pszTemp )
+    if ( pszTemp && !EQUAL( pszTemp, "" ) )
     {
         pszTemp += strlen( USGS_PARAMETERS );
         for ( i = 0; i < 15; i++ )
@@ -620,7 +628,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Read corner coordinates
     pszTemp = strstr( pszHeader, CORNER_UPPER_LEFT );
-    if ( pszTemp )
+    if ( pszTemp && !EQUAL( pszTemp, "" ) )
     {
         pszTemp += strlen( CORNER_UPPER_LEFT ) + 28;
         dfULX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
@@ -629,7 +637,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     pszTemp = strstr( pszHeader, CORNER_UPPER_RIGHT );
-    if ( pszTemp )
+    if ( pszTemp && !EQUAL( pszTemp, "" ) )
     {
         pszTemp += strlen( CORNER_UPPER_RIGHT ) + 28;
         dfURX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
@@ -638,7 +646,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     pszTemp = strstr( pszHeader, CORNER_LOWER_LEFT );
-    if ( pszTemp )
+    if ( pszTemp && !EQUAL( pszTemp, "" ) )
     {
         pszTemp += strlen( CORNER_LOWER_LEFT ) + 28;
         dfLLX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
@@ -647,7 +655,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     pszTemp = strstr( pszHeader, CORNER_LOWER_RIGHT );
-    if ( pszTemp )
+    if ( pszTemp && !EQUAL( pszTemp, "" ) )
     {
         pszTemp += strlen( CORNER_LOWER_RIGHT ) + 28;
         dfLRX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
@@ -655,37 +663,43 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         dfLRY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
     }
 
-    // Strip out zone number from the easting values, if either
-    if ( dfULX >= 1000000.0 )
-        dfULX -= (double)iZone * 1000000.0;
-    if ( dfURX >= 1000000.0 )
-        dfURX -= (double)iZone * 1000000.0;
-    if ( dfLLX >= 1000000.0 )
-        dfLLX -= (double)iZone * 1000000.0;
-    if ( dfLRX >= 1000000.0 )
-        dfLRX -= (double)iZone * 1000000.0;
+    if ( dfULX != 0.0 && dfULY != 0.0
+         && dfURX != 0.0 && dfURY != 0.0
+         && dfLLX != 0.0 && dfLLY != 0.0
+         && dfLRX != 0.0 && dfLRY != 0.0 )
+    {
+        // Strip out zone number from the easting values, if either
+        if ( dfULX >= 1000000.0 )
+            dfULX -= (double)iZone * 1000000.0;
+        if ( dfURX >= 1000000.0 )
+            dfURX -= (double)iZone * 1000000.0;
+        if ( dfLLX >= 1000000.0 )
+            dfLLX -= (double)iZone * 1000000.0;
+        if ( dfLRX >= 1000000.0 )
+            dfLRX -= (double)iZone * 1000000.0;
 
-    // Create projection definition
-    oSRS.importFromUSGS( iProjSys, iZone, adfProjParms, iDatum );
-    oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
-    
-    // Read datum name
-    pszTemp = GetValue( pszHeader, DATUM_NAME, DATUM_NAME_SIZE, FALSE );
-    if ( EQUAL( pszTemp, "WGS84" ) )
-        oSRS.SetWellKnownGeogCS( "WGS84" );
-    CPLFree( pszTemp );
+        // Create projection definition
+        oSRS.importFromUSGS( iProjSys, iZone, adfProjParms, iDatum );
+        oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
+        
+        // Read datum name
+        pszTemp = GetValue( pszHeader, DATUM_NAME, DATUM_NAME_SIZE, FALSE );
+        if ( EQUAL( pszTemp, "WGS84" ) )
+            oSRS.SetWellKnownGeogCS( "WGS84" );
+        CPLFree( pszTemp );
 
-    if ( poDS->pszProjection )
-        CPLFree( poDS->pszProjection );
-    oSRS.exportToWkt( &poDS->pszProjection );
+        if ( poDS->pszProjection )
+            CPLFree( poDS->pszProjection );
+        oSRS.exportToWkt( &poDS->pszProjection );
 
-    // Calculate transformation matrix
-    poDS->adfGeoTransform[1] = (dfURX - dfLLX) / (poDS->nRasterXSize - 1);
-    poDS->adfGeoTransform[5] = (dfLLY - dfURY) / (poDS->nRasterYSize - 1);
-    poDS->adfGeoTransform[0] = dfULX - poDS->adfGeoTransform[1] / 2;
-    poDS->adfGeoTransform[3] = dfULY - poDS->adfGeoTransform[5] / 2;
-    poDS->adfGeoTransform[2] = 0.0;
-    poDS->adfGeoTransform[4] = 0.0;
+        // Calculate transformation matrix
+        poDS->adfGeoTransform[1] = (dfURX - dfLLX) / (poDS->nRasterXSize - 1);
+        poDS->adfGeoTransform[5] = (dfLLY - dfURY) / (poDS->nRasterYSize - 1);
+        poDS->adfGeoTransform[0] = dfULX - poDS->adfGeoTransform[1] / 2;
+        poDS->adfGeoTransform[3] = dfULY - poDS->adfGeoTransform[5] / 2;
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[4] = 0.0;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
