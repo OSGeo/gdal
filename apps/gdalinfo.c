@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.23  2002/03/25 13:50:07  warmerda
+ * only report min/max values if fetch successfully
+ *
  * Revision 1.22  2002/01/13 01:42:37  warmerda
  * add -sample test
  *
@@ -287,17 +290,29 @@ int main( int argc, char ** argv )
                 GDALGetColorInterpretationName(
                     GDALGetRasterColorInterpretation(hBand)) );
 
+        if( GDALGetDescription( hBand ) != NULL 
+            && strlen(GDALGetDescription( hBand )) > 0 )
+            printf( "  Description = %s\n", GDALGetDescription(hBand) );
+
         dfMin = GDALGetRasterMinimum( hBand, &bGotMin );
         dfMax = GDALGetRasterMaximum( hBand, &bGotMax );
-        printf( "  Min=%.3f/%d, Max=%.3f/%d",  dfMin, bGotMin, dfMax, bGotMax);
-        
-        if( bComputeMinMax )
+        if( bGotMin || bGotMax || bComputeMinMax )
         {
-            GDALComputeRasterMinMax( hBand, TRUE, adfCMinMax );
-            printf( ", Computed Min/Max=%.3f,%.3f", 
-                    adfCMinMax[0], adfCMinMax[1] );
+            printf( "  " );
+            if( bGotMin )
+                printf( "Min=%.3f ", dfMin );
+            if( bGotMax )
+                printf( "Max=%.3f ", dfMax );
+        
+            if( bComputeMinMax )
+            {
+                GDALComputeRasterMinMax( hBand, TRUE, adfCMinMax );
+                printf( "  Computed Min/Max=%.3f,%.3f", 
+                        adfCMinMax[0], adfCMinMax[1] );
+            }
+
+            printf( "\n" );
         }
-        printf( "\n" );
 
         dfNoData = GDALGetRasterNoDataValue( hBand, &bGotNodata );
         if( bGotNodata )
