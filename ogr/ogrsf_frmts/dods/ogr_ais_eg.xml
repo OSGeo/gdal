@@ -17,4 +17,9 @@
 
     <ancillary url="/home/warmerda/dods/bbhenv.dat.das"/>
   </entry>
+  <entry>
+    <primary regexp="http://gomoos.org/cgi-bin/d/nph-dods/buoy/dods/C0101/C0101.met.raw.nc*"/>
+
+    <ancillary url="/home/warmerda/dods/C0101.met.raw.nc.das"/>
+  </entry>
 </ais>
