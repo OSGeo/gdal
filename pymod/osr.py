@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.36  2004/02/22 10:25:12  dron
+# Added wrapper for OSRImportFromUSGS().
+#
 # Revision 1.35  2004/02/05 17:08:57  dron
 # Added wrapper for OSRSetHOM2PNO().
 #
@@ -218,6 +221,20 @@ class SpatialReference:
 	    return _gdal.OSRImportFromPCI( self._o, proj, units )
 	else:
 	    return _gdal.OSRImportFromPCI( self._o, proj, units, proj_parms )
+
+    def ImportFromUSGS( self, proj_code, zone=0, \
+		        proj_parms=None, datum_code=0 ):
+	"""Imports USGS styled projection definition.
+	
+	proj_code --- USGS projection system code,
+	zone --- zone number (for UTM and State Plane projection systems only),
+	proj_parms --- tuple of 15 coordinate system parameters (double
+	precition floating point values in packed DMS format). None by default
+	(i.e., all values zeroed). See OGRSpatialReference::importFromUSGS()
+	C++ function for details.
+	"""
+	return _gdal.OSRImportFromUSGS( self._o, proj_code, zone, \
+					proj_parms, datum_code )
 
     def ImportFromXML( self, xml ):
         return _gdal.OSRImportFromXML( self._o, xml )
