@@ -29,6 +29,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.3  2003/07/11 14:52:13  warmerda
+#  Added logic to replicate all source polygon fields onto output file.
+#
 #  Revision 1.2  2003/07/11 14:31:17  warmerda
 #  Use provided input filename.
 #
@@ -83,6 +86,13 @@ if infile is None:
     Usage()
 
 #############################################################################
+# Open the datasource to operate on.
+
+ds = ogr.Open( infile, update = 0 )
+
+poly_layer = ds.GetLayerByName( 'Polygon' )
+
+#############################################################################
 #	Create output file for the composed polygons.
 
 shp_driver = ogr.GetDriverByName( 'ESRI Shapefile' )
@@ -92,13 +102,16 @@ shp_ds = shp_driver.CreateDataSource( outfile )
 
 shp_layer = shp_ds.CreateLayer( 'out', geom_type = ogr.wkbPolygon )
 
-fd = ogr.FieldDefn( 'POLYID', ogr.OFTInteger )
-shp_layer.CreateField( fd )
+src_defn = poly_layer.GetLayerDefn()
+poly_field_count = src_defn.GetFieldCount()
 
-#############################################################################
-# Open the datasource to operate on.
-
-ds = ogr.Open( infile, update = 0 )
+for fld_index in range(poly_field_count):
+    src_fd = src_defn.GetFieldDefn( fld_index )
+    
+    fd = ogr.FieldDefn( src_fd.GetName(), src_fd.GetType() )
+    fd.SetWidth( src_fd.GetWidth() )
+    fd.SetPrecision( src_fd.GetPrecision() )
+    shp_layer.CreateField( fd )
 
 #############################################################################
 # Read all features in the line layer, holding just the geometry in a hash
@@ -174,8 +187,6 @@ print 'Processed %d links.' % link_count
 #############################################################################
 # Process all polygon features.
 
-poly_layer = ds.GetLayerByName( 'Polygon' )
-
 feat = poly_layer.GetNextFeature()
 tile_ref_field = feat.GetFieldIndex( 'MODULE' )
 polyid_field = feat.GetFieldIndex( 'POLYID' )
@@ -200,7 +211,10 @@ while feat is not None:
         #feat.SetGeometryDirectly( poly )
 
         feat2 = ogr.Feature(feature_def=shp_layer.GetLayerDefn())
-        feat2.SetField( 0, polyid )
+
+        for fld_index in range(poly_field_count):
+            feat2.SetField( fld_index, feat.GetField( fld_index ) )
+
         feat2.SetGeometryDirectly( poly )
 
         shp_layer.CreateFeature( feat2 )
