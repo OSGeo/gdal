@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/03/20 17:43:43  warmerda
+ * fixed bug when secondary schema larger than primary schema
+ *
  * Revision 1.11  2003/03/19 20:31:18  warmerda
  * add support for tables from external datasources
  *
@@ -158,10 +161,12 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
         swq_col_def *psColDef = psSelectInfo->column_defs + iField;
         OGRFieldDefn oFDefn( psColDef->field_name, OFTInteger );
         OGRFieldDefn *poSrcFDefn = NULL;
+        OGRFeatureDefn *poLayerDefn = 
+            papoTableLayers[psColDef->table_index]->GetLayerDefn();
 
         if( psColDef->field_index > -1 
-            && psColDef->field_index < poSrcDefn->GetFieldCount() )
-            poSrcFDefn = papoTableLayers[psColDef->table_index]->GetLayerDefn()->GetFieldDefn(psColDef->field_index);
+            && psColDef->field_index < poLayerDefn->GetFieldCount() )
+            poSrcFDefn = poLayerDefn->GetFieldDefn(psColDef->field_index);
 
         if( psColDef->col_func_name != NULL )
         {
