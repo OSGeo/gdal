@@ -1,3 +1,8 @@
+2000-11-16  Frank Warmerdam  <warmerda@cs46980-c>
+
+	* Moved GXF driver down in driver order (in GDALAllRegister()).
+	Improved test for GXFness in gxfdataset.cpp a bit.
+
 2000-10-30  Frank Warmerdam  <warmerda@cs46980-c>
 
 	* Added error related entry points to gdal.i/gdal.py for python.
