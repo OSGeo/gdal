@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/06 14:23:32  warmerda
+ * added DDFBinaryString
+ *
  * Revision 1.2  1999/04/27 22:09:50  warmerda
  * updated docs
  *
@@ -47,7 +50,8 @@
 typedef enum {
     DDFInt,
     DDFFloat,
-    DDFString
+    DDFString,
+    DDFBinaryString
 } DDFDataType;
   
 /************************************************************************/
@@ -90,6 +94,7 @@ class DDFModule
                 ~DDFModule();
                 
     int		Open( const char * pszFilename );
+    void	Close();
 
     void	Dump( FILE * fp );
 
@@ -251,7 +256,8 @@ public:
      * Get the general type of the subfield.  This can be used to
      * determine which of ExtractFloatData(), ExtractIntData() or
      * ExtractStringData() should be used.
-     * @return The subfield type.  One of DDFInt, DDFFloat or DDFString.
+     * @return The subfield type.  One of DDFInt, DDFFloat, DDFString or
+     * DDFBinaryString.
      */
       
     DDFDataType	GetType() { return eType; }
