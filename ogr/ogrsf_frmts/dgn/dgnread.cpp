@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2003/09/22 05:59:24  warmerda
+ * Fixed setting of offset for element index.
+ * Don't try to extract attribute data on TCB elements.
+ *
  * Revision 1.39  2003/08/19 20:16:56  warmerda
  * Added support for reading Cone (23), 3D surface (18) and 3D solid (19)
  * elements.  Added code to read transformation matrices for Cell headers
@@ -1090,7 +1094,8 @@ int DGNParseCore( DGNInfo *psDGN, DGNElemCore *psElement )
         psElement->color = psData[35];
     }
 
-    if( psElement->properties & DGNPF_ATTRIBUTES )
+    if( psElement->properties & DGNPF_ATTRIBUTES 
+        && psElement->type != DGNT_TCB )
     {
         int   nAttIndex;
         
@@ -1618,7 +1623,7 @@ void DGNBuildIndex( DGNInfo *psDGN )
         psEI->level = (unsigned char) nLevel;
         psEI->type = (unsigned char) nType;
         psEI->flags = 0;
-        psEI->offset = (unsigned char) nLastOffset;
+        psEI->offset = (long) nLastOffset;
 
         if( psDGN->abyElem[0] & 0x80 )
             psEI->flags |= DGNEIF_COMPLEX;
