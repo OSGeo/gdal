@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2003/11/17 20:10:46  warmerda
+ * added support for writing FFPT linkages
+ *
  * Revision 1.26  2003/11/12 21:24:23  warmerda
  * updates to new featuredefn generators
  *
@@ -320,7 +323,6 @@ class S57Reader
     DDFRecordIndex      oFE_Index;
 
     char                **papszOptions;
-    int                 bGenerateLNAM;
 
     int                 nOptionFlags; 
 

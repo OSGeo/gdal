@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/11/17 20:10:46  warmerda
+ * added support for writing FFPT linkages
+ *
  * Revision 1.4  2003/11/12 21:23:40  warmerda
  * updates to new featuredefn generators
  *
@@ -793,6 +796,35 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*                             GetHEXChar()                             */
+/************************************************************************/
+
+static int GetHEXChar( const char *pszSrcHEXString )
+
+{
+    int nResult = 0;
+
+    if( pszSrcHEXString[0] == '\0' || pszSrcHEXString[1] == '\0' )
+        return 0;
+
+    if( pszSrcHEXString[0] >= '0' && pszSrcHEXString[0] <= '9' )
+        nResult += (pszSrcHEXString[0] - '0') * 16;
+    else if( pszSrcHEXString[0] >= 'a' && pszSrcHEXString[0] <= 'f' )
+        nResult += (pszSrcHEXString[0] - 'a' + 10) * 16;
+    else if( pszSrcHEXString[0] >= 'A' && pszSrcHEXString[0] <= 'F' )
+        nResult += (pszSrcHEXString[0] - 'A' + 10) * 16;
+
+    if( pszSrcHEXString[1] >= '0' && pszSrcHEXString[1] <= '9' )
+        nResult += pszSrcHEXString[1] - '0';
+    else if( pszSrcHEXString[1] >= 'a' && pszSrcHEXString[1] <= 'f' )
+        nResult += pszSrcHEXString[1] - 'a' + 10;
+    else if( pszSrcHEXString[1] >= 'A' && pszSrcHEXString[1] <= 'F' )
+        nResult += pszSrcHEXString[1] - 'A' + 10;
+
+    return nResult;
+}
+
+/************************************************************************/
 /*                        WriteCompleteFeature()                        */
 /************************************************************************/
 
@@ -891,6 +923,49 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
         poRec->SetFieldRaw( poField, 0, 
                             (const char *) pabyRawData, nRawDataSize );
         CPLFree( pabyRawData );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add the FFPT if needed.                                         */
+/* -------------------------------------------------------------------- */
+    char **papszLNAM_REFS = poFeature->GetFieldAsStringList( "LNAM_REFS" );
+
+    if( CSLCount(papszLNAM_REFS) > 0 )
+    {
+        int i, nRefCount = CSLCount(papszLNAM_REFS);
+        const int *panRIND = 
+            poFeature->GetFieldAsIntegerList( "FFPT_RIND", NULL );
+
+        poRec->AddField( poModule->FindFieldDefn( "FFPT" ) );
+
+        for( i = 0; i < nRefCount; i++ )
+        {
+            char szLNAM[9];
+
+            if( strlen(papszLNAM_REFS[i]) < 16 )
+                continue;
+
+            // AGEN
+            szLNAM[1] = GetHEXChar( papszLNAM_REFS[i] + 0 );
+            szLNAM[0] = GetHEXChar( papszLNAM_REFS[i] + 2 );
+            
+            // FIDN
+            szLNAM[5] = GetHEXChar( papszLNAM_REFS[i] + 4 );
+            szLNAM[4] = GetHEXChar( papszLNAM_REFS[i] + 6 );
+            szLNAM[3] = GetHEXChar( papszLNAM_REFS[i] + 8 );
+            szLNAM[2] = GetHEXChar( papszLNAM_REFS[i] + 10 );
+
+            // FIDS
+            szLNAM[7] = GetHEXChar( papszLNAM_REFS[i] + 12 );
+            szLNAM[6] = GetHEXChar( papszLNAM_REFS[i] + 14 );
+
+            szLNAM[8] = '\0';
+
+            poRec->SetStringSubfield( "FFPT", 0, "LNAM", i, 
+                                      (char *) szLNAM, 8 );
+            poRec->SetIntSubfield( "FFPT", 0, "RIND", i, 
+                                   panRIND[i] );
+        }
     }
 
 /* -------------------------------------------------------------------- */
