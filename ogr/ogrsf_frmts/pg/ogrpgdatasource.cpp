@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/01/19 18:48:11  warmerda
+ * added commit after DROP TABLE and before dropping sequence
+ *
  * Revision 1.19  2003/09/11 20:03:03  warmerda
  * initialize poSRS ariable in FetchSRS
  *
@@ -396,15 +399,25 @@ void OGRPGDataSource::DeleteLayer( const char *pszLayerName )
                  "SELECT DropGeometryColumn('%s','%s','wkb_geometry')",
                  pszDBName, pszLayerName );
 
+        CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
+
         hResult = PQexec( hPGConn, szCommand );
         PQclear( hResult );
     }
 
     sprintf( szCommand, "DROP TABLE %s", pszLayerName );
+    CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
     hResult = PQexec( hPGConn, szCommand );
     PQclear( hResult );
     
+    hResult = PQexec(hPGConn, "COMMIT");
+    PQclear( hResult );
+
+    hResult = PQexec(hPGConn, "BEGIN");
+    PQclear( hResult );
+
     sprintf( szCommand, "DROP SEQUENCE %s_ogc_fid_seq", pszLayerName );
+    CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
     hResult = PQexec( hPGConn, szCommand );
     PQclear( hResult );
     
