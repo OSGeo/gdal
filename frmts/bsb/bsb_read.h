@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/11/04 04:26:45  warmerda
+ * preliminary work on write support
+ *
  * Revision 1.4  2002/07/19 22:05:15  warmerda
  * added support for NO1 (encrypted) files
  *
@@ -67,6 +70,9 @@ typedef struct {
     int		nVersion; /* times 100 */
 
     int         bNO1;
+
+    int         bNewFile;
+    int         nLastLineWritten;
 } BSBInfo;
 
 BSBInfo CPL_DLL *BSBOpen( const char *pszFilename );
@@ -74,6 +80,13 @@ int CPL_DLL BSBReadScanline( BSBInfo *psInfo, int nScanline,
                              unsigned char *pabyScanlineBuf );
 void CPL_DLL BSBClose( BSBInfo *psInfo );
 
+BSBInfo CPL_DLL *BSBCreate( const char *pszFilename, int nCreationFlags, 
+                            int nVersion, int nXSize, int nYSize );
+int CPL_DLL BSBWritePCT( BSBInfo *psInfo, 
+                         int nPCTSize, unsigned char *pabyPCT );
+int CPL_DLL BSBWriteScanline( BSBInfo *psInfo, 
+                              unsigned char *pabyScanlineBuf );
+                            
 CPL_C_END
 
 

@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/11/04 04:26:45  warmerda
+ * preliminary work on write support
+ *
  * Revision 1.7  2002/07/19 22:05:15  warmerda
  * added support for NO1 (encrypted) files
  *
@@ -577,4 +580,152 @@ void BSBClose( BSBInfo *psInfo )
     CPLFree( psInfo->panLineOffset );
     CPLFree( psInfo->pabyPCT );
     CPLFree( psInfo );
+}
+
+/************************************************************************/
+/*                             BSBCreate()                              */
+/************************************************************************/
+
+BSBInfo *BSBCreate( const char *pszFilename, int nCreationFlags, int nVersion, 
+                    int nXSize, int nYSize )
+
+{
+    FILE	*fp;
+    BSBInfo     *psInfo;
+
+/* -------------------------------------------------------------------- */
+/*      Open new KAP file.                                              */
+/* -------------------------------------------------------------------- */
+    fp = VSIFOpen( pszFilename, "w" );
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Failed to open output file %s.", 
+                  pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write out BSB line.                                             */
+/* -------------------------------------------------------------------- */
+    VSIFPrintf( fp, 
+                "!Copyright unknown\n" );
+    VSIFPrintf( fp, 
+                "VER/%.1f\n", nVersion / 100.0 );
+    VSIFPrintf( fp, 
+                "BSB/NA=UNKNOWN,NU=999502,RA=%d,%d,DU=254\n",
+                nXSize, nYSize );
+    VSIFPrintf( fp, 
+                "KNP/SC=25000,GD=WGS84,PR=Mercator\n" );
+    VSIFPrintf( fp, 
+                "    PP=31.500000,PI=0.033333,SP=,SK=0.000000,TA=90.000000\n");
+    VSIFPrintf( fp, 
+                "     UN=Metres,SD=HHWLT,DX=2.500000,DY=2.500000\n");
+
+
+/* -------------------------------------------------------------------- */
+/*      Create info structure.                                          */
+/* -------------------------------------------------------------------- */
+    psInfo = (BSBInfo *) CPLCalloc(1,sizeof(BSBInfo));
+    psInfo->fp = fp;
+    psInfo->bNO1 = FALSE;
+    psInfo->nVersion = nVersion;
+    psInfo->nXSize = nXSize;
+    psInfo->nYSize = nYSize;
+    psInfo->bNewFile = TRUE;
+    psInfo->nLastLineWritten = -1;
+
+    return psInfo;
+}
+
+/************************************************************************/
+/*                            BSBWritePCT()                             */
+/************************************************************************/
+
+int BSBWritePCT( BSBInfo *psInfo, int nPCTSize, unsigned char *pabyPCT )
+
+{
+    int        i;
+
+    if( nPCTSize > 128 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Pseudo-color table too large (%d entries), at most 128\n"
+                  " entries allowed in BSB format." );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Compute the number of bits required for the colors.             */
+/* -------------------------------------------------------------------- */
+    for( psInfo->nColorSize = 1; 
+         (1 << psInfo->nColorSize) < nPCTSize; 
+         psInfo->nColorSize++ ) {}
+
+/* -------------------------------------------------------------------- */
+/*      Write out the color table.  Note that color table entry zero    */
+/*      is ignored.  Zero is not a legal value.                         */
+/* -------------------------------------------------------------------- */
+    for( i = 1; i < nPCTSize; i++ )
+    {
+        VSIFPrintf( psInfo->fp, 
+                    "RGB/%d,%d,%d,%d\n", 
+                    i, pabyPCT[i*3+0], pabyPCT[i*3+1], pabyPCT[i*3+2] );
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                          BSBWriteScanline()                          */
+/************************************************************************/
+
+int BSBWriteScanline( BSBInfo *psInfo, unsigned char *pabyScanlineBuf )
+
+{
+    int   nValue, iX, byCountMask;
+
+    if( psInfo->nLastLineWritten == psInfo->nYSize - 1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Attempt to write too many scanlines." );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If this is the first scanline writen out the EOF marker, and    */
+/*      the introductory info in the image segment.                     */
+/* -------------------------------------------------------------------- */
+    if( psInfo->nLastLineWritten == -1 )
+    {
+        VSIFPutc( 0x1A, psInfo->fp );
+        VSIFPutc( 0x00, psInfo->fp );
+        VSIFPutc( psInfo->nColorSize, psInfo->fp );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write the line number.                                          */
+/* -------------------------------------------------------------------- */
+    nValue = ++psInfo->nLastLineWritten;
+
+    if( psInfo->nVersion >= 200 )
+        nValue++;
+
+    if( nValue >= 128*128 )
+        VSIFPutc( 0x80 | ((nValue & (0x7f<<14)) >> 14), psInfo->fp );
+    if( nValue >= 128 )
+        VSIFPutc( 0x80 | ((nValue & (0x7f<<7)) >> 7), psInfo->fp );
+    VSIFPutc( nValue & 0x7f, psInfo->fp );
+
+/* -------------------------------------------------------------------- */
+/*      Write out each pixel as a separate byte.  We don't try to       */
+/*      actually capture the runs since that radical and futuristic     */
+/*      concept is patented!                                            */
+/* -------------------------------------------------------------------- */
+    for( iX = 0; iX < psInfo->nXSize; iX++ )
+        VSIFPutc( pabyScanlineBuf[iX] << (7-psInfo->nColorSize), psInfo->fp );
+
+    VSIFPutc( 0x00, psInfo->fp );
+
+    return TRUE;
 }
