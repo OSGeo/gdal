@@ -95,7 +95,7 @@ ogr_dir:      port_dir
 	$(MAKE) /f makefile.vc
 	cd ..\..\ogr
 !IFDEF INCLUDE_OGR_FRMTS
-	$(MAKE) frmts ogr.lib
+	$(MAKE) default
 !ELSE
 	$(MAKE) ogr.lib
 !ENDIF
@@ -108,7 +108,8 @@ lib_dist:	default
 	zip -r $(DISTDIR).zip $(DISTDIR)
 
 $(GDAL_DLL):	lib
-	link /dll /debug $(OGR_INCLUDE) $(LIBOBJ) $(ECWLIB) $(OGDILIB) \
+	link /dll /debug $(OGR_INCLUDE) $(LIBOBJ) \
+		$(ECWLIB) $(OGDILIB) $(XERCES_LIB) \
 		 /out:$(GDAL_DLL) /implib:gdal_i.lib $(LINKER_FLAGS)
 
 install: $(GDAL_DLL) apps_dir pymod_dir
@@ -117,6 +118,10 @@ install: $(GDAL_DLL) apps_dir pymod_dir
 	$(MAKE) /f makefile.vc install
 	cd ..\pymod
 	if exist $(PYDIR)\python.exe $(MAKE) /f makefile.vc install
+!IFDEF INCLUDE_OGR_FRMTS
+	cd ..\ogr
+	$(MAKE) install
+!ENDIF
 	cd ..
 	
 	
