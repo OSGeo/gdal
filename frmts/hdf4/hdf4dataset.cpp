@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.23  2003/06/25 08:26:18  dron
+ * Support for Aster Level 1A/1B/2 products.
+ *
  * Revision 1.22  2003/06/12 15:07:04  dron
  * Added support for SeaWiFS Level 3 Standard Mapped Image Products.
  *
@@ -131,6 +134,8 @@ HDF4Dataset::HDF4Dataset()
     hHDF4 = 0;
     hSD = 0;
     hGR = 0;
+    psDataField = NULL;
+    psDimMap = NULL;
     papszGlobalMetadata = NULL;
     papszSubDatasets = NULL;
 }
@@ -154,6 +159,43 @@ HDF4Dataset::~HDF4Dataset()
         VSIFClose( fp );
     if( hHDF4 > 0 )
 	Hclose( hHDF4 );
+
+    if ( psDimMap )
+    {
+        int     i, nCount;
+
+        nCount = CPLListCount( psDimMap );
+        for ( i = 0; i < nCount; i++ )
+        {
+            HDF4EOSDimensionMap *psTemp;
+
+            psTemp = (HDF4EOSDimensionMap *)
+                CPLListGetData( CPLListGet( psDimMap, i ) );
+            CPLFree( psTemp->pszDataDimension );
+            CPLFree( psTemp );
+
+        }
+        CPLListDestroy( psDimMap );
+    }
+
+    if ( psDataField )
+    {
+        int     i, nCount;
+
+        nCount = CPLListCount( psDataField );
+        for ( i = 0; i < nCount; i++ )
+        {
+            HDF4EOSDataField *psTemp;
+
+            psTemp = (HDF4EOSDataField *)
+                CPLListGetData( CPLListGet( psDataField, i ) );
+            CPLFree( psTemp->pszDataFieldName );
+            CPLListDestroy( psTemp->psDimList );
+            CPLFree( psTemp );
+
+        }
+        CPLListDestroy( psDataField );
+    }
 }
 
 /************************************************************************/
@@ -782,46 +824,145 @@ void HDF4Dataset::HDF4EOSParseStructMetadata( int32 iHandle, int32 iAttribute,
     char	*pszData;
     char        **papszAttrList;
     int	        iCount, i, j;
-    int         nDims = 0;
+    CPLList     *psDM = NULL;
     
     pszData = (char *)CPLMalloc( (nValues + 1) * sizeof(char) );
     pszData[nValues] = '\0';
     SDreadattr( iHandle, iAttribute, pszData );
     
-    papszAttrList = CSLTokenizeString2( pszData, "\r\n\t =", CSLT_PRESERVEQUOTES );//HDF4EOSTokenizeAttrs( pszData );
+    papszAttrList =
+        CSLTokenizeString2( pszData, "\r\n\t =", CSLT_HONOURSTRINGS );
 
     iCount = CSLCount( papszAttrList );
-    for ( i = 0; i < iCount - 1; i++ )
+    for ( i = 0; i < iCount - 3; i++ )
     {
 
 /* -------------------------------------------------------------------- */
 /*     Extract DimensionMap table.                                      */
 /* -------------------------------------------------------------------- */
-        if ( EQUAL( papszAttrList[i], "OBJECT" ) &&
-             EQUALN( papszAttrList[i + 1], "DimensionMap", 12 ) )
+        if ( EQUAL( papszAttrList[i], "GROUP" )
+             && EQUALN( papszAttrList[i + 1], "DimensionMap", 12 ) )
         {
-            i++;
-            for ( j = 1; i + j < iCount - 1; j++ )
+            i += 2;
+            do
             {
-                if ( EQUAL( papszAttrList[i + j], "END_OBJECT" ) ||
-                     EQUAL( papszAttrList[i + j], "OBJECT" ) )
+                if ( EQUAL( papszAttrList[i], "OBJECT" ) &&
+                     EQUALN( papszAttrList[i + 1], "DimensionMap", 12 ) )
                 {
-                    break;
-                }
-                else if ( EQUAL( papszAttrList[i + j], "Offset" ) )
-                {
-                    sDimMap[nDims].dfOffset = atof(papszAttrList[i + j + 1]);
-                }
-                else if ( EQUAL( papszAttrList[i + j], "Increment" ) )
-                {
-                    sDimMap[nDims].dfIncrement = atof(papszAttrList[i + j + 1]);
-                }
-            }
+                    for ( j = 2; i + j < iCount - 1; j++ )
+                    {
+                        HDF4EOSDimensionMap *psTemp;
 
-            i += j;
-            nDims++;
-            if ( nDims > 1 )
-                break;
+                        if ( EQUAL( papszAttrList[i + j], "END_OBJECT" ) ||
+                             EQUAL( papszAttrList[i + j], "OBJECT" ) )
+                        {
+                            break;
+                        }
+                        else if ( EQUAL(papszAttrList[i + j], "DataDimension") )
+                        {
+                            psTemp = (HDF4EOSDimensionMap *)
+                                CPLMalloc( sizeof(HDF4EOSDimensionMap) );
+                            psTemp->pszDataDimension =
+                                CPLStrdup( papszAttrList[i + j + 1] );
+                            psDM = CPLListAppend( psDM, psTemp );
+
+                            // Store head of the list for later freeing
+                            if ( !psDimMap )
+                                psDimMap = psDM;
+                        }
+                        else if ( EQUAL( papszAttrList[i + j], "Offset" ) )
+                        {
+                            psTemp = (HDF4EOSDimensionMap *)
+                                CPLListGetData( CPLListGetLast(psDM) );
+                            psTemp->dfOffset = atof( papszAttrList[i + j + 1] );
+                        }
+                        else if ( EQUAL( papszAttrList[i + j], "Increment" ) )
+                        {
+                            psTemp = (HDF4EOSDimensionMap *)
+                                CPLListGetData( CPLListGetLast(psDM) );
+                            psTemp->dfIncrement =
+                                atof( papszAttrList[i + j + 1] );
+                        }
+                    }
+
+                    i += j;
+                }
+                
+                i++;
+            }
+            while ( i < iCount - 2 && !EQUAL( papszAttrList[i], "END_GROUP" ) );
+            i++;
+        }
+
+/* -------------------------------------------------------------------- */
+/*     Extract DataField table.                                         */
+/* -------------------------------------------------------------------- */
+        if ( i < iCount - 3
+             && EQUAL( papszAttrList[i], "GROUP" )
+             && EQUALN( papszAttrList[i + 1], "DataField", 9 ) )
+        {
+            i += 2;
+            do
+            {
+                if ( EQUAL( papszAttrList[i], "OBJECT" ) &&
+                     EQUALN( papszAttrList[i + 1], "DataField", 9 ) )
+                {
+                    for ( j = 2; i + j < iCount - 1; j++ )
+                    {
+                        HDF4EOSDataField *psTemp;
+
+                        if ( EQUAL( papszAttrList[i + j], "END_OBJECT" ) ||
+                             EQUAL( papszAttrList[i + j], "OBJECT" ) )
+                        {
+                            break;
+                        }
+                        else if ( EQUAL( papszAttrList[i + j], "DataFieldName" ) )
+                        {
+                            psTemp = (HDF4EOSDataField *)
+                                CPLMalloc(sizeof(HDF4EOSDataField));
+                            psTemp->pszDataFieldName =
+                                CPLStrdup( papszAttrList[i + j + 1] );
+                            psTemp->psDimList = NULL;
+                            psDataField = CPLListAppend( psDataField, psTemp );
+                        }
+                        else if ( EQUAL( papszAttrList[i + j], "DimList" ) )
+                        {
+                            int k, l;
+                            char **papszDimList =
+                                CSLTokenizeString2( papszAttrList[i + j + 1],
+                                                    "(), ",
+                                                    CSLT_HONOURSTRINGS );
+                            psTemp = (HDF4EOSDataField *)
+                                CPLListGetData( CPLListGetLast(psDataField) );
+                            for ( k = 0; k < CSLCount(papszDimList); k++ )
+                            {
+                                for ( l = 0; l < CPLListCount(psDM); l++ )
+                                {
+                                    CPLList *psElem = CPLListGet( psDM, l );
+                                    if( EQUAL( papszDimList[k],
+        ((HDF4EOSDimensionMap *)CPLListGetData( psElem ))->pszDataDimension ) )
+                                    {
+                                        psTemp->psDimList =
+                                            CPLListAppend( psTemp->psDimList,
+                                                    CPLListGetData( psElem ) );
+                                        break;
+                                    }
+                                }
+                            }
+
+                            CSLDestroy( papszDimList );
+                        }
+                    }
+
+                    i += j;
+                }
+                
+                i++;
+            }
+            while ( i < iCount - 1 && !EQUAL( papszAttrList[i], "END_GROUP" ) );
+
+            // Point psDM to the last value.
+            psDM = CPLListGetLast( psDM );
         }
     }
 
@@ -856,6 +997,7 @@ CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler )
              EQUALN( szAttrName, "badpixelinformation", 19 ) ||
 	     EQUALN( szAttrName, "product_summary", 15 ) ||
 	     EQUALN( szAttrName, "dem_specific", 12 ) ||
+	     EQUALN( szAttrName, "acv_specific", 12 ) ||
 	     EQUALN( szAttrName, "level_1_carryover", 17 ) )
         {
             papszGlobalMetadata = TranslateHDF4EOSAttributes( iHandler,
@@ -953,6 +1095,19 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
         {
             poDS->iDataType = ASTER_L1B;
 	    poDS->pszDataType = "ASTER_L1B";
+        }
+        else if ( EQUAL( pszValue, "AST_04" )
+                  || EQUAL( pszValue, "AST_05" )
+                  || EQUAL( pszValue, "AST_06V" )
+                  || EQUAL( pszValue, "AST_06S" )
+                  || EQUAL( pszValue, "AST_06T" )
+                  || EQUAL( pszValue, "AST_07" )
+                  || EQUAL( pszValue, "AST_08" )
+                  || EQUAL( pszValue, "AST_09" )
+                  || EQUAL( pszValue, "AST_09T" ) )
+        {
+            poDS->iDataType = ASTER_L2;
+            poDS->pszDataType = "ASTER_L2";
         }
         else if ( EQUAL( pszValue, "AST14DEM" ) )
         {
@@ -1055,10 +1210,11 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 		continue;
 
 	// Sort known datasets. We will display only image bands
-	if ( (poDS->iDataType == ASTER_L1A || poDS->iDataType == ASTER_L1B ) &&
-	     !EQUALN( szName, "ImageData", 9 ) )
+	if ( (poDS->iDataType == ASTER_L1A || poDS->iDataType == ASTER_L1B )
+             && !EQUALN( szName, "ImageData", 9 ) )
 		continue;
-	else if ( (poDS->iDataType == AST14DEM ) && !EQUALN( szName, "Band", 4 ) )
+	else if ( (poDS->iDataType == AST14DEM || poDS->iDataType == ASTER_L2 )
+                  && !EQUALN( szName, "Band", 4 ) )
 		continue;
 	else if ( (poDS->iDataType == MODIS_L1B ) && !EQUALN( szName, "EV_", 3 ) )
         {
@@ -1207,13 +1363,14 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                 pszName =
                     CPLSPrintf( "%s: Total absorption coefficient, 551 nm",
                                 szName );
-            else if ( EQUALN( szName, "sst", 3 ) )
-                pszName =
-                    CPLSPrintf( "%s: Sea surface temperature, daytime, 11 micron",
-                                szName );
+            /* XXX: 'sst4' should go before 'sst' case */
             else if ( EQUALN( szName, "sst4", 4 ) )
                 pszName =
                     CPLSPrintf( "%s: Sea surface temperature, daytime, 4 micron",
+                                szName );
+            else if ( EQUALN( szName, "sst", 3 ) )
+                pszName =
+                    CPLSPrintf( "%s: Sea surface temperature, daytime, 11 micron",
                                 szName );
             else
 		pszName = szName;

@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.11  2003/06/25 08:26:18  dron
+ * Support for Aster Level 1A/1B/2 products.
+ *
  * Revision 1.10  2003/06/12 15:07:34  dron
  * Value for MODIS Level 2 added.
  *
@@ -64,6 +67,8 @@
 #ifndef _HDF4DATASET_H_INCLUDED_
 #define _HDF4DATASET_H_INCLUDED_
 
+#include "cpl_list.h"
+
 typedef enum			// Types of subdatasets:
 {
     HDF4_SDS,			// Scientific Dataset
@@ -79,18 +84,26 @@ typedef enum			// Types of data products:
     SEAWIFS_L3,			// SeaWiFS Level-3 Standard Mapped Image
     ASTER_L1A,			// ASTER Level 1A
     ASTER_L1B,			// ASTER Level 1B
+    ASTER_L2,			// ASTER Level 2
     AST14DEM,			// ASTER DEM
     MODIS_L1B,                  // MODIS Level 1B
-    MODIS_L3,                   // MODIS Level 3
     MODIS_L2,                   // MODIS Level 2
+    MODIS_L3,                   // MODIS Level 3
     MODIS_UNK,
     UNKNOWN
 } HDF4Datatype;
 
 struct HDF4EOSDimensionMap
 {
-    double  dfOffset;
-    double  dfIncrement;
+    char        *pszDataDimension;
+    double      dfOffset;
+    double      dfIncrement;
+};
+
+struct HDF4EOSDataField
+{
+    char        *pszDataFieldName;
+    CPLList     *psDimList;
 };
 
 /************************************************************************/
@@ -117,7 +130,8 @@ class HDF4Dataset : public GDALDataset
     HDF4Datatype iDataType;
     const char	*pszDataType;
 
-    HDF4EOSDimensionMap sDimMap[2];
+    CPLList     *psDataField;
+    CPLList     *psDimMap;
     
     char	**papszGlobalMetadata;
     char	**papszSubDatasets;
