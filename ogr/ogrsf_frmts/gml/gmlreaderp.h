@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/01/27 04:06:47  fwarmerdam
+ * added ParseXSD
+ *
  * Revision 1.7  2003/06/27 17:11:23  warmerda
  * removed DOMString.hpp, and added XERCES namespace support
  *
@@ -192,6 +195,8 @@ public:
 
     int              LoadClasses( const char *pszFile = NULL );
     int              SaveClasses( const char *pszFile = NULL );
+
+    int              ParseXSD( const char *pszFile );
 
     int              PrescanForSchema(int bGetExtents = TRUE );
     void             ResetReading();
