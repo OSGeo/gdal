@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/12/30 20:29:43  fwarmerdam
+ * Added a credit.
+ *
  * Revision 1.3  2004/12/30 20:28:20  fwarmerdam
  * Added some documentation.
  *
@@ -85,6 +88,9 @@ typedef struct
  * order of 10s for 400 GCPs on a 2GHz Athlon processor. 
  *
  * TPS Transformers are serializable. 
+ *
+ * The GDAL Thin Plate Spline transformer is based on code provided by
+ * Gilad Ronnen on behalf of VIZRT Inc.  
  *
  * @param nGCPCount the number of GCPs in pasGCPList.
  * @param pasGCPList an array of GCPs to be used as input.
