@@ -1528,13 +1528,13 @@ AC_SUBST(EXE_EXT,$EXE_EXT)
 dnl ---------------------------------------------------------------------------
 dnl Which "true" program should we use? 
 dnl ---------------------------------------------------------------------------
-BINTRUE = /bin/true
+BINTRUE=/bin/true
 
 if test -f /bin/true.exe ; then
-  BINTRUE = /bin/true.exe
+  BINTRUE=/bin/true.exe
 fi
 if test -f /usr/bin/true ; then
-  BINTRUE = /usr/bin/true
+  BINTRUE=/usr/bin/true
 fi
 
 export BINTRUE
