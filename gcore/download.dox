@@ -49,7 +49,7 @@ from <a href="http://www.freegis.org/">www.freegis.org</a> in RPM format.<p>
 GDAL source releases are available in tar.gz and zip from from the
 GDAL primary ftp site, and http mirror site:
 
-<a href="ftp://ftp.remotesensing.org/gdal">ftp://ftp.remotesensing.org/gdal</a><p>
+<a href="http://www.gdal.org/dl">http://www.gdal.org/dl</a><p>
 <a href="http://gdal.maptools.org/dl/">http://gdal.maptools.org/dl</a><p>
 
 The <a href="NEWS.html">NEWS</a> file describes features added up to the
