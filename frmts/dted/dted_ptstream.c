@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/05/30 16:17:21  warmerda
+ * fix warnings with casting and unused parameters
+ *
  * Revision 1.6  2002/03/05 14:26:01  warmerda
  * expanded tabs
  *
@@ -354,7 +357,8 @@ void DTEDFillPixel( DTEDInfo *psInfo, GInt16 **papanProfiles,
     if( dfCoefSum == 0.0 )
         papanDstProfiles[iX][iY] = DTED_NODATA_VALUE;
     else
-        papanDstProfiles[iX][iY] = (int) floor(dfValueSum / dfCoefSum + 0.5);
+        papanDstProfiles[iX][iY] =
+            (GInt16) floor(dfValueSum / dfCoefSum + 0.5);
 }
 
 /************************************************************************/

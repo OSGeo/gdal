@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/05/30 16:17:21  warmerda
+ * fix warnings with casting and unused parameters
+ *
  * Revision 1.11  2003/02/26 15:30:41  warmerda
  * Modified reading code to treat any large negative values as if negative
  * values are being stored in twos complement form, as per
@@ -347,8 +350,8 @@ int DTEDWriteProfile( DTEDInfo * psDInfo, int nColumnOffset,
     for( i = 0; i < psDInfo->nYSize; i++ )
     {
         int     nABSVal = ABS(panData[psDInfo->nYSize-i-1]);
-        pabyRecord[8+i*2] = (nABSVal >> 8) & 0x7f;
-        pabyRecord[8+i*2+1] = nABSVal & 0xff;
+        pabyRecord[8+i*2] = (GByte) ((nABSVal >> 8) & 0x7f);
+        pabyRecord[8+i*2+1] = (GByte) (nABSVal & 0xff);
 
         if( panData[psDInfo->nYSize-i-1] < 0 )
             pabyRecord[8+i*2] |= 0x80;
@@ -356,10 +359,10 @@ int DTEDWriteProfile( DTEDInfo * psDInfo, int nColumnOffset,
 
     pabyRecord[0] = 0xaa;
     pabyRecord[1] = 0;
-    pabyRecord[2] = nColumnOffset / 256;
-    pabyRecord[3] = nColumnOffset % 256;
-    pabyRecord[4] = nColumnOffset / 256;
-    pabyRecord[5] = nColumnOffset % 256;
+    pabyRecord[2] = (GByte) (nColumnOffset / 256);
+    pabyRecord[3] = (GByte) (nColumnOffset % 256);
+    pabyRecord[4] = (GByte) (nColumnOffset / 256);
+    pabyRecord[5] = (GByte) (nColumnOffset % 256);
     pabyRecord[6] = 0;
     pabyRecord[7] = 0;
 
@@ -369,10 +372,10 @@ int DTEDWriteProfile( DTEDInfo * psDInfo, int nColumnOffset,
     for( i = 0; i < psDInfo->nYSize*2 + 8; i++ )
         nCheckSum += pabyRecord[i];
 
-    pabyRecord[8+psDInfo->nYSize*2+0] = (nCheckSum >> 24) & 0xff;
-    pabyRecord[8+psDInfo->nYSize*2+1] = (nCheckSum >> 16) & 0xff;
-    pabyRecord[8+psDInfo->nYSize*2+2] = (nCheckSum >> 8) & 0xff;
-    pabyRecord[8+psDInfo->nYSize*2+3] = nCheckSum & 0xff;
+    pabyRecord[8+psDInfo->nYSize*2+0] = (GByte) ((nCheckSum >> 24) & 0xff);
+    pabyRecord[8+psDInfo->nYSize*2+1] = (GByte) ((nCheckSum >> 16) & 0xff);
+    pabyRecord[8+psDInfo->nYSize*2+2] = (GByte) ((nCheckSum >> 8) & 0xff);
+    pabyRecord[8+psDInfo->nYSize*2+3] = (GByte) (nCheckSum & 0xff);
 
 /* -------------------------------------------------------------------- */
 /*      Write the record.                                               */
