@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/02/24 15:11:42  fwarmerdam
+ * fixed debug arguments in Read()
+ *
  * Revision 1.4  2005/02/07 22:53:54  fwarmerdam
  * added preliminary Create support for JP2ECW driver
  *
@@ -172,7 +175,7 @@ class VSIIOStream : public CNCSJPCIOStream
         {
             CPLDebug( "VSIIOSTREAM",
                       "Read(%d) failed @ %d, ignoring failure.",
-                      (int) (VSIFTellL( fpVSIL ) - startOfJPData) );
+                      count, (int) (VSIFTellL( fpVSIL ) - startOfJPData) );
         }
         
         return true;
