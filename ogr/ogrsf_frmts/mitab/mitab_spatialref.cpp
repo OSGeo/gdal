@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_spatialref.cpp,v 1.32 2001/10/25 16:13:41 warmerda Exp $
+ * $Id: mitab_spatialref.cpp,v 1.33 2002/03/01 19:00:15 warmerda Exp $
  *
  * Name:     mitab_spatialref.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log: mitab_spatialref.cpp,v $
+ * Revision 1.33  2002/03/01 19:00:15  warmerda
+ * False Easting/Northing should be in the linear units of measure in MapInfo,
+ * but in OGRSpatialReference/WKT they are always in meters.  Convert accordingly.
+ *
  * Revision 1.32  2001/10/25 16:13:41  warmerda
  * Added OGC string for datum 12
  *
@@ -418,6 +422,88 @@ OGRSpatialReference *TABFile::GetSpatialRef()
     }
 
     /*-----------------------------------------------------------------
+     * Get the units name, and translation factor.
+     *----------------------------------------------------------------*/
+    const char *pszUnitsName; 
+    const char *pszUnitsConv;
+    double      dfConv = 1.0;
+
+    switch( sTABProj.nUnitsId )
+    {
+      case 0:
+        pszUnitsName = "Mile";
+        pszUnitsConv = "1609.344";
+        break;
+
+      case 1:
+        pszUnitsName = "Kilometer";
+        pszUnitsConv = "1000.0";
+        break;
+            
+      case 2:
+        pszUnitsName = "IINCH";
+        pszUnitsConv = "0.0254";
+        break;
+            
+      case 3:
+        pszUnitsName = SRS_UL_FOOT;
+        pszUnitsConv = SRS_UL_FOOT_CONV;
+        break;
+            
+      case 4:
+        pszUnitsName = "IYARD";
+        pszUnitsConv = "0.9144";
+        break;
+            
+      case 5:
+        pszUnitsName = "Millimeter";
+        pszUnitsConv = "0.001";
+        break;
+            
+      case 6:
+        pszUnitsName = "Centimeter";
+        pszUnitsConv = "0.01";
+        break;
+            
+      case 7:
+        pszUnitsName = SRS_UL_METER;
+        pszUnitsConv = "1.0";
+        break;
+            
+      case 8:
+        pszUnitsName = SRS_UL_US_FOOT;
+        pszUnitsConv = SRS_UL_US_FOOT_CONV;
+        break;
+            
+      case 9:
+        pszUnitsName = SRS_UL_NAUTICAL_MILE;
+        pszUnitsConv = SRS_UL_NAUTICAL_MILE_CONV;
+        break;
+            
+      case 30:
+        pszUnitsName = SRS_UL_LINK;
+        pszUnitsConv = SRS_UL_LINK_CONV;
+        break;
+            
+      case 31:
+        pszUnitsName = SRS_UL_CHAIN;
+        pszUnitsConv = SRS_UL_CHAIN_CONV;
+        break;
+            
+      case 32:
+        pszUnitsName = SRS_UL_ROD;
+        pszUnitsConv = SRS_UL_ROD_CONV;
+        break;
+            
+      default:
+        pszUnitsName = SRS_UL_METER;
+        pszUnitsConv = "1.0";
+        break;
+    }
+
+    dfConv = atof(pszUnitsConv);
+
+    /*-----------------------------------------------------------------
      * Transform them into an OGRSpatialReference.
      *----------------------------------------------------------------*/
     m_poSpatialRef = new OGRSpatialReference;
@@ -447,8 +533,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
       case 2:
         m_poSpatialRef->SetCEA( sTABProj.adProjParams[1],
                                 sTABProj.adProjParams[0],
-                                sTABProj.adProjParams[2],
-                                sTABProj.adProjParams[3] );
+                                sTABProj.adProjParams[2] * dfConv,
+                                sTABProj.adProjParams[3] * dfConv );
         break;
 
         /*--------------------------------------------------------------
@@ -459,8 +545,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                                 sTABProj.adProjParams[3],
                                 sTABProj.adProjParams[1],
                                 sTABProj.adProjParams[0],
-                                sTABProj.adProjParams[4],
-                                sTABProj.adProjParams[5] );
+                                sTABProj.adProjParams[4] * dfConv,
+                                sTABProj.adProjParams[5] * dfConv );
         break;
 
         /*--------------------------------------------------------------
@@ -489,8 +575,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                                sTABProj.adProjParams[3],
                                sTABProj.adProjParams[1],
                                sTABProj.adProjParams[0],
-                               sTABProj.adProjParams[4],
-                               sTABProj.adProjParams[5] );
+                               sTABProj.adProjParams[4] * dfConv,
+                               sTABProj.adProjParams[5] * dfConv );
         break;
 
         /*--------------------------------------------------------------
@@ -502,8 +588,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                                 sTABProj.adProjParams[2],
                                 90.0, 
                                 sTABProj.adProjParams[3],
-                                sTABProj.adProjParams[4],
-                                sTABProj.adProjParams[5] );
+                                sTABProj.adProjParams[4] * dfConv,
+                                sTABProj.adProjParams[5] * dfConv );
         break;
 
         /*--------------------------------------------------------------
@@ -514,8 +600,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                                  sTABProj.adProjParams[3],
                                  sTABProj.adProjParams[1],
                                  sTABProj.adProjParams[0],
-                                 sTABProj.adProjParams[4],
-                                 sTABProj.adProjParams[5] );
+                                 sTABProj.adProjParams[4] * dfConv,
+                                 sTABProj.adProjParams[5] * dfConv );
         break;
 
         /*--------------------------------------------------------------
@@ -582,8 +668,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
         m_poSpatialRef->SetTM( sTABProj.adProjParams[1],
                                sTABProj.adProjParams[0],
                                sTABProj.adProjParams[2],
-                               sTABProj.adProjParams[3],
-                               sTABProj.adProjParams[4] );
+                               sTABProj.adProjParams[3] * dfConv,
+                               sTABProj.adProjParams[4] * dfConv );
         break;
 
         /*--------------------------------------------------------------
@@ -599,8 +685,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
       case 18:
         m_poSpatialRef->SetNZMG( sTABProj.adProjParams[1],
                                  sTABProj.adProjParams[0],
-                                 sTABProj.adProjParams[2],
-                                 sTABProj.adProjParams[3] );
+                                 sTABProj.adProjParams[2] * dfConv,
+                                 sTABProj.adProjParams[3] * dfConv );
         break;
 
         /*--------------------------------------------------------------
@@ -611,8 +697,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                                  sTABProj.adProjParams[3],
                                  sTABProj.adProjParams[1],
                                  sTABProj.adProjParams[0],
-                                 sTABProj.adProjParams[4],
-                                 sTABProj.adProjParams[5] );
+                                 sTABProj.adProjParams[4] * dfConv,
+                                 sTABProj.adProjParams[5] * dfConv );
         break;
 
         /*--------------------------------------------------------------
@@ -622,8 +708,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
         m_poSpatialRef->SetStereographic( sTABProj.adProjParams[1],
                                           sTABProj.adProjParams[0],
                                           sTABProj.adProjParams[2],
-                                          sTABProj.adProjParams[3],
-                                          sTABProj.adProjParams[4] );
+                                          sTABProj.adProjParams[3] * dfConv,
+                                          sTABProj.adProjParams[4] * dfConv );
         break;
 
         /*--------------------------------------------------------------
@@ -632,8 +718,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
       case 25:
         m_poSpatialRef->SetSOC( sTABProj.adProjParams[1],
                                 sTABProj.adProjParams[0],
-                                sTABProj.adProjParams[2],
-                                sTABProj.adProjParams[3] );
+                                sTABProj.adProjParams[2] * dfConv,
+                                sTABProj.adProjParams[3] * dfConv );
         break;
 
       default:
@@ -649,79 +735,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
         
         m_poSpatialRef->GetRoot()->AddChild(poUnits);
 
-        poUnits->AddChild( new OGR_SRSNode( SRS_UL_METER ) );
-        poUnits->AddChild( new OGR_SRSNode( "1.0" ) );
-       
-        switch( sTABProj.nUnitsId )
-        {
-          case 0:
-            poUnits->GetChild(0)->SetValue("Mile");
-            poUnits->GetChild(1)->SetValue("1609.344");
-            break;
-
-          case 1:
-            poUnits->GetChild(0)->SetValue("Kilometer");
-            poUnits->GetChild(1)->SetValue("1000.0");
-            break;
-            
-          case 2:
-            poUnits->GetChild(0)->SetValue("IINCH");
-            poUnits->GetChild(1)->SetValue("0.0254");
-            break;
-            
-          case 3:
-            poUnits->GetChild(0)->SetValue(SRS_UL_FOOT);
-            poUnits->GetChild(1)->SetValue(SRS_UL_FOOT_CONV);
-            break;
-            
-          case 4:
-            poUnits->GetChild(0)->SetValue("IYARD");
-            poUnits->GetChild(1)->SetValue("0.9144");
-            break;
-            
-          case 5:
-            poUnits->GetChild(0)->SetValue("Millimeter");
-            poUnits->GetChild(1)->SetValue("0.001");
-            break;
-            
-          case 6:
-            poUnits->GetChild(0)->SetValue("Centimeter");
-            poUnits->GetChild(1)->SetValue("0.01");
-            break;
-            
-          case 7:
-            poUnits->GetChild(0)->SetValue(SRS_UL_METER);
-            poUnits->GetChild(1)->SetValue("1.0");
-            break;
-            
-          case 8:
-            poUnits->GetChild(0)->SetValue(SRS_UL_US_FOOT);
-            poUnits->GetChild(1)->SetValue(SRS_UL_US_FOOT_CONV);
-            break;
-            
-          case 9:
-            poUnits->GetChild(0)->SetValue(SRS_UL_NAUTICAL_MILE);
-            poUnits->GetChild(1)->SetValue(SRS_UL_NAUTICAL_MILE_CONV);
-            break;
-            
-          case 30:
-            poUnits->GetChild(0)->SetValue(SRS_UL_LINK);
-            poUnits->GetChild(1)->SetValue(SRS_UL_LINK_CONV);
-            break;
-            
-          case 31:
-            poUnits->GetChild(0)->SetValue(SRS_UL_CHAIN);
-            poUnits->GetChild(1)->SetValue(SRS_UL_CHAIN_CONV);
-            break;
-            
-          case 32:
-            poUnits->GetChild(0)->SetValue(SRS_UL_ROD);
-            poUnits->GetChild(1)->SetValue(SRS_UL_ROD_CONV);
-            break;
-            
-          default:
-            break;
-        }
+        poUnits->AddChild( new OGR_SRSNode( pszUnitsName ) );
+        poUnits->AddChild( new OGR_SRSNode( pszUnitsConv ) );
     }
 
     /*-----------------------------------------------------------------
@@ -783,7 +798,7 @@ OGRSpatialReference *TABFile::GetSpatialRef()
         else
         {
             sprintf( szDatumName,
-                    "MIF 9999,%d,%.4g,%.4g,%.4g,%.15g,%.15g,%.15g,%.15g,%.15g",
+                     "MIF 9999,%d,%.4g,%.4g,%.4g,%.15g,%.15g,%.15g,%.15g,%.15g",
                      sTABProj.nEllipsoidId,
                      sTABProj.dDatumShiftX, 
                      sTABProj.dDatumShiftY, 
@@ -931,6 +946,16 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
     sTABProj.adDatumParams[4] = 0.0;
     
     /*-----------------------------------------------------------------
+     * Get the linear units and conversion.
+     *----------------------------------------------------------------*/
+    char        *pszLinearUnits;
+    double      dfLinearConv;
+
+    dfLinearConv = poSpatialRef->GetLinearUnits( &pszLinearUnits );
+    if( dfLinearConv == 0.0 )
+        dfLinearConv = 1.0;
+
+    /*-----------------------------------------------------------------
      * Transform the projection and projection parameters.
      *----------------------------------------------------------------*/
     const char *pszProjection = poSpatialRef->GetAttrValue("PROJECTION");
@@ -954,8 +979,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
-        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
-        parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
+        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
+        parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_AZIMUTHAL_EQUIDISTANT) )
@@ -992,8 +1017,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
-        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
-        parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
+        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
+        parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_GALL_STEREOGRAPHIC) )
@@ -1009,8 +1034,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_AZIMUTH,0.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
-        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
-        parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
+        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
+        parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
@@ -1028,8 +1053,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
-        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
-        parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
+        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
+        parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_MERCATOR_1SP) )
@@ -1057,8 +1082,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         sTABProj.nProjId = 18;
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
-        parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
+        parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_SWISS_OBLIQUE_CYLINDRICAL) )
@@ -1066,8 +1091,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         sTABProj.nProjId = 25;
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
-        parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
+        parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_ROBINSON) )
@@ -1088,8 +1113,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
-        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
+        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )
@@ -1098,8 +1123,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
-        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
+        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
     }
 
     /* ==============================================================
@@ -1210,11 +1235,6 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
     /*-----------------------------------------------------------------
      * Translate the units
      *----------------------------------------------------------------*/
-    char        *pszLinearUnits;
-    double      dfLinearConv;
-
-    dfLinearConv = poSpatialRef->GetLinearUnits( &pszLinearUnits );
-
     if( sTABProj.nProjId == 1 || pszLinearUnits == NULL )
         sTABProj.nUnitsId = 13;
     else if( dfLinearConv == 1000.0 )

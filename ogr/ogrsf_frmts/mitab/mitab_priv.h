@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.29 2001/11/19 15:07:54 daniel Exp $
+ * $Id: mitab_priv.h,v 1.30 2002/02/22 20:44:51 julien Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,11 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.30  2002/02/22 20:44:51  julien
+ * Prevent infinite loop with TABRelation by suppress the m_poCurFeature object
+ * from the class and setting it in the calling function and add GetFeature in
+ * the class. (bug 706)
+ *
  * Revision 1.29  2001/11/19 15:07:54  daniel
  * Added TABMAPObjNone to handle the case of TAB_GEOM_NONE
  *
@@ -1462,7 +1467,6 @@ class TABRelation
     int         *m_panRelTableFieldMap;
 
     OGRFeatureDefn *m_poDefn;
-    TABFeature *m_poCurFeature;
 
     void        ResetAllMembers();
     GByte       *BuildFieldKey(TABFeature *poFeature, int nFieldNo,
@@ -1481,7 +1485,7 @@ class TABRelation
 
     OGRFeatureDefn *GetFeatureDefn()  {return m_poDefn;};
     TABFieldType    GetNativeFieldType(int nFieldId);
-    TABFeature     *GetFeatureRef(int nFeatureId);
+    TABFeature     *GetFeature(int nFeatureId);
 
     int         SetFeature(TABFeature *poFeature, int nFeatureId=-1);
 
