@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/03/19 20:31:18  warmerda
+ * add support for tables from external datasources
+ *
  * Revision 1.10  2003/03/05 05:10:17  warmerda
  * implement join support
  *
@@ -89,6 +92,8 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
     panFIDIndex = NULL;
     nIndexSize = 0;
     nNextIndexFID = 0;
+    nExtraDSCount = 0;
+    papoExtraDS = NULL;
 
     if( poSpatFilter != NULL )
         this->poSpatialFilter = poSpatFilter->clone();
@@ -105,8 +110,33 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
 
     for( iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
     {
-        papoTableLayers[iTable] = poSrcDS->GetLayerByName( 
-            psSelectInfo->table_defs[iTable].table_name );
+        swq_table_def *psTableDef = psSelectInfo->table_defs + iTable;
+        OGRDataSource *poTableDS = poSrcDS;
+
+        if( psTableDef->data_source != NULL )
+        {
+            OGRSFDriverRegistrar *poReg=OGRSFDriverRegistrar::GetRegistrar();
+
+            poTableDS = 
+                poReg->OpenShared( psTableDef->data_source, FALSE, NULL );
+            if( poTableDS == NULL )
+            {
+                if( strlen(CPLGetLastErrorMsg()) == 0 )
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                              "Unable to open secondary datasource\n"
+                              "`%s' required by JOIN.",
+                              psTableDef->data_source );
+                return;
+            }
+
+            papoExtraDS = (OGRDataSource **)
+                CPLRealloc( papoExtraDS, sizeof(void*) * ++nExtraDSCount );
+
+            papoExtraDS[nExtraDSCount-1] = poTableDS;
+        }
+
+        papoTableLayers[iTable] = 
+            poTableDS->GetLayerByName( psTableDef->table_name );
         
         CPLAssert( papoTableLayers[iTable] != NULL );
 
@@ -186,6 +216,16 @@ OGRGenSQLResultsLayer::~OGRGenSQLResultsLayer()
 
     if( poDefn != NULL )
         delete poDefn;
+
+/* -------------------------------------------------------------------- */
+/*      Release any additional datasources being used in joins.         */
+/* -------------------------------------------------------------------- */
+    OGRSFDriverRegistrar *poReg=OGRSFDriverRegistrar::GetRegistrar();
+
+    for( int iEDS = 0; iEDS < nExtraDSCount; iEDS++ )
+        poReg->ReleaseDataSource( papoExtraDS[iEDS] );
+
+    CPLFree( papoExtraDS );
 }
 
 /************************************************************************/
