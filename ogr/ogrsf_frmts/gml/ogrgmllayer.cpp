@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/01/10 16:23:11  warmerda
+ * assign FIDs if not provided in CreateFeature()
+ *
  * Revision 1.4  2002/04/24 19:32:07  warmerda
  * Make a copy of the passed OGRSpatialReference in the constructor.
  *
@@ -237,11 +240,11 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
     VSIFPrintf( fp, "  <gml:featureMember>\n" );
 
     if( poFeature->GetFID() == OGRNullFID )
-        VSIFPrintf( fp, "    <%s>\n", poFeatureDefn->GetName() );
-    else
-        VSIFPrintf( fp, "    <%s fid=\"%d\">\n", 
-                    poFeatureDefn->GetName(),
-                    poFeature->GetFID() );
+        poFeature->SetFID( iNextGMLId++ );
+
+    VSIFPrintf( fp, "    <%s fid=\"%d\">\n", 
+                poFeatureDefn->GetName(),
+                poFeature->GetFID() );
 
     // Write all "set" fields. 
     for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
