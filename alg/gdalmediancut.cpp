@@ -35,6 +35,9 @@
  *      Heckbert, SIGGRAPH proceedings, 1982, pp. 297-307.
  * 
  * $Log$
+ * Revision 1.3  2002/04/16 17:48:36  warmerda
+ * Ensure everything is initialized.
+ *
  * Revision 1.2  2001/07/18 04:43:13  warmerda
  * added CPL_CVSID
  *
@@ -284,7 +287,7 @@ static void
 splitbox(Colorbox* ptr)
 {
     int		hist2[GMC_B_LEN];
-    int		first, last;
+    int		first=0, last=0;
     register Colorbox	*new_cb;
     register int	*iptr, *histp;
     register int	i, j;
