@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/01/17 08:16:41  shadow
+ * stupid errors
+ *
  * Revision 1.2  2000/01/17 08:07:41  shadow
  * check just for the string, not the whole line
  *
@@ -168,10 +171,8 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 	char    **papszTokens;
 
         nLineCount++;
-        if( nLineCount > 1000 || strlen(pszLine) > 1000 )
-	  break;
 
-	if(! EQUAL(pszLine,"END_USGS_DOQ_HEADER") )
+	if( EQUAL(pszLine,"END_USGS_DOQ_HEADER") )
 	  break;
 
 	papszTokens = CSLTokenizeString( pszLine );
