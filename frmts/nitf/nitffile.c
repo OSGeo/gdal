@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/12/18 20:16:20  warmerda
+ * allow lots of fields to be overridden with passed in options
+ *
  * Revision 1.6  2002/12/17 21:23:15  warmerda
  * implement LUT reading and writing
  *
@@ -240,10 +243,6 @@ NITFFile *NITFCreate( const char *pszFilename,
     int         nOffset = 0, iBand, nImageSize, nIHSize;
     const char *pszIREP;
 
-    pszIREP = CSLFetchNameValue( papszOptions, "IREP" );
-    if( pszIREP == NULL )
-        pszIREP = "MONO";
-
 /* -------------------------------------------------------------------- */
 /*      Open new file.                                                  */
 /* -------------------------------------------------------------------- */
@@ -258,6 +257,13 @@ NITFFile *NITFCreate( const char *pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Fetch some parameter overrides.                                 */
+/* -------------------------------------------------------------------- */
+    pszIREP = CSLFetchNameValue( papszOptions, "IREP" );
+    if( pszIREP == NULL )
+        pszIREP = "MONO";
+
+/* -------------------------------------------------------------------- */
 /*      Compute raw image size.                                         */
 /* -------------------------------------------------------------------- */
     nImageSize = ((nBitsPerSample)/8) * nPixels * nLines * nBands;
@@ -268,89 +274,103 @@ NITFFile *NITFCreate( const char *pszFilename,
     memset( achHeader, ' ', sizeof(achHeader) );
 
 #define PLACE(location,name,text)  strncpy(location,text,strlen(text))
+#define OVR(width,location,name,text) { 				\
+    const char *pszParmValue; 						\
+    pszParmValue = CSLFetchNameValue( papszOptions, #name ); 		\
+    if( pszParmValue == NULL )						\
+        pszParmValue = text;						\
+    strncpy(location,pszParmValue,MIN(width,strlen(pszParmValue))); }   
 
-    PLACE(achHeader+   0, FDHR_FVER,    "NITF02.10"                     );
-    PLACE(achHeader+   9, CLEVEL,       "05"                            );
-    PLACE(achHeader+  11, STYPE        ,"BF01"                          );
-    PLACE(achHeader+  15, OSTAID       ,"GDAL"                          );
-    PLACE(achHeader+  25, FDT          ,"20021216151629"                );
-    PLACE(achHeader+  39, FTITLE       ,""                              );
-    PLACE(achHeader+ 119, FSCLAS       ,"U"                             );
-    PLACE(achHeader+ 120, FSCLSY       ,""                              );
-    PLACE(achHeader+ 122, FSCODE       ,""                              );
-    PLACE(achHeader+ 133, FSCTLH       ,""                              );
-    PLACE(achHeader+ 135, FSREL        ,""                              );
-    PLACE(achHeader+ 155, FSDCTP       ,""                              );
-    PLACE(achHeader+ 157, FSDCDT       ,""                              );
-    PLACE(achHeader+ 165, FSDCXM       ,""                              );
-    PLACE(achHeader+ 169, FSDG         ,""                              );
-    PLACE(achHeader+ 170, FSDGDT       ,""                              );
-    PLACE(achHeader+ 178, FSCLTX       ,""                              );
-    PLACE(achHeader+ 221, FSCATP       ,""                              );
-    PLACE(achHeader+ 222, FSCAUT       ,""                              );
-    PLACE(achHeader+ 262, FSCRSN       ,""                              );
-    PLACE(achHeader+ 263, FSSRDT       ,""                              );
-    PLACE(achHeader+ 271, FSCTLN       ,""                              );
-    PLACE(achHeader+ 286, FSCOP        ,"00000"                         );
-    PLACE(achHeader+ 291, FSCPYS       ,"00000"                         );
-    PLACE(achHeader+ 296, ENCRYP       ,"0"                             );
+    PLACE (achHeader+  0, FDHR_FVER,    "NITF02.10"                     );
+    OVR( 2,achHeader+  9, CLEVEL,       "05"                            );
+    PLACE (achHeader+ 11, STYPE        ,"BF01"                          );
+    OVR(10,achHeader+ 15, OSTAID       ,"GDAL"                          );
+    OVR(14,achHeader+ 25, FDT          ,"20021216151629"                );
+    OVR(80,achHeader+ 39, FTITLE       ,""                              );
+    OVR( 1,achHeader+119, FSCLAS       ,"U"                             );
+    OVR( 2,achHeader+120, FSCLSY       ,""                              );
+    OVR(11,achHeader+122, FSCODE       ,""                              );
+    OVR( 2,achHeader+133, FSCTLH       ,""                              );
+    OVR(20,achHeader+135, FSREL        ,""                              );
+    OVR( 2,achHeader+155, FSDCTP       ,""                              );
+    OVR( 8,achHeader+157, FSDCDT       ,""                              );
+    OVR( 4,achHeader+165, FSDCXM       ,""                              );
+    OVR( 1,achHeader+169, FSDG         ,""                              );
+    OVR( 8,achHeader+170, FSDGDT       ,""                              );
+    OVR(43,achHeader+178, FSCLTX       ,""                              );
+    OVR( 1,achHeader+221, FSCATP       ,""                              );
+    OVR(40,achHeader+222, FSCAUT       ,""                              );
+    OVR( 1,achHeader+262, FSCRSN       ,""                              );
+    OVR( 8,achHeader+263, FSSRDT       ,""                              );
+    OVR(15,achHeader+271, FSCTLN       ,""                              );
+    OVR( 5,achHeader+286, FSCOP        ,"00000"                         );
+    OVR( 5,achHeader+291, FSCPYS       ,"00000"                         );
+    PLACE (achHeader+296, ENCRYP       ,"0"                             );
     achHeader[297] = achHeader[298] = achHeader[299] = 0x00; /* FBKGC */
-    PLACE(achHeader+ 300, ONAME        ,""                              );
-    PLACE(achHeader+ 324, OPHONE       ,""                              );
-    PLACE(achHeader+ 342, FL           ,"????????????"                  );
-    PLACE(achHeader+ 354, HL           ,"000404"                        );
-    PLACE(achHeader+ 360, NUMI         ,"1"                             );
-    PLACE(achHeader+ 363, LISH1        ,"??????"                        );
-    PLACE(achHeader+ 369, LI1          ,CPLSPrintf("%010d",nImageSize)  );
-    PLACE(achHeader+ 379, NUMS         ,"000"                           );
-    PLACE(achHeader+ 382, NUMX         ,"000"                           );
-    PLACE(achHeader+ 385, NUMT         ,"000"                           );
-    PLACE(achHeader+ 388, NUMDES       ,"000"                           );
-    PLACE(achHeader+ 391, NUMRES       ,"000"                           );
-    PLACE(achHeader+ 394, UDHDL        ,"00000"                         );
-    PLACE(achHeader+ 399, XHDL         ,"00000"                         );
+    OVR(24,achHeader+300, ONAME        ,""                              );
+    OVR(18,achHeader+324, OPHONE       ,""                              );
+    PLACE (achHeader+342, FL           ,"????????????"                  );
+    PLACE (achHeader+354, HL           ,"000404"                        );
+    PLACE (achHeader+360, NUMI         ,"1"                             );
+    PLACE (achHeader+363, LISH1        ,"??????"                        );
+    PLACE (achHeader+369, LI1          ,CPLSPrintf("%010d",nImageSize)  );
+    PLACE (achHeader+379, NUMS         ,"000"                           );
+    PLACE (achHeader+382, NUMX         ,"000"                           );
+    PLACE (achHeader+385, NUMT         ,"000"                           );
+    PLACE (achHeader+388, NUMDES       ,"000"                           );
+    PLACE (achHeader+391, NUMRES       ,"000"                           );
+    PLACE (achHeader+394, UDHDL        ,"00000"                         );
+    PLACE (achHeader+399, XHDL         ,"00000"                         );
     
 /* -------------------------------------------------------------------- */
 /*      Prepare the image header.                                       */
 /* -------------------------------------------------------------------- */
     pachIMHDR = achHeader + 404;
 
-    PLACE(pachIMHDR+   0, IM           , "IM"                           );
-    PLACE(pachIMHDR+   2, HD1          , "Missing"                      );
-    PLACE(pachIMHDR+  12, IDATIM       , "20021216151629"               );
-    PLACE(pachIMHDR+  26, TGTID        , ""                             );
-    PLACE(pachIMHDR+  43, HD2          , ""                             );
-    PLACE(pachIMHDR+ 123, ISCLAS       , "U"                            );
-    PLACE(pachIMHDR+ 124, ISCLSY       , ""                             );
-    PLACE(pachIMHDR+ 126, ISCODE       , ""                             );
-    PLACE(pachIMHDR+ 137, ISCTLH       , ""                             );
-    PLACE(pachIMHDR+ 139, ISREL        , ""                             );
-    PLACE(pachIMHDR+ 159, ISDCTP       , ""                             );
-    PLACE(pachIMHDR+ 161, ISDCDT       , ""                             );
-    PLACE(pachIMHDR+ 169, ISDCXM       , ""                             );
-    PLACE(pachIMHDR+ 173, ISDG         , ""                             );
-    PLACE(pachIMHDR+ 174, ISDGDT       , ""                             );
-    PLACE(pachIMHDR+ 182, ISCLTX       , ""                             );
-    PLACE(pachIMHDR+ 225, ISCATP       , ""                             );
-    PLACE(pachIMHDR+ 226, ISCAUT       , ""                             );
-    PLACE(pachIMHDR+ 266, ISCRSN       , ""                             );
-    PLACE(pachIMHDR+ 267, ISSRDT       , ""                             );
-    PLACE(pachIMHDR+ 275, ISCTLN       , ""                             );
-    PLACE(pachIMHDR+ 290, ENCRYP       , "0"                            );
-    PLACE(pachIMHDR+ 291, ISORCE       , "Unknown"                      );
-    PLACE(pachIMHDR+ 333, NROWS        , CPLSPrintf("%08d", nLines)     );
-    PLACE(pachIMHDR+ 341, NCOLS        , CPLSPrintf("%08d", nPixels)    );
-    PLACE(pachIMHDR+ 349, PVTYPE       , pszPVType                      );
-    PLACE(pachIMHDR+ 352, IREP         , pszIREP                        );
-    PLACE(pachIMHDR+ 360, ICAT         , "VIS"                          );
-    PLACE(pachIMHDR+ 368, ABPP         , CPLSPrintf("%02d",nBitsPerSample) );
-    PLACE(pachIMHDR+ 370, PJUST        , "R"                            );
-    PLACE(pachIMHDR+ 371, ICORDS       , " "                            );
-    PLACE(pachIMHDR+ 372, NICOM        , "0"                            );
-    PLACE(pachIMHDR+ 373, IC           , "NC"                           );
-    PLACE(pachIMHDR+ 375, NBANDS       , CPLSPrintf("%d",nBands)        );
+    PLACE (pachIMHDR+  0, IM           , "IM"                           );
+    OVR(10,pachIMHDR+  2, HD1          , "Missing"                      );
+    OVR(14,pachIMHDR+ 12, IDATIM       , "20021216151629"               );
+    OVR(17,pachIMHDR+ 26, TGTID        , ""                             );
+    OVR(80,pachIMHDR+ 43, IID2         , ""                             );
+    OVR( 1,pachIMHDR+123, ISCLAS       , "U"                            );
+    OVR( 2,pachIMHDR+124, ISCLSY       , ""                             );
+    OVR(11,pachIMHDR+126, ISCODE       , ""                             );
+    OVR( 2,pachIMHDR+137, ISCTLH       , ""                             );
+    OVR(20,pachIMHDR+139, ISREL        , ""                             );
+    OVR( 2,pachIMHDR+159, ISDCTP       , ""                             );
+    OVR( 8,pachIMHDR+161, ISDCDT       , ""                             );
+    OVR( 4,pachIMHDR+169, ISDCXM       , ""                             );
+    OVR( 1,pachIMHDR+173, ISDG         , ""                             );
+    OVR( 8,pachIMHDR+174, ISDGDT       , ""                             );
+    OVR(43,pachIMHDR+182, ISCLTX       , ""                             );
+    OVR( 1,pachIMHDR+225, ISCATP       , ""                             );
+    OVR(40,pachIMHDR+226, ISCAUT       , ""                             );
+    OVR( 1,pachIMHDR+266, ISCRSN       , ""                             );
+    OVR( 8,pachIMHDR+267, ISSRDT       , ""                             );
+    OVR(15,pachIMHDR+275, ISCTLN       , ""                             );
+    PLACE (pachIMHDR+290, ENCRYP       , "0"                            );
+    OVR(42,pachIMHDR+291, ISORCE       , "Unknown"                      );
+    PLACE (pachIMHDR+333, NROWS        , CPLSPrintf("%08d", nLines)     );
+    PLACE (pachIMHDR+341, NCOLS        , CPLSPrintf("%08d", nPixels)    );
+    PLACE (pachIMHDR+349, PVTYPE       , pszPVType                      );
+    PLACE (pachIMHDR+352, IREP         , pszIREP                        );
+    OVR( 8,pachIMHDR+360, ICAT         , "VIS"                          );
+    OVR( 2,pachIMHDR+368, ABPP         , CPLSPrintf("%02d",nBitsPerSample) );
+    OVR( 1,pachIMHDR+370, PJUST        , "R"                            );
+    OVR( 1,pachIMHDR+371, ICORDS       , " "                            );
 
-    nOffset = 376;
+    nOffset = 372;
+    if( pachIMHDR[371] != ' ' )
+    {
+        OVR(60,pachIMHDR+nOffset, IGEOLO, ""                            );
+        nOffset += 60;
+    }
+
+    PLACE (pachIMHDR+nOffset, NICOM    , "0"                            );
+    PLACE (pachIMHDR+nOffset+1, IC     , "NC"                           );
+    PLACE (pachIMHDR+nOffset+3, NBANDS , CPLSPrintf("%d",nBands)        );
+
+    nOffset += 4;
 
 /* -------------------------------------------------------------------- */
 /*      Per band info                                                   */
