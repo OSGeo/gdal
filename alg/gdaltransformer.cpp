@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/08/09 14:38:27  warmerda
+ * added serialize/deserialize support for warpoptions and transformers
+ *
  * Revision 1.14  2004/03/28 16:02:04  warmerda
  * added GDALApplyGeoTransform()
  *
@@ -84,6 +87,16 @@
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
+CPL_C_START
+CPLXMLNode *GDALSerializeGCPTransformer( void *pTransformArg );
+void *GDALDeserializeGCPTransformer( CPLXMLNode *psTree );
+
+static CPLXMLNode *GDALSerializeReprojectionTransformer( void *pTransformArg );
+static void *GDALDeserializeReprojectionTransformer( CPLXMLNode *psTree );
+
+static CPLXMLNode *GDALSerializeGenImgProjTransformer( void *pTransformArg );
+static void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree );
+CPL_C_END
 
 /************************************************************************/
 /*                          GDALTransformFunc                           */
@@ -717,6 +730,203 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
     return TRUE;
 }
 
+/************************************************************************/
+/*                 GDALSerializeGenImgProjTransformer()                 */
+/************************************************************************/
+
+static CPLXMLNode *
+GDALSerializeGenImgProjTransformer( void *pTransformArg )
+
+{
+    char szWork[200];
+    CPLXMLNode *psTree;
+    GDALGenImgProjTransformInfo *psInfo = 
+        (GDALGenImgProjTransformInfo *) pTransformArg;
+
+    psTree = CPLCreateXMLNode( NULL, CXT_Element, "GenImgProjTransformer" );
+
+/* -------------------------------------------------------------------- */
+/*      Handle GCP transformation.                                      */
+/* -------------------------------------------------------------------- */
+    if( psInfo->pSrcGCPTransformArg != NULL )
+    {
+        CPLXMLNode *psTransformerContainer;
+        CPLXMLNode *psTransformer;
+
+        psTransformerContainer = 
+            CPLCreateXMLNode( psTree, CXT_Element, "SrcGCPTransformer" );
+
+        psTransformer = GDALSerializeTransformer( GDALGCPTransform,
+                                                  psInfo->pSrcGCPTransformArg);
+        if( psTransformer != NULL )
+            CPLAddXMLChild( psTransformerContainer, psTransformer );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle source geotransforms.                                    */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        sprintf( szWork, "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g", 
+                 psInfo->adfSrcGeoTransform[0],
+                 psInfo->adfSrcGeoTransform[1],
+                 psInfo->adfSrcGeoTransform[2],
+                 psInfo->adfSrcGeoTransform[3],
+                 psInfo->adfSrcGeoTransform[4],
+                 psInfo->adfSrcGeoTransform[5] );
+        CPLCreateXMLElementAndValue( psTree, "SrcGeoTransform", szWork );
+        
+        sprintf( szWork, "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g", 
+                 psInfo->adfSrcInvGeoTransform[0],
+                 psInfo->adfSrcInvGeoTransform[1],
+                 psInfo->adfSrcInvGeoTransform[2],
+                 psInfo->adfSrcInvGeoTransform[3],
+                 psInfo->adfSrcInvGeoTransform[4],
+                 psInfo->adfSrcInvGeoTransform[5] );
+        CPLCreateXMLElementAndValue( psTree, "SrcInvGeoTransform", szWork );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Handle destination geotransforms.                               */
+/* -------------------------------------------------------------------- */
+    sprintf( szWork, "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g", 
+             psInfo->adfDstGeoTransform[0],
+             psInfo->adfDstGeoTransform[1],
+             psInfo->adfDstGeoTransform[2],
+             psInfo->adfDstGeoTransform[3],
+             psInfo->adfDstGeoTransform[4],
+             psInfo->adfDstGeoTransform[5] );
+    CPLCreateXMLElementAndValue( psTree, "DstGeoTransform", szWork );
+    
+    sprintf( szWork, "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g", 
+             psInfo->adfDstInvGeoTransform[0],
+             psInfo->adfDstInvGeoTransform[1],
+             psInfo->adfDstInvGeoTransform[2],
+             psInfo->adfDstInvGeoTransform[3],
+             psInfo->adfDstInvGeoTransform[4],
+             psInfo->adfDstInvGeoTransform[5] );
+    CPLCreateXMLElementAndValue( psTree, "DstInvGeoTransform", szWork );
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a reprojection transformer?                          */
+/* -------------------------------------------------------------------- */
+    if( psInfo->pReprojectArg != NULL )
+    {
+        CPLXMLNode *psTransformerContainer;
+        CPLXMLNode *psTransformer;
+
+        psTransformerContainer = 
+            CPLCreateXMLNode( psTree, CXT_Element, "ReprojectTransformer" );
+
+        psTransformer = GDALSerializeTransformer( GDALReprojectionTransform,
+                                                  psInfo->pReprojectArg );
+        if( psTransformer != NULL )
+            CPLAddXMLChild( psTransformerContainer, psTransformer );
+    }
+    
+    return psTree;
+}
+
+/************************************************************************/
+/*                GDALDeserializeGenImgProjTransformer()                */
+/************************************************************************/
+
+void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree )
+
+{
+    GDALGenImgProjTransformInfo *psInfo;
+    CPLXMLNode *psSubtree;
+
+/* -------------------------------------------------------------------- */
+/*      Initialize the transform info.                                  */
+/* -------------------------------------------------------------------- */
+    psInfo = (GDALGenImgProjTransformInfo *) 
+        CPLCalloc(sizeof(GDALGenImgProjTransformInfo),1);
+
+/* -------------------------------------------------------------------- */
+/*      SrcGeotransform                                                 */
+/* -------------------------------------------------------------------- */
+    if( CPLGetXMLNode( psTree, "SrcGeoTransform" ) != NULL )
+    {
+        sscanf( CPLGetXMLValue( psTree, "SrcGeoTransform", "" ), 
+                "%lg,%lg,%lg,%lg,%lg,%lg", 
+                psInfo->adfSrcGeoTransform + 0,
+                psInfo->adfSrcGeoTransform + 1,
+                psInfo->adfSrcGeoTransform + 2,
+                psInfo->adfSrcGeoTransform + 3,
+                psInfo->adfSrcGeoTransform + 4,
+                psInfo->adfSrcGeoTransform + 5 );
+
+        if( CPLGetXMLNode( psTree, "SrcInvGeoTransform" ) != NULL )
+        {
+            sscanf( CPLGetXMLValue( psTree, "SrcInvGeoTransform", "" ), 
+                    "%lg,%lg,%lg,%lg,%lg,%lg", 
+                    psInfo->adfSrcInvGeoTransform + 0,
+                    psInfo->adfSrcInvGeoTransform + 1,
+                    psInfo->adfSrcInvGeoTransform + 2,
+                    psInfo->adfSrcInvGeoTransform + 3,
+                    psInfo->adfSrcInvGeoTransform + 4,
+                    psInfo->adfSrcInvGeoTransform + 5 );
+            
+        }
+        else
+            GDALInvGeoTransform( psInfo->adfSrcGeoTransform,
+                                 psInfo->adfSrcInvGeoTransform );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Src GCP Transform                                               */
+/* -------------------------------------------------------------------- */
+    psSubtree = CPLGetXMLNode( psTree, "SrcGCPTransformer" );
+    if( psSubtree != NULL && psSubtree->psChild != NULL )
+    {
+        psInfo->pSrcGCPTransformArg = 
+            GDALDeserializeGCPTransformer( psSubtree->psChild );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      DstGeotransform                                                 */
+/* -------------------------------------------------------------------- */
+    if( CPLGetXMLNode( psTree, "DstGeoTransform" ) != NULL )
+    {
+        sscanf( CPLGetXMLValue( psTree, "DstGeoTransform", "" ), 
+                "%lg,%lg,%lg,%lg,%lg,%lg", 
+                psInfo->adfDstGeoTransform + 0,
+                psInfo->adfDstGeoTransform + 1,
+                psInfo->adfDstGeoTransform + 2,
+                psInfo->adfDstGeoTransform + 3,
+                psInfo->adfDstGeoTransform + 4,
+                psInfo->adfDstGeoTransform + 5 );
+
+        if( CPLGetXMLNode( psTree, "DstInvGeoTransform" ) != NULL )
+        {
+            sscanf( CPLGetXMLValue( psTree, "DstInvGeoTransform", "" ), 
+                    "%lg,%lg,%lg,%lg,%lg,%lg", 
+                    psInfo->adfDstInvGeoTransform + 0,
+                    psInfo->adfDstInvGeoTransform + 1,
+                    psInfo->adfDstInvGeoTransform + 2,
+                    psInfo->adfDstInvGeoTransform + 3,
+                    psInfo->adfDstInvGeoTransform + 4,
+                    psInfo->adfDstInvGeoTransform + 5 );
+            
+        }
+        else
+            GDALInvGeoTransform( psInfo->adfDstGeoTransform,
+                                 psInfo->adfDstInvGeoTransform );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Reproject transformer                                           */
+/* -------------------------------------------------------------------- */
+    psSubtree = CPLGetXMLNode( psTree, "ReprojectTransformer" );
+    if( psSubtree != NULL && psSubtree->psChild != NULL )
+    {
+        psInfo->pReprojectArg = 
+            GDALDeserializeReprojectionTransformer( psSubtree->psChild );
+    }
+
+    return psInfo;
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -862,6 +1072,65 @@ int GDALReprojectionTransform( void *pTransformArg, int bDstToSrc,
     return bSuccess;
 }
 
+/************************************************************************/
+/*                GDALSerializeReprojectionTransformer()                */
+/************************************************************************/
+
+static CPLXMLNode *
+GDALSerializeReprojectionTransformer( void *pTransformArg )
+
+{
+    CPLXMLNode *psTree;
+    GDALReprojectionTransformInfo *psInfo = 
+        (GDALReprojectionTransformInfo *) pTransformArg;
+
+    psTree = CPLCreateXMLNode( NULL, CXT_Element, "ReprojectionTransformer" );
+
+/* -------------------------------------------------------------------- */
+/*      Handle SourceCS.                                                */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference *poSRS;
+    char *pszWKT = NULL;
+
+    poSRS = psInfo->poForwardTransform->GetSourceCS();
+    poSRS->exportToWkt( &pszWKT );
+    CPLCreateXMLElementAndValue( psTree, "SourceSRS", pszWKT );
+    CPLFree( pszWKT );
+
+/* -------------------------------------------------------------------- */
+/*      Handle DestinationCS.                                           */
+/* -------------------------------------------------------------------- */
+    poSRS = psInfo->poForwardTransform->GetTargetCS();
+    poSRS->exportToWkt( &pszWKT );
+    CPLCreateXMLElementAndValue( psTree, "TargetSRS", pszWKT );
+    CPLFree( pszWKT );
+
+    return psTree;
+}
+
+/************************************************************************/
+/*               GDALDeserializeReprojectionTransformer()               */
+/************************************************************************/
+
+static void *
+GDALDeserializeReprojectionTransformer( CPLXMLNode *psTree )
+
+{
+    const char *pszSrcWKT = CPLGetXMLValue( psTree, "SourceSRS", NULL );
+    const char *pszDstWKT = CPLGetXMLValue( psTree, "TargetSRS", NULL );
+
+    if( pszSrcWKT != NULL && pszDstWKT != NULL )
+        return GDALCreateReprojectionTransformer( pszSrcWKT, 
+                                                  pszDstWKT );
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "ReprojectionTransformer definition missing either\n"
+                  "SourceSRS or TargetSRS definition." );
+
+        return NULL;
+    }
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1140,3 +1409,64 @@ int GDALInvGeoTransform( double *gt_in, double *gt_out )
     return 1;
 }
 
+/************************************************************************/
+/*                      GDALSerializeTransformer()                      */
+/************************************************************************/
+
+CPLXMLNode *GDALSerializeTransformer( GDALTransformerFunc pfnFunc,
+                                      void *pTransformArg )
+
+{
+    if( pfnFunc == GDALGenImgProjTransform )
+        return GDALSerializeGenImgProjTransformer( pTransformArg );
+    else if( pfnFunc == GDALReprojectionTransform )
+        return GDALSerializeReprojectionTransformer( pTransformArg );
+    else if( pfnFunc == GDALGCPTransform )
+        return GDALSerializeGCPTransformer( pTransformArg );
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to serialize unrecognised transformer." );
+        return NULL;
+    }
+}
+
+/************************************************************************/
+/*                     GDALDeserializeTransformer()                     */
+/************************************************************************/
+
+CPLErr GDALDeserializeTransformer( CPLXMLNode *psTree, 
+                                   GDALTransformerFunc *ppfnFunc,
+                                   void **ppTransformArg )
+
+{
+    *ppfnFunc = NULL;
+    *ppTransformArg = NULL;
+
+    CPLErrorReset();
+
+    if( psTree == NULL || psTree->eType != CXT_Element )
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Malformed element in GDALDeserializeTransformer" );
+    else if( EQUAL(psTree->pszValue,"GenImgProjTransformer") )
+    {
+        *ppfnFunc = GDALGenImgProjTransform;
+        *ppTransformArg = GDALDeserializeGenImgProjTransformer( psTree );
+    }
+    else if( EQUAL(psTree->pszValue,"ReprojectionTransformer") )
+    {
+        *ppfnFunc = GDALReprojectionTransform;
+        *ppTransformArg = GDALDeserializeReprojectionTransformer( psTree );
+    }
+    else if( EQUAL(psTree->pszValue,"GCPTransformer") )
+    {
+        *ppfnFunc = GDALGCPTransform;
+        *ppTransformArg = GDALDeserializeGCPTransformer( psTree );
+    }
+    else
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unrecognised element '%s' GDALDeserializeTransformer",
+                  psTree->pszValue );
+
+    return CPLGetLastErrorType();
+}

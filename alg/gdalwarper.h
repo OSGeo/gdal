@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2004/08/09 14:38:27  warmerda
+ * added serialize/deserialize support for warpoptions and transformers
+ *
  * Revision 1.11  2003/11/22 19:13:31  dron
  * Added C bindings for GDALWarpOperation functions.
  *
@@ -75,6 +78,7 @@
  */
 
 #include "gdal_alg.h"
+#include "cpl_minixml.h"
 
 CPL_C_START
 
@@ -186,6 +190,9 @@ GDALWarpOptions CPL_DLL *GDALCreateWarpOptions();
 void CPL_DLL GDALDestroyWarpOptions( GDALWarpOptions * );
 GDALWarpOptions CPL_DLL *GDALCloneWarpOptions( const GDALWarpOptions * );
 
+CPLXMLNode CPL_DLL *GDALSerializeWarpOptions( const GDALWarpOptions * );
+GDALWarpOptions CPL_DLL *GDALDeserializeWarpOptions( CPLXMLNode * );
+
 /************************************************************************/
 /*                         GDALReprojectImage()                         */
 /************************************************************************/
@@ -206,6 +213,17 @@ GDALCreateAndReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
                     double dfMaxError,
                     GDALProgressFunc pfnProgress, void *pProgressArg, 
                     GDALWarpOptions *psOptions );
+
+/************************************************************************/
+/*                           VRTWarpedDataset                           */
+/************************************************************************/
+
+GDALDatasetH CPL_DLL GDALCreateWarpedVRT( GDALDatasetH hSrcDS, 
+                                          const char *pszSrcWKT, 
+                                          const char *pszDstWKT, 
+                                          GDALResampleAlg eResampleAlg, 
+                                          double dfMaxError, 
+                                          const GDALWarpOptions *psOptions );
 
 CPL_C_END
 

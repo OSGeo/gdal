@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/08/09 14:38:27  warmerda
+ * added serialize/deserialize support for warpoptions and transformers
+ *
  * Revision 1.16  2003/12/15 15:59:25  warmerda
  * added CPL_DLL on contour stuff.
  *
@@ -87,6 +90,7 @@
  */
 
 #include "gdal.h"
+#include "cpl_minixml.h"
 
 CPL_C_START
 
@@ -189,6 +193,13 @@ GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
                          void *pTransformArg,
                          double *padfGeoTransformOut, 
                          int *pnPixels, int *pnLines );
+
+CPLXMLNode CPL_DLL *
+GDALSerializeTransformer( GDALTransformerFunc pfnFunc, void *pTransformArg );
+CPLErr CPL_DLL GDALDeserializeTransformer( CPLXMLNode *psTree, 
+                                           GDALTransformerFunc *ppfnFunc, 
+                                           void **ppTransformArg );
+                                      
 
 /* -------------------------------------------------------------------- */
 /*      Contour Line Generation                                         */
