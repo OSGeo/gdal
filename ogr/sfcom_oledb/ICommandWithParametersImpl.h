@@ -32,6 +32,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/10/15 13:38:11  warmerda
+ * change to unix text format
+ *
  * Revision 1.2  2001/08/17 19:58:21  warmerda
  * remove LFs
  *
