@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2004/09/23 16:11:14  fwarmerdam
+ * Cleanup memory at end.
+ *
  * Revision 1.8  2002/12/13 06:36:01  warmerda
  * report PROJ.4 form
  *
@@ -181,4 +184,7 @@ int main( int nArgc, char ** papszArgv )
             }
         }
     }
+
+    OSRCleanup();
+    CPLFinderClean();
 }
