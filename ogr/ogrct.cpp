@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/11/18 00:57:53  warmerda
+ * change printf to CPLDebug
+ *
  * Revision 1.10  2001/11/07 22:14:17  warmerda
  * add a way of statically linking in PROJ.4
  *
@@ -383,7 +386,7 @@ int OGRProj4CT::Transform( int nCount, double *x, double *y, double *z )
 
     if( err != 0 )
     {
-        printf( "pfn_pj_transform failed:%d.\n", err );
+        CPLDebug( "OGR", "pfn_pj_transform failed:%d.\n", err );
         return FALSE;
     }
 
