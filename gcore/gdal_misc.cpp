@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2004/01/18 16:43:37  dron
+ * Added GDALGetDataTypeByName() function.
+ *
  * Revision 1.49  2003/08/18 12:43:47  warmerda
  * always include ogr_spatialref.h
  *
@@ -418,6 +421,38 @@ const char *GDALGetDataTypeName( GDALDataType eDataType )
       default:
         return NULL;
     }
+}
+
+/************************************************************************/
+/*                        GDALGetDataTypeByName()                       */
+/************************************************************************/
+
+/**
+ * Get data type by symbolic name.
+ *
+ * Returns a data type corresponding to the given symbolic name. This
+ * function is opposite to the GDALGetDataTypeName().
+ *
+ * @param pszName string containing the symbolic name of the type.
+ * 
+ * @return GDAL data type.
+ */
+
+GDALDataType GDALGetDataTypeByName( const char *pszName )
+
+{
+    int	iType;
+    
+    for( iType = 1; iType < GDT_TypeCount; iType++ )
+    {
+        if( GDALGetDataTypeName((GDALDataType)iType) != NULL
+            && EQUAL(GDALGetDataTypeName((GDALDataType)iType), pszName) )
+        {
+            return (GDALDataType)iType;
+        }
+    }
+
+    return GDT_Unknown;
 }
 
 /************************************************************************/
