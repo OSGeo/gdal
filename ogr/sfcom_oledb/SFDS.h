@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/07/21 13:25:50  warmerda
+ * Remoted extra include of sfutil.h.
+ *
  * Revision 1.6  1999/07/20 17:11:11  kshih
  * Use OGR code
  *
@@ -48,9 +51,9 @@
 
 #ifndef __CSFSource_H_
 #define __CSFSource_H_
+
 #include "resource.h"       // main symbols
 #include "SFRS.h"
-#include "sfutil.h"
 
 // IDBInitializeImpl
 template <class T>
