@@ -19,6 +19,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/05/21 04:49:17  warmerda
+ * avoid warnings
+ *
  * Revision 1.21  2003/03/26 16:08:20  warmerda
  * fixed table_def parsing when table name is quoted (literal)
  *
@@ -1001,8 +1004,6 @@ int swq_expr_evaluate( swq_expr *expr, swq_op_evaluator fn_evaluator,
     {
         return fn_evaluator( expr, record_handle );
     }
-
-    return FALSE;
 }
 
 /************************************************************************/
