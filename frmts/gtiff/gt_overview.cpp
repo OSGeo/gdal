@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/08/14 18:37:24  warmerda
+ * added (untested) support for writing palettes to overviews
+ *
  * Revision 1.4  2000/07/17 17:09:30  warmerda
  * added support for complex data
  *
@@ -216,6 +219,39 @@ GTIFFBuildOverviews( const char * pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Do we have a palette?  If so, create a TIFF compatible version. */
+/* -------------------------------------------------------------------- */
+    unsigned short	anTRed[256], anTGreen[256], anTBlue[256];
+    unsigned short      *panRed=NULL, *panGreen=NULL, *panBlue=NULL;
+
+    if( nPhotometric == PHOTOMETRIC_PALETTE )
+    {
+        GDALColorTable *poCT = papoBandList[0]->GetColorTable();
+
+        for( int iColor = 0; iColor < 256; iColor++ )
+        {
+            if( iColor < poCT->GetColorEntryCount() )
+            {
+                GDALColorEntry  sRGB;
+
+                poCT->GetColorEntryAsRGB( iColor, &sRGB );
+
+                anTRed[iColor] = (unsigned short) (256 * sRGB.c1);
+                anTGreen[iColor] = (unsigned short) (256 * sRGB.c2);
+                anTBlue[iColor] = (unsigned short) (256 * sRGB.c3);
+            }
+            else
+            {
+                anTRed[iColor] = anTGreen[iColor] = anTBlue[iColor] = 0;
+            }
+        }
+
+        panRed = anTRed;
+        panGreen = anTGreen;
+        panBlue = anTBlue;
+    }
+        
+/* -------------------------------------------------------------------- */
 /*      Loop, creating overviews.                                       */
 /* -------------------------------------------------------------------- */
     for( iOverview = 0; iOverview < nOverviews; iOverview++ )
@@ -231,7 +267,8 @@ GTIFFBuildOverviews( const char * pszFilename,
         nDirOffset = 
             TIFF_WriteOverview( hOTIFF, nOXSize, nOYSize, nBitsPerPixel, 
                                 nBands, 128, 128, TRUE, COMPRESSION_NONE,
-                                nPhotometric, nSampleFormat, NULL, NULL, NULL,
+                                nPhotometric, nSampleFormat, 
+                                panRed, panGreen, panBlue, 
                                 FALSE );
     }
 
