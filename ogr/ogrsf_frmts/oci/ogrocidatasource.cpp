@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/02/06 21:14:43  warmerda
+ * cleanup some memory leaks
+ *
  * Revision 1.15  2003/01/15 06:10:04  warmerda
  * Added logic to hack angular unit name to "Decimal Degree".
  *
@@ -114,6 +117,13 @@ OGROCIDataSource::~OGROCIDataSource()
         delete papoLayers[i];
     
     CPLFree( papoLayers );
+
+    for( i = 0; i < nKnownSRID; i++ )
+    {
+        delete papoSRS[i];
+    }
+    CPLFree( papoSRS );
+    CPLFree( panSRID );
 }
 
 /************************************************************************/
@@ -206,6 +216,8 @@ int OGROCIDataSource::Open( const char * pszNewName, int bUpdate,
             OpenTable( szFullTableName, papszRow[1], nSRID, bUpdate, FALSE );
         }
     }
+
+    CPLFree( pszUserid );
 
     return TRUE;
 }
