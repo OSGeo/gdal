@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/09/03 13:01:39  warmerda
+ * added docs
+ *
  * Revision 1.6  1999/09/02 03:40:03  warmerda
  * added indexed readers
  *
@@ -148,21 +151,6 @@ int SDTSAttrReader::Open( const char *pszFilename )
 /************************************************************************/
 /*                           GetNextRecord()                            */
 /************************************************************************/
-
-/**
- * Fetch the next attribute record.
- *
- * @param poModId Object to be updated with the record id of the record read.
- * Pass NULL (the default) if the record id isn't required.
- * @param ppoRecord Used to return a pointer to the whole DDFRecord if not
- * NULL.  The record pointer can be used to DDFRecord::Clone() a persistent
- * copy of the record.
- *
- * @return The DDFField for the ATTP field within the ISO8211 record.  This
- * field contains the <i>user</i> attributes for the attribute record.  Use
- * the normal DDFField methods to query the subfield values.  The list of
- * available subfields can be fetched from the DDFFieldDefn.
- */
 
 DDFField *SDTSAttrReader::GetNextRecord( SDTSModId * poModId,
                                          DDFRecord ** ppoRecord )

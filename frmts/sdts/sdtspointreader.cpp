@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/09/03 13:01:39  warmerda
+ * added docs
+ *
  * Revision 1.5  1999/09/02 03:40:03  warmerda
  * added indexed readers
  *
@@ -116,6 +119,27 @@ int SDTSRawPoint::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
 
     return TRUE;
 }
+
+/************************************************************************/
+/*                                Dump()                                */
+/************************************************************************/
+
+void SDTSRawPoint::Dump( FILE * fp )
+
+{
+    int		i;
+    
+    fprintf( fp, "SDTSRawPoint %s: ", oModId.GetName() );
+
+    if( oAreaId.nRecord != -1 )
+        fprintf( fp, " AreaId=%s", oAreaId.GetName() );
+
+    for( i = 0; i < nAttributes; i++ )
+        fprintf( fp, "  ATID[%d]=%s", i, aoATID[i].GetName() );
+    
+    fprintf( fp, "  Vertex = (%.2f,%.2f,%.2f)\n", dfX, dfY, dfZ );
+}
+
 
 /************************************************************************/
 /* ==================================================================== */

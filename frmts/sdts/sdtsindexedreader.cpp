@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/09/03 13:01:39  warmerda
+ * added docs
+ *
  * Revision 1.1  1999/09/02 03:39:40  warmerda
  * New
  *
@@ -57,6 +60,41 @@ SDTSIndexedReader::SDTSIndexedReader()
 SDTSIndexedReader::~SDTSIndexedReader()
 
 {
+    ClearIndex();
+}
+
+/************************************************************************/
+/*                             IsIndexed()                              */
+/************************************************************************/
+
+/**
+  Returns TRUE if the module is indexed, otherwise it returns FALSE.
+
+  If the module is indexed all the feature have already been read into
+  memory, and searches based on the record number can be performed
+  efficiently.
+  */
+
+int SDTSIndexedReader::IsIndexed()
+
+{
+    return nIndexSize != 0;
+}
+
+/************************************************************************/
+/*                             ClearIndex()                             */
+/************************************************************************/
+
+/**
+  Free all features in the index (if filled).
+
+  After this the reader is considered to not be indexed, and IsIndexed()
+  will return FALSE untill the index is forcably filled again. 
+  */
+
+void SDTSIndexedReader::ClearIndex()
+
+{
     for( int i = 0; i < nIndexSize; i++ )
     {
         if( papoFeatures[i] != NULL )
@@ -64,14 +102,29 @@ SDTSIndexedReader::~SDTSIndexedReader()
     }
     
     CPLFree( papoFeatures );
+
+    papoFeatures = NULL;
+    nIndexSize = 0;
 }
 
 /************************************************************************/
 /*                           GetNextFeature()                           */
-/*                                                                      */
-/*      Read from index if file is in memory, otherwise pass off to     */
-/*      the derived class to read a raw feature from the module.        */
 /************************************************************************/
+
+/**
+  Fetch the next available feature from this reader.
+
+  The returned SDTSFeature * is to an internal indexed object if the
+  IsIndexed() method returns TRUE, otherwise the returned feature becomes the
+  responsibility of the caller to destroy with delete.
+
+  Note that the Rewind() method can be used to start over at the beginning of
+  the modules feature list.
+
+  @return next feature, or NULL if no more are left.  Please review above
+  ownership/delete semantics.
+
+  */
 
 SDTSFeature *SDTSIndexedReader::GetNextFeature()
 
@@ -96,6 +149,21 @@ SDTSFeature *SDTSIndexedReader::GetNextFeature()
 /*                        GetIndexedFeatureRef()                        */
 /************************************************************************/
 
+/**
+ Fetch a feature based on it's record number.
+
+ This method will forceably fill the feature cache, reading all the
+ features in the file into memory, if they haven't already been loaded.
+ The ClearIndex() method can be used to flush this cache when no longer
+ needed. 
+
+ @param iRecordId the record to fetch, normally based on the nRecord
+ field of an SDTSModId. 
+
+ @return a pointer to an internal feature (not to be deleted) or NULL
+ if there is no matching feature.
+*/
+
 SDTSFeature *SDTSIndexedReader::GetIndexedFeatureRef( int iRecordId )
 
 {
@@ -111,6 +179,13 @@ SDTSFeature *SDTSIndexedReader::GetIndexedFeatureRef( int iRecordId )
 /************************************************************************/
 /*                             FillIndex()                              */
 /************************************************************************/
+
+/**
+ Read all features into a memory indexed cached.
+
+ The ClearIndex() method can be used to free all indexed features.
+ FillIndex() does nothing, if an index has already been built.
+*/
 
 void SDTSIndexedReader::FillIndex()
 
@@ -155,6 +230,26 @@ void SDTSIndexedReader::FillIndex()
 /*                        ScanModuleReferences()                        */
 /************************************************************************/
 
+/**
+  Scan an entire SDTS module for record references with the given field
+  name.
+
+  The fields are required to have a MODN subfield from which the
+  module is extracted.
+
+  This method is normally used to find all the attribute modules referred
+  to by a point, line or polygon module to build a unified schema.
+
+  This method will have the side effect of rewinding unindexed readers
+  because the scanning operation requires reading all records in the module
+  from disk. 
+  
+  @param pszFName the field name to search for.  By default "ATID" is
+  used.
+
+  @return a NULL terminated list of module names.  Free with CSLDestroy().
+*/
+
 char ** SDTSIndexedReader::ScanModuleReferences( const char * pszFName )
 
 {
@@ -164,6 +259,12 @@ char ** SDTSIndexedReader::ScanModuleReferences( const char * pszFName )
 /************************************************************************/
 /*                               Rewind()                               */
 /************************************************************************/
+
+/**
+  Rewind so that the next feature returned by GetNextFeature() will be the
+  first in the module.
+
+*/
 
 void SDTSIndexedReader::Rewind()
 

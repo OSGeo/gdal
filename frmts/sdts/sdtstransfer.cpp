@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/09/03 13:01:39  warmerda
+ * added docs
+ *
  * Revision 1.7  1999/09/02 03:40:03  warmerda
  * added indexed readers
  *
@@ -72,8 +75,7 @@ SDTSTransfer::SDTSTransfer()
 SDTSTransfer::~SDTSTransfer()
 
 {
-    if( nLayers > 0 )
-        Close();
+    Close();
 }
 
 
@@ -168,20 +170,51 @@ int SDTSTransfer::Open( const char * pszFilename )
 /*                               Close()                                */
 /************************************************************************/
 
-/**
- * Reinitialize this object, freeing all transfer specific resources.
- */
-
 void SDTSTransfer::Close()
 
 {
+    for( int i = 0; i < nLayers; i++ )
+    {
+        if( papoLayerReader[i] != NULL )
+            delete papoLayerReader[i];
+    }
+    CPLFree( papoLayerReader );
+    papoLayerReader = NULL;
     CPLFree( panLayerCATDEntry );
+    panLayerCATDEntry = NULL;
     nLayers = 0;
 }
 
 /************************************************************************/
 /*                            GetLayerType()                            */
 /************************************************************************/
+
+/**
+  Fetch type of requested feature layer.
+
+  @param iEntry the index of the layer to fetch information on.  A value
+  from zero to GetLayerCount()-1.
+
+  @return the layer type.
+
+  <ul>
+  <li> SLTPoint: A point layer.  An SDTSPointReader is returned by
+  SDTSTransfer::GetLayerIndexedReader().
+
+  <li> SLTLine: A line layer.  An SDTSLineReader is returned by
+  SDTSTransfer::GetLayerIndexedReader().
+
+  <li> SLTAttr: An attribute primary or secondary layer.  An SDTSAttrReader
+  is returned by SDTSTransfer::GetLayerIndexedReader().
+
+  <li> SLTPoly: A polygon layer.  An SDTSPolygonReader is returned by
+  SDTSTransfer::GetLayerIndexedReader().
+
+  <li> SDTSRaster: A raster layer.  SDTSTransfer::GetLayerIndexedReader()
+  is not implemented.  Use SDTSTransfer::GetLayerRasterReader() instead.
+  </ul>
+  
+ */
 
 SDTSLayerType SDTSTransfer::GetLayerType( int iEntry )
 
@@ -333,6 +366,21 @@ SDTSAttrReader *SDTSTransfer::GetLayerAttrReader( int iEntry )
 /*                        GetLayerRasterReader()                        */
 /************************************************************************/
 
+/**
+  Instantiate an SDTSRasterReader for the indicated layer.
+
+  @param iEntry the index of the layer to instantiate a reader for.  A
+  value between 0 and GetLayerCount()-1.
+
+  @return a pointer to a new SDTSRasterReader object, or NULL if the method
+  fails.
+
+  NOTE: The reader returned from GetLayerRasterReader() becomes the
+  responsibility of the caller to delete, and isn't automatically deleted
+  when the SDTSTransfer is destroyed.  This method is different from
+  the GetLayerIndexedReader() method in this regard.
+  */
+
 SDTSRasterReader *SDTSTransfer::GetLayerRasterReader( int iEntry )
 
 {
@@ -392,6 +440,34 @@ DDFModule *SDTSTransfer::GetLayerModuleReader( int iEntry )
 /*                       GetLayerIndexedReader()                        */
 /************************************************************************/
 
+/**
+  Returns a pointer to a reader of the appropriate type to the requested
+  layer.
+
+  Notes:
+  <ul>
+  <li> The returned reader remains owned by the SDTSTransfer, and will be
+  destroyed when the SDTSTransfer is destroyed.  It should not be
+  destroyed by the application. 
+
+  <li> If an indexed reader was already created for this layer using
+  GetLayerIndexedReader(), it will be returned instead of creating a new
+  reader.  Amoung other things this means that the returned reader may not
+  be positioned to read from the beginning of the module, and may already
+  have it's index filled.
+
+  <li> The returned reader will be of a type appropriate to the layer.
+  See SDTSTransfer::GetLayerType() to see what reader classes correspond
+  to what layer types, so it can be cast accordingly (if necessary). 
+ 
+  </ul>
+
+  @param iEntry the index of the layer to instantiate a reader for.  A
+  value between 0 and GetLayerCount()-1.
+
+  @return a pointer to an appropriate reader or NULL if the method fails.
+  */
+
 SDTSIndexedReader *SDTSTransfer::GetLayerIndexedReader( int iEntry )
 
 {
@@ -425,8 +501,6 @@ SDTSIndexedReader *SDTSTransfer::GetLayerIndexedReader( int iEntry )
 
 /************************************************************************/
 /*                             FindLayer()                              */
-/*                                                                      */
-/*      Find a layer based on a module name.                            */
 /************************************************************************/
 
 int SDTSTransfer::FindLayer( const char * pszModule )
@@ -487,6 +561,16 @@ SDTSFeature *SDTSTransfer::GetIndexedFeatureRef( SDTSModId *poModId,
 /*      Fetch the attribute information corresponding to a given        */
 /*      SDTSModId.                                                      */
 /************************************************************************/
+
+/**
+  Fetch the attribute fields given a particular module/record id.
+
+  @param poModId an attribute record identifer, normally taken from the
+  aoATID[] array of an SDTSIndexedFeature.
+
+  @return a pointer to the DDFField containing the user attribute values as
+  subfields.
+  */
 
 DDFField *SDTSTransfer::GetAttr( SDTSModId *poModId )
 

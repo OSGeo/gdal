@@ -51,4 +51,9 @@ install-obj:	$(foreach file,$(OBJ),../o/$(file)) ../o/sdtsdataset.o
 ../o/%.o:	%.o
 	cp $*.o ../o
 
+docs:
+	rm -rf html
+	mkdir html
+	doxygen
+	rm html/index.html
 

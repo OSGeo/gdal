@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/09/03 13:01:39  warmerda
+ * added docs
+ *
  * Revision 1.2  1999/06/03 21:13:18  warmerda
  * Added transform support.
  *
@@ -280,6 +283,22 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 /*      record once it's location is known.                             */
 /************************************************************************/
 
+/**
+  Read a block of raster data from the file.
+
+  @param nXOffset X block offset into the file.  Normally zero for scanline
+  organized raster files.
+
+  @param nYOffset Y block offset into the file.  Normally the scanline offset
+  from top of raster for scanline organized raster files.
+
+  @param pData pointer to GInt16 (signed short) buffer of data into which to
+  read the raster.
+
+  @return 
+
+  */
+
 int SDTSRasterReader::GetBlock( int nXOffset, int nYOffset, void * pData )
 
 {
@@ -301,13 +320,12 @@ int SDTSRasterReader::GetBlock( int nXOffset, int nYOffset, void * pData )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we didn't get what we needed just give up.  We should        */
-/*      really rewind, and search from the top or better yet index      */
-/*      directly to the request.                                        */
+/*      If we didn't get what we needed just start over.		*/
 /* -------------------------------------------------------------------- */
     if( poRecord == NULL )
     {
-        return FALSE;
+        oDDFModule.Rewind();
+        return GetBlock( nXOffset, nYOffset, pData );
     }
 
 /* -------------------------------------------------------------------- */
@@ -368,6 +386,31 @@ int SDTSRasterReader::GetBlock( int nXOffset, int nYOffset, void * pData )
 /************************************************************************/
 /*                            GetTransform()                            */
 /************************************************************************/
+
+/**
+  Fetch the transformation between pixel/line coordinates and georeferenced
+  coordinates.
+
+  @param padfTransformOut pointer to an array of six doubles which will be
+  filled with the georeferencing transform.
+
+  @return TRUE is returned, indicating success.
+
+  The padfTransformOut array consists of six values.  The pixel/line coordinate
+  (Xp,Yp) can be related to a georeferenced coordinate (Xg,Yg) or (Easting,
+  Northing).
+
+  <pre>
+  Xg = padfTransformOut[0] + Xp * padfTransform[1] + Yp * padfTransform[2]
+  Yg = padfTransformOut[3] + Xp * padfTransform[4] + Yp * padfTransform[5]
+  </pre>
+
+  In other words, for a north up image the top left corner of the top left
+  pixel is at georeferenced coordinate (padfTransform[0],padfTransform[3])
+  the pixel width is padfTransform[1], the pixel height is padfTransform[5]
+  and padfTransform[2] and padfTransform[4] will be zero.
+
+  */
 
 int SDTSRasterReader::GetTransform( double * padfTransformOut )
 

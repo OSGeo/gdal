@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  CEOS Translator
+ * Project:  SDTS Translator
  * Purpose:  GDALDataset driver for SDTS Raster translator.
  * Author:   Frank Warmerdam, warmerda@home.com
  *
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/09/03 13:01:39  warmerda
+ * added docs
+ *
  * Revision 1.2  1999/06/03 21:14:01  warmerda
  * added GetGeoTransform() and GetProjectionRef() support
  *
@@ -38,6 +41,12 @@
 
 #include "sdts_al.h"
 #include "gdal_priv.h"
+
+/**
+ \file sdtsdataset.cpp
+
+ exclude
+*/
 
 static GDALDriver	*poSDTSDriver = NULL;
 

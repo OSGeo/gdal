@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/09/03 13:01:39  warmerda
+ * added docs
+ *
  * Revision 1.4  1999/09/02 03:40:03  warmerda
  * added indexed readers
  *
@@ -289,6 +292,22 @@ int SDTSRawPolygon::AssembleRings()
     return bSuccess;
 }
 
+/************************************************************************/
+/*                                Dump()                                */
+/************************************************************************/
+
+void SDTSRawPolygon::Dump( FILE * fp )
+
+{
+    int		i;
+    
+    fprintf( fp, "SDTSRawPolygon %s: ", oModId.GetName() );
+
+    for( i = 0; i < nAttributes; i++ )
+        fprintf( fp, "  ATID[%d]=%s", i, aoATID[i].GetName() );
+
+    fprintf( fp, "\n" );
+}
 
 /************************************************************************/
 /* ==================================================================== */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/09/03 13:01:39  warmerda
+ * added docs
+ *
  * Revision 1.8  1999/09/02 03:40:03  warmerda
  * added indexed readers
  *
@@ -279,6 +282,17 @@ SDTSRawLine * SDTSLineReader::GetNextLine()
 /*      Attach line features to all the polygon features they relate    */
 /*      to.                                                             */
 /************************************************************************/
+
+/**
+  Attach lines in this module to their polygons as the first step in
+  polygon formation.
+
+  See also the SDTSRawPolygon::AssembleRings() method.
+
+  @param poTransfer the SDTSTransfer of this SDTSLineReader, and from
+  which the related SDTSPolygonReader will be instantiated.
+
+*/
 
 void SDTSLineReader::AttachToPolygons( SDTSTransfer * poTransfer )
 

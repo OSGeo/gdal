@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  1999/09/03 13:01:39  warmerda
+ * added docs
+ *
  * Revision 1.13  1999/09/02 03:40:03  warmerda
  * added indexed readers
  *
@@ -86,9 +89,13 @@ char **SDTSScanModuleReferences( DDFModule *, const char * );
 
 /************************************************************************/
 /*                              SDTS_IREF                               */
-/*									*/
-/*      Class for reading the IREF (internal reference) module.         */
 /************************************************************************/
+
+/**
+  Class holding SDTS IREF (internal reference) information, internal
+  coordinate system format, scaling and resolution.  This object isn't
+  normally needed by applications. 
+*/
 class SDTS_IREF
 {
   public:
@@ -115,9 +122,13 @@ class SDTS_IREF
 
 /************************************************************************/
 /*                              SDTS_XREF                               */
-/*                                                                      */
-/*      Class for reading the XREF (projection) module.         	*/
 /************************************************************************/
+
+/**
+  Class for reading the XREF (external reference) module containing the
+  data projection definition.
+*/
+
 class SDTS_XREF
 {
   public:
@@ -126,21 +137,27 @@ class SDTS_XREF
 
     int         Read( const char *pszFilename );
 
-    char	*pszSystemName;			/* RSNM */
-				  /* one of GEO, SPCS, UTM, UPS, OTHR, UNSP */
+    /** Projection system name, from the RSNM field.  One of GEO, SPCS, UTM,
+        UPS, OTHR, UNSP. */
+    char	*pszSystemName;		
+				  
 
-    char	*pszDatum;			/* HDAT */
-				  /* one of NAS, NAX, WGA, WGB, WGC, WGE */
-
-    int		nZone;		      		/* ZONE */
+    /** Horizontal datum name, from the HDAT field.  One of NAS, NAX, WGA,
+        WGB, WGC, WGE. */
+    char	*pszDatum;		
+				  
+    /** Zone number for UTM and SPCS projections, from the ZONE field. */
+    int		nZone;		      	      
 };
 
 /************************************************************************/
 /*                              SDTS_CATD                               */
-/*                                                                      */
-/*      Class for reading the directory of other files file.            */
 /************************************************************************/
 class SDTS_CATDEntry;
+
+/**
+  List of feature layer types.  See SDTSTransfer::GetLayerType().
+  */
 
 typedef enum {
   SLTUnknown,
@@ -151,6 +168,10 @@ typedef enum {
   SLTRaster
 } SDTSLayerType;
 
+/**
+  Class for accessing the CATD (Catalog Directory) file containing a list of
+  all other files (modules) in the transfer.
+*/
 class SDTS_CATD
 {
     char	*pszPrefixPath;
@@ -175,11 +196,12 @@ class SDTS_CATD
 
 /************************************************************************/
 /*                              SDTSModId                               */
-/*                                                                      */
-/*      A simple class to encapsulate a model and record                */
-/*      identifier.  Implemented in sdtslib.cpp.                        */
 /************************************************************************/
 
+/**
+  Object representing a unique module/record identifier within an SDTS
+  transfer.
+*/
 class SDTSModId
 {
   public:
@@ -188,38 +210,61 @@ class SDTSModId
                 	      szOBRP[0] = '\0'; }
 
     int		Set( DDFField * );
+
     const char *GetName();
-    
+
+    /** The module name, such as PC01, containing the indicated record. */
     char	szModule[8];
+
+    /** The record within the module referred to.  This is -1 for unused
+        SDTSModIds. */
     long	nRecord;
+
+    /** The "role" of this record within the module.  This is normally empty
+        for references, but set in the oModId member of a feature.  */
     char	szOBRP[8]; 
 };
 
 /************************************************************************/
 /*                             SDTSFeature                              */
-/*                                                                      */
-/*      Base class for points, lines, polygons and attribute            */
-/*      records.                                                        */
 /************************************************************************/
 
+/**
+  Base class for various SDTS features classes, providing a generic
+  module identifier, and list of attribute references.
+*/
 class SDTSFeature
 {
 public:
 
     virtual            ~SDTSFeature();
-    
+
+    /** Unique identifier for this record/feature within transfer. */
     SDTSModId		oModId;
 
-#define MAX_ATID	4    
+#define MAX_ATID	4
+    /** Number of attribute links (aoATID[]) on this feature. */
     int		nAttributes;
+
+    /** List of nAttributes attribute record identifiers related to this
+        feature.  */
     SDTSModId	aoATID[MAX_ATID];
 
     void        ApplyATID( DDFField * );
+
+
+    /** Dump reable description of feature to indicated stream. */
+    virtual void Dump( FILE * ) = 0;
 };
 
 /************************************************************************/
 /*                          SDTSIndexedReader                           */
 /************************************************************************/
+
+/**
+  Base class for all the SDTSFeature type readers.  Provides feature
+  caching semantics and fetching based on a record number.
+  */
 
 class SDTSIndexedReader
 {
@@ -242,6 +287,8 @@ public:
     virtual void        Rewind();
     
     void		FillIndex();
+    void		ClearIndex();
+    int			IsIndexed();
 
     SDTSFeature	       *GetIndexedFeatureRef( int );
     char **		ScanModuleReferences( const char * = "ATID" );
@@ -250,10 +297,10 @@ public:
 
 /************************************************************************/
 /*                             SDTSRawLine                              */
-/*                                                                      */
-/*      Simple container for the information from a line read from a    */
-/*      line file.                                                      */
 /************************************************************************/
+
+/** SDTS line feature, as read from LE* modules by SDTSLineReader. */
+
 class SDTSRawLine : public SDTSFeature
 {
   public:
@@ -262,15 +309,30 @@ class SDTSRawLine : public SDTSFeature
 
     int         Read( SDTS_IREF *, DDFRecord * );
 
+    /** Number of vertices in the padfX, padfY and padfZ arrays. */
     int		nVertices;
 
+    /** List of nVertices X coordinates. */
     double	*padfX;
+    /** List of nVertices Y coordinates. */
     double	*padfY;
+    /** List of nVertices Z coordinates - currently always zero. */
     double	*padfZ;
 
-    SDTSModId	oLeftPoly;		/* PIDL */
-    SDTSModId	oRightPoly;		/* PIDR */
+    /** Identifier of polygon to left of this line.  This is the SDTS PIDL
+        subfield. */
+    SDTSModId	oLeftPoly;	       
+
+    /** Identifier of polygon to right of this line.  This is the SDTS PIDR
+        subfield. */
+    SDTSModId	oRightPoly;
+
+    /** Identifier for the start node of this line.  This is the SDTS SNID
+        subfield. */
     SDTSModId	oStartNode;		/* SNID */
+
+    /** Identifier for the end node of this line.  This is the SDTS ENID
+        subfield. */
     SDTSModId	oEndNode;		/* ENID */
 
     void	Dump( FILE * );
@@ -281,6 +343,14 @@ class SDTSRawLine : public SDTSFeature
 /*                                                                      */
 /*      Class for reading any of the files lines.                       */
 /************************************************************************/
+
+/**
+  Reader for SDTS line modules.
+
+  Returns SDTSRawLine features. Normally readers are instantiated with
+  the SDTSTransfer::GetIndexedReader() method.
+
+  */
 
 class SDTSLineReader : public SDTSIndexedReader
 {
@@ -301,9 +371,16 @@ class SDTSLineReader : public SDTSIndexedReader
 
 /************************************************************************/
 /*                            SDTSAttrRecord                            */
-/*                                                                      */
-/*      Simple "SDTSFeature" enabled contain for an attribute record.   */
 /************************************************************************/
+
+/**
+  SDTS attribute record feature, as read from A* modules by
+  SDTSAttrReader.
+
+  Note that even though SDTSAttrRecord is derived from SDTSFeature, there
+  are never any attribute records associated with attribute records using
+  the aoATID[] mechanism.  SDTSFeature::nAttributes will always be zero.
+  */
 
 class SDTSAttrRecord : public SDTSFeature
 {
@@ -311,7 +388,12 @@ class SDTSAttrRecord : public SDTSFeature
     		SDTSAttrRecord();
     virtual    ~SDTSAttrRecord();
 
+    /** The entire DDFRecord read from the file. */
     DDFRecord   *poWholeRecord;
+
+    /** The ATTR DDFField with the user attribute.  Each subfield is a
+        attribute value. */
+
     DDFField    *poATTR;
 
     virtual void Dump( FILE * );
@@ -319,9 +401,12 @@ class SDTSAttrRecord : public SDTSFeature
 
 /************************************************************************/
 /*                            SDTSAttrReader                            */
-/*                                                                      */
-/*      Class for reading any of the primary attribute files.           */
 /************************************************************************/
+
+/**
+  Class for reading SDTSAttrRecord features from a primary or secondary
+  attribute module.
+  */
 
 class SDTSAttrReader : public SDTSIndexedReader
 {
@@ -339,6 +424,10 @@ class SDTSAttrReader : public SDTSIndexedReader
     SDTSAttrRecord *GetNextAttrRecord();
     void	Close();
 
+    /**
+      Returns TRUE if this is a Attribute Secondary layer rather than
+      an Attribute Primary layer.
+      */
     int		IsSecondary() { return bIsSecondary; }
     
     SDTSFeature *GetNextRawFeature( void ) { return GetNextAttrRecord(); }
@@ -346,10 +435,11 @@ class SDTSAttrReader : public SDTSIndexedReader
 
 /************************************************************************/
 /*                             SDTSRawPoint                             */
-/*                                                                      */
-/*      Simple container for the information from a point.              */
 /************************************************************************/
 
+/**
+  Object containing a point feature (type NA, NO or NP).
+  */
 class SDTSRawPoint : public SDTSFeature
 {
   public:
@@ -358,18 +448,27 @@ class SDTSRawPoint : public SDTSFeature
 
     int         Read( SDTS_IREF *, DDFRecord * );
 
+    /** X coordinate of point. */
     double	dfX;
+    /** Y coordinate of point. */
     double	dfY;
+    /** Z coordinate of point. */
     double	dfZ;
 
+    /** Optional identifier of area marked by this point (ie. PC01:27). */
     SDTSModId   oAreaId;		/* ARID */
+
+    virtual void Dump( FILE * );
 };
 
 /************************************************************************/
 /*                           SDTSPointReader                            */
-/*                                                                      */
-/*      Class for reading any of the point files.                       */
 /************************************************************************/
+
+/**
+  Class for reading SDTSRawPoint features from a point module (type NA, NO
+  or NP).
+  */
 
 class SDTSPointReader : public SDTSIndexedReader
 {
@@ -388,9 +487,24 @@ class SDTSPointReader : public SDTSIndexedReader
 
 /************************************************************************/
 /*                             SDTSRawPolygon                           */
-/*                                                                      */
-/*      Simple container for the information from a polygon             */
 /************************************************************************/
+
+/**
+  Class for holding information about a polygon feature.
+
+  When directly read from a polygon module, the polygon has no concept
+  of it's geometry.  Just it's ID, and references to attribute records.
+  However, if the SDTSLineReader::AttachToPolygons() method is called on
+  the module containing the lines forming the polygon boundaries, then the
+  nEdges/papoEdges information on the SDTSRawPolygon will be filled in.
+
+  Once this is complete the AssembleRings() method can be used to fill in the
+  nRings/nVertices/panRingStart/padfX/padfY/padfZ information defining the
+  ring geometry.
+
+  Note that the rings may not appear in any particular order, nor with any
+  meaningful direction (clockwise or counterclockwise).  
+  */
 
 class SDTSRawPolygon : public SDTSFeature
 {
@@ -407,21 +521,36 @@ class SDTSRawPolygon : public SDTSFeature
 
     void	AddEdge( SDTSRawLine * );
 
+    /** This method will assemble the edges associated with a polygon into
+      rings, returning FALSE if problems are encountered during assembly. */
     int		AssembleRings();
-    
+
+    /** Number of rings in assembled polygon. */
     int		nRings;
+    /** Total number of vertices in all rings of assembled polygon. */
     int		nVertices;
+    /** Offsets into padfX/padfY/padfZ for the beginning of each ring in the
+      polygon.  This array is nRings long. */
     int		*panRingStart;
+
+    /** List of nVertices X coordinates for the polygon (split over multiple
+      rings via panRingStart. */
     double	*padfX;
+    /** List of nVertices Y coordinates for the polygon (split over multiple
+      rings via panRingStart. */
     double      *padfY;
+    /** List of nVertices Z coordinates for the polygon (split over multiple
+      rings via panRingStart.  The values are almost always zero. */
     double      *padfZ;
+
+    virtual void Dump( FILE * );
 };
 
 /************************************************************************/
 /*                          SDTSPolygonReader                           */
-/*                                                                      */
-/*      Class for reading any of the polygon files.                     */
 /************************************************************************/
+
+/** Class for reading SDTSRawPolygon features from a polygon (PC*) module. */
 
 class SDTSPolygonReader : public SDTSIndexedReader
 {
@@ -438,9 +567,15 @@ class SDTSPolygonReader : public SDTSIndexedReader
 
 /************************************************************************/
 /*                           SDTSRasterReader                           */
-/*                                                                      */
-/*      Class for reading any of the raster cell files.                 */
 /************************************************************************/
+
+/**
+  Class for reading raster data from a raster layer.
+
+  This class is somewhat unique amoung the reader classes in that it isn't
+  derived from SDTSIndexedFeature, and it doesn't return "features".  Instead
+  it is used to read raster blocks, in the natural block size of the dataset.
+  */
 
 class SDTSRasterReader
 {
@@ -472,18 +607,38 @@ class SDTSRasterReader
 
     int		GetTransform( double * );
 
+    /**
+      Fetch the raster width.
+
+      @return the width in pixels.
+      */
     int		GetXSize() { return nXSize; }
+    /**
+      Fetch the raster height.
+
+      @return the height in pixels.
+      */
     int		GetYSize() { return nYSize; }
-    
+
+    /** Fetch the width of a source block (usually same as raster width). */
     int		GetBlockXSize() { return nXBlockSize; }
+    /** Fetch the height of a source block (usually one). */
     int		GetBlockYSize() { return nYBlockSize; }
-    
+
     int		GetBlock( int nXOffset, int nYOffset, void * pData );
 };
 
 /************************************************************************/
 /*                             SDTSTransfer                             */
 /************************************************************************/
+
+/**
+  Master class representing an entire SDTS transfer.
+
+  This class is used to open the transfer, to get a list of available
+  feature layers, and to instantiate readers for those layers.
+
+  */
 
 class SDTSTransfer
 {
