@@ -26,6 +26,9 @@
  * Note this is a C++ include file, and can't be used by C code.
  * 
  * $Log$
+ * Revision 1.6  1999/04/21 04:16:25  warmerda
+ * experimental docs
+ *
  * Revision 1.5  1999/01/11 15:36:18  warmerda
  * Added projections support, and a few other things.
  *
@@ -86,6 +89,8 @@ class CPL_DLL GDALMajorObject
 /*      Encapsulate a Projection definition.                            */
 /************************************************************************/
 
+//! Encapsulates a projections definition.
+
 class CPL_DLL GDALProjDef
 {
     void	*psPJ;
@@ -109,6 +114,8 @@ class CPL_DLL GDALProjDef
 /*                                                                      */
 /*      Normally this is one file.                                      */
 /************************************************************************/
+
+//! A dataset (normally a single raster, or vector file).
 
 class CPL_DLL GDALDataset : public GDALMajorObject
 {
@@ -188,6 +195,8 @@ class CPL_DLL GDALRasterBlock
 /*                                                                      */
 /*      one band, or channel in a dataset.                              */
 /************************************************************************/
+
+//! A single raster band (or channel).
 
 class CPL_DLL GDALRasterBand : public GDALMajorObject
 {

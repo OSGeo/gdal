@@ -26,6 +26,9 @@
  * that calls the GDAL library.
  * 
  * $Log$
+ * Revision 1.8  1999/04/21 04:16:13  warmerda
+ * experimental docs
+ *
  * Revision 1.7  1999/03/02 21:09:48  warmerda
  * add GDALDecToDMS()
  *
@@ -51,6 +54,9 @@
 
 #ifndef GDAL_H_INCLUDED
 #define GDAL_H_INCLUDED
+
+/*! \file gdal.h
+ */
 
 #include "cpl_port.h"
 #include "cpl_error.h"
@@ -120,6 +126,16 @@ GDALDriverH CPL_DLL GDALGetDriverByName( const char * );
 /* ==================================================================== */
 
 void CPL_DLL   GDALClose( GDALDatasetH );
+
+/*!
+  \fn int GDALGetRasterXSize( GDALDatasetH hDataset );
+
+  \brief Fetch raster width in pixels.
+
+  \param hDataset handle returned by GDALOpen().
+
+  */  
+
 
 int CPL_DLL	GDALGetRasterXSize( GDALDatasetH );
 int CPL_DLL	GDALGetRasterYSize( GDALDatasetH );

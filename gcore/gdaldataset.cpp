@@ -25,6 +25,9 @@
  * The GDALDataset class.
  * 
  * $Log$
+ * Revision 1.5  1999/04/21 04:16:51  warmerda
+ * experimental docs
+ *
  * Revision 1.4  1999/01/11 15:37:55  warmerda
  * fixed log keyword
  * 
@@ -154,6 +157,15 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
 /*                           GetRasterXSize()                           */
 /************************************************************************/
 
+//! Fetch raster width in pixels.
+
+/*!
+
+Returns the raster width of all GDALBands associated with this
+GDALDataset.  The C function GDALGetRasterXSize() does the same.
+
+*/
+
 int GDALDataset::GetRasterXSize()
 
 {
@@ -174,6 +186,8 @@ int GDALGetRasterXSize( GDALDatasetH hDataset )
 /************************************************************************/
 /*                           GetRasterYSize()                           */
 /************************************************************************/
+
+//! Fetch raster height in pixels.
 
 int GDALDataset::GetRasterYSize()
 
@@ -211,6 +225,14 @@ GDALRasterBand * GDALDataset::GetRasterBand( int nBandId )
 /************************************************************************/
 /*                         GDALGetRasterBand()                          */
 /************************************************************************/
+
+/*! \relates GDALRasterBand
+
+  \param hDS Dataset handle
+  \param nBandId The band number to fetch from 1 to GDALGetRasterCount().
+  \return a GDALRasterBand handle (GDALRasterBandH).
+
+*/
 
 GDALRasterBandH GDALGetRasterBand( GDALDatasetH hDS, int nBandId )
 
