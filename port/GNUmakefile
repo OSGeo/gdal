@@ -35,3 +35,6 @@ $(LIB): $(OBJ)
 install:	$(LIB)
 	for f in *.h ; do $(INSTALL) $$f $(INST_INCLUDE) ; done
 	$(INSTALL) cpl.a $(INST_LIB)
+
+xmlreformat:	xmlreformat.o $(LIB)
+	$(CXX) $(CXXFLAGS) xmlreformat.o $(LIB) -o xmlreformat
