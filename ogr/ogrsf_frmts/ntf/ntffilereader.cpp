@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2002/06/18 02:29:41  warmerda
+ * fixed possible one-off error in att records ended with variable value
+ *
  * Revision 1.25  2002/02/11 16:53:32  warmerda
  * ensure file opened in binary mode
  *
@@ -998,7 +1001,11 @@ int NTFFileReader::ProcessAttRec( NTFRecord * poRecord,
 /*      Establish new offset position.                                  */
 /* -------------------------------------------------------------------- */
         if( nFWidth == 0 )
-            iOffset = nEnd + 1;
+        {
+            iOffset = nEnd;
+            if( pszData[iOffset] == '\\' )
+                iOffset++;
+        }
         else
             iOffset += 2 + atoi(psAttDesc->fwidth);
     }
