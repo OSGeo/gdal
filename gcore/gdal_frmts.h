@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/12/03 04:41:16  warmerda
+ * added NITF
+ *
  * Revision 1.18  2002/10/03 05:41:27  warmerda
  * added GSC Geogrid format
  *
@@ -135,6 +138,7 @@ void CPL_DLL GDALRegister_LDF(void);
 void CPL_DLL GDALRegister_BSB(void);
 void CPL_DLL GDALRegister_XPM(void);
 void CPL_DLL GDALRegister_GSC(void);
+void CPL_DLL GDALRegister_NITF(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
