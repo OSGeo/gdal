@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.8  2003/03/07 16:26:39  warmerda
+#  fixed up for ungeoreferenced files, supress extra error
+#
 #  Revision 1.7  2003/01/28 15:00:13  warmerda
 #  applied patch for multi-band support from Ken Boss
 #
@@ -196,14 +199,22 @@ class file_info:
 
         # figure out intersection region
         tgw_ulx = max(t_ulx,self.ulx)
-        tgw_uly = min(t_uly,self.uly)
         tgw_lrx = min(t_lrx,self.lrx)
-        tgw_lry = max(t_lry,self.lry)
+        if t_geotransform[5] < 0:
+            tgw_uly = min(t_uly,self.uly)
+            tgw_lry = max(t_lry,self.lry)
+        else:
+            tgw_uly = max(t_uly,self.uly)
+            tgw_lry = min(t_lry,self.lry)
         
         # do they even intersect?
-        if tgw_ulx >= tgw_lrx or tgw_uly <= tgw_lry:
+        if tgw_ulx >= tgw_lrx:
             return 1
-
+        if t_geotransform[5] < 0 and tgw_uly <= tgw_lry:
+            return 1
+        if t_geotransform[5] > 0 and tgw_uly >= tgw_lry:
+            return 1
+            
         # compute target window in pixel coordinates.
         tw_xoff = int((tgw_ulx - t_geotransform[0]) / t_geotransform[1] + 0.1)
         tw_yoff = int((tgw_uly - t_geotransform[3]) / t_geotransform[5] + 0.1)
@@ -336,7 +347,9 @@ if __name__ == '__main__':
         psize_y = file_infos[0].geotransform[5]
 
     # Try opening as an existing file.
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     t_fh = gdal.Open( out_file, gdal.GA_ReadOnly )
+    gdal.PopErrorHandler()
     
     # Create output file if it does not already exist.
     if t_fh is None:
@@ -357,6 +370,13 @@ if __name__ == '__main__':
 
         if copy_pct:
             t_fh.GetRasterBand(1).SetRasterColorTable(file_infos[0].ct)
+    else:
+        if separate != 0:
+            bands = len(file_infos)
+        else:
+            bands = min(file_infos[0].bands,t_fh.RasterCount)
+
+        
 
     # Copy data from source files into output file.
     t_band = 1
