@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.13 1999/11/08 04:34:55 stephane Exp $
+ * $Id: mitab.h,v 1.1 1999/11/08 21:05:51 svillene Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo MIF Read/Write library
@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.1  1999/11/08 21:05:51  svillene
+ * first revision
+ *
  * Revision 1.13  1999/11/08 04:34:55  stephane
  * mid/mif support
  *
@@ -335,7 +338,7 @@ class MIFFile: public IMapInfoFile
     virtual int AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                                int nWidth, int nPrecision=0);
     /* TODO */
-    virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef){return NULL;}
+    virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef){return FALSE;}
 
     virtual int SetFeature(TABFeature *poFeature, int nFeatureId = -1);
 
