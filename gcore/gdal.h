@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.81  2004/04/29 13:42:58  warmerda
+ * added C Offset/Scale entry points
+ *
  * Revision 1.80  2004/04/04 20:05:37  warmerda
  * mark as 1.2.0.1
  *
@@ -454,6 +457,8 @@ CPLErr CPL_DLL GDALSetRasterCategoryNames( GDALRasterBandH, char ** );
 double CPL_DLL GDALGetRasterMinimum( GDALRasterBandH, int *pbSuccess );
 double CPL_DLL GDALGetRasterMaximum( GDALRasterBandH, int *pbSuccess );
 const char CPL_DLL *GDALGetRasterUnitType( GDALRasterBandH );
+double CPL_DLL GDALGetRasterOffset( GDALRasterBandH, int *pbSuccess );
+double CPL_DLL GDALGetRasterScale( GDALRasterBandH, int *pbSuccess );
 void CPL_DLL GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
                                       double adfMinMax[2] );
 CPLErr CPL_DLL GDALFlushRasterCache( GDALRasterBandH hBand );

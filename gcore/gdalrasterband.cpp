@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.47  2004/04/29 13:42:41  warmerda
+ * added C Offset/Scale entry points
+ *
  * Revision 1.46  2004/04/06 19:19:30  dron
  * Added GDALRasterBand::IsBlockCached() method.
  *
@@ -1707,6 +1710,8 @@ CPLErr GDALRasterBand::BuildOverviews( const char * pszResampling,
  * For file formats that don't know this intrinsically a value of zero
  * is returned. 
  *
+ * This method is the same as the C function GDALGetRasterOffset().
+ *
  * @param pbSuccess pointer to a boolean to use to indicate if the
  * returned value is meaningful or not.  May be NULL (default).
  *
@@ -1720,6 +1725,16 @@ double GDALRasterBand::GetOffset( int *pbSuccess )
         *pbSuccess = FALSE;
 
     return 0.0;
+}
+
+/************************************************************************/
+/*                        GDALGetRasterOffset()                         */
+/************************************************************************/
+
+double GDALGetRasterOffset( GDALRasterBandH hBand, int *pbSuccess )
+
+{
+    return ((GDALRasterBand *) hBand)->GetOffset( pbSuccess );
 }
 
 /************************************************************************/
@@ -1739,6 +1754,8 @@ double GDALRasterBand::GetOffset( int *pbSuccess )
  * For file formats that don't know this intrinsically a value of one
  * is returned. 
  *
+ * This method is the same as the C function GDALGetRasterScale().
+ *
  * @param pbSuccess pointer to a boolean to use to indicate if the
  * returned value is meaningful or not.  May be NULL (default).
  *
@@ -1752,6 +1769,16 @@ double GDALRasterBand::GetScale( int *pbSuccess )
         *pbSuccess = FALSE;
 
     return 1.0;
+}
+
+/************************************************************************/
+/*                         GDALGetRasterScale()                         */
+/************************************************************************/
+
+double GDALGetRasterScale( GDALRasterBandH hBand, int *pbSuccess )
+
+{
+    return ((GDALRasterBand *) hBand)->GetScale( pbSuccess );
 }
 
 /************************************************************************/
