@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/04/08 20:57:06  warmerda
+ * added Clone
+ *
  * Revision 1.9  2003/04/03 23:39:11  danmo
  * Small updates to C API docs (Normand S.)
  *
@@ -155,6 +158,35 @@ void OGR_FD_Destroy( OGRFeatureDefnH hDefn )
 
 {
     delete (OGRFeatureDefn *) hDefn;
+}
+
+/************************************************************************/
+/*                               Clone()                                */
+/************************************************************************/
+
+/**
+ * \fn OGRFeatureDefn *OGRFeatureDefn::Clone() const;
+ *
+ * Create a copy of this feature definition.
+ *
+ * Creates a deep copy of the feature definition. 
+ * 
+ * @return the copy. 
+ */
+
+OGRFeatureDefn *OGRFeatureDefn::Clone()
+
+{
+    OGRFeatureDefn *poCopy;
+
+    poCopy = new OGRFeatureDefn( GetName() );
+
+    poCopy->SetGeomType( GetGeomType() );
+
+    for( int i = 0; i < GetFieldCount(); i++ )
+        poCopy->AddFieldDefn( GetFieldDefn( i ) );
+
+    return poCopy;
 }
 
 /************************************************************************/
