@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/11/17 05:16:49  warmerda
+ * added meridian 2 support
+ *
  * Revision 1.21  2002/07/08 14:49:44  warmerda
  * added TILE_REF uniquification support
  *
@@ -173,6 +176,9 @@
 #define NPC_LANDFORM_PROFILE_DTM 17
 
 #define NPC_BL2000              18
+
+#define NPC_MERIDIAN2           19
+#define NTF_MERIDIAN2           "Meridian_02.01"
 
 /************************************************************************/
 /*                              NTFRecord                               */

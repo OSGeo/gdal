@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2002/11/17 05:16:49  warmerda
+ * added meridian 2 support
+ *
  * Revision 1.28  2002/10/02 20:48:39  warmerda
  * Added support for GENERIC_CPOLY layer
  *
@@ -494,7 +497,9 @@ int NTFFileReader::Open( const char * pszFilenameIn )
         nProduct = NPC_LANDFORM_PROFILE_CONT;
     else if( EQUALN(pszProduct,"Strategi",8) )
         nProduct = NPC_STRATEGI;
-    else if( EQUALN(pszProduct,"Meridian",8) )
+    else if( EQUALN(pszProduct,"Meridian_02",11) )
+        nProduct = NPC_MERIDIAN2;
+    else if( EQUALN(pszProduct,"Meridian_01",11) )
         nProduct = NPC_MERIDIAN;
     else if( EQUAL(pszProduct,NTF_BOUNDARYLINE) 
              && EQUALN(pszPVName,"A10N_FC",7) )
@@ -562,7 +567,7 @@ int NTFFileReader::Open( const char * pszFilenameIn )
         dfScale = atoi(poRecord->GetField(148+31,148+39));
     else if( nProduct == NPC_STRATEGI )
         dfScale = 250000;
-    else if( nProduct == NPC_MERIDIAN )
+    else if( nProduct == NPC_MERIDIAN || nProduct == NPC_MERIDIAN2 )
         dfScale = 100000;
     else if( nProduct == NPC_LANDFORM_PROFILE_CONT )
         dfScale = 10000;
