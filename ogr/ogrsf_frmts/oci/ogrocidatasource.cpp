@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/01/14 22:15:13  warmerda
+ * added pseudo-sql commands DELLAYER and VALLAYER
+ *
  * Revision 1.12  2003/01/14 15:09:44  warmerda
  * set layer creation options on OGROCITableLayer
  *
@@ -235,6 +238,87 @@ int OGROCIDataSource::OpenTable( const char *pszNewName,
 }
 
 /************************************************************************/
+/*                           ValidateLayer()                            */
+/************************************************************************/
+
+void OGROCIDataSource::ValidateLayer( const char *pszLayerName )
+
+{
+    int	iLayer;
+
+/* -------------------------------------------------------------------- */
+/*      Try to find layer.                                              */
+/* -------------------------------------------------------------------- */
+    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( EQUAL(pszLayerName,papoLayers[iLayer]->GetLayerDefn()->GetName()) )
+            break;
+    }
+
+    if( iLayer == nLayers )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "ValidateLayer(): %s is not a recognised layer.", 
+                  pszLayerName );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Verify we have an FID and geometry column for this table.       */
+/* -------------------------------------------------------------------- */
+    OGROCITableLayer *poLayer = (OGROCITableLayer *) papoLayers[iLayer];
+
+    if( poLayer->GetFIDName() == NULL || poLayer->GetGeomName() == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "ValidateLayer(): %s lacks a geometry or fid column.", 
+                  pszLayerName );
+
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Prepare and execute the geometry validation.                    */
+/* -------------------------------------------------------------------- */
+    OGROCIStringBuf oValidateCmd;
+    OGROCIStatement oValidateStmt( GetSession() );
+
+    oValidateCmd.Append( "SELECT c." );
+    oValidateCmd.Append( poLayer->GetFIDName() );
+    oValidateCmd.Append( ", SDO_GEOM.VALIDATE_GEOMETRY(c." );
+    oValidateCmd.Append( poLayer->GetGeomName() );
+    oValidateCmd.Append( ", m.diminfo) from " );
+    oValidateCmd.Append( poLayer->GetLayerDefn()->GetName() );
+    oValidateCmd.Append( " c, user_sdo_geom_metadata m WHERE m.table_name= '");
+    oValidateCmd.Append( poLayer->GetLayerDefn()->GetName() );
+    oValidateCmd.Append( "' AND m.column_name = '" );
+    oValidateCmd.Append( poLayer->GetGeomName() );
+    oValidateCmd.Append( "' AND SDO_GEOM.VALIDATE_GEOMETRY(c." );
+    oValidateCmd.Append( poLayer->GetGeomName() );
+    oValidateCmd.Append( ", m.diminfo ) <> 'TRUE'" );
+
+    oValidateStmt.Execute( oValidateCmd.GetString() );
+
+/* -------------------------------------------------------------------- */
+/*      Report results to debug stream.                                 */
+/* -------------------------------------------------------------------- */
+    char **papszRow;
+
+    while( (papszRow = oValidateStmt.SimpleFetchRow()) != NULL )
+    {
+        const char *pszReason = papszRow[1];
+
+        if( EQUAL(pszReason,"13011") )
+            pszReason = "13011: value is out of range";
+        else if( EQUAL(pszReason,"13050") )
+            pszReason = "13050: unable to construct spatial object";
+
+        CPLDebug( "OCI", "Validation failure for FID=%s: %s", 
+                  papszRow[0], pszReason );
+    }
+}
+
+/************************************************************************/
 /*                            DeleteLayer()                             */
 /************************************************************************/
 
@@ -249,7 +333,10 @@ void OGROCIDataSource::DeleteLayer( const char *pszLayerName )
     for( iLayer = 0; iLayer < nLayers; iLayer++ )
     {
         if( EQUAL(pszLayerName,papoLayers[iLayer]->GetLayerDefn()->GetName()) )
+        {
+            pszLayerName = CPLStrdup(papoLayers[iLayer]->GetLayerDefn()->GetName());
             break;
+        }
     }
 
     if( iLayer == nLayers )
@@ -279,6 +366,8 @@ void OGROCIDataSource::DeleteLayer( const char *pszLayerName )
              "DELETE FROM USER_SDO_GEOM_METADATA WHERE TABLE_NAME = '%s'", 
              pszLayerName );
     oCommand.Execute( szCommand );
+
+    CPLFree( (char *) pszLayerName );
 }
 
 /************************************************************************/
@@ -423,6 +512,8 @@ OGRLayer *OGROCIDataSource::GetLayer( int iLayer )
         return papoLayers[iLayer];
 }
 
+
+
 /************************************************************************/
 /*                             ExecuteSQL()                             */
 /************************************************************************/
@@ -432,6 +523,35 @@ OGRLayer * OGROCIDataSource::ExecuteSQL( const char *pszSQLCommand,
                                         const char *pszDialect )
 
 {
+
+/* -------------------------------------------------------------------- */
+/*      Special case DELLAYER: command.                                 */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    {
+        const char *pszLayerName = pszSQLCommand + 9;
+
+        while( *pszLayerName == ' ' )
+            pszLayerName++;
+
+        DeleteLayer( pszLayerName );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Special case VALLAYER: command.                                 */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszSQLCommand,"VALLAYER:",9) )
+    {
+        const char *pszLayerName = pszSQLCommand + 9;
+
+        while( *pszLayerName == ' ' )
+            pszLayerName++;
+
+        ValidateLayer( pszLayerName );
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Just execute simple command.                                    */
 /* -------------------------------------------------------------------- */

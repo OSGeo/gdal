@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/01/14 22:15:13  warmerda
+ * added pseudo-sql commands DELLAYER and VALLAYER
+ *
  * Revision 1.9  2003/01/14 16:59:03  warmerda
  * added field truncation support
  *
@@ -278,6 +281,9 @@ class OGROCILayer : public OGRLayer
     OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
 
     virtual int         TestCapability( const char * );
+
+    const char         *GetGeomName() { return pszGeomName; }
+    const char         *GetFIDName() { return pszFIDName; }
 };
 
 /************************************************************************/
@@ -431,6 +437,7 @@ class OGROCIDataSource : public OGRDataSource
     int                 TestCapability( const char * );
 
     void                DeleteLayer( const char * );
+    void                ValidateLayer( const char * );
     
     virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                     OGRGeometry *poSpatialFilter,
