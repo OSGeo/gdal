@@ -1,3 +1,19 @@
+
+===============================================================================
+	
+2002-04-16  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Release GDAL 1.1.7.
+
+	* gdal/ogr/ogrsf_frmts/shape/shape2ogr.cpp: ensure shapes are written
+	with correct ring winding.
+
+	* gdal/apps/{gdalinfo,gdal_translate}.c: Added --version support.
+
+	* gdal/core/gdal_misc.cpp: Added GDALVersionInfo().
+
+	* gdal/html/format_various.html: added XPM support.
+
 2002-04-15  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* ogr/ogrsf_frmts/sdts/ogrsdtsdatasource.cpp: delete SDTSTransfer
@@ -68,6 +84,8 @@
 	* OLEDB Provider: Fixed serious bug resulting in the end of rowset
 	not being returned properly in many cases. 
 
+===============================================================================
+	
 2002-02-04  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* Release GDAL 1.1.6.
