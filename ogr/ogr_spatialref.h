@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.66  2005/03/03 04:55:42  fwarmerdam
+ * make exportToWkt() const
+ *
  * Revision 1.65  2005/02/11 14:21:28  fwarmerdam
  * added GEOS projection support
  *
@@ -216,7 +219,7 @@ class CPL_DLL OGRSpatialReference
     OGRSpatialReference *Clone() const;
     OGRSpatialReference *CloneGeogCS() const;
 
-    OGRErr      exportToWkt( char ** );
+    OGRErr      exportToWkt( char ** ) const;
     OGRErr      exportToPrettyWkt( char **, int = FALSE) const;
     OGRErr      exportToProj4( char ** ) const;
     OGRErr      exportToPCI( char **, char **, double ** ) const;
