@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_utils.cpp,v 1.15 2001/01/19 06:06:18 daniel Exp $
+ * $Id: mitab_utils.cpp,v 1.16 2001/01/23 21:23:42 daniel Exp $
  *
  * Name:     mitab_utils.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_utils.cpp,v $
+ * Revision 1.16  2001/01/23 21:23:42  daniel
+ * Added projection bounds lookup table, called from TABFile::SetProjInfo()
+ *
  * Revision 1.15  2001/01/19 06:06:18  daniel
  * Don't filter chars in TABCleanFieldName() if we're on a DBCS system
  *
@@ -638,3 +641,80 @@ char *TABCleanFieldName(const char *pszSrcName)
 
     return pszNewName;
 }
+
+
+/**********************************************************************
+ * MapInfo Units string to numeric ID conversion
+ **********************************************************************/
+typedef struct 
+{
+    int         nUnitId;
+    char        *pszAbbrev;
+} MapInfoUnitsInfo;
+
+static MapInfoUnitsInfo gasUnitsList[] = 
+{
+    {0, "mi"},
+    {1, "km"},
+    {2, "in"},
+    {3, "ft"},
+    {4, "yd"},
+    {5, "mm"},
+    {6, "cm"},
+    {7, "m"},
+    {8, "survey ft"},
+    {9, "nmi"},
+    {30, "li"},
+    {31, "ch"},
+    {32, "rd"},
+    {-1, NULL}
+};
+
+
+/**********************************************************************
+ *                       TABUnitIdToString()
+ *
+ * Return the MIF units name for specified units id.
+ * Return "" if no match found.
+ *
+ * The returned string should not be freed by the caller.
+ **********************************************************************/
+const char *TABUnitIdToString(int nId)
+{
+    MapInfoUnitsInfo *psList;
+
+    psList = gasUnitsList;
+
+    while(psList->nUnitId != -1)
+    {
+        if (psList->nUnitId == nId) 
+            return psList->pszAbbrev;
+        psList++;
+    }
+
+    return "";
+}
+
+/**********************************************************************
+ *                       TABUnitIdFromString()
+ *
+ * Return the units ID for specified MIF units name
+ *
+ * Returns -1 if no match found.
+ **********************************************************************/
+int TABUnitIdFromString(const char *pszName)
+{
+    MapInfoUnitsInfo *psList;
+
+    psList = gasUnitsList;
+
+    while(psList->nUnitId != -1)
+    {
+        if (EQUAL(psList->pszAbbrev, pszName)) 
+            return psList->nUnitId;
+        psList++;
+    }
+
+    return -1;
+}
+

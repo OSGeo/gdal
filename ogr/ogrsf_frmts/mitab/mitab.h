@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.45 2001/01/22 16:03:59 warmerda Exp $
+ * $Id: mitab.h,v 1.47 2001/01/23 22:06:50 daniel Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo MIF Read/Write library
@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 1999-2001, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.47  2001/01/23 22:06:50  daniel
+ * Added MITABCoordSysTableLoaded()
+ *
+ * Revision 1.46  2001/01/23 21:23:41  daniel
+ * Added projection bounds lookup table, called from TABFile::SetProjInfo()
+ *
  * Revision 1.45  2001/01/22 16:03:59  warmerda
  * expanded tabs
  *
@@ -89,7 +95,7 @@
 /*---------------------------------------------------------------------
  * Current version of the MITAB library... always useful!
  *--------------------------------------------------------------------*/
-#define MITAB_VERSION "1.0.4 (2000-11-23)"
+#define MITAB_VERSION "1.0.4 (2001-01-23)"
 
 #ifndef PI
 #  define PI 3.14159265358979323846
@@ -127,9 +133,9 @@ class IMapInfoFile : public OGRLayer
   private:
 
   protected: 
-    OGRGeometry         *m_poFilterGeom;
-    int                  m_nCurFeatureId;
- 
+    OGRGeometry        *m_poFilterGeom;
+    int                 m_nCurFeatureId;
+    GBool               m_bBoundsSet;
 
   public:
     IMapInfoFile() ;
@@ -185,6 +191,7 @@ class IMapInfoFile : public OGRLayer
     ///////////////
     // Write access specific stuff
     //
+    GBool       IsBoundsSet()            {return m_bBoundsSet;}
     virtual int SetBounds(double dXMin, double dYMin, 
                           double dXMax, double dYMax) = 0;
     virtual int SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
@@ -227,7 +234,6 @@ class TABFile: public IMapInfoFile
     int         m_nVersion;
     char        *m_pszCharset;
     int         *m_panIndexNo;
-    GBool       m_bBoundsSet;
     TABTableType m_eTableType;  // NATIVE (.DAT) or DBF
 
     TABDATFile  *m_poDATFile;   // Attributes file
@@ -312,8 +318,7 @@ class TABFile: public IMapInfoFile
     // semi-private.
     virtual int  GetProjInfo(TABProjInfo *poPI)
             { return m_poMAPFile->GetHeaderBlock()->GetProjInfo( poPI ); }
-    virtual int  SetProjInfo(TABProjInfo *poPI)
-            { return m_poMAPFile->GetHeaderBlock()->SetProjInfo( poPI ); }
+    virtual int  SetProjInfo(TABProjInfo *poPI);
     virtual int  SetMIFCoordSys(const char *pszMIFCoordSys);
 
     int         GetFieldIndexNumber(int nFieldId);
@@ -510,7 +515,6 @@ class MIFFile: public IMapInfoFile
     ///////////////
     // Private Write access specific stuff
     //
-    GBool       m_bBoundsSet;
     GBool       m_bPreParsed;
     GBool       m_bHeaderWrote;
     
@@ -1452,6 +1456,7 @@ OGRSpatialReference * MITABCoordSys2SpatialRef( const char * );
 GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
                                   double &dXMin, double &dYMin,
                                   double &dXMax, double &dYMax );
+int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj);
 
 typedef struct {
     int         nMapInfoDatumID;
@@ -1474,6 +1479,26 @@ typedef struct
     double      dfA; /* semi major axis in meters */
     double      dfInvFlattening; /* Inverse flattening */
 } MapInfoSpheroidInfo;
+
+
+/*---------------------------------------------------------------------
+ * The following are used for coordsys bounds lookup
+ *--------------------------------------------------------------------*/
+typedef struct
+{
+    TABProjInfo sProj;          /* Projection/datum definition */
+    double      dXMin;          /* Default bounds for that coordsys */
+    double      dYMin;
+    double      dXMax;
+    double      dYMax;
+} MapInfoBoundsInfo;
+
+GBool   MITABLookupCoordSysBounds(TABProjInfo *psCS,
+                                  double &dXMin, double &dYMin,
+                                  double &dXMax, double &dYMax);
+int     MITABLoadCoordSysTable(const char *pszFname);
+void    MITABFreeCoordSysTable();
+GBool   MITABCoordSysTableLoaded();
 
 #endif /* _MITAB_H_INCLUDED_ */
 

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.22 2001/01/22 16:03:58 warmerda Exp $
+ * $Id: mitab_miffile.cpp,v 1.23 2001/01/23 21:23:42 daniel Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -10,7 +10,7 @@
  * Author:   Stephane Villeneuve, stephane.v@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Stephane Villeneuve
+ * Copyright (c) 1999-2001, Stephane Villeneuve
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.23  2001/01/23 21:23:42  daniel
+ * Added projection bounds lookup table, called from TABFile::SetProjInfo()
+ *
  * Revision 1.22  2001/01/22 16:03:58  warmerda
  * expanded tabs
  *
@@ -69,44 +72,10 @@
  * Revision 1.12  2000/01/18 23:13:41  daniel
  * Implemented AddFieldNative()
  *
- * Revision 1.11  2000/01/15 22:30:44  daniel
- * Switch to MIT/X-Consortium OpenSource license
- *
- * Revision 1.10  1999/12/19 17:40:53  daniel
- * Fixed memory leaks
- *
- * Revision 1.9  1999/12/19 01:10:36  stephane
- * Remove the automatic pre parsing for the GetBounds and GetFeatureCount
- *
- * Revision 1.8  1999/12/18 08:25:39  daniel
- * Write OFTReals as Floats instead of Decimals (for which width ended up
- * being 0 most of the time)
- *
- * Revision 1.7  1999/12/14 04:02:31  daniel
- * Added bforceFlags to GetBounds() and GetFeatureCountByType()
- *
- * Revision 1.6  1999/12/14 02:20:55  daniel
- * Added bTestOpen flag on Open()
- *
- * Revision 1.5  1999/11/14 18:12:47  stephane
- * add a test if it's a empty line for unknown feature type
- *
- * Revision 1.4  1999/11/14 17:43:32  stephane
- * Add ifdef to remove CPLError if OGR is define
- *
- * Revision 1.3  1999/11/11 01:22:05  stephane
- * Remove DebugFeature call, Point Reading error, add IsValidFeature() to 
- * test correctly if we are on a feature.
- *
- * Revision 1.2  1999/11/09 22:31:38  warmerda
- * initial implementation of MIF CoordSys support
- *
- * Revision 1.1  1999/11/08 19:19:34  stephane
- * Add CoordSys string support
+ * ...
  *
  * Revision 1.1  1999/11/08 04:16:07  stephane
  * First Revision
- *
  *
  **********************************************************************/
 
@@ -154,8 +123,6 @@ MIFFile::MIFFile()
     m_nWriteFeatureId = -1;
     m_poCurFeature = NULL;
    
-    m_bBoundsSet = FALSE;
-
     m_bPreParsed = FALSE;
     m_nAttribut = 0;
     m_bHeaderWrote = FALSE;

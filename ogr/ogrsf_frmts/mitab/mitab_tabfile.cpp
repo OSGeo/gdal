@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.40 2001/01/22 16:03:58 warmerda Exp $
+ * $Id: mitab_tabfile.cpp,v 1.41 2001/01/23 21:23:42 daniel Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -10,7 +10,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 1999-2001, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.41  2001/01/23 21:23:42  daniel
+ * Added projection bounds lookup table, called from TABFile::SetProjInfo()
+ *
  * Revision 1.40  2001/01/22 16:03:58  warmerda
  * expanded tabs
  *
@@ -75,82 +78,7 @@
  * Revision 1.27  2000/01/16 19:08:49  daniel
  * Added support for reading 'Table Type DBF' tables
  *
- * Revision 1.26  2000/01/15 21:40:03  daniel
- * Switched to MIT license +  When unsupported feature types encountered,
- * return a feature with NONE geometry and produce only a warning.
- *
- * Revision 1.25  1999/12/19 17:38:55  daniel
- * Fixed memory leaks
- *
- * Revision 1.24  1999/12/16 17:13:18  daniel
- * GetBounds(): added a check to always return X/YMax > X/YMin
- *
- * Revision 1.23  1999/12/14 04:03:03  daniel
- * Added bforceFlags to GetBounds() and GetFeatureCountByType()
- *
- * Revision 1.22  1999/12/14 02:13:40  daniel
- * Added .IND file support, bTestOpen flag on open(), + minor changes
- *
- * Revision 1.21  1999/11/14 17:49:18  stephane
- * Add missing ifndef OGR in open
- *
- * Revision 1.20  1999/11/14 17:43:32  stephane
- * Add ifdef to remove CPLError if OGR is define
- *
- * Revision 1.19  1999/11/14 04:49:11  daniel
- * Support dataset with no .MAP/.ID files, support version 100 files,
- * and return better error message for unsupported .TAB file types.
- *
- * Revision 1.18  1999/11/12 05:52:45  daniel
- * Added SetMIFCoordSys()
- *
- * Revision 1.17  1999/11/09 07:36:34  daniel
- * Modif. GetNextFeatureId() to skip deleted features when reading
- *
- * Revision 1.16  1999/11/08 19:18:09  stephane
- * remove multiply definition
- *
- * Revision 1.15  1999/11/08 04:36:28  stephane
- * add ogr support
- *
- * Revision 1.14  1999/10/19 06:14:52  daniel
- * Check that new tables contain at least one column (MapInfo requirement)
- *
- * Revision 1.13  1999/10/06 15:09:58  daniel
- * Removed unused variables
- *
- * Revision 1.12  1999/10/06 13:16:50  daniel
- * Added GetBounds()
- *
- * Revision 1.11  1999/10/01 03:50:00  daniel
- * Increment RefCount for OGRFeatureDefn in ParseTABFile()
- *
- * Revision 1.10  1999/10/01 02:12:17  warmerda
- * fixed OGRFieldDefn leak
- *
- * Revision 1.9  1999/09/28 13:32:51  daniel
- * Added AddFieldNative()
- *
- * Revision 1.8  1999/09/26 14:59:37  daniel
- * Implemented write support
- *
- * Revision 1.7  1999/09/23 19:51:43  warmerda
- * moved GetSpatialRef() to mitab_spatialref.cpp
- *
- * Revision 1.6  1999/09/20 18:42:20  daniel
- * Use binary access to open files.
- *
- * Revision 1.5  1999/09/17 17:36:05  warmerda
- * The appropriate default value for RectifiedGridAngle in HOM is 90.0.
- *
- * Revision 1.4  1999/09/16 02:39:17  daniel
- * Completed read support for most feature types
- *
- * Revision 1.3  1999/09/01 17:50:28  daniel
- * Added GetNativeFieldType() and GetFeatureDefn()
- *
- * Revision 1.2  1999/07/14 05:20:42  warmerda
- * added first pass of projection creation
+ * ...
  *
  * Revision 1.1  1999/07/12 04:18:25  daniel
  * Initial checkin
@@ -190,8 +118,6 @@ TABFile::TABFile()
     m_nCurFeatureId = 0;
     m_nLastFeatureId = 0;
     m_panIndexNo = NULL;
-
-    m_bBoundsSet = FALSE;
 }
 
 /**********************************************************************
@@ -2034,6 +1960,58 @@ int TABFile::SetMIFCoordSys(const char *pszMIFCoordSys)
                  "SetMIFCoordSys() can be called only after dataset has been "
                  "created and before any feature is set.");
         return -1;
+    }
+
+    return 0;
+}
+
+/**********************************************************************
+ *                   TABFile::SetProjInfo()
+ *
+ * Set projection for a new file using a TABProjInfo structure.
+ *
+ * This function must be called after creating a new dataset and before any
+ * feature can be written to it.
+ *
+ * This call will also trigger a lookup of default bounds for the specified
+ * projection (except nonearth), and reset the m_bBoundsValid flag.
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABFile::SetProjInfo(TABProjInfo *poPI)
+{
+    if (m_eAccessMode != TABWrite)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "SetProjInfo() can be used only with Write access.");
+        return -1;
+    }
+
+    /*-----------------------------------------------------------------
+     * Check that dataset has been created but no feature set yet.
+     *----------------------------------------------------------------*/
+    if (m_poMAPFile && m_nLastFeatureId < 1)
+    {
+        if (m_poMAPFile->GetHeaderBlock()->SetProjInfo( poPI ) != 0)
+            return -1;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "SetProjInfo() can be called only after dataset has been "
+                 "created and before any feature is set.");
+        return -1;
+    }
+
+    /*-----------------------------------------------------------------
+     * Lookup default bounds and reset m_bBoundsSet flag
+     *----------------------------------------------------------------*/
+    double dXMin, dYMin, dXMax, dYMax;
+
+    m_bBoundsSet = FALSE;
+    if (MITABLookupCoordSysBounds(poPI, dXMin, dYMin, dXMax, dYMax) == TRUE)
+    {
+        SetBounds(dXMin, dYMin, dXMax, dYMax);
     }
 
     return 0;

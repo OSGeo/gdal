@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_datasource.cpp,v 1.3 2001/01/22 16:03:58 warmerda Exp $
+ * $Id: mitab_ogr_datasource.cpp,v 1.4 2001/02/06 22:13:54 warmerda Exp $
  *
  * Name:     mitab_ogr_datasource.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
@@ -30,6 +30,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log: mitab_ogr_datasource.cpp,v $
+ * Revision 1.4  2001/02/06 22:13:54  warmerda
+ * fixed memory leak in OGRTABDataSource::CreateLayer()
+ *
  * Revision 1.3  2001/01/22 16:03:58  warmerda
  * expanded tabs
  *
@@ -285,6 +288,7 @@ OGRTABDataSource::CreateLayer( const char * pszLayerName,
     poFile = new TABFile;
     if( poFile->Open( pszFullFilename, "wb", FALSE ) != 0 )
     {
+        CPLFree( pszFullFilename );
         delete poFile;
         return FALSE;
     }
@@ -306,6 +310,8 @@ OGRTABDataSource::CreateLayer( const char * pszLayerName,
     m_papoLayers = (IMapInfoFile **)
         CPLRealloc(m_papoLayers,sizeof(void*)*m_nLayerCount);
     m_papoLayers[m_nLayerCount-1] = poFile;
+
+    CPLFree( pszFullFilename );
 
     return poFile;
 }

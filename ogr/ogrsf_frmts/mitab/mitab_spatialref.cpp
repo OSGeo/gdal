@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_spatialref.cpp,v 1.27 2001/01/22 16:00:53 warmerda Exp $
+ * $Id: mitab_spatialref.cpp,v 1.28 2001/01/23 21:23:42 daniel Exp $
  *
  * Name:     mitab_spatialref.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -8,7 +8,7 @@
  * Author:   Frank Warmerdam, warmerda@home.com
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Frank Warmerdam
+ * Copyright (c) 1999-2001, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_spatialref.cpp,v $
+ * Revision 1.28  2001/01/23 21:23:42  daniel
+ * Added projection bounds lookup table, called from TABFile::SetProjInfo()
+ *
  * Revision 1.27  2001/01/22 16:00:53  warmerda
  * reworked swiss projection support
  *
@@ -779,21 +782,15 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                      sTABProj.adDatumParams[3],
                      sTABProj.adDatumParams[4] );
         }
-
-        poHeader->SetProjInfo( &sTABProj );
     }
     else if( strlen(psDatumInfo->pszOGCDatumName) > 0 )
     {
         strncpy( szDatumName, psDatumInfo->pszOGCDatumName,
                  sizeof(szDatumName) );
-
-        poHeader->SetProjInfo( &sTABProj );
     }
     else
     {
         sprintf( szDatumName, "MIF %d", psDatumInfo->nMapInfoDatumID );
-        
-        poHeader->SetProjInfo( &sTABProj );
     }
 
     /*-----------------------------------------------------------------
@@ -1236,11 +1233,9 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
     
     /*-----------------------------------------------------------------
      * Set the new parameters in the .MAP header.
+     * This will also trigger lookup of default bounds for the projection.
      *----------------------------------------------------------------*/
-    TABMAPHeaderBlock *poHeader;
-
-    if ((poHeader = m_poMAPFile->GetHeaderBlock()) == NULL ||
-        poHeader->SetProjInfo( &sTABProj ) != 0)
+    if ( SetProjInfo( &sTABProj ) != 0 )
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "SetSpatialRef() failed setting projection parameters.");

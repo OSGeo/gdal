@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.19 2001/01/22 16:00:53 warmerda Exp $
+ * $Id: mitab_coordsys.cpp,v 1.20 2001/01/23 21:23:42 daniel Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -9,7 +9,7 @@
  * Author:   Frank Warmerdam, warmerda@home.com
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Frank Warmerdam
+ * Copyright (c) 1999-2001, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.20  2001/01/23 21:23:42  daniel
+ * Added projection bounds lookup table, called from TABFile::SetProjInfo()
+ *
  * Revision 1.19  2001/01/22 16:00:53  warmerda
  * reworked swiss projection support
  *
@@ -93,6 +96,7 @@
  **********************************************************************/
 
 #include "mitab.h"
+#include "mitab_utils.h"
 
 extern MapInfoDatumInfo asDatumInfoList[200];
 extern MapInfoSpheroidInfo asSpheroidInfoList[200];
@@ -1099,3 +1103,171 @@ GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
 
     return FALSE;
 }
+
+
+/**********************************************************************
+ *                     MITABCoordSys2TABProjInfo()
+ *
+ * Convert a MIF COORDSYS string into a TABProjInfo structure.
+ *
+ * Note that it would have been possible to achieve the same by calling
+ * TABFile::SetSpatialRef( MITABCoordSys2SpatialRef() ) but this would 
+ * involve lots of manipulations for cases where only a simple conversion
+ * is required.
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
+
+{
+    char        **papszFields;
+
+    // Set all fields to zero, equivalent of NonEarth Units "mi"
+    memset(psProj, 0, sizeof(TABProjInfo));
+
+    if( pszCoordSys == NULL )
+        return -1;
+    
+    /*-----------------------------------------------------------------
+     * Parse the passed string into words.
+     *----------------------------------------------------------------*/
+    while(*pszCoordSys == ' ') pszCoordSys++;  // Eat leading spaces
+    if( EQUALN(pszCoordSys,"CoordSys",8) )
+        pszCoordSys += 9;
+    
+    papszFields = CSLTokenizeStringComplex( pszCoordSys, " ,", TRUE, FALSE );
+
+    /*-----------------------------------------------------------------
+     * Clip off Bounds information.
+     *----------------------------------------------------------------*/
+    int         iBounds = CSLFindString( papszFields, "Bounds" );
+
+    while( iBounds != -1 && papszFields[iBounds] != NULL )
+    {
+        CPLFree( papszFields[iBounds] );
+        papszFields[iBounds] = NULL;
+        iBounds++;
+    }
+
+    /*-----------------------------------------------------------------
+     * Fetch the projection.
+     *----------------------------------------------------------------*/
+    char        **papszNextField;
+
+    if( CSLCount( papszFields ) >= 3
+        && EQUAL(papszFields[0],"Earth")
+        && EQUAL(papszFields[1],"Projection") )
+    {
+        psProj->nProjId = atoi(papszFields[2]);
+        papszNextField = papszFields + 3;
+    }
+    else if (CSLCount( papszFields ) >= 2
+             && EQUAL(papszFields[0],"NonEarth") )
+    {
+        // NonEarth Units "..." Bounds (x, y) (x, y)
+        psProj->nProjId = 0;
+        papszNextField = papszFields + 2;
+
+        if( papszNextField[0] != NULL && EQUAL(papszNextField[0],"Units") )
+            papszNextField++;
+    }
+    else
+    {
+        // Invalid projection string ???
+        if (CSLCount(papszFields) > 0)
+            CPLError(CE_Warning, CPLE_IllegalArg,
+                     "Failed parsing CoordSys: '%s'", pszCoordSys);
+        CSLDestroy(papszFields);
+        return -1;
+    }
+
+    /*-----------------------------------------------------------------
+     * Fetch the datum information.
+     *----------------------------------------------------------------*/
+    int         nDatum = 0;
+
+    if( psProj->nProjId != 0 && CSLCount(papszNextField) > 0 )
+    {
+        nDatum = atoi(papszNextField[0]);
+        papszNextField++;
+    }
+
+    if( (nDatum == 999 || nDatum == 9999)
+        && CSLCount(papszNextField) >= 4 )
+    {
+        psProj->nEllipsoidId = atoi(papszFields[0]);
+        psProj->dDatumShiftX = atof(papszNextField[1]);
+        psProj->dDatumShiftY = atof(papszNextField[2]);
+        psProj->dDatumShiftZ = atof(papszNextField[3]);
+        papszNextField += 4;
+
+        if( nDatum == 9999
+            && CSLCount(papszNextField) >= 5 )
+        {
+            psProj->adDatumParams[0] = atof(papszNextField[0]);
+            psProj->adDatumParams[1] = atof(papszNextField[1]);
+            psProj->adDatumParams[2] = atof(papszNextField[2]);
+            psProj->adDatumParams[3] = atof(papszNextField[3]);
+            psProj->adDatumParams[4] = atof(papszNextField[4]);
+            papszNextField += 5;
+        }
+    }
+    else if (nDatum != 999 && nDatum != 9999)
+    {
+    /*-----------------------------------------------------------------
+     * Find the datum, and collect it's parameters if possible.
+     *----------------------------------------------------------------*/
+        int         iDatum;
+        MapInfoDatumInfo *psDatumInfo = NULL;
+        
+        for(iDatum=0; asDatumInfoList[iDatum].nMapInfoDatumID != -1; iDatum++)
+        {
+            if( asDatumInfoList[iDatum].nMapInfoDatumID == nDatum )
+            {
+                psDatumInfo = asDatumInfoList + iDatum;
+                break;
+            }
+        }
+
+        if( asDatumInfoList[iDatum].nMapInfoDatumID == -1
+            && nDatum != 999 && nDatum != 9999 )
+        {
+            /* use WGS84 */
+            psDatumInfo = asDatumInfoList + 0;
+        }
+
+        if( psDatumInfo != NULL )
+        {
+            psProj->nEllipsoidId = psDatumInfo->nEllipsoid;
+            psProj->dDatumShiftX = psDatumInfo->dfShiftX;
+            psProj->dDatumShiftY = psDatumInfo->dfShiftY;
+            psProj->dDatumShiftZ = psDatumInfo->dfShiftZ;
+            psProj->adDatumParams[0] = psDatumInfo->dfDatumParm0;
+            psProj->adDatumParams[1] = psDatumInfo->dfDatumParm1;
+            psProj->adDatumParams[2] = psDatumInfo->dfDatumParm2;
+            psProj->adDatumParams[3] = psDatumInfo->dfDatumParm3;
+            psProj->adDatumParams[4] = psDatumInfo->dfDatumParm4;
+        }
+    }    
+
+    /*-----------------------------------------------------------------
+     * Fetch the units string.
+     *----------------------------------------------------------------*/
+    if( CSLCount(papszNextField) > 0 )
+    {
+        psProj->nUnitsId = TABUnitIdFromString(papszNextField[0]);
+        papszNextField++;
+    }
+
+    /*-----------------------------------------------------------------
+     * Finally the projection parameters.
+     *----------------------------------------------------------------*/
+    for(int iParam=0; iParam < 6 && CSLCount(papszNextField) > 0; iParam++)
+    {
+        psProj->adProjParams[iParam] = atof(papszNextField[0]);
+        papszNextField++;         
+    }
+
+    return 0;
+}
+

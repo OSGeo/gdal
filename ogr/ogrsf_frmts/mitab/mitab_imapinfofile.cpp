@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_imapinfofile.cpp,v 1.10 2001/01/22 16:03:58 warmerda Exp $
+ * $Id: mitab_imapinfofile.cpp,v 1.12 2001/02/06 22:03:24 warmerda Exp $
  *
  * Name:     mitab_imapinfo
  * Project:  MapInfo mid/mif Tab Read/Write library
@@ -9,7 +9,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 1999-2001, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,12 @@
  **********************************************************************
  *
  * $Log: mitab_imapinfofile.cpp,v $
+ * Revision 1.12  2001/02/06 22:03:24  warmerda
+ * fixed memory leak of whole features in CreateFeature
+ *
+ * Revision 1.11  2001/01/23 21:23:42  daniel
+ * Added projection bounds lookup table, called from TABFile::SetProjInfo()
+ *
  * Revision 1.10  2001/01/22 16:03:58  warmerda
  * expanded tabs
  *
@@ -76,6 +82,8 @@
 IMapInfoFile::IMapInfoFile()
 {
     m_poFilterGeom = NULL;    
+    m_nCurFeatureId = 0;
+    m_bBoundsSet = FALSE;
 }
 
 
@@ -201,6 +209,7 @@ OGRErr     IMapInfoFile::CreateFeature(OGRFeature *poFeature)
     TABFeature *poTABFeature;
     OGRGeometry   *poGeom;
     OGRwkbGeometryType eGType;
+    OGRErr  eErr;
 
     /*-----------------------------------------------------------------
      * MITAB won't accept new features unless they are in a type derived
@@ -275,9 +284,13 @@ OGRErr     IMapInfoFile::CreateFeature(OGRFeature *poFeature)
     
 
     if (SetFeature(poTABFeature) > -1)
-      return OGRERR_NONE;
+        eErr = OGRERR_NONE;
     else
-      return OGRERR_FAILURE;
+        eErr = OGRERR_FAILURE;
+
+    delete poTABFeature;
+    
+    return eErr;
 }
 
 /**********************************************************************

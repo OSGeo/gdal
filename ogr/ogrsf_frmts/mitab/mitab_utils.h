@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_utils.h,v 1.8 2000/02/18 20:46:58 daniel Exp $
+ * $Id: mitab_utils.h,v 1.9 2001/01/23 21:23:42 daniel Exp $
  *
  * Name:     mitab_utils.h
  * Project:  MapInfo TAB Read/Write library
@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 1999-2001, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_utils.h,v $
+ * Revision 1.9  2001/01/23 21:23:42  daniel
+ * Added projection bounds lookup table, called from TABFile::SetProjInfo()
+ *
  * Revision 1.8  2000/02/18 20:46:58  daniel
  * Added TABCleanFieldName()
  *
@@ -84,6 +87,9 @@ char *TABEscapeString(char *pszString);
 char *TABUnEscapeString(char *pszString, GBool bSrcIsConst);
 
 char *TABCleanFieldName(const char *pszSrcName);
+
+const char *TABUnitIdToString(int nId);
+int   TABUnitIdFromString(const char *pszName);
 
 #endif /* _MITAB_UTILS_H_INCLUDED_ */
 
