@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/05/30 19:24:38  warmerda
+ * add partial support for tag type 5
+ *
  * Revision 1.7  2002/04/22 20:44:41  warmerda
  * added (partial) cell library support
  *
@@ -718,12 +721,14 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
               if( psTagDef->type == 1 )
                   fprintf( fp, ", default=%s\n", 
                            psTagDef->defaultValue.string );
-              else if( psTagDef->type == 3 )
+              else if( psTagDef->type == 3 || psTagDef->type == 5 )
                   fprintf( fp, ", default=%d\n", 
                            psTagDef->defaultValue.integer );
               else if( psTagDef->type == 4 )
                   fprintf( fp, ", default=%g\n", 
                            psTagDef->defaultValue.real );
+              else
+                  fprintf( fp, ", default=<unknown>\n" );
           }
       }
       break;
