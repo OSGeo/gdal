@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.19  2001/07/18 05:05:12  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.18  2001/03/21 15:00:49  warmerda
  * Escape % signs in printf() format.
  *
@@ -89,6 +92,8 @@
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /*  ******************************************************************* */
 /*                               Usage()                                */

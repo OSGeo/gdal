@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.2  2001/07/18 05:05:12  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.1  1999/06/03 14:22:15  warmerda
  * New
  *
@@ -37,6 +40,8 @@
 #include "gdal.h"
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 int main( int argc, char ** argv )
 

@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.19  2001/07/18 05:05:12  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.18  2001/07/05 13:12:40  warmerda
  * added UnitType support
  *
@@ -82,6 +85,8 @@
 #include "gdal.h"
 #include "ogr_srs_api.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 static int 
 GDALInfoReportCorner( GDALDatasetH hDataset, 
