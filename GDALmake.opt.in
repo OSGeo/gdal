@@ -36,7 +36,7 @@ INST_PYMOD      =       @pymoddir@
 #	the CFG environment variable.  Set to debug for debug builds.
 #	This is similar to the OGDI builds. 
 #
-ifeq (,$(findstring debug,$(CFG)))
+ifneq (,$(findstring debug,$(CFG)))
 C_ODFLAGS 	= $(C_DBGFLAGS)
 CXX_ODFLAGS 	= $(CXX_DBGFLAGS)
 endif
