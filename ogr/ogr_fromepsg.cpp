@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2003/05/20 18:43:31  warmerda
+ * added error reporting
+ *
  * Revision 1.23  2003/02/14 22:15:04  warmerda
  * expand tabs
  *
@@ -1357,6 +1360,21 @@ OGRErr OGRSpatialReference::importFromEPSG( int nCode )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Verify that we can find the required filename(s).               */
+/* -------------------------------------------------------------------- */
+    if( CSVScanFileByName( CSVFilename( "gcs.csv" ),
+                           "COORD_REF_SYS_CODE", 
+                           "4269", CC_Integer ) == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Unable to open EPSG support file %s.\n"
+                  "Try setting the GEOTIFF_CSV environment variable to point to the\n"
+                  "directory containing EPSG csv files.", 
+                  CSVFilename( "gcs.csv" ) );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Is this a GeogCS code?   this is inadequate as a criteria       */
 /* -------------------------------------------------------------------- */
     if( EPSGGetGCSInfo( nCode, NULL, NULL, NULL, NULL, NULL, NULL ) )
@@ -1364,12 +1382,19 @@ OGRErr OGRSpatialReference::importFromEPSG( int nCode )
     else
         eErr = SetEPSGProjCS( this, nCode );
 
+    if( eErr == OGRERR_UNSUPPORTED_SRS )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "EPSG PCS/GCS code %d not found in EPSG support files.  Is this a valid\nEPSG coordinate system?", 
+                  nCode );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Make sure any peculiarities in the ordering are fixed up.       */
 /* -------------------------------------------------------------------- */
     if( eErr == OGRERR_NONE )
         eErr = FixupOrdering();
-        
+
     return eErr;
 }
 
