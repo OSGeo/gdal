@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/01/02 21:48:52  warmerda
+ * uppercaseify layer names when creating tables
+ *
  * Revision 1.4  2002/12/29 19:43:59  warmerda
  * avoid some warnings
  *
@@ -247,6 +250,11 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
 
 {
     char		szCommand[1024];
+    char               *pszSafeLayerName = CPLStrdup(pszLayerName);
+    int                 i;
+    
+    for( i = 0; pszSafeLayerName[i] != '\0'; i++ )
+        pszSafeLayerName[i] = toupper(pszSafeLayerName[i]);
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
@@ -261,7 +269,7 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
             if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
                 && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
             {
-                DeleteLayer( pszLayerName );
+                DeleteLayer( pszSafeLayerName );
             }
             else
             {
@@ -270,6 +278,7 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
                           "Use the layer creation option OVERWRITE=YES to "
                           "replace it.",
                           pszLayerName );
+                CPLFree( pszSafeLayerName );
                 return NULL;
             }
         }
@@ -296,10 +305,13 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
              "CREATE TABLE \"%s\" ( "
              "OGC_FID NUMBER, "
              "ORA_GEOMETRY %s )",
-             pszLayerName, SDO_GEOMETRY );
+             pszSafeLayerName, SDO_GEOMETRY );
 
     if( oStatement.Execute( szCommand ) != CE_None )
+    {
+        CPLFree( pszSafeLayerName );
         return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Add the table to the user_sdo_geom_metadata table without       */
@@ -309,7 +321,7 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
     sprintf( szCommand, 
              "INSERT INTO USER_SDO_GEOM_METADATA VALUES "
              "( '%s', '%s', NULL, NULL )", 
-             pszLayerName, "ORA_GEOMETRY" );
+             pszSafeLayerName, "ORA_GEOMETRY" );
 
     oStatement.Execute( szCommand );
 
@@ -318,7 +330,7 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     OGROCITableLayer	*poLayer;
 
-    poLayer = new OGROCITableLayer( this, pszLayerName, TRUE );
+    poLayer = new OGROCITableLayer( this, pszSafeLayerName, TRUE );
 
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",FALSE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
@@ -330,6 +342,8 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
         CPLRealloc( papoLayers,  sizeof(OGROCILayer *) * (nLayers+1) );
     
     papoLayers[nLayers++] = poLayer;
+
+    CPLFree( pszSafeLayerName );
 
     return poLayer;
 }
