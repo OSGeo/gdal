@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/01/07 18:16:26  warmerda
+ * fixed some egrarious errors in geometry support
+ *
  * Revision 1.4  2003/01/06 17:58:50  warmerda
  * restructure geometry translation, add FID support
  *
@@ -385,13 +388,14 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
 /* ==================================================================== */
 /*      Loop over the component elements.                               */
 /* ==================================================================== */
-    int   nStartOrdinal = 1;
+    ub4   nNextStartOrdinal = 1;
 
     for( int iElement = 0; iElement < nElemCount; iElement += 3 )
     {
         boolean bExists;
         OCINumber *hNumber;
-        ub4       nNextStartOrdinal, nInterpretation, nEType;
+        ub4       nInterpretation, nEType;
+        int       nStartOrdinal = nNextStartOrdinal;
 
 /* -------------------------------------------------------------------- */
 /*      Get the details about element from the elem_info array.         */
@@ -409,7 +413,7 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
                        (dvoid **)&hNumber, NULL );
         OCINumberToInt(poSession->hError, hNumber, (uword)sizeof(ub4), 
                        OCI_NUMBER_UNSIGNED, (dvoid *) &nInterpretation );
-        
+
         if( iElement < nElemCount-3 )
         {
             OCICollGetElem(poSession->hEnv, poSession->hError, 
