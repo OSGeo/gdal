@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/05/24 21:29:26  warmerda
+ * avoid warnings
+ *
  * Revision 1.6  2002/05/18 22:57:54  warmerda
  * allow long lines
  *
@@ -341,7 +344,7 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
     if( sph_data == NULL )
         return FAILURE;
 
-    if( fread( sph_data, 1, sph_size, fp ) != sph_size )
+    if( (int) fread( sph_data, 1, sph_size, fp ) != sph_size )
     {
         free( self );
         SendError( "fread() for sph failed." );
@@ -629,7 +632,7 @@ static int EnvisatFile_RewriteHeader( EnvisatFile *self )
             return FAILURE;
         }
         
-        if( fread( dsd_text, 1, dsd_size, self->fp ) != dsd_size )
+        if( (int) fread( dsd_text, 1, dsd_size, self->fp ) != dsd_size )
         {
             SendError( "fread() failed in EnvisatFile_RewriteHeader()" );
             return FAILURE;
@@ -1192,7 +1195,7 @@ int EnvisatFile_SetKeyValueAsDouble( EnvisatFile *self,
         sprintf( format, "%%+0%d.%df", length, decimals );
         sprintf( string_value, format, value );
 
-        if( strlen(string_value) > length )
+        if( (int)strlen(string_value) > length )
             string_value[length] = '\0';
     }
 
@@ -1424,7 +1427,7 @@ int EnvisatFile_ReadDatasetChunk( EnvisatFile *self,
         return FAILURE;
     }
 
-    if( fread( buffer, 1, size, self->fp ) != size )
+    if( (int) fread( buffer, 1, size, self->fp ) != size )
     {
         SendError( "read failed in EnvisatFile_ReadChunk()" );
         return FAILURE;
