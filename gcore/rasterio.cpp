@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2005/02/17 22:12:39  fwarmerdam
+ * ensure that GDALDataset::BlockRasterIO() calls blocking band RasterIO
+ *
  * Revision 1.28  2003/05/21 04:40:13  warmerda
  * avoid warnings
  *
@@ -1121,11 +1124,12 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                     GDALRasterBand *poBand = GetRasterBand(panBandMap[iBand]);
                     
                     eErr = 
-                        poBand->IRasterIO( eRWFlag, nChunkXOff, nChunkYOff, 
-                                           nChunkXSize, nChunkYSize, 
-                                           pabyChunkData + iBand * nBandSpace, 
-                                           nChunkXSize, nChunkYSize, eBufType, 
-                                           nPixelSpace, nLineSpace );
+                        poBand->GDALRasterBand::IRasterIO( 
+                            eRWFlag, nChunkXOff, nChunkYOff, 
+                            nChunkXSize, nChunkYSize, 
+                            pabyChunkData + iBand * nBandSpace, 
+                            nChunkXSize, nChunkYSize, eBufType, 
+                            nPixelSpace, nLineSpace );
                     if( eErr != CE_None )
                         return eErr;
                 }
