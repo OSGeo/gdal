@@ -1,4 +1,7 @@
-GDAL_ROOT = ..
+VERSION =	0_2
+GDAL_ROOT = .
+
+DISTDIR	=	gdal_$(VERSION)
 
 !INCLUDE nmake.opt
 
@@ -57,3 +60,9 @@ ogr:      port_dir
 	$(MAKE) /f makefile.vc
 	cd ..\..\ogr
 	$(MAKE) all 
+
+lib_dist:	default
+	rm -rf $(DISTDIR)
+	mkdir $(DISTDIR)
+	cp gdal.lib port/*.h core/*.h ogr/*.h $(DISTDIR)
+	zip -r $(DISTDIR).zip $(DISTDIR)
