@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/02/06 21:15:45  warmerda
+ * Get hElemInfoTDO, improve initial session error chequing
+ *
  * Revision 1.6  2003/01/14 16:58:39  warmerda
  * treat very long string fields as having no set width
  *
@@ -125,6 +128,15 @@ int OGROCISession::EstablishSession( const char *pszUserid,
         nStatus = 
             OCIEnvCreate( &ghOracleEnvironment, OCI_OBJECT, (dvoid *)0, 
                           0, 0, 0, (size_t) 0, (dvoid **)0 );
+
+        if( nStatus == -1 || ghOracleEnvironment == NULL )
+        {
+            CPLDebug("OCI", 
+                     "OCIEnvCreate() failed with status %d.\n"
+                     "Presumably Oracle is not properly installed, skipping.");
+                      
+            return FALSE;
+        }
         
     }
 
@@ -191,7 +203,7 @@ int OGROCISession::EstablishSession( const char *pszUserid,
         return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*      Try to get the MDSYS.SDO_GEOMETRY type object.                  */
+/*      Try to get the MDSYS.SDO_ORDINATE_ARRAY type object.            */
 /* -------------------------------------------------------------------- */
     if( Failed( 
         OCIDescribeAny(hSvcCtx, hError, 
@@ -218,6 +230,37 @@ int OGROCISession::EstablishSession( const char *pszUserid,
         OCIObjectPin(hEnv, hError, hGeomTypeRef, (OCIComplexObject *)0, 
                      OCI_PIN_ANY, OCI_DURATION_SESSION, 
                      OCI_LOCK_NONE, (dvoid **)&hOrdinatesTDO),
+        "OCIObjectPin" ) )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Try to get the MDSYS.SDO_ELEM_INFO_ARRAY type object.           */
+/* -------------------------------------------------------------------- */
+    if( Failed( 
+        OCIDescribeAny(hSvcCtx, hError, 
+                       (text *) "MDSYS.SDO_ELEM_INFO_ARRAY", 
+                       (ub4) strlen("MDSYS.SDO_ELEM_INFO_ARRAY"),
+                       OCI_OTYPE_NAME, (ub1)1, (ub1)OCI_PTYPE_TYPE, 
+                       hDescribe ), 
+        "OCIDescribeAny(MDSYS.SDO_ELEM_INFO_ARRAY)" ) )
+        return FALSE;
+
+    if( Failed( 
+        OCIAttrGet((dvoid *)hDescribe, (ub4)OCI_HTYPE_DESCRIBE,
+                   (dvoid *)&hGeomParam, (ub4 *)0, (ub4)OCI_ATTR_PARAM, 
+                   hError), "OCIGetAttr(ATTR_PARAM)") )
+        return FALSE;
+
+    if( Failed( 
+        OCIAttrGet((dvoid *)hGeomParam, (ub4)OCI_DTYPE_PARAM,
+                   (dvoid *)&hGeomTypeRef, (ub4 *)0, (ub4)OCI_ATTR_REF_TDO, 
+                   hError), "OCIAttrGet(ATTR_REF_TDO)" ) )
+        return FALSE;
+
+    if( Failed( 
+        OCIObjectPin(hEnv, hError, hGeomTypeRef, (OCIComplexObject *)0, 
+                     OCI_PIN_ANY, OCI_DURATION_SESSION, 
+                     OCI_LOCK_NONE, (dvoid **)&hElemInfoTDO),
         "OCIObjectPin" ) )
         return FALSE;
 
