@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/02/15 16:30:57  warmerda
+ * fixed initialization of fpLog
+ *
  * Revision 1.15  2001/01/19 21:16:41  warmerda
  * expanded tabs
  *
@@ -331,13 +334,13 @@ void CPLDefaultErrorHandler( CPLErr eErrClass, int nError,
 
 {
     static int       bLogInit = FALSE;
-    static FILE *    fpLog;
-    fpLog = stderr;
+    static FILE *    fpLog = stderr;
 
     if( !bLogInit )
     {
         bLogInit = TRUE;
 
+        fpLog = stderr;
         if( getenv( "CPL_LOG" ) != NULL )
         {
             fpLog = fopen( getenv("CPL_LOG"), "wt" );
