@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/08/21 03:01:39  warmerda
+ * added raw_data support
+ *
  * Revision 1.12  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -419,6 +422,20 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
     }
 
 /* -------------------------------------------------------------------- */
+/*      If the element structure type is "core" or if we are running    */
+/*      in "capture all" mode, record the complete binary image of      */
+/*      the element.                                                    */
+/* -------------------------------------------------------------------- */
+    if( psElement->stype == DGNST_CORE 
+        || (psDGN->options & DGNO_CAPTURE_RAW_DATA) )
+    {
+        psElement->raw_bytes = psDGN->nElemBytes;
+        psElement->raw_data = (unsigned char *)CPLMalloc(psElement->raw_bytes);
+
+        memcpy( psElement->raw_data, psDGN->abyElem, psElement->raw_bytes );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Collect some additional generic information.                    */
 /* -------------------------------------------------------------------- */
     psElement->element_id = psDGN->next_element_id - 1;
@@ -569,6 +586,8 @@ void DGNFreeElement( DGNHandle hDGN, DGNElemCore *psElement )
 {
     if( psElement->attr_data != NULL )
         VSIFree( psElement->attr_data );
+    if( psElement->raw_data != NULL )
+        VSIFree( psElement->raw_data );
     CPLFree( psElement );
 }
 

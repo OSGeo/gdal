@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/08/21 03:01:39  warmerda
+ * added raw_data support
+ *
  * Revision 1.12  2001/06/25 15:07:51  warmerda
  * Added support for DGNElemComplexHeader
  * Don't include elements with the complex bit (such as shared cell definition
@@ -143,6 +146,9 @@ typedef struct {
 
     int		attr_bytes;	/*!< Bytes of attribute data, usually zero. */
     unsigned char *attr_data;   /*!< Raw attribute data */
+
+    int         raw_bytes;      /*!< Bytes of raw data, usually zero. */
+    unsigned char *raw_data;    /*!< All raw element data including header. */
 } DGNElemCore;
 
 /** 
@@ -384,12 +390,18 @@ typedef struct {
 #define DGNJ_RIGHT_BOTTOM	8
 
 /* -------------------------------------------------------------------- */
+/*      DGN file reading options.                                       */
+/* -------------------------------------------------------------------- */
+#define DGNO_CAPTURE_RAW_DATA	0x01
+
+/* -------------------------------------------------------------------- */
 /*      API                                                             */
 /* -------------------------------------------------------------------- */
 /** Opaque handle representing DGN file, used with DGN API. */
 typedef void *DGNHandle;
 
 DGNHandle CPL_DLL    DGNOpen( const char * );
+void CPL_DLL         DGNSetOptions( DGNHandle, int );
 int CPL_DLL          DGNTestOpen( GByte *, int );
 const DGNElementInfo CPL_DLL *DGNGetElementIndex( DGNHandle, int * );
 int CPL_DLL          DGNGetExtents( DGNHandle, double * );

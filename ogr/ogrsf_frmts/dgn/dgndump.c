@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/08/21 03:01:39  warmerda
+ * added raw_data support
+ *
  * Revision 1.6  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -52,6 +55,24 @@
 
 CPL_CVSID("$Id$");
 
+static void DGNDumpRawElement( DGNHandle hDGN, DGNElemCore *psCore,
+                               FILE *fpOut );
+
+/************************************************************************/
+/*                               Usage()                                */
+/************************************************************************/
+
+static void Usage()
+
+{
+    printf( "Usage: dgndump [-s] [-r n] filename.dgn\n" );
+    printf( "\n" );
+    printf( "  -s: produce summary report of element types and levels.\n");
+    printf( "  -r n: report raw binary contents of elements of type n.\n");
+
+    exit( 1 );
+}
+
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
@@ -61,32 +82,48 @@ int main( int argc, char ** argv )
 {
     DGNHandle   hDGN;
     DGNElemCore *psElement;
-    const char	*pszFilename;
-    int         bSummary = FALSE;
+    const char	*pszFilename = NULL;
+    int         bSummary = FALSE, iArg, bRaw = FALSE;
+    char	achRaw[64];
 
-    if( argc < 2 )
+    memset( achRaw, 0, 64 );
+
+    for( iArg = 1; iArg < argc; iArg++ )
     {
-        printf( "Usage: dgndump [-s] filename.dgn\n" );
-        exit( 1 );
+        if( strcmp(argv[iArg],"-s") == 0 )
+        {
+            bSummary = TRUE;
+        }
+        else if( strcmp(argv[iArg],"-r") == 0 && iArg < argc-1 )
+        {
+            achRaw[MAX(0,MIN(63,atoi(argv[iArg+1])))] = 1;
+            bRaw = TRUE;
+            iArg++;
+        }
+        else if( argv[iArg][0] == '-' || pszFilename != NULL )
+            Usage();
+        else 
+            pszFilename = argv[iArg];
     }
-    
-    if( strcmp(argv[1],"-s") == 0 )
-    {
-        bSummary = TRUE;
-        pszFilename = argv[2];
-    }
-    else
-        pszFilename = argv[1];
+
+    if( pszFilename == NULL )
+        Usage();
 
     hDGN = DGNOpen( pszFilename );
     if( hDGN == NULL )
         exit( 1 );
+
+    if( bRaw )
+        DGNSetOptions( hDGN, DGNO_CAPTURE_RAW_DATA );
 
     if( !bSummary )
     {
         while( (psElement=DGNReadElement(hDGN)) != NULL )
         {
             DGNDumpElement( hDGN, psElement, stdout );
+            if( achRaw[psElement->type] != 0 )
+                DGNDumpRawElement( hDGN, psElement, stdout );
+
             DGNFreeElement( hDGN, psElement );
         }
     }
@@ -167,3 +204,45 @@ int main( int argc, char ** argv )
 
     return 0;
 }
+
+/************************************************************************/
+/*                         DGNDumpRawElement()                          */
+/************************************************************************/
+
+static void DGNDumpRawElement( DGNHandle hDGN, DGNElemCore *psCore, 
+                               FILE *fpOut )
+
+{
+    int		i, iChar = 0;
+    char	szLine[80];
+
+    fprintf( fpOut, "  Raw Data (%d bytes):\n", psCore->raw_bytes );
+    for( i = 0; i < psCore->raw_bytes; i++ )
+    {
+        char	szHex[3];
+
+        if( (i % 16) == 0 )						
+        {
+            sprintf( szLine, "%6d: %71s", i, " " );
+            iChar = 0;
+        }
+
+        sprintf( szHex, "%02x", psCore->raw_data[i] );
+        strncpy( szLine+8+iChar*2, szHex, 2 );
+        
+        if( psCore->raw_data[i] < 32 || psCore->raw_data[i] > 127 )
+            szLine[42+iChar] = '.';
+        else
+            szLine[42+iChar] = psCore->raw_data[i];
+
+        if( i == psCore->raw_bytes - 1 || (i+1) % 16 == 0 )
+        {
+            fprintf( fpOut, "%s\n", szLine );
+        }
+
+        iChar++;
+    }
+}
+
+
+

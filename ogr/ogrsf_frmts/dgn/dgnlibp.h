@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/08/21 03:01:39  warmerda
+ * added raw_data support
+ *
  * Revision 1.6  2001/03/07 13:56:44  warmerda
  * updated copyright to be held by Avenza Systems
  *
@@ -63,6 +66,7 @@ typedef struct {
 
     int         got_tcb;
     int         dimension;
+    int         options;
     double	scale;
     double	origin_x;
     double	origin_y;

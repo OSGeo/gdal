@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/08/21 03:01:39  warmerda
+ * added raw_data support
+ *
  * Revision 1.8  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -166,6 +169,28 @@ DGNHandle DGNOpen( const char * pszFilename )
     psDGN->got_bounds = FALSE;
 
     return (DGNHandle) psDGN;
+}
+
+/************************************************************************/
+/*                           DGNSetOptions()                            */
+/************************************************************************/
+
+/**
+ * Set file access options.
+ *
+ * @param hDGN handle to file returned by DGNOpen(). 
+ * @param nOptions ORed option flags (currently either 0 or 
+ * DGNO_CAPTURE_RAW_DATA). 
+ *
+ * Sets options affecting subsequent data reading. 
+ */
+
+void DGNSetOptions( DGNHandle hDGN, int nOptions )
+
+{
+    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+
+    psDGN->options = nOptions;
 }
 
 /************************************************************************/
