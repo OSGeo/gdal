@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/10/19 15:36:55  warmerda
+ * added support for filename on commandline
+ *
  * Revision 1.1  1999/05/05 17:32:38  warmerda
  * New
  *
@@ -46,7 +49,10 @@ int main( int nArgc, char ** papszArgv )
     char	data[20000];
     int		i;
 
-    psCEOS = CEOSOpen( "imag_01.dat", "rb" );
+    if( nArgc > 1 )
+        psCEOS = CEOSOpen( papszArgv[1], "rb" );
+    else
+        psCEOS = CEOSOpen( "imag_01.dat", "rb" );
 
     printf( "%d x %d x %d with %d bits/pixel.\n",
             psCEOS->nPixels, psCEOS->nLines, psCEOS->nBands,
