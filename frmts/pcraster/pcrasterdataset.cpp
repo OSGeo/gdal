@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/11/10 10:21:42  kdejong
+ * *** empty log message ***
+ *
  * Revision 1.2  2004/11/10 10:09:19  kdejong
  * Initial versions. Read only driver.
  *
@@ -117,7 +120,7 @@ void GDALRegister_PCRaster()
 // DEFINITION OF STATIC PCRDATASET MEMBERS
 //------------------------------------------------------------------------------
 
-//!
+//! Tries to open 
 /*!
   \param     .
   \return    .
@@ -128,14 +131,16 @@ void GDALRegister_PCRaster()
 */
 GDALDataset* PCRasterDataset::Open(GDALOpenInfo* info)
 {
-  if(!info->fp) {
-    return 0;
+  PCRasterDataset* dataset = 0;
+
+  if(info->fp) {
+
+    MAP* map = open(info->pszFilename, M_READ);
+
+    if(map) {
+      dataset = new PCRasterDataset(map);
+    }
   }
-
-  MAP* map = open(info->pszFilename, M_READ);
-
-  // Create a PCRasterDataset.
-  PCRasterDataset* dataset = new PCRasterDataset(map);
 
   return dataset;
 }

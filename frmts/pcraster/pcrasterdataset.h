@@ -74,8 +74,6 @@ private:
   //! Copy constructor. NOT IMPLEMENTED.
                    PCRasterDataset     (const PCRasterDataset&);
 
-  // void             determineMissingValue();
-
 public:
 
   //----------------------------------------------------------------------------
