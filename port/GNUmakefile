@@ -27,5 +27,5 @@ clean:
 install:
 	for f in *.h ; do $(INSTALL_DATA) $$f $(INST_INCLUDE) ; done
 
-xmlreformat:	xmlreformat.o $(LIB)
-	$(CXX) $(CXXFLAGS) xmlreformat.o $(LIB) -o xmlreformat
+xmlreformat:	xmlreformat.o 
+	$(CXX) $(CXXFLAGS) xmlreformat.o $(CONFIG_LIBS) -o xmlreformat
