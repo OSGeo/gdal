@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/01/24 17:37:06  warmerda
+ * added SetGeometryDirectly
+ *
  * Revision 1.1  2002/01/04 19:46:30  warmerda
  * New
  *
@@ -46,6 +49,7 @@ GMLFeature::GMLFeature( GMLFeatureClass *poClass )
 {
     m_poClass = poClass;
     m_pszFID = NULL;
+    m_pszGeometry = NULL;
     
     m_nPropertyCount = 0;
     m_papszProperty = NULL;
@@ -67,6 +71,7 @@ GMLFeature::~GMLFeature()
     }
 
     CPLFree( m_papszProperty );
+    CPLFree( m_pszGeometry );
 }
 
 /************************************************************************/
@@ -138,4 +143,20 @@ void GMLFeature::Dump( FILE * fp )
         printf( "  %s = %s\n", 
                 m_poClass->GetProperty( i )->GetName(),
                 GetProperty( i ) );
+
+    if( m_pszGeometry )
+        printf( "  %s\n", m_pszGeometry );
+}
+
+/************************************************************************/
+/*                        SetGeometryDirectly()                         */
+/************************************************************************/
+
+void GMLFeature::SetGeometryDirectly( char *pszGeometry )
+
+{
+    if( m_pszGeometry )
+        CPLFree( m_pszGeometry );
+
+    m_pszGeometry = pszGeometry;
 }
