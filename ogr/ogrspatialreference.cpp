@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/02/25 13:23:25  warmerda
+ * removed include of ogr_geometry.h
+ *
  * Revision 1.10  2000/01/11 22:12:39  warmerda
  * Ensure GEOGCS node is always at position 1 under PROJCS
  *
@@ -61,7 +64,6 @@
  */
 
 #include "ogr_spatialref.h"
-#include "ogr_geometry.h"
 #include "ogr_p.h"
 
 /* why would fipszone and zone be paramers when they relate to a composite

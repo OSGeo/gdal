@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/02/25 13:23:25  warmerda
+ * removed include of ogr_geometry.h
+ *
  * Revision 1.7  2000/01/26 21:22:18  warmerda
  * added tentative MakeValueSafe implementation
  *
@@ -52,7 +55,6 @@
  */
 
 #include "ogr_spatialref.h"
-#include "ogr_geometry.h"
 #include "ogr_p.h"
 
 /************************************************************************/
