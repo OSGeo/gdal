@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.39  2001/12/08 04:43:48  warmerda
+ * added BSB registration
+ *
  * Revision 1.38  2001/11/27 14:39:41  warmerda
  * added usgsdem
  *
@@ -259,6 +262,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_fits
     GDALRegister_FITS();
+#endif
+
+#ifdef FRMT_bsb
+    GDALRegister_BSB();
 #endif
 
 #ifdef FRMT_ecw
