@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.65  2002/12/21 17:29:38  warmerda
+ * fixed default degree/radian problem for GEOGCS
+ *
  * Revision 1.64  2002/12/16 17:08:44  warmerda
  * added GetPrimeMeridian() method, and fiddled with OGRPrintDouble
  *
@@ -951,10 +954,10 @@ double OGRSpatialReference::GetAngularUnits( char ** ppszName ) const
     const OGR_SRSNode *poCS = GetAttrNode( "GEOGCS" );
 
     if( ppszName != NULL )
-        *ppszName = "unknown";
+        *ppszName = "degree";
         
     if( poCS == NULL )
-        return 1.0;
+        return atof(SRS_UA_DEGREE_CONV);
 
     for( int iChild = 0; iChild < poCS->GetChildCount(); iChild++ )
     {
