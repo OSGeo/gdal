@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2002/10/31 18:51:05  warmerda
+ * added 16bit and 32bit floating point support
+ *
  * Revision 1.4  2002/10/21 18:06:57  warmerda
  * fixed multi-component write support
  *
@@ -72,7 +75,8 @@ CPL_C_END
 static int kakadu_initialized = FALSE;
 
 static void
-transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision);
+transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
+               GDALDataType eOutType );
 
 static const unsigned int jp2_uuid_box_type = 0x75756964;
 
@@ -217,7 +221,16 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
 {
     this->nBand = nBand;
 
-    this->eDataType = GDT_Byte;
+    if( oCodeStream.get_bit_depth(nBand-1) == 16
+        && oCodeStream.get_signed(nBand-1) )
+        this->eDataType = GDT_Int16;
+    else if( oCodeStream.get_bit_depth(nBand-1) == 16
+        && !oCodeStream.get_signed(nBand-1) )
+        this->eDataType = GDT_UInt16;
+    else if( oCodeStream.get_bit_depth(nBand-1) == 32 )
+        this->eDataType = GDT_Float32;
+    else
+        this->eDataType = GDT_Byte;
 
     this->nDiscardLevels = nDiscardLevels;
     this->oCodeStream = oCodeStream;
@@ -350,6 +363,7 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
         kdu_dims tile_indices; 
         kdu_coords tpos;
+        int  nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
     
         oCodeStream.get_valid_tiles(tile_indices);
     
@@ -366,7 +380,8 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
                 GByte *pabyDest;
 
-                pabyDest = ((GByte *)pImage) + offset.x + offset.y*nBlockXSize;
+                pabyDest = ((GByte *)pImage) 
+                    + (offset.x + offset.y*nBlockXSize) * nWordSize;
 
                 ProcessTile( tile, pabyDest, offset.x, offset.y );
             
@@ -405,6 +420,7 @@ void JP2KAKRasterBand::ProcessTile( kdu_tile tile, GByte *pabyDest,
     bool reversible = comp.get_reversible();
     int bit_depth = comp.get_bit_depth();
     kdu_resolution res = comp.access_resolution();
+    int  nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
 
     res.get_dims(dims);
     
@@ -428,7 +444,8 @@ void JP2KAKRasterBand::ProcessTile( kdu_tile tile, GByte *pabyDest,
     for( int y = 0; y < dims.size.y; y++ )
     {
         engine.pull(line,true);
-        transfer_bytes(pabyDest + y * nBlockXSize,line,1,bit_depth);
+        transfer_bytes(pabyDest + y * nBlockXSize * nWordSize,
+                       line, nWordSize, bit_depth, eDataType );
     }
 
     engine.destroy();
@@ -796,119 +813,134 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 static void
-transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision)
+transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
+               GDALDataType eOutType )
 
   /* Transfers source samples from the supplied line buffer into the output
      byte buffer, spacing successive output samples apart by `gap' bytes
      (to allow for interleaving of colour components).  The function performs
      all necessary level shifting, type conversion, rounding and truncation. */
 {
-  int width = src.get_width();
-  if (src.get_buf32() != NULL)
+    int width = src.get_width();
+    if (src.get_buf32() != NULL)
     { // Decompressed samples have a 32-bit representation (integer or float)
-      assert(precision >= 8); // Else would have used 16 bit representation
-      kdu_sample32 *sp = src.get_buf32();
-      if (!src.is_absolute())
+        assert(precision >= 8); // Else would have used 16 bit representation
+        kdu_sample32 *sp = src.get_buf32();
+        if (!src.is_absolute() && eOutType != GDT_Byte )
         { // Transferring normalized floating point data.
-          float scale16 = (float)(1<<16);
-          kdu_int32 val;
+            float scale16 = (float)(1<<16);
 
-          for (; width > 0; width--, sp++, dest+=gap)
+            for (; width > 0; width--, sp++, dest+=gap)
             {
-              val = (kdu_int32)(sp->fval*scale16);
-              val = (val+128)>>8; // May be faster than true rounding
-              val += 128;
-              if (val & ((-1)<<8))
-                val = (val<0)?0:255;
-              *dest = (kdu_byte) val;
+                if( eOutType == GDT_Int16 )
+                    *((GInt16 *) dest) = (GInt16) (sp->fval*scale16);
+                else if( eOutType == GDT_UInt16 )
+                    *((GUInt16 *) dest) = (GUInt16) (sp->fval*scale16 + 32768);
+                else if( eOutType == GDT_Float32 )
+                    *((float *) dest) = sp->fval;
             }
         }
-      else
-        { // Transferring 32-bit absolute integers.
-          kdu_int32 val;
-          kdu_int32 downshift = precision-8;
-          kdu_int32 offset = (1<<downshift)>>1;
-              
-          for (; width > 0; width--, sp++, dest+=gap)
+        else if (!src.is_absolute())
+        { // Transferring normalized floating point data.
+            float scale16 = (float)(1<<16);
+            kdu_int32 val;
+
+            for (; width > 0; width--, sp++, dest+=gap)
             {
-              val = sp->ival;
-              val = (val+offset)>>downshift;
-              val += 128;
-              if (val & ((-1)<<8))
-                val = (val<0)?0:255;
-              *dest = (kdu_byte) val;
+                val = (kdu_int32)(sp->fval*scale16);
+                val = (val+128)>>8; // May be faster than true rounding
+                val += 128;
+                if (val & ((-1)<<8))
+                    val = (val<0)?0:255;
+                *dest = (kdu_byte) val;
+            }
+        }
+        else
+        { // Transferring 32-bit absolute integers.
+            kdu_int32 val;
+            kdu_int32 downshift = precision-8;
+            kdu_int32 offset = (1<<downshift)>>1;
+              
+            for (; width > 0; width--, sp++, dest+=gap)
+            {
+                val = sp->ival;
+                val = (val+offset)>>downshift;
+                val += 128;
+                if (val & ((-1)<<8))
+                    val = (val<0)?0:255;
+                *dest = (kdu_byte) val;
             }
         }
     }
-  else
+    else
     { // Source data is 16 bits.
-      kdu_sample16 *sp = src.get_buf16();
-      if (!src.is_absolute())
+        kdu_sample16 *sp = src.get_buf16();
+        if (!src.is_absolute())
         { // Transferring 16-bit fixed point quantities
-          kdu_int16 val;
+            kdu_int16 val;
 
-          if (precision >= 8)
+            if (precision >= 8)
             { // Can essentially ignore the bit-depth.
-              for (; width > 0; width--, sp++, dest+=gap)
+                for (; width > 0; width--, sp++, dest+=gap)
                 {
-                  val = sp->ival;
-                  val += (1<<(KDU_FIX_POINT-8))>>1;
-                  val >>= (KDU_FIX_POINT-8);
-                  val += 128;
-                  if (val & ((-1)<<8))
-                    val = (val<0)?0:255;
-                  *dest = (kdu_byte) val;
+                    val = sp->ival;
+                    val += (1<<(KDU_FIX_POINT-8))>>1;
+                    val >>= (KDU_FIX_POINT-8);
+                    val += 128;
+                    if (val & ((-1)<<8))
+                        val = (val<0)?0:255;
+                    *dest = (kdu_byte) val;
                 }
             }
-          else
+            else
             { // Need to force zeros into one or more least significant bits.
-              kdu_int16 downshift = KDU_FIX_POINT-precision;
-              kdu_int16 upshift = 8-precision;
-              kdu_int16 offset = 1<<(downshift-1);
+                kdu_int16 downshift = KDU_FIX_POINT-precision;
+                kdu_int16 upshift = 8-precision;
+                kdu_int16 offset = 1<<(downshift-1);
 
-              for (; width > 0; width--, sp++, dest+=gap)
+                for (; width > 0; width--, sp++, dest+=gap)
                 {
-                  val = sp->ival;
-                  val = (val+offset)>>downshift;
-                  val <<= upshift;
-                  val += 128;
-                  if (val & ((-1)<<8))
-                    val = (val<0)?0:(256-(1<<upshift));
-                  *dest = (kdu_byte) val;
+                    val = sp->ival;
+                    val = (val+offset)>>downshift;
+                    val <<= upshift;
+                    val += 128;
+                    if (val & ((-1)<<8))
+                        val = (val<0)?0:(256-(1<<upshift));
+                    *dest = (kdu_byte) val;
                 }
             }
         }
-      else
+        else
         { // Transferring 16-bit absolute integers.
-          kdu_int16 val;
+            kdu_int16 val;
 
-          if (precision >= 8)
+            if (precision >= 8)
             {
-              kdu_int16 downshift = precision-8;
-              kdu_int16 offset = (1<<downshift)>>1;
+                kdu_int16 downshift = precision-8;
+                kdu_int16 offset = (1<<downshift)>>1;
               
-              for (; width > 0; width--, sp++, dest+=gap)
+                for (; width > 0; width--, sp++, dest+=gap)
                 {
-                  val = sp->ival;
-                  val = (val+offset)>>downshift;
-                  val += 128;
-                  if (val & ((-1)<<8))
-                    val = (val<0)?0:255;
-                  *dest = (kdu_byte) val;
+                    val = sp->ival;
+                    val = (val+offset)>>downshift;
+                    val += 128;
+                    if (val & ((-1)<<8))
+                        val = (val<0)?0:255;
+                    *dest = (kdu_byte) val;
                 }
             }
-          else
+            else
             {
-              kdu_int16 upshift = 8-precision;
+                kdu_int16 upshift = 8-precision;
 
-              for (; width > 0; width--, sp++, dest+=gap)
+                for (; width > 0; width--, sp++, dest+=gap)
                 {
-                  val = sp->ival;
-                  val <<= upshift;
-                  val += 128;
-                  if (val & ((-1)<<8))
-                    val = (val<0)?0:(256-(1<<upshift));
-                  *dest = (kdu_byte) val;
+                    val = sp->ival;
+                    val <<= upshift;
+                    val += 128;
+                    if (val & ((-1)<<8))
+                        val = (val<0)?0:(256-(1<<upshift));
+                    *dest = (kdu_byte) val;
                 }
             }
         }
@@ -989,6 +1021,32 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
+/*      What data type should we use?  We assume all datatypes match    */
+/*      the first band.                                                 */
+/* -------------------------------------------------------------------- */
+    GDALDataType eType;
+    GDALRasterBand *poPrototypeBand = poSrcDS->GetRasterBand(1);
+
+    eType = poPrototypeBand->GetRasterDataType();
+    if( eType != GDT_Byte && eType != GDT_Int16 && eType != GDT_UInt16
+        && eType != GDT_Float32 )
+    {
+        if( bStrict )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, 
+                     "JP2KAK (JPEG2000) driver does not support data type %s.",
+                     GDALGetDataTypeName( eType ) );
+            return NULL;
+        }
+
+        CPLError(CE_Warning, CPLE_AppDefined, 
+                 "JP2KAK (JPEG2000) driver does not support data type %s, forcing to Float32.",
+                 GDALGetDataTypeName( eType ) );
+        
+        eType = GDT_Float32;
+    }
+
+/* -------------------------------------------------------------------- */
 /*	Establish how many bytes of data we want for each layer.  	*/
 /*	We take the quality as a percentage, so if QUALITY of 50 is	*/
 /*	selected, we will set the base layer to 50% the default size.   */
@@ -1010,9 +1068,10 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-    if( dfQuality < 99.5 )
+    if( dfQuality < 99.5 || eType != GDT_Byte )
     {
         layer_bytes[11] = (kdu_long) (nXSize * nYSize * dfQuality / 100.0);
+        layer_bytes[11] *= (GDALGetDataTypeSize(eType) / 8);
     }
     else
         bReversible = true;
@@ -1025,8 +1084,11 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
     oSizeParams.set( Scomponents, 0, 0, poSrcDS->GetRasterCount() );
     oSizeParams.set( Sdims, 0, 0, nYSize );
     oSizeParams.set( Sdims, 0, 1, nXSize );
-    oSizeParams.set( Sprecision, 0, 0, 8 );
-    oSizeParams.set( Ssigned, 0, 0, false );
+    oSizeParams.set( Sprecision, 0, 0, GDALGetDataTypeSize(eType) );
+    if( eType == GDT_UInt16 || eType == GDT_Byte )
+        oSizeParams.set( Ssigned, 0, 0, false );
+    else
+        oSizeParams.set( Ssigned, 0, 0, true );
 
     kdu_params *poSizeRef = &oSizeParams; poSizeRef->finalize();
 
@@ -1067,6 +1129,9 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     oCodeStream.access_siz()->parse_string("Clayers=12");
     oCodeStream.access_siz()->parse_string("Cycc=no");
+    if( eType == GDT_Int16 || eType == GDT_UInt16 )
+        oCodeStream.access_siz()->parse_string("Qstep=0.0000152588");
+        
     if( bReversible )
         oCodeStream.access_siz()->parse_string("Creversible=yes");
     else
@@ -1113,7 +1178,8 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Create the image as one big tile.                               */
 /* -------------------------------------------------------------------- */
     kdu_tile oTile = oCodeStream.open_tile(kdu_coords(0,0));
-    GByte *pabyBuffer = (GByte *) CPLMalloc(nXSize);
+    GByte *pabyBuffer = (GByte *) 
+        CPLMalloc(nXSize * (GDALGetDataTypeSize(eType)/8) );
 
     int c, num_components = oTile.get_num_components(); 
 
@@ -1151,7 +1217,7 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
         for( iLine = 0; iLine < nYSize; iLine++ )
         {
             poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                              (void *) pabyBuffer, nXSize, 1, GDT_Byte,
+                              (void *) pabyBuffer, nXSize, 1, eType,
                               0, 0 );
 
             if( bReversible )
@@ -1162,13 +1228,37 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
                 for (int n=dims.size.x; n > 0; n--, dest++, sp++)
                     dest->ival = ((kdu_int16)(*sp)) - 128;
             }
-            else
+            else if( eType == GDT_Byte )
             {
                 kdu_sample32 *dest = line.get_buf32();
                 kdu_byte *sp = pabyBuffer;
                 
                 for (int n=dims.size.x; n > 0; n--, dest++, sp++)
                     dest->fval = ((((kdu_int16)(*sp))-128.0) * 0.00390625);
+            }
+            else if( eType == GDT_Int16 )
+            {
+                kdu_sample32 *dest = line.get_buf32();
+                GInt16  *sp = (GInt16 *) pabyBuffer;
+                
+                for (int n=dims.size.x; n > 0; n--, dest++, sp++)
+                    dest->fval = (((kdu_int16)(*sp)) * 0.0000152588);
+            }
+            else if( eType == GDT_UInt16 )
+            {
+                kdu_sample32 *dest = line.get_buf32();
+                GUInt16  *sp = (GUInt16 *) pabyBuffer;
+                
+                for (int n=dims.size.x; n > 0; n--, dest++, sp++)
+                    dest->fval = (((int)(*sp) - 32768) * 0.0000152588);
+            }
+            else if( eType == GDT_Float32 )
+            {
+                kdu_sample32 *dest = line.get_buf32();
+                float  *sp = (float *) pabyBuffer;
+                
+                for (int n=dims.size.x; n > 0; n--, dest++, sp++)
+                    dest->fval = *sp;  /* scale it? */
             }
 
             engine.push(line,true);
