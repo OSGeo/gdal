@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/07/19 15:37:43  warmerda
+ * Fixed type of nRowsPerstrip as per bug report from Pete (qaz7@mindspring.com)
+ *
  * Revision 1.18  2001/07/25 15:36:34  warmerda
  * fixed bug with last band when writing one file per band
  *
@@ -682,7 +685,7 @@ static CPLErr CopyOneBandToStrips( HFABand * poBand, TIFF * hTIFF, int nSample)
     unsigned char *pabyStrip;
     int		nTileXSize, nTileYSize, nStripWidth, nDataBits, iStrip;
     int		nLoadedTileRow;
-    uint16	nRowsPerStrip;
+    uint32	nRowsPerStrip;
     
 /* -------------------------------------------------------------------- */
 /*	Collect various information in local variables.			*/
