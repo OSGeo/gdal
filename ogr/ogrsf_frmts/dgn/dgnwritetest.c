@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/03/23 16:19:28  warmerda
+ * restore regular form, set color info for shape header
+ *
  * Revision 1.6  2003/11/25 15:47:56  warmerda
  * Added surface type for complex headers: Marius
  *
@@ -59,22 +62,6 @@ CPL_CVSID("$Id$");
 int main( int argc, char ** argv )
 
 {
-#ifndef notdef
-    DGNElemCore *pEllipse;
-    DGNHandle hDGN;
-
-    hDGN = DGNOpen( "out.dgn", 1 );
-
-    pEllipse = DGNCreateArcElem( hDGN, DGNT_ELLIPSE,
-                                 1.0, 0.5, 0.0, 0.1, 0.1,
-                                 0.0, 360.0, 0.0, NULL );
-   
-    DGNUpdateElemCore( hDGN, pEllipse, 10, 60, 4, 1, 0 );
-    DGNWriteElement( hDGN, pEllipse );
-    DGNFreeElement( hDGN, pEllipse );
-
-    DGNClose( hDGN );
-#else
     DGNHandle hNewDGN;
     DGNElemCore *psMembers[2];
     DGNPoint   asPoints[10];
@@ -204,8 +191,10 @@ int main( int argc, char ** argv )
 
     psLine = DGNCreateComplexHeaderFromGroup( hNewDGN, 
                                               DGNT_COMPLEX_SHAPE_HEADER,
+                                              DGNSUT_SOLID,
                                               2, psMembers );
 
+    DGNUpdateElemCore( hNewDGN, psLine, 9, 0, 3, 1, 0 );
     DGNAddShapeFillInfo( hNewDGN, psLine, 7 );
 
     DGNWriteElement( hNewDGN, psLine );
@@ -262,7 +251,6 @@ int main( int argc, char ** argv )
     DGNClose( hNewDGN );
 
     return 0;
-#endif
 }
 
 
