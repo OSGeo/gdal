@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  1999/06/13 17:31:15  warmerda
+ * Added oledbgis.h.
+ *
  * Revision 1.13  1999/05/25 19:46:28  warmerda
  * hardcode_jet_clsid
  *
@@ -64,6 +67,7 @@
 //#include "MSjetoledb.h"
 #include "sfclsid.h"
 #include "sfiiddef.h"
+#include "oledbgis.h"
 
 static HRESULT SFDumpGeomColumn( IOpenRowset*, const char *, const char * );
 static HRESULT SFDumpSchema( IOpenRowset*, const char * );
@@ -92,7 +96,7 @@ void main( int nArgc, char ** papszArgv )
 {
     CLSID       &hProviderCLSID = (CLSID) CLSID_JETOLEDB_3_51;
 //    CLSID       &hProviderCLSID = (CLSID) CLSID_SFProvider;
-    const char *pszDataSource = "d:\\opengis\\gdal\\ogr\\World.mdb";
+    const char *pszDataSource = "f:\\opengis\\SFData\\World.mdb";
     const char *pszTable = "worldmif_geometry";
     const char *pszGeomColumn = NULL;
     HRESULT     hr;
