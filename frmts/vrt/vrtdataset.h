@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/07/30 21:51:00  warmerda
+ * added support for VRTRawRasterBand
+ *
  * Revision 1.15  2004/07/28 17:47:33  warmerda
  * Disable VRTWarpedRasterBand for now.
  *
@@ -313,6 +316,45 @@ class CPL_DLL VRTWarpedRasterBand : public VRTRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
 };
 #endif
+
+/************************************************************************/
+/*                           VRTRawRasterBand                           */
+/************************************************************************/
+
+class RawRasterBand;
+
+class CPL_DLL VRTRawRasterBand : public VRTRasterBand
+{
+    RawRasterBand  *poRawRaster;
+
+    char           *pszSourceFilename;
+    int            bRelativeToVRT;
+
+  public:
+                   VRTRawRasterBand( GDALDataset *poDS, int nBand,
+                                     GDALDataType eType = GDT_Unknown );
+    virtual        ~VRTRawRasterBand();
+
+    virtual CPLErr         XMLInit( CPLXMLNode *, const char * );
+    virtual CPLXMLNode *   SerializeToXML(void);
+
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              int, int );
+
+    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IWriteBlock( int, int, void * );
+
+    CPLErr         SetRawLink( const char *pszFilename, 
+                               const char *pszVRTPath,
+                               int bRelativeToVRT, 
+                               vsi_l_offset nImageOffset, 
+                               int nPixelOffset, int nLineOffset, 
+                               const char *pszByteOrder );
+
+    void           ClearRawLink();
+
+};
 
 /************************************************************************/
 /*                              VRTDriver                               */

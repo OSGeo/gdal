@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/07/30 21:51:29  warmerda
+ * added support for VRTRawRasterBand
+ *
  * Revision 1.15  2004/07/27 21:59:48  warmerda
  * Enable .ovr support.
  *
@@ -477,11 +480,12 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->bNeedsFlush = FALSE;
 
     CPLFree( pszXML );
+    CPLFree( pszVRTPath );
 
 /* -------------------------------------------------------------------- */
 /*      Open overviews.                                                 */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->fp != NULL )
+    if( poOpenInfo->fp != NULL && poDS != NULL )
         poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
     return poDS;
@@ -626,17 +630,29 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath )
         if( psChild->eType == CXT_Element
             && EQUAL(psChild->pszValue,"VRTRasterBand") )
         {
-            VRTRasterBand  *poBand;
+            VRTRasterBand  *poBand = NULL;
+            const char *pszSubclass = CPLGetXMLValue( psChild, "subclass", 
+                                                      "VRTSourcedRasterBand" );
 
-            poBand = new VRTSourcedRasterBand( poDS, nBands+1 );
-            if( poBand->XMLInit( psChild, poDS->pszVRTPath ) == CE_None )
+            if( EQUAL(pszSubclass,"VRTSourcedRasterBand") )
+                poBand = new VRTSourcedRasterBand( poDS, nBands+1 );
+            else if( EQUAL(pszSubclass, "VRTRawRasterBand") )
+                poBand = new VRTRawRasterBand( poDS, nBands+1 );
+            else
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "VRTRasterBand of unrecognised subclass '%s'.",
+                          pszSubclass );
+
+            if( poBand != NULL 
+                && poBand->XMLInit( psChild, poDS->pszVRTPath ) == CE_None )
             {
                 poDS->SetBand( ++nBands, poBand );
             }
             else
             {
                 CPLDestroyXMLNode( psTree );
-                delete poBand; 
+                if( poBand )
+                    delete poBand; 
                 delete poDS;
                 return NULL;
             }
@@ -659,40 +675,114 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
 
 {
     int i;
-    VRTSourcedRasterBand *poBand = 
-        new VRTSourcedRasterBand( this, GetRasterCount() + 1, eType, 
-                                  GetRasterXSize(), GetRasterYSize() );
 
-    SetBand( GetRasterCount() + 1, poBand );
+    const char *pszSubClass = CSLFetchNameValue(papszOptions, "subclass");
 
-    for( i=0; papszOptions != NULL && papszOptions[i] != NULL; i++ )
+    bNeedsFlush = 1;
+
+/* ==================================================================== */
+/*      Handle a new raw band.                                          */
+/* ==================================================================== */
+    if( pszSubClass != NULL && EQUAL(pszSubClass,"VRTRawRasterBand") )
     {
-        if( EQUALN(papszOptions[i],"AddFuncSource=", 14) )
+        int nWordDataSize = GDALGetDataTypeSize( eType ) / 8;
+        vsi_l_offset nImageOffset = 0;
+        int nPixelOffset = nWordDataSize;
+        int nLineOffset = nWordDataSize * GetRasterXSize();
+        const char *pszFilename;
+        const char *pszByteOrder = NULL;
+        int bRelativeToVRT = FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Collect required information.                                   */
+/* -------------------------------------------------------------------- */
+        if( CSLFetchNameValue(papszOptions, "ImageOffset") != NULL )
+            nImageOffset = atoi(CSLFetchNameValue(papszOptions, "ImageOffset"));
+
+        if( CSLFetchNameValue(papszOptions, "PixelOffset") != NULL )
+            nPixelOffset = atoi(CSLFetchNameValue(papszOptions,"PixelOffset"));
+
+        if( CSLFetchNameValue(papszOptions, "LineOffset") != NULL )
+            nLineOffset = atoi(CSLFetchNameValue(papszOptions, "LineOffset"));
+
+        if( CSLFetchNameValue(papszOptions, "ByteOrder") != NULL )
+            pszByteOrder = CSLFetchNameValue(papszOptions, "ByteOrder");
+
+        if( CSLFetchNameValue(papszOptions, "SourceFilename") != NULL )
+            pszFilename = CSLFetchNameValue(papszOptions, "SourceFilename");
+        else
         {
-            VRTImageReadFunc pfnReadFunc = NULL;
-            void             *pCBData = NULL;
-            double           dfNoDataValue = VRT_NODATA_UNSET;
-
-            char **papszTokens = CSLTokenizeStringComplex( papszOptions[i]+14,
-                                                           ",", TRUE, FALSE );
-
-            if( CSLCount(papszTokens) < 1 )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "AddFuncSource() ... required argument missing." );
-            }
-
-            sscanf( papszTokens[0], "%p", &pfnReadFunc );
-            if( CSLCount(papszTokens) > 1 )
-                sscanf( papszTokens[1], "%p", &pCBData );
-            if( CSLCount(papszTokens) > 2 )
-                dfNoDataValue = atof( papszTokens[2] );
-
-            poBand->AddFuncSource( pfnReadFunc, pCBData, dfNoDataValue );
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "AddBand() requires a SourceFilename option for VRTRawRasterBands." );
+            return CE_Failure;
         }
+        
+        bRelativeToVRT = 
+            CSLFetchBoolean( papszOptions, "RelativeToVRT", FALSE );
+
+/* -------------------------------------------------------------------- */
+/*      Create and initialize the band.                                 */
+/* -------------------------------------------------------------------- */
+        CPLErr eErr;
+
+        VRTRawRasterBand *poBand = 
+            new VRTRawRasterBand( this, GetRasterCount() + 1, eType );
+
+        eErr = 
+            poBand->SetRawLink( pszFilename, NULL, FALSE, 
+                                nImageOffset, nPixelOffset, nLineOffset, 
+                                pszByteOrder );
+        if( eErr != CE_None )
+        {
+            delete poBand;
+            return eErr;
+        }
+
+        SetBand( GetRasterCount() + 1, poBand );
+
+        return CE_None;
     }
 
-    return CE_None;
+/* ==================================================================== */
+/*      Handle a new "sourced" band.                                    */
+/* ==================================================================== */
+    else
+    {
+        VRTSourcedRasterBand *poBand = 
+            new VRTSourcedRasterBand( this, GetRasterCount() + 1, eType, 
+                                      GetRasterXSize(), GetRasterYSize() );
+
+        SetBand( GetRasterCount() + 1, poBand );
+
+        for( i=0; papszOptions != NULL && papszOptions[i] != NULL; i++ )
+        {
+            if( EQUALN(papszOptions[i],"AddFuncSource=", 14) )
+            {
+                VRTImageReadFunc pfnReadFunc = NULL;
+                void             *pCBData = NULL;
+                double           dfNoDataValue = VRT_NODATA_UNSET;
+
+                char **papszTokens = CSLTokenizeStringComplex( papszOptions[i]+14,
+                                                               ",", TRUE, FALSE );
+
+                if( CSLCount(papszTokens) < 1 )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                              "AddFuncSource() ... required argument missing." );
+                }
+
+                sscanf( papszTokens[0], "%p", &pfnReadFunc );
+                if( CSLCount(papszTokens) > 1 )
+                    sscanf( papszTokens[1], "%p", &pCBData );
+                if( CSLCount(papszTokens) > 2 )
+                    dfNoDataValue = atof( papszTokens[2] );
+
+                poBand->AddFuncSource( pfnReadFunc, pCBData, dfNoDataValue );
+            }
+        }
+
+        return CE_None;
+    }
 }
 
 /************************************************************************/
