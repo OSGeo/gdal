@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/05/29 16:40:18  warmerda
+ * dont provide default value for method argumentsvrtdataset.cpp
+ *
  * Revision 1.4  2002/05/29 16:06:05  warmerda
  * complete detailed band metadata
  *
@@ -567,7 +570,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                              AddBand()                               */
 /************************************************************************/
 
-CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions=NULL )
+CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
 
 {
     SetBand( GetRasterCount() + 1, 
