@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/04/01 17:51:59  warmerda
+ * allow featureMember with or without gml: namespace tag
+ *
  * Revision 1.8  2002/03/08 20:20:09  warmerda
  * initialized class locked flag
  *
@@ -344,7 +347,8 @@ int GMLReader::IsFeatureElement( const char *pszElement )
 {
     CPLAssert( m_poState != NULL );
 
-    if( !EQUAL(m_poState->GetLastComponent(),"gml:featureMember") )
+    if( !EQUAL(m_poState->GetLastComponent(),"gml:featureMember") 
+        && !EQUAL(m_poState->GetLastComponent(),"featureMember") )
         return FALSE;						
 
     // If the class list isn't locked, any element that is a featureMember
@@ -729,9 +733,12 @@ int GMLReader::PrescanForSchema( int bGetExtents )
 #ifdef SUPPORT_GEOMETRY
         if( bGetExtents )
         {
-            OGRGeometry *poGeometry;
+            OGRGeometry *poGeometry = NULL;
 
-            poGeometry = GML2OGRGeometry( poFeature->GetGeometry() );
+            if( poFeature->GetGeometry() != NULL 
+                && strlen(poFeature->GetGeometry()) != 0 )
+                poGeometry = GML2OGRGeometry( poFeature->GetGeometry() );
+
             if( poGeometry != NULL )
             {
                 double	dfXMin, dfXMax, dfYMin, dfYMax;
