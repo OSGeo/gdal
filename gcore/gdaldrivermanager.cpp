@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.4  2000/03/06 02:21:39  warmerda
+ * added GDALRegisterDriver func
+ *
  * Revision 1.3  1999/10/21 13:24:08  warmerda
  * Added documentation and C callable functions.
  *
@@ -229,6 +232,17 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
 
     return( nDrivers - 1 );
 }
+
+/************************************************************************/
+/*                         GDALRegisterDriver()                         */
+/************************************************************************/
+
+int GDALRegisterDriver( GDALDriverH hDriver )
+
+{
+    return GetGDALDriverManager()->RegisterDriver( (GDALDriver *) hDriver );
+}
+
 
 /************************************************************************/
 /*                          DeregisterDriver()                          */
