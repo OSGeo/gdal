@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2003/05/30 18:35:15  warmerda
+ * fixed stateplane.csv error msg and clear() before SetLocalCS call
+ *
  * Revision 1.27  2003/05/30 17:48:57  warmerda
  * Set GEOGCS|UNIT AUTHORITY information.
  *
@@ -1487,11 +1490,12 @@ OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83,
         {
             bFailureReported = TRUE;
             CPLError( CE_Warning, CPLE_OpenFailed, 
-                      "Unable to find state plane zone in horiz_cs.csv,\n"
-                      "likely because EPSG tables cannot be found.  Using\n"
+                      "Unable to find state plane zone in stateplane.csv,\n"
+                      "likely because the GDAL data files cannot be found.  Using\n"
                       "incomplete definition of state plane zone.\n" );
         }
 
+        Clear();
         if( bNAD83 )
         {
             sprintf( szName, "State Plane Zone %d / NAD83", nZone );
