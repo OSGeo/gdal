@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2000/03/09 23:22:03  warmerda
+ * added GetHistogram
+ *
  * Revision 1.14  2000/03/06 02:20:35  warmerda
  * added colortables, overviews, etc
  *
@@ -328,6 +331,11 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual int HasArbitraryOverviews();
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int);
+
+    CPLErr  GetHistogram( double dfMin, double dfMax,
+                          int nBuckets, int * panHistogram,
+                          int bIncludeOutOfRange, int bApproxOK,
+                          GDALProgressFunc, void *pProgressData );
 };
 
 /* ******************************************************************** */

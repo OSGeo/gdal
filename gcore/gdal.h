@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2000/03/09 23:22:03  warmerda
+ * added GetHistogram
+ *
  * Revision 1.17  2000/03/08 19:59:16  warmerda
  * added GDALFlushRasterCache
  *
@@ -179,6 +182,12 @@ typedef void *GDALDriverH;
 typedef void *GDALProjDefH;
 typedef void *GDALColorTableH;
 
+/* -------------------------------------------------------------------- */
+/*      Callback "progress" function.                                   */
+/* -------------------------------------------------------------------- */
+typedef int (*GDALProgressFunc)(double,const char *, void *);
+int GDALDummyProgress( double, const char *, void *);
+
 /* ==================================================================== */
 /*      Registration/driver related.                                    */
 /* ==================================================================== */
@@ -248,6 +257,12 @@ double CPL_DLL GDALGetRasterMaximum( GDALRasterBandH, int *pbSuccess );
 void CPL_DLL GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
                                       double adfMinMax[2] );
 CPLErr CPL_DLL GDALFlushRasterCache( GDALRasterBandH hBand );
+CPLErr CPL_DLL GDALGetRasterHistogram( GDALRasterBandH hBand,
+                                       double dfMin, double dfMax,
+                                       int nBuckets, int *panHistogram,
+                                       int bIncludeOutOfRange, int bApproxOK,
+                                       GDALProgressFunc pfnProgress,
+                                       void * pProgressData );
 
 /* need to add functions related to block cache */
 

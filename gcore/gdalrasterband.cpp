@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.12  2000/03/09 23:22:03  warmerda
+ * added GetHistogram
+ *
  * Revision 1.11  2000/03/08 19:59:16  warmerda
  * added GDALFlushRasterCache
  *
@@ -1363,3 +1366,229 @@ int GDALGetRasterBandYSize( GDALRasterBandH hBand )
 {
     return ((GDALRasterBand *) hBand)->GetYSize();
 }
+
+/************************************************************************/
+/*                            GetHistogram()                            */
+/************************************************************************/
+
+/**
+ * Compute raster histogram. 
+ *
+ * Note that the bucket size is (dfMax-dfMin) / nBuckets.  
+ *
+ * For example to compute a simple 256 entry histogram of eight bit data, 
+ * the following would be suitable.  The unusual bounds are to ensure that
+ * bucket boundaries don't fall right on integer values causing possible errors
+ * due to rounding after scaling. 
+<pre>
+    int anHistogram[256];
+
+    poBand->GetHistogram( -0.5, 255.5, 256, anHistogram, FALSE, FALSE, 
+                          GDALDummyProgress, NULL );
+</pre>
+ *
+ * Note that setting bApproxOK will generally result in a subsampling of the
+ * file, and will utilize overviews if available.  It should generally 
+ * produce a representative histogram for the data that is suitable for use
+ * in generating histogram based luts for instance.  Generally bApproxOK is
+ * much faster than an exactly computed histogram.
+ *
+ * @param dfMin the lower bound of the histogram.
+ * @param dfMax the upper bound of the histogram.
+ * @param nBuckets the number of buckets in panHistogram.
+ * @param panHistogram array into which the histogram totals are placed.
+ * @param bIncludeOutOfRange if TRUE values below the histogram range will
+ * mapped into panHistogram[0], and values above will be mapped into 
+ * panHistogram[nBuckets-1] otherwise out of range values are discarded.
+ * @param bApproxOK TRUE if an approximate, or incomplete histogram OK.
+ * @param pfnProgress function to report progress to completion. 
+ * @param pProgressData application data to pass to pfnProgress. 
+ *
+ * @return CE_None on success, or CE_Failure if something goes wrong. 
+ */
+
+CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax, 
+                                     int nBuckets, int *panHistogram, 
+                                     int bIncludeOutOfRange, int bApproxOK,
+                                     GDALProgressFunc pfnProgress, 
+                                     void *pProgressData )
+
+{
+    CPLAssert( pfnProgress != NULL );
+
+/* -------------------------------------------------------------------- */
+/*      If we have overviews, use them for the histogram.               */
+/* -------------------------------------------------------------------- */
+    if( bApproxOK && GetOverviewCount() > 0 )
+    {
+        double dfBestPixels = GetXSize() * GetYSize();
+        GDALRasterBand *poBestOverview = NULL;
+        
+        for( int i = 0; i < GetOverviewCount(); i++ )
+        {
+            GDALRasterBand *poOverview = GetOverview(i);
+            double         dfPixels;
+
+            dfPixels = poOverview->GetXSize() * poOverview->GetYSize();
+            if( dfPixels < dfBestPixels )
+            {
+                dfBestPixels = dfPixels;
+                poBestOverview = poOverview;
+            }
+            
+            if( poBestOverview != NULL )
+                return GetHistogram( dfMin, dfMax, nBuckets, panHistogram, 
+                                     bIncludeOutOfRange, bApproxOK, 
+                                     pfnProgress, pProgressData );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Figure out the ratio of blocks we will read to get an           */
+/*      approximate value.                                              */
+/* -------------------------------------------------------------------- */
+    int         nBlockXSize, nBlockYSize;
+    int         nBlocksPerRow, nBlocksPerColumn;
+    int         nSampleRate;
+    double      dfScale;
+
+    GetBlockSize( &nBlockXSize, &nBlockYSize );
+    nBlocksPerRow = (GetXSize() + nBlockXSize - 1) / nBlockXSize;
+    nBlocksPerColumn = (GetYSize() + nBlockYSize - 1) / nBlockYSize;
+
+    if( bApproxOK )
+        nSampleRate = 
+            (int) MAX(1,sqrt((double) nBlocksPerRow * nBlocksPerColumn));
+    else
+        nSampleRate = 1;
+    
+    dfScale = nBuckets / (dfMax - dfMin);
+
+/* -------------------------------------------------------------------- */
+/*      Read the blocks, and add to histogram.                          */
+/* -------------------------------------------------------------------- */
+    memset( panHistogram, 0, sizeof(int) * nBuckets );
+    for( int iSampleBlock = 0; 
+         iSampleBlock < nBlocksPerRow * nBlocksPerColumn;
+         iSampleBlock += nSampleRate )
+    {
+        double dfValue = 0.0;
+        int  iXBlock, iYBlock, nXCheck, nYCheck;
+        GDALRasterBlock *poBlock;
+
+        if( !pfnProgress( iSampleBlock/(double)nBlocksPerRow*nBlocksPerColumn,
+                          NULL, pProgressData ) )
+            return CE_Failure;
+
+        iYBlock = iSampleBlock / nBlocksPerRow;
+        iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
+        
+        poBlock = GetBlockRef( iXBlock, iYBlock );
+        if( poBlock == NULL )
+            return CE_Failure;
+        
+        if( (iXBlock+1) * nBlockXSize > GetXSize() )
+            nXCheck = GetXSize() - iXBlock * nBlockXSize;
+        else
+            nXCheck = nBlockXSize;
+
+        if( (iYBlock+1) * nBlockYSize > GetYSize() )
+            nYCheck = GetYSize() - iYBlock * nBlockYSize;
+        else
+            nYCheck = nBlockYSize;
+
+        /* this is a special case for a common situation */
+        if( poBlock->GetDataType() == GDT_Byte
+            && dfScale == 1.0 && (dfMin >= -0.5 && dfMin <= 0.5)
+            && nYCheck == nBlockYSize && nXCheck == nBlockXSize
+            && nBuckets == 256 )
+        {
+            int    nPixels = nXCheck * nYCheck;
+            GByte  *pabyData = (GByte *) poBlock->GetDataRef();
+            
+            for( int i = 0; i < nPixels; i++ )
+                panHistogram[pabyData[i]]++;
+            
+            continue; /* to next sample block */
+        }
+
+        /* this isn't the fastest way to do this, but is easier for now */
+        for( int iY = 0; iY < nYCheck; iY++ )
+        {
+            for( int iX = 0; iX < nXCheck; iX++ )
+            {
+                int    iOffset = iX + iY * nBlockXSize;
+                int    nIndex;
+
+                switch( poBlock->GetDataType() )
+                {
+                  case GDT_Byte:
+                    dfValue = ((GByte *) poBlock->GetDataRef())[iOffset];
+                    break;
+
+                  case GDT_UInt16:
+                    dfValue = ((GUInt16 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_Int16:
+                    dfValue = ((GInt16 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_UInt32:
+                    dfValue = ((GUInt32 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_Int32:
+                    dfValue = ((GInt32 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_Float32:
+                    dfValue = ((float *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_Float64:
+                    dfValue = ((double *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  default:
+                    CPLAssert( FALSE );
+                    return CE_Failure;
+                }
+                
+                nIndex = (int) floor((dfValue - dfMin) * dfScale);
+
+                if( nIndex < 0 )
+                {
+                    if( bIncludeOutOfRange )
+                        panHistogram[0]++;
+                }
+                else if( nIndex >= nBuckets )
+                {
+                    if( bIncludeOutOfRange )
+                        panHistogram[nBuckets-1]++;
+                }
+                else
+                {
+                    panHistogram[nIndex]++;
+                }
+            }
+        }
+    }
+
+    pfnProgress( 1.0, NULL, pProgressData );
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                       GDALGetRasterHistogram()                       */
+/************************************************************************/
+
+CPLErr GDALGetRasterHistogram( GDALRasterBandH hBand, 
+                               double dfMin, double dfMax, 
+                               int nBuckets, int *panHistogram, 
+                               int bIncludeOutOfRange, int bApproxOK,
+                               GDALProgressFunc pfnProgress, 
+                               void *pProgressData )
+
+{
+    return ((GDALRasterBand *) hBand)->
+        GetHistogram( dfMin, dfMax, nBuckets, panHistogram, 
+                      bIncludeOutOfRange, bApproxOK,
+                      pfnProgress, pProgressData );
+}
+                               
