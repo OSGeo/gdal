@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.47  2003/05/20 14:30:37  warmerda
+# fixed GetRasterBand logic
+#
 # Revision 1.46  2003/04/03 19:27:55  warmerda
 # added nullable string support, fixed ogr.Layer.SetAttributeFilter()
 #
@@ -344,7 +347,7 @@ class Dataset(MajorObject):
         return Driver(_obj= _gdal.GDALGetDatasetDriver(self._o))
 
     def GetRasterBand(self, i):
-        if i > 0 & i <= self.RasterCount:
+        if i > 0 and i <= self.RasterCount:
             return self._band[i-1]
         else:
             return None
