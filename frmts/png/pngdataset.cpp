@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.9  2001/08/23 03:32:37  warmerda
+ * implemented read/write support for transparency (colortable/nodata)
+ *
  * Revision 1.8  2001/08/22 17:12:07  warmerda
  * added world file support
  *
@@ -110,6 +113,9 @@ class PNGDataset : public GDALDataset
     int	   bGeoTransformValid;
     double adfGeoTransform[6];
 
+    int		bHaveNoData;
+    double 	dfNoDataValue;
+
     void        CollectMetadata();
     CPLErr      LoadScanline( int );
     void        Restart();
@@ -142,6 +148,7 @@ class PNGRasterBand : public GDALRasterBand
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
+    virtual double GetNoDataValue( int *pbSuccess = NULL );
 };
 
 
@@ -274,6 +281,21 @@ GDALColorTable *PNGRasterBand::GetColorTable()
 }
 
 /************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double PNGRasterBand::GetNoDataValue( int *pbSuccess )
+
+{
+    PNGDataset *poPDS = (PNGDataset *) poDS;
+
+    if( pbSuccess != NULL )
+        *pbSuccess = poPDS->bHaveNoData;
+
+    return poPDS->dfNoDataValue;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                             PNGDataset                               */
 /* ==================================================================== */
@@ -302,6 +324,9 @@ PNGDataset::PNGDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+
+    bHaveNoData = FALSE;
+    dfNoDataValue = -1;
 }
 
 /************************************************************************/
@@ -603,10 +628,16 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
         png_color *pasPNGPalette;
         int	nColorCount;
         GDALColorEntry oEntry;
+        unsigned char *trans = NULL;
+        png_color_16 *trans_values = NULL;
+        int	num_trans;
 
         if( png_get_PLTE( poDS->hPNG, poDS->psPNGInfo, 
                           &pasPNGPalette, &nColorCount ) == 0 )
             nColorCount = 0;
+
+        png_get_tRNS( poDS->hPNG, poDS->psPNGInfo, 
+                      &trans, &num_trans, &trans_values );
 
         poDS->poColorTable = new GDALColorTable();
 
@@ -615,9 +646,32 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
             oEntry.c1 = pasPNGPalette[iColor].red;
             oEntry.c2 = pasPNGPalette[iColor].green;
             oEntry.c3 = pasPNGPalette[iColor].blue;
-            oEntry.c4 = 255;
+
+            if( iColor < num_trans )
+                oEntry.c4 = trans[iColor];
+            else
+                oEntry.c4 = 255;
 
             poDS->poColorTable->SetColorEntry( iColor, &oEntry );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for transparency values in greyscale images.              */
+/* -------------------------------------------------------------------- */
+    if( poDS->nColorType == PNG_COLOR_TYPE_GRAY 
+        || poDS->nColorType == PNG_COLOR_TYPE_GRAY_ALPHA )
+    {
+        png_color_16 *trans_values = NULL;
+        unsigned char *trans;
+        int num_trans;
+
+        if( png_get_tRNS( poDS->hPNG, poDS->psPNGInfo, 
+                          &trans, &num_trans, &trans_values ) != 0 
+            && trans_values != NULL )
+        {
+            poDS->bHaveNoData = TRUE;
+            poDS->dfNoDataValue = trans_values->gray;
         }
     }
 
@@ -687,8 +741,10 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nColorType=0, nBitDepth;
     GDALDataType eType;
 
-    if( nBands == 1 )
+    if( nBands == 1 && poSrcDS->GetRasterBand(1)->GetColorTable() == NULL )
         nColorType = PNG_COLOR_TYPE_GRAY;
+    else if( nBands == 1 )
+        nColorType = PNG_COLOR_TYPE_PALETTE;
     else if( nBands == 2 )
         nColorType = PNG_COLOR_TYPE_GRAY_ALPHA;
     else if( nBands == 3 )
@@ -736,7 +792,83 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     png_set_IHDR( hPNG, psPNGInfo, nXSize, nYSize, 
                   nBitDepth, nColorType, PNG_INTERLACE_NONE, 
                   PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE );
-    
+
+/* -------------------------------------------------------------------- */
+/*      Try to handle nodata values as a tRNS block (note for           */
+/*      paletted images, we safe the effect to apply as part of         */
+/*      palette).  We don't try to address a nodata value for RGB       */
+/*      images.                                                         */
+/* -------------------------------------------------------------------- */
+    int		bHaveNoData = FALSE;
+    double	dfNoDataValue = -1;
+    png_color_16 sTRNSColor;
+
+    dfNoDataValue = poSrcDS->GetRasterBand(1)->GetNoDataValue( &bHaveNoData );
+
+    if( (nColorType == PNG_COLOR_TYPE_GRAY 
+         || nColorType == PNG_COLOR_TYPE_GRAY_ALPHA)
+        && dfNoDataValue > 0 && dfNoDataValue < 65536 )
+    {
+        sTRNSColor.gray = (int) dfNoDataValue;
+        png_set_tRNS( hPNG, psPNGInfo, NULL, 0, &sTRNSColor );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write palette if there is one.  Technically, I think it is      */
+/*      possible to write 16bit palettes for PNG, but we will omit      */
+/*      this for now.                                                   */
+/* -------------------------------------------------------------------- */
+    png_color	*pasPNGColors = NULL;
+    unsigned char	*pabyAlpha = NULL;
+
+    if( nColorType == PNG_COLOR_TYPE_PALETTE )
+    {
+        GDALColorTable	*poCT;
+        GDALColorEntry  sEntry;
+        int		iColor, bFoundTrans = FALSE;
+
+        poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
+
+        pasPNGColors = (png_color *) CPLMalloc(sizeof(png_color) *
+                                               poCT->GetColorEntryCount());
+
+        for( iColor = 0; iColor < poCT->GetColorEntryCount(); iColor++ )
+        {
+            poCT->GetColorEntryAsRGB( iColor, &sEntry );
+            if( sEntry.c4 != 255 )
+                bFoundTrans = TRUE;
+
+            pasPNGColors[iColor].red = sEntry.c1;
+            pasPNGColors[iColor].green = sEntry.c2;
+            pasPNGColors[iColor].blue = sEntry.c3;
+        }
+        
+        png_set_PLTE( hPNG, psPNGInfo, pasPNGColors, 
+                      poCT->GetColorEntryCount() );
+
+/* -------------------------------------------------------------------- */
+/*      If we have transparent elements in the palette we need to       */
+/*      write a transparency block.                                     */
+/* -------------------------------------------------------------------- */
+        if( bFoundTrans || bHaveNoData )
+        {
+
+            pabyAlpha = (unsigned char *)CPLMalloc(poCT->GetColorEntryCount());
+
+            for( iColor = 0; iColor < poCT->GetColorEntryCount(); iColor++ )
+            {
+                poCT->GetColorEntryAsRGB( iColor, &sEntry );
+                pabyAlpha[iColor] = sEntry.c4;
+
+                if( bHaveNoData && iColor == (int) dfNoDataValue )
+                    pabyAlpha[iColor] = 0;
+            }
+
+            png_set_tRNS( hPNG, psPNGInfo, pabyAlpha, 
+                          poCT->GetColorEntryCount(), NULL );
+        }
+    }
+
     png_write_info( hPNG, psPNGInfo );
 
 /* -------------------------------------------------------------------- */
@@ -768,6 +900,9 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     png_destroy_write_struct( &hPNG, &psPNGInfo );
 
     VSIFClose( fpImage );
+
+    CPLFree( pabyAlpha );
+    CPLFree( pasPNGColors );
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 }
