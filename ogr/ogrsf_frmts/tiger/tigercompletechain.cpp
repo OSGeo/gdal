@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/02/03 05:46:00  warmerda
+ * fixed problem with chains at EOF without shape points being dropped
+ *
  * Revision 1.16  2004/01/13 17:23:49  warmerda
  * recover more gracefully from RT2 open errors
  *
@@ -656,10 +659,14 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
         if( VSIFRead( achShapeRec, psRT2Info->nRecordLength, 1, fpShape ) != 1 )
         {
             if( !VSIFEof( fpShape ) )
+            {
                 CPLError( CE_Failure, CPLE_FileIO,
                           "Failed to read record %d of %s2",
                           nWorkingRecId-1, pszModule );
-            return -2;
+                return -2;
+            }
+            else
+                return -1;
         }
 
         if( atoi(GetField(achShapeRec,6,15)) == nTLID )
