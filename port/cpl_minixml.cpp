@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.28  2004/01/29 15:29:28  warmerda
+ * Added CPLCleanXMLElementName
+ *
  * Revision 1.27  2003/12/04 15:46:51  warmerda
  * Added CPLAddXMLSibling()
  *
@@ -1686,4 +1689,40 @@ int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
     return TRUE;
 }
 
+/************************************************************************/
+/*                       CPLCleanXMLElementName()                       */
+/************************************************************************/
 
+/**
+ * Make string into safe XML token.
+ *
+ * Modififies a string in place to try and make it into a legal
+ * XML token that can be used as an element name.   This is accomplished
+ * by changing any characters not legal in a token into an underscore. 
+ * 
+ * I haven't actually reviewed the XML specifications, so I am not sure 
+ * what is and is not legal.  However, this gives a good place to refine the
+ * rules when someone has the time to dig them up. 
+ *
+ * @param pszTarget the string to be adjusted.  It is altered in place. 
+ */
+
+void       CPL_DLL CPLCleanXMLElementName( char *pszTarget )
+
+{
+    if( pszTarget == NULL )
+        return;
+
+    for( ; *pszTarget != '\0'; pszTarget++ )
+    {
+        if( (*((unsigned char *) pszTarget) & 0x80) || isalnum( *pszTarget )
+            || *pszTarget == '_' || *pszTarget == '.' )
+        {
+            /* ok */
+        }
+        else
+        {
+            *pszTarget = '_';
+        }
+    }
+}
