@@ -30,6 +30,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2004/08/27 19:58:38  warmerda
+ * Don't delete clone records in Clear() method.  Leave this for the
+ * DDFModule destructor to do (re: DMSG Bug 3025).
+ *
  * Revision 1.8  2004/06/01 14:51:19  warmerda
  * expand tabs
  *
@@ -98,8 +102,13 @@ DDFRecordIndex::~DDFRecordIndex()
 void DDFRecordIndex::Clear()
 
 {
-    for( int i = 0; i < nRecordCount; i++ )
-        delete pasRecords[i].poRecord;
+    // It turns out that deleting these records here is very expensive
+    // due to the linear search in DDFModule::RemoveClone().  For now we
+    // just leave the clones depending on DDFModule::~DDFModule() to clean
+    // them up eventually.
+
+    //for( int i = 0; i < nRecordCount; i++ )
+    //  delete pasRecords[i].poRecord;
 
     CPLFree( pasRecords );
     pasRecords = NULL;
