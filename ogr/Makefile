@@ -2,7 +2,7 @@
 LINKFLAGS =	/Zi /MTd
 EXTRAFLAGS =	-I$(MSDASDK)\inc \
 		-I"$(VCDIR)\ATL\Include" -DWIN32 \
-		-I. -Iogrsf_frmts -I..\frmts\gtiff\libgeotiff /W3
+		-I. -Iogrsf_frmts -I..\frmts\gtiff\libgeotiff
 
 GDAL_ROOT = 	..
 
@@ -10,8 +10,7 @@ GDAL_ROOT = 	..
 
 OLE_LIBS =	oledb.lib ole32.lib oleaut32.lib 
 
-ALL_LIBS =	$(OLE_LIBS) $(GDAL_ROOT)/port/cpl.lib $(OGDILIB) \
-		$(XERCES_LIB) $(OCI_LIB) $(PG_LIB) $(LIBS)
+ALL_LIBS =	$(OLE_LIBS) $(GDAL_ROOT)/port/cpl.lib $(EXTERNAL_LIBS) $(LIBS)
 
 OGR_FRMTS =	ogrsf_frmts\ogrsf_frmts.lib ogrsf_frmts\ogrsf_frmts_sup.lib
 OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj ogr_api.obj \
@@ -67,7 +66,7 @@ ogroledb.lib:	$(OBJ_OLEDB)
 	lib /out:ogroledb.lib $(OBJ_OLEDB)
 
 sfcdump.exe:	geometryidl.h sfcdump.obj ogr.lib ogroledb.lib
-        cl $(LINKFLAGS) sfcdump.obj ogroledb.lib $(LINKARGS) \
+	cl $(LINKFLAGS) sfcdump.obj ogroledb.lib $(LINKARGS) \
 		/link $(LINKER_FLAGS)
 
 test1.exe:	test1.obj $(OBJ_OGR) $(DEPLIBS)
