@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/03/17 18:16:30  warmerda
+ * added support for linestring from nested seq, and floating point validity tests
+ *
  * Revision 1.4  2004/03/12 22:13:07  warmerda
  * major upgrade with normalized sequen nested sequence support
  *
@@ -338,19 +341,12 @@ BaseType *OGRDODSSequenceLayer::GetFieldValue( OGRDODSFieldDefn *poFDefn,
 }
 
 /************************************************************************/
-/*                       GetFieldValueAsDouble()                        */
+/*                          BaseTypeToDouble()                          */
 /************************************************************************/
 
-double OGRDODSSequenceLayer::GetFieldValueAsDouble( OGRDODSFieldDefn *poFDefn,
-                                                    int nFeatureId )
+double OGRDODSSequenceLayer::BaseTypeToDouble( BaseType *poBT )
 
 {
-    BaseType *poBT;
-
-    poBT = GetFieldValue( poFDefn, nFeatureId, NULL );
-    if( poBT == NULL )
-        return 0.0;
-
     switch( poBT->type() )
     {
       case dods_byte_c:
@@ -431,6 +427,23 @@ double OGRDODSSequenceLayer::GetFieldValueAsDouble( OGRDODSFieldDefn *poFDefn,
 }
 
 /************************************************************************/
+/*                       GetFieldValueAsDouble()                        */
+/************************************************************************/
+
+double OGRDODSSequenceLayer::GetFieldValueAsDouble( OGRDODSFieldDefn *poFDefn,
+                                                    int nFeatureId )
+
+{
+    BaseType *poBT;
+
+    poBT = GetFieldValue( poFDefn, nFeatureId, NULL );
+    if( poBT == NULL )
+        return 0.0;
+
+    return BaseTypeToDouble( poBT );
+}
+
+/************************************************************************/
 /*                             GetFeature()                             */
 /************************************************************************/
 
@@ -495,17 +508,6 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( long nFeatureId )
 
     poFeature = new OGRFeature( poFeatureDefn );
     poFeature->SetFID( nFeatureId );
-
-/* -------------------------------------------------------------------- */
-/*      Fetch the point information                                     */
-/* -------------------------------------------------------------------- */
-    if( oXField.bValid && oYField.bValid )
-    {
-        poFeature->SetGeometryDirectly( 
-            new OGRPoint( GetFieldValueAsDouble( &oXField, iSubSeq ),
-                          GetFieldValueAsDouble( &oYField, iSubSeq ),
-                          GetFieldValueAsDouble( &oZField, iSubSeq ) ) );
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Process all the regular data fields.                            */
@@ -769,6 +771,93 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( long nFeatureId )
         }
     }
     
+/* ==================================================================== */
+/*      Fetch the geometry.                                             */
+/* ==================================================================== */
+    if( oXField.bValid && oYField.bValid )
+    {
+        int iXField = poFeature->GetFieldIndex( oXField.pszFieldName );
+        int iYField = poFeature->GetFieldIndex( oYField.pszFieldName );
+        int iZField = -1;
+
+        if( oZField.bValid )
+            iZField = poFeature->GetFieldIndex(oZField.pszFieldName);
+
+/* -------------------------------------------------------------------- */
+/*      If we can't find the values in attributes then use the more     */
+/*      general mechanism to fetch the value.                           */
+/* -------------------------------------------------------------------- */
+        
+        if( iXField == -1 || iYField == -1 
+            || (oZField.bValid && iZField == -1) )
+        {
+            poFeature->SetGeometryDirectly( 
+                new OGRPoint( GetFieldValueAsDouble( &oXField, iSubSeq ),
+                              GetFieldValueAsDouble( &oYField, iSubSeq ),
+                              GetFieldValueAsDouble( &oZField, iSubSeq ) ) );
+        }
+/* -------------------------------------------------------------------- */
+/*      If the fields are list values, then build a linestring.         */
+/* -------------------------------------------------------------------- */
+        else if( poFeature->GetFieldDefnRef(iXField)->GetType() == OFTRealList
+            && poFeature->GetFieldDefnRef(iYField)->GetType() == OFTRealList )
+        {
+            const double *padfX, *padfY, *padfZ = NULL;
+            int nPointCount, i;
+            OGRLineString *poLS = new OGRLineString();
+            
+            padfX = poFeature->GetFieldAsDoubleList( iXField, &nPointCount );
+            padfY = poFeature->GetFieldAsDoubleList( iYField, &nPointCount );
+            if( iZField != -1 )
+                padfZ = poFeature->GetFieldAsDoubleList(iZField,&nPointCount);
+
+            poLS->setPoints( nPointCount, (double *) padfX, (double *) padfY,
+                             (double *) padfZ );
+
+            // Make a pass clearing out NaN or Inf values. 
+            for( i = 0; i < nPointCount; i++ )
+            {
+                double dfX = poLS->getX(i);
+                double dfY = poLS->getY(i);
+                double dfZ = poLS->getZ(i);
+                int bReset = FALSE;
+
+                if( OGRDODSIsDoubleInvalid( &dfX ) )
+                {
+                    dfX = 0.0;
+                    bReset = TRUE;
+                }
+                if( OGRDODSIsDoubleInvalid( &dfY ) )
+                {
+                    dfY = 0.0;
+                    bReset = TRUE;
+                }
+                if( OGRDODSIsDoubleInvalid( &dfZ ) )
+                {
+                    dfZ = 0.0;
+                    bReset = TRUE;
+                }
+
+                if( bReset )
+                    poLS->setPoint( i, dfX, dfY, dfZ );
+            }
+
+            poFeature->SetGeometryDirectly( poLS );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise build a point.                                        */
+/* -------------------------------------------------------------------- */
+        else
+        {
+            poFeature->SetGeometryDirectly( 
+                new OGRPoint( 
+                    poFeature->GetFieldAsDouble( iXField ),
+                    poFeature->GetFieldAsDouble( iYField ),
+                    poFeature->GetFieldAsDouble( iZField ) ) );
+        }
+    }
+
     return poFeature;
 }
 
@@ -838,4 +927,119 @@ int OGRDODSSequenceLayer::ProvideDataDDS()
     }
 
     return poTargetVar != NULL;
+}
+
+/* IEEE Constants:
+
+  http://www.psc.edu/general/software/packages/ieee/ieee.html
+
+Single Precision:
+
+  S EEEEEEEE FFFFFFFFFFFFFFFFFFFFFFF
+  0 1      8 9                    31
+
+The value V represented by the word may be determined as follows:
+
+    * If E=255 and F is nonzero, then V=NaN ("Not a number")
+    * If E=255 and F is zero and S is 1, then V=-Infinity
+    * If E=255 and F is zero and S is 0, then V=Infinity
+    * If 0<E<255 then V=(-1)**S * 2 ** (E-127) * (1.F) where "1.F" is intended to represent the binary number created by prefixing F with an implicit leading 1 and a binary point.
+    * If E=0 and F is nonzero, then V=(-1)**S * 2 ** (-126) * (0.F) These are "unnormalized" values.
+    * If E=0 and F is zero and S is 1, then V=-0
+    * If E=0 and F is zero and S is 0, then V=0 
+
+In particular,
+
+  0 00000000 00000000000000000000000 = 0
+  1 00000000 00000000000000000000000 = -0
+
+  0 11111111 00000000000000000000000 = Infinity
+  1 11111111 00000000000000000000000 = -Infinity
+
+  0 11111111 00000100000000000000000 = NaN
+  1 11111111 00100010001001010101010 = NaN
+
+  0 10000000 00000000000000000000000 = +1 * 2**(128-127) * 1.0 = 2
+  0 10000001 10100000000000000000000 = +1 * 2**(129-127) * 1.101 = 6.5
+  1 10000001 10100000000000000000000 = -1 * 2**(129-127) * 1.101 = -6.5
+
+  0 00000001 00000000000000000000000 = +1 * 2**(1-127) * 1.0 = 2**(-126)
+  0 00000000 10000000000000000000000 = +1 * 2**(-126) * 0.1 = 2**(-127) 
+  0 00000000 00000000000000000000001 = +1 * 2**(-126) * 
+                                       0.00000000000000000000001 = 
+                                       2**(-149)  (Smallest positive value)
+
+Double Precision:
+
+The IEEE double precision floating point standard representation requires a 64 bit word, which may be represented as numbered from 0 to 63, left to right. The first bit is the sign bit, S, the next eleven bits are the exponent bits, 'E', and the final 52 bits are the fraction 'F':
+
+  S EEEEEEEEEEE FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+  0 1        11 12                                                63
+
+The value V represented by the word may be determined as follows:
+
+    * If E=2047 and F is nonzero, then V=NaN ("Not a number")
+    * If E=2047 and F is zero and S is 1, then V=-Infinity
+    * If E=2047 and F is zero and S is 0, then V=Infinity
+    * If 0<E<2047 then V=(-1)**S * 2 ** (E-1023) * (1.F) where "1.F" is intended to represent the binary number created by prefixing F with an implicit leading 1 and a binary point.
+    * If E=0 and F is nonzero, then V=(-1)**S * 2 ** (-1022) * (0.F) These are "unnormalized" values.
+    * If E=0 and F is zero and S is 1, then V=-0
+    * If E=0 and F is zero and S is 0, then V=0 
+
+*/
+
+/************************************************************************/
+/*                       OGRDODSIsFloatInvalid()                        */
+/*                                                                      */
+/*      For now we are really just checking if the value is NaN, Inf    */
+/*      or -Inf.                                                        */
+/************************************************************************/
+
+
+int OGRDODSIsFloatInvalid( const float * pfValToCheck )
+
+{
+    const unsigned char *pabyValToCheck = (unsigned char *) pfValToCheck;
+
+#if CPL_IS_LSB == 0
+    if( (pabyValToCheck[0] & 0x7f) == 0x7f 
+        && (pabyValToCheck[1] & 0x80) == 0x80 )
+        return TRUE;
+    else 
+        return FALSE;
+#else
+    if( pabyValToCheck[3] & 0x7f == 0x7f 
+        && pabyValToCheck[2] & 0x80 == 0x80 )
+        return TRUE;
+    else 
+        return FALSE;
+#endif
+}
+
+/************************************************************************/
+/*                       OGRDODSIsDoubleInvalid()                       */
+/*                                                                      */
+/*      For now we are really just checking if the value is NaN, Inf    */
+/*      or -Inf.                                                        */
+/************************************************************************/
+
+
+int OGRDODSIsDoubleInvalid( const double * pdfValToCheck )
+
+{
+    const unsigned char *pabyValToCheck = (unsigned char *) pdfValToCheck;
+
+#if CPL_IS_LSB == 0 
+    if( pabyValToCheck[0] & 0x7f == 0x7f 
+        && pabyValToCheck[1] & 0xf0 == 0xf0 )
+        return TRUE;
+    else 
+        return FALSE;
+#else
+    if( (pabyValToCheck[7] & 0x7f) == 0x7f 
+        && (pabyValToCheck[6] & 0xf0) == 0xf0 )
+        return TRUE;
+    else 
+        return FALSE;
+#endif
 }
