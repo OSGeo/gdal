@@ -101,7 +101,7 @@ GDAL is hosted at remotesensing.org.<p>
 <li> <a href="ogr/osr_tutorial.html">OGRSpatialReference Tutorial</a>: My OGR 
 encapsulation of OpenGIS projection definitions.<p>
 
-<li> <a href="http://keittlab.bio.sunysb.edu/R/GDAL/">GDAL Bindings into R.</a>
+<li> <a href="http://rgdal.sourceforge.net/">GDAL Bindings into R</a>
 by Timothy H. Keitt.<p>
 
 <li> GDAL is available as an RPM on the FreeGIS CD's, and list is
