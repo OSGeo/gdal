@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/01/25 20:37:23  warmerda
+ * added driver and related classes
+ *
  * Revision 1.1  2002/01/24 17:39:22  warmerda
  * New
  *
@@ -39,8 +42,119 @@
 #define _OGR_GML_H_INCLUDED
 
 #include "ogrsf_frmts.h"
+#include "gmlreader.h"
 
+/* -------------------------------------------------------------------- */
+/*      Simple GML geometry conversion functions.                       */
+/* -------------------------------------------------------------------- */
 OGRGeometry *GML2OGRGeometry( const char * );
-const char *OGR2GMLGeometry( OGRGeometry * );
+char *OGR2GMLGeometry( OGRGeometry * );
+
+class OGRGMLDataSource;
+
+/************************************************************************/
+/*                            OGRGMLLayer                               */
+/************************************************************************/
+
+class OGRGMLLayer : public OGRLayer
+{
+    OGRSpatialReference *poSRS;
+    OGRFeatureDefn     *poFeatureDefn;
+    OGRGeometry		*poFilterGeom;
+
+    int			iNextGMLId;
+    int			nTotalGMLCount;
+
+    int			bWriter;
+
+    OGRGMLDataSource    *poDS;
+
+    GMLFeatureClass     *poFClass;
+
+  public:
+                        OGRGMLLayer( const char * pszName, 
+                                     OGRSpatialReference *poSRS, 
+                                     int bWriter,
+                                     OGRwkbGeometryType eType,
+                                     OGRGMLDataSource *poDS );
+
+    			~OGRGMLLayer();
+
+    OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
+    void		SetSpatialFilter( OGRGeometry * );
+
+    void		ResetReading();
+    OGRFeature *	GetNextFeature();
+
+    OGRErr              CreateFeature( OGRFeature *poFeature );
+    
+    OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
+
+    virtual OGRErr      CreateField( OGRFieldDefn *poField,
+                                     int bApproxOK = TRUE );
+
+    virtual OGRSpatialReference *GetSpatialRef();
+    
+    int                 TestCapability( const char * );
+};
+
+/************************************************************************/
+/*                           OGRGMLDataSource                           */
+/************************************************************************/
+
+class OGRGMLDataSource : public OGRDataSource
+{
+    OGRGMLLayer     **papoLayers;
+    int			nLayers;
+    
+    char		*pszName;
+    
+    OGRGMLLayer         *TranslateGMLSchema( GMLFeatureClass * );
+
+    // output related parameters 
+    FILE		*fpOutput;
+
+    // input related parameters.
+    IGMLReader		*poReader;
+
+  public:
+    			OGRGMLDataSource();
+    			~OGRGMLDataSource();
+
+    int			Open( const char *, int bTestOpen );
+    int                 Create( const char *pszFile, char **papszOptions );
+
+    const char	        *GetName() { return pszName; }
+    int			GetLayerCount() { return nLayers; }
+    OGRLayer		*GetLayer( int );
+
+    virtual OGRLayer    *CreateLayer( const char *, 
+                                      OGRSpatialReference * = NULL,
+                                      OGRwkbGeometryType = wkbUnknown,
+                                      char ** = NULL );
+
+    int                 TestCapability( const char * );
+
+    FILE		*GetOutputFP() { return fpOutput; }
+    IGMLReader          *GetReader() { return poReader; }
+};
+
+/************************************************************************/
+/*                             OGRGMLDriver                             */
+/************************************************************************/
+
+class OGRGMLDriver : public OGRSFDriver
+{
+  public:
+    		~OGRGMLDriver();
+                
+    const char *GetName();
+    OGRDataSource *Open( const char *, int );
+
+    virtual OGRDataSource *CreateDataSource( const char *pszName,
+                                             char ** = NULL );
+    
+    int                 TestCapability( const char * );
+};
 
 #endif /* _OGR_GML_H_INCLUDED */
