@@ -1,5 +1,8 @@
 2002-03-27  Frank Warmerdam  <warmerdam@pobox.com>
 
+	* ogr/ogrsf_frmts/generic/ogrlayer.cpp: Added working default
+	implementation of GetFeature(fid) method.
+
 	* ogr/ogrtindex.cpp: New program for creating MapServer compatible
 	index files for OGR data sources.
 
