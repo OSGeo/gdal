@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2004/11/12 15:37:46  fwarmerdam
+ * Added logic to compute the channel type if it is missing from
+ * the channel header.
+ *
  * Revision 1.10  2004/01/31 09:27:19  dron
  * Fixed number of projection parameters mismatch.
  *
@@ -625,6 +629,21 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
 
         pszString = CPLScanString( szTemp + 160, 8, TRUE, FALSE );
         eType = poDS->PCIDSKTypeToGDAL( pszString );
+
+        // Old files computed type based on list.
+        if( eType == GDT_Unknown && pszString[0] == '\0' )
+        {
+            if( iBand < nByteBands )
+                eType = GDT_Byte;
+            else if( iBand < nByteBands + nInt16Bands )
+                eType = GDT_Int16;
+            else if( iBand < nByteBands + nInt16Bands + nUInt16Bands )
+                eType = GDT_UInt16;
+            else if( iBand < nByteBands + nInt16Bands  + nUInt16Bands
+                     + nFloat32Bands )
+                eType = GDT_Float32;
+        }
+
         if ( eType == GDT_Unknown )
         {
             CPLDebug( "PCIDSK",
