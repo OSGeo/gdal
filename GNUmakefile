@@ -1,6 +1,6 @@
 
 GDAL_ROOT	=	.
-WEB_DIR		= /web/remotesensing/gdal
+WEB_DIR		= $(HOME)/www/gdal
 
 include GDALmake.opt
 
