@@ -5,10 +5,10 @@
  * Purpose:  HDF4 Datasets. Open HDF4 file, fetch metadata and list of
  *           subdatasets.
  *           This driver initially based on code supplied by Markus Neteler
- * Author:   Andrey Kiselev, dron@at1895.spb.edu
+ * Author:   Andrey Kiselev, dron@remotesensing.org
  *
  ******************************************************************************
- * Copyright (c) 2002, Andrey Kiselev <dron@at1895.spb.edu>
+ * Copyright (c) 2002, Andrey Kiselev <dron@remotesensing.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.18  2003/02/27 14:28:55  dron
+ * Fixes in HDF-EOS metadata parsing algorithm.
+ *
  * Revision 1.17  2002/12/19 17:42:57  dron
  * Size of string buffer in TranslateHDF4EOSAttributes() fixed.
  *
@@ -121,7 +124,7 @@ HDF4Dataset::HDF4Dataset()
 }
 
 /************************************************************************/
-/*                            ~HDF4Dataset()                         */
+/*                            ~HDF4Dataset()                            */
 /************************************************************************/
 
 HDF4Dataset::~HDF4Dataset()
@@ -546,8 +549,8 @@ char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
     // (<number>,<number>,...)
     //
     // Records within objects may follows in any order, objects may contains
-    // other objects, groups contains other groups and objects. Names of
-    // groups and objects are not unique and may repeats.
+    // other objects (and lacks VALUE record), groups contains other groups
+    // and objects. Names of groups and objects are not unique and may repeat.
     // Objects may contains other types of records.
     //
     // We are interested in OBJECTS structures only.
@@ -568,6 +571,11 @@ char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
 	    {
 	        if ( EQUAL( papszAttrList[i + j], "END_OBJECT" ) )
 	            break;
+		else if ( EQUAL( papszAttrList[i + j], "OBJECT" ) )
+		{
+		    i = i + j - 1;
+		    break;
+		}
 	        else if ( EQUAL( papszAttrList[i + j], "VALUE" ) )
 	        {
 		    i += j;
@@ -646,50 +654,50 @@ char** HDF4Dataset::TranslateHDF4Attributes( int32 iHandle,
     switch (iNumType)
     {
         case DFNT_CHAR8: // The same as DFNT_CHAR
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pbData );
+        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pbData );
 	break;
 	case DFNT_UCHAR8: // The same as DFNT_UCHAR
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pbData );
+        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pbData );
 	break;
         case DFNT_INT8:
 	pszTemp = SPrintArray( (signed char *)pbData, nValues, ", " );
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
+        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
         case DFNT_UINT8:
 	pszTemp = SPrintArray( (GByte *)pbData, nValues, ", " );
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
+        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
         case DFNT_INT16:
 	pszTemp = SPrintArray( (GInt16 *)pbData, nValues, ", " );
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
+        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
         case DFNT_UINT16:
 	pszTemp = SPrintArray( (GUInt16 *)pbData, nValues, ", " );
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
+        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
         case DFNT_INT32:
 	pszTemp = SPrintArray( (GInt32 *)pbData, nValues, ", " );
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
+        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
         case DFNT_UINT32:
 	pszTemp = SPrintArray( (GUInt32 *)pbData, nValues, ", " );
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
+        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
         case DFNT_INT64:
 	pszTemp = SPrintArray( (GIntBig *)pbData, nValues, ", " );
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
+        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
         case DFNT_UINT64:
 	pszTemp = SPrintArray( (GUIntBig *)pbData, nValues, ", " );
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
+        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
         case DFNT_FLOAT32:
 	pszTemp = SPrintArray((float *)pbData, nValues, ", ");
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
+        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
         case DFNT_FLOAT64:
 	pszTemp = SPrintArray((double *)pbData, nValues, ", ");
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
+        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
 	default:
 	break;
