@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2003/05/06 05:13:36  sperkins
+ * 	* core/gdalrasterband.cpp: Added C++ Fill() method and
+ * 	corresponding C GDALFillRaster() method.
+ *
  * Revision 1.42  2003/04/25 19:47:57  warmerda
  * added RasterIO on GDALDataset, added lock count on blocks
  *
@@ -487,6 +491,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual const char *GetUnitType();
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
+    virtual CPLErr Fill(double dfRealValue, double dfImaginaryValue = 0);
 
     virtual CPLErr SetCategoryNames( char ** );
     virtual CPLErr SetNoDataValue( double );
