@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2004/03/04 16:58:05  warmerda
+ * Fixed up memory leak of results set column definition info.
+ *
  * Revision 1.11  2004/03/04 05:41:21  warmerda
  * Modified Fetch() method to use SQLFetch() for cases it would be
  * sufficient for.  The SQLScrollFetch() isn't implemented on some brain
@@ -68,6 +71,7 @@
 
 #include "cpl_odbc.h"
 #include "cpl_vsi.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -258,7 +262,6 @@ CPLODBCStatement::CPLODBCStatement( CPLODBCSession *poSession )
 CPLODBCStatement::~CPLODBCStatement()
 
 {
-    ClearColumnData();
     Clear();
 
     if( m_hStmt != NULL )
@@ -352,7 +355,7 @@ int CPLODBCStatement::CollectResultsInfo()
             return FALSE;
 
         szColName[nNameLength] = '\0';
-        m_papszColNames[iCol] = strdup(szColName);
+        m_papszColNames[iCol] = CPLStrdup(szColName);
     }
 
     return TRUE;
@@ -851,17 +854,44 @@ int CPLODBCStatement::Appendf( const char *pszFormat, ... )
 /************************************************************************/
 
 /**
- * Clear internal command text.
+ * Clear internal command text and result set definitions.
  */
 
 void CPLODBCStatement::Clear()
 
 {
+    ClearColumnData();
+
     if( m_pszStatement != NULL )
+    {
         VSIFree( m_pszStatement );
+        m_pszStatement = NULL;
+    }
 
     m_nStatementLen = 0;
     m_nStatementMax = 0;
+
+    if( m_papszColNames )
+    {
+        CPLFree( m_panColType );
+        m_panColType = NULL;
+
+        CPLFree( m_panColSize );
+        m_panColSize = NULL;
+
+        CPLFree( m_panColPrecision );
+        m_panColPrecision = NULL;
+
+        CPLFree( m_panColNullable );
+        m_panColNullable = NULL;
+
+        CSLDestroy( m_papszColNames );
+        m_papszColNames = NULL;
+
+        CPLFree( m_papszColValues );
+        m_papszColValues = NULL;
+    }
+
 }
 
 /************************************************************************/
@@ -949,7 +979,7 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
 
         SQLGetData( m_hStmt, 4, SQL_C_CHAR, szWrkData, sizeof(szWrkData)-1, 
                     &cbDataLen );
-        m_papszColNames[iCol] = strdup(szWrkData);
+        m_papszColNames[iCol] = CPLStrdup(szWrkData);
 
         SQLGetData( m_hStmt, 5, SQL_C_CHAR, szWrkData, sizeof(szWrkData)-1, 
                     &cbDataLen );
