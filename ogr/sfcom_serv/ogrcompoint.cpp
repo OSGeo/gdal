@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/05/21 02:39:50  warmerda
+ * Added IWks support
+ *
  * Revision 1.4  1999/05/17 14:43:10  warmerda
  * Added Polygon, linestring and curve support.  Changed IGeometryTmpl to
  * also include COM interface class as an argument.
@@ -74,6 +77,10 @@ STDMETHODIMP OGRComPoint::QueryInterface(REFIID rIID,
 
    else if (rIID == IID_IGeometry) {
       *ppInterface = this;
+   }
+
+   else if (rIID == IID_IWks) {
+      *ppInterface = &oWks;
    }
 
    else if (rIID == IID_IPoint) {

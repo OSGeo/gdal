@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/05/21 02:39:50  warmerda
+ * Added IWks support
+ *
  * Revision 1.6  1999/05/20 19:46:15  warmerda
  * add some automatation, and Wkt support
  *
@@ -58,6 +61,7 @@
 #include "geometryidl.h"
 #include "ogr_geometry.h"
 #include "ocg_public.h"
+#include "cpl_conv.h"
 
 void OGRComDebug( const char *, const char *, ... );
 
@@ -89,7 +93,10 @@ protected:
 };
 
 /************************************************************************/
-/*                   OGRComGeometryFactoryDispatcher                    */
+/*                  OGRComGeometryFactoryDispatcher()                   */
+/*                                                                      */
+/*      Note: it appears at this time that this class is not            */
+/*      necessary.  It is kept for reference.                           */
 /************************************************************************/
 
 class OGRComGeometryFactory;
@@ -142,7 +149,34 @@ class OGRComGeometryFactory : public IGeometryFactory
     OGRComGeometryFactoryDispatcher oDispatcher;
 };
 
+/************************************************************************/
+/*                             OGRComWks()                              */
+/*                                                                      */
+/*      This class implements the IWks and is intended to be            */
+/*      aggregated with all IGeometry classes.                          */
+/************************************************************************/
 
+class OGRComWks : public IWks
+{
+    IUnknown       *pOuter;            // ref to outer object
+    OGRGeometry    *poOGRGeometry;     // ref to outer objects geometry
+
+  public:
+                      OGRComWks();
+
+   void               Initialize( IUnknown *, OGRGeometry * );
+
+   // IUnknown
+   STDMETHODIMP         QueryInterface(REFIID, void **);
+   STDMETHODIMP_(ULONG) AddRef();
+   STDMETHODIMP_(ULONG) Release();
+
+   // IWks
+   STDMETHOD(ExportToWKB)(VARIANT *wkb);
+   STDMETHOD(ExportToWKT)(BSTR *wkt);
+   STDMETHOD(ImportFromWKB)(VARIANT wkb, ISpatialReference *spatialRef);
+   STDMETHOD(ImportFromWKT)(BSTR wkt, ISpatialReference *spatialRef);
+};
 
 /************************************************************************/
 /*                          OGRComGeometryTmpl                          */
@@ -163,6 +197,7 @@ template<class GC, class IC> class OGRComGeometryTmpl : public IC
 {
   public:
                          OGRComGeometryTmpl( GC * );
+    virtual              ~OGRComGeometryTmpl();
                          
     // IUnknown
     STDMETHODIMP_(ULONG) AddRef();
@@ -182,6 +217,8 @@ template<class GC, class IC> class OGRComGeometryTmpl : public IC
                         double *maxX, double *maxY);
 
   protected:
+    OGRComWks  oWks;
+    
     ULONG      m_cRef;
 
     GC         *poGeometry;

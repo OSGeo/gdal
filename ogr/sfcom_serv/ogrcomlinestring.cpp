@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/21 02:39:50  warmerda
+ * Added IWks support
+ *
  * Revision 1.1  1999/05/17 14:40:50  warmerda
  * New
  *
@@ -76,6 +79,10 @@ STDMETHODIMP OGRComLineString::QueryInterface(REFIID rIID,
 
    else if (rIID == IID_ILinearRing) {
       *ppInterface = this;
+   }
+
+   else if (rIID == IID_IWks) {
+      *ppInterface = &oWks;
    }
 
    // We don't support this interface

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/21 02:39:50  warmerda
+ * Added IWks support
+ *
  * Revision 1.2  1999/05/17 14:43:10  warmerda
  * Added Polygon, linestring and curve support.  Changed IGeometryTmpl to
  * also include COM interface class as an argument.
@@ -47,6 +50,19 @@ OGRComGeometryTmpl<GC,IC>::OGRComGeometryTmpl<GC,IC>( GC * poGeometryIn )
 {
     poGeometry = poGeometryIn;
     m_cRef = 0;
+    oWks.Initialize( this, poGeometry );
+//    OGRComDebug( "lifetime", "<Create %s>\n", poGeometry->getGeometryName());
+}
+
+/************************************************************************/
+/*                        ~OGRComGeometryTmpl()                         */
+/************************************************************************/
+
+template<class GC,class IC> 
+OGRComGeometryTmpl<GC,IC>::~OGRComGeometryTmpl<GC,IC>()
+
+{
+//   OGRComDebug( "lifetime", "<Destroy %s>\n", poGeometry->getGeometryName());
 }
 
 // =======================================================================

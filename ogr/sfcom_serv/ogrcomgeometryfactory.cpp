@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/05/21 02:39:50  warmerda
+ * Added IWks support
+ *
  * Revision 1.5  1999/05/20 19:46:15  warmerda
  * add some automatation, and Wkt support
  *
@@ -199,7 +202,12 @@ OGRComGeometryFactory::CreateFromWKB( VARIANT wkb,
 
     // notdef: not doing anything with spatial ref yet. 
 
-    assert( wkb.vt == (VT_UI1 | VT_ARRAY) );
+    if( wkb.vt != (VT_UI1 | VT_ARRAY) )
+    {
+        OGRComDebug( "failure", 
+                     "Didn't get a UI1|ARRAY VARIANT in CreateFromWKB()\n" );
+        return E_FAIL;
+    }
 
     SafeArrayAccessData( *(wkb.pparray), (void **) &pabyRawData );
     eErr = OGRGeometryFactory::createFromWkb( pabyRawData, NULL,
