@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2005/02/18 21:52:44  fwarmerdam
+ * Fixed support for .prj files with blank lines between the parameters.
+ *
  * Revision 1.37  2005/01/13 16:32:27  fwarmerdam
  * added support for fipszone for stateplane
  *
@@ -549,7 +552,14 @@ static double OSR_GDV( char **papszNV, const char * pszField,
 
         for( nOffset=atoi(pszField+6); 
              papszNV[iLine] != NULL && nOffset > 0; 
-             nOffset--, iLine++ ) {}
+             iLine++ ) 
+        {
+            if( strlen(papszNV[iLine]) > 0 )
+                nOffset--;
+        }
+        
+        while( papszNV[iLine] != NULL && strlen(papszNV[iLine]) == 0 ) 
+            iLine++;
 
         if( papszNV[iLine] != NULL )
         {
@@ -575,8 +585,10 @@ static double OSR_GDV( char **papszNV, const char * pszField,
                 if( atof(papszTokens[0]) < 0.0 )
                     dfValue *= -1;
             }
-            else
+            else if( CSLCount(papszTokens) > 0 )
                 dfValue = atof(papszTokens[0]);
+            else
+                dfValue = dfDefaultValue;
 
             CSLDestroy( papszTokens );
 
