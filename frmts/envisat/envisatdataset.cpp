@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/04/26 14:53:22  warmerda
+ * added EscapedRecord for metadata
+ *
  * Revision 1.9  2002/04/16 17:53:33  warmerda
  * Initialize variables.
  *
@@ -347,12 +350,20 @@ char **EnvisatDataset::GetMetadata( const char * pszDomain )
 /*      Massage the data into a safe textual format.  For now we        */
 /*      just turn zero bytes into spaces.                               */
 /* -------------------------------------------------------------------- */
+    char *pszEscapedRecord;
+
+    CSLDestroy( papszTempMD );
+
+    pszEscapedRecord = CPLEscapeString( pszRecord, nDSRSize, 
+                                        CPLES_BackslashQuotable );
+    papszTempMD = CSLSetNameValue( NULL, "EscapedRecord", pszEscapedRecord );
+    CPLFree( pszEscapedRecord );
+
     for( i = 0; i < nDSRSize; i++ )
         if( pszRecord[i] == '\0' )
             pszRecord[i] = ' ';
 
-    CSLDestroy( papszTempMD );
-    papszTempMD = CSLSetNameValue( NULL, "RawRecord", pszRecord );
+    papszTempMD = CSLSetNameValue( papszTempMD, "RawRecord", pszRecord );
 
     CPLFree( pszRecord );
 
