@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2003/04/02 19:05:59  dron
+ * Large file support.
+ *
  * Revision 1.26  2003/03/18 19:03:44  gwalter
  * Add flushing, fix coordinate interpretation.
  *
@@ -227,7 +230,7 @@ MFFTiledBand::MFFTiledBand( MFFDataset *poDS, int nBand, FILE *fp,
 MFFTiledBand::~MFFTiledBand()
 
 {
-    VSIFClose( fpRaw );
+    VSIFCloseL( fpRaw );
 }
 
 
@@ -249,8 +252,8 @@ CPLErr MFFTiledBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     nOffset = nBlockSize * (nBlockXOff + nBlockYOff*nTilesPerRow);
 
-    if( VSIFSeek( fpRaw, nOffset, SEEK_SET ) == -1 
-        || VSIFRead( pImage, 1, nBlockSize, fpRaw ) < 1 )
+    if( VSIFSeekL( fpRaw, nOffset, SEEK_SET ) == -1 
+        || VSIFReadL( pImage, 1, nBlockSize, fpRaw ) < 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
                   "Read of tile %d/%d failed with fseek or fread error.", 
@@ -362,7 +365,7 @@ MFFDataset::~MFFDataset()
         for( int i = 0; i < GetRasterCount(); i++ )
         {
             if( pafpBandFiles[i] != NULL )
-                VSIFClose( pafpBandFiles[i] );
+                VSIFCloseL( pafpBandFiles[i] );
         }
         CPLFree( pafpBandFiles );
     }
@@ -906,9 +909,9 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
                                                      papszDirFiles[i], NULL );
 
         if( poOpenInfo->eAccess == GA_Update )
-            fpRaw = VSIFOpen( pszRawFilename, "rb+" );
+            fpRaw = VSIFOpenL( pszRawFilename, "rb+" );
         else
-            fpRaw = VSIFOpen( pszRawFilename, "rb" );
+            fpRaw = VSIFOpenL( pszRawFilename, "rb" );
         
         if( fpRaw == NULL )
         {
@@ -988,7 +991,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
             poBand = 
                 new RawRasterBand( poDS, nBand, fpRaw, 0, nPixelOffset,
                                    nPixelOffset * poDS->GetRasterXSize(),
-                                   eDataType, bNative );
+                                   eDataType, bNative, TRUE );
         }
 
         poDS->SetBand( nBand, poBand );
@@ -1383,17 +1386,16 @@ MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     /* MFF requires corner and center gcps */
     double	*padfTiepoints;
-    int src_prj;
-    int georef_created = FALSE;
+    int         src_prj;
+    int         georef_created = FALSE;
 
-    padfTiepoints = (double *) 
-        CPLMalloc(2*sizeof(double)*5);
+    padfTiepoints = (double *) CPLMalloc(2*sizeof(double)*5);
 
     src_prj = GetMFFProjectionType(poSrcDS->GetProjectionRef());
 
     if ((src_prj != MFFPRJ_NONE) && (src_prj != MFFPRJ_UNRECOGNIZED))
     {
-      double *tempGeoTransform=NULL; 
+      double    *tempGeoTransform = NULL; 
 
       tempGeoTransform = (double *) CPLMalloc(6*sizeof(double));
 
