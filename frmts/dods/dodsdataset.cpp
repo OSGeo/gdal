@@ -528,7 +528,7 @@ DODSDataset::get_geo_info(DAS &das, DDS &dds) throw(Error)
 
     //Set a full coordinate system from "spatial_ref" in WKT or any user input.
     value = at->get_attr(spatial_ref);
-    if( value != "" value != "None" )
+    if( value != "" && value != "None" )
     {
         DBG(cerr << spatial_ref << ": " << value << endl);
         
@@ -1341,6 +1341,9 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 // $Log$
+// Revision 1.12  2004/09/15 12:26:29  fwarmerdam
+// Fixed up last change.
+//
 // Revision 1.11  2004/09/08 15:33:55  warmerda
 // added support for spatial_ref (WKT)
 //
