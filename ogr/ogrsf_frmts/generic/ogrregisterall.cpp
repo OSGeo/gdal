@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/01/30 02:33:29  warmerda
+ * added OGRDODS
+ *
  * Revision 1.17  2003/11/07 22:06:10  warmerda
  * reorder registration
  *
@@ -104,6 +107,9 @@ void OGRRegisterAll()
     RegisterOGRREC();
     RegisterOGRMEM();
     RegisterOGRGML();
+#ifdef DODS_ENABLED
+    RegisterOGRDODS();
+#endif
 #ifdef ODBC_ENABLED
     RegisterOGRODBC();
 #endif
