@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2004/10/01 13:28:26  fwarmerdam
+ * Fixed osr_tutorial link.
+ *
  * Revision 1.41  2003/05/21 04:45:39  warmerda
  * avoid warings about unused formal parameters
  *
@@ -619,7 +622,7 @@ int GDALGetRasterCount( GDALDatasetH hDS )
  * @return a pointer to an internal projection reference string.  It should
  * not be altered, freed or expected to last for long. 
  *
- * @see http://gdal.velocet.ca/projects/opengis/ogrhtml/osr_tutorial.html
+ * @see http://www.gdal.org/ogr/osr_tutorial.html
  */
 
 const char *GDALDataset::GetProjectionRef()
