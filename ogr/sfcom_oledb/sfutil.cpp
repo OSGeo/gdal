@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/05/06 15:12:39  warmerda
+ * improve IErrorInfo support
+ *
  * Revision 1.16  2002/05/02 19:51:36  warmerda
  * improve wkbGeomTypeToDBGEOM for other 3D geom types
  *
@@ -94,6 +97,113 @@ typedef struct _IUnknownOGRInfo
 }  IUnknownOGRInfo;
 
 static IUnknownOGRInfo *pIUnkOGRInfo = NULL;
+
+/* our custom error info seems to work ok, and the old method doesn't
+   so for now it is always on.
+*/
+#ifndef SUPPORT_CUSTOM_IERRORINFO
+#define SUPPORT_CUSTOM_IERRORINFO
+#endif
+
+/************************************************************************/
+/* ==================================================================== */
+/*                              SFIError                                */
+/*                                                                      */
+/*     Simple implementation of the IError interface.                   */
+/* ==================================================================== */
+/************************************************************************/
+#ifdef SUPPORT_CUSTOM_IERRORINFO
+class SFIError : public IErrorInfo
+{
+public:
+    // CTOR/DTOR
+    SFIError( const char *pszErrorIn )
+	{
+            CPLDebug( "OGR_OLEDB", "SFIError(%s)", pszErrorIn );
+            m_cRef   = 1;
+            m_pszError = CPLStrdup(pszErrorIn);
+	}
+
+    ~SFIError()
+	{
+            CPLDebug( "OGR_OLEDB", "~SFIError(%s)", m_pszError );
+            if( m_pszError != NULL )
+                CPLFree( m_pszError );
+	}
+
+    // IUNKOWN
+    HRESULT STDMETHODCALLTYPE	QueryInterface (REFIID riid, void **ppv) 
+        {
+            if (riid == IID_IUnknown||
+                riid == IID_IErrorInfo )
+            {
+                *ppv = (IErrorInfo *) this;		
+                AddRef();
+                return NOERROR;
+            }
+            else
+            {
+                *ppv = 0;
+                return E_NOINTERFACE;
+            }
+	};
+
+    ULONG STDMETHODCALLTYPE		AddRef (void) 
+        {
+            return ++m_cRef;
+        };
+    ULONG STDMETHODCALLTYPE		Release (void )
+	{
+            if (--m_cRef ==0)
+            {
+                delete this;
+                return 0;
+            }
+            return m_cRef;
+	};
+
+    HRESULT STDMETHODCALLTYPE GetGUID( 
+            /* [out] */ GUID *pGUID )
+        {
+            //*pGUID = DB_NULLGUID;				   
+            return S_OK;
+        };
+
+    HRESULT STDMETHODCALLTYPE GetSource( 
+            /* [out] */ BSTR __RPC_FAR *pBstrSource)
+        {
+            *pBstrSource = SysAllocString(A2BSTR("OLE DB Provider"));
+            return S_OK;
+        };
+        
+    HRESULT STDMETHODCALLTYPE GetDescription( 
+            /* [out] */ BSTR __RPC_FAR *pBstrDescription)
+        {
+            *pBstrDescription = SysAllocString(A2BSTR(m_pszError));
+            return S_OK;
+        };
+        
+    HRESULT STDMETHODCALLTYPE GetHelpFile( 
+            /* [out] */ BSTR __RPC_FAR *pBstrHelpFile)
+        {
+            *pBstrHelpFile = NULL;
+            return S_OK;
+        };
+        
+    HRESULT STDMETHODCALLTYPE GetHelpContext( 
+        /* [out] */ DWORD __RPC_FAR *pdwHelpContext)
+        {
+            *pdwHelpContext = 0;
+            return S_OK;
+        };
+
+    // Data Members
+
+    int		m_cRef;
+    char       *m_pszError;
+};
+#endif /* def SUPPORT_CUSTOM_IERRORINFO */
+
 
 /************************************************************************/
 /*                      SFGetOGRDataSource()                            */
@@ -403,6 +513,43 @@ void CPL_ATLTrace2( DWORD category, UINT level, const char * format, ... )
     CPLDebug( "ATLTrace2", "%s", szMessage );
 }
 
+#ifdef SUPPORT_CUSTOM_IERRORINFO
+/************************************************************************/
+/*                            SFReportError()                           */
+/************************************************************************/
+
+HRESULT	SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,
+                      char *pszFmt, ...)
+{
+    va_list args;
+
+    if (!FAILED(passed_hr))
+        return passed_hr;
+
+    IErrorInfo		*pErrorInfo;
+    char                szErrorMsg[20000];
+
+    /* Expand the error message 
+     */
+    va_start(args, pszFmt);
+    vsprintf( szErrorMsg, pszFmt, args );
+    va_end(args);
+
+    CPLDebug( "OGR_OLEDB", "SFReportError(%d,%d,%s)\n", 
+              passed_hr, providerCode, szErrorMsg );
+
+    SetErrorInfo(0, NULL);
+
+    pErrorInfo = new SFIError( szErrorMsg );
+
+    // Call SetErrorInfo to pass the error object to the Automation DLL.
+    SetErrorInfo(0, pErrorInfo);
+
+    pErrorInfo->Release();
+
+    return passed_hr;
+}
+#else /* notdef SUPPORT_CUSTOM_IERRORINFO */
 /************************************************************************/
 /*                            SFReportError()                           */
 /************************************************************************/
@@ -533,6 +680,7 @@ HRESULT	SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,
     }
     return passed_hr;
 }
+#endif
 
 /************************************************************************/
 /*                       SFWkbGeomTypeToDBGEOM()                        */
