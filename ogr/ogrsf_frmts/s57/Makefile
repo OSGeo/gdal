@@ -1,6 +1,6 @@
 
 OBJ	=	ogrs57driver.obj ogrs57datasource.obj ogrs57layer.obj \
-		s57classregistrar.obj s57reader.obj 
+		s57classregistrar.obj s57reader.obj ddfrecordindex.obj
 
 EXTRAFLAGS =	-I.. -I..\.. -I$(GDAL_ROOT)/frmts/iso8211
 
