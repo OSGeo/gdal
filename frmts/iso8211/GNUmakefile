@@ -16,7 +16,7 @@ default:	$(OBJ) 8211dump
 all:	8211dump docs
 
 clean:
-	rm -f *.o 8211dump
+	rm -rf *.o 8211dump 8211view $(DISTDIR) $(DISTDIR).tar.gz html/*
 
 %.o:	%.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCLUDE) $*.cpp -o $*.o
