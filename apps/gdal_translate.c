@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.24  2002/04/16 14:00:25  warmerda
+ * added GDALVersionInfo
+ *
  * Revision 1.23  2002/02/07 20:24:18  warmerda
  * added -scale option
  *
@@ -118,14 +121,15 @@ static void Usage()
 {
     int	iDr;
         
-    printf( "Usage: gdal_translate \n"
+    printf( "Usage: gdal_translate [--version]\n"
             "       [-ot {Byte/UInt16/UInt32/Int32/Float32/Float64/CInt16/\n"
             "             CInt32/CFloat32/CFloat64}] [-not_strict]\n"
             "       [-of format] [-b band] [-outsize xsize[%%] ysize[%%]]\n"
-            "       [-scale [src_min src_max [dst_min dst_max]]]"
+            "       [-scale [src_min src_max [dst_min dst_max]]]\n"
             "       [-srcwin xoff yoff xsize ysize] [-co \"NAME=VALUE\"]*\n"
             "       src_dataset dst_dataset\n\n" );
 
+    printf( "%s\n\n", GDALVersionInfo( "--version" ) );
     printf( "The following format drivers are configured:\n" );
     for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
     {
@@ -177,6 +181,11 @@ int main( int argc, char ** argv )
     {
         if( EQUAL(argv[i],"-of") && i < argc-1 )
             pszFormat = argv[++i];
+
+        else if( EQUAL(argv[i],"--version") )
+        {
+            printf( "%s\n", GDALVersionInfo( "--version" ) );
+        }
 
         else if( EQUAL(argv[i],"-ot") && i < argc-1 )
         {
