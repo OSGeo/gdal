@@ -61,4 +61,5 @@ $(OGR_LIB):	$(OBJ)
 %.o:	%.cpp
 	$(CXX) -c $(LINCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 
-
+web-update:	docs
+	cp html/* /u/www/projects/opengis/ogrhtml
