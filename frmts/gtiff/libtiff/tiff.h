@@ -1,4 +1,4 @@
-/* $Id: tiff.h,v 1.29 2005/01/11 15:22:22 dron Exp $ */
+/* $Id: tiff.h,v 1.32 2005/03/04 12:32:34 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -77,11 +77,7 @@ typedef unsigned int uint32;
 #ifndef _TIFF_DATA_TYPEDEFS_
 #define _TIFF_DATA_TYPEDEFS_
 
-#ifdef __STDC__
 typedef	signed char int8;	/* NB: non-ANSI compilers may not grok */
-#else
-typedef	char int8;
-#endif
 typedef	unsigned char uint8;
 typedef	short int16;
 typedef	unsigned short uint16;	/* sizeof (uint16) must == 2 */
@@ -297,8 +293,8 @@ typedef	enum {
 #define	TIFFTAG_PRIMARYCHROMATICITIES	319	/* !primary chromaticities */
 #define	TIFFTAG_COLORMAP		320	/* RGB map for pallette image */
 #define	TIFFTAG_HALFTONEHINTS		321	/* !highlight+shadow info */
-#define	TIFFTAG_TILEWIDTH		322	/* !rows/data tile */
-#define	TIFFTAG_TILELENGTH		323	/* !cols/data tile */
+#define	TIFFTAG_TILEWIDTH		322	/* !tile width in pixels */
+#define	TIFFTAG_TILELENGTH		323	/* !tile height in pixels */
 #define TIFFTAG_TILEOFFSETS		324	/* !offsets to data tiles */
 #define TIFFTAG_TILEBYTECOUNTS		325	/* !byte counts for tiles */
 #define	TIFFTAG_BADFAXLINES		326	/* lines w/ wrong pixel count */
@@ -429,6 +425,7 @@ typedef	enum {
 #define	TIFFTAG_FAXRECVPARAMS		34908	/* encoded Class 2 ses. parms */
 #define	TIFFTAG_FAXSUBADDRESS		34909	/* received SubAddr string */
 #define	TIFFTAG_FAXRECVTIME		34910	/* receive time (secs) */
+#define	TIFFTAG_FAXDCS			34911	/* encoded fax ses. params, Table 2/T.30 */
 /* tags 37439-37443 are registered to SGI <gregl@sgi.com> */
 #define TIFFTAG_STONITS			37439	/* Sample value to Nits */
 /* tag 34929 is a private tag registered to FedEx */
