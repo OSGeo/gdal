@@ -1,4 +1,4 @@
-/* $Id: tif_dirinfo.c,v 1.37 2004/11/05 13:07:54 dron Exp $ */
+/* $Id: tif_dirinfo.c,v 1.38 2004/11/11 11:22:04 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -64,20 +64,20 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       TRUE,	FALSE,	"ImageLength" },
     { TIFFTAG_IMAGELENGTH,	 1, 1, TIFF_SHORT,	FIELD_IMAGEDIMENSIONS,
       TRUE,	FALSE,	"ImageLength" },
-/* XXX LONG for compatibility with some broken TIFF writers */
-    { TIFFTAG_BITSPERSAMPLE,	-1,-1, TIFF_LONG,	FIELD_BITSPERSAMPLE,
-      FALSE,	FALSE,	"BitsPerSample" },
     { TIFFTAG_BITSPERSAMPLE,	-1,-1, TIFF_SHORT,	FIELD_BITSPERSAMPLE,
       FALSE,	FALSE,	"BitsPerSample" },
 /* XXX LONG for compatibility with some broken TIFF writers */
-    { TIFFTAG_COMPRESSION,	-1, 1, TIFF_LONG,	FIELD_COMPRESSION,
-      FALSE,	FALSE,	"Compression" },
+    { TIFFTAG_BITSPERSAMPLE,	-1,-1, TIFF_LONG,	FIELD_BITSPERSAMPLE,
+      FALSE,	FALSE,	"BitsPerSample" },
     { TIFFTAG_COMPRESSION,	-1, 1, TIFF_SHORT,	FIELD_COMPRESSION,
       FALSE,	FALSE,	"Compression" },
 /* XXX LONG for compatibility with some broken TIFF writers */
-    { TIFFTAG_PHOTOMETRIC,	 1, 1, TIFF_LONG,	FIELD_PHOTOMETRIC,
-      FALSE,	FALSE,	"PhotometricInterpretation" },
+    { TIFFTAG_COMPRESSION,	-1, 1, TIFF_LONG,	FIELD_COMPRESSION,
+      FALSE,	FALSE,	"Compression" },
     { TIFFTAG_PHOTOMETRIC,	 1, 1, TIFF_SHORT,	FIELD_PHOTOMETRIC,
+      FALSE,	FALSE,	"PhotometricInterpretation" },
+/* XXX LONG for compatibility with some broken TIFF writers */
+    { TIFFTAG_PHOTOMETRIC,	 1, 1, TIFF_LONG,	FIELD_PHOTOMETRIC,
       FALSE,	FALSE,	"PhotometricInterpretation" },
     { TIFFTAG_THRESHHOLDING,	 1, 1, TIFF_SHORT,	FIELD_THRESHHOLDING,
       TRUE,	FALSE,	"Threshholding" },

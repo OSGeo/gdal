@@ -1,4 +1,4 @@
-/* $Id: tiff.h,v 1.26 2004/10/02 11:16:50 dron Exp $ */
+/* $Id: tiff.h,v 1.29 2005/01/11 15:22:22 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -49,6 +49,24 @@
 #define	TIFF_LITTLEENDIAN	0x4949
 
 /*
+ * The so called TIFF types conflict with definitions from inttypes.h 
+ * included from sys/types.h on AIX (at least using VisualAge compiler). 
+ * We try to work around this by detecting this case.  Defining 
+ * _TIFF_DATA_TYPEDEFS_ short circuits the later definitions in tiff.h, and
+ * we will in the holes not provided for by inttypes.h. 
+ *
+ * See http://bugzilla.remotesensing.org/show_bug.cgi?id=39
+ */
+#if defined(_H_INTTYPES) && defined(_ALL_SOURCE) && defined(USING_VISUALAGE)
+
+#define _TIFF_DATA_TYPEDEFS_
+typedef unsigned char uint8;
+typedef unsigned short uint16;
+typedef unsigned int uint32;
+
+#endif
+
+/*
  * Intrinsic data types required by the file format:
  *
  * 8-bit quantities	int8/uint8
@@ -59,29 +77,20 @@
 #ifndef _TIFF_DATA_TYPEDEFS_
 #define _TIFF_DATA_TYPEDEFS_
 
-#ifndef HAVE_INT8
-# ifdef __STDC__
+#ifdef __STDC__
 typedef	signed char int8;	/* NB: non-ANSI compilers may not grok */
-# else
-typedef	char int8;
-# endif
-#endif
-
-typedef	unsigned char uint8;
-#ifndef HAVE_INT16
-typedef	short int16;
-#endif
-typedef	unsigned short uint16;	/* sizeof (uint16) must == 2 */
-#if SIZEOF_LONG == 4
-# ifndef HAVE_INT32
-typedef	long int32;
-# endif
-typedef	unsigned long uint32;	/* sizeof (uint32) must == 4 */
 #else
-# ifndef HAVE_INT32
+typedef	char int8;
+#endif
+typedef	unsigned char uint8;
+typedef	short int16;
+typedef	unsigned short uint16;	/* sizeof (uint16) must == 2 */
+#if defined(__alpha) || (defined(_MIPS_SZLONG) && _MIPS_SZLONG == 64) || defined(__LP64__) || defined(__arch64__)
 typedef	int int32;
-# endif
 typedef	unsigned int uint32;	/* sizeof (uint32) must == 4 */
+#else
+typedef	long int32;
+typedef	unsigned long uint32;	/* sizeof (uint32) must == 4 */
 #endif
 
 #endif /* _TIFF_DATA_TYPEDEFS_ */
@@ -131,6 +140,7 @@ typedef	struct {
  *  - items marked with a ! are introduced in revision 6.0.
  *  - items marked with a % are introduced post revision 6.0.
  *  - items marked with a $ are obsoleted by revision 6.0.
+ *  - items marked with a & are introduced by Adobe DNG specification.
  */
 
 /*
@@ -192,7 +202,8 @@ typedef	enum {
 #define     COMPRESSION_PIXARFILM	32908   /* Pixar companded 10bit LZW */
 #define	    COMPRESSION_PIXARLOG	32909   /* Pixar companded 11bit ZIP */
 #define	    COMPRESSION_DEFLATE		32946	/* Deflate compression */
-#define     COMPRESSION_ADOBE_DEFLATE   8       /* Deflate compression, as recognized by Adobe */
+#define     COMPRESSION_ADOBE_DEFLATE   8       /* Deflate compression,
+						   as recognized by Adobe */
 /* compression code 32947 is reserved for Oceana Matrix <dev@oceana.com> */
 #define     COMPRESSION_DCS             32947   /* Kodak DCS encoding */
 #define	    COMPRESSION_JBIG		34661	/* ISO JBIG */
@@ -317,10 +328,14 @@ typedef	enum {
 #define	    SAMPLEFORMAT_COMPLEXIEEEFP	6	/* !complex ieee floating */
 #define	TIFFTAG_SMINSAMPLEVALUE		340	/* !variable MinSampleValue */
 #define	TIFFTAG_SMAXSAMPLEVALUE		341	/* !variable MaxSampleValue */
-#define	TIFFTAG_CLIPPATH		343	/* %ClipPath [Adobe TIFF technote 2] */
-#define	TIFFTAG_XCLIPPATHUNITS		344	/* %XClipPathUnits [Adobe TIFF technote 2] */
-#define	TIFFTAG_YCLIPPATHUNITS		345	/* %YClipPathUnits [Adobe TIFF technote 2] */
-#define	TIFFTAG_INDEXED			346	/* %Indexed [Adobe TIFF Technote 3] */
+#define	TIFFTAG_CLIPPATH		343	/* %ClipPath
+						   [Adobe TIFF technote 2] */
+#define	TIFFTAG_XCLIPPATHUNITS		344	/* %XClipPathUnits
+						   [Adobe TIFF technote 2] */
+#define	TIFFTAG_YCLIPPATHUNITS		345	/* %YClipPathUnits
+						   [Adobe TIFF technote 2] */
+#define	TIFFTAG_INDEXED			346	/* %Indexed
+						   [Adobe TIFF Technote 3] */
 #define	TIFFTAG_JPEGTABLES		347	/* %JPEG table stream */
 #define	TIFFTAG_OPIPROXY		351	/* %OPI Proxy [Adobe TIFF technote] */
 /*
@@ -344,8 +359,11 @@ typedef	enum {
 #define	    YCBCRPOSITION_CENTERED	1	/* !as in PostScript Level 2 */
 #define	    YCBCRPOSITION_COSITED	2	/* !as in CCIR 601-1 */
 #define	TIFFTAG_REFERENCEBLACKWHITE	532	/* !colorimetry info */
-#define	TIFFTAG_XMLPACKET		700	/* %XML packet [Adobe XMP Specification, January 2004 */
-#define TIFFTAG_OPIIMAGEID		32781	/* %OPI ImageID [Adobe TIFF technote] */
+#define	TIFFTAG_XMLPACKET		700	/* %XML packet
+						   [Adobe XMP Specification,
+						   January 2004 */
+#define TIFFTAG_OPIIMAGEID		32781	/* %OPI ImageID
+						   [Adobe TIFF technote] */
 /* tags 32952-32956 are private tags registered to Island Graphics */
 #define TIFFTAG_REFPTS			32953	/* image reference points */
 #define TIFFTAG_REGIONTACKPOINT		32954	/* region-xform tack point */
@@ -396,7 +414,8 @@ typedef	enum {
 #define TIFFTAG_IT8TRANSPARENCYINDICATOR 34028	/* HC transparency switch */
 #define TIFFTAG_IT8COLORCHARACTERIZATION 34029	/* color character. table */
 #define TIFFTAG_IT8HCUSAGE		34030	/* HC usage indicator */
-#define TIFFTAG_IT8TRAPINDICATOR	34031	/* Trapping indicator (untrapped=0, trapped=1) */
+#define TIFFTAG_IT8TRAPINDICATOR	34031	/* Trapping indicator
+						   (untrapped=0, trapped=1) */
 #define TIFFTAG_IT8CMYKEQUIVALENT	34032	/* CMYK color equivalents */
 /* tags 34232-34236 are private tags registered to Texas Instruments */
 #define TIFFTAG_FRAMECOUNT              34232   /* Sequence Frame Count */
@@ -416,6 +435,70 @@ typedef	enum {
 #define	TIFFTAG_FEDEX_EDR		34929	/* unknown use */
 /* tag 65535 is an undefined tag used by Eastman Kodak */
 #define TIFFTAG_DCSHUESHIFTVALUES       65535   /* hue shift correction data */
+/* Adobe Digital Negative format tags */
+#define TIFFTAG_DNGVERSION		50706	/* &DNG version number */
+#define TIFFTAG_DNGBACKWARDVERSION	50707	/* &DNG compatibility version */
+#define TIFFTAG_UNIQUECAMERAMODEL	50708	/* &name for the camera model */
+#define TIFFTAG_LOCALIZEDCAMERAMODEL	50709	/* &localized camera model
+						   name */
+#define TIFFTAG_CFAPLANECOLOR		50710	/* &CFAPattern->LinearRaw space
+						   mapping */
+#define TIFFTAG_CFALAYOUT		50711	/* &spatial layout of the CFA */
+#define TIFFTAG_LINEARIZATIONTABLE	50712	/* &lookup table description */
+#define TIFFTAG_BLACKLEVELREPEATDIM	50713	/* &repeat pattern size for
+						   the BlackLevel tag */
+#define TIFFTAG_BLACKLEVEL		50714	/* &zero light encoding level */
+#define TIFFTAG_BLACKLEVELDELTAH	50715	/* &zero light encoding level
+						   differences (columns) */
+#define TIFFTAG_BLACKLEVELDELTAV	50716	/* &zero light encoding level
+						   differences (rows) */
+#define TIFFTAG_WHITELEVEL		50717	/* &fully saturated encoding
+						   level */
+#define TIFFTAG_DEFAULTSCALE		50718	/* &default scale factors */
+#define TIFFTAG_DEFAULTCROPORIGIN	50719	/* &origin of the final image
+						   area */
+#define TIFFTAG_DEFAULTCROPSIZE		50720	/* &size of the final image 
+						   area */
+#define TIFFTAG_COLORMATRIX1		50721	/* &XYZ->reference color space
+						   transformation matrix 1 */
+#define TIFFTAG_COLORMATRIX2		50722	/* &XYZ->reference color space
+						   transformation matrix 2 */
+#define TIFFTAG_CAMERACALIBRATION1	50723	/* &calibration matrix 1 */
+#define TIFFTAG_CAMERACALIBRATION2	50724	/* &calibration matrix 2 */
+#define TIFFTAG_REDUCTIONMATRIX1	50725	/* &dimensionality reduction
+						   matrix 1 */
+#define TIFFTAG_REDUCTIONMATRIX2	50726	/* &dimensionality reduction
+						   matrix 2 */
+#define TIFFTAG_ANALOGBALANCE		50727	/* &gain applied the stored raw
+						   values*/
+#define TIFFTAG_ASSHOTNEUTRAL		50728	/* &selected white balance in
+						   linear reference space */
+#define TIFFTAG_ASSHOTWHITEXY		50729	/* &selected white balance in
+						   x-y chromaticity
+						   coordinates */
+#define TIFFTAG_BASELINEEXPOSURE	50730	/* &how much to move the zero
+						   point */
+#define TIFFTAG_BASELINENOISE		50731	/* &relative noise level */
+#define TIFFTAG_BASELINESHARPNESS	50732	/* &relative amount of
+						   sharpening */
+#define TIFFTAG_BAYERGREENSPLIT		50733	/* &how closely the values of
+						   the green pixels in the
+						   blue/green rows track the
+						   values of the green pixels
+						   in the red/green rows */
+#define TIFFTAG_LINEARRESPONSELIMIT	50734	/* &non-linear encoding range */
+#define TIFFTAG_CAMERASERIALNUMBER	50735	/* &camera's serial number */
+#define TIFFTAG_CHROMABLURRADIUS	50737	/* &chroma blur radius */
+#define TIFFTAG_ANTIALIASSTRENGTH	50738	/* &relative strength of the
+						   camera's anti-alias filter */
+#define TIFFTAG_DNGPRIVATEDATA		50740	/* &manufacturer's private data */
+#define TIFFTAG_MAKERNOTESAFETY		50741	/* &whether the EXIF MakerNote
+						   tag is safe to preserve
+						   along with the rest of the
+						   EXIF data */
+#define	TIFFTAG_CALIBRATIONILLUMINANT1	50778	/* &illuminant 1 */
+#define TIFFTAG_CALIBRATIONILLUMINANT2	50779	/* &illuminant 2 */
+#define TIFFTAG_BESTQUALITYSCALE	50780	/* &best quality multiplier */
 
 /*
  * The following are ``pseudo tags'' that can be used to control

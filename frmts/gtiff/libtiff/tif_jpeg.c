@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.26 2004/11/04 12:40:11 dron Exp $ */
+/* $Id: tif_jpeg.c,v 1.28 2005/01/12 15:06:22 dron Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -75,6 +75,17 @@ int TIFFFillTile(TIFF*, ttile_t);
 #include "jerror.h"
 
 /*
+ * We are using width_in_blocks which is supposed to be private to
+ * libjpeg. Unfortunately, the libjpeg delivered with Cygwin has
+ * renamed this member to width_in_data_units.  Since the header has
+ * also renamed a define, use that unique define name in order to
+ * detect the problem header and adjust to suit.
+ */
+#if defined(D_MAX_DATA_UNITS_IN_MCU)
+#define width_in_blocks width_in_data_units
+#endif
+
+/*
  * On some machines it may be worthwhile to use _setjmp or sigsetjmp
  * in place of plain setjmp.  These macros will make it easier.
  */
@@ -138,6 +149,9 @@ typedef	struct {
 	int		jpegtablesmode;	/* What to put in JPEGTables */
 
         int             ycbcrsampling_fetched;
+	uint32		recvparams;	/* encoded Class 2 session params */
+	char*		subaddress;	/* subaddress string */
+	uint32		recvtime;	/* time spent receiving (secs) */
 } JPEGState;
 
 #define	JState(tif)	((JPEGState*)(tif)->tif_data)
@@ -149,6 +163,9 @@ static	int JPEGEncodeRaw(TIFF*, tidata_t, tsize_t, tsample_t);
 static  int JPEGInitializeLibJPEG( TIFF * tif );
 
 #define	FIELD_JPEGTABLES	(FIELD_CODEC+0)
+#define	FIELD_RECVPARAMS	(FIELD_CODEC+1)
+#define	FIELD_SUBADDRESS	(FIELD_CODEC+2)
+#define	FIELD_RECVTIME		(FIELD_CODEC+3)
 
 static const TIFFFieldInfo jpegFieldInfo[] = {
     { TIFFTAG_JPEGTABLES,	 -3,-3,	TIFF_UNDEFINED,	FIELD_JPEGTABLES,
@@ -159,6 +176,13 @@ static const TIFFFieldInfo jpegFieldInfo[] = {
       FALSE,	FALSE,	"" },
     { TIFFTAG_JPEGTABLESMODE,	 0, 0,	TIFF_ANY,	FIELD_PSEUDO,
       FALSE,	FALSE,	"" },
+    /* Specific for JPEG in faxes */
+    { TIFFTAG_FAXRECVPARAMS,	 1, 1, TIFF_LONG,	FIELD_RECVPARAMS,
+      TRUE,	FALSE,	"FaxRecvParams" },
+    { TIFFTAG_FAXSUBADDRESS,	-1,-1, TIFF_ASCII,	FIELD_SUBADDRESS,
+      TRUE,	FALSE,	"FaxSubAddress" },
+    { TIFFTAG_FAXRECVTIME,	 1, 1, TIFF_LONG,	FIELD_RECVTIME,
+      TRUE,	FALSE,	"FaxRecvTime" },
 };
 #define	N(a)	(sizeof (a) / sizeof (a[0]))
 
@@ -1404,6 +1428,15 @@ JPEGVSetField(TIFF* tif, ttag_t tag, va_list ap)
                 /* mark the fact that we have a real ycbcrsubsampling! */
 		sp->ycbcrsampling_fetched = 1;
 		return (*sp->vsetparent)(tif, tag, ap);
+	case TIFFTAG_FAXRECVPARAMS:
+		sp->recvparams = va_arg(ap, uint32);
+		break;
+	case TIFFTAG_FAXSUBADDRESS:
+		_TIFFsetString(&sp->subaddress, va_arg(ap, char*));
+		break;
+	case TIFFTAG_FAXRECVTIME:
+		sp->recvtime = va_arg(ap, uint32);
+		break;
 	default:
 		return (*sp->vsetparent)(tif, tag, ap);
 	}

@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.44 2004/11/05 13:10:33 dron Exp $ */
+/* $Id: tif_dirread.c,v 1.47 2004/12/19 18:35:35 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -71,7 +71,7 @@ CheckMalloc(TIFF* tif, size_t nmemb, size_t elem_size, const char* what)
 	/*
 	 * XXX: Check for integer overflow.
 	 */
-	if (elem_size && bytes / elem_size == nmemb)
+	if (nmemb && elem_size && bytes / elem_size == nmemb)
 		cp = (char*)_TIFFmalloc(bytes);
 
 	if (cp == NULL)
@@ -256,13 +256,6 @@ TIFFReadDirectory(TIFF* tif)
 	fix = 0;
 	for (dp = dir, n = dircount; n > 0; n--, dp++) {
 
-                /*
-                 * Find the field information entry for this tag.
-		 * Added check for tags to ignore ... [BFC]
-                 */
-		if( TIFFReassignTagToIgnore(TIS_EXTRACT, dp->tdir_tag) )
-                    dp->tdir_tag = IGNORE;
-
 		if (fix >= tif->tif_nfields || dp->tdir_tag == IGNORE)
 			continue;
                
@@ -330,7 +323,8 @@ TIFFReadDirectory(TIFF* tif)
 		/*
 		 * Check count if known in advance.
 		 */
-		if (fip->field_readcount != TIFF_VARIABLE) {
+		if (fip->field_readcount != TIFF_VARIABLE
+		    && fip->field_readcount != TIFF_VARIABLE2) {
 			uint32 expected = (fip->field_readcount == TIFF_SPP) ?
 			    (uint32) td->td_samplesperpixel :
 			    (uint32) fip->field_readcount;
