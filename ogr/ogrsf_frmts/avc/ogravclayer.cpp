@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/12/21 19:48:05  warmerda
+ * rearrange code a bit to workaround VStudio.NET bug
+ *
  * Revision 1.4  2002/02/18 20:36:50  warmerda
  * added attribute query
  *
@@ -503,7 +506,6 @@ int OGRAVCLayer::MatchesSpatialFilter( void *pFeature )
       default:
         return TRUE;
     }
-    
 }
 
 /************************************************************************/
@@ -535,32 +537,26 @@ int OGRAVCLayer::AppendTableDefinition( AVCTableDef *psTableDef )
         if( eSectionType == AVCFileARC && iField < 4 )
             continue;
 
-        switch( psFInfo->nType1*10 )
-        {
-          case AVC_FT_DATE:
-          case AVC_FT_CHAR:
+        oFDefn.SetWidth( psFInfo->nFmtWidth );
+
+        if( psFInfo->nType1 * 10 == AVC_FT_DATE 
+            || psFInfo->nType1 * 10 == AVC_FT_CHAR )
             oFDefn.SetType( OFTString );
-            oFDefn.SetWidth( psFInfo->nFmtWidth );
-            break;
 
-          case AVC_FT_FIXINT:
-          case AVC_FT_BININT:
+        else if( psFInfo->nType1 * 10 == AVC_FT_FIXINT 
+                 || psFInfo->nType1 * 10 == AVC_FT_BININT )
             oFDefn.SetType( OFTInteger );
-            oFDefn.SetWidth( psFInfo->nFmtWidth );
-            break;
 
-          case AVC_FT_FIXNUM:
-          case AVC_FT_BINFLOAT:
+        else if( psFInfo->nType1 * 10 == AVC_FT_FIXNUM 
+                 || psFInfo->nType1 * 10 == AVC_FT_BINFLOAT )
+        {
             oFDefn.SetType( OFTReal );
-            oFDefn.SetWidth( psFInfo->nFmtWidth );
             if( psFInfo->nFmtPrec > 0 )
                 oFDefn.SetPrecision( psFInfo->nFmtPrec );
-            break;
         }
 
         poFeatureDefn->AddFieldDefn( &oFDefn );
     }
-
     return TRUE;
 }
 
@@ -618,3 +614,9 @@ int OGRAVCLayer::TranslateTableFields( OGRFeature *poFeature,
 
     return TRUE;
 }
+
+
+
+
+
+
