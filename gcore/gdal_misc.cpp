@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/03/09 23:21:44  warmerda
+ * added GDALDummyProgress
+ *
  * Revision 1.6  2000/03/06 21:59:44  warmerda
  * added min/max calculate
  *
@@ -358,4 +361,14 @@ void GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
 
     adfMinMax[0] = dfMin;
     adfMinMax[1] = dfMax;
+}
+
+/************************************************************************/
+/*                         GDALDummyProgress()                          */
+/************************************************************************/
+
+int GDALDummyProgress( double, const char *, void * )
+
+{
+    return TRUE;
 }
