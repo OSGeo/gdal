@@ -43,6 +43,10 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.22  2003/01/31 18:08:24  warmerda
+ * Added test for broken png_get_channels().  I don't know what is *really*
+ * going on here.
+ *
  * Revision 1.21  2003/01/25 22:28:18  warmerda
  * improved data type error message a bit
  *
@@ -635,6 +639,16 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
         				!= PNG_INTERLACE_NONE;
 
     poDS->nColorType = png_get_color_type( poDS->hPNG, poDS->psPNGInfo );
+
+    if( poDS->nColorType == PNG_COLOR_TYPE_PALETTE 
+        && poDS->nBands > 1 )
+    {
+        CPLDebug( "GDAL", "PNG Driver got %d from png_get_channels(),\n"
+                  "but this kind of image (paletted) can only have one band.\n"
+                  "Correcting and continuing, but this may indicate a bug!",
+                  poDS->nBands );
+        poDS->nBands = 1;
+    }
     
 /* -------------------------------------------------------------------- */
 /*      We want to treat 1,2,4 bit images as eight bit.  This call      */
