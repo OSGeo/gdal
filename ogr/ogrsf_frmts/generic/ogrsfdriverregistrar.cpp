@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/08/30 09:13:34  warmerda
+ * Set INST_DATA as FinderLocation
+ *
  * Revision 1.2  1999/07/27 00:51:08  warmerda
  * added arg to get driver out of Open()
  *
@@ -51,6 +54,10 @@ OGRSFDriverRegistrar::OGRSFDriverRegistrar()
     CPLAssert( poRegistrar == NULL );
     nDrivers = 0;
     papoDrivers = NULL;
+
+#ifdef INST_DATA
+    CPLPushFinderLocation( INST_DATA );
+#endif
 }
 
 /************************************************************************/

@@ -21,7 +21,7 @@ clean:
 	rm -f *.o
 
 %.o:	%.cpp
-	$(CXX) -c $(ALL_C_FLAGS) $*.cpp -o $*.o
+	$(CXX) -c $(ALL_C_FLAGS) -DINST_DATA=\"$(INST_DATA)\" $*.cpp -o $*.o
 	ar r ../ogrsf_frmts.a $*.o
 
 %.o:	%.c
