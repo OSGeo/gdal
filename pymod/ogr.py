@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.37  2005/01/22 18:30:58  hobu
+# typo in Layer::GetSpatialFilter
+#
 # Revision 1.36  2005/01/22 06:14:57  fwarmerdam
 # added thisown support for geometry and feature
 #
@@ -436,7 +439,7 @@ class Layer:
         _gdal.OGR_L_SetSpatialFilterRect( self._o, minx, miny, maxx, maxy )
 
     def GetSpatialFilter( self ):
-        geom_o = _gdal.OGR_L_GetSpatialGeometry( self._o )
+        geom_o = _gdal.OGR_L_GetSpatialFilter( self._o )
         if geom_o is None or geom_o == 'NULL':
             return None
         else:
