@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/10/02 14:16:21  warmerda
+ * fix handling of case where a query is being cleared
+ *
  * Revision 1.8  2001/07/19 18:26:42  warmerda
  * expand tabs
  *
@@ -157,9 +160,25 @@ OGRErr OGRLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 OGRErr OGRLayer::SetAttributeFilter( const char *pszQuery )
 
 {
+/* -------------------------------------------------------------------- */
+/*      Are we just clearing any existing query?                        */
+/* -------------------------------------------------------------------- */
+    if( pszQuery == NULL || strlen(pszQuery) == 0 )
+    {
+        if( m_poAttrQuery )
+        {
+            delete m_poAttrQuery;
+            m_poAttrQuery = NULL;
+            ResetReading();
+        }
+        return OGRERR_NONE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Or are we installing a new query?                               */
+/* -------------------------------------------------------------------- */
     OGRErr      eErr;
 
-    ResetReading();
     if( !m_poAttrQuery )
         m_poAttrQuery = new OGRFeatureQuery();
 
@@ -169,6 +188,8 @@ OGRErr OGRLayer::SetAttributeFilter( const char *pszQuery )
         delete m_poAttrQuery;
         m_poAttrQuery = NULL;
     }
+
+    ResetReading();
 
     return eErr;
 }
