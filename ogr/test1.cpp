@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/20 14:36:19  warmerda
+ * added well known text support
+ *
  * Revision 1.3  1999/03/30 21:21:43  warmerda
  * added linearring/polygon support
  *
@@ -57,11 +60,16 @@ int main( int nArgc, char ** papszArgv )
     if( nArgc < 3 )
     {
         printf( "Usage: test1 -reportbin bin_file\n" );
+        printf( "    or test1 -reporttxt txt_file\n" );
         printf( "    or test1 -createbin bin_file {point,line}\n" );
         exit( 1 );
     }
 
     if( strcmp( papszArgv[1], "-reportbin" ) == 0 )
+    {
+        ReportBin( papszArgv[2] );
+    }
+    else if( strcmp( papszArgv[1], "-reporttxt" ) == 0 )
     {
         ReportBin( papszArgv[2] );
     }
@@ -148,7 +156,7 @@ void ReportBin( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Read into a block of memory.                                    */
 /* -------------------------------------------------------------------- */
-    pabyData = (unsigned char *) OGRMalloc( length );
+    pabyData = (unsigned char *) OGRCalloc( 1, length+1 );
     if( pabyData == NULL )
     {
         fclose( fp );
@@ -159,14 +167,31 @@ void ReportBin( const char * pszFilename )
     fread( pabyData, length, 1, fp );
 
 /* -------------------------------------------------------------------- */
-/*      Instantiate a geometry from this data.                          */
+/*      Instantiate a geometry from this data.  If the first byte is    */
+/*      over ``31'' we will assume it is text format, otherwise binary. */
 /* -------------------------------------------------------------------- */
     poGeom = NULL;
-    eErr = OGRGeometryFactory::createFromWkb( pabyData, &poGeom, length );
+    if( pabyData[0] > 31 )
+    {
+        eErr = OGRGeometryFactory::createFromWkt( (char *) pabyData, NULL,
+                                                  &poGeom );
+    }
+    else
+    {
+        eErr = OGRGeometryFactory::createFromWkb( pabyData, NULL,
+                                                  &poGeom, length );
+    }
 
     if( eErr == OGRERR_NONE )
     {
         poGeom->dumpReadable( stdout );
+    }
+    else
+    {
+        fprintf( stderr,
+                 "Encountered error %d trying to create the geometry in "
+                 "OGRGeometryFactory.\n",
+                 eErr );
     }
 
 /* -------------------------------------------------------------------- */
