@@ -21,6 +21,7 @@ OBJ     =  ogrtigerdriver.o           \
 	   tigeridhistory.o           \
 	   tigerpolychainlink.o       \
 	   tigerpip.o                 \
+	   tigerspatialmetadata.o     \
 	   tigertlidrange.o           \
 	   tigerzerocellid.o          \
 	   tigeroverunder.o           \

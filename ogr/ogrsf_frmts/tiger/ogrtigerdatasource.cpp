@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/04/06 16:05:29  fwarmerdam
+ * added spatialmetadata (RTM) support
+ *
  * Revision 1.32  2005/04/06 15:04:23  fwarmerdam
  * added TIGER2004 support
  *
@@ -667,6 +670,11 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
                                  new TigerPolyChainLink( this,
                                                        papszModules[0]) ));
     
+    // RTM
+    AddLayer( new OGRTigerLayer( this,
+                                 new TigerSpatialMetadata( this,
+                                                           papszModules[0] ) ) );
+    
     // RTP
     AddLayer( new OGRTigerLayer( this,
                                  new TigerPIP( this,
@@ -975,6 +983,12 @@ OGRLayer *OGRTigerDataSource::CreateLayer( const char *pszLayerName,
     {
         poLayer = new OGRTigerLayer( this,
                                      new TigerPolygonEconomic( this, NULL ) );
+    }
+
+    else if( EQUAL(pszLayerName,"SpatialMetadata") )
+    {
+        poLayer = new OGRTigerLayer( this,
+                                     new TigerSpatialMetadata( this, NULL ) );
     }
 
     else if( EQUAL(pszLayerName,"ZeroCellID") )
