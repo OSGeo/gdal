@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.26  2004/10/12 14:15:22  fwarmerdam
+ * Added srcwin checking.
+ *
  * Revision 1.25  2004/08/19 15:49:52  warmerda
  * Don't continue if the srcwin falls outside the raster.
  *
@@ -531,6 +534,26 @@ int main( int argc, char ** argv )
                      GDALGetRasterYSize(hDataset) );
             exit( 1 );
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Verify source window.                                           */
+/* -------------------------------------------------------------------- */
+    if( anSrcWin[0] < 0 || anSrcWin[1] < 0 
+        || anSrcWin[2] <= 0 || anSrcWin[3] <= 0
+        || anSrcWin[0] + anSrcWin[2] > GDALGetRasterXSize(hDataset) 
+        || anSrcWin[1] + anSrcWin[3] > GDALGetRasterYSize(hDataset) )
+    {
+        fprintf( stderr, 
+                 "-srcwin %d %d %d %d falls outside raster size of %dx%d\n"
+                 "or is otherwise illegal.\n",
+                 anSrcWin[0],
+                 anSrcWin[1],
+                 anSrcWin[2],
+                 anSrcWin[3],
+                 GDALGetRasterXSize(hDataset), 
+                 GDALGetRasterYSize(hDataset) );
+        exit( 1 );
     }
 
 /* -------------------------------------------------------------------- */
