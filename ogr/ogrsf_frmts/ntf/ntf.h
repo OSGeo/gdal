@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/10/04 03:08:52  warmerda
+ * added raster support
+ *
  * Revision 1.8  1999/10/01 14:47:51  warmerda
  * major upgrade: generic, string feature codes, etc
  *
@@ -83,6 +86,8 @@
 #define NRT_TEXTREC  43		       /* Text */
 #define NRT_TEXTPOS  44		       /* Text position */
 #define NRT_TEXTREP  45		       /* Text representation */
+#define NRT_GRIDHREC 50		       /* Grid Header Record */
+#define NRT_GRIDREC  51		       /* Grid Data Record */
 #define NRT_COMMENT  90		       /* Comment record */
 #define NRT_VTR      99                /* Volume Termination Record */
 
@@ -123,6 +128,9 @@
 
 #define NPC_LANDRANGER_CONT     15
 #define NTF_LANDRANGER_CONT     "OS_LANDRANGER_CONT"
+
+#define NPC_LANDRANGER_DTM	16
+#define NPC_LANDFORM_PROFILE_DTM 17
 
 /************************************************************************/
 /*                              NTFRecord                               */
@@ -177,6 +185,7 @@ typedef struct
 } NTFAttDesc;
 
 class OGRNTFLayer;
+class OGRNTFRasterLayer;
 class OGRNTFDataSource;
 class NTFFileReader;
 
@@ -250,6 +259,15 @@ class NTFFileReader
     int		      anIndexSize[100];
     NTFRecord	      **apapoRecordIndex[100];
 
+    void	      EstablishRasterAccess();
+    OGRNTFRasterLayer *poRasterLayer;
+    int		      nRasterXSize;
+    int		      nRasterYSize;
+    int		      nRasterDataType;
+    double	      adfGeoTransform[6];
+    
+    long	     *panColumnOffset;
+
   public:
                       NTFFileReader( OGRNTFDataSource * );
                       ~NTFFileReader();
@@ -314,6 +332,15 @@ class NTFFileReader
     void	      EstablishLayer( const char *, OGRwkbGeometryType,
                                       NTFFeatureTranslator, int,
                                       NTFGenericClass *, ... );
+
+    // Raster related
+    int		      IsRasterProduct();
+    int		      GetRasterXSize() { return nRasterXSize; }
+    int		      GetRasterYSize() { return nRasterYSize; }
+    int               GetRasterDataType() { return nRasterDataType; }
+    double	     *GetGeoTransform() { return adfGeoTransform; }
+    CPLErr	      ReadRasterColumn( int, float * );
+    
 };
 
 /************************************************************************/
@@ -398,6 +425,46 @@ class OGRNTFFeatureClassLayer : public OGRLayer
 };
 
 /************************************************************************/
+/*                          OGRNTFRasterLayer                           */
+/************************************************************************/
+
+class OGRNTFRasterLayer : public OGRLayer
+{
+    OGRFeatureDefn     *poFeatureDefn;
+    OGRGeometry	       *poFilterGeom;
+
+    OGRNTFDataSource   *poDS;
+
+    NTFFileReader      *poReader;
+
+    float	       *pafColumn;
+    int			iColumnOffset;
+
+    int			iCurrentFC;
+  
+  public:
+    			OGRNTFRasterLayer( OGRNTFDataSource * poDS,
+                                           NTFFileReader * poReaderIn );
+    			~OGRNTFRasterLayer();
+
+    OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
+    void		SetSpatialFilter( OGRGeometry * );
+
+    void		ResetReading();
+    OGRFeature *	GetNextFeature();
+
+    OGRFeature         *GetFeature( long nFeatureId );
+    
+    OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
+
+    int                 GetFeatureCount( int = TRUE );
+    
+    virtual OGRSpatialReference *GetSpatialRef();
+    
+    int                 TestCapability( const char * );
+};
+
+/************************************************************************/
 /*                           OGRNTFDataSource                           */
 /************************************************************************/
 
@@ -406,7 +473,7 @@ class OGRNTFDataSource : public OGRDataSource
     char		*pszName;
 
     int			nLayers;
-    OGRNTFLayer		**papoLayers;
+    OGRLayer		**papoLayers;
 
     OGRNTFFeatureClassLayer *poFCLayer;
 
@@ -450,7 +517,7 @@ class OGRNTFDataSource : public OGRDataSource
 
     // these are only for the use of the NTFFileReader class.
     OGRNTFLayer         *GetNamedLayer( const char * );
-    void                 AddLayer( OGRNTFLayer * );
+    void                 AddLayer( OGRLayer * );
 
     // Mainly for OGRNTFLayer class
     int			 GetFileCount() { return nNTFFileCount; }

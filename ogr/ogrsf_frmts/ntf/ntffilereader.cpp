@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  1999/10/04 03:08:52  warmerda
+ * added raster support
+ *
  * Revision 1.10  1999/10/03 03:43:43  warmerda
  * Handle GType 7 "circle" geometries by producing a reasonable linear
  * approximation.
@@ -128,6 +131,10 @@ NTFFileReader::NTFFileReader( OGRNTFDataSource * poDataSource )
         anIndexSize[i] = 0;
         apapoRecordIndex[i] = NULL;
     }
+
+    panColumnOffset = NULL;
+    poRasterLayer = NULL;
+    nRasterXSize = nRasterYSize = nRasterDataType = 1;
 }
 
 /************************************************************************/
@@ -140,6 +147,7 @@ NTFFileReader::~NTFFileReader()
     DestroyIndex();
     ClearDefs();
     CPLFree( pszFilename );
+    CPLFree( panColumnOffset );
 }
 
 /************************************************************************/
@@ -419,6 +427,10 @@ int NTFFileReader::Open( const char * pszFilenameIn )
         else
             nProduct = NPC_CODE_POINT_PLUS;
     }
+    else if( EQUALN(pszProduct,"OS_LANDRANGER_DTM",17) )
+        nProduct = NPC_LANDRANGER_DTM;
+    else if( EQUALN(pszProduct,"L-F_PROFILE_DTM",15) )
+        nProduct = NPC_LANDFORM_PROFILE_DTM;
 
     if( poDS->GetOption("FORCE_GENERIC") != NULL
         && !EQUAL(poDS->GetOption("FORCE_GENERIC"),"OFF") )
@@ -482,7 +494,10 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 /* -------------------------------------------------------------------- */
 /*      Ensure we have appropriate layers defined.                      */
 /* -------------------------------------------------------------------- */
-    EstablishLayers();
+    if( !IsRasterProduct() )
+        EstablishLayers();
+    else
+        EstablishRasterAccess();
     
     return TRUE;
 }
@@ -1116,7 +1131,8 @@ void NTFFileReader::GetFPPos( long *pnPos, long *pnFID )
     else
         *pnPos = nPostSavedPos;
 
-    *pnFID = nSavedFeatureId;
+    if( pnFID != NULL )
+        *pnFID = nSavedFeatureId;
 }
 
 /************************************************************************/
@@ -1321,6 +1337,13 @@ OGRFeature * NTFFileReader::ReadOGRFeature( OGRNTFLayer * poTargetLayer )
     OGRNTFLayer	*poLayer = NULL;
     NTFRecord	**papoGroup;
     OGRFeature  *poFeature = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      If this is a raster file, use a custom method to read the       */
+/*      feature.                                                        */
+/* -------------------------------------------------------------------- */
+    if( IsRasterProduct() )
+        return poRasterLayer->GetNextFeature();
 
 /* -------------------------------------------------------------------- */
 /*      Loop looking for a group we can translate, and that if          */

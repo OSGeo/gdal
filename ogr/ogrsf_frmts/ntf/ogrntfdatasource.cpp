@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/10/04 03:08:52  warmerda
+ * added raster support
+ *
  * Revision 1.5  1999/10/01 14:47:51  warmerda
  * major upgrade: generic, string feature codes, etc
  *
@@ -116,7 +119,7 @@ OGRNTFLayer * OGRNTFDataSource::GetNamedLayer( const char * pszName )
     for( int i = 0; i < nLayers; i++ )
     {
         if( EQUAL(papoLayers[i]->GetLayerDefn()->GetName(),pszName) )
-            return papoLayers[i];
+            return (OGRNTFLayer *) papoLayers[i];
     }
 
     return NULL;
@@ -126,10 +129,10 @@ OGRNTFLayer * OGRNTFDataSource::GetNamedLayer( const char * pszName )
 /*                              AddLayer()                              */
 /************************************************************************/
 
-void OGRNTFDataSource::AddLayer( OGRNTFLayer * poNewLayer )
+void OGRNTFDataSource::AddLayer( OGRLayer * poNewLayer )
 
 {
-    papoLayers = (OGRNTFLayer **)
+    papoLayers = (OGRLayer **)
         CPLRealloc( papoLayers, sizeof(void*) * ++nLayers );
     
     papoLayers[nLayers-1] = poNewLayer;
