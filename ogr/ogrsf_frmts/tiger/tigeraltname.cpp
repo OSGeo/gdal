@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/04 23:25:32  warmerda
+ * first round implementation of writer
+ *
  * Revision 1.4  2001/01/19 21:15:20  warmerda
  * expanded tabs
  *
@@ -44,6 +47,8 @@
 
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
+
+#define FILE_CODE "4"
 
 /************************************************************************/
 /*                            TigerAltName()                            */
@@ -91,7 +96,7 @@ TigerAltName::~TigerAltName()
 int TigerAltName::SetModule( const char * pszModule )
 
 {
-    if( !OpenFile( pszModule, "4" ) )
+    if( !OpenFile( pszModule, FILE_CODE ) )
         return FALSE;
 
     EstablishFeatureCount();
@@ -164,4 +169,37 @@ OGRFeature *TigerAltName::GetFeature( int nRecordId )
     return poFeature;
 }
 
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
 
+#define WRITE_REC_LEN 58
+
+OGRErr TigerAltName::CreateFeature( OGRFeature *poFeature )
+
+{
+    char	szRecord[WRITE_REC_LEN+1];
+    const int	*panValue;
+    int		nValueCount = 0;
+
+    if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
+        return OGRERR_FAILURE;
+
+    memset( szRecord, ' ', WRITE_REC_LEN );
+
+    WriteField( poFeature, "TLID", szRecord, 6, 15, 'R', 'N' );
+    WriteField( poFeature, "RTSQ", szRecord, 16, 18, 'R', 'N' );
+
+    panValue = poFeature->GetFieldAsIntegerList( "FEAT", &nValueCount );
+    for( int i = 0; i < nValueCount; i++ )
+    {
+        char	szWork[9];
+        
+        sprintf( szWork, "%8d", panValue[i] );
+        strncpy( szRecord + 18 + 8 * i, szWork, 8 );
+    }
+
+    WriteRecord( szRecord, WRITE_REC_LEN, FILE_CODE );
+
+    return OGRERR_NONE;
+}

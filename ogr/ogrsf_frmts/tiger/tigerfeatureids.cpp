@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/04 23:25:32  warmerda
+ * first round implementation of writer
+ *
  * Revision 1.4  2001/07/04 05:40:35  warmerda
  * upgraded to support FILE, and Tiger2000 schema
  *
@@ -44,6 +47,8 @@
 
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
+
+#define FILE_CODE "5"
 
 /************************************************************************/
 /*                            TigerFeatureIds()                         */
@@ -106,7 +111,7 @@ TigerFeatureIds::~TigerFeatureIds()
 int TigerFeatureIds::SetModule( const char * pszModule )
 
 {
-    if( !OpenFile( pszModule, "5" ) )
+    if( !OpenFile( pszModule, FILE_CODE ) )
         return FALSE;
 
     EstablishFeatureCount();
@@ -170,4 +175,32 @@ OGRFeature *TigerFeatureIds::GetFeature( int nRecordId )
     return poFeature;
 }
 
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
 
+#define WRITE_REC_LEN 52
+
+OGRErr TigerFeatureIds::CreateFeature( OGRFeature *poFeature )
+
+{
+    char	szRecord[WRITE_REC_LEN+1];
+
+    if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
+        return OGRERR_FAILURE;
+
+    memset( szRecord, ' ', WRITE_REC_LEN );
+
+    WriteField( poFeature, "FILE", szRecord, 2, 6, 'L', 'N' );
+    WriteField( poFeature, "STATE", szRecord, 2, 3, 'L', 'N' );
+    WriteField( poFeature, "COUNTY", szRecord, 4, 6, 'L', 'N' );
+    WriteField( poFeature, "FEAT", szRecord, 7, 14, 'R', 'N' );
+    WriteField( poFeature, "FEDIRP", szRecord, 15, 16, 'L', 'A' );
+    WriteField( poFeature, "FENAME", szRecord, 17, 46, 'L', 'A' );
+    WriteField( poFeature, "FETYPE", szRecord, 47, 50, 'L', 'A' );
+    WriteField( poFeature, "FEDIRS", szRecord, 51, 52, 'L', 'A' );
+
+    WriteRecord( szRecord, WRITE_REC_LEN, FILE_CODE );
+
+    return OGRERR_NONE;
+}

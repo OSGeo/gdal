@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/07/04 23:25:32  warmerda
+ * first round implementation of writer
+ *
  * Revision 1.5  2001/07/04 05:40:35  warmerda
  * upgraded to support FILE, and Tiger2000 schema
  *
@@ -47,6 +50,8 @@
 
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
+
+#define FILE_CODE "8"
 
 /************************************************************************/
 /*                         TigerAreaLandmarks()                         */
@@ -103,7 +108,7 @@ TigerAreaLandmarks::~TigerAreaLandmarks()
 int TigerAreaLandmarks::SetModule( const char * pszModule )
 
 {
-    if( !OpenFile( pszModule, "8" ) )
+    if( !OpenFile( pszModule, FILE_CODE ) )
         return FALSE;
 
     EstablishFeatureCount();
@@ -155,14 +160,40 @@ OGRFeature *TigerAreaLandmarks::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
     OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
-    poFeature->SetField( "FILE", GetField( achRecord, 6, 10 ));
-    poFeature->SetField( "STATE", GetField( achRecord, 6, 7 ));
-    poFeature->SetField( "COUNTY", GetField( achRecord, 8, 10 ));
-    poFeature->SetField( "CENID", GetField( achRecord, 11, 15 ));
-    poFeature->SetField( "POLYID", GetField( achRecord, 16, 25 ));
-    poFeature->SetField( "LAND", GetField( achRecord, 26, 35 ));
+    SetField( poFeature, "FILE", achRecord, 6, 10 );
+    SetField( poFeature, "STATE", achRecord, 6, 7 );
+    SetField( poFeature, "COUNTY", achRecord, 8, 10 );
+    SetField( poFeature, "CENID", achRecord, 11, 15 );
+    SetField( poFeature, "POLYID", achRecord, 16, 25 );
+    SetField( poFeature, "LAND", achRecord, 26, 35 );
 
     return poFeature;
 }
 
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
 
+#define WRITE_REC_LEN 36
+
+OGRErr TigerAreaLandmarks::CreateFeature( OGRFeature *poFeature )
+
+{
+    char	szRecord[WRITE_REC_LEN+1];
+
+    if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
+        return OGRERR_FAILURE;
+
+    memset( szRecord, ' ', WRITE_REC_LEN );
+
+    WriteField( poFeature, "FILE", szRecord, 6, 10, 'L', 'N' );
+    WriteField( poFeature, "STATE", szRecord, 6, 7, 'L', 'N' );
+    WriteField( poFeature, "COUNTY", szRecord, 8, 10, 'L', 'N' );
+    WriteField( poFeature, "CENID", szRecord, 11, 15, 'L', 'A' );
+    WriteField( poFeature, "POLYID", szRecord, 16, 25, 'R', 'N' );
+    WriteField( poFeature, "LAND", szRecord, 26, 35, 'R', 'N' );
+
+    WriteRecord( szRecord, WRITE_REC_LEN, FILE_CODE );
+
+    return OGRERR_NONE;
+}

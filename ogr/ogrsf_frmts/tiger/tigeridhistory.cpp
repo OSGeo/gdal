@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/04 23:25:32  warmerda
+ * first round implementation of writer
+ *
  * Revision 1.4  2001/07/04 05:40:35  warmerda
  * upgraded to support FILE, and Tiger2000 schema
  *
@@ -45,6 +48,8 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
+#define FILE_CODE "H"
+
 /************************************************************************/
 /*                           TigerIDHistory()                           */
 /************************************************************************/
@@ -60,7 +65,7 @@ TigerIDHistory::TigerIDHistory( OGRTigerDataSource * poDSIn,
     poFeatureDefn->SetGeomType( wkbNone );
 
 /* -------------------------------------------------------------------- */
-/*      Fields from type 9 record.                                      */
+/*      Fields from record.                                             */
 /* -------------------------------------------------------------------- */
     oField.Set( "MODULE", OFTString, 8 );
     poFeatureDefn->AddFieldDefn( &oField );
@@ -112,7 +117,7 @@ TigerIDHistory::~TigerIDHistory()
 int TigerIDHistory::SetModule( const char * pszModule )
 
 {
-    if( !OpenFile( pszModule, "H" ) )
+    if( !OpenFile( pszModule, FILE_CODE ) )
         return FALSE;
 
     EstablishFeatureCount();
@@ -178,4 +183,34 @@ OGRFeature *TigerIDHistory::GetFeature( int nRecordId )
     return poFeature;
 }
 
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
 
+#define WRITE_REC_LEN 62
+
+OGRErr TigerIDHistory::CreateFeature( OGRFeature *poFeature )
+
+{
+    char	szRecord[WRITE_REC_LEN+1];
+
+    if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
+        return OGRERR_FAILURE;
+
+    memset( szRecord, ' ', WRITE_REC_LEN );
+
+    WriteField( poFeature, "FILE", szRecord, 6, 10, 'L', 'N' );
+    WriteField( poFeature, "STATE", szRecord, 6, 7, 'L', 'N' );
+    WriteField( poFeature, "COUNTY", szRecord, 8, 10, 'L', 'N' );
+    WriteField( poFeature, "TLID", szRecord, 11, 20, 'R', 'N' );
+    WriteField( poFeature, "HIST", szRecord, 21, 21, 'L', 'A' );
+    WriteField( poFeature, "SOURCE", szRecord, 22, 22, 'L', 'A' );
+    WriteField( poFeature, "TLIDFR1", szRecord, 23, 32, 'R', 'N' );
+    WriteField( poFeature, "TLIDFR2", szRecord, 33, 42, 'R', 'N' );
+    WriteField( poFeature, "TLIDTO1", szRecord, 43, 52, 'R', 'N' );
+    WriteField( poFeature, "TLIDTO2", szRecord, 53, 62, 'R', 'N' );
+
+    WriteRecord( szRecord, WRITE_REC_LEN, FILE_CODE );
+
+    return OGRERR_NONE;
+}

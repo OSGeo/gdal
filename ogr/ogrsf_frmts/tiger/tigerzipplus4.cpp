@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/07/04 23:25:32  warmerda
+ * first round implementation of writer
+ *
  * Revision 1.3  2001/01/19 21:15:20  warmerda
  * expanded tabs
  *
@@ -41,6 +44,8 @@
 
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
+
+#define FILE_CODE	"Z"
 
 /************************************************************************/
 /*                           TigerZipPlus4()                            */
@@ -91,7 +96,7 @@ TigerZipPlus4::~TigerZipPlus4()
 int TigerZipPlus4::SetModule( const char * pszModule )
 
 {
-    if( !OpenFile( pszModule, "Z" ) )
+    if( !OpenFile( pszModule, FILE_CODE ) )
         return FALSE;
 
     EstablishFeatureCount();
@@ -149,4 +154,30 @@ OGRFeature *TigerZipPlus4::GetFeature( int nRecordId )
     SetField( poFeature, "ZIP4R", achRecord, 23, 26 );
 
     return poFeature;
+}
+
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
+
+#define WRITE_REC_LEN 26
+
+OGRErr TigerZipPlus4::CreateFeature( OGRFeature *poFeature )
+
+{
+    char	szRecord[WRITE_REC_LEN+1];
+
+    if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
+        return OGRERR_FAILURE;
+
+    memset( szRecord, ' ', WRITE_REC_LEN );
+
+    WriteField( poFeature, "TLID", szRecord, 6, 15, 'R', 'N' );
+    WriteField( poFeature, "RTSQ", szRecord, 16, 18, 'R', 'N' );
+    WriteField( poFeature, "ZIP4L", szRecord, 19, 22, 'L', 'N' );
+    WriteField( poFeature, "ZIP4R", szRecord, 23, 26, 'L', 'N' );
+
+    WriteRecord( szRecord, WRITE_REC_LEN, FILE_CODE );
+
+    return OGRERR_NONE;
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/04 23:25:32  warmerda
+ * first round implementation of writer
+ *
  * Revision 1.4  2001/07/04 05:40:35  warmerda
  * upgraded to support FILE, and Tiger2000 schema
  *
@@ -44,6 +47,8 @@
 
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
+
+#define FILE_CODE "R"
 
 /************************************************************************/
 /*                           TigerTLIDRange()                           */
@@ -103,7 +108,7 @@ TigerTLIDRange::~TigerTLIDRange()
 int TigerTLIDRange::SetModule( const char * pszModule )
 
 {
-    if( !OpenFile( pszModule, "R" ) )
+    if( !OpenFile( pszModule, FILE_CODE ) )
         return FALSE;
 
     EstablishFeatureCount();
@@ -166,4 +171,31 @@ OGRFeature *TigerTLIDRange::GetFeature( int nRecordId )
     return poFeature;
 }
 
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
 
+#define WRITE_REC_LEN 46
+
+OGRErr TigerTLIDRange::CreateFeature( OGRFeature *poFeature )
+
+{
+    char	szRecord[WRITE_REC_LEN+1];
+
+    if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
+        return OGRERR_FAILURE;
+
+    memset( szRecord, ' ', WRITE_REC_LEN );
+
+    WriteField( poFeature, "FILE", szRecord, 6, 10, 'L', 'N' );
+    WriteField( poFeature, "STATE", szRecord, 6, 7, 'L', 'N' );
+    WriteField( poFeature, "COUNTY", szRecord, 8, 10, 'L', 'N' );
+    WriteField( poFeature, "CENID", szRecord, 11, 15, 'L', 'A' );
+    WriteField( poFeature, "MAXID", szRecord, 16, 25, 'R', 'N' );
+    WriteField( poFeature, "MINID", szRecord, 26, 35, 'R', 'N' );
+    WriteField( poFeature, "HIGHID", szRecord, 36, 45, 'R', 'N' );
+
+    WriteRecord( szRecord, WRITE_REC_LEN, FILE_CODE );
+
+    return OGRERR_NONE;
+}

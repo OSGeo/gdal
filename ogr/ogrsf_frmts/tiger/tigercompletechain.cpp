@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/07/04 23:25:32  warmerda
+ * first round implementation of writer
+ *
  * Revision 1.7  2001/07/04 05:40:35  warmerda
  * upgraded to support FILE, and Tiger2000 schema
  *
@@ -707,6 +710,219 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
     return -1;
 }
 
+/************************************************************************/
+/*                           SetWriteModule()                           */
+/************************************************************************/
+int TigerCompleteChain::SetWriteModule( const char *pszFileCode, int nRecLen, 
+                                        OGRFeature *poFeature )
 
+{
+    int	bSuccess;
 
+    bSuccess = TigerFileBase::SetWriteModule( pszFileCode, nRecLen, poFeature);
+    if( !bSuccess )
+        return bSuccess;
 
+/* -------------------------------------------------------------------- */
+/*      Open the RT3 file                                               */
+/* -------------------------------------------------------------------- */
+    if( bUsingRT3 )
+    {
+        if( fpRT3 != NULL )
+        {
+            VSIFClose( fpRT3 );
+            fpRT3 = NULL;
+        }
+
+        if( pszModule )
+        {
+            char        *pszFilename;
+        
+            pszFilename = poDS->BuildFilename( pszModule, "3" );
+
+            fpRT3 = VSIFOpen( pszFilename, "ab" );
+
+            CPLFree( pszFilename );
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Close the shape point file, if open and free the list of        */
+/*      record ids.                                                     */
+/* -------------------------------------------------------------------- */
+    if( fpShape != NULL )
+    {
+        VSIFClose( fpShape );
+        fpShape = NULL;
+    }
+    
+    if( pszModule )
+    {
+        char        *pszFilename;
+        
+        pszFilename = poDS->BuildFilename( pszModule, "2" );
+        
+        fpShape = VSIFOpen( pszFilename, "ab" );
+        
+        CPLFree( pszFilename );
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
+
+#define WRITE_REC_LEN_RT1 228
+#define WRITE_REC_LEN_RT2 208
+#define WRITE_REC_LEN_RT3 111
+
+/* max of above */
+#define WRITE_REC_LEN WRITE_REC_LEN_RT1
+
+OGRErr TigerCompleteChain::CreateFeature( OGRFeature *poFeature )
+
+{
+    char	szRecord[WRITE_REC_LEN+1];
+    OGRLineString *poLine = (OGRLineString *) poFeature->GetGeometryRef();
+
+    if( poLine == NULL 
+        || (poLine->getGeometryType() != wkbLineString
+            && poLine->getGeometryType() != wkbLineString25D) )
+        return OGRERR_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      Write basic data record ("RT1")                                 */
+/* -------------------------------------------------------------------- */
+
+    if( !SetWriteModule( "1", WRITE_REC_LEN_RT1+2, poFeature ) )
+        return OGRERR_FAILURE;
+
+    memset( szRecord, ' ', WRITE_REC_LEN_RT1 );
+
+    WriteField( poFeature, "TLID", szRecord, 6, 15, 'R', 'N' );
+    WriteField( poFeature, "SIDE1", szRecord, 16, 16, 'R', 'N' );
+    WriteField( poFeature, "SOURCE", szRecord, 17, 17, 'L', 'A' );
+    WriteField( poFeature, "FEDIRP", szRecord, 18, 19, 'L', 'A' );
+    WriteField( poFeature, "FENAME", szRecord, 20, 49, 'L', 'A' );
+    WriteField( poFeature, "FETYPE", szRecord, 50, 53, 'L', 'A' );
+    WriteField( poFeature, "FEDIRS", szRecord, 54, 55, 'L', 'A' );
+    WriteField( poFeature, "CFCC", szRecord, 56, 58, 'L', 'A' );
+    WriteField( poFeature, "FRADDL", szRecord, 59, 69, 'R', 'A' );
+    WriteField( poFeature, "TOADDL", szRecord, 70, 80, 'R', 'A' );
+    WriteField( poFeature, "FRADDR", szRecord, 81, 91, 'R', 'A' );
+    WriteField( poFeature, "TOADDR", szRecord, 92, 102, 'R', 'A' );
+    WriteField( poFeature, "FRIADDL", szRecord, 103, 103, 'L', 'A' );
+    WriteField( poFeature, "TOIADDL", szRecord, 104, 104, 'L', 'A' );
+    WriteField( poFeature, "FRIADDR", szRecord, 105, 105, 'L', 'A' );
+    WriteField( poFeature, "TOIADDR", szRecord, 106, 106, 'L', 'A' );
+    WriteField( poFeature, "ZIPL", szRecord, 107, 111, 'L', 'N' );
+    WriteField( poFeature, "ZIPR", szRecord, 112, 116, 'L', 'N' );
+    WriteField( poFeature, "FAIRL", szRecord, 117, 121, 'L', 'N' );
+    WriteField( poFeature, "FAIRR", szRecord, 122, 126, 'L', 'N' );
+    WriteField( poFeature, "TRUSTL", szRecord, 127, 127, 'L', 'A' );
+    WriteField( poFeature, "TRUSTR", szRecord, 128, 128, 'L', 'A' );
+    WriteField( poFeature, "CENSUS1", szRecord, 129, 129, 'L', 'A' );
+    WriteField( poFeature, "CENSUS2", szRecord, 130, 130, 'L', 'A' );
+    WriteField( poFeature, "STATEL", szRecord, 131, 132, 'L', 'N' );
+    WriteField( poFeature, "STATER", szRecord, 133, 134, 'L', 'N' );
+    WriteField( poFeature, "COUNTYL", szRecord, 135, 137, 'L', 'N' );
+    WriteField( poFeature, "COUNTYR", szRecord, 138, 140, 'L', 'N' );
+    WriteField( poFeature, "FMCDL", szRecord, 141, 145, 'L', 'N' );
+    WriteField( poFeature, "FMCDR", szRecord, 146, 150, 'L', 'N' );
+    WriteField( poFeature, "FSMCDL", szRecord, 151, 155, 'L', 'N' );
+    WriteField( poFeature, "FSMCDR", szRecord, 156, 160, 'L', 'N' );
+    WriteField( poFeature, "FPLL", szRecord, 161, 165, 'L', 'N' );
+    WriteField( poFeature, "FPLR", szRecord, 166, 170, 'L', 'N' );
+    WriteField( poFeature, "CTBNAL", szRecord, 171, 176, 'L', 'N' );
+    WriteField( poFeature, "CTBNAR", szRecord, 177, 182, 'L', 'N' );
+    WriteField( poFeature, "BLKL", szRecord, 183, 186, 'L', 'N' );
+    WriteField( poFeature, "BLKR", szRecord, 187, 190, 'L', 'N' );
+
+    WritePoint( szRecord, 191, poLine->getX(0), poLine->getY(0) );
+    WritePoint( szRecord, 210, 
+                poLine->getX(poLine->getNumPoints()-1), 
+                poLine->getY(poLine->getNumPoints()-1) );
+
+    WriteRecord( szRecord, WRITE_REC_LEN_RT1, "1" );
+
+/* -------------------------------------------------------------------- */
+/*      Write geographic entity codes (RT3)                             */
+/* -------------------------------------------------------------------- */
+
+    memset( szRecord, ' ', WRITE_REC_LEN_RT3 );
+
+    WriteField( poFeature, "TLID", szRecord, 6, 15, 'R', 'N' );
+    WriteField( poFeature, "STATE90L", szRecord, 16, 17, 'L', 'N' );
+    WriteField( poFeature, "STATE90R", szRecord, 18, 19, 'L', 'N' );
+    WriteField( poFeature, "COUN90L", szRecord, 20, 22, 'L', 'N' );
+    WriteField( poFeature, "COUN90R", szRecord, 23, 25, 'L', 'N' );
+    WriteField( poFeature, "FMCD90L", szRecord, 26, 30, 'L', 'N' );
+    WriteField( poFeature, "FMCD90R", szRecord, 31, 35, 'L', 'N' );
+    WriteField( poFeature, "FPL90L", szRecord, 36, 40, 'L', 'N' );
+    WriteField( poFeature, "FPL90R", szRecord, 41, 45, 'L', 'N' );
+    WriteField( poFeature, "CTBNA90L", szRecord, 46, 51, 'L', 'N' );
+    WriteField( poFeature, "CTBNA90R", szRecord, 52, 57, 'L', 'N' );
+    WriteField( poFeature, "AIR90L", szRecord, 58, 61, 'L', 'N' );
+    WriteField( poFeature, "AIR90R", szRecord, 62, 65, 'L', 'N' );
+    WriteField( poFeature, "TRUST90L", szRecord, 66, 66, 'L', 'A' );
+    WriteField( poFeature, "TRUST90R", szRecord, 67, 67, 'L', 'A' );
+    WriteField( poFeature, "BLK90L", szRecord, 70, 73, 'L', 'A' );
+    WriteField( poFeature, "BLK90R", szRecord, 74, 77, 'L', 'A' );
+    WriteField( poFeature, "AIRL", szRecord, 78, 81, 'L', 'N' );
+    WriteField( poFeature, "AIRR", szRecord, 82, 85, 'L', 'N' );
+
+    /* Census 2000 */
+    WriteField( poFeature, "ANRCL", szRecord, 86, 90, 'L', 'N' );
+    WriteField( poFeature, "ANRCR", szRecord, 91, 95, 'L', 'N' );
+    WriteField( poFeature, "AITSCEL", szRecord, 96, 98, 'L', 'N' );
+    WriteField( poFeature, "AITSCER", szRecord, 99, 101, 'L', 'N' );
+    WriteField( poFeature, "AITSL", szRecord, 102, 106, 'L', 'N' );
+    WriteField( poFeature, "AITSR", szRecord, 107, 111, 'L', 'N' );
+
+    /* Pre 2000 */
+    WriteField( poFeature, "VTDL", szRecord, 104, 107, 'L', 'A' );
+    WriteField( poFeature, "VTDR", szRecord, 108, 111, 'L', 'A' );
+
+    WriteRecord( szRecord, WRITE_REC_LEN_RT3, "3", fpRT3 );
+
+/* -------------------------------------------------------------------- */
+/*      Write shapes sections (RT2)                                     */
+/* -------------------------------------------------------------------- */
+    if( poLine->getNumPoints() > 2 )
+    {
+        int	nPoints = poLine->getNumPoints();
+        int	iPoint, nRTSQ = 1;
+
+        for( iPoint = 1; iPoint < nPoints-1; )
+        {
+            int		i;
+            char	szTemp[5];
+
+            memset( szRecord, ' ', WRITE_REC_LEN_RT2 );
+
+            WriteField( poFeature, "TLID", szRecord, 6, 15, 'R', 'N' );
+            
+            sprintf( szTemp, "%3d", nRTSQ );
+            strncpy( ((char *)szRecord) + 15, szTemp, 4 );
+
+            for( i = 0; i < 10; i++ )
+            {
+                if( iPoint < nPoints-1 )
+                    WritePoint( szRecord, 19+19*i, 
+                                poLine->getX(iPoint), poLine->getY(iPoint) );
+                else
+                    WritePoint( szRecord, 19+19*i, 0.0, 0.0 );
+
+                iPoint++;
+            }
+            
+            WriteRecord( szRecord, WRITE_REC_LEN_RT2, "2", fpShape );
+
+            nRTSQ++;
+        }
+    }
+
+    return OGRERR_NONE;
+}

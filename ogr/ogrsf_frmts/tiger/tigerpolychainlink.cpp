@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/04 23:25:32  warmerda
+ * first round implementation of writer
+ *
  * Revision 1.4  2001/07/04 05:40:35  warmerda
  * upgraded to support FILE, and Tiger2000 schema
  *
@@ -44,6 +47,8 @@
 
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
+
+#define FILE_CODE "I"
 
 /************************************************************************/
 /*                         TigerPolyChainLink()                         */
@@ -109,7 +114,7 @@ TigerPolyChainLink::~TigerPolyChainLink()
 int TigerPolyChainLink::SetModule( const char * pszModule )
 
 {
-    if( !OpenFile( pszModule, "I" ) )
+    if( !OpenFile( pszModule, FILE_CODE ) )
         return FALSE;
 
     EstablishFeatureCount();
@@ -174,4 +179,33 @@ OGRFeature *TigerPolyChainLink::GetFeature( int nRecordId )
     return poFeature;
 }
 
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
 
+#define WRITE_REC_LEN 52
+
+OGRErr TigerPolyChainLink::CreateFeature( OGRFeature *poFeature )
+
+{
+    char	szRecord[WRITE_REC_LEN+1];
+
+    if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
+        return OGRERR_FAILURE;
+
+    memset( szRecord, ' ', WRITE_REC_LEN );
+
+    WriteField( poFeature, "TLID", szRecord, 6, 15, 'R', 'N' );
+    WriteField( poFeature, "FILE", szRecord, 16, 20, 'L', 'N' );
+    WriteField( poFeature, "STATE", szRecord, 16, 17, 'L', 'N' );
+    WriteField( poFeature, "COUNTY", szRecord, 18, 20, 'L', 'N' );
+    WriteField( poFeature, "RTLINK", szRecord, 21, 21, 'L', 'A' );
+    WriteField( poFeature, "CENIDL", szRecord, 22, 26, 'L', 'A' );
+    WriteField( poFeature, "POLYIDL", szRecord, 27, 36, 'R', 'N');
+    WriteField( poFeature, "CENIDR", szRecord, 37, 41, 'L', 'A' );
+    WriteField( poFeature, "POLYIDR", szRecord, 42, 51, 'R', 'N');
+
+    WriteRecord( szRecord, WRITE_REC_LEN, FILE_CODE );
+
+    return OGRERR_NONE;
+}

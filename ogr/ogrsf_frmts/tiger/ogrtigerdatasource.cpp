@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/07/04 23:25:32  warmerda
+ * first round implementation of writer
+ *
  * Revision 1.8  2001/07/04 05:40:35  warmerda
  * upgraded to support FILE, and Tiger2000 schema
  *
@@ -126,6 +129,8 @@ TigerVersion TigerClassifyVersion( int nVersionCode )
 OGRTigerDataSource::OGRTigerDataSource()
 
 {
+    bWriteMode = FALSE;
+
     nLayers = 0;
     papoLayers = NULL;
 
@@ -184,6 +189,22 @@ OGRLayer *OGRTigerDataSource::GetLayer( int iLayer )
         return NULL;
     else
         return papoLayers[iLayer];
+}
+
+/************************************************************************/
+/*                              GetLayer()                              */
+/************************************************************************/
+
+OGRLayer *OGRTigerDataSource::GetLayer( const char *pszLayerName )
+
+{
+    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( EQUAL(papoLayers[iLayer]->GetLayerDefn()->GetName(),pszLayerName) )
+            return papoLayers[iLayer];
+    }
+
+    return NULL;
 }
 
 /************************************************************************/
@@ -473,8 +494,156 @@ char *OGRTigerDataSource::BuildFilename( const char *pszModuleName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRTigerDataSource::TestCapability( const char * )
+int OGRTigerDataSource::TestCapability( const char *pszCap )
 
 {
-    return FALSE;
+    if( EQUAL(pszCap,ODsCCreateLayer) )
+        return GetWriteMode();
+    else
+        return FALSE;
+}
+
+/************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
+
+int OGRTigerDataSource::Create( const char *pszNameIn, char **papszOptions )
+
+{
+    VSIStatBuf      stat;
+    
+/* -------------------------------------------------------------------- */
+/*      Try to create directory if it doesn't already exist.            */
+/* -------------------------------------------------------------------- */
+    if( VSIStat( pszNameIn, &stat ) != 0 )
+    {
+        VSIMkdir( pszNameIn, 0755 );
+    }
+
+    if( VSIStat( pszNameIn, &stat ) != 0 || !VSI_ISDIR(stat.st_mode) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "%s is not a directory, nor can be directly created as one.",
+                  pszName );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Store various information.                                      */
+/* -------------------------------------------------------------------- */
+    pszPath = CPLStrdup( pszNameIn );
+    pszName = CPLStrdup( pszNameIn );
+    bWriteMode = TRUE;
+
+    SetOptionList( papszOptions );
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                            CreateLayer()                             */
+/************************************************************************/
+
+OGRLayer *OGRTigerDataSource::CreateLayer( const char *pszLayerName, 
+                                           OGRSpatialReference *poSpatRef, 
+                                           OGRwkbGeometryType eGType, 
+                                           char **papszOptions )
+
+{
+    OGRTigerLayer	*poLayer = NULL;
+
+    if( GetLayer( pszLayerName ) != NULL )
+        return GetLayer( pszLayerName );
+
+    if( poSpatRef != NULL && 
+        (!poSpatRef->IsGeographic() 
+         || !EQUAL(poSpatRef->GetAttrValue("DATUM"),
+                   "North_American_Datum_1983")) )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Requested coordinate system wrong for Tiger, " 
+                  "forcing to GEOGCS NAD83." );
+    }
+
+    if( EQUAL(pszLayerName,"PIP") )
+    {
+        poLayer = new OGRTigerLayer( this,
+                                     new TigerPIP( this, NULL ) );
+    }
+    else if( EQUAL(pszLayerName,"ZipPlus4") )
+    {
+        poLayer = new OGRTigerLayer( this,
+                                     new TigerZipPlus4( this, NULL ) );
+    }
+    else if( EQUAL(pszLayerName,"TLIDRange") )
+    {
+        poLayer = new OGRTigerLayer( this,
+                                     new TigerTLIDRange( this, NULL ) );
+    }
+    else if( EQUAL(pszLayerName,"PolyChainLink") )
+    {
+        poLayer = new OGRTigerLayer( this,
+                                     new TigerPolyChainLink( this, NULL ) );
+    }
+    else if( EQUAL(pszLayerName,"CompleteChain") )
+    {
+        poLayer = new OGRTigerLayer( this,
+                                     new TigerCompleteChain( this, NULL ) );
+    }
+    else if( EQUAL(pszLayerName,"AltName") )
+    {
+        poLayer = new OGRTigerLayer( this,
+                                     new TigerAltName( this, NULL ) );
+    }
+    else if( EQUAL(pszLayerName,"FeatureIds") )
+    {
+        poLayer = new OGRTigerLayer( this,
+                                     new TigerFeatureIds( this, NULL ) );
+    }
+    else if( EQUAL(pszLayerName,"ZipCodes") )
+    {
+        poLayer = new OGRTigerLayer( this,
+                                     new TigerZipCodes( this, NULL ) );
+    }
+    else if( EQUAL(pszLayerName,"Landmarks") )
+    {
+        poLayer = new OGRTigerLayer( this,
+                                     new TigerLandmarks( this, NULL ) );
+    }
+    else if( EQUAL(pszLayerName,"AreaLandmarks") )
+    {
+        poLayer = new OGRTigerLayer( this,
+                                     new TigerAreaLandmarks( this, NULL ) );
+    }
+    else if( EQUAL(pszLayerName,"KeyFeatures") )
+    {
+        poLayer = new OGRTigerLayer( this,
+                                     new TigerKeyFeatures( this, NULL ) );
+    }
+    else if( EQUAL(pszLayerName,"EntityNames") )
+    {
+        poLayer = new OGRTigerLayer( this,
+                                     new TigerEntityNames( this, NULL ) );
+    }
+    else if( EQUAL(pszLayerName,"IDHistory") )
+    {
+        poLayer = new OGRTigerLayer( this,
+                                     new TigerIDHistory( this, NULL ) );
+    }
+    else if( EQUAL(pszLayerName,"Polygon") )
+    {
+        poLayer = new OGRTigerLayer( this,
+                                     new TigerPolygon( this, NULL ) );
+    }
+
+    if( poLayer == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to create layer %s, not a known TIGER/Line layer.",
+                  pszLayerName );
+    }
+    else
+        AddLayer( poLayer );
+
+    return poLayer;
 }

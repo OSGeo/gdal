@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/04 23:25:32  warmerda
+ * first round implementation of writer
+ *
  * Revision 1.4  2001/01/19 21:15:20  warmerda
  * expanded tabs
  *
@@ -60,7 +63,7 @@ OGRTigerDriver::~OGRTigerDriver()
 const char *OGRTigerDriver::GetName()
 
 {
-    return "U.S. Census TIGER/Line";
+    return "TIGER";
 }
 
 /************************************************************************/
@@ -93,10 +96,34 @@ OGRDataSource *OGRTigerDriver::Open( const char * pszFilename, int bUpdate )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRTigerDriver::TestCapability( const char * )
+int OGRTigerDriver::TestCapability( const char *pszCap )
 
 {
-    return FALSE;
+    if( EQUAL(pszCap,ODrCCreateDataSource) )
+        return TRUE;
+    else
+        return FALSE;
+}
+
+/************************************************************************/
+/*                          CreateDataSource()                          */
+/************************************************************************/
+
+OGRDataSource *OGRTigerDriver::CreateDataSource( const char *pszName,
+                                                 char **papszOptions )
+
+{
+    OGRTigerDataSource *poDS;
+
+    poDS = new OGRTigerDataSource();
+
+    if( poDS->Create( pszName, papszOptions ) )
+        return poDS;
+    else
+    {
+        delete poDS;
+        return NULL;
+    }
 }
 
 /************************************************************************/

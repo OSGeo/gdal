@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/04 23:25:32  warmerda
+ * first round implementation of writer
+ *
  * Revision 1.4  2001/01/19 21:15:20  warmerda
  * expanded tabs
  *
@@ -44,6 +47,8 @@
 
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
+
+#define FILE_CODE "6"
 
 /************************************************************************/
 /*                            TigerZipCodes()                           */
@@ -186,4 +191,36 @@ OGRFeature *TigerZipCodes::GetFeature( int nRecordId )
     return poFeature;
 }
 
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
 
+#define WRITE_REC_LEN 76
+
+OGRErr TigerZipCodes::CreateFeature( OGRFeature *poFeature )
+
+{
+    char	szRecord[WRITE_REC_LEN+1];
+
+    if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
+        return OGRERR_FAILURE;
+
+    memset( szRecord, ' ', WRITE_REC_LEN );
+
+    WriteField( poFeature, "TLID", szRecord, 6, 15, 'R', 'N' );
+    WriteField( poFeature, "RTSQ", szRecord, 16, 18, 'R', 'N' );
+    WriteField( poFeature, "FRADDL", szRecord, 19, 29, 'R', 'A' );
+    WriteField( poFeature, "TOADDL", szRecord, 30, 40, 'R', 'A' );
+    WriteField( poFeature, "FRADDR", szRecord, 41, 51, 'R', 'A' );
+    WriteField( poFeature, "TOADDR", szRecord, 52, 62, 'R', 'A' );
+    WriteField( poFeature, "FRIADDL", szRecord, 63, 63, 'L', 'A' );
+    WriteField( poFeature, "TOIADDL", szRecord, 64, 64, 'L', 'A' );
+    WriteField( poFeature, "FRIADDR", szRecord, 65, 65, 'L', 'A' );
+    WriteField( poFeature, "TOIADDR", szRecord, 66, 66, 'L', 'A' );
+    WriteField( poFeature, "ZIPL", szRecord, 67, 71, 'L', 'N' );
+    WriteField( poFeature, "ZIPR", szRecord, 72, 76, 'L', 'N' );
+
+    WriteRecord( szRecord, WRITE_REC_LEN, FILE_CODE );
+
+    return OGRERR_NONE;
+}

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/07/04 23:25:32  warmerda
+ * first round implementation of writer
+ *
  * Revision 1.7  2001/07/04 05:40:35  warmerda
  * upgraded to support FILE, and Tiger2000 schema
  *
@@ -126,9 +129,13 @@ public:
   virtual const char *GetShortModule() { return pszShortModule; }
   virtual const char *GetModule() { return pszModule; }
   virtual int         SetModule( const char * ) = 0;
+  virtual int         SetWriteModule( const char *, int, OGRFeature * );
 
   virtual int         GetFeatureCount() { return nFeatures; }
   virtual OGRFeature *GetFeature( int ) = 0;
+
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature ) 
+				{ return OGRERR_FAILURE; }
 
   OGRFeatureDefn     *GetFeatureDefn() { return poFeatureDefn; }
 
@@ -136,6 +143,12 @@ public:
   static void         SetField( OGRFeature *, const char *, const char *,
                                 int, int );
 
+  int                 WriteField( OGRFeature *, const char *, char *,
+                                  int, int, char, char );
+  int                 WriteRecord( char *pachRecord, int nRecLen, 
+                                   const char *pszType, FILE *fp = NULL );
+  int                 WritePoint( char *pachRecord, int nStart, 
+                                  double dfX, double dfY );
 };
 
 /************************************************************************/
@@ -161,6 +174,10 @@ public:
   virtual int         SetModule( const char * );
 
   virtual OGRFeature *GetFeature( int );
+
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+
+  virtual int         SetWriteModule( const char *, int, OGRFeature * );
 };
 
 /************************************************************************/
@@ -177,6 +194,8 @@ public:
   virtual int         SetModule( const char * );
 
   virtual OGRFeature *GetFeature( int );
+
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 };
 
 /************************************************************************/
@@ -193,6 +212,8 @@ public:
   virtual int         SetModule( const char * );
 
   virtual OGRFeature *GetFeature( int );
+
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 };
 
 /************************************************************************/
@@ -208,6 +229,8 @@ public:
   virtual int         SetModule( const char * );
 
   virtual OGRFeature *GetFeature( int );
+
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 };
 
 /************************************************************************/
@@ -223,6 +246,8 @@ public:
   virtual int         SetModule( const char * );
 
   virtual OGRFeature *GetFeature( int );
+
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 };
 
 /************************************************************************/
@@ -238,6 +263,8 @@ public:
   virtual int         SetModule( const char * );
 
   virtual OGRFeature *GetFeature( int );
+
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 };
 
 /************************************************************************/
@@ -253,6 +280,8 @@ public:
   virtual int         SetModule( const char * );
 
   virtual OGRFeature *GetFeature( int );
+
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 };
 
 /************************************************************************/
@@ -272,6 +301,9 @@ public:
   virtual int         SetModule( const char * );
 
   virtual OGRFeature *GetFeature( int );
+
+  virtual int         SetWriteModule( const char *, int, OGRFeature * );
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 };
 
 /************************************************************************/
@@ -287,6 +319,8 @@ public:
   virtual int         SetModule( const char * );
 
   virtual OGRFeature *GetFeature( int );
+
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 };
 
 /************************************************************************/
@@ -302,6 +336,8 @@ public:
   virtual int         SetModule( const char * );
 
   virtual OGRFeature *GetFeature( int );
+
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 };
 
 /************************************************************************/
@@ -317,6 +353,8 @@ public:
   virtual int         SetModule( const char * );
 
   virtual OGRFeature *GetFeature( int );
+
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 };
 
 /************************************************************************/
@@ -332,6 +370,8 @@ public:
   virtual int         SetModule( const char * );
 
   virtual OGRFeature *GetFeature( int );
+
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 };
 
 /************************************************************************/
@@ -347,6 +387,8 @@ public:
   virtual int         SetModule( const char * );
 
   virtual OGRFeature *GetFeature( int );
+
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 };
 
 /************************************************************************/
@@ -362,6 +404,8 @@ public:
   virtual int         SetModule( const char * );
 
   virtual OGRFeature *GetFeature( int );
+
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 };
 
 /************************************************************************/
@@ -394,11 +438,7 @@ class OGRTigerLayer : public OGRLayer
     void                ResetReading();
     OGRFeature *        GetNextFeature();
     OGRFeature         *GetFeature( long nFeatureId );
-#ifdef notdef    
-    OGRErr              SetFeature( OGRFeature *poFeature );
-    OGRErr              CreateFeature( OGRFeature *poFeature );
-#endif
-    
+
     OGRFeatureDefn *    GetLayerDefn();
 
     int                 GetFeatureCount( int ) { return nFeatureCount; }
@@ -406,6 +446,10 @@ class OGRTigerLayer : public OGRLayer
     int                 TestCapability( const char * );
 
     virtual OGRSpatialReference *GetSpatialRef();
+
+    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      CreateField( OGRFieldDefn *poField,
+                                     int bApproxOK = TRUE );
 };
 
 /************************************************************************/
@@ -431,9 +475,13 @@ class OGRTigerDataSource : public OGRDataSource
     int		        nVersionCode;
     TigerVersion	nVersion;
 
+    int			bWriteMode;
+
   public:
                         OGRTigerDataSource();
                         ~OGRTigerDataSource();
+
+    int			GetWriteMode() { return bWriteMode; }
 
     TigerVersion        GetVersion() { return nVersion; }
     int                 GetVersionCode() { return nVersionCode; }
@@ -443,10 +491,14 @@ class OGRTigerDataSource : public OGRDataSource
     
     int                 Open( const char * pszName, int bTestOpen = FALSE,
                               char ** papszFileList = NULL );
+
+    int			Create( const char *pszName, char **papszOptions );
     
     const char          *GetName() { return pszName; }
     int                 GetLayerCount();
     OGRLayer            *GetLayer( int );
+    OGRLayer            *GetLayer( const char *pszLayerName );
+
     void                AddLayer( OGRTigerLayer * );
     int                 TestCapability( const char * );
 
@@ -459,6 +511,11 @@ class OGRTigerDataSource : public OGRDataSource
 
     int                 GetModuleCount() { return nModules; }
     const char         *GetModule( int );
+
+    virtual OGRLayer    *CreateLayer( const char *, 
+                                      OGRSpatialReference * = NULL,
+                                      OGRwkbGeometryType = wkbUnknown,
+                                      char ** = NULL );
 };
 
 /************************************************************************/
@@ -471,8 +528,13 @@ class OGRTigerDriver : public OGRSFDriver
                 ~OGRTigerDriver();
                 
     const char *GetName();
+
     OGRDataSource *Open( const char *, int );
-    int                 TestCapability( const char * );
+
+    virtual OGRDataSource *CreateDataSource( const char *pszName,
+                                             char ** = NULL );
+
+    int         TestCapability( const char * );
 };
 
 #endif /* ndef _OGR_TIGER_H_INCLUDED */

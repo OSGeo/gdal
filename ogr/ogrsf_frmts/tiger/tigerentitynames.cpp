@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/04 23:25:32  warmerda
+ * first round implementation of writer
+ *
  * Revision 1.4  2001/07/04 05:40:35  warmerda
  * upgraded to support FILE, and Tiger2000 schema
  *
@@ -44,6 +47,8 @@
 
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
+
+#define FILE_CODE "C"
 
 /************************************************************************/
 /*                          TigerEntityNames()                          */
@@ -77,13 +82,13 @@ TigerEntityNames::TigerEntityNames( OGRTigerDataSource * poDSIn,
     oField.Set( "FIPS", OFTInteger, 5 );
     poFeatureDefn->AddFieldDefn( &oField );
     
-    oField.Set( "FIPSCC", OFTInteger, 2 );
+    oField.Set( "FIPSCC", OFTString, 2 );
     poFeatureDefn->AddFieldDefn( &oField );
     
     oField.Set( "PDC", OFTString, 1 );
     poFeatureDefn->AddFieldDefn( &oField );
     
-    oField.Set( "LASAD", OFTInteger, 2 );
+    oField.Set( "LASAD", OFTString, 2 );
     poFeatureDefn->AddFieldDefn( &oField );
     
     oField.Set( "ENTITY", OFTString, 1 );
@@ -216,4 +221,39 @@ OGRFeature *TigerEntityNames::GetFeature( int nRecordId )
     return poFeature;
 }
 
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
 
+#define WRITE_REC_LEN 112
+
+OGRErr TigerEntityNames::CreateFeature( OGRFeature *poFeature )
+
+{
+    char	szRecord[WRITE_REC_LEN+1];
+
+    if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
+        return OGRERR_FAILURE;
+
+    memset( szRecord, ' ', WRITE_REC_LEN );
+
+    WriteField( poFeature, "STATE", szRecord, 6, 7, 'L', 'N' );
+    WriteField( poFeature, "COUNTY", szRecord, 8, 10, 'L', 'N' );
+    WriteField( poFeature, "FIPSYR", szRecord, 11, 14, 'L', 'N' );
+    WriteField( poFeature, "FIPS", szRecord, 15, 19, 'L', 'N' );
+    WriteField( poFeature, "FIPSCC", szRecord, 20, 21, 'L', 'A' );
+    WriteField( poFeature, "PDC", szRecord, 22, 22, 'L', 'A' );
+    WriteField( poFeature, "LASAD", szRecord, 23, 24, 'L', 'A' );
+    WriteField( poFeature, "ENTITY", szRecord, 25, 25, 'L', 'A' );
+    WriteField( poFeature, "MA", szRecord, 26, 29, 'L', 'N' );
+    WriteField( poFeature, "SD", szRecord, 30, 34, 'L', 'N' );
+    WriteField( poFeature, "AIR", szRecord, 35, 38, 'L', 'N' );
+    WriteField( poFeature, "VTD", szRecord, 39, 44, 'R', 'A' );
+    WriteField( poFeature, "UA", szRecord, 45, 49, 'L', 'N' );
+    WriteField( poFeature, "AITSCE", szRecord, 50, 52, 'L', 'N' );
+    WriteField( poFeature, "NAME", szRecord, 53, 112, 'L', 'A' );
+
+    WriteRecord( szRecord, WRITE_REC_LEN, FILE_CODE );
+
+    return OGRERR_NONE;
+}
