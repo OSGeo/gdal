@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/02/22 22:17:42  warmerda
+ * Ensure that components of complex chain/shapes are spatially selected
+ * based on the decision made for their owner (header).
+ *
  * Revision 1.11  2002/01/21 20:52:11  warmerda
  * added SetSpatialFilter function
  *
@@ -181,6 +185,8 @@ DGNHandle DGNOpen( const char * pszFilename )
 
     psDGN->has_spatial_filter = FALSE;
     psDGN->sf_converted_to_uor = FALSE;
+    psDGN->select_complex_group = FALSE;
+    psDGN->in_complex_group = FALSE;
 
     return (DGNHandle) psDGN;
 }
