@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/12/12 03:15:31  warmerda
+ * avoid leaks
+ *
  * Revision 1.14  2001/12/08 04:46:16  warmerda
  * added support for color table
  *
@@ -340,9 +343,11 @@ PAuxDataset::~PAuxDataset()
     }
 
     CPLFree( pszProjection );
-    CPLFree( pszGCPProjection );
 
+    CPLFree( pszGCPProjection );
+    GDALDeinitGCPs( nGCPCount, pasGCPList );
     CPLFree( pasGCPList );
+
     CPLFree( pszAuxFilename );
     CSLDestroy( papszAuxLines );
 }
