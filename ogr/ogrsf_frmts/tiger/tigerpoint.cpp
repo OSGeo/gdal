@@ -44,7 +44,7 @@ OGRFeature *TigerPoint::GetFeature( int nRecordId,
     return NULL;
   }
 
-  if( VSIFRead( achRecord, psRTInfo->reclen, 1, fpPrimary ) != 1 ) {
+  if( VSIFRead( achRecord, psRTInfo->nRecordLength, 1, fpPrimary ) != 1 ) {
     CPLError( CE_Failure, CPLE_FileIO,
 	      "Failed to read record %d of %sP",
 	      nRecordId, pszModule );
@@ -84,10 +84,10 @@ OGRErr TigerPoint::CreateFeature( OGRFeature *poFeature,
   char        szRecord[OGR_TIGER_RECBUF_LEN];
   OGRPoint    *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
 
-  if( !SetWriteModule( pszFileCode, psRTInfo->reclen+2, poFeature ) )
+  if( !SetWriteModule( pszFileCode, psRTInfo->nRecordLength+2, poFeature ) )
     return OGRERR_FAILURE;
 
-  memset( szRecord, ' ', psRTInfo->reclen );
+  memset( szRecord, ' ', psRTInfo->nRecordLength );
 
   WriteFields( psRTInfo, poFeature, szRecord );
 
@@ -101,7 +101,7 @@ OGRErr TigerPoint::CreateFeature( OGRFeature *poFeature,
     }
   }
 
-  WriteRecord( szRecord, psRTInfo->reclen, pszFileCode );
+  WriteRecord( szRecord, psRTInfo->nRecordLength, pszFileCode );
 
   return OGRERR_NONE;
 }

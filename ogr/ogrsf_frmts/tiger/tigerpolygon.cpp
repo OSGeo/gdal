@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/01/04 23:21:56  mbp
+ * Minor bug fixes and field definition changes.  Cleaned
+ * up and commented code written for TIGER 2002 support.
+ *
  * Revision 1.8  2002/12/26 00:20:19  mbp
  * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
  * first round implementation of TIGER_2002 support
@@ -121,20 +125,20 @@ static TigerRecordInfo rtA_2002_info =
 static TigerFieldInfo rtA_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       1,   1,     1 },  //  otype mismatch
+  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       1,   1,     1 },
   { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
   { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
   { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1,     1 },
   { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       1,   1,     1 },
   { "FAIR",       'L', 'N', OFTInteger,   26,  30,   5,       1,   1,     1 },
-  { "FMCD",       'L', 'N', OFTInteger,   31,  35,   5,       1,   1,     1 },  //  beg mismatch,end mismatch
+  { "FMCD",       'L', 'N', OFTInteger,   31,  35,   5,       1,   1,     1 },
   { "FPL",        'L', 'N', OFTInteger,   36,  40,   5,       1,   1,     1 },
   { "CTBNA90",    'L', 'N', OFTInteger,   41,  46,   6,       1,   1,     1 },
   { "BLK90",      'L', 'A', OFTString,    47,  50,   4,       1,   1,     1 },
   { "CD106",      'L', 'N', OFTInteger,   51,  52,   2,       1,   1,     1 },
   { "CD108",      'L', 'N', OFTInteger,   53,  54,   2,       1,   1,     1 },
   { "SDELM",      'L', 'A', OFTString,    55,  59,   5,       1,   1,     1 },
-  { "SDSEC",      'L', 'N', OFTString,    65,  69,   5,       1,   1,     1 },  //  otype mismatch
+  { "SDSEC",      'L', 'N', OFTString,    65,  69,   5,       1,   1,     1 },
   { "SDUNI",      'L', 'A', OFTString,    70,  74,   5,       1,   1,     1 },
   { "TAZ",        'R', 'A', OFTString,    75,  80,   6,       1,   1,     1 },
   { "UA",         'L', 'N', OFTInteger,   81,  84,   4,       1,   1,     1 },
@@ -205,18 +209,18 @@ static TigerRecordInfo rtS_2002_info =
 
 
 static TigerFieldInfo rtS_2000_Redistricting_fields[] = {
-  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       0,   0,     1 },  //  otype mismatch
+  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       0,   0,     1 },
   { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       0,   0,     1 },
   { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       0,   0,     1 },
   { "CENID",      'L', 'A', OFTString,    11,  15,   5,       0,   0,     1 },
   { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       0,   0,     1 },
-  { "WATER",      'L', 'N', OFTString,    26,  26,   1,       1,   1,     1 },  //  otype mismatch
+  { "WATER",      'L', 'N', OFTString,    26,  26,   1,       1,   1,     1 },
   { "CMSAMSA",    'L', 'N', OFTInteger,   27,  30,   4,       1,   1,     1 },
   { "PMSA",       'L', 'N', OFTInteger,   31,  34,   4,       1,   1,     1 },
   { "AIANHH",     'L', 'N', OFTInteger,   35,  39,   5,       1,   1,     1 },
   { "AIR",        'L', 'N', OFTInteger,   40,  43,   4,       1,   1,     1 },
   { "TRUST",      'L', 'A', OFTString,    44,  44,   1,       1,   1,     1 },
-  { "ANRC",       'L', 'A', OFTInteger,   45,  46,   2,       1,   1,     1 },  //  otype mismatch
+  { "ANRC",       'L', 'A', OFTInteger,   45,  46,   2,       1,   1,     1 },
   { "STATECU",    'L', 'N', OFTInteger,   47,  48,   2,       1,   1,     1 },
   { "COUNTYCU",   'L', 'N', OFTInteger,   49,  51,   3,       1,   1,     1 },
   { "FCCITY",     'L', 'N', OFTInteger,   52,  56,   5,       1,   1,     1 },
@@ -224,8 +228,8 @@ static TigerFieldInfo rtS_2000_Redistricting_fields[] = {
   { "FSMCD",      'L', 'N', OFTInteger,   62,  66,   5,       1,   1,     1 },
   { "PLACE",      'L', 'N', OFTInteger,   67,  71,   5,       1,   1,     1 },
   { "CTBNA00",    'L', 'N', OFTInteger,   72,  77,   6,       1,   1,     1 },
-  { "BLK00",      'L', 'N', OFTString,    78,  81,   4,       1,   1,     1 },  //  otype mismatch
-  { "RS10",       'R', 'N', OFTInteger,   82,  82,   0,       0,   1,     1 },  //  otype mismatch
+  { "BLK00",      'L', 'N', OFTString,    78,  81,   4,       1,   1,     1 },
+  { "RS10",       'R', 'N', OFTInteger,   82,  82,   0,       0,   1,     1 },
   { "CDCU",       'L', 'N', OFTInteger,   83,  84,   2,       1,   1,     1 },
 
   { "SLDU",       'R', 'A', OFTString,    85,  87,   3,       1,   1,     1 },
@@ -249,19 +253,19 @@ static TigerRecordInfo rtS_2000_Redistricting_info =
   };
 
 static TigerFieldInfo rtS_fields[] = {
-  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       0,   0,     1 },  //  otype mismatch
+  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       0,   0,     1 },
   { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       0,   0,     1 },
   { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       0,   0,     1 },
   { "CENID",      'L', 'A', OFTString,    11,  15,   5,       0,   0,     1 },
   { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       0,   0,     1 },
 
-  { "WATER",      'L', 'N', OFTString,    26,  26,   1,       1,   1,     1 },  //  otype mismatch
+  { "WATER",      'L', 'N', OFTString,    26,  26,   1,       1,   1,     1 },
   { "CMSAMSA",    'L', 'N', OFTInteger,   27,  30,   4,       1,   1,     1 },
   { "PMSA",       'L', 'N', OFTInteger,   31,  34,   4,       1,   1,     1 },
   { "AIANHH",     'L', 'N', OFTInteger,   35,  39,   5,       1,   1,     1 },
   { "AIR",        'L', 'N', OFTInteger,   40,  43,   4,       1,   1,     1 },
   { "TRUST",      'L', 'A', OFTString,    44,  44,   1,       1,   1,     1 },
-  { "ANRC",       'L', 'A', OFTInteger,   45,  46,   2,       1,   1,     1 },  //  otype mismatch
+  { "ANRC",       'L', 'A', OFTInteger,   45,  46,   2,       1,   1,     1 },
   { "STATECU",    'L', 'N', OFTInteger,   47,  48,   2,       1,   1,     1 },
   { "COUNTYCU",   'L', 'N', OFTInteger,   49,  51,   3,       1,   1,     1 },
   { "FCCITY",     'L', 'N', OFTInteger,   52,  56,   5,       1,   1,     1 },
@@ -269,8 +273,8 @@ static TigerFieldInfo rtS_fields[] = {
   { "FSMCD",      'L', 'N', OFTInteger,   62,  66,   5,       1,   1,     1 },
   { "PLACE",      'L', 'N', OFTInteger,   67,  71,   5,       1,   1,     1 },
   { "CTBNA00",    'L', 'N', OFTInteger,   72,  77,   6,       1,   1,     1 },
-  { "BLK00",      'L', 'N', OFTString,    78,  81,   4,       1,   1,     1 },  //  otype mismatch
-  { "RS10",       'R', 'N', OFTInteger,   82,  82,   0,       0,   1,     1 },  //  otype mismatch
+  { "BLK00",      'L', 'N', OFTString,    78,  81,   4,       1,   1,     1 },
+  { "RS10",       'R', 'N', OFTInteger,   82,  82,   0,       0,   1,     1 },
   { "CDCU",       'L', 'N', OFTInteger,   83,  84,   2,       1,   1,     1 },
 
   { "STSENATE",   'L', 'A', OFTString,    85,  90,   6,       1,   1,     1 },
@@ -292,8 +296,6 @@ TigerPolygon::TigerPolygon( OGRTigerDataSource * poDSIn,
                                   const char * pszPrototypeModule )
 
 {
-  //    OGRFieldDefn        oField("",OFTInteger);
-
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "Polygon" );
     poFeatureDefn->SetGeomType( wkbNone );
@@ -444,7 +446,7 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
             return NULL;
         }
 
-        if( VSIFRead( achRTSRec, psRTSInfo->reclen, 1, fpRTS ) != 1 )
+        if( VSIFRead( achRTSRec, psRTSInfo->nRecordLength, 1, fpRTS ) != 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to read record %d of %sS",
@@ -512,22 +514,22 @@ OGRErr TigerPolygon::CreateFeature( OGRFeature *poFeature )
 /*      Write basic data record ("RTA")                                 */
 /* -------------------------------------------------------------------- */
 
-    if( !SetWriteModule( "A", psRTAInfo->reclen+2, poFeature ) )
+    if( !SetWriteModule( "A", psRTAInfo->nRecordLength+2, poFeature ) )
         return OGRERR_FAILURE;
 
-    memset( szRecord, ' ', psRTAInfo->reclen );
+    memset( szRecord, ' ', psRTAInfo->nRecordLength );
 
     WriteFields( psRTAInfo, poFeature, szRecord );
-    WriteRecord( szRecord, psRTAInfo->reclen, "A" );
+    WriteRecord( szRecord, psRTAInfo->nRecordLength, "A" );
 
 /* -------------------------------------------------------------------- */
 /*      Prepare S record.                                               */
 /* -------------------------------------------------------------------- */
 
-    memset( szRecord, ' ', psRTSInfo->reclen );
+    memset( szRecord, ' ', psRTSInfo->nRecordLength );
 
     WriteFields( psRTSInfo, poFeature, szRecord );
-    WriteRecord( szRecord, psRTSInfo->reclen, "S", fpRTS );
+    WriteRecord( szRecord, psRTSInfo->nRecordLength, "S", fpRTS );
 
 
     return OGRERR_NONE;

@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/01/04 23:21:56  mbp
+ * Minor bug fixes and field definition changes.  Cleaned
+ * up and commented code written for TIGER 2002 support.
+ *
  * Revision 1.8  2002/12/26 00:20:19  mbp
  * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
  * first round implementation of TIGER_2002 support
@@ -82,7 +86,7 @@ static TigerRecordInfo rt5_2002_info =
 static TigerFieldInfo rt5_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "FILE",       'L', 'N', OFTInteger,    2,   6,   5,       1,   1,     1 },  //  otype mismatch
+  { "FILE",       'L', 'N', OFTString,     2,   6,   5,       1,   1,     1 },
   { "STATE",      'L', 'N', OFTInteger,    2,   3,   2,       1,   1,     1 },
   { "COUNTY",     'L', 'N', OFTInteger,    4,   6,   3,       1,   1,     1 },
   { "FEAT",       'R', 'N', OFTInteger,    7,  14,   8,       1,   1,     1 },
@@ -91,18 +95,7 @@ static TigerFieldInfo rt5_fields[] = {
   { "FETYPE",     'L', 'A', OFTString,    47,  50,   4,       1,   1,     1 },
   { "FEDIRS",     'L', 'A', OFTString,    51,  52,   2,       1,   1,     1 }
 };
-// Note 1: the OGR Type for "FILE" was (erroneously) OFTString in
-// earlier versions of tigerfeatureids.cpp (with type code 'N'!).
-// Note 2: notice that the FILE field overlaps the STATE and COUNTY
-// fields in the record; I'm not sure if this is as it should be, but
-// I'm leaving it as is while converting this file to use the
-// TigerFieldInfo stuff.  Notice also that in this case all three of
-// these fields have bDefine=bSet=bWrite=1, whereas there is at least
-// one other case (tigerlandmarks.cpp) of a similar situation with a
-// FILE field that overlaps STATE and COUNTY fields, and yet in that
-// case the FILE field has bSet=0.  I'm not sure if that is deliberate
-// or an omission, but I'm preserving the way the original code was.
-// mbp Fri Dec 20 22:01:35 2002
+
 static TigerRecordInfo rt5_info =
   {
     rt5_fields,
@@ -187,7 +180,7 @@ OGRFeature *TigerFeatureIds::GetFeature( int nRecordId )
         return NULL;
     }
 
-    if( VSIFRead( achRecord, psRT5Info->reclen, 1, fpPrimary ) != 1 )
+    if( VSIFRead( achRecord, psRT5Info->nRecordLength, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %s5",
@@ -211,14 +204,14 @@ OGRErr TigerFeatureIds::CreateFeature( OGRFeature *poFeature )
 {
     char        szRecord[OGR_TIGER_RECBUF_LEN];
 
-    if( !SetWriteModule( FILE_CODE, psRT5Info->reclen+2, poFeature ) )
+    if( !SetWriteModule( FILE_CODE, psRT5Info->nRecordLength+2, poFeature ) )
         return OGRERR_FAILURE;
 
-    memset( szRecord, ' ', psRT5Info->reclen );
+    memset( szRecord, ' ', psRT5Info->nRecordLength );
 
     WriteFields( psRT5Info, poFeature, szRecord);
 
-    WriteRecord( szRecord, psRT5Info->reclen, FILE_CODE );
+    WriteRecord( szRecord, psRT5Info->nRecordLength, FILE_CODE );
 
     return OGRERR_NONE;
 }

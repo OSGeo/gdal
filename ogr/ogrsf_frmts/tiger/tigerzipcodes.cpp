@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/01/04 23:21:56  mbp
+ * Minor bug fixes and field definition changes.  Cleaned
+ * up and commented code written for TIGER 2002 support.
+ *
  * Revision 1.8  2002/12/26 00:20:19  mbp
  * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
  * first round implementation of TIGER_2002 support
@@ -71,10 +75,10 @@ static TigerFieldInfo rt6_fields[] = {
   { "TOADDL",     'R', 'A', OFTString,   30,  40,  11,       1,   1,     1 },
   { "FRADDR",     'R', 'A', OFTString,   41,  51,  11,       1,   1,     1 },
   { "TOADDR",     'R', 'A', OFTString,   52,  62,  11,       1,   1,     1 },
-  { "FRIADDL",    'L', 'A', OFTString,   63,  63,   1,       1,   1,     1 }, // otype mismatch
-  { "TOIADDL",    'L', 'A', OFTString,   64,  64,   1,       1,   1,     1 }, // otype mismatch
-  { "FRIADDR",    'L', 'A', OFTString,   65,  65,   1,       1,   1,     1 }, // otype mismatch
-  { "TOIADDR",    'L', 'A', OFTString,   66,  66,   1,       1,   1,     1 }, // otype mismatch
+  { "FRIADDL",    'L', 'A', OFTInteger,  63,  63,   1,       1,   1,     1 },
+  { "TOIADDL",    'L', 'A', OFTInteger,  64,  64,   1,       1,   1,     1 },
+  { "FRIADDR",    'L', 'A', OFTInteger,  65,  65,   1,       1,   1,     1 },
+  { "TOIADDR",    'L', 'A', OFTInteger,  66,  66,   1,       1,   1,     1 },
   { "ZIPL",       'L', 'N', OFTInteger,  67,  71,   5,       1,   1,     1 },
   { "ZIPR",       'L', 'N', OFTInteger,  72,  76,   5,       1,   1,     1 }
 };
@@ -163,7 +167,7 @@ OGRFeature *TigerZipCodes::GetFeature( int nRecordId )
         return NULL;
     }
 
-    if( VSIFRead( achRecord, psRT6Info->reclen, 1, fpPrimary ) != 1 )
+    if( VSIFRead( achRecord, psRT6Info->nRecordLength, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %s6",
@@ -191,14 +195,14 @@ OGRErr TigerZipCodes::CreateFeature( OGRFeature *poFeature )
 {
   char  szRecord[OGR_TIGER_RECBUF_LEN];
 
-    if( !SetWriteModule( FILE_CODE, psRT6Info->reclen+2, poFeature ) )
+    if( !SetWriteModule( FILE_CODE, psRT6Info->nRecordLength+2, poFeature ) )
         return OGRERR_FAILURE;
 
-    memset( szRecord, ' ', psRT6Info->reclen );
+    memset( szRecord, ' ', psRT6Info->nRecordLength );
 
     WriteFields( psRT6Info, poFeature, szRecord);
 
-    WriteRecord( szRecord, psRT6Info->reclen, FILE_CODE );
+    WriteRecord( szRecord, psRT6Info->nRecordLength, FILE_CODE );
 
     return OGRERR_NONE;
 }

@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/01/04 23:21:56  mbp
+ * Minor bug fixes and field definition changes.  Cleaned
+ * up and commented code written for TIGER 2002 support.
+ *
  * Revision 1.8  2002/12/26 00:20:19  mbp
  * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
  * first round implementation of TIGER_2002 support
@@ -159,7 +163,7 @@ OGRFeature *TigerAltName::GetFeature( int nRecordId )
         return NULL;
     }
 
-    if( VSIFRead( achRecord, psRT4Info->reclen, 1, fpPrimary ) != 1 )
+    if( VSIFRead( achRecord, psRT4Info->nRecordLength, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %s4",
@@ -203,10 +207,10 @@ OGRErr TigerAltName::CreateFeature( OGRFeature *poFeature )
     const int   *panValue;
     int         nValueCount = 0;
 
-    if( !SetWriteModule( FILE_CODE, psRT4Info->reclen+2, poFeature ) )
+    if( !SetWriteModule( FILE_CODE, psRT4Info->nRecordLength+2, poFeature ) )
         return OGRERR_FAILURE;
 
-    memset( szRecord, ' ', psRT4Info->reclen );
+    memset( szRecord, ' ', psRT4Info->nRecordLength );
 
     WriteFields( psRT4Info, poFeature, szRecord );
 
@@ -219,7 +223,7 @@ OGRErr TigerAltName::CreateFeature( OGRFeature *poFeature )
         strncpy( szRecord + 18 + 8 * i, szWork, 8 );
     }
 
-    WriteRecord( szRecord, psRT4Info->reclen, FILE_CODE );
+    WriteRecord( szRecord, psRT4Info->nRecordLength, FILE_CODE );
 
     return OGRERR_NONE;
 }

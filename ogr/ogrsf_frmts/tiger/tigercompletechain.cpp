@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/01/04 23:21:56  mbp
+ * Minor bug fixes and field definition changes.  Cleaned
+ * up and commented code written for TIGER 2002 support.
+ *
  * Revision 1.12  2002/12/28 21:45:05  warmerda
  * oncall uses spaces instead of zero for null vertices in .RT2 file
  *
@@ -72,7 +76,6 @@
 #include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
-
 
 static TigerFieldInfo rt1_2002_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
@@ -139,10 +142,10 @@ static TigerFieldInfo rt1_fields[] = {
   { "TOADDL",     'R', 'A', OFTString,    70,  80,  11,       1,   1,     1 },
   { "FRADDR",     'R', 'A', OFTString,    81,  91,  11,       1,   1,     1 },
   { "TOADDR",     'R', 'A', OFTString,    92, 102,  11,       1,   1,     1 },
-  { "FRIADDL",    'L', 'A', OFTString,   103, 103,   1,       1,   1,     1 },
-  { "TOIADDL",    'L', 'A', OFTString,   104, 104,   1,       1,   1,     1 },
-  { "FRIADDR",    'L', 'A', OFTString,   105, 105,   1,       1,   1,     1 },
-  { "TOIADDR",    'L', 'A', OFTString,   106, 106,   1,       1,   1,     1 },
+  { "FRIADDL",    'L', 'A', OFTInteger,  103, 103,   1,       1,   1,     1 },
+  { "TOIADDL",    'L', 'A', OFTInteger,  104, 104,   1,       1,   1,     1 },
+  { "FRIADDR",    'L', 'A', OFTInteger,  105, 105,   1,       1,   1,     1 },
+  { "TOIADDR",    'L', 'A', OFTInteger,  106, 106,   1,       1,   1,     1 },
   { "ZIPL",       'L', 'N', OFTInteger,  107, 111,   5,       1,   1,     1 },
   { "ZIPR",       'L', 'N', OFTInteger,  112, 116,   5,       1,   1,     1 },
   { "FAIRL",      'L', 'N', OFTInteger,  117, 121,   5,       1,   1,     1 },
@@ -164,8 +167,8 @@ static TigerFieldInfo rt1_fields[] = {
   { "FPLR",       'L', 'N', OFTInteger,  166, 170,   5,       1,   1,     1 },
   { "CTBNAL",     'L', 'N', OFTInteger,  171, 176,   6,       1,   1,     1 },
   { "CTBNAR",     'L', 'N', OFTInteger,  177, 182,   6,       1,   1,     1 },
-  { "BLKL",       'L', 'N', OFTInteger,  183, 186,   4,       1,   1,     1 },
-  { "BLKR",       'L', 'N', OFTInteger,  187, 190,   4,       1,   1,     1 }
+  { "BLKL",       'L', 'N', OFTString,   183, 186,   4,       1,   1,     1 },
+  { "BLKR",       'L', 'N', OFTString,   187, 190,   4,       1,   1,     1 }
 }; 
 static TigerRecordInfo rt1_info =
   {
@@ -177,8 +180,8 @@ static TigerRecordInfo rt1_info =
 static TigerRecordInfo rt2_info =
   {
     NULL,	// RT2 is handled specially in the code below; the only
-    0,		// thing from this structure that is used is the reclen
-    208
+    0,		// thing from this structure that is used is:
+    208		// <--- nRecordLength
   };
 
 
@@ -197,8 +200,8 @@ static TigerFieldInfo rt3_2000_Redistricting_fields[] = {
   { "CTBNA90R",   'L', 'N', OFTInteger,    52,  57,   6,       1,   1,     1 },
   { "AIR90L",     'L', 'N', OFTInteger,    58,  61,   4,       1,   1,     1 },
   { "AIR90R",     'L', 'N', OFTInteger,    62,  65,   4,       1,   1,     1 },
-  { "TRUST90L",   'L', 'A', OFTInteger,    66,  66,   1,       1,   1,     1 },  //  otype mismatch
-  { "TRUST90R",   'L', 'A', OFTInteger,    67,  67,   1,       1,   1,     1 },  //  otype mismatch
+  { "TRUST90L",   'L', 'A', OFTString,     66,  66,   1,       1,   1,     1 },
+  { "TRUST90R",   'L', 'A', OFTString,     67,  67,   1,       1,   1,     1 },
   { "BLK90L",     'L', 'A', OFTString,     70,  73,   4,       1,   1,     1 },
   { "BLK90R",     'L', 'A', OFTString,     74,  77,   4,       1,   1,     1 },
   { "AIRL",       'L', 'N', OFTInteger,    78,  81,   4,       1,   1,     1 },
@@ -208,11 +211,8 @@ static TigerFieldInfo rt3_2000_Redistricting_fields[] = {
   { "ANRCR",      'L', 'N', OFTInteger,    91,  95,   5,       1,   1,     1 },
   { "AITSCEL",    'L', 'N', OFTInteger,    96,  98,   3,       1,   1,     1 },
   { "AITSCER",    'L', 'N', OFTInteger,    99, 101,   3,       1,   1,     1 },
-  { "AITL",       'L', 'N', OFTInteger,   102, 106,   5 ,      1,   1,     1 }, // change to AITSL
-  { "AITR",       'L', 'N', OFTInteger,   107, 111,   5,       1,   1,     1 }  // change to AITSR
-  // make the above two changes after debugging; keep as AITL and AITR
-  // during debugging to facilitate diffing output of tigerinfo with
-  // that of previous version, which (erroneously) used AITL and AITR.
+  { "AITSL",      'L', 'N', OFTInteger,   102, 106,   5 ,      1,   1,     1 },
+  { "AITSR",      'L', 'N', OFTInteger,   107, 111,   5,       1,   1,     1 }
 };
 static TigerRecordInfo rt3_2000_Redistricting_info  =
   {
@@ -236,8 +236,8 @@ static TigerFieldInfo rt3_fields[] = {
   { "CTBNA90R",   'L', 'N', OFTInteger,    52,  57,   6,       1,   1,     1 },
   { "AIR90L",     'L', 'N', OFTInteger,    58,  61,   4,       1,   1,     1 },
   { "AIR90R",     'L', 'N', OFTInteger,    62,  65,   4,       1,   1,     1 },
-  { "TRUST90L",   'L', 'A', OFTInteger,    66,  66,   1,       1,   1,     1 },  //  otype mismatch
-  { "TRUST90R",   'L', 'A', OFTInteger,    67,  67,   1,       1,   1,     1 },  //  otype mismatch
+  { "TRUST90L",   'L', 'A', OFTInteger,    66,  66,   1,       1,   1,     1 },
+  { "TRUST90R",   'L', 'A', OFTInteger,    67,  67,   1,       1,   1,     1 },
   { "BLK90L",     'L', 'A', OFTString,     70,  73,   4,       1,   1,     1 },
   { "BLK90R",     'L', 'A', OFTString,     74,  77,   4,       1,   1,     1 },
   { "AIRL",       'L', 'N', OFTInteger,    78,  81,   4,       1,   1,     1 },
@@ -399,7 +399,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
         return NULL;
     }
 
-    if( VSIFRead( achRecord, psRT1Info->reclen, 1, fpPrimary ) != 1 )
+    if( VSIFRead( achRecord, psRT1Info->nRecordLength, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %s1",
@@ -422,7 +422,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
     if( fpRT3 != NULL )
     {
         char    achRT3Rec[OGR_TIGER_RECBUF_LEN];
-        int     nRT3RecLen = psRT3Info->reclen + nRecordLength - psRT1Info->reclen;
+        int     nRT3RecLen = psRT3Info->nRecordLength + nRecordLength - psRT1Info->nRecordLength;
 
         if( VSIFSeek( fpRT3, nRecordId * nRT3RecLen, SEEK_SET ) != 0 )
         {
@@ -432,7 +432,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
             return NULL;
         }
 
-        if( VSIFRead( achRT3Rec, psRT3Info->reclen, 1, fpRT3 ) != 1 )
+        if( VSIFRead( achRT3Rec, psRT3Info->nRecordLength, 1, fpRT3 ) != 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to read record %d of %s3",
@@ -485,7 +485,7 @@ void TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
 /*      Read all the sequential records with the same TLID.             */
 /* -------------------------------------------------------------------- */
     char        achShapeRec[OGR_TIGER_RECBUF_LEN];
-    int         nShapeRecLen = psRT2Info->reclen + nRecordLength - psRT1Info->reclen;
+    int         nShapeRecLen = psRT2Info->nRecordLength + nRecordLength - psRT1Info->nRecordLength;
 
     for( ; TRUE; nShapeRecId++ )
     {
@@ -498,7 +498,7 @@ void TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
             return;
         }
 
-        if( VSIFRead( achShapeRec, psRT2Info->reclen, 1, fpShape ) != 1 )
+        if( VSIFRead( achShapeRec, psRT2Info->nRecordLength, 1, fpShape ) != 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to read record %d of %s2",
@@ -617,7 +617,7 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
     int         nMaxChainToRead = nChainId - iTestChain;
     int         nChainsRead = 0;
     char        achShapeRec[OGR_TIGER_RECBUF_LEN];
-    int         nShapeRecLen = psRT2Info->reclen + nRecordLength - psRT1Info->reclen;
+    int         nShapeRecLen = psRT2Info->nRecordLength + nRecordLength - psRT1Info->nRecordLength;
 
     while( nChainsRead < nMaxChainToRead )
     {
@@ -630,7 +630,7 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
             return -1;
         }
 
-        if( VSIFRead( achShapeRec, psRT2Info->reclen, 1, fpShape ) != 1 )
+        if( VSIFRead( achShapeRec, psRT2Info->nRecordLength, 1, fpShape ) != 1 )
         {
             if( !VSIFEof( fpShape ) )
                 CPLError( CE_Failure, CPLE_FileIO,
@@ -737,23 +737,23 @@ OGRErr TigerCompleteChain::CreateFeature( OGRFeature *poFeature )
     /* -------------------------------------------------------------------- */
     /*      Write basic data record ("RT1")                                 */
     /* -------------------------------------------------------------------- */
-    if( !SetWriteModule( "1", psRT1Info->reclen+2, poFeature ) )
+    if( !SetWriteModule( "1", psRT1Info->nRecordLength+2, poFeature ) )
         return OGRERR_FAILURE;
-    memset( szRecord, ' ', psRT1Info->reclen );
+    memset( szRecord, ' ', psRT1Info->nRecordLength );
     WriteFields( psRT1Info, poFeature, szRecord );
     WritePoint( szRecord, 191, poLine->getX(0), poLine->getY(0) );
     WritePoint( szRecord, 210, 
                 poLine->getX(poLine->getNumPoints()-1), 
                 poLine->getY(poLine->getNumPoints()-1) );
-    WriteRecord( szRecord, psRT1Info->reclen, "1" );
+    WriteRecord( szRecord, psRT1Info->nRecordLength, "1" );
 
     /* -------------------------------------------------------------------- */
     /*      Write geographic entity codes (RT3)                             */
     /* -------------------------------------------------------------------- */
     if (bUsingRT3) {
-      memset( szRecord, ' ', psRT3Info->reclen );
+      memset( szRecord, ' ', psRT3Info->nRecordLength );
       WriteFields( psRT3Info, poFeature, szRecord );
-      WriteRecord( szRecord, psRT3Info->reclen, "3", fpRT3 );
+      WriteRecord( szRecord, psRT3Info->nRecordLength, "3", fpRT3 );
     }
 
     /* -------------------------------------------------------------------- */
@@ -769,7 +769,7 @@ OGRErr TigerCompleteChain::CreateFeature( OGRFeature *poFeature )
             int         i;
             char        szTemp[5];
 
-            memset( szRecord, ' ', psRT2Info->reclen );
+            memset( szRecord, ' ', psRT2Info->nRecordLength );
 
             WriteField( poFeature, "TLID", szRecord, 6, 15, 'R', 'N' );
             
@@ -787,7 +787,7 @@ OGRErr TigerCompleteChain::CreateFeature( OGRFeature *poFeature )
                 iPoint++;
             }
             
-            WriteRecord( szRecord, psRT2Info->reclen, "2", fpShape );
+            WriteRecord( szRecord, psRT2Info->nRecordLength, "2", fpShape );
 
             nRTSQ++;
         }

@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/01/04 23:21:56  mbp
+ * Minor bug fixes and field definition changes.  Cleaned
+ * up and commented code written for TIGER 2002 support.
+ *
  * Revision 1.8  2002/12/26 00:20:19  mbp
  * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
  * first round implementation of TIGER_2002 support
@@ -95,7 +99,7 @@ static TigerFieldInfo rtC_2000_Redistricting_fields[] = {
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
   { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
   { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
-  { "FIPSYR",     'L', 'N', OFTString,    11,  14,   4,       1,   1,     1 },  //  otype mismatch
+  { "FIPSYR",     'L', 'N', OFTString,    11,  14,   4,       1,   1,     1 },
   { "FIPS",       'L', 'N', OFTInteger,   15,  19,   5,       1,   1,     1 },
   { "FIPSCC",     'L', 'A', OFTString,    20,  21,   2,       1,   1,     1 },
   { "PDC",        'L', 'A', OFTString,    22,  22,   1,       1,   1,     1 },
@@ -105,7 +109,7 @@ static TigerFieldInfo rtC_2000_Redistricting_fields[] = {
   { "SD",         'L', 'N', OFTInteger,   30,  34,   5,       1,   1,     1 },
   { "AIR",        'L', 'N', OFTInteger,   35,  38,   4,       1,   1,     1 },
   { "VTD",        'R', 'A', OFTString,    39,  44,   6,       1,   1,     1 },
-  { "UA",         'L', 'N', OFTInteger,   45,  49,   4,       1,   1,     1 },
+  { "UA",         'L', 'N', OFTInteger,   45,  49,   5,       1,   1,     1 },
   { "AITSCE",     'L', 'N', OFTInteger,   50,  52,   3,       1,   1,     1 },
   { "NAME",       'L', 'A', OFTString,    53, 112,  66,       1,   1,     1 }
 };
@@ -121,7 +125,7 @@ static TigerFieldInfo rtC_fields[] = {
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
   { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
   { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
-  { "FIPSYR",     'L', 'N', OFTString,    11,  12,   4,       1,   1,     1 },  //  otype mismatch
+  { "FIPSYR",     'L', 'N', OFTString,    11,  12,   4,       1,   1,     1 },
   { "FIPS",       'L', 'N', OFTInteger,   13,  17,   5,       1,   1,     1 },
   { "FIPSCC",     'L', 'A', OFTString,    18,  19,   2,       1,   1,     1 },
   { "PDC",        'L', 'A', OFTString,    20,  20,   1,       1,   1,     1 },
@@ -154,9 +158,9 @@ TigerEntityNames::TigerEntityNames( OGRTigerDataSource * poDSIn,
     poFeatureDefn = new OGRFeatureDefn( "EntityNames" );
     poFeatureDefn->SetGeomType( wkbPoint );
 
-    if( GetVersion() >= TIGER_2002 ) {
+    if( poDS->GetVersion() >= TIGER_2002 ) {
       psRTCInfo = &rtC_2002_info;
-    } else if( GetVersion() >= TIGER_2000_Redistricting ) {
+    } else if( poDS->GetVersion() >= TIGER_2000_Redistricting ) {
       psRTCInfo = &rtC_2000_Redistricting_info;
     } else {
       psRTCInfo = &rtC_info;
@@ -221,7 +225,7 @@ OGRFeature *TigerEntityNames::GetFeature( int nRecordId )
         return NULL;
     }
 
-    if( VSIFRead( achRecord, psRTCInfo->reclen, 1, fpPrimary ) != 1 )
+    if( VSIFRead( achRecord, psRTCInfo->nRecordLength, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %sC",
@@ -249,14 +253,14 @@ OGRErr TigerEntityNames::CreateFeature( OGRFeature *poFeature )
 {
     char        szRecord[OGR_TIGER_RECBUF_LEN];
 
-    if( !SetWriteModule( FILE_CODE, psRTCInfo->reclen+2, poFeature ) )
+    if( !SetWriteModule( FILE_CODE, psRTCInfo->nRecordLength+2, poFeature ) )
         return OGRERR_FAILURE;
 
-    memset( szRecord, ' ', psRTCInfo->reclen );
+    memset( szRecord, ' ', psRTCInfo->nRecordLength );
 
     WriteFields( psRTCInfo, poFeature, szRecord );
 
-    WriteRecord( szRecord, psRTCInfo->reclen, FILE_CODE );
+    WriteRecord( szRecord, psRTCInfo->nRecordLength, FILE_CODE );
 
     return OGRERR_NONE;
 }

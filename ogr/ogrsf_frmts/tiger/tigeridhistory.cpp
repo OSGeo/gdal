@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/01/04 23:21:56  mbp
+ * Minor bug fixes and field definition changes.  Cleaned
+ * up and commented code written for TIGER 2002 support.
+ *
  * Revision 1.8  2002/12/26 00:20:19  mbp
  * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
  * first round implementation of TIGER_2002 support
@@ -65,7 +69,7 @@ CPL_CVSID("$Id$");
 static TigerFieldInfo rtH_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       1,   1,     1 },  //  otype mismatch
+  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       1,   1,     1 },
   { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
   { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
   { "TLID",       'R', 'N', OFTInteger,   11,  20,  10,       1,   1,     1 },
@@ -161,7 +165,7 @@ OGRFeature *TigerIDHistory::GetFeature( int nRecordId )
         return NULL;
     }
 
-    if( VSIFRead( achRecord, psRTHInfo->reclen, 1, fpPrimary ) != 1 )
+    if( VSIFRead( achRecord, psRTHInfo->nRecordLength, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %sH",
@@ -188,14 +192,14 @@ OGRErr TigerIDHistory::CreateFeature( OGRFeature *poFeature )
 {
     char        szRecord[OGR_TIGER_RECBUF_LEN];
 
-    if( !SetWriteModule( FILE_CODE, psRTHInfo->reclen+2, poFeature ) )
+    if( !SetWriteModule( FILE_CODE, psRTHInfo->nRecordLength+2, poFeature ) )
         return OGRERR_FAILURE;
 
-    memset( szRecord, ' ', psRTHInfo->reclen );
+    memset( szRecord, ' ', psRTHInfo->nRecordLength );
 
     WriteFields( psRTHInfo, poFeature, szRecord );
 
-    WriteRecord( szRecord, psRTHInfo->reclen, FILE_CODE );
+    WriteRecord( szRecord, psRTHInfo->nRecordLength, FILE_CODE );
 
     return OGRERR_NONE;
 }

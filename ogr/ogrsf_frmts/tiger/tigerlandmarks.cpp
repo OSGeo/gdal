@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/01/04 23:21:56  mbp
+ * Minor bug fixes and field definition changes.  Cleaned
+ * up and commented code written for TIGER 2002 support.
+ *
  * Revision 1.9  2002/12/26 00:20:19  mbp
  * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
  * first round implementation of TIGER_2002 support
@@ -87,7 +91,7 @@ static TigerRecordInfo rt7_2002_info =
 static TigerFieldInfo rt7_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   0,     1 },  //  otype mismatch,beg mismatch,end mismatch
+  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       1,   0,     1 },
   { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
   { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
   { "LAND",       'R', 'N', OFTInteger,   11,  20,  10,       1,   1,     1 },
