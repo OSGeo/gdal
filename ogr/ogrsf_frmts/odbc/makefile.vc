@@ -1,6 +1,6 @@
 
 OBJ	=	ogrodbcdriver.obj ogrodbcdatasource.obj ogrodbclayer.obj \
-		ogrodbctablelayer.obj
+		ogrodbctablelayer.obj ogrodbcselectlayer.obj
 
 GDAL_ROOT	=	..\..\..
 
