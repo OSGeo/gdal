@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/03/16 22:15:08  warmerda
+ * added CPLResetExtension
+ *
  * Revision 1.5  2001/02/24 01:53:57  warmerda
  * Added CPLFormCIFilename()
  *
@@ -234,6 +237,52 @@ const char *CPLGetExtension( const char *pszFullFilename )
         iExtStart = strlen(pszFullFilename)-1;
 
     strcpy( szStaticResult, pszFullFilename+iExtStart+1 );
+
+    return szStaticResult;
+}
+
+/************************************************************************/
+/*                         CPLResetExtension()                          */
+/************************************************************************/
+
+/**
+ * Replace the extension with the provided one.
+ *
+ * @param pszPath the input path, this string is not altered.
+ * @param pszExtension the new extension to apply to the given path.
+ *
+ * @return an altered filename with the new extension.    Do not
+ * modify or free the returned string.  The string may be destroyed by the
+ * next CPL call.
+ */
+
+const char *CPLResetExtension( const char *pszPath, const char *pszExt )
+
+{
+    int		i;
+
+/* -------------------------------------------------------------------- */
+/*      First, try and strip off any existing extension.                */
+/* -------------------------------------------------------------------- */
+    strcpy( szStaticResult, pszPath );
+    for( i = strlen(szStaticResult)-1; i > 0; i-- )
+    {
+        if( szStaticResult[i] == '.' )
+        {
+            szStaticResult[i] = '\0';
+            break;
+        }
+
+        if( szStaticResult[i] == '/' || szStaticResult[i] == '\\' 
+            || szStaticResult[i] == ':' )
+            break;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Append the new extension.                                       */
+/* -------------------------------------------------------------------- */
+    strcat( szStaticResult, "." );
+    strcat( szStaticResult, pszExt );
 
     return szStaticResult;
 }

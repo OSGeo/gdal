@@ -1,4 +1,12 @@
 /******************************************************************************
+ * $Id$
+ *
+ * Project:  CPL - Common Portability Library
+ * Purpose:  Convenience functions declarations.
+ *           This is intended to remain light weight.
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *
+ ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,12 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * cpl_conv.h
+ * $Log$
+ * Revision 1.12  2001/03/16 22:15:08  warmerda
+ * added CPLResetExtension
  *
- * Prototypes, and stuff for various convenience functions.  This is intended
- * to remain light weight.
- *
- * $Log: 
  * Revision 1.1  1998/10/18 06:15:11  warmerda
  * Initial implementation.
  *
@@ -91,6 +97,7 @@ const char CPL_DLL *CPLFormFilename( const char *pszPath,
 const char CPL_DLL *CPLFormCIFilename( const char *pszPath,
                                        const char *pszBasename,
                                        const char *pszExtension );
+const char CPL_DLL *CPLResetExtension( const char *, const char * );
 
 /* -------------------------------------------------------------------- */
 /*      Find File Function                                              */
