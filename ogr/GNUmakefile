@@ -112,9 +112,15 @@ reg-test2:
 	    diff s2.out reg_test2.log; \
 	fi
 
-install:	$(OGR_LIB) ogrinfo ogr2ogr
+ifeq ($(OGR_ENABLED),yes)
+install-full:	ogrinfo ogr2ogr
+	$(INSTALL) ogrinfo ogr2ogr $(INST_BIN)
+else
+install-full:
+endif
+
+install:	$(OGR_LIB) install-full
 	$(INSTALL) $(INST_H_FILES) $(INST_INCLUDE)
 	$(INSTALL) $(OGR_LIB) $(INST_LIB)
-	$(INSTALL) ogrinfo ogr2ogr $(INST_BIN)
 
 
