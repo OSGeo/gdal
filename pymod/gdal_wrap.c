@@ -33,10 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.101  2004/12/02 19:53:02  fwarmerdam
- * Added GDALComputeBandStats()
- * Implement generic mechanism for progress callbacks, and use for
- * ComputeBandStats, Create and CreateCopy().
+ * Revision 1.102  2004/12/17 18:48:56  fwarmerdam
+ * added dataset level read/write methods
  *
  ************************************************************************/
 
@@ -1570,6 +1568,164 @@ py_GDALWriteRaster(PyObject *self, PyObject *args) {
 	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
 	return NULL;
     }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+
+/************************************************************************/
+/*                       GDALDatasetReadRaster()                        */
+/************************************************************************/
+static PyObject *
+py_GDALDatasetReadRaster(PyObject *self, PyObject *args) {
+
+    PyObject *result = NULL;
+    PyObject *py_band_list;
+    GDALDatasetH  _arg0;
+    char *_argc0 = NULL;
+    int  _arg1;
+    int  _arg2;
+    int  _arg3;
+    int  _arg4;
+    int  _arg5;
+    int  _arg6;
+    int  nBandCount, *panBandList = NULL, i;
+    GDALDataType  _arg7;
+    char *result_string;
+    int  result_size;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"siiiiiiiO!|O:GDALDatasetReadRaster",
+                         &_argc0,&_arg1,&_arg2,&_arg3,&_arg4,
+                         &_arg5,&_arg6,&_arg7, 
+			 &PyList_Type, &py_band_list, 
+			 &result))
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_GDALDatasetH )) {
+            PyErr_SetString(PyExc_TypeError,
+			    "Type error in argument 1 of GDALReadRaster."
+			    " Expected _GDALRasterBandH.");
+            return NULL;
+        }
+    }
+
+    nBandCount = PyList_Size( py_band_list );
+    panBandList = (int *) CPLMalloc(sizeof(int) * nBandCount);
+    for( i = 0; i < nBandCount; i++ )
+    {
+	if( !PyArg_Parse( PyList_GET_ITEM(py_band_list,i), "i",
+		          panBandList + i ) )
+        {
+	    PyErr_SetString(PyExc_ValueError, 
+			    "failed to extra band from band list. ");
+	    return NULL;
+        }
+    }
+
+    /* we either receive a buffer object to use or
+     * allocate a suitable string object */
+    if( result && result != Py_None )
+    {
+	if( PyObject_AsWriteBuffer(result, (void**) &result_string, &result_size) )
+	{
+	    PyErr_SetString(PyExc_TypeError, "No writable buffer from object");
+	    return NULL;
+	}
+	if( result_size != _arg5 * _arg6 * (GDALGetDataTypeSize(_arg7)/8) )
+	{
+	    PyErr_SetString(PyExc_TypeError, "Unaligned buffer");
+	    return NULL;
+	}
+
+	Py_INCREF(result);
+    } else {
+	result_size = _arg5*_arg6*(GDALGetDataTypeSize(_arg7)/8)*nBandCount;
+	result = PyString_FromStringAndSize(NULL, result_size);
+	if( !result )
+	    return NULL;
+	result_string = PyString_AsString(result);
+    }
+
+    if( GDALDatasetRasterIO(_arg0, GF_Read, _arg1, _arg2, _arg3, _arg4, 
+		     (void *) result_string, 
+		     _arg5, _arg6, _arg7, nBandCount, panBandList, 
+		     0, 0, 0 ) != CE_None )
+    {
+	Py_XDECREF(result);
+	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
+	result = NULL;
+    }
+
+    CPLFree( panBandList );
+    return result;
+}
+
+
+/************************************************************************/
+/*                       GDALDatasetWriteRaster()                       */
+/************************************************************************/
+static PyObject *
+py_GDALDatasetWriteRaster(PyObject *self, PyObject *args) {
+
+    GDALRasterBandH  _arg0;
+    char *_argc0 = NULL;
+    int  _arg1;
+    int  _arg2;
+    int  _arg3;
+    int  _arg4;
+    char *strbuffer_arg = NULL;
+    int  strbuffer_size;
+    int  _arg5;
+    int  _arg6;
+    GDALDataType  _arg7;
+    PyObject *py_band_list = NULL;
+    int nBandCount, *panBandList = NULL, i;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"siiiis#iiiO!:GDALDatasetWriteRaster",
+                         &_argc0,&_arg1,&_arg2,&_arg3,&_arg4,
+                         &strbuffer_arg,&strbuffer_size,&_arg5,&_arg6,&_arg7,
+			 &PyList_Type, &py_band_list )) 
+        return NULL;
+
+
+
+    if (_argc0) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_GDALDatasetH)) {
+            PyErr_SetString(PyExc_TypeError,
+			    "Type error in argument 1 of GDALWriteRaster."
+			    " Expected _GDALRasterBandH.");
+            return NULL;
+        }
+    }
+	
+    nBandCount = PyList_Size( py_band_list );
+    panBandList = (int *) CPLMalloc(sizeof(int) * nBandCount);
+    for( i = 0; i < nBandCount; i++ )
+    {
+	if( !PyArg_Parse( PyList_GET_ITEM(py_band_list,i), "i",
+		          panBandList + i ) )
+        {
+	    PyErr_SetString(PyExc_ValueError, 
+			    "failed to extra band from band list. ");
+	    return NULL;
+        }
+    }
+
+    if( GDALDatasetRasterIO(_arg0, GF_Write, _arg1, _arg2, _arg3, _arg4, 
+		            (void *) strbuffer_arg,
+		            _arg5, _arg6, _arg7, nBandCount, panBandList, 
+			    0, 0, 0 ) != CE_None )
+    {
+        CPLFree( panBandList );
+	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
+	return NULL;
+    }
+
+    CPLFree( panBandList );
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -11321,6 +11477,8 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALGCPsToGeoTransform", py_GDALGCPsToGeoTransform, 1 },
 	 { "GDALSetGCPs", py_GDALSetGCPs, 1 },
 	 { "GDALGetGCPs", py_GDALGetGCPs, 1 },
+	 { "GDALDatasetWriteRaster", py_GDALDatasetWriteRaster, 1 },
+	 { "GDALDatasetReadRaster", py_GDALDatasetReadRaster, 1 },
 	 { "GDALWriteRaster", py_GDALWriteRaster, 1 },
 	 { "GDALReadRaster", py_GDALReadRaster, 1 },
 	 { "GDALBuildOverviews", py_GDALBuildOverviews, 1 },
