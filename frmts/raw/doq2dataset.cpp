@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/01/17 08:07:41  shadow
+ * check just for the string, not the whole line
+ *
  * Revision 1.1  2000/01/17 08:01:16  shadow
  * first cut - untested
  *
@@ -157,7 +160,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     double      dfXDim, dfYDim;
 
     pszLine = CPLReadLine( poOpenInfo->fp );
-    if(! EQUAL(pszLine,"BEGIN_USGS_DOQ_HEADER") )
+    if(! EQUALN(pszLine,"BEGIN_USGS_DOQ_HEADER", 21) )
       return NULL;
 
     while( (pszLine = CPLReadLine( poOpenInfo->fp )) )
