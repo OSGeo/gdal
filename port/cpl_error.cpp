@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.26  2003/05/08 21:51:14  warmerda
+ * added CPL{G,S}etConfigOption() usage
+ *
  * Revision 1.25  2003/04/04 14:57:38  dron
  * _vsnprintf() hack moved to the cpl_config.h.vc.
  *
@@ -108,6 +111,7 @@
 
 #include "cpl_error.h"
 #include "cpl_vsi.h"
+#include "cpl_conv.h"
 
 #define TIMESTAMP_DEBUG
 #ifdef TIMESTAMP_DEBUG
@@ -201,7 +205,7 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
     gnCPLLastErrNo = err_no;
     geCPLLastErrType = eErrClass;
 
-    if( getenv("CPL_LOG_ERRORS") != NULL )
+    if( CPLGetConfigOption("CPL_LOG_ERRORS",NULL) != NULL )
         CPLDebug( "CPLError", "%s", gszCPLLastErrMsg );
 
     if( gpfnCPLErrorHandler )
@@ -241,7 +245,7 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 {
     char        *pszMessage;
     va_list     args;
-    const char  *pszDebug = getenv("CPL_DEBUG");
+    const char  *pszDebug = CPLGetConfigOption("CPL_DEBUG",NULL);
 
 #define ERROR_MAX 25000
 
@@ -277,7 +281,9 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 /*      to ensure one is looking at what one should be looking at!      */
 /* -------------------------------------------------------------------- */
 
+    pszMessage[0] = '\0';
 #ifdef TIMESTAMP_DEBUG
+    if( CPLGetConfigOption( "CPL_TIMESTAMP", NULL ) != NULL )
     {
         time_t ltime;
     
@@ -294,8 +300,6 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
         }
         strcat( pszMessage, ": " );
     }
-#else
-    pszMessage[0] = '\0';
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -417,9 +421,9 @@ void CPLDefaultErrorHandler( CPLErr eErrClass, int nError,
         bLogInit = TRUE;
 
         fpLog = stderr;
-        if( getenv( "CPL_LOG" ) != NULL )
+        if( CPLGetConfigOption( "CPL_LOG", NULL ) != NULL )
         {
-            fpLog = fopen( getenv("CPL_LOG"), "wt" );
+            fpLog = fopen( CPLGetConfigOption("CPL_LOG",""), "wt" );
             if( fpLog == NULL )
                 fpLog = stderr;
         }
@@ -462,10 +466,11 @@ void CPLLoggingErrorHandler( CPLErr eErrClass, int nError,
     {
         const char *cpl_log = NULL;
 
+        CPLSetConfigOption( "CPL_TIMESTAMP", "ON" );
+
         bLogInit = TRUE;
 
-        if( getenv("CPL_LOG") != NULL )
-            cpl_log = getenv("CPL_LOG");
+        cpl_log = CPLGetConfigOption("CPL_LOG", NULL );
 
         fpLog = stderr;
         if( cpl_log != NULL && EQUAL(cpl_log,"OFF") )

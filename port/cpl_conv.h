@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/05/08 21:51:14  warmerda
+ * added CPL{G,S}etConfigOption() usage
+ *
  * Revision 1.19  2003/03/02 04:44:38  warmerda
  * added CPLStringToComplex
  *
@@ -78,6 +81,9 @@
 CPL_C_START
 
 void CPL_DLL CPLVerifyConfiguration();
+
+const char CPL_DLL *CPLGetConfigOption( const char *, const char * );
+void CPL_DLL        CPLSetConfigOption( const char *, const char * );
 
 /* -------------------------------------------------------------------- */
 /*      Safe malloc() API.  Thin cover over VSI functions with fatal    */

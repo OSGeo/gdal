@@ -3,7 +3,7 @@
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Convenience functions.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/05/08 21:51:14  warmerda
+ * added CPL{G,S}etConfigOption() usage
+ *
  * Revision 1.21  2003/03/05 16:46:54  warmerda
  * Cast strchr() result for Sun (patch from Graeme).
  *
@@ -94,8 +97,11 @@
  */
 
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
+
+static char **papszConfigOptions = NULL;
 
 /************************************************************************/
 /*                             CPLCalloc()                              */
@@ -426,6 +432,35 @@ void CPLVerifyConfiguration()
 #endif    
         CPLError( CE_Fatal, CPLE_AppDefined, 
                   "CPLVerifyConfiguration(): byte order set wrong.\n" );
+}
+
+/************************************************************************/
+/*                         CPLGetConfigOption()                         */
+/************************************************************************/
+
+const char *CPLGetConfigOption( const char *pszKey, const char *pszDefault )
+
+{
+    const char *pszResult = CSLFetchNameValue( papszConfigOptions, pszKey );
+
+    if( pszResult == NULL )
+        pszResult = getenv( pszKey );
+
+    if( pszResult == NULL )
+        return pszDefault;
+    else
+        return pszResult;
+}
+
+/************************************************************************/
+/*                         CPLSetConfigOption()                         */
+/************************************************************************/
+
+void CPLSetConfigOption( const char *pszKey, const char *pszValue )
+
+{
+    papszConfigOptions = 
+        CSLSetNameValue( papszConfigOptions, pszKey, pszValue );
 }
 
 /************************************************************************/
