@@ -38,14 +38,16 @@
  *  o 1, 2 and 4 bit data promoted to 8 bit. 
  *  o Transparency values not currently read and applied to palette.
  *  o 16 bit alpha values are not scaled by to eight bit. 
- *  o It is not currently possible to write more than one band PNG files,
- *    unless the application very carefully ensures that all bands of each
- *    scanline are written at once, all the way down through the cache!
+ *  o I should install setjmp()/longjmp() based error trapping for PNG calls.
+ *    Currently a failure in png libraries will result in a complete
+ *    application termination. 
  * 
  * $Log$
+ * Revision 1.2  2000/04/28 20:56:01  warmerda
+ * converted to use CreateCopy() instead of Create()
+ *
  * Revision 1.1  2000/04/27 19:39:51  warmerda
  * New
- *
  */
 
 #include "gdal_priv.h"
@@ -70,8 +72,6 @@ class PNGRasterBand;
 class PNGDataset : public GDALDataset
 {
     friend	PNGRasterBand;
-
-    int         bNewFile;
 
     FILE        *fpImage;
     png_structp hPNG;
@@ -165,16 +165,6 @@ CPLErr PNGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         nPixelSize = 1;
     nPixelOffset = poGDS->nBands * nPixelSize;
 
-/* -------------------------------------------------------------------- */
-/*      Take care to return without disturbing the working buffer       */
-/*      for files we are writing.                                       */
-/* -------------------------------------------------------------------- */
-    if( poGDS->bNewFile && nBlockYOff != poGDS->nBufferStartLine )
-    {
-        memset( pImage, 0, nPixelSize * nXSize );
-        return CE_None;
-    }
-    
 /* -------------------------------------------------------------------- */
 /*      Load the desired scanline into the working buffer.              */
 /* -------------------------------------------------------------------- */
@@ -326,7 +316,6 @@ GDALColorTable *PNGRasterBand::GetColorTable()
 PNGDataset::PNGDataset()
 
 {
-    bNewFile = FALSE;
     hPNG = NULL;
     psPNGInfo = NULL;
     pabyBuffer = NULL;
@@ -345,22 +334,7 @@ PNGDataset::~PNGDataset()
 {
     FlushCache();
 
-    if( bNewFile )
-    {
-        while( nLastLineRead < GetRasterYSize()-1 && pabyBuffer != NULL )
-        {
-            png_bytep      row;
-
-            row = pabyBuffer;
-            png_write_rows( hPNG, &row, 1 );
-            nLastLineRead++;
-        }
-
-        png_write_end( hPNG, psPNGInfo );
-        png_destroy_write_struct( &hPNG, &psPNGInfo );
-    }
-    else
-        png_destroy_read_struct( &hPNG, &psPNGInfo, NULL );
+    png_destroy_read_struct( &hPNG, &psPNGInfo, NULL );
 
     VSIFClose( fpImage );
 
@@ -380,7 +354,7 @@ void PNGDataset::FlushCache()
 {
     GDALDataset::FlushCache();
 
-    if( pabyBuffer != NULL && !bNewFile )
+    if( pabyBuffer != NULL )
     {
         CPLFree( pabyBuffer );
         pabyBuffer = NULL;
@@ -482,32 +456,6 @@ CPLErr PNGDataset::LoadScanline( int nLine )
     if( pabyBuffer == NULL )
         pabyBuffer = (GByte *) CPLMalloc(nPixelOffset * GetRasterXSize());
 
-
-/* -------------------------------------------------------------------- */
-/*      If we are writing, check if we have an old line to write,       */
-/*      and return new lines as all zeros.                              */
-/* -------------------------------------------------------------------- */
-    png_bytep      row;
-
-    if( nBufferLines > 0 && nBufferStartLine == nLastLineRead+1 && bNewFile )
-    {
-        if( nBufferStartLine == 0 )
-            png_write_info( hPNG, psPNGInfo );
-
-        row = pabyBuffer;
-        png_write_rows( hPNG, &row, 1 );
-        nLastLineRead = nBufferStartLine;
-    }
-
-    nBufferStartLine = nLine;
-    nBufferLines = 1;
-
-    if( bNewFile )
-    {
-        memset( pabyBuffer, 0, nPixelOffset * GetRasterXSize() );
-        return CE_None;
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Otherwise we just try to read the requested row.  Do we need    */
 /*      to rewind and start over?                                       */
@@ -518,12 +466,17 @@ CPLErr PNGDataset::LoadScanline( int nLine )
 /* -------------------------------------------------------------------- */
 /*      Read till we get the desired row.                               */
 /* -------------------------------------------------------------------- */
+    png_bytep      row;
+
     row = pabyBuffer;
     while( nLine > nLastLineRead )
     {
         png_read_rows( hPNG, &row, NULL, 1 );
         nLastLineRead++;
     }
+
+    nBufferStartLine = nLine;
+    nBufferLines = 1;
 
     return CE_None;
 }
@@ -685,98 +638,134 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                               Create()                               */
+/*                           PNGCreateCopy()                            */
 /************************************************************************/
 
-GDALDataset *PNGDataset::Create( const char * pszFilename,
-                                 int nXSize, int nYSize, int nBands,
-                                 GDALDataType eType,
-                                 char **papszParmList )
+static GDALDataset *
+PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
+               int bStrict, char ** papszOptions, 
+               GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
-    PNGDataset *	poDS;
+    int  nBands = poSrcDS->GetRasterCount();
+    int  nXSize = poSrcDS->GetRasterXSize();
+    int  nYSize = poSrcDS->GetRasterYSize();
 
-    poDS = new PNGDataset;
-    poDS->bNewFile = TRUE;
-    poDS->bInterlaced = FALSE;
-
-    if( eType == GDT_Byte )
-        poDS->nBitDepth = 8;
-    else if( eType == GDT_UInt16 )
-        poDS->nBitDepth = 16;
-    else
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "PNG driver doesn't support data type %s.\n"
-                  "Only Byte and UInt16 supported.\n", 
-                  GDALGetDataTypeName( eType ) );
-        delete poDS;
-        return NULL;
-    }
-
-    if( nBands == 1 )
-        poDS->nColorType = PNG_COLOR_TYPE_GRAY;
-    else if( nBands == 2 )
-        poDS->nColorType = PNG_COLOR_TYPE_GRAY_ALPHA;
-    else if( nBands == 3 )
-        poDS->nColorType = PNG_COLOR_TYPE_RGB;
-    else if( nBands == 4 )
-        poDS->nColorType = PNG_COLOR_TYPE_RGB_ALPHA;
-    else
+/* -------------------------------------------------------------------- */
+/*      Some some rudimentary checks                                    */
+/* -------------------------------------------------------------------- */
+    if( nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4 )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
-                  "PNG driver only supports 1, 2, 3 or 4 bands,\n"
-                  "not %d bands as requested.\n", nBands );
-        delete poDS;
+                  "PNG driver doesn't support %d bands.  Must be 1 (grey),\n"
+                  "2 (grey+alpha), 3 (rgb) or 4 (rgba) bands.\n", 
+                  nBands );
+
+        return NULL;
+    }
+
+    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte 
+        && poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt16
+        && bStrict )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "PNG driver doesn't support data type %s. "
+                  "Only eight and sixteen bit bands supported.\n", 
+                  GDALGetDataTypeName( 
+                      poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
+
         return NULL;
     }
 
 /* -------------------------------------------------------------------- */
-/*      Try creating the file.                                          */
+/*      Setup some parameters.                                          */
 /* -------------------------------------------------------------------- */
-    poDS->fpImage = VSIFOpen( pszFilename, "wb" );
-    if( poDS->fpImage == NULL )
+    int  nColorType, nBitDepth;
+    GDALDataType eType;
+
+    if( nBands == 1 )
+        nColorType = PNG_COLOR_TYPE_GRAY;
+    else if( nBands == 2 )
+        nColorType = PNG_COLOR_TYPE_GRAY_ALPHA;
+    else if( nBands == 3 )
+        nColorType = PNG_COLOR_TYPE_RGB;
+    else if( nBands == 4 )
+        nColorType = PNG_COLOR_TYPE_RGB_ALPHA;
+
+    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt16 )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Unable to create new file %s for write access.\n", 
+        eType = GDT_Byte;
+        nBitDepth = 8;
+    }
+    else 
+    {
+        eType = GDT_UInt16;
+        nBitDepth = 16;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the dataset.                                             */
+/* -------------------------------------------------------------------- */
+    FILE	*fpImage;
+
+    fpImage = VSIFOpen( pszFilename, "wb" );
+    if( fpImage == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Unable to create png file %s.\n", 
                   pszFilename );
-        delete poDS;
         return NULL;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize PNG access to the file.                              */
 /* -------------------------------------------------------------------- */
-    poDS->hPNG = png_create_write_struct( PNG_LIBPNG_VER_STRING, 
-                                          poDS, NULL, NULL );
-    poDS->psPNGInfo = png_create_info_struct( poDS->hPNG );
+    png_structp hPNG;
+    png_infop   psPNGInfo;
     
-    png_init_io( poDS->hPNG, poDS->fpImage );
+    hPNG = png_create_write_struct( PNG_LIBPNG_VER_STRING, 
+                                    NULL, NULL, NULL );
+    psPNGInfo = png_create_info_struct( hPNG );
+    
+    png_init_io( hPNG, fpImage );
 
-    png_set_IHDR( poDS->hPNG, poDS->psPNGInfo, nXSize, nYSize, 
-                  poDS->nBitDepth, poDS->nColorType, PNG_INTERLACE_NONE, 
+    png_set_IHDR( hPNG, psPNGInfo, nXSize, nYSize, 
+                  nBitDepth, nColorType, PNG_INTERLACE_NONE, 
                   PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE );
     
-    poDS->nRasterXSize = nXSize;
-    poDS->nRasterYSize = nYSize;
-    poDS->eAccess = GA_Update;
-        
-/* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
-/* -------------------------------------------------------------------- */
-    int		iBand;
+    png_write_info( hPNG, psPNGInfo );
 
-    for( iBand = 0; iBand < nBands; iBand++ )
+/* -------------------------------------------------------------------- */
+/*      Loop over image, copying image data.                            */
+/* -------------------------------------------------------------------- */
+    GByte 	*pabyScanline;
+    CPLErr      eErr;
+
+    pabyScanline = (GByte *) CPLMalloc( nBands * nXSize * 2 );
+
+    for( int iLine = 0; iLine < nYSize; iLine++ )
     {
-        poDS->SetBand( iBand+1, new PNGRasterBand( poDS, iBand+1 ) );
+        png_bytep       row = pabyScanline;
+
+        for( int iBand = 0; iBand < nBands; iBand++ )
+        {
+            GDALRasterBand * poBand = poSrcDS->GetRasterBand( iBand+1 );
+            eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
+                                     pabyScanline + iBand, nXSize, 1, GDT_Byte,
+                                     nBands, nBands * nXSize );
+        }
+
+        png_write_rows( hPNG, &row, 1 );
     }
 
-/* -------------------------------------------------------------------- */
-/*      Open overviews.                                                 */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, pszFilename );
+    CPLFree( pabyScanline );
 
-    return( poDS );
+    png_write_end( hPNG, psPNGInfo );
+    png_destroy_write_struct( &hPNG, &psPNGInfo );
+
+    VSIFClose( fpImage );
+
+    return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 }
 
 /************************************************************************/
@@ -796,7 +785,7 @@ void GDALRegister_PNG()
         poDriver->pszLongName = "Portable Network Graphics";
         
         poDriver->pfnOpen = PNGDataset::Open;
-        poDriver->pfnCreate = PNGDataset::Create;
+        poDriver->pfnCreateCopy = PNGCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
