@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.63  2004/04/05 21:30:44  warmerda
+ * moved ECW down so other jpeg2000 drivers used in preference
+ *
  * Revision 1.62  2004/01/07 20:06:34  warmerda
  * Added netcdf support
  *
@@ -356,10 +359,6 @@ void GDALAllRegister()
     GDALRegister_PCIDSK();
 #endif
 
-#ifdef FRMT_ecw
-    GDALRegister_ECW();
-#endif
-
 #ifdef FRMT_netcdf
     GDALRegister_netCDF();
 #endif
@@ -394,6 +393,10 @@ void GDALAllRegister()
 // This one should always be placed after other JasPer supported formats,
 // such as BMP or PNM. In other case we will get bad side effects.
     GDALRegister_JPEG2000();
+#endif
+
+#ifdef FRMT_ecw
+    GDALRegister_ECW();
 #endif
 
 #ifdef FRMT_l1b
