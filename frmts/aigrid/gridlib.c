@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/02/18 14:41:00  warmerda
+ * added support for 0xcf
+ *
  * Revision 1.9  2000/02/18 05:05:16  warmerda
  * Do one time warning for unsupported tile types - don't blow assert
  *
@@ -322,7 +325,7 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
         }
         
 /* -------------------------------------------------------------------- */
-/*      Literal data (0xD7)                                             */
+/*      Literal data (0xD7): 8bit values.                               */
 /* -------------------------------------------------------------------- */
         else if( nMagic == 0xD7 && nMarker < 128 )
         {
@@ -331,6 +334,24 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
                 panData[nPixels++] = *(pabyCur++) + nMin;
                 nMarker--;
                 nDataSize--;
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Literal data (0xCF): 16 bit values.                             */
+/* -------------------------------------------------------------------- */
+        else if( nMagic == 0xCF && nMarker < 128 )
+        {
+            GUInt32	nValue;
+            
+            while( nMarker > 0 )
+            {
+                nValue = pabyCur[0] * 256 + pabyCur[1] + nMin;
+                panData[nPixels++] = nValue;
+                pabyCur += 2;
+
+                nMarker--;
+                nDataSize -= 2;
             }
         }
 
