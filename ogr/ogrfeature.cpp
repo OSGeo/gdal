@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/04/24 20:00:30  warmerda
+ * fix clone to copy fid as well
+ *
  * Revision 1.20  2001/11/09 15:02:40  warmerda
  * dump render style
  *
@@ -341,6 +344,8 @@ OGRFeature *OGRFeature::Clone()
     }
 
     poNew->SetStyleString(GetStyleString());
+
+    poNew->SetFID( GetFID() );
 
     return poNew;
 }
