@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/01/24 15:05:01  warmerda
+ * Fixed byte order detection bugs as per bugzilla 261.
+ *
  * Revision 1.5  2003/01/24 15:00:07  warmerda
  * Added additional data types as per Bugzilla 262.
  *
@@ -697,14 +700,14 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int		bNativeOrder = TRUE;
 
-    if( CSLFetchNameValue(poDS->papszHeader,"data_type" ) != NULL )
+    if( CSLFetchNameValue(poDS->papszHeader,"byte_order" ) != NULL )
     {
 #ifdef CPL_LSB                               
         bNativeOrder = atoi(CSLFetchNameValue(poDS->papszHeader,
-                                              "data_type" )) == 1;
+                                              "byte_order" )) == 1;
 #else
         bNativeOrder = atoi(CSLFetchNameValue(poDS->papszHeader,
-                                              "data_type" )) != 1;
+                                              "byte_order" )) != 1;
 #endif
     }
 
