@@ -1,0 +1,30 @@
+
+GDAL_ROOT	=	../..
+
+include $(GDAL_ROOT)/GDALmake.opt
+
+GDAL_OBJ	=	
+NITFLIB_OBJ	=	nitffile.o
+
+OBJ = $(GDAL_OBJ) $(NITF_OBJ)
+
+default:	$(OBJ)
+
+clean:
+	rm -f *.o
+
+%.o:	%.c
+	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
+
+%.o:	%.cpp
+	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
+
+
+nitfdump:	nitfdump.o $(NITFLIB_OBJ)
+	$(CXX) nitfdump.o $(NITFLIB_OBJ) $(GDAL_ROOT)/port/cpl.a -o nitfdump
+
+install-obj:	$(foreach file,$(OBJ),../o/$(file))
+
+../o/%.o:	%.o
+	cp $*.o ../o
+
