@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/06 15:15:07  warmerda
+ * Removed extra break;
+ *
  * Revision 1.2  1999/05/06 14:25:43  warmerda
  * added DDFBinaryString, and a bit of optimization
  *
@@ -170,7 +173,6 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
         
         CPLAssert( FALSE );
         return FALSE;
-        break;
         
       default:
         CPLError( CE_Failure, CPLE_AppDefined,
