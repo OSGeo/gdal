@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2001/11/09 21:05:07  warmerda
+ * fixed local_cs stripping
+ *
  * Revision 1.39  2001/10/19 15:38:04  warmerda
  * fixed well known geogcses to use degree instead of DMSH
  *
@@ -2477,6 +2480,14 @@ OGRErr OGRSpatialReference::StripCTParms( OGR_SRSNode * poCurrent )
 {
     if( poCurrent == NULL )
         poCurrent = GetRoot();
+
+    if( poCurrent == GetRoot() && EQUAL(poCurrent->GetValue(),"LOCAL_CS") )
+    {
+        delete poCurrent;
+        poRoot = NULL;
+
+        return OGRERR_NONE;
+    }
     
     if( poCurrent == NULL )
         return OGRERR_NONE;
