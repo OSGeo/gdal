@@ -23,6 +23,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/02/19 06:27:57  warmerda
+ * more prefixes to avoid trying to open
+ *
  * Revision 1.13  2003/07/16 22:16:03  warmerda
  * dont try FMEObjects on OCI: names
  *
@@ -603,7 +606,11 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
             break;
     }
          
-    if( (i < 2 || pszCompositeName[i] != ':' || EQUALN(pszCompositeName,"OCI:",4))
+    if( (i < 2 || pszCompositeName[i] != ':' 
+         || EQUALN(pszCompositeName,"OCI:",4)
+         || EQUALN(pszCompositeName,"gltp:",5)
+         || EQUALN(pszCompositeName,"DODS:",5)
+         || EQUALN(pszCompositeName,"ODBC:",5))
         && !EQUAL(CPLGetExtension( pszCompositeName ), "fdd")
         && !EQUALN(pszCompositeName,"PROMPT",6) )
     {
