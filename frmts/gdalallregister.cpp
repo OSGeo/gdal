@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.53  2002/12/03 19:03:08  dron
+ * Added BMP driver.
+ *
  * Revision 1.52  2002/12/03 04:42:35  warmerda
  * added NITF
  *
@@ -315,6 +318,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_xpm
     GDALRegister_XPM();
+#endif
+
+#ifdef FRMT_bmp
+    GDALRegister_BMP();
 #endif
 
 #ifdef FRMT_ecw

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/12/03 19:02:39  dron
+ * Added BMP driver.
+ *
  * Revision 1.19  2002/12/03 04:41:16  warmerda
  * added NITF
  *
@@ -137,6 +140,7 @@ void CPL_DLL GDALRegister_L1B(void);
 void CPL_DLL GDALRegister_LDF(void);
 void CPL_DLL GDALRegister_BSB(void);
 void CPL_DLL GDALRegister_XPM(void);
+void CPL_DLL GDALRegister_BMP(void);
 void CPL_DLL GDALRegister_GSC(void);
 void CPL_DLL GDALRegister_NITF(void);
 CPL_C_END

@@ -154,7 +154,7 @@ endif
 #
 GDAL_FORMATS = 	gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 bsb xpm \
 		sdts raw dted mem jdem envisat elas fit vrt usgsdem l1b \
-		nitf \
+		nitf bmp \
 		@OPT_GDAL_FORMATS@
 
 #
