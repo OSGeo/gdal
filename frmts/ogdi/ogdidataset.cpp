@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/12/02 20:31:03  fwarmerdam
+ * upgraded with support for advise api
+ *
  * Revision 1.19  2004/10/30 15:51:48  fwarmerdam
  * undid the last change, breaks things if buf/win sizes differ
  *
@@ -88,12 +91,104 @@
  *
  */
 
-#include "ogdidataset.h"
+#include <math.h>
+#include "ecs.h"
+#include "gdal_priv.h"
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
+CPL_C_START
+void	GDALRegister_OGDI(void);
+CPL_C_END
+
+/************************************************************************/
+/* ==================================================================== */
+/*				OGDIDataset				*/
+/* ==================================================================== */
+/************************************************************************/
+
+class OGDIRasterBand;
+
+class CPL_DLL OGDIDataset : public GDALDataset
+{
+    friend class OGDIRasterBand;
+    
+    int		nClientID;
+
+    ecs_Region	sGlobalBounds;
+    ecs_Region  sCurrentBounds;
+    int         nCurrentBand;
+    int         nCurrentIndex;
+
+    char	*pszProjection;
+
+    static CPLErr CollectLayers(int, char***,char***);
+    static CPLErr OverrideGlobalInfo(OGDIDataset*,const char *);
+
+    void        AddSubDataset( const char *pszType, const char *pszLayer );
+    char	**papszSubDatasets;
+
+  public:
+    		OGDIDataset();
+    		~OGDIDataset();
+                
+    static GDALDataset *Open( GDALOpenInfo * );
+
+    int		GetClientID() { return nClientID; }
+
+    virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * );
+
+    virtual void *GetInternalHandle( const char * );
+
+    virtual char **GetMetadata( const char * pszDomain = "" );
+};
+
+/************************************************************************/
+/* ==================================================================== */
+/*                            OGDIRasterBand                             */
+/* ==================================================================== */
+/************************************************************************/
+
+class OGDIRasterBand : public GDALRasterBand
+{
+    friend class OGDIDataset;
+
+    int		nOGDIImageType; /* ie. 1 for RGB */
+
+    char	*pszLayerName;
+    ecs_Family  eFamily;
+
+    int		nComponent; /* varies only for RGB layers */
+
+    GDALColorTable *poCT;
+
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              int, int );
+
+    CPLErr         EstablishAccess( int nXOff, int nYOff, 
+                                    int nXSize, int nYSize,
+                                    int nBufXSize, int nBufYSize );
+
+  public:
+
+                   OGDIRasterBand( OGDIDataset *, int, const char *,
+                                   ecs_Family, int );
+                   ~OGDIRasterBand();
+
+    virtual CPLErr IReadBlock( int, int, void * );
+    virtual int    HasArbitraryOverviews();
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorTable *GetColorTable();
+
+    virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
+                               int nBufXSize, int nBufYSize, 
+                               GDALDataType eDT, char **papszOptions );
+
+};
 
 /************************************************************************/
 /*                           OGDIRasterBand()                            */
@@ -116,7 +211,9 @@ OGDIRasterBand::OGDIRasterBand( OGDIDataset *poDS, int nBand,
 /* -------------------------------------------------------------------- */
 /*      Make this layer current.                                        */
 /* -------------------------------------------------------------------- */
-    EstablishAccess( 0, 0, poDS->GetRasterXSize(), poDS->GetRasterXSize() );
+    EstablishAccess( 0, 0, 
+                     poDS->GetRasterXSize(), poDS->GetRasterYSize(), 
+                     poDS->GetRasterXSize(), poDS->GetRasterYSize() );
 
 /* -------------------------------------------------------------------- */
 /*      Get the raster info.                                            */
@@ -223,7 +320,8 @@ CPLErr OGDIRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Establish access at the desired resolution.                     */
 /* -------------------------------------------------------------------- */
-    eErr = EstablishAccess( nYOff, nXOff, nXSize, nBufXSize );
+    eErr = EstablishAccess( nXOff, nYOff, nXSize, nYSize, 
+                            nBufXSize, nBufYSize );
     if( eErr != CE_None )
         return eErr;
 
@@ -317,9 +415,9 @@ int OGDIRasterBand::HasArbitraryOverviews()
 /*                          EstablishAccess()                           */
 /************************************************************************/
 
-CPLErr OGDIRasterBand::EstablishAccess( int nYOff, 
-                                        int nWinXOff, int nWinXSize, 
-                                        int nBufXSize )
+CPLErr OGDIRasterBand::EstablishAccess( int nXOff, int nYOff, 
+                                        int nWinXSize, int nWinYSize, 
+                                        int nBufXSize, int nBufYSize )
 
 {
     ecs_Result	 *psResult;
@@ -353,34 +451,55 @@ CPLErr OGDIRasterBand::EstablishAccess( int nYOff,
 /*      What region would represent this resolution and window?         */
 /* -------------------------------------------------------------------- */
     ecs_Region   sWin;
-    int          nYSize;
+    double       dfNSTolerance = 0.0000001;
 
-    sWin.west = nWinXOff * poODS->sGlobalBounds.ew_res
+    sWin.west = nXOff * poODS->sGlobalBounds.ew_res
         + poODS->sGlobalBounds.west;
-    sWin.east = (nWinXOff+nWinXSize) * poODS->sGlobalBounds.ew_res
+    sWin.east = (nXOff+nWinXSize) * poODS->sGlobalBounds.ew_res
         + poODS->sGlobalBounds.west;
     sWin.ew_res = poODS->sGlobalBounds.ew_res*(nWinXSize/(double)nBufXSize);
 
     sWin.north = poODS->sGlobalBounds.north 
         - nYOff*poODS->sGlobalBounds.ns_res;
-    sWin.ns_res = sWin.ew_res 
-        * (poODS->sGlobalBounds.ns_res / poODS->sGlobalBounds.ew_res);
+    if( nBufYSize == 1 && nWinYSize == 1 )
+    {
+        sWin.ns_res = sWin.ew_res 
+            * (poODS->sGlobalBounds.ns_res / poODS->sGlobalBounds.ew_res);
+        nWinYSize = (int) ((sWin.north - poODS->sGlobalBounds.south + sWin.ns_res*0.9)
+                                / sWin.ns_res);
 
-    nYSize = (int) ((sWin.north - poODS->sGlobalBounds.south + sWin.ns_res*0.9)
-                    / sWin.ns_res);
-    sWin.south = sWin.north - nYSize * sWin.ns_res;
+        sWin.south = sWin.north - nWinYSize * sWin.ns_res;
+        dfNSTolerance = MAX(poODS->sCurrentBounds.ns_res,sWin.ns_res);
+    }
+    else if( nBufYSize == 1 )
+    {
+        sWin.ns_res = poODS->sGlobalBounds.ns_res
+            *(nWinYSize/(double)nBufYSize);
+        nWinYSize = (int) ((sWin.north - poODS->sGlobalBounds.south + sWin.ns_res*0.9)
+                                / sWin.ns_res);
+
+        sWin.south = sWin.north - nWinYSize * sWin.ns_res;
+        dfNSTolerance = MAX(poODS->sCurrentBounds.ns_res,sWin.ns_res);
+    }
+    else
+    {
+        sWin.ns_res = poODS->sGlobalBounds.ns_res
+            *(nWinYSize/(double)nBufYSize);
+        sWin.south = sWin.north - nWinYSize * sWin.ns_res;
+        dfNSTolerance = sWin.ns_res * 0.001;
+    }
 
     if( poODS->nCurrentIndex == -1 
         || ABS(sWin.west - poODS->sCurrentBounds.west) > 0.0001 
         || ABS(sWin.east - poODS->sCurrentBounds.east) > 0.0001 
-        || ABS(sWin.north+poODS->nCurrentIndex*sWin.ns_res
-               -poODS->sCurrentBounds.north) > 0.0001
+        || ABS(sWin.north - (poODS->sCurrentBounds.north - poODS->nCurrentIndex * poODS->sCurrentBounds.ns_res)) > dfNSTolerance 
         || ABS(sWin.ew_res/poODS->sCurrentBounds.ew_res - 1.0) > 0.0001
-        || ABS(sWin.ns_res/poODS->sCurrentBounds.ns_res - 1.0) > 0.0001 )
+        || ABS(sWin.ns_res - poODS->sCurrentBounds.ns_res) > dfNSTolerance )
     {
-#ifdef notdef
-        CPLDebug( "OGDIRasterBand", "<EstablishAccess: Set Region>" );
-#endif
+        CPLDebug( "OGDIRasterBand", 
+                  "<EstablishAccess: Set Region(%d,%d,%d,%d,%d,%d>",
+                  nXOff, nYOff, nWinXSize, nWinYSize, nBufXSize, nBufYSize );
+
         psResult = cln_SelectRegion( poODS->nClientID, &sWin );
         if( ECSERROR(psResult) )
         {
@@ -425,6 +544,23 @@ GDALColorTable *OGDIRasterBand::GetColorTable()
 
 {
     return poCT;
+}
+
+/************************************************************************/
+/*                             AdviseRead()                             */
+/*                                                                      */
+/*      Allow the application to give us a hint in advance how they     */
+/*      want the data.                                                  */
+/************************************************************************/
+
+CPLErr OGDIRasterBand::AdviseRead( int nXOff, int nYOff, 
+                                   int nXSize, int nYSize,
+                                   int nBufXSize, int nBufYSize, 
+                                   GDALDataType eDT, char **papszOptions )
+
+{
+    return EstablishAccess( nXOff, nYOff, nXSize, nYSize, 
+                            nBufXSize, nBufYSize );
 }
     
 /************************************************************************/
