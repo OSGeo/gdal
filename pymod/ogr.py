@@ -28,6 +28,13 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.43  2005/02/05 18:11:53  hobu
+# Allow the Geometry constructor to take in
+# gml, wkt, wkb, and srs as keyword argmuments.  There
+# was already a wkt argument, but no implementation behind it.
+# The srs is used in the wkb and wkt contructors, otherwise it
+# is not used
+#
 # Revision 1.42  2005/02/05 04:57:24  hobu
 # Implemented __copy__ and a basic
 # __getattr__ for Feature.  No special handling
@@ -936,7 +943,12 @@ def CreateGeometryFromGML( string ):
         raise ValueError, _gdal.CPLGetLastErrorMsg()
 
 class Geometry:
-    def __init__(self, type=None, obj=None, wkt=None, thisown = None):
+    def __init__(self, type=None, obj=None,
+                 wkt=None,
+                 thisown = None,
+                 wkb=None,
+                 gml=None,
+                 srs=None):
         if obj is not None:
             self._o = obj
             if thisown is not None:
@@ -946,6 +958,18 @@ class Geometry:
         elif type is not None:
             self._o = _gdal.OGR_G_CreateGeometry( type )
             self.thisown = 1
+        elif wkt:
+            if srs:
+                return CreateGeometryFromWkt(wkt, srs)
+            else:
+                return CreateGeometryFromWkt(wkt)
+        elif wkb:
+            if srs:
+                return CreateGeometryFromWkb(wkb, srs)
+            else:
+                return CreateGeometryFromWkb(wkb)
+        elif gml:
+            return CreateGeometryFromGML(gml)
         else:
             raise OGRError, 'OGRGeometry may not be directly instantiated.'
 
