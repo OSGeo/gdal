@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2004/03/19 05:06:00  warmerda
+ * Pass 0 for order to GDALCreateGenImgProjTransformer() from
+ * GDALCreateAndReprojectImage() so that the default will be to figure
+ * out the best order instead of defaulting to 2nd order.
+ *
  * Revision 1.9  2004/02/25 19:51:00  warmerda
  * Fixed nodata check in GDT_Int16 case (from Manuel Massing).
  *
@@ -286,7 +291,7 @@ CPLErr GDALCreateAndReprojectImage(
 
     hTransformArg = 
         GDALCreateGenImgProjTransformer( hSrcDS, pszSrcWKT, NULL, pszDstWKT, 
-                                         TRUE, 1000.0, 2 );
+                                         TRUE, 1000.0, 0 );
 
     if( hTransformArg == NULL )
         return CE_Failure;
