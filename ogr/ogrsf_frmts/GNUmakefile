@@ -48,7 +48,7 @@ ifeq ($(HAVE_OGDI),yes)
 	(cd ogdi; $(MAKE) clean)
 endif
 ifeq ($(HAVE_OCI),yes)
-	(cd ogdi; $(MAKE) clean)
+	(cd oci; $(MAKE) clean)
 endif
 ifeq ($(HAVE_OGR_PG),yes)
 	(cd pg; $(MAKE) clean)
