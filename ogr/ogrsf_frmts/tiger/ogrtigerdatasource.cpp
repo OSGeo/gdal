@@ -3,10 +3,10 @@
  *
  * Project:  TIGER/Line Translator
  * Purpose:  Implements OGRTigerDataSource class
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 1999, Frank Warmerdam
+ * Copyright (c) 1999, Frank Warmerdam <warmerdam@pobox.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/02/27 16:02:46  warmerda
+ * Handle case with filename without path properly in BuildFilename().
+ *
  * Revision 1.20  2003/01/13 17:06:10  warmerda
  * added support for a single county as a dataset
  *
@@ -187,6 +190,10 @@ TigerVersion TigerClassifyVersion( int nVersionCode )
     return nVersion;
 }
 
+/************************************************************************/
+/*                         TigerVersionString()                         */
+/************************************************************************/
+
 char * TigerVersionString( TigerVersion nVersion )
 {
 
@@ -204,7 +211,6 @@ char * TigerVersionString( TigerVersion nVersion )
   if (nVersion == TIGER_Unknown) { return "TIGER_Unknown"; }
   return "???";
 }
-  
 
 /************************************************************************/
 /*                         OGRTigerDataSource()                         */
@@ -672,8 +678,12 @@ char *OGRTigerDataSource::BuildFilename( const char *pszModuleName,
                                      + strlen(pszModuleName)
                                      + strlen(pszExtension) + 10);
 
-    sprintf( pszFilename, "%s/%s%s",
-             GetDirPath(), pszModuleName, pszExtension );
+    if( strlen(GetDirPath()) == 0 )
+        sprintf( pszFilename, "%s%s",
+                 pszModuleName, pszExtension );
+    else
+        sprintf( pszFilename, "%s/%s%s",
+                 GetDirPath(), pszModuleName, pszExtension );
 
     return pszFilename;
 }
