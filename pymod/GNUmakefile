@@ -44,4 +44,5 @@ install:	$(GDALMODULE).$(SO_EXT)
 		$(INSTALL_DATA) $$f $(INST_PYMOD) ; \
 	    fi \
 	done
-
+	# ugh! spurius relinking leaves a file owned by root into .libs/.
+	find . -user root -exec rm -f '{}' ';'
