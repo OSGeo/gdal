@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/05/31 15:46:09  warmerda
+ * added uncompress support for reduce precision, non-run length encoded data
+ *
  * Revision 1.14  2001/01/03 16:20:10  warmerda
  * Converted to large file API
  *
@@ -289,6 +292,8 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
     GUInt32  nDataMin, nDataOffset;
     int      nNumBits, nPixelsOutput=0;			
     GInt32   nNumRuns;
+    GByte *pabyCounter, *pabyValues;
+    int   nValueBitOffset;
 
     memcpy( &nDataMin, pabyCData, 4 );
     nDataMin = CPL_LSBWORD32( nDataMin );
@@ -301,19 +306,114 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 
     nNumBits = pabyCData[12];
 
-/* -------------------------------------------------------------------- */
-/*	Establish data pointers.					*/    
-/* -------------------------------------------------------------------- */
-    GByte *pabyCounter, *pabyValues;
-    int   nValueBitOffset;
 
+/* ==================================================================== */
+/*      If this is not run length encoded, but just reduced             */
+/*      precision, handle it now.                                       */
+/* ==================================================================== */
+    if( nNumRuns == -1 )
+    {
+        pabyValues = pabyCData + 13;
+        nValueBitOffset = 0;
+
+        for( nPixelsOutput = 0; nPixelsOutput < nMaxPixels; nPixelsOutput++ )
+        {
+            int	nDataValue;
+
+/* -------------------------------------------------------------------- */
+/*      Extract the data value in a way that depends on the number      */
+/*      of bits in it.                                                  */
+/* -------------------------------------------------------------------- */
+            if( nNumBits == 0 )
+            {
+                nDataValue = 0;
+            }
+            else if( nNumBits == 1 )
+            {
+                nDataValue =
+                    (pabyValues[nValueBitOffset>>3] >> (nValueBitOffset&7)) & 0x1;
+                nValueBitOffset++;
+            }
+            else if( nNumBits == 2 )
+            {
+                nDataValue =
+                    (pabyValues[nValueBitOffset>>3] >> (nValueBitOffset&7)) & 0x3;
+                nValueBitOffset += 2;
+            }
+            else if( nNumBits == 4 )
+            {
+                nDataValue =
+                    (pabyValues[nValueBitOffset>>3] >> (nValueBitOffset&7)) & 0xf;
+                nValueBitOffset += 4;
+            }
+            else if( nNumBits == 8 )
+            {
+                nDataValue = *pabyValues;
+                pabyValues++;
+            }
+            else if( nNumBits == 16 )
+            {
+                nDataValue = 256 * *(pabyValues++);
+                nDataValue += *(pabyValues++);
+            }
+            else if( nNumBits == 32 )
+            {
+                nDataValue = 256 * 256 * 256 * *(pabyValues++);
+                nDataValue = 256 * 256 * *(pabyValues++);
+                nDataValue = 256 * *(pabyValues++);
+                nDataValue = *(pabyValues++);
+            }
+            else
+            {
+                printf( "nNumBits = %d\n", nNumBits );
+                CPLAssert( FALSE );
+                nDataValue = 0;
+            }
+
+/* -------------------------------------------------------------------- */
+/*      Offset by the minimum value.                                    */
+/* -------------------------------------------------------------------- */
+            nDataValue += nDataMin;
+
+/* -------------------------------------------------------------------- */
+/*      Now apply to the output buffer in a type specific way.          */
+/* -------------------------------------------------------------------- */
+            if( nDataType == EPT_u8 )
+            {
+                CPLAssert( nDataValue < 256 );
+                ((GByte *) pabyDest)[nPixelsOutput] = nDataValue;
+            }
+            else if( nDataType == EPT_u16 )
+            {
+                ((GUInt16 *) pabyDest)[nPixelsOutput] = nDataValue;
+            }
+            else if( nDataType == EPT_s16 )
+            {
+                ((GInt16 *) pabyDest)[nPixelsOutput] = nDataValue;
+            }
+            else if( nDataType == EPT_f32 )
+            {
+                ((float *) pabyDest)[nPixelsOutput] = (float) nDataValue;
+            }
+            else
+            {
+                CPLAssert( FALSE );
+            }
+        }
+
+        return CE_None;
+    }
+
+/* ==================================================================== */
+/*      Establish data pointers for runs.                               */
+/* ==================================================================== */
     pabyCounter = pabyCData + 13;
     pabyValues = pabyCData + nDataOffset;
     nValueBitOffset = 0;
     
-/* ==================================================================== */
+/* -------------------------------------------------------------------- */
 /*      Loop over runs.                                                 */
-/* ==================================================================== */
+/* -------------------------------------------------------------------- */
     int    iRun;
 
     for( iRun = 0; iRun < nNumRuns; iRun++ )
