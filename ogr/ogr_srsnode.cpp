@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGR_SRSNode class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2003/01/08 18:14:28  warmerda
+ * added FixupOrdering()
+ *
  * Revision 1.23  2002/12/10 04:06:57  warmerda
  * Added support for a parent pointer in OGR_SRSNode.
  * Ensure that authority codes are quoted (bugzilla 201)
@@ -890,3 +893,122 @@ void OGR_SRSNode::StripNodes( const char * pszName )
     for( int i = 0; i < GetChildCount(); i++ )
         GetChild(i)->StripNodes( pszName );
 }
+
+/************************************************************************/
+/*                           FixupOrdering()                            */
+/************************************************************************/
+
+/**
+ * Correct parameter ordering to match CT Specification.
+ *
+ * Some mechanisms to create WKT using OGRSpatialReference, and some
+ * imported WKT fail to maintain the order of parameters required according
+ * to the BNF definitions in the OpenGIS SF-SQL and CT Specifications.  This
+ * method attempts to massage things back into the required order.
+ *
+ * This method will reorder the children of the node it is invoked on and
+ * then recurse to all children to fix up their children.
+ *
+ * @return OGRERR_NONE on success or an error code if something goes 
+ * wrong.  
+ */
+
+static char *apszPROJCSRule[] = 
+{ "PROJCS", "GEOGCS", "PROJECTION", "PARAMETER", "UNIT", "AXIS", "AUTHORITY", 
+  NULL };
+
+static char *apszDATUMRule[] = 
+{ "DATUM", "SPHEROID", "TOWGS84", "AUTHORITY", NULL };
+
+static char *apszGEOGCSRule[] = 
+{ "GEOGCS", "DATUM", "PRIMEM", "UNIT", "AXIS", "AUTHORITY", NULL };
+
+static char **apszOrderingRules[] = {
+    apszPROJCSRule, apszGEOGCSRule, apszDATUMRule, NULL };
+
+OGRErr OGR_SRSNode::FixupOrdering()
+
+{
+    int    i;
+
+/* -------------------------------------------------------------------- */
+/*      Recurse ordering children.                                      */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < GetChildCount(); i++ )
+        GetChild(i)->FixupOrdering();
+
+    if( GetChildCount() < 3 )
+        return OGRERR_NONE;
+
+/* -------------------------------------------------------------------- */
+/*      Is this a node for which an ordering rule exists?               */
+/* -------------------------------------------------------------------- */
+    char **papszRule = NULL;
+
+    for( i = 0; apszOrderingRules[i] != NULL; i++ )
+    {
+        if( EQUAL(apszOrderingRules[i][0],pszValue) )
+        {
+            papszRule = apszOrderingRules[i] + 1;
+            break;
+        }
+    }
+
+    if( papszRule == NULL )
+        return OGRERR_NONE;
+
+/* -------------------------------------------------------------------- */
+/*      If we have a rule, apply it.  We create an array                */
+/*      (panChildPr) with the priority code for each child (derived     */
+/*      from the rule) and we then bubble sort based on this.           */
+/* -------------------------------------------------------------------- */
+    int  *panChildKey = (int *) CPLCalloc(sizeof(int),GetChildCount());
+
+    for( i = 1; i < GetChildCount(); i++ )
+    {
+        panChildKey[i] = CSLFindString( papszRule, GetChild(i)->GetValue() );
+        if( panChildKey[i] == -1 )
+        {
+            CPLDebug( "OGRSpatialReference", 
+                      "Found unexpected key %s when trying to order SRS nodes.",
+                      GetChild(i)->GetValue() );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Sort - Note we don't try to do anything with the first child    */
+/*      which we assume is a name string.                               */
+/* -------------------------------------------------------------------- */
+    int j, bChange = TRUE;
+
+    for( i = 1; bChange && i < GetChildCount()-1; i++ )
+    {
+        bChange = FALSE;
+        for( j = 1; j < GetChildCount()-i; j++ )
+        {
+            if( panChildKey[j] == -1 || panChildKey[j+1] == -1 )
+                continue;
+
+            if( panChildKey[j] > panChildKey[j+1] )
+            {
+                OGR_SRSNode *poTemp = papoChildNodes[j];
+                int          nKeyTemp = panChildKey[j];
+
+                papoChildNodes[j] = papoChildNodes[j+1];
+                papoChildNodes[j+1] = poTemp;
+
+                nKeyTemp = panChildKey[j];
+                panChildKey[j] = panChildKey[j+1];
+                panChildKey[j+1] = nKeyTemp;
+
+                bChange = TRUE;
+            }
+        }
+    }
+
+    CPLFree( panChildKey );
+
+    return OGRERR_NONE;
+}
+
+

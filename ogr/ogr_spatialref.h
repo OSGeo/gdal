@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2003/01/08 18:14:28  warmerda
+ * added FixupOrdering()
+ *
  * Revision 1.45  2002/12/16 17:06:51  warmerda
  * added GetPrimeMeridian() method
  *
@@ -227,6 +230,7 @@ class CPL_DLL OGR_SRSNode
     void        SetValue( const char * );
 
     void        MakeValueSafe();
+    OGRErr      FixupOrdering();
 
     OGR_SRSNode *Clone() const;
 
@@ -304,6 +308,7 @@ class CPL_DLL OGRSpatialReference
 
     OGRErr      Validate();
     OGRErr      StripCTParms( OGR_SRSNode * = NULL );
+    OGRErr      FixupOrdering();
 
     // Machinary for accessing parse nodes
     OGR_SRSNode *GetRoot() { return poRoot; }
