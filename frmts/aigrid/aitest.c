@@ -14,6 +14,7 @@ static void DumpMagic( AIGInfo_t * psInfo, int bVerbose )
     for( i = 0; i < psInfo->nBlocks; i++ )
     {
         GByte	byMagic;
+        int	bReport = bVerbose;
         
         if( psInfo->panBlockSize[i] == 0 )
             continue;
@@ -21,13 +22,21 @@ static void DumpMagic( AIGInfo_t * psInfo, int bVerbose )
         VSIFSeek( psInfo->fpGrid, psInfo->panBlockOffset[i]+2, SEEK_SET );
         VSIFRead( &byMagic, 1, 1, psInfo->fpGrid );
 
-        if( bVerbose
-            || ( byMagic != 0 && byMagic != 0x43 && byMagic != 0x04
-                 && byMagic != 0x08 && byMagic != 0x10 && byMagic != 0xd7 
-                 && byMagic != 0xdf && byMagic != 0xe0 && byMagic != 0xfc
-                 && byMagic != 0xf8 && byMagic != 0xff) )
+        if ( byMagic != 0 && byMagic != 0x43 && byMagic != 0x04
+             && byMagic != 0x08 && byMagic != 0x10 && byMagic != 0xd7 
+             && byMagic != 0xdf && byMagic != 0xe0 && byMagic != 0xfc
+             && byMagic != 0xf8 && byMagic != 0xff)
+            bReport = TRUE;
+
+        if( byMagic == 0 && psInfo->panBlockSize[i] > 8 
+            && psInfo->nCellType == AIG_CELLTYPE_INT )
+            bReport = TRUE;
+
+        if( bReport )
         {
-            printf( " %02x %d/%d\n", byMagic, i, psInfo->panBlockOffset[i] );
+            printf( " %02x %d/%d@%d\n", byMagic, i,
+                    psInfo->panBlockSize[i],
+                    psInfo->panBlockOffset[i] );
         }
     }
 }
@@ -80,9 +89,11 @@ int main( int argc, char ** argv )
             psInfo->dfURY );
 
     if( psInfo->nCellType == AIG_CELLTYPE_INT )
-        printf( "Integer coverage.\n" );
+        printf( "Integer coverage, %dx%d blocks.\n",
+                psInfo->nBlockXSize, psInfo->nBlockYSize );
     else
-        printf( "Floating point coverage.\n" );
+        printf( "Floating point coverage, %dx%d blocks.\n",
+                psInfo->nBlockXSize, psInfo->nBlockYSize );
 
     printf( "Stats - Min=%f, Max=%f, Mean=%f, StdDev=%f\n",
             psInfo->dfMin,
