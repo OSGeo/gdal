@@ -13,7 +13,7 @@ ISOLIB  =	$(ISODIR)/libiso8211.a
 SDTSDIR = 	$(GDAL_ROOT)/frmts/sdts
 SDTSLIB =	$(SDTSDIR)/libsdts_al.a
 
-CPPFLAGS +=	-I.. -I../.. -I$(SDTSDIR) -I$(ISODIR)
+CPPFLAGS :=	-I.. -I../.. -I$(SDTSDIR) -I$(ISODIR) $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(O_OBJ)
 

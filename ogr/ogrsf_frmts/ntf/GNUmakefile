@@ -8,7 +8,7 @@ OBJ	=	ntffilereader.o ntfrecord.o ogrntfdatasource.o \
 		ogrntffeatureclasslayer.o ntf_generic.o ntf_raster.o \
 		ntf_codelist.o ntfstroke.o
 
-CPPFLAGS	+=	-I.. -I../..
+CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 
 LIBS	:=	$(GDAL_LIB) $(LIBS) 
 

@@ -29,7 +29,7 @@ OBJ     =  ogrtigerdriver.o           \
 
 
 
-CPPFLAGS	+=	-I.. -I../..
+CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 
 LIBS	:=	$(GDAL_LIB) $(LIBS)
 

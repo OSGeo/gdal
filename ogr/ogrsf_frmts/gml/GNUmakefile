@@ -9,7 +9,7 @@ OGR_OBJ =	ogrgmldriver.o ogrgmldatasource.o ogrgmllayer.o
 
 OBJ =	$(CORE_OBJ) $(OGR_OBJ)
 
-CPPFLAGS	+=	$(XERCES_INCLUDE) -I.. -I../..
+CPPFLAGS	:=	$(XERCES_INCLUDE) -I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 #CFLAGS	:=	$(filter-out -Wall,$(CFLAGS))
 
 ifeq ($(HAVE_XERCES),yes)
