@@ -66,6 +66,11 @@ JPEG_SUPPORTED = 1
 # Uncomment the following and update to enable FME support.
 #FME_DIR =	d:\Software\fme
 
+!IFDEF ORACLE_HOME
+OCI_LIB =	$(ORACLE_HOME)\oci\lib\msvc\ociw32.lib \
+		$(ORACLE_HOME)\oci\lib\msvc\oci.lib
+!ENDIF
+
 ########### END OF STUFF THAT NORMALLY NEEDS TO BE UPDATED ##################
 
 
