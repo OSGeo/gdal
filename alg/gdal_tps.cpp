@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/12/31 02:01:58  fwarmerdam
+ * Removed unused variables.
+ *
  * Revision 1.5  2004/12/30 21:18:12  fwarmerdam
  * Updated credits.
  *
@@ -109,8 +112,7 @@ void *GDALCreateTPSTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
 
 {
     TPSTransformInfo *psInfo;
-    double *padfGeoX, *padfGeoY, *padfRasterX, *padfRasterY;
-    int    *panStatus, iGCP;
+    int    iGCP;
 
 /* -------------------------------------------------------------------- */
 /*      Allocate transform info.                                        */
@@ -315,7 +317,6 @@ void *GDALDeserializeTPSTransformer( CPLXMLNode *psTree )
     GDAL_GCP *pasGCPList = 0;
     int nGCPCount = 0;
     void *pResult;
-    int nReqOrder;
     int bReversed;
 
     /* -------------------------------------------------------------------- */
