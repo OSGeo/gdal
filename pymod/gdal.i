@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.69  2003/06/18 18:39:14  warmerda
+ * added OSRSetprojection functions
+ *
  * Revision 1.68  2003/06/10 09:26:55  dron
  * Added SetAngularUnits() and GetAngularUnits().
  *
@@ -1338,6 +1341,151 @@ int     OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS,
 	                           int nZone, int bNAD83, 
                                    const char *pszOverrideUnitsName, 
                                    double dfOverrideUnits );
+
+/** Albers Conic Equal Area */
+OGRErr OGRSetACEA( OGRSpatialReferenceH hSRS, double dfStdP1, double dfStdP2,
+                         double dfCenterLat, double dfCenterLong,
+                         double dfFalseEasting, double dfFalseNorthing );
+    
+/** Azimuthal Equidistant */
+OGRErr  OSRSetAE( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
+                       double dfFalseEasting, double dfFalseNorthing );
+
+/** Cylindrical Equal Area */
+OGRErr OSRSetCEA( OGRSpatialReferenceH hSRS, double dfStdP1, double dfCentralMeridian,
+                        double dfFalseEasting, double dfFalseNorthing );
+
+/** Cassini-Soldner */
+OGRErr OSRSetCS( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
+                       double dfFalseEasting, double dfFalseNorthing );
+
+/** Equidistant Conic */
+OGRErr OSRSetEC( OGRSpatialReferenceH hSRS, double dfStdP1, double dfStdP2,
+                       double dfCenterLat, double dfCenterLong,
+                       double dfFalseEasting, double dfFalseNorthing );
+
+/** Eckert IV */
+OGRErr OSRSetEckertIV( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
+                             double dfFalseEasting, double dfFalseNorthing );
+
+/** Eckert VI */
+OGRErr OSRSetEckertVI( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
+                             double dfFalseEasting, double dfFalseNorthing );
+
+/** Equirectangular */
+OGRErr OSRSetEquirectangular(double dfCenterLat, double dfCenterLong,
+                        double dfFalseEasting, double dfFalseNorthing );
+
+/** Gall Stereograpic */
+OGRErr OSRSetGS( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
+                       double dfFalseEasting, double dfFalseNorthing );
+    
+/** Gnomonic */
+OGRErr OSRSetGnomonic(double dfCenterLat, double dfCenterLong,
+                            double dfFalseEasting, double dfFalseNorthing );
+
+/** Hotine Oblique Mercator */
+OGRErr OSRSetHOM( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
+                        double dfAzimuth, double dfRectToSkew,
+                        double dfScale,
+                        double dfFalseEasting, double dfFalseNorthing );
+
+/** Krovak Oblique Conic Conformal */
+OGRErr OSRSetKrovak( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
+                           double dfAzimuth, double dfPseudoStdParallelLat,
+                           double dfScale, 
+                           double dfFalseEasting, double dfFalseNorthing );
+
+/** Lambert Azimuthal Equal-Area */
+OGRErr OSRSetLAEA( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
+                         double dfFalseEasting, double dfFalseNorthing );
+
+/** Lambert Conformal Conic */
+OGRErr OSRSetLCC( OGRSpatialReferenceH hSRS, double dfStdP1, double dfStdP2,
+                        double dfCenterLat, double dfCenterLong,
+                        double dfFalseEasting, double dfFalseNorthing );
+
+/** Lambert Conformal Conic 1SP */
+OGRErr OSRSetLCC1SP( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
+                           double dfScale,
+                           double dfFalseEasting, double dfFalseNorthing );
+
+/** Lambert Conformal Conic (Belgium) */
+OGRErr OSRSetLCCB( OGRSpatialReferenceH hSRS, double dfStdP1, double dfStdP2,
+                         double dfCenterLat, double dfCenterLong,
+                         double dfFalseEasting, double dfFalseNorthing );
+    
+/** Miller Cylindrical */
+OGRErr OSRSetMC( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
+                       double dfFalseEasting, double dfFalseNorthing );
+
+/** Mercator */
+OGRErr OSRSetMercator( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
+                             double dfScale, 
+                             double dfFalseEasting, double dfFalseNorthing );
+
+/** Mollweide */
+OGRErr  OSRSetMollweide( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
+                              double dfFalseEasting, double dfFalseNorthing );
+
+/** New Zealand Map Grid */
+OGRErr OSRSetNZMG( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
+                         double dfFalseEasting, double dfFalseNorthing );
+
+/** Oblique Stereographic */
+OGRErr OSRSetOS( OGRSpatialReferenceH hSRS, double dfOriginLat, double dfCMeridian,
+                       double dfScale,
+                       double dfFalseEasting,double dfFalseNorthing);
+    
+/** Orthographic */
+OGRErr OSRSetOrthographic( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
+                                 double dfFalseEasting,double dfFalseNorthing);
+
+/** Polyconic */
+OGRErr OSRSetPolyconic( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
+                              double dfFalseEasting, double dfFalseNorthing );
+
+/** Polar Stereographic */
+OGRErr OSRSetPS( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
+                       double dfScale,
+                       double dfFalseEasting, double dfFalseNorthing);
+    
+/** Robinson */
+OGRErr OSRSetRobinson( OGRSpatialReferenceH hSRS, double dfCenterLong, 
+                             double dfFalseEasting, double dfFalseNorthing );
+    
+/** Sinusoidal */
+OGRErr OSRSetSinusoidal( OGRSpatialReferenceH hSRS, double dfCenterLong, 
+                               double dfFalseEasting, double dfFalseNorthing );
+    
+/** Stereographic */
+OGRErr OSRSetStereographic( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
+                                  double dfScale,
+                                 double dfFalseEasting,double dfFalseNorthing);
+    
+/** Swiss Oblique Cylindrical */
+OGRErr OSRSetSOC( OGRSpatialReferenceH hSRS, double dfLatitudeOfOrigin, double dfCentralMeridian,
+                        double dfFalseEasting, double dfFalseNorthing );
+    
+/** Transverse Mercator */
+OGRErr OSRSetTM( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
+                       double dfScale,
+                       double dfFalseEasting, double dfFalseNorthing );
+
+/** Tunesia Mining Grid  */
+OGRErr OSRSetTMG( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong, 
+                        double dfFalseEasting, double dfFalseNorthing );
+
+/** Transverse Mercator (South Oriented) */
+OGRErr OSRSetTMSO( OGRSpatialReferenceH hSRS,
+                           double dfCenterLat, double dfCenterLong,
+                           double dfScale,
+                           double dfFalseEasting, double dfFalseNorthing );
+
+/** VanDerGrinten */
+OGRErr OSRSetVDG( OGRSpatialReferenceH hSRS,
+                          double dfCenterLong,
+                          double dfFalseEasting, double dfFalseNorthing );
 
 %{
 /************************************************************************/
