@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/07/24 18:04:43  warmerda
+ * Avoid crash if fp is NULL in establish record length.
+ *
  * Revision 1.10  2001/07/19 16:05:49  warmerda
  * clear out tabs
  *
@@ -170,7 +173,7 @@ int TigerFileBase::EstablishRecordLength( FILE * fp )
     char        chCurrent;
     int         nRecLen = 0;
     
-    if( VSIFSeek( fp, 0, SEEK_SET ) != 0 )
+    if( fp == NULL || VSIFSeek( fp, 0, SEEK_SET ) != 0 )
         return -1;
 
 /* -------------------------------------------------------------------- */
