@@ -14,6 +14,7 @@ default:
 	cd ..
 	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj \
 				 sdts\*.obj s57\*.obj tiger\*.obj \
+				 mitab\*.obj \
 				 ..\..\frmts\iso8211\*.obj \
 				 ..\..\frmts\sdts\sdtsattrreader.obj \
 				 ..\..\frmts\sdts\sdtscatd.obj \
