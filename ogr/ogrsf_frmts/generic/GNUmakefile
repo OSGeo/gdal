@@ -3,7 +3,7 @@ GDAL_ROOT	=	../../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	ogrsfdriverregistrar.o
+OBJ	=	ogrsfdriverregistrar.o ogrlayer.o
 
 ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port $(CFLAGS)
 
