@@ -27,7 +27,7 @@ BASE_INCLUDE =	/INCLUDE:_GDALSimpleImageWarp \
 		/INCLUDE:_GDALComputeMedianCutPCT \
 		/INCLUDE:_GDALDitherRGB2PCT
 
-LIBOBJ = port\*.obj core\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ)
+LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ)
 	
 DISTDIR	=	gdal_$(VERSION)
 
@@ -42,7 +42,7 @@ clean:
 	cd port
 	$(MAKE) /f makefile.vc clean
 	cd ..
-	cd core
+	cd gcore
 	$(MAKE) /f makefile.vc clean
 	cd ..
 	cd alg
@@ -77,7 +77,7 @@ ogr_min:
 	cd ..
 
 core_dir:
-	cd core
+	cd gcore
 	$(MAKE) /f makefile.vc
 	cd ..\alg
 	$(MAKE) /f makefile.vc
@@ -121,7 +121,7 @@ ogr_apps:
 lib_dist:	default
 	rm -rf $(DISTDIR)
 	mkdir $(DISTDIR)
-	cp gdal.lib port\*.h core\*.h ogr\*.h $(DISTDIR)
+	cp gdal.lib port\*.h gcore\*.h ogr\*.h $(DISTDIR)
 	zip -r $(DISTDIR).zip $(DISTDIR)
 
 $(GDAL_DLL):	lib
@@ -147,7 +147,7 @@ install: $(GDAL_DLL) apps_dir pymod_dir
 
 devinstall: install
 	copy port\*.h $(INCDIR)
-	copy core\*.h $(INCDIR)
+	copy gcore\*.h $(INCDIR)
 	copy alg\*.h $(INCDIR)
 	copy ogr\*.h $(INCDIR)
 !IFDEF INCLUDE_OGR_FRMTS
