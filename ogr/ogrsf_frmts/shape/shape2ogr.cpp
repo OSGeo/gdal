@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2003/02/25 14:35:11  warmerda
+ * Incorporated more correct support for reading multi-part arcs as
+ * MultiLineStrings.
+ *
  * Revision 1.23  2002/10/04 04:31:40  warmerda
  * Fixes for writing 3D multipoints.
  *
@@ -179,12 +183,55 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
              || psShape->nSHPType == SHPT_ARCM
              || psShape->nSHPType == SHPT_ARCZ )
     {
-        OGRLineString *poOGRLine = new OGRLineString();
+        if( psShape->nParts == 1 )
+        {
+            OGRLineString *poOGRLine = new OGRLineString();
 
-        poOGRLine->setPoints( psShape->nVertices,
-                              psShape->padfX, psShape->padfY, psShape->padfZ );
+            poOGRLine->setPoints( psShape->nVertices,
+                                  psShape->padfX, psShape->padfY, psShape->padfZ );
         
-        poOGR = poOGRLine;
+            poOGR = poOGRLine;
+        }
+        else
+        {
+            int	iRing;
+            OGRMultiLineString *poOGRMulti;
+        
+            poOGR = poOGRMulti = new OGRMultiLineString();
+            
+            for( iRing = 0; iRing < psShape->nParts; iRing++ )
+            {
+                OGRLineString	*poLine;
+                int	nRingPoints;
+                int	nRingStart;
+
+                poLine = new OGRLineString();
+
+                if( psShape->panPartStart == NULL )
+                {
+                    nRingPoints = psShape->nVertices;
+                    nRingStart = 0;
+                }
+                else
+                {
+
+                    if( iRing == psShape->nParts - 1 )
+                        nRingPoints =
+                            psShape->nVertices - psShape->panPartStart[iRing];
+                    else
+                        nRingPoints = psShape->panPartStart[iRing+1]
+                            - psShape->panPartStart[iRing];
+                    nRingStart = psShape->panPartStart[iRing];
+                }
+            
+                poLine->setPoints( nRingPoints, 
+                                   psShape->padfX + nRingStart,
+                                   psShape->padfY + nRingStart,
+                                   psShape->padfZ + nRingStart );
+
+                poOGRMulti->addGeometryDirectly( poLine );
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -233,9 +280,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
                                psShape->padfY + nRingStart,
                                psShape->padfZ + nRingStart );
 
-            poOGRPoly->addRing( poRing );
-
-            delete poRing;
+            poOGRPoly->addRingDirectly( poRing );
         }
     }
 
