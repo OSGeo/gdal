@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2003/11/24 14:17:40  warmerda
+ * Added a bunch more no-disphdr elements as per email from Marius.
+ *
  * Revision 1.42  2003/11/18 21:11:40  warmerda
  * Added DGNElemTypeHasDispHdr() function.
  *
@@ -1094,8 +1097,16 @@ int DGNElemTypeHasDispHdr( int nElemType )
 {
     switch( nElemType )
     {
+      case 0:
       case DGNT_TCB:
       case DGNT_CELL_LIBRARY:
+      case 32:
+      case 44:
+      case 48:
+      case 49:
+      case 50:
+      case 51:
+      case 57:
       case 63:
         return FALSE;
         
