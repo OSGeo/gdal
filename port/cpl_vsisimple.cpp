@@ -30,6 +30,9 @@
  *    instance validation of access strings to fopen().
  * 
  * $Log$
+ * Revision 1.12  2002/06/15 03:10:22  aubin
+ * remove debug test for 64bit compile
+ *
  * Revision 1.11  2002/06/15 00:07:23  aubin
  * mods to enable 64bit file i/o
  *
@@ -306,7 +309,6 @@ int VSIStat( const char * pszFilename, VSIStatBuf * pStatBuf )
     return( stat64( pszFilename, pStatBuf ) );
 #else
     return( stat( pszFilename, pStatBuf ) );
-#error We got the wrong stat function! 
 #endif
 #endif
 }
