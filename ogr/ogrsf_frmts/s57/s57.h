@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/11/25 20:53:49  warmerda
+ * added sounding and S57_SPLIT_MULTIPOINT support
+ *
  * Revision 1.6  1999/11/18 19:01:25  warmerda
  * expanded tabs
  *
@@ -62,6 +65,12 @@ OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
 class S57Reader;
 
 char **S57FileCollector( const char * pszDataset );
+
+/* -------------------------------------------------------------------- */
+/*      Define the following to automatically split sounding            */
+/*      wkgMultiPoint features into multiple wkbPoint features.         */
+/* -------------------------------------------------------------------- */
+#undef S57_SPLIT_MULTIPOINT
 
 /* -------------------------------------------------------------------- */
 /*      RCNM values.                                                    */
@@ -212,10 +221,17 @@ class S57Reader
     int                 nNextFEIndex;
     DDFRecordIndex      oFE_Index;
 
+    int			iPointOffset;
+    OGRFeature		*poMultiPoint;
+
+    void		ClearPendingMultiPoint();
+    OGRFeature	       *NextPendingMultiPoint();
+
     OGRFeature         *AssembleFeature( DDFRecord  *, OGRFeatureDefn * );
 
     void                ApplyObjectClassAttributes( DDFRecord *, OGRFeature *);
     
+    void                AssembleSoundingGeometry( DDFRecord *, OGRFeature * );
     void                AssemblePointGeometry( DDFRecord *, OGRFeature * );
     void                AssembleLineGeometry( DDFRecord *, OGRFeature * );
     void                AssembleAreaGeometry( DDFRecord *, OGRFeature * );

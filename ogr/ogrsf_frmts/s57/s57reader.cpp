@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/11/25 20:53:49  warmerda
+ * added sounding and S57_SPLIT_MULTIPOINT support
+ *
  * Revision 1.6  1999/11/18 19:01:25  warmerda
  * expanded tabs
  *
@@ -73,6 +76,9 @@ S57Reader::S57Reader( const char * pszFilename )
     bFileIngested = FALSE;
 
     nNextFEIndex = 0;
+
+    iPointOffset = 0;
+    poMultiPoint = NULL;
 }
 
 /************************************************************************/
@@ -142,12 +148,57 @@ void S57Reader::Close()
         oVE_Index.Clear();
         oVF_Index.Clear();
         oFE_Index.Clear();
-        
+
+        ClearPendingMultiPoint();
+
         delete poModule;
         poModule = NULL;
 
         bFileIngested = FALSE;
     }
+}
+
+/************************************************************************/
+/*                       ClearPendingMultiPoint()                       */
+/************************************************************************/
+
+void S57Reader::ClearPendingMultiPoint()
+
+{
+    if( poMultiPoint != NULL )
+    {
+        delete poMultiPoint;
+        poMultiPoint = NULL;
+    }
+        
+}
+
+/************************************************************************/
+/*                       NextPendingMultiPoint()                        */
+/************************************************************************/
+
+OGRFeature *S57Reader::NextPendingMultiPoint()
+
+{
+    CPLAssert( poMultiPoint != NULL );
+    CPLAssert( poMultiPoint->GetGeometryRef()->getGeometryType()
+               						== wkbMultiPoint );
+
+    OGRFeatureDefn *poDefn = poMultiPoint->GetDefnRef();
+    OGRFeature	*poPoint = new OGRFeature( poDefn );
+    OGRMultiPoint *poMPGeom = (OGRMultiPoint *) poMultiPoint->GetGeometryRef();
+
+    for( int i = 0; i < poDefn->GetFieldCount(); i++ )
+    {
+        poPoint->SetField( i, poMultiPoint->GetRawFieldRef(i) );
+    }
+
+    poPoint->SetGeometry( poMPGeom->getGeometryRef( iPointOffset++ ) );
+
+    if( iPointOffset >= poMPGeom->getNumGeometries() )
+        ClearPendingMultiPoint();
+
+    return poPoint;
 }
 
 /************************************************************************/
@@ -167,6 +218,7 @@ void S57Reader::SetClassBased( S57ClassRegistrar * poReg )
 void S57Reader::Rewind()
 
 {
+    ClearPendingMultiPoint();
     nNextFEIndex = 0;
 }
 
@@ -254,6 +306,9 @@ void S57Reader::Ingest()
 void S57Reader::SetNextFEIndex( int nNewIndex )
 
 {
+    if( nNextFEIndex != nNewIndex )
+        ClearPendingMultiPoint();
+    
     nNextFEIndex = nNewIndex;
 }
 
@@ -266,15 +321,39 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
 {
     if( !bFileIngested )
         Ingest();
-    
+
+    if( poMultiPoint != NULL )
+    {
+        if( poTarget == poMultiPoint->GetDefnRef() )
+        {
+            return NextPendingMultiPoint();
+        }
+        else
+        {
+            ClearPendingMultiPoint();
+        }
+    }
+        
     while( nNextFEIndex < oFE_Index.GetCount() )
     {
         OGRFeature      *poFeature;
 
         poFeature = AssembleFeature( oFE_Index.GetByIndex(nNextFEIndex++),
                                      poTarget );
+
         if( poFeature != NULL )
+        {
+#ifdef S57_SPLIT_MULTIPOINT            
+            if(poFeature->GetGeometryRef()->getGeometryType() == wkbMultiPoint)
+            {
+                poMultiPoint = poFeature;
+                iPointOffset = 0;
+                return NextPendingMultiPoint();
+            }
+#endif
+
             return poFeature;
+        }
     }
 
     return NULL;
@@ -290,7 +369,7 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
                                         OGRFeatureDefn * poTarget )
 
 {
-    int         nPRIM;
+    int         nPRIM, nOBJL;
     OGRFeatureDefn *poFDefn;
 
 /* -------------------------------------------------------------------- */
@@ -320,10 +399,11 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
 /* -------------------------------------------------------------------- */
 /*      Assign a few standard feature attribues.                        */
 /* -------------------------------------------------------------------- */
+    nOBJL = poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 );
+    poFeature->SetField( "OBJL", nOBJL );
+
     poFeature->SetField( "GRUP",
                          poRecord->GetIntSubfield( "FRID", 0, "GRUP", 0 ));
-    poFeature->SetField( "OBJL",
-                         poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 ));
     poFeature->SetField( "RVER",
                          poRecord->GetIntSubfield( "FRID", 0, "RVER", 0 ));
     poFeature->SetField( "AGEN",
@@ -346,7 +426,10 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
 
     if( nPRIM == PRIM_P )
     {
-        AssemblePointGeometry( poRecord, poFeature );
+        if( nOBJL == 129 ) /* SOUNDG */
+            AssembleSoundingGeometry( poRecord, poFeature );
+        else
+            AssemblePointGeometry( poRecord, poFeature );
     }
     else if( nPRIM == PRIM_L )
     {
@@ -461,6 +544,91 @@ void S57Reader::AssemblePointGeometry( DDFRecord * poFRecord,
     }
 
     poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
+}
+
+/************************************************************************/
+/*                      AssembleSoundingGeometry()                      */
+/************************************************************************/
+
+void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
+                                          OGRFeature * poFeature )
+
+{
+    DDFField    *poFSPT;
+    int         nRCNM, nRCID;
+    DDFRecord   *poSRecord;
+    
+
+/* -------------------------------------------------------------------- */
+/*      Feature the spatial record containing the point.                */
+/* -------------------------------------------------------------------- */
+    poFSPT = poFRecord->FindField( "FSPT" );
+    if( poFSPT == NULL )
+        return;
+
+    CPLAssert( poFSPT->GetRepeatCount() == 1 );
+        
+    nRCID = ParseName( poFSPT, 0, &nRCNM );
+
+    if( nRCNM == RCNM_VI )
+        poSRecord = oVI_Index.FindRecord( nRCID );
+    else
+        poSRecord = oVC_Index.FindRecord( nRCID );
+
+    if( poSRecord == NULL )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Extract vertices.                                               */
+/* -------------------------------------------------------------------- */
+    OGRMultiPoint	*poMP = new OGRMultiPoint();
+    DDFField		*poField;
+    int			nPointCount, i, nBytesLeft;
+    DDFSubfieldDefn    *poXCOO, *poYCOO, *poVE3D;
+    const char	       *pachData;
+
+    poField = poSRecord->FindField( "SG2D" );
+    if( poField == NULL )
+        poField = poSRecord->FindField( "SG3D" );
+    if( poField == NULL )
+        return;
+
+    poXCOO = poField->GetFieldDefn()->FindSubfieldDefn( "XCOO" );
+    poYCOO = poField->GetFieldDefn()->FindSubfieldDefn( "YCOO" );
+    poVE3D = poField->GetFieldDefn()->FindSubfieldDefn( "VE3D" );
+
+    nPointCount = poField->GetRepeatCount();
+
+    pachData = poField->GetData();
+    nBytesLeft = poField->GetDataSize();
+
+    for( i = 0; i < nPointCount; i++ )
+    {
+        double		dfX, dfY, dfZ = 0.0;
+        int		nBytesConsumed;
+
+        dfX = poXCOO->ExtractIntData( pachData, nBytesLeft,
+                                      &nBytesConsumed ) / (double) nCOMF;
+        nBytesLeft -= nBytesConsumed;
+        pachData += nBytesConsumed;
+        
+        dfY = poYCOO->ExtractIntData( pachData, nBytesLeft,
+                                      &nBytesConsumed ) / (double) nCOMF;
+        nBytesLeft -= nBytesConsumed;
+        pachData += nBytesConsumed;
+
+        if( poVE3D != NULL )
+        {
+            dfZ = poYCOO->ExtractIntData( pachData, nBytesLeft,
+                                          &nBytesConsumed ) / (double) nSOMF;
+            nBytesLeft -= nBytesConsumed;
+            pachData += nBytesConsumed;
+        }
+
+        poMP->addGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
+    }
+
+    poFeature->SetGeometryDirectly( poMP );
 }
 
 /************************************************************************/
@@ -943,7 +1111,12 @@ OGRFeatureDefn *S57Reader::GenerateObjectClassDefn( S57ClassRegistrar *poCR,
     }
     else if( EQUAL(papszGeomPrim[0],"Point") )
     {
-        poFDefn->SetGeomType( wkbPoint );
+#ifndef S57_SPLIT_MULTIPOINT        
+        if( EQUAL(poCR->GetAcronym(),"SOUNDG") )
+            poFDefn->SetGeomType( wkbMultiPoint );
+        else
+#endif            
+            poFDefn->SetGeomType( wkbPoint );
     }
     else if( EQUAL(papszGeomPrim[0],"Area") )
     {
