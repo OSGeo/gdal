@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/08/21 21:25:30  warmerda
+ * Rodney Jensen: Addd FindRecordByObjl()
+ *
  * Revision 1.21  2002/10/28 22:30:24  warmerda
  * tab expanded
  *
@@ -141,7 +144,7 @@ char **S57FileCollector( const char * pszDataset );
 
 #define MAX_CLASSES 23000
 #define MAX_ATTRIBUTES 25000
-    
+
 class S57ClassRegistrar
 {
     // Class information:
@@ -164,7 +167,7 @@ class S57ClassRegistrar
     char       *pachAttrClass;
     int        *panAttrIndex; // sorted by acronym.
 
-    int         FindFile( const char *pszTarget, const char *pszDirectory, 
+    int         FindFile( const char *pszTarget, const char *pszDirectory,
                           int bReportErr, FILE **fp );
 
     const char *ReadLine( FILE * fp );
@@ -205,7 +208,7 @@ public:
 #define SAT_INT         'I'
 #define SAT_CODE_STRING 'A'
 #define SAT_FREE_TEXT   'S'
-    
+
     char        GetAttrClass( int i ) { return pachAttrClass[i]; }
     int         FindAttrByAcronym( const char * );
 
@@ -228,9 +231,12 @@ typedef struct
 class DDFRecordIndex
 {
     int         bSorted;
-    
+
     int         nRecordCount;
     int         nRecordMax;
+
+    int         nLastObjlPos;            /* rjensen. added for FindRecordByObjl() */
+    int         nLastObjl;                  /* rjensen. added for FindRecordByObjl() */
 
     DDFIndexedRecord *pasRecords;
 
@@ -244,6 +250,8 @@ public:
     int         RemoveRecord( int nKey );
 
     DDFRecord  *FindRecord( int nKey );
+
+    DDFRecord  *FindRecordByObjl( int nObjl );    /* rjensen. added for FindRecordByObjl() */
 
     void        Clear();
 
@@ -264,7 +272,7 @@ class S57Reader
 
     char                *pszModuleName;
     char                *pszDSNM;
-    
+
     DDFModule           *poModule;
 
     int                 nCOMF;  /* Coordinate multiplier */
@@ -281,7 +289,7 @@ class S57Reader
 
     char                **papszOptions;
     int                 bGenerateLNAM;
-    
+
     int                 bSplitMultiPoint;
     int                 bAddSOUNDGDepth;
     int                 iPointOffset;
@@ -297,7 +305,7 @@ class S57Reader
 
     void                ApplyObjectClassAttributes( DDFRecord *, OGRFeature *);
     void                GenerateLNAMAndRefs( DDFRecord *, OGRFeature * );
-    
+
     void                AssembleSoundingGeometry( DDFRecord *, OGRFeature * );
     void                AssemblePointGeometry( DDFRecord *, OGRFeature * );
     void                AssembleLineGeometry( DDFRecord *, OGRFeature * );
