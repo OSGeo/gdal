@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/01/22 22:36:05  warmerda
+ * expanded tabs
+ *
  * Revision 1.4  2000/12/05 23:07:43  warmerda
  * Check for CE_Failure, not just an error being set.
  *
@@ -100,7 +103,7 @@ OGRDataSource *OGRSFDriverRegistrar::Open( const char * pszName,
                                            OGRSFDriver ** ppoDriver )
 
 {
-    OGRDataSource	*poDS;
+    OGRDataSource       *poDS;
 
     if( ppoDriver != NULL )
         *ppoDriver = NULL;
@@ -134,7 +137,7 @@ OGRDataSource *OGRSFDriverRegistrar::Open( const char * pszName,
 void OGRSFDriverRegistrar::RegisterDriver( OGRSFDriver * poNewDriver )
 
 {
-    int		iDriver;
+    int         iDriver;
 
 /* -------------------------------------------------------------------- */
 /*      It has no effect to register a driver more than once.           */
@@ -143,7 +146,7 @@ void OGRSFDriverRegistrar::RegisterDriver( OGRSFDriver * poNewDriver )
     {
         if( poNewDriver == papoDrivers[iDriver] )
             return;
-    }							
+    }                                                   
 
 /* -------------------------------------------------------------------- */
 /*      Add to the end of the driver list.                              */
