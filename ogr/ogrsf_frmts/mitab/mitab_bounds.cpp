@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_bounds.cpp,v 1.2 2001/01/23 22:06:50 daniel Exp $
+ * $Id: mitab_bounds.cpp,v 1.3 2001/02/14 21:17:33 daniel Exp $
  *
  * Name:     mitab_bounds.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_bounds.cpp,v $
+ * Revision 1.3  2001/02/14 21:17:33  daniel
+ * Check only if first char is "#" for comments in MITABLoadCoordSysTable()
+ *
  * Revision 1.2  2001/01/23 22:06:50  daniel
  * Added MITABCoordSysTableLoaded()
  *
@@ -1132,7 +1135,7 @@ int MITABLoadCoordSysTable(const char *pszFname)
 
             iLine++;
 
-            if (strlen(pszLine) < 10 || EQUAL(pszLine, "#"))
+            if (strlen(pszLine) < 10 || EQUALN(pszLine, "#", 1))
                 continue;  // Skip empty lines/comments
  
             if ((nStatus = MITABCoordSys2TABProjInfo(pszLine, &sProj)) != 0)

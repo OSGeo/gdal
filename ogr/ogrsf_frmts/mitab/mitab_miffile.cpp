@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.23 2001/01/23 21:23:42 daniel Exp $
+ * $Id: mitab_miffile.cpp,v 1.24 2001/02/27 19:59:05 daniel Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,10 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.24  2001/02/27 19:59:05  daniel
+ * Enabled spatial filter in IMapInfoFile::GetNextFeature(), and avoid
+ * unnecessary feature cloning in GetNextFeature() and GetFeature()
+ *
  * Revision 1.23  2001/01/23 21:23:42  daniel
  * Added projection bounds lookup table, called from TABFile::SetProjInfo()
  *
@@ -1134,7 +1138,8 @@ TABFeature *MIFFile::GetFeatureRef(int nFeatureId)
     if ((pszLine = m_poMIFFile->GetLastLine()) != NULL)
     {
         // Delete previous feature... we'll start we a clean one.
-        delete m_poCurFeature;
+        if (m_poCurFeature)
+            delete m_poCurFeature;
         m_poCurFeature = NULL;
 
         if (EQUALN(pszLine,"NONE",4))

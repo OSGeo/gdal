@@ -46,6 +46,7 @@ ToDo - Open Questions:
 
 CHANGES - Current Version:
 --------------------------
+
 - Modified mitab_imapinfofile.cpp so that variable width fields (nWidth=0)
   is translated to 254 characters, instead of 255 so it will actually be
   a legal field width in TAB.  (NFW)
@@ -68,6 +69,22 @@ CHANGES - Current Version:
 - Added support for Swiss Oblique Mercator/Cylindrical. (NFW)
 
 - Expand tabs (NFW)
+
+- Added projection bounds lookup tables, automatically called by
+  TABFile::SetProjInfo() (and SetSpatialRef() by the same way).
+  TABFile::IsBoundsSet() can be used after setting projection to
+  establish if some default bounds were found or not for the projection.
+
+- Fixed IMapInfoFile::CreateFeature(), was leaking feature memory. (NFW)
+
+- Fixed small memory leak in OGRTABDataSource::CreateLayer() (NFW)
+
+- Support SpatialFilter inside IMapInfoFile::GetNextFeature().  
+  TAB files should support spatial filter via their spatial index for 
+  optimal performance.
+
+- Avoid unnecessary cloning of features in IMapInfoFile::GetNextFeature() and
+  IMapInfoFile::GetFeature().
 
 
 Version 1.0.4 - (2000-11-14)
@@ -258,5 +275,5 @@ Version 0.1 - (1999-12-04)
 
 
 ------------
-$Id: HISTORY.TXT,v 1.42 2001/01/22 16:03:59 warmerda Exp $
+$Id: HISTORY.TXT,v 1.46 2001/02/27 19:59:05 daniel Exp $
 ------------

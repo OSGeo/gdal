@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.47 2001/01/23 22:06:50 daniel Exp $
+ * $Id: mitab.h,v 1.48 2001/02/27 19:59:05 daniel Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo MIF Read/Write library
@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.48  2001/02/27 19:59:05  daniel
+ * Enabled spatial filter in IMapInfoFile::GetNextFeature(), and avoid
+ * unnecessary feature cloning in GetNextFeature() and GetFeature()
+ *
  * Revision 1.47  2001/01/23 22:06:50  daniel
  * Added MITABCoordSysTableLoaded()
  *
@@ -95,7 +99,7 @@
 /*---------------------------------------------------------------------
  * Current version of the MITAB library... always useful!
  *--------------------------------------------------------------------*/
-#define MITAB_VERSION "1.0.4 (2001-01-23)"
+#define MITAB_VERSION "1.0.4 (2001-02-27)"
 
 #ifndef PI
 #  define PI 3.14159265358979323846
@@ -135,6 +139,7 @@ class IMapInfoFile : public OGRLayer
   protected: 
     OGRGeometry        *m_poFilterGeom;
     int                 m_nCurFeatureId;
+    TABFeature         *m_poCurFeature;
     GBool               m_bBoundsSet;
 
   public:
@@ -243,7 +248,6 @@ class TABFile: public IMapInfoFile
     OGRFeatureDefn *m_poDefn;
     OGRSpatialReference *m_poSpatialRef;
 
-    TABFeature *m_poCurFeature;
     int         m_nLastFeatureId;
 
 
@@ -497,7 +501,6 @@ class MIFFile: public IMapInfoFile
     OGRFeatureDefn *m_poDefn;
     OGRSpatialReference *m_poSpatialRef;
 
-    TABFeature *m_poCurFeature;
     int         m_nFeatureCount;
     int         m_nWriteFeatureId;
     int         m_nAttribut;

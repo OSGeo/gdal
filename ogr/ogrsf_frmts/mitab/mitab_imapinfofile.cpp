@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_imapinfofile.cpp,v 1.12 2001/02/06 22:03:24 warmerda Exp $
+ * $Id: mitab_imapinfofile.cpp,v 1.13 2001/02/27 19:59:05 daniel Exp $
  *
  * Name:     mitab_imapinfo
  * Project:  MapInfo mid/mif Tab Read/Write library
@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_imapinfofile.cpp,v $
+ * Revision 1.13  2001/02/27 19:59:05  daniel
+ * Enabled spatial filter in IMapInfoFile::GetNextFeature(), and avoid
+ * unnecessary feature cloning in GetNextFeature() and GetFeature()
+ *
  * Revision 1.12  2001/02/06 22:03:24  warmerda
  * fixed memory leak of whole features in CreateFeature
  *
@@ -83,6 +87,7 @@ IMapInfoFile::IMapInfoFile()
 {
     m_poFilterGeom = NULL;    
     m_nCurFeatureId = 0;
+    m_poCurFeature = NULL;
     m_bBoundsSet = FALSE;
 }
 
@@ -98,6 +103,12 @@ IMapInfoFile::~IMapInfoFile()
     {
         delete m_poFilterGeom;
         m_poFilterGeom = NULL;
+    }
+
+    if (m_poCurFeature)
+    {
+        delete m_poCurFeature;
+        m_poCurFeature = NULL;
     }
 }
 
@@ -185,17 +196,24 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
  **********************************************************************/
 OGRFeature *IMapInfoFile::GetNextFeature()
 {
-    OGRFeature *poFeature, *poFeatureRef;
-      
-    poFeatureRef = GetFeatureRef(m_nCurFeatureId+1);
-    if (poFeatureRef)
+    OGRFeature *poFeatureRef;
+    int nFeatureId;
+
+    while( (nFeatureId = GetNextFeatureId(m_nCurFeatureId)) != -1 )
     {
-        poFeature = poFeatureRef->Clone();
-        poFeature->SetFID(poFeatureRef->GetFID());
-        return poFeature;
+        poFeatureRef = GetFeatureRef(nFeatureId);
+        if (poFeatureRef == NULL)
+            return NULL;
+        else if (m_poFilterGeom == NULL ||
+                 m_poFilterGeom->Intersect( poFeatureRef->GetGeometryRef()))
+        {
+            // Avoid cloning feature... return the copy owned by the class
+            CPLAssert(poFeatureRef == m_poCurFeature);
+            m_poCurFeature = NULL;  
+            return poFeatureRef;
+        }
     }
-    else
-      return NULL;
+    return NULL;
 }
 
 /**********************************************************************
@@ -302,16 +320,16 @@ OGRErr     IMapInfoFile::CreateFeature(OGRFeature *poFeature)
  **********************************************************************/
 OGRFeature *IMapInfoFile::GetFeature(long nFeatureId)
 {
-    OGRFeature *poFeature, *poFeatureRef;
+    OGRFeature *poFeatureRef;
 
-    
     poFeatureRef = GetFeatureRef(nFeatureId);
     if (poFeatureRef)
     {
-        poFeature = poFeatureRef->Clone();
-        poFeature->SetFID(poFeatureRef->GetFID());
-        
-        return poFeature;
+        // Avoid cloning feature... return the copy owned by the class
+        CPLAssert(poFeatureRef == m_poCurFeature);
+        m_poCurFeature = NULL;  
+
+        return poFeatureRef;
     }
     else
       return NULL;
