@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/10/24 02:22:56  warmerda
+ * added the -nlt flag
+ *
  * Revision 1.18  2002/10/18 14:32:02  warmerda
  * Added -s_srs to usage option list.
  *
@@ -101,7 +104,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            OGRSpatialReference *poOutputSRS,
                            OGRSpatialReference *poSourceSRS,
                            char **papszSelFields,
-                           int bAppend );
+                           int bAppend, int eGType );
 
 static int bSkipFailures = FALSE;
 static int nGroupTransactions = 200;
@@ -130,6 +133,7 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszSelect;
     char        **papszSelFields = NULL;
     const char  *pszSQLStatement = NULL;
+    int         eGType = -2;
 
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
@@ -172,6 +176,34 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-nln") && iArg < nArgc-1 )
         {
             pszNewLayerName = papszArgv[++iArg];
+        }
+        else if( EQUAL(papszArgv[iArg],"-nlt") && iArg < nArgc-1 )
+        {
+            if( EQUAL(papszArgv[iArg+1],"NONE") )
+                eGType = wkbNone;
+            else if( EQUAL(papszArgv[iArg+1],"GEOMETRY") )
+                eGType = wkbUnknown;
+            else if( EQUAL(papszArgv[iArg+1],"POINT") )
+                eGType = wkbPoint;
+            else if( EQUAL(papszArgv[iArg+1],"LINESTRING") )
+                eGType = wkbLineString;
+            else if( EQUAL(papszArgv[iArg+1],"POLYGON") )
+                eGType = wkbPolygon;
+            else if( EQUAL(papszArgv[iArg+1],"GEOMETRYCOLLECTION") )
+                eGType = wkbGeometryCollection;
+            else if( EQUAL(papszArgv[iArg+1],"MULTIPOINT") )
+                eGType = wkbPoint;
+            else if( EQUAL(papszArgv[iArg+1],"MULTILINESTRING") )
+                eGType = wkbLineString;
+            else if( EQUAL(papszArgv[iArg+1],"MULTIPOLYGON") )
+                eGType = wkbMultiPolygon;
+            else
+            {
+                fprintf( stderr, "-nlt %s: type not recognised.\n", 
+                         papszArgv[iArg+1] );
+                exit( 1 );
+            }
+            iArg++;
         }
         else if( EQUAL(papszArgv[iArg],"-tg") && iArg < nArgc-1 )
         {
@@ -373,7 +405,7 @@ int main( int nArgc, char ** papszArgv )
         {
             if( !TranslateLayer( poDS, poResultSet, poODS, papszLCO, 
                                  pszNewLayerName, bTransform, poOutputSRS,
-                                 poSourceSRS, papszSelFields, bAppend ) )
+                                 poSourceSRS, papszSelFields, bAppend, eGType))
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Terminating translation prematurely after failed\n"
@@ -413,7 +445,7 @@ int main( int nArgc, char ** papszArgv )
             
             if( !TranslateLayer( poDS, poLayer, poODS, papszLCO, 
                                  pszNewLayerName, bTransform, poOutputSRS,
-                                 poSourceSRS, papszSelFields, bAppend ) 
+                                 poSourceSRS, papszSelFields, bAppend, eGType) 
                 && !bSkipFailures )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -456,7 +488,7 @@ static void Usage()
             "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
             "               [[-dsco NAME=VALUE] ...] dst_datasource_name\n"
             "               src_datasource_name\n"
-            "               [-lco NAME=VALUE] [-nln name] layer [layer ...]]\n"
+            "               [-lco NAME=VALUE] [-nln name] [-nlt type] layer [layer ...]]\n"
             "\n"
             " -f format_name: output file format name, possible values are:\n");
     
@@ -476,7 +508,10 @@ static void Usage()
             " -spat xmin ymin xmax ymax: spatial query extents\n"
             " -dsco NAME=VALUE: Dataset creation option (format specific)\n"
             " -lco  NAME=VALUE: Layer creation option (format specific)\n"
-            " -nln name: Assign an alternate name to the new layer\n" );
+            " -nln name: Assign an alternate name to the new layer\n"
+            " -nlt type: Force a geometry type for new layer.  One of NONE, GEOMETRY,\n"
+            "      POINT, LINESTRING, POLYGON, GEOMETRYCOLLECTION, MULTIPOINT, MULTILINE,\n"
+            "      MULTIPOLYGON, or MULTILINESTRING. Default is type of source layer.\n" );
 
     printf(" -a_srs srs_def: Assign an output SRS\n"
            " -t_srs srs_def: Reproject/transform to this SRS on output\n"
@@ -502,7 +537,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            OGRSpatialReference *poOutputSRS,
                            OGRSpatialReference *poSourceSRS,
                            char **papszSelFields,
-                           int bAppend)
+                           int bAppend, int eGType )
 
 {
     OGRLayer    *poDstLayer;
@@ -561,11 +596,15 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 /* -------------------------------------------------------------------- */
     if( !bAppend )
     {
+        if( eGType == -2 )
+            eGType = poFDefn->GetGeomType();
+
         CPLAssert( poDstDS->TestCapability( ODsCCreateLayer ) );
         CPLErrorReset();
 
         poDstLayer = poDstDS->CreateLayer( pszNewLayerName, poOutputSRS,
-                                           poFDefn->GetGeomType(), papszLCO );
+                                           (OGRwkbGeometryType) eGType, 
+                                           papszLCO );
 
         if( poDstLayer == NULL )
             return FALSE;
