@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/01/15 05:35:32  warmerda
+ * allow override of SRID, pass to table constructor
+ *
  * Revision 1.13  2003/01/14 22:15:13  warmerda
  * added pseudo-sql commands DELLAYER and VALLAYER
  *
@@ -421,7 +424,9 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     char szSRSId[100];
 
-    if( poSRS != NULL )
+    if( CSLFetchNameValue( papszOptions, "SRID" ) != NULL )
+	strcpy( szSRSId, CSLFetchNameValue( papszOptions, "SRID" ) );	  
+    else if( poSRS != NULL )
         sprintf( szSRSId, "%d", FetchSRSId( poSRS ) );
     else
         strcpy( szSRSId, "NULL" );
@@ -434,7 +439,7 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
     
     sprintf( szCommand, 
              "CREATE TABLE \"%s\" ( "
-             "OGR_FID NUMBER, "
+             "OGR_FID INTEGER, "
              "ORA_GEOMETRY %s )",
              pszSafeLayerName, SDO_GEOMETRY );
 
@@ -463,7 +468,8 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
     OGROCITableLayer	*poLayer;
 
     poLayer = new OGROCITableLayer( this, pszSafeLayerName, "ORA_GEOMETRY",
-                                    -1, TRUE, TRUE );
+                                    EQUAL(szSRSId,"NULL") ? -1 : atoi(szSRSId),
+				    TRUE, TRUE );
 
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",FALSE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
