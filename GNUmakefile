@@ -39,6 +39,8 @@ clean:	lclean
 lclean:
 	rm -f *.a *.so
 
+distclean:	dist-clean
+
 dist-clean:	clean
 	rm configure GDALmake.opt.in port/cpl_config.h
 
