@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2005/01/15 16:09:37  fwarmerdam
+ * added SetOffset, SetScale methods
+ *
  * Revision 1.49  2005/01/04 21:14:01  fwarmerdam
  * added GDAL_FORCE_CACHING config variable
  *
@@ -523,6 +526,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLErr SetNoDataValue( double );
     virtual CPLErr SetColorTable( GDALColorTable * ); 
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
+    virtual CPLErr SetOffset( double );
+    virtual CPLErr SetScale( double );
 
     virtual int HasArbitraryOverviews();
     virtual int GetOverviewCount();
