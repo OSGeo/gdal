@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/02/08 05:46:33  fwarmerdam
+ * Fixed up ~NITFDataset() image length/COMRAT patching.
+ *
  * Revision 1.30  2005/02/08 05:20:16  fwarmerdam
  * preliminary implementation of JPEG2000 support via Create()
  *
@@ -490,16 +493,30 @@ NITFDataset::~NITFDataset()
 {
     FlushCache();
 
+/* -------------------------------------------------------------------- */
+/*      Close the underlying NITF file.                                 */
+/* -------------------------------------------------------------------- */
+    int nImageStart = -1;
     if( psFile != NULL )
     {
+        nImageStart = psFile->pasSegmentInfo[0].nSegmentStart;
+
         NITFClose( psFile );
         psFile = NULL;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Free datastructures.                                            */
+/* -------------------------------------------------------------------- */
     CPLFree( pszProjection );
 
     GDALDeinitGCPs( nGCPCount, pasGCPList );
     CPLFree( pasGCPList );
 
+/* -------------------------------------------------------------------- */
+/*      If we have a jpeg2000 output file, make sure it gets closed     */
+/*      and flushed out.                                                */
+/* -------------------------------------------------------------------- */
     if( poJ2KDataset != NULL )
     {
         GDALClose( (GDALDatasetH) poJ2KDataset );
@@ -509,6 +526,19 @@ NITFDataset::~NITFDataset()
         for( int i = 0; i < nBands && papoBands != NULL; i++ )
             papoBands[i] = NULL;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Update file length, and COMRAT for JPEG2000 files we are        */
+/*      writing to.                                                     */
+/* -------------------------------------------------------------------- */
+    if( bJP2Writing )
+    {
+        GIntBig nPixelCount = nRasterXSize * ((GIntBig) nRasterYSize) * 
+            nBands;
+
+        NITFPatchImageLength( GetDescription(), nImageStart, nPixelCount );
+    }
+
 }
 
 /************************************************************************/
