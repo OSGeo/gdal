@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/04/16 17:49:29  warmerda
+ * Ensure dfRatio is assigned a value.
+ *
  * Revision 1.8  2001/07/18 04:04:30  warmerda
  * added CPL_CVSID
  *
@@ -259,7 +262,7 @@ GDALDownsampleChunkC32R( int nSrcWidth, int nSrcHeight,
                 }
                 else
                 {
-                    double	dfM, dfDesiredM, dfRatio;
+                    double	dfM, dfDesiredM, dfRatio=1.0;
 
                     pafDstScanline[iDstPixel*2  ] = dfTotalR / nCount;
                     pafDstScanline[iDstPixel*2+1] = dfTotalI / nCount;
