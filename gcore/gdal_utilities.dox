@@ -267,7 +267,7 @@ gdal_translate
 \endif
 
 The gdal_translate utility can be used to convert raster data between 
-different formats, potentially peforming some operations like subsettings, 
+different formats, potentially performing some operations like subsettings, 
 resampling, and rescaling pixels in the process.
 
 <dl>
@@ -444,8 +444,7 @@ coordinate systems that can be passed are anything supported by the
 OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS
 and GCSes (ie. EPSG:4296), PROJ.4 declarations (as above), or the name
 of a .prf file containing well known text.</dd>
-<dt> <b>-order</b> <em>n</em>:</dt><dd> order of polynom used for warping
-(1 to 3) </dd>
+<dt> <b>-order</b> <em>n</em>:</dt><dd> order of polynom used for warping (1 to 3). The default is to figure out the best order.</dd>
 <dt> <b>-et</b> <em>err_threshold</em>:</dt><dd> error threshold for transformation approximation (in pixel units - defaults to 0.125).</dd>
 <dt> <b>-te</b> <em>xmin ymin xmax ymax</em>:</dt></dd> set georeferenced extents of output file to be created.</dd>
 <dt> <b>-tr</b> <em>xres yres</em>:</dt><dd> set output file resolution (in target georeferenced units)</dd>
@@ -458,7 +457,7 @@ pixels and lines</dd>
  data type.</dd>
 <dt> <b>-wt</b> <em>type</em>:</dt><dd> Working pixel data type. The datatype of
  pixels in the source image and destination image buffers.</dd>
-<dt> <b>-rn</b>:</dt><dd> Use nearest neighbour resampling (fastest algorithm, worst
+<dt> <b>-rn</b>:</dt><dd> Use nearest neighbour resampling (default, fastest algorithm, worst
  interpolation quality).</dd>
 <dt> <b>-rb</b>:</dt><dd> Use bilinear resampling.</dd>
 <dt> <b>-rc</b>:</dt><dd> Use cubic resampling.</dd>
@@ -767,8 +766,8 @@ If not specified the aggregate extents of all input files will be
 used.</dd>
 <dt>
 <dt> <b>-v</b>:</dt><dd> Generate verbose output of mosaicing operations as they are done.</dd>
-<dt> <b>-seperate</b>:</dt><dd> 
-Place each input file into a seperate <i>stacked</i> band. 
+<dt> <b>-separate</b>:</dt><dd> 
+Place each input file into a separate <i>stacked</i> band. 
 </dd>
 <dt> <b>-pct</b>:</dt><dd> 
 Grab a pseudocolor table from the first input image, and use it for the output.
