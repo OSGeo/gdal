@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/12/11 20:37:49  warmerda
+ * add option to avoid caching indexed records on multiple readers
+ *
  * Revision 1.9  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -89,6 +92,16 @@ OGRNTFDataSource::OGRNTFDataSource()
     papszOptions = NULL;
 
     poSpatialRef = new OGRSpatialReference( "PROJCS[\"OSGB 1936 / British National Grid\",GEOGCS[\"OSGB 1936\",DATUM[\"OSGB_1936\",SPHEROID[\"Airy 1830\",6377563.396,299.3249646]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",49],PARAMETER[\"central_meridian\",-2],PARAMETER[\"scale_factor\",0.999601272],PARAMETER[\"false_easting\",400000],PARAMETER[\"false_northing\",-100000],UNIT[\"metre\",1]]" );
+
+/* -------------------------------------------------------------------- */
+/*      Allow initialization of options from the environment.           */
+/* -------------------------------------------------------------------- */
+    if( getenv("OGR_NTF_OPTIONS") != NULL )
+    {
+        papszOptions = 
+            CSLTokenizeStringComplex( getenv("OGR_NTF_OPTIONS"), ",",
+                                      FALSE, FALSE );
+    }
 }
 
 /************************************************************************/
@@ -453,6 +466,10 @@ OGRFeature *OGRNTFDataSource::GetNextFeature()
     if( poFeature == NULL )
     {
         papoNTFFileReader[iCurrentReader]->Close();
+        if( GetOption("CACHING") != NULL
+            && EQUAL(GetOption("CACHING"),"OFF") )
+            papoNTFFileReader[iCurrentReader]->DestroyIndex();
+
         iCurrentReader++;
         nCurrentPos = -1;
         nCurrentFID = 1;
