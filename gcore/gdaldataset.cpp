@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2000/06/26 21:44:50  warmerda
+ * make progress func save for overviews
+ *
  * Revision 1.16  2000/06/26 18:47:31  warmerda
  * added GDALBuildOverviews
  *
@@ -802,6 +805,9 @@ CPLErr GDALDataset::IBuildOverviews( const char *pszResampling,
                                      void * pProgressData )
     
 {
+    if( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
+
     if( oOvManager.IsInitialized() )
         return oOvManager.BuildOverviews( NULL, pszResampling, 
                                           nOverviews, panOverviewList,
