@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.36  2004/08/24 20:13:28  warmerda
+ * ensure -nomd works for bands too
+ *
  * Revision 1.35  2004/08/09 14:39:07  warmerda
  * added shared list dump
  *
@@ -212,6 +215,15 @@ int main( int argc, char ** argv )
         fprintf( stderr,
                  "GDALOpen failed - %d\n%s\n",
                  CPLGetLastErrorNo(), CPLGetLastErrorMsg() );
+
+        CSLDestroy( argv );
+    
+        GDALDumpOpenDatasets( stderr );
+
+        GDALDestroyDriverManager();
+
+        CPLDumpSharedList( NULL );
+
         exit( 1 );
     }
     
@@ -448,7 +460,7 @@ int main( int argc, char ** argv )
                     GDALGetRasterScale( hBand, &bSuccess ) );
 
         papszMetadata = GDALGetMetadata( hBand, NULL );
-        if( CSLCount(papszMetadata) > 0 )
+        if( bShowMetadata && CSLCount(papszMetadata) > 0 )
         {
             printf( "Metadata:\n" );
             for( i = 0; papszMetadata[i] != NULL; i++ )
