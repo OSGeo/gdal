@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/08/11 21:10:29  warmerda
+ * Removed extra dumpopendatasets call.
+ *
  * Revision 1.7  2004/08/11 20:11:24  warmerda
  * Added special VRT mode
  *
@@ -543,8 +546,6 @@ int main( int argc, char ** argv )
     {
         if( GDALInitializeWarpedVRT( hDstDS, psWO ) != CE_None )
             exit( 1 );
-
-        GDALDumpOpenDatasets( stderr );
 
         GDALClose( hDstDS );
         GDALClose( hSrcDS );
