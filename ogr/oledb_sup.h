@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/05/21 02:38:32  warmerda
+ * added AnsiToBSTR()
+ *
  * Revision 1.5  1999/04/07 11:54:16  warmerda
  * Added dumping stuff.
  *
@@ -70,7 +73,8 @@ void DumpErrorMsg( const char * );
 HRESULT DumpErrorHResult( HRESULT, const char *, ... );
 
 HRESULT AnsiToUnicode(LPCSTR pszA, LPOLESTR* ppszW);
-HRESULT UnicodeToAnsi(LPOLESTR ppszW, LPCSTR *pszA );
+HRESULT UnicodeToAnsi(LPCOLESTR ppszW, LPSTR *pszA );
+HRESULT AnsiToBSTR( const char *, BSTR * );
 
 /* -------------------------------------------------------------------- */
 /*      Ole helper functions.                                           */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/05/21 02:38:06  warmerda
+ * added AnsiToBSTR()
+ *
  * Revision 1.4  1999/04/07 11:52:44  warmerda
  * Added PrintColumn().
  *
@@ -173,6 +176,29 @@ HRESULT AnsiToUnicode(LPCSTR pszA, LPOLESTR* ppszW)
 
    return NOERROR;
 }
+
+/************************************************************************/
+/*                             AnsiToBSTR()                             */
+/*                                                                      */
+/*      Convert an ANSI string to Unicode, and then to a BSTR.          */
+/************************************************************************/
+
+HRESULT AnsiToBSTR( const char *pszInput, BSTR * ppszOutput )
+
+{
+    HRESULT      hr;
+    LPOLESTR     pszUnicode;
+
+    hr = AnsiToUnicode( pszInput, &pszUnicode );
+    if( FAILED(hr) )
+        return hr;
+
+    *ppszOutput = SysAllocString( pszUnicode );
+    CoTaskMemFree( pszUnicode );
+
+    return ResultFromScode( S_OK );
+}
+
 /************************************************************************/
 /*                       OledbSupGetDataSource()                        */
 /************************************************************************/
