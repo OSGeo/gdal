@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2004/11/17 22:57:21  fwarmerdam
+ * added CPLScanPointer() and CPLPrintPointer()
+ *
  * Revision 1.41  2004/08/16 20:24:07  warmerda
  * added CPLUnlinkTree
  *
@@ -677,6 +680,63 @@ GUIntBig CPLScanUIntBig( const char *pszString, int nMaxLength )
 }
 
 /************************************************************************/
+/*                           CPLScanPointer()                           */
+/************************************************************************/
+
+/**
+ * Extract pointer from string.
+ *
+ * Scan up to a maximum number of characters from a string and convert
+ * the result to a GUIntBig. 
+ *
+ * @param pszString String containing characters to be scanned. It may be
+ * terminated with a null character.
+ *
+ * @param nMaxLength The maximum number of character to consider as part
+ * of the number. Less characters will be considered if a null character
+ * is encountered.
+ * 
+ * @return pointer value, converted from its ASCII form.
+ */
+
+void *CPLScanPointer( const char *pszString, int nMaxLength )
+{
+    void  *pResult;
+    char  szTemp[128];
+
+/* -------------------------------------------------------------------- */
+/*      Compute string into local buffer, and terminate it.             */
+/* -------------------------------------------------------------------- */
+    if( nMaxLength > (int) sizeof(szTemp)-1 )
+        nMaxLength = sizeof(szTemp)-1;
+
+    strncpy( szTemp, pszString, nMaxLength );
+    szTemp[nMaxLength] = '\0';
+
+/* -------------------------------------------------------------------- */
+/*      On MSVC we have to scanf pointer values without the 0x          */
+/*      prefix.                                                         */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(szTemp,"0x",2) )
+    {
+        pResult = NULL;
+
+#if defined(WIN32) && defined(_MSC_VER)
+        sscanf( szTemp+2, "%p", &pResult );
+#else
+        sscanf( szTemp, "%p", &pResult );
+#endif
+    }
+    
+    else
+    {
+        pResult = (void *) CPLScanUIntBig( szTemp, nMaxLength );
+    }
+
+    return pResult;
+}
+
+/************************************************************************/
 /*                             CPLScanDouble()                          */
 /************************************************************************/
 
@@ -912,6 +972,48 @@ int CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
 #else
     sprintf( szTemp, "%*ld", nMaxLen, iValue );
 #endif
+
+    return CPLPrintString( pszBuffer, szTemp, nMaxLen );
+}
+
+/************************************************************************/
+/*                          CPLPrintPointer()                           */
+/************************************************************************/
+
+/**
+ * Print pointer value into specified string buffer. This string will not
+ * be NULL-terminated.
+ *
+ * @param Pointer to the destination string buffer. Should be
+ * large enough to hold the resulting string. Note, that the string will
+ * not be NULL-terminated, so user should do this himself, if needed.
+ *
+ * @param pValue Pointer to ASCII encode.
+ * 
+ * @param nMaxLen Maximum length of the resulting string. If string length
+ * is greater than nMaxLen, it will be truncated.
+ * 
+ * @return Number of characters printed.
+ */
+
+int CPLPrintPointer( char *pszBuffer, void *pValue, int nMaxLen )
+{
+    char    szTemp[64];
+
+    if ( !pszBuffer )
+        return 0;
+
+    if ( nMaxLen >= 64 )
+        nMaxLen = 63;
+
+    sprintf( szTemp, "%p", pValue );
+
+    // On windows, and possibly some other platforms the sprintf("%p")
+    // does not prefix things with 0x so it is hard to know later if the
+    // value is hex encoded.  Fix this up here. 
+
+    if( !EQUALN(szTemp,"0x",2) )
+        sprintf( szTemp, "0x%p", pValue );
 
     return CPLPrintString( pszBuffer, szTemp, nMaxLen );
 }
