@@ -17,13 +17,13 @@ clean:
 	rm -f *.o
 
 %.o:	%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $(XTRA_OPT) $*.c -o $*.o
+	$(CC) -c $(XTRA_OPT) $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
 
 %.o:	%.cpp
-	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $(XTRA_OPT) $*.cpp -o $*.o
+	$(CXX) -c $(XTRA_OPT) $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 
 %.o:	libungif/%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $(XTRA_OPT) libungif/$*.c -o $*.o
+	$(CC) -c $(XTRA_OPT) $(GDAL_INCLUDE) $(CFLAGS) libungif/$*.c -o $*.o
 
 
 all:	$(OBJ)
