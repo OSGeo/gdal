@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/12/13 06:14:17  warmerda
+ * fixed bug with IsRelative function
+ *
  * Revision 1.11  2002/12/13 06:00:54  warmerda
  * added CPLProjectRelativeFilename() and CPLIsFilenameRelative()
  *
@@ -586,7 +589,7 @@ int CPLIsFilenameRelative( const char *pszFilename )
     if( (strlen(pszFilename) > 2 && strncmp(pszFilename+1,":\\",2) == 0)
         || pszFilename[0] == '\\'
         || pszFilename[0] == '/' )
-        return TRUE;
-    else
         return FALSE;
+    else
+        return TRUE;
 }
