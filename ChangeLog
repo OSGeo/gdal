@@ -1,3 +1,7 @@
+2001-06-21  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Added core/gdal_drivertut.dox, documentation on writing drivers.
+
 2001-06-20  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* apps/GNUmakefile: fixed some bugs in generating apps/gdal-config
