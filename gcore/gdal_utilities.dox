@@ -617,9 +617,10 @@ Usage:
 \endhtmlonly
 
 \verbatim
-gdal_merge.py [-o out_filename] [-f out_format] [-v]
-                     [-ps pixelsize_x pixelsize_y]
-                     [-ul_lr ulx uly lrx lry] input_files
+gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*
+                     [-ps pixelsize_x pixelsize_y] [-separate] [-v] [-pct]
+                     [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init value]
+                     input_files
 \endverbatim
 \if man
 \section mdescription DESCRIPTION
@@ -632,16 +633,35 @@ they may be overlapping, and at different resolutions.
 <dl>
 <dt> <b>-o</b> <i>out_filename</i>:</dt><dd> The name of the output file to be
 created.</dd>
-<dt> <b>-f</b> <i>out_format</i>:</dt><dd> Output format, defaults to
-GeoTIFF. </dd>
+<dt> <b>-of</b> <i>format</i>:</dt><dd> 
+Output format, defaults to GeoTIFF (GTiff). 
+</dd>
+<dt> <b>-co</b> <i>NAME=VALUE</i>:</dt><dd> 
+Creation option for output file.  Multiple options can be specified.
+</dd>
 <dt> <b>-ps</b> <i>pixelsize_x pixelsize_y</i>:</dt><dd> Pixel size to be used for the
 output file.  If not specified the resolution of the first input file will
 be used.</dd>
 <dt> <b>-ul_lr</b> <i>ulx uly lrx lry</i>:</dt><dd> The extents of the output file. 
 If not specified the aggregate extents of all input files will be
 used.</dd>
-<dt> <b>-v</b>:</dt><dd> Generate verbose output of mosaicing operations as they are
-done.</dd>
+<dt>
+<dt> <b>-v</b>:</dt><dd> Generate verbose output of mosaicing operations as they are done.</dd>
+<dt> <b>-seperate</b>:</dt><dd> 
+Place each input file into a seperate <i>stacked</i> band. 
+</dd>
+<dt> <b>-pct</b>:</dt><dd> 
+Grab a pseudocolor table from the first input image, and use it for the output.
+Merging pseudocolored images this way assumes that all input files use the same
+color table.
+</dd>
+<dt> <b>-n</b> <i>nodata_value</i>:</dt><dd> 
+Ignore pixels from files being merged in with this pixel value. 
+</dd>
+<dt> <b>-init</b> <i>value</i>:</dt><dd> 
+Pre-initialize the output file with this value.  However, it is not marked
+as the nodata value in the output file. 
+</dd>
 </dl>
 
 NOTE: gdal_merge.py is a Python script, and will only work if GDAL was built
