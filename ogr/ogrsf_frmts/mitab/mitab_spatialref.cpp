@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_spatialref.cpp,v 1.38 2002/12/12 20:12:18 warmerda Exp $
+ * $Id: mitab_spatialref.cpp,v 1.39 2002/12/19 20:46:01 warmerda Exp $
  *
  * Name:     mitab_spatialref.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_spatialref.cpp,v $
+ * Revision 1.39  2002/12/19 20:46:01  warmerda
+ * fixed spelling of Provisional_South_American_Datum_1956
+ *
  * Revision 1.38  2002/12/12 20:12:18  warmerda
  * fixed signs of rotational parameters for TOWGS84 in WKT
  *
@@ -247,7 +250,7 @@ MapInfoDatumInfo asDatumInfoList[] =
 {80, "", 4, -307, -92, 127, 0, 0, 0, 0, 0},
 {81, "", 4, 185, 165, 42, 0, 0, 0, 0, 0},
 {82, "", 4, -288, 175, -376, 0, 0, 0, 0, 0},
-{83, "Provisional_South_Americian_Datum_1956", 7, 11, 72, -101, 0, 0, 0, 0, 0},
+{83, "Provisional_South_American_Datum_1956", 7, 11, 72, -101, 0, 0, 0, 0, 0},
 {84, "", 4, -128, -283, 22, 0, 0, 0, 0, 0},
 {85, "Qornoq", 4, 164, 138, -189, 0, 0, 0, 0, 0},
 {86, "", 4, 94, -948, -1262, 0, 0, 0, 0, 0},
