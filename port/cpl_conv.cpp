@@ -23,6 +23,9 @@
  * cpl_conv.c: Various CPL convenience functions (from cpl_conv.h).
  *
  * $Log$
+ * Revision 1.7  1999/08/27 12:55:39  danmo
+ * Support 0 bytes allocations in CPLRealloc()
+ *
  * Revision 1.6  1999/06/25 04:38:03  warmerda
  * Fixed CPLReadLine() to work for long lines.
  *
@@ -151,6 +154,12 @@ void * CPLRealloc( void * pData, size_t nNewSize )
 
 {
     void	*pReturn;
+
+    if ( nNewSize == 0 )
+    {
+        VSIFree(pData);
+        return NULL;
+    }
 
     if( pData == NULL )
         pReturn = VSIMalloc( nNewSize );
