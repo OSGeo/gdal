@@ -51,6 +51,9 @@
  ***************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/03/19 15:22:02  warmerda
+ * Fixed double free of padfRasterX. Submitted by Scott Reynolds.
+ *
  * Revision 1.4  2002/12/07 17:09:50  warmerda
  * re-enable 3rd order even though unstable
  *
@@ -199,7 +202,7 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
     CPLFree( padfGeoX );
     CPLFree( padfGeoY );
     CPLFree( padfRasterX );
-    CPLFree( padfRasterX );
+    CPLFree( padfRasterY );
     CPLFree( panStatus );
     
     CPLFree( psInfo );
