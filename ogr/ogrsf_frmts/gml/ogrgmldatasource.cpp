@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/01/17 20:40:06  warmerda
+ * added bounding rectangle support and XSISCHEMAURI option
+ *
  * Revision 1.6  2003/01/07 22:30:18  warmerda
  * Added special support for output filename "stdout".
  *
@@ -81,6 +84,24 @@ OGRGMLDataSource::~OGRGMLDataSource()
     {
         VSIFPrintf( fpOutput, "%s", 
                     "</gml:featureCollection>\n" );
+
+        if( nBoundedByLocation != -1 
+            && sBoundingRect.IsInit() 
+            && VSIFSeek( fpOutput, nBoundedByLocation, SEEK_SET ) == 0 )
+        {
+            VSIFPrintf( fpOutput, "  <gml:boundedBy>\n" );
+            VSIFPrintf( fpOutput, "    <gml:Box>\n" );
+            VSIFPrintf( fpOutput, 
+                        "      <gml:coord><gml:X>%.16g</gml:X>"
+                        "<gml:Y>%.16g</gml:Y></gml:coord>\n",
+                        sBoundingRect.MinX, sBoundingRect.MinY );
+            VSIFPrintf( fpOutput, 
+                        "      <gml:coord><gml:X>%.16g</gml:X>"
+                        "<gml:Y>%.16g</gml:Y></gml:coord>\n",
+                        sBoundingRect.MaxX, sBoundingRect.MaxY );
+            VSIFPrintf( fpOutput, "    </gml:Box>\n" );
+            VSIFPrintf( fpOutput, "  </gml:boundedBy>" );
+        }
 
         if( fpOutput != stdout )
             VSIFClose( fpOutput );
@@ -279,7 +300,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
 /************************************************************************/
 
 int OGRGMLDataSource::Create( const char *pszFilename, 
-                              char ** /* papszOptions */ )
+                              char **papszOptions )
 
 {
     if( fpOutput != NULL || poReader != NULL )
@@ -312,9 +333,35 @@ int OGRGMLDataSource::Create( const char *pszFilename,
                 "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" );
 
     VSIFPrintf( fpOutput, "%s", 
-                "<gml:featureCollection\n"
+                "<gml:featureCollection\n" );
+
+/* -------------------------------------------------------------------- */
+/*      Write out schema info if provided in creation options.          */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue( papszOptions, "XSISCHEMAURI" ) != NULL )
+    {
+        VSIFPrintf( fpOutput, 
+              "     xmlns:xsi=\"http://www.w3c.org/2001/XMLSchema-instance\"\n"
+              "     xsi::schemaLocation=\"%s\"\n", 
+                    CSLFetchNameValue( papszOptions, "XSISCHEMAURI" ) );
+    }
+
+    VSIFPrintf( fpOutput, "%s", 
                 "     xmlns:gml=\"http://www.opengis.net/gml\">\n" );
 
+/* -------------------------------------------------------------------- */
+/*      Should we initialize an area to place the boundedBy element?    */
+/*      We will need to seek back to fill it in.                        */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchBoolean( papszOptions, "BOUNDEDBY", TRUE ) )
+    {
+        nBoundedByLocation = VSIFTell( fpOutput );
+
+        if( nBoundedByLocation != -1 )
+            VSIFPrintf( fpOutput, "%280s\n", "" );
+    }
+    else
+        nBoundedByLocation = -1;
 
     return TRUE;
 }
@@ -386,3 +433,14 @@ OGRLayer *OGRGMLDataSource::GetLayer( int iLayer )
     else
         return papoLayers[iLayer];
 }
+
+/************************************************************************/
+/*                            GrowExtents()                             */
+/************************************************************************/
+
+void OGRGMLDataSource::GrowExtents( OGREnvelope *psGeomBounds )
+
+{
+    sBoundingRect.Merge( *psGeomBounds );
+}
+
