@@ -12,13 +12,19 @@ These formats are completely different and NOT compatible. This driver
 intended for HDF4 file formats importing. Earth Observing System (EOS)
 maintains its own HDF modification called HDF-EOS. This modification
 suited for using with remote sensing data and fully compatible with
-underlying HDF. This driver can import HDF4-EOS files.<p>
+underlying HDF. This driver can import HDF4-EOS files. Currently EOS use
+HDF4-EOS for data storing (telemetry form `Terra' and `Aqua' satellites). In
+the future they will switch to HDF5-EOS format, which will be used for
+telemetry from `Aura' satellite.<p>
 
 Hierarchical Data Format is a container for several different datasets.
 For data storing Scientific Datasets (SDS) used most often. SDS is a
 multidimensional array filled by data. In one HDF several different SDS may
 be combined. They may differs in size, number of dimensions and may represents
-data for different regions. So there is two steps for HDF importing:
+data for different regions. It is impossible to read data from HDF file
+without external information. This additional information should be known to
+user and user will explore HDF file and select datsets for reading by
+description. So there is two steps for HDF importing:
 <ul>
 <li> read HDF file, global attributes and list of subdatasets;
 <li> select one of subdatasets by description and import data.
@@ -127,7 +133,12 @@ Band 12 Block=1354x2040 Type=UInt16, ColorInterp=Undefined<br>
 </tt><p>
 
 Or you may use <b>gdal_translate</b> for reading image bands from this
-dataset.
+dataset.<p>
+
+Note, that this driver intended only for importing remote sensing and
+geospatial datasets in form of raster images. If you want explore all data
+contained in HDF file you should use another tools (you can find information
+about different HDF tools using links at end of this page).
 
 <!--h2>Georeference</h2-->
 
@@ -143,7 +154,8 @@ Currently supported:
 
 <h2>Metadata</h2>
 
-All HDF4 attributes transparently translated in GDAL metadata.
+All HDF4 attributes transparently translated in GDAL metadata. In HDF file
+attributes assigned to whole file as well as to particular datasets.
 
 <h2>See Also:</h2>
 
