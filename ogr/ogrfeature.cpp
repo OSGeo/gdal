@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2004/10/12 19:26:33  fwarmerdam
+ * fixed up documentation on passing NULL to DumpReadable()
+ *
  * Revision 1.29  2003/05/28 19:16:42  warmerda
  * fixed up argument names and stuff for docs
  *
@@ -1893,7 +1896,8 @@ void OGR_F_SetFieldRaw( OGRFeatureH hFeat, int iField, OGRField *psValue )
  *
  * This method is the same as the C function OGR_F_DumpReadable().
  *
- * @param fpOut the stream to write to, such as strout.
+ * @param fpOut the stream to write to, such as stdout.  If NULL stdout will
+ * be used. 
  */
 
 void OGRFeature::DumpReadable( FILE * fpOut )
