@@ -143,7 +143,7 @@ ODBCLIB = odbc32.lib
 
 EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(OCI_LIB) $(PG_LIB) $(ODBCLIB) \
 		$(ECWLIB) $(HDF4_LIB) $(FME_LIB) $(JASPER_LIB) $(MRSID_LIB) \
-		$(FITS_LIB) $(JPEG_LIB) $(PNG_LIB)
+		$(FITS_LIB) $(JPEG_LIB) $(PNG_LIB) $(NETCDF_LIB) 
 
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c
