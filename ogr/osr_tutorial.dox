@@ -36,7 +36,7 @@ degrees.  The following code initializes a geographic coordinate system
 on supplying all this information along with a user visible name for the
 geographic coordinate system. 
 
-<pre>
+\code
 	OGRSpatialReference oSRS;
 
 	oSRS.SetGeogCS( "My geographic coordinate system",
@@ -45,7 +45,7 @@ geographic coordinate system.
 			SRS_WGS84_SEMIMAJOR, SRS_WGS84_INVFLATTENING, 
 			"Greenwich", 0.0, 
 			"degree", SRS_UA_DEGREE_CONV );
-</pre>
+\endcode
 
 Of these values, the names "My geographic coordinate system", "My WGS84 
 Spheroid", "Greenwich" and "degree" are not keys, but are used for display
@@ -57,29 +57,29 @@ The OGRSpatialReference has built in support for a few well known coordinate
 systems, which include "NAD27", "NAD83", "WGS72" and "WGS84" which can be
 defined in a single call to SetWellKnownGeogCS(). 
 
-<pre>
+\code
 	oSRS.SetWellKnownGeogCS( "WGS84" );
-</pre>
+\endcode
 
 Furthermore, any geographic coordinate system in the EPSG database can
 be set by it's GCS code number if the EPSG database is available. 
 
-<pre>
+\code
 	oSRS.SetWellKnownGeogCS( "EPSG:4326" );
-</pre>
+\endcode
 
 For serializization, and transmission of projection definitions to other
 packages, the OpenGIS Well Known Text format for coordinate systems is
 used.  An OGRSpatialReference can be initialized from well known text, or
 converted back into well known text.
 
-<pre>
+\code
 	char	*pszWKT = NULL;
 
 	oSRS.SetWellKnownGeogCS( "WGS84" );
 	oSRS.exportToWkt( &pszWKT );
 	printf( "%s\n", pszWKT );
-</pre>
+\endcode
 
 gives something like:
 
@@ -119,13 +119,13 @@ for the projection transform used to translate between linear positions
 defines a UTM zone 17 projected coordinate system with and underlying 
 geographic coordinate system (datum) of WGS84.
 
-<pre>
+\code
 	OGRSpatialReference	oSRS;
 
 	oSRS.SetProjCS( "UTM 17 (WGS84) in northern hemisphere." );
 	oSRS.SetWellKnownGeogCS( "WGS84" );
 	oSRS.SetUTM( 17, TRUE );
-</pre>
+\endcode
 
 Calling SetProjCS() sets a user
 name for the projected coordinate system and establishes that the system
@@ -188,7 +188,7 @@ with GetProjParm().   The code for the Set methods of the various projections
 in ogrspatialreference.cpp can be consulted to find which parameters apply to 
 which projections.  
 
-<pre>
+\code
     const char *pszProjection = poSRS->GetAttrValue("PROJECTION");
 
     if( pszProjection == NULL )
@@ -208,7 +208,7 @@ which projections.
                  poSRS->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
     ...
-</pre>
+\endcode
 
 <h2>Coordinate Transformation</h2>
 
@@ -218,7 +218,7 @@ created using OGRCreateCoordinateTransformation(), and then the
 OGRCoordinateTransformation::Transform() method can be used to convert
 points between coordinate systems.
 
-<pre>
+\code
         OGRSpatialReference oSourceSRS, oTargetSRS;
         OGRCoordinateTransformation *poCT;
         double			x, y;
@@ -238,7 +238,7 @@ points between coordinate systems.
                     atof( papszArgv[i+3] ),
                     atof( papszArgv[i+4] ),
                     x, y );
-</pre>
+\endcode
 
 There are a couple of points at which transformations can
 fail.  First, OGRCreateCoordinateTransformation() may fail, 
@@ -269,7 +269,7 @@ system using the same geographic coordinate system as a projected coordinate
 system, and using that to transform between projected coordinates and
 lat/long. 
 
-<pre>
+\code
     OGRSpatialReference    oUTM, *poLatLong;
     OGRCoordinateTransformation *poTransform;
 
@@ -289,7 +289,7 @@ lat/long.
 
     if( poTransform->Transform( nPoints, x, y, z ) != OGRERR_NONE )
     ...
-</pre>
+\endcode
 
 <h2>Alternate Interfaces</h2>
 
@@ -300,7 +300,7 @@ are missing for some C++ methods.
 
 <h3>C Bindings</h3>
 
-<pre>
+\code
 typedef void *OGRSpatialReferenceH;                               
 typedef void *OGRCoordinateTransformationH;
 
@@ -365,11 +365,11 @@ void OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH );
 
 int OCTTransform( OGRCoordinateTransformationH hCT,
                   int nCount, double *x, double *y, double *z );
-</pre>
+\endcode
 
 <h3>Python Bindings</h3>
 
-<pre>
+\code
 class osr.SpatialReference
     def __init__(self,obj=None):
     def ImportFromWkt( self, wkt ):
@@ -390,18 +390,12 @@ class CoordinateTransformation:
     def __init__(self,source,target):
     def TransformPoint(self, x, y, z = 0):
     def TransformPoints(self, points):
-</pre>
+\endcode
 
 <h2>Internal Implementation</h2>
 
 The OGRCoordinateTransformation service is implemented on top of the
 <a href="http://www.remotesensing.org/proj">PROJ.4</a> library originally
-written by Gerald Evenden of the USGS.  Datum shifting is currently implemented
-using 7 coefficient bursa-wolf equations based on the TOWGS84[] values
-provided with the datum if available.   
-
-In the future it is planned to incorporation optional use of NADCON for
-datum conversion between NAD27 and NAD83, and possibly lookup of datum
-shifting parameters from the EPSG database if no TOWGS84 clause is provided.
+written by Gerald Evenden of the USGS.  
 
 */
