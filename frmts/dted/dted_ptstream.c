@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/11/23 16:43:34  warmerda
+ * rough interpolate implementation
+ *
  * Revision 1.1  2001/11/21 19:51:34  warmerda
  * New
  *
@@ -92,9 +95,9 @@ int DTEDWritePt( void *hStream, double dfLong, double dfLat, double dfElev )
         psInfo = psStream->pasCF[psStream->nLastFile].psInfo;
 
         if( dfLat > psInfo->dfULCornerY
-            || dfLat < psInfo->dfULCornerY - 1.0
+            || dfLat < psInfo->dfULCornerY - 1.0 - psInfo->dfPixelSizeY
             || dfLong < psInfo->dfULCornerX
-            || dfLong > psInfo->dfULCornerX + 1.0 )
+            || dfLong > psInfo->dfULCornerX + 1.0 + psInfo->dfPixelSizeX )
             psStream->nLastFile = -1;
     }
 
@@ -106,9 +109,9 @@ int DTEDWritePt( void *hStream, double dfLong, double dfLat, double dfElev )
         psInfo = psStream->pasCF[i].psInfo;
 
         if( !(dfLat > psInfo->dfULCornerY
-              || dfLat < psInfo->dfULCornerY - 1.0
+              || dfLat < psInfo->dfULCornerY - 1.0 - psInfo->dfPixelSizeY
               || dfLong < psInfo->dfULCornerX
-              || dfLong > psInfo->dfULCornerX + 1.0) )
+              || dfLong > psInfo->dfULCornerX + 1.0 + psInfo->dfPixelSizeX) )
         {
             psStream->nLastFile = i;
         }
@@ -153,7 +156,7 @@ int DTEDWritePt( void *hStream, double dfLong, double dfLat, double dfElev )
         if( pszError != NULL )
             return FALSE;
 
-        psInfo = DTEDOpen( pszFullFilename, "rb", FALSE );
+        psInfo = DTEDOpen( pszFullFilename, "rb+", FALSE );
 
         CPLFree( pszFullFilename );
 
@@ -187,8 +190,9 @@ int DTEDWritePt( void *hStream, double dfLong, double dfLat, double dfElev )
         psStream->pasCF[psStream->nLastFile].papanProfiles[iProfile] = 
             CPLMalloc(sizeof(GInt16) * psInfo->nYSize);
 
-        memset( psStream->pasCF[psStream->nLastFile].papanProfiles[iProfile], 
-                0xff, sizeof(GInt16) * psInfo->nYSize );
+        for( i = 0; i < psInfo->nYSize; i++ )
+            psStream->pasCF[psStream->nLastFile].papanProfiles[iProfile][i] =
+                DTED_NODATA_VALUE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -242,4 +246,140 @@ void DTEDClosePtStream( void *hStream )
     CPLFree( psStream->pasCF );
     CPLFree( psStream->pszPath );
     CPLFree( psStream );
+}
+
+/************************************************************************/
+/*                           DTEDFillPixel()                            */
+/************************************************************************/
+
+void DTEDFillPixel( DTEDInfo *psInfo, GInt16 **papanProfiles, 
+                    GInt16 **papanDstProfiles, int iX, int iY, 
+                    int nPixelSearchDist, float *pafKernel )
+
+{
+    int	nKernelWidth = 2 * nPixelSearchDist + 1;
+    int nXMin, nXMax, nYMin, nYMax;
+    double dfCoefSum = 0.0, dfValueSum = 0.0;
+    int iXS, iYS;
+
+    nXMin = MAX(0,iX - nPixelSearchDist);
+    nXMax = MIN(psInfo->nXSize-1,iX + nPixelSearchDist);
+    nYMin = MAX(0,iY - nPixelSearchDist);
+    nYMax = MIN(psInfo->nYSize-1,iY + nPixelSearchDist);
+
+    for( iXS = nXMin; iXS <= nXMax; iXS++ )
+    {
+        GInt16	*panThisProfile = papanProfiles[iXS];
+
+        if( panThisProfile == NULL )
+            continue;
+
+        for( iYS = nYMin; iYS <= nYMax; iYS++ )
+        {
+            if( panThisProfile[iYS] != DTED_NODATA_VALUE )
+            {
+                int	iXK, iYK;
+                float   fKernelCoef;
+
+                iXK = iXS - iX + nPixelSearchDist;
+                iYK = iYS - iY + nPixelSearchDist;
+
+                fKernelCoef = pafKernel[iXK + iYK * nKernelWidth];
+                dfCoefSum += fKernelCoef;
+                dfValueSum += fKernelCoef * panThisProfile[iYS];
+            }
+        }
+    }
+
+    if( dfCoefSum == 0.0 )
+        papanDstProfiles[iX][iY] = DTED_NODATA_VALUE;
+    else
+        papanDstProfiles[iX][iY] = (int) floor(dfValueSum / dfCoefSum + 0.5);
+}
+
+/************************************************************************/
+/*                          DTEDFillPtStream()                          */
+/*                                                                      */
+/*      Apply simple inverse distance interpolator to all no-data       */
+/*      pixels based on available values within the indicated search    */
+/*      distance (rectangular).                                         */
+/************************************************************************/
+
+void DTEDFillPtStream( void *hStream, int nPixelSearchDist )
+
+{
+    DTEDPtStream *psStream = (DTEDPtStream *) hStream;
+    int	          iFile, nKernelWidth;
+    float         *pafKernel;
+    int           iX, iY;
+
+/* -------------------------------------------------------------------- */
+/*      Setup inverse distance weighting kernel.                        */
+/* -------------------------------------------------------------------- */
+    nKernelWidth = 2 * nPixelSearchDist + 1;
+    pafKernel = (float *) CPLMalloc(nKernelWidth*nKernelWidth*sizeof(float));
+    
+    for( iX = 0; iX < nKernelWidth; iX++ )
+    {
+        for( iY = 0; iY < nKernelWidth; iY++ )
+        {
+            pafKernel[iX + iY * nKernelWidth] = 1.0 / 
+                sqrt( (nPixelSearchDist-iX) * (nPixelSearchDist-iX)
+                      + (nPixelSearchDist-iY) * (nPixelSearchDist-iY) );
+        }
+    }
+        
+/* ==================================================================== */
+/*      Process each cached file.                                       */
+/* ==================================================================== */
+    for( iFile = 0; iFile < psStream->nOpenFiles; iFile++ )
+    {
+        DTEDInfo        *psInfo = psStream->pasCF[iFile].psInfo;
+        GInt16          **papanProfiles = psStream->pasCF[iFile].papanProfiles;
+        GInt16          **papanDstProfiles;
+
+        papanDstProfiles = (GInt16 **)
+            CPLCalloc(sizeof(GInt16*),psInfo->nXSize);
+        
+/* -------------------------------------------------------------------- */
+/*      Setup output image.                                             */
+/* -------------------------------------------------------------------- */
+        for( iX = 0; iX < psInfo->nXSize; iX++ )
+        {
+            papanDstProfiles[iX] = (GInt16 *) 
+                CPLMalloc(sizeof(GInt16) * psInfo->nYSize);
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Interpolate all missing values, and copy over available values. */
+/* -------------------------------------------------------------------- */
+        for( iX = 0; iX < psInfo->nXSize; iX++ )
+        {
+            for( iY = 0; iY < psInfo->nYSize; iY++ )
+            {
+                if( papanProfiles[iX] == NULL
+                    || papanProfiles[iX][iY] == DTED_NODATA_VALUE )
+                {
+                    DTEDFillPixel( psInfo, papanProfiles, papanDstProfiles, 
+                                   iX, iY, nPixelSearchDist, pafKernel );
+                }
+                else
+                {
+                    papanDstProfiles[iX][iY] = papanProfiles[iX][iY];
+                }
+            }
+        }
+/* -------------------------------------------------------------------- */
+/*      Push new values back into cache.                                */
+/* -------------------------------------------------------------------- */
+        for( iX = 0; iX < psInfo->nXSize; iX++ )
+        {
+            CPLFree( papanProfiles[iX] );
+            papanProfiles[iX] = papanDstProfiles[iX];
+        }
+
+        CPLFree( papanDstProfiles );
+    }    
+
+    CPLFree( pafKernel );
 }
