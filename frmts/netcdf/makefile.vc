@@ -1,0 +1,14 @@
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+OBJ	=	netcdfdataset.obj
+EXTRAFLAGS = 	/I$(NETCDF_INC_DIR)
+
+default:	$(OBJ)
+	copy *.obj ..\o
+
+clean:
+	-del *.obj
+
