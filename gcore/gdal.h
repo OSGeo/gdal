@@ -26,6 +26,9 @@
  * that calls the GDAL library.
  * 
  * $Log$
+ * Revision 1.6  1999/01/11 15:36:17  warmerda
+ * Added projections support, and a few other things.
+ *
  * Revision 1.5  1998/12/31 18:53:33  warmerda
  * Add GDALGetDriverByName
  *
@@ -79,6 +82,13 @@ typedef enum {
 } GDALRWFlag;
 
 /* -------------------------------------------------------------------- */
+/*      GDAL Specific error codes.                                      */
+/*                                                                      */
+/*      error codes 100 to 299 reserved for GDAL.                       */
+/* -------------------------------------------------------------------- */
+#define CPLE_WrongFormat	200
+
+/* -------------------------------------------------------------------- */
 /*      Define handle types related to various internal classes.        */
 /* -------------------------------------------------------------------- */
 
@@ -87,6 +97,7 @@ typedef void *GDALDatasetH;
 typedef void *GDALRasterBandH;
 typedef void *GDALGeorefH;
 typedef void *GDALDriverH;
+typedef void *GDALProjDefH;
 
 /* ==================================================================== */
 /*      Registration/driver related.                                    */
@@ -112,6 +123,11 @@ int CPL_DLL	GDALGetRasterYSize( GDALDatasetH );
 int CPL_DLL	GDALGetRasterCount( GDALDatasetH );
 GDALGeorefH CPL_DLL GDALGetRasterGeoref( GDALDatasetH );
 GDALRasterBandH CPL_DLL GDALGetRasterBand( GDALDatasetH, int );
+const char CPL_DLL *GDALGetProjectionRef( GDALDatasetH );
+CPLErr CPL_DLL  GDALSetProjection( GDALDatasetH, const char * );
+CPLErr CPL_DLL  GDALGetGeoTransform( GDALDatasetH, double * );
+CPLErr CPL_DLL  GDALSetGeoTransform( GDALDatasetH, double * );
+void CPL_DLL   *GDALGetInternalHandle( GDALDatasetH, const char * );
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
@@ -131,6 +147,15 @@ CPLErr CPL_DLL GDALReadBlock( GDALRasterBandH, int, int, void * );
 CPLErr CPL_DLL GDALWriteBlock( GDALRasterBandH, int, int, void * );
 
 /* need to add functions related to block cache */
+
+/* ==================================================================== */
+/*      Projections                                                     */
+/* ==================================================================== */
+
+GDALProjDefH CPL_DLL GDALCreateProjDef( const char * );
+CPLErr 	CPL_DLL GDALReprojectToLongLat( GDALProjDefH, double *, double * );
+CPLErr 	CPL_DLL GDALReprojectFromLongLat( GDALProjDefH, double *, double * );
+void    CPL_DLL GDALDestroyProjDef( GDALProjDefH );
 
 CPL_C_END
 

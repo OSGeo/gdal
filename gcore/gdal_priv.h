@@ -26,6 +26,9 @@
  * Note this is a C++ include file, and can't be used by C code.
  * 
  * $Log$
+ * Revision 1.5  1999/01/11 15:36:18  warmerda
+ * Added projections support, and a few other things.
+ *
  * Revision 1.4  1998/12/31 18:54:25  warmerda
  * Implement initial GDALRasterBlock support, and block cache
  *
@@ -78,6 +81,30 @@ class CPL_DLL GDALMajorObject
 };
 
 /************************************************************************/
+/*                             GDALProjDef                              */
+/*                                                                      */
+/*      Encapsulate a Projection definition.                            */
+/************************************************************************/
+
+class CPL_DLL GDALProjDef
+{
+    void	*psPJ;
+
+    char	*pszProjection;
+
+  public:
+    		GDALProjDef( const char * = NULL );
+                ~GDALProjDef();
+
+    CPLErr	ToLongLat( double * padfX, double * padfY );
+    CPLErr	FromLongLat( double * padfX, double * padfY );
+
+    const char  *GetProjectionString( void ) { return pszProjection; }
+    CPLErr	SetProjectionString( const char * );
+};
+
+
+/************************************************************************/
 /*                             GDALDataset                              */
 /*                                                                      */
 /*      Normally this is one file.                                      */
@@ -98,15 +125,25 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     		GDALDataset(void);
     void        RasterInitialize( int, int );
     void        SetBand( int, GDALRasterBand * );
-    
+
   public:
     virtual	~GDALDataset();
-    
+
     int		GetRasterXSize( void );
     int		GetRasterYSize( void );
     int		GetRasterCount( void );
     GDALGeoref  *GetRasterGeoref( void );
     GDALRasterBand *GetRasterBand( int );
+
+    virtual void FlushCache(void);
+
+    virtual const char *GetProjectionRef(void);
+    virtual CPLErr SetProjection( const char * );
+
+    virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr SetGeoTransform( double * );
+
+    virtual void *GetInternalHandle( const char * );
 };
 
 /************************************************************************/
