@@ -17,3 +17,7 @@ clean:
 %.o:	%.cpp
 	$(CXX) -c $(GDAL_INCLUDE) $(CFLAGS) $*.cpp -o $*.o
 
+docs:	
+	(cd ..; $(MAKE) docs)
+
+
