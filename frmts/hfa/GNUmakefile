@@ -43,7 +43,10 @@ img2tif:	img2tif.cpp imggeotiff.c geoextra.c $(HFAOBJ)
 #	This test just dumps the Imagine data dictionary and node trees,
 #	and compares to an existing set.
 test:	hfatest
-	./tst_hfa.sh $(IMG_DATA_DIR)/*.img $(IMG_DATA_DIR)/*/*.img
+	./tst_hfa.sh $(IMG_DATA_DIR)/*.img \
+		     $(IMG_DATA_DIR)/Eprj/*.img \
+		     $(IMG_DATA_DIR)/fire/*.img \
+		     $(IMG_DATA_DIR)/colordo/*.img
 
 test_img2tif:	img2tif
 	./tst_img2tif_1.sh
