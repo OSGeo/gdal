@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.7  2003/05/06 20:17:24  warmerda
+# added DMD and DCAP constants
+#
 # Revision 1.6  2003/03/02 17:18:28  warmerda
 # Added CPL error classes and codes.
 #
@@ -119,3 +122,13 @@ CPLE_NotSupported               = 6
 CPLE_AssertionFailed            = 7
 CPLE_NoWriteAccess              = 8
 CPLE_UserInterrupt              = 9
+
+DMD_LONGNAME = "DMD_LONGNAME"
+DMD_HELPTOPIC = "DMD_HELPTOPIC"
+DMD_MIMETYPE = "DMD_MIMETYPE"
+DMD_EXTENSION = "DMD_EXTENSION"
+DMD_CREATIONOPTIONLIST = "DMD_CREATIONOPTIONLIST" 
+DMD_CREATIONDATATYPES = "DMD_CREATIONDATATYPES" 
+
+DCAP_CREATE =    "DCAP_CREATE"
+DCAP_CREATECOPY = "DCAP_CREATECOPY"
