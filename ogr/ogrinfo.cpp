@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/07/17 15:00:21  danmo
+ * Report layer extent in ReportOnLayer().
+ *
  * Revision 1.9  2001/06/26 20:58:45  warmerda
  * added spatial query option
  *
@@ -269,6 +272,13 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
             OGRGeometryTypeToName( poDefn->GetGeomType() ) );
 
     printf( "Feature Count: %d\n", poLayer->GetFeatureCount() );
+
+    OGREnvelope oExt;
+    if (poLayer->GetExtent(&oExt, TRUE) == OGRERR_NONE)
+    {
+        printf("Extent: (%f, %f) - (%f, %f)\n", 
+               oExt.MinX, oExt.MinY, oExt.MaxX, oExt.MaxY);
+    }
 
     if( bVerbose )
     {
