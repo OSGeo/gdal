@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/01/22 01:36:54  sperkins
+ * 	* frmts/fits/fitsdataset.cpp: Silently truncate when writing
+ * 	values to FITS files outside valid range.
+ *
  * Revision 1.8  2001/12/06 19:25:12  warmerda
  * updated as per submission by Diana Esch-Mosher
  *
@@ -212,6 +216,14 @@ CPLErr FITSRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
   long nElements = nRasterXSize;
   fits_write_img(hFITS, dataset->fitsDataType, offset, nElements,
 		 pImage, &status);
+
+  // Capture special case of non-zero status due to data range
+  // overflow Standard GDAL policy is to silently truncate, which is
+  // what CFITSIO does (in addition to returning 412 as the status).
+  if (status == 412)
+    status = 0;
+
+  // Check for other errors
   if (status) {
     CPLError(CE_Failure, CPLE_AppDefined,
 	     "Error writing image data to FITS file (%d).", status);
@@ -701,4 +713,17 @@ void GDALRegister_FITS() {
     GetGDALDriverManager()->RegisterDriver(poDriver);
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
