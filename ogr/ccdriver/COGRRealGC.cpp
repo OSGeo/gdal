@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/07/30 11:39:14  warmerda
+ * Create SRS from GDAL WKT
+ *
  * Revision 1.1  1999/07/25 02:07:30  warmerda
  * New
  *
@@ -88,8 +91,8 @@ BOOL COGRRealGC::SetupComObjects()
 {
     // Setup GridGeometry COM object.
     {
-        // Assume WGS84.
-        ISpatialReferencePtr pSR=CreateEpsgSRS(4326);
+        ISpatialReferencePtr 
+                    pSR=CreateWKT_SRS( GDALGetProjectionRef(m_hDS) );
 
         CComPtr<IAffineGeoReference> pAffine=CAffineGeoReferenceImpl::Construct(Pos2D(0,0),Vec2D(0.1,0),Vec2D(0,0.1),pSR);
 
