@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/11/14 04:16:30  fwarmerdam
+ * fixup src alpha support
+ *
  * Revision 1.15  2004/10/07 15:50:18  fwarmerdam
  * added preliminary alpha band support
  *
@@ -115,6 +118,11 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 
 CPLErr CPL_DLL 
 GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
+                        int nXOff, int nYOff, int nXSize, int nYSize,
+                        GByte ** /*ppImageData */,
+                        int bMaskIsFloat, void *pValidityMask );
+CPLErr CPL_DLL 
+GDALWarpSrcAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
                         int nXOff, int nYOff, int nXSize, int nYSize,
                         GByte ** /*ppImageData */,
                         int bMaskIsFloat, void *pValidityMask );

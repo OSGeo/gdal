@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2004/11/14 04:16:30  fwarmerdam
+ * fixup src alpha support
+ *
  * Revision 1.22  2004/11/05 18:24:26  fwarmerdam
  * In ComputeSourceWindow() fallback to using grid if any points along edges
  * fail.  Also add a buffer around the imagery read if any points fail.
@@ -403,6 +406,15 @@ int GDALWarpOperation::ValidateOptions()
                       "  SAMPLE_STEPS warp option has illegal value." );
             return FALSE;
         }
+    }
+
+    if( psOptions->nSrcAlphaBand > 0 
+        && psOptions->pfnSrcDensityMaskFunc != NULL )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg, 
+               "GDALWarpOptions.Validate()\n"
+               "  pfnSrcDensityMaskFunc provided as well as a SrcAlphaBand." );
+        return FALSE;
     }
 
     if( psOptions->nDstAlphaBand > 0 
@@ -1366,6 +1378,26 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     
     /* TODO */
 
+/* -------------------------------------------------------------------- */
+/*      Generate a source density mask if we have a source alpha band   */
+/* -------------------------------------------------------------------- */
+    if( eErr == CE_None && psOptions->nSrcAlphaBand > 0 )
+    {
+        CPLAssert( oWK.pafDstDensity == NULL );
+
+        eErr = CreateKernelMask( &oWK, i, "UnifiedSrcDensity" );
+        
+        if( eErr == CE_None )
+            eErr = 
+                GDALWarpSrcAlphaMasker( psOptions, 
+                                        psOptions->nBandCount, 
+                                        psOptions->eWorkingDataType,
+                                        oWK.nSrcXOff, oWK.nSrcYOff, 
+                                        oWK.nSrcXSize, oWK.nSrcYSize,
+                                        oWK.papabySrcImage,
+                                        TRUE, oWK.pafUnifiedSrcDensity );
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Generate a destination density mask if we have a destination    */
 /*      alpha band.                                                     */
