@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2002/07/19 22:05:15  warmerda
+ * added support for NO1 (encrypted) files
+ *
  * Revision 1.5  2002/07/11 13:09:43  warmerda
  * Added support for GCP to Geotransform conversion.
  *
@@ -339,6 +342,11 @@ GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
             && poOpenInfo->pabyHeader[i+1] == 'O' 
             && poOpenInfo->pabyHeader[i+2] == 'S' 
             && poOpenInfo->pabyHeader[i+3] == '/' )
+            break;
+        if( poOpenInfo->pabyHeader[i+0] == 'W' 
+            && poOpenInfo->pabyHeader[i+1] == 'X' 
+            && poOpenInfo->pabyHeader[i+2] == '\\' 
+            && poOpenInfo->pabyHeader[i+3] == '8' )
             break;
     }
 

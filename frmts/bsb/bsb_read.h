@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/07/19 22:05:15  warmerda
+ * added support for NO1 (encrypted) files
+ *
  * Revision 1.3  2002/07/19 20:32:57  warmerda
  * added nVersion to structure.
  *
@@ -62,6 +65,8 @@ typedef struct {
     int         nColorSize;
 
     int		nVersion; /* times 100 */
+
+    int         bNO1;
 } BSBInfo;
 
 BSBInfo CPL_DLL *BSBOpen( const char *pszFilename );

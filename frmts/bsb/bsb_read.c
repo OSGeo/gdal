@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/07/19 22:05:15  warmerda
+ * added support for NO1 (encrypted) files
+ *
  * Revision 1.6  2002/07/19 20:57:32  warmerda
  * nos files are VER/1 but have ver2 style line markers
  *
@@ -61,7 +64,7 @@
 
 CPL_CVSID("$Id$");
 
-static const char *BSBReadHeaderLine( FILE *fp );
+static const char *BSBReadHeaderLine( FILE *fp, int bNO1 );
 
 /************************************************************************
 
@@ -130,6 +133,47 @@ file format and I want to break it open! Chart data for the People!
 
  ************************************************************************/
 
+static int nSavedCharacter = -1000;
+
+/************************************************************************/
+/*                             BSBUngetc()                              */
+/************************************************************************/
+
+void BSBUngetc( int nCharacter )
+
+{
+    CPLAssert( nSavedCharacter == -1000 );
+    nSavedCharacter = nCharacter;
+}
+
+/************************************************************************/
+/*                              BSBGetc()                               */
+/************************************************************************/
+
+int BSBGetc( FILE * fp, int bNO1 )
+
+{
+    int nByte;
+
+    if( nSavedCharacter != -1000 )
+    {
+        nByte = nSavedCharacter;
+        nSavedCharacter = -1000;
+        return nByte;
+    }
+
+    nByte = VSIFGetc( fp );
+    
+    if( bNO1 )
+    {
+        nByte = nByte - 9;
+        if( nByte < 0 )
+            nByte = nByte + 256;
+    }
+
+    return nByte;
+}
+
 
 /************************************************************************/
 /*                              BSBOpen()                               */
@@ -143,7 +187,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
     FILE	*fp;
     char	achTestBlock[1000];
     const char  *pszLine;
-    int         i;
+    int         i, bNO1 = FALSE;
     BSBInfo     *psInfo;
 
 /* -------------------------------------------------------------------- */
@@ -173,14 +217,23 @@ BSBInfo *BSBOpen( const char *pszFilename )
 
     for( i = 0; i < sizeof(achTestBlock) - 4; i++ )
     {
+        /* Test for "BSB/" */
         if( achTestBlock[i+0] == 'B' && achTestBlock[i+1] == 'S' 
             && achTestBlock[i+2] == 'B' && achTestBlock[i+3] == '/' )
             break;
 
+        /* Test for "NOS/" */
         if( achTestBlock[i+0] == 'N' && achTestBlock[i+1] == 'O'
             && achTestBlock[i+2] == 'S' && achTestBlock[i+3] == '/' )
             break;
 
+        /* Test for "NOS/" offset by 9 in ASCII for NO1 files */
+        if( achTestBlock[i+0] == 'W' && achTestBlock[i+1] == 'X'
+            && achTestBlock[i+2] == '\\' && achTestBlock[i+3] == '8' )
+        {
+            bNO1 = TRUE;
+            break;
+        }
     }
 
     if( i == sizeof(achTestBlock) - 4 )
@@ -196,13 +249,14 @@ BSBInfo *BSBOpen( const char *pszFilename )
 /* -------------------------------------------------------------------- */
     psInfo = (BSBInfo *) CPLCalloc(1,sizeof(BSBInfo));
     psInfo->fp = fp;
+    psInfo->bNO1 = bNO1;
 
 /* -------------------------------------------------------------------- */
 /*      Rewind, and read line by line.                                  */
 /* -------------------------------------------------------------------- */
     VSIFSeek( fp, 0, SEEK_SET );
 
-    while( (pszLine = BSBReadHeaderLine(fp)) != NULL )
+    while( (pszLine = BSBReadHeaderLine(fp, bNO1)) != NULL )
     {
         char	**papszTokens = NULL;
         int      nCount = 0;
@@ -294,8 +348,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
 /*      If all has gone well this far, we should be pointing at the     */
 /*      sequence "0x1A 0x00".  Read past to get to start of data.       */
 /* -------------------------------------------------------------------- */
-    if( VSIFGetc( fp ) !=  0x1A
-        || VSIFGetc( fp ) != 0x00 )
+    if( BSBGetc( fp, bNO1 ) !=  0x1A || BSBGetc( fp, bNO1 ) != 0x00 )
     {
         BSBClose( psInfo );
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -306,7 +359,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Read the number of bit size of color numbers.                   */
 /* -------------------------------------------------------------------- */
-    psInfo->nColorSize = VSIFGetc( fp );
+    psInfo->nColorSize = BSBGetc( fp, bNO1 );
     CPLAssert( psInfo->nColorSize > 0 && psInfo->nColorSize < 9 );
 
 /* -------------------------------------------------------------------- */
@@ -332,19 +385,19 @@ BSBInfo *BSBOpen( const char *pszFilename )
 /*      lasts till the next call.                                       */
 /************************************************************************/
 
-const char *BSBReadHeaderLine( FILE * fp )
+static const char *BSBReadHeaderLine( FILE * fp, int bNO1 )
 
 {
     static char	szLine[1000];
     char        chNext;
     int	        nLineLen = 0;
 
-    while( !feof(fp) && nLineLen < sizeof(szLine)-1 )
+    while( !VSIFEof(fp) && nLineLen < sizeof(szLine)-1 )
     {
-        chNext = VSIFGetc( fp );
+        chNext = BSBGetc( fp, bNO1 );
         if( chNext == 0x1A )
         {
-            VSIUngetc( chNext, fp );
+            BSBUngetc( chNext );
             return NULL;
         }
 
@@ -353,9 +406,9 @@ const char *BSBReadHeaderLine( FILE * fp )
         {
             char	chLF;
 
-            chLF = VSIFGetc( fp );
+            chLF = BSBGetc( fp, bNO1 );
             if( chLF != 10 && chLF != 13 )
-                VSIUngetc( chLF, fp );
+                BSBUngetc( chLF );
             chNext = '\n';
         }
 
@@ -366,19 +419,19 @@ const char *BSBReadHeaderLine( FILE * fp )
         {
             char chTest;
 
-            chTest = VSIFGetc(fp);
+            chTest = BSBGetc(fp, bNO1);
             /* Are we done? */
             if( chTest != ' ' )
             {
-                VSIUngetc( chTest, fp );
+                BSBUngetc( chTest );
                 szLine[nLineLen] = '\0';
                 return szLine;
             }
 
             /* eat pending spaces */
             while( chTest == ' ' )
-                chTest = VSIFGetc(fp);
-            VSIUngetc( chTest, fp );
+                chTest = BSBGetc(fp,bNO1);
+            BSBUngetc( chTest );
 
             /* insert comma in data stream */
             szLine[nLineLen++] = ',';
@@ -447,7 +500,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 /*      missing line marker.                                            */
 /* -------------------------------------------------------------------- */
     do {
-        byNext = VSIFGetc( fp );
+        byNext = BSBGetc( fp, psInfo->bNO1 );
         nLineMarker = nLineMarker * 128 + (byNext & 0x7f);
     } while( (byNext & 0x80) != 0 );
 
@@ -470,7 +523,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 /* -------------------------------------------------------------------- */
 /*      Read and expand runs.                                           */
 /* -------------------------------------------------------------------- */
-    while( (byNext = VSIFGetc(fp)) != 0 )
+    while( (byNext = BSBGetc(fp,psInfo->bNO1)) != 0 )
     {
         int	nPixValue;
         int     nRunCount, i;
@@ -481,7 +534,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 
         while( (byNext & 0x80) != 0 )
         {
-            byNext = VSIFGetc( fp );
+            byNext = BSBGetc( fp, psInfo->bNO1 );
             nRunCount = nRunCount * 128 + (byNext & 0x7f);
         }
 
