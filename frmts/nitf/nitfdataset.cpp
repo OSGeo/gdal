@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2005/03/21 16:25:41  fwarmerdam
+ * When writing IGEOLO adjust for center of corner pixels instead of
+ * outer image corners.  Also support generating geotransform from
+ * rotated IGEOLO values.
+ *
  * Revision 1.38  2005/03/17 19:34:31  fwarmerdam
  * Added IC and IMODE metadata.
  *
@@ -602,6 +607,13 @@ NITFDataset::NITFDataset()
     nGCPCount = 0;
     pasGCPList = NULL;
     pszGCPProjection = NULL;
+
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -909,27 +921,47 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Do we have IGEOLO data that can be treated as a geotransform?   */
+/*      Do we have IGEOLO data that can be treated as a                 */
+/*      geotransform?  Our approach should support images in an         */
+/*      affine rotated frame of reference.                              */
 /* -------------------------------------------------------------------- */
-    if( psImage->dfULX == psImage->dfLLX 
-        && psImage->dfURX == psImage->dfLRX
-        && psImage->dfULY == psImage->dfURY
-        && psImage->dfLLY == psImage->dfLRY
-        && psImage->dfULX != psImage->dfLRX
-        && psImage->dfULY != psImage->dfLRY )
-    {
+    int nGCPCount = 4;
+    GDAL_GCP    *psGCPs;
+
+    psGCPs = (GDAL_GCP *) CPLMalloc(sizeof(GDAL_GCP) * nGCPCount);
+    GDALInitGCPs( nGCPCount, psGCPs );
+
+    psGCPs[0].dfGCPPixel	= 0.0;
+    psGCPs[0].dfGCPLine		= 0.0;
+    psGCPs[0].dfGCPX		= psImage->dfULX;
+    psGCPs[0].dfGCPY		= psImage->dfULY;
+
+    psGCPs[1].dfGCPPixel = poDS->nRasterXSize;
+    psGCPs[1].dfGCPLine = 0.0;
+    psGCPs[1].dfGCPX		= psImage->dfURX;
+    psGCPs[1].dfGCPY		= psImage->dfURY;
+
+    psGCPs[2].dfGCPPixel = poDS->nRasterXSize;
+    psGCPs[2].dfGCPLine = poDS->nRasterYSize;
+    psGCPs[2].dfGCPX		= psImage->dfLRX;
+    psGCPs[2].dfGCPY		= psImage->dfLRY;
+
+    psGCPs[3].dfGCPPixel = 0.0;
+    psGCPs[3].dfGCPLine = poDS->nRasterYSize;
+    psGCPs[3].dfGCPX		= psImage->dfLLX;
+    psGCPs[3].dfGCPY		= psImage->dfLLY;
+
+/* -------------------------------------------------------------------- */
+/*      Convert the GCPs into a geotransform definition, if possible.   */
+/* -------------------------------------------------------------------- */
+    if( GDALGCPsToGeoTransform( nGCPCount, psGCPs, 
+                                poDS->adfGeoTransform, TRUE ) )
+    {	
         poDS->bGotGeoTransform = TRUE;
-        poDS->adfGeoTransform[0] = psImage->dfULX;
-        poDS->adfGeoTransform[1] = 
-            (psImage->dfLRX - psImage->dfULX) / poDS->nRasterXSize;
-        poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = psImage->dfULY;
-        poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = 
-            (psImage->dfLRY - psImage->dfULY) / poDS->nRasterYSize;
-    }
+    } 
+
 /* -------------------------------------------------------------------- */
-/*      Otherwise try looking for a .nfw file.                          */
+/*      Try looking for a .nfw file.                                    */
 /* -------------------------------------------------------------------- */
     else if( GDALReadWorldFile( poOpenInfo->pszFilename, "nfw", 
                                 poDS->adfGeoTransform ) )
@@ -991,6 +1023,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
     }
+
 /* -------------------------------------------------------------------- */
 /*      If we have IGEOLO that isn't north up, return it as GCPs.       */
 /* -------------------------------------------------------------------- */
@@ -998,6 +1031,10 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
               || psImage->dfLRX != 0 || psImage->dfLLX != 0)
              && psImage->chICORDS != 'N' )
     {
+        CPLDebug( "GDAL", 
+                  "NITFDataset::Open() wasn't able to derive a first order\n"
+                  "geotransform.  It will be returned as GCPs.");
+
         poDS->nGCPCount = 4;
         poDS->pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),
                                                   poDS->nGCPCount);
@@ -1033,7 +1070,11 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 
         poDS->pszGCPProjection = CPLStrdup( poDS->pszProjection );
     }
-                 
+
+    // This cleans up the original copy of the GCPs used to test if 
+    // this IGEOLO could be used for a geotransform.
+    GDALDeinitGCPs( nGCPCount, psGCPs );
+
 /* -------------------------------------------------------------------- */
 /*      Do we have metadata.                                            */
 /* -------------------------------------------------------------------- */
@@ -1317,23 +1358,27 @@ CPLErr NITFDataset::GetGeoTransform( double *padfGeoTransform )
 CPLErr NITFDataset::SetGeoTransform( double *padfGeoTransform )
 
 {
-    double dfULX, dfULY, dfURX, dfURY, dfLRX, dfLRY, dfLLX, dfLLY;
+    double dfIGEOLOULX, dfIGEOLOULY, dfIGEOLOURX, dfIGEOLOURY, 
+           dfIGEOLOLRX, dfIGEOLOLRY, dfIGEOLOLLX, dfIGEOLOLLY;
 
-    dfULX = padfGeoTransform[0];
-    dfULY = padfGeoTransform[3];
-    dfURX = dfULX + padfGeoTransform[1] * nRasterXSize;
-    dfURY = dfULY + padfGeoTransform[4] * nRasterXSize;
-    dfLRX = dfULX + padfGeoTransform[1] * nRasterXSize
-        + padfGeoTransform[2] * nRasterYSize;
-    dfLRY = dfULY + padfGeoTransform[4] * nRasterXSize
-        + padfGeoTransform[5] * nRasterYSize;
-    dfLLX = dfULX + padfGeoTransform[2] * nRasterYSize;
-    dfLLY = dfULY + padfGeoTransform[5] * nRasterYSize;
+
+    dfIGEOLOULX = padfGeoTransform[0] + 0.5 * padfGeoTransform[1] 
+                                      + 0.5 * padfGeoTransform[2];
+    dfIGEOLOULY = padfGeoTransform[3] + 0.5 * padfGeoTransform[4] 
+                                      + 0.5 * padfGeoTransform[5];
+    dfIGEOLOURX = dfIGEOLOULX + padfGeoTransform[1] * (nRasterXSize - 1);
+    dfIGEOLOURY = dfIGEOLOULY + padfGeoTransform[4] * (nRasterXSize - 1);
+    dfIGEOLOLRX = dfIGEOLOULX + padfGeoTransform[1] * (nRasterXSize - 1)
+                              + padfGeoTransform[2] * (nRasterYSize - 1);
+    dfIGEOLOLRY = dfIGEOLOULY + padfGeoTransform[4] * (nRasterXSize - 1)
+                              + padfGeoTransform[5] * (nRasterYSize - 1);
+    dfIGEOLOLLX = dfIGEOLOULX + padfGeoTransform[2] * (nRasterYSize - 1);
+    dfIGEOLOLLY = dfIGEOLOULY + padfGeoTransform[5] * (nRasterYSize - 1);
 
     if( NITFWriteIGEOLO( psImage, psImage->chICORDS, 
                          psImage->nZone, 
-                         dfULX, dfULY, dfURX, dfURY, 
-                         dfLRX, dfLRY, dfLLX, dfLLY ) )
+                         dfIGEOLOULX, dfIGEOLOULY, dfIGEOLOURX, dfIGEOLOURY, 
+                         dfIGEOLOLRX, dfIGEOLOLRY, dfIGEOLOLLX, dfIGEOLOLLY ) )
         return CE_None;
     else
         return CE_Failure;
