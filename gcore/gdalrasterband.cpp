@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.25  2001/10/18 14:35:22  warmerda
+ * avoid conflicts between parameters and member data
+ *
  * Revision 1.24  2001/10/17 16:20:45  warmerda
  * make histograming work with complex data (r(treat as magnitude)
  *
@@ -1618,14 +1621,8 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
 /*      Figure out the ratio of blocks we will read to get an           */
 /*      approximate value.                                              */
 /* -------------------------------------------------------------------- */
-    int         nBlockXSize, nBlockYSize;
-    int         nBlocksPerRow, nBlocksPerColumn;
     int         nSampleRate;
     double      dfScale;
-
-    GetBlockSize( &nBlockXSize, &nBlockYSize );
-    nBlocksPerRow = (GetXSize() + nBlockXSize - 1) / nBlockXSize;
-    nBlocksPerColumn = (GetYSize() + nBlockYSize - 1) / nBlockYSize;
 
     if( bApproxOK )
         nSampleRate = 

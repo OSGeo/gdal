@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2001/10/18 14:35:22  warmerda
+ * avoid conflicts between parameters and member data
+ *
  * Revision 1.24  2001/10/17 21:47:02  warmerda
  * added SetGCPs() on GDALDataset
  *
@@ -840,7 +843,7 @@ CPLErr GDALSetGCPs( GDALDatasetH hDS, int nGCPCount,
 
 CPLErr GDALDataset::BuildOverviews( const char *pszResampling, 
                                     int nOverviews, int *panOverviewList, 
-                                    int nBands, int *panBandList,
+                                    int nListBands, int *panBandList,
                                     GDALProgressFunc pfnProgress, 
                                     void * pProgressData )
     
@@ -848,11 +851,11 @@ CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
     CPLErr   eErr;
     int      *panAllBandList = NULL;
 
-    if( nBands == 0 )
+    if( nListBands == 0 )
     {
-        nBands = GetRasterCount();
-        panAllBandList = (int *) CPLMalloc(sizeof(int) * nBands);
-        for( int i = 0; i < nBands; i++ )
+        nListBands = GetRasterCount();
+        panAllBandList = (int *) CPLMalloc(sizeof(int) * nListBands);
+        for( int i = 0; i < nListBands; i++ )
             panAllBandList[i] = i+1;
 
         panBandList = panAllBandList;
@@ -862,7 +865,7 @@ CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
         pfnProgress = GDALDummyProgress;
 
     eErr = IBuildOverviews( pszResampling, nOverviews, panOverviewList, 
-                            nBands, panBandList, pfnProgress, pProgressData );
+                            nListBands, panBandList, pfnProgress, pProgressData );
 
     if( panAllBandList != NULL )
         CPLFree( panAllBandList );
@@ -877,13 +880,13 @@ CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
 CPLErr GDALBuildOverviews( GDALDatasetH hDataset,
                            const char *pszResampling, 
                            int nOverviews, int *panOverviewList, 
-                           int nBands, int *panBandList,
+                           int nListBands, int *panBandList,
                            GDALProgressFunc pfnProgress, 
                            void * pProgressData )
 
 {
     return ((GDALDataset *) hDataset)->BuildOverviews(
-        pszResampling, nOverviews, panOverviewList, nBands, panBandList, 
+        pszResampling, nOverviews, panOverviewList, nListBands, panBandList, 
         pfnProgress, pProgressData );
 }
     
@@ -895,7 +898,7 @@ CPLErr GDALBuildOverviews( GDALDatasetH hDataset,
 
 CPLErr GDALDataset::IBuildOverviews( const char *pszResampling, 
                                      int nOverviews, int *panOverviewList, 
-                                     int nBands, int *panBandList,
+                                     int nListBands, int *panBandList,
                                      GDALProgressFunc pfnProgress, 
                                      void * pProgressData )
     
@@ -906,7 +909,7 @@ CPLErr GDALDataset::IBuildOverviews( const char *pszResampling,
     if( oOvManager.IsInitialized() )
         return oOvManager.BuildOverviews( NULL, pszResampling, 
                                           nOverviews, panOverviewList,
-                                          nBands, panBandList,
+                                          nListBands, panBandList,
                                           pfnProgress, pProgressData );
     else
     {
