@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2003/06/03 19:44:00  warmerda
+ * added GDALRPCInfo support
+ *
  * Revision 1.46  2003/05/23 15:52:54  warmerda
  * Cosmetic changes made.
  *
@@ -1614,6 +1617,98 @@ int GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
                 return FALSE;
         }
     }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                          _FetchDblFromMD()                           */
+/************************************************************************/
+
+static int _FetchDblFromMD( char **papszMD, const char *pszKey, 
+                            double *padfTarget, int nCount, double dfDefault )
+
+{
+    char szFullKey[200];
+
+    sprintf( szFullKey, "RPC_%s", pszKey );
+
+    const char *pszValue = CSLFetchNameValue( papszMD, szFullKey );
+    int i;
+    
+    for( i = 0; i < nCount; i++ )
+        padfTarget[i] = dfDefault;
+
+    if( pszKey == NULL )
+        return FALSE;
+
+    if( nCount == 1 )
+    {
+        *padfTarget = atof( pszValue );
+        return TRUE;
+    }
+
+    char **papszTokens = CSLTokenizeStringComplex( pszValue, " ,", 
+                                                   FALSE, FALSE );
+
+    if( CSLCount( papszTokens ) != nCount )
+    {
+        CSLDestroy( papszTokens );
+        return FALSE;
+    }
+
+    for( i = 0; i < nCount; i++ )
+        padfTarget[i] = atof(papszTokens[i]);
+
+    CSLDestroy( papszTokens );
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                         GDALExtractRPCInfo()                         */
+/************************************************************************/
+
+int GDALExtractRPCInfo( char **papszMD, GDALRPCInfo *psRPC )
+
+{
+    if( CSLFetchNameValue( papszMD, "RPC_LINE_NUM_COEFF" ) == NULL )
+        return FALSE;
+
+    if( CSLFetchNameValue( papszMD, "RPC_LINE_NUM_COEFF" ) == NULL 
+        || CSLFetchNameValue( papszMD, "RPC_LINE_DEN_COEFF" ) == NULL 
+        || CSLFetchNameValue( papszMD, "RPC_SAMP_NUM_COEFF" ) == NULL 
+        || CSLFetchNameValue( papszMD, "RPC_SAMP_DEN_COEFF" ) == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                 "Some required RPC metadata missing in GDALExtractRPCInfo()");
+        return FALSE;
+    }
+
+    _FetchDblFromMD( papszMD, "LINE_OFF", &(psRPC->dfLINE_OFF), 1, 0.0 );
+    _FetchDblFromMD( papszMD, "LINE_SCALE", &(psRPC->dfLINE_SCALE), 1, 1.0 );
+    _FetchDblFromMD( papszMD, "SAMP_OFF", &(psRPC->dfSAMP_OFF), 1, 0.0 );
+    _FetchDblFromMD( papszMD, "SAMP_SCALE", &(psRPC->dfSAMP_SCALE), 1, 1.0 );
+    _FetchDblFromMD( papszMD, "HEIGHT_OFF", &(psRPC->dfHEIGHT_OFF), 1, 0.0 );
+    _FetchDblFromMD( papszMD, "HEIGHT_SCALE", &(psRPC->dfHEIGHT_SCALE),1, 1.0);
+    _FetchDblFromMD( papszMD, "LAT_OFF", &(psRPC->dfLAT_OFF), 1, 0.0 );
+    _FetchDblFromMD( papszMD, "LAT_SCALE", &(psRPC->dfLAT_SCALE), 1, 1.0 );
+    _FetchDblFromMD( papszMD, "LONG_OFF", &(psRPC->dfLONG_OFF), 1, 0.0 );
+    _FetchDblFromMD( papszMD, "LONG_SCALE", &(psRPC->dfLONG_SCALE), 1, 1.0 );
+
+    _FetchDblFromMD( papszMD, "LINE_NUM_COEFF", psRPC->adfLINE_NUM_COEFF, 
+                     20, 0.0 );
+    _FetchDblFromMD( papszMD, "LINE_DEN_COEFF", psRPC->adfLINE_DEN_COEFF, 
+                     20, 0.0 );
+    _FetchDblFromMD( papszMD, "SAMP_NUM_COEFF", psRPC->adfSAMP_NUM_COEFF, 
+                     20, 0.0 );
+    _FetchDblFromMD( papszMD, "SAMP_DEN_COEFF", psRPC->adfSAMP_DEN_COEFF, 
+                     20, 0.0 );
+    
+    _FetchDblFromMD( papszMD, "MIN_LONG", &(psRPC->dfMIN_LONG), 1, -180.0 );
+    _FetchDblFromMD( papszMD, "MIN_LAT", &(psRPC->dfMIN_LAT), 1, -90.0 );
+    _FetchDblFromMD( papszMD, "MAX_LONG", &(psRPC->dfMAX_LONG), 1, 180.0 );
+    _FetchDblFromMD( papszMD, "MAX_LAT", &(psRPC->dfMAX_LAT), 1, 90.0 );
 
     return TRUE;
 }

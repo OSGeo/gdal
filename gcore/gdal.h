@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.69  2003/06/03 19:44:00  warmerda
+ * added GDALRPCInfo support
+ *
  * Revision 1.68  2003/05/06 05:20:38  sperkins
  * cleaned up comments
  *
@@ -317,6 +320,8 @@ GDAL_GCP CPL_DLL *GDALDuplicateGCPs( int, const GDAL_GCP * );
 
 int CPL_DLL GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs, 
                                     double *padfGeoTransform, int bApproxOK ); 
+int CPL_DLL GDALInvGeoTransform( double *padfGeoTransformIn, 
+                                 double *padfInvGeoTransformOut );
 
 /* ==================================================================== */
 /*      major objects (dataset, and, driver, drivermanager).            */
@@ -459,6 +464,33 @@ int CPL_DLL GDALReadTabFile( const char *pszBaseFilename,
 const char CPL_DLL *GDALDecToDMS( double, const char *, int );
 
 const char CPL_DLL *GDALVersionInfo( const char * );
+
+typedef struct { 
+    double      dfLINE_OFF;
+    double      dfSAMP_OFF;
+    double      dfLAT_OFF;
+    double      dfLONG_OFF;
+    double      dfHEIGHT_OFF;
+
+    double      dfLINE_SCALE;
+    double      dfSAMP_SCALE;
+    double      dfLAT_SCALE;
+    double      dfLONG_SCALE;
+    double      dfHEIGHT_SCALE;
+
+    double      adfLINE_NUM_COEFF[20];
+    double      adfLINE_DEN_COEFF[20];
+    double      adfSAMP_NUM_COEFF[20];
+    double      adfSAMP_DEN_COEFF[20];
+    
+    double	dfMIN_LONG;
+    double      dfMIN_LAT;
+    double      dfMAX_LONG;
+    double	dfMAX_LAT;
+
+} GDALRPCInfo;
+
+int CPL_DLL GDALExtractRPCInfo( char **, GDALRPCInfo * );
 
 /* ==================================================================== */
 /*      Color tables.                                                   */
