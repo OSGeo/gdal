@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/12/17 20:03:08  warmerda
+ * added rudimentary NITF 1.1 support
+ *
  * Revision 1.4  2002/12/17 05:26:26  warmerda
  * implement basic write support
  *
@@ -89,7 +92,7 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 /* -------------------------------------------------------------------- */
 /*      Check file type.                                                */
 /* -------------------------------------------------------------------- */
-    VSIFRead( szTemp, 1, 4, fp );
+    VSIFRead( szTemp, 1, 9, fp );
 
     if( !EQUALN(szTemp,"NITF",4) && !EQUALN(szTemp,"NSIF",4) )
     {
@@ -102,9 +105,18 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 /* -------------------------------------------------------------------- */
 /*      Get header length.                                              */
 /* -------------------------------------------------------------------- */
-    VSIFSeek( fp, 354, SEEK_SET );
-    VSIFRead( szTemp, 1, 6, fp );
-    szTemp[6] = '\0';
+    if( EQUALN(szTemp,"NITF01.",7) )
+    {
+        VSIFSeek( fp, 394, SEEK_SET );
+        VSIFRead( szTemp, 1, 6, fp );
+        szTemp[6] = '\0';
+    }
+    else
+    {
+        VSIFSeek( fp, 354, SEEK_SET );
+        VSIFRead( szTemp, 1, 6, fp );
+        szTemp[6] = '\0';
+    }
 
     nHeaderLen = atoi(szTemp);
 
@@ -125,14 +137,18 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 /* -------------------------------------------------------------------- */
 /*      Get version.                                                    */
 /* -------------------------------------------------------------------- */
-    NITFGetField( psFile->szVersion, pachHeader, 4, 5 );
+    NITFGetField( psFile->szVersion, pachHeader, 0, 9 );
 
 /* -------------------------------------------------------------------- */
 /*      Collect segment info for the types we care about.               */
 /* -------------------------------------------------------------------- */
     nNextData = nHeaderLen;
 
-    nOffset = NITFCollectSegmentInfo( psFile, 360, "IM", 6, 10, &nNextData );
+    if( EQUALN(psFile->szVersion,"NITF01.",7) )
+        nOffset = 400;
+    else
+        nOffset = 360;
+    nOffset = NITFCollectSegmentInfo( psFile, nOffset,"IM",6, 10, &nNextData );
 
     nOffset = NITFCollectSegmentInfo( psFile, nOffset, "GR", 4, 6, &nNextData);
 
@@ -485,11 +501,12 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
         
         psInfo->nSegmentHeaderSize = 
             atoi(NITFGetField(szTemp,pachSegDef, 
-                              iSegment * nHeaderLenSize, 
+                              iSegment * (nHeaderLenSize+nDataLenSize), 
                               nHeaderLenSize));
         psInfo->nSegmentSize = 
             atoi(NITFGetField(szTemp,pachSegDef, 
-                              iSegment * nDataLenSize + nCount*nHeaderLenSize, 
+                              iSegment * (nHeaderLenSize+nDataLenSize) 
+                              + nHeaderLenSize,
                               nDataLenSize));
 
         psInfo->nSegmentHeaderStart = *pnNextData;

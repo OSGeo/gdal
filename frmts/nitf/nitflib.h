@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/12/17 20:03:08  warmerda
+ * added rudimentary NITF 1.1 support
+ *
  * Revision 1.3  2002/12/17 05:26:26  warmerda
  * implement basic write support
  *
@@ -68,7 +71,7 @@ typedef struct {
 typedef struct {
     FILE    *fp;
 
-    char    szVersion[6];
+    char    szVersion[10];
 
     int     nSegmentCount;
     NITFSegmentInfo *pasSegmentInfo;
@@ -179,6 +182,39 @@ int       CPL_DLL  NITFWriteImageLine( NITFImage *, int nLine, int nBand,
 /* -------------------------------------------------------------------- */
 char *NITFGetField( char *pszTarget, const char *pszSource, 
                     int nStart, int nLength );
+
+/* -------------------------------------------------------------------- */
+/*      location ids from the location table (from MIL-STD-2411-1).     */
+/* -------------------------------------------------------------------- */
+
+typedef enum {
+    LID_HeaderComponent = 128,
+    LID_LocationComponent = 129,
+    LID_CoverageSectionSubheader = 130,
+    LID_CompressionSectionSubsection = 131,
+    LID_CompressionLookupSubsection = 132,
+    LID_CompressionParameterSubsection = 133,
+    LID_ColorGrayscaleSectionSubheader = 134,
+    LID_ColormapSubsection = 135,
+    LID_ImageDescriptionSubheader = 136,
+    LID_ImageDisplayParametersSubheader = 137,
+    LID_MaskSubsection = 138,
+    LID_ColorConverterSubsection = 139,
+    LID_SpatialDataSubsection = 140,
+    LID_AttributeSectionSubheader = 141,
+    LID_AttributeSubsection = 142,
+    LID_ExplicitArealCoverageTable = 143,
+    LID_RelatedImagesSectionSubheader = 144,
+    LID_RelatedImagesSubsection = 145,
+    LID_ReplaceUpdateSectionSubheader = 146,
+    LID_ReplaceUpdateTable = 147,
+    LID_BoundaryRectangleSectionSubheader = 148,
+    LID_BoundaryRectangleTable = 149,
+    LID_FrameFileIndexSectionSubHeader = 150,
+    LID_FrameFileIndexSubsection = 151,
+    LID_ColorTableIndexSectionSubheader = 152,
+    LID_ColorTableIndexRecord = 153
+} NITFLocId;
 
 CPL_C_END
 
