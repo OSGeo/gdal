@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/02/20 22:27:35  warmerda
+ * fixed problem with units on text height for very small values
+ *
  * Revision 1.16  2002/01/21 21:36:16  warmerda
  * removed DGNid
  *
@@ -425,7 +428,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
               sprintf( pszOgrFS+strlen(pszOgrFS), ",s:%.3fg", 
                        psText->height_mult );
           else
-              sprintf( pszOgrFS+strlen(pszOgrFS), ",s:%.12f", 
+              sprintf( pszOgrFS+strlen(pszOgrFS), ",s:%.12fg", 
                        psText->height_mult );
 
           // Add the angle, if not horizontal
