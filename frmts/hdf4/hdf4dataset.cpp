@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.14  2002/11/13 06:00:04  warmerda
+ * avoid use of long long type as it doesn't exist perse on windows
+ *
  * Revision 1.13  2002/11/08 18:29:04  dron
  * Added Create() method.
  *
@@ -614,10 +617,10 @@ char** HDF4Dataset::TranslateHDF4Attributes( int32 iHandle,
 	pbData = (int8 *)CPLMalloc( nValues * sizeof(uint32) );
 	break;
         case DFNT_INT64:
-	pbData = (int8 *)CPLMalloc( nValues * sizeof(long long) );
+	pbData = (int8 *)CPLMalloc( nValues * 8 );
 	break;
         case DFNT_UINT64:
-	pbData = (int8 *)CPLMalloc( nValues * sizeof(unsigned long long) );
+	pbData = (int8 *)CPLMalloc( nValues * 8 );
 	break;
         case DFNT_FLOAT32:
 	pbData = (int8 *)CPLMalloc( nValues * sizeof(float) );
