@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/11/11 20:37:07  warmerda
+ * added write related stuff
+ *
  * Revision 1.13  2002/03/14 21:39:09  warmerda
  * added DGNLoadRawElement, max_element_count
  *
@@ -133,11 +136,18 @@ typedef struct {
 			+ (p)[3]*256 \
                         + (p)[1]*65536*256 \
                         + (p)[0]*65536)
+#define DGN_WRITE_INT32( n, p )	{ GInt32 nMacroWork = (n); \
+                                  (p)[0] = (nMacroWork & 0x00ff0000) >> 16; \
+                                  (p)[1] = (nMacroWork & 0xff000000) >> 24; \
+                                  (p)[2] = (nMacroWork & 0x000000ff) >> 0; \
+                                  (p)[3] = (nMacroWork & 0x0000ff00) >> 8; }
 
 int DGNParseCore( DGNInfo *, DGNElemCore * );
 void DGNTransformPoint( DGNInfo *, DGNPoint * );
 void DGNInverseTransformPoint( DGNInfo *, DGNPoint * );
+void DGNInverseTransformPointToInt( DGNInfo *, DGNPoint *, unsigned char * );
 void DGN2IEEEDouble( void * );
+void IEEE2DGNDouble( void * );
 void DGNBuildIndex( DGNInfo * );
 void DGNRad50ToAscii( unsigned short rad50, char *str );
 void DGNSpatialFilterToUOR( DGNInfo *);
