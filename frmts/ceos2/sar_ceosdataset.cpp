@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/07/16 16:42:32  warmerda
+ * Added radiometric data record type code.
+ *
  * Revision 1.12  2001/01/24 22:35:34  warmerda
  * multi-record scanline support added to ceos2
  *
@@ -113,6 +116,7 @@ static CeosTypeCode_t QuadToTC( int a, int b, int c, int d )
 #define LEADER_RADIOMETRIC_COMPENSATION_TC QuadToTC( 18, 51, 18, 20 )
 #define VOLUME_DESCRIPTOR_RECORD_TC        QuadToTC( 192, 192, 18, 18 )
 #define IMAGE_HEADER_RECORD_TC             QuadToTC( 63, 192, 18, 18 )
+#define LEADER_RADIOMETRIC_DATA_RECORD_TC  QuadToTC( 18, 50, 18, 20 )
 
 #define PROC_PARAM_RECORD_TYPECODE { 18, 120, 18, 20 }
 #define RAD_MET_RECORD_TYPECODE    { 18, 50, 18, 20 }
@@ -570,6 +574,19 @@ void SAR_CEOSDataset::ScanForMetadata()
         if( !EQUALN(szField,"                ", 16 ) )
             SetMetadataItem( "CEOS_DM_FAST_ALPHA_2", szField );
 
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to find calibration information from Radiometric Data       */
+/*      Record.                                                         */
+/* -------------------------------------------------------------------- */
+    record = FindCeosRecord( sVolume.RecordList, 
+                             LEADER_RADIOMETRIC_DATA_RECORD_TC,
+                             __CEOS_LEADER_FILE, -1, -1 );
+
+    if( record != NULL )
+    {
+        /* perhaps add something here eventually */
     }
 }
 
