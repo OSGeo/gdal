@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.12  2005/02/17 03:42:10  kruland
+ * Added macro to define typemaps for optional arguments to functions.
+ * The optional argument must be coded as a pointer in the function decl.
+ * The function must properly interpret a null pointer as default.
+ *
  * Revision 1.11  2005/02/16 17:49:40  kruland
  * Added in typemap for Lists of GCPs.
  * Added 'python' to all the freearg typemaps too.
@@ -180,7 +185,8 @@ ARRAY_TYPEMAP(c_transform, 6);
   /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
   PyString_AsStringAndSize($input, &$2, &$1 );
 }
-%typecheck(SWIG_TYPECHECK_POINTER) (int nLen, char *pBuf)
+%typemap(python,typecheck,precedence=SWIG_TYPECHECK_POINTER)
+        (int nLen, char *pBuf)
 {
   /* %typecheck(SWIG_TYPECHECK_POINTER) (int nLen, char *pBuf) */
   $1 = (PyString_Check($input)) ? 1 : 0;
@@ -361,3 +367,33 @@ ARRAY_TYPEMAP(c_transform, 6);
   PyArg_Parse( $input, "s", &val );
   $1 = &val;
 }
+
+/*
+ * Typemap for an optional POD argument.
+ * Declare function to take POD *.  If the parameter
+ * is NULL then the function needs to define a default
+ * value.
+ */
+%define OPTIONAL_POD(type,argstring)
+%typemap(python,in) (type *optional_##type) ( type val )
+{
+  /* %typemap(python,in) (type *optional_##type) */
+  if ( $input == Py_None ) {
+    $1 = 0;
+  }
+  else if ( PyArg_Parse( $input, #argstring ,&val ) ) {
+    $1 = &val;
+  }
+  else {
+    PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
+    SWIG_fail;
+  }
+}
+%typemap(python,typecheck,precedence=0) (type *optional_##type)
+{
+  /* %typemap(python,typecheck,precedence=0) (type *optionalInt) */
+  $1 = (($input==Py_None) || my_PyCheck_##type($input)) ? 1 : 0;
+}
+%enddef
+
+OPTIONAL_POD(int,i);
