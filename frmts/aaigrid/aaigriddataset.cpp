@@ -28,6 +28,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/10/02 13:10:16  warmerda
+ * Fixed bug in setting of Y offset derived from yllcenter,  was off 1 pixel.
+ * As per GRASS RT bug https://intevation.de/rt/webrt?serial_num=1332.
+ *
  * Revision 1.16  2002/09/04 06:50:36  warmerda
  * avoid static driver pointers
  *
@@ -377,7 +381,8 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[1] = dfCellSize;
         poDS->adfGeoTransform[2] = 0.0;
         poDS->adfGeoTransform[3] = atof( papszTokens[j + 1] )
-            + poDS->nRasterYSize * dfCellSize + 0.5 * dfCellSize;
+            - 0.5 * dfCellSize
+            + poDS->nRasterYSize * dfCellSize ;
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = - dfCellSize;
     }
