@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2001/11/16 21:36:01  warmerda
+ * added the AddBand() method on GDALDataset
+ *
  * Revision 1.37  2001/10/17 21:47:02  warmerda
  * added SetGCPs() on GDALDataset
  *
@@ -338,6 +341,8 @@ int CPL_DLL	GDALGetRasterXSize( GDALDatasetH );
 int CPL_DLL	GDALGetRasterYSize( GDALDatasetH );
 int CPL_DLL	GDALGetRasterCount( GDALDatasetH );
 GDALRasterBandH CPL_DLL GDALGetRasterBand( GDALDatasetH, int );
+
+CPLErr CPL_DLL  GDALAddBand( GDALDataType eType, char **papszOptions );
 
 const char CPL_DLL *GDALGetProjectionRef( GDALDatasetH );
 CPLErr CPL_DLL  GDALSetProjection( GDALDatasetH, const char * );
