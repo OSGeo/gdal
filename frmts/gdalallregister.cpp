@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.12  1999/10/21 13:24:52  warmerda
+ * Added documentation.
+ *
  * Revision 1.11  1999/08/13 03:25:58  warmerda
  * add paux
  *
@@ -86,6 +89,28 @@ static char *szConfiguredFormats = "GDAL_FORMATS";
 /*                                                                      */
 /*      Register all identifiably supported formats.                    */
 /************************************************************************/
+
+/**
+ * Register all known configured GDAL drivers.
+ *
+ * This function will drive any of the following that are configured into
+ * GDAL.  Possible others as well that haven't been updated in this
+ * documentation:
+ *
+ * <ul>
+ * <li> GeoTIFF (GTiff)
+ * <li> Geosoft GXF (GXF)
+ * <li> Erdas Imagine (HFA)
+ * <li> CEOS (CEOS)
+ * <li> ELAS (ELAS)
+ * <li> Arc/Info Binary Grid (AIGrid)
+ * <li> SDTS Raster DEM (SDTS)
+ * <li> OGDI (OGDI)
+ * <li> ESRI Labelled BIL (EHdr)
+ * <li> PCI .aux Labelled Raw Raster (PAux)
+ * </ul>
+ *
+ */
 
 void GDALAllRegister()
 
