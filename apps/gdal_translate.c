@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.21  2001/09/24 15:55:11  warmerda
+ * added cleanup percent done
+ *
  * Revision 1.20  2001/08/23 03:23:46  warmerda
  * added the -not_strict switch
  *
@@ -439,6 +442,8 @@ int main( int argc, char ** argv )
         CPLFree( pabyBlock );
     }
 
+    GDALTermProgress( 1.0000001, NULL, NULL );
+    
     GDALClose( hOutDS );
     GDALClose( hDataset );
     
