@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.97  2004/05/21 18:38:02  warmerda
+ * added GetMinimum, GetMaximum, GetOffset and GetScale methods
+ *
  * Revision 1.96  2004/05/10 17:09:15  warmerda
  * added autoidentifyepsg
  *
@@ -661,6 +664,11 @@ int  GDALGetRasterBandYSize( GDALRasterBandH );
 GDALColorInterp  GDALGetRasterColorInterpretation( GDALRasterBandH );
 GDALColorTableH  GDALGetRasterColorTable( GDALRasterBandH );
 int              GDALSetRasterColorTable( GDALRasterBandH, GDALColorTableH );
+
+double GDALGetRasterMinimum( GDALRasterBandH, int *pbSuccess );
+double GDALGetRasterMaximum( GDALRasterBandH, int *pbSuccess );
+double GDALGetRasterOffset( GDALRasterBandH, int *pbSuccess );
+double GDALGetRasterScale( GDALRasterBandH, int *pbSuccess );
 
 double           GDALGetRasterNoDataValue( GDALRasterBandH, int * );
 int              GDALSetRasterNoDataValue( GDALRasterBandH, double );
