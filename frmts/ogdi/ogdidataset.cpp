@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/06/23 22:40:53  warmerda
+ * added SUBDATASETS support
+ *
  * Revision 1.9  2001/06/20 16:09:40  warmerda
  * utilize capabilities data
  *
@@ -369,10 +372,18 @@ CPLErr OGDIRasterBand::EstablishAccess( int nYOff,
 GDALColorInterp OGDIRasterBand::GetColorInterpretation()
 
 {
-    if( poCT == NULL )
-        return GCI_Undefined;
-    else
+    if( poCT != NULL )
         return GCI_PaletteIndex;
+    else if( nOGDIImageType == 1 && eFamily == Image && nComponent == 0 )
+        return GCI_RedBand;
+    else if( nOGDIImageType == 1 && eFamily == Image && nComponent == 1 )
+        return GCI_GreenBand;
+    else if( nOGDIImageType == 1 && eFamily == Image && nComponent == 2 )
+        return GCI_BlueBand;
+    else if( nOGDIImageType == 1 && eFamily == Image && nComponent == 3 )
+        return GCI_AlphaBand;
+    else
+        return GCI_Undefined;
 }
 
 /************************************************************************/
@@ -402,6 +413,7 @@ OGDIDataset::OGDIDataset()
     nClientID = -1;
     nCurrentBand = -1;
     nCurrentIndex = -1;
+    papszSubDatasets = NULL;
 }
 
 /************************************************************************/
@@ -412,8 +424,21 @@ OGDIDataset::~OGDIDataset()
 
 {
     cln_DestroyClient( nClientID );
+    CSLDestroy( papszSubDatasets );
 }
 
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char **OGDIDataset::GetMetadata( const char *pszDomain )
+
+{
+    if( pszDomain != NULL && EQUAL(pszDomain,"SUBDATASETS") )
+        return papszSubDatasets;
+    else
+        return GDALDataset::GetMetadata( pszDomain );
+}
 
 /************************************************************************/
 /*                                Open()                                */
@@ -528,6 +553,7 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->nClientID = nClientID;
     poDS->poDriver = poOGDIDriver;
+    poDS->SetDescription( poOpenInfo->pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
@@ -590,6 +616,20 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
         else
             OverrideGlobalInfo( poDS, papszImages[0] );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise setup a subdataset list.                              */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        int	i;
+
+        for( i = 0; papszMatrices != NULL && papszMatrices[i] != NULL; i++ )
+            poDS->AddSubDataset( "Matrix", papszMatrices[i] );
+
+        for( i = 0; papszImages != NULL && papszImages[i] != NULL; i++ )
+            poDS->AddSubDataset( "Image", papszImages[i] );
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Establish raster info.                                          */
@@ -607,9 +647,10 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     for( i=0; papszMatrices != NULL && papszMatrices[i] != NULL; i++)
     {
-        poDS->SetBand( poDS->GetRasterCount()+1, 
-                       new OGDIRasterBand( poDS, poDS->GetRasterCount()+1, 
-                                           papszMatrices[i], Matrix, 0 ) );
+        if( CSLFindString( papszImages, papszMatrices[i] ) == -1 )
+            poDS->SetBand( poDS->GetRasterCount()+1, 
+                           new OGDIRasterBand( poDS, poDS->GetRasterCount()+1, 
+                                               papszMatrices[i], Matrix, 0 ) );
     }
 
     for( i=0; papszImages != NULL && papszImages[i] != NULL; i++)
@@ -640,6 +681,27 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                           AddSubDataset()                            */
+/************************************************************************/
+
+void OGDIDataset::AddSubDataset( const char *pszType, const char *pszLayer )
+
+{
+    char	szName[80];
+    int		nCount = CSLCount( papszSubDatasets ) / 2;
+
+    sprintf( szName, "SUBDATASET_%d_NAME", nCount+1 );
+    papszSubDatasets = 
+        CSLSetNameValue( papszSubDatasets, szName, 
+              CPLSPrintf( "%s:%s:%s", GetDescription(), pszLayer, pszType ) );
+
+    sprintf( szName, "SUBDATASET_%d_DESC", nCount+1 );
+    papszSubDatasets = 
+        CSLSetNameValue( papszSubDatasets, szName, 
+              CPLSPrintf( "%s:%s", pszLayer, pszType ) );
+}
+
+/************************************************************************/
 /*                           CollectLayers()                            */
 /************************************************************************/
 
@@ -656,9 +718,13 @@ CPLErr OGDIDataset::CollectLayers( int nClientID,
          iLayer++ )
     {
         if( psLayer->families[Image] )
+        {
             *ppapszImages = CSLAddString( *ppapszImages, psLayer->name );
-        else if( psLayer->families[Matrix] )
-            *ppapszMatrices = CSLAddString( *ppapszImages, psLayer->name );
+        }
+        if( psLayer->families[Matrix] )
+        {
+            *ppapszMatrices = CSLAddString( *ppapszMatrices, psLayer->name );
+        }
     }
 
     return CE_None;

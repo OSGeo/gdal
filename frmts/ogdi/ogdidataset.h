@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/06/23 22:40:53  warmerda
+ * added SUBDATASETS support
+ *
  * Revision 1.8  2001/06/20 16:09:40  warmerda
  * utilize capabilities data
  *
@@ -91,6 +94,9 @@ class CPL_DLL OGDIDataset : public GDALDataset
     static CPLErr CollectLayers(int, char***,char***);
     static CPLErr OverrideGlobalInfo(OGDIDataset*,const char *);
 
+    void        AddSubDataset( const char *pszType, const char *pszLayer );
+    char	**papszSubDatasets;
+
   public:
     		OGDIDataset();
     		~OGDIDataset();
@@ -103,6 +109,8 @@ class CPL_DLL OGDIDataset : public GDALDataset
     virtual CPLErr GetGeoTransform( double * );
 
     virtual void *GetInternalHandle( const char * );
+
+    virtual char **GetMetadata( const char * pszDomain = "" );
 };
 
 /************************************************************************/
