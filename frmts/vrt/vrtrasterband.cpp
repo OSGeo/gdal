@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/03/14 10:31:22  dron
+ * Check return value of the VRTSimpleSource::XMLInit() in VRTRasterBand::XMLInit().
+ *
  * Revision 1.12  2003/03/13 20:39:25  dron
  * Improved block initialization logic in IRasterIO().
  *
@@ -1265,20 +1268,26 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree )
                           "Aver",4)) )
         {
             VRTSource * poSource = new VRTAveragedSource();
-            poSource->XMLInit( psChild );
-            AddSource( poSource );
+            if ( poSource->XMLInit( psChild ) == CE_None )
+                AddSource( poSource );
+            else
+                return CE_Failure;
         }
         else if( EQUAL(psChild->pszValue,"SimpleSource") )
         {
             VRTSource * poSource = new VRTSimpleSource();
-            poSource->XMLInit( psChild );
-            AddSource( poSource );
+            if ( poSource->XMLInit( psChild ) == CE_None )
+                AddSource( poSource );
+            else
+                return CE_Failure;
         }
         else if( EQUAL(psChild->pszValue,"ComplexSource") )
         {
             VRTSource * poSource = new VRTComplexSource();
-            poSource->XMLInit( psChild );
-            AddSource( poSource );
+            if ( poSource->XMLInit( psChild ) == CE_None )
+                AddSource( poSource );
+            else
+                return CE_Failure;
         }
     }
 
