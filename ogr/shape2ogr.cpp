@@ -7,7 +7,7 @@
  * Author:   Frank Warmerdam, warmerda@home.com
  *
  ******************************************************************************
- * Copyright (c) 1999, Frank Warmerdam
+ * Copyright (c) 1999,  Les Technologies SoftMap Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/06/11 19:22:13  warmerda
+ * added OGRFeature and OGRFeatureDefn related translation
+ *
  * Revision 1.2  1999/05/31 20:41:49  warmerda
  * added multipoint support
  *
@@ -37,8 +40,9 @@
  *
  */
 
-#include "ogr_geometry.h"
+#include "ogr_feature.h"
 #include "../frmts/shapelib/shapefil.h"
+#include "cpl_conv.h"
 
 /************************************************************************/
 /*                          SHPReadOGRObject()                          */
@@ -174,3 +178,83 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
 
     return poOGR;
 }
+
+/************************************************************************/
+/*                       SHPReadOGRFeatureDefn()                        */
+/************************************************************************/
+
+OGRFeatureDefn *SHPReadOGRFeatureDefn( SHPHandle hSHP, DBFHandle hDBF )
+
+{
+    OGRFeatureDefn	*poDefn = new OGRFeatureDefn( "Shape" );
+    int			iField;
+
+    for( iField = 0; iField < DBFGetFieldCount( hDBF ); iField++ )
+    {
+        char		szFieldName[20];
+        int		nWidth, nPrecision;
+        DBFFieldType	eDBFType;
+        OGRFieldDefn	oField("", OFTInteger);
+
+        eDBFType = DBFGetFieldInfo( hDBF, iField, szFieldName,
+                                    &nWidth, &nPrecision );
+
+        oField.SetName( szFieldName );
+        oField.SetWidth( nWidth );
+        oField.SetPrecision( nPrecision );
+
+        if( eDBFType == FTString )
+            oField.SetType( OFTString );
+        else if( eDBFType == FTInteger )
+            oField.SetType( OFTInteger );
+        else
+            oField.SetType( OFTReal );
+
+        poDefn->AddFieldDefn( &oField );
+    }
+
+    return poDefn;
+}
+
+/************************************************************************/
+/*                         SHPReadOGRFeature()                          */
+/************************************************************************/
+
+OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
+                               OGRFeatureDefn * poDefn, int iShape )
+
+{
+    OGRFeature	*poFeature = new OGRFeature( poDefn );
+
+    poFeature->SetGeometryDirectly( SHPReadOGRObject( hSHP, iShape ) );
+
+    for( int iField = 0; iField < poDefn->GetFieldCount(); iField++ )
+    {
+        switch( poDefn->GetFieldDefn(iField)->GetType() )
+        {
+          case OFTString:
+            poFeature->SetField( iField,
+                                 DBFReadStringAttribute( hDBF, iShape,
+                                                         iField ) );
+            break;
+
+          case OFTInteger:
+            poFeature->SetField( iField,
+                                 DBFReadIntegerAttribute( hDBF, iShape,
+                                                          iField ) );
+            break;
+
+          case OFTReal:
+            poFeature->SetField( iField,
+                                 DBFReadDoubleAttribute( hDBF, iShape,
+                                                         iField ) );
+            break;
+
+          default:
+            CPLAssert( FALSE );
+        }
+    }
+
+    return( poFeature );
+}
+
