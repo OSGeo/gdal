@@ -11,7 +11,7 @@ INCDIR = D:\bin\include
 PYDIR   =	D:\Software\Python22
 
 # Uncomment the first for an optimized build or the second for a debug build.
-OPTFLAGS=	/nologo /Ox 
+OPTFLAGS=	/nologo /Ox /MD
 #OPTFLAGS=	/nologo /Zi /Fd$(GDAL_ROOT)\gdal.pdb
 
 # Version number embedded in DLL name. 
@@ -71,6 +71,13 @@ JPEG_SUPPORTED = 1
 # Uncomment the following and update to enable NCSA HDF Release 4 support.
 #HDF4_DIR =	D:\warmerda\HDF41r5
 #HDF4_LIB =	/LIBPATH:$(HDF4_DIR)\lib
+
+# Uncomment the following for MrSID support.
+# You will likely require /MD and /EHsc in OPTFLAGS. 
+#
+#MRSID_DIR =	C:\Software\MrSID
+#MRSID_LIB =	/LIBPATH:$(MRSID_DIR)\bin\lib_md \
+#		MrSIDDecode_md.lib lt_xTrans_md.lib advapi32.lib user32.lib
 
 # Uncomment the following and update to enable FME support.
 #FME_DIR =	d:\Software\fme
