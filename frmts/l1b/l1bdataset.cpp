@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.12  2002/08/31 10:01:36  dron
+ * Fixes in function declarations
+ *
  * Revision 1.11  2002/08/29 17:05:22  dron
  * Fixes in channels description.
  *
@@ -227,7 +230,7 @@ class L1BDataset : public GDALDataset
     void	FetchNOAA9TimeCode(TimeCode *psTime, GByte *piRecordHeader, int *iLocInd);
     void	FetchNOAA15TimeCode(TimeCode *psTime, GUInt16 *piRecordHeader, int *intLocInd);
     void	ComputeGeoref();
-    void	L1BDataset::ProcessDatasetHeader();
+    void	ProcessDatasetHeader();
     
   public:
                 L1BDataset();
