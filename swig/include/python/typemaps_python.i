@@ -9,6 +9,12 @@
 
  *
  * $Log$
+ * Revision 1.15  2005/02/18 16:54:35  kruland
+ * Removed IGNORE_RC exception macro.
+ * Removed fragments.i %include because it's not included in swig 1.3.24.
+ * Defined out typemap IF_ERR_RETURN_NONE.
+ * Defined out typemap THROW_OGR_ERROR.  (untested).
+ *
  * Revision 1.14  2005/02/17 21:14:48  kruland
  * Use swig library's typemaps.i and fragments.i to support returning
  * multiple argument values as a tuple.  Use this in all the custom
@@ -64,11 +70,12 @@
 */
 
 /*
- * Include the fragments typemap helpers from swig library
- * These provide facilities to collect output arguments into
- * lists.
+ * The typemaps defined here use the code fragment called:
+ * t_out_helper which is defined in the pytuplehlp.swg file.
+ * The *.swg library files are considered "swig internal".
+ * fortunately, pytuplehlp.swg is included by typemaps.i
+ * which we need anyway.
  */
-%include "fragments.i"
 
 /*
  * Include the typemaps from swig library for returning of
@@ -80,18 +87,50 @@
 
 /*
  *
- * define a simple macro which can be used
- * as part of an %exception clause which cases the
- * method to ignore its return code
+ * Define a simple return code typemap
+ * which checks if the return code from
+ * the wrapped method is non-zero.
+ * If non-zero, return None.  Otherwise,
+ * return normally.  It is particularly
+ * useful when the return value is through
+ * arguments.
+ *
+ * Applied like this:
+ * %apply (IF_ERR_RETURN_NONE) {CPLErr};
+ * CPLErr function_to_wrap( );
+ * %clear (CPLErr);
  */
-%define IGNORE_RC
+%typemap(out) IF_ERR_RETURN_NONE
 {
-  /* IGNORE_RC exception */
-  $action
-  Py_DECREF( $result );
-  $result = 0;
+  /* %typemap(out) IF_ERR_RETURN_NONE */
+  resultobj = 0;
 }
-%enddef 
+%typemap(ret) IF_ERR_RETURN_NONE
+{
+ /* %typemap(ret) IF_ERR_RETURN_NONE */
+  if (result != 0 ) {
+    Py_XDECREF( resultobj );
+    resultobj = Py_None;
+    Py_INCREF(resultobj);
+  }
+}
+
+/*
+ * Another output typemap which will raise an
+ * exception on error.
+ *
+ */
+%typemap(out) THROW_OGR_ERROR
+{
+  /* %typemap(out) THROW_OGR_ERROR */
+  resultobj = 0;
+  if ( result != 0) {
+    char *errMsg = "OGR Error %02d";
+    sprintf(errMsg,result);
+    PyErr_SetString( PyExc_RuntimeError, errMsg );
+    SWIG_fail;
+  }
+}
 
 /*
  * SWIG macro to define fixed length array typemaps
