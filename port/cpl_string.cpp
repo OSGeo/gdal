@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.35  2003/07/17 10:15:40  dron
+ * CSLTestBoolean() added.
+ *
  * Revision 1.34  2003/05/28 19:22:38  warmerda
  * fixed docs
  *
@@ -832,6 +835,32 @@ char **CSLAppendPrintf(char **papszStrList, char *fmt, ...)
     return CSLAddString(papszStrList, gszCPLSPrintfBuffer[nCurrent]);
 }
 
+/************************************************************************/
+/*                         CSLTestBoolean()                             */
+/************************************************************************/
+
+/**
+ * Test what boolean value contained in the string.
+ *
+ * If pszValue is "NO", "FALSE", "OFF" or "0" will be returned FALSE.
+ * Otherwise, TRUE will be returned.
+ *
+ * @param pszValue the string should be tested.
+ * 
+ * @return TRUE or FALSE.
+ */
+
+int CSLTestBoolean( const char *pszValue )
+{
+    if( EQUAL(pszValue,"NO")
+        || EQUAL(pszValue,"FALSE") 
+        || EQUAL(pszValue,"OFF") 
+        || EQUAL(pszValue,"0") )
+        return FALSE;
+    else
+        return TRUE;
+}
+
 /**********************************************************************
  *                       CSLFetchBoolean()
  *
@@ -862,13 +891,8 @@ int CSLFetchBoolean( char **papszStrList, const char *pszKey, int bDefault )
     pszValue = CSLFetchNameValue(papszStrList, pszKey );
     if( pszValue == NULL )
         return bDefault;
-    else if( EQUAL(pszValue,"NO") 
-             || EQUAL(pszValue,"FALSE") 
-             || EQUAL(pszValue,"OFF") 
-             || EQUAL(pszValue,"0") )
-        return FALSE;
-    else
-        return TRUE;
+    else 
+        return CSLTestBoolean( pszValue );
 }
 
 /**********************************************************************
