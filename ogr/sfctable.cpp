@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/08/07 21:38:10  warmerda
+ * avoid local new/delete on OGRFeatureDefn
+ *
  * Revision 1.14  2001/11/20 16:41:43  warmerda
  * added extra Release() in ~SFCTable() to avoid leak
  *
@@ -118,7 +121,7 @@ SFCTable::~SFCTable()
     CPLDebug( "OGR_SFC", "~SFCTable()" );
 
     if( poDefn != NULL )
-        delete poDefn;
+        OGRFeatureDefn::DestroyFeatureDefn( poDefn );
 
     CPLFree( panColOrdinal );
     CPLFree( pszTableName );
@@ -238,7 +241,7 @@ int SFCTable::ReadSchemaInfo( CDataSource * poDS, CSession *poSession )
 /*      Prepare a definition for the columns of this table as an        */
 /*      OGRFeatureDefn.                                                 */
 /* -------------------------------------------------------------------- */
-    poDefn = new OGRFeatureDefn( GetTableName() );
+    poDefn = OGRFeatureDefn::CreateFeatureDefn( GetTableName() );
     poDefn->SetGeomType( (OGRwkbGeometryType) GetGeometryType() );
     panColOrdinal = (ULONG *) CPLMalloc(sizeof(ULONG) * GetColumnCount());
 
@@ -409,7 +412,7 @@ int SFCTable::ReadOGISColumnInfo( CSession * poSession,
             if( poSRS != NULL )
             {
                 if( poSRS->Dereference() == 0 )
-                    delete poSRS;
+                    OSRDestroySpatialReference( poSRS );
             }
 
             pszSRS_WKT = SFCDataSource::GetWKTFromSRSId( poSession, nSRS_ID );
