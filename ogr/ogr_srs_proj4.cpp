@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2003/06/27 17:54:12  warmerda
+ * allow k_0 in place of k parsing proj4, bug 355
+ *
  * Revision 1.42  2003/06/21 23:25:03  warmerda
  * added +towgs84 support in importFromProj4()
  *
@@ -232,6 +235,11 @@ static double OSR_GDV( char **papszNV, const char * pszField,
     const char * pszValue;
 
     pszValue = CSLFetchNameValue( papszNV, pszField );
+
+    // special hack to use k_0 if available.
+    if( pszValue == NULL && EQUAL(pszField,"k") )
+        pszValue = CSLFetchNameValue( papszNV, "k_0" );
+
     if( pszValue == NULL )
         return dfDefaultValue;
     else
