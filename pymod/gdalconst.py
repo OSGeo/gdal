@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.10  2004/11/01 17:25:28  fwarmerdam
+# added CPL Escape functions
+#
 # Revision 1.9  2004/08/11 19:04:35  warmerda
 # added warping related support
 #
@@ -146,3 +149,9 @@ DMD_CREATIONDATATYPES = "DMD_CREATIONDATATYPES"
 
 DCAP_CREATE =    "DCAP_CREATE"
 DCAP_CREATECOPY = "DCAP_CREATECOPY"
+
+CPLES_BackslashQuotable = 0
+CPLES_XML = 1
+CPLES_URL = 2
+CPLES_SQL = 3
+CPLES_CSV = 4

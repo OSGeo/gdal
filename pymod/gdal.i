@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.104  2004/11/01 17:25:28  fwarmerdam
+ * added CPL Escape functions
+ *
  * Revision 1.103  2004/10/04 17:26:01  fwarmerdam
  * Added hack for SWIGTYPENULL for SWIG 1.3.
  *
@@ -590,6 +593,9 @@ void         CPLPushFinderLocation( const char * );
 void         CPLPopFinderLocation();
 void         CPLFinderClean();
 const char  *CPLFindFile(const char *pszClass, const char *pszBasename);
+
+char  *CPLEscapeString( const char *pszString, int nLength, int nScheme );
+char *CPLUnescapeString( const char *pszString, int *pnLength, int nScheme );
 
 /* -------------------------------------------------------------------- */
 /*      General GDAL stuff.                                             */

@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.68  2004/11/01 17:25:28  fwarmerdam
+# added CPL Escape functions
+#
 # Revision 1.67  2004/08/17 19:18:47  gwalter
 # Fixed y/z mixup in GCP serialize function
 # for the with_Z=1 case.
@@ -219,6 +222,16 @@ def ParseXMLString( text ):
     
 def SerializeXMLTree( tree ):
     return _gdal.CPLSerializeXMLTree( tree )
+
+
+def EscapeString( in_string, length = -1, scheme = CPLES_BackslashQuotable ):
+    return _gdal.CPLEscapeString( in_string, length, scheme )
+    
+def UnescapeString( in_string, scheme = CPLES_BackslashQuotable ):
+    ret_len = _gdal.ptrcreate('int',0,1)
+    result = _gdal.CPLUnescapeString( in_string, ret_len, scheme)
+    _gdal.ptrfree( ret_len )
+    return result
     
 ###############################################################################
 # GDAL Services not related to objects.
