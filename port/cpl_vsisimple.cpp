@@ -30,6 +30,9 @@
  *    instance validation of access strings to fopen().
  * 
  * $Log$
+ * Revision 1.3  1998/12/14 04:50:33  warmerda
+ * Avoid C++ comments so it will be C compilable as well.
+ *
  * Revision 1.2  1998/12/04 21:42:57  danmo
  * Added #ifndef WIN32 arounf #include <unistd.h>
  *
@@ -40,7 +43,8 @@
 
 #include "cpl_vsi.h"
 
-// for stat()
+/* for stat() */
+
 #ifndef WIN32
 #  include <unistd.h>
 #endif
