@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/08/07 21:37:47  warmerda
+ * added indirect OGRFeaturedefn constructor/destructor
+ *
  * Revision 1.21  2001/11/01 16:54:16  warmerda
  * added DestroyFeature
  *
@@ -281,6 +284,9 @@ class CPL_DLL OGRFeatureDefn
     int         Reference() { return ++nRefCount; }
     int         Dereference() { return --nRefCount; }
     int         GetReferenceCount() { return nRefCount; }
+
+    static OGRFeatureDefn  *CreateFeatureDefn( const char *pszName = NULL );
+    static void         DestroyFeatureDefn( OGRFeatureDefn * );
 };
 
 /************************************************************************/
