@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.81  2002/12/19 15:08:29  dron
+ * SetGCPs() function added.
+ *
  * Revision 1.80  2002/12/17 18:24:03  warmerda
  * dont return the projection via GetProjectionRef() if GCPs are used
  *
@@ -205,6 +208,7 @@ class GTiffDataset : public GDALDataset
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
+    CPLErr         SetGCPs( int, const GDAL_GCP *, const char * );
 
     virtual CPLErr IBuildOverviews( const char *, int, int *, int, int *, 
                                     GDALProgressFunc, void * );
@@ -1529,56 +1533,104 @@ void GTiffDataset::WriteGeoTIFFInfo()
 /* -------------------------------------------------------------------- */
 /*      If the geotransform is the default, don't bother writing it.    */
 /* -------------------------------------------------------------------- */
-    if( adfGeoTransform[0] == 0.0 && adfGeoTransform[1] == 1.0
-        && adfGeoTransform[2] == 0.0 && adfGeoTransform[3] == 0.0
-        && adfGeoTransform[4] == 0.0 && ABS(adfGeoTransform[5]) == 1.0 )
-        return;
+    if( adfGeoTransform[0] != 0.0 && adfGeoTransform[1] != 1.0
+        && adfGeoTransform[2] != 0.0 && adfGeoTransform[3] != 0.0
+        && adfGeoTransform[4] != 0.0 && ABS(adfGeoTransform[5]) != 1.0 )
+    {
 
 /* -------------------------------------------------------------------- */
 /*      Write the transform.  We ignore the rotational coefficients     */
 /*      for now.  We will fix this up later. (notdef)                   */
 /* -------------------------------------------------------------------- */
-    if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 )
-    {
-        double	adfPixelScale[3], adfTiePoints[6];
+	if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 )
+	{
+	    double	adfPixelScale[3], adfTiePoints[6];
 
-        adfPixelScale[0] = adfGeoTransform[1];
-        adfPixelScale[1] = fabs(adfGeoTransform[5]);
-        adfPixelScale[2] = 0.0;
-        
-        TIFFSetField( hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale );
-        
-        adfTiePoints[0] = 0.0;
-        adfTiePoints[1] = 0.0;
-        adfTiePoints[2] = 0.0;
-        adfTiePoints[3] = adfGeoTransform[0];
-        adfTiePoints[4] = adfGeoTransform[3];
-        adfTiePoints[5] = 0.0;
-        
-        TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints );
+	    adfPixelScale[0] = adfGeoTransform[1];
+	    adfPixelScale[1] = fabs(adfGeoTransform[5]);
+	    adfPixelScale[2] = 0.0;
+	    
+	    TIFFSetField( hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale );
+	    
+	    adfTiePoints[0] = 0.0;
+	    adfTiePoints[1] = 0.0;
+	    adfTiePoints[2] = 0.0;
+	    adfTiePoints[3] = adfGeoTransform[0];
+	    adfTiePoints[4] = adfGeoTransform[3];
+	    adfTiePoints[5] = 0.0;
+	    
+	    TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints );
+	}
+	else
+	{
+	    double	adfMatrix[16];
+	    
+	    memset(adfMatrix,0,sizeof(double) * 16);
+	    
+	    adfMatrix[0] = adfGeoTransform[1];
+	    adfMatrix[1] = adfGeoTransform[2];
+	    adfMatrix[3] = adfGeoTransform[0];
+	    adfMatrix[4] = adfGeoTransform[4];
+	    adfMatrix[5] = adfGeoTransform[5];
+	    adfMatrix[7] = adfGeoTransform[3];
+	    adfMatrix[15] = 1.0;
+	    
+	    TIFFSetField( hTIFF, TIFFTAG_GEOTRANSMATRIX, 16, adfMatrix );
+	}
+/* -------------------------------------------------------------------- */
+/*      Are we maintaining a .tfw file?                                 */
+/* -------------------------------------------------------------------- */
+	if( pszTFWFilename != NULL )
+	{
+	    FILE	*fp;
+
+	    fp = VSIFOpen( pszTFWFilename, "wt" );
+	    
+	    fprintf( fp, "%.10f\n", adfGeoTransform[1] );
+	    fprintf( fp, "%.10f\n", adfGeoTransform[4] );
+	    fprintf( fp, "%.10f\n", adfGeoTransform[2] );
+	    fprintf( fp, "%.10f\n", adfGeoTransform[5] );
+	    fprintf( fp, "%.10f\n", adfGeoTransform[0] 
+		     + 0.5 * adfGeoTransform[1]
+		     + 0.5 * adfGeoTransform[2] );
+	    fprintf( fp, "%.10f\n", adfGeoTransform[3]
+		     + 0.5 * adfGeoTransform[4]
+		     + 0.5 * adfGeoTransform[5] );
+	    VSIFClose( fp );
+	}
     }
-    
-    else
+    else if( GetGCPCount() > 0 )
     {
-        double	adfMatrix[16];
-        
-        memset(adfMatrix,0,sizeof(double) * 16);
-        
-        adfMatrix[0] = adfGeoTransform[1];
-        adfMatrix[1] = adfGeoTransform[2];
-        adfMatrix[3] = adfGeoTransform[0];
-        adfMatrix[4] = adfGeoTransform[4];
-        adfMatrix[5] = adfGeoTransform[5];
-        adfMatrix[7] = adfGeoTransform[3];
-        adfMatrix[15] = 1.0;
-        
-        TIFFSetField( hTIFF, TIFFTAG_GEOTRANSMATRIX, 16, adfMatrix );
+	double	*padfTiePoints;
+	int		iGCP;
+	
+	padfTiePoints = (double *) 
+	    CPLMalloc( 6 * sizeof(double) * GetGCPCount() );
+
+	for( iGCP = 0; iGCP < GetGCPCount(); iGCP++ )
+	{
+
+	    padfTiePoints[iGCP*6+0] = pasGCPList[iGCP].dfGCPPixel;
+	    padfTiePoints[iGCP*6+1] = pasGCPList[iGCP].dfGCPLine;
+	    padfTiePoints[iGCP*6+2] = 0;
+	    padfTiePoints[iGCP*6+3] = pasGCPList[iGCP].dfGCPX;
+	    padfTiePoints[iGCP*6+4] = pasGCPList[iGCP].dfGCPY;
+	    padfTiePoints[iGCP*6+5] = pasGCPList[iGCP].dfGCPZ;
+	}
+
+	TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 
+		      6 * GetGCPCount(), padfTiePoints );
+	CPLFree( padfTiePoints );
+	
+	pszProjection = CPLStrdup( GetGCPProjection() );
     }
+    else
+	return;
 
 /* -------------------------------------------------------------------- */
 /*	Write out projection definition.				*/
 /* -------------------------------------------------------------------- */
-    if( !EQUAL(pszProjection,"") )
+    if( pszProjection != NULL && !EQUAL( pszProjection, "" ) )
     {
         GTIF	*psGTIF;
 
@@ -1587,29 +1639,6 @@ void GTiffDataset::WriteGeoTIFFInfo()
         GTIFWriteKeys( psGTIF );
         GTIFFree( psGTIF );
     }
-
-/* -------------------------------------------------------------------- */
-/*      Are we maintaining a .tfw file?                                 */
-/* -------------------------------------------------------------------- */
-    if( pszTFWFilename != NULL )
-    {
-        FILE	*fp;
-
-        fp = VSIFOpen( pszTFWFilename, "wt" );
-        
-        fprintf( fp, "%.10f\n", adfGeoTransform[1] );
-        fprintf( fp, "%.10f\n", adfGeoTransform[4] );
-        fprintf( fp, "%.10f\n", adfGeoTransform[2] );
-        fprintf( fp, "%.10f\n", adfGeoTransform[5] );
-        fprintf( fp, "%.10f\n", adfGeoTransform[0] 
-                 + 0.5 * adfGeoTransform[1]
-                 + 0.5 * adfGeoTransform[2] );
-        fprintf( fp, "%.10f\n", adfGeoTransform[3]
-                 + 0.5 * adfGeoTransform[4]
-                 + 0.5 * adfGeoTransform[5] );
-        VSIFClose( fp );
-    }
-
 }
 
 /************************************************************************/
@@ -2959,13 +2988,40 @@ const char *GTiffDataset::GetGCPProjection()
 }
 
 /************************************************************************/
-/*                               GetGCP()                               */
+/*                               GetGCPs()                              */
 /************************************************************************/
 
 const GDAL_GCP *GTiffDataset::GetGCPs()
 
 {
     return pasGCPList;
+}
+
+/************************************************************************/
+/*                               SetGCPs()                              */
+/************************************************************************/
+
+CPLErr GTiffDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                              const char *pszGCPProjection )
+{
+    if( GetAccess() == GA_Update )
+    {
+	this->nGCPCount = nGCPCount;
+	this->pasGCPList = (GDAL_GCP *)
+	    CPLCalloc(sizeof(GDAL_GCP),nGCPCount);
+	memcpy( this->pasGCPList, pasGCPList,
+		sizeof(GDAL_GCP) * nGCPCount );
+	this->pszProjection = CPLStrdup( pszGCPProjection );
+        bGeoTIFFInfoChanged = TRUE;
+
+	return CE_None;
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+            "SetGCPs() is only supported on newly created GeoTIFF files." );
+        return CE_Failure;
+    }
 }
 
 /************************************************************************/
