@@ -42,6 +42,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2005/03/11 14:59:07  fwarmerdam
+ * Default to assuming nothing is infinite if isinf() macro not defined.
+ * Per http://bugzilla.remotesensing.org/show_bug.cgi?id=795
+ *
  * Revision 1.39  2005/03/01 21:22:07  fwarmerdam
  * added CPLIsFinite()
  *
@@ -284,14 +288,28 @@ int strncasecmp(char * str1, char * str2, int len);
 char * strdup (char *instr);
 #endif
 
+/* -------------------------------------------------------------------- */
+/*      Handle isnan() and isinf().  Note that isinf() and isnan()      */
+/*      are supposed to be macros according to C99.  Some systems       */
+/*      (ie. Tru64) don't have isinf() at all, so if the macro is       */
+/*      not defined we just assume nothing is infinite.  This may       */
+/*      mean we have no real CPLIsInf() on systems with an isinf()      */
+/*      function but no corresponding macro, but I can live with        */
+/*      that since it isn't that important a test.                      */
+/* -------------------------------------------------------------------- */
 #ifdef _MSC_VER
 #  define CPLIsNan(x) _isnan(x)
 #  define CPLIsInf(x) (!_isnan(x) && !_finite(x))
 #  define CPLIsFinite(x) _finite(x)
 #else
 #  define CPLIsNan(x) isnan(x)
-#  define CPLIsInf(x) isinf(x)
-#  define CPLIsFinite(x) (!isnan(x) && !isinf(x))
+#  ifdef isinf 
+#    define CPLIsInf(x) isinf(x)
+#    define CPLIsFinite(x) (!isnan(x) && !isinf(x))
+#  else
+#    define CPLIsInf(x)    FALSE
+#    define CPLIsFinite(x) (!isnan(x))
+#  endif
 #endif
 
 /*---------------------------------------------------------------------
