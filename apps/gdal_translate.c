@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/06/09 21:19:30  warmerda
+ * dump formats with usage message
+ *
  * Revision 1.13  2000/04/30 23:21:47  warmerda
  * uses new CreateCopy when possible
  *
@@ -82,12 +85,22 @@
 static void Usage()
 
 {
-    printf( "Usage: gdal_translate [-ot {Byte/UInt16/UInt32/Int32/Float32/Float64}]\n"
-            "                      [-of format] [-b band]\n"
-            "			   [-outsize xsize ysize]\n"
-            "                      [-srcwin xoff yoff xsize ysize]\n"
-            "                      [-co \"NAME=VALUE.\"]*\n"
-            "                      src_dataset dst_dataset\n" );
+    int	iDr;
+        
+    printf( "Usage: gdal_translate \n"
+            "       [-ot {Byte/UInt16/UInt32/Int32/Float32/Float64/CInt16/\n"
+            "             CInt32/CFloat32/CFloat64}]\n"
+            "       [-of format] [-b band] [-outsize xsize ysize]\n"
+            "       [-srcwin xoff yoff xsize ysize] [-co \"NAME=VALUE\"]*\n"
+            "       src_dataset dst_dataset\n\n" );
+
+    printf( "The following format drivers are configured:\n" );
+    for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
+    {
+        printf( "  %s: %s\n",
+                GDALGetDriverShortName( GDALGetDriver(iDr) ),
+                GDALGetDriverLongName( GDALGetDriver(iDr) ) );
+    }
 }
 
 /* ******************************************************************** */
@@ -115,6 +128,11 @@ int main( int argc, char ** argv )
     anSrcWin[1] = 0;
     anSrcWin[2] = 0;
     anSrcWin[3] = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Register standard GDAL drivers, and identify output driver.     */
+/* -------------------------------------------------------------------- */
+    GDALAllRegister();
 
 /* -------------------------------------------------------------------- */
 /*      Handle command line arguments.                                  */
@@ -194,11 +212,6 @@ int main( int argc, char ** argv )
         Usage();
         exit( 10 );
     }
-
-/* -------------------------------------------------------------------- */
-/*      Register standard GDAL drivers, and identify output driver.     */
-/* -------------------------------------------------------------------- */
-    GDALAllRegister();
 
 /* -------------------------------------------------------------------- */
 /*      Attempt to open source file.                                    */
