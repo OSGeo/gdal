@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  1999/04/21 04:18:32  warmerda
+ * updated usage
+ *
  * Revision 1.12  1999/03/21 21:32:45  warmerda
  * added -s strip support
  *
@@ -107,7 +110,12 @@ void Usage()
 "    -v    overview sampling increment(s) (0=single, 98=full set minus 2x,\n"
 "          99=full set)  Examples: -v 2 4 8   -v 0   -v 99\n"
 "    -quiet Don't produce a translation report.\n"
-"    -?    Print explanation of command line arguments\n" );
+"    -?    Print this explanation of command line arguments\n"
+"\n"
+"Visit http://gdal.velocet.ca/projects/imagine/hfa_index.html for more info.\n"
+"\n"
+"Author: Frank Warmerdam (warmerda@home.com)\n"
+"Special thanks to Intergraph Corporation for funding this project\n" );
     exit( 1 );
 }
 
