@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/10/15 15:51:17  warmerda
+ * Avoid C++ comments.
+ *
  * Revision 1.12  2003/07/08 20:28:09  warmerda
  * avoid warings
  *
@@ -538,8 +541,9 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
     do {
         byNext = BSBGetc( fp, psInfo->bNO1 );
 
-        // Special hack to skip over extra zeros in some files, such
-        // as optech/sample1.kap.
+        /* Special hack to skip over extra zeros in some files, such
+        ** as optech/sample1.kap.
+        */
         while( nScanline != 0 && nLineMarker == 0 && byNext == 0 )
             byNext = BSBGetc( fp, psInfo->bNO1 );
 
