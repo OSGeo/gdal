@@ -30,6 +30,7 @@ MrSID Driver:
 
 ECW Driver:
     - Added preliminary support for using 3.0 SDK for JPEG2000 support. 
+    - Fix oversampling assertion problem.
 
 ArcInfo Binary Grids:
     - Added support for 0x01 and 0x20 block type.
