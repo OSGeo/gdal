@@ -46,6 +46,9 @@
  *					    Lou Steinberg
  *
  * $Log$
+ * Revision 1.7  2005/04/04 15:24:16  fwarmerdam
+ * added CPL_STDCALL to some functions
+ *
  * Revision 1.6  2004/04/27 13:38:07  warmerda
  * Fixed typo in docs.
  *
@@ -105,13 +108,14 @@ static void FindNearestColor( int nColors, int *panPCT, GByte *pabyColorMap );
  * @return CE_None on success or CE_Failure if an error occurs. 
  */
 
-int GDALDitherRGB2PCT( GDALRasterBandH hRed, 
-                       GDALRasterBandH hGreen, 
-                       GDALRasterBandH hBlue, 
-                       GDALRasterBandH hTarget, 
-                       GDALColorTableH hColorTable,
-                       GDALProgressFunc pfnProgress, 
-                       void * pProgressArg )
+int CPL_STDCALL 
+GDALDitherRGB2PCT( GDALRasterBandH hRed, 
+                   GDALRasterBandH hGreen, 
+                   GDALRasterBandH hBlue, 
+                   GDALRasterBandH hTarget, 
+                   GDALColorTableH hColorTable,
+                   GDALProgressFunc pfnProgress, 
+                   void * pProgressArg )
 
 {
     int		nXSize, nYSize;

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/04/04 15:24:16  fwarmerdam
+ * added CPL_STDCALL to some functions
+ *
  * Revision 1.7  2003/07/08 15:33:04  warmerda
  * avoid warnings
  *
@@ -100,12 +103,13 @@ GDALSimpleWarpRemapping( int nBandCount, GByte **papabySrcData,
  * @return TRUE if the operation completes, or FALSE if an error occurs. 
  */
 
-int GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS, 
-                         int nBandCount, int *panBandList, 
-                         GDALTransformerFunc pfnTransform, void *pTransformArg,
-                         GDALProgressFunc pfnProgress, void *pProgressArg, 
-                         char **papszWarpOptions )
-
+int CPL_STDCALL
+GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS, 
+                     int nBandCount, int *panBandList, 
+                     GDALTransformerFunc pfnTransform, void *pTransformArg,
+                     GDALProgressFunc pfnProgress, void *pProgressArg, 
+                     char **papszWarpOptions )
+    
 {
     int		iBand, bCancelled = FALSE;
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/04/04 15:24:16  fwarmerdam
+ * added CPL_STDCALL to some functions
+ *
  * Revision 1.17  2004/12/31 02:11:20  fwarmerdam
  * Avoid warning.
  *
@@ -128,13 +131,14 @@ CPL_CVSID("$Id$");
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
 
-CPLErr GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT, 
-                           GDALDatasetH hDstDS, const char *pszDstWKT,
-                           GDALResampleAlg eResampleAlg, 
-                           double dfWarpMemoryLimit, 
-                           double dfMaxError,
-                           GDALProgressFunc pfnProgress, void *pProgressArg, 
-                           GDALWarpOptions *psOptions )
+CPLErr CPL_STDCALL 
+GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT, 
+                    GDALDatasetH hDstDS, const char *pszDstWKT,
+                    GDALResampleAlg eResampleAlg, 
+                    double dfWarpMemoryLimit, 
+                    double dfMaxError,
+                    GDALProgressFunc pfnProgress, void *pProgressArg, 
+                    GDALWarpOptions *psOptions )
 
 {
     GDALWarpOptions *psWOptions;
@@ -287,7 +291,7 @@ CPLErr GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 /*      This is a "quicky" reprojection API.                            */
 /************************************************************************/
 
-CPLErr GDALCreateAndReprojectImage( 
+CPLErr CPL_STDCALL GDALCreateAndReprojectImage( 
     GDALDatasetH hSrcDS, const char *pszSrcWKT, 
     const char *pszDstFilename, const char *pszDstWKT,
     GDALDriverH hDstDriver, char **papszCreateOptions,
@@ -718,7 +722,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 /*                       GDALCreateWarpOptions()                        */
 /************************************************************************/
 
-GDALWarpOptions *GDALCreateWarpOptions()
+GDALWarpOptions * CPL_STDCALL GDALCreateWarpOptions()
 
 {
     GDALWarpOptions *psOptions;
@@ -736,7 +740,7 @@ GDALWarpOptions *GDALCreateWarpOptions()
 /*                       GDALDestroyWarpOptions()                       */
 /************************************************************************/
 
-void GDALDestroyWarpOptions( GDALWarpOptions *psOptions )
+void CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions *psOptions )
 
 {
     CSLDestroy( psOptions->papszWarpOptions );
@@ -765,7 +769,8 @@ void GDALDestroyWarpOptions( GDALWarpOptions *psOptions )
 /*                        GDALCloneWarpOptions()                        */
 /************************************************************************/
 
-GDALWarpOptions *GDALCloneWarpOptions( const GDALWarpOptions *psSrcOptions )
+GDALWarpOptions * CPL_STDCALL
+GDALCloneWarpOptions( const GDALWarpOptions *psSrcOptions )
 
 {
     GDALWarpOptions *psDstOptions = GDALCreateWarpOptions();
@@ -790,7 +795,8 @@ GDALWarpOptions *GDALCloneWarpOptions( const GDALWarpOptions *psSrcOptions )
 /*                      GDALSerializeWarpOptions()                      */
 /************************************************************************/
 
-CPLXMLNode *GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
+CPLXMLNode * CPL_STDCALL 
+GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
 
 {
     CPLXMLNode *psTree;
@@ -934,7 +940,7 @@ CPLXMLNode *GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
 /*                     GDALDeserializeWarpOptions()                     */
 /************************************************************************/
 
-GDALWarpOptions *GDALDeserializeWarpOptions( CPLXMLNode *psTree )
+GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 
 {
     CPLErrorReset();
