@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2004/10/06 19:49:14  fwarmerdam
+ * Added Mysql registration function.
+ *
  * Revision 1.44  2004/07/20 19:18:44  warmerda
  * added CSV
  *
@@ -397,6 +400,7 @@ void CPL_DLL RegisterOGRMIF();
 void CPL_DLL RegisterOGROGDI();
 void CPL_DLL RegisterOGRODBC();
 void CPL_DLL RegisterOGRPG();
+void CPL_DLL RegisterOGRMySQL();
 void CPL_DLL RegisterOGROCI();
 void CPL_DLL RegisterOGRDGN();
 void CPL_DLL RegisterOGRGML();
