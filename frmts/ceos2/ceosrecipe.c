@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/08/26 18:30:47  warmerda
+ * added preliminary SIR-C support
+ *
  * Revision 1.15  2004/07/06 15:43:01  gwalter
  * Updated to extract more metadata and
  * recognize more sar ceos files.
@@ -79,12 +82,15 @@ CPL_CVSID("$Id$");
 
 /* Array of Datatypes and their names/values */
 
-typedef struct { char *String;
-                 int Type;
+typedef struct { 
+    char *String;
+    int Type;
 } CeosStringType_t;
 
-typedef struct { int (*function)(CeosSARVolume_t *volume, void *token);
-                 void *token;
+typedef struct { 
+    int (*function)(CeosSARVolume_t *volume, void *token);
+    void *token;
+    const char *name;
 } RecipeFunctionData_t;
 
 
@@ -112,6 +118,7 @@ CeosStringType_t CeosInterleaveType[] = { { "BSQ", __CEOS_IL_BAND },
 #define PROC_DATA_REC_ALT { 50, 11, 31, 20 }
 #define DATA_SET_SUMMARY { 18, 10, 18, 20 }
 
+/* NOTE: This seems to be the generic recipe used for most things */
 CeosRecipeType_t RadarSatRecipe[] =
 {
     { __CEOS_REC_NUMCHANS, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
@@ -164,6 +171,7 @@ CeosRecipeType_t RadarSatRecipe[] =
       289, 4, __CEOS_REC_TYP_I }, /* Suffix data per record */
     { 0, 0, 0, { 0, 0, 0, 0 }, 0, 0, 0 } /* Last record is Zero */
 } ;
+
 
 CeosRecipeType_t JersRecipe[] =
 {
@@ -241,7 +249,42 @@ CeosRecipeType_t ScanSARRecipe[] =
     { 0, 0, 0, { 0, 0, 0, 0 }, 0, 0, 0 } /* Last record is Zero */
 } ;
 
-#undef IMAGE_OPT
+CeosRecipeType_t SIRCRecipe[] =
+{
+    { __CEOS_REC_NUMCHANS, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      233, 4, __CEOS_REC_TYP_I }, /* Number of channels */
+    { __CEOS_REC_INTERLEAVE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      269, 4, __CEOS_REC_TYP_A }, /* Interleaving type */
+    { __CEOS_REC_DATATYPE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      429, 4, __CEOS_REC_TYP_A }, /* Data type */
+    { __CEOS_REC_LINES, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      237, 8, __CEOS_REC_TYP_I }, /* How many lines */
+    { __CEOS_REC_TBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      261, 4, __CEOS_REC_TYP_I },
+    { __CEOS_REC_BBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      265, 4, __CEOS_REC_TYP_I }, /* Bottom border pixels */
+    { __CEOS_REC_PPL, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      249, 8, __CEOS_REC_TYP_I }, /* Pixels per line */
+    { __CEOS_REC_LBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      245, 4, __CEOS_REC_TYP_I }, /* Left Border Pixels */
+    { __CEOS_REC_RBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      257, 4, __CEOS_REC_TYP_I }, /* Right Border Pixels */
+    { __CEOS_REC_BPP, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      225, 4, __CEOS_REC_TYP_I }, /* Bytes Per Pixel */
+    { __CEOS_REC_RPL, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      273, 2, __CEOS_REC_TYP_I }, /* Records per line */
+    { __CEOS_REC_IDS, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      277, 4, __CEOS_REC_TYP_I }, /* Prefix data per record */
+    { __CEOS_REC_FDL, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      9, 4, __CEOS_REC_TYP_B }, /* Length of Imagry Options Header */
+    { __CEOS_REC_RECORDSIZE, 1, __CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC,
+      9, 4, __CEOS_REC_TYP_B }, /* The processed image record size */
+    { __CEOS_REC_SUFFIX_SIZE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      289, 4, __CEOS_REC_TYP_I }, /* Suffix data per record */
+
+    { 0, 0, 0, { 0, 0, 0, 0 }, 0, 0, 0 } /* Last record is Zero */
+} ;
+
 #undef PROC_DATA_REC
 
 static void ExtractInt( CeosRecord_t *record, int type, unsigned int offset, unsigned int length, int *value );
@@ -250,14 +293,17 @@ static char *ExtractString( CeosRecord_t *record, unsigned int offset, unsigned 
 
 static int GetCeosStringType(const CeosStringType_t *CeosType, const char *string);
 
+static int SIRCRecipeFCN( CeosSARVolume_t *volume, void *token );
+
 Link_t *RecipeFunctions = NULL;
 
 void RegisterRecipes( void )
 {
 
-    AddRecipe( ScanSARRecipeFCN, ScanSARRecipe );
-    AddRecipe( CeosDefaultRecipe, RadarSatRecipe );
-    AddRecipe( CeosDefaultRecipe, JersRecipe );
+    AddRecipe( SIRCRecipeFCN, SIRCRecipe, "SIR-C" );
+    AddRecipe( ScanSARRecipeFCN, ScanSARRecipe, "ScanSAR" );
+    AddRecipe( CeosDefaultRecipe, RadarSatRecipe, "RadarSat" );
+    AddRecipe( CeosDefaultRecipe, JersRecipe, "Jers" );
     /*  AddRecipe( CeosDefaultRecipe, AtlantisRecipe ); */
 }
 
@@ -275,7 +321,8 @@ void FreeRecipes( void )
 
 void AddRecipe( int (*function)(CeosSARVolume_t *volume,
 				void *token),
-		void *token )
+		void *token,
+                const char *name )
 {
 
     RecipeFunctionData_t *TempData;
@@ -286,6 +333,7 @@ void AddRecipe( int (*function)(CeosSARVolume_t *volume,
 
     TempData->function = function;
     TempData->token = token;
+    TempData->name = name;
 
     Link = ceos2CreateLink( TempData );
 
@@ -513,6 +561,73 @@ int ScanSARRecipeFCN( CeosSARVolume_t *volume, void *token )
     return 0;
 }    
 
+static int SIRCRecipeFCN( CeosSARVolume_t *volume, void *token )
+{
+    struct CeosSARImageDesc *ImageDesc = &(volume->ImageDesc);
+    CeosTypeCode_t TypeCode;
+    CeosRecord_t *record;
+    char szSARDataFormat[29];
+
+    memset( ImageDesc, 0, sizeof( struct CeosSARImageDesc ) );
+
+/* -------------------------------------------------------------------- */
+/*      First, we need to check if the "SAR Data Format Type            */
+/*      identifier" is set to "COMPRESSED CROSS-PRODUCTS" which is      */
+/*      pretty idiosyncratic to SIRC products.  It might also appear    */
+/*      for some other similarly encoded Polarmetric data I suppose.    */
+/* -------------------------------------------------------------------- */
+    /* IMAGE_OPT */
+    TypeCode.UCharCode.Subtype1 = 63;
+    TypeCode.UCharCode.Type     = 192;
+    TypeCode.UCharCode.Subtype2 = 18;
+    TypeCode.UCharCode.Subtype3 = 18;
+
+    record = FindCeosRecord( volume->RecordList, TypeCode, 
+                             __CEOS_IMAGRY_OPT_FILE, -1, -1 );
+    if( record == NULL )
+        return 0;
+
+    ExtractString( record, 401, 28, szSARDataFormat );
+    if( !EQUALN( szSARDataFormat, "COMPRESSED CROSS-PRODUCTS", 25) )
+        return 0;
+
+/* -------------------------------------------------------------------- */
+/*      Apply normal handling...                                        */
+/* -------------------------------------------------------------------- */
+    CeosDefaultRecipe( volume, token );
+
+/* -------------------------------------------------------------------- */
+/*      Make sure this looks like the SIRC product we are expecting.    */
+/* -------------------------------------------------------------------- */
+    if( ImageDesc->BytesPerPixel != 10 )
+        return 0;
+
+/* -------------------------------------------------------------------- */
+/*      Then fix up a few values.                                       */
+/* -------------------------------------------------------------------- */
+    /* It seems the bytes of pixel data per record is just wrong.  Fix. */
+    ImageDesc->PixelDataBytesPerRecord = 
+        ImageDesc->BytesPerPixel * ImageDesc->PixelsPerLine;
+    
+    ImageDesc->DataType = __CEOS_TYP_CCP_COMPLEX_FLOAT;
+
+/* -------------------------------------------------------------------- */
+/*      Sanity checking                                                 */
+/* -------------------------------------------------------------------- */
+    if( ImageDesc->PixelsPerLine == 0 || ImageDesc->Lines == 0 ||
+	ImageDesc->RecordsPerLine == 0 || ImageDesc->ImageDataStart == 0 ||
+	ImageDesc->FileDescriptorLength == 0 || ImageDesc->DataType == 0 ||
+	ImageDesc->NumChannels == 0 || ImageDesc->BytesPerPixel == 0 ||
+	ImageDesc->ChannelInterleaving == 0 || ImageDesc->BytesPerRecord == 0)
+    {
+	return 0;
+    } else {
+	
+	ImageDesc->ImageDescValid = TRUE;
+	return 1;
+    }
+}    
+
 void GetCeosSARImageDesc( CeosSARVolume_t *volume )
 {
     Link_t *link;
@@ -536,7 +651,11 @@ void GetCeosSARImageDesc( CeosSARVolume_t *volume )
 	    rec_data = link->object;
             function = rec_data->function;
 	    if(( *function )( volume, rec_data->token ) )
-		return ;
+            {
+                CPLDebug( "CEOS", "Using recipe '%s'.", 
+                          rec_data->name );
+		return;
+            }
 	}
     }
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2004/08/26 18:30:47  warmerda
+ * added preliminary SIR-C support
+ *
  * Revision 1.34  2004/07/06 15:43:01  gwalter
  * Updated to extract more metadata and
  * recognize more sar ceos files.
@@ -215,10 +218,12 @@ static CeosTypeCode_t QuadToTC( int a, int b, int c, int d )
 /************************************************************************/
 
 class SAR_CEOSRasterBand;
+class CCPRasterBand;
 
 class SAR_CEOSDataset : public GDALDataset
 {
     friend class SAR_CEOSRasterBand;
+    friend class CCPRasterBand;
 
     CeosSARVolume_t sVolume;
 
@@ -244,6 +249,22 @@ class SAR_CEOSDataset : public GDALDataset
     virtual char **GetMetadata( const char * pszDomain );
 
     static GDALDataset *Open( GDALOpenInfo * );
+};
+
+/************************************************************************/
+/* ==================================================================== */
+/*                          CCPRasterBand                               */
+/* ==================================================================== */
+/************************************************************************/
+
+class CCPRasterBand : public GDALRasterBand
+{
+    friend class SAR_CEOSDataset;
+
+  public:
+                   CCPRasterBand( SAR_CEOSDataset *, int, GDALDataType );
+
+    virtual CPLErr IReadBlock( int, int, void * );
 };
 
 /************************************************************************/
@@ -353,6 +374,149 @@ CPLErr SAR_CEOSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 #ifdef CPL_LSB
     GDALSwapWords( pImage, nBytesPerSample, nBlockXSize, nBytesPerSample );
 #endif    
+
+    CPLFree( pabyRecord );
+
+    return CE_None;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*				CCPRasterBand				*/
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                           CCPRasterBand()                            */
+/************************************************************************/
+
+CCPRasterBand::CCPRasterBand( SAR_CEOSDataset *poGDS, int nBand,
+                              GDALDataType eType )
+
+{
+    this->poDS = poGDS;
+    this->nBand = nBand;
+
+    eDataType = eType;
+
+    nBlockXSize = poGDS->nRasterXSize;
+    nBlockYSize = 1;
+
+    if( nBand == 1 )
+        SetMetadataItem( "POLARMETRIC_INTERP", "HH" );
+    else if( nBand == 2 )
+        SetMetadataItem( "POLARMETRIC_INTERP", "HV" );
+    else if( nBand == 3 )
+        SetMetadataItem( "POLARMETRIC_INTERP", "VH" );
+    else if( nBand == 4 )
+        SetMetadataItem( "POLARMETRIC_INTERP", "VV" );
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+/* From: http://southport.jpl.nasa.gov/software/dcomp/dcomp.html
+
+ysca = sqrt{ [ (Byte(2) / 254 ) + 1.5] 2Byte(1) }
+
+Re(SHH) = byte(3) ysca/127
+
+Im(SHH) = byte(4) ysca/127
+
+Re(SHV) = byte(5) ysca/127
+
+Im(SHV) = byte(6) ysca/127
+
+Re(SVH) = byte(7) ysca/127
+
+Im(SVH) = byte(8) ysca/127
+
+Re(SVV) = byte(9) ysca/127
+
+Im(SVV) = byte(10) ysca/127
+
+*/
+
+CPLErr CCPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                  void * pImage )
+
+{
+    struct CeosSARImageDesc *ImageDesc;
+    int	   offset;
+    GByte  *pabyRecord;
+    SAR_CEOSDataset *poGDS = (SAR_CEOSDataset *) poDS;
+
+    ImageDesc = &(poGDS->sVolume.ImageDesc);
+
+    offset = ImageDesc->FileDescriptorLength
+        + ImageDesc->BytesPerRecord * nBlockYOff 
+        + ImageDesc->ImageDataStart;
+
+/* -------------------------------------------------------------------- */
+/*      Load all the pixel data associated with this scanline.          */
+/* -------------------------------------------------------------------- */
+    int	        nBytesToRead = ImageDesc->BytesPerPixel * nBlockXSize;
+
+    pabyRecord = (GByte *) CPLMalloc( nBytesToRead );
+    
+    if( VSIFSeek( poGDS->fpImage, offset, SEEK_SET ) != 0 
+        || (int) VSIFRead( pabyRecord, 1, nBytesToRead, 
+                           poGDS->fpImage ) != nBytesToRead )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Error reading %d bytes of CEOS record data at offset %d.\n"
+                  "Reading file %s failed.", 
+                  nBytesToRead, offset, poGDS->GetDescription() );
+        CPLFree( pabyRecord );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Copy the desired band out based on the size of the type, and    */
+/*      the interleaving mode.                                          */
+/* -------------------------------------------------------------------- */
+    int iX;
+
+    for( iX = 0; iX < nBlockXSize; iX++ )
+    {
+        unsigned char *pabyGroup = pabyRecord + iX * ImageDesc->BytesPerPixel;
+        signed char *Byte = (signed char*)pabyGroup-1; /* A ones based alias */
+        double dfReSHH, dfImSHH, dfReSHV, dfImSHV, 
+            dfReSVH, dfImSVH, dfReSVV, dfImSVV, dfScale;
+
+        dfScale = sqrt( (Byte[2] / 254 + 1.5) * pow(2,Byte[1]) );
+        
+        dfReSHH = Byte[3] * dfScale / 127.0;
+        dfImSHH = Byte[4] * dfScale / 127.0;
+        dfReSHV = Byte[5] * dfScale / 127.0;
+        dfImSHV = Byte[6] * dfScale / 127.0;
+        dfReSVH = Byte[7] * dfScale / 127.0;
+        dfImSVH = Byte[8] * dfScale / 127.0;
+        dfReSVV = Byte[9] * dfScale / 127.0;
+        dfImSVV = Byte[10]* dfScale / 127.0;
+
+        if( nBand == 1 )
+        {
+            ((float *) pImage)[iX*2  ] = dfReSHH;
+            ((float *) pImage)[iX*2+1] = dfImSHH;
+        }        
+        else if( nBand == 2 )
+        {
+            ((float *) pImage)[iX*2  ] = dfReSHV;
+            ((float *) pImage)[iX*2+1] = dfImSHV;
+        }
+        else if( nBand == 3 )
+        {
+            ((float *) pImage)[iX*2  ] = dfReSVH;
+            ((float *) pImage)[iX*2+1] = dfImSVH;
+        }
+        else if( nBand == 4 )
+        {
+            ((float *) pImage)[iX*2  ] = dfReSVV;
+            ((float *) pImage)[iX*2+1] = dfImSVV;
+        }
+    }
 
     CPLFree( pabyRecord );
 
@@ -1503,6 +1667,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
         break;
 
       case __CEOS_TYP_COMPLEX_FLOAT:
+      case __CEOS_TYP_CCP_COMPLEX_FLOAT:
         eType = GDT_CFloat32;
         break;
 
@@ -1525,15 +1690,27 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 #else
     bNative = TRUE;
 #endif
-    
+
+/* -------------------------------------------------------------------- */
+/*      Special case for compressed cross products.                     */
+/* -------------------------------------------------------------------- */
+    if( psImageDesc->DataType == __CEOS_TYP_CCP_COMPLEX_FLOAT )
+    {
+        for( int iBand = 0; iBand < psImageDesc->NumChannels; iBand++ )
+        {
+            poDS->SetBand( poDS->nBands+1, 
+                           new CCPRasterBand( poDS, poDS->nBands+1, eType ) );
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Roll our own ...                                                */
 /* -------------------------------------------------------------------- */
-    if( psImageDesc->RecordsPerLine > 1
-        || psImageDesc->DataType == __CEOS_TYP_CHAR
-        || psImageDesc->DataType == __CEOS_TYP_LONG
-        || psImageDesc->DataType == __CEOS_TYP_ULONG
-        || psImageDesc->DataType == __CEOS_TYP_DOUBLE )
+    else if( psImageDesc->RecordsPerLine > 1
+             || psImageDesc->DataType == __CEOS_TYP_CHAR
+             || psImageDesc->DataType == __CEOS_TYP_LONG
+             || psImageDesc->DataType == __CEOS_TYP_ULONG
+             || psImageDesc->DataType == __CEOS_TYP_DOUBLE )
     {
         for( int iBand = 0; iBand < psImageDesc->NumChannels; iBand++ )
         {

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/08/26 18:30:47  warmerda
+ * added preliminary SIR-C support
+ *
  * Revision 1.7  2003/12/11 22:11:35  warmerda
  * clean up recipes when dataset destroyed to avoid memory noise
  *
@@ -105,6 +108,7 @@ Link_t *AddLink( Link_t *psList, Link_t *psLink );
 #define __CEOS_TYP_COMPLEX_LONG 13
 #define __CEOS_TYP_COMPLEX_ULONG 14
 #define __CEOS_TYP_COMPLEX_FLOAT 15
+#define __CEOS_TYP_CCP_COMPLEX_FLOAT 16 /* COMPRESSED CROSS PRODUCT */
 
 /* Defines for CEOS file names */
 
@@ -325,7 +329,7 @@ void RegisterRecipes(void);
 void FreeRecipes();
 
 void AddRecipe( int ( *function )( CeosSARVolume_t *volume, void *token ),
-		void *token );
+		void *token, const char *name );
 
 int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token );
 int ScanSARRecipeFCN( CeosSARVolume_t *volume, void *token );
