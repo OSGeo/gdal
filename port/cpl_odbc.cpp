@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/10/06 17:17:02  warmerda
+ * fixed some type issues
+ *
  * Revision 1.4  2003/09/26 20:02:41  warmerda
  * update GetColData()
  *
@@ -304,7 +307,7 @@ int CPLODBCStatement::CollectResultsInfo()
     m_papszColValues = (char **) calloc(sizeof(char *),(m_nColCount+1));
 
     m_panColType = (short *) calloc(sizeof(short),m_nColCount);
-    m_panColSize = (SQLULEN *) calloc(sizeof(SQLULEN),m_nColCount);
+    m_panColSize = (SQLUINTEGER *) calloc(sizeof(SQLUINTEGER),m_nColCount);
     m_panColPrecision = (short *) calloc(sizeof(short),m_nColCount);
     m_panColNullable = (short *) calloc(sizeof(short),m_nColCount);
 
@@ -317,11 +320,11 @@ int CPLODBCStatement::CollectResultsInfo()
         SQLSMALLINT nNameLength;
 
         if( Failed( 
-                SQLDescribeCol( m_hStmt, iCol+1, 
+                SQLDescribeCol( m_hStmt, (SQLUSMALLINT) iCol+1, 
                                 (SQLCHAR *) szColName, sizeof(szColName),
                                 &nNameLength,
                                 m_panColType + iCol,
-                                (SQLUINTEGER*) m_panColSize + iCol,
+                                m_panColSize + iCol,
                                 m_panColPrecision + iCol,
                                 m_panColNullable + iCol )) )
             return FALSE;
@@ -415,7 +418,7 @@ short CPLODBCStatement::GetColSize( int iCol )
     if( iCol < 0 || iCol >= m_nColCount )
         return -1;
     else
-        return m_panColSize[iCol];
+        return (short) m_panColSize[iCol];
 }
 
 /************************************************************************/
@@ -511,7 +514,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         SQLINTEGER cbDataLen;
 
         szWrkData[0] = '\0';
-        if( Failed( SQLGetData( m_hStmt, iCol+1, SQL_C_CHAR,
+        if( Failed( SQLGetData( m_hStmt, (SQLUSMALLINT) iCol+1, SQL_C_CHAR,
                                 szWrkData, sizeof(szWrkData)-1, 
                                 &cbDataLen ) ) )
             return FALSE;
@@ -840,13 +843,13 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
     if( nResultCount < 1 )
         m_nColCount = 500; // Hopefully lots.
     else
-        m_nColCount = nResultCount;
+        m_nColCount = (short) nResultCount;
     
     m_papszColNames = (char **) calloc(sizeof(char *),(m_nColCount+1));
     m_papszColValues = (char **) calloc(sizeof(char *),(m_nColCount+1));
 
     m_panColType = (short *) calloc(sizeof(short),m_nColCount);
-    m_panColSize = (SQLULEN *) calloc(sizeof(SQLULEN),m_nColCount);
+    m_panColSize = (SQLUINTEGER *) calloc(sizeof(SQLUINTEGER),m_nColCount);
     m_panColPrecision = (short *) calloc(sizeof(short),m_nColCount);
     m_panColNullable = (short *) calloc(sizeof(short),m_nColCount);
 
@@ -862,7 +865,7 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
 
         if( Failed( SQLFetch( m_hStmt ) ) )
         {
-            m_nColCount = iCol;
+            m_nColCount = (SQLUSMALLINT) iCol;
             break;
         }
 
@@ -874,7 +877,7 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
 
         SQLGetData( m_hStmt, 5, SQL_C_CHAR, szWrkData, sizeof(szWrkData)-1, 
                     &cbDataLen );
-        m_panColType[iCol] = atoi(szWrkData);
+        m_panColType[iCol] = (short) atoi(szWrkData);
 
         SQLGetData( m_hStmt, 7, SQL_C_CHAR, szWrkData, sizeof(szWrkData)-1, 
                     &cbDataLen );
@@ -882,7 +885,7 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
 
         SQLGetData( m_hStmt, 9, SQL_C_CHAR, szWrkData, sizeof(szWrkData)-1, 
                     &cbDataLen );
-        m_panColPrecision[iCol] = atoi(szWrkData);
+        m_panColPrecision[iCol] = (short) atoi(szWrkData);
 
         SQLGetData( m_hStmt, 11, SQL_C_CHAR, szWrkData, sizeof(szWrkData)-1, 
                     &cbDataLen );
