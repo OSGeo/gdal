@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2003/08/27 15:40:37  warmerda
+ * added support for generating DB2 V7.2 compatible WKB
+ *
  * Revision 1.44  2003/05/28 19:16:42  warmerda
  * fixed up argument names and stuff for docs
  *
@@ -269,6 +272,9 @@ class CPL_DLL OGRGeometry
     OGRGeometry *Difference( OGRGeometry * );
     OGRGeometry *SymmetricDifference( OGRGeometry * );
 #endif    
+
+    // Special HACK for DB2 7.2 support
+    static int bGenerate_DB2_V72_BYTE_ORDER;
 };
 
 /************************************************************************/
