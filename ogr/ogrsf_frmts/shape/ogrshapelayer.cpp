@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/03/05 05:09:41  warmerda
+ * initialize panMatchingFIDs
+ *
  * Revision 1.11  2003/03/04 05:49:05  warmerda
  * added attribute indexing support
  *
@@ -88,6 +91,7 @@ OGRShapeLayer::OGRShapeLayer( const char * pszName,
     bUpdateAccess = bUpdate;
 
     iNextShapeId = 0;
+    panMatchingFIDs = NULL;
 
     if( hSHP != NULL )
         nTotalShapeCount = hSHP->nRecords;
