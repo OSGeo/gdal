@@ -1,5 +1,5 @@
 
-OBJ	=	geotiff.obj gt_wkt_srs.obj
+OBJ	=	geotiff.obj gt_wkt_srs.obj gt_overview.obj
 
 EXTRAFLAGS = 	-Ilibtiff -Ilibgeotiff
 
