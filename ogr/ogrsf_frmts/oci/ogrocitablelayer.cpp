@@ -30,6 +30,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/01/06 18:00:34  warmerda
+ * Restructure geometry translation ... collections now supported.
+ * Dimension is now a layer wide attribute.
+ * Update dimension info in USER_SDO_GEOM_METADATA on close.
+ *
  * Revision 1.6  2003/01/02 21:51:05  warmerda
  * fix quote escaping
  *
@@ -62,7 +67,7 @@ CPL_CVSID("$Id$");
 
 OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn, 
                                     const char * pszTableName,
-                                    int bUpdate )
+                                    int bUpdate, int bNewLayerIn )
 
 {
     poDS = poDSIn;
@@ -72,14 +77,17 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
     pszQueryStatement = NULL;
     
     bUpdateAccess = bUpdate;
+    bNewLayer = bNewLayerIn;
+    bLaunderColumnNames = TRUE;
 
     iNextShapeId = 0;
+    iNextFIDToWrite = 1;
+    nDimension = 3;
 
     poFeatureDefn = ReadTableDefinition( pszTableName );
     
     ResetReading();
 
-    bLaunderColumnNames = TRUE;
 }
 
 /************************************************************************/
@@ -89,6 +97,9 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
 OGROCITableLayer::~OGROCITableLayer()
 
 {
+    if( bNewLayer )
+        FinalizeNewLayer();
+
     CPLFree( pszQuery );
     CPLFree( pszWHERE );
 }
@@ -165,6 +176,13 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
 
         if( oField.GetType() == OFTBinary )
             continue;			
+
+        if( EQUAL(oField.GetNameRef(),"OGR_FID") 
+            && oField.GetType() == OFTInteger )
+        {
+            pszFIDName = CPLStrdup(oField.GetNameRef());
+            continue;
+        }
 
         poDefn->AddFieldDefn( &oField );
     }
@@ -248,16 +266,17 @@ void OGROCITableLayer::BuildFullQueryStatement()
         pszQueryStatement = NULL;
     }
 
-    char szCommand[6000];
+    OGROCIStringBuf oCmd;
     char *pszFields = BuildFields();
 
-    sprintf( szCommand, 
-             "SELECT %s FROM \"%s\" %s", 
-             pszFields, poFeatureDefn->GetName(), pszWHERE );
-    
-    CPLFree( pszFields );
+    oCmd.Append( "SELECT " );
+    oCmd.Append( pszFields );
+    oCmd.Append( " FROM \"" );
+    oCmd.Append( poFeatureDefn->GetName() );
+    oCmd.Append( "\" " );
+    oCmd.Append( pszWHERE );
 
-    pszQueryStatement = CPLStrdup( szCommand );
+    pszQueryStatement = oCmd.StealString();
 }
 
 /************************************************************************/
@@ -311,42 +330,38 @@ void OGROCITableLayer::ResetReading()
 char *OGROCITableLayer::BuildFields()
 
 {
-    int		i, nSize;
-    char	*pszFieldList;
-
-    nSize = 25;
-
-    if( pszGeomName )
-        nSize += strlen(pszGeomName);
-
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
-        nSize += strlen(poFeatureDefn->GetFieldDefn(i)->GetNameRef()) + 4;
-
-    pszFieldList = (char *) CPLMalloc(nSize);
+    int		i;
+    OGROCIStringBuf oFldList;
 
     if( pszGeomName )							
     {
-        sprintf( pszFieldList, "\"%s\"", pszGeomName );
+        oFldList.Append( "\"" );
+        oFldList.Append( pszGeomName );
+        oFldList.Append( "\"" );
         iGeomColumn = 0;
     }
-    else
-        pszFieldList[0] = '\0';
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
 
-        if( strlen(pszFieldList) > 0 )
-            strcat( pszFieldList, ", " );
+        if( oFldList.GetLast() != '\0' )
+            oFldList.Append( "," );
 
-        strcat( pszFieldList, "\"" );
-        strcat( pszFieldList, pszName );
-        strcat( pszFieldList, "\"" );
+        oFldList.Append( "\"" );
+        oFldList.Append( pszName );
+        oFldList.Append( "\"" );
     }
 
-    CPLAssert( (int) strlen(pszFieldList) < nSize );
+    if( pszFIDName != NULL )
+    {
+        iFIDColumn = poFeatureDefn->GetFieldCount();
+        oFldList.Append( ",\"" );
+        oFldList.Append( pszFIDName );
+        oFldList.Append( "\"" );
+    }
 
-    return pszFieldList;
+    return oFldList.StealString();
 }
 
 /************************************************************************/
@@ -377,6 +392,117 @@ OGRErr OGROCITableLayer::SetFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*                       TranslateElementGroup()                        */
+/*                                                                      */
+/*      Append one or more element groups to the existing element       */
+/*      info and ordinates lists for the passed geometry.               */
+/************************************************************************/
+
+OGRErr 
+OGROCITableLayer::TranslateElementGroup( OGRGeometry *poGeometry, 
+                                         OGROCIStringBuf *poElemInfo,
+                                         int &nLastOrdinate, 
+                                         OGROCIStringBuf *poOrdinates )
+
+{
+    
+    switch( wkbFlatten(poGeometry->getGeometryType()) )
+    {
+      case wkbPoint:
+      {
+          OGRPoint *poPoint = (OGRPoint *) poGeometry;
+
+          if( poElemInfo->GetLast() != '(' )
+              poElemInfo->Append( "," );
+          
+          poElemInfo->Appendf( 32, "%d,1,1", nLastOrdinate+1 );
+
+          if( nLastOrdinate != 0 )
+              poOrdinates->Append( "," );
+          
+          poOrdinates->Appendf( 64, "%.16g,%.16g", 
+                                poPoint->getX(), poPoint->getY() );
+          
+          if( nDimension == 3 )
+              poOrdinates->Appendf( 32, ",%.16g", poPoint->getZ() );
+
+          nLastOrdinate++;
+
+          return OGRERR_NONE;
+      }
+
+      case wkbLineString:
+      {
+          OGRLineString *poLine = (OGRLineString *) poGeometry;
+          int  iVert;
+          
+          if( poElemInfo != NULL )
+          {
+              if( poElemInfo->GetLast() != '(' )
+                  poElemInfo->Append( "," );
+
+              poElemInfo->Appendf( 32, "%d,2,1", nLastOrdinate+1 );
+          }
+
+          for( iVert = 0; iVert < poLine->getNumPoints(); iVert++ )
+          {
+              if( nLastOrdinate != 0 )
+                  poOrdinates->Append( "," );
+
+              poOrdinates->Appendf( 64, "%.16g,%.16g", 
+                                    poLine->getX(iVert), poLine->getY(iVert) );
+          
+              if( nDimension == 3 )
+                  poOrdinates->Appendf( 32, ",%.16g", poLine->getZ(iVert) );
+
+              nLastOrdinate++;
+          }
+          return OGRERR_NONE;
+      }
+
+      case wkbPolygon:
+      {
+          OGRPolygon *poPoly = (OGRPolygon *) poGeometry;
+          int iRing;
+          OGRErr eErr;
+
+
+          for( iRing = -1; iRing < poPoly->getNumInteriorRings(); iRing++ )
+          {
+              OGRLinearRing *poRing;
+
+              if( iRing == -1 )
+                  poRing = poPoly->getExteriorRing();
+              else
+                  poRing = poPoly->getInteriorRing(iRing);
+
+              // take care of eleminfo here.
+              if( poElemInfo->GetLast() != '(' )
+                  poElemInfo->Append( "," );
+
+              if( iRing == -1 )
+                  poElemInfo->Appendf( 20, "%d,1003,1", nLastOrdinate+1 );
+              else
+                  poElemInfo->Appendf( 20, "%d,2003,1", nLastOrdinate+1 );
+
+              // but recurse to add the ordinates.
+              eErr = TranslateElementGroup( poRing, NULL, 
+                                            nLastOrdinate, poOrdinates );
+              if( eErr != OGRERR_NONE )
+                  return eErr;
+          }
+
+          return OGRERR_NONE;
+      }
+
+      default:
+      {
+          return OGRERR_FAILURE;
+      }
+    }
+}
+
+/************************************************************************/
 /*                       TranslateToSDOGeometry()                       */
 /************************************************************************/
 
@@ -396,11 +522,11 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
 
         if( poGeometry->getDimension() == 2 )
             sprintf( szResult, 
-                     "%s(%d,NULL,SDO_POINT(%.16g,%.16g),NULL,NULL)",
+                     "%s(%d,NULL,MDSYS.SDO_POINT_TYPE(%.16g,%.16g),NULL,NULL)",
                      SDO_GEOMETRY, 2001, poPoint->getX(), poPoint->getY() );
         else
             sprintf( szResult, 
-                     "%s(%d,NULL,SDO_POINT(%.16g,%.16g,%.16g),NULL,NULL)",
+                     "%s(%d,NULL,MDSYS.SDO_POINT_TYPE(%.16g,%.16g,%.16g),NULL,NULL)",
                      SDO_GEOMETRY, 2001, 
                      poPoint->getX(), poPoint->getY(), poPoint->getZ() );
 
@@ -412,35 +538,20 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
 /* ==================================================================== */
     else if( wkbFlatten(poGeometry->getGeometryType()) == wkbLineString )
     {
-        OGRLineString *poLine = (OGRLineString *) poGeometry;
-        int nDim = poGeometry->getDimension();
-        char *pszResult;
-        int  iOff, iVert;
+        int nLastOrdinate = 0;
+        OGROCIStringBuf oElemInfo, oOrdinates;
 
-        pszResult = (char *) CPLMalloc(poLine->getNumPoints() * 51 + 500);
+        oElemInfo.Appendf( 100, "%s(%d,NULL,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(",
+                           SDO_GEOMETRY, nDimension * 1000 + 2 );
+        oOrdinates.Append( "),MDSYS.SDO_ORDINATE_ARRAY(" );
 
-        sprintf( pszResult, 
-                 "%s(%d,NULL,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),"
-                 "MDSYS.SDO_ORDINATE_ARRAY(", 
-                 SDO_GEOMETRY, nDim * 1000 + 2 );
-        
-        iOff = strlen(pszResult);
-        for( iVert = 0; iVert < poLine->getNumPoints(); iVert++ )
-        {
-            if( iVert != 0 )
-                pszResult[iOff++] = ',';
+        TranslateElementGroup( poGeometry, &oElemInfo, 
+                               nLastOrdinate, &oOrdinates );
 
-            sprintf( pszResult + iOff, "%.16g,%.16g", 
-                     poLine->getX(iVert), poLine->getY(iVert) );
-            iOff += strlen(pszResult+iOff);
-            if( nDim == 3 )
-            {
-                sprintf( pszResult + iOff, ",%.16g", poLine->getZ(iVert) );
-                iOff += strlen(pszResult+iOff);
-            }
-        }
-        strcat( pszResult + iOff, "))" );
-        return pszResult;
+        oElemInfo.Append( oOrdinates.GetString() );
+        oElemInfo.Append( "))" );
+
+        return oElemInfo.StealString();
     }
 
 /* ==================================================================== */
@@ -448,101 +559,120 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
 /* ==================================================================== */
     else if( wkbFlatten(poGeometry->getGeometryType()) == wkbPolygon )
     {
-        OGRPolygon *poPoly = (OGRPolygon *) poGeometry;
-        OGRLinearRing *poRing;
-        int nDim = poGeometry->getDimension();
+        int nLastOrdinate = 0;
+        OGROCIStringBuf oElemInfo, oOrdinates;
+
+/* -------------------------------------------------------------------- */
+/*      Prepare eleminfo section.                                       */
+/* -------------------------------------------------------------------- */
+        oElemInfo.Appendf( 90, "%s(%d,NULL,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(",
+                           SDO_GEOMETRY, nDimension == 2 ? 2003 : 3003 );
+        oOrdinates.Append( "),MDSYS.SDO_ORDINATE_ARRAY(" );
+
+/* -------------------------------------------------------------------- */
+/*      Translate and return.                                           */
+/* -------------------------------------------------------------------- */
+        TranslateElementGroup( poGeometry, &oElemInfo, 
+                               nLastOrdinate, &oOrdinates );
+
+        oElemInfo.Append( oOrdinates.GetString() );
+        oElemInfo.Append( "))" );
+
+        return oElemInfo.StealString();
+    }
+
+/* ==================================================================== */
+/*      Handle a multi point geometry.                                  */
+/* ==================================================================== */
+    else if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPoint )
+    {
+        OGRMultiPoint *poMP = (OGRMultiPoint *) poGeometry;
         char *pszResult;
-        int  iOff, iVert, iRing, nBufSize;
+        int  iOff, iVert;
 
-/* -------------------------------------------------------------------- */
-/*      Work out buffer size required based on total vertex count       */
-/*      for all rings.                                                  */
-/* -------------------------------------------------------------------- */
-        nBufSize = 500;
-        for( iRing = -1; iRing < poPoly->getNumInteriorRings(); iRing++ )
-        {
-            if( iRing == -1 )
-                poRing = poPoly->getExteriorRing();
-            else
-                poRing = poPoly->getInteriorRing(iRing);
-            nBufSize += poRing->getNumPoints() * 51 + 30;
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Prepare base command.                                           */
-/* -------------------------------------------------------------------- */
-        pszResult = (char *) CPLMalloc(nBufSize);
+        pszResult = (char *) CPLMalloc(poMP->getNumGeometries() * 51 + 500);
 
         sprintf( pszResult, 
-                 "%s(%d,NULL,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(",
-                 SDO_GEOMETRY, nDim == 2 ? 2003 : 3003 );
-        iOff = strlen(pszResult);
-
-/* -------------------------------------------------------------------- */
-/*      Add elem_info portion data.                                     */
-/* -------------------------------------------------------------------- */
-        iVert = 0;
-        for( iRing = -1; iRing < poPoly->getNumInteriorRings(); iRing++ )
-        {
-            if( iRing == -1 )
-            {
-                poRing = poPoly->getExteriorRing();
-                sprintf(pszResult + iOff, "1,1003,1" );			
-            }
-            else
-            {
-                poRing = poPoly->getInteriorRing(iRing);
-                sprintf(pszResult + iOff, ",%d,2003,1",
-                        iVert * nDim + 1 );
-            }
-            iVert += poRing->getNumPoints();
-            iOff += strlen(pszResult+iOff);
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Add ordinates array.                                            */
-/* -------------------------------------------------------------------- */
-        int bNeedComma = FALSE;
-
-        sprintf( pszResult+iOff, "),MDSYS.SDO_ORDINATE_ARRAY(" );
-        iOff += strlen(pszResult+iOff);
+                 "%s(%d,NULL,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,1,%d),"
+                 "MDSYS.SDO_ORDINATE_ARRAY(", 
+                 SDO_GEOMETRY, nDimension*1000 + 5, poMP->getNumGeometries() );
         
-        for( iRing = -1; iRing < poPoly->getNumInteriorRings(); iRing++ )
+        iOff = strlen(pszResult);
+        for( iVert = 0; iVert < poMP->getNumGeometries(); iVert++ )
         {
-            if( iRing == -1 )
-            {
-                poRing = poPoly->getExteriorRing();
-            }
-            else
-            {
-                poRing = poPoly->getInteriorRing(iRing);
-            }
+            OGRPoint *poPoint = (OGRPoint *)poMP->getGeometryRef( iVert );
 
-            for( iVert = poRing->getNumPoints()-1; iVert >= 0; iVert-- )
-            {
-                CPLAssert( iOff < nBufSize - 60 );
+            if( iVert != 0 )
+                pszResult[iOff++] = ',';
 
-                if( bNeedComma )
-                    pszResult[iOff++] = ',';
-                else
-                    bNeedComma = TRUE;
-                
-                sprintf( pszResult + iOff, "%.16g,%.16g", 
-                         poRing->getX(iVert), poRing->getY(iVert) );
+            sprintf( pszResult + iOff, "%.16g,%.16g", 
+                     poPoint->getX(), poPoint->getY() );
+            iOff += strlen(pszResult+iOff);
+            if( nDimension == 3 )
+            {
+                sprintf( pszResult + iOff, ",%.16g", poPoint->getZ() );
                 iOff += strlen(pszResult+iOff);
-                if( nDim == 3 )
-                {
-                    sprintf( pszResult + iOff, ",%.16g", poRing->getZ(iVert) );
-                    iOff += strlen(pszResult+iOff);
-                }
             }
         }
         strcat( pszResult + iOff, "))" );
-
         return pszResult;
     }
 
-    return NULL;
+/* ==================================================================== */
+/*      Handle other geometry collections.                              */
+/* ==================================================================== */
+    else
+    {
+        int nLastOrdinate = 0;
+        OGROCIStringBuf oElemInfo, oOrdinates;
+        int nGType;
+
+/* -------------------------------------------------------------------- */
+/*      Identify the GType.                                             */
+/* -------------------------------------------------------------------- */
+        if( poGeometry->getGeometryType() == wkbMultiLineString )
+            nGType = nDimension * 1000 + 6;
+        else if( poGeometry->getGeometryType() == wkbMultiPolygon )
+            nGType = nDimension * 1000 + 7;
+        else if( poGeometry->getGeometryType() == wkbGeometryCollection )
+            nGType = nDimension * 1000 + 4;
+        else 
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Unexpected geometry type (%d/%s) in "
+                      "OGROCITableLayer::TranslateToSDOGeometry()",
+                      poGeometry->getGeometryType(), 
+                      poGeometry->getGeometryName() );
+            return NULL;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Prepare eleminfo section.                                       */
+/* -------------------------------------------------------------------- */
+        oElemInfo.Appendf( 90, "%s(%d,NULL,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(",
+                           SDO_GEOMETRY, nGType );
+        oOrdinates.Append( "),MDSYS.SDO_ORDINATE_ARRAY(" );
+
+/* -------------------------------------------------------------------- */
+/*      Translate each child in turn.                                   */
+/* -------------------------------------------------------------------- */
+        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeometry;
+        int  iChild;
+
+        for( iChild = 0; iChild < poGC->getNumGeometries(); iChild++ )
+        {
+            TranslateElementGroup( poGC->getGeometryRef( iChild ), &oElemInfo, 
+                                   nLastOrdinate, &oOrdinates );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Collect and return.                                             */
+/* -------------------------------------------------------------------- */
+        oElemInfo.Append( oOrdinates.GetString() );
+        oElemInfo.Append( "))" );
+
+        return oElemInfo.StealString();
+    }
 }
 
 /************************************************************************/
@@ -554,9 +684,23 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
 {
     OGROCISession      *poSession = poDS->GetSession();
     char		*pszCommand;
-    int                 i, bNeedComma;
+    int                 i, bNeedComma = FALSE;
     unsigned int        nCommandBufSize;;
 
+/* -------------------------------------------------------------------- */
+/*      Add extents of this geometry to the existing layer extents.     */
+/* -------------------------------------------------------------------- */
+    if( poFeature->GetGeometryRef() != NULL )
+    {
+        OGREnvelope  sThisExtent;
+        
+        poFeature->GetGeometryRef()->getEnvelope( &sThisExtent );
+        sExtent.Merge( sThisExtent );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Prepare SQL statement buffer.                                   */
+/* -------------------------------------------------------------------- */
     nCommandBufSize = 2000;
     pszCommand = (char *) CPLMalloc(nCommandBufSize);
 
@@ -567,11 +711,19 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
 
     if( poFeature->GetGeometryRef() != NULL )
     {
+        bNeedComma = TRUE;
         strcat( pszCommand, pszGeomName );
-        strcat( pszCommand, " " );					
     }
     
-    bNeedComma = poFeature->GetGeometryRef() != NULL;
+    if( pszFIDName != NULL )
+    {
+        if( bNeedComma )
+            strcat( pszCommand, ", " );
+        
+        strcat( pszCommand, pszFIDName );
+    }
+    
+
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         if( !poFeature->IsFieldSet( i ) )
@@ -623,10 +775,30 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Set the other fields.                                           */
+/*      Set the FID.                                                    */
 /* -------------------------------------------------------------------- */
     int nOffset = strlen(pszCommand);
 
+    if( pszFIDName != NULL )
+    {
+        long  nFID;
+
+        if( bNeedComma )
+            strcat( pszCommand+nOffset, ", " );
+        bNeedComma = TRUE;
+
+        nOffset += strlen(pszCommand+nOffset);
+
+        nFID = poFeature->GetFID();
+        if( nFID == -1 )
+            nFID = iNextFIDToWrite++;
+
+        sprintf( pszCommand+nOffset, "%ld", nFID );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set the other fields.                                           */
+/* -------------------------------------------------------------------- */
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         const char *pszStrValue = poFeature->GetFieldAsString(i);
@@ -722,7 +894,6 @@ OGRErr OGROCITableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 
 {
     OGROCISession      *poSession = poDS->GetSession();
-    char		szCommand[1024];
     char		szFieldType[256];
     OGRFieldDefn        oField( poFieldIn );
 
@@ -759,7 +930,7 @@ OGRErr OGROCITableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     else if( oField.GetType() == OFTString )
     {
         if( oField.GetWidth() == 0 || !bPreservePrecision )
-            strcpy( szFieldType, "VARCHAR" );
+            strcpy( szFieldType, "VARCHAR(1024)" );
         else
             sprintf( szFieldType, "CHAR(%d)", oField.GetWidth() );
     }
@@ -784,11 +955,16 @@ OGRErr OGROCITableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
-    OGROCIStatement oAddField( poSession );
+    OGROCIStringBuf     oCommand;
+    OGROCIStatement     oAddField( poSession );
 
-    sprintf( szCommand, "ALTER TABLE \"%s\" ADD \"%s\" %s", 
+    oCommand.MakeRoomFor( 40 + strlen(poFeatureDefn->GetName())
+                          + strlen(oField.GetNameRef())
+                          + strlen(szFieldType) );
+
+    sprintf( oCommand.GetString(), "ALTER TABLE \"%s\" ADD \"%s\" %s", 
              poFeatureDefn->GetName(), oField.GetNameRef(), szFieldType );
-    if( oAddField.Execute( szCommand ) != CE_None )
+    if( oAddField.Execute( oCommand.GetString() ) != CE_None )
         return OGRERR_FAILURE;
 
     poFeatureDefn->AddFieldDefn( &oField );
@@ -840,4 +1016,100 @@ int OGROCITableLayer::GetFeatureCount( int bForce )
     }
     
     return atoi(papszResult[0]);
+}
+
+/************************************************************************/
+/*                            SetDimension()                            */
+/************************************************************************/
+
+void OGROCITableLayer::SetDimension( int nNewDim )
+
+{
+    nDimension = nNewDim;
+}
+
+/************************************************************************/
+/*                          FinalizeNewLayer()                          */
+/*                                                                      */
+/*      Our main job here is to update the USER_SDO_GEOM_METADATA       */
+/*      table to include the correct array of dimension object with     */
+/*      the appropriate extents for this layer.  We may also do         */
+/*      spatial indexing at this point.                                 */
+/************************************************************************/
+
+void OGROCITableLayer::FinalizeNewLayer()
+
+{
+    OGROCIStringBuf  sDimUpdate;
+    double           dfResSize;
+
+/* -------------------------------------------------------------------- */
+/*      Prepare dimension update statement.                             */
+/* -------------------------------------------------------------------- */
+    sDimUpdate.Append( "UPDATE USER_SDO_GEOM_METADATA SET DIMINFO = " );
+    sDimUpdate.Append( "MDSYS.SDO_DIM_ARRAY(" );
+
+    if( sExtent.MaxX - sExtent.MinX > 400 )
+        dfResSize = 0.001;
+    else
+        dfResSize = 0.0000001;
+
+    sDimUpdate.Appendf(200,
+                       "MDSYS.SDO_DIM_ELEMENT('X',%.16g,%.16g,%.12g)",
+                       sExtent.MinX - dfResSize * 3,
+                       sExtent.MaxX + dfResSize * 3,
+                       dfResSize );
+    sDimUpdate.Appendf(200,
+                       ",MDSYS.SDO_DIM_ELEMENT('Y',%.16g,%.16g,%.12g)",
+                       sExtent.MinY - dfResSize * 3,
+                       sExtent.MaxY + dfResSize * 3,
+                       dfResSize );
+
+    // We choose this pretty arbitrarily under the assumption the Z 
+    // is elevation in some reasonable range.  It is somewhat hard to
+    // collect Z range information.
+    if( nDimension == 3 )
+    {
+        sDimUpdate.Append(",MDSYS.SDO_DIM_ELEMENT('Z',"
+                          "-100000.0,100000.0,0.002)");
+    }
+
+    sDimUpdate.Append( ")" );
+
+    sDimUpdate.Appendf( strlen(poFeatureDefn->GetName()) + 100,
+                        " WHERE table_name = '%s'", 
+                        poFeatureDefn->GetName() );
+
+/* -------------------------------------------------------------------- */
+/*      Execute the metadata update.                                    */
+/* -------------------------------------------------------------------- */
+    OGROCIStatement oExecStatement( poDS->GetSession() );
+
+    if( oExecStatement.Execute( sDimUpdate.GetString() ) != CE_None )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Try creating an index on the table now.  Use a simple 5         */
+/*      level quadtree based index.  Would R-tree be a better default?  */
+/* -------------------------------------------------------------------- */
+
+// Disable for now, spatial index creation always seems to cause me to 
+// lose my connection to the database!
+#ifdef notdef
+    OGROCIStringBuf  sIndexCmd;
+
+    sIndexCmd.Appendf( 10000, "CREATE INDEX %s_idx ON %s(%s) "
+                       "INDEXTYPE IS MDSYS.SPATIAL_INDEX "
+                       "PARAMETERS( 'SDO_LEVEL = 5' )",
+                       poFeatureDefn->GetName(), 
+                       poFeatureDefn->GetName(), 
+                       pszGeomName );
+
+    if( oExecStatement.Execute( sIndexCmd.GetString() ) != CE_None )
+    {
+        char szDropCommand[2000];
+        sprintf( szDropCommand, "DROP INDEX %s_idx", poFeatureDefn->GetName());
+        oExecStatement.Execute( szDropCommand );
+    }
+#endif
 }
