@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/10/24 14:22:49  warmerda
+ * Added worldfile read support (but not write/export).
+ *
  * Revision 1.14  2003/03/27 11:34:25  dron
  * Fixes for large file support.
  *
@@ -90,9 +93,14 @@ class PNMDataset : public RawDataset
 {
     FILE        *fpImage;       // image data file.
 
+    int         bGeoTransformValid;
+    double      adfGeoTransform[6];
+
   public:
                 PNMDataset();
                 ~PNMDataset();
+
+    virtual CPLErr GetGeoTransform( double * );
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -107,6 +115,13 @@ class PNMDataset : public RawDataset
 PNMDataset::PNMDataset()
 {
     fpImage = NULL;
+    bGeoTransformValid = FALSE;
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -119,6 +134,23 @@ PNMDataset::~PNMDataset()
     FlushCache();
     if( fpImage != NULL )
         VSIFCloseL( fpImage );
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr PNMDataset::GetGeoTransform( double * padfTransform )
+
+{
+
+    if( bGeoTransformValid )
+    {
+        memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
+        return CE_None;
+    }
+    else
+        return CE_Failure;
 }
 
 /************************************************************************/
@@ -273,6 +305,9 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
+    poDS->bGeoTransformValid = 
+        GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+                           poDS->adfGeoTransform );
     return( poDS );
 }
 
