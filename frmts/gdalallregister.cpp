@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.25  2000/11/27 19:03:44  warmerda
+ * added JDEM format
+ *
  * Revision 1.24  2000/11/16 14:48:53  warmerda
  * moved GXF down in driver ordering
  *
@@ -123,6 +126,7 @@ void GDALRegister_HKV(void);
 void GDALRegister_PNG(void);
 void GDALRegister_JPEG(void);
 void GDALRegister_MEM(void);
+void GDALRegister_JDEM(void);
 void GDALRegister_GRASS(void);
 CPL_C_END
 
@@ -215,6 +219,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_mem
     GDALRegister_MEM();
+#endif
+
+#ifdef FRMT_jdem
+    GDALRegister_JDEM();
 #endif
 
 #ifdef FRMT_raw
