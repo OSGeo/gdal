@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2003/03/26 14:59:49  warmerda
+ * updated SWQ API
+ *
  * Revision 1.44  2002/10/29 20:16:59  warmerda
  * added debugging
  *
@@ -572,7 +575,7 @@ char *CSFRowset::ProcessSpecialFields( const char *pszRawCommand,
     for( i = 0; i < m_poDS->GetLayerCount(); i++ )
     {
         if( EQUAL(m_poDS->GetLayer(i)->GetLayerDefn()->GetName(),
-                  select_info->from_table) )
+                  select_info->table_defs[0].table_name) )
         {
             poLayer = m_poDS->GetLayer(i);
             break;
@@ -581,20 +584,25 @@ char *CSFRowset::ProcessSpecialFields( const char *pszRawCommand,
 
     if( poLayer != NULL )
     {
+        swq_field_list sFieldList;
         char **papszFieldNames;
         int  nFieldCount = poLayer->GetLayerDefn()->GetFieldCount() + 2;
 
-        papszFieldNames = (char **) CPLMalloc(sizeof(char *) * nFieldCount);
-        papszFieldNames[0] = "FID";
+        memset( &sFieldList, 0, sizeof(sFieldList) );
+
+        sFieldList.count = nFieldCount;
+        sFieldList.names = (char **) CPLMalloc(sizeof(char *)*(nFieldCount+1));
+
+        sFieldList.names[0] = "FID";
         for( i = 0; i < nFieldCount-2; i++ )
-            papszFieldNames[i+1] = (char *) 
+            sFieldList.names[i+1] = (char *) 
                 poLayer->GetLayerDefn()->GetFieldDefn(i)->GetNameRef();
 
-        papszFieldNames[nFieldCount-1] = "OGIS_GEOMETRY";
+        sFieldList.names[nFieldCount-1] = "OGIS_GEOMETRY";
 
-        swq_select_expand_wildcard( select_info, nFieldCount, papszFieldNames);
+        swq_select_expand_wildcard( select_info, &sFieldList );
         
-        CPLFree( papszFieldNames );
+        CPLFree( sFieldList.names );
     }
     
 /* -------------------------------------------------------------------- */
