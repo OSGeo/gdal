@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/03/06 21:50:10  warmerda
+ * fixed bug with setting nBands
+ *
  * Revision 1.11  2000/03/06 02:20:56  warmerda
  * added reference counting
  *
@@ -176,6 +179,8 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
 
         for( i = nBands; i < nNewBand; i++ )
             papoBands[i] = NULL;
+
+        nBands = MAX(nBands,nNewBand);
     }
 
 /* -------------------------------------------------------------------- */
