@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2002/10/21 18:05:42  warmerda
+ * added AutoSkipDrivers() method on driver manager
+ *
  * Revision 1.37  2002/09/11 14:17:52  warmerda
  * make SetDescription() and GetDescription() virtual
  *
@@ -593,6 +596,7 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     void        DeregisterDriver( GDALDriver * );
 
     void        AutoLoadDrivers();
+    void        AutoSkipDrivers();
 
     const char *GetHome();
     void        SetHome( const char * );
