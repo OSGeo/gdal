@@ -26,6 +26,9 @@
  *
  * 
  * $Log$
+ * Revision 1.7  2000/01/10 15:43:06  warmerda
+ * Fixed debug statement.
+ *
  * Revision 1.6  2000/01/10 15:31:02  warmerda
  * Added debug statement in GDALOpen.
  *
@@ -149,7 +152,7 @@ GDALDatasetH GDALOpen( const char * pszFilename, GDALAccess eAccess )
                 poDS->poDriver = poDriver;
 
             CPLDebug( "GDAL", "GDALOpen(%s) succeeds as %s.\n",
-                      poDriver->pszLongName );
+                      pszFilename, poDriver->pszLongName );
             
             return (GDALDatasetH) poDS;
         }
