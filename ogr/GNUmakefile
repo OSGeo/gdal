@@ -35,22 +35,22 @@ very-clean: clean
 	rm -rf html rtf
 
 ogrinfo$(EXE):	ogrinfo.o  $(EXE_DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) ogrinfo.o $(CONFIG_LIBS) -o ogrinfo$(EXE)
+	$(LD) $(LNK_FLAGS) ogrinfo.o $(CONFIG_LIBS) -o ogrinfo$(EXE)
 
 test_ogrsf$(EXE):	test_ogrsf.o  $(EXE_DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) test_ogrsf.o $(CONFIG_LIBS) -o test_ogrsf$(EXE)
+	$(LD) $(LNK_FLAGS) test_ogrsf.o $(CONFIG_LIBS) -o test_ogrsf$(EXE)
 
 ogr2ogr$(EXE):	ogr2ogr.o  $(EXE_DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) ogr2ogr.o $(CONFIG_LIBS) -o ogr2ogr$(EXE)
+	$(LD) $(LNK_FLAGS) ogr2ogr.o $(CONFIG_LIBS) -o ogr2ogr$(EXE)
 
 sdts2mi$(EXE):	sdts2mi.o  $(EXE_DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) sdts2mi.o $(CONFIG_LIBS) -o sdts2mi$(EXE)
+	$(LD) $(LNK_FLAGS) sdts2mi.o $(CONFIG_LIBS) -o sdts2mi$(EXE)
 
 testepsg$(EXE):	testepsg.o  $(EXE_DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) testepsg.o $(CONFIG_LIBS) -o testepsg$(EXE)
+	$(LD) $(LNK_FLAGS) testepsg.o $(CONFIG_LIBS) -o testepsg$(EXE)
 
 ogrtindex$(EXE):	ogrtindex.o  $(EXE_DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) ogrtindex.o $(CONFIG_LIBS) -o ogrtindex$(EXE)
+	$(LD) $(LNK_FLAGS) ogrtindex.o $(CONFIG_LIBS) -o ogrtindex$(EXE)
 
 lib:	sublibs $(OBJ)
 
