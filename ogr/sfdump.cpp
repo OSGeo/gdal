@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  1999/05/25 19:46:28  warmerda
+ * hardcode_jet_clsid
+ *
  * Revision 1.12  1999/05/24 01:08:08  warmerda
  * Added "SF" provider for Kens new provider.
  *
@@ -58,7 +61,7 @@
 
 // Get various classid.
 #include "msdaguid.h"
-#include "MSjetoledb.h"
+//#include "MSjetoledb.h"
 #include "sfclsid.h"
 #include "sfiiddef.h"
 
@@ -88,7 +91,8 @@ static void Usage()
 void main( int nArgc, char ** papszArgv )
 {
     CLSID       &hProviderCLSID = (CLSID) CLSID_JETOLEDB_3_51;
-    const char *pszDataSource = "f:\\opengis\\SFData\\World.mdb";
+//    CLSID       &hProviderCLSID = (CLSID) CLSID_SFProvider;
+    const char *pszDataSource = "d:\\opengis\\gdal\\ogr\\World.mdb";
     const char *pszTable = "worldmif_geometry";
     const char *pszGeomColumn = NULL;
     HRESULT     hr;

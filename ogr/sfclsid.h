@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/05/25 19:46:28  warmerda
+ * hardcode_jet_clsid
+ *
  * Revision 1.5  1999/05/24 01:08:33  warmerda
  * Added CLSID_SFProvider for Ken's provider.
  *
@@ -64,5 +67,8 @@ DEFINE_GUID(CLSID_CadcorpSFSpatialReferenceFactory,
 
 DEFINE_GUID(CLSID_OGRComClassFactory,
             0xbc518ff0,0x08dd,0x11d3,0xb3,0xf9,0x00,0x80,0xc8,0xe6,0x25,0x64);
+
+DEFINE_GUID(CLSID_JETOLEDB_3_51,
+	    0xdee35060,0x506b,0x11cf,0xb1,0xaa,0x00,0xaa,0x00,0xb8,0xde,0x95);
 
 #endif
