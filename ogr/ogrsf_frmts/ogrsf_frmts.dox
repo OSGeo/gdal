@@ -1,0 +1,221 @@
+/************************************************************************/
+/*                         OGRSFDriverRegistrar                         */
+/************************************************************************/
+
+/**
+ 
+  \fn OGRDataSource *OGRSFDriverRegistrar::Open( const char *pszName, int bUpdate = FALSE );
+
+  Open a file / data source with one of the registered drivers.
+
+  This method loops through all the drivers registered with the driver
+  manager trying each until one succeeds with the give data source.  This
+  method is static.  Applications don't normally need to use any other
+  OGRSFDriverRegistrar methods directly, not do they normally need to have
+  a pointer to an OGRSFDriverRegistrar instance.
+
+  If this method fails, CPLGetLastErrorMsg() can be used to check if there
+  is an error message explaining why.
+
+  @param pszName the name of the file, or data source to open.
+  @param bUpdate FALSE for read-only access (the default) or TRUE for 
+         read-write access.
+
+  @return NULL on error or if the pass name is not supported by this driver,
+  otherwise a pointer to an OGRDataSource.  This OGRDataSource should be
+  closed by deleting the object when it is no longer needed.
+
+  <b>Example:</b>
+
+  <pre>
+    OGRDataSource	*poDS;
+
+    poDS = OGRSFDriverRegistrar::Open( "polygon.shp" );
+    if( poDS == NULL )
+    {
+        return;
+    }
+
+    ... use the data source ...
+
+    delete poDS;
+  </pre>
+
+*/
+
+/**
+  \fn OGRSFDriverRegistrar *OGRSFDriverRegistrar::GetRegistrar();
+
+  Return the driver manager, creating one if none exist. 
+
+  @return the driver manager.
+
+*/
+
+/** 
+  \fn void OGRSFDriverRegistrar::RegisterDriver( OGRSFDriver * poDriver );
+  
+  Add a driver to the list of registered drivers.
+
+  If the passed driver is already registered (based on pointer comparison) 
+  then the driver isn't registered.  New drivers are added at the end of
+  the list of registered drivers.
+
+  @param poDriver the driver to add.
+
+*/
+
+/**
+
+  \fn int OGRSFDriverRegistrar::GetDriverCount();
+
+  Fetch the number of registered drivers.
+
+  @return the driver count.
+
+*/
+
+/**
+ 
+  \fn OGRSFDriver * OGRSFDriverRegistrar::GetDriver( int iDriver );
+
+  Fetch the indicated driver.
+
+  @param iDriver the driver index, from 0 to GetDriverCount()-1.
+
+  @return pointer to the driver, or NULL if iDriver is out of range.
+
+*/
+
+
+/************************************************************************/
+/*                             OGRSFDriver                              */
+/************************************************************************/
+
+
+/** 
+
+  \fn const char *OGRSFDriver::GetName();
+
+  Fetch name of driver (file format).  This name should be relatively short
+  (10-40 characters), and should reflect the underlying file format.  For
+  instance "ESRI Shapefile".
+
+  @return driver name.  This is an internal string and should not be modified
+  or freed. 
+*/
+
+/**
+
+  \fn OGRDataSource *OGRSFDriver::Open( const char *pszName, int bUpdate );
+
+  Attempt to open file with this driver. 
+
+  This method is what OGRSFDriverRegistrar uses to implement its Open() method.
+  See it for more details.
+
+  @param pszName the name of the file, or data source to try and open.
+  @param bUpdate TRUE if update access is required, otherwise FALSE (the
+  default).
+
+  @return NULL on error or if the pass name is not supported by this driver,
+  otherwise a pointer to an OGRDataSource.  This OGRDataSource should be
+  closed by deleting the object when it is no longer needed.
+
+*/
+
+/************************************************************************/
+/*                            OGRDataSource                             */
+/************************************************************************/
+
+/** 
+ \fn const char *OGRDataSource::GetName();
+
+ Returns the name of the data source.  This string should be sufficient to
+ open the data source if passed to the same OGRSFDriver that this data
+ source was opened with, but it need not be exactly the same string that
+ was used to open the data source.  Normally this a filename. 
+
+ @return pointer to an internal name string which should not be modified
+ or freed by the caller.
+
+*/
+
+/**
+ \fn int OGRDataSource::GetLayerCount();
+
+ Get the number of layers in this data source.
+
+ @return layer count.
+
+*/
+
+/**
+ \fn OGRLayer *OGRDataSource::GetLayer(int iLayer);
+
+ Fetch a layer by index.  The returned layer remains owned by the OGRDataSource
+ and should not be deleted by the application.
+
+ @param iLayer a layer number between 0 and GetLayerCount()-1.
+
+ @return the layer, or NULL if iLayer is out of range or an error occurs.
+
+*/
+
+/************************************************************************/
+/*                               OGRLayer                               */
+/************************************************************************/
+
+/**
+ \fn void OGRLayer::ResetReading();
+
+ Reset feature reading to start on the first feature.  This affects 
+ GetNextFeature().
+
+*/
+
+/**
+ \fn OGRFeature *OGRLayer::GetNextFeature( long * pnFeatureId = NULL );
+
+ Fetch the next available feature from this layer.  The returned feature
+ becomes the responsiblity of the caller to delete.  It is critical that
+ all features associated with an OGRLayer (more specifically an 
+ OGRFeatureDefn) be deleted before that layer/datasource is deleted.
+
+ This method implements sequential access to the features of a layer.  The
+ ResetReading() method can be used to start at the beginning again.  Random
+ reading, writing and spatial filtering will be added to the OGRLayer in 
+ the future.
+
+ @param pnFeatureId if not NULL the feature id of the returned feature will
+ be returned.
+
+ @return a feature, or NULL if no more features are available. 
+
+*/
+
+/** 
+ \fn OGRFeatureDefn *OGRLayer::GetLayerDefn();
+
+ Fetch the schema information for this layer.
+
+ The returned OGRFeatureDefn is owned by the OGRLayer, and should not be
+ modified or freed by the application.  It encapsulates the attribute schema
+ of the features of the layer. 
+
+ @return feature definition.
+
+*/
+
+/**
+
+ \fn OGRSpatialReference *OGRLayer::GetSpatialRef();
+
+ Fetch the spatial reference system for this layer. 
+
+ The returned object is owned by the OGRLayer and should not be modified
+ or freed by the application.  
+
+ @return spatial reference, or NULL if there isn't one.
+
+*/
