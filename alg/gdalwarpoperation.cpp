@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/04/29 13:44:55  warmerda
+ * fixed some memory leaks
+ *
  * Revision 1.18  2004/03/28 21:22:46  warmerda
  * Substantial improvement in default selection of eWorkingDataType.  In some
  * cases we need to use a more refined data type to preserve nodata values.
@@ -1417,6 +1420,17 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     CPLFree( oWK.papabySrcImage[0] );
     CPLFree( oWK.papabySrcImage );
     CPLFree( oWK.papabyDstImage );
+
+    if( oWK.papanBandSrcValid != NULL )
+    {
+        for( i = 0; i < oWK.nBands; i++ )
+            CPLFree( oWK.papanBandSrcValid[i] );
+        CPLFree( oWK.papanBandSrcValid );
+    }
+    CPLFree( oWK.panUnifiedSrcValid );
+    CPLFree( oWK.pafUnifiedSrcDensity );
+    CPLFree( oWK.panDstValid );
+    CPLFree( oWK.pafDstDensity );
     
     return eErr;
 }
