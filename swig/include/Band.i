@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.10  2005/02/23 17:44:00  kruland
+ * Added GetMetadata, SetMetadata, SetRasterColorInterpretation.
+ *
  * Revision 1.9  2005/02/22 23:27:39  kruland
  * Implement GetRasterColorTable/SetRasterColorTable.
  *
@@ -107,13 +110,33 @@ public:
   GDALDataType DataType;
 %mutable;
 
+%apply (char **dict) { char ** };
+  char ** GetMetadata( const char * pszDomain = "" ) {
+    return GDALGetMetadata( self, pszDomain );
+  }
+%clear char **;
+
+%apply (char **dict) { char ** papszMetadata };
+  CPLErr SetMetadata( char ** papszMetadata, const char * pszDomain = "" ) {
+    return GDALSetMetadata( self, papszMetadata, pszDomain );
+  }
+%clear char **papszMetadata;
+
   GDALColorInterp GetRasterColorInterpretation() {
     return GDALGetRasterColorInterpretation( self );
+  }
+
+  CPLErr SetRasterColorInterpretation( GDALColorInterp val ) {
+    return GDALSetRasterColorInterpretation( self, val );
   }
 
   double GetNoDataValue() {
     int noval;
     return GDALGetRasterNoDataValue( self, &noval );
+  }
+
+  CPLErr SetNoDataValue( double d) {
+    return GDALSetRasterNoDataValue( self, d );
   }
 
   double GetMinimum() {
@@ -134,10 +157,6 @@ public:
   double GetScale() {
     int noval;
     return GDALGetRasterScale( self, &noval );
-  }
-
-  CPLErr SetNoDataValue( double d) {
-    return GDALSetRasterNoDataValue( self, d );
   }
 
   int GetOverviewCount() {
