@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/01/22 19:23:11  warmerda
+ * Fixed bug with offset into arrays of structures.
+ *
  * Revision 1.2  1999/01/22 17:37:59  warmerda
  * Fixed up support for variable sizes, and arrays of variable sized objects
  *
@@ -473,7 +476,7 @@ void *HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
             int		iIndexCounter;
 
             for( iIndexCounter = 0;
-                 iIndexCounter < nIndexValue-1;
+                 iIndexCounter < nIndexValue;
                  iIndexCounter++ )
             {
                 nExtraOffset +=
