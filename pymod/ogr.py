@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.46  2005/02/07 21:37:06  hobu
+# Docstring added to __getattr__ for Feature
+#
 # Revision 1.45  2005/02/07 16:52:28  hobu
 # Added a __copy__ method for Geometry.
 # Added capabilities constants for Driver, DataSource,
@@ -733,6 +736,7 @@ class Feature:
         return self.Clone()
 
     def __getattr__(self, name):
+        """Returns the values of fields by the given name"""
         try:
             names = []
             for i in range(self.GetFieldCount()):
