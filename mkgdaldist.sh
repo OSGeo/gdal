@@ -47,13 +47,6 @@ rm -rf gdal/dist_docs
 rm -f gdal/VERSION
 echo $GDAL_VERSION > gdal/VERSION
 
-# Build GDAL/OGR documentation
-cd gdal
-make docs
-cd ogr
-make docs
-cd ../..
-
 mv gdal gdal-${GDAL_VERSION}
 
 rm -f ../gdal-${GDAL_VERSION}.tar.gz ../gdal${COMPRESSED_VERSION}.zip
