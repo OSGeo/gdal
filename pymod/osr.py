@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.29  2003/06/20 18:28:15  warmerda
+# added all the projection specific Set methods
+#
 # Revision 1.28  2003/06/10 09:26:55  dron
 # Added SetAngularUnits() and GetAngularUnits().
 #
@@ -326,6 +329,102 @@ class SpatialReference:
 
     def __str__( self ):
         return self.ExportToPrettyWkt()
+
+    def SetACEA( self, stdp1, stdp2, clat, clong, fe, fn ):
+	return _gdal.OSRSetACEA( self._o, stdp1, stdp2, clat, clong, fe, fn )
+
+    def SetAE( self, clat, clong, fe, fn ):
+	return _gdal.OSRSetAE( self._o, clat, clong, fe, fn )
+
+    def SetCEA( self, stdp1, cm, fe, fn ):
+	return _gdal.OSRSetCEA( self._o, stdp1, cm, fe, fn )
+
+    def SetCS( self, clat, clong, fe, fn ):
+	return _gdal.OSRSetCS( self._o, clat, clong, fe, fn )
+
+    def SetEC( self, stdp1, stdp2, clat, clong, fe, fn ):
+	return _gdal.OSRSetEC( self._o, stdp1, stdp2, clat, clong, fe, fn )
+
+    def SetEckertIV( self, cm, fe, fn ):
+	return _gdal.OSRSetEckertIV( self._o, cm, fe, fn )
+
+    def SetEckertVI( self, cm, fe, fn ):
+	return _gdal.OSRSetEckertVI( self._o, cm, fe, fn )
+
+    def SetEquirectangular( self, clat, clong, fe, fn ):
+	return _gdal.OSRSetEquirectangular( self._o, clat, clong, fe, fn )
+
+    def SetGS( self, cm, fe, fn ):
+	return _gdal.OSRSetGS( self._o, cm, fe, fn )
+
+    def SetGnomonic( self, clat, clong, fe, fn ):
+	return _gdal.OSRSetGnomic( self._o, clat, clong, fe, fn )
+
+    def SetHOM( self, clat, clong, azi, recttoskew, scale, fe, fn ):
+	return _gdal.OSRSetHOM( self._o, clat, clong, azi, recttoskew, scale, fe, fn )
+
+    def SetKrovak( self, clat, clong, azi, pstdparlat, scale, fe, fn ):
+	return _gdal.OSRSetKrovak( self._o, clat, clong, azi, pstdparlat, scale, fe, fn )
+
+    def SetLAEA( self, clat, clong, fe, fn ):
+	return _gdal.OSRSetLAEA( self._o, clat, clong, fe, fn )
+
+    def SetLCC( self, stdp1, stdp2, clat, clong, fe, fn ):
+	return _gdal.OSRSetLCC( self._o, stdp1, stdp2, clat, clong, fe, fn )
+
+    def SetLCCB( self, stdp1, stdp2, clat, clong, fe, fn ):
+	return _gdal.OSRSetLCCB( self._o, stdp1, stdp2, clat, clong, fe, fn )
+
+    def SetLCC1SP( self, clat, clong, scale, fe, fn ):
+	return _gdal.OSRSetLCC1SP( self._o, clat, clong, scale, fe, fn )
+
+    def SetMC( self, clat, clong, fe, fn ):
+	return _gdal.OSRSetMC( self._o, clat, clong, fe, fn )
+
+    def SetMercator( self, clat, clong, scale, fe, fn ):
+	return _gdal.OSRSetMercator( self._o, clat, clong, scale, fe, fn )
+
+    def SetMollweide( self, cm, fe, fn ):
+	return _gdal.OSRSetMollweide( self._o, cm, fe, fn )
+
+    def SetNZMG( self, clat, clong, fe, fn ):
+	return _gdal.OSRSetNZMG( self._o, clat, clong, fe, fn )
+
+    def SetOS( self, olat, cm, fe, fn ):
+	return _gdal.OSRSetOS( self._o, olat, cm, fe, fn )
+
+    def SetOrthographic( self, clat, clong, fe, fn ):
+	return _gdal.OSRSetOrthographic( self._o, clat, clong, fe, fn )
+
+    def SetPolyconic( self, clat, clong, fe, fn ):
+	return _gdal.OSRSetPolyconic( self._o, clat, clong, fe, fn )
+
+    def SetPS( self, clat, clong, fe, fn ):
+	return _gdal.OSRSetPS( self._o, clat, clong, fe, fn )
+
+    def SetRobinson( self, clong, fe, fn ):
+	return _gdal.OSRSetRobinson( self._o, clong, fe, fn )
+
+    def SetSinusoidal( self, clong, fe, fn ):
+	return _gdal.OSRSetSinusoidal( self._o, clong, fe, fn )
+
+    def SetStereographic( self, clat, clong, scale, fe, fn ):
+	return _gdal.OSRSetStereographic( self._o, clat, clong, scale, fe, fn )
+
+    def SetSOC( self, lato, cm, fe, fn ):
+	return _gdal.OSRSetSOC( self._o, lato, cm, fe, fn )
+
+    def SetTM( self, clat, clong, scale, fe, fn ):
+	return _gdal.OSRSetTM( self._o, clat, clong, scale, fe, fn )
+
+    def SetTMSO( self, clat, clong, scale, fe, fn ):
+	return _gdal.OSRSetTMSO( self._o, clat, clong, scale, fe, fn )
+
+    def SetTMG( self, clat, clong, fe, fn ):
+	return _gdal.OSRSetTMG( self._o, clat, clong, fe, fn )
+
+    def SetVDG( self, clong, fe, fn ):
+	return _gdal.OSRSetVDG( self._o, clong, fe, fn )
 
     
 class CoordinateTransformation:
