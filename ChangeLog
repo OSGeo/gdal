@@ -1,3 +1,8 @@
+2003-02-03  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* /gdal/frmts/raw/pnmdataset.cpp: Added support for reading
+	and writing 16-bit images.
+
 2003-01-31  Andrey Kiselev  <dron@remotesensing.org>
 	
 	* /gdal/frmts/jpeg2000/jpeg2000dataset.cpp: Added support for reading
