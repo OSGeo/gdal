@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2004/04/02 17:44:55  warmerda
+ * SELECT in caps for readability
+ *
  * Revision 1.20  2004/01/19 18:48:11  warmerda
  * added commit after DROP TABLE and before dropping sequence
  *
@@ -577,7 +580,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
         }
 
         sprintf( szCommand, 
-                 "SELECT AddGeometryColumn('%s','%s','wkb_geometry',%d,'%s',%d)",
+                 "select AddGeometryColumn('%s','%s','wkb_geometry',%d,'%s',%d)",
                  pszDBName, pszLayerName, nSRSId, pszGeometryType, 3 );
 
         CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
