@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/08/11 19:00:37  warmerda
+ * added GDALSetGenImgProjTransformerDstGeoTransform
+ *
  * Revision 1.15  2004/08/09 14:38:27  warmerda
  * added serialize/deserialize support for warpoptions and transformers
  *
@@ -556,7 +559,38 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
     
     return psInfo;
 }
-    
+
+/************************************************************************/
+/*            GDALSetGenImgProjTransformerDstGeoTransform()             */
+/************************************************************************/
+
+/**
+ * Set GenImgProj output geotransform.
+ *
+ * Normally the "destination geotransform", or transformation between 
+ * georeferenced output coordinates and pixel/line coordinates on the
+ * destination file is extracted from the destination file by 
+ * GDALCreateGenImgProjTransformer() and stored in the GenImgProj private
+ * info.  However, sometimes it is inconvenient to have an output file
+ * handle with appropriate geotransform information when creating the
+ * transformation.  For these cases, this function can be used to apply
+ * the destination geotransform. 
+ *
+ * @param hTransformArg the handle to update.
+ * @param padfGeoTransform the destination geotransform to apply (six doubles).
+ */
+
+void GDALSetGenImgProjTransformerDstGeoTransform( 
+    void *hTransformArg, const double *padfGeoTransform )
+
+{
+    GDALGenImgProjTransformInfo *psInfo = 
+        (GDALGenImgProjTransformInfo *) hTransformArg;
+
+    memcpy( psInfo->adfDstGeoTransform, padfGeoTransform, sizeof(double) * 6 );
+    GDALInvGeoTransform( psInfo->adfDstGeoTransform, 
+                         psInfo->adfDstInvGeoTransform );
+}
 
 /************************************************************************/
 /*                  GDALDestroyGenImgProjTransformer()                  */

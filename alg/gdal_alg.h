@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/08/11 19:00:06  warmerda
+ * added GDALSetGenImgProjTransformerDstGeoTransform
+ *
  * Revision 1.17  2004/08/09 14:38:27  warmerda
  * added serialize/deserialize support for warpoptions and transformers
  *
@@ -133,6 +136,8 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
                                  GDALDatasetH hDstDS, const char *pszDstWKT,
                                  int bGCPUseOK, double dfGCPErrorThreshold,
                                  int nOrder );
+void CPL_DLL GDALSetGenImgProjTransformerDstGeoTransform( void *, 
+                                                          const double * );
 void CPL_DLL GDALDestroyGenImgProjTransformer( void * );
 int CPL_DLL GDALGenImgProjTransform( 
     void *pTransformArg, int bDstToSrc, int nPointCount,
