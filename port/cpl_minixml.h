@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/03/24 16:46:48  warmerda
+ * added CPLStripXMLNamespace
+ *
  * Revision 1.6  2002/11/16 20:38:34  warmerda
  * added support for literals like DOCTYPE
  *
@@ -94,6 +97,9 @@ CPLXMLNode CPL_DLL *CPLCreateXMLElementAndValue( CPLXMLNode *psParent,
 CPLXMLNode CPL_DLL *CPLCloneXMLTree( CPLXMLNode *psTree );
 int        CPL_DLL CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
                                    const char *pszValue );
+void       CPL_DLL CPLStripXMLNamespace( CPLXMLNode *psRoot, 
+                                         const char *pszNameSpace, 
+                                         int bRecurse );
 
 CPL_C_END
 
