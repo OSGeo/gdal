@@ -191,6 +191,91 @@ if test "$PNG_SETTING" != "no" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Select a libtiff library to use.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(libtiff,[  --with-libtiff=ARG      Libtiff library to use (ARG=internal, yes or path)],,)
+
+if test "$with_libtiff" = "yes" -o "$with_libtiff" = "" ; then
+
+  AC_CHECK_LIB(tiff,TIFFWriteCheck,TIFF_SETTING=external,TIFF_SETTING=internal,)
+
+  dnl Cygwin takes a somewhat restrictive view of what should be exported
+  dnl from the dll, so don't use the external library if missing semi-private
+  dnl functions.
+  if test "$TIFF_SETTING" = "external" ; then
+    AC_CHECK_LIB(tiff,_TIFFsetDoubleArray,TIFF_SETTING=external,TIFF_SETTING=internal,)
+  fi
+
+  if test "$TIFF_SETTING" = "external" ; then   
+    LIBS="-ltiff $LIBS"
+    echo "using pre-installed libtiff."
+  else
+    echo "using internal TIFF code."
+  fi
+
+elif test "$with_libtiff" = "internal" ; then
+
+  TIFF_SETTING=internal
+
+  echo "using internal TIFF code."
+
+else
+
+  TIFF_SETTING=external
+  if test -r $with_libtiff/tiff.h ; then
+    LIBS="-L$with_libtiff -ltiff $LIBS"
+    EXTRA_INCLUDES="-I$with_libtiff $EXTRA_INCLUDES"
+  else
+    LIBS="-L$with_libtiff/lib -ltiff $LIBS"
+    EXTRA_INCLUDES="-I$with_libtiff/include $EXTRA_INCLUDES"
+  fi
+
+  echo "using libtiff from $with_libtiff."
+fi
+
+AC_SUBST(TIFF_SETTING,$TIFF_SETTING)
+
+dnl ---------------------------------------------------------------------------
+dnl Select a libgeotiff library to use.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(geotiff,[  --with-geotiff=ARG      Libgeotiff library to use (ARG=internal, yes or path)],,)
+
+if test "$with_geotiff" = "yes" -o "$with_geotiff" = "" ; then
+
+  AC_CHECK_LIB(geotiff,GTIFGetDefn,GEOTIFF_SETTING=external,GEOTIFF_SETTING=internal,)
+
+  if test "$GEOTIFF_SETTING" = "external" ; then   
+    LIBS="-lgeotiff $LIBS"
+    echo "using pre-installed libgeotiff."
+  else
+    echo "using internal GeoTIFF code."
+  fi
+
+elif test "$with_geotiff" = "internal" ; then
+
+  GEOTIFF_SETTING=internal
+
+  echo "using internal GeoTIFF code."
+
+else
+
+  GEOTIFF_SETTING=external
+  if test -r $with_geotiff/libgeotiff.a ; then
+    LIBS="-L$with_geotiff -lgeotiff $LIBS"
+    EXTRA_INCLUDES="-I$with_libtiff $EXTRA_INCLUDES"
+  else
+    LIBS="-L$with_geotiff/lib -lgeotiff $LIBS"
+    EXTRA_INCLUDES="-I$with_libtiff/include $EXTRA_INCLUDES"
+  fi
+
+  echo "using libgeotiff from $with_geotiff."
+fi
+
+AC_SUBST(GEOTIFF_SETTING,$GEOTIFF_SETTING)
+
+dnl ---------------------------------------------------------------------------
 dnl Select a JPEG Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
@@ -205,6 +290,26 @@ if test "$with_jpeg" = "no" ; then
 elif test "$with_jpeg" = "yes" -o "$with_jpeg" = "" ; then
 
   AC_CHECK_LIB(jpeg,jpeg_read_scanlines,JPEG_SETTING=external,JPEG_SETTING=internal,)
+  AC_CHECK_HEADERS(jpeglib.h)
+
+  if test "$JPEG_SETTING" = "external" -a "$ac_cv_header_jpeglib_h" = "no" ; then
+    JPEG_SETTING=internal
+  fi
+
+  if test "$JPEG_SETTING" = "external" -a "$TIFF_SETTING" = "internal" ; then
+    AC_MSG_CHECKING([for width_in_blocks in jpeglib.h])
+
+    rm -f conftest.c
+    echo '#include "jpeglib.h"' >> conftest.c
+    echo 'int main() { jpeg_component_info *compptr=0; int i; i = comptr->width_in_blocks; }' >> conftest.c
+    if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
+      AC_MSG_RESULT([yes])
+    else
+      AC_MSG_RESULT([no])
+      JPEG_SETTING=internal
+    fi
+    rm -f conftest*
+  fi
 
   if test "$JPEG_SETTING" = "external" ; then   
     LIBS="-ljpeg $LIBS"
@@ -279,84 +384,6 @@ AC_SUBST(GIF_SETTING,$GIF_SETTING)
 if test "$GIF_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="gif $OPT_GDAL_FORMATS"
 fi
-
-dnl ---------------------------------------------------------------------------
-dnl Select a libtiff library to use.
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(libtiff,[  --with-libtiff=ARG      Libtiff library to use (ARG=internal, yes or path)],,)
-
-if test "$with_libtiff" = "yes" -o "$with_libtiff" = "" ; then
-
-  AC_CHECK_LIB(tiff,TIFFWriteCheck,TIFF_SETTING=external,TIFF_SETTING=internal,)
-
-  if test "$TIFF_SETTING" = "external" ; then   
-    LIBS="-ltiff $LIBS"
-    echo "using pre-installed libtiff."
-  else
-    echo "using internal TIFF code."
-  fi
-
-elif test "$with_libtiff" = "internal" ; then
-
-  TIFF_SETTING=internal
-
-  echo "using internal TIFF code."
-
-else
-
-  TIFF_SETTING=external
-  if test -r $with_libtiff/tiff.h ; then
-    LIBS="-L$with_libtiff -ltiff $LIBS"
-    EXTRA_INCLUDES="-I$with_libtiff $EXTRA_INCLUDES"
-  else
-    LIBS="-L$with_libtiff/lib -ltiff $LIBS"
-    EXTRA_INCLUDES="-I$with_libtiff/include $EXTRA_INCLUDES"
-  fi
-
-  echo "using libtiff from $with_libtiff."
-fi
-
-AC_SUBST(TIFF_SETTING,$TIFF_SETTING)
-
-dnl ---------------------------------------------------------------------------
-dnl Select a libgeotiff library to use.
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(geotiff,[  --with-geotiff=ARG      Libgeotiff library to use (ARG=internal, yes or path)],,)
-
-if test "$with_geotiff" = "yes" -o "$with_geotiff" = "" ; then
-
-  AC_CHECK_LIB(geotiff,GTIFGetDefn,GEOTIFF_SETTING=external,GEOTIFF_SETTING=internal,)
-
-  if test "$GEOTIFF_SETTING" = "external" ; then   
-    LIBS="-lgeotiff $LIBS"
-    echo "using pre-installed libgeotiff."
-  else
-    echo "using internal GeoTIFF code."
-  fi
-
-elif test "$with_geotiff" = "internal" ; then
-
-  GEOTIFF_SETTING=internal
-
-  echo "using internal GeoTIFF code."
-
-else
-
-  GEOTIFF_SETTING=external
-  if test -r $with_geotiff/libgeotiff.a ; then
-    LIBS="-L$with_geotiff -lgeotiff $LIBS"
-    EXTRA_INCLUDES="-I$with_libtiff $EXTRA_INCLUDES"
-  else
-    LIBS="-L$with_geotiff/lib -lgeotiff $LIBS"
-    EXTRA_INCLUDES="-I$with_libtiff/include $EXTRA_INCLUDES"
-  fi
-
-  echo "using libgeotiff from $with_geotiff."
-fi
-
-AC_SUBST(GEOTIFF_SETTING,$GEOTIFF_SETTING)
 
 dnl ---------------------------------------------------------------------------
 dnl Select an OGDI Library to use, or disable driver.
