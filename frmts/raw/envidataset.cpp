@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/07/28 14:33:27  warmerda
+ * Added Geograpic lat/lon.
+ *
  * Revision 1.17  2004/01/27 22:38:37  aamici
  * Remove CInt* data types from GDAL_DMD_CREATIONDATATYPES since they are
  * no supported by this driver.
@@ -547,10 +550,15 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     {
         oSRS.SetStatePlane( ESRIToUSGSZone(atoi(papszFields[7])), FALSE );
     }
-    else if( EQUALN(papszFields[0],"State Plane (NAD 83)",19) 
+    else if( EQUALN(papszFields[0],"State Plane (NAD 83)",19)
              && nCount >= 8 )
     {
         oSRS.SetStatePlane( ESRIToUSGSZone(atoi(papszFields[7])), TRUE );
+    }
+    else if( EQUALN(papszFields[0],"Geographic Lat",14) 
+             && nCount >= 8 )
+    {
+        oSRS.SetWellKnownGeogCS( "WGS84" );
     }
 
     if( oSRS.GetRoot() == NULL )
@@ -559,6 +567,17 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     if( EQUAL(papszFields[nCount-1],"units=Feet") )
     {
         oSRS.SetLinearUnits( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV) );
+    }
+    else if( EQUAL(papszFields[nCount-1],"units=Seconds") 
+             && oSRS.IsGeographic() )
+    {
+        /* convert geographic coordinate systems in seconds to degrees */
+        adfGeoTransform[0] /= 3600.0;
+        adfGeoTransform[1] /= 3600.0;
+        adfGeoTransform[2] /= 3600.0;
+        adfGeoTransform[3] /= 3600.0;
+        adfGeoTransform[4] /= 3600.0;
+        adfGeoTransform[5] /= 3600.0;
     }
 
     if( oSRS.GetRoot() != NULL )
