@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2005/02/17 22:16:12  fwarmerdam
+ * changed to use two level block cache
+ *
  * Revision 1.50  2005/01/15 16:09:37  fwarmerdam
  * added SetOffset, SetScale methods
  *
@@ -280,6 +283,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     int         nBands;
     GDALRasterBand **papoBands;
 
+    int         bForceCachedIO;
+
     int         nRefCount;
     int         bShared;
 
@@ -461,6 +466,9 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     int         nBlocksPerRow;
     int         nBlocksPerColumn;
 
+    int         bSubBlockingActive;
+    int         nSubBlocksPerRow;
+    int         nSubBlocksPerColumn;
     GDALRasterBlock **papoBlocks;
 
     int         nBlockReads;
@@ -479,9 +487,12 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                                      void *, int, int, GDALDataType,
                                      int, int );
 
-    CPLErr         AdoptBlock( int, int, GDALRasterBlock * );
     void           InitBlockInfo();
+
+    CPLErr         AdoptBlock( int, int, GDALRasterBlock * );
+    GDALRasterBlock *TryGetBlockRef( int nXBlockOff, int nYBlockYOff );
     int            IsBlockCached( int, int );
+
 
   public:
                 GDALRasterBand();

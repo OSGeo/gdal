@@ -27,7 +27,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
+ *
  * $Log$
+ * Revision 1.55  2005/02/17 22:16:12  fwarmerdam
+ * changed to use two level block cache
+ *
  * Revision 1.54  2005/01/15 16:10:43  fwarmerdam
  * Added set scale/offset methods
  *
@@ -133,6 +137,10 @@
 #include "gdal_priv.h"
 #include "cpl_string.h"
 
+#define SUBBLOCK_SIZE 64
+#define TO_SUBBLOCK(x) ((x) >> 6)
+#define WITHIN_SUBBLOCK(x) ((x) & 0x3f)
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -151,9 +159,10 @@ GDALRasterBand::GDALRasterBand()
     nBlockXSize = nBlockYSize = -1;
     eDataType = GDT_Byte;
 
-    nBlocksPerRow = 0;
-    nBlocksPerColumn = 0;
+    nSubBlocksPerRow = nBlocksPerRow = 0;
+    nSubBlocksPerColumn = nBlocksPerColumn = 0;
 
+    bSubBlockingActive = FALSE;
     papoBlocks = NULL;
 
     nBlockReads = 0;
@@ -172,7 +181,7 @@ GDALRasterBand::~GDALRasterBand()
 
 {
     FlushCache();
-    
+
     CPLFree( papoBlocks );
 
     if( nBlockReads > nBlocksPerRow * nBlocksPerColumn
@@ -698,12 +707,27 @@ void GDALRasterBand::InitBlockInfo()
         return;
 
     CPLAssert( nBlockXSize > 0 && nBlockYSize > 0 );
-    
+
     nBlocksPerRow = (nRasterXSize+nBlockXSize-1) / nBlockXSize;
     nBlocksPerColumn = (nRasterYSize+nBlockYSize-1) / nBlockYSize;
     
-    papoBlocks = (GDALRasterBlock **)
-        CPLCalloc( sizeof(void*), nBlocksPerRow * nBlocksPerColumn );
+    if( nBlocksPerRow < SUBBLOCK_SIZE/2 )
+    {
+        bSubBlockingActive = FALSE;
+        
+        papoBlocks = (GDALRasterBlock **)
+            CPLCalloc( sizeof(void*), nBlocksPerRow * nBlocksPerColumn );
+    }
+    else
+    {
+        bSubBlockingActive = TRUE;
+
+        nSubBlocksPerRow = (nBlocksPerRow + SUBBLOCK_SIZE + 1)/SUBBLOCK_SIZE;
+        nSubBlocksPerColumn = (nBlocksPerColumn + SUBBLOCK_SIZE + 1)/SUBBLOCK_SIZE;
+        
+        papoBlocks = (GDALRasterBlock **)
+            CPLCalloc( sizeof(void*), nSubBlocksPerRow * nSubBlocksPerColumn );
+    }
 }
 
 /************************************************************************/
@@ -716,7 +740,7 @@ void GDALRasterBand::InitBlockInfo()
 /*      This method is protected.                                       */
 /************************************************************************/
 
-CPLErr GDALRasterBand::AdoptBlock( int nBlockXOff, int nBlockYOff,
+CPLErr GDALRasterBand::AdoptBlock( int nXBlockOff, int nYBlockOff,
                                    GDALRasterBlock * poBlock )
 
 {
@@ -724,20 +748,60 @@ CPLErr GDALRasterBand::AdoptBlock( int nBlockXOff, int nBlockYOff,
     
     InitBlockInfo();
     
-    CPLAssert( nBlockXOff >= 0 && nBlockXOff < nBlocksPerRow );
-    CPLAssert( nBlockYOff >= 0 && nBlockYOff < nBlocksPerColumn );
+/* -------------------------------------------------------------------- */
+/*      Simple case without subblocking.                                */
+/* -------------------------------------------------------------------- */
+    if( !bSubBlockingActive )
+    {
+        nBlockIndex = nXBlockOff + nYBlockOff * nBlocksPerRow;
 
-    nBlockIndex = nBlockXOff + nBlockYOff * nBlocksPerRow;
-    if( papoBlocks[nBlockIndex] == poBlock )
+        if( papoBlocks[nBlockIndex] == poBlock )
+            return( CE_None );
+
+        if( papoBlocks[nBlockIndex] != NULL )
+            FlushBlock( nXBlockOff, nYBlockOff );
+
+        papoBlocks[nBlockIndex] = poBlock;
+        poBlock->Touch();
+
         return( CE_None );
+    }
 
-    if( papoBlocks[nBlockIndex] != NULL )
-        FlushBlock( nBlockXOff, nBlockYOff );
+/* -------------------------------------------------------------------- */
+/*      Identify the subblock in which our target occurs, and create    */
+/*      it if necessary.                                                */
+/* -------------------------------------------------------------------- */
+    int nSubBlock = TO_SUBBLOCK(nXBlockOff) 
+        + TO_SUBBLOCK(nYBlockOff) * nSubBlocksPerRow;
 
-    papoBlocks[nBlockIndex] = poBlock;
+    if( papoBlocks[nSubBlock] == NULL )
+    {
+        int nSubGridSize = 
+            sizeof(GDALRasterBlock*) * SUBBLOCK_SIZE * SUBBLOCK_SIZE;
+
+        papoBlocks[nSubBlock] = (GDALRasterBlock *) CPLMalloc(nSubGridSize);
+        memset( papoBlocks[nSubBlock], 0, nSubGridSize );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check within subblock.                                          */
+/* -------------------------------------------------------------------- */
+    GDALRasterBlock **papoSubBlockGrid = 
+        (GDALRasterBlock **) papoBlocks[nSubBlock];
+
+    int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
+        + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
+
+    if( papoSubBlockGrid[nBlockInSubBlock] == poBlock )
+        return CE_None;
+
+    if( papoSubBlockGrid[nBlockInSubBlock] != NULL )
+        FlushBlock( nXBlockOff, nYBlockOff );
+
+    papoSubBlockGrid[nBlockInSubBlock] = poBlock;
     poBlock->Touch();
 
-    return( CE_None );
+    return CE_None;
 }
 
 /************************************************************************/
@@ -755,22 +819,7 @@ CPLErr GDALRasterBand::AdoptBlock( int nBlockXOff, int nBlockYOff,
 
 int GDALRasterBand::IsBlockCached( int nXOff, int nYOff )
 {
-    if( papoBlocks )
-    {
-        for( int nBlockIndex = 0;
-             nBlockIndex < nBlocksPerColumn * nBlocksPerRow;
-             nBlockIndex++ )
-        {
-            if( papoBlocks[nBlockIndex] )
-            {
-                if ( papoBlocks[nBlockIndex]->GetXOff() == nXOff
-                     && papoBlocks[nBlockIndex]->GetYOff() == nYOff )
-                    return TRUE;
-            }
-        }
-    }
-
-    return FALSE;
+    return TryGetBlockRef( nXOff, nYOff ) != NULL;
 }
 
 /************************************************************************/
@@ -791,19 +840,66 @@ int GDALRasterBand::IsBlockCached( int nXOff, int nYOff )
 CPLErr GDALRasterBand::FlushCache()
 
 {
-    for( int iY = 0; iY < nBlocksPerColumn; iY++ )
+/* -------------------------------------------------------------------- */
+/*      Flush all blocks in memory ... this case is without subblocking.*/
+/* -------------------------------------------------------------------- */
+    if( !bSubBlockingActive )
     {
-        for( int iX = 0; iX < nBlocksPerRow; iX++ )
+        for( int iY = 0; iY < nBlocksPerColumn; iY++ )
         {
-            if( papoBlocks[iX + iY*nBlocksPerRow] != NULL )
+            for( int iX = 0; iX < nBlocksPerRow; iX++ )
             {
-                CPLErr    eErr;
+                if( papoBlocks[iX + iY*nBlocksPerRow] != NULL )
+                {
+                    CPLErr    eErr;
 
-                eErr = FlushBlock( iX, iY );
+                    eErr = FlushBlock( iX, iY );
 
-                if( eErr != CE_None )
-                    return eErr;
+                    if( eErr != CE_None )
+                        return eErr;
+                }
             }
+        }
+        return CE_None;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      With subblocking.  We can short circuit missing subblocks.      */
+/* -------------------------------------------------------------------- */
+    int iSBX, iSBY;
+
+    for( iSBY = 0; iSBY < nSubBlocksPerColumn; iSBY++ )
+    {
+        for( iSBX = 0; iSBX < nSubBlocksPerRow; iSBX++ )
+        {
+            int nSubBlock = iSBX + iSBY * nSubBlocksPerRow;
+        
+            GDALRasterBlock **papoSubBlockGrid = 
+                (GDALRasterBlock **) papoBlocks[nSubBlock];
+
+            if( papoSubBlockGrid == NULL )
+                continue;
+
+            for( int iY = 0; iY < SUBBLOCK_SIZE; iY++ )
+            {
+                for( int iX = 0; iX < SUBBLOCK_SIZE; iX++ )
+                {
+                    if( papoSubBlockGrid[iX + iY * SUBBLOCK_SIZE] != NULL )
+                    {
+                        CPLErr eErr;
+
+                        eErr = FlushBlock( iX + iSBX * SUBBLOCK_SIZE, 
+                                           iY + iSBY * SUBBLOCK_SIZE );
+                        if( eErr != CE_None )
+                            return eErr;
+                    }
+                }
+            }
+
+            // We might as well get rid of this grid chunk since we know 
+            // it is now empty.
+            papoBlocks[nSubBlock] = NULL;
+            CPLFree( papoSubBlockGrid );
         }
     }
 
@@ -834,34 +930,78 @@ CPLErr GDALFlushRasterCache( GDALRasterBandH hBand )
 /*      Protected method.                                               */
 /************************************************************************/
 
-CPLErr GDALRasterBand::FlushBlock( int nBlockXOff, int nBlockYOff )
+CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff )
 
 {
-    int         nBlockIndex;
+    int             nBlockIndex;
     GDALRasterBlock *poBlock;
-    CPLErr      eErr = CE_None;
-        
+    
     InitBlockInfo();
     
 /* -------------------------------------------------------------------- */
-/*      Validate                                                        */
+/*      Validate the request                                            */
 /* -------------------------------------------------------------------- */
-    CPLAssert( nBlockXOff >= 0 && nBlockXOff < nBlocksPerRow );
-    CPLAssert( nBlockYOff >= 0 && nBlockYOff < nBlocksPerColumn );
+    if( nXBlockOff < 0 || nXBlockOff >= nBlocksPerRow )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg,
+                  "Illegal nBlockXOff value (%d) in "
+                        "GDALRasterBand::GetBlockRef()\n",
+                  nXBlockOff );
 
-    nBlockIndex = nBlockXOff + nBlockYOff * nBlocksPerRow;
-    poBlock = papoBlocks[nBlockIndex];
-    if( poBlock == NULL )
-        return( CE_None );
+        return( CE_Failure );
+    }
+
+    if( nYBlockOff < 0 || nYBlockOff >= nBlocksPerColumn )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg,
+                  "Illegal nBlockYOff value (%d) in "
+                        "GDALRasterBand::GetBlockRef()\n",
+                  nYBlockOff );
+
+        return( CE_Failure );
+    }
 
 /* -------------------------------------------------------------------- */
-/*      Remove, and update count.                                       */
+/*      Simple case for single level caches.                            */
 /* -------------------------------------------------------------------- */
-    papoBlocks[nBlockIndex] = NULL;
+    if( !bSubBlockingActive )
+    {
+        nBlockIndex = nXBlockOff + nYBlockOff * nBlocksPerRow;
+        poBlock = papoBlocks[nBlockIndex];
+        papoBlocks[nBlockIndex] = NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Identify our subblock.                                          */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        int nSubBlock = TO_SUBBLOCK(nXBlockOff) 
+            + TO_SUBBLOCK(nYBlockOff) * nSubBlocksPerRow;
+        
+        if( papoBlocks[nSubBlock] == NULL )
+            return CE_None;
+        
+/* -------------------------------------------------------------------- */
+/*      Check within subblock.                                          */
+/* -------------------------------------------------------------------- */
+        GDALRasterBlock **papoSubBlockGrid = 
+            (GDALRasterBlock **) papoBlocks[nSubBlock];
+        
+        int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
+            + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
+        
+        poBlock = papoSubBlockGrid[nBlockInSubBlock];
+        papoSubBlockGrid[nBlockInSubBlock] = NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Is the target block dirty?  If so we need to write it.          */
 /* -------------------------------------------------------------------- */
+
+    if( poBlock == NULL )
+        return CE_None;
+
     if( poBlock->GetDirty() )
         poBlock->Write();
 
@@ -870,40 +1010,20 @@ CPLErr GDALRasterBand::FlushBlock( int nBlockXOff, int nBlockYOff )
 /* -------------------------------------------------------------------- */
     delete poBlock;
 
-    return( eErr );
+    return( CE_None );
 }
 
-
 /************************************************************************/
-/*                            GetBlockRef()                             */
+/*                           TryGetBlockRef()                           */
 /************************************************************************/
 
-/**
- * Fetch a pointer to an internally cached raster block.
- *
- * Note that calling GetBlockRef() on a previously uncached band will
- * enable caching.
- * 
- * @param nXBlockOff the horizontal block offset, with zero indicating
- * the left most block, 1 the next block and so forth. 
- *
- * @param nYBlockOff the vertical block offset, with zero indicating
- * the top most block, 1 the next block and so forth.
- * 
- * @param bJustInitialize If TRUE the block will be allocated and initialized,
- * but not actually read from the source.  This is useful when it will just
- * be completely set and written back. 
- *
- * @return pointer to the block object, or NULL on failure.
- */
-
-GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
-                                               int nYBlockOff,
-                                               int bJustInitialize )
+GDALRasterBlock *GDALRasterBand::TryGetBlockRef( int nXBlockOff, 
+                                                 int nYBlockOff )
 
 {
-    int         nBlockIndex;
-
+    int             nBlockIndex;
+    GDALRasterBlock *poBlock;
+    
     InitBlockInfo();
     
 /* -------------------------------------------------------------------- */
@@ -930,16 +1050,84 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
     }
 
 /* -------------------------------------------------------------------- */
-/*      If the block isn't already in the cache, we will need to        */
-/*      create it, read into it, and adopt it.  Adopting it may         */
-/*      flush an old tile from the cache.                               */
+/*      Simple case for single level caches.                            */
 /* -------------------------------------------------------------------- */
-    nBlockIndex = nXBlockOff + nYBlockOff * nBlocksPerRow;
-    
-    if( papoBlocks[nBlockIndex] == NULL )
+    if( !bSubBlockingActive )
     {
-        GDALRasterBlock *poBlock;
-        
+        nBlockIndex = nXBlockOff + nYBlockOff * nBlocksPerRow;
+        poBlock = papoBlocks[nBlockIndex];
+        if( poBlock != NULL )
+            poBlock->Touch();
+        return poBlock;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Identify our subblock.                                          */
+/* -------------------------------------------------------------------- */
+    int nSubBlock = TO_SUBBLOCK(nXBlockOff) 
+        + TO_SUBBLOCK(nYBlockOff) * nSubBlocksPerRow;
+
+    if( papoBlocks[nSubBlock] == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Check within subblock.                                          */
+/* -------------------------------------------------------------------- */
+    GDALRasterBlock **papoSubBlockGrid = 
+        (GDALRasterBlock **) papoBlocks[nSubBlock];
+
+    int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
+        + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
+
+    poBlock = papoSubBlockGrid[nBlockInSubBlock];
+    if( poBlock != NULL )
+        poBlock->Touch();
+
+    return poBlock;
+}
+
+/************************************************************************/
+/*                            GetBlockRef()                             */
+/************************************************************************/
+
+/**
+ * Fetch a pointer to an internally cached raster block.
+ *
+ * Note that calling GetBlockRef() on a previously uncached band will
+ * enable caching.
+ * 
+ * @param nBlockXOff the horizontal block offset, with zero indicating
+ * the left most block, 1 the next block and so forth. 
+ *
+ * @param nYBlockOff the vertical block offset, with zero indicating
+ * the top most block, 1 the next block and so forth.
+ * 
+ * @param bJustInitialize If TRUE the block will be allocated and initialized,
+ * but not actually read from the source.  This is useful when it will just
+ * be completely set and written back. 
+ *
+ * @return pointer to the block object, or NULL on failure.
+ */
+
+GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
+                                               int nYBlockOff,
+                                               int bJustInitialize )
+
+{
+    GDALRasterBlock *poBlock;
+
+/* -------------------------------------------------------------------- */
+/*      Try and fetch from cache.                                       */
+/* -------------------------------------------------------------------- */
+    poBlock = TryGetBlockRef( nXBlockOff, nYBlockOff );
+
+/* -------------------------------------------------------------------- */
+/*      If we didn't find it in our memory cache, instantiate a         */
+/*      block (potentially load from disk) and "adopt" it into the      */
+/*      cache.                                                          */
+/* -------------------------------------------------------------------- */
+    if( poBlock == NULL )
+    {
         poBlock = new GDALRasterBlock( this, nXBlockOff, nYBlockOff );
 
         /* allocate data space */
@@ -975,13 +1163,7 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Every read access updates the last touched time.                */
-/* -------------------------------------------------------------------- */
-    if( papoBlocks[nBlockIndex] != NULL )
-        papoBlocks[nBlockIndex]->Touch();
-
-    return( papoBlocks[nBlockIndex] );
+    return poBlock;
 }
 
 /************************************************************************/
