@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.34  2002/11/11 16:02:06  dron
+ * More error messages added.
+ *
  * Revision 1.33  2002/10/17 17:55:31  warmerda
  * Minor improvement to RasterIO() docs.
  *
@@ -865,14 +868,18 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
         if( poBlock->Internalize() != CE_None )
         {
             delete poBlock;
-
+	    CPLError( CE_Failure, CPLE_AppDefined, "Internalize failed",
+		      nXBlockOff, nYBlockOff);
             return( NULL );
         }
 
         if( IReadBlock(nXBlockOff,nYBlockOff,poBlock->GetDataRef()) != CE_None)
         {
             delete poBlock;
-            return( NULL );
+            CPLError( CE_Failure, CPLE_AppDefined,
+		      "IReadBlock failed at X offset %d, Y offset %d",
+		      nXBlockOff, nYBlockOff );
+	    return( NULL );
         }
 
         AdoptBlock( nXBlockOff, nYBlockOff, poBlock );

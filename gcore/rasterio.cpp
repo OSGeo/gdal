@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/11/11 16:02:06  dron
+ * More error messages added.
+ *
  * Revision 1.16  2002/07/09 20:33:12  warmerda
  * expand tabs
  *
@@ -130,7 +133,10 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 poBlock = GetBlockRef( 0, nLBlockY );
                 if( poBlock == NULL )
                 {
-                    return( CE_Failure );
+                    CPLError( CE_Failure, CPLE_AppDefined,
+			"GetBlockRef failed at X block offset %d, Y block offset %d",
+			0, nLBlockY );
+		    return( CE_Failure );
                 }
 
                 if( eRWFlag == GF_Write )
