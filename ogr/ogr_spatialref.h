@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/03/16 19:04:01  warmerda
+ * added SetTMG, moved constants to ogr_srs_api.h
+ *
  * Revision 1.12  2000/01/26 21:22:18  warmerda
  * added tentative MakeValueSafe implementation
  *
@@ -69,7 +72,7 @@
 #ifndef _OGR_SPATIALREF_H_INCLUDED
 #define _OGR_SPATIALREF_H_INCLUDED
 
-#include "ogr_core.h"
+#include "ogr_srs_api.h"
 
 /************************************************************************/
 /*                             OGR_SRSNode                              */
@@ -110,6 +113,8 @@ class OGR_SRSNode
 
     void        InsertChild( OGR_SRSNode *, int );
     void        AddChild( OGR_SRSNode * );
+    int         FindChild( const char * );
+    void        DestroyChild( int );
 
     const char  *GetValue() { return pszValue; }
     void        SetValue( const char * );
@@ -137,6 +142,7 @@ class OGR_SRSNode
  * (or OGR_SRSNode objects) can be accessed more directly.
  *
  * At this time, no methods for reprojection, validation of SRS semantics
+
  * have been implemented.  This will follow at some point in the future. 
  */
 
@@ -155,23 +161,27 @@ class OGRSpatialReference
     int         Dereference();
     int         GetReferenceCount() { return nRefCount; }
 
+    OGRSpatialReference *Clone();
+
+    OGRErr      importFromWkt( char ** );
+    OGRErr      exportToWkt( char ** );
+    OGRErr      exportToProj4( char ** );
+    OGRErr      importFromEPSG( int );
+
+    OGRErr      Validate();
+    OGRErr      StripCTParms( OGR_SRSNode * = NULL );
+
+    // Machinary for accessing parse nodes
     OGR_SRSNode *GetRoot() { return poRoot; }
     void        SetRoot( OGR_SRSNode * );
     
     OGR_SRSNode *GetAttrNode(const char *);
     const char  *GetAttrValue(const char *, int = 0);
 
-    OGRErr      Validate();
-
-    OGRSpatialReference *Clone();
-
-    OGRErr      importFromWkt( char ** );
-    OGRErr      exportToWkt( char ** );
-    OGRErr      exportToProj4( char ** );
-
     OGRErr      SetNode( const char *, const char * );
     OGRErr      SetNode( const char *, double );
 
+    // Set/get geographic components
     OGRErr      SetLinearUnits( const char *pszName, double dfInMeters );
     double      GetLinearUnits( char ** = NULL );
     
@@ -187,6 +197,10 @@ class OGRSpatialReference
     double      GetSemiMajor( OGRErr * = NULL );
     double      GetSemiMinor( OGRErr * = NULL );
     double      GetInvFlattening( OGRErr * = NULL );
+
+    OGRErr      SetAuthority( const char * pszTargetKey, 
+                              const char * pszAuthority, 
+                              int nCode );
                            
     OGRErr      SetProjParm( const char *, double );
     double      GetProjParm( const char *, double = 0.0, OGRErr * = NULL );
@@ -310,7 +324,11 @@ class OGRSpatialReference
     OGRErr      SetTM( double dfCenterLat, double dfCenterLong,
                        double dfScale,
                        double dfFalseEasting, double dfFalseNorthing );
-    
+
+    // Tunesia Mining Grid 
+    OGRErr      SetTMG( double dfCenterLat, double dfCenterLong, 
+                        double dfFalseEasting, double dfFalseNorthing );
+
     // Transverse Mercator (South Oriented)
     OGRErr      SetTMSO( double dfCenterLat, double dfCenterLong,
                          double dfScale,
@@ -324,111 +342,5 @@ class OGRSpatialReference
     OGRErr      SetUTM( int nZone, int bNorth = TRUE );
     int		GetUTMZone( int *pbNorth = NULL );
 };
-
-/* ==================================================================== */
-/*      Some "standard" strings.                                        */
-/* ==================================================================== */
-
-#define SRS_PT_ALBERS_CONIC_EQUAL_AREA                                  \
-                                "Albers_Conic_Equal_Area"
-#define SRS_PT_AZIMUTHAL_EQUIDISTANT "Azimuthal_Equidistant"
-#define SRS_PT_CASSINI_SOLDNER  "Cassini_Soldner"
-#define SRS_PT_CYLINDRICAL_EQUAL_AREA "Cylindrical_Equal_Area"
-#define SRS_PT_ECKERT_IV        "Eckert_IV"
-#define SRS_PT_ECKERT_VI        "Eckert_VI"
-#define SRS_PT_EQUIDISTANT_CONIC "Equidistant_Conic"
-#define SRS_PT_EQUIRECTANGULAR  "Equirectangular"
-#define SRS_PT_GALL_STEREOGRAPHIC "Gall_Stereographic"
-#define SRS_PT_GNOMONIC         "Gnomonic"
-#define SRS_PT_HOTINE_OBLIQUE_MERCATOR                                  \
-                                "Hotine_Oblique_Mercator"
-#define SRS_PT_LABORDE_OBLIQUE_MERCATOR                                 \
-                                "Laborde_Oblique_Mercator"
-#define SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP                              \
-                                "Lambert_Conformal_Conic_1SP"
-#define SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP                              \
-                                "Lambert_Conformal_Conic_2SP"
-#define SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM                      \
-                                "Lambert_Conformal_Conic_2SP_Belgium)"
-#define SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA                     \
-                                "Lambert_Azimuthal_Equal_Area"
-#define SRS_PT_MERCATOR_1SP     "Mercator_1SP"
-#define SRS_PT_MERCATOR_2SP     "Mercator_2SP"
-#define SRS_PT_MILLER_CYLINDRICAL "Miller_Cylindrical"
-#define SRS_PT_MOLLWEIDE        "Mollweide"
-#define SRS_PT_NEW_ZEALAND_MAP_GRID                                     \
-                                "New_Zealand_Map_Grid"
-#define SRS_PT_OBLIQUE_STEREOGRAPHIC                                    \
-                                "Oblique_Stereographic"
-#define SRS_PT_ORTHOGRAPHIC     "Orthographic"
-#define SRS_PT_POLAR_STEREOGRAPHIC                                      \
-                                "Polar_Stereographic"
-#define SRS_PT_POLYCONIC        "Polyconic"
-#define SRS_PT_ROBINSON         "Robinson"
-#define SRS_PT_SINUSOIDAL       "Sinusoidal"
-#define SRS_PT_STEREOGRAPHIC    "Stereographic"
-#define SRS_PT_SWISS_OBLIQUE_CYLINDRICAL                                \
-                                "Swiss_Oblique_Cylindrical"
-#define SRS_PT_TRANSVERSE_MERCATOR                                      \
-                                "Transverse_Mercator"
-#define SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED                       \
-                                "Transverse_Mercator_South_Orientated"
-#define SRS_PT_TUNISIA_MINING_GRID                                      \
-                                "Tunisia_Mining_Grid"
-#define SRS_PT_VANDERGRINTEN    "VanDerGrinten"
-
-                                
-
-#define SRS_PP_CENTRAL_MERIDIAN         "central_meridian"
-#define SRS_PP_SCALE_FACTOR             "scale_factor"
-#define SRS_PP_STANDARD_PARALLEL_1      "standard_parallel_1"
-#define SRS_PP_STANDARD_PARALLEL_2      "standard_parallel_2"
-#define SRS_PP_LONGITUDE_OF_CENTER      "longitude_of_center"
-#define SRS_PP_LATITUDE_OF_CENTER       "latitude_of_center"
-#define SRS_PP_LONGITUDE_OF_ORIGIN      "longitude_of_origin"
-#define SRS_PP_LATITUDE_OF_ORIGIN       "latitude_of_origin"
-#define SRS_PP_FALSE_EASTING            "false_easting"
-#define SRS_PP_FALSE_NORTHING           "false_northing"
-#define SRS_PP_AZIMUTH                  "azimuth"
-#define SRS_PP_LONGITUDE_OF_POINT_1     "longitude_of_point_1"
-#define SRS_PP_LATITUDE_OF_POINT_1      "latitude_of_point_1"
-#define SRS_PP_LONGITUDE_OF_POINT_2     "longitude_of_point_2"
-#define SRS_PP_LATITUDE_OF_POINT_2      "latitude_of_point_2"
-#define SRS_PP_LONGITUDE_OF_POINT_3     "longitude_of_point_3"
-#define SRS_PP_LATITUDE_OF_POINT_3      "latitude_of_point_3"
-#define SRS_PP_RECTIFIED_GRID_ANGLE     "rectified_grid_angle"
-#define SRS_PP_LANDSAT_NUMBER           "landsat_number"
-#define SRS_PP_PATH_NUMBER              "path_number"
-#define SRS_PP_PERSPECTIVE_POINT_HEIGHT "perspective_point_height"
-#define SRS_PP_FIPSZONE                 "fipszone"
-#define SRS_PP_ZONE                     "zone"
-
-#define SRS_UL_METER            "Meter"
-#define SRS_UL_FOOT             "Foot (International)" /* or just "FOOT"? */
-#define SRS_UL_FOOT_CONV                    "0.3048"
-#define SRS_UL_US_FOOT          "U.S. Foot" /* or "US survey foot" */
-#define SRS_UL_US_FOOT_CONV                 "0.3048006"
-#define SRS_UL_NAUTICAL_MILE    "Nautical Mile"
-#define SRS_UL_NAUTICAL_MILE_CONV           "1852.0"
-#define SRS_UL_LINK             "Link"          /* Based on US Foot */
-#define SRS_UL_LINK_CONV                    "0.20116684023368047"
-#define SRS_UL_CHAIN            "Chain"         /* based on US Foot */
-#define SRS_UL_CHAIN_CONV                   "2.0116684023368047"
-#define SRS_UL_ROD              "Rod"           /* based on US Foot */
-#define SRS_UL_ROD_CONV                     "5.02921005842012"
-
-#define SRS_UA_DEGREE           "degree"
-#define SRS_UA_DEGREE_CONV                  "0.0174532925199433"
-#define SRS_UA_RADIAN           "radian"
-
-#define SRS_PM_GREENWICH        "Greenwich"
-
-#define SRS_DN_NAD27            "North American Datum 1927"
-#define SRS_DN_NAD83            "North American Datum 1983"
-#define SRS_DN_WGS84            "World Geodetic System 1984"
-
-#define SRS_WGS84_SEMIMAJOR     6378137.0                                
-#define SRS_WGS84_INVFLATTENING 298.257223563
-                                
 
 #endif /* ndef _OGR_SPATIALREF_H_INCLUDED */
