@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/06/12 17:33:17  warmerda
+ * improved DNGO_CAPTURE_RAW_DATA flag documnentation
+ *
  * Revision 1.10  2003/05/21 03:42:01  warmerda
  * Expanded tabs
  *
@@ -192,7 +195,10 @@ int DGNResizeElement( DGNHandle hDGN, DGNElemCore *psElement, int nNewSize )
 /** 
  * Write element to file. 
  *
- * Only elements with "raw_data" loaded may be written.
+ * Only elements with "raw_data" loaded may be written.  This should
+ * include elements created with the various DGNCreate*() functions, and
+ * those read from the file with the DGNO_CAPTURE_RAW_DATA flag turned on
+ * with DGNSetOptions(). 
  *
  * The passed element is written to the indicated file.  If the 
  * DGNElemCore.offset field is -1 then the element is written at the end of
