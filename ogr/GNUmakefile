@@ -27,7 +27,15 @@ default:	sublibs lib apps
 
 all:	sublibs apps test_ogrsf$(EXE) docs
 
+ifeq ($(OGR_ENABLED),yes)
+
 apps:	ogrinfo$(EXE) ogr2ogr$(EXE) ogrtindex$(EXE)
+
+else
+
+apps:
+
+endif
 
 clean:
 	rm -f *.o ogrinfo$(EXE) ogr2ogr$(EXE) ogrtindex$(EXE) 
@@ -62,8 +70,16 @@ $(FRMTS_LIB):
 
 lib:	$(OGR_LIB) 
 
+ifeq ($(OGR_ENABLED),yes)
+
 sublibs:
 	(cd ogrsf_frmts; $(MAKE))
+
+else
+
+sublibs:
+
+endif
 
 docs:
 	rm -rf html/*
