@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.70  2003/02/14 22:15:04  warmerda
+ * expand tabs
+ *
  * Revision 1.69  2003/02/08 00:37:15  warmerda
  * try to improve documentation
  *
@@ -2043,7 +2046,7 @@ double OSRGetProjParm( OGRSpatialReferenceH hSRS, const char *pszName,
 /************************************************************************/
 
 /**
- * Fetch a normalized projection parameter value.		       
+ * Fetch a normalized projection parameter value.                      
  *
  * This method is the same as GetProjParm() except that the value of
  * the parameter is "normalized" into degrees or meters depending on 

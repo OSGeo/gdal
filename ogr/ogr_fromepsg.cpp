@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/02/14 22:15:04  warmerda
+ * expand tabs
+ *
  * Revision 1.22  2003/02/14 16:29:02  warmerda
  * Added LAEA support
  *
@@ -265,10 +268,10 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
                          double * pdfInDegrees )
 
 {
-    const char	*pszUOMName = NULL;
-    double	dfInDegrees = 1.0;
+    const char  *pszUOMName = NULL;
+    double      dfInDegrees = 1.0;
     const char *pszFilename = CSVFilename( "unit_of_measure.csv" );
-    char	szSearchKey[24];
+    char        szSearchKey[24];
 
     sprintf( szSearchKey, "%d", nUOMAngleCode );
     pszUOMName = CSVGetField( pszFilename,

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/02/14 22:12:07  warmerda
+ * expand tabs
+ *
  * Revision 1.18  2002/12/18 20:22:53  warmerda
  * fiddle with roundoff issues in DecToDMS
  *
@@ -518,7 +521,7 @@ double CPLDMSToDec( const char *is )
             goto skip;
           default:
             v += tv * vm[nl];
-          skip:	n = 4;
+          skip: n = 4;
             continue;
         }
         if (n < nl) {
