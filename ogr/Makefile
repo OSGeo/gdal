@@ -4,7 +4,7 @@ MSDASDK =       C:\MSDASDK
 
 EXTRAFLAGS =	-I$(VSTUDIO)\VC98\ATL\Include \
 		-I$(MSDASDK)\include\oledb \
-		-I. -Iogrsf_frmts
+		-I. -Iogrsf_frmts /W3
 
 GDAL_ROOT = 	..
 
