@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.83  2004/02/04 21:26:11  warmerda
+ * added optimization loading into numpy array
+ *
  * Revision 1.82  2004/01/31 09:54:28  dron
  * Fixed projection parameters number mismatch in PCI import/export functions.
  *
@@ -965,20 +968,19 @@ py_GDALReadRaster(PyObject *self, PyObject *args) {
     }
 	
     result_size = _arg5 * _arg6 * (GDALGetDataTypeSize(_arg7)/8);
-    result_string = (char *) malloc(result_size+1);
+    result = PyString_FromStringAndSize(NULL,result_size);
+    if( !result )
+	return NULL;
+    result_string = PyString_AsString(result);
 
     if( GDALRasterIO(_arg0, GF_Read, _arg1, _arg2, _arg3, _arg4, 
 		     (void *) result_string, 
 		     _arg5, _arg6, _arg7, 0, 0 ) != CE_None )
     {
-	free( result_string );
+        Py_XDECREF(result);
 	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
 	return NULL;
     }
-
-    result = PyString_FromStringAndSize(result_string,result_size);
-
-    free( result_string );
 
     return result;
 }
