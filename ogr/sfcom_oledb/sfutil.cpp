@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/04/30 18:57:22  warmerda
+ * use CPLDebug
+ *
  * Revision 1.10  2000/07/19 20:50:35  warmerda
  * better debug file location
  *
@@ -63,6 +66,7 @@
 #include "sftraceback.h"
 #include "sfutil.h"
 #include "SF.h"
+#include "cpl_error.h"
 
 typedef struct _IUnknownOGRInfo
 {
@@ -231,14 +235,6 @@ void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... )
     static FILE      *fpDebug = NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Do we have a debug file?                                        */
-/* -------------------------------------------------------------------- */
-    if( fpDebug == NULL )
-    {
-        fpDebug = fopen( "f:\\Debug", "w" );
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Write message to stdout.                                        */
 /* -------------------------------------------------------------------- */
     fprintf( stdout, "%s:", pszDebugClass );
@@ -250,19 +246,17 @@ void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... )
     fflush( stdout );
 
 /* -------------------------------------------------------------------- */
-/*      Write message to debug file.                                    */
+/*      Also route through CPL                                          */
 /* -------------------------------------------------------------------- */
-    if( fpDebug != NULL )
-    {
-        fprintf( fpDebug, "%s:", pszDebugClass );
+    char      szMessage[10000];
 
-        va_start(args, pszFormat);
-        vfprintf( fpDebug, pszFormat, args );
-        va_end(args);
+    va_start(args, pszFormat);
+    vsprintf( szMessage, pszFormat, args );
+    va_end(args);
 
-        fflush( fpDebug );
-    }
+    CPLDebug( pszDebugClass, "%s", szMessage );
 }
+
 /************************************************************************/
 /*                            SFReportError()                           */
 /************************************************************************/
@@ -279,6 +273,9 @@ HRESULT	SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,
         IErrorInfo		*pErrorInfo;
         IErrorRecords	*pErrorRecords;
         HRESULT			hr;
+
+        CPLDebug( "OGR_OLEDB", "SFReportError(%d,%d,%s)\n", 
+                  passed_hr, providerCode, pszText );
 
         SetErrorInfo(0, NULL);
 		
