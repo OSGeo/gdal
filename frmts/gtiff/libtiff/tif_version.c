@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_version.c,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_version.c,v 1.2 2000/11/13 14:42:38 warmerda Exp $ */
 /*
  * Copyright (c) 1992-1997 Sam Leffler
  * Copyright (c) 1992-1997 Silicon Graphics, Inc.
@@ -23,9 +23,8 @@
  * OF THIS SOFTWARE.
  */
 #include "tiffiop.h"
-#include "version.h"
 
-static const char TIFFVersion[] = VERSION;
+static const char TIFFVersion[] = TIFFLIB_VERSION_STR;
 
 const char*
 TIFFGetVersion(void)

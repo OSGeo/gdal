@@ -38,7 +38,6 @@
  *
  * Contributed by Tom Lane <tgl@sss.pgh.pa.us>.
  */
-
 #include <assert.h>
 #include <stdio.h>
 #include <setjmp.h>
@@ -47,11 +46,6 @@
 
 #ifdef FAR
 #undef FAR
-#endif
-
-/* The WINDOWS RPCNDR.H file defines boolean */
-#ifdef __RPCNDR_H__
-#define HAVE_BOOLEAN
 #endif
 
 #include "jpeglib.h"

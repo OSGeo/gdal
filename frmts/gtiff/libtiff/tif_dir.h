@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.h,v 1.2 1999/12/21 17:03:03 mwelles Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.h,v 1.3 2001/03/02 04:59:52 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -70,6 +70,7 @@ typedef	struct {
 	char*	td_make;
 	char*	td_model;
 	char*	td_software;
+        char*   td_copyright;
 	char*	td_pagename;
 	tstrip_t td_stripsperimage;
 	tstrip_t td_nstrips;		/* size of offset & bytecount arrays */
@@ -201,8 +202,9 @@ typedef	struct {
 #define FIELD_FOVCOT			59
 #define FIELD_MATRIX_WORLDTOSCREEN	60
 #define FIELD_MATRIX_WORLDTOCAMERA	61
+#define FIELD_COPYRIGHT			62
 /* end of support for well-known tags; codec-private tags follow */
-#define	FIELD_CODEC			62	/* base of codec-private tags */
+#define	FIELD_CODEC			63	/* base of codec-private tags */
 /*
  * Pseudo-tags don't normally need field bits since they
  * are not written to an output file (by definition).

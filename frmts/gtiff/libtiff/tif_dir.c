@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.c,v 1.14 2000/10/17 03:23:36 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.c,v 1.15 2001/03/02 04:59:52 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -213,6 +213,9 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		break;
 	case TIFFTAG_SOFTWARE:
 		_TIFFsetString(&td->td_software, va_arg(ap, char*));
+		break;
+	case TIFFTAG_COPYRIGHT:
+		_TIFFsetString(&td->td_copyright, va_arg(ap, char*));
 		break;
 	case TIFFTAG_ORIENTATION:
 		v = va_arg(ap, int);
@@ -641,6 +644,9 @@ _TIFFVGetField(TIFF* tif, ttag_t tag, va_list ap)
 	case TIFFTAG_SOFTWARE:
 		*va_arg(ap, char**) = td->td_software;
 		break;
+	case TIFFTAG_COPYRIGHT:
+		*va_arg(ap, char**) = td->td_copyright;
+		break;
 	case TIFFTAG_ORIENTATION:
 		*va_arg(ap, uint16*) = td->td_orientation;
 		break;
@@ -917,6 +923,7 @@ TIFFFreeDirectory(TIFF* tif)
 	CleanupField(td_make);
 	CleanupField(td_model);
 	CleanupField(td_software);
+	CleanupField(td_copyright);
 	CleanupField(td_pagename);
 	CleanupField(td_sampleinfo);
 #if SUBIFD_SUPPORT

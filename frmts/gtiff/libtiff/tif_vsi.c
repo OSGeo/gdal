@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/20 03:29:45  warmerda
+ * updated
+ *
  * Revision 1.2  2001/02/15 15:33:18  warmerda
  * don't access through tif pointer if open fails
  *
@@ -62,7 +65,7 @@ _tiffSeekProc(thandle_t fd, toff_t off, int whence)
     if( VSIFSeekL( (FILE *) fd, off, whence ) == 0 )
         return VSIFTellL( (FILE *) fd );
     else
-        return off - 1;
+        return -1;
 }
 
 static int

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffio.h,v 1.6 2000/06/15 15:32:36 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffio.h,v 1.10 2001/04/06 02:54:13 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -31,15 +31,7 @@
  * TIFF I/O Library Definitions.
  */
 #include "tiff.h"
-
-/*
- * This define can be used in code that requires
- * compilation-related definitions specific to a
- * version or versions of the library.  Runtime
- * version checking should be done based on the
- * string returned by TIFFGetVersion.
- */
-#define	TIFFLIB_VERSION	19970127	/* January 27, 1997 */
+#include "tiffvers.h"
 
 /*
  * TIFF is defined as an incomplete type to hide the
@@ -211,6 +203,11 @@ typedef struct {
 #include <stdio.h>
 #include <stdarg.h>
 
+/* share internal LogLuv conversion routines? */
+#ifndef LOGLUV_PUBLIC
+#define LOGLUV_PUBLIC		1	
+#endif
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -336,6 +333,31 @@ extern	void TIFFSwabArrayOfLong(uint32*, unsigned long);
 extern	void TIFFSwabArrayOfDouble(double*, unsigned long);
 extern	void TIFFReverseBits(unsigned char *, unsigned long);
 extern	const unsigned char* TIFFGetBitRevTable(int);
+
+#ifdef LOGLUV_PUBLIC
+#define U_NEU		0.210526316
+#define V_NEU		0.473684211
+#define UVSCALE		410.
+extern	double LogL16toY(int);
+extern	double LogL10toY(int);
+extern	void XYZtoRGB24(float*, uint8*);
+extern	int uv_decode(double*, double*, int);
+extern	void LogLuv24toXYZ(uint32, float*);
+extern	void LogLuv32toXYZ(uint32, float*);
+#if defined(c_plusplus) || defined(__cplusplus)
+extern	int LogL16fromY(double, int = SGILOGENCODE_NODITHER);
+extern	int LogL10fromY(double, int = SGILOGENCODE_NODITHER);
+extern	int uv_encode(double, double, int = SGILOGENCODE_NODITHER);
+extern	uint32 LogLuv24fromXYZ(float*, int = SGILOGENCODE_NODITHER);
+extern	uint32 LogLuv32fromXYZ(float*, int = SGILOGENCODE_NODITHER);
+#else
+extern	int LogL16fromY(double, int);
+extern	int LogL10fromY(double, int);
+extern	int uv_encode(double, double, int);
+extern	uint32 LogLuv24fromXYZ(float*, int);
+extern	uint32 LogLuv32fromXYZ(float*, int);
+#endif
+#endif /* LOGLUV_PUBLIC */
 #if defined(__cplusplus)
 }
 #endif

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffconf.h,v 1.2 2000/01/28 21:46:30 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffconf.h,v 1.3 2001/05/12 03:59:50 warmerda Exp $ */
 /*
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
@@ -97,7 +97,7 @@
  *    THUNDER_SUPPORT	enable support for ThunderScan 4-bit RLE algorithm
  *    NEXT_SUPPORT	enable support for NeXT 2-bit RLE algorithm
  *    OJPEG_SUPPORT	enable support for 6.0-style JPEG DCT algorithms
- *			(no builtin support, only a codec hook)
+ *			(requires IJG software)
  *    JPEG_SUPPORT	enable support for post-6.0-style JPEG DCT algorithms
  *			(requires freely available IJG software, see tif_jpeg.c)
  *    ZIP_SUPPORT	enable support for Deflate algorithm

@@ -67,8 +67,20 @@
  * of conversion to and from LogLuv, though the application is still
  * responsible for interpreting the TIFFTAG_STONITS calibration factor.
  *
- * The information is compressed into one of two basic encodings, depending on
- * the setting of the compression tag, which is one of COMPRESSION_SGILOG
+ * By definition, a CIE XYZ vector of [1 1 1] corresponds to a neutral white
+ * point of (x,y)=(1/3,1/3).  However, most color systems assume some other
+ * white point, such as D65, and an absolute color conversion to XYZ then
+ * to another color space with a different white point may introduce an
+ * unwanted color cast to the image.  It is often desirable, therefore, to
+ * perform a white point conversion that maps the input white to [1 1 1]
+ * in XYZ, then record the original white point using the TIFFTAG_WHITEPOINT
+ * tag value.  A decoder that demands absolute color calibration may use
+ * this white point tag to get back the original colors, but usually it
+ * will be ignored and the new white point will be used instead that
+ * matches the output color space.
+ *
+ * Pixel information is compressed into one of two basic encodings, depending
+ * on the setting of the compression tag, which is one of COMPRESSION_SGILOG
  * or COMPRESSION_SGILOG24.  For COMPRESSION_SGILOG, greyscale data is
  * stored as:
  *
@@ -120,6 +132,17 @@
  * scheme by separating the logL, u and v bytes for each row and applying
  * a PackBits type of compression.  Since the 24-bit encoding is not
  * adaptive, the 32-bit color format takes less space in many cases.
+ *
+ * Further control is provided over the conversion from higher-resolution
+ * formats to final encoded values through the pseudo tag
+ * TIFFTAG_SGILOGENCODE:
+ *  SGILOGENCODE_NODITHER     = do not dither encoded values
+ *  SGILOGENCODE_RANDITHER    = apply random dithering during encoding
+ *
+ * The default value of this tag is SGILOGENCODE_NODITHER for
+ * COMPRESSION_SGILOG to maximize run-length encoding and
+ * SGILOGENCODE_RANDITHER for COMPRESSION_SGILOG24 to turn
+ * quantization errors into noise.
  */
 
 #include <stdio.h>
@@ -135,10 +158,11 @@ typedef	struct logLuvState LogLuvState;
 
 struct logLuvState {
 	int			user_datafmt;	/* user data format */
+	int			encode_meth;	/* encoding method */
 	int			pixel_size;	/* bytes per pixel */
 
 	tidata_t*		tbuf;		/* translation buffer */
-	short			tbuflen;	/* buffer length */
+	int			tbuflen;	/* buffer length */
 	void (*tfunc)(LogLuvState*, tidata_t, int);
 
 	TIFFVSetMethod		vgetparent;	/* super-class method */
@@ -232,7 +256,6 @@ LogLuvDecode24(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 		assert(sp->tbuflen >= npixels);
 		tp = (uint32 *) sp->tbuf;
 	}
-	_TIFFmemset((tdata_t) tp, 0, npixels*sizeof (tp[0]));
 					/* copy to array of uint32 */
 	bp = (u_char*) tif->tif_rawcp;
 	cc = tif->tif_rawcc;
@@ -598,46 +621,57 @@ LogLuvEncodeTile(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 /*
  * Encode/Decode functions for converting to and from user formats.
  */
+
 #include "uvcode.h"
 
-#define U_NEU	0.210526316
-#define V_NEU	0.473684211
-
-#ifdef	M_LN2
-#define	LOGOF2		M_LN2
-#else
-#define LOGOF2		0.69314718055994530942
-#endif
-#define log2(x)		((1./LOGOF2)*log(x))
-#define exp2(x)		exp(LOGOF2*(x))
-
+#ifndef UVSCALE
+#define U_NEU		0.210526316
+#define V_NEU		0.473684211
 #define UVSCALE		410.
+#endif
 
-static double
-pix16toY(int p16)
+#ifndef	M_LN2
+#define M_LN2		0.69314718055994530942
+#endif
+#ifndef M_PI
+#define M_PI		3.14159265358979323846
+#endif
+#define log2(x)		((1./M_LN2)*log(x))
+#define exp2(x)		exp(M_LN2*(x))
+
+#define itrunc(x,m)	((m)==SGILOGENCODE_NODITHER ? \
+				(int)(x) : \
+				(int)((x) + rand()*(1./RAND_MAX) - .5))
+
+#if !LOGLUV_PUBLIC
+static
+#endif
+double
+LogL16toY(int p16)		/* compute luminance from 16-bit LogL */
 {
 	int	Le = p16 & 0x7fff;
 	double	Y;
 
 	if (!Le)
 		return (0.);
-	Y = exp(LOGOF2/256.*(Le+.5) - LOGOF2*64.);
-	if (p16 & 0x8000)
-		return (-Y);
-	return (Y);
+	Y = exp(M_LN2/256.*(Le+.5) - M_LN2*64.);
+	return (!(p16 & 0x8000) ? Y : -Y);
 }
 
-static int
-pix16fromY(double Y)
+#if !LOGLUV_PUBLIC
+static
+#endif
+int
+LogL16fromY(double Y, int em)	/* get 16-bit LogL from Y */
 {
-	if (Y >= 1.84467e19)
+	if (Y >= 1.8371976e19)
 		return (0x7fff);
-	if (Y <= -1.84467e19)
+	if (Y <= -1.8371976e19)
 		return (0xffff);
-	if (Y > 5.43571e-20)
-		return (int)(256.*(log2(Y) + 64.));
-	if (Y < -5.43571e-20)
-		return (~0x7fff | (int)(256.*(log2(-Y) + 64.)));
+	if (Y > 5.4136769e-20)
+		return itrunc(256.*(log2(Y) + 64.), em);
+	if (Y < -5.4136769e-20)
+		return (~0x7fff | itrunc(256.*(log2(-Y) + 64.), em));
 	return (0);
 }
 
@@ -648,7 +682,7 @@ L16toY(LogLuvState* sp, tidata_t op, int n)
 	float* yp = (float*) op;
 
 	while (n-- > 0)
-		*yp++ = (float)pix16toY(*l16++);
+		*yp++ = (float)LogL16toY(*l16++);
 }
 
 static void
@@ -658,7 +692,7 @@ L16toGry(LogLuvState* sp, tidata_t op, int n)
 	uint8* gp = (uint8*) op;
 
 	while (n-- > 0) {
-		double Y = pix16toY(*l16++);
+		double Y = LogL16toY(*l16++);
 		*gp++ = (Y <= 0.) ? 0 : (Y >= 1.) ? 255 : (int)(256.*sqrt(Y));
 	}
 }
@@ -670,10 +704,13 @@ L16fromY(LogLuvState* sp, tidata_t op, int n)
 	float* yp = (float*) op;
 
 	while (n-- > 0)
-		*l16++ = pix16fromY(*yp++);
+		*l16++ = LogL16fromY(*yp++, sp->encode_meth);
 }
 
-static void
+#if !LOGLUV_PUBLIC
+static
+#endif
+void
 XYZtoRGB24(float xyz[3], uint8 rgb[3])
 {
 	double	r, g, b;
@@ -688,63 +725,156 @@ XYZtoRGB24(float xyz[3], uint8 rgb[3])
 	rgb[2] = (b <= 0.) ? 0 : (b >= 1.) ? 255 : (int)(256.*sqrt(b));
 }
 
+#if !LOGLUV_PUBLIC
+static
+#endif
+double
+LogL10toY(int p10)		/* compute luminance from 10-bit LogL */
+{
+	if (p10 == 0)
+		return (0.);
+	return (exp(M_LN2/64.*(p10+.5) - M_LN2*12.));
+}
+
+#if !LOGLUV_PUBLIC
+static
+#endif
+int
+LogL10fromY(double Y, int em)	/* get 10-bit LogL from Y */
+{
+	if (Y >= 15.742)
+		return (0x3ff);
+	else if (Y <= .00024283)
+		return (0);
+	else
+		return itrunc(64.*(log2(Y) + 12.), em);
+}
+
+#define NANGLES		100
+#define uv2ang(u, v)	( (NANGLES*.499999999/M_PI) \
+				* atan2((v)-V_NEU,(u)-U_NEU) + .5*NANGLES )
+
 static int
-uv_encode(double u, double v)		/* encode (u',v') coordinates */
+oog_encode(double u, double v)		/* encode out-of-gamut chroma */
+{
+	static int	oog_table[NANGLES];
+	static int	initialized = 0;
+	register int	i;
+	
+	if (!initialized) {		/* set up perimeter table */
+		double	eps[NANGLES], ua, va, ang, epsa;
+		int	ui, vi, ustep;
+		for (i = NANGLES; i--; )
+			eps[i] = 2.;
+		for (vi = UV_NVS; vi--; ) {
+			va = UV_VSTART + (vi+.5)*UV_SQSIZ;
+			ustep = uv_row[vi].nus-1;
+			if (vi == UV_NVS-1 || vi == 0 || ustep <= 0)
+				ustep = 1;
+			for (ui = uv_row[vi].nus-1; ui >= 0; ui -= ustep) {
+				ua = uv_row[vi].ustart + (ui+.5)*UV_SQSIZ;
+				ang = uv2ang(ua, va);
+                                i = (int) ang;
+				epsa = fabs(ang - (i+.5));
+				if (epsa < eps[i]) {
+					oog_table[i] = uv_row[vi].ncum + ui;
+					eps[i] = epsa;
+				}
+			}
+		}
+		for (i = NANGLES; i--; )	/* fill any holes */
+			if (eps[i] > 1.5) {
+				int	i1, i2;
+				for (i1 = 1; i1 < NANGLES/2; i1++)
+					if (eps[(i+i1)%NANGLES] < 1.5)
+						break;
+				for (i2 = 1; i2 < NANGLES/2; i2++)
+					if (eps[(i+NANGLES-i2)%NANGLES] < 1.5)
+						break;
+				if (i1 < i2)
+					oog_table[i] =
+						oog_table[(i+i1)%NANGLES];
+				else
+					oog_table[i] =
+						oog_table[(i+NANGLES-i2)%NANGLES];
+			}
+		initialized = 1;
+	}
+	i = (int) uv2ang(u, v);		/* look up hue angle */
+	return (oog_table[i]);
+}
+
+#undef uv2ang
+#undef NANGLES
+
+#if !LOGLUV_PUBLIC
+static
+#endif
+int
+uv_encode(double u, double v, int em)	/* encode (u',v') coordinates */
 {
 	register int	vi, ui;
 
 	if (v < UV_VSTART)
-		return(-1);
-	vi = (int)((v - UV_VSTART)*(1./UV_SQSIZ));
+		return oog_encode(u, v);
+	vi = itrunc((v - UV_VSTART)*(1./UV_SQSIZ), em);
 	if (vi >= UV_NVS)
-		return(-1);
+		return oog_encode(u, v);
 	if (u < uv_row[vi].ustart)
-		return(-1);
-	ui = (int)((u - uv_row[vi].ustart)*(1./UV_SQSIZ));
+		return oog_encode(u, v);
+	ui = itrunc((u - uv_row[vi].ustart)*(1./UV_SQSIZ), em);
 	if (ui >= uv_row[vi].nus)
-		return(-1);
-	return(uv_row[vi].ncum + ui);
+		return oog_encode(u, v);
+
+	return (uv_row[vi].ncum + ui);
 }
 
-static int
+#if !LOGLUV_PUBLIC
+static
+#endif
+int
 uv_decode(double *up, double *vp, int c)	/* decode (u',v') index */
 {
 	int	upper, lower;
 	register int	ui, vi;
 
 	if (c < 0 || c >= UV_NDIVS)
-		return(-1);
-	lower = 0;			/* binary search */
+		return (-1);
+	lower = 0;				/* binary search */
 	upper = UV_NVS;
-	do {
+	while (upper - lower > 1) {
 		vi = (lower + upper) >> 1;
 		ui = c - uv_row[vi].ncum;
 		if (ui > 0)
 			lower = vi;
 		else if (ui < 0)
 			upper = vi;
-		else
+		else {
+			lower = vi;
 			break;
-	} while (upper - lower > 1);
+		}
+	}
 	vi = lower;
 	ui = c - uv_row[vi].ncum;
 	*up = uv_row[vi].ustart + (ui+.5)*UV_SQSIZ;
 	*vp = UV_VSTART + (vi+.5)*UV_SQSIZ;
-	return(0);
+	return (0);
 }
 
-static void
-pix24toXYZ(uint32 p, float XYZ[3])
+#if !LOGLUV_PUBLIC
+static
+#endif
+void
+LogLuv24toXYZ(uint32 p, float XYZ[3])
 {
-	int	Le, Ce;
+	int	Ce;
 	double	L, u, v, s, x, y;
 					/* decode luminance */
-	Le = p >> 14 & 0x3ff;
-	if (Le == 0) {
+	L = LogL10toY(p>>14 & 0x3ff);
+	if (L <= 0.) {
 		XYZ[0] = XYZ[1] = XYZ[2] = 0.;
 		return;
 	}
-	L = exp(LOGOF2/64.*(Le+.5) - LOGOF2*12.);
 					/* decode color */
 	Ce = p & 0x3fff;
 	if (uv_decode(&u, &v, Ce) < 0) {
@@ -759,31 +889,28 @@ pix24toXYZ(uint32 p, float XYZ[3])
 	XYZ[2] = (float)((1.-x-y)/y * L);
 }
 
-static uint32
-pix24fromXYZ(float XYZ[3])
+#if !LOGLUV_PUBLIC
+static
+#endif
+uint32
+LogLuv24fromXYZ(float XYZ[3], int em)
 {
 	int	Le, Ce;
-	double	L, u, v, s;
+	double	u, v, s;
 					/* encode luminance */
-	L = XYZ[1];
-	if (L >= 16.)
-		Le = 0x3ff;
-	else if (L <= 1./4096.)
-		Le = 0;
-	else
-		Le = (int)(64.*(log2(L) + 12.));
+	Le = LogL10fromY(XYZ[1], em);
 					/* encode color */
 	s = XYZ[0] + 15.*XYZ[1] + 3.*XYZ[2];
-	if (s == 0.) {
+	if (!Le || s <= 0.) {
 		u = U_NEU;
 		v = V_NEU;
 	} else {
 		u = 4.*XYZ[0] / s;
 		v = 9.*XYZ[1] / s;
 	}
-	Ce = uv_encode(u, v);
-	if (Ce < 0)
-		Ce = uv_encode(U_NEU, V_NEU);
+	Ce = uv_encode(u, v, em);
+	if (Ce < 0)			/* never happens */
+		Ce = uv_encode(U_NEU, V_NEU, SGILOGENCODE_NODITHER);
 					/* combine encodings */
 	return (Le << 14 | Ce);
 }
@@ -795,7 +922,7 @@ Luv24toXYZ(LogLuvState* sp, tidata_t op, int n)
 	float* xyz = (float*) op;
 
 	while (n-- > 0) {
-		pix24toXYZ(*luv, xyz);
+		LogLuv24toXYZ(*luv, xyz);
 		xyz += 3;
 		luv++;
 	}
@@ -830,7 +957,7 @@ Luv24toRGB(LogLuvState* sp, tidata_t op, int n)
 	while (n-- > 0) {
 		float xyz[3];
 
-		pix24toXYZ(*luv++, xyz);
+		LogLuv24toXYZ(*luv++, xyz);
 		XYZtoRGB24(xyz, rgb);
 		rgb += 3;
 	}
@@ -843,7 +970,7 @@ Luv24fromXYZ(LogLuvState* sp, tidata_t op, int n)
 	float* xyz = (float*) op;
 
 	while (n-- > 0) {
-		*luv++ = pix24fromXYZ(xyz);
+		*luv++ = LogLuv24fromXYZ(xyz, sp->encode_meth);
 		xyz += 3;
 	}
 }
@@ -861,23 +988,30 @@ Luv24fromLuv48(LogLuvState* sp, tidata_t op, int n)
 			Le = 0;
 		else if (luv3[0] >= (1<<12)+3314)
 			Le = (1<<10) - 1;
-		else
+		else if (sp->encode_meth == SGILOGENCODE_NODITHER)
 			Le = (luv3[0]-3314) >> 2;
-		Ce = uv_encode((luv[1]+.5)/(1<<15), (luv[2]+.5)/(1<<15));
-		if (Ce < 0)
-			Ce = uv_encode(U_NEU, V_NEU);
+		else
+			Le = itrunc(.25*(luv3[0]-3314.), sp->encode_meth);
+
+		Ce = uv_encode((luv[1]+.5)/(1<<15), (luv[2]+.5)/(1<<15),
+					sp->encode_meth);
+		if (Ce < 0)	/* never happens */
+			Ce = uv_encode(U_NEU, V_NEU, SGILOGENCODE_NODITHER);
 		*luv++ = (uint32)Le << 14 | Ce;
 		luv3 += 3;
 	}
 }
 
-static void
-pix32toXYZ(uint32 p, float XYZ[3])
+#if !LOGLUV_PUBLIC
+static
+#endif
+void
+LogLuv32toXYZ(uint32 p, float XYZ[3])
 {
 	double	L, u, v, s, x, y;
 					/* decode luminance */
-	L = pix16toY((int)p >> 16);
-	if (L == 0.) {
+	L = LogL16toY((int)p >> 16);
+	if (L <= 0.) {
 		XYZ[0] = XYZ[1] = XYZ[2] = 0.;
 		return;
 	}
@@ -893,16 +1027,19 @@ pix32toXYZ(uint32 p, float XYZ[3])
 	XYZ[2] = (float)((1.-x-y)/y * L);
 }
 
-static uint32
-pix32fromXYZ(float XYZ[3])
+#if !LOGLUV_PUBLIC
+static
+#endif
+uint32
+LogLuv32fromXYZ(float XYZ[3], int em)
 {
 	unsigned int	Le, ue, ve;
 	double	u, v, s;
 					/* encode luminance */
-	Le = (unsigned int)pix16fromY(XYZ[1]);
+	Le = (unsigned int)LogL16fromY(XYZ[1], em);
 					/* encode color */
 	s = XYZ[0] + 15.*XYZ[1] + 3.*XYZ[2];
-	if (s == 0.) {
+	if (!Le || s <= 0.) {
 		u = U_NEU;
 		v = V_NEU;
 	} else {
@@ -910,10 +1047,10 @@ pix32fromXYZ(float XYZ[3])
 		v = 9.*XYZ[1] / s;
 	}
 	if (u <= 0.) ue = 0;
-	else ue = (unsigned int)(UVSCALE * u);
+	else ue = itrunc(UVSCALE*u, em);
 	if (ue > 255) ue = 255;
 	if (v <= 0.) ve = 0;
-	else ve = (unsigned int)(UVSCALE * v);
+	else ve = itrunc(UVSCALE*v, em);
 	if (ve > 255) ve = 255;
 					/* combine encodings */
 	return (Le << 16 | ue << 8 | ve);
@@ -926,7 +1063,7 @@ Luv32toXYZ(LogLuvState* sp, tidata_t op, int n)
 	float* xyz = (float*) op;
 
 	while (n-- > 0) {
-		pix32toXYZ(*luv++, xyz);
+		LogLuv32toXYZ(*luv++, xyz);
 		xyz += 3;
 	}
 }
@@ -958,7 +1095,7 @@ Luv32toRGB(LogLuvState* sp, tidata_t op, int n)
 	while (n-- > 0) {
 		float xyz[3];
 
-		pix32toXYZ(*luv++, xyz);
+		LogLuv32toXYZ(*luv++, xyz);
 		XYZtoRGB24(xyz, rgb);
 		rgb += 3;
 	}
@@ -971,7 +1108,7 @@ Luv32fromXYZ(LogLuvState* sp, tidata_t op, int n)
 	float* xyz = (float*) op;
 
 	while (n-- > 0) {
-		*luv++ = pix32fromXYZ(xyz);
+		*luv++ = LogLuv32fromXYZ(xyz, sp->encode_meth);
 		xyz += 3;
 	}
 }
@@ -982,10 +1119,19 @@ Luv32fromLuv48(LogLuvState* sp, tidata_t op, int n)
 	uint32* luv = (uint32*) sp->tbuf;
 	int16* luv3 = (int16*) op;
 
+	if (sp->encode_meth == SGILOGENCODE_NODITHER) {
+		while (n-- > 0) {
+			*luv++ = (uint32)luv3[0] << 16 |
+				(luv3[1]*(uint32)(UVSCALE+.5) >> 7 & 0xff00) |
+				(luv3[2]*(uint32)(UVSCALE+.5) >> 15 & 0xff);
+			luv3 += 3;
+		}
+		return;
+	}
 	while (n-- > 0) {
 		*luv++ = (uint32)luv3[0] << 16 |
-			(luv3[1]*(uint32)(UVSCALE+.5) >> 7 & 0xff00) |
-			(luv3[2]*(uint32)(UVSCALE+.5) >> 15 & 0xff);
+	(itrunc(luv3[1]*(UVSCALE/(1<<15)), sp->encode_meth) << 8 & 0xff00) |
+		(itrunc(luv3[2]*(UVSCALE/(1<<15)), sp->encode_meth) & 0xff);
 		luv3 += 3;
 	}
 }
@@ -1043,7 +1189,7 @@ LogL16InitState(TIFF* tif)
 		    "No support for converting user data format to LogL");
 		return (0);
 	}
-	sp->tbuflen = (short)(td->td_imagewidth * td->td_rowsperstrip);
+	sp->tbuflen = td->td_imagewidth * td->td_rowsperstrip;
 	sp->tbuf = (tidata_t*) _TIFFmalloc(sp->tbuflen * sizeof (int16));
 	if (sp->tbuf == NULL) {
 		TIFFError(module, "%s: No space for SGILog translation buffer",
@@ -1141,7 +1287,7 @@ LogLuvInitState(TIFF* tif)
 		    "No support for converting user data format to LogLuv");
 		return (0);
 	}
-	sp->tbuflen = (short)(td->td_imagewidth * td->td_rowsperstrip);
+	sp->tbuflen = td->td_imagewidth * td->td_rowsperstrip;
 	sp->tbuf = (tidata_t*) _TIFFmalloc(sp->tbuflen * sizeof (uint32));
 	if (sp->tbuf == NULL) {
 		TIFFError(module, "%s: No space for SGILog translation buffer",
@@ -1335,6 +1481,7 @@ LogLuvVSetField(TIFF* tif, ttag_t tag, va_list ap)
 			break;
 		case SGILOGDATAFMT_RAW:
 			bps = 32, fmt = SAMPLEFORMAT_UINT;
+			TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
 			break;
 		case SGILOGDATAFMT_8BIT:
 			bps = 8, fmt = SAMPLEFORMAT_UINT;
@@ -1352,6 +1499,16 @@ LogLuvVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		 */
 		tif->tif_tilesize = TIFFTileSize(tif);
 		tif->tif_scanlinesize = TIFFScanlineSize(tif);
+		return (1);
+	case TIFFTAG_SGILOGENCODE:
+		sp->encode_meth = va_arg(ap, int);
+		if (sp->encode_meth != SGILOGENCODE_NODITHER &&
+				sp->encode_meth != SGILOGENCODE_RANDITHER) {
+			TIFFError(tif->tif_name,
+				"Unknown encoding %d for LogLuv compression",
+				sp->encode_meth);
+			return (0);
+		}
 		return (1);
 	default:
 		return (*sp->vsetparent)(tif, tag, ap);
@@ -1374,7 +1531,9 @@ LogLuvVGetField(TIFF* tif, ttag_t tag, va_list ap)
 
 static const TIFFFieldInfo LogLuvFieldInfo[] = {
     { TIFFTAG_SGILOGDATAFMT,	  0, 0,	TIFF_SHORT,	FIELD_PSEUDO,
-      TRUE,	FALSE,	"SGILogDataFmt"}
+      TRUE,	FALSE,	"SGILogDataFmt"},
+    { TIFFTAG_SGILOGENCODE,	  0, 0, TIFF_SHORT,	FIELD_PSEUDO,
+      TRUE,	FALSE,	"SGILogEncode"}
 };
 
 int
@@ -1392,8 +1551,10 @@ TIFFInitSGILog(TIFF* tif, int scheme)
 	if (tif->tif_data == NULL)
 		goto bad;
 	sp = (LogLuvState*) tif->tif_data;
-	memset(sp, 0, sizeof (*sp));
+	_TIFFmemset((tdata_t)sp, 0, sizeof (*sp));
 	sp->user_datafmt = SGILOGDATAFMT_UNKNOWN;
+	sp->encode_meth = (scheme == COMPRESSION_SGILOG24) ?
+				SGILOGENCODE_RANDITHER : SGILOGENCODE_NODITHER;
 	sp->tfunc = _logLuvNop;
 
 	/*

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiff.h,v 1.5 2000/07/14 18:43:08 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiff.h,v 1.7 2001/04/03 04:00:23 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -42,8 +42,24 @@
 #define	TIFF_BIGENDIAN		0x4d4d
 #define	TIFF_LITTLEENDIAN	0x4949
 
-#ifndef _TIFF_DATA_TYPEDEFS_
+/*
+ * The so called TIFF types conflict with definitions from inttypes.h 
+ * included from sys/types.h on AIX (at least using VisualAge compiler). 
+ * We try to work around this by detecting this case.  Defining 
+ * _TIFF_DATA_TYPEDEFS_ short circuits the later definitions in tiff.h, and
+ * we will in the holes not provided for by inttypes.h. 
+ *
+ * See http://bugzilla.remotesensing.org/show_bug.cgi?id=39
+ */
+#if defined(_H_INTTYPES) && defined(_ALL_SOURCE)
+
 #define _TIFF_DATA_TYPEDEFS_
+typedef unsigned char uint8;
+typedef unsigned short uint16;
+typedef unsigned int uint32;
+
+#endif
+
 /*
  * Intrinsic data types required by the file format:
  *
@@ -52,6 +68,9 @@
  * 32-bit quantities	int32/uint32
  * strings		unsigned char*
  */
+#ifndef _TIFF_DATA_TYPEDEFS_
+#define _TIFF_DATA_TYPEDEFS_
+
 #ifdef __STDC__
 typedef	signed char int8;	/* NB: non-ANSI compilers may not grok */
 #else
@@ -438,4 +457,7 @@ typedef	enum {
 #define     SGILOGDATAFMT_16BIT		1	/* 16-bit samples */
 #define     SGILOGDATAFMT_RAW		2	/* uninterpreted data */
 #define     SGILOGDATAFMT_8BIT		3	/* 8-bit RGB monitor values */
+#define TIFFTAG_SGILOGENCODE		65561 /* SGILog data encoding control*/
+#define     SGILOGENCODE_NODITHER	0     /* do not dither encoded values*/
+#define     SGILOGENCODE_RANDITHER	1     /* randomly dither encd values */
 #endif /* _TIFF_ */
