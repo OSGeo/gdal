@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/03/23 16:06:27  warmerda
+ * Fixed up complex header attribute handling as complained about by EDG.
+ *
  * Revision 1.18  2003/11/25 15:47:56  warmerda
  * Added surface type for complex headers: Marius
  *
@@ -1619,6 +1622,7 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
 {
     DGNElemComplexHeader *psCH;
     DGNElemCore *psCore;
+    unsigned char abyRawZeroLinkage[8] = {0,0,0,0,0,0,0,0};
 
     CPLAssert( nType == DGNT_COMPLEX_CHAIN_HEADER 
                || nType == DGNT_COMPLEX_SHAPE_HEADER
@@ -1641,7 +1645,7 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
 /* -------------------------------------------------------------------- */
 /*      Set complex header specific information in the structure.       */
 /* -------------------------------------------------------------------- */
-    psCH->totlength = nTotLength;
+    psCH->totlength = nTotLength - 4;
     psCH->numelems = nNumElems;
     psCH->surftype = nSurfType;
 
@@ -1650,14 +1654,14 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
 /* -------------------------------------------------------------------- */
     if ( nType == DGNT_COMPLEX_CHAIN_HEADER 
          || nType == DGNT_COMPLEX_SHAPE_HEADER ) 
-      psCore->raw_bytes = 48;
+      psCore->raw_bytes = 40;
     else 
       psCore->raw_bytes = 42;
 
     psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
 
-    psCore->raw_data[36] = (unsigned char) (nTotLength % 256);
-    psCore->raw_data[37] = (unsigned char) (nTotLength / 256);
+    psCore->raw_data[36] = (unsigned char) ((nTotLength-4) % 256);
+    psCore->raw_data[37] = (unsigned char) ((nTotLength-4) / 256);
     psCore->raw_data[38] = (unsigned char) (nNumElems % 256);
     psCore->raw_data[39] = (unsigned char) (nNumElems / 256);
     if ( nType == DGNT_3DSURFACE_HEADER || nType == DGNT_3DSOLID_HEADER ) {
@@ -1669,6 +1673,12 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
 /*      Set the core raw data.                                          */
 /* -------------------------------------------------------------------- */
     DGNUpdateElemCoreExtended( hDGN, psCore );
+
+/* -------------------------------------------------------------------- */
+/*      Elements have to be at least 48 bytes long, so we have to       */
+/*      add a dummy bit of attribute data to fill out the length.       */
+/* -------------------------------------------------------------------- */
+    DGNAddRawAttrLink( hDGN, psCore, 8, abyRawZeroLinkage );
     
     return psCore;
 }
