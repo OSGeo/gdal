@@ -2,7 +2,7 @@ GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	geotiff.o geotiff_proj4.o
+OBJ	=	geotiff.o
 
 ALL_C_FLAGS	=	-Ilibgeotiff -Ilibtiff $(GDAL_INCLUDE) $(CFLAGS)
 
@@ -28,8 +28,8 @@ gt_test:	gt_test.o gt_gs.o cpl_csv.o
 	$(CC) gt_test.o gt_gs.o cpl_csv.o $(GDAL_ROOT)/port/*.o \
 		libgeotiff/libgeotiff.a libtiff/libtiff.a $(LIBS) -o gt_test
 
-n_test:	n_test.o geotiff_proj4.o
-	$(CC) n_test.o geotiff_proj4.o \
+n_test:	n_test.o
+	$(CC) n_test.o \
 		$(GDAL_ROOT)/port/*.o \
 		libgeotiff/libgeotiff.a libtiff/libtiff.a $(LIBS) -o n_test
 
