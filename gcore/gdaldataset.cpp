@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2005/03/09 17:06:48  fwarmerdam
+ * Added use of BlockBasedRasterIO() if bForceCachedIO turned on.  untested.
+ *
  * Revision 1.45  2005/02/17 22:13:16  fwarmerdam
  * added bForceCachedIO on dataset
  *
@@ -1456,6 +1459,20 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
                   nXOff, nYOff, nXSize, nYSize, 
                   nBufXSize, nBufYSize );
     }
+
+/* -------------------------------------------------------------------- */
+/*      We are being forced to use cached IO instead of a driver        */
+/*      specific implementation.                                        */
+/* -------------------------------------------------------------------- */
+    else if( bForceCachedIO )
+    {
+        eErr = 
+            BlockBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                pData, nBufXSize, nBufYSize, eBufType,
+                                nBandCount, panBandMap,
+                                nPixelSpace, nLineSpace, nBandSpace );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Call the format specific function.                              */
 /* -------------------------------------------------------------------- */
