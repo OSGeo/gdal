@@ -13,4 +13,4 @@ CPPFLAGS	+=	-I.. -I../.. $(FME_INCLUDE) \
 default:	$(O_OBJ)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(O_OBJ)
