@@ -10,8 +10,8 @@
 
 <h2><a name="AAIGrid">AAIGrid -- Arc/Info ASCII Grid</a></h2>
 
-Supported for read access, including reading of an affine georeferencing 
-transform and some projections.  
+Supported for read and write access, including reading of an affine
+georeferencing transform and some projections.  
 This format is the ASCII interchange format for Arc/Info Grid, 
 and takes the form of an ASCII file, plus sometimes an associated .prj file.
 It is normally produced with the Arc/Info ASCIIGRID command.<p>
@@ -90,7 +90,7 @@ unlabelled DOQ (Digital Ortho Quad) format from the USGS.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/raw/doq1dataset.cpp</tt>.<p>
 
-<h2><a name="DOQ2">DOQ2 -- New Labelled USGS DOQ</a></h1>
+<h2><a name="DOQ2">DOQ2 -- New Labelled USGS DOQ</a></h2>
 
 Support for read access, including reading of an affine georeferencing 
 transform, capture of the projection string and reading of other auxilary

@@ -1,3 +1,8 @@
+2002-06-11  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* /gdal/frmts/aaigrid/aaigriddataset.cpp: Write support implemented
+	for Arc/Info ASCII Grid Format.
+
 2002-05-08  Andrey Kiselev  <dron@remotesensing.org>
 	
 	* /gdal/frmts/l1b/l1bdataset.cpp, GNUmakefile, makefile.vc: New driver
