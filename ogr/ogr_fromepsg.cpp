@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/12/13 06:35:45  warmerda
+ * fixed rotatin sign in TOWGS84 from method 9607
+ *
  * Revision 1.15  2002/12/02 00:07:50  warmerda
  * set angular units properly in GEOGCS
  *
@@ -462,7 +465,7 @@ int EPSGGetWGS84Transform( int nGeogCS, double *padfTransform )
         atoi(CSLGetField( papszLine,
                           CSVGetFileFieldId(pszFilename,
                                             "COORD_OP_METHOD_CODE")));
-    if( nMethodCode != 9603 && nMethodCode != 9607 )
+    if( nMethodCode != 9603 && nMethodCode != 9607 && nMethodCode != 9606 )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -472,6 +475,18 @@ int EPSGGetWGS84Transform( int nGeogCS, double *padfTransform )
 
     for( iField = 0; iField < 7; iField++ )
         padfTransform[iField] = atof(papszLine[iDXField+iField]);
+
+/* -------------------------------------------------------------------- */
+/*      9607 - coordinate frame rotation has reverse signs on the       */
+/*      rotational coefficients.  Fix up now since we internal          */
+/*      operate according to method 9606 (position vector 7-parameter). */
+/* -------------------------------------------------------------------- */
+    if( nMethodCode == 9607 )
+    {
+        padfTransform[3] *= -1;
+        padfTransform[4] *= -1;
+        padfTransform[5] *= -1;
+    }
         
     return TRUE;
 }
