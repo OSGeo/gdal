@@ -4,7 +4,7 @@ GDAL_ROOT	=	../..
 include $(GDAL_ROOT)/GDALmake.opt
 
 GDAL_OBJ	=	nitfdataset.o
-NITFLIB_OBJ	=	nitffile.o nitfimage.o mgrs.o geocent_lat.o
+NITFLIB_OBJ	=	nitffile.o nitfimage.o mgrs.o
 
 OBJ = $(GDAL_OBJ) $(NITFLIB_OBJ)
 
