@@ -29,6 +29,10 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.69  2004/11/11 03:15:49  fwarmerdam
+# Don't call GDALAllRegister() in other methods unless there are zero
+# drivers registered.
+#
 # Revision 1.68  2004/11/01 17:25:28  fwarmerdam
 # added CPL Escape functions
 #
@@ -297,14 +301,16 @@ def AllRegister():
     
 def GetDriverList():
     list = []
-    _gdal.GDALAllRegister()
+    if _gdal.GDALGetDriverCount() == 0:
+        _gdal.GDALAllRegister()
     driver_count = _gdal.GDALGetDriverCount()
     for iDriver in range(driver_count):
         list.append( Driver(_gdal.GDALGetDriver( iDriver )) )
     return list
 
 def GetDriverByName(name):
-    _gdal.GDALAllRegister()
+    if _gdal.GDALGetDriverCount() == 0:
+        _gdal.GDALAllRegister()
     driver_o = _gdal.GDALGetDriverByName( name )
     if driver_o is None or driver_o == "NULL":
         return None
@@ -312,7 +318,8 @@ def GetDriverByName(name):
         return Driver( driver_o )
     
 def Open(file,access=GA_ReadOnly):
-    _gdal.GDALAllRegister()
+    if _gdal.GDALGetDriverCount() == 0:
+        _gdal.GDALAllRegister()
     _obj = _gdal.GDALOpen(file,access)
     if _obj is None or _obj == "NULL" :
         return None;
@@ -321,7 +328,8 @@ def Open(file,access=GA_ReadOnly):
         return Dataset(_obj)
 
 def OpenShared(file,access=GA_ReadOnly):
-    _gdal.GDALAllRegister()
+    if _gdal.GDALGetDriverCount() == 0:
+        _gdal.GDALAllRegister()
     _obj = _gdal.GDALOpenShared(file,access)
     if _obj is None or _obj == "NULL" :
         return None;
