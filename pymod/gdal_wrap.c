@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.2  2000/03/06 03:30:51  warmerda
- * Added geotransform stuff
+ * Revision 1.3  2000/03/08 20:01:04  warmerda
+ * added geotransforms
  *
  ************************************************************************/
 
@@ -645,6 +645,50 @@ py_GDALGetGeoTransform(PyObject *self, PyObject *args) {
 	                 geotransform[3],
 	                 geotransform[4],
 	                 geotransform[5] );
+}
+
+static PyObject *
+py_GDALSetGeoTransform(PyObject *self, PyObject *args) {
+
+    GDALDatasetH  _arg0;
+    char *_argc0 = NULL;
+    double geotransform[6];
+    CPLErr err;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s(dddddd):GDALSetGeoTransform",&_argc0,
+	geotransform+0, geotransform+1, geotransform+2, 
+	geotransform+3, geotransform+4, geotransform+5) )
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALDatasetH" )) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of GDALSetGeoTransform."
+                            "  Expected _GDALDatasetH.");
+            return NULL;
+        }
+    }
+	
+    err = GDALSetGeoTransform(_arg0,geotransform);
+
+    if( err != CE_None )
+    {
+	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
+	return NULL;
+    }
+
+    
+    return Py_BuildValue("dddddd",
+	                 geotransform[0],
+	                 geotransform[1],
+	                 geotransform[2],
+	                 geotransform[3],
+	                 geotransform[4],
+	                 geotransform[5] );
+
+    Py_INCREF(Py_None);
+    return Py_None;
 }
 static PyObject *_wrap_GDALGetDataTypeSize(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -1860,6 +1904,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALColorEntry_c2_set", _wrap_GDALColorEntry_c2_set, 1 },
 	 { "GDALColorEntry_c1_get", _wrap_GDALColorEntry_c1_get, 1 },
 	 { "GDALColorEntry_c1_set", _wrap_GDALColorEntry_c1_set, 1 },
+	 { "GDALSetGeoTransform", py_GDALSetGeoTransform, 1 },
 	 { "GDALGetGeoTransform", py_GDALGetGeoTransform, 1 },
 	 { "GDALReadRaster", py_GDALReadRaster, 1 },
 	 { "GDALDecToDMS", _wrap_GDALDecToDMS, 1 },

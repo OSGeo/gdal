@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/03/08 20:01:04  warmerda
+ * added geotransforms
+ *
  * Revision 1.2  2000/03/06 03:30:51  warmerda
  * Added geotransform stuff
  *
@@ -310,6 +313,54 @@ py_GDALGetGeoTransform(PyObject *self, PyObject *args) {
 %}
 
 %native(GDALGetGeoTransform) py_GDALGetGeoTransform;
+
+%{
+static PyObject *
+py_GDALSetGeoTransform(PyObject *self, PyObject *args) {
+
+    GDALDatasetH  _arg0;
+    char *_argc0 = NULL;
+    double geotransform[6];
+    CPLErr err;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s(dddddd):GDALSetGeoTransform",&_argc0,
+	geotransform+0, geotransform+1, geotransform+2, 
+	geotransform+3, geotransform+4, geotransform+5) )
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALDatasetH" )) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of GDALSetGeoTransform."
+                            "  Expected _GDALDatasetH.");
+            return NULL;
+        }
+    }
+	
+    err = GDALSetGeoTransform(_arg0,geotransform);
+
+    if( err != CE_None )
+    {
+	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
+	return NULL;
+    }
+
+    
+    return Py_BuildValue("dddddd",
+	                 geotransform[0],
+	                 geotransform[1],
+	                 geotransform[2],
+	                 geotransform[3],
+	                 geotransform[4],
+	                 geotransform[5] );
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+%}
+
+%native(GDALSetGeoTransform) py_GDALSetGeoTransform;
 
 
 

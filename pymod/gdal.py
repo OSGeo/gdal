@@ -7,6 +7,7 @@ def Open(file,access=_gdal.GA_ReadOnly):
     _gdal.GDALAllRegister()
     _obj = _gdal.GDALOpen(file,access)
     if _obj:
+        _gdal.GDALDereferenceDataset( _obj )
         return Dataset(_obj)
     else:
         return None
@@ -15,6 +16,7 @@ class Dataset:
 
     def __init__(self, _obj):
         self._o = _obj
+        _gdal.GDALReferenceDataset( _obj )
         self.RasterXSize = _gdal.GDALGetRasterXSize(self._o)
         self.RasterYSize = _gdal.GDALGetRasterYSize(self._o)
         self.RasterCount = _gdal.GDALGetRasterCount(self._o)
@@ -25,7 +27,8 @@ class Dataset:
 
     def __del__(self):
         if self._o:
-            _gdal.GDALClose(self._o)
+            if _gdal.GDALDereferenceDataset(self._o) <= 0:
+                _gdal.GDALClose(self._o)
 
     def GetRasterBand(self, i):
         if i > 0 & i <= self.RasterCount:
@@ -35,6 +38,9 @@ class Dataset:
 
     def GetGeoTransform(self):
         return _gdal.GDALGetGeoTransform(self._o)
+
+    def SetGeoTransform(self,transform):
+        _gdal.GDALSetGeoTransform(self._o,transform)
 
     def GetProjection(self):
         return _gdal.GDALGetProjectionRef(self._o)
