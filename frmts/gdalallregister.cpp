@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.36  2001/09/17 18:05:20  warmerda
+ * Register DOQ2 format.
+ *
  * Revision 1.35  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -255,6 +258,7 @@ void GDALAllRegister()
 #ifdef FRMT_raw
     GDALRegister_PNM();
     GDALRegister_DOQ1();
+    GDALRegister_DOQ2();
     GDALRegister_EHdr();
     GDALRegister_PAux();
     GDALRegister_MFF();
