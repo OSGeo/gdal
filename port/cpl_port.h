@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.23  2001/01/13 04:06:39  warmerda
+ * added strings.h on AIX as per patch from Dale.
+ *
  * Revision 1.22  2001/01/03 16:18:07  warmerda
  * added GUIntBig
  *
@@ -148,6 +151,10 @@
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
+
+#ifdef _AIX
+#  include <strings.h>
+#endif
 
 #if defined(HAVE_LIBDBMALLOC) && defined(HAVE_DBMALLOC_H) && defined(DEBUG)
 #  define DBMALLOC
