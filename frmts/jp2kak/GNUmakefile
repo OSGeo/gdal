@@ -10,8 +10,7 @@ KAKINC = -I$(KAKDIR)/coresys/common -I$(KAKDIR)/apps/compressed_io \
 APPOBJ  = $(KAKDIR)/apps/make/args.o $(KAKDIR)/apps/make/image_in.o \
 	$(KAKDIR)/apps/make/image_out.o $(KAKDIR)/apps/make/jp2.o \
 	$(KAKDIR)/apps/make/mj2.o $(KAKDIR)/apps/make/palette.o \
-	$(KAKDIR)/apps/make/roi_sources.o \
-	$(KAKDIR)/apps/make/region_decompressor.o \
+	$(KAKDIR)/apps/make/roi_sources.o 
 
 #CXXFLAGS :=	$(CXXFLAGS) -DFILEIO_DEBUG
 
