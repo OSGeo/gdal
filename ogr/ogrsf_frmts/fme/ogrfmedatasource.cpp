@@ -23,6 +23,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/09/04 19:03:48  warmerda
+ * avoid creating session if datasetname is not for FME
+ *
  * Revision 1.8  2002/09/04 18:44:48  warmerda
  * try to make aggregates into multipolygons
  *
@@ -567,10 +570,34 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
 {
     FME_MsgNum          err;
 
+    CPLAssert( poSession == NULL );  // only open once
+
+/* -------------------------------------------------------------------- */
+/*      Do some initial validation.  Does this even look like it        */
+/*      could plausibly be an FME suitable name?  We accept PROMPT:,    */
+/*      <reader>: or anything ending in .fdd as a reasonable candidate. */
+/* -------------------------------------------------------------------- */
+    int  i;
+
+    for( i = 0; pszCompositeName[i] != ':' && pszCompositeName[i] != '\0'; i++)
+    {
+        if( pszCompositeName[i] == '/' || pszCompositeName[i] == '\\'
+            || pszCompositeName[i] == '.' )
+            break;
+    }
+         
+    if( (i < 2 || pszCompositeName[i] != ':')
+        && !EQUAL(CPLGetExtension( pszCompositeName ), "fdd")
+        && !EQUALN(pszCompositeName,"PROMPT",6) )
+    {
+        CPLDebug( kPROVIDERNAME, 
+                  "OGRFMEDataSource::Open(%s) don't try to open via FME.", 
+                  pszCompositeName );
+        return FALSE;
+    }
+
     CPLDebug( kPROVIDERNAME, "OGRFMEDataSource::Open(%s):%p/%d", 
               pszCompositeName, this, CPLGetPID() );
-
-    CPLAssert( poSession == NULL );  // only open once
 
 /* -------------------------------------------------------------------- */
 /*      Create an FME Session.                                          */
@@ -627,8 +654,6 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
 /*      reader name will be followed by a single colon and then the     */
 /*      FME DATASET name.                                               */
 /* -------------------------------------------------------------------- */
-    int         i;
-
     for( i = 0; pszName[i] != '\0' && pszName[i] != ':'; i++ ) {}
 
     if( pszName[i] == '\0' || i < 2 )
