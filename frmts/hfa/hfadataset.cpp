@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/10/13 18:09:40  warmerda
+ * fixed degree/radian translation
+ *
  * Revision 1.10  2000/10/12 19:30:31  warmerda
  * substantially improved write support
  *
@@ -464,10 +467,10 @@ CPLErr HFADataset::WriteProjection()
     {
         sPro.proNumber = EPRJ_ALBERS_CONIC_EQUAL_AREA;
         sPro.proName = "Albers Conic Equal Area";
-        sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_1)*R2D;
-        sPro.proParams[3] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_2)*R2D;
-        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*R2D;
-        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*R2D;
+        sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_1)*D2R;
+        sPro.proParams[3] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_2)*D2R;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*D2R;
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
@@ -475,10 +478,10 @@ CPLErr HFADataset::WriteProjection()
     {
         sPro.proNumber = EPRJ_LAMBERT_CONFORMAL_CONIC;
         sPro.proName = "Lambert Conformal Conic";
-        sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_1)*R2D;
-        sPro.proParams[3] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_2)*R2D;
-        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
-        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*R2D;
+        sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_1)*D2R;
+        sPro.proParams[3] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_2)*D2R;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*D2R;
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
@@ -486,8 +489,8 @@ CPLErr HFADataset::WriteProjection()
     {
         sPro.proNumber = EPRJ_MERCATOR;
         sPro.proName = "Mercator";
-        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
-        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*R2D;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*D2R;
         /* hopefully the scale factor is 1.0! */
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
@@ -496,8 +499,8 @@ CPLErr HFADataset::WriteProjection()
     {
         sPro.proNumber = EPRJ_POLAR_STEREOGRAPHIC;
         sPro.proName = "Polar Stereographic";
-        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
-        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*R2D;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*D2R;
         /* hopefully the scale factor is 1.0! */
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
@@ -506,8 +509,8 @@ CPLErr HFADataset::WriteProjection()
     {
         sPro.proNumber = EPRJ_POLYCONIC;
         sPro.proName = "Polyconic";
-        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
-        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*R2D;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*D2R;
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
@@ -515,10 +518,10 @@ CPLErr HFADataset::WriteProjection()
     {
         sPro.proNumber = EPRJ_EQUIDISTANT_CONIC;
         sPro.proName = "Equidistant Conic";
-        sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_1)*R2D;
-        sPro.proParams[3] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_2)*R2D;
-        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*R2D;
-        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*R2D;
+        sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_1)*D2R;
+        sPro.proParams[3] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_2)*D2R;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*D2R;
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
         sPro.proParams[8] = 1.0;
@@ -527,8 +530,8 @@ CPLErr HFADataset::WriteProjection()
     {
         sPro.proNumber = EPRJ_TRANSVERSE_MERCATOR;
         sPro.proName = "Transverse Mercator";
-        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
-        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*R2D;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*D2R;
         sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
@@ -537,8 +540,8 @@ CPLErr HFADataset::WriteProjection()
     {
         sPro.proNumber = EPRJ_STEREOGRAPHIC;
         sPro.proName = "Stereographic";
-        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
-        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*R2D;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*D2R;
         /* hopefully the scale factor is 1.0! */
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
@@ -547,8 +550,8 @@ CPLErr HFADataset::WriteProjection()
     {
         sPro.proNumber = EPRJ_LAMBERT_AZIMUTHAL_EQUAL_AREA;
         sPro.proName = "Lambert Azitmuthal Equal Area";
-        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*R2D;
-        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*R2D;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*D2R;
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
@@ -556,8 +559,8 @@ CPLErr HFADataset::WriteProjection()
     {
         sPro.proNumber = EPRJ_AZIMUTHAL_EQUIDISTANT;
         sPro.proName = "Azitmuthal Equidistant";
-        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*R2D;
-        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*R2D;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*D2R;
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
@@ -565,8 +568,8 @@ CPLErr HFADataset::WriteProjection()
     {
         sPro.proNumber = EPRJ_GNOMONIC;
         sPro.proName = "Gnomonic";
-        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
-        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*R2D;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*D2R;
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
@@ -574,8 +577,8 @@ CPLErr HFADataset::WriteProjection()
     {
         sPro.proNumber = EPRJ_ORTHOGRAPHIC;
         sPro.proName = "Orthographic";
-        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
-        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*R2D;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*D2R;
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
@@ -583,7 +586,7 @@ CPLErr HFADataset::WriteProjection()
     {
         sPro.proNumber = EPRJ_SINUSOIDAL;
         sPro.proName = "Sinusoidal";
-        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*R2D;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*D2R;
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
@@ -591,8 +594,8 @@ CPLErr HFADataset::WriteProjection()
     {
         sPro.proNumber = EPRJ_EQUIRECTANGULAR;
         sPro.proName = "Equirectangular";
-        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
-        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*R2D;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*D2R;
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
@@ -600,7 +603,7 @@ CPLErr HFADataset::WriteProjection()
     {
         sPro.proNumber = EPRJ_MILLER_CYLINDRICAL;
         sPro.proName = "Miller Cylindrical";
-        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*R2D;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*D2R;
         /* hopefully the latitude is zero! */
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
@@ -609,7 +612,7 @@ CPLErr HFADataset::WriteProjection()
     {
         sPro.proNumber = EPRJ_VANDERGRINTEN;
         sPro.proName = "VanDerGrinten";
-        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
@@ -618,10 +621,10 @@ CPLErr HFADataset::WriteProjection()
         sPro.proNumber = EPRJ_HOTINE_OBLIQUE_MERCATOR;
         sPro.proName = "Hotine Oblique Mercator";
         sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
-        sPro.proParams[3] = oSRS.GetProjParm(SRS_PP_AZIMUTH)*R2D;
+        sPro.proParams[3] = oSRS.GetProjParm(SRS_PP_AZIMUTH)*D2R;
         /* hopefully the rectified grid angle is zero */
-        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*R2D;
-        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*R2D;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*D2R;
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
         sPro.proParams[12] = 1.0;
@@ -649,8 +652,8 @@ CPLErr HFADataset::WriteProjection()
     sMapInfo.lowerRightCenter.y = 
         adfGeoTransform[3] + adfGeoTransform[5] * (GetRasterYSize()-0.5);
 
-    sMapInfo.pixelSize.width = adfGeoTransform[1];
-    sMapInfo.pixelSize.height = adfGeoTransform[5];
+    sMapInfo.pixelSize.width = ABS(adfGeoTransform[1]);
+    sMapInfo.pixelSize.height = ABS(adfGeoTransform[5]);
 
     sMapInfo.units = "meters";
 
@@ -963,7 +966,11 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[3] = psMapinfo->upperLeftCenter.y
             + psMapinfo->pixelSize.height*0.5;
         poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = - psMapinfo->pixelSize.height;
+
+        if( psMapinfo->upperLeftCenter.y > psMapinfo->lowerRightCenter.y )
+            poDS->adfGeoTransform[5] = - psMapinfo->pixelSize.height;
+        else
+            poDS->adfGeoTransform[5] = psMapinfo->pixelSize.height;
     }
     
 /* -------------------------------------------------------------------- */
