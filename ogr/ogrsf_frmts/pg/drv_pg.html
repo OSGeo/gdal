@@ -8,6 +8,8 @@
 <h1>PostgreSQL</h1>
 
 This is an experimental driver for prototyping options for using PostgreSQL
+(and PostgreSQL extended with 
+<a href="http://postgis.refractions.net/">PostGIS</a>)
 as a vector database.<p>
 
 When opening a database, it's name should be specified in the form
@@ -22,9 +24,11 @@ point of view, with the table names as the layer names.  Named views are
 not currently support.<p>
 
 Regular (non-spatial) tables can be accessed, and will return features with
-attributes, but not geometry.  If the table has a "ogc_wkb" field, it will
-be treated as a binary field containing geometries in OpenGIS Well Known
-Binary format, and attempts made to read it accordingly.<p>
+attributes, but not geometry.  If the table has a "wkb_geometry" field, it will
+be treated as a spatial table.  The type of the field is inspected to 
+determine how to read it.  It can be a PostGIS <b>geometry</b> field, which
+is assumed to come back in OGC WKT, or type BYTEA or OID in which case it
+is used as a source of OGC WKB geometry.<p>
 
 If there is an "ogc_fid" field, it will be used to set the feature id of
 the features, and not treated as a regular field. <p>
@@ -40,16 +44,16 @@ Currently there is no support for coordinate systems in the PostgreSQL driver.
 the types "VARCHAR*", "INT*", and "FLOAT*" are recognised directly.  All
 other types are treated as VARCHAR.<p>
 
-<li> BYTEA fields in PostgreSQL version preceeding 7.1 (not yet released)
+<li> BYTEA fields in PostgreSQL version preceeding 7.1
 don't support more than 8K in a record, so significant sized geometries
 on a feature will trigger an errow about the INSERT command being to big
-for the buffer.<P>
+for the buffer.  Upgrade to 7.1.x!<P>
 
 <li> The driver is not performance tuned.  All geometry is passed back
 and forth in escaped BYTEA text form, there is no spatial indexing, etc.<p>
 
 <li> Some features are not implemented properly.  For instance, spatial
-filtering is broken. <p>
+filtering is broken.<p>
 
 <li> Special field names, and other mechanisms are likely to change in the
 near future.  This driver is only suitable to use for experimentation.<p>
@@ -75,18 +79,28 @@ are not appropriate mapped into PostgreSQL.<p>
 
 Currently only sequential writing is supported.<p>
 
+If the database has PostGIS types loaded (ie. the geometry type) newly
+created layers will be created with the PostGIS Geometry type.  Otherwise
+they will use OID.  
+
 <h3>Dataset Creation Options</h3>
 
 None<p>
 
 <h3>Layer Creation Options</h3>
 
-None<p>
+<ul>
+<li>
+<b>GEOM_TYPE</b>: The GEOM_TYPE layer creation option can be set to 
+one of "Geometry", "BYTEA" or "OID" to force the type of geometry used for
+a table. <p>
+</ul>
 
 <h3>See Also</h3>
 
 <ul>
 <li> <a href="http://www.postgresql.org/">PostgreSQL Home Page</a><p>
+<li> <a href="http://postgis.refractions.net/">PostGIS</a><p>
 </ul>
 
 </body>
