@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/03/13 16:34:20  warmerda
+ * another fix in special case rasterio logic
+ *
  * Revision 1.21  2003/03/13 15:36:59  warmerda
  * fixed number of words copied in recent IRasterIO() special case
  *
@@ -157,7 +160,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             }
 
             nSrcByteOffset = ((iSrcY-nLBlockY*nBlockYSize)*nBlockXSize + nXOff)
-                * nPixelSpace;
+                * nBandDataSize;
             
             if( eDataType == eBufType )
             {
