@@ -3,7 +3,7 @@
  *
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Implementation of the HFABand, for accessing one Eimg_Layer.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Intergraph Corporation
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2003/04/22 19:39:10  warmerda
+ * dont emit debug message on failed read unless it is not an external file
+ *
  * Revision 1.28  2003/03/27 15:51:40  dron
  * Improvements in update state handling in GetRasterBlock().
  *
@@ -873,14 +876,12 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
     if( VSIFReadL( pData, panBlockSize[iBlock], 1, fpData ) != 1 )
     {
-	// XXX: Suppose that file in update state
 	memset( pData, 0, 
 	    HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
-#ifdef DEBUG
-	CPLDebug( "HFABand", "Read of %d bytes at %d failed.\n", 
-		  panBlockSize[iBlock],
-		  panBlockStart[iBlock] );
-#endif
+        if( fpData != fpExternal )
+            CPLDebug( "HFABand", "Read of %d bytes at %d failed.\n", 
+                      panBlockSize[iBlock],
+                      panBlockStart[iBlock] );
 
 	return CE_None;
     }
