@@ -246,6 +246,13 @@ These are:
 	compilation. It is C++ library, so you may get incompatibilities in
 	C++ name mangling between different GCC versions (2.95.x and 3.x).
 
+<li> NetCDF support requires the 
+<a href="http://www.unidata.ucar.edu/packages/netcdf/">netCDF library</a>. 
+Once it is built and installed, use the "--with-netcdf=<path to install tree>"
+option to configure and build GDAL.  Link conflicts have been observed with
+the netCDF libraries, and the HDF libraries ... coexistance may not be 
+practical.  NetCDF support has not been built or tested on Windows. <p>
+
 </ul>
 
 <a name="largefiles"><h2>Large File Support</h2></a>
@@ -263,7 +270,7 @@ href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/fileio/ba
 MSDN</a>. In short, maximum file size at NTFS is limited by (2^64 - 1) bytes, at
 FAT32 and FAT16 it is (2^32 - 1) bytes. So don't try create files larger
 than 4 GiB on FAT32. In some cases you will not get an error message during
-jumping over 4GiB barrier, but all your data will be lost. This is not GDAL
+jumping over 4GiB barrier, but all your data will be lost.  This is not a GDAL
 bug, this is Windows problem.<p>
 
 */
