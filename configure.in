@@ -50,7 +50,8 @@ AC_CHECK_HEADERS(fcntl.h unistd.h dbmalloc.h dlfcn.h stdint.h limits.h locale.h)
 dnl Checks for library functions.
 AC_C_BIGENDIAN
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(vsnprintf)					
+AC_CHECK_FUNCS(vsnprintf)
+AC_CHECK_FUNCS(snprintf)
 
 dnl Make sure at least these are checked under C++.  Prototypes missing on 
 dnl some platforms.
