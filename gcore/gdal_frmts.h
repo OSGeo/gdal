@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2003/12/13 00:00:07  jimg
+ * Added GDALRegister_DODS().
+ *
  * Revision 1.23  2003/12/11 06:18:43  warmerda
  * added BT driver
  *
@@ -154,6 +157,7 @@ void CPL_DLL GDALRegister_NITF(void);
 void CPL_DLL GDALRegister_MrSID(void);
 void CPL_DLL GDALRegister_PCIDSK(void);
 void CPL_DLL GDALRegister_BT(void);
+void CPL_DLL GDALRegister_DODS(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
