@@ -1,3 +1,24 @@
+2001-09-15  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* configure.in: modified --with-libz handling as per bug 75, to be
+	more standard.
+
+	http://bugzilla.remotesensing.org/show_bug.cgi?id=76
+
+===============================================================================
+	
+2001-09-15  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Release GDAL 1.1.5.
+
+	* Modify include order in most GNUmakefiles to ensure that 
+	include paths for system stuff (like /usr/local/include) don't take
+	priority over application include files in GDAL tree.  Especially
+	important when there is an old GDAL already installed.
+
+	* ogr/ogrsf_frmts/mitab: Upgraded to include fast spatial query 
+	support, and attribute query support.
+
 2001-09-06  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* bridge: upgrade bridge error reporting, add GCP functions.
