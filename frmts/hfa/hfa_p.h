@@ -30,6 +30,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/07/16 20:40:32  warmerda
+ * Added a series of patches from Andreas Wimmer which:
+ *  o Add lots of improved support for metadata.
+ *  o Use USE_SPILL only, instead of SPILL_FILE extra creation option.
+ *  o Added ability to control block sizes.
+ *
  * Revision 1.15  2003/05/13 19:32:10  warmerda
  * support for reading and writing opacity provided by Diana Esch-Mosher
  *
@@ -147,6 +153,8 @@ typedef struct hfainfo {
 GUInt32 HFAAllocateSpace( HFAInfo_t *, GUInt32 );
 CPLErr  HFAParseBandInfo( HFAInfo_t * );
 HFAInfo_t *HFAGetDependent( HFAInfo_t *, const char * );
+
+char ** GetHFAAuxMetaDataList();
 
 #define HFA_PRIVATE
 

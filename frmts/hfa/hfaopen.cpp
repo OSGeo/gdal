@@ -35,6 +35,12 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.33  2004/07/16 20:40:32  warmerda
+ * Added a series of patches from Andreas Wimmer which:
+ *  o Add lots of improved support for metadata.
+ *  o Use USE_SPILL only, instead of SPILL_FILE extra creation option.
+ *  o Added ability to control block sizes.
+ *
  * Revision 1.32  2004/06/09 17:54:01  dron
  * Create spill files when the image becomes larger 2GB (instead of former 4GB).
  * New option SPILL_FILE=YES to force spill file generation.
@@ -142,6 +148,30 @@
 #include <limits.h>
 
 CPL_CVSID("$Id$");
+
+
+static char *apszAuxMetadataItems[] = {
+
+// node/entry            field_name                  metadata_key       type
+
+ "Statistics",           "dminimum",              "STATISTICS_MINIMUM", "Esta_Statistics",
+ "Statistics",           "dmaximum",              "STATISTICS_MAXIMUM", "Esta_Statistics",
+ "Statistics",           "dmean",                 "STATISTICS_MEAN",    "Esta_Statistics",
+ "Statistics",           "dmedian",               "STATISTICS_MEDIAN",  "Esta_Statistics",
+ "Statistics",           "dmode",                 "STATISTICS_MODE",    "Esta_Statistics",
+ "Statistics",           "dstddev",               "STATISTICS_STDDEV",  "Esta_Statistics",
+ "HistogramParameters",  "lBinFunction.numBins",  "STATISTICS_HISTONUMBINS",    "Eimg_StatisticsParameters830",
+ "HistogramParameters",  "dBinFunction.minLimit", "STATISTICS_HISTOMIN",        "Eimg_StatisticsParameters830",
+ "HistogramParameters",  "dBinFunction.maxLimit", "STATISTICS_HISTOMAX",        "Eimg_StatisticsParameters830",
+ NULL
+};
+
+
+char ** GetHFAAuxMetaDataList()
+{
+    return apszAuxMetadataItems;
+}
+
 
 /************************************************************************/
 /*                          HFAGetDictionary()                          */
@@ -1418,6 +1448,16 @@ HFAHandle HFACreate( const char * pszFilename,
 {
     HFAHandle	psInfo;
     int		nBlockSize = 64;
+    const char * pszValue = CSLFetchNameValue( papszOptions, "BLOCKSIZE" );
+    if ( pszValue != NULL )
+    {
+        nBlockSize = atoi( pszValue );
+        // check for sane values
+        if ( ( nBlockSize < 32 ) || (nBlockSize > 2048) )
+        {
+            nBlockSize = 64;
+        }
+    }
     int		bCreateLargeRaster = CSLFetchBoolean(papszOptions,"USE_SPILL",
                                                      FALSE);
     char	*pszFullFilename = NULL, *pszRawFilename = NULL;
@@ -1464,21 +1504,23 @@ HFAHandle HFACreate( const char * pszFilename,
     double dfApproxSize = (double)nBytesPerBlock * (double)nBlocks *
         (double)nBands + 10000000.0;
 
-    const char *pszValue = CSLFetchNameValue( papszOptions, "SPILL_FILE" );
+    if( dfApproxSize > 2147483648.0 )
+        bCreateLargeRaster = TRUE;
 
-    if( dfApproxSize > 2147483648.0 ||
-        ( pszValue && (EQUAL(pszValue, "ON") ||
-                       EQUAL(pszValue, "YES") ||
-                       EQUAL(pszValue, "TRUE")) ))
+    // erdas imagine always creates this entry no matter if an external
+    // spill file is used or not
+    HFAEntry *poImgFormat;
+    poImgFormat = new HFAEntry( psInfo, "IMGFormatInfo",
+                                "ImgFormatInfo831", psInfo->poRoot );
+    poImgFormat->MakeData();
+    if ( bCreateLargeRaster )
     {
-	HFAEntry *poImgFormat;
-
-	bCreateLargeRaster = TRUE;
-	poImgFormat =
-	    new HFAEntry( psInfo, "IMGFormatInfo",
-			  "ImgFormatInfo831", psInfo->poRoot );
-	poImgFormat->MakeData();
-	poImgFormat->SetIntField( "spaceUsedForRasterData", 0 );
+        poImgFormat->SetIntField( "spaceUsedForRasterData", 0 );
+    }
+    else
+    {
+        poImgFormat->SetIntField( "spaceUsedForRasterData",
+                                  nBytesPerBlock*nBlocks*nBands );
     }
 
 /* ==================================================================== */
@@ -1602,7 +1644,9 @@ HFAHandle HFACreate( const char * pszFilename,
 	    else if( nDataType == EPT_s16 )
 		chBandType = 'S';
 	    else if( nDataType == EPT_u32 )
-		chBandType = 'I';
+                // for some reason erdas imagine expects an L for unsinged 32 bit ints
+                // otherwise it gives strange "out of memory errors"
+		chBandType = 'L';
 	    else if( nDataType == EPT_s32 )
 		chBandType = 'L';
 	    else if( nDataType == EPT_f32 )
@@ -1619,7 +1663,8 @@ HFAHandle HFACreate( const char * pszFilename,
 		chBandType = 'c';
 	    }
 
-	    sprintf( szLDict, "{4096:%cdata,}RasterDMS,.", chBandType );
+            // the first value in the entry below gives the number of pixels within a block
+	    sprintf( szLDict, "{%d:%cdata,}RasterDMS,.", nBlockSize*nBlockSize, chBandType );
 
 	    poEhfa_Layer = new HFAEntry( psInfo, "Ehfa_Layer", "Ehfa_Layer",
 					 poEimg_Layer );
@@ -1912,40 +1957,13 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
     else
         return CE_Failure;
 
-/* -------------------------------------------------------------------- */
-/*      Create the Descriptor table.                                    */
-/* -------------------------------------------------------------------- */
-    HFAEntry	*poEdsc_Table;
-
-    poEdsc_Table = new HFAEntry( hHFA, "GDAL_MetaData", "Edsc_Table",
-                                 poNode );
-
-    poEdsc_Table->SetIntField( "numrows", 1 );
-
-/* -------------------------------------------------------------------- */
-/*      Create the Binning function node.  I am not sure that we        */
-/*      really need this though.                                        */
-/* -------------------------------------------------------------------- */
-    HFAEntry       *poEdsc_BinFunction;
-
-    poEdsc_BinFunction =
-        new HFAEntry( hHFA, "#Bin_Function#", "Edsc_BinFunction",
-                      poEdsc_Table );
-
-    // Because of the BaseData we have to hardcode the size. 
-    poEdsc_BinFunction->MakeData( 30 );
-
-    poEdsc_BinFunction->SetIntField( "numBins", 1 );
-    poEdsc_BinFunction->SetStringField( "binFunction", "direct" );
-    poEdsc_BinFunction->SetDoubleField( "minLimit", 0.0 );
-    poEdsc_BinFunction->SetDoubleField( "maxLimit", 0.0 );
-
-/* -------------------------------------------------------------------- */
-/*      Process each metadata item as a separate column.		*/
-/* -------------------------------------------------------------------- */
+    // check if the Metadata is an "known" entity which should be stored in a
+    // better place
+    char * pszBinValues = NULL;
+    char ** pszAuxMetaData = GetHFAAuxMetaDataList();
+    // check each metadata item
     for( int iColumn = 0; papszMD[iColumn] != NULL; iColumn++ )
     {
-        HFAEntry        *poEdsc_Column;
         char            *pszKey = NULL;
         const char      *pszValue;
 
@@ -1953,26 +1971,111 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
         if( pszValue == NULL )
             continue;
 
-/* -------------------------------------------------------------------- */
-/*      Create the Edsc_Column.                                         */
-/* -------------------------------------------------------------------- */
-        poEdsc_Column = new HFAEntry( hHFA, pszKey, "Edsc_Column",
-                                      poEdsc_Table );
-        poEdsc_Column->SetIntField( "numRows", 1 );
-        poEdsc_Column->SetStringField( "dataType", "string" );
-        poEdsc_Column->SetIntField( "maxNumChars", strlen(pszValue)+1 );
+        // know look if its known
+        int i;
+        for( i = 0; pszAuxMetaData[i] != NULL; i += 4 )
+        {
+            if ( EQUALN( pszAuxMetaData[i + 2], pszKey, strlen(pszKey) ) )
+                break;
+        }
+        if ( pszAuxMetaData[i] != NULL )
+        {
+            // found one, get the right entry
+            HFAEntry *poEntry =	poNode->GetNamedChild( pszAuxMetaData[i] );
+            if( poEntry == NULL )
+            {
+                // child does not yet exist --> create it
+                poEntry = new HFAEntry( hHFA, pszAuxMetaData[i], pszAuxMetaData[i+3],
+                                        poNode );
+                if ( EQUALN( "HistogramParameters", pszAuxMetaData[i], 19 ) )
+                {
+                    // this is a bit nasty I need to set the string field for the object
+                    // first because the SetStringField sets the count for the object
+                    // BinFunction to the length of the string
+                    poEntry->MakeData( 70 );
+                    poEntry->SetStringField( "BinFunction.binFunctionType", "linear" );
+                }
+            }
+            if ( poEntry == NULL )
+                continue;
 
-/* -------------------------------------------------------------------- */
-/*      Write the data out.                                             */
-/* -------------------------------------------------------------------- */
-        int      nOffset = HFAAllocateSpace( hHFA, strlen(pszValue)+1);
+            const char *pszFieldName = pszAuxMetaData[i+1] + 1;
+            switch( pszAuxMetaData[i+1][0] )
+            {
+                case 'd':
+                {
+                    double dfValue = atof( pszValue );
+                    poEntry->SetDoubleField( pszFieldName, dfValue );
+                }
+                break;
+	        case 'i':
+	        case 'l':
+                {
+                    int nValue = atoi( pszValue );
+                    poEntry->SetIntField( pszFieldName, nValue );
+                }
+                break;
+                default:
+                    CPLAssert( FALSE );
+            }
+        }
+        else if ( EQUALN( "STATISTICS_HISTOBINVALUES", pszKey, strlen(pszKey) ) )
+        {
+            pszBinValues = strdup( pszValue );
+	}
+    }
 
-        poEdsc_Column->SetIntField( "columnDataPtr", nOffset );
+    if ( pszBinValues != NULL )
+    {
+        HFAEntry * poEntry = poNode->GetNamedChild( "HistogramParameters" );
+        if ( poEntry != NULL )
+        {
+            // if this node exists we have added Histogram data -- complete with some defaults
+            poEntry->SetIntField( "SkipFactorX", 1 );
+            poEntry->SetIntField( "SkipFactorY", 1 );
 
-        VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
-        VSIFWriteL( (void *) pszValue, 1, strlen(pszValue)+1, hHFA->fp );
+            int nNumBins = poEntry->GetIntField( "BinFunction.numBins" );
+            double dMinLimit = poEntry->GetDoubleField( "BinFunction.minLimit" );
+            double dMaxLimit = poEntry->GetDoubleField( "BinFunction.maxLimit" );
+            // fill the descriptor table
+            poEntry = new HFAEntry( hHFA, "Descriptor_Table", "Edsc_Table", poNode );
+            poEntry->SetIntField( "numRows", nNumBins );
+            // bin function
+            HFAEntry * poBinFunc = new HFAEntry( hHFA, "#Bin_Function#", "Edsc_BinFunction",
+                                                 poEntry );
+            poBinFunc->MakeData( 30 );
+            poBinFunc->SetIntField( "numBins", nNumBins );
+            poBinFunc->SetDoubleField( "minLimit", dMinLimit );
+            poBinFunc->SetDoubleField( "maxLimit", dMaxLimit );
+            poBinFunc->SetStringField( "binFunctionType", "linear" ); // we use always a linear
 
-        CPLFree( pszKey );
+            // we need a child named histogram
+            HFAEntry * poHisto = new HFAEntry( hHFA, "Histogram", "Edsc_Column",
+                                               poEntry );
+            poHisto->SetIntField( "numRows", nNumBins );
+            // allocate space for the bin values
+            GUInt32 nOffset = HFAAllocateSpace( hHFA, nNumBins*4 );
+            poHisto->SetIntField( "columnDataPtr", nOffset );
+            poHisto->SetStringField( "dataType", "integer" );
+            poHisto->SetIntField( "maxNumChars", 0 );
+            // write out histogram data
+            char * pszWork = pszBinValues;
+            for ( int nBin = 0; nBin < nNumBins; ++nBin )
+            {
+                char * pszEnd = strchr( pszWork, '|' );
+                if ( pszEnd != NULL )
+                {
+                    *pszEnd = 0;
+                    VSIFSeekL( hHFA->fp, nOffset + 4*nBin, SEEK_SET );
+                    int nValue = atoi( pszWork );
+                    HFAStandard( 4, &nValue );
+
+                    VSIFWriteL( (void *)&nValue, 1, 4, hHFA->fp );
+                    pszWork = pszEnd + 1;
+                }
+            }
+            free( pszBinValues );
+        }
     }
 
     return CE_Failure;
