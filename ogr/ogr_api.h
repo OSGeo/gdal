@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/02/22 12:37:26  fwarmerdam
+ * rename Equal/Intersect to Equals/Intersects
+ *
  * Revision 1.24  2005/02/02 19:59:47  fwarmerdam
  * added SetNextByIndex support
  *
@@ -172,8 +175,8 @@ OGRSpatialReferenceH CPL_DLL OGR_G_GetSpatialReference( OGRGeometryH );
 OGRErr CPL_DLL OGR_G_Transform( OGRGeometryH, OGRCoordinateTransformationH );
 OGRErr CPL_DLL OGR_G_TransformTo( OGRGeometryH, OGRSpatialReferenceH );
 
-int    CPL_DLL OGR_G_Intersect( OGRGeometryH, OGRGeometryH );
-int    CPL_DLL OGR_G_Equal( OGRGeometryH, OGRGeometryH );
+int    CPL_DLL OGR_G_Intersects( OGRGeometryH, OGRGeometryH );
+int    CPL_DLL OGR_G_Equals( OGRGeometryH, OGRGeometryH );
 int    CPL_DLL OGR_G_Disjoint( OGRGeometryH, OGRGeometryH );
 int    CPL_DLL OGR_G_Touches( OGRGeometryH, OGRGeometryH );
 int    CPL_DLL OGR_G_Crosses( OGRGeometryH, OGRGeometryH );
@@ -194,6 +197,10 @@ double CPL_DLL OGR_G_GetArea( OGRGeometryH );
 int    CPL_DLL OGR_G_Centroid( OGRGeometryH, OGRGeometryH );
 
 void   CPL_DLL OGR_G_Empty( OGRGeometryH );
+
+/* backward compatibility */
+int    CPL_DLL OGR_G_Intersect( OGRGeometryH, OGRGeometryH );
+int    CPL_DLL OGR_G_Equal( OGRGeometryH, OGRGeometryH );
 
 /* Methods for getting/setting vertices in points, line strings and rings */
 int    CPL_DLL OGR_G_GetPointCount( OGRGeometryH );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2005/02/22 12:38:01  fwarmerdam
+ * rename Equal/Intersect to Equals/Intersects
+ *
  * Revision 1.28  2004/02/22 10:03:40  dron
  * Fix compirison casting problems in OGRPoint::Equal() method.
  *
@@ -542,7 +545,7 @@ void OGRPoint::getEnvelope( OGREnvelope * psEnvelope ) const
 /*                               Equal()                                */
 /************************************************************************/
 
-OGRBoolean OGRPoint::Equal( OGRGeometry * poOther ) const
+OGRBoolean OGRPoint::Equals( OGRGeometry * poOther ) const
 
 {
     OGRPoint    *poOPoint = (OGRPoint *) poOther;

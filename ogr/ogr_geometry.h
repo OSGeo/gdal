@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2005/02/22 12:37:26  fwarmerdam
+ * rename Equal/Intersect to Equals/Intersects
+ *
  * Revision 1.50  2004/09/17 15:05:36  fwarmerdam
  * added get_Area() support
  *
@@ -270,8 +273,8 @@ class CPL_DLL OGRGeometry
     OGRErr  transformTo( OGRSpatialReference *poSR );
 
     // ISpatialRelation
-    virtual OGRBoolean  Intersect( OGRGeometry * ) const;
-    virtual OGRBoolean  Equal( OGRGeometry * ) const = 0;
+    virtual OGRBoolean  Intersects( OGRGeometry * ) const;
+    virtual OGRBoolean  Equals( OGRGeometry * ) const = 0;
     virtual OGRBoolean  Disjoint( const OGRGeometry * ) const;
     virtual OGRBoolean  Touches( const OGRGeometry * ) const;
     virtual OGRBoolean  Crosses( const OGRGeometry * ) const;
@@ -288,6 +291,10 @@ class CPL_DLL OGRGeometry
     virtual OGRGeometry *Union( const OGRGeometry * ) const;
     virtual OGRGeometry *Difference( const OGRGeometry * ) const;
     virtual OGRGeometry *SymmetricDifference( const OGRGeometry * ) const;
+
+    // backward compatibility methods. 
+    OGRBoolean  Intersect( OGRGeometry * ) const;
+    OGRBoolean  Equal( OGRGeometry * ) const;
 
     // Special HACK for DB2 7.2 support
     static int bGenerate_DB2_V72_BYTE_ORDER;
@@ -339,7 +346,7 @@ class CPL_DLL OGRPoint : public OGRGeometry
     void        setZ( double zIn ) { z = zIn; }
 
     // ISpatialRelation
-    virtual OGRBoolean  Equal( OGRGeometry * ) const;
+    virtual OGRBoolean  Equals( OGRGeometry * ) const;
     
     // Non standard from OGRGeometry
     virtual const char *getGeometryName() const;
@@ -421,7 +428,7 @@ class CPL_DLL OGRLineString : public OGRCurve
     double      getZ( int i ) const;
 
     // ISpatialRelation
-    virtual OGRBoolean  Equal( OGRGeometry * ) const;
+    virtual OGRBoolean  Equals( OGRGeometry * ) const;
     
     // non standard.
     void        setNumPoints( int );
@@ -551,7 +558,7 @@ class CPL_DLL OGRPolygon : public OGRSurface
     virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
 
     // ISpatialRelation
-    virtual OGRBoolean  Equal( OGRGeometry * ) const;
+    virtual OGRBoolean  Equals( OGRGeometry * ) const;
     
     // Non standard
     void        addRing( OGRLinearRing * );
@@ -614,7 +621,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     const OGRGeometry *getGeometryRef( int ) const;
 
     // ISpatialRelation
-    virtual OGRBoolean  Equal( OGRGeometry * ) const;
+    virtual OGRBoolean  Equals( OGRGeometry * ) const;
     
     // Non standard
     virtual OGRErr addGeometry( const OGRGeometry * );
