@@ -1,4 +1,4 @@
-/* $Header: /usr/cvsroot/gdal/frmts/gtiff/libtiff/tif_unix.c,v 1.6 1999/09/28 23:49:50 warmerda Exp $ */
+/* $Header: /usr/cvsroot/gdal/frmts/gtiff/libtiff/tif_unix.c,v 1.7 1999/11/17 15:29:56 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -41,7 +41,6 @@ _tiffReadProc(thandle_t fd, tdata_t buf, tsize_t size)
 
     ret = (tsize_t) read((int) fd, buf, (size_t) size);
 
-    printf( "read(%d,%p,%d) = %d, errno = %d\n", fd, buf, size, ret, errno );
     return ret;
 }
 
