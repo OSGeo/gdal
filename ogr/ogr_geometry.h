@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  1999/09/13 14:34:07  warmerda
+ * updated to use wkbZ of 0x8000 instead of 0x80000000
+ *
  * Revision 1.16  1999/09/13 02:27:32  warmerda
  * incorporated limited 2.5d support
  *
@@ -110,8 +113,8 @@ enum OGRwkbGeometryType
     wkbMultiPolygon = 6,
     wkbGeometryCollection = 7,
     wkbNone = 100,              // non-standard, for pure attribute records
-    wkbPoint25D = 0x80000001,
-    wkbLineString25D = 0x80000002
+    wkbPoint25D = 0x8001,
+    wkbLineString25D = 0x8002
 };
 
 #define ogrZMarker 0x21125711

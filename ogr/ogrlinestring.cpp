@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  1999/09/13 14:34:07  warmerda
+ * updated to use wkbZ of 0x8000 instead of 0x80000000
+ *
  * Revision 1.10  1999/09/13 02:27:33  warmerda
  * incorporated limited 2.5d support
  *
@@ -519,12 +522,12 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
     if( eByteOrder == wkbNDR )
     {
         eGeometryType = (OGRwkbGeometryType) pabyData[1];
-        bIs3D = (pabyData[4] != 0);
+        bIs3D = (pabyData[2] & 0x80);
     }
     else
     {
         eGeometryType = (OGRwkbGeometryType) pabyData[4];
-        bIs3D = (pabyData[1] != 0);
+        bIs3D = (pabyData[3] & 0x80);
     }
 
     assert( eGeometryType == wkbLineString );
@@ -608,23 +611,25 @@ OGRErr	OGRLineString::exportToWkb( OGRwkbByteOrder eByteOrder,
     if( eByteOrder == wkbNDR )
     {
         pabyData[1] = wkbLineString;
-        pabyData[2] = 0;
-        pabyData[3] = 0;
 
         if( getCoordinateDimension() == 3 )
-            pabyData[4] = 0x80;
+            pabyData[2] = 0x80;
         else
-            pabyData[4] = 0;
+            pabyData[2] = 0;
+        
+        pabyData[3] = 0;
+        pabyData[4] = 0;
     }
     else
     {
-        if( getCoordinateDimension() == 3 )
-            pabyData[1] = 0x80;
-        else
-            pabyData[1] = 0;
-
+        pabyData[1] = 0;
         pabyData[2] = 0;
-        pabyData[3] = 0;
+        
+        if( getCoordinateDimension() == 3 )
+            pabyData[3] = 0x80;
+        else
+            pabyData[3] = 0;
+
         pabyData[4] = wkbLineString;
     }
     
