@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/02/12 10:15:33  dron
+ * Fixed problem when computing band offset for band sequental files.
+ *
  * Revision 1.21  2004/01/23 22:16:09  warmerda
  * fixed issue with static buffer overwriting in forming prj name
  *
@@ -413,7 +416,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         nPixelOffset = nItemSize;
         nLineOffset = nPixelOffset * nCols;
-        nBandOffset = nLineOffset * nCols;
+        nBandOffset = nLineOffset * nRows;
     }
     else /* assume BIL */
     {
