@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabseamless.cpp,v 1.2 2001/03/15 03:57:51 daniel Exp $
+ * $Id: mitab_tabseamless.cpp,v 1.3 2001/09/19 14:21:36 daniel Exp $
  *
  * Name:     mitab_tabseamless.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_tabseamless.cpp,v $
+ * Revision 1.3  2001/09/19 14:21:36  daniel
+ * On Unix: replace '\\' in file path read from tab index with '/'
+ *
  * Revision 1.2  2001/03/15 03:57:51  daniel
  * Added implementation for new OGRLayer::GetExtent(), returning data MBR.
  *
@@ -384,6 +387,16 @@ int TABSeamless::OpenBaseTable(TABFeature *poIndexFeature,
      *----------------------------------------------------------------*/
     const char *pszName = poIndexFeature->GetFieldAsString(m_nTableNameField);
     char *pszFname = CPLStrdup(CPLSPrintf("%s%s", m_pszPath, pszName));
+
+#ifndef _WIN32
+    // On Unix, replace any '\\' in path with '/'
+    char *pszPtr = pszFname;
+    while((pszPtr = strchr(pszPtr, '\\')) != NULL)
+    {
+        *pszPtr = '/';
+        pszPtr++;
+    }
+#endif
 
     m_poCurBaseTable = new TABFile;
     if (m_poCurBaseTable->Open(pszFname, "rb", bTestOpenNoError) != 0)

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.19 2001/09/14 03:23:55 warmerda Exp $
+ * $Id: mitab_mapfile.cpp,v 1.20 2001/09/18 20:33:52 warmerda Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.20  2001/09/18 20:33:52  warmerda
+ * fixed case of spatial search on file with just one object block
+ *
  * Revision 1.19  2001/09/14 03:23:55  warmerda
  * Substantial upgrade to support spatial queries using spatial indexes
  *
@@ -514,11 +517,11 @@ TABRawBinBlock *TABMAPFile::PushBlock( int nFileOffset )
 /*      block is loaded that matching the spatial query extents.        */
 /************************************************************************/
 
-int TABMAPFile::LoadNextMatchingObjectBlock()
+int TABMAPFile::LoadNextMatchingObjectBlock( int bFirstObject )
 
 {
     // If we are just starting, verify the stack is empty.
-    if( m_poSpIndexLeaf == NULL )
+    if( bFirstObject )
     {
         CPLAssert( m_poSpIndex == NULL && m_poSpIndexLeaf == NULL );
 
@@ -643,7 +646,7 @@ int TABMAPFile::GetNextFeatureId( int nPrevId )
         // object blocks till we find a non-empty one.
         do 
         {
-            if( !LoadNextMatchingObjectBlock() )
+            if( !LoadNextMatchingObjectBlock( nPrevId == -1 ) )
                 return -1;
 
         } while( m_poCurObjBlock->AdvanceToNextObject(m_poHeader) == -1 );

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.26 2001/09/14 03:23:55 warmerda Exp $
+ * $Id: mitab_priv.h,v 1.27 2001/09/18 20:33:52 warmerda Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.27  2001/09/18 20:33:52  warmerda
+ * fixed case of spatial search on file with just one object block
+ *
  * Revision 1.26  2001/09/14 03:23:55  warmerda
  * Substantial upgrade to support spatial queries using spatial indexes
  *
@@ -888,7 +891,7 @@ class TABMAPFile
     // Stuff related to traversing spatial index.
     TABMAPIndexBlock *m_poSpIndexLeaf;
 
-    int         LoadNextMatchingObjectBlock();
+    int         LoadNextMatchingObjectBlock(int bFirstObject);
     TABRawBinBlock *PushBlock( int nFileOffset );
     
   public:

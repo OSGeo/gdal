@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.54 2001/09/14 03:23:55 warmerda Exp $
+ * $Id: mitab.h,v 1.55 2001/09/19 14:31:22 warmerda Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo MIF Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.55  2001/09/19 14:31:22  warmerda
+ * added m_nPreloadedId to keep track of preloaded line
+ *
  * Revision 1.54  2001/09/14 03:23:55  warmerda
  * Substantial upgrade to support spatial queries using spatial indexes
  *
@@ -629,7 +632,8 @@ class MIFFile: public IMapInfoFile
     int         m_nLines;
     int         m_nRegions;
     int         m_nTexts;
- 
+
+    int         m_nPreloadedId;  // preloaded mif line is for this feature id
     MIDDATAFile  *m_poMIDFile;   // Mid file
     MIDDATAFile  *m_poMIFFile;   // Mif File
 

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.29 2001/09/14 19:14:43 warmerda Exp $
+ * $Id: mitab_miffile.cpp,v 1.30 2001/09/19 14:31:22 warmerda Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.30  2001/09/19 14:31:22  warmerda
+ * added m_nPreloadedId to keep track of preloaded line
+ *
  * Revision 1.29  2001/09/14 19:14:43  warmerda
  * added attribute query support
  *
@@ -133,6 +136,7 @@ MIFFile::MIFFile()
 
     m_poMIDFile = NULL;
     m_poMIFFile = NULL;
+    m_nPreloadedId = 0;
 
     m_poDefn = NULL;
     m_poSpatialRef = NULL;
@@ -705,7 +709,14 @@ void MIFFile::ResetReading()
     m_poMIDFile->GetLine();
     
     // We're positioned on first feature.  Feature Ids start at 1.
-    m_nCurFeatureId = 1;
+    if (m_poCurFeature)
+    {
+        delete m_poCurFeature;
+        m_poCurFeature = NULL;
+    }
+
+    m_nCurFeatureId = 0;
+    m_nPreloadedId = 1;
 }
 
 /************************************************************************/
@@ -1025,6 +1036,7 @@ int MIFFile::Close()
     m_paeFieldType = NULL;
 
     m_nCurFeatureId = 0;
+    m_nPreloadedId = 0;
     m_nFeatureCount =0;
    
     m_bBoundsSet = FALSE;
@@ -1071,7 +1083,7 @@ int MIFFile::GotoFeature(int nFeatureId)
     if (nFeatureId < 1)
       return -1;
 
-    if (nFeatureId == m_nCurFeatureId) // CorrectPosition
+    if (nFeatureId == m_nPreloadedId) // CorrectPosition
     {
         return 0;
     }
@@ -1080,17 +1092,21 @@ int MIFFile::GotoFeature(int nFeatureId)
         if (nFeatureId < m_nCurFeatureId || m_nCurFeatureId == 0)
             ResetReading();
 
-        while(m_nCurFeatureId < nFeatureId)
+        while(m_nPreloadedId < nFeatureId)
         {
             if (NextFeature() == FALSE)
               return -1;
         }
 
-        CPLAssert(m_nCurFeatureId == nFeatureId);
+        CPLAssert(m_nPreloadedId == nFeatureId);
 
         return 0;
     }
 }
+
+/**********************************************************************
+ *                   MIFFile::NextFeature()
+ **********************************************************************/
 
 GBool MIFFile::NextFeature()
 {
@@ -1100,7 +1116,7 @@ GBool MIFFile::NextFeature()
         if (m_poMIFFile->IsValidFeature(pszLine))
         {
             m_poMIDFile->GetLine();
-            m_nCurFeatureId++;
+            m_nPreloadedId++;
             return TRUE;
         }
     }
@@ -1161,6 +1177,8 @@ TABFeature *MIFFile::GetFeatureRef(int nFeatureId)
         if (m_poCurFeature)
             delete m_poCurFeature;
         m_poCurFeature = NULL;
+
+        m_nCurFeatureId = m_nPreloadedId;
 
         if (EQUALN(pszLine,"NONE",4))
         {
@@ -1289,9 +1307,18 @@ TABFeature *MIFFile::GetFeatureRef(int nFeatureId)
         m_poCurFeature = NULL;
         return NULL;
     }
+
+    /*---------------------------------------------------------------------
+     * The act of reading the geometry causes the first line of the    
+     * next object to be preloaded.  Set the preloaded id appropriately.
+     *--------------------------------------------------------------------- */
+    if( m_poMIFFile->GetLastLine() != NULL )
+        m_nPreloadedId++;
+    else
+        m_nPreloadedId = 0;
    
     /* Update the Current Feature ID */
-    m_poCurFeature->SetFID(m_nCurFeatureId++);
+    m_poCurFeature->SetFID(m_nCurFeatureId);
 
     return m_poCurFeature;
 }
