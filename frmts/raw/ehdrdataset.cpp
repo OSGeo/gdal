@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/07/10 17:40:26  warmerda
+ * Accept tab as separator.  Assume signed 16 and 32bit values.
+ *
  * Revision 1.9  2001/03/23 03:25:57  warmerda
  * added support for GRID generated files, with nodata and projections
  *
@@ -220,7 +223,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         if( nLineCount > 1000 || strlen(pszLine) > 1000 )
             break;
 
-        papszTokens = CSLTokenizeString( pszLine );
+        papszTokens = CSLTokenizeStringComplex( pszLine, " \t", TRUE, FALSE );
         if( CSLCount( papszTokens ) < 2 )
         {
             CSLDestroy( papszTokens );
@@ -264,7 +267,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             dfXDim = dfYDim = atof(papszTokens[1]);
         }
-        else if( EQUAL(papszTokens[0],"NODATA_value") )
+        else if( EQUAL(papszTokens[0],"NODATA_value") 
+                 || EQUAL(papszTokens[0],"NODATA") )
         {
             dfNoData = atof(papszTokens[1]);
             bNoDataSet = TRUE;
@@ -272,9 +276,9 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         else if( EQUAL(papszTokens[0],"NBITS") )
         {
             if( atoi(papszTokens[1]) == 16 )
-                eDataType = GDT_UInt16;
+                eDataType = GDT_Int16;
             else if( atoi(papszTokens[1]) == 32 )
-                eDataType = GDT_UInt32;
+                eDataType = GDT_Int32;
         }
         else if( EQUAL(papszTokens[0],"byteorder") )
         {
