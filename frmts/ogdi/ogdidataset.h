@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/10/26 03:30:46  warmerda
+ * added math.h so it doesn't get included first from within ecsutil.h
+ *
  * Revision 1.5  2000/08/28 21:30:17  warmerda
  * restructure to use cln_GetNextObject
  *
@@ -49,6 +52,7 @@
 #ifndef OGDIDATASET_H_INCLUDED
 #define OGDIDATASET_H_INCLUDED
 
+#include <math.h>
 #include "ecs.h"
 #include "gdal_priv.h"
 
