@@ -22,6 +22,21 @@ text.<p>
 This driver wants administrative file for input. Filenames of images will be
 extracted and data will be imported, every file will be interpreted as band.<p>
 
+FAST-L7A consists form several files: big ones with image data and three
+small files with administrative information. You should give to driver one
+of the administrative files:<p>
+
+<ul>
+<li>L7fppprrr_rrrYYYYMMDD_HPN.FST: panchromatic band header file with 1
+    band
+<li>L7fppprrr_rrrYYYYMMDD_HRF.FST: VNIR/ SWIR bands header file with 6
+    bands
+<li>L7fppprrr_rrrYYYYMMDD_HTM.FST: thermal bands header file with 2 bands
+</ul>
+
+All raw images corresponded to their administrative files will be imported
+as GDAL bands.<p>
+
 From the ``<a href=http://ltpwww.gsfc.nasa.gov/IAS/pdfs/DFCB_V5_B2_R4.pdf>
 Level 1 Product Output Files Data Format Control Book</a>'':<p>
 <tt>
