@@ -24,8 +24,8 @@ clean:
 	$(CC) -c $(ALL_C_FLAGS) $*.c -o $*.o
 	ar r ../ogrsf_frmts.a $*.o
 
-ntfdump:	ntfdump.o $(OBJ)
-	$(CXX) $(LNK_FLAGS) ntfdump.o $(LIBS) -o ntfdump
+tigerinfo:	tigerinfo.o $(OBJ)
+	$(CXX) $(LNK_FLAGS) tigerinfo.o $(LIBS) -o tigerinfo
 
 
 

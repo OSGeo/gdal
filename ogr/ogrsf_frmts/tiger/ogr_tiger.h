@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/04 21:14:31  warmerda
+ * various improvements, and TestCapability()
+ *
  * Revision 1.1  1999/10/07 18:19:21  warmerda
  * New
  *
@@ -82,6 +85,15 @@ public:
 
 class TigerCompleteChain : public TigerFileBase
 {
+  FILE		     *fpShape;
+  int		     *panShapeRecordId;
+
+  FILE		     *fpRT3;
+  int		      bUsingRT3;
+
+  int                 GetShapeRecordId( int, int );
+  void                AddShapePoints( int, int, OGRLineString *, int );
+    
 public:
     		      TigerCompleteChain( OGRTigerDataSource *,
                                           const char * );
@@ -170,6 +182,7 @@ class OGRTigerDataSource : public OGRDataSource
     int			GetLayerCount();
     OGRLayer		*GetLayer( int );
     void                AddLayer( OGRTigerLayer * );
+    int                 TestCapability( const char * );
 
     OGRSpatialReference *GetSpatialRef() { return poSpatialRef; }
 
@@ -193,6 +206,7 @@ class OGRTigerDriver : public OGRSFDriver
                 
     const char *GetName();
     OGRDataSource *Open( const char *, int );
+    int                 TestCapability( const char * );
 };
 
 #endif /* ndef _OGR_TIGER_H_INCLUDED */

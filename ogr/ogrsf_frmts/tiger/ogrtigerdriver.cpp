@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/04 21:14:31  warmerda
+ * various improvements, and TestCapability()
+ *
  * Revision 1.1  1999/10/07 18:19:21  warmerda
  * New
  *
@@ -82,6 +85,16 @@ OGRDataSource *OGRTigerDriver::Open( const char * pszFilename, int bUpdate )
 }
 
 /************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int OGRTigerDriver::TestCapability( const char * )
+
+{
+    return FALSE;
+}
+
+/************************************************************************/
 /*                           RegisterOGRTiger()                           */
 /************************************************************************/
 
@@ -90,4 +103,5 @@ void RegisterOGRTiger()
 {
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRTigerDriver );
 }
+
 

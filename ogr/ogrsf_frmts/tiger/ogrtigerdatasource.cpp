@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/04 21:14:31  warmerda
+ * various improvements, and TestCapability()
+ *
  * Revision 1.1  1999/10/07 18:19:21  warmerda
  * New
  *
@@ -165,8 +168,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 /* -------------------------------------------------------------------- */
     if( VSI_ISREG(stat.st_mode) )
     {
-        // notdef: add parsing of full filename into path and module.
-        CPLAssert( FALSE );
+        return FALSE;
     }
     else
     {
@@ -334,5 +336,15 @@ char *OGRTigerDataSource::BuildFilename( const char *pszModuleName,
              GetDirPath(), pszModuleName, pszExtension );
 
     return pszFilename;
+}
+
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int OGRTigerDataSource::TestCapability( const char * )
+
+{
+    return FALSE;
 }
 
