@@ -9,14 +9,16 @@
 
 The JPEG JFIF format is supported for reading, and batch writing, but not
 update in place.  JPEG files are represented as one band (greyscale) or three 
-band (RGB) datasets with Byte valued bands.
+band (RGB) datasets with Byte valued bands.<p>
 
 There is currently no support for georeferencing information or metadata for
-JPEG files.  Overviews can be built for JPEG files as an external .ovr file.
+JPEG files. But if an ESRI world file exists with the .wld or .jgw suffixes,
+it will be read and used to establish the geotransform for the image. Overviews
+can be built for JPEG files as an external .ovr file.<p>
 
 The GDAL JPEG Driver is built using the Independent JPEG Group's jpeg
 library.  Also note that the GeoTIFF driver supports tiled TIFF with JPEG
-compressed tiles.
+compressed tiles.<p>
 
 <h2>Creation Options</h2>
 
@@ -25,6 +27,9 @@ are supported, and only 1 and 3 band configurations.  JPEG file creation
 is implemented by the batch (CreateCopy) method.  
 
 <ul>
+
+<li> <b>WORLFILE=ON</b>: Force the generation of an associated ESRI world
+file (.wld).<p>
 
 <li> <b>QUALITY=n</b>: By default the quality flag is set to 75, but this
 option can be used to select other values.  Values must be in the
