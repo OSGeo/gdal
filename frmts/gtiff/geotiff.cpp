@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.109  2004/04/12 09:13:18  dron
+ * Use compression type of the base image to generate overviews
+ * (requires libtiff >= 3.7.0).
+ *
  * Revision 1.108  2004/03/01 18:36:47  warmerda
  * improve error checking for overview generation
  *
@@ -242,6 +246,7 @@ class GTiffDataset : public GDALDataset
     uint32	nRowsPerStrip;
     uint16	nPhotometric;
     uint16      nSampleFormat;
+    uint16      nCompression;
     
     int		nBlocksPerBand;
 
@@ -1569,7 +1574,8 @@ CPLErr GTiffDataset::IBuildOverviews(
     if( GetAccess() != GA_Update )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "File open for read-only accessing, creating overviews externally." );
+                  "File open for read-only accessing, "
+                  "creating overviews externally." );
 
         return GDALDataset::IBuildOverviews( 
             pszResampling, nOverviews, panOverviewList, 
@@ -1655,7 +1661,7 @@ CPLErr GTiffDataset::IBuildOverviews(
             nOverviewOffset = 
                 TIFF_WriteOverview( hTIFF, nOXSize, nOYSize, 
                                     nBitsPerSample, nSamplesPerPixel, 
-                                    128, 128, TRUE, COMPRESSION_NONE, 
+                                    128, 128, TRUE, nCompression, 
                                     nPhotometric, nSampleFormat, 
                                     panRed, panGreen, panBlue, FALSE );
 
@@ -2179,6 +2185,9 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
     if( !TIFFGetField( hTIFF, TIFFTAG_SAMPLEFORMAT, &(nSampleFormat) ) )
         nSampleFormat = SAMPLEFORMAT_UINT;
     
+    if( !TIFFGetField( hTIFF, TIFFTAG_COMPRESSION, &(nCompression) ) )
+        nCompression = COMPRESSION_NONE;
+
 /* -------------------------------------------------------------------- */
 /*      Get strip/tile layout.                                          */
 /* -------------------------------------------------------------------- */
@@ -2832,6 +2841,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     TIFFGetField( hTIFF, TIFFTAG_PLANARCONFIG, &(poDS->nPlanarConfig) );
     TIFFGetField( hTIFF, TIFFTAG_PHOTOMETRIC, &(poDS->nPhotometric) );
     TIFFGetField( hTIFF, TIFFTAG_BITSPERSAMPLE, &(poDS->nBitsPerSample) );
+    TIFFGetField( hTIFF, TIFFTAG_COMPRESSION, &(poDS->nCompression) );
 
     if( TIFFIsTiled(hTIFF) )
     {
