@@ -24,6 +24,7 @@ Offset Length Name                    Notes
   140     4   Origin Code             Template or blank.
 
   144     6   DEM Level Code          Template or blank. 
+	                              "1" for PRODUCT=CDED50K
 
   150     6   Elevation Pattern       Hardcoded to "1" (regular)
 
@@ -75,7 +76,7 @@ Offset Length Name                    Notes
   889    2    Horizontal Datum        Template or "4" (NAD83). 
 
   892    4    Data edition/version    Template or blank. 
-              Spec edition/version 
+              Spec edition/version    "1020" for PRODUCT=CDED50K
 
   896    4    Percent Void            Generated.
 
@@ -101,10 +102,5 @@ Offset Length Name                    Notes
                                          "A" = TopoGrid
 
   140     4   Origin Code             Should be "YT" in Yukon I believe. 
-
-  144     6   DEM Level Code          Should be "1" for CDED. 
-
-  892    4    Data edition/version    Should be "1020" for CDED Version 2
-              Spec edition/version    I think.
 
 
