@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/12/06 18:13:49  warmerda
+ * added CPLAddXMLChild and CPLCreateElmentAndValue
+ *
  * Revision 1.1  2001/11/16 15:39:48  warmerda
  * New
  *
@@ -69,7 +72,12 @@ CPLXMLNode CPL_DLL *CPLCreateXMLNode( CPLXMLNode *poParent,
                                       CPLXMLNodeType eType,
                                       const char *pszText );
 char       CPL_DLL *CPLSerializeXMLTree( CPLXMLNode *psNode );
-  
+void       CPL_DLL  CPLAddXMLChild( CPLXMLNode *psParent,
+                                    CPLXMLNode *psChild );
+CPLXMLNode CPL_DLL *CPLCreateXMLElementAndValue( CPLXMLNode *psParent,
+                                                 const char *pszName,
+                                                 const char *pszValue );
+
 CPL_C_END
 
-#endif /* _CPL_STRING_H_INCLUDED */
+#endif /* _CPL_MINIXML_H_INCLUDED */
