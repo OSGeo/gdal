@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2002/10/29 20:16:59  warmerda
+ * added debugging
+ *
  * Revision 1.43  2002/08/08 22:02:17  warmerda
  * autodesk fix for preserving geometry index
  *
@@ -646,9 +649,26 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     int		nGeometryIndex = -1;
     int         bAddFID = FALSE;
 
+    {
+	IRowsetInfo *pRInfo = NULL;
+        HRESULT hr;
+
+	hr = QueryInterface(IID_IRowsetInfo, (void **) &pRInfo);
+        CPLDebug( "OGR_OLEDB", "CSFRowset::Execute() IRowsetInfo=%p/%d",
+                  pRInfo, hr );
+        if( pRInfo != NULL )
+            pRInfo->Release();
+    }
+
     QueryInterface(IID_IUnknown,(void **) &pIUnknown);
     poDS = SFGetOGRDataSource(pIUnknown);
+    
     assert(poDS);
+    if( poDS == NULL )
+    {
+        CPLDebug( "OGR_OLEDB", "Yikes! %d", *(((unsigned char *) poDS)) );
+        return E_FAIL;
+    }
 	
     pszCommand = OLE2A(m_strCommandText);
     CPLDebug( "OGR_OLEDB", "CSFRowset::Execute(%s)", pszCommand );
