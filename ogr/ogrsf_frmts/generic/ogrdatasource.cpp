@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/03/19 20:35:49  warmerda
+ * Added support for reference counting.
+ * Added support for joins from tables in other datasources.
+ *
  * Revision 1.12  2003/03/19 05:12:34  warmerda
  * fixed memory leak
  *
@@ -86,6 +90,7 @@ OGRDataSource::OGRDataSource()
 
 {
     m_poStyleTable = NULL;
+    m_nRefCount = 0;
 }
 
 /************************************************************************/
@@ -105,6 +110,93 @@ void OGR_DS_Destroy( OGRDataSourceH hDS )
 
 {
     delete (OGRDataSource *) hDS;
+}
+
+/************************************************************************/
+/*                             Reference()                              */
+/************************************************************************/
+
+int OGRDataSource::Reference()
+
+{
+    return ++m_nRefCount;
+}
+
+/************************************************************************/
+/*                          OGR_DS_Reference()                          */
+/************************************************************************/
+
+int OGR_DS_Reference( OGRDataSourceH hDataSource )
+
+{
+    return ((OGRDataSource *) hDataSource)->Reference();
+}
+
+/************************************************************************/
+/*                            Dereference()                             */
+/************************************************************************/
+
+int OGRDataSource::Dereference()
+
+{
+    return --m_nRefCount;
+}
+
+/************************************************************************/
+/*                         OGR_DS_Dereference()                         */
+/************************************************************************/
+
+int OGR_DS_Dereference( OGRDataSourceH hDataSource )
+
+{
+    return ((OGRDataSource *) hDataSource)->Dereference();
+}
+
+/************************************************************************/
+/*                            GetRefCount()                             */
+/************************************************************************/
+
+int OGRDataSource::GetRefCount() const
+
+{
+    return m_nRefCount;
+}
+
+/************************************************************************/
+/*                         OGR_DS_GetRefCount()                         */
+/************************************************************************/
+
+int OGR_DS_GetRefCount( OGRDataSourceH hDataSource )
+
+{
+    return ((OGRDataSource *) hDataSource)->GetRefCount();
+}
+
+/************************************************************************/
+/*                         GetSummaryRefCount()                         */
+/************************************************************************/
+
+int OGRDataSource::GetSummaryRefCount() const
+
+{
+    int nSummaryCount = m_nRefCount;
+    int iLayer;
+    OGRDataSource *poUseThis = (OGRDataSource *) this;
+
+    for( iLayer=0; iLayer < poUseThis->GetLayerCount(); iLayer++ )
+        nSummaryCount += poUseThis->GetLayer( iLayer )->GetRefCount();
+
+    return nSummaryCount;
+}
+
+/************************************************************************/
+/*                     OGR_DS_GetSummaryRefCount()                      */
+/************************************************************************/
+
+int OGR_DS_GetSummaryRefCount( OGRDataSourceH hDataSource )
+
+{
+    return ((OGRDataSource *) hDataSource)->GetSummaryRefCount();
 }
 
 /************************************************************************/
@@ -340,7 +432,31 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
     for( iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
     {
         swq_table_def *psTableDef = psSelectInfo->table_defs + iTable;
-        OGRLayer *poSrcLayer = GetLayerByName( psTableDef->table_name );
+        OGRLayer *poSrcLayer;
+        OGRDataSource *poTableDS = this;
+
+        if( psTableDef->data_source != NULL )
+        {
+            poTableDS = (OGRDataSource *) 
+                OGROpenShared( psTableDef->data_source, FALSE, NULL );
+            if( poTableDS == NULL )
+            {
+                if( strlen(CPLGetLastErrorMsg()) == 0 )
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                              "Unable to open secondary datasource\n"
+                              "`%s' required by JOIN.",
+                              psTableDef->data_source );
+
+                swq_select_free( psSelectInfo );
+                return NULL;
+            }
+
+            // This drops explicit reference, but leave it open for use by
+            // code in ogr_gensql.cpp
+            poTableDS->Dereference();
+        }
+
+        poSrcLayer = poTableDS->GetLayerByName( psTableDef->table_name );
 
         if( poSrcLayer == NULL )
         {
@@ -376,8 +492,19 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
     for( iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
     {
         swq_table_def *psTableDef = psSelectInfo->table_defs + iTable;
-        OGRLayer *poSrcLayer = GetLayerByName( psTableDef->table_name );
+        OGRDataSource *poTableDS = this;
+        OGRLayer *poSrcLayer;
         int      iField;
+
+        if( psTableDef->data_source != NULL )
+        {
+            poTableDS = (OGRDataSource *) 
+                OGROpenShared( psTableDef->data_source, FALSE, NULL );
+            CPLAssert( poTableDS != NULL );
+            poTableDS->Dereference();
+        }
+
+        poSrcLayer = poTableDS->GetLayerByName( psTableDef->table_name );
 
         for( iField = 0; 
              iField < poSrcLayer->GetLayerDefn()->GetFieldCount();
