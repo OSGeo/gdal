@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/08/22 17:47:50  warmerda
+ * Fixed declaration of gnCPLSPrintfBuffer.
+ *
  * Revision 1.12  2000/08/18 21:20:54  svillene
  * *** empty log message ***
  *
@@ -653,7 +656,7 @@ char ** CSLTokenizeStringComplex( const char * pszString,
 #define CPLSPrintf_BUF_SIZE 8000
 #define CPLSPrintf_BUF_Count 10
 static char gszCPLSPrintfBuffer[CPLSPrintf_BUF_Count][CPLSPrintf_BUF_SIZE];
-static gnCPLSPrintfBuffer = 0;
+static int gnCPLSPrintfBuffer = 0;
 
 const char *CPLSPrintf(char *fmt, ...)
 {
