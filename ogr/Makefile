@@ -75,10 +75,10 @@ sdts2mi.exe:      sdts2mi.obj $(OBJ_OGR)
 			$(ALL_LIBS)
 
 clean:
-	del *.obj
-        del *.exe
-	del *.lib
-	del *.pdb
+	-del *.obj
+        -del *.exe
+	-del *.lib
+	-del *.pdb
 
 allclean:	clean
 	cd ogrsf_frmts
