@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.37  2005/02/25 14:54:37  fwarmerdam
+ * Removed extra newline in debug statement.
+ *
  * Revision 1.36  2005/02/24 15:12:04  fwarmerdam
  * Ensure IOStream and fpVSIL are properly cleaned up
  *
@@ -625,7 +628,7 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
     int *panAdjustedBandList = NULL;
 
     CPLDebug( "ECW",
-              "ECWDataset::AdviseRead(%d,%d,%d,%d->%d,%d)\n",
+              "ECWDataset::AdviseRead(%d,%d,%d,%d->%d,%d)",
               nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
 
     if( nBufXSize > nXSize || nBufYSize > nYSize )
