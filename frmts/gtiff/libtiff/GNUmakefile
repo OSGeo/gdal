@@ -35,9 +35,7 @@ OBJ	= \
 	tif_version.o \
 	tif_warning.o \
 	tif_write.o \
-	tif_zip.o \
-	tif_overview.o \
-	tif_ovrcache.o 
+	tif_zip.o
 
 ALL_C_FLAGS	=	$(CFLAGS) -DZIP_SUPPORT -I../../zlib
 

@@ -6,10 +6,14 @@ OBJ	=	geotiff.o gt_wkt_srs.o gt_overview.o \
 		tif_ovrcache.o tif_overview.o 
 
 TIFF_OPTS	=	-Ilibgeotiff -Ilibtiff
-SUBLIBS 	=	../o/libgeotiff.a
+SUBLIBS 	=
 
 ifeq ($(TIFF_SETTING),internal)
 SUBLIBS	:= ../o/libtiff.a $(SUBLIBS) 
+endif
+
+ifeq ($(GEOTIFF_SETTING),internal)
+SUBLIBS	:= ../o/libgeotiff.a $(SUBLIBS) 
 endif
 
 default:	$(OBJ)
