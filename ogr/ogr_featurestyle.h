@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/12/07 03:42:37  danmo
+ * REmoved stray comma in OGRSType enum defn
+ *
  * Revision 1.2  2000/08/28 20:26:18  svillene
  * Add missing virtual ~()
  *
@@ -134,7 +137,7 @@ typedef enum ogr_style_type
 {
     OGRSTypeString,
     OGRSTypeDouble,
-    OGRSTypeInteger,
+    OGRSTypeInteger
 }  OGRSType;
 
 typedef struct ogr_style_param
