@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/02/19 15:14:58  warmerda
+ * altered extraction of sweepang
+ *
  * Revision 1.7  2001/02/02 22:20:29  warmerda
  * compute text height/width properly
  *
@@ -296,11 +299,15 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
 
           psEllipse->startang = DGN_INT32( psDGN->abyElem + 36 );
           psEllipse->startang = psEllipse->startang / 360000.0;
+          if( psDGN->abyElem[41] & 0x80 )
+          {
+              psDGN->abyElem[41] &= 0x7f;
+              nSweepVal = -1 * DGN_INT32( psDGN->abyElem + 40 );
+          }
+          else
+              nSweepVal = DGN_INT32( psDGN->abyElem + 40 );
 
-          nSweepVal = DGN_INT32( psDGN->abyElem + 40 );
-          if( nSweepVal & 0x80000000 ) 
-              psEllipse->sweepang = - (nSweepVal & 0x7fffffff)/360000.0;
-          else if( nSweepVal  == 0 )
+          if( nSweepVal == 0 )
               psEllipse->sweepang = 360.0;
           else
               psEllipse->sweepang = nSweepVal / 360000.0;
