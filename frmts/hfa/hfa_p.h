@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/02/21 15:40:58  dron
+ * Added support for writing large (>4 GB) Erdas Imagine files.
+ *
  * Revision 1.10  2001/06/10 20:31:35  warmerda
  * use vsi_l_offset for block offsets
  *
@@ -81,6 +84,14 @@ class HFADictionary;
 class HFABand;
 
 /************************************************************************/
+/*      Flag indicating read/write, or read-only access to data.        */
+/************************************************************************/
+typedef enum {
+    /*! Read only (no update) access */ HFA_ReadOnly = 0,
+    /*! Read/write access. */           HFA_Update = 1
+} HFAAccess;
+
+/************************************************************************/
 /*                              HFAInfo_t                               */
 /*                                                                      */
 /*      This is just a structure, and used hold info about the whole    */
@@ -91,6 +102,8 @@ typedef struct hfainfo {
 
     char	*pszPath;
     char        *pszFilename; /* sans path */
+
+    HFAAccess	eAccess;
 
     GUInt32     nEndOfFile;
     GUInt32	nRootPos;

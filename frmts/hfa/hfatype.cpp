@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/02/21 15:40:58  dron
+ * Added support for writing large (>4 GB) Erdas Imagine files.
+ *
  * Revision 1.5  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -231,7 +234,7 @@ HFAType::SetInstValue( const char * pszFieldPath,
     else
     {
         nNameLen = strlen(pszFieldPath);
-        pszRemainder = NULL;
+        pszRemainder = pszFieldPath/*NULL*/;
     }
     
 /* -------------------------------------------------------------------- */

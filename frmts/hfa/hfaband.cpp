@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2003/02/21 15:40:58  dron
+ * Added support for writing large (>4 GB) Erdas Imagine files.
+ *
  * Revision 1.23  2002/11/27 14:35:28  warmerda
  * Added support for uncompressing 4bit images.
  *
@@ -345,11 +348,14 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 
     pszFullFilename = CPLFormFilename( psInfo->pszPath, pszRawFilename, NULL );
 
-    fpExternal = VSIFOpenL( pszFullFilename, "rb" );
+    if( psInfo->eAccess == HFA_ReadOnly )
+	fpExternal = VSIFOpenL( pszFullFilename, "rb" );
+    else
+	fpExternal = VSIFOpenL( pszFullFilename, "r+b" );
     if( fpExternal == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Unable to find external data file:\n%s\n", 
+                  "Unable to open external data file:\n%s\n", 
                   pszFullFilename );
         return CE_Failure;
     }
@@ -879,17 +885,25 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 
 {
     int		iBlock;
+    FILE	*fpData;
 
     if( LoadBlockInfo() != CE_None )
         return CE_Failure;
+
+    if( fpExternal != NULL )
+        fpData = fpExternal;
+    else
+        fpData = psInfo->fp;
 
     iBlock = nXBlock + nYBlock * nBlocksPerRow;
     
     if( (panBlockFlag[iBlock] & (BFLG_VALID|BFLG_COMPRESSED)) == 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-          "Attempt to write to invalid, or compressed tile.  This\n"
-          "operation currently unsupported by HFABand::SetRasterBlock().\n" );
+          "Attempt to write to invalid, or compressed tile with number %d "
+	  "(X position %d, Y position %d).  This\n operation currently "
+	  "unsupported by HFABand::SetRasterBlock().\n",
+	  iBlock, nXBlock, nYBlock );
 
         return CE_Failure;
     }
@@ -897,7 +911,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 /*      Move to the location that the data sits.                        */
 /* -------------------------------------------------------------------- */
-    if( VSIFSeekL( psInfo->fp, panBlockStart[iBlock], SEEK_SET ) != 0 )
+    if( VSIFSeekL( fpData, panBlockStart[iBlock], SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
                   "Seek to %d failed.\n", panBlockStart[iBlock] );
@@ -941,7 +955,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 /*      Write uncompressed data.				        */
 /* -------------------------------------------------------------------- */
-    if( VSIFWriteL( pData, panBlockSize[iBlock], 1, psInfo->fp ) != 1 )
+    if( VSIFWriteL( pData, panBlockSize[iBlock], 1, fpData ) != 1 )
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
