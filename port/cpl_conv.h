@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/08/31 14:48:05  dron
+ * Added CPLScanLong() and CPLScanDouble().
+ *
  * Revision 1.21  2003/08/25 20:01:58  dron
  * Added CPLFGets() helper function.
  *
@@ -104,6 +107,12 @@ char CPL_DLL *CPLStrdup( const char * );
 /* -------------------------------------------------------------------- */
 char *CPLFGets( char *, int, FILE *);
 const char CPL_DLL *CPLReadLine( FILE * );
+
+/* -------------------------------------------------------------------- */
+/*      Read a numeric value from an ASCII character string.            */
+/* -------------------------------------------------------------------- */
+double CPLScanDouble( char *, int );
+long CPLScanLong( char *, int );
 
 /* -------------------------------------------------------------------- */
 /*      Fetch a function from DLL / so.                                 */
