@@ -31,8 +31,10 @@ CXX_ODFLAGS =	$(CXX_OPTFLAGS)
 LIBS		:= $(filter-out -ldbmalloc,$(LIBS))
 endif
 
-CFLAGS		=	@C_WFLAGS@ $(C_ODFLAGS)
-CXXFLAGS	=	@CXX_WFLAGS@ $(CXX_ODFLAGS)
+CFLAGS		=	@C_WFLAGS@ @C_PIC@ $(C_ODFLAGS)
+CXXFLAGS	=	@CXX_WFLAGS@ @CXX_PIC@ $(CXX_ODFLAGS)
+
+LD_SHARED	=	@LD_SHARED@
 
 GDAL_INCLUDE	=	-I$(GDAL_ROOT) -I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/core
 
@@ -53,8 +55,6 @@ GDAL_LIBS	=	$(GDAL_LIB) $(GDAL_ROOT)/frmts/o/*.a $(CPL_LIB) \
 			$(OGDI_LIBS)
 GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/core/*.o
-
-
 
 #
 #	Note these codes have to exactly match the format directory names, 

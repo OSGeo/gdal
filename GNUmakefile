@@ -13,8 +13,13 @@ $(GDAL_LIB):	port-target core-target frmts-target force-lib
 
 force-lib:
 	ar r $(GDAL_LIB) $(GDAL_OBJ)
-	$(CXX) -shared -Wl,-soname,gdal.1.0.so -o $(GDAL_SLIB) \
-		$(GDAL_OBJ) $(GDAL_LIBS) $(LIBS)
+	$(LD_SHARED) $(GDAL_OBJ) $(GDAL_LIBS) $(LIBS) -o $(GDAL_SLIB)
+
+#	If you really want proper SO files that will work in /usr/lib
+# 	Try replacing the above command with something like this:
+#
+#	$(CXX) -shared -Wl,-soname,gdal.so.1 -o $(GDAL_SLIB) \
+#		$(GDAL_OBJ) $(GDAL_LIBS) $(LIBS)
 
 port-target:
 	(cd port; $(MAKE))
