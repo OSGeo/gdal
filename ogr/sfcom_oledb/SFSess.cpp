@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/09/04 14:13:34  warmerda
+ * convert to unix text mode
+ *
  * Revision 1.2  2002/08/30 15:27:54  warmerda
  * Ensure stdafx.h include first
  *
@@ -283,6 +286,9 @@ HRESULT CSFSessionSchemaOGISGeoColumns::Execute(LONG* pcRowsAffected,
     }
 
     *pcRowsAffected = m_rgRowData.GET_SIZE_MACRO();
+
+    CPLDebug( "OGR_OLEDB",
+              "CSFSessionSchemaOGISGeoColumns::Execute() - complete" );
 
     return S_OK;
 }
