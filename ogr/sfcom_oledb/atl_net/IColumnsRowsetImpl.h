@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/08/29 19:02:21  warmerda
+ * modified mechanism for processing the SRS substantially
+ *
  * Revision 1.3  2002/08/28 18:51:20  warmerda
  * fixed bug2, iLayer was -1 for command rowsets
  *
@@ -60,6 +63,7 @@
 #include <atlcom.h>
 #include <atldb.h>
 #include "ICRRowsetImpl.h"
+#include "cpl_string.h"
 
 template <class T, class DeAllocator = CRunTimeFree < T > >
 class CAutoMemRelease
@@ -231,6 +235,7 @@ class ATL_NO_VTABLE IColumnsRowsetImpl : public IColumnsRowset
             }
 
             HRESULT PopulateRowset(ULONG numCols, DBCOLUMNINFO *pColInfo,
+                                   T *poCSFRowset,
                                    OGRDataSource *poDS, int iLayer,
                                    OGRLayer *poLayer )
                 {
@@ -270,28 +275,27 @@ class ATL_NO_VTABLE IColumnsRowsetImpl : public IColumnsRowset
                         // spatial column.
                         if( lstrcmpW(pColInfo[i].pwszName,L"OGIS_GEOMETRY") == 0)
                         {
+                            IUnknown *pIU;
+                            
                             data.m_nGeomType =
                                 SFWkbGeomTypeToDBGEOM(poLayer->GetLayerDefn()->GetGeomType());
-
-                            OGRSpatialReference *poSpatRef;
-                            char      *pszSpatRef = NULL;
-
-                            poSpatRef = poLayer->GetSpatialRef();
                             
-                            if( poSpatRef != NULL
-                                && poSpatRef->exportToWkt(&pszSpatRef)
-                                                              == OGRERR_NONE )
-                            {
-                                 data.m_nSpatialRefId = iLayer;
-                                 lstrcpyW(data.m_pszSpatialRefSystem,
-                                           A2OLE(pszSpatRef));
-                                 OGRFree( pszSpatRef );
-                            }
-                            else
-                            {
-                                 data.m_nSpatialRefId = poDS->GetLayerCount()+1;
-                                 lstrcpyW(data.m_pszSpatialRefSystem,L"" );
-                            }
+                            poCSFRowset->QueryInterface(IID_IUnknown,(void **) &pIU);
+
+                            char * pszWKT = SFGetLayerWKT( poLayer, pIU );
+
+                            if( pszWKT == NULL )
+                                pszWKT = CPLStrdup( "" );
+                            
+                            poCSFRowset->QueryInterface(IID_IUnknown,(void **) &pIU);
+                            data.m_nSpatialRefId =
+                                SFGetSRSIDFromWKT( pszWKT, pIU );
+                            pIU->Release();
+                                
+                            lstrcpyW(data.m_pszSpatialRefSystem,
+                                     A2OLE(pszWKT) );
+                            OGRFree( pszWKT );
+
                         }
                         else
                         {
@@ -386,6 +390,7 @@ class ATL_NO_VTABLE IColumnsRowsetImpl : public IColumnsRowset
                         if (SUCCEEDED(hr))
                         {
                             hr = pColRowset->PopulateRowset(numCols, pColInfo,
+                                                            pT, 
                                                             pT->m_poDS,
                                                             pT->m_iLayer,
                                                             pT->m_poLayer );
