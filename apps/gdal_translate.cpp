@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/11/06 15:05:55  warmerda
+ * added -a_srs
+ *
  * Revision 1.7  2002/10/24 02:55:18  warmerda
  * added the -mo to add metadata
  *
@@ -90,6 +93,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "gdal_priv.h"
+#include "ogr_spatialref.h"
 #include "vrt/vrtdataset.h"
 
 CPL_CVSID("$Id$");
@@ -111,7 +115,7 @@ static void Usage()
             "             CInt16/CInt32/CFloat32/CFloat64}] [-not_strict]\n"
             "       [-of format] [-b band] [-outsize xsize[%%] ysize[%%]]\n"
             "       [-scale [src_min src_max [dst_min dst_max]]]\n"
-            "       [-srcwin xoff yoff xsize ysize]\n"
+            "       [-srcwin xoff yoff xsize ysize] [-a_srs srs_def]\n"
             "       [-projwin ulx uly lrx lry] [-co \"NAME=VALUE\"]*\n"
             "       [-mo \"META-TAG=VALUE\"]*\n"
             "       src_dataset dst_dataset\n\n" );
@@ -159,6 +163,7 @@ int main( int argc, char ** argv )
     double              dfScaleDstMin=0.0, dfScaleDstMax=255.0;
     double              dfULX, dfULY, dfLRX, dfLRY;
     char                **papszMetadataOptions = NULL;
+    char                *pszOutputSRS = NULL;
 
     anSrcWin[0] = 0;
     anSrcWin[1] = 0;
@@ -267,6 +272,21 @@ int main( int argc, char ** argv )
             dfULY = atof(argv[++i]);
             dfLRX = atof(argv[++i]);
             dfLRY = atof(argv[++i]);
+        }   
+
+        else if( EQUAL(argv[i],"-a_srs") && i < argc-1 )
+        {
+            OGRSpatialReference oOutputSRS;
+
+            if( oOutputSRS.SetFromUserInput( argv[i+1] ) != OGRERR_NONE )
+            {
+                fprintf( stderr, "Failed to process SRS definition: %s\n", 
+                         argv[i+1] );
+                exit( 1 );
+            }
+
+            oOutputSRS.exportToWkt( &pszOutputSRS );
+            i++;
         }   
 
         else if( argv[i][0] == '-' )
@@ -433,7 +453,8 @@ int main( int argc, char ** argv )
         && anSrcWin[0] == 0 && anSrcWin[1] == 0 
         && anSrcWin[2] == GDALGetRasterXSize(hDataset)
         && anSrcWin[3] == GDALGetRasterYSize(hDataset) 
-        && pszOXSize == NULL && pszOYSize == NULL )
+        && pszOXSize == NULL && pszOYSize == NULL 
+        && pszOutputSRS == NULL )
     {
         
         hOutDS = GDALCreateCopy( hDriver, pszDest, hDataset, 
@@ -480,9 +501,16 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
         poVDS = new VRTDataset( nOXSize, nOYSize );
 
-        pszProjection = GDALGetProjectionRef( hDataset );
-        if( pszProjection != NULL && strlen(pszProjection) > 0 )
-            poVDS->SetProjection( pszProjection );
+        if( pszOutputSRS != NULL )
+        {
+            poVDS->SetProjection( pszOutputSRS );
+        }
+        else
+        {
+            pszProjection = GDALGetProjectionRef( hDataset );
+            if( pszProjection != NULL && strlen(pszProjection) > 0 )
+                poVDS->SetProjection( pszProjection );
+        }
 
         if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
         {
@@ -577,9 +605,16 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*	Copy over projection, and geotransform information.		*/
 /* -------------------------------------------------------------------- */
-    pszProjection = GDALGetProjectionRef( hDataset );
-    if( pszProjection != NULL && strlen(pszProjection) > 0 )
-        GDALSetProjection( hOutDS, pszProjection );
+    if( pszOutputSRS != NULL )
+    {
+        GDALSetProjection( hOutDS, pszOutputSRS );
+    }
+    else
+    {
+        pszProjection = GDALGetProjectionRef( hDataset );
+        if( pszProjection != NULL && strlen(pszProjection) > 0 )
+            GDALSetProjection( hOutDS, pszProjection );
+    }
 
     if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
     {
