@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/10/04 13:28:43  warmerda
+ * added DEM_SAMPLE support
+ *
  * Revision 1.3  1999/10/04 12:52:22  warmerda
  * Added DTM_ as a prefix to raster layer names.
  *
@@ -249,6 +252,18 @@ OGRNTFRasterLayer::OGRNTFRasterLayer( OGRNTFDataSource *poDSIn,
                                     poReader->GetRasterYSize());
     iColumnOffset = -1;
     iCurrentFC = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Check for DEM subsampling, and compute total feature count      */
+/*      accordingly.                                                    */
+/* -------------------------------------------------------------------- */
+    if( poDS->GetOption( "DEM_SAMPLE" ) == NULL )
+        nDEMSample = 1;
+    else
+        nDEMSample = MAX(1,atoi(poDS->GetOption("DEM_SAMPLE")));
+    
+    nFeatureCount = (poReader->GetRasterXSize() / nDEMSample)
+                  * (poReader->GetRasterYSize() / nDEMSample);
 }
 
 /************************************************************************/
@@ -298,7 +313,30 @@ void OGRNTFRasterLayer::ResetReading()
 OGRFeature *OGRNTFRasterLayer::GetNextFeature()
 
 {
-    return GetFeature( (long) ++iCurrentFC );
+    if( iCurrentFC == 0 )
+        iCurrentFC = 1;
+    else
+    {
+        int	iReqColumn, iReqRow;
+        
+        iReqColumn = (iCurrentFC - 1) / poReader->GetRasterYSize();
+        iReqRow = iCurrentFC - iReqColumn * poReader->GetRasterXSize() - 1;
+
+        if( iReqRow + nDEMSample > poReader->GetRasterYSize() )
+        {
+            iReqRow = 0;
+            iReqColumn += nDEMSample;
+        }
+        else
+        {
+            iReqRow += nDEMSample;
+        }
+
+        iCurrentFC = iReqColumn * poReader->GetRasterYSize()
+            + iReqRow + 1;
+    }
+
+    return GetFeature( (long) iCurrentFC );
 }
 
 /************************************************************************/
@@ -360,7 +398,7 @@ OGRFeature *OGRNTFRasterLayer::GetFeature( long nFeatureId )
 int OGRNTFRasterLayer::GetFeatureCount( int bForce )
 
 {
-    return poReader->GetRasterXSize() * poReader->GetRasterYSize();
+    return nFeatureCount;
 }
 
 /************************************************************************/

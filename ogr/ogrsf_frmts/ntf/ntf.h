@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/10/04 13:28:43  warmerda
+ * added DEM_SAMPLE support
+ *
  * Revision 1.9  1999/10/04 03:08:52  warmerda
  * added raster support
  *
@@ -260,12 +263,13 @@ class NTFFileReader
     NTFRecord	      **apapoRecordIndex[100];
 
     void	      EstablishRasterAccess();
-    OGRNTFRasterLayer *poRasterLayer;
     int		      nRasterXSize;
     int		      nRasterYSize;
     int		      nRasterDataType;
     double	      adfGeoTransform[6];
-    
+
+    OGRNTFRasterLayer *poRasterLayer;
+
     long	     *panColumnOffset;
 
   public:
@@ -442,6 +446,9 @@ class OGRNTFRasterLayer : public OGRLayer
 
     int			iCurrentFC;
   
+    int		        nDEMSample;
+    int		        nFeatureCount;
+    
   public:
     			OGRNTFRasterLayer( OGRNTFDataSource * poDS,
                                            NTFFileReader * poReaderIn );

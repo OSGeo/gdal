@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/10/04 13:28:43  warmerda
+ * added DEM_SAMPLE support
+ *
  * Revision 1.3  1999/10/01 14:47:51  warmerda
  * major upgrade: generic, string feature codes, etc
  *
@@ -57,13 +60,18 @@ int main( int argc, char ** argv )
     char	**papszOptions = NULL;
     
     if( argc == 1 )
-        printf( "Usage: ntfdump [-g] [-d] [-c] files\n" );
+        printf( "Usage: ntfdump [-s n] [-g] [-d] [-c] files\n" );
     
     for( int i = 1; i < argc; i++ )
     {
         if( EQUAL(argv[i],"-g") )
             papszOptions = CSLSetNameValue( papszOptions,
                                             "FORCE_GENERIC", "ON" );
+        else if( EQUAL(argv[i],"-s") )
+        {
+            papszOptions = CSLSetNameValue( papszOptions,
+                                            "DEM_SAMPLE", argv[++i] );
+        }
         else if( argv[i][0] == '-' )
             pszMode = argv[i];
         else if( EQUAL(pszMode,"-d") )
