@@ -34,7 +34,7 @@
 #ifndef RAWBLOCKEDIMAGE_H_INCLUDED
 #define RAWBLOCKEDIMAGE_H_INCLUDED
 
-#include "cpl_conv.h"
+#include <stdio.h>
 
 /************************************************************************/
 /* ==================================================================== */
@@ -54,7 +54,7 @@ public:
     int		nDirty;
     int		nPositionInFile;
 
-    GByte	*pabyData;
+    unsigned char *pabyData;
 };
 
 class RawBlockedImage
@@ -95,8 +95,8 @@ public:
 
     		~RawBlockedImage();
 
-    GByte	*GetTile( int, int );
-    GByte	*GetTileForUpdate( int, int );
+    unsigned char*GetTile( int, int );
+    unsigned char*GetTileForUpdate( int, int );
 
     int		GetBlockXSize() { return nBlockXSize; }
     int		GetBlockYSize() { return nBlockYSize; }

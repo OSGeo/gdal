@@ -53,6 +53,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/03/12 17:47:26  warmerda
+ * made independent of CPL
+ *
  * Revision 1.6  1999/02/24 16:24:00  warmerda
  * Don't include cpl_string.h
  *
@@ -73,12 +76,25 @@
  *
  */
 
+#include <stdio.h>
+#include <assert.h>
+#include <stdlib.h>
+
 #include "tiffio.h"
-#include "cpl_conv.h"
 #include "rawblockedimage.h"
 
+#ifndef FALSE
+#  define FALSE 0
+#  define TRUE 1
+#endif
+
+#ifndef MAX
+#  define MIN(a,b)      ((a<b) ? a : b)
+#  define MAX(a,b)      ((a>b) ? a : b)
+#endif
+
 extern "C" {
-    void TIFF_BuildOverviews( const char *, int, int * );
+    void TIFFBuildOverviews( const char *, int, int *, int );
 }
 
 /************************************************************************/
@@ -88,7 +104,10 @@ extern "C" {
 static
 void TIFF_WriteOverview( TIFF *hTIFF, int nSamples, RawBlockedImage **papoRBI,
                          int bTiled, int nCompressFlag, int nPhotometric,
-                         GUInt16 *panRed, GUInt16 *panGreen, GUInt16 *panBlue )
+                         unsigned short *panRed,
+                         unsigned short *panGreen,
+                         unsigned short *panBlue,
+                         int bUseSubIFDs )
 
 {
     int		iSample;
@@ -142,7 +161,7 @@ void TIFF_WriteOverview( TIFF *hTIFF, int nSamples, RawBlockedImage **papoRBI,
                  iTileX*poRBI->GetBlockXSize() < poRBI->GetXSize();
                  iTileX++ )
             {
-                GByte	*pabyData = poRBI->GetTile( iTileX, iTileY );
+                unsigned char	*pabyData = poRBI->GetTile( iTileX, iTileY );
                 int	nTileID;
 
                 if( bTiled )
@@ -179,17 +198,19 @@ void TIFF_WriteOverview( TIFF *hTIFF, int nSamples, RawBlockedImage **papoRBI,
 /************************************************************************/
 
 static
-void TIFF_DownSample( GByte * pabySrcTile, int nBlockXSize, int nBlockYSize,
+void TIFF_DownSample( unsigned char *pabySrcTile,
+                      int nBlockXSize, int nBlockYSize,
                       int nPixelSkewBits, int nBitsPerPixel,
-                      GByte * pabyOTile, int nOBlockXSize, int nOBlockYSize,
+                      unsigned char * pabyOTile,
+                      int nOBlockXSize, int nOBlockYSize,
                       int nTXOff, int nTYOff, int nOMult )
 
 {
     int		i, j, k, nPixelBytes = (nBitsPerPixel) / 8;
     int		nPixelGroupBytes = (nBitsPerPixel+nPixelSkewBits)/8;
-    GByte	*pabySrc, *pabyDst;
+    unsigned char *pabySrc, *pabyDst;
 
-    CPLAssert( nBitsPerPixel >= 8 );
+    assert( nBitsPerPixel >= 8 );
 
 /* -------------------------------------------------------------------- */
 /*      Handle case of one or more whole bytes per sample.              */
@@ -234,7 +255,8 @@ void TIFF_ProcessFullResBlock( TIFF *hTIFF, int nPlanarConfig,
                                int nOverviews, int * panOvList,
                                int nBitsPerPixel, 
                                int nSamples, RawBlockedImage ** papoRawBIs,
-                               int nSXOff, int nSYOff, GByte *pabySrcTile,
+                               int nSXOff, int nSYOff,
+                               unsigned char *pabySrcTile,
                                int nBlockXSize, int nBlockYSize )
 
 {
@@ -272,7 +294,7 @@ void TIFF_ProcessFullResBlock( TIFF *hTIFF, int nPlanarConfig,
         for( iOverview = 0; iOverview < nOverviews; iOverview++ )
         {
             RawBlockedImage *poRBI = papoRawBIs[iOverview*nSamples + iSample];
-            GByte	*pabyOTile;
+            unsigned char *pabyOTile;
             int	nTXOff, nTYOff, nOXOff, nOYOff, nOMult;
             int	nOBlockXSize = poRBI->GetBlockXSize();
             int	nOBlockYSize = poRBI->GetBlockYSize();
@@ -297,7 +319,7 @@ void TIFF_ProcessFullResBlock( TIFF *hTIFF, int nPlanarConfig,
              * Figure out the skew (extra space between ``our samples'') and
              * the byte offset to the first sample.
              */
-            CPLAssert( (nBitsPerPixel % 8) == 0 );
+            assert( (nBitsPerPixel % 8) == 0 );
             if( nPlanarConfig == PLANARCONFIG_SEPARATE )
             {
                 nSkewBits = 0;
@@ -339,8 +361,9 @@ void TIFF_ProcessFullResBlock( TIFF *hTIFF, int nPlanarConfig,
 /*      overviews.                                                      */
 /************************************************************************/
 
-void TIFF_BuildOverviews( const char * pszTIFFFilename,
-                          int nOverviews, int * panOvList )
+void TIFFBuildOverviews( const char * pszTIFFFilename,
+                         int nOverviews, int * panOvList,
+                         int bUseSubIFDs )
 
 {
     RawBlockedImage	**papoRawBIs;
@@ -348,9 +371,9 @@ void TIFF_BuildOverviews( const char * pszTIFFFilename,
     uint16		nBitsPerPixel, nPhotometric, nCompressFlag, nSamples,
                         nPlanarConfig;
     int			bTiled, nSXOff, nSYOff, i, iSample;
-    GByte		*pabySrcTile;
+    unsigned char	*pabySrcTile;
     TIFF		*hTIFF;
-    GUInt16		*panRedMap, *panGreenMap, *panBlueMap;
+    uint16		*panRedMap, *panGreenMap, *panBlueMap;
 
 /* -------------------------------------------------------------------- */
 /*      Get the base raster size.                                       */
@@ -374,10 +397,10 @@ void TIFF_BuildOverviews( const char * pszTIFFFilename,
 
     if( nBitsPerPixel < 8 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "File `%s' has samples of %d bits per sample.  Sample\n"
-                  "sizes of less than 8 bits per sample are not supported.\n",
-                  pszTIFFFilename, nBitsPerPixel );
+        TIFFError( "TIFFBuildOverviews",
+                   "File `%s' has samples of %d bits per sample.  Sample\n"
+                   "sizes of less than 8 bits per sample are not supported.\n",
+                   pszTIFFFilename, nBitsPerPixel );
         return;
     }
     
@@ -402,11 +425,11 @@ void TIFF_BuildOverviews( const char * pszTIFFFilename,
     if( TIFFGetField( hTIFF, TIFFTAG_COLORMAP,
                       &panRedMap, &panGreenMap, &panBlueMap ) )
     {
-        GUInt16		*panRed2, *panGreen2, *panBlue2;
+        uint16		*panRed2, *panGreen2, *panBlue2;
 
-        panRed2 = (GUInt16 *) CPLCalloc(2,256);
-        panGreen2 = (GUInt16 *) CPLCalloc(2,256);
-        panBlue2 = (GUInt16 *) CPLCalloc(2,256);
+        panRed2 = (uint16 *) calloc(2,256);
+        panGreen2 = (uint16 *) calloc(2,256);
+        panBlue2 = (uint16 *) calloc(2,256);
 
         memcpy( panRed2, panRedMap, 512 );
         memcpy( panGreen2, panGreenMap, 512 );
@@ -425,7 +448,7 @@ void TIFF_BuildOverviews( const char * pszTIFFFilename,
 /*      Initialize the overview raw layers                              */
 /* -------------------------------------------------------------------- */
     papoRawBIs = (RawBlockedImage **)
-        CPLCalloc(nOverviews*nSamples,sizeof(void*));
+        calloc(nOverviews*nSamples,sizeof(void*));
 
     for( i = 0; i < nOverviews; i++ )
     {
@@ -459,9 +482,9 @@ void TIFF_BuildOverviews( const char * pszTIFFFilename,
 /*      Allocate a buffer to hold a source block.                       */
 /* -------------------------------------------------------------------- */
     if( bTiled )
-        pabySrcTile = (GByte *) CPLMalloc(TIFFTileSize(hTIFF));
+        pabySrcTile = (unsigned char *) malloc(TIFFTileSize(hTIFF));
     else
-        pabySrcTile = (GByte *) CPLMalloc(TIFFStripSize(hTIFF));
+        pabySrcTile = (unsigned char *) malloc(TIFFStripSize(hTIFF));
     
 /* -------------------------------------------------------------------- */
 /*      Loop over the source raster, applying data to the               */
@@ -483,7 +506,7 @@ void TIFF_BuildOverviews( const char * pszTIFFFilename,
         }
     }
 
-    CPLFree( pabySrcTile );
+    free( pabySrcTile );
 
     TIFFClose( hTIFF );
 
@@ -506,7 +529,8 @@ void TIFF_BuildOverviews( const char * pszTIFFFilename,
         {
             TIFF_WriteOverview( hTIFF, nSamples, papoRawBIs + i*nSamples,
                                 bTiled, nCompressFlag, nPhotometric,
-                                panRedMap, panGreenMap, panBlueMap );
+                                panRedMap, panGreenMap, panBlueMap,
+                                bUseSubIFDs );
         }
         
         TIFFClose( hTIFF );
@@ -520,8 +544,13 @@ void TIFF_BuildOverviews( const char * pszTIFFFilename,
         delete papoRawBIs[i];
     }
 
-    CPLFree( papoRawBIs );
-    CPLFree( panRedMap );
-    CPLFree( panGreenMap );
-    CPLFree( panBlueMap );
+    if( papoRawBIs != NULL )
+        free( papoRawBIs );
+
+    if( panRedMap != NULL )
+    {
+        free( panRedMap );
+        free( panGreenMap );
+        free( panBlueMap );
+    }
 }
