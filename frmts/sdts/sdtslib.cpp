@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/11 12:55:54  warmerda
+ * added GetName() method to SDTSModId
+ *
  * Revision 1.2  1999/05/07 13:45:01  warmerda
  * major upgrade to use iso8211lib
  *
@@ -97,4 +100,18 @@ int SDTSGetSADR( SDTS_IREF *poIREF, DDFField * poField, int nVertices,
     }
     
     return TRUE;
+}
+
+/************************************************************************/
+/*                         SDTSModId::GetName()                         */
+/************************************************************************/
+
+const char * SDTSModId::GetName()
+
+{
+    static char		szName[20];
+
+    sprintf( szName, "%s:%ld", szModule, nRecord );
+
+    return szName;
 }
