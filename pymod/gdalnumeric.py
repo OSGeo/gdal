@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.8  2002/09/09 14:40:45  warmerda
+# removed extra import
+#
 # Revision 1.7  2002/02/13 17:17:22  warmerda
 # improve unknown type handling
 #
@@ -154,8 +157,6 @@ def BandWriteArray( band, array, xoff=0, yoff=0 ):
     return result
 
 def GDALTypeCodeToNumericTypeCode( gdal_code ):
-    from Numeric import *
-    
     if gdal_code == GDT_Byte:
         return UnsignedInt8
     elif gdal_code == GDT_UInt16:
