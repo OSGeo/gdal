@@ -24,10 +24,7 @@
  *
  * The GDALDataset class.
  * 
- * $Log$
- * Revision 1.1  1998/12/03 18:32:13  warmerda
- * New
- *
+ * $Log: 
  */
 
 #include "gdal_priv.h"
@@ -137,7 +134,7 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
 int GDALDataset::GetRasterXSize()
 
 {
-    return nRasterYSize;
+    return nRasterXSize;
 }
 
 /************************************************************************/
