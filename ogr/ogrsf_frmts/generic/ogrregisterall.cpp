@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/11/23 06:03:09  warmerda
+ * fixed PG support
+ *
  * Revision 1.5  2000/10/17 17:53:04  warmerda
  * added postgresql support
  *
@@ -60,10 +63,11 @@ void OGRRegisterAll()
     RegisterOGRTiger();
     RegisterOGRS57();
     RegisterOGRTAB();
+    RegisterOGRDGN();
 #ifdef OGDI_ENABLED
     RegisterOGROGDI();
 #endif
-#ifdef OGR_PG_ENABLED
+#ifdef PG_ENABLED
     RegisterOGRPG();
 #endif
 }
