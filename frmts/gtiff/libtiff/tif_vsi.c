@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/09/24 15:54:41  warmerda
+ * implement SizeProc properly
+ *
  * Revision 1.3  2001/07/20 03:29:45  warmerda
  * updated
  *
@@ -77,18 +80,16 @@ _tiffCloseProc(thandle_t fd)
 static toff_t
 _tiffSizeProc(thandle_t fd)
 {
-#ifdef _AM29K
-	long fsize;
-	return ((fsize = lseek((int) fd, 0, SEEK_END)) < 0 ? 0 : fsize);
-#else
-#if USE_64BIT_API == 1
-	struct stat64 sb;
-	return (toff_t) (fstat64((int) fd, &sb) < 0 ? 0 : sb.st_size);
-#else
-	struct stat sb;
-	return (toff_t) (fstat((int) fd, &sb) < 0 ? 0 : sb.st_size);
-#endif
-#endif
+    vsi_l_offset  old_off;
+    toff_t        file_size;
+
+    old_off = VSIFTellL( (FILE *) fd );
+    VSIFSeekL( (FILE *) fd, 0, SEEK_END );
+    
+    file_size = VSIFTellL( (FILE *) fd );
+    VSIFSeekL( (FILE *) fd, old_off, SEEK_SET );
+
+    return file_size;
 }
 
 static int
