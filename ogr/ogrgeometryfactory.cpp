@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/09/11 13:47:17  warmerda
+ * preliminary set of fixes for 3D WKB enum
+ *
  * Revision 1.10  2001/11/01 16:56:08  warmerda
  * added createGeometry and destroyGeometry methods
  *
@@ -304,7 +307,7 @@ OGRGeometry *
 OGRGeometryFactory::createGeometry( OGRwkbGeometryType eGeometryType )
 
 {
-    switch( eGeometryType )
+    switch( wkbFlatten(eGeometryType) )
     {
       case wkbPoint:
           return new OGRPoint();

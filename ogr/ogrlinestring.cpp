@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2002/09/11 13:47:17  warmerda
+ * preliminary set of fixes for 3D WKB enum
+ *
  * Revision 1.32  2002/08/19 14:11:35  warmerda
  * correct second setPoints() method properly.
  *
@@ -639,15 +642,15 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
     if( eByteOrder == wkbNDR )
     {
         eGeometryType = (OGRwkbGeometryType) pabyData[1];
-        bIs3D = (pabyData[2] & 0x80);
+        bIs3D = (pabyData[4] & 0x80);
     }
     else
     {
         eGeometryType = (OGRwkbGeometryType) pabyData[4];
-        bIs3D = (pabyData[3] & 0x80);
+        bIs3D = (pabyData[1] & 0x80);
     }
 
-    assert( eGeometryType == wkbLineString );
+    CPLAssert( eGeometryType == wkbLineString );
 
 /* -------------------------------------------------------------------- */
 /*      Get the vertex count.                                           */
@@ -725,33 +728,17 @@ OGRErr  OGRLineString::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
 /*      Set the geometry feature type.                                  */
 /* -------------------------------------------------------------------- */
+    GUInt32 nGType = getGeometryType();
+    
     if( eByteOrder == wkbNDR )
-    {
-        pabyData[1] = wkbLineString;
-
-        if( getCoordinateDimension() == 3 )
-            pabyData[2] = 0x80;
-        else
-            pabyData[2] = 0;
-        
-        pabyData[3] = 0;
-        pabyData[4] = 0;
-    }
+        nGType = CPL_LSBWORD32( nGType );
     else
-    {
-        pabyData[1] = 0;
-        pabyData[2] = 0;
-        
-        if( getCoordinateDimension() == 3 )
-            pabyData[3] = 0x80;
-        else
-            pabyData[3] = 0;
+        nGType = CPL_MSBWORD32( nGType );
 
-        pabyData[4] = wkbLineString;
-    }
+    memcpy( pabyData + 1, &nGType, 4 );
     
 /* -------------------------------------------------------------------- */
-/*      Copy in the raw data.                                           */
+/*      Copy in the data count.                                         */
 /* -------------------------------------------------------------------- */
     memcpy( pabyData+5, &nPointCount, 4 );
 

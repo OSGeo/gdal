@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2002/09/11 13:47:17  warmerda
+ * preliminary set of fixes for 3D WKB enum
+ *
  * Revision 1.33  2002/08/12 15:02:18  warmerda
  * added OGRRawPoint and OGREnvelope initializes
  *
@@ -161,16 +164,16 @@ enum OGRwkbGeometryType
     wkbMultiPolygon = 6,
     wkbGeometryCollection = 7,
     wkbNone = 100,              // non-standard, for pure attribute records
-    wkbPoint25D = 0x8001,       // non-standard, 2.5D extension
-    wkbLineString25D = 0x8002,
-    wkbPolygon25D = 0x8003,
-    wkbMultiPoint25D = 0x8004,
-    wkbMultiLineString25D = 0x8005,
-    wkbMultiPolygon25D = 0x8006,
-    wkbGeometryCollection25D = 0x8007,
+    wkbPoint25D = 0x80000001,       // 2.5D extensions as per 99-402
+    wkbLineString25D = 0x80000002,
+    wkbPolygon25D = 0x80000003,
+    wkbMultiPoint25D = 0x80000004,
+    wkbMultiLineString25D = 0x80000005,
+    wkbMultiPolygon25D = 0x80000006,
+    wkbGeometryCollection25D = 0x80000007,
 };
 
-#define wkb25DBit 0x8000
+#define wkb25DBit 0x80000000
 #define wkbFlatten(x)  ((x) & (~wkb25DBit))
 
 #define ogrZMarker 0x21125711
@@ -571,6 +574,8 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
 {
     int         nGeomCount;
     OGRGeometry **papoGeoms;
+
+    int         nCoordinateDimension;
     
   public:
                 OGRGeometryCollection();

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/09/11 13:47:17  warmerda
+ * preliminary set of fixes for 3D WKB enum
+ *
  * Revision 1.10  2002/08/06 21:16:41  warmerda
  * fixed possible overrun error in exportToWkt()
  *
@@ -73,7 +76,10 @@ CPL_CVSID("$Id$");
 OGRwkbGeometryType OGRMultiPoint::getGeometryType()
 
 {
-    return wkbMultiPoint;
+    if( getCoordinateDimension() == 3 )
+        return wkbMultiPoint25D;
+    else
+        return wkbMultiPoint;
 }
 
 /************************************************************************/

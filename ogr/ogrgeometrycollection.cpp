@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/09/11 13:47:17  warmerda
+ * preliminary set of fixes for 3D WKB enum
+ *
  * Revision 1.16  2002/05/02 19:45:36  warmerda
  * added flattenTo2D() method
  *
@@ -96,6 +99,7 @@ OGRGeometryCollection::OGRGeometryCollection()
 {
     nGeomCount = 0;
     papoGeoms = NULL;
+    nCoordinateDimension = 2;
 }
 
 /************************************************************************/
@@ -106,6 +110,7 @@ OGRGeometryCollection::~OGRGeometryCollection()
 
 {
     empty();
+    nCoordinateDimension = 2;
 }
 
 /************************************************************************/
@@ -156,7 +161,10 @@ OGRGeometry *OGRGeometryCollection::clone()
 OGRwkbGeometryType OGRGeometryCollection::getGeometryType()
 
 {
-    return wkbGeometryCollection;
+    if( getCoordinateDimension() == 3 )
+        return wkbGeometryCollection25D;
+    else
+        return wkbGeometryCollection;
 }
 
 /************************************************************************/
@@ -166,7 +174,7 @@ OGRwkbGeometryType OGRGeometryCollection::getGeometryType()
 int OGRGeometryCollection::getDimension()
 
 {
-    return 2;
+    return 2; // This isn't strictly correct.  It should be based on members.
 }
 
 /************************************************************************/
@@ -179,13 +187,16 @@ int OGRGeometryCollection::getDimension()
 int OGRGeometryCollection::getCoordinateDimension()
 
 {
-    int nDimension = 2;
+    if( nCoordinateDimension == 0 )
+    {
+        nCoordinateDimension = 2;
 
-    for( int i = 0; i < nGeomCount; i++ )
-        if( papoGeoms[i]->getCoordinateDimension() == 3 )
-            nDimension = 3;
+        for( int i = 0; i < nGeomCount; i++ )
+            if( papoGeoms[i]->getCoordinateDimension() == 3 )
+                nCoordinateDimension = 3;
+    }
 
-    return nDimension;
+    return nCoordinateDimension;
 }
 
 /************************************************************************/
@@ -197,6 +208,8 @@ void OGRGeometryCollection::flattenTo2D()
 {
     for( int i = 0; i < nGeomCount; i++ )
         papoGeoms[i]->flattenTo2D();
+
+    nCoordinateDimension = 2;
 }
 
 /************************************************************************/
@@ -326,6 +339,9 @@ OGRErr OGRGeometryCollection::addGeometryDirectly( OGRGeometry * poNewGeom )
 
     nGeomCount++;
 
+    if( poNewGeom->getCoordinateDimension() == 3 )
+        nCoordinateDimension = 3;
+
     return OGRERR_NONE;
 }
 
@@ -379,11 +395,15 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
 /* -------------------------------------------------------------------- */
 #ifdef DEBUG
     OGRwkbGeometryType eGeometryType;
-    
+
     if( eByteOrder == wkbNDR )
+    {
         eGeometryType = (OGRwkbGeometryType) pabyData[1];
+    }
     else
+    {
         eGeometryType = (OGRwkbGeometryType) pabyData[4];
+    }
 
     CPLAssert( eGeometryType == wkbGeometryCollection
                || eGeometryType == wkbMultiPolygon 
@@ -461,22 +481,17 @@ OGRErr  OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
     pabyData[0] = (unsigned char) eByteOrder;
 
 /* -------------------------------------------------------------------- */
-/*      Set the geometry feature type.                                  */
+/*      Set the geometry feature type, ensuring that 3D flag is         */
+/*      preserved.                                                      */
 /* -------------------------------------------------------------------- */
+    GUInt32 nGType = getGeometryType();
+    
     if( eByteOrder == wkbNDR )
-    {
-        pabyData[1] = getGeometryType();
-        pabyData[2] = 0;
-        pabyData[3] = 0;
-        pabyData[4] = 0;
-    }
+        nGType = CPL_LSBWORD32( nGType );
     else
-    {
-        pabyData[1] = 0;
-        pabyData[2] = 0;
-        pabyData[3] = 0;
-        pabyData[4] = getGeometryType();
-    }
+        nGType = CPL_MSBWORD32( nGType );
+
+    memcpy( pabyData + 1, &nGType, 4 );
     
 /* -------------------------------------------------------------------- */
 /*      Copy in the raw data.                                           */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/09/11 13:47:17  warmerda
+ * preliminary set of fixes for 3D WKB enum
+ *
  * Revision 1.17  2002/05/02 19:44:53  warmerda
  * fixed 3D binary support for polygon/linearring
  *
@@ -158,7 +161,10 @@ void OGRPolygon::empty()
 OGRwkbGeometryType OGRPolygon::getGeometryType()
 
 {
-    return wkbPolygon;
+    if( getCoordinateDimension() == 3 )
+        return wkbPolygon25D;
+    else
+        return wkbPolygon;
 }
 
 /************************************************************************/
@@ -178,15 +184,13 @@ int OGRPolygon::getDimension()
 int OGRPolygon::getCoordinateDimension()
 
 {
-    int  nDimension = 2;
-
     for( int iRing = 0; iRing < nRingCount; iRing++ )
     {
         if( papoRings[iRing]->getCoordinateDimension() == 3 )
-            nDimension = 3;
+            return 3;
     }
 
-    return nDimension;
+    return 2;
 }
 
 /************************************************************************/
@@ -405,12 +409,9 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
 #endif    
 
     if( eByteOrder == wkbNDR )
-        b3D = pabyData[2];
+        b3D = pabyData[4];
     else
-        b3D = pabyData[3];
-
-    if( b3D )
-        CPLDebug( "OGRPolygon", "importFromWkb() - 3D Mode" );
+        b3D = pabyData[1];
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have some rings?                                  */
@@ -488,20 +489,14 @@ OGRErr  OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
 /*      Set the geometry feature type.                                  */
 /* -------------------------------------------------------------------- */
+    GUInt32 nGType = getGeometryType();
+    
     if( eByteOrder == wkbNDR )
-    {
-        pabyData[1] = wkbPolygon;
-        pabyData[2] = b3D ? 0x80 : 0;
-        pabyData[3] = 0;
-        pabyData[4] = 0;
-    }
+        nGType = CPL_LSBWORD32( nGType );
     else
-    {
-        pabyData[1] = 0;
-        pabyData[2] = 0;
-        pabyData[3] = b3D ? 0x80 : 0;
-        pabyData[4] = wkbPolygon;
-    }
+        nGType = CPL_MSBWORD32( nGType );
+
+    memcpy( pabyData + 1, &nGType, 4 );
     
 /* -------------------------------------------------------------------- */
 /*      Copy in the raw data.                                           */
