@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/04/27 14:30:55  warmerda
+ * Cast CPLErr properly.
+ *
  * Revision 1.13  2004/04/07 13:08:56  warmerda
  * fixed write past end of scanline offset array
  *
@@ -662,9 +665,10 @@ CPLErr GXFGetRawScanline( GXFHandle hGXF, int iScanline, double * padfLineBuf )
 /* -------------------------------------------------------------------- */
 /*      Get this scanline, and update the offset for the next line.     */
 /* -------------------------------------------------------------------- */
-    nErr = GXFReadRawScanlineFrom( psGXF, psGXF->panRawLineOffset[iScanline],
-                                   psGXF->panRawLineOffset+iScanline+1,
-                                   padfLineBuf );
+    nErr = (CPLErr)
+        GXFReadRawScanlineFrom( psGXF, psGXF->panRawLineOffset[iScanline],
+                                psGXF->panRawLineOffset+iScanline+1,
+                                padfLineBuf );
 
     return nErr;
 }
