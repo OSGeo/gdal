@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.97  2004/10/04 21:03:37  fwarmerdam
- * updated
+ * Revision 1.98  2004/11/01 17:25:28  fwarmerdam
+ * added CPL Escape functions
  *
  ************************************************************************/
 
@@ -3490,6 +3490,43 @@ static PyObject *_wrap_CPLFindFile(PyObject *self, PyObject *args) {
     if(!PyArg_ParseTuple(args,"ss:CPLFindFile",&_arg0,&_arg1)) 
         return NULL;
     _result = (char *)CPLFindFile(_arg0,_arg1);
+    _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_CPLEscapeString(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+    char * _arg0;
+    int  _arg1;
+    int  _arg2;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sii:CPLEscapeString",&_arg0,&_arg1,&_arg2)) 
+        return NULL;
+    _result = (char *)CPLEscapeString(_arg0,_arg1,_arg2);
+    _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_CPLUnescapeString(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+    char * _arg0;
+    int * _arg1;
+    int  _arg2;
+    char * _argc1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ssi:CPLUnescapeString",&_arg0,&_argc1,&_arg2)) 
+        return NULL;
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,"_int_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of CPLUnescapeString. Expected _int_p.");
+        return NULL;
+        }
+    }
+    _result = (char *)CPLUnescapeString(_arg0,_arg1,_arg2);
     _resultobj = Py_BuildValue("s", _result);
     return _resultobj;
 }
@@ -11249,6 +11286,8 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALGetDataTypeName", _wrap_GDALGetDataTypeName, 1 },
 	 { "GDALDataTypeIsComplex", _wrap_GDALDataTypeIsComplex, 1 },
 	 { "GDALGetDataTypeSize", _wrap_GDALGetDataTypeSize, 1 },
+	 { "CPLUnescapeString", _wrap_CPLUnescapeString, 1 },
+	 { "CPLEscapeString", _wrap_CPLEscapeString, 1 },
 	 { "CPLFindFile", _wrap_CPLFindFile, 1 },
 	 { "CPLFinderClean", _wrap_CPLFinderClean, 1 },
 	 { "CPLPopFinderLocation", _wrap_CPLPopFinderLocation, 1 },
