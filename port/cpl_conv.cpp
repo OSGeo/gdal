@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/08/25 20:01:58  dron
+ * Added CPLFGets() helper function.
+ *
  * Revision 1.22  2003/05/08 21:51:14  warmerda
  * added CPL{G,S}etConfigOption() usage
  *
@@ -277,6 +280,57 @@ char *CPLStrdup( const char * pszString )
 }
 
 /************************************************************************/
+/*                            CPLFGets()                                */
+/************************************************************************/
+
+/**
+ * Reads in at most one less than nBufferSize characters from the fp
+ * stream and stores them into the buffer pointed to by pszBuffer.
+ * Reading stops after an EOF or a newline. If a newline is read, it
+ * is _not_ stored into the buffer. A '\0' is stored after the last
+ * character in the buffer. All three types of newline terminators
+ * recognized by the CPLFGets(): single '\r' and '\n' and '\r\n'
+ * combination.
+ *
+ * @param pszBuffer pointer to the targeting character buffer.
+ * @param nBufferSize maximum size of the string to read (not including
+ * termonating '\0').
+ * @param fp file pointer to read from.
+ * @return pointer to the pszBuffer containing a string read
+ * from the file or NULL if the error or end of file was encountered.
+ */
+
+char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
+
+{
+    size_t nActuallyRead, i;
+
+    if ( nBufferSize == 0 || pszBuffer == NULL || fp == NULL )
+	return NULL;
+
+    nActuallyRead =
+	    VSIFRead( pszBuffer, 1, nBufferSize - 1, fp );
+    if ( nActuallyRead == 0 )
+	return NULL;
+
+    pszBuffer[nActuallyRead] = '\0';
+
+    for ( i = 0; i < nActuallyRead; i++ )
+    {
+        if ( pszBuffer[i] == 10 || pszBuffer[i] == 13 )
+	{
+	    pszBuffer[i] = '\0';
+	    if ( pszBuffer[i + 1] == 10 || pszBuffer[i + 1] == 13 )
+		i++;
+	    VSIFSeek( fp, i + 1 - nActuallyRead, SEEK_CUR );
+	    break;
+	}
+    }
+
+    return pszBuffer;
+}
+
+/************************************************************************/
 /*                            CPLReadLine()                             */
 /************************************************************************/
 
@@ -306,7 +360,7 @@ const char *CPLReadLine( FILE * fp )
 {
     static char *pszRLBuffer = NULL;
     static int  nRLBufferSize = 0;
-    int         nLength, nReadSoFar = 0, nStripped = 0, i;
+    int         nReadSoFar = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup case.                                                   */
@@ -343,7 +397,7 @@ const char *CPLReadLine( FILE * fp )
 /* -------------------------------------------------------------------- */
 /*      Do the actual read.                                             */
 /* -------------------------------------------------------------------- */
-        if( VSIFGets( pszRLBuffer+nReadSoFar, nRLBufferSize-nReadSoFar, fp )
+        if( CPLFGets( pszRLBuffer+nReadSoFar, nRLBufferSize-nReadSoFar, fp )
             == NULL )
         {
             CPLFree( pszRLBuffer );
@@ -358,42 +412,6 @@ const char *CPLReadLine( FILE * fp )
     } while( nReadSoFar == nRLBufferSize - 1
              && pszRLBuffer[nRLBufferSize-2] != 13
              && pszRLBuffer[nRLBufferSize-2] != 10 );
-
-/* -------------------------------------------------------------------- */
-/*      Clear CR and LF off the end.                                    */
-/* -------------------------------------------------------------------- */
-    nLength = strlen(pszRLBuffer);
-    if( nLength > 0
-        && (pszRLBuffer[nLength-1] == 10 || pszRLBuffer[nLength-1] == 13) )
-    {
-        pszRLBuffer[--nLength] = '\0';
-        nStripped++;
-    }
-    
-    if( nLength > 0
-        && (pszRLBuffer[nLength-1] == 10 || pszRLBuffer[nLength-1] == 13) )
-    {
-        pszRLBuffer[--nLength] = '\0';
-        nStripped++;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Check that there aren't any extra CR or LF characters           */
-/*      embedded in what is left.  I have encountered files with        */
-/*      embedded CR (13) characters that should have acted as line      */
-/*      terminators but got sucked up by VSIFGetc().                    */
-/* -------------------------------------------------------------------- */
-    for( i = 0; i < nLength; i++ )
-    {
-        if( pszRLBuffer[i] == 10 || pszRLBuffer[i] == 13 )
-        {
-            /* we need to chop off the buffer here, and seek the input back
-               to after the character that should have been the line
-               terminator. */
-            VSIFSeek( fp, (i+1) - (nLength+nStripped), SEEK_CUR );
-            pszRLBuffer[i] = '\0';
-        }
-    }
 
     return( pszRLBuffer );
 }
