@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/10/01 14:47:51  warmerda
+ * major upgrade: generic, string feature codes, etc
+ *
  * Revision 1.7  1999/09/29 16:44:18  warmerda
  * added spatial ref handling
  *
@@ -143,6 +146,26 @@ class NTFRecord
 };
 
 /************************************************************************/
+/*                           NTFGenericClass                            */
+/************************************************************************/
+
+class NTFGenericClass
+{
+public:
+    int		nFeatureCount;
+
+    int		nAttrCount;
+    char	**papszAttrNames;
+    char	**papszAttrFormats;
+    int		*panAttrMaxWidth;
+
+                NTFGenericClass();
+                ~NTFGenericClass();
+    
+    void	CheckAddAttr( const char *, const char *, int );
+};
+
+/************************************************************************/
 /*                              NTFAttDesc                              */
 /************************************************************************/
 typedef struct
@@ -176,7 +199,7 @@ class NTFFileReader
 
     // feature class list.
     int               nFCCount;
-    int              *panFCNum;
+    char            **papszFCNum;
     char            **papszFCName;
 
     // attribute definitions
@@ -215,8 +238,6 @@ class NTFFileReader
     char	     *pszPVName;
     int		      nProduct;
 
-    void	      EstablishLayer( const char *, OGRwkbGeometryType,
-                                      NTFFeatureTranslator, int, ... );
     void	      EstablishLayers();
 
     void	      ClearCGroup();
@@ -225,6 +246,9 @@ class NTFFileReader
     OGRNTFLayer       *apoTypeTranslation[100];
 
     NTFRecordGrouper  pfnRecordGrouper;
+
+    int		      anIndexSize[100];
+    NTFRecord	      **apapoRecordIndex[100];
 
   public:
                       NTFFileReader( OGRNTFDataSource * );
@@ -278,7 +302,18 @@ class NTFFileReader
     double            GetPaperToGround() { return dfPaperToGround; }
 
     int		      GetFCCount() { return nFCCount; }
-    int               GetFeatureClass( int, int *, char ** );
+    int               GetFeatureClass( int, char **, char ** );
+
+    // Generic file index
+    void	      IndexFile();
+    void	      DestroyIndex();
+    NTFRecord	     *GetIndexedRecord( int, int );
+    NTFRecord	    **GetNextIndexedRecordGroup( NTFRecord ** );
+
+    // just for use of OGRNTFDatasource
+    void	      EstablishLayer( const char *, OGRwkbGeometryType,
+                                      NTFFeatureTranslator, int,
+                                      NTFGenericClass *, ... );
 };
 
 /************************************************************************/
@@ -384,15 +419,22 @@ class OGRNTFDataSource : public OGRDataSource
     NTFFileReader	**papoNTFFileReader;
 
     int			nFCCount;
-    int                *panFCNum;
+    char              **papszFCNum;
     char              **papszFCName;
 
     OGRSpatialReference *poSpatialRef;
+
+    NTFGenericClass     aoGenericClass[100];
+
+    char		**papszOptions;
     
   public:
     			OGRNTFDataSource();
     			~OGRNTFDataSource();
 
+    void		SetOptionList( char ** );
+    const char	       *GetOption( const char * );
+    
     int                 Open( const char * pszName, int bTestOpen = FALSE,
                               char ** papszFileList = NULL );
     
@@ -415,9 +457,13 @@ class OGRNTFDataSource : public OGRDataSource
     NTFFileReader       *GetFileReader(int i) { return papoNTFFileReader[i]; }
 
     int		         GetFCCount() { return nFCCount; }
-    int                  GetFeatureClass( int, int *, char ** );
+    int                  GetFeatureClass( int, char **, char ** );
 
     OGRSpatialReference *GetSpatialRef() { return poSpatialRef; }
+
+    NTFGenericClass     *GetGClass( int i ) { return aoGenericClass + i; }
+    void		WorkupGeneric( NTFFileReader * );
+    void                EstablishGenericLayers();
 };
 
 /************************************************************************/

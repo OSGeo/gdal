@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/10/01 14:47:51  warmerda
+ * major upgrade: generic, string feature codes, etc
+ *
  * Revision 1.4  1999/09/29 16:43:43  warmerda
  * added spatial ref, improved test open for non-os files
  *
@@ -64,10 +67,12 @@ OGRNTFDataSource::OGRNTFDataSource()
     iCurrentFC = 0;
 
     nFCCount = 0;
-    panFCNum = NULL;
+    papszFCNum = NULL;
     papszFCName = NULL;
 
     poFCLayer = NULL;
+
+    papszOptions = NULL;
 
     poSpatialRef = new OGRSpatialReference( "PROJCS[\"OSGB 1936 / British National Grid\",GEOGCS[\"OSGB 1936\",DATUM[\"OSGB_1936\",SPHEROID[\"Airy 1830\",6377563.396,299.3249646]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",49],PARAMETER[\"central_meridian\",-2],PARAMETER[\"scale_factor\",0.999601272],PARAMETER[\"false_easting\",400000],PARAMETER[\"false_northing\",-100000],UNIT[\"metre\",1]]" );
 }
@@ -95,6 +100,8 @@ OGRNTFDataSource::~OGRNTFDataSource()
     CPLFree( papoLayers );
 
     CPLFree( pszName );
+
+    CSLDestroy( papszOptions );
 
     delete poSpatialRef;
 }
@@ -307,6 +314,11 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
         return FALSE;
 
 /* -------------------------------------------------------------------- */
+/*      Establish generic layers.					*/
+/* -------------------------------------------------------------------- */
+    EstablishGenericLayers();
+    
+/* -------------------------------------------------------------------- */
 /*      Loop over all the files, collecting a unique feature class      */
 /*      listing.                                                        */
 /* -------------------------------------------------------------------- */
@@ -316,25 +328,22 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
         
         for( int iSrcFC = 0; iSrcFC < poSrcReader->GetFCCount(); iSrcFC++ )
         {
-            int		nSrcFCNum, iDstFC;
-            char       *pszSrcFCName;
+            int	        iDstFC;
+            char       *pszSrcFCName, *pszSrcFCNum;
 
-            poSrcReader->GetFeatureClass( iSrcFC, &nSrcFCNum, &pszSrcFCName );
+            poSrcReader->GetFeatureClass( iSrcFC, &pszSrcFCNum, &pszSrcFCName);
             
             for( iDstFC = 0; iDstFC < nFCCount; iDstFC++ )
             {
-                if( nSrcFCNum == panFCNum[iDstFC] )
+                if( EQUAL(pszSrcFCNum,papszFCNum[iDstFC]) )
                     break;
             }
 
             if( iDstFC >= nFCCount )
             {
                 nFCCount++;
-                panFCNum = (int *) CPLRealloc(panFCNum, sizeof(int)*nFCCount);
-                papszFCName = (char **) CPLRealloc(papszFCName,
-                                                   sizeof(char *) * nFCCount);
-                panFCNum[nFCCount-1] = nSrcFCNum;
-                papszFCName[nFCCount-1] = CPLStrdup( pszSrcFCName );
+                papszFCNum = CSLAddString(papszFCNum,pszSrcFCNum);
+                papszFCName = CSLAddString(papszFCName,pszSrcFCName);
             }
         }
     }
@@ -384,7 +393,7 @@ OGRFeature *OGRNTFDataSource::GetNextFeature()
     if( iCurrentReader == nNTFFileCount )
     {
         if( iCurrentFC < nFCCount )
-            return poFCLayer->GetFeature( panFCNum[iCurrentFC++] );
+            return poFCLayer->GetFeature( iCurrentFC++ );
         else
             return NULL;
     }
@@ -439,20 +448,42 @@ OGRFeature *OGRNTFDataSource::GetNextFeature()
 /*                          GetFeatureClass()                           */
 /************************************************************************/
 
-int OGRNTFDataSource::GetFeatureClass( int iFCIndex, int *pnFCId,
+int OGRNTFDataSource::GetFeatureClass( int iFCIndex,
+                                       char ** ppszFCId,
                                        char ** ppszFCName )
 
 {
     if( iFCIndex < 0 || iFCIndex >= nFCCount )
     {
-        *pnFCId = -1;
+        *ppszFCId = NULL;
         *ppszFCName = NULL;
         return FALSE;
     }
     else
     {
-        *pnFCId = panFCNum[iFCIndex];
+        *ppszFCId = papszFCNum[iFCIndex];
         *ppszFCName = papszFCName[iFCIndex];
         return TRUE;
     }
+}
+
+/************************************************************************/
+/*                             SetOptions()                             */
+/************************************************************************/
+
+void OGRNTFDataSource::SetOptionList( char ** papszNewOptions )
+
+{
+    CSLDestroy( papszOptions );
+    papszOptions = CSLDuplicate( papszNewOptions );
+}
+
+/************************************************************************/
+/*                             GetOption()                              */
+/************************************************************************/
+
+const char *OGRNTFDataSource::GetOption( const char * pszOption )
+
+{
+    return CSLFetchNameValue( papszOptions, pszOption );
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/10/01 14:47:51  warmerda
+ * major upgrade: generic, string feature codes, etc
+ *
  * Revision 1.1  1999/08/30 16:50:11  warmerda
  * New
  *
@@ -58,7 +61,7 @@ OGRNTFFeatureClassLayer::OGRNTFFeatureClassLayer( OGRNTFDataSource *poDSIn )
     poFeatureDefn = new OGRFeatureDefn( "FEATURE_CLASSES" );
     poFeatureDefn->SetGeomType( wkbNone );
 
-    OGRFieldDefn      oFCNum( "FEAT_CODE", OFTInteger );
+    OGRFieldDefn      oFCNum( "FEAT_CODE", OFTString );
 
     oFCNum.SetWidth( 4 );
     poFeatureDefn->AddFieldDefn( &oFCNum );
@@ -116,15 +119,10 @@ void OGRNTFFeatureClassLayer::ResetReading()
 OGRFeature *OGRNTFFeatureClassLayer::GetNextFeature()
 
 {
-    int		nFCId;
-    char        *pszFCName;
-    
     if( iCurrentFC >= GetFeatureCount() )
         return NULL;
 
-    poDS->GetFeatureClass( iCurrentFC++, &nFCId, &pszFCName );
-    
-    return GetFeature( (long) nFCId );
+    return GetFeature( (long) iCurrentFC++ );
 }
 
 /************************************************************************/
@@ -134,31 +132,21 @@ OGRFeature *OGRNTFFeatureClassLayer::GetNextFeature()
 OGRFeature *OGRNTFFeatureClassLayer::GetFeature( long nFeatureId )
 
 {
-    int		nFCId, nFCIndex;
-    char        *pszFCName;
-    
-/* -------------------------------------------------------------------- */
-/*      Try to find the feature class with the passed feature id        */
-/*      (feature class number).                                         */
-/* -------------------------------------------------------------------- */
-    for( nFCIndex = 0; nFCIndex < poDS->GetFCCount(); nFCIndex++ )
-    {
-        poDS->GetFeatureClass( nFCIndex, &nFCId, &pszFCName );
-        if( nFCId == nFeatureId )
-            break;
-    }
+    char        *pszFCName, *pszFCId;
 
-    if( nFCIndex >= poDS->GetFCCount() )
+    if( nFeatureId < 0 || nFeatureId >= poDS->GetFCCount() )
         return NULL;
-
+    
+    poDS->GetFeatureClass( nFeatureId, &pszFCId, &pszFCName );
+    
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding feature.                                 */
 /* -------------------------------------------------------------------- */
     OGRFeature	*poFeature = new OGRFeature( poFeatureDefn );
 
-    poFeature->SetField( 0, nFCId );
+    poFeature->SetField( 0, pszFCId );
     poFeature->SetField( 1, pszFCName );
-    poFeature->SetFID( nFCId );
+    poFeature->SetFID( nFeatureId );
     
     return poFeature;
 }

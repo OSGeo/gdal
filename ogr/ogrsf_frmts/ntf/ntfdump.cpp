@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/10/01 14:47:51  warmerda
+ * major upgrade: generic, string feature codes, etc
+ *
  * Revision 1.2  1999/08/30 16:48:40  warmerda
  * cleanup features
  *
@@ -38,8 +41,9 @@
 
 #include "ntf.h"
 #include "cpl_vsi.h"
+#include "cpl_string.h"
 
-static void NTFDump( const char * pszFile );
+static void NTFDump( const char * pszFile, char **papszOptions );
 static void NTFCount( const char * pszFile );
 
 /************************************************************************/
@@ -50,16 +54,20 @@ int main( int argc, char ** argv )
 
 {
     const char	*pszMode = "-d";
-
+    char	**papszOptions = NULL;
+    
     if( argc == 1 )
-        printf( "Usage: ntfdump [-d] [-c] files\n" );
+        printf( "Usage: ntfdump [-g] [-d] [-c] files\n" );
     
     for( int i = 1; i < argc; i++ )
     {
-        if( argv[i][0] == '-' )
+        if( EQUAL(argv[i],"-g") )
+            papszOptions = CSLSetNameValue( papszOptions,
+                                            "FORCE_GENERIC", "ON" );
+        else if( argv[i][0] == '-' )
             pszMode = argv[i];
         else if( EQUAL(pszMode,"-d") )
-            NTFDump( argv[i] );
+            NTFDump( argv[i], papszOptions );
         else if( EQUAL(pszMode,"-c") )
             NTFCount( argv[i] );
     }
@@ -108,12 +116,14 @@ static void NTFCount( const char * pszFile )
 /*                              NTFDump()                               */
 /************************************************************************/
 
-static void NTFDump( const char * pszFile )
+static void NTFDump( const char * pszFile, char **papszOptions )
 
 {
     OGRFeature	       *poFeature;
     OGRNTFDataSource   oDS;
 
+    oDS.SetOptionList( papszOptions );
+    
     if( !oDS.Open( pszFile ) )
         return;
 
