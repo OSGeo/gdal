@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.14  2002/11/12 09:16:52  dron
+ * Added rank choosing in Create() method.
+ *
  * Revision 1.13  2002/11/11 16:43:50  dron
  * Create() method now really works.
  *
@@ -199,23 +202,24 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	case HDF4_SDS:
         /* HDF rank:
         A rank 2 dataset is an image read in scan-line order (2D). 
-        A rank 3 dataset is a series of images which are read in an image at a time
-        to form a volume.
+        A rank 3 dataset is a series of images which are read in an image
+	at a time to form a volume.
         A rank 4 dataset may be thought of as a series of volumes.
 
-        The "iStart" array specifies the multi-dimensional index of the starting
-        corner of the hyperslab to read. The values are zero based.
+        The "iStart" array specifies the multi-dimensional index of the
+	starting corner of the hyperslab to read. The values are zero based.
 
         The "edge" array specifies the number of values to read along each
         dimension of the hyperslab.
 
         The "iStride" array allows for sub-sampling along each dimension. If a
         iStride value is specified for a dimension, that many values will be
-        skipped over when reading along that dimension. Specifying iStride = NULL
-        in the C interface or iStride = 1 in either interface specifies contiguous
-        reading of data. If the iStride values are set to 0, SDreaddata returns
-        FAIL (or -1). No matter what iStride value is provided, data is always
-        placed contiguously in buffer.
+        skipped over when reading along that dimension. Specifying
+	iStride = NULL in the C interface or iStride = 1 in either
+	interface specifies contiguous reading of data. If the iStride
+	values are set to 0, SDreaddata returns FAIL (or -1). No matter
+	what iStride value is provided, data is always placed contiguously
+	in buffer.
      
         See also:
         http://www.dur.ac.uk/~dcs0elb/au-case-study/code/hdf-browse.c.html
@@ -365,21 +369,26 @@ CPLErr HDF4ImageRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     
 	iStart[poGDS->iXDim] = nBlockXOff;
 	iEdges[poGDS->iXDim] = nBlockXSize;
+	if ( (SDwritedata( poGDS->iSDS, iStart, NULL,
+			   iEdges, (VOIDP)pImage )) < 0 )
+	    eErr = CE_Failure;
 	break;
 	case 2:
+	poGDS->iSDS = SDselect( poGDS->hSD, nBand - 1 );
 	iStart[poGDS->iYDim] = nBlockYOff;
 	iEdges[poGDS->iYDim] = nBlockYSize;
     
 	iStart[poGDS->iXDim] = nBlockXOff;
 	iEdges[poGDS->iXDim] = nBlockXSize;
+	if ( (SDwritedata( poGDS->iSDS, iStart, NULL,
+			   iEdges, (VOIDP)pImage )) < 0 )
+	    eErr = CE_Failure;
+	SDendaccess( poGDS->iSDS );
 	break;
 	default:
 	eErr = CE_Failure;
 	break;
     }
-    
-    if ( (SDwritedata( poGDS->iSDS, iStart, NULL, iEdges, (VOIDP)pImage )) < 0 )
-	eErr = CE_Failure;
 
     return eErr;
 }
@@ -460,9 +469,9 @@ HDF4ImageDataset::~HDF4ImageDataset()
 {
     FlushCache();
     
-    if ( iSDS )
+    if ( iSDS > 0 )
 	SDendaccess( iSDS );
-    if ( iGR )
+    if ( iGR > 0 )
 	GRendaccess( iGR );
     if ( papszSubdatasetName )
 	CSLDestroy( papszSubdatasetName );
@@ -724,7 +733,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
         for ( iAttribute = 0; iAttribute < poDS->nAttrs; iAttribute++ )
         {
-            SDattrinfo( poDS->iSDS, iAttribute, szAttrName, &iAttrNumType, &nValues );
+            SDattrinfo( poDS->iSDS, iAttribute, szAttrName,
+			&iAttrNumType, &nValues );
             poDS->papszLocalMetadata =
 		poDS->TranslateHDF4Attributes( poDS->iSDS, iAttribute,
 		    szAttrName, iAttrNumType, nValues, poDS->papszLocalMetadata );
@@ -765,13 +775,16 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
            return NULL;
         
 	poDS->iGR = GRselect( poDS->hGR, iDataset );
-       	if ( GRgetiminfo( poDS->iGR, poDS->szName, &poDS->iRank, &poDS->iNumType,
-			  &poDS->iInterlaceMode, poDS->aiDimSizes, &poDS->nAttrs ) != 0 )
+       	if ( GRgetiminfo( poDS->iGR, poDS->szName,
+			  &poDS->iRank, &poDS->iNumType,
+			  &poDS->iInterlaceMode, poDS->aiDimSizes,
+			  &poDS->nAttrs ) != 0 )
 	    return NULL;
 
         for ( iAttribute = 0; iAttribute < poDS->nAttrs; iAttribute++ )
         {
-            GRattrinfo( poDS->iGR, iAttribute, szAttrName, &iAttrNumType, &nValues );
+            GRattrinfo( poDS->iGR, iAttribute, szAttrName,
+			&iAttrNumType, &nValues );
             poDS->papszLocalMetadata = 
 		poDS->TranslateHDF4Attributes( poDS->iGR, iAttribute,
 		    szAttrName, iAttrNumType, nValues, poDS->papszLocalMetadata );
@@ -963,8 +976,9 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
     HDF4ImageDataset	*poDS;
-    const char	    *pszSDSName;
-    int32	    aiDimSizes[MAX_VAR_DIMS];
+    const char		*pszSDSName;
+    int			iBand;
+    int32		aiDimSizes[MAX_VAR_DIMS];
 
     poDS = new HDF4ImageDataset();
 
@@ -975,8 +989,7 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     poDS->iRank = 3;
     if ( CSLFetchNameValue( papszOptions, "RANK" ) != NULL &&
 	 EQUAL( CSLFetchNameValue( papszOptions, "RANK" ), "2" ) )
-	CPLDebug("HDF4Image", "Can't create 2D SDS dynamically. "
-			 "Single 3D SDS will be created");
+	poDS->iRank = 2;
     
     poDS->hSD = SDstart( pszFilename, DFACC_CREATE );
     poDS->iXDim = 1;
@@ -986,7 +999,47 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     aiDimSizes[poDS->iYDim] = nYSize;
     aiDimSizes[poDS->iBandDim] = nBands;
 
-    if ( poDS->iRank == 3 )
+    if ( poDS->iRank == 2 )
+    {
+	for ( iBand = 0; iBand < nBands; iBand++ )
+	{
+	    pszSDSName = CPLSPrintf( "Band%d", iBand );
+	    switch ( eType )
+	    {
+		case GDT_Float64:
+		poDS->iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_FLOAT64,
+				       poDS->iRank, aiDimSizes );
+		break;
+		case GDT_Float32:
+		poDS->iSDS = SDcreate(poDS-> hSD, pszSDSName, DFNT_FLOAT32,
+				      poDS->iRank, aiDimSizes );
+		break;
+		case GDT_UInt32:
+		poDS->iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_UINT32,
+				       poDS->iRank, aiDimSizes );
+		break;
+		case GDT_UInt16:
+		poDS->iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_UINT16,
+				       poDS->iRank, aiDimSizes );
+		break;
+		case GDT_Int32:
+		poDS->iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_INT32,
+				       poDS->iRank, aiDimSizes );
+		break;
+		case GDT_Int16:
+		poDS->iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_INT16,
+				       poDS->iRank, aiDimSizes );
+		break;
+		case GDT_Byte:
+		default:
+		poDS->iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_UCHAR8,
+				       poDS->iRank, aiDimSizes );
+		break;
+	    }
+	    SDendaccess( poDS->iSDS );
+	}
+    }
+    else if ( poDS->iRank == 3 )
     {
 	pszSDSName = "3-dimensional Scientific Dataset";
 	switch ( eType )
@@ -1043,8 +1096,6 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    int		iBand;
-
     for( iBand = 1; iBand <= nBands; iBand++ )
         poDS->SetBand( iBand, new HDF4ImageRasterBand( poDS, iBand, eType ) );
 
@@ -1382,7 +1433,7 @@ void GDALRegister_HDF4Image()
 
         poDriver->pfnOpen = HDF4ImageDataset::Open;
         poDriver->pfnCreate = HDF4ImageDataset::Create;
-//        poDriver->pfnCreateCopy = HDF4ImageCreateCopy;
+        poDriver->pfnCreateCopy = HDF4ImageCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
