@@ -12,7 +12,7 @@ LIBTOOL_INSTALL	=	$(LIBTOOL) --mode=install
 LIBTOOL_FINISH	=	$(LIBTOOL) --mode=finish --silent
 LIBTOOL_CLEAN	=	$(LIBTOOL) --mode=clean
 else
-LIBTOOL_FINISH	=	/bin/true
+LIBTOOL_FINISH	=	@BINTRUE@
 endif
 
 CC	=	$(LIBTOOL_COMPILE) @CC@
