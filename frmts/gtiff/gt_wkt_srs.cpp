@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/12/07 17:50:17  warmerda
+ * Fixed bug in datum handling.
+ *
  * Revision 1.6  1999/10/29 17:28:43  warmerda
  * OGC to GeoTIFF conversion
  *
@@ -405,7 +408,7 @@ static int OGCDatumName2EPSGDatumCode( const char * pszOGCName )
         WKTMassageDatum( papszTokens + 1 );
 
         if( EQUAL(papszTokens[1], pszOGCName) )
-            nReturn = atoi(papszTokens[9]);
+            nReturn = atoi(papszTokens[0]);
 
         CSLDestroy( papszTokens );
     }
