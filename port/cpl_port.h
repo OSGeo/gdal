@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.5  1999/01/28 05:26:12  danmo
+ * Added byte swapping macros.
+ *
  * Revision 1.4  1998/12/15 19:05:30  warmerda
  * added errno.h
  *
@@ -56,20 +59,6 @@
 #define CPL_BASE_H_INCLUDED
 
 /* ==================================================================== */
-/*      Base portability stuff ... this stuff may need to be            */
-/*      modified for new platforms.                                     */
-/* ==================================================================== */
-
-#define CPL_LSB
-
-typedef int		GInt32;
-typedef unsigned int 	GUInt32;
-typedef short		GInt16;
-typedef unsigned short	GUInt16;
-typedef unsigned char	GByte;
-typedef int		GBool;
-
-/* ==================================================================== */
 /*	Standard include files.						*/
 /* ==================================================================== */
 
@@ -83,6 +72,28 @@ typedef int		GBool;
 #ifdef DBMALLOC
 #include <dbmalloc.h>
 #endif
+
+/* ==================================================================== */
+/*      Base portability stuff ... this stuff may need to be            */
+/*      modified for new platforms.                                     */
+/* ==================================================================== */
+
+/*---------------------------------------------------------------------
+ *        types for 16 and 32 bits integers, etc...
+ *--------------------------------------------------------------------*/
+#if UINT_MAX == 65535
+typedef long            GInt32;
+typedef unsigned long   GUInt32;
+#else
+typedef int             GInt32;
+typedef unsigned int    GUInt32;
+#endif
+
+typedef short           GInt16;
+typedef unsigned short  GUInt16;
+typedef unsigned char   GByte;
+typedef int             GBool;
+
 
 /* ==================================================================== */
 /*      Other standard services.                                        */
@@ -129,5 +140,61 @@ typedef int		GBool;
 #  define EQUAL(a,b)              (strcasecmp(a,b)==0)
 #endif
 #endif
+
+/*---------------------------------------------------------------------
+ *                         CPL_LSB and CPL_MSB
+ * Only one of these 2 macros should be defined and specifies the byte 
+ * ordering for the current platform.  
+ * This should be defined in the Makefile, but if it is not then
+ * the default is CPL_LSB (Intel ordering, LSB first).
+ *--------------------------------------------------------------------*/
+#if ! ( defined(CPL_LSB) || defined(CPL_MSB) )
+#define CPL_LSB
+#endif
+
+/*---------------------------------------------------------------------
+ *        Little endian <==> big endian byte swap macros.
+ *--------------------------------------------------------------------*/
+
+#define CPL_SWAP16(x) \
+        ((GUInt16)( \
+            (((GUInt16)(x) & 0x00ffU) << 8) | \
+            (((GUInt16)(x) & 0xff00U) >> 8) ))
+
+#define CPL_SWAP32(x) \
+        ((GUInt32)( \
+            (((GUInt32)(x) & (GUInt32)0x000000ffUL) << 24) | \
+            (((GUInt32)(x) & (GUInt32)0x0000ff00UL) <<  8) | \
+            (((GUInt32)(x) & (GUInt32)0x00ff0000UL) >>  8) | \
+            (((GUInt32)(x) & (GUInt32)0xff000000UL) >> 24) ))
+
+/* Until we have a safe 64 bits integer data type defined, we'll replace
+ * this version of the CPL_SWAP64() macro with a less efficient one.
+ */
+/*
+#define CPL_SWAP64(x) \
+        ((uint64)( \
+            (uint64)(((uint64)(x) & (uint64)0x00000000000000ffULL) << 56) | \
+            (uint64)(((uint64)(x) & (uint64)0x000000000000ff00ULL) << 40) | \
+            (uint64)(((uint64)(x) & (uint64)0x0000000000ff0000ULL) << 24) | \
+            (uint64)(((uint64)(x) & (uint64)0x00000000ff000000ULL) << 8) | \
+            (uint64)(((uint64)(x) & (uint64)0x000000ff00000000ULL) >> 8) | \
+            (uint64)(((uint64)(x) & (uint64)0x0000ff0000000000ULL) >> 24) | \
+            (uint64)(((uint64)(x) & (uint64)0x00ff000000000000ULL) >> 40) | \
+            (uint64)(((uint64)(x) & (uint64)0xff00000000000000ULL) >> 56) ))
+*/
+
+#define	CPL_SWAPDOUBLE(p) {                             \
+        double _tmp = *(double *)(p);                     \
+	((GByte *)(p))[0] = ((GByte *)&_tmp)[7];          \
+	((GByte *)(p))[1] = ((GByte *)&_tmp)[6];          \
+	((GByte *)(p))[2] = ((GByte *)&_tmp)[5];          \
+	((GByte *)(p))[3] = ((GByte *)&_tmp)[4];          \
+	((GByte *)(p))[4] = ((GByte *)&_tmp)[3];          \
+	((GByte *)(p))[5] = ((GByte *)&_tmp)[2];          \
+	((GByte *)(p))[6] = ((GByte *)&_tmp)[1];          \
+	((GByte *)(p))[7] = ((GByte *)&_tmp)[0];          \
+}
+
 
 #endif /* ndef CPL_BASE_H_INCLUDED */
