@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.20  2005/02/21 19:03:17  kruland
+ * Use Py_XDECREF() in the argout buffer typemap.
+ * Added a convienence fragment for constructing python sequences from integer
+ * arrays.
+ *
  * Revision 1.19  2005/02/20 19:43:33  kruland
  * Implement another argout typemap for fixed length double arrays.
  *
@@ -328,6 +333,18 @@ ARRAY_TYPEMAP(3);
     free((void*) $2);
   }
 }
+%fragment("CreateTupleFromIntegerArray","header") %{
+static PyObject *
+CreateTupleFromDoubleArray( int *first, unsigned int size ) {
+  PyObject *out = PyTuple_New( size );
+  for( unsigned int i=0; i<size; i++ ) {
+    PyObject *val = PyInt_FromInt( *first );
+    ++first;
+    PyTuple_SetItem( out, i, val );
+  }
+  return out;
+}
+%}
 
 /*
  * Typemap for buffers with length <-> PyStrings
@@ -345,7 +362,7 @@ ARRAY_TYPEMAP(3);
 %typemap(python,argout) (int *nLen, char **pBuf )
 {
   /* %typemap(argout) (int *nLen, char **pBuf ) */
-  Py_DECREF($result);
+  Py_XDECREF($result);
   $result = PyString_FromStringAndSize( *$2, *$1 );
 }
 %typemap(python,freearg) (int *nLen, char **pBuf )
