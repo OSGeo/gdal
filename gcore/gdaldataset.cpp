@@ -25,6 +25,9 @@
  * The GDALDataset class.
  * 
  * $Log$
+ * Revision 1.10  2000/02/28 16:34:49  warmerda
+ * set the nRasterX/YSize in bands
+ *
  * Revision 1.9  1999/11/11 21:59:07  warmerda
  * added GetDriver() for datasets
  *
@@ -154,11 +157,16 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
 /* -------------------------------------------------------------------- */
 /*      Do we need to grow the bands list?                              */
 /* -------------------------------------------------------------------- */
-    if( nBands < nNewBand ) {
+    if( nBands < nNewBand || papoBands == NULL ) {
         int		i;
-        
-        papoBands = (GDALRasterBand **)
-            VSIRealloc(papoBands, sizeof(GDALRasterBand*) * nNewBand);
+
+        if( papoBands == NULL )
+            papoBands = (GDALRasterBand **)
+                VSICalloc(sizeof(GDALRasterBand*), MAX(nNewBand,nBands));
+        else
+            papoBands = (GDALRasterBand **)
+                VSIRealloc(papoBands, sizeof(GDALRasterBand*) *
+                           MAX(nNewBand,nBands));
 
         for( i = nBands; i < nNewBand; i++ )
             papoBands[i] = NULL;
@@ -178,6 +186,8 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
 /* -------------------------------------------------------------------- */
     poBand->nBand = nNewBand;
     poBand->poDS = this;
+    poBand->nRasterXSize = nRasterXSize;
+    poBand->nRasterYSize = nRasterYSize;
 }
 
 /************************************************************************/
