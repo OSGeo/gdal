@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2003/02/09 21:31:40  warmerda
+ * Added support for debug fileio.  Fixed setting of ORGgen_plt.
+ *
  * Revision 1.2  2003/01/31 20:32:42  warmerda
  * added fixes for computing target layer_bytes[] for large input images
  *
@@ -73,6 +76,10 @@
 #include "kdu_params.h"
 #include "kdu_compressed.h"
 #include "kdu_sample_processing.h"
+
+#ifdef FILEIO_DEBUG
+#include "dbg_file_source.h"
+#endif
 
 // Application level includes
 #include "kdu_file_io.h"
@@ -690,7 +697,11 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             poInput = jp2_src;
         }
         else
+#ifndef FILEIO_DEBUG
             poInput = new kdu_simple_file_source( poOpenInfo->pszFilename );
+#else
+            poInput = new dbg_simple_file_source( poOpenInfo->pszFilename );
+#endif
     }
     catch( ... )
     {
@@ -1174,7 +1185,7 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
         else
         {
             jpc_out.open( pszFilename );
-            poOutputFile = &jp2_out;
+            poOutputFile = &jpc_out;
         }
 
         oCodeStream.create(&oSizeParams, poOutputFile );
@@ -1198,7 +1209,7 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
     else
         oCodeStream.access_siz()->parse_string("Creversible=no");
 
-    oCodeStream.access_siz()->parse_string("ORGgen-plt=yes");
+    oCodeStream.access_siz()->parse_string("ORGgen_plt=yes");
     oCodeStream.access_siz()->parse_string("Corder=PCRL");
     oCodeStream.access_siz()->parse_string("Cprecincts={512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}");
 
