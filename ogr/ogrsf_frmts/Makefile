@@ -32,7 +32,10 @@ PG_OBJ = pg\*.obj
 !ENDIF
 
 default:
-	for %d in ( $(DIRLIST) ) do call ..\..\submake.bat %d
+	for %d in ( $(DIRLIST) ) do \
+		cd %d \
+		&& nmake /NOLOGO /f makefile.vc \
+		&& cd ..
 
 	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj \
 				 sdts\*.obj s57\*.obj tiger\*.obj gml\*.obj \
@@ -57,4 +60,7 @@ default:
 clean:
 	-del ogrsf_frmts.lib
 	-del ogrsf_frmts_sup.lib
-	for %d in ( $(DIRLIST) ) do call ..\..\submake.bat %d clean
+	for %d in ( $(DIRLIST) ) do \
+		cd %d \
+		&& nmake /NOLOGO /f makefile.vc clean \
+		&& cd ..
