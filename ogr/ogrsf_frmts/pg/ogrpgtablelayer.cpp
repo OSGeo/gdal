@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/09/11 20:03:36  warmerda
+ * avoid warning
+ *
  * Revision 1.13  2003/05/21 03:59:42  warmerda
  * expand tabs
  *
@@ -748,7 +751,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 
         for( i = 0; pszSafeName[i] != '\0'; i++ )
         {
-            pszSafeName[i] = tolower( pszSafeName[i] );
+            pszSafeName[i] = (char) tolower( pszSafeName[i] );
             if( pszSafeName[i] == '-' || pszSafeName[i] == '#' )
                 pszSafeName[i] = '_';
         }
