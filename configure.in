@@ -609,7 +609,7 @@ AC_SUBST(X_FME_HOME,$X_FME_HOME)
 dnl ---------------------------------------------------------------------------
 dnl Select an HDF4 Library to use, or disable driver.
 dnl
-dnl We assume the use will have libjpeg and libz from other sources when
+dnl We assume the user will have libjpeg and libz from other sources when
 dnl linking against static HDF4 libraries. 
 dnl ---------------------------------------------------------------------------
 
@@ -632,7 +632,7 @@ elif test "$with_hdf4" = "yes" -o "$with_hdf4" = "" ; then
     LIBS="-lmfhdf -ldf $LIBS"
   fi
 
-  # Some Linux distros install hdf include files here. 
+dnl Some Linux distros install hdf include files here. 
   if test "$HAVE_HDF4" = "yes" -a -r /usr/include/hdf/hdf.h ; then
     HDF4_INCLUDE="-I/usr/include/hdf"
   fi
@@ -653,13 +653,13 @@ else
     AC_CHECK_LIB(hdf4,SDreaddata,HDF_LIB_NAME=-lhdf4,HDF_LIB_NAME=missing,)
   fi
 
-  # Check again, with -ldf, -ljpeg and -lz this time.
+dnl Check again, with -ldf, -ljpeg and -lz this time.
   if test "$HDF_LIB_NAME" = "missing" ; then
     unset ac_cv_lib_mfhdf_SDreaddata
     AC_CHECK_LIB(mfhdf,SDreaddata,HDF_LIB_NAME="-lmfhdf -ldf",HDF_LIB_NAME=missing,-ldf -ljpeg -lz)
   fi
 
-  # Not found... again, with -lsz.
+dnl Not found... again, with -lsz.
   if test "$HDF_LIB_NAME" = "missing" ; then
     unset ac_cv_lib_mfhdf_SDreaddata
     AC_CHECK_LIB(mfhdf,SDreaddata,HDF_LIB_NAME="-lmfhdf -ldf -lsz",HDF_LIB_NAME=missing,-ldf -lsz -ljpeg -lz)
@@ -704,7 +704,7 @@ if test "$with_jasper" = "no" ; then
 
   HAVE_JASPER=no
 
-  echo "jpeg2000 support disabled."
+  AC_MSG_NOTICE([JasPer (JPEG2000) support disabled.])
 
 elif test "$with_jasper" = "yes" -o "$with_jasper" = "" ; then
 
@@ -721,10 +721,8 @@ else
   LIBS="-L$with_jasper -L$with_jasper/lib -ljasper $LIBS"
   EXTRA_INCLUDES="-I$with_jasper -I$with_jasper/include $EXTRA_INCLUDES"
 
-  echo "using JasPer library from $with_jasper."
+  AC_MSG_NOTICE([using JasPer library from $with_jasper.])
 fi
-
-AC_SUBST(HAVE_JASPER,$HAVE_JASPER)
 
 if test "$HAVE_JASPER" != "no" ; then
   OPT_GDAL_FORMATS="jpeg2000 $OPT_GDAL_FORMATS"
@@ -734,13 +732,15 @@ if test "$HAVE_JASPER" != "no" ; then
   AC_CHECK_LIB(jasper,jp2_encode_uuid,HAVE_JASPER_UUID=yes,HAVE_JASPER_UUID=no,)
 
   if test "$HAVE_JASPER_UUID" = "yes" ; then
-    echo "hacked JasPer version found (JasPer UUID), GeoJP2 enabled."
-    CFLAGS="$CFLAGS -DHAVE_JASPER_UUID"
-    CPPFLAGS="$CPPFLAGS -DHAVE_JASPER_UUID"
+    AC_MSG_NOTICE([hacked JasPer version found (JasPer UUID), GeoJP2 enabled.])
+    JASPER_FLAGS=-DHAVE_JASPER_UUID
   else
-    echo "hacked JasPer version not found, GeoJP2 disabled."
+    AC_MSG_NOTICE([hacked JasPer version not found, GeoJP2 disabled.])
   fi
 fi
+
+AC_SUBST(HAVE_JASPER,$HAVE_JASPER)
+AC_SUBST(JASPER_FLAGS,$JASPER_FLAGS)
 
 dnl ---------------------------------------------------------------------------
 dnl Select a ECW Library to use, or disable driver.
@@ -825,7 +825,7 @@ if test "x$with_mrsid" = "xno"  -o "x$with_mrsid" = "x" ; then
 
   HAVE_MRSID=no
 
-  AC_MSG_RESULT([MrSID support disabled.])
+  AC_MSG_NOTICE([MrSID support disabled.])
 
 else
 
@@ -1208,7 +1208,11 @@ LOC_MSG([  LIBJPEG support:           ${JPEG_SETTING}])
 LOC_MSG([  LIBGIF support:            ${GIF_SETTING}])
 LOC_MSG([  OGDI support:              ${HAVE_OGDI}])
 LOC_MSG([  HDF4 support:              ${HAVE_HDF4}])
-LOC_MSG([  JASPER support:            ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})])
+if test "x$HAVE_JASPER_UUID" != "x" ; then
+  LOC_MSG([  JASPER support:            ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})])
+else
+  LOC_MSG([  JASPER support:            ${HAVE_JASPER}])
+fi
 LOC_MSG([  ECW support:               ${ECW_SETTING}])
 LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
 LOC_MSG([  POSTGRESQL support:        ${HAVE_PG}])
