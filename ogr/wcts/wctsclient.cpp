@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/03/27 21:40:20  warmerda
+ * added post support, and GMLDATA support
+ *
  * Revision 1.2  2003/03/27 18:42:55  warmerda
  * support GMLURL (FileURL) request
  *
@@ -192,11 +195,59 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Parse the query string.                                         */
 /* -------------------------------------------------------------------- */
-    if( getenv("QUERY_STRING") == NULL )
-        WCTSClientEmitServiceException( "QUERY_STRING not set." );
+    if( getenv("REQUEST_METHOD") == NULL
+        || !EQUAL(getenv("REQUEST_METHOD"),"POST") )
+    {
+        if( getenv("QUERY_STRING") == NULL )
+            WCTSClientEmitServiceException( "QUERY_STRING not set." );
+        
+        papszParmList = CSLTokenizeString2( getenv("QUERY_STRING"), "&",
+                                            CSLT_PRESERVEESCAPES );
+    }
 
-    papszParmList = CSLTokenizeString2( getenv("QUERY_STRING"), "&",
-                                        CSLT_PRESERVEESCAPES );
+/* -------------------------------------------------------------------- */
+/*      Or parse the urlencoded text in the POST body (stdin)           */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        int nContentLength = 0;
+        char *pszBody = NULL;
+        
+        if( getenv("CONTENT_LENGTH") != NULL )
+        {
+            nContentLength = atoi(getenv("CONTENT_LENGTH"));
+            
+            pszBody = (char *) CPLMalloc(nContentLength+1);
+            
+            if( (int) fread(pszBody, 1, nContentLength, stdin) < nContentLength )
+                WCTSClientEmitServiceException( "POST body is short." );
+            
+            pszBody[nContentLength] = '\0';
+        }
+        
+        else
+        {
+            int nBodyMax, nBodyLen=0;
+            
+            nBodyMax = 100;
+            pszBody = (char *) CPLMalloc(nBodyMax);
+            
+            while( !feof(stdin) )
+            {
+                pszBody[nBodyLen++] = fgetc(stdin);
+                if( nBodyLen == nBodyMax )
+                {
+                    nBodyMax = nBodyMax * 2;
+                    pszBody = (char *) CPLRealloc(pszBody, nBodyMax);
+                }
+            }
+            
+            pszBody[nBodyLen] = '\0';
+        }
+
+        papszParmList = CSLTokenizeString2( pszBody, "&",
+                                            CSLT_PRESERVEESCAPES );
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Un-url-encode the items.                                        */
@@ -221,6 +272,7 @@ int main( int nArgc, char ** papszArgv )
     const char *pszInputX = CSLFetchNameValue(papszParmList,"InputX");
     const char *pszInputY = CSLFetchNameValue(papszParmList,"InputY");
     const char *pszGMLURL = CSLFetchNameValue(papszParmList,"GMLURL");
+    const char *pszGMLData = CSLFetchNameValue(papszParmList,"GMLDATA");
     const char *pszServer = CSLFetchNameValue(papszParmList,"WCTSServer");
 
     if( pszRequest == NULL )
@@ -286,9 +338,8 @@ int main( int nArgc, char ** papszArgv )
 /*      Handle Transform request for a single point provided in the     */
 /*      form.                                                           */
 /* ==================================================================== */
-    if( EQUAL( pszRequest, "Transform" ) 
-        && pszGMLURL != NULL
-        && strlen(pszGMLURL) != NULL )
+    if( EQUAL( pszRequest, "Transform" ) && pszGMLURL != NULL
+        && strlen(pszGMLURL) != 0 )
     {
 /* -------------------------------------------------------------------- */
 /*      Prepare request.                                                */
@@ -322,6 +373,69 @@ int main( int nArgc, char ** papszArgv )
         char *pszResultXML;
 
         pszResultXML = WCTSClientHTTPFetch( pszServer, szReqDoc );
+
+/* -------------------------------------------------------------------- */
+/*      Display result.                                                 */
+/* -------------------------------------------------------------------- */
+        WCTSClientReturnXML( pszResultXML );
+    }
+
+/* ==================================================================== */
+/*      Handle Transform request for a single point provided in the     */
+/*      form.                                                           */
+/* ==================================================================== */
+    if( EQUAL( pszRequest, "Transform" ) && pszGMLData != NULL
+        && strlen(pszGMLData) != 0 )
+    {
+        
+/* -------------------------------------------------------------------- */
+/*      Skip past any <?xml> element.                                   */
+/* -------------------------------------------------------------------- */
+        if( EQUALN(pszGMLData,"<?xml", 5) )
+        {
+            
+            while( *pszGMLData != '\0' && !EQUALN(pszGMLData,"?>",2) )
+                pszGMLData++;
+
+            if( EQUALN(pszGMLData,"?>",2) )
+                pszGMLData += 2;
+        }
+        
+/* -------------------------------------------------------------------- */
+/*      Prepare request.                                                */
+/* -------------------------------------------------------------------- */
+        char *pszReqDoc;
+
+        pszReqDoc = (char *) CPLMalloc(strlen(pszGMLData) + 10000);
+
+        sprintf( pszReqDoc, 
+"<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n"
+"<Transform xmlns=\"http://schemas.opengis.net/wcts\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:gml=\"http://www.opengis.net/gml\" version=\"0.1.0\">\n"
+"  <SourceCRS>\n"
+"    <crsID>\n"
+"      <gml:code>%s</gml:code>\n"
+"      <gml:codeSpace>EPSG</gml:codeSpace>\n"
+"    </crsID>\n"
+"  </SourceCRS>\n"
+"  <TargetCRS>\n"
+"    <crsID>\n"
+"      <gml:code>%s</gml:code>\n"
+"      <gml:codeSpace>EPSG</gml:codeSpace>\n"
+"    </crsID>\n"
+"  </TargetCRS>\n"
+"  <Data>\n"
+"%s\n" 
+"  </Data>\n"
+"</Transform>\n",
+                 pszSourceCRS, pszTargetCRS, pszGMLData );
+
+/* -------------------------------------------------------------------- */
+/*      Invoke Service.                                                 */
+/* -------------------------------------------------------------------- */
+        char *pszResultXML;
+
+        pszResultXML = WCTSClientHTTPFetch( pszServer, pszReqDoc );
+        CPLFree( pszReqDoc );
 
 /* -------------------------------------------------------------------- */
 /*      Display result.                                                 */
