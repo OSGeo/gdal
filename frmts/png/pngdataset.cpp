@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.25  2004/01/29 14:55:26  warmerda
+ * ensure 16bit files are byte swapped as needed
+ *
  * Revision 1.24  2003/09/15 20:45:00  warmerda
  * add pngw and pgw support
  *
@@ -662,6 +665,13 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poDS->nBitDepth < 8 )
         png_set_packing( poDS->hPNG );
+
+#ifdef CPL_LSB        
+    // png default to big endian, so we'll need to swap bytes if on a little endian machine.
+    if (poDS->nBitDepth>8)
+        png_set_swap(poDS->hPNG);
+#endif
+       
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
