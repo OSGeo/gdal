@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2001/07/05 13:13:40  warmerda
+ * added UnitType from C support
+ *
  * Revision 1.35  2001/05/01 18:09:25  warmerda
  * added GDALReadWorldFile()
  *
@@ -381,6 +384,7 @@ char CPL_DLL ** GDALGetRasterCategoryNames( GDALRasterBandH );
 CPLErr CPL_DLL GDALSetRasterCategoryNames( GDALRasterBandH, char ** );
 double CPL_DLL GDALGetRasterMinimum( GDALRasterBandH, int *pbSuccess );
 double CPL_DLL GDALGetRasterMaximum( GDALRasterBandH, int *pbSuccess );
+const char CPL_DLL *GDALGetRasterUnitType( GDALRasterBandH );
 void CPL_DLL GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
                                       double adfMinMax[2] );
 CPLErr CPL_DLL GDALFlushRasterCache( GDALRasterBandH hBand );

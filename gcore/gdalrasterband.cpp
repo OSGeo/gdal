@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.22  2001/07/05 13:13:40  warmerda
+ * added UnitType from C support
+ *
  * Revision 1.21  2000/10/06 15:25:48  warmerda
  * added setnodata, and some other methods
  *
@@ -1445,9 +1448,11 @@ const char *GDALRasterBand::GetDescription()
  * Return raster unit type.
  *
  * Return a name for the units of this raster's values.  For instance, it
- * might be "m" for an elevation model in meters.  If no units are available,
- * a value of "" will be returned.  The returned string should not be
- * modified, nor freed by the calling application.
+ * might be "m" for an elevation model in meters, or "ft" for feet.  If no 
+ * units are available, a value of "" will be returned.  The returned string 
+ * should not be modified, nor freed by the calling application.
+ *
+ * This method is the same as the C function GDALGetRasterUnitType(). 
  *
  * @return unit name string.
  */
@@ -1456,6 +1461,16 @@ const char *GDALRasterBand::GetUnitType()
 
 {
     return "";
+}
+
+/************************************************************************/
+/*                       GDALGetRasterUnitType()                        */
+/************************************************************************/
+
+const char *GDALGetRasterUnitType( GDALRasterBandH hBand )
+
+{
+    return ((GDALRasterBand *) hBand)->GetUnitType();
 }
 
 /************************************************************************/
