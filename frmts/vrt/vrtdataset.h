@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/07/28 17:47:33  warmerda
+ * Disable VRTWarpedRasterBand for now.
+ *
  * Revision 1.14  2004/07/28 16:56:02  warmerda
  * added VRTSourcedRasterBand
  *
@@ -279,6 +282,7 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
 };
 
+#ifdef notdef
 /************************************************************************/
 /*                         VRTWarpedRasterBand                          */
 /************************************************************************/
@@ -308,6 +312,7 @@ class CPL_DLL VRTWarpedRasterBand : public VRTRasterBand
 
     virtual CPLErr IReadBlock( int, int, void * );
 };
+#endif
 
 /************************************************************************/
 /*                              VRTDriver                               */
