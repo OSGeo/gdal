@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/06/08 16:04:25  warmerda
+ * Remove short method help because it was overriding the full help.
+ *
  * Revision 1.2  1999/06/08 15:41:16  warmerda
  * added working blob/geometry support
  *
@@ -77,25 +80,18 @@ class SFCTable : public CTable<CDynamicAccessor>
 
     void        ReleaseIUnknowns();
     
-    /** Get the spatial reference system of this rowset */
     const char *GetSpatialRefWKT();
 
-    /** Which column contains the geometry? */
     int		GetGeometryColumn();
 
-    /** Does this table have a geometry column? */
     int         HasGeometry();
 
-    /** Get geometry type */
 //    OGRwkbGeometryType GetGeometryType();
 
-    /** Fetch the raw geometry data for the last row read */
     BYTE        *GetWKBGeometry( int * pnSize );
 
-    /** Fetch the geometry as an Object */
     OGRGeometry *GetOGRGeometry();
 
-    /** Fetch the whole record as a feature */
     OGRFeature  *GetOGRFeature();
 };
 
