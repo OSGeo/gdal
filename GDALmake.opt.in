@@ -73,4 +73,4 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 #	format registration entry point.  eg. gdb -> GDALRegister_GDB().
 #
 GDAL_FORMATS = 	gxf gtiff hfa $(OGDI_FRMT) aigrid ceos ceos2 elas iso8211 \
-		sdts raw dted
+		sdts raw dted libz png
