@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2003/01/14 22:13:35  warmerda
+ * added isClockwise() method on OGRLinearRing
+ *
  * Revision 1.40  2003/01/08 22:04:11  warmerda
  * added forceToPolygon and forceToMultiPolygon methods
  *
@@ -436,6 +439,7 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     // Non standard.
     virtual const char *getGeometryName();
     virtual OGRGeometry *clone();
+    virtual int isClockwise();
     
     // IWks Interface - Note this isnt really a first class object
     // for the purposes of WKB form.  These methods always fail since this
