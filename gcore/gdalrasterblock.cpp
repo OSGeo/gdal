@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/04/06 19:16:16  dron
+ * Remove GDALRasterBlock::IsCached() method in favor
+ * of GDALRasterBand::IsBlockCached().
+ *
  * Revision 1.14  2004/03/19 05:17:42  warmerda
  * Increase default cachesize to 10MB.
  *
@@ -407,32 +411,5 @@ void GDALRasterBlock::MarkClean()
 
 {
     bDirty = FALSE;
-}
-
-/************************************************************************/
-/*                              IsCached()                              */
-/************************************************************************/
-/**
- * Check whether specified block is already cached.
- *
- * @param nXOff horizontal offset of the requested block.
- * @param nYOff vertical offset of the requested block.
- *
- * @return TRUE if specified block is in cache and FALSE otherwise.
- */
-
-
-int GDALRasterBlock::IsCached( int nXOff, int nYOff )
-{
-    GDALRasterBlock *poBlock = poOldest;
-    
-    while ( poBlock )
-    {
-        if ( poBlock->nXOff == nXOff && poBlock->nYOff == nYOff )
-            return TRUE;
-        poBlock = poBlock->poPrevious;
-    }
-
-    return FALSE;
 }
 
