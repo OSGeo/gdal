@@ -5,6 +5,7 @@ BINDIR = D:\bin
 PY_INST_DIR = D:\bin\pymod
 LIBDIR = D:\bin\lib
 INCDIR = D:\bin\include
+DATADIR = D:\bin\data
 
 # Set this to the installed directory containing python.  If you don't
 # have python just let it point to a directory that does not exist (as now). 
