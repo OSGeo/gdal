@@ -1,3 +1,38 @@
+'*****************************************************************************
+' $Id$
+'
+' Project:  GDAL VB6 Bindings
+' Purpose:  VB6 GDALRasterBand Shadow Class.
+' Author:   Frank Warmerdam, warmerdam@pobox.com
+'
+'*****************************************************************************
+' Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
+'
+' Permission is hereby granted, free of charge, to any person obtaining a
+' copy of this software and associated documentation files (the "Software"),
+' to deal in the Software without restriction, including without limitation
+' the rights to use, copy, modify, merge, publish, distribute, sublicense,
+' and/or sell copies of the Software, and to permit persons to whom the
+' Software is furnished to do so, subject to the following conditions:
+'
+' The above copyright notice and this permission notice shall be included
+' in all copies or substantial portions of the Software.
+'
+' THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+' OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+' FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+' THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+' LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+' FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+' DEALINGS IN THE SOFTWARE.
+'*****************************************************************************
+'
+' $Log$
+' Revision 1.3  2005/04/06 22:30:39  fwarmerdam
+' fixed some color table stuff, added headers
+'
+'
+
 VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
@@ -176,22 +211,22 @@ Public Function GetDescription() As String
 End Function
 ' ----------------------------------------------------------------------------
 Public Function GetColorTable() As GDALColorTable
-    Dim CT As New GDALColorTable
+    Dim ct As New GDALColorTable
     If obj <> 0 Then
         Dim CTHandle As Long
 
         CTHandle = GDALCore.GDALGetRasterColorTable(obj)
         If CTHandle <> 0 Then
-            Call CT.CInit(CTHandle)
+            Call ct.CInit(CTHandle)
         End If
     End If
-    Set GetColorTable = CT
+    Set GetColorTable = ct
 End Function
 
 ' ----------------------------------------------------------------------------
 Public Function SetColorTable(ColorTable As GDALColorTable) As Long
     If obj <> 0 And ColorTable.GetObjPtr() <> 0 Then
-        SetColorTable = GDALColor.GDALSetRasterColorTable( _
+        SetColorTable = GDALCore.GDALSetRasterColorTable( _
                 obj, ColorTable.GetObjPtr())
     Else
         SetColorTable = GDALCore.ObjIsNULLError
