@@ -45,8 +45,11 @@
  *   defined in the GNUmakefile (the default).
  *
  * $Log$
+ * Revision 1.14  2003/04/01 13:13:12  dron
+ * Few memory leaks fixed.
+ *
  * Revision 1.13  2003/03/31 20:00:55  dron
- * Added string fieldt width for CPLSPrintf() in WCTSGetCapabilities().
+ * Added string field width for CPLSPrintf() in WCTSGetCapabilities().
  *
  * Revision 1.12  2003/03/28 17:51:13  warmerda
  * Only allow http, https and ftp in FileURL urls.
@@ -496,6 +499,8 @@ void WCTSGetCapabilities( CPLXMLNode *psOperation )
 
     VSIFWrite( pszDoc, 1, nLen, stdout );
     fflush( stdout );
+
+    CPLFree( pszDoc );
 
     exit( 0 );
 }
@@ -1017,6 +1022,8 @@ int main( int nArgc, char ** papszArgv )
             WCTSEmitServiceException( "This server does not support the DescribeTransformation operation." );
         }
     }
+
+    CPLDestroyXMLNode( psRequest );
 
     WCTSEmitServiceException( "No recognisable supported request found." );
     exit( 1 );
