@@ -121,6 +121,11 @@ JPEG_SUPPORTED = 1
 #PG_INC_DIR = n:\pkg\libpq_win32\include
 #PG_LIB = n:\pkg\libpq_win32\lib\libpqdll.lib wsock32.lib
 
+# MySQL Libraries
+# NOTE: Need /MT instead of /MD, also enable /GX switch. 
+#MYSQL_INC_DIR = D:\Software\MySQLServer4.1\include
+#MYSQL_LIB = D:\Software\MySQLServer4.1\lib\opt\libmysql.lib advapi32.lib
+
 # SQLite Libraries
 #SQLITE_INC=-IN:\pkg\sqlite-win32
 #SQLITE_LIB=N:\pkg\sqlite-win32\sqlite3_i.lib
@@ -190,23 +195,11 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(OCI_LIB) $(PG_LIB) $(ODBCLIB) \
 		$(ECWLIB) $(HDF4_LIB) $(FME_LIB) $(JASPER_LIB) $(MRSID_LIB) \
 		$(FITS_LIB) $(JPEG_LIB) $(PNG_LIB) $(NETCDF_LIB) $(PROJ4_LIB) \
 		$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIB) $(SQLITE_LIB) \
-		$(ADD_LIBS)
+		$(MYSQL_LIB) $(ADD_LIBS)
 
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c
 
 .cpp.obj:	
 	$(CC) $(CFLAGS) /c $*.cpp
-
-
-
-
-
-
-
-
-
-
-
-
 
