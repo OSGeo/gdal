@@ -1,7 +1,7 @@
 #!/bin/sh
 
-if [ $# -ne 1 ] ; then
-  echo "Usage: mkgdaldist version"
+if [ $# -lt 1 ] ; then
+  echo "Usage: mkgdaldist version [-install]"
   echo
   echo "Example: mkgdaldist 1.1.1"
   exit
@@ -32,7 +32,27 @@ rm -rf gdal/viewer
 
 mv gdal gdal-${GDAL_VERSION}
 
+rm -f ../gdal-${GDAL_VERSION}.tar.gz ../gdal${COMPRESSED_VERSION}.zip
+
 tar cf ../gdal-${GDAL_VERSION}.tar.gz gdal-${GDAL_VERSION}
 gzip -9 ../gdal-${GDAL_VERSION}.tar.gz
 zip -r ../gdal${COMPRESSED_VERSION}.zip gdal-${GDAL_VERSION}
 
+cd ..
+rm -rf dist_wrk
+
+TARGETDIR=/ftp/remotesensing/pub/gdal
+if test "$2" = "-install" ; then
+  if test \! -d $TARGETDIR ; then
+    echo "Can't find $TARGETDIR ... -install failed."
+    exit
+  fi
+
+  echo "Installing: " $TARGETDIR/gdal-${GDAL_VERSION}.tar.gz
+  rm -f $TARGETDIR/gdal-${GDAL_VERSION}.tar.gz
+  cp gdal-${GDAL_VERSION}.tar.gz $TARGETDIR
+
+  echo "Installing: " $TARGETDIR/gdal${COMPRESSED_VERSION}.zip
+  rm -f $TARGETDIR/gdal${COMPRESSED_VERSION}.zip
+  cp gdal${COMPRESSED_VERSION}.zip $TARGETDIR
+fi
