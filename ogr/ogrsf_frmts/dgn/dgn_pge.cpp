@@ -13,22 +13,19 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/03/15 15:07:06  warmerda
+ * use dgn_pge.h
+ *
  * Revision 1.1  2002/03/14 21:40:37  warmerda
  * New
  *
  */
 
+#include "dgn_pge.h"
 #include "dgnlib.h"
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-char *pgeDGNWriteTags( const char *pszFilename, int nTagScheme, 
-                       const char *pszTagList );
-char *pgeDGNReadTags( const char *pszFilename, int nTagScheme );
-void pgeDGNFreeResult( char *pszResult );
-CPL_C_END
 
 static void CPLEscapeString( const char *pszSource, char *pszDest );
 static int DGNUpdateTagValue( DGNHandle, DGNElemTagValue *, const char * );
