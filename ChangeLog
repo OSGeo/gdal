@@ -1,3 +1,7 @@
+2004-02-19  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Prepare 1.2.0 alpha release. 
+
 2004-02-07  Andrey Kiselev  <dron@remotesensing.org>
 	
 	* ogr/{ogr_srs_api.h, ogr_spatialref.h, ogr_srs_usgs.cpp}: Implemented
