@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/02/06 22:39:08  warmerda
+ * dont filter out non-spatial features with spatial filter
+ *
  * Revision 1.20  2002/02/06 20:32:33  warmerda
  * handle improbably large elements
  *
@@ -161,7 +164,6 @@ static int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
 /* -------------------------------------------------------------------- */
 /*      Read the rest of the element data into the working buffer.      */
 /* -------------------------------------------------------------------- */
-    fflush( stdout );
     CPLAssert( nWords * 2 + 4 <= sizeof(psDGN->abyElem) );
 
     if( (int) VSIFRead( psDGN->abyElem + 4, 2, nWords, psDGN->fp ) != nWords )
@@ -692,7 +694,11 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
             if( !DGNGetElementExtents( psDGN, nType, 
                                        &nXMin, &nYMin, NULL,
                                        &nXMax, &nYMax, NULL ) )
-                bInsideFilter = !psDGN->sf_converted_to_uor;
+            {
+                /* If we don't have spatial characterists for the element
+                   we will pass it through. */
+                bInsideFilter = TRUE;
+            }
             else if( nXMin > psDGN->sf_max_x
                      || nYMin > psDGN->sf_max_y
                      || nXMax < psDGN->sf_min_x
