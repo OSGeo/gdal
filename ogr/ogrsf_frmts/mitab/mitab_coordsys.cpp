@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.26 2002/12/12 20:12:18 warmerda Exp $
+ * $Id: mitab_coordsys.cpp,v 1.27 2003/01/09 17:33:26 warmerda Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.27  2003/01/09 17:33:26  warmerda
+ * fixed ellipsoid extraction for datum 999/9999
+ *
  * Revision 1.26  2002/12/12 20:12:18  warmerda
  * fixed signs of rotational parameters for TOWGS84 in WKT
  *
@@ -226,7 +229,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
     if( (nDatum == 999 || nDatum == 9999)
         && CSLCount(papszNextField) >= 4 )
     {
-        nEllipsoid = atoi(papszFields[0]);
+        nEllipsoid = atoi(papszNextField[0]);
         adfDatumParm[0] = atof(papszNextField[1]);
         adfDatumParm[1] = atof(papszNextField[2]);
         adfDatumParm[2] = atof(papszNextField[3]);

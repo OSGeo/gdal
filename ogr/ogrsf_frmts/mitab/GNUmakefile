@@ -32,5 +32,3 @@ clean:
 	$(CC) -c $(ALL_C_FLAGS) $*.c -o $*.o
 	ar r ../ogrsf_frmts.a $*.o
 
-
-

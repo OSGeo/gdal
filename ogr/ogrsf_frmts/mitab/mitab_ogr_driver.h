@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_driver.h,v 1.10 2002/02/08 16:52:16 warmerda Exp $
+ * $Id: mitab_ogr_driver.h,v 1.11 2003/03/20 15:57:46 warmerda Exp $
  *
  * Name:     mitab_ogr_drive.h
  * Project:  Mid/mif tab ogr support
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_ogr_driver.h,v $
+ * Revision 1.11  2003/03/20 15:57:46  warmerda
+ * Added delete datasource support
+ *
  * Revision 1.10  2002/02/08 16:52:16  warmerda
  * added support for FORMAT=MIF option for creating layers
  *
@@ -117,6 +120,7 @@ public:
     OGRDataSource *Open ( const char *,int );
     int         TestCapability( const char * );
     virtual OGRDataSource *CreateDataSource( const char *, char ** = NULL );
+    virtual OGRErr DeleteDataSource( const char * );
 };
 
 void CPL_DLL RegisterOGRTAB();

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.34 2002/04/25 16:05:24 julien Exp $
+ * $Id: mitab_priv.h,v 1.35 2003/01/18 20:25:44 daniel Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999-2002, Daniel Morissette
+ * Copyright (c) 1999-2003, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.35  2003/01/18 20:25:44  daniel
+ * Increased MIDMAXCHAR value to 10000
+ *
  * Revision 1.34  2002/04/25 16:05:24  julien
  * Disabled the overflow warning in SetCoordFilter() by adding bIgnoreOverflow
  * variable in Coordsys2Int of the TABMAPFile class and TABMAPHeaderBlock class
@@ -1580,8 +1583,8 @@ class MIDDATAFile
        FILE *m_fp;
        const char *m_pszDelimiter;
 
-       // 512 is a limit for the length of a line
-#define MIDMAXCHAR 512
+       // Set limit for the length of a line
+#define MIDMAXCHAR 10000
        char m_szLastRead[MIDMAXCHAR];
        char m_szSavedLine[MIDMAXCHAR];
 
