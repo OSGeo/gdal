@@ -9,6 +9,12 @@
 
  *
  * $Log$
+ * Revision 1.6  2005/02/17 04:12:09  kruland
+ * Reimplement Band::ReadRaster Band::WriteRaster so they use optional int
+ * argument.  This allows keyword arguments in some languages.  Added a
+ * sanity check to WriteRaster to ensure the buffer string is long enough.
+ * Fixed FlushCache by moving it into the class.
+ *
  * Revision 1.5  2005/02/16 18:41:14  kruland
  * Implemented more methods.  Commented the ones still missing.
  *
@@ -38,14 +44,16 @@
 static
 CPLErr ReadRaster_internal( GDALRasterBand *obj, 
                             int xoff, int yoff, int xsize, int ysize,
-                            int buf_xsize, int buf_ysize, GDALDataType buf_type,
+                            int buf_xsize, int buf_ysize,
+                            GDALDataType buf_type,
                             int *buf_size, char **buf )
 {
 
   *buf_size = buf_xsize * buf_ysize * GDALGetDataTypeSize( buf_type ) / 8;
   *buf = (char*) malloc( *buf_size );
   CPLErr result =  GDALRasterIO( obj, GF_Read, xoff, yoff, xsize, ysize,
-                                 (void *) *buf, buf_xsize, buf_ysize, buf_type, 0, 0 );
+                                 (void *) *buf, buf_xsize, buf_ysize,
+                                 buf_type, 0, 0 );
   if ( result != CE_None ) {
     free( *buf );
     *buf = 0;
@@ -57,8 +65,14 @@ CPLErr ReadRaster_internal( GDALRasterBand *obj,
 static
 CPLErr WriteRaster_internal( GDALRasterBand *obj,
                              int xoff, int yoff, int xsize, int ysize,
-                             char *buffer, int buf_xsize, int buf_ysize, GDALDataType buf_type )
+                             int buf_xsize, int buf_ysize,
+                             GDALDataType buf_type,
+                             int buf_size, char *buffer )
 {
+    if ( buf_size < buf_xsize * buf_ysize * GDALGetDataTypeSize( buf_type) /8 ) {
+      return CE_Failure;
+    }
+
     return GDALRasterIO( obj, GF_Write, xoff, yoff, xsize, ysize, 
 		        (void *) buffer, buf_xsize, buf_ysize, buf_type, 0, 0 );
 }
@@ -138,47 +152,40 @@ public:
   }
 
 %apply ( int *nLen, char **pBuf ) { (int *buf_len, char **buf ) };
+%apply ( int *optional_int ) {(int*)};
+%feature( "kwargs" ) ReadRaster;
   CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
-                     int buf_xsize, int buf_ysize, GDALDataType buf_type,
-                     int *buf_len, char **buf ) {
+                     int *buf_len, char **buf,
+                     int *buf_xsize = 0,
+                     int *buf_ysize = 0,
+                     int *buf_type = 0 ) {
+    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
+    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
+    GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
+                                        : (GDALDataType)*buf_type;
     return ReadRaster_internal( self, xoff, yoff, xsize, ysize,
-                                buf_xsize, buf_ysize, buf_type, buf_len, buf );
-  }
-
-  CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
-                     int buf_xsize, int buf_ysize,
-                     int *buf_len, char **buf ) {
-    return ReadRaster_internal( self, xoff, yoff, xsize, ysize,
-                           buf_xsize, buf_ysize, GDALGetRasterDataType(self), buf_len, buf );
-  }
-
-  CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
-                     int *buf_len, char **buf ) {
-    return ReadRaster_internal( self, xoff, yoff, xsize, ysize,
-                           xsize, ysize, GDALGetRasterDataType(self), buf_len, buf );
+                                nxsize, nysize, ntype, buf_len, buf );
   }
 %clear (int *buf_len, char **buf );
+%clear (int*);
 
 %apply (int nLen, char *pBuf) { (int buf_len, char *buf_string) };
+%apply ( int *optional_int ) {(int*)};
+%feature( "kwargs" ) WriteRaster;
   CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
-                      int buf_len, char *buf_string, int buf_xsize, int buf_ysize, GDALDataType buf_type ) {
+                      int buf_len, char *buf_string,
+                      int *buf_xsize = 0,
+                      int *buf_ysize = 0,
+                      int *buf_type = 0 ) {
+    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
+    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
+    GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
+                                        : (GDALDataType)*buf_type;
     return WriteRaster_internal( self, xoff, yoff, xsize, ysize,
-                                 buf_string, buf_xsize, buf_ysize, buf_type );
-  }
-
-  CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
-                      int buf_len, char *buf_string, int buf_xsize, int buf_ysize ) {
-    return WriteRaster_internal( self, xoff, yoff, xsize, ysize,
-                                 buf_string, buf_xsize, buf_ysize, GDALGetRasterDataType(self) );
-  }
-
-  CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
-                      int buf_len, char *buf_string ) {
-    return WriteRaster_internal( self, xoff, yoff, xsize, ysize,
-                                 buf_string, xsize, ysize, GDALGetRasterDataType(self) );
+                                 nxsize, nysize, ntype, buf_len, buf_string );
   }
 %clear (int buf_len, char *buf_string);
-}
+%clear (int*);
 
   void FlushCache() {
     GDALFlushRasterCache( self );
@@ -193,6 +200,8 @@ public:
 /* GetHistogram */
 /* ComputeBandStats */
 /* AdviseRead */
+
+} /* %extend */
 
 };
 
