@@ -27,7 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************
  *
+ * Security Audit 2003/03/28 warmerda:
+ *   Completed security audit.  I believe that this module may be safely used 
+ *   to parse, arbitrary GML potentially provided by a hostile source without
+ *   compromising the system.
+ *
  * $Log$
+ * Revision 1.5  2003/03/28 05:46:43  warmerda
+ * completed security audit, fix error report risk
+ *
  * Revision 1.4  2003/03/12 20:52:07  warmerda
  * implemented support for gml:Box
  *
@@ -279,7 +287,7 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
         dfX = atof( GetElementText(psXNode) );
         dfY = atof( GetElementText(psYNode) );
 
-        if( psZNode != NULL )
+        if( psZNode != NULL && GetElementText(psZNode) != NULL )
             dfZ = atof( GetElementText(psZNode) );
 
         if( !AddPoint( poGeometry, dfX, dfY, dfZ ) )
@@ -491,7 +499,7 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( CPLXMLNode *psNode )
     }
 
     CPLError( CE_Failure, CPLE_AppDefined, 
-              "Unrecognised geometry type <%s>.", 
+              "Unrecognised geometry type <%.500s>.", 
               pszBaseGeometry );
 
     return NULL;
