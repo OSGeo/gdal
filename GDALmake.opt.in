@@ -12,6 +12,7 @@ PYTHON_INCLUDES = @PYTHON_INCLUDES@
 PYTHON = @PYTHON@
 
 HAVE_OGDI = @HAVE_OGDI@
+OGR_ENABLED = @OGR_ENABLED@
 
 INST_PREFIX	=	@INST_PREFIX@
 INST_INCLUDE	=	@INST_INCLUDE@
@@ -74,6 +75,11 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/core/*.o \
 			$(GDAL_ROOT)/ogr/ogrct.o \
 			$(GDAL_ROOT)/ogr/ogr_fromepsg.o
+
+ifeq ($(OGR_ENABLED),yes)
+GDAL_LIBS := $(GDAL_LIBS) $(GDAL_ROOT)/ogr/ogrsf_frmts/ogrsf_frmts.a
+GDAL_OBJ := $(GDAL_OBJ) $(GDAL_ROOT)/ogr/ogrsf_frmts/generic/ogrregisterall.o
+endif
 
 #
 #	Note these codes have to exactly match the format directory names, 

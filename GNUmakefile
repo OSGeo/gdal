@@ -8,7 +8,7 @@ default:	lib GDALmake.opt
 
 lib:	$(GDAL_LIB)
 
-$(GDAL_LIB):	port-target ogr-target core-target frmts-target force-lib py-target
+$(GDAL_LIB):	port-target core-target frmts-target ogr-target force-lib py-target
 
 force-lib:
 	ar r $(GDAL_LIB) $(GDAL_OBJ)
@@ -23,8 +23,18 @@ force-lib:
 port-target:
 	(cd port; $(MAKE))
 
+ifeq ($(OGR_ENABLED),yes)
+
 ogr-target:
-	(cd ogr; $(MAKE))
+	(cd ogr; $(MAKE) sublibs lib )
+
+else
+
+ogr-target:
+	(cd ogr; $(MAKE) lib )
+
+endif
+
 
 core-target:
 	(cd core; $(MAKE))

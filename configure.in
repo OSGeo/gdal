@@ -130,6 +130,18 @@ AC_SUBST(INST_LIB,$INST_LIB)
 AC_SUBST(INST_BIN,$INST_BIN)
 
 dnl ---------------------------------------------------------------------------
+AC_ARG_WITH(ogr,[  --with-ogr        Build OGR into shared library],,)
+
+if test "$with_ogr" = yes ; then
+  echo checking for OGR ... enabled by user
+  OGR_ENABLED=yes
+else
+  echo checking for OGR ... not requested by user
+  OGR_ENABLED=no
+fi
+AC_SUBST(OGR_ENABLED,$OGR_ENABLED)
+
+dnl ---------------------------------------------------------------------------
 
 AC_COMPILER_WFLAGS
 AC_COMPILER_PIC

@@ -57,6 +57,8 @@ testepsg:	testepsg.o $(OGR_LIB) $(FRMTS_LIB)
 $(FRMTS_LIB):
 	(cd ogrsf_frmts; $(MAKE))
 
+lib:	$(OGR_LIB) 
+
 sublibs:
 	(cd ogrsf_frmts; $(MAKE))
 
