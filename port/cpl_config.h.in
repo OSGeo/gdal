@@ -28,6 +28,10 @@
 /* Define if you have ftell64 and fseek64 */
 #undef UNIX_STDIO_64
 
+/* What 64bit stdio api entry points to use */
+#undef VSI_FTELL64
+#undef VSI_FSEEK64
+
 /* Define if you have 64 bit long long type */
 #undef HAVE_LONG_LONG
 

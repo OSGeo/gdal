@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/12/15 17:12:08  warmerda
+ * pass 64bit seek/tell functions via VSI_F{SEEK,TELL}64 macros
+ *
  * Revision 1.3  2001/07/18 04:00:49  warmerda
  * added CPL_CVSID
  *
@@ -45,6 +48,14 @@
 #if defined(UNIX_STDIO_64)
 
 CPL_CVSID("$Id$");
+
+
+#ifndef VSI_FTELL64
+#define VSI_FTELL64 ftell64
+#endif
+#ifndef VSI_FSEEK64
+#define VSI_FSEEK64 fseek64
+#endif
 
 /************************************************************************/
 /*                              VSIFOpen()                              */
@@ -73,7 +84,7 @@ int VSIFCloseL( FILE * fp )
 int VSIFSeekL( FILE * fp, vsi_l_offset nOffset, int nWhence )
 
 {
-    return( fseek64( fp, nOffset, nWhence ) );
+    return( VSI_FSEEK64 ( fp, nOffset, nWhence ) );
 }
 
 /************************************************************************/
@@ -83,7 +94,7 @@ int VSIFSeekL( FILE * fp, vsi_l_offset nOffset, int nWhence )
 vsi_l_offset VSIFTellL( FILE * fp )
 
 {
-    return( ftell64( fp ) );
+    return( VSI_FTELL64 ( fp ) );
 }
 
 /************************************************************************/
