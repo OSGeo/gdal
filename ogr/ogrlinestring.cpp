@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2004/01/16 21:57:16  warmerda
+ * fixed up EMPTY support
+ *
  * Revision 1.40  2004/01/16 21:20:00  warmerda
  * Added EMPTY support
  *
@@ -843,8 +846,9 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
     pszPreScan = OGRWktReadToken( pszPreScan, szToken );
     if( EQUAL(szToken,"EMPTY") )
     {
-        pszInput = OGRWktReadToken( pszPreScan, szToken );
-        pszInput = OGRWktReadToken( pszInput, szToken );
+        pszPreScan = OGRWktReadToken( pszPreScan, szToken );
+
+        *ppszInput = (char *) pszPreScan;
         
         if( !EQUAL(szToken,")") )
             return OGRERR_CORRUPT_DATA;
