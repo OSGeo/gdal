@@ -1010,6 +1010,48 @@ fi
 AC_SUBST(HAVE_OCI,$HAVE_OCI)
 AC_SUBST(OCI_INCLUDE,$OCI_INCLUDE)
 
+dnl Check for DODS.
+
+AC_MSG_CHECKING(Checking for DODS)
+AC_ARG_WITH(dods_root,
+    [  --with-dods-root[=ARG]  Include DODS support (ARG=no or absolute path)],
+    ,,)
+    
+if test -z "$with_dods_root" -o "$with_dods_root" = "no"; then
+    AC_MSG_RESULT(disabled)
+else
+    DODS_LIB=$with_dods_root/lib
+    DODS_INC=$with_dods_root/include
+    DODS_BIN=$with_dods_root/bin
+
+    dnl Add the DODS libraries to LIBS
+    LIBS="$LIBS -L$DODS_LIB -ldap++ -lpthread -lrx"
+    
+    dnl Add curl to LIBS; it might be local to DODS or generally installed
+    if test -x $DODS_BIN/curl-config; then
+        LIBS="$LIBS  `$DODS_BIN/curl-config --libs`"
+    elif which curl-config > /dev/null 2>&1; then
+        LIBS="$LIBS  `curl-config --libs`"
+    else
+        AC_MSG_ERROR([You gave a dods root, but I can't find curl!])
+    fi
+
+    if test -x $DODS_BIN/xml2-config; then
+        LIBS="$LIBS `$DODS_BIN/xml2-config --libs`"
+    elif which xml2-config > /dev/null 2>&1; then
+        LIBS="$LIBS  `xml2-config --libs`"
+    else
+        AC_MSG_ERROR([You gave a dods root, but I can't find xml2!])
+    fi
+
+    OPT_GDAL_FORMATS="dods $OPT_GDAL_FORMATS"
+    DODSDEF=-DFRMT_dods
+    AC_MSG_RESULT(setting DODS root directory to $with_dods_root)
+fi
+
+dnl This is used by the GNUmakefile in frmts/dods (via GDALmake.opt)
+AC_SUBST(DODS_INC)
+
 dnl ---------------------------------------------------------------------------
 
 AC_COMPILER_WFLAGS
