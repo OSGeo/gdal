@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2004/04/28 12:45:46  warmerda
+ * Fixed screwup in table selection query.
+ *
  * Revision 1.22  2004/04/23 15:10:10  warmerda
  * Added support for enumerating views.
  *
@@ -273,7 +276,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         hResult = PQexec(hPGConn, 
                          "DECLARE mycursor CURSOR for "
                          "SELECT relname FROM pg_class "
-                         "WHERE (relkind in ('r','v') AND relname !~ '^pg'" );
+                         "WHERE (relkind in ('r','v') AND relname !~ '^pg')" );
     }
 
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
