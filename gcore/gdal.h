@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.80  2004/04/04 20:05:37  warmerda
+ * mark as 1.2.0.1
+ *
  * Revision 1.79  2004/04/02 17:32:40  warmerda
  * added GDALGeneralCmdLineProcessor()
  *
@@ -157,13 +160,13 @@
 /*      GDAL Version Information.                                       */
 /* -------------------------------------------------------------------- */
 #ifndef GDAL_VERSION_NUM
-#  define GDAL_VERSION_NUM      1200
+#  define GDAL_VERSION_NUM      1201
 #endif
 #ifndef GDAL_RELEASE_DATE
 #  define GDAL_RELEASE_DATE     20040310
 #endif
 #ifndef GDAL_RELEASE_NAME
-#  define GDAL_RELEASE_NAME     "1.2.0.0"
+#  define GDAL_RELEASE_NAME     "1.2.0.1 (dev)"
 #endif
 
 /* -------------------------------------------------------------------- */
