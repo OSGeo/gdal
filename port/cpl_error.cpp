@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.18  2001/11/02 22:07:58  warmerda
+ * added logging error handler
+ *
  * Revision 1.17  2001/07/18 04:00:49  warmerda
  * added CPL_CVSID
  *
@@ -374,6 +377,62 @@ void CPLQuietErrorHandler( CPLErr eErrClass , int nError,
 {
     if( eErrClass == CE_Debug )
         CPLDefaultErrorHandler( eErrClass, nError, pszErrorMsg );
+}
+
+/************************************************************************/
+/*                       CPLLoggingErrorHandler()                       */
+/************************************************************************/
+
+void CPLLoggingErrorHandler( CPLErr eErrClass, int nError, 
+                             const char * pszErrorMsg )
+
+{
+    static int       bLogInit = FALSE;
+    static FILE *    fpLog = stderr;
+
+    if( !bLogInit )
+    {
+        const char *cpl_log = NULL;
+
+        bLogInit = TRUE;
+
+        if( getenv("CPL_LOG") != NULL )
+            cpl_log = getenv("CPL_LOG");
+
+        fpLog = stderr;
+        if( cpl_log != NULL && EQUAL(cpl_log,"OFF") )
+        {
+            fpLog = NULL;
+        }
+        else if( cpl_log != NULL )
+        {
+            char      path[5000];
+            int       i = 0;
+
+            strcpy( path, cpl_log );
+
+            while( (fpLog = fopen( path, "rt" )) != NULL ) 
+            {
+                fclose( fpLog );
+
+                sprintf( path, "%s_%d", cpl_log, i++ );
+            }
+
+            fpLog = fopen( path, "wt" );
+        }
+    }
+
+    if( fpLog == NULL )
+        return;
+
+    if( eErrClass == CE_Debug )
+        fprintf( fpLog, "%s\n", pszErrorMsg );
+    else if( eErrClass == CE_Warning )
+        fprintf( fpLog, "Warning %d: %s\n", nError, pszErrorMsg );
+    else
+        fprintf( fpLog, "ERROR %d: %s\n", nError, pszErrorMsg );
+
+    fflush( fpLog );
 }
 
 /**********************************************************************

@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/11/02 22:07:58  warmerda
+ * added logging error handler
+ *
  * Revision 1.15  2001/01/19 21:16:41  warmerda
  * expanded tabs
  *
@@ -116,6 +119,7 @@ void CPL_DLL CPLPushErrorHandler( CPLErrorHandler );
 void CPL_DLL CPLPopErrorHandler();
 void CPL_DLL CPLDefaultErrorHandler( CPLErr, int, const char * );
 void CPL_DLL CPLQuietErrorHandler( CPLErr, int, const char * );
+void CPL_DLL CPLLoggingErrorHandler( CPLErr, int, const char * );
 
 void CPL_DLL CPLDebug( const char *, const char *, ... );
 void CPL_DLL _CPLAssert( const char *, const char *, int );
