@@ -11,6 +11,7 @@ OLE_LIBS =	oledb.lib ole32.lib oleaut32.lib
 
 ALL_LIBS =	$(OLE_LIBS) $(GDAL_ROOT)/port/cpl.lib $(LIBS)
 
+OGR_FRMTS =	ogrsf_frmts\ogrsf_frmts.lib ogrsf_frmts\ogrsf_frmts_sup.lib
 OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
 		ogrlinestring.obj ogrpolygon.obj ogrlinearring.obj \
 		ogrutils.obj ogrgeometry.obj ogrgeometrycollection.obj \
@@ -55,23 +56,23 @@ test1.exe:	test1.obj $(OBJ_OGR)
 	cl test1.obj $(OBJ_OGR) $(ALL_LIBS)
 
 test2.exe:	test2.obj $(OBJ_OGR)
-	cl test2.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
+	cl test2.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS)
 
 test3.exe:      test3.obj $(OBJ_OGR)
-        cl test3.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
+        cl test3.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS)
 
 test_ogrsf.exe:      test_ogrsf.obj $(OBJ_OGR)
-        cl test_ogrsf.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
+        cl test_ogrsf.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS)
 
 ogrinfo.exe:      ogrinfo.obj $(OBJ_OGR)
-        cl ogrinfo.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
+        cl ogrinfo.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS)
 
 sdts2mi.exe:      sdts2mi.obj $(OBJ_OGR)
-        cl sdts2mi.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
+        cl sdts2mi.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS)
 
 clean:

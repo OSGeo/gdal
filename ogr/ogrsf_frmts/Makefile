@@ -16,7 +16,8 @@ default:
 	cd ..
 	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj \
 				 sdts\*.obj s57\*.obj tiger\*.obj \
-				 mitab\*.obj \
+				 mitab\*.obj
+	lib /out:ogrsf_frmts_sup.lib \
 				 ..\..\frmts\iso8211\*.obj \
 				 ..\..\frmts\sdts\sdtsattrreader.obj \
 				 ..\..\frmts\sdts\sdtscatd.obj \
@@ -30,14 +31,9 @@ default:
 				 ..\..\frmts\sdts\sdtsindexedreader.obj \
 				 ..\..\frmts\sdts\sdtsxref.obj
 
-fme-update:	
-	cd fme
-	$(MAKE)
-	cd ..
-	lib ogrsf_frmts.lib fme\*.obj
-
 clean:
 	-del ogrsf_frmts.lib
+	-del ogrsf_frmts_sup.lib
 	cd generic 
 	$(MAKE) clean
 	cd ..\shape 
