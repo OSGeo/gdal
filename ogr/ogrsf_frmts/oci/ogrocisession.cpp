@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/01/09 21:47:34  warmerda
+ * avoid debug info on schema
+ *
  * Revision 1.3  2003/01/09 21:19:12  warmerda
  * improved data type support, get/set precision
  *
@@ -319,10 +322,10 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
                             0, OCI_ATTR_SCALE, hError ), 
                 "OCIAttrGet(Scale)") )
                 return CE_Failure;
-
+#ifdef notdef
             CPLDebug( "OCI", "%s: Scale=%d, Precision=%d", 
                       szTermColName, nScale, byPrecision );
-
+#endif
             if( nScale < 0 )
                 poOGRDefn->SetType( OFTReal );
             else if( nScale > 0 )
