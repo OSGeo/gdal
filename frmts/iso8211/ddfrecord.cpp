@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/06 14:24:29  warmerda
+ * minor optimization, don't emit an error on EOF
+ *
  * Revision 1.1  1999/04/27 18:45:05  warmerda
  * New
  *
@@ -183,8 +186,14 @@ int DDFRecord::ReadHeader()
 /*      Read the 24 byte leader.                                        */
 /* -------------------------------------------------------------------- */
     char	achLeader[nLeaderSize];
-    
-    if( VSIFRead(achLeader,1,nLeaderSize,poModule->GetFP()) != nLeaderSize )
+    int		nReadBytes;
+
+    nReadBytes = VSIFRead(achLeader,1,nLeaderSize,poModule->GetFP());
+    if( nReadBytes == 0 && VSIFEof( poModule->GetFP() ) )
+    {
+        return FALSE;
+    }
+    else if( nReadBytes != (int) nLeaderSize )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Leader is short on DDF file.\n" );
@@ -202,9 +211,10 @@ int DDFRecord::ReadHeader()
     _recLength			  = DDFScanInt( achLeader+0, 5 );
     _leaderIden 		  = achLeader[6];
     _fieldAreaStart               = DDFScanInt(achLeader+12,5);
-    _sizeFieldLength              = DDFScanInt(achLeader+20,1);
-    _sizeFieldPos                 = DDFScanInt(achLeader+21,1);
-    _sizeFieldTag                 = DDFScanInt(achLeader+23,1);
+    
+    _sizeFieldLength = achLeader[20] - '0';
+    _sizeFieldPos = achLeader[21] - '0';
+    _sizeFieldTag = achLeader[23] - '0';
 
     if( _leaderIden == 'R' )
         nReuseHeader = TRUE;
@@ -233,7 +243,6 @@ int DDFRecord::ReadHeader()
     int		nFieldEntryWidth;
 
     nFieldEntryWidth = _sizeFieldLength + _sizeFieldPos + _sizeFieldTag;
-
     nFieldCount = 0;
     for( i = 0; i < nDataSize; i += nFieldEntryWidth )
     {
@@ -242,7 +251,7 @@ int DDFRecord::ReadHeader()
 
         nFieldCount++;
     }
-
+    
 /* ==================================================================== */
 /*      Allocate, and read field definitions.                           */
 /* ==================================================================== */
