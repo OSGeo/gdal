@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2004/05/12 14:27:47  warmerda
+ * added translation for nzgd49 and potsdam using epsg codes
+ *
  * Revision 1.46  2004/05/04 18:49:43  warmerda
  * Fixed handling of prime meridian.  In PROJ.4 strings the central meridian
  * or other longitude parameters are relative to the prime meridian.  Apply
@@ -764,10 +767,24 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         /* do nothing */
     }
     else if( (EQUAL(pszValue,"NAD27") || EQUAL(pszValue,"NAD83")
-              || EQUAL(pszValue,"WGS84") || EQUAL(pszValue,"WGS72")) 
+              || EQUAL(pszValue,"WGS84") || EQUAL(pszValue,"WGS72"))
              && dfFromGreenwich == 0.0 )
     {
         SetWellKnownGeogCS( pszValue );
+        bFullyDefined = TRUE;
+    }
+    else if( EQUAL(pszValue,"potsdam") )
+    {
+        OGRSpatialReference oGCS;
+        oGCS.importFromEPSG( 4314 );
+        CopyGeogCSFrom( &oGCS );
+        bFullyDefined = TRUE;
+    }
+    else if( EQUAL(pszValue,"nzgd49") )
+    {
+        OGRSpatialReference oGCS;
+        oGCS.importFromEPSG( 4272 );
+        CopyGeogCSFrom( &oGCS );
         bFullyDefined = TRUE;
     }
     else
@@ -1515,18 +1532,31 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     const char *pszPROJ4Datum = NULL;
     const OGR_SRSNode *poTOWGS84 = GetAttrNode( "TOWGS84" );
     char  szTOWGS84[256];
+    int nEPSGDatum = -1;
+    const char *pszAuthority;
+
+    pszAuthority = GetAuthorityName( "DATUM" );
+
+    if( pszAuthority != NULL && EQUAL(pszAuthority,"EPSG") )
+        nEPSGDatum = atoi(GetAuthorityCode( "DATUM" ));
 
     if( pszDatum == NULL )
         /* nothing */;
 
-    else if( EQUAL(pszDatum,SRS_DN_NAD27) )
+    else if( EQUAL(pszDatum,SRS_DN_NAD27) || nEPSGDatum == 6267 )
         pszPROJ4Datum = "+datum=NAD27";
 
-    else if( EQUAL(pszDatum,SRS_DN_NAD83) )
+    else if( EQUAL(pszDatum,SRS_DN_NAD83) || nEPSGDatum == 6269 )
         pszPROJ4Datum = "+datum=NAD83";
 
-    else if( EQUAL(pszDatum,SRS_DN_WGS84) )
+    else if( EQUAL(pszDatum,SRS_DN_WGS84) || nEPSGDatum == 6326 )
         pszPROJ4Datum = "+datum=WGS84";
+
+    else if( nEPSGDatum == 6314 )
+        pszPROJ4Datum = "+datum=potsdam";
+
+    else if( nEPSGDatum == 6272 )
+        pszPROJ4Datum = "+datum=nzgd49";
 
     else if( poTOWGS84 != NULL )
     {
