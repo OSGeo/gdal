@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/01/02 21:51:05  warmerda
+ * fix quote escaping
+ *
  * Revision 1.5  2002/12/29 19:43:59  warmerda
  * avoid some warnings
  *
@@ -499,6 +502,8 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
 /* -------------------------------------------------------------------- */
 /*      Add ordinates array.                                            */
 /* -------------------------------------------------------------------- */
+        int bNeedComma = FALSE;
+
         sprintf( pszResult+iOff, "),MDSYS.SDO_ORDINATE_ARRAY(" );
         iOff += strlen(pszResult+iOff);
         
@@ -513,12 +518,14 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
                 poRing = poPoly->getInteriorRing(iRing);
             }
 
-            for( iVert = 0; iVert < poRing->getNumPoints(); iVert++ )
+            for( iVert = poRing->getNumPoints()-1; iVert >= 0; iVert-- )
             {
                 CPLAssert( iOff < nBufSize - 60 );
 
-                if( iVert != 0 || iRing != -1 )
+                if( bNeedComma )
                     pszResult[iOff++] = ',';
+                else
+                    bNeedComma = TRUE;
                 
                 sprintf( pszResult + iOff, "%.16g,%.16g", 
                          poRing->getX(iVert), poRing->getY(iVert) );
@@ -651,10 +658,9 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
             
             for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
             {
-                if( pszStrValue[iChar] == '\\' 
-                    || pszStrValue[iChar] == '\'' )
+                if( pszStrValue[iChar] == '\'' )
                 {
-                    pszCommand[nOffset++] = '\\';
+                    pszCommand[nOffset++] = '\'';
                     pszCommand[nOffset++] = pszStrValue[iChar];
                 }
                 else
