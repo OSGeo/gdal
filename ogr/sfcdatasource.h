@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/11/01 17:07:30  warmerda
+ * lots of changes, including support for executing commands
+ *
  * Revision 1.9  1999/11/18 19:02:20  warmerda
  * expanded tabs
  *
@@ -62,6 +65,7 @@
 #define SFCDATASOURCE_H_INCLUDED
 
 #include <atldbcli.h>
+#include "oledbgis.h"
 
 class OGRGeometry;
 class SFCTable;
@@ -95,6 +99,9 @@ class SFCTable;
 
 class SFCDataSource : public CDataSource
 {
+    int         bSessionEstablished;
+    CSession    oSession;
+    
     int         nSRInitialized;
     char        **papszSRName;
 
@@ -102,6 +109,7 @@ class SFCDataSource : public CDataSource
     void        UseTables();
 
     void        AddSFTable( const char * );
+    int         EstablishSession();
 
   public:
 
@@ -116,7 +124,17 @@ class SFCDataSource : public CDataSource
     
     SFCTable    *CreateSFCTable( const char * pszTablename,
                                  OGRGeometry * poFilterGeometry = NULL,
-                                 const char * pszFilterOperator = NULL );
+                                 DBPROPOGISENUM eOperator
+                                    = DBPROP_OGIS_ENVELOPE_INTERSECTS );
+
+    SFCTable    *Execute( const char *pszCommand,
+                          OGRGeometry * poFilterGeometry,
+                          DBPROPOGISENUM eOperator
+                                = DBPROP_OGIS_ENVELOPE_INTERSECTS );
+                          
+    SFCTable    *Execute( const char *pszCommand,
+                          DBPROPSET* pPropSet = NULL,
+                          DBPARAMS *pParams = NULL );
 
     char        *GetWKTFromSRSId( int nSRS_ID );
     static char *GetWKTFromSRSId( CSession *, int nSRS_ID );
