@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/11/08 15:42:41  warmerda
+ * ensure type correctness of wkbFlatten
+ *
  * Revision 1.10  2002/10/24 20:53:02  warmerda
  * expand tabs
  *
@@ -143,7 +146,7 @@ typedef enum
 } OGRwkbGeometryType;
 
 #define wkb25DBit 0x80000000
-#define wkbFlatten(x)  ((x) & (~wkb25DBit))
+#define wkbFlatten(x)  ((OGRwkbGeometryType) ((x) & (~wkb25DBit)))
 
 #define ogrZMarker 0x21125711
 
