@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/03/13 16:47:20  warmerda
+ * fixed bug in non-complex case
+ *
  * Revision 1.1  2003/03/02 03:56:21  warmerda
  * New
  *
@@ -67,7 +70,7 @@ int GDALChecksumImage( GDALRasterBandH hBand,
         {
             GDALRasterIO( hBand, GF_Read, nXOff, iLine, nXSize, 1, 
                           panLineData, nXSize, 1, GDT_Int32, 0, 0 );
-            nCount = nXSize * 2;
+            nCount = nXSize;
         }
 
         for( i = 0; i < nCount; i++ )
