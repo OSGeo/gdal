@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2001/11/19 16:03:16  warmerda
+ * moved GDALDectoDMS here
+ *
  * Revision 1.25  2001/08/15 15:05:44  warmerda
  * return magnitude for complex samples in random sampler
  *
@@ -1110,4 +1113,40 @@ int GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
     }
 }
 
+/************************************************************************/
+/*                            GDALDecToDMS()                            */
+/*                                                                      */
+/*      Translate a decimal degrees value to a DMS string with          */
+/*      hemisphere.                                                     */
+/************************************************************************/
+
+const char *GDALDecToDMS( double dfAngle, const char * pszAxis,
+                          int nPrecision )
+
+{
+    int		nDegrees, nMinutes;
+    double	dfSeconds;
+    char	szFormat[30];
+    static char szBuffer[50];
+    const char	*pszHemisphere;
+    
+
+    nDegrees = (int) ABS(dfAngle);
+    nMinutes = (int) ((ABS(dfAngle) - nDegrees) * 60);
+    dfSeconds = (ABS(dfAngle) * 3600 - nDegrees*3600 - nMinutes*60);
+
+    if( EQUAL(pszAxis,"Long") && dfAngle < 0.0 )
+        pszHemisphere = "W";
+    else if( EQUAL(pszAxis,"Long") )
+        pszHemisphere = "E";
+    else if( dfAngle < 0.0 )
+        pszHemisphere = "S";
+    else
+        pszHemisphere = "N";
+
+    sprintf( szFormat, "%%3dd%%2d\'%%.%df\"%s", nPrecision, pszHemisphere );
+    sprintf( szBuffer, szFormat, nDegrees, nMinutes, dfSeconds );
+
+    return( szBuffer );
+}
 
