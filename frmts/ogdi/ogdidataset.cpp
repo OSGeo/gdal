@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/03/25 18:00:11  aubin
+ * request is satisfied based on nYSize, not destination buffer size
+ *
  * Revision 1.17  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -226,7 +229,7 @@ CPLErr OGDIRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     int      iScanline;
 
-    for( iScanline = 0; iScanline < nBufYSize; iScanline++ )
+    for( iScanline = 0; iScanline < nYSize; iScanline++ )
     {
         ecs_Result	*psResult;
         void		*pLineData;
