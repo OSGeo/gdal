@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2005/01/04 03:43:22  fwarmerdam
+ * added support for create/destroy spatial index sql commands
+ *
  * Revision 1.25  2005/01/03 22:26:21  fwarmerdam
  * updated to use spatial indexing
  *
@@ -636,7 +639,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     OGRShapeLayer       *poLayer;
 
-    poLayer = new OGRShapeLayer( pszLayerName, hSHP, hDBF, poSRS, TRUE,
+    poLayer = new OGRShapeLayer( pszBasename, hSHP, hDBF, poSRS, TRUE,
                                  eType );
     
     poLayer->InitializeIndexSupport( pszBasename );
@@ -678,5 +681,93 @@ OGRLayer *OGRShapeDataSource::GetLayer( int iLayer )
         return NULL;
     else
         return papoLayers[iLayer];
+}
+
+/************************************************************************/
+/*                             ExecuteSQL()                             */
+/*                                                                      */
+/*      We override this to provide special handling of CREATE          */
+/*      SPATIAL INDEX commands.  Support forms are:                     */
+/*                                                                      */
+/*        CREATE SPATIAL INDEX ON layer_name [DEPTH n]                  */
+/*                                                                      */
+/************************************************************************/
+
+OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
+                                           OGRGeometry *poSpatialFilter,
+                                           const char *pszDialect )
+
+{
+/* ==================================================================== */
+/*      Handle command to drop a spatial index.                         */
+/* ==================================================================== */
+    if( EQUALN(pszStatement, "DROP SPATIAL INDEX ON ", 22) )
+    {
+        OGRShapeLayer *poLayer = (OGRShapeLayer *) 
+            GetLayerByName( pszStatement + 22 );
+
+        if( poLayer != NULL )
+            poLayer->DropSpatialIndex();
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "No such layer as '%s' in DROP SPATIAL INDEX.", 
+                      pszStatement + 19 );
+        }
+        return NULL;
+    }
+    
+/* ==================================================================== */
+/*      Handle all comands except spatial index creation generically.   */
+/* ==================================================================== */
+    if( !EQUALN(pszStatement,"CREATE SPATIAL INDEX ON ",24) )
+        return OGRDataSource::ExecuteSQL( pszStatement, poSpatialFilter, 
+                                          pszDialect );
+
+/* -------------------------------------------------------------------- */
+/*      Parse into keywords.                                            */
+/* -------------------------------------------------------------------- */
+    char **papszTokens = CSLTokenizeString( pszStatement );
+    
+    if( CSLCount(papszTokens) < 5
+        || !EQUAL(papszTokens[0],"CREATE")
+        || !EQUAL(papszTokens[1],"SPATIAL")
+        || !EQUAL(papszTokens[2],"INDEX") 
+        || !EQUAL(papszTokens[3],"ON") 
+        || CSLCount(papszTokens) > 7 
+        || (CSLCount(papszTokens) == 7 && !EQUAL(papszTokens[5],"DEPTH")) )
+    {
+        CSLDestroy( papszTokens );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Syntax error in CREATE SPATIAL INDEX command.\n"
+                  "Was '%s'\n"
+                  "Should be of form 'CREATE SPATIAL INDEX ON <table> [DEPTH <n>]'",
+                  pszStatement );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get depth if provided.                                          */
+/* -------------------------------------------------------------------- */
+    int nDepth = 0;
+    if( CSLCount(papszTokens) == 7 )
+        nDepth = atoi(papszTokens[6]);
+
+/* -------------------------------------------------------------------- */
+/*      What layer are we operating on.                                 */
+/* -------------------------------------------------------------------- */
+    OGRShapeLayer *poLayer = (OGRShapeLayer *) GetLayerByName(papszTokens[4]);
+    CSLDestroy( papszTokens );
+
+    if( poLayer == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Layer %s not recognised.", 
+                  papszTokens[4] );
+        return NULL;
+    }
+
+    poLayer->CreateSpatialIndex( nDepth );
+    return NULL;
 }
 
