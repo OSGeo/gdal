@@ -50,7 +50,7 @@ list:
 	echo $(DIRLIST)
 
 subdirs:
-	for %d in ( $(DIRLIST) ) do ..\submake.bat %d
+	for %d in ( $(DIRLIST) ) do call ..\submake.bat %d
 
 o\gdalallregister.obj:	gdalallregister.cpp
 	$(CC) $(CFLAGS) $(MOREEXTRA) /c gdalallregister.cpp
@@ -58,6 +58,6 @@ o\gdalallregister.obj:	gdalallregister.cpp
 
 clean:
 	-del o\*.obj *.obj
-	for %d in ( $(DIRLIST) ) do ..\submake.bat %d clean
+	for %d in ( $(DIRLIST) ) do call ..\submake.bat %d clean
 	..\submake.bat iso8211 clean
 
