@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/04/14 14:14:40  warmerda
+ * fixed problem with Y origin for Landranger DTM
+ *
  * Revision 1.11  2003/02/27 21:09:47  warmerda
  * Apply ZMult to LANDFORM_PROFILE_DTM data to scale to meters.
  * adfGeoTransform[5] is left positive to correct coordinates ... the first
@@ -132,7 +135,7 @@ void NTFFileReader::EstablishRasterAccess()
         adfGeoTransform[0] = atoi(poRecord->GetField(25,34));
         adfGeoTransform[1] = 50;
         adfGeoTransform[2] = 0;
-        adfGeoTransform[3] = atoi(poRecord->GetField(87,96));
+        adfGeoTransform[3] = atoi(poRecord->GetField(35,44));
         adfGeoTransform[4] = 0;
         adfGeoTransform[5] = 50;
         
