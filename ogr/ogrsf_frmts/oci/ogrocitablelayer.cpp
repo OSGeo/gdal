@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/01/14 15:31:08  warmerda
+ * added fallback support if no spatial index available
+ *
  * Revision 1.14  2003/01/14 15:11:00  warmerda
  * Added layer creation options caching on layer.
  * Set SRID in spatial query.
@@ -88,6 +91,8 @@ CPL_CVSID("$Id$");
 static int nDiscarded = 0;
 static int nHits = 0;
 
+#define HSI_UNKNOWN  -2
+
 /************************************************************************/
 /*                          OGROCITableLayer()                          */
 /************************************************************************/
@@ -114,6 +119,10 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
     nDimension = 3;
 
     bValidTable = FALSE;
+    if( bNewLayerIn )
+        bHaveSpatialIndex = FALSE;
+    else
+        bHaveSpatialIndex = HSI_UNKNOWN;
 
     poFeatureDefn = ReadTableDefinition( pszTableName );
     
@@ -269,6 +278,26 @@ void OGROCITableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 }
 
 /************************************************************************/
+/*                        TestForSpatialIndex()                         */
+/************************************************************************/
+
+void OGROCITableLayer::TestForSpatialIndex( const char *pszSpatWHERE )
+
+{
+    OGROCIStringBuf oTestCmd;
+    OGROCIStatement oTestStatement( poDS->GetSession() );
+        
+    oTestCmd.Append( "SELECT COUNT(*) FROM " );
+    oTestCmd.Append( poFeatureDefn->GetName() );
+    oTestCmd.Append( pszSpatWHERE );
+
+    if( oTestStatement.Execute( oTestCmd.GetString() ) != CE_None )
+        bHaveSpatialIndex = FALSE;
+    else
+        bHaveSpatialIndex = TRUE;
+}
+
+/************************************************************************/
 /*                             BuildWhere()                             */
 /*                                                                      */
 /*      Build the WHERE statement appropriate to the current set of     */
@@ -283,13 +312,13 @@ void OGROCITableLayer::BuildWhere()
     CPLFree( pszWHERE );
     pszWHERE = NULL;
 
-    if( poFilterGeom != NULL )
+    if( poFilterGeom != NULL && bHaveSpatialIndex )
     {
         OGREnvelope  sEnvelope;
 
         poFilterGeom->getEnvelope( &sEnvelope );
 
-        oWHERE.Append( "WHERE sdo_filter(" );
+        oWHERE.Append( " WHERE sdo_filter(" );
         oWHERE.Append( pszGeomName );
         oWHERE.Append( ", MDSYS.SDO_GEOMETRY(2003," );
         if( nSRID == -1 )
@@ -303,6 +332,13 @@ void OGROCITableLayer::BuildWhere()
                         sEnvelope.MinX, sEnvelope.MinY,
                         sEnvelope.MaxX, sEnvelope.MaxY );
         oWHERE.Append( ")), 'querytype=window') = 'TRUE' " );
+    }
+
+    if( bHaveSpatialIndex == HSI_UNKNOWN )
+    {
+        TestForSpatialIndex( oWHERE.GetString() );
+        if( !bHaveSpatialIndex )
+            oWHERE.Clear();
     }
 
     if( pszQuery != NULL )

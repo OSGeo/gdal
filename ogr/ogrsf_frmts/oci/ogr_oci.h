@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/01/14 15:31:08  warmerda
+ * added fallback support if no spatial index available
+ *
  * Revision 1.7  2003/01/14 15:09:28  warmerda
  * additions to OGROCITableLayer
  *
@@ -285,6 +288,7 @@ class OGROCITableLayer : public OGROCILayer
     int                 bNewLayer;
     OGREnvelope         sExtent;
     int                 iNextFIDToWrite;
+    int                 bHaveSpatialIndex;
 
     OGRFeatureDefn     *ReadTableDefinition(const char *);
 
@@ -319,6 +323,8 @@ class OGROCITableLayer : public OGROCILayer
     void                ParseDIMINFO( const char *, double *, double *,
                                       double * );
     void                FinalizeNewLayer();
+
+    void                TestForSpatialIndex( const char * );
     
   public:
     			OGROCITableLayer( OGROCIDataSource *,
