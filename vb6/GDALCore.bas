@@ -31,6 +31,9 @@ Attribute VB_Name = "GDALCore"
 '*****************************************************************************
 '
 ' $Log$
+' Revision 1.5  2005/04/06 22:30:15  fwarmerdam
+' added OGRCoordinateTransformation and OGRSpatialReference functions
+'
 ' Revision 1.4  2005/04/04 15:34:30  fwarmerdam
 ' fixed in bindings for colortable stuff per bug 814
 '
@@ -351,6 +354,81 @@ Public Declare Sub GDALSetColorEntry _
         Alias "_GDALSetColorEntry@12" _
         (ByVal Handle As Long, ByVal ColorIndex As Long, _
           ByRef ColorEntry As Integer)
+
+' ----------------------------------------------------------------------------
+'       OGRSpatialReference
+' ----------------------------------------------------------------------------
+Public Declare Function OSRNewSpatialReference _
+        Lib "gdal12.dll" _
+        Alias "_OSRNewSpatialReference@4" _
+        (ByVal WKT As String) As Long
+
+Public Declare Function OSRCloneGeogCS _
+        Lib "gdal12.dll" _
+        Alias "_OSRCloneGeogCS@4" _
+        (ByVal Handle As Long) As Long
+
+Public Declare Function OSRClone _
+        Lib "gdal12.dll" _
+        Alias "_OSRClone@4" _
+        (ByVal Handle As Long) As Long
+
+Public Declare Sub OSRDestroySpatialReference _
+        Lib "gdal12.dll" _
+        Alias "_OSRDestroySpatialReference@4" _
+        (ByVal Handle As Long)
+
+Public Declare Function OSRImportFromEPSG _
+        Lib "gdal12.dll" _
+        Alias "_OSRImportFromEPSG@8" _
+        (ByVal Handle As Long, EPSGCode As Long) As Long
+
+Public Declare Function OSRExportToWkt _
+        Lib "gdal12.dll" _
+        Alias "_OSRExportToWkt@8" _
+        (ByVal Handle As Long, ByRef wktptr As Long) As Long
+
+Public Declare Function OSRExportToPrettyWkt _
+        Lib "gdal12.dll" _
+        Alias "_OSRExportToPrettyWkt@12" _
+        (ByVal Handle As Long, ByRef wktptr As Long, Simplify As Long) As Long
+
+Public Declare Function OSRSetFromUserInput _
+        Lib "gdal12.dll" _
+        Alias "_OSRSetFromUserInput@8" _
+        (ByVal Handle As Long, ByVal UserInput As String) As Long
+
+Public Declare Function OSRSetAttrValue _
+        Lib "gdal12.dll" _
+        Alias "_OSRSetAttrValue@12" _
+        (ByVal Handle As Long, ByVal NodePath As String, _
+        ByVal NodeValue As String) As Long
+
+Public Declare Function OSRGetAttrValue _
+        Lib "gdal12.dll" _
+        Alias "_OSRGetAttrValue@12" _
+        (ByVal Handle As Long, ByVal NodePath As String, _
+        ByVal iChild As Long) As Long
+
+' ----------------------------------------------------------------------------
+' OGRCoordinateTransformation
+' ----------------------------------------------------------------------------
+Public Declare Function OCTNewCoordinateTransformation _
+        Lib "gdal12.dll" _
+        Alias "_OCTNewCoordinateTransformation@8" _
+        (ByVal hSourceSRS As Long, ByVal hTargetSRS As Long) As Long
+
+Public Declare Sub OCTDestroyCoordinateTransformation _
+        Lib "gdal12.dll" _
+        Alias "_OCTDestroyCoordinateTransformation@4" _
+        (ByVal Handle As Long)
+
+Public Declare Function OCTTransformEx _
+        Lib "gdal12.dll" _
+        Alias "_OCTTransformEx@24" _
+        (ByVal Handle As Long, ByVal PointCount As Long, _
+        ByRef X As Double, ByRef Y As Double, ByRef Z As Double, _
+        ByRef Success As Long) As Long
 
 ' ----------------------------------------------------------------------------
 ' Special VB6 Support functions
