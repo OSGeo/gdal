@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/03/17 21:16:58  warmerda
+ * Added GCP support for the corner points if they dont produce a nice geotransform
+ *
  * Revision 1.15  2004/02/09 05:18:07  warmerda
  * fixed up north/south MGRS support
  *
@@ -103,6 +106,10 @@ class NITFDataset : public GDALDataset
 
     char        *pszProjection;
 
+    int         nGCPCount;
+    GDAL_GCP    *pasGCPList;
+    char        *pszGCPProjection;
+
   public:
                  NITFDataset();
                  ~NITFDataset();
@@ -110,6 +117,10 @@ class NITFDataset : public GDALDataset
     virtual const char *GetProjectionRef(void);
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
+
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -404,6 +415,10 @@ NITFDataset::NITFDataset()
     psImage = NULL;
     bGotGeoTransform = FALSE;
     pszProjection = CPLStrdup("");
+
+    nGCPCount = 0;
+    pasGCPList = NULL;
+    pszGCPProjection = NULL;
 }
 
 /************************************************************************/
@@ -421,6 +436,9 @@ NITFDataset::~NITFDataset()
         psFile = NULL;
     }
     CPLFree( pszProjection );
+
+    GDALDeinitGCPs( nGCPCount, pasGCPList );
+    CPLFree( pasGCPList );
 }
 
 /************************************************************************/
@@ -561,71 +579,109 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Otherwise try looking for a .nfw file.                          */
 /* -------------------------------------------------------------------- */
-    else
+    else if( GDALReadWorldFile( poOpenInfo->pszFilename, "nfw", 
+                                poDS->adfGeoTransform ) )
     {
-        poDS->bGotGeoTransform = 
-            GDALReadWorldFile( poOpenInfo->pszFilename, "nfw", poDS->adfGeoTransform );
+        const char *pszHDR;
+        FILE *fpHDR;
+        char **papszLines;
+        int isNorth;
+        int zone;
+        
+        poDS->bGotGeoTransform = TRUE;
 
         /* If nfw found, try looking for a header with projection info */
         /* in space imaging style format                               */
-        if (poDS->bGotGeoTransform)
-        {
-            const char *pszHDR;
-            FILE *fpHDR;
-            char **papszLines;
-            int isNorth;
-            int zone;
-
-            pszHDR = CPLResetExtension( poOpenInfo->pszFilename, "hdr" );
-
-            fpHDR = VSIFOpen( pszHDR, "rt" );
+        pszHDR = CPLResetExtension( poOpenInfo->pszFilename, "hdr" );
+        
+        fpHDR = VSIFOpen( pszHDR, "rt" );
 
 #ifndef WIN32
-            if( fpHDR == NULL )
-            {
-                pszHDR = CPLResetExtension( poOpenInfo->pszFilename, "HDR" );
-                fpHDR = VSIFOpen( pszHDR, "rt" );
-            }
+        if( fpHDR == NULL )
+        {
+            pszHDR = CPLResetExtension( poOpenInfo->pszFilename, "HDR" );
+            fpHDR = VSIFOpen( pszHDR, "rt" );
+        }
 #endif
     
-            if( fpHDR != NULL )
+        if( fpHDR != NULL )
+        {
+            VSIFClose( fpHDR );
+            papszLines=CSLLoad(pszHDR);
+            if (CSLCount(papszLines) == 16)
             {
-                VSIFClose( fpHDR );
-                papszLines=CSLLoad(pszHDR);
-                if (CSLCount(papszLines) == 16)
-                {
 
-                    if (psImage->chICORDS == 'N')
-                        isNorth=1;
-                    else if (psImage->chICORDS =='S')
+                if (psImage->chICORDS == 'N')
+                    isNorth=1;
+                else if (psImage->chICORDS =='S')
+                    isNorth=0;
+                else
+                {
+                    if (psImage->dfLLY+psImage->dfLRY+psImage->dfULY+psImage->dfURY < 0)
                         isNorth=0;
                     else
-                    {
-                        if (psImage->dfLLY+psImage->dfLRY+psImage->dfULY+psImage->dfURY < 0)
-                            isNorth=0;
-                        else
-                            isNorth=1;
-                    }
-                    if( (EQUALN(papszLines[7],
-                        "Selected Projection: Universal Transverse Mercator",50)) &&
-                        (EQUALN(papszLines[8],"Zone: ",6)) &&
-                        (strlen(papszLines[8]) >= 7))
-                    {
-                        CPLFree( poDS->pszProjection );
-                        poDS->pszProjection = NULL;
-                        zone=atoi(&(papszLines[8][6]));
-                        oSRSWork.SetUTM( zone, isNorth );
-                        oSRSWork.SetWellKnownGeogCS( "WGS84" );
-                        oSRSWork.exportToWkt( &(poDS->pszProjection) );
-                    }
+                        isNorth=1;
                 }
-                CSLDestroy(papszLines);
+                if( (EQUALN(papszLines[7],
+                            "Selected Projection: Universal Transverse Mercator",50)) &&
+                    (EQUALN(papszLines[8],"Zone: ",6)) &&
+                    (strlen(papszLines[8]) >= 7))
+                {
+                    CPLFree( poDS->pszProjection );
+                    poDS->pszProjection = NULL;
+                    zone=atoi(&(papszLines[8][6]));
+                    oSRSWork.SetUTM( zone, isNorth );
+                    oSRSWork.SetWellKnownGeogCS( "WGS84" );
+                    oSRSWork.exportToWkt( &(poDS->pszProjection) );
+                }
             }
-
+            CSLDestroy(papszLines);
         }
 
-        
     }
+/* -------------------------------------------------------------------- */
+/*      If we have IGEOLO that isn't north up, return it as GCPs.       */
+/* -------------------------------------------------------------------- */
+    else if( (psImage->dfULX != 0 || psImage->dfURX != 0 
+              || psImage->dfLRX != 0 || psImage->dfLLX != 0)
+             && psImage->chICORDS != 'N' )
+    {
+        poDS->nGCPCount = 4;
+        poDS->pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),
+                                                  poDS->nGCPCount);
+        GDALInitGCPs( 4, poDS->pasGCPList );
+
+        poDS->pasGCPList[0].dfGCPX = psImage->dfULX;
+        poDS->pasGCPList[0].dfGCPY = psImage->dfULY;
+        poDS->pasGCPList[0].dfGCPPixel = 0;
+        poDS->pasGCPList[0].dfGCPLine = 0;
+        CPLFree( poDS->pasGCPList[0].pszId );
+        poDS->pasGCPList[0].pszId = CPLStrdup( "UpperLeft" );
+
+        poDS->pasGCPList[1].dfGCPX = psImage->dfURX;
+        poDS->pasGCPList[1].dfGCPY = psImage->dfURY;
+        poDS->pasGCPList[1].dfGCPPixel = poDS->nRasterXSize;
+        poDS->pasGCPList[1].dfGCPLine = 0;
+        CPLFree( poDS->pasGCPList[1].pszId );
+        poDS->pasGCPList[1].pszId = CPLStrdup( "UpperRight" );
+
+        poDS->pasGCPList[2].dfGCPX = psImage->dfLLX;
+        poDS->pasGCPList[2].dfGCPY = psImage->dfLLY;
+        poDS->pasGCPList[2].dfGCPPixel = 0;
+        poDS->pasGCPList[2].dfGCPLine = poDS->nRasterYSize;
+        CPLFree( poDS->pasGCPList[2].pszId );
+        poDS->pasGCPList[2].pszId = CPLStrdup( "LowerLeft" );
+
+        poDS->pasGCPList[3].dfGCPX = psImage->dfLRX;
+        poDS->pasGCPList[3].dfGCPY = psImage->dfLRY;
+        poDS->pasGCPList[3].dfGCPPixel = poDS->nRasterXSize;
+        poDS->pasGCPList[3].dfGCPLine = poDS->nRasterYSize;
+        CPLFree( poDS->pasGCPList[3].pszId );
+        poDS->pasGCPList[3].pszId = CPLStrdup( "LowerRight" );
+
+        poDS->pszGCPProjection = CPLStrdup( poDS->pszProjection );
+    }
+                 
 /* -------------------------------------------------------------------- */
 /*      Do we have RPC info.                                            */
 /* -------------------------------------------------------------------- */
@@ -786,6 +842,39 @@ const char *NITFDataset::GetProjectionRef()
         return pszProjection;
     else
         return "";
+}
+
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int NITFDataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *NITFDataset::GetGCPProjection()
+
+{
+    if( nGCPCount > 0 && pszGCPProjection != NULL )
+        return pszGCPProjection;
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                               GetGCP()                               */
+/************************************************************************/
+
+const GDAL_GCP *NITFDataset::GetGCPs()
+
+{
+    return pasGCPList;
 }
 
 /************************************************************************/
