@@ -29,12 +29,12 @@ gdaladdo.exe:	gdaladdo.cpp $(GDALLIB) $(XTRAOBJ)
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdaladdo.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	
-gdalwarp.exe:	gdalwarp.c $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalwarp.c $(XTRAOBJ) $(LIBS) \
+gdalwarpsimple.exe:	gdalwarpsimple.c $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalwarpsimple.c $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	
-gdalwarptest.exe:	gdalwarptest.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalwarptest.cpp $(XTRAOBJ) $(LIBS) \
+gdalwarp.exe:	gdalwarp.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalwarp.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	
 gdal2raw.exe:	gdal2raw.c $(GDALLIB) $(XTRAOBJ)
