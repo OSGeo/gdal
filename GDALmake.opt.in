@@ -14,8 +14,8 @@ LIBS	=	@LIBS@ -lm
 #	This is similar to the OGDI builds. 
 #
 ifeq ($(CFG),debug)
-C_ODFLAGS 	= $(CXX_DBGFLAGS)
-CXX_ODFLAGS 	= $(C_DBGFLAGS)
+C_ODFLAGS 	= $(C_DBGFLAGS)
+CXX_ODFLAGS 	= $(CXX_DBGFLAGS)
 endif
 
 ifeq ($(CFG),gprof)
