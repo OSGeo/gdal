@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/09/18 14:45:47  warmerda
+ * return -1 from FetchSRSId() for SRS if not GEOGCS or PROJCS
+ *
  * Revision 1.21  2003/09/13 04:52:38  warmerda
  * Added logic to mapping some EPSG codes to and from Oracle codes by table.
  * Added logic to recognise an Oracle authority in WKT as a direct mapping
@@ -765,6 +768,9 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     int                 nSRSId;
 
     if( poSRS == NULL )
+        return -1;
+
+    if( !poSRS->IsProjected() && !poSRS->IsGeographic() )
         return -1;
 
 /* ==================================================================== */
