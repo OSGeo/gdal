@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/09/29 16:44:08  warmerda
+ * added spatial ref handling
+ *
  * Revision 1.6  1999/09/14 01:34:36  warmerda
  * added scale support, and generation of TEXT_HT_GROUND
  *
@@ -233,7 +236,7 @@ int NTFFileReader::Open( const char * pszFilenameIn )
     }
 
     nNTFLevel = atoi(oVHR.GetField( 57, 57 ));
-    CPLAssert( nNTFLevel >= 1 && nNTFLevel <= 3 );
+    CPLAssert( nNTFLevel >= 1 && nNTFLevel <= 5 );
 
 /* -------------------------------------------------------------------- */
 /*      Read records till we get the section header.                    */
@@ -501,6 +504,9 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
         poLine->setNumPoints( nOutCount );
     }
 
+    if( poGeometry != NULL )
+        poGeometry->assignSpatialReference( poDS->GetSpatialRef() );
+
     return poGeometry;
 }
 
@@ -577,6 +583,9 @@ OGRGeometry *NTFFileReader::ProcessGeometry3D( NTFRecord * poRecord,
         poLine->setNumPoints( nOutCount );
     }
 
+    if( poGeometry != NULL )
+        poGeometry->assignSpatialReference( poDS->GetSpatialRef() );
+    
     return poGeometry;
 }
 
@@ -1203,11 +1212,10 @@ OGRFeature * NTFFileReader::ReadOGRFeature( OGRNTFLayer * poTargetLayer )
         {
             // should this be a real error?
             CPLDebug( "NTF",
-                      "FeatureTranslate() failed for a %d record group in\n"
-                      "a %s type file.\n",
+                      "FeatureTranslate() failed for a type %d record group\n"
+                      "in a %s type file.\n",
                       papoGroup[0]->GetType(),
                       GetProduct() );
-            CPLAssert( FALSE );
         }
     }
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/09/29 16:44:18  warmerda
+ * added spatial ref handling
+ *
  * Revision 1.6  1999/09/14 01:34:36  warmerda
  * added scale support, and generation of TEXT_HT_GROUND
  *
@@ -321,6 +324,8 @@ class OGRNTFLayer : public OGRLayer
     
     int                 TestCapability( const char * );
 
+    virtual OGRSpatialReference *GetSpatialRef();
+
     // special to NTF
     OGRFeature         *FeatureTranslate( NTFFileReader *, NTFRecord ** );
 };
@@ -381,6 +386,8 @@ class OGRNTFDataSource : public OGRDataSource
     int			nFCCount;
     int                *panFCNum;
     char              **papszFCName;
+
+    OGRSpatialReference *poSpatialRef;
     
   public:
     			OGRNTFDataSource();
@@ -409,6 +416,8 @@ class OGRNTFDataSource : public OGRDataSource
 
     int		         GetFCCount() { return nFCCount; }
     int                  GetFeatureClass( int, int *, char ** );
+
+    OGRSpatialReference *GetSpatialRef() { return poSpatialRef; }
 };
 
 /************************************************************************/

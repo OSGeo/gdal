@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/09/29 16:44:08  warmerda
+ * added spatial ref handling
+ *
  * Revision 1.3  1999/09/09 16:28:14  warmerda
  * Removed ifdef'ed out methods.
  *
@@ -220,4 +223,14 @@ OGRFeature * OGRNTFLayer::FeatureTranslate( NTFFileReader *poReader,
         return NULL;
 
     return pfnTranslator( poReader, this, papoGroup );
+}
+
+/************************************************************************/
+/*                           GetSpatialRef()                            */
+/************************************************************************/
+
+OGRSpatialReference *OGRNTFLayer::GetSpatialRef()
+
+{
+    return poDS->GetSpatialRef();
 }
