@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/12/26 16:14:53  fwarmerdam
+ * added -tps flag
+ *
  * Revision 1.14  2004/11/29 15:01:55  fwarmerdam
  * Fixed typo in printf as per Bug 691.
  *
@@ -138,7 +141,7 @@ static void Usage()
 {
     printf( 
         "Usage: gdalwarp [--help-general] [--formats]\n"
-        "    [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]\n"
+        "    [-s_srs srs_def] [-t_srs srs_def] [-order n] ] [-tps] [-et err_threshold]\n"
         "    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
         "    [-wo \"NAME=VALUE\"] [-ot Byte/Int16/...] [-wt Byte/Int16]\n"
         "    [-srcnodata value [value...]] [-dstnodata value [value...]] -dstalpha\n" 
@@ -253,6 +256,10 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-order") && i < argc-1 )
         {
             nOrder = atoi(argv[++i]);
+        }
+        else if( EQUAL(argv[i],"-tps") )
+        {
+            nOrder = -1;
         }
         else if( EQUAL(argv[i],"-et") && i < argc-1 )
         {
