@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/09/03 13:34:45  warmerda
+ * added duplicate flag on GetNextRecord
+ *
  * Revision 1.7  1999/09/03 13:01:39  warmerda
  * added docs
  *
@@ -153,7 +156,8 @@ int SDTSAttrReader::Open( const char *pszFilename )
 /************************************************************************/
 
 DDFField *SDTSAttrReader::GetNextRecord( SDTSModId * poModId,
-                                         DDFRecord ** ppoRecord )
+                                         DDFRecord ** ppoRecord,
+                                         int bDuplicate )
 
 {
     DDFRecord	*poRecord;
@@ -172,6 +176,13 @@ DDFField *SDTSAttrReader::GetNextRecord( SDTSModId * poModId,
 
     if( poRecord == NULL )
         return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Make a copy of the record for persistent use if requested by    */
+/*      the caller.                                                     */
+/* -------------------------------------------------------------------- */
+    if( bDuplicate )
+        poRecord = poRecord->Clone();
 
 /* -------------------------------------------------------------------- */
 /*      Find the ATTP field.                                            */
@@ -220,7 +231,7 @@ SDTSAttrRecord *SDTSAttrReader::GetNextAttrRecord()
     SDTSModId   oModId;
     SDTSAttrRecord *poAttrRecord;
 
-    poATTRField = GetNextRecord( &oModId, &poRawRecord );
+    poATTRField = GetNextRecord( &oModId, &poRawRecord, TRUE );
 
     if( poATTRField == NULL )
         return NULL;

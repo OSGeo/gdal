@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  1999/09/03 13:34:45  warmerda
+ * added duplicate flag on GetNextRecord
+ *
  * Revision 1.14  1999/09/03 13:01:39  warmerda
  * added docs
  *
@@ -420,7 +423,8 @@ class SDTSAttrReader : public SDTSIndexedReader
 
     int         Open( const char * );
     DDFField	*GetNextRecord( SDTSModId * = NULL,
-                                DDFRecord ** = NULL );
+                                DDFRecord ** = NULL,
+                                int bDuplicate = FALSE );
     SDTSAttrRecord *GetNextAttrRecord();
     void	Close();
 
