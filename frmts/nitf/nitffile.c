@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/04/15 20:52:44  warmerda
+ * added metadata extraction
+ *
  * Revision 1.14  2003/09/11 19:51:55  warmerda
  * avoid type casting warnings
  *
@@ -191,6 +194,85 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 /*      Get version.                                                    */
 /* -------------------------------------------------------------------- */
     NITFGetField( psFile->szVersion, pachHeader, 0, 9 );
+
+/* -------------------------------------------------------------------- */
+/*      Collect a variety of information as metadata.                   */
+/* -------------------------------------------------------------------- */
+#define GetMD( target, hdr, start, length, name )              \
+{                                                              \
+        char szWork2[400];                                     \
+        int  iWork;                                            \
+        NITFGetField( szWork2, hdr, start, length );           \
+        iWork = length - 1;                                    \
+        while( iWork >= 0 && szWork2[iWork] == ' ' )           \
+            szWork2[iWork--] = '\0';                           \
+        target->papszMetadata =                                \
+            CSLSetNameValue( target->papszMetadata, "NITF_" #name, szWork2 ); \
+}
+       
+    if( EQUAL(psFile->szVersion,"NITF02.10") )
+    {
+        char szWork[100];
+
+        GetMD( psFile, pachHeader,   0,   9, FHDR   );
+        GetMD( psFile, pachHeader,   9,   2, CLEVEL );
+        GetMD( psFile, pachHeader,  11,   4, STYPE  );
+        GetMD( psFile, pachHeader,  15,  10, OSTAID );
+        GetMD( psFile, pachHeader,  25,  14, FDT    );
+        GetMD( psFile, pachHeader,  39,  80, FTITLE );
+        GetMD( psFile, pachHeader, 119,   1, FSCLAS );
+        GetMD( psFile, pachHeader, 120,   2, FSCLSY );
+        GetMD( psFile, pachHeader, 122,  11, FSCODE );
+        GetMD( psFile, pachHeader, 133,   2, FSCTLH );
+        GetMD( psFile, pachHeader, 135,  20, FSREL  );
+        GetMD( psFile, pachHeader, 155,   2, FSDCTP );
+        GetMD( psFile, pachHeader, 157,   8, FSDCDT );
+        GetMD( psFile, pachHeader, 165,   4, FSDCXM );
+        GetMD( psFile, pachHeader, 169,   1, FSDG   );
+        GetMD( psFile, pachHeader, 170,   8, FSDGDT );
+        GetMD( psFile, pachHeader, 178,  43, FSCLTX );
+        GetMD( psFile, pachHeader, 221,   1, FSCATP );
+        GetMD( psFile, pachHeader, 222,  40, FSCAUT );
+        GetMD( psFile, pachHeader, 262,   1, FSCRSN );
+        GetMD( psFile, pachHeader, 263,   8, FSSRDT );
+        GetMD( psFile, pachHeader, 271,  15, FSCTLN );
+        GetMD( psFile, pachHeader, 286,   5, FSCOP  );
+        GetMD( psFile, pachHeader, 291,   5, FSCPYS );
+        GetMD( psFile, pachHeader, 296,   1, ENCRYP );
+        sprintf( szWork, "%3d,%3d,%3d", 
+                 pachHeader[297], pachHeader[298], pachHeader[299] );
+        GetMD( psFile, szWork, 0, 11, FBKGC );
+        GetMD( psFile, pachHeader, 300,  24, ONAME  );
+        GetMD( psFile, pachHeader, 324,  18, OPHONE );
+    }
+    else if( EQUAL(psFile->szVersion,"NITF02.00") )
+    {
+        int nCOff = 0;
+
+        GetMD( psFile, pachHeader,   0,   9, FHDR   );
+        GetMD( psFile, pachHeader,   9,   2, CLEVEL );
+        GetMD( psFile, pachHeader,  11,   4, STYPE  );
+        GetMD( psFile, pachHeader,  15,  10, OSTAID );
+        GetMD( psFile, pachHeader,  25,  14, FDT    );
+        GetMD( psFile, pachHeader,  39,  80, FTITLE );
+        GetMD( psFile, pachHeader, 119,   1, FSCLAS );
+        GetMD( psFile, pachHeader, 120,  40, FSCODE );
+        GetMD( psFile, pachHeader, 160,  40, FSCTLH );
+        GetMD( psFile, pachHeader, 200,  40, FSREL  );
+        GetMD( psFile, pachHeader, 240,  20, FSCAUT );
+        GetMD( psFile, pachHeader, 260,  20, FSCTLN );
+        GetMD( psFile, pachHeader, 280,   6, FSDWNG );
+        if( EQUALN(pachHeader+280,"999998",6) )
+        {
+            GetMD( psFile, pachHeader, 286,  40, FSDEVT );
+            nCOff += 40;
+        }
+        GetMD( psFile, pachHeader, 286+nCOff,   5, FSCOP  );
+        GetMD( psFile, pachHeader, 291+nCOff,   5, FSCPYS );
+        GetMD( psFile, pachHeader, 296+nCOff,   1, ENCRYP );
+        GetMD( psFile, pachHeader, 297+nCOff,  27, ONAME  );
+        GetMD( psFile, pachHeader, 324+nCOff,  18, OPHONE );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Collect segment info for the types we care about.               */
