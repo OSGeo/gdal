@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.11  2004/05/03 20:00:54  warmerda
+# Don't double up no_defs.
+#
 # Revision 1.10  2004/05/03 19:58:56  warmerda
 # Fixed up PROJ.4 error handling.
 #
@@ -113,7 +116,7 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
             print '# '+name
             
             if err == 0 and string.find(out_string,'+proj=') > -1:
-                print '<%s> %s no_defs <>' % (str(code), out_string)
+                print '<%s> %s <>' % (str(code), out_string)
             else:
                 print '# Unable to translate coordinate system into PROJ.4 format.'
                 print '#'
