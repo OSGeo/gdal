@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/12/30 20:28:20  fwarmerdam
+ * Added some documentation.
+ *
  * Revision 1.2  2004/12/30 20:21:13  fwarmerdam
  * dos to unix
  *
@@ -68,6 +71,20 @@ typedef struct
 
 /**
  * Create Thin Plate Spline transformer from GCPs.
+ *
+ * The thin plate spline transformer produces exact transformation
+ * at all control points and smoothly varying transformations between
+ * control points with greatest influence from local control points. 
+ * It is suitable for for many applications not well modelled by polynomial
+ * transformations. 
+ *
+ * Creating the TPS transformer involves solving systems of linear equations
+ * related to the number of control points involved.  This solution is
+ * computed within this function call.  It can be quite an expensive operation
+ * for large numbers of GCPs.  For instance, for reference, it takes on the 
+ * order of 10s for 400 GCPs on a 2GHz Athlon processor. 
+ *
+ * TPS Transformers are serializable. 
  *
  * @param nGCPCount the number of GCPs in pasGCPList.
  * @param pasGCPList an array of GCPs to be used as input.
@@ -169,7 +186,7 @@ void GDALDestroyTPSTransformer( void *pTransformArg )
  *
  * This function matches the GDALTransformerFunc signature, and can be
  * used to transform one or more points from pixel/line coordinates to
- * georeferenced coordinates (SrcToDst) or vice versa (DstToSrc). 
+ * georeferenced coordinates (SrcToDst) or vice versa (DstToSrc).
  *
  * @param pTransformArg return value from GDALCreateTPSTransformer(). 
  * @param bDstToSrc TRUE if transformation is from the destination 
