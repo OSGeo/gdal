@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/07/29 18:00:44  warmerda
+ * modified quoting rules for WKT to more closely match standard examples
+ *
  * Revision 1.1  1999/06/25 20:20:53  warmerda
  * New
  *
@@ -286,23 +289,42 @@ OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult )
     *ppszResult[0] = '\0';
     
 /* -------------------------------------------------------------------- */
+/*      Do we need to quote this value?  Determine whether or not       */
+/*      this is a terminal string value.                                */
+/* -------------------------------------------------------------------- */
+    int		bNeedQuoting = FALSE;
+
+    if( GetChildCount() == 0 )
+    {
+        for( i = 0; pszValue[i] != '\0'; i++ )
+        {
+            if( !isdigit(pszValue[i]) && pszValue[i] != '.'
+                && pszValue[i] != '-' && pszValue[i] != '+'
+                && pszValue[i] != 'e' && pszValue[i] != 'E' )
+                bNeedQuoting = TRUE;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Capture this nodes value.  We put it in double quotes if        */
 /*      this is a leaf node, otherwise we assume it is a well formed    */
 /*      node name.                                                      */
 /* -------------------------------------------------------------------- */
-    if( nChildren == 0 )
+    if( bNeedQuoting )
+    {
         strcat( *ppszResult, "\"" );
-    strcat( *ppszResult, pszValue );
-
-    if( nChildren == 0 )
+        strcat( *ppszResult, pszValue ); /* should we do quoting? */
         strcat( *ppszResult, "\"" );
-
-    if( nChildren > 0 )
-        strcat( *ppszResult, "[" );
+    }
+    else
+        strcat( *ppszResult, pszValue );
 
 /* -------------------------------------------------------------------- */
 /*      Add the children strings with appropriate brackets and commas.  */
 /* -------------------------------------------------------------------- */
+    if( nChildren > 0 )
+        strcat( *ppszResult, "[" );
+    
     for( i = 0; i < nChildren; i++ )
     {
         strcat( *ppszResult, papszChildrenWkt[i] );
