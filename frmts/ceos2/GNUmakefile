@@ -3,7 +3,8 @@ GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	ceosopen.o ceosdataset.o
+OBJ	=	sar_ceosdataset.o \
+		ceosrecipe.o ceossar.o ceos.o link.o
 
 
 default:	$(OBJ)
@@ -17,9 +18,6 @@ clean:
 %.o:	%.cpp
 	$(CXX) -c $(CXXFLAGS) $(GDAL_INCLUDE) $*.cpp -o $*.o
 
-
-ceostest:	ceostest.o ceosopen.o
-	$(CXX) ceostest.o ceosopen.o $(GDAL_ROOT)/port/*.o $(LIBS) -o ceostest
 
 install-obj:	$(foreach file,$(OBJ),../o/$(file))
 
