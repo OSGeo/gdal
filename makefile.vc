@@ -22,9 +22,12 @@ clean:
 	$(MAKE) /f makefile.vc clean
 	cd ..
 	cd ogr
-	$(MAKE) clean
+	$(MAKE) allclean
 	cd ..
 	cd apps
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd pymod
 	$(MAKE) /f makefile.vc clean
 	cd ..
 
