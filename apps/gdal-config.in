@@ -8,6 +8,7 @@ Options:
 	[--cflags]
 	[--version]
 	[--ogr-enabled]
+	[--formats]
 EOF
 	exit $1
 }
@@ -35,6 +36,10 @@ case $1 in
 
   --ogr-enabled)
     echo $CONFIG_OGR_ENABLED
+    ;;
+
+  --formats)
+    echo $CONFIG_FORMATS
     ;;
 
   *)
