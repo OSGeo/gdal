@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2003/11/12 21:24:23  warmerda
+ * updates to new featuredefn generators
+ *
  * Revision 1.25  2003/09/15 20:53:06  warmerda
  * fleshed out feature writing
  *
@@ -129,6 +132,14 @@ char **S57FileCollector( const char * pszDataset );
 #define S57O_PRESERVE_EMPTY_NUMBERS "PRESERVE_EMPTY_NUMBERS"
 #define S57O_RETURN_PRIMITIVES "RETURN_PRIMITIVES"
 #define S57O_RETURN_LINKAGES "RETURN_LINKAGES"
+
+#define S57M_UPDATES 			0x01
+#define S57M_LNAM_REFS 			0x02
+#define S57M_SPLIT_MULTIPOINT           0x04
+#define S57M_ADD_SOUNDG_DEPTH		0x08
+#define S57M_PRESERVE_EMPTY_NUMBERS	0x10
+#define S57M_RETURN_PRIMITIVES		0x20
+#define S57M_RETURN_LINKAGES		0x40
 
 /* -------------------------------------------------------------------- */
 /*      RCNM values.                                                    */
@@ -311,15 +322,10 @@ class S57Reader
     char                **papszOptions;
     int                 bGenerateLNAM;
 
-    int                 bReturnPrimitives;
-    int                 bReturnLinkages;
-    int                 bSplitMultiPoint;
-    int                 bAddSOUNDGDepth;
+    int                 nOptionFlags; 
+
     int                 iPointOffset;
     OGRFeature          *poMultiPoint;
-
-    int                 bAutoReadUpdates;
-    int                 bPreserveEmptyNumbers;
 
     void                ClearPendingMultiPoint();
     OGRFeature         *NextPendingMultiPoint();
@@ -341,8 +347,6 @@ class S57Reader
     OGRFeatureDefn     *FindFDefn( DDFRecord * );
     int                 ParseName( DDFField *, int = 0, int * = NULL );
 
-    void                GenerateStandardAttributes( OGRFeatureDefn * );
-
     int                 ApplyRecordUpdate( DDFRecord *, DDFRecord * );
 
     int                 bMissingWarningIssued;
@@ -354,6 +358,7 @@ class S57Reader
 
     void                SetClassBased( S57ClassRegistrar * );
     void                SetOptions( char ** );
+    int                 GetOptionFlags() { return nOptionFlags; }
 
     int                 Open( int bTestOpen );
     void                Close();
@@ -376,12 +381,9 @@ class S57Reader
 
     int                 CollectClassList( int *, int);
 
-    OGRFeatureDefn  *GenerateGeomFeatureDefn( OGRwkbGeometryType );
-    OGRFeatureDefn  *GenerateObjectClassDefn( S57ClassRegistrar *, int );
-    OGRFeatureDefn  *GenerateVectorPrimitiveFeatureDefn( int );
-
     OGRErr              GetExtent( OGREnvelope *psExtent, int bForce );
-};
+
+ };
 
 /************************************************************************/
 /*                              S57Writer                               */
@@ -420,5 +422,14 @@ private:
     int                 nCOMF;  /* Coordinate multiplier */
     int                 nSOMF;  /* Vertical (sounding) multiplier */
 };
+
+/* -------------------------------------------------------------------- */
+/*      Functions to create OGRFeatureDefns.                            */
+/* -------------------------------------------------------------------- */
+void           CPL_DLL  S57GenerateStandardAttributes( OGRFeatureDefn *, int );
+OGRFeatureDefn CPL_DLL *S57GenerateGeomFeatureDefn( OGRwkbGeometryType, int );
+OGRFeatureDefn CPL_DLL *S57GenerateObjectClassDefn( S57ClassRegistrar *, 
+                                                    int, int );
+OGRFeatureDefn CPL_DLL  *S57GenerateVectorPrimitiveFeatureDefn( int, int );
 
 #endif /* ndef _S57_H_INCLUDED */

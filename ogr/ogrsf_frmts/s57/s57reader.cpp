@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2003/11/12 21:23:40  warmerda
+ * updates to new featuredefn generators
+ *
  * Revision 1.42  2003/09/15 20:53:06  warmerda
  * fleshed out feature writing
  *
@@ -184,7 +187,6 @@ S57Reader::S57Reader( const char * pszFilename )
 
     poRegistrar = NULL;
     bFileIngested = FALSE;
-    bAutoReadUpdates = TRUE;
 
     nNextFEIndex = 0;
     nNextVIIndex = 0;
@@ -196,11 +198,8 @@ S57Reader::S57Reader( const char * pszFilename )
     poMultiPoint = NULL;
 
     papszOptions = NULL;
-    bSplitMultiPoint = FALSE;
-    bGenerateLNAM = FALSE;
-    bAddSOUNDGDepth = FALSE;
-    bReturnPrimitives = FALSE;
-    bReturnLinkages = FALSE;
+
+    nOptionFlags = S57M_UPDATES;
 
     bMissingWarningIssued = FALSE;
     bAttrWarningIssued = FALSE;
@@ -311,7 +310,6 @@ void S57Reader::ClearPendingMultiPoint()
         delete poMultiPoint;
         poMultiPoint = NULL;
     }
-        
 }
 
 /************************************************************************/
@@ -363,49 +361,49 @@ void S57Reader::SetOptions( char ** papszOptionsIn )
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_SPLIT_MULTIPOINT );
     if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
-        bSplitMultiPoint = TRUE;
+        nOptionFlags |= S57M_SPLIT_MULTIPOINT;
     else
-        bSplitMultiPoint = FALSE;
+        nOptionFlags &= ~S57M_SPLIT_MULTIPOINT;
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_ADD_SOUNDG_DEPTH );
     if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
-        bAddSOUNDGDepth = TRUE;
+        nOptionFlags |= S57M_ADD_SOUNDG_DEPTH;
     else
-        bAddSOUNDGDepth = FALSE;
+        nOptionFlags &= ~S57M_ADD_SOUNDG_DEPTH;
 
-    CPLAssert( !bAddSOUNDGDepth || bSplitMultiPoint );
+    CPLAssert( ! (nOptionFlags & S57M_ADD_SOUNDG_DEPTH)
+               || (nOptionFlags & S57M_SPLIT_MULTIPOINT) );
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_LNAM_REFS );
     if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
-        bGenerateLNAM = TRUE;
+        nOptionFlags |= S57M_LNAM_REFS;
     else
-        bGenerateLNAM = FALSE;
+        nOptionFlags &= ~S57M_LNAM_REFS;
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_UPDATES );
     if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"APPLY") )
-        bAutoReadUpdates = FALSE;
+        nOptionFlags |= S57M_UPDATES;
     else
-        bAutoReadUpdates = TRUE;
+        nOptionFlags &= ~S57M_UPDATES;
 
     pszOptionValue = CSLFetchNameValue(papszOptions, 
                                        S57O_PRESERVE_EMPTY_NUMBERS);
     if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
-        bPreserveEmptyNumbers = TRUE;
+        nOptionFlags |= S57M_PRESERVE_EMPTY_NUMBERS;
     else
-        bPreserveEmptyNumbers = FALSE;
+        nOptionFlags &= ~S57M_PRESERVE_EMPTY_NUMBERS;
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_RETURN_PRIMITIVES );
     if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
-        bReturnPrimitives = TRUE;
+        nOptionFlags |= S57M_RETURN_PRIMITIVES;
     else
-        bReturnPrimitives = FALSE;
+        nOptionFlags &= ~S57M_RETURN_PRIMITIVES;
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_RETURN_LINKAGES );
     if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
-        bReturnLinkages = TRUE;
+        nOptionFlags |= S57M_RETURN_LINKAGES;
     else
-        bReturnLinkages = FALSE;
-
+        nOptionFlags &= ~S57M_RETURN_LINKAGES;
 }
 
 /************************************************************************/
@@ -518,7 +516,7 @@ void S57Reader::Ingest()
 /* -------------------------------------------------------------------- */
 /*      If update support is enabled, read and apply them.              */
 /* -------------------------------------------------------------------- */
-    if( bAutoReadUpdates )
+    if( nOptionFlags & S57M_UPDATES )
         FindAndApplyUpdates();
 }
 
@@ -593,7 +591,7 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
 /* -------------------------------------------------------------------- */
 /*      Next vector feature?                                            */
 /* -------------------------------------------------------------------- */
-    if( bReturnPrimitives )
+    if( nOptionFlags & S57M_RETURN_PRIMITIVES )
     {
         int nRCNM = 0;
         int *pnCounter = NULL;
@@ -666,7 +664,8 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
         poFeature = ReadFeature( nNextFEIndex++, poTarget );
         if( poFeature != NULL )
         {
-            if( bSplitMultiPoint && poFeature->GetGeometryRef() != NULL
+            if( (nOptionFlags & S57M_SPLIT_MULTIPOINT)
+                && poFeature->GetGeometryRef() != NULL
                 && wkbFlatten(poFeature->GetGeometryRef()->getGeometryType())
                                                         == wkbMultiPoint)
             {
@@ -775,7 +774,7 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
 /* -------------------------------------------------------------------- */
 /*      Generate primitive references if requested.                     */
 /* -------------------------------------------------------------------- */
-    if( bReturnLinkages )
+    if( nOptionFlags & S57M_RETURN_LINKAGES )
         GenerateFSPTAttributes( poRecord, poFeature );
 
 /* -------------------------------------------------------------------- */
@@ -877,7 +876,7 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
         {
             if( strlen(pszValue) == 0 )
             {
-                if( bPreserveEmptyNumbers )
+                if( nOptionFlags & S57M_PRESERVE_EMPTY_NUMBERS )
                     poFeature->SetField( iField, EMPTY_NUMBER_MARKER );
                 else
                     /* leave as null if value was empty string */;
@@ -1806,354 +1805,6 @@ void S57Reader::AddFeatureDefn( OGRFeatureDefn * poFDefn )
         CPLRealloc(papoFDefnList, sizeof(OGRFeatureDefn*)*nFDefnCount );
 
     papoFDefnList[nFDefnCount-1] = poFDefn;
-}
-
-/************************************************************************/
-/*                     GenerateStandardAttributes()                     */
-/*                                                                      */
-/*      Attach standard feature attributes to a feature definition.     */
-/************************************************************************/
-
-void S57Reader::GenerateStandardAttributes( OGRFeatureDefn *poFDefn )
-
-{
-    OGRFieldDefn        oField( "", OFTInteger );
-
-/* -------------------------------------------------------------------- */
-/*      RCID                                                            */
-/* -------------------------------------------------------------------- */
-    oField.Set( "RCID", OFTInteger, 10, 0 );
-    poFDefn->AddFieldDefn( &oField );
-
-/* -------------------------------------------------------------------- */
-/*      PRIM                                                            */
-/* -------------------------------------------------------------------- */
-    oField.Set( "PRIM", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
-
-/* -------------------------------------------------------------------- */
-/*      GRUP                                                            */
-/* -------------------------------------------------------------------- */
-    oField.Set( "GRUP", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
-
-/* -------------------------------------------------------------------- */
-/*      OBJL                                                            */
-/* -------------------------------------------------------------------- */
-    oField.Set( "OBJL", OFTInteger, 5, 0 );
-    poFDefn->AddFieldDefn( &oField );
-
-/* -------------------------------------------------------------------- */
-/*      RVER                                                            */
-/* -------------------------------------------------------------------- */
-    oField.Set( "RVER", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
-
-/* -------------------------------------------------------------------- */
-/*      AGEN                                                            */
-/* -------------------------------------------------------------------- */
-    oField.Set( "AGEN", OFTInteger, 5, 0 );
-    poFDefn->AddFieldDefn( &oField );
-
-/* -------------------------------------------------------------------- */
-/*      FIDN                                                            */
-/* -------------------------------------------------------------------- */
-    oField.Set( "FIDN", OFTInteger, 10, 0 );
-    poFDefn->AddFieldDefn( &oField );
-
-/* -------------------------------------------------------------------- */
-/*      FIDS                                                            */
-/* -------------------------------------------------------------------- */
-    oField.Set( "FIDS", OFTInteger, 5, 0 );
-    poFDefn->AddFieldDefn( &oField );
-
-/* -------------------------------------------------------------------- */
-/*      LNAM - only generated when LNAM strings are being used.         */
-/* -------------------------------------------------------------------- */
-    if( bGenerateLNAM )
-    {
-        oField.Set( "LNAM", OFTString, 16, 0 );
-        poFDefn->AddFieldDefn( &oField );
-        
-        oField.Set( "LNAM_REFS", OFTStringList, 16, 0 );
-        poFDefn->AddFieldDefn( &oField );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      LNAM - only generated when LNAM strings are being used.         */
-/* -------------------------------------------------------------------- */
-    if( bReturnLinkages )
-    {
-        oField.Set( "NAME_RCNM", OFTIntegerList, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
-        
-        oField.Set( "NAME_RCID", OFTIntegerList, 10, 0 );
-        poFDefn->AddFieldDefn( &oField );
-        
-        oField.Set( "ORNT", OFTIntegerList, 1, 0 );
-        poFDefn->AddFieldDefn( &oField );
-        
-        oField.Set( "USAG", OFTIntegerList, 1, 0 );
-        poFDefn->AddFieldDefn( &oField );
-
-        oField.Set( "MASK", OFTIntegerList, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
-    }
-}
-
-/************************************************************************/
-/*                      GenerateGeomFeatureDefn()                       */
-/************************************************************************/
-
-OGRFeatureDefn *S57Reader::GenerateGeomFeatureDefn( OGRwkbGeometryType eGType )
-
-{
-    OGRFeatureDefn      *poFDefn = NULL;
-    
-    if( eGType == wkbPoint )                                            
-    {
-        poFDefn = new OGRFeatureDefn( "Point" );
-        poFDefn->SetGeomType( eGType );
-    }
-    else if( eGType == wkbLineString )
-    {
-        poFDefn = new OGRFeatureDefn( "Line" );
-        poFDefn->SetGeomType( eGType );
-    }
-    else if( eGType == wkbPolygon )
-    {
-        poFDefn = new OGRFeatureDefn( "Area" );
-        poFDefn->SetGeomType( eGType );
-    }
-    else if( eGType == wkbNone )
-    {
-        poFDefn = new OGRFeatureDefn( "Meta" );
-        poFDefn->SetGeomType( eGType );
-    }
-    else if( eGType == wkbUnknown )
-    {
-        poFDefn = new OGRFeatureDefn( "Generic" );
-        poFDefn->SetGeomType( eGType );
-    }
-    else
-        return NULL;
-
-    GenerateStandardAttributes( poFDefn );
-
-    return poFDefn;
-}
-
-/************************************************************************/
-/*                 GenerateVectorPrimitiveFeatureDefn()                 */
-/************************************************************************/
-
-OGRFeatureDefn *S57Reader::GenerateVectorPrimitiveFeatureDefn( int nRCNM )
-
-{
-    OGRFeatureDefn      *poFDefn = NULL;
- 
-    if( nRCNM == RCNM_VI )
-    {
-        poFDefn = new OGRFeatureDefn( OGRN_VI );
-        poFDefn->SetGeomType( wkbPoint );
-    }
-    else if( nRCNM == RCNM_VC )
-    {
-        poFDefn = new OGRFeatureDefn( OGRN_VC );
-        poFDefn->SetGeomType( wkbPoint );
-    }
-    else if( nRCNM == RCNM_VE )
-    {
-        poFDefn = new OGRFeatureDefn( OGRN_VE );
-        poFDefn->SetGeomType( wkbLineString );
-    }
-    else if( nRCNM == RCNM_VF )
-    {
-        poFDefn = new OGRFeatureDefn( OGRN_VF );
-        poFDefn->SetGeomType( wkbPolygon );
-    }
-    else
-        return NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Core vector primitive attributes                                */
-/* -------------------------------------------------------------------- */
-    OGRFieldDefn oField("",OFTInteger);
-
-    oField.Set( "RCNM", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
-
-    oField.Set( "RCID", OFTInteger, 8, 0 );
-    poFDefn->AddFieldDefn( &oField );
-
-    oField.Set( "RVER", OFTInteger, 2, 0 );
-    poFDefn->AddFieldDefn( &oField );
-
-    oField.Set( "RUIN", OFTInteger, 2, 0 );
-    poFDefn->AddFieldDefn( &oField );
-
-/* -------------------------------------------------------------------- */
-/*      For lines we want to capture the point links for the first      */
-/*      and last nodes.                                                 */
-/* -------------------------------------------------------------------- */
-    if( nRCNM == RCNM_VE )
-    {
-        oField.Set( "NAME_RCNM_0", OFTInteger, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
-
-        oField.Set( "NAME_RCID_0", OFTInteger, 8, 0 );
-        poFDefn->AddFieldDefn( &oField );
-
-        oField.Set( "ORNT_0", OFTInteger, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
-
-        oField.Set( "USAG_0", OFTInteger, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
-
-        oField.Set( "TOPI_0", OFTInteger, 1, 0 );
-        poFDefn->AddFieldDefn( &oField );
-
-        oField.Set( "MASK_0", OFTInteger, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
-
-        oField.Set( "NAME_RCNM_1", OFTInteger, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
-
-        oField.Set( "NAME_RCID_1", OFTInteger, 8, 0 );
-        poFDefn->AddFieldDefn( &oField );
-
-        oField.Set( "ORNT_1", OFTInteger, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
-
-        oField.Set( "USAG_1", OFTInteger, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
-
-        oField.Set( "TOPI_1", OFTInteger, 1, 0 );
-        poFDefn->AddFieldDefn( &oField );
-
-        oField.Set( "MASK_1", OFTInteger, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
-    }
-
-    return poFDefn;
-}
-
-/************************************************************************/
-/*                      GenerateObjectClassDefn()                       */
-/************************************************************************/
-
-OGRFeatureDefn *S57Reader::GenerateObjectClassDefn( S57ClassRegistrar *poCR,
-                                                    int nOBJL )
-
-{
-    OGRFeatureDefn      *poFDefn = NULL;
-    char               **papszGeomPrim;
-
-    if( !poCR->SelectClass( nOBJL ) )
-        return NULL;
-    
-/* -------------------------------------------------------------------- */
-/*      Create the feature definition based on the object class         */
-/*      acronym.                                                        */
-/* -------------------------------------------------------------------- */
-    poFDefn = new OGRFeatureDefn( poCR->GetAcronym() );
-
-/* -------------------------------------------------------------------- */
-/*      Try and establish the geometry type.  If more than one          */
-/*      geometry type is allowed we just fall back to wkbUnknown.       */
-/* -------------------------------------------------------------------- */
-    papszGeomPrim = poCR->GetPrimitives();
-    if( CSLCount(papszGeomPrim) == 0 )
-    {
-        poFDefn->SetGeomType( wkbNone );
-    }
-    else if( CSLCount(papszGeomPrim) > 1 )
-    {
-        // leave as unknown geometry type.
-    }
-    else if( EQUAL(papszGeomPrim[0],"Point") )
-    {
-        if( EQUAL(poCR->GetAcronym(),"SOUNDG") )
-        {
-            if( bSplitMultiPoint )
-                poFDefn->SetGeomType( wkbPoint25D );
-            else
-                poFDefn->SetGeomType( wkbMultiPoint );
-        }
-        else
-            poFDefn->SetGeomType( wkbPoint );
-    }
-    else if( EQUAL(papszGeomPrim[0],"Area") )
-    {
-        poFDefn->SetGeomType( wkbPolygon );
-    }
-    else if( EQUAL(papszGeomPrim[0],"Line") )
-    {
-        poFDefn->SetGeomType( wkbLineString );
-    }
-    
-/* -------------------------------------------------------------------- */
-/*      Add the standard attributes.                                    */
-/* -------------------------------------------------------------------- */
-    GenerateStandardAttributes( poFDefn );
-
-/* -------------------------------------------------------------------- */
-/*      Add the attributes specific to this object class.               */
-/* -------------------------------------------------------------------- */
-    char        **papszAttrList = poCR->GetAttributeList();
-
-    for( int iAttr = 0;
-         papszAttrList != NULL && papszAttrList[iAttr] != NULL;
-         iAttr++ )
-    {
-        int     iAttrIndex = poCR->FindAttrByAcronym( papszAttrList[iAttr] );
-
-        if( iAttrIndex == -1 )
-        {
-            CPLDebug( "S57", "Can't find attribute %s from class %s:%s.\n",
-                      papszAttrList[iAttr],
-                      poCR->GetAcronym(),
-                      poCR->GetDescription() );
-            continue;
-        }
-
-        OGRFieldDefn    oField( papszAttrList[iAttr], OFTInteger );
-        
-        switch( poCR->GetAttrType( iAttrIndex ) )
-        {
-          case SAT_ENUM:
-          case SAT_INT:
-            oField.SetType( OFTInteger );
-            break;
-
-          case SAT_FLOAT:
-            oField.SetType( OFTReal );
-            break;
-
-          case SAT_CODE_STRING:
-          case SAT_FREE_TEXT:
-            oField.SetType( OFTString );
-            break;
-
-          case SAT_LIST:
-            oField.SetType( OFTString );
-            break;
-        }
-
-        poFDefn->AddFieldDefn( &oField );
-    }
-
-
-/* -------------------------------------------------------------------- */
-/*      Do we need to add DEPTH attributes to soundings?                */
-/* -------------------------------------------------------------------- */
-    if( EQUAL(poCR->GetAcronym(),"SOUNDG") && bAddSOUNDGDepth )
-    {
-        OGRFieldDefn    oField( "DEPTH", OFTReal );
-        poFDefn->AddFieldDefn( &oField );
-    }
-
-    return poFDefn;
 }
 
 /************************************************************************/

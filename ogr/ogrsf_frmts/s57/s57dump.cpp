@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/11/12 21:23:12  warmerda
+ * updates to new featuredefn generators
+ *
  * Revision 1.15  2003/09/15 20:53:06  warmerda
  * fleshed out feature writing
  *
@@ -161,6 +164,8 @@ int main( int nArgc, char ** papszArgv )
 
         oReader.SetOptions( papszOptions );
         
+        int             nOptionFlags = oReader.GetOptionFlags();
+
         if( !oReader.Open( FALSE ) )
             continue;
 
@@ -189,7 +194,8 @@ int main( int nArgc, char ** papszArgv )
                             oRegistrar.GetDescription() );
                     
                     oReader.AddFeatureDefn(
-                        oReader.GenerateObjectClassDefn( &oRegistrar, i ) );
+                        S57GenerateObjectClassDefn( &oRegistrar, i, 
+                                                    nOptionFlags ) );
                 }
                 else
                 {
@@ -201,31 +207,31 @@ int main( int nArgc, char ** papszArgv )
             if( bGeneric )
             {
                 oReader.AddFeatureDefn(
-                    oReader.GenerateGeomFeatureDefn( wkbUnknown ) );
+                    S57GenerateGeomFeatureDefn( wkbUnknown, nOptionFlags ) );
             }
         }
         else
         {
             oReader.AddFeatureDefn(
-                oReader.GenerateGeomFeatureDefn( wkbPoint ) );
+                S57GenerateGeomFeatureDefn( wkbPoint, nOptionFlags ) );
             oReader.AddFeatureDefn(
-                oReader.GenerateGeomFeatureDefn( wkbLineString ) );
+                S57GenerateGeomFeatureDefn( wkbLineString, nOptionFlags ) );
             oReader.AddFeatureDefn(
-                oReader.GenerateGeomFeatureDefn( wkbPolygon ) );
+                S57GenerateGeomFeatureDefn( wkbPolygon, nOptionFlags ) );
             oReader.AddFeatureDefn(
-                oReader.GenerateGeomFeatureDefn( wkbNone ) );
+                S57GenerateGeomFeatureDefn( wkbNone, nOptionFlags ) );
         }
 
         if( bReturnPrimitives )
         {
             oReader.AddFeatureDefn( 
-                oReader.GenerateVectorPrimitiveFeatureDefn( RCNM_VI ) );
+                S57GenerateVectorPrimitiveFeatureDefn( RCNM_VI, nOptionFlags));
             oReader.AddFeatureDefn( 
-                oReader.GenerateVectorPrimitiveFeatureDefn( RCNM_VC ) );
+                S57GenerateVectorPrimitiveFeatureDefn( RCNM_VC, nOptionFlags));
             oReader.AddFeatureDefn( 
-                oReader.GenerateVectorPrimitiveFeatureDefn( RCNM_VE ) );
+                S57GenerateVectorPrimitiveFeatureDefn( RCNM_VE, nOptionFlags));
             oReader.AddFeatureDefn( 
-                oReader.GenerateVectorPrimitiveFeatureDefn( RCNM_VF ) );
+                S57GenerateVectorPrimitiveFeatureDefn( RCNM_VF, nOptionFlags));
         }
     
         OGRFeature      *poFeature;
