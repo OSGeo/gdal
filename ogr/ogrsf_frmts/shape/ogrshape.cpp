@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/07/07 13:12:47  warmerda
+ * Added spatial searching
+ *
  * Revision 1.1  1999/07/05 18:58:07  warmerda
  * New
  *
@@ -56,6 +59,8 @@ OGRShapeLayer::OGRShapeLayer( SHPHandle hSHPIn, DBFHandle hDBFIn )
 
     iNextShapeId = 0;
 
+    nTotalShapeCount = hSHP->nRecords;
+    
     poFeatureDefn = SHPReadOGRFeatureDefn( hSHP, hDBF );
     
 }
@@ -112,15 +117,27 @@ void OGRShapeLayer::ResetReading()
 OGRFeature *OGRShapeLayer::GetNextFeature( long * pnFeatureId )
 
 {
-    if( iNextShapeId >= nTotalShapeCount )
-    {
-        return NULL;
-    }
-    
-    if( pnFeatureId != NULL )
-        *pnFeatureId = iNextShapeId;
+    OGRFeature	*poFeature;
 
-    return SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, iNextShapeId++ );
+    while( TRUE )
+    {
+        if( iNextShapeId >= nTotalShapeCount )
+        {
+            return NULL;
+        }
+    
+        if( pnFeatureId != NULL )
+            *pnFeatureId = iNextShapeId;
+
+        poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
+                                       iNextShapeId++ );
+
+        if( poFilterGeom == NULL
+            || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+            return poFeature;
+
+        delete poFeature;
+    }        
 }
 
 /************************************************************************/
