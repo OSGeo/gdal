@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/06/08 19:05:27  warmerda
+ * fixed up documentation
+ *
  * Revision 1.2  1999/06/08 16:07:10  warmerda
  * Removed short doc for CreateSFCTable.
  *
@@ -50,10 +53,12 @@ class SFCTable;
 /************************************************************************/
 
 /**
- * Simplified SFCOM Datasource/Data Source interface.
+ * Simplified SFCOM DataSource interface.
  *
- * This class should make it easier to create a datasource, and also
- * abstract the identification of spatial tables.
+ * This class is based on the ATL CDataSource, and adds a convenient
+ * way to instantiate an SFCTable for a particular table in the data source.
+ * This class is intended to include methods for getting a list of spatial
+ * tables for the data source, but this hasn't been implemented yet.
  
    Questions:<p>
 
@@ -62,21 +67,13 @@ class SFCTable;
    <li> Do we want to use CPL error handling mechanisms?  This would help
      capture meaningful text messages for errors within the client side
      API, and make access to IErrorInfo (is that the right name) information
-     easier.
-
-   <li> Should there be an SFCDatasourceManager class to help in identifying all
-     SFCOM datasources installed on a system?
+     easier.  Perhaps the client side code should throw exceptions instead?
 
    <li> Should our methods use BSTR or unicode strings instead of regular char?
 
-   <li> Should we make SFC classes into COM classes/interfaces?
+   <li> Should this class give direct access to the spatial reference system
+   table?
 
-   <li> Should this class have explicit support for the spatial reference
-        system table?
-
-   <li> Should we be limiting application exposure to all the oledb_sup.h
-        definitions?
-        
   </ul>
 
  */
@@ -105,3 +102,6 @@ class SFCDataSource : public CDataSource
 };
 
 #endif /* ndef SFCDATASOURCE_H_INCLUDED */
+
+
+
