@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2001/04/04 16:09:57  warmerda
+ * clarify units and definition of TOWGS84
+ *
  * Revision 1.27  2001/01/22 13:59:55  warmerda
  * added SetSOC
  *
@@ -2870,16 +2873,19 @@ int OSRIsSame( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
  * if there is no existing DATUM node.  Unlike most OGRSpatialReference
  * methods it will insert itself in the appropriate order, and will replace
  * an existing TOWGS84 node if there is one. 
+ *
+ * The parameters have the same meaning as EPSG transformation 9606
+ * (Position Vector 7-param. transformation). 
  * 
  * This method is the same as the C function OSRSetTOWGS84().
  * 
  * @param dfDX X child in meters.
  * @param dfDY Y child in meters.
  * @param dfDZ Z child in meters.
- * @param dfEX X rotation in radians (optional, defaults to zero).
- * @param dfEY Y rotation in radians (optional, defaults to zero).
- * @param dfEZ Z rotation in radians (optional, defaults to zero).
- * @param dfPPM scaling factor.
+ * @param dfEX X rotation in arc seconds (optional, defaults to zero).
+ * @param dfEY Y rotation in arc seconds (optional, defaults to zero).
+ * @param dfEZ Z rotation in arc seconds (optional, defaults to zero).
+ * @param dfPPM scaling factor (parts per million).
  * 
  * @return OGRERR_NONE on success. 
  */ 
