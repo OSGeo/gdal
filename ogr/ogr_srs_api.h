@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/10/11 19:27:12  warmerda
+ * upgraded validation infrastructure
+ *
  * Revision 1.16  2001/10/10 20:42:43  warmerda
  * added ESRI WKT morphing support
  *
@@ -227,9 +230,9 @@ typedef enum {
 
 #define SRS_PM_GREENWICH        "Greenwich"
 
-#define SRS_DN_NAD27            "North American Datum 1927"
-#define SRS_DN_NAD83            "North American Datum 1983"
-#define SRS_DN_WGS84            "World Geodetic System 1984"
+#define SRS_DN_NAD27            "North_American_Datum_1927"
+#define SRS_DN_NAD83            "North_American_Datum_1983"
+#define SRS_DN_WGS84            "WGS_1984"
 
 #define SRS_WGS84_SEMIMAJOR     6378137.0                                
 #define SRS_WGS84_INVFLATTENING 298.257223563
