@@ -10,7 +10,7 @@ model</a> to the calling application for all supported formats.
 The related <a href="ogr">OGR</a> 
 library (which lives within the GDAL source tree) provides
 a similar capability for simple features vector data.
-The <a href="NEWS.html">NEWS</a> page describes the April 2003 
+The <a href="NEWS.html">NEWS</a> page describes the April 2004 
 GDAL 1.2.0 release.<p>
 
 Master Page: <a href="http://www.remotesensing.org/gdal/index.html">
