@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/11/07 17:51:30  warmerda
+ * Added VRT format
+ *
  * Revision 1.15  2003/10/07 05:07:41  warmerda
  * Only include ODBC support if enabled.
  *
@@ -97,6 +100,7 @@ void OGRRegisterAll()
     RegisterOGRAVCBin();
     RegisterOGRREC();
     RegisterOGRMEM();
+    RegisterOGRVRT();
 #ifdef ODBC_ENABLED
     RegisterOGRODBC();
 #endif
