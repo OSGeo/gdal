@@ -1,7 +1,7 @@
 
 OBJ	=	ntf_estlayers.obj ntffilereader.obj ntfrecord.obj \
 		ogrntfdatasource.obj ogrntfdriver.obj ogrntflayer.obj \
-		ogrntffeatureclasslayer.obj 
+		ogrntffeatureclasslayer.obj ntf_generic.obj
 
 EXTRAFLAGS =	-I.. -I..\..
 
