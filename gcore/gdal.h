@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2001/11/18 00:52:15  warmerda
+ * removed GDALProjDef
+ *
  * Revision 1.38  2001/11/16 21:36:01  warmerda
  * added the AddBand() method on GDALDataset
  *
@@ -325,7 +328,8 @@ GDAL_GCP CPL_DLL *GDALDuplicateGCPs( int, const GDAL_GCP * );
 char CPL_DLL  **GDALGetMetadata( GDALMajorObjectH, const char * );
 CPLErr CPL_DLL  GDALSetMetadata( GDALMajorObjectH, char **,
                                  const char * );
-char CPL_DLL  **GDALGetMetadataItem( GDALMajorObjectH, const char * );
+const char CPL_DLL *GDALGetMetadataItem( GDALMajorObjectH, const char *, 
+                                         const char * );
 CPLErr CPL_DLL  GDALSetMetadataItem( GDALMajorObjectH,
                                      const char *, const char *,
                                      const char * );
@@ -431,6 +435,8 @@ int GDALReadWorldFile( const char *pszBaseFilename,
                        const char *pszExtension, 
                        double * padfGeoTransform );
 
+const char CPL_DLL *GDALDecToDMS( double, const char *, int );
+
 /* ==================================================================== */
 /*      Color tables.                                                   */
 /* ==================================================================== */
@@ -458,16 +464,6 @@ int CPL_DLL             GDALGetColorEntryCount( GDALColorTableH );
 const GDALColorEntry CPL_DLL *GDALGetColorEntry( GDALColorTableH, int );
 int CPL_DLL GDALGetColorEntryAsRGB( GDALColorTableH, int, GDALColorEntry *);
 void CPL_DLL GDALSetColorEntry( GDALColorTableH, int, const GDALColorEntry * );
-
-/* ==================================================================== */
-/*      Projections                                                     */
-/* ==================================================================== */
-
-GDALProjDefH CPL_DLL GDALCreateProjDef( const char * );
-CPLErr 	CPL_DLL GDALReprojectToLongLat( GDALProjDefH, double *, double * );
-CPLErr 	CPL_DLL GDALReprojectFromLongLat( GDALProjDefH, double *, double * );
-void    CPL_DLL GDALDestroyProjDef( GDALProjDefH );
-const char CPL_DLL *GDALDecToDMS( double, const char *, int );
 
 /* ==================================================================== */
 /*      GDAL Cache Management                                           */
