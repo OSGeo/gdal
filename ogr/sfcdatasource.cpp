@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/11/01 17:07:30  warmerda
+ * lots of changes, including support for executing commands
+ *
  * Revision 1.8  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -59,6 +62,7 @@
 #include "sfcschemarowsets.h"
 #include "ogr_geometry.h"
 #include "cpl_string.h"
+#include "oledb_sup.h"
 
 CPL_CVSID("$Id$");
 
@@ -71,6 +75,7 @@ SFCDataSource::SFCDataSource()
 {
     nSRInitialized = FALSE;
     papszSRName = NULL;
+    bSessionEstablished = FALSE;
 }
 
 /************************************************************************/
@@ -80,7 +85,29 @@ SFCDataSource::SFCDataSource()
 SFCDataSource::~SFCDataSource()
 
 {
+    CPLDebug( "SFC", "~SFCDataSource()" );
     CSLDestroy( papszSRName );
+}
+
+/************************************************************************/
+/*                          EstablishSession()                          */
+/************************************************************************/
+
+int SFCDataSource::EstablishSession()
+
+{
+    if( !bSessionEstablished )
+    {
+        if( FAILED(oSession.Open(*this)) )
+        {
+            CPLDebug( "OGR_OLEDB", 
+                      "Failed to open session on SFCDataSource!\n" );
+        }
+        else
+            bSessionEstablished = TRUE;
+    }
+
+    return bSessionEstablished;
 }
 
 /************************************************************************/
@@ -193,15 +220,9 @@ void SFCDataSource::Reinitialize()
 void SFCDataSource::UseTables()
 
 {
-    CSession           oSession;
     CTables            oTables;
 
-    if( FAILED(oSession.Open(*this)) )
-    {
-        return;
-    }
-
-    if( FAILED(oTables.Open(oSession)) )
+    if( !EstablishSession() || FAILED(oTables.Open(oSession)) )
     {
         return;
     }
@@ -242,20 +263,14 @@ void SFCDataSource::UseTables()
 int SFCDataSource::UseOGISFeaturesTables()
 
 {
-    CSession           oSession;
     COGISFeatureTables oTables;
-
-    if( FAILED(oSession.Open(*this)) )
-    {
-        return FALSE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      If this provider doesn't support this schema rowset, we         */
 /*      silently return without making a big fuss.  The caller will     */
 /*      try using the regular tables schema rowset instead.             */
 /* -------------------------------------------------------------------- */
-    if( FAILED(oTables.Open(oSession)) )
+    if( !EstablishSession() || FAILED(oTables.Open(oSession)) )
     {
         return FALSE;
     }
@@ -277,9 +292,6 @@ int SFCDataSource::UseOGISFeaturesTables()
 
 /************************************************************************/
 /*                           CreateSFCTable()                           */
-/*                                                                      */
-/*      The CSession is temporary, but the table is returned.  We       */
-/*      need a way of returning errors!                                 */
 /************************************************************************/
 
 /** 
@@ -295,33 +307,290 @@ int SFCDataSource::UseOGISFeaturesTables()
  * @param poFilterGeometry the geometry to use as a spatial filter, or more
  * often NULL to get all features from the spatial table.  (NOT IMPLEMENTED)
  *
- * @param pszFilterOperator the name of the spatial operator to apply.  
- * (NOT IMPLEMENTED OR DEFINED). 
+ * @param eOperator One of the geometry operators (DBPROP_OGIS_*) from 
+ * oledbgis.h.  Defaults to DBPROP_ENVELOPE_INTERSECTS.
  *
  * @return a pointer to the new spatial table object, or NULL on failure. 
  */
 
 SFCTable *SFCDataSource::CreateSFCTable( const char * pszTableName, 
                                          OGRGeometry * poFilterGeometry,
-                                         const char * pszFilterOperator )
+                                         DBPROPOGISENUM eOperator )
 
 {
-    CSession      oSession;
     SFCTable      *poTable;
+    DBID          idTable;
+    USES_CONVERSION;
 
-    if( FAILED(oSession.Open(*this)) )
+    if( !EstablishSession() )
         return NULL;
-
+        
     poTable = new SFCTable();
+    
+    idTable.eKind           = DBKIND_NAME;
+    idTable.uName.pwszName  = (LPOLESTR)T2COLE(pszTableName);
 
-    if( FAILED(poTable->Open(oSession, pszTableName)) )
+    if( FAILED(poTable->Open(oSession, idTable)) )
     {
+        CPLDebug( "SFCDUMP", "poTable->Open(%s) failed.", pszTableName );
         delete poTable;
         return NULL;
     }
 
     poTable->SetTableName( pszTableName );
-    poTable->ReadSchemaInfo( this );
+    poTable->ReadSchemaInfo( this, &oSession );
+
+    return poTable;
+}
+
+/************************************************************************/
+/*                              Execute()                               */
+/*                                                                      */
+/*      Execute an SQL command, with spatial constraints.               */
+/************************************************************************/
+
+SFCTable *SFCDataSource::Execute(const char *pszCommand,
+                                 OGRGeometry * poFilterGeometry,
+                                 DBPROPOGISENUM eOperator )
+
+{
+    HRESULT hr;
+
+    if( !EstablishSession() )
+        return NULL;
+
+    if( poFilterGeometry == NULL )
+        return Execute( pszCommand );
+
+/* -------------------------------------------------------------------- */
+/*      Create a command.                                               */
+/* -------------------------------------------------------------------- */
+    CComPtr<IDBCreateCommand> spCC;
+    CComPtr<ICommand> spCommand;
+
+    hr = oSession.m_spOpenRowset->QueryInterface(IID_IDBCreateCommand, 
+                                                 (void ** )&spCC);
+    if( !SUCCEEDED(hr) )
+        return NULL;
+
+    hr = spCC->CreateCommand( NULL, IID_ICommand, (IUnknown **) &spCommand );
+    if( !SUCCEEDED(hr) )
+        return NULL;
+    
+/* -------------------------------------------------------------------- */
+/*      Set command text.                                               */
+/* -------------------------------------------------------------------- */
+    CComPtr<ICommandText> spCText;
+    LPOLESTR  pwszCommand;
+
+    hr = spCommand->QueryInterface(IID_ICommandText, (void ** )&spCText);
+    if( !SUCCEEDED(hr) )
+        return NULL;
+    
+    AnsiToUnicode( pszCommand, &pwszCommand );
+    hr = spCText->SetCommandText( DBGUID_DEFAULT, pwszCommand );
+    if( !SUCCEEDED(hr) )
+        return NULL;
+
+    CoTaskMemFree( pwszCommand );
+    
+/* -------------------------------------------------------------------- */
+/*      Setup the bindings for the parameters.                          */
+/* -------------------------------------------------------------------- */
+    DBBINDING          rgBindings[3];
+#define STR_SIZE 512
+#define BUF_SIZE sizeof(VARIANT)+STR_SIZE+4
+    
+    memset( rgBindings, 0, sizeof(rgBindings) );
+
+    rgBindings[0].iOrdinal = 1;
+    rgBindings[0].obValue = 0;
+    rgBindings[0].obLength = 0;
+    rgBindings[0].dwPart = DBPART_VALUE;
+    rgBindings[0].dwMemOwner = DBMEMOWNER_CLIENTOWNED;
+    rgBindings[0].eParamIO = DBPARAMIO_INPUT;
+    rgBindings[0].cbMaxLen = sizeof(VARIANT);
+    rgBindings[0].wType = DBTYPE_VARIANT;
+
+    rgBindings[1].iOrdinal = 2;
+    rgBindings[1].obValue = sizeof(VARIANT);
+    rgBindings[1].dwPart = DBPART_VALUE;
+    rgBindings[1].dwMemOwner = DBMEMOWNER_CLIENTOWNED;
+    rgBindings[1].eParamIO = DBPARAMIO_INPUT;
+    rgBindings[1].cbMaxLen = 4;
+    rgBindings[1].wType = DBTYPE_UI4;
+
+    rgBindings[2].iOrdinal = 3;
+    rgBindings[2].obValue = sizeof(VARIANT)+4;
+    rgBindings[2].dwPart = DBPART_VALUE;
+    rgBindings[2].dwMemOwner = DBMEMOWNER_CLIENTOWNED;
+    rgBindings[2].eParamIO = DBPARAMIO_INPUT;
+    rgBindings[2].cbMaxLen = STR_SIZE;
+    rgBindings[2].wType = DBTYPE_WSTR;
+
+/* -------------------------------------------------------------------- */
+/*      Create a parameter accessor                                     */
+/* -------------------------------------------------------------------- */
+    CComPtr<IAccessor> spCAccessor;
+    HACCESSOR          hAccessor;
+    DBBINDSTATUS       rgStatus[3];
+    DBPARAMS           oParams;
+
+    hr = spCommand->QueryInterface(IID_IAccessor, (void ** )&spCAccessor);
+    if( !SUCCEEDED(hr) )
+        return NULL;
+    
+    hr = spCAccessor->CreateAccessor( DBACCESSOR_PARAMETERDATA, 3, 
+                                      rgBindings, BUF_SIZE, 
+                                      &hAccessor, rgStatus );
+    if( !SUCCEEDED(hr) )
+        return NULL;
+                               
+/* -------------------------------------------------------------------- */
+/*      Setup buffer with parameters.                                   */
+/* -------------------------------------------------------------------- */
+    int nGeomSize = poFilterGeometry->WkbSize();
+    unsigned char      buffer[BUF_SIZE];
+    VARIANT            *pVariant;
+    SAFEARRAY          *pArray;
+    void               *pGeomData;
+    SAFEARRAYBOUND     saBound[1];
+
+    *((int *) (buffer + rgBindings[1].obValue)) = eOperator;
+    lstrcpyW( (unsigned short *) (buffer + rgBindings[2].obValue), 
+              L"OGIS_GEOMETRY" );
+
+    saBound[0].lLbound = 0;
+    saBound[0].cElements = nGeomSize;
+    pArray = SafeArrayCreate( VT_UI1, 1, saBound );
+    SafeArrayAccessData( pArray, &pGeomData );
+    poFilterGeometry->exportToWkb( wkbNDR, (unsigned char *) pGeomData );
+
+    pVariant = (VARIANT *) (buffer + rgBindings[0].obValue);
+    VariantInit( pVariant );
+    pVariant->vt = VT_UI1 | VT_ARRAY;
+    pVariant->parray = pArray;
+    
+    oParams.pData = buffer;
+    oParams.hAccessor = hAccessor;
+    oParams.cParamSets = 1;
+       
+/* -------------------------------------------------------------------- */
+/*      Execute command.                                                */
+/* -------------------------------------------------------------------- */
+    LONG      cRowsAffected;
+    IRowset *pIRowset;
+
+    hr = spCommand->Execute( NULL, IID_IRowset, &oParams, &cRowsAffected, 
+                             (IUnknown **) &pIRowset );
+    if( !SUCCEEDED(hr) )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Open the rowset.                                                */
+/* -------------------------------------------------------------------- */
+    SFCTable      *poTable;
+
+    poTable = new SFCTable();
+    
+    if( FAILED(poTable->OpenFromRowset(pIRowset)) )
+    {
+        CPLDebug( "SFCDUMP", "poTable->OpenFromRowset(%s) failed.", 
+                  pszCommand  );
+        delete poTable;
+        return NULL;
+    }
+
+    poTable->SetTableName( "Command" );
+    poTable->ReadSchemaInfo( this, &oSession );
+
+/* -------------------------------------------------------------------- */
+/*      Release the accessor.                                           */
+/* -------------------------------------------------------------------- */
+    VariantClear( pVariant );
+    hr = spCAccessor->ReleaseAccessor( hAccessor, NULL );
+
+    return poTable;
+}
+
+/************************************************************************/
+/*                              Execute()                               */
+/*                                                                      */
+/*      Execute a command, possibly with parameters.                    */
+/************************************************************************/
+
+SFCTable *SFCDataSource::Execute(const char *pszCommand,
+                                 DBPROPSET* pPropSet,
+                                 DBPARAMS *pParams )
+{
+    HRESULT hr;
+
+    CPLDebug( "OGR_SFC", "Execute(%S)", pszCommand );
+
+    if( !EstablishSession() )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Create a command.                                               */
+/* -------------------------------------------------------------------- */
+    CComPtr<IDBCreateCommand> spCC;
+    CComPtr<ICommand> spCommand;
+
+    hr = oSession.m_spOpenRowset->QueryInterface(IID_IDBCreateCommand, 
+                                                 (void ** )&spCC);
+    if( !SUCCEEDED(hr) )
+        return NULL;
+
+    hr = spCC->CreateCommand( NULL, IID_ICommand, (IUnknown **) &spCommand );
+    if( !SUCCEEDED(hr) )
+        return NULL;
+    
+/* -------------------------------------------------------------------- */
+/*      Set command text.                                               */
+/* -------------------------------------------------------------------- */
+    CComPtr<ICommandText> spCText;
+    LPOLESTR  pwszCommand;
+
+    hr = spCommand->QueryInterface(IID_ICommandText, (void ** )&spCText);
+    if( !SUCCEEDED(hr) )
+        return NULL;
+
+    
+    AnsiToUnicode( pszCommand, &pwszCommand );
+    hr = spCText->SetCommandText( DBGUID_DEFAULT, pwszCommand );
+    if( !SUCCEEDED(hr) )
+        return NULL;
+
+    CoTaskMemFree( pwszCommand );
+    
+/* -------------------------------------------------------------------- */
+/*      Execute command.                                                */
+/* -------------------------------------------------------------------- */
+    LONG      cRowsAffected;
+    IRowset *pIRowset;
+
+    hr = spCommand->Execute( NULL, IID_IRowset, pParams, &cRowsAffected, 
+                             (IUnknown **) &pIRowset );
+    if( !SUCCEEDED(hr) )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Open the rowset.                                                */
+/* -------------------------------------------------------------------- */
+    SFCTable      *poTable;
+
+    poTable = new SFCTable();
+    
+    if( FAILED(poTable->OpenFromRowset(pIRowset)) )
+    {
+        CPLDebug( "SFCDUMP", "poTable->OpenFromRowset(%s) failed.", 
+                  pszCommand  );
+        delete poTable;
+        return NULL;
+    }
+
+    poTable->SetTableName( "Command" );
+    poTable->ReadSchemaInfo( this, &oSession );
 
     return poTable;
 }
@@ -350,9 +619,7 @@ SFCTable *SFCDataSource::CreateSFCTable( const char * pszTableName,
 char * SFCDataSource::GetWKTFromSRSId( int nSRS_ID )
 
 {
-    CSession      oSession;
-
-    if( FAILED(oSession.Open(*this)) )
+    if( !EstablishSession() )
         return NULL;
 
     return GetWKTFromSRSId( &oSession, nSRS_ID );
