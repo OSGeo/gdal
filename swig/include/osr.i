@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.11  2005/02/24 17:53:37  kruland
+ * import the generic typemap.i file.
+ *
  * Revision 1.10  2005/02/24 16:45:17  kruland
  * Commented missing methods.
  * Added first cut at a proxy for ProjectionMethods.
@@ -166,7 +169,7 @@ typedef double * double_17;
 %feature("compactdefaultargs");
 %feature("autodoc");
 
-%import gdal_typemaps.i
+%import typemaps.i
 
 typedef int OGRErr;
 
