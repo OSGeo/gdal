@@ -26,12 +26,16 @@
  *
  * 
  * $Log$
+ * Revision 1.2  1998/12/31 18:52:45  warmerda
+ * Use CPL memory functions (they are safe), and fixed up header reading.
+ *
  * Revision 1.1  1998/12/03 18:31:45  warmerda
  * New
  *
  */
 
 #include "gdal_priv.h"
+#include "cpl_conv.h"
 
 /************************************************************************/
 /* ==================================================================== */
@@ -46,7 +50,7 @@
 GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn )
 
 {
-    pszFilename = VSIStrdup( pszFilenameIn );
+    pszFilename = CPLStrdup( pszFilenameIn );
 
     nHeaderBytes = 0;
     pabyHeader = NULL;
@@ -56,25 +60,26 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn )
 /* -------------------------------------------------------------------- */
 /*      Collect information about the file.                             */
 /* -------------------------------------------------------------------- */
-    if( VSIStat( pszFilename, &sStat ) )
+    if( VSIStat( pszFilename, &sStat ) == 0 )
     {
         bStatOK = TRUE;
 
         if( VSI_ISREG( sStat.st_mode ) )
         {
-            nHeaderBytes = MAX(1024,sStat.st_size);
-            pabyHeader = (GByte *) VSICalloc(nHeaderBytes+1,1);
+            nHeaderBytes = MIN(1024,sStat.st_size);
+            pabyHeader = (GByte *) CPLCalloc(nHeaderBytes+1,1);
 
             fp = VSIFOpen( pszFilename, "rb" );
 
             if( fp != NULL )
             {
-                nHeaderBytes = VSIFRead( pabyHeader, nHeaderBytes, 1, fp );
+                nHeaderBytes = VSIFRead( pabyHeader, 1, nHeaderBytes, fp );
 
                 VSIRewind( fp );
             }
         }
     }
+         
 }
 
 /************************************************************************/
@@ -85,7 +90,7 @@ GDALOpenInfo::~GDALOpenInfo()
 
 {
     VSIFree( pabyHeader );
-    VSIFree( pszFilename );
+    CPLFree( pszFilename );
 
     if( fp != NULL )
         VSIFClose( fp );
