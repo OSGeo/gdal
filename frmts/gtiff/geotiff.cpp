@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2000/12/15 14:46:27  warmerda
+ * Added read support for .tfw files.
+ * Added read/write support for GEOTRANSMATRIX in GeoTIFF.
+ *
  * Revision 1.39  2000/10/14 04:09:26  warmerda
  * Set photometric to RGB for RGBA images in CreateCopy().
  *
@@ -1018,22 +1022,42 @@ void GTiffDataset::WriteGeoTIFFInfo()
 /*      Write the transform.  We ignore the rotational coefficients     */
 /*      for now.  We will fix this up later. (notdef)                   */
 /* -------------------------------------------------------------------- */
-    double	adfPixelScale[3], adfTiePoints[6];
+    if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 )
+    {
+        double	adfPixelScale[3], adfTiePoints[6];
 
-    adfPixelScale[0] = adfGeoTransform[1];
-    adfPixelScale[1] = fabs(adfGeoTransform[5]);
-    adfPixelScale[2] = 0.0;
-
-    TIFFSetField( hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale );
-
-    adfTiePoints[0] = 0.0;
-    adfTiePoints[1] = 0.0;
-    adfTiePoints[2] = 0.0;
-    adfTiePoints[3] = adfGeoTransform[0];
-    adfTiePoints[4] = adfGeoTransform[3];
-    adfTiePoints[5] = 0.0;
+        adfPixelScale[0] = adfGeoTransform[1];
+        adfPixelScale[1] = fabs(adfGeoTransform[5]);
+        adfPixelScale[2] = 0.0;
         
-    TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints );
+        TIFFSetField( hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale );
+        
+        adfTiePoints[0] = 0.0;
+        adfTiePoints[1] = 0.0;
+        adfTiePoints[2] = 0.0;
+        adfTiePoints[3] = adfGeoTransform[0];
+        adfTiePoints[4] = adfGeoTransform[3];
+        adfTiePoints[5] = 0.0;
+        
+        TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints );
+    }
+    
+    else
+    {
+        double	adfMatrix[16];
+        
+        memset(adfMatrix,0,sizeof(double) * 16);
+        
+        adfMatrix[0] = adfGeoTransform[1];
+        adfMatrix[1] = adfGeoTransform[2];
+        adfMatrix[3] = adfGeoTransform[0];
+        adfMatrix[4] = adfGeoTransform[4];
+        adfMatrix[5] = adfGeoTransform[5];
+        adfMatrix[7] = adfGeoTransform[3];
+        adfMatrix[15] = 1.0;
+        
+        TIFFSetField( hTIFF, TIFFTAG_GEOTRANSMATRIX, 16, adfMatrix );
+    }
 
 /* -------------------------------------------------------------------- */
 /*	Write out projection definition.				*/
@@ -1110,6 +1134,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     GTiffDataset 	*poDS;
 
     poDS = new GTiffDataset();
+    poDS->SetDescription( poOpenInfo->pszFilename );
 
     if( poDS->OpenOffset(hTIFF,TIFFCurrentDirOffset(hTIFF), TRUE,
                          poOpenInfo->eAccess ) != CE_None )
@@ -1223,9 +1248,9 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Get the transform.                                              */
+/*      Get the transform or gcps from the GeoTIFF file.                */
 /* -------------------------------------------------------------------- */
-    double	*padfTiePoints, *padfScale;
+    double	*padfTiePoints, *padfScale, *padfMatrix;
     int16	nCount;
 
     adfGeoTransform[0] = 0.0;
@@ -1274,7 +1299,80 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
             pasGCPList[iGCP].dfGCPZ = padfTiePoints[iGCP*6+5];
         }
     }
+
+    else if( TIFFGetField(hTIFF,TIFFTAG_GEOTRANSMATRIX,&nCount,&padfMatrix ) 
+             && nCount == 16 )
+    {
+        adfGeoTransform[0] = padfMatrix[3];
+        adfGeoTransform[1] = padfMatrix[0];
+        adfGeoTransform[2] = padfMatrix[1];
+        adfGeoTransform[3] = padfMatrix[7];
+        adfGeoTransform[4] = padfMatrix[4];
+        adfGeoTransform[5] = padfMatrix[5];
+        bGeoTransformValid = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise try looking for a .tfw file.                          */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        char	*pszTFW;
+        int	i;
+        FILE	*fpTFW;
+
+        pszTFW = (char *) CPLMalloc(strlen(GetDescription())+5);
+        strcpy( pszTFW, GetDescription());
+        for( i = strlen(pszTFW)-1; i > 0; i-- )
+        {
+            if( pszTFW[i] == '.' )
+            {
+                pszTFW[i] = '\0';
+                break;
+            }
+        }
+
+        strcat( pszTFW, ".tfw" );
         
+        fpTFW = VSIFOpen( pszTFW, "rt" );
+        if( fpTFW == NULL )
+        {
+            strcpy( pszTFW + strlen(pszTFW)-4, ".TFW" );
+            fpTFW = VSIFOpen( pszTFW, "rt" );
+        }
+
+        if( fpTFW != NULL )
+        {
+            char	**papszLines;
+
+            VSIFClose( fpTFW );
+
+            papszLines = CSLLoad( pszTFW );
+            if( CSLCount(papszLines) >= 6 
+                && atof(papszLines[0]) != 0.0
+                && atof(papszLines[3]) != 0.0 )
+            {
+                adfGeoTransform[0] = atof(papszLines[4]);
+                adfGeoTransform[1] = atof(papszLines[0]);
+                adfGeoTransform[2] = atof(papszLines[2]);
+                adfGeoTransform[3] = atof(papszLines[5]);
+                adfGeoTransform[4] = atof(papszLines[1]);
+                adfGeoTransform[5] = atof(papszLines[3]);
+
+                // correct for center of pixel vs. top left of pixel
+                adfGeoTransform[0] -= 0.5 * adfGeoTransform[1];
+                adfGeoTransform[0] -= 0.5 * adfGeoTransform[2];
+                adfGeoTransform[3] -= 0.5 * adfGeoTransform[4];
+                adfGeoTransform[3] -= 0.5 * adfGeoTransform[5];
+                                        
+                bGeoTransformValid = TRUE;
+            }
+            CSLDestroy(papszLines);
+        }
+
+        CPLFree( pszTFW );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Capture the color table if there is one.                        */
 /* -------------------------------------------------------------------- */
@@ -1679,23 +1777,43 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
             || adfGeoTransform[4] != 0.0 || ABS(adfGeoTransform[5]) != 1.0 ))
     {
-        double	adfPixelScale[3], adfTiePoints[6];
 
-        adfPixelScale[0] = adfGeoTransform[1];
-        adfPixelScale[1] = fabs(adfGeoTransform[5]);
-        adfPixelScale[2] = 0.0;
+        if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 )
+        {
+            double	adfPixelScale[3], adfTiePoints[6];
 
-        TIFFSetField( hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale );
+            adfPixelScale[0] = adfGeoTransform[1];
+            adfPixelScale[1] = fabs(adfGeoTransform[5]);
+            adfPixelScale[2] = 0.0;
 
-        adfTiePoints[0] = 0.0;
-        adfTiePoints[1] = 0.0;
-        adfTiePoints[2] = 0.0;
-        adfTiePoints[3] = adfGeoTransform[0];
-        adfTiePoints[4] = adfGeoTransform[3];
-        adfTiePoints[5] = 0.0;
+            TIFFSetField( hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale );
+            
+            adfTiePoints[0] = 0.0;
+            adfTiePoints[1] = 0.0;
+            adfTiePoints[2] = 0.0;
+            adfTiePoints[3] = adfGeoTransform[0];
+            adfTiePoints[4] = adfGeoTransform[3];
+            adfTiePoints[5] = 0.0;
         
-        TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints );
-        
+            TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints );
+        }
+        else
+        {
+            double	adfMatrix[16];
+
+            memset(adfMatrix,0,sizeof(double) * 16);
+
+            adfMatrix[0] = adfGeoTransform[1];
+            adfMatrix[1] = adfGeoTransform[2];
+            adfMatrix[3] = adfGeoTransform[0];
+            adfMatrix[4] = adfGeoTransform[4];
+            adfMatrix[5] = adfGeoTransform[5];
+            adfMatrix[7] = adfGeoTransform[3];
+            adfMatrix[15] = 1.0;
+
+            TIFFSetField( hTIFF, TIFFTAG_GEOTRANSMATRIX, 16, adfMatrix );
+        }
+            
         pszProjection = poSrcDS->GetProjectionRef();
     }
 

@@ -1,3 +1,9 @@
+2000-12-15  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Fixed so that non-geographic/projected model types result in
+	an empty coordinate system string, not WGS84, as per bug report
+	from Eric Miller and aerial.tif. 
+
 2000-12-14  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* Added HKVDataset::Delete() implementation, made accessable from
