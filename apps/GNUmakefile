@@ -5,7 +5,7 @@ include ../GDALmake.opt
 INCLUDE		=	$(GDAL_INCLUDE) -I$(GDAL_ROOT)/frmts
 DEP_LIBS	=	$(GDAL_LIB) $(CPL_LIB) $(XTRAOBJ)
 
-default:	gdalinfo gdal_translate
+default:	gdalinfo gdal_translate gdaladdo
 
 lib-depend:
 	(cd ../core ; $(MAKE) )
@@ -17,8 +17,11 @@ gdalinfo:	gdalinfo.o $(DEP_LIBS)
 
 gdal_translate:	gdal_translate.o  $(DEP_LIBS)
 	$(CXX) $(LNK_FLAGS) gdal_translate.o $(XTRAOBJ) \
-		$(GDAL_SLIB_LINK) $(LIBS) \
-		-o gdal_translate
+		$(GDAL_SLIB_LINK) $(LIBS) -o gdal_translate
+
+gdaladdo:	gdaladdo.o  $(DEP_LIBS)
+	$(CXX) $(LNK_FLAGS) gdaladdo.o $(XTRAOBJ) \
+		$(GDAL_SLIB_LINK) $(LIBS) -o gdaladdo
 
 gdal2raw:	gdal2raw.o $(DEP_LIBS)
 	$(CXX) $(LNK_FLAGS) gdal2raw.o $(XTRAOBJ) $(GDAL_LIBS) $(LIBS) \
