@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The generic portions of the OGRDataSource class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/03/05 05:13:49  warmerda
+ * added getlayerbyname, implement join support
+ *
  * Revision 1.10  2003/03/04 05:47:49  warmerda
  * added CREATE INDEX support
  *
@@ -153,6 +156,46 @@ OGRErr OGR_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer )
 
 {
     return ((OGRDataSource *) hDS)->DeleteLayer( iLayer );
+}
+
+/************************************************************************/
+/*                           GetLayerByName()                           */
+/************************************************************************/
+
+OGRLayer *OGRDataSource::GetLayerByName( const char *pszName )
+
+{
+    int  i;
+
+    /* first a case sensitive check */
+    for( i = 0; i < GetLayerCount(); i++ )
+    {
+        OGRLayer *poLayer = GetLayer(i);
+
+        if( strcmp( pszName, poLayer->GetLayerDefn()->GetName() ) == 0 )
+            return poLayer;
+    }
+
+    /* then case insensitive */
+    for( i = 0; i < GetLayerCount(); i++ )
+    {
+        OGRLayer *poLayer = GetLayer(i);
+
+        if( EQUAL( pszName, poLayer->GetLayerDefn()->GetName() ) )
+            return poLayer;
+    }
+
+    return NULL;
+}
+
+/************************************************************************/
+/*                       OGR_DS_GetLayerByName()                        */
+/************************************************************************/
+
+OGRLayerH OGR_DS_GetLayerByName( OGRDataSourceH hDS, const char *pszName )
+
+{
+    return (OGRLayerH) ((OGRDataSource *) hDS)->GetLayerByName( pszName );
 }
 
 /************************************************************************/
@@ -286,52 +329,75 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Identify the layer (table) being operated on.                   */
+/*      Validate that all the source tables are recognised, count       */
+/*      fields.                                                         */
 /* -------------------------------------------------------------------- */
-    OGRLayer *poSrcLayer = NULL;
+    int  nFieldCount = 0, iTable;
 
-    for( int iLayer = 0; iLayer < GetLayerCount(); iLayer++ )
+    for( iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
     {
-        if( EQUAL(GetLayer(iLayer)->GetLayerDefn()->GetName(),
-                  psSelectInfo->from_table) )
+        swq_table_def *psTableDef = psSelectInfo->table_defs + iTable;
+        OGRLayer *poSrcLayer = GetLayerByName( psTableDef->table_name );
+
+        if( poSrcLayer == NULL )
         {
-            poSrcLayer = GetLayer(iLayer);
-            break;
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "SELECT from table %s failed, no such table/featureclass.",
+                      psTableDef->table_name );
+            swq_select_free( psSelectInfo );
+            return NULL;
         }
-    }
 
-    if( poSrcLayer == NULL )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "SELECT from table %s failed, no such table/featureclass.",
-                  psSelectInfo->from_table );
-        swq_select_free( psSelectInfo );
-        return NULL;
+        nFieldCount += poSrcLayer->GetLayerDefn()->GetFieldCount();
     }
     
 /* -------------------------------------------------------------------- */
-/*      Build the field list.                                           */
+/*      Build the field list for all indicated tables.                  */
 /* -------------------------------------------------------------------- */
-    int  nFieldCount = poSrcLayer->GetLayerDefn()->GetFieldCount();
-    char **papszFieldList;
-    swq_field_type *paeFieldType;
-    
-    papszFieldList = (char **) CPLMalloc( sizeof(char *) * (nFieldCount+1) );
-    paeFieldType = (swq_field_type *)  
+    swq_field_list sFieldList;
+    int            nFIDIndex;
+
+    memset( &sFieldList, 0, sizeof(sFieldList) );
+    sFieldList.table_count = psSelectInfo->table_count;
+    sFieldList.table_defs = psSelectInfo->table_defs;
+
+    sFieldList.count = 0;
+    sFieldList.names = (char **) CPLMalloc( sizeof(char *) * (nFieldCount+1) );
+    sFieldList.types = (swq_field_type *)  
         CPLMalloc( sizeof(swq_field_type) * (nFieldCount+1) );
+    sFieldList.table_ids = (int *) 
+        CPLMalloc( sizeof(int) * (nFieldCount+1) );
+    sFieldList.ids = (int *) 
+        CPLMalloc( sizeof(int) * (nFieldCount+1) );
     
-    for( int iField = 0; iField < nFieldCount; iField++ )
+    for( iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
     {
-        OGRFieldDefn *poFDefn=poSrcLayer->GetLayerDefn()->GetFieldDefn(iField);
-        papszFieldList[iField] = (char *) poFDefn->GetNameRef();
-        if( poFDefn->GetType() == OFTInteger )
-            paeFieldType[iField] = SWQ_INTEGER;
-        else if( poFDefn->GetType() == OFTReal )
-            paeFieldType[iField] = SWQ_FLOAT;
-        else if( poFDefn->GetType() == OFTString )
-            paeFieldType[iField] = SWQ_STRING;
-        else
-            paeFieldType[iField] = SWQ_OTHER;
+        swq_table_def *psTableDef = psSelectInfo->table_defs + iTable;
+        OGRLayer *poSrcLayer = GetLayerByName( psTableDef->table_name );
+        int      iField;
+
+        for( iField = 0; 
+             iField < poSrcLayer->GetLayerDefn()->GetFieldCount();
+             iField++ )
+        {
+            OGRFieldDefn *poFDefn=poSrcLayer->GetLayerDefn()->GetFieldDefn(iField);
+            int iOutField = sFieldList.count++;
+            sFieldList.names[iOutField] = (char *) poFDefn->GetNameRef();
+            if( poFDefn->GetType() == OFTInteger )
+                sFieldList.types[iOutField] = SWQ_INTEGER;
+            else if( poFDefn->GetType() == OFTReal )
+                sFieldList.types[iOutField] = SWQ_FLOAT;
+            else if( poFDefn->GetType() == OFTString )
+                sFieldList.types[iOutField] = SWQ_STRING;
+            else
+                sFieldList.types[iOutField] = SWQ_OTHER;
+
+            sFieldList.table_ids[iOutField] = iTable;
+            sFieldList.ids[iOutField] = iField;
+        }
+
+        if( iTable == 0 )
+            nFIDIndex = poSrcLayer->GetLayerDefn()->GetFieldCount();
     }
 
 /* -------------------------------------------------------------------- */
@@ -339,7 +405,7 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      'FID'.                                                          */
 /* -------------------------------------------------------------------- */
     pszError = 
-        swq_select_expand_wildcard( psSelectInfo, nFieldCount, papszFieldList);
+        swq_select_expand_wildcard( psSelectInfo, &sFieldList );
 
     if( pszError != NULL )
     {
@@ -348,18 +414,21 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
         return NULL;
     }
 
-    papszFieldList[nFieldCount] = "FID";
-    paeFieldType[nFieldCount++] = SWQ_INTEGER;
+    sFieldList.names[sFieldList.count] = "FID";
+    sFieldList.types[sFieldList.count] = SWQ_INTEGER;
+    sFieldList.table_ids[sFieldList.count] = 0;
+    sFieldList.ids[sFieldList.count] = nFIDIndex;
+    
+    sFieldList.count++;
 
 /* -------------------------------------------------------------------- */
 /*      Finish the parse operation.                                     */
 /* -------------------------------------------------------------------- */
     
-    pszError = swq_select_parse( psSelectInfo, nFieldCount, papszFieldList,
-                                 paeFieldType, 0 );
+    pszError = swq_select_parse( psSelectInfo, &sFieldList, 0 );
 
-    CPLFree( papszFieldList );
-    CPLFree( paeFieldType );
+    CPLFree( sFieldList.names );
+    CPLFree( sFieldList.types );
 
     if( pszError != NULL )
     {
@@ -456,3 +525,4 @@ const char *OGR_DS_GetName( OGRDataSourceH hDS )
 {
     return ((OGRDataSource *)hDS)->GetName();
 }
+
