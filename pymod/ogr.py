@@ -28,6 +28,11 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.42  2005/02/05 04:57:24  hobu
+# Implemented __copy__ and a basic
+# __getattr__ for Feature.  No special handling
+# is done for wonky field name characters at this point.
+#
 # Revision 1.41  2005/02/03 14:22:16  fwarmerdam
 # Added __str__ method on Geometry.
 #
@@ -526,7 +531,7 @@ ds[0:4] would return a list of the first four features."""
                 raise IndexError
             return self.GetFeature(value)
         else:
-            raise TypeError,"Input %s is not of Int type" % type(value)
+            raise TypeError,"Input %s is not of IntType or SliceType" % type(value)
 
     def Reference(self):
         return _gdal.OGR_L_Reference(self._o)
@@ -674,6 +679,21 @@ class Feature:
     def __cmp__(self, other):
         return _gdal.OGR_F_Equal( self._o, other._o )
 
+    def __copy__(self):
+        return self.Clone()
+
+    def __getattr__(self, name):
+        try:
+            names = []
+            for i in range(self.GetFieldCount()):
+                names.append(self.GetFieldDefnRef(i).GetName())
+            if name in names:
+                return self.GetField(name)
+            else:
+                raise
+        except:
+            raise AttributeError, name
+        
     def Destroy( self ):
         if self._o is not None and self.thisown:
             _gdal.OGR_F_Destroy( self._o )
