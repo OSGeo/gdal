@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/05/28 19:22:38  warmerda
+ * fixed docs
+ *
  * Revision 1.13  2003/04/04 09:11:35  dron
  * strcpy() and strcat() replaced by strncpy() and strncat().
  * A lot of assertion on string sizes added.
@@ -339,7 +342,7 @@ const char *CPLGetExtension( const char *pszFullFilename )
  * Replace the extension with the provided one.
  *
  * @param pszPath the input path, this string is not altered.
- * @param pszExtension the new extension to apply to the given path.
+ * @param pszExt the new extension to apply to the given path.
  *
  * @return an altered filename with the new extension.    Do not
  * modify or free the returned string.  The string may be destroyed by the
