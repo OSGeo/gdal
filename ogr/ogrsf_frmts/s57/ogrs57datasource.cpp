@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/11/16 21:47:31  warmerda
+ * updated class occurance collection
+ *
  * Revision 1.2  1999/11/08 22:23:00  warmerda
  * added object class support
  *
@@ -118,6 +121,8 @@ int OGRS57DataSource::TestCapability( const char * )
 int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
 
 {
+    int		iModule;
+    
     pszName = CPLStrdup( pszFilename );
     
 /* -------------------------------------------------------------------- */
@@ -208,22 +213,32 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
     else
     {
         OGRFeatureDefn	*poDefn;
-        int	*panClasses = papoModules[0]->CollectClassList();
-        int	iClass;
+        int		*panClassCount;
+        int		iClass;
 
-        for( iClass = 0; panClasses[iClass] != -1; iClass++ )
+        panClassCount = (int *) CPLCalloc(sizeof(int),MAX_CLASSES);
+
+        for( iModule = 0; iModule < nModules; iModule++ )
+            papoModules[iModule]->CollectClassList(panClassCount,MAX_CLASSES);
+
+        for( iClass = 0; iClass < MAX_CLASSES; iClass++ )
         {
-            poDefn = S57Reader::GenerateObjectClassDefn( poRegistrar,
-                                                         panClasses[iClass] );
-            if( poDefn != NULL )
-                AddLayer( new OGRS57Layer( this, poDefn ) );
+            if( panClassCount[iClass] > 0 )
+            {
+                poDefn = S57Reader::GenerateObjectClassDefn( poRegistrar,
+                                                             iClass );
+                if( poDefn != NULL )
+                    AddLayer( new OGRS57Layer( this, poDefn ) );
+            }
         }
+
+        CPLFree( panClassCount );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Attach the layer definitions to each of the readers.            */
 /* -------------------------------------------------------------------- */
-    for( int iModule = 0; iModule < nModules; iModule++ )
+    for( iModule = 0; iModule < nModules; iModule++ )
     {
         if( poRegistrar != NULL )
             papoModules[iModule]->SetClassBased( poRegistrar );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/11/16 21:47:32  warmerda
+ * updated class occurance collection
+ *
  * Revision 1.3  1999/11/08 22:23:00  warmerda
  * added object class support
  *
@@ -995,52 +998,25 @@ OGRFeatureDefn *S57Reader::GenerateObjectClassDefn( S57ClassRegistrar *poCR,
 /*      occur in this dataset.                                          */
 /************************************************************************/
 
-int * S57Reader::CollectClassList()
+int S57Reader::CollectClassList(int *panClassCount, int nMaxClass )
 
 {
-    int		*panClassList, nClasses;
+    int		bSuccess = TRUE;
 
     if( !bFileIngested )
         Ingest();
-
-    nClasses = 0;
-    panClassList = (int  *) CPLMalloc(sizeof(int) * MAX_CLASSES);
 
     for( int iFEIndex = 0; iFEIndex < oFE_Index.GetCount(); iFEIndex++ )
     {
         DDFRecord *poRecord = oFE_Index.GetByIndex( iFEIndex );
         int	nOBJL = poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 );
-        int	iClass;
 
-/* -------------------------------------------------------------------- */
-/*      Search for the class in the list.                               */
-/* -------------------------------------------------------------------- */
-        for( iClass = 0;
-             iClass < nClasses && panClassList[iClass] != nOBJL;
-             iClass++ ) {}
+        if( nOBJL >= nMaxClass )
+            bSuccess = FALSE;
+        else
+            panClassCount[nOBJL]++;
 
-/* -------------------------------------------------------------------- */
-/*      Add to the end, if not found.                                   */
-/* -------------------------------------------------------------------- */
-        if( iClass == nClasses )
-        {
-            panClassList[nClasses++] = nOBJL;
-        }
-        
-/* -------------------------------------------------------------------- */
-/*      Promote to the beginning of the list for faster future searching.*/
-/* -------------------------------------------------------------------- */
-        if( iClass != 0 )
-        {
-            memmove( panClassList + 1, panClassList, iClass*sizeof(int) );
-            panClassList[0] = nOBJL;
-        }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Mark the end of list, and return list.                          */
-/* -------------------------------------------------------------------- */
-    panClassList[nClasses] = -1;
-    
-    return panClassList;
+    return bSuccess;
 }

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/11/16 21:47:32  warmerda
+ * updated class occurance collection
+ *
  * Revision 1.3  1999/11/08 22:23:00  warmerda
  * added object class support
  *
@@ -235,7 +238,7 @@ static void		GenerateStandardAttributes( OGRFeatureDefn * );
 
     void		AddFeatureDefn( OGRFeatureDefn * );
 
-    int		       *CollectClassList();
+    int		        CollectClassList( int *, int);
 
 static OGRFeatureDefn  *GenerateGeomFeatureDefn( OGRwkbGeometryType );
 static OGRFeatureDefn  *GenerateObjectClassDefn( S57ClassRegistrar *, int );

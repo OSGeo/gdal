@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/11/16 21:47:32  warmerda
+ * updated class occurance collection
+ *
  * Revision 1.2  1999/11/08 22:23:00  warmerda
  * added object class support
  *
@@ -62,25 +65,30 @@ int main( int nArgc, char ** papszArgv )
 
     if( oRegistrar.LoadInfo( "/home/warmerda/data/s57", TRUE ) )
     {
-        int	i, *panClassList = oReader.CollectClassList();
+        int	i, anClassList[MAX_CLASSES];
+
+        for( i = 0; i < MAX_CLASSES; i++ )
+            anClassList[i] = 0;
+        
+        oReader.CollectClassList(anClassList, MAX_CLASSES);
 
         oReader.SetClassBased( &oRegistrar );
 
         printf( "Classes found:\n" );
-        for( i = 0; panClassList[i] != -1; i++ )
+        for( i = 0; i < MAX_CLASSES; i++ )
         {
-            oRegistrar.SelectClass( panClassList[i] );
+            if( anClassList[i] == 0 )
+                continue;
+                
+            oRegistrar.SelectClass( i );
             printf( "%d: %s/%s\n",
-                    panClassList[i],
+                    i,
                     oRegistrar.GetAcronym(),
                     oRegistrar.GetDescription() );
             
             oReader.AddFeatureDefn(
-                S57Reader::GenerateObjectClassDefn( &oRegistrar,
-                                                    panClassList[i] ) );
+                S57Reader::GenerateObjectClassDefn( &oRegistrar, i ) );
         }
-
-        CPLFree( panClassList );
     }
     else
     {
