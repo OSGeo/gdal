@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/04/06 00:02:05  fwarmerdam
+ * various osr and oct functions now stdcall
+ *
  * Revision 1.26  2004/12/16 16:58:29  fwarmerdam
  * Use libproj.dylib on Apple
  *
@@ -309,7 +312,8 @@ char *OCTProj4Normalize( const char *pszProj4Src )
 /*                 OCTDestroyCoordinateTransformation()                 */
 /************************************************************************/
 
-void OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH hCT )
+void CPL_STDCALL
+OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH hCT )
 
 {
     delete (OGRCoordinateTransformation *) hCT;
@@ -332,7 +336,7 @@ void OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH hCT )
  * @return NULL on failure or a ready to use transformation object.
  */
 
-OGRCoordinateTransformation*
+OGRCoordinateTransformation*  
 OGRCreateCoordinateTransformation( OGRSpatialReference *poSource, 
                                    OGRSpatialReference *poTarget )
 
@@ -365,7 +369,8 @@ OGRCreateCoordinateTransformation( OGRSpatialReference *poSource,
 /*                   OCTNewCoordinateTransformation()                   */
 /************************************************************************/
 
-OGRCoordinateTransformationH OCTNewCoordinateTransformation(
+OGRCoordinateTransformationH CPL_STDCALL 
+OCTNewCoordinateTransformation(
     OGRSpatialReferenceH hSourceSRS, OGRSpatialReferenceH hTargetSRS )
 
 {
@@ -424,6 +429,9 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
                             OGRSpatialReference * poTargetIn )
 
 {
+	if( poSourceIn == NULL || poTargetIn == NULL )
+		return FALSE;
+
     poSRSSource = poSourceIn->Clone();
     poSRSTarget = poTargetIn->Clone();
 
@@ -574,8 +582,8 @@ int OGRProj4CT::Transform( int nCount, double *x, double *y, double *z )
 /*                            OCTTransform()                            */
 /************************************************************************/
 
-int OCTTransform( OGRCoordinateTransformationH hTransform,
-                  int nCount, double *x, double *y, double *z )
+int CPL_STDCALL OCTTransform( OGRCoordinateTransformationH hTransform,
+                              int nCount, double *x, double *y, double *z )
 
 {
     return ((OGRCoordinateTransformation*) hTransform)->
@@ -679,9 +687,9 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
 /*                           OCTTransformEx()                           */
 /************************************************************************/
 
-int OCTTransformEx( OGRCoordinateTransformationH hTransform,
-                    int nCount, double *x, double *y, double *z,
-                    int *pabSuccess )
+int CPL_STDCALL OCTTransformEx( OGRCoordinateTransformationH hTransform,
+                                int nCount, double *x, double *y, double *z,
+                                int *pabSuccess )
 
 {
     return ((OGRCoordinateTransformation*) hTransform)->
