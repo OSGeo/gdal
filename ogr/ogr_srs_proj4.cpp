@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2002/11/29 21:23:38  warmerda
+ * implement LCC1SP PROJ.4 to WKT translation
+ *
  * Revision 1.29  2002/11/29 20:56:37  warmerda
  * added LCC1SP conversion to PROJ.4, missing reverse
  *
@@ -510,14 +513,28 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                        OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
-    else if( EQUAL(pszProj,"lcc") ) /* 2SP form */
+    else if( EQUAL(pszProj,"lcc") ) 
     {
-        SetLCC( OSR_GDV( papszNV, "lat_1", 0.0 ), 
-                OSR_GDV( papszNV, "lat_2", 0.0 ), 
-                OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                OSR_GDV( papszNV, "x_0", 0.0 ), 
-                OSR_GDV( papszNV, "y_0", 0.0 ) );
+        if( OSR_GDV(papszNV, "lat_0", 0.0 ) 
+            == OSR_GDV(papszNV, "lat_1", 0.0 ) )
+        {
+            /* 1SP form */
+            SetLCC1SP( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                       OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                       OSR_GDV( papszNV, "k_0", 1.0 ), 
+                       OSR_GDV( papszNV, "x_0", 0.0 ), 
+                       OSR_GDV( papszNV, "y_0", 0.0 ) );
+        }
+        else
+        {
+            /* 2SP form */
+            SetLCC( OSR_GDV( papszNV, "lat_1", 0.0 ), 
+                    OSR_GDV( papszNV, "lat_2", 0.0 ), 
+                    OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                    OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                    OSR_GDV( papszNV, "x_0", 0.0 ), 
+                    OSR_GDV( papszNV, "y_0", 0.0 ) );
+        }
     }
 
     else if( EQUAL(pszProj,"omerc") )
