@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2002/04/24 16:25:04  warmerda
+ * Ensure that GDAL{Read,Write}WorldFile() are exported on Windows.
+ *
  * Revision 1.45  2002/04/19 12:22:05  dron
  * added GDALWriteWorldFile()
  *
@@ -457,10 +460,10 @@ void CPL_DLL
                    void * pDstData, GDALDataType eDstType, int nDstPixelOffset,
                    int nWordCount );
 
-int GDALReadWorldFile( const char *pszBaseFilename, 
+int CPL_DLL GDALReadWorldFile( const char *pszBaseFilename, 
                        const char *pszExtension, 
                        double * padfGeoTransform );
-int GDALWriteWorldFile( const char *pszBaseFilename, 
+int CPL_DLL GDALWriteWorldFile( const char *pszBaseFilename, 
                        const char *pszExtension, 
                        double * padfGeoTransform );
 
