@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/10/24 02:55:18  warmerda
+ * added the -mo to add metadata
+ *
  * Revision 1.6  2002/10/04 20:47:31  warmerda
  * fixed type override going through virtual db
  *
@@ -92,6 +95,7 @@
 CPL_CVSID("$Id$");
 
 static int ArgIsNumeric( const char * );
+static void AttachMetadata( GDALDatasetH, char ** );
 
 /*  ******************************************************************* */
 /*                               Usage()                                */
@@ -109,6 +113,7 @@ static void Usage()
             "       [-scale [src_min src_max [dst_min dst_max]]]\n"
             "       [-srcwin xoff yoff xsize ysize]\n"
             "       [-projwin ulx uly lrx lry] [-co \"NAME=VALUE\"]*\n"
+            "       [-mo \"META-TAG=VALUE\"]*\n"
             "       src_dataset dst_dataset\n\n" );
 
     printf( "%s\n\n", GDALVersionInfo( "--version" ) );
@@ -153,6 +158,7 @@ int main( int argc, char ** argv )
     double	        dfScaleSrcMin=0.0, dfScaleSrcMax=255.0;
     double              dfScaleDstMin=0.0, dfScaleDstMax=255.0;
     double              dfULX, dfULY, dfLRX, dfLRY;
+    char                **papszMetadataOptions = NULL;
 
     anSrcWin[0] = 0;
     anSrcWin[1] = 0;
@@ -234,6 +240,12 @@ int main( int argc, char ** argv )
                 dfScaleDstMax = 255.999;
             }
         }   
+
+        else if( EQUAL(argv[i],"-mo") && i < argc-1 )
+        {
+            papszMetadataOptions = CSLAddString( papszMetadataOptions,
+                                                 argv[++i] );
+        }
 
         else if( EQUAL(argv[i],"-outsize") && i < argc-2 )
         {
@@ -416,7 +428,7 @@ int main( int argc, char ** argv )
 /*      virtual input source to copy from.                              */
 /* -------------------------------------------------------------------- */
     if( eOutputType == GDT_Unknown 
-        && !bScale
+        && !bScale && CSLCount(papszMetadataOptions) == 0 
         && nBandCount == GDALGetRasterCount(hDataset)
         && anSrcWin[0] == 0 && anSrcWin[1] == 0 
         && anSrcWin[2] == GDALGetRasterXSize(hDataset)
@@ -427,11 +439,15 @@ int main( int argc, char ** argv )
         hOutDS = GDALCreateCopy( hDriver, pszDest, hDataset, 
                                  bStrict, papszCreateOptions, 
                                  GDALTermProgress, NULL );
+
         if( hOutDS != NULL )
             GDALClose( hOutDS );
         
         GDALClose( hDataset );
 
+        GDALDumpOpenDatasets( stderr );
+        GDALDestroyDriverManager();
+    
         exit( hOutDS == NULL );
     }
 
@@ -484,6 +500,7 @@ int main( int argc, char ** argv )
         }
         
         poVDS->SetMetadata( ((GDALDataset*)hDataset)->GetMetadata() );
+        AttachMetadata( (GDALDatasetH) poVDS, papszMetadataOptions );
 
         for( i = 0; i < nBandCount; i++ )
         {
@@ -522,12 +539,17 @@ int main( int argc, char ** argv )
                                  bStrict, papszCreateOptions, 
                                  GDALTermProgress, NULL );
         if( hOutDS != NULL )
+        {
             GDALClose( hOutDS );
+        }
 
         GDALClose( (GDALDatasetH) poVDS );
         
         GDALClose( hDataset );
 
+        GDALDumpOpenDatasets( stderr );
+        GDALDestroyDriverManager();
+    
         exit( hOutDS == NULL );
     }
 
@@ -573,6 +595,9 @@ int main( int argc, char ** argv )
 
         GDALSetGeoTransform( hOutDS, adfGeoTransform );
     }
+
+    GDALSetMetadata( hOutDS, GDALGetMetadata( hDataset, NULL ), NULL );
+    AttachMetadata( hOutDS, papszMetadataOptions );
 
 /* -------------------------------------------------------------------- */
 /*      Loop copying bands.                                             */
@@ -693,6 +718,9 @@ int main( int argc, char ** argv )
     GDALClose( hOutDS );
     GDALClose( hDataset );
     
+    GDALDumpOpenDatasets( stderr );
+    GDALDestroyDriverManager();
+    
     exit( 0 );
 }
 
@@ -718,4 +746,27 @@ int ArgIsNumeric( const char *pszArg )
     }
         
     return TRUE;
+}
+
+/************************************************************************/
+/*                           AttachMetadata()                           */
+/************************************************************************/
+
+static void AttachMetadata( GDALDatasetH hDS, char **papszMetadataOptions )
+
+{
+    int nCount = CSLCount(papszMetadataOptions);
+    int i;
+
+    for( i = 0; i < nCount; i++ )
+    {
+        char    *pszKey = NULL;
+        const char *pszValue;
+        
+        pszValue = CPLParseNameValue( papszMetadataOptions[i], &pszKey );
+        GDALSetMetadataItem(hDS,pszKey,pszValue,NULL);
+        CPLFree( pszKey );
+    }
+
+    CSLDestroy( papszMetadataOptions );
 }
