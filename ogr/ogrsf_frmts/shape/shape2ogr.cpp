@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/08/15 15:10:01  warmerda
+ * Fixed problem when GetFeature() called for a non-existant id.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=175
+ *
  * Revision 1.20  2002/08/14 23:27:25  warmerda
  * Fixed reading of Z coordinate for SHPT_ARCZ type.
  *
@@ -592,6 +596,16 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                                OGRFeatureDefn * poDefn, int iShape )
 
 {
+    if( iShape < 0 
+        || (hSHP != NULL && iShape >= hSHP->nRecords)
+        || (hDBF != NULL && iShape >= hDBF->nRecords) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Attempt to read shape with feature id (%d) out of available"
+                  " range.", iShape );
+        return NULL;
+    }
+
     OGRFeature	*poFeature = new OGRFeature( poDefn );
 
     if( hSHP != NULL )
