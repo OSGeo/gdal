@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/06/17 13:57:42  warmerda
+ * restored to previous state
+ *
  * Revision 1.10  2002/06/17 13:41:25  warmerda
  * ensure gdal_priv.h is included first for largefile handling
  *
@@ -64,14 +67,9 @@
 #ifndef OGDIDATASET_H_INCLUDED
 #define OGDIDATASET_H_INCLUDED
 
-#include "gdal_priv.h"
 #include <math.h>
-
-// MIN/MAX conflict with 
-#undef MIN
-#undef MAX
-
 #include "ecs.h"
+#include "gdal_priv.h"
 
 #ifndef MAX
 #  define MIN(a,b)      ((a<b) ? a : b)
