@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/03/03 02:29:38  warmerda
+ * Define PI if not already defined.
+ *
  * Revision 1.3  1999/03/02 21:10:57  warmerda
  * added lots of projections
  *
@@ -47,6 +50,10 @@
 
 #ifndef KvUserDefined
 #  define KvUserDefined 32767
+#endif
+
+#ifndef PI
+#  define PI 3.14159265358979323846
 #endif
 
 /************************************************************************/
