@@ -47,6 +47,10 @@ protected:
 
   double           GetNoDataValue      (int* success);
 
+  double           GetMinimum          (int* success);
+
+  double           GetMaximum          (int* success);
+
 public:
 
   //----------------------------------------------------------------------------

@@ -18,21 +18,22 @@
 
 
 
-GDALDataType       PCRasterType2GDALType    (CSF_CR PCRType);
+GDALDataType       cellRepresentation2GDALType(CSF_CR cellRepresentation);
 
-CSF_VS             string2PCRasterValueScale(const std::string& string);
+CSF_VS             string2ValueScale   (const std::string& string);
 
-std::string        PCRasterValueScale2String(CSF_VS valueScale);
+std::string        valueScale2String   (CSF_VS valueScale);
 
-CSF_VS             GDALType2PCRasterValueScale(
-                                        GDALDataType type);
+std::string        cellRepresentation2String(CSF_CR cellRepresentation);
+
+CSF_VS             GDALType2ValueScale (GDALDataType type);
 
 /*
 CSF_CR             string2PCRasterCellRepresentation(
                                         const std::string& string);
                                         */
 
-CSF_CR             GDALType2PCRasterCellRepresentation(
+CSF_CR             GDALType2CellRepresentation(
                                         GDALDataType type,
                                         bool exact);
 
@@ -55,10 +56,6 @@ void               alterToStdMV        (void* buffer,
                                         size_t size,
                                         CSF_CR cellRepresentation,
                                         double missingValue);
-
-CSF_CR             updateCellRepresentation(
-                                        CSF_VS valueScale,
-                                        CSF_CR cellRepresentation);
 
 MAP*               open                (std::string const& filename,
                                         MOPEN_PERM mode);

@@ -39,6 +39,9 @@ namespace gdal {
 
   More info about PCRaster can be found at http://www.pcraster.nl and
   http://pcraster.geog.uu.nl
+
+  Additional documentation about this driver can be found in
+  frmts/frmts_various.html of the GDAL source code distribution.
 */
 class PCRasterDataset: public GDALDataset
 {

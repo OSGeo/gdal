@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/11/22 10:40:23  kdejong
+ * Added PCRasterRasterBand::Minimum and Maximum. Improved documentation, layout. Removed unused code. Layout.
+ *
  * Revision 1.6  2004/11/13 19:00:55  fwarmerdam
  * Don't blow an assertion if we don't have enough header data, just
  * return NULL (in open()).
@@ -119,10 +122,8 @@ GDALDataset* PCRasterDataset::open(GDALOpenInfo* info)
 {
   PCRasterDataset* dataset = 0;
 
-  if( info->nHeaderBytes < static_cast<int>(CSF_SIZE_SIG) )
-      return NULL;
-
-  if(info->fp && strncmp((char*)info->pabyHeader, CSF_SIG, CSF_SIZE_SIG) == 0) {
+  if(info->fp && info->nHeaderBytes >= static_cast<int>(CSF_SIZE_SIG) &&
+         strncmp((char*)info->pabyHeader, CSF_SIG, CSF_SIZE_SIG) == 0) {
     MOPEN_PERM mode = M_READ;
     if(info->eAccess == GA_Update) {
       mode = M_READ_WRITE;
@@ -140,6 +141,19 @@ GDALDataset* PCRasterDataset::open(GDALOpenInfo* info)
 
 
 
+//! Writes a raster to \a filename as a PCRaster raster file.
+/*!
+  \warning   The source raster must have only 1 band. Currently, the values in
+             the source raster must be stored in one of the supported cell
+             representations (CR_UINT1, CR_INT4, CR_REAL4, CR_REAL8).
+
+  The meta data item PCRASTER_VALUESCALE will be checked to see what value
+  scale to use. Otherwise a value scale is determined using
+  GDALType2ValueScale(GDALDataType).
+
+  This function alwasy writes raster using CR_UINT1, CR_INT4 or CR_REAL4
+  cell representations.
+*/
 GDALDataset* PCRasterDataset::createCopy(char const* filename,
          GDALDataset* source, int strict, char** options,
          GDALProgressFunc progress, void* progressData)
@@ -159,7 +173,7 @@ GDALDataset* PCRasterDataset::createCopy(char const* filename,
   size_t nrCols = raster->GetXSize();
   std::string string;
 
-  CSF_CR fileCellRepresentation = GDALType2PCRasterCellRepresentation(
+  CSF_CR fileCellRepresentation = GDALType2CellRepresentation(
          raster->GetRasterDataType(), false);
 
   if(fileCellRepresentation == CR_UNDEFINED) {
@@ -168,18 +182,15 @@ GDALDataset* PCRasterDataset::createCopy(char const* filename,
     return 0;
   }
 
-  assert(fileCellRepresentation == CR_UINT1 || fileCellRepresentation == CR_INT4
-         || fileCellRepresentation == CR_REAL4);
-
   CSF_VS valueScale = VS_UNDEFINED;
   if(source->GetMetadataItem("PCRASTER_VALUESCALE")) {
     string = source->GetMetadataItem("PCRASTER_VALUESCALE");
   }
   if(!string.empty()) {
-    valueScale = string2PCRasterValueScale(string);
+    valueScale = string2ValueScale(string);
   }
   else {
-    valueScale = GDALType2PCRasterValueScale(raster->GetRasterDataType());
+    valueScale = GDALType2ValueScale(raster->GetRasterDataType());
   }
 
   if(valueScale == VS_UNDEFINED) {
@@ -188,26 +199,24 @@ GDALDataset* PCRasterDataset::createCopy(char const* filename,
     return 0;
   }
 
-  CSF_PT projection = PT_YDECT2B;
-  REAL8 left = 0.0;
-  REAL8 top = 0.0;
-  REAL8 angle = 0.0;
+  CSF_PT const projection = PT_YDECT2B;
+  REAL8  const angle = 0.0;
+  REAL8 west = 0.0;
+  REAL8 north = 0.0;
   REAL8 cellSize = 1.0;
 
   double transform[6];
   if(source->GetGeoTransform(transform) == CE_None) {
     if(transform[2] == 0.0 and transform[4] == 0.0) {
-      // Support dropped, projection always PT_YDECT2B.
-      // projection = (transform[5] > 0.0) ? PT_YINCT2B : PT_YDECT2B;
-      left = static_cast<REAL8>(transform[0]);
-      top = static_cast<REAL8>(transform[3]);
+      west = static_cast<REAL8>(transform[0]);
+      north = static_cast<REAL8>(transform[3]);
       cellSize = static_cast<REAL8>(transform[1]);
     }
   }
 
   // Determine in app cell representation.
   CSF_CR appCellRepresentation = CR_UNDEFINED;
-  appCellRepresentation = GDALType2PCRasterCellRepresentation(
+  appCellRepresentation = GDALType2CellRepresentation(
          raster->GetRasterDataType(), true);
 
   if(appCellRepresentation == CR_UNDEFINED) {
@@ -222,7 +231,7 @@ GDALDataset* PCRasterDataset::createCopy(char const* filename,
 
   // Create a raster with the in file cell representation.
   MAP* map = Rcreate(filename, nrRows, nrCols, fileCellRepresentation,
-                 valueScale, projection, left, top, angle, cellSize);
+                 valueScale, projection, west, north, angle, cellSize);
 
   if(!map) {
     CPLError(CE_Failure, CPLE_OpenFailed,
@@ -233,16 +242,15 @@ GDALDataset* PCRasterDataset::createCopy(char const* filename,
   // Try to convert in app cell representation to the cell representation
   // of the file.
   if(RuseAs(map, appCellRepresentation)) {
-    // TODO delete raster.
     CPLError(CE_Failure, CPLE_NotSupported,
-         "PCRaster driver: Cannot convert cell representations");
+         "PCRaster driver: Cannot convert cells: %s", MstrError());
     return 0;
   }
 
   int hasMissingValue;
   double missingValue = raster->GetNoDataValue(&hasMissingValue);
 
-  // TODO: conversie van INT2 naar INT4 ondersteunen. zie ruseas.c regel 503.
+  // TODO conversie van INT2 naar INT4 ondersteunen. zie ruseas.c regel 503.
   // conversie op r 159.
 
   // Create buffer for one row of values.
@@ -255,7 +263,7 @@ GDALDataset* PCRasterDataset::createCopy(char const* filename,
     // Get row from source.
     if(raster->RasterIO(GF_Read, 0, row, nrCols, 1, buffer, nrCols, 1,
          raster->GetRasterDataType(), 0, 0) != CE_None) {
-      // TODO delete raster.
+      std::free(buffer);
       CPLError(CE_Failure, CPLE_FileIO,
          "PCRaster driver: Error reading from source raster");
     }
@@ -264,17 +272,11 @@ GDALDataset* PCRasterDataset::createCopy(char const* filename,
       alterToStdMV(buffer, nrCols, appCellRepresentation, missingValue);
     }
 
-    /*
-    for(size_t col = 0; col < nrCols; ++col) {
-      std::cout << ((INT2*)buffer)[col] << " " << std::ends;
-    }
-    */
-
     // Write row in target.
     RputRow(map, row, buffer);
 
     if(!progress((row + 1) / (static_cast<double>(nrRows)), 0, progressData)) {
-      // TODO delete raster.
+      std::free(buffer);
       CPLError(CE_Failure, CPLE_UserInterrupt,
          "PCRaster driver: User terminated CreateCopy()");
     }
@@ -322,7 +324,7 @@ PCRasterDataset::PCRasterDataset(MAP* map)
   nBands = 1;
   SetBand(1, new PCRasterRasterBand(this));
 
-  SetMetadataItem("PCRASTER_VALUESCALE", PCRasterValueScale2String(
+  SetMetadataItem("PCRASTER_VALUESCALE", valueScale2String(
          d_valueScale).c_str());
 }
 
@@ -362,22 +364,6 @@ CPLErr PCRasterDataset::GetGeoTransform(double* transform)
 
   return CE_None;
 }
-
-
-
-/*
-void PCRasterDataset::determineMissingValue()
-{
-  CSF_CR type = RgetUseCellRepr(d_map);
-
-  if(type == CR_UNDEFINED) {
-    // TODO: error
-  }
-  else {
-    d_missingValue = ::missingValue(type);
-  }
-}
-*/
 
 
 
