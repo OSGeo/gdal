@@ -3,7 +3,7 @@
  *
  * Project:  ISO 8211 Access
  * Purpose:  Implements the DDFFieldDefn class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/07/03 15:38:46  warmerda
+ * some write capabilities added
+ *
  * Revision 1.11  2003/05/22 19:44:26  warmerda
  * Fixed another bug like the last.
  *
@@ -85,7 +88,7 @@ DDFFieldDefn::DDFFieldDefn()
     _arrayDescr = NULL;
     _formatControls = NULL;
     nSubfieldCount = 0;
-    paoSubfields = NULL;
+    papoSubfields = NULL;
     bRepeatingSubfields = FALSE;
 }
 
@@ -96,12 +99,179 @@ DDFFieldDefn::DDFFieldDefn()
 DDFFieldDefn::~DDFFieldDefn()
 
 {
+    int   i;
+
     CPLFree( pszTag );
     CPLFree( _fieldName );
     CPLFree( _arrayDescr );
     CPLFree( _formatControls );
 
-    delete[] paoSubfields;
+    for( i = 0; i < nSubfieldCount; i++ )
+        delete papoSubfields[i];
+    CPLFree( papoSubfields );
+}
+
+/************************************************************************/
+/*                            AddSubfield()                             */
+/************************************************************************/
+
+void DDFFieldDefn::AddSubfield( const char *pszName, 
+                                const char *pszFormat )
+
+{
+    DDFSubfieldDefn *poSFDefn = new DDFSubfieldDefn;
+
+    poSFDefn->SetName( pszName );
+    poSFDefn->SetFormat( pszFormat );
+    AddSubfield( poSFDefn );
+}
+
+/************************************************************************/
+/*                            AddSubfield()                             */
+/************************************************************************/
+
+void DDFFieldDefn::AddSubfield( DDFSubfieldDefn *poNewSFDefn,
+                                int bDontAddToFormat )
+
+{
+    nSubfieldCount++;
+    papoSubfields = (DDFSubfieldDefn ** )
+        CPLRealloc( papoSubfields, sizeof(void*) * nSubfieldCount );
+    papoSubfields[nSubfieldCount-1] = poNewSFDefn;
+    
+    if( bDontAddToFormat )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Add this format to the format list.  We don't bother            */
+/*      aggregating formats here.                                       */
+/* -------------------------------------------------------------------- */
+    if( _formatControls == NULL || strlen(_formatControls) == 0 )
+    {
+        CPLFree( _formatControls );
+        _formatControls = CPLStrdup( "()" );
+    }
+    
+    int nOldLen = strlen(_formatControls);
+    
+    char *pszNewFormatControls = (char *) 
+        CPLMalloc(nOldLen+3+strlen(poNewSFDefn->GetFormat()));
+    
+    strcpy( pszNewFormatControls, _formatControls );
+    pszNewFormatControls[nOldLen-1] = '\0';
+    if( pszNewFormatControls[nOldLen-2] != '(' )
+        strcat( pszNewFormatControls, "," );
+    
+    strcat( pszNewFormatControls, poNewSFDefn->GetFormat() );
+    strcat( pszNewFormatControls, ")" );
+    
+    CPLFree( _formatControls );
+    _formatControls = pszNewFormatControls;
+
+/* -------------------------------------------------------------------- */
+/*      Add the subfield name to the list.                              */
+/* -------------------------------------------------------------------- */
+    if( _arrayDescr == NULL )
+        _arrayDescr = CPLStrdup("");
+
+    _arrayDescr = (char *) 
+        CPLRealloc(_arrayDescr, 
+                   strlen(_arrayDescr)+strlen(poNewSFDefn->GetName())+2);
+    if( strlen(_arrayDescr) > 0 )
+        strcat( _arrayDescr, "!" );
+    strcat( _arrayDescr, poNewSFDefn->GetName() );
+}
+
+/************************************************************************/
+/*                               Create()                               */
+/*                                                                      */
+/*      Initialize a new field defn from application input, instead     */
+/*      of from an existing file.                                       */
+/************************************************************************/
+
+int DDFFieldDefn::Create( const char *pszTag, const char *pszFieldName, 
+                          const char *pszDescription, 
+                          DDFFieldDefn::data_struct_code eDataStructCode,
+                          DDFFieldDefn::data_type_code   eDataTypeCode,
+                          const char *pszFormat )
+
+{
+    CPLAssert( this->pszTag == NULL );
+    poModule = NULL;
+    this->pszTag = CPLStrdup( pszTag );
+    _fieldName = CPLStrdup( pszFieldName );
+    _arrayDescr = CPLStrdup( pszDescription );
+    _formatControls = CPLStrdup( "" );
+    
+    _data_struct_code = eDataStructCode;
+    _data_type_code = eDataTypeCode;
+
+    if( pszFormat != NULL )
+        _formatControls = CPLStrdup( pszFormat );
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                          GenerateDDREntry()                          */
+/************************************************************************/
+
+int DDFFieldDefn::GenerateDDREntry( char **ppachData, 
+                                    int *pnLength )
+
+{
+    *pnLength = 9 + strlen(_fieldName) + 1 
+        + strlen(_arrayDescr) + 1
+        + strlen(_formatControls) + 1;
+
+    if( strlen(_formatControls) == 0 )
+        *pnLength -= 1;
+
+    if( ppachData == NULL )
+        return TRUE;
+
+    *ppachData = (char *) CPLMalloc( *pnLength+1 );
+    
+    if( _data_struct_code == elementary )
+        (*ppachData)[0] = '0';
+    else if( _data_struct_code == vector )
+        (*ppachData)[0] = '1';
+    else if( _data_struct_code == array )
+        (*ppachData)[0] = '2';
+    else if( _data_struct_code == concatenated )
+        (*ppachData)[0] = '3';
+    
+    if( _data_type_code == char_string )
+        (*ppachData)[1] = '0';
+    else if( _data_type_code == implicit_point )
+        (*ppachData)[1] = '1';
+    else if( _data_type_code == explicit_point )
+        (*ppachData)[1] = '2';
+    else if( _data_type_code == explicit_point_scaled )
+        (*ppachData)[1] = '3';
+    else if( _data_type_code == char_bit_string )
+        (*ppachData)[1] = '4';
+    else if( _data_type_code == bit_string )
+        (*ppachData)[1] = '5';
+    else if( _data_type_code == mixed_data_type )
+        (*ppachData)[1] = '6';
+
+    (*ppachData)[2] = '0';
+    (*ppachData)[3] = '0';
+    (*ppachData)[4] = ';';
+    (*ppachData)[5] = '&';
+    (*ppachData)[6] = ' ';
+    (*ppachData)[7] = ' ';
+    (*ppachData)[8] = ' ';
+    sprintf( *ppachData + 9, "%s%c%s", 
+             _fieldName, DDF_UNIT_TERMINATOR, _arrayDescr );
+
+    if( strlen(_formatControls) > 0 )
+        sprintf( *ppachData + strlen(*ppachData), "%c%s",
+                 DDF_UNIT_TERMINATOR, _formatControls );
+    sprintf( *ppachData + strlen(*ppachData), "%c", DDF_FIELD_TERMINATOR );
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -319,9 +489,7 @@ void DDFFieldDefn::Dump( FILE * fp )
     fprintf( fp, "      _data_type_code = %s\n", pszValue );
 
     for( int i = 0; i < nSubfieldCount; i++ )
-    {
-        paoSubfields[i].Dump( fp );
-    }
+        papoSubfields[i]->Dump( fp );
 }
 
 /************************************************************************/
@@ -345,12 +513,13 @@ int DDFFieldDefn::BuildSubfields()
     papszSubfieldNames = CSLTokenizeStringComplex( pszSublist, "!",
                                                    FALSE, FALSE );
 
-    nSubfieldCount = CSLCount( papszSubfieldNames );
-    paoSubfields = new DDFSubfieldDefn[nSubfieldCount];
-    
-    for( int iSF = 0; iSF < nSubfieldCount; iSF++ )
+    int nSFCount = CSLCount( papszSubfieldNames );
+    for( int iSF = 0; iSF < nSFCount; iSF++ )
     {
-        paoSubfields[iSF].SetName( papszSubfieldNames[iSF] );
+        DDFSubfieldDefn *poSFDefn = new DDFSubfieldDefn;
+        
+        poSFDefn->SetName( papszSubfieldNames[iSF] );
+        AddSubfield( poSFDefn, TRUE );
     }
 
     CSLDestroy( papszSubfieldNames );
@@ -570,7 +739,7 @@ int DDFFieldDefn::ApplyFormats()
             break;
         }
         
-        if( !paoSubfields[iFormatItem].SetFormat(pszPastPrefix) )
+        if( !papoSubfields[iFormatItem]->SetFormat(pszPastPrefix) )
             return FALSE;
     }
 
@@ -594,13 +763,13 @@ int DDFFieldDefn::ApplyFormats()
     nFixedWidth = 0;
     for( int i = 0; i < nSubfieldCount; i++ )
     {
-        if( paoSubfields[i].GetWidth() == 0 )
+        if( papoSubfields[i]->GetWidth() == 0 )
         {
             nFixedWidth = 0;
             break;
         }
         else
-            nFixedWidth += paoSubfields[i].GetWidth();
+            nFixedWidth += papoSubfields[i]->GetWidth();
     }
 
     return TRUE;
@@ -624,8 +793,8 @@ DDFSubfieldDefn *DDFFieldDefn::FindSubfieldDefn( const char * pszMnemonic )
 {
     for( int i = 0; i < nSubfieldCount; i++ )
     {
-        if( EQUAL(paoSubfields[i].GetName(),pszMnemonic) )
-            return paoSubfields + i;
+        if( EQUAL(papoSubfields[i]->GetName(),pszMnemonic) )
+            return papoSubfields[i];
     }
 
     return NULL;
@@ -654,5 +823,5 @@ DDFSubfieldDefn *DDFFieldDefn::GetSubfield( int i )
         return NULL;
     }
              
-    return paoSubfields + i;
+    return papoSubfields[i];
 }
