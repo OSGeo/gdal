@@ -40,7 +40,7 @@ test1$(EXE):	test1.o $(DEP_LIBS)
 		 -o test1$(EXE)
 
 clean:
-	rm -f *.o $(BIN_LIST) core
+	rm -f *.o $(BIN_LIST) core gdal-config gdal-config-inst
 
 $(DEP_LIBS):
 
