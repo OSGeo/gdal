@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/10/21 15:08:19  fwarmerdam
+ * Added warning about file compression.
+ *
  * Revision 1.19  2004/08/18 15:31:46  warmerda
  * I've fixed a bug in ENVI driver that happened when creating a band with a
  * start offset greater that 2 Gbytes.  I've also added support for geotransform
@@ -894,6 +897,23 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         bNativeOrder = atoi(CSLFetchNameValue(poDS->papszHeader,
                                               "byte_order" )) != 0;
 #endif
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Warn about compressed datasets.                                 */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue(poDS->papszHeader,"file_compression" ) != NULL )
+    {
+        if( atoi(CSLFetchNameValue(poDS->papszHeader,"file_compression" )) 
+            != 0 )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "File %s is marked as compressed in the ENVI .hdr\n"
+                      "GDAL does not support auto-decompression of ENVI data\n"
+                      "files.  If the data appears corrupt please decompress\n"
+                      "manually and then retry.",
+                      poOpenInfo->pszFilename );
+        }
     }
 
 /* -------------------------------------------------------------------- */
