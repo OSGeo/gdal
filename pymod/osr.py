@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.19  2003/02/06 05:49:28  warmerda
+# Translate 'NULL' into None for CoordinateTransformation class constructor.
+#
 # Revision 1.18  2003/02/06 04:50:57  warmerda
 # added the Fixup() method on OGRSpatialReference
 #
@@ -243,6 +246,8 @@ class CoordinateTransformation:
             source = source[0]
             
         self._o = _gdal.OCTNewCoordinateTransformation( source._o, target._o )
+        if self._o == 'NULL':
+            self._o = None
 
     def __del__(self):
         if self._o: 
