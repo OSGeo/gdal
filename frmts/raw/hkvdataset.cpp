@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2003/08/12 15:26:09  gwalter
+ * Bug fix for wgs_84 LL projection case.
+ *
  * Revision 1.32  2003/07/08 21:10:19  warmerda
  * avoid warnings
  *
@@ -1090,7 +1093,8 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
             oLL.SetProjParm(SRS_PP_LONGITUDE_OF_ORIGIN,atof(pszOriginLong));
         }
 
-        if ((pszSpheroidName == NULL) || (EQUAL(pszSpheroidName,"wgs-84")))
+        if ((pszSpheroidName == NULL) || (EQUAL(pszSpheroidName,"wgs-84")) ||
+            (EQUAL(pszSpheroidName,"wgs_84")))
           {
             oUTM.SetWellKnownGeogCS( "WGS84" );
             oLL.SetWellKnownGeogCS( "WGS84" );
@@ -1197,21 +1201,31 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
             CPLError(CE_Warning,CPLE_AppDefined,"Warning- unrecognized ellipsoid.  Using wgs-84 parameters.\n");
             oLL.SetWellKnownGeogCS( "WGS84" );
           }
+        }
 
-            transform_ok = GDALGCPsToGeoTransform(5,pasGCPList,adfGeoTransform,0);
-            if (transform_ok == FALSE)
-            {
-                adfGeoTransform[0] = 0.0;
-                adfGeoTransform[1] = 1.0;
-                adfGeoTransform[2] = 0.0;
-                adfGeoTransform[3] = 0.0;
-                adfGeoTransform[4] = 0.0;
-                adfGeoTransform[5] = 1.0;
-            }
-            oLL.exportToWkt( &pszGCPProjection );
+        transform_ok = GDALGCPsToGeoTransform(5,pasGCPList,adfGeoTransform,0);
+
+        CPLFree( pszProjection );
+        pszProjection = NULL;
+
+        if (transform_ok == FALSE)
+        {
+            adfGeoTransform[0] = 0.0;
+            adfGeoTransform[1] = 1.0;
+            adfGeoTransform[2] = 0.0;
+            adfGeoTransform[3] = 0.0;
+            adfGeoTransform[4] = 0.0;
+            adfGeoTransform[5] = 1.0;
+        }
+        else
+        {
             oLL.exportToWkt( &pszProjection );
+        }
+
+        CPLFree( pszGCPProjection );
+        pszGCPProjection = NULL;
+        oLL.exportToWkt( &pszGCPProjection );
           
-        }  
     }
 
     delete hkvEllipsoids;
