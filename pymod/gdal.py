@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.24  2001/06/26 02:22:39  warmerda
+# added metadata domain support, and GetSubDatasets
+#
 # Revision 1.23  2001/05/07 14:50:44  warmerda
 # added python access to GDALComputeRasterMinMax
 #
@@ -280,8 +283,25 @@ class Dataset:
     def GetProjectionRef(self):
         return _gdal.GDALGetProjectionRef(self._o)
 
-    def GetMetadata(self):
-        return _gdal.GDALGetMetadata(self._o)
+    def GetMetadata(self, domain = None):
+        if domain is None:
+            return _gdal.GDALGetMetadata(self._o)
+        else:
+            return _gdal.GDALGetMetadata(self._o, domain)
+
+    def GetSubDatasets(self):
+        sd_list = []
+        
+        sd = self.GetMetadata('SUBDATASETS')
+        if sd is None:
+            return sd_list
+
+        i = 1
+        while sd.has_key('SUBDATASET_'+str(i)+'_NAME'):
+            sd_list.append( ( sd['SUBDATASET_'+str(i)+'_NAME'],
+                              sd['SUBDATASET_'+str(i)+'_DESC'] ) )
+            i = i + 1
+        return sd_list
 
     def GetGCPCount(self):
         return _gdal.GDALGetGCPCount(self._o)
