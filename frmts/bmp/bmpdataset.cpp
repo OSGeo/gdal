@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.10  2002/12/11 22:08:20  warmerda
+ * fixed multiband support for writing ... open wit wb+ in create
+ *
  * Revision 1.9  2002/12/11 16:13:04  dron
  * Support for 16-bit RGB images (untested).
  *
@@ -398,6 +401,13 @@ CPLErr BMPRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 	CPLError( CE_Failure, CPLE_FileIO,
 		  "Can't seek to offset %d in output file", iScanOffset );
 	return CE_Failure;
+    }
+
+    if( poGDS->nBands != 1 )
+    {
+        memset( pabyScan, 0, nScanSize );
+        VSIFRead( pabyScan, 1, nScanSize, poGDS->fp );
+        VSIFSeek( poGDS->fp, iScanOffset, SEEK_SET );
     }
     
     for ( iInPixel = 0, iOutPixel = nBand - 1;
@@ -929,7 +939,7 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
 
     poDS = new BMPDataset();
 
-    poDS->fp = VSIFOpen( pszFilename, "wb" );
+    poDS->fp = VSIFOpen( pszFilename, "wb+" );
     if( poDS->fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -1337,7 +1347,7 @@ void GDALRegister_BMP()
 
         poDriver->pfnOpen = BMPDataset::Open;
         poDriver->pfnCreate = BMPDataset::Create;
-        poDriver->pfnCreateCopy = BMPCreateCopy;
+//        poDriver->pfnCreateCopy = BMPCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
