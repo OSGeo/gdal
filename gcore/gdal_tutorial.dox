@@ -1,0 +1,307 @@
+/*!
+\page gdal_tutorial
+
+<center>
+<title>GDAL API Tutorial</title>
+</center>
+
+<h2>Opening the File</h2>
+
+Before opening a GDAL supported raster datastore it is necessary to 
+register drivers.  There is a driver for each supported format.  Normally
+this is accomplished with the GDALAllRegister() function which attempts
+to register all known drivers, including those auto-loaded from .so files
+using GDALDriverManager::AutoLoadDrivers().  If for some applications it
+is necessary to limit the set of drivers it may be helpful to review
+the code from <a href="gdalallregister.cpp.html">gdalallregister.cpp</a>.
+
+Once the drivers are registered, the application should call the free
+standing GDALOpen() function to open a dataset, passing the name of the
+dataset and the access desired (GA_ReadOnly or GA_Update). 
+
+In C++:
+<pre>
+    GDALDataset  *poDataset;
+
+    GDALAllRegister();
+
+    poDataset = (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+    if( poDataset == NULL )
+    {
+	...;
+    }
+</pre>
+
+In C:
+<pre>
+    GDALDatasetH  hDataset;
+
+    GDALAllRegister();
+
+    hDataset = GDALOpen( pszFilename, GA_ReadOnly );
+    if( poDataset == NULL )
+    {
+	...;
+    }
+</pre>
+
+In Python:
+<pre>
+    import gdal
+    from gdalconst import *
+
+    dataset = gdal.Open( filename, GA_ReadOnly )
+    if dataset is None:
+        ...
+</pre>
+
+Note that if GDALOpen() returns NULL it means the open failed, and that
+an error messages will already have been emitted via CPLError().  If you want
+to control how errors are reported to the user review the CPLError() 
+documentation.  Generally speaking all of GDAL uses CPLError() for error
+reporting.  Also, note that pszFilename need not actually be the name
+of a physical file (though it usually is).  It's interpretation is driver
+dependent, and it might be an URL, a filename with additional parameters
+added at the end controlling the open or almost anything.  Please try not
+to limit GDAL file selection dialogs to only selecting physical files.
+
+<h2>Getting Dataset Information</h2>
+
+As described in the <a href="gdal_datamodel.html">GDAL Data Model</a>, a
+GDALDataset contains a list of raster bands, all pertaining to the same
+area, and having the same resolution.  It also has metadata, a coordinate
+system, a georeferencing transform, size of raster and various other 
+information.  If we wanted to print some general information about the 
+dataset we might do the following:
+
+In C++:
+<pre>
+    double        adfGeoTransform[6];
+
+    printf( "Driver: %s/%s\n",
+            poDataset->GetDriver()->pszShortName, 
+            poDataset->GetDriver()->pszLongName );
+
+    printf( "Size is %dx%dx%d\n", 
+            poDataset->GetRasterXSize(), poDataset->GetRasterYSize(),
+            poDataset->GetRasterCount() );
+
+    if( poDataset->GetProjectionRef()  != NULL )
+        printf( "Projection is `%s'\n", poDataset->GetProjectionRef() );
+
+    if( poDataset->GetGeoTransform( adfGeoTransform ) == CE_None )
+    {
+        printf( "Origin = (%.6f,%.6f)\n",
+                adfGeoTransform[0], adfGeoTransform[3] );
+
+        printf( "Pixel Size = (%.6f,%.6f)\n",
+                adfGeoTransform[1], adfGeoTransform[5] );
+    }
+</pre> 
+
+In C:
+<pre>
+    GDALDriverH   hDriver;
+    double        adfGeoTransform[6];
+
+    hDriver = GDALGetDatasetDriver( hDataset );
+    printf( "Driver: %s/%s\n",
+            GDALGetDriverShortName( hDriver ),
+            GDALGetDriverLongName( hDriver ) );
+
+    printf( "Size is %dx%dx%d\n",
+	    GDALGetRasterXSize( hDataset ), 
+            GDALGetRasterYSize( hDataset ),
+            GDALGetRasterCount( hDataset ) );
+
+    if( GDALGetProjectionRef( hDataset ) != NULL )
+        printf( "Projection is `%s'\n", GDALGetProjectionRef( hDataset ) );
+
+    if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
+    {
+        printf( "Origin = (%.6f,%.6f)\n",
+                adfGeoTransform[0], adfGeoTransform[3] );
+
+        printf( "Pixel Size = (%.6f,%.6f)\n",
+                adfGeoTransform[1], adfGeoTransform[5] );
+    }
+</pre>
+
+In Python (note, driver bindings are not currently available):
+<pre>
+    print 'Size is ',dataset.RasterXSize,'x',dataset.RasterYSize, \
+          'x',dataset.RasterCount
+    print 'Projection is ',dataset.GetProjection()
+    
+    geotransform = dataset.GetGeoTransform()
+    if not geotransform is None:
+	print 'Origin = (',geotransform[0], ',',geotransform[3],')'
+	print 'Pixel Size = (',geotransform[1], ',',geotransform[5],')'
+</pre>
+
+<h2>Fetching a Raster Band</h2>
+
+At this time access to raster data via GDAL is done one band at a time.
+Also, there is metadata, blocksizes, color tables, and various other 
+information available on a band by band basis.  The following codes fetches
+a GDALRasterBand object from the dataset (numbered 1 through GetRasterCount())
+and displays a little information about it.
+
+In C++:
+<pre>
+	GDALRasterBand  *poBand;
+        int             nBlockXSize, nBlockYSize;
+        int             bGotMin, bGotMax;
+        double          adfMinMax[2];
+	
+        poBand = poDataset->GetRasterBand( 1 );
+	poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
+        printf( "Block=%dx%d Type=%s, ColorInterp=%s\n",
+                nBlockXSize, nBlockYSize,
+                GDALGetDataTypeName(poBand->GetRasterDataType()),
+                GDALGetColorInterpretationName(
+                    poBand->GetColorInterpretation()) );
+
+        adfMinMax[0] = poBand->GetMinimum( &bGotMin );
+        adfMinMax[1] = poBand->GetMaximum( &bGotMax );
+        if( ! (bGotMin && bGotMax) )
+            GDALComputeRasterMinMax((GDALRasterBandH)poBand, TRUE, adfMinMax);
+
+        printf( "Min=%.3fd, Max=%.3f\n", adfMinMax[0], adfMinMax[1] );
+        
+        if( poBand->GetOverviewCount() > 0 )
+            printf( "Band has %d overviews.\n", poBand->GetOverviewCount() );
+
+        if( poBand->GetColorTable() != NULL )
+            printf( "Band has a color table with %d entries.\n", 
+                     poBand->GetColorTable()->GetColorEntryCount() );
+</pre>
+
+In C:
+<pre>
+	GDALRasterBand  hBand;
+        int             nBlockXSize, nBlockYSize;
+        int             bGotMin, bGotMax;
+        double          adfMinMax[2];
+	
+        hBand = GDALGetRasterBand( hDataset, 1 );
+        GDALGetBlockSize( hBand, &nBlockXSize, &nBlockYSize );
+        printf( "Block=%dx%d Type=%s, ColorInterp=%s\n",
+                nBlockXSize, nBlockYSize,
+                GDALGetDataTypeName(GDALGetRasterDataType(hBand)),
+                GDALGetColorInterpretationName(
+                    GDALGetRasterColorInterpretation(hBand)) );
+
+        adfMinMax[0] = GDALGetRasterMinimum( hBand, &bGotMin );
+        adfMinMax[1] = GDALGetRasterMaximum( hBand, &bGotMax );
+        if( ! (bGotMin && bGotMax) )
+            GDALComputeRasterMinMax( hBand, TRUE, adfMinMax );
+
+        printf( "Min=%.3fd, Max=%.3f\n", adfMinMax[0], adfMinMax[1] );
+        
+        if( GDALGetOverviewCount(hBand) > 0 )
+            printf( "Band has %d overviews.\n", GDALGetOverviewCount(hBand));
+
+        if( GDALGetRasterColorTable( hBand ) != NULL )
+            printf( "Band has a color table with %d entries.\n", 
+                     GDALGetColorEntryCount(
+                         GDALGetRasterColorTable( hBand ) ) );
+</pre>
+
+In Python (note several bindings are missing):
+<pre>
+	band = dataset.GetRasterBand(1)
+
+	print 'Band Type=',gdal.GetDataTypeName(band.DataType)
+
+        if not band.GetRasterColorTable() is None:
+	    print 'Band has a color table.'
+</pre>
+
+<h2>Reading Raster Data</h2>
+
+There are a few ways to read raster data, but the most common is via
+the GDALRasterBand::RasterIO() method.  This method will automatically take 
+care of data type conversion, up/down sampling and windowing.  The following 
+code will read the first scanline of data into a similarly sized buffer,
+converting it to floating point as part of the operation.
+
+In C++:
+<pre>
+	float *pafScanline;
+        int   nXSize = poBand->GetXSize();
+
+        pafScanline = (float *) CPLMalloc(sizeof(float)*nXSize);
+        poBand->RasterIO( GF_Read, 0, 0, nXSize, 1, 
+                          pafScanline, nXSize, 1, GDT_Float32, 
+                          0, 0 );
+</pre>
+
+In C:
+<pre>
+	float *pafScanline;
+        int   nXSize = GDALGetRasterBandXSize( hBand );
+
+        pafScanline = (float *) CPLMalloc(sizeof(float)*nXSize);
+	GDALRasterIO( hBand, GF_Read, 0, 0, nXSize, 1, 
+                      pafScanline, nXSize, 1, GDT_Float32, 
+                      0, 0 );
+</pre>
+
+In Python (note that the returned scanline is of type string, and contains
+xsize*4 bytes of raw binary floating point data):
+<pre>
+ 	scanline = band.ReadRaster( 0, 0, band.XSize, 1, \
+                                    band.XSize, 1, GDT_Float32 )
+</pre>
+
+The RasterIO call takes the following arguments. 
+<pre>
+CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
+                                 int nXOff, int nYOff, int nXSize, int nYSize,
+                                 void * pData, int nBufXSize, int nBufYSize,
+                                 GDALDataType eBufType,
+                                 int nPixelSpace,
+                                 int nLineSpace )
+</pre>
+
+Note that the same RasterIO() call is used to read, or write based on 
+the setting of eRWFlag (either GF_Read or GF_Write).  The nXOff, nYOff, 
+nXSize, nYSize argument describe the window of raster data on disk to 
+read (or write).  It doesn't have to fall on tile boundaries though access
+may be more efficient if it does.  
+
+The pData is the memory buffer the data is read into, or written from.  It's
+real type must be whatever is passed as eBufType, such as GDT_Float32, or
+GDT_Byte.  The RasterIO() call will take care of converting between the 
+buffer's data type and the data type of the band.  Note that when converting
+floating point data to integer RasterIO() rounds down, and when converting
+source values outside the legal range of the output the nearest legal value
+is used.  This implies, for instance, that 16bit data read into a GDT_Byte
+buffer will map all values greater than 255 to 255, <b>the data is not 
+scaled!</b>
+
+The nBufXSize and nBufYSize
+values describe the size of the buffer.  When loading data at full resolution
+this would be the same as the window size.  However, to load a reduced 
+resolution overview this could be set to smaller than the window on disk.  In
+this case the RasterIO() will utilize overviews to do the IO more efficiently
+if the overviews are suitable. 
+
+The nPixelSpace, and nLineSpace are normally zero indicating that default
+values should be used.  However, they can be used to control access to 
+the memory data buffer, allowing reading into a buffer containing other
+pixel interleaved data for instance.  
+
+<h2>Closing the Dataset</h2>
+
+Please keep in mind that GDALRasterBand objects are <i>owned</i> by their
+dataset, and they should never be destroyed with the C++ delete operator. 
+GDALDataset's can be closed either by calling GDALClose() or using the
+delete operator on the GDALDataset.   Either will result in proper cleanup,
+and flushing of any pending writes.  
+
+*/
+
+
+
