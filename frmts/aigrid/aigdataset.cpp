@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/11/05 03:29:29  warmerda
+ * added GInt16 handling
+ *
  * Revision 1.16  2002/11/05 03:19:29  warmerda
  * remap nodata to 255, and only use byte type if max < 255
  *
@@ -155,6 +158,11 @@ AIGRasterBand::AIGRasterBand( AIGDataset *poDS, int nBand )
     {
         eDataType = GDT_Byte;
     }
+    else if( poDS->psInfo->nCellType == AIG_CELLTYPE_INT
+        && poDS->psInfo->dfMin >= -32767 && poDS->psInfo->dfMax <= 32767 )
+    {
+        eDataType = GDT_Int16;
+    }
     else if( poDS->psInfo->nCellType == AIG_CELLTYPE_INT )
     {
         eDataType = GDT_Int32;
@@ -195,6 +203,16 @@ CPLErr AIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     ((GByte *) pImage)[i] = 255;
                 else
                     ((GByte *) pImage)[i] = panGridRaster[i];
+            }
+        }
+        else if( eDataType == GDT_Int16 )
+        {
+            for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+            {
+                if( panGridRaster[i] == ESRI_GRID_NO_DATA )
+                    ((GInt16 *) pImage)[i] = -32768;
+                else
+                    ((GInt16 *) pImage)[i] = panGridRaster[i];
             }
         }
         else
@@ -256,6 +274,8 @@ double AIGRasterBand::GetNoDataValue( int *pbSuccess )
 
     if( eDataType == GDT_Float32 )
         return ESRI_GRID_FLOAT_NO_DATA;
+    else if( eDataType == GDT_Int16 )
+        return -32768;
     else if( eDataType == GDT_Byte )
         return 255;
     else
