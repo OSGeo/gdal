@@ -1907,13 +1907,14 @@ py_OGR_G_CreateFromWkb(PyObject *self, PyObject *args) {
     OGRSpatialReferenceH hSRS = NULL;
     OGRErr eErr;
     OGRGeometryH hGeom = NULL;
+    int    wkb_len = 0;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"zs:OGR_G_CreateFromWkb", &wkb_in, 
+    if(!PyArg_ParseTuple(args,"z#s:OGR_G_CreateFromWkb", &wkb_in, &wkb_len,
                          &srs_in))
         return NULL;
 
-    if( srs_in ) {
+    if( srs_in && strlen(srs_in) > 0 ) {
         if (SWIG_GetPtr_2(srs_in,
 			  (void **) &hSRS,_OGRSpatialReferenceH)) {
             PyErr_SetString(PyExc_TypeError,
@@ -1955,7 +1956,7 @@ py_OGR_G_CreateFromWkt(PyObject *self, PyObject *args) {
                          &srs_in))
         return NULL;
 
-    if( srs_in ) {
+    if( srs_in && strlen(srs_in) > 0 ) {
         if (SWIG_GetPtr_2(srs_in,
 			  (void **) &hSRS,_OGRSpatialReferenceH)) {
             PyErr_SetString(PyExc_TypeError,
