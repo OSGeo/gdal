@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.18  2003/02/22 07:23:02  dron
+ * Fixes i spill file writing.
+ *
  * Revision 1.17  2003/02/21 15:40:58  dron
  * Added support for writing large (>4 GB) Erdas Imagine files.
  *
@@ -1115,7 +1118,7 @@ void HFAStandard( int nBytes, void * pData )
 
 static const char *aszDefaultDD[] = {
 "{1:lversion,1:LfreeList,1:LrootEntryPtr,1:sentryHeaderLength,1:LdictionaryPtr,}Ehfa_File,{1:Lnext,1:Lprev,1:Lparent,1:Lchild,1:Ldata,1:ldataSize,64:cname,32:ctype,1:tmodTime,}Ehfa_Entry,{16:clabel,1:LheaderPtr,}Ehfa_HeaderTag,{1:LfreeList,1:lfreeSize,}Ehfa_FreeListNode,{1:lsize,1:Lptr,}Ehfa_Data,{1:lwidth,1:lheight,1:e3:thematic,athematic,fft of real-valued data,layerType,",
-"1:e13:u1,u2,u4,u8,s8,u16,s16,u32,s32,f32,f64,c64,c128,pixelType,1:lblockWidth,1:lblockHeight,}Eimg_Layer,{1:lwidth,1:lheight,1:e3:thematic,athematic,fft of real-valued data,layerType,1:e13:u1,u2,u4,u8,s8,u16,s16,u32,s32,f32,f64,c64,c128,pixelType,1:lblockWidth,1:lblockHeight,}Eimg_Layer_SubSample,{1:e2:raster,vector,type,1:LdictionaryPtr,}Ehfa_Layer,{1:sfileCode,1:Loffset,1:lsize,1:e2:false,true,logvalid,",
+"1:e13:u1,u2,u4,u8,s8,u16,s16,u32,s32,f32,f64,c64,c128,pixelType,1:lblockWidth,1:lblockHeight,}Eimg_Layer,{1:lwidth,1:lheight,1:e3:thematic,athematic,fft of real-valued data,layerType,1:e13:u1,u2,u4,u8,s8,u16,s16,u32,s32,f32,f64,c64,c128,pixelType,1:lblockWidth,1:lblockHeight,}Eimg_Layer_SubSample,{1:e2:raster,vector,type,1:LdictionaryPtr,}Ehfa_Layer,{1:LspaceUsedForRasterData,}ImgFormatInfo831,{1:sfileCode,1:Loffset,1:lsize,1:e2:false,true,logvalid,",
 "1:e2:no compression,ESRI GRID compression,compressionType,}Edms_VirtualBlockInfo,{1:lmin,1:lmax,}Edms_FreeIDList,{1:lnumvirtualblocks,1:lnumobjectsperblock,1:lnextobjectnum,1:e2:no compression,RLC compression,compressionType,0:poEdms_VirtualBlockInfo,blockinfo,0:poEdms_FreeIDList,freelist,1:tmodTime,}Edms_State,{0:pcstring,}Emif_String,{1:oEmif_String,fileName,2:LlayerStackValidFlagsOffset,2:LlayerStackDataOffset,1:LlayerStackCount,1:LlayerStackIndex,}ImgExternalRaster,{1:oEmif_String,algorithm,0:poEmif_String,nameList,}Eimg_RRDNamesList,{1:oEmif_String,projection,1:oEmif_String,units,}Eimg_MapInformation,",
 "{1:oEmif_String,dependent,}Eimg_DependentFile,{1:oEmif_String,ImageLayerName,}Eimg_DependentLayerName,{1:lnumrows,1:lnumcolumns,1:e13:EGDA_TYPE_U1,EGDA_TYPE_U2,EGDA_TYPE_U4,EGDA_TYPE_U8,EGDA_TYPE_S8,EGDA_TYPE_U16,EGDA_TYPE_S16,EGDA_TYPE_U32,EGDA_TYPE_S32,EGDA_TYPE_F32,EGDA_TYPE_F64,EGDA_TYPE_C64,EGDA_TYPE_C128,datatype,1:e4:EGDA_SCALAR_OBJECT,EGDA_TABLE_OBJECT,EGDA_MATRIX_OBJECT,EGDA_RASTER_OBJECT,objecttype,}Egda_BaseData,{1:*bvalueBD,}Eimg_NonInitializedValue,{1:dx,1:dy,}Eprj_Coordinate,{1:dwidth,1:dheight,}Eprj_Size,{0:pcproName,1:*oEprj_Coordinate,upperLeftCenter,",
 "1:*oEprj_Coordinate,lowerRightCenter,1:*oEprj_Size,pixelSize,0:pcunits,}Eprj_MapInfo,{0:pcdatumname,1:e3:EPRJ_DATUM_PARAMETRIC,EPRJ_DATUM_GRID,EPRJ_DATUM_REGRESSION,type,0:pdparams,0:pcgridname,}Eprj_Datum,{0:pcsphereName,1:da,1:db,1:deSquared,1:dradius,}Eprj_Spheroid,{1:e2:EPRJ_INTERNAL,EPRJ_EXTERNAL,proType,1:lproNumber,0:pcproExeName,0:pcproName,1:lproZone,0:pdproParams,1:*oEprj_Spheroid,proSpheroid,}Eprj_ProParameters,{1:dminimum,1:dmaximum,1:dmean,1:dmedian,1:dmode,1:dstddev,}Esta_Statistics,{1:lnumBins,1:e4:direct,linear,logarithmic,explicit,binFunctionType,1:dminLimit,1:dmaxLimit,1:*bbinLimits,}Edsc_BinFunction,{0:poEmif_String,LayerNames,1:*bExcludedValues,1:oEmif_String,AOIname,",
@@ -1334,7 +1337,16 @@ HFAHandle HFACreate( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     if ( (GUIntBig)nBytesPerBlock * (GUIntBig)nBlocks *
 	 (GUIntBig)nBands > 4294967296LL )
+    {
+	HFAEntry *poImgFormat;
+
 	bCreateLargeRaster = TRUE;
+	poImgFormat = 
+	    new HFAEntry( psInfo, "IMGFormatInfo",
+			  "ImgFormatInfo831", psInfo->poRoot );
+	poImgFormat->MakeData();
+	poImgFormat->SetIntField( "spaceUsedForRasterData", 0 );
+    }
 
 /* ==================================================================== */
 /*      Create each band (layer)                                        */
@@ -1342,7 +1354,7 @@ HFAHandle HFACreate( const char * pszFilename,
     
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
-        HFAEntry	*poEimg_Layer;
+	HFAEntry	*poEimg_Layer;
         char		szName[128];
 
         sprintf( szName, "Layer_%d", iBand+1 );
@@ -1486,10 +1498,10 @@ HFAHandle HFACreate( const char * pszFilename,
 
 	    VSIFSeekL( psInfo->fp, nLDict, SEEK_SET );
 	    VSIFWriteL( (void *) szLDict, strlen(szLDict) + 1, 1, psInfo->fp );
+
 	}
 	else
 	{
-	    HFAEntry *poEdms_State;
 	    int	nBytesPerRow = ( nBlocksPerRow + 7 ) / 8;
 	    int	iBlockMapSize = nBytesPerRow * nBlocksPerColumn;
 	    int	iHeaderSize = 49;
@@ -1502,6 +1514,11 @@ HFAHandle HFACreate( const char * pszFilename,
 		CPLStrdup( CPLGetFilename( pszFullFilename ) );
 	    char  *pszMagick = "ERDAS_IMG_EXTERNAL_RASTER";
 
+/* -------------------------------------------------------------------- */
+/*      Create ExternalRasterDMS object.                                */
+/* -------------------------------------------------------------------- */
+	    HFAEntry *poEdms_State;
+
 	    poEdms_State = 
 		new HFAEntry( psInfo, "ExternalRasterDMS",
 			      "ImgExternalRaster", poEimg_Layer );
@@ -1510,14 +1527,69 @@ HFAHandle HFACreate( const char * pszFilename,
 	    poEdms_State->SetStringField( "fileName.string", pszRawFilename );
 
 	    poEdms_State->SetIntField( "layerStackValidFlagsOffset[0]",
-				       iHeaderSize );
+				       iHeaderSize +
+				       iBand * (iFlagsSize + iRasterSize) );
 	    poEdms_State->SetIntField( "layerStackValidFlagsOffset[1]", 0 );
 
 	    poEdms_State->SetIntField( "layerStackDataOffset[0]",
-				       iHeaderSize + iFlagsSize );
+				       iHeaderSize + iFlagsSize +
+				       iBand * (iFlagsSize + iRasterSize));
 	    poEdms_State->SetIntField( "layerStackDataOffset[1]", 0 );
 	    poEdms_State->SetIntField( "layerStackCount", nBands );
 	    poEdms_State->SetIntField( "layerStackIndex", iBand );
+
+/* -------------------------------------------------------------------- */
+/*      Create the Ehfa_Layer.                                          */
+/* -------------------------------------------------------------------- */
+	    HFAEntry *poEhfa_Layer;
+	    GUInt32  nLDict;
+	    char     szLDict[128], chBandType;
+
+	    if( nDataType == EPT_u1 )
+		chBandType = '1';
+	    else if( nDataType == EPT_u2 )
+		chBandType = '2';
+	    else if( nDataType == EPT_u4 )
+		chBandType = '4';
+	    else if( nDataType == EPT_u8 )
+		chBandType = 'c';
+	    else if( nDataType == EPT_s8 )
+		chBandType = 'C';
+	    else if( nDataType == EPT_u16 )
+		chBandType = 's';
+	    else if( nDataType == EPT_s16 )
+		chBandType = 'S';
+	    else if( nDataType == EPT_u32 )
+		chBandType = 'I';
+	    else if( nDataType == EPT_s32 )
+		chBandType = 'L';
+	    else if( nDataType == EPT_f32 )
+		chBandType = 'f';
+	    else if( nDataType == EPT_f64 )
+		chBandType = 'd';
+	    else if( nDataType == EPT_c64 )
+		chBandType = 'm';
+	    else if( nDataType == EPT_c128 )
+		chBandType = 'M';
+	    else
+	    {
+		CPLAssert( FALSE );
+		chBandType = 'c';
+	    }
+	    
+	    sprintf( szLDict, "{4096:%cdata,}RasterDMS,.", chBandType );
+
+	    poEhfa_Layer = new HFAEntry( psInfo, "Ehfa_Layer", "Ehfa_Layer", 
+					 poEimg_Layer );
+	    poEhfa_Layer->MakeData();
+	    poEhfa_Layer->SetPosition();
+	    nLDict = HFAAllocateSpace( psInfo, strlen(szLDict) + 1 );
+
+	    poEhfa_Layer->SetStringField( "type", "raster" );
+	    poEhfa_Layer->SetIntField( "dictionaryPtr", nLDict );
+
+	    VSIFSeekL( psInfo->fp, nLDict, SEEK_SET );
+	    VSIFWriteL( (void *) szLDict, strlen(szLDict) + 1, 1, psInfo->fp );
 
 /* -------------------------------------------------------------------- */
 /*      Open external file and fill it with values.                     */
