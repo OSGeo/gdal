@@ -89,8 +89,8 @@ In C++:
     double        adfGeoTransform[6];
 
     printf( "Driver: %s/%s\n",
-            poDataset->GetDriver()->pszShortName, 
-            poDataset->GetDriver()->pszLongName );
+            poDataset->GetDriver()->GetDescription(), 
+            poDataset->GetDriver()->GetMetadataItem( GDAL_DMD_LONGNAME ) );
 
     printf( "Size is %dx%dx%d\n", 
             poDataset->GetRasterXSize(), poDataset->GetRasterYSize(),
