@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2000/02/14 16:24:57  warmerda
+ * Fixed comment.
+ *
  * Revision 1.5  1999/10/29 17:30:23  warmerda
  * read OGC rather than PROJ.4 definition
  *
@@ -276,7 +279,7 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                          GDALRegister_GTiff()                        */
+/*                          GDALRegister_GXF()                          */
 /************************************************************************/
 
 void GDALRegister_GXF()
