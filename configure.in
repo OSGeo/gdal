@@ -185,6 +185,9 @@ fi
 
 if test "$LIBZ_SETTING" = "external" ; then
   LIBS="-lz $LIBS"
+elif test "$with_libs" = "no" ; then
+  LIBZ_SETTING=no
+  AC_MSG_RESULT([not using libz at all.])
 else
   LIBZ_SETTING=internal
   OPT_GDAL_FORMATS="zlib $OPT_GDAL_FORMATS"
@@ -1191,7 +1194,7 @@ AC_MSG_CHECKING(Checking for DODS)
 AC_ARG_WITH(dods_root,
     [  --with-dods-root[=ARG]  Include DODS support (ARG=no or absolute path)],
     ,,)
-    
+
 if test -z "$with_dods_root" -o "$with_dods_root" = "no"; then
     AC_MSG_RESULT(disabled)
 else
@@ -1200,23 +1203,29 @@ else
     DODS_BIN=$with_dods_root/bin
 
     dnl Add the DODS libraries to LIBS
-    LIBS="$LIBS -L$DODS_LIB -ldap++ -lpthread -lrx"
+    if test -x $DODS_BIN/opendap-config ; then 
+      dnl OPeNDAP 3.4 and earlier lack opendap-config, but use it if avail.
+      LIBS="$LIBS `$DODS_BIN/opendap-config --libs`"
+    else
+      dnl Otherwise try to put things together in a more primitive way.
+      LIBS="$LIBS -L$DODS_LIB -ldap++ -lpthread -lrx"
     
-    dnl Add curl to LIBS; it might be local to DODS or generally installed
-    if test -x $DODS_BIN/curl-config; then
-        LIBS="$LIBS  `$DODS_BIN/curl-config --libs`"
-    elif which curl-config > /dev/null 2>&1; then
-        LIBS="$LIBS  `curl-config --libs`"
-    else
-        AC_MSG_ERROR([You gave a dods root, but I can't find curl!])
-    fi
+      dnl Add curl to LIBS; it might be local to DODS or generally installed
+      if test -x $DODS_BIN/curl-config; then
+          LIBS="$LIBS  `$DODS_BIN/curl-config --libs`"
+      elif which curl-config > /dev/null 2>&1; then
+          LIBS="$LIBS  `curl-config --libs`"
+      else
+          AC_MSG_ERROR([You gave a dods root, but I can't find curl!])
+      fi
 
-    if test -x $DODS_BIN/xml2-config; then
-        LIBS="$LIBS `$DODS_BIN/xml2-config --libs`"
-    elif which xml2-config > /dev/null 2>&1; then
-        LIBS="$LIBS  `xml2-config --libs`"
-    else
-        AC_MSG_ERROR([You gave a dods root, but I can't find xml2!])
+      if test -x $DODS_BIN/xml2-config; then
+          LIBS="$LIBS `$DODS_BIN/xml2-config --libs`"
+      elif which xml2-config > /dev/null 2>&1; then
+          LIBS="$LIBS  `xml2-config --libs`"
+      else
+          AC_MSG_ERROR([You gave a dods root, but I can't find xml2!])
+      fi 
     fi
 
     OPT_GDAL_FORMATS="dods $OPT_GDAL_FORMATS"
