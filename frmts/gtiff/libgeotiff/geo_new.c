@@ -12,6 +12,13 @@
  *    20 June, 1995      Niles D. Ritter         New
  *    7 July,  1995      Greg Martin             Fix index
  *
+ * $Log: geo_new.c,v $
+ * Revision 1.9  2003/06/19 20:04:11  warmerda
+ * fix memory underwrite if ascii parameter string is zero length
+ *
+ * Revision 1.8  2003/06/05 14:20:45  warmerda
+ * cosmetic formatting changes
+ *
  **********************************************************************/
 
 #include "geotiffio.h"   /* public interface        */
@@ -102,13 +109,15 @@ GTIF* GTIFNew(void *tif)
     bufcount = count+MAX_KEYS; /* allow for expansion */
 
     /* Get the PARAMS Tags, if any */
-    if (!(gt->gt_methods.get)(tif, GTIFF_DOUBLEPARAMS, &gt->gt_ndoubles, &gt->gt_double ))
+    if (!(gt->gt_methods.get)(tif, GTIFF_DOUBLEPARAMS,
+                              &gt->gt_ndoubles, &gt->gt_double ))
     {
         gt->gt_double=(double*)_GTIFcalloc(MAX_VALUES*sizeof(double));
         if (!gt->gt_double) goto failure;	
     }
     if (!(gt->gt_methods.get)(tif, GTIFF_ASCIIPARAMS,
-                              &tempData.tk_asciiParamsLength, &tempData.tk_asciiParams ))
+                              &tempData.tk_asciiParamsLength,
+                              &tempData.tk_asciiParams ))
     {
         tempData.tk_asciiParams         = 0;
         tempData.tk_asciiParamsLength   = 0;
@@ -164,50 +173,49 @@ GTIF* GTIFNew(void *tif)
 static int ReadKey(GTIF* gt, TempKeyData* tempData,
                    KeyEntry* entptr, GeoKey* keyptr)
 {
-	int offset,count;
+    int offset,count;
 	
-	keyptr->gk_key = entptr->ent_key;
-	keyptr->gk_count = entptr->ent_count;
-	count = entptr->ent_count;
-	offset = entptr->ent_val_offset;
-	if (gt->gt_keymin > keyptr->gk_key)  gt->gt_keymin=keyptr->gk_key;
-	if (gt->gt_keymax < keyptr->gk_key)  gt->gt_keymax=keyptr->gk_key;
+    keyptr->gk_key = entptr->ent_key;
+    keyptr->gk_count = entptr->ent_count;
+    count = entptr->ent_count;
+    offset = entptr->ent_val_offset;
+    if (gt->gt_keymin > keyptr->gk_key)  gt->gt_keymin=keyptr->gk_key;
+    if (gt->gt_keymax < keyptr->gk_key)  gt->gt_keymax=keyptr->gk_key;
 	
-	if (entptr->ent_location)
-	  keyptr->gk_type = (gt->gt_methods.type)(gt->gt_tif,entptr->ent_location);
-	else
-	  keyptr->gk_type = (gt->gt_methods.type)(gt->gt_tif,GTIFF_GEOKEYDIRECTORY);
+    if (entptr->ent_location)
+        keyptr->gk_type = (gt->gt_methods.type)(gt->gt_tif,entptr->ent_location);
+    else
+        keyptr->gk_type = (gt->gt_methods.type)(gt->gt_tif,GTIFF_GEOKEYDIRECTORY);
 	  
-	switch (entptr->ent_location)
-	{
-		case GTIFF_LOCAL:
-			/* store value into data value */
-			*(pinfo_t *)(&keyptr->gk_data) = entptr->ent_val_offset;
-			break;
-		case GTIFF_GEOKEYDIRECTORY:
-			keyptr->gk_data = (char *)(gt->gt_short+offset);
-			if (gt->gt_nshorts < offset+count)
-				gt->gt_nshorts = offset+count;
-			break;
-		case GTIFF_DOUBLEPARAMS:
-			keyptr->gk_data = (char *)(gt->gt_double+offset);
-			if (gt->gt_ndoubles < offset+count)
-				gt->gt_ndoubles = offset+count;
-			break;
-		case GTIFF_ASCIIPARAMS:
+    switch (entptr->ent_location)
+    {
+        case GTIFF_LOCAL:
+            /* store value into data value */
+            *(pinfo_t *)(&keyptr->gk_data) = entptr->ent_val_offset;
+            break;
+        case GTIFF_GEOKEYDIRECTORY:
+            keyptr->gk_data = (char *)(gt->gt_short+offset);
+            if (gt->gt_nshorts < offset+count)
+                gt->gt_nshorts = offset+count;
+            break;
+        case GTIFF_DOUBLEPARAMS:
+            keyptr->gk_data = (char *)(gt->gt_double+offset);
+            if (gt->gt_ndoubles < offset+count)
+                gt->gt_ndoubles = offset+count;
+            break;
+        case GTIFF_ASCIIPARAMS:
             if (offset + count > tempData->tk_asciiParamsLength)
-            {
                 return (0);
-            }
-            keyptr->gk_data = (char *) _GTIFcalloc (count);
+
+            keyptr->gk_data = (char *) _GTIFcalloc (MAX(1,count));
             _GTIFmemcpy (keyptr->gk_data,
-                tempData->tk_asciiParams + offset, count);
-            keyptr->gk_data[count-1] = '\0';
-			break;
-		default:
-			return 0; /* failure */
-	}
-	keyptr->gk_size = _gtiff_size[keyptr->gk_type];
+                         tempData->tk_asciiParams + offset, count);
+            keyptr->gk_data[MAX(0,count-1)] = '\0';
+            break;
+        default:
+            return 0; /* failure */
+    }
+    keyptr->gk_size = _gtiff_size[keyptr->gk_type];
 	
-	return 1; /* success */
+    return 1; /* success */
 }
