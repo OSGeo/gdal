@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/01/18 04:48:48  warmerda
+ * clean tabs, and newlines from input to importProj4
+ *
  * Revision 1.22  2001/12/12 20:18:06  warmerda
  * added support for units in proj.4 to WKT
  *
@@ -186,12 +189,27 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     char **papszNV = NULL;
     char **papszTokens;
     int  i;
+    char *pszCleanCopy;
+
+/* -------------------------------------------------------------------- */
+/*      Strip any newlines or other "funny" stuff that might occur      */
+/*      if this string just came from reading a file.                   */
+/* -------------------------------------------------------------------- */
+    pszCleanCopy = CPLStrdup( pszProj4 );
+    for( i = 0; pszCleanCopy[i] != '\0'; i++ )
+    {
+        if( pszCleanCopy[i] == 10 
+            || pszCleanCopy[i] == 13 
+            || pszCleanCopy[i] == 9 )
+            pszCleanCopy[i] = ' ';
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Parse the PROJ.4 string into a cpl_string.h style name/value    */
 /*      list.                                                           */
 /* -------------------------------------------------------------------- */
-    papszTokens = CSLTokenizeStringComplex( pszProj4, "+ ", TRUE, FALSE );
+    papszTokens = CSLTokenizeStringComplex( pszCleanCopy, "+ ", TRUE, FALSE );
+    CPLFree( pszCleanCopy );
     
     for( i = 0; papszTokens != NULL && papszTokens[i] != NULL; i++ )
     {
