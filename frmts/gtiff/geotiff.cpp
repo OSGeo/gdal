@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.94  2003/06/05 14:30:14  warmerda
+ * If GTIFNew() fails just issue a warning and continue.  This ensures that
+ * files like bruce.tif with corrupt tags can still be read as if the had
+ * no geotiff info at all.
+ *
  * Revision 1.93  2003/05/28 16:21:25  warmerda
  * added logic to set RGB/alpha for 4 bands in Create() case
  *
@@ -2223,7 +2228,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
         }
 
 /* -------------------------------------------------------------------- */
-/*      Capture the projection.                                         */
+/*      Capture the GeoTIFF projection, if available.                   */
 /* -------------------------------------------------------------------- */
         GTIF 	*hGTIF;
         GTIFDefn	sGTIFDefn;
@@ -2235,15 +2240,23 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 
         if ( !hGTIF )
         {
-            CPLDebug( "GTiff", "Can't create new GeoTIFF instance" );
-            return( CE_Failure );
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "GeoTIFF tags apparently corrupt, they are being ignored." );
         }
-
-        if( GTIFGetDefn( hGTIF, &sGTIFDefn ) )
+        else
         {
-            pszProjection = GTIFGetOGISDefn( &sGTIFDefn );
-        }
+            if( GTIFGetDefn( hGTIF, &sGTIFDefn ) )
+            {
+                pszProjection = GTIFGetOGISDefn( &sGTIFDefn );
+            }
 
+            GTIFFree( hGTIF );
+        }
+        
+/* -------------------------------------------------------------------- */
+/*      If we didn't get a geotiff projection definition, but we did    */
+/*      get one from the .tag file, use that instead.                   */
+/* -------------------------------------------------------------------- */
         if( pszTabWKT != NULL 
             && (pszProjection == NULL || pszProjection[0] == '\0') )
         {
@@ -2251,14 +2264,12 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
             pszProjection = pszTabWKT;
             pszTabWKT = NULL;
         }
-
+        
         if( pszProjection == NULL )
         {
             pszProjection = CPLStrdup( "" );
         }
-    
-        GTIFFree( hGTIF );
-
+        
         if( pszTabWKT != NULL )
             CPLFree( pszTabWKT );
 
