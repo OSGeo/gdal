@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/02/18 14:09:42  warmerda
+ * doc fixups
+ *
  * Revision 1.23  2003/12/08 20:32:48  warmerda
  * Added some improved error checking in DDFRecord() on the leader values.
  * Try reading extra bytes to find field terminator if the last byte in
@@ -1254,7 +1257,7 @@ DDFField *DDFRecord::AddField( DDFFieldDefn *poDefn )
  * be a value between 0 and GetRepeatCount().  If GetRepeatCount() is used, a
  * new instance of the field is appeneded.
  * @param pachRawData the raw data to replace this field instance with.
- * @param int nRawDataSize the number of bytes pointed to by pachRawData.
+ * @param nRawDataSize the number of bytes pointed to by pachRawData.
  *
  * @return TRUE on success or FALSE on failure.
  */
