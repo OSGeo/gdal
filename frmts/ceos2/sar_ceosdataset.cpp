@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2004/11/15 19:56:06  gwalter
+ * Updated PALSAR band reading.
+ *
  * Revision 1.39  2004/11/11 21:25:37  fwarmerdam
  * Return PALSAR in proper covariance matrix format.
  *
@@ -158,6 +161,23 @@ CPL_CVSID("$Id$");
 CPL_C_START
 void	GDALRegister_SAR_CEOS(void);
 CPL_C_END
+
+static GInt16 CastToGInt16(float val);
+
+static GInt16 CastToGInt16(float val)
+{
+    float temp;
+
+    temp = val;
+
+    if ( temp < -32768.0 )
+        temp = -32768.0;
+
+    if ( temp > 32767 )
+        temp = 32767.0;
+
+    return (GInt16) temp;    
+}
 
 char *CeosExtension[][6] = { 
 { "vol", "led", "img", "trl", "nul", "ext" },
@@ -597,15 +617,15 @@ PALSARRasterBand::PALSARRasterBand( SAR_CEOSDataset *poGDS, int nBand )
     if( nBand == 1 )
         SetMetadataItem( "POLARIMETRIC_INTERP", "Covariance_11" );
     else if( nBand == 2 )
-        SetMetadataItem( "POLARIMETRIC_INTERP", "Covariance_12" );
-    else if( nBand == 3 )
-        SetMetadataItem( "POLARIMETRIC_INTERP", "Covariance_13" );
-    else if( nBand == 4 )
         SetMetadataItem( "POLARIMETRIC_INTERP", "Covariance_22" );
-    else if( nBand == 5 )
-        SetMetadataItem( "POLARIMETRIC_INTERP", "Covariance_23" );
-    else if( nBand == 6 )
+    else if( nBand == 3 )
         SetMetadataItem( "POLARIMETRIC_INTERP", "Covariance_33" );
+    else if( nBand == 4 )
+        SetMetadataItem( "POLARIMETRIC_INTERP", "Covariance_12" );
+    else if( nBand == 5 )
+        SetMetadataItem( "POLARIMETRIC_INTERP", "Covariance_13" );
+    else if( nBand == 6 )
+        SetMetadataItem( "POLARIMETRIC_INTERP", "Covariance_23" );
 }
 
 /************************************************************************/
@@ -683,15 +703,26 @@ CPLErr PALSARRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 ** set polarimetric interpretation accordingly:
 **
 ** Covariance_11=HH*conj(HH): already there
+** Covariance_22=2*HV*conj(HV): need a factor of 2
+** Covariance_33=VV*conj(VV): already there 
 ** Covariance_12=sqrt(2)*HH*conj(HV): need the sqrt(2) factor
 ** Covariance_13=HH*conj(VV): already there
-** Covariance_22=2*HV*conj(HV): need a factor of 2
 ** Covariance_23=sqrt(2)*HV*conj(VV): need to take the conjugate, then 
 **               multiply by sqrt(2)
-** Covariance_33=VV*conj(VV): already there 
+**
 */
 
     if( nBand == 2 )
+    {
+        int i;
+        GInt16 *panLine = (GInt16 *) pImage;
+        
+        for( i = 0; i < nBlockXSize * 2; i++ )
+        {
+          panLine[i] = (GInt16) CastToGInt16(2.0 * panLine[i]);
+        }
+    }
+    else if( nBand == 4 )
     {
         int i;
         double sqrt_2 = pow(2.0,0.5);
@@ -699,20 +730,10 @@ CPLErr PALSARRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         
         for( i = 0; i < nBlockXSize * 2; i++ )
         {
-            panLine[i] = (GInt16) floor(panLine[i] * sqrt_2 + 0.5);
+          panLine[i] = (GInt16) CastToGInt16(floor(panLine[i] * sqrt_2 + 0.5));
         }
     }
-    else if( nBand == 4 )
-    {
-        int i;
-        GInt16 *panLine = (GInt16 *) pImage;
-        
-        for( i = 0; i < nBlockXSize * 2; i++ )
-        {
-            panLine[i] = (GInt16) (2 * panLine[i]);
-        }
-    }
-    else if( nBand == 5 )
+    else if( nBand == 6 )
     {
         int i;
         GInt16 *panLine = (GInt16 *) pImage;
@@ -721,13 +742,13 @@ CPLErr PALSARRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         // real portion - just multiple by sqrt(2)
         for( i = 0; i < nBlockXSize * 2; i += 2 )
         {
-            panLine[i] = (GInt16) floor(panLine[i] * sqrt_2 + 0.5);
+          panLine[i] = (GInt16) CastToGInt16(floor(panLine[i] * sqrt_2 + 0.5));
         }
 
         // imaginary portion - conjugate and multiply
         for( i = 1; i < nBlockXSize * 2; i += 2 )
         {
-            panLine[i] = (GInt16) floor(-panLine[i] * sqrt_2 + 0.5);
+          panLine[i] = (GInt16) CastToGInt16(floor(-panLine[i] * sqrt_2 + 0.5));
         }
     }
 
@@ -1696,7 +1717,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                   poOpenInfo->pszFilename );
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Try the various filenames.                                      */
 /* -------------------------------------------------------------------- */
