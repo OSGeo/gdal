@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.66  2004/09/16 18:24:13  fwarmerdam
+ * added airsar
+ *
  * Revision 1.65  2004/09/03 19:06:50  warmerda
  * added CPG driver
  *
@@ -359,6 +362,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_bmp
     GDALRegister_BMP();
+#endif
+
+#ifdef FRMT_airsar
+    GDALRegister_AirSAR();
 #endif
 
 #ifdef FRMT_pcidsk
