@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/01/06 19:07:14  warmerda
+ * Added braces within complex case in switch for HP/UX compatibility.
+ *
  * Revision 1.12  2003/12/15 20:24:58  warmerda
  * expand tabs
  *
@@ -444,77 +447,79 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
 
       case 'B':
       case 'b':
-        unsigned char   abyData[8];
+      {
+          unsigned char   abyData[8];
 
-        CPLAssert( nFormatWidth <= nMaxBytes );
-        if( pnConsumedBytes != NULL )
-            *pnConsumedBytes = nFormatWidth;
+          CPLAssert( nFormatWidth <= nMaxBytes );
+          if( pnConsumedBytes != NULL )
+              *pnConsumedBytes = nFormatWidth;
 
-        // Byte swap the data if it isn't in machine native format.
-        // In any event we copy it into our buffer to ensure it is
-        // word aligned.
+          // Byte swap the data if it isn't in machine native format.
+          // In any event we copy it into our buffer to ensure it is
+          // word aligned.
 #ifdef CPL_LSB
-        if( pszFormatString[0] == 'B' )
+          if( pszFormatString[0] == 'B' )
 #else            
-        if( pszFormatString[0] == 'b' )
+              if( pszFormatString[0] == 'b' )
 #endif            
-        {
-            for( int i = 0; i < nFormatWidth; i++ )
-                abyData[nFormatWidth-i-1] = pachSourceData[i];
-        }
-        else
-        {
-            memcpy( abyData, pachSourceData, nFormatWidth );
-        }
+              {
+                  for( int i = 0; i < nFormatWidth; i++ )
+                      abyData[nFormatWidth-i-1] = pachSourceData[i];
+              }
+              else
+              {
+                  memcpy( abyData, pachSourceData, nFormatWidth );
+              }
 
-        // Interpret the bytes of data.
-        switch( eBinaryFormat )
-        {
-          case UInt:
-            if( nFormatWidth == 1 )
-                return( abyData[0] );
-            else if( nFormatWidth == 2 )
-                return( *((GUInt16 *) abyData) );
-            else if( nFormatWidth == 4 )
-                return( *((GUInt32 *) abyData) );
-            else
-            {
-                CPLAssert( FALSE );
-                return 0.0;
-            }
+          // Interpret the bytes of data.
+          switch( eBinaryFormat )
+          {
+            case UInt:
+              if( nFormatWidth == 1 )
+                  return( abyData[0] );
+              else if( nFormatWidth == 2 )
+                  return( *((GUInt16 *) abyData) );
+              else if( nFormatWidth == 4 )
+                  return( *((GUInt32 *) abyData) );
+              else
+              {
+                  CPLAssert( FALSE );
+                  return 0.0;
+              }
             
-          case SInt:
-            if( nFormatWidth == 1 )
-                return( *((signed char *) abyData) );
-            else if( nFormatWidth == 2 )
-                return( *((GInt16 *) abyData) );
-            else if( nFormatWidth == 4 )
-                return( *((GInt32 *) abyData) );
-            else
-            {
-                CPLAssert( FALSE );
-                return 0.0;
-            }
+            case SInt:
+              if( nFormatWidth == 1 )
+                  return( *((signed char *) abyData) );
+              else if( nFormatWidth == 2 )
+                  return( *((GInt16 *) abyData) );
+              else if( nFormatWidth == 4 )
+                  return( *((GInt32 *) abyData) );
+              else
+              {
+                  CPLAssert( FALSE );
+                  return 0.0;
+              }
             
-          case FloatReal:
-            if( nFormatWidth == 4 )
-                return( *((float *) abyData) );
-            else if( nFormatWidth == 8 )
-                return( *((double *) abyData) );
-            else
-            {
-                CPLAssert( FALSE );
-                return 0.0;
-            }
+            case FloatReal:
+              if( nFormatWidth == 4 )
+                  return( *((float *) abyData) );
+              else if( nFormatWidth == 8 )
+                  return( *((double *) abyData) );
+              else
+              {
+                  CPLAssert( FALSE );
+                  return 0.0;
+              }
 
-          case NotBinary:            
-          case FPReal:
-          case FloatComplex:
-            CPLAssert( FALSE );
-            return 0.0;
-        }
-        break;
-        // end of 'b'/'B' case.
+            case NotBinary:            
+            case FPReal:
+            case FloatComplex:
+              CPLAssert( FALSE );
+              return 0.0;
+          }
+          break;
+          // end of 'b'/'B' case.
+      }
 
       default:
         CPLAssert( FALSE );
@@ -569,85 +574,87 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
 
       case 'B':
       case 'b':
-        unsigned char   abyData[8];
+      {
+          unsigned char   abyData[8];
 
-        if( nFormatWidth > nMaxBytes )
-        {
-            CPLError( CE_Warning, CPLE_AppDefined, 
-                      "Attempt to extract int subfield %s with format %s\n"
-                      "failed as only %d bytes available.  Using zero.",
-                      pszName, pszFormatString, nMaxBytes );
-            return 0;
-        }
+          if( nFormatWidth > nMaxBytes )
+          {
+              CPLError( CE_Warning, CPLE_AppDefined, 
+                        "Attempt to extract int subfield %s with format %s\n"
+                        "failed as only %d bytes available.  Using zero.",
+                        pszName, pszFormatString, nMaxBytes );
+              return 0;
+          }
 
-        if( pnConsumedBytes != NULL )
-            *pnConsumedBytes = nFormatWidth;
+          if( pnConsumedBytes != NULL )
+              *pnConsumedBytes = nFormatWidth;
 
-        // Byte swap the data if it isn't in machine native format.
-        // In any event we copy it into our buffer to ensure it is
-        // word aligned.
+          // Byte swap the data if it isn't in machine native format.
+          // In any event we copy it into our buffer to ensure it is
+          // word aligned.
 #ifdef CPL_LSB
-        if( pszFormatString[0] == 'B' )
+          if( pszFormatString[0] == 'B' )
 #else            
-        if( pszFormatString[0] == 'b' )
+              if( pszFormatString[0] == 'b' )
 #endif            
-        {
-            for( int i = 0; i < nFormatWidth; i++ )
-                abyData[nFormatWidth-i-1] = pachSourceData[i];
-        }
-        else
-        {
-            memcpy( abyData, pachSourceData, nFormatWidth );
-        }
+              {
+                  for( int i = 0; i < nFormatWidth; i++ )
+                      abyData[nFormatWidth-i-1] = pachSourceData[i];
+              }
+              else
+              {
+                  memcpy( abyData, pachSourceData, nFormatWidth );
+              }
 
-        // Interpret the bytes of data.
-        switch( eBinaryFormat )
-        {
-          case UInt:
-            if( nFormatWidth == 4 )
-                return( (int) *((GUInt32 *) abyData) );
-            else if( nFormatWidth == 1 )
-                return( abyData[0] );
-            else if( nFormatWidth == 2 )
-                return( *((GUInt16 *) abyData) );
-            else
-            {
-                CPLAssert( FALSE );
-                return 0;
-            }
+          // Interpret the bytes of data.
+          switch( eBinaryFormat )
+          {
+            case UInt:
+              if( nFormatWidth == 4 )
+                  return( (int) *((GUInt32 *) abyData) );
+              else if( nFormatWidth == 1 )
+                  return( abyData[0] );
+              else if( nFormatWidth == 2 )
+                  return( *((GUInt16 *) abyData) );
+              else
+              {
+                  CPLAssert( FALSE );
+                  return 0;
+              }
             
-          case SInt:
-            if( nFormatWidth == 4 )
-                return( *((GInt32 *) abyData) );
-            else if( nFormatWidth == 1 )
-                return( *((signed char *) abyData) );
-            else if( nFormatWidth == 2 )
-                return( *((GInt16 *) abyData) );
-            else
-            {
-                CPLAssert( FALSE );
-                return 0;
-            }
+            case SInt:
+              if( nFormatWidth == 4 )
+                  return( *((GInt32 *) abyData) );
+              else if( nFormatWidth == 1 )
+                  return( *((signed char *) abyData) );
+              else if( nFormatWidth == 2 )
+                  return( *((GInt16 *) abyData) );
+              else
+              {
+                  CPLAssert( FALSE );
+                  return 0;
+              }
             
-          case FloatReal:
-            if( nFormatWidth == 4 )
-                return( (int) *((float *) abyData) );
-            else if( nFormatWidth == 8 )
-                return( (int) *((double *) abyData) );
-            else
-            {
-                CPLAssert( FALSE );
-                return 0;
-            }
+            case FloatReal:
+              if( nFormatWidth == 4 )
+                  return( (int) *((float *) abyData) );
+              else if( nFormatWidth == 8 )
+                  return( (int) *((double *) abyData) );
+              else
+              {
+                  CPLAssert( FALSE );
+                  return 0;
+              }
 
-          case NotBinary:            
-          case FPReal:
-          case FloatComplex:
-            CPLAssert( FALSE );
-            return 0;
-        }
-        break;
-        // end of 'b'/'B' case.
+            case NotBinary:            
+            case FPReal:
+            case FloatComplex:
+              CPLAssert( FALSE );
+              return 0;
+          }
+          break;
+          // end of 'b'/'B' case.
+      }
 
       default:
         CPLAssert( FALSE );
