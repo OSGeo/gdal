@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.64  2004/05/26 17:45:39  warmerda
+ * added LAN format
+ *
  * Revision 1.63  2004/04/05 21:30:44  warmerda
  * moved ECW down so other jpeg2000 drivers used in preference
  *
@@ -381,6 +384,7 @@ void GDALAllRegister()
     GDALRegister_GSC();
     GDALRegister_FAST();
     GDALRegister_BT();
+    GDALRegister_LAN();
 #endif
 
 #ifdef FRMT_jp2kak

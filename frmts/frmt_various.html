@@ -280,6 +280,20 @@ NOTE: Implemented as <tt>gdal/frmts/jdem/jdemdataset.cpp</tt>.<p>
 See Also: <a href="http://www.gsi.go.jp/ENGLISH/">Geographic Survey 
 Institute (GSI) Web Site.</a><p>
 
+<h2><a href="LAN">LAN -- Erdas 7.x .LAN and .GIS</h2>
+
+GDAL supports reading Erdas 7.x .LAN and .GIS raster files.  Currently only
+8bit and 16bit data is supported, the 4bit pixel type is not supported.  
+
+GDAL does read the map extents (geotransform) from LAN/GIS files but does
+not support reading coordinate system information which is apparently 
+included in any complete way.  
+
+NOTE: Implemented as <tt>gdal/frmts/raw/landataset.cpp</tt><p>
+
+Development of this driver was financially supported by Kevin Flanders of
+(<a href="http://www.peoplegis.com">PeopleGIS</a>. <p>
+
 <h2><a name="MFF">MFF -- Atlantis MFF Raster</a></h2>
 
 GDAL includes read, update, and creation support for Atlantis Scientific's
