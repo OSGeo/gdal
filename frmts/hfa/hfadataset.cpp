@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.38  2004/05/11 21:38:34  warmerda
+ * Handle NAD27 better.
+ *
  * Revision 1.37  2004/05/10 16:59:54  warmerda
  * improve EPSG info in coordinate system
  *
@@ -1576,7 +1579,8 @@ CPLErr HFADataset::ReadProjection()
     {
         if( EQUAL(pszDatumName,"WGS 84") )
             oSRS.SetWellKnownGeogCS( "WGS84" );
-        else if( strstr(pszDatumName,"NAD27") != NULL )
+        else if( strstr(pszDatumName,"NAD27") != NULL 
+                 || EQUAL(pszDatumName,"North_American_Datum_1927") )
             oSRS.SetWellKnownGeogCS( "NAD27" );
         else if( EQUAL(pszDatumName,"North_American_Datum_1983") 
                  || strstr(pszDatumName,"NAD83") != NULL )
