@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2000/06/27 17:21:26  warmerda
+ * added GDALGetRasterSampleOverview
+ *
  * Revision 1.15  2000/06/26 22:17:49  warmerda
  * added scaled progress support
  *
@@ -305,7 +308,7 @@ void GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
 
 {
     double       dfMin=0.0, dfMax=0.0;
-    GDALRasterBand *poBand = (GDALRasterBand *) hBand;
+    GDALRasterBand *poBand;
 
 /* -------------------------------------------------------------------- */
 /*      Does the driver already know the min/max?                       */
@@ -316,6 +319,7 @@ void GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
 
         dfMin = GDALGetRasterMinimum( hBand, &bSuccessMin );
         dfMax = GDALGetRasterMaximum( hBand, &bSuccessMax );
+
         if( bSuccessMin && bSuccessMax )
         {
             adfMinMax[0] = dfMin;
@@ -327,26 +331,10 @@ void GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
 /* -------------------------------------------------------------------- */
 /*      If we have overview bands, use them for min/max.                */
 /* -------------------------------------------------------------------- */
-    if( bApproxOK && GDALGetOverviewCount(hBand) > 0 )
-    {
-        int     nBestSize = poBand->GetXSize() * poBand->GetYSize();
-        GDALRasterBand *poBestBand = poBand;
-
-        for( int iOverview = 0; 
-             iOverview < poBand->GetOverviewCount(); 
-             iOverview++ )
-        {
-            GDALRasterBand *poTestBand = poBand->GetOverview(iOverview);
-
-            if( poTestBand->GetXSize() * poTestBand->GetYSize() < nBestSize )
-            {
-                nBestSize = poTestBand->GetXSize() * poTestBand->GetYSize();
-                poBestBand = poTestBand;
-            }
-        }
-
-        poBand = poBestBand;
-    }
+    if( bApproxOK )
+        poBand = (GDALRasterBand *) GDALGetRasterSampleOverview( hBand, 2500 );
+    else 
+        poBand = (GDALRasterBand *) hBand;
     
 /* -------------------------------------------------------------------- */
 /*      Figure out the ratio of blocks we will read to get an           */
@@ -529,6 +517,55 @@ void GDALDestroyScaledProgress( void * pData )
 }
 
 /************************************************************************/
+/*                    GDALGetRasterSampleOverview()                     */
+/************************************************************************/
+
+/**
+ * Fetch best sampling overview.
+ *
+ * Returns the most reduced overview of the given band that still satisfies
+ * the desired number of samples.  This function can be used with zero
+ * as the number of desired samples to fetch the most reduced overview. 
+ * The same band as was passed in will be returned if it has not overviews,
+ * or if none of the overviews have enough samples. 
+ *
+ * @param hBand the band to search for overviews on.
+ * @param nDesiredSamples the returned band will have at least this many 
+ * pixels.
+ * @return optimal overview or hBand itself. 
+ */
+
+GDALRasterBandH GDALGetRasterSampleOverview( GDALRasterBandH hBand, 
+                                             int nDesiredSamples )
+
+{
+    int     nBestSamples; 
+    GDALRasterBandH hBestBand = hBand;
+
+    nBestSamples = GDALGetRasterBandXSize(hBand) 
+        * GDALGetRasterBandYSize(hBand);
+
+    for( int iOverview = 0; 
+         iOverview < GDALGetOverviewCount( hBand );
+         iOverview++ )
+    {
+        GDALRasterBandH hOBand = GDALGetOverview( hBand, iOverview );
+        int    nOSamples;
+
+        nOSamples = GDALGetRasterBandXSize(hOBand) 
+            * GDALGetRasterBandYSize(hOBand);
+
+        if( nOSamples < nBestSamples && nOSamples > nDesiredSamples )
+        {
+            nBestSamples = nOSamples;
+            hBestBand = hOBand;
+        }
+    }
+
+    return hBestBand;
+}
+
+/************************************************************************/
 /*                     GDALGetRandomRasterSample()                      */
 /************************************************************************/
 
@@ -536,29 +573,10 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
                                float *pafSampleBuf )
 
 {
-    GDALRasterBand *poBand = (GDALRasterBand *) hBand;
+    GDALRasterBand *poBand;
 
-/* -------------------------------------------------------------------- */
-/*      If we have overview bands, use them for min/max.                */
-/* -------------------------------------------------------------------- */
-    int     nBestSize = poBand->GetXSize() * poBand->GetYSize();
-    GDALRasterBand *poBestBand = poBand;
+    poBand = (GDALRasterBand *) GDALGetRasterSampleOverview( hBand, nSamples );
 
-    for( int iOverview = 0; 
-         iOverview < poBand->GetOverviewCount(); 
-         iOverview++ )
-    {
-        GDALRasterBand *poTestBand = poBand->GetOverview(iOverview);
-        
-        if( poTestBand->GetXSize() * poTestBand->GetYSize() < nBestSize )
-        {
-            nBestSize = poTestBand->GetXSize() * poTestBand->GetYSize();
-            poBestBand = poTestBand;
-        }
-    }
-    
-    poBand = poBestBand;
-    
 /* -------------------------------------------------------------------- */
 /*      Figure out the ratio of blocks we will read to get an           */
 /*      approximate value.                                              */
