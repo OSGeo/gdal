@@ -2,7 +2,7 @@ GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	usgsdemdataset.o
+OBJ	=	usgsdemdataset.o usgsdem_create.o
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 

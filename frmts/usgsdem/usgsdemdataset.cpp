@@ -1,8 +1,8 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  USGS DEM Reader
- * Purpose:  All code for USGS DEM Reader
+ * Project:  USGS DEM Driver
+ * Purpose:  All reader for USGS DEM Reader
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  * Portions of this module derived from the VTP USGS DEM driver by Ben
@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.13  2004/03/27 17:03:12  warmerda
+ * added preliminary creation support
+ *
  * Revision 1.12  2004/03/10 18:07:00  warmerda
  * Avoid double/float casting warning.
  *
@@ -85,6 +88,10 @@ typedef struct {
 
 #define USGSDEM_NODATA	-32767
 
+GDALDataset *USGSDEMCreateCopy( const char *, GDALDataset *, int, char **,
+                                GDALProgressFunc pfnProgress, 
+                                void * pProgressData );
+
 /************************************************************************/
 /*                              DConvert()                              */
 /************************************************************************/
@@ -138,10 +145,8 @@ class USGSDEMDataset : public GDALDataset
 		~USGSDEMDataset();
     
     static GDALDataset *Open( GDALOpenInfo * );
-
     CPLErr 	GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
-
 };
 
 /************************************************************************/
@@ -621,6 +626,7 @@ void GDALRegister_USGSDEM()
                                    "frmt_various.html#USGSDEM" );
         
         poDriver->pfnOpen = USGSDEMDataset::Open;
+        poDriver->pfnCreateCopy = USGSDEMCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
