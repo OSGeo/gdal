@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2001/10/11 19:27:12  warmerda
+ * upgraded validation infrastructure
+ *
  * Revision 1.33  2001/10/10 20:42:43  warmerda
  * added ESRI WKT morphing support
  *
@@ -223,6 +226,9 @@ class CPL_DLL OGRSpatialReference
     int         nRefCount;
 
     OGR_SRSNode *poRoot;
+
+    OGRErr      ValidateProjection();
+    int         IsAliasFor( const char *, const char * );
 
   public:
                 OGRSpatialReference(const OGRSpatialReference&);
