@@ -97,8 +97,8 @@ dist-clean:	clean
 	rm -f GDALmake.opt port/cpl_config.h config.cache config.status
 	rm -f libtool
 	rm -rf autom4te.cache
+	find . -name .libs -print | xargs -r rm -rf
 	find . -name "*.lo" -exec rm -f '{}' ';'
-	find . -name .libs -exec rm -rf '{}' ';'
 
 config:	configure
 	./configure
