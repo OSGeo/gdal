@@ -1,5 +1,8 @@
 /* port/cpl_config.h.in.  Generated from configure.in by autoheader.  */
 
+/* Define to 1 if you have the <assert.h> header file. */
+#undef HAVE_ASSERT_H
+
 /* Define to 1 if you have the `atoll' function. */
 #undef HAVE_ATOLL
 
