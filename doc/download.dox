@@ -41,8 +41,6 @@ part of the easy-to-install
 <a href="http://wwwamb.bologna.enea.it/forgrass/download.htm">GRASS GIS ON MAC
 OS X</a> package by Lorenzo Moretti.<p>
 
-<li> <a href="http://hobu.stat.iastate.edu/gdal-1.1.9win32.exe">http://hobu.stat.iastate.edu/gdal-1.1.9win32.exe</a>: Python 2.3 GDAL 1.1.9 add-on including Oracle Spatial, ECW, netcdf, GML and PostGIS.<p>
-
 <li> <a href="http://hobu.stat.iastate.edu/gdal-1.2.0win32.exe">http://hobu.stat.iastate.edu/gdal-1.2.0win32.exe</a>: Python 2.3 GDAL 1.2.0 add-on including ECW, netcdf, GML and PostGIS.<p>
 
 </ol>
