@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/07/23 14:27:47  warmerda
+ * CPLSetErrorHandler returns old handler
+ *
  * Revision 1.8  1999/05/20 14:59:05  warmerda
  * added CPLDebug()
  *
@@ -86,8 +89,10 @@ void CPL_DLL CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...);
 void CPL_DLL CPLErrorReset();
 int CPL_DLL CPLGetLastErrorNo();
 const char CPL_DLL * CPLGetLastErrorMsg();
-void CPL_DLL CPLSetErrorHandler(void(*pfnErrorHandler)(CPLErr,int,
-                                                       const char *));
+
+typedef void (*CPLErrorHandler)(CPLErr, int, const char*);
+CPLErrorHandler CPL_DLL CPLSetErrorHandler(CPLErrorHandler);
+
 void CPL_DLL CPLDebug( const char *, const char *, ... );
 void CPL_DLL _CPLAssert( const char *, const char *, int );
 

@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/07/23 14:27:47  warmerda
+ * CPLSetErrorHandler returns old handler
+ *
  * Revision 1.7  1999/06/27 16:50:52  warmerda
  * added support for CPL_DEBUG and CPL_LOG variables
  *
@@ -63,8 +66,7 @@ static char gszCPLLastErrMsg[2000] = "";
 static int  gnCPLLastErrNo = 0;
 
 static void CPLDefaultErrorHandler( CPLErr, int, const char *);
-static void (*gpfnCPLErrorHandler)(CPLErr, int, const char *) 
-                                        = CPLDefaultErrorHandler;
+static CPLErrorHandler gpfnCPLErrorHandler = CPLDefaultErrorHandler;
 
 /**********************************************************************
  *                          CPLError()
@@ -117,7 +119,8 @@ void    CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...)
      */
     gnCPLLastErrNo = err_no;
 
-    gpfnCPLErrorHandler(eErrClass, err_no, gszCPLLastErrMsg);
+    if( gpfnCPLErrorHandler )
+        gpfnCPLErrorHandler(eErrClass, err_no, gszCPLLastErrMsg);
 
     if( eErrClass == CE_Fatal )
         abort();
@@ -193,7 +196,8 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 /*      If the user provided his own error handling function, then call */
 /*      it, otherwise print the error to stderr and return.             */
 /* -------------------------------------------------------------------- */
-    gpfnCPLErrorHandler(CE_Debug, CPLE_None, pszMessage);
+    if( gpfnCPLErrorHandler )
+        gpfnCPLErrorHandler(CE_Debug, CPLE_None, pszMessage);
 
     VSIFree( pszMessage );
 }
@@ -314,11 +318,16 @@ static void CPLDefaultErrorHandler( CPLErr eErrClass, int nError,
  * indirectly exit the function.
  *
  * @param pfnErrorHandler new error handler function.
+ * @return returns the previously installed error handler.
  */ 
 
-void CPLSetErrorHandler(void (*pfnErrorHandler)(CPLErr, int, const char *))
+CPLErrorHandler CPLSetErrorHandler( CPLErrorHandler pfnErrorHandler )
 {
+    CPLErrorHandler	pfnOldHandler = gpfnCPLErrorHandler;
+    
     gpfnCPLErrorHandler = pfnErrorHandler;
+
+    return pfnOldHandler;
 }
 
 /************************************************************************/
