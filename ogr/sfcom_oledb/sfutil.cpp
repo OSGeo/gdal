@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/08/13 13:31:02  warmerda
+ * removed MEDC related checks
+ *
  * Revision 1.20  2002/08/12 18:38:55  warmerda
  * removed IDataSourceKey.h
  *
@@ -552,12 +555,7 @@ HRESULT    SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,
         ErrorInfo.hrError = passed_hr; 
         ErrorInfo.dwMinor = providerCode;
 
-//20020417 - ryan
-#ifdef MEDC_SDP
-        ErrorInfo.clsid   = CLSID_MEDC;
-#else
         ErrorInfo.clsid   = CLSID_SF;
-#endif //MEDC_SDP
         
         ErrorInfo.iid     = iid;
         ErrorInfo.dispid  = 0;
