@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2000/03/20 22:59:36  warmerda
+ * Added some documentation.
+ *
  * Revision 1.15  2000/03/20 22:39:49  warmerda
  * Added IsSame( method.
  *
@@ -362,6 +365,10 @@ class OGRSpatialReference
 /*      implementation.                                                 */
 /************************************************************************/
 
+/**
+ * Object for transforming between coordinate systems.
+ */
+ 
 class OGRCoordinateTransformation
 {
 public:
@@ -369,11 +376,26 @@ public:
 
     // From CT_CoordinateTransformation
 
+    /** Fetch internal source coordinate system. */
     virtual OGRSpatialReference *GetSourceCS() = 0;
+
+    /** Fetch internal target coordinate system. */
     virtual OGRSpatialReference *GetTargetCS() = 0;
 
     // From CT_MathTransform
 
+    /**
+     * Transform points from source to destination space.
+     *
+     * This method is the same as the C function OCTTransform().
+     *
+     * @param nCount number of points to transform.
+     * @param x array of nCount X vertices, modified in place.
+     * @param y array of nCount Y vertices, modified in place.
+     * @param z array of nCount Z vertices, modified in place.
+     * @return TRUE on success, or FALSE if some or all points fail to
+     * transform.
+     */
     virtual int Transform( int nCount, 
                            double *x, double *y, double *z = NULL ) = 0;
 
