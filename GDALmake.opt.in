@@ -77,13 +77,10 @@ OGRFRMTS_LIB	=	$(GDAL_ROOT)/ogr/ogrsf_frmts/ogrsf_frmts.a
 #
 # OGR/PostgreSQL support.
 #
-HAVE_OGR_PG     = no
-
-ifeq ($(HAVE_OGR_PG),yes)
-PG_HOME =	/usr/local/pgsql
-PG_LIB	=	-L$(PG_HOME)/lib -lpq
-PG_INC	=	-I$(PG_HOME)/include
-endif
+HAVE_OGR_PG     = @HAVE_PG@
+PG_HOME =	@PG_HOME@
+PG_LIB	=	@PG_LIB@
+PG_INC	=	@PG_INC@
 
 OGDI_INCLUDE	=	@OGDI_INCLUDE@
 
