@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.19  2003/12/05 18:01:24  warmerda
+# added GetDriver() support on Datasource
+#
 # Revision 1.18  2003/10/09 15:27:53  warmerda
 # added OGRLayer::DeleteFeature() support
 #
@@ -88,6 +91,8 @@ import _gdal
 import gdal
 import osr
 
+from _gdal import ptrcreate, ptrfree, ptrvalue, ptrset, ptrcast, ptradd, ptrmap, ptrptrcreate, ptrptrvalue, ptrptrset
+
 # OGRwkbGeometryType
 
 wkbUnknown = 0
@@ -138,20 +143,40 @@ _gdal.OGRRegisterAll()
 # Various free standing functions.
 
 def Open( filename, update = 0 ):
+
+    drv_ptr = ptrptrcreate( 'void' )
+    ptrptrset( drv_ptr, 'NULL' )
+
+    ds_o = _gdal.OGROpen( filename, update, drv_ptr )
+
+    driver_o = ptrcast(ptrptrvalue(drv_ptr),'OGRSFDriverH')
+    ptrfree( drv_ptr )
     
-    ds_o = _gdal.OGROpen( filename, update, 'NULL' )
     if ds_o is None or ds_o == 'NULL':
         raise ValueError, 'Unable to open: ' + filename
     else:
-        return DataSource( ds_o )
+        ds = DataSource( ds_o )
+        ds.driver_o = driver_o
+
+        return ds
 
 def OpenShared( filename, update = 0 ):
     
-    ds_o = _gdal.OGROpenShared( filename, update, 'NULL' )
+    drv_ptr = ptrptrcreate( 'void' )
+    ptrptrset( drv_ptr, 'NULL' )
+
+    ds_o = _gdal.OGROpenShared( filename, update, drv_ptr )
+    
+    driver_o = ptrcast(ptrptrvalue(drv_ptr),'OGRSFDriverH')
+    ptrfree( drv_ptr )
+    
     if ds_o is None or ds_o == 'NULL':
         raise ValueError, 'Unable to open: ' + filename
     else:
-        return DataSource( ds_o )
+        ds = DataSource( ds_o )
+        ds.driver_o = driver_o
+
+        return ds
 
 def GetDriverCount():
     return _gdal.OGRGetDriverCount()
@@ -323,6 +348,9 @@ class DataSource:
 
     def ReleaseResultSet( self, layer ):
         _gdal.OGR_DS_ReleaseResultSet( self._o, layer._o )
+
+    def GetDriver( self ):
+        return Driver( obj = self.driver_o )
 
 #############################################################################
 # OGRLayer
