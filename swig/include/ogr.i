@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.13  2005/02/21 18:00:44  hobu
+ * Started in on Geometry
+ *
  * Revision 1.12  2005/02/21 16:53:30  kruland
  * Changed name of SpatialReference shadow type.
  *
@@ -66,7 +69,8 @@
 %}
 
 typedef int OGRErr;
-  
+typedef int OGRwkbByteOrder;
+
 %pythoncode %{
 
 wkb25Bit = -2147483648 # 0x80000000
@@ -148,6 +152,7 @@ typedef void OSRSpatialReferenceShadow;
 
 %}
 
+
 /* OGR Driver */
 
 %rename (Driver) OGRSFDriverH;
@@ -169,9 +174,6 @@ public:
   OGRDataSourceH *CreateDataSource( const char *name, 
                                     char **options = 0 ) {
     OGRDataSourceH *ds = (OGRDataSourceH*) OGR_Dr_CreateDataSource( self, name, options);
-    if (ds != NULL) {
-      OGR_DS_Dereference(ds);
-    }
     return ds;
   }
   
@@ -181,10 +183,7 @@ public:
                                   const char* name, 
                                   char **options = 0 ) {
     OGRDataSourceH *ds = (OGRDataSourceH*) OGR_Dr_CopyDataSource(self, copy_ds, name, options);
-    if (ds != NULL) {
-      OGR_DS_Dereference(ds);
-    }
-      return ds;
+    return ds;
   }
   
 %newobject Open;
@@ -192,8 +191,7 @@ public:
   OGRDataSourceH *Open( const char* name, 
                         int update=0 ) {
     OGRDataSourceH* ds = (OGRDataSourceH*) OGR_Dr_Open(self, name, update);
-
-      return ds;
+    return ds;
   }
 
   int DeleteDataSource( const char *name ) {
@@ -266,7 +264,7 @@ public:
   %newobject CreateLayer;
   %feature( "kwargs" ) CreateLayer;
   OGRLayerH *CreateLayer(const char* name, 
-              OSRSpatialReferenceShadow* reference,
+              OSRSpatialReferenceShadow* reference=NULL,
               OGRwkbGeometryType geom_type=wkbUnknown,
               char** options=0) {
     OGRLayerH* layer = (OGRLayerH*) OGR_DS_CreateLayer( self,
@@ -474,8 +472,9 @@ public:
   OGRFeatureDefnH *GetLayerDefn() {
     return (OGRFeatureDefnH*) OGR_L_GetLayerDefn(self);
   }
-  
-  int GetFeatureCount(int force) {
+
+  %feature( "kwargs" ) GetFeatureCount;  
+  int GetFeatureCount(int force=1) {
     return OGR_L_GetFeatureCount(self, force);
   }
   
@@ -715,9 +714,9 @@ public:
   void SetField(const char* name, const char* value) {
     OGR_F_SetFieldString(self, OGR_F_GetFieldIndex(self, name), value);
   }
-  /* ---- SetField ----------------------------- */  
+  /* ------------------------------------------- */  
   
-  %feature(" kwargs ") SetFrom;
+  %feature("kwargs") SetFrom;
   OGRErr SetFrom(OGRFeatureH other, int forgiving=1) {
     OGRErr err = OGR_F_SetFrom(self, other, forgiving);
     if (err != 0)
@@ -732,11 +731,25 @@ public:
   void SetStyleString(const char* the_string) {
     OGR_F_SetStyleString(self, the_string);
   }
+
+  /* ---- GetFieldType ------------------------- */  
+  OGRFieldType GetFieldType(int id) {
+    return (OGRFieldType) OGR_Fld_GetType( OGR_F_GetFieldDefnRef( self, id));
+  }
   
+  OGRFieldType GetFieldType(const char* name, const char* value) {
+    return (OGRFieldType) OGR_Fld_GetType( 
+                            OGR_F_GetFieldDefnRef( self,  
+                                                   OGR_F_GetFieldIndex(self, 
+                                                                       name)
+                                                  )
+                                          );
+    
+  }
+  /* ------------------------------------------- */  
+  
+    
   %pythoncode {
-    def __del__(self):
-        if self.thisown:
-            self.Destroy()
 
     def __cmp__(self, other):
         """Compares a feature to another for equality"""
@@ -757,6 +770,22 @@ public:
                 raise
         except:
             raise AttributeError, name
+    def GetField(self, fld_index):
+        import types
+        if isinstance(fld_index, types.StringType):
+            fld_index = self.GetFieldIndex(fld_index)
+        if (fld_index < 0) or (fld_index > self.GetFieldCount()):
+            raise ValueError, "Illegal field requested in GetField()"
+        if not (self.IsFieldSet(fld_index)):
+            return None
+        fld_type = self.GetFieldType(fld_index)
+        if fld_type == OFTInteger:
+            return self.GetFieldAsInteger(fld_index)
+        if fld_type == OFTReal:
+            return self.GetFieldAsDouble(fld_index)
+        if fld_type == OFTString:
+            return self.GetFieldAsString(fld_index)
+        
 }
 } /* %extend */
 
@@ -774,7 +803,7 @@ class OGRFeatureDefnH {
 public:
 %extend {
 
-  %feature(" kwargs ") OGRFeatureDefnH;
+  %feature("kwargs") OGRFeatureDefnH;
   OGRFeatureDefnH* OGRFeatureDefnH(const char* name=NULL) {
     return (OGRFeatureDefnH* )OGR_FD_Create(name);
   }
@@ -829,6 +858,43 @@ public:
 }; /* class OGRFeatureDefnH */
 
 %clear (OGRErr);
+
+
+%rename (Geometry) OGRGeometryH;
+%apply (THROW_OGR_ERROR) {OGRErr};
+class OGRGeometryH {
+  
+  ~OGRGeometryH();
+public:
+%extend {
+
+  const char * ExportToWkt() {
+    char * output;
+    OGRErr err = OGR_G_ExportToWkt(self, &output);
+    if (err != 0) 
+      throw err;
+    return output;
+  }
+
+  %feature("kwargs") ExportToWkb;
+  unsigned char * ExportToWkb(OGRwkbByteOrder byte_order=wkbXDR) {
+    unsigned char * output;
+    OGRErr err = OGR_G_ExportToWkb(self, byte_order, (unsigned char*) &output);
+    if (err != 0) 
+      throw err;
+    return output;
+  }
+
+
+
+} /* %extend */
+
+
+}; /* class OGRGeometry */
+
+%clear (OGRErr);
+
+
 
 
 %{
