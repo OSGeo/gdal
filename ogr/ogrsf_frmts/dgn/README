@@ -39,6 +39,13 @@ Release 1.5
 
  o Added support for association ids (DGNLT_ASSOC_ID, DGNGetAssocID()). 
 
+ o Fixed problem with updating the DGNInfo.color_table field when a color
+   table is read. 
+
+ o Fixed problem with spatial queries either including all of a complex
+   element (and it's members) or none. 
+
+
 Release 1.4
 -----------
 
