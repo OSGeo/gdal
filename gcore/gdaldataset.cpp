@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2001/11/16 21:36:01  warmerda
+ * added the AddBand() method on GDALDataset
+ *
  * Revision 1.25  2001/10/18 14:35:22  warmerda
  * avoid conflicts between parameters and member data
  *
@@ -202,6 +205,49 @@ void GDALDataset::RasterInitialize( int nXSize, int nYSize )
     
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
+}
+
+/************************************************************************/
+/*                              AddBand()                               */
+/************************************************************************/
+
+/**
+ * Add a band to a dataset.
+ *
+ * This method will add a new band to the dataset if the underlying format
+ * supports this action.  Most formats do not. 
+ *
+ * Note that the new GDALRasterBand is not returned.  It may be fetched
+ * after successful completion of the method by calling 
+ * GDALDataset::GetRasterBand(GDALDataset::GetRasterCount()-1) as the newest
+ * band will always be the last band.
+ *
+ * @param eType the data type of the pixels in the new band. 
+ *
+ * @param papszOptions a list of NAME=VALUE option strings.  The supported
+ * options are format specific.  NULL may be passed by default.
+ *
+ * @return CE_None on success or CE_Failure on failure.  
+ */
+
+CPLErr GDALDataset::AddBand( GDALDataType eType, char **papszOptions )
+
+{
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "Dataset does not support the AddBand() method." );
+
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                            GDALAddBand()                             */
+/************************************************************************/
+
+CPLErr GDALAddBand( GDALDatasetH hDataset, 
+                    GDALDataType eType, char **papszOptions )
+
+{
+    return ((GDALDataset *) hDataset)->AddBand( eType, papszOptions );
 }
 
 /************************************************************************/

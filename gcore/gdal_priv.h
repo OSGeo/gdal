@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2001/11/16 21:36:01  warmerda
+ * added the AddBand() method on GDALDataset
+ *
  * Revision 1.26  2001/10/17 21:47:02  warmerda
  * added SetGCPs() on GDALDataset
  *
@@ -264,6 +267,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
 
+    virtual CPLErr        AddBand( GDALDataType eType, 
+                                   char **papszOptions=NULL );
+
     virtual void *GetInternalHandle( const char * );
     virtual GDALDriver *GetDriver(void);
 
@@ -279,6 +285,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     CPLErr BuildOverviews( const char *, int, int *,
                            int, int *, GDALProgressFunc, void * );
+
 };
 
 /* ******************************************************************** */
