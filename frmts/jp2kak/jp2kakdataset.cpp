@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2003/05/13 14:00:13  warmerda
+ * added mimetype and extension
+ *
  * Revision 1.7  2003/05/02 18:36:59  warmerda
  * added Clayers and FLUSH keywords
  *
@@ -1659,6 +1662,8 @@ void GDALRegister_JP2KAK()
                                    "frmt_jpeg2000.html" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte Int16 UInt16" );
+        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
 
         poDriver->pfnOpen = JP2KAKDataset::Open;
         poDriver->pfnCreateCopy = JP2KAKCopyCreate;
