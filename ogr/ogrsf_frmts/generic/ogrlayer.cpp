@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/03/04 05:48:05  warmerda
+ * added index initialize support
+ *
  * Revision 1.12  2002/09/26 18:16:19  warmerda
  * added C entry points
  *
@@ -69,6 +72,7 @@
 #include "ogrsf_frmts.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
+#include "ogr_attrind.h"
 
 CPL_CVSID("$Id$");
 
@@ -90,6 +94,12 @@ OGRLayer::OGRLayer()
 OGRLayer::~OGRLayer()
 
 {
+    if( m_poAttrIndex != NULL )
+    {
+        delete m_poAttrIndex;
+        m_poAttrIndex = NULL;
+    }
+
     if( m_poAttrQuery != NULL )
     {
         delete m_poAttrQuery;
@@ -470,4 +480,27 @@ void OGR_L_ResetReading( OGRLayerH hLayer )
     ((OGRLayer *) hLayer)->ResetReading();
 }
 
+/************************************************************************/
+/*                       InitializeIndexSupport()                       */
+/*                                                                      */
+/*      This is only intended to be called by driver layer              */
+/*      implementations but we don't make it protected so that the      */
+/*      datasources can do it too if that is more appropriate.          */
+/************************************************************************/
 
+OGRErr OGRLayer::InitializeIndexSupport( const char *pszFilename )
+
+{
+    OGRErr eErr;
+
+    m_poAttrIndex = OGRCreateDefaultLayerIndex();
+
+    eErr = m_poAttrIndex->Initialize( pszFilename, this );
+    if( eErr != OGRERR_NONE )
+    {
+        delete m_poAttrIndex;
+        m_poAttrIndex = NULL;
+    }
+
+    return eErr;
+}
