@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2002/10/09 14:31:06  warmerda
+ * dont permit negative widths to be assigned to field definition
+ *
  * Revision 1.23  2002/09/26 18:13:17  warmerda
  * moved some defs to ogr_core.h for sharing with ogr_api.h
  *
@@ -151,7 +154,7 @@ class CPL_DLL OGRFieldDefn
                                                 { eJustify = eJustifyIn; }
 
     int                 GetWidth() { return nWidth; }
-    void                SetWidth( int nWidthIn ) { nWidth = nWidthIn; }
+    void                SetWidth( int nWidthIn ) { nWidth = MAX(0,nWidthIn); }
 
     int                 GetPrecision() { return nPrecision; }
     void                SetPrecision( int nPrecisionIn )
