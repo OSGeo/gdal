@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/07/20 17:11:11  kshih
+ * Use OGR code
+ *
  * Revision 1.2  1999/06/04 15:17:27  warmerda
  * Added copyright header.
  *
@@ -37,16 +40,13 @@
 #ifndef __CSFRowset_H_
 #define __CSFRowset_H_
 #include "resource.h"       // main symbols
-extern "C" 
-{
-#include "shapefil.h"
-}
+#include "sfutil.h"
 
 class SchemaInfo
 {
 public:
-	int		nOffset;
-	DBFFieldType eType;
+	int				nOffset;
+	OGRFieldType	eFieldType;	
 };
 
 class CVirtualArray
@@ -55,16 +55,17 @@ public:
 	CVirtualArray();
 	~CVirtualArray();
 	void	RemoveAll();
-	void	Initialize(int nArraySize,DBFHandle,SHPHandle);
+	void	Initialize(int nArraySize, OGRLayer *pOGRLayer,int);
 	BYTE    &operator[](int iIndex);
 	int		GetSize() const {return m_nArraySize;}
 private:
-	BYTE		**m_ppasArray;
-	int			m_nArraySize;
-	DBFHandle	m_hDBFHandle;
-	SHPHandle	m_hSHPHandle;
+	int				m_nPackedRecordLength;
+	BYTE			*mBuffer;
+	OGRLayer		*m_pOGRLayer;
+	int				m_nArraySize;
+	int				m_nLastRecordAccessed;
 	CSimpleArray<SchemaInfo>	aSchemaInfo;
-	int			m_nPackedRecordLength;
+	OGRFeatureDefn	*m_pFeatureDefn;
 };
 
 
@@ -77,23 +78,6 @@ public:
 		static ATLCOLUMNINFO * GetColumnInfo(T* pT, ULONG* pcCols)
 	{	
 		USES_CONVERSION;
-#ifdef ZERO
-		*pcCols = 1;
-
-		memset(&colInfo, 0, sizeof(ATLCOLUMNINFO));
-
-		colInfo.pwszName = ::SysAllocString(T2OLE("Test Integer"));
-		colInfo.iOrdinal = 1;
-		colInfo.dwFlags = DBCOLUMNFLAGS_ISFIXEDLENGTH;
-		colInfo.ulColumnSize = 4;
-		colInfo.wType = DBTYPE_I4;
-		colInfo.bPrecision = 1;
-		colInfo.bScale = 1;
-		colInfo.columnid.uName.pwszName = colInfo.pwszName;
-		colInfo.cbOffset = 0;
-		
-		return &colInfo;
-#endif
 
 
 		CComQIPtr<ICommand> spCommand = pT->GetUnknown();
@@ -115,10 +99,6 @@ public:
 
 	}
 };
-
-
-
-
 
 // CSFCommand
 class ATL_NO_VTABLE CSFCommand : 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/07/20 17:11:11  kshih
+ * Use OGR code
+ *
  * Revision 1.7  1999/06/21 20:52:38  warmerda
  * Added default lat/long SRS WKT value.
  *
@@ -55,6 +58,19 @@ class CSFSessionSchemaOGISTables;
 class CSFSessionSchemaOGISGeoColumns;
 class CSFSessionSchemaSpatRef;
 
+
+class ATL_NO_VTABLE CSFSessionSupportErrorInfoImpl : public ISupportErrorInfo
+{
+public:
+	STDMETHOD(InterfaceSupportsErrorInfo)(REFIID riid)
+	{
+		if (IID_IOpenRowset == riid)
+			return S_OK;
+
+		return S_FALSE;
+	}
+};
+
 /////////////////////////////////////////////////////////////////////////////
 // CSFSession
 class ATL_NO_VTABLE CSFSession : 
@@ -64,7 +80,8 @@ class ATL_NO_VTABLE CSFSession :
 	public ISessionPropertiesImpl<CSFSession>,
 	public IObjectWithSiteSessionImpl<CSFSession>,
 	public IDBSchemaRowsetImpl<CSFSession>,
-	public IDBCreateCommandImpl<CSFSession, CSFCommand>
+	public IDBCreateCommandImpl<CSFSession, CSFCommand>,
+	public CSFSessionSupportErrorInfoImpl
 {
 public:
 	CSFSession()
@@ -92,6 +109,7 @@ BEGIN_COM_MAP(CSFSession)
 	COM_INTERFACE_ENTRY(IObjectWithSite)
 	COM_INTERFACE_ENTRY(IDBCreateCommand)
 	COM_INTERFACE_ENTRY(IDBSchemaRowset)
+	COM_INTERFACE_ENTRY(ISupportErrorInfo)
 END_COM_MAP()
 BEGIN_SCHEMA_MAP(CSFSession)
 	SCHEMA_ENTRY(DBSCHEMA_TABLES, CSFSessionTRSchemaRowset)
@@ -112,165 +130,127 @@ public:
 	HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
 	{
 		USES_CONVERSION;
-		CTABLESRow trData;
-		
-		lstrcpyW(trData.m_szType, OLESTR("TABLE"));
-		lstrcpyW(trData.m_szDesc, OLESTR("The Directory Table"));
-		lstrcpyW(trData.m_szTable,A2OLE("DBF"));
-		if (!m_rgRowData.Add(trData))
-			return E_OUTOFMEMORY;
-		*pcRowsAffected = 1;
 
+		CTABLESRow		trData;
+		int				iLayer;
+		IUnknown		*pIU;
+		OGRDataSource	*poDS;
+		OGRLayer		*pLayer;
+		OGRFeatureDefn	*poDefn;
+
+		QueryInterface(IID_IUnknown,(void **) &pIU);
+		poDS = SFGetOGRDataSource(pIU);
+
+		if (!poDS)
+		{
+			// Prep errors as well
+			return S_FALSE;
+		}
+
+		for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
+		{
+			pLayer = poDS->GetLayer(iLayer);
+			poDefn = pLayer->GetLayerDefn();
+			lstrcpyW(trData.m_szType, OLESTR("TABLE"));
+			lstrcpyW(trData.m_szTable,A2OLE(poDefn->GetName()));
+			if (!m_rgRowData.Add(trData))
+				return E_OUTOFMEMORY;
+		}
+
+		*pcRowsAffected = poDS->GetLayerCount();
+		
 		return S_OK;
 	}
 };
  
-	static DBFHandle GetDBFHandle(IUnknown *pIUnknown)
-	{
-        DBFHandle       hDBF = NULL;
-        HRESULT         hr;
-        IRowsetInfo     *pRInfo;
-        
-        hr = pIUnknown->QueryInterface(IID_IRowsetInfo,(void **) &pRInfo);
-        
-        
-        if (SUCCEEDED(hr))
-        {
-            IGetDataSource  *pIGetDataSource;
-            hr = pRInfo->GetSpecification(IID_IGetDataSource, (IUnknown **) &pIGetDataSource);
-            pRInfo->Release();
-            
-            if (SUCCEEDED(hr))
-            {
-                IDBProperties *pIDBProp;
-                
-                hr = pIGetDataSource->GetDataSource(IID_IDBProperties, (IUnknown **) &pIDBProp);
-                pIGetDataSource->Release();
-                
-                if (SUCCEEDED(hr))
-                {
-                    DBPROPIDSET sPropIdSets[1];
-                    DBPROPID    rgPropIds[1];
-                    
-                    ULONG       nPropSets;
-                    DBPROPSET   *rgPropSets;
-                    
-                    rgPropIds[0] = DBPROP_INIT_DATASOURCE;
-                    
-                    sPropIdSets[0].cPropertyIDs = 1;
-                    sPropIdSets[0].guidPropertySet = DBPROPSET_DBINIT;
-                    sPropIdSets[0].rgPropertyIDs = rgPropIds;
-                    
-                    pIDBProp->GetProperties(1,sPropIdSets,&nPropSets,&rgPropSets);
-                    
-                    if (rgPropSets)
-                    {
-                        USES_CONVERSION;
-                        char *pszDataSource;
-                        char *pszSource = (char *)  OLE2A(rgPropSets[0].rgProperties[0].vValue.bstrVal);
-                        
-                        hDBF = DBFOpen(pszSource,"r");
-                        pszDataSource = (char *) malloc(5+strlen(pszSource));
-                        strcpy(pszDataSource,pszSource);
-                        strcat(pszDataSource,".dbf");
-                        
-                        hDBF = DBFOpen(pszDataSource,"r");
-                        free(pszDataSource);
-                    }
-                    
-                    if (rgPropSets)
-                    {
-                        int i;
-                        for (i=0; i < (int) nPropSets; i++)
-                        {
-                            CoTaskMemFree(rgPropSets[i].rgProperties);
-                        }
-                        CoTaskMemFree(rgPropSets);
-                    }
-                    
-                    pIDBProp->Release();
-                }
-            }
-        }
-        
-        return hDBF;
-        
-    }
-
+	
 /////////////////////////////////////////////////////////////////////////////
 // CSFSessionColSchemaRowset
 class CSFSessionColSchemaRowset : 
 	public CRowsetImpl< CSFSessionColSchemaRowset, CCOLUMNSRow, CSFSession>
 {
 public:
-    
-
 	HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
 	{
 		USES_CONVERSION;
-		DBFHandle	hDBF;
-		int			i;
-		IUnknown    *pIU;
-
+		int				i;
+		int				iLayer;
+		IUnknown		*pIU;
+		OGRDataSource	*poDS;
+		OGRLayer		*pLayer;
+		OGRFeatureDefn	*poDefn;
+		OGRFieldDefn	*poField;
 
 
 		QueryInterface(IID_IUnknown,(void **) &pIU);
-		hDBF = GetDBFHandle((IUnknown *) pIU);
-		pIU->Release();
+		poDS = SFGetOGRDataSource(pIU);
 
-		if (!hDBF)
-			return E_FAIL;
-
-		for (i=0; i < DBFGetFieldCount(hDBF); i++)
+		if (!poDS)
 		{
-			CCOLUMNSRow trData;
-			char szFieldName[12];
-			int	 nWidth;
-			int  nDecimals;
+			// Prep errors as well
+			return S_FALSE;
+		}
 
-
-			switch(DBFGetFieldInfo(hDBF,i,szFieldName,&nWidth,&nDecimals))
+		for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
+		{
+			pLayer = poDS->GetLayer(iLayer);
+			poDefn = pLayer->GetLayerDefn();
+			LPOLESTR	pszLayerName = A2OLE(poDefn->GetName());
+			
+			for (i=0; i < poDefn->GetFieldCount(); i++)
 			{
-			case FTString:
-				trData.m_nDataType = DBTYPE_STR;
-				trData.m_ulCharMaxLength = nWidth;
-				trData.m_ulCharOctetLength = nWidth;
-				break;
-			case FTDouble:
-				trData.m_nDataType = DBTYPE_R8;
-				trData.m_nNumericPrecision = nDecimals;
-				break;
-			case FTInteger:
-				trData.m_nDataType = DBTYPE_I4;
-				break;
-			};
+				CCOLUMNSRow trData;
 
-			lstrcpyW(trData.m_szTableName,A2OLE("DBF"));
-			lstrcpyW(trData.m_szColumnName,A2OLE(szFieldName));
+				poField = poDefn->GetFieldDefn(i);
+
+				switch(poField->GetType())
+				{
+				case OFTInteger:
+					trData.m_nDataType = DBTYPE_I4;
+					break;
+				case OFTReal:
+					trData.m_nDataType = DBTYPE_R8;
+					trData.m_nNumericPrecision = poField->GetPrecision();
+
+					break;
+				case OFTString:
+					int nLength;
+					nLength = poField->GetWidth();
+					if (nLength == 0 || nLength > 4096)
+					{
+						nLength = 4096;
+					}
+					trData.m_nDataType = DBTYPE_STR;
+					trData.m_ulCharMaxLength = nLength;
+					trData.m_ulCharOctetLength = nLength;
+					break;
+				default:
+					return S_FALSE;
+				}
+
+				lstrcpyW(trData.m_szTableName,pszLayerName);
+				lstrcpyW(trData.m_szColumnName,A2OLE(poField->GetNameRef()));
+				trData.m_ulOrdinalPosition = i+1;
+				
+				if (!m_rgRowData.Add(trData))
+				{
+					return E_OUTOFMEMORY;
+				}
+
+
+			}
+			CCOLUMNSRow trData;
+			
+			lstrcpyW(trData.m_szTableName,pszLayerName);
+			lstrcpyW(trData.m_szColumnName,A2OLE("OGIS_GEOMETRY"));
 			trData.m_ulOrdinalPosition = i+1;
-
-
+			trData.m_nDataType = DBTYPE_IUNKNOWN;
 			if (!m_rgRowData.Add(trData))
 			{
-				DBFClose(hDBF);
 				return E_OUTOFMEMORY;
 			}
 		}
-		
-		CCOLUMNSRow trData;
-		
-		lstrcpyW(trData.m_szTableName,A2OLE("DBF"));
-		lstrcpyW(trData.m_szColumnName,A2OLE("OGIS_GEOMETRY"));
-		trData.m_ulOrdinalPosition = i+1;
-		trData.m_nDataType = DBTYPE_IUNKNOWN;
-		if (!m_rgRowData.Add(trData))
-		{
-			DBFClose(hDBF);
-			return E_OUTOFMEMORY;
-		}
-		
-		
-		DBFClose(hDBF);
+		*pcRowsAffected = poDS->GetLayerCount();
 		return S_OK;
 	}
 };
@@ -302,9 +282,10 @@ public:
 		m_rgRowData.Add(trDataS);
 
 		lstrcpyW(trDataBlob.m_szName,A2OLE("Geometry"));
-		trDataS.m_nType = DBTYPE_BYTES;
+		trDataS.m_nType = DBTYPE_IUNKNOWN;
 		m_rgRowData.Add(trDataBlob);
 
+		*pcRowsAffected = 4;
 		return S_OK;
 	}
 };
@@ -348,26 +329,37 @@ public:
 	HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
 	{
 		USES_CONVERSION;
-		DBFHandle		hDBF;
-		OGISTables_Row	trData;
-		char			szFieldName[12];
+
+		int				iLayer;
 		IUnknown		*pIU;
+		OGRDataSource	*poDS;
+		OGRLayer		*pLayer;
+		OGRFeatureDefn	*poDefn;
 
 		QueryInterface(IID_IUnknown,(void **) &pIU);
-		hDBF = GetDBFHandle(pIU);
-		pIU->Release();
+		poDS = SFGetOGRDataSource(pIU);
 
-		if (!hDBF)
-			return E_FAIL;
-		lstrcpyW(trData.m_szTableName,A2OLE("DBF"));
-		lstrcpyW(trData.m_szDGName,A2OLE("OGIS_GEOMETRY"));
-		DBFGetFieldInfo(hDBF,0,szFieldName,NULL,NULL);
-		lstrcpyW(trData.m_szColumnName,A2OLE(szFieldName));
+		if (!poDS)
+		{
+			// Prep errors as well
+			return S_FALSE;
+		}
 
-		m_rgRowData.Add(trData);
+		for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
+		{
+			OGISTables_Row trData;
 
-		DBFClose(hDBF);
+			pLayer = poDS->GetLayer(iLayer);
+			poDefn = pLayer->GetLayerDefn();
 
+			lstrcpyW(trData.m_szTableName,A2OLE(poDefn->GetName()));
+			lstrcpyW(trData.m_szDGName,A2OLE("OGIS_GEOMETRY"));
+			lstrcpyW(trData.m_szColumnName,A2OLE((poDefn->GetFieldDefn(0))->GetNameRef()));
+
+			m_rgRowData.Add(trData);
+		}
+
+		*pcRowsAffected = poDS->GetLayerCount();
 		return S_OK;
 	}
 };
@@ -412,30 +404,55 @@ public:
 	HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
 	{
 		USES_CONVERSION;
-		DBFHandle		hDBF;
-		OGISGeometry_Row trData;
 
-		lstrcpyW(trData.m_szTableName,A2OLE("DBF"));
-		lstrcpyW(trData.m_szColumnName,A2OLE("OGIS_GEOMETRY"));
-                trData.m_nSpatialRefId = 2;
-                
-		m_rgRowData.Add(trData);
+		int				iLayer;
+		IUnknown		*pIU;
+		OGRDataSource	*poDS;
+		OGRLayer		*pLayer;
+		OGRFeatureDefn	*poDefn;
+
+		QueryInterface(IID_IUnknown,(void **) &pIU);
+		poDS = SFGetOGRDataSource(pIU);
+
+		if (!poDS)
+		{
+			// Prep errors as well
+			return S_FALSE;
+		}
+
+		for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
+		{
+			OGISGeometry_Row trData;
+
+			pLayer = poDS->GetLayer(iLayer);
+			poDefn = pLayer->GetLayerDefn();
+
+			lstrcpyW(trData.m_szTableName,A2OLE(poDefn->GetName()));
+			lstrcpyW(trData.m_szColumnName,A2OLE("OGIS_GEOMETRY"));
+			trData.m_nSpatialRefId = 2; // CHECK this!!!!!
+			trData.m_nGeomType = poDefn->GetGeomType();
+
+			m_rgRowData.Add(trData);
+		}
+
+		*pcRowsAffected = poDS->GetLayerCount();
 
 		return S_OK;
 	}
 };
 
 
+
 /////////////////////////////////////////////////////////////////////////////
 // CSFSessionSchemaSpatRef
-
+// Note quite sure what to do with this yet!
 class OGISSpat_Row
 {
 public:
 	int		m_nSpatialRefId;
 	WCHAR	m_szAuthorityName[129];
 	WCHAR	m_nAuthorityId;
-	WCHAR	m_pszSpatialRefSystem[512];
+	WCHAR	m_pszSpatialRefSystem[10240];
 
 	OGISSpat_Row()
 	{
@@ -462,14 +479,70 @@ public:
 	HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
 	{
 		USES_CONVERSION;
-		DBFHandle		hDBF;
-		OGISSpat_Row trData;
+		bool	bAddDefault = false;
 
-		trData.m_nAuthorityId = 1;
-		trData.m_nSpatialRefId = 2;
-		lstrcpyW(trData.m_szAuthorityName,A2OLE("USGS"));
-	
-		m_rgRowData.Add(trData);
+		// See if we can get the Spatial reference system for each layer.
+		// It is unclear at the current time what the valid authority id and spatial
+		// ref ids are.  
+		int				iLayer;
+		IUnknown		*pIU;
+		OGRDataSource	*poDS;
+		OGRLayer		*pLayer;
+
+		QueryInterface(IID_IUnknown,(void **) &pIU);
+		poDS = SFGetOGRDataSource(pIU);
+
+		if (!poDS)
+		{
+			// Prep errors as well
+			return S_FALSE;
+		}
+
+		for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
+		{
+			OGISSpat_Row trData;
+				
+			pLayer = poDS->GetLayer(iLayer);
+
+			OGRSpatialReference *poSpatRef = pLayer->GetSpatialRef();
+			if (poSpatRef != NULL)
+			{
+				char *pszSpatRef;
+				poSpatRef->exportToWkt(&pszSpatRef);
+				
+				if (pszSpatRef)
+				{
+					// This should be verified!!!!!
+					trData.m_nAuthorityId = NULL;
+					trData.m_nSpatialRefId = NULL;
+					lstrcpyW(trData.m_pszSpatialRefSystem,A2OLE(pszSpatRef));
+					OGRFree(pszSpatRef);
+					
+					m_rgRowData.Add(trData);
+				}
+				else
+				{
+					bAddDefault = true;
+				}
+			}
+			else
+			{
+				bAddDefault = true;
+			}
+		}
+
+		if (bAddDefault)
+		{
+			OGISSpat_Row trData;
+			trData.m_nAuthorityId = 1;
+			trData.m_nSpatialRefId = 2;
+			lstrcpyW(trData.m_szAuthorityName,A2OLE("USGS"));
+			
+			m_rgRowData.Add(trData);	
+		}
+
+		*pcRowsAffected = poDS->GetLayerCount();
+
 		return S_OK;
 	}
 };

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/07/20 17:11:11  kshih
+ * Use OGR code
+ *
  * Revision 1.3  1999/06/25 18:17:25  kshih
  * Changes to get datasource from session/rowset/command
  *
@@ -41,12 +44,15 @@
  */
 
 #include <stdio.h>
-#include "shapefil.h"
+#include "ogrsf_frmts.h"
+#include <oledb.h>
 
 
+OGRDataSource	*SFGetOGRDataSource(IUnknown *pUnk);
+void			SFSetOGRDataSource(IUnknown *pUnk, OGRDataSource *pOGR);
+void			SFClearOGRDataSource(IUnknown *pUnk);
 void			SFGetFilenames(const char *,char **,char **);
-SHPHandle		SFGetSHPHandle(const char *);
-DBFHandle		SFGetDBFHandle(const char *);
 char			*SFGetInitDataSource(IUnknown *pIUnknownIn);
+HRESULT	     	SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,char *pszText);
 
 void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... );
