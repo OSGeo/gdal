@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/11/20 16:41:43  warmerda
+ * added extra Release() in ~SFCTable() to avoid leak
+ *
  * Revision 1.13  2001/11/01 17:05:01  warmerda
  * various old additions
  *
@@ -126,6 +129,11 @@ SFCTable::~SFCTable()
 
     if( poSRS != NULL )
         OSRDestroySpatialReference((OGRSpatialReferenceH) poSRS );
+
+    // I don't really know why I need to do this, but if I don't there is
+    // a reference left on the table.  
+    if( GetInterface() != NULL )
+        GetInterface()->Release();
 }
 
 /************************************************************************/
