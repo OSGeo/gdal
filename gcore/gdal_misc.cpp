@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2002/12/05 17:55:30  warmerda
+ * gdalreadtabfile should not be static
+ *
  * Revision 1.36  2002/12/05 15:46:38  warmerda
  * added GDALReadTabFile()
  *
@@ -1106,9 +1109,9 @@ GDAL_GCP *GDALDuplicateGCPs( int nCount, const GDAL_GCP *pasGCPList )
 
 #define MAX_GCP 256
  
-static int GDALReadTabFile( const char * pszBaseFilename, 
-                            double *padfGeoTransform, char **ppszWKT, 
-                            int *pnGCPCount, GDAL_GCP **ppasGCPs )
+int GDALReadTabFile( const char * pszBaseFilename, 
+                     double *padfGeoTransform, char **ppszWKT, 
+                     int *pnGCPCount, GDAL_GCP **ppasGCPs )
 
 
 {
