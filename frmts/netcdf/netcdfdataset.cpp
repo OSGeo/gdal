@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2004/01/07 21:02:19  warmerda
+ * fix up driver metadata
+ *
  * Revision 1.1  2004/01/07 20:05:53  warmerda
  * New
  *
@@ -524,6 +527,9 @@ void GDALRegister_netCDF()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#netCDF" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "nc" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Int16 Int32 Float32 Float64" );
 
         poDriver->pfnOpen = netCDFDataset::Open;
         poDriver->pfnCreateCopy = netCDFCreateCopy;
