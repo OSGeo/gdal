@@ -1,7 +1,12 @@
+2002-11-12  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* /gdal/frmts/hdf4/hdf4imagedataset.cpp:
+	Create() function added to NCSA HDF4 driver.
+
 2002-11-07  Andrey Kiselev  <dron@remotesensing.org>
 	
-	* /gdal/frmts/hdf4/hdf4dataset.cpp, hdf4imagedataset.cpp,
-	* hdf4dataset.h, frmts_hdf4.html:
+	* /gdal/frmts/hdf4/{hdf4dataset.cpp, hdf4imagedataset.cpp,
+	* hdf4dataset.h, frmts_hdf4.html}:
 	Writing support for NCSA HDF4 datasets via CreateCopy() function.
 
 2002-11-06  Frank Warmerdam  <warmerdam@pobox.com>
