@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/12/11 21:10:25  warmerda
+ * avoid SRS leak
+ *
  * Revision 1.8  2003/02/06 03:21:59  warmerda
  * Added OGRSpatialReference.Fixup() call to set linear units
  * as per http://bugzilla.remotesensing.org/show_bug.cgi?id=279.
@@ -93,6 +96,7 @@ OGRSDTSDataSource::~OGRSDTSDataSource()
 
     CPLFree( pszName );
 
+    delete poSRS;
     if( poTransfer )
         delete poTransfer;
 }
