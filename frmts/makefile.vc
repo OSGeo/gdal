@@ -4,8 +4,8 @@ GDAL_ROOT = ..
 EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_sdts -DFRMT_raw -DFRMT_gxf -DFRMT_ceos2 -DFRMT_png \
 		-DFRMT_jpeg -DFRMT_dted -DFRMT_mem -DFRMT_jdem -DFRMT_gif \
-		-DFRMT_envisat -DFRMT_aaigrid \
-		-DFRMT_fit \
+		-DFRMT_envisat -DFRMT_aaigrid -DFRMT_usgsdem \
+		-DFRMT_fit -DFRMT_vrt \
 		$(ECWDEF) $(OGDIDEF) $(ZLIBDEF)
 
 DIRLIST =	$(EXTRAFLAGS:-DFRMT_=)
