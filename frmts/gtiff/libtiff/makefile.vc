@@ -3,6 +3,7 @@ OBJ	= \
 	tif_aux.obj \
 	tif_close.obj \
 	tif_codec.obj \
+	tif_color.obj \
 	tif_compress.obj \
 	tif_dir.obj \
 	tif_dirinfo.obj \

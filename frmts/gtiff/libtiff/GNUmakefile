@@ -6,6 +6,7 @@ OBJ	= \
 	tif_aux.o \
 	tif_close.o \
 	tif_codec.o \
+	tif_color.o \
 	tif_compress.o \
 	tif_dir.o \
 	tif_dirinfo.o \
