@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.49  2005/03/02 17:42:46  hobu
+# First pass at a __setattr__ for Feature
+#
 # Revision 1.48  2005/02/23 20:32:56  hobu
 # retract slicing for Layers as implemented.
 #
@@ -723,14 +726,26 @@ class Feature:
         try:
             names = []
             for i in range(self.GetFieldCount()):
-                names.append(self.GetFieldDefnRef(i).GetName())
+                fieldname = self.GetFieldDefnRef(i).GetName()
+                names.append(fieldname)
             if name in names:
                 return self.GetField(name)
             else:
                 raise
         except:
             raise AttributeError, name
-        
+    def __setattr__(self, name, value):
+        """Sets the values of a specified field by the given name"""
+        special_names = ['_o','thisown']
+        if name in special_names:
+            self.__dict__[name] = value
+        if name not in special_names or name not in dir(self):
+            try:
+                self.__getattr__(name)
+                self.SetField(name, value)
+            except:
+                pass
+
     def Destroy( self ):
         if self._o is not None and self.thisown:
             _gdal.OGR_F_Destroy( self._o )
