@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/01/26 22:05:45  warmerda
+ * fixed bug with 2d/3d arcs
+ *
  * Revision 1.7  1999/12/23 14:51:07  warmerda
  * Improved support in face of 3D geometries.
  *
@@ -220,7 +223,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         double		dfX, dfY, dfZ = 0;
 
         if( poGeom->getGeometryType() != wkbPoint
-            || poGeom->getGeometryType() == wkbPoint25D )
+            && poGeom->getGeometryType() != wkbPoint25D )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Attempt to write non-point (%s) geometry to"
@@ -297,7 +300,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         SHPObject	*psShape;
 
         if( poGeom->getGeometryType() != wkbLineString
-            || poGeom->getGeometryType() != wkbLineString25D )
+            && poGeom->getGeometryType() != wkbLineString25D )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Attempt to write non-linestring (%s) geometry to "
