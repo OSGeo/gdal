@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2004/10/12 15:42:25  fwarmerdam
+ * Change all bands to be complex so that overviews will build properly
+ *
  * Revision 1.3  2004/10/08 12:22:09  fwarmerdam
  * Cast bytes passed to fabs(): Martin Daly
  *
@@ -136,7 +139,7 @@ AirSARRasterBand::AirSARRasterBand( AirSARDataset *poDS,
       case 1:
         SetMetadataItem( "POLARMETRIC_INTERP", "Covariance_11" );
         SetDescription( "Covariance_11" );
-        eDataType = GDT_Float32;
+        eDataType = GDT_CFloat32;
         break;
 
       case 2:
@@ -154,7 +157,7 @@ AirSARRasterBand::AirSARRasterBand( AirSARDataset *poDS,
       case 4:
         SetMetadataItem( "POLARMETRIC_INTERP", "Covariance_22" );
         SetDescription( "Covariance_22" );
-        eDataType = GDT_Float32;
+        eDataType = GDT_CFloat32;
         break;
 
       case 5:
@@ -166,7 +169,7 @@ AirSARRasterBand::AirSARRasterBand( AirSARDataset *poDS,
       case 6:
         SetMetadataItem( "POLARMETRIC_INTERP", "Covariance_33" );
         SetDescription( "Covariance_33" );
-        eDataType = GDT_Float32;
+        eDataType = GDT_CFloat32;
         break;
     }
 }
@@ -207,7 +210,8 @@ CPLErr AirSARRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             double *m = padfMatrix + 10 * iPixel;
 
-            pafLine[iPixel] = m[M11] + m[M22] + 2 * m[M12];
+            pafLine[iPixel*2+0] = m[M11] + m[M22] + 2 * m[M12];
+            pafLine[iPixel*2+1] = 0.0;
         }
     }
     else if( nBand == 2 ) /* C12 */
@@ -242,7 +246,8 @@ CPLErr AirSARRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             double *m = padfMatrix + 10 * iPixel;
             
-            pafLine[iPixel] = 2 * (m[M11] - m[M22]);
+            pafLine[iPixel*2+0] = 2 * (m[M11] - m[M22]);
+            pafLine[iPixel*2+1] = 0.0;
         }
     }
     else if( nBand == 5 ) /* C23 */
@@ -264,7 +269,8 @@ CPLErr AirSARRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             double *m = padfMatrix + 10 * iPixel;
             
-            pafLine[iPixel] = m[M11] + m[M22] - 2 * m[M12];
+            pafLine[iPixel*2+0] = m[M11] + m[M22] - 2 * m[M12];
+            pafLine[iPixel*2+1] = 0.0;
         }
     }
 
