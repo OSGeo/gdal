@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.13  1999/05/20 02:54:38  warmerda
+ * Added API documentation
+ *
  * Revision 1.12  1999/05/14 20:35:03  warmerda
  * added some more swapping macros
  *
@@ -78,6 +81,13 @@
 
 #ifndef CPL_BASE_H_INCLUDED
 #define CPL_BASE_H_INCLUDED
+
+/**
+ * \file cpl_port.h
+ *
+ * Core portability definitions for CPL.
+ *
+ */
 
 /* ==================================================================== */
 /*      We will use WIN32 as a standard windows define.                 */

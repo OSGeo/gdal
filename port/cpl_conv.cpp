@@ -23,6 +23,9 @@
  * cpl_conv.c: Various CPL convenience functions (from cpl_conv.h).
  *
  * $Log$
+ * Revision 1.5  1999/05/20 02:54:37  warmerda
+ * Added API documentation
+ *
  * Revision 1.4  1999/01/02 20:29:53  warmerda
  * Allow zero length allocations
  *
@@ -43,12 +46,29 @@
 /*                             CPLCalloc()                              */
 /************************************************************************/
 
+/**
+ * Safe version of calloc().
+ *
+ * This function is like the C library calloc(), but raises a CE_Fatal
+ * error with CPLError() if it fails to allocate the desired memory.  It
+ * should be used for small memory allocations that are unlikely to fail
+ * and for which the application is unwilling to test for out of memory
+ * conditions.  It uses VSICalloc() to get the memory, so any hooking of
+ * VSICalloc() will apply to CPLCalloc() as well.  CPLFree() or VSIFree()
+ * can be used free memory allocated by CPLCalloc().
+ *
+ * @param nCount number of objects to allocate.
+ * @param nSize size (in bytes) of object to allocate.
+ * @return pointer to newly allocated memory, only NULL if nSize * nCount is
+ * NULL.
+ */
+
 void *CPLCalloc( size_t nCount, size_t nSize )
 
 {
     void	*pReturn;
 
-    if( nSize == 0 )
+    if( nSize * nCount == 0 )
         return NULL;
     
     pReturn = VSICalloc( nCount, nSize );
@@ -65,6 +85,21 @@ void *CPLCalloc( size_t nCount, size_t nSize )
 /************************************************************************/
 /*                             CPLMalloc()                              */
 /************************************************************************/
+
+/**
+ * Safe version of malloc().
+ *
+ * This function is like the C library malloc(), but raises a CE_Fatal
+ * error with CPLError() if it fails to allocate the desired memory.  It
+ * should be used for small memory allocations that are unlikely to fail
+ * and for which the application is unwilling to test for out of memory
+ * conditions.  It uses VSIMalloc() to get the memory, so any hooking of
+ * VSIMalloc() will apply to CPLMalloc() as well.  CPLFree() or VSIFree()
+ * can be used free memory allocated by CPLMalloc().
+ *
+ * @param nSize size (in bytes) of memory block to allocate.
+ * @return pointer to newly allocated memory, only NULL if nSize is zero.
+ */
 
 void *CPLMalloc( size_t nSize )
 
@@ -88,6 +123,26 @@ void *CPLMalloc( size_t nSize )
 /************************************************************************/
 /*                             CPLRealloc()                             */
 /************************************************************************/
+
+/**
+ * Safe version of realloc().
+ *
+ * This function is like the C library realloc(), but raises a CE_Fatal
+ * error with CPLError() if it fails to allocate the desired memory.  It
+ * should be used for small memory allocations that are unlikely to fail
+ * and for which the application is unwilling to test for out of memory
+ * conditions.  It uses VSIRealloc() to get the memory, so any hooking of
+ * VSIRealloc() will apply to CPLRealloc() as well.  CPLFree() or VSIFree()
+ * can be used free memory allocated by CPLRealloc().
+ *
+ * It is also safe to pass NULL in as the existing memory block for
+ * CPLRealloc(), in which case it uses VSIMalloc() to allocate a new block.
+ *
+ * @param pData existing memory block which should be copied to the new block.
+ * @param nNewSize new size (in bytes) of memory block to allocate.
+ * @return pointer to allocated memory, only NULL if nNewSize is zero.
+ */
+
 
 void * CPLRealloc( void * pData, size_t nNewSize )
 
@@ -113,6 +168,24 @@ void * CPLRealloc( void * pData, size_t nNewSize )
 /*                             CPLStrdup()                              */
 /************************************************************************/
 
+/**
+ * Safe version of strdup() function.
+ *
+ * This function is similar to the C library strdup() function, but if
+ * the memory allocation fails it will issue a CE_Fatal error with
+ * CPLError() instead of returning NULL.  It uses VSIStrdup(), so any
+ * hooking of that function will apply to CPLStrdup() as well.  Memory
+ * allocated with CPLStrdup() can be freed with CPLFree() or VSIFree().
+ *
+ * It is also safe to pass a NULL string into CPLStrdup().  CPLStrdup()
+ * will allocate and return a zero length string (as opposed to a NULL
+ * string).
+ *
+ * @param pszString input string to be duplicated.  May be NULL.
+ * @return pointer to a newly allocated copy of the string.  Free with
+ * CPLFree() or VSIFree().
+ */
+
 char *CPLStrdup( const char * pszString )
 
 {
@@ -136,16 +209,27 @@ char *CPLStrdup( const char * pszString )
 
 /************************************************************************/
 /*                            CPLReadLine()                             */
-/*                                                                      */
-/*      Read a line of text from the given file handle, taking care     */
-/*      to capture CR and/or LF and strip off ... equivelent of         */
-/*      DKReadLine().  Pointer to an internal buffer is returned.       */
-/*      The application shouldn't free it, or depend on it's value      */
-/*      past the next call to CPLReadLine()                             */
-/*                                                                      */
-/*      TODO: Allow arbitrarily long lines ... currently limited to     */
-/*      512 characters.                                                 */
 /************************************************************************/
+
+/**
+ * Simplified line reading from text file.
+ * 
+ * Read a line of text from the given file handle, taking care
+ * to capture CR and/or LF and strip off ... equivelent of
+ * DKReadLine().  Pointer to an internal buffer is returned.
+ * The application shouldn't free it, or depend on it's value
+ * past the next call to CPLReadLine().
+ * 
+ * TODO: Allow arbitrarily long lines ... currently limited to
+ * 512 characters.
+ *
+ * Note that CPLReadLine() uses VSIFGets(), so any hooking of VSI file
+ * services should apply to CPLReadLine() as well.
+ *
+ * @param fp file pointer opened with VSIFOpen().
+ * @return pointer to an internal buffer containing a line of text read
+ * from the file or NULL if the end of file was encountered.
+ */
 
 const char *CPLReadLine( FILE * fp )
 

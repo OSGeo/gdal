@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/05/20 02:54:38  warmerda
+ * Added API documentation
+ *
  * Revision 1.6  1999/02/17 05:40:47  danmo
  * Fixed CPLAssert() macro to work with EGCS.
  *
@@ -57,6 +60,13 @@
 /*=====================================================================
                    Error handling functions (cpl_error.c)
  =====================================================================*/
+
+/**
+ * \file cpl_error.h
+ *
+ * CPL error handling services.
+ */
+  
 CPL_C_START
 
 typedef enum
@@ -89,6 +99,7 @@ CPL_C_END
 /*      Well known error codes.                                         */
 /* ==================================================================== */
 
+#define CPLE_None			0
 #define CPLE_AppDefined			1
 #define CPLE_OutOfMemory		2
 #define CPLE_FileIO			3

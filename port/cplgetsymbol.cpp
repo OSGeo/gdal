@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/05/20 02:54:38  warmerda
+ * Added API documentation
+ *
  * Revision 1.7  1999/04/23 13:56:36  warmerda
  * added stub implementation.  Don't check for __unix__
  *
@@ -64,16 +67,40 @@
 
 /************************************************************************/
 /*                            CPLGetSymbol()                            */
-/*                                                                      */
-/*      Note that this function doesn't:                                */
-/*       o prevent the reference count on the library from going up     */
-/*         for every request, or given any opportunity to unload        */
-/*         the library.                                                 */
-/*       o Attempt to look for the library in non-standard              */
-/*         locations.                                                   */
-/*       o Attempt to try variations on the symbol name, like           */
-/*         pre-prending or post-pending an underscore.                  */
 /************************************************************************/
+
+/**
+ * Fetch a function pointer from a shared library / DLL.
+ *
+ * This function is meant to abstract access to shared libraries and
+ * DLLs and performs functions similar to dlopen()/dlsym() on Unix and
+ * LoadLibrary() / GetProcAddress() on Windows.
+ *
+ * If no support for loading entry points from a shared library is available
+ * this function will always return NULL.   Rules on when this function
+ * issues a CPLError() or not are not currently well defined, and will have
+ * to be resolved in the future.
+ *
+ * Currently CPLGetSymbol() doesn't try to:
+ * <ul>
+ *  <li> prevent the reference count on the library from going up
+ *    for every request, or given any opportunity to unload      
+ *    the library.                                            
+ *  <li> Attempt to look for the library in non-standard         
+ *    locations.                                              
+ *  <li> Attempt to try variations on the symbol name, like      
+ *    pre-prending or post-pending an underscore.
+ * </ul>
+ * 
+ * Some of these issues may be worked on in the future.
+ *
+ * @param pszLibrary the name of the shared library or DLL containing
+ * the function.  May contain path to file.  If not system supplies search
+ * paths will be used.
+ * @param pszSymbolName the name of the function to fetch a pointer to.
+ * @return A pointer to the function if found, or NULL if the function isn't
+ * found, or the shared library can't be loaded.
+ */
 
 void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
@@ -114,15 +141,6 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
 /************************************************************************/
 /*                            CPLGetSymbol()                            */
-/*                                                                      */
-/*      Note that this function doesn't:                                */
-/*       o prevent the reference count on the library from going up     */
-/*         for every request, or given any opportunity to unload        */
-/*         the library.                                                 */
-/*       o Attempt to look for the library in non-standard              */
-/*         locations.                                                   */
-/*       o Attempt to try variations on the symbol name, like           */
-/*         pre-prending or post-pending an underscore.                  */
 /************************************************************************/
 
 void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )

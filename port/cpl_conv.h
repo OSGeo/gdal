@@ -38,6 +38,13 @@
 #include "cpl_vsi.h"
 #include "cpl_error.h"
 
+/**
+ * \file cpl_conv.h
+ *
+ * Various convenience functions for CPL.
+ *
+ */
+
 /* -------------------------------------------------------------------- */
 /*      Safe malloc() API.  Thin cover over VSI functions with fatal    */
 /*      error reporting if memory allocation fails.                     */
