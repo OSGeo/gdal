@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/07/21 13:23:27  warmerda
+ * Fixed multiple inclusion protection.
+ *
  * Revision 1.3  1999/07/08 20:04:58  warmerda
  * added GetFeatureCount
  *
@@ -40,7 +43,7 @@
  */
 
 #ifndef _OGRSF_FRMTS_H_INCLUDED
-#define _OGRSF_FRMTS_H_INLLUDED
+#define _OGRSF_FRMTS_H_INCLUDED
 
 #include "ogr_feature.h"
 
