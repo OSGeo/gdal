@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.19  2005/03/23 17:41:42  fwarmerdam
+ * added NTS and INTERNALNAME options for Matt
+ *
  * Revision 1.18  2004/12/17 19:50:03  fwarmerdam
  * Fixed last bug reference.
  *
@@ -1011,13 +1014,30 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
 /*      Fetch TOPLEFT location so we know what cell we are dealing      */
 /*      with.                                                           */
 /* -------------------------------------------------------------------- */
+    const char *pszNTS = 
+        CSLFetchNameValue( psWInfo->papszOptions, "NTS" );
     const char *pszTOPLEFT = CSLFetchNameValue( psWInfo->papszOptions, 
                                                 "TOPLEFT" );
     double dfULX = (psWInfo->dfULX+psWInfo->dfURX)*0.5;
     double dfULY = (psWInfo->dfULY+psWInfo->dfURY)*0.5;
 
+    // Have we been given an explicit NTS mapsheet name? 
+    if( pszNTS != NULL )
+    {
+        char szTrimmedTile[7];
+
+        strncpy( szTrimmedTile, pszNTS, 6 );
+        szTrimmedTile[6] = '\0';
+
+        if( !USGSDEM_LookupNTSByTile( szTrimmedTile, NULL, &dfULX, &dfULY ) )
+            return FALSE;
+
+        if( EQUALN(pszNTS+7,"e",1) )
+            dfULX += 0.25;
+    }
+
     // Try looking up TOPLEFT as a NTS mapsheet name.
-    if( pszTOPLEFT != NULL && strstr(pszTOPLEFT,",") == NULL
+    else if( pszTOPLEFT != NULL && strstr(pszTOPLEFT,",") == NULL
         && (strlen(pszTOPLEFT) == 6 || strlen(pszTOPLEFT) == 7) )
     {
         char szTrimmedTile[7];
@@ -1072,6 +1092,22 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
         if( EQUALN(psWInfo->pszFilename+7,"e",1) )
             dfULX += 0.25;
     }
+             
+    else if( strlen(psWInfo->pszFilename) == 14 
+             && EQUALN(psWInfo->pszFilename+6,"DEM",3)
+             && EQUAL(psWInfo->pszFilename+10,".dem") )
+    {
+        char szTrimmedTile[7];
+
+        strncpy( szTrimmedTile, psWInfo->pszFilename, 6 );
+        szTrimmedTile[6] = '\0';
+
+        if( !USGSDEM_LookupNTSByTile( szTrimmedTile, NULL, &dfULX, &dfULY ) )
+            return FALSE;
+
+        if( EQUALN(psWInfo->pszFilename+9,"e",1) )
+            dfULX += 0.25;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Set resolution and size information.                            */
@@ -1121,6 +1157,8 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
 /*      Can we find the NTS 50k tile name that corresponds with         */
 /*      this?                                                           */
 /* -------------------------------------------------------------------- */
+    const char *pszINTERNAL = 
+        CSLFetchNameValue( psWInfo->papszOptions, "INTERNALNAME" );
     char szTile[10];
     char chEWFlag = ' ';
 
@@ -1133,7 +1171,12 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
         chEWFlag = 'e';
     }
 
-    if( chEWFlag != ' ' )
+    if( pszINTERNAL != NULL )
+    {
+        CPLFree( psWInfo->pszFilename );
+        psWInfo->pszFilename = CPLStrdup( pszINTERNAL );
+    }
+    else if( chEWFlag != ' ' )
     {
         CPLFree( psWInfo->pszFilename );
         psWInfo->pszFilename = 
