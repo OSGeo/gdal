@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  1999/06/25 18:17:44  kshih
+ * Use new routines to get data source.
+ *
  * Revision 1.11  1999/06/22 16:59:30  kshih
  * Temporary fix for ADO.  Use static variable to keep datasource around.
  *
@@ -437,10 +440,11 @@ DBTYPE DBFType2OLEType(DBFFieldType eDBFType,int *pnOffset, int nWidth)
 
 HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
 {	
-    USES_CONVERSION;
-    LPSTR		szBaseFile;
+	USES_CONVERSION;
+	char		*pszName;
     DBFHandle	hDBF;
     SHPHandle	hSHP;
+	IUnknown    *pIUnknown;
 
 
     char            szFilename[512];
@@ -448,12 +452,16 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     int			i;
     int			nOffset = 0;
 
-	hDBF = SFGetDBFHandle(NULL);
-	
+	QueryInterface(IID_IUnknown,(void **) &pIUnknown);
+	hDBF = SFGetDBFHandle(pszName = SFGetInitDataSource((IUnknown *)pIUnknown));
+	free(pszName);
     if (!hDBF)
         return DB_E_ERRORSINCOMMAND;
 
-	hSHP = SFGetSHPHandle(NULL);
+	QueryInterface(IID_IUnknown,(void **) &pIUnknown);
+	hSHP = SFGetSHPHandle(pszName = SFGetInitDataSource((IUnknown *) pIUnknown));
+	free(pszName);
+
     if (!hSHP)
         return DB_E_ERRORSINCOMMAND;
 
