@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/04/22 19:41:24  dron
+ * Fixed problem in GDALWarpNoDataMasker(): missed breaks in switch.
+ *
  * Revision 1.5  2003/03/02 05:25:26  warmerda
  * added GDALWarpNoDataMasker
  *
@@ -372,6 +375,7 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
               }
           }
       }
+      break;
       
       case GDT_Int16:
       {
@@ -392,6 +396,7 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
               }
           }
       }
+      break;
       
       case GDT_UInt16:
       {
@@ -412,6 +417,7 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
               }
           }
       }
+      break;
       
       case GDT_Float32:
       {
@@ -431,6 +437,7 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
               }
           }
       }
+      break;
       
       default:
       {
@@ -461,6 +468,7 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 
           CPLFree( padfWrk );
       }
+      break;
     }
 
     return CE_None;
