@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/02/28 18:45:20  gpotts
+ * Prefixed CreateLink with ceos2 since there are multiple symbol conflict on static build under mac. Garrett Potts (gpotts@imagelinks.com)
+ *
  * Revision 1.4  2001/10/18 17:03:21  warmerda
  * use DetermineCeosRecordBodyLength internally
  *
@@ -365,7 +368,7 @@ void SerializeCeosRecordsFromFile(Link_t *record_list, FILE *fp)
 	fread(crec,sizeof(CeosRecord_t),1,fp);
 	crec->Buffer = HMalloc(crec->Length * sizeof(char) );
 	fread(crec->Buffer,sizeof(char),crec->Length,fp);
-	Link = CreateLink(crec);
+	Link = ceos2CreateLink(crec);
 	AddLink(record_list,Link);
     }
 }

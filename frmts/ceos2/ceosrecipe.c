@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/02/28 18:45:20  gpotts
+ * Prefixed CreateLink with ceos2 since there are multiple symbol conflict on static build under mac. Garrett Potts (gpotts@imagelinks.com)
+ *
  * Revision 1.10  2001/11/02 17:58:06  warmerda
  * more hacks to handle ESA LANDSAT dataset from Markus
  *
@@ -208,7 +211,7 @@ void AddRecipe( int (*function)(CeosSARVolume_t *volume,
     TempData->function = function;
     TempData->token = token;
 
-    Link = CreateLink( TempData );
+    Link = ceos2CreateLink( TempData );
 
     if( RecipeFunctions == NULL)
     {

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/02/28 18:45:20  gpotts
+ * Prefixed CreateLink with ceos2 since there are multiple symbol conflict on static build under mac. Garrett Potts (gpotts@imagelinks.com)
+ *
  * Revision 1.2  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -42,10 +45,10 @@ CPL_CVSID("$Id$");
 
 
 /************************************************************************/
-/*                             CreateLink()                             */
+/*                             ceos2CreateLink()                             */
 /************************************************************************/
 
-Link_t *CreateLink( void *pObject )
+Link_t *ceos2CreateLink( void *pObject )
 
 {
     Link_t	*psLink = (Link_t *) CPLCalloc(sizeof(Link_t),1);
