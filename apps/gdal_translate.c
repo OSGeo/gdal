@@ -28,6 +28,9 @@
  * Status: Incomplete.
  *
  * $Log$
+ * Revision 1.4  1999/05/17 01:38:05  warmerda
+ * added transfer of geotransform and proj
+ *
  * Revision 1.3  1999/05/13 15:33:12  warmerda
  * added support for selecting a single band
  *
@@ -68,6 +71,7 @@ int main( int argc, char ** argv )
     const char		*pszSource=NULL, *pszDest=NULL, *pszFormat = "GTiff";
     GDALDriverH		hDriver;
     int			*panBandList, nBandCount;
+    double		adfGeoTransform[6];
 
 /* -------------------------------------------------------------------- */
 /*      Handle command line arguments.                                  */
@@ -160,6 +164,14 @@ int main( int argc, char ** argv )
         exit( 10 );
     }
     
+/* -------------------------------------------------------------------- */
+/*	Copy over projection, and geotransform information.		*/
+/* -------------------------------------------------------------------- */
+    GDALSetProjection( hOutDS, GDALGetProjectionRef( hDataset ) );
+
+    if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
+        GDALSetGeoTransform( hOutDS, adfGeoTransform );
+
 /* -------------------------------------------------------------------- */
 /*      Loop copying bands.                                             */
 /* -------------------------------------------------------------------- */
