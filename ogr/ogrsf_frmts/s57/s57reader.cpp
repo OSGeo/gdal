@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2002/10/28 22:31:00  warmerda
+ * allow wkbMultiPoint25D for SOUNDG
+ *
  * Revision 1.35  2002/05/14 20:34:27  warmerda
  * added PRESERVE_EMPTY_NUMBERS support
  *
@@ -290,7 +293,7 @@ OGRFeature *S57Reader::NextPendingMultiPoint()
 
 {
     CPLAssert( poMultiPoint != NULL );
-    CPLAssert( poMultiPoint->GetGeometryRef()->getGeometryType()
+    CPLAssert( wkbFlatten(poMultiPoint->GetGeometryRef()->getGeometryType())
                                                         == wkbMultiPoint );
 
     OGRFeatureDefn *poDefn = poMultiPoint->GetDefnRef();
@@ -516,7 +519,7 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
         if( poFeature != NULL )
         {
             if( bSplitMultiPoint && poFeature->GetGeometryRef() != NULL
-                && poFeature->GetGeometryRef()->getGeometryType()
+                && wkbFlatten(poFeature->GetGeometryRef()->getGeometryType())
                                                         == wkbMultiPoint)
             {
                 poMultiPoint = poFeature;
