@@ -32,7 +32,7 @@ endif
 
 default:	lib ogrinfo ogr2ogr
 
-all:	sublibs test1 test2 test_ogrsf ogrinfo ogr2ogr docs
+all:	sublibs test1 test2 test_ogrsf ogrinfo ogr2ogr docs ogrtindex
 
 apps:	ogrinfo ogr2ogr
 
@@ -63,6 +63,9 @@ sdts2mi:	sdts2mi.o $(OGR_LIB) $(FRMTS_LIB)
 
 testepsg:	testepsg.o $(OGR_LIB) $(FRMTS_LIB)
 	$(CXX) $(LNK_FLAGS) testepsg.o $(FRMTS_LIB) $(LIBS) -o testepsg
+
+ogrtindex:	ogrtindex.o $(OGR_LIB) $(FRMTS_LIB)
+	$(CXX) $(LNK_FLAGS) ogrtindex.o $(FRMTS_LIB) $(LIBS) -o ogrtindex
 
 $(FRMTS_LIB):
 	(cd ogrsf_frmts; $(MAKE))
