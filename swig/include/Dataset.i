@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.7  2005/02/21 14:51:32  kruland
+ * Needed to rename GDALDriver to GDALDriverShadow in the last commit.
+ *
  * Revision 1.6  2005/02/20 19:42:53  kruland
  * Rename the Swig shadow classes so the names do not give the impression that
  * they are any part of the GDAL/OSR apis.  There were no bugs with the old
@@ -63,8 +66,8 @@ public:
     }
   }
 
-  GDALDriver* GetDriver() {
-    return (GDALDriver*) GDALGetDatasetDriver( self );
+  GDALDriverShadow* GetDriver() {
+    return (GDALDriverShadow*) GDALGetDatasetDriver( self );
   }
 
   GDALRasterBandShadow* GetRasterBand(int nBand ) {
