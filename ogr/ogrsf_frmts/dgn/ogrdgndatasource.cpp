@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/03/14 21:40:19  warmerda
+ * pass update flag to DGNOpen
+ *
  * Revision 1.4  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -112,7 +115,7 @@ int OGRDGNDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
 /*      Try to open the file as a DGN file.                             */
 /* -------------------------------------------------------------------- */
-    hDGN = DGNOpen( pszNewName );
+    hDGN = DGNOpen( pszNewName, FALSE );
     if( hDGN == NULL )
     {
         if( !bTestOpen )
