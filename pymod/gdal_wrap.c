@@ -2905,6 +2905,69 @@ static PyObject *_wrap_OSRCloneGeogCS(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OSRMorphToESRI(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRSpatialReferenceH  _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OSRMorphToESRI",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRMorphToESRI. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (int )OSRMorphToESRI(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRMorphFromESRI(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRSpatialReferenceH  _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OSRMorphFromESRI",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRMorphFromESRI. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (int )OSRMorphFromESRI(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRValidate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRSpatialReferenceH  _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OSRValidate",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRValidate. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (int )OSRValidate(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OSRSetAttrValue(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     int  _result;
@@ -3701,6 +3764,9 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRSetLinearUnits", _wrap_OSRSetLinearUnits, METH_VARARGS },
 	 { "OSRGetAttrValue", _wrap_OSRGetAttrValue, METH_VARARGS },
 	 { "OSRSetAttrValue", _wrap_OSRSetAttrValue, METH_VARARGS },
+	 { "OSRValidate", _wrap_OSRValidate, METH_VARARGS },
+	 { "OSRMorphFromESRI", _wrap_OSRMorphFromESRI, METH_VARARGS },
+	 { "OSRMorphToESRI", _wrap_OSRMorphToESRI, METH_VARARGS },
 	 { "OSRCloneGeogCS", _wrap_OSRCloneGeogCS, METH_VARARGS },
 	 { "OSRImportFromEPSG", _wrap_OSRImportFromEPSG, METH_VARARGS },
 	 { "OSRDereference", _wrap_OSRDereference, METH_VARARGS },
