@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.11  2002/12/11 22:09:13  warmerda
+ * Re-enable createcopy.
+ *
  * Revision 1.10  2002/12/11 22:08:20  warmerda
  * fixed multiband support for writing ... open wit wb+ in create
  *
@@ -1347,7 +1350,7 @@ void GDALRegister_BMP()
 
         poDriver->pfnOpen = BMPDataset::Open;
         poDriver->pfnCreate = BMPDataset::Create;
-//        poDriver->pfnCreateCopy = BMPCreateCopy;
+        poDriver->pfnCreateCopy = BMPCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
