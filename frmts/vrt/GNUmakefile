@@ -3,7 +3,8 @@ GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	vrtdataset.o vrtrasterband.o
+OBJ	=	vrtdataset.o vrtrasterband.o vrtdriver.o vrtsources.o \
+		vrtfilters.o
 
 default:	$(OBJ)
 
