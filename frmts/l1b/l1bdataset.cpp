@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.19  2003/06/19 12:28:45  dron
+ * More fixes in GCP extraction.
+ *
  * Revision 1.18  2003/06/19 09:36:13  dron
  * Fixed reading number of meaningful GCPs for NOAA-9/NOAA-14 data format.
  *
@@ -216,10 +219,9 @@ class L1BDataset : public GDALDataset
     int         nGCPCount;
     int         iGCPOffset;
     int         iGCPCodeOffset;
-    int         nGCPPerLine;
+    int         nGCPsPerLine;
     int         iLocationIndicator;
     double      dfGCPStart, dfGCPStep;
-    double      dfTLDist, dfTRDist, dfBLDist, dfBRDist;
 
     int         nBufferSize;
     int         iSpacecraftID;
@@ -505,20 +507,23 @@ void L1BDataset::FetchNOAA15TimeCode( TimeCode *psTime,
 /* Fetch the GCPs from the individual scanlines (NOAA9-NOAA14 version)  */
 /************************************************************************/
 
-void L1BDataset::FetchNOAA9GCPs(GDAL_GCP *pasGCPList, GInt16 *piRecordHeader, int iLine)
+void L1BDataset::FetchNOAA9GCPs( GDAL_GCP *pasGCPList,
+                                 GInt16 *piRecordHeader, int iLine )
 {
     int         nGoodGCPs, iGCPPos, j;
     GInt16      iTemp;
     double      dfPixel;
     
-    nGoodGCPs = ((GByte)*(piRecordHeader + iGCPCodeOffset) <= nGCPPerLine)?
-            (GByte)*(piRecordHeader + iGCPCodeOffset):nGCPPerLine;
+    nGoodGCPs = (*((GByte *)piRecordHeader + iGCPCodeOffset) <= nGCPsPerLine)?
+            *((GByte *)piRecordHeader + iGCPCodeOffset):nGCPsPerLine;
 
 #ifdef DEBUG
-    CPLDebug( "L1B", "nGCPPerLine=%d, nGoodGCPs=%d",
-              nGCPPerLine, nGoodGCPs );
+    CPLDebug( "L1B", "iGCPCodeOffset=%d, nGCPsPerLine=%d, nGoodGCPs=%d",
+              iGCPCodeOffset, nGCPsPerLine, nGoodGCPs );
 #endif
-    dfPixel = (iLocationIndicator == DESCEND)?dfGCPStart: GetRasterXSize() - dfGCPStart;
+
+    dfPixel = (iLocationIndicator == DESCEND)?
+        dfGCPStart:(GetRasterXSize() - dfGCPStart);
     j = iGCPOffset / (int)sizeof(piRecordHeader[0]);
     iGCPPos = iGCPOffset / (int)sizeof(piRecordHeader[0]) + 2 * nGoodGCPs;
     while ( j < iGCPPos )
@@ -532,13 +537,16 @@ void L1BDataset::FetchNOAA9GCPs(GDAL_GCP *pasGCPList, GInt16 *piRecordHeader, in
         pasGCPList[nGCPCount].dfGCPY = piRecordHeader[j++] / 128.0;
         pasGCPList[nGCPCount].dfGCPX = piRecordHeader[j++] / 128.0;
 #endif
-        if (pasGCPList[nGCPCount].dfGCPX < -180 || pasGCPList[nGCPCount].dfGCPX > 180 ||
-            pasGCPList[nGCPCount].dfGCPY < -90 || pasGCPList[nGCPCount].dfGCPY > 90)
+        if (pasGCPList[nGCPCount].dfGCPX < -180
+            || pasGCPList[nGCPCount].dfGCPX > 180
+            || pasGCPList[nGCPCount].dfGCPY < -90
+            || pasGCPList[nGCPCount].dfGCPY > 90)
             continue;
         pasGCPList[nGCPCount].dfGCPZ = 0.0;
         pasGCPList[nGCPCount].dfGCPPixel = dfPixel;
         dfPixel += (iLocationIndicator == DESCEND)?dfGCPStep:-dfGCPStep;
-        pasGCPList[nGCPCount].dfGCPLine = (double)((iLocationIndicator == DESCEND)?
+        pasGCPList[nGCPCount].dfGCPLine =
+            (double)((iLocationIndicator == DESCEND)?
             iLine:GetRasterYSize() - iLine - 1) + 0.5;
         nGCPCount++;
     }
@@ -548,15 +556,17 @@ void L1BDataset::FetchNOAA9GCPs(GDAL_GCP *pasGCPList, GInt16 *piRecordHeader, in
 /* Fetch the GCPs from the individual scanlines (NOAA15-NOAA17 version) */
 /************************************************************************/
 
-void L1BDataset::FetchNOAA15GCPs(GDAL_GCP *pasGCPList, GInt32 *piRecordHeader, int iLine)
+void L1BDataset::FetchNOAA15GCPs( GDAL_GCP *pasGCPList,
+                                  GInt32 *piRecordHeader, int iLine)
 {
     int         j, iGCPPos;
     GUInt32     lTemp;
     double      dfPixel;
     
-    dfPixel = (iLocationIndicator == DESCEND)?dfGCPStart: GetRasterXSize() - dfGCPStart;
+    dfPixel = (iLocationIndicator == DESCEND)?
+        dfGCPStart:(GetRasterXSize() - dfGCPStart);
     j = iGCPOffset / (int)sizeof(piRecordHeader[0]);
-    iGCPPos = iGCPOffset / (int)sizeof(piRecordHeader[0]) + 2 * nGCPPerLine;
+    iGCPPos = iGCPOffset / (int)sizeof(piRecordHeader[0]) + 2 * nGCPsPerLine;
     while ( j < iGCPPos )
     {
 #ifdef CPL_LSB
@@ -568,13 +578,16 @@ void L1BDataset::FetchNOAA15GCPs(GDAL_GCP *pasGCPList, GInt32 *piRecordHeader, i
         pasGCPList[nGCPCount].dfGCPY = piRecordHeader[j++] / 10000.0;
         pasGCPList[nGCPCount].dfGCPX = piRecordHeader[j++] / 10000.0;
 #endif
-        if (pasGCPList[nGCPCount].dfGCPX < -180 || pasGCPList[nGCPCount].dfGCPX > 180 ||
-            pasGCPList[nGCPCount].dfGCPY < -90 || pasGCPList[nGCPCount].dfGCPY > 90)
+        if ( pasGCPList[nGCPCount].dfGCPX < -180
+             || pasGCPList[nGCPCount].dfGCPX > 180
+             || pasGCPList[nGCPCount].dfGCPY < -90
+             || pasGCPList[nGCPCount].dfGCPY > 90 )
             continue;
         pasGCPList[nGCPCount].dfGCPZ = 0.0;
         pasGCPList[nGCPCount].dfGCPPixel = dfPixel;
         dfPixel += (iLocationIndicator == DESCEND)?dfGCPStep:-dfGCPStep;
-        pasGCPList[nGCPCount].dfGCPLine = (double)((iLocationIndicator == DESCEND)?
+        pasGCPList[nGCPCount].dfGCPLine =
+            (double)((iLocationIndicator == DESCEND)?
             iLine:GetRasterYSize() - iLine - 1) + 0.5;
         nGCPCount++;
     }
@@ -589,34 +602,38 @@ void L1BDataset::ProcessRecordHeaders()
     int         iLine, iLocInd;
     void        *piRecordHeader;
 
+    pasGCPList = (GDAL_GCP *)CPLCalloc( GetRasterYSize() * nGCPsPerLine,
+                                        sizeof(GDAL_GCP) );
+    GDALInitGCPs( GetRasterYSize() * nGCPsPerLine, pasGCPList );
+
     piRecordHeader = CPLMalloc(nRecordDataStart);
-    pasGCPList = (GDAL_GCP *) CPLCalloc( GetRasterYSize() * nGCPPerLine, sizeof(GDAL_GCP) );
-    GDALInitGCPs( GetRasterYSize() * nGCPPerLine, pasGCPList );
-    dfTLDist = dfTRDist = dfBLDist = dfBRDist = GetRasterXSize() * GetRasterXSize() +
-                                        GetRasterYSize() * GetRasterYSize();
     VSIFSeek(fp, nDataStartOffset, SEEK_SET);
     VSIFRead(piRecordHeader, 1, nRecordDataStart, fp);
+
     if (iSpacecraftID <= NOAA14)
         FetchNOAA9TimeCode(&sStartTime, (GByte *) piRecordHeader, &iLocInd);
     else
         FetchNOAA15TimeCode(&sStartTime, (GUInt16 *) piRecordHeader, &iLocInd);
     iLocationIndicator = iLocInd;
-    VSIFSeek(fp, nDataStartOffset + (GetRasterYSize() - 1) * nRecordSize, SEEK_SET);
-    VSIFRead(piRecordHeader, 1, nRecordDataStart, fp);
+    VSIFSeek( fp, nDataStartOffset + (GetRasterYSize() - 1) * nRecordSize,
+              SEEK_SET);
+    VSIFRead( piRecordHeader, 1, nRecordDataStart, fp );
     if (iSpacecraftID <= NOAA14)
         FetchNOAA9TimeCode(&sStopTime, (GByte *) piRecordHeader, &iLocInd);
     else
         FetchNOAA15TimeCode(&sStopTime, (GUInt16 *) piRecordHeader, &iLocInd);
+
     for ( iLine = 0; iLine < GetRasterYSize(); iLine++ )
     {
-        VSIFSeek(fp, nDataStartOffset + iLine * nRecordSize, SEEK_SET);
-        VSIFRead(piRecordHeader, 1, nRecordDataStart, fp);
+        VSIFSeek( fp, nDataStartOffset + iLine * nRecordSize, SEEK_SET );
+        VSIFRead( piRecordHeader, 1, nRecordDataStart, fp );
         if (iSpacecraftID <= NOAA14)
-            FetchNOAA9GCPs(pasGCPList, (GInt16 *)piRecordHeader, iLine);
+            FetchNOAA9GCPs( pasGCPList, (GInt16 *)piRecordHeader, iLine );
         else
-            FetchNOAA15GCPs(pasGCPList, (GInt32 *)piRecordHeader, iLine);
+            FetchNOAA15GCPs( pasGCPList, (GInt32 *)piRecordHeader, iLine );
     }
-    CPLFree(piRecordHeader);
+
+    CPLFree( piRecordHeader );
 }
 
 /************************************************************************/
@@ -783,7 +800,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->nBufferSize = 20484;
             poDS->dfGCPStart = 25.5; // GCPs are located at center of pixel
             poDS->dfGCPStep = 40;
-            poDS->nGCPPerLine = 51;
+            poDS->nGCPsPerLine = 51;
             if (poDS->iSpacecraftID <= NOAA14)
             {
                 if (poDS->iDataFormat == PACKED10BIT)
@@ -920,7 +937,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->nBufferSize = 4092;
             poDS->dfGCPStart = 5.5; // FIXME: depends to scan direction
             poDS->dfGCPStep = 8;
-            poDS->nGCPPerLine = 51;
+            poDS->nGCPsPerLine = 51;
             if (poDS->iSpacecraftID <= NOAA14)
             {
                 if (poDS->iDataFormat == PACKED10BIT)
