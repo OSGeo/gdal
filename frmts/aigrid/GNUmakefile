@@ -1,11 +1,11 @@
-
 GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
 AIGOBJ  =	gridlib.o aigopen.o aigccitt.o
 OBJ	=	aigdataset.o giodataset.o $(AIGOBJ)
-CPPFLAGS	=	$(GDAL_INCLUDE)
+
+CPPFLAGS	+=	$(GDAL_INCLUDE)
 
 default:	$(OBJ)
 
@@ -19,7 +19,7 @@ aigrid2tif:	aigrid2tif.o $(AIGOBJ)
 	$(CXX) aigrid2tif.o $(AIGOBJ) $(GDAL_ROOT)/port/*.o $(LIBS) -ltiff \
 		-o aigrid2tif
 
-install-obj:	$(foreach file,$(OBJ),../o/$(file))
+install-obj:	$(O_OBJ)
 
 aitest-dist:
 	rm -rf aitest_dist

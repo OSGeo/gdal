@@ -12,4 +12,4 @@ default:	$(OBJ)
 clean:
 	rm -f *.o
 
-install-obj:	$(foreach file,$(OBJ),../o/$(file))
+install-obj:	$(O_OBJ)

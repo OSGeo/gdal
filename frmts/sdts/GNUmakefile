@@ -13,7 +13,7 @@ OBJ	=	sdtsiref.o sdtscatd.o sdtslinereader.o sdtslib.o \
 		sdtspolygonreader.o sdtsxref.o sdtsrasterreader.o \
 		sdtsindexedreader.o
 
-ALL_CXX_FLAGS =	-I$(ISO8211DIR) $(GDAL_INCLUDE) $(CXXFLAGS)
+CPPFLAGS =	-I$(ISO8211DIR) $(GDAL_INCLUDE)
 
 SDTSLIB	=	libsdts_al.a
 LIBS	:=	$(SDTSLIB) $(ISO8211DIR)/libiso8211.a $(GDAL_LIB) $(LIBS)
@@ -30,10 +30,6 @@ clean:	clean-dist
 clean-dist:
 	rm -rf $(DISTDIR) $(DISTDIR).zip $(DISTDIR).tar.gz
 
-%.o:	%.cpp
-	$(CXX) -c $(ALL_CXX_FLAGS) -I$(GDAL_ROOT)/gcore -I$(GDAL_ROOT)/port \
-		$*.cpp -o $*.o
-
 $(SDTSLIB):	$(OBJ)
 	ar r $(SDTSLIB) $?
 
@@ -42,10 +38,7 @@ sdts2shp:	sdts2shp.cpp $(SDTSLIB)
 		$(SHPDIR)/shpopen.o $(SHPDIR)/dbfopen.o \
 		$(LIBS) -o sdts2shp
 
-install-obj:	$(SDTSLIB) $(foreach file,$(OBJ),../o/$(file)) ../o/sdtsdataset.o
-
-%.o:	%.cpp
-	$(CXX) -c $(ALL_CXX_FLAGS) $*.cpp -o $*.o
+install-obj:	$(SDTSLIB) $(O_OBJ) ../o/sdtsdataset.o
 
 docs:
 	rm -rf html

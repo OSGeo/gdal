@@ -6,7 +6,7 @@ VERSION =	1.1
 DISTDIR =	iso8211lib-$(VERSION)
 WEB_DIR =	/u/www/projects/iso8211
 
-INCLUDE	=	-I. -I$(GDAL_ROOT)/port
+CPPFLAGS	=	-I. -I$(GDAL_ROOT)/port
 
 ISOLIB = libiso8211.a
 OBJ =	ddfmodule.o ddfutils.o ddffielddefn.o ddfrecord.o ddffield.o \
@@ -22,12 +22,6 @@ clean:
 
 dist-clean:	clean
 	rm -rf $(DISTDIR)
-
-%.o:	%.cpp
-	$(CXX) -c $(INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
-
-%.o:	%.c
-	$(CC) -c $(INCLUDE) $(CFLAGS) $*.c -o $*.o
 
 $(ISOLIB):	$(OBJ)
 	$(AR) r $(ISOLIB) $?
@@ -95,4 +89,4 @@ test:	8211dump
 	fi
 
 
-install-obj:	$(ISOLIB) $(foreach file,$(OBJ),../o/$(file))
+install-obj:	$(ISOLIB) $(O_OBJ)

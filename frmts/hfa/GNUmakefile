@@ -9,20 +9,14 @@ OBJ	=	$(HFAOBJ) hfadataset.o
 
 ALL_C_FLAGS	=	$(GDAL_INCLUDE) $(CFLAGS)
 
+CPPFLAGS	=	$(GDAL_INCLUDE)
+
 IMG_DATA_DIR	=	/usr2/data/imagine
-
-
 
 default:	$(OBJ)
 
 clean:
 	rm -f *.o hfatest img2tif
-
-%.o:	%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
-
-%.o:	%.cpp
-	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 
 %.o:	addtiffo_src/%.cpp
 	$(CXX) -c -I$(GDAL_ROOT)/gcore -I$(GDAL_ROOT)/port $(ALL_C_FLAGS) \
@@ -56,7 +50,7 @@ test_img2tif:	img2tif
 	./tst_img2tif_1.sh
 
 
-install-obj:	$(foreach file,$(OBJ),../o/$(file))
+install-obj:	$(O_OBJ)
 
 img2tif-dist:
 	rm -rf img2tif_dist
