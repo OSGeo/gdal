@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/04/28 02:33:02  danmo
+ * CSLInsertStrings(): make sure papszStrList is NULL-terminated properly
+ *
  * Revision 1.8  1999/03/12 21:19:49  danmo
  * Fixed TokenizeStringComplex() vs strings ending with empty token,
  * and fixed a problem with CSLAdd/SetNameValue() vs empty string list.
@@ -336,6 +339,11 @@ char **CSLInsertStrings(char **papszStrList, int nInsertAtLineNo,
     /* Allocate room for the new strings */
     papszStrList = (char**)CPLRealloc(papszStrList, 
                                       (nDstLines+1)*sizeof(char*));
+
+    /* Make sure the array is NULL-terminated... it may not be if
+     * papszStrList was NULL before Realloc()
+     */
+    papszStrList[nSrcLines] = NULL;
 
     /* Make some room in the original list at the specified location 
      * Note that we also have to move the NULL pointer at the end of
