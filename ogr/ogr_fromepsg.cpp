@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/03/20 22:39:08  warmerda
+ * Added C function.
+ *
  * Revision 1.2  2000/03/20 14:59:05  warmerda
  * fixed semi major axis check
  *
@@ -986,6 +989,8 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
  * data.  If frmts/gtiff/libgeotiff isn't linked in, linking will fail. 
  * If EPSG tables can't be found at runtime, the method will fail.
  *
+ * This method is the same as the C function OSRImportFromEPSG().
+ *
  * @param nCode a GCS or PCS code from the horizontal coordinate system table.
  * 
  * @return OGRERR_NONE on success, or an error code on failure.
@@ -1012,4 +1017,14 @@ OGRErr OGRSpatialReference::importFromEPSG( int nCode )
         return SetEPSGProjCS( this, nCode );
         
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         OSRImportFromEPSG()                          */
+/************************************************************************/
+
+OGRErr OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nCode )
+
+{
+    return ((OGRSpatialReference *) hSRS)->importFromEPSG( nCode );
 }
