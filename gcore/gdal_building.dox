@@ -1,0 +1,68 @@
+/*!
+\page gdal_utilities
+
+<center>
+<title>Building GDAL From Source</title>
+</center>
+
+GDAL has been successfully built on Linux, IRIX, Solaris, and Windows NT.  
+On Unix platforms you might be able to build it as follows (assuming it is
+unpacked or checked out of CVS as <b>gdal</b>):
+
+<pre>
+% cd gdal
+% ./configure
+% make
+</pre>
+
+Some caveats are:<p>
+<ul>
+
+<li> I depend on GNUmake on Unix platforms.  Just get and install it if
+you don't already have it.<p>
+
+<li> The shared library building is pretty specific to the GNU tool chain. 
+If you are using something different than GNU C++, then you will likely 
+finding that the .so files isn't built successfully.  You could just link 
+against the static libraries (normally gdal/gdal.a gdal/ogr/ogr.a 
+gdal/frmts/o/ *.a gdal/gdal.a gdal/port/cpl.a) or you could hack LD_SHARED 
+command in gdal/GDALmake.opt to work on your platform.  For the SGI
+a value of "c++ -shared -all" is often suitable.<p>
+
+<li> GDAL, and it's utilities should now build on Cygwin and other platforms
+where shared libraries are not supported.  However, to build your own 
+applications against it, you will need to link against a more extensive
+set of libraries.  The <i>gdal-config --libs</i> command can be used to 
+determine the library set.<p>
+
+<li> My "autoconf" logic that checks for libtiff, libpng and libjpeg isn't too
+savvy about versions.  If it is using pre-installed versions of these 
+libraries and this support isn't working, rerun configure with 
+``--with-png=internal'', ``--with-jpeg=internal'', ``--with-geotiff=internal''
+or ``--with-libtiff=internal'' instead. <p>
+
+<li> To build on IRIX it is generally necessary to hand modify the
+GDALmake.opt file resulting from configure, and change "ld -shared"
+to "ld -shared -all".<p>
+
+<li> If you find build problems with one of the format drivers that you
+don't care about, just remove the format from the GDAL_FORMATS line
+at the bottom of gdal/GDALmake.opt, do a make clean, and make.  This will
+drop it from the build and default runtime registration. <p>
+
+</ul>
+
+GDAL can be built on Windows using MS VC++ at the commandline.  For this to
+work you will normally have to have run the VCVAR32.BAT script that comes
+with the compiler, and then do the following:<p>
+
+<pre>
+C:\> CD GDAL
+C:\GDAL\> nmake /f makefile.vc
+</pre>
+
+I frequently forget to update the Windows makefiles when I add new files,
+so if something comes up missing consider comparing the file lists in the
+appropriate makefile.vc against the GNUmakefile or just contact me. <p>
+
+*/
