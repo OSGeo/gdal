@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/09/17 21:11:07  warmerda
+ * try to create new default field instance when needed
+ *
  * Revision 1.19  2003/09/15 20:46:53  warmerda
  * supressed some warnings in SetFieldRaw if field empty
  *
@@ -1251,13 +1254,13 @@ DDFRecord::SetFieldRaw( DDFField *poField, int iIndexWithinField,
             return FALSE;
 
         nOldSize = poField->GetDataSize();
+        if( nOldSize == 0 )
+            nOldSize++; // for added DDF_FIELD_TERMINATOR. 
+
         if( !ResizeField( poField, nOldSize + nRawDataSize ) )
             return FALSE;
 
         pachFieldData = (char *) poField->GetData();
-
-        CPLAssert( pachFieldData[nOldSize-1] == DDF_FIELD_TERMINATOR );
-        
         memcpy( pachFieldData + nOldSize - 1, 
                 pachRawData, nRawDataSize );
         pachFieldData[nOldSize+nRawDataSize-1] = DDF_FIELD_TERMINATOR;
@@ -1584,6 +1587,20 @@ int DDFRecord::SetStringSubfield( const char *pszField, int iFieldIndex,
                                  iSubfieldIndex);
 
 /* -------------------------------------------------------------------- */
+/*      Add new instance if we have run out of data.                    */
+/* -------------------------------------------------------------------- */
+    if( nMaxBytes == 0 
+        || (nMaxBytes == 1 && pachSubfieldData[0] == DDF_FIELD_TERMINATOR) )
+    {
+        CreateDefaultFieldInstance( poField, iSubfieldIndex );
+
+        // Refetch.
+        pachSubfieldData = (char *) 
+            poField->GetSubfieldData(poSFDefn, &nMaxBytes,
+                                     iSubfieldIndex);
+    }
+
+/* -------------------------------------------------------------------- */
 /*      If the new length matches the existing length, just overlay     */
 /*      and return.                                                     */
 /* -------------------------------------------------------------------- */
@@ -1681,6 +1698,20 @@ int DDFRecord::SetIntSubfield( const char *pszField, int iFieldIndex,
                                  iSubfieldIndex);
 
 /* -------------------------------------------------------------------- */
+/*      Add new instance if we have run out of data.                    */
+/* -------------------------------------------------------------------- */
+    if( nMaxBytes == 0 
+        || (nMaxBytes == 1 && pachSubfieldData[0] == DDF_FIELD_TERMINATOR) )
+    {
+        CreateDefaultFieldInstance( poField, iSubfieldIndex );
+
+        // Refetch.
+        pachSubfieldData = (char *) 
+            poField->GetSubfieldData(poSFDefn, &nMaxBytes,
+                                     iSubfieldIndex);
+    }
+
+/* -------------------------------------------------------------------- */
 /*      If the new length matches the existing length, just overlay     */
 /*      and return.                                                     */
 /* -------------------------------------------------------------------- */
@@ -1776,6 +1807,20 @@ int DDFRecord::SetFloatSubfield( const char *pszField, int iFieldIndex,
     char *pachSubfieldData = (char *) 
         poField->GetSubfieldData(poSFDefn, &nMaxBytes,
                                  iSubfieldIndex);
+
+/* -------------------------------------------------------------------- */
+/*      Add new instance if we have run out of data.                    */
+/* -------------------------------------------------------------------- */
+    if( nMaxBytes == 0 
+        || (nMaxBytes == 1 && pachSubfieldData[0] == DDF_FIELD_TERMINATOR) )
+    {
+        CreateDefaultFieldInstance( poField, iSubfieldIndex );
+
+        // Refetch.
+        pachSubfieldData = (char *) 
+            poField->GetSubfieldData(poSFDefn, &nMaxBytes,
+                                     iSubfieldIndex);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If the new length matches the existing length, just overlay     */
