@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/09/11 14:22:33  warmerda
+ * make an effort to preserve band descriptions
+ *
  * Revision 1.4  2002/08/27 16:49:28  dron
  * Check for subdatasets in input file.
  *
@@ -508,6 +511,8 @@ int main( int argc, char ** argv )
             poVRTBand->SetColorTable( poSrcBand->GetColorTable() );
             poVRTBand->SetColorInterpretation(
                 poSrcBand->GetColorInterpretation());
+            if( strlen(poSrcBand->GetDescription()) > 0 )
+                poVRTBand->SetDescription( poSrcBand->GetDescription() );
         }
 
 /* -------------------------------------------------------------------- */
@@ -576,6 +581,9 @@ int main( int argc, char ** argv )
         
         printf( "Band %d Type = %d\n",
                 panBandList[i], GDALGetRasterDataType( hBand ) );
+
+        if( strlen(GDALGetDescription(hBand)) > 0 )
+            GDALSetDescription( hDstBand, GDALGetDescription(hBand) );
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to copy a colortable?                                */
