@@ -296,6 +296,41 @@ if test "$FITS_SETTING" != "no" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Check if PCRaster (libcsf) library is available.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(pcraster,[  --with-pcraster[=path]    Include PCRaster (libcsf) support],,)
+
+if test "$with_pcraster" = "no" ; then
+
+  PCRASTER_SETTING=no
+
+  echo "PCRaster support disabled."
+
+elif test "$with_pcraster" = "yes" -o "$with_pcraster" = "" ; then
+
+  AC_CHECK_LIB(csf,Mopen,PCRASTER_SETTING=yes,PCRASTER_SETTING=no,)
+
+  if test "$PCRASTER_SETTING" = "yes" ; then   
+    LIBS="-lcsf $LIBS"
+  fi
+
+else
+
+  FITS_SETTING=yes
+  LIBS="-L$with_pcraster/lib -lcsf $LIBS"
+  EXTRA_INCLUDES="-I$with_pcraster/include $EXTRA_INCLUDES"
+
+  echo "using libcsf from $with_pcraster."
+fi
+
+AC_SUBST(PCRASTER_SETTING,$PCRASTER_SETTING)
+
+if test "$PCRASTER_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="pcraster $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl Check if netcdf library is available.
 dnl ---------------------------------------------------------------------------
 
@@ -1525,6 +1560,7 @@ LOC_MSG()
 LOC_MSG([  LIBZ support:              ${LIBZ_SETTING}])
 LOC_MSG([  GRASS support:             ${GRASS_SETTING}])
 LOC_MSG([  CFITSIO support:           ${FITS_SETTING}])
+LOC_MSG([  PCRaster support:          ${PCRASTER_SETTING}])
 LOC_MSG([  NETCDF support:            ${NETCDF_SETTING}])
 LOC_MSG([  LIBPNG support:            ${PNG_SETTING}])
 LOC_MSG([  LIBTIFF support:           ${TIFF_SETTING}])
