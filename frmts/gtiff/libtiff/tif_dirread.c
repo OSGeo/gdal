@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirread.c,v 1.16 2003/04/17 19:28:00 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirread.c,v 1.20 2003/07/08 16:40:46 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -263,7 +263,6 @@ TIFFReadDirectory(TIFF* tif)
                     while (fix < tif->tif_nfields &&
                            tif->tif_fieldinfo[fix]->field_tag < dp->tdir_tag)
 			fix++;
-		    dp->tdir_tag = IGNORE;
 		}
 		/*
 		 * Null out old tags that we ignore.
@@ -593,6 +592,8 @@ bad:
 static int
 EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 {
+	static const char module[] = "EstimateStripByteCounts";
+
 	register TIFFDirEntry *dp;
 	register TIFFDirectory *td = &tif->tif_dir;
 	uint16 i;
@@ -613,16 +614,16 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 		/* calculate amount of space used by indirect values */
 		for (dp = dir, n = dircount; n > 0; n--, dp++)
 		{
-		    uint32 cc;
-		    if(dp->tdir_tag == IGNORE)
-		    {
-		        TIFFError(tif->tif_name,
-		        "Cannot determine StripByteCounts values, because of tags with unknown sizes");
-			return -1;
-		    }
-		    cc = dp->tdir_count*TIFFDataWidth(dp->tdir_type);
-		    if (cc > sizeof (uint32))
-			space += cc;
+			uint32 cc = TIFFDataWidth(dp->tdir_type);
+			if (cc == 0) {
+				TIFFError(module,
+			"%.1000s: Cannot determine size of unknown tag type %d",
+					  tif->tif_name, dp->tdir_type);
+				return -1;
+			}
+			cc = cc * dp->tdir_count;
+			if (cc > sizeof (uint32))
+				space += cc;
 		}
 		space = filesize - space;
 		if (td->td_planarconfig == PLANARCONFIG_SEPARATE)
@@ -656,8 +657,11 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 static void
 MissingRequired(TIFF* tif, const char* tagname)
 {
-	TIFFError(tif->tif_name,
-	    "TIFF directory is missing required \"%s\" field", tagname);
+	static const char module[] = "MissingRequired";
+
+	TIFFError(module,
+		  "%.1000s: TIFF directory is missing required \"%s\" field",
+		  tif->tif_name, tagname);
 }
 
 /*
@@ -1292,14 +1296,14 @@ TIFFFetchStripThing(TIFF* tif, TIFFDirEntry* dir, long nstrips, uint32** lpp)
 		if( (status = TIFFFetchShortArray(tif, dir, dp)) != 0 ) {
                     int i;
                     
-                    for( i = 0; i < nstrips && i < dir->tdir_count; i++ )
+                    for( i = 0; i < nstrips && i < (int) dir->tdir_count; i++ )
                     {
                         lp[i] = dp[i];
                     }
 		}
 		_TIFFfree((char*) dp);
 
-        } else if( nstrips != dir->tdir_count ) {
+        } else if( nstrips != (int) dir->tdir_count ) {
             /* Special case to correct length */
 
             uint32* dp = (uint32*) CheckMalloc(tif,
@@ -1311,7 +1315,7 @@ TIFFFetchStripThing(TIFF* tif, TIFFDirEntry* dir, long nstrips, uint32** lpp)
             if( status != 0 ) {
                 int i;
 
-                for( i = 0; i < nstrips && i < dir->tdir_count; i++ )
+                for( i = 0; i < nstrips && i < (int) dir->tdir_count; i++ )
                 {
                     lp[i] = dp[i];
                 }

@@ -54,7 +54,7 @@ int GTIFWriteKeys(GTIF *gt)
 	
     /* Set up header of ProjectionInfo tag */
     header = (KeyHeader *)gt->gt_short;
-    header->hdr_num_keys = gt->gt_num_keys;
+    header->hdr_num_keys = (pinfo_t) gt->gt_num_keys;
     header->hdr_version  = GvCurrentVersion;
     header->hdr_rev_major  = GvCurrentRevision;
     header->hdr_rev_minor  = GvCurrentMinorRev;
@@ -122,8 +122,8 @@ static int WriteKey(GTIF* gt, TempKeyData* tempData,
 {
     int count;
 	
-    entptr->ent_key = keyptr->gk_key;
-    entptr->ent_count = keyptr->gk_count;
+    entptr->ent_key = (pinfo_t) keyptr->gk_key;
+    entptr->ent_count = (pinfo_t) keyptr->gk_count;
     count = entptr->ent_count;
 	
     if (count==1 && keyptr->gk_type==TYPE_SHORT)
@@ -137,17 +137,17 @@ static int WriteKey(GTIF* gt, TempKeyData* tempData,
     {
       case TYPE_SHORT:
         entptr->ent_location = GTIFF_GEOKEYDIRECTORY;
-        entptr->ent_val_offset = 
-            (pinfo_t*)keyptr->gk_data - gt->gt_short;
+        entptr->ent_val_offset = (pinfo_t)
+            ((pinfo_t*)keyptr->gk_data - gt->gt_short);
         break;
       case TYPE_DOUBLE:
         entptr->ent_location = GTIFF_DOUBLEPARAMS;
-        entptr->ent_val_offset = 
-            (double*)keyptr->gk_data - gt->gt_double;
+        entptr->ent_val_offset = (pinfo_t) 
+            ((double*)keyptr->gk_data - gt->gt_double);
         break;
       case TYPE_ASCII:
         entptr->ent_location = GTIFF_ASCIIPARAMS;
-        entptr->ent_val_offset = tempData->tk_asciiParamsOffset;
+        entptr->ent_val_offset = (pinfo_t) tempData->tk_asciiParamsOffset;
         _GTIFmemcpy (tempData->tk_asciiParams + tempData->tk_asciiParamsOffset
                      , keyptr->gk_data, keyptr->gk_count);
         tempData->tk_asciiParams[tempData->tk_asciiParamsOffset+keyptr->gk_count-1] = '|';

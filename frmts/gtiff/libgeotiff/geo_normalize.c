@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c,v 1.36 2003/01/28 18:31:58 warmerda Exp $
+ * $Id: geo_normalize.c,v 1.37 2003/07/08 17:31:30 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.c,v $
+ * Revision 1.37  2003/07/08 17:31:30  warmerda
+ * cleanup various warnings
+ *
  * Revision 1.36  2003/01/28 18:31:58  warmerda
  * Default dfInDegrees in GTIFAngleToDD().
  *
@@ -247,7 +250,7 @@ int GTIFGetPCSInfo( int nPCSCode, char **ppszEPSGName,
             CSLGetField( papszRecord,
                          CSVGetFileFieldId(pszFilename,"UOM_CODE"));
         if( atoi(pszValue) > 0 )
-            *pnUOMLengthCode = atoi(pszValue);
+            *pnUOMLengthCode = (short) atoi(pszValue);
         else
             *pnUOMLengthCode = KvUserDefined;
     }
@@ -263,7 +266,7 @@ int GTIFGetPCSInfo( int nPCSCode, char **ppszEPSGName,
             CSLGetField( papszRecord,
                          CSVGetFileFieldId(pszFilename,"COORD_OP_CODE"));
         if( atoi(pszValue) > 0 )
-            *pnProjOp = atoi(pszValue);
+            *pnProjOp = (short) atoi(pszValue);
         else
             *pnUOMLengthCode = KvUserDefined;
     }
@@ -279,7 +282,7 @@ int GTIFGetPCSInfo( int nPCSCode, char **ppszEPSGName,
             CSLGetField( papszRecord,
                          CSVGetFileFieldId(pszFilename,"SOURCE_GEOGCRS_CODE"));
         if( atoi(pszValue) > 0 )
-            *pnGeogCS = atoi(pszValue);
+            *pnGeogCS = (short) atoi(pszValue);
         else
             *pnGeogCS = KvUserDefined;
     }
@@ -451,11 +454,11 @@ int GTIFGetGCSInfo( int nGCSCode, char ** ppszName,
         if( ppszName != NULL )
             *ppszName = CPLStrdup( pszName );
         if( pnDatum != NULL )
-            *pnDatum = nDatum;
+            *pnDatum = (short) nDatum;
         if( pnPM != NULL )
-            *pnPM = nPM;
+            *pnPM = (short) nPM;
         if( pnUOMAngle != NULL )
-            *pnUOMAngle = nUOMAngle;
+            *pnUOMAngle = (short) nUOMAngle;
 
         return TRUE;
     }
@@ -464,7 +467,7 @@ int GTIFGetGCSInfo( int nGCSCode, char ** ppszName,
 /*      Get the PM.                                                     */
 /* -------------------------------------------------------------------- */
     if( pnDatum != NULL )
-        *pnDatum = nDatum;
+        *pnDatum = (short) nDatum;
     
     nPM = atoi(CSVGetField( CSVFilename("gcs.csv" ),
                             "COORD_REF_SYS_CODE", szSearchKey, CC_Integer,
@@ -474,7 +477,7 @@ int GTIFGetGCSInfo( int nGCSCode, char ** ppszName,
         return FALSE;
 
     if( pnPM != NULL )
-        *pnPM = nPM;
+        *pnPM = (short) nPM;
 
 /* -------------------------------------------------------------------- */
 /*      Get the angular units.                                          */
@@ -487,7 +490,7 @@ int GTIFGetGCSInfo( int nGCSCode, char ** ppszName,
         return FALSE;
 
     if( pnUOMAngle != NULL )
-        *pnUOMAngle = nUOMAngle;
+        *pnUOMAngle = (short) nUOMAngle;
 
 /* -------------------------------------------------------------------- */
 /*      Get the name, if requested.                                     */
@@ -714,7 +717,7 @@ int GTIFGetDatumInfo( int nDatumCode, char ** ppszName, short * pnEllipsoid )
                                    "ELLIPSOID_CODE" ) );
 
     if( pnEllipsoid != NULL )
-        *pnEllipsoid = nEllipsoid;
+        *pnEllipsoid = (short) nEllipsoid;
     
 /* -------------------------------------------------------------------- */
 /*      Handle a few built-in datums.                                   */
@@ -747,7 +750,7 @@ int GTIFGetDatumInfo( int nDatumCode, char ** ppszName, short * pnEllipsoid )
             return FALSE;
 
         if( pnEllipsoid != NULL )
-            *pnEllipsoid = nEllipsoid;
+            *pnEllipsoid = (short) nEllipsoid;
 
         if( ppszName != NULL )
             *ppszName = CPLStrdup( pszName );
@@ -1284,7 +1287,7 @@ int GTIFGetProjTRFInfo( /* COORD_OP_CODE from coordinate_operation.csv */
 /*      Transfer requested data into passed variables.                  */
 /* -------------------------------------------------------------------- */
     if( pnProjMethod != NULL )
-        *pnProjMethod = nProjMethod;
+        *pnProjMethod = (short) nProjMethod;
 
     if( padfProjParms != NULL )
     {
@@ -1898,8 +1901,8 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
         nMapSys = GTIFPCSToMapSys( psDefn->PCS, &nGCS, &nZone );
         if( nMapSys != KvUserDefined )
         {
-            psDefn->ProjCode = GTIFMapSysToProj( nMapSys, nZone );
-            psDefn->GCS = nGCS;
+            psDefn->ProjCode = (short) GTIFMapSysToProj( nMapSys, nZone );
+            psDefn->GCS = (short) nGCS;
         }
     }
 
@@ -1924,7 +1927,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
         /*
          * Set the GeoTIFF identity of the parameters.
          */
-        psDefn->CTProjection =
+        psDefn->CTProjection = (short) 
             EPSGProjMethodToCTProjMethod( psDefn->Projection );
 
         SetGTParmIds( psDefn->CTProjection, psDefn->ProjParmId, NULL);

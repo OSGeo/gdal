@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_next.c,v 1.2 1999/11/27 21:43:28 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_next.c,v 1.3 2003/07/08 16:40:46 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -34,7 +34,7 @@
 
 #define SETPIXEL(op, v) {			\
 	switch (npixels++ & 3) {		\
-	case 0:	op[0]  = (v) << 6; break;	\
+	case 0:	op[0]  = (u_char) ((v) << 6); break;	\
 	case 1:	op[0] |= (v) << 4; break;	\
 	case 2:	op[0] |= (v) << 2; break;	\
 	case 3:	*op++ |= (v);	   break;	\

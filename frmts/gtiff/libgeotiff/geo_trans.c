@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_trans.c,v 1.9 2001/11/28 14:20:30 warmerda Exp $
+ * $Id: geo_trans.c,v 1.10 2003/07/08 17:31:30 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to abstract translation between pixel/line and PCS
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log: geo_trans.c,v $
+ * Revision 1.10  2003/07/08 17:31:30  warmerda
+ * cleanup various warnings
+ *
  * Revision 1.9  2001/11/28 14:20:30  warmerda
  * fixed transform memory leak in GTIFPCSToImage
  *
@@ -110,6 +113,14 @@ int GTIFTiepointTranslate( int gcp_count, double * gcps_in, double * gcps_out,
                            double *x_out, double *y_out )
 
 {
+    (void) gcp_count;
+    (void) gcps_in;
+    (void) gcps_out;
+    (void) x_in;
+    (void) y_in;
+    (void) x_out;
+    (void) y_out;
+    
     /* I would appreciate a _brief_ block of code for doing second order
        polynomial regression here! */
     return FALSE;

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_fax3.c,v 1.17 2002/03/06 14:07:27 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_fax3.c,v 1.18 2003/07/08 16:40:46 warmerda Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -532,14 +532,14 @@ Fax3SetupState(TIFF* tif)
 #define	Fax3FlushBits(tif, sp) {				\
 	if ((tif)->tif_rawcc >= (tif)->tif_rawdatasize)		\
 		(void) TIFFFlushData1(tif);			\
-	*(tif)->tif_rawcp++ = (sp)->data;			\
+	*(tif)->tif_rawcp++ = (tidataval_t) (sp)->data;		\
 	(tif)->tif_rawcc++;					\
 	(sp)->data = 0, (sp)->bit = 8;				\
 }
 #define	_FlushBits(tif) {					\
 	if ((tif)->tif_rawcc >= (tif)->tif_rawdatasize)		\
 		(void) TIFFFlushData1(tif);			\
-	*(tif)->tif_rawcp++ = data;				\
+	*(tif)->tif_rawcp++ = (tidataval_t) data;		\
 	(tif)->tif_rawcc++;					\
 	data = 0, bit = 8;					\
 }

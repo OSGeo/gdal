@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_lzw.c,v 1.17 2003/02/26 19:09:11 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_lzw.c,v 1.18 2003/07/08 16:40:46 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -230,8 +230,8 @@ LZWSetupDecode(TIFF* tif)
 		 */
                 code = 255;
                 do {
-                    sp->dec_codetab[code].value = code;
-                    sp->dec_codetab[code].firstchar = code;
+                    sp->dec_codetab[code].value = (u_char) code;
+                    sp->dec_codetab[code].firstchar = (u_char) code;
                     sp->dec_codetab[code].length = 1;
                     sp->dec_codetab[code].next = NULL;
                 } while (code--);
@@ -386,7 +386,7 @@ LZWDecode(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 			--tp;
 			t = codep->value;
 			codep = codep->next;
-			*tp = t;
+			*tp = (char) t;
 		} while (--residue && codep);
 		sp->dec_restart = 0;
 	}
@@ -490,7 +490,7 @@ LZWDecode(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 				--tp;
 				t = codep->value;
 				codep = codep->next;
-				*tp = t;
+				*tp = (char) t;
 			} while (codep && tp > op);
 			if (codep) {
 			    codeLoop(tif);
@@ -608,7 +608,7 @@ LZWDecodeCompat(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 			NextCode(tif, sp, bp, code, GetNextCodeCompat);
 			if (code == CODE_EOI)
 				break;
-			*op++ = code, occ--;
+			*op++ = (char) code, occ--;
 			oldcodep = sp->dec_codetab + code;
 			continue;
 		}
@@ -681,11 +681,11 @@ LZWDecodeCompat(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 				*--tp = codep->value;
 			} while( (codep = codep->next) != NULL);
 		} else
-			*op++ = code, occ--;
+			*op++ = (char) code, occ--;
 	}
 
 	tif->tif_rawcp = (tidata_t) bp;
-	sp->lzw_nbits = nbits;
+	sp->lzw_nbits = (u_short) nbits;
 	sp->lzw_nextdata = nextdata;
 	sp->lzw_nextbits = nextbits;
 	sp->dec_nbitsmask = nbitsmask;

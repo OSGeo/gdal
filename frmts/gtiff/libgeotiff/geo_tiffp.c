@@ -76,7 +76,7 @@ static int _GTIFGetField (tiff_t *tif, pinfo_t tag, int *count, void *val )
 	{
 		status = TIFFGetField((TIFF *)tif,tag,&tmp);
 		if (!status) return status;
-		scount = strlen(tmp)+1;
+		scount = (unsigned short) (strlen(tmp)+1);
 	}
 	else status = TIFFGetField((TIFF *)tif,tag,&scount,&tmp);
 	if (!status) return status;
@@ -98,7 +98,7 @@ static int _GTIFGetField (tiff_t *tif, pinfo_t tag, int *count, void *val )
 static int _GTIFSetField (tiff_t *tif, pinfo_t tag, int count, void *value )
 {
 	int status;
-	unsigned short scount = count;
+	unsigned short scount = (unsigned short) count;
 
 	/* libtiff ASCII uses null-delimiter */
 	if (_GTIFTagType(tif,  tag) == TYPE_ASCII)

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_extension.c,v 1.1 2002/02/24 16:13:39 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_extension.c,v 1.2 2003/07/08 16:40:46 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -47,7 +47,7 @@ ttag_t TIFFGetTagListEntry( TIFF *tif, int tag_index )
     TIFFDirectory* td = &tif->tif_dir;
 
     if( tag_index < 0 || tag_index >= td->td_customValueCount )
-        return -1;
+        return (ttag_t) -1;
     else
         return td->td_customValues[tag_index].info->field_tag;
 }

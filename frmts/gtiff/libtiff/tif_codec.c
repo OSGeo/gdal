@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_codec.c,v 1.3 2002/04/08 15:32:05 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_codec.c,v 1.4 2003/07/08 16:40:46 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -111,9 +111,11 @@ _notConfigured(TIFF* tif)
 static int
 NotConfigured(TIFF* tif, int scheme)
 {
-	tif->tif_decodestatus = FALSE;
-	tif->tif_setupdecode = _notConfigured;
-	tif->tif_encodestatus = FALSE;
-	tif->tif_setupencode = _notConfigured;
-	return (1);
+    (void) scheme;
+    
+    tif->tif_decodestatus = FALSE;
+    tif->tif_setupdecode = _notConfigured;
+    tif->tif_encodestatus = FALSE;
+    tif->tif_setupencode = _notConfigured;
+    return (1);
 }

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_print.c,v 1.8 2002/07/31 21:05:57 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_print.c,v 1.10 2003/07/08 16:40:46 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -494,9 +494,10 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
         ** Custom tag support.
         */
         {
-            int  i, count;
+            int  i;
+            short count;
 
-            count = TIFFGetTagListCount( tif );
+            count = (short) TIFFGetTagListCount( tif );
             for( i = 0; i < count; i++ )
             {
                 ttag_t  tag = TIFFGetTagListEntry( tif, i );
@@ -508,19 +509,20 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 
                 if( fld->field_passcount )
                 {
-                    int count, i;
+                    short value_count;
+                    int j;
                     void *raw_data;
                     
-                    if( TIFFGetField( tif, tag, &count, &raw_data ) != 1 )
+                    if( TIFFGetField( tif, tag, &value_count, &raw_data ) != 1 )
                         continue;
 
                     fprintf(fd, "  %s: ", fld->field_name );
 
-                    for( i = 0; i < count; i++ )
+                    for( j = 0; j < value_count; j++ )
                     {
                         if( fld->field_type == TIFF_SHORT )
                             fprintf( fd, "%d",
-                                     (int) ((short *) raw_data)[i] );
+                                     (int) ((short *) raw_data)[j] );
                         else if( fld->field_type == TIFF_ASCII )
                         {
                             fprintf( fd, "%s",
@@ -529,13 +531,13 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
                         }
                         else if( fld->field_type == TIFF_DOUBLE )
                             fprintf( fd, "%f",
-                                     ((double *) raw_data)[i] );
+                                     ((double *) raw_data)[j] );
                         else if( fld->field_type == TIFF_FLOAT )
                             fprintf( fd, "%f",
-                                     (float) ((double *) raw_data)[i] );
+                                     (float) ((double *) raw_data)[j] );
                         else if( fld->field_type == TIFF_LONG )
                             fprintf( fd, "%d",
-                                     (int) ((long *) raw_data)[i] );
+                                     (int) ((long *) raw_data)[j] );
                         else
                         {
                             fprintf( fd,
@@ -543,7 +545,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
                             break;
                         }
 
-                        if( i < count-1 )
+                        if( j < value_count-1 )
                             fprintf( fd, "," );
                     }
                     fprintf( fd, "\n" );
