@@ -9,6 +9,12 @@
 
  *
  * $Log$
+ * Revision 1.15  2005/02/18 16:09:53  kruland
+ * Added %feature("compactdefaultargs") which in python (and perhaps others)
+ * allows SWIG to code default arguments for C functions (like GDALDecToDMS).
+ * This also fixes a problem with Dataset::SetMetadata and there not being
+ * a %typecheck for char** <- dict.
+ *
  * Revision 1.14  2005/02/17 21:12:48  kruland
  * Added some more module level functions.
  *
@@ -83,6 +89,7 @@ typedef double *double_6;
 
 %}
 
+%feature("compactdefaultargs");
 %import gdal_typemaps.i
 
 typedef int GDALColorInterp;
