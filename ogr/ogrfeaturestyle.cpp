@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/03 04:20:26  danmo
+ * Allow empty strings in style string param values, and replaced printf messages
+ * in the code with CPLError() calls.
+ *
  * Revision 1.4  2001/07/03 03:20:55  danmo
  * Avoid losing Scale value during OGRStyleTool::Parse().
  *
@@ -888,16 +892,18 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
 
     if (CSLCount(papszToken) > 2 || CSLCount(papszToken) == 0)
     {
-        printf("Error in the format of the StyleTool %s\n",m_pszStyleString);
+        CPLError(CE_Failure, CPLE_AppDefined, 
+                 "Error in the format of the StyleTool %s\n",m_pszStyleString);
         return FALSE;
     }
     
     
-    papszToken2 = CSLTokenizeStringComplex(papszToken[1],":,",TRUE,FALSE);
+    papszToken2 = CSLTokenizeStringComplex(papszToken[1],":,",TRUE,TRUE);
     
     if (CSLCount(papszToken2) %2 != 0)
     {
-        printf("Error in the StyleTool String %s\n",m_pszStyleString);
+        CPLError(CE_Failure, CPLE_AppDefined, 
+                 "Error in the StyleTool String %s\n",m_pszStyleString);
         return FALSE;
     }
     
@@ -906,37 +912,42 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
       case OGRSTCPen:
         if (!EQUAL(papszToken[0],"PEN"))
         {
-            printf("Error in the Type of StyleTool %s should be a PEN Type\n",
-                   papszToken[0]);
+            CPLError(CE_Failure, CPLE_AppDefined, 
+                     "Error in the Type of StyleTool %s should be a PEN Type\n",
+                     papszToken[0]);
             return FALSE;
         }
         break;
       case OGRSTCBrush:
         if (!EQUAL(papszToken[0],"BRUSH"))
         {
-            printf("Error in the Type of StyleTool %s should be a BRUSH Type\n",
-                   papszToken[0]);
+            CPLError(CE_Failure, CPLE_AppDefined, 
+                     "Error in the Type of StyleTool %s should be a BRUSH Type\n",
+                     papszToken[0]);
             return FALSE;
         }
         break;
       case OGRSTCSymbol:
         if (!EQUAL(papszToken[0],"SYMBOL"))
         {
-            printf("Error in the Type of StyleTool %s should be a SYMBOL Type\n",
-                   papszToken[0]);
+            CPLError(CE_Failure, CPLE_AppDefined, 
+                     "Error in the Type of StyleTool %s should be a SYMBOL Type\n",
+                     papszToken[0]);
             return FALSE;
         }
         break;
       case OGRSTCLabel:
         if (!EQUAL(papszToken[0],"LABEL"))
         {
-            printf("Error in the Type of StyleTool %s should be a PEN Type\n",
-                   papszToken[0]);
+            CPLError(CE_Failure, CPLE_AppDefined, 
+                     "Error in the Type of StyleTool %s should be a LABEL Type\n",
+                     papszToken[0]);
             return FALSE;
         }
         break;
       default:
-        printf("Error in the Type of StyleTool, Type undetermined\n");
+        CPLError(CE_Failure, CPLE_AppDefined, 
+                 "Error in the Type of StyleTool, Type undetermined\n");
         return FALSE;
         break;
     }
