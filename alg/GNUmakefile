@@ -4,7 +4,7 @@ include ../GDALmake.opt
 
 OBJ	=	gdalmediancut.o gdaldither.o gdal_crs.o gdaltransformer.o \
 		gdalsimplewarp.o gdalwarper.o gdalwarpkernel.o \
-		gdalwarpoperation.o
+		gdalwarpoperation.o gdalchecksum.o
 
 default:	$(OBJ)
 
