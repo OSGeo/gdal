@@ -17,7 +17,7 @@ HKCR
 			VersionIndependentProgID = s 'Softmap.SF.Shape'
 			InprocServer32 = s '%MODULE%'
 			{
-				val ThreadingModel = s 'Apartment'
+				val ThreadingModel = s 'Both'
 			}
 			'Implemented Categories' = s ''
 			{
