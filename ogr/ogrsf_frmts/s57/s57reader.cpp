@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2002/05/14 20:34:27  warmerda
+ * added PRESERVE_EMPTY_NUMBERS support
+ *
  * Revision 1.34  2002/03/05 14:25:43  warmerda
  * expanded tabs
  *
@@ -170,6 +173,9 @@ S57Reader::S57Reader( const char * pszFilename )
     bSplitMultiPoint = FALSE;
     bGenerateLNAM = FALSE;
     bAddSOUNDGDepth = FALSE;
+
+    bMissingWarningIssued = FALSE;
+    bAttrWarningIssued = FALSE;
 }
 
 /************************************************************************/
@@ -323,13 +329,13 @@ void S57Reader::SetOptions( char ** papszOptionsIn )
     CSLDestroy( papszOptions );
     papszOptions = CSLDuplicate( papszOptionsIn );
 
-    pszOptionValue = CSLFetchNameValue( papszOptions, "SPLIT_MULTIPOINT" );
+    pszOptionValue = CSLFetchNameValue( papszOptions, S57O_SPLIT_MULTIPOINT );
     if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
         bSplitMultiPoint = TRUE;
     else
         bSplitMultiPoint = FALSE;
 
-    pszOptionValue = CSLFetchNameValue( papszOptions, "ADD_SOUNDG_DEPTH" );
+    pszOptionValue = CSLFetchNameValue( papszOptions, S57O_ADD_SOUNDG_DEPTH );
     if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
         bAddSOUNDGDepth = TRUE;
     else
@@ -337,17 +343,24 @@ void S57Reader::SetOptions( char ** papszOptionsIn )
 
     CPLAssert( !bAddSOUNDGDepth || bSplitMultiPoint );
 
-    pszOptionValue = CSLFetchNameValue( papszOptions, "LNAM_REFS" );
+    pszOptionValue = CSLFetchNameValue( papszOptions, S57O_LNAM_REFS );
     if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
         bGenerateLNAM = TRUE;
     else
         bGenerateLNAM = FALSE;
 
-    pszOptionValue = CSLFetchNameValue( papszOptions, "UPDATES" );
+    pszOptionValue = CSLFetchNameValue( papszOptions, S57O_UPDATES );
     if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"APPLY") )
         bAutoReadUpdates = FALSE;
     else
         bAutoReadUpdates = TRUE;
+
+    pszOptionValue = CSLFetchNameValue(papszOptions, 
+                                       S57O_PRESERVE_EMPTY_NUMBERS);
+    if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
+        bPreserveEmptyNumbers = TRUE;
+    else
+        bPreserveEmptyNumbers = FALSE;
 }
 
 /************************************************************************/
@@ -660,8 +673,6 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
         if( nAttrId < 1 || nAttrId > poRegistrar->GetMaxAttrIndex() 
             || (pszAcronym = poRegistrar->GetAttrAcronym(nAttrId)) == NULL )
         {
-            static int bAttrWarningIssued = FALSE;
-
             if( !bAttrWarningIssued )
             {
                 bAttrWarningIssued = TRUE;
@@ -676,9 +687,45 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
 
             continue;
         }
+
+        /* Fetch the attribute value */
+        const char *pszValue;
+        pszValue = poRecord->GetStringSubfield("ATTF",0,"ATVL",iAttr);
         
-        poFeature->SetField( pszAcronym,
-                          poRecord->GetStringSubfield("ATTF",0,"ATVL",iAttr) );
+        /* Apply to feature in an appropriate way */
+        int iField;
+        OGRFieldDefn *poFldDefn;
+
+        iField = poFeature->GetDefnRef()->GetFieldIndex(pszAcronym);
+        if( iField < 0 )
+        {
+            if( !bMissingWarningIssued )
+            {
+                bMissingWarningIssued = TRUE;
+                CPLError( CE_Warning, CPLE_AppDefined, 
+                          "Attributes %s ignored, not in expected schema.\n"
+                          "No more warnings will be issued for this dataset.", 
+                          pszAcronym );
+            }
+            continue;
+        }
+
+        poFldDefn = poFeature->GetDefnRef()->GetFieldDefn( iField );
+        if( poFldDefn->GetType() == OFTInteger 
+            || poFldDefn->GetType() == OFTReal )
+        {
+            if( strlen(pszValue) == 0 )
+            {
+                if( bPreserveEmptyNumbers )
+                    poFeature->SetField( iField, EMPTY_NUMBER_MARKER );
+                else
+                    /* leave as null if value was empty string */;
+            }
+            else
+                poFeature->SetField( iField, pszValue );
+        }
+        else
+            poFeature->SetField( iField, pszValue );
     }
     
 /* -------------------------------------------------------------------- */
