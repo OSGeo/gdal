@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.37  2004/02/25 08:13:40  dron
+# Added wrapper for OSRExportToUSGS() function.
+#
 # Revision 1.36  2004/02/22 10:25:12  dron
 # Added wrapper for OSRImportFromUSGS().
 #
@@ -228,10 +231,11 @@ class SpatialReference:
 	
 	proj_code --- USGS projection system code,
 	zone --- zone number (for UTM and State Plane projection systems only),
-	proj_parms --- tuple of 15 coordinate system parameters (double
+	proj_parms --- tuple of 15 USGS coordinate system parameters (double
 	precition floating point values in packed DMS format). None by default
-	(i.e., all values zeroed). See OGRSpatialReference::importFromUSGS()
-	C++ function for details.
+	(i.e., all values zeroed).
+	datum_code --- USGS ellipsoid code.
+	See OGRSpatialReference::importFromUSGS() C++ function for details.
 	"""
 	return _gdal.OSRImportFromUSGS( self._o, proj_code, zone, \
 					proj_parms, datum_code )
@@ -258,6 +262,18 @@ class SpatialReference:
 	projection parameters. See description of
 	OGRSpatialReference::exportToPCI() C++ function for details."""
         return _gdal.OSRExportToPCI( self._o )
+
+    def ExportToUSGS(self):
+	"""Return USGS styled projection definition.
+	
+	Returns tuple (proj_code, zone, (proj_parms), datum_code) where
+	proj_code is an USGS projection system code, zone is a zone number
+	for UTM and State Plane projection systems only), (proj_parms)
+	is a tuple of 15 double precition floating point values with
+	USGS projection parameters and datum_code is an USGS ellipsoid code.
+	See description of OGRSpatialReference::exportToUSGS() C++ function
+	for details."""
+        return _gdal.OSRExportToUSGS( self._o )
 
     def ExportToXML( self, dialect = '' ):
         return _gdal.OSRExportToXML( self._o, dialect )

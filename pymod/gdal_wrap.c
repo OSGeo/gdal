@@ -2239,6 +2239,49 @@ py_OSRExportToPrettyWkt(PyObject *self, PyObject *args) {
 }
 
 /************************************************************************/
+/*                          OSRExportToUSGS()                           */
+/************************************************************************/
+static PyObject *
+py_OSRExportToUSGS(PyObject *self, PyObject *args) {
+
+    OGRSpatialReferenceH _arg0;
+    char    *_argc0 = NULL;
+    long    iProjSys, iZone, iDatum;
+    double  *parms;
+    int     err;
+    PyObject *ret;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OSRExportToUSGS",&_argc0) )
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_OGRSpatialReferenceH)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of OSRExportToUSGS."
+                            "  Expected _OGRSpatialReferenceH.");
+            return NULL;
+        }
+    }
+	
+    err = OSRExportToUSGS( _arg0, &iProjSys, &iZone, &parms, &iDatum );
+    if( err != OGRERR_NONE )
+    {
+        PyErr_SetString(PyExc_TypeError,
+                        "Failed to export given SpatialReference.");
+        return NULL;
+    }
+
+    ret = Py_BuildValue( "(ll(ddddddddddddddd)l)", iProjSys, iZone,
+                         parms[0], parms[1], parms[2], parms[3], parms[4],
+                         parms[5], parms[6], parms[7], parms[8], parms[9],
+                         parms[10], parms[11], parms[12], parms[13],
+                         parms[14], iDatum );
+    CPLFree( parms );
+    return ret;
+}
+
+/************************************************************************/
 /*                           OSRExportToXML()                           */
 /************************************************************************/
 static PyObject *
@@ -10424,6 +10467,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OCTDestroyCoordinateTransformation", _wrap_OCTDestroyCoordinateTransformation, METH_VARARGS },
 	 { "OCTNewCoordinateTransformation", _wrap_OCTNewCoordinateTransformation, METH_VARARGS },
 	 { "OSRExportToXML", py_OSRExportToXML, METH_VARARGS },
+	 { "OSRExportToUSGS", py_OSRExportToUSGS, METH_VARARGS },
 	 { "OSRExportToPrettyWkt", py_OSRExportToPrettyWkt, METH_VARARGS },
 	 { "OSRExportToWkt", py_OSRExportToWkt, METH_VARARGS },
 	 { "OSRExportToProj4", py_OSRExportToProj4, METH_VARARGS },
