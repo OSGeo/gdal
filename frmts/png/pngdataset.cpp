@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.5  2000/06/05 13:04:15  warmerda
+ * Fixed case where png_get_text fails due to no text blocks existing.
+ *
  * Revision 1.4  2000/05/15 22:26:42  warmerda
  * Avoid warning.
  *
@@ -451,7 +454,8 @@ void PNGDataset::CollectMetadata()
     int   nTextCount;
     png_textp text_ptr;
 
-    png_get_text( hPNG, psPNGInfo, &text_ptr, &nTextCount );
+    if( png_get_text( hPNG, psPNGInfo, &text_ptr, &nTextCount ) == 0 )
+        return;
 
     for( int iText = 0; iText < nTextCount; iText++ )
     {
