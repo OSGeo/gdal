@@ -1078,7 +1078,7 @@ dnl ---------------------------------------------------------------------------
 
 MYSQL_CONFIG=no
 
-AC_ARG_WITH(pg,[  --with-mysql[=ARG]      Include MySQL (ARG=path to mysql_config)],,)
+AC_ARG_WITH(mysql,[  --with-mysql[=ARG]      Include MySQL (ARG=path to mysql_config)],,)
 
 if test "$with_mysql" = "yes" -o "$with_mysql" = "" ; then
   AC_PATH_PROG(MYSQL_CONFIG, mysql_config, no)
@@ -1107,12 +1107,17 @@ else
       AC_MSG_ERROR([--with-mysql argument is a not an executable file.  It should be the path to the mysql_config script, often somewhere like /usr/local/bin/mysql_config.])
   fi
 
-  HAVE_MYSQL=yes
-  MYSQL_LIB="`$MYSQL_CONFIG --libs`"
-  MYSQL_INC="`$MYSQL_CONFIG --include`"
+  MYSQL_VERSION="`$MYSQL_CONFIG --version`"
 
-  AC_MSG_RESULT([yes])
-
+  if test ${MYSQL_VERSION:0:1} -ge 4 ; then
+      HAVE_MYSQL=yes
+      MYSQL_LIB="`$MYSQL_CONFIG --libs`"
+      MYSQL_INC="`$MYSQL_CONFIG --include`"
+      AC_MSG_RESULT([yes])
+   else
+      HAVE_MYSQL=no
+     AC_MSG_RESULT([no, mysql is pre-4.x])
+   fi
 fi
 
 AC_SUBST(HAVE_MYSQL,$HAVE_MYSQL)
