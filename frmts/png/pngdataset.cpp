@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.20  2003/01/25 22:26:29  warmerda
+ * fixed a read, and a write bug with 16bit png files
+ *
  * Revision 1.19  2002/11/23 18:54:17  warmerda
  * added CREATIONDATATYPES metadata for drivers
  *
@@ -248,8 +251,8 @@ CPLErr PNGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         CPLAssert( nPixelSize == 2 );
         for( i = 0; i < nXSize; i++ )
         {
-            ((GByte *) pImage)[i] = pabyScanline[i*nPixelOffset];
-            ((GByte *) pImage)[i+1] = pabyScanline[i*nPixelOffset+1];
+            ((GUInt16 *) pImage)[i] = 
+                *((GUInt16 *) (pabyScanline+i*nPixelOffset));
         }
     }
 
@@ -931,8 +934,9 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     GByte 	*pabyScanline;
     CPLErr      eErr;
+    int         nWordSize = nBitDepth/8;
 
-    pabyScanline = (GByte *) CPLMalloc( nBands * nXSize * 2 );
+    pabyScanline = (GByte *) CPLMalloc( nBands * nXSize * nWordSize );
 
     for( int iLine = 0; iLine < nYSize; iLine++ )
     {
@@ -942,8 +946,10 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             GDALRasterBand * poBand = poSrcDS->GetRasterBand( iBand+1 );
             eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                     pabyScanline + iBand, nXSize, 1, GDT_Byte,
-                                     nBands, nBands * nXSize );
+                                     pabyScanline + iBand*nWordSize, 
+                                     nXSize, 1, eType,
+                                     nBands * nWordSize, 
+                                     nBands * nXSize * nWordSize );
         }
 
         png_write_rows( hPNG, &row, 1 );
