@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/10/04 18:19:22  warmerda
+ * Avoid type conversion warnings.
+ *
  * Revision 1.5  1999/10/04 13:38:39  warmerda
  * Fixed handling for filling holes in the column offset array.
  *
@@ -201,8 +204,8 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
 
         for( int iPixel = 0; iPixel < nRasterXSize; iPixel++ )
         {
-            pafElev[iPixel] = dfVOffset + dfVScale *
-                atoi(poRecord->GetField(84+iPixel*4,87+iPixel*4));
+            pafElev[iPixel] = (float) (dfVOffset + dfVScale *
+                atoi(poRecord->GetField(84+iPixel*4,87+iPixel*4)));
         }
     }
             
@@ -213,7 +216,7 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
     {
         for( int iPixel = 0; iPixel < nRasterXSize; iPixel++ )
         {
-            pafElev[iPixel] = 
+            pafElev[iPixel] = (float) 
                 atoi(poRecord->GetField(19+iPixel*5,23+iPixel*5));
         }
     }
