@@ -1,5 +1,5 @@
 
-EXTRAFLAGS = 	-I$(ECWDIR)/include /DWIN32 $(ECWDEF)
+EXTRAFLAGS = 	-I$(ECWDIR)/include /DWIN32 -DFRMT_ecw
 
 OBJ	=	ecwdataset.obj 
 
