@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2002/10/20 01:50:20  warmerda
+ * added new write prototypes
+ *
  * Revision 1.23  2002/10/07 13:14:18  warmerda
  * added association id support
  *
@@ -165,7 +168,7 @@ typedef struct {
     int		deleted;	/*!< Is element deleted? */
 
     int		graphic_group;  /*!< Graphic group number */
-    int		properties;     /*!< Properties: ORing of DGNP_ flags */
+    int		properties;     /*!< Properties: ORing of DGNPF_ flags */
     int         color;          /*!< Color index (0-255) */
     int         weight;         /*!< Line Weight (0-31) */
     int         style;          /*!< Line Style: One of DGNS_* values */
@@ -560,8 +563,6 @@ int CPL_DLL          DGNTestOpen( GByte *, int );
 const DGNElementInfo CPL_DLL *DGNGetElementIndex( DGNHandle, int * );
 int CPL_DLL          DGNGetExtents( DGNHandle, double * );
 DGNElemCore CPL_DLL *DGNReadElement( DGNHandle );
-int  CPL_DLL         DGNWriteElement( DGNHandle, DGNElemCore * );
-int  CPL_DLL         DGNResizeElement( DGNHandle, DGNElemCore *, int );
 void CPL_DLL         DGNFreeElement( DGNHandle, DGNElemCore * );
 void CPL_DLL         DGNRewind( DGNHandle );
 int  CPL_DLL         DGNGotoElement( DGNHandle, int );
@@ -583,8 +584,60 @@ unsigned char CPL_DLL *
 	      DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement, 
                              int iIndex, int *pnLinkageType,
                              int *pnEntityNum, int *pnMSLink, int *pnLinkSize);
-    
 
+/* Write API */
+    
+int  CPL_DLL  DGNWriteElement( DGNHandle, DGNElemCore * );
+int  CPL_DLL  DGNResizeElement( DGNHandle, DGNElemCore *, int );
+DGNHandle CPL_DLL 
+      DGNCreate( const char *pszNewFilename, const char *pszSeedFile, 
+                 int nCreationFlags, 
+                 double dfOriginX, double dfOriginY, double dfOriginZ,
+                 int nMasterUnitPerSubUnit, int nUORPerSubUnit, 
+                 const char *pszMasterUnits, const char *pszSubUnits );
+DGNElemCore CPL_DLL *DGNCloneElement( DGNHandle hDGNSrc, DGNHandle hDGNDst, 
+                                      DGNElemCore *psSrcElement );
+int CPL_DLL   DGNUpdateElemCore( DGNHandle hDGN, DGNElemCore *psElement, 
+                                 int nLevel, int nGraphicGroup, int nColor, 
+                                 int nWeight, int nStyle );
+int CPL_DLL   DGNUpdateElemCoreExtended( DGNHandle hDGN, 
+                                         DGNElemCore *psElement );
+
+DGNElemCore CPL_DLL *
+              DGNCreateMultiPointElem( DGNHandle hDGN, int nType, 
+                                       int nPointCount, DGNPoint*pasVertices );
+DGNElemCore CPL_DLL  *
+              DGNCreateArcElem2D( DGNHandle hDGN, int nType, 
+                                  double dfOriginX, double dfOriginY,
+                                  double dfPrimaryAxis, double dfSecondaryAxis,
+                                  double dfRotation, 
+                                  double dfStartAngle, double dfSweepAngle );
+
+DGNElemCore CPL_DLL *
+             DGNCreateTextElem( DGNHandle hDGN, const char *pszText, 
+                                int nFontId, int nJustification, 
+                                double dfLengthMult, double dfHeightMult, 
+                                double dfRotation, 
+                       double dfOriginX, double dfOriginY, double dfOriginZ );
+
+DGNElemCore CPL_DLL *
+            DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag, 
+                                     GByte abyColorInfo[256][3] );
+DGNElemCore *
+DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, 
+                            int nTotLength, int nNumElems );
+DGNElemCore *
+DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType, 
+                                 int nNumElems, DGNElemCore **papsElems );
+
+int CPL_DLL DGNAddMSLink( DGNHandle hDGN, DGNElemCore *psElement, 
+                          int nLinkageType, int nEntityNum, int nMSLink );
+
+int CPL_DLL DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement, 
+                               int nLinkSize, unsigned char *pabyRawLinkData );
+
+int CPL_DLL DGNAddFShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElement, 
+                                  int nColor );
 
 CPL_C_END
 

@@ -48,8 +48,10 @@ dist:
 	cp $(DIST_FILES) $(DIST_DIR)
 	zip -r $(DIST_FILE) $(DIST_DIR)
 
-web-update:	docs dist
+web-docs-update:	docs
 	cp html/* /u/www/projects/dgn/libhtml
+
+web-update:	web-docs-update dist
 	cp $(DIST_FILE) /u/www/projects/dgn/
 
 
