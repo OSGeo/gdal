@@ -18,15 +18,21 @@ include $(GDAL_ROOT)/GDALmake.opt
 default:	$(OBJ) libs
 
 clean:
-	rm -f *.o
+	rm -f *.o *-marker
 
 %.o:	%.cpp
 	$(CXX) -c $(LINCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 	ar r ../ogrsf_frmts.a $*.o
 
-install-libs:
+install-libs:	isolib-marker sdtslib-marker
+
+isolib-marker:	$(ISOLIB)
 	./install-libs.sh $(ISOLIB) $(FRMTSLIB)
+	touch isolib-marker
+
+sdtslib-marker:	$(SDTSLIB)
 	./install-libs.sh $(SDTSLIB) $(FRMTSLIB)
+	touch sdtslib-marker
 
 libs:	
 	(cd ../../../frmts/iso8211; $(MAKE))
