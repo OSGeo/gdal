@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.7  2005/02/15 16:51:20  kruland
+ * Removed use of <vector> and <algorith> stdlib includes.  Added typedefs for
+ * the fixed size array types which are needed for new mapping mechanism.
+ *
  * Revision 1.6  2005/02/15 06:25:42  kruland
  * Moved the Band definition to Band.i.
  *
@@ -39,9 +43,6 @@
 %{
 #include <iostream>
 using namespace std;
-#include <vector>
-
-#include <algorithm>
 
 #include "cpl_port.h"
 #include "cpl_string.h"
@@ -49,6 +50,9 @@ using namespace std;
 #include "gdal.h"
 #include "gdal_priv.h"
 #include "gdal_alg.h"
+
+typedef double double_6[6];
+typedef double double_2[2];
 
 %}
 
