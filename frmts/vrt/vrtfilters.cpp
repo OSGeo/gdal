@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/08/11 18:46:45  warmerda
+ * pass pszVRTPath through serialize methods
+ *
  * Revision 1.4  2004/03/16 18:34:35  warmerda
  * added support for relativeToVRT attribute on SourceFilename
  *
@@ -560,10 +563,10 @@ CPLErr VRTKernelFilteredSource::XMLInit( CPLXMLNode *psTree,
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *VRTKernelFilteredSource::SerializeToXML()
+CPLXMLNode *VRTKernelFilteredSource::SerializeToXML( const char *pszVRTPath )
 
 {
-    CPLXMLNode *psSrc = VRTFilteredSource::SerializeToXML();
+    CPLXMLNode *psSrc = VRTFilteredSource::SerializeToXML( pszVRTPath );
     CPLXMLNode *psKernel;
     char *pszKernelCoefs;
     int iCoef, nCoefCount = nKernelSize * nKernelSize;
