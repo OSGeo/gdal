@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_print.c,v 1.3 2000/01/28 21:05:40 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_print.c,v 1.4 2000/07/14 18:43:08 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -184,6 +184,12 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 			break;
 		case SAMPLEFORMAT_IEEEFP:
 			fprintf(fd, "IEEE floating point\n");
+			break;
+		case SAMPLEFORMAT_COMPLEXINT:
+			fprintf(fd, "complex signed integer\n");
+			break;
+		case SAMPLEFORMAT_COMPLEXIEEEFP:
+			fprintf(fd, "complex IEEE floating point\n");
 			break;
 		default:
 			fprintf(fd, "%u (0x%x)\n",

@@ -1,4 +1,4 @@
-/* $Header: /usr/cvsroot/gdal/frmts/gtiff/libtiff/tiffconf.h,v 1.3 2000/04/03 21:30:11 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffconf.h,v 1.2 2000/01/28 21:46:30 warmerda Exp $ */
 /*
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
@@ -111,7 +111,6 @@
 #define	THUNDER_SUPPORT
 #define	NEXT_SUPPORT
 #define LOGLUV_SUPPORT
-#define ZIP_SUPPORT
 #endif /* COMPRESSION_SUPPORT */
 
 /*

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.4 1999/11/27 21:32:10 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.5 2000/04/04 14:54:34 mwelles Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -1542,12 +1542,12 @@ initYCbCrConversion(TIFFRGBAImage* img)
      */
     TIFFGetFieldDefaulted(img->tif, TIFFTAG_YCBCRSUBSAMPLING, &hs, &vs);
     switch ((hs<<4)|vs) {
-    case 0x44: return (putcontig8bitYCbCr44tile);
-    case 0x42: return (putcontig8bitYCbCr42tile);
-    case 0x41: return (putcontig8bitYCbCr41tile);
-    case 0x22: return (putcontig8bitYCbCr22tile);
-    case 0x21: return (putcontig8bitYCbCr21tile);
-    case 0x11: return (putcontig8bitYCbCr11tile);
+    case 0x44: return (&putcontig8bitYCbCr44tile);
+    case 0x42: return (&putcontig8bitYCbCr42tile);
+    case 0x41: return (&putcontig8bitYCbCr41tile);
+    case 0x22: return (&putcontig8bitYCbCr22tile);
+    case 0x21: return (&putcontig8bitYCbCr21tile);
+    case 0x11: return (&putcontig8bitYCbCr11tile);
     }
     return (NULL);
 }

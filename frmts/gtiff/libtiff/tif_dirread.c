@@ -1,4 +1,4 @@
-/* $Header: /usr/cvsroot/gdal/frmts/gtiff/libtiff/tif_dirread.c,v 1.3 2000/04/03 21:30:11 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirread.c,v 1.6 2000/04/21 21:45:33 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler

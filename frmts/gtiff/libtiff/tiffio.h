@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffio.h,v 1.5 2000/01/28 21:09:02 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffio.h,v 1.6 2000/06/15 15:32:36 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -78,7 +78,22 @@ typedef	uint32 toff_t;		/* file offset */
 #if !defined(__WIN32__) && (defined(_WIN32) || defined(WIN32))
 #define __WIN32__
 #endif
+
+/*
+ * On windows you should define USE_WIN32_FILEIO if you are using tif_win32.c
+ * or AVOID_WIN32_FILEIO if you are using something else (like tif_unix.c).
+ *
+ * By default tif_win32.c is assumed on windows if not using the cygwin
+ * environment.
+ */
+
 #if defined(_WINDOWS) || defined(__WIN32__) || defined(_Windows)
+#  if !defined(__CYGWIN) && !defined(AVOID_WIN32_FILEIO) && !defined(USE_WIN32_FILIO)
+#    define USE_WIN32_FILEIO
+#  endif
+#endif
+
+#if defined(USE_WIN32_FILEIO)
 #include <windows.h>
 #ifdef __WIN32__
 DECLARE_HANDLE(thandle_t);	/* Win32 file handle */

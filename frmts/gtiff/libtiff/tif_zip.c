@@ -1,4 +1,4 @@
-/* $Header: /usr/cvsroot/gdal/frmts/gtiff/libtiff/tif_zip.c,v 1.3 2000/04/03 21:30:12 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_zip.c,v 1.2 1999/12/07 17:11:38 mwelles Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler
@@ -47,10 +47,6 @@
  * last found at ftp://ftp.uu.net/pub/archiving/zip/zlib/zlib-0.99.tar.gz.
  */
 #include "tif_predict.h"
-#ifdef HAVE_UNISTD_H
-#undef HAVE_UNISTD_H
-#endif
-
 #include "zlib.h"
 
 #include <stdio.h>
