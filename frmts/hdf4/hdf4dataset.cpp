@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2002/07/17 16:24:31  dron
+ * MODIS support improved a bit.
+ *
  * Revision 1.3  2002/07/17 13:36:18  dron
  * <hdf.h> and <mfhdf.h> changed to "hdf.h" and "mfhdf.h".
  *
@@ -72,7 +75,6 @@ HDF4Dataset::HDF4Dataset()
 {
     fp = NULL;
     hHDF4 = 0;
-    pszDataType = "UNKNOWN";
     papszSubDatasets = NULL;
 }
 
@@ -603,38 +605,47 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     const char	*pszValue;
     
-    pszValue = poDS->GetMetadataItem( "Title", 0 );
-    if ( pszValue && EQUAL( pszValue, "SeaWiFS Level-1A Data" ) )
+    if ( (pszValue = poDS->GetMetadataItem( "Title", 0 )) &&
+	 EQUAL( pszValue, "SeaWiFS Level-1A Data" ) )
     {
 	poDS->iDataType = SEAWIFS_L1A;
 	poDS->pszDataType = "SEAWIFS_L1A";
     }
-    pszValue = poDS->GetMetadataItem( "Title", 0 );
-    if ( pszValue && EQUAL( pszValue, "SeaWiFS Level-2 Data" ) )
+    else if ( (pszValue = poDS->GetMetadataItem( "Title", 0 )) &&
+	       EQUAL( pszValue, "SeaWiFS Level-2 Data" ) )
     {
 	poDS->iDataType = SEAWIFS_L2;
 	poDS->pszDataType = "SEAWIFS_L2";
     }
-    pszValue = poDS->GetMetadataItem( "Title", 0 );
-    if ( pszValue && EQUAL( pszValue, "SeaWiFS Level-3 Standard Mapped Image" ) )
+    else if ( (pszValue = poDS->GetMetadataItem( "Title", 0 )) &&
+	       EQUAL( pszValue, "SeaWiFS Level-3 Standard Mapped Image" ) )
     {
 	poDS->iDataType = SEAWIFS_L3;
 	poDS->pszDataType = "SEAWIFS_L3";
     }
-    pszValue = poDS->GetMetadataItem( "ALGORITHMPACKAGENAME", 0 ); // FIXME: is it right?
-    if ( pszValue && EQUAL( pszValue, "MODIS Level 1B channel subset" ) )
+    else if ( (pszValue = poDS->GetMetadataItem( "ALGORITHMPACKAGENAME", 0 )) &&
+	       EQUAL( pszValue, "MODIS Level 1B channel subset" ) ) // FIXME: does it right?
     {
         poDS->iDataType = MODIS_L1B;
 	poDS->pszDataType = "MODIS_L1B";
     }
-    pszValue = poDS->GetMetadataItem( "LONGNAME", 0 );
-    if ( pszValue && EQUAL( pszValue, "MODIS/Terra Calibrated Radiances 5-Min L1B Swath 250m" ) )
+    else if ( (pszValue = poDS->GetMetadataItem( "LONGNAME", 0 )) &&
+	       EQUAL( pszValue, "MODIS/Terra Calibrated Radiances 5-Min L1B Swath 250m" ) )
     {
         poDS->iDataType = MOD02QKM_L1B;
 	poDS->pszDataType = "MOD02QKM_L1B";
     }
-    if( poDS->iDataType == UNKNOWN )
+    else if ( (pszValue = poDS->GetMetadataItem( "ASSOCIATEDINSTRUMENTSHORTNAME", 0 )) &&
+	       EQUAL( pszValue, "MODIS" ) )
+    {
+        poDS->iDataType = MODIS_UNK;
+	poDS->pszDataType = "MODIS_UNK";
+    }
+    else
+    {
+	poDS->iDataType == UNKNOWN;
 	poDS->pszDataType = "UNKNOWN";
+    }
 
 /* -------------------------------------------------------------------- */
 /*  Make a list of subdatasets from SDSs contained in input HDF file.	*/

@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2002/07/17 16:24:31  dron
+ * MODIS support improved a bit.
+ *
  * Revision 1.1  2002/07/16 11:04:11  dron
  * New driver: HDF4 datasets. Initial version.
  *
@@ -41,6 +44,7 @@ typedef enum
     SEAWIFS_L3,			// SeaWiFS Level-3 Standard Mapped Image
     MODIS_L1B,
     MOD02QKM_L1B,
+    MODIS_UNK,
     UNKNOWN
 } HDF4Datatype;
 

@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2002/07/17 16:24:31  dron
+ * MODIS support improved a bit.
+ *
  * Revision 1.3  2002/07/17 13:36:18  dron
  * <hdf.h> and <mfhdf.h> changed to "hdf.h" and "mfhdf.h".
  *
@@ -179,66 +182,45 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 #define MAX_DIMS         20	/* FIXME: maximum number of dimensions in sds */
     int32	iStart[MAX_DIMS], iStride[MAX_DIMS], iEdges[MAX_DIMS];
 
-/* HDF rank:
-  A rank 2 dataset is an image read in scan-line order (2D). 
-  A rank 3 dataset is a series of images which are read in an image at a time
-  to form a volume.
-  A rank 4 dataset may be thought of as a series of volumes.
+    /* HDF rank:
+    A rank 2 dataset is an image read in scan-line order (2D). 
+    A rank 3 dataset is a series of images which are read in an image at a time
+    to form a volume.
+    A rank 4 dataset may be thought of as a series of volumes.
 
-  The "iStart" array specifies the multi-dimensional index of the starting
-  corner of the hyperslab to read. The values are zero based.
+    The "iStart" array specifies the multi-dimensional index of the starting
+    corner of the hyperslab to read. The values are zero based.
 
-  The "edge" array specifies the number of values to read along each
-  dimension of the hyperslab.
+    The "edge" array specifies the number of values to read along each
+    dimension of the hyperslab.
 
-  The "iStride" array allows for sub-sampling along each dimension. If a
-  iStride value is specified for a dimension, that many values will be
-  skipped over when reading along that dimension. Specifying iStride = NULL
-  in the C interface or iStride = 1 in either interface specifies contiguous
-  reading of data. If the iStride values are set to 0, SDreaddata returns
-  FAIL (or -1). No matter what iStride value is provided, data is always
-  placed contiguously in buffer.
+    The "iStride" array allows for sub-sampling along each dimension. If a
+    iStride value is specified for a dimension, that many values will be
+    skipped over when reading along that dimension. Specifying iStride = NULL
+    in the C interface or iStride = 1 in either interface specifies contiguous
+    reading of data. If the iStride values are set to 0, SDreaddata returns
+    FAIL (or -1). No matter what iStride value is provided, data is always
+    placed contiguously in buffer.
  
-  See also:
-   http://www.dur.ac.uk/~dcs0elb/au-case-study/code/hdf-browse.c.html
-   http://dao.gsfc.nasa.gov/DAO_people/yin/quads.code.html
-
-Dimensions:
-http://hdf.ncsa.uiuc.edu/training/UG_Examples/SD/write_slab.c
-  aiDimSizes[0] = Z_LENGTH;
-  aiDimSizes[1] = Y_LENGTH;
-  aiDimSizes[2] = X_LENGTH;
-
- 3D data:
-  note that iEdges[1] is set to 1 to define a 2-dimensional slab parallel to the ZX plane.  
-
-Meaning of iStart, iEdges, iStride:
-http://www.swa.com/meteorology/hdf/tutorial/File_reading.html
-YL = 30;
-XL = 30;
-dims[0] = YL;
- dims[1] = XL;
- iStart[0] =0;  row start - X axis
- iStart[1]=0; column start - Y axis
- iEdges[0] = dims[0];  - number elements to read  - rowmax
- iEdges[1] = dims[1]; - number elements to read - colmax
- iStride[0] = 3;   - skip every 3rd element 
- iStride[1] = 1; - no skip with value 1
-*/
+    See also:
+    http://www.dur.ac.uk/~dcs0elb/au-case-study/code/hdf-browse.c.html
+    http://dao.gsfc.nasa.gov/DAO_people/yin/quads.code.html
+    */
     switch ( poGDS->iRank )
     {
         case 4:	// 4Dim: volume-time
-	// FIXME: needs sample file. Do not works currently.
+	// FIXME: needs sample file. Does not works currently.
 	iStart[3] = 0/* range: 0--aiDimSizes[3]-1 */;	iStride[3] = 1;	iEdges[3] = 1;
 	iStart[2] = 0/* range: 0--aiDimSizes[2]-1 */;	iStride[2] = 1;	iEdges[2] = 1;
 	iStart[1] = nBlockYOff; iStride[1] = 1;	iEdges[1] = nBlockYSize;
 	iStart[0] = nBlockXOff;	iStride[0] = 1;	iEdges[0] = nBlockXSize;
 	break;
         case 3: // 3Dim: volume
-	switch(poGDS->iDataType)
+	switch( poGDS->iDataType )
 	{
 	    case MODIS_L1B:
 	    case MOD02QKM_L1B:
+	    case MODIS_UNK:
 	    iStart[0] = nBand - 1;	iStride[0] = 1;	iEdges[0] = 1;
 	    iStart[1] = nBlockYOff;	iStride[1] = 1;	iEdges[1] = nBlockYSize;
 	    iStart[2] = nBlockXOff;	iStride[2] = 1;	iEdges[2] = nBlockXSize;
@@ -406,6 +388,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     else if( EQUAL( poDS->papszSubdatasetName[1], "MODIS_L1B" ) )
         poDS->iDataType = MODIS_L1B;
     else if( EQUAL( poDS->papszSubdatasetName[1], "MOD02QKM_L1B" ) )
+        poDS->iDataType = MOD02QKM_L1B;
+    else if( EQUAL( poDS->papszSubdatasetName[1], "MODIS_UNK" ) )
         poDS->iDataType = MOD02QKM_L1B;
     else
 	poDS->iDataType = UNKNOWN;
