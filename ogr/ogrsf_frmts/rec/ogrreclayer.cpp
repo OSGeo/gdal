@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/07/11 13:28:20  warmerda
+ * use external RECGetField
+ *
  * Revision 1.4  2003/02/17 15:19:04  warmerda
  * Fixed support for deleted records.
  *
@@ -47,28 +50,6 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-/************************************************************************/
-/*                            RECGetField()                             */
-/************************************************************************/
-
-static const char *RECGetField( const char *pszSrc, int nStart, int nWidth )
-
-{
-    static char szWorkField[128];
-    int         i;
-    
-    strncpy( szWorkField, pszSrc+nStart-1, nWidth );
-    szWorkField[nWidth] = '\0';
-
-    i = strlen(szWorkField)-1;
-    
-    while( i >= 0 && szWorkField[i] == ' ' )
-        szWorkField[i--] = '\0';
-
-    return szWorkField;
-}
-
 
 /************************************************************************/
 /*                            OGRRECLayer()                             */
