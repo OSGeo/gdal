@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.59  2003/03/18 06:05:12  warmerda
- * Added GDALDataset::FlushCache()
+ * Revision 1.60  2003/03/20 17:53:30  warmerda
+ * added OGR OpenShared and reference coutnting stuff
  *
  ************************************************************************/
 
@@ -6746,6 +6746,66 @@ static PyObject *_wrap_OGR_L_RollbackTransaction(PyObject *self, PyObject *args)
     return _resultobj;
 }
 
+static PyObject *_wrap_OGR_L_Reference(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRLayerH  _arg0;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGR_L_Reference",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_L_Reference. Expected _OGRLayerH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_L_Reference(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_L_Dereference(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRLayerH  _arg0;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGR_L_Dereference",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_L_Dereference. Expected _OGRLayerH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_L_Dereference(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_L_GetRefCount(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRLayerH  _arg0;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGR_L_GetRefCount",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_L_GetRefCount. Expected _OGRLayerH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_L_GetRefCount(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OGR_DS_Destroy(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRDataSourceH  _arg0;
@@ -6954,6 +7014,86 @@ static PyObject *_wrap_OGR_DS_ReleaseResultSet(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OGR_DS_Reference(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRDataSourceH  _arg0;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGR_DS_Reference",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_DS_Reference. Expected _OGRDataSourceH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_DS_Reference(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_DS_Dereference(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRDataSourceH  _arg0;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGR_DS_Dereference",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_DS_Dereference. Expected _OGRDataSourceH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_DS_Dereference(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_DS_GetRefCount(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRDataSourceH  _arg0;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGR_DS_GetRefCount",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_DS_GetRefCount. Expected _OGRDataSourceH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_DS_GetRefCount(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_DS_GetSummaryRefCount(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRDataSourceH  _arg0;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGR_DS_GetSummaryRefCount",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_DS_GetSummaryRefCount. Expected _OGRDataSourceH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_DS_GetSummaryRefCount(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OGR_Dr_GetName(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     char * _result;
@@ -7138,6 +7278,77 @@ static PyObject *_wrap_OGRGetDriver(PyObject *self, PyObject *args) {
         return NULL;
     _result = (OGRSFDriverH )OGRGetDriver(_arg0);
     SWIG_MakePtr(_ptemp, (char *) _result,"_OGRSFDriverH");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGROpenShared(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRDataSourceH  _result;
+    char * _arg0;
+    int  _arg1;
+    OGRSFDriverH * _arg2;
+    char * _argc2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sis:OGROpenShared",&_arg0,&_arg1,&_argc2)) 
+        return NULL;
+    if (_argc2) {
+        if (SWIG_GetPtr(_argc2,(void **) &_arg2,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of OGROpenShared. Expected _OGRSFDriverH_p.");
+        return NULL;
+        }
+    }
+    _result = (OGRDataSourceH )OGROpenShared(_arg0,_arg1,_arg2);
+    SWIG_MakePtr(_ptemp, (char *) _result,"_OGRDataSourceH");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGRReleaseDataSource(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr  _result;
+    OGRDataSourceH  _arg0;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGRReleaseDataSource",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGRReleaseDataSource. Expected _OGRDataSourceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr )OGRReleaseDataSource(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGRGetOpenDSCount(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,":OGRGetOpenDSCount")) 
+        return NULL;
+    _result = (int )OGRGetOpenDSCount();
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGRGetOpenDS(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRDataSourceH  _result;
+    int  _arg0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"i:OGRGetOpenDS",&_arg0)) 
+        return NULL;
+    _result = (OGRDataSourceH )OGRGetOpenDS(_arg0);
+    SWIG_MakePtr(_ptemp, (char *) _result,"_OGRDataSourceH");
     _resultobj = Py_BuildValue("s",_ptemp);
     return _resultobj;
 }
@@ -7517,6 +7728,10 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALColorEntry_c1_set", _wrap_GDALColorEntry_c1_set, 1 },
 	 { "OGRBuildPolygonFromEdges", py_OGRBuildPolygonFromEdges, 1 },
 	 { "OGRRegisterAll", _wrap_OGRRegisterAll, 1 },
+	 { "OGRGetOpenDS", _wrap_OGRGetOpenDS, 1 },
+	 { "OGRGetOpenDSCount", _wrap_OGRGetOpenDSCount, 1 },
+	 { "OGRReleaseDataSource", _wrap_OGRReleaseDataSource, 1 },
+	 { "OGROpenShared", _wrap_OGROpenShared, 1 },
 	 { "OGRGetDriver", _wrap_OGRGetDriver, 1 },
 	 { "OGRGetDriverCount", _wrap_OGRGetDriverCount, 1 },
 	 { "OGRRegisterDriver", _wrap_OGRRegisterDriver, 1 },
@@ -7527,6 +7742,10 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_Dr_Open", _wrap_OGR_Dr_Open, 1 },
 	 { "OGR_Dr_GetName", _wrap_OGR_Dr_GetName, 1 },
 	 { "OGR_DS_CreateLayer", py_OGR_DS_CreateLayer, 1 },
+	 { "OGR_DS_GetSummaryRefCount", _wrap_OGR_DS_GetSummaryRefCount, 1 },
+	 { "OGR_DS_GetRefCount", _wrap_OGR_DS_GetRefCount, 1 },
+	 { "OGR_DS_Dereference", _wrap_OGR_DS_Dereference, 1 },
+	 { "OGR_DS_Reference", _wrap_OGR_DS_Reference, 1 },
 	 { "OGR_DS_ReleaseResultSet", _wrap_OGR_DS_ReleaseResultSet, 1 },
 	 { "OGR_DS_ExecuteSQL", _wrap_OGR_DS_ExecuteSQL, 1 },
 	 { "OGR_DS_TestCapability", _wrap_OGR_DS_TestCapability, 1 },
@@ -7536,6 +7755,9 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_DS_GetLayerCount", _wrap_OGR_DS_GetLayerCount, 1 },
 	 { "OGR_DS_GetName", _wrap_OGR_DS_GetName, 1 },
 	 { "OGR_DS_Destroy", _wrap_OGR_DS_Destroy, 1 },
+	 { "OGR_L_GetRefCount", _wrap_OGR_L_GetRefCount, 1 },
+	 { "OGR_L_Dereference", _wrap_OGR_L_Dereference, 1 },
+	 { "OGR_L_Reference", _wrap_OGR_L_Reference, 1 },
 	 { "OGR_L_RollbackTransaction", _wrap_OGR_L_RollbackTransaction, 1 },
 	 { "OGR_L_CommitTransaction", _wrap_OGR_L_CommitTransaction, 1 },
 	 { "OGR_L_StartTransaction", _wrap_OGR_L_StartTransaction, 1 },

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2003/03/20 17:53:30  warmerda
+ * added OGR OpenShared and reference coutnting stuff
+ *
  * Revision 1.58  2003/03/18 06:05:12  warmerda
  * Added GDALDataset::FlushCache()
  *
@@ -2562,6 +2565,9 @@ OGRErr  OGR_L_CreateField( OGRLayerH, OGRFieldDefnH, int );
 OGRErr  OGR_L_StartTransaction( OGRLayerH );
 OGRErr  OGR_L_CommitTransaction( OGRLayerH );
 OGRErr  OGR_L_RollbackTransaction( OGRLayerH );
+int     OGR_L_Reference( OGRLayerH );
+int     OGR_L_Dereference( OGRLayerH );
+int     OGR_L_GetRefCount( OGRLayerH );
 
 /* OGRDataSource */
 
@@ -2575,6 +2581,10 @@ int     OGR_DS_TestCapability( OGRDataSourceH, const char * );
 OGRLayerH  OGR_DS_ExecuteSQL( OGRDataSourceH, const char *, OGRGeometryH, 
                               const char * );
 void    OGR_DS_ReleaseResultSet( OGRDataSourceH, OGRLayerH );
+int     OGR_DS_Reference( OGRDataSourceH );
+int     OGR_DS_Dereference( OGRDataSourceH );
+int     OGR_DS_GetRefCount( OGRDataSourceH );
+int     OGR_DS_GetSummaryRefCount( OGRDataSourceH );
 
 %{
 static PyObject *
@@ -2645,6 +2655,10 @@ OGRDataSourceH OGROpen( const char *, int, OGRSFDriverH * );
 void           OGRRegisterDriver( OGRSFDriverH );
 int            OGRGetDriverCount();
 OGRSFDriverH   OGRGetDriver( int );
+OGRDataSourceH OGROpenShared( const char *, int, OGRSFDriverH * );
+OGRErr         OGRReleaseDataSource( OGRDataSourceH );
+int            OGRGetOpenDSCount();
+OGRDataSourceH OGRGetOpenDS(int);
 
 /* note: this is also declared in ogrsf_frmts.h */
 void  OGRRegisterAll();
