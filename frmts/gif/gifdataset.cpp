@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.16  2003/03/13 16:39:53  warmerda
+ * Added support for .gfw.
+ *
  * Revision 1.15  2002/11/26 02:36:38  warmerda
  * Use first saved image to set the width and height.  One sample image
  * (wmt.cgi.gif) has a disagreement between this value and the "screen" size.
@@ -437,7 +440,9 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->bGeoTransformValid = 
         GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
-                           poDS->adfGeoTransform );
+                           poDS->adfGeoTransform )
+        || GDALReadWorldFile( poOpenInfo->pszFilename, ".gfw", 
+                              poDS->adfGeoTransform );
 
     return poDS;
 }
