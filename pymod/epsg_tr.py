@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.8  2004/03/10 19:08:42  warmerda
+# added -list to usage
+#
 # Revision 1.7  2003/03/21 22:23:27  warmerda
 # added xml support
 #
@@ -61,7 +64,7 @@ import string
 def Usage():
 
     print 'Usage: epsg_tr.py [-wkt] [-pretty_wkt] [-proj4] [-xml] [-postgis]'
-    print '                  start_code [end_code]'
+    print '                  [-list filename] [start_code [end_code]]'
     sys.exit(1)
 
 # =============================================================================
