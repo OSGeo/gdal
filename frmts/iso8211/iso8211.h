@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/01/31 18:03:39  warmerda
+ * completely rewrote format expansion to make more general
+ *
  * Revision 1.8  1999/11/18 19:03:04  warmerda
  * expanded tabs
  *
@@ -223,7 +226,11 @@ class DDFFieldDefn
                  bit_string, 
                  mixed_data_type } data_type_code;
 
+    static char       *ExpandFormat( const char * );
+    
   private:
+
+    static char       *ExtractSubstring( const char * );
 
     DDFModule * poModule;
     char *      pszTag;

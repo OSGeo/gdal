@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/01/31 18:03:38  warmerda
+ * completely rewrote format expansion to make more general
+ *
  * Revision 1.3  1999/11/18 19:03:04  warmerda
  * expanded tabs
  *
@@ -41,6 +44,7 @@
 
 #include "iso8211.h"
 #include "cpl_string.h"
+#include <ctype.h>
 
 /************************************************************************/
 /*                            DDFFieldDefn()                            */
@@ -323,66 +327,124 @@ int DDFFieldDefn::BuildSubfields()
 }
 
 /************************************************************************/
-/*                         FixupExtraBrackets()                         */
+/*                          ExtractSubstring()                          */
 /*                                                                      */
-/*      As per note b) of 6.4.3.3 of the standard, sequences of bit     */
-/*      string fields should be included in an extra layer of           */
-/*      brackets to indicate that rescaning the format list should      */
-/*      start on a byte boundary.                                       */
+/*      Extract a substring terminated by a comma (or end of            */
+/*      string).  Commas in brackets are ignored as terminated with     */
+/*      bracket nesting understood gracefully.  If the returned         */
+/*      string would being and end with a bracket then strip off the    */
+/*      brackets.                                                       */
 /*                                                                      */
-/*      Since we don't intend to support bitstrings of other than       */
-/*      multiples of eight bits at a time, this is not relavent to      */
-/*      us.  However, we do need to strip the extra brackets away to    */
-/*      avoid screwing up interpretation of the formats.  This          */
-/*      function will strip a preceeding open bracket, and/or an        */
-/*      _extra_ bracket at the end of a token.                          */
-/*                                                                      */
-/*      For instance the format string ((B(32),B(32))) would first      */
-/*      be stripped down to (B(32),B(32)) by ApplyFormats(), then       */
-/*      split into "(B(32)" and "B(32))" by the tokenize function.      */
-/*      This function FixupExtraBrackets) would then doctor each of     */
-/*      these tokens into "B(32)".   Note that end brackets that        */
-/*      match open brackets (other than the first character) are not    */
-/*      stripped off.                                                   */
+/*      Given a string like "(A,3(B,C),D),X,Y)" return "A,3(B,C),D".    */
+/*      Give a string like "3A,2C" return "3A".                         */
 /************************************************************************/
 
-static void FixupExtraBrackets( char * pszToken )
+char *DDFFieldDefn::ExtractSubstring( const char * pszSrc )
 
 {
-/* -------------------------------------------------------------------- */
-/*      If the first character is an open bracket, move all             */
-/*      characters down one.                                            */
-/* -------------------------------------------------------------------- */
-    if( pszToken[0] == '(' )
+    int		nBracket=0, i;
+    char	*pszReturn;
+
+    for( i = 0;
+         pszSrc[i] != '\0' && (nBracket > 0 || pszSrc[i] != ',');
+         i++ )
     {
-        for( int i = 0; pszToken[i] != '\0'; i++ )
+        if( pszSrc[i] == '(' )
+            nBracket++;
+        else if( pszSrc[i] == ')' )
+            nBracket--;
+    }
+
+    if( pszSrc[0] == '(' )
+    {
+        pszReturn = CPLStrdup( pszSrc + 1 );
+        pszReturn[i-2] = '\0';
+    }
+    else
+    {
+        pszReturn = CPLStrdup( pszSrc  );
+        pszReturn[i] = '\0';
+    }
+
+    return pszReturn;
+}
+
+/************************************************************************/
+/*                            ExpandFormat()                            */
+/************************************************************************/
+
+char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
+
+{
+    char	szDest[400];
+    int		iSrc, iDst;
+    int		nRepeat = 0;
+
+    iSrc = 0;
+    iDst = 0;
+    szDest[0] = '\0';
+
+    while( pszSrc[iSrc] != '\0' )
+    {
+        /* This is presumably an extra level of brackets around some
+           binary stuff related to rescaning which we don't care to do
+           (see 6.4.3.3 of the standard.  We just strip off the extra
+           layer of brackets */
+        if( (iSrc == 0 || pszSrc[iSrc-1] == ',') && pszSrc[iSrc] == '(' )
         {
-            pszToken[i] = pszToken[i+1];
+            char       *pszContents = ExtractSubstring( pszSrc+iSrc );
+            char       *pszExpandedContents = ExpandFormat( pszContents );
+
+            strcat( szDest, pszExpandedContents );
+            iDst = strlen(szDest);
+            
+            iSrc = iSrc + strlen(pszContents) + 2;
+
+            CPLFree( pszContents );
+            CPLFree( pszExpandedContents );
+        }
+
+        /* this is a repeated subclause */
+        else if( (iSrc == 0 || pszSrc[iSrc-1] == ',')
+                 && isdigit(pszSrc[iSrc]) )
+        {
+            const char *pszNext;
+            nRepeat = atoi(pszSrc+iSrc);
+            
+            // skip over repeat count.
+            for( pszNext = pszSrc+iSrc; isdigit(*pszNext); pszNext++ )
+                iSrc++;
+
+            char       *pszContents = ExtractSubstring( pszNext );
+            char       *pszExpandedContents = ExpandFormat( pszContents );
+                
+            for( int i = 0; i < nRepeat; i++ )
+            {
+                strcat( szDest, pszExpandedContents );
+                if( i < nRepeat-1 )
+                    strcat( szDest, "," );
+            }
+
+            iDst = strlen(szDest);
+            
+            if( pszNext[0] == '(' )
+                iSrc = iSrc + strlen(pszContents) + 2;
+            else
+                iSrc = iSrc + strlen(pszContents);
+
+            CPLFree( pszContents );
+            CPLFree( pszExpandedContents );
+        }
+        else
+        {
+            szDest[iDst++] = pszSrc[iSrc++];
+            szDest[iDst] = '\0';
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Count open and close brackets.                                  */
-/* -------------------------------------------------------------------- */
-    int         nOpenCount=0, nCloseCount=0;
-
-    for( int i = 0; pszToken[i] != '\0'; i++ )
-    {
-        if( pszToken[i] == '(' )
-            nOpenCount++;
-
-        if( pszToken[i] == ')' )
-            nCloseCount++;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Strip off an extra trailing close bracket.                      */
-/* -------------------------------------------------------------------- */
-    if( nOpenCount < nCloseCount && pszToken[strlen(pszToken)-1] == ')' )
-        pszToken[strlen(pszToken)-1] = '\0';
+    return CPLStrdup( szDest );
 }
-
-
+                                 
 /************************************************************************/
 /*                            ApplyFormats()                            */
 /*                                                                      */
@@ -414,8 +476,8 @@ int DDFFieldDefn::ApplyFormats()
 /* -------------------------------------------------------------------- */
 /*      Duplicate the string, and strip off the brackets.               */
 /* -------------------------------------------------------------------- */
-    pszFormatList = CPLStrdup( _formatControls+1 );
-    pszFormatList[strlen(pszFormatList)-1] = '\0';
+
+    pszFormatList = ExpandFormat( _formatControls );
 
 /* -------------------------------------------------------------------- */
 /*      Tokenize based on commas.                                       */
@@ -426,52 +488,36 @@ int DDFFieldDefn::ApplyFormats()
     CPLFree( pszFormatList );
 
 /* -------------------------------------------------------------------- */
-/*      Loop over format items, parsing out the prefix number (if       */
-/*      any), and then applying the format to the indicated number      */
-/*      of subfields.  For instance a format like "3A" would result     */
-/*      in the format "A" being applied to three subfields.             */
+/*      Apply the format items to subfields.                            */
 /* -------------------------------------------------------------------- */
-    int         iNextSubfield = 0;
-
-    for( int iFormatItem = 0;
+    int	iFormatItem;
+    
+    for( iFormatItem = 0;
          papszFormatItems[iFormatItem] != NULL;
          iFormatItem++ )
     {
         const char      *pszPastPrefix;
 
-        FixupExtraBrackets( papszFormatItems[iFormatItem] );
-
         pszPastPrefix = papszFormatItems[iFormatItem];
         while( *pszPastPrefix >= '0' && *pszPastPrefix <= '9' )
             pszPastPrefix++;
 
-        int     nRepeatCount = atoi(papszFormatItems[iFormatItem]);
-
-        if( nRepeatCount == 0 )
-            nRepeatCount = 1;
-
-        while( nRepeatCount > 0 )
+        ///////////////////////////////////////////////////////////////
+        // Did we get too many formats for the subfields created
+        // by names?  This may be legal by the 8211 specification, but
+        // isn't encountered in any formats we care about so we just
+        // blow.
+        
+        if( iFormatItem >= nSubfieldCount )
         {
-            ///////////////////////////////////////////////////////////////
-            // Did we get too many formats for the subfields created
-            // by names?  This may be legal by the 8211 specification, but
-            // isn't encountered in any formats we care about so we just
-            // blow.
-            
-            if( iNextSubfield >= nSubfieldCount )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "Got more formats than subfields for field `%s'.\n",
-                          pszTag );
-                return FALSE;
-            }
-
-            if( !paoSubfields[iNextSubfield].SetFormat(pszPastPrefix) )
-                return FALSE;
-            
-            iNextSubfield++;
-            nRepeatCount--;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Got more formats than subfields for field `%s'.\n",
+                      pszTag );
+            return FALSE;
         }
+        
+        if( !paoSubfields[iFormatItem].SetFormat(pszPastPrefix) )
+            return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -479,7 +525,7 @@ int DDFFieldDefn::ApplyFormats()
 /* -------------------------------------------------------------------- */
     CSLDestroy( papszFormatItems );
 
-    if( iNextSubfield < nSubfieldCount )
+    if( iFormatItem < nSubfieldCount )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Got less formats than subfields for field `%s',\n",
