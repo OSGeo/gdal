@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/10/24 13:32:28  warmerda
+ * Fixed include path to work with GNUmakefile.
+ *
  * Revision 1.2  2001/07/18 05:05:12  warmerda
  * added CPL_CSVID
  *
@@ -36,7 +39,7 @@
  *
  */
 
-#include "frmts/shapelib/shapefil.h"
+#include "ogrsf_frmts/shape/shapefil.h"
 #include "gdal.h"
 
 CPL_CVSID("$Id$");
