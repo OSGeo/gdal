@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/08/11 20:34:52  warmerda
+ * Allow "user input" for projection information in .vrt file.
+ *
  * Revision 1.17  2004/08/11 18:43:50  warmerda
  * restructure init to support derived class, add pszVRTPath to serialize
  *
@@ -84,6 +87,7 @@
 #include "vrtdataset.h"
 #include "cpl_string.h"
 #include "cpl_minixml.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -311,7 +315,16 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
 /*      Check for an SRS node.                                          */
 /* -------------------------------------------------------------------- */
     if( strlen(CPLGetXMLValue(psTree, "SRS", "")) > 0 )
-        pszProjection = CPLStrdup(CPLGetXMLValue(psTree, "SRS", ""));
+    {
+        OGRSpatialReference oSRS;
+
+        CPLFree( pszProjection );
+        pszProjection = NULL;
+
+        if( oSRS.SetFromUserInput( CPLGetXMLValue(psTree, "SRS", "") )
+            == OGRERR_NONE )
+            oSRS.exportToWkt( &pszProjection );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Check for a GeoTransform node.                                  */
@@ -345,11 +358,17 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
     if( psGCPList != NULL )
     {
         CPLXMLNode *psXMLGCP;
+        OGRSpatialReference oSRS;
+        const char *pszRawProj = CPLGetXMLValue(psGCPList, "Projection", "");
 
         CPLFree( pszGCPProjection );
-        pszGCPProjection =
-            CPLStrdup(CPLGetXMLValue(psGCPList,"Projection",""));
-         
+
+        if( strlen(pszRawProj) > 0 
+            && oSRS.SetFromUserInput( pszRawProj ) == OGRERR_NONE )
+            oSRS.exportToWkt( &pszGCPProjection );
+        else
+            pszGCPProjection = CPLStrdup("");
+
         // Count GCPs.
         int  nGCPMax = 0;
          
@@ -833,7 +852,23 @@ VRTDataset::Create( const char * pszName,
     }
     else
     {
-        poDS = new VRTDataset( nXSize, nYSize );
+        const char *pszSubclass = CSLFetchNameValue( papszOptions,
+                                                     "SUBCLASS" );
+
+        if( pszSubclass == NULL || EQUAL(pszSubclass,"VRTDataset") )
+            poDS = new VRTDataset( nXSize, nYSize );
+        else if( EQUAL(pszSubclass,"VRTWarpedDataset") )
+        {
+            poDS = new VRTWarpedDataset( nXSize, nYSize );
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "SUBCLASS=%s not recognised.", 
+                      pszSubclass );
+            return NULL;
+        }
+
         poDS->SetDescription( pszName );
         
         for( iBand = 0; iBand < nBands; iBand++ )
