@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2001/05/24 21:02:42  warmerda
+ * moved OGRCoordinateTransform destructor defn
+ *
  * Revision 1.28  2001/02/06 17:10:28  warmerda
  * export entry points from DLL
  *
@@ -436,7 +439,7 @@ class CPL_DLL OGRSpatialReference
 class CPL_DLL OGRCoordinateTransformation
 {
 public:
-    virtual ~OGRCoordinateTransformation();
+    virtual ~OGRCoordinateTransformation() {}
 
     // From CT_CoordinateTransformation
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/05/24 21:02:42  warmerda
+ * moved OGRCoordinateTransform destructor defn
+ *
  * Revision 1.7  2001/01/19 21:10:47  warmerda
  * replaced tabs
  *
@@ -146,15 +149,6 @@ static int LoadProjLibrary()
     }
 
     return( TRUE );
-}
-
-/************************************************************************/
-/*                    ~OGRCoordinateTransformation()                    */
-/************************************************************************/
-
-OGRCoordinateTransformation::~OGRCoordinateTransformation()
-
-{
 }
 
 /************************************************************************/
