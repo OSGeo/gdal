@@ -14,8 +14,8 @@
 #  define STDC_HEADERS
 #endif
 
-/* Define if you have the <fcntl.h> header file.  */
-#undef HAVE_FCNTL_H
+/* Define to 1 if you have the <fcntl.h> header file.  */
+#define HAVE_FCNTL_H 1
 
 /* Define if you have the <unistd.h> header file.  */
 #undef HAVE_UNISTD_H
