@@ -79,6 +79,21 @@ dnl We need the following lines for libtiff too.
 HAVE_IEEEFP=1
 AC_DEFINE_UNQUOTED(HAVE_IEEEFP, $HAVE_IEEEFP, [Define as 0 or 1 according to the floating point format suported by the machine])
 
+dnl Check the native cpu bit order (also libtiff stuff).
+AC_MSG_CHECKING([native cpu bit order])
+case "$target_cpu" in
+    i*86*)
+        HOST_FILLORDER=FILLORDER_LSB2MSB
+	AC_MSG_RESULT([lsb2msb])
+	;;
+    *)
+	HOST_FILLORDER=FILLORDER_MSB2LSB
+	AC_MSG_RESULT([msb2lsb])
+        ;;
+esac
+AC_DEFINE_UNQUOTED(HOST_FILLORDER, $HOST_FILLORDER, [Set the native cpu bit order (FILLORDER_LSB2MSB or FILLORDER_MSB2LSB)])
+
+
 dnl Checks for library functions.
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(vsnprintf)
@@ -689,7 +704,7 @@ if test "$with_hdf4" = "no" ; then
 
 elif test "$with_hdf4" = "yes" -o "$with_hdf4" = "" ; then
 
-  AC_CHECK_LIB(mfhdf,SDreaddata,HAVE_HDF4=yes,HAVE_HDF4=no, -ldf)
+  AC_CHECK_LIB(mfhdf,SDreaddata,HAVE_HDF4=yes,HAVE_HDF4=no,-ldf)
 
   if test "$HAVE_HDF4" = "yes" ; then   
     LIBS="-lmfhdf -ldf $LIBS"
@@ -711,7 +726,7 @@ else
   ORIG_LIBS="$LIBS"
   LIBS="-L$HDF_LIB_DIR $LIBS"
 
-  AC_CHECK_LIB(mfhdf,SDreaddata,HDF_LIB_NAME=-lmfhdf,HDF_LIB_NAME=missing,)
+  AC_CHECK_LIB(mfhdf,SDreaddata,HDF_LIB_NAME=-lmfhdf,HDF_LIB_NAME=missing,-ldf)
   if test "$HDF_LIB_NAME" = "missing" ; then
     AC_CHECK_LIB(hdf4,SDreaddata,HDF_LIB_NAME=-lhdf4,HDF_LIB_NAME=missing,)
   fi
