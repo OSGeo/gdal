@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.28  2003/06/26 20:42:31  dron
+ * Support for Hyperion Level 1 data product.
+ *
  * Revision 1.27  2003/06/25 08:26:18  dron
  * Support for Aster Level 1A/1B/2 products.
  *
@@ -911,6 +914,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->iDataType = MODIS_UNK;
     else if( EQUAL( papszSubdatasetName[1], "SEAWIFS_L3" ) )
         poDS->iDataType = SEAWIFS_L3;
+    else if( EQUAL( papszSubdatasetName[1], "HYPERION_L1" ) )
+        poDS->iDataType = HYPERION_L1;
     else
         poDS->iDataType = UNKNOWN;
 
@@ -965,7 +970,13 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         poDS->SetMetadata( poDS->papszLocalMetadata, "" );
         poDS->iSDS = SDendaccess( poDS->iSDS );
-        // Create band information objects.
+
+        CPLDebug( "HDF4Image",
+                  "aiDimSizes[0]=%d, aiDimSizes[1]=%d, "
+                  "aiDimSizes[2]=%d, aiDimSizes[3]=%d",
+                  poDS->aiDimSizes[0], poDS->aiDimSizes[1],
+                  poDS->aiDimSizes[2], poDS->aiDimSizes[3] );
+
         switch( poDS->iRank )
         {
             case 2:
@@ -1051,9 +1062,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     
     poDS->nRasterXSize = poDS->aiDimSizes[poDS->iXDim];
     poDS->nRasterYSize = poDS->aiDimSizes[poDS->iYDim];
-    for( i = 1; i <= poDS->nBands; i++ )
-        poDS->SetBand( i, new HDF4ImageRasterBand( poDS, i,
-                                    poDS->GetDataType( poDS->iNumType ) ) );
 
 /* -------------------------------------------------------------------- */
 /*      Now we will handle particular types of HDF products. Every      */
@@ -2095,9 +2103,30 @@ CleanupAndBreakAsterL2:
         }
         break;
 
+/* -------------------------------------------------------------------- */
+/*      Hyperion Level 1.                                               */
+/* -------------------------------------------------------------------- */
+        case HYPERION_L1:
+        {
+            CPLDebug( "HDF4Image", "Input dataset interpreted as HYPERION_L1" );
+
+            // XXX: Hyperion SDSs has Height x Bands x Width dimensions
+            poDS->nBands = poDS->aiDimSizes[1];
+            poDS->nRasterXSize = poDS->aiDimSizes[2];
+            poDS->nRasterYSize = poDS->aiDimSizes[0];
+        }
+        break;
+
         default:
         break;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Create band information objects.                                */
+/* -------------------------------------------------------------------- */
+    for( i = 1; i <= poDS->nBands; i++ )
+        poDS->SetBand( i, new HDF4ImageRasterBand( poDS, i,
+                                    poDS->GetDataType( poDS->iNumType ) ) );
 
     return( poDS );
 }
@@ -2251,314 +2280,6 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
 }
 
 /************************************************************************/
-/*                      HDF4ImageCreateCopy()                           */
-/************************************************************************/
-
-static GDALDataset *
-HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                    int bStrict, char ** papszOptions, 
-                    GDALProgressFunc pfnProgress, void * pProgressData )
-
-{
-    int  nBands = poSrcDS->GetRasterCount();
-    int  nXSize = poSrcDS->GetRasterXSize();
-    int  nYSize = poSrcDS->GetRasterYSize();
-
-    if( !pfnProgress( 0.0, NULL, pProgressData ) )
-        return NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Choose rank for the created dataset. We will write 3D dataset   */
-/*      by default (if all bands has equal bit depths) and set of       */
-/*      2D datasets by user request.                                    */
-/* -------------------------------------------------------------------- */
-    int32           iRank = 3;
-    int             iBand;
-    GDALRasterBand  *poBand;
-    GDALDataType    eType;
-
-    if ( CSLFetchNameValue( papszOptions, "RANK" ) != NULL &&
-         EQUAL( CSLFetchNameValue( papszOptions, "RANK" ), "2" ) )
-        iRank = 2;
-
-    if ( iRank == 3 )
-    {
-        iBand = 1;
-        poBand = poSrcDS->GetRasterBand( iBand );
-        eType = poBand->GetRasterDataType();
-        while( iBand <= nBands )
-        {
-            poBand = poSrcDS->GetRasterBand( iBand++ );
-            if ( eType != poBand->GetRasterDataType() )
-            {
-                CPLDebug("HDF4Image", "Can't create 3D SDS because of different"
-                         "band depths. Set of 2D SDSs will be created");
-                iRank = 2;
-                break;
-            }
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Do we need compression?                                         */
-/*      NOTE: current NCSA HDF library implementation do not allow      */
-/*            partial modification to a compressed datastream.          */
-/*            Disabled for a future times.                              */
-/* -------------------------------------------------------------------- */
-#if 0
-    int         iCompType = COMP_CODE_NONE; // Without compression by default
-    comp_info   sCompInfo;
-    
-    if ( CSLFetchNameValue( papszOptions, "COMPRESS" ) != NULL )
-    {
-        if ( EQUAL( CSLFetchNameValue( papszOptions, "COMPRESS" ), "RLE" ) )
-        {
-            iCompType = COMP_CODE_RLE;
-        }
-        else if ( EQUAL( CSLFetchNameValue( papszOptions, "COMPRESS" ), "HUFFMAN" ) )
-        {
-            iCompType = COMP_CODE_SKPHUFF;
-            sCompInfo.skphuff.skp_size = 1;
-        }
-        else if ( EQUAL( CSLFetchNameValue( papszOptions, "COMPRESS" ), "DEFLATE" ) )
-        {
-            iCompType = COMP_CODE_DEFLATE;
-            sCompInfo.deflate.level = 9;
-        }
-    }
-#endif
-
-/* -------------------------------------------------------------------- */
-/*      Create the dataset.                                             */
-/* -------------------------------------------------------------------- */
-    int32           hSD, iSDS;
-    int32           iStart[MAX_NC_DIMS], iEdges[MAX_NC_DIMS];
-    int             iXDim = 1, iYDim = 0, iBandDim = 2;
-    int             nBlockXSize, nBlockYSize;
-    int             iXBlock, iYBlock;
-    int             nXBlocks, nYBlocks;
-    CPLErr          eErr = CE_None;
-    GByte           *pabyData;
-    const char      *pszSDSName;
-    int32           aiDimSizes[MAX_VAR_DIMS];
-
-    hSD = SDstart( pszFilename, DFACC_CREATE );
-    aiDimSizes[iXDim] = nXSize;
-    aiDimSizes[iYDim] = nYSize;
-    aiDimSizes[iBandDim] = nBands;
-
-    if ( iRank == 2 )
-    {
-        for( iBand = 0; iBand < nBands; iBand++ )
-        {
-            poBand = poSrcDS->GetRasterBand( iBand + 1 );
-            poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
-            nXBlocks = (poBand->GetXSize() + nBlockXSize - 1) / nBlockXSize;
-            nYBlocks = (poBand->GetYSize() + nBlockYSize - 1) / nBlockYSize;
-            eType = poBand->GetRasterDataType();
-            pabyData = (GByte *) CPLMalloc( nBlockXSize * nBlockYSize *
-                                            GDALGetDataTypeSize( eType ) / 8 );
-            pszSDSName = poBand->GetDescription();
-            
-            switch ( eType )
-            {
-                case GDT_Float64:
-                iSDS = SDcreate( hSD, pszSDSName, DFNT_FLOAT64, iRank, aiDimSizes );
-                break;
-                case GDT_Float32:
-                iSDS = SDcreate( hSD, pszSDSName, DFNT_FLOAT32, iRank, aiDimSizes );
-                break;
-                case GDT_UInt32:
-                iSDS = SDcreate( hSD, pszSDSName, DFNT_UINT32, iRank, aiDimSizes );
-                break;
-                case GDT_UInt16:
-                iSDS = SDcreate( hSD, pszSDSName, DFNT_UINT16, iRank, aiDimSizes );
-                break;
-                case GDT_Int32:
-                iSDS = SDcreate( hSD, pszSDSName, DFNT_INT32, iRank, aiDimSizes );
-                break;
-                case GDT_Int16:
-                iSDS = SDcreate( hSD, pszSDSName, DFNT_INT16, iRank, aiDimSizes );
-                break;
-                case GDT_Byte:
-                default:
-                iSDS = SDcreate( hSD, pszSDSName, DFNT_UINT8, iRank, aiDimSizes );
-                break;
-            }
-#if 0
-            if ( iCompType != COMP_CODE_NONE )
-            {
-                if ( iCompType != COMP_CODE_SKPHUFF )
-                    sCompInfo.skphuff.skp_size =
-                        GDALGetDataTypeSize( eType ) / 8;
-                SDsetcompress( iSDS, iCompType, &sCompInfo ); 
-            }
-#endif
-            
-            for( iYBlock = 0; iYBlock < nYBlocks; iYBlock++ )
-            {
-                for( iXBlock = 0; iXBlock < nXBlocks; iXBlock++ )
-                {
-                    eErr = poBand->ReadBlock( iXBlock, iYBlock, pabyData );
-                
-                    iStart[iYDim] = iYBlock * nBlockYSize;
-                    iEdges[iYDim] = nBlockYSize;
-                
-                    iStart[iXDim] = iXBlock * nBlockXSize;
-                    iEdges[iXDim] = nBlockXSize;
-                    
-                    SDwritedata( iSDS, iStart, NULL, iEdges, (VOIDP)pabyData );
-                }
-                
-                if( eErr == CE_None &&
-                !pfnProgress( (iYBlock + 1 + iBand * nYBlocks) / ((double) nYBlocks * nBands),
-                             NULL, pProgressData) )
-                {
-                    eErr = CE_Failure;
-                    CPLError( CE_Failure, CPLE_UserInterrupt, 
-                          "User terminated CreateCopy()" );
-                }
-            }
-            
-            CPLFree( pabyData );
-        }
-    }
-    else if ( iRank == 3 )
-    {
-        pszSDSName = "3-dimensional Scientific Dataset";
-        switch ( eType )
-        {
-            case GDT_Float64:
-            iSDS = SDcreate( hSD, pszSDSName, DFNT_FLOAT64, iRank, aiDimSizes );
-            break;
-            case GDT_Float32:
-            iSDS = SDcreate( hSD, pszSDSName, DFNT_FLOAT32, iRank, aiDimSizes );
-            break;
-            case GDT_UInt32:
-            iSDS = SDcreate( hSD, pszSDSName, DFNT_UINT32, iRank, aiDimSizes );
-            break;
-            case GDT_UInt16:
-            iSDS = SDcreate( hSD, pszSDSName, DFNT_UINT16, iRank, aiDimSizes );
-            break;
-            case GDT_Int32:
-            iSDS = SDcreate( hSD, pszSDSName, DFNT_INT32, iRank, aiDimSizes );
-            break;
-            case GDT_Int16:
-            iSDS = SDcreate( hSD, pszSDSName, DFNT_INT16, iRank, aiDimSizes );
-            break;
-            case GDT_Byte:
-            default:
-            iSDS = SDcreate( hSD, pszSDSName, DFNT_INT8, iRank, aiDimSizes );
-            break;
-        }
-#if 0
-        if ( iCompType != COMP_CODE_NONE )
-            if ( iCompType != COMP_CODE_SKPHUFF )
-                sCompInfo.skphuff.skp_size = GDALGetDataTypeSize( eType ) / 8;
-            SDsetcompress( iSDS, iCompType, &sCompInfo );
-#endif
-
-        for( iBand = 0; iBand < nBands; iBand++ )
-        {
-            poBand = poSrcDS->GetRasterBand( iBand + 1 );
-            poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
-            nXBlocks = (poBand->GetXSize() + nBlockXSize - 1) / nBlockXSize;
-            nYBlocks = (poBand->GetYSize() + nBlockYSize - 1) / nBlockYSize;
-            pabyData = (GByte *) CPLMalloc( nBlockXSize * nBlockYSize *
-                                            GDALGetDataTypeSize( eType ) / 8 );
-            
-            for( iYBlock = 0; iYBlock < nYBlocks; iYBlock++ )
-            {
-                for( iXBlock = 0; iXBlock < nXBlocks; iXBlock++ )
-                {
-                    eErr = poBand->ReadBlock( iXBlock, iYBlock, pabyData );
-                    
-                    iStart[iBandDim] = iBand;
-                    iEdges[iBandDim] = 1;
-                
-                    iStart[iYDim] = iYBlock * nBlockYSize;
-                    iEdges[iYDim] = nBlockYSize;
-                
-                    iStart[iXDim] = iXBlock * nBlockXSize;
-                    iEdges[iXDim] = nBlockXSize;
-                    
-                    SDwritedata( iSDS, iStart, NULL, iEdges, (VOIDP)pabyData );
-                }
-                
-                if( eErr == CE_None &&
-                !pfnProgress( (iYBlock + 1 + iBand * nYBlocks) /
-                              ((double) nYBlocks * nBands),
-                             NULL, pProgressData) )
-                {
-                    eErr = CE_Failure;
-                    CPLError( CE_Failure, CPLE_UserInterrupt, 
-                          "User terminated CreateCopy()" );
-                }
-            }
-            
-            CPLFree( pabyData );
-        }
-    }
-    else                                            // Should never happen
-        return NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Set global attributes.                                          */
-/* -------------------------------------------------------------------- */
-    const char  *pszValue;
-    char        *pszKey;
-    char        **papszMetadata;
-    double      adfGeoTransform[6];
-    
-    SDsetattr( hSD, "Signature", DFNT_CHAR8, strlen(pszGDALSignature) + 1,
-               pszGDALSignature );
-
-    pszValue = poSrcDS->GetProjectionRef();
-    if ( pszValue != NULL && !EQUAL( pszValue, "" ) )
-        SDsetattr( hSD, "Projection", DFNT_CHAR8, strlen(pszValue) + 1, pszValue );
-
-    pszValue = poSrcDS->GetGCPProjection();
-    if ( pszValue != NULL && !EQUAL( pszValue, "" ) )
-        SDsetattr( hSD, "GCPProjection", DFNT_CHAR8, strlen(pszValue) + 1, pszValue );
-
-    poSrcDS->GetGeoTransform( adfGeoTransform );
-    pszValue = CPLSPrintf( "%f, %f, %f, %f, %f, %f",
-                          adfGeoTransform[0], adfGeoTransform[1],
-                          adfGeoTransform[2], adfGeoTransform[3],
-                          adfGeoTransform[4], adfGeoTransform[5] );
-    SDsetattr( hSD, "TransformationMatrix", DFNT_CHAR8, strlen(pszValue) + 1, pszValue );
-    
-    for( iBand = 1; iBand <= nBands; iBand++ )
-    {
-        poBand = poSrcDS->GetRasterBand( iBand );
-        pszValue = poBand->GetDescription();
-        pszKey = (char *)CPLSPrintf( "BandDesc%d", iBand );
-        if ( pszValue != NULL && !EQUAL( pszValue, "" ) )
-            SDsetattr( hSD, pszKey, DFNT_CHAR8, strlen(pszValue) + 1, pszValue );
-    }
-
-    // Store all metadata from source dataset as HDF attributes
-    papszMetadata = poSrcDS->GetMetadata();
-    if ( papszMetadata )
-    {
-        while ( *papszMetadata )
-        {
-            pszValue = CPLParseNameValue( *papszMetadata++, &pszKey );
-            SDsetattr( hSD, pszKey, DFNT_CHAR8, strlen(pszValue) + 1, pszValue );
-            CPLFree( pszKey );
-        }
-    }
-    
-/* -------------------------------------------------------------------- */
-/*      That's all, folks.                                              */
-/* -------------------------------------------------------------------- */
-    iSDS = SDendaccess( iSDS );
-    hSD = SDend( hSD );
-    
-    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
-}
-
-/************************************************************************/
 /*                        GDALRegister_HDF4Image()                      */
 /************************************************************************/
 
@@ -2585,7 +2306,6 @@ void GDALRegister_HDF4Image()
 
         poDriver->pfnOpen = HDF4ImageDataset::Open;
         poDriver->pfnCreate = HDF4ImageDataset::Create;
-        //poDriver->pfnCreateCopy = HDF4ImageCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }

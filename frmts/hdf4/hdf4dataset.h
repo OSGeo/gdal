@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.12  2003/06/26 20:42:31  dron
+ * Support for Hyperion Level 1 data product.
+ *
  * Revision 1.11  2003/06/25 08:26:18  dron
  * Support for Aster Level 1A/1B/2 products.
  *
@@ -90,6 +93,7 @@ typedef enum			// Types of data products:
     MODIS_L2,                   // MODIS Level 2
     MODIS_L3,                   // MODIS Level 3
     MODIS_UNK,
+    HYPERION_L1,                // Hyperion L1 Data Product
     UNKNOWN
 } HDF4Datatype;
 
