@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/05/20 19:13:31  warmerda
+ * reorganize default file search rules, use GDAL_DATA and CPLGetConfigOptions
+ *
  * Revision 1.6  2002/11/30 16:56:31  warmerda
  * fixed up to support quoted newlines properly
  *
@@ -890,22 +893,39 @@ const char * CSVFilename( const char *pszBasename )
     if( pfnCSVFilenameHook == NULL )
     {
         FILE    *fp = NULL;
-        const char *pszResult = CPLFindFile( "epsg_csv", pszBasename );
+        const char *pszResult;
+        static bFinderInitialized = FALSE;
+
+        pszResult = CPLFindFile( "epsg_csv", pszBasename );
 
         if( pszResult != NULL )
             return pszResult;
 
-        if( getenv("GEOTIFF_CSV") != NULL )
+        if( !bFinderInitialized )
         {
-            sprintf( szPath, "%s/%s", getenv("GEOTIFF_CSV"), pszBasename );
+            bFinderInitialized = TRUE;
+
+            if( CPLGetConfigOption("GEOTIFF_CSV",NULL) != NULL )
+                CPLPushFinderLocation( CPLGetConfigOption("GEOTIFF_CSV",NULL));
+            
+            if( CPLGetConfigOption("GDAL_DATA",NULL) != NULL )
+                CPLPushFinderLocation( CPLGetConfigOption("GDAL_DATA",NULL) );
+
+            pszResult = CPLFindFile( "epsg_csv", pszBasename );
+
+            if( pszResult != NULL )
+                return pszResult;
         }
-        else if( (fp = fopen( "csv/horiz_cs.csv", "rt" )) != NULL )
+            
+        if( (fp = fopen( "csv/horiz_cs.csv", "rt" )) != NULL )
         {
             sprintf( szPath, "csv/%s", pszBasename );
         }
         else
         {
             sprintf( szPath, "/usr/local/share/epsg_csv/%s", pszBasename );
+            if( (fp = fopen( szPath, "rt" )) == NULL )
+                strcpy( szPath, pszBasename );
         }
 
         if( fp != NULL )
