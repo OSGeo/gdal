@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/17 14:39:13  warmerda
+ * Added ICurve, and some other IGeometry and related methods.
+ *
  * Revision 1.3  1999/05/14 13:30:59  warmerda
  * added IsEmpty() and IsSimple()
  *
@@ -84,7 +87,7 @@ typedef int	OGRBoolean;
 class OGRGeometry
 {
   public:
-    // standard
+    // standard IGeometry
     virtual int	getDimension() = 0;
     virtual int	getCoordinateDimension() = 0;
     virtual OGRBoolean	IsEmpty() { return 0; } 
@@ -189,20 +192,29 @@ class OGRCurve : public OGRGeometry
     		OGRCurve();
     virtual     ~OGRCurve();
 
+    // ICurve methods
+    virtual double get_Length();
+    virtual void StartPoint(OGRPoint *);
+    virtual void EndPoint(OGRPoint *);
+    virtual int  get_IsClosed();
+    virtual void Value( double, OGRPoint * );
+
     // IWks Interface
     virtual int	WkbSize();
     virtual OGRErr importFromWkb( unsigned char *, int = -1 );
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * );
-    
+
+    // IGeometry
     virtual int	getDimension();
     virtual int	getCoordinateDimension();
 
+    // ILineString methods
     int		getNumPoints() { return nPointCount; }
-
     void	getPoint( int, OGRPoint * );
     double	getX( int i ) { return paoPoints[i].x; }
     double	getY( int i ) { return paoPoints[i].y; }
 
+    // non-standard
     void	setNumPoints( int );
     void	setPoint( int, OGRPoint * );
     void	setPoint( int, double, double );
@@ -257,9 +269,21 @@ class OGRLinearRing : public OGRLineString
 };
 
 /************************************************************************/
+/*                              OGRSurface                              */
+/************************************************************************/
+
+class OGRSurface : public OGRGeometry
+{
+  public:
+    virtual double      get_Area() = 0;
+    virtual int         Centroid( OGRPoint * ) = 0;
+    virtual int         PointOnSurface( OGRPoint * ) = 0;
+};
+
+/************************************************************************/
 /*                              OGRPolygon                              */
 /************************************************************************/
-class OGRPolygon : public OGRGeometry
+class OGRPolygon : public OGRSurface
 {
     int		nRingCount;
     OGRLinearRing **papoRings;
@@ -272,6 +296,11 @@ class OGRPolygon : public OGRGeometry
     
     virtual void dumpReadable( FILE *, const char * );
 
+    // ISurface Interface
+    virtual double      get_Area();
+    virtual int         Centroid( OGRPoint * );
+    virtual int         PointOnSurface( OGRPoint * );
+    
     // IWks Interface
     virtual int	WkbSize();
     virtual OGRErr importFromWkb( unsigned char *, int = -1 );
