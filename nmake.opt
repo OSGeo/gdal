@@ -11,6 +11,9 @@ PY_INST_DIR = c:\usr\pymod
 # Location of MS Data Access SDK 
 MSDASDK =	F:\MSDASDK
 
+VERSION =	11
+GDAL_DLL =	gdal$(VERSION).dll
+
 INC	=	-I$(GDAL_ROOT)\port -I$(GDAL_ROOT)\ogr -I$(GDAL_ROOT)\core
 OPTFLAGS=	/nologo /Zi /Fd$(GDAL_ROOT)\gdal.pdb
 

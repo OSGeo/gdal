@@ -1,13 +1,12 @@
-VERSION =	0_2
 GDAL_ROOT = .
 
-LIBOBJ = port\*.obj core\*.obj frmts\o\*.obj ogr\ogr*.obj
+LIBOBJ = port\*.obj core\*.obj frmts\o\*.obj ogr\ogr.lib
 
 DISTDIR	=	gdal_$(VERSION)
 
 !INCLUDE nmake.opt
 
-default:	port_dir ogr_min core_dir frmts_dir gdal.dll apps_dir
+default:	port_dir ogr_min core_dir frmts_dir $(GDAL_DLL) apps_dir
 
 lib:
 	if exist gdal.lib del gdal.lib
@@ -72,11 +71,12 @@ lib_dist:	default
 	cp gdal.lib port/*.h core/*.h ogr/*.h $(DISTDIR)
 	zip -r $(DISTDIR).zip $(DISTDIR)
 
-gdal.dll:	lib
-	link /dll $(LIBOBJ) /out:gdal.dll /implib:gdal_i.lib
+$(GDAL_DLL):	lib
+	link /dll /INCLUDE:_OCTNewCoordinateTransformation \
+		$(LIBOBJ) /out:$(GDAL_DLL) /implib:gdal_i.lib
 
-install: gdal.dll apps_dir
-	copy gdal.dll $(BINDIR)
+install: $(GDAL_DLL) apps_dir
+	copy $(GDAL_DLL) $(BINDIR)
 	cd apps
 	$(MAKE) /f makefile.vc install
 	cd ..\pymod
