@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/12/08 21:58:32  warmerda
+ * save header
+ *
  * Revision 1.1  2001/12/08 04:35:16  warmerda
  * New
  *
@@ -48,6 +51,8 @@ typedef struct {
 
     int         nPCTSize;
     unsigned char *pabyPCT;
+
+    char        **papszHeader;
 
     int		*panLineOffset;
 
