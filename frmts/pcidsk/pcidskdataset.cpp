@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/10/29 16:38:56  warmerda
+ * set default extension
+ *
  * Revision 1.7  2003/10/17 07:07:33  dron
  * Use locale selection option in CPLScanDouble()/CPLPrintDouble().
  *
@@ -1365,6 +1368,7 @@ void GDALRegister_PCIDSK()
                                    "PCIDSK Database File" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "frmt_pcidsk.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pix" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte UInt16 Int16 Float32" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
