@@ -1,5 +1,5 @@
 
-OBJ	=	ogrsfdriverregistrar.obj ogrlayer.obj \
+OBJ	=	ogrsfdriverregistrar.obj ogrlayer.obj ogr_gensql.obj \
 		ogrdatasource.obj ogrsfdriver.obj ogrregisterall.obj
 
 
