@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.12  2004/03/10 18:07:00  warmerda
+ * Avoid double/float casting warning.
+ *
  * Revision 1.11  2004/02/24 21:43:39  warmerda
  * apply elevation offset as well as fVRes
  *
@@ -245,7 +248,8 @@ CPLErr USGSDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 /* leave in output buffer as nodata */;
             else
             {
-                float fComputedElev = nElev * poGDS->fVRes + dfElevOffset;
+                float fComputedElev = 
+                    (float)(nElev * poGDS->fVRes + dfElevOffset);
 
                 if( GetRasterDataType() == GDT_Int16 )
                 {
