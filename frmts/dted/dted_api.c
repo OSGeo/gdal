@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/02/15 18:26:29  warmerda
+ * fixed error code
+ *
  * Revision 1.8  2002/01/28 18:17:33  warmerda
  * fixed setting of nUHLOffset
  *
@@ -134,7 +137,7 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
 #ifndef AVOID_CPL
         if( !bTestOpen )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed,
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed to open file %s.",
                       pszFilename );
         }
