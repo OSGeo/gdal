@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/01/06 14:39:30  warmerda
+ * Improved error reporting.
+ *
  * Revision 1.2  1999/08/13 03:27:14  warmerda
  * fixed byte order handling
  *
@@ -293,8 +296,8 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
               "Attempt to create PCI .Aux labelled dataset with an illegal\n"
-              "data type (%d).\n",
-              eType );
+              "data type (%s).\n",
+              GDALGetDataTypeName(eType) );
 
         return NULL;
     }
