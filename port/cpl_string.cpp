@@ -28,7 +28,23 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
+ * Security Audit 2003/03/28 warmerda:
+ *   Completed security audit.  I believe that this module may be safely used 
+ *   to parse tokenize arbitrary input strings, assemble arbitrary sets of
+ *   names values into string lists, unescape and escape text even if provided
+ *   by a potentially hostile source.   
+ *
+ *   CPLSPrintf() and CSLAppendPrintf() may not be safely invoked on 
+ *   arbitrary length inputs since it has a fixed size output buffer on system 
+ *   without vsnprintf(). 
+ *
  * $Log$
+ * Revision 1.30  2003/03/28 05:29:53  warmerda
+ * Fixed buffer overflow risk in escaping code (for XML method).  Avoid
+ * use of CPLSPrintf() for name/value list assembly to avoid risk with long
+ * key names or values.  Use vsnprintf() in CPLSPrintf() on platforms where it
+ * is available.  Security audit complete.
+ *
  * Revision 1.29  2003/03/27 21:32:08  warmerda
  * Fixed bug with escaped spaces.
  *
@@ -294,7 +310,7 @@ char **CSLLoad(const char *pszFname)
     {
         /* Unable to open file */
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "CSLLoad(%s): %s", pszFname, strerror(errno));
+                 "CSLLoad(%s): %.500s", pszFname, strerror(errno));
     }
 
     return papszStrList;
@@ -698,7 +714,7 @@ char ** CSLTokenizeString2( const char * pszString,
                 pszString++;
             }
 
-            if( nTokenLen >= nTokenMax-2 )
+            if( nTokenLen >= nTokenMax-3 )
             {
                 nTokenMax = nTokenMax * 2 + 10;
                 pszToken = (char *) CPLRealloc( pszToken, nTokenMax );
@@ -755,7 +771,12 @@ const char *CPLSPrintf(char *fmt, ...)
     va_list args;
 
     va_start(args, fmt);
+#if defined(HAVE_VSNPRINTF)
+    vsnprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], CPLSPrintf_BUF_SIZE-1,
+              fmt, args);
+#else
     vsprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], fmt, args);
+#endif
     va_end(args);
     
    int nCurrent = gnCPLSPrintfBuffer;
@@ -778,7 +799,12 @@ char **CSLAppendPrintf(char **papszStrList, char *fmt, ...)
     va_list args;
 
     va_start(args, fmt);
+#if defined(HAVE_VSNPRINTF)
+    vsnprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], CPLSPrintf_BUF_SIZE-1,
+              fmt, args);
+#else
     vsprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], fmt, args);
+#endif
     va_end(args);
 
     int nCurrent = gnCPLSPrintfBuffer;
@@ -916,7 +942,6 @@ const char *CPLParseNameValue(const char *pszNameValue, char **ppszKey )
 
             return pszValue;
         }
-
     }
 
     return NULL;
@@ -978,14 +1003,17 @@ char **CSLFetchNameValueMultiple(char **papszStrList, const char *pszName)
 char **CSLAddNameValue(char **papszStrList, 
                     const char *pszName, const char *pszValue)
 {
-    const char *pszLine;
+    char *pszLine;
 
     if (pszName == NULL || pszValue==NULL)
         return papszStrList;
 
-    pszLine = CPLSPrintf("%s=%s", pszName, pszValue);
+    pszLine = (char *) CPLMalloc(strlen(pszName)+strlen(pszValue)+2);
+    sprintf( pszLine, "%s=%s", pszName, pszValue );
+    papszStrList = CSLAddString(papszStrList, pszLine);
+    CPLFree( pszLine );
 
-    return CSLAddString(papszStrList, pszLine);
+    return papszStrList;
 }
 
 /************************************************************************/
@@ -1034,10 +1062,9 @@ char **CSLSetNameValue(char **papszList,
             char cSep;
             cSep = (*papszPtr)[nLen];
 
-            free(*papszPtr);
-            *papszPtr = CPLStrdup(CPLSPrintf("%s%c%s", pszName,
-                                                       cSep, pszValue));
-
+            CPLFree(*papszPtr);
+            *papszPtr = (char *) CPLMalloc(strlen(pszName)+strlen(pszValue)+2);
+            sprintf( *papszPtr, "%s%c%s", pszName, cSep, pszValue );
             return papszList;
         }
         papszPtr++;
@@ -1045,8 +1072,7 @@ char **CSLSetNameValue(char **papszList,
 
     /* The name does not exist yet... create a new entry
      */
-    return CSLAddString(papszList, 
-                           CPLSPrintf("%s=%s", pszName, pszValue));
+    return CSLAddNameValue(papszList, pszName, pszValue);
 }
 
 /************************************************************************/
@@ -1143,7 +1169,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
     if( nLength == -1 )
         nLength = strlen(pszInput);
 
-    pszOutput = (char *) CPLMalloc(nLength * 5 + 50);
+    pszOutput = (char *) CPLMalloc(nLength * 6 + 1);
     
     if( nScheme == CPLES_BackslashQuotable )
     {
@@ -1182,11 +1208,11 @@ char *CPLEscapeString( const char *pszInput, int nLength,
                 || (pszInput[iIn] >= '0' && pszInput[iIn] <= '9')
                 || pszInput[iIn] == '_' )
             {
-                pszOutput[iOut++] = pszInput[iIn++];
+                pszOutput[iOut++] = pszInput[iIn];
             }
             else
             {
-                sprintf( pszOutput, "%%%02X", pszInput[iIn++] );
+                sprintf( pszOutput, "%%%02X", pszInput[iIn] );
                 iOut += 3;
             }
         }
@@ -1236,7 +1262,10 @@ char *CPLEscapeString( const char *pszInput, int nLength,
     }
     else
     {
-        strcpy( pszOutput, "Unrecognised Escaping Scheme" );
+        pszOutput[0] = '\0';
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Undefined escaping scheme (%d) in CPLEscapeString()",
+                  nScheme );
     }
 
     pszShortOutput = CPLStrdup( pszOutput );
@@ -1309,7 +1338,9 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
     {
         for( iIn = 0; pszInput[iIn] != '\0'; iIn++ )
         {
-            if( pszInput[iIn] == '%' )
+            if( pszInput[iIn] == '%' 
+                && pszInput[iIn+1] != '\0' 
+                && pszInput[iIn+2] != '\0' )
             {
                 int nHexChar = 0;
 
@@ -1319,6 +1350,10 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
                     nHexChar += 16 * (pszInput[iIn+1] - 'a' + 10);
                 else if( pszInput[iIn+1] >= '0' && pszInput[iIn+1] <= '9' )
                     nHexChar += 16 * (pszInput[iIn+1] - '0');
+                else
+                    CPLDebug( "CPL", 
+                              "Error unescaping CPLES_URL text, percent not "
+                              "followed by two hex digits." );
                     
                 if( pszInput[iIn+2] >= 'A' && pszInput[iIn+2] <= 'F' )
                     nHexChar += pszInput[iIn+2] - 'A' + 10;
@@ -1326,6 +1361,10 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
                     nHexChar += pszInput[iIn+2] - 'a' + 10;
                 else if( pszInput[iIn+2] >= '0' && pszInput[iIn+2] <= '9' )
                     nHexChar += pszInput[iIn+2] - '0';
+                else
+                    CPLDebug( "CPL", 
+                              "Error unescaping CPLES_URL text, percent not "
+                              "followed by two hex digits." );
 
                 pszOutput[iOut++] = nHexChar;
                 iIn += 2;
@@ -1339,7 +1378,6 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
                 pszOutput[iOut++] = pszInput[iIn];
             }
         }
-        
     }
     else /* if( nScheme == CPLES_BackslashQuoteable ) */
     {
@@ -1350,6 +1388,8 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
                 iIn++;
                 if( pszInput[iIn] == 'n' )
                     pszOutput[iOut++] = '\n';
+                else if( pszInput[iIn] == '0' )
+                    pszOutput[iOut++] = '\0';
                 else 
                     pszOutput[iOut++] = pszInput[iIn];
             }
