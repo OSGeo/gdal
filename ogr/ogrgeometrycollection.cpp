@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/31 14:59:06  warmerda
+ * added documentation
+ *
  * Revision 1.1  1999/05/23 05:34:36  warmerda
  * New
  *
@@ -39,6 +42,10 @@
 /************************************************************************/
 /*                       OGRGeometryCollection()                        */
 /************************************************************************/
+
+/**
+ * Create an empty geometry collection.
+ */
 
 OGRGeometryCollection::OGRGeometryCollection()
 
@@ -105,6 +112,9 @@ int OGRGeometryCollection::getDimension()
 
 /************************************************************************/
 /*                       getCoordinateDimension()                       */
+/*                                                                      */
+/*      Returning 2 is a dubious solution.  This should at least be     */
+/*      overridden by some of the subclasses.                           */
 /************************************************************************/
 
 int OGRGeometryCollection::getCoordinateDimension()
@@ -127,6 +137,15 @@ const char * OGRGeometryCollection::getGeometryName()
 /*                          getNumGeometries()                          */
 /************************************************************************/
 
+/**
+ * Fetch number of geometries in container.
+ *
+ * This method relates to the SFCOM IGeometryCollect::get_NumGeometries()
+ * method.
+ *
+ * @return count of children geometries.  May be zero.
+ */
+
 int OGRGeometryCollection::getNumGeometries()
 
 {
@@ -136,6 +155,21 @@ int OGRGeometryCollection::getNumGeometries()
 /************************************************************************/
 /*                           getGeometryRef()                           */
 /************************************************************************/
+
+/**
+ * Fetch geometry from container.
+ *
+ * This method returns a pointer to an geometry within the container.  The
+ * returned geometry remains owned by the container, and should not be
+ * modified.  The pointer is only valid untill the next change to the
+ * geometry container.  Use IGeometry::clone() to make a copy.
+ *
+ * This method relates to the SFCOM IGeometryCollection::get_Geometry() method.
+ *
+ * @param i the index of the geometry to fetch, between 0 and
+ *          getNumGeometries() - 1.
+ * @return pointer to requested geometry.
+ */
 
 OGRGeometry * OGRGeometryCollection::getGeometryRef( int i )
 
@@ -153,6 +187,21 @@ OGRGeometry * OGRGeometryCollection::getGeometryRef( int i )
 /*      override this to verify the type of the new geometry, and       */
 /*      then call this method to actually add it.                       */
 /************************************************************************/
+
+/**
+ * Add a geometry to the container.
+ *
+ * Some subclasses of OGRGeometryCollection restrict the types of geometry
+ * that can be added, and may return an error.  The passed geometry is cloned
+ * to make an internal copy.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param poNewGeom geometry to add to the container.
+ *
+ * @return OGRERR_NONE if successful, or OGRERR_UNSUPPORTED_GEOMETRY_TYPE if
+ * the geometry type is illegal for the type of geometry container.
+ */
 
 OGRErr OGRGeometryCollection::addGeometry( OGRGeometry * poNewGeom )
 

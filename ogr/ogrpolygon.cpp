@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/05/31 14:59:06  warmerda
+ * added documentation
+ *
  * Revision 1.4  1999/05/23 05:34:41  warmerda
  * added support for clone(), multipolygons and geometry collections
  *
@@ -46,8 +49,12 @@
 #include "ogr_p.h"
 
 /************************************************************************/
-/*                           OGRPolygon()                            */
+/*                             OGRPolygon()                             */
 /************************************************************************/
+
+/**
+ * Create an empty polygon.
+ */
 
 OGRPolygon::OGRPolygon()
 
@@ -57,7 +64,7 @@ OGRPolygon::OGRPolygon()
 }
 
 /************************************************************************/
-/*                           ~OGRPolygon()                           */
+/*                            ~OGRPolygon()                             */
 /************************************************************************/
 
 OGRPolygon::~OGRPolygon()
@@ -136,6 +143,20 @@ const char * OGRPolygon::getGeometryName()
 /*                          getExteriorRing()                           */
 /************************************************************************/
 
+/**
+ * Fetch reference to external polygon ring.
+ *
+ * Note that the returned ring pointer is to an internal data object of
+ * the OGRPolygon.  It should not be modified or deleted by the application,
+ * and the pointer is only valid till the polygon is next modified.  Use
+ * the OGRGeometry::clone() method to make a separate copy within the
+ * application.
+ *
+ * Relates to the SFCOM IPolygon::get_ExteriorRing() method.
+ *
+ * @return pointer to external ring.  May be NULL if the OGRPolygon is empty.
+ */
+
 OGRLinearRing *OGRPolygon::getExteriorRing()
 
 {
@@ -148,6 +169,15 @@ OGRLinearRing *OGRPolygon::getExteriorRing()
 /************************************************************************/
 /*                        getNumInteriorRings()                         */
 /************************************************************************/
+
+/**
+ * Fetch the number of internal rings.
+ *
+ * Relates to the SFCOM IPolygon::get_NumInteriorRings() method.
+ *
+ * @return count of internal rings, zero or more.
+ */
+
 
 int OGRPolygon::getNumInteriorRings()
 
@@ -162,6 +192,22 @@ int OGRPolygon::getNumInteriorRings()
 /*                          getInteriorRing()                           */
 /************************************************************************/
 
+/**
+ * Fetch reference to indicated internal ring.
+ *
+ * Note that the returned ring pointer is to an internal data object of
+ * the OGRPolygon.  It should not be modified or deleted by the application,
+ * and the pointer is only valid till the polygon is next modified.  Use
+ * the OGRGeometry::clone() method to make a separate copy within the
+ * application.
+ *
+ * Relates to the SFCOM IPolygon::get_InternalRing() method.
+ *
+ * @param iRing internal ring index from 0 to getNumInternalRings() - 1.
+ *
+ * @return pointer to external ring.  May be NULL if the OGRPolygon is empty.
+ */
+
 OGRLinearRing *OGRPolygon::getInteriorRing( int iRing )
 
 {
@@ -173,10 +219,20 @@ OGRLinearRing *OGRPolygon::getInteriorRing( int iRing )
 
 /************************************************************************/
 /*                              addRing()                               */
-/*                                                                      */
-/*      Add a ring to the polygon. Note we make a copy of the ring.     */
-/*      The original is still the responsibility of the caller.         */
 /************************************************************************/
+
+/**
+ * Add a ring to a polygon.
+ *
+ * If the polygon has no external ring (it is empty) this will be used as
+ * the external ring, otherwise it is used as an internal ring.  The passed
+ * OGRLinearRing remains the responsibility of the caller (an internal copy
+ * is made).
+ *
+ * This method has no SFCOM analog.
+ *
+ * @param poNewRing ring to be added to the polygon.
+ */
 
 void OGRPolygon::addRing( OGRLinearRing * poNewRing )
 
@@ -549,7 +605,7 @@ int OGRPolygon::Centroid( OGRPoint * )
 {
     // notdef ... not implemented yet.
     
-    return 0;
+    return OGRERR_FAILURE;
 }
 
 /************************************************************************/
@@ -561,5 +617,5 @@ int OGRPolygon::PointOnSurface( OGRPoint * )
 {
     // notdef ... not implemented yet.
     
-    return 0;
+    return OGRERR_FAILURE;
 }
