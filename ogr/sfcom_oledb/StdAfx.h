@@ -21,6 +21,17 @@
 extern CComModule _Module;
 #include <atlcom.h>
 #include <atlctl.h>
+
+#ifdef ATL_CPL_TRACE
+#ifdef ATLTRACE2
+#undef ATLTRACE2
+#endif
+
+#define ATLTRACE2    CPL_ATLTrace2
+#endif
+
+void CPL_ATLTrace2( DWORD category, UINT level, const char * format, ... );
+
 #include <atldb.h>
 
 //{{AFX_INSERT_LOCATION}}
