@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2004/09/16 18:23:42  fwarmerdam
+ * added airsar
+ *
  * Revision 1.27  2004/09/03 19:06:03  warmerda
  * added CPG driver
  *
@@ -170,6 +173,7 @@ void CPL_DLL GDALRegister_DODS(void);
 void CPL_DLL GDALRegister_netCDF(void);
 void CPL_DLL GDALRegister_LAN(void);
 void CPL_DLL GDALRegister_CPG(void);
+void CPL_DLL GDALRegister_AirSAR(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
