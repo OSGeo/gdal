@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2004/04/21 13:59:15  warmerda
+ * try to preserve PROJCS and GEOGCS names in citations
+ *
  * Revision 1.44  2004/03/18 09:58:07  dron
  * Use auxiliary functions from the libgeotiff instead of the ones from CPL.
  *
@@ -182,7 +185,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-char *  GTIFGetOGISDefn( GTIFDefn * );
+char *  GTIFGetOGISDefn( GTIF *, GTIFDefn * );
 int     GTIFSetFromOGISDefn( GTIF *, const char * );
 
 CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT, 
@@ -278,7 +281,7 @@ static void WKTMassageDatum( char ** ppszDatum )
 /*                          GTIFGetOGISDefn()                           */
 /************************************************************************/
 
-char *GTIFGetOGISDefn( GTIFDefn * psDefn )
+char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
 {
     OGRSpatialReference	oSRS;
@@ -293,19 +296,28 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
     if( psDefn->Model == ModelTypeProjected )
     {
+        char	*pszPCSName = "unnamed";
+        int         bNeedFree = FALSE;
+
         if( psDefn->PCS != KvUserDefined )
         {
-            char	*pszPCSName = "unnamed";
 
-            GTIFGetPCSInfo( psDefn->PCS, &pszPCSName, NULL, NULL, NULL );
+            if( GTIFGetPCSInfo( psDefn->PCS, &pszPCSName, NULL, NULL, NULL ) )
+                bNeedFree = TRUE;
+            
             oSRS.SetNode( "PROJCS", pszPCSName );
-            if( !EQUAL(pszPCSName,"unnamed") )
+            if( bNeedFree )
                 GTIFFreeMemory( pszPCSName );
 
             oSRS.SetAuthority( "PROJCS", "EPSG", psDefn->PCS );
         }
         else
-            oSRS.SetNode( "PROJCS", "unnamed" );
+        {
+            char szPCSName[200];
+            strcpy( szPCSName, "unnamed" );
+            GTIFKeyGet( hGTIF, GTCitationGeoKey, szPCSName, 0, sizeof(szPCSName) );
+            oSRS.SetNode( "PROJCS", szPCSName );
+        }
     }
     
 /* ==================================================================== */
@@ -317,7 +329,10 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
     char	*pszSpheroidName = NULL;
     char	*pszAngularUnits = NULL;
     double	dfInvFlattening, dfSemiMajor;
+    char        szGCSName[200];
     
+    if(GTIFKeyGet( hGTIF, GeogCitationGeoKey, szGCSName, 0, sizeof(szGCSName)))
+        pszGeogName = CPLStrdup(szGCSName);
     GTIFGetGCSInfo( psDefn->GCS, &pszGeogName, NULL, NULL, NULL );
     GTIFGetDatumInfo( psDefn->Datum, &pszDatumName, NULL );
     GTIFGetPMInfo( psDefn->PM, &pszPMName, NULL );
@@ -1460,10 +1475,22 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 /*      name.                                                           */
 /* -------------------------------------------------------------------- */
     if( poSRS->GetRoot() != NULL
-        && poSRS->GetRoot()->GetChild(0) != NULL )
+        && poSRS->GetRoot()->GetChild(0) != NULL 
+        && poSRS->IsProjected() )
     {
         GTIFKeySet( psGTIF, GTCitationGeoKey, TYPE_ASCII, 0, 
                     poSRS->GetRoot()->GetChild(0)->GetValue() );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to write a GCS citation.                                    */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode *poGCS = poSRS->GetAttrNode( "GEOGCS" );
+
+    if( poGCS != NULL && poGCS->GetChild(0) != NULL )
+    {
+        GTIFKeySet( psGTIF, GeogCitationGeoKey, TYPE_ASCII, 0, 
+                    poGCS->GetChild(0)->GetValue() );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1572,7 +1599,7 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
     hGTIF = GTIFNew(hTIFF);
 
     if( GTIFGetDefn( hGTIF, &sGTIFDefn ) )
-        *ppszWKT = GTIFGetOGISDefn( &sGTIFDefn );
+        *ppszWKT = GTIFGetOGISDefn( hGTIF, &sGTIFDefn );
     else
         *ppszWKT = NULL;
     
