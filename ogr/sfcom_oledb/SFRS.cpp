@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2001/05/31 02:55:49  warmerda
+ * formatting
+ *
  * Revision 1.19  2001/05/28 19:37:34  warmerda
  * lots of changes
  *
@@ -763,7 +766,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
 		
         colInfo.pwszName      = ::SysAllocString(A2OLE(poField->GetNameRef()));
         colInfo.iOrdinal	= i+2;
-        colInfo.dwFlags		= 0;
+        colInfo.dwFlags		= DBCOLUMNFLAGS_ISFIXEDLENGTH;
         colInfo.columnid.uName.pwszName = colInfo.pwszName;
         colInfo.cbOffset	= nOffset;
         colInfo.bScale		= ~0;
@@ -772,31 +775,33 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
         switch(poField->GetType())
         {
             case OFTInteger:
-                colInfo.ulColumnSize= 4;
-                colInfo.wType		= DBTYPE_I4;
+                colInfo.ulColumnSize = 4;
+                colInfo.wType	     = DBTYPE_I4;
                 nOffset += 8; // Make everything 8byte aligned
                 if( poField->GetWidth() != 0 )
                     colInfo.bPrecision = poField->GetWidth();
                 break;
 
             case OFTReal:
-                colInfo.wType		= DBTYPE_R8;
-                colInfo.ulColumnSize= 8;
+                colInfo.wType	     = DBTYPE_R8;
+                colInfo.ulColumnSize = 8;
                 nOffset += 8;
                 break;
 
             case OFTString:
-                colInfo.wType		 = DBTYPE_STR;
+                colInfo.wType	     = DBTYPE_STR;
                 colInfo.ulColumnSize = poField->GetWidth() == 0 ? STRING_BUFFER_SIZE-1 : poField->GetWidth();
+                colInfo.dwFlags      = 0;
                 nOffset += (((colInfo.ulColumnSize+1) / 8) + 1) * 8;
                 break;
 
             case OFTIntegerList:
             case OFTRealList:
             case OFTStringList:
-                colInfo.wType		 = DBTYPE_STR;
+                colInfo.wType	     = DBTYPE_STR;
                 colInfo.ulColumnSize = 80;
                 nOffset += (((colInfo.ulColumnSize+1) / 8) + 1) * 8;
+                colInfo.dwFlags      = 0;
                 break;
                 
             default:
