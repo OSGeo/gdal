@@ -307,7 +307,7 @@ int DGifGetImageDesc(GifFileType *GifFile)
     int i, BitsPerPixel;
     GifByteType Buf[3];
     GifFilePrivateType *Private = (GifFilePrivateType *) GifFile->Private;
-	SavedImage	*sp;
+    SavedImage	*sp;
 
     if (!IS_READABLE(Private)) {
 	/* This file was NOT open for reading: */
@@ -328,8 +328,10 @@ int DGifGetImageDesc(GifFileType *GifFile)
     GifFile->Image.Interlace = (Buf[0] & 0x40);
     if (Buf[0] & 0x80) {	    /* Does this image have local color map? */
 
-	if (GifFile->Image.ColorMap && GifFile->SavedImages == NULL)
+	if (GifFile->Image.ColorMap)
+        {
 	    FreeMapObject(GifFile->Image.ColorMap);
+        }
 
 	GifFile->Image.ColorMap = MakeMapObject(1 << BitsPerPixel, NULL);
     
@@ -346,11 +348,11 @@ int DGifGetImageDesc(GifFileType *GifFile)
     }
 
     if (GifFile->SavedImages) {
-	    if ((GifFile->SavedImages = (SavedImage *)realloc(GifFile->SavedImages,
-		     sizeof(SavedImage) * (GifFile->ImageCount + 1))) == NULL) {
-	        _GifError = D_GIF_ERR_NOT_ENOUGH_MEM;
-	        return GIF_ERROR;
-	    }
+        if ((GifFile->SavedImages = (SavedImage *)realloc(GifFile->SavedImages,
+                                                          sizeof(SavedImage) * (GifFile->ImageCount + 1))) == NULL) {
+            _GifError = D_GIF_ERR_NOT_ENOUGH_MEM;
+            return GIF_ERROR;
+        }
     } else {
         if ((GifFile->SavedImages =
              (SavedImage *)malloc(sizeof(SavedImage))) == NULL) {
@@ -359,26 +361,21 @@ int DGifGetImageDesc(GifFileType *GifFile)
         }
     }
 
-	sp = &GifFile->SavedImages[GifFile->ImageCount];
-	memcpy(&sp->ImageDesc, &GifFile->Image, sizeof(GifImageDesc));
+    sp = &GifFile->SavedImages[GifFile->ImageCount];
+    memcpy(&sp->ImageDesc, &GifFile->Image, sizeof(GifImageDesc));
     if (GifFile->Image.ColorMap != NULL) {
-	    sp->ImageDesc.ColorMap =
-               (ColorMapObject *)malloc(sizeof (ColorMapObject));
-	    memcpy(&sp->ImageDesc.ColorMap, &GifFile->Image.ColorMap,
-               sizeof(ColorMapObject));
-	    sp->ImageDesc.ColorMap->Colors =
-               (GifColorType *)malloc(sizeof (GifColorType));
-	    memcpy(&sp->ImageDesc.ColorMap->Colors,
-               &GifFile->Image.ColorMap->Colors, sizeof(GifColorType));
+        sp->ImageDesc.ColorMap = MakeMapObject( 
+            GifFile->Image.ColorMap->ColorCount, 
+            GifFile->Image.ColorMap->Colors );
     }
-	sp->RasterBits = (char *)NULL;
-	sp->ExtensionBlockCount = 0;
-	sp->ExtensionBlocks = (ExtensionBlock *)NULL;
+    sp->RasterBits = (char *)NULL;
+    sp->ExtensionBlockCount = 0;
+    sp->ExtensionBlocks = (ExtensionBlock *)NULL;
 
     GifFile->ImageCount++;
 
     Private->PixelCount = (long) GifFile->Image.Width *
-			    (long) GifFile->Image.Height;
+        (long) GifFile->Image.Height;
 
     DGifSetupDecompress(GifFile);  /* Reset decompress algorithm parameters. */
 
