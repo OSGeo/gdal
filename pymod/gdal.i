@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.92  2004/03/26 17:12:31  warmerda
+ * added fill wrapper
+ *
  * Revision 1.91  2004/03/23 15:34:37  warmerda
  * added field index check in GetField()
  *
@@ -656,6 +659,8 @@ void             GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
 int              GDALGetOverviewCount( GDALRasterBandH );
 GDALRasterBandH  GDALGetOverview( GDALRasterBandH, int );
 int              GDALFlushRasterCache( GDALRasterBandH );
+CPLErr           GDALFillRaster( GDALRasterBandH hBand, double dfRealValue,
+		                 double dfImaginaryValue );
 
 /* ==================================================================== */
 /*      Color tables.                                                   */

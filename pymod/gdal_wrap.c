@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.86  2004/03/23 15:34:37  warmerda
- * added field index check in GetField()
+ * Revision 1.87  2004/03/26 17:12:31  warmerda
+ * added fill wrapper
  *
  ************************************************************************/
 
@@ -4545,6 +4545,31 @@ static PyObject *_wrap_GDALFlushRasterCache(PyObject *self, PyObject *args) {
     }
     _result = (int )GDALFlushRasterCache(_arg0);
     _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALFillRaster(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    CPLErr * _result;
+    GDALRasterBandH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    char * _argc0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sdd:GDALFillRaster",&_argc0,&_arg1,&_arg2)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALFillRaster. Expected _GDALRasterBandH.");
+        return NULL;
+        }
+    }
+    _result = (CPLErr *) malloc(sizeof(CPLErr ));
+    *(_result) = GDALFillRaster(_arg0,_arg1,_arg2);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_CPLErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
     return _resultobj;
 }
 
@@ -10244,6 +10269,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALCloneColorTable", _wrap_GDALCloneColorTable, 1 },
 	 { "GDALDestroyColorTable", _wrap_GDALDestroyColorTable, 1 },
 	 { "GDALCreateColorTable", _wrap_GDALCreateColorTable, 1 },
+	 { "GDALFillRaster", _wrap_GDALFillRaster, 1 },
 	 { "GDALFlushRasterCache", _wrap_GDALFlushRasterCache, 1 },
 	 { "GDALGetOverview", _wrap_GDALGetOverview, 1 },
 	 { "GDALGetOverviewCount", _wrap_GDALGetOverviewCount, 1 },
