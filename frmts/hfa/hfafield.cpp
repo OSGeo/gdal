@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/01/28 18:03:07  warmerda
+ * Fixed some byte swapping problems, and problems with accessing data from
+ * the file that isn't on a word boundary.
+ *
  * Revision 1.3  1999/01/22 19:23:11  warmerda
  * Fixed bug with offset into arrays of structures.
  *
@@ -361,14 +365,17 @@ void *HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
 /* -------------------------------------------------------------------- */
     if( chPointer != '\0' )
     {
-        GUInt32		*panInfo = (GUInt32 *) pabyData;
+        GUInt32		nOffset;
 
-        if( panInfo[1] != (GUInt32) (nDataOffset + 8) )
+        memcpy( &nOffset, pabyData+4, 4 );
+        HFAStandard( 4, &nOffset );
+
+        if( nOffset != (GUInt32) (nDataOffset + 8) )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "%s.%s points at %d, not %d as expected\n",
                       pszFieldName, pszField ? pszField : "",
-                      panInfo[1], nDataOffset+8 );
+                      nOffset, nDataOffset+8 );
         }
         
         pabyData += 8;
@@ -549,7 +556,9 @@ int HFAField::GetInstBytes( GByte * pabyData )
 
     if( chPointer != '\0' )
     {
-        nCount = *((GUInt32 *) pabyData);
+        memcpy( &nCount, pabyData, 4 );
+        HFAStandard( 4, &nCount );
+
         pabyData += 8;
         nInstBytes += 8;
     }
@@ -593,7 +602,13 @@ int HFAField::GetInstCount( GByte * pabyData )
     if( chPointer == '\0' )
         return nItemCount;
     else
-        return panInfo[0];
+    {
+        GInt32 nCount;
+
+        memcpy( &nCount, panInfo+0, 4 );
+        HFAStandard( 4, &nCount );
+        return nCount;
+    }
 }
 
 /************************************************************************/
