@@ -7,6 +7,7 @@ SUBDIRS-yes	:= generic shape ntf sdts tiger s57 mitab dgn gml avc rec mem \
 SUBDIRS-$(HAVE_OGDI)	+= ogdi
 SUBDIRS-$(HAVE_OCI)	+= oci
 SUBDIRS-$(HAVE_OGR_PG)	+= pg
+SUBDIRS-$(HAVE_MYSQL)	+= mysql
 SUBDIRS-$(HAVE_FME)	+= fme
 SUBDIRS-$(HAVE_DODS)	+= dods
 SUBDIRS-$(ODBC_SETTING)	+= odbc
