@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/01/30 18:27:25  gwalter
+ * Fixed bug in tile sizing.
+ *
  * Revision 1.13  2004/01/29 23:35:22  gwalter
  * Add a few more metadata fields, make sure that
  * nodata value is recognized.
@@ -375,11 +378,11 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     int nLevel;
 
-    if( poSrcDS->GetRasterXSize() == 121 )
+    if( poSrcDS->GetRasterYSize() == 121 )
         nLevel = 0;
-    else if( poSrcDS->GetRasterXSize() == 1201 )
+    else if( poSrcDS->GetRasterYSize() == 1201 )
         nLevel = 1;
-    else if( poSrcDS->GetRasterXSize() == 3601 )
+    else if( poSrcDS->GetRasterYSize() == 3601 )
         nLevel = 2;
     else
     {

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2004/01/30 18:27:25  gwalter
+ * Fixed bug in tile sizing.
+ *
  * Revision 1.9  2004/01/29 23:35:22  gwalter
  * Add a few more metadata fields, make sure that
  * nodata value is recognized.
@@ -170,13 +173,13 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
     }
 
     if( ABS(nLLOriginLat) >= 80 )
-        nYSize = (nYSize - 1) / 6 + 1;
+        nXSize = (nXSize - 1) / 6 + 1;
     else if( ABS(nLLOriginLat) >= 75 )
-        nYSize = (nYSize - 1) / 4 + 1;
+        nXSize = (nXSize - 1) / 4 + 1;
     else if( ABS(nLLOriginLat) >= 70 )
-        nYSize = (nYSize - 1) / 3 + 1;
+        nXSize = (nXSize - 1) / 3 + 1;
     else if( ABS(nLLOriginLat) >= 50 )
-        nYSize = (nYSize - 1) / 2 + 1;
+        nXSize = (nXSize - 1) / 2 + 1;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
