@@ -12,8 +12,33 @@ files is not currently supported. OGR is based on GML 2.0. The reading only
 works if OGR is built with Xerces linked in.  XML validation is disabled by
 default.  GML writing is always supported, even without Xerces.<p>
 
-Currently the GML driver has no coordinate system support at this time.<p>
+The GML driver has no coordinate system support at this time.<p>
 
+In contrast to most GML readers, the OGR GML reader makes no effort to read
+the format XML Schema definition of the feature classes in a GML file.
+Instead it attempts to automatically discover them and their associated
+properties by scanning the file and looking for "known" gml objects in the
+gml namespace to determine the organization.  While this approach is error
+prone, it has the advantage of working for GML files even if the associated
+schema (.xsd) file has been lost.<p>
+
+The first time a GML file is opened it is completely scanned in order to
+determine the set of featuretypes, the attributes associated with each and
+other dataset level information.  This information is stored in a .gfs file
+with the same basename as the target gml file.  Subsequent accesses to the
+same GML file will use the .gfs file to predefine dataset level information
+accelerating access.  To a limited extent the .gfs file can be manually edited
+to alter how the GML file will be parsed.  Be warned that the .gfs file will
+be automatically regenerated if the associated .gml file has a newer timestamp.
+<p>
+
+When prescanning the GML file to determine the list of feature types, and
+fields, the contents of fields are scanned to try and determine the type
+of the field.  In some applications it is easier if all fields are just treated
+as string fields.  This can be accomplished by setting the configuration
+option <b>GML_FIELDTYPES</b> to the value <b>ALWAYS_STRING</b>.  Configuration
+options can be set via the CPLSetConfigOption() function or as environment
+variables.<p>
 
 <h2>Creation Issues</h2>
 
