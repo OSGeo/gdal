@@ -16,11 +16,12 @@ LOC_OBJ	=	ogrcomgeometryfactory.obj ogrcomutils.obj ogrcomwks.obj \
 
 SHR_OBJ	=	..\ogrgeometryfactory.obj ..\ogrpoint.obj ..\ogrcurve.obj \
 		..\ogrlinestring.obj ..\ogrpolygon.obj ..\ogrlinearring.obj \
-		..\oledb_sup.obj ..\ogrgeometry.obj ..\ogrutils.obj 
+		..\oledb_sup.obj ..\ogrgeometry.obj ..\ogrutils.obj \
+		..\ogrgeometrycollection.obj ..\ogrmultipolygon.obj
 
 default:	ogrcomgeometry.dll $(LOC_OBJ) testclient.exe ogrcomgeometry.tlb
 
-ogrcomgeometry.dll:	$(LOC_OBJ)
+ogrcomgeometry.dll:	$(LOC_OBJ) ogrcomgeometry.tlb
 	link /debug /dll /def:ogrcomgeometry.def /out:ogrcomgeometry.dll \
 		$(LOC_OBJ) $(SHR_OBJ) $(GDAL_ROOT)/port/*.obj $(OLE_LIBS)
 
@@ -35,3 +36,4 @@ clean:
 
 ogrcomgeometry.tlb:	ogrcomgeometry.idl
 	midl /I.. ogrcomgeometry.idl
+
