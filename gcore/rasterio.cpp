@@ -4,7 +4,7 @@
  * Project:  GDAL Core
  * Purpose:  Contains default implementation of GDALRasterBand::IRasterIO()
  *           and supporting functions of broader utility.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/04/25 19:45:41  warmerda
+ * Use special case for full res operations that involve a buffer that is
+ * not packaged (ie. its pixel interleaved).
+ * First implementation of GDALDataset::BlockBasedRasterIO() also added.
+ *
  * Revision 1.22  2003/03/13 16:34:20  warmerda
  * another fix in special case rasterio logic
  *
@@ -143,8 +148,12 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 || iSrcY >= (nLBlockY+1) * nBlockYSize )
             {
                 nLBlockY = iSrcY / nBlockYSize;
+                int bJustInitialize = 
+                    eRWFlag == GF_Write
+                    && nYOff <= nLBlockY * nBlockYSize
+                    && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize;
 
-                poBlock = GetBlockRef( 0, nLBlockY );
+                poBlock = GetBlockRef( 0, nLBlockY, bJustInitialize );
                 if( poBlock == NULL )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
@@ -212,8 +221,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* ==================================================================== */
     int         iSrcX;
 
-    if ( nPixelSpace == nBufDataSize
-         && nXSize == nBufXSize
+    if ( /* nPixelSpace == nBufDataSize
+            && */ nXSize == nBufXSize
          && nYSize == nBufYSize )    
     {
 /* -------------------------------------------------------------------- */
@@ -241,10 +250,17 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 nXSpan = ( ( nXSpan < nXSpanEnd )?nXSpan:nXSpanEnd ) - iSrcX;
                 nXSpanSize = nXSpan * nPixelSpace;
 
+                int bJustInitialize = 
+                    eRWFlag == GF_Write
+                    && nYOff <= nLBlockY * nBlockYSize
+                    && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
+                    && nXOff <= nLBlockX * nBlockXSize
+                    && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
+
 /* -------------------------------------------------------------------- */
 /*      Ensure we have the appropriate block loaded.                    */
 /* -------------------------------------------------------------------- */
-                poBlock = GetBlockRef( nLBlockX, nLBlockY );
+                poBlock = GetBlockRef( nLBlockX, nLBlockY, bJustInitialize );
                 if( !poBlock )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
@@ -266,7 +282,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 iSrcOffset = (iSrcX - nLBlockX*nBlockXSize
                     + (iSrcY - nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
 
-                if( eDataType == eBufType )
+                if( eDataType == eBufType 
+                    && nPixelSpace == nBufDataSize )
                 {
                     if( eRWFlag == GF_Read )
                         memcpy( ((GByte *) pData) + iBufOffset,
@@ -343,7 +360,14 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 nLBlockX = iSrcX / nBlockXSize;
                 nLBlockY = iSrcY / nBlockYSize;
 
-                poBlock = GetBlockRef( nLBlockX, nLBlockY );
+                int bJustInitialize = 
+                    eRWFlag == GF_Write
+                    && nYOff <= nLBlockY * nBlockYSize
+                    && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
+                    && nXOff <= nLBlockX * nBlockXSize
+                    && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
+
+                poBlock = GetBlockRef( nLBlockX, nLBlockY, bJustInitialize );
                 if( poBlock == NULL )
                 {
                     return( CE_Failure );
@@ -495,6 +519,21 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
         if( nWordSize == nSrcPixelOffset && nWordSize == nDstPixelOffset )
         {
             memcpy( pDstData, pSrcData, nSrcPixelOffset * nWordCount );
+            return;
+        }
+
+        // Moving single bytes, avoid any possible memcpy() overhead.
+        if( nWordSize == 1 )
+        {
+            GByte *pabySrc = (GByte *) pSrcData;
+            GByte *pabyDst = (GByte *) pDstData;
+
+            for( i = nWordCount; i != 0; i-- )
+            {
+                *pabyDst = *pabySrc;
+                pabyDst += nDstPixelOffset;
+                pabySrc += nSrcPixelOffset;
+            }
             return;
         }
 
@@ -888,5 +927,422 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
     return poBestOverview->RasterIO( eRWFlag, nOXOff, nOYOff, nOXSize, nOYSize,
                                      pData, nBufXSize, nBufYSize, eBufType,
                                      nPixelSpace, nLineSpace );
+}
+
+/************************************************************************/
+/*                         BlockBasedRasterIO()                         */
+/*                                                                      */
+/*      This convenience function implements a dataset level            */
+/*      RasterIO() interface based on calling down to fetch blocks,     */
+/*      much like the GDALRasterBand::IRasterIO(), but it handles       */
+/*      all bands at once, so that a format driver that handles a       */
+/*      request for different bands of the same block efficiently       */
+/*      (ie. without re-reading interleaved data) will efficiently.     */
+/*                                                                      */
+/*      This method is intended to be called by an overridden           */
+/*      IRasterIO() method in the driver specific GDALDataset           */
+/*      derived class.                                                  */
+/*                                                                      */
+/*      Default internal implementation of RasterIO() ... utilizes      */
+/*      the Block access methods to satisfy the request.  This would    */
+/*      normally only be overridden by formats with overviews.          */
+/*                                                                      */
+/*      To keep things relatively simple, this method does not          */
+/*      currently take advantage of some special cases addressed in     */
+/*      GDALRasterBand::IRasterIO(), so it is likely best to only       */
+/*      call it when you know it will help.  That is in cases where     */
+/*      data is at 1:1 to the buffer, you don't want to take            */
+/*      advantage of overviews, and you know the driver is              */
+/*      implementing interleaved IO efficiently on a block by block     */
+/*      basis.                                                          */
+/************************************************************************/
+
+CPLErr 
+GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
+                                 int nXOff, int nYOff, int nXSize, int nYSize,
+                                 void * pData, int nBufXSize, int nBufYSize,
+                                 GDALDataType eBufType,
+                                 int nBandCount, int *panBandMap,
+                                 int nPixelSpace, int nLineSpace,int nBandSpace)
+    
+{
+    GByte      **papabySrcBlock = NULL;
+    GDALRasterBlock *poBlock;
+    GDALRasterBlock **papoBlocks;
+    int         nLBlockX=-1, nLBlockY=-1, iBufYOff, iBufXOff, iSrcY, iBand;
+    int         nBlockXSize, nBlockYSize;
+    CPLErr      eErr = CE_None;
+    GDALDataType eDataType;
+
+/* -------------------------------------------------------------------- */
+/*      Ensure that all bands share a common block size.                */
+/* -------------------------------------------------------------------- */
+
+    for( iBand = 0; iBand < nBandCount; iBand++ )
+    {
+        GDALRasterBand *poBand = GetRasterBand( panBandMap[iBand] );
+        int nThisBlockXSize, nThisBlockYSize;
+
+        if( iBand == 0 )
+        {
+            poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
+            eDataType = poBand->GetRasterDataType();
+        }
+        else
+        {
+            poBand->GetBlockSize( &nThisBlockXSize, &nThisBlockYSize );
+            if( nThisBlockXSize != nBlockXSize 
+                || nThisBlockYSize != nBlockYSize )
+            {
+                CPLDebug( "GDAL", 
+                          "GDALDataset::BlockBasedRasterIO() ... "
+                          "mismatched block sizes, use std method." );
+                return GDALDataset::IRasterIO( eRWFlag, 
+                                               nXOff, nYOff, nXSize, nYSize, 
+                                               pData, nBufXSize, nBufYSize, 
+                                               eBufType, 
+                                               nBandCount, panBandMap,
+                                               nPixelSpace, nLineSpace, 
+                                               nBandSpace );
+            }
+
+            if( eDataType != poBand->GetRasterDataType() )
+            {
+                CPLDebug( "GDAL", 
+                          "GDALDataset::BlockBasedRasterIO() ... "
+                          "mismatched band data types, use std method." );
+                return GDALDataset::IRasterIO( eRWFlag, 
+                                               nXOff, nYOff, nXSize, nYSize, 
+                                               pData, nBufXSize, nBufYSize, 
+                                               eBufType, 
+                                               nBandCount, panBandMap,
+                                               nPixelSpace, nLineSpace, 
+                                               nBandSpace );
+            }
+        }
+    }
+
+    int         nBandDataSize = GDALGetDataTypeSize( eDataType ) / 8;
+    int         nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
+
+    papabySrcBlock = (GByte **) CPLCalloc(sizeof(GByte*),nBandCount);
+    papoBlocks = (GDALRasterBlock **) CPLCalloc(sizeof(void*),nBandCount);
+
+#ifdef notdef
+/* ==================================================================== */
+/*      A common case is the data requested with the destination        */
+/*      is packed, and the block width is the raster width.             */
+/* ==================================================================== */
+    if( nPixelSpace == nBufDataSize
+        && nLineSpace == nPixelSpace * nXSize
+        && nBlockXSize == GetXSize()
+        && nBufXSize == nXSize 
+        && nBufYSize == nYSize )
+    {
+        for( iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff++ )
+        {
+            int         nSrcByteOffset;
+            
+            iSrcY = iBufYOff + nYOff;
+            
+            if( iSrcY < nLBlockY * nBlockYSize
+                || iSrcY >= (nLBlockY+1) * nBlockYSize )
+            {
+                nLBlockY = iSrcY / nBlockYSize;
+                int bJustInitialize = 
+                    eRWFlag == GF_Write
+                    && nYOff <= nLBlockY * nBlockYSize
+                    && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize;
+
+                poBlock = GetBlockRef( 0, nLBlockY, bJustInitialize );
+                if( poBlock == NULL )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+			"GetBlockRef failed at X block offset %d, "
+                        "Y block offset %d", 0, nLBlockY );
+		    return( CE_Failure );
+                }
+
+                if( eRWFlag == GF_Write )
+                    poBlock->MarkDirty();
+                
+                pabySrcBlock = (GByte *) poBlock->GetDataRef();
+            }
+
+            nSrcByteOffset = ((iSrcY-nLBlockY*nBlockYSize)*nBlockXSize + nXOff)
+                * nBandDataSize;
+            
+            if( eDataType == eBufType )
+            {
+                if( eRWFlag == GF_Read )
+                    memcpy( ((GByte *) pData) + iBufYOff * nLineSpace,
+                            pabySrcBlock + nSrcByteOffset, 
+                            nLineSpace );
+                else
+                    memcpy( pabySrcBlock + nSrcByteOffset, 
+                            ((GByte *) pData) + iBufYOff * nLineSpace,
+                            nLineSpace );
+            }
+            else
+            {
+                /* type to type conversion */
+                
+                if( eRWFlag == GF_Read )
+                    GDALCopyWords( pabySrcBlock + nSrcByteOffset,
+                                   eDataType, nBandDataSize,
+                                   ((GByte *) pData) + iBufYOff * nLineSpace,
+                                   eBufType, nPixelSpace, nBufXSize );
+                else
+                    GDALCopyWords( ((GByte *) pData) + iBufYOff * nLineSpace,
+                                   eBufType, nPixelSpace,
+                                   pabySrcBlock + nSrcByteOffset,
+                                   eDataType, nBandDataSize, nBufXSize );
+            }
+        }
+
+        return CE_None;
+    }
+#endif
+
+#ifdef notdef    
+/* ==================================================================== */
+/*      The second case when we don't need subsample data but likely    */
+/*      need data type conversion.                                      */
+/* ==================================================================== */
+    int         iSrcX;
+
+    if ( nPixelSpace == nBufDataSize
+         && nXSize == nBufXSize
+         && nYSize == nBufYSize )    
+    {
+/* -------------------------------------------------------------------- */
+/*      Loop over buffer computing source locations.                    */
+/* -------------------------------------------------------------------- */
+        int     nLBlockXStart, nXSpanEnd;
+
+        // Calculate starting values out of loop
+        nLBlockXStart = nXOff / nBlockXSize;
+        nXSpanEnd = nBufXSize + nXOff;
+
+        for( iBufYOff = 0, iSrcY = nYOff; iBufYOff < nBufYSize; iBufYOff++, iSrcY++ )
+        {
+            int     iBufOffset, iSrcOffset, nXSpan;
+            
+            iBufOffset = iBufYOff * nLineSpace;
+            nLBlockY = iSrcY / nBlockYSize;
+            nLBlockX = nLBlockXStart;
+            iSrcX = nXOff;
+            while( iSrcX < nXSpanEnd )
+            {
+                int nXSpanSize;
+
+                nXSpan = (nLBlockX + 1) * nBlockXSize;
+                nXSpan = ( ( nXSpan < nXSpanEnd )?nXSpan:nXSpanEnd ) - iSrcX;
+                nXSpanSize = nXSpan * nPixelSpace;
+
+                int bJustInitialize = 
+                    eRWFlag == GF_Write
+                    && nYOff <= nLBlockY * nBlockYSize
+                    && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
+                    && nXOff <= nLBlockX * nBlockXSize
+                    && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
+
+/* -------------------------------------------------------------------- */
+/*      Ensure we have the appropriate block loaded.                    */
+/* -------------------------------------------------------------------- */
+                poBlock = GetBlockRef( nLBlockX, nLBlockY, bJustInitialize );
+                if( !poBlock )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+			"GetBlockRef failed at X block offset %d, "
+                        "Y block offset %d", nLBlockX, nLBlockY );
+                    return( CE_Failure );
+                }
+
+                if( eRWFlag == GF_Write )
+                    poBlock->MarkDirty();
+                
+                pabySrcBlock = (GByte *) poBlock->GetDataRef();
+                if( pabySrcBlock == NULL )
+                    return CE_Failure;
+
+/* -------------------------------------------------------------------- */
+/*      Copy over this chunk of data.                                   */
+/* -------------------------------------------------------------------- */
+                iSrcOffset = (iSrcX - nLBlockX*nBlockXSize
+                    + (iSrcY - nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
+
+                if( eDataType == eBufType )
+                {
+                    if( eRWFlag == GF_Read )
+                        memcpy( ((GByte *) pData) + iBufOffset,
+                                pabySrcBlock + iSrcOffset, nXSpanSize );
+                    else
+                        memcpy( pabySrcBlock + iSrcOffset, 
+                                ((GByte *) pData) + iBufOffset, nXSpanSize );
+                }
+                else
+                {
+                    /* type to type conversion */
+                    
+                    if( eRWFlag == GF_Read )
+                        GDALCopyWords( pabySrcBlock + iSrcOffset,
+                                       eDataType, nBandDataSize,
+                                       ((GByte *) pData) + iBufOffset,
+                                       eBufType, nPixelSpace, nXSpan );
+                    else
+                        GDALCopyWords( ((GByte *) pData) + iBufOffset,
+                                       eBufType, nPixelSpace,
+                                       pabySrcBlock + iSrcOffset,
+                                       eDataType, nBandDataSize, nXSpan );
+                }
+
+                iBufOffset += nXSpanSize;
+                nLBlockX++;
+                iSrcX+=nXSpan;
+            }
+        }
+
+        return CE_None;
+    }
+#endif
+
+/* ==================================================================== */
+/*      Loop reading required source blocks to satisfy output           */
+/*      request.  This is the most general implementation.              */
+/* ==================================================================== */
+
+/* -------------------------------------------------------------------- */
+/*      Compute stepping increment.                                     */
+/* -------------------------------------------------------------------- */
+    double      dfSrcX, dfSrcY, dfSrcXInc, dfSrcYInc;
+    
+    dfSrcXInc = nXSize / (double) nBufXSize;
+    dfSrcYInc = nYSize / (double) nBufYSize;
+
+/* -------------------------------------------------------------------- */
+/*      Loop over buffer computing source locations.                    */
+/* -------------------------------------------------------------------- */
+    for( iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff++ )
+    {
+        int     iBufOffset, iSrcOffset;
+        
+        dfSrcY = (iBufYOff+0.5) * dfSrcYInc + nYOff;
+        iSrcY = (int) dfSrcY;
+
+        iBufOffset = iBufYOff * nLineSpace;
+        
+        for( iBufXOff = 0; iBufXOff < nBufXSize; iBufXOff++ )
+        {
+            int iSrcX;
+
+            dfSrcX = (iBufXOff+0.5) * dfSrcXInc + nXOff;
+            
+            iSrcX = (int) dfSrcX;
+
+/* -------------------------------------------------------------------- */
+/*      Ensure we have the appropriate block loaded.                    */
+/* -------------------------------------------------------------------- */
+            if( iSrcX < nLBlockX * nBlockXSize
+                || iSrcX >= (nLBlockX+1) * nBlockXSize
+                || iSrcY < nLBlockY * nBlockYSize
+                || iSrcY >= (nLBlockY+1) * nBlockYSize )
+            {
+                nLBlockX = iSrcX / nBlockXSize;
+                nLBlockY = iSrcY / nBlockYSize;
+
+                int bJustInitialize = 
+                    eRWFlag == GF_Write
+                    && nYOff <= nLBlockY * nBlockYSize
+                    && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
+                    && nXOff <= nLBlockX * nBlockXSize
+                    && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
+
+                for( iBand = 0; iBand < nBandCount; iBand++ )
+                {
+                    GDALRasterBand *poBand = GetRasterBand( panBandMap[iBand]);
+                    poBlock = poBand->GetBlockRef( nLBlockX, nLBlockY, 
+                                                   bJustInitialize );
+                    if( poBlock == NULL )
+                    {
+                        eErr = CE_Failure;
+                        goto CleanupAndReturn;
+                    }
+
+                    if( eRWFlag == GF_Write )
+                        poBlock->MarkDirty();
+
+                    if( papoBlocks[iBand] != NULL )
+                        papoBlocks[iBand]->DropLock();
+                
+                    papoBlocks[iBand] = poBlock;
+                    poBlock->AddLock();
+
+                    papabySrcBlock[iBand] = (GByte *) poBlock->GetDataRef();
+                    if( papabySrcBlock[iBand] == NULL )
+                    {
+                        eErr = CE_Failure; 
+                        goto CleanupAndReturn;
+                    }
+                }
+            }
+
+/* -------------------------------------------------------------------- */
+/*      Copy over this pixel of data.                                   */
+/* -------------------------------------------------------------------- */
+            iSrcOffset = (iSrcX - nLBlockX*nBlockXSize
+                + (iSrcY - nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
+
+            for( iBand = 0; iBand < nBandCount; iBand++ )
+            {
+                GByte *pabySrcBlock = papabySrcBlock[iBand];
+                int iBandBufOffset = iBufOffset + iBand * nBandSpace;
+                
+                if( eDataType == eBufType )
+                {
+                    if( eRWFlag == GF_Read )
+                        memcpy( ((GByte *) pData) + iBandBufOffset,
+                                pabySrcBlock + iSrcOffset, nBandDataSize );
+                else
+                    memcpy( pabySrcBlock + iSrcOffset, 
+                            ((GByte *)pData) + iBandBufOffset, nBandDataSize );
+                }
+                else
+                {
+                    /* type to type conversion ... ouch, this is expensive way
+                       of handling single words */
+                    
+                    if( eRWFlag == GF_Read )
+                        GDALCopyWords( pabySrcBlock + iSrcOffset, eDataType, 0,
+                                       ((GByte *) pData) + iBandBufOffset, 
+                                       eBufType, 0, 1 );
+                    else
+                        GDALCopyWords( ((GByte *) pData) + iBandBufOffset, 
+                                       eBufType, 0,
+                                       pabySrcBlock + iSrcOffset, eDataType, 0,
+                                       1 );
+                }
+            }
+
+            iBufOffset += nPixelSpace;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      CleanupAndReturn.                                               */
+/* -------------------------------------------------------------------- */
+  CleanupAndReturn:
+    CPLFree( papabySrcBlock );
+    if( papoBlocks != NULL )
+    {
+        for( iBand = 0; iBand < nBandCount; iBand++ )
+        {
+            if( papoBlocks[iBand] != NULL )
+                papoBlocks[iBand]->DropLock();
+        }
+        CPLFree( papoBlocks );
+    }
+
+    return( CE_None );
 }
 
