@@ -123,6 +123,10 @@ LIBS	+=	$(PG_LIB)
 HAVE_HDF4     = @HAVE_HDF4@
 HDF4_INCLUDE  = @HDF4_INCLUDE@
 
+# DODS Include file location
+#
+DODS_INC = @DODS_INC@
+
 #
 # JPEG2000 via Kakadu Support.
 #
