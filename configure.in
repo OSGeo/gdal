@@ -529,7 +529,7 @@ elif test "$with_hdf4" = "yes" -o "$with_hdf4" = "" ; then
 
 
   if test "$HAVE_HDF4" = "yes" ; then   
-    LIBS="-lmfhdf $LIBS"
+    LIBS="-lmfhdf -ldf $LIBS"
   fi
 
   # Some Linux distros install hdf include files here. 
