@@ -9,6 +9,9 @@ HAVE_LIBTOOL	=	yes
 LIBTOOL_COMPILE	=	$(LIBTOOL) --mode=compile
 LIBTOOL_LINK	=	$(LIBTOOL) --mode=link
 LIBTOOL_INSTALL	=	$(LIBTOOL) --mode=install
+LIBTOOL_FINISH	=	$(LIBTOOL) --mode=finish --silent
+else
+LIBTOOL_FINISH	=	/bin/true
 endif
 
 CC	=	$(LIBTOOL_COMPILE) @CC@
