@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/03/05 05:08:28  warmerda
+ * added preliminary support for joins
+ *
  * Revision 1.7  2002/04/29 19:32:47  warmerda
  * added swq_select_parse, fix problem with where parsing and sorting code
  *
@@ -80,6 +83,7 @@ typedef struct {
 
     /* only for binary field operations */
     int         field_index;
+    int         table_index;
     swq_field_type field_type;
     char        *string_value;
     int         int_value;
@@ -90,15 +94,36 @@ typedef swq_field_op swq_expr;
 
 typedef int (*swq_op_evaluator)(swq_field_op *op, void *record_handle);
 
+typedef struct {
+    char       *data_source;
+    char       *table_name;
+    char       *table_alias;
+} swq_table_def;
+
+typedef struct {
+    int count;
+    char **names;
+    swq_field_type *types;
+    int *table_ids;
+    int *ids;
+
+    int table_count;
+    swq_table_def *table_defs;
+} swq_field_list;
+
 /* Compile an SQL WHERE clause into an internal form.  The field_list is
 ** the list of fields in the target 'table', used to render where into 
 ** field numbers instead of names. 
 */
 const char *swq_expr_compile( const char *where_clause, 
-                         int field_count,
-                         char **field_list,
-                         swq_field_type *field_types,
-                         swq_expr **expr );
+                              int field_count,
+                              char **field_list,
+                              swq_field_type *field_types,
+                              swq_expr **expr );
+
+const char *swq_expr_compile2( const char *where_clause, 
+                               swq_field_list *field_list, 
+                               swq_expr **expr );
 
 /*
 ** Evaluate an expression for a particular record using an application
@@ -134,6 +159,7 @@ typedef struct {
     swq_col_func col_func;
     char         *col_func_name;
     char         *field_name;
+    int          table_index;
     int          field_index;
     swq_field_type field_type;
     int          distinct_flag;
@@ -150,23 +176,40 @@ typedef struct {
 
 typedef struct {
     char *field_name;
+    int   table_index;
     int   field_index;
     int   ascending_flag;
 } swq_order_def;
+
+typedef struct {
+    int        secondary_table;
+
+    char      *primary_field_name;
+    int        primary_field;
+
+    swq_op     op;
+
+    char      *secondary_field_name;
+    int        secondary_field;
+} swq_join_def;
 
 typedef struct {
     int         query_mode;
 
     char        *raw_select;
 
-    int result_columns;
+    int         result_columns;
     swq_col_def *column_defs;
     swq_summary *column_summary;
 
+    int         table_count;
+    swq_table_def *table_defs;
+
+    int         join_count;
+    swq_join_def *join_defs;
+
     char        *whole_where_clause;
     swq_expr    *where_expr;
-
-    char        *from_table;
 
     int         order_specs;
     swq_order_def *order_defs;    
@@ -175,12 +218,9 @@ typedef struct {
 const char *swq_select_preparse( const char *select_statement, 
                                  swq_select **select_info );
 const char *swq_select_expand_wildcard( swq_select *select_info,
-                                        int field_count, 
-                                        char **field_list );
+                                        swq_field_list *field_list );
 const char *swq_select_parse( swq_select *select_info,
-                              int field_count, 
-                              char **field_list,
-                              swq_field_type *field_types,
+                              swq_field_list *field_list,
                               int parse_flags );
 void swq_select_free( swq_select *select_info );
 
