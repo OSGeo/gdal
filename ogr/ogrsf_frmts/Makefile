@@ -1,7 +1,7 @@
 GDAL_ROOT	=	..\..
 
 DIRLIST		=	generic shape ntf sdts tiger s57 dgn mitab gml avc \
-			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR)
+			rec $(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR)
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
@@ -31,7 +31,7 @@ default:
 	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj \
 				 sdts\*.obj s57\*.obj tiger\*.obj gml\*.obj \
 				 mitab\*.obj dgn\*.obj avc\*.obj $(OGDIOBJ) \
-				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ)
+				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) rec\*.obj
 	lib /out:ogrsf_frmts_sup.lib \
 				 ..\..\frmts\iso8211\*.obj \
 				 ..\..\frmts\sdts\sdtsattrreader.obj \
