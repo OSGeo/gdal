@@ -118,6 +118,7 @@ not already exist. <p>
 % ogr2ogr -f PostgreSQL PG:dbname=warmerda abc.shp
 </pre>
 
+<p>
 This second example loads a political boundaries layer from VPF (via the
 <a href="drv_ogdi.html">OGDI driver</a>), and renames the layer from the
 cryptic OGDI layer name to something more sensible.  If an existing table
@@ -129,6 +130,7 @@ of the desired name exists it is overwritten.<p>
         -lco OVERWRITE=yes -nln polbndl_bnd 'polbndl@bnd(*)_line'
 </pre>
 
+<p>
 In this example we merge tiger line data from two different directories of
 tiger files into one table.  Note that the second invocation uses -append
 and no OVERWRITE=yes. <p>
@@ -140,12 +142,20 @@ and no OVERWRITE=yes. <p>
      CompleteChain
 </pre>
 
+<p>
 This example shows using ogrinfo to evaluate an SQL query statement 
 within PostgreSQL.  More sophisticated PostGIS specific queries may also be
 used via the -sql commandline switch to ogrinfo.<p>
 
 <pre>
 ogrinfo -ro PG:dbname=warmerda -sql "SELECT pop_1994 from canada where province_name = 'Alberta'"
+</pre>
+
+<p>
+This example shows using ogrinfo to list PostgreSQL/PostGIS layers on a different host.<p>
+
+<pre>
+ogrinfo -ro PG:'host=myserver.velocet.ca user=postgres dbname=warmerda'
 </pre>
 
 <h3>See Also</h3>
