@@ -345,7 +345,7 @@ changequote([, ])dnl
     pyexecdir='$(exec_prefix)/lib/site-python'
   fi
 
-  AC_ARG_WITH(pymoddir,[  --with-pymoddir=ARG     Override Python package install dir)],,)
+  AC_ARG_WITH(pymoddir,[  --with-pymoddir=ARG   Override Python package install dir)],,)
 
   if test "$PYTHON" != "no" ; then
     AC_MSG_CHECKING([where .py files should go])
