@@ -13,7 +13,7 @@ clean:
 	rm -f *.o aitest
 
 aitest:	aitest.o $(AIGOBJ)
-	$(CXX) aitest.o $(AIGOBJ) $(GDAL_ROOT)/port/*.o -ldl -lm -o aitest
+	$(CXX) aitest.o $(AIGOBJ) $(GDAL_ROOT)/port/*.o $(CONFIG_LIBS) -o aitest
 
 aigrid2tif:	aigrid2tif.o $(AIGOBJ)
 	$(CXX) aigrid2tif.o $(AIGOBJ) $(GDAL_ROOT)/port/*.o $(LIBS) -ltiff \
