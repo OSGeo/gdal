@@ -13,3 +13,6 @@ clean:
 	rm -f *.o $(O_OBJ)
 
 install-obj:	$(O_OBJ)
+
+install:
+	$(INSTALL_DATA) memdataset.h $(INST_INCLUDE)
