@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2003/09/08 12:54:42  dron
+ * Fixed warnings.
+ *
  * Revision 1.27  2003/09/08 11:09:53  dron
  * Added CPLPrintDouble() and CPLPrintTime().
  *
@@ -707,7 +710,7 @@ char *CPLPrintDouble( char *pszBuffer, const char *pszFormat,
 
     sprintf( szTemp, pszFormat, dfValue );
 
-    for( i = 0; szTemp[i] != '\0', i < 64 ; i++ )
+    for( i = 0; szTemp[i] != '\0'; i++ )
     {
         if( szTemp[i] == 'E' || szTemp[i] == 'e' )
             szTemp[i] = 'D';
