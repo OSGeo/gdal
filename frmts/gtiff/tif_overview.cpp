@@ -53,6 +53,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/02/24 16:24:00  warmerda
+ * Don't include cpl_string.h
+ *
  * Revision 1.5  1999/02/11 22:27:12  warmerda
  * Added multi-sample support
  *
@@ -72,7 +75,6 @@
 
 #include "tiffio.h"
 #include "cpl_conv.h"
-#include "cpl_string.h"
 #include "rawblockedimage.h"
 
 extern "C" {
