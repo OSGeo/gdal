@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.94  2004/07/30 21:09:30  warmerda
- * added AddBand()
+ * Revision 1.95  2004/08/11 19:04:34  warmerda
+ * added warping related support
  *
  ************************************************************************/
 
@@ -564,6 +564,7 @@ char *SWIG_GetPtr(char *_c, void **ptr, char *_t)
 #include "gdal_py.h"
 #include "cpl_minixml.h"
 #include "ogr_api.h"
+#include "gdalwarper.h"
 
 CPL_CVSID("$Id$");
 
@@ -4959,6 +4960,211 @@ static PyObject *_wrap_GDALFlushCacheBlock(PyObject *self, PyObject *args) {
         return NULL;
     _result = (int )GDALFlushCacheBlock();
     _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALReprojectImage(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    CPLErr * _result;
+    GDALDatasetH  _arg0;
+    NULLableString  _arg1;
+    GDALDatasetH  _arg2;
+    NULLableString  _arg3;
+    int  _arg4;
+    double  _arg5;
+    double  _arg6;
+    void * _arg7;
+    void * _arg8;
+    void * _arg9;
+    char * _argc0 = 0;
+    char * _argc1 = 0;
+    char * _argc2 = 0;
+    char * _argc3 = 0;
+    char * _argc7 = 0;
+    char * _argc8 = 0;
+    char * _argc9 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ssssiddsss:GDALReprojectImage",&_argc0,&_argc1,&_argc2,&_argc3,&_arg4,&_arg5,&_arg6,&_argc7,&_argc8,&_argc9)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALReprojectImage. Expected _GDALDatasetH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GDALReprojectImage. Expected _NULLableString.");
+        return NULL;
+        }
+    }
+    if (_argc2) {
+        if (SWIG_GetPtr(_argc2,(void **) &_arg2,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of GDALReprojectImage. Expected _GDALDatasetH.");
+        return NULL;
+        }
+    }
+    if (_argc3) {
+        if (SWIG_GetPtr(_argc3,(void **) &_arg3,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of GDALReprojectImage. Expected _NULLableString.");
+        return NULL;
+        }
+    }
+    if (_argc7) {
+        if (SWIG_GetPtr(_argc7,(void **) &_arg7,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 8 of GDALReprojectImage. Expected _void_p.");
+        return NULL;
+        }
+    }
+    if (_argc8) {
+        if (SWIG_GetPtr(_argc8,(void **) &_arg8,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 9 of GDALReprojectImage. Expected _void_p.");
+        return NULL;
+        }
+    }
+    if (_argc9) {
+        if (SWIG_GetPtr(_argc9,(void **) &_arg9,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 10 of GDALReprojectImage. Expected _void_p.");
+        return NULL;
+        }
+    }
+    _result = (CPLErr *) malloc(sizeof(CPLErr ));
+    *(_result) = GDALReprojectImage(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7,_arg8,_arg9);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_CPLErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALCreateAndReprojectImage(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    CPLErr * _result;
+    GDALDatasetH  _arg0;
+    char * _arg1;
+    NULLableString  _arg2;
+    NULLableString  _arg3;
+    GDALDriverH  _arg4;
+    stringList  _arg5;
+    int  _arg6;
+    double  _arg7;
+    double  _arg8;
+    void * _arg9;
+    void * _arg10;
+    void * _arg11;
+    char * _argc0 = 0;
+    char * _argc2 = 0;
+    char * _argc3 = 0;
+    char * _argc4 = 0;
+    char * _argc5 = 0;
+    char * _argc9 = 0;
+    char * _argc10 = 0;
+    char * _argc11 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ssssssiddsss:GDALCreateAndReprojectImage",&_argc0,&_arg1,&_argc2,&_argc3,&_argc4,&_argc5,&_arg6,&_arg7,&_arg8,&_argc9,&_argc10,&_argc11)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALCreateAndReprojectImage. Expected _GDALDatasetH.");
+        return NULL;
+        }
+    }
+    if (_argc2) {
+        if (SWIG_GetPtr(_argc2,(void **) &_arg2,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of GDALCreateAndReprojectImage. Expected _NULLableString.");
+        return NULL;
+        }
+    }
+    if (_argc3) {
+        if (SWIG_GetPtr(_argc3,(void **) &_arg3,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of GDALCreateAndReprojectImage. Expected _NULLableString.");
+        return NULL;
+        }
+    }
+    if (_argc4) {
+        if (SWIG_GetPtr(_argc4,(void **) &_arg4,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of GDALCreateAndReprojectImage. Expected _GDALDriverH.");
+        return NULL;
+        }
+    }
+    if (_argc5) {
+        if (SWIG_GetPtr(_argc5,(void **) &_arg5,"_stringList")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of GDALCreateAndReprojectImage. Expected _stringList.");
+        return NULL;
+        }
+    }
+    if (_argc9) {
+        if (SWIG_GetPtr(_argc9,(void **) &_arg9,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 10 of GDALCreateAndReprojectImage. Expected _void_p.");
+        return NULL;
+        }
+    }
+    if (_argc10) {
+        if (SWIG_GetPtr(_argc10,(void **) &_arg10,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 11 of GDALCreateAndReprojectImage. Expected _void_p.");
+        return NULL;
+        }
+    }
+    if (_argc11) {
+        if (SWIG_GetPtr(_argc11,(void **) &_arg11,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 12 of GDALCreateAndReprojectImage. Expected _void_p.");
+        return NULL;
+        }
+    }
+    _result = (CPLErr *) malloc(sizeof(CPLErr ));
+    *(_result) = GDALCreateAndReprojectImage(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7,_arg8,_arg9,_arg10,_arg11);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_CPLErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALAutoCreateWarpedVRT(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    GDALDatasetH  _result;
+    GDALDatasetH  _arg0;
+    NULLableString  _arg1;
+    NULLableString  _arg2;
+    int  _arg3;
+    double  _arg4;
+    void * _arg5;
+    char * _argc0 = 0;
+    char * _argc1 = 0;
+    char * _argc2 = 0;
+    char * _argc5 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sssids:GDALAutoCreateWarpedVRT",&_argc0,&_argc1,&_argc2,&_arg3,&_arg4,&_argc5)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALAutoCreateWarpedVRT. Expected _GDALDatasetH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GDALAutoCreateWarpedVRT. Expected _NULLableString.");
+        return NULL;
+        }
+    }
+    if (_argc2) {
+        if (SWIG_GetPtr(_argc2,(void **) &_arg2,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of GDALAutoCreateWarpedVRT. Expected _NULLableString.");
+        return NULL;
+        }
+    }
+    if (_argc5) {
+        if (SWIG_GetPtr(_argc5,(void **) &_arg5,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of GDALAutoCreateWarpedVRT. Expected _void_p.");
+        return NULL;
+        }
+    }
+    _result = (GDALDatasetH )GDALAutoCreateWarpedVRT(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    SWIG_MakePtr(_ptemp, (char *) _result,"_GDALDatasetH");
+    _resultobj = Py_BuildValue("s",_ptemp);
     return _resultobj;
 }
 
@@ -10908,6 +11114,9 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALCreate", py_GDALCreate, 1 },
 	 { "GDALCreateCopy", py_GDALCreateCopy, 1 },
 	 { "GDALBuildOverviews", py_GDALBuildOverviews, 1 },
+	 { "GDALAutoCreateWarpedVRT", _wrap_GDALAutoCreateWarpedVRT, 1 },
+	 { "GDALCreateAndReprojectImage", _wrap_GDALCreateAndReprojectImage, 1 },
+	 { "GDALReprojectImage", _wrap_GDALReprojectImage, 1 },
 	 { "GDALFlushCacheBlock", _wrap_GDALFlushCacheBlock, 1 },
 	 { "GDALGetCacheUsed", _wrap_GDALGetCacheUsed, 1 },
 	 { "GDALGetCacheMax", _wrap_GDALGetCacheMax, 1 },
