@@ -1,3 +1,10 @@
+2001-11-29  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Fixed bug with the block sampling rate being too low to satisfy 
+	large sample count values.  Fixed bug with tiled images including 
+	some uninitialized or zero data in the sample set on partial edge 
+	tiles.
+
 2001-11-27  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* frmts/usgsdem: Implemented USGS DEM format based on VTP code.
