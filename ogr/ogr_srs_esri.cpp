@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2003/08/14 14:36:24  warmerda
+ * some ESRI .prj files use Central_Parallel instead of latitude_of_origin
+ *
  * Revision 1.26  2003/08/03 01:30:34  warmerda
  * Added mapping for EUR datum as per:
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=371
@@ -135,6 +138,7 @@ static char *apszProjMapping[] = {
 static char *apszAlbersMapping[] = {
     SRS_PP_CENTRAL_MERIDIAN, SRS_PP_LONGITUDE_OF_CENTER, 
     SRS_PP_LATITUDE_OF_ORIGIN, SRS_PP_LATITUDE_OF_CENTER,
+    "Central_Parallel", SRS_PP_LATITUDE_OF_CENTER,
     NULL, NULL };
 
 static char **papszDatumMapping = NULL;
