@@ -29,6 +29,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/03/12 21:19:49  danmo
+ * Fixed TokenizeStringComplex() vs strings ending with empty token,
+ * and fixed a problem with CSLAdd/SetNameValue() vs empty string list.
+ *
  * Revision 1.7  1999/03/09 21:29:57  warmerda
  * Added backslash escaping within string constants for tokenize function.
  *
@@ -573,6 +577,15 @@ char ** CSLTokenizeStringComplex( const char * pszString,
         {
             papszRetList = CSLAddString( papszRetList, pszToken );
         }
+
+        /* If the last token is an empty token, then we have to catch
+         * it now, otherwise we won't reenter the loop and it will be lost. 
+         */
+        if ( *pszString == '\0' && bAllowEmptyTokens &&
+             strchr(pszDelimiters, *(pszString-1)) )
+        {
+            papszRetList = CSLAddString( papszRetList, "" );
+        }
     }
 
     if( papszRetList == NULL )
@@ -721,7 +734,7 @@ char **CSLAddNameValue(char **papszStrList,
 {
     const char *pszLine;
 
-    if (papszStrList == NULL || pszName == NULL || pszValue==NULL)
+    if (pszName == NULL || pszValue==NULL)
         return papszStrList;
 
     pszLine = CPLSPrintf("%s=%s", pszName, pszValue);
@@ -747,12 +760,12 @@ char **CSLSetNameValue(char **papszList,
     char **papszPtr;
     int nLen;
 
-    if (papszList == NULL || pszName == NULL || pszValue==NULL)
+    if (pszName == NULL || pszValue==NULL)
         return papszList;
 
     nLen = strlen(pszName);
     papszPtr = papszList;
-    while(*papszPtr != NULL)
+    while(papszPtr && *papszPtr != NULL)
     {
         if (EQUALN(*papszPtr, pszName, nLen)
             && ( (*papszPtr)[nLen] == '=' || 
@@ -778,4 +791,3 @@ char **CSLSetNameValue(char **papszList,
     return CSLAddString(papszList, 
                            CPLSPrintf("%s=%s", pszName, pszValue));
 }
-
