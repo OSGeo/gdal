@@ -18,7 +18,7 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
 		ogrutils.obj ogrgeometry.obj ogrgeometrycollection.obj \
 		ogrmultipolygon.obj ogrmultilinestring.obj \
                 ogrmultipoint.obj ogrfeature.obj ogrfeaturedefn.obj \
-		ogrfielddefn.obj 
+		ogrfielddefn.obj ogr_srsnode.obj ogrspatialreference.obj
 
 OBJ_OLEDB =	oledb_sup.obj oledbsuprowset.obj oledb_sf.obj \
 		sfcenumerator.obj sfcdatasource.obj sfctable.obj

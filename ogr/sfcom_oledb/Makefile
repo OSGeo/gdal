@@ -20,10 +20,11 @@ SHR_OBJ =	..\ogrgeometryfactory.obj ..\ogrpoint.obj ..\ogrcurve.obj \
 		..\oledb_sup.obj ..\ogrgeometry.obj ..\ogrutils.obj \
 		..\ogrgeometrycollection.obj ..\ogrmultipolygon.obj \
 		..\ogrmultilinestring.obj ..\ogrmultipoint.obj \
+                ..\shape2ogr.obj ..\ogrfeature.obj ..\ogrfeaturedefn.obj \
+		..\ogrfielddefn.obj ..\ogrspatialreference.obj \
+		..\ogr_srsnode.obj \
 		..\..\frmts\shapelib\dbfopen.obj \
 		..\..\frmts\shapelib\shpopen.obj \
-                ..\shape2ogr.obj ..\ogrfeature.obj ..\ogrfeaturedefn.obj \
-		..\ogrfielddefn.obj \
 		..\..\port\*.obj
 
 default:	SF.dll
