@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/08/29 10:11:43  dron
+ * Implement caching for the case of sequental block reading.
+ *
  * Revision 1.14  2004/08/20 19:03:58  dron
  * Fixed problem with wrong sign in georeference calculation.
  *
@@ -1223,6 +1226,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 #include "lti_sceneBuffer.h"
 #include "lti_metadataDatabase.h"
 #include "lti_metadataRecord.h"
+#include "lti_utils.h"
 #include "MrSIDImageReader.h"
 #include "J2KImageReader.h"
 
@@ -1241,12 +1245,16 @@ class MrSIDDataset : public GDALDataset
     LTIImageReader      *poImageReader;
     LTINavigator        *poLTINav;
     LTIMetadataDatabase *poMetadata;
+    
+    LTISceneBuffer      *poBuffer;
+    int                 nBlockXSize, nBlockYSize;
+    int                 bPrevBlockRead;
+    int                 nPrevBlockXOff, nPrevBlockYOff;
 
     LTIDataType         eSampleType;
     GDALDataType        eDataType;
     LTIColorSpace       eColorSpace;
 
-    int                 nCurrentZoomLevel;
     double              dfCurrentMag;
 
     int                 bHasGeoTransfom;
@@ -1258,12 +1266,16 @@ class MrSIDDataset : public GDALDataset
     int                 nOverviewCount;
     MrSIDDataset        **papoOverviewDS;
 
-    CPLErr              OpenZoomLevel( int iZoom );
+    CPLErr              OpenZoomLevel( lt_int32 iZoom );
     char                *SerializeMetadataRec( const LTIMetadataRecord* );
     int                 GetMetadataElement( const char *, void *, int );
     void                FetchProjParms();
     void                GetGTIFDefn();
     char                *GetOGISDefn( GTIFDefn * );
+
+    virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int, void *,
+                                   int, int, GDALDataType, int, int *,int,
+                                   int, int );
 
   public:
                 MrSIDDataset();
@@ -1286,7 +1298,6 @@ class MrSIDRasterBand : public GDALRasterBand
     friend class MrSIDDataset;
 
     LTIPixel        *poPixel;
-    LTISceneBuffer  *poBuffer;
 
     int             nBlockSize;
 
@@ -1318,8 +1329,8 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDS, int nBand )
 /* -------------------------------------------------------------------- */
 /*      Set the block sizes and buffer parameters.                      */
 /* -------------------------------------------------------------------- */
-    nBlockXSize = poDS->GetRasterXSize();
-    nBlockYSize = poDS->poImageReader->getStripHeight();
+    nBlockXSize = poDS->nBlockXSize;
+    nBlockYSize = poDS->nBlockYSize;
     nBlockSize = nBlockXSize * nBlockYSize;
     poPixel = new LTIPixel( poDS->eColorSpace, poDS->nBands,
                             poDS->eSampleType );
@@ -1358,30 +1369,52 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                     void * pImage )
 {
     MrSIDDataset    *poGDS = (MrSIDDataset *)poDS;
-    GInt32          nLine = nBlockYOff * nBlockYSize;
 
-    // XXX: The scene, passed to LTIImageStage::read() call must be
-    // inside the image boundaries. So we should detect the last strip and
-    // form the scene properly.
-    poGDS->poLTINav->setSceneAsULWH(nBlockXOff * nBlockXSize, nLine,
-                                    nBlockXSize,
-                                    (nLine+nBlockYSize>poGDS->GetRasterYSize())?
-                                    (poGDS->GetRasterYSize()-nLine):nBlockYSize,
-                                    poGDS->dfCurrentMag);
-    poBuffer = new LTISceneBuffer( *poPixel, nBlockXSize, nBlockYSize, NULL );
-
-    if(!LT_SUCCESS(poGDS->poImageReader->read(poGDS->poLTINav->getScene(),
-                                              *poBuffer)))
+    
+    if ( !poGDS->bPrevBlockRead
+         || poGDS->nPrevBlockXOff != nBlockXOff
+         || poGDS->nPrevBlockYOff != nBlockYOff )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "MrSIDRasterBand::IReadBlock(): Failed to load image." );
-        delete poBuffer;
-        return CE_Failure;
+        GInt32          nLine = nBlockYOff * nBlockYSize;
+
+        // XXX: The scene, passed to LTIImageStage::read() call must be
+        // inside the image boundaries. So we should detect the last strip and
+        // form the scene properly.
+       if(!LT_SUCCESS( poGDS->poLTINav->setSceneAsULWH(
+                                nBlockXOff * nBlockXSize, nLine,
+                                nBlockXSize,
+                                (nLine+nBlockYSize>poGDS->GetRasterYSize())?
+                                (poGDS->GetRasterYSize()-nLine):nBlockYSize,
+                                poGDS->dfCurrentMag) ))
+
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+            "MrSIDRasterBand::IReadBlock(): Failed to set scene position." );
+            return CE_Failure;
+        }
+
+        if ( !poGDS->poBuffer )
+        {
+            poGDS->poBuffer =
+                new LTISceneBuffer( *poPixel, poGDS->nBlockXSize,
+                                    poGDS->nBlockYSize, NULL );
+        }
+
+        if(!LT_SUCCESS(poGDS->poImageReader->read(poGDS->poLTINav->getScene(),
+                                                  *poGDS->poBuffer)))
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "MrSIDRasterBand::IReadBlock(): Failed to load image." );
+            return CE_Failure;
+        }
+
+        poGDS->bPrevBlockRead = TRUE;
+        poGDS->nPrevBlockXOff = nBlockXOff;
+        poGDS->nPrevBlockYOff = nBlockYOff;
     }
 
-    memcpy( pImage, poBuffer->getTotalBandData(nBand - 1), nBlockSize );
+    memcpy( pImage, poGDS->poBuffer->getTotalBandData(nBand - 1), nBlockSize );
 
-    delete poBuffer;
     return CE_None;
 }
 
@@ -1485,6 +1518,12 @@ MrSIDDataset::MrSIDDataset()
     eSampleType = LTI_DATATYPE_UINT8;
     nBands = 0;
     eDataType = GDT_Byte;
+    
+    poBuffer = NULL;
+    bPrevBlockRead = FALSE;
+    nPrevBlockXOff = 0;
+    nPrevBlockYOff = 0;
+    
     pszProjection = CPLStrdup( "" );
     bHasGeoTransfom = FALSE;
     adfGeoTransform[0] = 0.0;
@@ -1494,7 +1533,7 @@ MrSIDDataset::MrSIDDataset()
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
     psDefn = NULL;
-    nCurrentZoomLevel = 0;
+    
     dfCurrentMag = 1.0;
     bIsOverview = FALSE;
     nOverviewCount = 0;
@@ -1511,6 +1550,8 @@ MrSIDDataset::~MrSIDDataset()
         delete poImageReader;
     if ( poLTINav )
         delete poLTINav;
+    if ( poBuffer )
+        delete poBuffer;
     if ( poMetadata )
         delete poMetadata;
     if ( pszProjection )
@@ -1523,6 +1564,33 @@ MrSIDDataset::~MrSIDDataset()
             delete papoOverviewDS[i];
         CPLFree( papoOverviewDS );
     }
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
+                                int nXOff, int nYOff, int nXSize, int nYSize,
+                                void * pData, int nBufXSize, int nBufYSize,
+                                GDALDataType eBufType, 
+                                int nBandCount, int *panBandMap,
+                                int nPixelSpace, int nLineSpace, int nBandSpace )
+
+{
+    if ( nBandCount > 1 && nXSize == nBufXSize && nYSize == nBufYSize )
+        return GDALDataset::BlockBasedRasterIO( 
+            eRWFlag, nXOff, nYOff, nXSize, nYSize,
+            pData, nBufXSize, nBufYSize, eBufType, 
+            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace );
+    else
+        return GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                       pData,
+                                       nBufXSize, nBufYSize, eBufType,
+                                       nBandCount, panBandMap,
+                                       nPixelSpace, nLineSpace, nBandSpace );
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -1670,25 +1738,29 @@ int MrSIDDataset::GetMetadataElement( const char *pszKey, void *pValue,
 /*                             OpenZoomLevel()                          */
 /************************************************************************/
 
-CPLErr MrSIDDataset::OpenZoomLevel( int iZoom )
+CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
 {
 /* -------------------------------------------------------------------- */
 /*      Take image geometry.                                            */
 /* -------------------------------------------------------------------- */
-    nRasterXSize = poImageReader->getWidth();
-    nRasterYSize = poImageReader->getHeight();
-    nBands = poImageReader->getNumBands();
-
-    nCurrentZoomLevel = iZoom;
-    dfCurrentMag = 1.0;
     if ( iZoom != 0 )
     {
-        unsigned int u32_w, u32_h;
-	dfCurrentMag /= pow( 2, iZoom );
-        poImageReader->getDimsAtMag( dfCurrentMag, u32_w, u32_h );
-	nRasterXSize = (int) u32_w;
-	nRasterYSize = (int) u32_h;
+        lt_uint32 iWidth, iHeight;
+        dfCurrentMag = LTIUtils::levelToMag( iZoom );
+        poImageReader->getDimsAtMag( dfCurrentMag, iWidth, iHeight );
+	nRasterXSize = iWidth;
+	nRasterYSize = iHeight;
     }
+    else
+    {
+        dfCurrentMag = 1.0;
+        nRasterXSize = poImageReader->getWidth();
+        nRasterYSize = poImageReader->getHeight();
+    }
+
+    nBands = poImageReader->getNumBands();
+    nBlockXSize = nRasterXSize;
+    nBlockYSize = poImageReader->getStripHeight();
 
     CPLDebug( "MrSID", "Opened zoom level %d with size %dx%d.\n",
               iZoom, nRasterXSize, nRasterYSize );
@@ -1849,7 +1921,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if ( poDS->nOverviewCount > 0 )
     {
-        int         i;
+        lt_int32        i;
 
         poDS->papoOverviewDS = (MrSIDDataset **)
             CPLMalloc( poDS->nOverviewCount * (sizeof(void*)) );
