@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/10/05 01:15:49  warmerda
+ * Fixed uncompress logic for nNumBits == 32 as per report from Michael Dougherty.
+ *
  * Revision 1.20  2002/06/20 14:10:58  warmerda
  * don't return CE_Failure for missing tiles, just zero quietly
  *
@@ -505,9 +508,9 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             else if( nNumBits == 32 )
             {
                 nDataValue = 256 * 256 * 256 * *(pabyValues++);
-                nDataValue = 256 * 256 * *(pabyValues++);
-                nDataValue = 256 * *(pabyValues++);
-                nDataValue = *(pabyValues++);
+                nDataValue += 256 * 256 * *(pabyValues++);
+                nDataValue += 256 * *(pabyValues++);
+                nDataValue += *(pabyValues++);
             }
             else
             {
@@ -634,9 +637,9 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
         else if( nNumBits == 32 )
         {
             nDataValue = 256 * 256 * 256 * *(pabyValues++);
-            nDataValue = 256 * 256 * *(pabyValues++);
-            nDataValue = 256 * *(pabyValues++);
-            nDataValue = *(pabyValues++);
+            nDataValue += 256 * 256 * *(pabyValues++);
+            nDataValue += 256 * *(pabyValues++);
+            nDataValue += *(pabyValues++);
         }
         else
         {
