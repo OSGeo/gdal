@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/04/30 18:19:01  warmerda
+ * eat newlines as whitespace
+ *
  * Revision 1.13  2002/04/29 19:32:34  warmerda
  * added swq_select_parse, fix problem with where parsing and sorting code
  *
@@ -140,7 +143,8 @@ static char *swq_token( const char *expression, char **next, int *is_literal )
     if( is_literal != NULL )
         *is_literal = 0;
 
-    while( *expression == ' ' || *expression == '\t' )
+    while( *expression == ' ' || *expression == '\t'
+           || *expression == 10 || *expression == 13 )
         expression++;
 
     if( *expression == '\0' )
