@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/08/07 21:38:33  warmerda
+ * improve usage message
+ *
  * Revision 1.12  2002/01/13 01:45:54  warmerda
  * improve cleanup
  *
@@ -106,11 +109,12 @@ static void Usage()
 
 {
     printf(
-      "Usage: sfcdump [-provider classname] [-ds datasource] [-table tablename]\n"
-      "           [-cmd 'sql statement'] [-region top bottom left right]\n"
+      "Usage: sfcdump  [-mt thread_count] [-provider classname] [-ds datasource] \n"
+      "           [-table tablename][-cmd 'sql statement']\n"
+      "           [-region top bottom left right]\n"
       "           [-action {dumpprov, dumptables, dumpsftables,\n"
       "                     dumpgeom, dumpfeat, dumpschema}]\n"
-      "           [-quiet] [-rc repeat_count] [-mt thread_count]\n"
+      "           [-quiet] [-rc repeat_count]\n"
       "\n"
       "Example:\n"
       "     C:> sfcdump -provider Microsoft.Jet.OLEDB.3.51\n"
