@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/09/29 16:36:41  warmerda
+ * added srs reporting
+ *
  * Revision 1.3  1999/09/22 13:31:48  warmerda
  * added sdts
  *
@@ -205,6 +208,19 @@ static void ReportOnLayer( OGRLayer * poLayer )
 
     printf( "Feature Count: %d\n", poLayer->GetFeatureCount() );
 
+    if( bVerbose )
+    {
+        char	*pszWKT;
+        
+        if( poLayer->GetSpatialRef() == NULL )
+            pszWKT = CPLStrdup( "(NULL)" );
+        else
+            poLayer->GetSpatialRef()->exportToWkt( &pszWKT );
+
+        printf( "Layer SRS WKT: %s\n", pszWKT );
+        CPLFree( pszWKT );
+    }
+    
     for( int iAttr = 0; iAttr < poDefn->GetFieldCount(); iAttr++ )
     {
         OGRFieldDefn	*poField = poDefn->GetFieldDefn( iAttr );

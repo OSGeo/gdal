@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/09/29 16:36:41  warmerda
+ * added srs reporting
+ *
  * Revision 1.5  1999/09/22 13:31:04  warmerda
  * added SDTS
  *
@@ -194,12 +197,42 @@ static void TestOGRLayerFeatureCount( OGRLayer *poLayer )
 {
     int 	nFC = 0, nClaimedFC = poLayer->GetFeatureCount();
     OGRFeature  *poFeature;
+    OGRSpatialReference * poSRS = poLayer->GetSpatialRef();
+    int		bWarnAboutSRS = FALSE;
 
     poLayer->ResetReading();
 
     while( (poFeature = poLayer->GetNextFeature()) != NULL )
     {
         nFC++;
+
+        if( poFeature->GetGeometryRef() != NULL
+            && poFeature->GetGeometryRef()->getSpatialReference() != poSRS
+            && !bWarnAboutSRS )
+        {
+            char	*pszLayerSRSWKT, *pszFeatureSRSWKT;
+            
+            bWarnAboutSRS = TRUE;
+
+            if( poSRS != NULL )
+                poSRS->exportToWkt( &pszLayerSRSWKT );
+            else
+                pszLayerSRSWKT = CPLStrdup("(NULL)");
+
+            if( poFeature->GetGeometryRef()->getSpatialReference() != NULL )
+                poFeature->GetGeometryRef()->
+                    getSpatialReference()->exportToWkt( &pszFeatureSRSWKT );
+            else
+                pszFeatureSRSWKT = CPLStrdup("(NULL)");
+            
+            printf( "ERROR: Feature SRS differs from layer SRS.\n"
+                    "Feature SRS = %s\n"
+                    "Layer SRS = %s\n",
+                    pszLayerSRSWKT, pszFeatureSRSWKT );
+            CPLFree( pszLayerSRSWKT );
+            CPLFree( pszFeatureSRSWKT );
+        }
+        
         delete poFeature;
     }
 
@@ -212,6 +245,11 @@ static void TestOGRLayerFeatureCount( OGRLayer *poLayer )
                 nFC, poLayer->GetFeatureCount() );
     else if( bVerbose )
         printf( "INFO: Feature count verified.\n" );
+
+    if( bVerbose && !bWarnAboutSRS )
+    {
+        printf("INFO: Feature/layer spatial ref. consistency verified.\n");
+    }
 }
 
 /************************************************************************/
