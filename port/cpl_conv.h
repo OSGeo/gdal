@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/08/15 09:23:24  dron
+ * Added CPLGetDirname() function
+ *
  * Revision 1.14  2002/02/01 20:39:50  warmerda
  * ensure CPLReadLine() is exported from DLL
  *
@@ -95,6 +98,7 @@ char CPL_DLL  **CPLReadDir( const char *pszPath );
 /*      Filename handling functions.                                    */
 /* -------------------------------------------------------------------- */
 const char CPL_DLL *CPLGetPath( const char * );
+const char CPL_DLL *CPLGetDirname( const char * );
 const char CPL_DLL *CPLGetFilename( const char * );
 const char CPL_DLL *CPLGetBasename( const char * );
 const char CPL_DLL *CPLGetExtension( const char * );

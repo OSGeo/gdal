@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/08/15 09:23:24  dron
+ * Added CPLGetDirname() function
+ *
  * Revision 1.9  2001/08/30 21:20:49  warmerda
  * expand tabs
  *
@@ -100,6 +103,7 @@ static int CPLFindFilenameStart( const char * pszFilename )
  * CPLGetPath( "/abc/def/" ) == "abc/def"
  * CPLGetPath( "/" ) == "/"
  * CPLGetPath( "/abc/def" ) == "/abc"
+ * CPLGetPath( "abc" ) == ""
  * </pre>
  *
  * @param pszFilename the filename potentially including a path.
@@ -117,6 +121,54 @@ const char *CPLGetPath( const char *pszFilename )
     if( iFileStart == 0 )
     {
         strcpy( szStaticResult, "" );
+        return szStaticResult;
+    }
+
+    strncpy( szStaticResult, pszFilename, iFileStart );
+    szStaticResult[iFileStart] = '\0';
+
+    if( iFileStart > 1
+        && (szStaticResult[iFileStart-1] == '/'
+            || szStaticResult[iFileStart-1] == '\\') )
+        szStaticResult[iFileStart-1] = '\0';
+
+    return szStaticResult;
+}
+
+/************************************************************************/
+/*                             CPLGetDirname()                          */
+/************************************************************************/
+
+/**
+ * Extract directory path portion of filename.
+ *
+ * Returns a string containing the directory path portion of the passed
+ * filename.  If there is no path in the passed filename the dot will be
+ * returned.  It is the only difference from CPLGetPath().
+ *
+ * <pre>
+ * CPLGetDirname( "abc/def.xyz" ) == "abc"
+ * CPLGetDirname( "/abc/def/" ) == "abc/def"
+ * CPLGetDirname( "/" ) == "/"
+ * CPLGetDirname( "/abc/def" ) == "/abc"
+ * CPLGetDirname( "abc" ) == "."
+ * </pre>
+ *
+ * @param pszFilename the filename potentially including a path.
+ *
+ * @return Path in an internal string which must not be freed.  The string
+ * may be destroyed by the next CPL filename handling call.  The returned
+ * will generally not contain a trailing path separator.
+ */
+
+const char *CPLGetDirname( const char *pszFilename )
+
+{
+    int         iFileStart = CPLFindFilenameStart(pszFilename);
+
+    if( iFileStart == 0 )
+    {
+        strcpy( szStaticResult, "." );
         return szStaticResult;
     }
 
