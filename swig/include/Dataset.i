@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.4  2005/02/16 17:41:19  kruland
+ * Added a few more methods to Dataset and marked the ones still missing.
+ *
  * Revision 1.3  2005/02/15 20:50:49  kruland
  * Added SetProjection.
  *
@@ -42,6 +45,16 @@ public:
   int RasterXSize;
   int RasterYSize;
 %mutable;
+
+  ~GDALDataset() {
+    if ( GDALDereferenceDataset( self ) <= 0 ) {
+      GDALClose(self);
+    }
+  }
+
+  GDALDriver* GetDriver() {
+    return (GDALDriver*) GDALGetDatasetDriver( self );
+  }
 
   GDALRasterBand* GetRasterBand(int nBand ) {
     return (GDALRasterBand*) GDALGetRasterBand( self, nBand );
@@ -91,6 +104,10 @@ public:
   }
 %clear (int overviewlist, int *pOverviews);
 
+  int GetGCPCount() {
+    return GDALGetGCPCount( self );
+  }
+
   const char *GetGCPProjection() {
     return GDALGetGCPProjection( self );
   }
@@ -99,6 +116,23 @@ public:
     *nGCPs = GDALGetGCPCount( self );
     *pGCPs = GDALGetGCPs( self );
   }
+
+  CPLErr SetGCPs( int nGCPs, GDAL_GCP const *pGCPs, const char *pszGCPProjection ) {
+    return GDALSetGCPs( self, nGCPs, pGCPs, pszGCPProjection );
+  }
+
+  void FlushCache() {
+    GDALFlushCache( self );
+  }
+
+/* NEEDED */
+/* GetSubDatasets */
+/* ReadAsArray */
+/* AddBand */
+/* AdviseRead */
+/* ReadRaster */
+/* WriteRaster */
+  
 }
 };
 
