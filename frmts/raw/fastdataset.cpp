@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2002/12/30 14:55:01  dron
+ * SetProjCS() removed, added unit setting.
+ *
  * Revision 1.1  2002/10/05 12:35:31  dron
  * FAST driver moved to the RAW directory.
  *
@@ -345,7 +348,6 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     
     if ( EQUALN(pszHeader + 3103, "UTM", 3) )
     {
-	oSRS.SetProjCS( "UTM" );
         iUTMZone = atoi( pszHeader + 3592 );
         if( *(pszHeader + 3662) == 'N' )	// North hemisphere
 	    oSRS.SetUTM( iUTMZone, TRUE );
@@ -361,6 +363,8 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         dfLLX = atof( pszHeader + 3904 );
         dfLLY = atof( pszHeader + 3918 );
     }
+
+    oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
     
     oSRS.exportToWkt( &poDS->pszProjection );
 
