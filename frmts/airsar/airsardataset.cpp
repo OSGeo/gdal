@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2004/10/05 18:25:45  fwarmerdam
+ * Added help pointer.
+ *
  * Revision 1.1  2004/10/05 18:12:26  fwarmerdam
  * New
  *
@@ -633,8 +636,7 @@ void GDALRegister_AirSAR()
         poDriver->SetDescription( "AirSAR" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "AirSAR Polarmetric Image" );
-//        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-//                                   "frmt_various.html#AirSAR" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_airsar.html" );
         poDriver->pfnOpen = AirSARDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
