@@ -12,11 +12,11 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 include ./ogr/file.lst
 GDAL_OBJ += $(addprefix ./ogr/,$(OBJ))
 
-default:	GDALmake.opt lib py-target apps-target
+default:	lib-target py-target apps-target
 
-lib:	port-target core-target frmts-target ogr-target check-lib
+lib-target:	check-lib
 
-force-lib:	
+force-lib:
 	$(AR) r $(GDAL_LIB) $(GDAL_OBJ)
 	$(RANLIB) $(GDAL_LIB)
 	$(LD_SHARED) $(GDAL_SLIB_SONAME) $(GDAL_OBJ) $(GDAL_LIBS) $(LIBS) \
@@ -30,7 +30,7 @@ $(GDAL_SLIB):	$(GDAL_OBJ)
 	$(LD_SHARED) $(GDAL_SLIB_SONAME) $(GDAL_OBJ) $(GDAL_LIBS) $(LIBS) \
 		-o $(GDAL_SLIB)
 
-check-lib:
+check-lib:	port-target core-target frmts-target ogr-target
 	$(MAKE) $(GDAL_LIB)
 ifeq ($(HAVE_LD_SHARED),yes)
 	$(MAKE) $(GDAL_SLIB)
@@ -52,11 +52,11 @@ frmts-target:
 ogr-all:
 	(cd ogr; $(MAKE) all)
 
-apps-target:	ogr-apps
+apps-target:	lib-target ogr-apps
 	(cd apps; $(MAKE))
 
 
-ogr-apps:
+ogr-apps:	lib-target
 	(cd ogr; $(MAKE) apps)
 
 #
@@ -77,7 +77,7 @@ clean:	lclean
 	(cd apps; $(MAKE) clean)
 	(cd pymod; $(MAKE) clean)
 
-py-module:
+py-module:	lib-target
 	(cd pymod; $(MAKE))
 
 lclean:
