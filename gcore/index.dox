@@ -137,6 +137,9 @@ includes a GDAL plugin (still prerelease).<p>
 
 <li> <a href="http://www.msmacrosystem.nl/Ilwis/index.html">MS MacroSystem</a>: 3D DEM Viewer.<p>
 
+<li> <a href="http://www.gstat.orgl">gstat</a>: a geostatistical modelling
+package.<p>
+
 </ul>
 
 */
