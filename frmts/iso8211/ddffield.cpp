@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/09/21 16:25:32  warmerda
+ * Fixed bug with repeating variable length fields and running out of data.
+ *
  * Revision 1.6  1999/06/23 02:14:08  warmerda
  * added support for variable width repeaters to GetRepeatCount()
  *
@@ -245,7 +248,7 @@ int DDFField::GetRepeatCount()
             poThisSFDefn->GetDataLength( pachData+iOffset, nDataSize - iOffset,
                                          &nBytesConsumed);
             iOffset += nBytesConsumed;
-            if( iOffset >= nDataSize )
+            if( iOffset > nDataSize )
                 return iRepeatCount - 1;
         }
 
