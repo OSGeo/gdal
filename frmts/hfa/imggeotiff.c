@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/03/02 14:18:09  warmerda
+ * Don't write geotiff info if no mapinfo
+ *
  * Revision 1.2  1999/01/28 16:21:24  warmerda
  * defined PI if needed
  *
@@ -239,8 +242,6 @@ CPLErr ImagineToGeoTIFFProjection( HFAHandle hHFA, TIFF * hTIFF )
     const Eprj_MapInfo *psMapInfo;
     int16	nPCS = KvUserDefined;
 
-    hGTiff = GTIFNew( hTIFF );
-
 /* -------------------------------------------------------------------- */
 /*      Get info on Imagine file projection.                            */
 /* -------------------------------------------------------------------- */
@@ -248,6 +249,11 @@ CPLErr ImagineToGeoTIFFProjection( HFAHandle hHFA, TIFF * hTIFF )
     psProParameters = HFAGetProParameters( hHFA );
     psDatum = HFAGetDatum( hHFA );
     
+    if( psMapInfo == NULL )
+        return CE_None;
+
+    hGTiff = GTIFNew( hTIFF );
+
 /* -------------------------------------------------------------------- */
 /*      Write out the pixelisarea marker.                               */
 /* -------------------------------------------------------------------- */
