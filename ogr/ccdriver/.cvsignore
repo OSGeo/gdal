@@ -5,3 +5,5 @@
 *.tlh
 *.tli
 *.opt
+*.dll
+*.lib
