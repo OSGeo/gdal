@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/05/14 21:33:30  warmerda
+ * use macros for options, pass PRESERVE_EMPTY_NUMBERS opt
+ *
  * Revision 1.12  2001/08/30 21:06:55  warmerda
  * expand tabs
  *
@@ -84,7 +87,7 @@ int main( int nArgc, char ** papszArgv )
     
     if( nArgc < 2 )
     {
-        printf( "Usage: s57dump [-split] [-lnam] [-no-update] filename\n" );
+        printf( "Usage: s57dump [-pen] [-split] [-lnam] [-no-update] filename\n" );
         exit( 1 );
     }
 
@@ -95,12 +98,16 @@ int main( int nArgc, char ** papszArgv )
     {
         if( EQUAL(papszArgv[iArg],"-split") )
             papszOptions =
-                CSLSetNameValue( papszOptions, "SPLIT_MULTIPOINT", "ON" );
+                CSLSetNameValue( papszOptions, S57O_SPLIT_MULTIPOINT, "ON" );
         else if( EQUAL(papszArgv[iArg],"-no-update") )
             bUpdate = FALSE;
+        else if( EQUAL(papszArgv[iArg],"-pen") )
+            papszOptions =
+                CSLSetNameValue( papszOptions, S57O_PRESERVE_EMPTY_NUMBERS,
+                                 "ON" );
         else if( EQUALN(papszArgv[iArg],"-lnam",4) )
             papszOptions =
-                CSLSetNameValue( papszOptions, "LNAM_REFS", "ON" );
+                CSLSetNameValue( papszOptions, S57O_LNAM_REFS, "ON" );
     }
     
 /* -------------------------------------------------------------------- */
@@ -109,7 +116,7 @@ int main( int nArgc, char ** papszArgv )
     S57ClassRegistrar   oRegistrar;
     int                 bRegistrarLoaded;
 
-    bRegistrarLoaded = oRegistrar.LoadInfo( "/home/warmerda/data/s57", TRUE );
+    bRegistrarLoaded = oRegistrar.LoadInfo( NULL, TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Get a list of candidate files.                                  */

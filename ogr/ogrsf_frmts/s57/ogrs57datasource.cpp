@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/05/14 21:33:30  warmerda
+ * use macros for options, pass PRESERVE_EMPTY_NUMBERS opt
+ *
  * Revision 1.17  2002/03/05 14:25:43  warmerda
  * expanded tabs
  *
@@ -217,20 +220,26 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
     poModule = new S57Reader( pszFilename );
 
     papszReaderOptions = CSLSetNameValue(papszReaderOptions, 
-                                         "LNAME_REFS", "ON" );
-    if( GetOption("UPDATES") != NULL )
-        papszReaderOptions = CSLSetNameValue( papszReaderOptions, 
-                                              "UPDATES", GetOption("UPDATES"));
+                                         S57O_LNAM_REFS, "ON" );
+    if( GetOption(S57O_UPDATES) != NULL )
+        papszReaderOptions = 
+            CSLSetNameValue( papszReaderOptions, S57O_UPDATES, 
+                             GetOption(S57O_UPDATES));
                                               
-    if( GetOption("SPLIT_MULTIPOINT") != NULL )
-        papszReaderOptions = CSLSetNameValue( papszReaderOptions, 
-                                              "SPLIT_MULTIPOINT", 
-                                              GetOption("SPLIT_MULTIPOINT"));
+    if( GetOption(S57O_SPLIT_MULTIPOINT) != NULL )
+        papszReaderOptions = 
+            CSLSetNameValue( papszReaderOptions, S57O_SPLIT_MULTIPOINT,
+                             GetOption(S57O_SPLIT_MULTIPOINT) );
                                               
-    if( GetOption("ADD_SOUNDG_DEPTH") != NULL )
-        papszReaderOptions = CSLSetNameValue( papszReaderOptions, 
-                                              "ADD_SOUNDG_DEPTH", 
-                                              GetOption("ADD_SOUNDG_DEPTH"));
+    if( GetOption(S57O_ADD_SOUNDG_DEPTH) != NULL )
+        papszReaderOptions = 
+            CSLSetNameValue( papszReaderOptions, S57O_ADD_SOUNDG_DEPTH,
+                             GetOption(S57O_ADD_SOUNDG_DEPTH));
+                                              
+    if( GetOption(S57O_PRESERVE_EMPTY_NUMBERS) != NULL )
+        papszReaderOptions = 
+            CSLSetNameValue( papszReaderOptions, S57O_PRESERVE_EMPTY_NUMBERS,
+                             GetOption(S57O_PRESERVE_EMPTY_NUMBERS) );
                                               
     poModule->SetOptions( papszReaderOptions );
     CSLDestroy( papszReaderOptions );
