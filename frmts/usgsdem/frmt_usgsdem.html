@@ -32,12 +32,17 @@ Terrain</a> project for more information on VTP.<p>
 
 GDAL supports export of geographic (but not UTM) USGS DEM and CDED data
 files, including the ability to generate CDED 2.0 50K products to Canadian
-federal govenment specifications. 
+federal govenment specifications. <p>
 
 Input data must already be sampled in a geographic coordinate system.  By 
 default the entire area of the input file will be output, but for CDED50K
 products the output file will be sampled at the production specified resolution
-and on product tile boundaries. 
+and on product tile boundaries.<P>
+
+If the input file has appropriate coordinate system information set, 
+export to specific product formats can take input in different coordinate
+systems (ie. from Albers projection to NAD83 geographic for CDED50K 
+production).<p>
 
 Creation Options:<p>
 
@@ -52,6 +57,20 @@ far north areas). <p>
 specify the top left corner of the tile to be generated.  It should be 
 on a 15 minute boundary and can be given in decimal degrees or degrees and 
 minutes (eg. TOPLEFT=117d15w,52d30n). <P>
+
+<li> <b>RESAMPLE=Nearest/Bilinear/Cubic/CubicSpline</b>: Set the resampling
+kernel used for resampling the data to the target grid.  Only has an effect
+when particular products like CDED50K are being produced.  Defaults to 
+Bilinear.<p>
+
+<li> <b>PRODUCER=text</b>: Up to 60 characters to be put into the producer
+field of the generated file.<p>
+
+<li> <b>OriginCode=text</b>: Up to 4 characters to be put into the origin
+code field of the generated file.<p>
+
+<li> <b>ProcessCode=code</b>: One character to be put into the process 
+code field of the generated file.<p>
 
 <li> <b>TEMPLATE=filename</b>: For any output file, a template file can be
 specified.  A number of fields (including the Data Producer) will be copied
