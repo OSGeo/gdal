@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/06/12 15:24:24  warmerda
+ * Fixed byte order handling.
+ *
  * Revision 1.7  2000/06/05 17:24:06  warmerda
  * added real complex support
  *
@@ -733,7 +736,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                     new RawRasterBand( 
                         poDS, poDS->nBands+1, poOpenInfo->fp, 
                         nStartData, nPixelOffset, nLineOffset, 
-                        eType, bNative ) );
+                        eType, !bNative ) );
         }
     }
 
