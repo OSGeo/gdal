@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/05/13 19:32:10  warmerda
+ * support for reading and writing opacity provided by Diana Esch-Mosher
+ *
  * Revision 1.19  2002/07/19 15:37:43  warmerda
  * Fixed type of nRowsPerstrip as per bug report from Pete (qaz7@mindspring.com)
  *
@@ -558,10 +561,10 @@ void ImagineToGeoTIFFPalette( HFABand *poBand, TIFF * hTIFF )
 
 {
     unsigned short	anTRed[256], anTGreen[256], anTBlue[256];
-    double	*padfRed, *padfGreen, *padfBlue;
+    double	*padfRed, *padfGreen, *padfBlue, *padfAlpha;
     int		nColors, i;
 
-    poBand->GetPCT( &nColors, &padfRed, &padfGreen, &padfBlue );
+    poBand->GetPCT( &nColors, &padfRed, &padfGreen, &padfBlue, &padfAlpha );
     CPLAssert( nColors > 0 );
 
     for( i = 0; i < 256; i++ )
@@ -845,7 +848,7 @@ static void ImagineToGeoTIFF( HFAHandle hHFA,
     TIFF	*hTIFF;
     int		nXSize, nYSize, nBlockXSize, nBlockYSize, nDataType;
     int		nBlocksPerRow, nBlocksPerColumn;
-    double	*padfRed, *padfGreen, *padfBlue;
+    double	*padfRed, *padfGreen, *padfBlue, *padfAlpha;
     int		nColors;
 
     HFAGetRasterInfo( hHFA, &nXSize, &nYSize, NULL );
@@ -872,7 +875,7 @@ static void ImagineToGeoTIFF( HFAHandle hHFA,
 /* -------------------------------------------------------------------- */
     if( nBandCount == 1 )
         papoBandList[panBandList[0]]->GetPCT( &nColors, &padfRed,
-                                              &padfGreen, &padfBlue );
+                                              &padfGreen, &padfBlue, &padfAlpha );
     else
         nColors = 0;
 
@@ -1025,9 +1028,9 @@ CPLErr CopyPyramidsToTiff( HFAHandle psInfo, HFABand *poBand, TIFF * hTIFF,
     HFAEntry	*poBandNode = poBand->poNode;
     HFAEntry	*poSubNode;
     int		nColors, nPhotometric;
-    double	*padfRed, *padfGreen, *padfBlue;
+    double	*padfRed, *padfGreen, *padfBlue, *padfAlpha;
 
-    poBand->GetPCT( &nColors, &padfRed, &padfGreen, &padfBlue );
+    poBand->GetPCT( &nColors, &padfRed, &padfGreen, &padfBlue, &padfAlpha );
     if( nColors == 0 )
         nPhotometric = PHOTOMETRIC_MINISBLACK;
     else

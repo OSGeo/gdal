@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/05/13 19:32:10  warmerda
+ * support for reading and writing opacity provided by Diana Esch-Mosher
+ *
  * Revision 1.10  2003/04/22 19:40:36  warmerda
  * fixed email address
  *
@@ -193,8 +196,8 @@ CPLErr CPL_DLL HFASetRasterBlock( HFAHandle hHFA, int nBand,
                                   void * pData );
 int     CPL_DLL HFAGetDataTypeBits( int );
 CPLErr	CPL_DLL HFAGetPCT( HFAHandle, int, int *, 
-                           double **, double **, double ** );
-CPLErr  CPL_DLL HFASetPCT( HFAHandle, int, int, double *, double *, double * );
+                           double **, double **, double ** , double **);
+CPLErr  CPL_DLL HFASetPCT( HFAHandle, int, int, double *, double *, double *, double * );
 void    CPL_DLL HFADumpTree( HFAHandle, FILE * );
 void    CPL_DLL HFADumpDictionary( HFAHandle, FILE * );
 CPLErr  CPL_DLL HFAGetDataRange( HFAHandle, int, double *, double * );
