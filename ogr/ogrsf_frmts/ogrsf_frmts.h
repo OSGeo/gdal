@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2003/11/06 18:27:35  warmerda
+ * Added VRT registration point
+ *
  * Revision 1.40  2003/10/09 15:28:07  warmerda
  * added OGRLayer::DeleteFeature() support
  *
@@ -393,6 +396,7 @@ void CPL_DLL RegisterOGRAVCE00();
 void CPL_DLL RegisterOGRFME();
 void CPL_DLL RegisterOGRREC();
 void CPL_DLL RegisterOGRMEM();
+void CPL_DLL RegisterOGRVRT();
 CPL_C_END
 
 
