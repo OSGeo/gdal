@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/12/21 16:11:11  fwarmerdam
+ * hacked Read() method error reporting to avoid NPJE issue
+ *
  * Revision 1.2  2004/12/20 22:17:57  fwarmerdam
  * adjusted for two create copy entry points
  *
@@ -154,7 +157,17 @@ class VSIIOStream : public CNCSJPCIOStream
         if( count == 0 )
             return true;
 
-        return(1 == VSIFReadL( buffer, count, 1, fpVSIL ) );
+//        return(1 == VSIFReadL( buffer, count, 1, fpVSIL ) );
+
+        // The following is a hack 
+        if( VSIFReadL( buffer, count, 1, fpVSIL ) != 1 )
+        {
+            CPLDebug( "VSIIOSTREAM",
+                      "Read(%d) failed @ %d, ignoring failure.",
+                      (int) (VSIFTellL( fpVSIL ) - startOfJPData) );
+        }
+        
+        return true;
     }
 
     virtual bool NCS_FASTCALL Write(void* buffer, UINT32 count) {
