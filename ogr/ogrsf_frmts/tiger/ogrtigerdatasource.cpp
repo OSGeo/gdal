@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2003/08/27 02:26:56  warmerda
+ * fixed overlap in 2002/2003 version classification
+ *
  * Revision 1.23  2003/08/18 14:47:53  warmerda
  * upgraded with *untested* TIGER 2003 support
  *
@@ -191,7 +194,7 @@ TigerVersion TigerClassifyVersion( int nVersionCode )
         nVersion = TIGER_2000_Census;
     else if( nVersionCode >=  203 /*0203*/ && nVersionCode <=  205 /*0205*/ )
         nVersion = TIGER_UA2000;
-    else if( nVersionCode >=  206 /*0206*/ && nVersionCode <= 300 /* 2003 */ )
+    else if( nVersionCode >=  206 /*0206*/ && nVersionCode < 300 /* 2003 */ )
         nVersion = TIGER_2002;
     else if( nVersionCode >=  300 /*0300*/ )
         nVersion = TIGER_2003;
