@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/11/24 20:32:07  warmerda
+ * Use TABLE instead of TABLES in SQLTables() call
+ *
  * Revision 1.8  2003/11/10 20:08:12  warmerda
  * added GetTables() implementation
  *
@@ -1026,7 +1029,7 @@ int CPLODBCStatement::GetTables( const char *pszCatalog,
                            (SQLCHAR *) pszCatalog, SQL_NTS,
                            (SQLCHAR *) pszSchema, SQL_NTS,
                            (SQLCHAR *) NULL, SQL_NTS,
-                           (SQLCHAR *) "TABLES", SQL_NTS ) ) )
+                           (SQLCHAR *) "TABLE", SQL_NTS ) ) )
         return FALSE;
     else
         return CollectResultsInfo();
@@ -1154,6 +1157,9 @@ const char *CPLODBCStatement::GetTypeName( int nTypeCode )
         return "TIMESTAMP";
 
       default:
-        return "UNKNOWN";
+          static char szType[100];
+
+          sprintf( szType, "UNKNOWN:%d", nTypeCode );
+          return szType;
     }
 }
