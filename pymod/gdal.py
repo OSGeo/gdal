@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.58  2004/02/25 09:04:33  dron
+# Added wrappers for GDALPackedDMSToDec() and GDALDecToPackedDMS().
+#
 # Revision 1.57  2004/02/08 09:13:56  aamici
 # optimize Band.ReadAsArray performance avoiding memory copy.
 #
@@ -257,7 +260,16 @@ def RGBFile2PCTFile( src_filename, dst_filename ):
     return 0
 
 def DecToDMS(angle, axis, precision = 2):
+    """Translate a decimal degrees value to a DMS string with hemisphere."""
     return _gdal.GDALDecToDMS(angle, axis, precision)
+
+def PackedDMSToDec(packed_angle):
+    """Convert a packed DMS value (DDDMMMSSS.SS) into decimal degrees."""
+    return _gdal.GDALPackedDMSToDec(packed_angle)
+
+def DecToPackedDMS(angle):
+    """Convert decimal degrees into packed DMS value (DDDMMMSSS.SS)."""
+    return _gdal.GDALDecToPackedDMS(angle)
 
 def GetDriverList():
     list = []

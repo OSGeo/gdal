@@ -3357,6 +3357,32 @@ static PyObject *_wrap_GDALDecToDMS(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_GDALPackedDMSToDec(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    double  _result;
+    double  _arg0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"d:GDALPackedDMSToDec",&_arg0)) 
+        return NULL;
+    _result = (double )GDALPackedDMSToDec(_arg0);
+    _resultobj = Py_BuildValue("d",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALDecToPackedDMS(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    double  _result;
+    double  _arg0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"d:GDALDecToPackedDMS",&_arg0)) 
+        return NULL;
+    _result = (double )GDALDecToPackedDMS(_arg0);
+    _resultobj = Py_BuildValue("d",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_GDALTermProgress(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     int  _result;
@@ -10623,6 +10649,8 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALSetMetadata", _wrap_GDALSetMetadata, METH_VARARGS },
 	 { "GDALGetMetadata", _wrap_GDALGetMetadata, METH_VARARGS },
 	 { "GDALTermProgress", _wrap_GDALTermProgress, METH_VARARGS },
+	 { "GDALDecToPackedDMS", _wrap_GDALDecToPackedDMS, METH_VARARGS },
+	 { "GDALPackedDMSToDec", _wrap_GDALPackedDMSToDec, METH_VARARGS },
 	 { "GDALDecToDMS", _wrap_GDALDecToDMS, METH_VARARGS },
 	 { "GDALGetPaletteInterpretationName", _wrap_GDALGetPaletteInterpretationName, METH_VARARGS },
 	 { "GDALGetColorInterpretationName", _wrap_GDALGetColorInterpretationName, METH_VARARGS },

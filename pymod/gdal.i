@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.89  2004/02/25 09:04:33  dron
+ * Added wrappers for GDALPackedDMSToDec() and GDALDecToPackedDMS().
+ *
  * Revision 1.88  2004/02/25 08:13:40  dron
  * Added wrapper for OSRExportToUSGS() function.
  *
@@ -552,6 +555,8 @@ const char *GDALGetColorInterpretationName( GDALColorInterp );
 const char *GDALGetPaletteInterpretationName( GDALPaletteInterp );
 
 const char *GDALDecToDMS( double, const char *, int );
+double GDALPackedDMSToDec( double );
+double GDALDecToPackedDMS( double );
 
 int GDALTermProgress( double, const char *, void * );
 
