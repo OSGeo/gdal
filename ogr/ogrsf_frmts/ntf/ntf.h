@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2005/02/22 12:54:16  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.25  2004/11/17 19:30:15  fwarmerdam
  * further fixes to stroking 3pt arcs
  *
@@ -458,7 +461,6 @@ class NTFFileReader
 class OGRNTFLayer : public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
-    OGRGeometry        *poFilterGeom;
     NTFFeatureTranslator pfnTranslator;
 
     OGRNTFDataSource   *poDS;
@@ -473,9 +475,6 @@ class OGRNTFLayer : public OGRLayer
                                      NTFFeatureTranslator pfnTranslator );
 
                         ~OGRNTFLayer();
-
-    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
-    void                SetSpatialFilter( OGRGeometry * );
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();

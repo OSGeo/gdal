@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/02/22 12:55:03  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.7  2005/02/02 21:09:44  fwarmerdam
  * track m_nFeaturesRead
  *
@@ -68,7 +71,6 @@ OGRAVCLayer::OGRAVCLayer( AVCFileType eSectionTypeIn,
                           OGRAVCDataSource *poDSIn )
 
 {
-    poFilterGeom = NULL;
     eSectionType = eSectionTypeIn;
     
     poDS = poDSIn;
@@ -93,31 +95,6 @@ OGRAVCLayer::~OGRAVCLayer()
         delete poFeatureDefn;
         poFeatureDefn = NULL;
     }
-
-    if( poFilterGeom != NULL )
-        delete poFilterGeom;
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRAVCLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
-
-{
-    if( poFilterGeom != NULL )
-    {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
-
-    if( poGeomIn != NULL )
-    {
-        poFilterGeom = poGeomIn->clone();
-        poFilterGeom->getEnvelope( &sFilterEnvelope );
-    }
-
-    ResetReading();
 }
 
 /************************************************************************/
@@ -411,7 +388,7 @@ OGRFeature *OGRAVCLayer::TranslateFeature( void *pAVCFeature )
 int OGRAVCLayer::MatchesSpatialFilter( void *pFeature )
 
 {
-    if( poFilterGeom == NULL )
+    if( m_poFilterGeom == NULL )
         return TRUE;
 
     switch( eSectionType )
@@ -430,14 +407,14 @@ int OGRAVCLayer::MatchesSpatialFilter( void *pFeature )
               AVCVertex *psV1 = psArc->pasVertices + iVert;
               AVCVertex *psV2 = psArc->pasVertices + iVert + 1;
 
-              if( (psV1->x < sFilterEnvelope.MinX
-                   && psV2->x < sFilterEnvelope.MinX)
-                  || (psV1->x > sFilterEnvelope.MaxX
-                      && psV2->x > sFilterEnvelope.MaxX)
-                  || (psV1->y < sFilterEnvelope.MinY
-                      && psV2->y < sFilterEnvelope.MinY)
-                  || (psV1->y > sFilterEnvelope.MaxY
-                      && psV2->y > sFilterEnvelope.MaxY) )
+              if( (psV1->x < m_sFilterEnvelope.MinX
+                   && psV2->x < m_sFilterEnvelope.MinX)
+                  || (psV1->x > m_sFilterEnvelope.MaxX
+                      && psV2->x > m_sFilterEnvelope.MaxX)
+                  || (psV1->y < m_sFilterEnvelope.MinY
+                      && psV2->y < m_sFilterEnvelope.MinY)
+                  || (psV1->y > m_sFilterEnvelope.MaxY
+                      && psV2->y > m_sFilterEnvelope.MaxY) )
                   /* This segment is completely outside extents */;
               else
                   return TRUE;
@@ -457,10 +434,10 @@ int OGRAVCLayer::MatchesSpatialFilter( void *pFeature )
       {
           AVCPal *psPAL = (AVCPal *) pFeature;
 
-          if( psPAL->sMin.x > sFilterEnvelope.MaxX
-              || psPAL->sMax.x < sFilterEnvelope.MinX
-              || psPAL->sMin.y > sFilterEnvelope.MaxY
-              || psPAL->sMax.y < sFilterEnvelope.MinY )
+          if( psPAL->sMin.x > m_sFilterEnvelope.MaxX
+              || psPAL->sMax.x < m_sFilterEnvelope.MinX
+              || psPAL->sMin.y > m_sFilterEnvelope.MaxY
+              || psPAL->sMax.y < m_sFilterEnvelope.MinY )
               return FALSE;
           else
               return TRUE;
@@ -473,10 +450,10 @@ int OGRAVCLayer::MatchesSpatialFilter( void *pFeature )
       {
           AVCCnt *psCNT = (AVCCnt *) pFeature;
           
-          if( psCNT->sCoord.x < sFilterEnvelope.MinX
-              || psCNT->sCoord.x > sFilterEnvelope.MaxX
-              || psCNT->sCoord.y < sFilterEnvelope.MinY
-              || psCNT->sCoord.y > sFilterEnvelope.MaxY )
+          if( psCNT->sCoord.x < m_sFilterEnvelope.MinX
+              || psCNT->sCoord.x > m_sFilterEnvelope.MaxX
+              || psCNT->sCoord.y < m_sFilterEnvelope.MinY
+              || psCNT->sCoord.y > m_sFilterEnvelope.MaxY )
               return FALSE;
           else
               return TRUE;
@@ -489,10 +466,10 @@ int OGRAVCLayer::MatchesSpatialFilter( void *pFeature )
       {
           AVCLab *psLAB = (AVCLab *) pFeature;
 
-          if( psLAB->sCoord1.x < sFilterEnvelope.MinX
-              || psLAB->sCoord1.x > sFilterEnvelope.MaxX
-              || psLAB->sCoord1.y < sFilterEnvelope.MinY
-              || psLAB->sCoord1.y > sFilterEnvelope.MaxY )
+          if( psLAB->sCoord1.x < m_sFilterEnvelope.MinX
+              || psLAB->sCoord1.x > m_sFilterEnvelope.MaxX
+              || psLAB->sCoord1.y < m_sFilterEnvelope.MinY
+              || psLAB->sCoord1.y > m_sFilterEnvelope.MaxY )
               return FALSE;
           else
               return TRUE;
@@ -509,10 +486,10 @@ int OGRAVCLayer::MatchesSpatialFilter( void *pFeature )
           if( psTXT->numVerticesLine == 0 )
               return TRUE;
 
-          if( psTXT->pasVertices[0].x < sFilterEnvelope.MinX
-              || psTXT->pasVertices[0].x > sFilterEnvelope.MaxX
-              || psTXT->pasVertices[0].y < sFilterEnvelope.MinY
-              || psTXT->pasVertices[0].y > sFilterEnvelope.MaxY )
+          if( psTXT->pasVertices[0].x < m_sFilterEnvelope.MinX
+              || psTXT->pasVertices[0].x > m_sFilterEnvelope.MaxX
+              || psTXT->pasVertices[0].y < m_sFilterEnvelope.MinY
+              || psTXT->pasVertices[0].y > m_sFilterEnvelope.MaxY )
               return FALSE;
           else
               return TRUE;

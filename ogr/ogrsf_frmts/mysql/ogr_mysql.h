@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/02/22 12:54:27  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.3  2004/10/12 16:59:31  fwarmerdam
  * rearrange include files for win32
  *
@@ -61,8 +64,6 @@ class OGRMySQLLayer : public OGRLayer
     // Layer spatial reference system, and srid.
     OGRSpatialReference *poSRS;
     int                 nSRSId;
-
-    OGRGeometry         *poFilterGeom;
 
     int                 iNextShapeId;
 
@@ -130,8 +131,7 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
 
-    virtual OGRGeometry *GetSpatialFilter() { return poFilterGeom; }
-    virtual void        SetSpatialFilter( OGRGeometry * );
+    void                SetSpatialFilter( OGRGeometry * );
 
     virtual OGRErr      SetAttributeFilter( const char * );
 #ifdef notdef
@@ -163,9 +163,6 @@ class OGRMySQLResultLayer : public OGRMySQLLayer
                                              const char * pszRawStatement,
                                              MYSQL_RES *hResultSetIn );
     virtual             ~OGRMySQLResultLayer();
-
-    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
-    void                SetSpatialFilter( OGRGeometry * ) {}
 
     OGRFeatureDefn     *ReadResultDefinition();
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/02/22 12:54:50  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.9  2004/02/23 21:45:03  warmerda
  * added support for various link formats
  *
@@ -75,7 +78,6 @@ class OGRDGNLayer : public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
 
-    OGRGeometry         *poFilterGeom;
     int                 iNextShapeId;
     int                 nTotalShapeCount;
 
@@ -100,7 +102,6 @@ class OGRDGNLayer : public OGRLayer
                                      int bUpdate );
                         ~OGRDGNLayer();
 
-    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
     void                SetSpatialFilter( OGRGeometry * );
 
     void                ResetReading();

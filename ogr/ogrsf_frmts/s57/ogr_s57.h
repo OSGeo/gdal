@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/02/22 12:53:12  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.9  2004/08/30 20:12:00  warmerda
  * keep the S57ClassRegistrar on the driver, not the datasource
  *
@@ -74,8 +77,6 @@ class OGRS57DataSource;
 
 class OGRS57Layer : public OGRLayer
 {
-    OGRGeometry        *poFilterGeom;
-
     OGRS57DataSource   *poDS;
 
     OGRFeatureDefn     *poFeatureDefn;
@@ -91,9 +92,6 @@ class OGRS57Layer : public OGRLayer
                                      OGRFeatureDefn *, int nFeatureCount = -1,
                                      int nOBJL = -1 );
     virtual             ~OGRS57Layer();
-
-    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
-    void                SetSpatialFilter( OGRGeometry * );
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/02/22 12:54:05  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.16  2005/02/02 20:54:27  fwarmerdam
  * track m_nFeaturesRead
  *
@@ -104,8 +107,6 @@ OGRPGLayer::OGRPGLayer()
 {
     poDS = NULL;
 
-    poFilterGeom = NULL;
-
     bHasWkb = FALSE;
     bWkbAsOid = FALSE;
     bHasPostGISGeometry = FALSE;
@@ -148,9 +149,6 @@ OGRPGLayer::~OGRPGLayer()
     CPLFree( pszGeomColumn );
     CPLFree( pszFIDColumn );
     CPLFree( pszQueryStatement );
-
-    if( poFilterGeom != NULL )
-        delete poFilterGeom;
 
     if( poSRS != NULL )
         poSRS->Dereference();
@@ -205,9 +203,9 @@ OGRFeature *OGRPGLayer::GetNextFeature()
         if( poFeature == NULL )
             return NULL;
 
-        if( (poFilterGeom == NULL
+        if( (m_poFilterGeom == NULL
             || bHasPostGISGeometry
-            || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+            || !FilterGeometry( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
             return poFeature;
@@ -636,7 +634,7 @@ int OGRPGLayer::TestCapability( const char * pszCap )
         return FALSE;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return poFilterGeom == NULL || bHasPostGISGeometry;
+        return m_poFilterGeom == NULL || bHasPostGISGeometry;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return TRUE;

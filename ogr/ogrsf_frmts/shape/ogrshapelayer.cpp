@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/02/22 12:51:56  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.18  2005/02/02 20:01:02  fwarmerdam
  * added SetNextByIndex support
  *
@@ -101,7 +104,6 @@ OGRShapeLayer::OGRShapeLayer( const char * pszName,
                               OGRwkbGeometryType eReqType )
 
 {
-    poFilterGeom = NULL;
     poSRS = poSRSIn;
 
     pszFullName = CPLStrdup(pszName);
@@ -159,9 +161,6 @@ OGRShapeLayer::~OGRShapeLayer()
     if( hSHP != NULL )
         SHPClose( hSHP );
 
-    if( poFilterGeom != NULL )
-        delete poFilterGeom;
-
     if( fpQIX != NULL )
         VSIFClose( fpQIX );
 }
@@ -185,25 +184,6 @@ int OGRShapeLayer::CheckForQIX()
     bCheckedForQIX = TRUE;
 
     return fpQIX != NULL;
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRShapeLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
-
-{
-    if( poFilterGeom != NULL )
-    {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
-
-    if( poGeomIn != NULL )
-        poFilterGeom = poGeomIn->clone();
-
-    ResetReading();
 }
 
 /************************************************************************/
@@ -231,19 +211,19 @@ int OGRShapeLayer::ScanIndices()
 /* -------------------------------------------------------------------- */
 /*      Check for spatial index if we have a spatial query.             */
 /* -------------------------------------------------------------------- */
-    if( poFilterGeom != NULL && !bCheckedForQIX )
+    if( m_poFilterGeom != NULL && !bCheckedForQIX )
         CheckForQIX();
 
 /* -------------------------------------------------------------------- */
 /*      Utilize spatial index if appropriate.                           */
 /* -------------------------------------------------------------------- */
-    if( poFilterGeom && fpQIX )
+    if( m_poFilterGeom && fpQIX )
     {
         int nSpatialFIDCount, *panSpatialFIDs;
         double adfBoundsMin[4], adfBoundsMax[4];
         OGREnvelope oEnvelope;
 
-        poFilterGeom->getEnvelope( &oEnvelope );
+        m_poFilterGeom->getEnvelope( &oEnvelope );
 
         adfBoundsMin[0] = oEnvelope.MinX;
         adfBoundsMin[1] = oEnvelope.MinY;
@@ -333,7 +313,7 @@ OGRErr OGRShapeLayer::SetNextByIndex( long nIndex )
 {
     // Eventually we should try to use panMatchingFIDs list 
     // if available and appropriate. 
-    if( poFilterGeom != NULL || m_poAttrQuery != NULL )
+    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
         return OGRLayer::SetNextByIndex( nIndex );
 
     iNextShapeId = nIndex;
@@ -355,7 +335,7 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
 /*      indices.  Only do this on the first request for a given pass    */
 /*      of course.                                                      */
 /* -------------------------------------------------------------------- */
-    if( (m_poAttrQuery != NULL || poFilterGeom != NULL)
+    if( (m_poAttrQuery != NULL || m_poFilterGeom != NULL)
         && iNextShapeId == 0 && panMatchingFIDs == NULL )
     {
         ScanIndices();
@@ -387,8 +367,8 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
                 m_nFeaturesRead++;
         }
 
-        if( (poFilterGeom == NULL
-            || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+        if( (m_poFilterGeom == NULL
+             || FilterGeometry( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
             return poFeature;
@@ -520,7 +500,7 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
 int OGRShapeLayer::GetFeatureCount( int bForce )
 
 {
-    if( poFilterGeom != NULL || m_poAttrQuery != NULL )
+    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
         return OGRLayer::GetFeatureCount( bForce );
     else
         return nTotalShapeCount;
@@ -569,7 +549,7 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
         return bUpdateAccess;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return poFilterGeom == NULL;
+        return m_poFilterGeom == NULL;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
@@ -578,7 +558,7 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCFastSetNextByIndex) )
-        return poFilterGeom == NULL && m_poAttrQuery == NULL;
+        return m_poFilterGeom == NULL && m_poAttrQuery == NULL;
 
     else if( EQUAL(pszCap,OLCCreateField) )
         return TRUE;

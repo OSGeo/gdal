@@ -25,6 +25,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/02/22 12:57:19  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.3  2005/02/02 20:54:26  fwarmerdam
  * track m_nFeaturesRead
  *
@@ -247,7 +250,7 @@ void OGRFMELayerCached::ResetReading()
 
     poDS->AcquireSession();
 
-    if( poFilterGeom == NULL )
+    if( m_poFilterGeom == NULL )
     {
         poIndex->queryAll();
     }
@@ -255,7 +258,7 @@ void OGRFMELayerCached::ResetReading()
     {
         OGREnvelope      oEnvelope;
 
-        poFilterGeom->getEnvelope( &oEnvelope );
+        m_poFilterGeom->getEnvelope( &oEnvelope );
 
         poFMEFeature->resetFeature();
 

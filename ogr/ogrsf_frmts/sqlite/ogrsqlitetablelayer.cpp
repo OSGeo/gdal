@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/02/22 12:50:31  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.7  2004/07/13 15:47:34  warmerda
  * fixed similar quoting bug in GetFeature()
  *
@@ -155,25 +158,6 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
     sqlite3_finalize( hColStmt );
 
     return CE_None;
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRSQLiteTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
-
-{
-    if( poFilterGeom != NULL )
-    {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
-
-    if( poGeomIn != NULL )
-        poFilterGeom = poGeomIn->clone();
-
-    ResetReading();
 }
 
 /************************************************************************/
@@ -359,7 +343,7 @@ int OGRSQLiteTableLayer::TestCapability( const char * pszCap )
 int OGRSQLiteTableLayer::GetFeatureCount( int bForce )
 
 {
-    if( poFilterGeom != NULL && pszGeomColumn != NULL )
+    if( m_poFilterGeom != NULL && pszGeomColumn != NULL )
         return OGRSQLiteLayer::GetFeatureCount( bForce );
 
 /* -------------------------------------------------------------------- */

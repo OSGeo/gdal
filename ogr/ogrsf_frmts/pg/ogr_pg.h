@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/02/22 12:54:05  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.15  2004/11/17 17:49:26  fwarmerdam
  * implemented SetFeature and DeleteFeature methods
  *
@@ -95,8 +98,6 @@ class OGRPGLayer : public OGRLayer
     // Layer spatial reference system, and srid.
     OGRSpatialReference *poSRS;
     int                 nSRSId;
-
-    OGRGeometry         *poFilterGeom;
 
     int                 iNextShapeId;
 
@@ -178,7 +179,6 @@ class OGRPGTableLayer : public OGRPGLayer
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
 
-    virtual OGRGeometry *GetSpatialFilter() { return poFilterGeom; }
     virtual void        SetSpatialFilter( OGRGeometry * );
 
     virtual OGRErr      SetAttributeFilter( const char * );
@@ -221,7 +221,6 @@ class OGRPGResultLayer : public OGRPGLayer
                                           PGresult *hInitialResult );
     virtual             ~OGRPGResultLayer();
 
-    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
     void                SetSpatialFilter( OGRGeometry * ) {}
 
     OGRFeatureDefn     *ReadResultDefinition();

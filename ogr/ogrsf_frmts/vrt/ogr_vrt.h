@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/02/22 12:50:10  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.2  2003/11/07 21:55:12  warmerda
  * complete fid support, relative dsname, fixes
  *
@@ -67,8 +70,6 @@ class OGRVRTLayer : public OGRLayer
     // Layer spatial reference system, and srid.
     OGRSpatialReference *poSRS;
 
-    OGRGeometry         *poFilterGeom;
-
     char                *pszQuery;
 
     int                 iFIDField; // -1 means pass through. 
@@ -104,9 +105,6 @@ class OGRVRTLayer : public OGRLayer
     virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int         GetFeatureCount( int );
-
-    virtual OGRGeometry *GetSpatialFilter() { return poFilterGeom; }
-    virtual void        SetSpatialFilter( OGRGeometry * );
 
 //    virtual OGRErr      SetAttributeFilter( const char * );
 

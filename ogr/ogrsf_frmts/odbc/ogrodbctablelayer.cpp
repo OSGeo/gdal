@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/02/22 12:53:56  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.4  2003/12/29 22:48:45  warmerda
  * added error check on whether any columns found
  *
@@ -134,25 +137,6 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszTableName,
     }
 
     return CE_None;
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRODBCTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
-
-{
-    if( poFilterGeom != NULL )
-    {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
-
-    if( poGeomIn != NULL )
-        poFilterGeom = poGeomIn->clone();
-
-    ResetReading();
 }
 
 /************************************************************************/

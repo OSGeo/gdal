@@ -25,6 +25,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/02/22 12:57:19  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.3  2005/02/02 20:54:27  fwarmerdam
  * track m_nFeaturesRead
  *
@@ -102,7 +105,6 @@ OGRFMELayer::OGRFMELayer( OGRFMEDataSource *poDSIn )
     poDS = poDSIn;
 
     poFeatureDefn = NULL;
-    poFilterGeom = NULL;
     poSpatialRef = NULL;
     pszAttributeFilter = NULL;
 
@@ -128,9 +130,6 @@ OGRFMELayer::~OGRFMELayer()
     if( poFMEFeature != NULL )
         poDS->GetFMESession()->destroyFeature( poFMEFeature );
 
-    if( poFilterGeom != NULL )
-        delete poFilterGeom;
-    
     if( poFeatureDefn != NULL )
         delete poFeatureDefn;
 
@@ -356,25 +355,6 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
     poDS->GetFMESession()->destroyStringArray( poAttrNames );
 
     return TRUE;
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRFMELayer::SetSpatialFilter( OGRGeometry * poGeomIn )
-
-{
-    if( poFilterGeom != NULL )
-    {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
-
-    if( poGeomIn != NULL )
-        poFilterGeom = poGeomIn->clone();
-
-    ResetReading();
 }
 
 /************************************************************************/

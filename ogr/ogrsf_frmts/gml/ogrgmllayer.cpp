@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/02/22 12:56:28  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.15  2005/02/02 20:54:27  fwarmerdam
  * track m_nFeaturesRead
  *
@@ -91,8 +94,6 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
                           OGRGMLDataSource *poDSIn )
 
 {
-    poFilterGeom = NULL;
-
     if( poSRSIn == NULL )
         poSRS = NULL;
     else
@@ -130,28 +131,8 @@ OGRGMLLayer::~OGRGMLLayer()
     if( poSRS != NULL )
         delete poSRS;
 
-    if( poFilterGeom != NULL )
-        delete poFilterGeom;
-
     if( !bWriter )
         delete poDS->GetReader();
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRGMLLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
-
-{
-    if( poFilterGeom != NULL )
-    {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
-
-    if( poGeomIn != NULL )
-        poFilterGeom = poGeomIn->clone();
 }
 
 /************************************************************************/
@@ -226,7 +207,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                 return NULL;
             }
             
-            if( poFilterGeom != NULL && !poFilterGeom->Intersect( poGeom ) )
+            if( m_poFilterGeom != NULL && !FilterGeometry( poGeom ) )
                 continue;
         }
         
@@ -279,7 +260,7 @@ int OGRGMLLayer::GetFeatureCount( int bForce )
     if( poFClass == NULL )
         return 0;
 
-    if( poFilterGeom != NULL || m_poAttrQuery != NULL )
+    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
         return OGRLayer::GetFeatureCount( bForce );
     else
         return poFClass->GetFeatureCount();
@@ -394,7 +375,9 @@ int OGRGMLLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
     {
-        if( poFClass == NULL || poFilterGeom != NULL || m_poAttrQuery != NULL )
+        if( poFClass == NULL 
+            || m_poFilterGeom != NULL 
+            || m_poAttrQuery != NULL )
             return FALSE;
 
         return poFClass->GetFeatureCount() != -1;

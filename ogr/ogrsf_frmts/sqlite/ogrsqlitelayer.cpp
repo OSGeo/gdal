@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/02/22 12:50:31  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.7  2005/02/02 20:54:27  fwarmerdam
  * track m_nFeaturesRead
  *
@@ -67,8 +70,6 @@ OGRSQLiteLayer::OGRSQLiteLayer()
 {
     poDS = NULL;
 
-    poFilterGeom = NULL;
-
     pszGeomColumn = NULL;
     pszFIDColumn = NULL;
 
@@ -104,9 +105,6 @@ OGRSQLiteLayer::~OGRSQLiteLayer()
 
     if( pszGeomColumn != NULL )
         CPLFree( pszGeomColumn );
-
-    if( poFilterGeom != NULL )
-        delete poFilterGeom;
 
     if( poFeatureDefn != NULL )
     {
@@ -221,8 +219,8 @@ OGRFeature *OGRSQLiteLayer::GetNextFeature()
         if( poFeature == NULL )
             return NULL;
 
-        if( (poFilterGeom == NULL
-            || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+        if( (m_poFilterGeom == NULL
+            || FilterGeometry( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
             return poFeature;

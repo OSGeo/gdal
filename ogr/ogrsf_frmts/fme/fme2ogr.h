@@ -23,6 +23,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/02/22 12:57:19  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.4  2002/11/08 21:20:58  warmerda
  * ensure a query is issued if resetreading never called
  *
@@ -128,7 +131,6 @@ class OGRFMELayer : public OGRLayer
 
     OGRFMEDataSource   *poDS;
 
-    OGRGeometry        *poFilterGeom;
     char               *pszAttributeFilter;
 
     IFMEFeature         *poFMEFeature;
@@ -139,9 +141,6 @@ class OGRFMELayer : public OGRLayer
 
     virtual int         Initialize( IFMEFeature *,
                                     OGRSpatialReference * );
-
-    virtual OGRGeometry *GetSpatialFilter() { return poFilterGeom; }
-    virtual void        SetSpatialFilter( OGRGeometry * );
 
     virtual OGRErr      SetAttributeFilter( const char * );
     

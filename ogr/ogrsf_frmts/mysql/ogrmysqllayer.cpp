@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/02/22 12:54:27  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.2  2005/02/02 20:54:27  fwarmerdam
  * track m_nFeaturesRead
  *
@@ -50,8 +53,6 @@ OGRMySQLLayer::OGRMySQLLayer()
 
 {
     poDS = NULL;
-
-    poFilterGeom = NULL;
 
     pszGeomColumn = NULL;
     pszQueryStatement = NULL;
@@ -89,9 +90,6 @@ OGRMySQLLayer::~OGRMySQLLayer()
     CPLFree( pszGeomColumn );
     CPLFree( pszFIDColumn );
     CPLFree( pszQueryStatement );
-
-    if( poFilterGeom != NULL )
-        delete poFilterGeom;
 
     if( poSRS != NULL )
         poSRS->Dereference();
@@ -134,8 +132,8 @@ OGRFeature *OGRMySQLLayer::GetNextFeature()
         if( poFeature == NULL )
             return NULL;
 
-        if( (poFilterGeom == NULL
-            || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+        if( (m_poFilterGeom == NULL
+            || FilterGeometry( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
             return poFeature;

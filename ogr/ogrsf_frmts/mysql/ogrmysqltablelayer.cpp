@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/02/22 12:54:27  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.2  2004/10/08 20:50:48  fwarmerdam
  * avoid leak in GetFeatureCount()
  *
@@ -224,14 +227,8 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 void OGRMySQLTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
 {
-    if( poFilterGeom != NULL )
-    {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
-
-    if( poGeomIn != NULL )
-        poFilterGeom = poGeomIn->clone();
+    if( !InstallFilter( poGeomIn ) )
+        return;
 
     BuildWhere();
 

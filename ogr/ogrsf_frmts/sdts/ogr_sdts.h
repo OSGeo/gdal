@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/02/22 12:53:19  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.4  2001/01/19 21:14:22  warmerda
  * expanded tabs
  *
@@ -61,7 +64,6 @@ class OGRSDTSDataSource;
 class OGRSDTSLayer : public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
-    OGRGeometry        *poFilterGeom;
 
     SDTSTransfer       *poTransfer;
     int                 iLayer;
@@ -77,9 +79,6 @@ class OGRSDTSLayer : public OGRLayer
   public:
                         OGRSDTSLayer( SDTSTransfer *, int, OGRSDTSDataSource*);
                         ~OGRSDTSLayer();
-
-    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
-    void                SetSpatialFilter( OGRGeometry * );
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
