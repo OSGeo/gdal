@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/04/17 19:53:17  warmerda
+ * added SELECT COUNT(*) support
+ *
  * Revision 1.1  2002/02/05 20:41:50  warmerda
  * New
  *
@@ -217,6 +220,40 @@ BYTE *OGRVirtualArray::GetRow( int iIndex, HRESULT &hr )
     memset( mBuffer, 0, m_nBufferSize );
 
 /* -------------------------------------------------------------------- */
+/*      If the m_nResultCount value is not -1, then a Count() of        */
+/*      records was requested.  Just set the count field, and           */
+/*      return.  If this is not the first index, then return with       */
+/*      end of resultset.                                               */
+/* -------------------------------------------------------------------- */
+    int      iDBField;
+
+    if( m_pRowset->m_nResultCount != -1 )
+    {
+        if( iIndex != 0 )
+        {
+            hr = DB_S_ENDOFROWSET;
+            return NULL;
+        }
+
+        for( iDBField = 0; iDBField < m_pRowset->m_paColInfo.GetSize(); iDBField++)
+        {
+            ATLCOLUMNINFO *pColInfo;
+            int           nOGRIndex;
+            
+            pColInfo = &(m_pRowset->m_paColInfo[iDBField]);
+            nOGRIndex = m_pRowset->m_panOGRIndex[iDBField];
+            
+            if( nOGRIndex == -3 )
+            {
+                *((int*) (mBuffer + pColInfo->cbOffset)) = 
+                    m_pRowset->m_nResultCount;
+            }
+        }
+
+        return mBuffer;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Fetch the feature.  Eventually we should return a real error    */
 /*      status depending on the nature of the failure.                  */
 /* -------------------------------------------------------------------- */
@@ -230,8 +267,6 @@ BYTE *OGRVirtualArray::GetRow( int iIndex, HRESULT &hr )
 /* -------------------------------------------------------------------- */
 /*      Fill in fields.                                                 */
 /* -------------------------------------------------------------------- */
-    int      iDBField;
-
     for( iDBField = 0; iDBField < m_pRowset->m_paColInfo.GetSize(); iDBField++)
     {
         ATLCOLUMNINFO *pColInfo;
@@ -423,6 +458,15 @@ void OGRVirtualArray::ResetCache( int nStart, int nSize )
 int OGRVirtualArray::CheckRows( int nStart, int nRequestCount )
 
 {
+    // Special case for SELECT COUNT(*) resultsets.
+    if( m_pRowset->m_nResultCount != -1 )
+    {
+        if( nStart == 0 )
+            return 1;
+        else
+            return 0;
+    }
+
     // Reset the m_papoFeatureCache stuff to a clean new cache with
     // nRequestCount entries. 
     ResetCache( nStart, nRequestCount );
