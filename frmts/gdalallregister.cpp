@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.60  2003/12/11 06:18:35  warmerda
+ * added BT driver
+ *
  * Revision 1.59  2003/10/09 13:37:14  warmerda
  * Remove GDALRegister_AIGrid2() ... too undependable.
  *
@@ -367,6 +370,7 @@ void GDALAllRegister()
     GDALRegister_FujiBAS();
     GDALRegister_GSC();
     GDALRegister_FAST();
+    GDALRegister_BT();
 #endif
 
 #ifdef FRMT_jp2kak

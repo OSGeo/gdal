@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/12/11 06:18:43  warmerda
+ * added BT driver
+ *
  * Revision 1.22  2003/09/09 12:14:25  dron
  * Added PCIDSK driver.
  *
@@ -150,6 +153,7 @@ void CPL_DLL GDALRegister_GSC(void);
 void CPL_DLL GDALRegister_NITF(void);
 void CPL_DLL GDALRegister_MrSID(void);
 void CPL_DLL GDALRegister_PCIDSK(void);
+void CPL_DLL GDALRegister_BT(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
