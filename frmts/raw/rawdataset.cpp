@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/08/09 16:26:27  warmerda
+ * improved error checking
+ *
  * Revision 1.4  2000/06/05 17:24:06  warmerda
  * added real complex support
  *
@@ -107,7 +110,8 @@ CPLErr RawRasterBand::AccessLine( int iLine )
 
     if( VSIFSeek( fpRaw, nImgOffset + iLine * nLineOffset,
                   SEEK_SET ) == -1
-        || VSIFRead( pLineBuffer, nPixelOffset, nBlockXSize, fpRaw ) < 1 )
+        || VSIFRead( pLineBuffer, nPixelOffset, 
+                     nBlockXSize, fpRaw ) < (size_t) nBlockXSize )
     {
         // for now I just set to zero under the assumption we might
         // be trying to read from a file past the data that has
