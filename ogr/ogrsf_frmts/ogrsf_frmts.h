@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2003/03/19 20:29:06  warmerda
+ * added shared access and reference counting
+ *
  * Revision 1.32  2003/03/05 05:09:11  warmerda
  * added GetLayerByName() method on OGRDataSource
  *
@@ -187,6 +190,10 @@ class CPL_DLL OGRLayer
     virtual OGRErr       CommitTransaction();
     virtual OGRErr       RollbackTransaction();
 
+    int                 Reference();
+    int                 Dereference();
+    int                 GetRefCount() const;
+    
     /* consider these private */
     OGRErr               InitializeIndexSupport( const char * );
     OGRLayerAttrIndex   *GetIndex() { return m_poAttrIndex; }
@@ -195,6 +202,8 @@ class CPL_DLL OGRLayer
     OGRStyleTable       *m_poStyleTable;
     OGRFeatureQuery     *m_poAttrQuery;
     OGRLayerAttrIndex   *m_poAttrIndex;
+
+    int                  m_nRefCount;
 };
 
 
@@ -238,11 +247,18 @@ class CPL_DLL OGRDataSource
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect );
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
-    
+
+    int                 Reference();
+    int                 Dereference();
+    int                 GetRefCount() const;
+    int                 GetSummaryRefCount() const;
+
   protected:
 
     OGRErr              ProcessSQLCreateIndex( const char * );
     OGRStyleTable *m_poStyleTable;
+
+    int                  m_nRefCount;
 };
 
 /************************************************************************/
@@ -291,6 +307,11 @@ class CPL_DLL OGRSFDriverRegistrar
 
                 OGRSFDriverRegistrar();
 
+    int         nOpenDSCount;
+    char        **papszOpenDSRawName;
+    OGRDataSource **papoOpenDS;
+    OGRSFDriver **papoOpenDSDriver;
+
   public:
 
                 ~OGRSFDriverRegistrar();
@@ -299,11 +320,17 @@ class CPL_DLL OGRSFDriverRegistrar
     static OGRDataSource *Open( const char *pszName, int bUpdate=FALSE,
                                 OGRSFDriver ** ppoDriver = NULL );
 
+    OGRDataSource *OpenShared( const char *pszName, int bUpdate=FALSE,
+                               OGRSFDriver ** ppoDriver = NULL );
+    OGRErr      ReleaseDataSource( OGRDataSource * );
+
     void        RegisterDriver( OGRSFDriver * );
 
     int         GetDriverCount( void );
     OGRSFDriver *GetDriver( int );
 
+    int         GetOpenDSCount() { return nOpenDSCount; } 
+    OGRDataSource *GetOpenDS( int );
 };
 
 /* -------------------------------------------------------------------- */
