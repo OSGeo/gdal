@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/03/24 20:58:30  warmerda
+ * Fixed typo.
+ *
  * Revision 1.3  2001/03/13 19:39:03  warmerda
  * Added help link
  *
@@ -418,7 +421,7 @@ const char *AAIGDataset::GetProjectionRef()
 }
 
 /************************************************************************/
-/*                          GDALRegister_AAIG()                        */
+/*                        GDALRegister_AAIGrid()                        */
 /************************************************************************/
 
 void GDALRegister_AAIGrid()
