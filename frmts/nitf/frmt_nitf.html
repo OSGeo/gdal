@@ -9,9 +9,11 @@
 
 GDAL supports reading of several subtypes of NITF image files, and writing
 simple uncompressed NITF 2.1 files.  NITF 1.1, NITF 2.0 and NITF 2.1
-files with uncomprssed or VQ compressed images should be readable.  Other
-compression mechanisms are not supported at this time.  The read support 
-test has been tested on CIB and CADRG RPF products.<p>
+files with uncomprssed or VQ compressed images should be readable.  
+JPEG2000 compressed images are also supported, but only if GDAL also has
+the JP2KAK driver enabled.  Other compression mechanisms are not supported 
+at this time.  The read support test has been tested on CIB and CADRG RPF 
+products.<p>
 
 NITF files can contain several images as well as other layers such as 
 graphics (CGM) and text.  Currently GDAL will only read the first image.  All
@@ -25,9 +27,8 @@ is available in RPF auxilary data it will be used in preference to the low
 precision IGEOLO information. In theory all input pixel types except 1bit are 
 supported, but only 8bit types have actually been tested.<p>
 
-Currently none of the various description, and security related header fields
-for the image or the NITF file as a whole are returned as metadata, though
-this could be easily added in the future.<p>
+Most file header and image header fields are returned as dataset level
+metadata.<p>
 
 <h2>Creation Issues</h2>
 
