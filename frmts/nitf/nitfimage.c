@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2004/12/21 04:57:36  fwarmerdam
+ * added support for writing UTM ICORDS/IGEOLO values
+ *
  * Revision 1.28  2004/12/10 21:25:57  fwarmerdam
  * added ICHIPB reader
  *
@@ -1275,6 +1278,7 @@ static void NITFEncodeDMSLoc( char *pszTarget, double dfValue,
 /************************************************************************/
 
 int NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
+                     int nZone, 
                      double dfULX, double dfULY,
                      double dfURX, double dfURY,
                      double dfLRX, double dfLRY,
@@ -1283,13 +1287,9 @@ int NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
 {
     char szIGEOLO[61];
 
-    if( chICORDS != 'G' )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "Currently NITFWriteIGEOLO() only supports writing ICORDS=G style." );
-        return FALSE;
-    }
-
+/* -------------------------------------------------------------------- */
+/*      Do some checking.                                               */
+/* -------------------------------------------------------------------- */
     if( psImage->chICORDS == ' ' )
     {
         CPLError(CE_Failure, CPLE_NotSupported, 
@@ -1298,21 +1298,69 @@ int NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
         return FALSE;
     }
 
-    NITFEncodeDMSLoc( szIGEOLO +  0, dfULY, "Lat" );
-    NITFEncodeDMSLoc( szIGEOLO +  7, dfULX, "Long" );
-    NITFEncodeDMSLoc( szIGEOLO + 15, dfURY, "Lat" );
-    NITFEncodeDMSLoc( szIGEOLO + 22, dfURX, "Long" );
-    NITFEncodeDMSLoc( szIGEOLO + 30, dfLRY, "Lat" );
-    NITFEncodeDMSLoc( szIGEOLO + 37, dfLRX, "Long" );
-    NITFEncodeDMSLoc( szIGEOLO + 45, dfLLY, "Lat" );
-    NITFEncodeDMSLoc( szIGEOLO + 52, dfLLX, "Long" );
+    if( chICORDS != 'G' && chICORDS != 'N' && chICORDS != 'S' )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "Currently NITFWriteIGEOLO() only supports writing ICORDS=G, N and S corners." );
+        return FALSE;
+    }
 
-    VSIFSeek( psImage->psFile->fp, 
-              psImage->psFile->pasSegmentInfo[psImage->iSegment].nSegmentHeaderStart
-              + 372, SEEK_SET );
-    VSIFWrite( szIGEOLO, 1, 60, psImage->psFile->fp );
+/* -------------------------------------------------------------------- */
+/*      Format geographic coordinates.                                  */
+/* -------------------------------------------------------------------- */
+    if( chICORDS == 'G' )
+    {
+        if( fabs(dfULX) > 180 || fabs(dfURX) > 180 
+            || fabs(dfLRX) > 180 || fabs(dfLLX) > 180 
+            || fabs(dfULY) >  90 || fabs(dfURY) >  90
+            || fabs(dfLRY) >  90 || fabs(dfLLY) >  90 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Attempt to write geographic bound outside of legal range." );
+            return FALSE;
+        }
 
-    return TRUE;
+        NITFEncodeDMSLoc( szIGEOLO +  0, dfULY, "Lat" );
+        NITFEncodeDMSLoc( szIGEOLO +  7, dfULX, "Long" );
+        NITFEncodeDMSLoc( szIGEOLO + 15, dfURY, "Lat" );
+        NITFEncodeDMSLoc( szIGEOLO + 22, dfURX, "Long" );
+        NITFEncodeDMSLoc( szIGEOLO + 30, dfLRY, "Lat" );
+        NITFEncodeDMSLoc( szIGEOLO + 37, dfLRX, "Long" );
+        NITFEncodeDMSLoc( szIGEOLO + 45, dfLLY, "Lat" );
+        NITFEncodeDMSLoc( szIGEOLO + 52, dfLLX, "Long" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Format UTM coordinates.                                         */
+/* -------------------------------------------------------------------- */
+    else if( chICORDS == 'N' || chICORDS == 'S' )
+    {
+        sprintf( szIGEOLO + 0, "%02d%06d%07d",
+                 nZone, (int) floor(dfULX+0.5), (int) floor(dfULY+0.5) );
+        sprintf( szIGEOLO + 15, "%02d%06d%07d",
+                 nZone, (int) floor(dfURX+0.5), (int) floor(dfURY+0.5) );
+        sprintf( szIGEOLO + 30, "%02d%06d%07d",
+                 nZone, (int) floor(dfLRX+0.5), (int) floor(dfLRY+0.5) );
+        sprintf( szIGEOLO + 45, "%02d%06d%07d",
+                 nZone, (int) floor(dfLLX+0.5), (int) floor(dfLLY+0.5) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write IGEOLO data to disk.                                      */
+/* -------------------------------------------------------------------- */
+    if( VSIFSeek( psImage->psFile->fp, 
+                  psImage->psFile->pasSegmentInfo[psImage->iSegment].nSegmentHeaderStart + 372, SEEK_SET ) == 0
+        && VSIFWrite( szIGEOLO, 1, 60, psImage->psFile->fp ) == 60 )
+    {
+        return TRUE;
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "I/O Error writing IGEOLO segment.\n%s",
+                  VSIStrerror( errno ) );
+        return FALSE;
+    }
 }
 
 /************************************************************************/
@@ -1388,7 +1436,7 @@ static int NITFIsAllDigits( const char *pachBuffer, int nCharCount )
     for( i = 0; i < nCharCount; i++ )
     {
         if( pachBuffer[i] != ' '
-            && (pachBuffer[i] < '1' || pachBuffer[i] > '0' ) )
+            && (pachBuffer[i] < '0' || pachBuffer[i] > '9' ) )
             return FALSE;
     }
     return TRUE;

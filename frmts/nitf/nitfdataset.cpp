@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2004/12/21 04:57:36  fwarmerdam
+ * added support for writing UTM ICORDS/IGEOLO values
+ *
  * Revision 1.26  2004/12/20 22:32:06  fwarmerdam
  * use JP2ECW driver not ECW driver for jpeg2000 output
  *
@@ -159,6 +162,11 @@ class NITFDataset : public GDALDataset
     virtual const GDAL_GCP *GetGCPs();
 
     static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *
+    NITFCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
+                    int bStrict, char **papszOptions, 
+                    GDALProgressFunc pfnProgress, void * pProgressData );
+
 };
 
 /************************************************************************/
@@ -1018,36 +1026,19 @@ CPLErr NITFDataset::SetGeoTransform( double *padfGeoTransform )
 {
     double dfULX, dfULY, dfURX, dfURY, dfLRX, dfLRY, dfLLX, dfLLY;
 
-    if( psImage->chICORDS != 'G' )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "Writing non-geographic coordinates not currently supported by NITF drivre." );
-        return CE_Failure;
-    }
-
-
     dfULX = padfGeoTransform[0];
     dfULY = padfGeoTransform[3];
     dfURX = dfULX + padfGeoTransform[1] * nRasterXSize;
     dfURY = dfULY + padfGeoTransform[4] * nRasterXSize;
     dfLRX = dfULX + padfGeoTransform[1] * nRasterXSize
-                  + padfGeoTransform[2] * nRasterYSize;
+        + padfGeoTransform[2] * nRasterYSize;
     dfLRY = dfULY + padfGeoTransform[4] * nRasterXSize
-                  + padfGeoTransform[5] * nRasterYSize;
+        + padfGeoTransform[5] * nRasterYSize;
     dfLLX = dfULX + padfGeoTransform[2] * nRasterYSize;
     dfLLY = dfULY + padfGeoTransform[5] * nRasterYSize;
 
-    if( fabs(dfULX) > 180 || fabs(dfURX) > 180 
-        || fabs(dfLRX) > 180 || fabs(dfLLX) > 180 
-        || fabs(dfULY) >  90 || fabs(dfURY) >  90
-        || fabs(dfLRY) >  90 || fabs(dfLLY) >  90 )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Attempt to write geographic bound outside of legal range." );
-        return CE_Failure;
-    }
-
     if( NITFWriteIGEOLO( psImage, psImage->chICORDS, 
+                         psImage->nZone, 
                          dfULX, dfULY, dfURX, dfURY, 
                          dfLRX, dfLRY, dfLLX, dfLLY ) )
         return CE_Failure;
@@ -1190,10 +1181,11 @@ NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
 /*                           NITFCreateCopy()                           */
 /************************************************************************/
 
-static GDALDataset *
-NITFCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
-                int bStrict, char **papszOptions, 
-                GDALProgressFunc pfnProgress, void * pProgressData )
+GDALDataset *
+NITFDataset::NITFCreateCopy( 
+    const char *pszFilename, GDALDataset *poSrcDS,
+    int bStrict, char **papszOptions, 
+    GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
     GDALDataType eType;
@@ -1279,12 +1271,34 @@ NITFCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     double adfGeoTransform[6];
     int    bWriteGeoTransform = FALSE;
+    int    bNorth, nZone = 0;
+    OGRSpatialReference oSRS;
+    char *pszWKT = (char *) poSrcDS->GetProjectionRef();
 
-    if( EQUALN(poSrcDS->GetProjectionRef(),"GEOGCS",6)
+    if( pszWKT != NULL )
+        oSRS.importFromWkt( &pszWKT );
+
+    // For now we write all geographic coordinate systems whether WGS84 or not.
+    // But really NITF is always WGS84 and we ought to reflect that. 
+    if( oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0 
         && poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
     {
         papszFullOptions = 
             CSLSetNameValue( papszFullOptions, "ICORDS", "G" );
+        bWriteGeoTransform = TRUE;
+    }
+
+    else if( oSRS.GetUTMZone( &bNorth ) > 0 
+        && poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+    {
+        if( bNorth )
+            papszFullOptions = 
+                CSLSetNameValue( papszFullOptions, "ICORDS", "N" );
+        else
+            papszFullOptions = 
+                CSLSetNameValue( papszFullOptions, "ICORDS", "S" );
+
+        nZone = oSRS.GetUTMZone( NULL );
         bWriteGeoTransform = TRUE;
     }
 
@@ -1410,7 +1424,10 @@ NITFCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
 /*      Set the georeferencing.                                         */
 /* -------------------------------------------------------------------- */
     if( bWriteGeoTransform )
+    {
+        ((NITFDataset *)poDstDS)->psImage->nZone = nZone;
         poDstDS->SetGeoTransform( adfGeoTransform );
+    }
 
     return poDstDS;
 }
@@ -1504,7 +1521,7 @@ void GDALRegister_NITF()
         
         poDriver->pfnOpen = NITFDataset::Open;
         poDriver->pfnCreate = NITFDatasetCreate;
-        poDriver->pfnCreateCopy = NITFCreateCopy;
+        poDriver->pfnCreateCopy = NITFDataset::NITFCreateCopy;
 
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_nitf.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ntf" );
