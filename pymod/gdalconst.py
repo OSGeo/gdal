@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.8  2004/02/10 11:08:53  dron
+# Added GDT_TypeCount constant.
+#
 # Revision 1.7  2003/05/06 20:17:24  warmerda
 # added DMD and DCAP constants
 #
@@ -65,6 +68,7 @@ GDT_CInt16 = 8
 GDT_CInt32 = 9
 GDT_CFloat32 = 10
 GDT_CFloat64 = 11
+GDT_TypeCount = 12
 
 # GDALAccess
 GA_ReadOnly = 0
