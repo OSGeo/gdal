@@ -30,7 +30,7 @@ default:
 
 	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj \
 				 sdts\*.obj s57\*.obj tiger\*.obj gml\*.obj \
-				 mitab\*.obj dgn\*.obj avc\*.obj mem\*.ob \
+				 mitab\*.obj dgn\*.obj avc\*.obj mem\*.obj \
 				$(OGDIOBJ) \
 				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) rec\*.obj
 	lib /out:ogrsf_frmts_sup.lib \
