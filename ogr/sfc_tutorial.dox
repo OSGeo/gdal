@@ -61,7 +61,7 @@ The console program SFCDUMP is intended to be an example of how to use
 the client api (as well as being a useful debugging tool in it's own
 right).  The full source should be available in 
 <a href="http://gdal.velocet.ca/projects/opengis/src/sfcdump.cpp">
-gdal/ogr/sfdump.cpp</a>.<p>
+gdal/ogr/sfcdump.cpp</a>.<p>
 
 
 <h3>SFCEnumerator: Finding a Provider</h3>
