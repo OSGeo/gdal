@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.11  2005/02/16 17:49:40  kruland
+ * Added in typemap for Lists of GCPs.
+ * Added 'python' to all the freearg typemaps too.
+ *
  * Revision 1.10  2005/02/16 17:18:03  hobu
  * put "python" name on the typemaps that are specific
  * to python
@@ -137,9 +141,9 @@ ARRAY_TYPEMAP(c_transform, 6);
     }
   }
 }
-%typemap(freearg) (int nList, int* pList)
+%typemap(python,freearg) (int nList, int* pList)
 {
-  /* %typemap(freearg) (int nList, int* pList) */
+  /* %typemap(python,freearg) (int nList, int* pList) */
   if ($2) {
     free((void*) $2);
   }
@@ -164,9 +168,9 @@ ARRAY_TYPEMAP(c_transform, 6);
   Py_DECREF($result);
   $result = PyString_FromStringAndSize( *$2, *$1 );
 }
-%typemap(freearg) (int *nLen, char **pBuf )
+%typemap(python,freearg) (int *nLen, char **pBuf )
 {
-  /* %typemap(freearg) (int *nLen, char **pBuf ) */
+  /* %typemap(python,freearg) (int *nLen, char **pBuf ) */
   if( $1 ) {
     free( *$2 );
   }
@@ -208,6 +212,39 @@ ARRAY_TYPEMAP(c_transform, 6);
   }
   Py_DECREF($result);
   $result = dict;
+}
+%typemap(python,in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) ( GDAL_GCP *tmpGCPList )
+{
+  /* %typemap(python,in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) */
+  /* check if is List */
+  if ( !PySequence_Check($input) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    SWIG_fail;
+  }
+  $1 = PySequence_Size($input);
+  tmpGCPList = (GDAL_GCP*) malloc($1*sizeof(GDAL_GCP));
+  $2 = tmpGCPList;
+  for( int i = 0; i<$1; i++ ) {
+    PyObject *o = PySequence_GetItem($input,i);
+    if ( !PyArg_ParseTuple(o,"ssddddd:Parse GCP List",
+                      &tmpGCPList->pszId,
+                      &tmpGCPList->pszInfo,
+                      &tmpGCPList->dfGCPPixel,
+                      &tmpGCPList->dfGCPLine,
+                      &tmpGCPList->dfGCPX,
+                      &tmpGCPList->dfGCPY,
+                      &tmpGCPList->dfGCPZ) ) {
+      SWIG_fail;
+    }
+    ++tmpGCPList;
+  }
+}
+%typemap(python,freearg) (int nGCPs, GDAL_GCP const *pGCPs )
+{
+  /* %typemap(python,freearg) (int nGCPs, GDAL_GCP const *pGCPs ) */
+  if ($2) {
+    free( (void*) $2 );
+  }
 }
 
 /*
@@ -280,9 +317,9 @@ ARRAY_TYPEMAP(c_transform, 6);
     }
   }
 }
-%typemap(freearg) char **dict
+%typemap(python,freearg) char **dict
 {
-  /* %typemap(freearg) char **dict */
+  /* %typemap(python,freearg) char **dict */
   CSLDestroy( $1 );
 }
 
@@ -308,9 +345,9 @@ ARRAY_TYPEMAP(c_transform, 6);
     $1 = CSLAddString( $1, pszItem );
   }
 }
-%typemap(freearg) char **options
+%typemap(python,freearg) char **options
 {
-  /* %typemap(freearg) char **options */
+  /* %typemap(python,freearg) char **options */
   CSLDestroy( $1 );
 }
 
