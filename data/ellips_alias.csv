@@ -1,0 +1,7 @@
+"ELLIPSOID_ALIAS_CODE","ELLIPSOID_ALIAS_NAME","ELLIPSOID_CODE","REVISION_DATE","INFORMATION_SOURCE","DATA_SOURCE","REMARKS","CHANGE_ID"
+7023,International 1967,7036,1996-10-18 00:00:00,,EPSG,Adopted by IUGG 1967 Lucerne. Inverse flattening defined to 2 d.p.  More usually known as GRS 1967 to avoid confusion with the International 1924 figure.,96.09
+7026,NWL 10D,7043,1999-04-22 00:00:00,,EPSG,Used by Transit Broadcast Ephemeris before 1989. Also referred to as WGS72 spheroid.,99.03
+7037,Clarke Modified 1880,7012,1996-10-18 00:00:00,,EPSG,The Clarke 1880 (RGS) figure is one of several modifications to the original definition.  The name Clarke Modified is usually taken to be the RGS modification.,
+7038,International 1979,7019,1996-10-18 00:00:00,,EPSG,Adopted by IUGG 1979 Canberra as the Geodetic Reference Spheroid of 1980 (GRS 1980).,
+7039,Hayford 1909,7022,1996-10-18 00:00:00,"\"Ellipsoidisch Parameter der Erdfigur (1800-1950)\" by Georg Strasser",EPSG,Described as a=6378388 m. and b=6356909 m. from which 1/f derived to be 296.95926...   The figure was adopted as the International ellipsoid in 1924 but with 1/f taken as 297 exactly from which b is derved as 6356911.946 m.,
+7040,WGS84,7030,1996-10-18 00:00:00,,EPSG,,
