@@ -28,7 +28,15 @@ $(GDALMODULE):	$(OBJ) $(GDAL_LIB)
 	$(LD_SHARED) $(OBJ) \
 		$(GDAL_SLIB_LINK) $(PYTHON_LIBS) $(LIBS) -o $(GDALMODULE)
 
-
+# special care is taken so that python scripts are installed as executables
 install:	$(GDALMODULE)
 	$(INSTALL_DIR) $(INST_PYMOD)
-	for f in *.py $(GDALMODULE) ; do $(INSTALL) $$f $(INST_PYMOD) ; done
+	$(INSTALL_DATA) $(GDALMODULE) $(INST_PYMOD)
+	for f in *.py ; do \
+	    if egrep '\#\!.*python' $$f > /dev/null ; then \
+		$(INSTALL) $$f $(INST_PYMOD) ; \
+	    else \
+		$(INSTALL_DATA) $$f $(INST_PYMOD) ; \
+	    fi \
+	done
+

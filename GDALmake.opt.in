@@ -1,6 +1,7 @@
 CC	=	@CC@
 CXX	=	@CXX@
 INSTALL = 	$(GDAL_ROOT)/install-sh -c
+INSTALL_DATA = 	$(GDAL_ROOT)/install-sh -c -m 0644
 INSTALL_DIR = 	$(GDAL_ROOT)/install-sh -d
 
 #Flags to build optimized relese version
@@ -31,7 +32,7 @@ INST_DATA 	=	@exec_prefix@/share/gdal
 INST_LIB	=	@libdir@
 INST_BIN	=	@bindir@
 INST_PYMOD      =       @pymoddir@
-INST_DOCS	=	@exec_prefix@/doc/gdal
+INST_DOCS	=	@exec_prefix@/doc
 
 #
 #	Whether we use debug flags, or optimization is determined by

@@ -33,8 +33,8 @@ $(LIB): $(OBJ)
 	$(RANLIB) $(LIB)
 
 install:	$(LIB)
-	for f in *.h ; do $(INSTALL) $$f $(INST_INCLUDE) ; done
-	$(INSTALL) cpl.a $(INST_LIB)
+	for f in *.h ; do $(INSTALL_DATA) $$f $(INST_INCLUDE) ; done
+	$(INSTALL_DATA) cpl.a $(INST_LIB)
 
 xmlreformat:	xmlreformat.o $(LIB)
 	$(CXX) $(CXXFLAGS) xmlreformat.o $(LIB) -o xmlreformat
