@@ -18,6 +18,9 @@
  *    29  Sep,  1995      NDR                  Fixed matrix printing.
  *
  * $Log: geo_print.c,v $
+ * Revision 1.9  2004/10/19 14:24:09  fwarmerdam
+ * dynamically allocate tag list so large lists work: Oliver Colin
+ *
  * Revision 1.8  2004/04/27 21:31:31  warmerda
  * avoid crash if gt_tif is NULL
  *
@@ -319,7 +322,7 @@ static int ReadTag(GTIF *gt,GTIFReadMethod scan,void *aux)
     int i,j,tag;
     char *vptr;
     char tagname[100];
-    double data[100],*dptr=data;
+    double *data,*dptr;
     int count,nrows,ncols,num;
     char message[1024];
 
@@ -331,8 +334,12 @@ static int ReadTag(GTIF *gt,GTIFReadMethod scan,void *aux)
 	
     tag = GTIFTagCode(tagname);
     if (tag < 0) return StringError(tagname);
-	
+
     count = nrows*ncols;
+
+    data = (double *) _GTIFcalloc(count * sizeof(double));
+    dptr = data;
+	
     for (i=0;i<nrows;i++)
     {
         scan(message,aux);
@@ -346,6 +353,8 @@ static int ReadTag(GTIF *gt,GTIFReadMethod scan,void *aux)
         }
     }	
     (gt->gt_methods.set)(gt->gt_tif, (pinfo_t) tag, count, data );	
+
+    _GTIFFree( data );
 
     return 1;
 }

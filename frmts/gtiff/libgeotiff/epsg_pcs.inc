@@ -10,6 +10,15 @@
 #include old_pcs.inc
 #endif /* OLD Codes */
 
+/* Newer PCS */
+ValuePair(PCS_Hjorsey_1955_Lambert, 3053)
+ValuePair(PCS_ISN93_Lambert_1993, 3057)
+ValuePair(PCS_ETRS89_Poland_CS2000_zone_5,2176)
+ValuePair(PCS_ETRS89_Poland_CS2000_zone_6,2177)
+ValuePair(PCS_ETRS89_Poland_CS2000_zone_7,2177)
+ValuePair(PCS_ETRS89_Poland_CS2000_zone_8,2178)
+ValuePair(PCS_ETRS89_Poland_CS92,2180)
+
 /* New PCS */
 ValuePair(PCS_GGRS87_Greek_Grid,2100)
 ValuePair(PCS_KKJ_Finland_zone_1,2391)
