@@ -951,7 +951,16 @@ elif test "$with_odbc" = "yes" -o "$with_odbc" = "" ; then
 
   AC_CHECK_LIB(odbc,SQLConnect,ODBC_SETTING=yes,ODBC_SETTING=no,)
 
-  if test "$ODBC_SETTING" = "yes" ; then   
+  if test "$ODBC_SETTING" = "yes" ; then
+    if test -f /usr/local/include/sql.h -o -f /usr/include/sql.h ; then
+      ODBC_SETTING=yes
+    else
+      echo "odbc library found, but sql.h missing, ODBC support disabled." 
+      ODBC_SETTING=no
+    fi
+  fi
+
+  if test "$ODBC_SETTING" = "yes"  ; then   
     LIBS="-lodbc $LIBS"
   fi
 
