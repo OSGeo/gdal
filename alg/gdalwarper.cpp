@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/08/11 21:20:47  warmerda
+ * avoid crash if transformer does not serialize
+ *
  * Revision 1.14  2004/08/09 14:38:27  warmerda
  * added serialize/deserialize support for warpoptions and transformers
  *
@@ -703,13 +706,17 @@ CPLXMLNode *GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
     if( psWO->pfnTransformer != NULL )
     {
         CPLXMLNode *psTransformerContainer;
+        CPLXMLNode *psTransformerTree;
 
         psTransformerContainer = 
             CPLCreateXMLNode( psTree, CXT_Element, "Transformer" );
 
-        CPLAddXMLChild( psTransformerContainer, 
-                        GDALSerializeTransformer( psWO->pfnTransformer,
-                                                  psWO->pTransformerArg ));
+        psTransformerTree = 
+            GDALSerializeTransformer( psWO->pfnTransformer,
+                                      psWO->pTransformerArg );
+
+        if( psTransformerTree != NULL )
+            CPLAddXMLChild( psTransformerContainer, psTransformerTree );
     }
 
 /* -------------------------------------------------------------------- */
