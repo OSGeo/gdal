@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/01/20 16:22:56  dron
+ * More clean usage of CPLFormCIFilename().
+ *
  * Revision 1.18  2004/01/04 21:17:11  warmerda
  * fixed up to preserve path in CPLFormCIFilename calls
  *
@@ -198,9 +201,9 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      filename.                                                       */
 /* -------------------------------------------------------------------- */
     char *pszPath = CPLStrdup( CPLGetPath( poOpenInfo->pszFilename ) );
-    pszHDRFilename = CPLFormCIFilename(pszPath,
-                                       CPLGetBasename(poOpenInfo->pszFilename),
-                                       ".hdr" );
+    char *pszName = CPLStrdup( CPLGetBasename(poOpenInfo->pszFilename) );
+    pszHDRFilename = CPLFormCIFilename( pszPath, pszName, ".hdr" );
+    CPLFree( pszName );
     CPLFree( pszPath );
 
     bSelectedHDR = EQUAL(pszHDRFilename, poOpenInfo->pszFilename);
