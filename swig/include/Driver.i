@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.8  2005/03/10 17:18:42  hobu
+ * #ifdefs for csharp
+ *
  * Revision 1.7  2005/02/24 16:33:07  kruland
  * Marked missing methods.
  *
@@ -103,3 +106,17 @@ char const *GDALDriverShadow_HelpTopic_get( GDALDriverShadow *h ) {
   return GDALGetDriverHelpTopic( h );
 }
 %}
+
+#ifdef SWIGCSHARP
+%{
+char const *GDALDriverShadow_get_ShortName( GDALDriverShadow *h ) {
+  return GDALGetDriverShortName( h );
+}
+char const *GDALDriverShadow_get_LongName( GDALDriverShadow *h ) {
+  return GDALGetDriverLongName( h );
+}
+char const *GDALDriverShadow_get_HelpTopic( GDALDriverShadow *h ) {
+  return GDALGetDriverHelpTopic( h );
+}
+%}
+#endif

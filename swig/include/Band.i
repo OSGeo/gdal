@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.11  2005/03/10 17:19:08  hobu
+ * #ifdefs for csharp
+ *
  * Revision 1.10  2005/02/23 17:44:00  kruland
  * Added GetMetadata, SetMetadata, SetRasterColorInterpretation.
  *
@@ -256,3 +259,17 @@ int GDALRasterBandShadow_YSize_get( GDALRasterBandShadow *h ) {
   return GDALGetRasterBandYSize( h );
 }
 %}
+
+#ifdef SWIGCSHARP
+%{
+GDALDataType GDALRasterBandShadow_get_DataType( GDALRasterBandShadow *h ) {
+  return GDALGetRasterDataType( h );
+}
+int GDALRasterBandShadow_get_XSize( GDALRasterBandShadow *h ) {
+  return GDALGetRasterBandXSize( h );
+}
+int GDALRasterBandShadow_get_YSize( GDALRasterBandShadow *h ) {
+  return GDALGetRasterBandYSize( h );
+}
+%}
+#endif

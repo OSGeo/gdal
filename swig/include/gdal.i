@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.22  2005/03/10 17:18:15  hobu
+ * #ifdefs for csharp
+ *
  * Revision 1.21  2005/02/24 17:20:02  hobu
  * return the dataset in AutoCreateWarpedVRT
  *
@@ -83,6 +86,7 @@
 //
 // We register all the drivers upon module initialization
 //
+#ifdef SWIGPYTHON
 %init %{
   if ( GDALGetDriverCount() == 0 ) {
     GDALAllRegister();
@@ -92,6 +96,7 @@
 %pythoncode %{
   from gdalconst import *
 %}
+#endif
 
 %{
 #include <iostream>
@@ -183,6 +188,7 @@ struct GDAL_GCP {
     CPLFree( self );
   }
 
+#ifdef SWIGPYTHON
 %pythoncode {
   def __str__(self):
     str = '%s (%.2fP,%.2fL) -> (%.7fE,%.7fN,%.2f) %s '\
@@ -205,6 +211,8 @@ struct GDAL_GCP {
             base.append([CXT_Attribute,'Z',[CXT_Text,zval]])        
         return base
 } /* pythoncode */
+#endif
+
 } /* extend */
 }; /* GDAL_GCP */
 %inline {
@@ -254,6 +262,56 @@ void GDAL_GCP_Id_set( GDAL_GCP *h, const char * val ) {
     CPLFree( h->pszId );
   h->pszId = CPLStrdup(val);
 }
+
+#ifdef SWIGCSHARP
+double GDAL_GCP_get_GCPX( GDAL_GCP *h ) {
+  return h->dfGCPX;
+}
+void GDAL_GCP_set_GCPX( GDAL_GCP *h, double val ) {
+  h->dfGCPX = val;
+}
+double GDAL_GCP_get_GCPY( GDAL_GCP *h ) {
+  return h->dfGCPY;
+}
+void GDAL_GCP_set_GCPY( GDAL_GCP *h, double val ) {
+  h->dfGCPY = val;
+}
+double GDAL_GCP_get_GCPZ( GDAL_GCP *h ) {
+  return h->dfGCPZ;
+}
+void GDAL_GCP_set_GCPZ( GDAL_GCP *h, double val ) {
+  h->dfGCPZ = val;
+}
+double GDAL_GCP_get_GCPPixel( GDAL_GCP *h ) {
+  return h->dfGCPPixel;
+}
+void GDAL_GCP_set_GCPPixel( GDAL_GCP *h, double val ) {
+  h->dfGCPPixel = val;
+}
+double GDAL_GCP_get_GCPLine( GDAL_GCP *h ) {
+  return h->dfGCPLine;
+}
+void GDAL_GCP_set_GCPLine( GDAL_GCP *h, double val ) {
+  h->dfGCPLine = val;
+}
+const char * GDAL_GCP_get_Info( GDAL_GCP *h ) {
+  return h->pszInfo;
+}
+void GDAL_GCP_set_Info( GDAL_GCP *h, const char * val ) {
+  if ( h->pszInfo ) 
+    CPLFree( h->pszInfo );
+  h->pszInfo = CPLStrdup(val);
+}
+const char * GDAL_GCP_get_Id( GDAL_GCP *h ) {
+  return h->pszId;
+}
+void GDAL_GCP_set_Id( GDAL_GCP *h, const char * val ) {
+  if ( h->pszId ) 
+    CPLFree( h->pszId );
+  h->pszId = CPLStrdup(val);
+}
+#endif
+
 }
 
 %rename (GCPsToGeoTransform) GDALGCPsToGeoTransform;
