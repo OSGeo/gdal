@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2004/10/26 17:41:29  fwarmerdam
+ * call MakeData(30) for poDesc_BinFunction because of basedata
+ *
  * Revision 1.38  2004/08/19 18:46:57  warmerda
  * Fixed problem with compressed floating point layers.
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=596
@@ -1240,6 +1243,9 @@ CPLErr HFABand::SetPCT( int nColors,
         poEdsc_BinFunction = 
             new HFAEntry( psInfo, "#Bin_Function#", "Edsc_BinFunction",
                           poEdsc_Table );
+
+        // Because of the BaseData we have to hardcode the size. 
+        poEdsc_BinFunction->MakeData( 30 );
 
         poEdsc_BinFunction->SetIntField( "numBins", nColors );
         poEdsc_BinFunction->SetStringField( "binFunction", "direct" );
