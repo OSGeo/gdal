@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/06/17 14:10:14  warmerda
+ * no stat64 on Win32
+ *
  * Revision 1.7  2002/06/17 14:00:16  warmerda
  * segregate VSIStatL() and VSIStatBufL.
  *
@@ -251,16 +254,6 @@ int VSIFEofL( FILE * fp )
     VSIFSeekL( fp, nCur, SEEK_SET );
 
     return (nCur == nEnd);
-}
-
-/************************************************************************/
-/*                              VSIStatL()                              */
-/************************************************************************/
-
-int VSIStatL( const char * pszFilename, VSIStatBufL * pStatBuf )
-
-{
-    return( stat64( pszFilename, pStatBuf ) );
 }
 
 #endif /* defined WIN32 */

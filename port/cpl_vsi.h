@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.15  2002/06/17 14:10:14  warmerda
+ * no stat64 on Win32
+ *
  * Revision 1.14  2002/06/17 14:00:16  warmerda
  * segregate VSIStatL() and VSIStatBufL.
  *
@@ -173,8 +176,13 @@ size_t CPL_DLL  VSIFWriteL( void *, size_t, size_t, FILE * );
 int CPL_DLL     VSIFEofL( FILE * );
 void CPL_DLL    VSIFFlushL( FILE * );
 
+#ifndef WIN32
 typedef struct stat64 VSIStatBufL;
 int CPL_DLL     VSIStatL( const char *, VSIStatBufL * );
+#else
+#define VSIStatBufL    VSIStatBuf
+#define VSIStatL       VSIStat
+#endif
 
 #else
 
