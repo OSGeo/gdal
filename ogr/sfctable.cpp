@@ -30,6 +30,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  1999/09/07 14:05:06  warmerda
+ * Ignore bPrecision for real/double fields as it's interpretation is
+ * unclear.  Use it as the field width for integers.  Note many types are
+ * missing from the type interpreation switch statement.
+ *
  * Revision 1.10  1999/09/01 12:08:34  warmerda
  * Ensure the geometry type gets set on the OGRFeatureDefn.
  *
@@ -224,19 +229,22 @@ int SFCTable::ReadSchemaInfo( CDataSource * poDS )
         {
             case DBTYPE_I4:
                 oField.SetType( OFTInteger );
-                oField.SetWidth( 11 );
+                if( psCInfo->bPrecision != 255 )
+                    oField.SetWidth( psCInfo->bPrecision );
+                else
+                    oField.SetWidth( 11 );
                 break;
 
             case DBTYPE_R4:
                 oField.SetType( OFTReal );
-                oField.SetWidth( 16 );
-                oField.SetPrecision( psCInfo->bPrecision );
+                // for now we ignore the provided precision information
+                // because we aren't sure how to interprete it.
                 break;
 
             case DBTYPE_R8:
                 oField.SetType( OFTReal );
-                oField.SetWidth( 24 );
-                oField.SetPrecision( psCInfo->bPrecision );
+                // for now we ignore the provided precision information
+                // because we aren't sure how to interprete it.
                 break;
 
             case DBTYPE_STR:
