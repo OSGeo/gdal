@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/04/21 19:03:20  warmerda
+ * added SyncToDisk support
+ *
  * Revision 1.13  2003/04/15 20:45:54  warmerda
  * Added code to update the feature count in CreateFeature().
  *
@@ -95,6 +98,8 @@ OGRShapeLayer::OGRShapeLayer( const char * pszName,
 
     iNextShapeId = 0;
     panMatchingFIDs = NULL;
+
+    bHeaderDirty = FALSE;
 
     if( hSHP != NULL )
         nTotalShapeCount = hSHP->nRecords;
@@ -166,6 +171,9 @@ void OGRShapeLayer::ResetReading()
                                                                  NULL );
         iMatchingFID = 0;
     }
+
+    if( bHeaderDirty )
+        SyncToDisk();
 }
 
 /************************************************************************/
@@ -234,6 +242,8 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
 
 {
     OGRErr eErr;
+
+    bHeaderDirty = TRUE;
 
     poFeature->SetFID( OGRNullFID );
 
@@ -535,4 +545,34 @@ int OGRShapeLayer::ResetGeomType( int nNewGeomType )
     hSHP->nShapeType = nNewGeomType;
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                             SyncToDisk()                             */
+/************************************************************************/
+
+OGRErr OGRShapeLayer::SyncToDisk()
+
+{
+    if( bHeaderDirty )
+    {
+        if( hSHP != NULL )
+            SHPWriteHeader( hSHP );
+
+        if( hDBF != NULL )
+            DBFUpdateHeader( hDBF );
+        
+        bHeaderDirty = FALSE;
+    }
+
+    if( hSHP != NULL )
+    {
+        fflush( hSHP->fpSHP );
+        fflush( hSHP->fpSHX );
+    }
+
+    if( hDBF != NULL )
+        fflush( hDBF->fp );
+
+    return OGRERR_NONE;
 }
