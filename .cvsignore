@@ -1,5 +1,5 @@
 GDALmake.opt
-config.*
+config.status
 man
 *.lib
 *.pdb
