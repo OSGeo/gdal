@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/08/13 03:28:12  warmerda
+ * treat 0x3f to 0x43 as raw 32bit data
+ *
  * Revision 1.6  1999/08/12 19:11:17  warmerda
  * corrected negative min handling, and no data values
  *
@@ -397,7 +400,7 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
 /* -------------------------------------------------------------------- */
     pabyCur = pabyRaw + 2;
     if( (nCellType == AIG_CELLTYPE_INT || pabyCur[0] != 0x00)
-        && pabyCur[0] != 0x43 )
+        && (pabyCur[0] < 0x3f || pabyCur[0] > 0x43) )
     {
         nMinSize = pabyCur[1];
         pabyCur += 2;
@@ -434,7 +437,8 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
         AIGProcessIntConstBlock( pabyCur, nDataSize, nMin,
                                  nBlockXSize, nBlockYSize, panData );
     }
-    else if( nMagic == 0x00 || nMagic == 0x43 )
+    else if( nMagic == 0x00
+             || (nMagic >= 0x3f && nMagic <= 0x43) )
     {
         if( nCellType == AIG_CELLTYPE_FLOAT )
             AIGProcessRaw32BitFloatBlock( pabyCur, nDataSize, 0,
