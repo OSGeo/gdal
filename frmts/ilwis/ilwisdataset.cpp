@@ -1205,7 +1205,8 @@ ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDS, int nBand )
     this->poDS = poDS;
     this->nBand = nBand;
     nBlockXSize = poDS->GetRasterXSize();
-    nBlockYSize = poDS->GetRasterYSize();
+		nBlockYSize = 1;
+    //nBlockYSize = poDS->GetRasterYSize();
     switch (psInfo.stStoreType)
     {
       case stByte: 
@@ -1345,10 +1346,9 @@ CPLErr ILWISRasterBand::GetILWISInfo(string pszFileName)
 }
 
 /** This driver defines a Block to be the entire raster; The method reads
-    the entire raster over in one shot. it reads the data into pImage.  
+    each line as a block. it reads the data into pImage.  
 
     @param nBlockXOff This must be zero for this driver
-    @param nBlockYOff This must be zero for this driver
     @param pImage Dump the data here
 
     @return A CPLErr code. This implementation returns a CE_Failure if the
@@ -1360,19 +1360,20 @@ CPLErr ILWISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    char * pBuffer;
+	  char * pBuffer;
 		
-    // If the x or y block offsets are ever non-zero, something is wrong.
-    CPLAssert( nBlockXOff == 0 && nBlockYOff == 0);
+    // If the x block offsets is non-zero, something is wrong.
+    CPLAssert( nBlockXOff == 0 );
 		
     int nBlockSize =  nBlockXSize * nBlockYSize * nSizePerPixel;
-    if( fpRaw == NULL )
+		if( fpRaw == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to open ILWIS data file.");  
         return( CE_Failure );
     }
-
+    
+		VSIFSeek( fpRaw, nBlockSize*nBlockYOff, SEEK_SET );
     pBuffer = (char *)CPLMalloc(nBlockSize);
     if (VSIFRead( pBuffer, 1, nBlockSize, fpRaw ) < 1)
     {
@@ -1386,7 +1387,7 @@ CPLErr ILWISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         int i;
       case stByte:
-        for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+        for( i = 0; i < nBlockXSize; i++ )
         {
             if (psInfo.bValue)
                 ((double *) pImage)[i] = psInfo.vr.rValue( (GByte)pBuffer[i]);
@@ -1396,7 +1397,7 @@ CPLErr ILWISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
         break;
       case stInt:
-        for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+        for( i = 0; i < nBlockXSize; i++ )
         {
             if (psInfo.bValue)
                 ((double *) pImage)[i] = psInfo.vr.rValue( ((GInt16 *) pBuffer)[i]);
@@ -1405,17 +1406,14 @@ CPLErr ILWISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
         break;
       case stLong:
-        for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+        for( i = 0; i < nBlockXSize; i++ )
             if (psInfo.bValue)
                 ((double *) pImage)[i] = psInfo.vr.rValue( ((GInt32 *) pBuffer)[i]);
             else
                 ((GInt32 *) pImage)[i] = ((GInt32 *) pBuffer)[i];
         break;
       case stReal:
-        for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
-            /*if (psInfo.bValue)
-              ((double *) pImage)[i] = psInfo.vr.rValue( ((double *) pBuffer)[i]);
-              else*/
+        for( i = 0; i < nBlockXSize; i++ )
             ((double *) pImage)[i] = ((double *) pBuffer)[i];
         break;
     }
