@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/09/03 13:01:16  warmerda
+ * rewrote attribute writing to simplify
+ *
  * Revision 1.3  1999/09/02 12:00:28  warmerda
  * write related attributes for points, and lines
  *
@@ -41,6 +44,7 @@
 
 #include "sdts_al.h"
 #include "shapefil.h"
+#include "cpl_string.h"
 
 static int  bVerbose = FALSE;
 
@@ -48,7 +52,7 @@ static void WriteLineShapefile( const char *, SDTSTransfer *,
                                 const char * );
 static void WritePointShapefile( const char *, SDTSTransfer *,
                                  const char * );
-static void WriteAttributeDBF( const char *, SDTS_IREF *, SDTS_CATD *,
+static void WriteAttributeDBF( const char *, SDTSTransfer *,
                                const char * );
 static void WritePolygonShapefile( const char *, SDTSTransfer *, 
                                    const char * );
@@ -58,8 +62,10 @@ AddPrimaryAttrToDBFSchema( DBFHandle hDBF, SDTSTransfer * poTransfer,
                            char ** papszModuleList );
 static void
 WritePrimaryAttrToDBF( DBFHandle hDBF, int nRecord, 
-                       SDTSTransfer *,
-                       SDTSFeature * poFeature );
+                       SDTSTransfer *, SDTSFeature * poFeature );
+static void
+WriteAttrRecordToDBF( DBFHandle hDBF, int nRecord, 
+                      SDTSTransfer *, DDFField * poAttributes );
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -82,6 +88,7 @@ static void Usage()
 
 int main( int nArgc, char ** papszArgv )
 
+{
 {
     int		i;
     const char	*pszCATDFilename = NULL;
@@ -170,8 +177,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     else if( pszMODN[0] == 'A' )
     {
-        WriteAttributeDBF( pszShapefile, oTransfer.GetIREF(),
-                           oTransfer.GetCATD(), pszMODN );
+        WriteAttributeDBF( pszShapefile, &oTransfer, pszMODN );
     }
 
 /* -------------------------------------------------------------------- */
@@ -189,6 +195,10 @@ int main( int nArgc, char ** papszArgv )
     {
         WritePolygonShapefile( pszShapefile, &oTransfer, pszMODN );
     }
+}    
+#ifdef DBMALLOC
+    malloc_dump(1);
+#endif
 }
 
 /************************************************************************/
@@ -309,7 +319,8 @@ static void WriteLineShapefile( const char * pszShapefile,
 
         WritePrimaryAttrToDBF( hDBF, iShape, poTransfer, poRawLine );
 
-        delete poRawLine;
+        if( !poLineReader->IsIndexed() )
+            delete poRawLine;
     }
 
 /* -------------------------------------------------------------------- */
@@ -419,7 +430,8 @@ static void WritePointShapefile( const char * pszShapefile,
 
         WritePrimaryAttrToDBF( hDBF, iShape, poTransfer, poRawPoint );
 
-        delete poRawPoint;
+        if( !poPointReader->IsIndexed() )
+            delete poRawPoint;
     }
 
 /* -------------------------------------------------------------------- */
@@ -434,22 +446,26 @@ static void WritePointShapefile( const char * pszShapefile,
 /************************************************************************/
 
 static void WriteAttributeDBF( const char * pszShapefile,
-                               SDTS_IREF * poIREF, SDTS_CATD * poCATD,
+                               SDTSTransfer * poTransfer,
                                const char * pszMODN )
 
 {
-    SDTSAttrReader	oAttrReader( poIREF );
-    int			iSF;
+    SDTSAttrReader	*poAttrReader;
+
+/* -------------------------------------------------------------------- */
+/*      Fetch a reference to the indexed Pointgon reader.                */
+/* -------------------------------------------------------------------- */
+    poAttrReader = (SDTSAttrReader *) 
+        poTransfer->GetLayerIndexedReader( poTransfer->FindLayer( pszMODN ) );
     
-/* -------------------------------------------------------------------- */
-/*      Open the line module file.                                      */
-/* -------------------------------------------------------------------- */
-    if( !oAttrReader.Open( poCATD->GetModuleFilePath( pszMODN ) ) )
+    if( poAttrReader == NULL )
     {
         fprintf( stderr, "Failed to open %s.\n",
-                 poCATD->GetModuleFilePath( pszMODN ) );
+                 poTransfer->GetCATD()->GetModuleFilePath( pszMODN ) );
         return;
     }
+
+    poAttrReader->Rewind();
 
 /* -------------------------------------------------------------------- */
 /*      Create the database file, and our basic set of attributes.      */
@@ -467,144 +483,33 @@ static void WriteAttributeDBF( const char * pszShapefile,
         return;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Read the first record so we can clone schema information off    */
-/*      of it.                                                          */
-/* -------------------------------------------------------------------- */
-    DDFField *poSR;
-    SDTSModId oModId;
-
-    poSR = oAttrReader.GetNextRecord(&oModId);
-    if( poSR == NULL )
-    {
-        fprintf( stderr,
-                 "Didn't find any meaningful attribute records in %s.\n",
-                 pszMODN );
-        
-        return;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Create one field to hold the record identity.                   */
-/* -------------------------------------------------------------------- */
     DBFAddField( hDBF, "SDTSRecId", FTInteger, 8, 0 );
-    
+
 /* -------------------------------------------------------------------- */
-/*      Clone schema off the first record.  Eventually we need to       */
-/*      get the information out of the DDR record, but it isn't         */
-/*      clear to me how to accomplish that with the SDTS++ API.         */
-/*                                                                      */
-/*      The following approach may fail (dramatically) if some          */
-/*      records do not include all subfields.  Furthermore, no          */
-/*      effort is made to make DBF field names unique.  The SDTS        */
-/*      attributes often have names much beyond the 14 character dbf    */
-/*      limit which may result in non-unique attributes.                */
+/*      Prepare the schema.                                             */
 /* -------------------------------------------------------------------- */
-    DDFFieldDefn 	*poFDefn = poSR->GetFieldDefn();
-    
-    for( iSF=0; iSF < poFDefn->GetSubfieldCount(); iSF++ )
-    {
-        DDFSubfieldDefn	*poSFDefn = poFDefn->GetSubfield( iSF );
-        int		nWidth = poSFDefn->GetWidth();
-            
-        switch( poSFDefn->GetType() )
-        {
-          case DDFString:
-            if( nWidth == 0 )
-            {
-                int		nMaxBytes;
-                
-                const char * pachData = poSR->GetSubfieldData(poSFDefn,
-                                                              &nMaxBytes);
+    char	**papszMODNList = CSLAddString( NULL, pszMODN );
 
-                nWidth = strlen(poSFDefn->ExtractStringData(pachData,
-                                                            nMaxBytes, NULL ));
-            }
-            
-            DBFAddField( hDBF, poSFDefn->GetName(), FTString, nWidth, 0 );
-            break;
+    AddPrimaryAttrToDBFSchema( hDBF, poTransfer, papszMODNList );
 
-          case DDFInt:
-            if( nWidth == 0 )
-                nWidth = 9;
-
-            DBFAddField( hDBF, poSFDefn->GetName(), FTInteger, nWidth, 0 );
-            break;
-
-          case DDFFloat:
-            DBFAddField( hDBF, poSFDefn->GetName(), FTDouble, 18, 6 );
-            break;
-
-          default:
-            fprintf( stderr,
-                     "Dropping attribute `%s' of module `%s'.  "
-                     "Type unsupported\n",
-                     poSFDefn->GetName(), pszMODN );
-            break;
-        }
-    }
+    CSLDestroy( papszMODNList );
     
 /* ==================================================================== */
 /*      Process all the records in the module.                          */
 /* ==================================================================== */
+    SDTSAttrRecord *poRecord;
     int		iRecord = 0;
 
-    while( poSR != NULL )
+    while((poRecord = (SDTSAttrRecord*)poAttrReader->GetNextFeature()) != NULL)
     {
-        int		iField = 1;
+        DBFWriteIntegerAttribute( hDBF, iRecord, 0,
+                                  poRecord->oModId.nRecord );
+
+        WriteAttrRecordToDBF( hDBF, iRecord, poTransfer, poRecord->poATTR );
+
+        if( !poAttrReader->IsIndexed() )
+            delete poRecord;
         
-/* -------------------------------------------------------------------- */
-/*      Write the record number ... the module is assumed.              */
-/* -------------------------------------------------------------------- */
-        DBFWriteIntegerAttribute( hDBF, iRecord, 0, oModId.nRecord );
-        
-/* -------------------------------------------------------------------- */
-/*      Process each field in the record.                               */
-/* -------------------------------------------------------------------- */
-        for( iSF=0; iSF < poFDefn->GetSubfieldCount(); iSF++ )
-        {
-            DDFSubfieldDefn	*poSFDefn = poFDefn->GetSubfield( iSF );
-            int			nMaxBytes;
-            const char * 	pachData = poSR->GetSubfieldData(poSFDefn,
-                                                                 &nMaxBytes);
-            
-            switch( poSFDefn->GetType() )
-            {
-              case DDFString:
-                DBFWriteStringAttribute(hDBF,iRecord, iField,
-                                        poSFDefn->ExtractStringData(pachData,
-                                                                    nMaxBytes,
-                                                                    NULL) );
-                iField++;
-                break;
-
-              case DDFFloat:
-                DBFWriteDoubleAttribute( hDBF, iRecord, iField, 
-                                        poSFDefn->ExtractFloatData(pachData,
-                                                                   nMaxBytes,
-                                                                   NULL) );
-                iField++;
-                break;
-
-              case DDFInt:
-                DBFWriteIntegerAttribute( hDBF, iRecord, iField, 
-                                        poSFDefn->ExtractIntData(pachData,
-                                                                 nMaxBytes,
-                                                                 NULL) );
-                iField++;
-                break;
-
-              default:
-                break;
-            }
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Read another record.  Don't delete the previously returned      */
-/*      record ... we don't really own it.                              */
-/* -------------------------------------------------------------------- */
-        poSR = oAttrReader.GetNextRecord(&oModId);
-
         iRecord++;
     }
 
@@ -612,8 +517,6 @@ static void WriteAttributeDBF( const char * pszShapefile,
 /*      Close, and cleanup.                                             */
 /* -------------------------------------------------------------------- */
     DBFClose( hDBF );
-    
-    oAttrReader.Close();
 }    
 
 /************************************************************************/
@@ -743,6 +646,9 @@ static void WritePolygonShapefile( const char * pszShapefile,
         DBFWriteIntegerAttribute( hDBF, iShape, nSDTSRecordField,
                                   poRawPoly->oModId.nRecord );
         WritePrimaryAttrToDBF( hDBF, iShape, poTransfer, poRawPoly );
+
+        if( !poPolyReader->IsIndexed() )
+            delete poRawPoly;
     }
 
 /* -------------------------------------------------------------------- */
@@ -882,69 +788,81 @@ WritePrimaryAttrToDBF( DBFHandle hDBF, int iRecord,
 
         poSR = poTransfer->GetAttr( poFeature->aoATID+iAttrRecord );
           
+        WriteAttrRecordToDBF( hDBF, iRecord, poTransfer, poSR );
+    }
+}
+
+/************************************************************************/
+/*                        WriteAttrRecordToDBF()                        */
+/************************************************************************/
+
+static void
+WriteAttrRecordToDBF( DBFHandle hDBF, int iRecord, 
+                      SDTSTransfer * poTransfer, DDFField * poSR )
+
+{
 /* -------------------------------------------------------------------- */
 /*      Process each subfield in the record.                            */
 /* -------------------------------------------------------------------- */
-        DDFFieldDefn 	*poFDefn = poSR->GetFieldDefn();
+    DDFFieldDefn 	*poFDefn = poSR->GetFieldDefn();
         
-        for( int iSF=0; iSF < poFDefn->GetSubfieldCount(); iSF++ )
-        {
-            DDFSubfieldDefn	*poSFDefn = poFDefn->GetSubfield( iSF );
-            int			iField;
-            int			nMaxBytes;
-            const char * 	pachData = poSR->GetSubfieldData(poSFDefn,
-                                                                 &nMaxBytes);
+    for( int iSF=0; iSF < poFDefn->GetSubfieldCount(); iSF++ )
+    {
+        DDFSubfieldDefn	*poSFDefn = poFDefn->GetSubfield( iSF );
+        int			iField;
+        int			nMaxBytes;
+        const char * 	pachData = poSR->GetSubfieldData(poSFDefn,
+                                                         &nMaxBytes);
 
 /* -------------------------------------------------------------------- */
 /*      Identify the related DBF field, if any.                         */
 /* -------------------------------------------------------------------- */
-            for( iField = 0; iField < hDBF->nFields; iField++ )
-            {
-                if( EQUALN(poSFDefn->GetName(),
-                           hDBF->pszHeader+iField*32,10) )
-                    break;
-            }
+        for( iField = 0; iField < hDBF->nFields; iField++ )
+        {
+            if( EQUALN(poSFDefn->GetName(),
+                       hDBF->pszHeader+iField*32,10) )
+                break;
+        }
 
-            if( iField == hDBF->nFields )
-                iField = -1;
+        if( iField == hDBF->nFields )
+            iField = -1;
             
 /* -------------------------------------------------------------------- */
 /*      Handle each of the types.                                       */
 /* -------------------------------------------------------------------- */
-            switch( poSFDefn->GetType() )
-            {
-              case DDFString:
-                const char	*pszValue;
+        switch( poSFDefn->GetType() )
+        {
+          case DDFString:
+            const char	*pszValue;
 
-                pszValue = poSFDefn->ExtractStringData(pachData, nMaxBytes,
-                                                       NULL);
+            pszValue = poSFDefn->ExtractStringData(pachData, nMaxBytes,
+                                                   NULL);
 
-                if( iField != -1 )
-                    DBFWriteStringAttribute(hDBF, iRecord, iField, pszValue );
-                break;
+            if( iField != -1 )
+                DBFWriteStringAttribute(hDBF, iRecord, iField, pszValue );
+            break;
 
-              case DDFFloat:
-                double	dfValue;
+          case DDFFloat:
+            double	dfValue;
 
-                dfValue = poSFDefn->ExtractFloatData(pachData, nMaxBytes,
-                                                     NULL);
+            dfValue = poSFDefn->ExtractFloatData(pachData, nMaxBytes,
+                                                 NULL);
 
-                if( iField != -1 )
-                    DBFWriteDoubleAttribute( hDBF, iRecord, iField, dfValue );
-                break;
+            if( iField != -1 )
+                DBFWriteDoubleAttribute( hDBF, iRecord, iField, dfValue );
+            break;
 
-              case DDFInt:
-                int		nValue;
+          case DDFInt:
+            int		nValue;
 
-                nValue = poSFDefn->ExtractIntData(pachData, nMaxBytes, NULL);
+            nValue = poSFDefn->ExtractIntData(pachData, nMaxBytes, NULL);
 
-                if( iField != -1 )
-                    DBFWriteIntegerAttribute( hDBF, iRecord, iField, nValue );
-                break;
+            if( iField != -1 )
+                DBFWriteIntegerAttribute( hDBF, iRecord, iField, nValue );
+            break;
 
-              default:
-                break;
-            }
-        } /* next subfield */
-    } /* next related record */
+          default:
+            break;
+        }
+    } /* next subfield */
 }
