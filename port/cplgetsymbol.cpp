@@ -1,7 +1,6 @@
 /******************************************************************************
  * $Id$
  *
- * Name:     gdalprojdef.cpp
  * Project:  Common Portability Library
  * Purpose:  Fetch a function pointer from a shared library / DLL.
  * Author:   Frank Warmerdam, warmerda@home.com
@@ -29,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/04/21 20:06:05  warmerda
+ * Removed incorrect comment.
+ *
  * Revision 1.5  1999/03/02 21:20:00  warmerda
  * test for dlfcn.h, not -ldl
  *
