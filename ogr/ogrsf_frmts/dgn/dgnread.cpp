@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2002/04/08 21:25:59  warmerda
+ * removed tagDef->id = iTag+1 assumption
+ *
  * Revision 1.25  2002/03/14 21:40:03  warmerda
  * expose DGNLoadRawElement, add max_element_count in psDGN
  *
@@ -924,8 +927,6 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
         tagDef->id = psDGN->abyElem[nDataOffset]
             + psDGN->abyElem[nDataOffset+1] * 256;
         nDataOffset += 2;
-
-        CPLAssert( tagDef->id == iTag+1 );
 
         /* Get User Prompt */
         tagDef->prompt = CPLStrdup( (char *) psDGN->abyElem + nDataOffset );
