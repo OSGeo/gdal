@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/02/08 20:22:39  fwarmerdam
+ * Added SetProjection support.
+ *
  * Revision 1.5  2005/01/15 16:11:12  fwarmerdam
  * lots of work on create support
  *
@@ -104,7 +107,7 @@ class IDADataset : public RawDataset
     
     virtual void FlushCache();
     virtual const char *GetProjectionRef(void);
-//    virtual CPLErr SetProjection( const char * );
+    virtual CPLErr SetProjection( const char * );
 
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
@@ -419,6 +422,112 @@ const char *IDADataset::GetProjectionRef()
         return pszProjection;
     else
         return "";
+}
+
+/************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
+CPLErr IDADataset::SetProjection( const char *pszWKTIn )
+
+{
+    OGRSpatialReference oSRS;
+
+    oSRS.importFromWkt( (char **) &pszWKTIn );
+
+    if( !oSRS.IsGeographic() && !oSRS.IsProjected() )
+        return CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      Clear projection parameters.                                    */
+/* -------------------------------------------------------------------- */
+    dfParallel1 = 0.0;
+    dfParallel2 = 0.0;
+    dfLatCenter = 0.0;
+    dfLongCenter = 0.0;
+
+/* -------------------------------------------------------------------- */
+/*      Geographic.                                                     */
+/* -------------------------------------------------------------------- */
+    if( oSRS.IsGeographic() )
+    {
+        // If no change, just return. 
+        if( nProjection == 3 )
+            return CE_None;
+
+        nProjection = 3;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Verify we don't have a false easting or northing as these       */
+/*      will be ignored for the projections we do support.              */
+/* -------------------------------------------------------------------- */
+    if( oSRS.GetProjParm( SRS_PP_FALSE_EASTING ) != 0.0
+        || oSRS.GetProjParm( SRS_PP_FALSE_NORTHING ) != 0.0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to set a projection on an IDA file with a non-zero\n"
+                  "false easting and/or northing.  This is not supported." );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Lambert Conformal Conic.  Note that we don't support false      */
+/*      eastings or nothings.                                           */
+/* -------------------------------------------------------------------- */
+    const char *pszProjection = oSRS.GetAttrValue( "PROJECTION" );
+
+    if( pszProjection == NULL )
+    {
+        /* do nothing - presumably geographic  */;
+    }
+    else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
+    {
+        nProjection = 4;
+        dfParallel1 = oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
+        dfParallel2 = oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
+        dfLatCenter = oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        dfLongCenter = oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+    }
+    else if( EQUAL(pszProjection,SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
+    {
+        nProjection = 6;
+        dfLatCenter = oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        dfLongCenter = oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+    }
+    else if( EQUAL(pszProjection,SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
+    {
+        nProjection = 8;
+        dfParallel1 = oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
+        dfParallel2 = oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
+        dfLatCenter = oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        dfLongCenter = oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+    }
+    else if( EQUAL(pszProjection,SRS_PT_GOODE_HOMOLOSINE) )
+    {
+        nProjection = 9;
+        dfLongCenter = oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "%s is an unsupported projection for IDA format.", 
+                  pszProjection );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Update header and mark it as dirty.                             */
+/* -------------------------------------------------------------------- */
+    bHeaderDirty = TRUE;
+
+    abyHeader[23] = nProjection;
+    c2tp( dfLatCenter, abyHeader + 120 );
+    c2tp( dfLongCenter, abyHeader + 126 );
+    c2tp( dfParallel1, abyHeader + 156 );
+    c2tp( dfParallel2, abyHeader + 162 );
+
+    return CE_None;
 }
 
 /************************************************************************/
