@@ -12,6 +12,7 @@ import "ocidl.idl", "SpatialReferenceIdl.idl";
 
 interface IGeometry;
 interface IPoint;
+interface IPointZ;
 interface ICurve;
 interface ILineString;
 interface ILinearRing;
@@ -63,6 +64,12 @@ interface IPoint : IGeometry
  HRESULT Coords([out] double* x, [out] double * y);
  [propget] HRESULT X([out, retval] double * x);  // for OLE Automation Clients
  [propget] HRESULT Y([out, retval] double * y); // for Automation Clients
+};
+
+[ object, uuid(D4579E2D-1D2B-11d3-80BE-00C04F680FFF) ]
+interface IPointZ : IPoint
+{
+ [propget] HRESULT Z([out, retval] double * z);
 };
 
 [ object, uuid(6A124036-FE38-11d0-BECE-00805F7C4268) ]
