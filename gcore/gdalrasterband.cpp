@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.33  2002/10/17 17:55:31  warmerda
+ * Minor improvement to RasterIO() docs.
+ *
  * Revision 1.32  2002/09/15 15:32:50  dron
  * Added InitBlockInfo() call to ReadBlock() and WriteBlock() functions.
  *
@@ -215,10 +218,10 @@ GDALRasterBand::~GDALRasterBand()
  * top to bottom pixel order.  Spacing is controlled by the nPixelSpace,
  * and nLineSpace parameters.
  *
- * @param nBufXSize the width of the buffer into which the desired region is
+ * @param nBufXSize the width of the buffer image into which the desired region is
  * to be read, or from which it is to be written.
  *
- * @param nBufYSize the height of the buffer into which the desired region is
+ * @param nBufYSize the height of the buffer image into which the desired region is
  * to be read, or from which it is to be written.
  *
  * @param eBufType the type of the pixel values in the pData data buffer.  The
@@ -227,7 +230,7 @@ GDALRasterBand::~GDALRasterBand()
  *
  * @param nPixelSpace The byte offset from the start of one pixel value in
  * pData to the start of the next pixel value within a scanline.  If defaulted
- * the size of the datatype eBufType is used.
+ * (0) the size of the datatype eBufType is used.
  *
  * @param nLineSpace The byte offset from the start of one scanline in
  * pData to the start of the next.  If defaulted the size of the datatype
