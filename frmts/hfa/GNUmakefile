@@ -46,6 +46,7 @@ test:	hfatest
 	./tst_hfa.sh $(IMG_DATA_DIR)/*.img \
 		     $(IMG_DATA_DIR)/Eprj/*.img \
 		     $(IMG_DATA_DIR)/fire/*.img \
+		     $(IMG_DATA_DIR)/usf/*.img \
 		     $(IMG_DATA_DIR)/colordo/*.img
 
 test_img2tif:	img2tif
