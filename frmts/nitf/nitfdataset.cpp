@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2005/01/28 03:47:26  fwarmerdam
+ * Fixed return value of SetGeoTransform().
+ *
  * Revision 1.28  2005/01/15 07:47:20  fwarmerdam
  * enable NPJE profile
  *
@@ -1044,9 +1047,9 @@ CPLErr NITFDataset::SetGeoTransform( double *padfGeoTransform )
                          psImage->nZone, 
                          dfULX, dfULY, dfURX, dfURY, 
                          dfLRX, dfLRY, dfLLX, dfLLY ) )
-        return CE_Failure;
-    else
         return CE_None;
+    else
+        return CE_Failure;
 }
 
 /************************************************************************/
