@@ -7,7 +7,9 @@
 #undef HAVE_VSNPRINTF
 
 /* Define if you have the ANSI C header files.  */
-#define STDC_HEADERS
+#ifndef STDC_HEADERS
+#  define STDC_HEADERS
+#endif
 
 /* Define if you have the <fcntl.h> header file.  */
 #undef HAVE_FCNTL_H
