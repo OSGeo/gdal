@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  1999/09/22 13:35:31  warmerda
+ * added SDTSPolygonReader::AssembleRings()
+ *
  * Revision 1.18  1999/09/21 17:25:45  warmerda
  * Added DDSH fields to raster reader.
  * Moved SADR reading onto SDTS_IREF.
@@ -571,6 +574,8 @@ class SDTSRawPolygon : public SDTSFeature
 
 class SDTSPolygonReader : public SDTSIndexedReader
 {
+    int		bRingsAssembled;
+    
   public:
     		SDTSPolygonReader();
     virtual    ~SDTSPolygonReader();
@@ -580,6 +585,8 @@ class SDTSPolygonReader : public SDTSIndexedReader
     void	Close();
 
     SDTSFeature *GetNextRawFeature( void ) { return GetNextPolygon(); }
+
+    void	AssembleRings( SDTSTransfer * );
 };
 
 /************************************************************************/

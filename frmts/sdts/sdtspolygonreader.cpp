@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/09/22 13:35:31  warmerda
+ * added SDTSPolygonReader::AssembleRings()
+ *
  * Revision 1.7  1999/09/21 02:23:25  warmerda
  * added logic to put outer ring first, and set ring direction
  *
@@ -192,6 +195,49 @@ void SDTSRawPolygon::AddEdgeToRing( int nVertToAdd,
 /************************************************************************/
 /*                           AssembleRings()                            */
 /************************************************************************/
+
+/**
+ * Form border lines (arcs) into outer and inner rings.
+ *
+ * See SDTSPolygonReader::AssemblePolygons() for a simple one step process
+ * to assembling geometry for all polygons in a transfer.
+ *
+ * This method will assemble the lines attached to a polygon into
+ * an outer ring, and zero or more inner rings.  Before calling it is
+ * necessary that all the lines associated with this polygon have already
+ * been attached.  Normally this is accomplished by calling
+ * SDTSLineReader::AttachToPolygons() on all line layers that might
+ * contain edges related to this layer.
+ *
+ * This method then forms the lines into rings.  Rings are formed by:
+ * <ol>
+ * <li> Take a previously unconsumed line, and start a ring with it.  Mark
+ *      it as consumed, and keep track of it's start and end node ids as
+ *      being the start and end node ids of the ring.
+ * <li> If the rings start id is the same as the end node id then this ring
+ *      is completely formed, return to step 1.
+ * <li> Search all unconsumed lines for a line with the same start or end
+ *      node id as the rings current node id.  If none are found then the
+ *      assembly has failed.  Return to step 1 but report failure on
+ *      completion.
+ * <li> Once found, add the line to the current ring, dropping the duplicated
+ *      vertex and reverse order if necessary.  Mark the line as consumed,
+ *      and update the rings end node id accordingly.
+ * <li> go to step 2.
+ * </ol>
+ *
+ * Once ring assembly from lines is complete, another pass is made to
+ * order the rings such that the exterior ring is first, the first ring
+ * has counter-clockwise vertex ordering and the inner rings have clockwise
+ * vertex ordering.  This is accomplished based on the assumption that the
+ * outer ring has the largest area, and using the +/- sign of area to establish
+ * direction of rings.
+ *
+ * @return TRUE if all rings assembled without problems or FALSE if a problem
+ * occured.  If a problem occurs rings are still formed from all lines, but
+ * some of the rings will not be closed, and rings will have no particular
+ * order or direction.
+ */
 
 int SDTSRawPolygon::AssembleRings()
 
@@ -418,6 +464,10 @@ int SDTSRawPolygon::AssembleRings()
     CPLFree( padfRingArea );
     CPLFree( panRawRingStart );
 
+    CPLFree( papoEdges );
+    papoEdges = NULL;
+    nEdges = 0;
+
     return TRUE;
 }
 
@@ -453,6 +503,7 @@ void SDTSRawPolygon::Dump( FILE * fp )
 SDTSPolygonReader::SDTSPolygonReader()
 
 {
+    bRingsAssembled = FALSE;
 }
 
 /************************************************************************/
@@ -522,4 +573,79 @@ SDTSRawPolygon * SDTSPolygonReader::GetNextPolygon()
         delete poRawPolygon;
         return NULL;
     }
+}
+
+/************************************************************************/
+/*                           AssembleRings()                            */
+/************************************************************************/
+
+/**
+ * Assemble geometry for a polygon transfer.
+ *
+ * This method takes care of attaching lines from all the line layers in
+ * this transfer to this polygon layer, assembling the lines into rings on
+ * the polygons, and then cleaning up unnecessary intermediate results.
+ *
+ * Currently this method will leave the line layers rewound to the beginning
+ * but indexed, and the polygon layer rewound but indexed.  In the future
+ * it may restore reading positions, and possibly flush line indexes if they
+ * were not previously indexed.
+ *
+ * This method does nothing if the rings have already been assembled on
+ * this layer using this method.
+ *
+ * See SDTSRawPolygon::AssembleRings() for more information on how the lines
+ * are assembled into rings.
+ *
+ * @param poTransfer the SDTSTransfer that this reader is a part of.  Used
+ * to get a list of line layers that might be needed.
+ */
+
+void SDTSPolygonReader::AssembleRings( SDTSTransfer * poTransfer )
+
+{
+    if( bRingsAssembled )
+        return;
+
+    bRingsAssembled = TRUE;
+    
+/* -------------------------------------------------------------------- */
+/*      To write polygons we need to build them from their related      */
+/*      arcs.  We don't know off hand which arc (line) layers           */
+/*      contribute so we process all line layers, attaching them to     */
+/*      polygons as appropriate.                                        */
+/* -------------------------------------------------------------------- */
+    for( int iLineLayer = 0;
+         iLineLayer < poTransfer->GetLayerCount();
+         iLineLayer++ )
+    {
+        SDTSLineReader	*poLineReader;
+        
+        if( poTransfer->GetLayerType(iLineLayer) != SLTLine )
+            continue;
+
+        poLineReader = (SDTSLineReader *)
+            poTransfer->GetLayerIndexedReader( iLineLayer );
+        if( poLineReader == NULL )
+            continue;
+
+        poLineReader->AttachToPolygons( poTransfer );
+        poLineReader->Rewind();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Scan all polygons indexed on this reader, and assemble their    */
+/*      rings.                                                          */
+/* -------------------------------------------------------------------- */
+    SDTSFeature	*poFeature;
+    
+    Rewind();
+    while( (poFeature = GetNextFeature()) != NULL )
+    {
+        SDTSRawPolygon	*poPoly = (SDTSRawPolygon *) poFeature;
+
+        poPoly->AssembleRings();
+    }
+    
+    Rewind();
 }
