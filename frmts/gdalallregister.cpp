@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.23  2000/09/11 13:32:26  warmerda
+ * added grass
+ *
  * Revision 1.22  2000/07/19 19:06:39  warmerda
  * added mem
  *
@@ -117,6 +120,7 @@ void GDALRegister_HKV(void);
 void GDALRegister_PNG(void);
 void GDALRegister_JPEG(void);
 void GDALRegister_MEM(void);
+void GDALRegister_GRASS(void);
 CPL_C_END
 
 #ifdef notdef
@@ -221,5 +225,9 @@ void GDALAllRegister()
     GDALRegister_MFF();
     GDALRegister_HKV();
     GDALRegister_EFF();
+#endif
+
+#ifdef FRMT_grass
+    GDALRegister_GRASS();
 #endif
 }
