@@ -140,6 +140,14 @@ correct XERCES_DIR to enable Xerces XML parser support for GML read support.
 <li> <b>FME_DIR</b>: Uncomment, and correct path to enable support for
 FMEObject vector access. 
 
+<li> <b>JPEG_EXTERNAL_LIB/JPEGDIR/JPEG_LIB</b>: Used to be able to link
+gdal with an external JPEG library. Uncomment these lines and correct the 
+paths.
+
+<li> <b>PNG_EXTERNAL_LIB/PNGDIR/PNG_LIB</b>: Used to be able to link
+gdal with an external PNG library. Uncomment these lines and correct the 
+paths.
+
 </ul>
 
 I frequently forget to update the Windows makefiles when I add new files,
