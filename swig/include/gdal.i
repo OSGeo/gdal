@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.11  2005/02/16 16:55:49  kruland
+ * Added typedef for CPLErr to prevent wrapping of the enum.
+ * Moved the AllRegister method definition.
+ *
  * Revision 1.10  2005/02/15 22:31:52  kruland
  * Moved CPL wrapping to cpl.i
  *
@@ -71,9 +75,7 @@ typedef double double_2[2];
 
 typedef int GDALAccess;
 typedef int GDALDataType;
-
-%rename (AllRegister) GDALAllRegister;
-void GDALAllRegister();
+typedef int CPLErr;
 
 %include "cpl.i"
 
@@ -84,6 +86,14 @@ void GDALAllRegister();
 %include "Band.i"
 
 %include "ColorTable.i"
+
+//************************************************************************
+//
+// Define the global methods
+//
+//************************************************************************
+%rename (AllRegister) GDALAllRegister;
+void GDALAllRegister();
 
 //************************************************************************
 //
