@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2004/06/24 00:37:12  warmerda
+ * fixed S57M_OPTIONS logic, support deleting attributes
+ *
  * Revision 1.46  2004/06/23 19:46:51  warmerda
  * fixed logic of APPLY updates logic
  *
@@ -393,9 +396,9 @@ void S57Reader::SetOptions( char ** papszOptionsIn )
     if( pszOptionValue == NULL )
         /* no change */;
     else if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"APPLY") )
-        nOptionFlags |= S57M_UPDATES;
-    else
         nOptionFlags &= ~S57M_UPDATES;
+    else
+        nOptionFlags |= S57M_UPDATES;
 
     pszOptionValue = CSLFetchNameValue(papszOptions, 
                                        S57O_PRESERVE_EMPTY_NUMBERS);
@@ -2152,9 +2155,15 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
                 iTAtt = poDstATTF->GetRepeatCount();
 
             pszRawData = poSrcATTF->GetInstanceData( iAtt, &nDataBytes );
-
-            poTarget->SetFieldRaw( poDstATTF, iTAtt, pszRawData, 
-                                   nDataBytes );
+            if( pszRawData[2] == 0x7f /* delete marker */ )
+            {
+                poTarget->SetFieldRaw( poDstATTF, iTAtt, NULL, 0 );
+            }
+            else
+            {
+                poTarget->SetFieldRaw( poDstATTF, iTAtt, pszRawData, 
+                                       nDataBytes );
+            }
         }
     }
 
