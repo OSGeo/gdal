@@ -69,15 +69,15 @@ The open method itself may look something like this:
 GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-/* -------------------------------------------------------------------- */
-/*      Before trying JDEMOpen() we first verify that there is at       */
-/*      least one "\n#keyword" type signature in the first chunk of     */
-/*      the file.                                                       */
-/* -------------------------------------------------------------------- */
+// -------------------------------------------------------------------- 
+//      Before trying JDEMOpen() we first verify that there is at       
+//      least one "\n#keyword" type signature in the first chunk of     
+//      the file.                                                       
+// -------------------------------------------------------------------- 
     if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 50 )
         return NULL;
 
-    /* check if century values seem reasonable */
+    // check if century values seem reasonable 
     if( (!EQUALN((char *)poOpenInfo->pabyHeader+11,"19",2)
           && !EQUALN((char *)poOpenInfo->pabyHeader+11,"20",2))
         || (!EQUALN((char *)poOpenInfo->pabyHeader+15,"19",2)
@@ -88,9 +88,9 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
     
-/* -------------------------------------------------------------------- */
-/*      Create a corresponding GDALDataset.                             */
-/* -------------------------------------------------------------------- */
+// -------------------------------------------------------------------- 
+//      Create a corresponding GDALDataset.                             
+// -------------------------------------------------------------------- 
     JDEMDataset 	*poDS;
 
     poDS = new JDEMDataset();
@@ -98,18 +98,18 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
     
-/* -------------------------------------------------------------------- */
-/*      Read the header.                                                */
-/* -------------------------------------------------------------------- */
+// -------------------------------------------------------------------- 
+//      Read the header.                                                
+// -------------------------------------------------------------------- 
     VSIFSeek( poDS->fp, 0, SEEK_SET );
     VSIFRead( poDS->abyHeader, 1, 1012, poDS->fp );
 
     poDS->nRasterXSize = JDEMGetField( (char *) poDS->abyHeader + 23, 3 );
     poDS->nRasterYSize = JDEMGetField( (char *) poDS->abyHeader + 26, 3 );
 
-/* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
-/* -------------------------------------------------------------------- */
+// -------------------------------------------------------------------- 
+//      Create band information objects.                                
+// -------------------------------------------------------------------- 
     poDS->nBands = 1;
     poDS->SetBand( 1, new JDEMRasterBand( poDS, 1 ));
 
@@ -131,7 +131,7 @@ data members:
 \code
     char	*pszFilename;
 
-    GDALAccess	eAccess; /* GA_ReadOnly or GA_Update */
+    GDALAccess	eAccess; // GA_ReadOnly or GA_Update
 
     GBool	bStatOK;
     VSIStatBuf	sStat;
@@ -164,7 +164,7 @@ format.
     if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 50 )
         return NULL;
 
-    /* check if century values seem reasonable */
+    // check if century values seem reasonable
     if( (!EQUALN((char *)poOpenInfo->pabyHeader+11,"19",2)
           && !EQUALN((char *)poOpenInfo->pabyHeader+11,"20",2))
         || (!EQUALN((char *)poOpenInfo->pabyHeader+15,"19",2)
@@ -638,9 +638,9 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nQuality = 75;
     int  bProgressive = FALSE;
 
-/* -------------------------------------------------------------------- */
-/*      Some some rudimentary checks                                    */
-/* -------------------------------------------------------------------- */
+// -------------------------------------------------------------------- 
+//      Some some rudimentary checks                                    
+// -------------------------------------------------------------------- 
     if( nBands != 1 && nBands != 3 )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
@@ -661,9 +661,9 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      What options has the user selected?                             */
-/* -------------------------------------------------------------------- */
+// -------------------------------------------------------------------- 
+//      What options has the user selected?                             
+// -------------------------------------------------------------------- 
     if( CSLFetchNameValue(papszOptions,"QUALITY") != NULL )
     {
         nQuality = atoi(CSLFetchNameValue(papszOptions,"QUALITY"));
@@ -681,9 +681,9 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         bProgressive = TRUE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create the dataset.                                             */
-/* -------------------------------------------------------------------- */
+// -------------------------------------------------------------------- 
+//      Create the dataset.                                             
+// -------------------------------------------------------------------- 
     FILE	*fpImage;
 
     fpImage = VSIFOpen( pszFilename, "wb" );
@@ -695,9 +695,9 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Initialize JPG access to the file.                              */
-/* -------------------------------------------------------------------- */
+// -------------------------------------------------------------------- 
+//      Initialize JPG access to the file.                              
+// -------------------------------------------------------------------- 
     struct jpeg_compress_struct sCInfo;
     struct jpeg_error_mgr sJErr;
     
@@ -728,9 +728,9 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     jpeg_start_compress( &sCInfo, TRUE );
 
-/* -------------------------------------------------------------------- */
-/*      Loop over image, copying image data.                            */
-/* -------------------------------------------------------------------- */
+// -------------------------------------------------------------------- 
+//      Loop over image, copying image data.                            
+// -------------------------------------------------------------------- 
     GByte 	*pabyScanline;
     CPLErr      eErr;
 
@@ -780,14 +780,14 @@ the Open() function.
 GDALDataset *PAuxDataset::Create( const char * pszFilename,
                                   int nXSize, int nYSize, int nBands,
                                   GDALDataType eType,
-                                  char ** /* papszParmList */ )
+                                  char ** // papszParmList  )
 
 {
     char	*pszAuxFilename;
 
-/* -------------------------------------------------------------------- */
-/*      Verify input options.                                           */
-/* -------------------------------------------------------------------- */
+// -------------------------------------------------------------------- 
+//      Verify input options.                                           
+// -------------------------------------------------------------------- 
     if( eType != GDT_Byte && eType != GDT_Float32 && eType != GDT_UInt16
         && eType != GDT_Int16 )
     {
@@ -799,9 +799,9 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Try to create the file.                                         */
-/* -------------------------------------------------------------------- */
+// -------------------------------------------------------------------- 
+//      Try to create the file.                                         
+// -------------------------------------------------------------------- 
     FILE	*fp;
 
     fp = VSIFOpen( pszFilename, "w" );
@@ -814,16 +814,16 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Just write out a couple of bytes to establish the binary        */
-/*      file, and then close it.                                        */
-/* -------------------------------------------------------------------- */
+// -------------------------------------------------------------------- 
+//      Just write out a couple of bytes to establish the binary        
+//      file, and then close it.                                        
+// -------------------------------------------------------------------- 
     VSIFWrite( (void *) "\0\0", 2, 1, fp );
     VSIFClose( fp );
 
-/* -------------------------------------------------------------------- */
-/*      Create the aux filename.                                        */
-/* -------------------------------------------------------------------- */
+// -------------------------------------------------------------------- 
+//      Create the aux filename.                                        
+// -------------------------------------------------------------------- 
     pszAuxFilename = (char *) CPLMalloc(strlen(pszFilename)+5);
     strcpy( pszAuxFilename, pszFilename );;
 
@@ -838,9 +838,9 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 
     strcat( pszAuxFilename, ".aux" );
 
-/* -------------------------------------------------------------------- */
-/*      Open the file.                                                  */
-/* -------------------------------------------------------------------- */
+// -------------------------------------------------------------------- 
+//      Open the file.                                                  
+// -------------------------------------------------------------------- 
     fp = VSIFOpen( pszAuxFilename, "wt" );
     if( fp == NULL )
     {
@@ -850,10 +850,10 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
         return NULL;
     }
     
-/* -------------------------------------------------------------------- */
-/*      We need to write out the original filename but without any      */
-/*      path components in the AuxilaryTarget line.  Do so now.         */
-/* -------------------------------------------------------------------- */
+// -------------------------------------------------------------------- 
+//      We need to write out the original filename but without any      
+//      path components in the AuxilaryTarget line.  Do so now.         
+// -------------------------------------------------------------------- 
     int		iStart;
 
     iStart = strlen(pszFilename)-1;
@@ -863,17 +863,17 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 
     VSIFPrintf( fp, "AuxilaryTarget: %s\n", pszFilename + iStart );
 
-/* -------------------------------------------------------------------- */
-/*      Write out the raw definition for the dataset as a whole.        */
-/* -------------------------------------------------------------------- */
+// -------------------------------------------------------------------- 
+//      Write out the raw definition for the dataset as a whole.        
+// -------------------------------------------------------------------- 
     VSIFPrintf( fp, "RawDefinition: %d %d %d\n",
                 nXSize, nYSize, nBands );
 
-/* -------------------------------------------------------------------- */
-/*      Write out a definition for each band.  We always write band     */
-/*      sequential files for now as these are pretty efficiently        */
-/*      handled by GDAL.                                                */
-/* -------------------------------------------------------------------- */
+// -------------------------------------------------------------------- 
+//      Write out a definition for each band.  We always write band     
+//      sequential files for now as these are pretty efficiently        
+//      handled by GDAL.                                                
+// -------------------------------------------------------------------- 
     int		nImgOffset = 0;
     
     for( int iBand = 0; iBand < nBands; iBand++ )
@@ -907,9 +907,9 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
         nImgOffset += nYSize * nLineOffset;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
+// -------------------------------------------------------------------- 
+//      Cleanup                                                         
+// -------------------------------------------------------------------- 
     VSIFClose( fp );
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
@@ -1020,7 +1020,6 @@ implement this.
 
 </ul> 
 
-*/
 
 
 
