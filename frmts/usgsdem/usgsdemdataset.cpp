@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.9  2003/09/19 19:19:37  warmerda
+ * Fixed nodata value (-32767), and avoid transforming nodata with fVRes.
+ *
  * Revision 1.8  2003/07/08 21:30:45  warmerda
  * avoid warnings
  *
@@ -71,7 +74,7 @@ typedef struct {
     double	y;
 } DPoint2;
 
-#define USGSDEM_NODATA	-32000
+#define USGSDEM_NODATA	-32767
 
 /************************************************************************/
 /*                              DConvert()                              */
@@ -232,6 +235,8 @@ CPLErr USGSDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             fscanf(poGDS->fp, "%d", &nElev);
             if (iY < 0 || iY >= GetYSize() )
                 bad = TRUE;
+            else if( nElev == USGSDEM_NODATA )
+                /* leave in output buffer as nodata */;
             else
             {
                 if( GetRasterDataType() == GDT_Int16 )
@@ -342,7 +347,7 @@ int USGSDEMDataset::LoadFromFile(FILE *InDem)
         fscanf(InDem, "%d", &j);
         if ((i!=1)||(j!=1))			// File OK?
         {
-            VSIFSeek(InDem, 893, 0); 	// Undocumented Format
+            VSIFSeek(InDem, 893, 0); 	// Undocumented Format (39109h1.dem)
             fscanf(InDem, "%d", &i);
             fscanf(InDem, "%d", &j);
             if ((i!=1)||(j!=1))			// File OK?
