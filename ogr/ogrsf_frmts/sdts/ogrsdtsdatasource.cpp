@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/04/15 13:18:39  warmerda
+ * Free transfer in destructor!
+ *
  * Revision 1.5  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -80,6 +83,9 @@ OGRSDTSDataSource::~OGRSDTSDataSource()
     CPLFree( papoLayers );
 
     CPLFree( pszName );
+
+    if( poTransfer )
+        delete poTransfer;
 }
 
 /************************************************************************/
