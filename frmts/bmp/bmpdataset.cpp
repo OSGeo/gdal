@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/03/27 15:51:06  dron
+ * Improvements in update state handling in IReadBlock().
+ *
  * Revision 1.17  2003/03/27 13:24:53  dron
  * Fixes for large file support.
  *
@@ -336,12 +339,6 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int         i, j;
     int         nBlockSize = nBlockXSize * nBlockYSize;
 
-    if( poGDS->eAccess == GA_Update )
-    {
-        memset( pImage, 0, nBlockSize );
-        return CE_None;
-    }
-
     if ( poGDS->sInfoHeader.iHeight > 0 )
         iScanOffset = poGDS->sFileHeader.iSize - (nBlockYOff + 1) * nScanSize;
     else
@@ -349,16 +346,35 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if ( VSIFSeekL( poGDS->fp, iScanOffset, SEEK_SET ) < 0 )
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Can't seek to offset %ld in input file to read data",
-                  iScanOffset);
-        return CE_Failure;
+        // XXX: We will not report error here, because file just may be
+	// in update state and data for this block will be available later
+        if( poGDS->eAccess == GA_Update )
+        {
+            memset( pImage, 0, nBlockSize );
+            return CE_None;
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Can't seek to offset %ld in input file to read data",
+                      iScanOffset);
+            return CE_Failure;
+        }
     }
     if ( VSIFReadL( pabyScan, 1, nScanSize, poGDS->fp ) < nScanSize )
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Can't read from offset %ld in input file", iScanOffset);
-        return CE_Failure;
+        // XXX
+        if( poGDS->eAccess == GA_Update )
+        {
+            memset( pImage, 0, nBlockSize );
+            return CE_None;
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Can't read from offset %ld in input file", iScanOffset);
+            return CE_Failure;
+        }
     }
 
     if ( poGDS->sInfoHeader.iBitCount == 8  ||
