@@ -26,6 +26,9 @@
  * that calls the GDAL library.
  * 
  * $Log$
+ * Revision 1.11  1999/10/01 14:44:02  warmerda
+ * added documentation
+ *
  * Revision 1.10  1999/07/23 19:35:22  warmerda
  * added GDALSwapWords(), GDALCopyWords()
  *
@@ -61,7 +64,8 @@
 #ifndef GDAL_H_INCLUDED
 #define GDAL_H_INCLUDED
 
-/*! \file gdal.h
+/**
+ * \file gdal.h
  *
  * Public (C callable) GDAL entry points.
  */
@@ -75,24 +79,26 @@
 
 CPL_C_START
 
+/*! Pixel data types */
 typedef enum {
     GDT_Unknown = 0,
-    GDT_Byte = 1,
-    GDT_UInt16 = 2,
-    GDT_Int16 = 3,
-    GDT_UInt32 = 4,
-    GDT_Int32 = 5,
-    GDT_Float32 = 6,
-    GDT_Float64 = 7,
+    /*! Eight bit unsigned integer */ 		GDT_Byte = 1,
+    /*! Sixteen bit unsigned integer */         GDT_UInt16 = 2,
+    /*! Sixteen bit signed integer */           GDT_Int16 = 3,
+    /*! Thirty two bit unsigned integer */      GDT_UInt32 = 4,
+    /*! Thirty two bit signed integer */        GDT_Int32 = 5,
+    /*! Thirty two bit floating point */        GDT_Float32 = 6,
+    /*! Sixty four bit floating point */        GDT_Float64 = 7,
     GDT_TypeCount = 8		/* maximum type # + 1 */
 } GDALDataType;
 
 int CPL_DLL GDALGetDataTypeSize( GDALDataType );
 const char *CPL_DLL GDALGetDataTypeName( GDALDataType );
 
+/*! Flag indicating read/write, or read-only access to data. */
 typedef enum {
-    GA_ReadOnly = 0,
-    GA_Update = 1
+    /*! Read only (no update) access */ GA_ReadOnly = 0,
+    /*! Read/write access. */           GA_Update = 1
 } GDALAccess;
 
 typedef enum {
@@ -136,17 +142,6 @@ GDALDriverH CPL_DLL GDALGetDriverByName( const char * );
 /* ==================================================================== */
 
 void CPL_DLL   GDALClose( GDALDatasetH );
-
-/*!
-  \fn int GDALGetRasterXSize( GDALDatasetH hDataset );
-
-  \brief Fetch raster width in pixels.
-
-  \param hDataset handle returned by GDALOpen().
-
-  */  
-
-
 int CPL_DLL	GDALGetRasterXSize( GDALDatasetH );
 int CPL_DLL	GDALGetRasterYSize( GDALDatasetH );
 int CPL_DLL	GDALGetRasterCount( GDALDatasetH );
@@ -195,7 +190,6 @@ CPLErr 	CPL_DLL GDALReprojectToLongLat( GDALProjDefH, double *, double * );
 CPLErr 	CPL_DLL GDALReprojectFromLongLat( GDALProjDefH, double *, double * );
 void    CPL_DLL GDALDestroyProjDef( GDALProjDefH );
 const char CPL_DLL *GDALDecToDMS( double, const char *, int );
-
 
 CPL_C_END
 

@@ -1,4 +1,12 @@
 /******************************************************************************
+ * $Id$
+ *
+ * Project:  GDAL Core
+ * Purpose:  Base class for format specific band class implementation.  This
+ *           base class provides default implementation for many methods.
+ * Author:   Frank Warmerdam, warmerda@home.com
+ *
+ **********************************************************************
  * Copyright (c) 1998, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -19,15 +27,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
- *
- * gdalrasterband.cpp
- *
- * The GDALRasterBand class.
- *
- * Note that the GDALRasterBand class is normally just used as a base class
- * for format specific band classes. 
- * 
  * $Log$
+ * Revision 1.5  1999/10/01 14:44:02  warmerda
+ * added documentation
+ *
  * Revision 1.4  1998/12/31 18:54:25  warmerda
  * Implement initial GDALRasterBlock support, and block cache
  *
@@ -39,7 +42,6 @@
  *
  * Revision 1.1  1998/12/03 18:32:01  warmerda
  * New
- *
  */
 
 #include "gdal_priv.h"
@@ -47,6 +49,8 @@
 /************************************************************************/
 /*                           GDALRasterBand()                           */
 /************************************************************************/
+
+/*! Constructor. Applications should never create GDALRasterBands directly. */
 
 GDALRasterBand::GDALRasterBand()
 
@@ -71,6 +75,9 @@ GDALRasterBand::GDALRasterBand()
 /*                          ~GDALRasterBand()                           */
 /************************************************************************/
 
+/*! Destructor. Applications should never destroy GDALRasterBands directly,
+    instead destroy the GDALDataset. */
+
 GDALRasterBand::~GDALRasterBand()
 
 {
@@ -83,11 +90,74 @@ GDALRasterBand::~GDALRasterBand()
 /*                              RasterIO()                              */
 /************************************************************************/
 
+/**
+ * Read/write a region of image data for this band.
+ *
+ * This method allows reading a region of a GDALRasterBand into a buffer,
+ * or writing data from a buffer into a region of a GDALRasterBand.  It
+ * automatically takes care of data type translation if the data type
+ * (eBufType) of the buffer is different than that of the GDALRasterBand.
+ * The method also takes care of image decimation / replication if the
+ * buffer size (nBufXSize x nBufYSize) is different than the size of the
+ * region being accessed (nXSize x nYSize).
+ *
+ * The nPixelSpace and nLineSpace parameters allow reading into or
+ * writing from unusually organized buffers.  This is primarily used
+ * for buffers containing more than one bands raster data in interleaved
+ * format. 
+ *
+ * Some formats may efficiently implement decimation into a buffer by
+ * reading from lower resolution overview images.
+ *
+ * For highest performance full resolution data access, read and write
+ * on "block boundaries" as returned by GetBlockSize(), or use the
+ * ReadBlock() and WriteBlock() methods.
+ *
+ * This method is the same as the C GDALRasterIO() function.
+ *
+ * @param eRWFlag Either GF_Read to read a region of data, or GT_Write to
+ * write a region of data.
+ *
+ * @param nXOff The pixel offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the left side.
+ *
+ * @param nYOff The line offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the top.
+ *
+ * @param nXSize The width of the region of the band to be accessed in pixels.
+ *
+ * @param nYSize The height of the region of the band to be accessed in lines.
+ *
+ * @param pData The buffer into which the data should be read, or from which
+ * it should be written.  This buffer must contain at least nBufXSize *
+ * nBufYSize words of type eBufType.  It is organized in left to right,
+ * top to bottom pixel order.  Spacing is controlled by the nPixelSpace,
+ * and nLineSpace parameters.
+ *
+ * @param nBufXSize the width of the buffer into which the desired region is
+ * to be read, or from which it is to be written.
+ *
+ * @param nBufYSize the height of the buffer into which the desired region is
+ * to be read, or from which it is to be written.
+ *
+ * @param eBufType the type of the pixel values in the pData data buffer.  The
+ * pixel values will automatically be translated to/from the GDALRasterBand
+ * data type as needed.
+ *
+ * @param nPixelSpace The byte offset from the start of one pixel value in
+ * pData to the start of the next pixel value within a scanline.  If defaulted
+ * the size of the datatype eBufType is used.
+ *
+ * @param nLineSpace The byte offset from the start of one scanline in
+ * pData to the start of the next.  If defaulted the size of the datatype
+ * eBufType * nBufXSize is used.
+ *
+ * @return CE_Failure if the access fails, otherwise CE_None.
+ */
+
 CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
-                                 int nXOff, int nYOff,
-                                 int nXSize, int nYSize,
-                                 void * pData,
-                                 int nBufXSize, int nBufYSize,
+                                 int nXOff, int nYOff, int nXSize, int nYSize,
+                                 void * pData, int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType,
                                  int nPixelSpace,
                                  int nLineSpace )
@@ -141,6 +211,88 @@ CPLErr GDALRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
 /************************************************************************/
 /*                             ReadBlock()                              */
 /************************************************************************/
+
+/**
+ * Read a block of image data efficiently.
+ *
+ * This method accesses a "natural" block from the raster band without
+ * resampling, or data type conversion.  For a more generalized, but
+ * potentially less efficient access use RasterIO().
+ *
+ * This method is the same as the C GDALReadBlock() function.
+ *
+ * See the GetBlockRef() method for a way of accessing internally cached
+ * block oriented data without an extra copy into an application buffer.
+ *
+ * @param nXBlockOff the horizontal block offset, with zero indicating
+ * the left most block, 1 the next block and so forth. 
+ *
+ * @param nYBlockOff the vertical block offset, with zero indicating
+ * the left most block, 1 the next block and so forth.
+ *
+ * @param pImage the buffer into which the data will be read.  The buffer
+ * must be large enough to hold GetBlockXSize()*GetBlockYSize() words
+ * of type GetRasterDataType().
+ *
+ * @return CE_None on success or CE_Failure on an error.
+ *
+ * The following code would efficiently compute a histogram of eight bit
+ * raster data.  Note that the final block may be partial ... data beyond
+ * the edge of the underlying raster band in these edge blocks is of an
+ * undermined value.
+ *
+<pre>
+ CPLErr GetHistogram( GDALRasterBand *poBand, int *panHistogram )
+
+ {
+     int	nXBlocks, nYBlocks, nXBlockSize, nYBlockSize;
+     int	iXBlock, iYBlock;
+
+     memset( panHistogram, 0, sizeof(int) * 256 );
+
+     CPLAssert( poBand->GetRasterDataType() == GDT_Byte );
+
+     poBand->GetBlockSize( &nXBlockSize, &nYBlockSize );
+     nXBlocks = (poBand->GetXSize() + nXBlockSize - 1) / nXBlockSize;
+     nYBlocks = (poBand->GetYSize() + nYBlockSize - 1) / nYBlockSize;
+
+     pabyData = (GByte *) CPLMalloc(nXBlockSize * nYBlockSize);
+
+     for( iYBlock = 0; iYBlock < nYBlocks; iYBlock++ )
+     {
+         for( iXBlock = 0; iXBlock < nxBlocks; iXBlock++ )
+         {
+             int	nXValid, nYValid;
+             
+             poBand->ReadBlock( iXBlock, iYBlock, pabyData );
+
+             // Compute the portion of the block that is valid
+             // for partial edge blocks.
+             if( iXBlock * nXBlockSize > poBand->GetXSize() )
+                 nXValid = poBand->GetXSize() - iXBlock * nXBlockSize;
+             else
+                 nXValid = nXBlockSize;
+
+             if( iYBlock * nYBlockSize > poBand->GetYSize() )
+                 nYValid = poBand->GetXSize() - iYBlock * nYBlockSize;
+             else
+                 nYValid = nYBlockSize;
+
+             // Collect the histogram counts.
+             for( int iY = 0; iY < nXValid; iY++ )
+             {
+                 for( int iX = 0; iX < nXValid; iX++ )
+                 {
+                     pabyHistogram[pabyData[iX + iY * nXBlockSize]] += 1;
+                 }
+             }
+         }
+     }
+ }
+ 
+</pre>
+ */
+
 
 CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
                                    void * pImage )
@@ -212,6 +364,36 @@ CPLErr GDALRasterBand::IWriteBlock( int, int, void * )
 /*                             WriteBlock()                             */
 /************************************************************************/
 
+/**
+ * Write a block of image data efficiently.
+ *
+ * This method accesses a "natural" block from the raster band without
+ * resampling, or data type conversion.  For a more generalized, but
+ * potentially less efficient access use RasterIO().
+ *
+ * This method is the same as the C GDALWriteBlock() function.
+ *
+ * See ReadBlock() for an example of block oriented data access.
+ *
+ * @param nXBlockOff the horizontal block offset, with zero indicating
+ * the left most block, 1 the next block and so forth. 
+ *
+ * @param nYBlockOff the vertical block offset, with zero indicating
+ * the left most block, 1 the next block and so forth.
+ *
+ * @param pImage the buffer from which the data will be written.  The buffer
+ * must be large enough to hold GetBlockXSize()*GetBlockYSize() words
+ * of type GetRasterDataType().
+ *
+ * @return CE_None on success or CE_Failure on an error.
+ *
+ * The following code would efficiently compute a histogram of eight bit
+ * raster data.  Note that the final block may be partial ... data beyond
+ * the edge of the underlying raster band in these edge blocks is of an
+ * undermined value.
+ *
+ */
+
 CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
                                    void * pImage )
 
@@ -276,6 +458,13 @@ CPLErr GDALWriteBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
 /*                         GetRasterDataType()                          */
 /************************************************************************/
 
+/**
+ * Fetch the pixel data type for this band.
+ *
+ * @return the data type of pixels for this band.
+ */
+  
+
 GDALDataType GDALRasterBand::GetRasterDataType()
 
 {
@@ -295,6 +484,26 @@ GDALDataType GDALGetRasterDataType( GDALRasterBandH hBand )
 /************************************************************************/
 /*                            GetBlockSize()                            */
 /************************************************************************/
+
+/**
+ * Fetch the "natural" block size of this band.
+ *
+ * GDAL contains a concept of the natural block size of rasters so that
+ * applications can organized data access efficiently for some file formats.
+ * The natural block size is the block size that is most efficient for
+ * accessing the format.  For many formats this is simple a whole scanline
+ * in which case *pnXSize is set to GetXSize(), and *pnYSize is set to 1.
+ *
+ * However, for tiled images this will typically be the tile size.
+ *
+ * Note that the X and Y block sizes don't have to divide the image size
+ * evenly, meaning that right and bottom edge blocks may be incomplete.
+ * See ReadBlock() for an example of code dealing with these issues.
+ *
+ * @param pnXSize integer to put the X block size into or NULL.
+ *
+ * @param pnYSize integer to put the Y block size into or NULL.
+ */
 
 void GDALRasterBand::GetBlockSize( int * pnXSize, int *pnYSize )
 
@@ -498,8 +707,23 @@ CPLErr GDALRasterBand::FlushBlock( int nBlockXOff, int nBlockYOff )
 /*                            GetBlockRef()                             */
 /************************************************************************/
 
-GDALRasterBlock * GDALRasterBand::GetBlockRef( int nBlockXOff,
-                                               int nBlockYOff )
+/**
+ * Fetch a pointer to an internally cached raster block.
+ *
+ * Note that calling GetBlockRef() on a previously uncached band will
+ * enable caching.
+ * 
+ * @param nXBlockOff the horizontal block offset, with zero indicating
+ * the left most block, 1 the next block and so forth. 
+ *
+ * @param nYBlockOff the vertical block offset, with zero indicating
+ * the left most block, 1 the next block and so forth.
+ *
+ * @return pointer to the block object, or NULL on failure.
+ */
+
+GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
+                                               int nYBlockOff )
 
 {
     int		nBlockIndex;
@@ -567,4 +791,20 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nBlockXOff,
         papoBlocks[nBlockIndex]->Touch();
 
     return( papoBlocks[nBlockIndex] );
+}
+
+/************************************************************************/
+/*                             GetAccess()                              */
+/************************************************************************/
+
+/**
+ * Find out if we have update permission for this band.
+ *
+ * @return Either GA_Update or GA_ReadOnly.
+ */
+
+GDALAccess GDALRasterBand::GetAccess()
+
+{
+    return eAccess;
 }

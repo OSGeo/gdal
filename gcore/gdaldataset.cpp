@@ -25,6 +25,9 @@
  * The GDALDataset class.
  * 
  * $Log$
+ * Revision 1.8  1999/10/01 14:44:02  warmerda
+ * added documentation
+ *
  * Revision 1.7  1999/05/17 01:43:10  warmerda
  * fixed GDALSetGeoTransform()
  *
@@ -61,6 +64,15 @@ GDALDataset::GDALDataset()
 /*                            ~GDALDataset()                            */
 /************************************************************************/
 
+/**
+ * Destroy an open GDALDataset.
+ *
+ * This is the accepted method of closing a GDAL dataset and deallocating
+ * all resources associated with it.
+ *
+ * Equivelent of the C callable GDALClose().
+ */
+
 GDALDataset::~GDALDataset()
 
 {
@@ -90,9 +102,14 @@ void GDALClose( GDALDatasetH hDS )
 
 /************************************************************************/
 /*                             FlushCache()                             */
-/*                                                                      */
-/*      Flush all write caches to disk.                                 */
 /************************************************************************/
+
+/**
+ * Flush all write cached data to disk.
+ *
+ * Any raster (or other GDAL) data written via GDAL calls, but buffered
+ * internally will be written to disk.
+ */
 
 void GDALDataset::FlushCache()
 
@@ -164,12 +181,13 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
 /*                           GetRasterXSize()                           */
 /************************************************************************/
 
-//! Fetch raster width in pixels.
+/**
 
-/*!
+ Fetch raster width in pixels.
 
-Returns the raster width of all GDALBands associated with this
-GDALDataset.  The C function GDALGetRasterXSize() does the same.
+ Equivelent of the C function GDALGetRasterXSize().
+
+ @return the width in pixels of raster bands in this GDALDataset.
 
 */
 
@@ -194,7 +212,15 @@ int GDALGetRasterXSize( GDALDatasetH hDataset )
 /*                           GetRasterYSize()                           */
 /************************************************************************/
 
-//! Fetch raster height in pixels.
+/**
+
+ Fetch raster height in pixels.
+
+ Equivelent of the C function GDALGetRasterYSize().
+
+ @return the height in pixels of raster bands in this GDALDataset.
+
+*/
 
 int GDALDataset::GetRasterYSize()
 
@@ -216,6 +242,19 @@ int GDALGetRasterYSize( GDALDatasetH hDataset )
 /*                           GetRasterBand()                            */
 /************************************************************************/
 
+/**
+
+ Fetch a band object for a dataset.
+
+ Equivelent of the C function GDALGetRasterBand().
+
+ @param nBandId the index number of the band to fetch, from 1 to
+                GetRasterCount().
+
+ @return the height in pixels of raster bands in this GDALDataset.
+
+*/
+
 GDALRasterBand * GDALDataset::GetRasterBand( int nBandId )
 
 {
@@ -233,14 +272,6 @@ GDALRasterBand * GDALDataset::GetRasterBand( int nBandId )
 /*                         GDALGetRasterBand()                          */
 /************************************************************************/
 
-/*! \relates GDALRasterBand
-
-  \param hDS Dataset handle
-  \param nBandId The band number to fetch from 1 to GDALGetRasterCount().
-  \return a GDALRasterBand handle (GDALRasterBandH).
-
-*/
-
 GDALRasterBandH GDALGetRasterBand( GDALDatasetH hDS, int nBandId )
 
 {
@@ -250,6 +281,14 @@ GDALRasterBandH GDALGetRasterBand( GDALDatasetH hDS, int nBandId )
 /************************************************************************/
 /*                           GetRasterCount()                           */
 /************************************************************************/
+
+/**
+ * Fetch the number of raster bands on this dataset.
+ *
+ * Same as the C function GDALGetRasterCount().
+ *
+ * @return the number of raster bands.
+ */
 
 int GDALDataset::GetRasterCount()
 
@@ -271,6 +310,22 @@ int GDALGetRasterCount( GDALDatasetH hDS )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
+/**
+ * Fetch the projection definition string for this dataset.
+ *
+ * Same as the C function GDALGetProjectionRef().
+ *
+ * The returned string defines the projection coordinate system of the
+ * image in either PROJ.4 format or OpenGIS WKT format.  It should be
+ * suitable for use with the GDALProjDef object to reproject positions.
+ *
+ * When a projection definition is not available an empty (but not NULL)
+ * string is returned.
+ *
+ * @return a pointer to an internal projection reference string.  It should
+ * not be altered, freed or expected to last for long. 
+ */
+
 const char *GDALDataset::GetProjectionRef()
 
 {
@@ -291,6 +346,21 @@ const char *GDALGetProjectionRef( GDALDatasetH hDS )
 /*                           SetProjection()                            */
 /************************************************************************/
 
+/**
+ * Set the projection reference string for this dataset.
+ *
+ * The string should be in OGC WKT or PROJ.4 format.  An error may occur
+ * because of incorrectly specified projection strings, because the dataset
+ * is not writable, or because the dataset does not support the indicated
+ * projection.  Many formats do not support writing projections.
+ *
+ * This method is the same as the C GDALSetProjection() function. 
+ *
+ * @param pszProjection projection reference string.
+ *
+ * @return CE_Failure if an error occurs, otherwise CE_None.
+ */
+
 CPLErr GDALDataset::SetProjection( const char * )
 
 {
@@ -310,6 +380,36 @@ CPLErr GDALSetProjection( GDALDatasetH hDS, const char * pszProjection )
 /************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
+
+/**
+ * Fetch the affine transformation coefficients.
+ *
+ * Fetches the coefficients for transforming between pixel/line (P,L) raster
+ * space, and projection coordinates (Xp,Yp) space.
+ *
+ *  Xp = padfTransform[0] + P*padfTransform[1] + L*padfTransform[2];
+ *  Yp = padfTransform[3] + P*padfTransform[4] + L*padfTransform[5];
+ *
+ * In a north up image, padfTransform[1] is the pixel width, and
+ * padfTransform[5] is the pixel height.  The upper left corner of the
+ * upper left pixel is at position (padfTransform[0],padfTransform[3]).
+ *
+ * The default transform is (0,1,0,0,0,1) and should be returned even when
+ * a CE_Failure error is returned, such as for formats that don't support
+ * transformation to projection coordinates.
+ *
+ * NOTE: GetGeoTransform() isn't expressive enough to handle the variety of
+ * OGC Grid Coverages pixel/line to projection transformation schemes.
+ * Eventually this method will be depreciated in favour of a more general
+ * scheme.
+ *
+ * This method does the same thing as the C GDALGetGeoTransform() function.
+ *
+ * @param padfTransform an existing six double buffer into which the
+ * transformation will be placed.
+ *
+ * @return CE_None on success, or CE_Failure if no transform can be fetched.
+ */
 
 CPLErr GDALDataset::GetGeoTransform( double * padfTransform )
 
@@ -341,6 +441,21 @@ CPLErr GDALGetGeoTransform( GDALDatasetH hDS, double * padfTransform )
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
+/**
+ * Set the affine transformation coefficients.
+ *
+ * See GetGeoTransform() for details on the meaning of the padfTransform
+ * coefficients.
+ *
+ * This method does the same thing as the C GDALSetGeoTransform() function.
+ *
+ * @param padfTransform a six double buffer containing the transformation
+ * coefficients to be written with the dataset.
+ *
+ * @return CE_None on success, or CE_Failure if this transform cannot be
+ * written.
+ */
+
 CPLErr GDALDataset::SetGeoTransform( double * )
 
 {
@@ -363,6 +478,17 @@ CPLErr GDALSetGeoTransform( GDALDatasetH hDS, double * padfTransform )
 /************************************************************************/
 /*                         GetInternalHandle()                          */
 /************************************************************************/
+
+/**
+ * Fetch a format specific internally meaningful handle.
+ *
+ * This method is the same as the C GDALGetInternalHandle() method. 
+ *
+ * @param pszHandleName the handle name desired.  The meaningful names
+ * will be specific to the file format.
+ *
+ * @return the desired handle value, or NULL if not recognised/supported.
+ */
 
 void *GDALDataset::GetInternalHandle( const char * )
 

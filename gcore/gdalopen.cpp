@@ -26,6 +26,9 @@
  *
  * 
  * $Log$
+ * Revision 1.4  1999/10/01 14:44:02  warmerda
+ * added documentation
+ *
  * Revision 1.3  1999/04/21 04:00:34  warmerda
  * Initialize fp to NULL.
  *
@@ -102,9 +105,22 @@ GDALOpenInfo::~GDALOpenInfo()
 
 /************************************************************************/
 /*                              GDALOpen()                              */
-/*                                                                      */
-/*      Attempt to open a dataset.                                      */
 /************************************************************************/
+
+/**
+ * Open a raster file as a GDALDataset.
+ *
+ * @param pszFilename the name of the file to access.  In the case of
+ * exotic drivers this may not refer to a physical file, but instead contain
+ * information for the driver on how to access a dataset.
+ *
+ * @param eAccess the desired access, either GA_Update or GA_ReadOnly.  Many
+ * drivers support only read only access.
+ *
+ * @return A GDALDatasetH handle or NULL on failure.  For C++ applications
+ * this handle can be cast to a GDALDataset *. 
+ */
+ 
 
 GDALDatasetH GDALOpen( const char * pszFilename, GDALAccess eAccess )
 

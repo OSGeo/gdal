@@ -26,6 +26,9 @@
  * Note this is a C++ include file, and can't be used by C code.
  * 
  * $Log$
+ * Revision 1.7  1999/10/01 14:44:02  warmerda
+ * added documentation
+ *
  * Revision 1.6  1999/04/21 04:16:25  warmerda
  * experimental docs
  *
@@ -56,7 +59,6 @@
 class GDALMajorObject;
 class GDALDataset;
 class GDALRasterBand;
-class GDALGeoref;
 class GDALDriver;
 
 /* -------------------------------------------------------------------- */
@@ -69,12 +71,12 @@ class GDALDriver;
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
 
-/************************************************************************/
+/* ******************************************************************** */
 /*                           GDALMajorObject                            */
 /*                                                                      */
 /*      Base class providing metadata, description and other            */
 /*      services shared by major objects.                               */
-/************************************************************************/
+/* ******************************************************************** */
 
 class CPL_DLL GDALMajorObject
 {
@@ -83,11 +85,9 @@ class CPL_DLL GDALMajorObject
     void		SetDescription( const char * );
 };
 
-/************************************************************************/
+/* ******************************************************************** */
 /*                             GDALProjDef                              */
-/*                                                                      */
-/*      Encapsulate a Projection definition.                            */
-/************************************************************************/
+/* ******************************************************************** */
 
 //! Encapsulates a projections definition.
 
@@ -109,13 +109,15 @@ class CPL_DLL GDALProjDef
 };
 
 
-/************************************************************************/
+/* ******************************************************************** */
 /*                             GDALDataset                              */
-/*                                                                      */
-/*      Normally this is one file.                                      */
-/************************************************************************/
+/* ******************************************************************** */
 
-//! A dataset (normally a single raster, or vector file).
+/**
+ * A dataset encapsulating one or more raster bands.
+ *
+ * Use GDALOpen() to create a GDALDataset for a named file.
+ */
 
 class CPL_DLL GDALDataset : public GDALMajorObject
 {
@@ -139,7 +141,6 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     int		GetRasterXSize( void );
     int		GetRasterYSize( void );
     int		GetRasterCount( void );
-    GDALGeoref  *GetRasterGeoref( void );
     GDALRasterBand *GetRasterBand( int );
 
     virtual void FlushCache(void);
@@ -153,11 +154,11 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual void *GetInternalHandle( const char * );
 };
 
-/************************************************************************/
+/* ******************************************************************** */
 /*                           GDALRasterBlock                            */
-/*                                                                      */
-/*      One block for a raster.                                         */
-/************************************************************************/
+/* ******************************************************************** */
+
+/*! A cached raster block ... to be documented later. */
 
 class CPL_DLL GDALRasterBlock
 {
@@ -190,11 +191,11 @@ class CPL_DLL GDALRasterBlock
 };
 
 
-/************************************************************************/
+/* ******************************************************************** */
 /*                            GDALRasterBand                            */
 /*                                                                      */
 /*      one band, or channel in a dataset.                              */
-/************************************************************************/
+/* ******************************************************************** */
 
 //! A single raster band (or channel).
 
@@ -251,11 +252,11 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     CPLErr	FlushCache();
 };
 
-/************************************************************************/
+/* ******************************************************************** */
 /*                             GDALOpenInfo                             */
 /*                                                                      */
 /*      Structure of data about dataset for open functions.             */
-/************************************************************************/
+/* ******************************************************************** */
 
 class CPL_DLL GDALOpenInfo
 {
@@ -278,13 +279,13 @@ class CPL_DLL GDALOpenInfo
 
 };
 
-/************************************************************************/
+/* ******************************************************************** */
 /*                              GDALDriver                              */
 /*                                                                      */
 /*      This roughly corresponds to a file format, though some          */
 /*      drivers may be gateways to many formats through a secondary     */
 /*      multi-library.                                                  */
-/************************************************************************/
+/* ******************************************************************** */
 
 class CPL_DLL GDALDriver
 {
@@ -308,9 +309,9 @@ class CPL_DLL GDALDriver
                                  GDALDataType eType, char ** papszOptions );
 };
 
-/************************************************************************/
+/* ******************************************************************** */
 /*                          GDALDriverManager                           */
-/************************************************************************/
+/* ******************************************************************** */
 
 class CPL_DLL GDALDriverManager
 {
