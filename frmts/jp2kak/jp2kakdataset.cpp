@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.20  2004/01/15 21:21:04  warmerda
+ * added lossless compression of 16bit values
+ *
  * Revision 1.19  2004/01/12 19:50:09  warmerda
  * Disable jpip support on 4.1 till I get around to fixing it up.
  *
@@ -1378,17 +1381,37 @@ transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
                 *dest = (kdu_byte) val;
             }
         }
+        else if( eOutType == GDT_Int16 || eOutType == GDT_UInt16 )
+        { // Transferring 32-bit absolute integers.
+            kdu_int32 val;
+              
+            for (; width > 0; width--, sp++, dest+=gap)
+            {
+                val = sp->ival;
+
+                if( eOutType == GDT_Int16 )
+                {
+                    *((GInt16 *) dest) = (GInt16) MAX(MIN(val,32767),-32768);
+                }
+                else
+                {
+                    assert( eOutType == GDT_UInt16 );
+                    *((GUInt16 *) dest) = (GUInt16) MAX(MIN(val,65535),0);
+                }
+            }
+        }
         else
         { // Transferring 32-bit absolute integers.
             kdu_int32 val;
             kdu_int32 downshift = precision-8;
             kdu_int32 offset = (1<<downshift)>>1;
-              
+
             for (; width > 0; width--, sp++, dest+=gap)
             {
                 val = sp->ival;
                 val = (val+offset)>>downshift;
                 val += 128;
+
                 if (val & ((-1)<<8))
                     val = (val<0)?0:255;
                 *dest = (kdu_byte) val;
@@ -1620,7 +1643,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-    if( dfQuality < 99.5 || eType != GDT_Byte )
+    if( dfQuality < 99.5 )
     {
         double dfLayerBytes = 
             (nXSize * ((double) nYSize) * dfQuality / 100.0);
@@ -1931,13 +1954,29 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                   (void *) pabyBuffer, nXSize, 1, eType,
                                   0, 0 );
 
-                if( bReversible )
+                if( bReversible && eType == GDT_Byte )
                 {
                     kdu_sample16 *dest = lines[c].get_buf16();
                     kdu_byte *sp = pabyBuffer;
                 
                     for (int n=nXSize; n > 0; n--, dest++, sp++)
                         dest->ival = ((kdu_int16)(*sp)) - 128;
+                }
+                else if( bReversible && eType == GDT_Int16 )
+                {
+                    kdu_sample16 *dest = lines[c].get_buf16();
+                    GInt16 *sp = (GInt16 *) pabyBuffer;
+                
+                    for (int n=nXSize; n > 0; n--, dest++, sp++)
+                        dest->ival = *sp;
+                }
+                else if( bReversible && eType == GDT_UInt16 )
+                {
+                    kdu_sample16 *dest = lines[c].get_buf16();
+                    GUInt16 *sp = (GUInt16 *) pabyBuffer;
+                
+                    for (int n=nXSize; n > 0; n--, dest++, sp++)
+                        dest->ival = *sp - 32767;
                 }
                 else if( eType == GDT_Byte )
                 {
