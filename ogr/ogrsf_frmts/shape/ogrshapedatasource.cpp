@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/09/04 15:35:14  warmerda
+ * add support for deferring geometry type selection till first feature
+ *
  * Revision 1.6  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -400,7 +403,8 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     OGRShapeLayer	*poLayer;
 
-    poLayer = new OGRShapeLayer( pszLayerName, hSHP, hDBF, poSRS, TRUE );
+    poLayer = new OGRShapeLayer( pszLayerName, hSHP, hDBF, poSRS, TRUE,
+                                 eType );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */

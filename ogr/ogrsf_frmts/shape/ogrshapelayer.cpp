@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/09/04 15:35:14  warmerda
+ * add support for deferring geometry type selection till first feature
+ *
  * Revision 1.6  2001/08/21 21:44:27  warmerda
  * fixed count logic if attribute query in play
  *
@@ -59,7 +62,8 @@ CPL_CVSID("$Id$");
 
 OGRShapeLayer::OGRShapeLayer( const char * pszName,
                               SHPHandle hSHPIn, DBFHandle hDBFIn, 
-                              OGRSpatialReference *poSRSIn, int bUpdate )
+                              OGRSpatialReference *poSRSIn, int bUpdate,
+                              OGRwkbGeometryType eReqType )
 
 {
     poFilterGeom = NULL;
@@ -74,6 +78,8 @@ OGRShapeLayer::OGRShapeLayer( const char * pszName,
     nTotalShapeCount = hSHP->nRecords;
     
     poFeatureDefn = SHPReadOGRFeatureDefn( pszName, hSHP, hDBF );
+
+    eRequestedGeomType = eReqType;
 }
 
 /************************************************************************/
@@ -181,6 +187,58 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
 
 {
     poFeature->SetFID( OGRNullFID );
+
+    if( nTotalShapeCount == 0 
+        && eRequestedGeomType == wkbUnknown 
+        && poFeature->GetGeometryRef() != NULL )
+    {
+        OGRGeometry	*poGeom = poFeature->GetGeometryRef();
+        int		nShapeType;
+        
+        switch( poGeom->getGeometryType() )
+        {
+          case wkbPoint:
+            nShapeType = SHPT_POINTZ;
+            break;
+
+          case wkbPoint25D:
+            nShapeType = SHPT_POINT;
+            break;
+
+          case wkbMultiPoint:
+            nShapeType = SHPT_MULTIPOINT;
+            break;
+
+          case wkbMultiPoint25D:
+            nShapeType = SHPT_MULTIPOINTZ;
+            break;
+
+          case wkbLineString:
+            nShapeType = SHPT_ARC;
+            break;
+
+          case wkbLineString25D:
+            nShapeType = SHPT_ARCZ;
+            break;
+
+          case wkbPolygon:
+          case wkbMultiPolygon:
+            nShapeType = SHPT_POLYGON;
+            break;
+
+          case wkbPolygon25D:
+          case wkbMultiPolygon25D:
+            nShapeType = SHPT_POLYGONZ;
+            break;
+
+          default:
+            nShapeType = -1;
+            break;
+        }
+
+        if( nShapeType != -1 )
+            ResetGeomType( nShapeType );
+    }
     
     return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature );
 }
@@ -346,4 +404,66 @@ OGRSpatialReference *OGRShapeLayer::GetSpatialRef()
 
 {
     return poSRS;
+}
+
+/************************************************************************/
+/*                           ResetGeomType()                            */
+/*                                                                      */
+/*      Modify the geometry type for this file.  Used to convert to     */
+/*      a different geometry type when a layer was created with a       */
+/*      type of unknown, and we get to the first feature to             */
+/*      establish the type.                                             */
+/************************************************************************/
+
+int OGRShapeLayer::ResetGeomType( int nNewGeomType )
+
+{
+    char	abyHeader[100];
+    int		nStartPos;
+
+    if( nTotalShapeCount > 0 )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Update .shp header.                                             */
+/* -------------------------------------------------------------------- */
+    nStartPos = ftell( hSHP->fpSHP );
+
+    if( fseek( hSHP->fpSHP, 0, SEEK_SET ) != 0
+        || fread( abyHeader, 100, 1, hSHP->fpSHP ) != 1 )
+        return FALSE;
+
+    *((GInt32 *) (abyHeader + 32)) = CPL_LSBWORD32( nNewGeomType );
+
+    if( fseek( hSHP->fpSHP, 0, SEEK_SET ) != 0
+        || fwrite( abyHeader, 100, 1, hSHP->fpSHP ) != 1 )
+        return FALSE;
+
+    if( fseek( hSHP->fpSHP, nStartPos, SEEK_SET ) != 0 )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Update .shx header.                                             */
+/* -------------------------------------------------------------------- */
+    nStartPos = ftell( hSHP->fpSHX );
+
+    if( fseek( hSHP->fpSHX, 0, SEEK_SET ) != 0
+        || fread( abyHeader, 100, 1, hSHP->fpSHX ) != 1 )
+        return FALSE;
+
+    *((GInt32 *) (abyHeader + 32)) = CPL_LSBWORD32( nNewGeomType );
+
+    if( fseek( hSHP->fpSHX, 0, SEEK_SET ) != 0
+        || fwrite( abyHeader, 100, 1, hSHP->fpSHX ) != 1 )
+        return FALSE;
+
+    if( fseek( hSHP->fpSHX, nStartPos, SEEK_SET ) != 0 )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Update other information.                                       */
+/* -------------------------------------------------------------------- */
+    hSHP->nShapeType = nNewGeomType;
+
+    return TRUE;
 }

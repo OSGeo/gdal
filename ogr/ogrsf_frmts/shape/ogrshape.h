@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/09/04 15:35:14  warmerda
+ * add support for deferring geometry type selection till first feature
+ *
  * Revision 1.7  2001/03/16 22:16:10  warmerda
  * added support for ESRI .prj files
  *
@@ -87,11 +90,15 @@ class OGRShapeLayer : public OGRLayer
 
     int			bUpdateAccess;
 
+    OGRwkbGeometryType  eRequestedGeomType;
+    int			ResetGeomType( int nNewType );
+
   public:
     			OGRShapeLayer( const char * pszName,
                                        SHPHandle hSHP, DBFHandle hDBF,
                                        OGRSpatialReference *poSRS,
-                                       int bUpdate );
+                                       int bUpdate, 
+                                       OGRwkbGeometryType eReqType=wkbUnknown);
     			~OGRShapeLayer();
 
     OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
