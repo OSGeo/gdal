@@ -128,10 +128,12 @@ $(GDAL_DLL):	lib
 	link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) $(LIBOBJ) \
 		$(ECWLIB) $(OGDILIB) $(XERCES_LIB) $(FME_LIB) $(JASPER_LIB)\
 		$(HDF4_LIB) $(OCI_LIB) $(PNG_LIB) $(JPEG_LIB) $(PG_LIB) \
-		$(MRSID_LIB) \
+		$(MRSID_LIB) $(FITS_LIB) \
 		 /out:$(GDAL_DLL) /implib:gdal_i.lib $(LINKER_FLAGS)
 
 install: $(GDAL_DLL) apps_dir pymod_dir
+  -mkdir $(BINDIR)
+  -mkdir $(DATADIR)
 	xcopy /y /r /d /f $(GDAL_DLL) $(BINDIR)
 	cd apps
 	$(MAKE) /f makefile.vc install
@@ -146,6 +148,8 @@ install: $(GDAL_DLL) apps_dir pymod_dir
 	cd ..
 
 devinstall: install
+  -mkdir $(INCDIR)
+  -mkdir $(LIBDIR)
 	copy port\*.h $(INCDIR)
 	copy gcore\*.h $(INCDIR)
 	copy alg\*.h $(INCDIR)

@@ -1,3 +1,9 @@
+2003-07-16  Simon Perkins  <s.perkins@lanl.gov>
+
+	* Added FITS support to windows makefiles.
+	
+	* Added GDALFillraster to gdalbridge.{cpp,h} 
+
 2003-06-27  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* Release 1.1.9 of GDAL/OGR.

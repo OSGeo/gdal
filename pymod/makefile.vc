@@ -18,5 +18,6 @@ clean:
 	-del *.obj *.dll *.lib
 
 install:	$(PYGDAL_DLL)
+  -mkdir $(PY_INST_DIR)
 	copy *.py $(PY_INST_DIR)
 	copy $(PYGDAL_DLL) $(PY_INST_DIR)
