@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2003/09/09 18:11:17  warmerda
+ * capture TOPI field from VRPT
+ *
  * Revision 1.39  2003/09/09 16:44:51  warmerda
  * fix sounding support in ReadVector()
  *
@@ -1114,27 +1117,31 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
 /* -------------------------------------------------------------------- */
 /*      Special edge fields.                                            */
 /* -------------------------------------------------------------------- */
-        
-    if( nRCNM == RCNM_VE )
+    DDFField *poVRPT;
+
+    if( nRCNM == RCNM_VE 
+        && (poVRPT = poRecord->FindField( "VRPT" )) != NULL )
     {
         poFeature->SetField( "NAME_RCNM_0", RCNM_VC );
-        poFeature->SetField( "NAME_RCID_0", 
-                             ParseName( poRecord->FindField( "VRPT" ), 0 ) );
+        poFeature->SetField( "NAME_RCID_0", ParseName( poVRPT, 0 ) );
         poFeature->SetField( "ORNT_0", 
                              poRecord->GetIntSubfield("VRPT",0,"ORNT",0) );
         poFeature->SetField( "USAG_0", 
                              poRecord->GetIntSubfield("VRPT",0,"USAG",0) );
+        poFeature->SetField( "TOPI_0", 
+                             poRecord->GetIntSubfield("VRPT",0,"TOPI",0) );
         poFeature->SetField( "MASK_0", 
                              poRecord->GetIntSubfield("VRPT",0,"MASK",0) );
                              
         
         poFeature->SetField( "NAME_RCNM_1", RCNM_VC );
-        poFeature->SetField( "NAME_RCID_1", 
-                             ParseName( poRecord->FindField( "VRPT" ), 1 ) );
+        poFeature->SetField( "NAME_RCID_1", ParseName( poVRPT, 1 ) );
         poFeature->SetField( "ORNT_1", 
                              poRecord->GetIntSubfield("VRPT",0,"ORNT",1) );
         poFeature->SetField( "USAG_1", 
                              poRecord->GetIntSubfield("VRPT",0,"USAG",1) );
+        poFeature->SetField( "TOPI_1", 
+                             poRecord->GetIntSubfield("VRPT",0,"TOPI",1) );
         poFeature->SetField( "MASK_1", 
                              poRecord->GetIntSubfield("VRPT",0,"MASK",1) );
     }
@@ -1886,6 +1893,9 @@ OGRFeatureDefn *S57Reader::GenerateVectorPrimitiveFeatureDefn( int nRCNM )
         oField.Set( "USAG_0", OFTInteger, 3, 0 );
         poFDefn->AddFieldDefn( &oField );
 
+        oField.Set( "TOPI_0", OFTInteger, 1, 0 );
+        poFDefn->AddFieldDefn( &oField );
+
         oField.Set( "MASK_0", OFTInteger, 3, 0 );
         poFDefn->AddFieldDefn( &oField );
 
@@ -1899,6 +1909,9 @@ OGRFeatureDefn *S57Reader::GenerateVectorPrimitiveFeatureDefn( int nRCNM )
         poFDefn->AddFieldDefn( &oField );
 
         oField.Set( "USAG_1", OFTInteger, 3, 0 );
+        poFDefn->AddFieldDefn( &oField );
+
+        oField.Set( "TOPI_1", OFTInteger, 1, 0 );
         poFDefn->AddFieldDefn( &oField );
 
         oField.Set( "MASK_1", OFTInteger, 3, 0 );
