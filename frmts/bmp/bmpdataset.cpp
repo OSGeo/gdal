@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.14  2002/12/15 15:24:41  dron
+ * Typos fixed.
+ *
  * Revision 1.13  2002/12/15 15:13:33  dron
  * BMP structures extended.
  *
@@ -122,10 +125,10 @@ enum BMPComprMethod
 
 enum BMPLCSType			// Type of logical color space.
 {
-    LCS_CALIBRATED_RGB = 0;	// This value indicates that endpoints and gamma
+    BMPLT_CALIBRATED_RGB = 0,	// This value indicates that endpoints and gamma
 				// values are given in the appropriate fields.
-    LCS_DEVICE_RGB = 1;
-    LCS_DEVICE_CMYK = 2;
+    BMPLT_DEVICE_RGB = 1,
+    BMPLT_DEVICE_CMYK = 2,
 };
 
 typedef struct
@@ -190,11 +193,11 @@ typedef struct
 				// component of each pixel.
     BMPLCSType	iCSType;	// Colour space of the DIB.
     BMPCIEXYZTriple sEndpoints; // This member is ignored unless the iCSType member
-				// specifies LCS_CALIBRATED_RGB.
+				// specifies BMPLT_CALIBRATED_RGB.
     GInt32	iGammaRed;	// Toned response curve for red. This member
 				// is ignored unless color values are calibrated
 				// RGB values and iCSType is set to
-				// LCS_CALIBRATED_RGB. Specified in 16^16 format.
+				// BMPLT_CALIBRATED_RGB. Specified in 16^16 format.
     GInt32	iGammaGreen;	// Toned response curve for green.
     GInt32	iGammaBlue;	// Toned response curve for blue.
 } BitmapInfoHeader;
@@ -912,7 +915,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 	eBMPType = BMPT_WIN4;
     else if ( poDS->sInfoHeader.iSize == BIH_OS21SIZE )
 	eBMPType = BMPT_OS21;
-    else if ( poDS->sInfoHeader.iSize == BIH_OS22SIZE64 ||
+    else if ( poDS->sInfoHeader.iSize == BIH_OS22SIZE ||
 	      poDS->sInfoHeader.iSize == 16 )
 	eBMPType = BMPT_OS22;
     else
