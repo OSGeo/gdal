@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/04/01 17:53:46  warmerda
+ * added getnumcolumns, and oledbsupWritecolumninfo
+ *
  * Revision 1.2  1999/03/31 15:11:16  warmerda
  * Use char * instead of LPWSTR, better multi-provider support
  *
@@ -72,6 +75,8 @@ int OleSupUninitialize();
 HRESULT OledbSupGetDataSource( REFCLSID, const char*, IOpenRowset ** );
 HRESULT OledbSupGetTableRowset( IOpenRowset *, const char*, IRowset ** );
 
+void OledbSupWriteColumnInfo( FILE *, DBCOLUMNINFO * );
+
 /************************************************************************/
 /*                         OledbSupRowset                               */
 /*                                                                      */
@@ -109,6 +114,7 @@ class OledbSupRowset
 
     IRowset     *GetIRowset() { return pIRowset; }
 
+    int          GetNumColumns() { return nColumns; }
     int          GetColumnOrdinal( const char * );
     DBCOLUMNINFO *GetColumnInfo( int );
 
