@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.12  2002/11/07 13:23:44  dron
+ * Support for projection information writing.
+ *
  * Revision 1.11  2002/11/06 15:47:14  dron
  * Added support for 3D datasets creation
  *
@@ -565,10 +568,12 @@ char** HDF4Dataset::TranslateHDF4Attributes( int32 iHandle,
     switch (iNumType)
     {
         case DFNT_CHAR8: // The same as DFNT_CHAR
-	pbData = (int8 *)CPLMalloc( nValues * sizeof(char8) );
+	pbData = (int8 *)CPLMalloc( (nValues + 1) * sizeof(char8) );
+	pbData[nValues] = '\0';
 	break;
 	case DFNT_UCHAR8: // The same as DFNT_UCHAR
-	pbData = (int8 *)CPLMalloc( nValues * sizeof(uchar8) );
+	pbData = (int8 *)CPLMalloc( (nValues + 1) * sizeof(uchar8) );
+	pbData[nValues] = '\0';
 	break;
         case DFNT_INT8:
 	pbData = (int8 *)CPLMalloc( nValues * sizeof(int8) );

@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.11  2002/11/07 13:23:44  dron
+ * Support for projection information writing.
+ *
  * Revision 1.10  2002/11/06 15:47:14  dron
  * Added support for 3D datasets creation
  *
@@ -119,6 +122,7 @@ class HDF4ImageDataset : public HDF4Dataset
 
     CPLErr 	GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
+    CPLErr	SetProjection( const char * );
     void	ReadCoordinates( const char*, double*, double* );
     void	ToUTM( OGRSpatialReference *, double *, double * );
 };
@@ -463,6 +467,16 @@ const char *HDF4ImageDataset::GetProjectionRef()
     return pszProjection;
 }
 
+/************************************************************************/
+/*                          SetProjection()                             */
+/************************************************************************/
+
+CPLErr HDF4ImageDataset::SetProjection( const char *pszString )
+
+{
+    pszProjection = (char *)pszString;
+    return CE_None;
+}
 
 /************************************************************************/
 /*                                ToUTM()				*/
@@ -685,7 +699,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     int		iUTMZone;
     double	dfULX, dfULY, dfURX, dfURY, dfLLX, dfLLY, dfLRX, dfLRY;
     double	dfCenterX, dfCenterY;
-    const char	*pszTemp;
+    const char	*pszValue;
     OGRSpatialReference oSRS;
     poDS->adfGeoTransform[0] = poDS->adfGeoTransform[2] =
 	poDS->adfGeoTransform[3] = poDS->adfGeoTransform[4] = 0.0;
@@ -694,19 +708,25 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     switch ( poDS->iDataType )
     {
 	case GDAL_HDF4:
-	if ( (pszTemp =
+	if ( (pszValue =
 	      CSLFetchNameValue(poDS->papszGlobalMetadata, "Projection")) )
-	    poDS->SetProjection( pszTemp );
-	if ( (pszTemp =
+	    poDS->SetProjection( pszValue );
+	if ( (pszValue =
 	      CSLFetchNameValue(poDS->papszGlobalMetadata, "TransformationMatrix")) )
 	{
 	    int i = 0;
-	    char *pszString = (char *) pszTemp; 
-	    while ( *pszTemp && i < 5 )
+	    char *pszString = (char *) pszValue; 
+	    while ( *pszValue && i < 6 )
 	    {
 		poDS->adfGeoTransform[i++] = strtod( pszString, &pszString );
 		pszString++;
 	    }
+	}
+	for( i = 1; i <= poDS->nBands; i++ )
+	{
+	    if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata,
+					       CPLSPrintf("BandDesc%d", i))) )
+		poDS->GetRasterBand( i )->SetDescription( pszValue );
 	}
 	break;
 	case ASTER_L1B:
@@ -858,6 +878,34 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	    }
 	}
     }
+/* -------------------------------------------------------------------- */
+/*      Do we need compression?                                         */
+/*      NOTE: current NCSA HDF library implementation do not allow      */
+/*            partial modification to a compressed datastream.          */
+/*            Disabled for a future times.                              */
+/* -------------------------------------------------------------------- */
+#if 0
+    int		iCompType = COMP_CODE_NONE; // Without compression by default
+    comp_info	sCompInfo;
+    
+    if ( CSLFetchNameValue( papszOptions, "COMPRESS" ) != NULL )
+    {
+	if ( EQUAL( CSLFetchNameValue( papszOptions, "COMPRESS" ), "RLE" ) )
+	{
+	    iCompType = COMP_CODE_RLE;
+	}
+	else if ( EQUAL( CSLFetchNameValue( papszOptions, "COMPRESS" ), "HUFFMAN" ) )
+	{
+	    iCompType = COMP_CODE_SKPHUFF;
+	    sCompInfo.skphuff.skp_size = 1;
+	}
+	else if ( EQUAL( CSLFetchNameValue( papszOptions, "COMPRESS" ), "DEFLATE" ) )
+	{
+	    iCompType = COMP_CODE_DEFLATE;
+	    sCompInfo.deflate.level = 9;
+	}
+    }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
@@ -882,7 +930,7 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
 	for( iBand = 0; iBand < nBands; iBand++ )
 	{
-	    poBand = poSrcDS->GetRasterBand( iBand + 1);
+	    poBand = poSrcDS->GetRasterBand( iBand + 1 );
 	    poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
 	    nXBlocks = (poBand->GetXSize() + nBlockXSize - 1) / nBlockXSize;
 	    nYBlocks = (poBand->GetYSize() + nBlockYSize - 1) / nBlockYSize;
@@ -916,6 +964,15 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 		iSDS = SDcreate( hSD, pszSDSName, DFNT_UCHAR8, iRank, aiDimSizes );
 		break;
 	    }
+#if 0
+	    if ( iCompType != COMP_CODE_NONE )
+	    {
+		if ( iCompType != COMP_CODE_SKPHUFF )
+		    sCompInfo.skphuff.skp_size =
+			GDALGetDataTypeSize( iNumType ) / 8;
+		SDsetcompress( iSDS, iCompType, &sCompInfo ); 
+	    }
+#endif
 	    
 	    for( iYBlock = 0; iYBlock < nYBlocks; iYBlock++ )
 	    {
@@ -973,10 +1030,16 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	    iSDS = SDcreate( hSD, pszSDSName, DFNT_UCHAR8, iRank, aiDimSizes );
 	    break;
 	}
+#if 0
+	if ( iCompType != COMP_CODE_NONE )
+	    if ( iCompType != COMP_CODE_SKPHUFF )
+		sCompInfo.skphuff.skp_size = GDALGetDataTypeSize( iNumType ) / 8;
+	    SDsetcompress( iSDS, iCompType, &sCompInfo );
+#endif
 
 	for( iBand = 0; iBand < nBands; iBand++ )
 	{
-	    poBand = poSrcDS->GetRasterBand( iBand + 1);
+	    poBand = poSrcDS->GetRasterBand( iBand + 1 );
 	    poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
 	    nXBlocks = (poBand->GetXSize() + nBlockXSize - 1) / nBlockXSize;
 	    nYBlocks = (poBand->GetYSize() + nBlockYSize - 1) / nBlockYSize;
@@ -1021,26 +1084,48 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Set global attributes.                                          */
 /* -------------------------------------------------------------------- */
-    const char	*pszTemp;
+    const char	*pszValue;
+    char	*pszKey;
+    char	**papszMetadata;
     double	adfGeoTransform[6];
     
     SDsetattr( hSD, "Signature", DFNT_CHAR8, strlen(pszGDALSignature),
 	       pszGDALSignature );
 
-    pszTemp = poSrcDS->GetProjectionRef();
-    /*if ( pszTemp != NULL || pszTemp != "" )
-	SDsetattr( hSD, "Projection", DFNT_CHAR8, strlen(pszTemp), pszTemp );
+    pszValue = poSrcDS->GetProjectionRef();
+    if ( pszValue != NULL && !EQUAL( pszValue, "" ) )
+	SDsetattr( hSD, "Projection", DFNT_CHAR8, strlen(pszValue), pszValue );
 
-    pszTemp = poSrcDS->GetGCPProjection();
-    if ( pszTemp != NULL || pszTemp != "" )
-	SDsetattr( hSD, "GCPProjection", DFNT_CHAR8, strlen(pszTemp), pszTemp );*/
+    pszValue = poSrcDS->GetGCPProjection();
+    if ( pszValue != NULL && !EQUAL( pszValue, "" ) )
+	SDsetattr( hSD, "GCPProjection", DFNT_CHAR8, strlen(pszValue), pszValue );
 
     poSrcDS->GetGeoTransform( adfGeoTransform );
-    pszTemp = CPLSPrintf( "%f, %f, %f, %f, %f, %f",
+    pszValue = CPLSPrintf( "%f, %f, %f, %f, %f, %f",
 			  adfGeoTransform[0], adfGeoTransform[1],
 			  adfGeoTransform[2], adfGeoTransform[3],
 			  adfGeoTransform[4], adfGeoTransform[5] );
-    SDsetattr( hSD, "TransformationMatrix", DFNT_CHAR8, strlen(pszTemp), pszTemp );
+    SDsetattr( hSD, "TransformationMatrix", DFNT_CHAR8, strlen(pszValue), pszValue );
+    
+    for( iBand = 1; iBand <= nBands; iBand++ )
+    {
+	poBand = poSrcDS->GetRasterBand( iBand );
+	pszValue = poBand->GetDescription();
+	pszKey = (char *)CPLSPrintf( "BandDesc%d", iBand );
+	if ( pszValue != NULL && !EQUAL( pszValue, "" ) )
+	    SDsetattr( hSD, pszKey, DFNT_CHAR8, strlen(pszValue), pszValue );
+    }
+
+    // Store all metadata from source dataset as HDF attributes
+    papszMetadata = poSrcDS->GetMetadata();
+    if ( papszMetadata )
+    {
+	while ( *papszMetadata )
+	{
+	    pszValue = CPLParseNameValue( *papszMetadata++, &pszKey );
+	    SDsetattr( hSD, pszKey, DFNT_CHAR8, strlen(pszValue), pszValue );
+	}
+    }
     
 /* -------------------------------------------------------------------- */
 /*      That's all, folks.                                              */
