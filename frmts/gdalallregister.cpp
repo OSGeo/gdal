@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.37  2001/11/16 21:13:47  warmerda
+ * added VRT dataset
+ *
  * Revision 1.36  2001/09/17 18:05:20  warmerda
  * Register DOQ2 format.
  *
@@ -177,6 +180,10 @@ void GDALAllRegister()
 
 {
     GetGDALDriverManager()->AutoLoadDrivers();
+
+#ifdef FRMT_vrt
+    GDALRegister_VRT();
+#endif    
 
 #ifdef FRMT_gdb    
     GDALRegister_GDB();
