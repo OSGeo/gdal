@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/03/21 02:58:00  warmerda
+ * added drop index support
+ *
  * Revision 1.2  2003/03/07 18:24:12  warmerda
  * expand tabs
  *
@@ -85,6 +88,7 @@ public:
     virtual OGRErr Initialize( const char *pszIndexPath, OGRLayer * ) = 0;
 
     virtual OGRErr CreateIndex( int iField ) = 0;
+    virtual OGRErr DropIndex( int iField ) = 0;
     virtual OGRErr IndexAllFeatures( int iField ) = 0;
 
     virtual OGRErr AddToIndex( OGRFeature *poFeature ) = 0;
