@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/07/08 13:59:35  warmerda
+ * added poSrcRing check in copy constructor, bug 361
+ *
  * Revision 1.13  2003/05/28 19:16:42  warmerda
  * fixed up argument names and stuff for docs
  *
@@ -90,6 +93,12 @@ OGRLinearRing::OGRLinearRing()
 OGRLinearRing::OGRLinearRing( OGRLinearRing * poSrcRing )
 
 {
+    if( poSrcRing == NULL )
+    {
+        CPLDebug( "OGR", "OGRLinearRing::OGRLinearRing(OGRLinearRing*poSrcRing) - passed in ring is NULL!" );
+        return;
+    }
+
     setNumPoints( poSrcRing->getNumPoints() );
 
     memcpy( paoPoints, poSrcRing->paoPoints,
