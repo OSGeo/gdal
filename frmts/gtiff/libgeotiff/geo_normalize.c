@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c,v 1.37 2003/07/08 17:31:30 warmerda Exp $
+ * $Id: geo_normalize.c,v 1.39 2004/06/07 12:57:13 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.c,v $
+ * Revision 1.39  2004/06/07 12:57:13  warmerda
+ * fallback to using gdal_datum.csv if datum.csv not found
+ *
+ * Revision 1.38  2004/03/19 12:20:40  dron
+ * Initialize projection parameters in GTIFFetchProjParms() before using.
+ *
  * Revision 1.37  2003/07/08 17:31:30  warmerda
  * cleanup various warnings
  *
@@ -706,6 +712,16 @@ int GTIFGetDatumInfo( int nDatumCode, char ** ppszName, short * pnEllipsoid )
     char	szSearchKey[24];
     int		nEllipsoid;
     const char *pszFilename = CSVFilename( "datum.csv" );
+    FILE       *fp;
+
+/* -------------------------------------------------------------------- */
+/*      If we can't find datum.csv then gdal_datum.csv is an            */
+/*      acceptable fallback.  Mostly this is for GDAL.                  */
+/* -------------------------------------------------------------------- */
+    if( (fp = VSIFOpen(pszFilename,"r")) == NULL )
+        pszFilename = CSVFilename( "gdal_datum.csv" );
+    else
+        VSIFClose( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Search the database for the corresponding datum code.           */
@@ -1037,7 +1053,7 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG )
 /************************************************************************/
 /*                            SetGTParmIds()                            */
 /*                                                                      */
-/*      This is hardcoded logic to set the GeoTIFF parameter            */
+/*      This is hardcoded logic to set the GeoTIFF parmaeter            */
 /*      identifiers for all the EPSG supported projections.  As the     */
 /*      trf_method.csv table grows with new projections, this code      */
 /*      will need to be updated.                                        */

@@ -13,6 +13,9 @@
  *    7 July,  1995      Greg Martin             Fix index
  *
  * $Log: geo_new.c,v $
+ * Revision 1.11  2004/04/27 21:32:08  warmerda
+ * Allow GTIFNew(NULL) to work
+ *
  * Revision 1.10  2003/09/02 13:52:17  warmerda
  * various hacks to support improperly terminated asciiparms
  *
@@ -82,7 +85,8 @@ GTIF* GTIFNew(void *tif)
     tempData.tk_asciiParamsOffset = 0;
 	
     /* since this is an array, GTIF will allocate the memory */
-    if (!(gt->gt_methods.get)(tif, GTIFF_GEOKEYDIRECTORY, &gt->gt_nshorts, &data ))
+    if ( tif == NULL 
+         || !(gt->gt_methods.get)(tif, GTIFF_GEOKEYDIRECTORY, &gt->gt_nshorts, &data ))
     {
         /* No ProjectionInfo, create a blank one */
         data=(pinfo_t*)_GTIFcalloc((4+MAX_VALUES)*sizeof(pinfo_t));
@@ -112,15 +116,17 @@ GTIF* GTIFNew(void *tif)
     bufcount = count+MAX_KEYS; /* allow for expansion */
 
     /* Get the PARAMS Tags, if any */
-    if (!(gt->gt_methods.get)(tif, GTIFF_DOUBLEPARAMS,
-                              &gt->gt_ndoubles, &gt->gt_double ))
+    if (tif == NULL
+        || !(gt->gt_methods.get)(tif, GTIFF_DOUBLEPARAMS,
+                                 &gt->gt_ndoubles, &gt->gt_double ))
     {
         gt->gt_double=(double*)_GTIFcalloc(MAX_VALUES*sizeof(double));
         if (!gt->gt_double) goto failure;	
     }
-    if (!(gt->gt_methods.get)(tif, GTIFF_ASCIIPARAMS,
-                              &tempData.tk_asciiParamsLength,
-                              &tempData.tk_asciiParams ))
+    if ( tif == NULL
+         || !(gt->gt_methods.get)(tif, GTIFF_ASCIIPARAMS,
+                                  &tempData.tk_asciiParamsLength,
+                                  &tempData.tk_asciiParams ))
     {
         tempData.tk_asciiParams         = 0;
         tempData.tk_asciiParamsLength   = 0;

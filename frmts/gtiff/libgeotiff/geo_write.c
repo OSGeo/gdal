@@ -27,7 +27,7 @@ TIFF file.
 
 @param gt The GeoTIFF handle returned by GTIFNew.
 
-GTIFKeySet() should be called before 
+GTIFWriteKeys() should be called before 
 GTIFFree() is used to deallocate a GeoTIFF access handle.
  */
 
@@ -41,6 +41,9 @@ int GTIFWriteKeys(GTIF *gt)
     int sortkeys[MAX_KEYS];
 	
     if (!(gt->gt_flags & FLAG_FILE_MODIFIED)) return 1;
+
+    if( gt->gt_tif == NULL )
+        return 0;
 	
     tempData.tk_asciiParams = 0;
     tempData.tk_asciiParamsLength = 0;
