@@ -25,6 +25,9 @@
  * The GXF driver, and dataset implementation.
  * 
  * $Log$
+ * Revision 1.3  1999/01/11 15:32:12  warmerda
+ * Added testing of file to verify it is GXF.
+ *
  * Revision 1.2  1998/12/15 19:06:49  warmerda
  * IReadBlock(), and GXFGetRawInfo()
  *
@@ -129,6 +132,30 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     GXFHandle	hGXF;
+    int		i, bFoundKeyword;
+    
+/* -------------------------------------------------------------------- */
+/*      Before trying GXFOpen() we first verify that there is at        */
+/*      least one "\n#keyword" type signature in the first chunk of     */
+/*      the file.                                                       */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 100 )
+        return NULL;
+
+    bFoundKeyword = FALSE;
+    for( i = 0; i < poOpenInfo->nHeaderBytes-1; i++ )
+    {
+        if( (poOpenInfo->pabyHeader[i] == 10
+             || poOpenInfo->pabyHeader[i] == 13)
+            && poOpenInfo->pabyHeader[i+1] == '#' )
+        {
+            bFoundKeyword = TRUE;
+            break;
+        }
+    }
+
+    if( !bFoundKeyword )
+        return NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
@@ -186,4 +213,3 @@ void GDALRegister_GXF()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
