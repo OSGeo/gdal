@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/03/14 21:33:46  warmerda
+ * treaat 9717 (Lambert Near Conformal) like LCC1SP
+ *
  * Revision 1.7  2001/01/19 21:10:46  warmerda
  * replaced tabs
  *
@@ -899,6 +902,7 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
     switch( nProjMethod )
     {
       case 9801:
+      case 9817: /* really LCC near conformal */
         poSRS->SetLCC1SP( adfProjParms[0], adfProjParms[1], adfProjParms[4], 
                           adfProjParms[5], adfProjParms[6] );
         break;
