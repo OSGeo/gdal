@@ -18,7 +18,8 @@ DISTDIR	=	gdal_$(VERSION)
 
 !INCLUDE nmake.opt
 
-default:	port_dir ogr_dir core_dir frmts_dir $(GDAL_DLL) apps_dir
+default:	port_dir ogr_dir core_dir frmts_dir $(GDAL_DLL) \
+		apps_dir pymod_dir
 
 lib:
 	if exist gdal.lib del gdal.lib
@@ -76,11 +77,10 @@ apps_dir:
 	cd apps
 	$(MAKE) /f makefile.vc
 	cd ..
-	if exist $(PYDIR)/python.exe $(MAKE) /f makefile.vc pymod_dir
 
 pymod_dir:
 	cd pymod
-	$(MAKE) /f makefile.vc
+	if exist $(PYDIR)\python.exe $(MAKE) /f makefile.vc
 	cd ..
 
 ogr_dir:      port_dir
@@ -101,7 +101,7 @@ lib_dist:	default
 $(GDAL_DLL):	lib
 	link /dll /debug $(OGR_INCLUDE) $(LIBOBJ) /out:$(GDAL_DLL) /implib:gdal_i.lib
 
-install: $(GDAL_DLL) apps_dir
+install: $(GDAL_DLL) apps_dir pymod_dir
 	copy $(GDAL_DLL) $(BINDIR)
 	cd apps
 	$(MAKE) /f makefile.vc install
