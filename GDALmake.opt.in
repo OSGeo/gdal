@@ -52,9 +52,15 @@ endif
 CFLAGS		=	@C_WFLAGS@ @C_PIC@ $(C_ODFLAGS)
 CXXFLAGS	=	@CXX_WFLAGS@ @CXX_PIC@ $(CXX_ODFLAGS)
 
+RANLIB		=	@RANLIB@
 SO_EXT		=	@SO_EXT@
 LD_SHARED	=	@LD_SHARED@
-RANLIB		=	@RANLIB@
+
+ifeq ($(notdir $(LD_SHARED)),true)
+HAVE_LD_SHARED  =	no
+else
+HAVE_LD_SHARED  =	yes
+endif
 
 GDAL_INCLUDE	=	-I$(GDAL_ROOT) -I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/core\
 			-I$(GDAL_ROOT)/ogr @EXTRA_INCLUDES@
