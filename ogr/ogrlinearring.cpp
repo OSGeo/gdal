@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/05/02 19:44:53  warmerda
+ * fixed 3D binary support for polygon/linearring
+ *
  * Revision 1.9  2002/04/17 21:46:22  warmerda
  * Ensure padfZ copied in copy constructor.
  *
@@ -143,9 +146,9 @@ OGRErr OGRLinearRing::exportToWkb( OGRwkbByteOrder, unsigned char * )
 /*      method!                                                         */
 /************************************************************************/
 
-OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder,
-                                     unsigned char * pabyData,
-                                     int nBytesAvailable )
+OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int b3D, 
+                                      unsigned char * pabyData,
+                                      int nBytesAvailable )
 
 {
     if( nBytesAvailable < 4 && nBytesAvailable != -1 )
@@ -162,18 +165,43 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder,
         nNewNumPoints = CPL_SWAP32(nNewNumPoints);
 
     setNumPoints( nNewNumPoints );
+
+    if( b3D )
+        Make3D();
+    else
+        Make2D();
     
 /* -------------------------------------------------------------------- */
 /*      Get the vertices                                                */
 /* -------------------------------------------------------------------- */
-    memcpy( paoPoints, pabyData + 4, 16 * nPointCount );
-    
-    if( OGR_SWAP( eByteOrder ) )
+    int i;
+
+    if( !b3D )
+        memcpy( paoPoints, pabyData + 4, 16 * nPointCount );
+    else
     {
         for( int i = 0; i < nPointCount; i++ )
         {
+            memcpy( &(paoPoints[i].x), pabyData + 4 + 24 * i, 8 );
+            memcpy( &(paoPoints[i].y), pabyData + 4 + 24 * i + 8, 8 );
+            memcpy( padfZ + i, pabyData + 4 + 24 * i + 16, 8 );
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Byte swap if needed.                                            */
+/* -------------------------------------------------------------------- */
+    if( OGR_SWAP( eByteOrder ) )
+    {
+        for( i = 0; i < nPointCount; i++ )
+        {
             CPL_SWAPDOUBLE( &(paoPoints[i].x) );
             CPL_SWAPDOUBLE( &(paoPoints[i].y) );
+
+            if( b3D )
+            {
+                CPL_SWAPDOUBLE( padfZ + i );
+            }
         }
     }
 
@@ -188,9 +216,12 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder,
 /************************************************************************/
 
 OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder,
+                                     int b3D,
                                      unsigned char * pabyData )
 
 {
+    int   i, nWords;
+
 /* -------------------------------------------------------------------- */
 /*      Copy in the raw data.                                           */
 /* -------------------------------------------------------------------- */
@@ -199,7 +230,24 @@ OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
 /*      Copy in the raw data.                                           */
 /* -------------------------------------------------------------------- */
-    memcpy( pabyData+4, paoPoints, 16 * nPointCount );
+    if( b3D )
+    {
+        nWords = 3 * nPointCount;
+        for( i = 0; i < nPointCount; i++ )
+        {
+            memcpy( pabyData+4+i*24, &(paoPoints[i].x), 8 );
+            memcpy( pabyData+4+i*24+8, &(paoPoints[i].y), 8 );
+            if( padfZ == NULL )
+                memset( pabyData+4+i*24+16, 0, 8 );
+            else
+                memcpy( pabyData+4+i*24+16, padfZ + i, 8 );
+        }
+    }
+    else
+    {
+        nWords = 2 * nPointCount; 
+        memcpy( pabyData+4, paoPoints, 16 * nPointCount );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Swap if needed.                                                 */
@@ -211,10 +259,9 @@ OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder,
         nCount = CPL_SWAP32( nPointCount );
         memcpy( pabyData+4, &nCount, 4 );
 
-        for( int i = 0; i < nPointCount; i++ )
+        for( i = 0; i < nWords; i++ )
         {
-            CPL_SWAPDOUBLE( pabyData + 4 + 16 * i );
-            CPL_SWAPDOUBLE( pabyData + 4 + 16 * i + 8 );
+            CPL_SWAPDOUBLE( pabyData + 4 + 8 * i );
         }
     }
     
@@ -227,10 +274,13 @@ OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder,
 /*      Helper method for OGRPolygon.  NOT THE NORMAL WkbSize() METHOD! */
 /************************************************************************/
 
-int OGRLinearRing::_WkbSize()
+int OGRLinearRing::_WkbSize( int b3D )
 
 {
-    return 4 + 16 * nPointCount;
+    if( b3D )
+        return 4 + 24 * nPointCount;
+    else
+        return 4 + 16 * nPointCount;
 }
 
 /************************************************************************/
