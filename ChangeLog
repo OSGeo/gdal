@@ -1,5 +1,11 @@
 2001-07-17  Frank Warmerdam  <warmerdam@pobox.com>
 
+	* png: ensure we have png.h before accepting system png.  Moved 
+	internal libpng code into a subdirectory to avoid include file
+	confusion.
+
+	* configure: added support for detecting PostgreSQL.  
+
 	* GDALmake.opt, app/GNUmakefile: Added support for building on 
 	platforms without shared library support (ie. Cygwin).
 
