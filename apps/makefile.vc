@@ -5,6 +5,8 @@ OBJ	=	gdalopen.obj gdaldrivermanager.obj gdaldriver.obj \
 
 GDAL_ROOT	=	..
 
+XTRAOBJ =	$(VCDIR)\lib\setargv.obj
+
 LIBS	=	$(GDAL_ROOT)\gdal_i.lib
 
 !INCLUDE ..\nmake.opt
@@ -22,6 +24,12 @@ gdaladdo.exe:	gdaladdo.cpp $(GDALLIB) $(XTRAOBJ)
 	
 gdal2raw.exe:	gdal2raw.c $(GDALLIB) $(XTRAOBJ)
 	$(CC) $(CFLAGS) gdal2raw.c $(XTRAOBJ) $(LIBS) 
+	
+gdaltindex.exe:	gdaltindex.c $(GDALLIB) $(XTRAOBJ)
+	$(CC) /I$(GDAL_ROOT) $(CFLAGS) gdaltindex.c \
+		../frmts/shapelib/shpopen.c \
+		../frmts/shapelib/dbfopen.c \
+		$(XTRAOBJ) $(LIBS) 
 	
 clean:
 	-del *.obj *.exe
