@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/01/11 15:29:55  warmerda
+ * expanded tabs
+ *
  * Revision 1.14  2003/01/09 18:27:40  warmerda
  * added headers/function headers
  *
@@ -403,7 +406,7 @@ int TigerFileBase::WriteRecord( char *pachRecord, int nRecLen,
      * or if this is not type "5"
      */
     if ( (poDS->GetVersion() >= TIGER_2002) ||
-	 (!EQUAL(pszType, "5")) )
+         (!EQUAL(pszType, "5")) )
     {
         char    szVersion[5];
         sprintf( szVersion, "%04d", poDS->GetVersionCode() );
@@ -491,15 +494,15 @@ int TigerFileBase::SetWriteModule( const char *pszExtension, int nRecLen,
 /*                           AddFieldDefns()                            */
 /************************************************************************/
 void TigerFileBase::AddFieldDefns(TigerRecordInfo *psRTInfo,
-				  OGRFeatureDefn  *poFeatureDefn)
+                                  OGRFeatureDefn  *poFeatureDefn)
 {
   OGRFieldDefn        oField("",OFTInteger);
   int i;
   for (i=0; i<psRTInfo->nFieldCount; ++i) {
     if (psRTInfo->pasFields[i].bDefine) {
       oField.Set( psRTInfo->pasFields[i].pszFieldName,
-		  psRTInfo->pasFields[i].OGRtype,
-		  psRTInfo->pasFields[i].nLen );
+                  psRTInfo->pasFields[i].OGRtype,
+                  psRTInfo->pasFields[i].nLen );
       poFeatureDefn->AddFieldDefn( &oField );
     }
   }
@@ -510,17 +513,17 @@ void TigerFileBase::AddFieldDefns(TigerRecordInfo *psRTInfo,
 /************************************************************************/
 
 void TigerFileBase::SetFields(TigerRecordInfo *psRTInfo,
-			      OGRFeature      *poFeature,
-			      char            *achRecord)
+                              OGRFeature      *poFeature,
+                              char            *achRecord)
 {
   int i;
   for (i=0; i<psRTInfo->nFieldCount; ++i) {
     if (psRTInfo->pasFields[i].bSet) {
       SetField( poFeature,
-		psRTInfo->pasFields[i].pszFieldName,
-		achRecord, 
-		psRTInfo->pasFields[i].nBeg,
-		psRTInfo->pasFields[i].nEnd );
+                psRTInfo->pasFields[i].pszFieldName,
+                achRecord, 
+                psRTInfo->pasFields[i].nBeg,
+                psRTInfo->pasFields[i].nEnd );
     }
   }
 }
@@ -529,19 +532,19 @@ void TigerFileBase::SetFields(TigerRecordInfo *psRTInfo,
 /*                             WriteField()                             */
 /************************************************************************/
 void TigerFileBase::WriteFields(TigerRecordInfo *psRTInfo,
-				OGRFeature      *poFeature,
-				char            *szRecord)
+                                OGRFeature      *poFeature,
+                                char            *szRecord)
 {
   int i;
   for (i=0; i<psRTInfo->nFieldCount; ++i) {
     if (psRTInfo->pasFields[i].bWrite) {
       WriteField( poFeature,
-		  psRTInfo->pasFields[i].pszFieldName,
-		  szRecord, 
-		  psRTInfo->pasFields[i].nBeg,
-		  psRTInfo->pasFields[i].nEnd,
-		  psRTInfo->pasFields[i].cFmt,
-		  psRTInfo->pasFields[i].cType );
+                  psRTInfo->pasFields[i].pszFieldName,
+                  szRecord, 
+                  psRTInfo->pasFields[i].nBeg,
+                  psRTInfo->pasFields[i].nEnd,
+                  psRTInfo->pasFields[i].cFmt,
+                  psRTInfo->pasFields[i].cType );
     }
   }
 }

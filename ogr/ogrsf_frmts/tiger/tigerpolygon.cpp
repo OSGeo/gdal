@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/01/11 15:29:55  warmerda
+ * expanded tabs
+ *
  * Revision 1.9  2003/01/04 23:21:56  mbp
  * Minor bug fixes and field definition changes.  Cleaned
  * up and commented code written for TIGER 2002 support.
@@ -77,7 +80,7 @@ static TigerFieldInfo rtA_2002_fields[] = {
   { "BLOCK",      'L', 'N', OFTInteger,   37,  40,   4,       1,   1,     1 },
   { "BLOCKSUFCU", 'L', 'A', OFTString,    41,  41,   1,       1,   1,     1 },
 
-  { "RS-A1",      'L', 'A', OFTString,    42,  42,   1,       1,   1,     1 },
+  { "RS_A1",      'L', 'A', OFTString,    42,  42,   1,       1,   1,     1 },
   { "AIANHHFPCU", 'L', 'N', OFTInteger,   43,  47,   5,       1,   1,     1 },
   { "AIANHHCU",   'L', 'N', OFTInteger,   48,  51,   4,       1,   1,     1 },
   { "AIHHTLICU",  'L', 'A', OFTString,    52,  52,   1,       1,   1,     1 },
@@ -95,24 +98,24 @@ static TigerFieldInfo rtA_2002_fields[] = {
   { "PMSACU",     'L', 'N', OFTInteger,  105, 108,   4,       1,   1,     1 },
   { "NECMACU",    'L', 'N', OFTInteger,  109, 112,   4,       1,   1,     1 },
   { "CDCU",       'R', 'N', OFTInteger,  113, 114,   2,       1,   1,     1 },
-  { "RS-A2",      'L', 'A', OFTString,   115, 119,   5,       1,   1,     1 },
-  { "RS-A3",      'R', 'A', OFTString,   120, 122,   3,       1,   1,     1 },
-  { "RS-A4",      'R', 'A', OFTString,   123, 128,   6,       1,   1,     1 },
-  { "RS-A5",      'R', 'A', OFTString,   129, 131,   3,       1,   1,     1 },
-  { "RS-A6",      'R', 'A', OFTString,   132, 134,   3,       1,   1,     1 },
-  { "RS-A7",      'R', 'A', OFTString,   135, 139,   5,       1,   1,     1 },
-  { "RS-A8",      'R', 'A', OFTString,   140, 145,   6,       1,   1,     1 },
-  { "RS-A9",      'L', 'A', OFTString,   146, 151,   6,       1,   1,     1 },
-  { "RS-A10",     'L', 'A', OFTString,   152, 157,   6,       1,   1,     1 },
-  { "RS-A11",     'L', 'A', OFTString,   158, 163,   6,       1,   1,     1 },
-  { "RS-A12",     'L', 'A', OFTString,   164, 169,   6,       1,   1,     1 },
-  { "RS-A13",     'L', 'A', OFTString,   170, 175,   6,       1,   1,     1 },
-  { "RS-A14",     'L', 'A', OFTString,   176, 181,   6,       1,   1,     1 },
-  { "RS-A15",     'L', 'A', OFTString,   182, 186,   5,       1,   1,     1 },
-  { "RS-A16",     'L', 'A', OFTString,   187, 187,   1,       1,   1,     1 },
-  { "RS-A17",     'L', 'A', OFTString,   188, 193,   6,       1,   1,     1 },
-  { "RS-A18",     'L', 'A', OFTString,   194, 199,   6,       1,   1,     1 },
-  { "RS-A19",     'L', 'A', OFTString,   200, 210,  11,       1,   1,     1 },
+  { "RS_A2",      'L', 'A', OFTString,   115, 119,   5,       1,   1,     1 },
+  { "RS_A3",      'R', 'A', OFTString,   120, 122,   3,       1,   1,     1 },
+  { "RS_A4",      'R', 'A', OFTString,   123, 128,   6,       1,   1,     1 },
+  { "RS_A5",      'R', 'A', OFTString,   129, 131,   3,       1,   1,     1 },
+  { "RS_A6",      'R', 'A', OFTString,   132, 134,   3,       1,   1,     1 },
+  { "RS_A7",      'R', 'A', OFTString,   135, 139,   5,       1,   1,     1 },
+  { "RS_A8",      'R', 'A', OFTString,   140, 145,   6,       1,   1,     1 },
+  { "RS_A9",      'L', 'A', OFTString,   146, 151,   6,       1,   1,     1 },
+  { "RS_A10",     'L', 'A', OFTString,   152, 157,   6,       1,   1,     1 },
+  { "RS_A11",     'L', 'A', OFTString,   158, 163,   6,       1,   1,     1 },
+  { "RS_A12",     'L', 'A', OFTString,   164, 169,   6,       1,   1,     1 },
+  { "RS_A13",     'L', 'A', OFTString,   170, 175,   6,       1,   1,     1 },
+  { "RS_A14",     'L', 'A', OFTString,   176, 181,   6,       1,   1,     1 },
+  { "RS_A15",     'L', 'A', OFTString,   182, 186,   5,       1,   1,     1 },
+  { "RS_A16",     'L', 'A', OFTString,   187, 187,   1,       1,   1,     1 },
+  { "RS_A17",     'L', 'A', OFTString,   188, 193,   6,       1,   1,     1 },
+  { "RS_A18",     'L', 'A', OFTString,   194, 199,   6,       1,   1,     1 },
+  { "RS_A19",     'L', 'A', OFTString,   200, 210,  11,       1,   1,     1 },
 };
 static TigerRecordInfo rtA_2002_info =
   {
@@ -454,7 +457,7 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
             return NULL;
         }
 
-	SetFields( psRTSInfo, poFeature, achRTSRec );
+        SetFields( psRTSInfo, poFeature, achRTSRec );
 
     }
     

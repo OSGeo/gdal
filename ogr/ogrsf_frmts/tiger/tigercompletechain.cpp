@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/01/11 15:29:55  warmerda
+ * expanded tabs
+ *
  * Revision 1.13  2003/01/04 23:21:56  mbp
  * Minor bug fixes and field definition changes.  Cleaned
  * up and commented code written for TIGER 2002 support.
@@ -179,9 +182,9 @@ static TigerRecordInfo rt1_info =
 
 static TigerRecordInfo rt2_info =
   {
-    NULL,	// RT2 is handled specially in the code below; the only
-    0,		// thing from this structure that is used is:
-    208		// <--- nRecordLength
+    NULL,       // RT2 is handled specially in the code below; the only
+    0,          // thing from this structure that is used is:
+    208         // <--- nRecordLength
   };
 
 
@@ -440,7 +443,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
             return NULL;
         }
 
-	SetFields( psRT3Info, poFeature, achRT3Rec );
+        SetFields( psRT3Info, poFeature, achRT3Rec );
 
     }
 

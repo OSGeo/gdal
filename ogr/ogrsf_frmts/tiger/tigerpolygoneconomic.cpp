@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/01/11 15:29:55  warmerda
+ * expanded tabs
+ *
  * Revision 1.2  2003/01/04 23:21:56  mbp
  * Minor bug fixes and field definition changes.  Cleaned
  * up and commented code written for TIGER 2002 support.
@@ -59,7 +62,7 @@ static TigerFieldInfo rtE_fields[] = {
   { "AIANHHFPEC", 'L', 'N', OFTInteger,   46,  50,   5,       1,   1,     1 },
   { "AIANHHEC",   'L', 'N', OFTInteger,   51,  54,   4,       1,   1,     1 },
   { "AIAHHTLIEC", 'L', 'A', OFTString,    55,  55,   1,       1,   1,     1 },
-  { "RS-E1",      'L', 'A', OFTString,    56,  73,  18,       1,   1,     1 }
+  { "RS_E1",      'L', 'A', OFTString,    56,  73,  18,       1,   1,     1 }
 };
 static TigerRecordInfo rtE_info =
   {

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/01/11 15:29:55  warmerda
+ * expanded tabs
+ *
  * Revision 1.12  2003/01/04 23:21:56  mbp
  * Minor bug fixes and field definition changes.  Cleaned
  * up and commented code written for TIGER 2002 support.
@@ -89,7 +92,7 @@ class OGRTigerDataSource;
 ** 1298 to 0499   TIGER/Line Files, 1998
 ** 0600 to 0800   TIGER/Line Files, 1999
 ** 1000 to 1100   TIGER/Line Files, Redistricting Census 2000
-** 0301 to 0801	  TIGER/Line Files, Census 2000
+** 0301 to 0801   TIGER/Line Files, Census 2000
 **
 ** 0302 to 0502   TIGER/Line Files, UA 2000
 ** ????    ????
@@ -128,23 +131,23 @@ char * TigerVersionString( TigerVersion );
 /*****************************************************************************/
 
 typedef struct TigerFieldInfo {
-  char 	       *pszFieldName;	// name of the field
-  char 	        cFmt;		// format of the field ('L' or 'R')
-  char          cType;		// type of the field ('A' or 'N')
-  OGRFieldType  OGRtype;	// OFTType of the field (OFTInteger, OFTString, ...?)
-  int		nBeg;		// beginning column number for field
-  int		nEnd;		// ending column number for field
-  int		nLen;		// length of field
+  char         *pszFieldName;   // name of the field
+  char          cFmt;           // format of the field ('L' or 'R')
+  char          cType;          // type of the field ('A' or 'N')
+  OGRFieldType  OGRtype;        // OFTType of the field (OFTInteger, OFTString, ...?)
+  int           nBeg;           // beginning column number for field
+  int           nEnd;           // ending column number for field
+  int           nLen;           // length of field
 
-  int		bDefine;  	// whether to add this field to the FeatureDefn
-  int		bSet;	  	// whether to set this field in GetFeature()
-  int		bWrite;   	// whether to write this field in CreateFeature()
+  int           bDefine;        // whether to add this field to the FeatureDefn
+  int           bSet;           // whether to set this field in GetFeature()
+  int           bWrite;         // whether to write this field in CreateFeature()
 } TigerFieldInfo;
 
 typedef struct TigerRecordInfo {
   TigerFieldInfo *pasFields;
-  int		  nFieldCount;
-  int		  nRecordLength;
+  int             nFieldCount;
+  int             nRecordLength;
 } TigerRecordInfo;
 
 // OGR_TIGER_RECBUF_LEN should be a number that is larger than the
@@ -219,17 +222,17 @@ public:
                                   double dfX, double dfY );
 
  protected:
-  void		      WriteFields(TigerRecordInfo *psRTInfo,
-				  OGRFeature      *poFeature,
-				  char            *szRecord);
+  void                WriteFields(TigerRecordInfo *psRTInfo,
+                                  OGRFeature      *poFeature,
+                                  char            *szRecord);
 
-  void		      AddFieldDefns(TigerRecordInfo *psRTInfo,
-				    OGRFeatureDefn  *poFeatureDefn);
+  void                AddFieldDefns(TigerRecordInfo *psRTInfo,
+                                    OGRFeatureDefn  *poFeatureDefn);
 
 
-  void		      SetFields(TigerRecordInfo *psRTInfo,
-				OGRFeature      *poFeature,
-				char            *achRecord);
+  void                SetFields(TigerRecordInfo *psRTInfo,
+                                OGRFeature      *poFeature,
+                                char            *achRecord);
 
 };
 
@@ -248,13 +251,13 @@ class TigerCompleteChain : public TigerFileBase
   int                 GetShapeRecordId( int, int );
   void                AddShapePoints( int, int, OGRLineString *, int );
 
-  void		      AddFieldDefnsPre2002();
-  OGRFeature	     *GetFeaturePre2002( int );
-  OGRErr 	      WriteRecordsPre2002( OGRFeature *, OGRLineString * );
+  void                AddFieldDefnsPre2002();
+  OGRFeature         *GetFeaturePre2002( int );
+  OGRErr              WriteRecordsPre2002( OGRFeature *, OGRLineString * );
 
-  OGRErr 	      WriteRecords2002( OGRFeature *, OGRLineString * );
-  OGRFeature	     *GetFeature2002( int );
-  void		      AddFieldDefns2002();
+  OGRErr              WriteRecords2002( OGRFeature *, OGRLineString * );
+  OGRFeature         *GetFeature2002( int );
+  void                AddFieldDefns2002();
 
   TigerRecordInfo    *psRT1Info;
   TigerRecordInfo    *psRT2Info;
@@ -347,31 +350,31 @@ public:
 class TigerPoint : public TigerFileBase
 {
  protected:
-  		      TigerPoint(int bRequireGeom);
+                      TigerPoint(int bRequireGeom);
 
-		      // The boolean bRequireGeom indicates whether
-		      // the layer requires each feature to actual
-		      // have a geom.  It's used in CreateFeature() to
-		      // decide whether to report an error when a
-		      // missing geom is detected.
+                      // The boolean bRequireGeom indicates whether
+                      // the layer requires each feature to actual
+                      // have a geom.  It's used in CreateFeature() to
+                      // decide whether to report an error when a
+                      // missing geom is detected.
 
  private:
- int		      bRequireGeom;
+ int                  bRequireGeom;
 
  public:
   virtual int         SetModule( const char *,
-				 char *pszFileCode );
+                                 char *pszFileCode );
 
   virtual OGRFeature *GetFeature( int              nRecordId,
-				  TigerRecordInfo *psRTInfo,
-				  int nX0, int nX1,
-				  int nY0, int nY1 );
+                                  TigerRecordInfo *psRTInfo,
+                                  int nX0, int nX1,
+                                  int nY0, int nY1 );
 
 
   virtual OGRErr CreateFeature( OGRFeature      *poFeature,
-				TigerRecordInfo *psRTInfo,
-				int nIndex,
-				char *pszFileCode );
+                                TigerRecordInfo *psRTInfo,
+                                int nIndex,
+                                char *pszFileCode );
 
 };
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/01/11 15:29:55  warmerda
+ * expanded tabs
+ *
  * Revision 1.18  2003/01/04 23:21:56  mbp
  * Minor bug fixes and field definition changes.  Cleaned
  * up and commented code written for TIGER 2002 support.
@@ -133,7 +136,7 @@ TigerVersion TigerClassifyVersion( int nVersionCode )
 ** 9812 to 9904   TIGER/Line Files, 1998 
 ** 0006 to 0008   TIGER/Line Files, 1999 
 ** 0010 to 0011   TIGER/Line Files, Redistricting Census 2000
-** 0103 to 0108	  TIGER/Line Files, Census 2000
+** 0103 to 0108   TIGER/Line Files, Census 2000
 **
 ** 0203 to 0205   TIGER/Line Files, UA 2000
 ** ????    ????
@@ -419,13 +422,13 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
             nVersion = TigerClassifyVersion( nVersionCode );
 
             if(    nVersionCode !=  0
-		&& nVersionCode !=  2
-		&& nVersionCode !=  3
+                && nVersionCode !=  2
+                && nVersionCode !=  3
                 && nVersionCode !=  5
-		&& nVersionCode != 21 
+                && nVersionCode != 21 
                 && nVersionCode != 24
                 && szHeader[3]  != '9'
-		&& szHeader[3]  != '0' )
+                && szHeader[3]  != '0' )
                 continue;
 
             // we could (and should) add a bunch more validation here.
@@ -477,8 +480,8 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
     // RT9
     if (nVersion < TIGER_2002) {
       AddLayer( new OGRTigerLayer( this,
-				   new TigerKeyFeatures( this,
-							 papszModules[0]) ));
+                                   new TigerKeyFeatures( this,
+                                                         papszModules[0]) ));
     }
     
     // RTA, RTS
@@ -489,8 +492,8 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
     // RTB
     if (nVersion >= TIGER_2002) {
       AddLayer( new OGRTigerLayer( this,
-				   new TigerPolygonCorrections( this,
-								papszModules[0]) ));
+                                   new TigerPolygonCorrections( this,
+                                                                papszModules[0]) ));
     }
     
     // RTC
@@ -501,8 +504,8 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
     // RTE
     if (nVersion >= TIGER_2002) {
       AddLayer( new OGRTigerLayer( this,
-				   new TigerPolygonEconomic( this,
-							     papszModules[0]) ));
+                                   new TigerPolygonEconomic( this,
+                                                             papszModules[0]) ));
     }
 
     // RTH
@@ -528,15 +531,15 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
     // RTT
     if (nVersion >= TIGER_2002) {
       AddLayer( new OGRTigerLayer( this,
-				   new TigerZeroCellID( this,
-							papszModules[0]) ));
+                                   new TigerZeroCellID( this,
+                                                        papszModules[0]) ));
     }
 
     // RTU
     if (nVersion >= TIGER_2002) {
       AddLayer( new OGRTigerLayer( this,
-				   new TigerOverUnder( this,
-						       papszModules[0]) ));
+                                   new TigerOverUnder( this,
+                                                       papszModules[0]) ));
     }
 
     // RTZ

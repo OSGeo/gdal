@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/01/11 15:29:55  warmerda
+ * expanded tabs
+ *
  * Revision 1.1  2002/12/26 00:20:19  mbp
  * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
  * first round implementation of TIGER_2002 support
@@ -94,15 +97,15 @@ int TigerOverUnder::SetModule( const char * pszModule )
 OGRFeature *TigerOverUnder::GetFeature( int nRecordId )
 {
   return TigerPoint::GetFeature( nRecordId,
-				 psRTUInfo,
-				 62, 71,
-				 72, 80 );
+                                 psRTUInfo,
+                                 62, 71,
+                                 72, 80 );
 }
 
 OGRErr TigerOverUnder::CreateFeature( OGRFeature *poFeature )
 {
   return TigerPoint::CreateFeature( poFeature, 
-				    psRTUInfo,
-				    62,
-				    FILE_CODE );
+                                    psRTUInfo,
+                                    62,
+                                    FILE_CODE );
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/01/11 15:29:55  warmerda
+ * expanded tabs
+ *
  * Revision 1.3  2003/01/09 18:27:40  warmerda
  * added headers/function headers
  *
@@ -61,9 +64,9 @@ int TigerPoint::SetModule( const char * pszModule, char *pszFileCode )
 /*                             GetFeature()                             */
 /************************************************************************/
 OGRFeature *TigerPoint::GetFeature( int nRecordId,
-				    TigerRecordInfo *psRTInfo,
-				    int nX0, int nX1,
-				    int nY0, int nY1 )
+                                    TigerRecordInfo *psRTInfo,
+                                    int nX0, int nX1,
+                                    int nY0, int nY1 )
 {
     char        achRecord[OGR_TIGER_RECBUF_LEN];
 
@@ -123,9 +126,9 @@ OGRFeature *TigerPoint::GetFeature( int nRecordId,
 /*                           CreateFeature()                            */
 /************************************************************************/
 OGRErr TigerPoint::CreateFeature( OGRFeature *poFeature, 
-				  TigerRecordInfo *psRTInfo,
-				  int pointIndex,
-				  char *pszFileCode)
+                                  TigerRecordInfo *psRTInfo,
+                                  int pointIndex,
+                                  char *pszFileCode)
 
 {
     char        szRecord[OGR_TIGER_RECBUF_LEN];
