@@ -31,6 +31,12 @@ Windows.
 Release Notes
 =============
 
+Release 1.5
+-----------
+
+ o Fixed collection of background color in color table (color 255) as per
+   bug report by Henk Jan Priester (Justcroft Technical Systems). 
+
 Release 1.4
 -----------
 
