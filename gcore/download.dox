@@ -78,8 +78,10 @@ Password: anonymous
 % cvs checkout gdal
 </pre>
 
-Update access to the CVS repository can be obtained by arrangement with
-the maintainer.<p>
+The repository can be <a href=
+"http://www.remotesensing.org/cgi-bin/cvsweb.cgi/osrs/gdal/">browsed on the 
+web</a>.  Update access to the CVS repository can be obtained by arrangement 
+with the maintainer.<p>
 
 */
 
