@@ -46,6 +46,13 @@ Windows.
 Release Notes
 =============
 
+Release ?.??
+------------
+
+ o Treat the most recently read color table as the global color table, 
+   instead of just the first one encountered.
+
+
 Release 1.10
 ------------
 
