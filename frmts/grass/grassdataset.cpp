@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/01/24 15:50:23  warmerda
+ * Improved nodata handling.  Still may be problems with integer cells
+ * where all zeros will be considered to be nodata values.
+ *
  * Revision 1.9  2002/01/23 14:56:27  warmerda
  * Added link to help.
  *
@@ -127,6 +131,12 @@ class GRASSRasterBand : public GDALRasterBand
 
     GDALColorTable *poCT;
 
+    int		bHaveMinMax;
+    double	dfCellMin;
+    double	dfCellMax;
+
+    double	dfNoData;
+
   public:
 
                    GRASSRasterBand( GRASSDataset *, int, 
@@ -136,6 +146,9 @@ class GRASSRasterBand : public GDALRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
+    virtual double GetMinimum( int *pbSuccess = NULL );
+    virtual double GetMaximum( int *pbSuccess = NULL );
+    virtual double GetNoDataValue( int *pbSuccess = NULL );
 };
 
 
@@ -156,6 +169,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
     G_get_cellhd( (char *) pszCellName, (char *) pszMapset, &sCellInfo );
     nGRSType = G_raster_map_type( (char *) pszCellName, (char *) pszMapset );
 
+    dfNoData = 0.0;
     if( nGRSType == CELL_TYPE && sCellInfo.format == 0 )
         this->eDataType = GDT_Byte;
     else if( nGRSType == CELL_TYPE && sCellInfo.format == 1 )
@@ -163,9 +177,15 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
     else if( nGRSType == CELL_TYPE )
         this->eDataType = GDT_UInt32;
     else if( nGRSType == FCELL_TYPE )
+    {
         this->eDataType = GDT_Float32;
+        dfNoData = -12345.0;
+    }
     else if( nGRSType == DCELL_TYPE )
+    {
         this->eDataType = GDT_Float64;
+        dfNoData = -12345.0;
+    }
     
     nBlockXSize = poDS->nRasterXSize;;
     nBlockYSize = 1;
@@ -209,6 +229,22 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
 
         G_free_colors( &sGrassColors );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Get min/max values.                                             */
+/* -------------------------------------------------------------------- */
+    struct FPRange sRange;
+
+    if( G_read_fp_range( (char *) pszCellName, (char *) pszMapset, 
+                         &sRange ) == -1 )
+    {
+        bHaveMinMax = FALSE;
+    }
+    else
+    {
+        bHaveMinMax = TRUE;
+        G_get_fp_range_min_max( &sRange, &dfCellMin, &dfCellMax );
+    }
 }
 
 /************************************************************************/
@@ -228,6 +264,10 @@ GRASSRasterBand::~GRASSRasterBand()
 
 /************************************************************************/
 /*                             IReadBlock()                             */
+/*                                                                      */
+/*      We only do "null" testing for floating point values.  We        */
+/*      assume integer values are having the null raster entries set    */
+/*      to zero which is the "nodata" value for integer layers.         */
 /************************************************************************/
 
 CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
@@ -236,7 +276,30 @@ CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     if( eDataType == GDT_Float32 || eDataType == GDT_Float64 
         || eDataType == GDT_UInt32 )
+    {
         G_get_raster_row( hCell, pImage, nBlockYOff, nGRSType  );
+
+        if( eDataType == GDT_Float32 || eDataType == GDT_Float64 )
+        {
+            char *pachNullBuf;
+
+            pachNullBuf = (char *) CPLMalloc(nBlockXSize);
+            G_get_null_value_row( hCell, pachNullBuf, nBlockYOff );
+            
+            for( int i = 0; i < nBlockXSize; i++ )
+            {
+                if( pachNullBuf[i] != 0 )
+                {
+                    if( eDataType == GDT_Float32 )
+                        ((float *) pImage)[i] = dfNoData;
+                    else 
+                        ((double *) pImage)[i] = dfNoData;
+                }
+            }
+
+            CPLFree( pachNullBuf );
+        }
+    }
     else
     {
         GUInt32 *panRow = (GUInt32 *) CPLMalloc(4 * nBlockXSize);
@@ -273,6 +336,61 @@ GDALColorTable *GRASSRasterBand::GetColorTable()
 
 {
     return poCT;
+}
+
+/************************************************************************/
+/*                             GetMinimum()                             */
+/************************************************************************/
+
+double GRASSRasterBand::GetMinimum( int *pbSuccess )
+
+{
+    if( pbSuccess )
+        *pbSuccess = bHaveMinMax;
+
+    if( bHaveMinMax )
+        return dfCellMin;
+
+    else if( eDataType == GDT_Float32 || eDataType == GDT_Float64 )
+        return -4294967295.0;
+    else
+        return 0;
+}
+
+/************************************************************************/
+/*                             GetMaximum()                             */
+/************************************************************************/
+
+double GRASSRasterBand::GetMaximum( int *pbSuccess )
+
+{
+    if( pbSuccess )
+        *pbSuccess = bHaveMinMax;
+
+    if( bHaveMinMax )
+        return dfCellMax;
+
+    else if( eDataType == GDT_Float32 || eDataType == GDT_Float64 )
+        return 4294967295.0;
+    else if( eDataType == GDT_UInt32 )
+        return 4294967295.0;
+    else if( eDataType == GDT_UInt16 )
+        return 65535;
+    else 
+        return 255;
+}
+
+/************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double GRASSRasterBand::GetNoDataValue( int *pbSuccess )
+
+{
+    if( pbSuccess )
+        *pbSuccess = TRUE;
+
+    return dfNoData;
 }
 
 /************************************************************************/
