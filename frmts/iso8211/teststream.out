@@ -62,11 +62,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `0^'
+      Data = `0'
   DDFField:
       Tag = `CELL'
       DataSize = 11
-      Data = `CEL0^1^1^1^'
+      Data = `CEL0111'
       Subfield `MODN' = `CEL0'
       Subfield `RCID' = 1
       Subfield `ROWI' = 1
@@ -74,7 +74,7 @@ DDFRecord:
   DDFField:
       Tag = `CVLS'
       DataSize = 759
-      Data = `^^^^^^^^^^^=^<^<^>^F^B^?^?^E^H^V^]^e^s^~...'
+      Data = `ÄÄÄÄÄ=<<>FB??EHV]es~...'
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
@@ -91,11 +91,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `1^'
+      Data = `1'
   DDFField:
       Tag = `CELL'
       DataSize = 11
-      Data = `CEL0^2^2^1^'
+      Data = `CEL0221'
       Subfield `MODN' = `CEL0'
       Subfield `RCID' = 2
       Subfield `ROWI' = 2
@@ -103,7 +103,7 @@ DDFRecord:
   DDFField:
       Tag = `CVLS'
       DataSize = 759
-      Data = `^^^^^^^^^^^K^M^N^T^V^U^S^M^X^U^U^e^q^z^^...'
+      Data = `ÄÄÄÄÄKMNTVUSMXUUeqzã...'
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
@@ -120,11 +120,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `2^'
+      Data = `2'
   DDFField:
       Tag = `CELL'
       DataSize = 11
-      Data = `CEL0^3^3^1^'
+      Data = `CEL0331'
       Subfield `MODN' = `CEL0'
       Subfield `RCID' = 3
       Subfield `ROWI' = 3
@@ -132,7 +132,7 @@ DDFRecord:
   DDFField:
       Tag = `CVLS'
       DataSize = 759
-      Data = `^^^^^^^^^^^[^^^_^`^g^f^c^^^e^i^o^o^w^^^^...'
+      Data = `ÄÄÄÄÄ[^_`gfc^eioowàë...'
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
@@ -149,11 +149,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `3^'
+      Data = `3'
   DDFField:
       Tag = `CELL'
       DataSize = 11
-      Data = `CEL0^4^4^1^'
+      Data = `CEL0441'
       Subfield `MODN' = `CEL0'
       Subfield `RCID' = 4
       Subfield `ROWI' = 4
@@ -161,7 +161,7 @@ DDFRecord:
   DDFField:
       Tag = `CVLS'
       DataSize = 759
-      Data = `^^^^^^^^^^^k^m^n^t^{^w^t^s^r^|^}^^^^^^^^...'
+      Data = `ÄÄÄÄÄkmnt{wtsr|}âÑé¢...'
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
@@ -178,11 +178,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `4^'
+      Data = `4'
   DDFField:
       Tag = `CELL'
       DataSize = 11
-      Data = `CEL0^5^5^1^'
+      Data = `CEL0551'
       Subfield `MODN' = `CEL0'
       Subfield `RCID' = 5
       Subfield `ROWI' = 5
@@ -190,7 +190,7 @@ DDFRecord:
   DDFField:
       Tag = `CVLS'
       DataSize = 759
-      Data = `^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...'
+      Data = `ÄÄÄÄÅÉáååäãäÑâèòú£´...'
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
@@ -207,11 +207,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `5^'
+      Data = `5'
   DDFField:
       Tag = `CELL'
       DataSize = 11
-      Data = `CEL0^6^6^1^'
+      Data = `CEL0661'
       Subfield `MODN' = `CEL0'
       Subfield `RCID' = 6
       Subfield `ROWI' = 6
@@ -219,7 +219,7 @@ DDFRecord:
   DDFField:
       Tag = `CVLS'
       DataSize = 759
-      Data = `^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...'
+      Data = `ÄÄÄÄëïôúü†ùü†îóù¶∞µ∂...'
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
@@ -236,11 +236,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `6^'
+      Data = `6'
   DDFField:
       Tag = `CELL'
       DataSize = 11
-      Data = `CEL0^7^7^1^'
+      Data = `CEL0771'
       Subfield `MODN' = `CEL0'
       Subfield `RCID' = 7
       Subfield `ROWI' = 7
@@ -248,7 +248,7 @@ DDFRecord:
   DDFField:
       Tag = `CVLS'
       DataSize = 759
-      Data = `^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...'
+      Data = `ÄÄÄÄ™≠Æ±≤±∞≤Ø¢¢≠≤¿… ...'
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
@@ -265,11 +265,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `7^'
+      Data = `7'
   DDFField:
       Tag = `CELL'
       DataSize = 11
-      Data = `CEL0^8^8^1^'
+      Data = `CEL0881'
       Subfield `MODN' = `CEL0'
       Subfield `RCID' = 8
       Subfield `ROWI' = 8
@@ -277,7 +277,7 @@ DDFRecord:
   DDFField:
       Tag = `CVLS'
       DataSize = 759
-      Data = `^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...'
+      Data = `ÄÄÄÄæƒ»ÀŒŒŒœ≈≤≠º≈–‡Ù...'
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
@@ -294,11 +294,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `8^'
+      Data = `8'
   DDFField:
       Tag = `CELL'
       DataSize = 11
-      Data = `CEL0^9^9^1^'
+      Data = `CEL0991'
       Subfield `MODN' = `CEL0'
       Subfield `RCID' = 9
       Subfield `ROWI' = 9
@@ -306,7 +306,8 @@ DDFRecord:
   DDFField:
       Tag = `CVLS'
       DataSize = 759
-      Data = `^^^^^^^^^^^^^^^^^&^%^$^^^^^^^^^^^^^^^^^_...'
+      Data = `ÄÄÄÄ‘ÿ›
+&%$÷øπÕ·¸_...'
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
@@ -323,11 +324,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `9^'
+      Data = `9'
   DDFField:
       Tag = `CELL'
       DataSize = 13
-      Data = `CEL0^10^10^1^'
+      Data = `CEL010101'
       Subfield `MODN' = `CEL0'
       Subfield `RCID' = 10
       Subfield `ROWI' = 10
@@ -335,7 +336,7 @@ DDFRecord:
   DDFField:
       Tag = `CVLS'
       DataSize = 759
-      Data = `^^^^^^^^^^^^^&^^^^^^^^^^^^^^^^^^W^^^^^^...'
+      Data = `ÄÄÄÄ&àáâãœ ‰Wçö°...'
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
@@ -352,11 +353,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `10^'
+      Data = `10'
   DDFField:
       Tag = `CELL'
       DataSize = 13
-      Data = `CEL0^11^11^1^'
+      Data = `CEL011111'
       Subfield `MODN' = `CEL0'
       Subfield `RCID' = 11
       Subfield `ROWI' = 11
@@ -364,7 +365,7 @@ DDFRecord:
   DDFField:
       Tag = `CVLS'
       DataSize = 759
-      Data = `^^^^^^^^^(^^^^^^^^^^^^^^W^^^^^^^^^^^^^^...'
+      Data = `ÄÄÄÄ(ìõüúôëW€„îù•™...'
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
@@ -381,11 +382,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `11^'
+      Data = `11'
   DDFField:
       Tag = `CELL'
       DataSize = 13
-      Data = `CEL0^12^12^1^'
+      Data = `CEL012121'
       Subfield `MODN' = `CEL0'
       Subfield `RCID' = 12
       Subfield `ROWI' = 12
@@ -393,7 +394,7 @@ DDFRecord:
   DDFField:
       Tag = `CVLS'
       DataSize = 759
-      Data = `^^^^^^^^^{^^^^^^^^^^^^^^^_^^^^^^^^^^^^^^...'
+      Data = `ÄÄÄÄ{ïöü°°úî_Áìõ§Æ∑...'
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
@@ -410,11 +411,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `12^'
+      Data = `12'
   DDFField:
       Tag = `CELL'
       DataSize = 13
-      Data = `CEL0^13^13^1^'
+      Data = `CEL013131'
       Subfield `MODN' = `CEL0'
       Subfield `RCID' = 13
       Subfield `ROWI' = 13
@@ -422,7 +423,7 @@ DDFRecord:
   DDFField:
       Tag = `CVLS'
       DataSize = 759
-      Data = `^^^^^^^^^%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...'
+      Data = `ÄÄÄÄ%åñöùûùñÅéõ¢™π∆...'
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
@@ -439,11 +440,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `13^'
+      Data = `13'
   DDFField:
       Tag = `CELL'
       DataSize = 13
-      Data = `CEL0^14^14^1^'
+      Data = `CEL014141'
       Subfield `MODN' = `CEL0'
       Subfield `RCID' = 14
       Subfield `ROWI' = 14
@@ -451,7 +452,7 @@ DDFRecord:
   DDFField:
       Tag = `CVLS'
       DataSize = 759
-      Data = `^^^^^^^^^$^0^^^^^^^^^^^^^^^^^^^^^^^^^^^^...'
+      Data = `ÄÄÄÄ$0ìóúúööåáò†¶ÆπÃ...'
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
@@ -468,11 +469,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `14^'
+      Data = `14'
   DDFField:
       Tag = `CELL'
       DataSize = 13
-      Data = `CEL0^15^15^1^'
+      Data = `CEL015151'
       Subfield `MODN' = `CEL0'
       Subfield `RCID' = 15
       Subfield `ROWI' = 15
@@ -480,7 +481,7 @@ DDFRecord:
   DDFField:
       Tag = `CVLS'
       DataSize = 759
-      Data = `^^^^^^^^^$^%^^^^^^^^^^^^^^^^^^^^^^^^^^^^...'
+      Data = `ÄÄÄÄ$%áîóòòòôîú°•≠∑ ...'
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
       Subfield `ELEVATION' = -32766
@@ -497,10 +498,9 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `15^'
+      Data = `15'
   DDFField:
       Tag = `CELL'
-      DataSize = 13
 ---------------------------------------------------------------------
 -- CA49995B.000
 ---------------------------------------------------------------------
@@ -929,11 +929,12 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `^^^'
+      Data = ` '
   DDFField:
       Tag = `DSID'
       DataSize = 107
-      Data = `^^^^^^^CA49995B.000^1^0^1997091019970910...'
+      Data = `
+   CA49995B.000101997091019970910...'
       Subfield `RCNM' = 10
       Subfield `RCID' = 1
       Subfield `EXPP' = 1
@@ -953,7 +954,7 @@ DDFRecord:
   DDFField:
       Tag = `DSSI'
       DataSize = 36
-      Data = `^^^^^^^^^^^^^^^^^^^9^^^^^^^^^^^^^^^^'
+      Data = `                9   ê   ™       '
       Subfield `DSTR' = 2
       Subfield `AALL' = 0
       Subfield `NALL' = 0
@@ -971,11 +972,12 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `^^^'
+      Data = ` '
   DDFField:
       Tag = `DSPM'
       DataSize = 26
-      Data = `^^^^^^^^^a^^^^^^@B^^^^^^^^'
+      Data = `   ®a  @B 
+   '
       Subfield `RCNM' = 20
       Subfield `RCID' = 2
       Subfield `HDAT' = 2
@@ -995,15 +997,13 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `^^^'
+      Data = ` '
   DDFField:
       Tag = `VRID'
       DataSize = 9
-      Data = `n9^^^^^^^'
+      Data = `n9    '
       Subfield `RCNM' = 110
       Subfield `RCID' = 57
-      Subfield `RVER' = 1
-      Subfield `RUIN' = 1
 ---------------------------------------------------------------------
 -- TWFLA009.DDF
 ---------------------------------------------------------------------
@@ -1071,17 +1071,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `0^'
+      Data = `0'
   DDFField:
       Tag = `ATPR'
       DataSize = 7
-      Data = `A009^1^'
+      Data = `A0091'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 1
   DDFField:
       Tag = `ATTP'
       DataSize = 53
-      Data = `POPULATED PLACE^401^Two-Dimensional^Not ...'
+      Data = `POPULATED PLACE401Two-DimensionalNot ...'
       Subfield `ENTITY_LABEL' = `POPULATED PLACE'
       Subfield `FEATURE_ID' = 401
       Subfield `DIMENSION' = `Two-Dimensional'
@@ -1092,17 +1092,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `1^'
+      Data = `1'
   DDFField:
       Tag = `ATPR'
       DataSize = 7
-      Data = `A009^2^'
+      Data = `A0092'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 2
   DDFField:
       Tag = `ATTP'
       DataSize = 47
-      Data = `BUILDING^1309^Two-Dimensional^Not Photor...'
+      Data = `BUILDING1309Two-DimensionalNot Photor...'
       Subfield `ENTITY_LABEL' = `BUILDING'
       Subfield `FEATURE_ID' = 1309
       Subfield `DIMENSION' = `Two-Dimensional'
@@ -1113,17 +1113,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `2^'
+      Data = `2'
   DDFField:
       Tag = `ATPR'
       DataSize = 7
-      Data = `A009^3^'
+      Data = `A0093'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 3
   DDFField:
       Tag = `ATTP'
       DataSize = 47
-      Data = `BUILDING^1307^Two-Dimensional^Not Photor...'
+      Data = `BUILDING1307Two-DimensionalNot Photor...'
       Subfield `ENTITY_LABEL' = `BUILDING'
       Subfield `FEATURE_ID' = 1307
       Subfield `DIMENSION' = `Two-Dimensional'
@@ -1134,17 +1134,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `3^'
+      Data = `3'
   DDFField:
       Tag = `ATPR'
       DataSize = 7
-      Data = `A009^4^'
+      Data = `A0094'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 4
   DDFField:
       Tag = `ATTP'
       DataSize = 47
-      Data = `BUILDING^1308^Two-Dimensional^Not Photor...'
+      Data = `BUILDING1308Two-DimensionalNot Photor...'
       Subfield `ENTITY_LABEL' = `BUILDING'
       Subfield `FEATURE_ID' = 1308
       Subfield `DIMENSION' = `Two-Dimensional'
@@ -1155,17 +1155,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `4^'
+      Data = `4'
   DDFField:
       Tag = `ATPR'
       DataSize = 7
-      Data = `A009^5^'
+      Data = `A0095'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 5
   DDFField:
       Tag = `ATTP'
       DataSize = 47
-      Data = `BUILDING^1306^Two-Dimensional^Not Photor...'
+      Data = `BUILDING1306Two-DimensionalNot Photor...'
       Subfield `ENTITY_LABEL' = `BUILDING'
       Subfield `FEATURE_ID' = 1306
       Subfield `DIMENSION' = `Two-Dimensional'
@@ -1176,17 +1176,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `5^'
+      Data = `5'
   DDFField:
       Tag = `ATPR'
       DataSize = 7
-      Data = `A009^6^'
+      Data = `A0096'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 6
   DDFField:
       Tag = `ATTP'
       DataSize = 47
-      Data = `BUILDING^1305^Two-Dimensional^Not Photor...'
+      Data = `BUILDING1305Two-DimensionalNot Photor...'
       Subfield `ENTITY_LABEL' = `BUILDING'
       Subfield `FEATURE_ID' = 1305
       Subfield `DIMENSION' = `Two-Dimensional'
@@ -1197,17 +1197,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `6^'
+      Data = `6'
   DDFField:
       Tag = `ATPR'
       DataSize = 7
-      Data = `A009^7^'
+      Data = `A0097'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 7
   DDFField:
       Tag = `ATTP'
       DataSize = 47
-      Data = `BUILDING^1304^Two-Dimensional^Not Photor...'
+      Data = `BUILDING1304Two-DimensionalNot Photor...'
       Subfield `ENTITY_LABEL' = `BUILDING'
       Subfield `FEATURE_ID' = 1304
       Subfield `DIMENSION' = `Two-Dimensional'
@@ -1218,17 +1218,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `7^'
+      Data = `7'
   DDFField:
       Tag = `ATPR'
       DataSize = 7
-      Data = `A009^8^'
+      Data = `A0098'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 8
   DDFField:
       Tag = `ATTP'
       DataSize = 46
-      Data = `CEMETERY^101^Two-Dimensional^Not Photore...'
+      Data = `CEMETERY101Two-DimensionalNot Photore...'
       Subfield `ENTITY_LABEL' = `CEMETERY'
       Subfield `FEATURE_ID' = 101
       Subfield `DIMENSION' = `Two-Dimensional'
@@ -1239,17 +1239,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `8^'
+      Data = `8'
   DDFField:
       Tag = `ATPR'
       DataSize = 7
-      Data = `A009^9^'
+      Data = `A0099'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 9
   DDFField:
       Tag = `ATTP'
       DataSize = 47
-      Data = `BUILDING^1303^Two-Dimensional^Not Photor...'
+      Data = `BUILDING1303Two-DimensionalNot Photor...'
       Subfield `ENTITY_LABEL' = `BUILDING'
       Subfield `FEATURE_ID' = 1303
       Subfield `DIMENSION' = `Two-Dimensional'
@@ -1260,17 +1260,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 2
-      Data = `9^'
+      Data = `9'
   DDFField:
       Tag = `ATPR'
       DataSize = 8
-      Data = `A009^10^'
+      Data = `A00910'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 10
   DDFField:
       Tag = `ATTP'
       DataSize = 47
-      Data = `BUILDING^1301^Two-Dimensional^Not Photor...'
+      Data = `BUILDING1301Two-DimensionalNot Photor...'
       Subfield `ENTITY_LABEL' = `BUILDING'
       Subfield `FEATURE_ID' = 1301
       Subfield `DIMENSION' = `Two-Dimensional'
@@ -1281,17 +1281,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `10^'
+      Data = `10'
   DDFField:
       Tag = `ATPR'
       DataSize = 8
-      Data = `A009^11^'
+      Data = `A00911'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 11
   DDFField:
       Tag = `ATTP'
       DataSize = 47
-      Data = `BUILDING^1302^Two-Dimensional^Not Photor...'
+      Data = `BUILDING1302Two-DimensionalNot Photor...'
       Subfield `ENTITY_LABEL' = `BUILDING'
       Subfield `FEATURE_ID' = 1302
       Subfield `DIMENSION' = `Two-Dimensional'
@@ -1302,17 +1302,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `11^'
+      Data = `11'
   DDFField:
       Tag = `ATPR'
       DataSize = 8
-      Data = `A009^12^'
+      Data = `A00912'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 12
   DDFField:
       Tag = `ATTP'
       DataSize = 47
-      Data = `FENCE LINE^14^One-Dimensional^Not Photor...'
+      Data = `FENCE LINE14One-DimensionalNot Photor...'
       Subfield `ENTITY_LABEL' = `FENCE LINE'
       Subfield `FEATURE_ID' = 14
       Subfield `DIMENSION' = `One-Dimensional'
@@ -1323,17 +1323,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `12^'
+      Data = `12'
   DDFField:
       Tag = `ATPR'
       DataSize = 8
-      Data = `A009^13^'
+      Data = `A00913'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 13
   DDFField:
       Tag = `ATTP'
       DataSize = 47
-      Data = `FENCE LINE^15^One-Dimensional^Not Photor...'
+      Data = `FENCE LINE15One-DimensionalNot Photor...'
       Subfield `ENTITY_LABEL' = `FENCE LINE'
       Subfield `FEATURE_ID' = 15
       Subfield `DIMENSION' = `One-Dimensional'
@@ -1344,17 +1344,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `13^'
+      Data = `13'
   DDFField:
       Tag = `ATPR'
       DataSize = 8
-      Data = `A009^14^'
+      Data = `A00914'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 14
   DDFField:
       Tag = `ATTP'
       DataSize = 47
-      Data = `FENCE LINE^16^One-Dimensional^Not Photor...'
+      Data = `FENCE LINE16One-DimensionalNot Photor...'
       Subfield `ENTITY_LABEL' = `FENCE LINE'
       Subfield `FEATURE_ID' = 16
       Subfield `DIMENSION' = `One-Dimensional'
@@ -1365,17 +1365,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `14^'
+      Data = `14'
   DDFField:
       Tag = `ATPR'
       DataSize = 8
-      Data = `A009^15^'
+      Data = `A00915'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 15
   DDFField:
       Tag = `ATTP'
       DataSize = 47
-      Data = `FENCE LINE^13^One-Dimensional^Not Photor...'
+      Data = `FENCE LINE13One-DimensionalNot Photor...'
       Subfield `ENTITY_LABEL' = `FENCE LINE'
       Subfield `FEATURE_ID' = 13
       Subfield `DIMENSION' = `One-Dimensional'
@@ -1386,17 +1386,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `15^'
+      Data = `15'
   DDFField:
       Tag = `ATPR'
       DataSize = 8
-      Data = `A009^16^'
+      Data = `A00916'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 16
   DDFField:
       Tag = `ATTP'
       DataSize = 46
-      Data = `FENCE LINE^7^One-Dimensional^Not Photore...'
+      Data = `FENCE LINE7One-DimensionalNot Photore...'
       Subfield `ENTITY_LABEL' = `FENCE LINE'
       Subfield `FEATURE_ID' = 7
       Subfield `DIMENSION' = `One-Dimensional'
@@ -1407,17 +1407,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `16^'
+      Data = `16'
   DDFField:
       Tag = `ATPR'
       DataSize = 8
-      Data = `A009^17^'
+      Data = `A00917'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 17
   DDFField:
       Tag = `ATTP'
       DataSize = 46
-      Data = `FENCE LINE^6^One-Dimensional^Not Photore...'
+      Data = `FENCE LINE6One-DimensionalNot Photore...'
       Subfield `ENTITY_LABEL' = `FENCE LINE'
       Subfield `FEATURE_ID' = 6
       Subfield `DIMENSION' = `One-Dimensional'
@@ -1428,17 +1428,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `17^'
+      Data = `17'
   DDFField:
       Tag = `ATPR'
       DataSize = 8
-      Data = `A009^18^'
+      Data = `A00918'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 18
   DDFField:
       Tag = `ATTP'
       DataSize = 46
-      Data = `FENCE LINE^9^One-Dimensional^Not Photore...'
+      Data = `FENCE LINE9One-DimensionalNot Photore...'
       Subfield `ENTITY_LABEL' = `FENCE LINE'
       Subfield `FEATURE_ID' = 9
       Subfield `DIMENSION' = `One-Dimensional'
@@ -1449,17 +1449,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `18^'
+      Data = `18'
   DDFField:
       Tag = `ATPR'
       DataSize = 8
-      Data = `A009^19^'
+      Data = `A00919'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 19
   DDFField:
       Tag = `ATTP'
       DataSize = 47
-      Data = `FENCE LINE^10^One-Dimensional^Not Photor...'
+      Data = `FENCE LINE10One-DimensionalNot Photor...'
       Subfield `ENTITY_LABEL' = `FENCE LINE'
       Subfield `FEATURE_ID' = 10
       Subfield `DIMENSION' = `One-Dimensional'
@@ -1470,17 +1470,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `19^'
+      Data = `19'
   DDFField:
       Tag = `ATPR'
       DataSize = 8
-      Data = `A009^20^'
+      Data = `A00920'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 20
   DDFField:
       Tag = `ATTP'
       DataSize = 47
-      Data = `FENCE LINE^12^One-Dimensional^Not Photor...'
+      Data = `FENCE LINE12One-DimensionalNot Photor...'
       Subfield `ENTITY_LABEL' = `FENCE LINE'
       Subfield `FEATURE_ID' = 12
       Subfield `DIMENSION' = `One-Dimensional'
@@ -1491,17 +1491,17 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 3
-      Data = `20^'
+      Data = `20'
   DDFField:
       Tag = `ATPR'
       DataSize = 8
-      Data = `A009^21^'
+      Data = `A00921'
       Subfield `MODN' = `A009'
       Subfield `RCID' = 21
   DDFField:
       Tag = `ATTP'
       DataSize = 46
-      Data = `FENCE LINE^8^One-Dimensional^Not Photore...'
+      Data = `FENCE LINE8One-DimensionalNot Photore...'
       Subfield `ENTITY_LABEL' = `FENCE LINE'
       Subfield `FEATURE_ID' = 8
       Subfield `DIMENSION' = `One-Dimensional'
@@ -1570,11 +1570,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `     1^'
+      Data = `     1'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^     1^IDEN^Identification         ...'
+      Data = `CATD     1IDENIdentification         ...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 1
       Subfield `NAME' = `IDEN'
@@ -1588,11 +1588,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `     2^'
+      Data = `     2'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^     2^CATD^Catalog/Directory      ...'
+      Data = `CATD     2CATDCatalog/Directory      ...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 2
       Subfield `NAME' = `CATD'
@@ -1606,11 +1606,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `     3^'
+      Data = `     3'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^     3^CATX^Catalog/Cross-Reference...'
+      Data = `CATD     3CATXCatalog/Cross-Reference...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 3
       Subfield `NAME' = `CATX'
@@ -1624,11 +1624,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `     4^'
+      Data = `     4'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^     4^CATS^Catalog/Spatial Domain ...'
+      Data = `CATD     4CATSCatalog/Spatial Domain ...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 4
       Subfield `NAME' = `CATS'
@@ -1642,11 +1642,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `     5^'
+      Data = `     5'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^     5^IREF^Internal Spatial Refere...'
+      Data = `CATD     5IREFInternal Spatial Refere...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 5
       Subfield `NAME' = `IREF'
@@ -1660,11 +1660,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `     6^'
+      Data = `     6'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^     6^XREF^External Spatial Refere...'
+      Data = `CATD     6XREFExternal Spatial Refere...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 6
       Subfield `NAME' = `XREF'
@@ -1678,11 +1678,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `     7^'
+      Data = `     7'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^     7^MDEF^Data Dictionary/Definit...'
+      Data = `CATD     7MDEFData Dictionary/Definit...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 7
       Subfield `NAME' = `MDEF'
@@ -1696,11 +1696,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `     8^'
+      Data = `     8'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^     8^MDOM^Data Dictionary/Domain ...'
+      Data = `CATD     8MDOMData Dictionary/Domain ...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 8
       Subfield `NAME' = `MDOM'
@@ -1714,11 +1714,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `     9^'
+      Data = `     9'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^     9^DDSH^Data Dictionary/Schema ...'
+      Data = `CATD     9DDSHData Dictionary/Schema ...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 9
       Subfield `NAME' = `DDSH'
@@ -1732,11 +1732,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `    10^'
+      Data = `    10'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^    10^STAT^Transfer Statistics    ...'
+      Data = `CATD    10STATTransfer Statistics    ...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 10
       Subfield `NAME' = `STAT'
@@ -1750,11 +1750,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `    11^'
+      Data = `    11'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^    11^DQHL^Lineage                ...'
+      Data = `CATD    11DQHLLineage                ...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 11
       Subfield `NAME' = `DQHL'
@@ -1768,11 +1768,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `    12^'
+      Data = `    12'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^    12^DQPA^Positional Accuracy    ...'
+      Data = `CATD    12DQPAPositional Accuracy    ...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 12
       Subfield `NAME' = `DQPA'
@@ -1786,11 +1786,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `    13^'
+      Data = `    13'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^    13^DQAA^Attribute Accuracy     ...'
+      Data = `CATD    13DQAAAttribute Accuracy     ...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 13
       Subfield `NAME' = `DQAA'
@@ -1804,11 +1804,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `    14^'
+      Data = `    14'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^    14^DQLC^Logical Consistency    ...'
+      Data = `CATD    14DQLCLogical Consistency    ...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 14
       Subfield `NAME' = `DQLC'
@@ -1822,11 +1822,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `    15^'
+      Data = `    15'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^    15^DQCG^Completeness           ...'
+      Data = `CATD    15DQCGCompleteness           ...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 15
       Subfield `NAME' = `DQCG'
@@ -1840,11 +1840,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `    16^'
+      Data = `    16'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^    16^ASCF^Attribute Primary      ...'
+      Data = `CATD    16ASCFAttribute Primary      ...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 16
       Subfield `NAME' = `ASCF'
@@ -1858,11 +1858,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `    17^'
+      Data = `    17'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^    17^AHDR^Attribute Primary      ...'
+      Data = `CATD    17AHDRAttribute Primary      ...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 17
       Subfield `NAME' = `AHDR'
@@ -1876,11 +1876,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `    18^'
+      Data = `    18'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^    18^FF01^Composite              ...'
+      Data = `CATD    18FF01Composite              ...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 18
       Subfield `NAME' = `FF01'
@@ -1894,11 +1894,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `    19^'
+      Data = `    19'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^    19^NP01^Point-Node             ...'
+      Data = `CATD    19NP01Point-Node             ...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 19
       Subfield `NAME' = `NP01'
@@ -1912,11 +1912,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `    20^'
+      Data = `    20'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^    20^NA01^Point-Node             ...'
+      Data = `CATD    20NA01Point-Node             ...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 20
       Subfield `NAME' = `NA01'
@@ -1930,11 +1930,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `    21^'
+      Data = `    21'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^    21^NO01^Point-Node             ...'
+      Data = `CATD    21NO01Point-Node             ...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 21
       Subfield `NAME' = `NO01'
@@ -1948,11 +1948,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `    22^'
+      Data = `    22'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^    22^LE01^Line                   ...'
+      Data = `CATD    22LE01Line                   ...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 22
       Subfield `NAME' = `LE01'
@@ -1966,11 +1966,11 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `    23^'
+      Data = `    23'
   DDFField:
       Tag = `CATD'
       DataSize = 65
-      Data = `CATD^    23^PC01^Polygon                ...'
+      Data = `CATD    23PC01Polygon                ...'
       Subfield `MODN' = `CATD'
       Subfield `RCID' = 23
       Subfield `NAME' = `PC01'
@@ -2107,42 +2107,42 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `     1^'
+      Data = `     1'
   DDFField:
       Tag = `LINE'
       DataSize = 13
-      Data = `LE01     1LE^'
+      Data = `LE01     1LE'
       Subfield `MODN' = `LE01'
       Subfield `RCID' = 1
       Subfield `OBRP' = `LE'
   DDFField:
       Tag = `PIDL'
       DataSize = 11
-      Data = `PC01     1^'
+      Data = `PC01     1'
       Subfield `MODN' = `PC01'
       Subfield `RCID' = 1
   DDFField:
       Tag = `PIDR'
       DataSize = 11
-      Data = `PC01     3^'
+      Data = `PC01     3'
       Subfield `MODN' = `PC01'
       Subfield `RCID' = 3
   DDFField:
       Tag = `SNID'
       DataSize = 11
-      Data = `NO01     2^'
+      Data = `NO01     2'
       Subfield `MODN' = `NO01'
       Subfield `RCID' = 2
   DDFField:
       Tag = `ENID'
       DataSize = 11
-      Data = `NO01     1^'
+      Data = `NO01     1'
       Subfield `MODN' = `NO01'
       Subfield `RCID' = 1
   DDFField:
       Tag = `SADR'
       DataSize = 193
-      Data = `^`^^^^^~^`^^^^^^^a^0^^^|^bK^^^^^^c^v^^^z...'
+      Data = ``ÍΩ~`‘çΩﬂaê0Ω|bK‘Ω›cvΩz...'
       Subfield `X' = 56629482
       Subfield `Y' = 415040126
       Subfield `X' = 56677517
@@ -2168,42 +2168,43 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `     2^'
+      Data = `     2'
   DDFField:
       Tag = `LINE'
       DataSize = 13
-      Data = `LE01     2LE^'
+      Data = `LE01     2LE'
       Subfield `MODN' = `LE01'
       Subfield `RCID' = 2
       Subfield `OBRP' = `LE'
   DDFField:
       Tag = `PIDL'
       DataSize = 11
-      Data = `PC01     2^'
+      Data = `PC01     2'
       Subfield `MODN' = `PC01'
       Subfield `RCID' = 2
   DDFField:
       Tag = `PIDR'
       DataSize = 11
-      Data = `PC01     3^'
+      Data = `PC01     3'
       Subfield `MODN' = `PC01'
       Subfield `RCID' = 3
   DDFField:
       Tag = `SNID'
       DataSize = 11
-      Data = `NO01     3^'
+      Data = `NO01     3'
       Subfield `MODN' = `NO01'
       Subfield `RCID' = 3
   DDFField:
       Tag = `ENID'
       DataSize = 11
-      Data = `NO01     3^'
+      Data = `NO01     3'
       Subfield `MODN' = `NO01'
       Subfield `RCID' = 3
   DDFField:
       Tag = `SADR'
       DataSize = 145
-      Data = `^a^^^^p&^a^-^^k^^a^^^^fH^a^^^^b5^a^v^^Z^...'
+      Data = `a
+ªp&a-ªkaæªfHaÎªb5avªZò...'
       Subfield `X' = 56696330
       Subfield `Y' = 414937126
       Subfield `X' = 56694573
@@ -2229,42 +2230,42 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `     3^'
+      Data = `     3'
   DDFField:
       Tag = `LINE'
       DataSize = 13
-      Data = `LE01     3LE^'
+      Data = `LE01     3LE'
       Subfield `MODN' = `LE01'
       Subfield `RCID' = 3
       Subfield `OBRP' = `LE'
   DDFField:
       Tag = `PIDL'
       DataSize = 11
-      Data = `PC01     4^'
+      Data = `PC01     4'
       Subfield `MODN' = `PC01'
       Subfield `RCID' = 4
   DDFField:
       Tag = `PIDR'
       DataSize = 11
-      Data = `PC01     3^'
+      Data = `PC01     3'
       Subfield `MODN' = `PC01'
       Subfield `RCID' = 3
   DDFField:
       Tag = `SNID'
       DataSize = 11
-      Data = `NO01     4^'
+      Data = `NO01     4'
       Subfield `MODN' = `NO01'
       Subfield `RCID' = 4
   DDFField:
       Tag = `ENID'
       DataSize = 11
-      Data = `NO01     4^'
+      Data = `NO01     4'
       Subfield `MODN' = `NO01'
       Subfield `RCID' = 4
   DDFField:
       Tag = `SADR'
       DataSize = 393
-      Data = `^k^^^^^^^k^^^^^{^k^^^^^^^k^7^^^^^k!f^^^^...'
+      Data = `k∏ñ¸kÄ∏¨{kΩ∏∑k7∏¬Ïk!f∏Œ°...'
       Subfield `X' = 57347857
       Subfield `Y' = 414750460
       Subfield `X' = 57349760
@@ -2290,42 +2291,42 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `     4^'
+      Data = `     4'
   DDFField:
       Tag = `LINE'
       DataSize = 13
-      Data = `LE01     4LE^'
+      Data = `LE01     4LE'
       Subfield `MODN' = `LE01'
       Subfield `RCID' = 4
       Subfield `OBRP' = `LE'
   DDFField:
       Tag = `PIDL'
       DataSize = 11
-      Data = `PC01     3^'
+      Data = `PC01     3'
       Subfield `MODN' = `PC01'
       Subfield `RCID' = 3
   DDFField:
       Tag = `PIDR'
       DataSize = 11
-      Data = `PC01     1^'
+      Data = `PC01     1'
       Subfield `MODN' = `PC01'
       Subfield `RCID' = 1
   DDFField:
       Tag = `SNID'
       DataSize = 11
-      Data = `NO01     2^'
+      Data = `NO01     2'
       Subfield `MODN' = `NO01'
       Subfield `RCID' = 2
   DDFField:
       Tag = `ENID'
       DataSize = 11
-      Data = `NO01     5^'
+      Data = `NO01     5'
       Subfield `MODN' = `NO01'
       Subfield `RCID' = 5
   DDFField:
       Tag = `SADR'
       DataSize = 25
-      Data = `^`^^^^^~^`^N^^^^^`#^^^^^^'
+      Data = ``ÍΩ~`Nª–˝`#Î∑ïç'
       Subfield `X' = 56629482
       Subfield `Y' = 415040126
       Subfield `X' = 56630094
@@ -2338,42 +2339,42 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `     5^'
+      Data = `     5'
   DDFField:
       Tag = `LINE'
       DataSize = 13
-      Data = `LE01     5LE^'
+      Data = `LE01     5LE'
       Subfield `MODN' = `LE01'
       Subfield `RCID' = 5
       Subfield `OBRP' = `LE'
   DDFField:
       Tag = `PIDL'
       DataSize = 11
-      Data = `PC01     5^'
+      Data = `PC01     5'
       Subfield `MODN' = `PC01'
       Subfield `RCID' = 5
   DDFField:
       Tag = `PIDR'
       DataSize = 11
-      Data = `PC01     1^'
+      Data = `PC01     1'
       Subfield `MODN' = `PC01'
       Subfield `RCID' = 1
   DDFField:
       Tag = `SNID'
       DataSize = 11
-      Data = `NO01     5^'
+      Data = `NO01     5'
       Subfield `MODN' = `NO01'
       Subfield `RCID' = 5
   DDFField:
       Tag = `ENID'
       DataSize = 11
-      Data = `NO01     7^'
+      Data = `NO01     7'
       Subfield `MODN' = `NO01'
       Subfield `RCID' = 7
   DDFField:
       Tag = `SADR'
       DataSize = 17
-      Data = `^`#^^^^^^`%c^^^L^'
+      Data = ``#Î∑ïç`%c∂ÎL'
       Subfield `X' = 56632299
       Subfield `Y' = 414684557
       Subfield `X' = 56632675
@@ -2384,42 +2385,42 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `     6^'
+      Data = `     6'
   DDFField:
       Tag = `LINE'
       DataSize = 13
-      Data = `LE01     6LE^'
+      Data = `LE01     6LE'
       Subfield `MODN' = `LE01'
       Subfield `RCID' = 6
       Subfield `OBRP' = `LE'
   DDFField:
       Tag = `PIDL'
       DataSize = 11
-      Data = `PC01     6^'
+      Data = `PC01     6'
       Subfield `MODN' = `PC01'
       Subfield `RCID' = 6
   DDFField:
       Tag = `PIDR'
       DataSize = 11
-      Data = `PC01     3^'
+      Data = `PC01     3'
       Subfield `MODN' = `PC01'
       Subfield `RCID' = 3
   DDFField:
       Tag = `SNID'
       DataSize = 11
-      Data = `NO01     6^'
+      Data = `NO01     6'
       Subfield `MODN' = `NO01'
       Subfield `RCID' = 6
   DDFField:
       Tag = `ENID'
       DataSize = 11
-      Data = `NO01     6^'
+      Data = `NO01     6'
       Subfield `MODN' = `NO01'
       Subfield `RCID' = 6
   DDFField:
       Tag = `SADR'
       DataSize = 249
-      Data = `^h^M^^^#^h^^^^^^^h^\^^^^^h^/^^^^^h+^^^^^...'
+      Data = `hM∂Ô#hÃ∂Ì h\∂Ë¿h/∂Ê·h+·∂ﬁÄ...'
       Subfield `X' = 57150541
       Subfield `Y' = 414641955
       Subfield `X' = 57150668
@@ -2445,39 +2446,38 @@ DDFRecord:
   DDFField:
       Tag = `0001'
       DataSize = 7
-      Data = `     7^'
+      Data = `     7'
   DDFField:
       Tag = `LINE'
       DataSize = 13
-      Data = `LE01     7LE^'
+      Data = `LE01     7LE'
       Subfield `MODN' = `LE01'
       Subfield `RCID' = 7
       Subfield `OBRP' = `LE'
   DDFField:
       Tag = `PIDL'
       DataSize = 11
-      Data = `PC01     7^'
+      Data = `PC01     7'
       Subfield `MODN' = `PC01'
       Subfield `RCID' = 7
   DDFField:
       Tag = `PIDR'
       DataSize = 11
-      Data = `PC01     1^'
+      Data = `PC01     1'
       Subfield `MODN' = `PC01'
       Subfield `RCID' = 1
   DDFField:
       Tag = `SNID'
       DataSize = 11
-      Data = `NO01     7^'
+      Data = `NO01     7'
       Subfield `MODN' = `NO01'
       Subfield `RCID' = 7
   DDFField:
       Tag = `ENID'
       DataSize = 11
-      Data = `NO01     8^'
+      Data = `NO01     8'
       Subfield `MODN' = `NO01'
       Subfield `RCID' = 8
   DDFField:
       Tag = `SADR'
       DataSize = 17
-      Data = `^`%c^^^L^`%^^^^p^'

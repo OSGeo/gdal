@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/06 15:39:26  warmerda
+ * avoid printing non-ASCII characters
+ *
  * Revision 1.2  1999/04/27 22:09:50  warmerda
  * updated docs
  *
@@ -80,7 +83,7 @@ void DDFField::Dump( FILE * fp )
     fprintf( fp, "      Data = `" );
     for( int i = 0; i < MIN(nDataSize,40); i++ )
     {
-        if( pachData[i] < 32 )
+        if( pachData[i] < 32 && pachData[i] > 126 )
             fprintf( fp, "%c", '^' );
         else
             fprintf( fp, "%c", pachData[i] );
