@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.17  2003/09/08 08:11:40  dron
+ * Added VSIGMTime() and VSILocalTime().
+ *
  * Revision 1.16  2003/05/27 20:44:40  warmerda
  * added VSI io debugging macros
  *
@@ -225,8 +228,16 @@ int CPL_DLL VSIMkdir( const char * pathname, long mode );
 int CPL_DLL VSIRmdir( const char * pathname );
 int CPL_DLL VSIUnlink( const char * pathname );
 
+/* ==================================================================== */
+/*      Time quering.                                                   */
+/* ==================================================================== */
+
 unsigned long CPL_DLL VSITime( unsigned long * );
 const char CPL_DLL *VSICTime( unsigned long );
+struct tm CPL_DLL *VSIGMTime( const time_t *pnTime,
+                              struct tm *poBrokenTime );
+struct tm CPL_DLL *VSILocalTime( const time_t *pnTime,
+                                 struct tm *poBrokenTime );
 
 /* -------------------------------------------------------------------- */
 /*      the following can be turned on for detailed logging of          */
