@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/03/06 02:21:15  warmerda
+ * Added help topic C function
+ *
  * Revision 1.10  2000/01/31 16:24:01  warmerda
  * use failure, not fatal
  *
@@ -234,5 +237,18 @@ const char * GDALGetDriverLongName( GDALDriverH hDriver )
         return NULL;
     else
         return ((GDALDriver *) hDriver)->pszLongName;
+}
+
+/************************************************************************/
+/*                       GDALGetDriverHelpTopic()                       */
+/************************************************************************/
+
+const char * GDALGetDriverHelpTopic( GDALDriverH hDriver )
+
+{
+    if( hDriver == NULL )
+        return NULL;
+    else
+        return ((GDALDriver *) hDriver)->pszHelpTopic;
 }
 
