@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/04/23 13:43:09  warmerda
+ * Fixed up MSB case
+ *
  * Revision 1.4  1999/03/08 19:23:18  warmerda
  * Added logic to byte swap block data on MSB systems.  Note that only 16 bit
  * data is currently handled.  This should be extended to larger data types
@@ -190,13 +193,11 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 
 #ifdef CPL_MSB             
-    if( HFAGetDataTypeBits(poBand->nDataType) == 16 )
+    if( HFAGetDataTypeBits(nDataType) == 16 )
     {
         int		ii;
 
-        for( ii = 0;
-             ii < poBand->nBlockXSize*poBand->nBlockYSize;
-             ii++ )
+        for( ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
         {
             unsigned char *pabyData = (unsigned char *) pData;
             int		nTemp;
