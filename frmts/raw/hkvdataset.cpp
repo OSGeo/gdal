@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/03/13 14:34:42  warmerda
+ * avoid const problem on write
+ *
  * Revision 1.1  2000/03/07 21:33:42  warmerda
  * New
  *
@@ -416,7 +419,7 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
         return NULL;
     }
     
-    VSIFWrite( "", 1, 1, fp );
+    VSIFWrite( (void*)"", 1, 1, fp );
     VSIFClose( fp );
 
 /* -------------------------------------------------------------------- */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/03/13 14:34:42  warmerda
+ * avoid const problem on write
+ *
  * Revision 1.4  2000/02/28 16:32:20  warmerda
  * use SetBand method
  *
@@ -321,7 +324,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /*      Just write out a couple of bytes to establish the binary        */
 /*      file, and then close it.                                        */
 /* -------------------------------------------------------------------- */
-    VSIFWrite( "\0\0", 2, 1, fp );
+    VSIFWrite( (void *) "\0\0", 2, 1, fp );
     VSIFClose( fp );
 
 /* -------------------------------------------------------------------- */
