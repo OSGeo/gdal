@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/03/27 21:04:38  warmerda
+ * Added support for reading, and creating lone .dbf files for wkbNone geometry
+ * layers.  Added support for creating a single .shp file instead of a directory
+ * if a path ending in .shp is passed to the data source create method.
+ *
  * Revision 1.14  2001/12/06 18:14:22  warmerda
  * handle case where there is no DBF file
  *
@@ -512,31 +517,36 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
         poDefn->AddFieldDefn( &oField );
     }
 
-    switch( hSHP->nShapeType )
+    if( hSHP == NULL )
+        poDefn->SetGeomType( wkbNone );
+    else
     {
-      case SHPT_POINT:
-      case SHPT_POINTZ:
-      case SHPT_POINTM:
-        poDefn->SetGeomType( wkbPoint );
-        break;
+        switch( hSHP->nShapeType )
+        {
+          case SHPT_POINT:
+          case SHPT_POINTZ:
+          case SHPT_POINTM:
+            poDefn->SetGeomType( wkbPoint );
+            break;
 
-      case SHPT_ARC:
-      case SHPT_ARCZ:
-      case SHPT_ARCM:
-        poDefn->SetGeomType( wkbLineString );
-        break;
+          case SHPT_ARC:
+          case SHPT_ARCZ:
+          case SHPT_ARCM:
+            poDefn->SetGeomType( wkbLineString );
+            break;
 
-      case SHPT_MULTIPOINT:
-      case SHPT_MULTIPOINTZ:
-      case SHPT_MULTIPOINTM:
-        poDefn->SetGeomType( wkbMultiPoint );
-        break;
+          case SHPT_MULTIPOINT:
+          case SHPT_MULTIPOINTZ:
+          case SHPT_MULTIPOINTM:
+            poDefn->SetGeomType( wkbMultiPoint );
+            break;
 
-      case SHPT_POLYGON:
-      case SHPT_POLYGONZ:
-      case SHPT_POLYGONM:
-        poDefn->SetGeomType( wkbPolygon );
-        break;
+          case SHPT_POLYGON:
+          case SHPT_POLYGONZ:
+          case SHPT_POLYGONM:
+            poDefn->SetGeomType( wkbPolygon );
+            break;
+        }
     }
 
     return poDefn;
@@ -552,7 +562,8 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 {
     OGRFeature	*poFeature = new OGRFeature( poDefn );
 
-    poFeature->SetGeometryDirectly( SHPReadOGRObject( hSHP, iShape ) );
+    if( hSHP != NULL )
+        poFeature->SetGeometryDirectly( SHPReadOGRObject( hSHP, iShape ) );
 
     for( int iField = 0; iField < poDefn->GetFieldCount(); iField++ )
     {
@@ -606,7 +617,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 /* -------------------------------------------------------------------- */
 /*      Don't write objects with missing geometry.                      */
 /* -------------------------------------------------------------------- */
-    if( poFeature->GetGeometryRef() == NULL )
+    if( poFeature->GetGeometryRef() == NULL && hSHP != NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to write feature without geometry not supported"
@@ -620,10 +631,13 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 /* -------------------------------------------------------------------- */
     OGRErr	eErr;
 
-    eErr = SHPWriteOGRObject( hSHP, poFeature->GetFID(),
-                              poFeature->GetGeometryRef() );
-    if( eErr != OGRERR_NONE )
-        return eErr;
+    if( hSHP != NULL )
+    {
+        eErr = SHPWriteOGRObject( hSHP, poFeature->GetFID(),
+                                  poFeature->GetGeometryRef() );
+        if( eErr != OGRERR_NONE )
+            return eErr;
+    }
     
 /* -------------------------------------------------------------------- */
 /*      If this is a new feature, establish it's feature id.            */

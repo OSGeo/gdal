@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/03/27 21:04:38  warmerda
+ * Added support for reading, and creating lone .dbf files for wkbNone geometry
+ * layers.  Added support for creating a single .shp file instead of a directory
+ * if a path ending in .shp is passed to the data source create method.
+ *
  * Revision 1.10  2001/12/12 17:24:08  warmerda
  * use CPLStat, not VSIStat
  *
@@ -76,6 +81,7 @@ OGRShapeDataSource::OGRShapeDataSource()
     pszName = NULL;
     papoLayers = NULL;
     nLayers = 0;
+    bSingleNewFile = FALSE;
 }
 
 /************************************************************************/
@@ -98,7 +104,7 @@ OGRShapeDataSource::~OGRShapeDataSource()
 /************************************************************************/
 
 int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
-                              int bTestOpen )
+                              int bTestOpen, int bSingleNewFileIn )
 
 {
     VSIStatBuf	stat;
@@ -108,6 +114,18 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
     pszName = CPLStrdup( pszNewName );
 
     bDSUpdate = bUpdate;
+
+    bSingleNewFile = bSingleNewFileIn;
+
+/* -------------------------------------------------------------------- */
+/*      If bSingleNewFile is TRUE we don't try to do anything else.     */
+/*      This is only utilized when the OGRShapeDriver::Create()         */
+/*      method wants to create a stub OGRShapeDataSource for a          */
+/*      single shapefile.  The driver will take care of creating the    */
+/*      file by calling CreateLayer().                                  */
+/* -------------------------------------------------------------------- */
+    if( bSingleNewFile )
+        return TRUE;
     
 /* -------------------------------------------------------------------- */
 /*      Is the given path a directory or a regular file?                */
@@ -124,7 +142,7 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
     }
     
 /* -------------------------------------------------------------------- */
-/*      Build a list of filenames we figure are Tiger files.            */
+/*      Build a list of filenames we figure are Shape files.            */
 /* -------------------------------------------------------------------- */
     if( VSI_ISREG(stat.st_mode) )
     {
@@ -144,8 +162,9 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
     else
     {
         char      **papszCandidates = CPLReadDir( pszNewName );
+        int       iCan;
 
-        for( int iCan = 0; iCan < CSLCount(papszCandidates); iCan++ )
+        for( iCan = 0; iCan < CSLCount(papszCandidates); iCan++ )
         {
             char	*pszFilename;
             const char  *pszCandidate = papszCandidates[iCan];
@@ -162,6 +181,46 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
             {
                 CPLError( CE_Failure, CPLE_OpenFailed,
                           "Failed to open shapefile %s.\n"
+                          "It may be corrupt.\n",
+                          pszFilename );
+                CPLFree( pszFilename );
+                return FALSE;
+            }
+            
+            CPLFree( pszFilename );
+        }
+
+        // Try and .dbf files without apparent associated shapefiles. 
+        for( iCan = 0; iCan < CSLCount(papszCandidates); iCan++ )
+        {
+            char	*pszFilename;
+            const char  *pszCandidate = papszCandidates[iCan];
+            const char  *pszLayerName;
+            int         iLayer, bGotAlready = FALSE;
+
+            if( strlen(pszCandidate) < 4
+                || !EQUAL(pszCandidate+strlen(pszCandidate)-4,".dbf") )
+                continue;
+
+            pszLayerName = CPLGetBasename(pszCandidate);
+            for( iLayer = 0; iLayer < nLayers; iLayer++ )
+            {
+                if( EQUAL(pszLayerName,
+                          GetLayer(iLayer)->GetLayerDefn()->GetName()) )
+                    bGotAlready = TRUE;
+            }
+            
+            if( bGotAlready )
+                continue;
+            
+            pszFilename =
+                CPLStrdup(CPLFormFilename(pszNewName, pszCandidate, NULL));
+
+            if( !OpenFile( pszFilename, bUpdate, bTestOpen )
+                && !bTestOpen )
+            {
+                CPLError( CE_Failure, CPLE_OpenFailed,
+                          "Failed to open dbf file %s.\n"
                           "It may be corrupt.\n",
                           pszFilename );
                 CPLFree( pszFilename );
@@ -206,7 +265,7 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
     else
         hSHP = SHPOpen( pszNewName, "r" );
 
-    if( hSHP == NULL )
+    if( hSHP == NULL && EQUAL(CPLGetExtension(pszNewName),"shp") )
         return FALSE;
     
 /* -------------------------------------------------------------------- */
@@ -216,6 +275,9 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
         hDBF = DBFOpen( pszNewName, "r+" );
     else
         hDBF = DBFOpen( pszNewName, "r" );
+
+    if( hDBF == NULL && hSHP == NULL )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Is there an associated .prj file we can read?                   */
@@ -310,6 +372,8 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
         nShapeType = SHPT_POINTZ;
     else if( eType == wkbLineString25D )
         nShapeType = SHPT_ARCZ;
+    else if( eType == wkbNone )
+        nShapeType = SHPT_NULL;
     else
         nShapeType = -1;
     
@@ -337,6 +401,10 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
         nShapeType = SHPT_POLYGONZ;
     else if( EQUAL(pszOverride,"MULTIPOINTZ") )
         nShapeType = SHPT_MULTIPOINTZ;
+    else if( EQUAL(pszOverride,"NONE") )
+    {
+        nShapeType = SHPT_NULL;
+    }
     else
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -358,35 +426,67 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
     }
     
 /* -------------------------------------------------------------------- */
+/*      What filename do we use, excluding the extension?               */
+/* -------------------------------------------------------------------- */
+    char *pszBasename;
+
+    if( bSingleNewFile && nLayers == 0 )
+    {
+        char *pszPath = CPLStrdup(CPLGetPath(pszName));
+        pszBasename = CPLStrdup(CPLFormFilename(pszPath,
+                                                CPLGetBasename(pszName), 
+                                                NULL));
+        CPLFree( pszPath );
+    }
+    else if( bSingleNewFile )
+        pszBasename = CPLStrdup(CPLFormFilename(CPLGetPath(pszName),
+                                                pszLayerName,NULL));
+    else
+        pszBasename = CPLStrdup(CPLFormFilename(pszName,pszLayerName,NULL));
+
+/* -------------------------------------------------------------------- */
 /*      Create the shapefile.                                           */
 /* -------------------------------------------------------------------- */
-    char	*pszFilename =
-        CPLStrdup(CPLFormFilename(pszName,pszLayerName,".shp"));
-    
-    hSHP = SHPCreate( pszFilename, nShapeType );
+    char	*pszFilename;
 
-    if( hSHP == NULL )
+    if( nShapeType != SHPT_NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to open Shapefile `%s'.\n",
-                  pszFilename );
+        pszFilename = CPLStrdup(CPLFormFilename( NULL, pszBasename, "shp" ));
+
+        hSHP = SHPCreate( pszFilename, nShapeType );
+        
+        if( hSHP == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Failed to open Shapefile `%s'.\n",
+                      pszFilename );
+            CPLFree( pszFilename );
+            CPLFree( pszBasename );
+            return NULL;
+        }
         CPLFree( pszFilename );
-        return NULL;
     }
-    CPLFree( pszFilename );
+    else
+        hSHP = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Create a DBF file.                                              */
 /* -------------------------------------------------------------------- */
-    hDBF = DBFCreate( CPLFormFilename( pszName, pszLayerName, ".dbf" ) );
+    pszFilename = CPLStrdup(CPLFormFilename( NULL, pszBasename, "dbf" ));
+    
+    hDBF = DBFCreate( pszFilename );
 
     if( hDBF == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to open Shape DBF file `%s'.\n",
-                  CPLFormFilename( pszName, pszLayerName, ".dbf" ) );
+                  pszFilename );
+        CPLFree( pszFilename );
+        CPLFree( pszBasename );
         return NULL;
     }
+
+    CPLFree( pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Create the .prj file, if required.                              */
@@ -394,7 +494,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
     if( poSRS != NULL )
     {
         char	*pszWKT = NULL;
-        const char *pszPrjFile = CPLFormFilename(pszName,pszLayerName,"prj");
+        const char *pszPrjFile = CPLFormFilename( NULL, pszBasename, "prj");
         FILE	*fp;
 
         /* the shape layer needs it's own copy */
@@ -409,6 +509,8 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
 
         CPLFree( pszWKT );
     }
+
+    CPLFree( pszBasename );
 
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
