@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/02/25 04:40:46  danmo
+ * Modif. CSLLoad() to use CPLReadLine() (better handling of newlines)
+ *
  * Revision 1.5  1999/02/17 01:41:58  warmerda
  * Added CSLGetField
  *
@@ -105,6 +108,7 @@ int CSLCount(char **papszStrList)
     return nItems;
 }
 
+
 /************************************************************************/
 /*                            CSLGetField()                             */
 /*                                                                      */
@@ -117,8 +121,8 @@ int CSLCount(char **papszStrList)
 const char * CSLGetField( char ** papszStrList, int iField )
 
 {
-    int		i;
-    
+    int         i;
+
     if( papszStrList == NULL || iField < 0 )
         return( "" );
 
@@ -190,16 +194,13 @@ char    **CSLDuplicate(char **papszStrList)
  *
  * Load a test file into a stringlist.
  *
- * Lines are limited to LOAD_STRLIST_BUFSIZE chars.
+ * Lines are limited in length by the size fo the CPLReadLine() buffer.
  **********************************************************************/
-#define LOAD_STRLIST_BUFSIZE  1024
-
 char **CSLLoad(const char *pszFname)
 {
-    FILE    *fp;
-    char    szBuf[LOAD_STRLIST_BUFSIZE];
-    char    **papszStrList=NULL;
-    int     nRead;
+    FILE        *fp;
+    const char  *pszLine;
+    char        **papszStrList=NULL;
 
     fp = VSIFOpen(pszFname, "rt");
 
@@ -207,15 +208,9 @@ char **CSLLoad(const char *pszFname)
     {
         while(!VSIFEof(fp))
         {
-            if (VSIFGets(szBuf, LOAD_STRLIST_BUFSIZE, fp) != NULL)
+            if ( (pszLine = CPLReadLine(fp)) != NULL )
             {
-                /* fgets() keeps the '\n' char at the end of the string...
-                 * remove it and then add the line to the stringlist.
-                 */
-                nRead = strlen(szBuf);
-                if (nRead > 0 && szBuf[nRead-1] == '\n')
-                    szBuf[nRead-1] = '\0';
-                papszStrList = CSLAddString(papszStrList, szBuf);
+                papszStrList = CSLAddString(papszStrList, pszLine);
             }
         }
 
@@ -224,7 +219,7 @@ char **CSLLoad(const char *pszFname)
     else
     {
         /* Unable to open file */
-        CPLError(CE_Failure, 102,
+        CPLError(CE_Failure, CPLE_OpenFailed,
                  "CSLLoad(%s): %s", pszFname, strerror(errno));
     }
 
