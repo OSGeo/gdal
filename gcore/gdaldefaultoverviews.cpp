@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/06/22 13:52:03  warmerda
+ * fixed bug when refreshing overviews during build
+ *
  * Revision 1.4  2001/06/20 16:08:54  warmerda
  * GDALDefaultOverviews now remembers ovr filename, and allows explicit setting
  *
@@ -297,7 +300,8 @@ GDALDefaultOverviews::BuildOverviews(
         {
             eErr = GDALRegenerateOverviews( poBand, 
                                             nNewOverviews, papoOverviewBands,
-                                            pszResampling, NULL, NULL );
+                                            pszResampling, 
+                                            GDALDummyProgress, NULL );
         }
     }
 
