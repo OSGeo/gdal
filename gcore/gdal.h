@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2000/03/06 21:50:37  warmerda
+ * added min/max support
+ *
  * Revision 1.15  2000/03/06 02:19:56  warmerda
  * added lots of new functions
  *
@@ -236,6 +239,11 @@ GDALColorInterp CPL_DLL GDALGetRasterColorInterpretation( GDALRasterBandH );
 GDALColorTableH CPL_DLL GDALGetRasterColorTable( GDALRasterBandH );
 int CPL_DLL             GDALGetOverviewCount( GDALRasterBandH );
 GDALRasterBandH CPL_DLL GDALGetOverview( GDALRasterBandH, int );
+double CPL_DLL GDALGetRasterNoDataValue( GDALRasterBandH, int *pbSuccess );
+double CPL_DLL GDALGetRasterMinimum( GDALRasterBandH, int *pbSuccess );
+double CPL_DLL GDALGetRasterMaximum( GDALRasterBandH, int *pbSuccess );
+void CPL_DLL GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
+                                      double adfMinMax[2] );
 
 /* need to add functions related to block cache */
 

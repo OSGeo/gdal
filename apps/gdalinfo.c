@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.9  2000/03/06 21:50:37  warmerda
+ * added min/max support
+ *
  * Revision 1.8  2000/03/06 02:18:13  warmerda
  * added overviews, and colour table
  *
@@ -123,6 +126,9 @@ int main( int argc, char ** argv )
 
     for( i = 0; i < GDALGetRasterCount( hDataset ); i++ )
     {
+        double      dfMin, dfMax, adfCMinMax[2];
+        int         bGotMin, bGotMax;
+
         hBand = GDALGetRasterBand( hDataset, i+1 );
         printf( "Band %d Type=%s, ColorInterp=%s\n", i+1,
                 GDALGetDataTypeName(
@@ -130,6 +136,12 @@ int main( int argc, char ** argv )
                 GDALGetColorInterpretationName(
                     GDALGetRasterColorInterpretation(hBand)) );
 
+        dfMin = GDALGetRasterMinimum( hBand, &bGotMin );
+        dfMax = GDALGetRasterMaximum( hBand, &bGotMax );
+        GDALComputeRasterMinMax( hBand, TRUE, adfCMinMax );
+        printf( "Min=%.3f/%d, Max=%.3f/%d, Computed Min/Max=%.3f,%.3f\n", 
+                dfMin, bGotMin, dfMax, bGotMax, adfCMinMax[0], adfCMinMax[1] );
+        
         if( GDALGetRasterColorInterpretation(hBand) == GCI_PaletteIndex )
         {
             GDALColorTableH	hTable;

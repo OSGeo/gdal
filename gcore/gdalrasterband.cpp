@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.10  2000/03/06 21:50:37  warmerda
+ * added min/max support
+ *
  * Revision 1.9  2000/03/06 02:22:01  warmerda
  * added overviews, colour tables, and many other methods
  *
@@ -881,6 +884,8 @@ char **GDALRasterBand::GetCategoryNames()
  * value used to mark pixels that are not valid data.  Such pixels should
  * generally not be displayed, nor contribute to analysis operations.
  *
+ * This method is the same as the C function GDALGetRasterNoDataValue().
+ *
  * @param pbSuccess pointer to a boolean to use to indicate if a value
  * is actually associated with this layer.  May be NULL (default).
  *
@@ -897,6 +902,16 @@ double GDALRasterBand::GetNoDataValue( int *pbSuccess )
 }
 
 /************************************************************************/
+/*                      GDALGetRasterNoDataValue()                      */
+/************************************************************************/
+
+double GDALGetRasterNoDataValue( GDALRasterBandH hBand, int *pbSuccess )
+
+{
+    return ((GDALRasterBand *) hBand)->GetNoDataValue( pbSuccess );
+}
+
+/************************************************************************/
 /*                             GetMaximum()                             */
 /************************************************************************/
 
@@ -905,6 +920,8 @@ double GDALRasterBand::GetNoDataValue( int *pbSuccess )
  * 
  * For file formats that don't know this intrinsically, the maximum supported
  * value for the data type will generally be returned.  
+ *
+ * This method is the same as the C function GDALGetRasterMaximum().
  *
  * @param pbSuccess pointer to a boolean to use to indicate if the
  * returned value is a tight maximum or not.  May be NULL (default).
@@ -947,6 +964,16 @@ double GDALRasterBand::GetMaximum( int *pbSuccess )
 }
 
 /************************************************************************/
+/*                        GDALGetRasterMaximum()                        */
+/************************************************************************/
+
+double GDALGetRasterMaximum( GDALRasterBandH hBand, int *pbSuccess )
+
+{
+    return ((GDALRasterBand *) hBand)->GetMaximum( pbSuccess );
+}
+
+/************************************************************************/
 /*                             GetMinimum()                             */
 /************************************************************************/
 
@@ -955,6 +982,8 @@ double GDALRasterBand::GetMaximum( int *pbSuccess )
  * 
  * For file formats that don't know this intrinsically, the minimum supported
  * value for the data type will generally be returned.  
+ *
+ * This method is the same as the C function GDALGetRasterMinimum().
  *
  * @param pbSuccess pointer to a boolean to use to indicate if the
  * returned value is a tight minimum or not.  May be NULL (default).
@@ -994,6 +1023,16 @@ double GDALRasterBand::GetMinimum( int *pbSuccess )
       default:
         return -4294967295.0; /* not actually accurate */
     }
+}
+
+/************************************************************************/
+/*                        GDALGetRasterMinimum()                        */
+/************************************************************************/
+
+double GDALGetRasterMinimum( GDALRasterBandH hBand, int *pbSuccess )
+
+{
+    return ((GDALRasterBand *) hBand)->GetMinimum( pbSuccess );
 }
 
 /************************************************************************/
