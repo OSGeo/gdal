@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/03/15 08:33:38  warmerda
+ * Use CPLGetConfigOption() for cache max.
+ *
  * Revision 1.12  2003/07/27 11:01:01  dron
  * GDALRasterBlock::IsCached() method added.
  *
@@ -118,9 +121,9 @@ int GDALGetCacheMax()
 {
     if( !bCacheMaxInitialized )
     {
-        if( getenv("GDAL_CACHEMAX") != NULL )
+        if( CPLGetConfigOption("GDAL_CACHEMAX",NULL) != NULL )
         {
-            nCacheMax = atoi(getenv("GDAL_CACHEMAX"));
+            nCacheMax = atoi(CPLGetConfigOption("GDAL_CACHEMAX","5"));
             if( nCacheMax < 1000 )
                 nCacheMax *= 1024 * 1024;
         }
