@@ -71,15 +71,13 @@ The GDAL source is available by anonymous CVS from the cvs.remotesensing.org
 server:<p>
 
 <pre>
-% export CVSROOT=:pserver:anonymous@cvs.remotesensing.org:/cvsroot
+% export CVSROOT=:pserver:anonymous@cvs.remotesensing.org:/cvs
 % cvs login
-Password: anonymous
+Password: <just hit enter>
 % cvs checkout gdal
 </pre>
 
-The repository can be <a href=
-"http://www.remotesensing.org/cgi-bin/cvsweb.cgi/osrs/gdal/">browsed on the 
-web</a>.  Update access to the CVS repository can be obtained by arrangement 
+Update access to the CVS repository can be obtained by arrangement 
 with the maintainer.<p>
 
 */
