@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/06/19 18:20:21  warmerda
+ * use VSIStatL() so it works on large files, dont keep stat in openinfo.
+ *
  * Revision 1.15  2002/06/15 00:07:23  aubin
  * mods to enable 64bit file i/o
  *
@@ -94,10 +97,30 @@ CPL_CVSID("$Id$");
 GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn )
 
 {
-    pszFilename = CPLStrdup( pszFilenameIn );
+/* -------------------------------------------------------------------- */
+/*      Ensure that C: is treated as C:\ so we can stat it on           */
+/*      Windows.  Similar to what is done in CPLStat().                 */
+/* -------------------------------------------------------------------- */
+#ifdef WIN32
+    if( strlen(pszFilenameIn) == 2 && pszFilenameIn[1] == ':' )
+    {
+        char    szAltPath[10];
+        
+        strcpy( szAltPath, pszFilenameIn );
+        strcat( szAltPath, "\\" );
+        pszFilename = CPLStrdup( szAltPath );
+    }
+    else
+#endif
+        pszFilename = CPLStrdup( pszFilenameIn );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize.                                                     */
+/* -------------------------------------------------------------------- */
 
     nHeaderBytes = 0;
     pabyHeader = NULL;
+    bIsDirectory = FALSE;
     bStatOK = FALSE;
     eAccess = eAccessIn;
     fp = NULL;
@@ -105,7 +128,9 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn )
 /* -------------------------------------------------------------------- */
 /*      Collect information about the file.                             */
 /* -------------------------------------------------------------------- */
-    if( CPLStat( pszFilename, &sStat ) == 0 )
+    VSIStatBufL  sStat;
+
+    if( VSIStatL( pszFilename, &sStat ) == 0 )
     {
         bStatOK = TRUE;
 
@@ -113,7 +138,7 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn )
         {
             pabyHeader = (GByte *) CPLCalloc(1025,1);
 
-            fp = VSIFOpenL( pszFilename, "rb" );
+            fp = VSIFOpen( pszFilename, "rb" );
 
             if( fp != NULL )
             {
@@ -122,6 +147,8 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn )
                 VSIRewind( fp );
             }
         }
+        else if( VSI_ISDIR( sStat.st_mode ) )
+            bIsDirectory = TRUE;
     }
 }
 
