@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2001/02/15 16:30:34  warmerda
+ * added create debug message
+ *
  * Revision 1.17  2000/10/06 15:26:49  warmerda
  * make buffer size for copying image data the exact size, fixing bug with complex data
  *
@@ -150,6 +153,11 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
     {
         GDALDataset *poDS;
 
+        CPLDebug( "GDAL", "GDALDriver::Create(%s,%s,%d,%d,%d,%s,%p)",
+                  pszShortName, pszFilename, nXSize, nYSize, nBands, 
+                  GDALGetDataTypeName( eType ), 
+                  papszParmList );
+              
         poDS = pfnCreate( pszFilename, nXSize, nYSize, nBands, eType,
                           papszParmList );
 
