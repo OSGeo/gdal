@@ -2,11 +2,16 @@
 OBJ	=	ogrsfdriverregistrar.obj ogrlayer.obj \
 		ogrdatasource.obj ogrsfdriver.obj ogrregisterall.obj
 
-EXTRAFLAGS =	-I.. -I..\..
 
 GDAL_ROOT	=	..\..\..
 
+EXTRAFLAGS =	-I.. -I..\.. $(OGDIDEF)
+
 !INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!IFDEF OGDIDIR
+OGDIDEF	=	-DOGDI_ENABLED
+!ENDIF
 
 default:	$(OBJ)
 
