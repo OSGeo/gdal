@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/11/26 03:07:08  warmerda
+ * set spatial reference on features
+ *
  * Revision 1.2  1999/11/18 19:01:25  warmerda
  * expanded tabs
  *
@@ -146,7 +149,13 @@ OGRFeature *OGRS57Layer::GetNextUnfilteredFeature()
 
         return GetNextUnfilteredFeature();
     }
-
+    else
+    {
+        if( poFeature->GetGeometryRef() != NULL )
+            poFeature->GetGeometryRef()->assignSpatialReference(
+                GetSpatialRef() );
+    }
+    
     return poFeature;
 }
 
