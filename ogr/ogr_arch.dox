@@ -22,39 +22,39 @@ specifications.<p>
 <h2>Class Overview</h2>
 
 <ul>
-<li> <b>Geometry</b> (<a href="../src/ogr_geometry.h">ogr_geometry.h</a>): 
+<li> <b>Geometry</b> (<a href="ogr__geometry_8h-source.html">ogr_geometry.h</a>): 
 The geometry classes (OGRGeometry, etc) encapsulate the OpenGIS model vector 
 data as well as providing some geometry operations, and translation to/from
 well known binary and text format.  A geometry includes a spatial reference
 system (projection).<p>
 
 <li> <b>Spatial Reference</b> 
-(<a href="../src/ogr_spatialref.h">ogr_spatialref.h</a>):
+(<a href="ogr__spatialref_8h-source.html">ogr_spatialref.h</a>):
 An OGRSpatialReference encapsulates the definition of a projection and 
 datum.<p>
 
-<li> <b>Feature</b> (<a href="../src/ogr_feature.h">ogr_feature.h</a>):
+<li> <b>Feature</b> (<a href="ogr__feature_8h-source.html">ogr_feature.h</a>):
 The OGRFeature encapsulate the definition of a whole feature, that is a 
 geometry and a set of attributes.<p>
 
 <li> <b>Feature Class Definition</b>
-(<a href="../src/ogr_feature.h">ogr_feature.h</a>): 
+(<a href="ogr__feature_8h-source.html">ogr_feature.h</a>): 
 The OGRFeatureDefn class capsures the schema (set of field definitions) for
 a group of related features (normally a whole layer).<p>
 
 <li> <b>Layer</b>
-(<a href="../src/ogrsf_frmts/ogrsf_frmts.h">ogrsf_frmts.h</a>): 
+(<a href="ogrsf__frmts_8h-source.html">ogrsf_frmts.h</a>): 
 OGRLayer is an abstract base class represent a layer of features in an 
 OGRDataSource.<p>
 
 <li> <b>Data Source</b>
-(<a href="../src/ogrsf_frmts/ogrsf_frmts.h">ogrsf_frmts.h</a>): 
+(<a href="ogrsf__frmts_8h-source.html">ogrsf_frmts.h</a>): 
 An OGRDataSource is an abstract base class
 representing a file or database containing one or more OGRLayer
 objects.<p>
 
 <li> <b>Drivers</b> 
-(<a href="../src/ogrsf_frmts/ogrsf_frmts.h">ogrsf_frmts.h</a>):
+(<a href="ogrsf__frmts_8h-source.html">ogrsf_frmts.h</a>):
 An OGRSFDriver represents a translator for a specific
 format, opening OGRDataSource objects.  All available drivers are managed 
 by the OGRSFDriverRegistrar.<p>
