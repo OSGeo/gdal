@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/10/19 15:44:59  warmerda
+ * added get/set gcps support
+ *
  * Revision 1.4  2001/07/18 04:45:29  warmerda
  * added CPL_CVSID
  *
@@ -61,6 +64,10 @@ class NUMPYDataset : public GDALDataset
     double	  adfGeoTransform[6];
     char	  *pszProjection;
 
+    int           nGCPCount;
+    GDAL_GCP      *pasGCPList;
+    char          *pszGCPProjection;
+
   public:
                  NUMPYDataset();
                  ~NUMPYDataset();
@@ -69,6 +76,12 @@ class NUMPYDataset : public GDALDataset
     virtual CPLErr SetProjection( const char * );
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
+
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
+    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                            const char *pszGCPProjection );
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -87,6 +100,10 @@ NUMPYDataset::NUMPYDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+
+    nGCPCount = 0;
+    pasGCPList = NULL;
+    pszGCPProjection = CPLStrdup("");
 }
 
 /************************************************************************/
@@ -97,6 +114,13 @@ NUMPYDataset::~NUMPYDataset()
 
 {
     CPLFree( pszProjection );
+
+    CPLFree( pszGCPProjection );
+    if( nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+    }
 
     FlushCache();
     Py_DECREF( psArray );
@@ -145,6 +169,60 @@ CPLErr NUMPYDataset::SetGeoTransform( double * padfTransform )
 {
     memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
     return( CE_None );
+}
+
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int NUMPYDataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *NUMPYDataset::GetGCPProjection()
+
+{
+    return pszGCPProjection;
+}
+
+/************************************************************************/
+/*                               GetGCPs()                              */
+/************************************************************************/
+
+const GDAL_GCP *NUMPYDataset::GetGCPs()
+
+{
+    return pasGCPList;
+}
+
+/************************************************************************/
+/*                              SetGCPs()                               */
+/************************************************************************/
+
+CPLErr NUMPYDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                              const char *pszGCPProjection )
+
+{
+    CPLFree( this->pszGCPProjection );
+    if( this->nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( this->nGCPCount, this->pasGCPList );
+        CPLFree( this->pasGCPList );
+    }
+
+    this->pszGCPProjection = CPLStrdup(pszGCPProjection);
+
+    this->nGCPCount = nGCPCount;
+
+    this->pasGCPList = GDALDuplicateGCPs( nGCPCount, pasGCPList );
+
+    return CE_None;
 }
 
 /************************************************************************/
