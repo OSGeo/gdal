@@ -30,6 +30,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.22  2005/02/07 17:22:14  fwarmerdam
+ * Hacked to emit only 11x20 GCPs.  Eventually we should make this
+ * controllable.
+ *
  * Revision 1.21  2005/01/28 20:29:37  fwarmerdam
  * added format info url.
  *
@@ -610,10 +614,6 @@ void L1BDataset::ProcessRecordHeaders()
     int         iLine, iLocInd;
     void        *piRecordHeader;
 
-    pasGCPList = (GDAL_GCP *)CPLCalloc( GetRasterYSize() * nGCPsPerLine,
-                                        sizeof(GDAL_GCP) );
-    GDALInitGCPs( GetRasterYSize() * nGCPsPerLine, pasGCPList );
-
     piRecordHeader = CPLMalloc(nRecordDataStart);
     VSIFSeek(fp, nDataStartOffset, SEEK_SET);
     VSIFRead(piRecordHeader, 1, nRecordDataStart, fp);
@@ -631,14 +631,69 @@ void L1BDataset::ProcessRecordHeaders()
     else
         FetchNOAA15TimeCode(&sStopTime, (GUInt16 *) piRecordHeader, &iLocInd);
 
-    for ( iLine = 0; iLine < GetRasterYSize(); iLine++ )
+/* -------------------------------------------------------------------- */
+/*      Pick a skip factor so that we will get roughly 20 lines         */
+/*      worth of GCPs.  That should give respectible coverage on all    */
+/*      but the longest swaths.                                         */
+/* -------------------------------------------------------------------- */
+    int nTargetLines = 20;
+    int nLineSkip = GetRasterYSize() / (nTargetLines-1);
+    
+/* -------------------------------------------------------------------- */
+/*      Initialize the GCP list.                                        */
+/* -------------------------------------------------------------------- */
+    pasGCPList = (GDAL_GCP *)CPLCalloc( nTargetLines * nGCPsPerLine,
+                                        sizeof(GDAL_GCP) );
+    GDALInitGCPs( nTargetLines * nGCPsPerLine, pasGCPList );
+
+/* -------------------------------------------------------------------- */
+/*      Fetch the GCPs for each selected line.  We force the last       */
+/*      line sampled to be the last line in the dataset even if that    */
+/*      leaves a bigger than expected gap.                              */
+/* -------------------------------------------------------------------- */
+    int iStep;
+
+    for( iStep = 0; iStep < nTargetLines; iStep++ )
     {
+        int nOrigGCPs = nGCPCount;
+
+        if( iStep == nTargetLines - 1 )
+            iLine = GetRasterYSize() - 1;
+        else
+            iLine = nLineSkip * iStep;
+
         VSIFSeek( fp, nDataStartOffset + iLine * nRecordSize, SEEK_SET );
         VSIFRead( piRecordHeader, 1, nRecordDataStart, fp );
+
         if (iSpacecraftID <= NOAA14)
             FetchNOAA9GCPs( pasGCPList, (GInt16 *)piRecordHeader, iLine );
         else
             FetchNOAA15GCPs( pasGCPList, (GInt32 *)piRecordHeader, iLine );
+
+/* -------------------------------------------------------------------- */
+/*      We don't really want too many GCPs per line.  Downsample to     */
+/*      11 per line.                                                    */
+/* -------------------------------------------------------------------- */
+        int iGCP;
+        int nGCPsOnThisLine = nGCPCount - nOrigGCPs;
+        int nDesiredGCPsPerLine = MIN(11,nGCPsOnThisLine);
+        int nGCPStep = (nGCPsOnThisLine - 1) / (nDesiredGCPsPerLine-1);
+
+        if( nGCPStep == 0 )
+            nGCPStep = 1;
+
+        for( iGCP = 0; iGCP < nDesiredGCPsPerLine; iGCP++ )
+        {
+            int iSrcGCP = nOrigGCPs + iGCP * nGCPStep;
+            int iDstGCP = nOrigGCPs + iGCP;
+
+            pasGCPList[iDstGCP].dfGCPX = pasGCPList[iSrcGCP].dfGCPX;
+            pasGCPList[iDstGCP].dfGCPY = pasGCPList[iSrcGCP].dfGCPY;
+            pasGCPList[iDstGCP].dfGCPPixel = pasGCPList[iSrcGCP].dfGCPPixel;
+            pasGCPList[iDstGCP].dfGCPLine = pasGCPList[iSrcGCP].dfGCPLine;
+        }
+
+        nGCPCount = nOrigGCPs + nDesiredGCPsPerLine;
     }
 
     CPLFree( piRecordHeader );
