@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/12/07 17:09:13  warmerda
+ * added -order flag
+ *
  * Revision 1.1  2002/12/07 16:13:38  warmerda
  * New
  *
@@ -44,7 +47,7 @@ CPL_CVSID("$Id$");
 static GDALDatasetH 
 GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename, 
                       const char *pszFormat, const char *pszSourceSRS, 
-                      const char *pszTargetSRS );
+                      const char *pszTargetSRS, int nOrder );
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -55,7 +58,7 @@ static void Usage()
 {
     printf( 
         "Usage: gdalwarp [--version] [--formats]\n"
-        "    [-s_srs srs_def] [-t_srs srs_def]\n"
+        "    [-s_srs srs_def] [-t_srs srs_def] [-order n]\n"
         "    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
         "    [-of format] [-co \"NAME=VALUE\"]* srcfile dstfile\n" );
     exit( 1 );
@@ -92,7 +95,7 @@ int main( int argc, char ** argv )
     char               *pszTargetSRS = NULL;
     char               *pszSourceSRS = NULL;
     const char         *pszSrcFilename = NULL, *pszDstFilename = NULL;
-    int                 bCreateOutput = FALSE, i;
+    int                 bCreateOutput = FALSE, i, nOrder = 0;
     void               *hTransformArg;
 
     GDALAllRegister();
@@ -135,6 +138,10 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-s_srs") && i < argc-1 )
         {
             pszSourceSRS = SanitizeSRS(argv[++i]);
+        }
+        else if( EQUAL(argv[i],"-order") && i < argc-1 )
+        {
+            nOrder = atoi(argv[++i]);
         }
         else if( argv[i][0] == '-' )
             Usage();
@@ -185,7 +192,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     if( hDstDS == NULL )
         hDstDS = GDALWarpCreateOutput( hSrcDS, pszDstFilename, pszFormat, 
-                                       pszSourceSRS, pszTargetSRS );
+                                       pszSourceSRS, pszTargetSRS, nOrder );
 
     if( hDstDS == NULL )
         exit( 1 );
@@ -197,7 +204,7 @@ int main( int argc, char ** argv )
     hTransformArg = 
         GDALCreateGenImgProjTransformer( hSrcDS, pszSourceSRS, 
                                          hDstDS, pszTargetSRS, 
-                                         TRUE, 1000.0 );
+                                         TRUE, 1000.0, nOrder );
 
     if( hTransformArg == NULL )
         exit( 1 );
@@ -232,7 +239,7 @@ int main( int argc, char ** argv )
 static GDALDatasetH 
 GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename, 
                       const char *pszFormat, const char *pszSourceSRS, 
-                      const char *pszTargetSRS )
+                      const char *pszTargetSRS, int nOrder )
 
 {
     GDALDriverH hDriver;
@@ -277,7 +284,7 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
     hTransformArg = 
         GDALCreateGenImgProjTransformer( hSrcDS, pszSourceSRS, 
                                          NULL, pszTargetSRS, 
-                                         TRUE, 1000.0 );
+                                         TRUE, 1000.0, nOrder );
 
     if( hTransformArg == NULL )
         return NULL;
@@ -296,6 +303,8 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
+    printf( "Creating output file is that %dP x %dL.\n", nPixels, nLines );
+
     hDstDS = GDALCreate( hDriver, pszFilename, nPixels, nLines, 
                          GDALGetRasterCount(hSrcDS),
                          GDALGetRasterDataType(GDALGetRasterBand(hSrcDS,1)),
