@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/02/08 00:37:15  warmerda
+ * try to improve documentation
+ *
  * Revision 1.14  2002/10/24 16:46:33  warmerda
  * added docs and C implementation for Equal and FlattenTo2D
  *
@@ -514,8 +517,8 @@ OGRErr OGR_G_ImportFromWkb( OGRGeometryH hGeom,
 }
 
 /**
- * \fn OGRErr OGRGeometry::exportToWkb( OGRwkbByteOrder eOrder,
-                                        unsigned char * pabyDstBuffer );
+ * \fn OGRErr OGRGeometry::exportToWkb( OGRwkbByteOrder eByteOrder,
+                                        unsigned char * pabyData );
  *
  * Convert a geometry into well known binary format.
  *
@@ -523,9 +526,9 @@ OGRErr OGR_G_ImportFromWkb( OGRGeometryH hGeom,
  *
  * This method is the same as the C function OGR_G_ExportToWkb().
  *
- * @param eOrder One of wkbXDR or wkbNDR indicating MSB or LSB byte order
+ * @param eByteOrder One of wkbXDR or wkbNDR indicating MSB or LSB byte order
  *               respectively.
- * @param pabyDstBuffer a buffer into which the binary representation is
+ * @param pabyData a buffer into which the binary representation is
  *                      written.  This buffer must be at least
  *                      OGRGeometry::WkbSize() byte in size.
  *
@@ -544,7 +547,7 @@ OGRErr OGR_G_ExportToWkb( OGRGeometryH hGeom, OGRwkbByteOrder eOrder,
 }
 
 /**
- * \fn OGRErr OGRGeometry::importFromWkt( char ** ppszSrcText );
+ * \fn OGRErr OGRGeometry::importFromWkt( char ** ppszInput );
  *
  * Assign geometry from well known text data.
  *
@@ -557,7 +560,7 @@ OGRErr OGR_G_ExportToWkb( OGRGeometryH hGeom, OGRwkbByteOrder eOrder,
  *
  * This method is the same as the C function OGR_G_ImportFromWkt().
  *
- * @param ppszSrcText pointer to a pointer to the source text.  The pointer is
+ * @param ppszInput pointer to a pointer to the source text.  The pointer is
  *                    updated to pointer after the consumed text.
  *
  * @return OGRERR_NONE if all goes well, otherwise any of

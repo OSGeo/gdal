@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.69  2003/02/08 00:37:15  warmerda
+ * try to improve documentation
+ *
  * Revision 1.68  2003/02/06 04:53:12  warmerda
  * added Fixup() method
  *
@@ -2116,7 +2119,7 @@ double OSRGetNormProjParm( OGRSpatialReferenceH hSRS, const char *pszName,
  *
  * This method is the same as the C function OSRSetNormProjParm().
  *
- * @param pszParmName the parameter name, which should be selected from
+ * @param pszName the parameter name, which should be selected from
  * the macros in ogr_srs_api.h, such as SRS_PP_CENTRAL_MERIDIAN. 
  *
  * @param dfValue value to assign. 

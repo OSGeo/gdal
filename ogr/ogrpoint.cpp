@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/02/08 00:37:14  warmerda
+ * try to improve documentation
+ *
  * Revision 1.19  2002/09/11 13:47:17  warmerda
  * preliminary set of fixes for 3D WKB enum
  *
@@ -406,7 +409,7 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
 /*      equivelent.                                                     */
 /************************************************************************/
 
-OGRErr OGRPoint::exportToWkt( char ** ppszReturn )
+OGRErr OGRPoint::exportToWkt( char ** ppszDstText )
 
 {
     char        szTextEquiv[100];
@@ -414,7 +417,7 @@ OGRErr OGRPoint::exportToWkt( char ** ppszReturn )
 
     OGRMakeWktCoordinate(szCoordinate, x, y, z);
     sprintf( szTextEquiv, "POINT (%s)", szCoordinate );
-    *ppszReturn = CPLStrdup( szTextEquiv );
+    *ppszDstText = CPLStrdup( szTextEquiv );
     
     return OGRERR_NONE;
 }
