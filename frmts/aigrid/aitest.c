@@ -6,7 +6,7 @@
 /*      Dump the magic ``block type byte'' for each existing block.     */
 /************************************************************************/
 
-static void DumpMagic( AIGInfo_t * psInfo )
+static void DumpMagic( AIGInfo_t * psInfo, int bVerbose )
 
 {
     int		i;
@@ -21,7 +21,14 @@ static void DumpMagic( AIGInfo_t * psInfo )
         VSIFSeek( psInfo->fpGrid, psInfo->panBlockOffset[i]+2, SEEK_SET );
         VSIFRead( &byMagic, 1, 1, psInfo->fpGrid );
 
-        printf( "%02x %d/%d\n", byMagic, i, psInfo->panBlockOffset[i] );
+        if( bVerbose
+            || ( byMagic != 0 && byMagic != 0x43 && byMagic != 0x04
+                 && byMagic != 0x08 && byMagic != 0x10 && byMagic != 0xd7 
+                 && byMagic != 0xdf && byMagic != 0xe0 && byMagic != 0xfc
+                 && byMagic != 0xf8 && byMagic != 0xff) )
+        {
+            printf( " %02x %d/%d\n", byMagic, i, psInfo->panBlockOffset[i] );
+        }
     }
 }
 
@@ -76,8 +83,7 @@ int main( int argc, char ** argv )
 /*      Do we want a dump of all the ``magic'' numbers for              */
 /*      instantated blocks?                                             */
 /* -------------------------------------------------------------------- */
-    if( bMagic)
-        DumpMagic( psInfo );
+    DumpMagic( psInfo, bMagic );
     
 /* -------------------------------------------------------------------- */
 /*      Read a block, and report it's contents.                         */
@@ -113,7 +119,10 @@ int main( int argc, char ** argv )
                 if( panRaster[i+j*psInfo->nBlockXSize] == GRID_NO_DATA )
                     printf( "-*- " );
                 else
+                    printf( "%f ", ((float *) panRaster)[i+j*psInfo->nBlockXSize] );
+#ifdef notdef
                     printf( "%3d ", panRaster[i+j*psInfo->nBlockXSize] );
+#endif                
             }
             printf( "\n" );
         }

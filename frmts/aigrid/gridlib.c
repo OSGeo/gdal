@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/03/02 21:10:28  warmerda
+ * added some floating point support
+ *
  * Revision 1.2  1999/02/04 22:15:33  warmerda
  * fleshed out implementation
  *
@@ -37,6 +40,76 @@
  */
 
 #include "aigrid.h"
+
+/************************************************************************/
+/*                    AIGProcessRaw32bitFloatBlock()                    */
+/*                                                                      */
+/*      Process a block using ``00'' (32 bit) raw format.               */
+/************************************************************************/
+
+static 
+CPLErr AIGProcessRaw32BitFloatBlock( GByte *pabyCur, int nDataSize, int nMin,
+                                     int nBlockXSize, int nBlockYSize,
+                                     float * pafData )
+
+{
+    int		i;
+
+    CPLAssert( nDataSize >= nBlockXSize*nBlockYSize*4 );
+    
+/* -------------------------------------------------------------------- */
+/*      Collect raw data.                                               */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+    {
+        float	fWork;
+
+#ifdef CPL_LSB
+        ((GByte *) &fWork)[3] = *(pabyCur++);
+        ((GByte *) &fWork)[2] = *(pabyCur++);
+        ((GByte *) &fWork)[1] = *(pabyCur++);
+        ((GByte *) &fWork)[0] = *(pabyCur++);
+#else
+        ((GByte *) &fWork)[0] = *(pabyCur++);
+        ((GByte *) &fWork)[1] = *(pabyCur++);
+        ((GByte *) &fWork)[2] = *(pabyCur++);
+        ((GByte *) &fWork)[3] = *(pabyCur++);
+#endif
+        
+        pafData[i] = fWork;
+    }
+
+    return( CE_None );
+}
+
+/************************************************************************/
+/*                      AIGProcessRaw32bitBlock()                       */
+/*                                                                      */
+/*      Process a block using ``00'' (32 bit) raw format.               */
+/************************************************************************/
+
+static 
+CPLErr AIGProcessRaw32BitBlock( GByte *pabyCur, int nDataSize, int nMin,
+                                int nBlockXSize, int nBlockYSize,
+                                GUInt32 * panData )
+
+{
+    int		i;
+
+    CPLAssert( nDataSize >= nBlockXSize*nBlockYSize*4 );
+    
+/* -------------------------------------------------------------------- */
+/*      Collect raw data.                                               */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+    {
+        panData[i] = pabyCur[0]*256*256*256 + pabyCur[1]*256*256
+                   + pabyCur[2]*256 + pabyCur[3] + nMin;
+        pabyCur += 4;
+    }
+
+    return( CE_None );
+}
 
 /************************************************************************/
 /*                         AIGProcess16bitRawBlock()                    */
@@ -256,7 +329,7 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
 {
     GByte	*pabyRaw, *pabyCur;
     CPLErr	eErr;
-    int		i, nMagic, nMin, nMinSize, nDataSize;
+    int		i, nMagic, nMin=0, nMinSize=0, nDataSize;
 
 /* -------------------------------------------------------------------- */
 /*      If the block has zero size it is all dummies.                   */
@@ -281,29 +354,35 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
 /* -------------------------------------------------------------------- */
     CPLAssert( nBlockSize == (pabyRaw[0]*256 + pabyRaw[1])*2 );
 
+    nDataSize = nBlockSize;
+    
 /* -------------------------------------------------------------------- */
 /*      Collect minimum value.                                          */
 /* -------------------------------------------------------------------- */
     pabyCur = pabyRaw + 2;
-    nMinSize = pabyCur[1];
-    pabyCur += 2;
-
-    nMin = 0;
-    for( i = 0; i < nMinSize; i++ )
+    if( pabyCur[0] != 0x00 && pabyCur[0] != 0x43 )
     {
-        nMin = nMin * 256 + *pabyCur;
-
-        if( i == 0 )
-            nMin &= 0x7f;
+        nMinSize = pabyCur[1];
+        pabyCur += 2;
         
-        pabyCur++;
+        nMin = 0;
+        for( i = 0; i < nMinSize; i++ )
+        {
+            nMin = nMin * 256 + *pabyCur;
+            
+            if( i == 0 )
+                nMin &= 0x7f;
+            
+            pabyCur++;
+        }
+
+        nDataSize -= 2+nMinSize;
     }
     
 /* -------------------------------------------------------------------- */
 /*	Call an apppropriate handler depending on magic code.		*/
 /* -------------------------------------------------------------------- */
     nMagic = pabyRaw[2];
-    nDataSize = nBlockSize - 2 - nMinSize;
 
     if( nMagic == 0x08 )
     {
@@ -317,11 +396,23 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
                                 nBlockXSize, nBlockYSize,
                                 panData );
     }
+    else if( nMagic == 0x00 )
+    {
+        AIGProcessRaw32BitFloatBlock( pabyCur, nDataSize, 0,
+                                      nBlockXSize, nBlockYSize,
+                                      (float *) panData );
+    }
     else if( nMagic == 0x10 )
     {
         AIGProcessRaw16BitBlock( pabyCur, nDataSize, nMin,
                                  nBlockXSize, nBlockYSize,
                                  panData );
+    }
+    else if( nMagic == 0x43 )
+    {
+        AIGProcessRaw32BitFloatBlock( pabyCur, nDataSize, 0,
+                                      nBlockXSize, nBlockYSize,
+                                      (float *) panData );
     }
     else if( nMagic == 0xFF )
     {
