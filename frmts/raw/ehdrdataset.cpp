@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/01/04 21:17:11  warmerda
+ * fixed up to preserve path in CPLFormCIFilename calls
+ *
  * Revision 1.17  2003/09/26 13:49:42  warmerda
  * fixed multi band support, implement rudimentary write support
  *
@@ -194,9 +197,11 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Now we need to tear apart the filename to form a .HDR           */
 /*      filename.                                                       */
 /* -------------------------------------------------------------------- */
-    pszHDRFilename = CPLFormCIFilename( NULL,
-					CPLGetBasename(poOpenInfo->pszFilename),
-					".hdr" );
+    char *pszPath = CPLStrdup( CPLGetPath( poOpenInfo->pszFilename ) );
+    pszHDRFilename = CPLFormCIFilename(pszPath,
+                                       CPLGetBasename(poOpenInfo->pszFilename),
+                                       ".hdr" );
+    CPLFree( pszPath );
 
     bSelectedHDR = EQUAL(pszHDRFilename, poOpenInfo->pszFilename);
 
@@ -208,7 +213,9 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     fp = VSIFOpen( pszHDRFilename, "r" );
     
     if( fp == NULL )
+    {
         return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Is this file an ESRI header file?  Read a few lines of text     */
@@ -324,7 +331,9 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      an error!                                                       */
 /* -------------------------------------------------------------------- */
     if( nRows == -1 || nCols == -1 )
+    {
         return NULL;
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Has the user selected the .hdr file to open?                    */
@@ -434,10 +443,12 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for a .prj file.                                          */
 /* -------------------------------------------------------------------- */
+    pszPath = CPLStrdup( CPLGetPath( poOpenInfo->pszFilename ) );
+
     const char  *pszPrjFile =
-	CPLFormCIFilename( NULL,
-			   CPLGetBasename(poOpenInfo->pszFilename),
+	CPLFormCIFilename( pszPath, CPLGetBasename(poOpenInfo->pszFilename),
 			   "prj" );
+    CPLFree( pszPath );
 
     fp = VSIFOpen( pszPrjFile, "r" );
     if( fp != NULL )
