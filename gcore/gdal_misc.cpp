@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2002/04/25 16:18:41  warmerda
+ * added extra checking
+ *
  * Revision 1.32  2002/04/24 19:21:26  warmerda
  * Include <ctype.h> for toupper(), tolower().
  *
@@ -902,6 +905,16 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
 
     nBlockPixels = nBlockXSize * nBlockYSize;
     nBlockCount = nBlocksPerRow * nBlocksPerColumn;
+
+    if( nBlocksPerRow == 0 || nBlocksPerColumn == 0 || nBlockPixels == 0 
+        || nBlockCount == 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "GDALGetRandomSample(): returning because band"
+                  " appears degenerate." );
+
+        return FALSE;
+    }
 
     nSampleRate = (int) MAX(1,sqrt((double) nBlockCount)-2.0);
 
