@@ -27,7 +27,7 @@ CFLAGS   :=	$(CFLAGS) -DFME_ENABLED
 CXXFLAGS :=	$(CXXFLAGS) -DFME_ENABLED
 endif
 
-ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port $(CFLAGS)
+CPPFLAGS	+=	-I.. -I../..
 
 # temporary work-around against topdir/GNUmakefile intrusion!
 .PRECIOUS:	ogrregisterall.o 
@@ -36,10 +36,3 @@ default:	$(O_OBJ)
 
 clean:
 	rm -f *.o
-
-%.o:	%.cpp
-	$(CXX) -c $(ALL_C_FLAGS) -DINST_DATA=\"$(INST_DATA)\" $*.cpp -o $*.o
-
-%.o:	%.c
-	$(CC) -c $(ALL_C_FLAGS) $*.c -o $*.o
-

@@ -29,7 +29,7 @@ OBJ     =  ogrtigerdriver.o           \
 
 
 
-ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port $(CFLAGS)
+CPPFLAGS	+=	-I.. -I../..
 
 LIBS	:=	$(GDAL_LIB) $(LIBS)
 
@@ -38,12 +38,6 @@ default:	$(O_OBJ)
 
 clean:
 	rm -f *.o
-
-%.o:	%.cpp
-	$(CXX) -c $(ALL_C_FLAGS) $*.cpp -o $*.o
-
-%.o:	%.c
-	$(CC) -c $(ALL_C_FLAGS) $*.c -o $*.o
 
 tigerinfo:	tigerinfo.o $(OBJ)
 	$(CXX) $(LNK_FLAGS) tigerinfo.o $(LIBS) -o tigerinfo
