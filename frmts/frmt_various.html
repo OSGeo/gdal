@@ -283,11 +283,13 @@ Institute (GSI) Web Site.</a><p>
 <h2><a href="LAN">LAN -- Erdas 7.x .LAN and .GIS</h2>
 
 GDAL supports reading Erdas 7.x .LAN and .GIS raster files.  Currently only
-8bit and 16bit data is supported, the 4bit pixel type is not supported.  
+8bit and 16bit data is supported, the 4bit pixel type is not supported.  <p>
 
-GDAL does read the map extents (geotransform) from LAN/GIS files but does
-not support reading coordinate system information which is apparently 
-included in any complete way.  
+GDAL does read the map extents (geotransform) from LAN/GIS files, and 
+attempts to read the coordinate system informaton.  However, this format
+of file does not include complete coordinate system information, so for
+state plane and UTM coordinate systems a LOCAL_CS definition is returned
+with valid linear units but no other meaningful information.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/raw/landataset.cpp</tt><p>
 
