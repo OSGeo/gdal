@@ -7,7 +7,6 @@
 #ifndef __xtiffio_h
 #define __xtiffio_h
 
-#include "cpl_serv.h"
 #include "tiffio.h"
 
 /**
@@ -52,6 +51,17 @@
 
 #if defined(__cplusplus)
 extern "C" {
+#endif
+
+/**********************************************************************
+ * Do we want to build as a DLL on windows?
+ **********************************************************************/
+#if !defined(CPL_DLL)
+#  if defined(_WIN32) && defined(BUILD_AS_DLL)
+#    define CPL_DLL     __declspec(dllexport)
+#  else
+#    define CPL_DLL
+#  endif
 #endif
 
 extern TIFF CPL_DLL * XTIFFOpen(const char* name, const char* mode);

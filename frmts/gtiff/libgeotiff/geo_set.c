@@ -10,6 +10,9 @@
  *  notice accompanies any products derived therefrom.
  *
  * $Log: geo_set.c,v $
+ * Revision 1.11  2004/04/27 21:32:33  warmerda
+ * reformat for clarity
+ *
  * Revision 1.10  2003/07/08 17:31:30  warmerda
  * cleanup various warnings
  *
@@ -150,15 +153,15 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
     }
     else switch (type)
     {
-        case TYPE_SHORT:  sval=(pinfo_t) va_arg(ap, int); val=(char *)&sval;     break;
-        case TYPE_DOUBLE: dval=va_arg(ap, dblparam_t); val=(char *)&dval;  break;
-        case TYPE_ASCII: 
-            val=va_arg(ap, char*);
-            count = strlen(val) + 1; /* force = string length */
-            break;
-        default:
-            assert( FALSE );
-            break;
+      case TYPE_SHORT:  sval=(pinfo_t) va_arg(ap, int); val=(char *)&sval;     break;
+      case TYPE_DOUBLE: dval=va_arg(ap, dblparam_t); val=(char *)&dval;  break;
+      case TYPE_ASCII: 
+        val=va_arg(ap, char*);
+        count = strlen(val) + 1; /* force = string length */
+        break;
+      default:
+        assert( FALSE );
+        break;
     }
     va_end(ap);
     
@@ -196,49 +199,49 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
     {
         switch (type)
         {
-        case TYPE_SHORT:  
+          case TYPE_SHORT:  
             if (count > 1) return 0;
             data = (char *)&key->gk_data; /* store value *in* data */
             break;
-        case TYPE_DOUBLE:
+          case TYPE_DOUBLE:
             key->gk_data = (char *)(gtif->gt_double + gtif->gt_ndoubles);
             data = key->gk_data;
             gtif->gt_ndoubles += count;
             break;
-        case TYPE_ASCII:
+          case TYPE_ASCII:
             break;
-        default:
+          default:
             va_end(ap);
             return 0;
         }
         gtif->gt_nshorts += sizeof(KeyEntry)/sizeof(pinfo_t);
     }
 
-        /* this fixes a bug where if a request is made to write a duplicate
-           key, we must initialize the data to a valid value.
-           Bryan Wells (bryan@athena.bangor.autometric.com) */
+    /* this fixes a bug where if a request is made to write a duplicate
+       key, we must initialize the data to a valid value.
+       Bryan Wells (bryan@athena.bangor.autometric.com) */
         
-        else /* no new values, but still have something to write */
+    else /* no new values, but still have something to write */
+    {
+        switch (type)
         {
-            switch (type)
-            {
-            case TYPE_SHORT:  
-                if (count > 1) return 0;
-                data = (char *)&key->gk_data; /* store value *in* data */
-                break;
-            case TYPE_DOUBLE:
-                data = key->gk_data;
-                break;
-            case TYPE_ASCII:
-                break;
-            default:
-                return 0;
-            }
+          case TYPE_SHORT:  
+            if (count > 1) return 0;
+            data = (char *)&key->gk_data; /* store value *in* data */
+            break;
+          case TYPE_DOUBLE:
+            data = key->gk_data;
+            break;
+          case TYPE_ASCII:
+            break;
+          default:
+            return 0;
         }
+    }
         
     switch (type)
     {
-    case TYPE_ASCII:
+      case TYPE_ASCII:
         /* throw away existing data and allocate room for new data */
         if (key->gk_data != 0)
         {
@@ -248,7 +251,7 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
         key->gk_count = count;
         data = key->gk_data;
         break;
-    default:
+      default:
         break;
     }
 

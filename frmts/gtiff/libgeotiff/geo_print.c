@@ -18,6 +18,15 @@
  *    29  Sep,  1995      NDR                  Fixed matrix printing.
  *
  * $Log: geo_print.c,v $
+ * Revision 1.8  2004/04/27 21:31:31  warmerda
+ * avoid crash if gt_tif is NULL
+ *
+ * Revision 1.7  2003/10/21 19:19:53  warmerda
+ * fixed bug with large message texts sometimes causing a crash
+ *
+ * Revision 1.6  2003/09/23 18:27:30  warmerda
+ * fixed bug with long datum names: bug 399
+ *
  * Revision 1.5  2003/07/08 17:31:30  warmerda
  * cleanup various warnings
  *
@@ -106,6 +115,9 @@ static void PrintGeoTags(GTIF *gt, GTIFPrintMethod print,void *aux)
 	int count;
 	tiff_t *tif=gt->gt_tif;
 
+        if( tif == NULL )
+            return;
+
 	if ((gt->gt_methods.get)(tif, GTIFF_TIEPOINTS, &count, &data ))
 		PrintTag(GTIFF_TIEPOINTS,count/3, data, 3, print, aux);
 	if ((gt->gt_methods.get)(tif, GTIFF_PIXELSCALE, &count, &data ))
@@ -188,7 +200,7 @@ static void PrintKey(GeoKey *key, GTIFPrintMethod print, void *aux)
                   message[out_char++] = ch;
 
               /* flush message if buffer full */
-              if( out_char == sizeof(message)-3 )
+              if( out_char >= sizeof(message)-3 )
               {
                   message[out_char] = '\0';
                   print(message,aux);
@@ -220,8 +232,8 @@ static void PrintKey(GeoKey *key, GTIFPrintMethod print, void *aux)
         sptr = (pinfo_t *)data;
         if (count==1)
         {
-            sprintf(message,"%s\n",GTIFValueName(keyid,*sptr));
-            print(message,aux);
+            print( GTIFValueName(keyid,*sptr), aux );
+            print( "\n", aux );
         }
         else
             for (; count > 0; count-= vals_now)
