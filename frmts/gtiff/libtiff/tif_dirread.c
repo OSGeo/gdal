@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirread.c,v 1.20 2003/07/08 16:40:46 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirread.c,v 1.21 2003/09/23 06:23:39 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -238,8 +238,7 @@ TIFFReadDirectory(TIFF* tif)
 		if (dp->tdir_tag < tif->tif_fieldinfo[fix]->field_tag) {
 			if (!diroutoforderwarning) {
 				TIFFWarning(module,
-	                                    "%.1000s: invalid TIFF directory; "
-                                            "tags are not sorted in ascending order",
+"%.1000s: invalid TIFF directory; tags are not sorted in ascending order",
                                             tif->tif_name);
 				diroutoforderwarning = 1;
 			}
@@ -252,7 +251,7 @@ TIFFReadDirectory(TIFF* tif)
 		    tif->tif_fieldinfo[fix]->field_tag != dp->tdir_tag) {
 
                     TIFFWarning(module,
-                                "%.1000s: unknown field with tag %d (0x%x) encountered",
+			"%.1000s: unknown field with tag %d (0x%x) encountered",
                                 tif->tif_name, dp->tdir_tag,  dp->tdir_tag);
 
                     TIFFMergeFieldInfo( tif,
@@ -263,6 +262,7 @@ TIFFReadDirectory(TIFF* tif)
                     while (fix < tif->tif_nfields &&
                            tif->tif_fieldinfo[fix]->field_tag < dp->tdir_tag)
 			fix++;
+		    dp->tdir_tag = IGNORE;
 		}
 		/*
 		 * Null out old tags that we ignore.
@@ -283,7 +283,7 @@ TIFFReadDirectory(TIFF* tif)
 			if (fix == tif->tif_nfields ||
 			    fip->field_tag != dp->tdir_tag) {
 				TIFFWarning(module,
-				   "%.1000s: wrong data type %d for \"%s\"; tag ignored",
+			"%.1000s: wrong data type %d for \"%s\"; tag ignored",
 				    tif->tif_name, dp->tdir_type, fip[-1].field_name);
 				goto ignore;
 			}
@@ -520,10 +520,10 @@ TIFFReadDirectory(TIFF* tif)
 		    goto bad;
 		}
 		TIFFWarning(module,
-                            "%.1000s: TIFF directory is missing required "
-                            "\"%s\" field, calculating from imagelength",
-                            tif->tif_name,
-		            _TIFFFieldWithTag(tif,TIFFTAG_STRIPBYTECOUNTS)->field_name);
+			"%.1000s: TIFF directory is missing required "
+			"\"%s\" field, calculating from imagelength",
+			tif->tif_name,
+		        _TIFFFieldWithTag(tif,TIFFTAG_STRIPBYTECOUNTS)->field_name);
 		if (EstimateStripByteCounts(tif, dir, dircount) < 0)
 		    goto bad;
 /* 
@@ -545,8 +545,7 @@ TIFFReadDirectory(TIFF* tif)
 		 * strip image.
 		 */
 		TIFFWarning(module,
-	                    "%.1000s: Bogus \"%s\" field, ignoring "
-                            "and calculating from imagelength",
+	"%.1000s: Bogus \"%s\" field, ignoring and calculating from imagelength",
                             tif->tif_name,
 		            _TIFFFieldWithTag(tif,TIFFTAG_STRIPBYTECOUNTS)->field_name);
 		if(EstimateStripByteCounts(tif, dir, dircount) < 0)
