@@ -199,7 +199,13 @@ GDAL_FORMATS = 	gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 bsb xpm \
 # globally.
 #
 
-ifeq ($(HAVE_LD_SHARED),yes)					
+ifeq ($(HAVE_LIBTOOL), yes)
+CONFIG_LIBS	=	$(LIBGDAL) $(PG_LIB)
+CONFIG_LIBS_INS	=	-L$(INST_LIB) -lgdal
+EXE_DEP_LIBS	=	$(LIBGDAL)
+else
+
+ifeq ($(HAVE_LD_SHARED),yes)
 CONFIG_LIBS	=	$(GDAL_SLIB_LINK) $(LIBS)
 CONFIG_LIBS_INS	=	-L$(INST_LIB) -lgdal.$(GDAL_VER)
 EXE_DEP_LIBS	=	$(GDAL_SLIB)
@@ -210,6 +216,7 @@ CONFIG_LIBS_INS	=	$(foreach LF,$(GDAL_LIBS),$(INST_LIB)/$(notdir $(LF)))\
 EXE_DEP_LIBS	=	$(GDAL_LIB)
 endif
 
+endif # HAVE_LIBTOOL
 
 #
 # generic library rules
