@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/04/14 15:00:53  warmerda
+ * Ensure that SDTSModId extraction works for variable sized MODN
+ *
  * Revision 1.10  1999/11/04 22:52:52  warmerda
  * added dynamic ATID support
  *
@@ -83,6 +86,7 @@ void SDTSFeature::ApplyATID( DDFField * poField )
 
 {
     int		nRepeatCount = poField->GetRepeatCount();
+    int         bUsualFormat;
     DDFSubfieldDefn *poMODN;
 
     poMODN = poField->GetFieldDefn()->FindSubfieldDefn( "MODN" );
@@ -91,7 +95,8 @@ void SDTSFeature::ApplyATID( DDFField * poField )
         CPLAssert( FALSE );
         return;
     }
-
+    
+    bUsualFormat = poMODN->GetWidth() == 4;
     for( int iRepeat = 0; iRepeat < nRepeatCount; iRepeat++ )
     {
         paoATID = (SDTSModId *) CPLRealloc(paoATID,
@@ -100,12 +105,19 @@ void SDTSFeature::ApplyATID( DDFField * poField )
         const char * pabyData;
         SDTSModId *poModId = paoATID + nAttributes;
 
-        pabyData = poField->GetSubfieldData( poMODN, NULL, iRepeat );
+        if( bUsualFormat )
+        {
+            pabyData = poField->GetSubfieldData( poMODN, NULL, iRepeat );
             
-        memcpy( poModId->szModule, pabyData, 4 );
-        poModId->szModule[4] = '\0';
-        poModId->nRecord = atoi(pabyData + 4);
-        poModId->szOBRP[0] = '\0';
+            memcpy( poModId->szModule, pabyData, 4 );
+            poModId->szModule[4] = '\0';
+            poModId->nRecord = atoi(pabyData + 4);
+            poModId->szOBRP[0] = '\0';
+        }
+        else
+        {
+            poModId->Set( poField );
+        }
         
         nAttributes++;
     }
@@ -133,13 +145,35 @@ int SDTSModId::Set( DDFField *poField )
 
 {
     const char	*pachData = poField->GetData();
+    DDFFieldDefn *poDefn = poField->GetFieldDefn();
 
-    memcpy( szModule, pachData, 4 );
-    szModule[4] = '\0';
+    if( poDefn->GetSubfieldCount() >= 2 
+        && poDefn->GetSubfield(0)->GetWidth() == 4 )
+    {
+        memcpy( szModule, pachData, 4 );
+        szModule[4] = '\0';
 
-    nRecord = atoi( pachData + 4 );
+        nRecord = atoi( pachData + 4 );
+    }
+    else
+    {
+        DDFSubfieldDefn *poSF;
+        int		nBytesRemaining;
+        const char  *pachData;
 
-    if( poField->GetFieldDefn()->GetSubfieldCount() == 3 )
+        szModule[4] = '\0';
+        poSF = poField->GetFieldDefn()->FindSubfieldDefn( "MODN" );
+        pachData = poField->GetSubfieldData(poSF, &nBytesRemaining);
+        strncpy( szModule,
+                 poSF->ExtractStringData( pachData, nBytesRemaining, NULL),
+                 sizeof(szModule) );
+            
+        poSF = poField->GetFieldDefn()->FindSubfieldDefn( "RCID" );
+        pachData = poField->GetSubfieldData(poSF, &nBytesRemaining);
+        nRecord = poSF->ExtractIntData( pachData, nBytesRemaining, NULL);
+    }
+
+    if( poDefn->GetSubfieldCount() == 3 )
     {
         DDFSubfieldDefn 	*poSF;
 
