@@ -158,7 +158,8 @@ HAVE_NUMPY=1
 
 GDAL_DLL =	gdal$(VERSION).dll
 
-INC	=	-I$(GDAL_ROOT)\port -I$(GDAL_ROOT)\ogr -I$(GDAL_ROOT)\gcore
+INC	=	-I$(GDAL_ROOT)\port -I$(GDAL_ROOT)\ogr -I$(GDAL_ROOT)\gcore \
+		-I$(GDAL_ROOT)\alg
 
 #LINKER_FLAGS =	/NODEFAULTLIB:LIBC 
 
