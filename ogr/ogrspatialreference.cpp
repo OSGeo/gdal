@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2002/01/18 04:51:05  warmerda
+ * added PROJ.4 support to SetFromUserInput()
+ *
  * Revision 1.42  2001/12/06 18:18:47  warmerda
  * added preliminary xml srs support
  *
@@ -1169,7 +1172,8 @@ OGRErr OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS, const char *pszName )
  * <ol>
  * <li> Well Known Text definition - passed on to importFromWkt().
  * <li> "EPSG:n" - number passed on to importFromEPSG(). 
- * <li> filename - file read for WKT definition, passed on to importFromWkt().
+ * <li> PROJ.4 definitions - passed on to importFromProj4().
+ * <li> filename - file read for WKT, XML or PROJ.4 definition.
  * <li> well known name accepted by SetWellKnownGeogCS(), such as NAD27, NAD83,
  * WGS84 or WGS72. 
  * </ol>
@@ -1219,6 +1223,10 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
         return SetWellKnownGeogCS( pszDefinition );
     }
 
+    if( strstr(pszDefinition,"+proj") != NULL 
+             || strstr(pszDefinition,"+init") != NULL )
+        return importFromProj4( pszDefinition );
+
 /* -------------------------------------------------------------------- */
 /*      Try to open it as a file.                                       */
 /* -------------------------------------------------------------------- */
@@ -1250,6 +1258,9 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 
     if( szBuffer[0] == '<' )
         return importFromXML( pszBufPtr );
+    else if( strstr(szBuffer,"+proj") != NULL 
+             || strstr(szBuffer,"+init") != NULL )
+        return importFromProj4( pszBufPtr );
     else
         return importFromWkt( &pszBufPtr );
 }
