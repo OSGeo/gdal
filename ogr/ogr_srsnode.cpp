@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/01/24 16:21:29  warmerda
+ * added StripNodes method, removed simplify flag from pretty wkt
+ *
  * Revision 1.17  2002/01/18 15:30:04  warmerda
  * fixed serious bug in DeleteChild()
  *
@@ -492,24 +495,12 @@ OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult )
 /*                         exportToPrettyWkt()                          */
 /************************************************************************/
 
-OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int bSimplify,
-                                       int nDepth )
+OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int nDepth )
 
 {
     char        **papszChildrenWkt = NULL;
     int         nLength = strlen(pszValue)+4;
     int         i;
-
-/* -------------------------------------------------------------------- */
-/*      Skip uninteresting nodes if simplify flag is set.               */
-/* -------------------------------------------------------------------- */
-    if( bSimplify 
-        && (EQUAL(GetValue(),"AUTHORITY")
-            || EQUAL(GetValue(),"AXIS")) )
-    {
-        *ppszResult = CPLStrdup("");
-        return OGRERR_NONE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Build a list of the WKT format for the children.                */
@@ -519,7 +510,7 @@ OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int bSimplify,
     for( i = 0; i < nChildren; i++ )
     {
         papoChildNodes[i]->exportToPrettyWkt( papszChildrenWkt + i,
-                                              bSimplify, nDepth + 1);
+                                              nDepth + 1);
         nLength += strlen(papszChildrenWkt[i]) + 2 + nDepth*4;
     }
 
@@ -820,3 +811,31 @@ OGRErr OGR_SRSNode::applyRemapper( const char *pszNode,
     return OGRERR_NONE;
 }
                                    
+/************************************************************************/
+/*                             StripNodes()                             */
+/************************************************************************/
+
+/**
+ * Strip child nodes matching name.
+ *
+ * Removes any decendent nodes of this node that match the given name. 
+ * Of course children of removed nodes are also discarded.
+ *
+ * @param pszName the name for nodes that should be removed.
+ */
+
+void OGR_SRSNode::StripNodes( const char * pszName )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Strip any children matching this name.                          */
+/* -------------------------------------------------------------------- */
+    while( FindChild( pszName ) >= 0 )
+        DestroyChild( FindChild( pszName ) );
+
+/* -------------------------------------------------------------------- */
+/*      Recurse                                                         */
+/* -------------------------------------------------------------------- */
+    for( int i = 0; i < GetChildCount(); i++ )
+        GetChild(i)->StripNodes( pszName );
+}

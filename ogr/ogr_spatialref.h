@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2002/01/24 16:21:45  warmerda
+ * added StripNodes method, removed simplify flag from pretty wkt
+ *
  * Revision 1.35  2001/12/06 18:18:47  warmerda
  * added preliminary xml srs support
  *
@@ -187,6 +190,7 @@ class CPL_DLL OGR_SRSNode
     void        AddChild( OGR_SRSNode * );
     int         FindChild( const char * );
     void        DestroyChild( int );
+    void        StripNodes( const char * );
 
     const char  *GetValue() { return pszValue; }
     void        SetValue( const char * );
@@ -197,7 +201,7 @@ class CPL_DLL OGR_SRSNode
 
     OGRErr      importFromWkt( char ** );
     OGRErr      exportToWkt( char ** );
-    OGRErr      exportToPrettyWkt( char **, int = FALSE, int = 1);
+    OGRErr      exportToPrettyWkt( char **, int = 1);
     
     OGRErr      applyRemapper( const char *pszNode, 
                                char **papszSrcValues, 
