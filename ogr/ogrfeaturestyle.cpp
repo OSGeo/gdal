@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/12/02 18:24:12  fwarmerdam
+ * added support for fontname on symbol, per bug 684
+ *
  * Revision 1.12  2004/05/11 00:39:43  warmerda
  * make asStyle*[] using methods non-inline
  *
@@ -104,17 +107,20 @@ OGRStyleParamId asStyleBrush[] = {{OGRSTBrushFColor,"fc",FALSE,OGRSTypeString},
                                 {OGRSTBrushPriority,"l",FALSE,OGRSTypeInteger 
                                 }};
 
-OGRStyleParamId asStyleSymbol[] = {{OGRSTSymbolId,"id",FALSE,OGRSTypeString},
-                                   {OGRSTSymbolAngle,"a",FALSE,OGRSTypeDouble},
-                                   {OGRSTSymbolColor,"c",FALSE,OGRSTypeString},
-                                   {OGRSTSymbolSize,"s",TRUE,OGRSTypeDouble},
-                                   {OGRSTSymbolDx,"dx",TRUE,OGRSTypeDouble},
-                                   {OGRSTSymbolDy,"dy",TRUE,OGRSTypeDouble},
-                                   {OGRSTSymbolStep,"ds",TRUE,OGRSTypeDouble},
-                                   {OGRSTSymbolPerp,"dp",TRUE,OGRSTypeDouble},
-                                   {OGRSTSymbolOffset,"di",TRUE,OGRSTypeDouble},
-                                   {OGRSTSymbolPriority,"l",FALSE,
-                                    OGRSTypeInteger }};
+OGRStyleParamId asStyleSymbol[] = 
+{
+    {OGRSTSymbolId,"id",FALSE,OGRSTypeString},
+    {OGRSTSymbolAngle,"a",FALSE,OGRSTypeDouble},
+    {OGRSTSymbolColor,"c",FALSE,OGRSTypeString},
+    {OGRSTSymbolSize,"s",TRUE,OGRSTypeDouble},
+    {OGRSTSymbolDx,"dx",TRUE,OGRSTypeDouble},
+    {OGRSTSymbolDy,"dy",TRUE,OGRSTypeDouble},
+    {OGRSTSymbolStep,"ds",TRUE,OGRSTypeDouble},
+    {OGRSTSymbolPerp,"dp",TRUE,OGRSTypeDouble},
+    {OGRSTSymbolOffset,"di",TRUE,OGRSTypeDouble},
+    {OGRSTSymbolPriority,"l",FALSE,OGRSTypeInteger},
+    {OGRSTSymbolFontName,"f",FALSE,OGRSTypeString}
+};
 
 OGRStyleParamId asStyleLabel[] = {{OGRSTLabelFontName,"f",FALSE,OGRSTypeString},
                                   {OGRSTLabelSize,"s",TRUE,OGRSTypeDouble},
