@@ -17,8 +17,8 @@ AIRSAR format contains a polarmetric image in compressed stokes matrix form.
 Internally GDAL decompressed the data into a stokes matrix, and then converts
 that form into a covariance matrix.  The returned six bands are the six values
 needed to define the 3x3 symmetric covariance matrix.  Note that the 
-non-diagonal elements of the matrix are complex values, while the dialog are
-real. <p>
+non-diagonal elements of the matrix are complex values, while the diagonal
+value are real (though represented as complex bands).<p>
 
 <ul>
 <li> Band 1: Covariance_11 - Float32
