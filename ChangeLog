@@ -1,5 +1,8 @@
 2003-05-05  Simon Perkins  <s.perkins@lanl.gov>
 
+	* core/gdalrasterband.cpp: Added C++ Fill() method and
+	corresponding C GDALFillRaster() method.
+
 	* frmts/fits/fitsdataset.cpp: Removed dodgy "value type guessing"
 	code from FITS metadata write routine.
 
