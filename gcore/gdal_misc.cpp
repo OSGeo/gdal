@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2003/08/12 22:13:32  warmerda
+ * Changed GDALReadTabFile(0 so that if the CoordSys results in a PROJCS, but
+ * the UNITS keyword is set to "degrees" we just use the GEOGCS portion.  It
+ * seems that the projection is "just for display", and the GCPs will actually
+ * be in lat/long.
+ *
  * Revision 1.47  2003/06/03 19:44:00  warmerda
  * added GDALRPCInfo support
  *
@@ -1236,12 +1242,34 @@ int GDALReadTabFile( const char * pszBaseFilename,
                 poSRS->exportToWkt( ppszWKT );
                 delete poSRS;
             }
+
 #else
             CPLDebug( "GDAL", "GDALReadTabFile(): Found `%s',\n"
                  "but GDALReadTabFile() not configured with MITAB callout.",
                       papszLines[iLine] );
 #endif
         }
+        else if( EQUAL(papszTok[0],"Units") 
+                 && CSLCount(papszTok) > 1 
+                 && EQUAL(papszTok[1],"degree") )
+        {
+            /*
+            ** If we have units of "degree", but a projected coordinate
+            ** system we need to convert it to geographic.  See to01_02.TAB.
+            */
+            if( ppszWKT != NULL && *ppszWKT != NULL
+                && EQUALN(*ppszWKT,"PROJCS",6) )
+            {
+                OGRSpatialReference oSRS, oSRSGeogCS;
+                char *pszSrcWKT = *ppszWKT;
+
+                oSRS.importFromWkt( &pszSrcWKT );
+                oSRSGeogCS.CopyGeogCSFrom( &oSRS );
+                CPLFree( *ppszWKT );
+                oSRSGeogCS.exportToWkt( ppszWKT );
+            }
+        }
+            
     }
 
 /* -------------------------------------------------------------------- */
