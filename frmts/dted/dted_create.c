@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/05/30 16:08:07  warmerda
+ * fixed setting of SE corner in DSI record
+ *
  * Revision 1.6  2002/10/10 17:00:16  warmerda
  * fixed bug in formatting some latitudes in DSI record
  *
@@ -219,19 +222,27 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
     DTEDFormat( achRecord + 141, "MSL" );
     DTEDFormat( achRecord + 144, "WGS84" );
 
+    /* origin */
     DTEDFormatDMS( achRecord + 185, nLLOriginLat, "LAT", 
                    "%02d%02d%02d.0%c" );
     DTEDFormatDMS( achRecord + 194, nLLOriginLong, "LONG", 
                    "%03d%02d%02d.0%c" );
 
+    /* SW */
     DTEDFormatDMS( achRecord + 204, nLLOriginLat, "LAT", "%02d%02d%02d%c" );
     DTEDFormatDMS( achRecord + 211, nLLOriginLong, "LONG", NULL );
+
+    /* NW */
     DTEDFormatDMS( achRecord + 219, nLLOriginLat+1, "LAT", "%02d%02d%02d%c" );
     DTEDFormatDMS( achRecord + 226, nLLOriginLong, "LONG", NULL );
+
+    /* NE */
     DTEDFormatDMS( achRecord + 234, nLLOriginLat+1, "LAT", "%02d%02d%02d%c" );
     DTEDFormatDMS( achRecord + 241, nLLOriginLong+1, "LONG", NULL );
-    DTEDFormatDMS( achRecord + 249, nLLOriginLat+1, "LAT", "%02d%02d%02d%c" );
-    DTEDFormatDMS( achRecord + 256, nLLOriginLong, "LONG", NULL );
+
+    /* SE */
+    DTEDFormatDMS( achRecord + 249, nLLOriginLat, "LAT", "%02d%02d%02d%c" );
+    DTEDFormatDMS( achRecord + 256, nLLOriginLong+1, "LONG", NULL );
 
     DTEDFormat( achRecord + 264, "0000000.0" );
     DTEDFormat( achRecord + 264, "0000000.0" );
