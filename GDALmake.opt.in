@@ -77,7 +77,7 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/ogr/ogr_fromepsg.o
 
 ifeq ($(OGR_ENABLED),yes)
-GDAL_LIBS := $(GDAL_LIBS) $(GDAL_ROOT)/ogr/ogrsf_frmts/ogrsf_frmts.a
+GDAL_LIBS := $(GDAL_ROOT)/ogr/ogrsf_frmts/ogrsf_frmts.a $(GDAL_LIBS) 
 GDAL_OBJ := $(GDAL_OBJ) $(GDAL_ROOT)/ogr/ogrsf_frmts/generic/ogrregisterall.o
 endif
 
