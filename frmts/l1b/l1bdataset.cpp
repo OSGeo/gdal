@@ -1,8 +1,8 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  NOAA Polar Orbiter Level 1b Dataset Reader
- * Purpose:  Partial implementation, can read NOAA-9(F)-NOAA-17(M) GAC/LAC/HRPT
+ * Project:  NOAA Polar Orbiter Level 1b Dataset Reader (AVHRR)
+ * Purpose:  Partial implementation, can read NOAA-9(F)-NOAA-17(M) AVHRR data
  * Author:   Andrey Kiselev, a_kissel@eudoramail.com
  *
  ******************************************************************************
@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2002/05/21 17:37:09  dron
+ * Additional meteadata.
+ *
  * Revision 1.3  2002/05/18 14:01:21  dron
  * NOAA-15 fixes, georeferencing
  *
@@ -50,16 +53,21 @@ CPL_C_START
 void	GDALRegister_L1B(void);
 CPL_C_END
 
-enum {		// Spacecrafts
-    NOAA9,	// NOAA-F
-    NOAA10,	// NOAA-G
-    NOAA11,	// NOAA-H
-    NOAA12,	// NOAA-D
-    NOAA13,	// NOAA-I
-    NOAA14,	// NOAA-J
-    NOAA15,	// NOAA-K
-    NOAA16,	// NOAA-L
-    NOAA17,	// NOAA-M
+enum {		// Spacecrafts:
+    TIROSN,	// TIROS-N
+    NOAA6,	// NOAA-6(A)
+    NOAAB,	// NOAA-B
+    NOAA7,	// NOAA-7(C)
+    NOAA8,	// NOAA-8(E)
+    NOAA9,	// NOAA-9(F)
+    NOAA10,	// NOAA-10(G)
+    NOAA11,	// NOAA-11(H)
+    NOAA12,	// NOAA-12(D)
+    NOAA13,	// NOAA-13(I)
+    NOAA14,	// NOAA-14(J)
+    NOAA15,	// NOAA-15(K)
+    NOAA16,	// NOAA-16(L)
+    NOAA17,	// NOAA-17(M)
 };
 
 enum {		// Types of datasets
@@ -70,11 +78,62 @@ enum {		// Types of datasets
 
 enum {		// Data format
     PACKED10BIT,
+    UNPACKED8BIT,
     UNPACKED16BIT
-};  
+};
+
+enum {		// Receiving stations names:
+    DU,		// Dundee, Scotland, UK
+    GC,		// Fairbanks, Alaska, USA (formerly Gilmore Creek)
+    HO,		// Honolulu, Hawaii, USA
+    MO,		// Monterey, California, USA
+    WE,		// Westarn Europe CDA, Lannion, France
+    SO,		// SOCC (Satellite Operations Control Center), Suitland, Maryland, USA
+    WI,		// Wallops Island, Virginia, USA
+    UNKNOWN_STATION
+};
+
+enum {		// Data processing center:
+    CMS,	// Centre de Meteorologie Spatiale - Lannion, France
+    DSS,	// Dundee Satellite Receiving Station - Dundee, Scotland, UK
+    NSS,	// NOAA/NESDIS - Suitland, Maryland, USA
+    UKM,	// United Kingdom Meteorological Office - Bracknell, England, UK
+    UNKNOWN_CENTER
+};
 
 #define TBM_HEADER_SIZE 122
-#define DATASET_HEADER_SIZE 148
+
+/************************************************************************/
+/* ==================================================================== */
+/*			TimeCode (helper class)				*/
+/* ==================================================================== */
+/************************************************************************/
+
+class TimeCode {
+    long	lYear;
+    long	lDay;
+    long	lMillisecond;
+    char 	pszString[100];
+
+  public:
+    void SetYear(long year)
+    {
+	    lYear = year;
+    }
+    void SetDay(long day)
+    {
+	    lDay = day;
+    }
+    void SetMillisecond(long millisecond)
+    {
+	    lMillisecond = millisecond;
+    }
+    char* PrintTime()
+    {
+	sprintf(pszString, "year: %ld, day: %ld, millisecond: %ld", lYear, lDay, lMillisecond);
+	return pszString;
+    }
+};
 
 /************************************************************************/
 /* ==================================================================== */
@@ -88,6 +147,11 @@ class L1BDataset : public GDALDataset
 
     GByte	 pabyTBMHeader[TBM_HEADER_SIZE];
 //    GByte	 pabyDataHeader[DATASET_HEADER_SIZE];
+    char	pszRevolution[6]; // Five-digit number identifying spacecraft revolution
+    int		iSource; // Source of data (receiving station name)
+    int		iProcCenter; // Data processing center
+    TimeCode	sStartTime;
+    TimeCode	sStopTime;
 
     GDAL_GCP    *pasGCPList;
     GDAL_GCP	*pasCorners;
@@ -113,10 +177,12 @@ class L1BDataset : public GDALDataset
 
     FILE	*fp;
 
-    void        ProcessHeader();
+    void        ProcessRecordHeaders();
     void	FetchNOAA9GCPs(GDAL_GCP *pasGCPList, GInt16 *piRecordHeader, int iLine);
     void	FetchNOAA15GCPs(GDAL_GCP *pasGCPList, GInt32 *piRecordHeader, int iLine);
     void	UpdateCorners(GDAL_GCP *psGCP);
+    void	FetchNOAA9TimeCode(TimeCode *psTime, GByte *piRecordHeader);
+    void	FetchNOAA15TimeCode(TimeCode *psTime, GUInt16 *piRecordHeader);
     void	ComputeGeoref();
 
   public:
@@ -322,9 +388,50 @@ const GDAL_GCP *L1BDataset::GetGCPs()
 
 void L1BDataset::ComputeGeoref()
 {
+    int bApproxOK = TRUE;
+    GDALGCPsToGeoTransform( 4, pasCorners, adfGeoTransform, bApproxOK );
 /*	adfGeoTransform[0]; //lon
 	adfGeoTransform[3]; //lat*/
 	;
+}
+
+/************************************************************************/
+/*	Fetch timecode from the record header (NOAA9-NOAA14 version)	*/
+/************************************************************************/
+void L1BDataset::FetchNOAA9TimeCode(TimeCode *psTime, GByte *piRecordHeader)
+{
+    GUInt32 lTemp;
+
+    lTemp = ((piRecordHeader[2] >> 1) & 0x7F);
+    psTime->SetYear((lTemp > 77)?(lTemp + 1900):(lTemp + 2000)); // Avoid `Year 2000' bug
+    psTime->SetDay((GUInt32)(piRecordHeader[2] & 0x01) << 8 | (GUInt32)piRecordHeader[3]);
+    psTime->SetMillisecond(
+	((GUInt32)(piRecordHeader[4] & 0x07) << 24) | ((GUInt32)piRecordHeader[5] << 16) |
+	((GUInt32)piRecordHeader[6] << 8) | (GUInt32)piRecordHeader[7]);
+}
+
+/************************************************************************/
+/*	Fetch timecode from the record header (NOAA15-NOAA17 version)	*/
+/************************************************************************/
+void L1BDataset::FetchNOAA15TimeCode(TimeCode *psTime, GUInt16 *piRecordHeader)
+{
+    GUInt16 iTemp;
+    GUInt32 lTemp;
+
+#ifdef CPL_LSB
+    iTemp = piRecordHeader[1];
+    psTime->SetYear(CPL_SWAP16(iTemp));
+    iTemp = piRecordHeader[2];
+    psTime->SetDay(CPL_SWAP16(iTemp));
+    lTemp = (GUInt32)CPL_SWAP16(piRecordHeader[4]) << 16 |
+	(GUInt32)CPL_SWAP16(piRecordHeader[5]);
+    psTime->SetMillisecond(lTemp);
+#else
+    psTime->SetYear(piRecordHeader[1]);
+    psTime->SetDay(piRecordHeader[2]);
+    psTime->SetMillisecond((GUInt32)piRecordHeader[4] << 16 | (GUInt32)piRecordHeader[5]);
+#endif
+
 }
 
 /************************************************************************/
@@ -414,6 +521,7 @@ void L1BDataset::FetchNOAA9GCPs(GDAL_GCP *pasGCPList, GInt16 *piRecordHeader, in
 
 void L1BDataset::FetchNOAA15GCPs(GDAL_GCP *pasGCPList, GInt32 *piRecordHeader, int iLine)
 {
+    GUInt32	lTemp;
     int		nGoodGCPs, iPixel;
     
     nGoodGCPs = nGCPPerLine;
@@ -422,8 +530,10 @@ void L1BDataset::FetchNOAA15GCPs(GDAL_GCP *pasGCPList, GInt32 *piRecordHeader, i
     while ( j < iGCPOffset / (int)sizeof(piRecordHeader[0]) + 2 * nGoodGCPs )
     {
 #ifdef CPL_LSB
-        pasGCPList[nGCPCount].dfGCPY = CPL_SWAP32(piRecordHeader[j]) / 10000.0; j++;
-        pasGCPList[nGCPCount].dfGCPX = CPL_SWAP32(piRecordHeader[j]) / 10000.0; j++;
+	lTemp = piRecordHeader[j++];
+        pasGCPList[nGCPCount].dfGCPY = CPL_SWAP32(lTemp) / 10000.0;
+	lTemp = piRecordHeader[j++];
+        pasGCPList[nGCPCount].dfGCPX = CPL_SWAP32(lTemp) / 10000.0;
 #else
         pasGCPList[nGCPCount].dfGCPY = piRecordHeader[j++] / 10000.0;
         pasGCPList[nGCPCount].dfGCPX = piRecordHeader[j++] / 10000.0;
@@ -439,17 +549,14 @@ void L1BDataset::FetchNOAA15GCPs(GDAL_GCP *pasGCPList, GInt32 *piRecordHeader, i
 }
 
 /************************************************************************/
-/*			ProcessHeader()					*/
+/*			ProcessRecordHeaders()					*/
 /************************************************************************/
 
-void L1BDataset::ProcessHeader()
+void L1BDataset::ProcessRecordHeaders()
 {
     int		iLine;
     void	*piRecordHeader;
 
-/* -------------------------------------------------------------------- */
-/*      Fetch the GCP from the individual scanlines                     */
-/* -------------------------------------------------------------------- */
     piRecordHeader = CPLMalloc(nRecordDataStart);
     pasGCPList = (GDAL_GCP *) CPLCalloc( GetRasterYSize() * nGCPPerLine, sizeof(GDAL_GCP) );
     GDALInitGCPs( GetRasterYSize() * nGCPPerLine, pasGCPList );
@@ -461,13 +568,23 @@ void L1BDataset::ProcessHeader()
 	VSIFSeek(fp, nDataStartOffset + iLine * nRecordSize, SEEK_SET);
 	VSIFRead(piRecordHeader, 1, nRecordDataStart, fp);
 	if (iSpacecraftID <= NOAA14)
-	    FetchNOAA9GCPs(pasGCPList, (GInt16 *)piRecordHeader, iLine);
+	{
+	    if (iLine == 0 )
+	        FetchNOAA9TimeCode(&sStartTime, (GByte *) piRecordHeader);
+	    else if (iLine == GetRasterYSize() - 1)
+		    FetchNOAA9TimeCode(&sStopTime, (GByte *) piRecordHeader);
+            FetchNOAA9GCPs(pasGCPList, (GInt16 *)piRecordHeader, iLine);
+	}
 	else
+	{
+	    if (iLine == 0)
+	        FetchNOAA15TimeCode(&sStartTime, (GUInt16 *) piRecordHeader);
+	    else if (iLine == GetRasterYSize() - 1)
+	        FetchNOAA15TimeCode(&sStopTime, (GUInt16 *) piRecordHeader);
 	    FetchNOAA15GCPs(pasGCPList, (GInt32 *)piRecordHeader, iLine);
+	}
     }
     ComputeGeoref();
-    int bApproxOK = TRUE;
-    GDALGCPsToGeoTransform( 4, pasCorners, adfGeoTransform, bApproxOK );
     CPLFree(piRecordHeader);
 }
 
@@ -483,12 +600,14 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->fp == NULL /*|| poOpenInfo->nHeaderBytes < 200*/ )
         return NULL;
 
-    if( !EQUALN((const char *) poOpenInfo->pabyHeader + 30, "NSS", 3) && 
-        !EQUALN((const char *) poOpenInfo->pabyHeader + 33, ".", 1) &&
+    // XXX: Signature is not very good
+    if( !EQUALN((const char *) poOpenInfo->pabyHeader + 33, ".", 1) &&
 	!EQUALN((const char *) poOpenInfo->pabyHeader + 38, ".", 1) && 
 	!EQUALN((const char *) poOpenInfo->pabyHeader + 41, ".", 1) && 
 	!EQUALN((const char *) poOpenInfo->pabyHeader + 48, ".", 1) && 
-	!EQUALN((const char *) poOpenInfo->pabyHeader + 54, ".", 1) )
+	!EQUALN((const char *) poOpenInfo->pabyHeader + 54, ".", 1) &&
+	!EQUALN((const char *) poOpenInfo->pabyHeader + 60, ".", 1) &&
+	!EQUALN((const char *) poOpenInfo->pabyHeader + 69, ".", 1) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -512,9 +631,29 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
     VSIFRead( poDS->pabyTBMHeader, 1, TBM_HEADER_SIZE, poDS->fp );
 //    VSIFRead( poDS->abyDataHeader, 1, DATASET_HEADER_SIZE, poDS->fp );
 
+    // Determine processing center where the dataset was created
+    if ( EQUALN((const char *) poDS->pabyTBMHeader + 30, "CMS", 3) )
+         poDS->iProcCenter = CMS;
+    else if ( EQUALN((const char *) poDS->pabyTBMHeader + 30, "DSS", 3) )
+         poDS->iProcCenter = DSS;
+    else if ( EQUALN((const char *) poDS->pabyTBMHeader + 30, "NSS", 3) )
+         poDS->iProcCenter = NSS;
+    else if ( EQUALN((const char *) poDS->pabyTBMHeader + 30, "UKM", 3) )
+         poDS->iProcCenter = UKM;
+    else
+	 poDS->iProcCenter = UNKNOWN_CENTER;
+    
     // Determine spacecraft type
-    if ( EQUALN((const char *)poDS->pabyTBMHeader + 39, "NF", 2) )
-         poDS->iSpacecraftID = NOAA9;
+    if ( EQUALN((const char *)poDS->pabyTBMHeader + 39, "NA", 2) )
+         poDS->iSpacecraftID = NOAA6;
+    else if ( EQUALN((const char *)poDS->pabyTBMHeader + 39, "NB", 2) )
+	 poDS->iSpacecraftID = NOAAB;
+    else if ( EQUALN((const char *)poDS->pabyTBMHeader + 39, "NC", 2) )
+	 poDS->iSpacecraftID = NOAA7;
+    else if ( EQUALN((const char *)poDS->pabyTBMHeader + 39, "NE", 2) )
+	 poDS->iSpacecraftID = NOAA8;
+    else if ( EQUALN((const char *)poDS->pabyTBMHeader + 39, "NF", 2) )
+	 poDS->iSpacecraftID = NOAA9;
     else if ( EQUALN((const char *)poDS->pabyTBMHeader + 39, "NG", 2) )
 	 poDS->iSpacecraftID = NOAA10;
     else if ( EQUALN((const char *)poDS->pabyTBMHeader + 39, "NH", 2) )
@@ -528,7 +667,9 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
     else if ( EQUALN((const char *)poDS->pabyTBMHeader + 39, "NK", 2) )
 	 poDS->iSpacecraftID = NOAA15;
     else if ( EQUALN((const char *)poDS->pabyTBMHeader + 39, "NL", 2) )
-	 poDS->iSpacecraftID = NOAA15;
+	 poDS->iSpacecraftID = NOAA16;
+    else if ( EQUALN((const char *)poDS->pabyTBMHeader + 39, "NM", 2) )
+	 poDS->iSpacecraftID = NOAA17;
     else
 	 goto bad;
 	   
@@ -541,6 +682,28 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 	 poDS->iDataType = GAC;
     else
 	 goto bad;
+
+    // Get revolution number (as string, we don't need this value for processing)
+    memcpy(poDS->pszRevolution, poDS->pabyTBMHeader + 62, 5);
+    poDS->pszRevolution[5] = 0;
+
+    // Get receiving station name
+    if ( EQUALN((const char *)poDS->pabyTBMHeader + 70, "DU", 2) )
+	 poDS->iSource = DU;
+    else if ( EQUALN((const char *)poDS->pabyTBMHeader + 70, "GC", 2) )
+	 poDS->iSource = GC;
+    else if ( EQUALN((const char *)poDS->pabyTBMHeader + 70, "HO", 2) )
+	 poDS->iSource = HO;
+    else if ( EQUALN((const char *)poDS->pabyTBMHeader + 70, "MO", 2) )
+	 poDS->iSource = MO;
+    else if ( EQUALN((const char *)poDS->pabyTBMHeader + 70, "WE", 2) )
+	 poDS->iSource = WE;
+    else if ( EQUALN((const char *)poDS->pabyTBMHeader + 70, "SO", 2) )
+	 poDS->iSource = SO;
+    else if ( EQUALN((const char *)poDS->pabyTBMHeader + 70, "WI", 2) )
+	 poDS->iSource = WI;
+    else
+	 poDS->iSource = UNKNOWN_STATION;
 
     // Determine number of channels and data format
     // (10-bit packed or 16-bit unpacked)
@@ -559,7 +722,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
     else
 	 goto bad;*/
 
-    switch(poDS->iDataType)
+    switch( poDS->iDataType )
     {
 	case HRPT:
 	case LAC:
@@ -575,7 +738,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 	        poDS->nRecordDataStart = 448;
 	        poDS->nRecordDataEnd = 14104;
 		poDS->iGCPCodeOffset = 53;
-		poDS->iGCPOffset = 104;
+	poDS->iGCPOffset = 104;
 	    }
 	    else if (poDS->iSpacecraftID <= NOAA17)
 	    {
@@ -609,7 +772,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 		poDS->nDataStartOffset = 9728;
                 poDS->nRecordSize = 4608;
 	        poDS->nRecordDataStart = 1264;
-	        poDS->nRecordDataEnd = 3992; //4016;
+	        poDS->nRecordDataEnd = 3992;
 		poDS->iGCPCodeOffset = 0; // XXX: not exist for NOAA15?
                 poDS->iGCPOffset = 640;
 	    }
@@ -636,15 +799,30 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if ( EQUALN((const char *)poDS->pabyTBMHeader + 96, "Y", 1) )
     {
-	poDS->ProcessHeader();
+	poDS->ProcessRecordHeaders();
     }
 
 /* -------------------------------------------------------------------- */
-/*      Get and set other important information	                        */
+/*      Get and set other important information	as metadata             */
 /* -------------------------------------------------------------------- */
     char *pszText;
-    switch(poDS->iSpacecraftID)
+    switch( poDS->iSpacecraftID )
     {
+	case TIROSN:
+	    pszText = "TIROS-N";
+	break;
+	case NOAA6:
+	    pszText = "NOAA-6(A)";
+	break;
+	case NOAAB:
+	    pszText = "NOAA-B";
+	break;
+	case NOAA7:
+	    pszText = "NOAA-7(C)";
+	break;
+	case NOAA8:
+	    pszText = "NOAA-8(E)";
+	break;
 	case NOAA9:
 	    pszText = "NOAA-9(F)";
 	break;
@@ -676,21 +854,71 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 	    pszText = "Unknown";
     }
     poDS->SetMetadataItem( "SATELLITE",  pszText );
-    switch(poDS->iDataType)
+    switch( poDS->iDataType )
     {
         case LAC:
-	    pszText = "LAC";
+	    pszText = "AVHRR LAC";
 	break;
         case HRPT:
-	    pszText = "HRPT";
+	    pszText = "AVHRR HRPT";
 	break;
         case GAC:
-	    pszText = "GAC";
+	    pszText = "AVHRR GAC";
 	break;
 	default:
 	    pszText = "Unknown";
     }
-    poDS->SetMetadataItem( "DATATYPE",  pszText );
+    poDS->SetMetadataItem( "DATA_TYPE",  pszText );
+    poDS->SetMetadataItem( "REVOLUTION",  poDS->pszRevolution );
+    switch( poDS->iSource )
+    {
+        case DU:
+	    pszText = "Dundee, Scotland, UK";
+	break;
+        case GC:
+	    pszText = "Fairbanks, Alaska, USA (formerly Gilmore Creek)";
+	break;
+        case HO:
+	    pszText = "Honolulu, Hawaii, USA";
+	break;
+        case MO:
+	    pszText = "Monterey, California, USA";
+	break;
+        case WE:
+	    pszText = "Westarn Europe CDA, Lannion, France";
+	break;
+        case SO:
+	    pszText = "SOCC (Satellite Operations Control Center), Suitland, Maryland, USA";
+	break;
+        case WI:
+	    pszText = "Wallops Island, Virginia, USA";
+	break;
+	default:
+	    pszText = "Unknown receiving station";
+    }
+    poDS->SetMetadataItem( "SOURCE",  pszText );
+    switch( poDS->iProcCenter )
+    {
+        case CMS:
+	    pszText = "Centre de Meteorologie Spatiale - Lannion, France";
+	break;
+        case DSS:
+	    pszText = "Dundee Satellite Receiving Station - Dundee, Scotland, UK";
+	break;
+        case NSS:
+	    pszText = "NOAA/NESDIS - Suitland, Maryland, USA";
+	break;
+        case UKM:
+	    pszText = "United Kingdom Meteorological Office - Bracknell, England, UK";
+	break;
+	default:
+	    pszText = "Unknown processing center";
+    }
+    poDS->SetMetadataItem( "PROCESSING_CENTER",  pszText );
+    // Time of first scanline
+    poDS->SetMetadataItem( "START",  poDS->sStartTime.PrintTime() );
+    // Time of last scanline
+    poDS->SetMetadataItem( "STOP",  poDS->sStopTime.PrintTime() );
     
     return( poDS );
 bad:
@@ -712,8 +940,8 @@ void GDALRegister_L1B()
         poL1BDriver = poDriver = new GDALDriver();
         
         poDriver->pszShortName = "L1B";
-        poDriver->pszLongName = "NOAA Polar Orbiter Level 1b Data Set";
-        poDriver->pszHelpTopic = "frmt_various.html#L1B";
+        poDriver->pszLongName = "NOAA Polar Orbiter Level 1b Data Set (AVHRR)";
+        poDriver->pszHelpTopic = "frmt_l1b.html";
         
         poDriver->pfnOpen = L1BDataset::Open;
 
