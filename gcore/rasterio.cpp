@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/03/06 02:22:13  warmerda
+ * added overview support
+ *
  * Revision 1.6  1999/11/23 18:44:10  warmerda
  * Fixed GDALCopyWords!
  *
@@ -120,6 +123,18 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return CE_None;
     }
     
+/* ==================================================================== */
+/*      Do we have overviews that would be appropriate to satisfy       */
+/*      this request?                                                   */
+/* ==================================================================== */
+    if( (nBufXSize < nXSize || nBufYSize < nYSize)
+        && GetOverviewCount() > 0 && eRWFlag == GF_Read )
+    {
+        if( OverviewRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                              pData, nBufXSize, nBufYSize, 
+                              eBufType, nPixelSpace, nLineSpace ) == CE_None )
+            return CE_None;
+    }
     
 /* ==================================================================== */
 /*      Loop reading required source blocks to satisfy output           */
@@ -498,3 +513,96 @@ void
         }
     } /* next iWord */
 }
+
+/************************************************************************/
+/*                          OverviewRasterIO()                          */
+/*                                                                      */
+/*      Special work function to utilize available overviews to         */
+/*      more efficiently satisfy downsampled requests.  It will         */
+/*      return CE_Failure if there are no appropriate overviews         */
+/*      available but it doesn't emit any error messages.               */
+/************************************************************************/
+
+CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
+                                int nXOff, int nYOff, int nXSize, int nYSize,
+                                void * pData, int nBufXSize, int nBufYSize,
+                                GDALDataType eBufType,
+                                int nPixelSpace, int nLineSpace )
+
+
+{
+    GDALRasterBand	*poBestOverview = NULL;
+    int			nOverviewCount = GetOverviewCount();
+    double		dfDesiredResolution, dfBestResolution = 1.0;
+
+/* -------------------------------------------------------------------- */
+/*      Find the Compute the desired resolution.  The resolution is     */
+/*      based on the least reduced axis, and represents the number      */
+/*      of source pixels to one destination pixel.                      */
+/* -------------------------------------------------------------------- */
+    if( (nXSize / (double) nBufXSize) < (nYSize / (double) nBufYSize ) 
+        || nBufYSize == 1 )
+        dfDesiredResolution = nXSize / (double) nBufXSize;
+    else
+        dfDesiredResolution = nYSize / (double) nBufYSize;
+
+/* -------------------------------------------------------------------- */
+/*      Find the overview level that largest resolution value (most     */
+/*      downsampled) that is still less than (or only a little more)    */
+/*      downsampled than the request.                                   */
+/* -------------------------------------------------------------------- */
+    for( int iOverview = 0; iOverview < nOverviewCount; iOverview++ )
+    {
+        GDALRasterBand	*poOverview = GetOverview( iOverview );
+        double		dfResolution;
+
+        if( (GetXSize() / (double) poOverview->GetXSize())
+            < (GetYSize() / (double) poOverview->GetYSize()) )
+            dfResolution = 
+                GetXSize() / (double) poOverview->GetXSize();
+        else
+            dfResolution = 
+                GetYSize() / (double) poOverview->GetYSize();
+
+        if( dfResolution < dfDesiredResolution * 1.2 
+            && dfResolution > dfBestResolution )
+        {
+            poBestOverview = poOverview;
+            dfBestResolution = dfResolution;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we didn't find an overview that helps us, just return        */
+/*      indicating failure and the full resolution image will be used.  */
+/* -------------------------------------------------------------------- */
+    if( poBestOverview == NULL )
+        return CE_Failure;
+
+/* -------------------------------------------------------------------- */
+/*      Recompute the source window in terms of the selected            */
+/*      overview.                                                       */
+/* -------------------------------------------------------------------- */
+    int		nOXOff, nOYOff, nOXSize, nOYSize;
+    double	dfXRes, dfYRes;
+    
+    dfXRes = GetXSize() / (double) poBestOverview->GetXSize();
+    dfYRes = GetYSize() / (double) poBestOverview->GetYSize();
+
+    nOXOff = MIN(poBestOverview->GetXSize()-1,(int) (nXOff/dfXRes+0.5));
+    nOYOff = MIN(poBestOverview->GetYSize()-1,(int) (nYOff/dfYRes+0.5));
+    nOXSize = MAX(1,(int) (nXSize/dfXRes + 0.5));
+    nOYSize = MAX(1,(int) (nYSize/dfYRes + 0.5));
+    if( nOXOff + nOXSize > poBestOverview->GetXSize() )
+        nOXSize = poBestOverview->GetXSize() - nOXOff;
+    if( nOYOff + nOYSize > poBestOverview->GetYSize() )
+        nOYSize = poBestOverview->GetYSize() - nOYOff;
+
+/* -------------------------------------------------------------------- */
+/*      Recast the call in terms of the new raster layer.               */
+/* -------------------------------------------------------------------- */
+    return poBestOverview->RasterIO( eRWFlag, nOXOff, nOYOff, nOXSize, nOYSize,
+                                     pData, nBufXSize, nBufYSize, eBufType,
+                                     nPixelSpace, nLineSpace );
+}
+
