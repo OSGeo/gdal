@@ -9,6 +9,13 @@
 
  *
  * $Log$
+ * Revision 1.15  2005/02/21 20:48:11  kruland
+ * Intermediate commit.  Changed internal typenames so they no longer use
+ * those defined in gdal/ogr library.  Removed newobject from Dataset function
+ * which return layers since they are owned by the dataset.  Moved the
+ * Geometry factory methods so they are visible to the Geometry object
+ * constructor.
+ *
  * Revision 1.14  2005/02/21 18:56:54  kruland
  * Fix usage of the Geometry class.  The factory methods were confused by
  * returning voids instead of void*s.
@@ -76,6 +83,7 @@
 
 typedef int OGRErr;
 typedef int OGRwkbByteOrder;
+typedef int OGRwkbGeometryType;
 
 %pythoncode %{
 
@@ -155,6 +163,11 @@ using namespace std;
 #include "cpl_string.h"
 
 typedef void OSRSpatialReferenceShadow;
+typedef void OGRDriverShadow;
+typedef void OGRDataSourceShadow;
+typedef void OGRLayerShadow;
+typedef void OGRFeatureShadow;
+typedef void OGRFeatureDefnShadow;
 typedef void OGRGeometryShadow;
 
 %}
@@ -162,11 +175,11 @@ typedef void OGRGeometryShadow;
 
 /* OGR Driver */
 
-%rename (Driver) OGRSFDriverH;
+%rename (Driver) OGRDriverShadow;
 
-class OGRSFDriverH {
-  OGRSFDriverH();
-  ~OGRSFDriverH();
+class OGRDriverShadow {
+  OGRDriverShadow();
+  ~OGRDriverShadow();
 public:
 %extend {
 
@@ -174,30 +187,28 @@ public:
   char const *name;
 %mutable;
 
-
-    
 %newobject CreateDataSource;
 %feature( "kwargs" ) CreateDataSource;
-  OGRDataSourceH *CreateDataSource( const char *name, 
+  OGRDataSourceShadow *CreateDataSource( const char *name, 
                                     char **options = 0 ) {
-    OGRDataSourceH *ds = (OGRDataSourceH*) OGR_Dr_CreateDataSource( self, name, options);
+    OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CreateDataSource( self, name, options);
     return ds;
   }
   
 %newobject CopyDataSource;
 %feature( "kwargs" ) CopyDataSource;
-  OGRDataSourceH *CopyDataSource( OGRDataSourceH* copy_ds, 
+  OGRDataSourceShadow *CopyDataSource( OGRDataSourceShadow* copy_ds, 
                                   const char* name, 
                                   char **options = 0 ) {
-    OGRDataSourceH *ds = (OGRDataSourceH*) OGR_Dr_CopyDataSource(self, copy_ds, name, options);
+    OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CopyDataSource(self, copy_ds, name, options);
     return ds;
   }
   
 %newobject Open;
 %feature( "kwargs" ) Open;
-  OGRDataSourceH *Open( const char* name, 
+  OGRDataSourceShadow *Open( const char* name, 
                         int update=0 ) {
-    OGRDataSourceH* ds = (OGRDataSourceH*) OGR_Dr_Open(self, name, update);
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*) OGR_Dr_Open(self, name, update);
     return ds;
   }
 
@@ -214,16 +225,16 @@ public:
 
 
 } /* %extend */
-}; /* class OGRSFDriverH */
+}; /* class OGRDriverShadow */
 
 
 /* OGR DataSource */
 
-%rename (DataSource) OGRDataSourceH;
+%rename (DataSource) OGRDataSourceShadow;
 
-class OGRDataSourceH {
-  OGRDataSourceH();
-  ~OGRDataSourceH();
+class OGRDataSourceShadow {
+  OGRDataSourceShadow();
+  ~OGRDataSourceShadow();
 public:
 %extend {
 
@@ -268,13 +279,12 @@ public:
     return OGR_DS_DeleteLayer(self, index);
   }
 
-  %newobject CreateLayer;
   %feature( "kwargs" ) CreateLayer;
-  OGRLayerH *CreateLayer(const char* name, 
+  OGRLayerShadow *CreateLayer(const char* name, 
               OSRSpatialReferenceShadow* reference=NULL,
               OGRwkbGeometryType geom_type=wkbUnknown,
               char** options=0) {
-    OGRLayerH* layer = (OGRLayerH*) OGR_DS_CreateLayer( self,
+    OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_CreateLayer( self,
                                                         name,
                                                         reference,
                                                         geom_type,
@@ -282,28 +292,25 @@ public:
     return layer;
   }
 
-  %newobject CopyLayer;
   %feature( "kwargs" ) CopyLayer;
-  OGRLayerH *CopyLayer(OGRLayerH src_layer,
+  OGRLayerShadow *CopyLayer(OGRLayerShadow *src_layer,
             const char* new_name,
             char** options=0) {
-    OGRLayerH* layer = (OGRLayerH*) OGR_DS_CopyLayer( self,
+    OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_CopyLayer( self,
                                                       src_layer,
                                                       new_name,
                                                       options);
     return layer;
   }
   
-  %newobject GetLayerByIndex;
   %feature( "kwargs" ) GetLayerByIndex;
-  OGRLayerH *GetLayerByIndex( int index=0) {
-    OGRLayerH* layer = (OGRLayerH*) OGR_DS_GetLayer(self, index);
+  OGRLayerShadow *GetLayerByIndex( int index=0) {
+    OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_GetLayer(self, index);
     return layer;
   }
 
-  %newobject GetLayerByName;
-  OGRLayerH *GetLayerByName( const char* layer_name) {
-    OGRLayerH* layer = (OGRLayerH*) OGR_DS_GetLayerByName(self, layer_name);
+  OGRLayerShadow *GetLayerByName( const char* layer_name) {
+    OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_GetLayerByName(self, layer_name);
     return layer;
   }
 
@@ -313,17 +320,17 @@ public:
 
   %newobject ExecuteSQL;
   %feature( "kwargs" ) ExecuteSQL;
-  OGRLayerH *ExecuteSQL(const char* statement,
+  OGRLayerShadow *ExecuteSQL(const char* statement,
                         OGRGeometryShadow* geom=NULL,
                         const char* dialect=NULL) {
-    OGRLayerH* layer = (OGRLayerH*) OGR_DS_ExecuteSQL(self,
+    OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_ExecuteSQL(self,
                                                       statement,
                                                       geom,
                                                       dialect);
     return layer;
   }
   
-  void ReleaseResultSet(OGRLayerH layer){
+  void ReleaseResultSet(OGRLayerShadow *layer){
     OGR_DS_ReleaseResultSet(self, layer);
   }
 
@@ -370,16 +377,16 @@ ds[0:4] would return a list of the first four layers."""
 } /* %extend */
 
 
-}; /* class OGRDataSourceH */
+}; /* class OGRDataSourceShadow */
 
 
 
 
-%rename (Layer) OGRLayerH;
+%rename (Layer) OGRLayerShadow;
 %apply (THROW_OGR_ERROR) {OGRErr};
-class OGRLayerH {
-  OGRLayerH();
-  ~OGRLayerH();
+class OGRLayerShadow {
+  OGRLayerShadow();
+  ~OGRLayerShadow();
 public:
 %extend {
 
@@ -426,13 +433,13 @@ public:
   }
   
   %newobject GetFeature;
-  OGRFeatureH *GetFeature(long fid) {
-    return (OGRFeatureH*) OGR_L_GetFeature(self, fid);
+  OGRFeatureShadow *GetFeature(long fid) {
+    return (OGRFeatureShadow*) OGR_L_GetFeature(self, fid);
   }
   
   %newobject GetNextFeature;
-  OGRFeatureH *GetNextFeature() {
-    return (OGRFeatureH*) OGR_L_GetNextFeature(self);
+  OGRFeatureShadow *GetNextFeature() {
+    return (OGRFeatureShadow*) OGR_L_GetNextFeature(self);
   }
   
   OGRErr SetNextByIndex(long new_index) {
@@ -443,7 +450,7 @@ public:
     return 0;
   }
   
-  OGRErr SetFeature(OGRFeatureH feature) {
+  OGRErr SetFeature(OGRFeatureShadow *feature) {
     OGRErr err = OGR_L_SetFeature(self, feature);
     if (err != 0) {
       throw err;
@@ -451,7 +458,7 @@ public:
     return 0;
   }
   
-  OGRErr CreateFeature(OGRFeatureH feature) {
+  OGRErr CreateFeature(OGRFeatureShadow *feature) {
     OGRErr err = OGR_L_CreateFeature(self, feature);
     if (err != 0) {
       throw err;
@@ -476,8 +483,8 @@ public:
   }
   
   %newobject GetLayerDefn;
-  OGRFeatureDefnH *GetLayerDefn() {
-    return (OGRFeatureDefnH*) OGR_L_GetLayerDefn(self);
+  OGRFeatureDefnShadow *GetLayerDefn() {
+    return (OGRFeatureDefnShadow*) OGR_L_GetLayerDefn(self);
   }
 
   %feature( "kwargs" ) GetFeatureCount;  
@@ -572,17 +579,17 @@ layer[0:4] would return a list of the first four features."""
 } /* %extend */
 
 
-}; /* class OGRLayerH */
+}; /* class OGRLayerShadow */
 
 %clear (OGRErr);
 
 
 
-%rename (Feature) OGRFeatureH;
+%rename (Feature) OGRFeatureShadow;
 %apply (THROW_OGR_ERROR) {OGRErr};
-class OGRFeatureH {
-  OGRFeatureH();
-  ~OGRFeatureH();
+class OGRFeatureShadow {
+  OGRFeatureShadow();
+  ~OGRFeatureShadow();
 public:
 %extend {
 
@@ -591,8 +598,8 @@ public:
   }
   
   %newobject GetDefnRef;
-  OGRFeatureDefnH *GetDefnRef() {
-    return (OGRFeatureDefnH*) OGR_F_GetDefnRef(self);
+  OGRFeatureDefnShadow *GetDefnRef() {
+    return (OGRFeatureDefnShadow*) OGR_F_GetDefnRef(self);
   }
   
   OGRErr SetGeometry(OGRGeometryShadow* geom) {
@@ -615,11 +622,11 @@ public:
   }
   
   %newobject Clone;
-  OGRFeatureH *Clone() {
-    return (OGRFeatureH*) OGR_F_Clone(self);
+  OGRFeatureShadow *Clone() {
+    return (OGRFeatureShadow*) OGR_F_Clone(self);
   }
   
-  int Equal(OGRFeatureH feature) {
+  int Equal(OGRFeatureShadow *feature) {
     return OGR_F_Equal(self, feature);
   }
   
@@ -724,7 +731,7 @@ public:
   /* ------------------------------------------- */  
   
   %feature("kwargs") SetFrom;
-  OGRErr SetFrom(OGRFeatureH other, int forgiving=1) {
+  OGRErr SetFrom(OGRFeatureShadow *other, int forgiving=1) {
     OGRErr err = OGR_F_SetFrom(self, other, forgiving);
     if (err != 0)
       throw err;
@@ -797,22 +804,22 @@ public:
 } /* %extend */
 
 
-}; /* class OGRFeatureH */
+}; /* class OGRFeatureShadow */
 
 %clear (OGRErr);
 
 
-%rename (FeatureDefn) OGRFeatureDefnH;
+%rename (FeatureDefn) OGRFeatureDefnShadow;
 %apply (THROW_OGR_ERROR) {OGRErr};
-class OGRFeatureDefnH {
-  
-  ~OGRFeatureDefnH();
+class OGRFeatureDefnShadow {
+  OGRFeatureDefnShadow();
+  ~OGRFeatureDefnShadow();
 public:
 %extend {
 
-  %feature("kwargs") OGRFeatureDefnH;
-  OGRFeatureDefnH* OGRFeatureDefnH(const char* name=NULL) {
-    return (OGRFeatureDefnH* )OGR_FD_Create(name);
+  %feature("kwargs") OGRFeatureDefnShadow;
+  OGRFeatureDefnShadow* OGRFeatureDefnShadow(const char* name=NULL) {
+    return (OGRFeatureDefnShadow* )OGR_FD_Create(name);
   }
   
   void Destroy() {
@@ -862,9 +869,54 @@ public:
 } /* %extend */
 
 
-}; /* class OGRFeatureDefnH */
+}; /* class OGRFeatureDefnShadow */
 
 %clear (OGRErr);
+
+%feature( "kwargs" ) CreateGeometryFromWkb;
+%newobject CreateGeometryFromWkb;
+%apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
+%inline %{
+  OGRGeometryShadow* CreateGeometryFromWkb( int len, char *bin_string, 
+                                            OSRSpatialReferenceShadow *reference=NULL ) {
+    void *geom;
+    OGRErr err = OGR_G_CreateFromWkb( (unsigned char *) bin_string,
+                                      reference,
+                                      &geom);
+    if (err != 0 )
+       throw err;
+    return (OGRGeometryShadow*) geom;
+  }
+ 
+%}
+%clear (int len, char *bin_string);
+
+%feature( "kwargs" ) CreateGeometryFromWkt;
+%apply (char **ignorechange) { (char **) };
+%newobject CreateGeometryFromWkt;
+%inline %{
+  OGRGeometryShadow* CreateGeometryFromWkt( char **val, 
+                                      OSRSpatialReferenceShadow *reference=NULL ) {
+    void *geom;
+    OGRErr err = OGR_G_CreateFromWkt(val,
+                                      reference,
+                                      &geom);
+    if (err != 0 )
+       throw err;
+    return (OGRGeometryShadow*) geom;
+  }
+ 
+%}
+%clear (char **);
+
+%newobject CreateGeometryFromGML;
+%inline %{
+  OGRGeometryShadow *CreateGeometryFromGML( const char * input_string ) {
+    OGRGeometryShadow* geom = (OGRGeometryShadow*)OGR_G_CreateFromGML(input_string);
+    return geom;
+  }
+ 
+%}
 
 
 %rename (Geometry) OGRGeometryShadow;
@@ -874,6 +926,24 @@ class OGRGeometryShadow {
   ~OGRGeometryShadow();
 public:
 %extend {
+
+  %feature("kwargs") OGRGeometryShadow;
+  OGRGeometryShadow( OGRwkbGeometryType type = wkbUnknown, char *wkt = 0, int wkb= 0, char *wkb_buf = 0, char *gml = 0 ) {
+    if (type != wkbUnknown ) {
+      return (OGRGeometryShadow*) OGR_G_CreateGeometry( type );
+    }
+    else if ( wkt != 0 ) {
+      return CreateGeometryFromWkt( &wkt );
+    }
+    else if ( wkb != 0 ) {
+      return CreateGeometryFromWkb( wkb, wkb_buf );
+    }
+    else if ( gml != 0 ) {
+      return CreateGeometryFromGML( gml );
+    }
+    // throw?
+    else return 0;
+  }
 
   const char * ExportToWkt() {
     char * output;
@@ -903,11 +973,11 @@ public:
 
 
 %{
-char const *OGRSFDriverH_name_get( OGRSFDriverH *h ) {
+char const *OGRDriverShadow_name_get( OGRDriverShadow *h ) {
   return OGR_Dr_GetName( h );
 }
 
-char const *OGRDataSourceH_name_get( OGRDataSourceH *h ) {
+char const *OGRDataSourceShadow_name_get( OGRDataSourceShadow *h ) {
   return OGR_DS_GetName( h );
 }
 
@@ -915,103 +985,42 @@ char const *OGRDataSourceH_name_get( OGRDataSourceH *h ) {
 %}
 
 %rename (GetDriverCount) OGRGetDriverCount;
-%rename (GetOpenDSCount) OGRGetOpenDSCount;
-%rename (SetGenerate_DB2_V72_BYTE_ORDER) OGRSetGenerate_DB2_V72_BYTE_ORDER;
-%rename (GetOpenDS) OGRGetOpenDS;
+int OGRGetDriverCount();
 
+%rename (GetOpenDSCount) OGRGetOpenDSCount;
+int OGRGetOpenDSCount();
 
 %apply (THROW_OGR_ERROR) {OGRErr};
-%inline %{
-  OGRSFDriverH* GetDriverByName( char const *name ) {
-    return (OGRSFDriverH*) OGRGetDriverByName( name );
-  }
-  
-  OGRSFDriverH* GetDriver(int driver_number) {
-    return (OGRSFDriverH*) OGRGetDriver(driver_number);
-  }
-  
-  
-  
-  int OGRGetDriverCount();
-  int OGRGetOpenDSCount();
-
-    
-  OGRErr OGRSetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER);
-  
-  
-  char* OGRErrors[10] = { "None",
-                              "Not enough data",
-                              "Unsupported geometry type",
-                              "Unsupported operation",
-                              "Corrupt data",
-                              "General Error",
-                              "Unsupported SRS"
-                            };
-  
-
-%}
+%rename (SetGenerate_DB2_V72_BYTE_ORDER) OGRSetGenerate_DB2_V72_BYTE_ORDER;
+OGRErr OGRSetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER);
 %clear (OGRErr);
+
+
+
+%inline %{
+OGRDriverShadow* GetDriverByName( char const *name ) {
+  return (OGRDriverShadow*) OGRGetDriverByName( name );
+}
+  
+OGRDriverShadow* GetDriver(int driver_number) {
+  return (OGRDriverShadow*) OGRGetDriver(driver_number);
+}
+%}
+
 
 %newobject GetOpenDS;
 %inline %{
-  OGRDataSourceH* GetOpenDS(int ds_number) {
-    OGRDataSourceH* layer = (OGRDataSourceH*) OGRGetOpenDS(ds_number);
+  OGRDataSourceShadow* GetOpenDS(int ds_number) {
+    OGRDataSourceShadow* layer = (OGRDataSourceShadow*) OGRGetOpenDS(ds_number);
     return layer;
   }
-  
-%}
-
-%feature( "kwargs" ) CreateGeometryFromWkb;
-%newobject CreateGeometryFromWkb;
-%apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
-%inline %{
-  OGRGeometryShadow* CreateGeometryFromWkb( int len, char *bin_string, 
-                                            OSRSpatialReferenceShadow *reference=NULL ) {
-    void *geom;
-    OGRErr err = OGR_G_CreateFromWkb( (unsigned char *) bin_string,
-                                      reference,
-                                      &geom);
-    if (err != 0 )
-       throw err;
-    return (OGRGeometryShadow*) geom;
-  }
- 
-%}
-%clear (int len, char *bin_string);
-
-
-%feature( "kwargs" ) CreateGeometryFromWkt;
-%apply (char **ignorechange) { (char **) };
-%newobject CreateGeometryFromWkt;
-%inline %{
-  OGRGeometryShadow* CreateGeometryFromWkt( char **val, 
-                                      OSRSpatialReferenceShadow *reference=NULL ) {
-    void *geom;
-    OGRErr err = OGR_G_CreateFromWkt(val,
-                                      reference,
-                                      &geom);
-    if (err != 0 )
-       throw err;
-    return (OGRGeometryShadow*) geom;
-  }
- 
-%}
-%clear (char **);
-
-%newobject CreateGeometryFromGML;
-%inline %{
-  OGRGeometryShadow *CreateGeometryFromGML( const char * input_string ) {
-    OGRGeometryShadow* geom = (OGRGeometryShadow*)OGR_G_CreateFromGML(input_string);
-    return geom;
-  }
- 
 %}
 
 %feature( "kwargs" ) Open;
 %newobject Open;
 %inline %{
-  OGRDataSourceH *Open( const char * filename, int update=0 ) {
-    OGRDataSourceH* ds = (OGRDataSourceH*)OGROpen(filename,update, NULL);
+  OGRDataSourceShadow *Open( const char * filename, int update=0 ) {
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(filename,update, NULL);
     return ds;
   }
  
@@ -1020,8 +1029,8 @@ char const *OGRDataSourceH_name_get( OGRDataSourceH *h ) {
 %feature( "kwargs" ) OpenShared;
 %newobject OpenShared;
 %inline %{
-  OGRDataSourceH *OpenShared( const char * filename, int update=0 ) {
-    OGRDataSourceH* ds = (OGRDataSourceH*)OGROpenShared(filename,update, NULL);
+  OGRDataSourceShadow *OpenShared( const char * filename, int update=0 ) {
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(filename,update, NULL);
     return ds;
   }
  
