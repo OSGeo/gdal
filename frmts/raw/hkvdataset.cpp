@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/04/05 19:28:48  warmerda
+ * Fixed MSB case.
+ *
  * Revision 1.2  2000/03/13 14:34:42  warmerda
  * avoid const problem on write
  *
@@ -401,7 +404,7 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
     fprintf( fp, "pixel.size = %d\n", GDALGetDataTypeSize(eType) );
     fprintf( fp, "pixel.field = { *real complex }\n" );
 #ifdef CPL_MSB     
-    fprintf( fp, "pixel.order = { lsbf *msbf }\n";
+    fprintf( fp, "pixel.order = { lsbf *msbf }\n" );
 #else
     fprintf( fp, "pixel.order = { *lsbf msbf }\n" );
 #endif
