@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/03/20 19:12:15  warmerda
+ * added debug messages
+ *
  * Revision 1.10  2003/03/19 20:37:09  warmerda
  * added OpenShared() mechanism
  *
@@ -168,6 +171,9 @@ OGRDataSource *OGRSFDriverRegistrar::Open( const char * pszName,
                 *ppoDriver = poRegistrar->papoDrivers[iDriver];
 
             poDS->Reference();
+
+            CPLDebug( "OGR", "OGROpen(%s) succeeded (%p).", 
+                      pszName, poDS );
             
             return poDS;
         }
@@ -176,6 +182,8 @@ OGRDataSource *OGRSFDriverRegistrar::Open( const char * pszName,
             return NULL;
     }
 
+    CPLDebug( "OGR", "OGROpen(%s) failed.", pszName );
+            
     return NULL;
 }
 
@@ -276,7 +284,6 @@ OGRSFDriverRegistrar::OpenShared( const char * pszName, int bUpdate,
     papoOpenDSDriver = (OGRSFDriver **) 
         CPLRealloc( papoOpenDSDriver, sizeof(char*) * (nOpenDSCount+1) );
 
-
     papszOpenDSRawName[nOpenDSCount] = CPLStrdup( pszName );
     papoOpenDS[nOpenDSCount] = poDS;
     papoOpenDSDriver[nOpenDSCount] = poTempDriver;
@@ -319,6 +326,10 @@ OGRErr OGRSFDriverRegistrar::ReleaseDataSource( OGRDataSource * poDS )
 
     if( iDS == nOpenDSCount )
     {
+        CPLDebug( "OGR", 
+                  "ReleaseDataSource(%s/%p) on unshared datasource!\n"
+                  "Deleting directly.", 
+                  poDS->GetName(), poDS );
         delete poDS;
         return OGRERR_FAILURE;
     }
@@ -327,7 +338,12 @@ OGRErr OGRSFDriverRegistrar::ReleaseDataSource( OGRDataSource * poDS )
         poDS->Dereference();
 
     if( poDS->GetRefCount() > 0 )
+    {
+        CPLDebug( "OGR", 
+                  "ReleaseDataSource(%s/%p) ... just dereferencing.",
+                  poDS->GetName(), poDS );
         return OGRERR_NONE;
+    }
 
     if( poDS->GetSummaryRefCount() > 0 )
     {
@@ -338,6 +354,14 @@ OGRErr OGRSFDriverRegistrar::ReleaseDataSource( OGRDataSource * poDS )
                   poDS->GetName() );
         return OGRERR_FAILURE;
     }
+
+/* -------------------------------------------------------------------- */
+/*      We really want to close this file, and remove it from the       */
+/*      shared list.                                                    */
+/* -------------------------------------------------------------------- */
+    CPLDebug( "OGR", 
+              "ReleaseDataSource(%s/%p) dereferenced and now destroying.",
+              poDS->GetName(), poDS );
 
     delete poDS;
 
