@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  1999/11/26 03:05:38  warmerda
+ * added unset field support
+ *
  * Revision 1.11  1999/11/18 19:02:19  warmerda
  * expanded tabs
  *
@@ -96,6 +99,12 @@ OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn )
     // usually be a waste. 
     pauFields = (OGRField *) CPLCalloc( poDefn->GetFieldCount(),
                                         sizeof(OGRField) );
+
+    for( int i = 0; i < poDefn->GetFieldCount(); i++ )
+    {
+        pauFields[i].Set.nMarker1 = OGRUnsetMarker;
+        pauFields[i].Set.nMarker2 = OGRUnsetMarker;
+    }
 }
 
 /************************************************************************/
@@ -113,12 +122,15 @@ OGRFeature::~OGRFeature()
     for( int i = 0; i < poDefn->GetFieldCount(); i++ )
     {
         OGRFieldDefn    *poFDefn = poDefn->GetFieldDefn(i);
-
+        
+        if( !IsFieldSet(i) )
+            continue;
+    
         switch( poFDefn->GetType() )
         {
           case OFTString:
             if( pauFields[i].String != NULL )
-                CPLFree( pauFields[i].String );
+                VSIFree( pauFields[i].String );
             break;
 
           case OFTStringList:
@@ -131,7 +143,7 @@ OGRFeature::~OGRFeature()
             break;
 
           default:
-            // should add support for string lists, and wide strings.
+            // should add support for wide strings.
             break;
         }
     }
@@ -302,6 +314,62 @@ OGRFeature *OGRFeature::Clone()
  */
 
 /************************************************************************/
+/*                             IsFieldSet()                             */
+/************************************************************************/
+
+/**
+ * \fn int OGRFeature::IsFieldSet( int iField );
+ *
+ * Test if a field has ever been assigned a value or not.
+ *
+ * @param iField the field to test.
+ *
+ * @return TRUE if the field has been set, otherwise false.
+ */
+
+/************************************************************************/
+/*                             UnsetField()                             */
+/************************************************************************/
+
+/**
+ * Clear a field, marking it as unset.
+ *
+ * @param iField the field to unset.
+ */
+
+void OGRFeature::UnsetField( int iField )
+
+{
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
+
+    CPLAssert( poFDefn != NULL || iField == -1 );
+    if( poFDefn == NULL || !IsFieldSet(iField) )
+        return;
+    
+    switch( poFDefn->GetType() )
+    {
+      case OFTRealList:
+      case OFTIntegerList:
+        CPLFree( pauFields[iField].IntegerList.paList );
+        break;
+
+      case OFTStringList:
+        CSLDestroy( pauFields[iField].StringList.paList );
+        break;
+
+      case OFTString:
+        CPLFree( pauFields[iField].String );
+        break;
+
+      default:
+        break;
+    }
+
+    pauFields[iField].Set.nMarker1 = OGRUnsetMarker;
+    pauFields[iField].Set.nMarker2 = OGRUnsetMarker;
+}
+
+/************************************************************************/
 /*                           GetRawFieldRef()                           */
 /************************************************************************/
 
@@ -339,6 +407,9 @@ int OGRFeature::GetFieldAsInteger( int iField )
     
     CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
+        return 0;
+    
+    if( !IsFieldSet(iField) )
         return 0;
     
     if( poFDefn->GetType() == OFTInteger )
@@ -379,6 +450,9 @@ double OGRFeature::GetFieldAsDouble( int iField )
     
     CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
+        return 0.0;
+
+    if( !IsFieldSet(iField) )
         return 0.0;
     
     if( poFDefn->GetType() == OFTReal )
@@ -421,6 +495,9 @@ const char *OGRFeature::GetFieldAsString( int iField )
 
     CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
+        return "";
+    
+    if( !IsFieldSet(iField) )
         return "";
     
     if( poFDefn->GetType() == OFTString )
@@ -574,6 +651,9 @@ const int *OGRFeature::GetFieldAsIntegerList( int iField, int *pnCount )
     if( poFDefn == NULL )
         return NULL;
     
+    if( !IsFieldSet(iField) )
+        return NULL;
+    
     if( poFDefn->GetType() == OFTIntegerList )
     {
         if( pnCount != NULL )
@@ -616,6 +696,9 @@ const double *OGRFeature::GetFieldAsDoubleList( int iField, int *pnCount )
     if( poFDefn == NULL )
         return NULL;
     
+    if( !IsFieldSet(iField) )
+        return NULL;
+    
     if( poFDefn->GetType() == OFTRealList )
     {
         if( pnCount != NULL )
@@ -656,6 +739,9 @@ char **OGRFeature::GetFieldAsStringList( int iField )
     if( poFDefn == NULL )
         return NULL;
     
+    if( !IsFieldSet(iField) )
+        return NULL;
+    
     if( poFDefn->GetType() == OFTStringList )
     {
         return pauFields[iField].StringList.paList;
@@ -694,6 +780,7 @@ void OGRFeature::SetField( int iField, int nValue )
     if( poFDefn->GetType() == OFTInteger )
     {
         pauFields[iField].Integer = nValue;
+        pauFields[iField].Set.nMarker2 = 0;
     }
     else if( poFDefn->GetType() == OFTReal )
     {
@@ -705,7 +792,9 @@ void OGRFeature::SetField( int iField, int nValue )
 
         sprintf( szTempBuffer, "%d", nValue );
 
-        CPLFree( pauFields[iField].String );
+        if( IsFieldSet( iField) )
+            CPLFree( pauFields[iField].String );
+        
         pauFields[iField].String = CPLStrdup( szTempBuffer );
     }
     else
@@ -744,6 +833,7 @@ void OGRFeature::SetField( int iField, double dfValue )
     else if( poFDefn->GetType() == OFTInteger )
     {
         pauFields[iField].Integer = (int) dfValue;
+        pauFields[iField].Set.nMarker2 = 0;
     }
     else if( poFDefn->GetType() == OFTString )
     {
@@ -751,7 +841,9 @@ void OGRFeature::SetField( int iField, double dfValue )
 
         sprintf( szTempBuffer, "%.16g", dfValue );
 
-        CPLFree( pauFields[iField].String );
+        if( IsFieldSet( iField) )
+            CPLFree( pauFields[iField].String );
+
         pauFields[iField].String = CPLStrdup( szTempBuffer );
     }
     else
@@ -784,12 +876,15 @@ void OGRFeature::SetField( int iField, const char * pszValue )
     
     if( poFDefn->GetType() == OFTString )
     {
-        CPLFree( pauFields[iField].String );
+        if( IsFieldSet(iField) )
+            CPLFree( pauFields[iField].String );
+            
         pauFields[iField].String = CPLStrdup( pszValue );
     }
     else if( poFDefn->GetType() == OFTInteger )
     {
         pauFields[iField].Integer = atoi(pszValue);
+        pauFields[iField].Set.nMarker2 = OGRUnsetMarker;
     }
     else if( poFDefn->GetType() == OFTReal )
     {
@@ -927,50 +1022,88 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
     
     if( poFDefn->GetType() == OFTInteger )
     {
-        pauFields[iField].Integer = puValue->Integer;
+        pauFields[iField] = *puValue;
     }
     else if( poFDefn->GetType() == OFTReal )
     {
-        pauFields[iField].Real = puValue->Real;
+        pauFields[iField] = *puValue;
     }
     else if( poFDefn->GetType() == OFTString )
     {
-        CPLFree( pauFields[iField].String );
-        pauFields[iField].String = CPLStrdup( puValue->String );
+        if( IsFieldSet( iField ) )
+            CPLFree( pauFields[iField].String );
+        
+        if( puValue->String == NULL )
+            pauFields[iField].String = NULL;
+        else if( puValue->Set.nMarker1 == OGRUnsetMarker
+                 && puValue->Set.nMarker2 == OGRUnsetMarker )
+            pauFields[iField] = *puValue;
+        else
+            pauFields[iField].String = CPLStrdup( puValue->String );
     }
     else if( poFDefn->GetType() == OFTIntegerList )
     {
         int     nCount = puValue->IntegerList.nCount;
         
-        CPLFree( pauFields[iField].IntegerList.paList );
-        pauFields[iField].IntegerList.paList =
-            (int *) CPLMalloc(sizeof(int) * nCount);
-        memcpy( pauFields[iField].IntegerList.paList,
-                puValue->IntegerList.paList,
-                sizeof(int) * nCount );
-        pauFields[iField].IntegerList.nCount = nCount;
+        if( IsFieldSet( iField ) )
+            CPLFree( pauFields[iField].IntegerList.paList );
+        
+        if( puValue->Set.nMarker1 == OGRUnsetMarker
+            && puValue->Set.nMarker2 == OGRUnsetMarker )
+        {
+            pauFields[iField] = *puValue;
+        }
+        else
+        {
+            pauFields[iField].IntegerList.paList =
+                (int *) CPLMalloc(sizeof(int) * nCount);
+            memcpy( pauFields[iField].IntegerList.paList,
+                    puValue->IntegerList.paList,
+                    sizeof(int) * nCount );
+            pauFields[iField].IntegerList.nCount = nCount;
+        }
     }
     else if( poFDefn->GetType() == OFTRealList )
     {
         int     nCount = puValue->RealList.nCount;
-        
-        CPLFree( pauFields[iField].RealList.paList );
-        pauFields[iField].RealList.paList =
-            (double *) CPLMalloc(sizeof(double) * nCount);
-        memcpy( pauFields[iField].RealList.paList,
-                puValue->RealList.paList,
-                sizeof(double) * nCount );
-        pauFields[iField].RealList.nCount = nCount;
+
+        if( IsFieldSet( iField ) )
+            CPLFree( pauFields[iField].RealList.paList );
+
+        if( puValue->Set.nMarker1 == OGRUnsetMarker
+            && puValue->Set.nMarker2 == OGRUnsetMarker )
+        {
+            pauFields[iField] = *puValue;
+        }
+        else
+        {
+            pauFields[iField].RealList.paList =
+                (double *) CPLMalloc(sizeof(double) * nCount);
+            memcpy( pauFields[iField].RealList.paList,
+                    puValue->RealList.paList,
+                    sizeof(double) * nCount );
+            pauFields[iField].RealList.nCount = nCount;
+        }
     }
     else if( poFDefn->GetType() == OFTStringList )
     {
-        CSLDestroy( pauFields[iField].StringList.paList );
-        pauFields[iField].StringList.paList =
-            CSLDuplicate( puValue->StringList.paList );
-
-        pauFields[iField].StringList.nCount = puValue->StringList.nCount;
-        CPLAssert( CSLCount(puValue->StringList.paList)
-                   == puValue->StringList.nCount );
+        if( IsFieldSet( iField ) )
+            CSLDestroy( pauFields[iField].StringList.paList );
+        
+        if( puValue->Set.nMarker1 == OGRUnsetMarker
+            && puValue->Set.nMarker2 == OGRUnsetMarker )
+        {
+            pauFields[iField] = *puValue;
+        }
+        else
+        {
+            pauFields[iField].StringList.paList =
+                CSLDuplicate( puValue->StringList.paList );
+            
+            pauFields[iField].StringList.nCount = puValue->StringList.nCount;
+            CPLAssert( CSLCount(puValue->StringList.paList)
+                       == puValue->StringList.nCount );
+        }
     }
     else
         /* do nothing for other field types */;
@@ -998,10 +1131,15 @@ void OGRFeature::DumpReadable( FILE * fpOut )
     {
         OGRFieldDefn    *poFDefn = poDefn->GetFieldDefn(iField);
         
-        fprintf( fpOut, "  %s (%s) = %s\n",
+        fprintf( fpOut, "  %s (%s) = ",
                  poFDefn->GetNameRef(),
-                 OGRFieldDefn::GetFieldTypeName(poFDefn->GetType()),
-                 GetFieldAsString( iField ) );
+                 OGRFieldDefn::GetFieldTypeName(poFDefn->GetType()) );
+
+        if( IsFieldSet( iField ) )
+            fprintf( fpOut, "%s\n", GetFieldAsString( iField ) );
+        else
+            fprintf( fpOut, "(null)\n" );
+            
     }
     
     if( poGeometry != NULL )
@@ -1137,6 +1275,12 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
                 continue;
             else
                 return OGRERR_FAILURE;
+        }
+
+        if( !poSrcFeature->IsFieldSet(iField) )
+        {
+            UnsetField( iField );
+            continue;
         }
 
         switch( poSrcFeature->GetFieldDefnRef(iField)->GetType() )

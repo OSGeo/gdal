@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  1999/11/26 03:05:38  warmerda
+ * added unset field support
+ *
  * Revision 1.10  1999/11/18 19:02:20  warmerda
  * expanded tabs
  *
@@ -104,6 +107,7 @@ enum OGRJustification
 };
 
 #define OGRNullFID            -1
+#define OGRUnsetMarker	      -21121
 
 /************************************************************************/
 /*                               OGRField                               */
@@ -138,6 +142,11 @@ typedef union {
 //        int   nCount;
 //        wchar *paList;
 //    } WideStringList;
+
+    struct {
+        int	nMarker1;
+        int	nMarker2;
+    } Set;
 } OGRField;
 
 /************************************************************************/
@@ -277,6 +286,14 @@ class OGRFeature
                                       { return poDefn->GetFieldDefn(iField); }
     int                 GetFieldIndex( const char * pszName)
                                       { return poDefn->GetFieldIndex(pszName);}
+
+    int			IsFieldSet( int iField )
+                        { return
+                              pauFields[iField].Set.nMarker1 != OGRUnsetMarker
+                           || pauFields[iField].Set.nMarker2 != OGRUnsetMarker;
+                              }
+    
+    void                UnsetField( int iField );
     
     OGRField           *GetRawFieldRef( int i ) { return pauFields + i; }
 
