@@ -44,6 +44,10 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.36  2003/08/29 17:32:27  warmerda
+ * Open file in binary mode for CSLLoad() since CPLReadline() works much
+ * better then.
+ *
  * Revision 1.35  2003/07/17 10:15:40  dron
  * CSLTestBoolean() added.
  *
@@ -310,7 +314,7 @@ char **CSLLoad(const char *pszFname)
     const char  *pszLine;
     char        **papszStrList=NULL;
 
-    fp = VSIFOpen(pszFname, "rt");
+    fp = VSIFOpen(pszFname, "rb");
 
     if (fp)
     {
