@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/01/16 21:19:29  warmerda
+ * Added preliminary text support
+ *
  * Revision 1.3  2001/01/16 18:11:12  warmerda
  * majorly extended, added arc support
  *
@@ -103,14 +106,6 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN )
     poFeatureDefn->AddFieldDefn( &oField );
 
 /* -------------------------------------------------------------------- */
-/*      _gv_color                                                       */
-/* -------------------------------------------------------------------- */
-    oField.SetName( "_gv_color" );
-    oField.SetType( OFTString);
-    oField.SetWidth( 12 );
-    poFeatureDefn->AddFieldDefn( &oField );
-
-/* -------------------------------------------------------------------- */
 /*      Weight                                                          */
 /* -------------------------------------------------------------------- */
     oField.SetName( "Weight" );
@@ -126,6 +121,22 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN )
     oField.SetType( OFTInteger );
     oField.SetWidth( 1 );
     oField.SetPrecision( 0 );
+    poFeatureDefn->AddFieldDefn( &oField );
+
+/* -------------------------------------------------------------------- */
+/*      _gv_color                                                       */
+/* -------------------------------------------------------------------- */
+    oField.SetName( "_gv_color" );
+    oField.SetType( OFTString);
+    oField.SetWidth( 12 );
+    poFeatureDefn->AddFieldDefn( &oField );
+
+/* -------------------------------------------------------------------- */
+/*      _gv_ogrfs                                                       */
+/* -------------------------------------------------------------------- */
+    oField.SetName( "_gv_ogrfs" );
+    oField.SetType( OFTString);
+    oField.SetWidth( 30 );
     poFeatureDefn->AddFieldDefn( &oField );
 }
 
@@ -240,6 +251,27 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
           }
 
           poFeature->SetGeometryDirectly( poLine );
+      }
+      break;
+
+      case DGNST_TEXT:
+      {
+          OGRPoint	*poPoint = new OGRPoint();
+          DGNElemText   *psText = (DGNElemText *) psElement;
+          char		*pszOgrFS;
+
+          poPoint->setX( psText->origin.x );
+          poPoint->setY( psText->origin.y );
+          poPoint->setZ( psText->origin.z );
+
+          poFeature->SetGeometryDirectly( poPoint );
+
+          pszOgrFS = (char *) CPLMalloc(strlen(psText->string) + 150);
+          sprintf( pszOgrFS, 
+                   "LABEL(t:\"%s\")", 
+                   psText->string );
+          poFeature->SetField( "_gv_ogrfs", pszOgrFS );
+          CPLFree( pszOgrFS );
       }
       break;
 
