@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/06/19 14:42:27  warmerda
+ * Don't close old overviews till after we have identified which already
+ * exist, otherwise multiple copies of overviews may be created.
+ *
  * Revision 1.1  2000/04/21 21:54:05  warmerda
  * New
  *
@@ -173,15 +177,6 @@ GDALDefaultOverviews::BuildOverviews(
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we have an existing overview file open, close it now.        */
-/* -------------------------------------------------------------------- */
-    if( poODS != NULL )
-    {
-        delete poODS;
-        poODS = NULL;
-    }
-
-/* -------------------------------------------------------------------- */
 /*      By default we assume that the dataset name is a suitable        */
 /*      filesystem object to associate with if nothing is provided.     */
 /* -------------------------------------------------------------------- */
@@ -223,6 +218,15 @@ GDALDefaultOverviews::BuildOverviews(
 
         if( panOverviewList[i] > 0 )
             panNewOverviewList[nNewOverviews++] = panOverviewList[i];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we have an existing overview file open, close it now.        */
+/* -------------------------------------------------------------------- */
+    if( poODS != NULL )
+    {
+        delete poODS;
+        poODS = NULL;
     }
 
 /* -------------------------------------------------------------------- */
