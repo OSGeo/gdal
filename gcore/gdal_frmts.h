@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/07/16 13:30:27  dron
+ * New driver: HDF4 dataset.
+ *
  * Revision 1.13  2002/05/08 16:33:25  dron
  * NOAA Polar Orbiter Dataset reader added
  *
@@ -110,6 +113,8 @@ void CPL_DLL GDALRegister_FujiBAS(void);
 void CPL_DLL GDALRegister_FIT(void);
 void CPL_DLL GDALRegister_VRT(void);
 void CPL_DLL GDALRegister_USGSDEM(void);
+void CPL_DLL GDALRegister_HDF4(void);
+void CPL_DLL GDALRegister_HDF4Image(void);
 void CPL_DLL GDALRegister_L1B(void);
 void CPL_DLL GDALRegister_LDF(void);
 void CPL_DLL GDALRegister_BSB(void);

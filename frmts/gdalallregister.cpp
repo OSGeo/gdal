@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.44  2002/07/16 13:30:27  dron
+ * New driver: HDF4 dataset.
+ *
  * Revision 1.43  2002/06/13 09:53:45  dron
  * Registration of AVHRR L1B driver moved above of GRASS driver registartion.
  *
@@ -303,6 +306,11 @@ void GDALAllRegister()
 
 #ifdef FRMT_fit
     GDALRegister_FIT();
+#endif
+
+#ifdef FRMT_hdf4
+    GDALRegister_HDF4();
+    GDALRegister_HDF4Image();
 #endif
 
 #ifdef FRMT_l1b
