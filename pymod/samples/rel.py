@@ -27,8 +27,11 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
+#
 #  $Log$
+#  Revision 1.2  2003/09/22 09:41:07  dron
+#  Spped optimizations, as suggested by Norman Vine.
+#
 #  Revision 1.1  2003/09/20 11:43:18  dron
 #  New.
 #
@@ -53,6 +56,7 @@ def Usage():
     print '                    (default 1)'
     print '  -dx xsize         X and Y dimensions (in metres) of one pixel on the ground'
     print '  -dy ysize         (taken from the geotransform matrix by default)'
+    print '  -r range	       Dynamic range for output image (default 255)'
     print '  -b band	       Select a band number to convert (default 1)'
     print '  -ot type	       Data type of the output dataset'
     print '                    (Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/'
@@ -103,6 +107,7 @@ lsrcel = None
 elstep = 1.0
 xsize = None
 ysize = None
+dyn_range = 255.0
 
 # Parse command line arguments.
 i = 1
@@ -137,6 +142,10 @@ while i < len(sys.argv):
         i += 1
         ysize = float(sys.argv[i])
 
+    elif arg == '-r':
+        i += 1
+        dyn_range = float(sys.argv[i])
+
     elif infile is None:
 	infile = arg
 
@@ -164,11 +173,16 @@ lsrcel = lsrcel / 180.0 * pi
 lx = -sin(lsrcaz) * cos(lsrcel)
 ly =  cos(lsrcaz) * cos(lsrcel)
 lz =  sin(lsrcel)
+lxyz = sqrt(lx**2 + ly**2 + lz**2)
 
 indataset = gdal.Open(infile, GA_ReadOnly)
 if indataset == None:
     print 'Cannot open', infile
     sys.exit(2)
+
+if indataset.RasterXSize < 3 or indataset.RasterYSize < 3:
+    print 'Input image is too small to process, minimum size is 3x3'
+    sys.exit(3)
 
 out_driver = gdal.GetDriverByName(format)
 outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, type)
@@ -187,35 +201,36 @@ if inband == None:
     print 'Cannot load band', iBand, 'from the', infile
     sys.exit(2)
 
-outline = Numeric.zeros((1, inband.XSize), gdalnumeric.GDALTypeCodeToNumericTypeCode(type))
+numtype = gdalnumeric.GDALTypeCodeToNumericTypeCode(type)
+outline = Numeric.zeros((1, inband.XSize), numtype)
 
-lineprev = inband.ReadAsArray(0, 0, inband.XSize, 1, inband.XSize, 1)
+prev = inband.ReadAsArray(0, 0, inband.XSize, 1, inband.XSize, 1)[0]
 outband.WriteArray(outline, 0, 0)
 gdal.TermProgress(0.0)
-linecur = inband.ReadAsArray(0, 1, inband.XSize, 1, inband.XSize, 1)
+
+cur = inband.ReadAsArray(0, 1, inband.XSize, 1, inband.XSize, 1)[0]
 outband.WriteArray(outline, 0, inband.YSize - 1)
 gdal.TermProgress(1.0 / inband.YSize)
 
+dx = 2 * xsize
+dy = 2 * ysize
+
 for i in range(1, inband.YSize - 1):
-    linenext = inband.ReadAsArray(0, i + 1, inband.XSize, 1, inband.XSize, 1)
-
-    for j in range(1, inband.XSize - 1):
-	dx = 2 * xsize
-	dzx = (linecur[0, j - 1] - linecur[0, j + 1]) * elstep
-	dy = 2 * ysize
-	dzy = (lineprev[0, j] - linenext[0, j]) * elstep
-	nx = -dy * dzx
-	ny = dx * dzy
-	nz = dx * dy
-	cosine = (nx*lx + ny*ly + nz*lz) / (sqrt(nx**2+ny**2+nz**2)*sqrt(lx**2+ly**2+lz**2))
-	if (cosine < 0):
-	    outline[0, j] = 0.0
-	else:
-	    outline[0, j] = cosine * 255
-
-    lineprev = linecur
-    linecur = linenext
+    next = inband.ReadAsArray(0, i + 1, inband.XSize, 1, inband.XSize, 1)[0]
+    dzx = (cur[0:-2] - cur[2:]) * elstep
+    dzy = (prev[1:-1] - next[1:-1]) * elstep
+    nx = -dy * dzx
+    ny = dx * dzy
+    nz = dx * dy
+    nxyz = nx*nx + ny*ny + nz*nz
+    nlxyz = nx*lx + ny*ly + nz*lz
+    cosine = dyn_range * ( nlxyz / (lxyz * Numeric.sqrt(nxyz)))
+    cosine = Numeric.clip(cosine, 0.0, dyn_range)
+    outline[0, 1:-1] = cosine.astype(numtype)
     outband.WriteArray(outline, 0, i)
+
+    prev = cur
+    cur = next
 
     # Display progress report on terminal
     gdal.TermProgress(float(i + 1) / (inband.YSize - 1))
