@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/07/09 18:36:14  warmerda
+ * Fixed last fix ... put the varchar stuff in side quotes and didn't
+ * address the case with no length set.
+ *
  * Revision 1.19  2004/07/09 16:34:23  warmerda
  * Added patch from Markus to trim strings to allowed length.
  *
@@ -690,11 +694,11 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
                     pszCommand[nOffset++] = pszStrValue[iChar];
             }
             pszCommand[nOffset] = '\0';
-            sprintf( pszCommand + strlen(pszCommand), 
-                     "::varchar(%d)", 
-                     poFeatureDefn->GetFieldDefn(i)->GetWidth() );
-           
             strcat( pszCommand+nOffset, "'" );
+            if( poFeatureDefn->GetFieldDefn(i)->GetWidth() > 0 )
+                sprintf( pszCommand + strlen(pszCommand), 
+                         "::varchar(%d)", 
+                         poFeatureDefn->GetFieldDefn(i)->GetWidth() );
         }
         else
         {
