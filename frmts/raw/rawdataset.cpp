@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2004/11/02 20:21:38  fwarmerdam
+ * added support for category names
+ *
  * Revision 1.25  2004/06/02 20:57:55  warmerda
  * centralize initialization
  *
@@ -216,6 +219,8 @@ void RawRasterBand::Initialize()
     poCT = NULL;
     eInterp = GCI_Undefined;
 
+    papszCategoryNames = NULL;
+
     bDirty = FALSE;
 }
 
@@ -227,6 +232,8 @@ void RawRasterBand::Initialize()
 RawRasterBand::~RawRasterBand()
 
 {
+    CSLDestroy( papszCategoryNames );
+
     FlushCache();
     
     CPLFree( pLineBuffer );
@@ -954,6 +961,29 @@ double RawRasterBand::GetNoDataValue( int * pbSuccess )
         *pbSuccess = bNoDataSet;
 
     return dfNoDataValue;
+}
+
+/************************************************************************/
+/*                          GetCategoryNames()                          */
+/************************************************************************/
+
+char **RawRasterBand::GetCategoryNames()
+
+{
+    return papszCategoryNames;
+}
+
+/************************************************************************/
+/*                          SetCategoryNames()                          */
+/************************************************************************/
+
+CPLErr RawRasterBand::SetCategoryNames( char ** papszNewNames )
+
+{
+    CSLDestroy( papszCategoryNames );
+    papszCategoryNames = CSLDuplicate( papszNewNames );
+
+    return CE_None;
 }
 
 /************************************************************************/

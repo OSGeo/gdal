@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/11/02 20:21:38  fwarmerdam
+ * added support for category names
+ *
  * Revision 1.15  2004/07/31 04:53:21  warmerda
  * added various query methods
  *
@@ -129,6 +132,8 @@ class CPL_DLL RawRasterBand : public GDALRasterBand
     GDALColorTable *poCT;
     GDALColorInterp eInterp;
 
+    char           **papszCategoryNames;
+
     int         Seek( vsi_l_offset, int );
     size_t      Read( void *, size_t, size_t );
     size_t      Write( void *, size_t, size_t );
@@ -170,6 +175,9 @@ class CPL_DLL RawRasterBand : public GDALRasterBand
 
     virtual CPLErr  SetNoDataValue( double );
     virtual double  GetNoDataValue( int *pbSuccess = NULL );
+
+    virtual char **GetCategoryNames();
+    virtual CPLErr SetCategoryNames( char ** );
 
     virtual CPLErr  FlushCache();
 
