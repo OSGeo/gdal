@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/03/15 04:21:50  danmo
+ * Added GetExtent()
+ *
  * Revision 1.1  1999/11/04 21:16:11  warmerda
  * New
  *
@@ -180,6 +183,31 @@ int OGRShapeLayer::GetFeatureCount( int bForce )
 }
 
 /************************************************************************/
+/*                             GetExtent()                              */
+/*                                                                      */
+/*      Fetch extent of the data currently stored in the dataset.       */
+/*      The bForce flag has no effect on SHO files since that value     */
+/*      is always in the header.                                        */
+/*                                                                      */
+/*      Returns OGRERR_NONE/OGRRERR_FAILURE.                            */
+/************************************************************************/
+
+OGRErr OGRShapeLayer::GetExtent (OGREnvelope *psExtent, int bForce)
+
+{
+    double adMin[4], adMax[4];
+
+    SHPGetInfo(hSHP, NULL, NULL, adMin, adMax);
+
+    psExtent->MinX = adMin[0];
+    psExtent->MinY = adMin[1];
+    psExtent->MaxX = adMax[0];
+    psExtent->MaxY = adMax[1];
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
@@ -198,6 +226,9 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
+
+    else if( EQUAL(pszCap,OLCFastGetExtent) )
+        return TRUE;
 
     else if( EQUAL(pszCap,OLCCreateField) )
         return TRUE;

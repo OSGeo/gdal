@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/03/15 04:21:50  danmo
+ * Added GetExtent()
+ *
  * Revision 1.5  1999/11/04 21:17:25  warmerda
  * support layer/ds creation, one ds is now many shapefiles
  *
@@ -99,6 +102,7 @@ class OGRShapeLayer : public OGRLayer
     OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
 
     int                 GetFeatureCount( int );
+    OGRErr              GetExtent(OGREnvelope *psExtent, int bForce);
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
