@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/12/10 21:27:24  fwarmerdam
+ * Added ICHIPB support
+ *
  * Revision 1.13  2004/05/06 14:58:06  warmerda
  * added USE00A and STDIDC parsing and reporting as metadata
  *
@@ -275,9 +278,9 @@ typedef enum {
 /*      RPC structure, and function to fill it.                         */
 /* -------------------------------------------------------------------- */
 typedef struct  {
-    int		SUCCESS;
+    int			SUCCESS;
 
-    double	ERR_BIAS;
+    double		ERR_BIAS;
     double      ERR_RAND;
 
     double      LINE_OFF;
@@ -301,6 +304,45 @@ typedef struct  {
 int CPL_DLL NITFReadRPC00B( NITFImage *psImage, NITFRPC00BInfo * );
 int CPL_DLL NITFRPCGeoToImage(NITFRPC00BInfo *, double, double, double,
                               double *, double *);
+
+/* -------------------------------------------------------------------- */
+/*      ICHIP structure, and function to fill it.                         */
+/* -------------------------------------------------------------------- */
+typedef struct {
+	int		XFRM_FLAG;
+	double	SCALE_FACTOR;
+	int		ANAMORPH_CORR;
+	int		SCANBLK_NUM;
+
+	double	OP_ROW_11;
+	double	OP_COL_11;
+
+	double	OP_ROW_12;
+	double	OP_COL_12;
+
+	double	OP_ROW_21;
+	double	OP_COL_21;
+
+	double	OP_ROW_22;
+	double	OP_COL_22;
+
+	double	FI_ROW_11;
+	double	FI_COL_11;
+
+	double	FI_ROW_12;
+	double	FI_COL_12;
+
+	double	FI_ROW_21;
+	double	FI_COL_21;
+
+	double	FI_ROW_22;
+	double	FI_COL_22;
+
+	int		FI_ROW;
+	int		FI_COL;
+} NITFICHIPBInfo;
+
+int CPL_DLL NITFReadICHIPB( NITFImage *psImage, NITFICHIPBInfo * );
 
 double CPL_DLL 
         NITF_WGS84_Geocentric_Latitude_To_Geodetic_Latitude( double dfLat );
