@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/03/23 16:00:05  warmerda
+ * doc typo fixed
+ *
  * Revision 1.1  1999/03/23 13:56:13  warmerda
  * New
  *
@@ -262,8 +265,7 @@ int SDTSLineReader::Open( string osFilename )
     }
     
 /* -------------------------------------------------------------------- */
-/*      Establish reader access to the file, and read the first         */
-/*      (only) record in the IREF file.                                 */
+/*      Establish reader access to the file				*/
 /* -------------------------------------------------------------------- */
     po8211Reader = new sio_8211Reader( ifs, &converters );
     poIter = new sio_8211ForwardIterator( *po8211Reader );
