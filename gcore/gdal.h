@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2003/04/25 19:46:13  warmerda
+ * added GDALDatasetRasterIO
+ *
  * Revision 1.62  2003/03/18 06:01:03  warmerda
  * Added GDALFlushCache()
  *
@@ -455,6 +458,13 @@ GDALRasterBandH CPL_DLL GDALGetRasterBand( GDALDatasetH, int );
 
 CPLErr CPL_DLL  GDALAddBand( GDALDatasetH hDS, GDALDataType eType, 
                              char **papszOptions );
+
+CPLErr CPL_DLL GDALDatasetRasterIO( 
+    GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
+    int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
+    void * pBuffer, int nBXSize, int nBYSize, GDALDataType eBDataType,
+    int nBandCount, int *panBandCount, 
+    int nPixelSpace, int nLineSpace, int nBandSpace);
 
 const char CPL_DLL *GDALGetProjectionRef( GDALDatasetH );
 CPLErr CPL_DLL  GDALSetProjection( GDALDatasetH, const char * );
