@@ -153,6 +153,7 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/ogr/ogr_srs_validate.o \
 			$(GDAL_ROOT)/ogr/ogrutils.o \
 			$(GDAL_ROOT)/ogr/ogr_srs_proj4.o \
+			$(GDAL_ROOT)/ogr/ograssemblepolygon.o \
 			$(GDAL_ROOT)/ogr/ogr_api.o
 
 ifeq ($(OGR_ENABLED),yes)
