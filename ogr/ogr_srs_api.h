@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2004/02/05 17:07:59  dron
+ * Support for HOM projection, specified by two points on centerline.
+ *
  * Revision 1.39  2004/02/01 14:23:29  dron
  * Added OSRImportFromUSGS().
  *
@@ -216,6 +219,8 @@ typedef enum {
 #define SRS_PT_GNOMONIC         "Gnomonic"
 #define SRS_PT_HOTINE_OBLIQUE_MERCATOR                                  \
                                 "Hotine_Oblique_Mercator"
+#define SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN         \
+                            "Hotine_Oblique_Mercator_Two_Point_Natural_Origin"
 #define SRS_PT_LABORDE_OBLIQUE_MERCATOR                                 \
                                 "Laborde_Oblique_Mercator"
 #define SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP                              \
@@ -481,11 +486,19 @@ OGRErr CPL_DLL OSRSetGnomonic(OGRSpatialReferenceH hSRS,
                               double dfCenterLat, double dfCenterLong,
                             double dfFalseEasting, double dfFalseNorthing );
 
-/** Hotine Oblique Mercator */
-OGRErr CPL_DLL OSRSetHOM( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
-                        double dfAzimuth, double dfRectToSkew,
-                        double dfScale,
-                        double dfFalseEasting, double dfFalseNorthing );
+/** Hotine Oblique Mercator using azimuth angle */
+OGRErr CPL_DLL OSRSetHOM( OGRSpatialReferenceH hSRS,
+                          double dfCenterLat, double dfCenterLong,
+                          double dfAzimuth, double dfRectToSkew,
+                          double dfScale,
+                          double dfFalseEasting, double dfFalseNorthing );
+
+/** Hotine Oblique Mercator using two points on centerline */
+OGRErr CPL_DLL OSRSetHOM2PNO( OGRSpatialReferenceH hSRS, double dfCenterLat,
+                              double dfLat1, double dfLong1,
+                              double dfLat2, double dfLong2,
+                              double dfScale,
+                              double dfFalseEasting, double dfFalseNorthing );
 
 /** Krovak Oblique Conic Conformal */
 OGRErr CPL_DLL OSRSetKrovak( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2004/02/05 17:07:59  dron
+ * Support for HOM projection, specified by two points on centerline.
+ *
  * Revision 1.57  2004/02/01 14:24:09  dron
  * Added OGRSpatialReference::importFromUSGS().
  *
@@ -329,11 +332,18 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetGnomonic(double dfCenterLat, double dfCenterLong,
                             double dfFalseEasting, double dfFalseNorthing );
 
-    /** Hotine Oblique Mercator */
+    /** Hotine Oblique Mercator using azimuth angle */
     OGRErr      SetHOM( double dfCenterLat, double dfCenterLong,
                         double dfAzimuth, double dfRectToSkew,
                         double dfScale,
                         double dfFalseEasting, double dfFalseNorthing );
+
+    /** Hotine Oblique Mercator using two points on centerline */
+    OGRErr      SetHOM2PNO( double dfCenterLat,
+                            double dfLat1, double dfLong1,
+                            double dfLat2, double dfLong2,
+                            double dfScale,
+                            double dfFalseEasting, double dfFalseNorthing );
 
     /** Krovak Oblique Conic Conformal */
     OGRErr      SetKrovak( double dfCenterLat, double dfCenterLong,
