@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/10/19 18:35:43  warmerda
+ * changed help topic location
+ *
  * Revision 1.12  2000/10/13 20:58:37  warmerda
  * added to projections list
  *
@@ -1390,7 +1393,7 @@ void GDALRegister_HFA()
         
         poDriver->pszShortName = "HFA";
         poDriver->pszLongName = "Erdas Imagine Images (.img)";
-        poDriver->pszHelpTopic = "frmt_various.html#HFA";
+        poDriver->pszHelpTopic = "frmt_hfa.html";
         
         poDriver->pfnOpen = HFADataset::Open;
         poDriver->pfnCreate = HFADataset::Create;
