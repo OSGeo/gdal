@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/01/19 16:54:44  warmerda
+ * added logic to capture field types
+ *
  * Revision 1.7  2003/05/21 03:48:35  warmerda
  * Expand tabs
  *
@@ -85,6 +88,8 @@ public:
 
     void        SetSrcElement( const char *pszSrcElement );
     const char *GetSrcElement() { return m_pszSrcElement; }
+
+    void        AnalysePropertyValue( const char * );
 };
 
 /************************************************************************/
