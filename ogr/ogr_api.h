@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/10/24 16:46:08  warmerda
+ * removed bogus OGR_G_GetWkbSize()
+ *
  * Revision 1.2  2002/09/26 19:00:07  warmerda
  * ensure all entry points CPL_DLL'ed
  *
@@ -76,7 +79,6 @@ OGRGeometryH CPL_DLL OGR_G_CreateGeometry( OGRwkbGeometryType );
 
 int    CPL_DLL OGR_G_GetDimension( OGRGeometryH );
 int    CPL_DLL OGR_G_GetCoordinateDimension( OGRGeometryH );
-int    CPL_DLL OGR_G_GetWkbSize( OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_Clone( OGRGeometryH );
 void   CPL_DLL OGR_G_GetEnvelope( OGRGeometryH, OGREnvelope * );
 OGRErr CPL_DLL OGR_G_ImportFromWkb( OGRGeometryH, unsigned char *, int );
