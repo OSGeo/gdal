@@ -53,8 +53,8 @@ JPEG_SUPPORTED = 1
 
 # Uncomment for JPEG2000 support
 #JASPER_DIR = S:\projects_libs\jasper-1.500.4
-#JASPER_INCLUDE = -I$(JASPER_DIR)\src\libjasper\include\jasper
-#JASPER_LIB = $(JASPER_DIR)src\msvc\Win32_Release\libjasper.lib
+#JASPER_INCLUDE = -I$(JASPER_DIR)\src\libjasper\include
+#JASPER_LIB = $(JASPER_DIR)\src\msvc\Win32_Release\libjasper.lib
 
 # Uncommment if you have Frank's modified Kakadu build.
 #KAKDIR =	D:\warmerda\jp2\kakadu
