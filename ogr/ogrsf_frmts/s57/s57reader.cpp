@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2001/08/30 21:18:35  warmerda
+ * removed debug info
+ *
  * Revision 1.26  2001/08/30 21:06:55  warmerda
  * expand tabs
  *
@@ -1053,7 +1056,8 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
             poSRecord = oVE_Index.FindRecord( nRCID );
             if( poSRecord == NULL )
             {
-                printf( "Couldn't find spatial record %d.\n", nRCID );
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "Couldn't find spatial record %d.\n", nRCID );
                 continue;
             }
     
@@ -1142,11 +1146,6 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
     poPolygon = OGRBuildPolygonFromEdges( poLines, TRUE, &eErr );
     if( eErr != OGRERR_NONE )
     {
-        printf( "Error record information:\n" );
-        poFRecord->Dump( stdout );
-        poPolygon->dumpReadable( stdout );
-        poLines->dumpReadable( stdout );
-
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Polygon assembly has failed for feature FIDN=%d,FIDS=%d.\n"
                   "Geometry may be missing or incomplete.", 
@@ -1510,11 +1509,6 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 {
     const char *pszKey = poUpdate->GetField(1)->GetFieldDefn()->GetName();
 
-    printf( "Target:\n" );
-    poTarget->Dump( stdout );
-    printf( "\nUpdate:\n" );
-    poUpdate->Dump( stdout );
-
 /* -------------------------------------------------------------------- */
 /*      Validate versioning.                                            */
 /* -------------------------------------------------------------------- */
@@ -1806,9 +1800,6 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
         }
     }
 
-    printf( "\nResult:\n" );
-    poTarget->Dump( stdout );
-    
     return TRUE;
 }
 
