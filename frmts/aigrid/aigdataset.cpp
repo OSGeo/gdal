@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/03/13 19:39:24  warmerda
+ * changed short name to AIG, added help link
+ *
  * Revision 1.7  2000/11/09 06:22:51  warmerda
  * fixed geotransform, added limited projection support
  *
@@ -356,8 +359,9 @@ void GDALRegister_AIGrid()
     {
         poAIGDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "AIGrid";
+        poDriver->pszShortName = "AIG";
         poDriver->pszLongName = "Arc/Info Binary Grid";
+        poDriver->pszHelpTopic = "frmt_various.html#AIG";
         
         poDriver->pfnOpen = AIGDataset::Open;
 
