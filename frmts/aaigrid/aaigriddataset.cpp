@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/06/14 12:28:41  dron
+ * No data handling at writing.
+ *
  * Revision 1.12  2002/06/13 13:48:28  dron
  * Added writing of .prj files for Arc/Info 8
  *
@@ -127,6 +130,7 @@ class AAIGRasterBand : public GDALRasterBand
     virtual       ~AAIGRasterBand();
 
     virtual double GetNoDataValue( int * );
+    virtual CPLErr SetNoDataValue( double );
     virtual CPLErr IReadBlock( int, int, void * );
 };
 
@@ -228,6 +232,21 @@ double AAIGRasterBand::GetNoDataValue( int * pbSuccess )
         *pbSuccess = poODS->bNoDataSet;
 
     return poODS->dfNoDataValue;
+}
+
+/************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+CPLErr AAIGRasterBand::SetNoDataValue( double dfNoData )
+
+{
+    AAIGDataset	*poODS = (AAIGDataset *) poDS;
+
+    poODS->bNoDataSet = TRUE;
+    poODS->dfNoDataValue = dfNoData;
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -512,16 +531,22 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     VSIFPrintf( fpImage, "yllcorner    %.12f\n", 
         adfGeoTransform[3]- nYSize * adfGeoTransform[1] );
     VSIFPrintf( fpImage, "cellsize     %.12f\n", adfGeoTransform[1] );
-//    VSIFPrintf( fpImage, "NODATA_value %d\n", -9999 );
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
 /* -------------------------------------------------------------------- */
-    double 	*padfScanline;
-    int		iLine, iPixel;
+    double 	*padfScanline, dfNoData;
+    int		iLine, iPixel, bSuccess;
     CPLErr      eErr = CE_None;
     
     GDALRasterBand * poBand = poSrcDS->GetRasterBand( 1 );
+
+    // Write `nodata' value to header if it is exists in source dataset
+    dfNoData = poBand->GetNoDataValue( &bSuccess );
+    if ( bSuccess )
+        VSIFPrintf( fpImage, "NODATA_value %6.20g\n", dfNoData );
+    
+    // Write scanlines to output file
     padfScanline = (double *) CPLMalloc( nXSize *
 		                GDALGetDataTypeSize(GDT_CFloat64) / 8 );
     for( iLine = 0; eErr == CE_None && iLine < nYSize; iLine++ )
