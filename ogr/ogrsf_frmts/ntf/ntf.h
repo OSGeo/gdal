@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/02/08 20:41:48  warmerda
+ * removed tabs
+ *
  * Revision 1.18  2001/12/11 20:37:49  warmerda
  * add option to avoid caching indexed records on multiple readers
  *
@@ -195,12 +198,12 @@ class NTFGenericClass
 public:
     int         nFeatureCount;
 
-    int		b3D;
+    int         b3D;
     int         nAttrCount;
     char        **papszAttrNames;
     char        **papszAttrFormats;
     int         *panAttrMaxWidth;
-    int		*pabAttrMultiple;
+    int         *pabAttrMultiple;
 
                 NTFGenericClass();
                 ~NTFGenericClass();
@@ -319,7 +322,7 @@ class NTFFileReader
 
     int               anIndexSize[100];
     NTFRecord         **apapoRecordIndex[100];
-    int		      bIndexBuilt;
+    int               bIndexBuilt;
     int               bIndexNeeded;
 
     void              EstablishRasterAccess();
