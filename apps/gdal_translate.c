@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.20  2001/08/23 03:23:46  warmerda
+ * added the -not_strict switch
+ *
  * Revision 1.19  2001/07/18 05:05:12  warmerda
  * added CPL_CSVID
  *
@@ -106,7 +109,7 @@ static void Usage()
         
     printf( "Usage: gdal_translate \n"
             "       [-ot {Byte/UInt16/UInt32/Int32/Float32/Float64/CInt16/\n"
-            "             CInt32/CFloat32/CFloat64}]\n"
+            "             CInt32/CFloat32/CFloat64}] [-not_strict]\n"
             "       [-of format] [-b band] [-outsize xsize[%%] ysize[%%]]\n"
             "       [-srcwin xoff yoff xsize ysize] [-co \"NAME=VALUE\"]*\n"
             "       src_dataset dst_dataset\n\n" );
@@ -139,7 +142,7 @@ int main( int argc, char ** argv )
     int			nOXSize = 0, nOYSize = 0;
     char		*pszOXSize=NULL, *pszOYSize=NULL;
     char                **papszCreateOptions = NULL;
-    int                 anSrcWin[4];
+    int                 anSrcWin[4], bStrict = TRUE;
     const char          *pszProjection;
 
     anSrcWin[0] = 0;
@@ -184,6 +187,9 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-b") && i < argc-1 )
             nSrcBand = atoi(argv[++i]);
+            
+        else if( EQUAL(argv[i],"-not_strict")  )
+            bStrict = FALSE;
             
         else if( EQUAL(argv[i],"-co") && i < argc-1 )
         {
@@ -309,7 +315,7 @@ int main( int argc, char ** argv )
     {
         
         hOutDS = GDALCreateCopy( hDriver, pszDest, hDataset, 
-                                 TRUE, papszCreateOptions, 
+                                 bStrict, papszCreateOptions, 
                                  GDALTermProgress, NULL );
         if( hOutDS != NULL )
             GDALClose( hOutDS );
