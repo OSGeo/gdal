@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.2  2000/06/27 16:48:57  warmerda
+# added progress func support
+#
 # Revision 1.1  2000/06/26 21:11:21  warmerda
 # New
 #
@@ -41,6 +44,10 @@ import os.path
 if len(sys.argv) < 2:
     print "Usage: gdalimport.py source_file [newfile]"
     sys.exit(1)
+
+def progress_cb( complete, message, cb_data ):
+    print cb_data, complete
+    
 
 filename = sys.argv[1]
 dataset = gdal.Open( filename )
@@ -65,11 +72,14 @@ else:
 
 print 'Importing to Tiled GeoTIFF file:', newfile
 new_dataset = geotiff.CreateCopy( newfile, dataset, 0,
-                                  ['TILED=YES',] )
+                                  ['TILED=YES',],
+                                  callback = progress_cb,
+                                  callback_data = 'Translate: ' )
 dataset = None
 
 print 'Building overviews'
-new_dataset.BuildOverviews( "average" )
+new_dataset.BuildOverviews( "average", callback=progress_cb,
+                            callback_data = 'Overviews: ' )
 new_dataset = None
 
 print 'Done'

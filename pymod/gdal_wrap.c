@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.11  2000/06/26 19:54:23  warmerda
- * added options support in GDALCreateCopy
+ * Revision 1.12  2000/06/27 16:48:57  warmerda
+ * added progress func support
  *
  ************************************************************************/
 
@@ -561,6 +561,67 @@ char *SWIG_GetPtr(char *_c, void **ptr, char *_t)
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
 
+
+typedef struct {
+    PyObject *psPyCallback;
+    PyObject *psPyCallbackData;
+    int nLastReported;
+} PyProgressData;
+
+/************************************************************************/
+/*                          PyProgressProxy()                           */
+/************************************************************************/
+
+int PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
+
+{
+    PyProgressData *psInfo = (PyProgressData *) pData;
+    PyObject *psArgs, *psResult;
+    int      bContinue = TRUE;
+
+    if( psInfo->nLastReported == (int) (100.0 * dfComplete) )
+        return TRUE;
+
+    if( psInfo->psPyCallback == NULL || psInfo->psPyCallback == Py_None )
+        return TRUE;
+
+    psInfo->nLastReported = (int) 100.0 * dfComplete;
+    
+    if( pszMessage == NULL )
+        pszMessage = "";
+
+    if( psInfo->psPyCallbackData == NULL )
+        psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage, Py_None );
+    else
+        psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage, 
+	                       psInfo->psPyCallbackData );
+
+    psResult = PyEval_CallObject( psInfo->psPyCallback, psArgs);
+    Py_XDECREF(psArgs);
+
+    if( psResult == NULL )
+    {
+        return TRUE;
+    }
+
+    if( psResult == Py_None )
+    {
+	Py_XDECREF(Py_None);
+        return TRUE;
+    }
+
+    if( !PyArg_Parse( psResult, "i", &bContinue ) )
+    {
+        PyErr_SetString(PyExc_ValueError, "bad progress return value");
+	return FALSE;
+    }
+
+    Py_XDECREF(psResult);
+
+    return bContinue;    
+}
+
+
 /************************************************************************/
 /*                           GDALBuildOverviews()                       */
 /************************************************************************/
@@ -573,12 +634,17 @@ py_GDALBuildOverviews(PyObject *self, PyObject *args) {
     PyObject *psPyOverviewList = NULL, *psPyBandList = NULL;
     int   nOverviews, *panOverviewList, i;
     CPLErr eErr;
+    PyProgressData sProgressInfo;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"ssO!O!:GDALBuildOverviews",	
+    sProgressInfo.psPyCallback = NULL;
+    sProgressInfo.psPyCallbackData = NULL;
+    if(!PyArg_ParseTuple(args,"ssO!O!|OO:GDALBuildOverviews",	
 			 &pszSwigDS, &pszResampling, 
 		         &PyList_Type, &psPyOverviewList, 
-			 &PyList_Type, &psPyBandList ) )
+			 &PyList_Type, &psPyBandList,
+                         &(sProgressInfo.psPyCallback), 
+		         &(sProgressInfo.psPyCallbackData) ) )
         return NULL;
 
     if (SWIG_GetPtr(pszSwigDS,(void **) &hDS, "_GDALDatasetH" )) {
@@ -601,7 +667,7 @@ py_GDALBuildOverviews(PyObject *self, PyObject *args) {
     }
 
     eErr = GDALBuildOverviews( hDS, pszResampling, nOverviews, panOverviewList,
-			       0, NULL, NULL, NULL );
+			       0, NULL, PyProgressProxy, &sProgressInfo );
 
     CPLFree( panOverviewList );
 
@@ -621,11 +687,16 @@ py_GDALCreateCopy(PyObject *self, PyObject *args) {
     GDALDriverH hDriver = NULL;
     GDALDatasetH hSourceDS = NULL, hTargetDS = NULL;   
     char **papszOptions = NULL;
+    PyProgressData sProgressInfo;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"sss|iO!:GDALCreateCopy",	
+    sProgressInfo.psPyCallback = NULL;
+    sProgressInfo.psPyCallbackData = NULL;
+    if(!PyArg_ParseTuple(args,"sss|iO!OO:GDALCreateCopy",	
 			 &pszSwigDriver, &pszFilename, &pszSwigSourceDS, 
-			 &bStrict, &PyList_Type, &poPyOptions) )
+			 &bStrict, &PyList_Type, &poPyOptions,
+			 &(sProgressInfo.psPyCallback), 
+		         &(sProgressInfo.psPyCallbackData)) )
         return NULL;
 
     if (SWIG_GetPtr(pszSwigDriver,(void **) &hDriver, "_GDALDriverH" )) {
@@ -661,7 +732,7 @@ py_GDALCreateCopy(PyObject *self, PyObject *args) {
     }
 
     hTargetDS = GDALCreateCopy( hDriver, pszFilename, hSourceDS, bStrict, 
-			        papszOptions, NULL, NULL );
+			        papszOptions, PyProgressProxy, &sProgressInfo);
 	
     CSLDestroy( papszOptions );
 

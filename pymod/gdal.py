@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.13  2000/06/27 16:48:57  warmerda
+# added progress func support
+#
 # Revision 1.12  2000/06/26 21:11:10  warmerda
 # Added default rules for overviews
 #
@@ -122,9 +125,11 @@ class Driver:
         self.LongName = _gdal.GDALGetDriverLongName(self._o)
         self.HelpTopic = _gdal.GDALGetDriverHelpTopic(self._o)
 
-    def CreateCopy(self, filename, source_ds, strict=1, options=None):
+    def CreateCopy(self, filename, source_ds, strict=1, options=None,
+                   callback = None, callback_data = None ):
         target_ds = _gdal.GDALCreateCopy( self._o, filename, source_ds._o,
-                                          strict, options)
+                                          strict, options,
+                                          callback, callback_data )
         if target_ds is None:
             return None
         else:
@@ -196,7 +201,8 @@ class Dataset:
 
         return gcp_list
 
-    def BuildOverviews(self, resampling="NEAREST", overviewlist = None ):
+    def BuildOverviews(self, resampling="NEAREST", overviewlist = None,
+                       callback = None, callback_data = None):
         if overviewlist is None:
             if self.RasterXSize > 4096:
                 overviewlist = [2,4,8,16,32,64]
@@ -207,7 +213,8 @@ class Dataset:
             else:
                 overviewlist = [2,4,8]
                 
-        return _gdal.GDALBuildOverviews(self._o, resampling, overviewlist, [])
+        return _gdal.GDALBuildOverviews(self._o, resampling, overviewlist, [],
+                                        callback, callback_data )
 
 class Band:            
     def __init__(self, _obj):
