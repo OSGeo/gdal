@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2001/11/02 22:28:22  warmerda
+ * fixed free of static spheroid name
+ *
  * Revision 1.21  2001/10/12 15:06:05  warmerda
  * various build improvements to avoid internal/external conflicts
  *
@@ -233,7 +236,7 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
     dfSemiMajor = psDefn->SemiMajor;
     if( psDefn->SemiMajor == 0.0 )
     {
-        pszSpheroidName = "unretrievable - using WGS84";
+        pszSpheroidName = CPLStrdup("unretrievable - using WGS84");
         dfSemiMajor = SRS_WGS84_SEMIMAJOR;
         dfInvFlattening = SRS_WGS84_INVFLATTENING;
     }
