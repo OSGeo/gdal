@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.22 2001/11/19 15:04:41 daniel Exp $
+ * $Id: mitab_mapfile.cpp,v 1.23 2002/02/20 13:53:40 daniel Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -9,7 +9,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999-2001, Daniel Morissette
+ * Copyright (c) 1999-2002, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.23  2002/02/20 13:53:40  daniel
+ * Prevent an infinite loop of calls to LoadNextMatchingObjectBlock() in
+ * GetNextFeatureId() if no objects found in spatial index.
+ *
  * Revision 1.22  2001/11/19 15:04:41  daniel
  * Prevent writing of coordinates outside of the +/-1e9 integer bounds.
  *
@@ -642,11 +646,13 @@ int TABMAPFile::GetNextFeatureId( int nPrevId )
         // first object from it.  Note that some object blocks actually
         // have no objects, so we may have to advance to additional 
         // object blocks till we find a non-empty one.
+        GBool bFirstCall = (nPrevId == -1);
         do 
         {
-            if( !LoadNextMatchingObjectBlock( nPrevId == -1 ) )
+            if( !LoadNextMatchingObjectBlock( bFirstCall ) )
                 return -1;
 
+            bFirstCall = FALSE;
         } while( m_poCurObjBlock->AdvanceToNextObject(m_poHeader) == -1 );
     }
 
