@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/01/10 22:31:53  warmerda
+ * no longer encode ordinates into SQL statement when creating features
+ *
  * Revision 1.11  2003/01/09 21:19:12  warmerda
  * improved data type support, get/set precision
  *
@@ -100,6 +103,8 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
     iNextFIDToWrite = 1;
     nDimension = 3;
 
+    bValidTable = FALSE;
+
     poFeatureDefn = ReadTableDefinition( pszTableName );
     
     CPLFree( pszGeomName );
@@ -108,6 +113,12 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
     poSRS = poDSIn->FetchSRS( nSRID );
     if( poSRS != NULL )
         poSRS->Reference();
+
+    nOrdinalCount = 0;
+    nOrdinalMax = 0;
+    padfOrdinals = NULL;
+
+    hOrdVARRAY = NULL;
 
     ResetReading();
 }
@@ -127,6 +138,8 @@ OGROCITableLayer::~OGROCITableLayer()
 
     if( poSRS != NULL && poSRS->Dereference() == 0 )
         delete poSRS;
+
+    CPLFree( padfOrdinals );
 }
 
 /************************************************************************/
@@ -203,6 +216,8 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
 
         poDefn->AddFieldDefn( &oField );
     }
+
+    bValidTable = TRUE;
 
     return poDefn;
 }
@@ -543,6 +558,23 @@ OGRErr OGROCITableLayer::SetFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*                            PushOrdinal()                             */
+/************************************************************************/
+
+void OGROCITableLayer::PushOrdinal( double dfOrd )
+
+{
+    if( nOrdinalCount == nOrdinalMax )
+    {
+        nOrdinalMax = nOrdinalMax * 2 + 100;
+        padfOrdinals = (double *) CPLRealloc(padfOrdinals, 
+                                             sizeof(double) * nOrdinalMax);
+    }
+    
+    padfOrdinals[nOrdinalCount++] = dfOrd;
+}
+
+/************************************************************************/
 /*                       TranslateElementGroup()                        */
 /*                                                                      */
 /*      Append one or more element groups to the existing element       */
@@ -551,12 +583,9 @@ OGRErr OGROCITableLayer::SetFeature( OGRFeature *poFeature )
 
 OGRErr 
 OGROCITableLayer::TranslateElementGroup( OGRGeometry *poGeometry, 
-                                         OGROCIStringBuf *poElemInfo,
-                                         int &nLastOrdinate, 
-                                         OGROCIStringBuf *poOrdinates )
+                                         OGROCIStringBuf *poElemInfo )
 
 {
-    
     switch( wkbFlatten(poGeometry->getGeometryType()) )
     {
       case wkbPoint:
@@ -566,18 +595,12 @@ OGROCITableLayer::TranslateElementGroup( OGRGeometry *poGeometry,
           if( poElemInfo->GetLast() != '(' )
               poElemInfo->Append( "," );
           
-          poElemInfo->Appendf( 32, "%d,1,1", nLastOrdinate+1 );
+          poElemInfo->Appendf( 32, "%d,1,1", nOrdinalCount+1 );
 
-          if( nLastOrdinate != 0 )
-              poOrdinates->Append( "," );
-          
-          poOrdinates->Appendf( 64, "%.16g,%.16g", 
-                                poPoint->getX(), poPoint->getY() );
-          
+          PushOrdinal( poPoint->getX() );
+          PushOrdinal( poPoint->getY() );
           if( nDimension == 3 )
-              poOrdinates->Appendf( 32, ",%.16g", poPoint->getZ() );
-
-          nLastOrdinate += nDimension;
+              PushOrdinal( poPoint->getZ() );
 
           return OGRERR_NONE;
       }
@@ -592,21 +615,15 @@ OGROCITableLayer::TranslateElementGroup( OGRGeometry *poGeometry,
               if( poElemInfo->GetLast() != '(' )
                   poElemInfo->Append( "," );
 
-              poElemInfo->Appendf( 32, "%d,2,1", nLastOrdinate+1 );
+              poElemInfo->Appendf( 32, "%d,2,1", nOrdinalCount+1 );
           }
 
           for( iVert = 0; iVert < poLine->getNumPoints(); iVert++ )
           {
-              if( nLastOrdinate != 0 )
-                  poOrdinates->Append( "," );
-
-              poOrdinates->Appendf( 64, "%.16g,%.16g", 
-                                    poLine->getX(iVert), poLine->getY(iVert) );
-          
+              PushOrdinal( poLine->getX(iVert) );
+              PushOrdinal( poLine->getY(iVert) );
               if( nDimension == 3 )
-                  poOrdinates->Appendf( 32, ",%.16g", poLine->getZ(iVert) );
-
-              nLastOrdinate += nDimension;
+                  PushOrdinal( poLine->getZ(iVert) );
           }
           return OGRERR_NONE;
       }
@@ -632,13 +649,12 @@ OGROCITableLayer::TranslateElementGroup( OGRGeometry *poGeometry,
                   poElemInfo->Append( "," );
 
               if( iRing == -1 )
-                  poElemInfo->Appendf( 20, "%d,1003,1", nLastOrdinate+1 );
+                  poElemInfo->Appendf( 20, "%d,1003,1", nOrdinalCount+1 );
               else
-                  poElemInfo->Appendf( 20, "%d,2003,1", nLastOrdinate+1 );
+                  poElemInfo->Appendf( 20, "%d,2003,1", nOrdinalCount+1 );
 
               // but recurse to add the ordinates.
-              eErr = TranslateElementGroup( poRing, NULL, 
-                                            nLastOrdinate, poOrdinates );
+              eErr = TranslateElementGroup( poRing, NULL );
               if( eErr != OGRERR_NONE )
                   return eErr;
           }
@@ -660,6 +676,8 @@ OGROCITableLayer::TranslateElementGroup( OGRGeometry *poGeometry,
 char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
 
 {
+    nOrdinalCount = 0;
+
     if( poGeometry == NULL )
         return CPLStrdup("NULL");
 
@@ -689,19 +707,14 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
 /* ==================================================================== */
     else if( wkbFlatten(poGeometry->getGeometryType()) == wkbLineString )
     {
-        int nLastOrdinate = 0;
-        OGROCIStringBuf oElemInfo, oOrdinates;
+        OGROCIStringBuf oElemInfo;
 
         oElemInfo.Appendf( 100, "%s(%d,NULL,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(",
                            SDO_GEOMETRY, nDimension * 1000 + 2 );
-        oOrdinates.Append( "),MDSYS.SDO_ORDINATE_ARRAY(" );
 
-        TranslateElementGroup( poGeometry, &oElemInfo, 
-                               nLastOrdinate, &oOrdinates );
+        TranslateElementGroup( poGeometry, &oElemInfo );
 
-        oElemInfo.Append( oOrdinates.GetString() );
-        oElemInfo.Append( "))" );
-
+        oElemInfo.Append( "),:ordinates)" );
         return oElemInfo.StealString();
     }
 
@@ -710,24 +723,20 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
 /* ==================================================================== */
     else if( wkbFlatten(poGeometry->getGeometryType()) == wkbPolygon )
     {
-        int nLastOrdinate = 0;
-        OGROCIStringBuf oElemInfo, oOrdinates;
+        OGROCIStringBuf oElemInfo;
 
 /* -------------------------------------------------------------------- */
 /*      Prepare eleminfo section.                                       */
 /* -------------------------------------------------------------------- */
         oElemInfo.Appendf( 90, "%s(%d,NULL,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(",
                            SDO_GEOMETRY, nDimension == 2 ? 2003 : 3003 );
-        oOrdinates.Append( "),MDSYS.SDO_ORDINATE_ARRAY(" );
 
 /* -------------------------------------------------------------------- */
 /*      Translate and return.                                           */
 /* -------------------------------------------------------------------- */
-        TranslateElementGroup( poGeometry, &oElemInfo, 
-                               nLastOrdinate, &oOrdinates );
+        TranslateElementGroup( poGeometry, &oElemInfo );
 
-        oElemInfo.Append( oOrdinates.GetString() );
-        oElemInfo.Append( "))" );
+        oElemInfo.Append( "),:ordinates)" );
 
         return oElemInfo.StealString();
     }
@@ -739,33 +748,24 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
     {
         OGRMultiPoint *poMP = (OGRMultiPoint *) poGeometry;
         char *pszResult;
-        int  iOff, iVert;
+        int  iVert;
 
-        pszResult = (char *) CPLMalloc(poMP->getNumGeometries() * 51 + 500);
+        pszResult = (char *) CPLMalloc(500);
 
         sprintf( pszResult, 
                  "%s(%d,NULL,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,1,%d),"
-                 "MDSYS.SDO_ORDINATE_ARRAY(", 
+                 ":ordinates)", 
                  SDO_GEOMETRY, nDimension*1000 + 5, poMP->getNumGeometries() );
         
-        iOff = strlen(pszResult);
         for( iVert = 0; iVert < poMP->getNumGeometries(); iVert++ )
         {
             OGRPoint *poPoint = (OGRPoint *)poMP->getGeometryRef( iVert );
 
-            if( iVert != 0 )
-                pszResult[iOff++] = ',';
-
-            sprintf( pszResult + iOff, "%.16g,%.16g", 
-                     poPoint->getX(), poPoint->getY() );
-            iOff += strlen(pszResult+iOff);
+            PushOrdinal( poPoint->getX() );
+            PushOrdinal( poPoint->getY() );
             if( nDimension == 3 )
-            {
-                sprintf( pszResult + iOff, ",%.16g", poPoint->getZ() );
-                iOff += strlen(pszResult+iOff);
-            }
+                PushOrdinal( poPoint->getZ() );
         }
-        strcat( pszResult + iOff, "))" );
         return pszResult;
     }
 
@@ -774,7 +774,6 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
 /* ==================================================================== */
     else
     {
-        int nLastOrdinate = 0;
         OGROCIStringBuf oElemInfo, oOrdinates;
         int nGType;
 
@@ -811,16 +810,12 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
         int  iChild;
 
         for( iChild = 0; iChild < poGC->getNumGeometries(); iChild++ )
-        {
-            TranslateElementGroup( poGC->getGeometryRef( iChild ), &oElemInfo, 
-                                   nLastOrdinate, &oOrdinates );
-        }
+            TranslateElementGroup( poGC->getGeometryRef(iChild), &oElemInfo );
 
 /* -------------------------------------------------------------------- */
 /*      Collect and return.                                             */
 /* -------------------------------------------------------------------- */
-        oElemInfo.Append( oOrdinates.GetString() );
-        oElemInfo.Append( "))" );
+        oElemInfo.Append( "),:ordinates)" );
 
         return oElemInfo.StealString();
     }
@@ -1004,20 +999,92 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
     strcat( pszCommand+nOffset, ")" );
 
 /* -------------------------------------------------------------------- */
-/*      Execute the insert.                                             */
+/*      Bind and translate the ordinates if we have some.               */
 /* -------------------------------------------------------------------- */
     OGROCIStatement oInsert( poSession );
+    int  bHaveOrdinates = strstr(pszCommand,":ordinates") != NULL;
 
-    if( oInsert.Execute( pszCommand ) != CE_None )
+    if( oInsert.Prepare( pszCommand ) != CE_None )
     {
         CPLFree( pszCommand );
         return OGRERR_FAILURE;
     }
-    else
+
+    CPLFree( pszCommand );
+    if( bHaveOrdinates )
     {
-        CPLFree( pszCommand );
-        return OGRERR_NONE;
+        OCIBind *hBindOrd = NULL;
+        int i;
+        OCINumber oci_number; 
+
+        // Create or clear VARRAY 
+        if( hOrdVARRAY == NULL )
+        {
+            if( poSession->Failed(
+                OCIObjectNew( poSession->hEnv, poSession->hError, 
+                              poSession->hSvcCtx, OCI_TYPECODE_VARRAY,
+                              poSession->hOrdinatesTDO, (dvoid *)NULL, 
+                              OCI_DURATION_SESSION,
+                              FALSE, (dvoid **)&hOrdVARRAY),
+                "OCIObjectNew(hOrdVARRAY)") )
+                return OGRERR_FAILURE;
+        }
+        else
+        {
+            sb4  nOldCount;
+
+            OCICollSize( poSession->hEnv, poSession->hError, 
+                         hOrdVARRAY, &nOldCount );
+            OCICollTrim( poSession->hEnv, poSession->hError, 
+                         nOldCount, hOrdVARRAY );
+        }
+
+        // Prepare the VARRAY of ordinate values. 
+	for (i = 0; i < nOrdinalCount; i++)
+	{
+            if( poSession->Failed( 
+                OCINumberFromReal( poSession->hError, 
+                                   (dvoid *) (padfOrdinals + i),
+                                   (uword)sizeof(double),
+                                   &oci_number),
+                "OCINumberFromReal") )
+                return OGRERR_FAILURE;
+
+            if( poSession->Failed( 
+                OCICollAppend( poSession->hEnv, poSession->hError,
+                               (dvoid *) &oci_number,
+                               (dvoid *)0, hOrdVARRAY),
+                "OCICollAppend") )
+                return OGRERR_FAILURE;
+	}
+
+        // Do the binding.
+        if( poSession->Failed( 
+            OCIBindByName( oInsert.GetStatement(), &hBindOrd, 
+                           poSession->hError,
+                           (text *) ":ordinates", (sb4) -1, (dvoid *) 0, 
+                           (sb4) 0, SQLT_NTY, (dvoid *)0, (ub2 *)0, 
+                           (ub2 *)0, (ub4)0, (ub4 *)0, 
+                           (ub4)OCI_DEFAULT),
+            "OCIBindByName(:ordinates)") )
+            return OGRERR_FAILURE;
+
+        if( poSession->Failed(
+            OCIBindObject( hBindOrd, poSession->hError, 
+                           poSession->hOrdinatesTDO,
+                           (dvoid **)&hOrdVARRAY, (ub4 *)0, 
+                           (dvoid **)0, (ub4 *)0),
+            "OCIBindObject(:ordinates)" ) )
+            return OGRERR_FAILURE;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Execute the insert.                                             */
+/* -------------------------------------------------------------------- */
+    if( oInsert.Execute( NULL ) != CE_None )
+        return OGRERR_FAILURE;
+    else
+        return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -1056,14 +1123,8 @@ OGRErr OGROCITableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     if( bLaunderColumnNames )
     {
         char	*pszSafeName = CPLStrdup( oField.GetNameRef() );
-        int	i;
 
-        for( i = 0; pszSafeName[i] != '\0'; i++ )
-        {
-            pszSafeName[i] = tolower( pszSafeName[i] );
-            if( pszSafeName[i] == '-' || pszSafeName[i] == '#' )
-                pszSafeName[i] = '_';
-        }
+        poSession->CleanName( pszSafeName );
         oField.SetName( pszSafeName );
         CPLFree( pszSafeName );
     }
@@ -1099,7 +1160,7 @@ OGRErr OGROCITableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
                   "Can't create field %s with type %s on Oracle layers.  Creating as VARCHAR.",
                   oField.GetNameRef(),
                   OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
-        strcpy( szFieldType, "VARCHAR" );
+        strcpy( szFieldType, "VARCHAR(2048)" );
     }
     else
     {
@@ -1248,6 +1309,30 @@ void OGROCITableLayer::FinalizeNewLayer()
         return;
 
 /* -------------------------------------------------------------------- */
+/*      Establish an index name.  For some reason Oracle 8.1.7 does     */
+/*      not support spatial index names longer than 18 characters so    */
+/*      we magic up an index name if it would be too long.              */
+/* -------------------------------------------------------------------- */
+    char  szIndexName[20];
+
+    if( strlen(poFeatureDefn->GetName()) < 15 )
+        sprintf( szIndexName, "%s_idx", poFeatureDefn->GetName() );
+    else if( strlen(poFeatureDefn->GetName()) < 17 )
+        sprintf( szIndexName, "%si", poFeatureDefn->GetName() );
+    else
+    {
+        int i, nHash = 0;
+        const char *pszSrcName = poFeatureDefn->GetName();
+
+        for( i = 0; pszSrcName[i] != '\0'; i++ )
+            nHash = (nHash + i * pszSrcName[i]) % 987651;
+        
+        sprintf( szIndexName, "OSI_%d", nHash );
+    }
+
+    poDS->GetSession()->CleanName( szIndexName );
+
+/* -------------------------------------------------------------------- */
 /*      Try creating an index on the table now.  Use a simple 5         */
 /*      level quadtree based index.  Would R-tree be a better default?  */
 /* -------------------------------------------------------------------- */
@@ -1256,17 +1341,17 @@ void OGROCITableLayer::FinalizeNewLayer()
 // lose my connection to the database!
     OGROCIStringBuf  sIndexCmd;
 
-    sIndexCmd.Appendf( 10000, "CREATE INDEX %s_idx ON %s(%s) "
+    sIndexCmd.Appendf( 10000, "CREATE INDEX \"%s\" ON \"%s\"(\"%s\") "
                        "INDEXTYPE IS MDSYS.SPATIAL_INDEX "
                        "PARAMETERS( 'SDO_LEVEL = 5' )",
-                       poFeatureDefn->GetName(), 
+                       szIndexName, 
                        poFeatureDefn->GetName(), 
                        pszGeomName );
 
     if( oExecStatement.Execute( sIndexCmd.GetString() ) != CE_None )
     {
         char szDropCommand[2000];
-        sprintf( szDropCommand, "DROP INDEX %s_idx", poFeatureDefn->GetName());
+        sprintf( szDropCommand, "DROP INDEX \"%s\"", szIndexName );
         oExecStatement.Execute( szDropCommand );
     }
 }
