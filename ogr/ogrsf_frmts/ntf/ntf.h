@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/09/14 01:34:36  warmerda
+ * added scale support, and generation of TEXT_HT_GROUND
+ *
  * Revision 1.5  1999/09/13 14:07:21  warmerda
  * added landline99 and geometry3d
  *
@@ -191,6 +194,9 @@ class NTFFileReader
     double            dfTileXSize;
     double            dfTileYSize;
 
+    double	      dfScale;
+    double	      dfPaperToGround;
+
     long              nStartPos;
     long	      nPreSavedPos;
     long	      nPostSavedPos;
@@ -265,6 +271,8 @@ class NTFFileReader
     const char       *GetProduct() { return pszProduct; }
     const char       *GetPVName() { return pszPVName; }
     int               GetProductId() { return nProduct; }
+    double	      GetScale() { return dfScale; }
+    double            GetPaperToGround() { return dfPaperToGround; }
 
     int		      GetFCCount() { return nFCCount; }
     int               GetFeatureClass( int, int *, char ** );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/09/14 01:34:36  warmerda
+ * added scale support, and generation of TEXT_HT_GROUND
+ *
  * Revision 1.5  1999/09/13 14:07:59  warmerda
  * added nrt_comment, geometry3d, and landline99 support
  *
@@ -96,6 +99,9 @@ NTFFileReader::NTFFileReader( OGRNTFDataSource * poDataSource )
     nNTFLevel = 0;
     dfTileXSize = 0;
     dfTileYSize = 0;
+
+    dfScale = 0.0;
+    dfPaperToGround = 0.0;
 
     nCoordWidth = 6;
     nZWidth = 6;
@@ -345,6 +351,9 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 /* -------------------------------------------------------------------- */
 /*      Handle the section header record.                               */
 /* -------------------------------------------------------------------- */
+    nSavedFeatureId = nBaseFeatureId;
+    nStartPos = VSIFTell(fp);
+    
     pszTileName = CPLStrdup(poRecord->GetField(3,12));        // SECT_REF
     while( pszTileName[strlen(pszTileName)-1] == ' ' )
         pszTileName[strlen(pszTileName)-1] = '\0';
@@ -364,9 +373,36 @@ int NTFFileReader::Open( const char * pszFilenameIn )
     dfTileYSize = atoi(poRecord->GetField(33+74,42+74));
     dfZMult = atoi(poRecord->GetField(37,46)) / 1000.0;
 
-    nSavedFeatureId = nBaseFeatureId;
-    nStartPos = VSIFTell(fp);
+/* -------------------------------------------------------------------- */
+/*      Setup scale and transformation factor for text height.          */
+/* -------------------------------------------------------------------- */
+    if( poRecord->GetLength() > 200 )
+        dfScale = atoi(poRecord->GetField(148+31,148+39));
+    else if( nProduct == NPC_STRATEGI )
+        dfScale = 250000;
+    else if( nProduct == NPC_MERIDIAN )
+        dfScale = 100000;
+    else if( nProduct == NPC_LANDFORM_PROFILE_CONT )
+        dfScale = 10000;
+    else if( nProduct == NPC_LANDRANGER_CONT )
+        dfScale = 50000;
+    else if( nProduct == NPC_OSCAR_ASSET
+             || nProduct == NPC_OSCAR_TRAFFIC
+             || nProduct == NPC_OSCAR_NETWORK
+             || nProduct == NPC_OSCAR_ROUTE )
+        dfScale = 10000;
+    else if( nProduct == NPC_BASEDATA )
+        dfScale = 625000;
+    else if( nProduct == NPC_BOUNDARYLINE )
+        dfScale = 10000;
+    else
+        dfScale = 10000;
     
+    if( dfScale != 0.0 )
+        dfPaperToGround = dfScale / 1000.0;
+    else
+        dfPaperToGround = 0.0;
+
 /* -------------------------------------------------------------------- */
 /*      Ensure we have appropriate layers defined.                      */
 /* -------------------------------------------------------------------- */

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/09/14 01:34:36  warmerda
+ * added scale support, and generation of TEXT_HT_GROUND
+ *
  * Revision 1.5  1999/09/13 14:36:45  warmerda
  * Mark PROFILE_POINT and PROFILE_LINE as 3D features.
  *
@@ -966,6 +969,10 @@ static OGRFeature *TranslateStrategiText( NTFFileReader *poReader,
     // ORIENT
     poFeature->SetField( 5, atoi(papoGroup[2]->GetField( 17, 20 )) * 0.1 );
 
+    // TEXT_HT_GROUND
+    poFeature->SetField( 7, poFeature->GetFieldAsDouble(3)
+                         * poReader->GetPaperToGround() );
+
     // Geometry
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[3]));
 
@@ -1333,15 +1340,19 @@ static OGRFeature *TranslateLandlineName( NTFFileReader *poReader,
     // ORIENT
     poFeature->SetField( 6, atof(papoGroup[1]->GetField( 11, 14 )) * 0.1 );
 
-    // Geometry
-    poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[2]));
+    // TEXT_HT_GROUND
+    poFeature->SetField( 7, poFeature->GetFieldAsDouble(4)
+                         * poReader->GetPaperToGround() );
 
     // CHG_DATE (optional)
     if( poFeature->GetFieldIndex("CHG_DATE") == 7 )
     {
-        poFeature->SetField( 7, papoGroup[0]->GetField( 15+nNumChar+2,
+        poFeature->SetField( 8, papoGroup[0]->GetField( 15+nNumChar+2,
                                                         15+nNumChar+2+5) );
     }
+
+    // Geometry
+    poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[2]));
 
     return poFeature;
 }
@@ -1476,6 +1487,7 @@ void NTFFileReader::EstablishLayers()
                         "TEXT_HT", OFTReal, 4, 1,
                         "DIG_POSTN", OFTInteger, 1, 0,
                         "ORIENT", OFTReal, 5, 1,
+                        "TEXT_HT_GROUND", OFTReal, 10, 3,
                         NULL );
     }
     else if( GetProductId() == NPC_LANDLINE99 )
@@ -1505,7 +1517,8 @@ void NTFFileReader::EstablishLayers()
                         "TEXT_HT", OFTReal, 4, 1,
                         "DIG_POSTN", OFTInteger, 1, 0,
                         "ORIENT", OFTReal, 5, 1,
-                        "CHG_DATE", OFTString, 6, 0, 
+                        "TEXT_HT_GROUND", OFTReal, 10, 3,
+                        "CHG_DATE", OFTString, 6, 0,
                         NULL );
     }
     else if( GetProductId() == NPC_LANDRANGER_CONT )
@@ -1574,6 +1587,7 @@ void NTFFileReader::EstablishLayers()
                         "DIG_POSTN", OFTInteger, 1, 0, 
                         "ORIENT", OFTReal, 5, 1,
                         "TEXT", OFTString, 0, 0, 
+                        "TEXT_HT_GROUND", OFTReal, 10, 3,
                         NULL );
 
         EstablishLayer( "STRATEGI_NODE", wkbNone,
@@ -1628,6 +1642,7 @@ void NTFFileReader::EstablishLayers()
                         "DIG_POSTN", OFTInteger, 1, 0, 
                         "ORIENT", OFTReal, 5, 1,
                         "TEXT", OFTString, 0, 0, 
+                        "TEXT_HT_GROUND", OFTReal, 10, 3,
                         NULL );
 
         EstablishLayer( "MERIDIAN_NODE", wkbNone,
@@ -1706,6 +1721,7 @@ void NTFFileReader::EstablishLayers()
                         "DIG_POSTN", OFTInteger, 1, 0, 
                         "ORIENT", OFTReal, 5, 1,
                         "TEXT", OFTString, 0, 0, 
+                        "TEXT_HT_GROUND", OFTReal, 10, 3,
                         NULL );
 
         EstablishLayer( "BASEDATA_NODE", wkbNone,
@@ -1939,6 +1955,7 @@ void NTFFileReader::EstablishLayers()
                         "DIG_POSTN", OFTInteger, 1, 0, 
                         "ORIENT", OFTReal, 5, 1,
                         "TEXT", OFTString, 0, 0,
+                        "TEXT_HT_GROUND", OFTReal, 10, 3,
                         NULL );
     }
 }
