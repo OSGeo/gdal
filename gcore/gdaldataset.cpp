@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2000/08/09 16:26:00  warmerda
+ * debug message on dataset cleanup
+ *
  * Revision 1.19  2000/07/11 14:35:43  warmerda
  * added documentation
  *
@@ -114,6 +117,8 @@ GDALDataset::~GDALDataset()
 
 {
     int		i;
+
+    CPLDebug( "GDAL", "GDALClose(%s)\n", GetDescription() );
 
 /* -------------------------------------------------------------------- */
 /*      Destroy the raster bands if they exist.                         */
