@@ -110,6 +110,8 @@ the source image for copying.
 <li> <b>-projwin</b> <i>ulx uly lrx lry</i>: Selects a subwindow from the
 source image for copying (like -srcwin) but with the corners given in 
 georeferenced coordinates. 
+<li> <b>-mo</b> <i>"KEY=VALUE"</i>: passes a metadata key and value to set
+on the output dataset if possible.
 <li> <b>-co</b> <i>"NAME=VALUE"</i>: passes a creation option to the output
 format driver.  Multiple <b>-co</b> options may be listed.  See format 
 specific documentation for legal creation options for each format.
