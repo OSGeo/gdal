@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2005/01/13 15:18:05  fwarmerdam
+ * use SetLinearUnitsAndUpdateParameters()
+ *
  * Revision 1.35  2004/09/23 16:20:40  fwarmerdam
  * added clode to cleanup datum mapping table: bug 613
  *
@@ -898,11 +901,11 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
 
         pszValue = OSR_GDS( papszPrj, "Units", NULL );
         if( pszValue == NULL )
-            SetLinearUnits( SRS_UL_METER, 1.0 );
+            SetLinearUnitsAndUpdateParameters( SRS_UL_METER, 1.0 );
         else if( EQUAL(pszValue,"FEET") )
-            SetLinearUnits( SRS_UL_FOOT, atof(SRS_UL_FOOT_CONV) );
+            SetLinearUnitsAndUpdateParameters( SRS_UL_FOOT, atof(SRS_UL_FOOT_CONV) );
         else
-            SetLinearUnits( pszValue, 1.0 );
+            SetLinearUnitsAndUpdateParameters( pszValue, 1.0 );
     }
     
     return OGRERR_NONE;
