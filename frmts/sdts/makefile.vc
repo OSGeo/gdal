@@ -19,6 +19,7 @@ base:	    $(BOBJ)
 clean:
 	-del *.obj
 	-del *.exe
+	-del *.lib
 
 sdts2shp.exe:	sdts2shp.cpp $(BOBJ)
 	$(CC) $(CFLAGS) /I..\shapelib sdts2shp.cpp $(BOBJ) \

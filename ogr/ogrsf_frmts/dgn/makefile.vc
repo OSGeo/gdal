@@ -12,6 +12,7 @@ GDAL_ROOT	=	..\..\..
 default:	$(OBJ)
 
 clean:
+	-del *.lib
 	-del *.obj *.pdb
 
 dgndump.exe:	$(LL_OBJ) dgndump.obj
