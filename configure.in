@@ -1114,7 +1114,7 @@ else
   MYSQL_VERSION="`$MYSQL_CONFIG --version`"
 
   case ${MYSQL_VERSION} in 
-    [0-3]*) 
+    [[0-3]*]) 
       HAVE_MYSQL=no
       AC_MSG_RESULT([no, mysql is pre-4.x])
 	;;
