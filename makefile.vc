@@ -150,4 +150,4 @@ devinstall: install
 !IFDEF INCLUDE_OGR_FRMTS
 	copy ogr\ogrsf_frmts\*.h $(INCDIR)
 !ENDIF
-	copy gdal_i.lib $(BINDIR)
+	copy gdal_i.lib $(LIBDIR)
