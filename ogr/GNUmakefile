@@ -10,6 +10,10 @@ INST_H_FILES	=	ogr_core.h ogr_feature.h ogr_geometry.h ogr_p.h \
 
 CPPFLAGS	:=	-Iogrsf_frmts -I. $(GDAL_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(CPPFLAGS)
 
+ifeq ($(HAVE_GEOS),yes)
+CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_INC) $(CPPFLAGS)
+endif
+
 default:	lib apps
 
 all:	sublibs apps test_ogrsf$(EXE) docs
