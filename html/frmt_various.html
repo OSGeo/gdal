@@ -192,44 +192,12 @@ access via GDAL methods. Similarly, non-standard header keywords that
 the user defines in the dataset's metadata will be written to the FITS
 file when the GDAL handle is closed.
 
-<p>FITS files that contain the header keywords BSCALE and BZERO are
-handled specially. Such files appear to GDAL to contain float data,
-regardless of the actual type of the data in the file. Data read
-from or written to the file is automatically scaled according to the
-formula:
-
-<blockquote>
-external_value = BZERO + BSCALE * stored_value
-</blockquote>
-
-<p>The BSCALE and BZERO header keywords can only be set during file
-creation, using the creation options listed below. The type specified
-for the Create() method should indicate the required underlying data
-type of the file (typically, byte). As far as GDAL is concerned the
-file will look like a float file. This special behavior can be
-disabled using the NOSCALE creation option. With this option in place,
-in addition to the BSCALE/BZERO options, then the BSCALE and BZERO
-header keywords will be set, but the file will behave in every other
-way like a normal file. This is useful when you want to write raw
-values to the file, but also want to set BSCALE and BZERO.
-
-<p>Creation Options:
-
-<ul>
-
-  <li> <b>BSCALE=nnn</b>: Set the FITS BSCALE header to the specified
-value, and enable automatic re-scaling of data on read/write. If
-BSCALE is specified, then BZERO must also be specified.
-
-  <li> <b>BZERO=nnn</b>: Set the FITS BZERO header to the specified
-value, and enable automatic re-scaling of data on read/write. If BZERO
-is specified then BSCALE must also be specified.
-
-  <li> <b>NOSCALE=yes</b>: Only has an effect if BSCALE/BZERO are
-specified, in which case it disables the re-scaling normally induced
-by those options.
-
-</ul>
+<p>Note to those familiar with the CFITSIO library: The automatic
+rescaling of data values, triggered by the presence of the BSCALE and
+BZERO header keywords in a FITS file, is disabled in GDAL. Those
+header keywords are accessible and updatable via dataset metadata, in
+the same was as any other header keywords, but they do not affect
+reading/writing of data values from/to the file.
 
 <p>NOTE: Implemented as <tt>gdal/frmts/fits/fitsdataset.cpp</tt>.<p>
 

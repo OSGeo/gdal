@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/07/02 22:40:46  sperkins
+ * Backpedalling... Special creation options for b-scaled FITS files
+ * eliminated to reduce weirdness.
+ *
  * Revision 1.12  2002/07/02 01:20:24  sperkins
  * * frmts/fits/fitsdataset.cpp: Modified creation options for FITS
  * driver and handling of "b-scaled" files. See docs for details.
@@ -96,24 +100,11 @@ class FITSDataset : public GDALDataset {
   
   fitsfile* hFITS;
 
-  // The following two fields give the type as GDAL sees it. In
-  // certain circumstances, this may not correspond to the underlying
-  // FITS type given by BITPIX. For instance, a byte image file
-  // created using the BZERO and BSCALE creation options (and without
-  // the NOSCALE option), appears as a float image as far as GDAL is
-  // concerned, although it may have any underlying type (bytes, in
-  // this case). This is necessary because the cfitsio library
-  // performs automatic scaling of data whenever it is read or written
-  // from a file with BSCALE/BZERO set. Always using a float GDAL
-  // buffer avoids the scaled data producing overflow errors, usually
-  // problem when reading float data stored as scaled bytes.
-
   GDALDataType gdalDataType;   // GDAL code for the image type
   int fitsDataType;   // FITS code for the image type
 
   bool isExistingFile;
   long highestOffsetWritten;  // How much of image has been written
-  bool isBScaled;      // Does this image use BSCALE/BZERO?
 
   FITSDataset();     // Others shouldn't call this constructor explicitly
 
@@ -290,10 +281,10 @@ static int guessFITSHeaderDataType(fitsfile* hFITS, const char* key,
 
 // Simple static function to determine if FITS header keyword should
 // be saved in meta data.
-static const int ignorableHeaderCount = 17;
+static const int ignorableHeaderCount = 15;
 static char* ignorableFITSHeaders[ignorableHeaderCount] = {
   "SIMPLE", "BITPIX", "NAXIS", "NAXIS1", "NAXIS2", "NAXIS3", "END",
-  "XTENSION", "PCOUNT", "GCOUNT", "EXTEND", "BSCALE", "BZERO", "CONTINUE",
+  "XTENSION", "PCOUNT", "GCOUNT", "EXTEND", "CONTINUE",
   "COMMENT", "", "LONGSTRN"
 };
 static bool isIgnorableFITSHeader(const char* name) {
@@ -406,6 +397,12 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
     return CE_Failure;
   }
 
+  // The cftsio driver automatically rescales data on read and write
+  // if BSCALE and BZERO are defined as header keywords. This behavior
+  // causes overflows with GDAL and is slightly mysterious, so we
+  // disable this rescaling here.
+  fits_set_bscale(hFITS, 1.0, 0.0, &status);
+
   // Get the image info for this dataset (note that all bands in a FITS dataset
   // have the same type)
   int bitpix;
@@ -421,11 +418,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
   }
 
   // Determine data type
-  if (isBScaled) { // B-Scaled images always look like float images
-    gdalDataType = GDT_Float32;
-    fitsDataType = TFLOAT;
-  }
-  else if (bitpix == BYTE_IMG) {
+  if (bitpix == BYTE_IMG) {
      gdalDataType = GDT_Byte;
      fitsDataType = TBYTE;
   }
@@ -565,18 +558,6 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
   dataset->eAccess = poOpenInfo->eAccess;
   dataset->poDriver = poFITSDriver;
 
-  // Check to see if the image contains BSCALE and BZERO. If so, we
-  // treat it as a float file, irrespective of the underlying type
-  float bZero = 0, bScale = 1;
-  dataset->isBScaled = false;
-  fits_read_key_flt(hFITS, "BZERO", &bZero, 0, &status);
-  fits_read_key_flt(hFITS, "BSCALE", &bScale, 0, &status);
-  if (status)
-    // BZERO and BSCALE headers not present - reset status
-    status = 0;
-  else
-    dataset->isBScaled = true;
-  
   // Set up the description and initialize the dataset
   dataset->SetDescription(poOpenInfo->pszFilename);
   if (dataset->Init(hFITS, true) != CE_None) {
@@ -604,30 +585,10 @@ GDALDataset *FITSDataset::Create(const char* pszFilename,
   fitsfile* hFITS;
   int status = 0;
 
-  // Parse options - setting BSCALE and BZERO (both or neither must be set)
-  // causes BSCALE and BZERO keywords to be immediately set in the FITS file
-  // Data written to the file will automatically be rescaled using these 
-  // parameters, unless the NOSCALE=yes option is set.
-  bool haveBZero = false, haveBScale = false, noScale = false;
-  float bZero, bScale;
-  if (CSLFetchNameValue(papszParmList,"BZERO") != NULL) {
-    haveBZero = true;
-    bZero = atof(CSLFetchNameValue(papszParmList,"BZERO"));
-
-  }
-  if (CSLFetchNameValue(papszParmList,"BSCALE") != NULL) {
-    haveBScale = true;
-    bScale = atof(CSLFetchNameValue(papszParmList,"BSCALE"));
-  }
-  if (CSLFetchNameValue(papszParmList,"NOSCALE") != NULL)
-    noScale = true;
-
-  if (haveBZero != haveBScale) {
-    CPLError(CE_Failure, CPLE_AppDefined,
-	     "Either neither or both BSCALE and BZERO options must be "
-	     "specified when creating a FITS file");
-    return NULL;
-  }
+  // No creation options are defined. The BSCALE/BZERO options were
+  // removed on 2002-07-02 by Simon Perkins because they introduced
+  // excessive complications and didn't really fit into the GDAL
+  // paradigm.
 
   // Create the file - to force creation, we prepend the name with '!'
   char* extFilename = new char[strlen(pszFilename) + 10];  // 10 for margin!
@@ -663,6 +624,8 @@ GDALDataset *FITSDataset::Create(const char* pszFilename,
   long naxes[3] = {nXSize, nYSize, nBands};
   int naxis = (nBands == 1) ? 2 : 3;
   fits_create_img(hFITS, bitpix, naxis, naxes, &status);
+
+  // Check the status
   if (status) {
     CPLError(CE_Failure, CPLE_AppDefined,
 	     "Couldn't create image within FITS file %s (%d).", 
@@ -678,28 +641,6 @@ GDALDataset *FITSDataset::Create(const char* pszFilename,
   dataset->eAccess = GA_Update;
   dataset->SetDescription(pszFilename);
 
-  // If bscaling is requested, add appropriate BSCALE and BZERO headers
-  dataset->isBScaled = false;
-  if (haveBScale) {
-    fits_movabs_hdu(hFITS, 1, 0, &status);
-    fits_update_key(hFITS, TFLOAT, "BSCALE", &bScale, 0, &status);
-    fits_update_key(hFITS, TFLOAT, "BZERO", &bZero, 0, &status);
-    
-    // If NOSCALE was specified, then disable scaling
-    if (noScale)
-      fits_set_bscale(hFITS, 1.0, 0.0, &status);
-    else
-      dataset->isBScaled = true;
-
-    if (status) {
-      CPLError(CE_Failure, CPLE_AppDefined,
-	       "Couldn't set BSCALE/BZERO headers in FITS file %s (%d)",
-	       pszFilename, status);
-      fits_close_file(hFITS, &status);
-      return NULL;
-    }
-  }
-  
   // Init recalculates a lot of stuff we already know, but...
   if (dataset->Init(hFITS, false) != CE_None) { 
     delete dataset;
