@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_e00gen.c,v 1.14 2001/11/25 21:15:23 daniel Exp $
+ * $Id: avc_e00gen.c,v 1.15 2004/08/19 17:48:20 warmerda Exp $
  *
  * Name:     avc_e00gen.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: avc_e00gen.c,v $
+ * Revision 1.15  2004/08/19 17:48:20  warmerda
+ * Avoid uninitialized variable warnings.
+ *
  * Revision 1.14  2001/11/25 21:15:23  daniel
  * Added hack (AVC_MAP_TYPE40_TO_DOUBLE) to map type 40 fields bigger than 8
  * digits to double precision as we generate E00 output (bug599)
@@ -143,7 +146,7 @@ void    AVCE00GenReset(AVCE00GenInfo  *psInfo)
 const char *AVCE00GenStartSection(AVCE00GenInfo *psInfo, AVCFileType eType, 
                                   const char *pszClassName)
 {
-    char *pszName;
+    char *pszName = "UNK";
 
     AVCE00GenReset(psInfo);
 
@@ -301,7 +304,7 @@ const char *AVCE00GenEndSection(AVCE00GenInfo *psInfo, AVCFileType eType,
 const char *AVCE00GenObject(AVCE00GenInfo *psInfo, 
                             AVCFileType eType, void *psObj, GBool bCont)
 {
-    const char *pszLine;
+    const char *pszLine = NULL;
 
     switch(eType)
     {
