@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/02/15 18:26:44  warmerda
+ * create output directory if necessary
+ *
  * Revision 1.4  2002/01/28 19:11:34  warmerda
  * avoid warning
  *
@@ -71,6 +74,28 @@ void *DTEDCreatePtStream( const char *pszPath, int nLevel )
 {
     DTEDPtStream *psStream;
     int          i;
+    VSIStatBuf   sStat;
+
+/* -------------------------------------------------------------------- */
+/*      Does the target directory already exist?  If not try to         */
+/*      create it.                                                      */
+/* -------------------------------------------------------------------- */
+    if( CPLStat( pszPath, &sStat ) != 0 )
+    {
+        if( VSIMkdir( pszPath, 0755 ) != 0 )
+        {
+#ifndef AVOID_CPL
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Unable to find, or create directory `%s'.",
+                      pszPath );
+#endif
+            return NULL;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the stream and initialize it.                            */
+/* -------------------------------------------------------------------- */
 
     psStream = (DTEDPtStream *) CPLCalloc( sizeof(DTEDPtStream), 1 );
     psStream->nLevel = nLevel;
@@ -81,6 +106,8 @@ void *DTEDCreatePtStream( const char *pszPath, int nLevel )
 
     for( i = 0; i < DTEDMD_MAX+1; i++ )
         psStream->apszMetadata[i] = NULL;
+
+    
     
     return (void *) psStream;
 }
@@ -166,7 +193,14 @@ int DTEDWritePt( void *hStream, double dfLong, double dfLat, double dfElev )
         pszError = DTEDCreate( pszFullFilename, psStream->nLevel, 
                                nCrLat, nCrLong );
         if( pszError != NULL )
+        {
+#ifndef AVOID_CPL
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Failed to create DTED file `%s'.\n%s", 
+                      pszFullFilename, pszError );
+#endif
             return FALSE;
+        }
 
         psInfo = DTEDOpen( pszFullFilename, "rb+", FALSE );
 
