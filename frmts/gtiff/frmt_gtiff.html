@@ -55,6 +55,13 @@ Creation Options:<p>
 <li> <b>TFW=YES</b>: Force the generation of an associated ESRI world
 file (.tfw).<p>
 
+<li> <b>INTERLEAVE=[BAND,PIXEL]</b>: By default TIFF files with band
+interleaving (PLANARCONFIG_SEPARATE in TIFF terminology) are created.  These
+are slightly more efficient for some purposes, but some applications only 
+support pixel interleaved TIFF files.  In these cases pass INTERLEAVE=PIXEL
+to produce pixel interleaved TIFF files (PLANARCONFIG_CONTIG in TIFF
+terminology).<p>
+
 <li> <b>TILED=YES</b>: By default stripped TIFF files are created.  This
 option can be used to force creation of tiled TIFF files.<p>
 
