@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/10/09 14:13:40  warmerda
+ * ensure width is at least 1
+ *
  * Revision 1.9  2002/04/05 19:59:37  warmerda
  * Output file was getting different geometries in some cases.
  *
@@ -390,7 +393,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
     }
     else if( poField->GetType() == OFTString )
     {
-        if( poField->GetWidth() == 0 )
+        if( poField->GetWidth() < 1 )
             iNewField =
                 DBFAddField( hDBF, poField->GetNameRef(), FTString, 80, 0 );
         else
