@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/10/15 19:09:46  warmerda
+ * fixed memory leak of panShapeRecordId array
+ *
  * Revision 1.14  2003/01/11 15:29:55  warmerda
  * expanded tabs
  *
@@ -313,6 +316,8 @@ TigerCompleteChain::TigerCompleteChain( OGRTigerDataSource * poDSIn,
 TigerCompleteChain::~TigerCompleteChain()
 
 {
+    CPLFree( panShapeRecordId );
+
     if( fpRT3 != NULL )
         VSIFClose( fpRT3 );
 
