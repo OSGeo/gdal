@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/12/06 21:43:56  warmerda
+ * added GCP support to general transformer
+ *
  * Revision 1.3  2002/12/05 21:45:01  warmerda
  * fixed a few GenImgProj bugs
  *
@@ -239,11 +242,15 @@ typedef struct {
     double   adfSrcGeoTransform[6];
     double   adfSrcInvGeoTransform[6];
 
+    void     *pSrcGCPTransformArg;
+
     void     *pReprojectArg;
 
     double   adfDstGeoTransform[6];
     double   adfDstInvGeoTransform[6];
     
+    void     *pDstGCPTransformArg;
+
 } GDALGenImgProjTransformInfo;
 
 /************************************************************************/
@@ -267,9 +274,39 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 /* -------------------------------------------------------------------- */
 /*      Get forward and inverse geotransform for the source image.      */
 /* -------------------------------------------------------------------- */
-    GDALGetGeoTransform( hSrcDS, psInfo->adfSrcGeoTransform );
-    InvGeoTransform( psInfo->adfSrcGeoTransform, 
-                     psInfo->adfSrcInvGeoTransform );
+    if( GDALGetGeoTransform( hSrcDS, psInfo->adfSrcGeoTransform ) == CE_None
+        && (psInfo->adfSrcGeoTransform[0] != 0.0
+            || psInfo->adfSrcGeoTransform[1] != 1.0
+            || psInfo->adfSrcGeoTransform[2] != 0.0
+            || psInfo->adfSrcGeoTransform[3] != 0.0
+            || psInfo->adfSrcGeoTransform[4] != 0.0
+            || ABS(psInfo->adfSrcGeoTransform[5]) != 1.0) )
+    {
+        InvGeoTransform( psInfo->adfSrcGeoTransform, 
+                         psInfo->adfSrcInvGeoTransform );
+    }
+    else if( bGCPUseOK && GDALGetGCPCount( hSrcDS ) > 0 )
+    {
+        psInfo->pSrcGCPTransformArg = 
+            GDALCreateGCPTransformer( GDALGetGCPCount( hSrcDS ),
+                                      GDALGetGCPs( hSrcDS ), 0, FALSE );
+        if( psInfo->pSrcGCPTransformArg == NULL )
+        {
+            GDALDestroyGenImgProjTransformer( psInfo );
+            return NULL;
+        }
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to compute a transformation between pixel/line\n"
+                  "and georeferenced coordinates for %s.\n"
+                  "There is no affine transformation and no GCPs.", 
+                  GDALGetDescription( hSrcDS ) );
+
+        GDALDestroyGenImgProjTransformer( psInfo );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Setup reprojection.                                             */
@@ -317,6 +354,12 @@ void GDALDestroyGenImgProjTransformer( void *hTransformArg )
     GDALGenImgProjTransformInfo *psInfo = 
         (GDALGenImgProjTransformInfo *) hTransformArg;
 
+    if( psInfo->pSrcGCPTransformArg != NULL )
+        GDALDestroyGCPTransformer( psInfo->pSrcGCPTransformArg );
+
+    if( psInfo->pDstGCPTransformArg != NULL )
+        GDALDestroyGCPTransformer( psInfo->pDstGCPTransformArg );
+
     if( psInfo->pReprojectArg != NULL )
         GDALDestroyReprojectionTransformer( psInfo->pReprojectArg );
 
@@ -336,29 +379,46 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
         (GDALGenImgProjTransformInfo *) pTransformArg;
     int   i;
     double *padfGeoTransform;
+    void *pGCPTransformArg;
 
 /* -------------------------------------------------------------------- */
 /*      Convert from src (dst) pixel/line to src (dst)                  */
 /*      georeferenced coordinates.                                      */
 /* -------------------------------------------------------------------- */
     if( bDstToSrc )
-        padfGeoTransform = psInfo->adfDstGeoTransform;
-    else
-        padfGeoTransform = psInfo->adfSrcGeoTransform;
-
-    for( i = 0; i < nPointCount; i++ )
     {
-        double dfNewX, dfNewY;
+        padfGeoTransform = psInfo->adfDstGeoTransform;
+        pGCPTransformArg = psInfo->pDstGCPTransformArg;
+    }
+    else
+    {
+        padfGeoTransform = psInfo->adfSrcGeoTransform;
+        pGCPTransformArg = psInfo->pSrcGCPTransformArg;
+    }
         
-        dfNewX = padfGeoTransform[0]
-            + padfX[i] * padfGeoTransform[1]
-            + padfY[i] * padfGeoTransform[2];
-        dfNewY = padfGeoTransform[3]
-            + padfX[i] * padfGeoTransform[4]
-            + padfY[i] * padfGeoTransform[5];
-        
-        padfX[i] = dfNewX;
-        padfY[i] = dfNewY;
+    if( pGCPTransformArg == NULL )
+    {
+        for( i = 0; i < nPointCount; i++ )
+        {
+            double dfNewX, dfNewY;
+            
+            dfNewX = padfGeoTransform[0]
+                + padfX[i] * padfGeoTransform[1]
+                + padfY[i] * padfGeoTransform[2];
+            dfNewY = padfGeoTransform[3]
+                + padfX[i] * padfGeoTransform[4]
+                + padfY[i] * padfGeoTransform[5];
+            
+            padfX[i] = dfNewX;
+            padfY[i] = dfNewY;
+        }
+    }
+    else
+    {
+        if( !GDALGCPTransform( pGCPTransformArg, FALSE, 
+                               nPointCount, padfX, padfY, padfZ,
+                               panSuccess ) )
+            return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -381,25 +441,41 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
 /*      Convert dst (src) georef coordinates back to pixel/line.        */
 /* -------------------------------------------------------------------- */
     if( bDstToSrc )
-        padfGeoTransform = psInfo->adfSrcInvGeoTransform;
-    else
-        padfGeoTransform = psInfo->adfDstInvGeoTransform;
-
-    for( i = 0; i < nPointCount; i++ )
     {
-        double dfNewX, dfNewY;
-        
-        dfNewX = padfGeoTransform[0]
-            + padfX[i] * padfGeoTransform[1]
-            + padfY[i] * padfGeoTransform[2];
-        dfNewY = padfGeoTransform[3]
-            + padfX[i] * padfGeoTransform[4]
-            + padfY[i] * padfGeoTransform[5];
-        
-        padfX[i] = dfNewX;
-        padfY[i] = dfNewY;
+        padfGeoTransform = psInfo->adfSrcInvGeoTransform;
+        pGCPTransformArg = psInfo->pSrcGCPTransformArg;
     }
-
+    else
+    {
+        padfGeoTransform = psInfo->adfDstInvGeoTransform;
+        pGCPTransformArg = psInfo->pDstGCPTransformArg;
+    }
+        
+    if( pGCPTransformArg == NULL )
+    {
+        for( i = 0; i < nPointCount; i++ )
+        {
+            double dfNewX, dfNewY;
+            
+            dfNewX = padfGeoTransform[0]
+                + padfX[i] * padfGeoTransform[1]
+                + padfY[i] * padfGeoTransform[2];
+            dfNewY = padfGeoTransform[3]
+                + padfX[i] * padfGeoTransform[4]
+                + padfY[i] * padfGeoTransform[5];
+            
+            padfX[i] = dfNewX;
+            padfY[i] = dfNewY;
+        }
+    }
+    else
+    {
+        if( !GDALGCPTransform( pGCPTransformArg, TRUE,
+                               nPointCount, padfX, padfY, padfZ,
+                               panSuccess ) )
+            return FALSE;
+    }
+        
     return TRUE;
 }
 
