@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/01/31 16:48:15  warmerda
+ * removed need for getting feature count for a rowset
+ *
  * Revision 1.11  2001/11/21 16:27:22  warmerda
  * added MAXOPENROWS at Bruces request
  *
@@ -67,7 +70,8 @@
 #include "sfutil.h"
 #include "IColumnsRowsetImpl.h"
 #include "ICommandWithParametersImpl.h"
-#include "SFAccessorImpl.h" 
+#include "SFAccessorImpl.h"
+#include "IFRowsetImpl.h"
 
 /************************************************************************/
 /*                            CVirtualArray                             */
@@ -81,10 +85,8 @@ public:
 	CVirtualArray();
 	~CVirtualArray();
 	void	RemoveAll();
-	void	Initialize(int nArraySize, OGRLayer *pOGRLayer,int,
-                           CSFRowset *);
-	BYTE    &operator[](int iIndex);
-	int	GetSize() const {return m_nArraySize;}
+	void	Initialize(OGRLayer *pOGRLayer,int, CSFRowset *);
+	BYTE    *GetRow(int iIndex, HRESULT &hr );
 private:
         int     FillGeometry( OGRGeometry *poGeometry, 
                               unsigned char *pabyBuffer,
@@ -97,7 +99,6 @@ private:
 	BYTE	*mBuffer;
         int     m_nBufferSize;
 	OGRLayer *m_pOGRLayer;
-	int	m_nArraySize;
 	int	m_nLastRecordAccessed;
 	OGRFeatureDefn	*m_pFeatureDefn;
         CSFRowset       *m_pRowset;
@@ -241,7 +242,7 @@ END_PROPSET_MAP()
 template <class T, class Storage, class CreatorClass,
     class ArrayType = CSimpleArray<Storage>,
     class RowClass = CSimpleRow,
-    class RowsetInterface = IRowsetImpl < T, IRowset, RowClass> >
+    class RowsetInterface = IFRowsetImpl < T, IRowset, RowClass> >
 class CSFRowsetImpl :
 	public CComObjectRootEx<CreatorClass::_ThreadModel>,
 	public SFAccessorImpl<T>,
@@ -377,6 +378,31 @@ END_COM_MAP()
 	static ATLCOLUMNINFO* GetColumnInfo(T* pv, ULONG* pcCols)
 	{
 		return Storage::GetColumnInfo(pv,pcCols);
+	}
+
+        OUT_OF_LINE
+        HRESULT GetDataHelper(HACCESSOR hAccessor,
+                              ATLCOLUMNINFO*& rpInfo,
+                              void** ppBinding,
+                              void*& rpSrcData,
+                              ULONG& rcCols,
+                              CComPtr<IDataConvert>& rspConvert,
+                              RowClass* pRow)
+        {
+            ATLASSERT(ppBinding != NULL);
+            HRESULT hr;
+            
+            T* pT = (T*) this;
+            *ppBinding = (void*)pT->m_rgBindings.Lookup((int)hAccessor);
+            if (*ppBinding == NULL)
+                return DB_E_BADACCESSORHANDLE;
+            rpSrcData = (void*)pT->m_rgRowData.GetRow(pRow->m_iRowset, hr);
+            if( rpSrcData == NULL )
+                return hr;
+
+            rpInfo = T::GetColumnInfo((T*)this, &rcCols);
+            rspConvert = pT->m_spConvert;
+            return S_OK;
 	}
 
 

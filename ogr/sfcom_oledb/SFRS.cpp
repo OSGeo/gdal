@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2002/01/31 16:48:15  warmerda
+ * removed need for getting feature count for a rowset
+ *
  * Revision 1.32  2002/01/11 20:36:31  warmerda
  * set ISLONG flag on geometry column to indicate use of streams
  *
@@ -124,6 +127,8 @@
 #include "sfutil.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+#define VIRTUALARRAY_SIZE_UNKNOWN 10000000
 
 // Select one of BLOB_NONE, BLOB_IUNKNOWN, BLOB_BYTES, or BLOB_BYTES_BY_REF
 // This will determine the type and handling of the geometry column.
@@ -459,7 +464,6 @@ CVirtualArray::CVirtualArray()
     m_nBufferSize = 0;
     m_nLastRecordAccessed = -1;
     m_nPackedRecordLength = 0;
-    m_nArraySize = 0;
 }
 
 /************************************************************************/
@@ -489,33 +493,34 @@ void CVirtualArray::RemoveAll()
 /*      Initialize the record cache.                                    */
 /************************************************************************/
 
-void	CVirtualArray::Initialize(int nArraySize, OGRLayer *pLayer,
-                                  int nBufferSize, CSFRowset *poRowset )
+void	CVirtualArray::Initialize(OGRLayer *pLayer, int nBufferSize, 
+                                  CSFRowset *poRowset )
 {
-        m_nBufferSize  = nBufferSize;
-	mBuffer	       = (BYTE *) malloc(nBufferSize);
-	m_nArraySize   = nArraySize;
-	m_pOGRLayer    = pLayer;
-	m_pFeatureDefn = pLayer->GetLayerDefn();
-        m_pRowset      = poRowset;
+    m_nBufferSize  = nBufferSize;
+    mBuffer	       = (BYTE *) malloc(nBufferSize);
+    m_pOGRLayer    = pLayer;
+    m_pFeatureDefn = pLayer->GetLayerDefn();
+    m_pRowset      = poRowset;
 
-        CPLDebug( "OGR_OLEDB", "CVirtualArray::Initialize()" );
-        m_pOGRLayer->ResetReading();
+    CPLDebug( "OGR_OLEDB", "CVirtualArray::Initialize()" );
+    m_pOGRLayer->ResetReading();
 }
 
 /************************************************************************/
-/*                      CVirtualArray::operator[]                       */
+/*                       CVirtualArray::GetRow()                        */
 /*                                                                      */
 /*      Fetch request record from the record cache, possibly having     */
 /*      to add it to the cache.                                         */
 /************************************************************************/
 
-BYTE &CVirtualArray::operator[](int iIndex) 
+BYTE *CVirtualArray::GetRow( int iIndex, HRESULT &hr )
 {
     OGRFeature      *poFeature;
 #ifdef ROWGET_DEBUG
     CPLDebug( "OGR_OLEDB", "CVirtualArray::operator[%d]", iIndex );
 #endif
+
+    hr = S_OK;
 
     // Pre-initialize output buffer.
     memset( mBuffer, 0, m_nBufferSize );
@@ -549,10 +554,11 @@ BYTE &CVirtualArray::operator[](int iIndex)
 
     if (iIndex -1 != m_nLastRecordAccessed)
     {
-        CPLDebug( "OGR_OLEDB", "Assertion failed at %s:%d\n", 
-                  __FILE__, __LINE__ );
-        // Error condition; // Assertion failure!
-        return *mBuffer;
+        CPLDebug( "OGR_OLEDB", 
+                  "Went *PAST* end of dataset requesting feature %d.", 
+                  iIndex );
+        hr = DB_S_ENDOFROWSET;
+        return NULL;
     }
 
     m_nLastRecordAccessed = iIndex;
@@ -561,10 +567,10 @@ BYTE &CVirtualArray::operator[](int iIndex)
 
     if (!poFeature)
     {
-        CPLDebug( "OGR_OLEDB", "Failed to get feature at %s:%d\n", 
-                  __FILE__, __LINE__ );
-        // Error condition; // Assertion failure!
-        return *mBuffer;
+        CPLDebug( "OGR_OLEDB", "Hit end of dataset requesting feature %d.", 
+                  iIndex );
+        hr = DB_S_ENDOFROWSET;
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -596,7 +602,7 @@ BYTE &CVirtualArray::operator[](int iIndex)
 
     OGRFeature::DestroyFeature( poFeature );
 
-    return (*mBuffer);
+    return mBuffer;
 }
 
 /************************************************************************/
@@ -1173,12 +1179,19 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     else
         pLayer->SetAttributeFilter( NULL );
 	
-    // Get count
-    int      nTotalRows;
-
-    nTotalRows = pLayer->GetFeatureCount(TRUE);
     if (pcRowsAffected)
-        *pcRowsAffected = nTotalRows;
+    {
+        int      nTotalRows;
+
+        nTotalRows = pLayer->GetFeatureCount(FALSE);
+        if( nTotalRows != -1 )
+            *pcRowsAffected = nTotalRows;
+        else
+            CPLDebug( "OGR_OLEDB", 
+                      "Couldn't get feature count cheaply for %s,\n"
+                      "not setting *pcRowsAffected.  Should be OK.", 
+                      pszCommand );
+    }
 
     // Setup to define fields. 
     int  iField;
@@ -1302,7 +1315,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
         CPLDebug( "OGR_OLEDB", "Defined field `%S'", colInfo.pwszName );
     }
 
-    m_rgRowData.Initialize(nTotalRows,pLayer,nOffset,this);
+    m_rgRowData.Initialize(pLayer,nOffset,this);
 
     return S_OK;
 }
