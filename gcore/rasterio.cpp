@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/02/07 16:44:25  dron
+ * IRasterIO() improved to cast several pixels per time.
+ *
  * Revision 1.17  2002/11/11 16:02:06  dron
  * More error messages added.
  *
@@ -103,6 +106,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
 {
     int         nBandDataSize = GDALGetDataTypeSize( eDataType ) / 8;
+    int		nBytesPerDataPixel = GDALGetDataTypeSize( eDataType ) / 8;
+    int		nBytesPerBufPixel = GDALGetDataTypeSize( eBufType ) / 8;
     GByte       *pabySrcBlock = NULL;
     GDALRasterBlock *poBlock;
     int         nLBlockX=-1, nLBlockY=-1, iBufYOff, iBufXOff, iSrcY;
@@ -231,37 +236,67 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     return CE_Failure;
             }
 
+            /* calculate buffer span in the current block and handle as many
+               pixels as possible in one call to the GDALCopyWords routine.
+               Note: this makes sure that if the data is being subsampled at
+               somethings besides an integer interval that only one pixel at a
+               time is grabbed.  This is very inefficient.  It would likely be
+               better to convert the entire line, then pull out the pixels that
+               are needed for the subsampled version. */
+            int iSrcXInc = (int)dfSrcXInc;
+            int wordCount = 1;
+            if ( dfSrcXInc == iSrcXInc )
+            {
+                /* integer multiple for subsampling, so calculate the number
+                   of words to copy.  Also make sure the end of the requested
+                   bytes isn't exceeded. */
+                int endXBlockIndex = (nLBlockX + 1) * nBlockXSize;
+                wordCount = (endXBlockIndex - iSrcX) / iSrcXInc;
+                if ( wordCount > (nBufXSize - iBufXOff) )
+                    wordCount = nBufXSize - iBufXOff;
+            }
+
 /* -------------------------------------------------------------------- */
 /*      Copy over this pixel of data.                                   */
 /* -------------------------------------------------------------------- */
-            iSrcOffset = (iSrcX - nLBlockX*nBlockXSize
-                + (iSrcY - nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
+            iSrcOffset = ( iSrcX - nLBlockX*nBlockXSize
+                + (iSrcY - nLBlockY*nBlockYSize) * nBlockXSize ) *
+		nBandDataSize;
 
             if( eDataType == eBufType )
             {
+                /* FIXME: it might be better to call GDALCopyWords to process
+                   all the pixels from the current buffer */
                 if( eRWFlag == GF_Read )
                     memcpy( ((GByte *) pData) + iBufOffset,
                             pabySrcBlock + iSrcOffset, nBandDataSize );
                 else
                     memcpy( pabySrcBlock + iSrcOffset, 
                             ((GByte *) pData) + iBufOffset, nBandDataSize );
+                iBufOffset += nPixelSpace;
             }
             else
             {
-                /* type to type conversion ... ouch, this is expensive way
-                   of handling single words */
-                
+                /* copy all the words for the current image block */
                 if( eRWFlag == GF_Read )
-                    GDALCopyWords( pabySrcBlock + iSrcOffset, eDataType, 0,
-                                   ((GByte *) pData) + iBufOffset, eBufType, 0,
-                                   1 );
+                {
+                    GDALCopyWords( pabySrcBlock + iSrcOffset, eDataType, 
+                                   nBytesPerDataPixel * iSrcXInc,
+                                   ((GByte *) pData) + iBufOffset, eBufType, 
+                                   nBytesPerBufPixel * iSrcXInc, wordCount );
+                }
                 else
-                    GDALCopyWords( ((GByte *) pData) + iBufOffset, eBufType, 0,
-                                   pabySrcBlock + iSrcOffset, eDataType, 0,
-                                   1 );
+                {
+                    GDALCopyWords( ((GByte *) pData) + iBufOffset, eBufType, 
+                                   nBytesPerBufPixel * iSrcXInc,
+                                   pabySrcBlock + iSrcOffset, eDataType, 
+                                   nBytesPerDataPixel * iSrcXInc, wordCount );
+                }
+                /* adjust the loop counter to account for copying multiple
+                   words - ugly I know */
+                iBufXOff += ( wordCount - 1 );
+                iBufOffset += ( nPixelSpace * wordCount );
             }
-
-            iBufOffset += nPixelSpace;
         }
     }
 
