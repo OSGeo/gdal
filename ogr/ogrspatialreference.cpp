@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.85  2004/05/06 19:26:04  dron
+ * Added OSRSetProjection() function.
+ *
  * Revision 1.84  2004/05/04 17:54:45  warmerda
  * internal longitude format is greenwich relative - no adjustments needed
  *
@@ -1975,6 +1978,17 @@ OGRErr OSRSetProjCS( OGRSpatialReferenceH hSRS, const char * pszName )
 /*                           SetProjection()                            */
 /************************************************************************/
 
+/**
+ * Set a projection name.
+ *
+ * This method is the same as the C function OSRSetProjection().
+ *
+ * @param pszProjection the projection name, which should be selected from
+ * the macros in ogr_srs_api.h, such as SRS_PT_TRANSVERSE_MERCATOR. 
+ *
+ * @return OGRERR_NONE on success.
+ */
+
 OGRErr OGRSpatialReference::SetProjection( const char * pszProjection )
 
 {
@@ -2000,6 +2014,17 @@ OGRErr OGRSpatialReference::SetProjection( const char * pszProjection )
         poRoot->InsertChild( poGeogCS, 1 );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            OSRSetProjection()                        */
+/************************************************************************/
+
+OGRErr OSRSetProjection( OGRSpatialReferenceH hSRS,
+                         const char * pszProjection )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetProjection( pszProjection );
 }
 
 /************************************************************************/
