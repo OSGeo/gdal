@@ -107,7 +107,8 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 ifeq ($(OGR_ENABLED),yes)
 GDAL_LIBS := $(OGRFRMTS_LIB) $(PG_LIB) $(GDAL_LIBS) 
 
-GDAL_OBJ := $(GDAL_OBJ) $(GDAL_ROOT)/ogr/ogrsf_frmts/generic/ogrregisterall.o
+GDAL_OBJ := $(GDAL_OBJ) $(GDAL_ROOT)/ogr/ogrsf_frmts/generic/ogrregisterall.o \
+		$(GDAL_ROOT)/ogr/ogrfeaturestyle.o
 endif
 
 #
