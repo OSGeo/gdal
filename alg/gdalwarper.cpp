@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2004/03/19 15:54:42  warmerda
+ * Fixed another place where "2" was used instead of 0 as the default
+ * polynomial order.
+ *
  * Revision 1.10  2004/03/19 05:06:00  warmerda
  * Pass 0 for order to GDALCreateGenImgProjTransformer() from
  * GDALCreateAndReprojectImage() so that the default will be to figure
@@ -132,7 +136,7 @@ CPLErr GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 
     hTransformArg = 
         GDALCreateGenImgProjTransformer( hSrcDS, pszSrcWKT, hDstDS, pszDstWKT, 
-                                         TRUE, 1000.0, 2 );
+                                         TRUE, 1000.0, 0 );
 
     if( hTransformArg == NULL )
         return CE_Failure;
