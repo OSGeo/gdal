@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.66  2003/01/08 18:14:28  warmerda
+ * added FixupOrdering()
+ *
  * Revision 1.65  2002/12/21 17:29:38  warmerda
  * fixed default degree/radian problem for GEOGCS
  *
@@ -3077,6 +3080,21 @@ const char *OSRGetAuthorityName( OGRSpatialReferenceH hSRS,
 /*                            StripCTParms()                            */
 /************************************************************************/
 
+/** 
+ * Strip OGC CT Parameters.
+ *
+ * This method will remove all components of the coordinate system
+ * that are specific to the OGC CT Specification.  That is it will attempt
+ * to strip it down to being compatible with the Simple Features 1.0 
+ * specification.
+ *
+ * This method is the same as the C function OSRStripCTParms().
+ *
+ * @param poCurrent node to operate on.  NULL to operate on whole tree.
+ *
+ * @return OGRERR_NONE on success or an error code.
+ */
+
 OGRErr OGRSpatialReference::StripCTParms( OGR_SRSNode * poCurrent )
 
 {
@@ -3102,6 +3120,16 @@ OGRErr OGRSpatialReference::StripCTParms( OGR_SRSNode * poCurrent )
     poCurrent->StripNodes( "AXIS" );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          OSRStripCTParms()                           */
+/************************************************************************/
+
+OGRErr OSRStripCTParms( OGRSpatialReferenceH hSRS )
+
+{
+    return ((OGRSpatialReference *) hSRS)->StripCTParms( NULL );
 }
 
 /************************************************************************/
@@ -3623,4 +3651,41 @@ void OGRSpatialReference::GetNormInfo(void) const
     poThis->dfToDegrees = GetAngularUnits(NULL) / atof(SRS_UA_DEGREE_CONV);
     if( fabs(poThis->dfToDegrees-1.0) < 0.000000001 )
         poThis->dfToDegrees = 1.0;
+}
+
+/************************************************************************/
+/*                           FixupOrdering()                            */
+/************************************************************************/
+
+/**
+ * Correct parameter ordering to match CT Specification.
+ *
+ * Some mechanisms to create WKT using OGRSpatialReference, and some
+ * imported WKT fail to maintain the order of parameters required according
+ * to the BNF definitions in the OpenGIS SF-SQL and CT Specifications.  This
+ * method attempts to massage things back into the required order.
+ *
+ * This method is the same as the C function OSRFixupOrdering().
+ *
+ * @return OGRERR_NONE on success or an error code if something goes 
+ * wrong.  
+ */
+
+OGRErr OGRSpatialReference::FixupOrdering()
+
+{
+    if( GetRoot() != NULL )
+        return GetRoot()->FixupOrdering();
+    else
+        return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          OSRFixupOrdering()                          */
+/************************************************************************/
+
+OGRErr OSRFixupOrdering( OGRSpatialReferenceH hSRS )
+
+{
+    return ((OGRSpatialReference *) hSRS)->FixupOrdering();
 }

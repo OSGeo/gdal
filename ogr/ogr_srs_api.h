@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/01/08 18:14:28  warmerda
+ * added FixupOrdering()
+ *
  * Revision 1.24  2002/12/16 17:07:13  warmerda
  * added NormProjParm functions, and OSRGetPrimeMeridian
  *
@@ -282,6 +285,8 @@ int CPL_DLL OSRReference( OGRSpatialReferenceH );
 int CPL_DLL OSRDereference( OGRSpatialReferenceH );
 
 OGRErr CPL_DLL OSRValidate( OGRSpatialReferenceH );
+OGRErr CPL_DLL OSRFixupOrdering( OGRSpatialReferenceH );
+OGRErr CPL_DLL OSRStripCTParms( OGRSpatialReferenceH );
 
 OGRErr CPL_DLL OSRImportFromEPSG( OGRSpatialReferenceH, int );
 OGRErr CPL_DLL OSRImportFromWkt( OGRSpatialReferenceH, char ** );
