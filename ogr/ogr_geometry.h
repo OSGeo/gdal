@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2002/08/12 15:02:18  warmerda
+ * added OGRRawPoint and OGREnvelope initializes
+ *
  * Revision 1.32  2002/05/02 19:45:36  warmerda
  * added flattenTo2D() method
  *
@@ -186,6 +189,10 @@ enum OGRwkbByteOrder
 class OGRRawPoint
 {
   public:
+	  OGRRawPoint()
+	  {
+		  x = y = 0.0;
+	  }
     double      x;
     double      y;
 };
@@ -197,6 +204,10 @@ class OGRRawPoint
 class OGREnvelope
 {
   public:
+	OGREnvelope()
+	{
+		MinX = MaxX = MinY = MaxY = 0;
+	}
     double      MinX;
     double      MaxX;
     double      MinY;
