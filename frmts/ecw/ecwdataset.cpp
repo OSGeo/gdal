@@ -28,6 +28,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/04/15 13:45:03  warmerda
+ * Don't require the file to be open in ::Open() for .ecw files.  Large
+ * files (>2GB) will generally not be open.
+ *
  * Revision 1.21  2004/04/05 21:29:40  warmerda
  * improved logic to recognise jp2/jpc
  *
@@ -605,7 +609,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
                     sizeof(jp2_header) ) == 0) )
         /* accept JPEG2000 files */;
     else if( (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"ecw")
-              || poOpenInfo->fp == NULL)
+              || poOpenInfo->nHeaderBytes == 0)
              && !EQUALN(poOpenInfo->pszFilename,"ecwp:",5) )
         return( NULL );
     
