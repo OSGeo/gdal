@@ -5,7 +5,7 @@ include ../GDALmake.opt
 OBJ	=	ogrgeometryfactory.o ogrpoint.o ogrcurve.o ogrlinestring.o \
 		ogrlinearring.o ogrpolygon.o ogrutils.o ogrgeometry.o \
 		ogrgeometrycollection.o ogrmultipolygon.o ogrsurface.o \
-		ogrmultipoint.o ogrmultilinestring.o \
+		ogrmultipoint.o ogrmultilinestring.o ogr_api.o \
 		\
 		ogrfeature.o ogrfeaturedefn.o ogrfeaturestyle.o ogrfielddefn.o\
 		ogrspatialreference.o ogr_srsnode.o ogr_srs_proj4.o \
