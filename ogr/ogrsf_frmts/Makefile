@@ -3,12 +3,16 @@ default:
 	$(MAKE) $*
 	cd ..\shape 
 	$(MAKE) $*
+	cd ..\ntf
+	$(MAKE) $*
 	cd ..
-	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj
+	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj
 
 clean:
 	del ogrsf_frmts.lib
 	cd generic 
 	$(MAKE) clean
 	cd ..\shape 
+	$(MAKE) clean
+	cd ..\ntf
 	$(MAKE) clean
