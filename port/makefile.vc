@@ -11,7 +11,8 @@ OBJ	=	cpl_conv.obj \
 		cpl_path.obj \
 		cpl_csv.obj \
 		cpl_findfile.obj \
-		cpl_vsil_win32.obj
+		cpl_vsil_win32.obj \
+		cpl_minixml.obj
 
 LIB	=	cpl.lib
 
