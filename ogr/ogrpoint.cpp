@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/09/11 13:47:17  warmerda
+ * preliminary set of fixes for 3D WKB enum
+ *
  * Revision 1.18  2002/05/02 19:45:36  warmerda
  * added flattenTo2D() method
  *
@@ -259,12 +262,12 @@ OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
     if( eByteOrder == wkbNDR )
     {
         eGeometryType = (OGRwkbGeometryType) pabyData[1];
-        bIs3D = pabyData[2] & 0x80;
+        bIs3D = pabyData[4] & 0x80;
     }
     else
     {
         eGeometryType = (OGRwkbGeometryType) pabyData[4];
-        bIs3D = pabyData[3] & 0x80;
+        bIs3D = pabyData[1] & 0x80;
     }
 
     assert( eGeometryType == wkbPoint );
@@ -313,30 +316,14 @@ OGRErr  OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
 /*      Set the geometry feature type.                                  */
 /* -------------------------------------------------------------------- */
+    GUInt32 nGType = getGeometryType();
+    
     if( eByteOrder == wkbNDR )
-    {
-        pabyData[1] = wkbPoint;
-
-        if( z == 0 )
-            pabyData[2] = 0;
-        else
-            pabyData[2] = 0x80;
-        
-        pabyData[3] = 0;
-        pabyData[4] = 0;
-    }
+        nGType = CPL_LSBWORD32( nGType );
     else
-    {
-        pabyData[1] = 0;
-        pabyData[2] = 0;
+        nGType = CPL_MSBWORD32( nGType );
 
-        if( z == 0 )
-            pabyData[3] = 0;
-        else
-            pabyData[3] = 0x80;
-        
-        pabyData[4] = wkbPoint;
-    }
+    memcpy( pabyData + 1, &nGType, 4 );
     
 /* -------------------------------------------------------------------- */
 /*      Copy in the raw data.                                           */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/09/11 13:47:17  warmerda
+ * preliminary set of fixes for 3D WKB enum
+ *
  * Revision 1.7  2001/07/19 18:25:07  warmerda
  * expanded tabs
  *
@@ -63,7 +66,10 @@ CPL_CVSID("$Id$");
 OGRwkbGeometryType OGRMultiLineString::getGeometryType()
 
 {
-    return wkbMultiLineString;
+    if( getCoordinateDimension() == 3 )
+        return wkbMultiLineString25D;
+    else
+        return wkbMultiLineString;
 }
 
 /************************************************************************/
