@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/12/12 17:06:57  warmerda
+ * added CPLStat
+ *
  * Revision 1.12  2001/03/16 22:15:08  warmerda
  * added CPLResetExtension
  *
@@ -54,13 +57,14 @@
 /* -------------------------------------------------------------------- */
 /*      Runtime check of various configuration items.                   */
 /* -------------------------------------------------------------------- */
+CPL_C_START
+
 void CPLVerifyConfiguration();
 
 /* -------------------------------------------------------------------- */
 /*      Safe malloc() API.  Thin cover over VSI functions with fatal    */
 /*      error reporting if memory allocation fails.                     */
 /* -------------------------------------------------------------------- */
-CPL_C_START
 void CPL_DLL *CPLMalloc( size_t );
 void CPL_DLL *CPLCalloc( size_t, size_t );
 void CPL_DLL *CPLRealloc( void *, size_t );
@@ -111,7 +115,12 @@ const char    CPL_DLL *CPLDefaultFindFile(const char *pszClass,
 void          CPL_DLL CPLPushFileFinder( CPLFileFinder pfnFinder );
 CPLFileFinder CPL_DLL CPLPopFileFinder();
 void          CPL_DLL CPLPushFinderLocation( const char * );
+void          CPL_DLL CPLPopFinderLocation();
 
+/* -------------------------------------------------------------------- */
+/*      Safe version of stat() that works properly on stuff like "C:".  */
+/* -------------------------------------------------------------------- */
+int CPL_DLL     CPLStat( const char *, VSIStatBuf * );
 
 CPL_C_END
 

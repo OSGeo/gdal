@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/12/12 17:06:57  warmerda
+ * added CPLStat
+ *
  * Revision 1.13  2001/07/18 04:00:49  warmerda
  * added CPL_CVSID
  *
@@ -384,5 +387,24 @@ void CPLVerifyConfiguration()
                   "CPLVerifyConfiguration(): byte order set wrong.\n" );
 }
 
+/************************************************************************/
+/*                              CPLStat()                               */
+/*                                                                      */
+/*      Same as VSIStat() except it works on "C:" as if it were         */
+/*      "C:\".                                                          */
+/************************************************************************/
 
+int CPLStat( const char *pszPath, VSIStatBuf *psStatBuf )
 
+{
+    if( strlen(pszPath) == 2 && pszPath[1] == ':' )
+    {
+        char	szAltPath[10];
+        
+        strcpy( szAltPath, pszPath );
+        strcat( szAltPath, "\\" );
+        return VSIStat( szAltPath, psStatBuf );
+    }
+    else
+        return VSIStat( pszPath, psStatBuf );
+}
