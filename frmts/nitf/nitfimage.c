@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/02/25 14:49:31  fwarmerdam
+ * Fixed offset to NICOM in NITFIHFieldOffset().
+ *
  * Revision 1.32  2005/02/21 03:57:43  fwarmerdam
  * Declare variables at beginning of blocks as required by C standard.
  *
@@ -1905,7 +1908,7 @@ GUInt32 NITFIHFieldOffset( NITFImage *psImage, const char *pszFieldName )
     char szTemp[128];
     int nNICOM;
     GUInt32 nWrkOffset;
-    GUInt32 nIMOffset = 
+    GUInt32 nIMOffset =
         psImage->psFile->pasSegmentInfo[psImage->iSegment].nSegmentHeaderStart;
 
     // We only support files we created.
@@ -1940,7 +1943,8 @@ GUInt32 NITFIHFieldOffset( NITFImage *psImage, const char *pszFieldName )
 /* -------------------------------------------------------------------- */
 /*      Comments.                                                       */
 /* -------------------------------------------------------------------- */
-    nNICOM = atoi(NITFGetField(szTemp,psImage->pachHeader,nWrkOffset,1));
+    nNICOM = atoi(NITFGetField(szTemp,psImage->pachHeader,
+                               nWrkOffset - nIMOffset,1));
         
     if( EQUAL(pszFieldName,"NICOM") )
         return nWrkOffset;
