@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2003/03/22 13:17:16  dron
+ * Debugging messages enclosed with #ifdef statements.
+ *
  * Revision 1.26  2003/03/03 16:53:07  dron
  * GetRasterBlock() don't report error in case of incomplete input file.
  *
@@ -808,8 +811,10 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
     {
         // XXX: We will not report error here, because file just may be
 	// in update state and data for this block will be available later
-	CPLDebug( "HFABand", "Seek to %d failed.\n",
+#ifdef DEBUG
+        CPLDebug( "HFABand", "Seek to %d failed.\n",
 		  panBlockStart[iBlock] );
+#endif
         memset( pData, 0, 
                 HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
 
@@ -832,9 +837,11 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 	    // XXX: Suppose that file in update state
 	    memset( pData, 0, 
                 HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
+#ifdef DEBUG
 	    CPLDebug( "HFABand", "Read of %d bytes at %d failed.\n", 
                       panBlockSize[iBlock],
                       panBlockStart[iBlock] );
+#endif
 
             return CE_None;
         }
@@ -856,9 +863,11 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 	// XXX: Suppose that file in update state
 	memset( pData, 0, 
 	    HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
+#ifdef DEBUG
 	CPLDebug( "HFABand", "Read of %d bytes at %d failed.\n", 
 		  panBlockSize[iBlock],
 		  panBlockStart[iBlock] );
+#endif
 
 	return CE_None;
     }
