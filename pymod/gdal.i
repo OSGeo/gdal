@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.95  2004/05/06 19:27:06  dron
+ * Added OSRSetProjection() wrapper.
+ *
  * Revision 1.94  2004/04/24 21:28:20  warmerda
  * Added GetLastErrorType
  *
@@ -1533,6 +1536,7 @@ const char *OSRGetAuthorityCode( OGRSpatialReferenceH hSRS,
 	                         const char * pszTargetKey );
 const char *OSRGetAuthorityName( OGRSpatialReferenceH hSRS, 
 	                         const char * pszTargetKey );
+OGRErr  OSRSetProjection( OGRSpatialReferenceH, const char * );
 int     OSRSetProjParm( OGRSpatialReferenceH, const char *, double );
 double  OSRGetProjParm( OGRSpatialReferenceH hSRS,
                         const char * pszParmName, double dfDefault, int * );
