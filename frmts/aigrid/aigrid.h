@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/04/21 16:51:30  warmerda
+ * fixed up floating point support
+ *
  * Revision 1.2  1999/02/04 22:15:33  warmerda
  * fleshed out implementation
  *
@@ -35,7 +38,6 @@
  * New
  *
  */
-
 
 #ifndef _AIGRID_H_INCLUDED
 #define _AIGRID_H_INCLUDED
@@ -46,18 +48,30 @@ CPL_C_START
 
 #define GRID_NO_DATA 65536
 
+/* ==================================================================== */
+/*      Grid Instance                                                   */
+/* ==================================================================== */
 typedef struct {
-    int		nBlockXSize;
-    int		nBlockYSize;
+    /* Private information */
     
-    int		nBlocksPerRow;
-    int		nBlocksPerColumn;
-
     int		nBlocks;
     int		*panBlockOffset;
     int		*panBlockSize;
 
     FILE	*fpGrid;	/* the w001001.adf file */
+
+    /* public information */
+
+    int		nCellType;
+
+#define AIG_CELLTYPE_INT		1
+#define AIG_CELLTYPE_FLOAT		2    
+    
+    int		nBlockXSize;
+    int		nBlockYSize;
+    
+    int		nBlocksPerRow;
+    int		nBlocksPerColumn;
 
     double	dfLLX;
     double	dfLLY;
@@ -70,20 +84,34 @@ typedef struct {
     int		nPixels;
     int		nLines;
 
+    double	dfMin;
+    double	dfMax;
+    double	dfMean;
+    double	dfStdDev;
+
 } AIGInfo_t;
 
+/* ==================================================================== */
+/*      Private APIs                                                    */
+/* ==================================================================== */
+
 CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
-                     int nBlockXSize, int nBlockYSize, GUInt32 * panData );
-CPLErr AIGReadTile( AIGInfo_t *, int, int, GUInt32 * );
+                     int nBlockXSize, int nBlockYSize, GUInt32 * panData,
+                     int nCellType );
+
 CPLErr AIGReadHeader( const char *, AIGInfo_t * );
 CPLErr AIGReadBlockIndex( const char *, AIGInfo_t * );
 CPLErr AIGReadBounds( const char *, AIGInfo_t * );
+CPLErr AIGReadStatistics( const char *, AIGInfo_t * );
 
-/************************************************************************/
-/*                              Public API                              */
-/************************************************************************/
+/* ==================================================================== */
+/*      Public APIs                                                     */
+/* ==================================================================== */
 
 AIGInfo_t	*AIGOpen( const char *, const char * );
+
+CPLErr 		AIGReadTile( AIGInfo_t *, int, int, GUInt32 * );
+CPLErr 		AIGReadFloatTile( AIGInfo_t *, int, int, float * );
 
 void		AIGClose( AIGInfo_t * );
 

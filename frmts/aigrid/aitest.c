@@ -78,6 +78,17 @@ int main( int argc, char ** argv )
             psInfo->dfLLY,
             psInfo->dfURX,
             psInfo->dfURY );
+
+    if( psInfo->nCellType == AIG_CELLTYPE_INT )
+        printf( "Integer coverage.\n" );
+    else
+        printf( "Floating point coverage.\n" );
+
+    printf( "Stats - Min=%f, Max=%f, Mean=%f, StdDev=%f\n",
+            psInfo->dfMin,
+            psInfo->dfMax,
+            psInfo->dfMean,
+            psInfo->dfStdDev );
     
 /* -------------------------------------------------------------------- */
 /*      Do we want a dump of all the ``magic'' numbers for              */
@@ -102,7 +113,7 @@ int main( int argc, char ** argv )
                       psInfo->panBlockOffset[nBlock],
                       psInfo->panBlockSize[nBlock],
                       psInfo->nBlockXSize, psInfo->nBlockYSize,
-                      panRaster );
+                      panRaster, psInfo->nCellType );
 
         printf( "\nBlock %d:\n", nBlock );
         
@@ -118,11 +129,11 @@ int main( int argc, char ** argv )
 
                 if( panRaster[i+j*psInfo->nBlockXSize] == GRID_NO_DATA )
                     printf( "-*- " );
-                else
-                    printf( "%f ", ((float *) panRaster)[i+j*psInfo->nBlockXSize] );
-#ifdef notdef
+                else if( psInfo->nCellType == AIG_CELLTYPE_FLOAT )
+                    printf( "%f ",
+                            ((float *) panRaster)[i+j*psInfo->nBlockXSize] );
+                else 
                     printf( "%3d ", panRaster[i+j*psInfo->nBlockXSize] );
-#endif                
             }
             printf( "\n" );
         }

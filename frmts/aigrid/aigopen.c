@@ -28,12 +28,14 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/04/21 16:51:30  warmerda
+ * fixed up floating point support
+ *
  * Revision 1.2  1999/02/04 22:15:33  warmerda
  * fleshed out implementation
  *
  * Revision 1.1  1999/02/03 14:12:56  warmerda
  * New
- *
  */
 
 #include "aigrid.h"
@@ -112,6 +114,17 @@ AIGInfo_t *AIGOpen( const char * pszCoverName, const char * pszAccess )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Read the statistics.                                            */
+/* -------------------------------------------------------------------- */
+    if( AIGReadStatistics( pszCoverName, psInfo ) != CE_None )
+    {
+        VSIFClose( psInfo->fpGrid );
+        
+        CPLFree( psInfo );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Compute the number of pixels and lines.                         */
 /* -------------------------------------------------------------------- */
     psInfo->nPixels = (int)
@@ -120,6 +133,82 @@ AIGInfo_t *AIGOpen( const char * pszCoverName, const char * pszAccess )
         (psInfo->dfURY - psInfo->dfLLY) / psInfo->dfCellSizeY;
     
     return( psInfo );
+}
+
+/************************************************************************/
+/*                            AIGReadTile()                             */
+/************************************************************************/
+
+CPLErr AIGReadTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
+                    GUInt32 *panData )
+
+{
+    int		nBlockID;
+    CPLErr	eErr;
+
+    nBlockID = nBlockXOff + nBlockYOff * psInfo->nBlocksPerRow;
+    if( nBlockID < 0 || nBlockID >= psInfo->nBlocks )
+    {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
+    
+    eErr = AIGReadBlock( psInfo->fpGrid,
+                         psInfo->panBlockOffset[nBlockID],
+                         psInfo->panBlockSize[nBlockID],
+                         psInfo->nBlockXSize, psInfo->nBlockYSize,
+                         panData, psInfo->nCellType );
+
+    if( eErr == CE_None && psInfo->nCellType == AIG_CELLTYPE_FLOAT )
+    {
+        float	*pafData = (float *) panData;
+        int	i, nPixels = psInfo->nBlockXSize * psInfo->nBlockYSize;
+
+        for( i = 0; i < nPixels; i++ )
+        {
+            panData[i] = (int) pafData[i];
+        }
+    }
+
+    return( eErr );
+}
+
+/************************************************************************/
+/*                          AIGReadFloatTile()                          */
+/************************************************************************/
+
+CPLErr AIGReadFloatTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
+                         float *pafData )
+
+{
+    int		nBlockID;
+    CPLErr	eErr;
+
+    nBlockID = nBlockXOff + nBlockYOff * psInfo->nBlocksPerRow;
+    if( nBlockID < 0 || nBlockID >= psInfo->nBlocks )
+    {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
+    
+    eErr = AIGReadBlock( psInfo->fpGrid,
+                         psInfo->panBlockOffset[nBlockID],
+                         psInfo->panBlockSize[nBlockID],
+                         psInfo->nBlockXSize, psInfo->nBlockYSize,
+                         (GInt32 *) pafData, psInfo->nCellType );
+
+    if( eErr == CE_None && psInfo->nCellType == AIG_CELLTYPE_INT )
+    {
+        GUInt32	*panData = (GUInt32 *) pafData;
+        int	i, nPixels = psInfo->nBlockXSize * psInfo->nBlockYSize;
+
+        for( i = 0; i < nPixels; i++ )
+        {
+            pafData[i] = panData[i];
+        }
+    }
+
+    return( eErr );
 }
 
 /************************************************************************/

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/04/21 16:51:30  warmerda
+ * fixed up floating point support
+ *
  * Revision 1.3  1999/03/02 21:10:28  warmerda
  * added some floating point support
  *
@@ -324,7 +327,8 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
 /************************************************************************/
 
 CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
-                     int nBlockXSize, int nBlockYSize, GUInt32 *panData )
+                     int nBlockXSize, int nBlockYSize,
+                     GUInt32 *panData, int nCellType )
 
 {
     GByte	*pabyRaw, *pabyCur;
@@ -396,23 +400,22 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
                                 nBlockXSize, nBlockYSize,
                                 panData );
     }
-    else if( nMagic == 0x00 )
+    else if( nMagic == 0x00 || nMagic == 0x43 )
     {
-        AIGProcessRaw32BitFloatBlock( pabyCur, nDataSize, 0,
-                                      nBlockXSize, nBlockYSize,
-                                      (float *) panData );
+        if( nCellType == AIG_CELLTYPE_FLOAT )
+            AIGProcessRaw32BitFloatBlock( pabyCur, nDataSize, 0,
+                                          nBlockXSize, nBlockYSize,
+                                          (float *) panData );
+        else
+            AIGProcessRaw32BitBlock( pabyCur, nDataSize, nMin,
+                                     nBlockXSize, nBlockYSize,
+                                     panData );
     }
     else if( nMagic == 0x10 )
     {
         AIGProcessRaw16BitBlock( pabyCur, nDataSize, nMin,
                                  nBlockXSize, nBlockYSize,
                                  panData );
-    }
-    else if( nMagic == 0x43 )
-    {
-        AIGProcessRaw32BitFloatBlock( pabyCur, nDataSize, 0,
-                                      nBlockXSize, nBlockYSize,
-                                      (float *) panData );
     }
     else if( nMagic == 0xFF )
     {
@@ -430,30 +433,6 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
     CPLFree( pabyRaw );
     
     return CE_None;
-}
-
-/************************************************************************/
-/*                            AIGReadTile()                             */
-/************************************************************************/
-
-CPLErr AIGReadTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
-                    GUInt32 *panData )
-
-{
-    int		nBlockID;
-
-    nBlockID = nBlockXOff + nBlockYOff * psInfo->nBlocksPerRow;
-    if( nBlockID < 0 || nBlockID >= psInfo->nBlocks )
-    {
-        CPLAssert( FALSE );
-        return CE_Failure;
-    }
-
-    return( AIGReadBlock( psInfo->fpGrid,
-                          psInfo->panBlockOffset[nBlockID],
-                          psInfo->panBlockSize[nBlockID],
-                          psInfo->nBlockXSize, psInfo->nBlockYSize,
-                          panData ) );
 }
 
 /************************************************************************/
@@ -501,6 +480,7 @@ CPLErr AIGReadHeader( const char * pszCoverName, AIGInfo_t * psInfo )
 /* -------------------------------------------------------------------- */
 /*      Read the block size information.                                */
 /* -------------------------------------------------------------------- */
+    memcpy( &(psInfo->nCellType), abyData+16, 4 );
     memcpy( &(psInfo->nBlocksPerRow), abyData+288, 4 );
     memcpy( &(psInfo->nBlocksPerColumn), abyData+292, 4 );
     memcpy( &(psInfo->nBlockXSize), abyData+296, 4 );
@@ -509,6 +489,7 @@ CPLErr AIGReadHeader( const char * pszCoverName, AIGInfo_t * psInfo )
     memcpy( &(psInfo->dfCellSizeY), abyData+264, 8 );
     
 #ifdef CPL_LSB
+    psInfo->nCellType = CPL_SWAP32( psInfo->nCellType );
     psInfo->nBlocksPerRow = CPL_SWAP32( psInfo->nBlocksPerRow );
     psInfo->nBlocksPerColumn = CPL_SWAP32( psInfo->nBlocksPerColumn );
     psInfo->nBlockXSize = CPL_SWAP32( psInfo->nBlockXSize );
@@ -619,7 +600,7 @@ CPLErr AIGReadBounds( const char * pszCoverName, AIGInfo_t * psInfo )
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to open grid block index file:\n%s\n",
+                  "Failed to open grid bounds file:\n%s\n",
                   pszHDRFilename );
 
         CPLFree( pszHDRFilename );
@@ -646,6 +627,66 @@ CPLErr AIGReadBounds( const char * pszCoverName, AIGInfo_t * psInfo )
     psInfo->dfLLY = adfBound[1];
     psInfo->dfURX = adfBound[2];
     psInfo->dfURY = adfBound[3];
+
+    return( CE_None );
+}
+
+/************************************************************************/
+/*                         AIGReadStatistics()                          */
+/*                                                                      */
+/*      Read the sta.adf file for the layer statistics.                 */
+/************************************************************************/
+
+CPLErr AIGReadStatistics( const char * pszCoverName, AIGInfo_t * psInfo )
+
+{
+    char	*pszHDRFilename;
+    FILE	*fp;
+    double	adfStats[4];
+
+    psInfo->dfMin = 0.0;
+    psInfo->dfMax = 0.0;
+    psInfo->dfMean = 0.0;
+    psInfo->dfStdDev = 0.0;
+
+/* -------------------------------------------------------------------- */
+/*      Open the file sta.adf file.                                     */
+/* -------------------------------------------------------------------- */
+    pszHDRFilename = (char *) CPLMalloc(strlen(pszCoverName)+40);
+    sprintf( pszHDRFilename, "%s/sta.adf", pszCoverName );
+
+    fp = VSIFOpen( pszHDRFilename, "rb" );
+    
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to open grid statistics file:\n%s\n",
+                  pszHDRFilename );
+
+        CPLFree( pszHDRFilename );
+        return( CE_Failure );
+    }
+
+    CPLFree( pszHDRFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Get the contents - four doubles.                                */
+/* -------------------------------------------------------------------- */
+    VSIFRead( adfStats, 1, 32, fp );
+
+    VSIFClose( fp );
+
+#ifdef CPL_LSB
+    CPL_SWAPDOUBLE(adfStats+0);
+    CPL_SWAPDOUBLE(adfStats+1);
+    CPL_SWAPDOUBLE(adfStats+2);
+    CPL_SWAPDOUBLE(adfStats+3);
+#endif    
+    
+    psInfo->dfMin = adfStats[0];
+    psInfo->dfMax = adfStats[1];
+    psInfo->dfMean = adfStats[2];
+    psInfo->dfStdDev = adfStats[3];
 
     return( CE_None );
 }
