@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/03/02 05:25:26  warmerda
+ * added GDALWarpNoDataMasker
+ *
  * Revision 1.4  2003/02/22 02:04:11  warmerda
  * added dfMaxError to reproject function
  *
@@ -324,6 +327,145 @@ CPLErr GDALCreateAndReprojectImage(
     return eErr;
 }
 
+/************************************************************************/
+/*                        GDALWarpNoDataMasker()                        */
+/*                                                                      */
+/*      GDALMaskFunc for establishing a validity mask for a source      */
+/*      band based on a provided NODATA value.                          */
+/************************************************************************/
+
+CPLErr 
+GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType, 
+                      int /* nXOff */, int /* nYOff */, int nXSize, int nYSize,
+                      GByte **ppImageData, 
+                      int bMaskIsFloat, void *pValidityMask )
+
+{
+    double *padfNoData = (double *) pMaskFuncArg;
+    GUInt32 *panValidityMask = (GUInt32 *) pValidityMask;
+
+    if( nBandCount != 1 || bMaskIsFloat )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Invalid nBandCount or bMaskIsFloat argument in SourceNoDataMask" );
+        return CE_Failure;
+    }
+
+    switch( eType )
+    {
+      case GDT_Byte:
+      {
+          int nNoData = (int) padfNoData[0];
+          GByte *pabyData = (GByte *) *ppImageData;
+          int iOffset;
+
+          // nothing to do if value is out of range.
+          if( padfNoData[0] < 0.0 || padfNoData[0] > 255.000001 
+              || padfNoData[1] != 0.0 )
+              return CE_None;
+
+          for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
+          {
+              if( pabyData[iOffset] == nNoData )
+              {
+                  panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
+              }
+          }
+      }
+      
+      case GDT_Int16:
+      {
+          int nNoData = (int) padfNoData[0];
+          GInt16 *panData = (GInt16 *) *ppImageData;
+          int iOffset;
+
+          // nothing to do if value is out of range.
+          if( padfNoData[0] < 32768 || padfNoData[0] > 32767
+              || padfNoData[1] != 0.0 )
+              return CE_None;
+
+          for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
+          {
+              if( panData[iOffset] == nNoData )
+              {
+                  panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
+              }
+          }
+      }
+      
+      case GDT_UInt16:
+      {
+          int nNoData = (int) padfNoData[0];
+          GUInt16 *panData = (GUInt16 *) *ppImageData;
+          int iOffset;
+
+          // nothing to do if value is out of range.
+          if( padfNoData[0] < 0 || padfNoData[0] > 65535
+              || padfNoData[1] != 0.0 )
+              return CE_None;
+
+          for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
+          {
+              if( panData[iOffset] == nNoData )
+              {
+                  panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
+              }
+          }
+      }
+      
+      case GDT_Float32:
+      {
+          float fNoData = (float) padfNoData[0];
+          float *pafData = (float *) *ppImageData;
+          int iOffset;
+
+          // nothing to do if value is out of range.
+          if( padfNoData[1] != 0.0 )
+              return CE_None;
+
+          for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
+          {
+              if( pafData[iOffset] == fNoData )
+              {
+                  panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
+              }
+          }
+      }
+      
+      default:
+      {
+          double  *padfWrk;
+          int     iLine, iPixel;
+          int     nWordSize = GDALGetDataTypeSize(eType)/8;
+
+          padfWrk = (double *) CPLMalloc(nXSize * sizeof(double) * 2);
+          for( iLine = 0; iLine < nYSize; iLine++ )
+          {
+              GDALCopyWords( ((GByte *) *ppImageData)+nWordSize*iLine*nXSize, 
+                             eType, nWordSize,
+                             padfWrk, GDT_CFloat64, 16, nXSize );
+              
+              for( iPixel = 0; iPixel < nXSize; iPixel++ )
+              {
+                  if( padfWrk[iPixel*2] == padfNoData[0]
+                      && padfWrk[iPixel*2+1] == padfNoData[1] )
+                  {
+                      int iOffset = iPixel + iLine * nXSize;
+                      
+                      panValidityMask[iOffset>>5] &=
+                          ~(0x01 << (iOffset & 0x1f));
+                  }
+              }
+              
+          }
+
+          CPLFree( padfWrk );
+      }
+    }
+
+    return CE_None;
+}
+
 
 /************************************************************************/
 /* ==================================================================== */
@@ -419,3 +561,4 @@ GDALWarpOptions *GDALCloneWarpOptions( const GDALWarpOptions *psSrcOptions )
 
     return psDstOptions;
 }
+
