@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.25  2003/06/10 09:32:31  dron
+ * Added support for MODIS Level 3 products.
+ *
  * Revision 1.24  2003/05/21 14:11:43  dron
  * MODIS Level 1B earth-view (EV) product now supported.
  *
@@ -816,19 +819,13 @@ GDALDataType HDF4ImageDataset::GetDataType( int32 iNumType )
 /************************************************************************/
 
 void HDF4ImageDataset::ToUTM( OGRSpatialReference *poProj,
-                                double *pdfGeoX, double *pdfGeoY )
+                              double *pdfGeoX, double *pdfGeoY )
 {
-/* -------------------------------------------------------------------- */
-/*      Setup transformation to lat/long.                               */
-/* -------------------------------------------------------------------- */
     OGRCoordinateTransformation *poTransform = NULL;
     OGRSpatialReference *poLatLong = NULL;
     poLatLong = poProj->CloneGeogCS();
     poTransform = OGRCreateCoordinateTransformation( poLatLong, poProj );
     
-/* -------------------------------------------------------------------- */
-/*      Transform to latlong and report.                                */
-/* -------------------------------------------------------------------- */
     if( poTransform != NULL )
         poTransform->Transform( 1, pdfGeoX, pdfGeoY, NULL );
         
@@ -898,6 +895,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->iDataType = AST14DEM;
     else if( EQUAL( poDS->papszSubdatasetName[1], "MODIS_L1B" ) )
         poDS->iDataType = MODIS_L1B;
+    else if( EQUAL( poDS->papszSubdatasetName[1], "MODIS_L3" ) )
+        poDS->iDataType = MODIS_L3;
     else if( EQUAL( poDS->papszSubdatasetName[1], "MODIS_UNK" ) )
         poDS->iDataType = MODIS_UNK;
     else
@@ -1069,6 +1068,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     // has its own structure.
     switch ( poDS->iDataType )
     {
+
 /* -------------------------------------------------------------------- */
 /*      HDF created by GDAL.                                            */
 /* -------------------------------------------------------------------- */
@@ -1109,6 +1109,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     poDS->GetRasterBand( i )->SetNoDataValue( atof(pszValue) );
             }
         break;
+
 /* -------------------------------------------------------------------- */
 /*      ASTER Level 1B.                                                 */
 /* -------------------------------------------------------------------- */
@@ -1177,6 +1178,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->bHasGeoTransfom = TRUE;
         }
         break;
+
 /* -------------------------------------------------------------------- */
 /*      ASTER DEM product.                                              */
 /* -------------------------------------------------------------------- */
@@ -1223,6 +1225,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->adfGeoTransform[4] = 0.0;
             poDS->bHasGeoTransfom = TRUE;
         break;
+
 /* -------------------------------------------------------------------- */
 /*      MODIS Level 1B.                                                 */
 /* -------------------------------------------------------------------- */
@@ -1370,6 +1373,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
             if ( pfLat && pfLong )
             {
+                if ( poDS->pszGCPProjection )
+                    CPLFree( poDS->pszGCPProjection );
+                poDS->pszGCPProjection = CPLStrdup( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]" );
+
                 CPLDebug( "HDF4Image",
                           "Reading geolocation points: nXPoints=%d, nYPoints=%d, "
                           "Offset1=%f, Increment1=%f, Offset2=%f, Increment2=%f",
@@ -1416,6 +1423,69 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             }
         }
         break;
+
+/* -------------------------------------------------------------------- */
+/*      MODIS Level 3.                                                  */
+/* -------------------------------------------------------------------- */
+        case MODIS_L3:
+        {
+            CPLDebug( "HDF4Image", "Input dataset interpreted as MODIS_L3" );
+
+            // Read band descriptions and NoData value
+            pszValue = CSLFetchNameValue( poDS->papszGlobalMetadata,
+                                          "SHORTNAME" );
+            for ( i = 1; i <= poDS->nBands; i++ )
+            {
+                GDALRasterBand  *poBand = poDS->GetRasterBand( i );
+
+                // In case of mean, standard deviation or number of
+                // observations map types NoData value indicated by the 0.0
+                if ( *(pszValue + 4) == 'M' || *(pszValue + 4) == 'S'
+                      || *(pszValue + 4) == 'N' )
+                    poBand->SetNoDataValue( 0.0 );
+                // In other case NoData filled with value 255
+                else
+                    poBand->SetNoDataValue( 255.0 );
+                poBand->SetDescription(
+                    CSLFetchNameValue( poDS->papszLocalMetadata, "Long_name" ) );
+            }
+
+            // Read coordinate system and geotransform matrix
+            oSRS.SetWellKnownGeogCS( "WGS84" );
+            
+            if ( EQUAL(CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                         "Map Projection"),
+                       "Equidistant Cylindrical") )
+            {
+                oSRS.SetEquirectangular( 0.0, 0.0, 0.0, 0.0 );
+                oSRS.SetLinearUnits( SRS_UL_METER, 1 );
+                if ( poDS->pszProjection )
+                    CPLFree( poDS->pszProjection );
+                oSRS.exportToWkt( &poDS->pszProjection );
+            }
+
+            dfULX = atof( CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                            "Westernmost Longitude") );
+            dfULY = atof( CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                            "Northernmost Latitude") );
+            dfLRX = atof( CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                            "Easternmost Longitude") );
+            dfLRY = atof( CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                            "Southernmost Latitude") );
+            poDS->ToUTM( &oSRS, &dfULX, &dfULY );
+            poDS->ToUTM( &oSRS, &dfLRX, &dfLRY );
+            poDS->adfGeoTransform[0] = dfULX;
+            poDS->adfGeoTransform[3] = dfULY;
+            poDS->adfGeoTransform[1] = (dfLRX - dfULX) / poDS->nRasterXSize;
+            poDS->adfGeoTransform[5] = (dfULY - dfLRY) / poDS->nRasterYSize;
+            if ( dfULY > 0)     // Northern hemisphere
+                poDS->adfGeoTransform[5] = - poDS->adfGeoTransform[5];
+            poDS->adfGeoTransform[2] = 0.0;
+            poDS->adfGeoTransform[4] = 0.0;
+            poDS->bHasGeoTransfom = TRUE;
+        }
+        break;
+
         default:
         break;
     }

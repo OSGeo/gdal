@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.21  2003/06/10 09:32:31  dron
+ * Added support for MODIS Level 3 products.
+ *
  * Revision 1.20  2003/05/21 14:11:43  dron
  * MODIS Level 1B earth-view (EV) product now supported.
  *
@@ -936,35 +939,50 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 	poDS->iDataType = GDAL_HDF4;
 	poDS->pszDataType = "GDAL_HDF4";
     }
-    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "SHORTNAME"))
-	&& EQUAL( pszValue, "ASTL1A" ) )
+    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "SHORTNAME")) )
     {
-        poDS->iDataType = ASTER_L1A;
-	poDS->pszDataType = "ASTER_L1A";
-    }
-    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "SHORTNAME"))
-	&& EQUAL( pszValue, "ASTL1B" ) )
-    {
-        poDS->iDataType = ASTER_L1B;
-	poDS->pszDataType = "ASTER_L1B";
-    }
-    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "SHORTNAME"))
-	&& EQUAL( pszValue, "AST14DEM" ) )
-    {
-        poDS->iDataType = AST14DEM;
-	poDS->pszDataType = "AST14DEM";
-    }
-    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "SHORTNAME"))
-	&& (EQUAL( pszValue, "GSUB1" )
+	if ( EQUAL( pszValue, "ASTL1A" ) )
+        {
+            poDS->iDataType = ASTER_L1A;
+            poDS->pszDataType = "ASTER_L1A";
+        }
+        else if ( EQUAL( pszValue, "ASTL1B" ) )
+        {
+            poDS->iDataType = ASTER_L1B;
+	    poDS->pszDataType = "ASTER_L1B";
+        }
+        else if ( EQUAL( pszValue, "AST14DEM" ) )
+        {
+            poDS->iDataType = AST14DEM;
+            poDS->pszDataType = "AST14DEM";
+        }
+        else if ( EQUAL( pszValue, "GSUB1" )
             // L1B EV 1km
             || EQUAL( pszValue, "MOD021KM" ) || EQUAL( pszValue, "MYD021KM" )
             // L1B EV 500m
             || EQUAL( pszValue, "MOD02HKM" ) || EQUAL( pszValue, "MYD02HKM" )
             // L1B EV 250m
-            || EQUAL( pszValue, "MOD02QKM" ) || EQUAL( pszValue, "MYD02QKM" )) ) 
-    {
-        poDS->iDataType = MODIS_L1B;
-	poDS->pszDataType = "MODIS_L1B";
+            || EQUAL( pszValue, "MOD02QKM" ) || EQUAL( pszValue, "MYD02QKM" ) ) 
+        {
+            poDS->iDataType = MODIS_L1B;
+            poDS->pszDataType = "MODIS_L1B";
+        }
+        else if ( strlen( pszValue ) == 8
+                  && (EQUALN( pszValue, "MO", 2 ) || EQUALN( pszValue, "MY", 2 ))
+                  && (EQUALN( pszValue + 2, "04", 2 )
+                      || EQUALN( pszValue + 2, "36", 2 )
+                      || EQUALN( pszValue + 2, "1D", 2 ))
+                  && (*(pszValue + 4) == 'M' || *(pszValue + 4) == 'S'
+                      || *(pszValue + 4) == 'N' || *(pszValue + 4) == 'Q'
+                      || *(pszValue + 4) == 'F' || *(pszValue + 4) == '1'
+                      || *(pszValue + 4) == '2' || *(pszValue + 4) == '3')
+                  && (*(pszValue + 5) == 'D' || *(pszValue + 5) == 'W'
+                      || *(pszValue + 5) == 'M' || *(pszValue + 5) == 'N') )
+
+        {
+            poDS->iDataType = MODIS_L3;
+            poDS->pszDataType = "MODIS_L3";
+        }
     }
     else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "ASSOCIATEDINSTRUMENTSHORTNAME"))
 	&& EQUAL( pszValue, "MODIS" ) )

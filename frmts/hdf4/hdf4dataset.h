@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.9  2003/06/10 09:33:48  dron
+ * Added support for MODIS Level 3 products.
+ *
  * Revision 1.8  2003/05/21 14:11:43  dron
  * MODIS Level 1B earth-view (EV) product now supported.
  *
@@ -74,7 +77,8 @@ typedef enum			// Types of data products:
     ASTER_L1A,			// ASTER Level 1A
     ASTER_L1B,			// ASTER Level 1B
     AST14DEM,			// ASTER DEM
-    MODIS_L1B,
+    MODIS_L1B,                  // MODIS Level 1B
+    MODIS_L3,                   // MODIS Level 3
     MOD02QKM_L1B,
     MODIS_UNK,
     UNKNOWN
