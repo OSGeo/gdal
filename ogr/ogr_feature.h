@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/09/26 18:13:17  warmerda
+ * moved some defs to ogr_core.h for sharing with ogr_api.h
+ *
  * Revision 1.22  2002/08/07 21:37:47  warmerda
  * added indirect OGRFeaturedefn constructor/destructor
  *
@@ -110,79 +113,6 @@ class OGRStyleTable;
  *
  * Simple feature classes.
  */
-
-/**
- * List of feature field types.  This list is likely to be extended in the
- * future ... avoid coding applications based on the assumption that all
- * field types can be known.
- */
-
-enum OGRFieldType
-{
-  /** Simple 32bit integer */                   OFTInteger = 0,
-  /** List of 32bit integers */                 OFTIntegerList = 1,
-  /** Double Precision floating point */        OFTReal = 2,
-  /** List of doubles */                        OFTRealList = 3,
-  /** String of ASCII chars */                  OFTString = 4,
-  /** Array of strings */                       OFTStringList = 5,
-  /** Double byte string (unsupported) */       OFTWideString = 6,
-  /** List of wide strings (unsupported) */     OFTWideStringList = 7,
-  /** Raw Binary data (unsupported) */          OFTBinary = 8
-};
-
-/**
- * Display justification for field values.
- */
-
-enum OGRJustification
-{
-    OJUndefined = 0,
-    OJLeft = 1,
-    OJRight = 2
-};
-
-#define OGRNullFID            -1
-#define OGRUnsetMarker        -21121
-
-/************************************************************************/
-/*                               OGRField                               */
-/************************************************************************/
-
-/**
- * OGRFeature field attribute value union.
- */
-
-typedef union {
-    int         Integer;
-    double      Real;
-    char       *String;
-    // wchar    *WideString;
-    
-    struct {
-        int     nCount;
-        int     *paList;
-    } IntegerList;
-    
-    struct {
-        int     nCount;
-        double  *paList;
-    } RealList;
-    
-    struct {
-        int     nCount;
-        char    **paList;
-    } StringList;
-
-//    union {
-//        int   nCount;
-//        wchar *paList;
-//    } WideStringList;
-
-    struct {
-        int     nMarker1;
-        int     nMarker2;
-    } Set;
-} OGRField;
 
 /************************************************************************/
 /*                             OGRFieldDefn                             */
