@@ -3,6 +3,7 @@ default:
 	$(MAKE) $*
 	cd ..\shape 
 	$(MAKE) $*
+	cd ..
 	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj
 
 clean:
