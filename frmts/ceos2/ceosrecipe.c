@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/12/12 15:30:56  warmerda
+ * Fixed yet another memory leak in the recipe stuff.
+ *
  * Revision 1.12  2003/12/11 22:11:35  warmerda
  * clean up recipes when dataset destroyed to avoid memory noise
  *
@@ -203,6 +206,11 @@ void RegisterRecipes( void )
 void FreeRecipes( void )
 
 {
+    Link_t *link;
+
+    for( link = RecipeFunctions; link != NULL; link = link->next )
+        HFree( link->object );
+
     DestroyList( RecipeFunctions );
     RecipeFunctions = NULL;
 }
