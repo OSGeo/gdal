@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/08/25 13:33:19  dron
+ * Use CPLFormCIFilename() to case insensitive search for .HDR and .PRJ files.
+ *
  * Revision 1.15  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -172,7 +175,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     int		i, bSelectedHDR;
-    char	*pszHDRFilename;
+    const char	*pszHDRFilename;
     
 /* -------------------------------------------------------------------- */
 /*	We assume the user is pointing to the binary (ie. .bil) file.	*/
@@ -184,21 +187,11 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Now we need to tear apart the filename to form a .HDR           */
 /*      filename.                                                       */
 /* -------------------------------------------------------------------- */
-    pszHDRFilename = (char *) CPLMalloc(strlen(poOpenInfo->pszFilename)+5);
-    strcpy( pszHDRFilename, poOpenInfo->pszFilename );;
+    pszHDRFilename = CPLFormCIFilename( NULL,
+					CPLGetBasename(poOpenInfo->pszFilename),
+					".hdr" );
 
-    for( i = strlen(pszHDRFilename)-1; i > 0; i-- )
-    {
-        if( pszHDRFilename[i] == '.' )
-        {
-            pszHDRFilename[i] = '\0';
-            break;
-        }
-    }
-
-    strcat( pszHDRFilename, ".hdr" );
-
-    bSelectedHDR = EQUAL(pszHDRFilename,poOpenInfo->pszFilename);
+    bSelectedHDR = EQUAL(pszHDRFilename, poOpenInfo->pszFilename);
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a .hdr file?                                         */
@@ -206,13 +199,6 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     FILE	*fp;
 
     fp = VSIFOpen( pszHDRFilename, "r" );
-    if( fp == NULL )
-    {
-        strcpy( pszHDRFilename + strlen(pszHDRFilename)-4, ".HDR" );
-        fp = VSIFOpen( pszHDRFilename, "r" );
-    }
-
-    CPLFree( pszHDRFilename );
     
     if( fp == NULL )
         return NULL;
@@ -410,8 +396,10 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for a .prj file.                                          */
 /* -------------------------------------------------------------------- */
-    const char  *pszPrjFile = CPLResetExtension( poOpenInfo->pszFilename, 
-                                                 "prj" );
+    const char  *pszPrjFile =
+	CPLFormCIFilename( NULL,
+			   CPLGetBasename(poOpenInfo->pszFilename),
+			   "prj" );
 
     fp = VSIFOpen( pszPrjFile, "r" );
     if( fp != NULL )
