@@ -28,6 +28,9 @@
  * for format specific band classes. 
  * 
  * $Log$
+ * Revision 1.2  1998/12/06 02:52:08  warmerda
+ * Added new methods, and C cover functions.
+ *
  * Revision 1.1  1998/12/03 18:32:01  warmerda
  * New
  *
@@ -80,6 +83,19 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag /* eRWFlag */,
 }
 
 /************************************************************************/
+/*                           GDALReadBlock()                            */
+/************************************************************************/
+
+CPLErr GDALReadBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
+                      void * pData )
+
+{
+    GDALRasterBand	*poBand = (GDALRasterBand *) hBand;
+
+    return( poBand->ReadBlock( nXOff, nYOff, pData ) );
+}
+
+/************************************************************************/
 /*                             WriteBlock()                             */
 /************************************************************************/
 
@@ -92,6 +108,20 @@ CPLErr GDALRasterBand::WriteBlock( int /* nXBlockOff */, int /* nYBlockOff */,
     
     return( CE_Failure );
 }
+
+/************************************************************************/
+/*                           GDALWriteBlock()                           */
+/************************************************************************/
+
+CPLErr GDALWriteBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
+                       void * pData )
+
+{
+    GDALRasterBand	*poBand = (GDALRasterBand *) hBand;
+
+    return( poBand->WriteBlock( nXOff, nYOff, pData ) );
+}
+
 
 /************************************************************************/
 /*                         GetRasterDataType()                          */
@@ -111,4 +141,29 @@ GDALDataType GDALGetRasterDataType( GDALRasterBandH hBand )
 
 {
     return( ((GDALRasterBand *) hBand)->GetRasterDataType() );
+}
+
+/************************************************************************/
+/*                            GetBlockSize()                            */
+/************************************************************************/
+
+void GDALRasterBand::GetBlockSize( int * pnXSize, int *pnYSize )
+
+{
+    if( pnXSize != NULL )
+        *pnXSize = nBlockXSize;
+    if( pnYSize != NULL )
+        *pnYSize = nBlockYSize;
+}
+
+/************************************************************************/
+/*                          GDALGetBlockSize()                          */
+/************************************************************************/
+
+void GDALGetBlockSize( GDALRasterBandH hBand, int * pnXSize, int * pnYSize )
+
+{
+    GDALRasterBand	*poBand = (GDALRasterBand *) hBand;
+
+    poBand->GetBlockSize( pnXSize, pnYSize );
 }
