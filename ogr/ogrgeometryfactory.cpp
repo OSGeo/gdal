@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/05/31 20:41:27  warmerda
+ * Cleaned up functions substantially, by moving shared code to end of case
+ * statements.  createFromWkt() now updates pointer to text to indicate how
+ * much text was consumed.  Added multipoint, and multilinestring support.
+ *
  * Revision 1.5  1999/05/31 11:05:08  warmerda
  * added some documentation
  *
@@ -91,6 +96,7 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
     OGRwkbGeometryType eGeometryType;
     OGRwkbByteOrder eByteOrder;
     OGRErr	eErr;
+    OGRGeometry *poGeom;
 
     *ppoReturn = NULL;
 
@@ -121,93 +127,56 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
     switch( eGeometryType )
     {
       case wkbPoint:
-        OGRPoint	*poPoint;
-
-        poPoint = new OGRPoint();
-        eErr = poPoint->importFromWkb( pabyData, nBytes );
-        if( eErr == OGRERR_NONE )
-        {
-            poPoint->assignSpatialReference( poSR );
-            *ppoReturn = poPoint;
-        }
-        else
-        {
-            delete poPoint;
-        }
-        return eErr;
+        poGeom = new OGRPoint();
         break;
 
       case wkbLineString:
-        OGRLineString	*poLS;
-
-        poLS = new OGRLineString();
-        eErr = poLS->importFromWkb( pabyData, nBytes );
-        if( eErr == OGRERR_NONE )
-        {
-            poLS->assignSpatialReference( poSR );
-            *ppoReturn = poLS;
-        }
-        else
-        {
-            delete poLS;
-        }
-        return eErr;
+        poGeom = new OGRLineString();
         break;
 
       case wkbPolygon:
-        OGRPolygon	*poPG;
-
-        poPG = new OGRPolygon();
-        eErr = poPG->importFromWkb( pabyData, nBytes );
-        if( eErr == OGRERR_NONE )
-        {
-            poPG->assignSpatialReference( poSR );
-            *ppoReturn = poPG;
-        }
-        else
-        {
-            delete poPG;
-        }
-        return eErr;
+        poGeom = new OGRPolygon();
         break;
 
       case wkbGeometryCollection:
-        OGRGeometryCollection	*poC;
-
-        poC = new OGRGeometryCollection();
-        eErr = poC->importFromWkb( pabyData, nBytes );
-        if( eErr == OGRERR_NONE )
-        {
-            poC->assignSpatialReference( poSR );
-            *ppoReturn = poC;
-        }
-        else
-        {
-            delete poC;
-        }
-        return eErr;
+        poGeom = new OGRGeometryCollection();
         break;
 
       case wkbMultiPolygon:
-        OGRMultiPolygon	*poMP;
+        poGeom = new OGRMultiPolygon();
+        break;
 
-        poMP = new OGRMultiPolygon();
-        eErr = poMP->importFromWkb( pabyData, nBytes );
-        if( eErr == OGRERR_NONE )
-        {
-            poMP->assignSpatialReference( poSR );
-            *ppoReturn = poMP;
-        }
-        else
-        {
-            delete poMP;
-        }
-        return eErr;
+      case wkbMultiPoint:
+        poGeom = new OGRMultiPoint();
+        break;
+
+      case wkbMultiLineString:
+        poGeom = new OGRMultiLineString();
         break;
 
       default:
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Import from binary.                                             */
+/* -------------------------------------------------------------------- */
+    eErr = poGeom->importFromWkb( pabyData, nBytes );
+
+/* -------------------------------------------------------------------- */
+/*      Assign spatial reference system.                                */
+/* -------------------------------------------------------------------- */
+    if( eErr == OGRERR_NONE )
+    {
+        poGeom->assignSpatialReference( poSR );
+        *ppoReturn = poGeom;
+    }
+    else
+    {
+        delete poGeom;
+    }
+
+    return eErr;
 }
 
 /************************************************************************/
@@ -218,15 +187,9 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
  * Create a geometry object of the appropriate type from it's well known
  * text representation.
  *
- * There is no way of establishing how much text was consumed to create the
- * geometry.  If the object is converted back to text representation, the
- * result may be of a different size due to differences in numerical
- * precision and white space.  The OGRGeometry::importFromWkt() method
- * (used by this method) does return information on text consumed but requires
- * that the object type already have been established.
- *
- * @param pszData input zero terminated string containing well known text
- *                representation of the geometry to be created.
+ * @param ppszData input zero terminated string containing well known text
+ *                representation of the geometry to be created.  The pointer
+ *                is updated to point just beyond that last character consumed.
  * @param poSR pointer to the spatial reference to be assigned to the
  *             created geometry object.  This may be NULL.
  * @param ppoReturn the newly created geometry object will be assigned to the
@@ -238,117 +201,86 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
  * OGRERR_CORRUPT_DATA may be returned.
  */
 
-OGRErr OGRGeometryFactory::createFromWkt(const char *pszData,
+OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
                                          OGRSpatialReference * poSR,
                                          OGRGeometry **ppoReturn )
 
 {
     OGRErr	eErr;
     char	szToken[OGR_WKT_TOKEN_MAX];
-    char	*pszInput = (char *) pszData;
+    char	*pszInput = *ppszData;
+    OGRGeometry *poGeom;
 
     *ppoReturn = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Get the first token, which should be the geometry type.         */
 /* -------------------------------------------------------------------- */
-    if( OGRWktReadToken( pszData, szToken ) == NULL )
+    if( OGRWktReadToken( pszInput, szToken ) == NULL )
         return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
-/*      Instantiate a geometry of the appropriate type, and             */
-/*      initialize from the input stream.                               */
+/*      Instantiate a geometry of the appropriate type.                 */
 /* -------------------------------------------------------------------- */
     if( EQUAL(szToken,"POINT") )
     {
-        OGRPoint	*poPoint;
-
-        poPoint = new OGRPoint();
-        eErr = poPoint->importFromWkt( &pszInput );
-        if( eErr == OGRERR_NONE )
-        {
-            poPoint->assignSpatialReference( poSR );
-            *ppoReturn = poPoint;
-        }
-        else
-        {
-            delete poPoint;
-        }
-        return eErr;
+        poGeom = new OGRPoint();
     }
 
     else if( EQUAL(szToken,"LINESTRING") )
     {
-        OGRLineString	*poLS;
-
-        poLS = new OGRLineString();
-        eErr = poLS->importFromWkt( &pszInput );
-        if( eErr == OGRERR_NONE )
-        {
-            poLS->assignSpatialReference( poSR );
-            *ppoReturn = poLS;
-        }
-        else
-        {
-            delete poLS;
-        }
-        return eErr;
+        poGeom = new OGRLineString();
     }
 
     else if( EQUAL(szToken,"POLYGON") )
     {
-        OGRPolygon	*poPG;
-
-        poPG = new OGRPolygon();
-        eErr = poPG->importFromWkt( &pszInput );
-        if( eErr == OGRERR_NONE )
-        {
-            poPG->assignSpatialReference( poSR );
-            *ppoReturn = poPG;
-        }
-        else
-        {
-            delete poPG;
-        }
-        return eErr;
+        poGeom = new OGRPolygon();
     }
     
     else if( EQUAL(szToken,"GEOMETRYCOLLECTION") )
     {
-        OGRGeometryCollection	*poPG;
-
-        poPG = new OGRGeometryCollection();
-        eErr = poPG->importFromWkt( &pszInput );
-        if( eErr == OGRERR_NONE )
-        {
-            poPG->assignSpatialReference( poSR );
-            *ppoReturn = poPG;
-        }
-        else
-        {
-            delete poPG;
-        }
-        return eErr;
+        poGeom = new OGRGeometryCollection();
     }
     
     else if( EQUAL(szToken,"MULTIPOLYGON") )
     {
-        OGRMultiPolygon	*poPG;
+        poGeom = new OGRMultiPolygon();
+    }
 
-        poPG = new OGRMultiPolygon();
-        eErr = poPG->importFromWkt( &pszInput );
-        if( eErr == OGRERR_NONE )
-        {
-            poPG->assignSpatialReference( poSR );
-            *ppoReturn = poPG;
-        }
-        else
-        {
-            delete poPG;
-        }
-        return eErr;
+    else if( EQUAL(szToken,"MULTIPOINT") )
+    {
+        poGeom = new OGRMultiPoint();
+    }
+
+    else if( EQUAL(szToken,"MULTILINESTRING") )
+    {
+        poGeom = new OGRMultiLineString();
+    }
+
+    else
+    {
+        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do the import.                                                  */
+/* -------------------------------------------------------------------- */
+    eErr = poGeom->importFromWkt( &pszInput );
+    
+/* -------------------------------------------------------------------- */
+/*      Assign spatial reference system.                                */
+/* -------------------------------------------------------------------- */
+    if( eErr == OGRERR_NONE )
+    {
+        poGeom->assignSpatialReference( poSR );
+        *ppoReturn = poGeom;
+        *ppszData = pszInput;
     }
     else
-        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+    {
+        delete poGeom;
+    }
+    
+    return eErr;
 }
 
