@@ -28,17 +28,20 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/04/07 19:39:16  warmerda
+ * added some metadata
+ *
  * Revision 1.2  2000/04/04 22:25:18  warmerda
  * Added logic to read gcps if available.
  *
  * Revision 1.1  2000/03/31 13:32:49  warmerda
  * New
- *
  */
 
 #include "ceos.h"
 #include "gdal_priv.h"
 #include "../raw/rawdataset.h"
+#include "cpl_string.h"
 
 static GDALDriver	*poCEOSDriver = NULL;
 
@@ -66,6 +69,26 @@ static int
 ProcessData( FILE *fp, int fileid, CeosSARVolume_t *sar, int max_records, 
              int max_bytes );
 
+
+static CeosTypeCode_t QuadToTC( int a, int b, int c, int d )
+{
+    CeosTypeCode_t   abcd;
+
+    abcd.UCharCode.Subtype1 = a;
+    abcd.UCharCode.Type = b;
+    abcd.UCharCode.Subtype2 = c;
+    abcd.UCharCode.Subtype3 = d;
+
+    return abcd;
+}
+
+#define LEADER_DATASET_SUMMARY_TC  QuadToTC( 18, 10, 18, 20 )
+#define VOLUME_DESCRIPTOR_RECORD_TC QuadToTC( 192, 192, 18, 18 )
+
+#define PROC_PARAM_RECORD_TYPECODE { 18, 120, 18, 20 }
+#define RAD_MET_RECORD_TYPECODE    { 18, 50, 18, 20 }
+#define MAP_PROJ_RECORD_TYPECODE   { 18, 20, 18, 20 }
+
 /************************************************************************/
 /* ==================================================================== */
 /*				SAR_CEOSDataset				*/
@@ -83,6 +106,7 @@ class SAR_CEOSDataset : public GDALDataset
     GDAL_GCP    *pasGCPList;
 
     void        ScanForGCPs();
+    void        ScanForMetadata();
 
   public:
                 SAR_CEOSDataset();
@@ -170,6 +194,53 @@ const GDAL_GCP *SAR_CEOSDataset::GetGCPs()
 
 {
     return pasGCPList;
+}
+
+/************************************************************************/
+/*                          ScanForMetadata()                           */
+/************************************************************************/
+
+void SAR_CEOSDataset::ScanForMetadata() 
+
+{
+    CeosRecord_t *record;
+
+/* -------------------------------------------------------------------- */
+/*      Get the acquisition date.                                       */
+/* -------------------------------------------------------------------- */
+    record = FindCeosRecord( sVolume.RecordList, LEADER_DATASET_SUMMARY_TC,
+                             __CEOS_LEADER_FILE, -1, -1 );
+    if( record != NULL )
+    {
+        char szTime[33];
+
+        szTime[0] = '\0';
+        szTime[32] = '\0';
+
+        GetCeosField( record, 69, "A32", szTime );
+
+        papszMetadata = 
+            CSLSetNameValue( papszMetadata, "CEOS_ACQUISITION_TIME", szTime );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get the acquisition date.                                       */
+/* -------------------------------------------------------------------- */
+    record = FindCeosRecord( sVolume.RecordList, VOLUME_DESCRIPTOR_RECORD_TC,
+                             __CEOS_VOLUME_DIR_FILE, -1, -1 );
+    if( record != NULL )
+    {
+        char szField[17];
+
+        szField[0] = '\0';
+        szField[16] = '\0';
+
+        GetCeosField( record, 61, "A16", szField );
+
+        papszMetadata = 
+            CSLSetNameValue( papszMetadata, "CEOS_LOGICAL_VOLUME_ID", 
+                             szField );
+    }
 }
 
 /************************************************************************/
@@ -358,10 +429,10 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                 CPLDebug( "CEOS", "Opened %s.\n", pszFilename );
 
                 VSIFSeek( process_fp, 0, SEEK_END );
-                if( ProcessData( process_fp, i, psVolume, -1, 
+                if( ProcessData( process_fp, iFile, psVolume, -1, 
                                  VSIFTell( process_fp ) ) == 0 )
                 {
-                    switch( i )
+                    switch( iFile )
                     {
                       case 0: psVolume->VolumeDirectoryFile = TRUE;
                         break;
@@ -565,6 +636,11 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->fpImage = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Collect metadata.                                               */
+/* -------------------------------------------------------------------- */
+    poDS->ScanForMetadata();
 
 /* -------------------------------------------------------------------- */
 /*      Check for GCPs.                                                 */
