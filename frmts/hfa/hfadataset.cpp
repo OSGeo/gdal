@@ -29,6 +29,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.48  2005/01/28 03:42:05  fwarmerdam
+ * Fixed spelling of Azimuthal, per bug 751.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=751
+ *
  * Revision 1.47  2005/01/10 18:25:06  fwarmerdam
  * added support for getting/setting LAYER_TYPE metadata
  *
@@ -1257,7 +1261,7 @@ CPLErr HFADataset::WriteProjection()
     else if( EQUAL(pszProjName,SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
     {
         sPro.proNumber = EPRJ_LAMBERT_AZIMUTHAL_EQUAL_AREA;
-        sPro.proName = "Lambert Azitmuthal Equal-area";
+        sPro.proName = "Lambert Azimuthal Equal-area";
         sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*D2R;
         sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*D2R;
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
@@ -1266,7 +1270,7 @@ CPLErr HFADataset::WriteProjection()
     else if( EQUAL(pszProjName,SRS_PT_AZIMUTHAL_EQUIDISTANT) )
     {
         sPro.proNumber = EPRJ_AZIMUTHAL_EQUIDISTANT;
-        sPro.proName = "Azitmuthal Equidistant";
+        sPro.proName = "Azimuthal Equidistant";
         sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*D2R;
         sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*D2R;
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
