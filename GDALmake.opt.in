@@ -31,6 +31,7 @@ INST_DATA 	=	@exec_prefix@/share/gdal
 INST_LIB	=	@libdir@
 INST_BIN	=	@bindir@
 INST_PYMOD      =       @pymoddir@
+INST_DOCS	=	@exec_prefix@/doc/gdal
 
 #
 #	Whether we use debug flags, or optimization is determined by
