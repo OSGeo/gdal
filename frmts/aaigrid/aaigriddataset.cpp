@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/05/02 16:06:36  dron
+ * Memory leak fixed.
+ *
  * Revision 1.21  2003/04/02 19:05:03  dron
  * Fixes for large file support in Windows environment.
  *
@@ -683,6 +686,10 @@ CPLErr AAIGDataset::Delete( const char *pszFilename )
     pszBasename = CPLStrdup( CPLGetBasename(pszFilename) );
     pszPrjFilename = CPLFormFilename( pszDirname, pszBasename, "prj" );
     Remove( pszPrjFilename );
+
+    CPLFree( pszDirname );
+    CPLFree( pszBasename );
+
     return Remove( pszFilename );
 }
 
