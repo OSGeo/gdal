@@ -86,7 +86,7 @@ HIDE_UNDOC_MEMBERS   = NO
 # If the GENERATE_LATEX tag is set to YES (the default) Doxygen will
 # generate Latex output.
 
-GENERATE_LATEX       = YES
+GENERATE_LATEX       = NO
 
 # If the GENERATE_HTML tag is set to YES (the default) Doxygen will
 # generate HTML output
