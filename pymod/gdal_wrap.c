@@ -3925,6 +3925,36 @@ static PyObject *_wrap_OSRSetFromUserInput(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OSRCopyGeogCSFrom(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRSpatialReferenceH  _arg0;
+    OGRSpatialReferenceH  _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:OSRCopyGeogCSFrom",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRCopyGeogCSFrom. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OSRCopyGeogCSFrom. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (int )OSRCopyGeogCSFrom(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OSRSetGeogCS(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     int  _result;
@@ -7716,6 +7746,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRGetSemiMinor", _wrap_OSRGetSemiMinor, METH_VARARGS },
 	 { "OSRGetSemiMajor", _wrap_OSRGetSemiMajor, METH_VARARGS },
 	 { "OSRSetGeogCS", _wrap_OSRSetGeogCS, METH_VARARGS },
+	 { "OSRCopyGeogCSFrom", _wrap_OSRCopyGeogCSFrom, METH_VARARGS },
 	 { "OSRSetFromUserInput", _wrap_OSRSetFromUserInput, METH_VARARGS },
 	 { "OSRSetWellKnownGeogCS", _wrap_OSRSetWellKnownGeogCS, METH_VARARGS },
 	 { "OSRSetProjCS", _wrap_OSRSetProjCS, METH_VARARGS },
