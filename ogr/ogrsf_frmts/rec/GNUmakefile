@@ -9,7 +9,7 @@ ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port $(CFLAGS)
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-default:	$(OBJ)
+default:	$(O_OBJ)
 
 clean:
 	rm -f *.o

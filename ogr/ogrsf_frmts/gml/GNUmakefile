@@ -7,6 +7,8 @@ CORE_OBJ =	gmlpropertydefn.o gmlfeatureclass.o gmlfeature.o gmlreader.o
 
 OGR_OBJ =	ogrgmldriver.o ogrgmldatasource.o ogrgmllayer.o
 
+OBJ =	$(CORE_OBJ) $(OGR_OBJ)
+
 ALL_C_FLAGS	=	$(XERCES_INCLUDE) -I.. -I../.. -I$(GDAL_ROOT)/port \
 	$(filter-out -Wall,$(CFLAGS))
 
@@ -21,7 +23,7 @@ endif
 # enable XML schema validation in the parser.
 #ALL_C_FLAGS :=  -DOGR_GML_VALIDATION=1 $(ALL_C_FLAGS)
 
-default:	$(CORE_OBJ) $(OGR_OBJ)
+default:	$(O_OBJ)
 
 clean:
 	rm -f *.o gmlview

@@ -215,6 +215,9 @@ endif
 # generic library rules
 #
 
+
+O_OBJ =	$(foreach file,$(OBJ),../o/$(file))
+
 ../o/%.o:	%.o
-	cp $*.o ../o
+	cp $< $@
 

@@ -9,7 +9,7 @@ OBJ	=	ogrpgdriver.o ogrpgdatasource.o ogrpglayer.o ogrpgtablelayer.o\
 ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port \
 		$(PG_INC) $(CFLAGS)
 
-default:	$(OBJ)
+default:	$(O_OBJ)
 
 clean:
 	rm -f *.o

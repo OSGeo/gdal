@@ -15,7 +15,7 @@ ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port -I$(ISODIR) $(CFLAGS)
 LIBS	:=	../ogrsf_frmts.a ../../ogr.a $(ISOLIB) $(CPL_LIB) $(LIBS) 
 
 
-default:	$(OBJ)
+default:	$(O_OBJ)
 
 clean:
 	rm -f *.o
