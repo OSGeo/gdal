@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_write.c,v 1.7 2002/07/31 20:53:15 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_write.c,v 1.8 2003/01/31 16:43:18 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -484,6 +484,24 @@ TIFFWriteCheck(TIFF* tif, int tiles, const char* module)
 		    "Can not write scanlines to a tiled image");
 		return (0);
 	}
+        
+        /*
+         * While we allow compressed TIFF files to be opened in update mode,
+         * we don't allow writing any image blocks in an existing compressed
+         * image.  Eventually we could do so, by moving blocks that grow
+         * to the end of the file, but we don't for now. 
+         */
+	if (tif->tif_dir.td_stripoffset != NULL 
+            && tif->tif_dir.td_compression != COMPRESSION_NONE )
+        {
+            TIFFError( module,
+                       "%s:\n"
+                       "In place update to compressed TIFF images not "
+                       "supported.",
+                       tif->tif_name );
+            return (0);
+        }
+
 	/*
 	 * On the first write verify all the required information
 	 * has been setup and initialize any data structures that

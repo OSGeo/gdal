@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirread.c,v 1.13 2002/10/02 08:46:54 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirread.c,v 1.14 2002/12/17 17:10:07 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -1248,8 +1248,8 @@ TIFFFetchStripThing(TIFF* tif, TIFFDirEntry* dir, long nstrips, uint32** lpp)
 	register uint32* lp;
 	int status;
 
-	if (!CheckDirCount(tif, dir, (uint32) nstrips))
-		return (0);
+        CheckDirCount(tif, dir, (uint32) nstrips);
+
 	/*
 	 * Allocate space for strip information.
 	 */
@@ -1258,6 +1258,8 @@ TIFFFetchStripThing(TIFF* tif, TIFFDirEntry* dir, long nstrips, uint32** lpp)
 	      nstrips * sizeof (uint32), "for strip array")) == NULL)
 		return (0);
 	lp = *lpp;
+        memset( lp, 0, sizeof(uint32) * nstrips );
+
 	if (dir->tdir_type == (int)TIFF_SHORT) {
 		/*
 		 * Handle uint16->uint32 expansion.
@@ -1267,13 +1269,37 @@ TIFFFetchStripThing(TIFF* tif, TIFFDirEntry* dir, long nstrips, uint32** lpp)
 		if (dp == NULL)
 			return (0);
 		if( (status = TIFFFetchShortArray(tif, dir, dp)) != 0 ) {
-			register uint16* wp = dp;
-			while (nstrips-- > 0)
-				*lp++ = *wp++;
+                    int i;
+                    
+                    for( i = 0; i < nstrips && i < dir->tdir_count; i++ )
+                    {
+                        lp[i] = dp[i];
+                    }
 		}
 		_TIFFfree((char*) dp);
+
+        } else if( nstrips != dir->tdir_count ) {
+            /* Special case to correct length */
+
+            uint32* dp = (uint32*) CheckMalloc(tif,
+		    dir->tdir_count* sizeof (uint32), "to fetch strip tag");
+            if (dp == NULL)
+                return (0);
+
+            status = TIFFFetchLongArray(tif, dir, dp);
+            if( status != 0 ) {
+                int i;
+
+                for( i = 0; i < nstrips && i < dir->tdir_count; i++ )
+                {
+                    lp[i] = dp[i];
+                }
+            }
+
+            _TIFFfree( (char *) dp );
 	} else
-		status = TIFFFetchLongArray(tif, dir, lp);
+            status = TIFFFetchLongArray(tif, dir, lp);
+        
 	return (status);
 }
 

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_open.c,v 1.7 2002/04/20 12:16:52 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_open.c,v 1.8 2003/01/31 16:42:42 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -363,14 +363,6 @@ TIFFClientOpen(
 	!TIFFMapFileContents(tif, (tdata_t*) &tif->tif_base, &tif->tif_size))
 			tif->tif_flags &= ~TIFF_MAPPED;
 		if (TIFFReadDirectory(tif)) {
-                        if( m != O_RDONLY 
-                          && tif->tif_dir.td_compression != COMPRESSION_NONE )
-                        {
-                            TIFFError( name, 
-                                       "Can't open a compressed TIFF file"
-                                       " with compression for update." );
-                            goto bad;
-                        }
 			tif->tif_rawcc = -1;
 			tif->tif_flags |= TIFF_BUFFERSETUP;
 			return (tif);
