@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2005/03/19 21:50:09  fwarmerdam
+ * bug 802: GetBlockRef()-adopt block before reading data into it
+ *
  * Revision 1.55  2005/02/17 22:16:12  fwarmerdam
  * changed to use two level block cache
  *
@@ -1139,17 +1142,21 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
             return( NULL );
         }
 
+        AdoptBlock( nXBlockOff, nYBlockOff, poBlock );
+        poBlock->AddLock();
+
         if( !bJustInitialize
          && IReadBlock(nXBlockOff,nYBlockOff,poBlock->GetDataRef()) != CE_None)
         {
-            delete poBlock;
+            poBlock->DropLock();
+            FlushBlock( nXBlockOff, nYBlockOff );
             CPLError( CE_Failure, CPLE_AppDefined,
 		      "IReadBlock failed at X offset %d, Y offset %d",
 		      nXBlockOff, nYBlockOff );
 	    return( NULL );
         }
 
-        AdoptBlock( nXBlockOff, nYBlockOff, poBlock );
+        poBlock->DropLock();
 
         if( !bJustInitialize )
         {
