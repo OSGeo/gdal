@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/03/30 22:26:58  warmerda
+ * Avoid use of SQLRowCount() in GetColumns().  It does not work reliably
+ * with Oracle unixodbc driver on AIX.  Argg.
+ *
  * Revision 1.12  2004/03/04 16:58:05  warmerda
  * Fixed up memory leak of results set column definition info.
  *
@@ -943,13 +947,21 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
 /* -------------------------------------------------------------------- */
 /*      Allocate per column information.                                */
 /* -------------------------------------------------------------------- */
-    SQLINTEGER nResultCount;
+#ifdef notdef
+    // SQLRowCount() is too unreliable (with unixodbc on AIX for instance)
+    // so we now avoid it.
+    SQLINTEGER nResultCount=0;
 
-    SQLRowCount( m_hStmt, &nResultCount );
+    if( Failed(SQLRowCount( m_hStmt, &nResultCount ) ) )
+	nResultCount = 0;
+
     if( nResultCount < 1 )
         m_nColCount = 500; // Hopefully lots.
     else
         m_nColCount = (short) nResultCount;
+#endif
+
+    m_nColCount = 500;
     
     m_papszColNames = (char **) calloc(sizeof(char *),(m_nColCount+1));
     m_papszColValues = (char **) calloc(sizeof(char *),(m_nColCount+1));
@@ -963,6 +975,8 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
 /*      Establish columns to use for key information.                   */
 /* -------------------------------------------------------------------- */
     int iCol;
+
+    CPLDebug( "ODBC", "GetColumn() - m_nColCount=%d", m_nColCount ); 
 
     for( iCol = 0; iCol < m_nColCount; iCol++ )
     {
