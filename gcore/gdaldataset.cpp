@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2000/06/26 18:47:31  warmerda
+ * added GDALBuildOverviews
+ *
  * Revision 1.15  2000/04/21 21:56:23  warmerda
  * move metadata to GDALMajorObject, added BuildOverviews
  *
@@ -769,6 +772,23 @@ CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
     return eErr;
 }
 
+/************************************************************************/
+/*                         GDALBuildOverviews()                         */
+/************************************************************************/
+
+CPLErr GDALBuildOverviews( GDALDatasetH hDataset,
+                           const char *pszResampling, 
+                           int nOverviews, int *panOverviewList, 
+                           int nBands, int *panBandList,
+                           GDALProgressFunc pfnProgress, 
+                           void * pProgressData )
+
+{
+    return ((GDALDataset *) hDataset)->BuildOverviews(
+        pszResampling, nOverviews, panOverviewList, nBands, panBandList, 
+        pfnProgress, pProgressData );
+}
+    
 /************************************************************************/
 /*                          IBuildOverviews()                           */
 /*                                                                      */

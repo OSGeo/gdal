@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2000/06/26 18:47:31  warmerda
+ * added GDALBuildOverviews
+ *
  * Revision 1.25  2000/06/26 15:26:21  warmerda
  * added GDALGetDescription
  *
@@ -307,6 +310,9 @@ const GDAL_GCP CPL_DLL *GDALGetGCPs( GDALDatasetH );
 void CPL_DLL   *GDALGetInternalHandle( GDALDatasetH, const char * );
 int CPL_DLL     GDALReferenceDataset( GDALDatasetH );
 int CPL_DLL     GDALDereferenceDataset( GDALDatasetH );
+
+CPLErr CPL_DLL  GDALBuildOverviews( GDALDatasetH, const char *, int, int *,
+                                    int, int *, GDALProgressFunc, void * );
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
