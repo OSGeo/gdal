@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/12/08 21:58:32  warmerda
+ * save header
+ *
  * Revision 1.2  2001/12/08 15:58:45  warmerda
  * fixed VSIFSeek() arguments as per Chris Schaefer
  *
@@ -190,6 +193,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
 
         if( pszLine[3] == '/' )
         {
+            psInfo->papszHeader = CSLAddString( psInfo->papszHeader, pszLine );
             papszTokens = CSLTokenizeStringComplex( pszLine+4, ",=", 
                                                     FALSE,FALSE);
             nCount = CSLCount(papszTokens);
@@ -458,6 +462,7 @@ void BSBClose( BSBInfo *psInfo )
     if( psInfo->fp != NULL )
         VSIFClose( psInfo->fp );
 
+    CSLDestroy( psInfo->papszHeader );
     CPLFree( psInfo->panLineOffset );
     CPLFree( psInfo->pabyPCT );
     CPLFree( psInfo );
