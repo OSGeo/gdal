@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/02/12 16:00:03  warmerda
+ * failure to open shapefile is no longer an error, just a warning
+ *
  * Revision 1.18  2004/02/12 06:39:16  warmerda
  * added preliminary support for some GDT quirks
  *
@@ -404,6 +407,30 @@ int TigerCompleteChain::SetModule( const char * pszModule )
     CPLFree( panShapeRecordId );
     panShapeRecordId = NULL;
 
+/* -------------------------------------------------------------------- */
+/*      Try to open the RT2 file corresponding to this RT1 file.        */
+/* -------------------------------------------------------------------- */
+    if( pszModule != NULL )
+    {
+        char    *pszFilename;
+
+        pszFilename = poDS->BuildFilename( pszModule, "2" );
+
+        fpShape = VSIFOpen( pszFilename, "rb" );
+        
+        if( fpShape == NULL )
+        {
+            if( nRT1RecOffset == 0 )
+                CPLError( CE_Warning, CPLE_OpenFailed,
+                          "Failed to open %s, intermediate shape arcs will not be available.\n",
+                          pszFilename );
+        }
+        else
+            panShapeRecordId = (int *)CPLCalloc(sizeof(int),GetFeatureCount());
+        
+        CPLFree( pszFilename );
+    }
+
     return TRUE;
 }
 
@@ -596,35 +623,10 @@ int TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
 int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
 
 {
-/* -------------------------------------------------------------------- */
-/*      As a by-product we force the shape point file (RT2) to be       */
-/*      opened and allocate the record id array if the file isn't       */
-/*      already open.                                                   */
-/* -------------------------------------------------------------------- */
-    if( fpShape == NULL )
-    {
-        char    *pszFilename;
-
-        pszFilename = poDS->BuildFilename( pszModule, "2" );
-
-        fpShape = VSIFOpen( pszFilename, "rb" );
-        
-        if( fpShape == NULL )
-        {
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                      "Failed to open %s.\n",
-                      pszFilename );
-
-            CPLFree( pszFilename );
-            return -2;
-        }
-        
-        CPLFree( pszFilename );
-
-        panShapeRecordId = (int *) CPLCalloc(sizeof(int),GetFeatureCount());
-    }
-
     CPLAssert( nChainId >= 0 && nChainId < GetFeatureCount() );
+
+    if( fpShape == NULL || panShapeRecordId == NULL )
+        return -1;
     
 /* -------------------------------------------------------------------- */
 /*      Do we already have the answer?                                  */
