@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/03/09 21:29:57  warmerda
+ * Added backslash escaping within string constants for tokenize function.
+ *
  * Revision 1.6  1999/02/25 04:40:46  danmo
  * Modif. CSLLoad() to use CPLReadLine() (better handling of newlines)
  *
@@ -543,6 +546,13 @@ char ** CSLTokenizeStringComplex( const char * pszString,
             /* Within string constants we allow for escaped quotes, but
                in processing them we will unescape the quotes */
             if( bInString && pszString[0] == '\\' && pszString[1] == '"' )
+            {
+                pszString++;
+            }
+
+            /* Within string constants a \\ sequence reduces to \ */
+            else if( bInString
+                     && pszString[0] == '\\' && pszString[1] == '\\' )
             {
                 pszString++;
             }
