@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/05/15 14:47:24  warmerda
+ * implement quaternion support on write
+ *
  * Revision 1.3  2003/05/12 18:48:57  warmerda
  * added preliminary 3D write support
  *
@@ -98,15 +101,10 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Write an Arc.                                                   */
 /* -------------------------------------------------------------------- */
-    if( DGNGetDimension( hNewDGN ) == 2 )
-        psLine = DGNCreateArcElem2D( hNewDGN, DGNT_ARC, 
-                                     2000.0, 3000.0, 2000.0, 1000.0, 
-                                     45.0, 0.0, 270.0 );
-    else
-        psLine = DGNCreateArcElem( hNewDGN, DGNT_ARC, 
-                                     2000.0, 3000.0, 500.0, 2000.0, 1000.0, 
-                                     0.0, 270.0, 0.0, NULL );
-
+    psLine = DGNCreateArcElem( hNewDGN, DGNT_ARC, 
+                               2000.0, 3000.0, 500.0, 2000.0, 1000.0, 
+                               0.0, 270.0, 0.0, NULL );
+    
     DGNUpdateElemCore( hNewDGN, psLine, 15, 0, 3, 1, 0 );
     DGNWriteElement( hNewDGN, psLine );
     DGNFreeElement( hNewDGN, psLine );
@@ -114,16 +112,10 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Write an Ellipse with fill info.                                */
 /* -------------------------------------------------------------------- */
-    if( DGNGetDimension( hNewDGN ) == 2 )
-        psLine = DGNCreateArcElem2D( hNewDGN, DGNT_ELLIPSE, 
-                                     2000.0, 3000.0, 1000.0, 1000.0, 
-                                     45.0, 0.0, 360.0 );
-    else
-        psLine = DGNCreateArcElem( hNewDGN, DGNT_ELLIPSE, 
-                                   2000.0, 3000.0, 500.0, 1000.0, 1000.0, 
-                                   0.0, 360.0, 0.0, NULL );
-
-
+    psLine = DGNCreateArcElem( hNewDGN, DGNT_ELLIPSE, 
+                               2000.0, 3000.0, 500.0, 1000.0, 1000.0, 
+                               0.0, 360.0, 0.0, NULL );
+    
     DGNUpdateElemCore( hNewDGN, psLine, 15, 0, 3, 1, 0 );
     DGNWriteElement( hNewDGN, psLine );
     DGNFreeElement( hNewDGN, psLine );
@@ -132,11 +124,27 @@ int main( int argc, char ** argv )
 /*      Write some text.                                                */
 /* -------------------------------------------------------------------- */
     psLine = DGNCreateTextElem( hNewDGN, "This is a test string", 
-                                0, DGNJ_CENTER_TOP, 200.0, 200.0, 0.0,
+                                0, DGNJ_CENTER_TOP, 200.0, 200.0, 0.0, NULL,
                                 2000.0, 3000.0, 0.0 );
 
     DGNAddMSLink( hNewDGN, psLine, DGNLT_XBASE, 7, 101 );
     DGNAddMSLink( hNewDGN, psLine, DGNLT_DMRS, 7, 101 );
+    DGNUpdateElemCore( hNewDGN, psLine, 15, 0, 3, 1, 0 );
+    DGNWriteElement( hNewDGN, psLine );
+    DGNFreeElement( hNewDGN, psLine );
+
+    psLine = DGNCreateTextElem( hNewDGN, "------- 30 degrees",
+                                0, DGNJ_CENTER_TOP, 200.0, 200.0, 30.0, NULL,
+                                2000.0, 3000.0, 0.0 );
+
+    DGNUpdateElemCore( hNewDGN, psLine, 15, 0, 3, 1, 0 );
+    DGNWriteElement( hNewDGN, psLine );
+    DGNFreeElement( hNewDGN, psLine );
+
+    psLine = DGNCreateTextElem( hNewDGN, "------- 90 degrees",
+                                0, DGNJ_CENTER_TOP, 200.0, 200.0, 90.0, NULL,
+                                2000.0, 3000.0, 0.0 );
+
     DGNUpdateElemCore( hNewDGN, psLine, 15, 0, 3, 1, 0 );
     DGNWriteElement( hNewDGN, psLine );
     DGNFreeElement( hNewDGN, psLine );
