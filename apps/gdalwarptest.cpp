@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/04/23 05:18:02  warmerda
+ * added -multi switch
+ *
  * Revision 1.5  2003/04/21 17:21:04  warmerda
  * Fixed -wm switch.
  *
@@ -121,6 +124,7 @@ int main( int argc, char ** argv )
     GDALDataType        eOutputType = GDT_Unknown, eWorkingType = GDT_Unknown; 
     GDALResampleAlg     eResampleAlg = GRA_NearestNeighbour;
     const char          *pszSrcNodata = NULL;
+    int                 bMulti = FALSE;
 
     GDALAllRegister();
 
@@ -158,6 +162,10 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-wo") && i < argc-1 )
         {
             papszWarpOptions = CSLAddString( papszWarpOptions, argv[++i] );
+        }   
+        else if( EQUAL(argv[i],"-multi") )
+        {
+            bMulti = TRUE;
         }   
         else if( EQUAL(argv[i],"-of") && i < argc-1 )
         {
@@ -435,9 +443,14 @@ int main( int argc, char ** argv )
 
     if( oWO.Initialize( psWO ) == CE_None )
     {
-        oWO.ChunkAndWarpImage( 0, 0, 
-                               GDALGetRasterXSize( hDstDS ),
-                               GDALGetRasterYSize( hDstDS ) );
+        if( bMulti )
+            oWO.ChunkAndWarpMulti( 0, 0, 
+                                   GDALGetRasterXSize( hDstDS ),
+                                   GDALGetRasterYSize( hDstDS ) );
+        else
+            oWO.ChunkAndWarpImage( 0, 0, 
+                                   GDALGetRasterXSize( hDstDS ),
+                                   GDALGetRasterYSize( hDstDS ) );
     }
 
 /* -------------------------------------------------------------------- */
