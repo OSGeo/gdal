@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/03/27 22:09:43  warmerda
+ * fixed shallow copy problem with return result from CPLGetBasename()
+ * as per http://bugzilla.remotesensing.org/show_bug.cgi?id=310.
+ *
  * Revision 1.17  2003/03/20 19:11:30  warmerda
  * free pszBasename after it is used
  *
@@ -515,9 +519,11 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
     if( bSingleNewFile && nLayers == 0 )
     {
         char *pszPath = CPLStrdup(CPLGetPath(pszName));
-        pszBasename = CPLStrdup(CPLFormFilename(pszPath,
-                                                CPLGetBasename(pszName), 
-                                                NULL));
+        char *pszBasename = CPLStrdup(CPLGetBasename(pszName));
+
+        pszBasename = CPLStrdup(CPLFormFilename(pszPath, pszBasename, NULL));
+
+        CPLFree( pszBasename );
         CPLFree( pszPath );
     }
     else if( bSingleNewFile )
