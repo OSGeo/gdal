@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/11/11 20:53:53  warmerda
+ * Report file offset before each record dumped.
+ *
  * Revision 1.5  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -50,6 +53,7 @@
 
 #include <stdio.h>
 #include "iso8211.h"
+#include "cpl_vsi.h"
 
 CPL_CVSID("$Id$");
 
@@ -103,11 +107,16 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     DDFRecord       *poRecord;
     oModule.Dump( stdout );
+    long nStartLoc;
 
+    nStartLoc = VSIFTell( oModule.GetFP() );
     for( poRecord = oModule.ReadRecord();
          poRecord != NULL; poRecord = oModule.ReadRecord() )
     {
+        printf( "File Offset: %ld\n", nStartLoc );
         poRecord->Dump( stdout );
+
+        nStartLoc = VSIFTell( oModule.GetFP() );
     }
 
     oModule.Close();
