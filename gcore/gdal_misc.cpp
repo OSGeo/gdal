@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/03/06 21:59:44  warmerda
+ * added min/max calculate
+ *
  * Revision 1.5  2000/03/06 02:20:15  warmerda
  * added getname functions for colour interpretations
  *
@@ -45,7 +48,7 @@
  *
  */
 
-#include "gdal.h"
+#include "gdal_priv.h"
 
 /************************************************************************/
 /*                           __pure_virtual()                           */
@@ -208,4 +211,151 @@ const char *GDALGetColorInterpretationName( GDALColorInterp eInterp )
       default:
         return "Unknown";
     }
+}
+
+/************************************************************************/
+/*                      GDALComputeRasterMinMax()                       */
+/************************************************************************/
+
+/**
+ * Compute the min/max values for a band.
+ * 
+ * If approximate is OK, then the band's GetMinimum()/GetMaximum() will
+ * be trusted.  If it doesn't work, a subsample of blocks will be read to
+ * get an approximate min/max.  If the band has a nodata value it will
+ * be excluded from the minimum and maximum.
+ *
+ * If bApprox is FALSE, then all pixels will be read and used to compute
+ * an exact range.
+ * 
+ * @param hBand the band to copmute the range for.
+ * @param bApproxOK TRUE if an approximate (faster) answer is OK, otherwise
+ * FALSE.
+ * @param adfMinMax the array in which the minimum (adfMinMax[0]) and the
+ * maximum (adfMinMax[1]) are returned.
+ */
+
+void GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK, 
+                              double adfMinMax[2] )
+
+{
+    double       dfMin=0.0, dfMax=0.0;
+    GDALRasterBand *poBand = (GDALRasterBand *) hBand;
+
+/* -------------------------------------------------------------------- */
+/*      Does the driver already know the min/max?                       */
+/* -------------------------------------------------------------------- */
+    if( bApproxOK )
+    {
+        int          bSuccessMin, bSuccessMax;
+
+        dfMin = GDALGetRasterMinimum( hBand, &bSuccessMin );
+        dfMax = GDALGetRasterMaximum( hBand, &bSuccessMax );
+        if( bSuccessMin && bSuccessMax )
+        {
+            adfMinMax[0] = dfMin;
+            adfMinMax[1] = dfMax;
+            return;
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Figure out the ratio of blocks we will read to get an           */
+/*      approximate value.                                              */
+/* -------------------------------------------------------------------- */
+    int         nBlockXSize, nBlockYSize;
+    int         nBlocksPerRow, nBlocksPerColumn;
+    int         nSampleRate;
+    int         bGotNoDataValue, bFirstValue = TRUE;
+    double      dfNoDataValue;
+
+    dfNoDataValue = poBand->GetNoDataValue( &bGotNoDataValue );
+
+    poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
+    nBlocksPerRow = (poBand->GetXSize() + nBlockXSize - 1) / nBlockXSize;
+    nBlocksPerColumn = (poBand->GetYSize() + nBlockYSize - 1) / nBlockYSize;
+
+    if( bApproxOK )
+        nSampleRate = 
+            (int) MAX(1,sqrt((double) nBlocksPerRow * nBlocksPerColumn));
+    else
+        nSampleRate = 1;
+    
+    for( int iSampleBlock = 0; 
+         iSampleBlock < nBlocksPerRow * nBlocksPerColumn;
+         iSampleBlock += nSampleRate )
+    {
+        double dfValue = 0.0;
+        int  iXBlock, iYBlock, nXCheck, nYCheck;
+        GDALRasterBlock *poBlock;
+
+        iYBlock = iSampleBlock / nBlocksPerRow;
+        iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
+        
+        poBlock = poBand->GetBlockRef( iXBlock, iYBlock );
+        
+        if( (iXBlock+1) * nBlockXSize > poBand->GetXSize() )
+            nXCheck = poBand->GetXSize() - iXBlock * nBlockXSize;
+        else
+            nXCheck = nBlockXSize;
+
+        if( (iYBlock+1) * nBlockYSize > poBand->GetYSize() )
+            nYCheck = poBand->GetYSize() - iYBlock * nBlockYSize;
+        else
+            nYCheck = nBlockYSize;
+
+        /* this isn't the fastest way to do this, but is easier for now */
+        for( int iY = 0; iY < nYCheck; iY++ )
+        {
+            for( int iX = 0; iX < nXCheck; iX++ )
+            {
+                int    iOffset = iX + iY * nBlockXSize;
+
+                switch( poBlock->GetDataType() )
+                {
+                  case GDT_Byte:
+                    dfValue = ((GByte *) poBlock->GetDataRef())[iOffset];
+                    break;
+
+                  case GDT_UInt16:
+                    dfValue = ((GUInt16 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_Int16:
+                    dfValue = ((GInt16 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_UInt32:
+                    dfValue = ((GUInt32 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_Int32:
+                    dfValue = ((GInt32 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_Float32:
+                    dfValue = ((float *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_Float64:
+                    dfValue = ((double *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  default:
+                    CPLAssert( FALSE );
+                }
+                
+                if( bGotNoDataValue && dfValue == dfNoDataValue )
+                    continue;
+
+                if( bFirstValue )
+                {
+                    dfMin = dfMax = dfValue;
+                    bFirstValue = FALSE;
+                }
+                else
+                {
+                    dfMin = MIN(dfMin,dfValue);
+                    dfMax = MAX(dfMax,dfValue);
+                }
+            }
+        }
+    }
+
+    adfMinMax[0] = dfMin;
+    adfMinMax[1] = dfMax;
 }
