@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/01/26 20:30:07  fwarmerdam
+ * Change GetGDTProjDat to GetProjectionAndDatum().
+ *
  * Revision 1.5  2005/01/15 07:48:41  fwarmerdam
  * dos to unix linefeeds
  *
@@ -203,8 +206,8 @@ static int ECWTranslateFromWKT( const char *pszWKT,
         CNCSError oErr;
 
         oErr = 
-            CNCSJP2FileView::GetGDTProjDat( atoi(pszAuthorityCode), 
-                                            &pszEPSGProj, &pszEPSGDatum );
+            CNCSJP2FileView::GetProjectionAndDatum( atoi(pszAuthorityCode), 
+                                                 &pszEPSGProj, &pszEPSGDatum );
 
         CPLDebug( "ECW", "GetGDTProjDat(%d) = %s/%s", 
                   atoi(pszAuthorityCode), pszEPSGProj, pszEPSGDatum );
