@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/05/24 04:09:10  warmerda
+ * added clone and SetXMLValue functions
+ *
  * Revision 1.10  2002/04/01 16:08:21  warmerda
  * allow periods in tokens
  *
@@ -958,5 +961,110 @@ CPLXMLNode *CPLCreateXMLElementAndValue( CPLXMLNode *psParent,
     return CPLCreateXMLNode( 
         CPLCreateXMLNode( psParent, CXT_Element, pszName ),
         CXT_Text, pszValue );
+}
+
+/************************************************************************/
+/*                          CPLCloneXMLTree()                           */
+/*                                                                      */
+/*      Clone an XML Tree.  We use recursion to handle children, but    */
+/*      we do siblings by looping.  This means we can handle very       */
+/*      long lists of elements, but great depth may cause stack         */
+/*      overflow problems on some systems.                              */
+/************************************************************************/
+
+CPLXMLNode *CPLCloneXMLTree( CPLXMLNode *psTree )
+
+{
+    CPLXMLNode *psPrevious = NULL;
+    CPLXMLNode *psReturn = NULL;
+
+    while( psTree != NULL )
+    {
+        CPLXMLNode *psCopy;
+
+        psCopy = CPLCreateXMLNode( NULL, psTree->eType, psTree->pszValue );
+        if( psReturn == NULL )
+            psReturn = psCopy;
+        if( psPrevious != NULL )
+            psPrevious->psNext = psCopy;
+
+        if( psTree->psChild != NULL )
+            psCopy->psChild = CPLCloneXMLTree( psTree->psChild );
+
+        psPrevious = psCopy;
+        psTree = psTree->psNext;
+    }
+
+    return psReturn;
+}
+
+/************************************************************************/
+/*                           CPLSetXMLValue()                           */
+/*                                                                      */
+/*      Set the text value of an XML element to the suggested           */
+/*      value.  Intermediate element nodes are created if               */
+/*      an existing component is missing.                               */
+/************************************************************************/
+
+int CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
+                    const char *pszValue )
+
+{
+    char	**papszTokens;
+    int		iToken = 0;
+
+    papszTokens = CSLTokenizeStringComplex( pszPath, ".", FALSE, FALSE );
+
+    while( papszTokens[iToken] != NULL && psRoot != NULL )
+    {
+        CPLXMLNode *psChild;
+        int        bIsAttribute = FALSE;
+        const char *pszName = papszTokens[iToken];
+
+        if( pszName[0] == '#' )
+        {
+            bIsAttribute = TRUE;
+            pszName++;
+        }
+
+        if( psRoot->eType != CXT_Element )
+            return FALSE;
+
+        for( psChild = psRoot->psChild; psChild != NULL; 
+             psChild = psChild->psNext ) 
+        {
+            if( psChild->eType != CXT_Text 
+                && EQUAL(pszName,psChild->pszValue) )
+                break;
+        }
+
+        if( psChild == NULL )
+        {
+            if( bIsAttribute )
+                psChild = CPLCreateXMLNode( psRoot, CXT_Attribute, pszName );
+            else
+                psChild = CPLCreateXMLNode( psRoot, CXT_Element, pszName );
+        }
+
+        psRoot = psChild;
+        iToken++;
+    }
+
+    CSLDestroy( papszTokens );
+
+/* -------------------------------------------------------------------- */
+/*      Now set a value node under this node.                           */
+/* -------------------------------------------------------------------- */
+    if( psRoot->psChild == NULL )
+        CPLCreateXMLNode( psRoot, CXT_Text, pszValue );
+    else if( psRoot->psChild->eType != CXT_Text )
+        return FALSE;
+    else 
+    {
+        CPLFree( psRoot->psChild->pszValue );
+        psRoot->psChild->pszValue = CPLStrdup( pszValue );
+    }
+
+    return TRUE;
 }
 
