@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2004/05/25 16:58:59  warmerda
+ * Try to return an error if we don't find GCPs in TAB file.
+ *
  * Revision 1.57  2004/04/21 15:48:47  warmerda
  * Reimplement GDALGetGeoTransformFromGCPs to do best fit - Eric Donges
  *
@@ -1275,7 +1278,7 @@ int GDALReadTabFile( const char * pszBaseFilename,
             }
         }
         else if (bTypeRasterFound && bInsideTableDef
-                 && CSLCount(papszTok) > 5
+                 && CSLCount(papszTok) > 4
                  && EQUAL(papszTok[4], "Label") 
                  && nCoordinateCount < MAX_GCP )
         {
@@ -1285,8 +1288,11 @@ int GDALReadTabFile( const char * pszBaseFilename,
             asGCPs[nCoordinateCount].dfGCPLine = atof(papszTok[3]);
             asGCPs[nCoordinateCount].dfGCPX = atof(papszTok[0]);
             asGCPs[nCoordinateCount].dfGCPY = atof(papszTok[1]);
-            CPLFree( asGCPs[nCoordinateCount].pszId );
-            asGCPs[nCoordinateCount].pszId = CPLStrdup(papszTok[5]);
+            if( papszTok[5] != NULL )
+            {
+                CPLFree( asGCPs[nCoordinateCount].pszId );
+                asGCPs[nCoordinateCount].pszId = CPLStrdup(papszTok[5]);
+            }
 
             nCoordinateCount++;
         }
@@ -1333,6 +1339,16 @@ int GDALReadTabFile( const char * pszBaseFilename,
             
     }
 
+    CSLDestroy(papszTok);
+    CSLDestroy(papszLines);
+
+    if( nCoordinateCount == 0 )
+    {
+        CPLDebug( "GDAL", "GDALReadTabFile(%s) did not get any GCPs.", 
+                  pszTAB );
+        return FALSE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Try to convert the GCPs into a geotransform definition, if      */
 /*      possible.  Otherwise we will need to use them as GCPs.          */
@@ -1355,9 +1371,6 @@ int GDALReadTabFile( const char * pszBaseFilename,
         GDALDeinitGCPs( nCoordinateCount, asGCPs );
     }
      
-    CSLDestroy(papszTok);
-    CSLDestroy(papszLines);
-
     return TRUE;
 }
 
