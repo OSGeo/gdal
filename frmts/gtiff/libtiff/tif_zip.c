@@ -1,4 +1,4 @@
-/* $Header: /d1/sam/tiff/libtiff/RCS/tif_zip.c,v 1.11 1997/08/29 21:46:05 sam Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_zip.c,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler

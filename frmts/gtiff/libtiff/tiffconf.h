@@ -1,4 +1,4 @@
-/* $Header: /d1/sam/tiff/libtiff/RCS/tiffconf.h,v 1.17 1997/08/29 21:45:40 sam Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffconf.h,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
 /*
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
@@ -70,11 +70,15 @@
  *    YCBCR_SUPPORT	enable support for 6.0 YCbCr tags
  *    CMYK_SUPPORT	enable support for 6.0 CMYK tags
  *    ICC_SUPPORT	enable support for ICC profile tag
+ *    PHOTOSHOP_SUPPORT enable support for PHOTOSHOP resource tag
+ *    IPTC_SUPPORT  enable support for RichTIFF IPTC tag
  */
 #define	COLORIMETRY_SUPPORT
 #define	YCBCR_SUPPORT
 #define	CMYK_SUPPORT
 #define	ICC_SUPPORT
+#define PHOTOSHOP_SUPPORT
+#define IPTC_SUPPORT
 #endif /* FEATURE_SUPPORT */
 
 #ifndef COMPRESSION_SUPPORT

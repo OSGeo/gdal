@@ -1,4 +1,4 @@
-/* $Header: /d1/sam/tiff/libtiff/RCS/tif_getimage.c,v 1.43 1997/08/29 21:45:52 sam Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.2 1999/08/16 17:40:52 warmerda Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -185,7 +185,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
     uint16 compress;
     int colorchannels;
     uint16	*red_orig, *green_orig, *blue_orig;
-    int		n_color, i_color;
+    int		n_color;
 
     /* Initialize to normal values */
     img->row_offset = 0;

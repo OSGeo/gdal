@@ -1,4 +1,4 @@
-/* $Header: /d1/sam/tiff/libtiff/RCS/tif_fax3.c,v 1.137 1997/08/29 21:45:51 sam Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_fax3.c,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -382,7 +382,7 @@ _TIFFFax3fillruns(u_char* buf, uint16* runs, uint16* erun, uint32 lastx)
 			*cp++ &= 0xff << (8-bx);
 			run -= 8-bx;
 		    }
-		    if (n = run >> 3) {		/* multiple bytes to fill */
+		    if( (n = run >> 3) != 0 ) {	/* multiple bytes to fill */
 			if ((n/sizeof (long)) > 1) {
 			    /*
 			     * Align to longword boundary and fill.
@@ -421,7 +421,7 @@ _TIFFFax3fillruns(u_char* buf, uint16* runs, uint16* erun, uint32 lastx)
 			*cp++ |= 0xff >> bx;
 			run -= 8-bx;
 		    }
-		    if (n = run>>3) {		/* multiple bytes to fill */
+		    if( (n = run>>3) != 0 ) {	/* multiple bytes to fill */
 			if ((n/sizeof (long)) > 1) {
 			    /*
 			     * Align to longword boundary and fill.

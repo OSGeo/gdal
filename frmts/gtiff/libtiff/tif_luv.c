@@ -349,13 +349,12 @@ LogLuvDecodeTile(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 static int
 LogL16Encode(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 {
-	TIFFDirectory* td = &tif->tif_dir;
 	LogLuvState* sp = EncoderState(tif);
 	int shft, i, j, npixels;
 	tidata_t op;
 	int16* tp;
 	int16 b;
-	int occ, rc, mask, beg;
+	int occ, rc=0, mask, beg;
 
 	assert(s == 0);
 	assert(sp != NULL);
@@ -438,7 +437,6 @@ LogL16Encode(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 static int
 LogLuvEncode24(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 {
-	TIFFDirectory* td = &tif->tif_dir;
 	LogLuvState* sp = EncoderState(tif);
 	int i, npixels, occ;
 	tidata_t op;
@@ -484,13 +482,12 @@ LogLuvEncode24(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 static int
 LogLuvEncode32(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 {
-	TIFFDirectory* td = &tif->tif_dir;
 	LogLuvState* sp = EncoderState(tif);
 	int shft, i, j, npixels;
 	tidata_t op;
 	uint32* tp;
 	uint32 b;
-	int occ, rc, mask, beg;
+	int occ, rc=0, mask, beg;
 
 	assert(s == 0);
 	assert(sp != NULL);

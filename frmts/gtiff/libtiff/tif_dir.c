@@ -1,4 +1,4 @@
-/* $Header: /d1/sam/tiff/libtiff/RCS/tif_dir.c,v 1.162 1997/08/29 21:45:47 sam Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.c,v 1.2 1999/09/08 12:21:13 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -167,7 +167,7 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		/*
 		 * Setup new compression routine state.
 		 */
-		if (status = TIFFSetCompressionScheme(tif, v))
+		if( (status = TIFFSetCompressionScheme(tif, v)) != 0 )
 			td->td_compression = v;
 		break;
 	case TIFFTAG_PHOTOMETRIC:
@@ -405,7 +405,8 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		i = va_arg(ap, int);
 		s = va_arg(ap, char*);
 		i = checkInkNamesString(tif, i, s);
-		if (status = (i > 0)) {
+                status = i > 0;
+		if( i > 0 ) {
 			_TIFFsetNString(&td->td_inknames, s, i);
 			td->td_inknameslen = i;
 		}
@@ -423,6 +424,25 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		_TIFFsetByteArray(&td->td_profileData, va_arg(ap, void*),
 		    td->td_profileLength);
 		break;
+#endif
+#ifdef PHOTOSHOP_SUPPORT
+ 	case TIFFTAG_PHOTOSHOP:
+  		td->td_photoshopLength = (uint32) va_arg(ap, uint32);
+  		_TIFFsetByteArray (&td->td_photoshopData, va_arg(ap, void*),
+ 			td->td_photoshopLength);
+ 		break;
+#endif
+#ifdef IPTC_SUPPORT
+    case TIFFTAG_RICHTIFFIPTC: 
+  		td->td_richtiffiptcLength = (uint32) va_arg(ap, uint32);
+#ifdef PHOTOSHOP_SUPPORT
+  		_TIFFsetLongArray ((uint32**)&td->td_richtiffiptcData, va_arg(ap, uint32*),
+ 			td->td_richtiffiptcLength);
+#else
+  		_TIFFsetByteArray (&td->td_photoshopData, va_arg(ap, void*),
+ 			td->td_photoshopLength);
+#endif
+ 		break;
 #endif
 	default:
 		/*
@@ -752,6 +772,18 @@ _TIFFVGetField(TIFF* tif, ttag_t tag, va_list ap)
 		*va_arg(ap, void**) = td->td_profileData;
 		break;
 #endif
+#ifdef PHOTOSHOP_SUPPORT
+ 	case TIFFTAG_PHOTOSHOP:
+ 		*va_arg(ap, uint32*) = td->td_photoshopLength;
+ 		*va_arg(ap, void**) = td->td_photoshopData;
+ 		break;
+#endif
+#ifdef IPTC_SUPPORT
+ 	case TIFFTAG_RICHTIFFIPTC:
+ 		*va_arg(ap, uint32*) = td->td_richtiffiptcLength;
+ 		*va_arg(ap, void**) = td->td_richtiffiptcData;
+ 		break;
+#endif
 	default:
 		/*
 		 * This can happen if multiple images are open with
@@ -848,6 +880,12 @@ TIFFFreeDirectory(TIFF* tif)
 #endif
 #ifdef ICC_SUPPORT
 	CleanupField(td_profileData);
+#endif
+#ifdef PHOTOSHOP_SUPPORT
+	CleanupField(td_photoshopData);
+#endif
+#ifdef IPTC_SUPPORT
+	CleanupField(td_richtiffiptcData);
 #endif
 	CleanupField(td_stripoffset);
 	CleanupField(td_stripbytecount);
@@ -1091,4 +1129,55 @@ TIFFUnlinkDirectory(TIFF* tif, tdir_t dirn)
 	tif->tif_row = (uint32) -1;
 	tif->tif_curstrip = (tstrip_t) -1;
 	return (1);
+}
+
+/*			[BFC]
+ *
+ * Author: Bruce Cameron <cameron@petris.com>
+ *
+ * Set a table of tags that are to be replaced during directory process by the
+ * 'IGNORE' state - or return TRUE/FALSE for the requested tag such that
+ * 'ReadDirectory' can use the stored information.
+ */
+int
+TIFFReassignTagToIgnore (enum TIFFIgnoreSense task, int TIFFtagID)
+{
+    static int TIFFignoretags [FIELD_LAST];
+    static int tagcount = 0 ;
+    int		i;					/* Loop index */
+    int		j;					/* Loop index */
+
+    switch (task)
+    {
+      case TIS_STORE:
+        if ( tagcount < (FIELD_LAST - 1) )
+        {
+            for ( j = 0 ; j < tagcount ; ++j )
+            {					/* Do not add duplicate tag */
+                if ( TIFFignoretags [j] == TIFFtagID )
+                    return (TRUE) ;
+            }
+            TIFFignoretags [tagcount++] = TIFFtagID ;
+            return (TRUE) ;
+        }
+        break ;
+        
+      case TIS_EXTRACT:
+        for ( i = 0 ; i < tagcount ; ++i )
+        {
+            if ( TIFFignoretags [i] == TIFFtagID )
+                return (TRUE) ;
+        }
+        break;
+        
+      case TIS_EMPTY:
+        tagcount = 0 ;			/* Clear the list */
+        return (TRUE) ;
+        break;
+        
+      default:
+        break;
+    }
+    
+    return (FALSE);
 }

@@ -1,4 +1,4 @@
-/* $Header: /usr/cvsroot/gdal/frmts/gtiff/libtiff/tif_unix.c,v 1.2 1999/01/28 18:40:39 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_unix.c,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -29,9 +29,7 @@
  */
 #include "tiffiop.h"
 #include <sys/types.h>
-#ifdef __unix__
 #include <unistd.h>
-#endif
 #include <stdlib.h>
 
 static tsize_t
@@ -144,11 +142,7 @@ TIFFOpen(const char* name, const char* mode)
 #ifdef _AM29K
 	fd = open(name, m);
 #else
-#  if defined(WIN32) || defined(_WIN32)
-	fd = open(name, m|O_BINARY, 0666);
-#  else
 	fd = open(name, m, 0666);
-#  endif        
 #endif
 	if (fd < 0) {
 		TIFFError(module, "%s: Cannot open", name);

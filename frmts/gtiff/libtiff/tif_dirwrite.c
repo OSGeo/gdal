@@ -1,4 +1,4 @@
-/* $Header: /d1/sam/tiff/libtiff/RCS/tif_dirwrite.c,v 1.60 1997/08/29 21:45:49 sam Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirwrite.c,v 1.2 1999/08/18 12:38:55 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -474,6 +474,28 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 			return (0);
 		}
 		break;
+
+        /* added based on patch request from MARTIN.MCBRIDE.MM@agfa.co.uk,
+           correctness not verified (FW, 99/08) */
+        case TIFF_BYTE:
+        case TIFF_SBYTE:          
+                if (wc > 1) {
+                    char* cp;
+                    if (wc == (u_short) TIFF_VARIABLE) {
+                        TIFFGetField(tif, fip->field_tag, &wc, &cp);
+                        dir->tdir_count = wc;
+                    } else
+                        TIFFGetField(tif, fip->field_tag, &cp);
+                    if (!TIFFWriteByteArray(tif, dir, cp))
+                        return (0);
+                } else {
+                    char cv;
+                    TIFFGetField(tif, fip->field_tag, &cv);
+                    if (!TIFFWriteByteArray(tif, dir, &cv))
+                        return (0);
+                }
+                break;
+
 	case TIFF_UNDEFINED:
 		{ char* cp;
 		  if (wc == (u_short) TIFF_VARIABLE) {
@@ -488,6 +510,9 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 			return (0);
 		}
 		break;
+
+        case TIFF_NOTYPE:
+                break;
 	}
 	return (1);
 }

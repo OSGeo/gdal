@@ -1,4 +1,4 @@
-/* $Header: /d1/sam/tiff/libtiff/RCS/tif_dirinfo.c,v 1.43 1997/08/29 21:45:48 sam Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirinfo.c,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -216,6 +216,21 @@ static const TIFFFieldInfo tiffFieldInfo[] = {
     { TIFFTAG_TILEDEPTH,	 1, 1, TIFF_SHORT,	FIELD_TILEDEPTH,
       FALSE,	FALSE,	"TileDepth" },
 /* end SGI tags */
+#ifdef IPTC_SUPPORT
+#ifdef PHOTOSHOP_SUPPORT
+    { TIFFTAG_RICHTIFFIPTC, -1,-1, TIFF_LONG,   FIELD_RICHTIFFIPTC, 
+      FALSE,    TRUE,   "RichTIFFIPTC" },
+#else
+    { TIFFTAG_RICHTIFFIPTC, -1,-3, TIFF_UNDEFINED, FIELD_RICHTIFFIPTC, 
+      FALSE,    TRUE,   "RichTIFFIPTC" },
+#endif
+#endif
+#ifdef PHOTOSHOP_SUPPORT
+    { TIFFTAG_PHOTOSHOP,    -1,-3, TIFF_UNDEFINED, FIELD_PHOTOSHOP, 
+      FALSE,    TRUE,   "Photoshop" },
+    { TIFFTAG_PHOTOSHOP,    -1,-1, TIFF_BYTE,   FIELD_PHOTOSHOP, 
+      FALSE,    TRUE,   "Photoshop" },
+#endif
 #ifdef ICC_SUPPORT
     { TIFFTAG_ICCPROFILE,	-1,-3, TIFF_UNDEFINED,	FIELD_ICCPROFILE,
       FALSE,	TRUE,	"ICC Profile" },

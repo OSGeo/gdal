@@ -1,4 +1,4 @@
-/* $Header: /d1/sam/tiff/libtiff/RCS/tiffcomp.h,v 1.50 1997/08/29 21:45:39 sam Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffcomp.h,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler

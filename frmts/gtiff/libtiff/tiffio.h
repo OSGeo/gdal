@@ -1,4 +1,4 @@
-/* $Header: /d1/sam/tiff/libtiff/RCS/tiffio.h,v 1.97 1997/08/29 21:45:40 sam Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffio.h,v 1.3 1999/09/08 12:21:13 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -165,7 +165,6 @@ struct _TIFFRGBAImage {
 	uint32** PALmap;			/* palette image map */
 	TIFFYCbCrToRGB* ycbcr;			/* YCbCr conversion state */
 
-        /** notdef: new parameters **/
         int	row_offset;
         int     col_offset;
 };
@@ -259,6 +258,8 @@ extern	int TIFFUnlinkDirectory(TIFF*, tdir_t);
 extern	int TIFFSetField(TIFF*, ttag_t, ...);
 extern	int TIFFVSetField(TIFF*, ttag_t, va_list);
 extern	int TIFFWriteDirectory(TIFF *);
+extern	int TIFFReassignTagToIgnore(enum TIFFIgnoreSense, int);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern	void TIFFPrintDirectory(TIFF*, FILE*, long = 0);
 extern	int TIFFReadScanline(TIFF*, tdata_t, uint32, tsample_t = 0);

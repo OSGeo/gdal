@@ -1,4 +1,4 @@
-/* $Header: /d1/sam/tiff/libtiff/RCS/tif_lzw.c,v 1.73 1997/08/29 21:45:54 sam Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_lzw.c,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -612,7 +612,7 @@ LZWDecodeCompat(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 			tp = op;
 			do {
 				*--tp = codep->value;
-			} while (codep = codep->next);
+			} while( (codep = codep->next) != NULL);
 		} else
 			*op++ = code, occ--;
 	}

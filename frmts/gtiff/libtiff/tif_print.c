@@ -1,4 +1,4 @@
-/* $Header: /d1/sam/tiff/libtiff/RCS/tif_print.c,v 1.71 1997/08/29 21:45:58 sam Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_print.c,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -418,6 +418,16 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 	if (TIFFFieldSet(tif,FIELD_ICCPROFILE))
 		fprintf(fd, "  ICC Profile: <present>, %lu bytes\n",
 		    (u_long) td->td_profileLength);
+#endif
+#ifdef PHOTOSHOP_SUPPORT
+ 	if (TIFFFieldSet(tif,FIELD_PHOTOSHOP))
+ 		fprintf(fd, "  Photoshop Data: <present>, %lu bytes\n",
+ 		    (u_long) td->td_photoshopLength);
+#endif
+#ifdef IPTC_SUPPORT
+ 	if (TIFFFieldSet(tif,FIELD_RICHTIFFIPTC))
+ 		fprintf(fd, "  RichTIFFIPTC Data: <present>, %lu bytes\n",
+ 		    (u_long) td->td_richtiffiptcLength);
 #endif
 #if SUBIFD_SUPPORT
 	if (TIFFFieldSet(tif, FIELD_SUBIFD)) {

@@ -1,4 +1,4 @@
-/* $Header: /d1/sam/tiff/libtiff/RCS/tif_read.c,v 1.73 1997/08/29 21:45:59 sam Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_read.c,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -98,7 +98,7 @@ TIFFReadScanline(TIFF* tif, tdata_t buf, uint32 row, tsample_t sample)
 
 	if (!TIFFCheckRead(tif, 0))
 		return (-1);
-	if (e = TIFFSeek(tif, row, sample)) {
+	if( (e = TIFFSeek(tif, row, sample)) != 0) {
 		/*
 		 * Decompress desired row into user buffer.
 		 */

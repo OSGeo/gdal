@@ -1,4 +1,4 @@
-/* $Header: /d1/sam/tiff/libtiff/RCS/tif_dir.h,v 1.10 1997/08/29 21:45:37 sam Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.h,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -102,6 +102,14 @@ typedef	struct {
 	uint32	td_profileLength;
 	void	*td_profileData;
 #endif
+#ifdef PHOTOSHOP_SUPPORT
+	uint32	td_photoshopLength;
+	void	*td_photoshopData;
+#endif
+#ifdef IPTC_SUPPORT
+	uint32	td_richtiffiptcLength;
+	void	*td_richtiffiptcData;
+#endif
 } TIFFDirectory;
 
 /*
@@ -174,9 +182,11 @@ typedef	struct {
 #define	FIELD_SUBIFD			49
 #define	FIELD_NUMBEROFINKS		50
 #define FIELD_ICCPROFILE		51
-#define FIELD_STONITS			52
+#define FIELD_PHOTOSHOP			52
+#define FIELD_RICHTIFFIPTC		53
+#define FIELD_STONITS			54
 /* end of support for well-known tags; codec-private tags follow */
-#define	FIELD_CODEC			53	/* base of codec-private tags */
+#define	FIELD_CODEC			55	/* base of codec-private tags */
 /*
  * Pseudo-tags don't normally need field bits since they
  * are not written to an output file (by definition).

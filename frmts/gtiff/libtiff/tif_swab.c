@@ -1,4 +1,4 @@
-/* $Header: /d1/sam/tiff/libtiff/RCS/tif_swab.c,v 1.23 1997/08/29 21:46:00 sam Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_swab.c,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
