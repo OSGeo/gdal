@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2004/07/31 04:51:36  warmerda
+ * added shared file open support
+ *
  * Revision 1.31  2004/03/28 16:22:02  warmerda
  * const correctness changes in scan functions
  *
@@ -204,6 +207,23 @@ void          CPL_DLL CPLFinderClean();
 /*      Safe version of stat() that works properly on stuff like "C:".  */
 /* -------------------------------------------------------------------- */
 int CPL_DLL     CPLStat( const char *, VSIStatBuf * );
+
+/* -------------------------------------------------------------------- */
+/*      Reference counted file handle manager.  Makes sharing file      */
+/*      handles more practical.                                         */
+/* -------------------------------------------------------------------- */
+typedef struct {
+    FILE *fp;
+    int   nRefCount;
+    int   bLarge;
+    char  *pszFilename;
+    char  *pszAccess;
+} CPLSharedFileInfo;
+
+FILE CPL_DLL    *CPLOpenShared( const char *, const char *, int );
+void CPL_DLL     CPLCloseShared( FILE * );
+CPLSharedFileInfo CPL_DLL *CPLGetSharedList( int * );
+void CPL_DLL     CPLDumpSharedList( FILE * );
 
 /* -------------------------------------------------------------------- */
 /*      DMS to Dec to DMS conversion.                                   */
