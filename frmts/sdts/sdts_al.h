@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  1999/08/16 19:24:45  warmerda
+ * upped ATID limits, added polyreader method
+ *
  * Revision 1.10  1999/08/16 15:45:46  warmerda
  * added IsSecondary()
  *
@@ -236,7 +239,7 @@ class SDTSRawLine
     SDTSModId	oStartNode;		/* SNID */
     SDTSModId	oEndNode;		/* ENID */
 
-#define MAX_RAWLINE_ATID	3    
+#define MAX_RAWLINE_ATID	4    
     int		nAttributes;
     SDTSModId	aoATID[MAX_RAWLINE_ATID];  /* ATID (attribute) references */
 
@@ -315,7 +318,7 @@ class SDTSRawPoint
     double	dfY;
     double	dfZ;
 
-#define MAX_RAWPOINT_ATID	3    
+#define MAX_RAWPOINT_ATID	4
     int		nAttributes;
     SDTSModId	aoATID[MAX_RAWPOINT_ATID];  /* ATID (attribute) references */
     SDTSModId   oAreaId;		/* ARID */
@@ -359,7 +362,7 @@ class SDTSRawPolygon
 
     SDTSModId	oPolyId;
      
-#define MAX_RAWPOLYGON_ATID	3    
+#define MAX_RAWPOLYGON_ATID	4
     int		nAttributes;
     SDTSModId	aoATID[MAX_RAWPOLYGON_ATID];  /* ATID (attribute) references */
     SDTSModId   oAreaId;		      /* ARID */
@@ -429,6 +432,7 @@ class SDTSTransfer
 
     SDTSLineReader *GetLayerLineReader( int );
     SDTSPointReader *GetLayerPointReader( int );
+    SDTSPolygonReader *GetLayerPolygonReader( int );
     SDTSAttrReader *GetLayerAttrReader( int );
     SDTSRasterReader *GetLayerRasterReader( int );
     DDFModule	*GetLayerModuleReader( int );
