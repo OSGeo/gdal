@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/07/12 19:21:59  warmerda
+ * added support for _reading_ georef file
+ *
  * Revision 1.5  2000/06/05 17:24:06  warmerda
  * added real complex support
  *
@@ -48,6 +51,7 @@
 #include "rawdataset.h"
 #include "cpl_string.h"
 #include <ctype.h>
+#include "ogr_spatialref.h"
 
 static GDALDriver	*poHKVDriver = NULL;
 
@@ -69,7 +73,7 @@ class HKVRasterBand : public RawRasterBand
 
     int         nOverviews;
     RawRasterBand *papoOverviewBands;
-    
+
   public:
     		HKVRasterBand( HKVDataset *poDS, int nBand, FILE * fpRaw, 
                                unsigned int nImgOffset, int nPixelOffset,
@@ -91,6 +95,15 @@ class HKVDataset : public RawDataset
     int         *panOverviewLevel;
     FILE        **pafpOverviewBlob;
 
+    int         nGCPCount;
+    GDAL_GCP    *pasGCPList;
+
+    void        ProcessGeoref(const char *);
+    void        ProcessGeorefGCP(char **, const char *, double, double);
+
+    char        *pszProjection;
+    double      adfGeoTransform[6];
+
   protected:    
     virtual CPLErr IBuildOverviews( const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * );
@@ -100,6 +113,13 @@ class HKVDataset : public RawDataset
     
     char	**papszAttrib;
     
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
+
+    virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * );
+
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -147,6 +167,15 @@ HKVRasterBand::HKVRasterBand( HKVDataset *poDS, int nBand, FILE * fpRaw,
 HKVDataset::HKVDataset()
 {
     papszAttrib = NULL;
+    nGCPCount = 0;
+    pasGCPList = NULL;
+    pszProjection = CPLStrdup("");
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -160,6 +189,14 @@ HKVDataset::~HKVDataset()
     CSLDestroy( papszAttrib );
     if( fpBlob != NULL )
         VSIFClose( fpBlob );
+
+    if( nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+    }
+
+    CPLFree( pszProjection );
 }
 
 /************************************************************************/
@@ -174,6 +211,222 @@ CPLErr HKVDataset::IBuildOverviews( const char * pszResample,
 
 {
     return CE_None;
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *HKVDataset::GetProjectionRef()
+
+{
+    return( pszProjection );
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr HKVDataset::GetGeoTransform( double * padfTransform )
+
+{
+    memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 );
+    return( CE_None );
+}
+
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int HKVDataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *HKVDataset::GetGCPProjection()
+
+{
+    if( nGCPCount > 0 )
+        return "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",7030]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",6326]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"DMSH\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",4326]]";
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                               GetGCP()                               */
+/************************************************************************/
+
+const GDAL_GCP *HKVDataset::GetGCPs()
+
+{
+    return pasGCPList;
+}
+
+/************************************************************************/
+/*                          ProcessGeorefGCP()                          */
+/************************************************************************/
+
+void HKVDataset::ProcessGeorefGCP( char **papszGeoref, const char *pszBase,
+                                   double dfRasterX, double dfRasterY )
+
+{
+    char      szFieldName[128];
+    double    dfLat, dfLong;
+
+/* -------------------------------------------------------------------- */
+/*      Fetch the GCP from the string list.                             */
+/* -------------------------------------------------------------------- */
+    sprintf( szFieldName, "%s.latitude", pszBase );
+    if( CSLFetchNameValue(papszGeoref, szFieldName) == NULL )
+        return;
+    else
+        dfLat = atof(CSLFetchNameValue(papszGeoref, szFieldName));
+
+    sprintf( szFieldName, "%s.longitude", pszBase );
+    if( CSLFetchNameValue(papszGeoref, szFieldName) == NULL )
+        return;
+    else
+        dfLong = atof(CSLFetchNameValue(papszGeoref, szFieldName));
+
+/* -------------------------------------------------------------------- */
+/*      Add the gcp to the internal list.                               */
+/* -------------------------------------------------------------------- */
+    GDALInitGCPs( 1, pasGCPList + nGCPCount );
+            
+    CPLFree( pasGCPList[nGCPCount].pszId );
+
+    pasGCPList[nGCPCount].pszId = CPLStrdup( pszBase );
+                
+    pasGCPList[nGCPCount].dfGCPX = dfLong;
+    pasGCPList[nGCPCount].dfGCPY = dfLat;
+    pasGCPList[nGCPCount].dfGCPZ = 0.0;
+
+    pasGCPList[nGCPCount].dfGCPPixel = dfRasterX;
+    pasGCPList[nGCPCount].dfGCPLine = dfRasterY;
+
+    nGCPCount++;
+}
+
+/************************************************************************/
+/*                           ProcessGeoref()                            */
+/************************************************************************/
+
+void HKVDataset::ProcessGeoref( const char * pszFilename )
+
+{
+    char  **papszGeoref;
+    int   i;
+
+/* -------------------------------------------------------------------- */
+/*      Load the georef file, and boil white space away from around     */
+/*      the equal sign.                                                 */
+/* -------------------------------------------------------------------- */
+    papszGeoref = CSLLoad( pszFilename );
+    if( papszGeoref == NULL )
+        return;
+
+    for( i = 0; papszGeoref[i] != NULL; i++ )
+    {
+        int       bAfterEqual = FALSE;
+        int       iSrc, iDst;
+        char     *pszLine = papszGeoref[i];
+
+        for( iSrc=0, iDst=0; pszLine[iSrc] != '\0'; iSrc++ )
+        {
+            if( bAfterEqual || pszLine[iSrc] != ' ' )
+            {
+                pszLine[iDst++] = pszLine[iSrc];
+            }
+
+            if( iDst > 0 && pszLine[iDst-1] == '=' )
+                bAfterEqual = FALSE;
+        }
+        pszLine[iDst] = '\0';
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to get GCPs.                                                */
+/* -------------------------------------------------------------------- */
+    nGCPCount = 0;
+    pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),5);
+
+    ProcessGeorefGCP( papszGeoref, "top_left", 
+                      0, 0 );
+    ProcessGeorefGCP( papszGeoref, "top_right", 
+                      GetRasterXSize(), 0 );
+    ProcessGeorefGCP( papszGeoref, "bottom_left", 
+                      0, GetRasterYSize() );
+    ProcessGeorefGCP( papszGeoref, "bottom_right", 
+                      GetRasterXSize(), GetRasterYSize() );
+    ProcessGeorefGCP( papszGeoref, "centre", 
+                      GetRasterXSize()/2.0, GetRasterYSize()/2.0 );
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a recognised projection?                             */
+/* -------------------------------------------------------------------- */
+    const char *pszProjName, *pszOriginLong;
+
+    pszProjName = CSLFetchNameValue(papszGeoref, 
+                                    "projection.name");
+    pszOriginLong = CSLFetchNameValue(papszGeoref, 
+                                      "projection.origin_longitude");
+
+    if( pszProjName != NULL && EQUAL(pszProjName,"utm") 
+        && pszOriginLong != NULL && nGCPCount == 5 )
+    {
+        int nZone = (int)((atof(pszOriginLong)+184.5) / 6.0);
+        OGRSpatialReference oUTM;
+        OGRSpatialReference oLL;
+        OGRCoordinateTransformation *poTransform = NULL;
+        double dfUtmULX, dfUtmULY, dfUtmLRX, dfUtmLRY;
+        int    bSuccess = TRUE;
+
+        oUTM.SetUTM( nZone );
+        oUTM.SetWellKnownGeogCS( "WGS84" );
+
+        oLL.SetWellKnownGeogCS( "WGS84" );
+        
+        poTransform = OGRCreateCoordinateTransformation( &oLL, &oUTM );
+        if( poTransform == NULL )
+            bSuccess = FALSE;
+
+        dfUtmULX = pasGCPList[0].dfGCPX;
+        dfUtmULY = pasGCPList[0].dfGCPY;
+        if( bSuccess && !poTransform->Transform( 1, &dfUtmULX, &dfUtmULY ) )
+            bSuccess = FALSE;
+
+        dfUtmLRX = pasGCPList[3].dfGCPX;
+        dfUtmLRY = pasGCPList[3].dfGCPY;
+        if( bSuccess && !poTransform->Transform( 1, &dfUtmLRX, &dfUtmLRY ) )
+            bSuccess = FALSE;
+
+        if( bSuccess )
+        {
+            CPLFree( pszProjection );
+            pszProjection = NULL;
+            oUTM.exportToWkt( &pszProjection );
+            
+            adfGeoTransform[0] = dfUtmULX;
+            adfGeoTransform[1] = (dfUtmLRX - dfUtmULX) / GetRasterXSize();
+            adfGeoTransform[2] = 0.0;
+            adfGeoTransform[3] = dfUtmULY;
+            adfGeoTransform[4] = 0.0;
+            adfGeoTransform[5] = (dfUtmLRY - dfUtmULY) / GetRasterYSize();
+        }
+
+        if( poTransform != NULL )
+            delete poTransform;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    CSLDestroy( papszGeoref );
 }
 
 /************************************************************************/
@@ -376,6 +629,13 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
                                eType, bNative ) );
         nOffset += GDALGetDataTypeSize( eType ) / 8;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Process the georef file if there is one.                        */
+/* -------------------------------------------------------------------- */
+    pszFilename = CPLFormFilename(poOpenInfo->pszFilename, "georef", NULL );
+    if( VSIStat(pszFilename,&sStat) == 0 )
+        poDS->ProcessGeoref(pszFilename);
 
     return( poDS );
 }
