@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/05/18 11:05:07  dron
+ * Fixed problem in IRasterIO().
+ *
  * Revision 1.17  2003/05/02 16:00:17  dron
  * Implemented RawRasterBand::IRasterIO() method. Introduced `dirty' flag.
  *
@@ -471,16 +474,16 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  int nPixelSpace, int nLineSpace )
 
 {
+/* XXX: enable following call to switch back to the default block-oriented I/O
+ * logic with caching instead of RawRasterBand::IRasterIO() implementation.
+ * Probably this should be controlled by user and we need introduce additional
+ * methods to switch between two implementations. */
+/*    return GDALRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                      pData, nBufXSize, nBufYSize,eBufType,
+                                      nPixelSpace, nLineSpace ); */
+
     int         nBandDataSize = GDALGetDataTypeSize(eDataType) / 8;
     int         nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
-
-#ifdef DEBUG
-    CPLDebug( "RawRaster", 
-              "IRasterIO(nXOff=%d, nYOff=%d, nXSize=%d, nYSize=%d -> "
-              "nBufXSize=%d, nBufYSize=%d, nPixelSpace=%d, nLineSpace=%d)", 
-              nXOff, nYOff, nXSize, nYSize,
-              nBufXSize, nBufYSize, nPixelSpace, nLineSpace );
-#endif
 
 /* ==================================================================== */
 /*   Read data.                                                         */
@@ -527,11 +530,11 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
             pabyData = (GByte *) CPLMalloc( nBytesToRead );
 
-            iLine = 0;
-            while ( iLine < nYSize )
+            for ( iLine = 0; iLine < nBufYSize; iLine++ )
             {
                 if ( AccessBlock( nImgOffset
-                                  + ((vsi_l_offset)nYOff + iLine) * nLineOffset
+                                  + ((vsi_l_offset)nYOff
+                                  + (int)(iLine * dfSrcYInc)) * nLineOffset
                                   + nXOff * nPixelOffset,
                                   nBytesToRead, pabyData ) != CE_None )
                 {
@@ -539,7 +542,8 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                               "Failed to read %d bytes at %d.",
                               nBytesToRead,
                               nImgOffset
-                              + ((vsi_l_offset)nYOff + iLine) * nLineOffset
+                              + ((vsi_l_offset)nYOff
+                              + (int)(iLine * dfSrcYInc)) * nLineOffset
                               + nXOff * nPixelOffset );
                 }
 
@@ -552,7 +556,6 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     GDALCopyWords( pabyData, eDataType, nPixelOffset,
                                    (GByte *)pData + iLine * nLineSpace,
                                    eBufType, nPixelSpace, nXSize );
-                    iLine++;
                 }
                 else
                 {
@@ -560,15 +563,13 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
                     for ( iPixel = 0; iPixel < nBufXSize; iPixel++ )
                     {
-                        GDALCopyWords( pabyData+
-                                       (iLine*nXSize+(int)(iPixel*dfSrcXInc))*nPixelOffset,
+                        GDALCopyWords( pabyData +
+                                       (int)(iPixel * dfSrcXInc) * nPixelOffset,
                                        eDataType, 0,
-                                       (GByte *)pData+iLine*nLineSpace
-                                        +(iLine*nBufXSize+iPixel)*nBufDataSize,
+                                       (GByte *)pData + iLine * nLineSpace +
+                                       iPixel * nBufDataSize,
                                        eBufType, nPixelSpace, 1 );
                     }
-
-                    iLine = (int)((double)iLine + dfSrcYInc);
                 }
             }
 
@@ -678,11 +679,10 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
             pabyData = (GByte *) CPLMalloc( nBytesToWrite );
 
-            iLine = 0;
-            while ( iLine < nYSize )
+            for ( iLine = 0; iLine < nBufYSize; iLine++ )
             {
                 nBlockOff = nImgOffset
-                    + ((vsi_l_offset)nYOff + iLine) * nLineOffset
+                    + ((vsi_l_offset)nYOff + (int)(iLine*dfSrcYInc))*nLineOffset
                     + nXOff * nPixelOffset;
 
 /* -------------------------------------------------------------------- */
@@ -701,7 +701,6 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     GDALCopyWords( (GByte *)pData + iLine * nLineSpace,
                                    eBufType, nPixelSpace,
                                    pabyData, eDataType, nPixelOffset, nXSize );
-                    iLine++;
                 }
                 else
                 {
@@ -709,15 +708,13 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
                     for ( iPixel = 0; iPixel < nBufXSize; iPixel++ )
                     {
-                        GDALCopyWords( (GByte *)pData+iLine*nLineSpace
-                                        +(iLine*nBufXSize+iPixel)*nBufDataSize,
+                        GDALCopyWords( (GByte *)pData+iLine*nLineSpace +
+                                       iPixel * nBufDataSize,
                                        eBufType, nPixelSpace,
-                                       pabyData+
-                                       (iLine*nXSize+(int)(iPixel*dfSrcXInc))*nPixelOffset,
+                                       pabyData +
+                                       (int)(iPixel * dfSrcXInc) * nPixelOffset,
                                        eDataType, 0, 1 );
                     }
-
-                    iLine = (int)((double)iLine + dfSrcYInc);
                 }
 
 /* -------------------------------------------------------------------- */
