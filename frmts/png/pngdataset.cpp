@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.21  2003/01/25 22:28:18  warmerda
+ * improved data type error message a bit
+ *
  * Revision 1.20  2003/01/25 22:26:29  warmerda
  * fixed a read, and a write bug with 16bit png files
  *
@@ -786,7 +789,7 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "PNG driver doesn't support data type %s. "
-                  "Only eight and sixteen bit bands supported.\n", 
+                  "Only eight bit (Byte) and sixteen bit (UInt16) bands supported.\n", 
                   GDALGetDataTypeName( 
                       poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
 
