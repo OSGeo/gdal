@@ -43,13 +43,13 @@ or <a href="http://pobox.com/~warmerdam/projects/opengis/wkt_prop.doc">doc</a> f
 
 The best way to get OGR <a href="ogr_utilities.html">utilities</a>
 in ready-to-use form is to download the latest 
-<a href="ftp://www.gdal.org/dl/openev">OpenEV_FW</a> kit
+<a href="http://fwtools.maptools.org/">FWTools</a> kit
 for your platform.  While large, these include builds of the OGR utilities
 with lots of optional components built-in.  Once downloaded follow the 
 included instructions to setup your path and other environment variables
 correctly, and then you can use the various OGR utilities from the command 
 line.  The kits also include <a href="http://openev.sf.net/">OpenEV</a>, 
-a viewer that will display OGR vector files.<p>
+a viewer that will display OGR supported vector files.<p>
 
 <h3>Source</h3>
 
