@@ -4575,9 +4575,7 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
 const char *TABText::GetLabelStyleString()
 {
     const char *pszStyle = NULL;
-    int    nOGRStyle  = 1;
     char szPattern[20];
-    int nAngle = 0;
     int nJustification = 1;
     
     szPattern[0] = '\0';
