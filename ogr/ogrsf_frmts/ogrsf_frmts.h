@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2004/07/10 05:03:24  warmerda
+ * added SQLite
+ *
  * Revision 1.42  2004/02/11 18:03:15  warmerda
  * added RegisterOGRDODS()
  *
@@ -401,6 +404,7 @@ void CPL_DLL RegisterOGRREC();
 void CPL_DLL RegisterOGRMEM();
 void CPL_DLL RegisterOGRVRT();
 void CPL_DLL RegisterOGRDODS();
+void CPL_DLL RegisterOGRSQLite();
 
 CPL_C_END
 

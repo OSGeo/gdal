@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/07/10 05:03:42  warmerda
+ * added SQLite
+ *
  * Revision 1.18  2004/01/30 02:33:29  warmerda
  * added OGRDODS
  *
@@ -107,6 +110,9 @@ void OGRRegisterAll()
     RegisterOGRREC();
     RegisterOGRMEM();
     RegisterOGRGML();
+#ifdef SQLITE_ENABLED
+    RegisterOGRSQLite();
+#endif
 #ifdef DODS_ENABLED
     RegisterOGRDODS();
 #endif
