@@ -5,8 +5,8 @@ EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_sdts -DFRMT_raw -DFRMT_gxf -DFRMT_ceos2 -DFRMT_png \
 		-DFRMT_jpeg -DFRMT_dted -DFRMT_mem -DFRMT_jdem -DFRMT_gif \
 		-DFRMT_envisat -DFRMT_aaigrid -DFRMT_usgsdem -DFRMT_l1b \
-		-DFRMT_fit -DFRMT_vrt -DFRMT_xpm -DFRMT_bsb -DFRMT_jpeg2000 \
-		$(ECWDEF) $(OGDIDEF) $(ZLIBDEF)
+		-DFRMT_fit -DFRMT_vrt -DFRMT_xpm -DFRMT_bsb \
+		$(JPEG2000DEF) $(ECWDEF) $(OGDIDEF) $(ZLIBDEF)
 
 DIRLIST =	$(EXTRAFLAGS:-DFRMT_=)
 
@@ -16,6 +16,10 @@ DIRLIST =	$(EXTRAFLAGS:-DFRMT_=)
 OGDIDEF	=	-DFRMT_ogdi
 !ELSE
 ZLIBDEF =	-DFRMT_zlib
+!ENDIF
+
+!IFDEF JASPER_DIR
+JPEG2000DEF	=	-DFRMT_jpeg2000
 !ENDIF
 
 !IFDEF ECWDIR
