@@ -48,12 +48,12 @@ OPTFLAGS=	/nologo /Zi /Fd$(GDAL_ROOT)\gdal.pdb
 # Uncommment if you have Frank's modified Kakadu build.
 #KAKDIR =	D:\warmerda\jp2\kakadu
 
-# Uncomment the following and update to enable FME support.
-#FME_DIR =	d:\Software\fme
-
-# Uncomment the following and update to enable FME support.
+# Uncomment the following and update to enable NCSA HDF Release 4 support.
 #HDF4_DIR =	D:\warmerda\HDF41r5
 #HDF4_LIB =	/LIBPATH:$(HDF4_DIR)\lib
+
+# Uncomment the following and update to enable FME support.
+#FME_DIR =	d:\Software\fme
 
 ########### END OF STUFF THAT NORMALLY NEEDS TO BE UPDATED ##################
 
