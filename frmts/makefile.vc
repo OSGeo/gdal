@@ -35,4 +35,5 @@ o\gdalallregister.obj:	gdalallregister.cpp
 clean:
 	-del o\*.obj *.obj
 	for %d in ( $(DIRLIST) ) do ..\submake.bat %d clean
+	..\submake.bat iso8211 clean
 
