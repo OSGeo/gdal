@@ -1,4 +1,5 @@
 #include "gmlreader.h"
+#include "ogr_gml.h"
 
 
 /************************************************************************/
@@ -7,26 +8,73 @@
 static void Usage()
 
 {
-    printf( "Usage: gmlview [gmlfile]\n" );
+    printf( "Usage: gmlview [-nodump] [-si schemafile] gmlfile [-so schemafile]\n" );
     exit( 1 );
+}
+
+/************************************************************************/
+/*                              DumpFile()                              */
+/************************************************************************/
+
+static void DumpFile( IGMLReader *poReader, int bNoDump )
+
+{
+    GMLFeature  *poFeature;
+    
+    while( (poFeature = poReader->NextFeature()) != NULL )
+    {
+        OGRGeometry *poGeometry;
+
+        if( !bNoDump )
+            poFeature->Dump( stdout );
+
+        if( poFeature->GetGeometry() != NULL )
+        {
+            poGeometry = GML2OGRGeometry( poFeature->GetGeometry() );
+            if( poGeometry != NULL )
+            {
+                if( !bNoDump )
+                    poGeometry->dumpReadable( stdout );
+                delete poGeometry;
+            }
+        }
+        
+        delete poFeature;
+    }
 }
 
 int main( int nArgc, char **papszArgv )
 
 {
     IGMLReader	*poReader;
-    GMLFeature  *poFeature;
+    int         bNoDump = FALSE;
 
     if( nArgc < 2 )
         Usage();
 
     poReader = CreateGMLReader();
-    poReader->SetSourceFile( papszArgv[1] );
 
-    while( (poFeature = poReader->NextFeature()) != NULL )
+    for( int iArg = 1; iArg < nArgc; iArg++ )
     {
-        poFeature->Dump( stdout );
-        delete poFeature;
+        if( EQUAL(papszArgv[iArg],"-si") && iArg < nArgc-1 )
+        {
+            poReader->LoadClasses( papszArgv[iArg+1] );
+            iArg++;
+        }
+        else if( EQUAL(papszArgv[iArg],"-so") && iArg < nArgc-1 )
+        {
+            poReader->SaveClasses( papszArgv[iArg+1] );
+            iArg++;
+        }
+        else if( EQUAL(papszArgv[iArg],"-nodump") )
+            bNoDump = TRUE;
+        else if( papszArgv[iArg][0] != '-' )
+        {
+            poReader->SetSourceFile( papszArgv[iArg] );
+            DumpFile( poReader, bNoDump );
+        }
+        else
+            Usage();
     }
 
     delete poReader;
