@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.36  2005/02/24 15:12:04  fwarmerdam
+ * Ensure IOStream and fpVSIL are properly cleaned up
+ *
  * Revision 1.35  2005/02/10 04:49:53  fwarmerdam
  * added SetColorInterpretation
  *
@@ -193,6 +196,8 @@ class CPL_DLL ECWDataset : public GDALDataset
                                 GByte *, int, int, GDALDataType,
                                 int, int *, int, int, int );
     CPLErr      LoadNextLine();
+
+    VSIIOStream *poIOStream;
 
   public:
     		ECWDataset();
@@ -583,6 +588,7 @@ ECWDataset::ECWDataset()
     bWinActive = FALSE;
     panWinBandList = NULL;
     eRasterDataType = GDT_Byte;
+    poIOStream = NULL;
 }
 
 /************************************************************************/
@@ -599,9 +605,10 @@ ECWDataset::~ECWDataset()
         delete poFileView;
     }
 
+    if( poIOStream != NULL )
+        delete poIOStream;
     if( fpVSIL != NULL )
-        delete fpVSIL;
-
+        VSIFCloseL( fpVSIL );
 }
 
 /************************************************************************/
@@ -1025,6 +1032,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
     CNCSError        oErr;
     int              i;
     FILE            *fpVSIL = NULL;
+    VSIIOStream *poIOStream = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      This will disable automatic conversion of YCbCr to RGB by       */
@@ -1061,7 +1069,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
               return NULL;
           }
 
-          FILE *fpVSIL = VSIFOpenL( real_filename, "rb" );
+          fpVSIL = VSIFOpenL( real_filename, "rb" );
           if( fpVSIL == NULL )
           {
               CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -1069,7 +1077,6 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
               return NULL;
           }
 
-          VSIIOStream *poIOStream;
           poIOStream = new VSIIOStream();
           poIOStream->Access( fpVSIL, FALSE, real_filename,
                               subfile_offset, subfile_size );
@@ -1126,6 +1133,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->poFileView = poFileView;
     poDS->fpVSIL = fpVSIL;
+    poDS->poIOStream = poIOStream;
 
 /* -------------------------------------------------------------------- */
 /*      Fetch general file information.                                 */
