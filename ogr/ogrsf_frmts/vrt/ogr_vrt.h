@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/11/07 21:55:12  warmerda
+ * complete fid support, relative dsname, fixes
+ *
  * Revision 1.1  2003/11/07 17:50:09  warmerda
  * New
  *
@@ -59,6 +62,7 @@ class OGRVRTLayer : public OGRLayer
 
     OGRDataSource       *poSrcDS;
     OGRLayer            *poSrcLayer;
+    int                 bNeedReset;
 
     // Layer spatial reference system, and srid.
     OGRSpatialReference *poSRS;
@@ -87,7 +91,8 @@ class OGRVRTLayer : public OGRLayer
                         OGRVRTLayer();
     virtual             ~OGRVRTLayer();
 
-    virtual int         Initialize( CPLXMLNode *psLTree );
+    virtual int         Initialize( CPLXMLNode *psLTree, 
+                                    const char *pszVRTDirectory );
 
     virtual void        ResetReading();
     virtual OGRFeature *GetNextFeature();

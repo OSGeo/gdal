@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/11/07 21:55:12  warmerda
+ * complete fid support, relative dsname, fixes
+ *
  * Revision 1.1  2003/11/07 17:50:36  warmerda
  * New
  *
@@ -111,6 +114,7 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
         VSIFSeek( fp, 0, SEEK_SET );
         
         pszXML = (char *) CPLMalloc(nLen+1);
+        pszXML[nLen] = '\0';
         if( ((int) VSIFRead( pszXML, 1, nLen, fp )) != nLen )
         {
             CPLFree( pszXML );
