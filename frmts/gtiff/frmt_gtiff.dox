@@ -1,0 +1,54 @@
+/*!
+\page gtiff
+
+<title>GTiff -- GeoTIFF File Format</title>
+
+Most forms of TIFF and GeoTIFF files are supported by GDAL for reading, and
+somewhat less varieties can be written.
+
+Currently band types of Byte, UInt16, Int16, and Float32 are supported for
+reading.  The compression formats listed below should be supported for
+reading as well. 
+
+Most GeoTIFF projections should be supported, with the caveat that in order
+to translate uncommon Projected, and Geographic coordinate systems into 
+OGC WKT it is necessary to have the EPSG .csv files avalable.  They must
+be found at the location pointed to by the GEOTIFF_CSV environment variable.
+<p>
+
+<h2>Creation Issues</h2>
+
+GeoTIFF files can be created with image band types of Byte, UInt16, Int16, 
+and Float32.  Other types are not currently supported for creation.  Created
+files may have any number of bands.  Files with exactly 3 bands will be
+given a photometric interpretation of RGB, while all other combinations will
+have a photometric interpretation of Min Is White.  It is not currently 
+possible to create TIFF files with pseudo-color tables with GDAL.<p>
+
+Creation Options:<p>
+
+<ul>
+
+<li> <b>TILED=YES</b>: By default stripped TIFF files are created.  This
+option can be used to force creation of tiled TIFF files.<p>
+
+<li> <b>BLOCKXSIZE=n</b>: Sets tile width, defaults to 256.<p>
+
+<li> <b>BLOCKYSIZE=n</b>: Set tile or strip height.  Tile height defaults to
+256, strip height defaults to a value such that one strip is 8K or less. <p>
+
+<li> <b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/NONE]</b>: Set the compression
+to use.  JPEG should only be used with Byte data.  LZW is normally 
+unavailable.  None is the default.<p>
+
+</ul>
+
+See Also:<p>
+
+<ul>
+<li> <a href="http://www.remotesensing.org/geotiff/geotiff.html">GeoTIFF Information Page</a>
+<li> <a href="http://www.libtiff.org/">libtiff Page</a>
+
+</ul>
+
+*/
