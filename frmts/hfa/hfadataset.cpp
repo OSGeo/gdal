@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.50  2005/02/17 22:21:27  fwarmerdam
+ * avoid memory leak of bin values
+ *
  * Revision 1.49  2005/01/29 00:58:38  fwarmerdam
  * Fixed to use 0 for inv flattening of spherical ellipsoid.  Bug 751.
  *
@@ -775,6 +778,7 @@ void HFARasterBand::ReadAuxMetadata()
             strcat( pszBinValues, "|" );
         }
         SetMetadataItem( "STATISTICS_HISTOBINVALUES", pszBinValues );
+        CPLFree( pszBinValues );
     }
 }
 
