@@ -680,16 +680,13 @@ dnl Not found... again, with -lsz.
 
   LIBS="-L$HDF_LIB_DIR $HDF_LIB_NAME $ORIG_LIBS"
 
-  if test -r $with_hdf4/hdf/hdf.h ; then
+  if test -r "$with_hdf4/hdf/hdf.h" ; then
     HDF4_INCLUDE="-I$with_hdf4/hdf"
-  fi
-  if test -r $with_hdf4/include/hdf/hdf.h ; then
+  elif test -r "$with_hdf4/include/hdf/hdf.h" ; then
     HDF4_INCLUDE="-I$with_hdf4/include/hdf"
-  fi
-  if test -r $with_hdf4/include/hdf.h ; then
+  elif test -r "$with_hdf4/include/hdf.h" ; then
     HDF4_INCLUDE="-I$with_hdf4/include"
-  fi
-  if test -r $with_hdf4/hdf.h ; then
+  elif test -r "$with_hdf4/hdf.h" ; then
     HDF4_INCLUDE="-I$wHDF4_INCLUDEith_hdf4"
   fi
 
@@ -1136,28 +1133,67 @@ dnl This is used by the GNUmakefile in frmts/dods (via GDALmake.opt)
 AC_SUBST(DODS_INC)
 
 dnl ---------------------------------------------------------------------------
-dnl PROJ.4 related tweaks.
+dnl PROJ.4 related stuff.
 dnl ---------------------------------------------------------------------------
 
 AC_MSG_CHECKING([how to link PROJ.4 library])
 
-AC_ARG_WITH(static_proj4,[  --with-static-proj4=ARG Compile with PROJ.4 statically (ARG=yes or no)],,)
+AC_ARG_WITH(static_proj4,[  --with-static-proj4=ARG Compile with PROJ.4 statically (ARG=no or path)],,)
 
-if test "x$with_static_proj4" = "xyes"; then
+if test "x$with_static_proj4" = "xno" -o "x$with_static_proj4" = "x"; then
 
-  PROJ_STATIC=yes
-
-  AC_MSG_RESULT([link statically.])
+  PROJ_STATIC=no
+  AC_MSG_RESULT([link dynamically.])
 
 else
 
-  PROJ_STATIC=no
+  PROJ_STATIC=yes
+  AC_MSG_RESULT([link statically.])
 
-  AC_MSG_RESULT([link dynamically.])
+  ORIG_LIBS="$LIBS"
+  PROJ_LIB="-lproj"
 
+  if test "x$with_static_proj4" = "xyes" ; then
+    LIBS="$PROJ_LIB $ORIG_LIBS"
+    AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
+  else
+  
+    LIBS="-L$with_static_proj4/src $PROJ_LIB $ORIG_LIBS"
+    AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
+
+    if test "PROJ_STATIC" = "no"; then
+      LIBS="-L$with_static_proj4/lib $PROJ_LIB $ORIG_LIBS"
+    fi
+    AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
+
+    if test "PROJ_STATIC" = "no"; then
+      LIBS="-L$with_static_proj4 $PROJ_LIB $ORIG_LIBS"
+    fi
+    AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
+
+    if test "PROJ_STATIC" = "no"; then
+      LIBS="$PROJ_LIB $ORIG_LIBS"
+    fi
+    AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
+
+  fi
+
+  if test "PROJ_STATIC" = "no"; then
+    LIBS="$ORIG_LIBS"
+  fi
+
+  if test -r "$with_static_proj4/src/proj_api.h" ; then
+    PROJ_INCLUDE="-I$with_static_proj4/src"
+  elif test -r "$with_static_proj4/include/proj_api.h" ; then
+    PROJ_INCLUDE="-I$with_static_proj4/include"
+  elif test -r "$with_static_proj4/proj_api.h" ; then
+    PROJ_INCLUDE="-I$with_static_proj4"
+  fi
+  
 fi
 
 AC_SUBST(PROJ_STATIC)
+AC_SUBST(PROJ_INCLUDE)
 
 dnl ---------------------------------------------------------------------------
 dnl Get/override version.
