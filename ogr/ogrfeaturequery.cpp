@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/04/03 21:05:39  fwarmerdam
+ * Fixed IN operator for Reals.
+ *
  * Revision 1.8  2004/02/23 21:48:19  warmerda
  * Fixed bug with support for IS NULL and IS NOT NULL on list fields.
  * Added preliminary (untested) support for GetUsedFields().
@@ -255,7 +258,7 @@ static int OGRFeatureQueryEvaluator( swq_field_op *op, OGRFeature *poFeature )
               pszSrc = op->string_value;
               while( *pszSrc != '\0' )
               {
-                  if( atof(pszSrc) == psField->Integer )
+                  if( atof(pszSrc) == psField->Real )
                       return TRUE;
                   pszSrc += strlen(pszSrc) + 1;
               }
