@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/02/08 16:18:41  warmerda
+ * ensure that catalog logic knows about ENC_ROOT directories
+ *
  * Revision 1.5  2001/12/12 17:23:26  warmerda
  * Use CPLStat() instead of VSIStat().
  *
@@ -136,29 +139,70 @@ char **S57FileCollector( const char *pszDataset )
         return papszRetList;
     }
 
+
+/* -------------------------------------------------------------------- */
+/*      We presumably have a catalog.  It contains paths to files       */
+/*      that generally lack the ENC_ROOT component.  Try to find the    */
+/*      correct name for the ENC_ROOT directory if available and        */
+/*      build a base path for our purposes.                             */
+/* -------------------------------------------------------------------- */
+    char        *pszCatDir = CPLStrdup( CPLGetPath( pszDataset ) );
+    char        *pszRootDir = NULL;
+    
+    if( CPLStat( CPLFormFilename(pszCatDir,"ENC_ROOT",NULL), &sStatBuf ) == 0
+        && VSI_ISDIR(sStatBuf.st_mode) )
+    {
+        pszRootDir = CPLStrdup(CPLFormFilename( pszCatDir, "ENC_ROOT", NULL ));
+    }
+    else if( CPLStat( CPLFormFilename( pszCatDir, "enc_root", NULL ), 
+                      &sStatBuf ) == 0 && VSI_ISDIR(sStatBuf.st_mode) )
+    {
+        pszRootDir = CPLStrdup(CPLFormFilename( pszCatDir, "enc_root", NULL ));
+    }
+
+    if( pszRootDir )
+        CPLDebug( "S57", "Found root directory to be %s.", 
+                  pszRootDir );
+
 /* -------------------------------------------------------------------- */
 /*      We have a catalog.  Scan it for data files, those with an       */
 /*      IMPL of BIN.  Shouldn't there be a better way of testing        */
 /*      whether a file is a data file or another catalog file?          */
 /* -------------------------------------------------------------------- */
-    char        *pszDir = CPLStrdup( CPLGetPath( pszDataset ) );
-    
     for( ; poRecord != NULL; poRecord = oModule.ReadRecord() )
     {
         if( poRecord->FindField( "CATD" ) != NULL
             && EQUAL(poRecord->GetStringSubfield("CATD",0,"IMPL",0),"BIN") )
         {
-            const char  *pszFile;
+            const char  *pszFile, *pszWholePath;
 
             pszFile = poRecord->GetStringSubfield("CATD",0,"FILE",0);
-            
-            papszRetList =
-                CSLAddString( papszRetList, 
-                              CPLFormFilename( pszDir, pszFile, NULL ) );
+
+            // Often there is an extra ENC_ROOT in the path, try finding 
+            // this file. 
+
+            pszWholePath = CPLFormFilename( pszCatDir, pszFile, NULL );
+            if( CPLStat( pszWholePath, &sStatBuf ) != 0
+                && pszRootDir != NULL )
+            {
+                pszWholePath = CPLFormFilename( pszRootDir, pszFile, NULL );
+            }
+                
+            if( CPLStat( pszWholePath, &sStatBuf ) != 0 )
+            {
+                CPLError( CE_Warning, CPLE_OpenFailed,
+                          "Can't find file %s from catalog %s.", 
+                          pszFile, pszDataset );
+                continue;
+            }
+
+            papszRetList = CSLAddString( papszRetList, pszWholePath );
+            CPLDebug( "S57", "Got path %s from CATALOG.", pszWholePath );
         }
     }
 
-    CPLFree( pszDir );
+    CPLFree( pszCatDir );
+    CPLFree( pszRootDir );
 
     return papszRetList;
 }
