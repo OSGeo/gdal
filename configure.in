@@ -54,20 +54,8 @@ AC_UNIX_STDIO_64
 
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
-dnl Check for BSDTYPES. winsock.h defines those types, so avoid redefinition
-dnl in Cygwin and MinGW environments. We need those types for internal
-dnl version of the libtiff library.
-AC_CHECK_TYPES([u_char, u_short, u_int, u_long],,,
-[
-#if HAVE_SYS_TYPES_H
-# include <sys/types.h>
-#endif
-#if HAVE_WINSOCK_H
-#include <winsock.h>
-#endif
-])
 dnl Some compilers (IBM VisualAge) has these types defined, so check it here.
-dnl These type also used in internal libtiff.
+dnl These types are used in internal libtiff.
 AC_CHECK_TYPES([int8, int16, int32],,,
 [
 #if HAVE_INTTYPES_H
