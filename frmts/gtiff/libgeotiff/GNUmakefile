@@ -19,7 +19,7 @@ ALL_C_FLAGS	=	-I../libtiff $(CFLAGS)
 default:	libgeotiff.a
 
 clean:
-	rm -f *.o
+	rm -f *.o *.a
 
 %.o:	%.c
 	$(CC) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/port $*.c -o $*.o

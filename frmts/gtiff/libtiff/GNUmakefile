@@ -43,7 +43,7 @@ ALL_C_FLAGS	=	$(CFLAGS)
 default:	libtiff.a
 
 clean:
-	rm -f *.o
+	rm -f *.o *.a
 
 %.o:	%.c
 	$(CC) -c $(CFLAGS) -I$(GDAL_ROOT)/port $*.c -o $*.o
