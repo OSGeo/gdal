@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/04/20 14:05:16  warmerda
+ * added support for provided min/max
+ *
  * Revision 1.5  2000/02/28 16:32:19  warmerda
  * use SetBand method
  *
@@ -91,6 +94,8 @@ class AIGRasterBand : public GDALRasterBand
                    AIGRasterBand( AIGDataset *, int );
 
     virtual CPLErr IReadBlock( int, int, void * );
+    virtual double GetMinimum( int *pbSuccess );
+    virtual double GetMaximum( int *pbSuccess );
 };
 
 static GDALDriver	*poAIGDriver = NULL;
@@ -165,6 +170,36 @@ CPLErr AIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return AIGReadFloatTile( poODS->psInfo, nBlockXOff, nBlockYOff,
                                  (float *) pImage );
     }
+}
+
+/************************************************************************/
+/*                             GetMinimum()                             */
+/************************************************************************/
+
+double AIGRasterBand::GetMinimum( int *pbSuccess )
+
+{
+    AIGDataset	*poODS = (AIGDataset *) poDS;
+
+    if( pbSuccess != NULL )
+        *pbSuccess = TRUE;
+
+    return poODS->psInfo->dfMin;
+}
+
+/************************************************************************/
+/*                             GetMinimum()                             */
+/************************************************************************/
+
+double AIGRasterBand::GetMaximum( int *pbSuccess )
+
+{
+    AIGDataset	*poODS = (AIGDataset *) poDS;
+
+    if( pbSuccess != NULL )
+        *pbSuccess = TRUE;
+
+    return poODS->psInfo->dfMax;
 }
 
 
