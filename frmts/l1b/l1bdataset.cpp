@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.11  2002/08/29 17:05:22  dron
+ * Fixes in channels description.
+ *
  * Revision 1.10  2002/08/28 15:16:31  dron
  * Band descriptions added
  *
@@ -208,8 +211,8 @@ class L1BDataset : public GDALDataset
     int		nRecordDataEnd;
     int		nDataStartOffset;
     int		nRecordSize;
-    int		iChannels;
     GUInt16	iInstrumentStatus;
+    GUInt32	iChannels;
 
     double      adfGeoTransform[6];
     char        *pszProjection;
@@ -836,7 +839,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         if (poDS->pabyTBMHeader[i] == 1 || poDS->pabyTBMHeader[i] == 'Y')
 	{
 	    poDS->nBands++;
-	    poDS->iChannels = poDS->iChannels | (1 << (i - 97));
+	    poDS->iChannels |= (1 << (i - 97));
 	}
     if (poDS->nBands == 0 || poDS->nBands > 5)
     {
@@ -1144,50 +1147,57 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    for( i = 1; i <= poDS->nBands; i++ )
+    int iBand;
+    
+    for( iBand = 1, i = 0; iBand <= poDS->nBands; iBand++ )
     {
-        poDS->SetBand( i, new L1BRasterBand( poDS, i ));
+        poDS->SetBand( iBand, new L1BRasterBand( poDS, iBand ));
         
 	// Channels descriptions
         if ( poDS->iSpacecraftID >= NOAA6 && poDS->iSpacecraftID <= NOAA17 )
         {
-	    switch( i )
+            if ( !(i & 0x01) && poDS->iChannels & 0x01 )
 	    {
-	    case 1:
-                if ( poDS->iChannels & 0x01 )
-	            poDS->GetRasterBand(i)->SetDescription( paszChannelsDesc[0] );
-	    break;
-	    case 2:
-	        if ( poDS->iChannels & 0x02 )
-	            poDS->GetRasterBand(i)->SetDescription( paszChannelsDesc[1] );
-	    break;
-	    case 3:
-	        if ( poDS->iChannels & 0x04 )
-	            if (poDS->iSpacecraftID >= NOAA15 && poDS->iSpacecraftID <= NOAA17)
-                        if (poDS->iInstrumentStatus & 0x0400)
-		            poDS->GetRasterBand(i)->SetDescription( paszChannelsDesc[7] );
-		        else
-		            poDS->GetRasterBand(i)->SetDescription( paszChannelsDesc[6] );
-	            else    
-	                poDS->GetRasterBand(i)->SetDescription( paszChannelsDesc[2] );
-	    break;
-	    case 4:
-	        if ( poDS->iChannels & 0x08 )
-	            poDS->GetRasterBand(i)->SetDescription( paszChannelsDesc[3] );
-	    break;
-	    case 5:
-	        if ( poDS->iChannels & 0x0F )
-		    if (poDS->iSpacecraftID == NOAA13)	 		// 5 NOAA-13
-		        poDS->GetRasterBand(i)->SetDescription( paszChannelsDesc[5] );
-	            else if (poDS->iSpacecraftID == NOAA6 ||
-		            poDS->iSpacecraftID == NOAA8 ||
-			    poDS->iSpacecraftID == NOAA10)	 	// 4 NOAA-6,-8,-10
-		        poDS->GetRasterBand(i)->SetDescription( paszChannelsDesc[3] );
+	        poDS->GetRasterBand(iBand)->SetDescription( paszChannelsDesc[0] );
+	        i |= 0x01;
+		continue;
+	    }
+	    if ( !(i & 0x02) && poDS->iChannels & 0x02 )
+	    {
+	        poDS->GetRasterBand(iBand)->SetDescription( paszChannelsDesc[1] );
+                i |= 0x02;
+		continue;
+	    }
+	    if ( !(i & 0x04) && poDS->iChannels & 0x04 )
+	    {
+	        if (poDS->iSpacecraftID >= NOAA15 && poDS->iSpacecraftID <= NOAA17)
+                    if (poDS->iInstrumentStatus & 0x0400)
+	                poDS->GetRasterBand(iBand)->SetDescription( paszChannelsDesc[7] );
+		    else
+		        poDS->GetRasterBand(iBand)->SetDescription( paszChannelsDesc[6] );
+	        else    
+	            poDS->GetRasterBand(iBand)->SetDescription( paszChannelsDesc[2] );
+		i |= 0x04;
+		continue;
+	    }
+	    if ( !(i & 0x08) && poDS->iChannels & 0x08 )
+	    {
+	        poDS->GetRasterBand(iBand)->SetDescription( paszChannelsDesc[3] );
+                i |= 0x08;
+		continue;
+	    }
+	    if ( !(i & 0x10) && poDS->iChannels & 0x10 )
+	    {
+		if (poDS->iSpacecraftID == NOAA13)	 		// 5 NOAA-13
+		    poDS->GetRasterBand(iBand)->SetDescription( paszChannelsDesc[5] );
+	        else if (poDS->iSpacecraftID == NOAA6 ||
+		         poDS->iSpacecraftID == NOAA8 ||
+		         poDS->iSpacecraftID == NOAA10)	 	// 4 NOAA-6,-8,-10
+		    poDS->GetRasterBand(iBand)->SetDescription( paszChannelsDesc[3] );
 		else
-	            poDS->GetRasterBand(i)->SetDescription( paszChannelsDesc[4] );
-	    break;
-	    default:
-	    break;
+	            poDS->GetRasterBand(iBand)->SetDescription( paszChannelsDesc[4] );
+		i |= 0x10;
+		continue;
 	    }
         }
     }
