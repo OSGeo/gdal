@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/01/13 05:18:11  warmerda
+ * added support for multiple versions
+ *
  * Revision 1.2  1999/12/22 15:38:15  warmerda
  * major update
  *
@@ -85,7 +88,7 @@ TigerAltName::~TigerAltName()
 int TigerAltName::SetModule( const char * pszModule )
 
 {
-    if( !OpenFile( pszModule, "RT4" ) )
+    if( !OpenFile( pszModule, "4" ) )
         return FALSE;
 
     EstablishFeatureCount();
@@ -105,7 +108,7 @@ OGRFeature *TigerAltName::GetFeature( int nRecordId )
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Request for out-of-range feature %d of %s.RT1",
+                  "Request for out-of-range feature %d of %s4",
                   nRecordId, pszModule );
         return NULL;
     }
@@ -119,7 +122,7 @@ OGRFeature *TigerAltName::GetFeature( int nRecordId )
     if( VSIFSeek( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to %d of %s.RT4",
+                  "Failed to seek to %d of %s4",
                   nRecordId * nRecordLength, pszModule );
         return NULL;
     }
@@ -127,7 +130,7 @@ OGRFeature *TigerAltName::GetFeature( int nRecordId )
     if( VSIFRead( achRecord, 58, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read record %d of %s.RT4",
+                  "Failed to read record %d of %s4",
                   nRecordId, pszModule );
         return NULL;
     }

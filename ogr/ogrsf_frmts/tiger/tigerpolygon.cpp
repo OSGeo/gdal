@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/01/13 05:18:11  warmerda
+ * added support for multiple versions
+ *
  * Revision 1.1  1999/12/22 15:37:59  warmerda
  * New
  *
@@ -201,7 +204,7 @@ TigerPolygon::~TigerPolygon()
 int TigerPolygon::SetModule( const char * pszModule )
 
 {
-    if( !OpenFile( pszModule, "RTA" ) )
+    if( !OpenFile( pszModule, "A" ) )
         return FALSE;
 
     EstablishFeatureCount();
@@ -221,7 +224,7 @@ int TigerPolygon::SetModule( const char * pszModule )
         {
             char	*pszFilename;
         
-            pszFilename = poDS->BuildFilename( pszModule, "RTS" );
+            pszFilename = poDS->BuildFilename( pszModule, "S" );
 
             fpRTS = VSIFOpen( pszFilename, "rb" );
 
@@ -244,7 +247,7 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Request for out-of-range feature %d of %s.RTA",
+                  "Request for out-of-range feature %d of %sA",
                   nRecordId, pszModule );
         return NULL;
     }
@@ -258,7 +261,7 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
     if( VSIFSeek( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to %d of %s.RTA",
+                  "Failed to seek to %d of %sA",
                   nRecordId * nRecordLength, pszModule );
         return NULL;
     }
@@ -266,7 +269,7 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
     if( VSIFRead( achRecord, sizeof(achRecord), 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read record %d of %s.RTA",
+                  "Failed to read record %d of %sA",
                   nRecordId, pszModule );
         return NULL;
     }
@@ -309,7 +312,7 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
         if( VSIFSeek( fpRTS, nRecordId * nRTSRecLen, SEEK_SET ) != 0 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "Failed to seek to %d of %s.RTS",
+                      "Failed to seek to %d of %sS",
                       nRecordId * nRTSRecLen, pszModule );
             return NULL;
         }
@@ -317,7 +320,7 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
         if( VSIFRead( achRTSRec, 111, 1, fpRTS ) != 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "Failed to read record %d of %s.RTS",
+                      "Failed to read record %d of %sS",
                       nRecordId, pszModule );
             return NULL;
         }

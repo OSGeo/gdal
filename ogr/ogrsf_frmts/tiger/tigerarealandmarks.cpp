@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/01/13 05:18:11  warmerda
+ * added support for multiple versions
+ *
  * Revision 1.2  1999/12/22 15:38:15  warmerda
  * major update
  *
@@ -91,7 +94,7 @@ TigerAreaLandmarks::~TigerAreaLandmarks()
 int TigerAreaLandmarks::SetModule( const char * pszModule )
 
 {
-    if( !OpenFile( pszModule, "RT8" ) )
+    if( !OpenFile( pszModule, "8" ) )
         return FALSE;
 
     EstablishFeatureCount();
@@ -111,7 +114,7 @@ OGRFeature *TigerAreaLandmarks::GetFeature( int nRecordId )
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Request for out-of-range feature %d of %s.RT8",
+                  "Request for out-of-range feature %d of %s8",
                   nRecordId, pszModule );
         return NULL;
     }
@@ -125,7 +128,7 @@ OGRFeature *TigerAreaLandmarks::GetFeature( int nRecordId )
     if( VSIFSeek( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to %d of %s.RT8",
+                  "Failed to seek to %d of %s8",
                   nRecordId * nRecordLength, pszModule );
         return NULL;
     }
@@ -133,7 +136,7 @@ OGRFeature *TigerAreaLandmarks::GetFeature( int nRecordId )
     if( VSIFRead( achRecord, sizeof(achRecord), 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read record %d of %s.RT8",
+                  "Failed to read record %d of %s8",
                   nRecordId, pszModule );
         return NULL;
     }

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/01/13 05:18:11  warmerda
+ * added support for multiple versions
+ *
  * Revision 1.3  1999/12/22 15:38:15  warmerda
  * major update
  *
@@ -272,7 +275,7 @@ TigerCompleteChain::~TigerCompleteChain()
 int TigerCompleteChain::SetModule( const char * pszModule )
 
 {
-    if( !OpenFile( pszModule, "RT1" ) )
+    if( !OpenFile( pszModule, "1" ) )
         return FALSE;
 
     EstablishFeatureCount();
@@ -292,7 +295,7 @@ int TigerCompleteChain::SetModule( const char * pszModule )
         {
             char	*pszFilename;
         
-            pszFilename = poDS->BuildFilename( pszModule, "RT3" );
+            pszFilename = poDS->BuildFilename( pszModule, "3" );
 
             fpRT3 = VSIFOpen( pszFilename, "rb" );
 
@@ -328,7 +331,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Request for out-of-range feature %d of %s.RT1",
+                  "Request for out-of-range feature %d of %s1",
                   nRecordId, pszModule );
         return NULL;
     }
@@ -342,7 +345,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
     if( VSIFSeek( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to %d of %s.RT1",
+                  "Failed to seek to %d of %s1",
                   nRecordId * nRecordLength, pszModule );
         return NULL;
     }
@@ -350,7 +353,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
     if( VSIFRead( achRecord, 228, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read record %d of %s.RT1",
+                  "Failed to read record %d of %s1",
                   nRecordId, pszModule );
         return NULL;
     }
@@ -410,7 +413,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
         if( VSIFSeek( fpRT3, nRecordId * nRT3RecLen, SEEK_SET ) != 0 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "Failed to seek to %d of %s.RT3",
+                      "Failed to seek to %d of %s3",
                       nRecordId * nRT3RecLen, pszModule );
             return NULL;
         }
@@ -418,7 +421,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
         if( VSIFRead( achRT3Rec, 111, 1, fpRT3 ) != 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "Failed to read record %d of %s.RT3",
+                      "Failed to read record %d of %s3",
                       nRecordId, pszModule );
             return NULL;
         }
@@ -494,7 +497,7 @@ void TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
                       SEEK_SET ) != 0 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "Failed to seek to %d of %s.RT2",
+                      "Failed to seek to %d of %s2",
                       (nShapeRecId-1) * nShapeRecLen, pszModule );
             return;
         }
@@ -502,7 +505,7 @@ void TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
         if( VSIFRead( achShapeRec, 208, 1, fpShape ) != 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "Failed to read record %d of %s.RT2",
+                      "Failed to read record %d of %s2",
                       nShapeRecId-1, pszModule );
             return;
         }
@@ -554,7 +557,7 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
     {
         char	*pszFilename;
 
-        pszFilename = poDS->BuildFilename( pszModule, "RT2" );
+        pszFilename = poDS->BuildFilename( pszModule, "2" );
 
         fpShape = VSIFOpen( pszFilename, "rb" );
         
@@ -625,16 +628,17 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
                       SEEK_SET ) != 0 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "Failed to seek to %d of %s.RT2",
+                      "Failed to seek to %d of %s2",
                       (nWorkingRecId-1) * nShapeRecLen, pszModule );
             return -1;
         }
 
         if( VSIFRead( achShapeRec, 208, 1, fpShape ) != 1 )
         {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Failed to read record %d of %s.RT2",
-                      nWorkingRecId-1, pszModule );
+            if( !VSIFEof( fpShape ) )
+                CPLError( CE_Failure, CPLE_FileIO,
+                          "Failed to read record %d of %s2",
+                          nWorkingRecId-1, pszModule );
             return -1;
         }
 

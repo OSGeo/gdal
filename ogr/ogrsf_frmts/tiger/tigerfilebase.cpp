@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/01/13 05:18:11  warmerda
+ * added support for multiple versions
+ *
  * Revision 1.2  1999/12/22 15:38:15  warmerda
  * major update
  *
@@ -47,6 +50,7 @@
 TigerFileBase::TigerFileBase()
 
 {
+    pszShortModule = NULL;
     pszModule = NULL;
     fpPrimary = NULL;
     poFeatureDefn = NULL;
@@ -61,6 +65,7 @@ TigerFileBase::~TigerFileBase()
 
 {
     CPLFree( pszModule );
+    CPLFree( pszShortModule );
 }
 
 /************************************************************************/
@@ -75,6 +80,8 @@ int TigerFileBase::OpenFile( const char * pszModuleToOpen,
 
     CPLFree( pszModule );
     pszModule = NULL;
+    CPLFree( pszShortModule );
+    pszShortModule = NULL;
     
     if( fpPrimary != NULL )
     {
@@ -94,6 +101,13 @@ int TigerFileBase::OpenFile( const char * pszModuleToOpen,
     if( fpPrimary != NULL )
     {
         pszModule = CPLStrdup(pszModuleToOpen);
+        pszShortModule = CPLStrdup(pszModuleToOpen);
+        for( int i = 0; pszShortModule[i] != '\0'; i++ )
+        {
+            if( pszShortModule[i] == '.' )
+                pszShortModule[i] = '\0';
+        }
+        
         return TRUE;
     }
     else

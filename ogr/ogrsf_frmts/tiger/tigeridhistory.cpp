@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/01/13 05:18:11  warmerda
+ * added support for multiple versions
+ *
  * Revision 1.1  1999/12/22 15:37:59  warmerda
  * New
  *
@@ -100,7 +103,7 @@ TigerIDHistory::~TigerIDHistory()
 int TigerIDHistory::SetModule( const char * pszModule )
 
 {
-    if( !OpenFile( pszModule, "RTH" ) )
+    if( !OpenFile( pszModule, "H" ) )
         return FALSE;
 
     EstablishFeatureCount();
@@ -120,7 +123,7 @@ OGRFeature *TigerIDHistory::GetFeature( int nRecordId )
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Request for out-of-range feature %d of %s.RTH",
+                  "Request for out-of-range feature %d of %sH",
                   nRecordId, pszModule );
         return NULL;
     }
@@ -134,7 +137,7 @@ OGRFeature *TigerIDHistory::GetFeature( int nRecordId )
     if( VSIFSeek( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to %d of %s.RTH",
+                  "Failed to seek to %d of %sH",
                   nRecordId * nRecordLength, pszModule );
         return NULL;
     }
@@ -142,7 +145,7 @@ OGRFeature *TigerIDHistory::GetFeature( int nRecordId )
     if( VSIFRead( achRecord, sizeof(achRecord), 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read record %d of %s.RTH",
+                  "Failed to read record %d of %sH",
                   nRecordId, pszModule );
         return NULL;
     }

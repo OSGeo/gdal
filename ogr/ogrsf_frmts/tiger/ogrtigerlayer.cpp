@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/01/13 05:18:11  warmerda
+ * added support for multiple versions
+ *
  * Revision 1.2  1999/12/22 15:38:15  warmerda
  * major update
  *
@@ -173,7 +176,7 @@ OGRFeature *OGRTigerLayer::GetFeature( long nFeatureId )
             poFeature->GetGeometryRef()->assignSpatialReference(
                 poDS->GetSpatialRef() );
 
-        poFeature->SetField( 0, poReader->GetModule() );
+        poFeature->SetField( 0, poReader->GetShortModule() );
     }
 
     return poFeature;

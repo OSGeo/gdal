@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/01/13 05:18:11  warmerda
+ * added support for multiple versions
+ *
  * Revision 1.1  1999/12/22 15:37:59  warmerda
  * New
  *
@@ -85,7 +88,7 @@ TigerZipPlus4::~TigerZipPlus4()
 int TigerZipPlus4::SetModule( const char * pszModule )
 
 {
-    if( !OpenFile( pszModule, "RTZ" ) )
+    if( !OpenFile( pszModule, "Z" ) )
         return FALSE;
 
     EstablishFeatureCount();
@@ -105,7 +108,7 @@ OGRFeature *TigerZipPlus4::GetFeature( int nRecordId )
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Request for out-of-range feature %d of %s.RTZ",
+                  "Request for out-of-range feature %d of %sZ",
                   nRecordId, pszModule );
         return NULL;
     }
@@ -119,7 +122,7 @@ OGRFeature *TigerZipPlus4::GetFeature( int nRecordId )
     if( VSIFSeek( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to %d of %s.RTZ",
+                  "Failed to seek to %d of %sZ",
                   nRecordId * nRecordLength, pszModule );
         return NULL;
     }
@@ -127,7 +130,7 @@ OGRFeature *TigerZipPlus4::GetFeature( int nRecordId )
     if( VSIFRead( achRecord, sizeof(achRecord), 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read record %d of %s.RTZ",
+                  "Failed to read record %d of %sZ",
                   nRecordId, pszModule );
         return NULL;
     }

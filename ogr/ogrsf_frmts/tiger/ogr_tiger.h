@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/01/13 05:18:11  warmerda
+ * added support for multiple versions
+ *
  * Revision 1.4  1999/12/22 15:38:15  warmerda
  * major update
  *
@@ -59,6 +62,7 @@ protected:
   OGRTigerDataSource  *poDS;
 
   char		      *pszModule;
+  char                *pszShortModule;
   FILE		      *fpPrimary;
     
   OGRFeatureDefn      *poFeatureDefn;
@@ -72,7 +76,8 @@ protected:
 public:
                       TigerFileBase();
   virtual            ~TigerFileBase();
-    
+
+  virtual const char *GetShortModule() { return pszShortModule; }
   virtual const char *GetModule() { return pszModule; }
   virtual int         SetModule( const char * ) = 0;
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/01/13 05:18:11  warmerda
+ * added support for multiple versions
+ *
  * Revision 1.4  1999/12/22 15:38:15  warmerda
  * major update
  *
@@ -194,15 +197,16 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
                 continue;
             }
             
-            if( EQUALN(candidateFileList[i] + strlen(candidateFileList[i])-4,
-                       ".RT1",4) )
+            if( EQUALN(candidateFileList[i],"TGR",3)
+                && candidateFileList[i][strlen(candidateFileList[i])-4] == '.'
+                && candidateFileList[i][strlen(candidateFileList[i])-1] == '1')
             {
                 char       szModule[128];
 
                 strncpy( szModule, candidateFileList[i],
-                         strlen(candidateFileList[i])-4 );
+                         strlen(candidateFileList[i])-1 );
 
-                szModule[strlen(candidateFileList[i])-4] = '\0';
+                szModule[strlen(candidateFileList[i])-1] = '\0';
 
                 papszFileList = CSLAddString(papszFileList, szModule);
             }
@@ -212,7 +216,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
         {
             if( !bTestOpen )
                 CPLError( CE_Failure, CPLE_OpenFailed,
-                          "No candidate Tiger files (.RT1) found in\n"
+                          "No candidate Tiger files (TGR*.RT1) found in\n"
                           "directory: %s",
                           pszFilename );
 
@@ -238,7 +242,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
             int		nVersion;
             char	*pszFilename;
 
-            pszFilename = BuildFilename( papszFileList[i], "RT1" );
+            pszFilename = BuildFilename( papszFileList[i], "1" );
 
             fp = VSIFOpen( pszFilename, "rb" );
             CPLFree( pszFilename );
@@ -386,12 +390,27 @@ char *OGRTigerDataSource::BuildFilename( const char *pszModuleName,
 
 {
     char	*pszFilename;
+    char	szLCExtension[3];
 
+/* -------------------------------------------------------------------- */
+/*      Force the record type to lower case if the filename appears     */
+/*      to be in lower case.                                            */
+/* -------------------------------------------------------------------- */
+    if( *pszExtension >= 'A' && *pszExtension <= 'Z' && *pszModuleName == 't' )
+    {
+        szLCExtension[0] = (*pszExtension) + 'a' - 'A';
+        szLCExtension[1] = '\0';
+        pszExtension = szLCExtension;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Build the filename.                                             */
+/* -------------------------------------------------------------------- */
     pszFilename = (char *) CPLMalloc(strlen(GetDirPath())
                                      + strlen(pszModuleName)
                                      + strlen(pszExtension) + 10);
 
-    sprintf( pszFilename, "%s/%s.%s",
+    sprintf( pszFilename, "%s/%s%s",
              GetDirPath(), pszModuleName, pszExtension );
 
     return pszFilename;
