@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2004/11/01 18:22:07  fwarmerdam
+ * added PALSAR support
+ *
  * Revision 1.8  2004/08/26 18:30:47  warmerda
  * added preliminary SIR-C support
  *
@@ -109,6 +112,7 @@ Link_t *AddLink( Link_t *psList, Link_t *psLink );
 #define __CEOS_TYP_COMPLEX_ULONG 14
 #define __CEOS_TYP_COMPLEX_FLOAT 15
 #define __CEOS_TYP_CCP_COMPLEX_FLOAT 16 /* COMPRESSED CROSS PRODUCT */
+#define __CEOS_TYP_PALSAR_COMPLEX_SHORT 17 /* PALSAR - treat as COMPLEX SHORT*/
 
 /* Defines for CEOS file names */
 

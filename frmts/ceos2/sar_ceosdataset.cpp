@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2004/11/01 18:22:07  fwarmerdam
+ * added PALSAR support
+ *
  * Revision 1.36  2004/08/26 18:55:27  warmerda
  * Optimized SIRC decoding to avoid redoing pow() alot.
  *
@@ -222,11 +225,13 @@ static CeosTypeCode_t QuadToTC( int a, int b, int c, int d )
 
 class SAR_CEOSRasterBand;
 class CCPRasterBand;
+class PALSARRasterBand;
 
 class SAR_CEOSDataset : public GDALDataset
 {
     friend class SAR_CEOSRasterBand;
     friend class CCPRasterBand;
+    friend class PALSARRasterBand;
 
     CeosSARVolume_t sVolume;
 
@@ -266,6 +271,22 @@ class CCPRasterBand : public GDALRasterBand
 
   public:
                    CCPRasterBand( SAR_CEOSDataset *, int, GDALDataType );
+
+    virtual CPLErr IReadBlock( int, int, void * );
+};
+
+/************************************************************************/
+/* ==================================================================== */
+/*                        PALSARRasterBand                              */
+/* ==================================================================== */
+/************************************************************************/
+
+class PALSARRasterBand : public GDALRasterBand
+{
+    friend class SAR_CEOSDataset;
+
+  public:
+                   PALSARRasterBand( SAR_CEOSDataset *, int );
 
     virtual CPLErr IReadBlock( int, int, void * );
 };
@@ -541,6 +562,113 @@ CPLErr CCPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
     }
 
+    CPLFree( pabyRecord );
+
+    return CE_None;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*			      PALSARRasterBand				*/
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                           PALSARRasterBand()                         */
+/************************************************************************/
+
+PALSARRasterBand::PALSARRasterBand( SAR_CEOSDataset *poGDS, int nBand )
+
+{
+    this->poDS = poGDS;
+    this->nBand = nBand;
+
+    eDataType = GDT_CInt16;
+
+    nBlockXSize = poGDS->nRasterXSize;
+    nBlockYSize = 1;
+
+    if( nBand == 1 )
+        SetMetadataItem( "POLARMETRIC_INTERP", "HH*HH" );
+    else if( nBand == 2 )
+        SetMetadataItem( "POLARMETRIC_INTERP", "HV*HV" );
+    else if( nBand == 3 )
+        SetMetadataItem( "POLARMETRIC_INTERP", "VV*VV" );
+    else if( nBand == 4 )
+        SetMetadataItem( "POLARMETRIC_INTERP", "HH*HV" );
+    else if( nBand == 5 )
+        SetMetadataItem( "POLARMETRIC_INTERP", "HH*VV" );
+    else if( nBand == 6 )
+        SetMetadataItem( "POLARMETRIC_INTERP", "VV*HV" );
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+/*
+** Based on ERSDAC-VX-CEOS-004
+*/
+
+CPLErr PALSARRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                  void * pImage )
+
+{
+    struct CeosSARImageDesc *ImageDesc;
+    int	   offset;
+    GByte  *pabyRecord;
+    SAR_CEOSDataset *poGDS = (SAR_CEOSDataset *) poDS;
+
+    ImageDesc = &(poGDS->sVolume.ImageDesc);
+
+    offset = ImageDesc->FileDescriptorLength
+        + ImageDesc->BytesPerRecord * nBlockYOff 
+        + ImageDesc->ImageDataStart;
+
+/* -------------------------------------------------------------------- */
+/*      Load all the pixel data associated with this scanline.          */
+/* -------------------------------------------------------------------- */
+    int	        nBytesToRead = ImageDesc->BytesPerPixel * nBlockXSize;
+
+    pabyRecord = (GByte *) CPLMalloc( nBytesToRead );
+    
+    if( VSIFSeek( poGDS->fpImage, offset, SEEK_SET ) != 0 
+        || (int) VSIFRead( pabyRecord, 1, nBytesToRead, 
+                           poGDS->fpImage ) != nBytesToRead )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Error reading %d bytes of CEOS record data at offset %d.\n"
+                  "Reading file %s failed.", 
+                  nBytesToRead, offset, poGDS->GetDescription() );
+        CPLFree( pabyRecord );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Copy the desired band out based on the size of the type, and    */
+/*      the interleaving mode.                                          */
+/* -------------------------------------------------------------------- */
+    if( nBand == 1 || nBand == 2 || nBand == 3 )
+    {
+        // we need to pre-initialize things to set the imaginary component to 0
+        memset( pImage, 0, nBlockXSize * 4 );
+
+        GDALCopyWords( pabyRecord + 4*(nBand - 1), GDT_Int16, 18, 
+                       pImage, GDT_Int16, 4, 
+                       nBlockXSize );
+#ifdef CPL_LSB
+        GDALSwapWords( pImage, 2, nBlockXSize, 4 );
+#endif        
+    }
+    else
+    {
+        GDALCopyWords( pabyRecord + 6 + 4*(nBand - 4), GDT_CInt16, 18, 
+                       pImage, GDT_CInt16, 4, 
+                       nBlockXSize );
+#ifdef CPL_LSB
+        GDALSwapWords( pImage, 2, nBlockXSize*2, 2 );
+#endif        
+    }
     CPLFree( pabyRecord );
 
     return CE_None;
@@ -1666,6 +1794,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
         break;
 
       case __CEOS_TYP_COMPLEX_SHORT:
+      case __CEOS_TYP_PALSAR_COMPLEX_SHORT:
         eType = GDT_CInt16;
         break;
 
@@ -1723,6 +1852,18 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             poDS->SetBand( poDS->nBands+1, 
                            new CCPRasterBand( poDS, poDS->nBands+1, eType ) );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Special case for PALSAR data.                                   */
+/* -------------------------------------------------------------------- */
+    else if( psImageDesc->DataType == __CEOS_TYP_PALSAR_COMPLEX_SHORT )
+    {
+        for( int iBand = 0; iBand < psImageDesc->NumChannels; iBand++ )
+        {
+            poDS->SetBand( poDS->nBands+1, 
+                           new PALSARRasterBand( poDS, poDS->nBands+1 ) );
         }
     }
 
