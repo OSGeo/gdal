@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.41  2004/09/17 21:26:28  fwarmerdam
+ * Yikes ... CPLEscapeString() was badly broken for BackslashEscapable.
+ *
  * Revision 1.40  2004/08/16 20:23:46  warmerda
  * added .csv escaping
  *
@@ -1257,10 +1260,15 @@ char *CPLEscapeString( const char *pszInput, int nLength,
                 pszOutput[iOut++] = '\\';
                 pszOutput[iOut++] = '0';
             }
-            else if( pszInput[iIn] == '"' )
+            else if( pszInput[iIn] == '\n' )
             {
                 pszOutput[iOut++] = '\\';
                 pszOutput[iOut++] = 'n';
+            }
+            else if( pszInput[iIn] == '"' )
+            {
+                pszOutput[iOut++] = '\\';
+                pszOutput[iOut++] = '\"';
             }
             else if( pszInput[iIn] == '\\' )
             {
