@@ -1,7 +1,7 @@
 GDAL_ROOT	=	..\..
 
 DIRLIST		=	generic shape ntf sdts tiger s57 dgn mitab gml avc \
-			$(OGDIDIR)
+			$(OGDIDIR) $(FMEDIR)
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
@@ -10,12 +10,18 @@ OGDIDIR	=	ogdi
 OGDIOBJ =	ogdi\*.obj
 !ENDIF
 
+!IFDEF FME_DIR
+FMEDIR = fme
+FMEOBJ = fme\*.obj
+!ENDIF
+
 default:
 	for %d in ( $(DIRLIST) ) do ..\..\submake.bat %d
 
 	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj \
 				 sdts\*.obj s57\*.obj tiger\*.obj gml\*.obj \
-				 mitab\*.obj dgn\*.obj avc\*.obj $(OGDIOBJ)
+				 mitab\*.obj dgn\*.obj avc\*.obj $(OGDIOBJ) \
+				$(FMEOBJ)
 	lib /out:ogrsf_frmts_sup.lib \
 				 ..\..\frmts\iso8211\*.obj \
 				 ..\..\frmts\sdts\sdtsattrreader.obj \
