@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/11/22 17:17:18  warmerda
+ * reformat
+ *
  * Revision 1.8  1999/07/23 19:20:27  kshih
  * Modifications for errors etc...
  *
@@ -62,46 +65,46 @@
 template <class T>
 class ATL_NO_VTABLE MyIDBInitializeImpl : public IDBInitializeImpl<T>
 {
-public:
-	virtual ~MyIDBInitializeImpl()
+  public:
+    virtual ~MyIDBInitializeImpl()
 	{
-		SFClearOGRDataSource((void *) this);
+            SFClearOGRDataSource((void *) this);
 	}
 
-	STDMETHOD(Initialize)(void)
+    STDMETHOD(Initialize)(void)
 	{
-		HRESULT hr;
-		hr =IDBInitializeImpl<T>::Initialize();
-	
-		if (SUCCEEDED(hr))
-		{
-			char *pszDataSource;
-			IUnknown *pIU;
-			QueryInterface(IID_IUnknown, (void **) &pIU);		
+            HRESULT hr;
+            hr =IDBInitializeImpl<T>::Initialize();
+
+            if (SUCCEEDED(hr))
+            {
+                char *pszDataSource;
+                IUnknown *pIU;
+                QueryInterface(IID_IUnknown, (void **) &pIU);		
 			
-			SFRegisterOGRFormats();
+                SFRegisterOGRFormats();
 
-			pszDataSource = SFGetInitDataSource(pIU);
+                pszDataSource = SFGetInitDataSource(pIU);
 
-			OGRDataSource *poDS;
-			poDS = OGRSFDriverRegistrar::Open( pszDataSource, FALSE );
+                OGRDataSource *poDS;
+                poDS = OGRSFDriverRegistrar::Open( pszDataSource, FALSE );
 
 
-			if (poDS)
-			{
-				hr = S_OK;
-				QueryInterface(IID_IUnknown, (void **) &pIU);
-				SFSetOGRDataSource(pIU,poDS,(void *) this);
-			}
-			else
-			{
-				hr = SFReportError(E_FAIL,IID_IDBInitialize,0,pszDataSource);
-			}
+                if (poDS)
+                {
+                    hr = S_OK;
+                    QueryInterface(IID_IUnknown, (void **) &pIU);
+                    SFSetOGRDataSource(pIU,poDS,(void *) this);
+                }
+                else
+                {
+                    hr = SFReportError(E_FAIL,IID_IDBInitialize,0,pszDataSource);
+                }
 			
-			free(pszDataSource);
-		}
+                free(pszDataSource);
+            }
 	
-		return hr;
+            return hr;
 		
 	}
 };

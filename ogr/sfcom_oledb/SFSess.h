@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/11/22 17:15:12  warmerda
+ * reformat
+ *
  * Revision 1.8  1999/07/20 17:11:11  kshih
  * Use OGR code
  *
@@ -475,75 +478,75 @@ END_PROVIDER_COLUMN_MAP()
 class CSFSessionSchemaSpatRef:
 public CRowsetImpl<CSFSessionSchemaSpatRef,OGISSpat_Row,CSFSession>
 {
-public:
-	HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
+  public:
+    HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
 	{
-		USES_CONVERSION;
-		bool	bAddDefault = false;
+            USES_CONVERSION;
+            bool	bAddDefault = false;
 
-		// See if we can get the Spatial reference system for each layer.
-		// It is unclear at the current time what the valid authority id and spatial
-		// ref ids are.  
-		int				iLayer;
-		IUnknown		*pIU;
-		OGRDataSource	*poDS;
-		OGRLayer		*pLayer;
+            // See if we can get the Spatial reference system for each layer.
+            // It is unclear at the current time what the valid authority id and spatial
+            // ref ids are.  
+            int				iLayer;
+            IUnknown		*pIU;
+            OGRDataSource	*poDS;
+            OGRLayer		*pLayer;
 
-		QueryInterface(IID_IUnknown,(void **) &pIU);
-		poDS = SFGetOGRDataSource(pIU);
+            QueryInterface(IID_IUnknown,(void **) &pIU);
+            poDS = SFGetOGRDataSource(pIU);
 
-		if (!poDS)
-		{
-			// Prep errors as well
-			return S_FALSE;
-		}
+            if (!poDS)
+            {
+                // Prep errors as well
+                return S_FALSE;
+            }
 
-		for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
-		{
-			OGISSpat_Row trData;
+            for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
+            {
+                OGISSpat_Row trData;
 				
-			pLayer = poDS->GetLayer(iLayer);
+                pLayer = poDS->GetLayer(iLayer);
 
-			OGRSpatialReference *poSpatRef = pLayer->GetSpatialRef();
-			if (poSpatRef != NULL)
-			{
-				char *pszSpatRef;
-				poSpatRef->exportToWkt(&pszSpatRef);
+                OGRSpatialReference *poSpatRef = pLayer->GetSpatialRef();
+                if (poSpatRef != NULL)
+                {
+                    char *pszSpatRef=NULL;
+                    poSpatRef->exportToWkt(&pszSpatRef);
 				
-				if (pszSpatRef)
-				{
-					// This should be verified!!!!!
-					trData.m_nAuthorityId = NULL;
-					trData.m_nSpatialRefId = NULL;
-					lstrcpyW(trData.m_pszSpatialRefSystem,A2OLE(pszSpatRef));
-					OGRFree(pszSpatRef);
+                    if (pszSpatRef)
+                    {
+                        // This should be verified!!!!!
+                        trData.m_nAuthorityId = NULL;
+                        trData.m_nSpatialRefId = NULL;
+                        lstrcpyW(trData.m_pszSpatialRefSystem,A2OLE(pszSpatRef));
+                        OGRFree(pszSpatRef);
 					
-					m_rgRowData.Add(trData);
-				}
-				else
-				{
-					bAddDefault = true;
-				}
-			}
-			else
-			{
-				bAddDefault = true;
-			}
-		}
+                        m_rgRowData.Add(trData);
+                    }
+                    else
+                    {
+                        bAddDefault = true;
+                    }
+                }
+                else
+                {
+                    bAddDefault = true;
+                }
+            }
 
-		if (bAddDefault)
-		{
-			OGISSpat_Row trData;
-			trData.m_nAuthorityId = 1;
-			trData.m_nSpatialRefId = 2;
-			lstrcpyW(trData.m_szAuthorityName,A2OLE("USGS"));
+            if (bAddDefault)
+            {
+                OGISSpat_Row trData;
+                trData.m_nAuthorityId = 1;
+                trData.m_nSpatialRefId = 2;
+                lstrcpyW(trData.m_szAuthorityName,A2OLE("USGS"));
 			
-			m_rgRowData.Add(trData);	
-		}
+                m_rgRowData.Add(trData);	
+            }
 
-		*pcRowsAffected = poDS->GetLayerCount();
+            *pcRowsAffected = poDS->GetLayerCount();
 
-		return S_OK;
+            return S_OK;
 	}
 };
 
