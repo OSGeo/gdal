@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.4  1999/01/28 16:25:19  warmerda
+ * Added implementation of HFAStandard().
+ *
  * Revision 1.3  1999/01/22 17:38:47  warmerda
  * lots of additions
  *
@@ -646,3 +649,27 @@ void HFADumpDictionary( HFAHandle hHFA, FILE * fpOut )
     
     hHFA->poDictionary->Dump( fpOut );
 }
+
+/************************************************************************/
+/*                            HFAStandard()                             */
+/*                                                                      */
+/*      Swap byte order on MSB systems.                                 */
+/************************************************************************/
+
+#ifdef CPL_MSB
+void HFAStandard( int nBytes, void * pData )
+
+{
+    int		i;
+    GByte	*pabyData = (GByte *) pData;
+
+    for( i = nBytes/2-1; i >= 0; i-- )
+    {
+        GByte	byTemp;
+
+        byTemp = pabyData[i];
+        pabyData[i] = pabyData[nBytes-i-1];
+        pabyData[nBytes-i-1] = byTemp;
+    }
+}
+#endif
