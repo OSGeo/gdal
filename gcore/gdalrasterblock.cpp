@@ -1,5 +1,13 @@
 /******************************************************************************
- * Copyright (c) 1998, Frank Warmerdam
+ * $Id$
+ *
+ * Project:  GDAL Core
+ * Purpose:  Implementation of GDALRasterBlock class and related global 
+ *           raster block cache management.
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *
+ **********************************************************************
+ * Copyright (c) 1998, Frank Warmerdam <warmerdam@pobox.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,12 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * gdalrasterblock.cpp
- *
- * The GDALRasterBlock class.
- *
- * 
  * $Log$
+ * Revision 1.10  2003/02/21 20:07:55  warmerda
+ * update header
+ *
  * Revision 1.9  2003/01/28 16:51:24  warmerda
  * document cache functions
  *
