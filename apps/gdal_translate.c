@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/10/21 13:21:49  warmerda
+ * Added report of available formats.
+ *
  * Revision 1.6  1999/10/01 14:45:14  warmerda
  * prettied up
  *
@@ -157,7 +160,17 @@ int main( int argc, char ** argv )
     hDriver = GDALGetDriverByName( pszFormat );
     if( hDriver == NULL )
     {
+        int	iDr;
+        
         printf( "Output driver `%s' not recognised.\n", pszFormat );
+        printf( "The following format drivers are configured:\n" );
+        for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
+        {
+            printf( "  %s: %s\n",
+                    GDALGetDriverShortName( GDALGetDriver(iDr) ),
+                    GDALGetDriverLongName( GDALGetDriver(iDr) ) );
+        }
+        printf( "\n" );
         Usage();
         exit( 1 );
     }
