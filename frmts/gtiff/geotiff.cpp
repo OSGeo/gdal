@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.129  2005/01/15 16:15:09  fwarmerdam
+ * trimmed revision history.
+ *
  * Revision 1.128  2005/01/15 16:13:17  fwarmerdam
  * Use GTiffRasterBand as base for 1bit and RGB band specialized types.
  * Generalized metadata support, include band metadata.
@@ -122,140 +125,6 @@
  *
  * Revision 1.101  2004/01/01 19:49:50  dron
  * Use uint16 insted of int16 for the count of tie points.
- *
- * Revision 1.100  2003/12/22 15:08:16  dron
- * Check, whether all bands in input dataset has the same data type.
- *
- * Revision 1.99  2003/08/25 13:57:54  warmerda
- * Added support for XRESOLUTION, YRESOLUTION and RESOLUTIONUNIT.
- *
- * Revision 1.98  2003/07/18 19:32:54  warmerda
- * fixed pszProjection initialize change from last commit
- *
- * Revision 1.97  2003/07/18 15:17:28  warmerda
- * Added GTIFF_DIR: option
- *
- * Revision 1.96  2003/07/18 12:48:30  warmerda
- * Install GDALDefaultCSVFilename incase we are using an external libgeotiff
- *
- * Revision 1.95  2003/07/08 15:39:03  warmerda
- * avoid warnings
- *
- * Revision 1.94  2003/06/05 14:30:14  warmerda
- * If GTIFNew() fails just issue a warning and continue.  This ensures that
- * files like bruce.tif with corrupt tags can still be read as if the had
- * no geotiff info at all.
- *
- * Revision 1.93  2003/05/28 16:21:25  warmerda
- * added logic to set RGB/alpha for 4 bands in Create() case
- *
- * Revision 1.92  2003/05/20 20:15:06  warmerda
- * dont use geopixelscale if it is zero, like in some IKONOS images
- *
- * Revision 1.91  2003/04/28 20:55:02  warmerda
- * Use dataset level IO for createcopy stripped contig case
- *
- * Revision 1.90  2003/03/13 15:49:28  warmerda
- * Fixed CFloat64 support.
- *
- * Revision 1.89  2003/03/13 14:36:03  warmerda
- * added support for CInt32 and CFloat64
- *
- * Revision 1.88  2003/02/15 20:22:44  warmerda
- * fixed handling of GDALReadTabFile() return value
- *
- * Revision 1.87  2003/01/28 14:55:55  warmerda
- * fixed serious bug in writing geotransform to geotiff tags!
- *
- * Revision 1.86  2003/01/15 15:35:13  warmerda
- * Fixed minor typo.
- *
- * Revision 1.85  2003/01/15 14:43:24  warmerda
- * call GTIFDeaccessCSV
- *
- * Revision 1.84  2003/01/10 16:05:18  dron
- * Improved support for NoData.
- *
- * Revision 1.83  2003/01/09 17:24:42  dron
- * Added NoData value handling via 42113 TIFF tag.
- *
- * Revision 1.82  2002/12/24 15:19:14  dron
- * Handling PHOTOMETRIC_MINISBLACK images now correct.
- *
- * Revision 1.81  2002/12/19 15:08:29  dron
- * SetGCPs() function added.
- *
- * Revision 1.80  2002/12/17 18:24:03  warmerda
- * dont return the projection via GetProjectionRef() if GCPs are used
- *
- * Revision 1.79  2002/12/09 16:09:52  warmerda
- * ensure parent extender is invoked
- *
- * Revision 1.78  2002/12/05 19:05:29  warmerda
- * Fixed recent bug with geotiff projection.
- *
- * Revision 1.77  2002/12/04 16:30:06  warmerda
- * moved GDALReadTabFile() to core
- *
- * Revision 1.76  2002/12/04 03:25:57  warmerda
- * Fixed small memory leak.
- *
- * Revision 1.75  2002/12/03 13:55:44  warmerda
- * Warn if we cannot export a pseudocolor table in CreateCopy().
- *
- * Revision 1.74  2002/11/30 20:51:17  warmerda
- * add support for generic metadata, and updating proj/metdata in place
- *
- * Revision 1.73  2002/11/23 18:08:55  warmerda
- * added CREATIONDATATYPES support on driver
- *
- * Revision 1.72  2002/11/03 10:50:28  dron
- * Added GeoTIFF instance creation check.
- *
- * Revision 1.71  2002/09/30 21:14:12  warmerda
- * added support for overviews of RGBA files
- *
- * Revision 1.70  2002/09/04 06:46:05  warmerda
- * added CSVDeaccess as a driver cleanup action
- *
- * Revision 1.69  2002/07/13 04:16:39  warmerda
- * added WORLDFILE support
- *
- * Revision 1.68  2002/06/25 13:56:54  warmerda
- * fixed bug generating high overview levels
- *
- * Revision 1.67  2002/06/18 02:47:46  warmerda
- * fixed handling of long string constant
- *
- * Revision 1.66  2002/06/17 14:53:58  warmerda
- * fixed byte line alignment bug with 1bit files
- *
- * Revision 1.65  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.64  2002/06/11 20:28:50  warmerda
- * fixed error test in CreateCopy
- *
- * Revision 1.63  2002/06/11 03:43:04  warmerda
- * Allow CreateCopy() to return a GA_ReadOnly dataset if opening the created
- * file with GA_Update fails.  This is the case with compressed files.
- *
- * Revision 1.62  2002/05/29 03:10:40  warmerda
- * CopyCreate now writes metadata items
- *
- * Revision 1.61  2002/05/06 21:40:09  warmerda
- * fix up mapinfo tab support substantially
- *
- * Revision 1.60  2002/04/03 20:43:13  warmerda
- * Avoid using tiffiop.h - added IsBlockAvailable() method
- *
- * Revision 1.59  2002/03/06 21:18:15  warmerda
- * Don't try to write color table to non-eight bit files.
- *
- * Revision 1.58  2001/12/06 18:42:38  warmerda
- * Restructure warning/error handlers to "escape" contents of module argument
- * when putting it into the format string.  I was experiencing a crash when
- * a filename included a % and it was being reported in a warning.
  */
 
 #include "gdal_priv.h"
