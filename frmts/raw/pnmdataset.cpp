@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/18 19:04:10  warmerda
+ * Removed debug printf.
+ *
  * Revision 1.2  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -182,8 +185,6 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->fpImage = VSIFOpen( poOpenInfo->pszFilename, "rb+" );
     else
         poDS->fpImage = VSIFOpen( poOpenInfo->pszFilename, "rb" );
-
-    printf( "poDS->fpImage = %p\n", poDS->fpImage );
 
     if( poDS->fpImage == NULL )
     {
