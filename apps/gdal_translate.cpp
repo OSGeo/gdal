@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/03/03 16:29:35  warmerda
+ * Added the -quiet flag.
+ *
  * Revision 1.12  2002/12/03 03:40:11  warmerda
  * Avoid initialization warning.
  *
@@ -129,7 +132,7 @@ static void Usage()
             "       [-scale [src_min src_max [dst_min dst_max]]]\n"
             "       [-srcwin xoff yoff xsize ysize] [-a_srs srs_def]\n"
             "       [-projwin ulx uly lrx lry] [-co \"NAME=VALUE\"]*\n"
-            "       [-mo \"META-TAG=VALUE\"]*\n"
+            "       [-mo \"META-TAG=VALUE\"]* [-quiet]\n"
             "       src_dataset dst_dataset\n\n" );
 
     printf( "%s\n\n", GDALVersionInfo( "--version" ) );
@@ -175,6 +178,8 @@ int main( int argc, char ** argv )
     double              dfULX, dfULY, dfLRX, dfLRY;
     char                **papszMetadataOptions = NULL;
     char                *pszOutputSRS = NULL;
+    int                 bQuiet = FALSE;
+    GDALProgressFunc    pfnProgress = GDALTermProgress;
 
     anSrcWin[0] = 0;
     anSrcWin[1] = 0;
@@ -199,6 +204,12 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"--version") )
         {
             printf( "%s\n", GDALVersionInfo( "--version" ) );
+        }
+
+        else if( EQUAL(argv[i],"-quiet") )
+        {
+            bQuiet = TRUE;
+            pfnProgress = GDALDummyProgress;
         }
 
         else if( EQUAL(argv[i],"-ot") && i < argc-1 )
@@ -350,8 +361,9 @@ int main( int argc, char ** argv )
 
     nRasterXSize = GDALGetRasterXSize( hDataset );
     nRasterYSize = GDALGetRasterYSize( hDataset );
-    
-    printf( "Size is %d, %d\n", nRasterXSize, nRasterYSize );
+
+    if( !bQuiet )
+        printf( "Input file size is %d, %d\n", nRasterXSize, nRasterYSize );
 
     if( anSrcWin[2] == 0 && anSrcWin[3] == 0 )
     {
@@ -406,13 +418,14 @@ int main( int argc, char ** argv )
         anSrcWin[2] = (int) ((dfLRX - dfULX) / adfGeoTransform[1] + 0.5);
         anSrcWin[3] = (int) ((dfLRY - dfULY) / adfGeoTransform[5] + 0.5);
 
-        fprintf( stdout, 
-                 "Computed -srcwin %d %d %d %d from projected window.\n",
-                 anSrcWin[0], 
-                 anSrcWin[1], 
-                 anSrcWin[2], 
-                 anSrcWin[3] );
-
+        if( !bQuiet )
+            fprintf( stdout, 
+                     "Computed -srcwin %d %d %d %d from projected window.\n",
+                     anSrcWin[0], 
+                     anSrcWin[1], 
+                     anSrcWin[2], 
+                     anSrcWin[3] );
+        
         if( anSrcWin[0] < 0 || anSrcWin[1] < 0 
             || anSrcWin[0] + anSrcWin[2] > GDALGetRasterXSize(hDataset) 
             || anSrcWin[1] + anSrcWin[3] > GDALGetRasterYSize(hDataset) )
@@ -470,7 +483,7 @@ int main( int argc, char ** argv )
         
         hOutDS = GDALCreateCopy( hDriver, pszDest, hDataset, 
                                  bStrict, papszCreateOptions, 
-                                 GDALTermProgress, NULL );
+                                 pfnProgress, NULL );
 
         if( hOutDS != NULL )
             GDALClose( hOutDS );
@@ -644,7 +657,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     hOutDS = GDALCreateCopy( hDriver, pszDest, (GDALDatasetH) poVDS,
                              bStrict, papszCreateOptions, 
-                             GDALTermProgress, NULL );
+                             pfnProgress, NULL );
     if( hOutDS != NULL )
     {
         GDALClose( hOutDS );
