@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/03/18 18:34:17  warmerda
+ * added reason code 13349
+ *
  * Revision 1.16  2003/02/06 21:14:43  warmerda
  * cleanup some memory leaks
  *
@@ -330,6 +333,8 @@ void OGROCIDataSource::ValidateLayer( const char *pszLayerName )
             pszReason = "13011: value is out of range";
         else if( EQUAL(pszReason,"13050") )
             pszReason = "13050: unable to construct spatial object";
+        else if( EQUAL(pszReason,"13349") )
+            pszReason = "13349: polygon boundary crosses itself";
 
         CPLDebug( "OCI", "Validation failure for FID=%s: %s", 
                   papszRow[0], pszReason );
