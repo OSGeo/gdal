@@ -26,10 +26,13 @@ clean:
 
 
 8211dump:	8211dump.o $(OBJ)
-	$(CXX) 8211dump.o $(GDAL_ROOT)/port/*.o $(OBJ) $(LIBS) -o 8211dump
+	$(CXX) $(CXX_ODFLAGS) 8211dump.o $(GDAL_ROOT)/port/*.o $(OBJ) $(LIBS) -o 8211dump
 
 8211view:	8211view.o $(OBJ)
-	$(CXX) 8211view.o $(GDAL_ROOT)/port/*.o $(OBJ) $(LIBS) -o 8211view
+	$(CXX) $(CXX_ODFLAGS) 8211view.o $(GDAL_ROOT)/port/*.o $(OBJ) $(LIBS) -o 8211view
+
+timetest:	timetest.o $(OBJ)
+	$(CXX) $(CXX_ODFLAGS) timetest.o $(GDAL_ROOT)/port/*.o $(OBJ) $(LIBS) -o timetest
 
 docs:
 	doxygen
