@@ -6,7 +6,14 @@ GDAL_ROOT	=	..
 
 !INCLUDE ..\nmake.opt
 
-EXTRAFLAGS =	-I$(PYDIR)/include
+!IFDEF HAVE_NUMPY
+NUMPY_DEF = -DHAVE_NUMPY
+!ELSE
+NUMPY_DEF =
+!ENDIF
+
+EXTRAFLAGS =	-I$(PYDIR)/include $(NUMPY_DEF)
+
 
 default:	$(PYGDAL_DLL)
 
