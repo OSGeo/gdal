@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.43  2004/11/11 18:29:44  fwarmerdam
+# Added Bonne.
+#
 # Revision 1.42  2004/05/15 17:57:40  warmerda
 # Fixed SRS_UL_FOOT_CONV.
 #
@@ -490,6 +493,9 @@ class SpatialReference:
 
     def SetCS( self, clat, clong, fe, fn ):
 	return _gdal.OSRSetCS( self._o, clat, clong, fe, fn )
+
+    def SetBonne( self, clat, clong, fe, fn ):
+	return _gdal.OSRSetBonne( self._o, clat, clong, fe, fn )
 
     def SetEC( self, stdp1, stdp2, clat, clong, fe, fn ):
 	return _gdal.OSRSetEC( self._o, stdp1, stdp2, clat, clong, fe, fn )
