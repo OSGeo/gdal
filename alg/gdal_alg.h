@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/12/07 17:09:38  warmerda
+ * added order flag to GenImgProjTransformer
+ *
  * Revision 1.5  2002/12/06 21:43:12  warmerda
  * tweak prototypes
  *
@@ -90,7 +93,8 @@ typedef int
 void CPL_DLL *
 GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
                                  GDALDatasetH hDstDS, const char *pszDstWKT,
-                                 int bGCPUseOK, double dfGCPErrorThreshold );
+                                 int bGCPUseOK, double dfGCPErrorThreshold,
+                                 int nOrder );
 void CPL_DLL GDALDestroyGenImgProjTransformer( void * );
 int CPL_DLL GDALGenImgProjTransform( 
     void *pTransformArg, int bDstToSrc, int nPointCount,
