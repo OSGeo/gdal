@@ -26,6 +26,9 @@
  *
  * 
  * $Log$
+ * Revision 1.11  2001/08/20 13:40:28  warmerda
+ * modified message on failure to open if not a file
+ *
  * Revision 1.10  2001/07/18 04:04:30  warmerda
  * added CPL_CVSID
  *
@@ -172,9 +175,15 @@ GDALDatasetH GDALOpen( const char * pszFilename, GDALAccess eAccess )
             return NULL;
     }
 
-    CPLError( CE_Failure, CPLE_OpenFailed,
-              "`%s' not recognised as a supported file format.\n",
-              pszFilename );
+    if( oOpenInfo.bStatOK )
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "`%s' not recognised as a supported file format.\n",
+                  pszFilename );
+    else
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "`%s' does not exist in the file system,\n"
+                  "and is not recognised as a supported dataset name.\n",
+                  pszFilename );
               
     return NULL;
 }
