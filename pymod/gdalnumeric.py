@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.13  2004/03/21 17:21:52  dron
+# Handle unsigned integer types in type code conversion routines.
+#
 # Revision 1.12  2004/02/08 09:13:56  aamici
 # optimize Band.ReadAsArray performance avoiding memory copy.
 #
@@ -180,11 +183,11 @@ def GDALTypeCodeToNumericTypeCode( gdal_code ):
     if gdal_code == GDT_Byte:
         return UnsignedInt8
     elif gdal_code == GDT_UInt16:
-        return None
+        return UnsignedInt16
     elif gdal_code == GDT_Int16:
         return Int16
     elif gdal_code == GDT_UInt32:
-        return None
+        return UnsignedInt32
     elif gdal_code == GDT_Int32:
         return Int32
     elif gdal_code == GDT_Float32:
@@ -207,10 +210,16 @@ def NumericTypeCodeToGDALTypeCode( numeric_code ):
         return GDT_Byte
     elif numeric_code == Int16:
         return GDT_Int16
+    elif numeric_code == UnsignedInt16:
+        return GDT_UInt16
     elif numeric_code == Int32:
         return GDT_Int32
+    elif numeric_code == UnsignedInt32:
+        return GDT_UInt32
     elif numeric_code == Int:
         return GDT_Int32
+    elif numeric_code == UnsignedInt:
+        return GDT_UInt32
     elif numeric_code == Float32:
         return GDT_Float32
     elif numeric_code == Float64:
