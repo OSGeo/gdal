@@ -1,5 +1,5 @@
 
-cOBJ	=	ceosopen.obj ceosdataset.obj 
+OBJ	=	ceosopen.obj ceosdataset.obj 
 
 GDAL_ROOT	=	..\..
 
