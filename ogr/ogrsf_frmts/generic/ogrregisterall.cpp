@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/08/24 04:44:05  danmo
+ * Added optional OGDI driver in OGR
+ *
  * Revision 1.3  1999/12/22 15:36:45  warmerda
  * RegisterOGRMIF no longer exists
  *
@@ -54,5 +57,8 @@ void OGRRegisterAll()
     RegisterOGRTiger();
     RegisterOGRS57();
     RegisterOGRTAB();
+#ifdef OGDI_ENABLED
+    RegisterOGROGDI();
+#endif
 }
 

@@ -6,6 +6,11 @@ include $(GDAL_ROOT)/GDALmake.opt
 OBJ	=	ogrsfdriverregistrar.o ogrlayer.o ogrdatasource.o \
 		ogrsfdriver.o ogrregisterall.o
 
+ifeq ($(OGDI_FLAG),ENABLED)
+CFLAGS   :=	$(CFLAGS) -DOGDI_ENABLED
+CXXFLAGS :=	$(CXXFLAGS) -DOGDI_ENABLED
+endif
+
 ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port $(CFLAGS)
 
 

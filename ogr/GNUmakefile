@@ -16,11 +16,16 @@ INST_H_FILES	=	ogr_core.h ogr_feature.h ogr_geometry.h ogr_p.h \
 
 OGR_LIB  =	ogr.a
 
-LIBS	:=	$(OGR_LIB) $(CPL_LIB) $(LIBS) 
+LIBS	:=	$(OGR_LIB) $(CPL_LIB) $(LIBS) $(OGDI_LIBS)
 
 FRMTS_LIB = 	ogrsf_frmts/ogrsf_frmts.a
 
 LINCLUDE =	-Iogrsf_frmts -I. -I$(GDAL_ROOT)/port 
+
+ifeq ($(OGDI_FLAG),ENABLED)
+CFLAGS   :=	$(CFLAGS) -DOGDI_ENABLED
+CXXFLAGS :=	$(CXXFLAGS) -DOGDI_ENABLED
+endif
 
 default:	$(OGR_LIB)
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/08/24 04:44:05  danmo
+ * Added optional OGDI driver in OGR
+ *
  * Revision 1.13  2000/08/18 21:52:53  svillene
  * Add OGR Representation
  *
@@ -248,6 +251,7 @@ void    RegisterOGRTiger();
 void	RegisterOGRS57();
 void    RegisterOGRTAB();
 void    RegisterOGRMIF();
+void    RegisterOGROGDI();
 CPL_C_END
 
 

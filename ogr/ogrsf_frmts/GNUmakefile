@@ -1,3 +1,5 @@
+include ../../GDALmake.opt
+
 default:
 	(cd generic; $(MAKE) $*)
 	(cd shape; $(MAKE) $*)
@@ -6,6 +8,9 @@ default:
 	(cd tiger; $(MAKE) $*)
 	(cd s57; $(MAKE) $*)
 	(cd mitab; $(MAKE) $*)
+ifeq ($(HAVE_OGDI),yes)
+	(cd ogdi; $(MAKE) $*)
+endif
 
 clean:
 	rm -f ogrsf_frmts.a
@@ -16,5 +21,8 @@ clean:
 	(cd tiger; $(MAKE) clean)
 	(cd s57; $(MAKE) clean)
 	(cd mitab; $(MAKE) clean)
+ifeq ($(HAVE_OGDI),yes)
+	(cd ogdi; $(MAKE) clean)
+endif
 
 
