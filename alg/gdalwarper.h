@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/08/11 20:11:47  warmerda
+ * added GDALInitializeWarpedVRT
+ *
  * Revision 1.13  2004/08/11 19:01:25  warmerda
  * Added prototypes for GDALAutoCreateWarpedVRT and GDALCreateWarpedVRT
  *
@@ -231,6 +234,9 @@ GDALDatasetH CPL_DLL
 GDALCreateWarpedVRT( GDALDatasetH hSrcDS, 
                      int nPixels, int nLines, double *padfGeoTransform,
                      GDALWarpOptions *psOptions );
+
+CPLErr CPL_DLL GDALInitializeWarpedVRT( GDALDatasetH hDS, 
+                                        GDALWarpOptions *psWO );
 
 CPL_C_END
 
