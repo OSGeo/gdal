@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2001/11/07 22:08:51  warmerda
+ * dont put + in to_meter value
+ *
  * Revision 1.20  2001/11/02 22:21:15  warmerda
  * fixed memory leak
  *
@@ -1082,7 +1085,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
 
     else
     {
-        sprintf( szProj4+strlen(szProj4), "+to_meter=+%.10f ",
+        sprintf( szProj4+strlen(szProj4), "+to_meter=%.10f ",
                  dfLinearConv );
     }
 
