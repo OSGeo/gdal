@@ -53,14 +53,6 @@ int GDALBridgeInitialize( const char * pszTargetDir )
 
     if( pfnTest == NULL )
     {
-        sprintf( szPath,
-                 "%s%c%s", getenv("GDAL_HOME"),
-                 PATH_SEP, pszSOFilename );
-        pfnTest = GBGetSymbol( szPath, "GDALOpen" );
-    }
-
-    if( pfnTest == NULL )
-    {
         sprintf( szPath, pszSOFilename );
         pfnTest = GBGetSymbol( szPath, "GDALOpen" );
     }
