@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/01/06 21:37:00  warmerda
+ * added CPL_DLL attribute on OGRBuildPolygon...
+ *
  * Revision 1.4  2003/01/02 21:45:23  warmerda
  * move OGRBuildPolygonsFromEdges into C API
  *
@@ -122,7 +125,7 @@ OGRGeometryH CPL_DLL OGR_G_GetGeometryRef( OGRGeometryH, int );
 OGRErr CPL_DLL OGR_G_AddGeometry( OGRGeometryH, OGRGeometryH );
 OGRErr CPL_DLL OGR_G_AddGeometryDirectly( OGRGeometryH, OGRGeometryH );
 
-OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLinesAsCollection,
+OGRGeometryH CPL_DLL OGRBuildPolygonFromEdges( OGRGeometryH hLinesAsCollection,
                                        int bBestEffort, 
                                        int bAutoClose, 
                                        double dfTolerance,
