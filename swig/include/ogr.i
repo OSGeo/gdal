@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.19  2005/02/22 15:33:37  kruland
+ * Removed duplicate defns of SetField that I introduced in previous revision.
+ * Added %appy to SetField which will call str() on second arg.
+ *
  * Revision 1.18  2005/02/22 02:04:33  kruland
  * Corrected decl of FieldDefn constructor.
  * Implemented first cut at Feature.SetField() -- needs to accept any for value.
@@ -716,14 +720,6 @@ public:
     return OGR_F_GetFieldIndex(self, name);
   }
 
-  void SetField( int index, const char*value ) {
-    OGR_F_SetFieldString( self, index, value);
-  }
-
-  void SetField( const char *name, const char*value ) {
-    OGR_F_SetFieldString( self, OGR_F_GetFieldIndex(self, name), value );
-  }
-  
   int GetFID() {
     return OGR_F_GetFID(self);
   }
@@ -750,6 +746,7 @@ public:
 
   /* ---- SetField ----------------------------- */
   
+  %apply ( tostring argin ) { (const char* value) };
   void SetField(int id, const char* value) {
     OGR_F_SetFieldString(self, id, value);
   }
@@ -757,6 +754,8 @@ public:
   void SetField(const char* name, const char* value) {
     OGR_F_SetFieldString(self, OGR_F_GetFieldIndex(self, name), value);
   }
+  %clear (const char* value );
+
   /* ------------------------------------------- */  
   
   %feature("kwargs") SetFrom;
