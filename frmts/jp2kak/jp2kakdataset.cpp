@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2003/05/02 18:36:59  warmerda
+ * added Clayers and FLUSH keywords
+ *
  * Revision 1.6  2003/04/17 16:47:42  warmerda
  * added ROI processing while encoding
  *
@@ -1167,6 +1170,7 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
     int	   nXSize = poSrcDS->GetRasterXSize();
     int    nYSize = poSrcDS->GetRasterYSize();
     bool   bReversible = false;
+    int    bFlushEnabled = CSLFetchBoolean( papszOptions, "FLUSH", TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize Kakadu warning/error reporting subsystem.            */
@@ -1217,12 +1221,12 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      How many layers?                                                */
 /* -------------------------------------------------------------------- */
-    int      layer_count;
+    int      layer_count = 12;
 
-    if( CSLFetchNameValue(papszOptions,"LAYERS") == NULL )
-        layer_count = 12;
-    else
+    if( CSLFetchNameValue(papszOptions,"LAYERS") != NULL )
         layer_count = atoi(CSLFetchNameValue(papszOptions,"LAYERS"));
+    else if( CSLFetchNameValue(papszOptions,"Clayers") != NULL )
+        layer_count = atoi(CSLFetchNameValue(papszOptions,"Clayers"));
     
 /* -------------------------------------------------------------------- */
 /*	Establish how many bytes of data we want for each layer.  	*/
@@ -1390,8 +1394,11 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
 
         if( pszValue != NULL )
         {
-            oCodeStream.access_siz()->parse_string(
-                CPLSPrintf( "%s=%s", apszParms[iParm], pszValue ) );
+            const char *pszOpt = 
+                CPLSPrintf( "%s=%s", apszParms[iParm], pszValue );
+            oCodeStream.access_siz()->parse_string( pszOpt );
+
+            CPLDebug( "JP2KAK", "parse_string(%s)", pszOpt );
         }
     }
 
@@ -1586,7 +1593,7 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
             }
         }
 
-        if( oCodeStream.ready_for_flush() )			
+        if( oCodeStream.ready_for_flush() && bFlushEnabled )
         {
             CPLDebug( "JP2KAK", 
                       "Calling oCodeStream.flush() at line %d",
@@ -1594,7 +1601,7 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
             
             oCodeStream.flush( layer_bytes, layer_count );
         }
-        else
+        else if( bFlushEnabled )
             CPLDebug( "JP2KAK", 
                       "read_for_flush() is false at line %d.",
                       iLine );
