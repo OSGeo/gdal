@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.8  2005/02/23 17:46:39  kruland
+ * Added r/o attribute RasterCount.
+ * Added AddBand method.
+ * Added WriteRaster method.
+ *
  * Revision 1.7  2005/02/21 14:51:32  kruland
  * Needed to rename GDALDriver to GDALDriverShadow in the last commit.
  *
@@ -58,6 +63,7 @@ public:
 %immutable;
   int RasterXSize;
   int RasterYSize;
+  int RasterCount;
 %mutable;
 
   ~GDALDatasetShadow() {
@@ -109,11 +115,12 @@ public:
   }
 %clear char **papszMetadata;
 
-  // The int,int* arguments are typemapped.  The name of the first argument
+  // The (int,int*) arguments are typemapped.  The name of the first argument
   // becomes the kwarg name for it.
 %feature("kwargs") BuildOverviews;
 %apply (int nList, int* pList) { (int overviewlist, int *pOverviews) };
-  int BuildOverviews( const char *resampling = "NEAREST", int overviewlist = 0 , int *pOverviews = 0 ) {
+  int BuildOverviews( const char *resampling = "NEAREST",
+                      int overviewlist = 0 , int *pOverviews = 0 ) {
     return GDALBuildOverviews( self, resampling, overviewlist, pOverviews, 0, 0, 0, 0);
   }
 %clear (int overviewlist, int *pOverviews);
@@ -139,16 +146,68 @@ public:
     GDALFlushCache( self );
   }
 
+%feature ("kwargs") AddBand;
+/* uses the defined char **options typemap */
+  CPLErr AddBand( GDALDataType datatype = GDT_Byte, char **options = 0 ) {
+    return GDALAddBand( self, datatype, options );
+  }
+
+%feature("kwargs") WriteRaster;
+%apply (int nLen, char *pBuf) { (int buf_len, char *buf_string) };
+%apply (int *optional_int) { (int*) };
+%apply (int *optional_int) { (GDALDataType *buf_type) };
+%apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
+  CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
+	              int buf_len, char *buf_string,
+                      int *buf_xsize = 0, int *buf_ysize = 0,
+                      GDALDataType *buf_type = 0,
+                      int band_list = 0, int *pband_list = 0 ) {
+    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
+    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
+    GDALDataType ntype;
+    if ( buf_type != 0 ) {
+      ntype = (GDALDataType) *buf_type;
+    } else {
+      int lastband = GDALGetRasterCount( self ) - 1;
+      ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
+    }
+    bool myBandList = false;
+    int nBandCount;
+    int *pBandList;
+    if ( band_list != 0 ) {
+      myBandList = false;
+      nBandCount = band_list;
+      pBandList = pband_list;
+    }
+    else {
+      myBandList = true;
+      nBandCount = GDALGetRasterCount( self );
+      pBandList = (int*) CPLMalloc( sizeof(int) * nBandCount );
+      for( int i = 0; i< nBandCount; ++i ) {
+        pBandList[i] = i;
+      }
+    }
+    return GDALDatasetRasterIO( self, GF_Write, xoff, yoff, xsize, ysize,
+                                (void*) buf_string, nxsize, nysize, ntype,
+                                band_list, pband_list, 0, 0, 0 );
+    if ( myBandList ) {
+       CPLFree( pBandList );
+    }
+  }
+%clear (int band_list, int *pband_list );
+%clear (GDALDataType *buf_type);
+%clear (int*);
+%clear (int buf_len, char *buf_string);
+
 /* NEEDED */
 /* GetSubDatasets */
 /* ReadAsArray */
 /* AddBand */
 /* AdviseRead */
 /* ReadRaster */
-/* WriteRaster */
   
-}
-};
+} /* extend */
+}; /* GDALDatasetShadow */
 
 %{
 int GDALDatasetShadow_RasterXSize_get( GDALDatasetShadow *h ) {
@@ -156,5 +215,8 @@ int GDALDatasetShadow_RasterXSize_get( GDALDatasetShadow *h ) {
 }
 int GDALDatasetShadow_RasterYSize_get( GDALDatasetShadow *h ) {
   return GDALGetRasterYSize( h );
+}
+int GDALDatasetShadow_RasterCount_get( GDALDatasetShadow *h ) {
+  return GDALGetRasterCount( h );
 }
 %}
