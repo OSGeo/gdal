@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/09/22 17:17:50  warmerda
+ * added support for .bpw and .bmpw worldfiles
+ *
  * Revision 1.24  2003/09/11 19:55:15  warmerda
  * avoid warnings
  *
@@ -1140,6 +1143,16 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->bGeoTransformValid =
         GDALReadWorldFile( poOpenInfo->pszFilename, ".wld",
                            poDS->adfGeoTransform );
+
+    if( !poDS->bGeoTransformValid )
+        poDS->bGeoTransformValid =
+            GDALReadWorldFile( poOpenInfo->pszFilename, ".bpw",
+                               poDS->adfGeoTransform );
+
+    if( !poDS->bGeoTransformValid )
+        poDS->bGeoTransformValid =
+            GDALReadWorldFile( poOpenInfo->pszFilename, ".bmpw",
+                               poDS->adfGeoTransform );
 
     return( poDS );
 }
