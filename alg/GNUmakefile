@@ -7,7 +7,7 @@ OBJ	=	gdalmediancut.o gdaldither.o gdal_crs.o gdaltransformer.o \
 		gdalwarpoperation.o gdalchecksum.o gdal_rpc.o
 
 ifeq ($(OGR_ENABLED),yes)
-OBJ = $(OBJ) contour.o
+OBJ += contour.o
 endif
 
 
