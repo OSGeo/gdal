@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.8  2003/03/07 16:28:55  warmerda
+# lots of 'NULL' fixes
+#
 # Revision 1.7  2003/03/03 05:16:11  warmerda
 # added DeleteLayer and DeleteDataSource methods
 #
@@ -64,7 +67,8 @@ wkbMultiPoint = 4
 wkbMultiLineString = 5
 wkbMultiPolygon = 6
 wkbGeometryCollection = 7
-wkbNone = 100 
+wkbNone = 100
+wkbLinearRing = 101
 wkbPoint25D = 0x80000001   
 wkbLineString25D = 0x80000002
 wkbPolygon25D = 0x80000003
@@ -104,8 +108,8 @@ _gdal.OGRRegisterAll()
 
 def Open( filename, update = 0 ):
     
-    ds_o = _gdal.OGROpen( filename, update, None )
-    if ds_o is None:
+    ds_o = _gdal.OGROpen( filename, update, 'NULL' )
+    if ds_o is None or ds_o == 'NULL':
         raise ValueError, 'Unable to open: ' + filename
     else:
         return DataSource( ds_o )
@@ -115,7 +119,7 @@ def GetDriverCount():
 
 def GetDriver( driver_index ):
     dr_o = _gdal.OGRGetDriver( driver_index )
-    if dr_o is None:
+    if dr_o is None or dr_o == 'NULL':
         raise IndexError
     else:
         return Driver( dr_o )
@@ -147,15 +151,15 @@ class Driver:
 
     def Open( self, filename, update = 0 ):
         ds_o = _gdal.OGR_Dr_Open( self._o, filename, update )
-        if ds_o is None:
+        if ds_o is None or ds_o == 'NULL':
             return None
         else:
             return DataSource( ds_o )
 
     def CreateDataSource( self, filename, options = None ):
         ds_o = _gdal.OGR_Dr_CreateDataSource( self._o, filename, "NULL" )
-        if ds_o is None:
-            return None
+        if ds_o is None or ds_o == 'NULL':
+            raise ValueError, CPLGetLastErrorMsg()
         else:
             return DataSource( ds_o )
 
@@ -184,48 +188,45 @@ class DataSource:
     def GetLayer(self,iLayer=0):
         # If given a layer name, scan for it. 
         if type(iLayer).__name__ == 'str':
-            layer_count = self.GetLayerCount()
-            for i in range(layer_count):
-                if self.GetLayer(i).GetName() == iLayer:
-                    return self.GetLayer(i)
-            return None
-            
+            return self.GetLayerByName( iLayer )
+
         l_obj = _gdal.OGR_DS_GetLayer( self._o, iLayer)
-        if l_obj is not None:
+        if l_obj is not None and l_obj != 'NULL':
             return Layer( l_obj )
         else:
-            return None
+            raise IndexError, 'No layer %d on datasource' % iLayer
+
+    def GetLayerByName(self,name):
+        # If given a layer name, scan for it. 
+        l_obj = _gdal.OGR_DS_GetLayerByName( self._o, name)
+        if l_obj is not None and l_obj != 'NULL':
+            return Layer( l_obj )
+        else:
+            raise IndexError, 'No layer %s on datasource' % name 
 
     def DeleteLayer( self, iLayer ):
         return _gdal.OGR_DS_DeleteLayer( self._o, iLayer )
 
-    def GetLayerByName(self,name):
-        layer_count = self.GetLayerCount()
-        for i in range(layer_count):
-            if self.GetLayer(i).GetName() == name:
-                return self.GetLayer(i)
-        return None
-
     def CreateLayer(self, name, srs = None, geom_type = wkbUnknown,
                     options = [] ):
         obj = _gdal.OGR_DS_CreateLayer( self._o, name, srs, geom_type, options)
-        if obj is None:
-            return None
+        if obj is None and obj != 'NULL':
+            raise ValueError, gdal.GetLastErrorMsg()
         else:
             return Layer( obj = obj )
 
     def TestCapability( self, cap ):
         return _gdal.OGR_DS_TestCapability( self._o, cap )
 
-    def ExecuteSQL( self, statement, region = None, dialect = "" ):
+    def ExecuteSQL( self, statement, region = 'NULL', dialect = "" ):
         l_obj = _gdal.OGR_DS_ExecuteSQL( self._o, statement, region, dialect )
-        if l_obj is not None:
+        if l_obj is not None and l_obj != 'NULL':
             return Layer( l_obj )
         else:
             return None
 
-    def ReleaseResultsSet( self, layer ):
-        _gdal.OGR_DS_ReleaseResultsSet( self._o, layer._o )
+    def ReleaseResultSet( self, layer ):
+        _gdal.OGR_DS_ReleaseResultSet( self._o, layer._o )
 
 #############################################################################
 # OGRLayer
@@ -238,14 +239,14 @@ class Layer:
 
     def SetSpatialFilter( self, geom ):
         if geom is None:
-            geom_o = None
+            geom_o = 'NULL'
         else:
             geom_o = geom._o
         _gdal.OGR_L_SetSpatialFilter( self._o, geom_o )
 
     def GetSpatialFilter( self ):
         geom_o = _gdal.OGR_L_GetSpatialGeometry( self._o )
-        if geom_o is None:
+        if geom_o is None or geom_o == 'NULL':
             return None
         else:
             return Geometry( _obj = geom_o )
@@ -261,14 +262,14 @@ class Layer:
 
     def GetFeature( self, fid ):
         f_o = _gdal.OGR_L_GetFeature( self._o, fid )
-        if f_o is None:
+        if f_o is None or f_o == 'NULL':
             return None
         else:
             return Feature( obj = f_o )
 
     def GetNextFeature( self ):
         f_o = _gdal.OGR_L_GetNextFeature( self._o )
-        if f_o is None:
+        if f_o is None or f_o == 'NULL':
             return None
         else:
             return Feature( obj = f_o )
@@ -286,7 +287,7 @@ class Layer:
         return _gdal.OGR_L_GetFeatureCount( self._o, force )
 
     def GetExtent( self, force = 1 ):
-        raise ValueError, 'No implemented yet'
+        raise ValueError, 'Not implemented yet'
 
     def TestCapability( self, cap ):
         return _gdal.OGR_L_TestCapability( self._o, cap )
@@ -613,10 +614,10 @@ class Geometry:
     def GetZ( self, i ):
         return _gdal.OGR_G_GetZ( self._o, i )
 
-    def SetPoint( self, i, x, y, z ):
+    def SetPoint( self, i, x, y, z = 0):
         return _gdal.OGR_G_SetPoint( self._o, i, x, y, z )
 
-    def AddPoint( self, x, y, z ):
+    def AddPoint( self, x, y, z = 0 ):
         return _gdal.OGR_G_AddPoint( self._o, x, y, z )
 
     def GetGeometryCount( self ):
