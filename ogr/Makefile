@@ -19,10 +19,10 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
 		ogrfielddefn.obj ogr_srsnode.obj ogrspatialreference.obj \
 		ogr_srs_proj4.obj
 
-OBJ_OLEDB =	oledb_sup.obj oledbsuprowset.obj oledb_sf.obj \
+OBJ_OLEDB =	oledb_sup.obj \
 		sfcenumerator.obj sfcdatasource.obj sfctable.obj
 
-default:        test1.exe sfcdump.exe test2.exe test3.exe
+default:        test1.exe sfcdump.exe test2.exe
 
 frmts:
 	cd ogrsf_frmts

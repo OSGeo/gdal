@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/09/07 12:05:59  warmerda
+ * trimmed out some old oledbsup related stuff
+ *
  * Revision 1.8  1999/06/09 21:03:58  warmerda
  * Removed OledbSupRowset documentation ... this class will be decommisioned
  * soon.
@@ -89,67 +92,9 @@ HRESULT AnsiToBSTR( const char *, BSTR * );
 int OleSupInitialize();
 int OleSupUninitialize();
 
-HRESULT OledbSupGetDataSource( REFCLSID, const char*, IOpenRowset ** );
-HRESULT OledbSupGetTableRowset( IOpenRowset *, const char*, IRowset ** );
-
 void OledbSupWriteColumnInfo( FILE *, DBCOLUMNINFO * );
 void OledbSupDumpRow( FILE *, DBCOLUMNINFO *, int, DBBINDING *,
                       ULONG, ULONG, BYTE * );
-
-/************************************************************************/
-/*                         OledbSupRowset                               */
-/************************************************************************/
-
-class OledbSupRowset
-{
-  protected:    
-    IRowset    *pIRowset;
-    IAccessor  *pIAccessor;
-    HACCESSOR  hAccessor;
-
-    ULONG       nColumns;
-    DBCOLUMNINFO *paoColumnInfo;
-    LPWSTR      pwszColumnStringBuffer;
-
-    ULONG      nBindings;
-    DBBINDING  *paoBindings;
-    int        *panBoundOrdinal;
-    
-    int        nMaxRecordSize;
-    BYTE       *pabyRecord;
-    
-    HRESULT    EstablishAccessor();
-    HRESULT    EstablishColumnInfo();
-    HRESULT    EstablishDefaultBindings();
-
-    static HRESULT EstablishOneDefaultBinding( DBCOLUMNINFO*, DBBINDING*,
-                                               DWORD * );
-
-  public:
-                 OledbSupRowset();
-    virtual      ~OledbSupRowset();
-
-    HRESULT      OpenTable( IOpenRowset *, const char * );
-
-    virtual HRESULT AccessRowset( IRowset * );
-
-    IRowset     *GetIRowset() { return pIRowset; }
-
-    int          GetNumColumns() { return nColumns; }
-
-    int          GetColumnOrdinal( const char * );
-
-    DBCOLUMNINFO *GetColumnInfo( int );
-
-    int          GetNextRecord( HRESULT * );
-
-    void         *GetFieldData( int  iColumn,
-                                int * pnDBType = NULL,
-                                int * pnStatus = NULL,
-                                int * pnSize = NULL );
-
-    void         DumpRow( FILE * );
-};
 
 /* -------------------------------------------------------------------- */
 /*                       Constants from sampclnt.                       */

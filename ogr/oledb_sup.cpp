@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/09/07 12:05:59  warmerda
+ * trimmed out some old oledbsup related stuff
+ *
  * Revision 1.5  1999/05/21 02:38:06  warmerda
  * added AnsiToBSTR()
  *
@@ -197,171 +200,6 @@ HRESULT AnsiToBSTR( const char *pszInput, BSTR * ppszOutput )
     CoTaskMemFree( pszUnicode );
 
     return ResultFromScode( S_OK );
-}
-
-/************************************************************************/
-/*                       OledbSupGetDataSource()                        */
-/************************************************************************/
-
-HRESULT OledbSupGetDataSource( REFCLSID phProviderCLSID, 
-                               const char *pszDataSource,
-                               IOpenRowset **ppIOpenRowset )
-
-{
-    IDBCreateSession    *pIDBCreateSession = NULL;
-    IDBInitialize*	pIDBInit = NULL;
-    IDBProperties*	pIDBProperties = NULL;
-    DBPROPSET		dbPropSet[1];
-    DBPROP		dbProp[1];
-
-    HRESULT	hr;
-
-    assert(ppIOpenRowset != NULL);
-    *ppIOpenRowset = NULL;
-
-    VariantInit(&(dbProp[0].vValue));
-
-    // Create an instance of the SampProv sample data provider
-    hr = CoCreateInstance( phProviderCLSID, NULL, CLSCTX_INPROC_SERVER, 
-                           IID_IDBInitialize, (void **)&pIDBInit ); 
-    if (FAILED(hr))
-    {
-        DumpErrorHResult( hr, "CoCreateInstance" );
-        goto error;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Select the data source.  We don't need to do this for some      */
-/*      providers, it seems.                                            */
-/* -------------------------------------------------------------------- */
-    if( pszDataSource != NULL && strlen(pszDataSource) > 0 )
-    {
-        LPWSTR            pwszDataSource = NULL;
-        // Initialize this provider with the path to the customer.csv file
-        dbPropSet[0].rgProperties	= &dbProp[0];
-        dbPropSet[0].cProperties	= 1;
-        dbPropSet[0].guidPropertySet	= DBPROPSET_DBINIT;
-       
-        dbProp[0].dwPropertyID		= DBPROP_INIT_DATASOURCE;
-        dbProp[0].dwOptions		= DBPROPOPTIONS_REQUIRED;
-        dbProp[0].colid			= DB_NULLID;
-
-        AnsiToUnicode( pszDataSource, &pwszDataSource );
-
-        V_VT(&(dbProp[0].vValue))	= VT_BSTR;
-        V_BSTR(&(dbProp[0].vValue))	= SysAllocString( pwszDataSource );
-        CoTaskMemFree( pwszDataSource );
-
-        if ( NULL == V_BSTR(&(dbProp[0].vValue)) )
-        {
-            DumpErrorMsg( "SysAllocString failed\n" );
-            goto error;
-        }
-
-        hr = pIDBInit->QueryInterface( IID_IDBProperties, 
-                                       (void**)&pIDBProperties);
-        if (FAILED(hr))
-        {
-            DumpErrorHResult( hr, "IDBInitialize::QI for IDBProperties");
-            goto error;
-        }
-
-        hr = pIDBProperties->SetProperties( 1, &dbPropSet[0]);
-        if (FAILED(hr))
-        {
-            DumpErrorHResult( hr, "IDBProperties::SetProperties" );
-            goto error;
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Initialize the database.                                        */
-/* -------------------------------------------------------------------- */
-    hr = pIDBInit->Initialize();
-    if (FAILED(hr))
-    {
-        DumpErrorHResult( hr, "IDBInitialize::Initialize" );
-        goto error;
-    }
-
-    hr = pIDBInit->QueryInterface( IID_IDBCreateSession, 
-                                   (void**)&pIDBCreateSession);
-    pIDBInit->Release();
-    pIDBInit = NULL;
-        
-    if (FAILED(hr))
-    {
-        DumpErrorHResult( hr, "IDBInitialize::QI for IDBCreateSession");
-        goto error;
-    }
-
-    hr = pIDBCreateSession->CreateSession( NULL, IID_IOpenRowset, 
-                                           (IUnknown**) ppIOpenRowset );    
-
-    pIDBCreateSession->Release();
-    pIDBCreateSession = NULL;
-     
-    if (FAILED(hr))
-    {
-        DumpErrorHResult( hr, "IDBCreateSession::CreateSession");
-        goto error;
-    }
-
-    hr = ResultFromScode( S_OK );
-
-  error:    
-    VariantClear( &(dbProp[0].vValue) );
-
-    if( pIDBProperties )
-        pIDBProperties->Release();
-
-    return hr;    
-}
-
-/************************************************************************/
-/*                       OledbSupGetTableRowset()                       */
-/*                                                                      */
-/*      Get the rowset associated with a particular table name.         */
-/************************************************************************/
-
-HRESULT OledbSupGetTableRowset( IOpenRowset * pIOpenRowset, 
-                                const char *pszTableName, 
-                                IRowset ** ppIRowset )
-{
-   DBID            dbcolid;
-   HRESULT         hr;
-
-   assert(pIOpenRowset != NULL);
-   assert(ppIRowset  != NULL );
-
-   *ppIRowset = NULL;
-    
-   // tell the provider which table to open
-   dbcolid.eKind           = DBKIND_NAME;
-   AnsiToUnicode( pszTableName, &(dbcolid.uName.pwszName) );
-    
-   hr = pIOpenRowset->OpenRowset
-      ( NULL,                 // pUnkOuter - we are not aggregating
-        &dbcolid,             // pTableID -  the table we want
-        NULL,					// pIndexID - the index we want
-        IID_IRowset,          // riid - interface we want on the rowset object
-        0,                    // cProperties - we are niave about props for now
-        NULL,                 // prgProperties[]
-        (IUnknown**)ppIRowset );
-
-   CoTaskMemFree( dbcolid.uName.pwszName );
-
-   if (FAILED(hr))
-   {
-      DumpErrorHResult( hr, "IOpenRowset::OpenRowset" );
-      goto error;
-   }
-    
-   // all went well
-   return ResultFromScode( S_OK );
-
-  error:
-   return ResultFromScode( hr );
 }
 
 /************************************************************************/
@@ -773,7 +611,7 @@ static void PrintColumn
                 int      ii;
 
                 sprintf( out_string, "(BLOB:%dbytes:0x", dwLength );
-                for( ii = 0; ii < 8 && ii < dwLength; ii++ )
+                for( ii = 0; ii < 8 && ii < (int) dwLength; ii++ )
                 {
                     sprintf( out_string + strlen(out_string), 
                              "%02x", pColumn->bData[ii] );
