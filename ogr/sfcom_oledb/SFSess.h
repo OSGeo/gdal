@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2002/08/15 15:39:47  warmerda
+ * Fixed type of m_nAuthorityId to be in, instead of WCHAR, to conform to the
+ * SF spec (as per http://bugzilla.remotesensing.org/show_bug.cgi?id=140.
+ *
  * Revision 1.23  2002/08/12 14:44:28  warmerda
  * backported VC6 compatibility
  *
@@ -956,7 +960,7 @@ class OGISSpat_Row
   public:
     int		m_nSpatialRefId;
     WCHAR	m_szAuthorityName[129];
-    WCHAR	m_nAuthorityId;
+    int 	m_nAuthorityId;
     WCHAR	m_pszSpatialRefSystem[10240];
 
     OGISSpat_Row()
