@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/02/02 21:09:44  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.31  2004/02/24 14:24:08  warmerda
  * Fixed a bug where 0/0 linkages terminated all other linkages on an element.
  *
@@ -278,6 +281,13 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN,
 OGRDGNLayer::~OGRDGNLayer()
 
 {
+    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    {
+        CPLDebug( "Mem", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  poFeatureDefn->GetName() );
+    }
+
     delete poEvalFeature;
     delete poFeatureDefn;
 
@@ -415,6 +425,9 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
     poFeature->SetField( "Weight", psElement->weight );
     poFeature->SetField( "Style", psElement->style );
     
+
+    m_nFeaturesRead++;
+
 /* -------------------------------------------------------------------- */
 /*      Collect linkage information                                     */
 /* -------------------------------------------------------------------- */
