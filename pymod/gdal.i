@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.100  2004/07/30 21:09:30  warmerda
+ * added AddBand()
+ *
  * Revision 1.99  2004/07/10 07:08:39  warmerda
  * added new GEOS methods
  *
@@ -646,6 +649,8 @@ int 	GDALGetRasterXSize( GDALDatasetH );
 int 	GDALGetRasterYSize( GDALDatasetH );
 int 	GDALGetRasterCount( GDALDatasetH );
 GDALRasterBandH  GDALGetRasterBand( GDALDatasetH, int );
+int     GDALAddBand( GDALDatasetH hDS, GDALDataType eType, 
+                     char **papszOptions );
 const char  *GDALGetProjectionRef( GDALDatasetH );
 int      GDALSetProjection( GDALDatasetH, const char * );
 int      GDALGetGeoTransform( GDALDatasetH, double * );

@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.93  2004/07/10 07:08:39  warmerda
- * added new GEOS methods
+ * Revision 1.94  2004/07/30 21:09:30  warmerda
+ * added AddBand()
  *
  ************************************************************************/
 
@@ -4062,6 +4062,35 @@ static PyObject *_wrap_GDALGetRasterBand(PyObject *self, PyObject *args) {
     _result = (GDALRasterBandH )GDALGetRasterBand(_arg0,_arg1);
     SWIG_MakePtr(_ptemp, (char *) _result,"_GDALRasterBandH");
     _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALAddBand(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    GDALDatasetH  _arg0;
+    GDALDataType  _arg1;
+    char ** _arg2;
+    char * _argc0 = 0;
+    char * _argc2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sis:GDALAddBand",&_argc0,&_arg1,&_argc2)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALAddBand. Expected _GDALDatasetH.");
+        return NULL;
+        }
+    }
+    if (_argc2) {
+        if (SWIG_GetPtr(_argc2,(void **) &_arg2,"_char_pp")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of GDALAddBand. Expected _char_pp.");
+        return NULL;
+        }
+    }
+    _result = (int )GDALAddBand(_arg0,_arg1,_arg2);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
@@ -10918,6 +10947,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALGetGeoTransform", _wrap_GDALGetGeoTransform, 1 },
 	 { "GDALSetProjection", _wrap_GDALSetProjection, 1 },
 	 { "GDALGetProjectionRef", _wrap_GDALGetProjectionRef, 1 },
+	 { "GDALAddBand", _wrap_GDALAddBand, 1 },
 	 { "GDALGetRasterBand", _wrap_GDALGetRasterBand, 1 },
 	 { "GDALGetRasterCount", _wrap_GDALGetRasterCount, 1 },
 	 { "GDALGetRasterYSize", _wrap_GDALGetRasterYSize, 1 },
