@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/09/11 22:47:54  aamici
+ * add class constructors and destructors where needed in order to
+ * let the mingw/cygwin binutils produce sensible partially linked objet files
+ * with 'ld -r'.
+ *
  * Revision 1.14  2003/05/28 19:16:43  warmerda
  * fixed up argument names and stuff for docs
  *
@@ -77,6 +82,14 @@
 #include <assert.h>
 
 CPL_CVSID("$Id$");
+
+/************************************************************************/
+/*                           OGRMultiPoint()                            */
+/************************************************************************/
+
+OGRMultiPoint::OGRMultiPoint()
+{
+}
 
 /************************************************************************/
 /*                          getGeometryType()                           */

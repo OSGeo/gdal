@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/09/11 22:47:53  aamici
+ * add class constructors and destructors where needed in order to
+ * let the mingw/cygwin binutils produce sensible partially linked objet files
+ * with 'ld -r'.
+ *
  * Revision 1.4  2003/01/11 15:29:55  warmerda
  * expanded tabs
  *
@@ -47,6 +52,10 @@ CPL_CVSID("$Id$");
 TigerPoint::TigerPoint( int bRequireGeom )
 {
     this->bRequireGeom = bRequireGeom;
+}
+
+TigerPoint::~TigerPoint()
+{
 }
 
 /************************************************************************/

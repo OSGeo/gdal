@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/09/11 22:47:53  aamici
+ * add class constructors and destructors where needed in order to
+ * let the mingw/cygwin binutils produce sensible partially linked objet files
+ * with 'ld -r'.
+ *
  * Revision 1.14  2003/08/18 14:47:53  warmerda
  * upgraded with *untested* TIGER 2003 support
  *
@@ -361,6 +366,8 @@ class TigerPoint : public TigerFileBase
                       // have a geom.  It's used in CreateFeature() to
                       // decide whether to report an error when a
                       // missing geom is detected.
+
+  virtual             ~TigerPoint();
 
  private:
  int                  bRequireGeom;
