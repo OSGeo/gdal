@@ -1,5 +1,12 @@
 2001-01-22  Frank Warmerdam  <warmerdam@pobox.com>
 
+	* Added alg directory, and GDALComputeMedianCutPCT(), and
+	GDALDitherRGB2PCT() functions.
+
+===============================================================================
+	
+2001-01-22  Frank Warmerdam  <warmerdam@pobox.com>
+
 	* Released gdal 1.1.3 source distributions.
 
 2001-01-20  Frank Warmerdam  <warmerdam@pobox.com>
