@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2004/07/06 19:35:51  warmerda
+ * Default to using FTString for unrecognised field types like logical.
+ *
  * Revision 1.31  2004/01/16 22:40:40  warmerda
  * any inner rings not assigned to a polygo are promoted to be outer rings
  *
@@ -928,12 +931,12 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
         oField.SetWidth( nWidth );
         oField.SetPrecision( nPrecision );
 
-        if( eDBFType == FTString )
-            oField.SetType( OFTString );
+        if( eDBFType == FTDouble )
+            oField.SetType( OFTReal );
         else if( eDBFType == FTInteger )
             oField.SetType( OFTInteger );
         else
-            oField.SetType( OFTReal );
+            oField.SetType( OFTString );
 
         poDefn->AddFieldDefn( &oField );
     }
