@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.27 2000/07/18 15:21:33 warmerda Exp $
+ * $Id: shpopen.c,v 1.28 2001/02/06 22:25:06 warmerda Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.28  2001/02/06 22:25:06  warmerda
+ * fixed memory leaks when SHPOpen() fails
+ *
  * Revision 1.27  2000/07/18 15:21:33  warmerda
  * added better enforcement of -1 for append in SHPWriteObject
  *
@@ -123,7 +126,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: shpopen.c,v 1.27 2000/07/18 15:21:33 warmerda Exp $";
+  "$Id: shpopen.c,v 1.28 2001/02/06 22:25:06 warmerda Exp $";
 
 #include "shapefil.h"
 
@@ -367,7 +370,12 @@ SHPHandle SHPOpen( const char * pszLayer, const char * pszAccess )
     }
     
     if( psSHP->fpSHP == NULL )
+    {
+        free( psSHP );
+        free( pszBasename );
+        free( pszFullname );
         return( NULL );
+    }
 
     sprintf( pszFullname, "%s.shx", pszBasename );
     psSHP->fpSHX = fopen(pszFullname, pszAccess );
