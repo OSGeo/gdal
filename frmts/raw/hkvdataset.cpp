@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2003/08/12 15:37:40  gwalter
+ * Make sure wgs-84 and wgs_84 treated the same way.
+ *
  * Revision 1.33  2003/08/12 15:26:09  gwalter
  * Bug fix for wgs_84 LL projection case.
  *
@@ -1183,7 +1186,8 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
             oLL.SetProjParm(SRS_PP_LONGITUDE_OF_ORIGIN,atof(pszOriginLong));
         }
 
-        if ((pszSpheroidName == NULL) || (EQUAL(pszSpheroidName,"wgs-84")))
+        if ((pszSpheroidName == NULL) || (EQUAL(pszSpheroidName,"wgs-84")) ||
+            (EQUAL(pszSpheroidName,"wgs_84")))
           {
             oLL.SetWellKnownGeogCS( "WGS84" );
           }
