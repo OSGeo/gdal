@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.115  2004/09/24 02:48:39  fwarmerdam
+ * Try to avoid unnecessary calls to TIFFReadDirectory() when scanning
+ * for overviews in files with only one directory.
+ *
  * Revision 1.114  2004/09/08 15:33:18  warmerda
  * allow writing of projection without geotrasnform
  *
@@ -2570,7 +2574,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 /* -------------------------------------------------------------------- */
     if( bBase )
     {
-        while( TIFFReadDirectory( hTIFF ) != 0 )
+        while( !TIFFLastDirectory( hTIFF ) 
+               && TIFFReadDirectory( hTIFF ) != 0 )
         {
             uint32	nThisDir = TIFFCurrentDirOffset(hTIFF);
             uint32	nSubType;
