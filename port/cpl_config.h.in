@@ -1,5 +1,8 @@
 /* port/cpl_config.h.in.  Generated from configure.in by autoheader.  */
 
+/* --prefix directory for GDAL install */
+#undef GDAL_PREFIX
+
 /* Define to 1 if you have the <assert.h> header file. */
 #undef HAVE_ASSERT_H
 
@@ -17,6 +20,9 @@
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
+
+/* Define to 1 if you have the <float.h> header file. */
+#undef HAVE_FLOAT_H
 
 /* Define as 0 or 1 according to the floating point format suported by the
    machine */
@@ -82,6 +88,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Define to 1 if you have the <values.h> header file. */
+#undef HAVE_VALUES_H
+
 /* Define to 1 if you have the `vprintf' function. */
 #undef HAVE_VPRINTF
 
@@ -136,7 +145,3 @@
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
 #undef WORDS_BIGENDIAN
-
-/* --prefix directory for GDAL install */
-#undef GDAL_PREFIX
-
