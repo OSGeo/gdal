@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/07/08 20:05:45  warmerda
+ * added GetFeatureCount()
+ *
  * Revision 1.2  1999/07/07 13:12:47  warmerda
  * Added spatial searching
  *
@@ -139,6 +142,17 @@ OGRFeature *OGRShapeLayer::GetNextFeature( long * pnFeatureId )
         delete poFeature;
     }        
 }
+
+/************************************************************************/
+/*                          GetFeatureCount()                           */
+/************************************************************************/
+
+int OGRShapeLayer::GetFeatureCount( int )
+
+{
+    return nTotalShapeCount;
+}
+
 
 /************************************************************************/
 /* ==================================================================== */

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/07/08 20:05:45  warmerda
+ * added GetFeatureCount()
+ *
  * Revision 1.1  1999/07/05 18:58:07  warmerda
  * New
  *
@@ -73,6 +76,8 @@ class OGRShapeLayer : public OGRLayer
     OGRFeature *	GetNextFeature( long * );
 
     OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
+
+    int                 GetFeatureCount( int );
 };
 
 /************************************************************************/
