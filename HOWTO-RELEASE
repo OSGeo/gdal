@@ -1,16 +1,12 @@
 	Notes on Preparing a GDAL Source Release
 	========================================
 
-1) Place Release notice in ChangeLog file. 
-
-2) Update the release date, and number information at the top of gcore/gdal.h.
+1) Update the release date, and number information at the top of gcore/gdal.h.
    Three macros: GDAL_VERSION_NUM, GDAL_RELEASE_DATE and GDAL_RELEASE_NAME.
 
-3) Update the VERSION file.
+2) Update the VERSION file.
 
-3.1) Update GDAL_VER macro in GDALmake.opt.in. 
-
-3.2) Update LIBGDAL_CURRENT/REVISION/AGE macros in GDALmake.opt.in.
+3) Update LIBGDAL_CURRENT/REVISION/AGE macros in GDALmake.opt.in.
    - For a release with no interface changes just bump REVISION. 
    - Adding interfaces, bump CURRENT/AGE, set REVISION to 0. 
    - Deleting interfaces / compatibility issues - bump CURRENT, others to zero.
@@ -26,6 +22,8 @@
 
 5) Update the GDAL gcore/index.dox to refer to the newly to be created
    source files, and commit. 
+
+5.5) Place Release notice in ChangeLog file. 
 
 6) Tag the release set in CVS. 
 
