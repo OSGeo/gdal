@@ -41,5 +41,5 @@ setup( name = 'Gdal Wrapper',
        version = 'ng using swig 1.3',
        description = 'Swig 1.3 wrapper over gdal',
        py_modules = ['gdal'],
-       url="http://gdal.maptools.org",
+       url="http://www.gdal.org",
        ext_modules = [gdal_module] )
