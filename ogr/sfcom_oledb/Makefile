@@ -35,4 +35,4 @@ clean:
 	rm -f *.obj *.exe *.dll SF.h SF_i.c SF.tlb SF.res
 
 SF.h:      SF.idl
-	midl /tlb SF.tlb /h SF.h /0icf /iid SF_i.c SF.idl
+	midl /tlb SF.tlb /h SF.h /Oicf /iid SF_i.c SF.idl
