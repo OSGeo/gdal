@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/03/08 19:22:31  warmerda
+ * Added support to set TIFFTAG_SAMPLEFORMAT.  Removed all byte swapping logic.
+ *
  * Revision 1.7  1999/03/02 16:19:06  warmerda
  * Fixed bug with -v list termination, and added support for ``-v 0''.
  *
@@ -587,26 +590,8 @@ static CPLErr CopyOneBand( HFABand * poBand, TIFF * hTIFF, int nSample )
         {
             int	iTile;
 
-            if( poBand->GetRasterBlock( iBlockX, iBlockY, pData )
-                != CE_None )
+            if( poBand->GetRasterBlock( iBlockX, iBlockY, pData ) != CE_None )
                 return( CE_Failure );
-
-            if( HFAGetDataTypeBits(poBand->nDataType) == 16 )
-            {
-                int		ii;
-
-                for( ii = 0;
-                     ii < poBand->nBlockXSize*poBand->nBlockYSize;
-                     ii++ )
-                {
-                    unsigned char *pabyData = (unsigned char *) pData;
-                    int		nTemp;
-
-                    nTemp = pabyData[ii*2];
-                    pabyData[ii*2] = pabyData[ii*2+1];
-                    pabyData[ii*2+1] = nTemp;
-                }
-            }
 
             iTile = TIFFComputeTile( hTIFF,
                                      iBlockX*poBand->nBlockXSize, 
@@ -685,7 +670,8 @@ static void ImagineToGeoTIFF( HFAHandle hHFA,
     TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE,
                   HFAGetDataTypeBits(nDataType) );
 
-    /* notdef: should error on illegal types */
+    if( nDataType == EPT_s16 || nDataType == EPT_s8 )
+        TIFFSetField( hTIFF, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_INT );
 
     if( poBlueBand == NULL )
     {
