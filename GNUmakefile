@@ -62,3 +62,7 @@ docs:
 
 all:	default
 
+web-update:	docs
+	rm -rf /u/www/gdal/html
+	mkdir /u/www/gdal/html
+	cp html/*.* /u/www/gdal/html
