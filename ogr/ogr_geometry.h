@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2001/09/04 14:48:34  warmerda
+ * added some more 2.5D geometry types
+ *
  * Revision 1.26  2001/05/24 18:05:18  warmerda
  * substantial fixes to WKT support for MULTIPOINT/LINE/POLYGON
  *
@@ -140,9 +143,11 @@ enum OGRwkbGeometryType
     wkbMultiPolygon = 6,
     wkbGeometryCollection = 7,
     wkbNone = 100,              // non-standard, for pure attribute records
-    wkbPoint25D = 0x8001,
+    wkbPoint25D = 0x8001,       // non-standard, 2.5D extension
     wkbLineString25D = 0x8002,
-    wkbPolygon25D = 0x8003
+    wkbPolygon25D = 0x8003,
+    wkbMultiPoint25D = 0x8004,
+    wkbMultiPolygon25D = 0x8006,
 };
 
 #define ogrZMarker 0x21125711
