@@ -1,10 +1,11 @@
 #include "cpl_minixml.h"
+#include "cpl_conv.h"
 
 int main( int argc, char **argv )
 
 {
     CPLXMLNode *poTree;
-    char       szXML[1000000];
+    static char  szXML[10000000];
     FILE       *fp;
     int        nLen;
 
@@ -34,5 +35,10 @@ int main( int argc, char **argv )
 
     poTree = CPLParseXMLString( szXML );
     if( poTree != NULL )
-        printf( "%s", CPLSerializeXMLTree( poTree ) );
+    {
+        char *pszRawXML = CPLSerializeXMLTree( poTree );
+        printf( "%s", pszRawXML );
+        CPLFree( pszRawXML );
+    }
+    CPLDestroyXMLNode( poTree );
 }
