@@ -86,6 +86,7 @@ Usage: gdal_translate
        [-scale [src_min src_max [dst_min dst_max]]]       
        [-srcwin xoff yoff xsize ysize] [-a_srs srs_def]
        [-projwin xoff yoff xsize ysize] [-co "NAME=VALUE"]*
+       [-mo \"META-TAG=VALUE\"]* [-quiet]
        src_dataset dst_dataset
 \endverbatim
 
@@ -118,6 +119,9 @@ on the output dataset if possible.
 <li> <b>-co</b> <i>"NAME=VALUE"</i>: passes a creation option to the output
 format driver.  Multiple <b>-co</b> options may be listed.  See format 
 specific documentation for legal creation options for each format.
+<li> <b>-mo</b> <i>"META-TAG=VALUE"</i>: Add the indicated metadata values
+to the output dataset.
+<li> <b>-quiet</b>: Supress progress monitor and other non-error output.
 <li> <i>src_dataset</i>: The source file name.
 <li> <i>dst_dataset</i>: The destination file name.
 </ul>
