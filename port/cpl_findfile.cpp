@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/01/15 07:46:20  fwarmerdam
+ * make cplpopfinderlocation safer for final cleanup
+ *
  * Revision 1.7  2004/11/22 16:01:05  fwarmerdam
  * added GDAL_PREFIX
  *
@@ -88,9 +91,9 @@ static void CPLFinderInit()
 void CPLFinderClean()
 
 {
-    while( CPLPopFileFinder() != NULL ) {}
     while( papszFinderLocations != NULL )
         CPLPopFinderLocation();
+    while( CPLPopFileFinder() != NULL ) {}
 
     bFinderInitialized = FALSE;
 }
@@ -206,6 +209,9 @@ void CPLPopFinderLocation()
 
 {
     int      nCount;
+
+    if( papszFinderLocations == NULL )
+        return;
 
     CPLFinderInit();
 
