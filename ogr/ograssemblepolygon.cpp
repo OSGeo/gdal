@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/03/05 14:25:14  warmerda
+ * expand tabs
+ *
  * Revision 1.2  2002/02/22 22:23:38  warmerda
  * added tolerances when assembling polygons
  *
@@ -203,7 +206,7 @@ OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
 /*      within finding anything to add.                                 */
 /* ==================================================================== */
         int             bWorkDone = TRUE;
-        double	        dfBestDist = dfTolerance;
+        double          dfBestDist = dfTolerance;
 
         while( !CheckPoints(poRing,0,poRing,poRing->getNumPoints()-1,NULL)
                && nRemainingEdges > 0

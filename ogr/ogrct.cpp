@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/03/05 14:25:14  warmerda
+ * expand tabs
+ *
  * Revision 1.13  2002/01/18 04:49:17  warmerda
  * report CPL errors if transform() fails
  *
@@ -122,7 +125,7 @@ class OGRProj4CT : public OGRCoordinateTransformation
     void        *psPJTarget;
     int         bTargetLatLong;
 
-    int		nErrorCount;
+    int         nErrorCount;
 
 public:
                 OGRProj4CT();
@@ -334,7 +337,7 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
         if( pfn_pj_get_errno_ref != NULL
             && pfn_pj_strerrno != NULL )
         {
-            int	*p_pj_errno = pfn_pj_get_errno_ref();
+            int *p_pj_errno = pfn_pj_get_errno_ref();
 
             CPLError( CE_Failure, CPLE_NotSupported, 
                       "Failed to initialize PROJ.4 with `%s'.\n%s", 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/03/05 14:25:14  warmerda
+ * expand tabs
+ *
  * Revision 1.19  2002/02/21 20:09:04  warmerda
  * Drop white space outside of quotes when ingesting WKT.  This makes the
  * ingest of 'pretty' WKT possible.
@@ -786,7 +789,7 @@ OGRErr OGR_SRSNode::applyRemapper( const char *pszNode,
                                    int nStepSize, int bChildOfHit )
 
 {
-    int	i;
+    int i;
 
 /* -------------------------------------------------------------------- */
 /*      Scan for value, and replace if our parent was a "hit".          */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/03/05 14:25:14  warmerda
+ * expand tabs
+ *
  * Revision 1.15  2001/11/01 17:20:33  warmerda
  * added DISABLE_OGRGEOM_TRANSFORM macro
  *
@@ -769,7 +772,7 @@ OGRErr OGRPolygon::transform( OGRCoordinateTransformation *poCT )
 #else
     for( int iRing = 0; iRing < nRingCount; iRing++ )
     {
-        OGRErr	eErr;
+        OGRErr  eErr;
 
         eErr = papoRings[iRing]->transform( poCT );
         if( eErr != OGRERR_NONE )

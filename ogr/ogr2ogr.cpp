@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/03/05 14:25:14  warmerda
+ * expand tabs
+ *
  * Revision 1.14  2002/01/18 04:46:38  warmerda
  * added -s_srs support
  *
@@ -105,7 +108,7 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszDestDataSource = NULL;
     char        **papszLayers = NULL;
     char        **papszDSCO = NULL, **papszLCO = NULL;
-    int		bTransform = FALSE;
+    int         bTransform = FALSE;
     const char  *pszOutputSRSDef = NULL;
     const char  *pszSourceSRSDef = NULL;
     OGRSpatialReference *poOutputSRS = NULL;
@@ -451,7 +454,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
         poCT = OGRCreateCoordinateTransformation( poSourceSRS, poOutputSRS );
         if( poCT == NULL )
         {
-            char	*pszWKT = NULL;
+            char        *pszWKT = NULL;
 
             printf("Failed to create coordinate transformation between the\n"
                    "following coordinate systems.  This may be because they\n"
@@ -517,7 +520,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 /*      Transfer features.                                              */
 /* -------------------------------------------------------------------- */
     OGRFeature  *poFeature;
-    int		nFeaturesInTransaction = 0;
+    int         nFeaturesInTransaction = 0;
     
     poSrcLayer->ResetReading();
 

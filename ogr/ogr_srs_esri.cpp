@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/03/05 14:25:14  warmerda
+ * expand tabs
+ *
  * Revision 1.10  2001/11/09 21:06:40  warmerda
  * stripctparms may not results in null root
  *
@@ -69,7 +72,7 @@ char *apszProjMapping[] = {
     "Albers", SRS_PT_ALBERS_CONIC_EQUAL_AREA,
     "Cassini", SRS_PT_CASSINI_SOLDNER,
     "Hotine_Oblique_Mercator_Azimuth_Natural_Origin", 
-    					SRS_PT_HOTINE_OBLIQUE_MERCATOR,
+                                        SRS_PT_HOTINE_OBLIQUE_MERCATOR,
     "Lambert_Conformal_Conic", SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP,
     "Van_der_Grinten_I", SRS_PT_VANDERGRINTEN,
     SRS_PT_TRANSVERSE_MERCATOR, SRS_PT_TRANSVERSE_MERCATOR,
@@ -386,7 +389,7 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
 OGRErr OGRSpatialReference::morphToESRI()
 
 {
-    OGRErr	eErr;
+    OGRErr      eErr;
 
 /* -------------------------------------------------------------------- */
 /*      Strip all CT parameters (AXIS, AUTHORITY, TOWGS84, etc).        */
@@ -413,7 +416,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 /* -------------------------------------------------------------------- */
 /*      Try to insert a D_ in front of the datum name.                  */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode	*poDatum;
+    OGR_SRSNode *poDatum;
 
     poDatum = GetAttrNode( "DATUM" );
     if( poDatum != NULL )
@@ -469,7 +472,7 @@ OGRErr OSRMorphToESRI( OGRSpatialReferenceH hSRS )
 OGRErr OGRSpatialReference::morphFromESRI()
 
 {
-    OGRErr	eErr = OGRERR_NONE;
+    OGRErr      eErr = OGRERR_NONE;
 
     if( GetRoot() == NULL )
         return OGRERR_NONE;
@@ -477,7 +480,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
 /* -------------------------------------------------------------------- */
 /*      Try to remove any D_ in front of the datum name.                */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode	*poDatum;
+    OGR_SRSNode *poDatum;
 
     poDatum = GetAttrNode( "DATUM" );
     if( poDatum != NULL )
