@@ -1,3 +1,9 @@
+2003-08-31  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* ogr/{ogr_srs_api.h, ogr_spatialref.h, ogr_srs_pci.cpp}: Implemented
+	OGRSpatialReference::importFromPCI() to read PCI style coordinate
+	system reference.
+
 2003-07-16  Simon Perkins  <s.perkins@lanl.gov>
 
 	* Added FITS support to windows makefiles.
