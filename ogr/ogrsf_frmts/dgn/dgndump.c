@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/03/14 21:38:27  warmerda
+ * pass update arg to DGNOpen
+ *
  * Revision 1.8  2002/01/21 20:49:52  warmerda
  * added spatial search option
  *
@@ -122,7 +125,7 @@ int main( int argc, char ** argv )
     if( pszFilename == NULL )
         Usage();
 
-    hDGN = DGNOpen( pszFilename );
+    hDGN = DGNOpen( pszFilename, FALSE );
     if( hDGN == NULL )
         exit( 1 );
 
