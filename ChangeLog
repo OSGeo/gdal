@@ -1,3 +1,8 @@
+2002-08-10  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* configure.in: fixed bug with libjpeg test reported by 
+	George Planansky.
+
 2002-08-06  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* apps/gdal_translate.c: added the -projwin flag at the request
