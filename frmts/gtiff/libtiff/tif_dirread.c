@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.47 2004/12/19 18:35:35 dron Exp $ */
+/* $Id: tif_dirread.c,v 1.51 2005/03/03 16:00:01 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -578,12 +578,19 @@ TIFFReadDirectory(TIFF* tif)
  * Assume we have wrong StripByteCount value (in case of single strip) in
  * following cases:
  *   - it is equal to zero along with StripOffset;
- *   - it is larger than file itself (in case of uncompressed image).
+ *   - it is larger than file itself (in case of uncompressed image);
+ *   - it is smaller than the size of the bytes per row multiplied on the
+ *     number of rows.  The last case should not be checked in the case of
+ *     writing new image, because we may do not know the exact strip size
+ *     until the whole image will be written and directory dumped out.
  */
 #define	BYTECOUNTLOOKSBAD \
     ( (td->td_stripbytecount[0] == 0 && td->td_stripoffset[0] != 0) || \
       (td->td_compression == COMPRESSION_NONE && \
-       td->td_stripbytecount[0] > TIFFGetFileSize(tif) - td->td_stripoffset[0]) )
+       td->td_stripbytecount[0] > TIFFGetFileSize(tif) - td->td_stripoffset[0]) || \
+      (tif->tif_mode == O_RDONLY && \
+       td->td_compression == COMPRESSION_NONE && \
+       td->td_stripbytecount[0] < TIFFScanlineSize(tif) * td->td_imagelength) )
 	} else if (td->td_nstrips == 1 && BYTECOUNTLOOKSBAD) {
 		/*
 		 * Plexus (and others) sometimes give a value

@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.8 2004/10/12 18:50:48 dron Exp $ */
+/* $Id: tif_pixarlog.c,v 1.9 2005/01/15 15:44:05 dron Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -867,8 +867,8 @@ static void
 horizontalDifferenceF(float *ip, int n, int stride, uint16 *wp, uint16 *FromLT2)
 {
 
-    register int  r1, g1, b1, a1, r2, g2, b2, a2, mask;
-    register float  fltsize = Fltsize;
+    int32 r1, g1, b1, a1, r2, g2, b2, a2, mask;
+    float fltsize = Fltsize;
 
 #define  CLAMP(v) ( (v<(float)0.)   ? 0				\
 		  : (v<(float)2.)   ? FromLT2[(int)(v*fltsize)]	\
@@ -878,42 +878,45 @@ horizontalDifferenceF(float *ip, int n, int stride, uint16 *wp, uint16 *FromLT2)
     mask = CODE_MASK;
     if (n >= stride) {
 	if (stride == 3) {
-	    r2 = wp[0] = CLAMP(ip[0]);  g2 = wp[1] = CLAMP(ip[1]);
-	    b2 = wp[2] = CLAMP(ip[2]);
+	    r2 = wp[0] = (uint16) CLAMP(ip[0]);
+	    g2 = wp[1] = (uint16) CLAMP(ip[1]);
+	    b2 = wp[2] = (uint16) CLAMP(ip[2]);
 	    n -= 3;
 	    while (n > 0) {
 		n -= 3;
 		wp += 3;
 		ip += 3;
-		r1 = CLAMP(ip[0]); wp[0] = (r1-r2) & mask; r2 = r1;
-		g1 = CLAMP(ip[1]); wp[1] = (g1-g2) & mask; g2 = g1;
-		b1 = CLAMP(ip[2]); wp[2] = (b1-b2) & mask; b2 = b1;
+		r1 = (int32) CLAMP(ip[0]); wp[0] = (r1-r2) & mask; r2 = r1;
+		g1 = (int32) CLAMP(ip[1]); wp[1] = (g1-g2) & mask; g2 = g1;
+		b1 = (int32) CLAMP(ip[2]); wp[2] = (b1-b2) & mask; b2 = b1;
 	    }
 	} else if (stride == 4) {
-	    r2 = wp[0] = CLAMP(ip[0]);  g2 = wp[1] = CLAMP(ip[1]);
-	    b2 = wp[2] = CLAMP(ip[2]);  a2 = wp[3] = CLAMP(ip[3]);
+	    r2 = wp[0] = (uint16) CLAMP(ip[0]);
+	    g2 = wp[1] = (uint16) CLAMP(ip[1]);
+	    b2 = wp[2] = (uint16) CLAMP(ip[2]);
+	    a2 = wp[3] = (uint16) CLAMP(ip[3]);
 	    n -= 4;
 	    while (n > 0) {
 		n -= 4;
 		wp += 4;
 		ip += 4;
-		r1 = CLAMP(ip[0]); wp[0] = (r1-r2) & mask; r2 = r1;
-		g1 = CLAMP(ip[1]); wp[1] = (g1-g2) & mask; g2 = g1;
-		b1 = CLAMP(ip[2]); wp[2] = (b1-b2) & mask; b2 = b1;
-		a1 = CLAMP(ip[3]); wp[3] = (a1-a2) & mask; a2 = a1;
+		r1 = (int32) CLAMP(ip[0]); wp[0] = (r1-r2) & mask; r2 = r1;
+		g1 = (int32) CLAMP(ip[1]); wp[1] = (g1-g2) & mask; g2 = g1;
+		b1 = (int32) CLAMP(ip[2]); wp[2] = (b1-b2) & mask; b2 = b1;
+		a1 = (int32) CLAMP(ip[3]); wp[3] = (a1-a2) & mask; a2 = a1;
 	    }
 	} else {
 	    ip += n - 1;	/* point to last one */
 	    wp += n - 1;	/* point to last one */
 	    n -= stride;
 	    while (n > 0) {
-		REPEAT(stride, wp[0] = CLAMP(ip[0]);
+		REPEAT(stride, wp[0] = (uint16) CLAMP(ip[0]);
 				wp[stride] -= wp[0];
 				wp[stride] &= mask;
 				wp--; ip--)
 		n -= stride;
 	    }
-	    REPEAT(stride, wp[0] = CLAMP(ip[0]); wp--; ip--)
+	    REPEAT(stride, wp[0] = (uint16) CLAMP(ip[0]); wp--; ip--)
 	}
     }
 }

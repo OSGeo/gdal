@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.28 2005/01/12 15:06:22 dron Exp $ */
+/* $Id: tif_jpeg.c,v 1.30 2005/03/05 10:04:02 dron Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -152,6 +152,7 @@ typedef	struct {
 	uint32		recvparams;	/* encoded Class 2 session params */
 	char*		subaddress;	/* subaddress string */
 	uint32		recvtime;	/* time spent receiving (secs) */
+	char*		faxdcs;		/* encoded fax parameters (DCS, Table 2/T.30) */
 } JPEGState;
 
 #define	JState(tif)	((JPEGState*)(tif)->tif_data)
@@ -166,6 +167,7 @@ static  int JPEGInitializeLibJPEG( TIFF * tif );
 #define	FIELD_RECVPARAMS	(FIELD_CODEC+1)
 #define	FIELD_SUBADDRESS	(FIELD_CODEC+2)
 #define	FIELD_RECVTIME		(FIELD_CODEC+3)
+#define	FIELD_FAXDCS		(FIELD_CODEC+4)
 
 static const TIFFFieldInfo jpegFieldInfo[] = {
     { TIFFTAG_JPEGTABLES,	 -3,-3,	TIFF_UNDEFINED,	FIELD_JPEGTABLES,
@@ -183,6 +185,8 @@ static const TIFFFieldInfo jpegFieldInfo[] = {
       TRUE,	FALSE,	"FaxSubAddress" },
     { TIFFTAG_FAXRECVTIME,	 1, 1, TIFF_LONG,	FIELD_RECVTIME,
       TRUE,	FALSE,	"FaxRecvTime" },
+    { TIFFTAG_FAXDCS,		-1, -1, TIFF_ASCII,	FIELD_FAXDCS,
+      TRUE,	FALSE,	"FaxDcs" },
 };
 #define	N(a)	(sizeof (a) / sizeof (a[0]))
 
@@ -1437,9 +1441,13 @@ JPEGVSetField(TIFF* tif, ttag_t tag, va_list ap)
 	case TIFFTAG_FAXRECVTIME:
 		sp->recvtime = va_arg(ap, uint32);
 		break;
+	case TIFFTAG_FAXDCS:
+		_TIFFsetString(&sp->faxdcs, va_arg(ap, char*));
+		break;
 	default:
 		return (*sp->vsetparent)(tif, tag, ap);
 	}
+	TIFFSetFieldBit(tif, _TIFFFieldWithTag(tif, tag)->field_bit);
 	tif->tif_flags |= TIFF_DIRTYDIRECT;
 	return (1);
 }
@@ -1534,7 +1542,19 @@ JPEGVGetField(TIFF* tif, ttag_t tag, va_list ap)
                 JPEGFixupTestSubsampling( tif );
 		return (*sp->vgetparent)(tif, tag, ap);
 		break;
-	default:
+        case TIFFTAG_FAXRECVPARAMS:
+                *va_arg(ap, uint32*) = sp->recvparams;
+                break;
+        case TIFFTAG_FAXSUBADDRESS:
+                *va_arg(ap, char**) = sp->subaddress;
+                break;
+        case TIFFTAG_FAXRECVTIME:
+                *va_arg(ap, uint32*) = sp->recvtime;
+                break;
+        case TIFFTAG_FAXDCS:
+                *va_arg(ap, char**) = sp->faxdcs;
+                break;
+default:
 		return (*sp->vgetparent)(tif, tag, ap);
 	}
 	return (1);
@@ -1549,6 +1569,16 @@ JPEGPrintDir(TIFF* tif, FILE* fd, long flags)
 	if (TIFFFieldSet(tif,FIELD_JPEGTABLES))
 		fprintf(fd, "  JPEG Tables: (%lu bytes)\n",
 			(unsigned long) sp->jpegtables_length);
+        if (TIFFFieldSet(tif,FIELD_RECVPARAMS))
+                fprintf(fd, "  Fax Receive Parameters: %08lx\n",
+                   (unsigned long) sp->recvparams);
+        if (TIFFFieldSet(tif,FIELD_SUBADDRESS))
+                fprintf(fd, "  Fax SubAddress: %s\n", sp->subaddress);
+        if (TIFFFieldSet(tif,FIELD_RECVTIME))
+                fprintf(fd, "  Fax Receive Time: %lu secs\n",
+                    (unsigned long) sp->recvtime);
+        if (TIFFFieldSet(tif,FIELD_FAXDCS))
+                fprintf(fd, "  Fax DCS: %s\n", sp->faxdcs);
 }
 
 static uint32
@@ -1678,6 +1708,10 @@ TIFFInitJPEG(TIFF* tif, int scheme)
 	sp->jpegquality = 75;			/* Default IJG quality */
 	sp->jpegcolormode = JPEGCOLORMODE_RAW;
 	sp->jpegtablesmode = JPEGTABLESMODE_QUANT | JPEGTABLESMODE_HUFF;
+
+        sp->recvparams = 0;
+        sp->subaddress = NULL;
+        sp->faxdcs = NULL;
 
         sp->ycbcrsampling_fetched = 0;
 

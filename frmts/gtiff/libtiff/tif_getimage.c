@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.44 2004/12/25 20:20:57 dron Exp $ */
+/* $Id: tif_getimage.c,v 1.45 2005/01/15 15:44:58 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -220,8 +220,8 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
     uint16 planarconfig;
     uint16 compress;
     int colorchannels;
-    uint16	*red_orig, *green_orig, *blue_orig;
-    int		n_color;
+    uint16 *red_orig, *green_orig, *blue_orig;
+    int n_color;
 
     /* Initialize to normal values */
     img->row_offset = 0;
@@ -297,7 +297,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
     case PHOTOMETRIC_PALETTE:
 	if (!TIFFGetField(tif, TIFFTAG_COLORMAP,
 	    &red_orig, &green_orig, &blue_orig)) {
-	    TIFFError(TIFFFileName(tif), "Missing required \"Colormap\" tag");
+	    sprintf(emsg, "Missing required \"Colormap\" tag");
 	    return (0);
 	}
 
@@ -307,7 +307,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
         img->greencmap = (uint16 *) _TIFFmalloc(sizeof(uint16)*n_color);
         img->bluecmap = (uint16 *) _TIFFmalloc(sizeof(uint16)*n_color);
         if( !img->redcmap || !img->greencmap || !img->bluecmap ) {
-	    TIFFError(TIFFFileName(tif), "Out of memory for colormap copy");
+	    sprintf(emsg, "Out of memory for colormap copy");
 	    return (0);
         }
 
@@ -418,11 +418,18 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 	!(planarconfig == PLANARCONFIG_SEPARATE && colorchannels > 1);
     if (img->isContig) {
 	img->get = TIFFIsTiled(tif) ? gtTileContig : gtStripContig;
-	return pickTileContigCase(img);
+	if (!pickTileContigCase(img)) {
+		sprintf(emsg, "Sorry, can not handle image");
+		return 0;
+	}
     } else {
 	img->get = TIFFIsTiled(tif) ? gtTileSeparate : gtStripSeparate;
-	return pickTileSeparateCase(img);
+	if (!pickTileSeparateCase(img)) {
+		sprintf(emsg, "Sorry, can not handle image");
+		return 0;
+	}
     }
+    return 1;
 }
 
 int
@@ -449,7 +456,7 @@ TIFFReadRGBAImageOriented(TIFF* tif,
 			  uint32 rwidth, uint32 rheight, uint32* raster,
 			  int orientation, int stop)
 {
-    char emsg[1024];
+    char emsg[1024] = "";
     TIFFRGBAImage img;
     int ok;
 
@@ -2438,7 +2445,7 @@ int
 TIFFReadRGBAStrip(TIFF* tif, uint32 row, uint32 * raster )
 
 {
-    char 	emsg[1024];
+    char 	emsg[1024] = "";
     TIFFRGBAImage img;
     int 	ok;
     uint32	rowsperstrip, rows_to_read;
@@ -2489,7 +2496,7 @@ int
 TIFFReadRGBATile(TIFF* tif, uint32 col, uint32 row, uint32 * raster)
 
 {
-    char 	emsg[1024];
+    char 	emsg[1024] = "";
     TIFFRGBAImage img;
     int 	ok;
     uint32	tile_xsize, tile_ysize;
