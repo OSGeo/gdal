@@ -28,7 +28,7 @@ clean:
 	$(CXX) $(CXXFLAGS) /c $*.cpp
 
 $(LIBNAME): $(OBJ)
-	del $(LIBNAME)
+	if exist $(LIBNAME) del $(LIBNAME)
 	lib /out:$(LIBNAME) $(OBJ)
 
 #
