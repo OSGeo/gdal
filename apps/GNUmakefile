@@ -10,7 +10,7 @@ BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
 default:	gdal-config-inst gdal-config $(BIN_LIST)
 
 lib-depend:
-	(cd ../core ; $(MAKE) )
+	(cd ../gcore ; $(MAKE) )
 	(cd ../port ; $(MAKE) )
 
 gdalinfo$(EXE):	gdalinfo.o  $(DEP_LIBS)
@@ -65,7 +65,7 @@ gdal-config:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 	echo '#!/bin/sh' > gdal-config
 	echo 'CONFIG_LIBS="$(CONFIG_LIBS)"' >> gdal-config
 	echo 'CONFIG_PREFIX="$(GDAL_ROOT)"' >> gdal-config
-	echo 'CONFIG_CFLAGS="-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/alg -I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogr/ogrsf_frmts"' >> gdal-config
+	echo 'CONFIG_CFLAGS="-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore -I$(GDAL_ROOT)/alg -I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogr/ogrsf_frmts"' >> gdal-config
 	echo 'CONFIG_VERSION="'`cat ../VERSION`'"' >> gdal-config
 	echo 'CONFIG_OGR_ENABLED=$(OGR_ENABLED)' >> gdal-config
 	echo 'CONFIG_FORMATS="$(GDAL_FORMATS)"' >> gdal-config
