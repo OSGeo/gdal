@@ -3,7 +3,7 @@
  *
  * Project:  Arc/Info Binary Grid Driver
  * Purpose:  Implements GDAL interface to underlying library.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/02/13 17:22:37  warmerda
+ * updated email
+ *
  * Revision 1.17  2002/11/05 03:29:29  warmerda
  * added GInt16 handling
  *
