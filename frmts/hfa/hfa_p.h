@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/06/10 20:31:35  warmerda
+ * use vsi_l_offset for block offsets
+ *
  * Revision 1.9  2000/12/29 16:37:32  warmerda
  * Use GUInt32 for all file offsets
  *
@@ -64,6 +67,7 @@
 
 #include "cpl_port.h"
 #include "cpl_error.h"
+#include "cpl_vsi.h"
 
 #ifdef CPL_LSB
 #  define HFAStandard(n,p)	{}
@@ -130,7 +134,7 @@ HFAInfo_t *HFAGetDependent( HFAInfo_t *, const char * );
 class HFABand
 {
     int		nBlocks;
-    GUInt32	*panBlockStart;
+    vsi_l_offset *panBlockStart;
     int		*panBlockSize;
     int		*panBlockFlag;
 
@@ -141,12 +145,15 @@ class HFABand
     double	*apadfPCT[3];
 
     CPLErr	LoadBlockInfo();
+    CPLErr	LoadExternalBlockInfo();
 
   public:
     		HFABand( HFAInfo_t *, HFAEntry * );
                 ~HFABand();
                 
     HFAInfo_t	*psInfo;
+
+    FILE	*fpExternal;
                          
     int		nDataType;
     HFAEntry	*poNode;
