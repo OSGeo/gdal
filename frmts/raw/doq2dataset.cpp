@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/01/24 05:54:00  shadow
+ * fix minor logic bug
+ *
  * Revision 1.4  2000/01/24 03:08:16  shadow
  * add description reading
  *
@@ -212,7 +215,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 	    if (strchr(pszLine, '"') != NULL) {
 	      char *ptr;
 	      pszQuadname = CPLStrdup(strchr(pszLine, '"')+1);
-	      ptr = strrchr(pszLine, '"');
+	      ptr = strrchr(pszQuadname, '"');
 	      if (ptr) *ptr = '\0';
 	    } else {
 	      pszQuadname = CPLStrdup(papszTokens[1]);
