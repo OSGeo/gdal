@@ -4,7 +4,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	jpeg2000dataset.o
 
-CPPFLAGS	+=	$(GDAL_INCLUDE) -I. -I../libjasper/include
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(JASPER_INCLUDE) $(CPPFLAGS)
 CXXFLAGS	+=	-g -O2
 
 default:	$(OBJ)

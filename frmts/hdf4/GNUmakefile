@@ -4,7 +4,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	hdf4dataset.o hdf4imagedataset.o
 
-CPPFLAGS	=	$(GDAL_INCLUDE) $(HDF4_INCLUDE)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(HDF4_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ)
 

@@ -8,7 +8,7 @@ NITFLIB_OBJ	=	nitffile.o nitfimage.o
 
 OBJ = $(GDAL_OBJ) $(NITFLIB_OBJ)
 
-CPPFLAGS	+=	$(GDAL_INCLUDE)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ)
 

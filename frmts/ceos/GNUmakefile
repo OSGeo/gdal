@@ -5,7 +5,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	ceosopen.o ceosdataset.o
 
-CPPFLAGS	+=	$(GDAL_INCLUDE)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ)
 

@@ -16,7 +16,7 @@ OBJ	=	gdalopen.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
 #CXXFLAGS 	:=	-DHAVE_MITAB $(CXXFLAGS)
 #endif
 
-CPPFLAGS	+=	$(GDAL_INCLUDE)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ)
 
