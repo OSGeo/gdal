@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2003/04/25 19:47:57  warmerda
+ * added RasterIO on GDALDataset, added lock count on blocks
+ *
  * Revision 1.41  2003/03/20 22:10:53  warmerda
  * added support for reporting cache thrashing
  *
@@ -265,6 +268,14 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual CPLErr IBuildOverviews( const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * );
     
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              int, int *, int, int, int );
+
+    CPLErr BlockBasedRasterIO( GDALRWFlag, int, int, int, int,
+                               void *, int, int, GDALDataType,
+                               int, int *, int, int, int );
+
     friend class GDALRasterBand;
     
   public:
@@ -295,6 +306,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
                             const char *pszGCPProjection );
  
+    CPLErr      RasterIO( GDALRWFlag, int, int, int, int,
+                          void *, int, int, GDALDataType,
+                          int, int *, int, int, int );
+
     int           Reference();
     int           Dereference();
     GDALAccess    GetAccess() { return eAccess; }
@@ -320,6 +335,7 @@ class CPL_DLL GDALRasterBlock
     
     int                 nAge;
     int                 bDirty;
+    int                 nLockCount;
 
     int                 nXOff;
     int                 nYOff;
@@ -342,6 +358,8 @@ class CPL_DLL GDALRasterBlock
     void        Touch( void );          /* update age */
     void        MarkDirty( void );      /* data has been modified since read */
     void        MarkClean( void );
+    void        AddLock( void ) { nLockCount++; }
+    void        DropLock( void ) { nLockCount--; }
 
     CPLErr      Write();
 
@@ -352,14 +370,14 @@ class CPL_DLL GDALRasterBlock
     int         GetYSize() { return nYSize; }
     int         GetAge() { return nAge; }
     int         GetDirty() { return bDirty; }
+    int         GetLockCount() { return nLockCount; }
 
     void        *GetDataRef( void ) { return pData; }
 
     GDALRasterBand *GetBand() { return poBand; }
 
-    static void FlushOldestBlock();
+    static int FlushCacheBlock();
     static void Verify();
-
 };
 
 
@@ -453,7 +471,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     CPLErr      WriteBlock( int, int, void * );
 
-    GDALRasterBlock *GetBlockRef( int, int );
+    GDALRasterBlock *GetBlockRef( int nXBlockOff, int nYBlockOff, 
+                                  int bJustInitialize = FALSE );
     CPLErr      FlushBlock( int = -1, int = -1 );
 
     // New OpengIS CV_SampleDimension stuff.
