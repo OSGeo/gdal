@@ -1,0 +1,34 @@
+CC	=	gcc
+
+OPTFLAGS =	-O
+DBGFLAGS =	-g -DDEBUG
+
+#
+#	Whether we use debug flags, or optimization is determined by
+#	the CFG environment variable.  Set to debug for debug builds.
+#	This is similar to the OGDI builds. 
+#
+ifeq ($(CFG),debug)
+OD_FLAGS =	$(DBGFLAGS)
+else
+OD_FLAGS =	$(OPTFLAGS)
+endif
+
+CFLAGS	=	-Wall $(OD_FLAGS)
+
+GDAL_INCLUDE	=	-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/core
+
+LIBS		=	-ldl -lm
+
+GDAL_LIBS	=	$(GDAL_ROOT)/frmts/*.o \
+			$(GDAL_ROOT)/frmts/geotiff/libgeotiff/libgeotiff.a \
+			$(GDAL_ROOT)/frmts/geotiff/libtiff/libtiff.a \
+			$(GDAL_ROOT)/core/*.o $(GDAL_ROOT)/port/*.o 
+
+
+#
+#	Note these codes have to exactly match the format directory names, 
+#	and their uppercase form should be the format portion of the
+#	format registration entry point.  eg. gdb -> GDALRegister_GDB().
+#
+GDAL_FORMATS = 	gdb
