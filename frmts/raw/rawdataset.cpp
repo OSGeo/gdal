@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/12/12 18:41:33  warmerda
+ * don't pass vsi_l_offset values in debug calls
+ *
  * Revision 1.11  2001/12/12 18:15:46  warmerda
  * preliminary update for large raw file support
  *
@@ -92,7 +95,8 @@ RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
     CPLDebug( "GDALRaw", 
               "RawRasterBand(%p,%d,%p,\n"
               "              Off=%d,PixOff=%d,LineOff=%d,%s,%d)\n",
-              poDS, nBand, fpRaw, nImgOffset, nPixelOffset, nLineOffset, 
+              poDS, nBand, fpRaw, 
+              (unsigned int) nImgOffset, nPixelOffset, nLineOffset, 
               GDALGetDataTypeName(eDataType), bNativeOrder );
 
     dfNoDataValue = 0.0;
@@ -134,7 +138,7 @@ RawRasterBand::RawRasterBand( FILE * fpRaw, vsi_l_offset nImgOffset,
     
     CPLDebug( "GDALRaw", 
               "RawRasterBand(floating,Off=%d,PixOff=%d,LineOff=%d,%s,%d)\n",
-              nImgOffset, nPixelOffset, nLineOffset, 
+              (unsigned int) nImgOffset, nPixelOffset, nLineOffset, 
               GDALGetDataTypeName(eDataType), bNativeOrder );
 
     dfNoDataValue = 0.0;
@@ -289,7 +293,7 @@ CPLErr RawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to scanline %d @ %d to write to file.\n",
-                  nBlockYOff, nImgOffset + nBlockYOff * nLineOffset );
+                  nBlockYOff, (int) (nImgOffset + nBlockYOff * nLineOffset) );
         
         eErr = CE_Failure;
     }
