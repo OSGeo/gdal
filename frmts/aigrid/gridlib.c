@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/03/15 02:00:52  warmerda
+ * Added type 0x01 (untested).
+ *
  * Revision 1.11  2000/02/18 14:47:25  warmerda
  * Avoid unused variable warnings.
  *
@@ -225,6 +228,37 @@ CPLErr AIGProcessRaw4BitBlock( GByte *pabyCur, int nDataSize, int nMin,
             panData[i] = ((*(pabyCur) & 0xf0) >> 4) + nMin;
         else
             panData[i] = (*(pabyCur++) & 0xf) + nMin;
+    }
+
+    return( CE_None );
+}
+
+/************************************************************************/
+/*                       AIGProcess1BitRawBlock()                       */
+/*                                                                      */
+/*      Process a block using ``0x01'' raw format.                      */
+/************************************************************************/
+
+static 
+CPLErr AIGProcessRaw1BitBlock( GByte *pabyCur, int nDataSize, int nMin,
+                               int nBlockXSize, int nBlockYSize,
+                               GUInt32 * panData )
+
+{
+    int		i;
+
+    (void) nDataSize;
+    CPLAssert( nDataSize >= (nBlockXSize*nBlockYSize+7)/8 );
+    
+/* -------------------------------------------------------------------- */
+/*      Collect raw data.                                               */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+    {
+        if( pabyCur[i>>3] & (0x80 >> (i&0x7)) )
+            panData[i] = 1;
+        else
+            panData[i] = 0;
     }
 
     return( CE_None );
@@ -482,6 +516,12 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
     else if( nMagic == 0x04 )
     {
         AIGProcessRaw4BitBlock( pabyCur, nDataSize, nMin,
+                                nBlockXSize, nBlockYSize,
+                                panData );
+    }
+    else if( nMagic == 0x01 )
+    {
+        AIGProcessRaw1BitBlock( pabyCur, nDataSize, nMin,
                                 nBlockXSize, nBlockYSize,
                                 panData );
     }
