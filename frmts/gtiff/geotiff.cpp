@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.86  2003/01/15 15:35:13  warmerda
+ * Fixed minor typo.
+ *
  * Revision 1.85  2003/01/15 14:43:24  warmerda
  * call GTIFDeaccessCSV
  *
@@ -3382,7 +3385,7 @@ void GDALRegister_GTiff()
 "       <Value>PIXEL</Value>"
 "   </Option>"
 "   <Option name='TILED' type='boolean' description='Switch to tiled format'/>"
-"   <Option name='TFW' type='boolean' description='Write out world filet'/>"
+"   <Option name='TFW' type='boolean' description='Write out world file'/>"
 "   <Option name='BLOCKXSIZE' type='int' description='Tile Width'/>"
 "   <Option name='BLOCKYSIZE' type='int' description='Tile/Strip Height'/>"
 "</CreationOptionList>" );
