@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2004/06/02 15:53:00  warmerda
+ * improve divide by zero error checking
+ *
  * Revision 1.45  2004/04/06 04:24:51  warmerda
  * Always make any new color table encountered the default color
  * table when it is read.
@@ -465,7 +468,11 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
               
               psCell->xscale = sqrt(a2 + c2) / 214748;
               psCell->yscale = sqrt(b*b + d*d) / 214748;
-              psCell->rotation = acos(a / sqrt(a2 + c2));
+              if( (a2 + c2) <= 0.0 )
+                  psCell->rotation = 0.0;
+              else
+                  psCell->rotation = acos(a / sqrt(a2 + c2));
+
               if (b <= 0)
                   psCell->rotation = psCell->rotation * 180 / PI;
               else

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2004/06/02 15:53:00  warmerda
+ * improve divide by zero error checking
+ *
  * Revision 1.8  2003/05/21 03:42:01  warmerda
  * Expanded tabs
  *
@@ -118,6 +121,13 @@ int DGNStrokeArc( DGNHandle hFile, DGNElemArc *psArc,
 
     if( nPoints < 2 )
         return FALSE;
+
+    if( psArc->primary_axis == 0.0 || psArc->secondary_axis == 0.0 )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Zero primary or secondary axis in DGNStrokeArc()." );
+        return FALSE;
+    }
 
     dfAngleStep = psArc->sweepang / (nPoints - 1);
     for( i = 0; i < nPoints; i++ )
