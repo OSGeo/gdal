@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2003/11/07 13:12:38  dron
+ * Handle 32-bit BMPs properly.
+ *
  * Revision 1.26  2003/10/24 20:31:53  warmerda
  * Added extension metadata.
  *
@@ -417,8 +420,11 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         for ( i = 0, j = 0; i < nBlockXSize; i++ )
         {
             // Colour triplets in BMP file organized in reverse order:
-            // blue, green, red
-            ((GByte *) pImage)[i] = pabyScan[j + iBytesPerPixel - nBand];
+            // blue, green, red. When we have 32-bit BMP the forth byte
+            // in quadriplet should be discarded as it has no meaning.
+            // That is why we always use 3 byte count in the following
+            // pabyScan index.
+            ((GByte *) pImage)[i] = pabyScan[j + 3 - nBand];
             j += iBytesPerPixel;
         }
     }
