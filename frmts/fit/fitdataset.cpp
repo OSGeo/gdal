@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.20  2004/03/22 23:45:41  aubin
+ * wrap endian swapping functions in namespace to limit scope
+ *
  * Revision 1.19  2004/02/25 19:04:19  warmerda
  * Modified a few calls in the create code to use VSI*L API as well.
  * Untested as of yet.
@@ -112,6 +115,8 @@ CPL_C_END
 #define FIT_WRITE
 
 #define FIT_PAGE_SIZE 128
+
+using namespace gstEndian;
 
 /************************************************************************/
 /* ==================================================================== */

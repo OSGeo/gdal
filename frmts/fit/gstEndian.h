@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2004/03/22 23:45:41  aubin
+ * wrap endian swapping functions in namespace to limit scope
+ *
  * Revision 1.2  2001/07/06 18:46:25  nemec
  * Cleanup files - improve Windows build, make proper copyright notice
  *
@@ -43,6 +46,8 @@
 #include <cpl_port.h>
 
 #include "gstTypes.h"
+
+namespace gstEndian {
 
 // have to do swapping on Linux and Windows
 #ifdef CPL_LSB
@@ -126,5 +131,7 @@ static inline void swapbytes(void * value, int size)
 #define swapb( value )
 
 #endif // swapping
+
+} // gstEndian namespace
 
 #endif // ! _gstEndian_h_
