@@ -47,7 +47,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /Yu"stdafx.h" /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /ZI /Od /I "..\..\frmts\shapelib" /I "..\..\ogr\\" /I "..\..\port" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /FR /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /ZI /Od /I "..\..\frmts\shapelib" /I "..\..\ogr\\" /I "..\..\port" /I "..\ogrsf_frmts" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /FR /FD /GZ /c
 # SUBTRACT CPP /YX /Yc /Yu
 # ADD BASE RSC /l 0x1009 /d "_DEBUG"
 # ADD RSC /l 0x1009 /d "_DEBUG"
@@ -298,11 +298,27 @@ SOURCE=..\..\port\cplgetsymbol.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\frmts\shapelib\dbfopen.c
+SOURCE=..\ogrsf_frmts\shape\dbfopen.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogr_srsnode.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=..\ogrcurve.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrfeature.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrfeaturedefn.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrfielddefn.cpp
 # End Source File
 # Begin Source File
 
@@ -315,6 +331,10 @@ SOURCE=..\ogrgeometrycollection.cpp
 # Begin Source File
 
 SOURCE=..\ogrgeometryfactory.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrsf_frmts\generic\ogrlayer.cpp
 # End Source File
 # Begin Source File
 
@@ -346,6 +366,26 @@ SOURCE=..\ogrpolygon.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\ogrsf_frmts\ogrsf_frmts.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrsf_frmts\generic\ogrsfdriverregistrar.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrsf_frmts\shape\ogrshape.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrsf_frmts\shape\ogrshape.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrspatialreference.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\ogrsurface.cpp
 # End Source File
 # Begin Source File
@@ -371,7 +411,19 @@ SOURCE=.\SF.rc
 # End Source File
 # Begin Source File
 
+SOURCE=.\sfregister.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\SFRS.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\sftraceback.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\sfutil.cpp
 # End Source File
 # Begin Source File
 
@@ -379,7 +431,11 @@ SOURCE=..\shape2ogr.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\frmts\shapelib\shpopen.c
+SOURCE=..\ogrsf_frmts\shape\shapefil.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrsf_frmts\shape\shpopen.c
 # End Source File
 # Begin Source File
 
@@ -481,6 +537,14 @@ SOURCE=.\SFRS.h
 # Begin Source File
 
 SOURCE=.\SFSess.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sftraceback.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sfutil.h
 # End Source File
 # Begin Source File
 

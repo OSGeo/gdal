@@ -6,7 +6,7 @@
 
 import "oaidl.idl";
 import "ocidl.idl";
-
+	
 [
 	uuid(C9BD5066-0D6D-11D3-94FF-00104B238935),
 	version(1.0),
@@ -25,4 +25,5 @@ library SFLib
 	{
 		interface IUnknown;
 	};
+	
 };
