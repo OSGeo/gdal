@@ -3,38 +3,57 @@ GDAL_ROOT = .
 !INCLUDE nmake.opt
 
 ##############################################################################
+# We need to add vb6 support if STDCALL is defined. 
+!IFDEF STDCALL
+VB6_OBJ = vb6\vb6_support.obj
+VB6_TARGET = vb6_dir
+!ENDIF
+
+##############################################################################
 # The following determines whether we are linking all the OGR formats 
 # into the DLL, or only the minimum spatial reference related stuff required
 # for a raster-gdal build.
 
-!IFDEF INCLUDE_OGR_FRMTS
-OGR_OBJ = ogr\ogrsf_frmts\ogrsf_frmts.lib ogr\ogr.lib
-OGR_INCLUDE = /INCLUDE:_OCTNewCoordinateTransformation \
-		/INCLUDE:_OGRRegisterAll \
+#OGR_BASE_INCLUDE = /INCLUDE:_OCTNewCoordinateTransformation@8 \
+#		/INCLUDE:_OGRFeatureStylePuller@0 \
+#		/INCLUDE:_OSRValidate@4 \
+#		/INCLUDE:_OPTGetProjectionMethods@0 \
+#		/INCLUDE:_OGR_G_GetPointCount@4
+
+OGR_BASE_INCLUDE = /INCLUDE:_OCTNewCoordinateTransformation \
 		/INCLUDE:_OGRFeatureStylePuller \
 		/INCLUDE:_OSRValidate \
 		/INCLUDE:_OPTGetProjectionMethods \
 		/INCLUDE:_OGR_G_GetPointCount 
+
+
+!IFDEF INCLUDE_OGR_FRMTS
+OGR_OBJ = ogr\ogrsf_frmts\ogrsf_frmts.lib ogr\ogr.lib
+OGR_INCLUDE = $(OGR_BASE_INCLUDE) /INCLUDE:_OGRRegisterAll
+
 !ELSE
 OGR_OBJ = ogr\ogr.lib
-OGR_INCLUDE =	/INCLUDE:_OCTNewCoordinateTransformation /INCLUDE:_OGRFree \
-		/INCLUDE:_OPTGetParameterList \
-		/INCLUDE:_OGRFeatureStylePuller \
-		/INCLUDE:_OSRValidate \
-		/INCLUDE:_OPTGetProjectionMethods 
+OGR_INCLUDE =	$(OGR_BASE_INCLUDE) 
 !ENDIF
 
+!IFDEF STDCALL
+BASE_INCLUDE =	/INCLUDE:_GDALSimpleImageWarp@36 \
+		/INCLUDE:_GDALReprojectImage@48 \
+		/INCLUDE:_GDALComputeMedianCutPCT@32 \
+		/INCLUDE:_GDALDitherRGB2PCT@28 \
+		/INCLUDE:_vbSafeArrayToPtr@16  
+!ELSE
 BASE_INCLUDE =	/INCLUDE:_GDALSimpleImageWarp \
-		/INCLUDE:_GDALSuggestedWarpOutput \
-		/INCLUDE:_GDALGCPTransform \
+		/INCLUDE:_GDALReprojectImage \
 		/INCLUDE:_GDALComputeMedianCutPCT \
 		/INCLUDE:_GDALDitherRGB2PCT
+!ENDIF
 
-LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ)
+LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ) $(VB6_OBJ)
 	
 DISTDIR	=	gdal_$(VERSION)
 
-default:	port_dir ogr_dir core_dir frmts_dir $(GDAL_DLL) \
+default:	port_dir ogr_dir core_dir frmts_dir $(VB6_TARGET) $(GDAL_DLL) \
 		apps_dir pymod_dir ogr_apps
 
 lib:
@@ -61,6 +80,9 @@ clean:
 	$(MAKE) /f makefile.vc clean
 	cd ..
 	cd pymod
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd vb6
 	$(MAKE) /f makefile.vc clean
 	cd ..
 	if exist gdal.lib del gdal.lib
@@ -101,6 +123,11 @@ pymod_dir:
 	if exist $(PYDIR)\python.exe $(MAKE) /f makefile.vc
 	cd ..
 
+vb6_dir:
+	cd vb6
+	$(MAKE) /f makefile.vc
+	cd ..
+	
 ogr_dir:      port_dir
 	cd frmts/iso8211
 	$(MAKE) /f makefile.vc
