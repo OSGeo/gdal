@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2004/08/30 20:10:38  warmerda
+ * implemented FetchLine() with optimized access
+ *
  * Revision 1.48  2004/08/27 20:23:11  warmerda
  * fixed up a bit of formatting
  *
@@ -218,6 +221,8 @@ S57Reader::S57Reader( const char * pszFilename )
 
     bMissingWarningIssued = FALSE;
     bAttrWarningIssued = FALSE;
+
+    memset( apoFDefnByOBJL, 0, sizeof(apoFDefnByOBJL) );
 }
 
 /************************************************************************/
@@ -677,6 +682,22 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
     while( nNextFEIndex < oFE_Index.GetCount() )
     {
         OGRFeature      *poFeature;
+        OGRFeatureDefn *poFeatureDefn;
+
+        poFeatureDefn = (OGRFeatureDefn *) 
+            oFE_Index.GetClientInfoByIndex( nNextFEIndex );
+
+        if( poFeatureDefn == NULL )
+        {
+            poFeatureDefn = FindFDefn( oFE_Index.GetByIndex( nNextFEIndex ) );
+            oFE_Index.SetClientInfoByIndex( nNextFEIndex, poFeatureDefn );
+        }
+
+        if( poFeatureDefn != poTarget )
+        {
+            nNextFEIndex++;
+            continue;
+        }
 
         poFeature = ReadFeature( nNextFEIndex++, poTarget );
         if( poFeature != NULL )
@@ -712,7 +733,6 @@ OGRFeature *S57Reader::ReadFeature( int nFeatureId, OGRFeatureDefn *poTarget )
     if( nFeatureId < 0 || nFeatureId >= oFE_Index.GetCount() )
         return NULL;
 
-    
     poFeature = AssembleFeature( oFE_Index.GetByIndex(nFeatureId),
                                  poTarget );
     if( poFeature != NULL )
@@ -1302,6 +1322,144 @@ int S57Reader::FetchPoint( int nRCNM, int nRCID,
 }
 
 /************************************************************************/
+/*                             FetchLine()                              */
+/************************************************************************/
+
+int S57Reader::FetchLine( DDFRecord *poSRecord, 
+                          int iStartVertex, int iDirection,
+                          OGRLineString *poLine )
+
+{
+    int             nVCount;
+    DDFField        *poSG2D = poSRecord->FindField( "SG2D" );
+    DDFSubfieldDefn *poXCOO=NULL, *poYCOO=NULL;
+    int bStandardFormat = TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Get some basic definitions.                                     */
+/* -------------------------------------------------------------------- */
+    if( poSG2D != NULL )
+    {
+        poXCOO = poSG2D->GetFieldDefn()->FindSubfieldDefn("XCOO");
+        poYCOO = poSG2D->GetFieldDefn()->FindSubfieldDefn("YCOO");
+
+        if( poXCOO == NULL || poYCOO == NULL )
+        {
+            CPLDebug( "S57", "XCOO or YCOO are NULL" );
+            return FALSE;
+        }
+
+        nVCount = poSG2D->GetRepeatCount();
+    }
+    else
+    {
+        return TRUE;
+    }
+
+    if( nVCount == 0 )
+    {
+        CPLDebug( "S57", "VCount is zero." );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Make sure out line is long enough to hold all the vertices      */
+/*      we will apply.                                                  */
+/* -------------------------------------------------------------------- */
+    int nVBase;
+
+    if( iDirection < 0 )
+        nVBase = iStartVertex + nVCount;
+    else
+        nVBase = iStartVertex;
+
+    if( poLine->getNumPoints() < iStartVertex + nVCount )
+        poLine->setNumPoints( iStartVertex + nVCount );
+        
+/* -------------------------------------------------------------------- */
+/*      Are the SG2D and XCOO/YCOO definitions in the form we expect?   */
+/* -------------------------------------------------------------------- */
+    if( poSG2D->GetFieldDefn()->GetSubfieldCount() != 2 )
+        bStandardFormat = FALSE;
+
+    if( !EQUAL(poXCOO->GetFormat(),"b24") 
+        || !EQUAL(poYCOO->GetFormat(),"b24") )
+        bStandardFormat = FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Collect the vertices:                                           */
+/*                                                                      */
+/*      This approach assumes that the data is LSB organized int32      */
+/*      binary data as per the specification.  We avoid lots of         */
+/*      extra calls to low level DDF methods as they are quite          */
+/*      expensive.                                                      */
+/* -------------------------------------------------------------------- */
+    if( bStandardFormat )
+    {
+        const char  *pachData;
+        int         nBytesRemaining;
+
+        pachData = poSG2D->GetSubfieldData(poYCOO,&nBytesRemaining,0);
+        
+        for( int i = 0; i < nVCount; i++ )
+        {
+            double      dfX, dfY;
+            GInt32      nXCOO, nYCOO;
+
+            memcpy( &nYCOO, pachData, 4 );
+            pachData += 4;
+            memcpy( &nXCOO, pachData, 4 );
+            pachData += 4;
+
+#ifdef CPL_MSB
+            CPL_SWAP32PTR( &nXCOO );
+            CPL_SWAP32PTR( &nYCOO );
+#endif
+            dfX = nXCOO / (double) nCOMF;
+            dfY = nYCOO / (double) nCOMF;
+
+            poLine->setPoint( nVBase, dfX, dfY );
+
+            nVBase += iDirection;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Collect the vertices:                                           */
+/*                                                                      */
+/*      The generic case where we use low level but expensive DDF       */
+/*      methods to get the data.  This should work even if some         */
+/*      things are changed about the SG2D fields such as making them    */
+/*      floating point or a different byte order.                       */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        for( int i = 0; i < nVCount; i++ )
+        {
+            double      dfX, dfY;
+            const char  *pachData;
+            int         nBytesRemaining;
+
+            pachData = poSG2D->GetSubfieldData(poXCOO,&nBytesRemaining,i);
+                
+            dfX = poXCOO->ExtractIntData(pachData,nBytesRemaining,NULL)
+                / (double) nCOMF;
+
+            pachData = poSG2D->GetSubfieldData(poYCOO,&nBytesRemaining,i);
+
+            dfY = poXCOO->ExtractIntData(pachData,nBytesRemaining,NULL)
+                / (double) nCOMF;
+                
+            poLine->setPoint( nVBase, dfX, dfY );
+
+            nVBase += iDirection;
+        }
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                       AssemblePointGeometry()                        */
 /************************************************************************/
 
@@ -1633,25 +1791,10 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
             }
     
 /* -------------------------------------------------------------------- */
-/*      Establish the number of vertices, and whether we need to        */
-/*      reverse or not.                                                 */
+/*      Create the line string.                                         */
 /* -------------------------------------------------------------------- */
             OGRLineString *poLine = new OGRLineString();
         
-            int             nVCount;
-            DDFField        *poSG2D = poSRecord->FindField( "SG2D" );
-            DDFSubfieldDefn *poXCOO=NULL, *poYCOO=NULL;
-
-            if( poSG2D != NULL )
-            {
-                poXCOO = poSG2D->GetFieldDefn()->FindSubfieldDefn("XCOO");
-                poYCOO = poSG2D->GetFieldDefn()->FindSubfieldDefn("YCOO");
-
-                nVCount = poSG2D->GetRepeatCount();
-            }
-            else
-                nVCount = 0;
-
 /* -------------------------------------------------------------------- */
 /*      Add the start node.                                             */
 /* -------------------------------------------------------------------- */
@@ -1668,28 +1811,13 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 /* -------------------------------------------------------------------- */
 /*      Collect the vertices.                                           */
 /* -------------------------------------------------------------------- */
-            int             nVBase = poLine->getNumPoints();
-        
-            poLine->setNumPoints( nVCount+nVBase );
-
-            for( int i = 0; i < nVCount; i++ )
+            if( !FetchLine( poSRecord, poLine->getNumPoints(), 1, poLine ) )
             {
-                double      dfX, dfY;
-                const char  *pachData;
-                int         nBytesRemaining;
-
-                pachData = poSG2D->GetSubfieldData(poXCOO,&nBytesRemaining,i);
-                
-                dfX = poXCOO->ExtractIntData(pachData,nBytesRemaining,NULL)
-                    / (double) nCOMF;
-
-                pachData = poSG2D->GetSubfieldData(poYCOO,&nBytesRemaining,i);
-
-                dfY = poXCOO->ExtractIntData(pachData,nBytesRemaining,NULL)
-                    / (double) nCOMF;
-                
-                poLine->setPoint( nVBase++, dfX, dfY );
+                CPLDebug( "S57", "FetchLine() failed in AssembleAreaGeometry()!" );
+                delete poLine;
+                continue;
             }
+
 
 /* -------------------------------------------------------------------- */
 /*      Add the end node.                                               */
@@ -1746,6 +1874,9 @@ OGRFeatureDefn * S57Reader::FindFDefn( DDFRecord * poRecord )
     if( poRegistrar != NULL )
     {
         int     nOBJL = poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 );
+
+        if( apoFDefnByOBJL[nOBJL] != NULL )
+            return apoFDefnByOBJL[nOBJL];
 
         if( !poRegistrar->SelectClass( nOBJL ) )
         {
@@ -1828,6 +1959,12 @@ void S57Reader::AddFeatureDefn( OGRFeatureDefn * poFDefn )
         CPLRealloc(papoFDefnList, sizeof(OGRFeatureDefn*)*nFDefnCount );
 
     papoFDefnList[nFDefnCount-1] = poFDefn;
+
+    if( poRegistrar != NULL )
+    {
+        if( poRegistrar->SelectClass( poFDefn->GetName() ) )
+            apoFDefnByOBJL[poRegistrar->GetOBJL()] = poFDefn;
+    }
 }
 
 /************************************************************************/
