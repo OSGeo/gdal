@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_close.c,v 1.4 2002/08/15 12:59:25 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_close.c,v 1.5 2003/09/25 08:02:46 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -39,6 +39,9 @@ TIFFClose(TIFF* tif)
         TIFFFlush(tif);
     (*tif->tif_cleanup)(tif);
     TIFFFreeDirectory(tif);
+
+    if (tif->tif_dirlist)
+        _TIFFfree(tif->tif_dirlist);
         
     /* Clean up client info links */
     while( tif->tif_clientinfo )

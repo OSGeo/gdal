@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_aux.c,v 1.5 2003/07/08 15:51:57 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_aux.c,v 1.6 2003/12/06 15:55:41 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -31,8 +31,6 @@
  */
 #include "tiffiop.h"
 #include "tif_predict.h"
-
-#ifdef COLORIMETRY_SUPPORT
 #include <math.h>
 
 static void
@@ -66,7 +64,6 @@ TIFFDefaultRefBlackWhite(TIFFDirectory* td)
 	    td->td_refblackwhite[2*i+1] = (float)((1L<<td->td_bitspersample)-1L);
 	}
 }
-#endif
 
 /*
  * Like TIFFGetField, but return any default
@@ -123,7 +120,6 @@ TIFFVGetFieldDefaulted(TIFF* tif, ttag_t tag, va_list ap)
 			*va_arg(ap, uint16*) = (uint16) sp->predictor;
 			return (1);
                 }
-#ifdef CMYK_SUPPORT
 	case TIFFTAG_DOTRANGE:
 		*va_arg(ap, uint16 *) = 0;
 		*va_arg(ap, uint16 *) = (1<<td->td_bitspersample)-1;
@@ -134,7 +130,6 @@ TIFFVGetFieldDefaulted(TIFF* tif, ttag_t tag, va_list ap)
 	case TIFFTAG_NUMBEROFINKS:
 		*va_arg(ap, uint16 *) = td->td_ninks;
 		return (1);
-#endif
 	case TIFFTAG_EXTRASAMPLES:
 		*va_arg(ap, uint16 *) = td->td_extrasamples;
 		*va_arg(ap, uint16 **) = td->td_sampleinfo;
@@ -156,7 +151,6 @@ TIFFVGetFieldDefaulted(TIFF* tif, ttag_t tag, va_list ap)
 	case TIFFTAG_IMAGEDEPTH:
 		*va_arg(ap, uint32 *) = td->td_imagedepth;
 		return (1);
-#ifdef YCBCR_SUPPORT
 	case TIFFTAG_YCBCRCOEFFICIENTS:
 		if (!td->td_ycbcrcoeffs) {
 			td->td_ycbcrcoeffs = (float *)
@@ -175,8 +169,20 @@ TIFFVGetFieldDefaulted(TIFF* tif, ttag_t tag, va_list ap)
 	case TIFFTAG_YCBCRPOSITIONING:
 		*va_arg(ap, uint16 *) = td->td_ycbcrpositioning;
 		return (1);
-#endif
-#ifdef COLORIMETRY_SUPPORT
+	case TIFFTAG_WHITEPOINT:
+		if (!td->td_whitepoint) {
+			td->td_whitepoint = (float *)
+				_TIFFmalloc(2 * sizeof (float));
+			/* TIFF 6.0 specification says that it is no default
+			   value for the WhitePoint, but AdobePhotoshop TIFF
+			   Technical Note tells that it should be CIE D50. */
+			td->td_whitepoint[0] =
+				D50_X0 / (D50_X0 + D50_Y0 + D50_Z0);
+			td->td_whitepoint[1] =
+				D50_Y0 / (D50_X0 + D50_Y0 + D50_Z0);
+		}
+		*va_arg(ap, float **) = td->td_whitepoint;
+		return (1);
 	case TIFFTAG_TRANSFERFUNCTION:
 		if (!td->td_transferfunction[0])
 			TIFFDefaultTransferFunction(td);
@@ -191,7 +197,6 @@ TIFFVGetFieldDefaulted(TIFF* tif, ttag_t tag, va_list ap)
 			TIFFDefaultRefBlackWhite(td);
 		*va_arg(ap, float **) = td->td_refblackwhite;
 		return (1);
-#endif
 	}
 	return (0);
 }

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_open.c,v 1.9 2003/07/26 03:54:29 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_open.c,v 1.11 2003/09/25 08:36:21 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -313,6 +313,8 @@ TIFFClientOpen(
 		if (!TIFFDefaultDirectory(tif))
 			goto bad;
 		tif->tif_diroff = 0;
+		tif->tif_dirlist = NULL;
+		tif->tif_dirnumber = 0;
 		return (tif);
 	}
 	/*

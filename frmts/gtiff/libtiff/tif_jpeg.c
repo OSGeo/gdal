@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_jpeg.c,v 1.15 2003/07/08 20:32:54 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_jpeg.c,v 1.16 2003/12/20 13:47:28 dron Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -817,7 +817,7 @@ JPEGDecodeRaw(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 	tsize_t nrows;
 
 	/* data is expected to be read in multiples of a scanline */
-	if (nrows = sp->cinfo.d.image_height) {
+	if ( (nrows = sp->cinfo.d.image_height) ) {
 		/* Cb,Cr both have sampling factors 1, so this is correct */
 		JDIMENSION clumps_per_line = sp->cinfo.d.comp_info[1].downsampled_width;
 		int samples_per_clump = sp->samplesperclump;
@@ -974,7 +974,6 @@ JPEGSetupEncode(TIFF* tif)
 		 * default value is inappropriate for YCbCr.  Fill in the
 		 * proper value if application didn't set it.
 		 */
-#ifdef COLORIMETRY_SUPPORT
 		if (!TIFFFieldSet(tif, FIELD_REFBLACKWHITE)) {
 			float refbw[6];
 			long top = 1L << td->td_bitspersample;
@@ -986,7 +985,6 @@ JPEGSetupEncode(TIFF* tif)
 			refbw[5] = refbw[1];
 			TIFFSetField(tif, TIFFTAG_REFERENCEBLACKWHITE, refbw);
 		}
-#endif
 		break;
 	case PHOTOMETRIC_PALETTE:		/* disallowed by Tech Note */
 	case PHOTOMETRIC_MASK:

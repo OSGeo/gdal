@@ -993,7 +993,7 @@ Luv24fromLuv48(LogLuvState* sp, tidata_t op, int n)
 		else
 			Le = itrunc(.25*(luv3[0]-3314.), sp->encode_meth);
 
-		Ce = uv_encode((luv[1]+.5)/(1<<15), (luv[2]+.5)/(1<<15),
+		Ce = uv_encode((luv3[1]+.5)/(1<<15), (luv3[2]+.5)/(1<<15),
 					sp->encode_meth);
 		if (Ce < 0)	/* never happens */
 			Ce = uv_encode(U_NEU, V_NEU, SGILOGENCODE_NODITHER);

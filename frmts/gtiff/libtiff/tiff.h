@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiff.h,v 1.15 2002/10/06 23:31:21 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiff.h,v 1.20 2003/12/31 09:14:32 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -79,7 +79,7 @@ typedef	char int8;
 typedef	unsigned char uint8;
 typedef	short int16;
 typedef	unsigned short uint16;	/* sizeof (uint16) must == 2 */
-#if defined(__alpha) || (defined(_MIPS_SZLONG) && _MIPS_SZLONG == 64) || defined(__LP64__) || defined(__arch64__)
+#if defined(__alpha) || (defined(_MIPS_SZLONG) && _MIPS_SZLONG == 64) || defined(__LP64__) || defined(__arch64__) || defined(_LP64)
 typedef	int int32;
 typedef	unsigned int uint32;	/* sizeof (uint32) must == 4 */
 #else
@@ -116,10 +116,10 @@ typedef	struct {
  * offset field.
  */
 typedef	struct {
-	uint16	tdir_tag;	/* see below */
-	uint16	tdir_type;	/* data type; see below */
-	uint32  tdir_count;	/* number of items; length in spec */
-	uint32  tdir_offset;	/* byte offset to field data */
+	uint16		tdir_tag;	/* see below */
+	uint16		tdir_type;	/* data type; see below */
+	uint32		tdir_count;	/* number of items; length in spec */
+	uint32		tdir_offset;	/* byte offset to field data */
 } TIFFDirEntry;
 
 /*
@@ -148,7 +148,8 @@ typedef	enum {
 	TIFF_SLONG	= 9,	/* !32-bit signed integer */
 	TIFF_SRATIONAL	= 10,	/* !64-bit signed fraction */
 	TIFF_FLOAT	= 11,	/* !32-bit IEEE floating point */
-	TIFF_DOUBLE	= 12	/* !64-bit IEEE floating point */
+	TIFF_DOUBLE	= 12,	/* !64-bit IEEE floating point */
+	TIFF_IFD	= 13	/* %32-bit unsigned integer (offset) */
 } TIFFDataType;
 
 /*
