@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/06/03 14:03:01  warmerda
+ * Added raster layer support
+ *
  * Revision 1.5  1999/05/11 14:08:26  warmerda
  * added SLTPoly
  *
@@ -144,7 +147,9 @@ int SDTS_CATD::Read( const char * pszFilename )
     }
 
     if( i <= 0 )
-        pszPrefixPath[0] = '\0';
+    {
+        strcpy( pszPrefixPath, "." );
+    }
     
 /* ==================================================================== */
 /*      Loop reading CATD records, and adding to our list of entries    */
@@ -297,6 +302,9 @@ SDTSLayerType SDTS_CATD::GetEntryType( int iEntry )
 
     else if( EQUALN(papoEntries[iEntry]->pszType,"Polygon",7) )
         return SLTPoly;
+
+    else if( EQUALN(papoEntries[iEntry]->pszType,"Cell",4) )
+        return SLTRaster;
 
     else
 	return SLTUnknown;

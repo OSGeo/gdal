@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/06/03 14:03:10  warmerda
+ * Added raster layer support
+ *
  * Revision 1.3  1999/05/13 15:32:30  warmerda
  * added SLTPoly as an interesting layer
  *
@@ -102,6 +105,22 @@ int SDTSTransfer::Open( const char * pszFilename )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
+/*      Read the XREF file.                                             */
+/* -------------------------------------------------------------------- */
+    if( oCATD.GetModuleFilePath( "XREF" ) == NULL )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Can't find XREF module in transfer `%s'.\n",
+                  pszFilename );
+    }
+    else if( !oXREF.Read( oCATD.GetModuleFilePath( "XREF" ) ) )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+              "Can't read XREF module, even though found in transfer `%s'.\n",
+                  pszFilename );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Build an index of layer types we recognise and care about.      */
 /* -------------------------------------------------------------------- */
     int	iCATDLayer;
@@ -116,6 +135,7 @@ int SDTSTransfer::Open( const char * pszFilename )
           case SLTLine:
           case SLTAttr:
 	  case SLTPoly:
+          case SLTRaster:
             panLayerCATDEntry[nLayers++] = iCATDLayer;
             break;
 
@@ -259,6 +279,36 @@ SDTSAttrReader *SDTSTransfer::GetLayerAttrReader( int iEntry )
     else
     {
         return poAttrReader;
+    }
+}
+
+/************************************************************************/
+/*                        GetLayerRasterReader()                        */
+/************************************************************************/
+
+SDTSRasterReader *SDTSTransfer::GetLayerRasterReader( int iEntry )
+
+{
+    SDTSRasterReader	*poRasterReader;
+    
+    if( iEntry < 0
+        || iEntry >= nLayers
+        || oCATD.GetEntryType( panLayerCATDEntry[iEntry] ) != SLTRaster )
+    {
+        return NULL;
+    }
+
+    poRasterReader = new SDTSRasterReader();
+    
+    if( !poRasterReader->Open( &oCATD,
+                         oCATD.GetEntryModule(panLayerCATDEntry[iEntry] ) ) )
+    {
+        delete poRasterReader;
+        return NULL;
+    }
+    else
+    {
+        return poRasterReader;
     }
 }
 
