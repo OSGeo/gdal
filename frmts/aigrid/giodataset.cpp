@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/01/13 19:10:53  warmerda
+ * Call AccessWindowSet() _before_ creating a new layer.
+ *
  * Revision 1.3  2000/01/13 17:34:18  warmerda
  * Fixed transposition of nXSize and nYSize.
  *
@@ -440,13 +443,20 @@ GDALDataset *GIODataset::Create( const char * pszFilename,
     }
     
 /* -------------------------------------------------------------------- */
+/*      Set the access window.                                          */
+/* -------------------------------------------------------------------- */
+    double      adfAdjustedBox[4];
+    
+    adfBox[0] = -0.5;
+    adfBox[1] = -0.5;
+    adfBox[2] = nXSize-0.5;
+    adfBox[3] = nYSize-0.5;
+
+    pfnAccessWindowSet( adfBox, 1.0, adfAdjustedBox ); 
+    
+/* -------------------------------------------------------------------- */
 /*      Create the file.                                                */
 /* -------------------------------------------------------------------- */
-    adfBox[0] = 0;
-    adfBox[1] = 0;
-    adfBox[2] = nXSize;
-    adfBox[3] = nYSize;
-
     nChannel = pfnCellLayerCreate( (char *) pszFilename, 
                                    WRITEONLY, ROWIO, CELLFLOAT,
                                    1.0, adfBox );
@@ -486,13 +496,6 @@ GDALDataset *GIODataset::Create( const char * pszFilename,
 
     poDS->nCellType = CELLFLOAT;
 
-/* -------------------------------------------------------------------- */
-/*      Set the access window.                                          */
-/* -------------------------------------------------------------------- */
-    double      adfAdjustedBox[4];
-
-    pfnAccessWindowSet( adfBox, 1.0, adfAdjustedBox ); 
-    
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
