@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/01/10 16:13:09  warmerda
+ * added documentation
+ *
  * Revision 1.3  2000/12/28 21:28:59  warmerda
  * added element index support
  *
@@ -45,6 +48,28 @@
 /*                              DGNOpen()                               */
 /************************************************************************/
 
+/**
+ * Open a DGN file. 
+ *
+ * The file is opened, and minimally verified to ensure it is a DGN (ISFF)
+ * file.  If the file cannot be opened for read access an error with code
+ * CPLE_OpenFailed with be reported via CPLError() and NULL returned.  
+ * If the file header does
+ * not appear to be a DGN file, an error with code CPLE_AppDefined will be
+ * reported via CPLError(), and NULL returned.
+ *
+ * If successful a handle for further access is returned.  This should be
+ * closed with DGNClose() when no longer needed.  
+ *
+ * DGNOpen() does not scan the file on open, and should be very fast even for
+ * large files.  
+ *
+ * @param pszFilename name of file to try opening.
+ *
+ * @return handle to use for further access to file using DGN API, or NULL
+ * if open fails.
+ */
+
 DGNHandle DGNOpen( const char * pszFilename )
 
 {
@@ -56,11 +81,30 @@ DGNHandle DGNOpen( const char * pszFilename )
 /* -------------------------------------------------------------------- */
     fp = VSIFOpen( pszFilename, "rb" );
     if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Unable to open `%s' for read access.\n", 
+                  pszFilename );
         return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Verify the format ... add later.                                */
 /* -------------------------------------------------------------------- */
+    GByte	abyHeader[4];
+
+    VSIFRead( abyHeader, 1, 4, fp );
+    if( abyHeader[0] != 0x08 || abyHeader[1] != 0x09
+        || abyHeader[2] != 0xFE || abyHeader[3] != 0x02 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "File `%s' does not have expected DGN header.\n", 
+                  pszFilename );
+        VSIFClose( fp );
+        return NULL;
+    }
+
+    VSIRewind( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Create the info structure.                                      */
@@ -80,12 +124,20 @@ DGNHandle DGNOpen( const char * pszFilename )
     psDGN->element_count = 0;
     psDGN->element_index = NULL;
 
+    psDGN->got_bounds = FALSE;
+
     return (DGNHandle) psDGN;
 }
 
 /************************************************************************/
 /*                              DGNClose()                              */
 /************************************************************************/
+
+/**
+ * Close DGN file. 
+ *
+ * @param hDGN Handle from DGNOpen() for file to close.
+ */
 
 void DGNClose( DGNHandle hDGN )
 
