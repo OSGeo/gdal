@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/02/21 14:31:56  warmerda
+ * hack for INFINITY conflict problems with math.h
+ *
  * Revision 1.4  2002/03/06 20:08:02  warmerda
  * added tracking of extents, feature count and extrainfo
  *
@@ -45,6 +48,12 @@
 #define _CPL_GMLREADERP_H_INCLUDED
 
 #include "gmlreader.h"
+
+// This works around problems with math.h on some platforms #defining INFINITY
+#ifdef INFINITY
+#undef  INFINITY
+#define INFINITY INFINITY_XERCES
+#endif
 
 #include <dom/DOMString.hpp>
 #include <util/PlatformUtils.hpp>
