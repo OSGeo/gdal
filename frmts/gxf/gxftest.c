@@ -14,6 +14,7 @@ int main( int argc, char ** argv )
     CPLErr	eErr = CE_None;
     double	*padfLineBuf;
     char	*pszProjection;
+    double	dfXOrigin, dfYOrigin, dfXSize, dfYSize, dfRotation;
 
     if( argc < 2 )
     {
@@ -57,6 +58,19 @@ int main( int argc, char ** argv )
 
     CPLFree( pszProjection );
 
+    GXFGetRawPosition( hGXF, &dfXOrigin, &dfYOrigin, &dfXSize, &dfYSize,
+                       &dfRotation );
+
+    printf( "Raw Position: Origin=(%g,%g) PixelSize=(%g,%g) Rot=%g\n",
+            dfXOrigin, dfYOrigin, dfXSize, dfYSize, dfRotation );
+    
+    
+    GXFGetPROJ4Position( hGXF, &dfXOrigin, &dfYOrigin, &dfXSize, &dfYSize,
+                       &dfRotation );
+
+    printf( "PROJ4 Position: Origin=(%g,%g) PixelSize=(%g,%g) Rot=%g\n",
+            dfXOrigin, dfYOrigin, dfXSize, dfYSize, dfRotation );
+    
     
     GXFClose( hGXF );
 
