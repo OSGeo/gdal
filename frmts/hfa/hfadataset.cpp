@@ -29,13 +29,16 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/01/27 18:32:46  warmerda
+ * compiles OK
+ *
  * Revision 1.1  1999/01/22 17:40:43  warmerda
  * New
  *
  */
 
 #include "gdal_priv.h"
-#include "ecs.h"
+#include "hfa.h"
 
 CPL_C_START
 void	GDALRegister_HFA(void);
@@ -186,7 +189,7 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Verify that this is a HFA file.                                 */
 /* -------------------------------------------------------------------- */
     if( !poOpenInfo->bStatOK || poOpenInfo->nHeaderBytes < 15
-        || !EQUAL((char *) poOpenInfo->pabyHeader,"EHFA_HEADER_TAG",15) )
+        || !EQUALN((char *) poOpenInfo->pabyHeader,"EHFA_HEADER_TAG",15) )
         return( NULL );
 
 /* -------------------------------------------------------------------- */
