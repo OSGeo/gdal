@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/07/27 00:52:40  warmerda
+ * added write methods
+ *
  * Revision 1.3  1999/07/26 13:59:25  warmerda
  * added feature writing api
  *
@@ -181,9 +184,71 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
         /* nothing returned */
     }
     
+/* -------------------------------------------------------------------- */
+/*      Cleanup shape, and set feature id.                              */
+/* -------------------------------------------------------------------- */
     SHPDestroyObject( psShape );
 
     return poOGR;
+}
+
+/************************************************************************/
+/*                         SHPWriteOGRObject()                          */
+/************************************************************************/
+
+OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
+
+{
+/* ==================================================================== */
+/*      Write point geometry.                                           */
+/* ==================================================================== */
+    if( hSHP->nShapeType == SHPT_POINT
+        || hSHP->nShapeType == SHPT_POINTM
+        || hSHP->nShapeType == SHPT_POINTZ )
+    {
+        SHPObject	*psShape;
+        OGRPoint	*poPoint = (OGRPoint *) poGeom;
+        double		dfX, dfY, dfZ = 0;
+
+        if( poGeom->getGeometryType() != wkbPoint )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Attempt to write non-point geometry to point shapefile.");
+
+            return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+        }
+
+        dfX = poPoint->getX();
+        dfY = poPoint->getY();
+        dfZ = 0.0;
+        
+        psShape = SHPCreateSimpleObject( hSHP->nShapeType, 1,
+                                         &dfX, &dfY, &dfZ );
+        SHPWriteObject( hSHP, iShape, psShape );
+        SHPDestroyObject( psShape );
+    }
+    else if( hSHP->nShapeType == SHPT_MULTIPOINT
+             || hSHP->nShapeType == SHPT_MULTIPOINTM
+             || hSHP->nShapeType == SHPT_MULTIPOINTZ )
+    {
+    }
+    else if( hSHP->nShapeType == SHPT_ARC
+             || hSHP->nShapeType == SHPT_ARCM
+             || hSHP->nShapeType == SHPT_ARCZ )
+    {
+    }
+    else if( hSHP->nShapeType == SHPT_POLYGON
+             || hSHP->nShapeType == SHPT_POLYGONM
+             || hSHP->nShapeType == SHPT_POLYGONZ )
+    {
+    }
+    else
+    {
+        /* do nothing for multipatch */
+        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+    }
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -289,6 +354,9 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
         }
     }
 
+    if( poFeature != NULL )
+        poFeature->SetFID( iShape );
+
     return( poFeature );
 }
 
@@ -301,22 +369,25 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 
 OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            OGRFeatureDefn * poDefn, 
-                           OGRFeature * poFeature,
-                           long *piShape )
+                           OGRFeature * poFeature )
 
 {
 /* -------------------------------------------------------------------- */
 /*      If this is a new feature, establish it's feature id.            */
 /* -------------------------------------------------------------------- */
-    if( *piShape == -1 )
-        *piShape = DBFGetRecordCount( hDBF );
+    if( poFeature->GetFID() == OGRNullFID )
+        poFeature->SetFID( DBFGetRecordCount( hDBF ) );
 
 /* -------------------------------------------------------------------- */
-/*      Write the geometry ... fix later.                               */
+/*      Write the geometry.                                             */
 /* -------------------------------------------------------------------- */
-// notdef
-//    poFeature->SetGeometryDirectly( SHPReadOGRObject( hSHP, iShape ) );
+    OGRErr	eErr;
 
+    eErr = SHPWriteOGRObject( hSHP, poFeature->GetFID(),
+                              poFeature->GetGeometryRef() );
+    if( eErr != OGRERR_NONE )
+        return eErr;
+    
 /* -------------------------------------------------------------------- */
 /*      Write all the fields.                                           */
 /* -------------------------------------------------------------------- */
@@ -325,17 +396,17 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
         switch( poDefn->GetFieldDefn(iField)->GetType() )
         {
           case OFTString:
-            DBFWriteStringAttribute( hDBF, *piShape, iField, 
+            DBFWriteStringAttribute( hDBF, poFeature->GetFID(), iField, 
                                      poFeature->GetFieldAsString( iField ));
             break;
 
           case OFTInteger:
-            DBFWriteIntegerAttribute( hDBF, *piShape, iField, 
+            DBFWriteIntegerAttribute( hDBF, poFeature->GetFID(), iField, 
                                       poFeature->GetFieldAsInteger(iField) );
             break;
 
           case OFTReal:
-            DBFWriteDoubleAttribute( hDBF, *piShape, iField, 
+            DBFWriteDoubleAttribute( hDBF, poFeature->GetFID(), iField, 
                                      poFeature->GetFieldAsDouble(iField) );
             break;
 
