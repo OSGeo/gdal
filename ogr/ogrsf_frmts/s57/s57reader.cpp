@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  1999/11/26 15:17:01  warmerda
+ * fixed lname to lnam
+ *
  * Revision 1.10  1999/11/26 15:08:38  warmerda
  * added setoptions, and LNAM support
  *
@@ -235,7 +238,7 @@ void S57Reader::SetOptions( char ** papszOptionsIn )
     else
         bSplitMultiPoint = FALSE;
 
-    pszOptionValue = CSLFetchNameValue( papszOptions, "LNAME_REFS" );
+    pszOptionValue = CSLFetchNameValue( papszOptions, "LNAM_REFS" );
     if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
         bGenerateLNAM = TRUE;
     else

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/11/26 15:17:01  warmerda
+ * fixed lname to lnam
+ *
  * Revision 1.6  1999/11/26 15:08:38  warmerda
  * added setoptions, and LNAM support
  *
@@ -77,7 +80,7 @@ int main( int nArgc, char ** papszArgv )
                 CSLSetNameValue( papszOptions, "SPLIT_MULTIPOINT", "ON" );
         else if( EQUALN(papszArgv[iArg],"-lnam",4) )
             papszOptions =
-                CSLSetNameValue( papszOptions, "LNAME_REFS", "ON" );
+                CSLSetNameValue( papszOptions, "LNAM_REFS", "ON" );
     }
     
 /* -------------------------------------------------------------------- */
