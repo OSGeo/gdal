@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2005/01/19 20:29:10  fwarmerdam
+ * added autoloaddrivers on ogrsfdriverregistrar
+ *
  * Revision 1.47  2005/01/03 22:16:44  fwarmerdam
  * added OGRLayer::SetSpatialFilterRect()
  *
@@ -391,6 +394,8 @@ class CPL_DLL OGRSFDriverRegistrar
 
     int         GetOpenDSCount() { return nOpenDSCount; } 
     OGRDataSource *GetOpenDS( int );
+
+    void        AutoLoadDrivers();
 };
 
 /* -------------------------------------------------------------------- */
