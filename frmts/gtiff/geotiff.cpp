@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.126  2004/11/12 17:02:08  gwalter
+ * Use GDALDuplicateGCPs instead of malloc/memcpy
+ * so that GCP Id and Info are duplicated
+ * properly.
+ *
  * Revision 1.125  2004/11/11 21:03:38  fwarmerdam
  * dont try and write tiepoint+pixelscale for southup images, bug 666
  *
@@ -3749,10 +3754,7 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
     if( GetAccess() == GA_Update )
     {
 	this->nGCPCount = nGCPCount;
-	this->pasGCPList = (GDAL_GCP *)
-	    CPLCalloc(sizeof(GDAL_GCP),nGCPCount);
-	memcpy( this->pasGCPList, pasGCPList,
-		sizeof(GDAL_GCP) * nGCPCount );
+	this->pasGCPList = GDALDuplicateGCPs(nGCPCount, pasGCPList);
 	this->pszProjection = CPLStrdup( pszGCPProjection );
         bGeoTIFFInfoChanged = TRUE;
 
