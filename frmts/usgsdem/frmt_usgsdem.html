@@ -28,8 +28,6 @@ Some of the code for implementing usgsdemdataset.cpp was derived from
 VTP code by Ben Discoe.  See the <a href="http://www.vterrain.org/">Virtual
 Terrain</a> project for more information on VTP.<p>
 
-NOTE: Implemented as <tt>gdal/frmts/sdts/usgsdemdataset.cpp</tt>.<p>
-
 <h2>Creation Issues</h2>
 
 GDAL supports export of geographic (but not UTM) USGS DEM and CDED data
@@ -60,6 +58,27 @@ specified.  A number of fields (including the Data Producer) will be copied
 from the template file if provided, and are otherwise left blank. 
 
 </ul>
+
+Example:
+
+The following would generate a single CDED50K tile, extracting from the 
+larger DEM coverage yk_3arcsec for a tile with the top left corner -117w,60n.
+The file yk_template.dem is used to set some product fields including the
+Producer of Data, Process Code and Origin Code fields. 
+
+<pre>
+gdal_translate -of USGSDEM -co PRODUCT=CDED50K -co TEMPLATE=yk_template.dem \
+               -co TOPLEFT=-117w,60n yk_3arcsec 031a01_e.dem
+</pre>
+
+<hr>
+
+NOTE: Implemented as <tt>gdal/frmts/sdts/usgsdemdataset.cpp</tt>.<p>
+
+The USGS DEM reading code in GDAL was derived from the importer in the
+<a href="http://www.vterrain.org/">VTP</a> software.  The export capability
+was developed with the financial support of the Yukon Department of  
+Environment.<p> 
 
 </body>
 </html>
