@@ -191,35 +191,61 @@ fi
 AC_SUBST(LIBZ_SETTING,$LIBZ_SETTING)
 
 dnl ---------------------------------------------------------------------------
-dnl Check if GRASS library is available.
+dnl Check if we should build with GRASS support.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(grass,[  --with-grass[=ARG]      Include GRASS support (ARG=no or libgrass path)],,)
+GRASS_SETTING=no
+GRASS_INCLUDE=
+export GRASS_INCLUDE GRASS_SETTING
 
-if test "$with_grass" = "no" ; then
+AC_ARG_WITH(grass,[  --with-grass[=ARG]      Include GRASS support (ARG=GRASS install tree dir)],,)
 
-  GRASS_SETTING=no
+AC_ARG_WITH(libgrass,[  --with-libgrass[=ARG]    Include GRASS support based on libgrass (GRASS 5.0)],,)
+
+# default use of grass libraries off since we can't easily auto-find them.
+if test "$with_grass" = "" ; then
+  with_grass=no
+fi
+
+# Check for GRASS 5.7.0 or later library use.
+if test "$with_grass" != "yes" -a "$with_grass" != "no" ; then
+
+  AC_CHECK_LIB(grass_gis,G_asprintf,GRASS_SETTING=grass57+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime)
+   
+  if test "$GRASS_SETTING" = "grass" ; then   
+    LIBS="-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
+    GRASS_INCLUDE="-I$with_grass/include"
+  else
+    AC_MSG_ERROR([--with-grass=$with_grass requested, but libraries not found!])
+  fi
+
+# Check if libgrass is disabled.
+elif test "$with_libgrass" = "no" ; then
 
   echo "GRASS support disabled."
 
-elif test "$with_grass" = "yes" -o "$with_grass" = "" ; then
+elif test "$with_libgrass" = "yes" -o "$with_libgrass" = "" ; then
 
-  AC_CHECK_LIB(grass5,G_gisinit_2,GRASS_SETTING=external,GRASS_SETTING=no,)
+  AC_CHECK_LIB(grass5,G_gisinit_2,GRASS_SETTING=libgrass,GRASS_SETTING=no,)
 
-  if test "$GRASS_SETTING" = "external" ; then   
+  if test "$GRASS_SETTING" = "libgrass" ; then   
     LIBS="-lgrass5 $LIBS"
   fi
 
 else
 
-  GRASS_SETTING=external
-  LIBS="-L$with_grass -L$with_grass/lib -lgrass5 $LIBS"
-  EXTRA_INCLUDES="-I$with_grass -I$with_grass/include $EXTRA_INCLUDES"
+  AC_CHECK_LIB(grass5,G_gisinit_2,GRASS_SETTING=libgrass,GRASS_SETTING=no,-L$with_libgrass/lib)
 
-  echo "using libgrass from $with_grass."
+  if test "$GRASS_SETTING" = "libgrass" ; then   
+    LIBS="-L$with_libgrass -L$with_libgrass/lib -lgrass5 $LIBS"
+    GRASS_INCLUDE="-I$with_libgrass -I$with_libgrass/include $EXTRA_INCLUDES"
+  else
+    AC_MSG_ERROR([--with-libgrass=$with_grass requested, but libgrass5 not found!])
+  fi
 fi
 
 AC_SUBST(GRASS_SETTING,$GRASS_SETTING)
+AC_SUBST(GRASS_INCLUDE,$GRASS_INCLUDE)
 
 if test "$GRASS_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="grass $OPT_GDAL_FORMATS"
