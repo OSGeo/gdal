@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/03/23 18:08:17  warmerda
+ * Fixed row/column major orientedness of data for multi-dimensional arrays.
+ *
  * Revision 1.3  2004/02/19 13:57:21  warmerda
  * complete support for extra_containers
  *
@@ -468,7 +471,7 @@ OGRFeature *OGRDODSGridLayer::GetFeature( long nFeatureId )
     int iDim;
     int nRemainder = nFeatureId;
 
-    for( iDim = 0; iDim < nDimCount; iDim++ )
+    for( iDim = nDimCount-1; iDim >= 0; iDim-- )
     {
         paoDimensions[iDim].iLastValue = 
             (nRemainder % paoDimensions[iDim].nDimEntries) 
