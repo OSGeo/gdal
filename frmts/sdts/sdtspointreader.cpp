@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/07/30 19:15:56  warmerda
+ * added module reference counting
+ *
  * Revision 1.2  1999/05/11 14:09:00  warmerda
  * fixed up to use PNTS for point record id
  *
@@ -198,4 +201,15 @@ SDTSRawPoint * SDTSPointReader::GetNextPoint()
         delete poRawPoint;
         return NULL;
     }
+}
+
+
+/************************************************************************/
+/*                        ScanModuleReferences()                        */
+/************************************************************************/
+
+char ** SDTSPointReader::ScanModuleReferences( const char * pszFName )
+
+{
+    return SDTSScanModuleReferences( &oDDFModule, pszFName );
 }

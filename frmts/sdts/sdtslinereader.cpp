@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/07/30 19:15:56  warmerda
+ * added module reference counting
+ *
  * Revision 1.5  1999/06/03 14:11:42  warmerda
  * Avoid redeclaration of i.
  *
@@ -267,4 +270,14 @@ SDTSRawLine * SDTSLineReader::GetNextLine()
         delete poRawLine;
         return NULL;
     }
+}
+
+/************************************************************************/
+/*                        ScanModuleReferences()                        */
+/************************************************************************/
+
+char ** SDTSLineReader::ScanModuleReferences( const char * pszFName )
+
+{
+    return SDTSScanModuleReferences( &oDDFModule, pszFName );
 }

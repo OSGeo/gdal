@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/07/30 19:15:56  warmerda
+ * added module reference counting
+ *
  * Revision 1.7  1999/06/03 21:13:02  warmerda
  * Added transform for rasters.
  *
@@ -62,6 +65,7 @@ class SDTS_IREF;
 #define SDTS_SIZEOF_SADR	8
 
 int SDTSGetSADR( SDTS_IREF *, DDFField *, int, double *, double *, double * );
+char **SDTSScanModuleReferences( DDFModule *, const char * );
 
 /************************************************************************/
 /*                              SDTS_IREF                               */
@@ -173,6 +177,8 @@ class SDTSLineReader
     int         Open( const char * );
     SDTSRawLine *GetNextLine( void );
     void	Close();
+
+    char **	ScanModuleReferences( const char * = "ATID" );
 };
 
 /************************************************************************/
@@ -272,6 +278,8 @@ class SDTSPointReader
     int         Open( const char * );
     SDTSRawPoint *GetNextPoint( void );
     void	Close();
+
+    char **	ScanModuleReferences( const char * = "ATID" );
 };
 
 /************************************************************************/
@@ -319,6 +327,8 @@ class SDTSPolygonReader
     int         Open( const char * );
     SDTSRawPolygon *GetNextPolygon( void );
     void	Close();
+
+    char **	ScanModuleReferences( const char * = "ATID" );
 };
 
 /************************************************************************/

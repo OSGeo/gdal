@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/07/30 19:15:56  warmerda
+ * added module reference counting
+ *
  * Revision 1.1  1999/05/11 14:04:42  warmerda
  * New
  *
@@ -179,4 +182,14 @@ SDTSRawPolygon * SDTSPolygonReader::GetNextPolygon()
         delete poRawPolygon;
         return NULL;
     }
+}
+
+/************************************************************************/
+/*                        ScanModuleReferences()                        */
+/************************************************************************/
+
+char ** SDTSPolygonReader::ScanModuleReferences( const char * pszFName )
+
+{
+    return SDTSScanModuleReferences( &oDDFModule, pszFName );
 }

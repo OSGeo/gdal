@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/07/30 19:15:56  warmerda
+ * added module reference counting
+ *
  * Revision 1.3  1999/05/11 12:55:54  warmerda
  * added GetName() method to SDTSModId
  *
@@ -40,6 +43,7 @@
  */
 
 #include "sdts_al.h"
+#include "cpl_string.h"
 
 /************************************************************************/
 /*                           SDTSModId::Set()                           */
@@ -115,3 +119,72 @@ const char * SDTSModId::GetName()
 
     return szName;
 }
+
+/************************************************************************/
+/*                      SDTSScanModuleReferences()                      */
+/*                                                                      */
+/*      Find all modules references by records in this module based     */
+/*      on a particular field name.  That field must be in module       */
+/*      reference form (contain MODN/RCID subfields).                   */
+/************************************************************************/
+
+char **SDTSScanModuleReferences( DDFModule * poModule, const char * pszFName )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Identify the field, and subfield we are interested in.          */
+/* -------------------------------------------------------------------- */
+    DDFFieldDefn	*poIDField;
+    DDFSubfieldDefn     *poMODN;
+
+    poIDField = poModule->FindFieldDefn( pszFName );
+
+    if( poIDField == NULL )
+        return NULL;
+
+    poMODN = poIDField->FindSubfieldDefn( "MODN" );
+    if( poMODN == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Scan the file.                                                  */
+/* -------------------------------------------------------------------- */
+    DDFRecord	*poRecord;
+    char	**papszModnList = NULL;
+    
+    poModule->Rewind();
+    while( (poRecord = poModule->ReadRecord()) != NULL )
+    {
+        int	iField;
+        
+        for( iField = 0; iField < poRecord->GetFieldCount(); iField++ )
+        {
+            DDFField	*poField = poRecord->GetField( iField );
+
+            if( poField->GetFieldDefn() == poIDField )
+            {
+                const char	*pszModName;
+                int		i;
+
+                for( i = 0; i < poField->GetRepeatCount(); i++ )
+                {
+                    char	szName[5];
+                    
+                    pszModName = poField->GetSubfieldData(poMODN,NULL,i);
+
+                    strncpy( szName, pszModName, 4 );
+                    szName[4] = '\0';
+                    
+                    if( CSLFindString( papszModnList, szName ) == -1 )
+                        papszModnList = CSLAddString( papszModnList, szName );
+                }
+            }
+        }
+    }
+
+    poModule->Rewind();
+
+    return papszModnList;
+}
+
+
