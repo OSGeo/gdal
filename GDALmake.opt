@@ -1,15 +1,7 @@
-#
-#	Default compiler is gcc, 
-#	but for Redhat 5 systems, we must use EGCS for C++
-#
-ifneq ($(wildcard /usr/bin/egc?),)
-CC	=	egcs --no-rtti -fno-exceptions
-else
 CC	=	gcc
-endif
 
 OPTFLAGS =	-O
-DBGFLAGS =	-g -DDEBUG
+DBGFLAGS =	-g -DDEBUG -DDBMALLOC
 
 #
 #	Whether we use debug flags, or optimization is determined by
@@ -18,24 +10,39 @@ DBGFLAGS =	-g -DDEBUG
 #
 ifeq ($(CFG),debug)
 OD_FLAGS =	$(DBGFLAGS)
-else
+endif
+
+ifeq ($(CFG),gprof)
+OD_FLAGS =	-pg
+LNK_FLAGS =	-pg
+endif
+
+ifeq ($(OD_FLAGS),)
 OD_FLAGS =	$(OPTFLAGS)
 endif
 
 CFLAGS	=	-Wall $(OD_FLAGS)
 
-GDAL_INCLUDE	=	-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/core
+GDAL_INCLUDE	=	-I$(GDAL_ROOT) -I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/core
 
 LIBS		=	-lm
-
 ifeq ($(MAKE_MODE),)
 LIBS	:=    -ldl $(LIBS) 
 endif
 
-GDAL_LIBS	=	$(GDAL_ROOT)/frmts/*.o \
-			$(GDAL_ROOT)/frmts/geotiff/libgeotiff/libgeotiff.a \
-			$(GDAL_ROOT)/frmts/geotiff/libtiff/libtiff.a \
-			$(GDAL_ROOT)/core/*.o $(GDAL_ROOT)/port/*.o 
+ifeq ($(CFG),debug)
+LIBS		:=	$(LIBS) -ldbmalloc
+endif
+
+ifneq ($(TOPDIR),)
+OGDI_LIBS	=	-L$(TOPDIR)/bin/linux -logdi -lzlib
+OGDI_FLAG	=	ENABLED
+endif
+
+GDAL_LIBS	=	$(GDAL_ROOT)/frmts/o/*.o \
+			$(GDAL_ROOT)/frmts/o/*.a \
+			$(OGDI_LIBS) \
+			$(GDAL_ROOT)/core/*.o $(GDAL_ROOT)/port/*.o
 
 
 #
@@ -43,4 +50,4 @@ GDAL_LIBS	=	$(GDAL_ROOT)/frmts/*.o \
 #	and their uppercase form should be the format portion of the
 #	format registration entry point.  eg. gdb -> GDALRegister_GDB().
 #
-GDAL_FORMATS = 	gdb
+GDAL_FORMATS = 	gxf gtiff hfa ogdi
