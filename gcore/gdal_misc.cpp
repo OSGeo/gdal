@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2002/12/11 21:21:46  warmerda
+ * fixed debug format problem
+ *
  * Revision 1.39  2002/12/09 20:05:31  warmerda
  * fixed return flag from GDALReadTabFile
  *
@@ -1219,7 +1222,8 @@ int GDALReadTabFile( const char * pszBaseFilename,
             }
 #else
             CPLDebug( "GDAL", "GDALReadTabFile(): Found `%s',\n"
-                 "but GDALReadTabFile() not configured with MITAB callout." );
+                 "but GDALReadTabFile() not configured with MITAB callout.",
+                      papszLines[iLine] );
 #endif
         }
     }
