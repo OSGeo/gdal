@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/07/13 15:38:44  warmerda
+ * Fixed quoting in DELETE statement.  Don't use single quotes on field
+ * names in the WHERE clause.
+ *
  * Revision 1.5  2004/07/13 15:11:19  warmerda
  * implemented SetFeature, transaction support
  *
@@ -665,10 +669,17 @@ OGRErr OGRSQLiteTableLayer::SetFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     int rc;
     char *pszErrMsg = NULL;
+    const char *pszSQL;
+
+    pszSQL = 
+        CPLSPrintf( "DELETE FROM '%s' WHERE \"%s\" = %d", 
+                    poFeatureDefn->GetName(), 
+                    pszFIDColumn,
+                    poFeature->GetFID() );
+
+    CPLDebug( "OGR_SQLITE", "exec(%s)", pszSQL );
     
-    rc = sqlite3_exec( poDS->GetDB(), 
-                       CPLSPrintf( "DELETE FROM '%s' WHERE '%s' = %d", 
-                                   poFeature->GetFID() ),
+    rc = sqlite3_exec( poDS->GetDB(), pszSQL,
                        NULL, NULL, &pszErrMsg );
     
     if( rc != SQLITE_OK )
