@@ -11,7 +11,9 @@ include $(GDAL_ROOT)/GDALmake.opt
 OBJ	=	sdtsiref.o sdtscatd.o sdtslinereader.o sdtslib.o \
 		sdtspointreader.o sdtsattrreader.o sdtstransfer.o \
 		sdtspolygonreader.o sdtsxref.o sdtsrasterreader.o \
-		sdtsindexedreader.o 
+		sdtsindexedreader.o \
+		\
+		ogrsdtsdriver.o ogrsdtsdatasource.o ogrsdtslayer.o
 
 ALL_CXX_FLAGS =	-I$(GDAL_HOME)/ogr/ogrsf_frmts -I$(ISO8211DIR) \
 		$(GDAL_INCLUDE) $(CXXFLAGS)
