@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.33  2005/01/17 17:01:56  fwarmerdam
+ * ensure that namespace stripping apply to attributes
+ *
  * Revision 1.32  2004/10/21 18:59:00  fwarmerdam
  * Ensure that an empty path in CPLGetXMLValue() means the current node.
  *
@@ -1079,6 +1082,9 @@ CPLXMLNode *CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType,
 void CPLDestroyXMLNode( CPLXMLNode *psNode )
 
 {
+    if( psNode == NULL )
+        return;
+
     if( psNode->psChild != NULL )
         CPLDestroyXMLNode( psNode->psChild );
     
@@ -1550,7 +1556,7 @@ void CPLStripXMLNamespace( CPLXMLNode *psRoot,
 
     if( pszNamespace != NULL )
     {
-        if( psRoot->eType == CXT_Element 
+        if( (psRoot->eType == CXT_Element || psRoot->eType == CXT_Attribute)
             && EQUALN(pszNamespace,psRoot->pszValue,strlen(pszNamespace)) 
             && psRoot->pszValue[strlen(pszNamespace)] == ':' )
         {
