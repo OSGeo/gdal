@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/04/12 20:19:15  warmerda
+ * added xpm
+ *
  * Revision 1.11  2002/03/04 21:54:30  warmerda
  * added envi format
  *
@@ -106,6 +109,7 @@ void CPL_DLL GDALRegister_VRT(void);
 void CPL_DLL GDALRegister_USGSDEM(void);
 void CPL_DLL GDALRegister_LDF(void);
 void CPL_DLL GDALRegister_BSB(void);
+void CPL_DLL GDALRegister_XPM(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
