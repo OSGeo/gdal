@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/11/29 21:31:28  warmerda
+ * added support for writing georef on SetGeoTransform
+ *
  * Revision 1.8  2000/08/16 15:51:39  warmerda
  * added support for reading overviews
  *
@@ -100,6 +103,7 @@ class HKVDataset : public RawDataset
 {
     friend	HKVRasterBand;
 
+    char	*pszPath;
     FILE	*fpBlob;
 
     int         nOverviews;
@@ -115,6 +119,11 @@ class HKVDataset : public RawDataset
     char        *pszProjection;
     double      adfGeoTransform[6];
 
+    char	**papszAttrib;
+
+    int		bGeorefChanged;
+    char	**papszGeoref;
+    
   protected:    
     virtual CPLErr IBuildOverviews( const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * );
@@ -122,14 +131,14 @@ class HKVDataset : public RawDataset
     		HKVDataset();
     virtual     ~HKVDataset();
     
-    char	**papszAttrib;
-    
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
 
     virtual const char *GetProjectionRef(void);
     virtual CPLErr GetGeoTransform( double * );
+
+    virtual CPLErr SetGeoTransform( double * );
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -242,7 +251,11 @@ GDALRasterBand *HKVRasterBand::GetOverview( int i )
 
 HKVDataset::HKVDataset()
 {
+    pszPath = NULL;
     papszAttrib = NULL;
+    papszGeoref = NULL;
+    bGeorefChanged = FALSE;
+
     nGCPCount = 0;
     pasGCPList = NULL;
     pszProjection = CPLStrdup("");
@@ -267,7 +280,16 @@ HKVDataset::~HKVDataset()
     int       i;
 
     FlushCache();
-    CSLDestroy( papszAttrib );
+
+    if( bGeorefChanged )
+    {
+        const char	*pszFilename;
+
+        pszFilename = CPLFormFilename(pszPath, "georef", NULL );
+
+        CSLSave( papszGeoref, pszFilename );
+    }
+
     if( fpBlob != NULL )
         VSIFClose( fpBlob );
 
@@ -285,6 +307,10 @@ HKVDataset::~HKVDataset()
     }
     CPLFree( pafpOverviewBlob );
     CPLFree( panOverviewLevel );
+
+    CPLFree( pszPath );
+    CSLDestroy( papszGeoref );
+    CSLDestroy( papszAttrib );
 }
 
 /************************************************************************/
@@ -319,6 +345,93 @@ CPLErr HKVDataset::GetGeoTransform( double * padfTransform )
 
 {
     memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 );
+    return( CE_None );
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
+
+{
+    char	szValue[128];
+
+    memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
+
+/* -------------------------------------------------------------------- */
+/*      top left                                                        */
+/* -------------------------------------------------------------------- */
+    sprintf( szValue, "%.10f", padfTransform[3] );
+    papszGeoref = CSLSetNameValue( papszGeoref, "top_left.latitude", 
+                                   szValue );
+
+    sprintf( szValue, "%.10f", padfTransform[0] );
+    papszGeoref = CSLSetNameValue( papszGeoref, "top_left.longitude", 
+                                   szValue );
+
+/* -------------------------------------------------------------------- */
+/*      top_right                                                       */
+/* -------------------------------------------------------------------- */
+    sprintf( szValue, "%.10f", padfTransform[3] );
+    papszGeoref = CSLSetNameValue( papszGeoref, "top_right.latitude", 
+                                   szValue );
+
+    sprintf( szValue, "%.10f", 
+             padfTransform[0] + GetRasterXSize() * padfTransform[1] );
+    papszGeoref = CSLSetNameValue( papszGeoref, "top_right.longitude", 
+                                   szValue );
+
+/* -------------------------------------------------------------------- */
+/*      bottom_left                                                     */
+/* -------------------------------------------------------------------- */
+    sprintf( szValue, "%.10f", 
+             padfTransform[3] + GetRasterYSize() * padfTransform[5] );
+    papszGeoref = CSLSetNameValue( papszGeoref, "bottom_left.latitude", 
+                                   szValue );
+
+    sprintf( szValue, "%.10f", padfTransform[0] );
+    papszGeoref = CSLSetNameValue( papszGeoref, "bottom_left.longitude", 
+                                   szValue );
+
+/* -------------------------------------------------------------------- */
+/*      bottom_right                                                    */
+/* -------------------------------------------------------------------- */
+    sprintf( szValue, "%.10f", 
+             padfTransform[3] + GetRasterYSize() * padfTransform[5] );
+    papszGeoref = CSLSetNameValue( papszGeoref, "bottom_right.latitude", 
+                                   szValue );
+
+    sprintf( szValue, "%.10f", 
+             padfTransform[0] + GetRasterXSize() * padfTransform[1] );
+    papszGeoref = CSLSetNameValue( papszGeoref, "bottom_right.longitude", 
+                                   szValue );
+
+/* -------------------------------------------------------------------- */
+/*      Center                                                          */
+/* -------------------------------------------------------------------- */
+    sprintf( szValue, "%.10f", 
+             padfTransform[3] + GetRasterYSize() * padfTransform[5] * 0.5 );
+    papszGeoref = CSLSetNameValue( papszGeoref, "centre.latitude", 
+                                   szValue );
+
+    sprintf( szValue, "%.10f", 
+             padfTransform[0] + GetRasterXSize() * padfTransform[1] * 0.5 );
+    papszGeoref = CSLSetNameValue( papszGeoref, "centre.longitude", 
+                                   szValue );
+
+/* -------------------------------------------------------------------- */
+/*      Set projection to LL if not previously set.                     */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue( papszGeoref, "projection.name" ) == NULL )
+    {
+        papszGeoref = CSLSetNameValue( papszGeoref, "projection.name", "LL" );
+        papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name", 
+                                       "ev-wgs-84" );
+    }
+
+    bGeorefChanged = TRUE;
+
     return( CE_None );
 }
 
@@ -407,13 +520,13 @@ void HKVDataset::ProcessGeorefGCP( char **papszGeoref, const char *pszBase,
 void HKVDataset::ProcessGeoref( const char * pszFilename )
 
 {
-    char  **papszGeoref;
     int   i;
 
 /* -------------------------------------------------------------------- */
 /*      Load the georef file, and boil white space away from around     */
 /*      the equal sign.                                                 */
 /* -------------------------------------------------------------------- */
+    CSLDestroy( papszGeoref );
     papszGeoref = CSLLoad( pszFilename );
     if( papszGeoref == NULL )
         return;
@@ -510,11 +623,6 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
         if( poTransform != NULL )
             delete poTransform;
     }
-    
-/* -------------------------------------------------------------------- */
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
-    CSLDestroy( papszGeoref );
 }
 
 /************************************************************************/
@@ -578,6 +686,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new HKVDataset();
 
+    poDS->pszPath = CPLStrdup( poOpenInfo->pszFilename );
     poDS->poDriver = poHKVDriver;
     poDS->papszAttrib = papszAttrib;
     
@@ -666,7 +775,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Unsupported pixel data type in %s.\n"
                   "pixel.size=%d pixel.encoding=%s\n", 
-                  poOpenInfo->pszFilename, nSize, pszEncoding );
+                  poDS->pszPath, nSize, pszEncoding );
         delete poDS;
         return NULL;
     }
@@ -674,7 +783,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open the blob file.                                             */
 /* -------------------------------------------------------------------- */
-    pszFilename = CPLFormFilename(poOpenInfo->pszFilename, "blob", NULL );
+    pszFilename = CPLFormFilename(poDS->pszPath, "blob", NULL );
     if( poOpenInfo->eAccess == GA_ReadOnly )
     {
         poDS->fpBlob = VSIFOpen( pszFilename, "rb" );
@@ -709,8 +818,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
         FILE         *fp;
 
         sprintf( szBlobName, "blob%d", nLevel );
-        pszFilename = CPLFormFilename(poOpenInfo->pszFilename, szBlobName, 
-                                      NULL );
+        pszFilename = CPLFormFilename(poDS->pszPath, szBlobName, NULL );
         
         fp = VSIFOpen( pszFilename, "rb" );
         if( fp == NULL )
@@ -748,7 +856,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Process the georef file if there is one.                        */
 /* -------------------------------------------------------------------- */
-    pszFilename = CPLFormFilename(poOpenInfo->pszFilename, "georef", NULL );
+    pszFilename = CPLFormFilename(poDS->pszPath, "georef", NULL );
     if( VSIStat(pszFilename,&sStat) == 0 )
         poDS->ProcessGeoref(pszFilename);
 
