@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.83  2004/03/04 18:04:45  warmerda
+ * added importFromDict() support
+ *
  * Revision 1.82  2004/02/05 17:07:59  dron
  * Support for HOM projection, specified by two points on centerline.
  *
@@ -1530,6 +1533,20 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 
     if( EQUALN(pszDefinition,"AUTO:",5) )
         return importFromWMSAUTO( pszDefinition );
+
+    if( EQUALN(pszDefinition,"DICT:",5) 
+        && strstr(pszDefinition,",") )
+    {
+        char *pszFile = CPLStrdup(pszDefinition+5);
+        char *pszCode = strstr(pszFile,",") + 1;
+        
+        pszCode[-1] = '\0';
+
+        err = importFromDict( pszFile, pszCode );
+        CPLFree( pszFile );
+
+        return err;
+    }
 
     if( EQUAL(pszDefinition,"NAD27") 
         || EQUAL(pszDefinition,"NAD83") 

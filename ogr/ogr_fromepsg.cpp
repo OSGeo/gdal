@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2004/03/04 18:04:45  warmerda
+ * added importFromDict() support
+ *
  * Revision 1.31  2003/11/20 19:41:15  warmerda
  * added logic to set EPSG authority info if read from PROJ.4
  *
@@ -1410,6 +1413,17 @@ OGRErr OGRSpatialReference::importFromEPSG( int nCode )
         eErr = SetEPSGGeogCS( this, nCode );
     else
         eErr = SetEPSGProjCS( this, nCode );
+
+/* -------------------------------------------------------------------- */
+/*      If we get it as an unsupported code, try looking it up in       */
+/*      the epsg.wkt coordinate system dictionary.                      */
+/* -------------------------------------------------------------------- */
+    if( eErr == OGRERR_UNSUPPORTED_SRS )
+    {
+        char szCode[32];
+        sprintf( szCode, "%d", nCode );
+        eErr = importFromDict( "epsg.wkt", szCode );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If we get it as an unsupported code, try looking it up in       */

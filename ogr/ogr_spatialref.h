@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2004/03/04 18:04:45  warmerda
+ * added importFromDict() support
+ *
  * Revision 1.59  2004/02/07 17:31:21  dron
  * Added OSRExportToUSGS() method.
  *
@@ -215,6 +218,7 @@ class CPL_DLL OGRSpatialReference
                                 double *padfPrjParams, long iDatum );
     OGRErr      importFromWMSAUTO( const char *pszAutoDef );
     OGRErr      importFromXML( const char * );
+    OGRErr      importFromDict( const char *pszDict, const char *pszCode );
 
     OGRErr      morphToESRI();
     OGRErr      morphFromESRI();
