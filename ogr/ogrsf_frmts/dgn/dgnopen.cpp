@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/01/21 20:52:11  warmerda
+ * added SetSpatialFilter function
+ *
  * Revision 1.10  2001/09/27 14:28:44  warmerda
  * first hack at 3D support
  *
@@ -176,6 +179,9 @@ DGNHandle DGNOpen( const char * pszFilename )
     else
         psDGN->dimension = 2;
 
+    psDGN->has_spatial_filter = FALSE;
+    psDGN->sf_converted_to_uor = FALSE;
+
     return (DGNHandle) psDGN;
 }
 
@@ -199,6 +205,90 @@ void DGNSetOptions( DGNHandle hDGN, int nOptions )
     DGNInfo	*psDGN = (DGNInfo *) hDGN;
 
     psDGN->options = nOptions;
+}
+
+/************************************************************************/
+/*                        DGNSetSpatialFilter()                         */
+/************************************************************************/
+
+/**
+ * Set rectangle for which features are desired.
+ *
+ * If a spatial filter is set with this function, DGNReadElement() will
+ * only return spatial elements (elements with a known bounding box) and
+ * only those elements for which this bounding box overlaps the requested
+ * region. 
+ *
+ * If all four values (dfXMin, dfXMax, dfYMin and dfYMax) are zero, the
+ * spatial filter is disabled.   Note that installing a spatial filter
+ * won't reduce the amount of data read from disk.  All elements are still
+ * scanned, but the amount of processing work for elements outside the 
+ * spatial filter is minimized.  
+ *
+ * @param hDGN Handle from DGNOpen() for file to update.
+ * @param dfXMin minimum x coordinate for extents (georeferenced coordinates).
+ * @param dfYMin minimum y coordinate for extents (georeferenced coordinates).
+ * @param dfXMax maximum x coordinate for extents (georeferenced coordinates).
+ * @param dfYMax maximum y coordinate for extents (georeferenced coordinates).
+ */ 
+
+void DGNSetSpatialFilter( DGNHandle hDGN, 
+                          double dfXMin, double dfYMin, 
+                          double dfXMax, double dfYMax )
+
+{
+    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+
+    if( dfXMin == 0.0 && dfXMax == 0.0
+        && dfYMin == 0.0 && dfYMax == 0.0 )
+    {
+        psDGN->has_spatial_filter = FALSE;
+        return;
+    }
+
+    psDGN->has_spatial_filter = TRUE;
+    psDGN->sf_converted_to_uor = FALSE;
+
+    psDGN->sf_min_x_geo = dfXMin;
+    psDGN->sf_min_y_geo = dfYMin;
+    psDGN->sf_max_x_geo = dfXMax;
+    psDGN->sf_max_y_geo = dfYMax;
+
+    DGNSpatialFilterToUOR( psDGN );
+
+}
+
+/************************************************************************/
+/*                       DGNSpatialFilterToUOR()                        */
+/************************************************************************/
+
+void DGNSpatialFilterToUOR( DGNInfo *psDGN )
+
+{
+    DGNPoint	sMin, sMax;
+
+    if( psDGN->sf_converted_to_uor 
+        || !psDGN->has_spatial_filter 
+        || !psDGN->got_tcb )
+        return;
+
+    sMin.x = psDGN->sf_min_x_geo;
+    sMin.y = psDGN->sf_min_y_geo;
+    sMin.z = 0;
+    
+    sMax.x = psDGN->sf_max_x_geo;
+    sMax.y = psDGN->sf_max_y_geo;
+    sMax.z = 0;
+
+    DGNInverseTransformPoint( psDGN, &sMin );
+    DGNInverseTransformPoint( psDGN, &sMax );
+
+    psDGN->sf_min_x = (GUInt32) (sMin.x + 2147483648.0);
+    psDGN->sf_min_y = (GUInt32) (sMin.y + 2147483648.0);
+    psDGN->sf_max_x = (GUInt32) (sMax.x + 2147483648.0);
+    psDGN->sf_max_y = (GUInt32) (sMax.y + 2147483648.0);
+
+    psDGN->sf_converted_to_uor = TRUE;
 }
 
 /************************************************************************/

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/01/21 20:50:12  warmerda
+ * added SetSpatialFilter function
+ *
  * Revision 1.15  2002/01/15 06:38:18  warmerda
  * added DGNGetShapeFillInfo
  *
@@ -451,6 +454,9 @@ const char CPL_DLL  *DGNTypeToName( int );
 
 int CPL_DLL   DGNStrokeArc( DGNHandle, DGNElemArc *, int, DGNPoint * );
 int CPL_DLL   DGNStrokeCurve( DGNHandle, DGNElemMultiPoint*, int, DGNPoint * );
+void CPL_DLL  DGNSetSpatialFilter( DGNHandle hDGN, 
+                                   double dfXMin, double dfYMin, 
+                                   double dfXMax, double dfYMax );
 
 
 CPL_C_END
