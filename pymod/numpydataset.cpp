@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/12/11 17:20:44  gwalter
+ * Added UInt16 and UInt32 to list of recognized NumPy types.
+ *
  * Revision 1.9  2003/09/26 15:59:51  warmerda
  * warn if opening an array with internal definitions
  *
@@ -313,8 +316,16 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
         eType = GDT_Int32;
         break;
 
+      case 'u':
+        eType = GDT_UInt32;
+        break;
+
       case 's':
         eType = GDT_Int16;
+        break;
+
+      case 'w':
+        eType = GDT_UInt16;
         break;
 
       case 'b':
