@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/05/13 19:32:10  warmerda
+ * support for reading and writing opacity provided by Diana Esch-Mosher
+ *
  * Revision 1.7  2003/04/22 19:40:36  warmerda
  * fixed email address
  *
@@ -147,7 +150,7 @@ int main( int argc, char ** argv )
         for( i = 1; i <= nBands; i++ )
         {
             int	nDataType, nColors, nOverviews, iOverview;
-            double	*padfRed, *padfGreen, *padfBlue;
+            double	*padfRed, *padfGreen, *padfBlue, *padfAlpha;
             int nBlockXSize, nBlockYSize;
         
             HFAGetBandInfo( hHFA, i, &nDataType, &nBlockXSize, &nBlockYSize, 
@@ -164,15 +167,17 @@ int main( int argc, char ** argv )
                         nXSize, nYSize, nBlockXSize, nBlockYSize );
             }
 
-            if( HFAGetPCT( hHFA, i, &nColors, &padfRed, &padfGreen, &padfBlue )
+            if( HFAGetPCT( hHFA, i, &nColors, &padfRed, &padfGreen, 
+			   &padfBlue, &padfAlpha )
                 == CE_None )
             {
                 int	j;
 
                 for( j = 0; j < nColors; j++ )
                 {
-                    printf( "PCT[%d] = %f,%f,%f\n",
-                            j, padfRed[j], padfGreen[j], padfBlue[j] );
+                    printf( "PCT[%d] = %f,%f,%f %f\n",
+                            j, padfRed[j], padfGreen[j], 
+			    padfBlue[j], padfAlpha[j]);
                 }
             }
         }

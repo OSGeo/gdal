@@ -29,8 +29,8 @@
  *****************************************************************************
  *
  * $Log$
- * Revision 1.31  2003/05/08 21:54:53  warmerda
- * implement block based flushing
+ * Revision 1.32  2003/05/13 19:32:10  warmerda
+ * support for reading and writing opacity provided by Diana Esch-Mosher
  *
  * Revision 1.30  2003/04/28 20:50:18  warmerda
  * implement dataset level IO, and attempt to optimization createcopy()
@@ -388,7 +388,7 @@ class HFARasterBand : public GDALRasterBand
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
-
+    virtual CPLErr          SetColorTable( GDALColorTable * );
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
 
@@ -483,12 +483,12 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
 /* -------------------------------------------------------------------- */
 /*      Collect color table if present.                                 */
 /* -------------------------------------------------------------------- */
-    double    *padfRed, *padfGreen, *padfBlue;
+    double    *padfRed, *padfGreen, *padfBlue, *padfAlpha;
     int       nColors;
 
     if( iOverview == -1
         && HFAGetPCT( hHFA, nBand, &nColors,
-                      &padfRed, &padfGreen, &padfBlue ) == CE_None
+                      &padfRed, &padfGreen, &padfBlue, &padfAlpha ) == CE_None
         && nColors > 0 )
     {
         poCT = new GDALColorTable();
@@ -499,7 +499,7 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
             sEntry.c1 = (int) (padfRed[iColor]   * 255);
             sEntry.c2 = (int) (padfGreen[iColor] * 255);
             sEntry.c3 = (int) (padfBlue[iColor]  * 255);
-            sEntry.c4 = 255;
+            sEntry.c4 = (int) (padfAlpha[iColor]  * 255);
             poCT->SetColorEntry( iColor, &sEntry );
         }
     }
@@ -661,6 +661,49 @@ GDALColorTable *HFARasterBand::GetColorTable()
 {
     return poCT;
 }
+/************************************************************************/
+/*                           SetColorTable()                            */
+/************************************************************************/
+
+CPLErr HFARasterBand::SetColorTable( GDALColorTable * poCTable )
+
+{
+
+/* -------------------------------------------------------------------- */
+/*      Write out the colortable, and update the configuration.         */
+/* -------------------------------------------------------------------- */
+    double	anTRed[256], anTGreen[256], anTBlue[256], anTAlpha[256]; 
+
+    for( int iColor = 0; iColor < 256; iColor++ )
+    {
+	if( iColor < poCTable->GetColorEntryCount() )
+	{
+	    GDALColorEntry  sRGB;
+	    
+	    poCTable->GetColorEntryAsRGB( iColor, &sRGB );
+	    
+	    anTRed[iColor] = sRGB.c1 / 255.0;
+	    anTGreen[iColor] = sRGB.c2 / 255.0;
+	    anTBlue[iColor] = sRGB.c3 / 255.0;
+	    anTAlpha[iColor] = sRGB.c4 / 255.0;
+	}
+	else
+	{
+	    anTRed[iColor] = anTGreen[iColor] = anTBlue[iColor] = anTAlpha[iColor] = 0.;
+	}
+    }
+
+    HFASetPCT( hHFA, nBand, 256,
+	       anTRed, anTGreen, anTBlue, anTAlpha);
+
+
+    if( poCT )
+      delete poCT;
+    
+    poCT = poCTable->Clone();
+
+    return CE_None;
+}
 
 /************************************************************************/
 /*                            SetMetadata()                             */
@@ -729,22 +772,11 @@ HFADataset::~HFADataset()
 void HFADataset::FlushCache()
 
 {
+    GDALDataset::FlushCache();
+
     if( eAccess != GA_Update )
         return;
 
-/* -------------------------------------------------------------------- */
-/*      If we are using spill files we need to flush all bands of a     */
-/*      given block before proceeding in order to optimize write        */
-/*      throughput.                                                     */
-/* -------------------------------------------------------------------- */
-    if( hHFA->papoBand[0]->fpExternal == NULL )
-        GDALDataset::FlushCache();
-    else
-        GDALDataset::BlockBasedFlushCache();
-
-/* -------------------------------------------------------------------- */
-/*      Write out projection and metadata if they have changed.         */
-/* -------------------------------------------------------------------- */
     if( bGeoDirty )
         WriteProjection();
 
@@ -1774,12 +1806,13 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         poCT = poBand->GetColorTable();
         if( poCT != NULL )
         {
-            double	*padfRed, *padfGreen, *padfBlue;
+            double	*padfRed, *padfGreen, *padfBlue, *padfAlpha;
             int         nColors = poCT->GetColorEntryCount(), iColor;
 
             padfRed   = (double *) CPLMalloc(sizeof(double) * nColors);
             padfGreen = (double *) CPLMalloc(sizeof(double) * nColors);
             padfBlue  = (double *) CPLMalloc(sizeof(double) * nColors);
+            padfAlpha  = (double *) CPLMalloc(sizeof(double) * nColors);
             for( iColor = 0; iColor < nColors; iColor++ )
             {
                 GDALColorEntry  sEntry;
@@ -1788,14 +1821,16 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 padfRed[iColor]   = sEntry.c1 / 255.0;
                 padfGreen[iColor] = sEntry.c2 / 255.0;
                 padfBlue[iColor]  = sEntry.c3 / 255.0;
+                padfAlpha[iColor]  = sEntry.c4 / 255.0;
             }
 
             HFASetPCT( poDS->hHFA, iBand+1, nColors,
-                       padfRed, padfGreen, padfBlue );
+                       padfRed, padfGreen, padfBlue, padfAlpha );
 
             CPLFree( padfRed );
             CPLFree( padfGreen );
             CPLFree( padfBlue );
+            CPLFree( padfAlpha );
         }
     }
 

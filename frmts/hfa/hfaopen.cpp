@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.28  2003/05/13 19:32:10  warmerda
+ * support for reading and writing opacity provided by Diana Esch-Mosher
+ *
  * Revision 1.27  2003/04/22 19:40:36  warmerda
  * fixed email address
  *
@@ -1057,31 +1060,34 @@ CPLErr HFASetDatum( HFAHandle hHFA, const Eprj_Datum *poDatum )
 /************************************************************************/
 
 CPLErr HFAGetPCT( HFAHandle hHFA, int nBand, int *pnColors,
-                  double **ppadfRed, double **ppadfGreen, double **ppadfBlue )
+                  double **ppadfRed, double **ppadfGreen, 
+		  double **ppadfBlue , double **ppadfAlpha)
 
 {
     if( nBand < 1 || nBand > hHFA->nBands )
         return CE_Failure;
 
     return( hHFA->papoBand[nBand-1]->GetPCT( pnColors, ppadfRed,
-                                             ppadfGreen, ppadfBlue ) );
+                                             ppadfGreen, ppadfBlue,
+					     ppadfAlpha) );
 }
 
 /************************************************************************/
-/*                             HFAGetPCT()                              */
+/*                             HFASetPCT()                              */
 /*                                                                      */
-/*      Read the PCT from a band, if it has one.                        */
+/*      Set the PCT on a band.                                          */
 /************************************************************************/
 
 CPLErr HFASetPCT( HFAHandle hHFA, int nBand, int nColors,
-                  double *padfRed, double *padfGreen, double *padfBlue )
+                  double *padfRed, double *padfGreen, double *padfBlue, 
+		  double *padfAlpha )
 
 {
     if( nBand < 1 || nBand > hHFA->nBands )
         return CE_Failure;
 
     return( hHFA->papoBand[nBand-1]->SetPCT( nColors, padfRed,
-                                             padfGreen, padfBlue ) );
+                                             padfGreen, padfBlue, padfAlpha ) );
 }
 
 /************************************************************************/

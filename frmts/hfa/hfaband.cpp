@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2003/05/13 19:32:10  warmerda
+ * support for reading and writing opacity provided by Diana Esch-Mosher
+ *
  * Revision 1.30  2003/04/29 08:53:45  dron
  * In Get/SetRasterBlock calculate block offset in place when we have spill file.
  *
@@ -153,7 +156,7 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
     panBlockFlag = NULL;
 
     nPCTColors = -1;
-    apadfPCT[0] = apadfPCT[1] = apadfPCT[2] = NULL;
+    apadfPCT[0] = apadfPCT[1] = apadfPCT[2] = apadfPCT[3] = NULL;
 
     nOverviews = 0;
     papoOverviews = NULL;
@@ -276,6 +279,7 @@ HFABand::~HFABand()
     CPLFree( apadfPCT[0] );
     CPLFree( apadfPCT[1] );
     CPLFree( apadfPCT[2] );
+    CPLFree( apadfPCT[3] );
 
     if( fpExternal != NULL )
         VSIFCloseL( fpExternal );
@@ -1066,13 +1070,15 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 CPLErr HFABand::GetPCT( int * pnColors,
                         double **ppadfRed,
                         double **ppadfGreen,
-                        double **ppadfBlue )
+                        double **ppadfBlue,
+                        double **ppadfAlpha )
 
 {
     *pnColors = 0;
     *ppadfRed = NULL;
     *ppadfGreen = NULL;
     *ppadfBlue = NULL;
+    *ppadfAlpha = NULL;
         
 /* -------------------------------------------------------------------- */
 /*      If we haven't already tried to load the colors, do so now.      */
@@ -1089,7 +1095,7 @@ CPLErr HFABand::GetPCT( int * pnColors,
             return( CE_Failure );
 
         nPCTColors = poColumnEntry->GetIntField( "numRows" );
-        for( iColumn = 0; iColumn < 3; iColumn++ )
+        for( iColumn = 0; iColumn < 4; iColumn++ )
         {
             apadfPCT[iColumn] = (double *)CPLMalloc(sizeof(double)*nPCTColors);
             if( iColumn == 0 )
@@ -1098,12 +1104,20 @@ CPLErr HFABand::GetPCT( int * pnColors,
                 poColumnEntry= poNode->GetNamedChild("Descriptor_Table.Green");
             else if( iColumn == 2 )
                 poColumnEntry = poNode->GetNamedChild("Descriptor_Table.Blue");
-
+            else if( iColumn == 3 ) {
+                poColumnEntry = poNode->GetNamedChild("Descriptor_Table.Opacity");
+		if( poColumnEntry == NULL ) {
+                    double  *pdAlpha = apadfPCT[iColumn];
+                    for( i = 0; i < nPCTColors; i++ )
+                        pdAlpha[i] = 1.0;
+                    continue;
+		}
+	    }
 
             VSIFSeekL( psInfo->fp, poColumnEntry->GetIntField("columnDataPtr"),
-                      SEEK_SET );
+                       SEEK_SET );
             VSIFReadL( apadfPCT[iColumn], sizeof(double), nPCTColors,
-                      psInfo->fp);
+                       psInfo->fp);
 
             for( i = 0; i < nPCTColors; i++ )
                 HFAStandard( 8, apadfPCT[iColumn] + i );
@@ -1120,6 +1134,7 @@ CPLErr HFABand::GetPCT( int * pnColors,
     *ppadfRed = apadfPCT[0];
     *ppadfGreen = apadfPCT[1];
     *ppadfBlue = apadfPCT[2];
+    *ppadfAlpha = apadfPCT[3];
     
     return( CE_None );
 }
@@ -1133,7 +1148,8 @@ CPLErr HFABand::GetPCT( int * pnColors,
 CPLErr HFABand::SetPCT( int nColors,
                         double *padfRed,
                         double *padfGreen,
-                        double *padfBlue )
+                        double *padfBlue ,
+			double *padfAlpha)
 
 {
 
@@ -1170,7 +1186,7 @@ CPLErr HFABand::SetPCT( int nColors,
 /* -------------------------------------------------------------------- */
 /*      Process each color component                                    */
 /* -------------------------------------------------------------------- */
-        for( int iColumn = 0; iColumn < 3; iColumn++ )
+        for( int iColumn = 0; iColumn < 4; iColumn++ )
         {
             HFAEntry        *poEdsc_Column;
             double	    *padfValues=NULL;
@@ -1190,7 +1206,11 @@ CPLErr HFABand::SetPCT( int nColors,
             {
                 pszName = "Blue";
                 padfValues = padfBlue;
-                
+            }
+            else if( iColumn == 3 )
+            {
+                pszName = "Opacity";
+                padfValues = padfAlpha;
             }
 
 /* -------------------------------------------------------------------- */

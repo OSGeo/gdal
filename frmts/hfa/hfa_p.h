@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/05/13 19:32:10  warmerda
+ * support for reading and writing opacity provided by Diana Esch-Mosher
+ *
  * Revision 1.14  2003/04/29 08:53:45  dron
  * In Get/SetRasterBlock calculate block offset in place when we have spill file.
  *
@@ -172,7 +175,7 @@ class HFABand
 #define BFLG_COMPRESSED	0x02
 
     int		nPCTColors;
-    double	*apadfPCT[3];
+    double	*apadfPCT[4];
 
     CPLErr	LoadBlockInfo();
     CPLErr	LoadExternalBlockInfo();
@@ -203,8 +206,8 @@ class HFABand
     CPLErr	GetRasterBlock( int nXBlock, int nYBlock, void * pData );
     CPLErr	SetRasterBlock( int nXBlock, int nYBlock, void * pData );
 
-    CPLErr	GetPCT( int *, double **, double **, double ** );
-    CPLErr	SetPCT( int, double *, double *, double * );
+    CPLErr	GetPCT( int *, double **, double **, double **, double ** );
+    CPLErr	SetPCT( int, double *, double *, double *, double * );
 };
 
 
