@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/03/23 20:32:37  gdalanon
+ * fix usage
+ *
  * Revision 1.10  2000/03/23 18:48:19  warmerda
  * Added support for creation options.
  *
@@ -76,7 +79,7 @@ static void Usage()
     printf( "Usage: gdal_translate [-ot {Byte/UInt16/UInt32/Int32/Float32/Float64}]\n"
             "                      [-of format] [-b band]\n"
             "			   [-outsize xsize ysize]\n"
-            "                      [-co "NAME=VALUE"]*
+            "                      [-co \"NAME=VALUE.\"]*\n"
             "                      src_dataset dst_dataset\n" );
 }
 
