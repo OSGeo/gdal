@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2003/09/11 19:55:15  warmerda
+ * avoid warnings
+ *
  * Revision 1.23  2003/06/17 17:59:03  dron
  * Do not close GDALOpenInfo::fp handler before reopening.
  *
@@ -580,9 +583,12 @@ CPLErr BMPRasterBand::SetColorTable( GDALColorTable *poColorTable )
         {
             poColorTable->GetColorEntryAsRGB( i, &oEntry );
             poGDS->pabyColorTable[i * poGDS->nColorElems + 3] = 0;
-            poGDS->pabyColorTable[i * poGDS->nColorElems + 2] = oEntry.c1; // Red
-            poGDS->pabyColorTable[i * poGDS->nColorElems + 1] = oEntry.c2; // Green
-            poGDS->pabyColorTable[i * poGDS->nColorElems] = oEntry.c3;     // Blue
+            poGDS->pabyColorTable[i * poGDS->nColorElems + 2] = 
+                (GByte) oEntry.c1; // Red
+            poGDS->pabyColorTable[i * poGDS->nColorElems + 1] = 
+                (GByte) oEntry.c2; // Green
+            poGDS->pabyColorTable[i * poGDS->nColorElems] = 
+                (GByte) oEntry.c3;     // Blue
         }
 
         VSIFSeekL( poGDS->fp, BFH_SIZE + poGDS->sInfoHeader.iSize, SEEK_SET );

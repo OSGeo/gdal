@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/09/11 19:56:35  warmerda
+ * avoid warnings
+ *
  * Revision 1.17  2003/09/03 20:36:26  warmerda
  * added subfield writing support
  *
@@ -248,9 +251,9 @@ int DDFRecord::Write()
     sprintf( szLeader + 12, "%05d", nFieldOffset + nLeaderSize );
     szLeader[17] = ' ';
 
-    szLeader[20] = '0' + _sizeFieldLength;
-    szLeader[21] = '0' + _sizeFieldPos;
-    szLeader[23] = '0' + _sizeFieldTag;
+    szLeader[20] = (char) ('0' + _sizeFieldLength);
+    szLeader[21] = (char) ('0' + _sizeFieldPos);
+    szLeader[23] = (char) ('0' + _sizeFieldTag);
 
     /* notdef: lots of stuff missing */
 
