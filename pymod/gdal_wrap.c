@@ -1290,6 +1290,40 @@ py_GDALGetDescription(PyObject *self, PyObject *args) {
 }
 
 /************************************************************************/
+/*                         GDALSetDescription()                         */
+/************************************************************************/
+static PyObject *
+py_GDALSetDescription(PyObject *self, PyObject *args) {
+
+    GDALMajorObjectH  hObject;
+    char *_argc0 = NULL;
+    char *pszDesc = NULL;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:GDALSetDescription",&_argc0, &pszDesc))
+        return NULL;
+
+    if (_argc0) {
+#ifdef SWIGTYPE_GDALDatasetH
+        if (SWIG_ConvertPtr(_argc0,(void **) &hObject,NULL,0) ) 
+#else
+        if (SWIG_GetPtr(_argc0,(void **) &hObject,NULL )) 
+#endif
+	{
+            PyErr_SetString(PyExc_TypeError,
+                          "Type error in argument 1 of GDALGetDescription."
+                          "  Expected _GDALMajorObjectH.");
+            return NULL;
+        }
+    }
+
+    GDALSetDescription( hObject, pszDesc );
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+/************************************************************************/
 /*                         GDALGetRasterNoDataValue()                   */
 /************************************************************************/
 static PyObject *
@@ -4008,6 +4042,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALDitherRGB2PCT", py_GDALDitherRGB2PCT, METH_VARARGS },
 	 { "GDALComputeMedianCutPCT", py_GDALComputeMedianCutPCT, METH_VARARGS },
 	 { "GDALGetRasterNoDataValue", py_GDALGetRasterNoDataValue, METH_VARARGS },
+	 { "GDALSetDescription", py_GDALSetDescription, METH_VARARGS },
 	 { "GDALGetDescription", py_GDALGetDescription, METH_VARARGS },
 	 { "GDALSetMetadata", py_GDALSetMetadata, METH_VARARGS },
 	 { "GDALGetMetadata", py_GDALGetMetadata, METH_VARARGS },
