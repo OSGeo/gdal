@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/04/28 15:28:53  warmerda
+ * Ryan Proulx fixed WKT MULTIPOINT format
+ *
  * Revision 1.12  2002/10/25 15:20:50  warmerda
  * fixed MULTIPOINT WKT format
  *
@@ -159,7 +162,8 @@ OGRErr OGRMultiPoint::exportToWkt( char ** ppszReturn )
         if( i > 0 )
             strcat( *ppszReturn + nRetLen, "," );
 
-        strcat( *ppszReturn + nRetLen, "(" );
+        //20030424 - removed extra bracket - ryan
+        //strcat( *ppszReturn + nRetLen, "(" );
 
         nRetLen += strlen(*ppszReturn + nRetLen);
 
@@ -179,7 +183,9 @@ OGRErr OGRMultiPoint::exportToWkt( char ** ppszReturn )
                                   poPoint->getX(), 
                                   poPoint->getY(),
                                   0.0 );
-        strcat( *ppszReturn + nRetLen, ")" );
+        
+        //20030424 - removed extra bracket - ryan
+        //strcat( *ppszReturn + nRetLen, ")" );
     }
 
     strcat( *ppszReturn+nRetLen, ")" );
