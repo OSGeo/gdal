@@ -7,6 +7,8 @@
 
 <h2>Opening the File</h2>
 
+
+
 Before opening a GDAL supported raster datastore it is necessary to 
 register drivers.  There is a driver for each supported format.  Normally
 this is accomplished with the GDALAllRegister() function which attempts
@@ -20,7 +22,11 @@ standing GDALOpen() function to open a dataset, passing the name of the
 dataset and the access desired (GA_ReadOnly or GA_Update). 
 
 In C++:
-<pre>
+\code
+#include "gdal_priv.h"
+
+int main()
+{
     GDALDataset  *poDataset;
 
     GDALAllRegister();
@@ -30,30 +36,34 @@ In C++:
     {
 	...;
     }
-</pre>
+\endcode
 
 In C:
-<pre>
+\code
+#include "gdal.h"
+
+int main()
+{
     GDALDatasetH  hDataset;
 
     GDALAllRegister();
 
     hDataset = GDALOpen( pszFilename, GA_ReadOnly );
-    if( poDataset == NULL )
+    if( hDataset == NULL )
     {
 	...;
     }
-</pre>
+\endcode
 
 In Python:
-<pre>
+\code
     import gdal
     from gdalconst import *
 
     dataset = gdal.Open( filename, GA_ReadOnly )
     if dataset is None:
         ...
-</pre>
+\endcode
 
 Note that if GDALOpen() returns NULL it means the open failed, and that
 an error messages will already have been emitted via CPLError().  If you want
@@ -75,7 +85,7 @@ information.  If we wanted to print some general information about the
 dataset we might do the following:
 
 In C++:
-<pre>
+\code
     double        adfGeoTransform[6];
 
     printf( "Driver: %s/%s\n",
@@ -97,10 +107,10 @@ In C++:
         printf( "Pixel Size = (%.6f,%.6f)\n",
                 adfGeoTransform[1], adfGeoTransform[5] );
     }
-</pre> 
+\endcode
 
 In C:
-<pre>
+\code
     GDALDriverH   hDriver;
     double        adfGeoTransform[6];
 
@@ -125,10 +135,10 @@ In C:
         printf( "Pixel Size = (%.6f,%.6f)\n",
                 adfGeoTransform[1], adfGeoTransform[5] );
     }
-</pre>
+\endcode
 
 In Python (note, driver bindings are not currently available):
-<pre>
+\code
     print 'Size is ',dataset.RasterXSize,'x',dataset.RasterYSize, \
           'x',dataset.RasterCount
     print 'Projection is ',dataset.GetProjection()
@@ -137,7 +147,7 @@ In Python (note, driver bindings are not currently available):
     if not geotransform is None:
 	print 'Origin = (',geotransform[0], ',',geotransform[3],')'
 	print 'Pixel Size = (',geotransform[1], ',',geotransform[5],')'
-</pre>
+\endcode
 
 <h2>Fetching a Raster Band</h2>
 
@@ -148,7 +158,7 @@ a GDALRasterBand object from the dataset (numbered 1 through GetRasterCount())
 and displays a little information about it.
 
 In C++:
-<pre>
+\code
 	GDALRasterBand  *poBand;
         int             nBlockXSize, nBlockYSize;
         int             bGotMin, bGotMax;
@@ -175,10 +185,10 @@ In C++:
         if( poBand->GetColorTable() != NULL )
             printf( "Band has a color table with %d entries.\n", 
                      poBand->GetColorTable()->GetColorEntryCount() );
-</pre>
+\endcode
 
 In C:
-<pre>
+\code
 	GDALRasterBand  hBand;
         int             nBlockXSize, nBlockYSize;
         int             bGotMin, bGotMax;
@@ -206,17 +216,17 @@ In C:
             printf( "Band has a color table with %d entries.\n", 
                      GDALGetColorEntryCount(
                          GDALGetRasterColorTable( hBand ) ) );
-</pre>
+\endcode
 
 In Python (note several bindings are missing):
-<pre>
+\code
 	band = dataset.GetRasterBand(1)
 
 	print 'Band Type=',gdal.GetDataTypeName(band.DataType)
 
         if not band.GetRasterColorTable() is None:
 	    print 'Band has a color table.'
-</pre>
+\endcode
 
 <h2>Reading Raster Data</h2>
 
@@ -227,7 +237,7 @@ code will read the first scanline of data into a similarly sized buffer,
 converting it to floating point as part of the operation.
 
 In C++:
-<pre>
+\code
 	float *pafScanline;
         int   nXSize = poBand->GetXSize();
 
@@ -235,10 +245,10 @@ In C++:
         poBand->RasterIO( GF_Read, 0, 0, nXSize, 1, 
                           pafScanline, nXSize, 1, GDT_Float32, 
                           0, 0 );
-</pre>
+\endcode
 
 In C:
-<pre>
+\code
 	float *pafScanline;
         int   nXSize = GDALGetRasterBandXSize( hBand );
 
@@ -246,24 +256,25 @@ In C:
 	GDALRasterIO( hBand, GF_Read, 0, 0, nXSize, 1, 
                       pafScanline, nXSize, 1, GDT_Float32, 
                       0, 0 );
-</pre>
+\endcode
 
 In Python (note that the returned scanline is of type string, and contains
 xsize*4 bytes of raw binary floating point data):
-<pre>
+
+\code
  	scanline = band.ReadRaster( 0, 0, band.XSize, 1, \
                                     band.XSize, 1, GDT_Float32 )
-</pre>
+\endcode
 
 The RasterIO call takes the following arguments. 
-<pre>
+\code
 CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
                                  int nXOff, int nYOff, int nXSize, int nYSize,
                                  void * pData, int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType,
                                  int nPixelSpace,
                                  int nLineSpace )
-</pre>
+\endcode
 
 Note that the same RasterIO() call is used to read, or write based on 
 the setting of eRWFlag (either GF_Read or GF_Write).  The nXOff, nYOff, 
