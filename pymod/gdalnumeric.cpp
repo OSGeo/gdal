@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/07/18 04:45:29  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.1  2000/07/19 19:42:54  warmerda
  * New
  *
@@ -36,6 +39,8 @@
 #include "gdal.h"
 #include "Python.h"
 #include "gdal_py.h"
+
+CPL_CVSID("$Id$");
 
 PyObject *py_NumPyArrayToGDALFilename( PyObject *self, PyObject *args )
 

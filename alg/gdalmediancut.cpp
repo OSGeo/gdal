@@ -35,6 +35,9 @@
  *      Heckbert, SIGGRAPH proceedings, 1982, pp. 297-307.
  * 
  * $Log$
+ * Revision 1.2  2001/07/18 04:43:13  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.1  2001/01/22 22:30:59  warmerda
  * New
  *
@@ -42,6 +45,8 @@
 
 #include "gdal_priv.h"
 #include "gdal_alg.h"
+
+CPL_CVSID("$Id$");
 
 #define	MAX_CMAP_SIZE	256
 

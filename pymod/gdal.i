@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2001/07/18 04:44:17  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.29  2001/05/07 14:50:44  warmerda
  * added python access to GDALComputeRasterMinMax
  *
@@ -72,6 +75,8 @@
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
 #include "gdal_py.h"
+
+CPL_CVSID("$Id$");
 
 #ifdef SWIGTYPE_GDALDatasetH
 #  define SWIG_GetPtr_2(s,d,t)  SWIG_ConvertPtr( s, d,(SWIGTYPE##t),1)

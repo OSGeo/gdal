@@ -46,6 +46,9 @@
  *					    Lou Steinberg
  *
  * $Log$
+ * Revision 1.2  2001/07/18 04:43:13  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.1  2001/01/22 22:30:59  warmerda
  * New
  *
@@ -53,6 +56,8 @@
 
 #include "gdal_priv.h"
 #include "gdal_alg.h"
+
+CPL_CVSID("$Id$");
 
 #define C_LEVELS	32
 #define C_SHIFT  	3

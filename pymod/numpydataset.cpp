@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/07/18 04:45:29  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.3  2001/03/08 18:42:06  warmerda
  * implement projection, and geotransform holding support
  *
@@ -42,6 +45,8 @@
 #include "gdal_priv.h"
 #include "../frmts/mem/memdataset.h"
 #include "gdal_py.h"
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poNUMPYDriver = NULL;
 
