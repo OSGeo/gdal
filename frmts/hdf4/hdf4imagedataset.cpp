@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.41  2005/02/24 01:49:24  fwarmerdam
+ * Establish iBandDim for rank-3 HDFEOS datasets (swath/grid).
+ *
  * Revision 1.40  2005/01/27 16:57:58  fwarmerdam
  * added coastwatch missing_value support
  *
@@ -1342,6 +1345,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     // two dimensions as X and Y sizes
                     poDS->iXDim = nDimCount - 1;
                     poDS->iYDim = nDimCount - 2;
+                    if( nDimCount >= 3 )
+                        poDS->iBandDim = nDimCount - 3;
+
                     /*for ( i = 0; i < nDimCount; i++ )
                       {
                       if ( EQUALN( papszDimList[i], "X", 1 ) )
@@ -1558,6 +1564,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     // two dimensions as X and Y sizes
                     poDS->iXDim = nDimCount - 1;
                     poDS->iYDim = nDimCount - 2;
+
+                    if( nDimCount >= 3 )
+                        poDS->iBandDim = nDimCount - 3;
+
                     for ( i = 0; i < nDimCount; i++ )
                     {
                         if ( EQUALN( papszDimList[i], "X", 1 ) )
