@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.19  2005/03/22 21:48:11  fwarmerdam
+ * Added preliminary Mk1 libjpeg support.  Compress still not working.
+ *
  * Revision 1.18  2005/02/25 15:17:35  fwarmerdam
  * Use dataset io to fetch to provide (potentially) faster interleaved
  * reads.
@@ -161,7 +164,11 @@ JPGRasterBand::JPGRasterBand( JPGDataset *poDS, int nBand )
 {
     this->poDS = poDS;
     this->nBand = nBand;
-    eDataType = GDT_Byte;
+    if( poDS->sDInfo.data_precision == 12 )
+        eDataType = GDT_UInt16;
+    else
+        eDataType = GDT_Byte;
+
     nBlockXSize = poDS->nRasterXSize;;
     nBlockYSize = 1;
 }
@@ -176,7 +183,8 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     JPGDataset	*poGDS = (JPGDataset *) poDS;
     CPLErr      eErr;
-    int         i, nXSize = GetXSize();
+    int         nXSize = GetXSize();
+    int         nWordSize = GDALGetDataTypeSize(eDataType) / 8;
     
     CPLAssert( nBlockXOff == 0 );
 
@@ -191,11 +199,28 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Transfer between the working buffer the the callers buffer.     */
 /* -------------------------------------------------------------------- */
     if( poGDS->GetRasterCount() == 1 )
-        memcpy( pImage, poGDS->pabyScanline, nXSize );
+    {
+#ifdef JPEG_LIB_MK1
+        GDALCopyWords( poGDS->pabyScanline, GDT_UInt16, 2, 
+                       pImage, eDataType, nWordSize, 
+                       nXSize );
+#else
+        memcpy( pImage, poGDS->pabyScanline, nXSize * nWordSize );
+#endif
+    }
     else
     {
-        for( i = 0; i < nXSize; i++ )
-            ((GByte *) pImage)[i] = poGDS->pabyScanline[i*3+nBand-1];
+#ifdef JPEG_LIB_MK1
+        GDALCopyWords( poGDS->pabyScanline + (nBand-1) * 2, 
+                       GDT_UInt16, 6, 
+                       pImage, eDataType, nWordSize, 
+                       nXSize );
+#else
+        GDALCopyWords( poGDS->pabyScanline + (nBand-1) * nWordSize, 
+                       eDataType, nWordSize * 3, 
+                       pImage, eDataType, nWordSize, 
+                       nXSize );
+#endif
     }
 
 /* -------------------------------------------------------------------- */
@@ -288,7 +313,8 @@ CPLErr JPGDataset::LoadScanline( int iLine )
         return CE_None;
 
     if( pabyScanline == NULL )
-        pabyScanline = (GByte *)CPLMalloc(GetRasterCount() * GetRasterXSize());
+        pabyScanline = (GByte *)
+            CPLMalloc(GetRasterCount() * GetRasterXSize() * 2);
 
     if( iLine < nLoadedScanline )
         Restart();
@@ -498,7 +524,27 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte && bStrict )
+    GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
+
+#ifdef JPEG_LIB_MK1
+    if( eDT != GDT_Byte && eDT != GDT_UInt16 && bStrict )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "JPEG driver doesn't support data type %s. "
+                  "Only eight and twelve bit bands supported (Mk1 libjpeg).\n",
+                  GDALGetDataTypeName( 
+                      poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
+
+        return NULL;
+    }
+
+    if( eDT == GDT_UInt16 || eDT == GDT_Int16 )
+        eDT = GDT_UInt16;
+    else
+        eDT = GDT_Byte;
+
+#else
+    if( eDT != GDT_Byte && bStrict )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "JPEG driver doesn't support data type %s. "
@@ -508,6 +554,9 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         return NULL;
     }
+    
+    eDT = GDT_Byte; // force to 8bit. 
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      What options has the user selected?                             */
@@ -555,6 +604,19 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     sCInfo.image_height = nYSize;
     sCInfo.input_components = nBands;
 
+#ifdef JPEG_LIB_MK1
+    if( eDT == GDT_UInt16 )
+    {
+        sCInfo.data_precision = 12;
+        sCInfo.bits_in_jsample = 12;
+    }
+    else
+    {
+        sCInfo.data_precision = 8;
+        sCInfo.bits_in_jsample = 8;
+    }
+#endif
+
     if( nBands == 1 )
     {
         sCInfo.in_color_space = JCS_GRAYSCALE;
@@ -579,16 +641,25 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     GByte 	*pabyScanline;
     CPLErr      eErr = CE_None;
 
-    pabyScanline = (GByte *) CPLMalloc( nBands * nXSize );
+    pabyScanline = (GByte *) CPLMalloc( nBands * nXSize * 2 );
 
     for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
     {
         JSAMPLE      *ppSamples;
 
+#ifdef JPEG_LIB_MK1
+        eErr = poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
+                                  pabyScanline, nXSize, 1, GDT_UInt16,
+                                  nBands, anBandList, 
+                                  nBands, nBands * nXSize, 1 );
+#else
         eErr = poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                                   pabyScanline, nXSize, 1, GDT_Byte,
                                   nBands, anBandList, 
                                   nBands, nBands * nXSize, 1 );
+#endif
+
+        // Should we clip values over 4095 (12bit)? 
 
         ppSamples = (JSAMPLE *) pabyScanline;
 
@@ -638,8 +709,13 @@ void GDALRegister_JPEG()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jpg" );
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jpeg" );
 
+#ifdef JPEG_LIB_MK1
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte UInt16" );
+#else
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte" );
+#endif
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>\n"
 "   <Option name='PROGRESSIVE' type='boolean'/>\n"
