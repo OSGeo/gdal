@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.15  2004/04/06 19:23:48  warmerda
+ * Don't forget to close the dataset!
+ *
  * Revision 1.14  2003/10/06 20:50:45  warmerda
  * fixed author email
  *
@@ -102,6 +105,7 @@ class GXFDataset : public GDALDataset
     char	*pszProjection;
 
   public:
+                GXFDataset();
 		~GXFDataset();
     
     static GDALDataset *Open( GDALOpenInfo * );
@@ -178,12 +182,25 @@ CPLErr GXFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 /************************************************************************/
+/*                             GXFDataset()                             */
+/************************************************************************/
+
+GXFDataset::GXFDataset()
+
+{
+    pszProjection = NULL;
+    hGXF = NULL;
+}
+
+/************************************************************************/
 /*                            ~GXFDataset()                             */
 /************************************************************************/
 
 GXFDataset::~GXFDataset()
 
 {
+    if( hGXF != NULL )
+        GXFClose( hGXF );
     CPLFree( pszProjection );
 }
 
