@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2002/08/19 14:11:35  warmerda
+ * correct second setPoints() method properly.
+ *
  * Revision 1.31  2002/08/19 03:24:51  warmerda
  * Fixed serious bug with 3D points in setPoints() methods.
  *
@@ -561,7 +564,7 @@ void OGRLineString::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
  */
 
 void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY,
-                               double * padfZ )
+                               double * padfZIn )
 
 {
     int         i;
@@ -569,21 +572,21 @@ void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY,
 /* -------------------------------------------------------------------- */
 /*      Check 2D/3D.                                                    */
 /* -------------------------------------------------------------------- */
-    if( padfZ != NULL )
+    if( padfZIn != NULL )
     {
         int     bIs3D = FALSE;
 
         for( i = 0; i < nPointsIn && !bIs3D; i++ )
         {
-            if( padfZ[i] != 0.0 )
+            if( padfZIn[i] != 0.0 )
                 bIs3D = TRUE;
         }
 
         if( !bIs3D )
-            padfZ = NULL;
+            padfZIn = NULL;
     }
 
-    if( padfZ == NULL )
+    if( padfZIn == NULL )
         Make2D();
     else
         Make3D();
@@ -600,7 +603,7 @@ void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY,
     }
 
     if( padfZ != NULL )
-        memcpy( this->padfZ, padfZIn, sizeof(double) * nPointsIn );
+        memcpy( padfZ, padfZIn, sizeof(double) * nPointsIn );
 }
 
 /************************************************************************/
