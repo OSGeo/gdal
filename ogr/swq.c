@@ -19,6 +19,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/03/19 20:26:33  warmerda
+ * fixed memory leak for join info
+ *
  * Revision 1.18  2003/03/19 05:12:08  warmerda
  * support table.* wildcard expansion
  *
@@ -1633,71 +1636,6 @@ const char *swq_select_expand_wildcard( swq_select *select_info,
                                         swq_field_list *field_list )
 
 {
-#ifdef notdef
-/* -------------------------------------------------------------------- */
-/*      Expand "*" field for selects.                                   */
-/* -------------------------------------------------------------------- */
-    if( select_info->result_columns == 1
-        && strcmp(select_info->column_defs[0].field_name,"*") == 0 
-        && select_info->column_defs[0].col_func_name == NULL )
-    {
-        int  i;
-
-        SWQ_FREE( select_info->column_defs[0].field_name );
-        SWQ_FREE( select_info->column_defs );
-        
-        select_info->result_columns = field_list->count;
-        select_info->column_defs = (swq_col_def *) 
-            SWQ_MALLOC(select_info->result_columns * sizeof(swq_col_def));
-        memset( select_info->column_defs, 0, 
-                sizeof(swq_col_def) * select_info->result_columns );
-
-        for( i = 0; i < select_info->result_columns; i++ )
-        {
-            swq_col_def *def = select_info->column_defs + i;
-            int compose = 0;
-            
-            if( field_list->table_ids != NULL 
-                && field_list->table_ids[i] != 0 )
-            {
-                /* does this field duplicate an earlier one? */
-
-                int other;
-
-                for( other = 0; other < i; other++ )
-                {
-                    if( strcasecmp(field_list->names[other],
-                                   field_list->names[i]) == 0 )
-                    {
-                        compose = 1;
-                        break;
-                    }
-                }
-            }
-
-            if( !compose )
-                def->field_name = swq_strdup( field_list->names[i] );
-            else
-            {
-                int itable = field_list->table_ids[i];
-                char *composed_name;
-                const char *field_name = field_list->names[i];
-                const char *table_alias = 
-                    field_list->table_defs[itable].table_alias;
-
-                composed_name = (char *) 
-                    swq_malloc(strlen(field_name)+strlen(table_alias)+2);
-
-                sprintf( composed_name, "%s.%s", table_alias, field_name );
-
-                def->field_name = composed_name;
-            }
-        }
-
-        return NULL;
-    }
-#endif
-
     int isrc;
 
 /* ==================================================================== */
@@ -2337,6 +2275,15 @@ void swq_select_free( swq_select *select_info )
     
     if( select_info->order_defs != NULL )
         SWQ_FREE( select_info->order_defs );
+
+    for( i = 0; i < select_info->join_count; i++ )
+    {
+        SWQ_FREE( select_info->join_defs[i].primary_field_name );
+        if( select_info->join_defs[i].secondary_field_name != NULL )
+            SWQ_FREE( select_info->join_defs[i].secondary_field_name );
+    }
+    if( select_info->join_defs != NULL )
+        SWQ_FREE( select_info->join_defs );
 
     SWQ_FREE( select_info );
 }
