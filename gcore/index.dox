@@ -103,6 +103,10 @@ The VTP libraries now use GDAL.<p>
 <li> <a href="http://thuban.intevation.org">Thuban</a>: 
 A multi-platform interactive geographic data viewer.<p>
 
+<li> <a href="http://qgis.sourceforge.net">Quantum GIS (QGIS)</a>: 
+A Geographic Information System (GIS) built for Linux/Unix. 
+QGIS supports vector, raster, and database formats.<p>
+
 <li> <a href="http://www.terrainengine.com">Demeter</a>: 
 A another OpenGL based terrain engine somewhat similar to VTP.<p>
 
