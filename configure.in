@@ -355,13 +355,13 @@ AC_SUBST(EXTRA_INCLUDES,$EXTRA_INCLUDES)
 
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(ogr,[  --with-ogr              Build OGR into shared library],,)
+AC_ARG_WITH(ogr,[  --without-ogr          Don't build OGR into shared library],,)
 
-if test "$with_ogr" = yes ; then
-  echo checking for OGR ... enabled by user
+if test "$with_ogr" = yes -o x"$with_ogr" = x ; then
+  echo checking for OGR ... enabled
   OGR_ENABLED=yes
 else
-  echo checking for OGR ... not requested by user
+  echo checking for OGR ... disabled by user
   OGR_ENABLED=no
 fi
 AC_SUBST(OGR_ENABLED,$OGR_ENABLED)
