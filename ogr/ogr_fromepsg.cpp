@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2004/05/26 19:53:17  warmerda
+ * Fixed poor NULL checking in auto-identify.
+ *
  * Revision 1.36  2004/05/10 17:05:14  warmerda
  * added AutoIdentifyEPSG()
  *
@@ -1705,7 +1708,12 @@ OGRErr OGRSpatialReference::AutoIdentifyEPSG()
 
         pszAuthName = GetAuthorityName( "PROJCS|GEOGCS" );
         pszAuthCode = GetAuthorityCode( "PROJCS|GEOGCS" );
-        if( EQUAL(pszAuthName,"EPSG") && atoi(pszAuthCode) == 4326 )
+
+        if( pszAuthName == NULL ||  pszAuthCode == NULL )
+        {
+            /* don't exactly recognise datum */
+        }
+        else if( EQUAL(pszAuthName,"EPSG") && atoi(pszAuthCode) == 4326 )
         { // WGS84
             if( bNorth ) 
                 SetAuthority( "PROJCS", "EPSG", 32600 + nZone );
