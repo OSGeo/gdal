@@ -10,7 +10,8 @@ GDAL_ROOT = 	..
 
 OLE_LIBS =	oledb.lib ole32.lib oleaut32.lib 
 
-ALL_LIBS =	$(OLE_LIBS) $(GDAL_ROOT)/port/cpl.lib $(OGDILIB) $(LIBS)
+ALL_LIBS =	$(OLE_LIBS) $(GDAL_ROOT)/port/cpl.lib $(OGDILIB) \
+		$(XERCES_LIB) $(LIBS)
 
 OGR_FRMTS =	ogrsf_frmts\ogrsf_frmts.lib ogrsf_frmts\ogrsf_frmts_sup.lib
 OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
@@ -96,6 +97,9 @@ ogrinfo.exe:      ogrinfo.obj $(OBJ_OGR) $(DEPLIBS)
 
 ogr2ogr.exe:      ogr2ogr.obj $(OBJ_OGR) $(DEPLIBS)
         cl $(LINKFLAGS) ogr2ogr.obj $(LINKARGS) /link $(LINKER_FLAGS)
+
+ogrtindex.exe:      ogrtindex.obj $(OBJ_OGR) $(DEPLIBS)
+        cl $(LINKFLAGS) ogrtindex.obj $(SETARGV) $(LINKARGS) /link $(LINKER_FLAGS)
 
 sdts2mi.exe:      sdts2mi.obj $(OBJ_OGR) $(DEPLIBS)
         cl $(LINKFLAGS) sdts2mi.obj $(OBJ_OGR) $(OGR_FRMTS) \
