@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/10/06 15:29:27  warmerda
+ * added PAuxRasterBand, implemented nodata support
+ *
  * Revision 1.8  2000/09/15 15:14:12  warmerda
  * fixed geotransform[5] calculation
  *
@@ -69,8 +72,12 @@ CPL_C_END
 /* ==================================================================== */
 /************************************************************************/
 
+class PAuxRasterBand;
+
 class PAuxDataset : public RawDataset
 {
+    friend      PAuxRasterBand;
+
     FILE	*fpImage;	// image data file.
 
   public:
@@ -89,6 +96,110 @@ class PAuxDataset : public RawDataset
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
 };
+
+/************************************************************************/
+/* ==================================================================== */
+/*                           PAuxRasterBand                             */
+/* ==================================================================== */
+/************************************************************************/
+
+class PAuxRasterBand : public RawRasterBand
+{
+  public:
+
+                 PAuxRasterBand( GDALDataset *poDS, int nBand, FILE * fpRaw, 
+                                 unsigned int nImgOffset, int nPixelOffset,
+                                 int nLineOffset,
+                                 GDALDataType eDataType, int bNativeOrder );
+
+                 ~PAuxRasterBand();
+
+    virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual CPLErr SetNoDataValue( double );
+};
+
+/************************************************************************/
+/*                           PAuxRasterBand()                           */
+/************************************************************************/
+
+PAuxRasterBand::PAuxRasterBand( GDALDataset *poDS, int nBand,
+                                FILE * fpRaw, unsigned int nImgOffset,
+                                int nPixelOffset, int nLineOffset,
+                                GDALDataType eDataType, int bNativeOrder )
+        : RawRasterBand( poDS, nBand, fpRaw, 
+                         nImgOffset, nPixelOffset, nLineOffset, 
+                         eDataType, bNativeOrder )
+
+{
+}
+
+/************************************************************************/
+/*                          ~PAuxRasterBand()                           */
+/************************************************************************/
+
+PAuxRasterBand::~PAuxRasterBand()
+
+{
+}
+
+/************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double PAuxRasterBand::GetNoDataValue( int *pbSuccess )
+
+{
+    PAuxDataset *poPDS = (PAuxDataset *) poDS;
+    char	szTarget[128];
+    const char  *pszLine;
+
+    sprintf( szTarget, "METADATA_IMG_%d_NO_DATA_VALUE", nBand );
+
+    pszLine = CSLFetchNameValue( poPDS->papszAuxLines, szTarget );
+
+    if( pbSuccess != NULL )
+        *pbSuccess = (pszLine != NULL);
+
+    if( pszLine == NULL )
+        return -1e8;
+    else
+        return atof(pszLine);
+}
+
+/************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+CPLErr PAuxRasterBand::SetNoDataValue( double dfNewValue )
+
+{
+    PAuxDataset *poPDS = (PAuxDataset *) poDS;
+    char	szTarget[128];
+    char	szValue[128];
+
+    if( GetAccess() == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess, 
+                  "Can't update readonly dataset." );
+        return CE_Failure;
+    }
+
+    sprintf( szTarget, "METADATA_IMG_%d_NO_DATA_VALUE", nBand );
+    sprintf( szValue, "%24.12f", dfNewValue );
+    poPDS->papszAuxLines = 
+        CSLSetNameValue( poPDS->papszAuxLines, szTarget, szValue );
+    
+    poPDS->bAuxUpdated = TRUE;
+
+    return CE_None;
+}
+
+
+/************************************************************************/
+/* ==================================================================== */
+/*				PAuxDataset				*/
+/* ==================================================================== */
+/************************************************************************/
 
 /************************************************************************/
 /*                            PAuxDataset()                             */
@@ -114,7 +225,10 @@ PAuxDataset::~PAuxDataset()
         VSIFClose( fpImage );
 
     if( bAuxUpdated )
+    {
+        CSLSetNameValueSeparator( papszAuxLines, ": " );
         CSLSave( papszAuxLines, pszAuxFilename );
+    }
 
     CPLFree( pszAuxFilename );
     CSLDestroy( papszAuxLines );
@@ -186,34 +300,14 @@ CPLErr PAuxDataset::SetGeoTransform( double * padfGeoTransform )
                padfGeoTransform[3] + padfGeoTransform[5] * GetRasterYSize() );
     }
         
-    if( CSLFetchNameValue(papszAuxLines, "UpLeftX") != NULL )
-    {
-
-        papszAuxLines = CSLSetNameValue( papszAuxLines, 
-                                         "UpLeftX", szUpLeftX );
-        papszAuxLines = CSLSetNameValue( papszAuxLines, 
-                                         "UpLeftY", szUpLeftY );
-        papszAuxLines = CSLSetNameValue( papszAuxLines, 
-                                         "LoRightX", szLoRightX );
-        papszAuxLines = CSLSetNameValue( papszAuxLines, 
-                                         "LoRightY", szLoRightY );
-    }
-    else
-    {
-        char	szValue[128];
-        
-        sprintf( szValue, "UpLeftX: %s", szUpLeftX );
-        papszAuxLines = CSLAddString( papszAuxLines, szValue );
-        
-        sprintf( szValue, "UpLeftY: %s", szUpLeftY );
-        papszAuxLines = CSLAddString( papszAuxLines, szValue );
-        
-        sprintf( szValue, "LoRightX: %s", szLoRightX );
-        papszAuxLines = CSLAddString( papszAuxLines, szValue );
-        
-        sprintf( szValue, "LoRightY: %s", szLoRightY );
-        papszAuxLines = CSLAddString( papszAuxLines, szValue );
-    }
+    papszAuxLines = CSLSetNameValue( papszAuxLines, 
+                                     "UpLeftX", szUpLeftX );
+    papszAuxLines = CSLSetNameValue( papszAuxLines, 
+                                     "UpLeftY", szUpLeftY );
+    papszAuxLines = CSLSetNameValue( papszAuxLines, 
+                                     "LoRightX", szLoRightX );
+    papszAuxLines = CSLSetNameValue( papszAuxLines, 
+                                     "LoRightY", szLoRightY );
 
     bAuxUpdated = TRUE;
 
@@ -326,6 +420,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = atoi(papszTokens[0]);
     poDS->nRasterYSize = atoi(papszTokens[1]);
     poDS->nBands = atoi(papszTokens[2]);
+    poDS->eAccess = poOpenInfo->eAccess;
 
     CSLDestroy( papszTokens );
     
@@ -389,10 +484,10 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         
         poDS->SetBand( i+1, 
-            new RawRasterBand( poDS, i+1, poDS->fpImage,
-                               atoi(papszTokens[1]),
-                               atoi(papszTokens[2]),
-                               atoi(papszTokens[3]), eType, bNative ) );
+            new PAuxRasterBand( poDS, i+1, poDS->fpImage,
+                                atoi(papszTokens[1]),
+                                atoi(papszTokens[2]),
+                                atoi(papszTokens[3]), eType, bNative ) );
 
         CSLDestroy( papszTokens );
     }
