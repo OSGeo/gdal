@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.41  2003/05/06 05:13:36  sperkins
+ * 	* core/gdalrasterband.cpp: Added C++ Fill() method and
+ * 	corresponding C GDALFillRaster() method.
+ *
  * Revision 1.40  2003/05/02 19:47:57  warmerda
  * added C GetBandNumber and GetBandDataset entry points
  *
@@ -898,6 +902,110 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
         papoBlocks[nBlockIndex]->Touch();
 
     return( papoBlocks[nBlockIndex] );
+}
+
+/************************************************************************/
+/*                               Fill()                                 */
+/************************************************************************/
+
+/** 
+ * Fill this band with a constant value. GDAL makes no guarantees
+ * about what values pixels in newly created files are set to, so this
+ * method can be used to clear a band to a specified "default" value.
+ * The fill value is passed in as a double but this will be converted
+ * to the underlying type before writing to the file. An optional
+ * second argument allows the imaginary component of a complex
+ * constant value to be specified.
+ * 
+ * @param dfRealvalue Real component of fill value
+ * @param dfImaginaryValue Imaginary component of fill value, defaults to zero
+ * 
+ * @return CE_Failure if the write fails, otherwise CE_None
+ */
+CPLErr GDALRasterBand::Fill(double dfRealValue, double dfImaginaryValue) {
+
+    // General approach is to construct a source block of the file's
+    // native type containing the appropriate value and then copy this
+    // to each block in the image via the the RasterBlock cache. Using
+    // the cache means we avoid file I/O if it's not necessary, at the
+    // expense of some extra memcpy's (since we write to the
+    // RasterBlock cache, which is then at some point written to the
+    // underlying file, rather than simply directly to the underlying
+    // file.)
+
+    // Check we can write to the file
+    if( eAccess == GA_ReadOnly ) {
+        CPLError(CE_Failure, CPLE_NoWriteAccess,
+                 "Attempt to write to read only dataset in"
+                 "GDALRasterBand::Fill().\n" );
+        return CE_Failure;
+    }
+
+    // Make sure block parameters are set
+    InitBlockInfo();
+
+    // Allocate the source block
+    int blockSize = nBlockXSize * nBlockYSize;
+    int elementSize = GDALGetDataTypeSize(eDataType) / 8;
+    int blockByteSize = blockSize * elementSize;
+    unsigned char* srcBlock = (unsigned char*) VSIMalloc(blockByteSize);
+    if (srcBlock == NULL) {
+	CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "GDALRasterBand::Fill(): Out of memory "
+		 "allocating %d bytes.\n", blockByteSize);
+        return CE_Failure;
+    }
+    
+    // Initialize the first element of the block, doing type conversion
+    double complexSrc[2] = { dfRealValue, dfImaginaryValue };
+    GDALCopyWords(complexSrc, GDT_CFloat64, 0, srcBlock, eDataType, 0, 1);
+
+    // Copy first element to the rest of the block
+    for (unsigned char* blockPtr = srcBlock + elementSize; 
+	 blockPtr < srcBlock + blockByteSize; blockPtr += elementSize) {
+	memcpy(blockPtr, srcBlock, elementSize);
+    }
+
+    // Write block to block cache
+    for (int j = 0; j < nBlocksPerColumn; ++j) {
+	for (int i = 0; i < nBlocksPerRow; ++i) {
+	    GDALRasterBlock* destBlock = GetBlockRef(i, j, TRUE);
+	    if (destBlock == NULL) {
+		CPLError(CE_Failure, CPLE_OutOfMemory,
+			 "GDALRasterBand::Fill(): Error "
+			 "while retrieving cache block.\n");
+		return CE_Failure;
+	    }
+	    memcpy(destBlock->GetDataRef(), srcBlock, blockByteSize);
+	    destBlock->MarkDirty();
+	}
+    }
+
+    // Free up the source block
+    VSIFree(srcBlock);
+
+    return CE_None;
+}
+
+
+/************************************************************************/
+/*                         GDALFillRaster()                             */
+/************************************************************************/
+
+/** 
+ * Fill this band with a constant value. Set \a dfImaginaryValue to
+ * zero non-complex rasters.
+ * 
+ * @param dfRealvalue Real component of fill value
+ * @param dfImaginaryValue Imaginary component of fill value
+ * 
+ * @see GDALRasterBand::Fill()
+ * 
+ * @return CE_Failure if the write fails, otherwise CE_None
+ */
+CPLErr GDALFillRaster(GDALRasterBandH hBand, double dfRealValue, 
+		      double dfImaginaryValue) {
+    return ((GDALRasterBand*) hBand)->Fill(dfRealValue, dfImaginaryValue);
 }
 
 /************************************************************************/

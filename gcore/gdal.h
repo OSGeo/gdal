@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.67  2003/05/06 05:13:36  sperkins
+ * 	* core/gdalrasterband.cpp: Added C++ Fill() method and
+ * 	corresponding C GDALFillRaster() method.
+ *
  * Revision 1.66  2003/05/02 19:47:57  warmerda
  * added C GetBandNumber and GetBandDataset entry points
  *
@@ -418,7 +422,8 @@ CPLErr CPL_DLL GDALGetRasterHistogram( GDALRasterBandH hBand,
                                        void * pProgressData );
 int CPL_DLL GDALGetRandomRasterSample( GDALRasterBandH, int, float * );
 GDALRasterBandH CPL_DLL GDALGetRasterSampleOverview( GDALRasterBandH, int );
-
+CPLErr GDALFillRaster( GDALRasterBandH hBand, double dfRealValue,
+		       double dfImaginaryValue );
 CPLErr GDALComputeBandStats( GDALRasterBandH hBand, int nSampleStep, 
                              double *pdfMean, double *pdfStdDev, 
                              GDALProgressFunc pfnProgress,
