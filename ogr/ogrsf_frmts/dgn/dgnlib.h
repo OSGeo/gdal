@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2002/11/13 21:26:32  warmerda
+ * added more documentation
+ *
  * Revision 1.26  2002/11/12 19:44:32  warmerda
  * added DGNViewInfo support
  *
@@ -118,7 +121,7 @@
 CPL_C_START
 
 #define CPLE_DGN_ERROR_BASE
-#define CPLE_ElementToBig      		CPLE_DGN_ERROR_BASE+1
+#define CPLE_ElementTooBig     		CPLE_DGN_ERROR_BASE+1
 
 /**
  * \file dgnlib.h
@@ -386,18 +389,35 @@ typedef struct {
  * Returned for DGNT_TAG_VALUE(37).
  */
 
-typedef union { char *string; GInt32 integer; double real; } tagValueUnion;
-
 typedef struct {
     DGNElemCore core;
 
-    int         tagType;           /*!< Tag type indicator, 1=string */
+    int         tagType;           /*!< Tag type indicator, DGNTT_* */
     int         tagSet;            /*!< Which tag set does this relate to? */
     int         tagIndex;          /*!< Tag index within tag set. */
     int         tagLength;         /*!< Length of tag information (text) */
     tagValueUnion tagValue;        /*!< Textual value of tag */
 
 } DGNElemTagValue;
+
+typedef union { char *string; GInt32 integer; double real; } tagValueUnion;
+
+/**
+ * Tag definition.
+ *
+ * Structure holding definition of one tag within a DGNTagSet.
+ */
+typedef struct _DGNTagDef {
+    char	*name;      /*!< Name of this tag. */
+    int         id;         /*!< Tag index/identifier. */
+    char        *prompt;    /*!< User prompt when requesting value. */
+    int         type;       /*!< Tag type (one of DGNTT_STRING(1), DGNTT_INTEGER(3) or DGNTT_FLOAT(4). */
+    tagValueUnion defaultValue; /*!< Default tag value */
+} DGNTagDef;
+
+#define DGNTT_STRING      1
+#define DGNTT_INTEGER     3
+#define DGNTT_FLOAT       4
 
 /** 
  * Tag Set.
@@ -407,23 +427,15 @@ typedef struct {
  * Returned for DGNT_APPLICATION_ELEM(66), Level: 24.
  */
 
-typedef struct _DGNTagDef {
-    char	*name;
-    int         id;
-    char        *prompt;
-    int         type;
-    tagValueUnion defaultValue;
-} DGNTagDef;
-
 typedef struct {
     DGNElemCore core;
 
-    int        tagCount;
-    int        tagSet; 
-    int        flags;
-    char       *tagSetName;
+    int        tagCount;    /*!< Number of tags in tagList. */
+    int        tagSet;      /*!< Tag set index. */
+    int        flags;       /*!< Tag flags - not too much known. */
+    char       *tagSetName; /*!< Tag set name. */
 
-    DGNTagDef  *tagList;
+    DGNTagDef  *tagList;    /*!< List of tag definitions in this set. */
 
 } DGNElemTagSet;
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2002/11/13 21:26:32  warmerda
+ * added more documentation
+ *
  * Revision 1.34  2002/11/12 23:11:52  warmerda
  * fixed error with tags in DGNFreeElement()
  *
@@ -277,6 +280,31 @@ DGNGetRawExtents( DGNInfo *psDGN, int nType, unsigned char *pabyRawData,
 /************************************************************************/
 /*                        DGNGetElementExtents()                        */
 /************************************************************************/
+
+/**
+ * Fetch extents of an element.
+ *
+ * This function will return the extents of the passed element if possible.
+ * The extents are extracted from the element header if it contains them,
+ * and transformed into master georeferenced format.  Some element types 
+ * do not have extents at all and will fail.  
+ *
+ * This call will also fail if the extents raw data for the element is not
+ * available.  This will occur if it was not the most recently read element,
+ * and if the raw_data field is not loaded. 
+ *
+ * @param hDGN the handle of the file to read from.
+ *
+ * @param psElement the element to extract extents from.
+ *
+ * @param psMin structure loaded with X, Y and Z minimum values for the 
+ * extent. 
+ *
+ * @param psMax structure loaded with X, Y and Z maximum values for the 
+ * extent. 
+ *
+ * @return TRUE on success of FALSE if extracting extents fails. 
+ */
 
 int DGNGetElementExtents( DGNHandle hDGN, DGNElemCore *psElement, 
                           DGNPoint *psMin, DGNPoint *psMax )

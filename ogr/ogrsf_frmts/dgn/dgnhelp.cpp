@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/11/13 21:26:32  warmerda
+ * added more documentation
+ *
  * Revision 1.11  2002/11/12 19:44:17  warmerda
  * added view display
  *
@@ -956,7 +959,21 @@ const char *DGNTypeToName( int nType )
 /*                         DGNGetAttrLinkSize()                         */
 /************************************************************************/
 
-int DGNGetAttrLinkSize( DGNHandle hDGN, DGNElemCore *psElement, int nOffset )
+/**
+ * Get attribute linkage size. 
+ *
+ * Returns the size, in bytes, of the attribute linkage starting at byte
+ * offset nOffset.  On failure a value of 0 is returned.
+ *
+ * @param hDGN the file from which the element originated.
+ * @param psElement the element to report on.
+ * @param nOffset byte offset within attribute data of linkage to check.
+ *
+ * @return size of linkage in bytes, or zero. 
+ */
+
+int DGNGetAttrLinkSize( DGNHandle hDGN, DGNElemCore *psElement, 
+                        int nOffset )
 
 {
     if( psElement->attr_bytes < nOffset + 4 )
@@ -980,6 +997,37 @@ int DGNGetAttrLinkSize( DGNHandle hDGN, DGNElemCore *psElement, int nOffset )
 /************************************************************************/
 /*                           DGNGetLinkage()                            */
 /************************************************************************/
+
+/**
+ * Returns requested linkage raw data. 
+ *
+ * A pointer to the raw data for the requested attribute linkage is returned
+ * as well as (potentially) various information about the linkage including
+ * the linkage type, database entity number and MSLink value, and the length
+ * of the raw linkage data in bytes.
+ *
+ * If the requested linkage (iIndex) does not exist a value of zero is 
+ * returned.
+ *
+ * The entity number is (loosely speaking) the index of the table within
+ * the current database to which the MSLINK value will refer.  The entity
+ * number should be used to lookup the table name in the MSCATALOG table. 
+ * The MSLINK value is the key value for the record in the target table. 
+ *
+ * @param hDGN the file from which the element originated.
+ * @param psElement the element to report on.
+ * @param iIndex the zero based index of the linkage to fetch.
+ * @param pnLinkageType variable to return linkage type.  This may be one of
+ * the predefined DGNLT_ values or a different value. This pointer may be NULL.
+ * @param pnEntityNum variable to return the entity number in or NULL if not
+ * required.  
+ * @param pnMSLink variable to return the MSLINK value in, or NULL if not 
+ * required.
+ * @param pnLength variable to returned the linkage size in bytes or NULL.
+ * 
+ * @return pointer to raw internal linkage data.  This data should not be
+ * altered or freed.  NULL returned on failure. 
+ */
 
 unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement, 
                               int iIndex, int *pnLinkageType,

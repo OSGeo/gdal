@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/11/13 21:26:32  warmerda
+ * added more documentation
+ *
  * Revision 1.4  2002/11/12 19:45:54  warmerda
  * added support to update TCB in DGNCreate
  *
@@ -814,7 +817,7 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
     if( (psDGN->dimension == 2 && 38 + 8 * nPointCount >= 512)
         || (psDGN->dimension == 3 && 38 + 12 * nPointCount >= 512) )
     {
-        CPLError( CE_Failure, CPLE_ElementToBig, 
+        CPLError( CE_Failure, CPLE_ElementTooBig, 
                   "Attempt to create %s element with %d points failed.\n"
                   "Element would be too large.",
                   DGNTypeToName( nType ), nPointCount );
@@ -1508,7 +1511,7 @@ int DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement,
 
     if( psElement->size + nLinkSize > 768 )
     {
-        CPLError( CE_Failure, CPLE_ElementToBig, 
+        CPLError( CE_Failure, CPLE_ElementTooBig, 
                   "Attempt to add %d byte linkage to element exceeds maximum"
                   " element size.", 
                   nLinkSize );
