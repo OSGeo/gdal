@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/08/09 16:30:44  warmerda
+ * Modified 0x00 integer blocks to be treated as a constant min valued block.
+ *
  * Revision 1.4  1999/04/21 16:51:30  warmerda
  * fixed up floating point support
  *
@@ -88,7 +91,7 @@ CPLErr AIGProcessRaw32BitFloatBlock( GByte *pabyCur, int nDataSize, int nMin,
 /************************************************************************/
 /*                      AIGProcessRaw32bitBlock()                       */
 /*                                                                      */
-/*      Process a block using ``00'' (32 bit) raw format.               */
+/*      Process a block using ``0x43'' (32 bit) raw format.             */
 /************************************************************************/
 
 static 
@@ -110,6 +113,31 @@ CPLErr AIGProcessRaw32BitBlock( GByte *pabyCur, int nDataSize, int nMin,
                    + pabyCur[2]*256 + pabyCur[3] + nMin;
         pabyCur += 4;
     }
+
+    return( CE_None );
+}
+
+/************************************************************************/
+/*                      AIGProcessIntConstBlock()                       */
+/*                                                                      */
+/*      Process a block using ``00'' constant 32bit integer format.     */
+/************************************************************************/
+
+static 
+CPLErr AIGProcessIntConstBlock( GByte *pabyCur, int nDataSize, int nMin,
+                                int nBlockXSize, int nBlockYSize,
+                                GUInt32 * panData )
+
+{
+    int		i;
+
+    CPLAssert( nDataSize <= 8 );
+    
+/* -------------------------------------------------------------------- */
+/*	Apply constant min value.					*/
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+        panData[i] = nMin;
 
     return( CE_None );
 }
@@ -364,7 +392,8 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
 /*      Collect minimum value.                                          */
 /* -------------------------------------------------------------------- */
     pabyCur = pabyRaw + 2;
-    if( pabyCur[0] != 0x00 && pabyCur[0] != 0x43 )
+    if( (nCellType == AIG_CELLTYPE_INT || pabyCur[0] != 0x00)
+        && pabyCur[0] != 0x43 )
     {
         nMinSize = pabyCur[1];
         pabyCur += 2;
@@ -399,6 +428,11 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
         AIGProcessRaw4BitBlock( pabyCur, nDataSize, nMin,
                                 nBlockXSize, nBlockYSize,
                                 panData );
+    }
+    else if( nCellType == AIG_CELLTYPE_INT && nMagic == 0x00 )
+    {
+        AIGProcessIntConstBlock( pabyCur, nDataSize, nMin,
+                                 nBlockXSize, nBlockYSize, panData );
     }
     else if( nMagic == 0x00 || nMagic == 0x43 )
     {
