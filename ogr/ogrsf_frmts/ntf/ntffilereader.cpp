@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2001/08/23 13:36:38  warmerda
+ * fixed circle to line to close properly
+ *
  * Revision 1.18  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -690,7 +693,7 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
         poGeometry = poLine;
         poLine->setNumPoints( 72 );
         
-        for( iPoint = 0; iPoint < 72; iPoint++ )
+        for( iPoint = 0; iPoint <= 72; iPoint++ )
         {
             double      dfAngle = iPoint * (2*PI/72.0);
             
