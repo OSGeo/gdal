@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/04/29 19:32:34  warmerda
+ * added swq_select_parse, fix problem with where parsing and sorting code
+ *
  * Revision 1.12  2002/04/25 20:57:35  warmerda
  * expand tabs
  *
@@ -714,9 +717,11 @@ swq_subexpr_compile( char **tokens,
     ** grab the remainder of the expression at "this level" and add to the
     ** local tree. 
     */
-    if( tokens[*tokens_consumed] != NULL
-        && (op_code == swq_identify_op( tokens, tokens_consumed ))
-        && SWQ_OP_IS_LOGICAL(op_code) )
+    op_code = SWQ_UNKNOWN;
+    if( tokens[*tokens_consumed] != NULL )
+        op_code = swq_identify_op( tokens, tokens_consumed );
+
+    if( SWQ_OP_IS_LOGICAL(op_code) )
     {
         swq_expr *remainder = NULL;
         swq_expr *parent;
@@ -1283,18 +1288,20 @@ const char *swq_select_preparse( const char *select_statement,
 }
 
 /************************************************************************/
-/*                          swq_select_parse()                          */
+/*                     swq_select_expand_wildcard()                     */
+/*                                                                      */
+/*      This function replaces the '*' in a "SELECT *" with the list    */
+/*      provided list of fields.  Itis used by swq_select_parse(),      */
+/*      but may be called in advance by applications wanting the        */
+/*      "default" field list to be different than the full list of      */
+/*      fields.                                                         */
 /************************************************************************/
 
-const char *swq_select_parse( swq_select *select_info, 
-                              int field_count, 
-                              char **field_list,
-                              swq_field_type *field_types,
-                              int parse_flags )
+const char *swq_select_expand_wildcard( swq_select *select_info, 
+                                        int field_count, 
+                                        char **field_list )
 
 {
-    int  i;
-
 /* -------------------------------------------------------------------- */
 /*      Expand "*" field for selects.                                   */
 /* -------------------------------------------------------------------- */
@@ -1302,6 +1309,8 @@ const char *swq_select_parse( swq_select *select_info,
         && strcmp(select_info->column_defs[0].field_name,"*") == 0 
         && select_info->column_defs[0].col_func_name == NULL )
     {
+        int  i;
+
         SWQ_FREE( select_info->column_defs[0].field_name );
         SWQ_FREE( select_info->column_defs );
         
@@ -1318,6 +1327,27 @@ const char *swq_select_parse( swq_select *select_info,
             def->field_name = swq_strdup( field_list[i] );
         }
     }
+
+    return NULL;
+}
+
+/************************************************************************/
+/*                          swq_select_parse()                          */
+/************************************************************************/
+
+const char *swq_select_parse( swq_select *select_info, 
+                              int field_count, 
+                              char **field_list,
+                              swq_field_type *field_types,
+                              int parse_flags )
+
+{
+    int  i;
+    const char *error;
+
+    error = swq_select_expand_wildcard( select_info, field_count, field_list );
+    if( error != NULL )
+        return error;
 
 /* -------------------------------------------------------------------- */
 /*      Identify field information.                                     */
@@ -1593,7 +1623,7 @@ static int swq_compare_int( const void *item1, const void *item2 )
     v1 = atoi(*((const char **) item1));
     v2 = atoi(*((const char **) item2));
 
-    return v2 - v1;
+    return v1 - v2;
 }
 
 static int swq_compare_real( const void *item1, const void *item2 )
@@ -1656,7 +1686,7 @@ const char *swq_select_finish_summarize( swq_select *select_info )
 /* -------------------------------------------------------------------- */
 /*      Do we want the list ascending in stead of descending?           */
 /* -------------------------------------------------------------------- */
-    if( select_info->order_defs[0].ascending_flag )
+    if( !select_info->order_defs[0].ascending_flag )
     {
         char *saved;
         int i;
