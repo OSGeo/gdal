@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/02/02 22:20:29  warmerda
+ * compute text height/width properly
+ *
  * Revision 1.6  2001/01/17 16:07:33  warmerda
  * ensure that TCB and ColorTable side effects occur on indexing pass too
  *
@@ -338,8 +341,10 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
 
           psText->font_id = psDGN->abyElem[36];
           psText->justification = psDGN->abyElem[37];
-          psText->length_mult = DGN_INT32( psDGN->abyElem + 38 );
-          psText->height_mult = DGN_INT32( psDGN->abyElem + 42 );
+          psText->length_mult = (DGN_INT32( psDGN->abyElem + 38 ))
+              * psDGN->scale * 6.0 / 1000.0;
+          psText->height_mult = (DGN_INT32( psDGN->abyElem + 42 ))
+              * psDGN->scale * 6.0 / 1000.0;
 
           psText->rotation = DGN_INT32( psDGN->abyElem + 46 );
           psText->rotation = psText->rotation / 360000.0;
@@ -653,7 +658,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 
           fprintf( fp, 
                    "  origin=(%.5f,%.5f), rotation=%f\n"
-                   "  font=%d, just=%d, length_mult=%ld, height_mult=%ld\n"
+                   "  font=%d, just=%d, length_mult=%g, height_mult=%g\n"
                    "  string = \"%s\"\n",
                    psText->origin.x, 
                    psText->origin.y, 
@@ -820,8 +825,10 @@ void DGNTransformPoint( DGNInfo *psDGN, DGNPoint *psPoint )
  * @param hDGN the file to get an index for.
  * @param pnElementCount the integer to put the total element count into. 
  *
- * @return a pointer to an array of DGNElementInfo structures (there will be
- * *pnElementCount entries in the array), or NULL on failure. 
+ * @return a pointer to an internal array of DGNElementInfo structures (there 
+ * will be *pnElementCount entries in the array), or NULL on failure.  The
+ * returned array should not be modified or freed, and will last only as long
+ * as the DGN file remains open. 
  */
 
 const DGNElementInfo *DGNGetElementIndex( DGNHandle hDGN, int *pnElementCount )
