@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/03/19 15:14:50  dron
+ * Bicubic interpolation implemented in GWKCubicResample().
+ *
  * Revision 1.7  2003/03/17 15:39:01  dron
  * Added GWKNearestNoMasksFloat() and GWKNearestFloat() functions.
  *
@@ -987,16 +990,56 @@ static int GWKBilinearResample( GDALWarpKernel *poWK, int iBand,
 
 /************************************************************************/
 /*                          GWKCubicResample()                          */
+/*              Bicubic interpolation using B-splines.                  */
 /************************************************************************/
 
+#define P(x) (((x) > 0)?(x)*(x)*(x):0)
+#define BSPLINE(x) (( P(x + 2) - 4 * P(x + 1) + 6 * P(x) - 4 * P(x - 1) ) / 6)    
 static int GWKCubicResample( GDALWarpKernel *poWK, int iBand, 
                              double dfSrcX, double dfSrcY,
                              double *pdfDensity, 
                              double *pdfReal, double *pdfImag )
 
 {
-    *pdfDensity = 0.0;
-    return FALSE;
+    double  dfAccumulatorReal = 0.0, dfAccumulatorImag = 0.0;
+    double  dfAccumulatorDensity = 0.0;
+    dfSrcX = dfSrcX - 0.5;
+    dfSrcY = dfSrcY - 0.5;
+    int     iSrcX = (int) floor( dfSrcX );
+    int     iSrcY = (int) floor( dfSrcY );
+    double  dfDeltaX = dfSrcX - iSrcX;
+    double  dfDeltaY = dfSrcY - iSrcY;
+    int     i, j;
+
+    // Get the nearest neighbour at the image borders
+    if ( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
+         || dfSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
+        return GWKGetPixelValue( poWK, iBand, iSrcX + iSrcY * poWK->nSrcXSize,
+                                 pdfDensity, pdfReal, pdfImag );
+
+    for ( i = -1; i < 2; i++ )
+    {
+        for ( j = -1; j < 2; j++ )
+        {
+            int     iX = iSrcX + i;
+            int     iY = iSrcY + j;
+            if ( GWKGetPixelValue( poWK, iBand, iX + iY  * poWK->nSrcXSize,
+                                   pdfDensity, pdfReal, pdfImag ) )
+            {
+                double  dfWeight =
+                    BSPLINE((double)i - dfDeltaX) * BSPLINE(dfDeltaY - (double)j);
+                dfAccumulatorReal += *pdfReal * dfWeight;
+                dfAccumulatorImag += *pdfImag * dfWeight;
+                dfAccumulatorDensity += *pdfDensity * dfWeight;
+            }
+        }
+    }
+    
+    *pdfReal = dfAccumulatorReal;
+    *pdfImag = dfAccumulatorImag;
+    *pdfDensity = dfAccumulatorDensity;
+    
+    return TRUE;
 }
 
 /************************************************************************/
