@@ -63,6 +63,6 @@ gdal-config-inst:	gdal-config.in ../GDALmake.opt ./GNUmakefile
 
 
 install: default
-	cp $(BIN_LIST) $(INST_BIN)
-	cp gdal-config-inst $(INST_BIN)/gdal-config
+	$(INSTALL) $(BIN_LIST) $(INST_BIN)
+	$(INSTALL) gdal-config-inst $(INST_BIN)/gdal-config
 

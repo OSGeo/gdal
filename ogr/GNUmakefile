@@ -113,8 +113,8 @@ reg-test2:
 	fi
 
 install:	$(OGR_LIB) ogrinfo ogr2ogr
-	cp $(INST_H_FILES) $(INST_INCLUDE)
-	cp $(OGR_LIB) $(INST_LIB)
-	cp ogrinfo ogr2ogr $(INST_BIN)
+	$(INSTALL) $(INST_H_FILES) $(INST_INCLUDE)
+	$(INSTALL) $(OGR_LIB) $(INST_LIB)
+	$(INSTALL) ogrinfo ogr2ogr $(INST_BIN)
 
 
