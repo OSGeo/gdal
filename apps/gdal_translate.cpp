@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/04/17 12:55:40  dron
+ * Few memory leaks fixed.
+ *
  * Revision 1.13  2003/03/03 16:29:35  warmerda
  * Added the -quiet flag.
  *
@@ -356,6 +359,7 @@ int main( int argc, char ** argv )
     {
         fprintf( stderr,
                  "Input file contains subdatasets. Please, select one of them for reading.\n" );
+        GDALClose( hDataset );
         exit( 1 );
     }
 
@@ -407,6 +411,8 @@ int main( int argc, char ** argv )
             fprintf( stderr, 
                      "The -projwin option was used, but the geotransform is\n"
                      "rotated.  This configuration is not supported.\n" );
+            GDALClose( hDataset );
+            CPLFree( panBandList );
             exit( 1 );
         }
 
@@ -462,6 +468,10 @@ int main( int argc, char ** argv )
         }
         printf( "\n" );
         Usage();
+        
+        GDALClose( hDataset );
+        CPLFree( panBandList );
+        GDALDestroyDriverManager();
         exit( 1 );
     }
 
