@@ -1,5 +1,6 @@
 test1
 *.bin
+*.txt
 SFDUMP
 dlldata.c
 geometryidl.h
@@ -8,5 +9,4 @@ geometryidl_p.c
 spatialreferenceidl.h
 spatialreferenceidl_i.c
 spatialreferenceidl_p.c
-
 
