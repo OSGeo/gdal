@@ -1,0 +1,64 @@
+<html>
+<head>
+<title>DODS -- OPeNDAP Grid Client</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>DODS -- OPeNDAP Grid Client</h1>
+
+GDAL optionally includes read support for 2D grids and arrays via the OPeNDAP
+(DODS) protocol. <p>
+
+<h2>Dataset Naming</h2>
+
+The full dataset name specification consists of the OPeNDAP dataset
+url, the full path to the desired array or grid variable, and an indicator
+of the array indices to be accessed.<p>
+
+For instance, if the url http://maps.gdal.org/daac-bin/nph-hdf/3B42.HDF.dds 
+returns a DDS definition like this:<p>
+
+<pre>
+Dataset {
+  Structure {
+    Structure {
+      Float64 percipitate[scan = 5][longitude = 360][latitude = 80];
+      Float64 relError[scan = 5][longitude = 360][latitude = 80];
+    } PlanetaryGrid;
+  } DATA_GRANULE;
+} 3B42.HDF;
+</pre>
+<p>
+
+then the percipitate grid can be accessed using the following GDAL 
+dataset name:<p>
+
+http://maps.gdal.org/daac-bin/nph-hdf/3B42.HDF?DATA_GRANULE.PlanetaryGrid.percipitate[0][x][y]
+<p>
+
+The full path to the grid or array to be accessed needs to be specified (not
+counting the outer Dataset name).  GDAL needs to know which indices of 
+the array to treat as x (longitude or easting) and y (latitude or northing).
+Any other dimensions need to be restricted to a single value.<p>
+
+In cases of data servers with only 2D arrays and grids as immediate
+children of the Dataset it may not be necessary to name the grid or array
+variable. <p>
+
+In cases where there are a number of 2D arrays or grids at the dataset
+level, they may be each automatically treated as seperate bands.<p>
+
+<h2>Specialized AIS/DAS Metadata</h2>
+
+
+<hr>
+
+See Also:<p>
+
+<ul>
+<li> <a href="http://www.opendap.org/">OPeNDAP Website</a>
+</ul>
+
+</body>
+</html>
