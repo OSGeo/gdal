@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2003/02/14 21:05:40  warmerda
+ * Don't use path for rawdataset.h.
+ *
  * Revision 1.2  2002/12/30 14:55:01  dron
  * SetProjCS() removed, added unit setting.
  *
@@ -55,7 +58,7 @@
 #include "gdal_priv.h"
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
-#include "../raw/rawdataset.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
 
