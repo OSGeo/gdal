@@ -1,3 +1,11 @@
+2002-11-30  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* frmts/gtiff: Added support for writing generic metadata. 
+	Added support for updating metadata and projections of existing files.
+	Added improvements to GeoTIFF info writing including writing a
+	citation, ellipsoid info, and fixing some bugs.  Improved GeoTIFF
+	reading to set authorities in WKT on various things.
+
 2002-11-23  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* added DMD_CREATIONDATATYPES metadata for all drivers with create
