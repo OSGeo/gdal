@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2003/08/18 13:26:01  warmerda
+ * added SetTMVariant() and related definitions
+ *
  * Revision 1.34  2003/06/21 23:24:36  warmerda
  * added Set/Get TOWGS84 calls
  *
@@ -232,6 +235,17 @@ typedef enum {
                                 "Transverse_Mercator"
 #define SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED                       \
                                 "Transverse_Mercator_South_Orientated"
+
+/* special mapinfo variants on Transverse Mercator */
+#define SRS_PT_TRANSVERSE_MERCATOR_MI_22 \
+                                "Transverse_Mercator_MapInfo_22"
+#define SRS_PT_TRANSVERSE_MERCATOR_MI_23 \
+                                "Transverse_Mercator_MapInfo_23"
+#define SRS_PT_TRANSVERSE_MERCATOR_MI_24 \
+                                "Transverse_Mercator_MapInfo_24"
+#define SRS_PT_TRANSVERSE_MERCATOR_MI_25 \
+                                "Transverse_Mercator_MapInfo_25"
+
 #define SRS_PT_TUNISIA_MINING_GRID                                      \
                                 "Tunisia_Mining_Grid"
 #define SRS_PT_VANDERGRINTEN    "VanDerGrinten"
@@ -536,6 +550,13 @@ OGRErr CPL_DLL OSRSetSOC( OGRSpatialReferenceH hSRS, double dfLatitudeOfOrigin, 
 OGRErr CPL_DLL OSRSetTM( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
                        double dfScale,
                        double dfFalseEasting, double dfFalseNorthing );
+
+/** Transverse Mercator variant */
+OGRErr CPL_DLL OSRSetTMVariant( 
+    OGRSpatialReferenceH hSRS, const char *pszVariantName,
+    double dfCenterLat, double dfCenterLong,
+    double dfScale,
+    double dfFalseEasting, double dfFalseNorthing );
 
 /** Tunesia Mining Grid  */
 OGRErr CPL_DLL OSRSetTMG( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong, 

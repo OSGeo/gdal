@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2003/08/18 13:26:01  warmerda
+ * added SetTMVariant() and related definitions
+ *
  * Revision 1.51  2003/05/30 15:39:53  warmerda
  * Added override units capability for SetStatePlane()
  *
@@ -525,6 +528,12 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetTM( double dfCenterLat, double dfCenterLong,
                        double dfScale,
                        double dfFalseEasting, double dfFalseNorthing );
+
+    /** Transverse Mercator variants. */
+    OGRErr      SetTMVariant( const char *pszVariantName, 
+                              double dfCenterLat, double dfCenterLong,
+                              double dfScale,
+                              double dfFalseEasting, double dfFalseNorthing );
 
     /** Tunesia Mining Grid  */
     OGRErr      SetTMG( double dfCenterLat, double dfCenterLong, 
