@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/11/25 04:09:57  kshih
+ * Added code to delete OGR dataset when no longer in use.
+ *
  * Revision 1.8  1999/11/22 17:17:05  warmerda
  * removed debug statements
  *
@@ -147,6 +150,7 @@ void SFClearOGRDataSource(void *pKey)
 		if (pInfo->pKey == pKey)
 		{
 			*pPrev = pInfo->next;		
+			delete pInfo->pOGR;
 			delete pInfo;
 			break;
 		}
