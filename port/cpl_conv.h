@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2004/03/28 16:22:02  warmerda
+ * const correctness changes in scan functions
+ *
  * Revision 1.30  2004/03/24 09:01:17  dron
  * Added CPLPrintUIntBig().
  *
@@ -136,10 +139,10 @@ const char CPL_DLL *CPLReadLine( FILE * );
 /* -------------------------------------------------------------------- */
 /*      Read a numeric value from an ASCII character string.            */
 /* -------------------------------------------------------------------- */
-char CPL_DLL *CPLScanString( char *, int, int, int );
-double CPL_DLL CPLScanDouble( char *, int, char * );
-long CPL_DLL CPLScanLong( char *, int );
-GUIntBig CPL_DLL CPLScanUIntBig( char *, int );
+char CPL_DLL *CPLScanString( const char *, int, int, int );
+double CPL_DLL CPLScanDouble( const char *, int, char * );
+long CPL_DLL CPLScanLong( const char *, int );
+GUIntBig CPL_DLL CPLScanUIntBig( const char *, int );
 
 /* -------------------------------------------------------------------- */
 /*      Print a value to an ASCII character string.                     */
