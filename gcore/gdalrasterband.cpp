@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.54  2005/01/15 16:10:43  fwarmerdam
+ * Added set scale/offset methods
+ *
  * Revision 1.53  2005/01/04 21:14:01  fwarmerdam
  * added GDAL_FORCE_CACHING config variable
  *
@@ -1771,6 +1774,40 @@ double GDALGetRasterOffset( GDALRasterBandH hBand, int *pbSuccess )
 }
 
 /************************************************************************/
+/*                             SetOffset()                              */
+/************************************************************************/
+
+/**
+ * Set scaling offset.
+ *
+ * Very few formats implement this method.   When not implemented it will
+ * issue a CPLE_NotSupported error and return CE_Failure. 
+ * 
+ * @param dfNewOffset the new offset.
+ *
+ * @return CE_None or success or CE_Failure on failure. 
+ */
+
+CPLErr GDALRasterBand::SetOffset( double dfNewOffset )
+
+{
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "SetOffset() not supported on this raster band." );
+    
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                        GDALSetRasterOffset()                         */
+/************************************************************************/
+
+CPLErr GDALSetRasterOffset( GDALRasterBandH hBand, double dfNewOffset )
+
+{
+    return ((GDALRasterBand *) hBand)->SetOffset( dfNewOffset );
+}
+
+/************************************************************************/
 /*                              GetScale()                              */
 /************************************************************************/
 
@@ -1812,6 +1849,40 @@ double GDALGetRasterScale( GDALRasterBandH hBand, int *pbSuccess )
 
 {
     return ((GDALRasterBand *) hBand)->GetScale( pbSuccess );
+}
+
+/************************************************************************/
+/*                              SetScale()                              */
+/************************************************************************/
+
+/**
+ * Set scaling ratio.
+ *
+ * Very few formats implement this method.   When not implemented it will
+ * issue a CPLE_NotSupported error and return CE_Failure. 
+ * 
+ * @param dfNewScale the new scale.
+ *
+ * @return CE_None or success or CE_Failure on failure. 
+ */
+
+CPLErr GDALRasterBand::SetScale( double dfNewScale )
+
+{
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "SetScale() not supported on this raster band." );
+    
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                        GDALSetRasterScale()                          */
+/************************************************************************/
+
+CPLErr GDALSetRasterScale( GDALRasterBandH hBand, double dfNewOffset )
+
+{
+    return ((GDALRasterBand *) hBand)->SetScale( dfNewOffset );
 }
 
 /************************************************************************/
