@@ -3,6 +3,7 @@ GDAL_ROOT	=	../..
 include $(GDAL_ROOT)/GDALmake.opt
 
 ifeq ($(PNG_SETTING),internal)
+XTRA_OPT =	-Ilibpng
 OBJ	=	png.o pngerror.o pnggccrd.o pngget.o pngmem.o \
 		pngpread.o pngread.o pngrio.o pngrtran.o pngrutil.o \
 		pngset.o pngtrans.o pngvcrd.o pngwio.o pngwrite.o \
@@ -22,6 +23,9 @@ clean:
 
 %.o:	%.c
 	$(CC) -c $(CFLAGS) $(GDAL_INCLUDE) $(XTRA_OPT) $*.c -o $*.o
+
+%.o:	libpng/%.c
+	$(CC) -c $(CFLAGS) $(GDAL_INCLUDE) $(XTRA_OPT) libpng/$*.c -o $*.o
 
 %.o:	%.cpp
 	$(CXX) -c $(CXXFLAGS) $(GDAL_INCLUDE) $(XTRA_OPT) $*.cpp -o $*.o
