@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/09/01 12:08:34  warmerda
+ * Ensure the geometry type gets set on the OGRFeatureDefn.
+ *
  * Revision 1.9  1999/07/09 13:05:01  warmerda
  * figure out geometry column before building OGRFeatureDefn
  *
@@ -200,6 +203,7 @@ int SFCTable::ReadSchemaInfo( CDataSource * poDS )
 /*      OGRFeatureDefn.                                                 */
 /* -------------------------------------------------------------------- */
     poDefn = new OGRFeatureDefn( GetTableName() );
+    poDefn->SetGeomType( (OGRwkbGeometryType) GetGeometryType() );
     panColOrdinal = (ULONG *) CPLMalloc(sizeof(ULONG) * GetColumnCount());
 
     for( ULONG iColumn = 0; iColumn < GetColumnCount(); iColumn++ )
