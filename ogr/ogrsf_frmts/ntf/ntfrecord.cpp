@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/02/18 21:40:03  warmerda
+ * Fixed error message.
+ *
  * Revision 1.7  2002/02/11 17:04:45  warmerda
  * cleanup tabs
  *
@@ -197,7 +200,7 @@ int NTFRecord::ReadPhysicalLine( FILE *fp, char *pszLine )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%d byte record too long for NTF format.\n"
-                  "No line may be longer than 80 characters though up to %d toleraged.\n",
+                  "No line may be longer than 80 characters though up to %d tolerated.\n",
                   nBytesRead, MAX_RECORD_LEN );
         return -2;
     }
