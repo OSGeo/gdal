@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/10/31 14:41:30  warmerda
+ * avoid memory leaks and warnings
+ *
  * Revision 1.9  2000/10/20 04:18:15  warmerda
  * added overviews, stateplane, and u4
  *
@@ -129,6 +132,8 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
             }
 
             poOvEntry = psInfo->poRoot->GetNamedChild( pszPath );
+            CPLFree( pszPath );
+
             if( poOvEntry == NULL )
                 continue;
 
@@ -389,7 +394,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 
             for( i = 0; i < nRepeatCount; i++ )
             {
-                ((float *) pabyDest)[nPixelsOutput++] = nDataValue;
+                ((float *) pabyDest)[nPixelsOutput++] = (float) nDataValue;
             }
         }
         else
@@ -529,7 +534,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 
     iBlock = nXBlock + nYBlock * nBlocksPerRow;
     
-    if( !panBlockFlag[iBlock] & (BFLG_VALID|BFLG_COMPRESSED) )
+    if( (panBlockFlag[iBlock] & (BFLG_VALID|BFLG_COMPRESSED)) == 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
           "Attempt to write to invalid, or compressed tile.  This\n"
@@ -740,8 +745,8 @@ CPLErr HFABand::SetPCT( int nColors,
         for( int iColumn = 0; iColumn < 3; iColumn++ )
         {
             HFAEntry        *poEdsc_Column;
-            double	    *padfValues;
-            const char      *pszName;
+            double	    *padfValues=NULL;
+            const char      *pszName=NULL;
             
             if( iColumn == 0 )
             {
