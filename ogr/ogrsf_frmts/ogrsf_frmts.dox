@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2005/02/02 21:22:00  fwarmerdam
+ * Added SetNextByIndex().
+ *
  * Revision 1.23  2005/01/03 22:16:44  fwarmerdam
  * added OGRLayer::SetSpatialFilterRect()
  *
@@ -1613,6 +1616,10 @@ installed after which it will return FALSE.<p>
  <li> <b>OLCFastGetExtent</b> / "FastGetExtent": 
 TRUE if this layer can return its data extent (via OGRLayer::GetExtent()) efficiently ... ie. without scanning all the features.  In some cases this will return TRUE until a spatial filter is installed after which it will return FALSE.<p>
 
+ <li> <b>OLCFastSetNextByIndex</b> / "FastSetNextByIndex": 
+TRUE if this layer can perform the SetNextByIndex() call efficiently, otherwise
+FALSE.<p>
+
 </ul>
  
  This method is the same as the C function OGR_L_TestCapability().
@@ -1720,6 +1727,33 @@ This method is the same as the C function OGR_L_SyncToDisk().
 
 @return OGRERR_NONE if no error occurs (even if nothing is done) or an
 error code.
+*/
+
+/**
+ \fn OGRErr OGRLayer::SetNextByIndex( long nIndex );
+
+ Move read cursor to the nIndex'th feature in the current resultset. 
+
+ This method allows positioning of a layer such that the GetNextFeature()
+ call will read the requested feature, where nIndex is an absolute index
+ into the current result set.   So, setting it to 3 would mean the next
+ feature read with GetNextFeature() would have been the 4th feature to have
+ been read if sequential reading took place from the beginning of the layer,
+ including accounting for spatial and attribute filters. 
+
+ Only in rare circumstances is SetNextByIndex() efficiently implemented.  
+ In all other cases the default implementation which calls ResetReading()
+ and then calls GetNextFeature() nIndex times is used.  To determine if 
+ fast seeking is available on the current layer use the TestCapability()
+ method with a value of OLCFastSetNextByIndex.  
+
+ This method is the same as the C function OGR_L_SetNextByIndex().
+
+ @param nIndex the index indicating how many steps into the result set
+ to seek. 
+
+ @return OGRERR_NONE on success or an error code.
+
 */
 
 /**
