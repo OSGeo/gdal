@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/06/29 18:29:30  warmerda
+ * don't refree pszURL when failing with non-raster datastores.
+ *
  * Revision 1.11  2001/06/28 19:18:35  warmerda
  * allow double quotes to be used in filename toprotect colons
  *
@@ -566,7 +569,6 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
                   "While this is an OGDI datastore, it does not appear to\n"
                   "have any identifiable raster layers.  Perhaps it is a\n"
                   "vector datastore?" );
-        CPLFree( pszURL );
         cln_DestroyClient( nClientID );
         return NULL;
     }
