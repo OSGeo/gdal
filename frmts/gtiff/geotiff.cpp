@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.70  2002/09/04 06:46:05  warmerda
+ * added CSVDeaccess as a driver cleanup action
+ *
  * Revision 1.69  2002/07/13 04:16:39  warmerda
  * added WORLDFILE support
  *
@@ -205,10 +208,9 @@
 #include "tif_ovrcache.h"
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
+#include "cpl_csv.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poGTiffDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_GTiff(void);
@@ -1890,7 +1892,6 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 
     hTIFF = hTIFFIn;
 
-    poDriver = poGTiffDriver;
     nDirOffset = nDirOffsetIn;
 
     SetDirectory( nDirOffsetIn );
@@ -2394,7 +2395,6 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     poDS = new GTiffDataset();
     poDS->hTIFF = hTIFF;
-    poDS->poDriver = poGTiffDriver;
 
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
@@ -3101,17 +3101,28 @@ GTiffErrorHandler(const char* module, const char* fmt, va_list ap )
 }
 
 /************************************************************************/
+/*                        GDALDeregister_GTiff()                        */
+/************************************************************************/
+
+void GDALDeregister_GTiff( GDALDriver * )
+
+{
+    CPLDebug( "GDAL", "GDALDeregister_GTiff() called." );
+    CSVDeaccess( NULL );
+}
+
+/************************************************************************/
 /*                          GDALRegister_GTiff()                        */
 /************************************************************************/
 
 void GDALRegister_GTiff()
 
 {
-    GDALDriver	*poDriver;
-
-    if( poGTiffDriver == NULL )
+    if( GDALGetDriverByName( "GTiff" ) == NULL )
     {
-        poGTiffDriver = poDriver = new GDALDriver();
+        GDALDriver	*poDriver;
+
+        poDriver = new GDALDriver();
 
         poDriver->SetDescription( "GTiff" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoTIFF" );
@@ -3141,6 +3152,7 @@ void GDALRegister_GTiff()
         poDriver->pfnOpen = GTiffDataset::Open;
         poDriver->pfnCreate = GTiffDataset::Create;
         poDriver->pfnCreateCopy = GTiffCreateCopy;
+        poDriver->pfnUnloadDriver = GDALDeregister_GTiff;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
 
