@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/04/29 19:35:50  warmerda
+ * fixes for selecting FID
+ *
  * Revision 1.5  2002/04/29 18:13:36  warmerda
  * Fix serious bug with datasets with sparse FID sets.
  *
@@ -101,15 +104,18 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Prepare a feature definition based on the query.                */
 /* -------------------------------------------------------------------- */
+    OGRFeatureDefn *poSrcDefn = poSrcLayer->GetLayerDefn();
+
     poDefn = new OGRFeatureDefn( psSelectInfo->from_table );
 
     for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
     {
         swq_col_def *psColDef = psSelectInfo->column_defs + iField;
         OGRFieldDefn oFDefn( psColDef->field_name, OFTInteger );
-        OGRFieldDefn *poSrcFDefn;
+        OGRFieldDefn *poSrcFDefn = NULL;
 
-        if( psColDef->field_index > -1 )
+        if( psColDef->field_index > -1 
+            && psColDef->field_index < poSrcDefn->GetFieldCount() )
             poSrcFDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn(psColDef->field_index);
 
         if( psColDef->col_func_name != NULL )
@@ -120,7 +126,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
 
         if( psColDef->col_func == SWQCF_COUNT )
             oFDefn.SetType( OFTInteger );
-        else
+        else if( poSrcFDefn != NULL )
         {
             oFDefn.SetType( poSrcFDefn->GetType() );
             oFDefn.SetWidth( poSrcFDefn->GetWidth() );
@@ -131,6 +137,8 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
     }
 
     poDefn->SetGeomType( poSrcLayer->GetLayerDefn()->GetGeomType() );
+
+    iFIDFieldIndex = poSrcDefn->GetFieldCount();
 
 /* -------------------------------------------------------------------- */
 /*      If an ORDER BY is in effect, apply it now.                      */
@@ -381,8 +389,11 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
     {
         swq_col_def *psColDef = psSelectInfo->column_defs + iField;
 
-        poDstFeat->SetField( iField,
-                    poSrcFeat->GetRawFieldRef( psColDef->field_index ) );
+        if( psColDef->field_index == iFIDFieldIndex )
+            poDstFeat->SetField( iField, (int) poSrcFeat->GetFID() );
+        else
+            poDstFeat->SetField( iField,
+                         poSrcFeat->GetRawFieldRef( psColDef->field_index ) );
     }
 
     return poDstFeat;
@@ -583,10 +594,17 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             OGRFieldDefn *poFDefn;
             OGRField *psSrcField, *psDstField;
 
+            psDstField = pasIndexFields + iFeature * nOrderItems + iKey;
+
+            if( psKeyDef->field_index == iFIDFieldIndex )
+            {
+                psDstField->Integer = poSrcFeat->GetFID();
+                continue;
+            }
+
             poFDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn( 
                 psKeyDef->field_index );
 
-            psDstField = pasIndexFields + iFeature * nOrderItems + iKey;
             psSrcField = poSrcFeat->GetRawFieldRef( psKeyDef->field_index );
 
             if( poFDefn->GetType() == OFTInteger 
@@ -629,6 +647,9 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
     {
         swq_order_def *psKeyDef = psSelectInfo->order_defs + iKey;
         OGRFieldDefn *poFDefn;
+
+        if( psKeyDef->field_index == iFIDFieldIndex )
+            continue;
 
         poFDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn( 
             psKeyDef->field_index );
@@ -724,19 +745,19 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
     {
         swq_order_def *psKeyDef = psSelectInfo->order_defs + iKey;
         OGRFieldDefn *poFDefn;
-        
-        poFDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn( 
-            psKeyDef->field_index );
+
+        if( psKeyDef->field_index == iFIDFieldIndex )
+            poFDefn = NULL;
+        else
+            poFDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn( 
+                psKeyDef->field_index );
         
         if( (pasFirstTuple[iKey].Set.nMarker1 == OGRUnsetMarker 
              && pasFirstTuple[iKey].Set.nMarker2 == OGRUnsetMarker)
             || (pasSecondTuple[iKey].Set.nMarker1 == OGRUnsetMarker 
                 && pasSecondTuple[iKey].Set.nMarker2 == OGRUnsetMarker) )
             nResult = 0;
-        else if( poFDefn->GetType() == OFTString )
-            nResult = strcmp(pasFirstTuple[iKey].String,
-                             pasSecondTuple[iKey].String);
-        else if( poFDefn->GetType() == OFTInteger )
+        else if( poFDefn == NULL || poFDefn->GetType() == OFTInteger )
         {
             if( pasFirstTuple[iKey].Integer < pasSecondTuple[iKey].Integer )
                 nResult = -1;
@@ -744,6 +765,9 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
                      > pasSecondTuple[iKey].Integer )
                 nResult = 1;
         }
+        else if( poFDefn->GetType() == OFTString )
+            nResult = strcmp(pasFirstTuple[iKey].String,
+                             pasSecondTuple[iKey].String);
         else if( poFDefn->GetType() == OFTReal )
         {
             if( pasFirstTuple[iKey].Real < pasSecondTuple[iKey].Real )
