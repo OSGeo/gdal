@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/11/20 14:52:26  warmerda
+ * Fix from Markus for center of pixel positioning.
+ *
  * Revision 1.7  2001/11/11 23:50:59  warmerda
  * added required class keyword to friend declarations
  *
@@ -325,11 +328,11 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         double	dfCellSize = atof( papszTokens[9] );
 
-        poDS->adfGeoTransform[0] = atof( papszTokens[5] ) + 0.5 * dfCellSize;
+        poDS->adfGeoTransform[0] = atof( papszTokens[5] ) - 0.5 * dfCellSize;
         poDS->adfGeoTransform[1] = dfCellSize;
         poDS->adfGeoTransform[2] = 0.0;
         poDS->adfGeoTransform[3] = atof( papszTokens[7] )
-            + poDS->nRasterYSize * dfCellSize - 0.5 * dfCellSize;
+            + poDS->nRasterYSize * dfCellSize + 0.5 * dfCellSize;
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = - dfCellSize;
     }
@@ -339,11 +342,11 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         double	dfCellSize = atof( papszTokens[5] );
 
-        poDS->adfGeoTransform[0] = atof( papszTokens[7] ) + 0.5 * dfCellSize;
+        poDS->adfGeoTransform[0] = atof( papszTokens[7] ) - 0.5 * dfCellSize;
         poDS->adfGeoTransform[1] = dfCellSize;
         poDS->adfGeoTransform[2] = 0.0;
         poDS->adfGeoTransform[3] = atof( papszTokens[9] )
-            + poDS->nRasterYSize * dfCellSize - 0.5 * dfCellSize;
+            + poDS->nRasterYSize * dfCellSize + 0.5 * dfCellSize;
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = - dfCellSize;
     }
