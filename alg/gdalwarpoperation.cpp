@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/05/07 19:57:32  warmerda
+ * INIT_DEST now supports a list of band values
+ *
  * Revision 1.9  2003/05/07 19:13:06  warmerda
  * added pre and post warp chunk processor
  *
@@ -881,12 +884,17 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 
     if( pszInitDest != NULL )
     {
+        char **papszInitValues = 
+            CSLTokenizeStringComplex( pszInitDest, ",", FALSE, FALSE );
+        int nInitCount = CSLCount(papszInitValues);
+                                                           
         for( iBand = 0; iBand < psOptions->nBandCount; iBand++ )
         {
             double adfInitRealImag[2];
             GByte *pBandData;
+            const char *pszBandInit = papszInitValues[MIN(iBand,nInitCount-1)];
 
-            if( EQUAL(pszInitDest,"NO_DATA")
+            if( EQUAL(pszBandInit,"NO_DATA")
                 && psOptions->padfDstNoDataReal != NULL )
             {
                 adfInitRealImag[0] = psOptions->padfDstNoDataReal[iBand];
@@ -894,7 +902,7 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
             }
             else
             {
-                CPLStringToComplex( pszInitDest, 
+                CPLStringToComplex( pszBandInit,
                                     adfInitRealImag + 0, adfInitRealImag + 1);
             }
 
@@ -921,6 +929,8 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
                                nDstXSize * nDstYSize );
             }
         }
+
+        CSLDestroy( papszInitValues );
     }
 
 /* -------------------------------------------------------------------- */
