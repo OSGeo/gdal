@@ -91,7 +91,7 @@ ogr_dir:      port_dir
 	cd ..\sdts	
 	$(MAKE) /f makefile.vc
 	cd ..\..\ogr
-	$(MAKE) frmts default
+	$(MAKE) frmts ogr.lib
 	cd ..
 
 lib_dist:	default
