@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2004/04/02 20:44:37  warmerda
+ * preserve APBB (actual bits per pixel) field as metadata
+ *
  * Revision 1.8  2003/05/29 19:50:57  warmerda
  * added TRE in image, and RPC00B support
  *
@@ -149,6 +152,7 @@ typedef struct {
     char       szPVType[4];
     char       szIREP[9];
     char       szICAT[9];
+    int        nABPP; /* signficant bits per pixel */
 
     char       chICORDS;
     int        nZone;
