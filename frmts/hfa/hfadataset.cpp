@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.34  2003/05/30 15:40:35  warmerda
+ * improved state plane handling with unusual units
+ *
  * Revision 1.33  2003/05/21 17:04:57  warmerda
  * significant improvements to reading and writing mapinfo units
  *
@@ -1283,16 +1286,22 @@ CPLErr HFADataset::ReadProjection()
     psPro = HFAGetProParameters( hHFA );
     psMapInfo = HFAGetMapInfo( hHFA );
 
-    if( psPro == NULL )
-        return CE_Failure;
+    if( psPro == NULL && psMapInfo != NULL )
+    {
+        oSRS.SetLocalCS( psMapInfo->proName );
+    }
 
-    if( psPro->proType == EPRJ_EXTERNAL )
+    else if( psPro == NULL )
+    {
+        return CE_Failure;
+    }
+
+    else if( psPro->proType == EPRJ_EXTERNAL )
     {
         oSRS.SetLocalCS( psPro->proName );
     }
 
-    else if( psPro->proNumber != EPRJ_LATLONG
-             && psPro->proNumber != EPRJ_STATE_PLANE )
+    else if( psPro->proNumber != EPRJ_LATLONG )
     {
         oSRS.SetProjCS( psPro->proName );
     }
@@ -1328,6 +1337,45 @@ CPLErr HFADataset::ReadProjection()
             oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
     }
 
+    if( psPro == NULL )
+    {
+        if( oSRS.IsLocal() )
+            goto exportFromSRS;
+        else
+            return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to work out ellipsoid and datum information.                */
+/* -------------------------------------------------------------------- */
+    const char *pszDatumName = psPro->proSpheroid.sphereName;
+    const char *pszEllipsoidName = psPro->proSpheroid.sphereName;
+    double	dfInvFlattening;
+
+    if( psDatum != NULL )
+    {
+        int	i;
+
+        pszDatumName = psDatum->datumname;
+
+        /* Imagine to WKT translation */
+        for( i = 0; apszDatumMap[i] != NULL; i += 2 )
+        {
+            if( EQUAL(pszDatumName,apszDatumMap[i]) )
+            {
+                pszDatumName = apszDatumMap[i+1];
+                break;
+            }
+        }
+    }
+
+    if( psPro->proSpheroid.a == 0.0 )
+        ((Eprj_ProParameters *) psPro)->proSpheroid.a = 6378137.0;
+    if( psPro->proSpheroid.b == 0.0 )
+        ((Eprj_ProParameters *) psPro)->proSpheroid.b = 6356752.3;
+
+    dfInvFlattening = 1.0/(1.0 - psPro->proSpheroid.b/psPro->proSpheroid.a);
+
 /* -------------------------------------------------------------------- */
 /*      Handle different projection methods.                            */
 /* -------------------------------------------------------------------- */
@@ -1341,11 +1389,20 @@ CPLErr HFADataset::ReadProjection()
         break;
 
       case EPRJ_STATE_PLANE:
-        if( psPro->proParams[0] == 1 )
-            oSRS.SetStatePlane( ESRIToUSGSZone(psPro->proZone), TRUE );
-        else
-            oSRS.SetStatePlane( ESRIToUSGSZone(psPro->proZone), FALSE );
-        break;
+      {
+          char *pszUnitsName = NULL;
+          double dfLinearUnits = oSRS.GetLinearUnits( &pszUnitsName );
+          
+          pszUnitsName = CPLStrdup( pszUnitsName );
+
+          /* Set state plane zone.  Set NAD83/27 on basis of spheroid */
+          oSRS.SetStatePlane( ESRIToUSGSZone(psPro->proZone), 
+                              fabs(psPro->proSpheroid.a - 6378137.0)< 1.0,
+                              pszUnitsName, dfLinearUnits );
+
+          CPLFree( pszUnitsName );
+      }
+      break;
 
       case EPRJ_ALBERS_CONIC_EQUAL_AREA:
         oSRS.SetACEA( psPro->proParams[2]*R2D, psPro->proParams[3]*R2D,
@@ -1494,34 +1551,6 @@ CPLErr HFADataset::ReadProjection()
 /* -------------------------------------------------------------------- */
 /*      Try and set the GeogCS information.                             */
 /* -------------------------------------------------------------------- */
-    const char *pszDatumName = psPro->proSpheroid.sphereName;
-    const char *pszEllipsoidName = psPro->proSpheroid.sphereName;
-    double	dfInvFlattening;
-
-    if( psDatum != NULL )
-    {
-        int	i;
-
-        pszDatumName = psDatum->datumname;
-
-        /* Imagine to WKT translation */
-        for( i = 0; apszDatumMap[i] != NULL; i += 2 )
-        {
-            if( EQUAL(pszDatumName,apszDatumMap[i]) )
-            {
-                pszDatumName = apszDatumMap[i+1];
-                break;
-            }
-        }
-    }
-
-    if( psPro->proSpheroid.a == 0.0 )
-        ((Eprj_ProParameters *) psPro)->proSpheroid.a = 6378137.0;
-    if( psPro->proSpheroid.b == 0.0 )
-        ((Eprj_ProParameters *) psPro)->proSpheroid.b = 6356752.3;
-
-    dfInvFlattening = 1.0/(1.0 - psPro->proSpheroid.b/psPro->proSpheroid.a);
-
     if( oSRS.GetAttrNode("GEOGCS") == NULL
         && oSRS.GetAttrNode("LOCAL_CS") == NULL )
     {
@@ -1543,6 +1572,7 @@ CPLErr HFADataset::ReadProjection()
 /* -------------------------------------------------------------------- */
 /*      Get the WKT representation of the coordinate system.            */
 /* -------------------------------------------------------------------- */
+  exportFromSRS:
     CPLFree( pszProjection );
     pszProjection = NULL;
 
