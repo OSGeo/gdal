@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/12/17 22:01:27  warmerda
+ * implemented support for IC=M4 overview.ovr
+ *
  * Revision 1.5  2002/12/17 21:23:15  warmerda
  * implement LUT reading and writing
  *
@@ -421,7 +424,36 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
     else
     {
+        GUInt32  nIMDATOFF;
+        GUInt16  nBMRLNTH, nTMRLNTH, nTPXCDLNTH;
+        int      i;
+        int nBlockCount = psImage->nBlocksPerRow * psImage->nBlocksPerColumn;
+
+        CPLAssert( psImage->szIC[0] == 'M' || psImage->szIC[1] == 'M' );
+
+        VSIFSeek( psFile->fp, psSegInfo->nSegmentStart, SEEK_SET );
+        VSIFRead( &nIMDATOFF, 1, 4, psFile->fp );
+        VSIFRead( &nBMRLNTH, 1, 2, psFile->fp );
+        VSIFRead( &nTMRLNTH, 1, 2, psFile->fp );
+        VSIFRead( &nTPXCDLNTH, 1, 2, psFile->fp );
+
+        CPL_MSBPTR32( &nIMDATOFF );
+        CPL_MSBPTR16( &nBMRLNTH );
+        CPL_MSBPTR16( &nTMRLNTH );
+        CPL_MSBPTR16( &nTPXCDLNTH );
+
+        CPLAssert( nBMRLNTH == 4 ); /* offsets are 4 byte */
         
+        VSIFSeek( psFile->fp, (nTPXCDLNTH+7)/8, SEEK_CUR );
+        VSIFRead( psImage->panBlockStart, 4, nBlockCount, psFile->fp );
+
+        for( i=0; i < psImage->nBlocksPerRow * psImage->nBlocksPerColumn; i++ )
+        {
+            CPL_MSBPTR32( psImage->panBlockStart + i );
+            if( psImage->panBlockStart[i] != 0xffffffff )
+                psImage->panBlockStart[i] 
+                    += psSegInfo->nSegmentStart + nIMDATOFF;
+        }
     }
 
     return psImage;
@@ -524,7 +556,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 /* -------------------------------------------------------------------- */
     if( psImage->nWordSize == psImage->nPixelOffset
         && psImage->nWordSize * psImage->nBlockWidth == psImage->nLineOffset 
-        && psImage->szIC[0] != 'C' )
+        && psImage->szIC[0] != 'C' && psImage->szIC[0] != 'M' )
     {
 
         if( VSIFSeek( psImage->psFile->fp, psImage->panBlockStart[iFullBlock], 
@@ -591,6 +623,9 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
     else if( EQUAL(psImage->szIC,"C4") || EQUAL(psImage->szIC,"M4") )
     {
         GByte abyVQCoded[6144];
+
+        if( psImage->panBlockStart[iFullBlock] == 0xffffffff )
+            return BLKREAD_NULL;
 
         /* Read the codewords */
         if( VSIFSeek( psImage->psFile->fp, psImage->panBlockStart[iFullBlock], 
