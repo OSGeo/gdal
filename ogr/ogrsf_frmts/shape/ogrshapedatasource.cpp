@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/12/11 21:45:36  warmerda
+ * fixed unlikely memory leak of pszWKT
+ *
  * Revision 1.7  2001/09/04 15:35:14  warmerda
  * add support for deferring geometry type selection till first feature
  *
@@ -393,9 +396,9 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
         {
             VSIFWrite( pszWKT, strlen(pszWKT), 1, fp );
             VSIFClose( fp );
-
-            CPLFree( pszWKT );
         }
+
+        CPLFree( pszWKT );
     }
 
 /* -------------------------------------------------------------------- */
