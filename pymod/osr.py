@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.44  2005/01/05 21:21:38  fwarmerdam
+# added goode homolosine
+#
 # Revision 1.43  2004/11/11 18:29:44  fwarmerdam
 # Added Bonne.
 #
@@ -130,6 +133,7 @@ SRS_PT_EQUIDISTANT_CONIC	= "Equidistant_Conic"
 SRS_PT_EQUIRECTANGULAR		= "Equirectangular"
 SRS_PT_GALL_STEREOGRAPHIC	= "Gall_Stereographic"
 SRS_PT_GNOMONIC			= "Gnomonic"
+SRS_PT_GOODE_HOMOLOSINE         = "Goode_Homolosine"
 SRS_PT_HOTINE_OBLIQUE_MERCATOR	= "Hotine_Oblique_Mercator"
 SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN = \
     "Hotine_Oblique_Mercator_Two_Point_Natural_Origin"
@@ -511,6 +515,9 @@ class SpatialReference:
 
     def SetGS( self, cm, fe, fn ):
 	return _gdal.OSRSetGS( self._o, cm, fe, fn )
+
+    def SetGH( self, cm, fe, fn ):
+	return _gdal.OSRSetGH( self._o, cm, fe, fn )
 
     def SetGnomonic( self, clat, clong, fe, fn ):
 	return _gdal.OSRSetGnomic( self._o, clat, clong, fe, fn )

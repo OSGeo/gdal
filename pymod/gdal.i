@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.110  2005/01/05 21:21:38  fwarmerdam
+ * added goode homolosine
+ *
  * Revision 1.109  2005/01/03 22:19:09  fwarmerdam
  * added OGRLayer::SetSpatialFilterRect()
  *
@@ -1747,6 +1750,10 @@ int OSRSetEquirectangular(OGRSpatialReferenceH hSRS,
 /** Gall Stereograpic */
 int OSRSetGS( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
                        double dfFalseEasting, double dfFalseNorthing );
+    
+/** Goode Homolosine */
+int OSRSetGH( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
+    	      double dfFalseEasting, double dfFalseNorthing );
     
 /** Gnomonic */
 int OSRSetGnomonic(OGRSpatialReferenceH hSRS, 

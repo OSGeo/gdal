@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.103  2005/01/03 22:19:09  fwarmerdam
- * added OGRLayer::SetSpatialFilterRect()
+ * Revision 1.104  2005/01/05 21:21:38  fwarmerdam
+ * added goode homolosine
  *
  ************************************************************************/
 
@@ -6793,6 +6793,29 @@ static PyObject *_wrap_OSRSetGS(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OSRSetGH(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sddd:OSRSetGH",&_argc0,&_arg1,&_arg2,&_arg3)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetGH. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (int )OSRSetGH(_arg0,_arg1,_arg2,_arg3);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OSRSetGnomonic(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     int  _result;
@@ -11439,6 +11462,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRSetHOM2PNO", _wrap_OSRSetHOM2PNO, 1 },
 	 { "OSRSetHOM", _wrap_OSRSetHOM, 1 },
 	 { "OSRSetGnomonic", _wrap_OSRSetGnomonic, 1 },
+	 { "OSRSetGH", _wrap_OSRSetGH, 1 },
 	 { "OSRSetGS", _wrap_OSRSetGS, 1 },
 	 { "OSRSetEquirectangular", _wrap_OSRSetEquirectangular, 1 },
 	 { "OSRSetEckertVI", _wrap_OSRSetEckertVI, 1 },
