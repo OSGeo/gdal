@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/09/25 20:22:21  warmerda
+ * ensure pszPROJ4Units is initialized
+ *
  * Revision 1.11  2000/09/25 15:46:56  warmerda
  * added sphere
  *
@@ -970,7 +973,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
 /* -------------------------------------------------------------------- */
 /*      Handle linear units.                                            */
 /* -------------------------------------------------------------------- */
-    const char	*pszPROJ4Units;
+    const char	*pszPROJ4Units=NULL;
     char  	*pszLinearUnits = NULL;
     double	dfLinearConv;
 
