@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2002/04/19 12:22:05  dron
+ * added GDALWriteWorldFile()
+ *
  * Revision 1.44  2002/04/16 13:59:33  warmerda
  * added GDALVersionInfo
  *
@@ -455,6 +458,9 @@ void CPL_DLL
                    int nWordCount );
 
 int GDALReadWorldFile( const char *pszBaseFilename, 
+                       const char *pszExtension, 
+                       double * padfGeoTransform );
+int GDALWriteWorldFile( const char *pszBaseFilename, 
                        const char *pszExtension, 
                        double * padfGeoTransform );
 
