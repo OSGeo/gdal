@@ -18,7 +18,6 @@ The following utility programs are distributed with GDAL.
 <li> <a href="#gdal_merge">gdal_merge.py</a> - Build a quick mosaic from a set of images.
 <li> <a href="#gdal-config">gdal-config</a> - Get options required to build 
 software using GDAL.
-against GDAL.
 </ul>
 
 <!-- ====================================================================== -->
@@ -74,11 +73,6 @@ systems can be used directly by these names.
 be selected based on their EPSG codes, for instance EPSG:27700 is the British
 National Grid.  A list of EPSG coordinate systems can be found in the GDAL 
 data files gcs.csv and pcs.csv. 
-
-<li> <b>EPSG:</b><i>n</i>: Coordinate systems (projected or geographic) can
-be selected based on their EPSG codes, for instance EPSG:27700 is the British
-National Grid.  A list of EPSG coordinate systems can be found in the GDAL 
-data files gcs.csv and pcs.csv.<p>
 
 <li> <i>PROJ.4 Definitions</i>: A PROJ.4 definition string can be used
 as a coordinate system.  For instance "+proj=utm +zone=11 +datum=WGS84".  
