@@ -109,7 +109,7 @@ HAVE_FME        =       no
 FME_INCLUDE	=	
 else
 HAVE_FME        =       yes
-FME_INCLUDE	=	$(FME_HOME)/fmeobjects/cpp
+FME_INCLUDE	=	-I$(FME_HOME)/fmeobjects/cpp
 endif
 
 
