@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/10/01 14:47:05  warmerda
+ * added full family of get/set field methods with field names
+ *
  * Revision 1.7  1999/08/30 14:52:33  warmerda
  * added support for StringList fields
  *
@@ -273,6 +276,23 @@ class OGRFeature
     const double       *GetFieldAsDoubleList( int i, int *pnCount );
     char              **GetFieldAsStringList( int i );
 
+    int			GetFieldAsInteger( const char *pszFName )
+                      { return GetFieldAsInteger( GetFieldIndex(pszFName) ); }
+    double		GetFieldAsDouble( const char *pszFName )
+                      { return GetFieldAsDouble( GetFieldIndex(pszFName) ); }
+    const char	       *GetFieldAsString( const char *pszFName )
+                      { return GetFieldAsString( GetFieldIndex(pszFName) ); }
+    const int 	       *GetFieldAsIntegerList( const char *pszFName,
+                                               int *pnCount )
+                      { return GetFieldAsIntegerList( GetFieldIndex(pszFName),
+                                                      pnCount ); }
+    const double       *GetFieldAsDoubleList( const char *pszFName,
+                                              int *pnCount )
+                      { return GetFieldAsDoubleList( GetFieldIndex(pszFName),
+                                                     pnCount ); }
+    char              **GetFieldAsStringList( const char *pszFName )
+                      { return GetFieldAsStringList(GetFieldIndex(pszFName)); }
+
     void		SetField( int i, int nValue );
     void		SetField( int i, double dfValue );
     void		SetField( int i, const char * pszValue );
@@ -280,6 +300,23 @@ class OGRFeature
     void		SetField( int i, int nCount, double * padfValues );
     void		SetField( int i, char ** papszValues );
     void		SetField( int i, OGRField * puValue );
+
+    void		SetField( const char *pszFName, int nValue )
+                           { SetField( GetFieldIndex(pszFName), nValue ); }
+    void		SetField( const char *pszFName, double dfValue )
+                           { SetField( GetFieldIndex(pszFName), dfValue ); }
+    void		SetField( const char *pszFName, const char * pszValue)
+                           { SetField( GetFieldIndex(pszFName), pszValue ); }
+    void		SetField( const char *pszFName, int nCount,
+                                  int * panValues )
+                         { SetField(GetFieldIndex(pszFName),nCount,panValues);}
+    void		SetField( const char *pszFName, int nCount,
+                                  double * padfValues )
+                         {SetField(GetFieldIndex(pszFName),nCount,padfValues);}
+    void		SetField( const char *pszFName, char ** papszValues )
+                           { SetField( GetFieldIndex(pszFName), papszValues); }
+    void		SetField( const char *pszFName, OGRField * puValue )
+                           { SetField( GetFieldIndex(pszFName), puValue ); }
 
     long		GetFID() { return nFID; }
     virtual OGRErr	SetFID( long );
