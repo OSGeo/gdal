@@ -6,6 +6,11 @@ for any purpose without fee is hereby granted, provided that the above
 copyright notice appear in all copies and that both that copyright notice and 
 this permission notice appear in supporting documentation.
 */
+#ifdef WIN32
+#include <windows.h>	//bwf
+#include <winbase.h>	//bwf
+#define sleep Sleep
+#endif
 
 #include <errno.h>
 #include "mfhdf.h"
