@@ -87,7 +87,7 @@ NOTE: Implemented as <tt>gdal/frmts/raw/effdataset.cpp</tt>.<p>
 
 <h2><a name="EHdr">EHdr -- ESRI .hdr Labelled</h2>
 
-GDAL support the ESRI .hdr labelling format for reading raw raster data
+GDAL supports the ESRI .hdr labelling format for reading raw raster data
 (often referred to as ESRI BIL format) for read-only access.  Eight, sixteen
 and thirty-two bit integer raster data types are supported as well as reading
 of the affine georeferencing transform.  Reading of projection definitions
@@ -98,6 +98,14 @@ open a dataset select the file with the image file (often with the extension
 This driver may be sufficient to read GTopo 30 data, and Geospot products.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/raw/ehdrdataset.cpp</tt>.<p>
+
+<h2><a name="Envisat">Envisat -- Envisat Image Product</h2>
+
+GDAL supports the Envisat product format for read access.  All sample
+types are supported.  At this time geocoding information is ignored but
+it is anticipated that it will be added in the future. <p>
+
+NOTE: Implemented as <tt>gdal/frmts/envisat/envisatdataset.cpp</tt>.<p>
 
 <h2><a name="GIO">GIO -- Arc/Info Binary Grid</a></h2>
 
