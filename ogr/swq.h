@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/04/23 20:05:23  warmerda
+ * added SELECT statement parsing
+ *
  * Revision 1.3  2002/04/19 20:46:06  warmerda
  * added [NOT] IN, [NOT] LIKE and IS [NOT] NULL support
  *
@@ -99,5 +102,74 @@ void swq_expr_free( swq_expr * );
 
 int swq_test_like( const char *input, const char *pattern );
 
-#endif /* def _SWQ_H_INCLUDED_ */
 
+/****************************************************************************/
+
+#define SWQP_ALLOW_UNDEFINED_COL_FUNCS 0x01
+
+typedef enum {
+    SWQCF_NONE,
+    SWQCF_AVG,
+    SWQCF_MIN,
+    SWQCF_MAX,
+    SWQCF_COUNT,
+    SWQCF_SUM,
+    SWQCF_CUSTOM
+} swq_col_func;
+
+typedef struct {
+    swq_col_func col_func;
+    char         *col_func_name;
+    char         *field_name;
+    int          field_index;
+    int          distinct_flag;
+} swq_col_def;
+
+typedef struct {
+    int         count;
+    
+    char        **distinct_list;
+    double      sum;
+    double      min;
+    double      max;
+} swq_summary;
+
+typedef struct {
+    char *field_name;
+    int   field_index;
+    int   ascending_flag;
+} swq_order_def;
+
+typedef struct {
+    int   summary_record_only;
+
+    char        *raw_select;
+
+    int result_columns;
+    swq_col_def *column_defs;
+    swq_summary *column_summary;
+
+    char        *whole_where_clause;
+    swq_expr    *where_expr;
+
+    char        *from_table;
+
+    int         order_specs;
+    swq_order_def *order_defs;    
+} swq_select;
+
+const char *swq_select_preparse( const char *select_statement, 
+                                 swq_select **select_info );
+const char *swq_select_parse( swq_select *select_info,
+                              int field_count, 
+                              char **field_list,
+                              swq_field_type *field_types,
+                              int parse_flags );
+void swq_select_free( swq_select *select_info );
+
+const char *swq_select_summarize( swq_select *select_info, 
+                                  int dest_column, 
+                                  const char *value );
+
+
+#endif /* def _SWQ_H_INCLUDED_ */
