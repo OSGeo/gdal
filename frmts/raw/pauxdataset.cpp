@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2003/06/26 19:05:03  warmerda
+ * fixed leak of pszTarget
+ *
  * Revision 1.23  2003/02/03 05:10:18  warmerda
  * fix expectation that GDALOpenInfo.fp is set, not necessarily for large files
  *
@@ -805,6 +808,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
     if( pszLine == NULL || !EQUALN(pszLine,"AuxilaryTarget",14) )
     {
         CPLFree( pszAuxFilename );
+        CPLFree( pszTarget );
         return NULL;
     }
     
