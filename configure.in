@@ -36,10 +36,10 @@ if test "$with_grass" = "no" ; then
 
 elif test "$with_grass" = "yes" -o "$with_grass" = "" ; then
 
-  AC_CHECK_LIB(grass,G_gisinit_2,GRASS_SETTING=external,GRASS_SETTING=no,)
+  AC_CHECK_LIB(grass5,G_gisinit_2,GRASS_SETTING=external,GRASS_SETTING=no,)
 
   if test "$GRASS_SETTING" = "external" ; then   
-    LIBS="-lgrass $LIBS"
+    LIBS="-lgrass5 $LIBS"
     echo "libgrass found."
   else
     echo "libgrass not found."
@@ -48,7 +48,7 @@ elif test "$with_grass" = "yes" -o "$with_grass" = "" ; then
 else
 
   GRASS_SETTING=external
-  LIBS="-L$with_grass -L$with_grass/lib -lgrass $LIBS"
+  LIBS="-L$with_grass -L$with_grass/lib -lgrass5 $LIBS"
   EXTRA_INCLUDES="-I$with_grass -I$with_grass/include $EXTRA_INCLUDES"
 
   echo "using libgrass from $with_grass."
