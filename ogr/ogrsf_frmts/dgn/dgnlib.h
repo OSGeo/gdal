@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2003/01/20 20:07:06  warmerda
+ * added cell header writing api
+ *
  * Revision 1.28  2002/11/13 21:28:23  warmerda
  * fix declaration order
  *
@@ -682,6 +685,21 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType,
 DGNElemCore *
 DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType, 
                                  int nNumElems, DGNElemCore **papsElems );
+
+DGNElemCore CPL_DLL  *
+DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName, 
+                         short nClass, short *panLevels, 
+                         DGNPoint *psRangeLow, DGNPoint *psRangeHigh, 
+                         DGNPoint *psOrigin, double dfXScale, double dfYScale,
+                         double dfRotation );
+                     
+DGNElemCore *
+DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName, 
+                              short nClass, short *panLevels, 
+                              int nNumElems, DGNElemCore **papsElems,
+                              DGNPoint *psOrigin,
+                              double dfXScale, double dfYScale,
+                              double dfRotation );
 
 int CPL_DLL DGNAddMSLink( DGNHandle hDGN, DGNElemCore *psElement, 
                           int nLinkageType, int nEntityNum, int nMSLink );
