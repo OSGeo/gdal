@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.7  2000/09/14 21:06:49  warmerda
+# added GetWellKnownGeogCSAsWKT
+#
 # Revision 1.6  2000/08/30 20:31:25  warmerda
 # added some more methods
 #
@@ -52,6 +55,11 @@ import _gdal
 
 def GetProjectionMethods():
     return _gdal.OPTGetProjectionMethods()
+
+def GetWellKnownGeogCSAsWKT( name ):
+    srs = SpatialReference()
+    srs.SetWellKnownGeogCS( name )
+    return srs.ExportToWkt()
 
 class SpatialReference:
 
