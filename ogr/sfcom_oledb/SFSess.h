@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/06/21 20:52:38  warmerda
+ * Added default lat/long SRS WKT value.
+ *
  * Revision 1.6  1999/06/21 17:29:51  warmerda
  * Set the SRS id to 2 to match the value dummy value in the SRS table.
  *
@@ -439,7 +442,8 @@ public:
 		m_nSpatialRefId = 0;
 		m_szAuthorityName[0] = NULL;
 		m_nAuthorityId = 0;
-		m_pszSpatialRefSystem[0] = NULL;
+		lstrcpyW(m_pszSpatialRefSystem,
+                         L"GEOGCS[\"Latitude/Longitude.WGS 84\",DATUM[\"WGS 84\",SPHEROID[\"anon\",6378137,298.25722356049]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.0174532925199433]]" );
 	}
 
 BEGIN_PROVIDER_COLUMN_MAP(OGISSpat_Row)
