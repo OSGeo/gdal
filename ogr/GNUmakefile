@@ -9,7 +9,7 @@ OBJ	=	ogrgeometryfactory.o ogrpoint.o ogrcurve.o ogrlinestring.o \
 		\
 		ogrfeature.o ogrfeaturedefn.o ogrfielddefn.o \
 		ogrspatialreference.o ogr_srsnode.o ogr_srs_proj4.o \
-		ogr_fromepsg.o
+		ogr_fromepsg.o ogrct.o
 
 OGR_LIB  =	ogr.a
 
