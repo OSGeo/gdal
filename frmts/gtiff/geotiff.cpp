@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.97  2003/07/18 15:17:28  warmerda
+ * Added GTIFF_DIR: option
+ *
  * Revision 1.96  2003/07/18 12:48:30  warmerda
  * Install GDALDefaultCSVFilename incase we are using an external libgeotiff
  *
@@ -267,6 +270,7 @@ class GTiffDataset : public GDALDataset
 
     CPLErr	   OpenOffset( TIFF *, uint32 nDirOffset, int, GDALAccess );
 
+    static GDALDataset *OpenDir( const char *pszFilename );
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -1171,7 +1175,7 @@ GTiffDataset::GTiffDataset()
     bNoDataSet = FALSE;
     bNoDataChanged = FALSE;
     dfNoDataValue = -9999.0;
-    pszProjection = NULL;
+    pszProjection = CPLStrdup(pszProjection);
     bBase = TRUE;
     bTreatAsRGBA = FALSE;
     nOverviewCount = 0;
@@ -1920,6 +1924,13 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     TIFF	*hTIFF;
 
 /* -------------------------------------------------------------------- */
+/*      We have a special hook for handling opening a specific          */
+/*      directory of a TIFF file.                                       */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(poOpenInfo->pszFilename,"GTIFF_DIR:",10) )
+        return OpenDir( poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
 /*	First we check to see if the file has the expected header	*/
 /*	bytes.								*/    
 /* -------------------------------------------------------------------- */
@@ -1957,6 +1968,95 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poDS->OpenOffset( hTIFF,TIFFCurrentDirOffset(hTIFF), TRUE,
                           poOpenInfo->eAccess ) != CE_None )
+    {
+        delete poDS;
+        return NULL;
+    }
+    else
+    {
+        return poDS;
+    }
+}
+
+/************************************************************************/
+/*                              OpenDir()                               */
+/*                                                                      */
+/*      Open a specific directory as encoded into a filename.           */
+/************************************************************************/
+
+GDALDataset *GTiffDataset::OpenDir( const char *pszCompositeName )
+
+{
+    if( !EQUALN(pszCompositeName,"GTIFF_DIR:",10) )
+        return NULL;
+    
+/* -------------------------------------------------------------------- */
+/*      Split out filename, and dir#/offset.                            */
+/* -------------------------------------------------------------------- */
+    const char *pszFilename = pszCompositeName + 10;
+    int        bAbsolute = FALSE;
+    uint32     nOffset;
+    
+    if( EQUALN(pszFilename,"off:",4) )
+    {
+        bAbsolute = TRUE;
+        pszFilename += 4;
+    }
+
+    nOffset = atol(pszFilename);
+    pszFilename += 1;
+
+    while( *pszFilename != '\0' && pszFilename[-1] != ':' )
+        pszFilename++;
+
+    if( *pszFilename == '\0' || nOffset == 0 )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Unable to extract offset or filename, should take the form\n"
+                  "GTIFF_DIR:<dir>:filename or GTIFF_DIR:off:<dir_offset>:filename" );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try opening the dataset.                                        */
+/* -------------------------------------------------------------------- */
+    TIFF	*hTIFF;
+
+    GTiffOneTimeInit();
+
+    hTIFF = XTIFFOpen( pszFilename, "r" );
+    if( hTIFF == NULL )
+        return( NULL );
+
+/* -------------------------------------------------------------------- */
+/*      If a directory was requested by index, advance to it now.       */
+/* -------------------------------------------------------------------- */
+    if( !bAbsolute )
+    {
+        while( nOffset > 1 )
+        {
+            if( TIFFReadDirectory( hTIFF ) == 0 )
+            {
+                XTIFFClose( hTIFF );
+                CPLError( CE_Failure, CPLE_OpenFailed, 
+                          "Requested directory %d not found." );
+                return NULL;
+            }
+            nOffset--;
+        }
+
+        nOffset = TIFFCurrentDirOffset( hTIFF );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create a corresponding GDALDataset.                             */
+/* -------------------------------------------------------------------- */
+    GTiffDataset 	*poDS;
+
+    poDS = new GTiffDataset();
+    poDS->SetDescription( pszFilename );
+
+    if( poDS->OpenOffset( hTIFF, nOffset, FALSE, GA_ReadOnly ) != CE_None )
     {
         delete poDS;
         return NULL;
