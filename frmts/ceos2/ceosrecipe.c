@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/04/04 15:10:32  warmerda
+ * add code to compute BytesPerRecord
+ *
  * Revision 1.2  2000/03/31 13:34:20  warmerda
  * ported to gdal
  *
@@ -60,6 +63,7 @@ CeosStringType_t CeosInterleaveType[] = { { "BSQ", __CEOS_IL_BAND },
 
 #define IMAGE_OPT { 63, 192, 18, 18 }
 #define PROC_DATA_REC { 50, 11, 18, 20 }
+#define PROC_DATA_REC_ALT { 50, 11, 31, 20 }
 #define DATA_SET_SUMMARY { 18, 10, 18, 20 }
 
 CeosRecipeType_t RadarSatRecipe[] =
@@ -100,8 +104,14 @@ CeosRecipeType_t RadarSatRecipe[] =
       0, 0, __CEOS_REC_TYP_I }, /* Must be calculated */
     { __CEOS_REC_PRODTYPE, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
       0, 0, __CEOS_REC_TYP_I },
+
     { __CEOS_REC_RECORDSIZE, 1, __CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC,
       9, 4, __CEOS_REC_TYP_B }, /* The processed image record size */
+
+    /* Some ERS-1 products use an alternate data record subtype2. */
+    { __CEOS_REC_RECORDSIZE, 1, __CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC_ALT,
+      9, 4, __CEOS_REC_TYP_B }, /* The processed image record size */
+
     { __CEOS_REC_SUFFIX_SIZE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
       289, 4, __CEOS_REC_TYP_I }, /* Suffix data per record */
     { 0, 0, 0, { 0, 0, 0, 0 }, 0, 0, 0 } /* Last record is Zero */
@@ -241,6 +251,9 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token )
 			/* Issue warning */
 			ImageDesc->ImageDataStart = 192;
 		    }
+
+                    if( ImageDesc->ImageDataStart == 0 )
+                        ImageDesc->ImageDataStart = 192;
 		    break;
 		case __CEOS_REC_SUFFIX_SIZE:
 		    DoExtractInt( ImageDesc->ImageSuffixData );
@@ -279,9 +292,17 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token )
 	}
     }
 
-    /* Now we find some values that aren't in the CEOS header, but we calculate */
+    /* Some files don't have the BytesPerRecord stuff, so we calculate it if possible */
 
-    if( ImageDesc->PixelsPerRecord == 0 && ImageDesc->ImageDataStart != 0 &&
+    if( ImageDesc->BytesPerRecord == 0 && ImageDesc->RecordsPerLine == 1 &&
+	ImageDesc->PixelsPerLine > 0 && ImageDesc->BytesPerPixel > 0 )
+    {
+        ImageDesc->BytesPerRecord = ImageDesc->PixelsPerLine *
+	  ImageDesc->BytesPerPixel + ImageDesc->ImageDataStart +
+	  ImageDesc->ImageSuffixData ;
+    }
+    
+    if( ImageDesc->PixelsPerRecord == 0 && 
 	ImageDesc->BytesPerRecord != 0 && ImageDesc->BytesPerPixel != 0 )
     {
 	ImageDesc->PixelsPerRecord = ( ( ImageDesc->BytesPerRecord -
@@ -292,7 +313,6 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token )
 	if(ImageDesc->PixelsPerRecord > ImageDesc->PixelsPerLine)
 	    ImageDesc->PixelsPerRecord = ImageDesc->PixelsPerLine;
     }
-
     
     /* Sanity checking */
     
