@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/03/05 15:15:07  warmerda
+ * fixed zero tolerance problems
+ *
  * Revision 1.3  2002/03/05 14:25:14  warmerda
  * expand tabs
  *
@@ -79,11 +82,12 @@ static int CheckPoints( OGRLineString *poLine1, int iPoint1,
 {
     double      dfDeltaX, dfDeltaY, dfDistance;
 
+    if( pdfDistance == NULL || *pdfDistance == 0 )
+        return poLine1->getX(iPoint1) == poLine2->getX(iPoint2)
+            && poLine1->getY(iPoint1) == poLine2->getY(iPoint2);
+
     dfDeltaX = poLine1->getX(iPoint1) - poLine2->getX(iPoint2);
     dfDeltaY = poLine1->getY(iPoint1) - poLine2->getY(iPoint2);
-
-    if( pdfDistance == NULL )
-        return dfDeltaX == 0.0 && dfDeltaY == 0.0;
 
     dfDeltaX = ABS(dfDeltaX);
     dfDeltaY = ABS(dfDeltaY);
