@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2004/05/11 18:17:34  warmerda
+ * export various classes
+ *
  * Revision 1.27  2003/11/17 20:10:46  warmerda
  * added support for writing FFPT linkages
  *
@@ -175,7 +178,7 @@ char **S57FileCollector( const char * pszDataset );
 #define MAX_CLASSES 23000
 #define MAX_ATTRIBUTES 25000
 
-class S57ClassRegistrar
+class CPL_DLL S57ClassRegistrar
 {
     // Class information:
     int         nClasses;
@@ -258,7 +261,7 @@ typedef struct
     DDFRecord   *poRecord;
 } DDFIndexedRecord;
 
-class DDFRecordIndex
+class CPL_DLL DDFRecordIndex
 {
     int         bSorted;
 
@@ -293,7 +296,7 @@ public:
 /*                              S57Reader                               */
 /************************************************************************/
 
-class S57Reader
+class CPL_DLL S57Reader
 {
     S57ClassRegistrar  *poRegistrar;
 
@@ -391,7 +394,7 @@ class S57Reader
 /*                              S57Writer                               */
 /************************************************************************/
 
-class S57Writer
+class CPL_DLL S57Writer
 {
 public:
                         S57Writer();
