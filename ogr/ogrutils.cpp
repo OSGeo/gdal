@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/12/09 16:10:39  warmerda
+ * added DMS translation
+ *
  * Revision 1.8  2002/08/07 02:46:10  warmerda
  * improved comments
  *
@@ -320,4 +323,113 @@ void OGRFree( void * pMemory )
 
 {
     CPLFree( pMemory );
+}
+
+/************************************************************************/
+/*                            proj_strtod()                             */
+/************************************************************************/
+static double
+proj_strtod(char *nptr, char **endptr) 
+
+{
+    char c, *cp = nptr;
+    double result;
+
+    /*
+     * Scan for characters which cause problems with VC++ strtod()
+     */
+    while ((c = *cp) != '\0') {
+        if (c == 'd' || c == 'D') {
+
+            /*
+             * Found one, so NUL it out, call strtod(),
+             * then restore it and return
+             */
+            *cp = '\0';
+            result = strtod(nptr, endptr);
+            *cp = c;
+            return result;
+        }
+        ++cp;
+    }
+
+    /* no offending characters, just handle normally */
+
+    return strtod(nptr, endptr);
+}
+/************************************************************************/
+/*                            OSRDMSToDec()                             */
+/************************************************************************/
+
+static const char*sym = "NnEeSsWw";
+static const double vm[] = { 1.0, 0.0166666666667, 0.00027777778 };
+
+double OSRDMSToDec( const char *is )
+
+{
+    int sign, n, nl;
+    char *p, *s, work[64];
+    double v, tv;
+
+    /* copy sting into work space */
+    while (isspace(sign = *is)) ++is;
+    for (n = sizeof(work), s = work, p = (char *)is; isgraph(*p) && --n ; )
+        *s++ = *p++;
+    *s = '\0';
+    /* it is possible that a really odd input (like lots of leading
+       zeros) could be truncated in copying into work.  But ... */
+    sign = *(s = work);
+    if (sign == '+' || sign == '-') s++;
+    else sign = '+';
+    for (v = 0., nl = 0 ; nl < 3 ; nl = n + 1 ) {
+        if (!(isdigit(*s) || *s == '.')) break;
+        if ((tv = proj_strtod(s, &s)) == HUGE_VAL)
+            return tv;
+        switch (*s) {
+          case 'D': case 'd':
+            n = 0; break;
+          case '\'':
+            n = 1; break;
+          case '"':
+            n = 2; break;
+          case 'r': case 'R':
+            if (nl) {
+                return 0.0;
+            }
+            ++s;
+            v = tv;
+            goto skip;
+          default:
+            v += tv * vm[nl];
+          skip:	n = 4;
+            continue;
+        }
+        if (n < nl) {
+            return 0.0;
+        }
+        v += tv * vm[n];
+        ++s;
+    }
+    /* postfix sign */
+    if (*s && (p = strchr(sym, *s))) {
+        sign = (p - sym) >= 4 ? '-' : '+';
+        ++s;
+    }
+    if (sign == '-')
+        v = -v;
+
+    return v;
+}
+
+/************************************************************************/
+/*                            OSRDecToDMS()                             */
+/************************************************************************/
+CPL_C_START
+const char CPL_DLL *GDALDecToDMS( double, const char *, int );
+CPL_C_END
+
+const char *OSRDecToDMS( double dfAngle, const char *pszAxis, int nPrecision )
+
+{
+    return GDALDecToDMS( dfAngle, pszAxis, nPrecision );
 }
