@@ -1,6 +1,7 @@
 
 GDAL_ROOT = ..
 
+
 EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_sdts -DFRMT_raw
 
@@ -35,4 +36,23 @@ o\gdalallregister.obj:	gdalallregister.cpp
 
 clean:
 	del o\*.obj *.obj
+	cd ceos
+	$(MAKE) /f makefile.vc clean
+	cd ..\aigrid
+	$(MAKE) /f makefile.vc clean
+	cd ..\elas
+	$(MAKE) /f makefile.vc clean
+	cd ..\hfa
+	$(MAKE) /f makefile.vc clean
+	cd ..\gtiff
+	$(MAKE) /f makefile.vc clean
+	cd ..\ceos
+	$(MAKE) /f makefile.vc clean
+	cd ..\iso8211
+	$(MAKE) /f makefile.vc clean 
+	cd ..\sdts
+	$(MAKE) /f makefile.vc clean
+	cd ..\raw
+	$(MAKE) /f makefile.vc clean
+	cd ..
 
