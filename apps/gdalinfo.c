@@ -26,8 +26,8 @@
  * serves as an early test harnass.
  *
  * $Log$
- * Revision 1.7  2000/01/31 03:55:25  warmerda
- * Improved formatting.
+ * Revision 1.8  2000/03/06 02:18:13  warmerda
+ * added overviews, and colour table
  *
  * Revision 1.6  1999/12/30 02:40:17  warmerda
  * Report driver used.
@@ -124,8 +124,58 @@ int main( int argc, char ** argv )
     for( i = 0; i < GDALGetRasterCount( hDataset ); i++ )
     {
         hBand = GDALGetRasterBand( hDataset, i+1 );
-        printf( "Band %d Type = %s\n", i+1,
-                GDALGetDataTypeName(GDALGetRasterDataType(hBand)) );
+        printf( "Band %d Type=%s, ColorInterp=%s\n", i+1,
+                GDALGetDataTypeName(
+                    GDALGetRasterDataType(hBand)),
+                GDALGetColorInterpretationName(
+                    GDALGetRasterColorInterpretation(hBand)) );
+
+        if( GDALGetRasterColorInterpretation(hBand) == GCI_PaletteIndex )
+        {
+            GDALColorTableH	hTable;
+            int			i;
+
+            hTable = GDALGetRasterColorTable( hBand );
+            printf( "  Color Table (%s with %d entries)\n", 
+                    GDALGetPaletteInterpretationName(
+                        GDALGetPaletteInterpretation( hTable )), 
+                    GDALGetColorEntryCount( hTable ) );
+
+            for( i = 0; i < GDALGetColorEntryCount( hTable ); i++ )
+            {
+                GDALColorEntry	sEntry;
+
+                GDALGetColorEntryAsRGB( hTable, i, &sEntry );
+                printf( "  %3d: %d,%d,%d,%d\n", 
+                        i, 
+                        sEntry.c1,
+                        sEntry.c2,
+                        sEntry.c3,
+                        sEntry.c4 );
+            }
+        }
+
+        if( GDALGetOverviewCount(hBand) > 0 )
+        {
+            int		iOverview;
+
+            printf( "  Overviews: " );
+            for( iOverview = 0; 
+                 iOverview < GDALGetOverviewCount(hBand);
+                 iOverview++ )
+            {
+                GDALRasterBandH	hOverview;
+
+                if( iOverview != 0 )
+                    printf( ", " );
+
+                hOverview = GDALGetOverview( hBand, iOverview );
+                printf( "%dx%d", 
+                        GDALGetRasterBandXSize( hOverview ),
+                        GDALGetRasterBandYSize( hOverview ) );
+            }
+            printf( "\n" );
+        }
     }
 
     GDALClose( hDataset );
