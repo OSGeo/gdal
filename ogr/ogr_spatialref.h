@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2000/03/22 01:09:43  warmerda
+ * added SetProjCS and SetWellKnownTextCS
+ *
  * Revision 1.18  2000/03/20 23:33:51  warmerda
  * updated docs a bit
  *
@@ -162,9 +165,8 @@ class OGR_SRSNode
  * SRS using GetAttrValue(), but in special cases the underlying parse tree
  * (or OGR_SRSNode objects) can be accessed more directly.
  *
- * At this time, no methods for reprojection, validation of SRS semantics
-
- * have been implemented.  This will follow at some point in the future. 
+ * See <a href="osr_tutorial.html">the tutorial</a> for more information on
+ * how to use this class.
  */
 
 class OGRSpatialReference
@@ -211,7 +213,8 @@ class OGRSpatialReference
     int         IsProjected();
     int         IsSameGeogCS( OGRSpatialReference * );
     int         IsSame( OGRSpatialReference * );
-    
+
+    OGRErr      SetProjCS( const char * );
     OGRErr      SetProjection( const char * );
     OGRErr      SetGeogCS( const char * pszGeogName,
                            const char * pszDatumName,
@@ -221,6 +224,8 @@ class OGRSpatialReference
                            double dfPMOffset = 0.0,
                            const char * pszUnits = NULL,
                            double dfConvertToRadians = 0.0 );
+    OGRErr      SetWellKnownGeogCS( const char * );
+    
     double      GetSemiMajor( OGRErr * = NULL );
     double      GetSemiMinor( OGRErr * = NULL );
     double      GetInvFlattening( OGRErr * = NULL );
@@ -232,140 +237,140 @@ class OGRSpatialReference
     OGRErr      SetProjParm( const char *, double );
     double      GetProjParm( const char *, double = 0.0, OGRErr * = NULL );
 
-    // Albers Conic Equal Area
+    /** Albers Conic Equal Area */
     OGRErr      SetACEA( double dfStdP1, double dfStdP2,
                          double dfCenterLat, double dfCenterLong,
                          double dfFalseEasting, double dfFalseNorthing );
-
-    // Azimuthal Equidistant
+    
+    /** Azimuthal Equidistant */
     OGRErr      SetAE( double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
 
-    // Cylindrical Equal Area
+    /** Cylindrical Equal Area */
     OGRErr      SetCEA( double dfStdP1, double dfCentralMeridian,
                         double dfFalseEasting, double dfFalseNorthing );
 
-    // Cassini-Soldner
+    /** Cassini-Soldner */
     OGRErr      SetCS( double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
 
-    // Equidistant Conic
+    /** Equidistant Conic */
     OGRErr      SetEC( double dfStdP1, double dfStdP2,
                        double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
 
-    // Eckert IV
+    /** Eckert IV */
     OGRErr      SetEckertIV( double dfCentralMeridian,
                              double dfFalseEasting, double dfFalseNorthing );
 
-    // Eckert VI
+    /** Eckert VI */
     OGRErr      SetEckertVI( double dfCentralMeridian,
                              double dfFalseEasting, double dfFalseNorthing );
 
-    // Equirectangular
+    /** Equirectangular */
     OGRErr      SetEquirectangular(double dfCenterLat, double dfCenterLong,
                         double dfFalseEasting, double dfFalseNorthing );
 
-    // Gall Stereograpic
+    /** Gall Stereograpic */
     OGRErr      SetGS( double dfCentralMeridian,
                        double dfFalseEasting, double dfFalseNorthing );
     
-    // Gnomonic
+    /** Gnomonic */
     OGRErr      SetGnomonic(double dfCenterLat, double dfCenterLong,
                             double dfFalseEasting, double dfFalseNorthing );
 
-    // Hotine Oblique Mercator
+    /** Hotine Oblique Mercator */
     OGRErr      SetHOM( double dfCenterLat, double dfCenterLong,
                         double dfAzimuth, double dfRectToSkew,
                         double dfScale,
                         double dfFalseEasting, double dfFalseNorthing );
 
-    // Lambert Azimuthal Equal-Area
+    /** Lambert Azimuthal Equal-Area */
     OGRErr      SetLAEA( double dfCenterLat, double dfCenterLong,
                          double dfFalseEasting, double dfFalseNorthing );
 
-    // Lambert Conformal Conic
+    /** Lambert Conformal Conic */
     OGRErr      SetLCC( double dfStdP1, double dfStdP2,
                         double dfCenterLat, double dfCenterLong,
                         double dfFalseEasting, double dfFalseNorthing );
 
-    // Lambert Conformal Conic 1SP
+    /** Lambert Conformal Conic 1SP */
     OGRErr      SetLCC1SP( double dfCenterLat, double dfCenterLong,
                            double dfScale,
                            double dfFalseEasting, double dfFalseNorthing );
 
-    // Lambert Conformal Conic (Belgium)
+    /** Lambert Conformal Conic (Belgium) */
     OGRErr      SetLCCB( double dfStdP1, double dfStdP2,
                          double dfCenterLat, double dfCenterLong,
                          double dfFalseEasting, double dfFalseNorthing );
     
-    // Miller Cylindrical
+    /** Miller Cylindrical */
     OGRErr      SetMC( double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
 
-    // Mercator
+    /** Mercator */
     OGRErr      SetMercator( double dfCenterLat, double dfCenterLong,
                              double dfScale, 
                              double dfFalseEasting, double dfFalseNorthing );
 
-    // Mollweide
+    /** Mollweide */
     OGRErr      SetMollweide( double dfCentralMeridian,
                               double dfFalseEasting, double dfFalseNorthing );
 
-    // New Zealand Map Grid
+    /** New Zealand Map Grid */
     OGRErr      SetNZMG( double dfCenterLat, double dfCenterLong,
                          double dfFalseEasting, double dfFalseNorthing );
 
-    // Oblique Stereographic
+    /** Oblique Stereographic */
     OGRErr      SetOS( double dfOriginLat, double dfCMeridian,
                        double dfScale,
                        double dfFalseEasting,double dfFalseNorthing);
     
-    // Orthographic
+    /** Orthographic */
     OGRErr      SetOrthographic( double dfCenterLat, double dfCenterLong,
                                  double dfFalseEasting,double dfFalseNorthing);
 
-    // Polyconic
+    /** Polyconic */
     OGRErr      SetPolyconic( double dfCenterLat, double dfCenterLong,
                               double dfFalseEasting, double dfFalseNorthing );
 
-    // Polar Stereographic
+    /** Polar Stereographic */
     OGRErr      SetPS( double dfCenterLat, double dfCenterLong,
                        double dfScale,
                        double dfFalseEasting, double dfFalseNorthing);
     
-    // Robinson
+    /** Robinson */
     OGRErr      SetRobinson( double dfCenterLong, 
                              double dfFalseEasting, double dfFalseNorthing );
     
-    // Sinusoidal
+    /** Sinusoidal */
     OGRErr      SetSinusoidal( double dfCenterLong, 
                                double dfFalseEasting, double dfFalseNorthing );
     
-    // Stereographic
+    /** Stereographic */
     OGRErr      SetStereographic( double dfCenterLat, double dfCenterLong,
                                   double dfScale,
                                  double dfFalseEasting,double dfFalseNorthing);
     
-    // Transverse Mercator
+    /** Transverse Mercator */
     OGRErr      SetTM( double dfCenterLat, double dfCenterLong,
                        double dfScale,
                        double dfFalseEasting, double dfFalseNorthing );
 
-    // Tunesia Mining Grid 
+    /** Tunesia Mining Grid  */
     OGRErr      SetTMG( double dfCenterLat, double dfCenterLong, 
                         double dfFalseEasting, double dfFalseNorthing );
 
-    // Transverse Mercator (South Oriented)
+    /** Transverse Mercator (South Oriented) */
     OGRErr      SetTMSO( double dfCenterLat, double dfCenterLong,
                          double dfScale,
                          double dfFalseEasting, double dfFalseNorthing );
 
-    // VanDerGrinten
+    /** VanDerGrinten */
     OGRErr      SetVDG( double dfCenterLong,
                         double dfFalseEasting, double dfFalseNorthing );
 
-    // Universal Transverse Mercator
+    /** Universal Transverse Mercator */
     OGRErr      SetUTM( int nZone, int bNorth = TRUE );
     int		GetUTMZone( int *pbNorth = NULL );
 };

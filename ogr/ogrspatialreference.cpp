@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2000/03/22 01:09:43  warmerda
+ * added SetProjCS and SetWellKnownTextCS
+ *
  * Revision 1.14  2000/03/20 22:40:59  warmerda
  * Added C API and some documentation.
  *
@@ -196,7 +199,7 @@ OGRSpatialReferenceH OSRNewSpatialReference( const char *pszWKT )
 
     poSRS = new OGRSpatialReference();
 
-    if( pszWKT != NULL )
+    if( pszWKT != NULL && strlen(pszWKT) > 0 )
     {
         if( poSRS->importFromWkt( (char **) (&pszWKT) ) != OGRERR_NONE )
         {
@@ -1178,6 +1181,108 @@ OGRErr OSRSetGeogCS( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
+/*                         SetWellKnownGeogCS()                         */
+/************************************************************************/
+
+/**
+ * Set a GeogCS based on well known name.
+ *
+ * This may be called on an empty OGRSpatialReference to make a geographic
+ * coordinate system, or on something with an existing PROJCS node to 
+ * set the underlying geographic coordinate system of a projected coordinate
+ * system. 
+ *
+ * The following well known text values are currently supported:
+ * <ul>
+ * <li> "WGS84": same as "EPSG:4326" but has no dependence on EPSG data files.
+ * <li> "WGS72": same as "EPSG:4322" but has no dependence on EPSG data files.
+ * <li> "NAD27": same as "EPSG:4267" but has no dependence on EPSG data files.
+ * <li> "NAD83": same as "EPSG:4269" but has no dependence on EPSG data files.
+ * <li> "EPSG:n": same as doing an ImportFromEPSG(n).
+ * </ul>
+ * 
+ * @param pszName name of well known geographic coordinate system.
+ * @return OGRERR_NONE on success, or OGRERR_FAILURE if the name isn't
+ * recognised, the target object is already initialized, or an EPSG value
+ * can't be successfully looked up.
+ */ 
+
+OGRErr OGRSpatialReference::SetWellKnownGeogCS( const char * pszName )
+
+{
+    OGR_SRSNode  *poGeogCS = NULL;
+    OGRErr       eErr = OGRERR_FAILURE;
+    char         *pszWKT = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Do we already have a GEOGCS?                                    */
+/* -------------------------------------------------------------------- */
+    if( GetAttrNode( "GEOGCS" ) != NULL )
+        return OGRERR_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      Check for EPSG authority numbers.                               */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszName, "EPSG:",5) )
+    {
+        OGRSpatialReference   oSRS2;
+
+        eErr = oSRS2.importFromEPSG( atoi(pszName+5) );
+        if( eErr != OGRERR_NONE )
+            return eErr;
+
+        if( !oSRS2.IsGeographic() )
+            return OGRERR_FAILURE;
+
+        poGeogCS = oSRS2.GetRoot()->Clone();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for simple names.                                         */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszName, "WGS84") )
+        pszWKT = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",7030]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",6326]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"DMSH\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",4326]]";
+
+    else if( EQUAL(pszName, "WGS72") )
+        pszWKT = "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26,AUTHORITY[\"EPSG\",7043]],TOWGS84[0,0,4.5,0,0,0.554,0.2263],AUTHORITY[\"EPSG\",6322]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"DMSH\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",4322]]";
+
+    else if( EQUAL(pszName, "NAD27") )
+        pszWKT = "GEOGCS[\"NAD27\",DATUM[\"North_American_Datum_1927\",SPHEROID[\"Clarke 1866\",6378206.4,294.978698213898,AUTHORITY[\"EPSG\",7008]],TOWGS84[-3,142,183,0,0,0,0],AUTHORITY[\"EPSG\",6267]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"DMSH\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",4267]]";
+        
+    else if( EQUAL(pszName, "NAD83") )
+        pszWKT = "GEOGCS[\"NAD83\",DATUM[\"North_American_Datum_1983\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",7019]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",6269]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"DMSH\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",4269]]";
+
+    if( pszWKT != NULL )
+    {
+        poGeogCS = new OGR_SRSNode;
+        poGeogCS->importFromWkt(&pszWKT);
+    }
+
+    if( poGeogCS == NULL )
+        return OGRERR_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      Attach below the PROJCS if there is one, or make this the root. */
+/* -------------------------------------------------------------------- */
+    if( GetRoot() != NULL && EQUAL(GetRoot()->GetValue(),"PROJCS") )
+        poRoot->InsertChild( poGeogCS, 1 );
+    else
+        SetRoot( poGeogCS );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                       OSRSetWellKnownGeogCS()                        */
+/************************************************************************/
+
+OGRErr OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS, const char *pszName )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetWellKnownGeogCS( pszName );
+}
+
+/************************************************************************/
 /*                            GetSemiMajor()                            */
 /************************************************************************/
 
@@ -1303,6 +1408,47 @@ double OSRGetSemiMinor( OGRSpatialReferenceH hSRS, OGRErr *pnErr )
 
 {
     return ((OGRSpatialReference *) hSRS)->GetSemiMinor( pnErr );
+}
+
+/************************************************************************/
+/*                             SetProjCS()                              */
+/************************************************************************/
+
+/**
+ * Set the user visible PROJCS name.
+ *
+ * This method is the same as the C function OSRSetProjCS(). 
+ *
+ * This method is will ensure a PROJCS node is created as the root, 
+ * and set the provided name on it.  It must be used before SetGeogCS()
+ * or SetWellKnownGeogCS() can be used in creation of a projected coordinate
+ * system.  
+ *
+ * @param pszName the user visible name to assign.  Not used as a key.
+ * 
+ * @return OGRERR_NONE on success.
+ */
+
+OGRErr OGRSpatialReference::SetProjCS( const char * pszName )
+
+{
+    if( !GetAttrNode( "PROJCS" ) )
+    {
+        SetNode( "PROJCS", pszName );
+        return OGRERR_NONE;
+    }
+    else
+        return OGRERR_FAILURE;
+}
+
+/************************************************************************/
+/*                            OSRSetProjCS()                            */
+/************************************************************************/
+
+OGRErr OSRSetProjCS( OGRSpatialReferenceH hSRS, const char * pszName )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetProjCS( pszName );
 }
 
 /************************************************************************/
@@ -1465,6 +1611,18 @@ double OGRSpatialReference::GetProjParm( const char * pszName,
         *pnErr = OGRERR_FAILURE;
 
     return dfDefaultValue;
+}
+
+/************************************************************************/
+/*                           OSRGetProjParm()                           */
+/************************************************************************/
+
+double OSRGetProjParm( OGRSpatialReferenceH hSRS, const char *pszName,
+                       double dfDefaultValue, OGRErr *pnErr )
+
+{
+    return ((OGRSpatialReference *) hSRS)->
+        GetProjParm(pszName, dfDefaultValue, pnErr);
 }
 
 /************************************************************************/
@@ -2486,4 +2644,3 @@ int OSRIsSame( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
     return ((OGRSpatialReference *) hSRS1)->IsSame( 
         (OGRSpatialReference *) hSRS2 );
 }
-

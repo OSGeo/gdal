@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/03/22 01:09:43  warmerda
+ * added SetProjCS and SetWellKnownTextCS
+ *
  * Revision 1.3  2000/03/20 23:33:51  warmerda
  * updated docs a bit
  *
@@ -225,6 +228,10 @@ int     OSRIsProjected( OGRSpatialReferenceH );
 int     OSRIsSameGeogCS( OGRSpatialReferenceH, OGRSpatialReferenceH );
 int     OSRIsSame( OGRSpatialReferenceH, OGRSpatialReferenceH );
 
+OGRErr  OSRSetProjCS( OGRSpatialReferenceH hSRS, const char * pszName );
+OGRErr  OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS,
+                               const char * pszName );
+
 OGRErr  OSRSetGeogCS( OGRSpatialReferenceH hSRS,
                       const char * pszGeogName,
                       const char * pszDatumName,
@@ -250,7 +257,7 @@ double  OSRGetProjParm( OGRSpatialReferenceH hSRS,
                         OGRErr * /* = NULL */ );
 
 OGRErr  OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth );
-int     OSRGetUTM( OGRSpatialReferenceH hSRS, int *pbNorth );
+int     OSRGetUTMZone( OGRSpatialReferenceH hSRS, int *pbNorth );
 
 /* -------------------------------------------------------------------- */
 /*      OGRCoordinateTransform C API.                                   */
