@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.57  2003/06/26 19:51:49  dron
+ * Register HDF4 driver before ESRI to avoid confusion when ESRI .hdr exist.
+ *
  * Revision 1.56  2003/04/23 12:23:17  dron
  * Added MrSID format.
  *
@@ -337,6 +340,11 @@ void GDALAllRegister()
     GDALRegister_ECW();
 #endif
 
+#ifdef FRMT_hdf4
+    GDALRegister_HDF4();
+    GDALRegister_HDF4Image();
+#endif
+
 #ifdef FRMT_raw
     GDALRegister_PNM();
     GDALRegister_DOQ1();
@@ -361,11 +369,6 @@ void GDALAllRegister()
 // This one should always be placed after other JasPer supported formats,
 // such as BMP or PNM. In other case we will get bad side effects.
     GDALRegister_JPEG2000();
-#endif
-
-#ifdef FRMT_hdf4
-    GDALRegister_HDF4();
-    GDALRegister_HDF4Image();
 #endif
 
 #ifdef FRMT_l1b
