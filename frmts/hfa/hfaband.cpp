@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2003/10/02 16:35:21  warmerda
+ * added logic to search for <basename>.rrd if overview file missing
+ *
  * Revision 1.36  2003/09/22 05:27:55  warmerda
  * yikes - fixed debugging hack that completely broke driver
  *
@@ -216,6 +219,24 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
             pszJustFilename = CPLStrdup(CPLGetFilename(pszFilename));
             psHFA = HFAGetDependent( psInfo, pszJustFilename );
             CPLFree( pszJustFilename );
+
+            // Try finding the dependent file as this file with the
+            // extension .rrd.  This is intended to address problems
+            // with users changing the names of their files. 
+            if( psHFA == NULL )
+            {
+                char *pszBasename = 
+                    CPLStrdup(CPLGetBasename(psInfoIn->pszFilename));
+                
+                pszJustFilename = 
+                    CPLStrdup(CPLFormFilename(NULL, pszBasename, "rrd"));
+                CPLDebug( "HFA", "Failed to find overview file with expected name,\ntry %s instead.", 
+                          pszJustFilename );
+                psHFA = HFAGetDependent( psInfo, pszJustFilename );
+                CPLFree( pszJustFilename );
+                CPLFree( pszBasename );
+            }
+
             if( psHFA == NULL )
             {
                 CPLFree( pszFilename );
