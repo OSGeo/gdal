@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/07/07 14:20:57  warmerda
+ * fixed AVOID_CPL support
+ *
  * Revision 1.3  2000/01/24 13:58:25  warmerda
  * support rb access
  *
@@ -114,12 +117,14 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
 
     if( fp == NULL )
     {
+#ifndef AVOID_CPL
         if( !bTestOpen )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "Failed to open file %s.",
                       pszFilename );
         }
+#endif
 
         return NULL;
     }
@@ -132,10 +137,12 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
     {
         if( VSIFRead( achRecord, 1, DTED_UHL_SIZE, fp ) != DTED_UHL_SIZE )
         {
+#ifndef AVOID_CPL
             if( !bTestOpen )
                 CPLError( CE_Failure, CPLE_OpenFailed,
                           "Unable to read header, %s is not DTED.",
                           pszFilename );
+#endif
             VSIFClose( fp );
             return NULL;
         }
@@ -144,10 +151,12 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
 
     if( !EQUALN(achRecord,"UHL",3) )
     {
+#ifndef AVOID_CPL
         if( !bTestOpen )
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "No UHL record.  %s is not a DTED file.",
                       pszFilename );
+#endif
         
         VSIFClose( fp );
         return NULL;
@@ -175,9 +184,13 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
     if( !EQUALN(psDInfo->pachDSIRecord,"DSI",3)
         || !EQUALN(psDInfo->pachACCRecord,"ACC",3) )
     {
+#ifndef AVOID_CPL
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "DSI or ACC record missing.  DTED access to\n%s failed.",
-                  pszFilename );
+#else
+        fprintf( stderr, 
+#endif
+                 "DSI or ACC record missing.  DTED access to\n%s failed.",
+                 pszFilename );
         
         VSIFClose( fp );
         return NULL;
@@ -245,7 +258,11 @@ int DTEDReadProfile( DTEDInfo * psDInfo, int nColumnOffset,
     if( VSIFSeek( psDInfo->fp, nOffset, SEEK_SET ) != 0
         || VSIFRead( pabyRecord, (12+psDInfo->nYSize*2), 1, psDInfo->fp ) != 1)
     {
+#ifndef AVOID_CPL
         CPLError( CE_Failure, CPLE_FileIO,
+#else
+        fprintf( stderr, 
+#endif
                   "Failed to seek to, or read profile %d at offset %d\n"
                   "in DTED file.\n",
                   nColumnOffset, nOffset );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/07/07 14:20:57  warmerda
+ * fixed AVOID_CPL support
+ *
  * Revision 1.1  1999/12/07 18:01:28  warmerda
  * New
  *
@@ -44,16 +47,40 @@
 #  include "cpl_conv.h"
 #else
 
-#undef CPL_C_START
-#undef CPL_C_END
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+
+#define CPL_C_START
+#define CPL_C_END
+
+#ifndef TRUE
+#  define TRUE 1
+#  define FALSE 0
+#endif
+
+#ifndef EQUAL
+#if defined(WIN32) || defined(_WIN32) || defined(_WINDOWS)
+#  define EQUALN(a,b,n)           (strnicmp(a,b,n)==0)
+#  define EQUAL(a,b)              (stricmp(a,b)==0)
+#else
+#  define EQUALN(a,b,n)           (strncasecmp(a,b,n)==0)
+#  define EQUAL(a,b)              (strcasecmp(a,b)==0)
+#endif
+#endif
 
 #define VSIFTell ftell
+#define VSIFOpen fopen
+#define VSIFClose fclose
+#define VSIFRead fread
 #define CPLMalloc malloc
 #define CPLCalloc calloc
 #define CPLFree free
 #define GInt16	short
 #define GByte   unsigned char
 #define VSIFSeek fseek
+#define CPLAssert assert
 
 #endif
 
