@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/11/15 21:19:21  warmerda
+ * added transaction semantics
+ *
  * Revision 1.9  2001/10/02 14:16:21  warmerda
  * fix handling of case where a query is being cleared
  *
@@ -244,5 +247,35 @@ OGRErr OGRLayer::CreateField( OGRFieldDefn * poField, int bApproxOK )
     CPLError( CE_Failure, CPLE_NotSupported,
               "CreateField() not supported by this layer.\n" );
               
-    return CE_Failure;
+    return OGRERR_UNSUPPORTED_OPERATION;
+}
+
+/************************************************************************/
+/*                          StartTransaction()                          */
+/************************************************************************/
+
+OGRErr OGRLayer::StartTransaction()
+
+{
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         CommitTransaction()                          */
+/************************************************************************/
+
+OGRErr OGRLayer::CommitTransaction()
+
+{
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                        RollbackTransaction()                         */
+/************************************************************************/
+
+OGRErr OGRLayer::RollbackTransaction()
+
+{
+    return OGRERR_UNSUPPORTED_OPERATION;
 }
