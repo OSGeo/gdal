@@ -7,14 +7,15 @@
 
 <h1>HFA -- Erdas Imagine .img</h1>
 
-GDAL supports Erdas Imagine .img format for read access and write.  The current
-implementation ignores pyramid levels, and metadata but does capture 
-palettes, and georeferencing.  It supports the erdas band types 
+GDAL supports Erdas Imagine .img format for read access and write.  The
+driver supports reading overviews, palettes, and georeferencing.  It 
+supports the erdas band types 
 u8, s8, u16, s16, u32, s32, f32, f64, c64 and c128.<p>
 
 Compressed and missing tiles in Erdas files should be handled properly on read.
 Files between 2GB and 4GB in size should work on Windows NT, and may work
-on some Unix platforms.<p>
+on some Unix platforms. Files with external spill files (needed for datasets
+larger than 4GB) are also support for reading and writing.<p>
 
 Metadata reading and writing is supported at the dataset level, and for
 bands, but this is GDAL specific metadata - not metadata in an Imagine
@@ -29,6 +30,9 @@ the complex types.  Created files may have any number of bands.  Pseudo-Color
 tables will be written if using the GDALDriver::CreateCopy() methodology.
 Most projections should be supported though translation of unusual datums
 (other than WGS84, WGS72, NAD83, and NAD27) may be problematic. <p>
+
+If overviews are generated, they will be in an external .ovr (GeoTIFF file)
+recognised only by GDAL, not in the .rrd format produced by Imagine.<p>
 
 Creation Options:<p>
 
