@@ -19,6 +19,10 @@ Password: ********
 # exit
 </pre>
 
+In order to run GDAL after installing it is necessary for the shared
+library to be findable.  This can often be accomplished by setting 
+LD_LIBRARY_PATH to include /usr/local/lib.<p>
+
 Some caveats are:<p>
 <ul>
 
