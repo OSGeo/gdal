@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2004/01/23 22:16:09  warmerda
+ * fixed issue with static buffer overwriting in forming prj name
+ *
  * Revision 1.20  2004/01/23 04:56:01  warmerda
  * support worldfiles if no corners in .hdr
  *
@@ -448,11 +451,10 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for a .prj file.                                          */
 /* -------------------------------------------------------------------- */
     pszPath = CPLStrdup( CPLGetPath( poOpenInfo->pszFilename ) );
-
-    const char  *pszPrjFile =
-	CPLFormCIFilename( pszPath, CPLGetBasename(poOpenInfo->pszFilename),
-			   "prj" );
+    pszName = CPLStrdup( CPLGetBasename(poOpenInfo->pszFilename) );
+    const char  *pszPrjFile = CPLFormCIFilename( pszPath, pszName, "prj" );
     CPLFree( pszPath );
+    CPLFree( pszName );
 
     fp = VSIFOpen( pszPrjFile, "r" );
     if( fp != NULL )
