@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/08/13 02:36:57  warmerda
+ * added write support
+ *
  * Revision 1.1  1999/07/23 19:34:34  warmerda
  * New
  *
@@ -84,5 +87,7 @@ class RawRasterBand : public GDALRasterBand
     // should override RasterIO eventually.
     
     virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * ); 
+    virtual CPLErr IWriteBlock( int, int, void * );
+
+    CPLErr       AccessLine( int iLine );
 };

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/08/13 02:36:57  warmerda
+ * added write support
+ *
  * Revision 1.1  1999/07/23 19:34:34  warmerda
  * New
  *
@@ -53,7 +56,6 @@ RawRasterBand::RawRasterBand( RawDataset *poDS, int nBand,
     this->nImgOffset = nImgOffset;
     this->nPixelOffset = nPixelOffset;
     this->nLineOffset = nLineOffset;
-    this->eDataType = eDataType;
     this->bNativeOrder = bNativeOrder;
 
 /* -------------------------------------------------------------------- */
@@ -76,9 +78,46 @@ RawRasterBand::RawRasterBand( RawDataset *poDS, int nBand,
 RawRasterBand::~RawRasterBand()
 
 {
+    FlushCache();
+    
     CPLFree( pLineBuffer );
 }
 
+/************************************************************************/
+/*                             AccessLine()                             */
+/************************************************************************/
+
+CPLErr RawRasterBand::AccessLine( int iLine )
+
+{
+    if( nLoadedScanline == iLine )
+        return CE_None;
+
+    if( VSIFSeek( fpRaw, nImgOffset + iLine * nLineOffset,
+                  SEEK_SET ) == -1
+        || VSIFRead( pLineBuffer, nPixelOffset, nBlockXSize, fpRaw ) < 1 )
+    {
+        // for now I just set to zero under the assumption we might
+        // be trying to read from a file past the data that has
+        // actually been written out.  Eventually we should differentiate
+        // between newly created datasets, and existing datasets. Existing
+        // datasets should generate an error in this case.
+        memset( pLineBuffer, 0, nPixelOffset * nBlockXSize );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Byte swap the interesting data, if required.                    */
+/* -------------------------------------------------------------------- */
+    if( !bNativeOrder  && eDataType != GDT_Byte )
+    {
+        GDALSwapWords( pLineBuffer, GDALGetDataTypeSize(eDataType)/8,
+                       nBlockXSize, nPixelOffset );
+    }
+
+    nLoadedScanline = iLine;
+
+    return CE_None;
+}
 
 /************************************************************************/
 /*                             IReadBlock()                             */
@@ -92,35 +131,8 @@ CPLErr RawRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     CPLAssert( nBlockXOff == 0 );
 
-/* -------------------------------------------------------------------- */
-/*      Do we have the desired scanline loaded?  If not, load it now.   */
-/* -------------------------------------------------------------------- */
-    if( nLoadedScanline != nBlockYOff )
-    {
-        if( VSIFSeek( fpRaw, nImgOffset + nBlockYOff * nLineOffset,
-                      SEEK_SET ) == -1
-            || VSIFRead( pLineBuffer, nPixelOffset, nBlockXSize, fpRaw ) < 1 )
-        {
-            // for now I just set to zero under the assumption we might
-            // be trying to read from a file past the data that has
-            // actually been written out.  Eventually we should differentiate
-            // between newly created datasets, and existing datasets. Existing
-            // datasets should generate an error in this case.
-            memset( pLineBuffer, 0, nPixelOffset * nBlockXSize );
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Byte swap the interesting data, if required.                    */
-/* -------------------------------------------------------------------- */
-        if( !bNativeOrder )
-        {
-            GDALSwapWords( pLineBuffer, GDALGetDataTypeSize(eDataType)/8,
-                           nBlockXSize, nPixelOffset );
-        }
-
-        nLoadedScanline = nBlockYOff;
-    }
-
+    AccessLine( nBlockYOff );
+    
 /* -------------------------------------------------------------------- */
 /*      Copy data from disk buffer to user block buffer.                */
 /* -------------------------------------------------------------------- */
@@ -136,10 +148,68 @@ CPLErr RawRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr RawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                     void * pImage )
+                                   void * pImage )
 
 {
-    return CE_Failure;
+    CPLErr		eErr = CE_None;
+
+    CPLAssert( nBlockXOff == 0 );
+
+/* -------------------------------------------------------------------- */
+/*      If the data for this band is completely contiguous we don't     */
+/*      have to worry about pre-reading from disk.                      */
+/* -------------------------------------------------------------------- */
+    if( nPixelOffset > GDALGetDataTypeSize(eDataType) / 8 )
+        eErr = AccessLine( nBlockYOff );
+
+/* -------------------------------------------------------------------- */
+/*      Copy data from disk buffer to user block buffer.                */
+/* -------------------------------------------------------------------- */
+    GDALCopyWords( pImage, eDataType, GDALGetDataTypeSize(eDataType)/8,
+                   pLineBuffer, eDataType, nPixelOffset,
+                   nBlockXSize );
+
+/* -------------------------------------------------------------------- */
+/*      Byte swap (if necessary) back into disk order before writing.   */
+/* -------------------------------------------------------------------- */
+    if( !bNativeOrder && eDataType != GDT_Byte )
+    {
+        GDALSwapWords( pLineBuffer, GDALGetDataTypeSize(eDataType)/8,
+                       nBlockXSize, nPixelOffset );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write to disk.                                                  */
+/* -------------------------------------------------------------------- */
+    if( VSIFSeek( fpRaw, nImgOffset + nBlockYOff * nLineOffset,
+                  SEEK_SET ) == -1 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to seek to scanline %d to file.\n",
+                  nBlockYOff );
+        
+        eErr = CE_Failure;
+    }
+    else if( VSIFWrite( pLineBuffer, nPixelOffset, nBlockXSize, fpRaw ) < 1 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to write scanline %d to file.\n",
+                  nBlockYOff );
+        
+        eErr = CE_Failure;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Byte swap (if necessary) back into machine order so the         */
+/*      buffer is still usable for reading purposes.                    */
+/* -------------------------------------------------------------------- */
+    if( !bNativeOrder && eDataType != GDT_Byte )
+    {
+        GDALSwapWords( pLineBuffer, GDALGetDataTypeSize(eDataType)/8,
+                       nBlockXSize, nPixelOffset );
+    }
+
+    return eErr;
 }
 
 /************************************************************************/
