@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/02/03 21:17:03  warmerda
+ * added .rec driver
+ *
  * Revision 1.11  2002/12/28 04:10:11  warmerda
  * added Oracle(OCI) support
  *
@@ -83,6 +86,7 @@ void OGRRegisterAll()
     RegisterOGRDGN();
     RegisterOGRGML();
     RegisterOGRAVCBin();
+    RegisterOGRREC();
 //    RegisterOGRE00();
 #ifdef OGDI_ENABLED
     RegisterOGROGDI();
