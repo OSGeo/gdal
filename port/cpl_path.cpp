@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/05/12 19:20:55  warmerda
+ * Fixed documentation of CPLGetExtension().
+ *
  * Revision 1.6  2001/03/16 22:15:08  warmerda
  * added CPLResetExtension
  *
@@ -209,10 +212,10 @@ const char *CPLGetBasename( const char *pszFullFilename )
  *
  * Returns a string containing the extention portion of the passed
  * name.  If there is no extension (the filename has no dot) an empty string
- * is returned.  The returned extension will always include the period.
+ * is returned.  The returned extension will not include the period.
  *
  * <pre>
- * CPLGetExtension( "abc/def.xyz" ) == ".xyz"
+ * CPLGetExtension( "abc/def.xyz" ) == "xyz"
  * CPLGetExtension( "abc/def" ) == ""
  * </pre>
  *
