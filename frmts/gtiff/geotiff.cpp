@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.72  2002/11/03 10:50:28  dron
+ * Added GeoTIFF instance creation check.
+ *
  * Revision 1.71  2002/09/30 21:14:12  warmerda
  * added support for overviews of RGBA files
  *
@@ -1898,8 +1901,8 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new GTiffDataset();
     poDS->SetDescription( poOpenInfo->pszFilename );
 
-    if( poDS->OpenOffset(hTIFF,TIFFCurrentDirOffset(hTIFF), TRUE,
-                         poOpenInfo->eAccess ) != CE_None )
+    if( poDS->OpenOffset( hTIFF,TIFFCurrentDirOffset(hTIFF), TRUE,
+                          poOpenInfo->eAccess ) != CE_None )
     {
         delete poDS;
         return NULL;
@@ -2158,6 +2161,12 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
     
     hGTIF = GTIFNew(hTIFF);
 
+    if ( !hGTIF )
+    {
+	CPLDebug( "GTiff", "Can't create new GeoTIFF instance" );
+	return( CE_Failure );
+    }
+    
     if( GTIFGetDefn( hGTIF, &sGTIFDefn ) )
     {
         pszProjection = GTIFGetOGISDefn( &sGTIFDefn );
