@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/02/21 20:09:04  warmerda
+ * Drop white space outside of quotes when ingesting WKT.  This makes the
+ * ingest of 'pretty' WKT possible.
+ *
  * Revision 1.18  2002/01/24 16:21:29  warmerda
  * added StripNodes method, removed simplify flag from pretty wkt
  *
@@ -635,6 +639,12 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput )
         {
             break;
         }
+        else if( !bInQuotedString 
+                 && (*pszInput == ' ' || *pszInput == '\t' 
+                     || *pszInput == 10 || *pszInput == 13) )
+        {
+            /* just skip over whitespace */
+        } 
         else
         {
             szToken[nTokenLen++] = *pszInput;
