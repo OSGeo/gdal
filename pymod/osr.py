@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.23  2003/03/07 16:29:39  warmerda
+# NULL fixes
+#
 # Revision 1.22  2003/02/25 04:57:37  warmerda
 # added CopyGeogCSFrom()
 #
@@ -137,14 +140,14 @@ class SpatialReference:
 
     def CloneGeogCS(self):
         o = _gdal.OSRCloneGeogCS( self._o )
-        if o is None:
+        if o is None or o == 'NULL':
             return None
         else:
             return SpatialReference(obj=o)
     
     def Clone(self):
         o = SpatialReference(obj=_gdal.OSRClone( self._o ))
-        if o is None:
+        if o is None or o == 'NULL':
             return None
         else:
             return SpatialReference(obj=o)
