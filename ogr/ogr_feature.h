@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2001/06/01 14:33:00  warmerda
+ * added CreateFeature factory method
+ *
  * Revision 1.17  2001/02/06 17:10:28  warmerda
  * export entry points from DLL
  *
@@ -381,6 +384,8 @@ class CPL_DLL OGRFeature
     virtual const char *GetStyleString();
     virtual void        SetStyleString(const char *);
     virtual void        SetStyleTable(OGRStyleTable *poStyleTable);
+
+    static OGRFeature  *CreateFeature( OGRFeatureDefn * );
 };
 
 #endif /* ndef _OGR_FEATURE_H_INCLUDED */

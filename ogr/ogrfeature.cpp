@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/06/01 14:32:27  warmerda
+ * added CreateFeature factory method
+ *
  * Revision 1.16  2001/02/06 14:14:09  warmerda
  * fixed up documentation
  *
@@ -164,7 +167,28 @@ OGRFeature::~OGRFeature()
     
     CPLFree( pauFields );
     CPLFree(m_pszStyleString);
-    
+}
+
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
+
+/* Feature factory.
+ *
+ * This is essentially a feature factory, useful for               
+ * applications creating features but wanting to ensure they       
+ * are created out of the OGR/GDAL heap.                           
+ * 
+ * @param poDefn Feature definition defining schema.
+ * 
+ * @return new feature object with null fields and no geometry.  May be
+ * deleted with delete. 
+ */
+
+OGRFeature *OGRFeature::CreateFeature( OGRFeatureDefn *poDefn )
+
+{
+    return new OGRFeature( poDefn );
 }
 
 /************************************************************************/
