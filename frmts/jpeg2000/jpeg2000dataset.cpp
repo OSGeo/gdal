@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.17  2003/04/06 10:13:23  dron
+ * Support for pseudocoloured images with LUT.
+ *
  * Revision 1.16  2003/03/06 18:08:39  dron
  * Unneeded macro removed.
  *
@@ -99,10 +102,11 @@ CPLErr CPL_DLL GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
 CPL_C_END
 
 // XXX: Part of code below extracted from the JasPer internal headers and
-// must be in sync with JasPer version (this one works with JasPer 1.600.0)
+// must be in sync with JasPer version (this one works with JasPer 1.700.2)
 #define JP2_FTYP_MAXCOMPATCODES 32
 #define JP2_BOX_IHDR    0x69686472      /* Image Header */
 #define JP2_BOX_BPCC    0x62706363      /* Bits Per Component */
+#define	JP2_BOX_PCLR	0x70636c72	/* Palette */
 #define JP2_BOX_UUID    0x75756964      /* UUID */
 extern "C" {
 typedef struct {
@@ -633,7 +637,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->nRasterYSize = box->data.ihdr.height;
                 CPLDebug( "JPEG2000",
                           "IHDR box found. Dump: "
-                          "width=%d, height=%d, numcmpts=%d, bpp=%d\n",
+                          "width=%d, height=%d, numcmpts=%d, bpp=%d",
                           box->data.ihdr.width, box->data.ihdr.height,
                           box->data.ihdr.numcmpts, (box->data.ihdr.bpc & 0x7F) + 1 );
                 if ( box->data.ihdr.bpc )
@@ -652,13 +656,13 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
                 break;
                 case JP2_BOX_BPCC:
                 CPLDebug( "JPEG2000", "BPCC box found. Dump:" );
-                if ( !paiDepth )
+                if ( !paiDepth && !pabSignedness )
                 {
                     paiDepth = (int *)
                         CPLMalloc( box->data.bpcc.numcmpts * sizeof(int) );
                     pabSignedness = (int *)
                         CPLMalloc( box->data.bpcc.numcmpts * sizeof(int) );
-                    for( iBand=0; iBand < (int)box->data.bpcc.numcmpts; iBand++)
+                    for( iBand = 0; iBand < (int)box->data.bpcc.numcmpts; iBand++ )
                     {
                         paiDepth[iBand] = box->data.bpcc.bpcs[iBand] && 0x7F;
                         pabSignedness[iBand] = box->data.bpcc.bpcs[iBand] >> 7;
@@ -666,6 +670,29 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
                                   "Component %d: bpp=%d, signedness=%d",
                                   iBand, paiDepth[iBand], pabSignedness[iBand] );
                     }
+                }
+                break;
+                case JP2_BOX_PCLR:
+                CPLDebug( "JPEG2000",
+                          "PCLR box found. Dump: number of LUT entries=%d, "
+                          "number of resulting channels=%d",
+                          box->data.pclr.numlutents, box->data.pclr.numchans );
+                poDS->nBands = box->data.pclr.numchans;
+                if ( paiDepth )
+                    CPLFree( paiDepth );
+                if ( pabSignedness )
+                    CPLFree( pabSignedness );
+                paiDepth = (int *)
+                        CPLMalloc( box->data.pclr.numchans * sizeof(int) );
+                pabSignedness = (int *)
+                        CPLMalloc( box->data.pclr.numchans * sizeof(int) );
+                for( iBand = 0; iBand < (int)box->data.pclr.numchans; iBand++ )
+                {
+                    paiDepth[iBand] = box->data.pclr.bpc[iBand] && 0x7F;
+                    pabSignedness[iBand] = box->data.pclr.bpc[iBand] >> 7;
+                    CPLDebug( "JPEG2000",
+                              "Component %d: bpp=%d, signedness=%d",
+                              iBand, paiDepth[iBand], pabSignedness[iBand] );
                 }
                 break;
 #ifdef HAVE_JASPER_UUID
