@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.10  2000/03/29 15:33:32  warmerda
+ * added block size
+ *
  * Revision 1.9  2000/03/06 21:50:37  warmerda
  * added min/max support
  *
@@ -128,9 +131,12 @@ int main( int argc, char ** argv )
     {
         double      dfMin, dfMax, adfCMinMax[2];
         int         bGotMin, bGotMax;
+        int         nBlockXSize, nBlockYSize;
 
         hBand = GDALGetRasterBand( hDataset, i+1 );
-        printf( "Band %d Type=%s, ColorInterp=%s\n", i+1,
+        GDALGetBlockSize( hBand, &nBlockXSize, &nBlockYSize );
+        printf( "Band %d Block=%dx%d Type=%s, ColorInterp=%s\n", i+1,
+                nBlockXSize, nBlockYSize,
                 GDALGetDataTypeName(
                     GDALGetRasterDataType(hBand)),
                 GDALGetColorInterpretationName(
