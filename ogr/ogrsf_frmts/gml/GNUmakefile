@@ -10,7 +10,7 @@ OGR_OBJ =	ogrgmldriver.o ogrgmldatasource.o ogrgmllayer.o
 OBJ =	$(CORE_OBJ) $(OGR_OBJ)
 
 CPPFLAGS	+=	$(XERCES_INCLUDE) -I.. -I../..
-CFLAGS	=	$(filter-out -Wall,$(CFLAGS))
+#CFLAGS	:=	$(filter-out -Wall,$(CFLAGS))
 
 ifeq ($(HAVE_XERCES),yes)
 CORE_OBJ :=	$(CORE_OBJ) gmlreadstate.o gmlhandler.o trstring.o
