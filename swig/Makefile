@@ -1,6 +1,11 @@
 
-default: gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp
+SWIG_TARGETS = gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp
+
+default: ${SWIG_TARGETS}
 	python setup.py build
+
+install: ${SWIG_TARGETS}
+	python setup.py install
 
 gdalconst_wrap.c: gdalconst.i
 	swig -python -I../.. -o $@ $<
@@ -11,7 +16,7 @@ gdal_wrap.cpp:	gdal.i gdal_typemaps.i Driver.i Dataset.i Band.i ColorTable.i cpl
 ogr_wrap.cpp:  ogr.i gdal_typemaps.i
 	swig -python -c++ -I../.. -o $@ $<
 
-osr_wrap.cpp:  osr.i
+osr_wrap.cpp:  osr.i gdal_typemaps.i
 	swig -python -c++ -I../.. -o $@ $<
 
 clean:
@@ -22,5 +27,3 @@ clean:
 	-rm osr_wrap.cpp osr.py
 	-rm -rf build
 
-install: default
-	python setup.py install
