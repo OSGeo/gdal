@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2002/03/08 20:17:52  warmerda
+ * assume WGS84 if ellipse info missing
+ *
  * Revision 1.23  2002/01/18 04:48:48  warmerda
  * clean tabs, and newlines from input to importProj4
  *
@@ -519,14 +522,18 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         dfSemiMajor = OSR_GDV( papszNV, "a", 0.0 );
         if( dfSemiMajor == 0.0 )
         {
-            CPLDebug( "OGR_PROJ4", "Can't find ellipse definition in:\n%s", 
+            CPLDebug( "OGR_PROJ4", "Can't find ellipse definition, default to WGS84:\n%s", 
                       pszProj4 );
-            CSLDestroy( papszNV );
-            return OGRERR_UNSUPPORTED_SRS;
+
+            dfSemiMajor = SRS_WGS84_SEMIMAJOR;
+            dfSemiMinor = -1.0;
+            dfInvFlattening = SRS_WGS84_INVFLATTENING;
         }
-        
-        dfSemiMinor = OSR_GDV( papszNV, "b", -1.0 );
-        dfInvFlattening = OSR_GDV( papszNV, "rf", -1.0 );
+        else
+        {
+            dfSemiMinor = OSR_GDV( papszNV, "b", -1.0 );
+            dfInvFlattening = OSR_GDV( papszNV, "rf", -1.0 );
+        }
         
         if( dfSemiMinor == -1.0 && dfInvFlattening == -1.0 )
         {
