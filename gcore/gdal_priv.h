@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2004/04/06 19:22:25  dron
+ * Removed GDALRasterBlock::IsCached(), added GDALRasterBand::IsBlockCached().
+ *
  * Revision 1.46  2003/07/27 11:01:01  dron
  * GDALRasterBlock::IsCached() method added.
  *
@@ -391,7 +394,6 @@ class CPL_DLL GDALRasterBlock
 
     static int  FlushCacheBlock();
     static void Verify();
-    static int  IsCached( int nXOff, int nYOff );
 };
 
 
@@ -463,6 +465,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     CPLErr         AdoptBlock( int, int, GDALRasterBlock * );
     void           InitBlockInfo();
+    int            IsBlockCached( int, int );
 
   public:
                 GDALRasterBand();
