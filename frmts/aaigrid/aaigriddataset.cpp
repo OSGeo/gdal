@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/04/02 19:05:03  dron
+ * Fixes for large file support in Windows environment.
+ *
  * Revision 1.20  2003/03/27 19:52:58  dron
  * Implemented Delete() method and large file support.
  *
@@ -211,7 +214,7 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( panLineOffset[nBlockYOff] == 0 )
         return CE_Failure;
 
-    if( VSIFSeekL( poODS->fp, panLineOffset[nBlockYOff], SEEK_SET ) != 0 )
+    if( VSIFSeek( poODS->fp, panLineOffset[nBlockYOff], SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Can't seek to offset %ld in input file to read data.",
@@ -227,7 +230,7 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     if( nBlockYOff < poODS->nRasterYSize - 1 )
-        panLineOffset[nBlockYOff + 1] = VSIFTellL( poODS->fp );
+        panLineOffset[nBlockYOff + 1] = VSIFTell( poODS->fp );
 
     if( pImage == NULL )
         return CE_None;
@@ -315,7 +318,7 @@ AAIGDataset::~AAIGDataset()
 
 {
     if( fp != NULL )
-        VSIFCloseL( fp );
+        VSIFClose( fp );
 
     CPLFree( pszProjection );
     CSLDestroy( papszPrj );
@@ -544,7 +547,7 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     FILE        *fpImage;
 
-    fpImage = VSIFOpenL( pszFilename, "wt" );
+    fpImage = VSIFOpen( pszFilename, "wt" );
     if( fpImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -601,7 +604,7 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     CPLFree( padfScanline );
-    VSIFCloseL( fpImage );
+    VSIFClose( fpImage );
 
 /* -------------------------------------------------------------------- */
 /*      Try to write projection file.                                   */
