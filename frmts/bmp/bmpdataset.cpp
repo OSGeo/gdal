@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2002/12/07 15:20:23  dron
+ * SetColorTable() added. Create() really works now.
+ *
  * Revision 1.5  2002/12/06 20:50:13  warmerda
  * fixed type warning
  *
@@ -121,9 +124,10 @@ typedef struct
 				// be used to calculate this value (1<<iBitCount)
     GInt32	iClrImportant;	// Number of important colours. If 0, all
 				// colours are required
-    // Fields above should be used for applications, compatible
-    // with Windows NT 3.51 and earlier. Windows 98/Me, Windows 2000/XP
-    // introduces additional fields:
+
+    // Fields above should be used for bitmaps, compatible with Windows NT 3.51
+    // and earlier. Windows 98/Me, Windows 2000/XP introduces additional fields:
+
     GInt32	iRedMask;	// Colour mask that specifies the red component
 				// of each pixel, valid only if iCompression
 				// is set to BI_BITFIELDS.
@@ -205,6 +209,7 @@ class BMPRasterBand : public GDALRasterBand
     virtual CPLErr	    IWriteBlock( int, int, void * );
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable  *GetColorTable();
+    CPLErr  SetColorTable( GDALColorTable * );
 };
 
 /************************************************************************/
@@ -391,6 +396,61 @@ GDALColorTable *BMPRasterBand::GetColorTable()
 }
 
 /************************************************************************/
+/*                           SetColorTable()                            */
+/************************************************************************/
+
+CPLErr BMPRasterBand::SetColorTable( GDALColorTable *poColorTable )
+{
+    BMPDataset	*poGDS = (BMPDataset *) poDS;
+    
+    if ( poColorTable )
+    {
+	GDALColorEntry	oEntry;
+	int		i;
+
+	poGDS->sInfoHeader.iClrUsed = poColorTable->GetColorEntryCount();
+	if ( poGDS->sInfoHeader.iClrUsed < 1 ||
+	     poGDS->sInfoHeader.iClrUsed > (1 << poGDS->sInfoHeader.iBitCount) )
+	    return CE_Failure;
+	
+	VSIFSeek( poGDS->fp, BFH_SIZE + 32, SEEK_SET );
+#ifdef CPL_LSB
+	VSIFWrite( &poGDS->sInfoHeader.iClrUsed, 4, 1, poGDS->fp );
+#else
+	long	iLong;
+	
+	iLong = CPL_SWAP32( poGDS->sInfoHeader.iClrUsed );
+	VSIFWrite( &iLong, 4, 1, poGDS->fp );
+#endif
+	poGDS->pabyColorTable = (GByte *) CPLRealloc( poGDS->pabyColorTable,
+				4 * poGDS->sInfoHeader.iClrUsed );
+	if ( !poGDS->pabyColorTable )
+	    return CE_Failure;
+	
+	for( i = 0; i < poGDS->sInfoHeader.iClrUsed; i++ )
+	{
+	    poColorTable->GetColorEntryAsRGB( i, &oEntry );
+	    poGDS->pabyColorTable[i * 4 + 3] = 0;
+	    poGDS->pabyColorTable[i * 4 + 2] = oEntry.c1;   // Red
+	    poGDS->pabyColorTable[i * 4 + 1] = oEntry.c2;   // Green
+	    poGDS->pabyColorTable[i * 4] = oEntry.c3;	    // Blue
+	}
+	
+	VSIFSeek( poGDS->fp, BFH_SIZE + poGDS->sInfoHeader.iSize, SEEK_SET );
+	if ( VSIFWrite( poGDS->pabyColorTable, 1, 
+			4 * poGDS->sInfoHeader.iClrUsed, poGDS->fp ) <
+	     4 * (GUInt32) poGDS->sInfoHeader.iClrUsed )
+	{
+	    return CE_Failure;
+	}
+    }
+    else
+	return CE_Failure;
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                       GetColorInterpretation()                       */
 /************************************************************************/
 
@@ -451,6 +511,8 @@ BMPDataset::BMPDataset()
 
 BMPDataset::~BMPDataset()
 {
+    FlushCache();
+
     if ( pszProjection )
 	CPLFree( pszProjection );
     if ( pabyColorTable )
@@ -525,13 +587,15 @@ void BMPDataset::FlushCache()
 /************************************************************************/
 
 GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
-
 {
     if( poOpenInfo->fp == NULL )
         return NULL;
 
     if(	!EQUALN((const char *) poOpenInfo->pabyHeader, "BM", 2) )
         return NULL;
+
+    VSIFClose( poOpenInfo->fp );
+    poOpenInfo->fp = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -541,8 +605,13 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new BMPDataset();
 
-    poDS->fp = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
+    if( poOpenInfo->eAccess == GA_ReadOnly )
+	poDS->fp = VSIFOpen( poOpenInfo->pszFilename, "rb" );
+    else
+	poDS->fp = VSIFOpen( poOpenInfo->pszFilename, "r+b" );
+    if ( !poDS->fp )
+	return NULL;
+
     CPLStat(poOpenInfo->pszFilename, &sStat);
     
 /* -------------------------------------------------------------------- */
@@ -587,7 +656,18 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
     CPL_SWAP32PTR( &poDS->sInfoHeader.iClrUsed );
     CPL_SWAP32PTR( &poDS->sInfoHeader.iClrImportant );
 #endif
-    
+
+    if ( poDS->sInfoHeader.iBitCount != 1  &&
+	 poDS->sInfoHeader.iBitCount != 4  &&
+	 poDS->sInfoHeader.iBitCount != 8  &&
+	 poDS->sInfoHeader.iBitCount != 16 &&
+	 poDS->sInfoHeader.iBitCount != 24 &&
+	 poDS->sInfoHeader.iBitCount != 32 )
+    {
+	delete poDS;
+	return NULL;
+    }
+
     CPLDebug( "BMP", "Windows Device Independent Bitmap parameters:\n"
 	      " info header size: %d bytes\n"
 	      " width: %d\n height: %d\n planes: %d\n bpp: %d\n"
@@ -726,9 +806,9 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
  
     if ( nBands == 1 )
     {
-	poDS->sInfoHeader.iClrUsed = ( 1 << poDS->sInfoHeader.iBitCount );
+	poDS->sInfoHeader.iClrUsed = 1 << poDS->sInfoHeader.iBitCount;
 	poDS->pabyColorTable = 
-	    (GByte *) CPLMalloc( 4 * poDS->sInfoHeader.iClrUsed);
+	    (GByte *) CPLMalloc( 4 * poDS->sInfoHeader.iClrUsed );
 	for ( i = 0; i < poDS->sInfoHeader.iClrUsed; i++ )
 	{
 	    poDS->pabyColorTable[i * 4] =
@@ -837,7 +917,7 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
     if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
 	poDS->bGeoTransformValid = TRUE;
 
-    return poDS;
+    return (GDALDataset *) poDS;
 }
 
 /************************************************************************/
@@ -891,6 +971,7 @@ BMPCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     sInfoHeader.iPlanes = 1;
     sInfoHeader.iBitCount = ( nBands == 3 )?24:8;
     sInfoHeader.iCompression = BMPC_RGB;
+    // Don't forget to wrap scanline at 4-byte boundary
     nScanSize = ((sInfoHeader.iWidth * sInfoHeader.iBitCount + 31) & ~31) / 8;
     sInfoHeader.iSizeImage = nScanSize * sInfoHeader.iHeight;
     sInfoHeader.iXPelsPerMeter = 0;
@@ -1118,7 +1199,7 @@ void GDALRegister_BMP()
 
         poDriver->pfnOpen = BMPDataset::Open;
         poDriver->pfnCreate = BMPDataset::Create;
-        //poDriver->pfnCreateCopy = BMPCreateCopy;
+        poDriver->pfnCreateCopy = BMPCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
