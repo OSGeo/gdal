@@ -38,7 +38,6 @@
 
 #include "dods-datatypes.h"
 
-#define DODS_DEBUG
 #include "dodsdataset.h"
 
 CPL_CVSID("$Id$");
@@ -53,8 +52,8 @@ private:
 
 public:
     DODSDatasetTest() : 
-	url_1("http://localhost/dods-test/nph-dods/data/nc/fnoc1.nc?u[0][lat][lon]"),
-	url_2("http://localhost/dods-test/nph-dods/data/nc/fnoc1.nc?v[1:16][lat][lon]")
+	url_1("http://localhost/dods-test/nph-dods/data/nc/fnoc1.nc?u[1][lat][lon]"),
+	url_2("http://localhost/dods-test/nph-dods/data/nc/fnoc1.nc?v[1-16][lat][lon]")
     {
 	// Register all the GDAL drivers. If you only want one driver
 	// registered, look at gdalallregister.cpp. 
@@ -78,9 +77,14 @@ public:
     CPPUNIT_TEST(verify_layer_spec_test);
     CPPUNIT_TEST(get_var_info_test);
     CPPUNIT_TEST(build_constraint_test);
+#if 0
+    CPPUNIT_TEST(are_same_type_test);
+#endif
+    CPPUNIT_TEST(contiguous_bands_test);
     CPPUNIT_TEST(gdal_open_test);
     CPPUNIT_TEST(get_raster_test);
-    CPPUNIT_TEST(rasterband_irasterio_test);
+    CPPUNIT_TEST(irasteriohelper_test);
+    CPPUNIT_TEST(irasterio_test);
     CPPUNIT_TEST(get_geo_info_test);
     CPPUNIT_TEST(get_projection_ref_test);
 
@@ -122,17 +126,17 @@ public:
 	poDS->parse_input(url_1);
 	CPPUNIT_ASSERT(poDS->d_oURL == "http://localhost/dods-test/nph-dods/data/nc/fnoc1.nc");
 	CPPUNIT_ASSERT(poDS->d_oVarName == "u");
-	CPPUNIT_ASSERT(poDS->d_oBandExpr == "[0][lat][lon]");
+	CPPUNIT_ASSERT(poDS->d_oBandExpr == "[1][lat][lon]");
 
 	poDS->parse_input(string("http://localhost/fnoc1.nc?bogus[lat][lon]"));
 	CPPUNIT_ASSERT(poDS->d_oURL == "http://localhost/fnoc1.nc");
 	CPPUNIT_ASSERT(poDS->d_oVarName == "bogus");
 	CPPUNIT_ASSERT(poDS->d_oBandExpr == "[lat][lon]");
 
-	poDS->parse_input(string("http://localhost/fnoc1.nc?bogus[0][11:21][lat][lon]"));
+	poDS->parse_input(string("http://localhost/fnoc1.nc?bogus[1][11-21][lat][lon]"));
 	CPPUNIT_ASSERT(poDS->d_oURL == "http://localhost/fnoc1.nc");
 	CPPUNIT_ASSERT(poDS->d_oVarName == "bogus");
-	CPPUNIT_ASSERT(poDS->d_oBandExpr == "[0][11:21][lat][lon]");
+	CPPUNIT_ASSERT(poDS->d_oBandExpr == "[1][11-21][lat][lon]");
 
 	// Try invalid input. All should throw Error.
 	try {
@@ -166,7 +170,7 @@ public:
 	poDS->d_oBandSpec.push_back(ds);
 	ds.type = DODSDataset::dim_spec::lon;
 	poDS->d_oBandSpec.push_back(ds);
-	ds.type = DODSDataset::dim_spec::index; ds.start = 0;
+	ds.type = DODSDataset::dim_spec::index; ds.start = 1;
 	poDS->d_oBandSpec.push_back(ds);
 	poDS->d_iVarRank = 3;
 	try {
@@ -187,7 +191,7 @@ public:
 	}
 
 	// Add a fourth dim spec; should work
-	ds.type = DODSDataset::dim_spec::range; ds.start = 0; ds.stop = 7;
+	ds.type = DODSDataset::dim_spec::range; ds.start = 1; ds.stop = 8;
 	poDS->d_oBandSpec.push_back(ds);
 	try {
 	    poDS->verify_layer_spec();
@@ -196,7 +200,7 @@ public:
 	catch (Error &e) {CPPUNIT_ASSERT(!"Should not throw Error"); }
 
 	// Only one range spec allowed; should fail
-	ds.type = DODSDataset::dim_spec::range; ds.start = 0; ds.stop = 8;
+	ds.type = DODSDataset::dim_spec::range; ds.start = 1; ds.stop = 9;
 	poDS->d_iVarRank = 5;
 	poDS->d_oBandSpec.push_back(ds);
 	try {
@@ -248,6 +252,51 @@ public:
 	}
     }
 
+#if 0
+    void are_same_type_test() {
+	// I don't have easy access to data sources where there are things
+	// with bands of different types... 01/27/04 jhrg
+	poDataset = static_cast<DODSDataset *>(GDALOpen(url_2.c_str(), 
+							GA_ReadOnly));
+	int *panBandMap = new int[5];
+	panBandMap[0] = 1; panBandMap[1] = 1; panBandMap[2] = 1; 
+	panBandMap[3] = 1; panBandMap[4] = 1; 
+	CPPUNIT_ASSERT(poDataset->are_same_type(5, panBandMap));
+	
+	panBandMap[0] = 1; panBandMap[1] = 2; panBandMap[2] = 3;
+	panBandMap[3] = 4; panBandMap[4] = 5; 
+	CPPUNIT_ASSERT(poDataset->are_same_type(5, panBandMap));
+	
+	panBandMap[0] = 1; panBandMap[1] = 3; panBandMap[2] = 5;
+	panBandMap[3] = 7; panBandMap[4] = 9; 
+	CPPUNIT_ASSERT(poDataset->are_same_type(5, panBandMap));
+    }
+#endif
+
+    void contiguous_bands_test() {
+	poDataset = static_cast<DODSDataset *>(GDALOpen(url_2.c_str(), 
+							GA_ReadOnly));
+
+	int *panBandMap = new int[5];
+	panBandMap[0] = 1; panBandMap[1] = 2; panBandMap[2] = 3;
+	panBandMap[3] = 4; panBandMap[4] = 5; 
+
+	DBG(cerr << "contiguous_bands(0, 5, panBandMap): "
+	    << poDataset->contiguous_bands(0, 5, panBandMap) << endl);
+	CPPUNIT_ASSERT(poDataset->contiguous_bands(0, 5, panBandMap) == 4);
+	
+	panBandMap[0] = 1; panBandMap[1] = 2; panBandMap[2] = 3;
+	panBandMap[3] = 5; panBandMap[4] = 6; 
+
+	DBG(cerr << "contiguous_bands(0, 5, panBandMap): "
+	    << poDataset->contiguous_bands(0, 5, panBandMap) << endl);
+	CPPUNIT_ASSERT(poDataset->contiguous_bands(0, 5, panBandMap) == 2);
+
+	DBG(cerr << "contiguous_bands(3, 5, panBandMap): "
+	     << poDataset->contiguous_bands(3, 5, panBandMap) << endl);
+	CPPUNIT_ASSERT(poDataset->contiguous_bands(3, 5, panBandMap) == 4);
+    }
+
     void gdal_open_test() {
 	poDataset = static_cast<DODSDataset *>(GDALOpen(url_1.c_str(), 
 							GA_ReadOnly));
@@ -277,20 +326,19 @@ public:
 	poDS->d_oBandSpec.push_back(ds);
 	poDS->d_iVarRank = 3;
 
-	string c1 = poDS->BuildConstraint(0, 0, 10, 10, 1);
+	string c1 = poDS->build_constraint(0, 0, 10, 10, 1, 1);
 	DBG(cerr << "C1: " << c1 <<endl);
-	CPPUNIT_ASSERT(c1 == "u[2][0:9][0:9]");
+	CPPUNIT_ASSERT(c1 == "u[1][0:9][0:9]");
 
-	string c2 = poDS->BuildConstraint(4, 5, 4, 6, 4);
+	// Band four, given that the band spec is [2-8] means GDAL band 5
+	// which is DAP index 4.
+	string c2 = poDS->build_constraint(4, 5, 4, 6, 4, 4);
 	DBG(cerr << "C2: " << c2 <<endl);
-	CPPUNIT_ASSERT(c2 == "u[5][5:10][4:7]");
+	CPPUNIT_ASSERT(c2 == "u[4][5:10][4:7]");
 
-#if 0
-	// I removed the one-param version of BuildConstraint. 01/21/04 jhrg
-	string c3 = poDS->BuildConstraint(4);
+	string c3 = poDS->build_constraint(4, 5, 4, 6, 4, 6);
 	DBG(cerr << "C3: " << c3 <<endl);
-	CPPUNIT_ASSERT(c3 == "u[5][0:16][0:20]");
-#endif
+	CPPUNIT_ASSERT(c3 == "u[4:6][5:10][4:7]");
     }
 
     void get_raster_test() {
@@ -299,9 +347,11 @@ public:
 							    GA_ReadOnly));
 	    dods_int16 *pImage = new dods_int16[21 * 17];
 	    // x size == 21, y size == 17 (0..20, 0..16)
-	    poDataset->GetRaster(0, 0, 21, 17, 1, static_cast<void*>(pImage));
+	    poDataset->get_raster(0, 0, 21, 17, 1, 1, static_cast<void*>(pImage));
 	    // I got these values (-1728, -303) by looking at the ASCII
 	    // output for the variable 'u': http://localhost/dods-test/nph-dods/data/nc/fnoc1.nc.ascii?u[0:1:0][0:1:16][0:1:20]
+	    // NOTE: Offsets are zero-based while band numbers are ones-based
+	    // to match GDAL .
 	    DBG(cerr << "Element 20,16: " << pImage[20+(16*21)] << endl);
 	    CPPUNIT_ASSERT(pImage[0+(0*21)] == -1728);
 	    CPPUNIT_ASSERT(pImage[20+(16*21)] == -303);
@@ -311,22 +361,34 @@ public:
 							    GA_ReadOnly));
 	    pImage = new dods_int16[21 * 17];
 	    // x size == 21, y size == 17 (0..20, 0..16)
-	    poDataset->GetRaster(0, 0, 21, 17, 10, static_cast<void*>(pImage));
-	    // I got these values (-514, -157) by looking at the ASCII
-	    // output for the variable 'v': http://localhost/dods-test/nph-dods/data/nc/fnoc1.nc.ascii?v[10:1:10][0:1:16][0:1:20]
+	    poDataset->get_raster(0, 0, 21, 17, 10, 10, static_cast<void*>(pImage));
+	    // I got these values (3121, 109) by looking at the ASCII
+	    // output for the variable 'v': http://localhost/dods-test/nph-dods/data/nc/fnoc1.nc.ascii?v[9:1:9][0:1:16][0:1:20]
 	    DBG(cerr << "Element 20,16: " << pImage[20+(16*21)] << endl);
-	    CPPUNIT_ASSERT(pImage[0+(0*21)] == -514);
-	    CPPUNIT_ASSERT(pImage[20+(16*21)] == -157);
+	    CPPUNIT_ASSERT(pImage[0+(0*21)] == 2023);
+	    CPPUNIT_ASSERT(pImage[20+(16*21)] == -41);
 	    delete[] pImage;
 
 	    pImage = new dods_int16[5 * 5];
 	    // x size == 5, y size == 5 (0..4, 0..4)
-	    poDataset->GetRaster(9, 9, 5, 5, 10, static_cast<void*>(pImage));
-	    // I got these values (-334, -827) by looking at the ASCII
-	    // output for the variable 'v': http://localhost/dods-test/nph-dods/data/nc/fnoc1.nc.ascii?v[10:1:10][9:1:13][9:1:13]
+	    poDataset->get_raster(9, 9, 5, 5, 10, 10, static_cast<void*>(pImage));
+	    // I got these values (-957, -1281) by looking at the ASCII
+	    // output for the variable 'v': http://localhost/dods-test/nph-dods/data/nc/fnoc1.nc.ascii?v[9:1:9][9:1:13][9:1:13]
 	    DBG(cerr << "Element 4,4: " << pImage[4+(4*5)] << endl);
-	    CPPUNIT_ASSERT(pImage[0+(0*5)] == -334);
-	    CPPUNIT_ASSERT(pImage[4+(4*5)] == -827);
+	    CPPUNIT_ASSERT(pImage[0+(0*5)] == -360);
+	    CPPUNIT_ASSERT(pImage[4+(4*5)] == -987);
+	    delete[] pImage;
+
+	    // Grab two bands (10 and 11)
+	    pImage = new dods_int16[5 * 5 * 2];
+	    // x size == 5, y size == 5, z size = 2 (0..4, 0..4, 0..1)
+	    poDataset->get_raster(9, 9, 5, 5, 10, 11, static_cast<void*>(pImage));
+	    // output for the variable 'v': http://localhost/dods-test/nph-dods/data/nc/fnoc1.nc.ascii?v[9:1:10][9:1:13][9:1:13]
+	    DBG(cerr << "Element 4,4: " << pImage[4+(4*5)+(0*5*5)] << endl);
+	    CPPUNIT_ASSERT(pImage[0+(0*5)+(0*5*5)] == -360);
+	    CPPUNIT_ASSERT(pImage[4+(4*5)+(0*5*5)] == -987);
+	    CPPUNIT_ASSERT(pImage[0+(0*5)+(1*5*5)] == -334);
+	    CPPUNIT_ASSERT(pImage[4+(4*5)+(1*5*5)] == -827);
 	    delete[] pImage;
 	}
 	catch (Error &e) {
@@ -336,7 +398,7 @@ public:
     }
 
     // Test DODSRasterBand::IRasterIO()
-    void rasterband_irasterio_test() {
+    void irasteriohelper_test() {
 	try {
 	    // Get the whole raster U
 	    poDataset = static_cast<DODSDataset *>(GDALOpen(url_1.c_str(), 
@@ -351,11 +413,13 @@ public:
 	    int nPixelSpace = GDALGetDataTypeSize( GDT_Int16 ) / 8;
 	    int nLineSpace = nPixelSpace * 21; // nBufXSize == 21
 
-	    CPLErr status = poBand->IRasterIO(GF_Read, 0, 0, 21, 17, 
-					       pasData, 21, 17, GDT_Int16,
-					       nPixelSpace, nLineSpace);
-
-	    CPPUNIT_ASSERT(status == CE_None);
+	    poDataset->irasterio_helper(GF_Read, 
+				       0, 0, 21, 17,
+				       poBand->GetRasterDataType(),
+				       pasData, 21, 17, 
+				       GDT_Int16,
+				       1, 1,
+				       nPixelSpace, nLineSpace);
 
 	    DBG(cerr << "Element 0,0: " << pasData[0+(0*21)] << endl);
 	    DBG(cerr << "Element 20,16: " << pasData[20+(16*21)] << endl);
@@ -373,17 +437,19 @@ public:
 	    pasData = new dods_int16[5 * 5];
 	    nLineSpace = nPixelSpace * 5; // nBufXSize == 5!
 
-	    status = poBand->IRasterIO(GF_Read, 9, 9, 5, 5, 
-				       pasData, 5, 5, GDT_Int16,
+	    poDataset->irasterio_helper(GF_Read,
+				       9, 9, 5, 5, 
+				       poBand->GetRasterDataType(),
+				       pasData, 5, 5, 
+				       GDT_Int16,
+				       10, 10,
 				       nPixelSpace, nLineSpace);
-
-	    CPPUNIT_ASSERT(status == CE_None);
 
 	    DBG(cerr << "Element 0,0: " << pasData[0+(0*5)] << endl);
 	    DBG(cerr << "Element 4,4: " << pasData[4+(4*5)] << endl);
 
-	    CPPUNIT_ASSERT(pasData[0+(0*5)] == -334);
-	    CPPUNIT_ASSERT(pasData[4+(4*5)] == -827);
+	    CPPUNIT_ASSERT(pasData[0+(0*5)] == -360);
+	    CPPUNIT_ASSERT(pasData[4+(4*5)] == -987);
 
 	    delete[] pasData; pasData = 0;
 
@@ -393,17 +459,19 @@ public:
 	    nPixelSpace = GDALGetDataTypeSize( GDT_Float32 ) / 8;
 	    nLineSpace = nPixelSpace * 5; // nBufXSize == 5!
 
-	    status = poBand->IRasterIO(GF_Read, 9, 9, 5, 5, 
-				       pafData, 5, 5, GDT_Float32,
+	    poDataset->irasterio_helper(GF_Read,
+				       9, 9, 5, 5,
+				       poBand->GetRasterDataType(),
+				       pafData, 5, 5, 
+				       GDT_Float32,
+				       10, 10,
 				       nPixelSpace, nLineSpace);
-
-	    CPPUNIT_ASSERT(status == CE_None);
 
 	    DBG(cerr << "Element 0,0: " << pafData[0+(0*5)] << endl);
 	    DBG(cerr << "Element 4,4: " << pafData[4+(4*5)] << endl);
 
-	    CPPUNIT_ASSERT(pafData[0+(0*5)] == -334.0);
-	    CPPUNIT_ASSERT(pafData[4+(4*5)] == -827.0);
+	    CPPUNIT_ASSERT(pafData[0+(0*5)] == -360.0);
+	    CPPUNIT_ASSERT(pafData[4+(4*5)] == -987.0);
 
 	    delete[] pafData; pafData = 0;
 
@@ -413,17 +481,42 @@ public:
 	    nPixelSpace = GDALGetDataTypeSize( GDT_Int16 ) / 8;
 	    nLineSpace = nPixelSpace * 2; // nBufXSize == 2!
 
-	    status = poBand->IRasterIO(GF_Read, 9, 9, 5, 5, 
-				       pasData, 2, 2, GDT_Int16,
+	    poDataset->irasterio_helper(GF_Read,
+				       9, 9, 5, 5, 
+				       poBand->GetRasterDataType(),
+				       pasData, 2, 2, 
+				       GDT_Int16,
+				       10, 10,
 				       nPixelSpace, nLineSpace);
-
-	    CPPUNIT_ASSERT(status == CE_None);
 
 	    DBG(cerr << "Element 0,0: " << pasData[0+(0*2)] << endl);
 	    DBG(cerr << "Element 1,1: " << pasData[1+(1*2)] << endl);
 
-	    CPPUNIT_ASSERT(pasData[0+(0*2)] == -678);
-	    CPPUNIT_ASSERT(pasData[1+(1*2)] == -592);
+	    CPPUNIT_ASSERT(pasData[0+(0*2)] == -680);
+	    CPPUNIT_ASSERT(pasData[1+(1*2)] == -1522);
+
+	    delete[] pasData; pasData = 0;
+
+	    // Now Get V using a buffer of a different size. Slightly
+	    // different test from above.
+	    // I know the size and type because I looked at the URL. See above.
+	    pasData = new dods_int16[2 * 2];
+	    nPixelSpace = GDALGetDataTypeSize( GDT_Int16 ) / 8;
+	    nLineSpace = nPixelSpace * 2; // nBufXSize == 2!
+
+	    poDataset->irasterio_helper(GF_Read,
+				       9, 9, 4, 4, 
+				       poBand->GetRasterDataType(),
+				       pasData, 2, 2,
+				       GDT_Int16,
+				       10, 10,
+				       nPixelSpace, nLineSpace);
+
+	    DBG(cerr << "Element 0,0: " << pasData[0+(0*2)] << endl);
+	    DBG(cerr << "Element 1,1: " << pasData[1+(1*2)] << endl);
+
+	    CPPUNIT_ASSERT(pasData[0+(0*2)] == -680);
+	    CPPUNIT_ASSERT(pasData[1+(1*2)] == -1522);
 
 	    delete[] pasData; pasData = 0;
 
@@ -432,24 +525,195 @@ public:
 	    nPixelSpace = GDALGetDataTypeSize( GDT_Float32 ) / 8;
 	    nLineSpace = nPixelSpace * 2; // nBufXSize == 2!
 
-	    status = poBand->IRasterIO(GF_Read, 9, 9, 5, 5, 
-				       pafData, 2, 2, GDT_Float32,
+	    poDataset->irasterio_helper(GF_Read,
+				       9, 9, 5, 5, 
+				       poBand->GetRasterDataType(),
+				       pafData, 2, 2, 
+				       GDT_Float32,
+				       10, 10,
 				       nPixelSpace, nLineSpace);
-
-	    CPPUNIT_ASSERT(status == CE_None);
 
 	    DBG(cerr << "Element 0,0: " << pafData[0+(0*2)] << endl);
 	    DBG(cerr << "Element 1,1: " << pafData[1+(1*2)] << endl);
 
-	    CPPUNIT_ASSERT(pafData[0+(0*2)] == -678.0);
-	    CPPUNIT_ASSERT(pafData[1+(1*2)] == -592.0);
+	    CPPUNIT_ASSERT(pafData[0+(0*2)] == -680.0);
+	    CPPUNIT_ASSERT(pafData[1+(1*2)] == -1522.0);
 
 	    delete[] pafData; pafData = 0;
+
+	    // Grab two bands at once
+	    pasData = new dods_int16[5 * 5 * 2];
+	    nPixelSpace = GDALGetDataTypeSize( GDT_Int16 ) / 8;
+	    nLineSpace = nPixelSpace * 5; // nBufXSize == 5!
+
+	    poDataset->irasterio_helper(GF_Read,
+				       9, 9, 5, 5, 
+				       poBand->GetRasterDataType(),
+				       pasData, 5, 5, 
+				       GDT_Int16,
+				       10, 11,
+				       nPixelSpace, nLineSpace);
+
+	    DBG(cerr << "Band 1, 0,0: " << pasData[0+(0*5)+(0*5*5)] << endl);
+	    DBG(cerr << "Band 1, 4,4: " << pasData[4+(4*5)+(0*5*5)] << endl);
+	    DBG(cerr << "Band 2, 0,0: " << pasData[0+(0*5)+(1*5*5)] << endl);
+	    DBG(cerr << "Band 2, 4,4: " << pasData[4+(4*5)+(1*5*5)] << endl);
+
+	    CPPUNIT_ASSERT(pasData[0+(0*5)+(0*5*5)] == -360);
+	    CPPUNIT_ASSERT(pasData[4+(4*5)+(0*5*5)] == -987);
+	    CPPUNIT_ASSERT(pasData[0+(0*5)+(1*5*5)] == -334);
+	    CPPUNIT_ASSERT(pasData[4+(4*5)+(1*5*5)] == -827);
+
+	    delete[] pasData; pasData = 0;
+
 	}
 	catch (Error &e) {
 	    cerr << "Error: " << e.get_error_message() << endl;
-	    CPPUNIT_ASSERT(!"Caught Error while testing GetRaster!");
+	    CPPUNIT_ASSERT(!"Caught Error while testing IRasterIOHelper!");
 	}
+    }
+
+    void irasterio_test() {
+	// Get the whole raster U
+	poDataset = static_cast<DODSDataset *>(GDALOpen(url_1.c_str(), 
+							GA_ReadOnly));
+
+	// I know the size and type because I looked at the URL. See above.
+	dods_int16 *pasData = new dods_int16[21 * 17];
+
+	// Compute these as Dataset::RasterIO() would if they were
+	// defaulted. 
+	int nPixelSpace = GDALGetDataTypeSize( GDT_Int16 ) / 8;
+	int nLineSpace = nPixelSpace * 21; // nBufXSize == 21
+	int nBandSpace = nLineSpace * 17; // nBufYSize == 17
+	int nBandCount = 1;
+	int *panBandMap = new int[1];
+	panBandMap[0]=1;
+
+	CPLErr e = poDataset->IRasterIO(GF_Read, 
+					0, 0, 21, 17,
+					pasData, 21, 17, 
+					GDT_Int16,
+					nBandCount, panBandMap,
+					nPixelSpace, nLineSpace, nBandSpace);
+
+	CPPUNIT_ASSERT(e == CE_None);
+
+	DBG(cerr << "Element 0,0: " << pasData[0+(0*21)] << endl);
+	DBG(cerr << "Element 20,16: " << pasData[20+(16*21)] << endl);
+
+	CPPUNIT_ASSERT(pasData[0+(0*21)] == -1728);
+	CPPUNIT_ASSERT(pasData[20+(16*21)] == -303);
+
+	delete[] pasData; pasData = 0;
+	delete[] panBandMap; panBandMap = 0;
+
+	// Test multi band reads using V: Bands 10 and 11
+	poDataset = static_cast<DODSDataset *>(GDALOpen(url_2.c_str(), 
+							GA_ReadOnly));
+	pasData = new dods_int16[5 * 5 * 2];
+	nPixelSpace = GDALGetDataTypeSize( GDT_Int16 ) / 8;
+	nLineSpace = nPixelSpace * 5; // nBufXSize == 5!
+	nBandSpace = nLineSpace * 5; // nBufYSize == 5
+
+	nBandCount = 2;
+	panBandMap = new int[nBandCount];
+	panBandMap[0]=10; panBandMap[1]=11;
+
+	e = poDataset->IRasterIO(GF_Read, 
+				 9, 9, 5, 5,
+				 pasData, 5, 5,
+				 GDT_Int16,
+				 nBandCount, panBandMap,
+				 nPixelSpace, nLineSpace, nBandSpace);
+
+	CPPUNIT_ASSERT(e == CE_None);
+
+	DBG(cerr << "Band 1, 0,0: " << pasData[0+(0*5)+(0*5*5)] << endl);
+	DBG(cerr << "Band 1, 4,4: " << pasData[4+(4*5)+(0*5*5)] << endl);
+	DBG(cerr << "Band 2, 0,0: " << pasData[0+(0*5)+(1*5*5)] << endl);
+	DBG(cerr << "Band 2, 4,4: " << pasData[4+(4*5)+(1*5*5)] << endl);
+
+	CPPUNIT_ASSERT(pasData[0+(0*5)+(0*5*5)] == -360);
+	CPPUNIT_ASSERT(pasData[4+(4*5)+(0*5*5)] == -987);
+	CPPUNIT_ASSERT(pasData[0+(0*5)+(1*5*5)] == -334);
+	CPPUNIT_ASSERT(pasData[4+(4*5)+(1*5*5)] == -827);
+
+	delete[] pasData; pasData = 0;
+	delete[] panBandMap; panBandMap = 0;
+
+	// Band 10 and 12
+	pasData = new dods_int16[5 * 5 * 2];
+	nPixelSpace = GDALGetDataTypeSize( GDT_Int16 ) / 8;
+	nLineSpace = nPixelSpace * 5; // nBufXSize == 5!
+	nBandSpace = nLineSpace * 5; // nBufYSize == 5
+
+	nBandCount = 2;
+	panBandMap = new int[nBandCount];
+	panBandMap[0]=10; panBandMap[1]=12;
+
+	e = poDataset->IRasterIO(GF_Read, 
+				 9, 9, 5, 5,
+				 pasData, 5, 5,
+				 GDT_Int16,
+				 nBandCount, panBandMap,
+				 nPixelSpace, nLineSpace, nBandSpace);
+
+	CPPUNIT_ASSERT(e == CE_None);
+
+	DBG(cerr << "Band 1, 0,0: " << pasData[0+(0*5)+(0*5*5)] << endl);
+	DBG(cerr << "Band 1, 4,4: " << pasData[4+(4*5)+(0*5*5)] << endl);
+	DBG(cerr << "Band 2, 0,0: " << pasData[0+(0*5)+(1*5*5)] << endl);
+	DBG(cerr << "Band 2, 4,4: " << pasData[4+(4*5)+(1*5*5)] << endl);
+
+	CPPUNIT_ASSERT(pasData[0+(0*5)+(0*5*5)] == -360);
+	CPPUNIT_ASSERT(pasData[4+(4*5)+(0*5*5)] == -987);
+	CPPUNIT_ASSERT(pasData[0+(0*5)+(1*5*5)] == -349);
+	CPPUNIT_ASSERT(pasData[4+(4*5)+(1*5*5)] == -1952);
+
+	delete[] pasData; pasData = 0;
+	delete[] panBandMap; panBandMap = 0;
+
+	// Bands 9,10, 12,13
+	pasData = new dods_int16[5 * 5 * 4];
+	nPixelSpace = GDALGetDataTypeSize( GDT_Int16 ) / 8;
+	nLineSpace = nPixelSpace * 5; // nBufXSize == 5!
+	nBandSpace = nLineSpace * 5; // nBufYSize == 5
+
+	nBandCount = 4;
+	panBandMap = new int[nBandCount];
+	panBandMap[0]=9; panBandMap[1]=10; panBandMap[2]=12; panBandMap[3]=13;
+
+	e = poDataset->IRasterIO(GF_Read, 
+				 9, 9, 5, 5,
+				 pasData, 5, 5,
+				 GDT_Int16,
+				 nBandCount, panBandMap,
+				 nPixelSpace, nLineSpace, nBandSpace);
+
+	CPPUNIT_ASSERT(e == CE_None);
+
+	DBG(cerr << "Band 1, 0,0: " << pasData[0+(0*5)+(0*5*5)] << endl);
+	DBG(cerr << "Band 1, 4,4: " << pasData[4+(4*5)+(0*5*5)] << endl);
+	DBG(cerr << "Band 2, 0,0: " << pasData[0+(0*5)+(1*5*5)] << endl);
+	DBG(cerr << "Band 2, 4,4: " << pasData[4+(4*5)+(1*5*5)] << endl);
+	DBG(cerr << "Band 3, 0,0: " << pasData[0+(0*5)+(2*5*5)] << endl);
+	DBG(cerr << "Band 3, 4,4: " << pasData[4+(4*5)+(2*5*5)] << endl);
+	DBG(cerr << "Band 4, 0,0: " << pasData[0+(0*5)+(3*5*5)] << endl);
+	DBG(cerr << "Band 4, 4,4: " << pasData[4+(4*5)+(3*5*5)] << endl);
+
+	CPPUNIT_ASSERT(pasData[0+(0*5)+(0*5*5)] == -78);
+	CPPUNIT_ASSERT(pasData[4+(4*5)+(0*5*5)] == -1034);
+	CPPUNIT_ASSERT(pasData[0+(0*5)+(1*5*5)] == -360);
+	CPPUNIT_ASSERT(pasData[4+(4*5)+(1*5*5)] == -987);
+
+	CPPUNIT_ASSERT(pasData[0+(0*5)+(2*5*5)] == -349);
+	CPPUNIT_ASSERT(pasData[4+(4*5)+(2*5*5)] == -1952);
+	CPPUNIT_ASSERT(pasData[0+(0*5)+(3*5*5)] == -487);
+	CPPUNIT_ASSERT(pasData[4+(4*5)+(3*5*5)] == -1859);
+
+	delete[] pasData; pasData = 0;
+	delete[] panBandMap; panBandMap = 0;
     }
 
     void get_geo_info_test() {
@@ -531,8 +795,11 @@ main( int argc, char* argv[] )
 }
 
 // $Log$
+// Revision 1.4  2004/01/29 23:19:24  jimg
+// Added tests for the new methods.
+//
 // Revision 1.3  2004/01/21 21:52:16  jimg
-// Removed the unused method BuildConstraint(int). GDAL uses ones indexing
+// Removed the unused method build_constraint(int). GDAL uses ones indexing
 // for Bands while this driver was using zero-based indexing. I changed
 // the code so the driver now also uses ones-based indexing for bands.
 //
