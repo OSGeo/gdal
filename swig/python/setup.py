@@ -68,6 +68,11 @@ gdal_module = Extension('_gdal',
                     include_dirs = include_dirs,
                     libraries = libraries,
                     library_dirs = library_dirs)
+gdalconst_module = Extension('_gdalconst',
+                    sources=['gdalconst_wrap.c'],
+                    include_dirs = include_dirs,
+                    libraries = libraries,
+                    library_dirs = library_dirs)
 osr_module = Extension('_osr',
                     sources=['osr_wrap.cpp'],
                     include_dirs = include_dirs,
@@ -86,5 +91,6 @@ setup( name = 'Gdal Wrapper',
        py_modules = ['gdal', 'osr', 'ogr'],
        url="http://www.gdal.org",
        ext_modules = [gdal_module,
+                      gdalconst_module,
                       osr_module,
                       ogr_module] )
