@@ -1,5 +1,8 @@
 2002-04-03  Frank Warmerdam  <warmerdam@pobox.com>
 
+	* gdal/frmts/ceos2/sar_ceosdataset.cpp: added special GetMetadata()
+	access to raw record information for Ahmed.
+
 	* gdal/frmts/gtiff/geotiff.cpp: Remove dependence on tiffiop.h by
 	adding IsBlockAvailable() method which uses TIFFGetField() to access
 	the strip/tile byte counts.
