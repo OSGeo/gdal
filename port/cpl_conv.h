@@ -73,6 +73,16 @@ void CPL_DLL *CPLGetSymbol( const char *, const char * );
 /* -------------------------------------------------------------------- */
 char CPL_DLL  **CPLReadDir( const char *pszPath );
 
+/* -------------------------------------------------------------------- */
+/*      Filename handling functions.                                    */
+/* -------------------------------------------------------------------- */
+const char CPL_DLL *CPLGetPath( const char * );
+const char CPL_DLL *CPLGetFilename( const char * );
+const char CPL_DLL *CPLGetBasename( const char * );
+const char CPL_DLL *CPLGetExtension( const char * );
+const char CPL_DLL *CPLFormFilename( const char *pszPath,
+                                     const char *pszBasename,
+                                     const char *pszExtension );
 
 CPL_C_END
 
