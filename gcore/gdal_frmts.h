@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2004/10/21 19:22:41  fwarmerdam
+ * Added GDALRegister_RS2().
+ *
  * Revision 1.29  2004/10/16 14:39:04  fwarmerdam
  * added GMT format
  *
@@ -178,6 +181,7 @@ void CPL_DLL GDALRegister_netCDF(void);
 void CPL_DLL GDALRegister_LAN(void);
 void CPL_DLL GDALRegister_CPG(void);
 void CPL_DLL GDALRegister_AirSAR(void);
+void CPL_DLL GDALRegister_RS2(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
