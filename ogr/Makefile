@@ -70,6 +70,10 @@ ogrinfo.exe:      ogrinfo.obj $(OBJ_OGR)
         cl ogrinfo.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
 			$(ALL_LIBS)
 
+sdts2mi.exe:      sdts2mi.obj $(OBJ_OGR)
+        cl sdts2mi.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
+			$(ALL_LIBS)
+
 clean:
 	del *.obj
         del *.exe
