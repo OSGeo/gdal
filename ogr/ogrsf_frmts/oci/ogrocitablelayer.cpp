@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/12/29 19:43:59  warmerda
+ * avoid some warnings
+ *
  * Revision 1.4  2002/12/29 03:48:58  warmerda
  * fixed memory bug in CreateFeature()
  *
@@ -97,7 +100,6 @@ OGROCITableLayer::~OGROCITableLayer()
 OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
 
 {
-    char		szCommand[1024];
     OGROCISession      *poSession = poDS->GetSession();
     sword               nStatus;
     OGRFeatureDefn *poDefn = new OGRFeatureDefn( pszTable );
@@ -547,7 +549,6 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
     char		*pszCommand;
     int                 i, bNeedComma;
     unsigned int        nCommandBufSize;;
-    OGRErr              eErr;
 
     nCommandBufSize = 2000;
     pszCommand = (char *) CPLMalloc(nCommandBufSize);

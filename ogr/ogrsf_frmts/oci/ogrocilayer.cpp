@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/12/29 19:43:59  warmerda
+ * avoid some warnings
+ *
  * Revision 1.2  2002/12/28 04:38:36  warmerda
  * converted to unix file conventions
  *
@@ -141,8 +144,6 @@ OGRFeature *OGROCILayer::GetNextFeature()
 OGRFeature *OGROCILayer::GetNextRawFeature()
 
 {
-    char	szCommand[4096];
-
 /* -------------------------------------------------------------------- */
 /*      Do we need to establish an initial query?                       */
 /* -------------------------------------------------------------------- */
@@ -434,7 +435,7 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
 
         else if( ORA_GTYPE_MATCH(nGType,ORA_GTYPE_POLYGON) )
         {
-            CPLAssert(wkbFlatten(poGeom->getGeometryType()) == wkbLinearRing);
+            CPLAssert(wkbFlatten(poGeom->getGeometryType()) == wkbLineString );
             poPolygon->addRingDirectly( (OGRLinearRing *) poGeom );
         }
         else 
