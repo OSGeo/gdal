@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/12/05 22:40:09  warmerda
+ * Added very limited SetProjection support, includes Bessel
+ *
  * Revision 1.9  2000/11/29 21:31:28  warmerda
  * added support for writing georef on SetGeoTransform
  *
@@ -139,6 +142,7 @@ class HKVDataset : public RawDataset
     virtual CPLErr GetGeoTransform( double * );
 
     virtual CPLErr SetGeoTransform( double * );
+    virtual CPLErr SetProjection( const char * );
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -433,6 +437,38 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     bGeorefChanged = TRUE;
 
     return( CE_None );
+}
+
+/************************************************************************/
+/*                           SetProjection()                            */
+/*                                                                      */
+/*      We provide very limited support for setting the projection.     */
+/*      Currently all that is supported is controlling whether the      */
+/*      datum is WGS84 (the default), or Bessel Ellipsoid (as is        */
+/*      found with Japanese DEM data with Tokyo datum).                 */
+/************************************************************************/
+
+CPLErr HKVDataset::SetProjection( const char * pszProjection )
+
+{
+    printf( "HKVDataset::SetProjection(%s)\n", pszProjection );
+
+    papszGeoref = CSLSetNameValue( papszGeoref, "projection.name", "LL" );
+
+    if( strstr(pszProjection,"Bessel") != NULL )
+    {
+        papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name", 
+                                       "ev-bessel" );
+    }
+    else
+    {
+        papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name", 
+                                       "ev-wgs-84" );
+    }
+
+    bGeorefChanged = TRUE;
+
+    return CE_None;
 }
 
 /************************************************************************/
