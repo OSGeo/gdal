@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.24  2005/02/24 17:20:47  hobu
+ * move constants to %constants so they are available to
+ * all languages
+ *
  * Revision 1.23  2005/02/24 16:15:53  hobu
  * ifdef'd the %pythoncode, conditionally rename some methods
  * if they conflict with existing "object" methods in C#.
@@ -109,9 +113,11 @@
 %feature("autodoc");
 
 %init %{
+
   if ( OGRGetDriverCount() == 0 ) {
     OGRRegisterAll();
   }
+  
 %}
 
 typedef int OGRErr;
@@ -119,74 +125,65 @@ typedef int OGRwkbByteOrder;
 typedef int OGRwkbGeometryType;
 typedef int OGRFieldType;
 typedef int OGRJustification;
+  
+%constant wkb25Bit = -2147483648;
+%constant wkbUnknown = 0;
 
-#ifdef SWIGPYTHON
-%pythoncode %{
-
-wkb25Bit = -2147483648 # 0x80000000
-wkbUnknown = 0
-wkbPoint = 1  
-wkbLineString = 2
-wkbPolygon = 3
-wkbMultiPoint = 4
-wkbMultiLineString = 5
-wkbMultiPolygon = 6
-wkbGeometryCollection = 7
-wkbNone = 100
-wkbLinearRing = 101
-wkbPoint25D =              wkbPoint              + wkb25Bit
-wkbLineString25D =         wkbLineString         + wkb25Bit
-wkbPolygon25D =            wkbPolygon            + wkb25Bit
-wkbMultiPoint25D =         wkbMultiPoint         + wkb25Bit
-wkbMultiLineString25D =    wkbMultiLineString    + wkb25Bit
-wkbMultiPolygon25D =       wkbMultiPolygon       + wkb25Bit
-wkbGeometryCollection25D = wkbGeometryCollection + wkb25Bit
+%constant wkbPoint = 1;
+%constant wkbLineString = 2;
+%constant wkbPolygon = 3;
+%constant wkbMultiPoint = 4;
+%constant wkbMultiLineString = 5;
+%constant wkbMultiPolygon = 6;
+%constant wkbGeometryCollection = 7;
+%constant wkbNone = 100;
+%constant wkbLinearRing = 101;
+%constant wkbPoint25D =              wkbPoint              + wkb25DBit;
+%constant wkbLineString25D =         wkbLineString         + wkb25DBit;
+%constant wkbPolygon25D =            wkbPolygon            + wkb25DBit;
+%constant wkbMultiPoint25D =         wkbMultiPoint         + wkb25DBit;
+%constant wkbMultiLineString25D =    wkbMultiLineString    + wkb25DBit;
+%constant wkbMultiPolygon25D =       wkbMultiPolygon       + wkb25DBit;
+%constant wkbGeometryCollection25D = wkbGeometryCollection + wkb25DBit;
 
 
-OFTInteger = 0
-OFTIntegerList= 1
-OFTReal = 2
-OFTRealList = 3
-OFTString = 4
-OFTStringList = 5
-OFTWideString = 6
-OFTWideStringList = 7
-OFTBinary = 8
+%constant OFTInteger = 0;
+%constant OFTIntegerList= 1;
+%constant OFTReal = 2;
+%constant OFTRealList = 3;
+%constant OFTString = 4;
+%constant OFTStringList = 5;
+%constant OFTWideString = 6;
+%constant OFTWideStringList = 7;
+%constant OFTBinary = 8;
 
 
-OJUndefined = 0
-OJLeft = 1
-OJRight = 2
+%constant OJUndefined = 0;
+%constant OJLeft = 1;
+%constant OJRight = 2;
 
-wkbXDR = 0
-wkbNDR = 1
+%constant wkbXDR = 0;
+%constant wkbNDR = 1;
 
-
-
-
-OLCRandomRead          = "RandomRead"
-OLCSequentialWrite     = "SequentialWrite"
-OLCRandomWrite         = "RandomWrite"
-OLCFastSpatialFilter   = "FastSpatialFilter"
-OLCFastFeatureCount    = "FastFeatureCount"
-OLCFastGetExtent       = "FastGetExtent"
-OLCCreateField         = "CreateField"
-OLCTransactions        = "Transactions"
-OLCDeleteFeature       = "DeleteFeature"
-OLCFastSetNextByIndex  = "FastSetNextByIndex"
+%constant OLCRandomRead          = "RandomRead";
+%constant OLCSequentialWrite     = "SequentialWrite";
+%constant OLCRandomWrite         = "RandomWrite";
+%constant OLCFastSpatialFilter   = "FastSpatialFilter";
+%constant OLCFastFeatureCount    = "FastFeatureCount";
+%constant OLCFastGetExtent       = "FastGetExtent";
+%constant OLCCreateField         = "CreateField";
+%constant OLCTransactions        = "Transactions";
+%constant OLCDeleteFeature       = "DeleteFeature";
+%constant OLCFastSetNextByIndex  = "FastSetNextByIndex";
 
 
-ODsCCreateLayer        = "CreateLayer"
-ODsCDeleteLayer        = "DeleteLayer"
+%constant ODsCCreateLayer        = "CreateLayer";
+%constant ODsCDeleteLayer        = "DeleteLayer";
 
 
-ODrCCreateDataSource   = "CreateDataSource"
-ODrCDeleteDataSource   = "DeleteDataSource"
+%constant ODrCCreateDataSource   = "CreateDataSource";
+%constant ODrCDeleteDataSource   = "DeleteDataSource";
 
-have_geos=0
-%}
-
-#endif
 
 %{
 #include <iostream>
@@ -209,6 +206,7 @@ typedef void OGRFieldDefnShadow;
 
 typedef double *double_4;
 
+const unsigned long wkb25bit = -2147483648;
 %}
 
 
