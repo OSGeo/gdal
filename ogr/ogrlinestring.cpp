@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2002/02/22 22:24:08  warmerda
+ * clarify setPoints code
+ *
  * Revision 1.24  2001/11/14 14:44:06  warmerda
  * fixed problem with WKT translation
  *
@@ -473,7 +476,7 @@ void OGRLineString::addPoint( double x, double y, double z )
  */
 
 void OGRLineString::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
-                               double * padfZ )
+                               double * padfZIn )
 
 {
     setNumPoints( nPointsIn );
@@ -482,21 +485,21 @@ void OGRLineString::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
 /* -------------------------------------------------------------------- */
 /*      Check 2D/3D.                                                    */
 /* -------------------------------------------------------------------- */
-    if( padfZ != NULL )
+    if( padfZIn != NULL )
     {
         int     i, bIs3D = FALSE;
 
         for( i = 0; i < nPointsIn && !bIs3D; i++ )
         {
-            if( padfZ[i] != 0.0 )
+            if( padfZIn[i] != 0.0 )
                 bIs3D = TRUE;
         }
 
         if( !bIs3D )
-            padfZ = NULL;
+            padfZIn = NULL;
     }
 
-    if( padfZ == NULL )
+    if( padfZIn == NULL )
     {
         if( this->padfZ != NULL )
             Make2D();
