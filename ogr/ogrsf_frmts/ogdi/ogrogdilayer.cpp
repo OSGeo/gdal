@@ -29,6 +29,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/04/17 21:41:02  warmerda
+ * Added use of cln_GetLayerCapabilities() to query list of available layers.
+ * Restructured OGROGDIDataSource and OGROGDILayer classes somewhat to
+ * avoid passing so much information in the layer creation call.  Added support
+ * for preserving text on OGDI text features.
+ *
  * Revision 1.2  2000/08/30 01:36:57  danmo
  * Added GetSpatialRef() support
  *
@@ -45,24 +51,25 @@
 /*                           OGROGDILayer()                            */
 /************************************************************************/
 
-OGROGDILayer::OGROGDILayer( int nNewClientID, const char * pszName,
-                            ecs_Family eFamily, ecs_Region *sGlobalBounds,
-                            OGRSpatialReference *poSpatialRef)
+OGROGDILayer::OGROGDILayer( OGROGDIDataSource *poODS, 
+                            const char * pszName, ecs_Family eFamily )
+
 {
-    m_nClientID = nNewClientID;
+    m_poODS = poODS;
+    m_nClientID = m_poODS->GetClientID();
     m_eFamily = eFamily;
 
     m_pszOGDILayerName = CPLStrdup(pszName);
 
     m_poFilterGeom = NULL;
-    m_sFilterBounds = *sGlobalBounds;
+    m_sFilterBounds = *(m_poODS->GetGlobalBounds());
 
     m_iNextShapeId = 0;
     m_nTotalShapeCount = -1;
     m_poFeatureDefn = NULL;
 
     // Keep a reference on the SpatialRef (owned by the dataset).
-    m_poSpatialRef = poSpatialRef;
+    m_poSpatialRef = m_poODS->GetSpatialRef();
 
     // Select layer and feature family.
     ResetReading();
@@ -283,6 +290,14 @@ OGRFeature *OGROGDILayer::GetNextFeature()
         pszFieldStart[nNameLen] = chSavedChar;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Apply the text associated with text features if appropriate.    */
+/* -------------------------------------------------------------------- */
+    if( m_eFamily == Text )
+    {
+        poFeature->SetField( "text", ECSGEOM(psResult).text.desc );
+    }
+
 
     return poFeature;
 }
@@ -478,6 +493,16 @@ void OGROGDILayer::BuildFeatureDefn()
             break;
 
         }
+
+        m_poFeatureDefn->AddFieldDefn( &oField );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add a text attribute for text objects.                          */
+/* -------------------------------------------------------------------- */
+    if( m_eFamily == Text )
+    {
+        OGRFieldDefn	oField("text", OFTString);
 
         m_poFeatureDefn->AddFieldDefn( &oField );
     }

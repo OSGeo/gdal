@@ -29,6 +29,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/04/17 21:41:02  warmerda
+ * Added use of cln_GetLayerCapabilities() to query list of available layers.
+ * Restructured OGROGDIDataSource and OGROGDILayer classes somewhat to
+ * avoid passing so much information in the layer creation call.  Added support
+ * for preserving text on OGDI text features.
+ *
  * Revision 1.2  2000/08/30 01:36:57  danmo
  * Added GetSpatialRef() support
  *
@@ -49,12 +55,11 @@ OGROGDIDataSource::OGROGDIDataSource()
 
 {
     m_pszFullName = NULL;
-    m_pszURL = NULL;
-    m_pszOGDILayerName = NULL;
     m_papoLayers = NULL;
     m_nLayers = 0;
     m_nClientID = -1;
     m_poSpatialRef = NULL;
+    m_poCurrentLayer = NULL;
 }
 
 /************************************************************************/
@@ -65,8 +70,6 @@ OGROGDIDataSource::~OGROGDIDataSource()
 
 {
     CPLFree(m_pszFullName );
-    CPLFree(m_pszURL);
-    CPLFree(m_pszOGDILayerName);
 
     for( int i = 0; i < m_nLayers; i++ )
         delete m_papoLayers[i];
@@ -88,147 +91,169 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
 {
     ecs_Result *psResult;
     char *pszFamily=NULL, *pszLyrName=NULL;
+    char *pszWorkingName;
 
     CPLAssert( m_nLayers == 0 );
     
 /* -------------------------------------------------------------------- */
 /*      Parse the dataset name.                                         */
-/*                                                                      */
-/*      Since I don't know of any way to parse the dictionary to        */
-/*      retrieve the list of layers, the current implementation         */
-/*      expects the layer of interest to be included at the end of      */
-/*      the gltp URL,                                                   */
 /*      i.e.                                                            */
-/*      gltp://<hostname>/<format>/<path_to_dataset>:<layer_name>:<Family>*/
+/* gltp://<hostname>/<format>/<path_to_dataset>[:<layer_name>:<Family>] */
 /*                                                                      */
 /*      Where <Family> is one of: Line, Area, Point, and Text           */
 /* -------------------------------------------------------------------- */
+        if( !EQUALN(pszNewName,"gltp:",5) )
+            return FALSE;
 
-    if( !EQUALN(pszNewName,"gltp:",5) )
-        return FALSE;
+        pszWorkingName = CPLStrdup( pszNewName );
 
-    m_pszFullName = CPLStrdup( pszNewName );
-    pszFamily = strrchr(m_pszFullName, ':');
-    if (pszFamily)
-    {
-        *pszFamily = '\0';
-        pszLyrName = strrchr(m_pszFullName, ':');
-    }
-
-    if (pszLyrName == NULL || pszLyrName == m_pszFullName + 4)
-    {
-        if (!bTestOpen)
+        pszFamily = strrchr(pszWorkingName, ':');
+        if (pszFamily && pszFamily != pszWorkingName + 4)
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Incomplete OGDI Dataset Name (%s). "
-                      "OGR needs layer name and feature family at end of URL: "
-    "gltp://<hostname>/<format>/<path_to_dataset>:<layer_name>:<Family>\n",
-                      m_pszFullName);
-        }
-        return FALSE;
-    }
+            pszLyrName = strrchr(pszWorkingName, ':');
+            if (pszLyrName == pszWorkingName + 4)
+                pszLyrName = NULL;
 
-    *pszLyrName = '\0';
-    m_pszURL = CPLStrdup(m_pszFullName);
-    *pszLyrName = ':';
-    m_pszOGDILayerName = CPLStrdup(pszLyrName+1);
-    *pszFamily = ':';
-    pszFamily++;
-
-    if (EQUAL(pszFamily, "Line"))
-        m_eFamily = Line;
-    else if (EQUAL(pszFamily, "Area"))
-        m_eFamily = Area;
-    else if (EQUAL(pszFamily, "Point"))
-        m_eFamily = Point;
-    else if (EQUAL(pszFamily, "Text"))
-        m_eFamily = Text;
-    else
-    {
-        if (!bTestOpen)
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Invalid or unsupported family name (%s) in URL %s\n",
-                      pszFamily, m_pszFullName);
+            if( pszLyrName != NULL )
+            {
+                *pszFamily = '\0';
+                *pszLyrName = '\0';
+            }
         }
-        return FALSE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Open the client interface.                                      */
 /* -------------------------------------------------------------------- */
-    psResult = cln_CreateClient(&m_nClientID, m_pszURL);
-    if( ECSERROR( psResult ) )
-    {
-        if (!bTestOpen)
+        psResult = cln_CreateClient(&m_nClientID, pszWorkingName);
+        if( ECSERROR( psResult ) )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "OGDI DataSource Open Failed: %s\n",
-                      psResult->message );
+            if (!bTestOpen)
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "OGDI DataSource Open Failed: %s\n",
+                          psResult->message );
+            }
+            return FALSE;
         }
-        return FALSE;
-    }
+
+        m_pszFullName = CPLStrdup(pszNewName);
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file.                         */
 /* -------------------------------------------------------------------- */
-    psResult = cln_GetGlobalBound( m_nClientID );
-    if( ECSERROR(psResult) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s", psResult->message );
-        return FALSE;
-    }
+        psResult = cln_GetGlobalBound( m_nClientID );
+        if( ECSERROR(psResult) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s", psResult->message );
+            return FALSE;
+        }
 
-    m_sGlobalBounds = ECSREGION(psResult);
+        m_sGlobalBounds = ECSREGION(psResult);
 
-    psResult = cln_GetServerProjection(m_nClientID);
-    if( ECSERROR(psResult) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s", psResult->message );
-        return FALSE;
-    }
+        psResult = cln_GetServerProjection(m_nClientID);
+        if( ECSERROR(psResult) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s", psResult->message );
+            return FALSE;
+        }
 
-    m_poSpatialRef = new OGRSpatialReference;
+        m_poSpatialRef = new OGRSpatialReference;
 
-    if( m_poSpatialRef->importFromProj4( ECSTEXT(psResult) ) != OGRERR_NONE )
-    {
-        CPLError( CE_Warning, CPLE_NotSupported,
-                  "untranslatable PROJ.4 projection: %s\n", 
-                  ECSTEXT(psResult) );
-        delete m_poSpatialRef;
-        m_poSpatialRef = NULL;
-    }
+        if( m_poSpatialRef->importFromProj4( ECSTEXT(psResult) ) != OGRERR_NONE )
+        {
+            CPLError( CE_Warning, CPLE_NotSupported,
+                      "untranslatable PROJ.4 projection: %s\n", 
+                      ECSTEXT(psResult) );
+            delete m_poSpatialRef;
+            m_poSpatialRef = NULL;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Select the global region.                                       */
 /* -------------------------------------------------------------------- */
-    psResult = cln_SelectRegion( m_nClientID, &m_sGlobalBounds );
-    if( ECSERROR(psResult) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s", psResult->message );
-        return FALSE;
-    }
+        psResult = cln_SelectRegion( m_nClientID, &m_sGlobalBounds );
+        if( ECSERROR(psResult) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s", psResult->message );
+            return FALSE;
+        }
     
 /* -------------------------------------------------------------------- */
-/*      Create layer.                                                   */
-/*                                                                      */
-/*      Since OGDI forces us to set a global active layer and           */
-/*      family, the current implementation will support only one        */
-/*      layer at a time.                                                */
+/*      If an explicit layer was selected, just create that layer.      */
 /* -------------------------------------------------------------------- */
-    m_papoLayers = (OGROGDILayer**)CPLCalloc(1, sizeof(OGROGDILayer*));
+        m_poCurrentLayer = NULL;
 
-    m_papoLayers[m_nLayers++] = new OGROGDILayer(m_nClientID, 
-                                                 m_pszOGDILayerName,
-                                                 m_eFamily, &m_sGlobalBounds,
-                                                 m_poSpatialRef);
+        if( pszLyrName != NULL )
+        {
+            ecs_Family	eFamily;
 
-    return TRUE;
+            if (EQUAL(pszFamily, "Line"))
+                eFamily = Line;
+            else if (EQUAL(pszFamily, "Area"))
+                eFamily = Area;
+            else if (EQUAL(pszFamily, "Point"))
+                eFamily = Point;
+            else if (EQUAL(pszFamily, "Text"))
+                eFamily = Text;
+            else
+            {
+                if (!bTestOpen)
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                              "Invalid or unsupported family name (%s) in URL %s\n",
+                              pszFamily, m_pszFullName);
+                }
+                return FALSE;
+            }
+
+            IAddLayer( pszLyrName, eFamily );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise create a layer for every layer in the capabilities.   */
+/* -------------------------------------------------------------------- */
+        else
+        {
+            int		i;
+            const ecs_LayerCapabilities *psLayerCap;
+
+            for( i = 0; 
+                (psLayerCap = cln_GetLayerCapabilities(m_nClientID,i)) != NULL;
+                 i++ )
+            {
+                if( psLayerCap->families[Point] )
+                    IAddLayer( psLayerCap->name, Point );
+                if( psLayerCap->families[Line] )
+                    IAddLayer( psLayerCap->name, Line );
+                if( psLayerCap->families[Area] )
+                    IAddLayer( psLayerCap->name, Area );
+                if( psLayerCap->families[Text] )
+                    IAddLayer( psLayerCap->name, Text );
+            }
+        }
+
+        return TRUE;
 }
 
+/************************************************************************/
+/*                             IAddLayer()                              */
+/*                                                                      */
+/*      Internal helper function for adding one existing layer to       */
+/*      the datasource.                                                 */
+/************************************************************************/
+
+void OGROGDIDataSource::IAddLayer( const char *pszLayerName, 
+                                   ecs_Family eFamily )
+
+{
+    m_papoLayers = (OGROGDILayer**)
+        CPLRealloc( m_papoLayers, (m_nLayers+1) * sizeof(OGROGDILayer*));
+    
+    m_papoLayers[m_nLayers++] = new OGROGDILayer(this, pszLayerName, eFamily);
+}
 
 /************************************************************************/
 /*                           TestCapability()                           */

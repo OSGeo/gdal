@@ -7,28 +7,36 @@
 
 <h1>OGDI Vectors</h1>
 
-OGDI Vectors are supported for read access for the following
-family types:
+OGDI vector support is optional in OGR, and is normally only configured if
+OGDI is installed on the build system.  If available OGDI vectors are 
+supported for read access for the following family types:
 <ul>
   <li> Point
   <li> Line
   <li> Area
-  <li> Text (Currently returned as regular points and text string is lost)
+  <li> Text (Currently returned as points with the text in the "text" attribute)
 </ul>
 <p>
 
-OGDI has no clear standard for the way to parse the OGDI dataset dictionary 
-and retrieve the list of available layers.  And in addition to that, an
-OGDI client can select only with one layer and family type at any given 
-time.  For those reasons, in the current implementation a DataSource 
-can contain only one OGR Layer, corresponding to one OGDI layer and family 
-type.<p>
+If an OGDI gltp url is opened directly the OGDI 3.1 capabilities for the
+driver/server are queried to get a list of layers.  One OGR layer is created
+for each OGDI family available for each layer in the datastore.  For drivers
+such as VRF this can result in alot of layers.  Each of the layers has an
+OGR name based on the OGDI name plus an underscore and the family name.  For
+instance a layer might be called <b>watrcrsl@hydro(*)_line</b> if coming
+out of the VRF driver. 
 
-So the URL used to open a OGDI layer through OGR is the regular GLTP URL to
-which you append the layer name and family type (separated by colons):<p>
+Alternatively to accessing all the layers in a datastore, it is possible to 
+open a particular layer using a customized filename consisting
+of the regular GLTP URL to
+which you append the layer name and family type (separated by colons).  This
+mechanism must be used to access layers of pre OGDI 3.1 drivers as before
+OGDI 3.1 there was no regular way to discover available layers in OGDI.<p>
+
 <PRE>
    gltp:[//&lt;hostname&gt;]/&lt;driver_name&gt;/&lt;dataset_name&gt;:&lt;layer_name&gt;:&lt;family&gt;
 </PRE>
+
 Where &lt;layer_name&gt; is the OGDI Layer name, and &lt;family&gt; is one of:
 "line", "area", "point", or "text".<p>
 
@@ -44,9 +52,7 @@ using the GDAL OGDI Raster driver.<p>
 <h3>See Also</h3>
 
 <ul>
-<li> <a href="http://gdal.velocet.ca/projects/ogdi/index.html">OGDI Project 
-     Page</a>.<p>
-
+<li> <a href="http://ogdi.sourceforge.net/">OGDI.SourceForge.Net</a><p>
 </ul>
 
 </body>

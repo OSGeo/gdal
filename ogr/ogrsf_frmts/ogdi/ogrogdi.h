@@ -30,6 +30,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/04/17 21:41:02  warmerda
+ * Added use of cln_GetLayerCapabilities() to query list of available layers.
+ * Restructured OGROGDIDataSource and OGROGDILayer classes somewhat to
+ * avoid passing so much information in the layer creation call.  Added support
+ * for preserving text on OGDI text features.
+ *
  * Revision 1.2  2000/08/30 01:36:56  danmo
  * Added GetSpatialRef() support
  *
@@ -48,9 +54,11 @@
 /************************************************************************/
 /*                             OGROGDILayer                             */
 /************************************************************************/
+class OGROGDIDataSource;
 
 class OGROGDILayer : public OGRLayer
 {
+    OGROGDIDataSource  *m_poODS;
     int                 m_nClientID;
     char               *m_pszOGDILayerName;
     ecs_Family          m_eFamily;
@@ -64,9 +72,8 @@ class OGROGDILayer : public OGRLayer
     int                 m_nTotalShapeCount;
 
   public:
-                        OGROGDILayer( int nClientID, const char * pszName,
-                                      ecs_Family eFamily, ecs_Region *sBounds,
-                                      OGRSpatialReference *poSpatialRef);
+                        OGROGDILayer(OGROGDIDataSource *, const char *, 
+                                     ecs_Family);
                         ~OGROGDILayer();
 
     OGRGeometry *       GetSpatialFilter() { return m_poFilterGeom; }
@@ -98,14 +105,17 @@ class OGROGDIDataSource : public OGRDataSource
     OGROGDILayer      **m_papoLayers;
     int                 m_nLayers;
     
-    char               *m_pszFullName;
-    char               *m_pszURL;
-    char               *m_pszOGDILayerName;
     int                 m_nClientID;
-    ecs_Family          m_eFamily;
 
     ecs_Region          m_sGlobalBounds;
     OGRSpatialReference *m_poSpatialRef;
+
+    OGROGDILayer	*m_poCurrentLayer;
+
+    char		*m_pszFullName;
+
+    void		IAddLayer( const char *pszLayerName, 
+                                   ecs_Family eFamily );
 
   public:
                         OGROGDIDataSource();
@@ -118,6 +128,10 @@ class OGROGDIDataSource : public OGRDataSource
     OGRLayer            *GetLayer( int );
 
     int                 TestCapability( const char * );
+
+    ecs_Region	       *GetGlobalBounds() { return &m_sGlobalBounds; }
+    OGRSpatialReference*GetSpatialRef() { return m_poSpatialRef; }
+    int			GetClientID() { return m_nClientID; }
 };
 
 /************************************************************************/
