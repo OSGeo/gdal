@@ -119,7 +119,7 @@ else
 fi
 
 CFLAGS="$CFLAGS $THREAD_FLAG"
-CPPFLAGS="$CPPFLAGS $THREAD_FLAG"
+CXXFLAGS="$CXXFLAGS $THREAD_FLAG"
 LIBS="$THREAD_LIB $LIBS" 
 
 dnl ---------------------------------------------------------------------------
@@ -1149,6 +1149,28 @@ else
 fi
 
 AC_SUBST(PROJ_STATIC)
+
+dnl ---------------------------------------------------------------------------
+dnl Get/override version.
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([GDAL version])
+
+AC_ARG_WITH(gdal-ver,[  --with-gdal-ver=ARG Override VERSION file],,)
+
+if test "x$with_gdal_ver" != "x"; then
+
+  GDAL_VER=$with_gdal_ver
+
+else
+
+  GDAL_VER=`cat VERSION`
+
+fi
+
+AC_MSG_RESULT($GDAL_VER)
+
+AC_SUBST(GDAL_VER)
 
 dnl ---------------------------------------------------------------------------
 
