@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/05/11 16:22:01  warmerda
+ * Also search for .hdr appended to full filename, not just .hdr replacing
+ * the existing extension - as per Bugzilla bug 127 from Alessandro Amici.
+ *
  * Revision 1.1  2002/03/04 21:52:48  warmerda
  * New
  *
@@ -518,8 +522,7 @@ int ENVIDataset::ReadHeader( FILE * fpHdr )
 GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int		i, bSelectedHDR;
-    char	*pszHDRFilename;
+    int		i;
     
 /* -------------------------------------------------------------------- */
 /*	We assume the user is pointing to the binary (ie. .bil) file.	*/
@@ -528,39 +531,38 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Now we need to tear apart the filename to form a .HDR           */
-/*      filename.                                                       */
-/* -------------------------------------------------------------------- */
-    pszHDRFilename = (char *) CPLMalloc(strlen(poOpenInfo->pszFilename)+5);
-    strcpy( pszHDRFilename, poOpenInfo->pszFilename );;
-
-    for( i = strlen(pszHDRFilename)-1; i > 0; i-- )
-    {
-        if( pszHDRFilename[i] == '.' )
-        {
-            pszHDRFilename[i] = '\0';
-            break;
-        }
-    }
-
-    strcat( pszHDRFilename, ".hdr" );
-
-    bSelectedHDR = EQUAL(pszHDRFilename,poOpenInfo->pszFilename);
-
-/* -------------------------------------------------------------------- */
-/*      Do we have a .hdr file?                                         */
+/*      Do we have a .hdr file?  Try upper and lower case, and          */
+/*      replacing the extension as well as appending the extension      */
+/*      to whatever we currently have.                                  */
 /* -------------------------------------------------------------------- */
     FILE	*fp;
+    const char	*pszHDRFilename;
 
+    pszHDRFilename = CPLResetExtension( poOpenInfo->pszFilename, "hdr" );
     fp = VSIFOpen( pszHDRFilename, "r" );
+
+#ifndef WIN32
     if( fp == NULL )
     {
-        strcpy( pszHDRFilename + strlen(pszHDRFilename)-4, ".HDR" );
+        pszHDRFilename = CPLResetExtension( poOpenInfo->pszFilename, "HDR" );
         fp = VSIFOpen( pszHDRFilename, "r" );
     }
+#endif
+    if( fp == NULL )
+    {
+        pszHDRFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
+                                          "hdr" );
+        fp = VSIFOpen( pszHDRFilename, "r" );
+    }
+#ifndef WIN32
+    if( fp == NULL )
+    {
+        pszHDRFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
+                                          "HDR" );
+        fp = VSIFOpen( pszHDRFilename, "r" );
+    }
+#endif
 
-    CPLFree( pszHDRFilename );
-    
     if( fp == NULL )
         return NULL;
 
@@ -588,7 +590,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Has the user selected the .hdr file to open?                    */
 /* -------------------------------------------------------------------- */
-    if( bSelectedHDR )
+    if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"hdr") )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "The selected file is an ENVI header file, but to\n"
