@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/11/09 19:09:03  warmerda
+ * added VARIANTToString... does not appear to work
+ *
  * Revision 1.10  1999/11/18 19:02:20  warmerda
  * expanded tabs
  *
@@ -88,6 +91,10 @@ HRESULT DumpErrorHResult( HRESULT, const char *, ... );
 HRESULT AnsiToUnicode(LPCSTR pszA, LPOLESTR* ppszW);
 HRESULT UnicodeToAnsi(LPCOLESTR ppszW, LPSTR *pszA );
 HRESULT AnsiToBSTR( const char *, BSTR * );
+
+extern "C" {
+const char *VARIANTToString( VARIANT * );
+}
 
 /* -------------------------------------------------------------------- */
 /*      Ole helper functions.                                           */
