@@ -1,4 +1,4 @@
-/* $Id: tif_dirinfo.c,v 1.26 2004/06/06 10:17:26 dron Exp $ */
+/* $Id: tif_dirinfo.c,v 1.28 2004/08/19 08:22:01 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -399,12 +399,11 @@ _TIFFSampleToTagType(TIFF* tif)
 const TIFFFieldInfo*
 _TIFFFindFieldInfo(TIFF* tif, ttag_t tag, TIFFDataType dt)
 {
-	static const TIFFFieldInfo *last = NULL;
 	int i, n;
 
-	if (last && last->field_tag == tag &&
-	    (dt == TIFF_ANY || dt == last->field_type))
-		return (last);
+	if (tif->tif_foundfield && tif->tif_foundfield->field_tag == tag &&
+	    (dt == TIFF_ANY || dt == tif->tif_foundfield->field_type))
+		return (tif->tif_foundfield);
 	/* NB: use sorted search (e.g. binary search) */
 	if(dt != TIFF_ANY) {
             TIFFFieldInfo key = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -419,7 +418,7 @@ _TIFFFindFieldInfo(TIFF* tif, ttag_t tag, TIFFDataType dt)
 		const TIFFFieldInfo* fip = tif->tif_fieldinfo[i];
 		if (fip->field_tag == tag &&
 		    (dt == TIFF_ANY || fip->field_type == dt))
-			return (last = fip);
+			return (tif->tif_foundfield = fip);
 	}
 	return ((const TIFFFieldInfo *)0);
 }
@@ -427,12 +426,12 @@ _TIFFFindFieldInfo(TIFF* tif, ttag_t tag, TIFFDataType dt)
 const TIFFFieldInfo*
 _TIFFFindFieldInfoByName(TIFF* tif, const char *field_name, TIFFDataType dt)
 {
-	static const TIFFFieldInfo *last = NULL;
 	int i, n;
 
-	if (last && streq(last->field_name, field_name) &&
-	    (dt == TIFF_ANY || dt == last->field_type))
-		return (last);
+	if (tif->tif_foundfield
+	    && streq(tif->tif_foundfield->field_name, field_name)
+	    && (dt == TIFF_ANY || dt == tif->tif_foundfield->field_type))
+		return (tif->tif_foundfield);
 	/* NB: use sorted search (e.g. binary search) */
 	if(dt != TIFF_ANY) {
             TIFFFieldInfo key = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -447,7 +446,7 @@ _TIFFFindFieldInfoByName(TIFF* tif, const char *field_name, TIFFDataType dt)
 		const TIFFFieldInfo* fip = tif->tif_fieldinfo[i];
 		if (streq(fip->field_name, field_name) &&
 		    (dt == TIFF_ANY || fip->field_type == dt))
-			return (last = fip);
+			return (tif->tif_foundfield = fip);
 	}
 	return ((const TIFFFieldInfo *)0);
 }

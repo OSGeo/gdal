@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.30 2004/04/29 07:42:33 dron Exp $ */
+/* $Id: tif_dirread.c,v 1.34 2004/09/02 14:24:57 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -272,8 +272,9 @@ TIFFReadDirectory(TIFF* tif)
 		    tif->tif_fieldinfo[fix]->field_tag != dp->tdir_tag) {
 
                     TIFFWarning(module,
-			"%.1000s: unknown field with tag %d (0x%x) encountered",
-                                tif->tif_name, dp->tdir_tag,  dp->tdir_tag);
+                        "%.1000s: unknown field with tag %d (0x%x) encountered",
+                                tif->tif_name, dp->tdir_tag, dp->tdir_tag,
+                                dp->tdir_type);
 
                     TIFFMergeFieldInfo( tif,
                                         _TIFFCreateAnonFieldInfo( tif,
@@ -297,16 +298,17 @@ TIFFReadDirectory(TIFF* tif)
 		 * Check data type.
 		 */
 		fip = tif->tif_fieldinfo[fix];
-		while (dp->tdir_type != (u_short) fip->field_type) {
+		while (dp->tdir_type != (u_short) fip->field_type
+                       && fix < tif->tif_nfields) {
 			if (fip->field_type == TIFF_ANY)	/* wildcard */
 				break;
-			fip++, fix++;
-			if (fix == tif->tif_nfields ||
+                        fip = tif->tif_fieldinfo[++fix];
+			if (fix >= tif->tif_nfields ||
 			    fip->field_tag != dp->tdir_tag) {
 				TIFFWarning(module,
 			"%.1000s: wrong data type %d for \"%s\"; tag ignored",
 					    tif->tif_name, dp->tdir_type,
-					    fip[-1].field_name);
+					    tif->tif_fieldinfo[fix-1]->field_name);
 				goto ignore;
 			}
 		}
@@ -417,11 +419,11 @@ TIFFReadDirectory(TIFF* tif)
 			 * one value per sample.  Because of this, we
 			 * accept the tag if one value is supplied.
 			 *
-			 * The MinSampleValue, MaxSampleValue and
-			 * BitsPerSample tags are supposed to be written
-			 * as one value/sample, but some vendors incorrectly
-			 * write one value only -- so we accept that
-			 * as well (yech).
+                         * The MinSampleValue, MaxSampleValue, BitsPerSample
+                         * DataType and SampleFormat tags are supposed to be
+                         * written as one value/sample, but some vendors
+                         * incorrectly write one value only -- so we accept
+                         * that as well (yech).
 			 */
 			if (dp->tdir_count == 1) {
 				v = TIFFExtractData(tif,
@@ -806,8 +808,9 @@ TIFFFetchRational(TIFF* tif, TIFFDirEntry* dir)
 static float
 TIFFFetchFloat(TIFF* tif, TIFFDirEntry* dir)
 {
-	long l = TIFFExtractData(tif, dir->tdir_type, dir->tdir_offset);
-	float v = *(float*) &l;
+	float v;
+	int32 l = TIFFExtractData(tif, dir->tdir_type, dir->tdir_offset);
+        memcpy(&v, &l, sizeof(float));
 	TIFFCvtIEEEFloatToNative(tif, 1, &v);
 	return (v);
 }
@@ -1480,3 +1483,5 @@ ChopUpSingleUncompressedStrip(TIFF* tif)
 	td->td_stripbytecount = newcounts;
 	td->td_stripoffset = newoffsets;
 }
+
+/* vim: set ts=8 sts=8 sw=8 noet: */
