@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.28  2001/01/15 14:32:30  warmerda
+ * added envisat
+ *
  * Revision 1.27  2001/01/10 04:41:09  warmerda
  * added gif support
  *
@@ -136,6 +139,7 @@ void GDALRegister_JDEM(void);
 void GDALRegister_GRASS(void);
 void GDALRegister_PNM(void);
 void GDALRegister_GIF(void);
+void GDALRegister_Envisat(void);
 CPL_C_END
 
 #ifdef notdef
@@ -235,6 +239,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_gif
     GDALRegister_GIF();
+#endif
+
+#ifdef FRMT_envisat
+    GDALRegister_Envisat();
 #endif
 
 #ifdef FRMT_raw
