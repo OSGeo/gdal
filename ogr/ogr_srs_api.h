@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/05/30 22:45:44  warmerda
+ * added OSRCloneGeogCS()
+ *
  * Revision 1.5  2000/04/26 18:25:56  warmerda
  * added missing CPL_DLL attributes
  *
@@ -210,6 +213,7 @@ typedef void *OGRCoordinateTransformationH;
 
 OGRSpatialReferenceH CPL_DLL
       OSRNewSpatialReference( const char * /* = NULL */);
+OGRSpatialReferenceH CPL_DLL OSRCloneGeogCS( OGRSpatialReferenceH );
 void CPL_DLL OSRDestroySpatialReference( OGRSpatialReferenceH );
 
 int CPL_DLL OSRReference( OGRSpatialReferenceH );

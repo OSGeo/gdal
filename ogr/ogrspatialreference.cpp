@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2000/05/30 22:45:45  warmerda
+ * added OSRCloneGeogCS()
+ *
  * Revision 1.16  2000/03/24 14:49:56  warmerda
  * added WGS84 related methods
  *
@@ -2493,6 +2496,17 @@ OGRSpatialReference *OGRSpatialReference::CloneGeogCS()
     poNewSRS->SetRoot( poGeogCS->Clone() );
 
     return poNewSRS;
+}
+
+/************************************************************************/
+/*                           OSRCloneGeogCS()                           */
+/************************************************************************/
+
+OGRSpatialReferenceH OSRCloneGeogCS( OGRSpatialReferenceH hSource )
+
+{
+    return (OGRSpatialReferenceH) 
+        ((OGRSpatialReference *) hSource)->CloneGeogCS();
 }
 
 /************************************************************************/
