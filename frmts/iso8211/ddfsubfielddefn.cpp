@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/11/12 21:22:14  warmerda
+ * fixed some docs
+ *
  * Revision 1.10  2003/09/05 19:13:45  warmerda
  * added format support for binary ints
  *
@@ -918,9 +921,9 @@ int DDFSubfieldDefn::FormatIntValue( char *pachData, int nBytesAvailable,
 /************************************************************************/
 
 /**
- * Format int subfield value.
+ * Format float subfield value.
  *
- * Returns a buffer with the passed in int value reformatted in a way
+ * Returns a buffer with the passed in float value reformatted in a way
  * suitable for storage in a DDFField for this subfield.  
  */
 
