@@ -30,7 +30,8 @@ static void DumpFile( IGMLReader *poReader, int bNoDump )
 
         if( poFeature->GetGeometry() != NULL )
         {
-            poGeometry = GML2OGRGeometry( poFeature->GetGeometry() );
+            poGeometry = OGRGeometryFactory::createFromGML( 
+                poFeature->GetGeometry() );
             if( poGeometry != NULL )
             {
                 if( !bNoDump )
