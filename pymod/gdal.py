@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.50  2003/06/10 09:25:29  dron
+# Handle the case of empty string in MajorObject::GetMetadata().
+#
 # Revision 1.49  2003/05/28 19:46:53  warmerda
 # added TermProgress
 #
@@ -286,6 +289,8 @@ class MajorObject:
 
     def GetMetadata( self, domain = '' ):
         md = _gdal.GDALGetMetadata( self._o, domain )
+	if md is None:
+	    return {}
         md_dict = _gdal.StringListToDict( md )
         return md_dict
         
