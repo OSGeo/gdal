@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2002/10/29 19:44:08  warmerda
+ * fixed complex group handling with spatial queries
+ *
  * Revision 1.30  2002/10/29 19:25:18  warmerda
  * fixed serious bug in applying color table to DGNInfo structure
  *
@@ -830,15 +833,15 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
             ** We want to select complex elements based on the extents of
             ** the header, not the individual elements.
             */
-            if( psDGN->abyElem[0] & 0x80 /* complex flag set */ )
+            if( nType == DGNT_COMPLEX_CHAIN_HEADER
+                || nType == DGNT_COMPLEX_SHAPE_HEADER )
             {
-                if( nType == DGNT_COMPLEX_CHAIN_HEADER
-                    || nType == DGNT_COMPLEX_SHAPE_HEADER )
-                {
-                    psDGN->in_complex_group = TRUE;
-                    psDGN->select_complex_group = bInsideFilter;
-                }
-                else if( psDGN->in_complex_group )
+                psDGN->in_complex_group = TRUE;
+                psDGN->select_complex_group = bInsideFilter;
+            }
+            else if( psDGN->abyElem[0] & 0x80 /* complex flag set */ )
+            {
+                if( psDGN->in_complex_group )
                     bInsideFilter = psDGN->select_complex_group;
             }
             else
