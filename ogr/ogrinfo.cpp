@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/02/25 14:56:25  warmerda
+ * Added the -so (summary only) switch.
+ *
  * Revision 1.17  2002/11/17 17:41:39  warmerda
  * added --formats option
  *
@@ -89,6 +92,7 @@ CPL_CVSID("$Id$");
 
 int     bReadOnly = FALSE;
 int     bVerbose = TRUE;
+int     bSummaryOnly = FALSE;
 int     nFetchFID = OGRNullFID;
 
 static void Usage();
@@ -158,6 +162,10 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUALN(papszArgv[iArg],"-al",2) )
         {
             bAllLayers = TRUE;
+        }
+        else if( EQUALN(papszArgv[iArg],"-so",2) )
+        {
+            bSummaryOnly = TRUE;
         }
         else if( EQUAL(papszArgv[iArg],"--formats") )
         {
@@ -331,7 +339,7 @@ static void Usage()
 {
     printf( "Usage: ogrinfo [-ro] [-q] [-where restricted_where]\n"
             "               [-spat xmin ymin xmax ymax] [-fid fid]\n"
-            "               [-sql statement] [-al] [--formats]\n"
+            "               [-sql statement] [-al] [-so] [--formats]\n"
             "               datasource_name [layer [layer ...]]\n");
     exit( 1 );
 }
@@ -405,7 +413,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
 /* -------------------------------------------------------------------- */
     OGRFeature  *poFeature;
 
-    if( nFetchFID == OGRNullFID )
+    if( nFetchFID == OGRNullFID && !bSummaryOnly )
     {
         while( (poFeature = poLayer->GetNextFeature()) != NULL )
         {
@@ -413,7 +421,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
             delete poFeature;
         }
     }
-    else
+    else if( nFetchFID != OGRNullFID )
     {
         poFeature = poLayer->GetFeature( nFetchFID );
         if( poFeature == NULL )
