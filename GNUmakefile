@@ -156,9 +156,10 @@ install-lib:
 
 else
 
+ifeq ($(HAVE_LD_SHARED),yes)
+
 GDAL_VER_MAJOR	=	$(firstword $(subst ., ,$(GDAL_VER)))
 GDAL_SLIB_B	=	$(notdir $(GDAL_SLIB))
-
 
 install-lib:
 	$(INSTALL_DIR) $(INST_LIB)
@@ -171,4 +172,13 @@ install-lib:
 	(cd $(INST_LIB) ; \
 	 ln -s $(GDAL_SLIB_B).$(GDAL_VER) $(GDAL_SLIB_B).$(GDAL_VER_MAJOR))
 
-endif
+else
+
+install-lib:
+	$(INSTALL_DIR) $(INST_LIB)
+	$(INSTALL_LIB) $(GDAL_LIB) $(INST_LIB)
+
+endif # HAVE_LD_SHARED=no 
+
+
+endif # HAVE_LIBTOOL=no 
