@@ -189,6 +189,9 @@ with control information.
 Usage: gdalwarp [--version] [--formats]
     [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]
     [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]
+    [-wo "NAME=VALUE"] [-ot Byte/Int16/...] [-wt Byte/Int16]
+    [-rn] [-rb] [-rc] [-rcs] [-srcnodata value [value...]]
+    [-wm memory_in_mb] [-multi] [-q]
     [-of format] [-co "NAME=VALUE"]* srcfile dstfile
 \endverbatim
 
@@ -200,24 +203,45 @@ Usage: gdalwarp [--version] [--formats]
  EPSG PCS and GCSes (ie. EPSG:4296), PROJ.4 declarations (as above),
  or the name of a .prf file containing well known text.
 <li> <b>-t_srs</b> <em>srs_def</em>: target spatial reference set. The
-coordinate systems that can be passed are anything supported by the
-OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS
-and GCSes (ie. EPSG:4296), PROJ.4 declarations (as above), or the name
-of a .prf file containing well known text.
+ coordinate systems that can be passed are anything supported by the
+ OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS
+ and GCSes (ie. EPSG:4296), PROJ.4 declarations (as above), or the name
+ of a .prf file containing well known text.
 <li> <b>-order</b> <em>n</em>: order of polynom used for warping (1 to 3) 
 <li> <b>-et</b> <em>err_threshold</em>: error threshold for transformation
-approximation (in pixel units - defaults to 0.125).
+ approximation (in pixel units - defaults to 0.125).
 <li> <b>-te</b> <em>xmin ymin xmax ymax</em>: set georeferenced extents of 
-output file to be created.
+ output file to be created.
 <li> <b>-tr</b> <em>xres yres</em>: set output file resolution (in target
-georeferenced units)
+ georeferenced units)
 <li> <b>-ts</b> <em>width height</em>: set output file size in pixels and lines
+<li> <b>-wo</b> <em>"NAME=VALUE"</em>: Set a lost of warp options. There is a
+ <a href="warptut.html#warpoptions">list</a> of available ones. Multiple
+ <b>-wo</b> options may be listed.
+<li> <b>-ot</b> <em>type</em>: For the output bands to be of the indicated
+ data type.
+<li> <b>-wt</b> <em>type</em>: Working pixel data type. The datatype of
+ pixels in the source image and destination image buffers.
+<li> <b>-rn</b>: Use nearest neighbour resampling (fastest algorithm, worst
+ interpolation quality).
+<li> <b>-rb</b>: Use bilinear resampling.
+<li> <b>-rc</b>: Use cubic resampling.
+<li> <b>-rcs</b>: Use cubic spline resampling (slowest algorithm).
+<li> <b>-srcnodata</b> <em>value [value...]</em>: Set nodata masking values
+ (several values may be specified). Masked values will not be used in
+ interpolation.
+<li> <b>-wm</b> <em>memory_in_mb</em>: Set the amount of memory (in bytes)
+ that the warp API is allowed to use for caching.
+<li> <b>-multi</b>: Use multithreaded warping implementation. Multiple threads
+ will be used to process chunks of image and perform input/output operation
+ simultaneously.
+<li> <b>-q</b>: Be quiet.
 <li> <b>-of</b> <em>format</em>: Select the output format. The default is
-GeoTIFF (GTiff). Use the short format name. 
+ GeoTIFF (GTiff). Use the short format name.
 <li> <b>-co</b> <em>"NAME=VALUE"</em>: passes a creation
-option to the output format driver. Multiple <b>-co</b> options may be
-listed. See format specific documentation for legal creation options
-for each format. 
+ option to the output format driver. Multiple <b>-co</b> options may be
+ listed. See format specific documentation for legal creation options
+ for each format. 
 <li> <em>srcfile</em>: The source file name. 
 <li> <em>dstfile</em>: The destination file name. 
 </ul>
