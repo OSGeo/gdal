@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/08/30 21:18:39  warmerda
+ * fixed typedef
+ *
  * Revision 1.12  2001/08/30 21:06:55  warmerda
  * expand tabs
  *
@@ -178,11 +181,11 @@ public:
 /*      Maintain an index of DDF records based on an integer key.       */
 /************************************************************************/
 
-typedef struct DDFIndexedRecord
+typedef struct
 {
     int         nKey;
     DDFRecord   *poRecord;
-};
+} DDFIndexedRecord;
 
 class DDFRecordIndex
 {
