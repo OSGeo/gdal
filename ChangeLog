@@ -1,3 +1,11 @@
+2001-09-21  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* ogr/ogr_geometry.h: added transform() and transformTo() methods.
+
+	* ogr/ogr_spatialref.h: added SetFromUserInput() method.
+
+	* ogr/ogr2ogr.cpp: added -t_srs and -a_srs options.
+
 2001-09-19  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* frmts/raw/doq2dataset.cpp: fixes for file submitted by Eric Miller,
