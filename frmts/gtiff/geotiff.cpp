@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2000/03/31 14:12:38  warmerda
+ * added CPL based handling of libtiff warnings and errors
+ *
  * Revision 1.22  2000/03/31 13:36:07  warmerda
  * added gcp's and metadata
  *
@@ -1249,6 +1252,33 @@ const GDAL_GCP *GTiffDataset::GetGCPs()
 }
 
 /************************************************************************/
+/*                        GTiffWarningHandler()                         */
+/************************************************************************/
+void
+GTiffWarningHandler(const char* module, const char* fmt, va_list ap )
+{
+    char	szModFmt[128];
+
+    if( strstr(fmt,"unknown field") != NULL )
+        return;
+
+    sprintf( szModFmt, "%s:%s", module, fmt );
+    CPLErrorV( CE_Warning, CPLE_AppDefined, szModFmt, ap );
+}
+
+/************************************************************************/
+/*                        GTiffWarningHandler()                         */
+/************************************************************************/
+void
+GTiffErrorHandler(const char* module, const char* fmt, va_list ap )
+{
+    char	szModFmt[128];
+
+    sprintf( szModFmt, "%s:%s", module, fmt );
+    CPLErrorV( CE_Failure, CPLE_AppDefined, szModFmt, ap );
+}
+
+/************************************************************************/
 /*                          GDALRegister_GTiff()                        */
 /************************************************************************/
 
@@ -1268,6 +1298,9 @@ void GDALRegister_GTiff()
         poDriver->pfnCreate = GTiffDataset::Create;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
+
+        TIFFSetWarningHandler( GTiffWarningHandler );
+        TIFFSetErrorHandler( GTiffErrorHandler );
     }
 }
 
