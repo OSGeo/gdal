@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/04/03 22:12:49  warmerda
+ * Added special metadata access to raw record data
+ *
  * Revision 1.22  2001/12/20 15:20:03  warmerda
  * Added some more metadata from Landsat ESA CEOS files.
  *
@@ -177,6 +180,7 @@ class SAR_CEOSDataset : public GDALDataset
 
     FILE	*fpImage;
 
+    char        **papszTempMD;
     
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
@@ -192,6 +196,8 @@ class SAR_CEOSDataset : public GDALDataset
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
+
+    virtual char **GetMetadata( const char * pszDomain );
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -325,6 +331,8 @@ SAR_CEOSDataset::SAR_CEOSDataset()
     fpImage = NULL;
     nGCPCount = 0;
     pasGCPList = NULL;
+
+    papszTempMD = NULL;
 }
 
 /************************************************************************/
@@ -334,6 +342,8 @@ SAR_CEOSDataset::SAR_CEOSDataset()
 SAR_CEOSDataset::~SAR_CEOSDataset()
 
 {
+    CSLDestroy( papszTempMD );
+
     if( fpImage != NULL )
         VSIFClose( fpImage );
 
@@ -390,6 +400,109 @@ const GDAL_GCP *SAR_CEOSDataset::GetGCPs()
 
 {
     return pasGCPList;
+}
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/*                                                                      */
+/*      We provide our own GetMetadata() so that we can override        */
+/*      behavior for some very specialized domain names intended to     */
+/*      give us access to raw record data.                              */
+/*                                                                      */
+/*      The domain must look like:                                      */
+/*        ceos-FFF-n-n-n-n:r                                            */
+/*                                                                      */
+/*        FFF - The file id - one of vol, lea, img, trl or nul.         */
+/*        n-n-n-n - the record type code such as 18-10-18-20 for the    */
+/*        dataset summary record in the leader file.                    */
+/*        :r - The zero based record number to fetch (optional)         */
+/*                                                                      */
+/*      Note that only records that are pre-loaded will be              */
+/*      accessable, and this normally means that most image records     */
+/*      are not available.                                              */
+/************************************************************************/
+
+char **SAR_CEOSDataset::GetMetadata( const char * pszDomain )
+
+{
+    if( pszDomain == NULL || !EQUALN(pszDomain,"ceos-",5) )
+        return GDALDataset::GetMetadata( pszDomain );
+
+/* -------------------------------------------------------------------- */
+/*      Identify which file to fetch the file from.                     */
+/* -------------------------------------------------------------------- */
+    int	nFileId = -1;
+    
+    if( EQUALN(pszDomain,"ceos-vol",8) )
+    {
+        nFileId = __CEOS_VOLUME_DIR_FILE;
+    }
+    else if( EQUALN(pszDomain,"ceos-lea",8) )
+    {
+        nFileId = __CEOS_LEADER_FILE;
+    }
+    else if( EQUALN(pszDomain,"ceos-img",8) )
+    {
+        nFileId = __CEOS_IMAGRY_OPT_FILE;
+    }
+    else if( EQUALN(pszDomain,"ceos-trl",8) )
+    {
+        nFileId = __CEOS_TRAILER_FILE;
+    }
+    else if( EQUALN(pszDomain,"ceos-nul",8) )
+    {
+        nFileId = __CEOS_NULL_VOL_FILE;
+    }
+    else
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Identify the record type.                                       */
+/* -------------------------------------------------------------------- */
+    CeosTypeCode_t sTypeCode;
+    int  a, b, c, d, nRecordIndex = -1;
+
+    if( sscanf( pszDomain+8, "-%d-%d-%d-%d:%d", 
+                &a, &b, &c, &d, &nRecordIndex ) != 5 
+        && sscanf( pszDomain+8, "-%d-%d-%d-%d", 
+                   &a, &b, &c, &d ) != 4 )
+    {
+        return NULL;
+    }
+
+    sTypeCode = QuadToTC( a, b, c, d );
+
+/* -------------------------------------------------------------------- */
+/*      Try to fetch the record.                                        */
+/* -------------------------------------------------------------------- */
+    CeosRecord_t *record;
+
+    record = FindCeosRecord( sVolume.RecordList, sTypeCode, nFileId, 
+                             -1, nRecordIndex );
+
+    if( record == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Massage the data into a safe textual format.  For now we        */
+/*      just turn zero bytes into spaces.                               */
+/* -------------------------------------------------------------------- */
+    char *pszSafeCopy;
+    int  i;
+
+    pszSafeCopy = (char *) CPLCalloc(1,record->Length+1);
+    memcpy( pszSafeCopy, record->Buffer, record->Length );
+    
+    for( i = 0; i < record->Length; i++ )
+        if( pszSafeCopy[i] == '\0' )
+            pszSafeCopy[i] = ' ';
+
+    CSLDestroy( papszTempMD );
+    papszTempMD = CSLSetNameValue( NULL, "RawRecord", pszSafeCopy );
+
+    CPLFree( pszSafeCopy );
+
+    return papszTempMD;
 }
 
 /************************************************************************/
