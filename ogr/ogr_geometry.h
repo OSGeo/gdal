@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/05/31 11:05:08  warmerda
+ * added some documentation
+ *
  * Revision 1.6  1999/05/23 05:34:40  warmerda
  * added support for clone(), multipolygons and geometry collections
  *
@@ -55,6 +58,18 @@
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 
+/**
+ * \file ogr_geometry.h
+ *
+ * Simple feature geometry classes.
+ */
+
+/**
+ * List of well known binary geometry types.  These are used within the BLOBs
+ * but are also returned from OGRGeometry::getGeometryType() to identify the
+ * type of a geometry object.
+ */
+
 enum OGRwkbGeometryType
 {
     wkbUnknown = 0,		// non-standard
@@ -73,6 +88,9 @@ enum OGRwkbByteOrder
     wkbNDR = 1
 };
 
+/**
+ * Simple container for a position.
+ */
 class OGRRawPoint
 {
   public:
@@ -83,6 +101,16 @@ class OGRRawPoint
 /************************************************************************/
 /*                             OGRGeometry                              */
 /************************************************************************/
+
+/**
+ * Abstract base class for all geometry classes.
+ *
+ * Note that the family of spatial analysis methods (Equal(), Disjoint(), ...,
+ * ConvexHull(), Buffer(), ...) are not implemented at ths time.  Some other
+ * required and optional geometry methods have also been omitted at this
+ * time.
+ */
+ 
 class OGRGeometry
 {
   private:
@@ -145,6 +173,13 @@ class OGRGeometry
 /************************************************************************/
 /*                               OGRPoint                               */
 /************************************************************************/
+
+/**
+ * Point class.
+ *
+ * Implements SFCOM IPoint methods.
+ */
+
 class OGRPoint : public OGRGeometry
 {
     double	x;
@@ -152,9 +187,7 @@ class OGRPoint : public OGRGeometry
 
   public:
     		OGRPoint();
-                OGRPoint( double, double );
-                OGRPoint( OGRRawPoint & );
-                OGRPoint( OGRRawPoint * );
+                OGRPoint( double x, double y );
     virtual     ~OGRPoint();
 
     // IWks Interface
@@ -185,9 +218,14 @@ class OGRPoint : public OGRGeometry
 
 /************************************************************************/
 /*                               OGRCurve                               */
-/*                                                                      */
-/*      This is a pure virtual class.                                   */
 /************************************************************************/
+
+/**
+ * Abstract curve base class.
+ *
+ * Contrary to the OpenGIS data model, a number of LineString method
+ * have been moved down to the OGRCurve class. 
+ */
 
 class OGRCurve : public OGRGeometry
 {
@@ -394,6 +432,11 @@ class OGRMultiPolygon : public OGRGeometryCollection
 /************************************************************************/
 /*                          OGRGeometryFactory                          */
 /************************************************************************/
+
+/**
+ * Create geometry objects from well known text/binary.
+ */
+
 class OGRGeometryFactory
 {
   public:

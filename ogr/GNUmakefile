@@ -22,3 +22,8 @@ clean:
 
 test1:	$(OBJ) test1.o
 	$(CXX) $(LNK_FLAGS) test1.o $(OBJ) $(LIBS) -o test1
+
+
+docs:
+	rm -rf html/*
+	doxygen

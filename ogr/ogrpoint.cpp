@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/05/31 11:05:08  warmerda
+ * added some documentation
+ *
  * Revision 1.4  1999/05/23 05:34:40  warmerda
  * added support for clone(), multipolygons and geometry collections
  *
@@ -305,3 +308,41 @@ OGRErr OGRPoint::exportToWkt( char ** ppszReturn )
     
     return OGRERR_NONE;
 }
+
+/**
+ * \fn double OGRPoint::getX();
+ *
+ * Fetch X coordinate.
+ *
+ * Relates to the SFCOM IPoint::get_X() method.
+ *
+ * @return the X coordinate of this point. 
+ */
+
+/**
+ * \fn double OGRPoint::getY();
+ *
+ * Fetch Y coordinate.
+ *
+ * Relates to the SFCOM IPoint::get_Y() method.
+ *
+ * @return the Y coordinate of this point. 
+ */
+
+/**
+ * \fn void OGRPoint::setX( double xIn );
+ *
+ * Assign point X coordinate.
+ *
+ * There is no corresponding SFCOM method.
+ */ 
+
+/**
+ * \fn void OGRPoint::setY( double yIn );
+ *
+ * Assign point Y coordinate.
+ *
+ * There is no corresponding SFCOM method.
+ */ 
+
+

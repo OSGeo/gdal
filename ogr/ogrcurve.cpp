@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/05/31 11:05:08  warmerda
+ * added some documentation
+ *
  * Revision 1.4  1999/05/20 14:35:44  warmerda
  * added support for well known text format
  *
@@ -105,6 +108,18 @@ int OGRCurve::WkbSize()
 /*                              getPoint()                              */
 /************************************************************************/
 
+/**
+ * Fetch a point in line string.
+ *
+ * This method properly belongs on the OGRLineString, and it fetches one
+ * of the vertices in the line string by index.
+ *
+ * This method relates to the ILineString::get_Point() method.
+ *
+ * @param i the vertex to fetch, from 0 to getNumPoints()-1.
+ * @param poPoint a point to initialize with the fetched point.
+ */
+
 void	OGRCurve::getPoint( int i, OGRPoint * poPoint )
 
 {
@@ -119,6 +134,18 @@ void	OGRCurve::getPoint( int i, OGRPoint * poPoint )
 /************************************************************************/
 /*                            setNumPoints()                            */
 /************************************************************************/
+
+/**
+ * Set number of points in geometry.
+ *
+ * This method primary exists to preset the number of points in a linestring
+ * geometry before setPoint() is used to assign them to avoid reallocating
+ * the array larger with each call to addPoint(). 
+ *
+ * This method has no SFCOM analog.
+ *
+ * @param nNewPointCount the new number of points for geometry.
+ */
 
 void OGRCurve::setNumPoints( int nNewPointCount )
 
@@ -149,6 +176,7 @@ void OGRCurve::setNumPoints( int nNewPointCount )
 /************************************************************************/
 /*                              setPoint()                              */
 /************************************************************************/
+
 
 void OGRCurve::setPoint( int iPoint, OGRPoint * poPoint )
 
