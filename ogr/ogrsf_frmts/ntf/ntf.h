@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/05/01 13:47:36  warmerda
+ * keep track if generic geometry is 3D
+ *
  * Revision 1.14  2001/01/19 20:31:12  warmerda
  * expand tabs
  *
@@ -180,6 +183,7 @@ class NTFGenericClass
 public:
     int         nFeatureCount;
 
+    int		b3D;
     int         nAttrCount;
     char        **papszAttrNames;
     char        **papszAttrFormats;

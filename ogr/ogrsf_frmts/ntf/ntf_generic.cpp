@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/05/01 13:47:36  warmerda
+ * keep track if generic geometry is 3D
+ *
  * Revision 1.9  2001/04/30 15:10:43  warmerda
  * added support for 3D geometry
  *
@@ -82,6 +85,7 @@ NTFGenericClass::NTFGenericClass()
 {
     nFeatureCount = 0;
 
+    b3D = FALSE;
     nAttrCount = 0;
     papszAttrNames = NULL;
     papszAttrFormats = NULL;
@@ -232,6 +236,8 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
               case NRT_GEOMETRY3D:
                   if( atoi(poRecord->GetField(3,8)) != 0 )
                       poClass->CheckAddAttr( "GEOM_ID", "I6", 6 );
+                  if( poRecord->GetType() == NRT_GEOMETRY3D )
+                      poClass->b3D = TRUE;
                   break;
 
               case NRT_POINTREC:
@@ -797,6 +803,11 @@ static OGRFeature *TranslateGenericPoly( NTFFileReader *poReader,
 
     return poFeature;
 #endif
+
+    CPLError( CE_Warning, CPLE_AppDefined, 
+              "TranslateGenericPolygon() currently does not support"
+              " CPOLYGONS, skipping." );
+
     return NULL;
 }
 
@@ -815,10 +826,23 @@ void OGRNTFDataSource::EstablishGenericLayers()
     for( int iFile = 0; iFile < nNTFFileCount; iFile++ )
     {
         NTFFileReader   *poPReader = NULL;
+        int		n3DFlag = 0;
         
         poPReader = papoNTFFileReader[iFile];
         if( poPReader->GetProductId() != NPC_UNKNOWN )
             continue;
+
+/* -------------------------------------------------------------------- */
+/*      If any of the generic classes are 3D, then assume all our       */
+/*      geometry should be marked as 3D.                                */
+/* -------------------------------------------------------------------- */
+        for( iType = 0; iType < 99; iType++ )
+        {
+            NTFGenericClass     *poClass = aoGenericClass + iType;
+        
+            if( poClass->nFeatureCount > 0 && poClass->b3D )
+                n3DFlag = 0x8000;
+        }
         
 /* -------------------------------------------------------------------- */
 /*      Create layers for all recognised layer types with features.     */
@@ -833,7 +857,8 @@ void OGRNTFDataSource::EstablishGenericLayers()
             if( iType == NRT_POINTREC )
             {
                 poPReader->
-                    EstablishLayer( "GENERIC_POINT", wkbPoint,
+                    EstablishLayer( "GENERIC_POINT", 
+                                    (OGRwkbGeometryType) (wkbPoint | n3DFlag),
                                     TranslateGenericPoint,
                                     NRT_POINTREC, poClass,
                                     "POINT_ID", OFTInteger, 6, 0,
@@ -842,7 +867,9 @@ void OGRNTFDataSource::EstablishGenericLayers()
             else if( iType == NRT_LINEREC )
             {
                 poPReader->
-                    EstablishLayer( "GENERIC_LINE", wkbLineString,
+                    EstablishLayer( "GENERIC_LINE", 
+                                    (OGRwkbGeometryType) 
+                                    (wkbLineString | n3DFlag),
                                     TranslateGenericLine,
                                     NRT_LINEREC, poClass,
                                     "LINE_ID", OFTInteger, 6, 0,
@@ -851,7 +878,9 @@ void OGRNTFDataSource::EstablishGenericLayers()
             else if( iType == NRT_TEXTREC )
             {
                 poPReader->
-                    EstablishLayer( "GENERIC_TEXT", wkbPoint,
+                    EstablishLayer( "GENERIC_TEXT", 
+                                    (OGRwkbGeometryType) 
+                                    (wkbPoint | n3DFlag),
                                     TranslateGenericText,
                                     NRT_TEXTREC, poClass,
                                     "TEXT_ID", OFTInteger, 6, 0,
@@ -860,7 +889,9 @@ void OGRNTFDataSource::EstablishGenericLayers()
             else if( iType == NRT_NAMEREC )
             {
                 poPReader->
-                    EstablishLayer( "GENERIC_NAME", wkbPoint,
+                    EstablishLayer( "GENERIC_NAME", 
+                                    (OGRwkbGeometryType) 
+                                    (wkbPoint | n3DFlag),
                                     TranslateGenericName,
                                     NRT_NAMEREC, poClass,
                                     "NAME_ID", OFTInteger, 6, 0,
@@ -869,7 +900,9 @@ void OGRNTFDataSource::EstablishGenericLayers()
             else if( iType == NRT_NODEREC )
             {
                 poPReader->
-                    EstablishLayer( "GENERIC_NODE", wkbPoint,
+                    EstablishLayer( "GENERIC_NODE",
+                                    (OGRwkbGeometryType) 
+                                    (wkbPoint | n3DFlag),
                                     TranslateGenericNode,
                                     NRT_NODEREC, poClass,
                                     "NODE_ID", OFTInteger, 6, 0,
@@ -893,7 +926,9 @@ void OGRNTFDataSource::EstablishGenericLayers()
             else if( iType == NRT_POLYGON )
             {
                 poPReader->
-                    EstablishLayer( "GENERIC_POLY", wkbPoint,
+                    EstablishLayer( "GENERIC_POLY", 
+                                    (OGRwkbGeometryType) 
+                                    (wkbPoint | n3DFlag),
                                     TranslateGenericPoly,
                                     NRT_POLYGON, poClass,
                                     "POLY_ID", OFTInteger, 6, 0,
