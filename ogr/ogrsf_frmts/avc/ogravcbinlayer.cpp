@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/02/22 22:23:38  warmerda
+ * added tolerances when assembling polygons
+ *
  * Revision 1.3  2002/02/18 20:38:18  warmerda
  * Added spatial filtering.
  * Added Attribute query.
@@ -315,7 +318,7 @@ int OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
     OGRErr  eErr;
     OGRPolygon *poPolygon;
 
-    poPolygon = OGRBuildPolygonFromEdges( &oArcs, TRUE, &eErr );
+    poPolygon = OGRBuildPolygonFromEdges( &oArcs, TRUE, FALSE, 0.0, &eErr );
     if( poPolygon != NULL )
         poFeature->SetGeometryDirectly( poPolygon );
 

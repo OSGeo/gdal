@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2002/02/22 22:23:38  warmerda
+ * added tolerances when assembling polygons
+ *
  * Revision 1.32  2001/12/19 22:44:53  warmerda
  * added ADD_SOUNDG_DEPTH support
  *
@@ -1232,7 +1235,7 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
     OGRPolygon  *poPolygon;
     OGRErr      eErr;
 
-    poPolygon = OGRBuildPolygonFromEdges( poLines, TRUE, &eErr );
+    poPolygon = OGRBuildPolygonFromEdges( poLines, TRUE, FALSE, 0.0, &eErr );
     if( eErr != OGRERR_NONE )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
