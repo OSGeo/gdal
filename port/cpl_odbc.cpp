@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/11/24 20:48:08  warmerda
+ * pass NULLs t SQLColumns, not empty strings
+ *
  * Revision 1.9  2003/11/24 20:32:07  warmerda
  * Use TABLE instead of TABLES in SQLTables() call
  *
@@ -874,11 +877,12 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
                                   const char *pszSchema )
 
 {
+#ifdef notdef
     if( pszCatalog == NULL )
         pszCatalog = "";
     if( pszSchema == NULL )
         pszSchema = "";
-
+#endif
 /* -------------------------------------------------------------------- */
 /*      Fetch columns resultset for this table.                         */
 /* -------------------------------------------------------------------- */
@@ -886,7 +890,7 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
                             (SQLCHAR *) pszCatalog, SQL_NTS,
                             (SQLCHAR *) pszSchema, SQL_NTS,
                             (SQLCHAR *) pszTable, SQL_NTS,
-                            (SQLCHAR *) "", SQL_NTS ) ) )
+                            (SQLCHAR *) NULL /* "" */, SQL_NTS ) ) )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
