@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/02/19 17:17:42  warmerda
+ * clean finder for easier memory leak testing
+ *
  * Revision 1.21  2003/11/19 20:41:17  warmerda
  * avoid memory leak
  *
@@ -334,10 +337,8 @@ int main( int nArgc, char ** papszArgv )
     delete poDS;
 
     delete OGRSFDriverRegistrar::GetRegistrar();
-#ifdef DBMALLOC
-    malloc_dump(1);
-#endif
-    
+    CPLFinderClean();
+
     return 0;
 }
 
