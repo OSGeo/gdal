@@ -1,5 +1,7 @@
 2002-02-07  Frank Warmerdam  <warmerdam@pobox.com>
 
+	* apps/gdal_translate.c: added -scale commandline option.
+
 	* frmts/raw/pauxdataset.cpp: Bug reported by Max fixed.  Only read
 	or write the exactly number of bytes required to avoid slight reads
 	past end of file resulting in error and data loss.
