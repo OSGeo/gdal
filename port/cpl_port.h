@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2001/08/30 21:20:49  warmerda
+ * expand tabs
+ *
  * Revision 1.27  2001/07/18 04:00:49  warmerda
  * added CPL_CVSID
  *
@@ -370,7 +373,7 @@ m * this version of the CPL_SWAP64() macro with a less efficient one.
  */
 
 #ifndef DISABLE_CVSID
-#  define CPL_CVSID(string)	static char cpl_cvsid[] = string; \
+#  define CPL_CVSID(string)     static char cpl_cvsid[] = string; \
 static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
 #else
 #  define CPL_CVSID(string)

@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/08/30 21:20:49  warmerda
+ * expand tabs
+ *
  * Revision 1.8  2001/07/18 04:00:49  warmerda
  * added CPL_CVSID
  *
@@ -267,7 +270,7 @@ const char *CPLGetExtension( const char *pszFullFilename )
 const char *CPLResetExtension( const char *pszPath, const char *pszExt )
 
 {
-    int		i;
+    int         i;
 
 /* -------------------------------------------------------------------- */
 /*      First, try and strip off any existing extension.                */
@@ -396,10 +399,10 @@ const char *CPLFormCIFilename( const char * pszPath,
     return CPLFormFilename( pszPath, pszBasename, pszExtension );
 #else
     const char  *pszAddedExtSep = "";
-    char	*pszFilename;
+    char        *pszFilename;
     const char  *pszFullPath;
-    int		nLen = strlen(pszBasename)+2, i;
-    FILE	*fp;
+    int         nLen = strlen(pszBasename)+2, i;
+    FILE        *fp;
 
     if( pszExtension != NULL )
         nLen += strlen(pszExtension);
