@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/05/28 19:16:42  warmerda
+ * fixed up argument names and stuff for docs
+ *
  * Revision 1.10  2003/04/08 20:57:06  warmerda
  * added Clone
  *
@@ -165,7 +168,7 @@ void OGR_FD_Destroy( OGRFeatureDefnH hDefn )
 /************************************************************************/
 
 /**
- * \fn OGRFeatureDefn *OGRFeatureDefn::Clone() const;
+ * \fn OGRFeatureDefn *OGRFeatureDefn::Clone();
  *
  * Create a copy of this feature definition.
  *
@@ -245,7 +248,7 @@ const char *OGR_FD_GetName( OGRFeatureDefnH hDefn )
  *
  * This function is the same as the CPP OGRFeatureDefn::GetFieldCount().
  *
- * @param dDefn handle to the feature definition to get the fields count from.
+ * @param hDefn handle to the feature definition to get the fields count from.
  * @return count of fields.
  */
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2003/05/28 19:16:42  warmerda
+ * fixed up argument names and stuff for docs
+ *
  * Revision 1.27  2003/04/08 20:57:28  warmerda
  * added RemapFields on OGRFeature
  *
@@ -335,7 +338,7 @@ class CPL_DLL OGRFeature
                            { SetField( GetFieldIndex(pszFName), puValue ); }
 
     long                GetFID() { return nFID; }
-    virtual OGRErr      SetFID( long );
+    virtual OGRErr      SetFID( long nFID );
 
     void                DumpReadable( FILE * );
 

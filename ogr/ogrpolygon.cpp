@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/05/28 19:16:43  warmerda
+ * fixed up argument names and stuff for docs
+ *
  * Revision 1.19  2003/03/07 21:28:56  warmerda
  * support 0x8000 style 3D WKB flags
  *
@@ -380,13 +383,13 @@ int OGRPolygon::WkbSize()
 /************************************************************************/
 
 OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
-                                  int nBytesAvailable )
+                                  int nSize )
 
 {
     OGRwkbByteOrder     eByteOrder;
     int                 nDataOffset, b3D;
     
-    if( nBytesAvailable < 21 && nBytesAvailable != -1 )
+    if( nSize < 21 && nSize != -1 )
         return OGRERR_NOT_ENOUGH_DATA;
 
 /* -------------------------------------------------------------------- */
@@ -439,8 +442,8 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
     papoRings = (OGRLinearRing **) OGRMalloc(sizeof(void*) * nRingCount);
 
     nDataOffset = 9;
-    if( nBytesAvailable != -1 )
-        nBytesAvailable -= nDataOffset;
+    if( nSize != -1 )
+        nSize -= nDataOffset;
 
 /* -------------------------------------------------------------------- */
 /*      Get the rings.                                                  */
@@ -452,15 +455,15 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
         papoRings[iRing] = new OGRLinearRing();
         eErr = papoRings[iRing]->_importFromWkb( eByteOrder, b3D,
                                                  pabyData + nDataOffset,
-                                                 nBytesAvailable );
+                                                 nSize );
         if( eErr != OGRERR_NONE )
         {
             nRingCount = iRing;
             return eErr;
         }
 
-        if( nBytesAvailable != -1 )
-            nBytesAvailable -= papoRings[iRing]->_WkbSize( b3D );
+        if( nSize != -1 )
+            nSize -= papoRings[iRing]->_WkbSize( b3D );
 
         nDataOffset += papoRings[iRing]->_WkbSize( b3D );
     }
@@ -641,7 +644,7 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
 /*      equivelent.  This could be made alot more CPU efficient!        */
 /************************************************************************/
 
-OGRErr OGRPolygon::exportToWkt( char ** ppszReturn )
+OGRErr OGRPolygon::exportToWkt( char ** ppszDstText )
 
 {
     char        **papszRings;
@@ -667,26 +670,26 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszReturn )
 /*      Allocate exactly the right amount of space for the              */
 /*      aggregated string.                                              */
 /* -------------------------------------------------------------------- */
-    *ppszReturn = (char *) VSIMalloc(nCumulativeLength + nRingCount + 11);
+    *ppszDstText = (char *) VSIMalloc(nCumulativeLength + nRingCount + 11);
 
-    if( *ppszReturn == NULL )
+    if( *ppszDstText == NULL )
         return OGRERR_NOT_ENOUGH_MEMORY;
 
 /* -------------------------------------------------------------------- */
 /*      Build up the string, freeing temporary strings as we go.        */
 /* -------------------------------------------------------------------- */
-    strcpy( *ppszReturn, "POLYGON (" );
+    strcpy( *ppszDstText, "POLYGON (" );
 
     for( iRing = 0; iRing < nRingCount; iRing++ )
     {                                                           
         if( iRing > 0 )
-            strcat( *ppszReturn, "," );
+            strcat( *ppszDstText, "," );
         
-        strcat( *ppszReturn, papszRings[iRing] + 11 );
+        strcat( *ppszDstText, papszRings[iRing] + 11 );
         VSIFree( papszRings[iRing] );
     }
 
-    strcat( *ppszReturn, ")" );
+    strcat( *ppszDstText, ")" );
 
     CPLFree( papszRings );
 
@@ -733,7 +736,7 @@ int OGRPolygon::PointOnSurface( OGRPoint * )
 /*                            getEnvelope()                             */
 /************************************************************************/
 
-void OGRPolygon::getEnvelope( OGREnvelope * poEnvelope )
+void OGRPolygon::getEnvelope( OGREnvelope * psEnvelope )
 
 {
     OGREnvelope         oRingEnv;
@@ -741,20 +744,20 @@ void OGRPolygon::getEnvelope( OGREnvelope * poEnvelope )
     if( nRingCount == 0 )
         return;
 
-    papoRings[0]->getEnvelope( poEnvelope );
+    papoRings[0]->getEnvelope( psEnvelope );
 
     for( int iRing = 1; iRing < nRingCount; iRing++ )
     {
         papoRings[iRing]->getEnvelope( &oRingEnv );
 
-        if( poEnvelope->MinX > oRingEnv.MinX )
-            poEnvelope->MinX = oRingEnv.MinX;
-        if( poEnvelope->MinY > oRingEnv.MinY )
-            poEnvelope->MinY = oRingEnv.MinY;
-        if( poEnvelope->MaxX < oRingEnv.MaxX )
-            poEnvelope->MaxX = oRingEnv.MaxX;
-        if( poEnvelope->MaxY < oRingEnv.MaxY )
-            poEnvelope->MaxY = oRingEnv.MaxY;
+        if( psEnvelope->MinX > oRingEnv.MinX )
+            psEnvelope->MinX = oRingEnv.MinX;
+        if( psEnvelope->MinY > oRingEnv.MinY )
+            psEnvelope->MinY = oRingEnv.MinY;
+        if( psEnvelope->MaxX < oRingEnv.MaxX )
+            psEnvelope->MaxX = oRingEnv.MaxX;
+        if( psEnvelope->MaxY < oRingEnv.MaxY )
+            psEnvelope->MaxY = oRingEnv.MaxY;
     }
 }
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/05/28 19:16:43  warmerda
+ * fixed up argument names and stuff for docs
+ *
  * Revision 1.21  2003/03/07 21:28:56  warmerda
  * support 0x8000 style 3D WKB flags
  *
@@ -243,12 +246,12 @@ int OGRPoint::WkbSize()
 /************************************************************************/
 
 OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
-                                int nBytesAvailable )
+                                int nSize )
 
 {
     OGRwkbByteOrder     eByteOrder;
     
-    if( nBytesAvailable < 21 && nBytesAvailable != -1 )
+    if( nSize < 21 && nSize != -1 )
         return OGRERR_NOT_ENOUGH_DATA;
 
 /* -------------------------------------------------------------------- */
@@ -429,11 +432,11 @@ OGRErr OGRPoint::exportToWkt( char ** ppszDstText )
 /*                            getEnvelope()                             */
 /************************************************************************/
 
-void OGRPoint::getEnvelope( OGREnvelope * poEnvelope )
+void OGRPoint::getEnvelope( OGREnvelope * psEnvelope )
 
 {
-    poEnvelope->MinX = poEnvelope->MaxX = getX();
-    poEnvelope->MinY = poEnvelope->MaxY = getY();
+    psEnvelope->MinX = psEnvelope->MaxX = getX();
+    psEnvelope->MinY = psEnvelope->MaxY = getY();
 }
 
 

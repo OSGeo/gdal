@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2003/05/28 19:16:42  warmerda
+ * fixed up argument names and stuff for docs
+ *
  * Revision 1.43  2003/04/28 15:39:33  warmerda
  * ryan added forceToMultiPolyline and forceToMultiPoint
  *
@@ -224,8 +227,8 @@ class CPL_DLL OGRGeometry
     virtual int WkbSize() = 0;
     virtual OGRErr importFromWkb( unsigned char *, int=-1 )=0;
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * ) = 0;
-    virtual OGRErr importFromWkt( char ** ) = 0;
-    virtual OGRErr exportToWkt( char ** ) = 0;
+    virtual OGRErr importFromWkt( char ** ppszInput ) = 0;
+    virtual OGRErr exportToWkt( char ** ppszDstText ) = 0;
     
     // non-standard
     virtual OGRwkbGeometryType getGeometryType() = 0;
@@ -294,7 +297,7 @@ class CPL_DLL OGRPoint : public OGRGeometry
     virtual OGRErr importFromWkb( unsigned char *, int=-1 );
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * );
     virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char ** );
+    virtual OGRErr exportToWkt( char ** ppszDstText );
     
     // IGeometry
     virtual int getDimension();
@@ -371,7 +374,7 @@ class CPL_DLL OGRLineString : public OGRCurve
     virtual OGRErr importFromWkb( unsigned char *, int = -1 );
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * );
     virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char ** );
+    virtual OGRErr exportToWkt( char ** ppszDstText );
 
     // IGeometry interface
     virtual int getDimension();
@@ -468,8 +471,8 @@ class CPL_DLL OGRSurface : public OGRGeometry
 {
   public:
     virtual double      get_Area() = 0;
-    virtual OGRErr      Centroid( OGRPoint * ) = 0;
-    virtual OGRErr      PointOnSurface( OGRPoint * ) = 0;
+    virtual OGRErr      Centroid( OGRPoint * poPoint ) = 0;
+    virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) = 0;
 };
 
 /************************************************************************/
@@ -504,15 +507,15 @@ class CPL_DLL OGRPolygon : public OGRSurface
     
     // ISurface Interface
     virtual double      get_Area();
-    virtual int         Centroid( OGRPoint * );
-    virtual int         PointOnSurface( OGRPoint * );
+    virtual int         Centroid( OGRPoint * poPoint );
+    virtual int         PointOnSurface( OGRPoint * poPoint );
     
     // IWks Interface
     virtual int WkbSize();
     virtual OGRErr importFromWkb( unsigned char *, int = -1 );
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * );
     virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char ** );
+    virtual OGRErr exportToWkt( char ** ppszDstText );
 
     // IGeometry
     virtual int getDimension();
@@ -568,7 +571,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual OGRErr importFromWkb( unsigned char *, int = -1 );
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * );
     virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char ** );
+    virtual OGRErr exportToWkt( char ** ppszDstText );
 
     // IGeometry methods
     virtual int getDimension();

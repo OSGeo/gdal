@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/05/28 19:16:42  warmerda
+ * fixed up argument names and stuff for docs
+ *
  * Revision 1.9  2003/05/21 04:49:17  warmerda
  * avoid warnings
  *
@@ -173,10 +176,11 @@ static void AddEdgeToRing( OGRLinearRing * poRing, OGRLineString * poLine,
 /************************************************************************/
 /*                      OGRBuildPolygonFromEdges()                      */
 /************************************************************************/
+
 /**
  * Build a ring from a bunch of arcs.
  *
- * @param poLines handle to the line string geometry to add to the ring.
+ * @param hLines handle to the line string geometry to add to the ring.
  * @param bBestEffort not yet implemented???.
  * @param bAutoClose indicates if the ring should be close when first and
  * last points of the ring are the same.

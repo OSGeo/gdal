@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2003/05/28 19:16:42  warmerda
+ * fixed up argument names and stuff for docs
+ *
  * Revision 1.25  2003/03/12 14:25:31  warmerda
  * Fixed bug 294 re: quoting of axis directions
  *
@@ -809,11 +812,14 @@ void OGR_SRSNode::MakeValueSafe()
  *                (eg. "PROJECTION")
  * @param papszSrcValues a NULL terminated array of source string.  If the
  * node value matches one of these (case insensitive) then replacement occurs.
- * @param papszDstValue an array of destination strings.  On a match, the
+ * @param papszDstValues an array of destination strings.  On a match, the
  * one corresponding to a source value will be used to replace a node.
  * @param nStepSize increment when stepping through source and destination
  * arrays, allowing source and destination arrays to be one interleaved array
  * for instances.  Defaults to 1.
+ * @param bChildOfHit Only TRUE if we the current node is the child of a match,
+ * and so needs to be set.  Application code would normally pass FALSE for this
+ * argument.
  * 
  * @return returns OGRERR_NONE unless something bad happens.  There is no
  * indication returned about whether any replacement occured.  

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/05/28 19:16:42  warmerda
+ * fixed up argument names and stuff for docs
+ *
  * Revision 1.12  2003/01/14 22:13:35  warmerda
  * added isClockwise() method on OGRLinearRing
  *
@@ -127,9 +130,12 @@ int OGRLinearRing::WkbSize()
 /*      Disable method for this class.                                  */
 /************************************************************************/
 
-OGRErr OGRLinearRing::importFromWkb( unsigned char *, int )
+OGRErr OGRLinearRing::importFromWkb( unsigned char *pabyData, int nSize )
 
 {
+    (void) pabyData;
+    (void) nSize;
+
     return OGRERR_UNSUPPORTED_OPERATION;
 }
 
@@ -139,9 +145,13 @@ OGRErr OGRLinearRing::importFromWkb( unsigned char *, int )
 /*      Disable method for this class.                                  */
 /************************************************************************/
 
-OGRErr OGRLinearRing::exportToWkb( OGRwkbByteOrder, unsigned char * )
+OGRErr OGRLinearRing::exportToWkb( OGRwkbByteOrder eByteOrder, 
+                                   unsigned char * pabyData )
 
 {
+    (void) eByteOrder;
+    (void) pabyData;
+
     return OGRERR_UNSUPPORTED_OPERATION;
 }
 

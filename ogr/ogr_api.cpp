@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/05/28 19:16:42  warmerda
+ * fixed up argument names and stuff for docs
+ *
  * Revision 1.5  2003/04/14 17:33:35  warmerda
  * Fixed GetPoint's y value for points as per bug 319.
  *
@@ -407,7 +410,7 @@ OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
  * OGRGeometryCollection::addGeometry.
  *
  * @param hGeom existing geometry container.
- * @param hNewGeom geometry to add to the container.
+ * @param hNewSubGeom geometry to add to the container.
  *
  * @return OGRERR_NONE if successful, or OGRERR_UNSUPPORTED_GEOMETRY_TYPE if
  * the geometry type is illegal for the type of existing geometry.
@@ -461,7 +464,7 @@ OGRErr OGR_G_AddGeometry( OGRGeometryH hGeom, OGRGeometryH hNewSubGeom )
  * There is no SFCOM analog to this method.
  *
  * @param hGeom existing geometry.
- * @param hNewGeom geometry to add to the existing geometry.
+ * @param hNewSubGeom geometry to add to the existing geometry.
  *
  * @return OGRERR_NONE if successful, or OGRERR_UNSUPPORTED_GEOMETRY_TYPE if
  * the geometry type is illegal for the type of geometry container.
