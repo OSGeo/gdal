@@ -27,4 +27,7 @@ clean:
 dgndump:	dgndump.c $(OBJ)
 	$(CXX) $(ALL_C_FLAGS) dgndump.c $(OBJ) $(CPL_LIB) -ldl -lm -o dgndump 
 
+docs:
+	doxgyen
+
 
