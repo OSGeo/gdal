@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2001/12/06 18:42:38  warmerda
+ * Restructure warning/error handlers to "escape" contents of module argument
+ * when putting it into the format string.  I was experiencing a crash when
+ * a filename included a % and it was being reported in a warning.
+ *
  * Revision 1.57  2001/11/11 23:50:59  warmerda
  * added required class keyword to friend declarations
  *
@@ -2923,18 +2928,51 @@ const GDAL_GCP *GTiffDataset::GetGCPs()
 }
 
 /************************************************************************/
+/*                       PrepareTIFFErrorFormat()                       */
+/*                                                                      */
+/*      sometimes the "module" has stuff in it that has special         */
+/*      meaning in a printf() style format, so we try to escape it.     */
+/*      For now we hope the only thing we have to escape is %'s.        */
+/************************************************************************/
+
+static char *PrepareTIFFErrorFormat( const char *module, const char *fmt )
+
+{
+    char      *pszModFmt;
+    int       iIn, iOut;
+
+    pszModFmt = (char *) CPLMalloc( strlen(module)*2 + strlen(fmt) + 2 );
+    for( iOut = 0, iIn = 0; module[iIn] != '\0'; iIn++ )
+    {
+        if( module[iIn] == '%' )
+        {
+            pszModFmt[iOut++] = '%';
+            pszModFmt[iOut++] = '%';
+        }
+        else
+            pszModFmt[iOut++] = module[iIn];
+    }
+    pszModFmt[iOut] = '\0';
+    strcat( pszModFmt, ":" );
+    strcat( pszModFmt, fmt );
+
+    return pszModFmt;
+}
+
+/************************************************************************/
 /*                        GTiffWarningHandler()                         */
 /************************************************************************/
 void
 GTiffWarningHandler(const char* module, const char* fmt, va_list ap )
 {
-    char	szModFmt[128];
+    char	*pszModFmt;
 
     if( strstr(fmt,"unknown field") != NULL )
         return;
 
-    sprintf( szModFmt, "%s:%s", module, fmt );
-    CPLErrorV( CE_Warning, CPLE_AppDefined, szModFmt, ap );
+    pszModFmt = PrepareTIFFErrorFormat( module, fmt );
+    CPLErrorV( CE_Warning, CPLE_AppDefined, pszModFmt, ap );
+    CPLFree( pszModFmt );
 }
 
 /************************************************************************/
@@ -2943,10 +2981,11 @@ GTiffWarningHandler(const char* module, const char* fmt, va_list ap )
 void
 GTiffErrorHandler(const char* module, const char* fmt, va_list ap )
 {
-    char	szModFmt[128];
+    char *pszModFmt;
 
-    sprintf( szModFmt, "%s:%s", module, fmt );
-    CPLErrorV( CE_Failure, CPLE_AppDefined, szModFmt, ap );
+    pszModFmt = PrepareTIFFErrorFormat( module, fmt );
+    CPLErrorV( CE_Failure, CPLE_AppDefined, pszModFmt, ap );
+    CPLFree( pszModFmt );
 }
 
 /************************************************************************/
