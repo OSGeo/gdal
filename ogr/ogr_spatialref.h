@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2004/05/10 17:05:14  warmerda
+ * added AutoIdentifyEPSG()
+ *
  * Revision 1.60  2004/03/04 18:04:45  warmerda
  * added importFromDict() support
  *
@@ -283,6 +286,8 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetAuthority( const char * pszTargetKey, 
                               const char * pszAuthority, 
                               int nCode );
+
+    OGRErr      AutoIdentifyEPSG();
 
     const char *GetAuthorityCode( const char * pszTargetKey ) const;
     const char *GetAuthorityName( const char * pszTargetKey ) const;

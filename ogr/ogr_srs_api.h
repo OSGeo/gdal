@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2004/05/10 17:05:14  warmerda
+ * added AutoIdentifyEPSG()
+ *
  * Revision 1.43  2004/05/06 19:26:04  dron
  * Added OSRSetProjection() function.
  *
@@ -455,6 +458,7 @@ OGRErr CPL_DLL OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS,
                                           int nZone, int bNAD83,
                                           const char *pszOverrideUnitName,
                                           double dfOverrideUnit );
+OGRErr CPL_DLL OSRAutoIdentifyEPSG( OGRSpatialReferenceH hSRS );
 
 /** Albers Conic Equal Area */
 OGRErr CPL_DLL OSRSetACEA( OGRSpatialReferenceH hSRS, double dfStdP1, double dfStdP2,
