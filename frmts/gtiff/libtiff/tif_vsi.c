@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/07/17 22:45:58  warmerda
+ * avoid casting warning
+ *
  * Revision 1.5  2003/07/08 19:49:30  warmerda
  * avoid warning
  *
@@ -71,7 +74,7 @@ _tiffSeekProc(thandle_t fd, toff_t off, int whence)
     if( VSIFSeekL( (FILE *) fd, off, whence ) == 0 )
         return (toff_t) VSIFTellL( (FILE *) fd );
     else
-        return -1;
+        return (toff_t) -1;
 }
 
 static int
