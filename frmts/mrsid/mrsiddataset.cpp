@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/05/07 10:26:02  dron
+ * Added multidimensional metadata handling.
+ *
  * Revision 1.1  2003/04/23 12:21:56  dron
  * New.
  *
@@ -92,7 +95,7 @@ class MrSIDDataset : public GDALDataset
 
     CPLErr              GetGeoTransform( double * padfTransform );
     const char          *GetProjectionRef();
-    const char          *SerializeMetadataElement( const MetadataElement *poElem );
+    char                *SerializeMetadataElement( const MetadataElement *poElem );
 };
 
 /************************************************************************/
@@ -195,11 +198,6 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             case GDT_Float32:
             {
                 ((float*)pImage)[i] = ((float*)poImageBuf->getData())[j];
-            }
-            break;
-            case GDT_Float64:
-            {
-                ((double*)pImage)[i] = ((double*)poImageBuf->getData())[j];
             }
             break;
             case GDT_Byte:
@@ -378,34 +376,52 @@ const char *MrSIDDataset::GetProjectionRef()
 /*                      SerializeMetadataElement()                      */
 /************************************************************************/
 
-const char *MrSIDDataset::SerializeMetadataElement( const MetadataElement
+char *MrSIDDataset::SerializeMetadataElement( const MetadataElement
                                                     *poElem )
 {
-    switch( poElem->type() )
-    {
-        case MetadataValue::BYTE:
-        case MetadataValue::SHORT:
-        case MetadataValue::LONG:
-            return CPLSPrintf( "%lu", (unsigned long)poElem->getMetadataValue() );
-        break;
-        case MetadataValue::SBYTE:
-        case MetadataValue::SSHORT:
-        case MetadataValue::SLONG:
-            return CPLSPrintf( "%ld", (long)poElem->getMetadataValue() );
-        break;
-        case MetadataValue::FLOAT:
-            return CPLSPrintf( "%f", (float)poElem->getMetadataValue() );
-        break;
-        case MetadataValue::DOUBLE:
-            return CPLSPrintf( "%lf", (double)poElem->getMetadataValue() );
-        break;
-        case MetadataValue::ASCII:
-            return (const char*)poElem->getMetadataValue();
-        break;
-        default:
-            return "";
-        break;
-    }
+    IntDimension oDim = poElem->getDimensions();
+    int         i, j, iLength;
+    const char  *pszTemp = NULL;
+    char        *pszMetadata = CPLStrdup( "" );
+
+    for ( i = 0; i < oDim.height; i++ )
+        for ( j = 0; j < oDim.width; j++ )
+        {
+            switch( poElem->type() )
+            {
+                case MetadataValue::BYTE:
+                case MetadataValue::SHORT:
+                case MetadataValue::LONG:
+                    pszTemp = CPLSPrintf( "%lu", (unsigned long)(*poElem)[i][j] );
+                break;
+                case MetadataValue::SBYTE:
+                case MetadataValue::SSHORT:
+                case MetadataValue::SLONG:
+                    pszTemp = CPLSPrintf( "%ld", (long)(*poElem)[i][j] );
+                break;
+                case MetadataValue::FLOAT:
+                    pszTemp = CPLSPrintf( "%f", (float)(*poElem)[i][j] );
+                break;
+                case MetadataValue::DOUBLE:
+                    pszTemp = CPLSPrintf( "%lf", (double)(*poElem)[i][j] );
+                break;
+                case MetadataValue::ASCII:
+                    pszTemp = (const char*)poElem->getMetadataValue();
+                break;
+                default:
+                    pszTemp = "";
+                break;
+            }
+
+            iLength = strlen(pszMetadata) + strlen(pszTemp) + 2;
+
+            pszMetadata = (char *)CPLRealloc( pszMetadata, iLength );
+            if ( !EQUAL( pszMetadata, "" ) )
+                strncat( pszMetadata, ",", 1 );
+            strncat( pszMetadata, pszTemp, iLength );
+        }
+
+    return pszMetadata;
 }
 
 /************************************************************************/
@@ -442,9 +458,6 @@ CPLErr MrSIDDataset::OpenZoomLevel( int iZoom )
         break;
         case ImageBufferInfo::FLOAT32:
         eDataType = GDT_Float32;
-        break;
-        case ImageBufferInfo::FLOAT64:
-        eDataType = GDT_Float64;
         break;
         case ImageBufferInfo::UINT8:
         default:
@@ -545,8 +558,22 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 
         while( i != poDS->poMrSidMetadata->end() )
         {
-            poDS->SetMetadataItem( (*i).getKey().c_str(),
-                                   poDS->SerializeMetadataElement( &(*i) ) );
+            char    *pszElement = poDS->SerializeMetadataElement( &(*i) );
+            char    *pszKey = CPLStrdup( (*i).getKey().c_str() );
+            char    *pszTemp = pszKey;
+
+            // GDAL metadata keys should not contain ':' and '=' characters.
+            // We will replace them with '_'.
+            do
+            {
+                if ( *pszTemp == ':' || *pszTemp == '=' )
+                    *pszTemp = '_';
+            }
+            while ( *++pszTemp );
+
+            poDS->SetMetadataItem( pszKey, pszElement );
+            CPLFree( pszElement );
+            CPLFree( pszKey );
             i++;
         }
     }

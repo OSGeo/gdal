@@ -16,18 +16,22 @@ Now is is developed and distributed by the LizardTech, Inc.<p>
 This driver supports reading of MrSID image files using LizardTech's decoding
 software development kit (DSDK). <b>This DSDK is not free software, you should
 contact LizardTech to obtain it (see link at end of this page).</b> If you are
-using GCC, please, ensure that you are using the same compiler as was used
+using GCC, please, ensure that you have the same compiler as was used
 for DSDK compilation. It is C++ library, so you may get incompatibilities
 in C++ name mangling between different GCC versions (2.95.x and 3.x).<p>
 
 <h2>Metadata</h2>
 
-MrSID metadata transparently translated into GDAL metadata strings. Note,
-that files in MrSID format contain a set of standard metadata tags such as:
-IMAGE::WIDTH (contains the width of the image), IMAGE::HEIGHT (contains the
-height of the image), IMAGE::XY_ORIGIN (contains the x and y coordinates
-of the origin), IMAGE::INPUT_NAME (contains the name or names of the files
-used to create the MrSID image) etc.<p>
+MrSID metadata transparently translated into GDAL metadata strings. Files
+in MrSID format contain a set of standard metadata tags such as:
+IMAGE__WIDTH (contains the width of the image), IMAGE__HEIGHT (contains the
+height of the image), IMAGE__XY_ORIGIN (contains the x and y coordinates
+of the origin), IMAGE__INPUT_NAME (contains the name or names of the files
+used to create the MrSID image) etc.  GDAL's metadata keys cannot contain
+characters `:' and `=', but standard MrSID tags always contain double colons
+in tag names. These characters replaced in GDAL with `_' during translation.
+So if you are using other software to work with MrSID be ready that names
+of metadata keys will be shown differently in GDAL.<p>
 
 <h2>See Also:</h2>
 
