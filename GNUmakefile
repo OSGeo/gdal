@@ -3,6 +3,15 @@ GDAL_ROOT	=	.
 
 include GDALmake.opt
 
+GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
+			$(GDAL_ROOT)/gcore/*.o \
+			$(GDAL_ROOT)/port/*.o \
+			$(GDAL_ROOT)/alg/*.o \
+			$(GDAL_ROOT)/ogr/ogrsf_frmts/o/*.o
+
+include ./ogr/file.lst
+GDAL_OBJ += $(addprefix ./ogr/,$(OBJ))
+
 default:	GDALmake.opt lib py-target apps-target
 
 lib:	port-target core-target frmts-target ogr-target check-lib

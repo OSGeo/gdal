@@ -164,7 +164,7 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/gcore/*.o \
 			$(GDAL_ROOT)/port/*.o \
 			$(GDAL_ROOT)/alg/*.o \
-			$(GDAL_ROOT)/ogr/ogr.o
+			$(GDAL_ROOT)/ogr/ogrsf_frmts/o/*.o
 
 ifeq ($(OGR_ENABLED),yes)
 GDAL_LIBS := $(GDAL_LIB) $(PG_LIB) $(OCI_LIB) $(GDAL_LIBS)
