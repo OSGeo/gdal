@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/01/04 03:42:54  fwarmerdam
+ * cleanup qix files
+ *
  * Revision 1.8  2003/05/21 04:03:54  warmerda
  * expand tabs
  *
@@ -181,7 +184,8 @@ OGRErr OGRShapeDriver::DeleteDataSource( const char *pszDataSource )
     int iExt;
     VSIStatBuf sStatBuf;
     static const char *apszExtensions[] = 
-        { "shp", "shx", "dbf", "sbn", "sbx", "prj", "idm", "ind", NULL };
+        { "shp", "shx", "dbf", "sbn", "sbx", "prj", "idm", "ind", 
+          "qix", NULL };
 
     if( VSIStat( pszDataSource, &sStatBuf ) != 0 )
     {
