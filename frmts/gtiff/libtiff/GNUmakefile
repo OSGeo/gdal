@@ -54,6 +54,11 @@ default:	$(OBJ)
 clean:
 	rm -f $(O_OBJ) *.o *.a
 
+update:
+	mv port.h port_safe.h
+	copymatch.sh ~/osrs/libtiff/libtiff *.c *.h
+	mv port_safe.h port.h
+
 install-obj:	$(O_OBJ)
 
 ../../o/%.o:	%.o
