@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/06/20 14:11:27  warmerda
+ * added support for 1 bit files
+ *
  * Revision 1.21  2002/06/19 20:48:11  warmerda
  * ensure metadata dirty flag set by SetMetadataItem calls
  *
@@ -386,6 +389,7 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
 
     switch( nHFADataType )
     {
+      case EPT_u1:
       case EPT_u4:
       case EPT_u8:
       case EPT_s8:
@@ -428,6 +432,8 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
         eDataType = GDT_Byte;
         /* notdef: this should really report an error, but this isn't
            so easy from within constructors. */
+        CPLDebug( "GDAL", "Unsupported pixel type in HFARasterBand: %d.", 
+                  (int) nHFADataType );
         break;
     }
 
@@ -564,6 +570,18 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             pabyData[ii] = pabyData[ii>>1] & 0x0f;
             pabyData[ii+1] = (pabyData[ii>>1] & 0xf0) >> 4;
+        }
+    }
+    if( eErr == CE_None && nHFADataType == EPT_u1 )
+    {
+        GByte	*pabyData = (GByte *) pImage;
+
+        for( int ii = nBlockXSize * nBlockYSize - 1; ii >= 0; ii-- )
+        {
+            if( (pabyData[ii>>3] & (1 << (ii & 0x7))) )
+                pabyData[ii] = 1;
+            else
+                pabyData[ii] = 0;
         }
     }
 
