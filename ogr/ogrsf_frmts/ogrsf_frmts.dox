@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2004/11/08 18:52:11  fwarmerdam
+ * Added CreateField docs.
+ *
  * Revision 1.20  2003/10/17 17:45:41  danmo
  * Added documentation on GetLayerByName() method and OGR_DS_GetLayerByName() function. (Normand Savard)
  *
@@ -1703,17 +1706,39 @@ This method is the same as the C function OGR_L_GetRefCount().
 */
 
 /**
+\fn OGRErr OGRLayer::CreateField( OGRFieldDefn *poField, 
+				  int bApproxOK = TRUE );
+
+Create a new field on a layer.  You must use this to create new fields
+on a real layer. Internally the OGRFeatureDefn for the layer will be updated
+to reflect the new field.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
+
+This function is the same as the C function OGR_L_CreateField().
+
+@param poField field definition to write to disk. 
+@param bApproxOK If TRUE, the field may be created in a slightly different
+form depending on the limitations of the format driver.
+
+@return OGRERR_NONE on success.
+*/
+ 
+/**
 
  \fn OGRErr OGR_L_CreateField( OGRLayerH hLayer, OGRFieldDefnH hField, 
                           int bApproxOK );
 
- Write a new field definition within a layer.
+Create a new field on a layer.  You must use this to create new fields
+on a real layer. Internally the OGRFeatureDefn for the layer will be updated
+to reflect the new field.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
 
  This function is the same as the C++ method OGRLayer::CreateField().
 
  @param hLayer handle to the layer to write the field definition.
  @param hField handle of the field definition to write to disk. 
- @param bApproxOK ?
+ @param bApproxOK If TRUE, the field may be created in a slightly different
+form depending on the limitations of the format driver.
 
  @return OGRERR_NONE on success.
 
