@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2001/07/25 15:36:34  warmerda
+ * fixed bug with last band when writing one file per band
+ *
  * Revision 1.17  2001/07/25 14:26:44  warmerda
  * various source dist related changes
  *
@@ -405,7 +408,8 @@ int main( int nArgc, char ** papszArgv )
                 printf( "Translating band %d to an TIFF file %s.\n",
                         nBand, szFilename );
 
-            ImagineToGeoTIFF( hHFA, hHFA->papoBand, 1, &nBand,
+            anBandList[0] = nBand - 1;
+            ImagineToGeoTIFF( hHFA, hHFA->papoBand, 1, anBandList,
                               szFilename, nCompressFlag,
                               nOverviewCount == 0,
                               bWriteInStrips );
