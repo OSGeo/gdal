@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  1999/11/14 18:13:08  svillene
+ * add RegisterOGRTAB RegisterOGRMIF
+ *
  * Revision 1.11  1999/11/04 21:09:40  warmerda
  * Made a bunch of changes related to supporting creation of new
  * layers and data sources.
@@ -228,6 +231,8 @@ void	RegisterOGRFME();
 void    RegisterOGRSDTS();
 void    RegisterOGRTiger();
 void	RegisterOGRS57();
+void    RegisterOGRTAB();
+void    RegisterOGRMIF();
 CPL_C_END
 
 
