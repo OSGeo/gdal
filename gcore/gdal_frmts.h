@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/04/23 12:24:26  dron
+ * MrSID driver added, EFF removed.
+ *
  * Revision 1.20  2002/12/03 19:02:39  dron
  * Added BMP driver.
  *
@@ -110,7 +113,6 @@ void CPL_DLL GDALRegister_SDTS(void);
 void CPL_DLL GDALRegister_ELAS(void);
 void CPL_DLL GDALRegister_EHdr(void);
 void CPL_DLL GDALRegister_PAux(void);
-void CPL_DLL GDALRegister_EFF(void);
 void CPL_DLL GDALRegister_ENVI(void);
 void CPL_DLL GDALRegister_DOQ1(void);
 void CPL_DLL GDALRegister_DOQ2(void);
@@ -143,6 +145,7 @@ void CPL_DLL GDALRegister_XPM(void);
 void CPL_DLL GDALRegister_BMP(void);
 void CPL_DLL GDALRegister_GSC(void);
 void CPL_DLL GDALRegister_NITF(void);
+void CPL_DLL GDALRegister_MrSID(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
