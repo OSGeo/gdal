@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.28  2003/04/21 15:50:29  warmerda
+ * fixup generic overview reading support
+ *
  * Revision 1.27  2003/04/14 19:06:02  warmerda
  * Don't override a meaningful SRS name with the psPro->proName.
  *
@@ -542,7 +545,10 @@ HFARasterBand::~HFARasterBand()
 int HFARasterBand::GetOverviewCount()
 
 {
-    return nOverviews;
+    if( nOverviews == 0 )
+        return GDALRasterBand::GetOverviewCount();
+    else
+        return nOverviews;
 }
 
 /************************************************************************/
@@ -552,7 +558,9 @@ int HFARasterBand::GetOverviewCount()
 GDALRasterBand *HFARasterBand::GetOverview( int i )
 
 {
-    if( i < 0 || i >= nOverviews )
+    if( nOverviews == 0 )
+        return GDALRasterBand::GetOverview( i );
+    else if( i < 0 || i >= nOverviews )
         return NULL;
     else
         return papoOverviewBands[i];
