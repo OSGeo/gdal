@@ -6,6 +6,10 @@ AC_DEFUN(AC_COMPILER_WFLAGS,
 	CFLAGS=`echo "$CFLAGS " | sed "s/-g //"`
 
 	# check for GNU compiler, and use -Wall
+	if test "$GCC" = "yes"; then
+		C_WFLAGS="-Wall"
+		AC_DEFINE(USE_GNUCC)
+	fi
 	if test "$GXX" = "yes"; then
 		CXX_WFLAGS="-Wall"
 		AC_DEFINE(USE_GNUCC)
