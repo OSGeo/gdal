@@ -152,14 +152,9 @@ XERCES_INCLUDE	=	@XERCES_INCLUDE@
 #
 # Oracle Spatial Support
 #
-ifneq ($(ORACLE_HOME),)
-HAVE_OCI = yes
-OCI_INCLUDE =   -I$(ORACLE_HOME)/rdbms/demo -I$(ORACLE_HOME)/rdbms/public
-OCI_LIB =	-L$(ORACLE_HOME)/lib -lclntsh
-LIBS	:=	$(OCI_LIB) $(LIBS)
-else
-HAVE_OCI = no
-endif
+HAVE_OCI =	@HAVE_OCI@
+OCI_INCLUDE =   @OCI_INCLUDE@
+
 
 #
 # FMEObjects
