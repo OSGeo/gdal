@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/10/24 16:46:33  warmerda
+ * added docs and C implementation for Equal and FlattenTo2D
+ *
  * Revision 1.13  2002/09/26 18:12:38  warmerda
  * added C support
  *
@@ -410,6 +413,27 @@ int OGR_G_GetCoordinateDimension( OGRGeometryH hGeom )
  */
 
 /**
+ * \fn int OGRGeometry::Equal( OGRGeometry *poOtherGeom );
+ *
+ * Returns two if two geometries are equivelent.
+ *
+ * This method is the same as the C function OGR_G_Equal().
+ *
+ * @return TRUE if equivelent or FALSE otherwise.
+ */
+
+/************************************************************************/
+/*                            OGR_G_Equal()                             */
+/************************************************************************/
+
+int OGR_G_Equal( OGRGeometryH hGeom, OGRGeometryH hOther )
+
+{
+    return ((OGRGeometry *) hGeom)->Equal( (OGRGeometry *) hOther );
+}
+
+
+/**
  * \fn int OGRGeometry::WkbSize();
  *
  * Returns size of related binary representation.
@@ -768,3 +792,23 @@ const char *OGRGeometryTypeToName( OGRwkbGeometryType eType )
         return szWorkName;
     }
 }
+
+/**
+ * \fn void OGRGeometry::flattenTo2D();
+ *
+ * Covnert geometry to strictly 2D.  In a sense this converts all Z coordinates
+ * to 0.0.
+ *
+ * This method is the same as the C function OGR_G_FlattenTo2D().
+ */
+
+/************************************************************************/
+/*                         OGR_G_FlattenTo2D()                          */
+/************************************************************************/
+
+void OGR_G_FlattenTo2D( OGRGeometryH hGeom )
+
+{
+    ((OGRGeometry *) hGeom)->flattenTo2D();
+}
+
