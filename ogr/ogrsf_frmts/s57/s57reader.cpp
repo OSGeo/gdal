@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2001/01/22 18:00:03  warmerda
+ * Don't completely flip out if there is other than one spatial linkage for
+ * in AssemblePointGeometry().  Record 577 of CA49995B.000 (newfiles) has this.
+ *
  * Revision 1.20  2000/09/28 16:30:31  warmerda
  * avoid warnings
  *
@@ -747,7 +751,16 @@ void S57Reader::AssemblePointGeometry( DDFRecord * poFRecord,
     if( poFSPT == NULL )
         return;
 
-    CPLAssert( poFSPT->GetRepeatCount() == 1 );
+    if( poFSPT->GetRepeatCount() != 1 )
+    {
+#ifdef DEBUG
+        fprintf( stderr, 
+                 "Point features with other than one spatial linkage.\n" );
+        poFRecord->Dump( stderr );
+#endif
+        CPLDebug( "S57", 
+           "Point feature encountered with other than one spatial linkage." );
+    }
         
     nRCID = ParseName( poFSPT, 0, &nRCNM );
 
