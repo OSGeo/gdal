@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/01/06 18:53:41  warmerda
+ * made data_type_code and data_struct_code global for HP C++ builds
+ *
  * Revision 1.18  2003/12/15 20:24:58  warmerda
  * expand tabs
  *
@@ -210,8 +213,8 @@ void DDFFieldDefn::AddSubfield( DDFSubfieldDefn *poNewSFDefn,
 
 int DDFFieldDefn::Create( const char *pszTag, const char *pszFieldName, 
                           const char *pszDescription, 
-                          DDFFieldDefn::data_struct_code eDataStructCode,
-                          DDFFieldDefn::data_type_code   eDataTypeCode,
+                          DDF_data_struct_code eDataStructCode,
+                          DDF_data_type_code   eDataTypeCode,
                           const char *pszFormat )
 
 {
