@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/08/11 20:11:24  warmerda
+ * Added special VRT mode
+ *
  * Revision 1.6  2004/07/28 17:56:00  warmerda
  * use return instead of exit() to avoid lame warnings on windows
  *
@@ -100,6 +103,8 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
 static double	       dfMinX=0.0, dfMinY=0.0, dfMaxX=0.0, dfMaxY=0.0;
 static double	       dfXRes=0.0, dfYRes=0.0;
 static int             nForcePixels=0, nForceLines=0, bQuiet = FALSE;
+
+static int             bVRT = FALSE;
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -203,6 +208,8 @@ int main( int argc, char ** argv )
         {
             pszFormat = argv[++i];
             bCreateOutput = TRUE;
+            if( EQUAL(pszFormat,"VRT") )
+                bVRT = TRUE;
         }
         else if( EQUAL(argv[i],"-t_srs") && i < argc-1 )
         {
@@ -528,6 +535,28 @@ int main( int argc, char ** argv )
     }
 
 /* -------------------------------------------------------------------- */
+/*      If we are producing VRT output, then just initialize it with    */
+/*      the warp options and write out now rather than proceeding       */
+/*      with the operations.                                            */
+/* -------------------------------------------------------------------- */
+    if( bVRT )
+    {
+        if( GDALInitializeWarpedVRT( hDstDS, psWO ) != CE_None )
+            exit( 1 );
+
+        GDALDumpOpenDatasets( stderr );
+
+        GDALClose( hDstDS );
+        GDALClose( hSrcDS );
+        
+        GDALDumpOpenDatasets( stderr );
+        
+        GDALDestroyDriverManager();
+        
+        return 0;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Initialize and execute the warp.                                */
 /* -------------------------------------------------------------------- */
     GDALWarpOperation oWO;
@@ -620,6 +649,15 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
         printf( "\n" );
         exit( 1 );
     }
+
+/* -------------------------------------------------------------------- */
+/*      For virtual output files, we have to set a special subclass     */
+/*      of dataset to create.                                           */
+/* -------------------------------------------------------------------- */
+    if( bVRT )
+        papszCreateOptions = 
+            CSLSetNameValue( papszCreateOptions, "SUBCLASS", 
+                             "VRTWarpedDataset" );
 
 /* -------------------------------------------------------------------- */
 /*      Create a transformation object from the source to               */
