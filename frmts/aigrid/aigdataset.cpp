@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/02/21 15:38:32  warmerda
+ * fixed nodata value for floats
+ *
  * Revision 1.11  2001/11/11 23:50:59  warmerda
  * added required class keyword to friend declarations
  *
@@ -236,7 +239,10 @@ double AIGRasterBand::GetNoDataValue( int *pbSuccess )
     if( pbSuccess != NULL )
         *pbSuccess = TRUE;
 
-    return GRID_NO_DATA;
+    if( eDataType == GDT_Float32 )
+        return ESRI_GRID_FLOAT_NO_DATA;
+    else
+        return GRID_NO_DATA;
 }
 
 /************************************************************************/

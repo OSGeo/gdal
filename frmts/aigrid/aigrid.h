@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/02/21 15:38:32  warmerda
+ * fixed nodata value for floats
+ *
  * Revision 1.8  2000/11/09 06:22:40  warmerda
  * save cover name
  *
@@ -63,7 +66,9 @@ CPL_C_START
 
 #define GRID_NO_DATA 65536
 
-#define ESRI_GRID_NO_DATA -2147483647
+#define ESRI_GRID_NO_DATA -2147483647				       
+/*#define ESRI_GRID_FLOAT_NO_DATA -340282306073709652508363335590014353408.0 */
+#define ESRI_GRID_FLOAT_NO_DATA -340282346638528859811704183484516925440.0
 
 /* ==================================================================== */
 /*      Grid Instance                                                   */
