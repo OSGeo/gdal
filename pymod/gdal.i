@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2002/07/18 15:27:15  warmerda
+ * made CPLDebug() safe
+ *
  * Revision 1.37  2002/06/27 15:41:49  warmerda
  * added minixml read/write stuff
  *
@@ -109,7 +112,6 @@ CPL_CVSID("$Id$");
 
 %native(NumPyArrayToGDALFilename) py_NumPyArrayToGDALFilename;
 
-void CPLDebug( const char *, const char * );
 void CPLErrorReset();
 int CPLGetLastErrorNo();
 const char *CPLGetLastErrorMsg();
@@ -1808,5 +1810,27 @@ py_CPLSerializeXMLTree(PyObject *self, PyObject *args) {
 %}
 
 %native(CPLSerializeXMLTree) py_CPLSerializeXMLTree;
+
+/************************************************************************/
+/*                             CPLDebug()                               */
+/************************************************************************/
+static PyObject *
+py_CPLDebug(PyObject *self, PyObject *args) {
+
+    char *pszText = NULL;
+    char *pszMsgClass = NULL;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:CPLDebug", &pszMsgClass, &psgText ))
+        return NULL;
+
+    CPLDebug( pszMsgClass, "%s", pszText );
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+%}
+
+%native(CPLDebug) py_CPLDebug;
 
 

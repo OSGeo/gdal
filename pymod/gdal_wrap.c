@@ -1840,20 +1840,6 @@ py_CPLSerializeXMLTree(PyObject *self, PyObject *args) {
 #ifdef __cplusplus
 extern "C" {
 #endif
-static PyObject *_wrap_CPLDebug(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    char * _arg0;
-    char * _arg1;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"ss:CPLDebug",&_arg0,&_arg1)) 
-        return NULL;
-    CPLDebug(_arg0,_arg1);
-    Py_INCREF(Py_None);
-    _resultobj = Py_None;
-    return _resultobj;
-}
-
 static PyObject *_wrap_CPLErrorReset(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
 
@@ -4072,7 +4058,6 @@ static PyMethodDef _gdalMethods[] = {
 	 { "CPLGetLastErrorMsg", _wrap_CPLGetLastErrorMsg, METH_VARARGS },
 	 { "CPLGetLastErrorNo", _wrap_CPLGetLastErrorNo, METH_VARARGS },
 	 { "CPLErrorReset", _wrap_CPLErrorReset, METH_VARARGS },
-	 { "CPLDebug", _wrap_CPLDebug, METH_VARARGS },
 	 { "NumPyArrayToGDALFilename", py_NumPyArrayToGDALFilename, METH_VARARGS },
 	 { NULL, NULL }
 };
