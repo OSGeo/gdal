@@ -28,6 +28,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.26  2003/12/02 18:01:09  warmerda
+ * Rewrote line reading function to avoid calls to CPLReadLine() since
+ * some files have all the data for the whole file in one long line.
+ *
  * Revision 1.25  2003/12/02 17:06:11  warmerda
  * Write out integers as integers.
  *
@@ -212,8 +216,6 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     AAIGDataset *poODS = (AAIGDataset *) poDS;
-    const char  *pszLine;
-    char        **papszTokens;
     int         iPixel;
 
     if( nBlockYOff < 0 || nBlockYOff > poODS->nRasterYSize - 1 
@@ -237,38 +239,48 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     for( iPixel = 0; iPixel < poODS->nRasterXSize; )
     {
-        pszLine = CPLReadLine( poODS->fp );
-        if( pszLine == NULL )
+        char szToken[500];
+        char chNext;
+        int  iTokenChar = 0;
+
+        /* suck up any pre-white space. */
+        do {
+            chNext = VSIFGetc( poODS->fp );
+        } while( isspace( chNext ) );
+
+        while( !isspace(chNext)  )
         {
-            CPLError( CE_Failure, CPLE_FileIO, "Can't read line from input file." );
-            return CE_Failure;
-        }
-
-        papszTokens = CSLTokenizeString( pszLine );
-        if( papszTokens == NULL )
-            return CE_Failure;
-
-
-
-
-        for( int iToken = 0; 
-             papszTokens[iToken] != NULL && iPixel < poODS->nRasterXSize; 
-             iToken++ )
-        {
-            if( pImage != NULL )
+            if( iTokenChar == sizeof(szToken)-2 )
             {
-                if( eDataType == GDT_Float32 )
-                    ((float *) pImage)[iPixel] = (float)
-                        atof(papszTokens[iToken]);
-                else
-                    ((GInt16 *) pImage)[iPixel] = (GInt16)
-                        atoi(papszTokens[iToken]);
+                CPLError( CE_Failure, CPLE_FileIO, 
+                          "Token too long at scanline %d.", 
+                          nBlockYOff );
+                return CE_Failure;
             }
 
-            iPixel++;
+            szToken[iTokenChar++] = chNext;
+            chNext = VSIFGetc( poODS->fp );
         }
 
-        CSLDestroy( papszTokens );
+        if( chNext == '\0' )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                      "File short, can't read line %d.",
+                      nBlockYOff );
+            return CE_Failure;
+        }
+
+        szToken[iTokenChar] = '\0';
+
+        if( pImage != NULL )
+        {
+            if( eDataType == GDT_Float32 )
+                ((float *) pImage)[iPixel] = (float) atof(szToken);
+            else
+                ((GInt16 *) pImage)[iPixel] = (GInt16) atoi(szToken);
+        }
+        
+        iPixel++;
     }
     
     if( nBlockYOff < poODS->nRasterYSize - 1 )
