@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/05/05 15:36:33  warmerda
+ * Treat any element ending in "member" as a feature container.
+ *
  * Revision 1.12  2003/03/06 20:30:28  warmerda
  * use GML/OGR geometry translations from ogr_geometry.h now
  *
@@ -363,9 +366,11 @@ int GMLReader::IsFeatureElement( const char *pszElement )
 {
     CPLAssert( m_poState != NULL );
 
-    if( !EQUAL(m_poState->GetLastComponent(),"gml:featureMember") 
-        && !EQUAL(m_poState->GetLastComponent(),"featureMember") )
-        return FALSE;						
+    const char *pszLast = m_poState->GetLastComponent();
+    int        nLen = strlen(pszLast);
+
+    if( nLen < 6 || !EQUAL(pszLast+nLen-6,"member") )
+        return FALSE;
 
     // If the class list isn't locked, any element that is a featureMember
     // will do. 
