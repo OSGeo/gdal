@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/08/19 20:16:14  warmerda
+ * Added support for CONE and 3D solid/surface header.
+ * Implemented DGNQuaternionToMatrix function.
+ * Marius Kintel
+ *
  * Revision 1.18  2003/06/27 14:38:26  warmerda
  * avoid warnings
  *
@@ -1031,6 +1036,15 @@ const char *DGNTypeToName( int nType )
       case DGNT_TAG_VALUE:
         return "Tag Value";
         
+      case DGNT_CONE:
+        return "Cone";
+
+      case DGNT_3DSURFACE_HEADER:
+        return "3D Surface Header";
+
+      case DGNT_3DSOLID_HEADER:
+        return "3D Solid Header";
+
       default:
         sprintf( szNumericResult, "%d", nType );
         return szNumericResult;
@@ -1187,3 +1201,40 @@ void DGNRotationToQuaternion( double dfRotation, int *panQuaternion )
     panQuaternion[2] = 0;
     panQuaternion[3] = (int) (sin(-dfRadianRot/2.0) * 2147483647);
 }
+
+/************************************************************************/
+/*                         DGNQuaternionToMatrix()                      */
+/*                                                                      */
+/*      Compute a rotation matrix for a given quaternion                */
+/* FIXME: Write documentation on how to use this matrix                 */
+/* (i.e. things like row/column major, OpenGL style or not)             */
+/* kintel 20030819                                                      */
+/************************************************************************/
+
+void DGNQuaternionToMatrix( int *quat, float *mat )
+{
+  double q[4];
+  for (int i=0;i<4;i++) q[i] = 1.0 * quat[i] / (1<<31);
+
+  mat[0*3+0] = q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3];
+  mat[0*3+1] = 2 * (q[2]*q[3] + q[0]*q[1]);
+  mat[0*3+2] = 2 * (q[0]*q[2] - q[1]*q[3]);
+  mat[1*3+0] = 2 * (q[0]*q[1] - q[2]*q[3]);
+  mat[1*3+1] = -q[0]*q[0] + q[1]*q[1] - q[2]*q[2] + q[3]*q[3];
+  mat[1*3+2] = 2 * (q[0]*q[3] + q[1]*q[2]);
+  mat[2*3+0] = 2 * (q[0]*q[2] + q[1]*q[3]); 
+  mat[2*3+1] = 2 * (q[1]*q[2] - q[0]*q[3]);
+  mat[2*3+2] = -q[0]*q[0] - q[1]*q[1] + q[2]*q[2] + q[3]*q[3];
+}
+
+/* FIXME: Add function to directly transform a vertex using a quaternion?
+   See below for sketched implementation. kintel 20030819.
+void DGNTransformVertex( int *quat, DGNPoint &v1, DGNPoint &v2 )
+{
+  float x,y,z,w;
+  // FIXME: Convert quat to x,y,z,w
+  v2.x = w*w*v1.x + 2*y*w*v1.z - 2*z*w*v1.y + x*x*v1.x + 2*y*x*v1.y + 2*z*x*v1.z - z*z*v1.x - y*y*v1.x; 
+  v2.y = 2*x*y*v1.x + y*y*v1.y + 2*z*y*v1.z + 2*w*z*v1.x - z*z*v1.y + w*w*v1.y - 2*x*w*v1.z - x*x*v1.y; 
+  v2.z = 2*x*z*v1.x + 2*y*z*v1.y + z*z*v1.z - 2*w*y*v1.x - y*y*v1.z + 2*w*x*v1.y - x*x*v1.z + w*w*v1.z;
+}
+*/
