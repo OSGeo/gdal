@@ -915,7 +915,7 @@ build directory.  Note that Kakadu is *not* free software.])
 else
   KAKDIR=$with_kakadu
   OPT_GDAL_FORMATS="jp2kak $OPT_GDAL_FORMATS"
-  LIBS="$LIBS -lkdu"
+  LIBS="$LIBS -L$with_kakadu/lib -lkdu"
   AC_MSG_RESULT([requested.])
   HAVE_KAKADU=yes
 fi
@@ -981,7 +981,7 @@ else
         AC_MSG_RESULT([found MrSID ESDK version 4.0.x.])
 	MRSID_FLAGS="-DMRSID_ESDK_VERSION_40 $MRSID_FLAGS"
 	MRSID_INCLUDE="-I$with_mrsid/include/mrsid_writers -I$with_mrsid/include/j2k_writers $MRSID_INCLUDE"
-	LIBS="-L$with_mrsid/3rd-party/lib/Release -lcryptopp -lltiesdk $LIBS"
+	LIBS="-L$with_mrsid/3rd-party/lib/Release -lltiesdk $LIBS -lcryptopp"
       fi
 
     else
