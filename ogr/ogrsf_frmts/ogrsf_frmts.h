@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2002/04/25 03:42:04  warmerda
+ * fixed spatial filter support on SQL results
+ *
  * Revision 1.24  2002/04/25 02:24:13  warmerda
  * added ExecuteSWQ() method
  *
@@ -215,7 +218,7 @@ class CPL_DLL OGRDataSource
     OGRStyleTable       *GetStyleTable(){return m_poStyleTable;}
 
     virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
-                                    OGREnvelope *psEnvelope,
+                                    OGRGeometry *poSpatialFilter,
                                     const char *pszDialect );
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
     
