@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.37 2003/12/19 07:54:50 fwarmerdam Exp $
+ * $Id: mitab_miffile.cpp,v 1.38 2004/02/27 21:04:14 fwarmerdam Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.38  2004/02/27 21:04:14  fwarmerdam
+ * dont write MIF header if file is readonly - gdal bugzilla 509
+ *
  * Revision 1.37  2003/12/19 07:54:50  fwarmerdam
  * write mif header on close if not already written out
  *
@@ -1017,7 +1020,8 @@ int MIFFile::WriteMIFHeader()
 int MIFFile::Close()
 {
     /* flush .mif header if not already written */
-    if ( m_poDefn != NULL && m_bHeaderWrote == FALSE)
+    if ( m_poDefn != NULL && m_bHeaderWrote == FALSE 
+         && m_eAccessMode != TABRead )
     {
         WriteMIFHeader();     
     }

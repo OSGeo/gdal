@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_datasource.cpp,v 1.6 2003/03/21 14:20:49 warmerda Exp $
+ * $Id: mitab_ogr_datasource.cpp,v 1.7 2004/02/27 21:06:03 fwarmerdam Exp $
  *
  * Name:     mitab_ogr_datasource.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
@@ -31,6 +31,11 @@
  **********************************************************************
  *
  * $Log: mitab_ogr_datasource.cpp,v $
+ * Revision 1.7  2004/02/27 21:06:03  fwarmerdam
+ * Better support for "single file" creation ... don't allow other layers to
+ * be created.  But *do* single file to satisfy the first layer creation request
+ * made.  Also, allow creating a datasource "on" an existing directory.
+ *
  * Revision 1.6  2003/03/21 14:20:49  warmerda
  * fixed email
  *
@@ -75,6 +80,8 @@ OGRTABDataSource::OGRTABDataSource()
     m_papoLayers = NULL;
     m_papszOptions = NULL;
     m_bCreateMIF = FALSE;
+    m_bSingleFile = FALSE;
+    m_bSingleLayerAlreadyCreated = FALSE;
 }
 
 /************************************************************************/
@@ -172,6 +179,7 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
         m_papoLayers[0] = poFile;
         
         m_pszDirectory = CPLStrdup( CPLGetPath(pszName) );
+        m_bSingleFile = TRUE;
     }
 
     return TRUE;
@@ -304,28 +312,64 @@ OGRTABDataSource::CreateLayer( const char * pszLayerName,
     IMapInfoFile        *poFile;
     char                *pszFullFilename;
 
-    if( m_bCreateMIF )
+/* -------------------------------------------------------------------- */
+/*      If it's a single file mode file, then we may have already       */
+/*      instantiated the low level layer.   We would just need to       */
+/*      reset the coordinate system and (potentially) bounds.           */
+/* -------------------------------------------------------------------- */
+    if( m_bSingleFile )
     {
-        pszFullFilename = CPLStrdup( CPLFormFilename( m_pszDirectory,
-                                                      pszLayerName, "mif" ) );
+        if( m_bSingleLayerAlreadyCreated )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                    "Unable to create new layers in this single file dataset.");
+            return NULL;
+        }
 
-        poFile = new MIFFile;
+        m_bSingleLayerAlreadyCreated = TRUE;
+
+        poFile = (IMapInfoFile *) m_papoLayers[0];
     }
+
+/* -------------------------------------------------------------------- */
+/*      We need to initially create the file, and add it as a layer.    */
+/* -------------------------------------------------------------------- */
     else
     {
-        pszFullFilename = CPLStrdup( CPLFormFilename( m_pszDirectory,
-                                                      pszLayerName, "tab" ) );
+        if( m_bCreateMIF )
+        {
+            pszFullFilename = CPLStrdup( CPLFormFilename( m_pszDirectory,
+                                                          pszLayerName, "mif" ) );
+            
+            poFile = new MIFFile;
+        }
+        else
+        {
+            pszFullFilename = CPLStrdup( CPLFormFilename( m_pszDirectory,
+                                                          pszLayerName, "tab" ) );
+            
+            poFile = new TABFile;
+        }
+        
+        if( poFile->Open( pszFullFilename, "wb", FALSE ) != 0 )
+        {
+            CPLFree( pszFullFilename );
+            delete poFile;
+            return FALSE;
+        }
 
-        poFile = new TABFile;
-    }
+        m_nLayerCount++;
+        m_papoLayers = (IMapInfoFile **)
+            CPLRealloc(m_papoLayers,sizeof(void*)*m_nLayerCount);
+        m_papoLayers[m_nLayerCount-1] = poFile;
 
-    if( poFile->Open( pszFullFilename, "wb", FALSE ) != 0 )
-    {
         CPLFree( pszFullFilename );
-        delete poFile;
-        return FALSE;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Assign the coordinate system (if provided) and set              */
+/*      reasonable bounds.                                              */
+/* -------------------------------------------------------------------- */
     if( poSRSIn != NULL )
         poFile->SetSpatialRef( poSRSIn );
 
@@ -339,13 +383,6 @@ OGRTABDataSource::CreateLayer( const char * pszLayerName,
         poFile->SetBounds( -30000000, -15000000, 30000000, 15000000 );
     }
 
-    m_nLayerCount++;
-    m_papoLayers = (IMapInfoFile **)
-        CPLRealloc(m_papoLayers,sizeof(void*)*m_nLayerCount);
-    m_papoLayers[m_nLayerCount-1] = poFile;
-
-    CPLFree( pszFullFilename );
-
     return poFile;
 }
 
@@ -357,7 +394,7 @@ int OGRTABDataSource::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
-        return TRUE;
+        return !m_bSingleFile;
     else
         return FALSE;
 }
