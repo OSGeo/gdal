@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/01/27 14:21:28  warmerda
+ * Fixed byte_order test.
+ *
  * Revision 1.6  2003/01/24 15:05:01  warmerda
  * Fixed byte order detection bugs as per bugzilla 261.
  *
@@ -704,10 +707,10 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     {
 #ifdef CPL_LSB                               
         bNativeOrder = atoi(CSLFetchNameValue(poDS->papszHeader,
-                                              "byte_order" )) == 1;
+                                              "byte_order" )) == 0;
 #else
         bNativeOrder = atoi(CSLFetchNameValue(poDS->papszHeader,
-                                              "byte_order" )) != 1;
+                                              "byte_order" )) != 0;
 #endif
     }
 
