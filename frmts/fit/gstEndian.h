@@ -1,13 +1,51 @@
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  FIT Driver
+ * Purpose:  Implement FIT Support - not using the SGI iflFIT library.
+ * Author:   Philip Nemec, nemec@keyholecorp.com
+ *
+ ******************************************************************************
+ * Copyright (c) 2001, Keyhole, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ******************************************************************************
+ * 
+ * $Log$
+ * Revision 1.2  2001/07/06 18:46:25  nemec
+ * Cleanup files - improve Windows build, make proper copyright notice
+ *
+ *
+ */
+
 #ifndef _gstEndian_h_
 #define _gstEndian_h_
 
 // endian swapping tools
 
 #include <stdio.h>
+#include <cpl_port.h>
+
 #include "gstTypes.h"
 
-// XXX - have to do swapping on Linux
-#ifdef __linux
+// have to do swapping on Linux and Windows
+#ifdef CPL_LSB
 #define swapping
 #else
 #endif
@@ -17,10 +55,6 @@ size_t swapped_fread(void *ptr, size_t size, size_t nitems, FILE *stream);
 size_t swapped_fwrite(const void *ptr, size_t size, size_t nitems, FILE
                       *stream);
 
-// from kff.h
-
-// XXX - definitions conflict with those in kff.h
-#ifndef kff_H
 static inline void swap64(void * value)
 {
     // 0x1122334455667788 --> 0x8877665544332211
@@ -77,23 +111,20 @@ static inline void swapbytes(void * value, int size)
 }
 
 #define swapb( value )  swapbytes( &value, sizeof(value))
-#endif // ! kff_H
 
-#else
+#else // swapping
+
 #define swapped_fread(ptr, size, nitems, stream) \
 	fread(ptr, size, nitems, stream)
 #define swapped_fwrite(ptr, size, nitems, stream) \
 	fwrite(ptr, size, nitems, stream)
 
-// XXX - definitions conflict with those in kff.h
-#ifndef kff_H
 #define swap64( vlaue )
 #define swap32( vlaue )
 #define swap16( vlaue )
 #define swapbytes( value, size )
 #define swapb( value )
-#endif // ! kff_H
 
-#endif
+#endif // swapping
 
 #endif // ! _gstEndian_h_
