@@ -9,7 +9,7 @@ OLE_LIBS =	ole32.lib oleaut32.lib
 GDAL_LIB =	$(GDAL_ROOT)/gdal.lib
 LOC_OBJ =       Cover.obj COGRRealGC.obj ComUtility.obj Geometry.obj \
 		GridGeometryImpl.obj AffineGeoReferenceImpl.obj \
-		GridCoverageFactoryImpl.obj
+		GridCoverageFactoryImpl.obj com_util.obj
 
 
 default:	Cover.dll
