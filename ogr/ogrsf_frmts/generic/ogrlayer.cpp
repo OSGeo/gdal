@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/07/27 00:51:39  warmerda
+ * added GetInfo(), fixed args for other methods
+ *
  * Revision 1.2  1999/07/26 13:59:06  warmerda
  * added feature writing api
  *
@@ -77,7 +80,7 @@ OGRFeature *OGRLayer::GetFeature( long nFeatureId )
 /*                             SetFeature()                             */
 /************************************************************************/
 
-OGRErr OGRLayer::SetFeature( OGRFeature *, long )
+OGRErr OGRLayer::SetFeature( OGRFeature * )
 
 {
     return OGRERR_UNSUPPORTED_OPERATION;
@@ -87,11 +90,19 @@ OGRErr OGRLayer::SetFeature( OGRFeature *, long )
 /*                           CreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRLayer::CreateFeature( OGRFeature *, long * pnFeatureId )
+OGRErr OGRLayer::CreateFeature( OGRFeature * )
 
 {
-    *pnFeatureId = OGRNullFID;
-
     return OGRERR_UNSUPPORTED_OPERATION;
+}
+
+/************************************************************************/
+/*                              GetInfo()                               */
+/************************************************************************/
+
+const char *OGRLayer::GetInfo( const char * pszTag )
+
+{
+    return NULL;
 }
 
