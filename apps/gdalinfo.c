@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.21  2001/11/17 21:40:58  warmerda
+ * converted to use OGR projection services
+ *
  * Revision 1.20  2001/11/02 22:21:36  warmerda
  * fixed memory leak
  *
@@ -368,8 +371,8 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
 {
     double	dfGeoX, dfGeoY;
     const char  *pszProjection;
-    GDALProjDefH hProj;
     double	adfGeoTransform[6];
+    OGRCoordinateTransformationH hTransform = NULL;
         
     printf( "%-11s ", corner_name );
     
@@ -405,22 +408,41 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
         printf( "(%12.3f,%12.3f) ", dfGeoX, dfGeoY );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Setup transformation to lat/long.                               */
+/* -------------------------------------------------------------------- */
     if( pszProjection != NULL && strlen(pszProjection) > 0 )
-        hProj = GDALCreateProjDef( pszProjection );
-    else
-        hProj = NULL;
+    {
+        OGRSpatialReferenceH hProj, hLatLong = NULL;
 
-    if( hProj != NULL 
-        && GDALReprojectToLongLat( hProj, &dfGeoX, &dfGeoY ) == CE_None )
+        hProj = OSRNewSpatialReference( pszProjection );
+        if( hProj != NULL )
+            hLatLong = OSRCloneGeogCS( hProj );
+
+        if( hLatLong != NULL )
+        {
+            hTransform = OCTNewCoordinateTransformation( hProj, hLatLong );
+            OSRDestroySpatialReference( hLatLong );
+        }
+
+        if( hProj != NULL )
+            OSRDestroySpatialReference( hProj );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Transform to latlong and report.                                */
+/* -------------------------------------------------------------------- */
+    if( hTransform != NULL 
+        && OCTTransform(hTransform,1,&dfGeoX,&dfGeoY,NULL) )
     {
         
         printf( "(%s,", GDALDecToDMS( dfGeoX, "Long", 2 ) );
         printf( "%s)", GDALDecToDMS( dfGeoY, "Lat", 2 ) );
     }
 
-    if( hProj != NULL )
-        GDALDestroyProjDef( hProj );
-
+    if( hTransform != NULL )
+        OCTDestroyCoordinateTransformation( hTransform );
+    
     printf( "\n" );
 
     return TRUE;
