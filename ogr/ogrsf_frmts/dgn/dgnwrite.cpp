@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/11/19 17:37:00  warmerda
+ * Fixes from Marius: use ElemTypeHasDispHdr, and cosmetic
+ *
  * Revision 1.14  2003/11/05 17:17:38  warmerda
  * use DGNLoadTCB() to ensure scaling setup
  *
@@ -762,7 +765,7 @@ int DGNUpdateElemCoreExtended( DGNHandle hDGN, DGNElemCore *psElement )
 /* -------------------------------------------------------------------- */
 /*      Handle the graphic properties.                                  */
 /* -------------------------------------------------------------------- */
-    if( psElement->raw_bytes > 36 && psElement->type != DGNT_CELL_LIBRARY )
+    if( psElement->raw_bytes > 36 && DGNElemTypeHasDispHdr( psElement->type ) )
     {
         rd[28] = (GByte) (psElement->graphic_group % 256);
         rd[29] = (GByte) (psElement->graphic_group / 256);
@@ -1552,7 +1555,7 @@ DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag,
     memcpy( psCT->color_info, abyColorInfo, 768 );
 
 /* -------------------------------------------------------------------- */
-/*      Setup Raw data for the text specific portion.                   */
+/*      Setup Raw data for the color table specific portion.            */
 /* -------------------------------------------------------------------- */
     psCore->raw_bytes = 806;
     psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
@@ -1574,10 +1577,6 @@ DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag,
 /************************************************************************/
 /*                     DGNCreateComplexHeaderElem()                     */
 /************************************************************************/
-
-DGNElemCore *
-DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, 
-                            int nTotLength, int nNumElems )
 
 /**
  * Create complex chain/shape header.
@@ -1602,7 +1601,9 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType,
  *
  * @return the new element (DGNElemComplexHeader) or NULL on failure. 
  */
-
+DGNElemCore *
+DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, 
+                            int nTotLength, int nNumElems )
 {
     DGNElemComplexHeader *psCH;
     DGNElemCore *psCore;
@@ -1633,7 +1634,7 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType,
     psCH->surftype = 0;
 
 /* -------------------------------------------------------------------- */
-/*      Setup Raw data for the text specific portion.                   */
+/*      Setup Raw data for the complex specific portion.                */
 /* -------------------------------------------------------------------- */
     if ( nType == DGNT_COMPLEX_CHAIN_HEADER 
          || nType == DGNT_COMPLEX_SHAPE_HEADER ) 
@@ -1647,8 +1648,7 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType,
     psCore->raw_data[37] = (unsigned char) (nTotLength / 256);
     psCore->raw_data[38] = (unsigned char) (nNumElems % 256);
     psCore->raw_data[39] = (unsigned char) (nNumElems / 256);
-    if ( nType == DGNT_3DSURFACE_HEADER 
-         || nType == DGNT_3DSOLID_HEADER ) {
+    if ( nType == DGNT_3DSURFACE_HEADER || nType == DGNT_3DSOLID_HEADER ) {
       psCore->raw_data[40] = (unsigned char) (psCH->surftype % 256);
       psCore->raw_data[41] = (unsigned char) (psCH->surftype / 256);
     }
