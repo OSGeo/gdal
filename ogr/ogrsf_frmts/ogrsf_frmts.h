@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2004/07/20 19:18:44  warmerda
+ * added CSV
+ *
  * Revision 1.43  2004/07/10 05:03:24  warmerda
  * added SQLite
  *
@@ -405,6 +408,7 @@ void CPL_DLL RegisterOGRMEM();
 void CPL_DLL RegisterOGRVRT();
 void CPL_DLL RegisterOGRDODS();
 void CPL_DLL RegisterOGRSQLite();
+void CPL_DLL RegisterOGRCSV();
 
 CPL_C_END
 
