@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2001/07/10 02:12:40  nemec
+ * Fixed writing of files whose dimensions aren't exact multiples of the page size
+ *
  * Revision 1.4  2001/07/07 01:03:35  nemec
  * Fixed math on check if 64 bit seek is needed
  *
@@ -41,6 +44,8 @@
  *
  *
  */
+
+#include <strings.h> // for bzero
 
 #include "fit.h"
 #include "gstEndian.h"
@@ -1101,18 +1106,41 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
         CPLError(CE_Fatal, CPLE_NotSupported, 
                  "FITRasterBand couldn't allocate %lu bytes", pageBytes);
 
-    long maxx = poSrcDS->GetRasterXSize() / blockX;
-    long maxy = poSrcDS->GetRasterYSize() / blockY;
+    long maxx = (long) ceil(poSrcDS->GetRasterXSize() / (double) blockX);
+    long maxy = (long) ceil(poSrcDS->GetRasterYSize() / (double) blockY);
+    long maxx_full = (long) floor(poSrcDS->GetRasterXSize() / (double) blockX);
+    long maxy_full = (long) floor(poSrcDS->GetRasterYSize() / (double) blockY);
+
+    CPLDebug("FIT", "about to write %ix%i blocks", maxx, maxy);
+
     for(long y=0; y < maxy; y++)
         for(long x=0; x < maxx; x++) {
+            long readX = blockX;
+            long readY = blockY;
+            int do_clean = FALSE;
+
+            // handle cases where image size isn't an exact multiple
+            // of page size
+            if (x >= maxx_full) {
+                readX = poSrcDS->GetRasterXSize() % blockX;
+                do_clean = TRUE;
+            }
+            if (y >= maxy_full) {
+                readY = poSrcDS->GetRasterYSize() % blockY;
+                do_clean = TRUE;
+            }
+
+            // clean out image sinnce only doing partial reads
+            bzero(output, pageBytes);
+
             for( int iBand = 0; iBand < nBands; iBand++ ) {
                 GDALRasterBand * poBand = poSrcDS->GetRasterBand( iBand+1 );
                 CPLErr eErr =
                     poBand->RasterIO( GF_Read, // eRWFlag
                                       x * blockX, // nXOff
                                       y * blockY, // nYOff
-                                      blockX, // nXSize
-                                      blockY, // nYSize
+                                      readX, // nXSize
+                                      readY, // nYSize
                                       output + iBand * bytesPerComponent,
                                       // pData
                                       blockX, // nBufXSize
@@ -1123,7 +1151,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
                                       bytesPerPixel * blockX); // nLineSpace
                 if (eErr != CE_None)
                     CPLError(CE_Failure, CPLE_FileIO, 
-                             "FIT write - CreateCopy got read error");
+                             "FIT write - CreateCopy got read error %i", eErr);
             } // for iBand
 
 #ifdef swapping
