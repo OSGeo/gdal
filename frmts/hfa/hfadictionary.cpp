@@ -1,7 +1,6 @@
 /******************************************************************************
  * $Id$
  *
- * Name:     hfadictionary.cpp
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Implementation of the HFADictionary class for managing the
  *           dictionary read from the HFA file.  Most work done by the
@@ -31,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/01/22 17:36:13  warmerda
+ * fixed return value
+ *
  * Revision 1.2  1999/01/04 22:52:47  warmerda
  * field access working
  *
@@ -160,6 +162,8 @@ int HFADictionary::GetItemSize( char chType )
         return 16;
 
       case 'b':
+        return 8;
+        
       case 'o':
       case 'x':
         return 0;
