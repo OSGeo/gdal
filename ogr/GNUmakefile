@@ -10,9 +10,10 @@ OBJ	=	ogrgeometryfactory.o ogrpoint.o ogrcurve.o ogrlinestring.o \
 		ogrfeature.o ogrfeaturedefn.o ogrfielddefn.o \
 		ogrspatialreference.o ogr_srsnode.o ogr_srs_proj4.o
 
-LIBS	:=	$(LIBS) 
-
 OGR_LIB  =	ogr.a
+
+LIBS	:=	$(OGR_LIB) $(CPL_LIB) $(LIBS) 
+
 FRMTS_LIB = 	ogrsf_frmts/ogrsf_frmts.a
 
 LINCLUDE =	-Iogrsf_frmts -I. -I$(GDAL_ROOT)/port
@@ -29,19 +30,16 @@ very-clean: clean
 	rm -rf html
 
 test1:	test1.o $(OGR_LIB)
-	$(CXX) $(LNK_FLAGS) test1.o $(OGR_LIB) $(CPL_LIB) $(LIBS) -o test1
+	$(CXX) $(LNK_FLAGS) test1.o $(LIBS) -o test1
 
 test2:	test2.o $(OGR_LIB) $(FRMTS_LIB)
-	$(CXX) $(LNK_FLAGS) test2.o $(FRMTS_LIB) $(GDAL_LIBS) \
-						$(LIBS) -o test2
+	$(CXX) $(LNK_FLAGS) test2.o $(FRMTS_LIB) $(LIBS) -o test2
 
 test_ogrsf:	test_ogrsf.o $(OGR_LIB) $(FRMTS_LIB)
-	$(CXX) $(LNK_FLAGS) test_ogrsf.o $(FRMTS_LIB) $(GDAL_LIBS) \
-						$(LIBS) -o test_ogrsf
+	$(CXX) $(LNK_FLAGS) test_ogrsf.o $(FRMTS_LIB) $(LIBS) -o test_ogrsf
 
 ogrinfo:	ogrinfo.o $(OGR_LIB) $(FRMTS_LIB)
-	$(CXX) $(LNK_FLAGS) ogrinfo.o $(FRMTS_LIB) $(GDAL_LIBS) \
-						$(LIBS) -o ogrinfo
+	$(CXX) $(LNK_FLAGS) ogrinfo.o $(FRMTS_LIB) $(LIBS) -o ogrinfo
 
 $(FRMTS_LIB):
 	(cd ogrsf_frmts; $(MAKE))
@@ -61,6 +59,6 @@ $(OGR_LIB):	$(OBJ)
 	$(CC) -c $(LINCLUDE) $(CFLAGS) $*.c -o $*.o
 
 %.o:	%.cpp
-	$(CXX) -c $(LINCLUDE) $(CFLAGS) $*.cpp -o $*.o
+	$(CXX) -c $(LINCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 
 
