@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2004/02/22 09:56:54  dron
+ * Fix compirison casting problems in OGRPolygon::Equal().
+ *
  * Revision 1.25  2004/02/21 15:36:14  warmerda
  * const correctness updates for geometry: bug 289
  *
@@ -830,7 +833,7 @@ OGRBoolean OGRPolygon::Equal( OGRGeometry * poOther ) const
 {
     OGRPolygon *poOPoly = (OGRPolygon *) poOther;
 
-    if( poOther == this )
+    if( poOPoly == this )
         return TRUE;
     
     if( poOther->getGeometryType() != getGeometryType() )
