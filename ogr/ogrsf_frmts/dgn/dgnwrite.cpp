@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/11/25 15:47:56  warmerda
+ * Added surface type for complex headers: Marius
+ *
  * Revision 1.17  2003/11/21 16:17:33  warmerda
  * fix missing handling of min/max Z in DGNCreateMultiPointElem()
  *
@@ -1597,12 +1600,13 @@ DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag,
  * group plus 5.  The DGNCreateComplexHeaderFromGroup() can be used to build
  * a complex element from the members more conveniently.  
  *
- * If you are creating a 3D surface or solid, the surftype is initialized
- * to DGNSUT_SOLID for surface and DGNSOT_VOLUME_OF_PROJECTION for solid.
- *
  * @param hDGN the file on which the element will be written.
- * @param nType either DGNT_COMPLEX_CHAIN_HEADER or DGNT_COMPLEX_SHAPE_HEADER
- * depending on whether the list is open or closed (last point equal to last).
+ * @param nType DGNT_COMPLEX_CHAIN_HEADER, DGNT_COMPLEX_SHAPE_HEADER, 
+ * DGNT_3DSURFACE_HEADER or DGNT_3DSOLID_HEADER.
+ * depending on whether the list is open or closed (last point equal to last)
+ * or if the object represents a surface or a solid.
+ * @param nSurfType the surface/solid type, one of DGNSUT_* or DGNSOT_*. 
+ * Ignored if nType is DGNT_COMPLEX_CHAIN_HEADER or DGNT_COMPLEX_SHAPE_HEADER.
  * @param nTotLength the value of the totlength field in the element.
  * @param nNumElems the number of elements in the complex group not including
  * the header element. 
@@ -1610,7 +1614,7 @@ DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag,
  * @return the new element (DGNElemComplexHeader) or NULL on failure. 
  */
 DGNElemCore *
-DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, 
+DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
                             int nTotLength, int nNumElems )
 {
     DGNElemComplexHeader *psCH;
@@ -1639,7 +1643,7 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
     psCH->totlength = nTotLength;
     psCH->numelems = nNumElems;
-    psCH->surftype = 0;
+    psCH->surftype = nSurfType;
 
 /* -------------------------------------------------------------------- */
 /*      Setup Raw data for the complex specific portion.                */
@@ -1687,6 +1691,8 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType,
  * DGNT_3DSURFACE_HEADER or DGNT_3DSOLID_HEADER.
  * depending on whether the list is open or closed (last point equal to last)
  * or if the object represents a surface or a solid.
+ * @param nSurfType the surface/solid type, one of DGNSUT_* or DGNSOT_*. 
+ * Ignored if nType is DGNT_COMPLEX_CHAIN_HEADER or DGNT_COMPLEX_SHAPE_HEADER.
  * @param nNumElems the number of elements in the complex group not including
  * the header element. 
  * @param papsElems array of pointers to nNumElems elements in the complex
@@ -1696,7 +1702,7 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType,
  */
 
 DGNElemCore *
-DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType, 
+DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType, int nSurfType,
                                  int nNumElems, DGNElemCore **papsElems )
 
 {
@@ -1754,7 +1760,8 @@ DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
 /*      Create the corresponding complex header.                        */
 /* -------------------------------------------------------------------- */
-    psCH = DGNCreateComplexHeaderElem( hDGN, nType, nTotalLength, nNumElems );
+    psCH = DGNCreateComplexHeaderElem( hDGN, nType, nSurfType, 
+                                       nTotalLength, nNumElems );
     DGNUpdateElemCore( hDGN, psCH, papsElems[0]->level, psCH->graphic_group,
                        psCH->color, psCH->weight, psCH->style );
 

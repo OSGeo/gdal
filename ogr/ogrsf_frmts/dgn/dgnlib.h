@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2003/11/25 15:47:56  warmerda
+ * Added surface type for complex headers: Marius
+ *
  * Revision 1.36  2003/11/21 16:17:33  warmerda
  * fix missing handling of min/max Z in DGNCreateMultiPointElem()
  *
@@ -772,10 +775,10 @@ DGNElemCore CPL_DLL *
             DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag, 
                                      GByte abyColorInfo[256][3] );
 DGNElemCore *
-DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, 
+DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, int nSurfType, 
                             int nTotLength, int nNumElems );
 DGNElemCore *
-DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType, 
+DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType, int nSurfType,
                                  int nNumElems, DGNElemCore **papsElems );
 
 DGNElemCore CPL_DLL  *
