@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2003/11/18 21:11:40  warmerda
+ * Added DGNElemTypeHasDispHdr() function.
+ *
  * Revision 1.41  2003/11/07 13:59:45  warmerda
  * added DGNLoadTCB()
  *
@@ -1074,6 +1077,35 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
 }
 
 /************************************************************************/
+/*                       DGNElemTypeHasDispHdr()                        */
+/************************************************************************/
+
+/**
+ * Does element type have display header.
+ *
+ * @param nElemType element type (0-63) to test. 
+ *
+ * @return TRUE if elements of passed in type have a display header after the
+ * core element header, or FALSE otherwise. 
+ */
+
+int DGNElemTypeHasDispHdr( int nElemType )
+
+{
+    switch( nElemType )
+    {
+      case DGNT_TCB:
+      case DGNT_CELL_LIBRARY:
+      case 63:
+        return FALSE;
+        
+      default:
+        return TRUE;
+    }
+}
+
+
+/************************************************************************/
 /*                            DGNParseCore()                            */
 /************************************************************************/
 
@@ -1087,8 +1119,7 @@ int DGNParseCore( DGNInfo *psDGN, DGNElemCore *psElement )
     psElement->deleted = psData[1] & 0x80;
     psElement->type = psData[1] & 0x7f;
 
-    if( psDGN->nElemBytes >= 36 
-        && psElement->type != DGNT_CELL_LIBRARY )
+    if( psDGN->nElemBytes >= 36 && DGNElemTypeHasDispHdr( psElement->type ) )
     {
         psElement->graphic_group = psData[28] + psData[29] * 256;
         psElement->properties = psData[32] + psData[33] * 256;
@@ -1096,9 +1127,16 @@ int DGNParseCore( DGNInfo *psDGN, DGNElemCore *psElement )
         psElement->weight = (psData[34] & 0xf8) >> 3;
         psElement->color = psData[35];
     }
+    else
+    {
+        psElement->graphic_group = 0;
+        psElement->properties = 0;
+        psElement->style = 0;
+        psElement->weight = 0;
+        psElement->color = 0;
+    }
 
-    if( psElement->properties & DGNPF_ATTRIBUTES 
-        && psElement->type != DGNT_TCB )
+    if( psElement->properties & DGNPF_ATTRIBUTES )
     {
         int   nAttIndex;
         
