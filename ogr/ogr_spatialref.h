@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/01/06 19:46:10  warmerda
+ * added special logic for setting, and recognising UTM
+ *
  * Revision 1.9  1999/11/18 19:02:20  warmerda
  * expanded tabs
  *
@@ -307,6 +310,10 @@ class OGRSpatialReference
     // VanDerGrinten
     OGRErr      SetVDG( double dfCenterLong,
                         double dfFalseEasting, double dfFalseNorthing );
+
+    // Universal Transverse Mercator
+    OGRErr      SetUTM( int nZone, int bNorth = TRUE );
+    int		GetUTMZone( int *pbNorth = NULL );
 };
 
 /* ==================================================================== */

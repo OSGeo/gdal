@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/01/06 19:46:10  warmerda
+ * added special logic for setting, and recognising UTM
+ *
  * Revision 1.8  1999/11/18 19:02:19  warmerda
  * expanded tabs
  *
@@ -1616,4 +1619,65 @@ OGRErr OGRSpatialReference::SetVDG( double dfCMeridian,
     return OGRERR_NONE;
 }
 
+/************************************************************************/
+/*                               SetUTM()                               */
+/************************************************************************/
 
+OGRErr OGRSpatialReference::SetUTM( int nZone, int bNorth )
+
+{
+    SetProjection( SRS_PT_TRANSVERSE_MERCATOR );
+    SetProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0 );
+    SetProjParm( SRS_PP_CENTRAL_MERIDIAN, nZone * 6 - 183 );
+    SetProjParm( SRS_PP_SCALE_FACTOR, 0.9996 );
+    SetProjParm( SRS_PP_FALSE_EASTING, 500000.0 );
+
+    if( bNorth )
+        SetProjParm( SRS_PP_FALSE_NORTHING, 0 );
+    else
+        SetProjParm( SRS_PP_FALSE_NORTHING, 10000000 );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                             GetUTMZone()                             */
+/*                                                                      */
+/*      Returns zero if it isn't UTM.                                   */
+/************************************************************************/
+
+int OGRSpatialReference::GetUTMZone( int * pbNorth )
+
+{
+    const char	*pszProjection = GetAttrValue( "PROJECTION" );
+
+    if( !EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )
+        return 0;
+
+    if( GetProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 ) != 0.0 )
+        return 0;
+
+    if( GetProjParm( SRS_PP_SCALE_FACTOR, 1.0 ) != 0.9996 )
+        return 0;
+          
+    if( GetProjParm( SRS_PP_FALSE_EASTING, 0.0 ) != 500000 )
+        return 0;
+
+    double	dfFalseNorthing = GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+
+    if( dfFalseNorthing != 0.0 && dfFalseNorthing != 10000000 )
+        return 0;
+
+    if( pbNorth != NULL )
+        *pbNorth = (dfFalseNorthing == 0);
+
+    double	dfCentralMeridian = GetProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0);
+    double	dfZone = (dfCentralMeridian+183) / 6.0 + 0.000000001;
+
+    if( ABS(dfZone - (int) dfZone) > 0.00001
+        || dfCentralMeridian < -177.00001
+        || dfCentralMeridian > 177.000001 )
+        return 0;
+    else
+        return (int) dfZone;
+}
