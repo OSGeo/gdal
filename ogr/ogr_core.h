@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2003/10/09 15:27:41  warmerda
+ * added OGRLayer::DeleteFeature() support
+ *
  * Revision 1.23  2003/09/11 19:59:41  warmerda
  * avoid casting issue with UNFIX macro
  *
@@ -315,6 +318,7 @@ typedef union {
 #define OLCFastGetExtent       "FastGetExtent"
 #define OLCCreateField         "CreateField"
 #define OLCTransactions        "Transactions"
+#define OLCDeleteFeature       "DeleteFeature"
 
 #define ODsCCreateLayer        "CreateLayer"
 #define ODsCDeleteLayer        "DeleteLayer"

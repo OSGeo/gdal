@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.18  2003/10/09 15:27:53  warmerda
+# added OGRLayer::DeleteFeature() support
+#
 # Revision 1.17  2003/10/06 22:28:54  warmerda
 # Added support for GetExtent().
 #
@@ -384,6 +387,9 @@ class Layer:
 
     def CreateFeature( self, feat ):
         return _gdal.OGR_L_CreateFeature( self._o, feat._o )
+
+    def DeleteFeature( self, fid ):
+        return _gdal.OGR_L_DeleteFeature( self._o, fid )
 
     def SyncToDisk( self ):
         return _gdal.OGR_L_SyncToDisk( self._o )

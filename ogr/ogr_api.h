@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/10/09 15:27:41  warmerda
+ * added OGRLayer::DeleteFeature() support
+ *
  * Revision 1.16  2003/09/04 14:01:44  warmerda
  * added OGRGetGenerate_DB2_V72_BYTE_ORDER
  *
@@ -285,6 +288,7 @@ OGRFeatureH CPL_DLL OGR_L_GetNextFeature( OGRLayerH );
 OGRFeatureH CPL_DLL OGR_L_GetFeature( OGRLayerH, long );
 OGRErr CPL_DLL OGR_L_SetFeature( OGRLayerH, OGRFeatureH );
 OGRErr CPL_DLL OGR_L_CreateFeature( OGRLayerH, OGRFeatureH );
+OGRErr CPL_DLL OGR_L_DeleteFeature( OGRLayerH, long );
 OGRFeatureDefnH CPL_DLL OGR_L_GetLayerDefn( OGRLayerH );
 OGRSpatialReferenceH CPL_DLL OGR_L_GetSpatialRef( OGRLayerH );
 int    CPL_DLL OGR_L_GetFeatureCount( OGRLayerH, int );
