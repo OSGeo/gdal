@@ -7,10 +7,9 @@ PROJ	=	smsf
 DLLNAME	=	SoftmapSF.dll
 
 EXTRAFLAGS =	-I$(SFOLEDB) \
-		-I$(VCDIR)\ATL\Include \
 		-I$(MSDASDK)\include\oledb -I$(OGR) -I$(SFOLEDB) /W2 \
-		-I$(OGR)\ogrsf_frmts 
-
+		-I$(OGR)\ogrsf_frmts \
+		-I$(VCDIR)\ATL\Include
 
 !INCLUDE $(GDAL_ROOT)/nmake.opt
 
@@ -18,7 +17,7 @@ OLE_LIBS =	ole32.lib oleaut32.lib
 OGR_LIBS =	$(OGR)\ogrsf_frmts\ogrsf_frmts.lib \
 		$(OGR)\ogrsf_frmts\ogrsf_frmts_sup.lib \
 		$(OGR)\ogroledb.lib $(OGR)\ogr.lib \
-		$(GDAL_ROOT)\port\cpl.lib
+		$(GDAL_ROOT)\port\cpl.lib  $(OGDILIB)
 
 LOC_OBJ =       SF.obj SFRS.obj sfutil.obj sftraceback.obj sfregister.obj
 
@@ -33,8 +32,9 @@ $(PROJ).res:	$(PROJ).rc SF.h $(SFOLEDB)/sf_common.rc
 	rc.exe /l 0x1009 /fo$(PROJ).res /I$(SFOLEDB) /d _DEBUG $(PROJ).rc
 
 $(DLLNAME):	SF.h $(LOC_OBJ) $(PROJ).res
-	link /dll /def:$(SFOLEDB)/SF.def /out:$(DLLNAME) \
-		$(LOC_OBJ) $(OGR_LIBS) $(OLE_LIBS) $(PROJ).res
+	link /dll /debug /def:$(SFOLEDB)/SF.def /out:$(DLLNAME) \
+		$(LOC_OBJ) $(OGR_LIBS) $(OLE_LIBS) $(PROJ).res \
+		$(LINKER_FLAGS)
 
 clean:
 	-del *.obj *.exe *.dll $(PROJ).res $(DLLNAME)
