@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/12/13 06:00:54  warmerda
+ * added CPLProjectRelativeFilename() and CPLIsFilenameRelative()
+ *
  * Revision 1.17  2002/12/09 18:52:51  warmerda
  * added DMS conversion
  *
@@ -115,6 +118,9 @@ const char CPL_DLL *CPLFormCIFilename( const char *pszPath,
                                        const char *pszBasename,
                                        const char *pszExtension );
 const char CPL_DLL *CPLResetExtension( const char *, const char * );
+const char CPL_DLL *CPLProjectRelativeFilename( const char *pszProjectDir, 
+                                            const char *pszSecondaryFilename );
+int CPL_DLL CPLIsFilenameRelative( const char *pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Find File Function                                              */
