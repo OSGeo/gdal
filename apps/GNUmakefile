@@ -63,7 +63,7 @@ gdal-config-inst:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 	echo 'CONFIG_CFLAGS="-I$(INST_INCLUDE)"' >> gdal-config-inst
 	echo 'CONFIG_VERSION="'`cat ../VERSION`'"' >> gdal-config-inst
 	echo 'CONFIG_OGR_ENABLED=$(OGR_ENABLED)' >> gdal-config-inst
-	echo 'CONFIG_FORMATS=$(GDAL_FORMATS)' >> gdal-config-inst
+	echo 'CONFIG_FORMATS="$(GDAL_FORMATS)"' >> gdal-config-inst
 	cat gdal-config.in >> gdal-config-inst
 	chmod a+x gdal-config-inst
 
