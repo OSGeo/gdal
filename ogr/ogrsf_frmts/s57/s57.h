@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/03/05 14:25:43  warmerda
+ * expanded tabs
+ *
  * Revision 1.18  2002/02/18 21:26:34  warmerda
  * removed declaration for OGRBuildPolygonFromEdges
  *
@@ -144,7 +147,7 @@ class S57ClassRegistrar
     char       *pachAttrClass;
     int        *panAttrIndex; // sorted by acronym.
 
-    int 	FindFile( const char *pszTarget, const char *pszDirectory, 
+    int         FindFile( const char *pszTarget, const char *pszDirectory, 
                           int bReportErr, FILE **fp );
 
     const char *ReadLine( FILE * fp );

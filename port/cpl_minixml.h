@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/03/05 14:26:57  warmerda
+ * expanded tabs
+ *
  * Revision 1.3  2002/01/23 20:45:06  warmerda
  * handle <?...?> and comment elements
  *
@@ -56,9 +59,9 @@ typedef enum
 
 typedef struct _CPLXMLNode
 {
-    CPLXMLNodeType	eType;
+    CPLXMLNodeType      eType;
     
-    char		*pszValue;
+    char                *pszValue;
 
     struct _CPLXMLNode  *psNext;
     struct _CPLXMLNode  *psChild;

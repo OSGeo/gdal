@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/03/05 14:25:43  warmerda
+ * expanded tabs
+ *
  * Revision 1.16  2001/12/19 22:44:53  warmerda
  * added ADD_SOUNDG_DEPTH support
  *
@@ -233,7 +236,7 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
     CSLDestroy( papszReaderOptions );
 
 /* -------------------------------------------------------------------- */
-/*      Try opening.                       				*/
+/*      Try opening.                                                    */
 /*                                                                      */
 /*      Eventually this should check for catalogs, and if found         */
 /*      instantiate a whole series of modules.                          */
@@ -410,7 +413,7 @@ OGRErr OGRS57DataSource::GetDSExtent( OGREnvelope *psExtent, int bForce )
 /* -------------------------------------------------------------------- */
     for( int iModule=0; iModule < nModules; iModule++ )
     {
-        OGREnvelope	oModuleEnvelope;
+        OGREnvelope     oModuleEnvelope;
         OGRErr          eErr;
 
         eErr = papoModules[iModule]->GetExtent( &oModuleEnvelope, bForce );

@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/03/05 14:26:57  warmerda
+ * expanded tabs
+ *
  * Revision 1.19  2002/01/16 03:59:27  warmerda
  * added CPLTokenizeString2
  *
@@ -573,7 +576,7 @@ char ** CSLTokenizeStringComplex( const char * pszString,
                                   int bHonourStrings, int bAllowEmptyTokens )
 
 {
-    int 	nFlags = 0;
+    int         nFlags = 0;
 
     if( bHonourStrings )
         nFlags |= CSLT_HONOURSTRINGS;
@@ -597,8 +600,8 @@ char ** CSLTokenizeString2( const char * pszString,
     char        **papszRetList = NULL;
     char        *pszToken;
     int         nTokenMax, nTokenLen;
-    int		bHonourStrings = (nCSLTFlags & CSLT_HONOURSTRINGS);
-    int		bAllowEmptyTokens = (nCSLTFlags & CSLT_ALLOWEMPTYTOKENS);
+    int         bHonourStrings = (nCSLTFlags & CSLT_HONOURSTRINGS);
+    int         bAllowEmptyTokens = (nCSLTFlags & CSLT_ALLOWEMPTYTOKENS);
 
     pszToken = (char *) CPLCalloc(10,1);
     nTokenMax = 10;

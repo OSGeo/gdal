@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/03/05 14:26:57  warmerda
+ * expanded tabs
+ *
  * Revision 1.8  2002/01/16 03:59:28  warmerda
  * added CPLTokenizeString2
  *
@@ -81,7 +84,7 @@ char CPL_DLL **CSLTokenizeString2( const char *pszString,
                                    const char *pszDelimeter, 
                                    int nCSLTFlags );
 
-#define CSLT_HONOURSTRINGS	0x0001
+#define CSLT_HONOURSTRINGS      0x0001
 #define CSLT_ALLOWEMPTYTOKENS   0x0002
 #define CSLT_PRESERVEQUOTES     0x0004
 #define CSLT_PRESERVEESCAPES    0x0008

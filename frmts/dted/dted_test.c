@@ -4,10 +4,10 @@
 int main()
 
 {
-    DTEDInfo	*psInfo;
+    DTEDInfo    *psInfo;
     int         iY, iX;
     void        *pStream;
-    GInt16	*panData;
+    GInt16      *panData;
 
 /* -------------------------------------------------------------------- */
 /*      Open input file.                                                */
@@ -36,8 +36,11 @@ int main()
         for( iY = 0; iY < psInfo->nYSize; iY++ )
         {
             DTEDWritePt( pStream, 
-                         psInfo->dfULCornerX + iX * psInfo->dfPixelSizeX * 2,
-                         psInfo->dfULCornerY - iY * psInfo->dfPixelSizeX * 2,
+                         psInfo->dfULCornerX + iX * psInfo->dfPixelSizeX * 2
+                         + psInfo->dfPixelSizeX * 0.5,
+                         psInfo->dfULCornerY 
+                         - (psInfo->nYSize-iY-1) * psInfo->dfPixelSizeX * 2
+                         - psInfo->dfPixelSizeY * 0.5,
                          panData[iY] );
         }
     }
@@ -47,6 +50,7 @@ int main()
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
+    DTEDFillPtStream( pStream, 2 );
     DTEDClosePtStream( pStream );
     DTEDClose( psInfo );
 

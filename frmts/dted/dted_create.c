@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/03/05 14:26:01  warmerda
+ * expanded tabs
+ *
  * Revision 1.4  2002/01/28 18:19:42  warmerda
  * fix setting of metadata fields
  *
@@ -59,9 +62,9 @@ static void DTEDFormatDMS( char *achField, double dfAngle,
                            const char *pszLatLong, const char *pszFormat )
 
 {
-    char	chHemisphere;
-    char	szWork[128];
-    int		nDegrees, nMinutes, nSeconds;
+    char        chHemisphere;
+    char        szWork[128];
+    int         nDegrees, nMinutes, nSeconds;
     double      dfRemainder;
     
     if( pszFormat == NULL )
@@ -123,9 +126,9 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
                         int nLLOriginLat, int nLLOriginLong )
 
 {
-    FILE	*fp;
+    FILE        *fp;
     unsigned char achRecord[3601*2 + 12];
-    int		nXSize, nYSize, iProfile;
+    int         nXSize, nYSize, iProfile;
     static char szError[512];
 
 /* -------------------------------------------------------------------- */

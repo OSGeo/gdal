@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/03/05 14:25:43  warmerda
+ * expanded tabs
+ *
  * Revision 1.5  2001/12/17 22:34:16  warmerda
  * added GetFeature() method on OGRS57Layer
  *
@@ -70,7 +73,7 @@ class OGRS57Layer : public OGRLayer
 
     int                 nCurrentModule;
     int                 nNextFEIndex;
-    int			nFeatureCount;
+    int                 nFeatureCount;
 
   public:
                         OGRS57Layer( OGRS57DataSource * poDS,

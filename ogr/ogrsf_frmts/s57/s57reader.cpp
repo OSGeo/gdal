@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2002/03/05 14:25:43  warmerda
+ * expanded tabs
+ *
  * Revision 1.33  2002/02/22 22:23:38  warmerda
  * added tolerances when assembling polygons
  *
@@ -287,7 +290,7 @@ OGRFeature *S57Reader::NextPendingMultiPoint()
     OGRFeatureDefn *poDefn = poMultiPoint->GetDefnRef();
     OGRFeature  *poPoint = new OGRFeature( poDefn );
     OGRMultiPoint *poMPGeom = (OGRMultiPoint *) poMultiPoint->GetGeometryRef();
-    OGRPoint	*poSrcPoint;
+    OGRPoint    *poSrcPoint;
 
     poPoint->SetFID( poMultiPoint->GetFID() );
     
@@ -524,7 +527,7 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
 OGRFeature *S57Reader::ReadFeature( int nFeatureId, OGRFeatureDefn *poTarget )
 
 {
-    OGRFeature	*poFeature;
+    OGRFeature  *poFeature;
 
     if( nFeatureId < 0 || nFeatureId >= oFE_Index.GetCount() )
         return NULL;
@@ -2100,9 +2103,9 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
 OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
 
 {
-#define INDEX_COUNT	4
+#define INDEX_COUNT     4
 
-    DDFRecordIndex	*apoIndex[INDEX_COUNT];
+    DDFRecordIndex      *apoIndex[INDEX_COUNT];
 
 /* -------------------------------------------------------------------- */
 /*      If we aren't forced to get the extent say no if we haven't      */
@@ -2117,7 +2120,7 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
 /*      We will scan all the low level vector elements for extents      */
 /*      coordinates.                                                    */
 /* -------------------------------------------------------------------- */
-    int		bGotExtents = FALSE;
+    int         bGotExtents = FALSE;
     int         nXMin=0, nXMax=0, nYMin=0, nYMax=0;
 
     apoIndex[0] = &oVI_Index;
@@ -2127,18 +2130,18 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
 
     for( int iIndex = 0; iIndex < INDEX_COUNT; iIndex++ )
     {
-        DDFRecordIndex	*poIndex = apoIndex[iIndex];
+        DDFRecordIndex  *poIndex = apoIndex[iIndex];
 
         for( int iVIndex = 0; iVIndex < poIndex->GetCount(); iVIndex++ )
         {
             DDFRecord *poRecord = poIndex->GetByIndex( iVIndex );
-            DDFField	*poSG3D = poRecord->FindField( "SG3D" );
+            DDFField    *poSG3D = poRecord->FindField( "SG3D" );
             DDFField    *poSG2D = poRecord->FindField( "SG2D" );
 
             if( poSG3D != NULL )
             {
                 int     i, nVCount = poSG3D->GetRepeatCount();
-                GInt32	*panData, nX, nY;
+                GInt32  *panData, nX, nY;
 
                 panData = (GInt32 *) poSG3D->GetData();
                 for( i = 0; i < nVCount; i++ )
@@ -2164,7 +2167,7 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
             else if( poSG2D != NULL )
             {
                 int     i, nVCount = poSG2D->GetRepeatCount();
-                GInt32	*panData, nX, nY;
+                GInt32  *panData, nX, nY;
 
                 panData = (GInt32 *) poSG2D->GetData();
                 for( i = 0; i < nVCount; i++ )

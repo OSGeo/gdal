@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/03/05 14:26:01  warmerda
+ * expanded tabs
+ *
  * Revision 1.9  2002/02/15 18:26:29  warmerda
  * fixed error code
  *
@@ -321,13 +324,13 @@ int DTEDWriteProfile( DTEDInfo * psDInfo, int nColumnOffset,
     GByte       *pabyRecord;
 
 /* -------------------------------------------------------------------- */
-/*	Format the data record.						*/
+/*      Format the data record.                                         */
 /* -------------------------------------------------------------------- */
     pabyRecord = (GByte *) CPLMalloc(12 + psDInfo->nYSize*2);
     
     for( i = 0; i < psDInfo->nYSize; i++ )
     {
-        int	nABSVal = ABS(panData[psDInfo->nYSize-i-1]);
+        int     nABSVal = ABS(panData[psDInfo->nYSize-i-1]);
         pabyRecord[8+i*2] = (nABSVal >> 8) & 0x7f;
         pabyRecord[8+i*2+1] = nABSVal & 0xff;
 
@@ -426,7 +429,7 @@ static void DTEDGetMetadataLocation( DTEDInfo *psDInfo,
 char *DTEDGetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode )
 
 {
-    int	nFieldLen;
+    int nFieldLen;
     char *pszFieldSrc;
     char *pszResult;
 
@@ -449,7 +452,7 @@ int DTEDSetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode,
                      const char *pszNewValue )
 
 {
-    int	nFieldLen;
+    int nFieldLen;
     char *pszFieldSrc;
 
     if( !psDInfo->bUpdate )

@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/03/05 14:26:57  warmerda
+ * expanded tabs
+ *
  * Revision 1.3  2001/07/18 04:00:49  warmerda
  * added CPL_CVSID
  *
@@ -54,15 +57,15 @@ int strcasecmp(char * str1, char * str2)
 {
     int i;
     char * temp1, *temp2;
- 	
+        
     for(i=0;str1[i]!='\0';i++)
         temp1[i]=tolower(str1[i]);
     temp1[i]='\0';
-	
+        
     for(i=0;str2[i]!='\0';i++)
         temp2[i]=tolower(str2[i]);
     temp2[i]='\0';
-	
+        
     return (strcmp( temp1, temp2) );
 
  
@@ -72,15 +75,15 @@ int strncasecmp(char * str1, char * str2, int len)
 {
     int i;
     char * temp1, *temp2;
- 	
+        
     for(i=0;str1[i]!='\0';i++)
         temp1[i]=tolower(str1[i]);
     temp1[i]='\0';
-	
+        
     for(i=0;str2[i]!='\0';i++)
         temp2[i]=tolower(str2[i]);
     temp2[i]='\0';
-	
+        
     return (strncmp( temp1, temp2, len) );
  
 }
@@ -88,12 +91,12 @@ int strncasecmp(char * str1, char * str2, int len)
 char * strdup (char *instr)
 {
     char * temp = calloc(strlen(instr)+1, 1);
- 	 
+         
     if (temp)
     {
         strcpy(temp, instr);
     }
- 	 
+         
     return temp;
 }
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/03/05 14:26:01  warmerda
+ * expanded tabs
+ *
  * Revision 1.5  2002/02/15 18:26:44  warmerda
  * create output directory if necessary
  *
@@ -161,11 +164,11 @@ int DTEDWritePt( void *hStream, double dfLong, double dfLat, double dfElev )
 /* -------------------------------------------------------------------- */
     if( psStream->nLastFile == -1 )
     {
-        DTEDInfo	*psInfo;
-        char	        szFile[128];
-        char		chNSHemi, chEWHemi;
-        int		nCrLong, nCrLat;
-        char		*pszFullFilename;
+        DTEDInfo        *psInfo;
+        char            szFile[128];
+        char            chNSHemi, chEWHemi;
+        int             nCrLong, nCrLat;
+        char            *pszFullFilename;
         const char      *pszError;
 
         nCrLong = (int) floor(dfLong);
@@ -223,8 +226,8 @@ int DTEDWritePt( void *hStream, double dfLong, double dfLat, double dfElev )
     }
 
 /* -------------------------------------------------------------------- */
-/*	Determine what profile this belongs in, and initialize the	*/
-/*	profile if it doesn't already exist.				*/
+/*      Determine what profile this belongs in, and initialize the      */
+/*      profile if it doesn't already exist.                            */
 /* -------------------------------------------------------------------- */
     psInfo = psStream->pasCF[psStream->nLastFile].psInfo;
 
@@ -261,7 +264,7 @@ void DTEDClosePtStream( void *hStream )
 
 {
     DTEDPtStream *psStream = (DTEDPtStream *) hStream;
-    int	          iFile, iMD;
+    int           iFile, iMD;
 
 /* -------------------------------------------------------------------- */
 /*      Flush all DTED files.                                           */
@@ -314,7 +317,7 @@ void DTEDFillPixel( DTEDInfo *psInfo, GInt16 **papanProfiles,
                     int nPixelSearchDist, float *pafKernel )
 
 {
-    int	nKernelWidth = 2 * nPixelSearchDist + 1;
+    int nKernelWidth = 2 * nPixelSearchDist + 1;
     int nXMin, nXMax, nYMin, nYMax;
     double dfCoefSum = 0.0, dfValueSum = 0.0;
     int iXS, iYS;
@@ -326,7 +329,7 @@ void DTEDFillPixel( DTEDInfo *psInfo, GInt16 **papanProfiles,
 
     for( iXS = nXMin; iXS <= nXMax; iXS++ )
     {
-        GInt16	*panThisProfile = papanProfiles[iXS];
+        GInt16  *panThisProfile = papanProfiles[iXS];
 
         if( panThisProfile == NULL )
             continue;
@@ -335,7 +338,7 @@ void DTEDFillPixel( DTEDInfo *psInfo, GInt16 **papanProfiles,
         {
             if( panThisProfile[iYS] != DTED_NODATA_VALUE )
             {
-                int	iXK, iYK;
+                int     iXK, iYK;
                 float   fKernelCoef;
 
                 iXK = iXS - iX + nPixelSearchDist;
@@ -366,7 +369,7 @@ void DTEDFillPtStream( void *hStream, int nPixelSearchDist )
 
 {
     DTEDPtStream *psStream = (DTEDPtStream *) hStream;
-    int	          iFile, nKernelWidth;
+    int           iFile, nKernelWidth;
     float         *pafKernel;
     int           iX, iY;
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/03/05 14:26:01  warmerda
+ * expanded tabs
+ *
  * Revision 1.7  2002/01/26 05:51:40  warmerda
  * added metadata read/write support
  *
@@ -56,15 +59,15 @@
 
 CPL_CVSID("$Id$");
 
-static GDALDriver	*poDTEDDriver = NULL;
+static GDALDriver       *poDTEDDriver = NULL;
 
 CPL_C_START
-void	GDALRegister_DTED(void);
+void    GDALRegister_DTED(void);
 CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
-/*				DTEDDataset				*/
+/*                              DTEDDataset                             */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -74,10 +77,10 @@ class DTEDDataset : public GDALDataset
 {
     friend class DTEDRasterBand;
 
-    DTEDInfo	*psDTED;
+    DTEDInfo    *psDTED;
 
   public:
-    virtual	~DTEDDataset();
+    virtual     ~DTEDDataset();
     
     virtual const char *GetProjectionRef(void);
     virtual CPLErr GetGeoTransform( double * );
@@ -97,7 +100,7 @@ class DTEDRasterBand : public GDALRasterBand
 
   public:
 
-    		DTEDRasterBand( DTEDDataset *, int );
+                DTEDRasterBand( DTEDDataset *, int );
     
     virtual CPLErr IReadBlock( int, int, void * );
 };
@@ -127,9 +130,9 @@ CPLErr DTEDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    DTEDDataset	*poDTED_DS = (DTEDDataset *) poDS;
-    int		nYSize = poDTED_DS->psDTED->nYSize;
-    GInt16	*panData;
+    DTEDDataset *poDTED_DS = (DTEDDataset *) poDS;
+    int         nYSize = poDTED_DS->psDTED->nYSize;
+    GInt16      *panData;
 
     CPLAssert( nBlockYOff == 0 );
 
@@ -146,7 +149,7 @@ CPLErr DTEDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     for( int i = nYSize/2; i >= 0; i-- )
     {
-        GInt16	nTemp;
+        GInt16  nTemp;
 
         nTemp = panData[i];
         panData[i] = panData[nYSize - i - 1];
@@ -174,8 +177,8 @@ DTEDDataset::~DTEDDataset()
 GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int		i;
-    DTEDInfo	*psDTED;
+    int         i;
+    DTEDInfo    *psDTED;
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
@@ -188,7 +191,7 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    DTEDDataset 	*poDS;
+    DTEDDataset         *poDS;
 
     poDS = new DTEDDataset();
 
@@ -275,7 +278,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Work out the level.                                             */
 /* -------------------------------------------------------------------- */
-    int	nLevel;
+    int nLevel;
 
     if( poSrcDS->GetRasterXSize() == 121 )
         nLevel = 0;
@@ -331,7 +334,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Read all the data in one dollup.                                */
 /* -------------------------------------------------------------------- */
     GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( 1 );
-    GInt16	*panData;
+    GInt16      *panData;
     
     panData = (GInt16 *) 
         CPLMalloc(sizeof(GInt16) * psDTED->nXSize * psDTED->nYSize);
@@ -343,7 +346,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Write all the profiles.                                         */
 /* -------------------------------------------------------------------- */
-    GInt16	anProfData[3601];
+    GInt16      anProfData[3601];
 
     for( int iProfile = 0; iProfile < psDTED->nXSize; iProfile++ )
     {
@@ -389,7 +392,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 void GDALRegister_DTED()
 
 {
-    GDALDriver	*poDriver;
+    GDALDriver  *poDriver;
 
     if( poDTEDDriver == NULL )
     {

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/03/05 14:26:57  warmerda
+ * expanded tabs
+ *
  * Revision 1.14  2001/12/12 17:06:57  warmerda
  * added CPLStat
  *
@@ -399,7 +402,7 @@ int CPLStat( const char *pszPath, VSIStatBuf *psStatBuf )
 {
     if( strlen(pszPath) == 2 && pszPath[1] == ':' )
     {
-        char	szAltPath[10];
+        char    szAltPath[10];
         
         strcpy( szAltPath, pszPath );
         strcat( szAltPath, "\\" );
