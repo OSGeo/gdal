@@ -7,10 +7,11 @@ OBJ	=	ogrgeometryfactory.o ogrpoint.o ogrcurve.o ogrlinestring.o \
 		ogrgeometrycollection.o ogrmultipolygon.o ogrsurface.o \
 		ogrmultipoint.o ogrmultilinestring.o \
 		\
-		ogrfeature.o ogrfeaturedefn.o ogrfeaturestyle.o ogrfielddefn.o \
+		ogrfeature.o ogrfeaturedefn.o ogrfeaturestyle.o ogrfielddefn.o\
 		ogrspatialreference.o ogr_srsnode.o ogr_srs_proj4.o \
 		ogr_fromepsg.o ogrct.o ogr_opt.o ogr_srs_esri.o \
-		ogrfeaturequery.o swq.o ogr_srs_validate.o ogr_srs_xml.o
+		ogrfeaturequery.o swq.o ogr_srs_validate.o ogr_srs_xml.o \
+		ograssemblepolygon.o
 
 INST_H_FILES	=	ogr_core.h ogr_feature.h ogr_geometry.h ogr_p.h \
 		ogr_spatialref.h ogr_srs_api.h ogrsf_frmts/ogrsf_frmts.h \
