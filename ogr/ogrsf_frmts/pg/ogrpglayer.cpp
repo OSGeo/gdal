@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/02/01 07:55:48  warmerda
+ * avoid dependence on libpq-fs.h
+ *
  * Revision 1.11  2003/01/08 22:07:14  warmerda
  * Added support for integer and real list field types
  *
@@ -67,12 +70,18 @@
 
 #include "cpl_conv.h"
 #include "ogr_pg.h"
-#include <libpq/libpq-fs.h>
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
 #define CURSOR_PAGE	1
+
+// These originally are defined in libpq-fs.h.
+
+#ifndef INV_WRITE
+#define INV_WRITE		0x00020000
+#define INV_READ		0x00040000
+#endif
 
 /************************************************************************/
 /*                           OGRPGLayer()                               */

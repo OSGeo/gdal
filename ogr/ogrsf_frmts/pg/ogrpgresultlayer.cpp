@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/02/01 07:55:48  warmerda
+ * avoid dependence on libpq-fs.h
+ *
  * Revision 1.1  2002/05/09 16:03:46  warmerda
  * New
  *
@@ -36,7 +39,6 @@
 
 #include "cpl_conv.h"
 #include "ogr_pg.h"
-#include <libpq/libpq-fs.h>
 
 CPL_CVSID("$Id$");
 
