@@ -1,5 +1,7 @@
 2001-12-06  Frank Warmerdam  <warmerdam@pobox.com>
 
+	* frmts/fits/fitsdataset.cpp: applied substantial updates from Diana.
+
 	* frmts/gtiff/geotiff.cpp: fixed bug in error/warning reporting when
 	a filename is the "module" and it has % directives in it.
 
