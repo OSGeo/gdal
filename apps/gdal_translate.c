@@ -28,6 +28,9 @@
  * Status: Incomplete.
  *
  * $Log$
+ * Revision 1.3  1999/05/13 15:33:12  warmerda
+ * added support for selecting a single band
+ *
  * Revision 1.2  1999/04/21 04:14:05  warmerda
  * Fixed GDALOpen() call
  *
@@ -47,7 +50,7 @@
 static void Usage()
 
 {
-    printf( "Usage: gdal_translate [-of format]\n"
+    printf( "Usage: gdal_translate [-of format] [-b band]\n"
             "                      src_dataset dst_dataset\n" );
 }
 
@@ -60,10 +63,11 @@ int main( int argc, char ** argv )
 {
     GDALDatasetH	hDataset, hOutDS;
     GDALRasterBandH	hBand;
-    int			i;
+    int			i, nSrcBand = -1;
     int			nRasterXSize, nRasterYSize;
     const char		*pszSource=NULL, *pszDest=NULL, *pszFormat = "GTiff";
     GDALDriverH		hDriver;
+    int			*panBandList, nBandCount;
 
 /* -------------------------------------------------------------------- */
 /*      Handle command line arguments.                                  */
@@ -73,6 +77,9 @@ int main( int argc, char ** argv )
         if( EQUAL(argv[i],"-of") )
             pszFormat = argv[++i];
 
+        else if( EQUAL(argv[i],"-b") )
+            nSrcBand = atoi(argv[++i]);
+            
         else if( pszSource == NULL )
             pszSource = argv[i];
 
@@ -118,6 +125,23 @@ int main( int argc, char ** argv )
     printf( "Size is %d, %d\n", nRasterXSize, nRasterYSize );
 
 /* -------------------------------------------------------------------- */
+/*	Build band list to translate					*/
+/* -------------------------------------------------------------------- */
+    if( nSrcBand != -1 )
+    {
+        nBandCount = 1;
+        panBandList = (int *) CPLMalloc(sizeof(int)*nBandCount);
+        panBandList[0] = nSrcBand;
+    }
+    else
+    {
+        nBandCount = GDALGetRasterCount( hDataset );
+        panBandList = (int *) CPLMalloc(sizeof(int)*nBandCount);
+        for( i = 0; i < nBandCount; i++ )
+            panBandList[i] = i+1;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create the output database.                                     */
 /* -------------------------------------------------------------------- */
     hDriver = GDALGetDriverByName( pszFormat );
@@ -129,8 +153,7 @@ int main( int argc, char ** argv )
     }
     
     hOutDS = GDALCreate( hDriver, pszDest, nRasterXSize, nRasterYSize,
-                         GDALGetRasterCount( hDataset ),
-                         GDT_Byte, NULL );
+                         nBandCount, GDT_Byte, NULL );
     if( hOutDS == NULL )
     {
         printf( "GDALCreate() failed.\n" );
@@ -141,17 +164,18 @@ int main( int argc, char ** argv )
 /*      Loop copying bands.                                             */
 /* -------------------------------------------------------------------- */
     
-    for( i = 0; i < GDALGetRasterCount( hDataset ); i++ )
+    for( i = 0; i < nBandCount; i++ )
     {
         GByte	*pabyBlock;
         int     iBlockY;
         int	nPixelSize;
         GDALRasterBandH hDstBand;
 
-        hBand = GDALGetRasterBand( hDataset, i+1 );
+        hBand = GDALGetRasterBand( hDataset, panBandList[i] );
         hDstBand = GDALGetRasterBand( hOutDS, i+1 );
         
-        printf( "Band %d Type = %d\n", i+1, GDALGetRasterDataType( hBand ) );
+        printf( "Band %d Type = %d\n",
+                panBandList[i], GDALGetRasterDataType( hBand ) );
 
 /* -------------------------------------------------------------------- */
 /*      Write out the raw raster data.                                  */
