@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.47 2002/06/17 15:00:30 julien Exp $
+ * $Id: mitab_feature.cpp,v 1.48 2002/08/27 17:17:33 warmerda Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.48  2002/08/27 17:17:33  warmerda
+ * handle errors better, auto-add FID column if there aren't any columns
+ *
  * Revision 1.47  2002/06/17 15:00:30  julien
  * Add IsInteriorRing() function in TABRegion to validate if a ring is internal
  *
@@ -332,12 +335,21 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
     int         iField, numFields, nStatus=0;
 
     CPLAssert(poDATFile);
-    CPLAssert(panIndexNo);
+    CPLAssert(panIndexNo || GetDefnRef()->GetFieldCount() == 0);
 
     numFields = poDATFile->GetNumFields();
 
     for(iField=0; nStatus == 0 && iField<numFields; iField++)
     {
+        // Hack for "extra" introduced field.
+        if( iField >= GetDefnRef()->GetFieldCount() )
+        {
+            CPLAssert( poDATFile->GetFieldType(iField) == TABFInteger 
+                       && iField == 0 );
+            nStatus = poDATFile->WriteIntegerField( GetFID(), poINDFile, 0 );
+            continue;
+        }
+
         switch(poDATFile->GetFieldType(iField))
         {
           case TABFChar:
@@ -1903,6 +1915,7 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
      * the type in poObjHdr->m_nType is valid.
      *----------------------------------------------------------------*/
     CPLAssert(m_nMapInfoType == poObjHdr->m_nType);
+    CPLErrorReset();
 
     poObjBlock = poMapFile->GetCurObjBlock();
 
@@ -2188,7 +2201,7 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         return -1;
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure )
         return -1;
 
     return 0;

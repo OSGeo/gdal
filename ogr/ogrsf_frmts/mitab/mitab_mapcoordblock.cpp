@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapcoordblock.cpp,v 1.11 2001/11/17 21:54:06 daniel Exp $
+ * $Id: mitab_mapcoordblock.cpp,v 1.12 2002/08/27 17:18:23 warmerda Exp $
  *
  * Name:     mitab_mapcoordblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapcoordblock.cpp,v $
+ * Revision 1.12  2002/08/27 17:18:23  warmerda
+ * improved CPL error testing
+ *
  * Revision 1.11  2001/11/17 21:54:06  daniel
  * Made several changes in order to support writing objects in 16 bits coordinate format.
  * New TABMAPObjHdr-derived classes are used to hold object info in mem until block is full.
@@ -180,6 +183,8 @@ int     TABMAPCoordBlock::CommitToFile()
 {
     int nStatus = 0;
 
+    CPLErrorReset();
+
     if ( m_pabyBuf == NULL )
     {
         CPLError(CE_Failure, CPLE_AssertionFailed, 
@@ -196,7 +201,8 @@ int     TABMAPCoordBlock::CommitToFile()
     WriteInt16(m_nSizeUsed - MAP_COORD_HEADER_SIZE); // num. bytes used
     WriteInt32(m_nNextCoordBlock);
 
-    nStatus = CPLGetLastErrorNo();
+    if( CPLGetLastErrorType() == CE_Failure )
+        nStatus = CPLGetLastErrorNo();
 
     /*-----------------------------------------------------------------
      * OK, call the base class to write the block to disk.
@@ -225,6 +231,8 @@ int     TABMAPCoordBlock::CommitToFile()
 int     TABMAPCoordBlock::InitNewBlock(FILE *fpSrc, int nBlockSize, 
                                         int nFileOffset /* = 0*/)
 {
+    CPLErrorReset();
+
     /*-----------------------------------------------------------------
      * Start with the default initialisation
      *----------------------------------------------------------------*/
@@ -258,7 +266,7 @@ int     TABMAPCoordBlock::InitNewBlock(FILE *fpSrc, int nBlockSize,
         WriteInt32(0);                  // Pointer to next coord block
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure )
         return -1;
 
     return 0;
@@ -315,7 +323,7 @@ int     TABMAPCoordBlock::ReadIntCoord(GBool bCompressed,
         nY = ReadInt32();
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -349,7 +357,7 @@ int     TABMAPCoordBlock::ReadIntCoords(GBool bCompressed, int numCoordPairs,
         {
             panXY[i]   = m_nComprOrgX + ReadInt16();
             panXY[i+1] = m_nComprOrgY + ReadInt16();
-            if (CPLGetLastErrorNo() != 0)
+            if (CPLGetLastErrorType() != 0)
                 return -1;
         }
     }
@@ -359,7 +367,7 @@ int     TABMAPCoordBlock::ReadIntCoords(GBool bCompressed, int numCoordPairs,
         {
             panXY[i]   = ReadInt32();
             panXY[i+1] = ReadInt32();
-            if (CPLGetLastErrorNo() != 0)
+            if (CPLGetLastErrorType() != 0)
                 return -1;
         }
     }
@@ -402,6 +410,7 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
 {
     int i, nTotalHdrSizeUncompressed;
 
+    CPLErrorReset();
 
     /*-------------------------------------------------------------
      * Note about header+vertices size vs compressed coordinates:
@@ -433,7 +442,7 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
         ReadIntCoord(bCompressed, pasHdrs[i].nXMax, pasHdrs[i].nYMax);
         pasHdrs[i].nDataOffset = ReadInt32();
 
-        if (CPLGetLastErrorNo() != 0)
+        if (CPLGetLastErrorType() != 0)
             return -1;
 
         numVerticesTotal += pasHdrs[i].numVertices;
@@ -499,6 +508,8 @@ int     TABMAPCoordBlock::WriteCoordSecHdrs(GBool bV450Hdr,
 {
     int i;
 
+    CPLErrorReset();
+
     for(i=0; i<numSections; i++)
     {
         /*-------------------------------------------------------------
@@ -513,7 +524,7 @@ int     TABMAPCoordBlock::WriteCoordSecHdrs(GBool bV450Hdr,
         WriteIntCoord(pasHdrs[i].nXMax, pasHdrs[i].nYMax, bCompressed);
         WriteInt32(pasHdrs[i].nDataOffset);
 
-        if (CPLGetLastErrorNo() != 0)
+        if (CPLGetLastErrorType() == CE_Failure )
             return -1;
     }
 
