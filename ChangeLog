@@ -1,3 +1,17 @@
+2000-10-06  Frank Warmerdam  <warmerda@cs46980-c>
+
+	* Upgraded PAuxDataset to support nodata values.
+
+	* Added SetNoDataValue(), SetCategoryNames() and some C/Python entry 
+	points.
+
+	* Default setting of GDALRasterBand->eAccess based on the dataset
+	in SetBand().
+
+2000-09-28  Frank Warmerdam  <warmerda@cs46980-c>
+
+	* Updated to current MITAB source from CVS. 
+
 2000-09-27  Frank Warmerdam  <warmerda@cs46980-c>
 
 	* Added colortable support for grass driver. 
