@@ -19,6 +19,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/03/17 04:21:25  fwarmerdam
+ * use FORCE_CDECL for args to qsort()
+ *
  * Revision 1.22  2003/05/21 04:49:17  warmerda
  * avoid warnings
  *
@@ -2146,7 +2149,7 @@ swq_select_summarize( swq_select *select_info,
 /*                      sort comparison functions.                      */
 /************************************************************************/
 
-static int swq_compare_int( const void *item1, const void *item2 )
+static int FORCE_CDECL swq_compare_int( const void *item1, const void *item2 )
 {
     int  v1, v2;
 
@@ -2156,7 +2159,7 @@ static int swq_compare_int( const void *item1, const void *item2 )
     return v1 - v2;
 }
 
-static int swq_compare_real( const void *item1, const void *item2 )
+static int FORCE_CDECL swq_compare_real( const void *item1, const void *item2 )
 {
     double  v1, v2;
 
@@ -2171,7 +2174,7 @@ static int swq_compare_real( const void *item1, const void *item2 )
         return 1;
 }
 
-static int swq_compare_string( const void *item1, const void *item2 )
+static int FORCE_CDECL swq_compare_string( const void *item1, const void *item2 )
 {
     return strcmp( *((const char **) item1), *((const char **) item2) );
 }
@@ -2186,7 +2189,7 @@ static int swq_compare_string( const void *item1, const void *item2 )
 const char *swq_select_finish_summarize( swq_select *select_info )
 
 {
-    int (*compare_func)(const void *, const void*);
+    int (FORCE_CDECL *compare_func)(const void *, const void*);
     int count;
     char **distinct_list;
 
