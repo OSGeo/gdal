@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_jpeg.c,v 1.16 2003/12/20 13:47:28 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_jpeg.c,v 1.18 2004/01/29 08:51:56 dron Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -51,17 +51,26 @@ int TIFFFillTile(TIFF*, ttile_t);
 #undef FAR
 #endif
 
+
 /*
    The windows RPCNDR.H file defines boolean, but defines it with the
-   wrong size.  So we declare HAVE_BOOLEAN so that the jpeg include file
-   won't try to typedef boolean, but #define it to override the rpcndr.h
-   definition.
+   unsigned char size.  You should compile JPEG library using appropriate
+   definitions in jconfig.h header, but many users compile library in wrong
+   way. That causes errors of the following type:
 
-   http://bugzilla.remotesensing.org/show_bug.cgi?id=188
+   "JPEGLib: JPEG parameter struct mismatch: library thinks size is 432,
+   caller expects 464"
+
+   For such users we wil fix the problem here. See install.doc file from
+   the JPEG library distribution for details.
 */
-#if defined(__RPCNDR_H__)
-#define HAVE_BOOLEAN
-#define boolean unsigned int
+
+/* Define "boolean" as unsigned char, not int, per Windows custom. */
+#if defined(__WIN32__)
+# ifndef __RPCNDR_H__            /* don't conflict if rpcndr.h already read */
+   typedef unsigned char boolean;
+# endif
+# define HAVE_BOOLEAN            /* prevent jmorecfg.h from redefining it */
 #endif
 
 #include "jpeglib.h"

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffiop.h,v 1.9 2003/12/24 22:07:23 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffiop.h,v 1.11 2004/01/30 20:22:18 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler

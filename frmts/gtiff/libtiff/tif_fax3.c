@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_fax3.c,v 1.21 2003/12/31 09:14:12 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_fax3.c,v 1.22 2004/02/05 09:53:39 dron Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -81,7 +81,7 @@ typedef struct {
 	uint32*	curruns;		/* runs for current line */
 
 	/* Encoder state info */
-	Ttag    tag;	                /* encoding state */
+	Ttag    tag;			/* encoding state */
 	u_char*	refline;		/* reference line for 2d decoding */
 	int	k;			/* #rows left that can be 2d encoded */
 	int	maxk;			/* max #rows that can be 2d encoded */
@@ -325,7 +325,7 @@ Fax3Decode2D(TIFF* tif, tidata_t buf, tsize_t occ, tsample_t s)
     case 12:(cp)[11] = 0; case 11:(cp)[10] = 0; case 10: (cp)[9] = 0;	\
     case  9: (cp)[8] = 0; case  8: (cp)[7] = 0; case  7: (cp)[6] = 0;	\
     case  6: (cp)[5] = 0; case  5: (cp)[4] = 0; case  4: (cp)[3] = 0;	\
-    case  3: (cp)[2] = 0; case  2: (cp)[1] = 0;			      	\
+    case  3: (cp)[2] = 0; case  2: (cp)[1] = 0;				\
     case  1: (cp)[0] = 0; (cp) += (n); case 0:  ;			\
     }
 #else
@@ -451,7 +451,7 @@ Fax3SetupState(TIFF* tif)
 	Fax3BaseState* sp = Fax3State(tif);
 	long rowbytes, rowpixels;
 	int needsRefLine;
-	Fax3CodecState* dsp = DecoderState(tif);
+	Fax3CodecState* dsp = (Fax3CodecState*) Fax3State(tif);
 	uint32 nruns;
 
 	if (td->td_bitspersample != 1) {
@@ -517,6 +517,7 @@ Fax3SetupState(TIFF* tif)
 		}
 	} else					/* 1d encoding */
 		EncoderState(tif)->refline = NULL;
+
 	return (1);
 }
 
@@ -1276,15 +1277,16 @@ InitCCITTFax3(TIFF* tif)
 	 */
 	_TIFFMergeFieldInfo(tif, faxFieldInfo, N(faxFieldInfo));
 	sp->vgetparent = tif->tif_tagmethods.vgetfield;
-	tif->tif_tagmethods.vgetfield = Fax3VGetField;	/* hook for codec tags */
+	tif->tif_tagmethods.vgetfield = Fax3VGetField; /* hook for codec tags */
 	sp->vsetparent = tif->tif_tagmethods.vsetfield;
-	tif->tif_tagmethods.vsetfield = Fax3VSetField;	/* hook for codec tags */
-	tif->tif_tagmethods.printdir = Fax3PrintDir;	/* hook for codec tags */
+	tif->tif_tagmethods.vsetfield = Fax3VSetField; /* hook for codec tags */
+	tif->tif_tagmethods.printdir = Fax3PrintDir;   /* hook for codec tags */
 	sp->groupoptions = 0;	
 	sp->recvparams = 0;
 	sp->subaddress = NULL;
 
-	tif->tif_flags |= TIFF_NOBITREV;	/* decoder does bit reversal */
+	if (sp->rw_mode == O_RDONLY) /* FIXME: improve for in place update */
+		tif->tif_flags |= TIFF_NOBITREV; /* decoder does bit reversal */
 	DecoderState(tif)->runs = NULL;
 	TIFFSetField(tif, TIFFTAG_FAXFILLFUNC, _TIFFFax3fillruns);
 	EncoderState(tif)->refline = NULL;

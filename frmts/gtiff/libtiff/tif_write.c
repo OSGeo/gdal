@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_write.c,v 1.9 2003/08/05 02:45:58 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_write.c,v 1.10 2004/01/20 19:28:05 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -565,7 +565,7 @@ TIFFWriteBufferSetup(TIFF* tif, tdata_t bp, tsize_t size)
 	}
 	if (size == (tsize_t) -1) {
 		size = (isTiled(tif) ?
-		    tif->tif_tilesize : tif->tif_scanlinesize);
+		    tif->tif_tilesize : TIFFStripSize(tif));
 		/*
 		 * Make raw data buffer at least 8K
 		 */
