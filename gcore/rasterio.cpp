@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2003/05/07 19:11:48  warmerda
+ * fixed bug in one case of bJustInitialize setting
+ *
  * Revision 1.26  2003/04/30 17:13:48  warmerda
  * added docs for many C functions
  *
@@ -159,6 +162,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 nLBlockY = iSrcY / nBlockYSize;
                 int bJustInitialize = 
                     eRWFlag == GF_Write
+                    && nXOff == 0 && nXSize == nBlockXSize
                     && nYOff <= nLBlockY * nBlockYSize
                     && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize;
 
