@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/02/02 21:52:41  fwarmerdam
+ * Avoid ununused variable warning.
+ *
  * Revision 1.29  2004/12/21 04:57:36  fwarmerdam
  * added support for writing UTM ICORDS/IGEOLO values
  *
@@ -1605,7 +1608,6 @@ int NITFReadICHIPB( NITFImage *psImage, NITFICHIPBInfo *psICHIP )
 {
     const char *pachTRE;
     char szTemp[32];
-    int  i;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have the TRE?                                             */
@@ -1614,60 +1616,60 @@ int NITFReadICHIPB( NITFImage *psImage, NITFICHIPBInfo *psICHIP )
                            "ICHIPB", NULL );
 
     if( pachTRE == NULL )
-	{
-		pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes,
-						"ICHIPA", NULL );
-	}
+    {
+        pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes,
+                               "ICHIPA", NULL );
+    }
 
-	if( pachTRE == NULL )
-	{
+    if( pachTRE == NULL )
+    {
         return FALSE;
-	}
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Parse out field values.                                         */
 /* -------------------------------------------------------------------- */
-	psICHIP->XFRM_FLAG = atoi(NITFGetField(szTemp, pachTRE, 0, 2 ));
+    psICHIP->XFRM_FLAG = atoi(NITFGetField(szTemp, pachTRE, 0, 2 ));
 
-	if ( psICHIP->XFRM_FLAG == 0 )
-	{
-		psICHIP->SCALE_FACTOR = atof(NITFGetField(szTemp, pachTRE, 2, 10 ));
-		psICHIP->ANAMORPH_CORR = atoi(NITFGetField(szTemp, pachTRE, 12, 2 ));
-		psICHIP->SCANBLK_NUM = atoi(NITFGetField(szTemp, pachTRE, 14, 2 ));
+    if ( psICHIP->XFRM_FLAG == 0 )
+    {
+        psICHIP->SCALE_FACTOR = atof(NITFGetField(szTemp, pachTRE, 2, 10 ));
+        psICHIP->ANAMORPH_CORR = atoi(NITFGetField(szTemp, pachTRE, 12, 2 ));
+        psICHIP->SCANBLK_NUM = atoi(NITFGetField(szTemp, pachTRE, 14, 2 ));
 
-		psICHIP->OP_ROW_11 = atof(NITFGetField(szTemp, pachTRE, 16, 12 ));
-		psICHIP->OP_COL_11 = atof(NITFGetField(szTemp, pachTRE, 28, 12 ));
+        psICHIP->OP_ROW_11 = atof(NITFGetField(szTemp, pachTRE, 16, 12 ));
+        psICHIP->OP_COL_11 = atof(NITFGetField(szTemp, pachTRE, 28, 12 ));
 
-		psICHIP->OP_ROW_12 = atof(NITFGetField(szTemp, pachTRE, 40, 12 ));
-		psICHIP->OP_COL_12 = atof(NITFGetField(szTemp, pachTRE, 52, 12 ));
+        psICHIP->OP_ROW_12 = atof(NITFGetField(szTemp, pachTRE, 40, 12 ));
+        psICHIP->OP_COL_12 = atof(NITFGetField(szTemp, pachTRE, 52, 12 ));
 
-		psICHIP->OP_ROW_21 = atof(NITFGetField(szTemp, pachTRE, 64, 12 ));
-		psICHIP->OP_COL_21 = atof(NITFGetField(szTemp, pachTRE, 76, 12 ));
+        psICHIP->OP_ROW_21 = atof(NITFGetField(szTemp, pachTRE, 64, 12 ));
+        psICHIP->OP_COL_21 = atof(NITFGetField(szTemp, pachTRE, 76, 12 ));
 
-		psICHIP->OP_ROW_22 = atof(NITFGetField(szTemp, pachTRE, 88, 12 ));
-		psICHIP->OP_COL_22 = atof(NITFGetField(szTemp, pachTRE, 100, 12 ));
+        psICHIP->OP_ROW_22 = atof(NITFGetField(szTemp, pachTRE, 88, 12 ));
+        psICHIP->OP_COL_22 = atof(NITFGetField(szTemp, pachTRE, 100, 12 ));
 
-		psICHIP->FI_ROW_11 = atof(NITFGetField(szTemp, pachTRE, 112, 12 ));
-		psICHIP->FI_COL_11 = atof(NITFGetField(szTemp, pachTRE, 124, 12 ));
+        psICHIP->FI_ROW_11 = atof(NITFGetField(szTemp, pachTRE, 112, 12 ));
+        psICHIP->FI_COL_11 = atof(NITFGetField(szTemp, pachTRE, 124, 12 ));
 
-		psICHIP->FI_ROW_12 = atof(NITFGetField(szTemp, pachTRE, 136, 12 ));
-		psICHIP->FI_COL_12 = atof(NITFGetField(szTemp, pachTRE, 148, 12 ));
+        psICHIP->FI_ROW_12 = atof(NITFGetField(szTemp, pachTRE, 136, 12 ));
+        psICHIP->FI_COL_12 = atof(NITFGetField(szTemp, pachTRE, 148, 12 ));
 
-		psICHIP->FI_ROW_21 = atof(NITFGetField(szTemp, pachTRE, 160, 12 ));
-		psICHIP->FI_COL_21 = atof(NITFGetField(szTemp, pachTRE, 172, 12 ));
+        psICHIP->FI_ROW_21 = atof(NITFGetField(szTemp, pachTRE, 160, 12 ));
+        psICHIP->FI_COL_21 = atof(NITFGetField(szTemp, pachTRE, 172, 12 ));
 
-		psICHIP->FI_ROW_22 = atof(NITFGetField(szTemp, pachTRE, 184, 12 ));
-		psICHIP->FI_COL_22 = atof(NITFGetField(szTemp, pachTRE, 196, 12 ));
+        psICHIP->FI_ROW_22 = atof(NITFGetField(szTemp, pachTRE, 184, 12 ));
+        psICHIP->FI_COL_22 = atof(NITFGetField(szTemp, pachTRE, 196, 12 ));
 
-		psICHIP->FI_ROW = atoi(NITFGetField(szTemp, pachTRE, 208, 8 ));
-		psICHIP->FI_COL = atoi(NITFGetField(szTemp, pachTRE, 216, 8 ));
-	}
-	else
-	{
-		fprintf( stdout, "Chip is already de-warpped?\n" );
-	}
+        psICHIP->FI_ROW = atoi(NITFGetField(szTemp, pachTRE, 208, 8 ));
+        psICHIP->FI_COL = atoi(NITFGetField(szTemp, pachTRE, 216, 8 ));
+    }
+    else
+    {
+        fprintf( stdout, "Chip is already de-warpped?\n" );
+    }
 
-	return TRUE;
+    return TRUE;
 }
 
 /************************************************************************/
