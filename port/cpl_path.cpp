@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/12/13 06:00:54  warmerda
+ * added CPLProjectRelativeFilename() and CPLIsFilenameRelative()
+ *
  * Revision 1.10  2002/08/15 09:23:24  dron
  * Added CPLGetDirname() function
  *
@@ -66,8 +69,16 @@
 CPL_CVSID("$Id$");
 
 
-static char     szStaticResult[1024]; /* should be size of larged possible
+static char     szStaticResult[2048]; /* should be size of larged possible
                                          filename */
+
+#ifdef WIN32        
+#define SEP_CHAR '\\'
+#define SEP_STRING "\\"
+#else
+#define SEP_CHAR '/'
+#define SEP_STRING "/"
+#endif
 
 /************************************************************************/
 /*                        CPLFindFilenameStart()                        */
@@ -100,7 +111,7 @@ static int CPLFindFilenameStart( const char * pszFilename )
  *
  * <pre>
  * CPLGetPath( "abc/def.xyz" ) == "abc"
- * CPLGetPath( "/abc/def/" ) == "abc/def"
+ * CPLGetPath( "/abc/def/" ) == "/abc/def"
  * CPLGetPath( "/" ) == "/"
  * CPLGetPath( "/abc/def" ) == "/abc"
  * CPLGetPath( "abc" ) == ""
@@ -148,7 +159,7 @@ const char *CPLGetPath( const char *pszFilename )
  *
  * <pre>
  * CPLGetDirname( "abc/def.xyz" ) == "abc"
- * CPLGetDirname( "/abc/def/" ) == "abc/def"
+ * CPLGetDirname( "/abc/def/" ) == "/abc/def"
  * CPLGetDirname( "/" ) == "/"
  * CPLGetDirname( "/abc/def" ) == "/abc"
  * CPLGetDirname( "abc" ) == "."
@@ -395,11 +406,7 @@ const char *CPLFormFilename( const char * pszPath,
     else if( strlen(pszPath) > 0
              && pszPath[strlen(pszPath)-1] != '/'
              && pszPath[strlen(pszPath)-1] != '\\' )
-#ifdef WIN32        
-        pszAddedPathSep = "\\";
-#else    
-        pszAddedPathSep = "/";
-#endif        
+        pszAddedPathSep = SEP_STRING;
 
     if( pszExtension == NULL )
         pszExtension = "";
@@ -504,4 +511,82 @@ const char *CPLFormCIFilename( const char * pszPath,
 
     return pszFullPath;
 #endif
+}
+
+/************************************************************************/
+/*                     CPLProjectRelativeFilename()                     */
+/************************************************************************/
+
+/**
+ * Find a file relative to a project file. 
+ *
+ * Given the path to a "project" directory, and a path to a secondary file
+ * referenced from that project, build a path to the secondary file
+ * that the current application can use.  If the secondary path is already
+ * absolute, rather than relative, then it will be returned unaltered. 
+ * 
+ * Examples:
+ * <pre>
+ * CPLProjectRelativeFilename("abc/def","tmp/abc.gif") == "abc/def/tmp/abc.gif"
+ * CPLProjectRelativeFilename("abc/def","/tmp/abc.gif") == "/tmp/abc.gif"
+ * CPLProjectRelativeFilename("/xy", "abc.gif") == "/xy/abc.gif"
+ * CPLProjectRelativeFilename("/abc/def","../abc.gif") == "/abc/def/../abc.gif"
+ * CPLProjectRelativeFilename("C:\WIN","abc.gif") == "C:\WIN\abc.gif"
+ * </pre>
+ *
+ * @param pszProjectDir the directory relative to which the secondary files 
+ * path should be interpreted.
+ * @param pszSecondaryFilename the filename (potentially with path) that
+ * is to be interpreted relative to the project directory.
+ *
+ * @return a composed path to the secondary file.  The returned string is
+ * internal and should not be altered, freed, or depending on past the next
+ * CPL call. 
+ */
+
+const char *CPLProjectRelativeFilename( const char *pszProjectDir, 
+                                        const char *pszSecondaryFilename )
+
+{
+    if( !CPLIsFilenameRelative( pszSecondaryFilename ) )
+        return pszSecondaryFilename;
+
+    if( pszProjectDir == NULL || strlen(pszProjectDir) == 0 )
+        return pszSecondaryFilename;
+
+    strcpy( szStaticResult, pszProjectDir );
+    if( pszProjectDir[strlen(pszProjectDir)-1] != '/' 
+        && pszProjectDir[strlen(pszProjectDir)-1] != '\\' )
+        strcat( szStaticResult, SEP_STRING );
+
+    strcat( szStaticResult, pszSecondaryFilename );
+        
+    return szStaticResult;
+}
+
+/************************************************************************/
+/*                       CPLIsFilenameRelative()                        */
+/************************************************************************/
+
+/**
+ * Is filename relative or absolute?
+ *
+ * The test is filesystem convention agnostic.  That is it will test for
+ * Unix style and windows style path conventions regardless of the actual
+ * system in use.  
+ *
+ * @param pszFilename the filename with path to test.
+ *
+ * @return TRUE if the filename is relative or FALSE if it is absolute. 
+ */
+
+int CPLIsFilenameRelative( const char *pszFilename )
+
+{
+    if( (strlen(pszFilename) > 2 && strncmp(pszFilename+1,":\\",2) == 0)
+        || pszFilename[0] == '\\'
+        || pszFilename[0] == '/' )
+        return TRUE;
+    else
+        return FALSE;
 }
