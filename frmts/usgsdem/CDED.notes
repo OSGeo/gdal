@@ -13,7 +13,7 @@ Offset Length Name                    Notes
 
   100     9   Filler                  Blank
 
-  109    48   SW Geographic Corner    Generated. 
+  109    26   SW Geographic Corner    Generated. 
 
   135     1   Process Code            Template or blank. 
 
@@ -41,7 +41,7 @@ Offset Length Name                    Notes
 
   540     6   Cov. Polygon Sides      Hardcoded to "4".
 
-  546   144   Corner Coordinates      Generated
+  546   192   Corner Coordinates      Generated
 
   738    24   Minimum Elevation       Generated
 
@@ -57,7 +57,7 @@ Offset Length Name                    Notes
 
   858    6    Columns of Profiles     Generated (height of dem in pixels)
 
-  869   12    Largest/Smallest Primary      Blank
+  864   12    Largest/Smallest Primary      Blank
               Contour Intervals and Units
 
   876    4    Data source data        Template or blank.
@@ -69,11 +69,11 @@ Offset Length Name                    Notes
 
   885    1    Data Validation Flag    Template or blank.
 
-  886    1    Suspect/Void Flag       Generated (0=none,2=void area)
+  886    2    Suspect/Void Flag       Generated (0=none,2=void area)
 
-  887    2    Vertical Datum          Template or "1" (MSL).
+  888    2    Vertical Datum          Template or "1" (MSL).
 
-  889    2    Horizontal Datum        Template or "4" (NAD83). 
+  890    2    Horizontal Datum        Template or "4" (NAD83). 
 
   892    4    Data edition/version    Template or blank. 
               Spec edition/version    "1020" for PRODUCT=CDED50K
