@@ -30,6 +30,9 @@
  *    instance validation of access strings to fopen().
  * 
  * $Log$
+ * Revision 1.9  2001/04/30 18:19:06  warmerda
+ * avoid stat on macos_pre10
+ *
  * Revision 1.8  2001/01/19 21:16:41  warmerda
  * expanded tabs
  *
@@ -288,7 +291,11 @@ char *VSIStrdup( const char * pszString )
 int VSIStat( const char * pszFilename, VSIStatBuf * pStatBuf )
 
 {
+#if defined(macos_pre10)
+    return -1;
+#else
     return( stat( pszFilename, pStatBuf ) );
+#endif
 }
 
 /************************************************************************/
@@ -300,6 +307,8 @@ int VSIMkdir( const char *pszPathname, long mode )
 {
 #ifdef WIN32
     return mkdir( pszPathname );
+#elif defined(macos_pre10)
+    return -1;
 #else
     return mkdir( pszPathname, mode );
 #endif

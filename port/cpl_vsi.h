@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.11  2001/04/30 18:19:06  warmerda
+ * avoid stat on macos_pre10
+ *
  * Revision 1.10  2001/01/19 21:16:41  warmerda
  * expanded tabs
  *
@@ -93,7 +96,9 @@
 #ifndef _WIN32
 #  include <unistd.h>
 #endif
-#include <sys/stat.h>
+#if !defined(macos_pre10)
+#  include <sys/stat.h>
+#endif
 
 CPL_C_START
 
