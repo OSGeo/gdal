@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.5  2004/04/25 19:28:45  aamici
+# core -> gcore update
+#
 # Revision 1.4  2004/01/31 10:14:08  aamici
 # fix all stale references after the libtool transition.
 # don't install non-python data files.
@@ -62,11 +65,11 @@ soversion=v[:3]
 
 SOURCES=glob.glob(os.path.join("pymod","*.c*"))
 print SOURCES
-INCLUDE_DIRS=[os.path.join("core"), os.path.join("port"), os.path.join("ogr"), os.path.join("pymod"), ] # only necessary
+INCLUDE_DIRS=[os.path.join("gcore"), os.path.join("port"), os.path.join("ogr"), os.path.join("pymod"), ] # only necessary
 LIBRARY_DIRS = ["./libs"]
 
 INCLUDE_FILES = [
-	glob.glob(os.path.join("core", "*.h")),
+	glob.glob(os.path.join("gcore", "*.h")),
 	glob.glob(os.path.join("port", "*.h")),
 	glob.glob(os.path.join("alg", "*.h")),
 	glob.glob(os.path.join("ogr", "*.h")), 
