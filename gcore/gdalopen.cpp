@@ -26,6 +26,9 @@
  *
  * 
  * $Log$
+ * Revision 1.6  2000/01/10 15:31:02  warmerda
+ * Added debug statement in GDALOpen.
+ *
  * Revision 1.5  1999/11/11 21:59:07  warmerda
  * added GetDriver() for datasets
  *
@@ -144,6 +147,9 @@ GDALDatasetH GDALOpen( const char * pszFilename, GDALAccess eAccess )
         {
             if( poDS->poDriver == NULL )
                 poDS->poDriver = poDriver;
+
+            CPLDebug( "GDAL", "GDALOpen(%s) succeeds as %s.\n",
+                      poDriver->pszLongName );
             
             return (GDALDatasetH) poDS;
         }
