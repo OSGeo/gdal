@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.24  2000/11/29 16:58:59  warmerda
- * fixed MajorObject handling
+ * Revision 1.25  2000/12/14 17:38:49  warmerda
+ * added GDALDriver.Delete
  *
  ************************************************************************/
 
@@ -640,7 +640,7 @@ py_GDALBuildOverviews(PyObject *self, PyObject *args) {
     char *pszResampling = "NEAREST";
     PyObject *psPyOverviewList = NULL, *psPyBandList = NULL;
     int   nOverviews, *panOverviewList, i;
-    CPLErr eErr;
+    int    eErr;
     PyProgressData sProgressInfo;
 
     self = self;
@@ -1020,7 +1020,7 @@ py_GDALSetGeoTransform(PyObject *self, PyObject *args) {
     GDALDatasetH  _arg0;
     char *_argc0 = NULL;
     double geotransform[6];
-    CPLErr err;
+    int    err;
 
     self = self;
     if(!PyArg_ParseTuple(args,"s(dddddd):GDALSetGeoTransform",&_argc0,
@@ -1726,11 +1726,10 @@ static PyObject *_wrap_GDALDeregisterDriver(PyObject *self, PyObject *args) {
 
 static PyObject *_wrap_GDALDeleteDataset(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
-    CPLErr * _result;
+    int  _result;
     GDALDriverH  _arg0;
     char * _arg1;
     char * _argc0 = 0;
-    char _ptemp[128];
 
     self = self;
     if(!PyArg_ParseTuple(args,"ss:GDALDeleteDataset",&_argc0,&_arg1)) 
@@ -1741,10 +1740,8 @@ static PyObject *_wrap_GDALDeleteDataset(PyObject *self, PyObject *args) {
         return NULL;
         }
     }
-    _result = (CPLErr *) malloc(sizeof(CPLErr ));
-    *(_result) = GDALDeleteDataset(_arg0,_arg1);
-    SWIG_MakePtr(_ptemp, (void *) _result,"_CPLErr_p");
-    _resultobj = Py_BuildValue("s",_ptemp);
+    _result = (int )GDALDeleteDataset(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
@@ -1955,11 +1952,10 @@ static PyObject *_wrap_GDALGetProjectionRef(PyObject *self, PyObject *args) {
 
 static PyObject *_wrap_GDALSetProjection(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
-    CPLErr * _result;
+    int  _result;
     GDALDatasetH  _arg0;
     char * _arg1;
     char * _argc0 = 0;
-    char _ptemp[128];
 
     self = self;
     if(!PyArg_ParseTuple(args,"ss:GDALSetProjection",&_argc0,&_arg1)) 
@@ -1970,10 +1966,8 @@ static PyObject *_wrap_GDALSetProjection(PyObject *self, PyObject *args) {
         return NULL;
         }
     }
-    _result = (CPLErr *) malloc(sizeof(CPLErr ));
-    *(_result) = GDALSetProjection(_arg0,_arg1);
-    SWIG_MakePtr(_ptemp, (void *) _result,"_CPLErr_p");
-    _resultobj = Py_BuildValue("s",_ptemp);
+    _result = (int )GDALSetProjection(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
@@ -2289,10 +2283,9 @@ static PyObject *_wrap_GDALGetOverview(PyObject *self, PyObject *args) {
 
 static PyObject *_wrap_GDALFlushRasterCache(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
-    CPLErr * _result;
+    int  _result;
     GDALRasterBandH  _arg0;
     char * _argc0 = 0;
-    char _ptemp[128];
 
     self = self;
     if(!PyArg_ParseTuple(args,"s:GDALFlushRasterCache",&_argc0)) 
@@ -2303,10 +2296,8 @@ static PyObject *_wrap_GDALFlushRasterCache(PyObject *self, PyObject *args) {
         return NULL;
         }
     }
-    _result = (CPLErr *) malloc(sizeof(CPLErr ));
-    *(_result) = GDALFlushRasterCache(_arg0);
-    SWIG_MakePtr(_ptemp, (void *) _result,"_CPLErr_p");
-    _resultobj = Py_BuildValue("s",_ptemp);
+    _result = (int )GDALFlushRasterCache(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
@@ -2505,14 +2496,13 @@ static PyObject *_wrap_GDALCreateProjDef(PyObject *self, PyObject *args) {
 
 static PyObject *_wrap_GDALReprojectToLongLat(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
-    CPLErr * _result;
+    int  _result;
     GDALProjDefH  _arg0;
     double * _arg1;
     double * _arg2;
     char * _argc0 = 0;
     char * _argc1 = 0;
     char * _argc2 = 0;
-    char _ptemp[128];
 
     self = self;
     if(!PyArg_ParseTuple(args,"sss:GDALReprojectToLongLat",&_argc0,&_argc1,&_argc2)) 
@@ -2535,23 +2525,20 @@ static PyObject *_wrap_GDALReprojectToLongLat(PyObject *self, PyObject *args) {
         return NULL;
         }
     }
-    _result = (CPLErr *) malloc(sizeof(CPLErr ));
-    *(_result) = GDALReprojectToLongLat(_arg0,_arg1,_arg2);
-    SWIG_MakePtr(_ptemp, (void *) _result,"_CPLErr_p");
-    _resultobj = Py_BuildValue("s",_ptemp);
+    _result = (int )GDALReprojectToLongLat(_arg0,_arg1,_arg2);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
 static PyObject *_wrap_GDALReprojectFromLongLat(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
-    CPLErr * _result;
+    int  _result;
     GDALProjDefH  _arg0;
     double * _arg1;
     double * _arg2;
     char * _argc0 = 0;
     char * _argc1 = 0;
     char * _argc2 = 0;
-    char _ptemp[128];
 
     self = self;
     if(!PyArg_ParseTuple(args,"sss:GDALReprojectFromLongLat",&_argc0,&_argc1,&_argc2)) 
@@ -2574,10 +2561,8 @@ static PyObject *_wrap_GDALReprojectFromLongLat(PyObject *self, PyObject *args) 
         return NULL;
         }
     }
-    _result = (CPLErr *) malloc(sizeof(CPLErr ));
-    *(_result) = GDALReprojectFromLongLat(_arg0,_arg1,_arg2);
-    SWIG_MakePtr(_ptemp, (void *) _result,"_CPLErr_p");
-    _resultobj = Py_BuildValue("s",_ptemp);
+    _result = (int )GDALReprojectFromLongLat(_arg0,_arg1,_arg2);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2000/12/14 17:38:49  warmerda
+ * added GDALDriver.Delete
+ *
  * Revision 1.25  2000/11/29 16:58:59  warmerda
  * fixed MajorObject handling
  *
@@ -169,7 +172,7 @@ int          GDALGetDriverCount();
 GDALDriverH  GDALGetDriver( int );
 int          GDALRegisterDriver( GDALDriverH );
 void         GDALDeregisterDriver( GDALDriverH );
-CPLErr	     GDALDeleteDataset( GDALDriverH, const char * );
+int	     GDALDeleteDataset( GDALDriverH, const char * );
 
 const char  *GDALGetDriverShortName( GDALDriverH );
 const char  *GDALGetDriverLongName( GDALDriverH );
@@ -186,7 +189,7 @@ int 	GDALGetRasterYSize( GDALDatasetH );
 int 	GDALGetRasterCount( GDALDatasetH );
 GDALRasterBandH  GDALGetRasterBand( GDALDatasetH, int );
 const char  *GDALGetProjectionRef( GDALDatasetH );
-CPLErr   GDALSetProjection( GDALDatasetH, const char * );
+int      GDALSetProjection( GDALDatasetH, const char * );
 int      GDALReferenceDataset( GDALDatasetH );
 int      GDALDereferenceDataset( GDALDatasetH );
 int      GDALGetGCPCount( GDALDatasetH );
@@ -213,7 +216,7 @@ int              GDALSetRasterNoDataValue( GDALRasterBandH, double );
 
 int              GDALGetOverviewCount( GDALRasterBandH );
 GDALRasterBandH  GDALGetOverview( GDALRasterBandH, int );
-CPLErr           GDALFlushRasterCache( GDALRasterBandH );
+int              GDALFlushRasterCache( GDALRasterBandH );
 
 
 /* ==================================================================== */
@@ -241,8 +244,8 @@ void  GDALSetColorEntry( GDALColorTableH, int, const GDALColorEntry * );
 /* ==================================================================== */
 
 GDALProjDefH  GDALCreateProjDef( const char * );
-CPLErr 	 GDALReprojectToLongLat( GDALProjDefH, double *, double * );
-CPLErr 	 GDALReprojectFromLongLat( GDALProjDefH, double *, double * );
+int    	 GDALReprojectToLongLat( GDALProjDefH, double *, double * );
+int    	 GDALReprojectFromLongLat( GDALProjDefH, double *, double * );
 void     GDALDestroyProjDef( GDALProjDefH );
 const char *GDALDecToDMS( double, const char *, int );
 
@@ -338,7 +341,7 @@ py_GDALBuildOverviews(PyObject *self, PyObject *args) {
     char *pszResampling = "NEAREST";
     PyObject *psPyOverviewList = NULL, *psPyBandList = NULL;
     int   nOverviews, *panOverviewList, i;
-    CPLErr eErr;
+    int    eErr;
     PyProgressData sProgressInfo;
 
     self = self;
@@ -747,7 +750,7 @@ py_GDALSetGeoTransform(PyObject *self, PyObject *args) {
     GDALDatasetH  _arg0;
     char *_argc0 = NULL;
     double geotransform[6];
-    CPLErr err;
+    int    err;
 
     self = self;
     if(!PyArg_ParseTuple(args,"s(dddddd):GDALSetGeoTransform",&_argc0,

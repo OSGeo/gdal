@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.20  2000/12/14 17:38:49  warmerda
+# added GDALDriver.Delete
+#
 # Revision 1.19  2000/10/30 21:25:41  warmerda
 # added access to CPL error functions
 #
@@ -176,6 +179,10 @@ class Driver:
         else:
             _gdal.GDALDereferenceDataset( target_ds )
             return Dataset(target_ds)
+
+    def Delete(self, filename):
+        return _gdal.GDALDeleteDataset( self._o, filename )
+        
         
 class Dataset:
 
