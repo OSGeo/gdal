@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/01/15 16:10:10  fwarmerdam
+ * added offset, scale and colorinterp to default createcopy
+ *
  * Revision 1.30  2003/05/23 20:42:24  sperkins
  * default CreateCopy() now copies metadata
  *
@@ -313,15 +316,35 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /*      Do we need to copy a colortable or other metadata?              */
 /* -------------------------------------------------------------------- */
         GDALColorTable *poCT;
+        int bSuccess;
+        double dfValue;
 
         poCT = poSrcBand->GetColorTable();
         if( poCT != NULL )
             poDstBand->SetColorTable( poCT );
 
+        if( !bStrict )
+            CPLPushErrorHandler( CPLQuietErrorHandler );
+
         if( strlen(poSrcBand->GetDescription()) > 0 )
             poDstBand->SetDescription( poSrcBand->GetDescription() );
 
         poDstBand->SetMetadata( poSrcBand->GetMetadata() );
+
+        dfValue = poSrcBand->GetOffset( &bSuccess );
+        if( bSuccess )
+            poDstBand->SetOffset( dfValue );
+
+        dfValue = poSrcBand->GetScale( &bSuccess );
+        if( bSuccess )
+            poDstBand->SetScale( dfValue );
+
+        if( poSrcBand->GetColorInterpretation() != GCI_Undefined )
+            poDstBand->SetColorInterpretation( 
+                poSrcBand->GetColorInterpretation() );
+
+        if( !bStrict )
+            CPLPopErrorHandler();
 
 /* -------------------------------------------------------------------- */
 /*      Copy image data.                                                */
