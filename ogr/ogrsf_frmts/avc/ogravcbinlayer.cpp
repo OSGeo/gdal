@@ -28,6 +28,13 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/02/18 20:38:18  warmerda
+ * Added spatial filtering.
+ * Added Attribute query.
+ * Set LAB FID based on sequence number rather than nValue field.
+ * Use either LAB FID or PolyID for table lookup.
+ * Add attributes to arcs and LABs.
+ *
  * Revision 1.2  2002/02/14 23:01:04  warmerda
  * added region and attribute support
  *
@@ -55,9 +62,11 @@ OGRAVCBinLayer::OGRAVCBinLayer( OGRAVCBinDataSource *poDSIn,
     hFile = NULL;
     poArcLayer = NULL;
     bNeedReset = FALSE;
+    nNextFID = 1;
 
     hTable = NULL;
     nTableBaseField = -1;
+    nTableAttrIndex = -1;
 
     SetupFeatureDefinition( psSection->pszName );
     
@@ -67,6 +76,20 @@ OGRAVCBinLayer::OGRAVCBinLayer( OGRAVCBinDataSource *poDSIn,
     else if( psSection->eType == AVCFileRPL )
         sprintf( szTableName, "%s.PAT%s", poDS->GetCoverageName(),
                  psSectionIn->pszName );
+    else if( psSection->eType == AVCFileARC )
+        sprintf( szTableName, "%s.AAT", poDS->GetCoverageName() );
+    else if( psSection->eType == AVCFileLAB )
+    {
+        AVCE00ReadPtr psInfo = ((OGRAVCBinDataSource *) poDS)->GetInfo();
+
+        sprintf( szTableName, "%s.PAT", poDS->GetCoverageName() );
+
+        for( int iSection = 0; iSection < psInfo->numSections; iSection++ )
+        {
+            if( psInfo->pasSections[iSection].eType == AVCFilePAL )
+                nTableAttrIndex = poFeatureDefn->GetFieldIndex( "PolyId" );
+        }
+    }
 
     CheckSetupTable();
 }
@@ -95,6 +118,7 @@ void OGRAVCBinLayer::ResetReading()
     }
 
     bNeedReset = FALSE;
+    nNextFID = 1;
 
     if( hTable != NULL )
     {
@@ -131,7 +155,13 @@ OGRFeature *OGRAVCBinLayer::GetFeature( long nFID )
     void *pFeature;
 
     if( nFID == -3 )
-        pFeature = AVCBinReadNextObject( hFile );
+    {
+        while( (pFeature = AVCBinReadNextObject( hFile )) != NULL
+               && !MatchesSpatialFilter( pFeature ) )
+        {
+            nNextFID++;
+        }
+    }
     else
     {
         bNeedReset = TRUE;
@@ -149,6 +179,18 @@ OGRFeature *OGRAVCBinLayer::GetFeature( long nFID )
     poFeature = TranslateFeature( pFeature );
     if( poFeature == NULL )
         return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      LAB's we have to assign the FID to directly, since it           */
+/*      doesn't seem to be stored in the file structure.                */
+/* -------------------------------------------------------------------- */
+    if( psSection->eType == AVCFileLAB )
+    {
+        if( nFID == -3 )
+            poFeature->SetFID( nNextFID++ );
+        else
+            poFeature->SetFID( nFID );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If this is a polygon layer, try to assemble the arcs to form    */
@@ -177,6 +219,22 @@ OGRFeature *OGRAVCBinLayer::GetNextFeature()
         ResetReading();
 
     OGRFeature *poFeature = GetFeature( -3 );
+
+    // Skip universe polygon.
+    if( poFeature != NULL && poFeature->GetFID() == 1 
+        && psSection->eType == AVCFilePAL )
+    {
+        OGRFeature::DestroyFeature( poFeature );
+        poFeature = GetFeature( -3 );
+    }
+
+    while( poFeature != NULL 
+           && m_poAttrQuery != NULL
+           && !m_poAttrQuery->Evaluate( poFeature ) )
+    {
+        OGRFeature::DestroyFeature( poFeature );
+        poFeature = GetFeature( -3 );
+    }
 
     if( poFeature == NULL )
         ResetReading();
@@ -359,9 +417,20 @@ int OGRAVCBinLayer::AppendTableFields( OGRFeature *poFeature )
 
 /* -------------------------------------------------------------------- */
 /*      Read the info record.                                           */
+/*                                                                      */
+/*      We usually assume the FID of the feature is the key but in a    */
+/*      polygon coverage we need to use the PolyId attribute of LAB     */
+/*      features to lookup the related attributes.  In this case        */
+/*      nTableAttrIndex will already be setup to refer to the           */
+/*      PolyId field.                                                   */
 /* -------------------------------------------------------------------- */
-    int	nRecordId = poFeature->GetFID();
+    int	nRecordId;
     void *hRecord;
+
+    if( nTableAttrIndex == -1 )
+        nRecordId = poFeature->GetFID();
+    else
+        nRecordId = poFeature->GetFieldAsInteger( nTableAttrIndex );
 
     hRecord = AVCBinReadObject( hTable, nRecordId );
     if( hRecord == NULL )
@@ -374,4 +443,8 @@ int OGRAVCBinLayer::AppendTableFields( OGRFeature *poFeature )
                                  hTable->hdr.psTableDef, 
                                  (AVCField *) hRecord );
 }
+
+
+
+
 
