@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/07/13 15:47:34  warmerda
+ * fixed similar quoting bug in GetFeature()
+ *
  * Revision 1.6  2004/07/13 15:38:44  warmerda
  * Fixed quoting in DELETE statement.  Don't use single quotes on field
  * names in the WHERE clause.
@@ -280,9 +283,11 @@ OGRFeature *OGRSQLiteTableLayer::GetFeature( long nFeatureId )
     iNextShapeId = nFeatureId;
 
     pszSQL =
-        CPLSPrintf( "SELECT _rowid_, * FROM '%s' WHERE '%s' = %d", 
+        CPLSPrintf( "SELECT _rowid_, * FROM '%s' WHERE \"%s\" = %d", 
                     poFeatureDefn->GetName(), 
                     pszFIDColumn, nFeatureId );
+
+    CPLDebug( "OGR_SQLITE", "exec(%s)", pszSQL );
 
     rc = sqlite3_prepare( poDS->GetDB(), pszSQL, strlen(pszSQL), 
 	    	          &hStmt, NULL );
