@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/01/05 22:23:40  warmerda
+ * added ExecuteSQL implementation via OGRODBCSelectLayer
+ *
  * Revision 1.2  2003/10/29 17:47:38  warmerda
  * Added FIDcolumn (based on primary key) support
  *
@@ -144,36 +147,37 @@ class OGRODBCTableLayer : public OGRODBCLayer
 #endif
 };
 
-#ifdef notdef
 /************************************************************************/
-/*                           OGRODBCResultLayer                           */
+/*                          OGRODBCSelectLayer                          */
 /************************************************************************/
 
-class OGRODBCResultLayer : public OGRODBCLayer
+class OGRODBCSelectLayer : public OGRODBCLayer
 {
-    void                BuildFullQueryStatement(void);
+    char                *pszBaseStatement;
 
-    char                *pszRawStatement;
+    void		ClearStatement();
+    OGRErr              ResetStatement();
 
-    PGresult            *hInitialResult;
-
-    int                 nFeatureCount;
+    virtual CPLODBCStatement *  GetStatement();
 
   public:
-                        OGRODBCResultLayer( OGRODBCDataSource *,
-                                          const char * pszRawStatement,
-                                          PGresult *hInitialResult );
-    virtual             ~OGRODBCResultLayer();
-
-    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
-    void                SetSpatialFilter( OGRGeometry * ) {}
-
-    OGRFeatureDefn     *ReadResultDefinition();
+                        OGRODBCSelectLayer( OGRODBCDataSource *, 
+                                           CPLODBCStatement * );
+                        ~OGRODBCSelectLayer();
 
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
+
+    virtual OGRGeometry *GetSpatialFilter() { return poFilterGeom; }
+    virtual void        SetSpatialFilter( OGRGeometry * );
+
+    virtual OGRErr      SetAttributeFilter( const char * );
+    virtual OGRFeature *GetFeature( long nFeatureId );
+    
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+
+    virtual int         TestCapability( const char * );
 };
-#endif
 
 /************************************************************************/
 /*                           OGRODBCDataSource                            */
@@ -201,10 +205,6 @@ class OGRODBCDataSource : public OGRDataSource
                         OGRODBCDataSource();
                         ~OGRODBCDataSource();
 
-    int                 FetchSRSId( OGRSpatialReference * poSRS );
-    OGRSpatialReference *FetchSRS( int nSRSId );
-
-
     int                 Open( const char *, int bUpdate, int bTestOpen );
     int                 OpenTable( const char *pszTableName, 
                                    const char *pszGeomCol,
@@ -223,12 +223,10 @@ class OGRODBCDataSource : public OGRDataSource
 
     int                 TestCapability( const char * );
 
-#ifdef notdef
     virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect );
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
-#endif
 
     // Internal use
     CPLODBCSession     *GetSession() { return &oSession; }
