@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/08/28 13:42:20  warmerda
+ * support multiple -b switches to select a set of bands
+ *
  * Revision 1.15  2003/07/27 12:31:14  dron
  * Few memory leaks fixed.
  *
@@ -166,11 +169,11 @@ int main( int argc, char ** argv )
 
 {
     GDALDatasetH	hDataset, hOutDS;
-    int			i, nSrcBand = -1;
+    int			i;
     int			nRasterXSize, nRasterYSize;
     const char		*pszSource=NULL, *pszDest=NULL, *pszFormat = "GTiff";
     GDALDriverH		hDriver;
-    int			*panBandList, nBandCount;
+    int			*panBandList = NULL, nBandCount = 0, bDefBands = TRUE;
     double		adfGeoTransform[6];
     GDALDataType	eOutputType = GDT_Unknown;
     int			nOXSize = 0, nOYSize = 0;
@@ -242,8 +245,23 @@ int main( int argc, char ** argv )
             i++;
         }
         else if( EQUAL(argv[i],"-b") && i < argc-1 )
-            nSrcBand = atoi(argv[++i]);
-            
+        {
+            if( atoi(argv[i+1]) < 1 )
+            {
+                printf( "Unrecognizable band number (%s).\n", argv[i+1] );
+                Usage();
+                GDALDestroyDriverManager();
+                exit( 2 );
+            }
+
+            nBandCount++;
+            panBandList = (int *) 
+                CPLRealloc(panBandList, sizeof(int) * nBandCount);
+            panBandList[nBandCount-1] = atoi(argv[++i]);
+
+            if( panBandList[nBandCount-1] != nBandCount )
+                bDefBands = FALSE;
+        }
         else if( EQUAL(argv[i],"-not_strict")  )
             bStrict = FALSE;
             
@@ -388,18 +406,29 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*	Build band list to translate					*/
 /* -------------------------------------------------------------------- */
-    if( nSrcBand != -1 )
-    {
-        nBandCount = 1;
-        panBandList = (int *) CPLMalloc(sizeof(int)*nBandCount);
-        panBandList[0] = nSrcBand;
-    }
-    else
+    if( nBandCount == 0 )
     {
         nBandCount = GDALGetRasterCount( hDataset );
         panBandList = (int *) CPLMalloc(sizeof(int)*nBandCount);
         for( i = 0; i < nBandCount; i++ )
             panBandList[i] = i+1;
+    }
+    else
+    {
+        for( i = 0; i < nBandCount; i++ )
+        {
+            if( panBandList[i] < 1 || panBandList[i] > GDALGetRasterCount(hDataset) )
+            {
+                fprintf( stderr, 
+                         "Band %d requested, but only bands 1 to %d available.\n",
+                         panBandList[i], GDALGetRasterCount(hDataset) );
+                GDALDestroyDriverManager();
+                exit( 2 );
+            }
+        }
+
+        if( nBandCount != GDALGetRasterCount( hDataset ) )
+            bDefBands = FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -493,8 +522,7 @@ int main( int argc, char ** argv )
 /*      virtual input source to copy from.                              */
 /* -------------------------------------------------------------------- */
     if( eOutputType == GDT_Unknown 
-        && !bScale && CSLCount(papszMetadataOptions) == 0 
-        && nBandCount == GDALGetRasterCount(hDataset)
+        && !bScale && CSLCount(papszMetadataOptions) == 0 && bDefBands 
         && anSrcWin[0] == 0 && anSrcWin[1] == 0 
         && anSrcWin[2] == GDALGetRasterXSize(hDataset)
         && anSrcWin[3] == GDALGetRasterYSize(hDataset) 
