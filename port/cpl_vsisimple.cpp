@@ -30,6 +30,9 @@
  *    instance validation of access strings to fopen().
  * 
  * $Log$
+ * Revision 1.11  2002/06/15 00:07:23  aubin
+ * mods to enable 64bit file i/o
+ *
  * Revision 1.10  2001/07/18 04:00:49  warmerda
  * added CPL_CVSID
  *
@@ -299,7 +302,12 @@ int VSIStat( const char * pszFilename, VSIStatBuf * pStatBuf )
 #if defined(macos_pre10)
     return -1;
 #else
+#ifdef VSI_LARGE_API_SUPPORTED
+    return( stat64( pszFilename, pStatBuf ) );
+#else
     return( stat( pszFilename, pStatBuf ) );
+#error We got the wrong stat function! 
+#endif
 #endif
 }
 

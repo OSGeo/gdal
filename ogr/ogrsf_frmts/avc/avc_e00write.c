@@ -76,10 +76,10 @@
  *
  **********************************************************************/
 
-#include <ctype.h>      /* tolower() */
 
 #include "cpl_vsi.h"
 #include "avc.h"
+#include <ctype.h>      /* tolower() */
 
 static GBool _IsStringAlnum(const char *pszFname);
 
