@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.4  2001/03/12 19:59:56  warmerda
+# added numeric to gdal type translation
+#
 # Revision 1.3  2000/11/17 17:16:33  warmerda
 # improved error reporting
 #
@@ -144,4 +147,25 @@ def GDALTypeCodeToNumericTypeCode( gdal_code ):
         return Complex64
     else:
         return None
+
+def NumericTypeCodeToGDALTypeCode( numeric_code ):
+    from Numeric import *
+
+    if numeric_code == UnsignedInt8:
+        return GDT_Byte
+    elif numeric_code == Int16:
+        return GDT_Int16
+    elif numeric_code == Int32:
+        return GDT_Int32
+    elif numeric_code == Float32:
+        return GDT_Float32
+    elif numeric_code == Float64:
+        return GDT_Float64
+    elif numeric_code == Complex32:
+        return GDT_CFloat32
+    elif numeric_code == Complex64:
+        return GDT_CFloat64
+    else:
+        return None
+    
 
