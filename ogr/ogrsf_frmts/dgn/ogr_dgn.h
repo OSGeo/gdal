@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/03/27 21:36:50  warmerda
+ * added implementation of GetFeature()
+ *
  * Revision 1.3  2002/02/22 22:18:44  warmerda
  * added support for commplex shapes
  *
@@ -74,6 +77,7 @@ class OGRDGNLayer : public OGRLayer
 
     void		ResetReading();
     OGRFeature *	GetNextFeature();
+    OGRFeature *        GetFeature( long nFeatureId );
 
     OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/03/27 21:36:50  warmerda
+ * added implementation of GetFeature()
+ *
  * Revision 1.18  2002/02/22 22:18:44  warmerda
  * added support for commplex shapes
  *
@@ -216,6 +219,38 @@ void OGRDGNLayer::ResetReading()
 {
     iNextShapeId = 0;
     DGNRewind( hDGN );
+}
+
+/************************************************************************/
+/*                             GetFeature()                             */
+/************************************************************************/
+
+OGRFeature *OGRDGNLayer::GetFeature( long nFeatureId )
+
+{
+    OGRFeature *poFeature;
+    DGNElemCore *psElement;
+
+    if( !DGNGotoElement( hDGN, nFeatureId ) )
+        return NULL;
+
+    // We should likely clear the spatial search region as it affects 
+    // DGNReadElement() but I will defer that for now. 
+
+    psElement = DGNReadElement( hDGN );
+    poFeature = ElementToFeature( psElement );
+    DGNFreeElement( hDGN, psElement );
+
+    if( poFeature == NULL )
+        return NULL;
+
+    if( poFeature->GetFID() != nFeatureId )
+    {
+        delete poFeature;
+        return NULL;
+    }
+
+    return poFeature;
 }
 
 /************************************************************************/
