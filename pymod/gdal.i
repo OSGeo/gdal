@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2003/03/18 06:05:12  warmerda
+ * Added GDALDataset::FlushCache()
+ *
  * Revision 1.57  2003/03/07 16:31:12  warmerda
  * added GetLayerByName
  *
@@ -238,6 +241,7 @@ int      GDALReferenceDataset( GDALDatasetH );
 int      GDALDereferenceDataset( GDALDatasetH );
 int      GDALGetGCPCount( GDALDatasetH );
 const char *GDALGetGCPProjection( GDALDatasetH );
+void     GDALFlushCache( GDALDatasetH );
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */

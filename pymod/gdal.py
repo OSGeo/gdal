@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.43  2003/03/18 06:05:12  warmerda
+# Added GDALDataset::FlushCache()
+#
 # Revision 1.42  2003/03/07 16:27:03  warmerda
 # some NULL fixes
 #
@@ -483,6 +486,9 @@ class Dataset:
     def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None):
         import gdalnumeric
         return gdalnumeric.DatasetReadAsArray( self, xoff, yoff, xsize, ysize )
+
+    def FlushCache(self):
+        _gdal.GDALFlushCache( self._o )
     
 class Band:            
     def __init__(self, _obj):
