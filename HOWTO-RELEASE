@@ -27,7 +27,7 @@
 6) Tag the release set in CVS. 
 
    eg. 
-   % cvs tag gdal_1_1_6 
+   % cvs tag -F gdal_1_1_6 
 
 7) Create the source distributions using the mkgdaldist.sh script.  The
    argument should be the version number (ie. 1.1.6).  Hit enter when 
