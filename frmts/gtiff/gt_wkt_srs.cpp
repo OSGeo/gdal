@@ -31,6 +31,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2005/03/15 16:04:47  fwarmerdam
+ * Emit semimajor+semiminor if inv flattening is zero (sphere) instead of
+ * semimajor + 0 inv flattening.
+ *
  * Revision 1.52  2005/03/09 17:04:44  fwarmerdam
  * added CEA support
  *
@@ -1606,8 +1610,12 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
                         KvUserDefined );
             GTIFKeySet( psGTIF, GeogSemiMajorAxisGeoKey, TYPE_DOUBLE, 1,
                         dfSemiMajor );
-            GTIFKeySet( psGTIF, GeogInvFlatteningGeoKey, TYPE_DOUBLE, 1,
-                        dfInvFlattening );
+            if( dfInvFlattening == 0.0 )
+                GTIFKeySet( psGTIF, GeogSemiMinorAxisGeoKey, TYPE_DOUBLE, 1,
+                            dfSemiMajor );
+            else
+                GTIFKeySet( psGTIF, GeogInvFlatteningGeoKey, TYPE_DOUBLE, 1,
+                            dfInvFlattening );
         }
         else if( poSRS->GetAttrValue("DATUM") != NULL
                  && strstr(poSRS->GetAttrValue("DATUM"),"unknown") == NULL
