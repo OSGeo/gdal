@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_open.c,v 1.6 2001/07/20 02:22:46 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_open.c,v 1.7 2002/04/20 12:16:52 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -156,6 +156,11 @@ TIFFClientOpen(
 	tif->tif_curstrip = (tstrip_t) -1;	/* invalid strip */
 	tif->tif_row = (uint32) -1;		/* read/write pre-increment */
 	tif->tif_clientdata = clientdata;
+	if (!readproc || !writeproc || !seekproc || !closeproc
+			|| !sizeproc || !mapproc || !unmapproc) {
+		TIFFError(module, "One of the client procedures are NULL pointer");
+		goto bad3;
+	}
 	tif->tif_readproc = readproc;
 	tif->tif_writeproc = writeproc;
 	tif->tif_seekproc = seekproc;
@@ -387,6 +392,7 @@ bad:
 	return ((TIFF*)0);
 bad2:
 	(void) (*closeproc)(clientdata);
+bad3:
 	return ((TIFF*)0);
 }
 

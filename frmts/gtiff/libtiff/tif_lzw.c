@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_lzw.c,v 1.10 2002/04/03 20:18:16 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_lzw.c,v 1.16 2002/08/22 16:50:50 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -396,8 +396,22 @@ LZWDecode(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 		/*
 	 	 * Add the new entry to the code table.
 	 	 */
-		assert(&sp->dec_codetab[0] <= free_entp && free_entp < &sp->dec_codetab[CSIZE]);
+		if (free_entp < &sp->dec_codetab[0] ||
+			free_entp >= &sp->dec_codetab[CSIZE]) {
+			TIFFError(tif->tif_name,
+			"LZWDecode: Corrupted LZW table at scanline %d",
+			tif->tif_row);
+			return (0);
+		}
+
 		free_entp->next = oldcodep;
+		if (free_entp->next < &sp->dec_codetab[0] ||
+			free_entp->next >= &sp->dec_codetab[CSIZE]) {
+			TIFFError(tif->tif_name,
+			"LZWDecode: Corrupted LZW table at scanline %d",
+			tif->tif_row);
+			return (0);
+		}
 		free_entp->firstchar = free_entp->next->firstchar;
 		free_entp->length = free_entp->next->length+1;
 		free_entp->value = (codep < free_entp) ?
@@ -414,6 +428,13 @@ LZWDecode(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 		 	 * Code maps to a string, copy string
 			 * value to output (written in reverse).
 		 	 */
+			if(codep->length == 0) {
+			    TIFFError(tif->tif_name,
+	    		    "LZWDecode: Wrong length of decoded string: "
+			    "data probably corrupted at scanline %d",
+			    tif->tif_row);	
+			    return (0);
+			}
 			if (codep->length > occ) {
 				/*
 				 * String is too long for decode buffer,
@@ -571,8 +592,22 @@ LZWDecodeCompat(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 		/*
 	 	 * Add the new entry to the code table.
 	 	 */
-		assert(&sp->dec_codetab[0] <= free_entp && free_entp < &sp->dec_codetab[CSIZE]);
+		if (free_entp < &sp->dec_codetab[0] ||
+			free_entp >= &sp->dec_codetab[CSIZE]) {
+			TIFFError(tif->tif_name,
+			"LZWDecodeCompat: Corrupted LZW table at scanline %d",
+			tif->tif_row);
+			return (0);
+		}
+
 		free_entp->next = oldcodep;
+		if (free_entp->next < &sp->dec_codetab[0] ||
+			free_entp->next >= &sp->dec_codetab[CSIZE]) {
+			TIFFError(tif->tif_name,
+			"LZWDecodeCompat: Corrupted LZW table at scanline %d",
+			tif->tif_row);
+			return (0);
+		}
 		free_entp->firstchar = free_entp->next->firstchar;
 		free_entp->length = free_entp->next->length+1;
 		free_entp->value = (codep < free_entp) ?
@@ -589,6 +624,13 @@ LZWDecodeCompat(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 		 	 * Code maps to a string, copy string
 			 * value to output (written in reverse).
 		 	 */
+			if(codep->length == 0) {
+			    TIFFError(tif->tif_name,
+	    		    "LZWDecodeCompat: Wrong length of decoded "
+			    "string: data probably corrupted at scanline %d",
+			    tif->tif_row);	
+			    return (0);
+			}
 			if (codep->length > occ) {
 				/*
 				 * String is too long for decode buffer,

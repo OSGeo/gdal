@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.19 2002/03/26 10:35:27 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.22 2002/10/07 13:01:08 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -55,7 +55,7 @@ TIFFRGBAImageOK(TIFF* tif, char emsg[1024])
     uint16 photometric;
     int colorchannels;
 
-    if (!(*tif->tif_setupdecode)(tif)) {
+    if (!tif->tif_decodestatus) {
 	sprintf(emsg, "Sorry, requested compression method is not configured");
 	return (0);
     }
@@ -387,12 +387,11 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 	!(planarconfig == PLANARCONFIG_SEPARATE && colorchannels > 1);
     if (img->isContig) {
 	img->get = TIFFIsTiled(tif) ? gtTileContig : gtStripContig;
-	(void) pickTileContigCase(img);
+	return pickTileContigCase(img);
     } else {
 	img->get = TIFFIsTiled(tif) ? gtTileSeparate : gtStripSeparate;
-	(void) pickTileSeparateCase(img);
+	return pickTileSeparateCase(img);
     }
-    return (1);
 }
 
 int
@@ -505,35 +504,7 @@ gtTileContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
                 break;
             }
 	    
-            tile_row_size = TIFFTileRowSize(tif);
-            pos = ((row+img->row_offset) % th) * tile_row_size;
-
-	    if(orientation == ORIENTATION_BOTLEFT)
-	    /* Vertically mirror rows in tile according to `Orientation' tag */
-            {
-                u_char *wrk_line, *top_line, *bottom_line;
-                uint32 t_row;
-
-                wrk_line = (u_char*)_TIFFmalloc(tile_row_size);
-                if (wrk_line == 0)
-	        {
-                    TIFFError(TIFFFileName(tif), "No space for tile row buffer");
-                    return (0);
-                }
-    
-                for(t_row = 0; t_row < th / 2; t_row++)
-                {
-
-                    top_line = buf + tile_row_size * t_row;
-                    bottom_line = buf + tile_row_size * (th-t_row-1);
-
-                    _TIFFmemcpy(wrk_line, top_line, tile_row_size);
-                    _TIFFmemcpy(top_line, bottom_line, tile_row_size);
-                    _TIFFmemcpy(bottom_line, wrk_line, tile_row_size);
-                }
-
-                _TIFFfree(wrk_line);
-            }
+            pos = ((row+img->row_offset) % th) * TIFFTileRowSize(tif);
 
     	    if (col + tw > w) 
             {
@@ -550,6 +521,8 @@ gtTileContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
             {
                 (*put)(img, raster+y*w+col, col, y, tw, nrow, 0, toskew, buf + pos);
             }
+
+	    
         }
 
         y += (orientation == ORIENTATION_TOPLEFT ? -(int32) nrow : (int32) nrow);

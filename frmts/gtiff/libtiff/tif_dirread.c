@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirread.c,v 1.9 2002/03/27 14:46:45 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirread.c,v 1.13 2002/10/02 08:46:54 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -252,6 +252,7 @@ TIFFReadDirectory(TIFF* tif)
                     while (fix < tif->tif_nfields &&
                            tif->tif_fieldinfo[fix]->field_tag < dp->tdir_tag)
 			fix++;
+		    dp->tdir_tag = IGNORE;
 		}
 		/*
 		 * Null out old tags that we ignore.
@@ -779,20 +780,36 @@ TIFFFetchByteArray(TIFF* tif, TIFFDirEntry* dir, uint16* v)
          * Extract data from offset field.
          */
         if (tif->tif_header.tiff_magic == TIFF_BIGENDIAN) {
-            switch (dir->tdir_count) {
-                case 4: v[3] = (uint16)(dir->tdir_offset & 0xff);
-                case 3: v[2] = (uint16)((dir->tdir_offset >> 8) & 0xff);
-                case 2: v[1] = (uint16)((dir->tdir_offset >> 16) & 0xff);
-                case 1: v[0] = (uint16)(dir->tdir_offset >> 24);
-            }
-        } else {
-            switch (dir->tdir_count) {
-                case 4: v[3] = (uint16)(dir->tdir_offset >> 24);
-                case 3: v[2] = (uint16)((dir->tdir_offset >> 16) & 0xff);
-                case 2: v[1] = (uint16)((dir->tdir_offset >> 8) & 0xff);
-                case 1: v[0] = (uint16)(dir->tdir_offset & 0xff);
-            }
-        }
+	    if (dir->tdir_type == TIFF_SBYTE)
+                switch (dir->tdir_count) {
+                    case 4: v[3] = (signed char)(dir->tdir_offset & 0xff);
+                    case 3: v[2] = (signed char)((dir->tdir_offset >> 8) & 0xff);
+                    case 2: v[1] = (signed char)((dir->tdir_offset >> 16) & 0xff);
+		    case 1: v[0] = (signed char)(dir->tdir_offset >> 24);	
+                }
+	    else
+                switch (dir->tdir_count) {
+                    case 4: v[3] = (uint16)(dir->tdir_offset & 0xff);
+                    case 3: v[2] = (uint16)((dir->tdir_offset >> 8) & 0xff);
+                    case 2: v[1] = (uint16)((dir->tdir_offset >> 16) & 0xff);
+		    case 1: v[0] = (uint16)(dir->tdir_offset >> 24);	
+                }
+	} else {
+	    if (dir->tdir_type == TIFF_SBYTE)
+                switch (dir->tdir_count) {
+                    case 4: v[3] = (signed char)(dir->tdir_offset >> 24);
+                    case 3: v[2] = (signed char)((dir->tdir_offset >> 16) & 0xff);
+                    case 2: v[1] = (signed char)((dir->tdir_offset >> 8) & 0xff);
+                    case 1: v[0] = (signed char)(dir->tdir_offset & 0xff);
+		}
+	    else
+                switch (dir->tdir_count) {
+                    case 4: v[3] = (uint16)(dir->tdir_offset >> 24);
+                    case 3: v[2] = (uint16)((dir->tdir_offset >> 16) & 0xff);
+                    case 2: v[1] = (uint16)((dir->tdir_offset >> 8) & 0xff);
+                    case 1: v[0] = (uint16)(dir->tdir_offset & 0xff);
+		}
+	}
         return (1);
     } else
         return (TIFFFetchData(tif, dir, (char*) v) != 0);	/* XXX */
@@ -827,7 +844,7 @@ TIFFFetchShortArray(TIFF* tif, TIFFDirEntry* dir, uint16* v)
 static int
 TIFFFetchShortPair(TIFF* tif, TIFFDirEntry* dir)
 {
-	uint16 v[2];
+	uint16 v[4];
 	int ok = 0;
 
 	switch (dir->tdir_type) {

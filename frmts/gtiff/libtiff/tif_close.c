@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_close.c,v 1.3 2002/04/03 20:13:31 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_close.c,v 1.4 2002/08/15 12:59:25 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -55,7 +55,23 @@ TIFFClose(TIFF* tif)
     if (isMapped(tif))
         TIFFUnmapFileContents(tif, tif->tif_base, tif->tif_size);
     (void) TIFFCloseFile(tif);
-    if (tif->tif_fieldinfo)
+    if (tif->tif_nfields > 0) 
+    {
+        int  i;
+
+        for (i = 0; i < tif->tif_nfields; i++) 
+	{
+	    TIFFFieldInfo *fld = tif->tif_fieldinfo[i];
+ 	    if (fld->field_bit == FIELD_CUSTOM && 
+		strncmp("Tag ", fld->field_name, 4) == 0) 
+	    {
+                _TIFFfree(fld->field_name);
+                _TIFFfree(fld);
+	    }
+        }   
+      
         _TIFFfree(tif->tif_fieldinfo);
+    }
+
     _TIFFfree(tif);
 }

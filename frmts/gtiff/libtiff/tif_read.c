@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_read.c,v 1.7 2002/01/18 19:05:27 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_read.c,v 1.8 2002/07/31 20:52:36 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -32,8 +32,8 @@
 #include <stdio.h>
 #include <assert.h>
 
-static	int TIFFFillStrip(TIFF*, tstrip_t);
-static	int TIFFFillTile(TIFF*, ttile_t);
+	int TIFFFillStrip(TIFF*, tstrip_t);
+	int TIFFFillTile(TIFF*, ttile_t);
 static	int TIFFStartStrip(TIFF*, tstrip_t);
 static	int TIFFStartTile(TIFF*, ttile_t);
 static	int TIFFCheckRead(TIFF*, int);
@@ -104,7 +104,10 @@ TIFFReadScanline(TIFF* tif, tdata_t buf, uint32 row, tsample_t sample)
 		 */
 		e = (*tif->tif_decoderow)
 		    (tif, (tidata_t) buf, tif->tif_scanlinesize, sample);
-		tif->tif_row++;
+
+                /* we are now poised at the beginning of the next row */
+                tif->tif_row = row + 1;
+
 		if (e)
 			(*tif->tif_postdecode)(tif, (tidata_t) buf,
 			    tif->tif_scanlinesize);
@@ -238,7 +241,7 @@ TIFFReadRawStrip(TIFF* tif, tstrip_t strip, tdata_t buf, tsize_t size)
  * The data buffer is expanded, as necessary, to
  * hold the strip's data.
  */
-static int
+int
 TIFFFillStrip(TIFF* tif, tstrip_t strip)
 {
 	static const char module[] = "TIFFFillStrip";
@@ -435,7 +438,7 @@ TIFFReadRawTile(TIFF* tif, ttile_t tile, tdata_t buf, tsize_t size)
  * The data buffer is expanded, as necessary, to
  * hold the tile's data.
  */
-static int
+int
 TIFFFillTile(TIFF* tif, ttile_t tile)
 {
 	static const char module[] = "TIFFFillTile";

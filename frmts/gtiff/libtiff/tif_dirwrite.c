@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirwrite.c,v 1.13 2002/04/03 21:06:49 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirwrite.c,v 1.14 2002/04/09 19:36:12 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -88,8 +88,8 @@ static	int TIFFWriteRational(TIFF*,
  * handle overwriting a directory with auxiliary
  * storage that's been changed.
  */
-int
-TIFFWriteDirectory(TIFF* tif)
+static int
+_TIFFWriteDirectory(TIFF* tif, int done)
 {
 	uint16 dircount;
 	toff_t diroff;
@@ -109,31 +109,34 @@ TIFFWriteDirectory(TIFF* tif)
 	 * different characteristics get the right buffers
 	 * setup for them.
 	 */
-	if (tif->tif_flags & TIFF_POSTENCODE) {
-		tif->tif_flags &= ~TIFF_POSTENCODE;
-		if (!(*tif->tif_postencode)(tif)) {
-			TIFFError(tif->tif_name,
-			    "Error post-encoding before directory write");
-			return (0);
-		}
+	if (done)
+	{
+	    if (tif->tif_flags & TIFF_POSTENCODE) {
+		    tif->tif_flags &= ~TIFF_POSTENCODE;
+		    if (!(*tif->tif_postencode)(tif)) {
+			    TIFFError(tif->tif_name,
+				"Error post-encoding before directory write");
+			    return (0);
+		    }
+	    }
+	    (*tif->tif_close)(tif);		/* shutdown encoder */
+	    /*
+	     * Flush any data that might have been written
+	     * by the compression close+cleanup routines.
+	     */
+	    if (tif->tif_rawcc > 0 && !TIFFFlushData1(tif)) {
+		    TIFFError(tif->tif_name,
+			"Error flushing data before directory write");
+		    return (0);
+	    }
+	    if ((tif->tif_flags & TIFF_MYBUFFER) && tif->tif_rawdata) {
+		    _TIFFfree(tif->tif_rawdata);
+		    tif->tif_rawdata = NULL;
+		    tif->tif_rawcc = 0;
+		    tif->tif_rawdatasize = 0;
+	    }
+	    tif->tif_flags &= ~(TIFF_BEENWRITING|TIFF_BUFFERSETUP);
 	}
-	(*tif->tif_close)(tif);			/* shutdown encoder */
-	/*
-	 * Flush any data that might have been written
-	 * by the compression close+cleanup routines.
-	 */
-	if (tif->tif_rawcc > 0 && !TIFFFlushData1(tif)) {
-		TIFFError(tif->tif_name,
-		    "Error flushing data before directory write");
-		return (0);
-	}
-	if ((tif->tif_flags & TIFF_MYBUFFER) && tif->tif_rawdata) {
-		_TIFFfree(tif->tif_rawdata);
-		tif->tif_rawdata = NULL;
-		tif->tif_rawcc = 0;
-                tif->tif_rawdatasize = 0;
-	}
-	tif->tif_flags &= ~(TIFF_BEENWRITING|TIFF_BUFFERSETUP);
 
 	td = &tif->tif_dir;
 	/*
@@ -387,22 +390,48 @@ TIFFWriteDirectory(TIFF* tif)
 		TIFFError(tif->tif_name, "Error writing directory link");
 		goto bad;
 	}
-	TIFFFreeDirectory(tif);
-	_TIFFfree(data);
-	tif->tif_flags &= ~TIFF_DIRTYDIRECT;
-	(*tif->tif_cleanup)(tif);
+	if (done) {
+		TIFFFreeDirectory(tif);
+		tif->tif_flags &= ~TIFF_DIRTYDIRECT;
+		(*tif->tif_cleanup)(tif);
 
-	/*
-	 * Reset directory-related state for subsequent
-	 * directories.
-	 */
-        TIFFCreateDirectory(tif);
+		/*
+		* Reset directory-related state for subsequent
+		* directories.
+		*/
+		TIFFCreateDirectory(tif);
+	}
+	_TIFFfree(data);
 	return (1);
 bad:
 	_TIFFfree(data);
 	return (0);
 }
 #undef WriteRationalPair
+
+int
+TIFFWriteDirectory(TIFF* tif)
+{
+	return _TIFFWriteDirectory(tif, TRUE);
+}
+
+/*
+ * Similar to TIFFWriteDirectory(), writes the directory out
+ * but leaves all data structures in memory so that it can be
+ * written again.  This will make a partially written TIFF file
+ * readable before it is successfully completed/closed.
+ */ 
+int
+TIFFCheckpointDirectory(TIFF* tif)
+{
+	int rc;
+	/* Setup the strips arrays, if they haven't already been. */
+	if (tif->tif_dir.td_stripoffset == NULL)
+	    (void) TIFFSetupStrips(tif);
+	rc = _TIFFWriteDirectory(tif, FALSE);
+	(void) TIFFSetWriteOffset(tif, TIFFSeekFile(tif, 0, SEEK_END));
+	return rc;
+}
 
 /*
  * Process tags that are not special cased.

@@ -86,7 +86,6 @@
 
 #include "tif_predict.h"
 #include "zlib.h"
-#include "zutil.h"
 
 #include <stdio.h>
 #include <assert.h>
@@ -1282,10 +1281,10 @@ TIFFInitPixarLog(TIFF* tif, int scheme)
 
 	/* Override SetField so we can handle our private pseudo-tag */
 	_TIFFMergeFieldInfo(tif, pixarlogFieldInfo, N(pixarlogFieldInfo));
-	sp->vgetparent = tif->tif_vgetfield;
-	tif->tif_vgetfield = PixarLogVGetField;   /* hook for codec tags */
-	sp->vsetparent = tif->tif_vsetfield;
-	tif->tif_vsetfield = PixarLogVSetField;   /* hook for codec tags */
+	sp->vgetparent = tif->tif_tagmethods.vgetfield;
+	tif->tif_tagmethods.vgetfield = PixarLogVGetField;   /* hook for codec tags */
+	sp->vsetparent = tif->tif_tagmethods.vsetfield;
+	tif->tif_tagmethods.vsetfield = PixarLogVSetField;   /* hook for codec tags */
 
 	/* Default values for codec-specific fields */
 	sp->quality = Z_DEFAULT_COMPRESSION; /* default comp. level */
