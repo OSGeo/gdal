@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/04/24 19:27:00  warmerda
+ * Added HKV nodata read support (pixel.no_data).
+ *
  * Revision 1.19  2001/12/12 18:15:46  warmerda
  * preliminary update for large raw file support
  *
@@ -607,7 +610,8 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
 GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int		i;
+    int		i, bNoDataSet = FALSE;
+    double      dfNoDataValue = 0.0;
     char        **papszAttrib;
     const char  *pszFilename, *pszValue;
     VSIStatBuf  sStat;
@@ -691,6 +695,13 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
 #else
         bNative = (strstr(pszValue,"*lsbf") != NULL);
 #endif
+    }
+
+    pszValue = CSLFetchNameValue(papszAttrib,"pixel.no_data");
+    if( pszValue != NULL )
+    {
+        bNoDataSet = TRUE;
+        dfNoDataValue = atof(pszValue);
     }
 
     pszValue = CSLFetchNameValue(papszAttrib,"channel.enumeration");
@@ -806,11 +817,17 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
 
     for( int iRawBand=0; iRawBand < nRawBands; iRawBand++ )
     {
-        poDS->SetBand( poDS->GetRasterCount()+1, 
+        HKVRasterBand *poBand;
+
+        poBand = 
             new HKVRasterBand( poDS, poDS->GetRasterCount()+1, poDS->fpBlob,
                                nOffset, nPixelOffset, nLineOffset, 
-                               eType, bNative ) );
+                               eType, bNative );
+        poDS->SetBand( poDS->GetRasterCount()+1, poBand );
         nOffset += GDALGetDataTypeSize( eType ) / 8;
+
+        if( bNoDataSet )
+            poBand->StoreNoDataValue( dfNoDataValue );
     }
 
 /* -------------------------------------------------------------------- */
