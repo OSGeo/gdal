@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/07/23 20:45:50  warmerda
+ * Added JPEG2000 support
+ *
  * Revision 1.21  2004/05/06 14:58:06  warmerda
  * added USE00A and STDIDC parsing and reporting as metadata
  *
@@ -115,6 +118,8 @@ class NITFDataset : public GDALDataset
 
     NITFFile    *psFile;
     NITFImage   *psImage;
+
+    GDALDataset *poJ2KDataset;
 
     int         bGotGeoTransform;
     double      adfGeoTransform[6];
@@ -430,6 +435,7 @@ NITFDataset::NITFDataset()
     psImage = NULL;
     bGotGeoTransform = FALSE;
     pszProjection = CPLStrdup("");
+    poJ2KDataset = NULL;
 
     nGCPCount = 0;
     pasGCPList = NULL;
@@ -454,6 +460,16 @@ NITFDataset::~NITFDataset()
 
     GDALDeinitGCPs( nGCPCount, pasGCPList );
     CPLFree( pasGCPList );
+
+    if( poJ2KDataset != NULL )
+    {
+        GDALClose( (GDALDatasetH) poJ2KDataset );
+        
+        // the bands are really jpeg2000 bands ... remove them 
+        // from the NITF list so they won't get destroyed twice.
+        for( int i = 0; i < nBands && papoBands != NULL; i++ )
+            papoBands[i] = NULL;
+    }
 }
 
 /************************************************************************/
@@ -532,12 +548,54 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = psImage->nRows;
 
 /* -------------------------------------------------------------------- */
+/*      If the image is JPEG2000 (C8) compressed, we will need to       */
+/*      open the image data as a JPEG2000 dataset.                      */
+/* -------------------------------------------------------------------- */
+    int nUsableBands = psImage->nBands;
+
+    if( EQUAL(psImage->szIC,"C8") )
+    {
+        char *pszDSName = CPLStrdup( 
+            CPLSPrintf( "J2K_SUBFILE:%d,%d,%s", 
+                        psFile->pasSegmentInfo[iSegment].nSegmentStart,
+                        psFile->pasSegmentInfo[iSegment].nSegmentSize,
+                        poOpenInfo->pszFilename ) );
+        poDS->poJ2KDataset = (GDALDataset *) 
+            GDALOpen( pszDSName, GA_ReadOnly );
+        if( poDS->poJ2KDataset == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Unable to open JPEG2000 image within NITF file.\n"
+                      "Is the JP2KAK driver available?" );
+            delete poDS;
+            return NULL;
+        }
+
+        if( poDS->poJ2KDataset->GetRasterCount() < nUsableBands )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "JPEG2000 data stream has less useful bands than expected, likely\n"
+                      "because some channels have differing resolutions." );
+            
+            nUsableBands = poDS->poJ2KDataset->GetRasterCount();
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     int		iBand;
 
-    for( iBand = 0; iBand < psImage->nBands; iBand++ )
-        poDS->SetBand( iBand+1, new NITFRasterBand( poDS, iBand+1 ) );
+    for( iBand = 0; iBand < nUsableBands; iBand++ )
+    {
+        if( poDS->poJ2KDataset == NULL )
+            poDS->SetBand( iBand+1, new NITFRasterBand( poDS, iBand+1 ) );
+        else
+        {
+            poDS->SetBand( iBand+1, 
+                           poDS->poJ2KDataset->GetRasterBand(iBand+1) );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Process the projection from the ICORDS.                         */
