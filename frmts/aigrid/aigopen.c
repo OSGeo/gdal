@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/11/11 18:29:03  warmerda
+ * added AIGLLOpen() to support upper case names too
+ *
  * Revision 1.14  2002/11/05 03:19:08  warmerda
  * avoid nodata remapping in gridlib, use GInt32 not GUInt for image data
  *
@@ -131,7 +134,7 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
     pszHDRFilename = (char *) CPLMalloc(strlen(pszCoverName)+40);
     sprintf( pszHDRFilename, "%s/w001001.adf", pszCoverName );
 
-    psInfo->fpGrid = VSIFOpen( pszHDRFilename, "rb" );
+    psInfo->fpGrid = AIGLLOpen( pszHDRFilename, "rb" );
     
     if( psInfo->fpGrid == NULL )
     {
@@ -284,3 +287,37 @@ void AIGClose( AIGInfo_t * psInfo )
     CPLFree( psInfo->pszCoverName );
     CPLFree( psInfo );
 }
+
+/************************************************************************/
+/*                             AIGLLOpen()                              */
+/*                                                                      */
+/*      Low level fopen() replacement that will try provided, and       */
+/*      upper cased versions of file names.                             */
+/************************************************************************/
+
+FILE *AIGLLOpen( const char *pszFilename, const char *pszAccess )
+
+{
+    FILE	*fp;
+
+    fp = VSIFOpen( pszFilename, pszAccess );
+    if( fp == NULL )
+    {
+        char *pszUCFilename = CPLStrdup(pszFilename);
+        int  i;
+
+        for( i = strlen(pszUCFilename)-1; 
+             pszUCFilename[i] != '/' && pszUCFilename[i] != '\\';
+             i-- )
+        {
+            pszUCFilename[i] = toupper(pszUCFilename[i]);
+        }
+        
+        fp = VSIFOpen( pszUCFilename, pszAccess );
+
+        CPLFree( pszUCFilename );
+    }
+
+    return fp;
+}
+

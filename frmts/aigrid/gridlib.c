@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/11/11 18:29:03  warmerda
+ * added AIGLLOpen() to support upper case names too
+ *
  * Revision 1.20  2002/11/05 03:19:08  warmerda
  * avoid nodata remapping in gridlib, use GInt32 not GUInt for image data
  *
@@ -739,7 +742,7 @@ CPLErr AIGReadHeader( const char * pszCoverName, AIGInfo_t * psInfo )
     pszHDRFilename = (char *) CPLMalloc(strlen(pszCoverName)+30);
     sprintf( pszHDRFilename, "%s/hdr.adf", pszCoverName );
 
-    fp = VSIFOpen( pszHDRFilename, "rb" );
+    fp = AIGLLOpen( pszHDRFilename, "rb" );
     
     if( fp == NULL )
     {
@@ -807,7 +810,7 @@ CPLErr AIGReadBlockIndex( const char * pszCoverName, AIGInfo_t * psInfo )
     pszHDRFilename = (char *) CPLMalloc(strlen(pszCoverName)+40);
     sprintf( pszHDRFilename, "%s/w001001x.adf", pszCoverName );
 
-    fp = VSIFOpen( pszHDRFilename, "rb" );
+    fp = AIGLLOpen( pszHDRFilename, "rb" );
     
     if( fp == NULL )
     {
@@ -879,7 +882,7 @@ CPLErr AIGReadBounds( const char * pszCoverName, AIGInfo_t * psInfo )
     pszHDRFilename = (char *) CPLMalloc(strlen(pszCoverName)+40);
     sprintf( pszHDRFilename, "%s/dblbnd.adf", pszCoverName );
 
-    fp = VSIFOpen( pszHDRFilename, "rb" );
+    fp = AIGLLOpen( pszHDRFilename, "rb" );
     
     if( fp == NULL )
     {
@@ -939,7 +942,7 @@ CPLErr AIGReadStatistics( const char * pszCoverName, AIGInfo_t * psInfo )
     pszHDRFilename = (char *) CPLMalloc(strlen(pszCoverName)+40);
     sprintf( pszHDRFilename, "%s/sta.adf", pszCoverName );
 
-    fp = VSIFOpen( pszHDRFilename, "rb" );
+    fp = AIGLLOpen( pszHDRFilename, "rb" );
     
     if( fp == NULL )
     {
