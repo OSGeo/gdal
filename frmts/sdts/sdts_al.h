@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  1999/09/03 19:03:45  warmerda
+ * fixed up help
+ *
  * Revision 1.15  1999/09/03 13:34:45  warmerda
  * added duplicate flag on GetNextRecord
  *
@@ -667,14 +670,25 @@ class SDTSTransfer
 
     SDTSIndexedReader *GetLayerIndexedReader( int );
 
+    /**
+      Fetch the catalog object for this transfer.
+
+      @return pointer to the internally managed SDTS_CATD for the transfer.
+      */
     SDTS_CATD	*GetCATD() { return &oCATD ; }
+
     SDTS_IREF	*GetIREF() { return &oIREF; }
+
+    /**
+      Fetch the external reference object for this transfer.
+
+      @return pointer to the internally managed SDTS_XREF for the transfer.
+      */
     SDTS_XREF   *GetXREF() { return &oXREF; }
 
     SDTSFeature *GetIndexedFeatureRef( SDTSModId *,
                                        SDTSLayerType *peType = NULL);
                 
-
     DDFField *GetAttr( SDTSModId * );
     
   private:
