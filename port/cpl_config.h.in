@@ -17,7 +17,7 @@
 
 #undef HAVE_LIBDL 
 
-#undef HAVE_LIBDBMALLOC
+#undef HAVE_DLFCN_H
 #undef HAVE_DBMALLOC_H
 #undef WORDS_BIGENDIAN
 

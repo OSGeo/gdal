@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/03/02 21:20:00  warmerda
+ * test for dlfcn.h, not -ldl
+ *
  * Revision 1.4  1999/03/02 21:08:11  warmerda
  * autoconf switch
  *
@@ -48,7 +51,7 @@
 /* ==================================================================== */
 /*                  Unix Implementation                                 */
 /* ==================================================================== */
-#if defined(__unix__) && defined(HAVE_LIBDL)
+#if defined(__unix__) && defined(HAVE_DLFCN_H)
 
 #include <dlfcn.h>
 
@@ -91,7 +94,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
     return( pSymbol );
 }
 
-#endif /* def __unix__ && defined(HAVE_LIBDL) */
+#endif /* def __unix__ && defined(HAVE_DLFCN_H) */
 
 /* ==================================================================== */
 /*                 Windows Implementation                               */
