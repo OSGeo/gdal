@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/10/01 14:46:38  warmerda
+ * don't blow assertion trying to get non-existant fields
+ *
  * Revision 1.3  1999/08/28 03:12:06  warmerda
  * Improve debug message for left over reference count message.
  *
@@ -133,7 +136,6 @@ OGRFieldDefn *OGRFeatureDefn::GetFieldDefn( int iField )
 {
     if( iField < 0 || iField >= nFieldCount )
     {
-        CPLAssert( FALSE );
         return NULL;
     }
 
