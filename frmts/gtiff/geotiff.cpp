@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.88  2003/02/15 20:22:44  warmerda
+ * fixed handling of GDALReadTabFile() return value
+ *
  * Revision 1.87  2003/01/28 14:55:55  warmerda
  * fixed serious bug in writing geotransform to geotiff tags!
  *
@@ -2188,9 +2191,12 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
             }
             if( !bGeoTransformValid )
             {
-                bGeoTransformValid = 
+                int bTabFileOK = 
                     GDALReadTabFile( GetDescription(), adfGeoTransform, 
                                      &pszTabWKT, &nGCPCount, &pasGCPList );
+
+                if( bTabFileOK && nGCPCount == 0 )
+                    bGeoTransformValid = TRUE;
             }
         }
 
