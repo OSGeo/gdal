@@ -114,6 +114,7 @@ clean:
         -del *.exe
 	-del *.lib
 	-del *.pdb
+	-del *.ilk
 
 allclean:	clean
 	cd ogrsf_frmts
