@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/12/14 22:59:14  warmerda
+ * added Krovak in ESRI compatible way
+ *
  * Revision 1.22  2002/12/09 18:55:07  warmerda
  * moved DMS stuff to gdal/port
  *
@@ -198,6 +201,7 @@ typedef enum {
 #define SRS_PT_TUNISIA_MINING_GRID                                      \
                                 "Tunisia_Mining_Grid"
 #define SRS_PT_VANDERGRINTEN    "VanDerGrinten"
+#define SRS_PT_KROVAK           "Krovak"
 
                                 
 
@@ -205,6 +209,7 @@ typedef enum {
 #define SRS_PP_SCALE_FACTOR             "scale_factor"
 #define SRS_PP_STANDARD_PARALLEL_1      "standard_parallel_1"
 #define SRS_PP_STANDARD_PARALLEL_2      "standard_parallel_2"
+#define SRS_PP_PSEUDO_STD_PARALLEL_1    "pseudo_standard_parallel_1"
 #define SRS_PP_LONGITUDE_OF_CENTER      "longitude_of_center"
 #define SRS_PP_LATITUDE_OF_CENTER       "latitude_of_center"
 #define SRS_PP_LONGITUDE_OF_ORIGIN      "longitude_of_origin"

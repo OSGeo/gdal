@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2002/12/14 22:59:14  warmerda
+ * added Krovak in ESRI compatible way
+ *
  * Revision 1.42  2002/12/10 04:04:38  warmerda
  * added parent pointer to OGR_SRSNode
  *
@@ -398,6 +401,12 @@ class CPL_DLL OGRSpatialReference
                         double dfAzimuth, double dfRectToSkew,
                         double dfScale,
                         double dfFalseEasting, double dfFalseNorthing );
+
+    /** Krovak Oblique Conic Conformal */
+    OGRErr      SetKrovak( double dfCenterLat, double dfCenterLong,
+                           double dfAzimuth, double dfPseudoStdParallelLat,
+                           double dfScale, 
+                           double dfFalseEasting, double dfFalseNorthing );
 
     /** Lambert Azimuthal Equal-Area */
     OGRErr      SetLAEA( double dfCenterLat, double dfCenterLong,

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2002/12/14 22:59:14  warmerda
+ * added Krovak in ESRI compatible way
+ *
  * Revision 1.60  2002/12/10 04:06:00  warmerda
  * updated well known GEOGCS descriptions
  *
@@ -2187,6 +2190,30 @@ OGRErr OGRSpatialReference::SetHOM( double dfCenterLat, double dfCenterLong,
     SetProjParm( SRS_PP_LONGITUDE_OF_CENTER, dfCenterLong );
     SetProjParm( SRS_PP_AZIMUTH, dfAzimuth );
     SetProjParm( SRS_PP_RECTIFIED_GRID_ANGLE, dfRectToSkew );
+    SetProjParm( SRS_PP_SCALE_FACTOR, dfScale );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                             SetKrovak()                              */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetKrovak( double dfCenterLat, double dfCenterLong,
+                                       double dfAzimuth, 
+                                       double dfPseudoStdParallel1,
+                                       double dfScale,
+                                       double dfFalseEasting,
+                                       double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_KROVAK );
+    SetProjParm( SRS_PP_LATITUDE_OF_CENTER, dfCenterLat );
+    SetProjParm( SRS_PP_LONGITUDE_OF_CENTER, dfCenterLong );
+    SetProjParm( SRS_PP_AZIMUTH, dfAzimuth );
+    SetProjParm( SRS_PP_PSEUDO_STD_PARALLEL_1, dfPseudoStdParallel1 );
     SetProjParm( SRS_PP_SCALE_FACTOR, dfScale );
     SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
     SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
