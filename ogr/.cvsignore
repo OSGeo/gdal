@@ -10,4 +10,7 @@ geometryidl_p.c
 spatialreferenceidl.h
 spatialreferenceidl_i.c
 spatialreferenceidl_p.c
+*.pdb
+*.ilk
+*.lib
 
