@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/11/17 17:25:37  warmerda
+ * added improved utm support
+ *
  * Revision 1.1  2000/11/09 06:22:15  warmerda
  * New
  *
@@ -184,8 +187,24 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
     
     else if( EQUAL(pszProj,"utm") )
     {
-        // I am not sure how southern hemisphere is marked.
-        SetUTM( (int) OSR_GDV( papszPrj, "zone", 0.0 ) );
+        if( (int) OSR_GDV( papszPrj, "zone", 0.0 ) != 0 )
+        {
+            double	dfYShift = OSR_GDV( papszPrj, "Yshift", 0.0 );
+
+            SetUTM( (int) OSR_GDV( papszPrj, "zone", 0.0 ),
+                    dfYShift >= 0.0 );
+        }
+        else
+        {
+            double	dfCentralMeridian, dfRefLat;
+            int		nZone;
+
+            dfCentralMeridian = OSR_GDV( papszPrj, "PARAM_1", 0.0 );
+            dfRefLat = OSR_GDV( papszPrj, "PARAM_2", 0.0 );
+
+            nZone = (int) ((dfCentralMeridian+183) / 6.0 + 0.0000001);
+            SetUTM( nZone, dfRefLat >= 0.0 );
+        }
     }
 
     else if( EQUAL(pszProj,"ALBERS") )
