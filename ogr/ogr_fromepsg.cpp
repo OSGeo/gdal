@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2004/09/10 21:02:41  fwarmerdam
+ * added note about 9814
+ *
  * Revision 1.37  2004/05/26 19:53:17  warmerda
  * Fixed poor NULL checking in auto-identify.
  *
@@ -1314,7 +1317,6 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
 
       case 9812:
       case 9813:
-      case 9814:
         poSRS->SetHOM( OGR_FP( ProjCenterLat ), OGR_FP( ProjCenterLong ),
                        OGR_FP( Azimuth ), 
                        OGR_FP( AngleRectifiedToSkewedGrid ),
@@ -1324,6 +1326,14 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
         poNode = poSRS->GetAttrNode( "PROJECTION" )->GetChild( 0 );
         if( nProjMethod == 9813 )
             poNode->SetValue( SRS_PT_LABORDE_OBLIQUE_MERCATOR );
+        break;
+
+      case 9814:
+        /* NOTE: This is no longer used!  Swiss Oblique Mercator gets
+        ** implemented using 9815 instead.  
+        */
+        poSRS->SetSOC( OGR_FP( ProjCenterLat ), OGR_FP( ProjCenterLong ),
+                       OGR_FP( FalseEasting ), OGR_FP( FalseNorthing ) );
         break;
 
       case 9815:
