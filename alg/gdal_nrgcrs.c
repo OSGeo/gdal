@@ -12,6 +12,9 @@
  ***************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/09/16 15:54:32  fwarmerdam
+ * added stub serialization support
+ *
  * Revision 1.1  2002/12/11 18:21:18  dron
  * New
  *
@@ -20,6 +23,7 @@
 
 #include "gdal_alg.h"
 #include "cpl_conv.h"
+#include "cpl_minixml.h"
 
 extern int TwoDPolyFit( double *, double *, int, int, double *, double *, double * );
 extern double TwoDPolyEval( double *, int, double, double );
@@ -257,3 +261,18 @@ int GDALGCPTransform( void *pTransformArg, int bDstToSrc,
     return TRUE;
 }
 
+CPLXMLNode *GDALSerializeGCPTransformer( void *pTransformArg )
+
+{
+    CPLError( CE_Failure, CPLE_AppDefined, 
+              "serialization not supported for this type of gcp transformer.");
+    return NULL;
+}
+
+void *GDALDeserializeGCPTransformer( CPLXMLNode *psTree )
+
+{
+    CPLError( CE_Failure, CPLE_AppDefined, 
+              "deserialization not supported for this type of gcp transformer.");
+    return NULL;
+}
