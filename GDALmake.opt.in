@@ -199,3 +199,8 @@ O_OBJ =	$(foreach file,$(OBJ),../o/$(file))
 ../o/%.o:	%.o
 	cp $< $@
 
+%-target:
+	$(MAKE) -C $*
+
+%-clean:
+	$(MAKE) -C $* clean
