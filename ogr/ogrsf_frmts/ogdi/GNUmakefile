@@ -12,4 +12,4 @@ default:	$(O_OBJ)
 $(OBJ):		ogrogdi.h
 
 clean:
-	rm -f *.o
+	rm -f *.o $(O_OBJ)

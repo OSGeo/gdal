@@ -18,7 +18,7 @@ CPPFLAGS +=	-I.. -I../.. -I$(SDTSDIR) -I$(ISODIR)
 default:	$(O_OBJ)
 
 clean:
-	rm -f *.o *-marker
+	rm -f *.o *-marker $(O_OBJ)
 
 install-libs:	isolib-marker sdtslib-marker
 	@echo Done adding ISO8211 and SDTS libraries into $(FRMTSLIB)

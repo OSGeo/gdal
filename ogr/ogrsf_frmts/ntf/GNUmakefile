@@ -15,7 +15,7 @@ LIBS	:=	$(GDAL_LIB) $(LIBS)
 default:	$(O_OBJ)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(O_OBJ)
 
 ntfdump:	ntfdump.o $(OBJ)
 	$(CXX) $(LNK_FLAGS) ntfdump.o $(LIBS) -o ntfdump

@@ -37,7 +37,7 @@ LIBS	:=	$(GDAL_LIB) $(LIBS)
 default:	$(O_OBJ)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(O_OBJ)
 
 tigerinfo:	tigerinfo.o $(OBJ)
 	$(CXX) $(LNK_FLAGS) tigerinfo.o $(LIBS) -o tigerinfo
