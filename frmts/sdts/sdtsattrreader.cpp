@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  SDTS Translator
- * Purpose:  Implementation of SDTSAttrReader and SDTSAttrRecord classes.
+ * Purpose:  Implementation of SDTSAttrReader class.
  * Author:   Frank Warmerdam, warmerda@home.com
  *
  ******************************************************************************
@@ -28,46 +28,15 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/07 13:45:01  warmerda
+ * major upgrade to use iso8211lib
+ *
  * Revision 1.2  1999/03/23 15:59:40  warmerda
  * implemented and working
  *
  */
 
 #include "sdts_al.h"
-
-#include <iostream>
-#include <fstream>
-#include "io/sio_Reader.h"
-#include "io/sio_8211Converter.h"
-
-/************************************************************************/
-/* ==================================================================== */
-/*			      SDTSAttrRecord				*/
-/*									*/
-/*	Note that virtually all the work on objects of this class	*/
-/*	is done by the SDTSAttrReader.					*/
-/* ==================================================================== */
-/************************************************************************/
-
-/************************************************************************/
-/*                           SDTSAttrRecord()                           */
-/************************************************************************/
-
-SDTSAttrRecord::SDTSAttrRecord()
-
-{
-    poATTP = NULL;
-}
-
-/************************************************************************/
-/*                          ~STDSAttrRecord()                           */
-/************************************************************************/
-
-SDTSAttrRecord::~SDTSAttrRecord()
-
-{
-}
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -84,8 +53,6 @@ SDTSAttrRecord::~SDTSAttrRecord()
 SDTSAttrReader::SDTSAttrReader( SDTS_IREF * poIREFIn )
 
 {
-    po8211Reader = NULL;
-    poIter = NULL;
     poIREF = poIREFIn;
 }
 
@@ -105,20 +72,7 @@ SDTSAttrReader::~SDTSAttrReader()
 void SDTSAttrReader::Close()
 
 {
-    if( poIter != NULL )
-    {
-        delete poIter;
-        poIter = NULL;
-    }
-
-    if( po8211Reader != NULL )
-    {
-        delete po8211Reader;
-        po8211Reader = NULL;
-    }
-
-    if( ifs )
-        ifs.close();
+    oDDFModule.Close();
 }
 
 /************************************************************************/
@@ -128,92 +82,75 @@ void SDTSAttrReader::Close()
 /*      data records.                                                   */
 /************************************************************************/
 
-int SDTSAttrReader::Open( string osFilename )
+int SDTSAttrReader::Open( const char *pszFilename )
 
 {
-/* -------------------------------------------------------------------- */
-/*      Open the file.                                                  */
-/* -------------------------------------------------------------------- */
-    ifs.open( osFilename.c_str() );
-    if( !ifs )
-    {
-        printf( "Unable to open `%s'\n", osFilename.c_str() );
-        return FALSE;
-    }
-    
-/* -------------------------------------------------------------------- */
-/*      Establish reader access to the file				*/
-/* -------------------------------------------------------------------- */
-    po8211Reader = new sio_8211Reader( ifs, NULL );
-    poIter = new sio_8211ForwardIterator( *po8211Reader );
-    
-    if( !(*poIter) )
-        return FALSE;
-    else
-        return TRUE;
+    return( oDDFModule.Open( pszFilename ) );
 }
 
 /************************************************************************/
 /*                           GetNextRecord()                            */
-/*                                                                      */
-/*      Fetch the record as an STDSAttrRecord.                          */
 /************************************************************************/
 
-SDTSAttrRecord * SDTSAttrReader::GetNextRecord()
+/**
+ * Fetch the next attribute record.
+ *
+ * @param poModId Object to be updated with the record id of the record read.
+ * Pass NULL (the default) if the record id isn't required.
+ * @param ppoRecord Used to return a pointer to the whole DDFRecord if not
+ * NULL.  The record pointer can be used to DDFRecord::Clone() a persistent
+ * copy of the record.
+ *
+ * @return The DDFField for the ATTP field within the ISO8211 record.  This
+ * field contains the <i>user</i> attributes for the attribute record.  Use
+ * the normal DDFField methods to query the subfield values.  The list of
+ * available subfields can be fetched from the DDFFieldDefn.
+ */
+
+DDFField *SDTSAttrReader::GetNextRecord( SDTSModId * poModId,
+                                         DDFRecord ** ppoRecord )
 
 {
-    SDTSAttrRecord	*poSR;
+    DDFRecord	*poRecord;
+    DDFField	*poATTP;
     
 /* -------------------------------------------------------------------- */
-/*      Are we initialized?                                             */
+/*      Fetch a record.                                                 */
 /* -------------------------------------------------------------------- */
-    if( poIter == NULL )
+    if( ppoRecord != NULL )
+        *ppoRecord = NULL;
+    
+    if( oDDFModule.GetFP() == NULL )
+        return NULL;
+
+    poRecord = oDDFModule.ReadRecord();
+
+    if( poRecord == NULL )
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Is the record iterator at the end of the file?                  */
+/*      Find the ATTP field.                                            */
 /* -------------------------------------------------------------------- */
-    if( ! *poIter )
+    poATTP = poRecord->FindField( "ATTP", 0 );
+    if( poATTP == NULL )
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Read records till we find one with an ATTP section.             */
-/*      Normally every record will have one.                            */
+/*      Update the module ID if required.                               */
 /* -------------------------------------------------------------------- */
-    poSR = new SDTSAttrRecord;
-
-    while( poSR->poATTP == NULL && *poIter )
+    if( poModId != NULL )
     {
-        sc_Record::const_iterator	oFieldIter;
+        DDFField	*poATPR = poRecord->FindField( "ATPR" );
 
-        poIter->get( poSR->oRecord );
-        ++(*poIter);
-
-        for( oFieldIter = poSR->oRecord.begin();
-             oFieldIter != poSR->oRecord.end();
-             ++oFieldIter )
-        {
-            const sc_Field	&oField = *oFieldIter;
-
-            if( oField.getMnemonic() == "ATTP" )
-            {
-                poSR->poATTP = &oField;
-            }
-            else if( oField.getMnemonic() == "ATPR" )
-            {
-                poSR->oRecordId.Set( &oField );
-            }
-        }
+        if( poATPR != NULL )
+            poModId->Set( poATPR );
     }
 
 /* -------------------------------------------------------------------- */
-/*      Return the result, or NULL if we never found a valid record.    */
+/*      return proper answer.                                           */
 /* -------------------------------------------------------------------- */
-    if( poSR->poATTP == NULL )
-    {
-        delete poSR;
-        return NULL;
-    }
-    else
-        return poSR;
+    if( ppoRecord != NULL )
+        *ppoRecord = poRecord;
+
+    return poATTP;
 }

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/07 13:45:01  warmerda
+ * major upgrade to use iso8211lib
+ *
  * Revision 1.2  1999/03/23 15:58:29  warmerda
  * added attribute support, dump catalog
  *
@@ -57,7 +60,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     if( !oCATD.Read( pszCATDFilename ) )
     {
-        cerr << "Failed to read CATD file\n";
+        printf( "Failed to read CATD file\n" );
         exit( 100 );
     }
 
@@ -65,24 +68,25 @@ int main( int nArgc, char ** papszArgv )
     for( i = 0; i < oCATD.getEntryCount(); i++ )
     {
         printf( "  %s: `%s'\n",
-                oCATD.getEntryModule(i).c_str(),
-                oCATD.getEntryType(i).c_str() );
+                oCATD.getEntryModule(i),
+                oCATD.getEntryType(i) );
     }
     printf( "\n" );
     
 /* -------------------------------------------------------------------- */
 /*      Dump the internal reference information.                        */
 /* -------------------------------------------------------------------- */
-    cout << "IREF filename = " << oCATD.getModuleFilePath( "IREF" ) << "\n";
+    printf( "IREF filename = %s\n", oCATD.getModuleFilePath( "IREF" ) );
     if( oIREF.Read( oCATD.getModuleFilePath( "IREF" ) ) )
     {
-        cout << "X Label = " << oIREF.osXAxisName << "\n";
-        cout << "X Scale = " << oIREF.dfXScale << "\n";
+        printf( "X Label = %s\n", oIREF.pszXAxisName );
+        printf( "X Scale = %f\n", oIREF.dfXScale );
     }
-
+    
 /* -------------------------------------------------------------------- */
 /*      Dump the first line file.                                       */
 /* -------------------------------------------------------------------- */
+#ifdef notdef    
     SDTSLineReader oLineReader( &oIREF );
     
     if( oLineReader.Open( oCATD.getModuleFilePath( "LE01" ) ) )
@@ -97,6 +101,7 @@ int main( int nArgc, char ** papszArgv )
         
         oLineReader.Close();
     }
+#endif
     
 /* -------------------------------------------------------------------- */
 /*	Dump all modules of type "Primary Attribute" in the catalog.	*/
@@ -105,30 +110,28 @@ int main( int nArgc, char ** papszArgv )
 
     for( i = 0; i < oCATD.getEntryCount(); i++ )
     {
-        if( oCATD.getEntryType(i) == "Attribute Primary         " )
+        if( EQUAL(oCATD.getEntryType(i),"Attribute Primary         ") )
         {
             if( oAttrReader.Open(
                 	oCATD.getModuleFilePath( oCATD.getEntryModule(i)) ) )
             {
-                SDTSAttrRecord	*poRecord;
-
-                while( (poRecord = oAttrReader.GetNextRecord()) != NULL )
+                DDFField	*poATTP;
+                SDTSModId	oModId;
+                
+                while( (poATTP = oAttrReader.GetNextRecord(&oModId)) != NULL )
                 {
                     fprintf( stdout,
                              "\nRecord %s:%ld\n",
-                             poRecord->oRecordId.szModule,
-                             poRecord->oRecordId.nRecord );
-                             
-                    cout << *(poRecord->GetSubfieldList());
+                             oModId.szModule,
+                             oModId.nRecord );
 
-                    delete poRecord;
+                    poATTP->Dump( stdout );
                 }
-
-                oAttrReader.Close();
             }
+
+            oAttrReader.Close();
         }
     }
-    
 }
 
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/07 13:45:01  warmerda
+ * major upgrade to use iso8211lib
+ *
  * Revision 1.1  1999/03/23 13:56:13  warmerda
  * New
  *
@@ -56,7 +59,7 @@ sio_8211Converter_BFP64 converter_bfp64;
 int main( int nArgc, char ** papszArgv )
 
 {
-    converter_dictionary converters; // hints for reader for binary data
+    sio_8211_converter_dictionary converters; // hints for reader for binary data
     
     converters["X"] = &converter_bi32; // set up default converter hints
     converters["Y"] = &converter_bi32; // for these mnemonics

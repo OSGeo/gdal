@@ -28,19 +28,15 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/07 13:45:01  warmerda
+ * major upgrade to use iso8211lib
+ *
  * Revision 1.1  1999/03/23 13:56:13  warmerda
  * New
  *
  */
 
 #include "sdts_al.h"
-
-#include <iostream>
-#include <fstream>
-#include "io/sio_Reader.h"
-#include "io/sio_8211Converter.h"
-
-#include "container/sc_Record.h"
 
 /************************************************************************/
 /*                             SDTS_IREF()                              */
@@ -51,6 +47,10 @@ SDTS_IREF::SDTS_IREF()
 {
     dfXScale = 1.0;
     dfYScale = 1.0;
+
+    pszXAxisName = CPLStrdup("");
+    pszYAxisName = CPLStrdup("");
+    pszCoordinateFormat = CPLStrdup("");
 }
 
 /************************************************************************/
@@ -59,6 +59,9 @@ SDTS_IREF::SDTS_IREF()
 
 SDTS_IREF::~SDTS_IREF()
 {
+    CPLFree( pszXAxisName );
+    CPLFree( pszYAxisName );
+    CPLFree( pszCoordinateFormat );
 }
 
 /************************************************************************/
@@ -67,72 +70,50 @@ SDTS_IREF::~SDTS_IREF()
 /*      Read the named file to initialize this structure.               */
 /************************************************************************/
 
-int SDTS_IREF::Read( string osFilename )
+int SDTS_IREF::Read( const char * pszFilename )
 
 {
-    sc_Subfield	*poSubfield;
-    
-/* -------------------------------------------------------------------- */
-/*      Open the file.                                                  */
-/* -------------------------------------------------------------------- */
-    ifstream	ifs;
-    
-    ifs.open( osFilename.c_str() );
-    if( !ifs )
-    {
-        printf( "Unable to open `%s'\n", osFilename.c_str() );
-        return FALSE;
-    }
-    
-/* -------------------------------------------------------------------- */
-/*      Establish reader access to the file, and read the first         */
-/*      (only) record in the IREF file.                                 */
-/* -------------------------------------------------------------------- */
-    sio_8211Reader	oReader( ifs, NULL );
-    sio_8211ForwardIterator oIter( oReader );
-    scal_Record		oRecord;
-    
-    if( !oIter )
-        return FALSE;
-    
-    oIter.get( oRecord );
+    DDFModule	oIREFFile;
+    DDFRecord	*poRecord;
 
 /* -------------------------------------------------------------------- */
-/*      Verify that we have a proper IREF record.                       */
+/*      Open the file, and read the header.                             */
 /* -------------------------------------------------------------------- */
-    if( oRecord.getSubfield( "IREF", 0, "MODN", 0 ) == NULL )
+    if( !oIREFFile.Open( pszFilename ) )
+        return FALSE;
+    
+/* -------------------------------------------------------------------- */
+/*      Read the first record, and verify that this is an IREF record.  */
+/* -------------------------------------------------------------------- */
+    poRecord = oIREFFile.ReadRecord();
+    if( poRecord == NULL )
+        return FALSE;
+
+    if( poRecord->GetStringSubfield( "IREF", 0, "MODN", 0 ) == NULL )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Get the labels.                                                 */
 /* -------------------------------------------------------------------- */
-    poSubfield = oRecord.getSubfield( "IREF", 0, "XLBL", 0 );
-    if( poSubfield != NULL )
-        poSubfield->getA( osXAxisName );
-
-    poSubfield = oRecord.getSubfield( "IREF", 0, "YLBL", 0 );
-    if( poSubfield != NULL )
-        poSubfield->getA( osYAxisName );
+    CPLFree( pszXAxisName );
+    pszXAxisName = CPLStrdup( poRecord->GetStringSubfield( "IREF", 0,
+                                                           "XLBL", 0 ) );
+    CPLFree( pszYAxisName );
+    pszYAxisName = CPLStrdup( poRecord->GetStringSubfield( "IREF", 0,
+                                                           "YLBL", 0 ) );
     
 /* -------------------------------------------------------------------- */
 /*	Get the coordinate encoding.					*/
 /* -------------------------------------------------------------------- */
-    poSubfield = oRecord.getSubfield( "IREF", 0, "HFMT", 0 );
-    if( poSubfield != NULL )
-        poSubfield->getA( osCoordinateFormat );
+    CPLFree( pszCoordinateFormat );
+    pszCoordinateFormat =
+        CPLStrdup( poRecord->GetStringSubfield( "IREF", 0, "HFMT", 0 ) );
 
 /* -------------------------------------------------------------------- */
 /*      Get the scaling factors.                                        */
 /* -------------------------------------------------------------------- */
-    poSubfield = oRecord.getSubfield( "IREF", 0, "SFAX", 0 );
-    if( poSubfield != NULL )
-        poSubfield->getR( dfXScale );
-
-    poSubfield = oRecord.getSubfield( "IREF", 0, "SFAY", 0 );
-    if( poSubfield != NULL )
-        poSubfield->getR( dfYScale );
+    dfXScale = poRecord->GetFloatSubfield( "IREF", 0, "SFAX", 0 );
+    dfYScale = poRecord->GetFloatSubfield( "IREF", 0, "SFAY", 0 );
 
     return TRUE;
 }
-
-

@@ -1,23 +1,21 @@
 
-SHPDIR		=	/home/warmerda/shapelib-1.2.4
-#SDTSHOME	=	/home/warmerda/pkg/libsdts++-0.5.3
-SDTSHOME	=	/home/warmerda/pkg/sdts++-1.0preB
+SHPDIR		=	/home/warmerda/shapelib-1.2.5
+ISO8211DIR	=	../iso8211
 GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	sdtsiref.o sdtscatd.o sdtslinereader.o sdtsattrreader.o \
-		sdtspointreader.o sdtslib.o
+OBJ	=	sdtsiref.o sdtscatd.o sdtslinereader.o sdtslib.o \
+		sdtspointreader.o sdtsattrreader.o
 
-ALL_C_FLAGS	=	-I$(SDTSHOME) -I$(SDTSHOME)/sdts++ \
-			$(GDAL_INCLUDE) $(CFLAGS)
-LIBS	:=	$(SDTSHOME)/sdts++/libsdts++.a $(LIBS)
+ALL_C_FLAGS	=	-I$(ISO8211DIR) $(GDAL_INCLUDE) $(CFLAGS)
+LIBS	:=	$(ISO8211DIR)/libiso8211.a $(LIBS)
 
 
 
 default:	$(OBJ)
 
-all:	8211dump sdts2ascii sdts2shp
+all:	sdts2ascii sdts2shp
 
 clean:
 	rm -f *.o sdts2ascii 8211dump
@@ -38,9 +36,6 @@ sdts2shp:	sdts2shp.cpp $(OBJ)
 	$(CXX) $(ALL_C_FLAGS) -I$(SHPDIR) sdts2shp.cpp $(OBJ) \
 		$(SHPDIR)/shpopen.o $(SHPDIR)/dbfopen.o \
 		$(GDAL_ROOT)/port/*.o $(LIBS) -o sdts2shp
-
-8211dump:	8211dump.o
-	$(CXX) 8211dump.o $(GDAL_ROOT)/port/*.o $(LIBS) -o 8211dump
 
 install-obj:	$(OBJ)
 	cp $(OBJ) ../o

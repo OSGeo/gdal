@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/07 13:45:01  warmerda
+ * major upgrade to use iso8211lib
+ *
  * Revision 1.3  1999/04/21 04:38:32  warmerda
  * Added new classes including SDTSPoint
  *
@@ -43,9 +46,7 @@
 #define STDS_AL_H_INCLUDED
 
 #include "cpl_conv.h"
-#include "container/sc_Record.h"
-#include <iostream>
-#include <fstream>
+#include "iso8211.h"
 
 /* -------------------------------------------------------------------- */
 /*      scal_Record                                                     */
@@ -55,15 +56,9 @@
 /* -------------------------------------------------------------------- */
 class SDTS_IREF;
 
-class scal_Record : public sc_Record
-{
-  public:
-    sc_Subfield		*getSubfield( const string, int, const string, int );
-};
+#define SDTS_SIZEOF_SADR	8
 
-sc_Subfield * SDTSGetSubfieldOfField( const sc_Field *, string, int );
-
-int SDTSGetSADR( SDTS_IREF *, const sc_Field *, double *, double *, double * );
+int SDTSGetSADR( SDTS_IREF *, DDFField *, int, double *, double *, double * );
 
 /************************************************************************/
 /*                              SDTS_IREF                               */
@@ -76,15 +71,15 @@ class SDTS_IREF
     		SDTS_IREF();
 		~SDTS_IREF();
 
-    int         Read( const string osFilename );
+    int         Read( const char *pszFilename );
 
-    string	osXAxisName;			/* XLBL */
-    string	osYAxisName;			/* YLBL */
+    char	*pszXAxisName;			/* XLBL */
+    char  	*pszYAxisName;			/* YLBL */
 
     double	dfXScale;			/* SFAX */
     double      dfYScale;			/* SFAY */
 
-    string	osCoordinateFormat;		/* HFMT */
+    char  	*pszCoordinateFormat;		/* HFMT */
                 
 };
 
@@ -97,7 +92,7 @@ class SDTS_CATDEntry;
 
 class SDTS_CATD
 {
-    string	osPrefixPath;
+    char	*pszPrefixPath;
 
     int		nEntries;
     SDTS_CATDEntry **papoEntries;
@@ -106,13 +101,13 @@ class SDTS_CATD
     		SDTS_CATD();
                 ~SDTS_CATD();
 
-    int         Read( const string osFilename );
+    int         Read( const char * pszFilename );
 
-    string	getModuleFilePath( const string &osModule );
+    const char  *getModuleFilePath( const char * pszModule );
 
     int		getEntryCount() { return nEntries; }
-    const string &getEntryModule(int);
-    const string &getEntryType(int);
+    const char * getEntryModule(int);
+    const char * getEntryType(int);
 };
 
 /************************************************************************/
@@ -122,14 +117,10 @@ class SDTS_CATD
 /************************************************************************/
 
 class SDTSRawLine;
-class sio_8211Reader;
-class sio_8211ForwardIterator;
 
 class SDTSLineReader
 {
-    ifstream	ifs;
-    sio_8211Reader	*po8211Reader;
-    sio_8211ForwardIterator *poIter;
+    DDFModule   oDDFModule;
 
     SDTS_IREF	*poIREF;
     
@@ -137,7 +128,7 @@ class SDTSLineReader
     		SDTSLineReader( SDTS_IREF * );
                 ~SDTSLineReader();
 
-    int         Open( const string );
+    int         Open( const char * );
     SDTSRawLine *GetNextLine( void );
     void	Close();
 };
@@ -154,7 +145,7 @@ class SDTSModId
   public:
     		SDTSModId() { szModule[0] = '\0'; nRecord = -1; }
 
-    int		Set( const sc_Field * );
+    int		Set( DDFField * );
     
     char	szModule[8];
     long	nRecord;
@@ -172,7 +163,7 @@ class SDTSRawLine
     		SDTSRawLine();
                 ~SDTSRawLine();
 
-    int         Read( SDTS_IREF *, scal_Record * );
+    int         Read( SDTS_IREF *, DDFRecord * );
 
     SDTSModId	oLine;			/* LINE field */
                 
@@ -204,9 +195,7 @@ class SDTSAttrRecord;
 
 class SDTSAttrReader
 {
-    ifstream	ifs;
-    sio_8211Reader	*po8211Reader;
-    sio_8211ForwardIterator *poIter;
+    DDFModule	oDDFModule;
 
     SDTS_IREF	*poIREF;
     
@@ -214,35 +203,10 @@ class SDTSAttrReader
     		SDTSAttrReader( SDTS_IREF * );
                 ~SDTSAttrReader();
 
-    int         Open( const string );
-    SDTSAttrRecord *GetNextRecord( void );
+    int         Open( const char * );
+    DDFField	*GetNextRecord( SDTSModId * = NULL,
+                                DDFRecord ** = NULL );
     void	Close();
-};
-
-/************************************************************************/
-/*                            SDTSAttrRecord                            */
-/*                                                                      */
-/*      This class represents one record from a primary attribute       */
-/*      file.  It encapsulates a sc_Record, and returns a handle to     */
-/*      an sc_Field which the caller uses normal iterators on to        */
-/*      find all the sc_Subfields.  Normal methods are used to query    */
-/*      these.                                                          */
-/************************************************************************/
-
-class SDTSAttrRecord
-{
-    scal_Record		oRecord;
-    const sc_Field	*poATTP;
-
-    friend class SDTSAttrReader;
-    
-  public:
-    			SDTSAttrRecord();
-                        ~SDTSAttrRecord();
-
-    SDTSModId		oRecordId;
-    
-    const sc_Field	*GetSubfieldList() { return poATTP; }
 };
 
 /************************************************************************/
@@ -255,17 +219,14 @@ class SDTSRawPoint;
 
 class SDTSPointReader
 {
-    ifstream	ifs;
-    sio_8211Reader	*po8211Reader;
-    sio_8211ForwardIterator *poIter;
-
+    DDFModule	oDDFModule;
     SDTS_IREF	*poIREF;
     
   public:
     		SDTSPointReader( SDTS_IREF * );
                 ~SDTSPointReader();
 
-    int         Open( const string );
+    int         Open( const char * );
     SDTSRawPoint *GetNextPoint( void );
     void	Close();
 };
@@ -282,7 +243,7 @@ class SDTSRawPoint
     		SDTSRawPoint();
                 ~SDTSRawPoint();
 
-    int         Read( SDTS_IREF *, scal_Record * );
+    int         Read( SDTS_IREF *, DDFRecord * );
 
     SDTSModId	oPoint;			/* PNTS field */
                 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/07 13:45:01  warmerda
+ * major upgrade to use iso8211lib
+ *
  * Revision 1.3  1999/04/21 04:39:17  warmerda
  * converter related fixes.
  *
@@ -40,15 +43,6 @@
  */
 
 #include "sdts_al.h"
-
-#include <iostream>
-#include <fstream>
-#include "io/sio_Reader.h"
-#include "io/sio_8211Converter.h"
-
-#include "container/sc_Record.h"
-
-static sio_8211Converter_BI32	converter_bi32;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -79,8 +73,6 @@ SDTSRawLine::~SDTSRawLine()
 
 {
     CPLFree( padfX );
-    CPLFree( padfY );
-    CPLFree( padfZ );
 }
 
 /************************************************************************/
@@ -91,60 +83,57 @@ SDTSRawLine::~SDTSRawLine()
 /*      the work in this whole file.                                    */
 /************************************************************************/
 
-int SDTSRawLine::Read( SDTS_IREF * poIREF, scal_Record * poRecord )
+int SDTSRawLine::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
 
 {
-
+    CPLAssert( poRecord->GetStringSubfield( "LINE", 0, "MODN", 0 ) != NULL );
+    
 /* ==================================================================== */
 /*      Loop over fields in this record, looking for those we           */
 /*      recognise, and need.  I don't use the getSubfield()             */
 /*      interface on the record in order to retain some slight bit      */
 /*      of efficiency.                                                  */
 /* ==================================================================== */
-    sc_Record::const_iterator	oFieldIter;
-
-    for( oFieldIter = poRecord->begin();
-         oFieldIter != poRecord->end();
-         ++oFieldIter )
+    for( int iField = 0; iField < poRecord->GetFieldCount(); iField++ )
     {
-        const sc_Field	&oField = *oFieldIter;
-        string		osTemp;
+        DDFField	*poField = poRecord->GetField( iField );
+        const char	*pszFieldName;
 
-        if( oField.getMnemonic() == "LINE" )
-            oLine.Set( &oField );
+        CPLAssert( poField != NULL );
+        pszFieldName = poField->GetFieldDefn()->GetName();
 
-        else if( oField.getMnemonic() == "ATID" )
+        if( EQUAL(pszFieldName,"LINE") )
+            oLine.Set( poField );
+
+        else if( EQUAL(pszFieldName,"ATID") )
         {
             if( nAttributes < MAX_RAWLINE_ATID )
             {
-                aoATID[nAttributes].Set( &oField );
+                aoATID[nAttributes].Set( poField );
                 nAttributes++;
             }
         }
-        else if( oField.getMnemonic() == "PIDL" )
-            oLeftPoly.Set( &oField );
+        else if( EQUAL(pszFieldName,"PIDL") )
+            oLeftPoly.Set( poField );
         
-        else if( oField.getMnemonic() == "PIDR" )
-            oRightPoly.Set( &oField );
+        else if( EQUAL(pszFieldName,"PIDR") )
+            oRightPoly.Set( poField );
         
-        else if( oField.getMnemonic() == "SNID" )
-            oStartNode.Set( &oField );
+        else if( EQUAL(pszFieldName,"SNID") )
+            oStartNode.Set( poField );
         
-        else if( oField.getMnemonic() == "ENID" )
-            oEndNode.Set( &oField );
+        else if( EQUAL(pszFieldName,"ENID") )
+            oEndNode.Set( poField );
 
-        else if( oField.getMnemonic() == "SADR" )
+        else if( EQUAL(pszFieldName,"SADR") )
         {
-            /* notdef: this is _really inefficient_! */
-            nVertices++;
-            padfX = (double *) CPLRealloc(padfX, sizeof(double)*nVertices);
-            padfY = (double *) CPLRealloc(padfY, sizeof(double)*nVertices);
-            padfZ = (double *) CPLRealloc(padfZ, sizeof(double)*nVertices);
+            nVertices = poField->GetDataSize() / SDTS_SIZEOF_SADR;
 
-            SDTSGetSADR( poIREF, &oField,
-                         padfX + nVertices - 1,
-                         padfY + nVertices - 1,
-                         padfZ + nVertices - 1 );
+            padfX = (double *) CPLRealloc(padfX, sizeof(double)*nVertices*3);
+            padfY = padfX + nVertices;
+            padfZ = padfX + 2*nVertices;
+
+            SDTSGetSADR( poIREF, poField, nVertices, padfX, padfY, padfZ );
         }
     }
 
@@ -201,8 +190,6 @@ void SDTSRawLine::Dump( FILE * fp )
 SDTSLineReader::SDTSLineReader( SDTS_IREF * poIREFIn )
 
 {
-    po8211Reader = NULL;
-    poIter = NULL;
     poIREF = poIREFIn;
 }
 
@@ -222,22 +209,8 @@ SDTSLineReader::~SDTSLineReader()
 void SDTSLineReader::Close()
 
 {
-    if( poIter != NULL )
-    {
-        delete poIter;
-        poIter = NULL;
-    }
-
-    if( po8211Reader != NULL )
-    {
-        delete po8211Reader;
-        po8211Reader = NULL;
-    }
-
-    if( ifs )
-        ifs.close();
+    oDDFModule.Close();
 }
-
 
 /************************************************************************/
 /*                                Open()                                */
@@ -246,34 +219,10 @@ void SDTSLineReader::Close()
 /*      data records.                                                   */
 /************************************************************************/
 
-int SDTSLineReader::Open( string osFilename )
+int SDTSLineReader::Open( const char * pszFilename )
 
 {
-    converter_dictionary converters; // hints for reader for binary data
-    
-    converters["X"] = &converter_bi32; // set up default converter hints
-    converters["Y"] = &converter_bi32; // for these mnemonics
-
-/* -------------------------------------------------------------------- */
-/*      Open the file.                                                  */
-/* -------------------------------------------------------------------- */
-    ifs.open( osFilename.c_str() );
-    if( !ifs )
-    {
-        printf( "Unable to open `%s'\n", osFilename.c_str() );
-        return FALSE;
-    }
-    
-/* -------------------------------------------------------------------- */
-/*      Establish reader access to the file				*/
-/* -------------------------------------------------------------------- */
-    po8211Reader = new sio_8211Reader( ifs, &converters );
-    poIter = new sio_8211ForwardIterator( *po8211Reader );
-    
-    if( !(*poIter) )
-        return FALSE;
-    else
-        return TRUE;
+    return( oDDFModule.Open( pszFilename ) );
 }
 
 /************************************************************************/
@@ -288,29 +237,23 @@ SDTSRawLine * SDTSLineReader::GetNextLine()
 /* -------------------------------------------------------------------- */
 /*      Are we initialized?                                             */
 /* -------------------------------------------------------------------- */
-    if( poIter == NULL )
-        return NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Is the record iterator at the end of the file?                  */
-/* -------------------------------------------------------------------- */
-    if( ! *poIter )
+    if( oDDFModule.GetFP() == NULL )
         return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Read the record.                                                */
 /* -------------------------------------------------------------------- */
-    scal_Record		oRecord;
+    DDFRecord	*poRecord = oDDFModule.ReadRecord();
     
-    poIter->get( oRecord );
-    ++(*poIter);
+    if( poRecord == NULL )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Transform into a line feature.                                  */
 /* -------------------------------------------------------------------- */
     SDTSRawLine		*poRawLine = new SDTSRawLine();
 
-    if( poRawLine->Read( poIREF, &oRecord ) )
+    if( poRawLine->Read( poIREF, poRecord ) )
     {
         return( poRawLine );
     }
@@ -320,4 +263,3 @@ SDTSRawLine * SDTSLineReader::GetNextLine()
         return NULL;
     }
 }
-

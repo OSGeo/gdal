@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/07 13:45:01  warmerda
+ * major upgrade to use iso8211lib
+ *
  * Revision 1.1  1999/03/23 13:56:13  warmerda
  * New
  *
@@ -35,107 +38,22 @@
 
 #include "sdts_al.h"
 
-#include "io/sio_Reader.h"
-#include "io/sio_8211Converter.h"
-
-/************************************************************************/
-/*                      scal_Record::getSubfield()                      */
-/*                                                                      */
-/*      Fetch a subfield by name.                                       */
-/************************************************************************/
-
-sc_Subfield *scal_Record::getSubfield( const string osFieldName, int iField,
-                                       const string osSubfieldName,
-                                       				int iSubfield)
-
-{
-    sc_Record::const_iterator	oFieldIter;
-    int				nFieldHitCounter = 0;
-
-    for( oFieldIter = this->begin();
-         oFieldIter != this->end();
-         ++oFieldIter )
-    {
-        const sc_Field	&oField = *oFieldIter;
-
-        if( (osFieldName == "" || osFieldName == oField.getMnemonic())
-            && nFieldHitCounter++ == iField )
-        {
-            sc_Field::const_iterator  oSFIter;
-            int			      nSFHitCounter = 0;
-
-            for( oSFIter = oField.begin(); oSFIter != oField.end(); ++oSFIter )
-            {
-                const sc_Subfield	&oSubfield = *oSFIter;
-
-                if( (osSubfieldName == ""
-                       || osSubfieldName == oSubfield.getMnemonic())
-                    && nSFHitCounter++ == iSubfield )
-                {
-                    return( (sc_Subfield *) &oSubfield );
-                }                
-            }
-        }
-    }
-
-    return NULL;
-}
-
-/************************************************************************/
-/*                       SDTSGetSubfieldOfField()                       */
-/************************************************************************/
-
-sc_Subfield *SDTSGetSubfieldOfField( const sc_Field * poField,
-                                     const string osSubfieldName,
-                                     int iSubfield )
-
-{
-    sc_Field::const_iterator  oSFIter;
-    int			      nSFHitCounter = 0;
-
-    for( oSFIter = poField->begin(); oSFIter != poField->end(); ++oSFIter )
-    {
-        const sc_Subfield	&oSubfield = *oSFIter;
-
-        if( (osSubfieldName == ""
-             || osSubfieldName == oSubfield.getMnemonic())
-            && nSFHitCounter++ == iSubfield )
-        {
-            return( (sc_Subfield *) &oSubfield );
-        }                
-    }
-
-    return NULL;
-}
-
 /************************************************************************/
 /*                           SDTSModId::Set()                           */
 /*                                                                      */
-/*      Set a module from a field.                                      */
+/*      Set a module from a field.  We depend on our pre-knowledge      */
+/*      of the data layout to fetch more efficiently.                   */
 /************************************************************************/
 
-int SDTSModId::Set( const sc_Field * poField )
+int SDTSModId::Set( DDFField *poField )
 
 {
-    sc_Field::const_iterator  oSFIter;
+    const char	*pachData = poField->GetData();
 
-    for( oSFIter = poField->begin(); oSFIter != poField->end(); ++oSFIter )
-    {
-        const sc_Subfield	&oSubfield = *oSFIter;
+    memcpy( szModule, pachData, 4 );
+    szModule[4] = '\0';
 
-        if( oSubfield.getMnemonic() == "MODN" )
-        {
-            string	osTemp;
-
-            oSubfield.getA( osTemp );
-            strcpy( szModule, osTemp.c_str() );
-        }
-        else if( oSubfield.getMnemonic() == "RCID" )
-        {
-            oSubfield.getI( nRecord );
-            return( szModule[0] != '\0' );
-        }
-    }
+    nRecord = atoi( pachData + 4 );
 
     return FALSE;
 }
@@ -149,44 +67,34 @@ int SDTSModId::Set( const sc_Field * poField )
 /*      then.                                                           */
 /************************************************************************/
 
-int SDTSGetSADR( SDTS_IREF *poIREF,  const sc_Field * poField,
+int SDTSGetSADR( SDTS_IREF *poIREF, DDFField * poField, int nVertices,
                  double *pdfX, double * pdfY, double * pdfZ )
 
 {
-    sc_Field::const_iterator  oSFIter;
+    double	dfXScale = poIREF->dfXScale;
+    double	dfYScale = poIREF->dfYScale;
+    
+    CPLAssert( poField->GetDataSize() >= nVertices * SDTS_SIZEOF_SADR );
 
-    *pdfX = *pdfY = *pdfZ = 0;
+/* -------------------------------------------------------------------- */
+/*      For the sake of efficiency we depend on our knowledge that      */
+/*      the SADR field is a series of bigendian int32's and decode      */
+/*      them directly.                                                  */
+/* -------------------------------------------------------------------- */
+    GInt32	anXY[2];
+    const char	*pachRawData = poField->GetData();
 
-    for( oSFIter = poField->begin(); oSFIter != poField->end(); ++oSFIter )
+    for( int iVertex = 0; iVertex < nVertices; iVertex++ )
     {
-        const sc_Subfield	&oSubfield = *oSFIter;
+        // we copy to a temp buffer to ensure it is world aligned.
+        memcpy( anXY, pachRawData, 8 );
+        pachRawData += 8;
 
-        if( oSubfield.getMnemonic() == "X" )
-        {
-            long		x;
-            
-            oSubfield.getBI32( x );
-            *pdfX = x * poIREF->dfXScale;
-        }
-        else if( oSubfield.getMnemonic() == "Y" )
-        {
-            long		y;
-            
-            oSubfield.getBI32( y );
-            *pdfY = y * poIREF->dfYScale;
-        }
-        else if( oSubfield.getMnemonic() == "Z" )
-        {
-            long		z;
-            
-            oSubfield.getBI32( z );
-            *pdfZ = z; /* we should add vertical scaling */
-        }
-        else
-        {
-            assert( FALSE );
-        }
+        // possibly byte swap, and always apply scale factor
+        pdfX[iVertex] = dfXScale * CPL_MSBWORD32( anXY[0] );
+        pdfY[iVertex] = dfYScale * CPL_MSBWORD32( anXY[1] );
+        pdfZ[iVertex] = 0.0;
     }
-
+    
     return TRUE;
 }
