@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  1999/09/22 13:18:55  warmerda
+ * Added the addRingDirectly() method.
+ *
  * Revision 1.10  1999/09/13 02:27:33  warmerda
  * incorporated limited 2.5d support
  *
@@ -270,6 +273,34 @@ void OGRPolygon::addRing( OGRLinearRing * poNewRing )
                                                sizeof(void*) * (nRingCount+1));
 
     papoRings[nRingCount] = new OGRLinearRing( poNewRing );
+
+    nRingCount++;
+}
+
+/************************************************************************/
+/*                          addRingDirectly()                           */
+/************************************************************************/
+
+/**
+ * Add a ring to a polygon.
+ *
+ * If the polygon has no external ring (it is empty) this will be used as
+ * the external ring, otherwise it is used as an internal ring.  Ownership
+ * of the passed ring is assumed by the OGRPolygon, but otherwise this
+ * method operates the same as OGRPolygon::AddRing().
+ *
+ * This method has no SFCOM analog.
+ *
+ * @param poNewRing ring to be added to the polygon.
+ */
+
+void OGRPolygon::addRingDirectly( OGRLinearRing * poNewRing )
+
+{
+    papoRings = (OGRLinearRing **) OGRRealloc( papoRings,
+                                               sizeof(void*) * (nRingCount+1));
+
+    papoRings[nRingCount] = poNewRing;
 
     nRingCount++;
 }
