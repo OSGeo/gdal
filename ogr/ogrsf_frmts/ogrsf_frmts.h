@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2003/05/28 19:17:31  warmerda
+ * fixup stuff for docs
+ *
  * Revision 1.37  2003/04/22 19:36:04  warmerda
  * Added SyncToDisk
  *
@@ -251,19 +254,19 @@ class CPL_DLL OGRDataSource
 
     virtual int         TestCapability( const char * ) = 0;
 
-    virtual OGRLayer   *CreateLayer( const char *, 
-                                     OGRSpatialReference * = NULL,
-                                     OGRwkbGeometryType = wkbUnknown,
-                                     char ** = NULL );
+    virtual OGRLayer   *CreateLayer( const char *pszName, 
+                                     OGRSpatialReference *poSpatialRef = NULL,
+                                     OGRwkbGeometryType eGType = wkbUnknown,
+                                     char ** papszOptions = NULL );
     virtual OGRLayer   *CopyLayer( OGRLayer *poSrcLayer, 
                                    const char *pszNewName, 
                                    char **papszOptions = NULL );
     OGRStyleTable       *GetStyleTable(){return m_poStyleTable;}
 
-    virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
+    virtual OGRLayer *  ExecuteSQL( const char *pszStatement,
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect );
-    virtual void        ReleaseResultSet( OGRLayer * poLayer );
+    virtual void        ReleaseResultSet( OGRLayer * poResultsSet );
 
     virtual OGRErr      SyncToDisk();
 
@@ -348,10 +351,10 @@ class CPL_DLL OGRSFDriverRegistrar
                                OGRSFDriver ** ppoDriver = NULL );
     OGRErr      ReleaseDataSource( OGRDataSource * );
 
-    void        RegisterDriver( OGRSFDriver * );
+    void        RegisterDriver( OGRSFDriver * poDriver );
 
     int         GetDriverCount( void );
-    OGRSFDriver *GetDriver( int );
+    OGRSFDriver *GetDriver( int iDriver );
     OGRSFDriver *GetDriverByName( const char * );
 
     int         GetOpenDSCount() { return nOpenDSCount; } 
