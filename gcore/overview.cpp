@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/05/21 04:24:38  warmerda
+ * avoid warnings with cast
+ *
  * Revision 1.10  2002/07/09 20:33:12  warmerda
  * expand tabs
  *
@@ -149,11 +152,9 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                 
                 CPLAssert( nCount > 0 );
                 if( nCount == 0 )
-                {
                     pafDstScanline[iDstPixel] = 0.0;
-                }
                 else
-                    pafDstScanline[iDstPixel] = dfTotal / nCount;
+                    pafDstScanline[iDstPixel] = (float) (dfTotal / nCount);
             }
         }
 
@@ -267,8 +268,8 @@ GDALDownsampleChunkC32R( int nSrcWidth, int nSrcHeight,
                 {
                     double      dfM, dfDesiredM, dfRatio=1.0;
 
-                    pafDstScanline[iDstPixel*2  ] = dfTotalR / nCount;
-                    pafDstScanline[iDstPixel*2+1] = dfTotalI / nCount;
+                    pafDstScanline[iDstPixel*2  ] = (float) (dfTotalR/nCount);
+                    pafDstScanline[iDstPixel*2+1] = (float) (dfTotalI/nCount);
                     
                     dfM = sqrt(pafDstScanline[iDstPixel*2  ]*pafDstScanline[iDstPixel*2  ]
                              + pafDstScanline[iDstPixel*2+1]*pafDstScanline[iDstPixel*2+1]);
@@ -276,8 +277,8 @@ GDALDownsampleChunkC32R( int nSrcWidth, int nSrcHeight,
                     if( dfM != 0.0 )
                         dfRatio = dfDesiredM / dfM;
 
-                    pafDstScanline[iDstPixel*2  ] *= dfRatio;
-                    pafDstScanline[iDstPixel*2+1] *= dfRatio;
+                    pafDstScanline[iDstPixel*2  ] *= (float) dfRatio;
+                    pafDstScanline[iDstPixel*2+1] *= (float) dfRatio;
                 }
             }
             else if( EQUALN(pszResampling,"AVER",4) )
@@ -303,8 +304,8 @@ GDALDownsampleChunkC32R( int nSrcWidth, int nSrcHeight,
                 }
                 else
                 {
-                    pafDstScanline[iDstPixel*2  ] = dfTotalR / nCount;
-                    pafDstScanline[iDstPixel*2+1] = dfTotalI / nCount;
+                    pafDstScanline[iDstPixel*2  ] = (float) (dfTotalR/nCount);
+                    pafDstScanline[iDstPixel*2+1] = (float) (dfTotalI/nCount);
                 }
             }
         }
@@ -592,8 +593,9 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
             {
                 // Compute the magnitude of the complex value.
 
-                fValue = sqrt(pafData[iPixel*2  ] * pafData[iPixel*2  ]
-                            + pafData[iPixel*2+1] * pafData[iPixel*2+1]);
+                fValue = (float) 
+                    sqrt(pafData[iPixel*2  ] * pafData[iPixel*2  ]
+                         + pafData[iPixel*2+1] * pafData[iPixel*2+1]);
             }
             else
             {
@@ -724,13 +726,13 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
             {
                 if( bComplex )
                 {
-                    pafData[iPixel*2] *= dfGain;
-                    pafData[iPixel*2+1] *= dfGain;
+                    pafData[iPixel*2] *= (float) dfGain;
+                    pafData[iPixel*2+1] *= (float) dfGain;
                 }
                 else
                 {
-                    pafData[iPixel] = (pafData[iPixel]-dfOverviewMean)*dfGain 
-                        + dfOrigMean;
+                    pafData[iPixel] = (float)
+                        ((pafData[iPixel]-dfOverviewMean)*dfGain + dfOrigMean);
 
                 }
             }
