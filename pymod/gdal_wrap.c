@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.74  2003/08/27 15:40:05  warmerda
- * added OGRSetGenerate_DB2_V72_BYTE_ORDER()
+ * Revision 1.75  2003/09/22 05:48:50  warmerda
+ * added GML geometry support
  *
  ************************************************************************/
 
@@ -6412,6 +6412,41 @@ static PyObject *_wrap_OGR_G_FlattenTo2D(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OGR_G_ExportToGML(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+    OGRGeometryH  _arg0;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGR_G_ExportToGML",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_ExportToGML. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (char *)OGR_G_ExportToGML(_arg0);
+    _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_CreateFromGML(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _result;
+    char * _arg0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGR_G_CreateFromGML",&_arg0)) 
+        return NULL;
+    _result = (OGRGeometryH )OGR_G_CreateFromGML(_arg0);
+    SWIG_MakePtr(_ptemp, (char *) _result,"_OGRGeometryH");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OGR_G_AssignSpatialReference(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRGeometryH  _arg0;
@@ -9756,6 +9791,8 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_G_Transform", _wrap_OGR_G_Transform, 1 },
 	 { "OGR_G_GetSpatialReference", _wrap_OGR_G_GetSpatialReference, 1 },
 	 { "OGR_G_AssignSpatialReference", _wrap_OGR_G_AssignSpatialReference, 1 },
+	 { "OGR_G_CreateFromGML", _wrap_OGR_G_CreateFromGML, 1 },
+	 { "OGR_G_ExportToGML", _wrap_OGR_G_ExportToGML, 1 },
 	 { "OGR_G_FlattenTo2D", _wrap_OGR_G_FlattenTo2D, 1 },
 	 { "OGR_G_GetGeometryName", _wrap_OGR_G_GetGeometryName, 1 },
 	 { "OGR_G_GetGeometryType", _wrap_OGR_G_GetGeometryType, 1 },
