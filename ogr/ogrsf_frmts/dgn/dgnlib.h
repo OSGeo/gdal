@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/02/06 20:33:02  warmerda
+ * preliminary addition of tagset support
+ *
  * Revision 1.16  2002/01/21 20:50:12  warmerda
  * added SetSpatialFilter function
  *
@@ -308,6 +311,39 @@ typedef struct {
 
 } DGNElemCellHeader;
 
+/** 
+ * Tag Value.
+ *
+ * The core.stype code is DGNST_TAG_VALUE.
+ *
+ * Returned for DGNT_TAG_VALUE(37).
+ */
+
+typedef struct {
+    DGNElemCore core;
+
+    int         tagType;           /*!< Tag type indicator, 1=string */
+    int         tagSet;            /*!< Which tag set does this relate to? */
+    int         tagIndex;          /*!< Tag index within tag set. */
+    int         tagLength;         /*!< Length of tag information (text) */
+    char       *tagValue;          /*!< Textual value of tag */
+
+} DGNElemTagValue;
+
+/** 
+ * Tag Set.
+ *
+ * The core.stype code is DGNST_TAG_SET.
+ *
+ * Returned for DGNT_APPLICATION_ELEM(66), Level: 24.
+ */
+
+typedef struct {
+    DGNElemCore core;
+
+
+} DGNElemTagSet;
+
 /* -------------------------------------------------------------------- */
 /*      Structure types                                                 */
 /* -------------------------------------------------------------------- */
@@ -336,6 +372,12 @@ typedef struct {
 /** DGNElemCore style: Element uses DGNElemCellHeader structure */
 #define DGNST_CELL_HEADER          8
 
+/** DGNElemCore style: Element uses DGNElemTagValue structure */
+#define DGNST_TAG_VALUE            9
+
+/** DGNElemCore style: Element uses DGNElemTagSet structure */
+#define DGNST_TAG_SET             10
+
 /* -------------------------------------------------------------------- */
 /*      Element types                                                   */
 /* -------------------------------------------------------------------- */
@@ -358,6 +400,7 @@ typedef struct {
 #define DGNT_BSPLINE              21
 #define DGNT_SHARED_CELL_DEFN     34
 #define DGNT_SHARED_CELL_ELEM     35
+#define DGNT_TAG_VALUE_ELEM       37
 #define DGNT_APPLICATION_ELEM     66
 
 /* -------------------------------------------------------------------- */
