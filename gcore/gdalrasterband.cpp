@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.46  2004/04/06 19:19:30  dron
+ * Added GDALRasterBand::IsBlockCached() method.
+ *
  * Revision 1.45  2003/09/23 15:51:10  warmerda
  * Fixed two doc errors in ReadBlock() docs.
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=397
@@ -671,7 +674,6 @@ void GDALRasterBand::InitBlockInfo()
         CPLCalloc( sizeof(void*), nBlocksPerRow * nBlocksPerColumn );
 }
 
-
 /************************************************************************/
 /*                             AdoptBlock()                             */
 /*                                                                      */
@@ -704,6 +706,39 @@ CPLErr GDALRasterBand::AdoptBlock( int nBlockXOff, int nBlockYOff,
     poBlock->Touch();
 
     return( CE_None );
+}
+
+/************************************************************************/
+/*                           IsBlockCached()                            */
+/************************************************************************/
+
+/**
+ * Check whether specified block is already cached.
+ *
+ * @param nXOff horizontal offset of the requested block.
+ * @param nYOff vertical offset of the requested block.
+ *
+ * @return TRUE if specified block is in cache and FALSE otherwise.
+ */
+
+int GDALRasterBand::IsBlockCached( int nXOff, int nYOff )
+{
+    if( papoBlocks )
+    {
+        for( int nBlockIndex = 0;
+             nBlockIndex < nBlocksPerColumn * nBlocksPerRow;
+             nBlockIndex++ )
+        {
+            if( papoBlocks[nBlockIndex] )
+            {
+                if ( papoBlocks[nBlockIndex]->GetXOff() == nXOff
+                     && papoBlocks[nBlockIndex]->GetYOff() == nYOff )
+                    return TRUE;
+            }
+        }
+    }
+
+    return FALSE;
 }
 
 /************************************************************************/
@@ -821,7 +856,7 @@ CPLErr GDALRasterBand::FlushBlock( int nBlockXOff, int nBlockYOff )
  * the left most block, 1 the next block and so forth. 
  *
  * @param nYBlockOff the vertical block offset, with zero indicating
- * the left most block, 1 the next block and so forth.
+ * the top most block, 1 the next block and so forth.
  * 
  * @param bJustInitialize If TRUE the block will be allocated and initialized,
  * but not actually read from the source.  This is useful when it will just
