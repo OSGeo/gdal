@@ -20,7 +20,8 @@ config.status: configure
 		--with-threads \
 		--with-grass=no \
 		--with-libtiff=internal \
-		--with-geotiff=internal
+		--with-geotiff=internal \
+		--with-xerces
 
 	# Patch the generated libtool to avoid passing -rpath when linking,
 	# and to explicitly link libraries against the libraries they

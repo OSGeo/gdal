@@ -2,7 +2,7 @@ Source: gdal
 Section: science
 Priority: optional
 Maintainer: Silke Reimer <silke@intevation.net>
-Build-Depends: debhelper (>> 4.1.25), zlib1g-dev, libcfitsio-dev, libpng12-dev, libjpeg62-dev, libungif4-dev, libhdf4g-dev, postgresql-dev, postgresql-client, libxerces21-dev, python-dev, python-numeric, doxygen
+Build-Depends: debhelper (>> 4.1.25), zlib1g-dev, libcfitsio-dev, libpng12-dev, libjpeg62-dev, libungif4-dev, libhdf4g-dev, postgresql-dev, postgresql-client, libxerces21-dev, unixodbc-dev, python-dev, python-numeric, doxygen
 Standards-Version: 3.6.0
 
 Package: libgdal1
