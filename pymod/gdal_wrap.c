@@ -337,7 +337,7 @@ SWIG_GetPtr(char *c, void **ptr, char *t)
   if (*c != '_') {
     *ptr = (void *) 0;
     if (strcmp(c,"NULL") == 0) return (char *) 0;
-    else c;
+    else return c;
   }
   c++;
   /* Extract hex value from pointer */
@@ -1872,6 +1872,27 @@ static PyObject *_wrap_GDALOpen(PyObject *self, PyObject *args) {
     if(!PyArg_ParseTuple(args,"si:GDALOpen",&_arg0,&_arg1)) 
         return NULL;
     _result = (GDALDatasetH )GDALOpen(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_GDALDatasetH");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALOpenShared(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    GDALDatasetH  _result;
+    char * _arg0;
+    GDALAccess  _arg1;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"si:GDALOpenShared",&_arg0,&_arg1)) 
+        return NULL;
+    _result = (GDALDatasetH )GDALOpenShared(_arg0,_arg1);
     if (_result) {
         SWIG_MakePtr(_ptemp, (char *) _result,"_GDALDatasetH");
         _resultobj = Py_BuildValue("s",_ptemp);
@@ -3917,6 +3938,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALGetDriver", _wrap_GDALGetDriver, METH_VARARGS },
 	 { "GDALGetDriverCount", _wrap_GDALGetDriverCount, METH_VARARGS },
 	 { "GDALGetDriverByName", _wrap_GDALGetDriverByName, METH_VARARGS },
+	 { "GDALOpenShared", _wrap_GDALOpenShared, METH_VARARGS },
 	 { "GDALOpen", _wrap_GDALOpen, METH_VARARGS },
 	 { "GDALRegister_NUMPY", _wrap_GDALRegister_NUMPY, METH_VARARGS },
 	 { "GDALAllRegister", _wrap_GDALAllRegister, METH_VARARGS },
