@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/02/08 04:50:37  fwarmerdam
+ * added FlushCache method on writeable dataset
+ *
  * Revision 1.7  2005/02/07 22:53:54  fwarmerdam
  * added preliminary Create support for JP2ECW driver
  *
@@ -674,7 +677,7 @@ CPLErr GDALECWCompressor::Initialize(
         if( real_filename != NULL )
             real_filename = strstr(real_filename+1,",");
         if( real_filename != NULL )
-            real_filename = real_filename++;
+            real_filename++;
         else
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -910,6 +913,8 @@ class CPL_DLL ECWWriteDataset : public GDALDataset
                                  GDALDataType, char **papszOptions,
                                  int );
     		~ECWWriteDataset();
+
+    virtual void   FlushCache( void );
                 
     virtual CPLErr SetGeoTransform( double * );
     virtual CPLErr SetProjection( const char *pszWKT );
@@ -992,6 +997,16 @@ ECWWriteDataset::~ECWWriteDataset()
     CPLFree( pszProjection );
     CSLDestroy( papszOptions );
     CPLFree( pszFilename );
+}
+
+/************************************************************************/
+/*                             FlushCache()                             */
+/************************************************************************/
+
+void ECWWriteDataset::FlushCache()
+
+{
+    BlockBasedFlushCache();
 }
 
 /************************************************************************/
@@ -1156,6 +1171,9 @@ CPLErr ECWWriteRasterBand::IWriteBlock( int nBlockX, int nBlockY,
     int nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
     CPLErr eErr;
 
+/* -------------------------------------------------------------------- */
+/*      Flush previous line if needed.                                  */
+/* -------------------------------------------------------------------- */
     if( nBlockY == poGDS->nLoadedLine + 1 )
     {
         eErr = poGDS->FlushLine();
@@ -1163,6 +1181,10 @@ CPLErr ECWWriteRasterBand::IWriteBlock( int nBlockX, int nBlockY,
             return eErr;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Blow a gasket if we have been asked to write something out      */
+/*      of order.                                                       */
+/* -------------------------------------------------------------------- */
     if( nBlockY != poGDS->nLoadedLine )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1172,6 +1194,9 @@ CPLErr ECWWriteRasterBand::IWriteBlock( int nBlockX, int nBlockY,
         return CE_Failure;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Copy passed data into current line buffer.                      */
+/* -------------------------------------------------------------------- */
     memcpy( poGDS->pabyBILBuffer + (nBand-1) * nWordSize * nRasterXSize, 
             pBuffer, 
             nWordSize * nRasterXSize );
