@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2002/03/14 21:40:03  warmerda
+ * expose DGNLoadRawElement, add max_element_count in psDGN
+ *
  * Revision 1.24  2002/03/12 17:11:31  warmerda
  * ensure tag elements are indexed
  *
@@ -153,7 +156,7 @@ int DGNGotoElement( DGNHandle hDGN, int element_id )
 /*                         DGNLoadRawElement()                          */
 /************************************************************************/
 
-static int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
+int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
 
 {
 /* -------------------------------------------------------------------- */
@@ -639,19 +642,19 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           if( psTag->tagType == 1 )
           {
               psTag->tagValue.string = 
-                  CPLStrdup( (char *) psDGN->abyElem + 152 );
+                  CPLStrdup( (char *) psDGN->abyElem + 154 );
           }
           else if( psTag->tagType == 3 )
           {
               memcpy( &(psTag->tagValue.integer), 
-                      psDGN->abyElem + 152, 4 );
+                      psDGN->abyElem + 154, 4 );
               psTag->tagValue.integer = 
                   CPL_LSBWORD32( psTag->tagValue.integer );
           }
           else if( psTag->tagType == 4 )
           {
               memcpy( &(psTag->tagValue.real), 
-                      psDGN->abyElem + 152, 8 );
+                      psDGN->abyElem + 154, 8 );
               DGN2IEEEDouble( &(psTag->tagValue.real) );
           }
       }
@@ -698,10 +701,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
 /* -------------------------------------------------------------------- */
     psElement->element_id = psDGN->next_element_id - 1;
 
-#ifdef DGN_DEBUG
     psElement->offset = VSIFTell( psDGN->fp ) - psDGN->nElemBytes;
     psElement->size = psDGN->nElemBytes;
-#endif
 
     return psElement;
 }
@@ -1360,5 +1361,7 @@ void DGNBuildIndex( DGNInfo *psDGN )
     }
 
     DGNRewind( psDGN );
+
+    psDGN->max_element_count = nMaxElements;
 }
 
