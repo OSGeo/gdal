@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/11/15 21:18:59  warmerda
+ * added transaction grouping on the write side
+ *
  * Revision 1.12  2001/10/25 22:33:16  danmo
  * Added support for -select option
  *
@@ -84,6 +87,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            char **papszSelFields );
 
 static int bSkipFailures = FALSE;
+static int nGroupTransactions = 200;
 
 /************************************************************************/
 /*                                main()                                */
@@ -135,6 +139,10 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-nln") && iArg < nArgc-1 )
         {
             pszNewLayerName = papszArgv[++iArg];
+        }
+        else if( EQUAL(papszArgv[iArg],"-tg") && iArg < nArgc-1 )
+        {
+            nGroupTransactions = atoi(papszArgv[++iArg]);
         }
         else if( EQUAL(papszArgv[iArg],"-a_srs") && iArg < nArgc-1 )
         {
@@ -481,18 +489,32 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 /*      Transfer features.                                              */
 /* -------------------------------------------------------------------- */
     OGRFeature  *poFeature;
+    int		nFeaturesInTransaction = 0;
     
     poSrcLayer->ResetReading();
-    
+
+    if( nGroupTransactions )
+        poDstLayer->StartTransaction();
+
     while( (poFeature = poSrcLayer->GetNextFeature()) != NULL )
     {
         OGRFeature      *poDstFeature;
+
+        if( ++nFeaturesInTransaction == nGroupTransactions )
+        {
+            poDstLayer->CommitTransaction();
+            poDstLayer->StartTransaction();
+            nFeaturesInTransaction = 0;
+        }
 
         CPLErrorReset();
         poDstFeature = new OGRFeature( poDstLayer->GetLayerDefn() );
 
         if( poDstFeature->SetFrom( poFeature, TRUE ) != OGRERR_NONE )
         {
+            if( nGroupTransactions )
+                poDstLayer->CommitTransaction();
+            
             delete poFeature;
             
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -506,6 +528,9 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             eErr = poDstFeature->GetGeometryRef()->transform( poCT );
             if( eErr != OGRERR_NONE )
             {
+                if( nGroupTransactions )
+                    poDstLayer->CommitTransaction();
+
                 printf( "Failed to transform feature %d.\n", 
                         (int) poFeature->GetFID() );
                 if( !bSkipFailures )
@@ -519,12 +544,18 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
         if( poDstLayer->CreateFeature( poDstFeature ) != OGRERR_NONE 
             && !bSkipFailures )
         {
+            if( nGroupTransactions )
+                poDstLayer->RollbackTransaction();
+
             delete poDstFeature;
             return FALSE;
         }
 
         delete poDstFeature;
     }
+
+    if( nGroupTransactions )
+        poDstLayer->CommitTransaction();
 
     return TRUE;
 }
