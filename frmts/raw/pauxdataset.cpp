@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2004/03/23 15:03:25  dron
+ * Fixed problems with large (>4GB) multiband datasets.
+ *
  * Revision 1.26  2004/01/18 14:10:56  dron
  * Don't crash on broken auxilary files.
  *
@@ -176,7 +179,7 @@ class PAuxRasterBand : public RawRasterBand
   public:
 
                  PAuxRasterBand( GDALDataset *poDS, int nBand, FILE * fpRaw, 
-                                 unsigned int nImgOffset, int nPixelOffset,
+                                 vsi_l_offset nImgOffset, int nPixelOffset,
                                  int nLineOffset,
                                  GDALDataType eDataType, int bNativeOrder );
 
@@ -196,7 +199,7 @@ class PAuxRasterBand : public RawRasterBand
 /************************************************************************/
 
 PAuxRasterBand::PAuxRasterBand( GDALDataset *poDS, int nBand,
-                                FILE * fpRaw, unsigned int nImgOffset,
+                                FILE * fpRaw, vsi_l_offset nImgOffset,
                                 int nPixelOffset, int nLineOffset,
                                 GDALDataType eDataType, int bNativeOrder )
         : RawRasterBand( poDS, nBand, fpRaw, 
@@ -893,6 +896,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
     for( i = 0; i < poDS->nBands; i++ )
     {
         char	szDefnName[32];
+	vsi_l_offset nImgOffset;
         GDALDataType eType;
         int	bNative = TRUE;
 
@@ -924,10 +928,17 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
             bNative = EQUAL(papszTokens[4],"Unswapped");
 #endif
         }
-        
+
+#if defined(WIN32) && defined(_MSC_VER)
+	nImgOffset = _atoi64( papszTokens[1] );
+# elif HAVE_ATOLL
+	nImgOffset = atoll( papszTokens[1] );
+#else
+	nImgOffset = atol( papszTokens[1] );
+#endif
         poDS->SetBand( i+1, 
             new PAuxRasterBand( poDS, i+1, poDS->fpImage,
-                                atoi(papszTokens[1]),
+                                nImgOffset,
                                 atoi(papszTokens[2]),
                                 atoi(papszTokens[3]), eType, bNative ) );
 
@@ -1062,13 +1073,13 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /*      sequential files for now as these are pretty efficiently        */
 /*      handled by GDAL.                                                */
 /* -------------------------------------------------------------------- */
-    int		nImgOffset = 0;
+    vsi_l_offset    nImgOffset = 0;
     
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
-        const char * pszTypeName;
-        int	     nPixelOffset;
-        int	     nLineOffset;
+        const char  *pszTypeName, *pszFormatString;
+        int         nPixelOffset;
+        int         nLineOffset;
 
         nPixelOffset = GDALGetDataTypeSize(eType)/8;
         nLineOffset = nXSize * nPixelOffset;
@@ -1082,8 +1093,15 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
         else
             pszTypeName = "8U";
 
-        VSIFPrintf( fp, "ChanDefinition-%d: %s %d %d %d %s\n",
-                    iBand+1, pszTypeName,
+#if defined(WIN32) && defined(_MSC_VER)
+        pszFormatString = "ChanDefinition-%d: %s %I64d %d %d %s\n";
+# elif HAVE_LONG_LONG
+        pszFormatString = "ChanDefinition-%d: %s %Ld %d %d %s\n";
+#else
+        pszFormatString = "ChanDefinition-%d: %s %ld %d %d %s\n";
+#endif
+
+        VSIFPrintf( fp, pszFormatString, iBand+1, pszTypeName,
                     nImgOffset, nPixelOffset, nLineOffset,
 #ifdef CPL_LSB
                     "Swapped"
@@ -1092,7 +1110,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 #endif
                     );
 
-        nImgOffset += nYSize * nLineOffset;
+        nImgOffset += (vsi_l_offset)nYSize * nLineOffset;
     }
 
 /* -------------------------------------------------------------------- */
