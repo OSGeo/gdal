@@ -8,7 +8,7 @@
  * Author:   Frank Warmerdam, warmerda@home.com
  *
  ******************************************************************************
- * Copyright (c) 1999, Frank Warmerdam
+ * Copyright (c) 1999, 2001, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/08/30 03:49:13  warmerda
+ * reimplement to use qsort(), added delete
+ *
  * Revision 1.3  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -57,8 +60,7 @@ DDFRecordIndex::DDFRecordIndex()
 
     nRecordCount = 0;
     nRecordMax = 0;
-    panRecordKey = NULL;
-    papoRecordList = NULL;
+    pasRecords = NULL;
 }
 
 /************************************************************************/
@@ -82,14 +84,11 @@ void DDFRecordIndex::Clear()
 
 {
     for( int i = 0; i < nRecordCount; i++ )
-        delete papoRecordList[i];
+        delete pasRecords[i].poRecord;
 
-    CPLFree( panRecordKey );
-    panRecordKey = NULL;
+    CPLFree( pasRecords );
+    pasRecords = NULL;
     
-    CPLFree( papoRecordList );
-    papoRecordList = NULL;
-
     nRecordCount = 0;
     nRecordMax = 0;
 
@@ -111,16 +110,14 @@ void DDFRecordIndex::AddRecord( int nKey, DDFRecord * poRecord )
     if( nRecordCount == nRecordMax )
     {
         nRecordMax = (int) (nRecordCount * 1.3 + 100);
-        panRecordKey = (int *)
-            CPLRealloc( panRecordKey, sizeof(int)*nRecordMax );
-        papoRecordList = (DDFRecord **)
-            CPLRealloc( papoRecordList, sizeof(DDFRecord*)*nRecordMax );
+        pasRecords = (DDFIndexedRecord *) 
+            CPLRealloc( pasRecords, sizeof(DDFIndexedRecord)*nRecordMax );
     }
 
     bSorted = FALSE;
 
-    panRecordKey[nRecordCount] = nKey;
-    papoRecordList[nRecordCount] = poRecord;
+    pasRecords[nRecordCount].nKey = nKey;
+    pasRecords[nRecordCount].poRecord = poRecord;
 
     nRecordCount++;
 }
@@ -148,15 +145,83 @@ DDFRecord * DDFRecordIndex::FindRecord( int nKey )
     {
         int     nTestIndex = (nMaxIndex + nMinIndex) / 2;
 
-        if( panRecordKey[nTestIndex] < nKey )
+        if( pasRecords[nTestIndex].nKey < nKey )
             nMinIndex = nTestIndex + 1;
-        else if( panRecordKey[nTestIndex] > nKey )
+        else if( pasRecords[nTestIndex].nKey > nKey )
             nMaxIndex = nTestIndex - 1;
         else
-            return papoRecordList[nTestIndex];
+            return pasRecords[nTestIndex].poRecord;
     }
 
     return NULL;
+}
+
+/************************************************************************/
+/*                            RemoveRecord()                            */
+/************************************************************************/
+
+int DDFRecordIndex::RemoveRecord( int nKey )
+
+{
+    if( !bSorted )
+        Sort();
+
+/* -------------------------------------------------------------------- */
+/*      Do a binary search based on the key to find the desired record. */
+/* -------------------------------------------------------------------- */
+    int         nMinIndex = 0, nMaxIndex = nRecordCount-1;
+    int		nTestIndex;
+
+    while( nMinIndex <= nMaxIndex )
+    {
+        nTestIndex = (nMaxIndex + nMinIndex) / 2;
+
+        if( pasRecords[nTestIndex].nKey < nKey )
+            nMinIndex = nTestIndex + 1;
+        else if( pasRecords[nTestIndex].nKey > nKey )
+            nMaxIndex = nTestIndex - 1;
+        else
+            break;
+    }
+
+    if( nMinIndex > nMaxIndex )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Delete this record.                                             */
+/* -------------------------------------------------------------------- */
+    delete pasRecords[nTestIndex].poRecord;
+
+/* -------------------------------------------------------------------- */
+/*      Move all the list entries back one to fill the hole, and        */
+/*      update the total count.                                         */
+/* -------------------------------------------------------------------- */
+    memmove( pasRecords + nTestIndex, 
+             pasRecords + nTestIndex + 1, 
+             (nRecordCount - nTestIndex - 1) * sizeof(DDFIndexedRecord) );
+
+    nRecordCount--;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                             DDFCompare()                             */
+/*                                                                      */
+/*      Compare two DDFIndexedRecord objects for qsort().               */
+/************************************************************************/
+
+static int DDFCompare( const void *pRec1, const void *pRec2 )
+
+{
+    if( ((const DDFIndexedRecord *) pRec1)->nKey 
+        == ((const DDFIndexedRecord *) pRec2)->nKey )
+        return 0;
+    else if( ((const DDFIndexedRecord *) pRec1)->nKey 
+             < ((const DDFIndexedRecord *) pRec2)->nKey )
+        return -1;
+    else 
+        return 1;
 }
 
 /************************************************************************/
@@ -175,31 +240,7 @@ void DDFRecordIndex::Sort()
     if( bSorted )
         return;
 
-    int         i=0, j, bModified;
-
-    do
-    {
-        bModified = FALSE;
-        for( j = 0; j < nRecordCount - i - 1; j++ )
-        {
-            if( panRecordKey[j] > panRecordKey[j+1] )
-            {
-                int     nTemp;
-                DDFRecord * poRecord;
-
-                nTemp = panRecordKey[j];
-                panRecordKey[j] = panRecordKey[j+1];
-                panRecordKey[j+1] = nTemp;
-
-                poRecord = papoRecordList[j];
-                papoRecordList[j] = papoRecordList[j+1];
-                papoRecordList[j+1] = poRecord;
-
-                bModified = TRUE;
-            }
-        }
-        i++;
-    } while( bModified );
+    qsort( pasRecords, nRecordCount, sizeof(DDFIndexedRecord), DDFCompare );
 
     bSorted = TRUE;
 }
@@ -217,6 +258,6 @@ DDFRecord * DDFRecordIndex::GetByIndex( int nIndex )
     if( nIndex < 0 || nIndex >= nRecordCount )
         return NULL;
     else
-        return papoRecordList[nIndex];
+        return pasRecords[nIndex].poRecord;
 }
 
