@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/01/27 04:05:35  fwarmerdam
+ * added ParseXSD
+ *
  * Revision 1.8  2004/01/19 16:54:44  warmerda
  * added logic to capture field types
  *
@@ -213,6 +216,8 @@ public:
 
     virtual int  LoadClasses( const char *pszFile = NULL ) = 0;
     virtual int  SaveClasses( const char *pszFile = NULL ) = 0;
+
+    virtual int  ParseXSD( const char *pszFile ) = 0;
 
     virtual int PrescanForSchema( int bGetExtents = TRUE ) = 0;
 };
