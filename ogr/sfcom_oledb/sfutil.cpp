@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/11/22 15:21:37  warmerda
+ * reformatted a bit
+ *
  * Revision 1.6  1999/07/23 19:20:27  kshih
  * Modifications for errors etc...
  *
@@ -45,24 +48,19 @@
  *
  * Revision 1.1  1999/06/22 15:53:54  kshih
  * Utility functions.
- *
- *
  */
-
 
 #include "cpl_conv.h"
 #include "sftraceback.h"
 #include "sfutil.h"
 #include "SF.h"
 
-
-
 typedef struct _IUnknownOGRInfo
 {
-	IDBProperties *pIDB;
-	OGRDataSource *pOGR;
-	void		  *pKey;
-	struct _IUnknownOGRInfo	*next;
+  IDBProperties        *pIDB;
+  OGRDataSource        *pOGR;
+  void		       *pKey;
+  struct _IUnknownOGRInfo	*next;
 }  IUnknownOGRInfo;
 
 static IUnknownOGRInfo *pIUnkOGRInfo = NULL;
@@ -70,9 +68,11 @@ static IUnknownOGRInfo *pIUnkOGRInfo = NULL;
 /************************************************************************/
 /*                      SFGetOGRDataSource()                            */
 /*                                                                      */
-/*      Get a OGRData Source from a IUnknown Pointer of some sort		*/
+/*      Get a OGRData Source from a IUnknown Pointer of some sort	*/
 /************************************************************************/
+
 OGRDataSource *SFGetOGRDataSource(IUnknown *pUnk)
+
 {
 	IDBProperties	*pIDB  = NULL;
 	IUnknownOGRInfo	*pInfo = pIUnkOGRInfo;
@@ -103,7 +103,7 @@ OGRDataSource *SFGetOGRDataSource(IUnknown *pUnk)
 /************************************************************************/
 /*                          SFSetOGRDataSource()                        */
 /*                                                                      */
-/*     Set the OGRData Source from an IUnknown pointer.					*/
+/*     Set the OGRData Source from an IUnknown pointer.			*/
 /************************************************************************/
 void SFSetOGRDataSource(IUnknown *pUnk, OGRDataSource *pOGR, void *pKey)
 {
@@ -129,9 +129,9 @@ void SFSetOGRDataSource(IUnknown *pUnk, OGRDataSource *pOGR, void *pKey)
 }
 
 /************************************************************************/
-/*                          SFClearOGRDataSource                        */
+/*                        SFClearOGRDataSource()                        */
 /*                                                                      */
-/*     Set the OGRData Source from an IUnknown pointer.					*/
+/*      Set the OGRData Source from an IUnknown pointer.                */
 /************************************************************************/
 void SFClearOGRDataSource(void *pKey)
 {
@@ -153,61 +153,64 @@ void SFClearOGRDataSource(void *pKey)
 }
 
 /************************************************************************/
-/*							SFGetInitDataSource()						*/
-/*	Get the Data Source Filename from a session/rowset/command IUnknown */
-/*	pointer.  The interface passed in is freed automatically			*/
-/*  The returned name should be freed with free when done.				*/
+/*                        SFGetInitDataSource()                         */
+/*                                                                      */
+/*      Get the Data Source Filename from a session/rowset/command      */
+/*      IUnknown pointer.  The interface passed in is freed             */
+/*      automatically.  The returned name should be freed with free     */
+/*      when done.                                                      */
 /************************************************************************/
+
 char *SFGetInitDataSource(IUnknown *pIUnknownIn)
 {
-	IDBProperties	*pIDBProp;
-	char			*pszDataSource = NULL;
+    IDBProperties	*pIDBProp;
+    char			*pszDataSource = NULL;
 
-	if (pIUnknownIn == NULL)
-		return NULL;
+    if (pIUnknownIn == NULL)
+        return NULL;
 
-	pIDBProp = SFGetDataSourceProperties(pIUnknownIn);
+    pIDBProp = SFGetDataSourceProperties(pIUnknownIn);
 	
-	if (pIDBProp)
-	{
-		DBPROPIDSET sPropIdSets[1];
-		DBPROPID	rgPropIds[1];
+    if (pIDBProp)
+    {
+        DBPROPIDSET sPropIdSets[1];
+        DBPROPID	rgPropIds[1];
 		
-		ULONG		nPropSets;
-		DBPROPSET	*rgPropSets;
+        ULONG		nPropSets;
+        DBPROPSET	*rgPropSets;
 		
-		OGRComDebug( "Info", "Got Properties\n" );
-		rgPropIds[0] = DBPROP_INIT_DATASOURCE;
+        OGRComDebug( "Info", "Got Properties\n" );
+        rgPropIds[0] = DBPROP_INIT_DATASOURCE;
 		
-		sPropIdSets[0].cPropertyIDs = 1;
-		sPropIdSets[0].guidPropertySet = DBPROPSET_DBINIT;
-		sPropIdSets[0].rgPropertyIDs = rgPropIds;
+        sPropIdSets[0].cPropertyIDs = 1;
+        sPropIdSets[0].guidPropertySet = DBPROPSET_DBINIT;
+        sPropIdSets[0].rgPropertyIDs = rgPropIds;
 		
-		pIDBProp->GetProperties(1,sPropIdSets,&nPropSets,&rgPropSets);
+        pIDBProp->GetProperties(1,sPropIdSets,&nPropSets,&rgPropSets);
 		
-		if (rgPropSets)
-		{
-			USES_CONVERSION;
-			char *pszSource = (char *)  OLE2A(rgPropSets[0].rgProperties[0].vValue.bstrVal);
-			pszDataSource = (char *) malloc(1+strlen(pszSource));
-			strcpy(pszDataSource,pszSource);
-			OGRComDebug( "Info", 
-				"Got rgPropSets\n" );
-		}
+        if (rgPropSets)
+        {
+            USES_CONVERSION;
+            char *pszSource = (char *) 
+                OLE2A(rgPropSets[0].rgProperties[0].vValue.bstrVal);
+            pszDataSource = (char *) malloc(1+strlen(pszSource));
+            strcpy(pszDataSource,pszSource);
+            OGRComDebug( "Info", "Got rgPropSets\n" );
+        }
 		
-		if (rgPropSets)
-		{
-			int i;
-			for (i=0; i < nPropSets; i++)
-			{
-				CoTaskMemFree(rgPropSets[i].rgProperties);
-			}
-			CoTaskMemFree(rgPropSets);
-		}
-		pIDBProp->Release();	
-	}
+        if (rgPropSets)
+        {
+            int i;
+            for (i=0; i < nPropSets; i++)
+            {
+                CoTaskMemFree(rgPropSets[i].rgProperties);
+            }
+            CoTaskMemFree(rgPropSets);
+        }
+        pIDBProp->Release();	
+    }
 
-	return pszDataSource;
+    return pszDataSource;
 }
 /************************************************************************/
 /*                            OGRComDebug()                             */
@@ -257,59 +260,61 @@ void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... )
 /************************************************************************/
 
 
-HRESULT		SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,char *pszText)
+HRESULT	SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,
+                      char *pszText)
 {
-	static	IClassFactory *m_pErrorObjectFactory;
+    static	IClassFactory *m_pErrorObjectFactory;
 
-	if (FAILED(passed_hr))
-	{
-		ERRORINFO		ErrorInfo;
-		IErrorInfo		*pErrorInfo;
-		IErrorRecords	*pErrorRecords;
-		HRESULT			hr;
+    if (FAILED(passed_hr))
+    {
+        ERRORINFO		ErrorInfo;
+        IErrorInfo		*pErrorInfo;
+        IErrorRecords	*pErrorRecords;
+        HRESULT			hr;
 
-		SetErrorInfo(0, NULL);
+        SetErrorInfo(0, NULL);
 		
-		GetErrorInfo(0,&pErrorInfo);
+        GetErrorInfo(0,&pErrorInfo);
 		
-		if (!pErrorInfo)
-		{
-			if (!m_pErrorObjectFactory)
-			{
-				CoGetClassObject(CLSID_EXTENDEDERRORINFO,
-					CLSCTX_INPROC_SERVER,
-					NULL	,
-					IID_IClassFactory,
-					(LPVOID *) &m_pErrorObjectFactory);
-			}
+        if (!pErrorInfo)
+        {
+            if (!m_pErrorObjectFactory)
+            {
+                CoGetClassObject(CLSID_EXTENDEDERRORINFO,
+                                 CLSCTX_INPROC_SERVER,
+                                 NULL	,
+                                 IID_IClassFactory,
+                                 (LPVOID *) &m_pErrorObjectFactory);
+            }
 			
-			hr = m_pErrorObjectFactory->CreateInstance(NULL, IID_IErrorInfo,
-				(void**) &pErrorInfo);
-		}
+            hr = m_pErrorObjectFactory->CreateInstance(NULL, IID_IErrorInfo,
+                                                       (void**) &pErrorInfo);
+        }
 
-		hr = pErrorInfo->QueryInterface(IID_IErrorRecords, (void **) &pErrorRecords);
+        hr = pErrorInfo->QueryInterface(IID_IErrorRecords, 
+                                        (void **) &pErrorRecords);
 		
+        VARIANTARG  varg;
+        VariantInit (&varg); 
+        DISPPARAMS  dispparams = {&varg, NULL, 1, 0};
+        varg.vt = VT_BSTR; 
+        varg.bstrVal = SysAllocString(A2BSTR(pszText));
+        // Fill in the ERRORINFO structure and add the error record.
 		
-		VARIANTARG  varg;
-		VariantInit (&varg); 
-		DISPPARAMS  dispparams = {&varg, NULL, 1, 0};
-		varg.vt = VT_BSTR; 
-		varg.bstrVal = SysAllocString(A2BSTR(pszText));
-		// Fill in the ERRORINFO structure and add the error record.
-		
-		ErrorInfo.hrError = passed_hr; 
-		ErrorInfo.dwMinor = providerCode;
-		ErrorInfo.clsid   = CLSID_SF;
-		ErrorInfo.iid     = iid;
+        ErrorInfo.hrError = passed_hr; 
+        ErrorInfo.dwMinor = providerCode;
+        ErrorInfo.clsid   = CLSID_SF;
+        ErrorInfo.iid     = iid;
 
-		hr = pErrorRecords->AddErrorRecord(&ErrorInfo,ErrorInfo.dwMinor,&dispparams,NULL,0);
-		VariantClear(&varg);
-		// Call SetErrorInfo to pass the error object to the Automation DLL.
-		hr = SetErrorInfo(0, pErrorInfo);
-		// Release the interface pointers on the object to finish transferring ownership of
-		// the object to the Automation DLL. pErrorRecords->Release();
-		pErrorInfo->Release();
+        hr = pErrorRecords->AddErrorRecord(&ErrorInfo,ErrorInfo.dwMinor,
+                                           &dispparams,NULL,0);
+        VariantClear(&varg);
+        // Call SetErrorInfo to pass the error object to the Automation DLL.
+        hr = SetErrorInfo(0, pErrorInfo);
+        // Release the interface pointers on the object to finish transferring ownership of
+        // the object to the Automation DLL. pErrorRecords->Release();
+        pErrorInfo->Release();
 
-	}
-	return passed_hr;
+    }
+    return passed_hr;
 }
