@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/02/17 05:40:47  danmo
+ * Fixed CPLAssert() macro to work with EGCS.
+ *
  * Revision 1.5  1999/01/11 15:34:29  warmerda
  * added reserved range comment
  *
@@ -75,7 +78,7 @@ void CPL_DLL CPLSetErrorHandler(void(*pfnErrorHandler)(CPLErr,int,
 void CPL_DLL _CPLAssert( const char *, const char *, int );
 
 #ifdef DEBUG
-#  define CPLAssert(expr)  ((expr) ? (0) : _CPLAssert(#expr,__FILE__,__LINE__))
+#  define CPLAssert(expr)  ((expr) ? (void)(0) : _CPLAssert(#expr,__FILE__,__LINE__))
 #else
 #  define CPLAssert(expr)
 #endif
