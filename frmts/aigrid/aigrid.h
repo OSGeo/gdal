@@ -3,7 +3,7 @@
  *
  * Project:  Arc/Info Binary Grid Translator
  * Purpose:  Grid file access include file.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/10/31 03:09:11  warmerda
+ * added new CCITTRLE decompress func
+ *
  * Revision 1.9  2002/02/21 15:38:32  warmerda
  * fixed nodata value for floats
  *
@@ -129,6 +132,10 @@ CPLErr AIGReadHeader( const char *, AIGInfo_t * );
 CPLErr AIGReadBlockIndex( const char *, AIGInfo_t * );
 CPLErr AIGReadBounds( const char *, AIGInfo_t * );
 CPLErr AIGReadStatistics( const char *, AIGInfo_t * );
+
+CPLErr DecompressCCITTRLETile( unsigned char *pabySrcData, int nSrcBytes, 
+                               unsigned char *pabyDstData, int nDstBytes,
+                               int nBlockXSize, int nBlockYSize );
 
 /* ==================================================================== */
 /*      Public APIs                                                     */
