@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2000/04/21 21:55:01  warmerda
+ * majorobject updates, and overview building
+ *
  * Revision 1.18  2000/04/04 23:44:29  warmerda
  * added AutoLoadDrivers() to GDALDriverManager
  *
@@ -113,9 +116,25 @@ class GDALDriver;
 
 class CPL_DLL GDALMajorObject
 {
+  protected:
+    char             *pszDescription;
+    char            **papszMetadata;
+    
   public:
-    const char *	GetDescription( void * );
+                        GDALMajorObject();
+    virtual            ~GDALMajorObject();
+                        
+    const char *	GetDescription() const;
     void		SetDescription( const char * );
+
+    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual CPLErr      SetMetadata( char ** papszMetadata,
+                                     const char * pszDomain = "" );
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );
+    virtual CPLErr      SetMetadataItem( const char * pszName,
+                                         const char * pszValue,
+                                         const char * pszDomain = "" );
 };
 
 /* ******************************************************************** */
@@ -139,6 +158,32 @@ class CPL_DLL GDALProjDef
 
     const char  *GetProjectionString( void ) { return pszProjection; }
     CPLErr	SetProjectionString( const char * );
+};
+
+/* ******************************************************************** */
+/*                         GDALDefaultOverviews                         */
+/* ******************************************************************** */
+class GDALDefaultOverviews
+{
+    GDALDataset *poDS;
+    GDALDataset *poODS;
+    
+  public:
+               GDALDefaultOverviews();
+               ~GDALDefaultOverviews();
+
+    void       Initialize( GDALDataset *, const char * = NULL );
+    int        IsInitialized() { return poDS != NULL; }
+
+    int        GetOverviewCount(int);
+    GDALRasterBand *GetOverview(int,int);
+
+    CPLErr     BuildOverviews( const char * pszBasename,
+                               const char * pszResampling, 
+                               int nOverviews, int * panOverviewList,
+                               int nBands, int * panBandList,
+                               GDALProgressFunc pfnProgress,
+                               void *pProgressData );
 };
 
 /* ******************************************************************** */
@@ -171,8 +216,13 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     void        RasterInitialize( int, int );
     void        SetBand( int, GDALRasterBand * );
 
-    char	**papszMetadata;
-
+    GDALDefaultOverviews oOvManager;
+    
+    virtual CPLErr IBuildOverviews( const char *, int, int *,
+                                    int, int *, GDALProgressFunc, void * );
+    
+    friend class GDALRasterBand;
+    
   public:
     virtual	~GDALDataset();
 
@@ -192,14 +242,16 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual void *GetInternalHandle( const char * );
     virtual GDALDriver *GetDriver(void);
 
-    virtual char **GetMetadata();
-
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
  
     int           Reference();
     int           Dereference();
+    GDALAccess    GetAccess() { return eAccess; }
+
+    CPLErr BuildOverviews( const char *, int, int *,
+                           int, int *, GDALProgressFunc, void * );
 };
 
 /* ******************************************************************** */
@@ -308,8 +360,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     GDALRasterBlock **papoBlocks;
 
-    char	**papszMetadata;
-
     friend class GDALDataset;
     friend class GDALRasterBlock;
 
@@ -349,8 +399,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     CPLErr	FlushCache();
     CPLErr	FlushBlock( int = -1, int = -1 );
 
-    virtual char **GetMetadata();
- 
     // New OpengIS CV_SampleDimension stuff.
 
     virtual const char  *GetDescription();
@@ -367,6 +415,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual int HasArbitraryOverviews();
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int);
+    virtual CPLErr BuildOverviews( const char *, int, int *,
+                                   GDALProgressFunc, void * );
 
     CPLErr  GetHistogram( double dfMin, double dfMax,
                           int nBuckets, int * panHistogram,
@@ -414,7 +464,7 @@ class CPL_DLL GDALOpenInfo
  * multi-library.                                                  
  */
 
-class CPL_DLL GDALDriver
+class CPL_DLL GDALDriver : public GDALMajorObject
 {
   public:
     			GDALDriver();
@@ -457,7 +507,7 @@ class CPL_DLL GDALDriver
  * this class.
  */
 
-class CPL_DLL GDALDriverManager
+class CPL_DLL GDALDriverManager : public GDALMajorObject
 {
     int		nDrivers;
     GDALDriver	**papoDrivers;
@@ -484,6 +534,33 @@ class CPL_DLL GDALDriverManager
 
 CPL_C_START
 GDALDriverManager * GetGDALDriverManager( void );
+CPL_C_END
+
+/* ==================================================================== */
+/*      An assortment of overview related stuff.                        */
+/* ==================================================================== */
+
+CPL_C_START
+
+CPLErr 
+GTIFFBuildOverviews( const char * pszFilename,
+                     int nBands, GDALRasterBand **papoBandList, 
+                     int nOverviews, int * panOverviewList,
+                     const char * pszResampling, 
+                     GDALProgressFunc pfnProgress, void * pProgressData );
+
+CPLErr
+GDALDefaultBuildOverviews( GDALDataset *hSrcDS, const char * pszBasename,
+                           const char * pszResampling, 
+                           int nOverviews, int * panOverviewList,
+                           int nBands, int * panBandList,
+                           GDALProgressFunc pfnProgress, void * pProgressData);
+                           
+
+CPLErr
+GDALRegenerateOverviews( GDALRasterBand *, int, GDALRasterBand **,
+                         const char *, GDALProgressFunc, void * );
+
 CPL_C_END
 
 #endif /* ndef GDAL_PRIV_H_INCLUDED */
