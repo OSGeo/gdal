@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/12/02 18:24:12  fwarmerdam
+ * added support for fontname on symbol, per bug 684
+ *
  * Revision 1.7  2004/05/11 00:39:43  warmerda
  * make asStyle*[] using methods non-inline
  *
@@ -120,6 +123,7 @@ typedef enum ogr_style_tool_param_symbol_id
     OGRSTSymbolPerp,
     OGRSTSymbolOffset,
     OGRSTSymbolPriority,
+    OGRSTSymbolFontName,
     OGRSTSymbolLast
               
 } OGRSTSymbolParam;
@@ -436,8 +440,10 @@ public:
     void SetPerp(double dfPerp){SetParamDbl(OGRSTSymbolPerp,dfPerp  );}  
     int  Priority(GBool &bDefault){return GetParamNum(OGRSTSymbolPriority,bDefault);}
     void SetPriority(int nPriority){SetParamNum(OGRSTSymbolPriority,nPriority);}
-    
-
+    const char *FontName(GBool &bDefault)
+        {return GetParamStr(OGRSTSymbolFontName,bDefault);}
+    void SetFontName(const char *pszFontName)
+        {SetParamStr(OGRSTSymbolFontName,pszFontName);}
 
     /*****************************************************************/
     
