@@ -95,7 +95,6 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new JDEMDataset();
 
-    poDS->poDriver = poJDEMDriver;
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
     
@@ -191,13 +190,9 @@ of interest.
 
     poDS = new JDEMDataset();
 
-    poDS->poDriver = poJDEMDriver;
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
 \endcode
-
-The setting of poDriver is required.  We will see poJDEMDriver later when
-we discuss the driver instance object.  
 
 Generally at this point we would open the file, to acquire a file handle
 for the dataset; however, if read-only access is sufficient it is permitted
@@ -359,8 +354,6 @@ This is accomplished via the GDALDriverManager.  To register our format we
 implement a registration function:
 
 \code
-static GDALDriver	*poJDEMDriver = NULL;
-
 CPL_C_START
 void	GDALRegister_JDEM(void);
 CPL_C_END
@@ -372,9 +365,9 @@ void GDALRegister_JDEM()
 {
     GDALDriver	*poDriver;
 
-    if( poJDEMDriver == NULL )
+    if( GDALGetDriverByName( "JDEM" ) == NULL )
     {
-        poJDEMDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "JDEM" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
@@ -391,8 +384,8 @@ void GDALRegister_JDEM()
 \endcode
 
 The registration function will create an instance of a GDALDriver object
-when first called, and keep track of it in the local poJDEMDriver static
-pointer.  The following fields in the GDALDriver can be set before 
+when first called, and register it with the GDALDriverManager.  The
+following fields can be set in the driver before 
 registering it with the GDALDriverManager().
 
 <ul>
@@ -429,6 +422,9 @@ copied from another source, but not necessary updatable.  (optional)
 
 <li> pfnDelete: The function to call to delete a dataset of this format.
 (optional)
+
+<li> pfnUnloadDriver: A function called only when the driver is destroyed.
+Could be used to cleanup data at the driver level.  Rarely used.  (optional)
 
 </ul>
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/09/04 06:59:44  warmerda
+ * get rid of static driver pointer
+ *
  * Revision 1.7  2002/06/12 21:08:28  warmerda
  * update to metadata based driver info
  *
@@ -56,8 +59,6 @@
 #include "gdal_py.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poNUMPYDriver = NULL;
 
 /************************************************************************/
 /*				NUMPYDataset				*/
@@ -316,7 +317,6 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
     NUMPYDataset *poDS;
 
     poDS = new NUMPYDataset();
-    poDS->poDriver = poNUMPYDriver;
 
     poDS->psArray = psArray;
 
@@ -381,9 +381,9 @@ void GDALRegister_NUMPY()
 {
     GDALDriver	*poDriver;
 
-    if( poNUMPYDriver == NULL )
+    if( GDALGetDriverByName( "NUMPY" ) == NULL )
     {
-        poNUMPYDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "NUMPY" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
