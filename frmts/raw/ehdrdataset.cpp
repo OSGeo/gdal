@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/07/10 12:19:01  dron
+ * Read color table, when available (.clr file).
+ *
  * Revision 1.23  2004/05/11 18:07:01  warmerda
  * Treat NBITS=32 and 64 as floating point cases.
  *
@@ -124,7 +127,6 @@ class EHdrDataset : public RawDataset
 
     int         bGotTransform;
     double      adfGeoTransform[6];
-
     char	*pszProjection;
 
   public:
@@ -155,6 +157,7 @@ EHdrDataset::EHdrDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+
 }
 
 /************************************************************************/
@@ -219,12 +222,10 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      filename.                                                       */
 /* -------------------------------------------------------------------- */
     char *pszPath = CPLStrdup( CPLGetPath( poOpenInfo->pszFilename ) );
-    char *pszName = CPLStrdup( CPLGetBasename(poOpenInfo->pszFilename) );
-    pszHDRFilename = CPLFormCIFilename( pszPath, pszName, ".hdr" );
-    CPLFree( pszName );
-    CPLFree( pszPath );
+    char *pszName = CPLStrdup( CPLGetBasename( poOpenInfo->pszFilename ) );
+    pszHDRFilename = CPLFormCIFilename( pszPath, pszName, "hdr" );
 
-    bSelectedHDR = EQUAL(pszHDRFilename, poOpenInfo->pszFilename);
+    bSelectedHDR = EQUAL( pszHDRFilename, poOpenInfo->pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a .hdr file?                                         */
@@ -235,6 +236,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     
     if( fp == NULL )
     {
+        CPLFree( pszName );
+        CPLFree( pszPath );
         return NULL;
     }
 
@@ -355,6 +358,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( nRows == -1 || nCols == -1 )
     {
+        CPLFree( pszName );
+        CPLFree( pszPath );
         return NULL;
     }
     
@@ -370,13 +375,15 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                   "the data file (often with the extension .bil) corresponding\n"
                   "to the header file: %s\n", 
                   poOpenInfo->pszFilename );
+        CPLFree( pszName );
+        CPLFree( pszPath );
         return NULL;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    EHdrDataset 	*poDS;
+    EHdrDataset     *poDS;
 
     poDS = new EHdrDataset();
 
@@ -400,6 +407,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                   "Failed to open %s with write permission.\n%s", 
                   VSIStrerror( errno ) );
         delete poDS;
+        CPLFree( pszName );
+        CPLFree( pszPath );
         return NULL;
     }
 
@@ -433,7 +442,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->nBands = nBands;;
+    poDS->nBands = nBands;
     for( i = 0; i < poDS->nBands; i++ )
     {
         RawRasterBand	*poBand;
@@ -458,13 +467,9 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for a .prj file.                                          */
 /* -------------------------------------------------------------------- */
-    pszPath = CPLStrdup( CPLGetPath( poOpenInfo->pszFilename ) );
-    pszName = CPLStrdup( CPLGetBasename(poOpenInfo->pszFilename) );
-    const char  *pszPrjFile = CPLFormCIFilename( pszPath, pszName, "prj" );
-    CPLFree( pszPath );
-    CPLFree( pszName );
+    const char  *pszPrjFilename = CPLFormCIFilename( pszPath, pszName, "prj" );
 
-    fp = VSIFOpen( pszPrjFile, "r" );
+    fp = VSIFOpen( pszPrjFilename, "r" );
     if( fp != NULL )
     {
         char	**papszLines;
@@ -472,7 +477,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
         VSIFClose( fp );
         
-        papszLines = CSLLoad( pszPrjFile );
+        papszLines = CSLLoad( pszPrjFilename );
 
         if( oSRS.importFromESRI( papszLines ) == OGRERR_NONE )
         {
@@ -482,7 +487,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
         CSLDestroy( papszLines );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      If we didn't get bounds in the .hdr, look for a worldfile.      */
 /* -------------------------------------------------------------------- */
@@ -511,9 +516,55 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                                poDS->adfGeoTransform );
 
 /* -------------------------------------------------------------------- */
+/*      Check for a color table.                                        */
+/* -------------------------------------------------------------------- */
+    const char  *pszCLRFilename = CPLFormCIFilename( pszPath, pszName, "clr" );
+
+    fp = VSIFOpen( pszCLRFilename, "r" );
+    if( fp != NULL )
+    {
+        GDALColorTable oColorTable;
+
+        for(i = 0;;)
+        {
+            const char  *pszLine = CPLReadLine(fp);
+            if ( !pszLine )
+                break;
+
+            char	**papszValues = CSLTokenizeString2(pszLine, "\t ",
+                                                           CSLT_HONOURSTRINGS);
+            GDALColorEntry oEntry;
+
+            if ( CSLCount(papszValues) == 4 )
+            {
+                oEntry.c1 = atoi( papszValues[1] ); // Red
+                oEntry.c2 = atoi( papszValues[2] ); // Green
+                oEntry.c3 = atoi( papszValues[3] ); // Blue
+                oEntry.c4 = 255;
+
+                oColorTable.SetColorEntry( i++, &oEntry );
+            }
+
+            CSLDestroy( papszValues );
+        }
+    
+        VSIFClose( fp );
+
+        for( i = 1; i <= poDS->nBands; i++ )
+        {
+            GDALRasterBand *poBand = poDS->GetRasterBand( i );
+            poBand->SetColorTable( &oColorTable );
+            poBand->SetColorInterpretation( GCI_PaletteIndex );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
         poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+        CPLFree( pszName );
+        CPLFree( pszPath );
 
         return( poDS );
 }
@@ -581,6 +632,7 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Attempt to create file `%s' failed.\n",
                   pszHdrFilename );
+        CPLFree( pszHdrFilename );
         return NULL;
     }
     
