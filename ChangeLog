@@ -1,3 +1,8 @@
+2003-02-18  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* /gdal/frmts/raw/envidataset.cpp: Write support via Create() method
+	added.
+
 2003-02-15  Andrey Kiselev  <dron@remotesensing.org>
 	
 	* /gdal/pymod/samples/val_repl.py: Created directory for storing Python
