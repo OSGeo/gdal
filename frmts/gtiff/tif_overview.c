@@ -45,9 +45,6 @@
  ******************************************************************************
  *
  * tif_overview.c,v
- * Revision 1.1  2000/11/24 18:13:43  warmerda
- * New
- *
  * Revision 1.3  2000/04/18 22:48:31  warmerda
  * Added support for averaging resampling
  *
@@ -152,7 +149,7 @@ uint32 TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
         return 0;
 
     TIFFWriteDirectory( hTIFF );
-    TIFFSetDirectory( hTIFF, TIFFNumberOfDirectories(hTIFF)-1 );
+    TIFFSetDirectory( hTIFF, (tdir_t) (TIFFNumberOfDirectories(hTIFF)-1) );
 
     nOffset = TIFFCurrentDirOffset( hTIFF );
 
