@@ -99,6 +99,7 @@ GDAL_LIBS	=	$(GDAL_LIB) $(OGR_LIB) \
 			$(GDAL_LIB) $(CPL_LIB) $(OGDI_LIBS)
 GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/core/*.o \
+			$(GDAL_ROOT)/port/*.o \
 			$(GDAL_ROOT)/alg/*.o \
 			$(GDAL_ROOT)/ogr/ogrct.o \
 			$(GDAL_ROOT)/ogr/ogr_opt.o \

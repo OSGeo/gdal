@@ -1,3 +1,9 @@
+2001-03-21  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* GDALmake.opt.in: added port/*.o to GDAL_OBJ so that we don't
+	depend on the shared library linker using cpl.a the way we expect.
+	This should make things work cleaner on SGI.
+
 2001-03-20  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* apps/gdal_translate.c: fixes from Mark Salazar.
