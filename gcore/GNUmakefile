@@ -21,7 +21,7 @@ CPPFLAGS	+=	$(GDAL_INCLUDE)
 default:	$(OBJ)
 
 clean:
-	rm -f *.o
+	$(RM) *.o
 
 docs:	
 	(cd ..; $(MAKE) docs)

@@ -25,9 +25,9 @@ apps:
 endif
 
 clean:
-	rm -f *.o ogrinfo$(EXE) ogr2ogr$(EXE) ogrtindex$(EXE) 
-	rm -f sdts2mi$(EXE) testepsg$(EXE)
-	rm -f test_ogrsf$(EXE)
+	$(RM) *.o ogrinfo$(EXE) ogr2ogr$(EXE) ogrtindex$(EXE) 
+	$(RM) sdts2mi$(EXE) testepsg$(EXE)
+	$(RM) test_ogrsf$(EXE)
 	rm -f html/*
 	(cd ogrsf_frmts; $(MAKE) clean)
 
