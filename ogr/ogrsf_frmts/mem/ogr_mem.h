@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/10/10 15:11:07  warmerda
+ * added DeleteFeature()
+ *
  * Revision 1.2  2003/05/21 05:09:54  warmerda
  * expand tabs
  *
@@ -75,6 +78,7 @@ class OGRMemLayer : public OGRLayer
     OGRFeature         *GetFeature( long nFeatureId );
     OGRErr              SetFeature( OGRFeature *poFeature );
     OGRErr              CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      DeleteFeature( long nFID );
     
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
