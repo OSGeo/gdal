@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/06/26 20:58:20  warmerda
+ * added -nln switch
+ *
  * Revision 1.7  2000/12/05 23:09:05  warmerda
  * improved error testing, added lots of CPLResetError calls
  *
@@ -60,7 +63,8 @@ static void Usage();
 static int TranslateLayer( OGRDataSource *poSrcDS, 
                            OGRLayer * poSrcLayer,
                            OGRDataSource *poDstDS,
-                           char ** papszLSCO );
+                           char ** papszLSCO,
+                           const char *pszNewLayerName );
 
 static int bSkipFailures = FALSE;
 
@@ -76,6 +80,7 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszDestDataSource = NULL;
     char        **papszLayers = NULL;
     char        **papszDSCO = NULL, **papszLCO = NULL;
+    const char  *pszNewLayerName = NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
@@ -102,6 +107,10 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUALN(papszArgv[iArg],"-skip",5) )
         {
             bSkipFailures = TRUE;
+        }
+        else if( EQUAL(papszArgv[iArg],"-nln") && iArg < nArgc-1 )
+        {
+            pszNewLayerName = papszArgv[++iArg];
         }
         else if( papszArgv[iArg][0] == '-' )
         {
@@ -211,7 +220,8 @@ int main( int nArgc, char ** papszArgv )
             || CSLFindString( papszLayers,
                               poLayer->GetLayerDefn()->GetName() ) != -1 )
         {
-            if( !TranslateLayer( poDS, poLayer, poODS, papszLCO ) 
+            if( !TranslateLayer( poDS, poLayer, poODS, papszLCO, 
+                                 pszNewLayerName ) 
                 && !bSkipFailures )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -249,7 +259,7 @@ static void Usage()
     printf( "Usage: ogr2ogr [-skipfailures] [-f format_name]\n"
             "               [[-dsco NAME=VALUE] ...] dst_datasource_name\n"
             "               src_datasource_name\n"
-            "               [-lco NAME=VALUE] layer [layer ...]]\n"
+            "               [-lco NAME=VALUE] [-nln name] layer [layer ...]]\n"
             "\n"
             " -f format_name: output file format name, possible values are:\n");
     
@@ -262,7 +272,8 @@ static void Usage()
     }
 
     printf( " -dsco NAME=VALUE: Dataset creation option (format specific)\n"
-            " -lco  NAME=VALUE: Layer creation option (format specific)\n" );
+            " -lco  NAME=VALUE: Layer creation option (format specific)\n"
+            " -nln name: Assign an alternate name to the new layer\n" );
 
     exit( 1 );
 }
@@ -274,12 +285,16 @@ static void Usage()
 static int TranslateLayer( OGRDataSource *poSrcDS, 
                            OGRLayer * poSrcLayer,
                            OGRDataSource *poDstDS,
-                           char **papszLCO )
+                           char **papszLCO,
+                           const char *pszNewLayerName )
 
 {
     OGRLayer    *poDstLayer;
     OGRFeatureDefn *poFDefn;
-    
+
+    if( pszNewLayerName == NULL )
+        pszNewLayerName = poSrcLayer->GetLayerDefn()->GetName();
+
 /* -------------------------------------------------------------------- */
 /*      Create the layer.                                               */
 /* -------------------------------------------------------------------- */
@@ -288,7 +303,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 
     CPLErrorReset();
 
-    poDstLayer = poDstDS->CreateLayer( poSrcLayer->GetLayerDefn()->GetName(),
+    poDstLayer = poDstDS->CreateLayer( pszNewLayerName,
                                        poSrcLayer->GetSpatialRef(),
                                        poFDefn->GetGeomType(),
                                        papszLCO );
