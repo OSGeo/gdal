@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_print.c,v 1.11 2003/07/26 03:50:53 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_print.c,v 1.12 2003/08/07 16:42:55 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -520,9 +520,18 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 
                     for( j = 0; j < value_count; j++ )
                     {
-                        if( fld->field_type == TIFF_SHORT )
+			if( fld->field_type == TIFF_BYTE )
+                            fprintf( fd, "%d",
+                                     (int) ((char *) raw_data)[j] );
+			else if( fld->field_type == TIFF_SHORT )
                             fprintf( fd, "%d",
                                      (int) ((short *) raw_data)[j] );
+                        else if( fld->field_type == TIFF_LONG )
+                            fprintf( fd, "%d",
+                                     (int) ((long *) raw_data)[j] );
+			else if( fld->field_type == TIFF_RATIONAL )
+			    fprintf( fd, "%f",
+				     ((float *) raw_data)[j] );
                         else if( fld->field_type == TIFF_ASCII )
                         {
                             fprintf( fd, "%s",
@@ -534,10 +543,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
                                      ((double *) raw_data)[j] );
                         else if( fld->field_type == TIFF_FLOAT )
                             fprintf( fd, "%f",
-                                     (float) ((double *) raw_data)[j] );
-                        else if( fld->field_type == TIFF_LONG )
-                            fprintf( fd, "%d",
-                                     (int) ((long *) raw_data)[j] );
+                                     ((float *) raw_data)[j] );
                         else
                         {
                             fprintf( fd,

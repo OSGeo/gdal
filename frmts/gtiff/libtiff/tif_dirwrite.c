@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirwrite.c,v 1.15 2003/06/30 14:42:32 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirwrite.c,v 1.17 2003/08/12 07:50:37 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -451,81 +451,122 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 	case TIFF_SSHORT:
 		if (wc > 1) {
 			uint16* wp;
-			if (wc == (u_short) TIFF_VARIABLE)
+			if (wc == (u_short) TIFF_VARIABLE
+			    || fip->field_passcount)
 				TIFFGetField(tif, fip->field_tag, &wc, &wp);
 			else
 				TIFFGetField(tif, fip->field_tag, &wp);
 			if (!WRITEF(TIFFWriteShortArray, wp))
 				return (0);
 		} else {
-			uint16 sv;
-			TIFFGetField(tif, fip->field_tag, &sv);
-			dir->tdir_offset =
-			    TIFFInsertData(tif, dir->tdir_type, sv);
+			if (fip->field_passcount) {
+				uint16* wp;
+				TIFFGetField(tif, fip->field_tag, &wc, &wp);
+				if (!WRITEF(TIFFWriteShortArray, wp))
+					return 0;
+			} else {
+				uint16 sv;
+				TIFFGetField(tif, fip->field_tag, &sv);
+				dir->tdir_offset =
+					TIFFInsertData(tif, dir->tdir_type, sv);
+			}
 		}
 		break;
 	case TIFF_LONG:
 	case TIFF_SLONG:
 		if (wc > 1) {
 			uint32* lp;
-			if (wc == (u_short) TIFF_VARIABLE)
+			if (wc == (u_short) TIFF_VARIABLE
+			    || fip->field_passcount)
 				TIFFGetField(tif, fip->field_tag, &wc, &lp);
 			else
 				TIFFGetField(tif, fip->field_tag, &lp);
 			if (!WRITEF(TIFFWriteLongArray, lp))
 				return (0);
 		} else {
-			/* XXX handle LONG->SHORT conversion */
-			TIFFGetField(tif, fip->field_tag, &dir->tdir_offset);
+			if (fip->field_passcount) {
+				uint32* lp;
+				TIFFGetField(tif, fip->field_tag, &wc, &lp);
+				if (!WRITEF(TIFFWriteLongArray, lp))
+					return 0;
+			} else {
+				/* XXX handle LONG->SHORT conversion */
+				TIFFGetField(tif, fip->field_tag,
+					     &dir->tdir_offset);
+			}
 		}
 		break;
 	case TIFF_RATIONAL:
 	case TIFF_SRATIONAL:
 		if (wc > 1) {
 			float* fp;
-			if (wc == (u_short) TIFF_VARIABLE)
+			if (wc == (u_short) TIFF_VARIABLE
+			    || fip->field_passcount)
 				TIFFGetField(tif, fip->field_tag, &wc, &fp);
 			else
 				TIFFGetField(tif, fip->field_tag, &fp);
 			if (!WRITEF(TIFFWriteRationalArray, fp))
 				return (0);
 		} else {
-			float fv;
-			TIFFGetField(tif, fip->field_tag, &fv);
-			if (!WRITEF(TIFFWriteRationalArray, &fv))
-				return (0);
+			if (fip->field_passcount) {
+				float* fp;
+				TIFFGetField(tif, fip->field_tag, &wc, &fp);
+				if (!WRITEF(TIFFWriteRationalArray, fp))
+					return 0;
+			} else {
+				float fv;
+				TIFFGetField(tif, fip->field_tag, &fv);
+				if (!WRITEF(TIFFWriteRationalArray, &fv))
+					return (0);
+			}
 		}
 		break;
 	case TIFF_FLOAT:
 		if (wc > 1) {
 			float* fp;
-			if (wc == (u_short) TIFF_VARIABLE)
+			if (wc == (u_short) TIFF_VARIABLE
+			    || fip->field_passcount)
 				TIFFGetField(tif, fip->field_tag, &wc, &fp);
 			else
 				TIFFGetField(tif, fip->field_tag, &fp);
 			if (!WRITEF(TIFFWriteFloatArray, fp))
 				return (0);
 		} else {
-			float fv;
-			TIFFGetField(tif, fip->field_tag, &fv);
-			if (!WRITEF(TIFFWriteFloatArray, &fv))
-				return (0);
+			if (fip->field_passcount) {
+				float* fp;
+				TIFFGetField(tif, fip->field_tag, &wc, &fp);
+				if (!WRITEF(TIFFWriteFloatArray, fp))
+					return 0;
+			} else {
+				float fv;
+				TIFFGetField(tif, fip->field_tag, &fv);
+				if (!WRITEF(TIFFWriteFloatArray, &fv))
+					return (0);
+			}
 		}
 		break;
 	case TIFF_DOUBLE:
 		if (wc > 1) {
 			double* dp;
-			if (wc == (u_short) TIFF_VARIABLE)
+			if (wc == (u_short) TIFF_VARIABLE
+			    || fip->field_passcount)
 				TIFFGetField(tif, fip->field_tag, &wc, &dp);
 			else
 				TIFFGetField(tif, fip->field_tag, &dp);
 			if (!WRITEF(TIFFWriteDoubleArray, dp))
 				return (0);
 		} else {
-			double dv;
-			TIFFGetField(tif, fip->field_tag, &dv);
-			if (!WRITEF(TIFFWriteDoubleArray, &dv))
-				return (0);
+			if (fip->field_passcount) {
+				double* dp;
+				TIFFGetField(tif, fip->field_tag, &wc, &dp);
+				if (!WRITEF(TIFFWriteDoubleArray, dp))
+					return 0;
+			} else {
+				double dv;
+				TIFFGetField(tif, fip->field_tag, &dv);
+				if (!WRITEF(TIFFWriteDoubleArray, &dv))
+					return (0);
+			}
 		}
 		break;
 	case TIFF_ASCII:
@@ -541,23 +582,32 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
            correctness not verified (FW, 99/08) */
         case TIFF_BYTE:
         case TIFF_SBYTE:          
-                if (wc > 1) {
-                    char* cp;
-                    if (wc == (u_short) TIFF_VARIABLE) {
-                        TIFFGetField(tif, fip->field_tag, &wc, &cp);
-                        dir->tdir_count = wc;
-                    } else if (wc == (u_short) TIFF_VARIABLE2) {
-			TIFFGetField(tif, fip->field_tag, &wc2, &cp);
-			dir->tdir_count = wc2;
-                    } else
-                        TIFFGetField(tif, fip->field_tag, &cp);
-                    if (!TIFFWriteByteArray(tif, dir, cp))
-                        return (0);
+		if (wc > 1) {
+			char* cp;
+			if (wc == (u_short) TIFF_VARIABLE
+			    || fip->field_passcount) {
+				TIFFGetField(tif, fip->field_tag, &wc, &cp);
+				dir->tdir_count = wc;
+			} else if (wc == (u_short) TIFF_VARIABLE2) {
+				TIFFGetField(tif, fip->field_tag, &wc2, &cp);
+				dir->tdir_count = wc2;
+			} else
+				TIFFGetField(tif, fip->field_tag, &cp);
+			if (!TIFFWriteByteArray(tif, dir, cp))
+				return (0);
                 } else {
-                    char cv;
-                    TIFFGetField(tif, fip->field_tag, &cv);
-                    if (!TIFFWriteByteArray(tif, dir, &cv))
-                        return (0);
+			if (fip->field_passcount) {
+				char* cp;
+				TIFFGetField(tif, fip->field_tag, &wc, &cp);
+				dir->tdir_count = wc;
+				if (!TIFFWriteByteArray(tif, dir, cp))
+					return 0;
+			} else {
+				char cv;
+				TIFFGetField(tif, fip->field_tag, &cv);
+				if (!TIFFWriteByteArray(tif, dir, &cv))
+					return (0);
+			}
                 }
                 break;
 
