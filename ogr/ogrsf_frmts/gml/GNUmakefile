@@ -26,7 +26,7 @@ endif
 default:	$(O_OBJ)
 
 clean:
-	rm -f *.o gmlview
+	rm -f *.o gmlview $(O_OBJ)
 
 gmlview:	gmlview.cpp $(CORE_OBJ)
 	$(CXX) $(CPPFLAGS) $(CFLAGS) $(LNK_FLAGS) \
