@@ -3,7 +3,8 @@
 # $Id$
 #
 # Project:  GDAL Python samples
-# Purpose:  Script to write out ASCII GRD rasters (used in Golden Software Surfer)
+# Purpose:  Script to write out ASCII GRD rasters (used in Golden Software
+#	    Surfer)
 #           from any source supported by GDAL.
 # Author:   Andrey Kiselev, dron@remotesensing.org
 #
@@ -30,6 +31,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.2  2003/09/19 09:18:56  dron
+#  Make use of ProgressTerm() function.
+#
 #  Revision 1.1  2003/02/15 14:23:47  dron
 #  New
 #
@@ -42,6 +46,12 @@ import sys
 # =============================================================================
 def Usage():
     print 'Usage: gdal2grd.py [-b band] [-quiet] infile outfile'
+    print 'Write out ASCII GRD rasters (used in Golden Software Surfer)'
+    print
+    print '  -b band	    Select a band number to convert (1 based)'
+    print '  -quiet	    Do not report any diagnostic information'
+    print '  infile	    Name of the input GDAL supported file'
+    print '  outfile	    Name of the output GRD file'
     print
     sys.exit(1)
 
@@ -85,7 +95,6 @@ if infile == None:
     print 'Cannot open', infile
     sys.exit(2)
 geotransform = indataset.GetGeoTransform()
-print geotransform
 band = indataset.GetRasterBand(iBand)
 if band == None:
     print 'Cannot load band', iBand, 'from the', infile
@@ -124,4 +133,8 @@ for i in range(band.YSize - 1, -1, -1):
 	else:
 	    fpout.write("\n")
     fpout.write("\n")
+
+    # Display progress report on terminal
+    if not quiet:
+	gdal.TermProgress(float(band.YSize - i) / band.YSize)
 
