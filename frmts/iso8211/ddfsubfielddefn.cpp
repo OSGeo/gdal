@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/12/15 20:24:58  warmerda
+ * expand tabs
+ *
  * Revision 1.11  2003/11/12 21:22:14  warmerda
  * fixed some docs
  *
@@ -792,7 +795,7 @@ int DDFSubfieldDefn::FormatStringValue( char *pachData, int nBytesAvailable,
         nSize = nValueLength + 1;
     }
     else
-    {								       
+    {                                                                  
         nSize = nFormatWidth;
     }
 
@@ -852,7 +855,7 @@ int DDFSubfieldDefn::FormatIntValue( char *pachData, int nBytesAvailable,
         nSize = strlen(szWork) + 1;
     }
     else
-    {								       
+    {                                                                  
         nSize = nFormatWidth;
 
         if( GetBinaryFormat() == NotBinary && (int) strlen(szWork) > nSize )

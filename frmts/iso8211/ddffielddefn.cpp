@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/12/15 20:24:58  warmerda
+ * expand tabs
+ *
  * Revision 1.17  2003/09/17 21:11:34  warmerda
  * fixed handling of the field terminator on write
  *
@@ -855,7 +858,7 @@ DDFSubfieldDefn *DDFFieldDefn::GetSubfield( int i )
 
 char *DDFFieldDefn::GetDefaultValue( int *pnSize )
 
-{									
+{                                                                       
 /* -------------------------------------------------------------------- */
 /*      Loop once collecting the sum of the subfield lengths.           */
 /* -------------------------------------------------------------------- */
