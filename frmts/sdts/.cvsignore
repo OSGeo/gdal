@@ -6,3 +6,4 @@ sdts_1_1
 man
 *.tar.gz
 *.zip
+*-marker
