@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.6  1999/12/30 02:40:17  warmerda
+ * Report driver used.
+ *
  * Revision 1.5  1999/10/21 13:22:59  warmerda
  * Print band type symbolically rather than numerically.
  *
@@ -53,6 +56,7 @@ int main( int argc, char ** argv )
     int			i;
     double		adfGeoTransform[6];
     GDALProjDefH	hProjDef;
+    GDALDriverH		hDriver;
 
     if( argc < 2 )
     {
@@ -71,6 +75,11 @@ int main( int argc, char ** argv )
                  CPLGetLastErrorNo(), CPLGetLastErrorMsg() );
         exit( 1 );
     }
+    
+    hDriver = GDALGetDatasetDriver( hDataset );
+    printf( "Driver: %s/%s\n",
+            GDALGetDriverShortName( hDriver ),
+            GDALGetDriverLongName( hDriver ) );
 
     printf( "Size is %d, %d\n",
             GDALGetRasterXSize( hDataset ), 
