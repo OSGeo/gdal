@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  1999/09/13 02:27:32  warmerda
+ * incorporated limited 2.5d support
+ *
  * Revision 1.15  1999/08/29 17:14:29  warmerda
  * Added wkbNone.
  *
@@ -106,8 +109,12 @@ enum OGRwkbGeometryType
     wkbMultiLineString = 5,
     wkbMultiPolygon = 6,
     wkbGeometryCollection = 7,
-    wkbNone = 100              // non-standard, for pure attribute records
+    wkbNone = 100,              // non-standard, for pure attribute records
+    wkbPoint25D = 0x80000001,
+    wkbLineString25D = 0x80000002
 };
+
+#define ogrZMarker 0x21125711
 
 enum OGRwkbByteOrder
 {
@@ -226,10 +233,11 @@ class OGRPoint : public OGRGeometry
 {
     double	x;
     double	y;
+    double	z;
 
   public:
     		OGRPoint();
-                OGRPoint( double x, double y );
+                OGRPoint( double x, double y, double z = 0.0 );
     virtual     ~OGRPoint();
 
     // IWks Interface
@@ -249,10 +257,12 @@ class OGRPoint : public OGRGeometry
     // IPoint
     double	getX() { return x; }
     double	getY() { return y; }
+    double	getZ() { return z; }
 
     // Non standard
     void	setX( double xIn ) { x = xIn; }
     void	setY( double yIn ) { y = yIn; }
+    void	setZ( double zIn ) { z = zIn; }
 
     // ISpatialRelation
     virtual OGRBoolean	Equal( OGRGeometry * );
@@ -260,7 +270,6 @@ class OGRPoint : public OGRGeometry
     // Non standard from OGRGeometry
     virtual const char *getGeometryName();
     virtual OGRwkbGeometryType getGeometryType();
-
 };
 
 /************************************************************************/
@@ -296,6 +305,10 @@ class OGRLineString : public OGRCurve
   protected:
     int 	nPointCount;
     OGRRawPoint	*paoPoints;
+    double      *padfZ;
+
+    void        Make3D();
+    void        Make2D();
 
   public:
     		OGRLineString();
@@ -326,6 +339,7 @@ class OGRLineString : public OGRCurve
     void	getPoint( int, OGRPoint * );
     double	getX( int i ) { return paoPoints[i].x; }
     double	getY( int i ) { return paoPoints[i].y; }
+    double      getZ( int i );
 
     // ISpatialRelation
     virtual OGRBoolean	Equal( OGRGeometry * );
@@ -333,11 +347,12 @@ class OGRLineString : public OGRCurve
     // non standard.
     void	setNumPoints( int );
     void	setPoint( int, OGRPoint * );
-    void	setPoint( int, double, double );
-    void	setPoints( int, OGRRawPoint * );
-    void	setPoints( int, double * padfX, double * padfY );
+    void	setPoint( int, double, double, double = 0.0 );
+    void	setPoints( int, OGRRawPoint *, double * = NULL );
+    void	setPoints( int, double * padfX, double * padfY,
+                           double *padfZ = NULL );
     void	addPoint( OGRPoint * );
-    void	addPoint( double, double );
+    void	addPoint( double, double, double = 0.0 );
 
     // non-standard from OGRGeometry
     virtual OGRwkbGeometryType getGeometryType();

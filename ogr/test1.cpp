@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/09/13 02:27:33  warmerda
+ * incorporated limited 2.5d support
+ *
  * Revision 1.6  1999/05/31 20:40:17  warmerda
  * modified createFromWkt() to indicate how much text consumed
  *
@@ -67,7 +70,8 @@ int main( int nArgc, char ** papszArgv )
     {
         printf( "Usage: test1 -reportbin bin_file\n" );
         printf( "    or test1 -reporttxt txt_file\n" );
-        printf( "    or test1 -createbin bin_file {point,line,polygon,multipolygon}\n" );
+        printf( "    or test1 -createbin bin_file {point,line,polygon,multipolygon,\n" );
+        printf( "                                  point25d,line25d}\n" );
         exit( 1 );
     }
 
@@ -87,6 +91,12 @@ int main( int nArgc, char ** papszArgv )
             
             CreateBin( &oPoint, papszArgv[2] );
         }
+        else if( strcmp( papszArgv[3], "point25d") == 0 )
+        {
+            OGRPoint	oPoint( 100, 200, 300 );
+            
+            CreateBin( &oPoint, papszArgv[2] );
+        }
         else if( strcmp( papszArgv[3], "line") == 0 )
         {
             OGRLineString	oLine;
@@ -94,6 +104,16 @@ int main( int nArgc, char ** papszArgv )
             oLine.addPoint( 200, 300 );
             oLine.addPoint( 300, 400 );
             oLine.addPoint( 0, 0 );
+            
+            CreateBin( &oLine, papszArgv[2] );
+        }
+        else if( strcmp( papszArgv[3], "line25d") == 0 )
+        {
+            OGRLineString	oLine;
+
+            oLine.addPoint( 200, 300, 400 );
+            oLine.addPoint( 300, 400, 500 );
+            oLine.addPoint( 0, 0, 0 );
             
             CreateBin( &oLine, papszArgv[2] );
         }

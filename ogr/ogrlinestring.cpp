@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/09/13 02:27:33  warmerda
+ * incorporated limited 2.5d support
+ *
  * Revision 1.9  1999/07/27 00:48:11  warmerda
  * Added Equal() support
  *
@@ -76,6 +79,7 @@ OGRLineString::OGRLineString()
 {
     nPointCount = 0;
     paoPoints = NULL;
+    padfZ = NULL;
 }
 
 /************************************************************************/
@@ -96,7 +100,10 @@ OGRLineString::~OGRLineString()
 OGRwkbGeometryType OGRLineString::getGeometryType()
 
 {
-    return wkbLineString;
+    if( getCoordinateDimension() == 3 )
+        return wkbLineString25D;
+    else
+        return wkbLineString;
 }
 
 /************************************************************************/
@@ -121,7 +128,9 @@ OGRGeometry *OGRLineString::clone()
     poNewLineString = new OGRLineString();
 
     poNewLineString->assignSpatialReference( getSpatialReference() );
-    poNewLineString->setPoints( nPointCount, paoPoints );
+    poNewLineString->setPoints( nPointCount, paoPoints, padfZ );
+
+    // notdef: not 3D
 
     return poNewLineString;
 }
@@ -154,7 +163,10 @@ int OGRLineString::getDimension()
 int OGRLineString::getCoordinateDimension()
 
 {
-    return 2;
+    if( padfZ != NULL )
+        return 3;
+    else
+        return 2;
 }
 
 /************************************************************************/
@@ -167,7 +179,37 @@ int OGRLineString::getCoordinateDimension()
 int OGRLineString::WkbSize()
 
 {
-    return 5 + 4 + 16 * nPointCount;
+    return 5 + 4 + 8 * nPointCount * getCoordinateDimension();
+}
+
+/************************************************************************/
+/*                               Make2D()                               */
+/************************************************************************/
+
+void OGRLineString::Make2D()
+
+{
+    if( padfZ != NULL )
+    {
+        OGRFree( padfZ );
+        padfZ = NULL;
+    }
+}
+
+/************************************************************************/
+/*                               Make3D()                               */
+/************************************************************************/
+
+void OGRLineString::Make3D()
+
+{
+    if( padfZ == NULL )
+    {
+        if( nPointCount == 0 )
+            padfZ = (double *) OGRCalloc(sizeof(double),1);
+        else
+            padfZ = (double *) OGRCalloc(sizeof(double),nPointCount);
+    }
 }
 
 /************************************************************************/
@@ -192,6 +234,22 @@ void	OGRLineString::getPoint( int i, OGRPoint * poPoint )
 
     poPoint->setX( paoPoints[i].x );
     poPoint->setY( paoPoints[i].y );
+
+    if( getCoordinateDimension() == 3 )
+        poPoint->setZ( padfZ[i] );
+}
+
+/************************************************************************/
+/*                                getZ()                                */
+/************************************************************************/
+
+double OGRLineString::getZ( int i )
+
+{
+    if( padfZ != NULL && i >= 0 && i < nPointCount )
+        return( padfZ[i] );
+    else
+        return 0.0;
 }
 
 /************************************************************************/
@@ -215,10 +273,13 @@ void OGRLineString::setNumPoints( int nNewPointCount )
 {
     if( nNewPointCount == 0 )
     {
-        if( paoPoints != NULL )
-            OGRFree( paoPoints );
+        OGRFree( paoPoints );
         paoPoints = NULL;
-        nPointCount = nNewPointCount;
+        
+        OGRFree( padfZ );
+        padfZ = NULL;
+        
+        nPointCount = 0;
         return;
     }
 
@@ -228,9 +289,17 @@ void OGRLineString::setNumPoints( int nNewPointCount )
             OGRRealloc(paoPoints, sizeof(OGRRawPoint) * nNewPointCount);
 
         assert( paoPoints != NULL );
-
+        
         memset( paoPoints + nPointCount,
                 0, sizeof(OGRRawPoint) * (nNewPointCount - nPointCount) );
+        
+        if( getCoordinateDimension() == 3 )
+        {
+            padfZ = (double *)
+                OGRRealloc( padfZ, sizeof(double)*nNewPointCount );
+            memset( padfZ + nPointCount, 0,
+                    sizeof(double) * (nNewPointCount - nPointCount) );
+        }
     }
 
     nPointCount = nNewPointCount;
@@ -256,7 +325,7 @@ void OGRLineString::setNumPoints( int nNewPointCount )
 void OGRLineString::setPoint( int iPoint, OGRPoint * poPoint )
 
 {
-    setPoint( iPoint, poPoint->getX(), poPoint->getY() );
+    setPoint( iPoint, poPoint->getX(), poPoint->getY(), poPoint->getZ() );
 }
 
 /************************************************************************/
@@ -275,9 +344,10 @@ void OGRLineString::setPoint( int iPoint, OGRPoint * poPoint )
  * @param iPoint the index of the vertex to assign (zero based).
  * @param xIn input X coordinate to assign.
  * @param yIn input Y coordinate to assign.
+ * @param zIn input Z coordinate to assign (defaults to zero).
  */
 
-void OGRLineString::setPoint( int iPoint, double xIn, double yIn )
+void OGRLineString::setPoint( int iPoint, double xIn, double yIn, double zIn )
 
 {
     if( iPoint >= nPointCount )
@@ -285,6 +355,16 @@ void OGRLineString::setPoint( int iPoint, double xIn, double yIn )
 
     paoPoints[iPoint].x = xIn;
     paoPoints[iPoint].y = yIn;
+
+    if( zIn != 0.0 )
+    {
+        Make3D();
+        padfZ[iPoint] = zIn;
+    }
+    else if( getCoordinateDimension() == 3 )
+    {
+        padfZ[iPoint] = 0.0;
+    }
 }
 
 /************************************************************************/
@@ -305,7 +385,7 @@ void OGRLineString::setPoint( int iPoint, double xIn, double yIn )
 void OGRLineString::addPoint( OGRPoint * poPoint )
 
 {
-    setPoint( nPointCount, poPoint->getX(), poPoint->getY() );
+    setPoint( nPointCount, poPoint->getX(), poPoint->getY(), poPoint->getZ() );
 }
 
 /************************************************************************/
@@ -322,12 +402,13 @@ void OGRLineString::addPoint( OGRPoint * poPoint )
  *
  * @param x the X coordinate to assign to the new point.
  * @param y the Y coordinate to assign to the new point.
+ * @param z the Z coordinate to assign to the new point (defaults to zero).
  */
 
-void OGRLineString::addPoint( double x, double y )
+void OGRLineString::addPoint( double x, double y, double z )
 
 {
-    setPoint( nPointCount, x, y );
+    setPoint( nPointCount, x, y, z );
 }
 
 /************************************************************************/
@@ -347,11 +428,20 @@ void OGRLineString::addPoint( double x, double y )
  * @param paoPointsIn list of points being assigned.
  */
 
-void OGRLineString::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn )
+void OGRLineString::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
+                               double * padfZ )
 
 {
     setNumPoints( nPointsIn );
     memcpy( paoPoints, paoPointsIn, sizeof(OGRRawPoint) * nPointsIn);
+
+    if( padfZ == NULL )
+        Make2D();
+    else
+    {
+        Make3D();
+        memcpy( this->padfZ, padfZ, sizeof(double) * nPointsIn );
+    }
 }
 
 /************************************************************************/
@@ -369,12 +459,20 @@ void OGRLineString::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn )
  * @param nPointsIn number of points being passed in padfX and padfY.
  * @param padfX list of X coordinates of points being assigned.
  * @param padfY list of Y coordinates of points being assigned.
+ * @param padfZ list of Z coordinates of points being assigned (defaults to
+ * NULL for 2D objects).
  */
 
-void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY )
+void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY,
+                               double * padfZ )
 
 {
     int		i;
+
+    if( padfZ == NULL )
+        Make2D();
+    else
+        Make3D();
     
     setNumPoints( nPointsIn );
 
@@ -383,6 +481,9 @@ void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY )
         paoPoints[i].x = padfX[i];
         paoPoints[i].y = padfY[i];
     }
+
+    if( padfZ != NULL )
+        memcpy( this->padfZ, padfZ, sizeof(double) * nPointsIn );
 }
 
 /************************************************************************/
@@ -393,7 +494,7 @@ void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY )
 /************************************************************************/
 
 OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
-                                int nBytesAvailable )
+                                     int nBytesAvailable )
 
 {
     OGRwkbByteOrder	eByteOrder;
@@ -412,16 +513,21 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
 /*      geometry type is between 0 and 255 so we only have to fetch     */
 /*      one byte.                                                       */
 /* -------------------------------------------------------------------- */
-#ifdef DEBUG
     OGRwkbGeometryType eGeometryType;
-    
+    int		       bIs3D;
+
     if( eByteOrder == wkbNDR )
+    {
         eGeometryType = (OGRwkbGeometryType) pabyData[1];
+        bIs3D = (pabyData[4] != 0);
+    }
     else
+    {
         eGeometryType = (OGRwkbGeometryType) pabyData[4];
+        bIs3D = (pabyData[1] != 0);
+    }
 
     assert( eGeometryType == wkbLineString );
-#endif    
 
 /* -------------------------------------------------------------------- */
 /*      Get the vertex count.                                           */
@@ -435,20 +541,49 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
 
     setNumPoints( nNewNumPoints );
     
+    if( bIs3D )
+        Make3D();
+    else
+        Make2D();
+    
 /* -------------------------------------------------------------------- */
 /*      Get the vertex.                                                 */
 /* -------------------------------------------------------------------- */
-    memcpy( paoPoints, pabyData + 9, 16 * nPointCount );
+    int		i;
     
+    if( bIs3D )
+    {
+        for( i = 0; i < nPointCount; i++ )
+        {
+            memcpy( paoPoints + i, pabyData + 9 + i*24, 16 );
+            memcpy( padfZ + i, pabyData + 9 + 16 + i*24, 8 );
+        }
+    }
+    else
+    {
+        memcpy( paoPoints, pabyData + 9, 16 * nPointCount );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Byte swap if needed.                                            */
+/* -------------------------------------------------------------------- */
     if( OGR_SWAP( eByteOrder ) )
     {
-        for( int i = 0; i < nPointCount; i++ )
+        for( i = 0; i < nPointCount; i++ )
         {
             CPL_SWAPDOUBLE( &(paoPoints[i].x) );
             CPL_SWAPDOUBLE( &(paoPoints[i].y) );
         }
-    }
 
+        if( bIs3D )
+        {
+            for( i = 0; i < nPointCount; i++ )
+            {
+                CPL_SWAPDOUBLE( padfZ + i );
+            }
+        }
+    }
+    
     return OGRERR_NONE;
 }
 
@@ -475,11 +610,19 @@ OGRErr	OGRLineString::exportToWkb( OGRwkbByteOrder eByteOrder,
         pabyData[1] = wkbLineString;
         pabyData[2] = 0;
         pabyData[3] = 0;
-        pabyData[4] = 0;
+
+        if( getCoordinateDimension() == 3 )
+            pabyData[4] = 0x80;
+        else
+            pabyData[4] = 0;
     }
     else
     {
-        pabyData[1] = 0;
+        if( getCoordinateDimension() == 3 )
+            pabyData[1] = 0x80;
+        else
+            pabyData[1] = 0;
+
         pabyData[2] = 0;
         pabyData[3] = 0;
         pabyData[4] = wkbLineString;
@@ -493,7 +636,18 @@ OGRErr	OGRLineString::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
 /*      Copy in the raw data.                                           */
 /* -------------------------------------------------------------------- */
-    memcpy( pabyData+9, paoPoints, 16 * nPointCount );
+    int		i;
+    
+    if( getCoordinateDimension() == 3 )
+    {
+        for( i = 0; i < nPointCount; i++ )
+        {
+            memcpy( pabyData + 9 + 24*i, paoPoints+i, 16 );
+            memcpy( pabyData + 9 + 16 + 24*i, padfZ+i, 8 );
+        }
+    }
+    else
+        memcpy( pabyData+9, paoPoints, 16 * nPointCount );
 
 /* -------------------------------------------------------------------- */
 /*      Swap if needed.                                                 */
@@ -505,10 +659,9 @@ OGRErr	OGRLineString::exportToWkb( OGRwkbByteOrder eByteOrder,
         nCount = CPL_SWAP32( nPointCount );
         memcpy( pabyData+5, &nCount, 4 );
 
-        for( int i = 0; i < nPointCount; i++ )
+        for( i = getCoordinateDimension() * 3 - 1; i >= 0; i-- )
         {
-            CPL_SWAPDOUBLE( pabyData + 9 + 16 * i );
-            CPL_SWAPDOUBLE( pabyData + 9 + 16 * i + 8 );
+            CPL_SWAPDOUBLE( pabyData + 9 + 8 * i );
         }
     }
     
@@ -531,7 +684,12 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
     if( paoPoints != NULL )
     {
         nPointCount = 0;
+
         CPLFree( paoPoints );
+        paoPoints = NULL;
+        
+        CPLFree( padfZ );
+        padfZ = NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -549,7 +707,7 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
 
     nPointCount = 0;
 
-    pszInput = OGRWktReadPoints( pszInput, &paoPoints, &nMaxPoint,
+    pszInput = OGRWktReadPoints( pszInput, &paoPoints, &padfZ, &nMaxPoint,
                                  &nPointCount );
     if( pszInput == NULL )
         return OGRERR_CORRUPT_DATA;
@@ -584,8 +742,14 @@ OGRErr OGRLineString::exportToWkt( char ** ppszReturn )
         if( i > 0 )
             strcat( *ppszReturn, "," );
 
-        strcat( *ppszReturn, OGRMakeWktCoordinate( paoPoints[i].x,
-                                                   paoPoints[i].y ) );
+        if( getCoordinateDimension() == 3 )
+            strcat( *ppszReturn, OGRMakeWktCoordinate( paoPoints[i].x,
+                                                       paoPoints[i].y,
+                                                       padfZ[i] ) );
+        else
+            strcat( *ppszReturn, OGRMakeWktCoordinate( paoPoints[i].x,
+                                                       paoPoints[i].y,
+                                                       0.0 ) );
     }
 
     strcat( *ppszReturn, ")" );
@@ -673,6 +837,11 @@ void OGRLineString::Value( double dfDistance, OGRPoint * poPoint )
                            + paoPoints[i+1].x * dfRatio );
             poPoint->setY( paoPoints[i].y * (1 - dfRatio)
                            + paoPoints[i+1].y * dfRatio );
+
+            if( getCoordinateDimension() == 3 )
+                poPoint->setZ( padfZ[i] * (1 - dfRatio)
+                               + padfZ[i] * dfRatio );
+                
             return;
         }
     }
@@ -733,7 +902,8 @@ OGRBoolean OGRLineString::Equal( OGRGeometry * poOther )
     for( int iPoint = 1; iPoint < getNumPoints(); iPoint++ )
     {
         if( getX(iPoint) != poOLine->getX(iPoint)
-            || getY(iPoint) != poOLine->getY(iPoint) )
+            || getY(iPoint) != poOLine->getY(iPoint) 
+            || getZ(iPoint) != poOLine->getZ(iPoint) )
             return FALSE;
     }
 

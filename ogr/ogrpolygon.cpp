@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/09/13 02:27:33  warmerda
+ * incorporated limited 2.5d support
+ *
  * Revision 1.9  1999/07/27 00:48:12  warmerda
  * Added Equal() support
  *
@@ -497,6 +500,7 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
 /* ==================================================================== */
     OGRRawPoint	*paoPoints = NULL;
     int		nMaxPoints = 0, nMaxRings = 0;
+    double      *padfZ = NULL;
     
     do
     {
@@ -505,7 +509,7 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
 /* -------------------------------------------------------------------- */
 /*      Read points for one ring from input.                            */
 /* -------------------------------------------------------------------- */
-        pszInput = OGRWktReadPoints( pszInput, &paoPoints, &nMaxPoints,
+        pszInput = OGRWktReadPoints( pszInput, &paoPoints, &padfZ, &nMaxPoints,
                                      &nPoints );
 
         if( pszInput == NULL )
@@ -528,7 +532,7 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
 /*      Create the new ring, and assign to ring list.                   */
 /* -------------------------------------------------------------------- */
         papoRings[nRingCount] = new OGRLinearRing();
-        papoRings[nRingCount]->setPoints( nPoints, paoPoints );
+        papoRings[nRingCount]->setPoints( nPoints, paoPoints, padfZ );
 
         nRingCount++;
 
@@ -543,6 +547,7 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
 /*      freak if we don't get a closing bracket.                        */
 /* -------------------------------------------------------------------- */
     CPLFree( paoPoints );
+    CPLFree( padfZ );
    
     if( szToken[0] != ')' )
         return OGRERR_CORRUPT_DATA;

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/09/13 02:27:33  warmerda
+ * incorporated limited 2.5d support
+ *
  * Revision 1.1  1999/05/20 14:35:00  warmerda
  * New
  *
@@ -46,21 +49,32 @@
 /*      will have to tighten up in the future.                          */
 /************************************************************************/
 
-const char *OGRMakeWktCoordinate( double x, double y )
+const char *OGRMakeWktCoordinate( double x, double y, double z )
 
 {
     static char	szCoordinate[80];
 
-    if( x == (int) x && y == (int) y )
-        sprintf( szCoordinate, "%d %d", (int) x, (int) y );
-    else if( fabs(x) < 370 && fabs(y) < 370 )
-        sprintf( szCoordinate, "%.8f %.8f", x, y );
+    if( z == 0 )
+    {
+        if( x == (int) x && y == (int) y )
+            sprintf( szCoordinate, "%d %d", (int) x, (int) y );
+        else if( fabs(x) < 370 && fabs(y) < 370 )
+            sprintf( szCoordinate, "%.8f %.8f", x, y );
+        else
+            sprintf( szCoordinate, "%.3f %.3f", x, y );
+    }
     else
-        sprintf( szCoordinate, "%.3f %.3f", x, y );
+    {
+        if( x == (int) x && y == (int) y && z == (int) z )
+            sprintf( szCoordinate, "%d %d %d", (int) x, (int) y, (int) z );
+        else if( fabs(x) < 370 && fabs(y) < 370 )
+            sprintf( szCoordinate, "%.8f %.8f %.3f", x, y, z );
+        else
+            sprintf( szCoordinate, "%.3f %.3f %.3f", x, y, z );
+    }
 
     return szCoordinate;
 }
-
 
 /************************************************************************/
 /*                          OGRWktReadToken()                           */
@@ -129,7 +143,8 @@ const char *OGRWktReadToken( const char * pszInput, char * pszToken )
 /************************************************************************/
 
 const char * OGRWktReadPoints( const char * pszInput,
-                               OGRRawPoint ** ppaoPoints, int * pnMaxPoints,
+                               OGRRawPoint ** ppaoPoints, double **ppadfZ,
+                               int * pnMaxPoints,
                                int * pnPointsRead )
 
 {
@@ -186,6 +201,12 @@ const char * OGRWktReadPoints( const char * pszInput,
             *pnMaxPoints = *pnMaxPoints * 2 + 10;
             *ppaoPoints = (OGRRawPoint *)
                 CPLRealloc(*ppaoPoints, sizeof(OGRRawPoint) * *pnMaxPoints);
+
+            if( *ppadfZ != NULL )
+            {
+                *ppadfZ = (double *)
+                    CPLRealloc(*ppadfZ, sizeof(double) * *pnMaxPoints);
+            }
         }
 
 /* -------------------------------------------------------------------- */
@@ -194,14 +215,29 @@ const char * OGRWktReadPoints( const char * pszInput,
         (*ppaoPoints)[*pnPointsRead].x = atof(szTokenX);
         (*ppaoPoints)[*pnPointsRead].y = atof(szTokenY);
 
+/* -------------------------------------------------------------------- */
+/*      Do we have a Z coordinate?                                      */
+/* -------------------------------------------------------------------- */
+        pszInput = OGRWktReadToken( pszInput, szDelim );
+
+        if( isdigit(szDelim[0]) )
+        {
+            if( *ppadfZ == NULL )
+            {
+                *ppadfZ = (double *) CPLCalloc(sizeof(double),*pnMaxPoints);
+            }
+
+            (*ppadfZ)[*pnPointsRead] = atof(szDelim);
+            
+            pszInput = OGRWktReadToken( pszInput, szDelim );
+        }
+        
         (*pnPointsRead)++;
 
 /* -------------------------------------------------------------------- */
 /*      Read next delimeter ... it should be a comma if there are       */
 /*      more points.                                                    */
 /* -------------------------------------------------------------------- */
-        pszInput = OGRWktReadToken( pszInput, szDelim );
-
         if( szDelim[0] != ')' && szDelim[0] != ',' )
         {
             CPLDebug( "OGR",

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/09/13 02:27:33  warmerda
+ * incorporated limited 2.5d support
+ *
  * Revision 1.4  1999/07/29 17:30:38  warmerda
  * avoid geometry dependent stuff if ogr_geometry.h not included
  *
@@ -69,10 +72,11 @@
 const char * OGRWktReadToken( const char * pszInput, char * pszToken );
 
 const char * OGRWktReadPoints( const char * pszInput,
-                               OGRRawPoint **ppaoPoints, int * pnMaxPoints,
+                               OGRRawPoint **ppaoPoints, double **ppadfZ,
+                               int * pnMaxPoints,
                                int * pnReadPoints );
 
-const char *OGRMakeWktCoordinate( double, double );
+const char *OGRMakeWktCoordinate( double, double, double );
 #endif
 
 #endif /* ndef _OGR_P_H_INCLUDED */
