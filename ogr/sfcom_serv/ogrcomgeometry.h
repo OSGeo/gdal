@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/14 13:28:38  warmerda
+ * client and service now working for IPoint
+ *
  * Revision 1.1  1999/05/13 19:49:01  warmerda
  * New
  *
@@ -93,6 +96,61 @@ class OGRComGeometryFactory : public IGeometryFactory
   protected:
     ULONG      m_cRef;
 };
+
+#ifdef notdef
+/************************************************************************/
+/*                          OGRComGeometryTmpl                          */
+/*                                                                      */
+/*      Template class with generic geometry capabilities for           */
+/*      different interfaces derived from IGeometry.                    */
+/*                                                                      */
+/*      Note that the argument class must be derived from OGRGeometry.  */
+/************************************************************************/
+
+template<class GC> class OGRComGeometryTmpl
+{
+  public:
+                         OGRComGeometryTmpl( GC * );
+                         
+    // IUnknown
+    STDMETHODIMP         QueryInterface(REFIID, void**);
+    STDMETHODIMP_(ULONG) AddRef();
+    STDMETHODIMP_(ULONG) Release();
+
+    // IGeometry
+    STDMETHOD(get_Dimension)( long *dimension);
+    STDMETHOD(get_SpatialReference)(ISpatialReference ** spatialRef);
+    STDMETHOD(putref_SpatialReference)(ISpatialReference *spatialRef);
+    STDMETHOD(get_IsEmpty)(VARIANT_BOOL *isEmpty);
+    STDMETHOD(SetEmpty)(void);
+    STDMETHOD(get_IsSimple)(VARIANT_BOOL *isSimple);
+    STDMETHOD(Envelope)(IGeometry ** envelope);
+    STDMETHOD(Clone)(IGeometry **newShape);
+    STDMETHOD(Project)(ISpatialReference *newSystem, IGeometry **result);
+    STDMETHOD(Extent2D)(double *minX, double *minY,
+                        double *maxX, double *maxY);
+
+  protected:
+    ULONG      m_cRef;
+
+    GC         poGeometry;
+};
+
+/************************************************************************/
+/*                             OGRComPoint                              */
+/************************************************************************/
+class OGRComPoint : public OGRComGeometryTmpl<OGRPoint>
+{
+  public:
+                         OGRComPoint( OGRPoint * );
+                         
+    // IPoint
+    STDMETHOD(Coords)( double *x, double *y );
+    STDMETHOD(get_X)( double *x );
+    STDMETHOD(get_Y)( double *y );
+};
+#endif
+
 
 /************************************************************************/
 /*                            OGRComGeometry                            */
@@ -164,5 +222,6 @@ class OGRComPoint : public IPoint
     ULONG            m_cRef;
     OGRPoint         *poPoint;
 };
+
 
 #endif /* ndef _OGRCOMGEOMETRY_H_INCLUDED */

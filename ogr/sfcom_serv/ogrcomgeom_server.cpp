@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/14 13:28:38  warmerda
+ * client and service now working for IPoint
+ *
  * Revision 1.1  1999/05/13 19:49:01  warmerda
  * New
  *
@@ -37,6 +40,7 @@
 #define DBINITCONSTANTS
 
 #include "ogrcomgeometry.h"
+#include "sfclsid.h"
 
 const IID IID_IGeometry = 
  {0x6A124031,0xFE38,0x11d0,{0xBE,0xCE,0x00,0x80,0x5F,0x7C,0x42,0x68}};
@@ -55,10 +59,12 @@ const IID IID_IPoint =
 // Function exported from in-process server DLL that is called by COM to
 // obtain an interface pointer to a particular class factory.
 //
+// __declspec(dllexport)
 
-STDAPI DllGetClassObject(REFCLSID rClsId,
-                         REFIID rIID,
-                         void **ppvInterface)
+STDAPI
+DllGetClassObject(REFCLSID rClsId,
+                  REFIID rIID,
+                  void **ppvInterface)
 {
    HRESULT                  hResult;
    OGRComClassFactory       *pFactory;
@@ -66,7 +72,7 @@ STDAPI DllGetClassObject(REFCLSID rClsId,
    printf("In DllGetClassObject\n");
 
    // Make sure we're not being asked for a class factory that we don't know about
-   if (rClsId != CLSID_OGRCOMClassFactory) {
+   if (rClsId != CLSID_OGRComClassFactory) {
       printf("COM is requesting a class other than CLSID_OGRCOMClassFactory\n");
       return E_FAIL;
    }

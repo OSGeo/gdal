@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/14 13:28:38  warmerda
+ * client and service now working for IPoint
+ *
  * Revision 1.1  1999/05/13 19:49:01  warmerda
  * New
  *
@@ -42,7 +45,7 @@
 OGRComPoint::OGRComPoint( OGRPoint * poPointIn ) 
 
 {
-    poPoint = NULL;
+    poPoint = poPointIn;
     m_cRef = 0;
 }
 

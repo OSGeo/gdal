@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/14 13:28:38  warmerda
+ * client and service now working for IPoint
+ *
  * Revision 1.1  1999/05/13 19:49:01  warmerda
  * New
  *
@@ -68,6 +71,7 @@ STDMETHODIMP OGRComClassFactory::QueryInterface(REFIID rIID,
 
    // We don't support this interface
    else {
+      printf( "OGRComClassFactory::QueryInterface() ... failed.\n" );
       *ppInterface = NULL;
       return E_NOINTERFACE;
    }
@@ -142,10 +146,18 @@ STDMETHODIMP OGRComClassFactory::CreateInstance(LPUNKNOWN pUnkOuter,
    // eventually there may be other classes here. 
 
    // Now obtain the requested interface
-   hResult = pObj->QueryInterface(rIID, ppvInterface);
+   if( pObj == NULL )
+   {
+       printf( "OGRComClassFactory::CreateInstance() ... interface not"
+               " recognised.\n" );
+   }
+   else
+       hResult = pObj->QueryInterface(rIID, ppvInterface);
 
    // Destroy the object if the desired interface couldn't be obtained
    if (FAILED(hResult)) {
+      printf( "In OGRComClassFactory::CreateInstance() ... couldn't"
+              "get desired interface.\n" );
       delete pObj;
       return hResult;
    }

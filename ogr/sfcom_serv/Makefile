@@ -16,7 +16,8 @@ SHR_OBJ	=	..\ogrgeometryfactory.obj ..\ogrpoint.obj ..\ogrcurve.obj \
 default:	ogrcomgeometry.dll $(LOC_OBJ) testclient.exe 
 
 ogrcomgeometry.dll:	$(LOC_OBJ)
-	link /dll /out:ogrcomgeometry.dll $(LOC_OBJ) $(SHR_OBJ) $(OLE_LIBS)
+	link /dll /def:ogrcomgeometry.def /out:ogrcomgeometry.dll \
+		$(LOC_OBJ) $(SHR_OBJ) $(OLE_LIBS)
 
 ogrcomclassfactory.obj:	ogrcomclassfactory.cpp
 	$(CC) /c $(CFLAGS) ogrcomclassfactory.cpp
