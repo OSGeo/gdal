@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.26  2003/01/14 14:31:16  warmerda
+ * Added "OFF" as a negative response to CSLFetchBoolean().
+ *
  * Revision 1.25  2002/10/07 19:35:38  dron
  * Fixed description for CSLFetchBoolean()
  *
@@ -809,6 +812,7 @@ int CSLFetchBoolean( char **papszStrList, const char *pszKey, int bDefault )
         return bDefault;
     else if( EQUAL(pszValue,"NO") 
              || EQUAL(pszValue,"FALSE") 
+             || EQUAL(pszValue,"OFF") 
              || EQUAL(pszValue,"0") )
         return FALSE;
     else
