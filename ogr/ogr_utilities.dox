@@ -122,7 +122,7 @@ selections, reducing the set of attributes, setting the output coordinate
 system or even reprojecting the features during translation.
 
 \verbatim
-Usage: ogr2ogr [-skipfailures] [-f format_name]
+Usage: ogr2ogr [-skipfailures] [-append] [-update] [-f format_name]
                [-select field_list] [-where restricted_where]
                [-spat xmin ymin xmax ymax]
                [-t_srs srs_def] [-a_srs srs_def]
@@ -136,6 +136,8 @@ Usage: ogr2ogr [-skipfailures] [-f format_name]
      -f "MapInfo File"
      -f "GML"
      -f "PostgreSQL"
+ -append: Append to existing layer instead of creating new
+ -update: Open existing output datasource in update mode
  -select field_list: Comma-delimited list of fields from input layer to
                      copy to the new layer (defaults to all)
  -where restricted_where: Attribute query (like SQL WHERE)
