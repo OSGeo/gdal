@@ -28,9 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/01/22 02:12:17  sperkins
+ * Minor formatting change.
+ *
  * Revision 1.9  2002/01/22 01:36:54  sperkins
- * 	* frmts/fits/fitsdataset.cpp: Silently truncate when writing
- * 	values to FITS files outside valid range.
+ * Silently truncate when writing values to FITS files outside valid range.
  *
  * Revision 1.8  2001/12/06 19:25:12  warmerda
  * updated as per submission by Diana Esch-Mosher
