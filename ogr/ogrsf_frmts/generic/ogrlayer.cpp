@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/07/26 13:59:06  warmerda
+ * added feature writing api
+ *
  * Revision 1.1  1999/07/08 20:05:13  warmerda
  * New
  *
@@ -59,3 +62,36 @@ int OGRLayer::GetFeatureCount( int bForce )
 
     return nFeatureCount;
 }
+
+/************************************************************************/
+/*                             GetFeature()                             */
+/************************************************************************/
+
+OGRFeature *OGRLayer::GetFeature( long nFeatureId )
+
+{
+    return NULL;
+}
+
+/************************************************************************/
+/*                             SetFeature()                             */
+/************************************************************************/
+
+OGRErr OGRLayer::SetFeature( OGRFeature *, long )
+
+{
+    return OGRERR_UNSUPPORTED_OPERATION;
+}
+
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
+
+OGRErr OGRLayer::CreateFeature( OGRFeature *, long * pnFeatureId )
+
+{
+    *pnFeatureId = OGRNullFID;
+
+    return OGRERR_UNSUPPORTED_OPERATION;
+}
+

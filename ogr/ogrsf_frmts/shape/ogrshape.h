@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/07/26 13:59:25  warmerda
+ * added feature writing api
+ *
  * Revision 1.2  1999/07/08 20:05:45  warmerda
  * added GetFeatureCount()
  *
@@ -50,6 +53,9 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                                OGRFeatureDefn * poDefn, int iShape );
 OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape );
 OGRFeatureDefn *SHPReadOGRFeatureDefn( SHPHandle hSHP, DBFHandle hDBF );
+OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
+                           OGRFeatureDefn *poFeatureDefn,
+                           OGRFeature *poFeature, long * pnFeatureId );
 
 /************************************************************************/
 /*                            OGRShapeLayer                             */
@@ -75,9 +81,16 @@ class OGRShapeLayer : public OGRLayer
     void		ResetReading();
     OGRFeature *	GetNextFeature( long * );
 
+    OGRFeature         *GetFeature( long nFeatureId );
+    OGRErr              SetFeature( OGRFeature *poFeature, long nFeatureId );
+    OGRErr              CreateFeature( OGRFeature *poFeature,
+                                       long * pnFeatureId );
+    
     OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
 
     int                 GetFeatureCount( int );
+
+    int                 TestCapability( const char * );
 };
 
 /************************************************************************/

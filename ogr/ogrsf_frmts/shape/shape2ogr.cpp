@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/07/26 13:59:25  warmerda
+ * added feature writing api
+ *
  * Revision 1.2  1999/07/12 15:39:18  warmerda
  * added setting of shape geometry
  *
@@ -287,5 +290,60 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
     }
 
     return( poFeature );
+}
+
+/************************************************************************/
+/*                         SHPWriteOGRFeature()                         */
+/*                                                                      */
+/*      Write to an existing feature in a shapefile, or create a new    */
+/*      feature.                                                        */
+/************************************************************************/
+
+OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
+                           OGRFeatureDefn * poDefn, 
+                           OGRFeature * poFeature,
+                           long *piShape )
+
+{
+/* -------------------------------------------------------------------- */
+/*      If this is a new feature, establish it's feature id.            */
+/* -------------------------------------------------------------------- */
+    if( *piShape == -1 )
+        *piShape = DBFGetRecordCount( hDBF );
+
+/* -------------------------------------------------------------------- */
+/*      Write the geometry ... fix later.                               */
+/* -------------------------------------------------------------------- */
+// notdef
+//    poFeature->SetGeometryDirectly( SHPReadOGRObject( hSHP, iShape ) );
+
+/* -------------------------------------------------------------------- */
+/*      Write all the fields.                                           */
+/* -------------------------------------------------------------------- */
+    for( int iField = 0; iField < poDefn->GetFieldCount(); iField++ )
+    {
+        switch( poDefn->GetFieldDefn(iField)->GetType() )
+        {
+          case OFTString:
+            DBFWriteStringAttribute( hDBF, *piShape, iField, 
+                                     poFeature->GetFieldAsString( iField ));
+            break;
+
+          case OFTInteger:
+            DBFWriteIntegerAttribute( hDBF, *piShape, iField, 
+                                      poFeature->GetFieldAsInteger(iField) );
+            break;
+
+          case OFTReal:
+            DBFWriteDoubleAttribute( hDBF, *piShape, iField, 
+                                     poFeature->GetFieldAsDouble(iField) );
+            break;
+
+          default:
+            CPLAssert( FALSE );
+        }
+    }
+
+    return OGRERR_NONE;
 }
 

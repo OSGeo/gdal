@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/07/26 13:59:25  warmerda
+ * added feature writing api
+ *
  * Revision 1.4  1999/07/08 20:11:49  warmerda
  * fixed computation of feature count when spatial filter is in effect.
  *
@@ -147,6 +150,40 @@ OGRFeature *OGRShapeLayer::GetNextFeature( long * pnFeatureId )
 }
 
 /************************************************************************/
+/*                             GetFeature()                             */
+/************************************************************************/
+
+OGRFeature *OGRShapeLayer::GetFeature( long nFeatureId )
+
+{
+    return SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, nFeatureId );
+}
+
+/************************************************************************/
+/*                             SetFeature()                             */
+/************************************************************************/
+
+OGRErr OGRShapeLayer::SetFeature( OGRFeature *poFeature, long nFeatureId )
+
+{
+    return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature, 
+                               &nFeatureId );
+}
+
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
+
+OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature, long *pnFeatureId )
+
+{
+    *pnFeatureId = OGRNullFID;
+
+    return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature, 
+                               pnFeatureId );
+}
+
+/************************************************************************/
 /*                          GetFeatureCount()                           */
 /*                                                                      */
 /*      If a spatial filter is in effect, we turn control over to       */
@@ -163,6 +200,29 @@ int OGRShapeLayer::GetFeatureCount( int bForce )
     else
         return nTotalShapeCount;
 }
+
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int OGRShapeLayer::TestCapability( const char * pszCap )
+
+{
+    if( EQUAL(pszCap,OLCRandomRead) 
+        || EQUAL(pszCap,OLCSequentialWrite) 
+        || EQUAL(pszCap,OLCRandomWrite) )
+        return TRUE;
+
+    else if( EQUAL(pszCap,OLCFastFeatureCount) )
+        return poFilterGeom == NULL;
+
+    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
+        return FALSE;
+
+    else 
+        return FALSE;
+}
+
 
 
 /************************************************************************/
@@ -271,3 +331,4 @@ void RegisterOGRShape()
 {
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRShapeDriver );
 }
+

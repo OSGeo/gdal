@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/07/26 13:59:05  warmerda
+ * added feature writing api
+ *
  * Revision 1.4  1999/07/21 13:23:27  warmerda
  * Fixed multiple inclusion protection.
  *
@@ -53,6 +56,14 @@
  * Classes related to registration of format support, and opening datasets.
  */
 
+#define OGRNullFID            -1
+
+#define OLCRandomRead          "RandomRead"
+#define OLCSequentialWrite     "SequentialWrite"
+#define OLCRandomWrite         "RandomWrite"
+#define OLCFastSpatialFilter   "FastSpatialFilter"
+#define OLCFastFeatureCount    "FastFeatureCount"
+
 /************************************************************************/
 /*                               OGRLayer                               */
 /************************************************************************/
@@ -72,12 +83,18 @@ class OGRLayer
 
     virtual void	ResetReading() = 0;
     virtual OGRFeature *GetNextFeature( long * pnFeatureId = NULL ) = 0;
+    virtual OGRFeature *GetFeature( long nFeatureId );
+    virtual OGRErr      SetFeature( OGRFeature *poFeature, long nFeatureId );
+    virtual OGRErr      CreateFeature( OGRFeature *poFeature,
+                                       long * pnFeatureId );
 
     virtual OGRFeatureDefn *GetLayerDefn() = 0;
 
     virtual OGRSpatialReference *GetSpatialRef() { return NULL; }
 
     virtual int         GetFeatureCount( int bForce = TRUE );
+
+    virtual int         TestCapability( const char * ) = 0;
 };
 
 /************************************************************************/
