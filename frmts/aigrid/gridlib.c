@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/02/18 04:54:40  warmerda
+ * Added support for 0xf0 (16bit run length encoded).
+ * Fixed up handling of min value and no data values to be more generic.
+ *
  * Revision 1.7  1999/08/13 03:28:12  warmerda
  * treat 0x3f to 0x43 as raw 32bit data
  *
@@ -115,8 +119,8 @@ CPLErr AIGProcessRaw32BitBlock( GByte *pabyCur, int nDataSize, int nMin,
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
     {
-        panData[i] = pabyCur[0]*256*256*256 + pabyCur[1]*256*256
-                   + pabyCur[2]*256 + pabyCur[3] + nMin;
+        memcpy( panData + i, pabyCur, 4 );
+        panData[i] = CPL_MSBWORD32( panData[i] ) + nMin;
         pabyCur += 4;
     }
 
@@ -264,28 +268,28 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
         if( nMagic == 0xE0 )
         {
             GUInt32	nValue;
-            int		bNoData = FALSE;
             
             nValue = 0;
+            memcpy( &nValue, pabyCur, 4 );
+            pabyCur += 4;
+            nDataSize -= 4;
             
-            for( i = 0; i < 4; i++ )
-            {
-                nValue = nValue * 256 + *(pabyCur++);
-                nDataSize--;
-                
-                if( i == 0 )
-                {
-                    if( nValue & 0x80 )
-                        nValue &= 0x7f;
-                    else
-                        bNoData = TRUE;
-                }
-            }
+            nValue = CPL_MSBWORD32( nValue );
 
-            if( bNoData )
-                nValue = GRID_NO_DATA;
-            else
-                nValue += nMin;
+            nValue += nMin;
+            for( i = 0; i < nMarker; i++ )
+                panData[nPixels++] = nValue;
+        }
+        
+/* -------------------------------------------------------------------- */
+/*      Repeat data - two byte data block (0xF0)                        */
+/* -------------------------------------------------------------------- */
+        else if( nMagic == 0xF0 )
+        {
+            GUInt32	nValue;
+            
+            nValue = (pabyCur[0] * 256 + pabyCur[1]) + nMin;
+            pabyCur += 2;
 
             for( i = 0; i < nMarker; i++ )
                 panData[nPixels++] = nValue;
@@ -311,7 +315,7 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
         else if( nMagic == 0xDF && nMarker < 128 )
         {
             for( i = 0; i < nMarker; i++ )
-                panData[nPixels++] += nMin;
+                panData[nPixels++] = nMin;
         }
         
 /* -------------------------------------------------------------------- */
@@ -404,14 +408,23 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
     {
         nMinSize = pabyCur[1];
         pabyCur += 2;
-        
-        nMin = 0;
-        for( i = 0; i < nMinSize; i++ )
-        {
-            nMin = nMin * 256 + *pabyCur;
-            pabyCur++;
-        }
 
+        if( nMinSize == 4 )
+        {
+            memcpy( &nMin, pabyCur, 4 );
+            nMin = CPL_MSBWORD32( nMin );
+            pabyCur += 4;
+        }
+        else
+        {
+            nMin = 0;
+            for( i = 0; i < nMinSize; i++ )
+            {
+                nMin = nMin * 256 + *pabyCur;
+                pabyCur++;
+            }
+        }
+            
         nDataSize -= 2+nMinSize;
     }
     
