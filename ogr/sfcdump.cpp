@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/11/20 16:42:47  warmerda
+ * added repeat count flag for stress testing
+ *
  * Revision 1.10  2001/11/01 17:04:13  warmerda
  * various changes, including multithread support
  *
@@ -104,7 +107,7 @@ static void Usage()
       "           [-cmd 'sql statement'] [-region top bottom left right]\n"
       "           [-action {dumpprov, dumptables, dumpsftables,\n"
       "                     dumpgeom, dumpfeat, dumpschema}]\n"
-      "           [-quiet]\n"
+      "           [-quiet] [-rc repeat_count] [-mt thread_count]\n"
       "\n"
       "Example:\n"
       "     C:> sfcdump -provider Microsoft.Jet.OLEDB.3.51\n"
@@ -188,6 +191,8 @@ int main( int nArgc, char ** papszArgv )
 int SFCDump( int nArgc, char ** papszArgv )
 
 {
+    int        nRepeatCount = 1;
+
     const char *pszCommand = NULL;
     const char *pszProvider = "Softmap.SF.Shape";
     const char *pszDataSource = "E:\\data\\esri\\shape\\eg_data\\polygon.shp";
@@ -227,6 +232,11 @@ int SFCDump( int nArgc, char ** papszArgv )
         else if( iArg < nArgc-1 && stricmp( papszArgv[iArg],"-ds") == 0 )
         {
             pszDataSource = papszArgv[++iArg];
+        }
+
+        else if( iArg < nArgc-1 && stricmp( papszArgv[iArg],"-rc") == 0 )
+        {
+            nRepeatCount = atoi(papszArgv[++iArg]);
         }
 
         else if( iArg < nArgc-1 && stricmp( papszArgv[iArg],"-table") == 0 )
@@ -298,83 +308,88 @@ int SFCDump( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Access the requested data source.                               */
 /* -------------------------------------------------------------------- */
-    SFCDataSource      *poDS;
 
-    poDS = SFCOpenDataSource( pszProvider, pszDataSource, pszProviderString );
-    if( poDS == NULL )
-        return 0;
+    int           iRepetition;
+
+    for( iRepetition = 0; iRepetition < nRepeatCount; iRepetition++ )
+    {
+        SFCDataSource      *poDS;
+
+        poDS = SFCOpenDataSource( pszProvider, pszDataSource, 
+                                  pszProviderString );
+        if( poDS == NULL )
+            return 0;
 
 /* -------------------------------------------------------------------- */
 /*      If the action is to dump tables, do it now, without trying      */
 /*      to open a table.                                                */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszAction,"dumptables") )
-    {
-        SFCDumpTables( poDS );
-        return 0;
-    }
+        if( EQUAL(pszAction,"dumptables") )
+        {
+            SFCDumpTables( poDS );
+            return 0;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      If the action is to dump SF tables, do it now, without trying   */
 /*      to open a table.                                                */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszAction,"dumpsftables") )
-    {
-        SFCDumpSFTables( poDS );
-        return 0;
-    }
+        if( EQUAL(pszAction,"dumpsftables") )
+        {
+            SFCDumpSFTables( poDS );
+            return 0;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Open the requested table.                                       */
 /* -------------------------------------------------------------------- */
-    SFCTable      *poTable;
-
-    if( pszCommand == NULL )
-    {
-        poTable = poDS->CreateSFCTable( pszTable );
-        if( poTable == NULL )
+        SFCTable      *poTable;
+        if( pszCommand == NULL )
         {
-            printf( "Failed to open table %s.\n",  pszTable );
-            return 1;
+            poTable = poDS->CreateSFCTable( pszTable );
+            if( poTable == NULL )
+            {
+                printf( "Failed to open table %s.\n",  pszTable );
+                return 1;
+            }
         }
-    }
-    else
-    {
-        poTable = poDS->Execute( pszCommand, poSpatialFilter, 
-                                 eSpatialOperator );
-        if( poTable == NULL )
+        else
         {
-            printf( "Failed to execute %s.\n",  pszCommand );
-            return 1;
+            poTable = poDS->Execute( pszCommand, poSpatialFilter, 
+                                     eSpatialOperator );
+            if( poTable == NULL )
+            {
+                printf( "Failed to execute %s.\n",  pszCommand );
+                return 1;
+            }
         }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Display a little bit of information about the opened table.     */
 /* -------------------------------------------------------------------- */
-    char      *pszSRS_WKT;
+        char      *pszSRS_WKT;
 
-    pszSRS_WKT = poDS->GetWKTFromSRSId( poTable->GetSpatialRefID() );
-    printf( "Spatial Reference System ID: %d (%s)\n", 
-            poTable->GetSpatialRefID(), pszSRS_WKT );
-    CoTaskMemFree( pszSRS_WKT );
+        pszSRS_WKT = poDS->GetWKTFromSRSId( poTable->GetSpatialRefID() );
+        printf( "Spatial Reference System ID: %d (%s)\n", 
+                poTable->GetSpatialRefID(), pszSRS_WKT );
+        CoTaskMemFree( pszSRS_WKT );
 
-    printf( "Geometry Type: %d\n", 
-            poTable->GetGeometryType() );
-
-    delete poDS;
+        printf( "Geometry Type: %d\n", 
+                poTable->GetGeometryType() );
 
 /* -------------------------------------------------------------------- */
 /*      Perform action on the table.                                    */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszAction,"dumpgeom") )
-        SFCDumpTableGeometry( poTable );
-    else if( EQUALN(pszAction, "dumpfeat",8) )
-        SFCDumpTableFeatures( poTable );
-    else
-        SFCDumpTableSchema( poTable );
+        if( EQUAL(pszAction,"dumpgeom") )
+            SFCDumpTableGeometry( poTable );
+        else if( EQUALN(pszAction, "dumpfeat",8) )
+            SFCDumpTableFeatures( poTable );
+        else
+            SFCDumpTableSchema( poTable );
 
-    delete poTable;
+        delete poTable;
+        delete poDS;
+    }
 
     return 0;
 }
