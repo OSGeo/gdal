@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2003/04/25 19:57:14  warmerda
+ * Avoid warning.
+ *
  * Revision 1.23  2003/04/25 19:45:41  warmerda
  * Use special case for full res operations that involve a buffer that is
  * not packaged (ie. its pixel interleaved).
@@ -1023,7 +1026,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
     }
 
     int         nBandDataSize = GDALGetDataTypeSize( eDataType ) / 8;
-    int         nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
+//    int         nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
 
     papabySrcBlock = (GByte **) CPLCalloc(sizeof(GByte*),nBandCount);
     papoBlocks = (GDALRasterBlock **) CPLCalloc(sizeof(void*),nBandCount);
