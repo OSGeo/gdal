@@ -2,6 +2,7 @@ GDAL_ROOT	=	..
 
 include ../GDALmake.opt
 
+GDALMODULE	=	_gdalmodule
 OBJ        	=       gdal_wrap.o numpydataset.o gdalnumeric.o
 
 CPPFLAGS	+=	$(GDAL_INCLUDE) $(PYTHON_INCLUDES)
@@ -21,7 +22,7 @@ gdal_wrap.c:	gdal.i
 
 $(GDALMODULE).so:	$(OBJ) $(EXE_DEP_LIBS)
 	$(LD_SHARED) $(OBJ) \
-		$(GDAL_SLIB_LINK) $(PYTHON_LIBS) $(LIBS) -o $(GDALMODULE)
+		$(GDAL_SLIB_LINK) $(PYTHON_LIBS) $(LIBS) -o $@
 
 %.lo:	%.o ;
 
