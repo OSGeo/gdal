@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/11/07 21:55:12  warmerda
+ * complete fid support, relative dsname, fixes
+ *
  * Revision 1.1  2003/11/07 17:50:36  warmerda
  * New
  *
@@ -77,8 +80,11 @@ int OGRVRTDataSource::Initialize( CPLXMLNode *psTree, const char *pszNewName )
     CPLAssert( nLayers == 0 );
 
 /* -------------------------------------------------------------------- */
-/*      Set name.                                                       */
+/*      Set name, and capture the directory path so we can use it       */
+/*      for relative datasources.                                       */
 /* -------------------------------------------------------------------- */
+    char *pszVRTDirectory = CPLStrdup( CPLGetPath( pszNewName ) );
+
     pszName = CPLStrdup( pszNewName );
 
 /* -------------------------------------------------------------------- */
@@ -99,8 +105,9 @@ int OGRVRTDataSource::Initialize( CPLXMLNode *psTree, const char *pszNewName )
         
         poLayer = new OGRVRTLayer();
         
-        if( !poLayer->Initialize( psLTree ) )
+        if( !poLayer->Initialize( psLTree, pszVRTDirectory ) )
         {
+            CPLFree( pszVRTDirectory );
             delete poLayer;
             return FALSE;
         }
@@ -113,6 +120,7 @@ int OGRVRTDataSource::Initialize( CPLXMLNode *psTree, const char *pszNewName )
         papoLayers[nLayers++] = poLayer;
     }
 
+    CPLFree( pszVRTDirectory );
     return TRUE;
 }
 
