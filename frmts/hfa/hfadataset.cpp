@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.36  2003/06/10 16:58:57  warmerda
+ * Added check on failiure of Create in CreateCopy()
+ *
  * Revision 1.35  2003/05/30 17:30:46  warmerda
  * Avoid use of goto.
  *
@@ -1923,6 +1926,9 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                   poSrcDS->GetRasterYSize(),
                                   nBandCount,
                                   eType, papszOptions );
+
+    if( poDS == NULL )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Does the source have a PCT for any of the bands?  If so,        */
