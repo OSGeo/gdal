@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.27  2003/06/25 08:26:18  dron
+ * Support for Aster Level 1A/1B/2 products.
+ *
  * Revision 1.26  2003/06/12 15:07:56  dron
  * Added support for SeaWiFS Level 3 Standard Mapped Image Products.
  *
@@ -111,6 +114,7 @@
  */
 
 #include <string.h>
+#include <math.h>
 
 #include "hdf.h"
 #include "mfhdf.h"
@@ -131,6 +135,8 @@ CPL_C_END
 const char      *pszGDALSignature =
         "Created with GDAL (http://www.remotesensing.org/gdal/)";
 
+const double    PI = 3.14159265358979323846;
+
 /************************************************************************/
 /* ==================================================================== */
 /*                              HDF4ImageDataset                        */
@@ -141,7 +147,6 @@ class HDF4ImageDataset : public HDF4Dataset
 {
     friend class HDF4ImageRasterBand;
 
-    char        **papszSubdatasetName;
     char        *pszFilename;
     HDF4SubdatasetType iSubdatasetType;
     int32       iSDS, iGR, iPal, iDataset;
@@ -526,11 +531,11 @@ CPLErr HDF4ImageRasterBand::SetNoDataValue( double dfNoData )
 
 HDF4ImageDataset::HDF4ImageDataset()
 {
+    pszFilename = NULL;
     hSD = 0;
     hGR = 0;
     iSDS = 0;
     iGR = 0;
-    papszSubdatasetName = NULL;
     iSubdatasetType = HDF4_UNKNOWN;
     papszLocalMetadata = NULL;
     poColorTable = NULL;
@@ -557,6 +562,8 @@ HDF4ImageDataset::~HDF4ImageDataset()
 {
     FlushCache();
     
+    if ( pszFilename )
+        CPLFree( pszFilename );
     if ( iSDS > 0 )
         SDendaccess( iSDS );
     if ( hSD > 0 )
@@ -565,8 +572,6 @@ HDF4ImageDataset::~HDF4ImageDataset()
         GRendaccess( iGR );
     if ( hGR > 0 )
         GRend( hGR );
-    if ( papszSubdatasetName )
-        CSLDestroy( papszSubdatasetName );
     if ( papszLocalMetadata )
         CSLDestroy( papszLocalMetadata );
     if ( poColorTable != NULL )
@@ -869,6 +874,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
+    char                **papszSubdatasetName;
     HDF4ImageDataset    *poDS;
 
     poDS = new HDF4ImageDataset( );
@@ -876,31 +882,34 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
 
-    poDS->papszSubdatasetName =
-                CSLTokenizeString2( poOpenInfo->pszFilename, ":", 
-                                    CSLT_HONOURSTRINGS );
-    poDS->pszFilename = poDS->papszSubdatasetName[2];
+    papszSubdatasetName = CSLTokenizeString2( poOpenInfo->pszFilename,
+                                              ":", CSLT_HONOURSTRINGS );
+    poDS->pszFilename = CPLStrdup( papszSubdatasetName[2] );
 
-    if( EQUAL( poDS->papszSubdatasetName[0], "HDF4_SDS" ) )
+    if( EQUAL( papszSubdatasetName[0], "HDF4_SDS" ) )
         poDS->iSubdatasetType = HDF4_SDS;
-    else if ( EQUAL( poDS->papszSubdatasetName[0], "HDF4_GR" ) )
+    else if ( EQUAL( papszSubdatasetName[0], "HDF4_GR" ) )
         poDS->iSubdatasetType = HDF4_GR;
     else
         poDS->iSubdatasetType = HDF4_UNKNOWN;
     
-    if( EQUAL( poDS->papszSubdatasetName[1], "GDAL_HDF4" ) )
+    if( EQUAL( papszSubdatasetName[1], "GDAL_HDF4" ) )
         poDS->iDataType = GDAL_HDF4;
-    else if( EQUAL( poDS->papszSubdatasetName[1], "ASTER_L1B" ) )
+    else if( EQUAL( papszSubdatasetName[1], "ASTER_L1A" ) )
+        poDS->iDataType = ASTER_L1A;
+    else if( EQUAL( papszSubdatasetName[1], "ASTER_L1B" ) )
         poDS->iDataType = ASTER_L1B;
-    else if( EQUAL( poDS->papszSubdatasetName[1], "AST14DEM" ) )
+    else if( EQUAL( papszSubdatasetName[1], "ASTER_L2" ) )
+        poDS->iDataType = ASTER_L2;
+    else if( EQUAL( papszSubdatasetName[1], "AST14DEM" ) )
         poDS->iDataType = AST14DEM;
-    else if( EQUAL( poDS->papszSubdatasetName[1], "MODIS_L1B" ) )
+    else if( EQUAL( papszSubdatasetName[1], "MODIS_L1B" ) )
         poDS->iDataType = MODIS_L1B;
-    else if( EQUAL( poDS->papszSubdatasetName[1], "MODIS_L3" ) )
+    else if( EQUAL( papszSubdatasetName[1], "MODIS_L3" ) )
         poDS->iDataType = MODIS_L3;
-    else if( EQUAL( poDS->papszSubdatasetName[1], "MODIS_UNK" ) )
+    else if( EQUAL( papszSubdatasetName[1], "MODIS_UNK" ) )
         poDS->iDataType = MODIS_UNK;
-    else if( EQUAL( poDS->papszSubdatasetName[1], "SEAWIFS_L3" ) )
+    else if( EQUAL( papszSubdatasetName[1], "SEAWIFS_L3" ) )
         poDS->iDataType = SEAWIFS_L3;
     else
         poDS->iDataType = UNKNOWN;
@@ -926,7 +935,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Select SDS or GR to read from.                                  */
 /* -------------------------------------------------------------------- */
-    poDS->iDataset = atoi( poDS->papszSubdatasetName[3] );
+    poDS->iDataset = atoi( papszSubdatasetName[3] );
+    CSLDestroy( papszSubdatasetName );
+
     switch ( poDS->iSubdatasetType )
     {
         case HDF4_SDS:
@@ -1045,8 +1056,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                     poDS->GetDataType( poDS->iNumType ) ) );
 
 /* -------------------------------------------------------------------- */
-/*      Read projection information                                     */
+/*      Now we will handle particular types of HDF products. Every      */
+/*      HDF product has its own structure.                              */
 /* -------------------------------------------------------------------- */
+
     // Variables for reading georeferencing
     int             iUTMZone;
     double          dfULX, dfULY, dfURX, dfURY, dfLLX, dfLLY, dfLRX, dfLRY;
@@ -1058,19 +1071,12 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     char            szName[VSNAMELENMAX + 1];
     int32	    aiDimSizes[MAX_VAR_DIMS];
     int32           iStart[MAX_NC_DIMS], iEdges[MAX_NC_DIMS];
-    float           *pfLat = NULL, *pfLong = NULL;
-    GInt16          *piHeight = NULL;
-    float           fLatNoData, fLongNoData;
     GInt16          iHeightNoData;
     int             bLatNoDataSet = FALSE, bLongNoDataSet = FALSE;
     int             bHeightNoDataSet = FALSE;
 
     const char      *pszValue;
 
-/* -------------------------------------------------------------------- */
-/*      Now we will handle particular types of HDF products. Every      */
-/*      HDF product has its own structure.                              */
-/* -------------------------------------------------------------------- */
     switch ( poDS->iDataType )
     {
 
@@ -1116,71 +1122,589 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         break;
 
 /* -------------------------------------------------------------------- */
+/*      ASTER Level 1A.                                                 */
+/* -------------------------------------------------------------------- */
+        case ASTER_L1A:
+        {
+            CPLDebug( "HDF4Image", "Input dataset interpreted as ASTER_L1A" );
+
+/* -------------------------------------------------------------------- */
+/*      Read geolocation points.                                        */
+/* -------------------------------------------------------------------- */
+            double          *pdfLat = NULL, *pdfLong = NULL;
+            GInt32          *piLatticeX = NULL, *piLatticeY = NULL;
+
+            nXPoints = nYPoints = 0;
+            for ( i = poDS->iDataset - 1; i >= 0; i-- )
+            {
+                iSDS = SDselect( poDS->hSD, i );
+
+                if ( SDgetinfo( iSDS, szName, &iRank, aiDimSizes,
+                                &iNumType, &nAttrs) == 0 )
+                {
+                    if ( EQUALN( szName, "Latitude", 8 )
+                         && iNumType == DFNT_FLOAT64 )
+                    {
+                        if ( (nXPoints && nXPoints != aiDimSizes[1])
+                             || (nYPoints && nYPoints != aiDimSizes[0]) )
+                        {
+                            // Error: geolocation arrays has different sizes
+                            break;
+                        }
+                        else
+                        {
+                            nXPoints = aiDimSizes[1];
+                            nYPoints = aiDimSizes[0];
+                        }
+
+                        iStart[1] = 0;
+                        iEdges[1] = nXPoints;
+
+                        iStart[0] = 0;
+                        iEdges[0] = nYPoints;
+                        pdfLat = (double *)CPLMalloc( nXPoints * nYPoints *
+                                                      sizeof( double ) );
+                        SDreaddata( iSDS, iStart, NULL, iEdges, pdfLat );
+                    }
+                    else if ( EQUALN( szName, "Longitude", 9 )
+                              && iNumType == DFNT_FLOAT64 )
+                    {
+                        if ( (nXPoints && nXPoints != aiDimSizes[1])
+                             || (nYPoints && nYPoints != aiDimSizes[0]) )
+                        {
+                            // Error: geolocation arrays has different sizes
+                            break;
+                        }
+                        else
+                        {
+                            nXPoints = aiDimSizes[1];
+                            nYPoints = aiDimSizes[0];
+                        }
+
+                        iStart[1] = 0;
+                        iEdges[1] = nXPoints;
+
+                        iStart[0] = 0;
+                        iEdges[0] = nYPoints;
+                        pdfLong = (double *)CPLMalloc( nXPoints * nYPoints *
+                                                       sizeof( double ) );
+                        SDreaddata( iSDS, iStart, NULL, iEdges, pdfLong );
+                    }
+                    else if ( EQUALN( szName, "LatticePoint", 12 )
+                              && iNumType == DFNT_INT32 )
+                    {
+                        if ( (nXPoints && nXPoints != aiDimSizes[1])
+                             || (nYPoints && nYPoints != aiDimSizes[0])
+                             || aiDimSizes[2] != 2 )
+                        {
+                            // Error: geolocation arrays has different sizes
+                            break;
+                        }
+                        else
+                        {
+                            nXPoints = aiDimSizes[1];
+                            nYPoints = aiDimSizes[0];
+                        }
+
+                        iStart[1] = 0;
+                        iEdges[1] = nXPoints;
+
+                        iStart[0] = 0;
+                        iEdges[0] = nYPoints;
+
+                        iStart[2] = 0;
+                        iEdges[2] = 1;
+                        piLatticeX = (GInt32 *)CPLMalloc( nXPoints * nYPoints *
+                                                          sizeof( GInt32 ) );
+                        SDreaddata( iSDS, iStart, NULL, iEdges, piLatticeX );
+
+                        iStart[2] = 1;
+                        iEdges[2] = 1;
+                        piLatticeY = (GInt32 *)CPLMalloc( nXPoints * nYPoints *
+                                                          sizeof( GInt32 ) );
+                        SDreaddata( iSDS, iStart, NULL, iEdges, piLatticeY );
+                    }
+                }
+
+                poDS->iSDS = SDendaccess( iSDS );
+            }
+
+            if ( pdfLat && pdfLong && piLatticeX && piLatticeY )
+            {
+                if ( poDS->pszGCPProjection )
+                    CPLFree( poDS->pszGCPProjection );
+                poDS->pszGCPProjection = CPLStrdup( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]" );
+
+                CPLDebug( "HDF4Image",
+                          "Reading geolocation points: nXPoints=%d, nYPoints=%d",
+                          nXPoints, nYPoints );
+                
+                poDS->nGCPCount = 0;
+                poDS->pasGCPList =
+                    (GDAL_GCP *) CPLCalloc( nXPoints * nYPoints,
+                                            sizeof( GDAL_GCP ) );
+                GDALInitGCPs( nXPoints * nYPoints, poDS->pasGCPList );
+
+                for ( i = 0; i < nYPoints; i++ )
+                {
+                    for ( j = 0; j < nXPoints; j++ )
+                    {
+                        int index = i * nXPoints + j;
+
+                        // GCPs in Level 1A dataset are in geocentric
+                        // coordinates. Convert them in geodetic (we will
+                        // convert longitudes only, latitudes does not need to
+                        // be converted, because they are the same).
+                        // This calculation valid foe WGS84 datum only.
+                        pdfLat[index] =
+                            atan(tan(pdfLat[index]*PI/180)/0.99330562)*180/PI;
+                        poDS->pasGCPList[index].dfGCPY = pdfLat[index];
+                        poDS->pasGCPList[index].dfGCPX = pdfLong[index];
+                        poDS->pasGCPList[index].dfGCPZ = 0.0;
+
+                        poDS->pasGCPList[index].dfGCPPixel =
+                            piLatticeX[index] + 0.5;
+                        poDS->pasGCPList[index].dfGCPLine =
+                            piLatticeY[index] + 0.5;
+                        poDS->nGCPCount++;
+                    }
+                }
+
+                CPLFree( pdfLat );
+                CPLFree( pdfLong );
+                CPLFree( piLatticeX );
+                CPLFree( piLatticeY );
+            }
+
+            if ( pdfLat )
+                CPLFree( pdfLat );
+            if ( pdfLong )
+                CPLFree( pdfLong );
+            if ( piLatticeX )
+                CPLFree( piLatticeX );
+            if ( piLatticeY )
+                CPLFree( piLatticeY );
+        }
+        break;
+
+/* -------------------------------------------------------------------- */
 /*      ASTER Level 1B.                                                 */
 /* -------------------------------------------------------------------- */
         case ASTER_L1B:
-            CPLDebug( "HDF4Image", "Input dataset interpreted as ASTER_L1B" );
-        // Read geolocation points
-        /*poDS->iSDS = SDselect( poDS->hSD, poDS->iDataset );
-        iStart[poGDS->iYDim] = nBlockYOff;
-        iEdges[poGDS->iYDim] = nBlockYSize;
-    
-        iStart[poGDS->iXDim] = nBlockXOff;
-        iEdges[poGDS->iXDim] = nBlockXSize;
-        SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (float64 *)pImage );*/
-        if ( strlen( poDS->szName ) >= 10 &&
-             EQUAL( CSLFetchNameValue( poDS->papszGlobalMetadata,
-                CPLSPrintf("MPMETHOD%s", &poDS->szName[9]) ), "UTM" ) )
         {
-            oSRS.SetWellKnownGeogCS( "WGS84" );
-            
-            poDS->ReadCoordinates( CSLFetchNameValue( 
-                poDS->papszGlobalMetadata, "UPPERLEFT" ), &dfULY, &dfULX );
-            poDS->ReadCoordinates( CSLFetchNameValue( 
-                poDS->papszGlobalMetadata, "UPPERRIGHT" ), &dfURY, &dfURX );
-            poDS->ReadCoordinates( CSLFetchNameValue( 
-                poDS->papszGlobalMetadata, "LOWERLEFT" ), &dfLLY, &dfLLX );
-            poDS->ReadCoordinates( CSLFetchNameValue( 
-                poDS->papszGlobalMetadata, "LOWERRIGHT" ), &dfLRY, &dfLRX );
-            poDS->ReadCoordinates( CSLFetchNameValue( 
-                poDS->papszGlobalMetadata, "SCENECENTER" ),
-                                &dfCenterY, &dfCenterX );
-            
-            iUTMZone = atoi( CSLFetchNameValue( poDS->papszGlobalMetadata,
-                            CPLSPrintf("UTMZONECODE%s", &poDS->szName[9]) ) );
-            if( iUTMZone > 0 )
-                oSRS.SetUTM( iUTMZone, TRUE );
-            else
-                oSRS.SetUTM( - iUTMZone, FALSE );
+            CPLDebug( "HDF4Image", "Input dataset interpreted as ASTER_L1B" );
 
-            oSRS.exportToWkt( &poDS->pszProjection );
+            // XXX: Band 3B should be always georeferenced using GCPs,
+            // not the geotransformation matrix, because corner coordinates
+            // valid only for other bands, not 3B.
+            if ( !EQUAL( poDS->szName, "ImageData3B" ) &&
+                 strlen( poDS->szName ) >= 10 &&
+                 EQUAL( CSLFetchNameValue( poDS->papszGlobalMetadata,
+                    CPLSPrintf("MPMETHOD%s", &poDS->szName[9]) ), "UTM" ) )
+            {
+                oSRS.SetWellKnownGeogCS( "WGS84" );
+                
+                poDS->ReadCoordinates( CSLFetchNameValue( 
+                    poDS->papszGlobalMetadata, "UPPERLEFT" ), &dfULY, &dfULX );
+                poDS->ReadCoordinates( CSLFetchNameValue( 
+                    poDS->papszGlobalMetadata, "UPPERRIGHT" ), &dfURY, &dfURX );
+                poDS->ReadCoordinates( CSLFetchNameValue( 
+                    poDS->papszGlobalMetadata, "LOWERLEFT" ), &dfLLY, &dfLLX );
+                poDS->ReadCoordinates( CSLFetchNameValue( 
+                    poDS->papszGlobalMetadata, "LOWERRIGHT" ), &dfLRY, &dfLRX );
+                poDS->ReadCoordinates( CSLFetchNameValue( 
+                    poDS->papszGlobalMetadata, "SCENECENTER" ),
+                                    &dfCenterY, &dfCenterX );
+                
+                iUTMZone = atoi( CSLFetchNameValue( poDS->papszGlobalMetadata,
+                                CPLSPrintf("UTMZONECODE%s", &poDS->szName[9]) ) );
+                if( iUTMZone > 0 )
+                    oSRS.SetUTM( iUTMZone, TRUE );
+                else
+                    oSRS.SetUTM( - iUTMZone, FALSE );
 
-            poDS->ToUTM( &oSRS, &dfULX, &dfULY );
-            poDS->ToUTM( &oSRS, &dfURX, &dfURY );
-            poDS->ToUTM( &oSRS, &dfLLX, &dfLLY );
-            poDS->ToUTM( &oSRS, &dfLRX, &dfLRY );
-            
-            // Determine pixel sizes for different bands
-            if( EQUAL(&poDS->szName[9], "1") || EQUAL(&poDS->szName[9], "2") ||
-                EQUAL(&poDS->szName[9], "3N") || EQUAL(&poDS->szName[9], "3B") )
-                poDS->adfGeoTransform[1] = poDS->adfGeoTransform[5] = 15;     // VNIR, 15 m
-            else if ( EQUAL(&poDS->szName[9], "4")
-                      || EQUAL(&poDS->szName[9], "5")
-                      || EQUAL(&poDS->szName[9], "6")
-                      || EQUAL(&poDS->szName[9], "7")
-                      || EQUAL(&poDS->szName[9], "8")
-                      || EQUAL(&poDS->szName[9], "9") )
-                poDS->adfGeoTransform[1] = poDS->adfGeoTransform[5] = 30;     // SWIR, 30 m
-            else
-                poDS->adfGeoTransform[1] = poDS->adfGeoTransform[5] = 90;     // TIR, 90 m
-            if( dfCenterY > 0 )
-                poDS->adfGeoTransform[5] = -poDS->adfGeoTransform[5];
-            
-            poDS->adfGeoTransform[0] = dfLLX + poDS->adfGeoTransform[1] / 2;
-            poDS->adfGeoTransform[3] = dfULY - poDS->adfGeoTransform[5] / 2;
-            poDS->adfGeoTransform[2] = 0.0;
-            poDS->adfGeoTransform[4] = 0.0;
-            poDS->bHasGeoTransfom = TRUE;
+                oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
+                if ( poDS->pszProjection )
+                    CPLFree( poDS->pszProjection );
+                oSRS.exportToWkt( &poDS->pszProjection );
+
+                poDS->ToUTM( &oSRS, &dfULX, &dfULY );
+                poDS->ToUTM( &oSRS, &dfURX, &dfURY );
+                poDS->ToUTM( &oSRS, &dfLLX, &dfLLY );
+                poDS->ToUTM( &oSRS, &dfLRX, &dfLRY );
+                
+                // Calculate geotransfom matrix from corner coordinates
+                GDAL_GCP asGCPs[3];
+                GDALInitGCPs( 3, asGCPs );
+
+                asGCPs[0].dfGCPPixel = 0.5;
+                asGCPs[0].dfGCPLine = 0.5;
+                asGCPs[0].dfGCPX = dfULX;
+                asGCPs[0].dfGCPY = dfULY;
+                asGCPs[0].dfGCPZ = 0.0;
+
+                asGCPs[1].dfGCPPixel = poDS->nRasterXSize + 0.5;
+                asGCPs[1].dfGCPLine = 0.5;
+                asGCPs[1].dfGCPX = dfURX;
+                asGCPs[1].dfGCPY = dfURY;
+                asGCPs[1].dfGCPZ = 0.0;
+
+                asGCPs[2].dfGCPPixel = poDS->nRasterXSize + 0.5;
+                asGCPs[2].dfGCPLine = poDS->nRasterYSize + 0.5;
+                asGCPs[2].dfGCPX = dfLRX;
+                asGCPs[2].dfGCPY = dfLRY;
+                asGCPs[2].dfGCPZ = 0.0;
+
+                GDALGCPsToGeoTransform( 3, asGCPs, poDS->adfGeoTransform, TRUE );
+                GDALDeinitGCPs( 3, asGCPs );
+                poDS->bHasGeoTransfom = TRUE;
+            }
+
+/* -------------------------------------------------------------------- */
+/*      Read geolocation points.                                        */
+/* -------------------------------------------------------------------- */
+            double          *pdfLat = NULL, *pdfLong = NULL;
+
+            nXPoints = nYPoints = 0;
+            for ( i = poDS->iDataset - 1; i >= 0; i-- )
+            {
+                iSDS = SDselect( poDS->hSD, i );
+
+                if ( SDgetinfo( iSDS, szName, &iRank, aiDimSizes,
+                                &iNumType, &nAttrs) == 0 )
+                {
+                    if ( EQUALN( szName, "Latitude", 8 )
+                         && iNumType == DFNT_FLOAT64 )
+                    {
+                        if ( (nXPoints && nXPoints != aiDimSizes[1])
+                             || (nYPoints && nYPoints != aiDimSizes[0]) )
+                        {
+                            CPLDebug( "HDF4Image",
+                                      "Size of latitude array differs from "
+                                      "struct metadata, skip reading" );
+                            goto CleanupAndBreakAsterL1B;
+                        }
+                        else
+                        {
+                            nXPoints = aiDimSizes[1];
+                            nYPoints = aiDimSizes[0];
+                        }
+
+                        iStart[1] = 0;
+                        iEdges[1] = nXPoints;
+
+                        iStart[0] = 0;
+                        iEdges[0] = nYPoints;
+                        pdfLat = (double *)CPLCalloc( nXPoints * nYPoints,
+                                                      sizeof( double ) );
+                        SDreaddata( iSDS, iStart, NULL, iEdges, pdfLat );
+                    }
+                    else if ( EQUALN( szName, "Longitude", 9 )
+                              && iNumType == DFNT_FLOAT64 )
+                    {
+                        if ( (nXPoints && nXPoints != aiDimSizes[1])
+                             || (nYPoints && nYPoints != aiDimSizes[0]) )
+                        {
+                            CPLDebug( "HDF4Image",
+                                      "Size of longitude array differs from "
+                                      "struct metadata, skip reading" );
+                            goto CleanupAndBreakAsterL1B;
+                        }
+                        else
+                        {
+                            nXPoints = aiDimSizes[1];
+                            nYPoints = aiDimSizes[0];
+                        }
+
+                        iStart[1] = 0;
+                        iEdges[1] = nXPoints;
+
+                        iStart[0] = 0;
+                        iEdges[0] = nYPoints;
+                        pdfLong = (double *)CPLCalloc( nXPoints * nYPoints,
+                                                       sizeof( double ) );
+                        SDreaddata( iSDS, iStart, NULL, iEdges, pdfLong );
+                    }
+                }
+
+                poDS->iSDS = SDendaccess( iSDS );
+            }
+
+            if ( pdfLat && pdfLong )
+            {
+                if ( poDS->pszGCPProjection )
+                    CPLFree( poDS->pszGCPProjection );
+                poDS->pszGCPProjection = CPLStrdup( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]" );
+
+                HDF4EOSDimensionMap *psDMX = NULL, *psDMY = NULL;
+                int                 nCount = CPLListCount( poDS->psDataField );
+
+                for ( i = 0; i < nCount; i++ )
+                {
+                    HDF4EOSDataField *psTemp = (HDF4EOSDataField *)
+                       CPLListGetData( CPLListGet( poDS->psDataField, i ) );
+
+                    if ( EQUAL( psTemp->pszDataFieldName, poDS->szName ) )
+                    {
+                        psDMX = (HDF4EOSDimensionMap *)
+                            CPLListGetData(CPLListGet( psTemp->psDimList, 1 ));
+                        psDMY = (HDF4EOSDimensionMap *)
+                            CPLListGetData(CPLListGet( psTemp->psDimList, 0 ));
+                    }
+                }
+
+                if ( !psDMX || !psDMY )
+                    goto CleanupAndBreakAsterL1B;
+
+                CPLDebug( "HDF4Image",
+                          "Reading geolocation points: nXPoints=%d, nYPoints=%d, "
+                          "OffsetX=%f, IncrementX=%f, OffsetY=%f, IncrementY=%f",
+                          nXPoints, nYPoints,
+                          psDMX->dfOffset, psDMX->dfIncrement,
+                          psDMY->dfOffset, psDMY->dfIncrement );
+
+                poDS->nGCPCount = 0;
+                poDS->pasGCPList =
+                    (GDAL_GCP *) CPLCalloc( nXPoints * nYPoints,
+                                            sizeof( GDAL_GCP ) );
+                GDALInitGCPs( nXPoints * nYPoints, poDS->pasGCPList );
+
+                for ( i = 0; i < nYPoints; i++ )
+                {
+                    for ( j = 0; j < nXPoints; j++ )
+                    {
+                        int index = i * nXPoints + j;
+
+                        // GCPs in Level 1B dataset are in geocentric
+                        // coordinates. Convert them in geodetic (we will
+                        // convert longitudes only, latitudes does not need to
+                        // be converted, because they are the same).
+                        // This calculation valid foe WGS84 datum only.
+                        pdfLat[index] =
+                            atan(tan(pdfLat[index]*PI/180)/0.99330562)*180/PI;
+                        poDS->pasGCPList[index].dfGCPY = pdfLat[index];
+                        poDS->pasGCPList[index].dfGCPX = pdfLong[index];
+                        poDS->pasGCPList[index].dfGCPZ = 0.0;
+
+                        poDS->pasGCPList[index].dfGCPPixel =
+                            j * psDMX->dfIncrement + psDMX->dfOffset + 0.5;
+                        poDS->pasGCPList[index].dfGCPLine =
+                            i * psDMY->dfIncrement + psDMY->dfOffset + 0.5;
+                        poDS->nGCPCount++;
+                    }
+                }
+            }
+
+CleanupAndBreakAsterL1B:
+            if ( pdfLat )
+                CPLFree( pdfLat );
+            if ( pdfLong )
+                CPLFree( pdfLong );
+        }
+        break;
+
+/* -------------------------------------------------------------------- */
+/*      ASTER Level 2.                                                 */
+/* -------------------------------------------------------------------- */
+        case ASTER_L2:
+        {
+            CPLDebug( "HDF4Image", "Input dataset interpreted as ASTER_L2" );
+
+            if ( strlen( poDS->szName ) >= 5 &&
+                 EQUAL( CSLFetchNameValue( poDS->papszGlobalMetadata,
+                    CPLSPrintf("MPMETHOD%s", &poDS->szName[4]) ), "UTM" ) )
+            {
+                oSRS.SetWellKnownGeogCS( "WGS84" );
+                
+                poDS->ReadCoordinates( CSLFetchNameValue( 
+                    poDS->papszGlobalMetadata, "UPPERLEFT" ), &dfULY, &dfULX );
+                poDS->ReadCoordinates( CSLFetchNameValue( 
+                    poDS->papszGlobalMetadata, "UPPERRIGHT" ), &dfURY, &dfURX );
+                poDS->ReadCoordinates( CSLFetchNameValue( 
+                    poDS->papszGlobalMetadata, "LOWERLEFT" ), &dfLLY, &dfLLX );
+                poDS->ReadCoordinates( CSLFetchNameValue( 
+                    poDS->papszGlobalMetadata, "LOWERRIGHT" ), &dfLRY, &dfLRX );
+                poDS->ReadCoordinates( CSLFetchNameValue( 
+                    poDS->papszGlobalMetadata, "SCENECENTER" ),
+                                    &dfCenterY, &dfCenterX );
+                
+                iUTMZone = atoi( CSLFetchNameValue( poDS->papszGlobalMetadata,
+                                CPLSPrintf("UTMZONECODE%s", &poDS->szName[4]) ) );
+                if( iUTMZone > 0 )
+                    oSRS.SetUTM( iUTMZone, TRUE );
+                else
+                    oSRS.SetUTM( - iUTMZone, FALSE );
+
+                oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
+                if ( poDS->pszProjection )
+                    CPLFree( poDS->pszProjection );
+                oSRS.exportToWkt( &poDS->pszProjection );
+
+                poDS->ToUTM( &oSRS, &dfULX, &dfULY );
+                poDS->ToUTM( &oSRS, &dfURX, &dfURY );
+                poDS->ToUTM( &oSRS, &dfLLX, &dfLLY );
+                poDS->ToUTM( &oSRS, &dfLRX, &dfLRY );
+                
+                // Calculate geotransfom matrix from corner coordinates
+                GDAL_GCP asGCPs[3];
+                GDALInitGCPs( 3, asGCPs );
+
+                asGCPs[0].dfGCPPixel = 0.5;
+                asGCPs[0].dfGCPLine = 0.5;
+                asGCPs[0].dfGCPX = dfULX;
+                asGCPs[0].dfGCPY = dfULY;
+                asGCPs[0].dfGCPZ = 0.0;
+
+                asGCPs[1].dfGCPPixel = poDS->nRasterXSize + 0.5;
+                asGCPs[1].dfGCPLine = 0.5;
+                asGCPs[1].dfGCPX = dfURX;
+                asGCPs[1].dfGCPY = dfURY;
+                asGCPs[1].dfGCPZ = 0.0;
+
+                asGCPs[2].dfGCPPixel = poDS->nRasterXSize + 0.5;
+                asGCPs[2].dfGCPLine = poDS->nRasterYSize + 0.5;
+                asGCPs[2].dfGCPX = dfLRX;
+                asGCPs[2].dfGCPY = dfLRY;
+                asGCPs[2].dfGCPZ = 0.0;
+
+                GDALGCPsToGeoTransform( 3, asGCPs, poDS->adfGeoTransform, TRUE );
+                GDALDeinitGCPs( 3, asGCPs );
+                poDS->bHasGeoTransfom = TRUE;
+            }
+
+/* -------------------------------------------------------------------- */
+/*      Read geolocation points.                                        */
+/* -------------------------------------------------------------------- */
+            double          *pdfLat = NULL, *pdfLong = NULL;
+
+            nXPoints = nYPoints = 0;
+            for ( i = 0; i < poDS->nDatasets; i++ )
+            {
+                iSDS = SDselect( poDS->hSD, i );
+
+                if ( SDgetinfo( iSDS, szName, &iRank, aiDimSizes,
+                                &iNumType, &nAttrs) == 0 )
+                {
+                    if ( EQUALN( szName, "GeodeticLatitude", 16 )
+                         && iNumType == DFNT_FLOAT64 )
+                    {
+                        if ( (nXPoints && nXPoints != aiDimSizes[1])
+                             || (nYPoints && nYPoints != aiDimSizes[0]) )
+                        {
+                            CPLDebug( "HDF4Image",
+                                      "Size of latitude array differs from "
+                                      "struct metadata, skip reading" );
+                            goto CleanupAndBreakAsterL2;
+                        }
+                        else
+                        {
+                            nXPoints = aiDimSizes[1];
+                            nYPoints = aiDimSizes[0];
+                        }
+
+                        iStart[1] = 0;
+                        iEdges[1] = nXPoints;
+
+                        iStart[0] = 0;
+                        iEdges[0] = nYPoints;
+                        pdfLat = (double *)CPLCalloc( nXPoints * nYPoints,
+                                                      sizeof( double ) );
+                        SDreaddata( iSDS, iStart, NULL, iEdges, pdfLat );
+                    }
+                    else if ( EQUALN( szName, "Longitude", 9 )
+                              && iNumType == DFNT_FLOAT64 )
+                    {
+                        if ( (nXPoints && nXPoints != aiDimSizes[1])
+                             || (nYPoints && nYPoints != aiDimSizes[0]) )
+                        {
+                            CPLDebug( "HDF4Image",
+                                      "Size of longitude array differs from "
+                                      "struct metadata, skip reading" );
+                            goto CleanupAndBreakAsterL2;
+                        }
+                        else
+                        {
+                            nXPoints = aiDimSizes[1];
+                            nYPoints = aiDimSizes[0];
+                        }
+
+                        iStart[1] = 0;
+                        iEdges[1] = nXPoints;
+
+                        iStart[0] = 0;
+                        iEdges[0] = nYPoints;
+                        pdfLong = (double *)CPLCalloc( nXPoints * nYPoints,
+                                                       sizeof( double ) );
+                        SDreaddata( iSDS, iStart, NULL, iEdges, pdfLong );
+                    }
+                }
+
+                poDS->iSDS = SDendaccess( iSDS );
+            }
+
+            if ( pdfLat && pdfLong )
+            {
+                if ( poDS->pszGCPProjection )
+                    CPLFree( poDS->pszGCPProjection );
+                poDS->pszGCPProjection = CPLStrdup( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]" );
+
+                HDF4EOSDimensionMap *psDMX = NULL, *psDMY = NULL;
+                int                 nCount = CPLListCount( poDS->psDataField );
+
+                for ( i = 0; i < nCount; i++ )
+                {
+                    HDF4EOSDataField *psTemp = (HDF4EOSDataField *)
+                        CPLListGetData( CPLListGet( poDS->psDataField, i ) );
+
+                    if ( EQUAL( psTemp->pszDataFieldName, poDS->szName ) )
+                    {
+                        psDMX = (HDF4EOSDimensionMap *)
+                            CPLListGetData(CPLListGet( psTemp->psDimList, 1 ));
+                        psDMY = (HDF4EOSDimensionMap *)
+                            CPLListGetData(CPLListGet( psTemp->psDimList, 0 ));
+                    }
+                }
+
+                if ( !psDMX || !psDMY )
+                    goto CleanupAndBreakAsterL2;
+
+                CPLDebug( "HDF4Image",
+                          "Reading geolocation points: nXPoints=%d, nYPoints=%d, "
+                          "OffsetX=%f, IncrementX=%f, OffsetY=%f, IncrementY=%f",
+                          nXPoints, nYPoints,
+                          psDMX->dfOffset, psDMX->dfIncrement,
+                          psDMY->dfOffset, psDMY->dfIncrement );
+
+                poDS->nGCPCount = 0;
+                poDS->pasGCPList =
+                    (GDAL_GCP *) CPLCalloc( nXPoints * nYPoints,
+                                            sizeof( GDAL_GCP ) );
+                GDALInitGCPs( nXPoints * nYPoints, poDS->pasGCPList );
+
+                for ( i = 0; i < nYPoints; i++ )
+                {
+                    for ( j = 0; j < nXPoints; j++ )
+                    {
+                        int index = i * nXPoints + j;
+
+                        poDS->pasGCPList[index].dfGCPY = pdfLat[index];
+                        poDS->pasGCPList[index].dfGCPX = pdfLong[index];
+                        poDS->pasGCPList[index].dfGCPZ = 0.0;
+
+                        poDS->pasGCPList[index].dfGCPPixel =
+                            j * psDMX->dfIncrement + psDMX->dfOffset + 0.5;
+                        poDS->pasGCPList[index].dfGCPLine =
+                            i * psDMY->dfIncrement + psDMY->dfOffset + 0.5;
+                        poDS->nGCPCount++;
+                    }
+                }
+            }
+
+CleanupAndBreakAsterL2:
+            if ( pdfLat )
+                CPLFree( pdfLat );
+            if ( pdfLong )
+                CPLFree( pdfLong );
         }
         break;
 
@@ -1210,6 +1734,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 oSRS.SetUTM( iUTMZone, TRUE );
             else
                 oSRS.SetUTM( - iUTMZone, FALSE );
+
+            oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
+            if ( poDS->pszProjection )
+                    CPLFree( poDS->pszProjection );
             oSRS.exportToWkt( &poDS->pszProjection );
             
             poDS->ToUTM( &oSRS, &dfULX, &dfULY );
@@ -1261,6 +1789,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read geolocation points.                                        */
 /* -------------------------------------------------------------------- */
+            float           *pfLat = NULL, *pfLong = NULL;
+            GInt16          *piHeight = NULL;
+            float           fLatNoData, fLongNoData;
+
             nXPoints = nYPoints = 0;
             for ( i = 0; i < poDS->nDatasets; i++ )
             {
@@ -1382,12 +1914,32 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     CPLFree( poDS->pszGCPProjection );
                 poDS->pszGCPProjection = CPLStrdup( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]" );
 
+                HDF4EOSDimensionMap *psDMX = NULL, *psDMY = NULL;
+                int                 nCount = CPLListCount( poDS->psDataField );
+
+                for ( i = 0; i < nCount; i++ )
+                {
+                    HDF4EOSDataField *psTemp = (HDF4EOSDataField *)
+                        CPLListGetData( CPLListGet( poDS->psDataField, i ) );
+
+                    if ( EQUAL( psTemp->pszDataFieldName, poDS->szName ) )
+                    {
+                        psDMX = (HDF4EOSDimensionMap *)
+                            CPLListGetData(CPLListGet( psTemp->psDimList, 1 ));
+                        psDMY = (HDF4EOSDimensionMap *)
+                            CPLListGetData(CPLListGet( psTemp->psDimList, 0 ));
+                    }
+                }
+
+                if ( !psDMX || !psDMY )
+                    break;
+
                 CPLDebug( "HDF4Image",
                           "Reading geolocation points: nXPoints=%d, nYPoints=%d, "
-                          "Offset1=%f, Increment1=%f, Offset2=%f, Increment2=%f",
+                          "OffsetX=%f, IncrementX=%f, OffsetY=%f, IncrementY=%f",
                           nXPoints, nYPoints,
-                          poDS->sDimMap[0].dfOffset, poDS->sDimMap[0].dfIncrement,
-                          poDS->sDimMap[1].dfOffset, poDS->sDimMap[1].dfIncrement );
+                          psDMX->dfOffset, psDMX->dfIncrement,
+                          psDMY->dfOffset, psDMY->dfIncrement );
                 
                 poDS->nGCPCount = 0;
                 poDS->pasGCPList =
@@ -1413,19 +1965,20 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                         else 
                             poDS->pasGCPList[index].dfGCPZ = 0.0;
                         poDS->pasGCPList[index].dfGCPPixel =
-                            j * poDS->sDimMap[1].dfIncrement
-                            + poDS->sDimMap[1].dfOffset + 0.5;
+                            j * psDMX->dfIncrement + psDMX->dfOffset + 0.5;
                         poDS->pasGCPList[index].dfGCPLine =
-                            i * poDS->sDimMap[0].dfIncrement
-                            + poDS->sDimMap[0].dfOffset + 0.5;
+                            i * psDMY->dfIncrement + psDMY->dfOffset + 0.5;
                         poDS->nGCPCount++;
                     }
                 }
-
-                CPLFree( pfLat );
-                CPLFree( pfLong );
-                CPLFree( piHeight );
             }
+
+            if ( pfLat )
+                CPLFree( pfLat );
+            if ( pfLong )
+                CPLFree( pfLong );
+            if ( piHeight )
+                CPLFree( piHeight );
         }
         break;
 
