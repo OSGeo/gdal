@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.53  2005/01/04 21:14:01  fwarmerdam
+ * added GDAL_FORCE_CACHING config variable
+ *
  * Revision 1.52  2004/12/02 20:32:28  fwarmerdam
  * added AdviseRead methods
  *
@@ -151,6 +154,8 @@ GDALRasterBand::GDALRasterBand()
     papoBlocks = NULL;
 
     nBlockReads = 0;
+    bForceCachedIO =  CSLTestBoolean( 
+        CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") );
 }
 
 /************************************************************************/
@@ -303,9 +308,14 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Call the format specific function.                              */
 /* -------------------------------------------------------------------- */
-    return( IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                       pData, nBufXSize, nBufYSize, eBufType,
-                       nPixelSpace, nLineSpace ) );
+    if( bForceCachedIO )
+        return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                         pData, nBufXSize, nBufYSize, eBufType,
+                                         nPixelSpace, nLineSpace );
+    else
+        return IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                          pData, nBufXSize, nBufYSize, eBufType,
+                          nPixelSpace, nLineSpace ) ;
 }
 
 /************************************************************************/
