@@ -612,6 +612,14 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
 
 	// Record the geo-referencing information.
 	poDS->get_var_info(das, dds);
+        try { 
+            poDS->get_geo_info(das, dds);
+        } catch( Error &ei ) {
+            poDS->d_dfURLon = poDS->nRasterXSize;
+            poDS->d_dfURLat = 0.0;
+            poDS->d_dfLLLon = 0.0;
+            poDS->d_dfLLLat = poDS->nRasterYSize;
+        }
     }
 
     catch (Error &e) {
@@ -735,6 +743,9 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void * pImage)
 }
 
 // $Log$
+// Revision 1.2  2003/12/16 00:34:40  warmerda
+// Added call to get_geo_info, and a default case if it fails.
+//
 // Revision 1.1  2003/12/12 23:28:17  jimg
 // Added.
 //
