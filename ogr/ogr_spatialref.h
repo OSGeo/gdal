@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2000/10/20 04:19:38  warmerda
+ * added setstateplane
+ *
  * Revision 1.23  2000/10/16 21:26:07  warmerda
  * added some level of LOCAL_CS support
  *
@@ -394,6 +397,9 @@ class OGRSpatialReference
     /** Universal Transverse Mercator */
     OGRErr      SetUTM( int nZone, int bNorth = TRUE );
     int		GetUTMZone( int *pbNorth = NULL );
+
+    /** State Plane */
+    OGRErr      SetStatePlane( int nZone, int bNAD83 = TRUE );
 };
 
 /************************************************************************/

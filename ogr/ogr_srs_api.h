@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/10/20 04:19:38  warmerda
+ * added setstateplane
+ *
  * Revision 1.12  2000/10/16 21:26:07  warmerda
  * added some level of LOCAL_CS support
  *
@@ -289,6 +292,8 @@ double CPL_DLL OSRGetProjParm( OGRSpatialReferenceH hSRS,
 
 OGRErr CPL_DLL OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth );
 int    CPL_DLL OSRGetUTMZone( OGRSpatialReferenceH hSRS, int *pbNorth );
+OGRErr CPL_DLL OSRSetStatePlane( OGRSpatialReferenceH hSRS, 
+                                 int nZone, int bNAD83 );
 
 /* -------------------------------------------------------------------- */
 /*      OGRCoordinateTransform C API.                                   */

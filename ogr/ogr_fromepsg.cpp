@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/10/20 04:19:38  warmerda
+ * added setstateplane
+ *
  * Revision 1.3  2000/03/20 22:39:08  warmerda
  * Added C function.
  *
@@ -1028,3 +1031,100 @@ OGRErr OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nCode )
 {
     return ((OGRSpatialReference *) hSRS)->importFromEPSG( nCode );
 }
+
+/************************************************************************/
+/*                           SetStatePlane()                            */
+/************************************************************************/
+
+/**
+ * Set State Plane projection definition.
+ *
+ * This will attempt to generate a complete definition of a state plane
+ * zone based on generating the entire SRS from the EPSG tables.  If the
+ * EPSG tables are unavailable, it will produce a stubbed LOCAL_CS definition
+ * and return OGRERR_FAILURE.
+ *
+ * This method is the same as the C function OSRSetStatePlane().
+ *
+ * @param nZone State plane zone number, in the USGS numbering scheme (as
+ * dinstinct from the Arc/Info and Erdas numbering scheme. 
+ *
+ * @param bNAD83 TRUE if the NAD83 zone definition should be used or FALSE
+ * if the NAD27 zone definition should be used.  
+ * 
+ * @return OGRERR_NONE on success, or OGRERR_FAILURE on failure, mostly likely
+ * due to the EPSG tables not being accessable. 
+ */
+
+OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83 )
+
+{
+    int		nProjCode, nPCSCode;
+    char	szTRFCode[32];
+
+/* -------------------------------------------------------------------- */
+/*      Fugure out the TRF_CODE (like Proj_Alabama_CS83_East.           */
+/* -------------------------------------------------------------------- */
+    if( bNAD83 )
+        nProjCode = 10000 + nZone + 30;
+    else
+        nProjCode = 10000 + nZone;
+
+/* -------------------------------------------------------------------- */
+/*      Turn this into a PCS code.  We assume there will only be one    */
+/*      PCS corresponding to each Proj_ code since the proj code        */
+/*      already effectively indicates NAD27 or NAD83.                   */
+/* -------------------------------------------------------------------- */
+    sprintf( szTRFCode, "%d", nProjCode );
+    nPCSCode =
+        atoi( CSVGetField( CSVFilename( "horiz_cs.csv" ),
+                           "PROJECTION_TRF_CODE", szTRFCode, CC_Integer,
+                           "HORIZCS_CODE" ) );
+    if( nPCSCode < 1 )
+    {
+        char	szName[128];
+        static int bFailureReported = FALSE;
+
+        if( !bFailureReported )
+        {
+            bFailureReported = TRUE;
+            CPLError( CE_Warning, CPLE_OpenFailed, 
+                      "Unable to find state plane zone in horiz_cs.csv,\n"
+                      "likely because EPSG tables cannot be found.  Using\n"
+                      "incomplete definition of state plane zone.\n" );
+        }
+
+        if( bNAD83 )
+        {
+            sprintf( szName, "State Plane Zone %d / NAD83", nZone );
+            SetLocalCS( szName );
+            SetLinearUnits( SRS_UL_METER, 1.0 );
+        }
+        else
+        {
+            sprintf( szName, "State Plane Zone %d / NAD27", nZone );
+            SetLocalCS( szName );
+            SetLinearUnits( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV) );
+        }
+
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Define based on a full EPSG definition of the zone.             */
+/* -------------------------------------------------------------------- */
+
+    return importFromEPSG( nPCSCode );
+}
+
+/************************************************************************/
+/*                          OSRSetStatePlane()                          */
+/************************************************************************/
+
+OGRErr OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nZone, int bNAD83 )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetStatePlane( nZone, bNAD83 );
+}
+
+
