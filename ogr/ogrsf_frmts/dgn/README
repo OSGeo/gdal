@@ -34,6 +34,8 @@ Release Notes
 Release 1.5
 -----------
 
+ o Added 2D write support!  
+
  o Fixed collection of background color in color table (color 255) as per
    bug report by Henk Jan Priester (Justcroft Technical Systems). 
 
@@ -44,6 +46,13 @@ Release 1.5
 
  o Fixed problem with spatial queries either including all of a complex
    element (and it's members) or none. 
+
+ o Added support for reading the eight view descriptions in the TCB element.
+
+ o Added a Makefile in the source distribution.
+
+ o Fixed error with tags in DGNFreeElement() as reported by Henk Jan Priester.
+
 
 
 Release 1.4
