@@ -392,7 +392,7 @@ Description</a><p>
 
 <p>The driver reads all types of PCRaster maps: booleans, nominal, ordinals, scalar, directional and ldd. The same cell representation used to store values in the file is used to store the values in memory.</p>
 
-<p>The driver determines automatically when the source of the GDAL raster is a PCRaster file. When such a raster is written to a file the value scale of the original raster will be used. The driver <b>always</b> writes values using UINT1, INT4 or REAL4 cell representations, depending on the value scale:</p>
+<p>The driver detects whether the source of the GDAL raster is a PCRaster file. When such a raster is written to a file the value scale of the original raster will be used. The driver <b>always</b> writes values using UINT1, INT4 or REAL4 cell representations, depending on the value scale:</p>
 
 <table>
   <thead>
@@ -445,6 +445,7 @@ Description</a><p>
       <td>VS_BOOLEAN</td>
       <td>CR_UINT1</td>
     </tr>
+    <!--
     <tr>
       <td>GDT_UInt16</td>
       <td>VS_NOMINAL</td>
@@ -460,6 +461,8 @@ Description</a><p>
       <td>VS_NOMINAL</td>
       <td>R_INT4</td>
     </tr>
+    -->
+
     <tr>
       <td>GDT_Int32</td>
       <td>VS_NOMINAL</td>
@@ -477,6 +480,8 @@ Description</a><p>
     </tr>
   </tbody>
 </table>
+
+<p>The driver can convert values from one supported cell representation to another. It cannot convert to unsupported cell representations. For example, it is not possible to write a PCRaster raster file from values which are used as CR_INT2 (GDT_Int16).
 
 <p>NOTE: Implemented as <tt>gdal/frmts/pcraster/pcrasterdataset.cpp</tt>.</p>
 
