@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2004/02/23 21:45:03  warmerda
+ * added support for various link formats
+ *
  * Revision 1.29  2003/11/27 14:15:20  warmerda
  * added surface type in createcomplexheaderfromgroup call
  *
@@ -141,6 +144,31 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN,
     this->hDGN = hDGN;
     this->bUpdate = bUpdate;
 
+/* -------------------------------------------------------------------- */
+/*      Work out what link format we are using.                         */
+/* -------------------------------------------------------------------- */
+    OGRFieldType eLinkFieldType;
+
+    pszLinkFormat = (char *) CPLGetConfigOption( "DGN_LINK_FORMAT", "FIRST" );
+    if( EQUAL(pszLinkFormat,"FIRST") )
+        eLinkFieldType = OFTInteger;
+    else if( EQUAL(pszLinkFormat,"LIST") )
+        eLinkFieldType = OFTIntegerList;
+    else if( EQUAL(pszLinkFormat,"STRING") )
+        eLinkFieldType = OFTString;
+    else
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "DGN_LINK_FORMAT=%s, but only FIRST, LIST or STRING supported.",
+                  pszLinkFormat );
+        pszLinkFormat = "FIRST";
+        eLinkFieldType = OFTInteger;
+    }
+    pszLinkFormat = CPLStrdup(pszLinkFormat);
+
+/* -------------------------------------------------------------------- */
+/*      Create the feature definition.                                  */
+/* -------------------------------------------------------------------- */
     poFeatureDefn = new OGRFeatureDefn( pszName );
     
     OGRFieldDefn        oField( "", OFTInteger );
@@ -203,8 +231,8 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN,
 /*      EntityNum                                                       */
 /* -------------------------------------------------------------------- */
     oField.SetName( "EntityNum" );
-    oField.SetType( OFTInteger );
-    oField.SetWidth( 8 );
+    oField.SetType( eLinkFieldType );
+    oField.SetWidth( 0 );
     oField.SetPrecision( 0 );
     poFeatureDefn->AddFieldDefn( &oField );
 
@@ -212,8 +240,8 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN,
 /*      MSLink                                                          */
 /* -------------------------------------------------------------------- */
     oField.SetName( "MSLink" );
-    oField.SetType( OFTInteger );
-    oField.SetWidth( 10 );
+    oField.SetType( eLinkFieldType );
+    oField.SetWidth( 0 );
     oField.SetPrecision( 0 );
     poFeatureDefn->AddFieldDefn( &oField );
 
@@ -225,6 +253,19 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN,
     oField.SetWidth( 0 );
     oField.SetPrecision( 0 );
     poFeatureDefn->AddFieldDefn( &oField );
+
+/* -------------------------------------------------------------------- */
+/*      Create template feature for evaluating simple expressions.      */
+/* -------------------------------------------------------------------- */
+    bHaveSimpleQuery = FALSE;
+    poEvalFeature = new OGRFeature( poFeatureDefn );
+
+    /* TODO: I am intending to keep track of simple attribute queries (ones
+       using only FID, Type and Level and short circuiting their operation
+       based on the index.  However, there are some complexities with
+       complex elements, and spatial queries that have caused me to put it
+       off for now.
+    */
 }
 
 /************************************************************************/
@@ -234,10 +275,13 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN,
 OGRDGNLayer::~OGRDGNLayer()
 
 {
+    delete poEvalFeature;
     delete poFeatureDefn;
 
     if( poFilterGeom != NULL )
         delete poFilterGeom;
+
+    CPLFree( pszLinkFormat );
 }
 
 /************************************************************************/
@@ -369,17 +413,68 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
     poFeature->SetField( "Style", psElement->style );
     
 /* -------------------------------------------------------------------- */
-/*      Apply first MSLink if available.                                */
+/*      Collect linkage information                                     */
 /* -------------------------------------------------------------------- */
+#define MAX_LINK 100    
+    int anEntityNum[MAX_LINK], anMSLink[MAX_LINK];
     unsigned char *pabyData;
-    int nEntityNum=0, nMSLink=0;
+    int iLink=0;
 
-    pabyData = DGNGetLinkage( hDGN, psElement, 0, NULL, &nEntityNum, &nMSLink, 
-                              NULL );
-    if( pabyData && (nMSLink != 0 || nEntityNum != 0) )
+    anEntityNum[0] = 0;
+    anMSLink[0] = 0;
+
+    pabyData = DGNGetLinkage( hDGN, psElement, iLink, NULL, 
+                              anEntityNum+iLink, anMSLink+iLink, NULL );
+    while( pabyData && (anMSLink[iLink] != 0 || anEntityNum[iLink] != 0) 
+           && iLink < MAX_LINK )
     {
-        poFeature->SetField( "EntityNum", nEntityNum );
-        poFeature->SetField( "MSLink", nMSLink );
+        iLink++;
+        anEntityNum[iLink] = 0;
+        anMSLink[iLink] = 0;
+
+        pabyData = DGNGetLinkage( hDGN, psElement, iLink, NULL, 
+                                  anEntityNum+iLink, anMSLink+iLink, NULL );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Apply attribute linkage to feature.                             */
+/* -------------------------------------------------------------------- */
+    if( iLink > 0 )
+    {
+        if( EQUAL(pszLinkFormat,"FIRST") )
+        {
+            poFeature->SetField( "EntityNum", anEntityNum[0] );
+            poFeature->SetField( "MSLink", anMSLink[0] );
+        }
+        else if( EQUAL(pszLinkFormat,"LIST") )
+        {
+            poFeature->SetField( "EntityNum", iLink, anEntityNum );
+            poFeature->SetField( "MSLink", iLink, anMSLink );
+        }
+        else if( EQUAL(pszLinkFormat,"STRING") )
+        {
+            char szEntityList[MAX_LINK*9], szMSLinkList[MAX_LINK*9];
+            int iLink2, nEntityLen = 0, nMSLinkLen = 0;
+
+
+            for( iLink2 = 0; iLink2 < iLink; iLink2++ )
+            {
+                if( iLink2 != 0 )
+                {
+                    szEntityList[nEntityLen++] = ',';
+                    szMSLinkList[nMSLinkLen++] = ',';
+                }
+
+                sprintf( szEntityList + nEntityLen, "%d", anEntityNum[iLink2]);
+                sprintf( szMSLinkList + nMSLinkLen, "%d", anMSLink[iLink2] );
+                
+                nEntityLen += strlen(szEntityList + nEntityLen );
+                nMSLinkLen += strlen(szMSLinkList + nMSLinkLen );
+            }
+
+            poFeature->SetField( "EntityNum", szEntityList );
+            poFeature->SetField( "MSLink", szMSLinkList );
+        }
     }
 
 /* -------------------------------------------------------------------- */
