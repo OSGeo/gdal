@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/01/10 15:35:24  warmerda
+ * fixed and tested support for single quoted strings
+ *
  * Revision 1.15  2002/08/08 13:41:36  warmerda
  * added support for single quoted string constants
  *
@@ -159,7 +162,7 @@ static char *swq_token( const char *expression, char **next, int *is_literal )
 /* -------------------------------------------------------------------- */
 /*      Handle string constants.                                        */
 /* -------------------------------------------------------------------- */
-    if( *expression == '"' )
+    if( *expression == '"' || *expression == '\'' )
     {
         expression++;
 
@@ -1909,5 +1912,3 @@ static void grow_command( char **p_command, int *max_cmd_size, int *cmd_size,
     SWQ_FREE( *p_command );
     *p_command = new_command;
 }
-
-
