@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/04/07 11:52:44  warmerda
+ * Added PrintColumn().
+ *
  * Revision 1.3  1999/04/01 17:52:58  warmerda
  * added reporting of column info
  *
@@ -676,5 +679,171 @@ void OledbSupWriteColumnInfo(FILE *fp, DBCOLUMNINFO* p )
 
 }
 
+/************************************************************************/
+/*                             PrintColumn                              */
+/************************************************************************/
 
+static void PrintColumn
+	(
+        FILE          *fp,
+        DBCOLUMNINFO  *pColumnInfo,
+	COLUMNDATA    *pColumn,
+	DBBINDING     *rgBind,
+	ULONG          iBind,
+	ULONG          cMaxColWidth 
+	)
+{
+    void*	p;
+    ULONG   ulPrintWidth;
+    ULONG   ulPrintPrecision;
+    DWORD   dwStatus;
+    DWORD   dwLength;
+    BOOL    fDidVariant;
+    BOOL    fIsUnicode;
+    char*	sFormat;
+    HRESULT hr;
+	
+    assert(pColumn != NULL);
+    assert(rgBind != NULL);
 
+/* -------------------------------------------------------------------- */
+/*      Print out the column name.                                      */
+/* -------------------------------------------------------------------- */
+    if( pColumnInfo->pwszName == NULL )
+        fprintf( fp, "(anon) = " );
+    else
+        fprintf( fp, "%S = ", pColumnInfo->pwszName );
+    
+/* -------------------------------------------------------------------- */
+/*      Print value.                                                    */
+/* -------------------------------------------------------------------- */
+
+    fDidVariant = FALSE;
+    fIsUnicode  = FALSE;
+    dwStatus = pColumn->dwStatus;
+    dwLength = pColumn->dwLength;
+
+    if (dwStatus == DBSTATUS_S_ISNULL)
+    {
+        p = "<null>";
+        dwLength = strlen( (char *) p);
+    }
+    else if (dwStatus == DBBINDSTATUS_UNSUPPORTEDCONVERSION)
+    {
+        p = "<unsupportedconversion>";
+        dwLength = strlen( (char *) p);
+    }    
+    else
+    {
+        switch (rgBind[iBind].wType) 
+        {
+            case DBTYPE_STR:
+                // We have a string in our buffer, so use it.
+                p = (void *) &pColumn->bData;
+                break;
+
+            case DBTYPE_BYTES:
+                static char out_string[100];
+                int      ii;
+
+                sprintf( out_string, "(BLOB:%dbytes:0x", dwLength );
+                for( ii = 0; ii < 8 && ii < dwLength; ii++ )
+                {
+                    sprintf( out_string + strlen(out_string), 
+                             "%02x", pColumn->bData[ii] );
+                }
+                if( ii << dwLength )
+                    strcat( out_string, "...");
+            
+                strcat( out_string, ")" );
+                // We have a string in our buffer, so use it.
+                p = (void *) out_string;;
+                break;
+
+            case DBTYPE_VARIANT:
+                // We have a variant in our buffer, so convert to string.
+                p = (void *) &pColumn->bData;
+                hr = VariantChangeTypeEx(
+                    (VARIANT *) p,			// Destination (convert in place)
+                    (VARIANT *) p,			// Source
+                    LOCALE_SYSTEM_DEFAULT,	// LCID
+                    0,						// dwFlags
+                    VT_BSTR );
+                if (FAILED(hr))
+                {
+                    DumpErrorHResult( hr, "VariantChangeTypeEx, field %d", iBind );
+                    return;
+                }
+                p = (wchar_t *) (((VARIANT *)p)->bstrVal) ;
+                dwLength = ((DWORD *)p)[-1] / sizeof(wchar_t);
+                fDidVariant = TRUE;
+                fIsUnicode  = TRUE;
+                break;
+
+            default:
+                p = "??? unknown type ???";
+                break;
+        }
+    }
+
+    // Print the column.
+    // If it has been truncated or rounded, print a '#' in
+    // the far right-hand column.
+    ulPrintWidth     = min( cMaxColWidth, rgBind[iBind].cbMaxLen );
+    ulPrintPrecision = min( cMaxColWidth, dwLength );
+    if (dwStatus == DBSTATUS_S_TRUNCATED ||  cMaxColWidth < dwLength)
+    {
+        ulPrintWidth--;
+        ulPrintPrecision--;
+    }
+
+    sFormat = fIsUnicode ? "%-*.*S" : "%-*.*s";
+
+    fprintf( fp, sFormat, ulPrintWidth, ulPrintPrecision, p );
+
+    if (dwStatus == DBSTATUS_S_TRUNCATED ||  cMaxColWidth < dwLength)
+        fprintf( fp, "#" );
+    fprintf( fp, "\n" );
+    // Free memory used by the variant.
+    if (fDidVariant)
+        VariantClear( (VARIANT *) &pColumn->bData );
+}
+
+/************************************************************************/
+/*                          OledbSupDumpRow()                           */
+/************************************************************************/
+
+void OledbSupDumpRow
+	(
+    FILE        *fp,
+    DBCOLUMNINFO* paoColumnInfo,
+    int         nColumns,
+    DBBINDING* 	rgBind,
+    ULONG	cBind,
+    ULONG	cMaxColWidth,
+    BYTE* 	pData
+    )
+{
+    ULONG 	     iBind;
+    COLUMNDATA*      pColumn;
+    DBCOLUMNINFO*      pColumnInfo;
+    int              i;
+    
+    assert(rgBind);
+    assert( offsetof(COLUMNDATA, dwLength) == 0);	
+    
+    // Print each column we're bound to.
+    for (iBind=0; iBind < cBind; iBind++)
+    {
+        pColumnInfo = NULL;
+        for( i = 0; i < nColumns; i++ )
+        {
+            if( paoColumnInfo[i].iOrdinal == rgBind[iBind].iOrdinal )
+                pColumnInfo = paoColumnInfo + i;
+        }
+
+        pColumn = (COLUMNDATA *) (pData + rgBind[iBind].obLength);
+        PrintColumn( fp, pColumnInfo, pColumn, rgBind, iBind, cMaxColWidth );
+    }
+    fprintf( fp, "\n" );
+}    
