@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/12/18 21:18:38  warmerda
+ * report corners more sensibly
+ *
  * Revision 1.4  2002/12/17 05:26:26  warmerda
  * implement basic write support
  *
@@ -147,11 +150,11 @@ int main( int nArgc, char ** papszArgv )
                 psImage->chICORDS );
         if( psImage->chICORDS != ' ' )
         {
-            printf( "  UL=(%g,%g), UR=(%g,%g)\n  LR=(%g,%g), LL=(%g,%g)\n", 
+            printf( "  UL=(%g,%g), UR=(%g,%g)\n  LL=(%g,%g), LR=(%g,%g)\n", 
                     psImage->dfULX, psImage->dfULY,
                     psImage->dfURX, psImage->dfURY,
-                    psImage->dfLRX, psImage->dfLRY,
-                    psImage->dfLLX, psImage->dfLLY );
+                    psImage->dfLLX, psImage->dfLLY,
+                    psImage->dfLRX, psImage->dfLRY );
         }
 
         printf( "  %d x %d blocks of size %d x %d\n",
