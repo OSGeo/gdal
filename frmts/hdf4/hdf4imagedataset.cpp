@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.40  2005/01/27 16:57:58  fwarmerdam
+ * added coastwatch missing_value support
+ *
  * Revision 1.39  2005/01/25 20:38:09  fwarmerdam
  * Added coastwatch convention support.
  *
@@ -1940,6 +1943,27 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->bHasGeoTransform = TRUE;
         }
         break;
+
+
+/* -------------------------------------------------------------------- */
+/*	Generic SDS							*/
+/* -------------------------------------------------------------------- */
+      case UNKNOWN:
+      {
+
+          // This is a coastwatch convention.
+          if( CSLFetchNameValue( poDS->papszLocalMetadata, "missing_value" ) )
+          {
+              int i;
+              for( i = 1; i <= poDS->nBands; i++ )
+              {
+                  poDS->GetRasterBand(i)->SetNoDataValue(
+                      atof( CSLFetchNameValue(poDS->papszLocalMetadata, 
+                                              "missing_value") ) );
+              }
+          }
+      }
+      break;
 
 /* -------------------------------------------------------------------- */
 /*      Hyperion Level 1.                                               */
