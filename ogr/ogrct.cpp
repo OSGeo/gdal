@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/07/12 18:19:09  warmerda
+ * Removed debug statements.
+ *
  * Revision 1.5  2000/07/09 20:48:28  warmerda
  * rewrote to use PROJ.4 datum shifting
  *
@@ -274,7 +277,6 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
     if( poSRSSource->exportToProj4( &pszProj4Defn ) != OGRERR_NONE )
         return FALSE;
 
-    printf( "source = %s\n", pszProj4Defn );
     papszArgs = CSLTokenizeStringComplex( pszProj4Defn, " +",TRUE,FALSE );
     
     psPJSource = pfn_pj_init( CSLCount(papszArgs), papszArgs );
@@ -296,7 +298,6 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
     if( poSRSTarget->exportToProj4( &pszProj4Defn ) != OGRERR_NONE )
         return FALSE;
 
-    printf( "target = %s\n", pszProj4Defn );
     papszArgs = CSLTokenizeStringComplex( pszProj4Defn, " +",TRUE,FALSE );
     
     psPJTarget = pfn_pj_init( CSLCount(papszArgs), papszArgs );
