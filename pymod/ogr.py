@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.26  2004/07/10 07:08:39  warmerda
+# added new GEOS methods
+#
 # Revision 1.25  2004/07/10 05:05:24  warmerda
 # added closerings
 #
@@ -817,6 +820,24 @@ class Geometry:
     def Equal( self, other_geom ):
         return _gdal.OGR_G_Equal( self._o, other_geom._o )
 
+    def Disjoint( self, other_geom ):
+        return _gdal.OGR_G_Disjoint( self._o, other_geom._o )
+
+    def Touches( self, other_geom ):
+        return _gdal.OGR_G_Touches( self._o, other_geom._o )
+
+    def Crosses( self, other_geom ):
+        return _gdal.OGR_G_Crosses( self._o, other_geom._o )
+
+    def Within( self, other_geom ):
+        return _gdal.OGR_G_Within( self._o, other_geom._o )
+
+    def Contains( self, other_geom ):
+        return _gdal.OGR_G_Contains( self._o, other_geom._o )
+
+    def Overlaps( self, other_geom ):
+        return _gdal.OGR_G_Overlaps( self._o, other_geom._o )
+
     def Empty( self, other_geom ):
         return _gdal.OGR_G_Empty( self._o, other_geom._o )
 
@@ -854,6 +875,55 @@ class Geometry:
     def AddGeometryDirectly( self, subgeom ):
         return _gdal.OGR_G_AddGeometryDirectly( self._o, subgeom._o )
 
+    def GetBoundary( self ):
+        geom = _gdal.OGR_G_GetBoundary( self._o )
+        if geom is not None:
+            return Geometry( obj = geom )
+        else:
+            return None
+        
+    def ConvexHull( self ):
+        geom = _gdal.OGR_G_ConvexHull( self._o )
+        if geom is not None:
+            return Geometry( obj = geom )
+        else:
+            return None
+        
+    def Buffer( self, distance, quadsects = 30 ):
+        geom = _gdal.OGR_G_Buffer( self._o, distance, quadsects )
+        if geom is not None:
+            return Geometry( obj = geom )
+        else:
+            return None
+        
+    def Intersection( self, other ):
+        geom = _gdal.OGR_G_Intersection( self._o, other._o )
+        if geom is not None:
+            return Geometry( obj = geom )
+        else:
+            return None
+        
+    def Union( self, other ):
+        geom = _gdal.OGR_G_Union( self._o, other._o )
+        if geom is not None:
+            return Geometry( obj = geom )
+        else:
+            return None
+        
+    def Difference( self, other ):
+        geom = _gdal.OGR_G_Difference( self._o, other._o )
+        if geom is not None:
+            return Geometry( obj = geom )
+        else:
+            return None
+        
+    def SymmetricDifference( self, other ):
+        geom = _gdal.OGR_G_SymmetricDifference( self._o, other._o )
+        if geom is not None:
+            return Geometry( obj = geom )
+        else:
+            return None
+        
 
 def BuildPolygonFromEdges( edges, bBestEffort=0, bAutoClose=0, Tolerance=0 ):
     _o = _gdal.OGRBuildPolygonFromEdges( edges._o, bBestEffort, bAutoClose,

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.99  2004/07/10 07:08:39  warmerda
+ * added new GEOS methods
+ *
  * Revision 1.98  2004/07/10 05:05:23  warmerda
  * added closerings
  *
@@ -2729,6 +2732,22 @@ int OGR_G_TransformTo( OGRGeometryH, OGRSpatialReferenceH );
 
 int    OGR_G_Intersect( OGRGeometryH, OGRGeometryH );
 int    OGR_G_Equal( OGRGeometryH, OGRGeometryH );
+int    OGR_G_Disjoint( OGRGeometryH, OGRGeometryH );
+int    OGR_G_Touches( OGRGeometryH, OGRGeometryH );
+int    OGR_G_Crosses( OGRGeometryH, OGRGeometryH );
+int    OGR_G_Within( OGRGeometryH, OGRGeometryH );
+int    OGR_G_Contains( OGRGeometryH, OGRGeometryH );
+int    OGR_G_Overlaps( OGRGeometryH, OGRGeometryH );
+
+OGRGeometryH OGR_G_GetBoundary( OGRGeometryH );
+OGRGeometryH OGR_G_ConvexHull( OGRGeometryH );
+OGRGeometryH OGR_G_Buffer( OGRGeometryH, double, int );
+OGRGeometryH OGR_G_Intersection( OGRGeometryH, OGRGeometryH );
+OGRGeometryH OGR_G_Union( OGRGeometryH, OGRGeometryH );
+OGRGeometryH OGR_G_Difference( OGRGeometryH, OGRGeometryH );
+OGRGeometryH OGR_G_SymmetricDifference( OGRGeometryH, OGRGeometryH );
+double OGR_G_Distance( OGRGeometryH, OGRGeometryH );
+
 void   OGR_G_Empty( OGRGeometryH );
 
 /* Methods for getting/setting vertices in points, line strings and rings */
