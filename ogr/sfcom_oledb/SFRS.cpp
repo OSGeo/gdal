@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2002/01/11 20:36:31  warmerda
+ * set ISLONG flag on geometry column to indicate use of streams
+ *
  * Revision 1.31  2001/11/27 21:05:04  warmerda
  * ensure pLayer is initialized
  *
@@ -1213,7 +1216,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
 #ifdef BLOB_IUNKNOWN	
             colInfo.pwszName	= ::SysAllocString(A2OLE("OGIS_GEOMETRY"));
             colInfo.iOrdinal	= iField+1;
-            colInfo.dwFlags		= DBCOLUMNFLAGS_ISFIXEDLENGTH|DBCOLUMNFLAGS_MAYBENULL|DBCOLUMNFLAGS_ISNULLABLE;
+            colInfo.dwFlags		= DBCOLUMNFLAGS_ISFIXEDLENGTH|DBCOLUMNFLAGS_MAYBENULL|DBCOLUMNFLAGS_ISNULLABLE|DBCOLUMNFLAGS_ISLONG;
             colInfo.ulColumnSize= 4;
             colInfo.bPrecision  = ~0;
             colInfo.bScale	= ~0;
