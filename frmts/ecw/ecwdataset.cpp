@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/02/08 04:51:21  fwarmerdam
+ * fixed J2K_SUBFILE parsing error, add ECWCreateJPEG2000
+ *
  * Revision 1.32  2005/01/26 20:04:44  fwarmerdam
  * Fixed more non8bit issues.
  *
@@ -958,7 +961,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
           if( real_filename != NULL )
               real_filename = strstr(real_filename+1,",");
           if( real_filename != NULL )
-              real_filename = real_filename++;
+              real_filename++;
           else
           {
               CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -1273,6 +1276,8 @@ void GDALRegister_ECW()
         
         poDriver->pfnOpen = ECWDataset::OpenECW;
 #ifdef HAVE_COMPRESS
+// The create method seems not to work properly.
+//        poDriver->pfnCreate = ECWCreateECW;  
         poDriver->pfnCreateCopy = ECWCreateCopyECW;
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte" );
@@ -1312,6 +1317,7 @@ void GDALRegister_JP2ECW()
         
         poDriver->pfnOpen = ECWDataset::OpenJPEG2000;
 #ifdef HAVE_COMPRESS
+        poDriver->pfnCreate = ECWCreateJPEG2000;
         poDriver->pfnCreateCopy = ECWCreateCopyJPEG2000;
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte UInt16 Int16 UInt32 Int32 Float32 Float64" );
