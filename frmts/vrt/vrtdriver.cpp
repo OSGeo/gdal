@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/04/02 17:20:06  warmerda
+ * Added defaulte extension, and point help topic to VRT tutorial.
+ *
  * Revision 1.3  2004/03/16 18:34:35  warmerda
  * added support for relativeToVRT attribute on SourceFilename
  *
@@ -279,6 +282,8 @@ void GDALRegister_VRT()
         poDriver->SetDescription( "VRT" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Virtual Raster" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vrt" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "gdal_vrttut.html" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64" );
         
