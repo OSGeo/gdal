@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2000/07/13 17:34:11  warmerda
+ * Set description for CopyCreate() method.
+ *
  * Revision 1.15  2000/07/13 17:27:48  warmerda
  * added SetDescription after create
  *
@@ -149,6 +152,8 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 
         if( poDS != NULL )
             poDS->SetDescription( pszFilename );
+
+        return poDS;
     }
 }
 
@@ -215,9 +220,26 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 
+/* -------------------------------------------------------------------- */
+/*      If the format provides a CreateCopy() method use that,          */
+/*      otherwise fallback to the internal implementation using the     */
+/*      Create() method.                                                */
+/* -------------------------------------------------------------------- */
     if( pfnCreateCopy != NULL )
-        return pfnCreateCopy( pszFilename, poSrcDS, bStrict, papszOptions,
-                              pfnProgress, pProgressData );
+    {
+        GDALDataset *poDstDS;
+
+        poDstDS = pfnCreateCopy( pszFilename, poSrcDS, bStrict, papszOptions,
+                                 pfnProgress, pProgressData );
+        if( poDstDS != NULL )
+        {
+            if( poDstDS->GetDescription() == NULL 
+                || strlen(poDstDS->GetDescription()) > 0 )
+                poDstDS->SetDescription( pszFilename );
+        }
+
+        return poDstDS;
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Create destination dataset.                                     */
