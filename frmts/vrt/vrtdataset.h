@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/07/17 20:30:24  warmerda
+ * Added custom VRTDriver and moved all the sources class declarations in here.
+ *
  * Revision 1.8  2003/06/10 19:59:33  warmerda
  * added new Func based source type for passthrough to a callback
  *
@@ -90,6 +93,11 @@ public:
     virtual CPLErr  XMLInit( CPLXMLNode *psTree ) = 0;
     virtual CPLXMLNode *SerializeToXML() = 0;
 };
+
+typedef VRTSource *(*VRTSourceParser)(CPLXMLNode *);
+
+VRTSource *VRTParseCoreSources( CPLXMLNode *psTree );
+VRTSource *VRTParseFilterSources( CPLXMLNode *psTree );
 
 /************************************************************************/
 /*                              VRTDataset                              */
@@ -199,6 +207,10 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
 
     virtual CPLErr IReadBlock( int, int, void * );
 
+    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual CPLErr      SetMetadata( char ** papszMetadata,
+                                     const char * pszDomain = "" );
+
     virtual CPLErr SetNoDataValue( double );
     virtual double GetNoDataValue( int *pbSuccess = NULL );
 
@@ -209,11 +221,204 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     virtual GDALColorInterp GetColorInterpretation();
 };
 
+/************************************************************************/
+/*                              VRTDriver                               */
+/************************************************************************/
+
+class VRTDriver : public GDALDriver
+{
+  public:
+                 VRTDriver();
+                 ~VRTDriver();
+
+    char         **papszSourceParsers;
+
+    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual CPLErr      SetMetadata( char ** papszMetadata,
+                                     const char * pszDomain = "" );
+
+    VRTSource   *ParseSource( CPLXMLNode *psSrc );
+    void         AddSourceParser( const char *pszElementName, 
+                                  VRTSourceParser pfnParser );
+};
+
+/************************************************************************/
+/*                           VRTSimpleSource                            */
+/************************************************************************/
+
+class VRTSimpleSource : public VRTSource
+{
+protected:
+    GDALRasterBand      *poRasterBand;
+
+    int                 nSrcXOff;
+    int                 nSrcYOff;
+    int                 nSrcXSize;
+    int                 nSrcYSize;
+
+    int                 nDstXOff;
+    int                 nDstYOff;
+    int                 nDstXSize;
+    int                 nDstYSize;
+
+    int                 bNoDataSet;
+    double              dfNoDataValue;
+
+public:
+            VRTSimpleSource();
+    virtual ~VRTSimpleSource();
+
+    virtual CPLErr  XMLInit( CPLXMLNode *psTree );
+    virtual CPLXMLNode *SerializeToXML();
+
+    void           SetSrcBand( GDALRasterBand * );
+    void           SetSrcWindow( int, int, int, int );
+    void           SetDstWindow( int, int, int, int );
+    void           SetNoDataValue( double dfNoDataValue );
+
+    int            GetSrcDstWindow( int, int, int, int, int, int, 
+                                    int *, int *, int *, int *,
+                                    int *, int *, int *, int * );
+
+    virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
+                              void *pData, int nBufXSize, int nBufYSize, 
+                              GDALDataType eBufType, 
+                              int nPixelSpace, int nLineSpace );
+
+    void            DstToSrc( double dfX, double dfY,
+                              double &dfXOut, double &dfYOut );
+    void            SrcToDst( double dfX, double dfY,
+                              double &dfXOut, double &dfYOut );
+
+};
+
+/************************************************************************/
+/*                          VRTAveragedSource                           */
+/************************************************************************/
+
+class VRTAveragedSource : public VRTSimpleSource
+{
+public:
+    virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
+                              void *pData, int nBufXSize, int nBufYSize, 
+                              GDALDataType eBufType, 
+                              int nPixelSpace, int nLineSpace );
+    virtual CPLXMLNode *SerializeToXML();
+};
+
+/************************************************************************/
+/*                           VRTComplexSource                           */
+/************************************************************************/
+
+class VRTComplexSource : public VRTSimpleSource
+{
+public:
+                   VRTComplexSource();
+
+    virtual CPLErr RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
+                             void *pData, int nBufXSize, int nBufYSize, 
+                             GDALDataType eBufType, 
+                             int nPixelSpace, int nLineSpace );
+    virtual CPLXMLNode *SerializeToXML();
+    virtual CPLErr XMLInit( CPLXMLNode * );
+
+    int		   bDoScaling;
+    double	   dfScaleOff;
+    double         dfScaleRatio;
+
+};
+
+/************************************************************************/
+/*                           VRTFilteredSource                          */
+/************************************************************************/
+
+class VRTFilteredSource : public VRTComplexSource
+{
+private:
+    int          IsTypeSupported( GDALDataType eType );
+
+protected:
+    int          nSupportedTypesCount;
+    GDALDataType aeSupportedTypes[20];
+
+    int          nExtraEdgePixels;
+
+public:
+            VRTFilteredSource();
+    virtual ~VRTFilteredSource();
+
+    void    SetExtraEdgePixels( int );
+    void    SetFilteringDataTypesSupported( int, GDALDataType * );
+
+    virtual CPLErr  FilterData( int nXSize, int nYSize, GDALDataType eType, 
+                                GByte *pabySrcData, GByte *pabyDstData ) = 0;
+
+    virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
+                              void *pData, int nBufXSize, int nBufYSize, 
+                              GDALDataType eBufType, 
+                              int nPixelSpace, int nLineSpace );
+};
+
+/************************************************************************/
+/*                       VRTKernelFilteredSource                        */
+/************************************************************************/
+
+class VRTKernelFilteredSource : public VRTFilteredSource
+{
+protected:
+    int     nKernelSize;
+
+    double  *padfKernelCoefs;
+
+public:
+            VRTKernelFilteredSource();
+    virtual ~VRTKernelFilteredSource();
+
+    virtual CPLErr  XMLInit( CPLXMLNode *psTree );
+    virtual CPLXMLNode *SerializeToXML();
+
+    virtual CPLErr  FilterData( int nXSize, int nYSize, GDALDataType eType, 
+                                GByte *pabySrcData, GByte *pabyDstData );
+
+    CPLErr          SetKernel( int nKernelSize, double *padfCoefs );
+};
+
+/************************************************************************/
+/*                       VRTAverageFilteredSource                       */
+/************************************************************************/
+
+class VRTAverageFilteredSource : public VRTKernelFilteredSource
+{
+public:
+            VRTAverageFilteredSource( int nKernelSize );
+    virtual ~VRTAverageFilteredSource();
+
+    virtual CPLErr  XMLInit( CPLXMLNode *psTree );
+    virtual CPLXMLNode *SerializeToXML();
+};
+
+/************************************************************************/
+/*                            VRTFuncSource                             */
+/************************************************************************/
+class VRTFuncSource : public VRTSource
+{
+public:
+            VRTFuncSource();
+    virtual ~VRTFuncSource();
+
+    virtual CPLErr  XMLInit( CPLXMLNode * ) { return CE_Failure; }
+    virtual CPLXMLNode *SerializeToXML();
+
+    virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
+                              void *pData, int nBufXSize, int nBufYSize, 
+                              GDALDataType eBufType, 
+                              int nPixelSpace, int nLineSpace );
+
+    VRTImageReadFunc    pfnReadFunc;
+    void               *pCBData;
+    GDALDataType        eType;
+    
+    float               fNoDataValue;
+};
+
 #endif /* ndef VIRTUALDATASET_H_INCLUDED */
-
-
-
-
-
-
-
