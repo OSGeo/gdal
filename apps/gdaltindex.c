@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/04/06 13:05:19  fwarmerdam
+ * Print out "creating new index" message to help unconfuse people who
+ * see the error message about failing to open the index file.
+ *
  * Revision 1.6  2004/04/02 17:33:22  warmerda
  * added GDALGeneralCmdLineProcessor()
  *
@@ -123,6 +127,7 @@ int main(int argc, char *argv[])
     hSHP = SHPOpen( index_filename, "r+" );
     if( hSHP == NULL )
     {
+        printf( "Creating new index file...\n" );
         hSHP = SHPCreate( index_filename, SHPT_POLYGON );
     }
 
