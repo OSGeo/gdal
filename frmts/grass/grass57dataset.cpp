@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/09/24 14:28:49  fwarmerdam
+ * fixed some typos with floating point (from Radim)
+ *
  * Revision 1.2  2004/09/22 20:39:15  fwarmerdam
  * some updates to reduce spurious error reports
  *
@@ -552,13 +555,13 @@ CPLErr GRASSRasterBand::IRasterIO ( GDALRWFlag eRWFlag,
 			        (void *)  pnt,  eBufType, nPixelSpace,
 				nBufXSize ); 
 	    }
-	} else if( nGRSType == FCELL_TYPE ) {
+	} else if( nGRSType == DCELL_TYPE ) {
 	    if ( direct ) {
-		G_get_f_raster_row ( hCell, (FCELL *) pnt, row );
+		G_get_d_raster_row ( hCell, (DCELL *) pnt, row );
 	    } else {
-		G_get_f_raster_row ( hCell, fbuf, row );
+		G_get_d_raster_row ( hCell, dbuf, row );
 		
-		GDALCopyWords ( (void *) fbuf, GDT_Float32, sizeof(FCELL), 
+		GDALCopyWords ( (void *) dbuf, GDT_Float64, sizeof(DCELL), 
 			        (void *)  pnt,  eBufType, nPixelSpace,
 				nBufXSize ); 
 	    }
