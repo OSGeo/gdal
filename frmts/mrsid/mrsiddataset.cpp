@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/05/25 15:24:49  dron
+ * Added georeferencing.
+ *
  * Revision 1.2  2003/05/07 10:26:02  dron
  * Added multidimensional metadata handling.
  *
@@ -49,12 +52,17 @@
 #include "MetadataReader.h"
 #include "MetadataElement.h"
 
+#include <geo_normalize.h>
+#include <geovalues.h>
+
 LT_USE_NAMESPACE(LizardTech)
 
 CPL_CVSID("$Id$");
 
 CPL_C_START
 void    GDALRegister_MrSID(void);
+char *  GTIFGetOGISDefn( GTIFDefn * );
+double GTIFAngleToDD( double dfAngle, int nUOMAngle );
 CPL_C_END
 
 /************************************************************************/
@@ -82,20 +90,25 @@ class MrSIDDataset : public GDALDataset
     int                 bHasGeoTransfom;
     double              adfGeoTransform[6];
     char                *pszProjection;
+    GTIFDefn            *psDefn;
 
     int		        nOverviewCount;
     MrSIDDataset        **papoOverviewDS;
+
+    CPLErr              OpenZoomLevel( int iZoom );
+    char                *SerializeMetadataElement( const MetadataElement *poElem );
+    int                 GetMetadataElement( const char *pszKey, void *pValue );
+    void                FetchProjParms();
+    void                GetGTIFDefn();
 
   public:
                 MrSIDDataset();
                 ~MrSIDDataset();
 
-    CPLErr              OpenZoomLevel( int iZoom );
     static GDALDataset  *Open( GDALOpenInfo * );
 
-    CPLErr              GetGeoTransform( double * padfTransform );
+    virtual CPLErr      GetGeoTransform( double * padfTransform );
     const char          *GetProjectionRef();
-    char                *SerializeMetadataElement( const MetadataElement *poElem );
 };
 
 /************************************************************************/
@@ -135,7 +148,8 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDS, int nBand )
     this->eDataType = poDS->eDataType;
 
     nBlockXSize = poDS->GetRasterXSize();
-    nBlockYSize = poDS->GetRasterYSize();
+    nBlockYSize = ( nBlockXSize * poDS->GetRasterYSize() < 1000000 )?
+        poDS->GetRasterYSize():1000000/nBlockXSize + 1;
     nBlockSize = nBlockXSize * nBlockYSize;
     poDS->poMrSidNav->zoomTo( poDS->nCurrentZoomLevel ); 
     poDS->poMrSidNav->resize( nBlockXSize, nBlockYSize, IntRect::TOP_LEFT );
@@ -170,10 +184,9 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int             i, j;
 
     poImageBuf = new ImageBuffer( *poImageBufInfo );
-    poGDS->poMrSidNav->panTo( nBlockXOff * nBlockYSize,
-                              nBlockYOff * nBlockXSize,
+    poGDS->poMrSidNav->panTo( nBlockXOff * nBlockXSize,
+                              nBlockYOff * nBlockYSize,
                               IntRect::TOP_LEFT );
-    poImageBuf->setStripHeight( nBlockYSize );
 
     try
     {
@@ -311,9 +324,11 @@ MrSIDDataset::MrSIDDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+    psDefn = NULL;
     nCurrentZoomLevel = 0;
     nOverviewCount = 0;
     papoOverviewDS = NULL;
+
 }
 
 /************************************************************************/
@@ -338,6 +353,8 @@ MrSIDDataset::~MrSIDDataset()
         delete poColorSpace;
     if ( pszProjection )
         CPLFree( pszProjection );
+    if ( psDefn )
+        delete psDefn;
     if ( papoOverviewDS )
     {
         for( int i = 0; i < nOverviewCount; i++ )
@@ -376,8 +393,7 @@ const char *MrSIDDataset::GetProjectionRef()
 /*                      SerializeMetadataElement()                      */
 /************************************************************************/
 
-char *MrSIDDataset::SerializeMetadataElement( const MetadataElement
-                                                    *poElem )
+char *MrSIDDataset::SerializeMetadataElement( const MetadataElement *poElem )
 {
     IntDimension oDim = poElem->getDimensions();
     int         i, j, iLength;
@@ -425,6 +441,969 @@ char *MrSIDDataset::SerializeMetadataElement( const MetadataElement
 }
 
 /************************************************************************/
+/*                          GetMetadataElement()                        */
+/************************************************************************/
+
+int MrSIDDataset::GetMetadataElement( const char *pszKey, void *pValue )
+{
+    if ( !poMrSidMetadata->keyExists( pszKey ) )
+        return FALSE;
+
+    MetadataElement *poElem =
+        new MetadataElement( poMrSidMetadata->getValue( pszKey ) );
+
+    /* XXX: return FALSE if we have more than one element in metadata record*/
+    if ( poElem->getDimensionality() != MetadataElement::SINGLE_VALUE )
+        return FALSE;
+
+    switch( poElem->type() )
+    {
+        case MetadataValue::BYTE:
+        {
+            unsigned char iValue = (*poElem)[0][0];
+            memcpy( pValue, &iValue, sizeof( iValue ) );
+        }
+        break;
+        case MetadataValue::SHORT:
+        {
+            unsigned short iValue = (*poElem)[0][0];
+            memcpy( pValue, &iValue, sizeof( iValue ) );
+        }
+        break;
+        case MetadataValue::LONG:
+        {
+            unsigned long iValue = (*poElem)[0][0];
+            memcpy( pValue, &iValue, sizeof( iValue ) );
+        }
+        break;
+        case MetadataValue::SBYTE:
+        {
+            char iValue = (*poElem)[0][0];
+            memcpy( pValue, &iValue, sizeof( iValue ) );
+        }
+        break;
+        case MetadataValue::SSHORT:
+        {
+            signed short iValue = (*poElem)[0][0];
+            memcpy( pValue, &iValue, sizeof( iValue ) );
+        }
+        break;
+        case MetadataValue::SLONG:
+        {
+            signed long iValue = (*poElem)[0][0];
+            memcpy( pValue, &iValue, sizeof( iValue ) );
+        }
+        break;
+        case MetadataValue::FLOAT:
+        {
+            float fValue = (*poElem)[0][0];
+            memcpy( pValue, &fValue, sizeof( fValue ) );
+        }
+        break;
+        case MetadataValue::DOUBLE:
+        {
+            double dfValue = (*poElem)[0][0];
+            memcpy( pValue, &dfValue, sizeof( dfValue ) );
+        }
+        break;
+        default:
+        break;
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                    EPSGProjMethodToCTProjMethod()                    */
+/*                                                                      */
+/*      Convert between the EPSG enumeration for projection methods,    */
+/*      and the GeoTIFF CT codes.                                       */
+/*      Explicitly copied from geo_normalize.c of the GeoTIFF package   */
+/************************************************************************/
+
+static int EPSGProjMethodToCTProjMethod( int nEPSG )
+
+{
+    /* see trf_method.csv for list of EPSG codes */
+    
+    switch( nEPSG )
+    {
+      case 9801:
+        return( CT_LambertConfConic_1SP );
+
+      case 9802:
+        return( CT_LambertConfConic_2SP );
+
+      case 9803:
+        return( CT_LambertConfConic_2SP ); /* Belgian variant not supported */
+
+      case 9804:
+        return( CT_Mercator );  /* 1SP and 2SP not differentiated */
+
+      case 9805:
+        return( CT_Mercator );  /* 1SP and 2SP not differentiated */
+
+      case 9806:
+        return( CT_CassiniSoldner );
+
+      case 9807:
+        return( CT_TransverseMercator );
+
+      case 9808:
+        return( CT_TransvMercator_SouthOriented );
+
+      case 9809:
+        return( CT_ObliqueStereographic );
+
+      case 9810:
+        return( CT_PolarStereographic );
+
+      case 9811:
+        return( CT_NewZealandMapGrid );
+
+      case 9812:
+        return( CT_ObliqueMercator ); /* is hotine actually different? */
+
+      case 9813:
+        return( CT_ObliqueMercator_Laborde );
+
+      case 9814:
+        return( CT_ObliqueMercator_Rosenmund ); /* swiss  */
+
+      case 9815:
+        return( CT_ObliqueMercator );
+
+      case 9816: /* tunesia mining grid has no counterpart */
+        return( KvUserDefined );
+    }
+
+    return( KvUserDefined );
+}
+
+/* EPSG Codes for projection parameters.  Unfortunately, these bear no
+   relationship to the GeoTIFF codes even though the names are so similar. */
+
+#define EPSGNatOriginLat         8801
+#define EPSGNatOriginLong        8802
+#define EPSGNatOriginScaleFactor 8805
+#define EPSGFalseEasting         8806
+#define EPSGFalseNorthing        8807
+#define EPSGProjCenterLat        8811
+#define EPSGProjCenterLong       8812
+#define EPSGAzimuth              8813
+#define EPSGAngleRectifiedToSkewedGrid 8814
+#define EPSGInitialLineScaleFactor 8815
+#define EPSGProjCenterEasting    8816
+#define EPSGProjCenterNorthing   8817
+#define EPSGPseudoStdParallelLat 8818
+#define EPSGPseudoStdParallelScaleFactor 8819
+#define EPSGFalseOriginLat       8821
+#define EPSGFalseOriginLong      8822
+#define EPSGStdParallel1Lat      8823
+#define EPSGStdParallel2Lat      8824
+#define EPSGFalseOriginEasting   8826
+#define EPSGFalseOriginNorthing  8827
+#define EPSGSphericalOriginLat   8828
+#define EPSGSphericalOriginLong  8829
+#define EPSGInitialLongitude     8830
+#define EPSGZoneWidth            8831
+
+/************************************************************************/
+/*                            SetGTParmIds()                            */
+/*                                                                      */
+/*      This is hardcoded logic to set the GeoTIFF parameter            */
+/*      identifiers for all the EPSG supported projections.  As the     */
+/*      trf_method.csv table grows with new projections, this code      */
+/*      will need to be updated.                                        */
+/*      Explicitly copied from geo_normalize.c of the GeoTIFF package   */
+/************************************************************************/
+
+static int SetGTParmIds( int nCTProjection, 
+                         int *panProjParmId, 
+                         int *panEPSGCodes )
+
+{
+    int anWorkingDummy[7];
+
+    if( panEPSGCodes == NULL )
+        panEPSGCodes = anWorkingDummy;
+    if( panProjParmId == NULL )
+        panProjParmId = anWorkingDummy;
+
+    memset( panEPSGCodes, 0, sizeof(int) * 7 );
+
+    /* psDefn->nParms = 7; */
+    
+    switch( nCTProjection )
+    {
+      case CT_CassiniSoldner:
+      case CT_NewZealandMapGrid:
+        panProjParmId[0] = ProjNatOriginLatGeoKey;
+        panProjParmId[1] = ProjNatOriginLongGeoKey;
+        panProjParmId[5] = ProjFalseEastingGeoKey;
+        panProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        panEPSGCodes[0] = EPSGNatOriginLat;
+        panEPSGCodes[1] = EPSGNatOriginLong;
+        panEPSGCodes[5] = EPSGFalseEasting;
+        panEPSGCodes[6] = EPSGFalseNorthing;
+        return TRUE;
+
+      case CT_ObliqueMercator:
+        panProjParmId[0] = ProjCenterLatGeoKey;
+        panProjParmId[1] = ProjCenterLongGeoKey;
+        panProjParmId[2] = ProjAzimuthAngleGeoKey;
+        panProjParmId[3] = ProjRectifiedGridAngleGeoKey;
+        panProjParmId[4] = ProjScaleAtCenterGeoKey;
+        panProjParmId[5] = ProjFalseEastingGeoKey;
+        panProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        panEPSGCodes[0] = EPSGProjCenterLat;
+        panEPSGCodes[1] = EPSGProjCenterLong;
+        panEPSGCodes[2] = EPSGAzimuth;
+        panEPSGCodes[3] = EPSGAngleRectifiedToSkewedGrid;
+        panEPSGCodes[4] = EPSGInitialLineScaleFactor;
+        panEPSGCodes[5] = EPSGProjCenterEasting;
+        panEPSGCodes[6] = EPSGProjCenterNorthing;
+        return TRUE;
+
+      case CT_ObliqueMercator_Laborde:
+        panProjParmId[0] = ProjCenterLatGeoKey;
+        panProjParmId[1] = ProjCenterLongGeoKey;
+        panProjParmId[2] = ProjAzimuthAngleGeoKey;
+        panProjParmId[4] = ProjScaleAtCenterGeoKey;
+        panProjParmId[5] = ProjFalseEastingGeoKey;
+        panProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        panEPSGCodes[0] = EPSGProjCenterLat;
+        panEPSGCodes[1] = EPSGProjCenterLong;
+        panEPSGCodes[2] = EPSGAzimuth;
+        panEPSGCodes[4] = EPSGInitialLineScaleFactor;
+        panEPSGCodes[5] = EPSGProjCenterEasting;
+        panEPSGCodes[6] = EPSGProjCenterNorthing;
+        return TRUE;
+        
+      case CT_LambertConfConic_1SP:
+      case CT_Mercator:
+      case CT_ObliqueStereographic:
+      case CT_PolarStereographic:
+      case CT_TransverseMercator:
+      case CT_TransvMercator_SouthOriented:
+        panProjParmId[0] = ProjNatOriginLatGeoKey;
+        panProjParmId[1] = ProjNatOriginLongGeoKey;
+        panProjParmId[4] = ProjScaleAtNatOriginGeoKey;
+        panProjParmId[5] = ProjFalseEastingGeoKey;
+        panProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        panEPSGCodes[0] = EPSGNatOriginLat;
+        panEPSGCodes[1] = EPSGNatOriginLong;
+        panEPSGCodes[4] = EPSGNatOriginScaleFactor;
+        panEPSGCodes[5] = EPSGFalseEasting;
+        panEPSGCodes[6] = EPSGFalseNorthing;
+        return TRUE;
+
+      case CT_LambertConfConic_2SP:
+        panProjParmId[0] = ProjFalseOriginLatGeoKey;
+        panProjParmId[1] = ProjFalseOriginLongGeoKey;
+        panProjParmId[2] = ProjStdParallel1GeoKey;
+        panProjParmId[3] = ProjStdParallel2GeoKey;
+        panProjParmId[5] = ProjFalseEastingGeoKey;
+        panProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        panEPSGCodes[0] = EPSGFalseOriginLat;
+        panEPSGCodes[1] = EPSGFalseOriginLong;
+        panEPSGCodes[2] = EPSGStdParallel1Lat;
+        panEPSGCodes[3] = EPSGStdParallel2Lat;
+        panEPSGCodes[5] = EPSGFalseOriginEasting;
+        panEPSGCodes[6] = EPSGFalseOriginNorthing;
+        return TRUE;
+
+      case CT_SwissObliqueCylindrical:
+        panProjParmId[0] = ProjCenterLatGeoKey;
+        panProjParmId[1] = ProjCenterLongGeoKey;
+        panProjParmId[5] = ProjFalseEastingGeoKey;
+        panProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        /* EPSG codes? */
+        return TRUE;
+
+      default:
+        return( FALSE );
+    }
+}
+
+/************************************************************************/
+/*                           FetchProjParms()                           */
+/*                                                                      */
+/*      Fetch the projection parameters for a particular projection     */
+/*      from MrSID metadata, and fill the GTIFDefn structure out        */
+/*      with them.                                                      */
+/************************************************************************/
+
+void MrSIDDataset::FetchProjParms()
+{
+    double	dfNatOriginLong, dfNatOriginLat, dfRectGridAngle;
+    double	dfFalseEasting, dfFalseNorthing, dfNatOriginScale;
+    double	dfStdParallel1, dfStdParallel2, dfAzimuth;
+
+/* -------------------------------------------------------------------- */
+/*      Get the false easting, and northing if available.               */
+/* -------------------------------------------------------------------- */
+    if( !GetMetadataElement( "GEOTIFF_NUM::3082::ProjFalseEastingGeoKey",
+                             &dfFalseEasting )
+        && !GetMetadataElement( "GEOTIFF_NUM::3090:ProjCenterEastingGeoKey",
+                                &dfFalseEasting ) )
+        dfFalseEasting = 0.0;
+        
+    if( !GetMetadataElement( "GEOTIFF_NUM::3083::ProjFalseNorthingGeoKey",
+                             &dfFalseNorthing )
+        && !GetMetadataElement( "GEOTIFF_NUM::3091::ProjCenterNorthingGeoKey",
+                                &dfFalseNorthing ) )
+        dfFalseNorthing = 0.0;
+
+    switch( psDefn->CTProjection )
+    {
+/* -------------------------------------------------------------------- */
+      case CT_Stereographic:
+/* -------------------------------------------------------------------- */
+        if( GetMetadataElement( "GEOTIFF_NUM::3080::ProjNatOriginLongGeoKey",
+                                &dfNatOriginLong ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3084::ProjFalseOriginLongGeoKey",
+                                   &dfNatOriginLong ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3088::ProjCenterLongGeoKey",
+                                   &dfNatOriginLong ) == 0 )
+            dfNatOriginLong = 0.0;
+
+        if( GetMetadataElement( "GEOTIFF_NUM::3081::ProjNatOriginLatGeoKey",
+                                &dfNatOriginLat ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3085::ProjFalseOriginLatGeoKey",
+                                   &dfNatOriginLat ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3089::ProjCenterLatGeoKey",
+                                   &dfNatOriginLat ) == 0 )
+            dfNatOriginLat = 0.0;
+
+        if( GetMetadataElement( "GEOTIFF_NUM::3092::ProjScaleAtNatOriginGeoKey",
+                                &dfNatOriginScale ) == 0 )
+            dfNatOriginScale = 1.0;
+            
+        /* notdef: should transform to decimal degrees at this point */
+
+        psDefn->ProjParm[0] = dfNatOriginLat;
+        psDefn->ProjParmId[0] = ProjCenterLatGeoKey;
+        psDefn->ProjParm[1] = dfNatOriginLong;
+        psDefn->ProjParmId[1] = ProjCenterLongGeoKey;
+        psDefn->ProjParm[4] = dfNatOriginScale;
+        psDefn->ProjParmId[4] = ProjScaleAtNatOriginGeoKey;
+        psDefn->ProjParm[5] = dfFalseEasting;
+        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParm[6] = dfFalseNorthing;
+        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        psDefn->nParms = 7;
+        break;
+
+/* -------------------------------------------------------------------- */
+      case CT_LambertConfConic_1SP:
+      case CT_Mercator:
+      case CT_ObliqueStereographic:
+      case CT_TransverseMercator:
+      case CT_TransvMercator_SouthOriented:
+/* -------------------------------------------------------------------- */
+        if( GetMetadataElement( "GEOTIFF_NUM::3080::ProjNatOriginLongGeoKey",
+                                &dfNatOriginLong ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3084::ProjFalseOriginLongGeoKey",
+                                   &dfNatOriginLong ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3088::ProjCenterLongGeoKey", 
+                                   &dfNatOriginLong ) == 0 )
+            dfNatOriginLong = 0.0;
+
+        if( GetMetadataElement( "GEOTIFF_NUM::3081::ProjNatOriginLatGeoKey",
+                                &dfNatOriginLat ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3085::ProjFalseOriginLatGeoKey",
+                                   &dfNatOriginLat ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3089::ProjCenterLatGeoKey",
+                                   &dfNatOriginLat ) == 0 )
+            dfNatOriginLat = 0.0;
+
+        if( GetMetadataElement( "GEOTIFF_NUM::3092::ProjScaleAtNatOriginGeoKey",
+                                &dfNatOriginScale ) == 0 )
+            dfNatOriginScale = 1.0;
+
+        /* notdef: should transform to decimal degrees at this point */
+
+        psDefn->ProjParm[0] = dfNatOriginLat;
+        psDefn->ProjParmId[0] = ProjNatOriginLatGeoKey;
+        psDefn->ProjParm[1] = dfNatOriginLong;
+        psDefn->ProjParmId[1] = ProjNatOriginLongGeoKey;
+        psDefn->ProjParm[4] = dfNatOriginScale;
+        psDefn->ProjParmId[4] = ProjScaleAtNatOriginGeoKey;
+        psDefn->ProjParm[5] = dfFalseEasting;
+        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParm[6] = dfFalseNorthing;
+        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        psDefn->nParms = 7;
+        break;
+
+/* -------------------------------------------------------------------- */
+      case CT_ObliqueMercator: /* hotine */
+/* -------------------------------------------------------------------- */
+        if( GetMetadataElement( "GEOTIFF_NUM::3080::ProjNatOriginLongGeoKey",
+                                &dfNatOriginLong ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3084::ProjFalseOriginLongGeoKey",
+                                   &dfNatOriginLong ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3088::ProjCenterLongGeoKey", 
+                                   &dfNatOriginLong ) == 0 )
+            dfNatOriginLong = 0.0;
+
+        if( GetMetadataElement( "GEOTIFF_NUM::3081::ProjNatOriginLatGeoKey",
+                                &dfNatOriginLat ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3085::ProjFalseOriginLatGeoKey",
+                                   &dfNatOriginLat ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3089::ProjCenterLatGeoKey",
+                                   &dfNatOriginLat ) == 0 )
+            dfNatOriginLat = 0.0;
+
+        if( GetMetadataElement( "GEOTIFF_NUM::3094::ProjAzimuthAngleGeoKey",
+                                &dfAzimuth ) == 0 )
+            dfAzimuth = 0.0;
+
+        if( GetMetadataElement( "GEOTIFF_NUM::3096::ProjRectifiedGridAngleGeoKey",
+                                &dfRectGridAngle ) == 0 )
+            dfRectGridAngle = 90.0;
+
+        if( GetMetadataElement( "GEOTIFF_NUM::3092::ProjScaleAtNatOriginGeoKey",
+                                &dfNatOriginScale ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3093::ProjScaleAtCenterGeoKey",
+                                   &dfNatOriginScale ) == 0 )
+            dfNatOriginScale = 1.0;
+            
+        /* notdef: should transform to decimal degrees at this point */
+
+        psDefn->ProjParm[0] = dfNatOriginLat;
+        psDefn->ProjParmId[0] = ProjCenterLatGeoKey;
+        psDefn->ProjParm[1] = dfNatOriginLong;
+        psDefn->ProjParmId[1] = ProjCenterLongGeoKey;
+        psDefn->ProjParm[2] = dfAzimuth;
+        psDefn->ProjParmId[2] = ProjAzimuthAngleGeoKey;
+        psDefn->ProjParm[3] = dfRectGridAngle;
+        psDefn->ProjParmId[3] = ProjRectifiedGridAngleGeoKey;
+        psDefn->ProjParm[4] = dfNatOriginScale;
+        psDefn->ProjParmId[4] = ProjScaleAtCenterGeoKey;
+        psDefn->ProjParm[5] = dfFalseEasting;
+        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParm[6] = dfFalseNorthing;
+        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        psDefn->nParms = 7;
+        break;
+
+/* -------------------------------------------------------------------- */
+      case CT_CassiniSoldner:
+      case CT_Polyconic:
+/* -------------------------------------------------------------------- */
+        if( GetMetadataElement( "GEOTIFF_NUM::3080::ProjNatOriginLongGeoKey",
+                                &dfNatOriginLong ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3084::ProjFalseOriginLongGeoKey",
+                                   &dfNatOriginLong ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3088::ProjCenterLongGeoKey", 
+                                   &dfNatOriginLong ) == 0 )
+            dfNatOriginLong = 0.0;
+
+        if( GetMetadataElement( "GEOTIFF_NUM::3081::ProjNatOriginLatGeoKey",
+                                &dfNatOriginLat ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3085::ProjFalseOriginLatGeoKey",
+                                   &dfNatOriginLat ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3089::ProjCenterLatGeoKey",
+                                   &dfNatOriginLat ) == 0 )
+            dfNatOriginLat = 0.0;
+
+
+        if( GetMetadataElement( "GEOTIFF_NUM::3092::ProjScaleAtNatOriginGeoKey",
+                                &dfNatOriginScale ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3093::ProjScaleAtCenterGeoKey",
+                                   &dfNatOriginScale ) == 0 )
+            dfNatOriginScale = 1.0;
+            
+        /* notdef: should transform to decimal degrees at this point */
+
+        psDefn->ProjParm[0] = dfNatOriginLat;
+        psDefn->ProjParmId[0] = ProjNatOriginLatGeoKey;
+        psDefn->ProjParm[1] = dfNatOriginLong;
+        psDefn->ProjParmId[1] = ProjNatOriginLongGeoKey;
+        psDefn->ProjParm[4] = dfNatOriginScale;
+        psDefn->ProjParmId[4] = ProjScaleAtNatOriginGeoKey;
+        psDefn->ProjParm[5] = dfFalseEasting;
+        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParm[6] = dfFalseNorthing;
+        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        psDefn->nParms = 7;
+        break;
+
+/* -------------------------------------------------------------------- */
+      case CT_AzimuthalEquidistant:
+      case CT_MillerCylindrical:
+      case CT_Equirectangular:
+      case CT_Gnomonic:
+      case CT_LambertAzimEqualArea:
+      case CT_Orthographic:
+/* -------------------------------------------------------------------- */
+        if( GetMetadataElement( "GEOTIFF_NUM::3080::ProjNatOriginLongGeoKey",
+                                &dfNatOriginLong ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3084::ProjFalseOriginLongGeoKey",
+                                   &dfNatOriginLong ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3088::ProjCenterLongGeoKey", 
+                                   &dfNatOriginLong ) == 0 )
+            dfNatOriginLong = 0.0;
+
+        if( GetMetadataElement( "GEOTIFF_NUM::3081::ProjNatOriginLatGeoKey",
+                                &dfNatOriginLat ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3085::ProjFalseOriginLatGeoKey",
+                                   &dfNatOriginLat ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3089::ProjCenterLatGeoKey",
+                                   &dfNatOriginLat ) == 0 )
+            dfNatOriginLat = 0.0;
+
+        /* notdef: should transform to decimal degrees at this point */
+
+        psDefn->ProjParm[0] = dfNatOriginLat;
+        psDefn->ProjParmId[0] = ProjCenterLatGeoKey;
+        psDefn->ProjParm[1] = dfNatOriginLong;
+        psDefn->ProjParmId[1] = ProjCenterLongGeoKey;
+        psDefn->ProjParm[5] = dfFalseEasting;
+        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParm[6] = dfFalseNorthing;
+        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        psDefn->nParms = 7;
+        break;
+
+/* -------------------------------------------------------------------- */
+      case CT_Robinson:
+      case CT_Sinusoidal:
+      case CT_VanDerGrinten:
+/* -------------------------------------------------------------------- */
+        if( GetMetadataElement( "GEOTIFF_NUM::3080::ProjNatOriginLongGeoKey",
+                                &dfNatOriginLong ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3084::ProjFalseOriginLongGeoKey",
+                                   &dfNatOriginLong ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3088::ProjCenterLongGeoKey", 
+                                   &dfNatOriginLong ) == 0 )
+            dfNatOriginLong = 0.0;
+
+        /* notdef: should transform to decimal degrees at this point */
+
+        psDefn->ProjParm[1] = dfNatOriginLong;
+        psDefn->ProjParmId[1] = ProjCenterLongGeoKey;
+        psDefn->ProjParm[5] = dfFalseEasting;
+        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParm[6] = dfFalseNorthing;
+        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        psDefn->nParms = 7;
+        break;
+
+/* -------------------------------------------------------------------- */
+      case CT_PolarStereographic:
+/* -------------------------------------------------------------------- */
+        if( GetMetadataElement( "GEOTIFF_NUM::3095::ProjStraightVertPoleLongGeoKey",
+                                &dfNatOriginLong ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3080::ProjNatOriginLongGeoKey",
+                                   &dfNatOriginLong ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3084::ProjFalseOriginLongGeoKey",
+                                   &dfNatOriginLong ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3088::ProjCenterLongGeoKey",
+                                   &dfNatOriginLong ) == 0 )
+            dfNatOriginLong = 0.0;
+
+        if( GetMetadataElement( "GEOTIFF_NUM::3081::ProjNatOriginLatGeoKey",
+                                &dfNatOriginLat ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3085::ProjFalseOriginLatGeoKey",
+                                   &dfNatOriginLat ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3089::ProjCenterLatGeoKey",
+                                   &dfNatOriginLat ) == 0 )
+            dfNatOriginLat = 0.0;
+
+        if( GetMetadataElement( "GEOTIFF_NUM::3092::ProjScaleAtNatOriginGeoKey",
+                                &dfNatOriginScale ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3093::ProjScaleAtCenterGeoKey",
+                                   &dfNatOriginScale ) == 0 )
+            dfNatOriginScale = 1.0;
+            
+        /* notdef: should transform to decimal degrees at this point */
+
+        psDefn->ProjParm[0] = dfNatOriginLat;
+        psDefn->ProjParmId[0] = ProjNatOriginLatGeoKey;;
+        psDefn->ProjParm[1] = dfNatOriginLong;
+        psDefn->ProjParmId[1] = ProjStraightVertPoleLongGeoKey;
+        psDefn->ProjParm[4] = dfNatOriginScale;
+        psDefn->ProjParmId[4] = ProjScaleAtNatOriginGeoKey;
+        psDefn->ProjParm[5] = dfFalseEasting;
+        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParm[6] = dfFalseNorthing;
+        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        psDefn->nParms = 7;
+        break;
+
+/* -------------------------------------------------------------------- */
+      case CT_LambertConfConic_2SP:
+/* -------------------------------------------------------------------- */
+        if( GetMetadataElement( "GEOTIFF_NUM::3078::ProjStdParallel1GeoKey",
+                                &dfStdParallel1 ) == 0 )
+            dfStdParallel1 = 0.0;
+
+        if( GetMetadataElement( "GEOTIFF_NUM::3079::ProjStdParallel2GeoKey",
+                                &dfStdParallel2 ) == 0 )
+            dfStdParallel1 = 0.0;
+
+        if( GetMetadataElement( "GEOTIFF_NUM::3080::ProjNatOriginLongGeoKey",
+                                &dfNatOriginLong ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3084::ProjFalseOriginLongGeoKey",
+                                   &dfNatOriginLong ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3088::ProjCenterLongGeoKey", 
+                                   &dfNatOriginLong ) == 0 )
+            dfNatOriginLong = 0.0;
+
+        if( GetMetadataElement( "GEOTIFF_NUM::3081::ProjNatOriginLatGeoKey",
+                                &dfNatOriginLat ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3085::ProjFalseOriginLatGeoKey",
+                                   &dfNatOriginLat ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3089::ProjCenterLatGeoKey",
+                                   &dfNatOriginLat ) == 0 )
+            dfNatOriginLat = 0.0;
+
+        /* notdef: should transform to decimal degrees at this point */
+
+        psDefn->ProjParm[0] = dfNatOriginLat;
+        psDefn->ProjParmId[0] = ProjFalseOriginLatGeoKey;
+        psDefn->ProjParm[1] = dfNatOriginLong;
+        psDefn->ProjParmId[1] = ProjFalseOriginLongGeoKey;
+        psDefn->ProjParm[2] = dfStdParallel1;
+        psDefn->ProjParmId[2] = ProjStdParallel1GeoKey;
+        psDefn->ProjParm[3] = dfStdParallel2;
+        psDefn->ProjParmId[3] = ProjStdParallel2GeoKey;
+        psDefn->ProjParm[5] = dfFalseEasting;
+        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParm[6] = dfFalseNorthing;
+        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        psDefn->nParms = 7;
+        break;
+
+/* -------------------------------------------------------------------- */
+      case CT_AlbersEqualArea:
+      case CT_EquidistantConic:
+/* -------------------------------------------------------------------- */
+        if( GetMetadataElement( "GEOTIFF_NUM::3078::ProjStdParallel1GeoKey",
+                                &dfStdParallel1 ) == 0 )
+            dfStdParallel1 = 0.0;
+
+        if( GetMetadataElement( "GEOTIFF_NUM::3079::ProjStdParallel2GeoKey",
+                                &dfStdParallel2 ) == 0 )
+            dfStdParallel1 = 0.0;
+
+        if( GetMetadataElement( "GEOTIFF_NUM::3080::ProjNatOriginLongGeoKey",
+                                &dfNatOriginLong ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3084::ProjFalseOriginLongGeoKey",
+                                   &dfNatOriginLong ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3088::ProjCenterLongGeoKey", 
+                                   &dfNatOriginLong ) == 0 )
+            dfNatOriginLong = 0.0;
+
+        if( GetMetadataElement( "GEOTIFF_NUM::3081::ProjNatOriginLatGeoKey",
+                                &dfNatOriginLat ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3085::ProjFalseOriginLatGeoKey",
+                                   &dfNatOriginLat ) == 0
+            && GetMetadataElement( "GEOTIFF_NUM::3089::ProjCenterLatGeoKey",
+                                   &dfNatOriginLat ) == 0 )
+            dfNatOriginLat = 0.0;
+
+        /* notdef: should transform to decimal degrees at this point */
+
+        psDefn->ProjParm[0] = dfStdParallel1;
+        psDefn->ProjParmId[0] = ProjStdParallel1GeoKey;
+        psDefn->ProjParm[1] = dfStdParallel2;
+        psDefn->ProjParmId[1] = ProjStdParallel2GeoKey;
+        psDefn->ProjParm[2] = dfNatOriginLat;
+        psDefn->ProjParmId[2] = ProjNatOriginLatGeoKey;
+        psDefn->ProjParm[3] = dfNatOriginLong;
+        psDefn->ProjParmId[3] = ProjNatOriginLongGeoKey;
+        psDefn->ProjParm[5] = dfFalseEasting;
+        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParm[6] = dfFalseNorthing;
+        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        psDefn->nParms = 7;
+        break;
+    }
+}
+
+/************************************************************************/
+/*                            GetGTIFDefn()                             */
+/*      This function borrowed from the GTIFGetDefn() function.         */
+/*      See geo_normalize.c from the GeoTIFF package.                   */
+/************************************************************************/
+
+void MrSIDDataset::GetGTIFDefn()
+{
+    double	dfInvFlattening;
+
+/* -------------------------------------------------------------------- */
+/*      Initially we default all the information we can.                */
+/* -------------------------------------------------------------------- */
+    psDefn = new( GTIFDefn );
+    psDefn->Model = KvUserDefined;
+    psDefn->PCS = KvUserDefined;
+    psDefn->GCS = KvUserDefined;
+    psDefn->UOMLength = KvUserDefined;
+    psDefn->UOMLengthInMeters = 1.0;
+    psDefn->UOMAngle = KvUserDefined;
+    psDefn->UOMAngleInDegrees = 1.0;
+    psDefn->Datum = KvUserDefined;
+    psDefn->Ellipsoid = KvUserDefined;
+    psDefn->SemiMajor = 0.0;
+    psDefn->SemiMinor = 0.0;
+    psDefn->PM = KvUserDefined;
+    psDefn->PMLongToGreenwich = 0.0;
+
+    psDefn->ProjCode = KvUserDefined;
+    psDefn->Projection = KvUserDefined;
+    psDefn->CTProjection = KvUserDefined;
+
+    psDefn->nParms = 0;
+    for( int i = 0; i < MAX_GTIF_PROJPARMS; i++ )
+    {
+        psDefn->ProjParm[i] = 0.0;
+        psDefn->ProjParmId[i] = 0;
+    }
+
+    psDefn->MapSys = KvUserDefined;
+    psDefn->Zone = 0;
+
+/* -------------------------------------------------------------------- */
+/*	Try to get the overall model type.				*/
+/* -------------------------------------------------------------------- */
+    GetMetadataElement( "GEOTIFF_NUM::1024::GTModelTypeGeoKey",
+                        &(psDefn->Model) );
+
+/* -------------------------------------------------------------------- */
+/*      Try to get a PCS.                                               */
+/* -------------------------------------------------------------------- */
+    if( GetMetadataElement( "GEOTIFF_NUM::3072::ProjectedCSTypeGeoKey",
+                            &(psDefn->PCS) ) == 1
+        && psDefn->PCS != KvUserDefined )
+    {
+        /*
+         * Translate this into useful information.
+         */
+        GTIFGetPCSInfo( psDefn->PCS, NULL, &(psDefn->ProjCode),
+                        &(psDefn->UOMLength), &(psDefn->GCS) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*       If we have the PCS code, but didn't find it in the CSV files   */
+/*      (likely because we can't find them) we will try some ``jiffy    */
+/*      rules'' for UTM and state plane.                                */
+/* -------------------------------------------------------------------- */
+    if( psDefn->PCS != KvUserDefined && psDefn->ProjCode == KvUserDefined )
+    {
+        int	nMapSys, nZone;
+        int	nGCS = psDefn->GCS;
+
+        nMapSys = GTIFPCSToMapSys( psDefn->PCS, &nGCS, &nZone );
+        if( nMapSys != KvUserDefined )
+        {
+            psDefn->ProjCode = GTIFMapSysToProj( nMapSys, nZone );
+            psDefn->GCS = nGCS;
+        }
+    }
+   
+/* -------------------------------------------------------------------- */
+/*      If the Proj_ code is specified directly, use that.              */
+/* -------------------------------------------------------------------- */
+    if( psDefn->ProjCode == KvUserDefined )
+        GetMetadataElement( "GEOTIFF_NUM::3074::ProjectionGeoKey",
+                            &(psDefn->ProjCode) );
+    
+    if( psDefn->ProjCode != KvUserDefined )
+    {
+        /*
+         * We have an underlying projection transformation value.  Look
+         * this up.  For a PCS of ``WGS 84 / UTM 11'' the transformation
+         * would be Transverse Mercator, with a particular set of options.
+         * The nProjTRFCode itself would correspond to the name
+         * ``UTM zone 11N'', and doesn't include datum info.
+         */
+        GTIFGetProjTRFInfo( psDefn->ProjCode, NULL, &(psDefn->Projection),
+                            psDefn->ProjParm );
+        
+        /*
+         * Set the GeoTIFF identity of the parameters.
+         */
+        psDefn->CTProjection =
+            EPSGProjMethodToCTProjMethod( psDefn->Projection );
+
+        SetGTParmIds( psDefn->CTProjection, psDefn->ProjParmId, NULL);
+        psDefn->nParms = 7;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to get a GCS.  If found, it will override any implied by    */
+/*      the PCS.                                                        */
+/* -------------------------------------------------------------------- */
+    GetMetadataElement( "GEOTIFF_NUM::2048::GeographicTypeGeoKey",
+                        &(psDefn->GCS) );
+
+/* -------------------------------------------------------------------- */
+/*      Derive the datum, and prime meridian from the GCS.              */
+/* -------------------------------------------------------------------- */
+    if( psDefn->GCS != KvUserDefined )
+    {
+        GTIFGetGCSInfo( psDefn->GCS, NULL, &(psDefn->Datum), &(psDefn->PM),
+                        &(psDefn->UOMAngle) );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Handle the GCS angular units.  GeogAngularUnitsGeoKey           */
+/*      overrides the GCS or PCS setting.                               */
+/* -------------------------------------------------------------------- */
+    GetMetadataElement( "GEOTIFF_NUM::2054::GeogAngularUnitsGeoKey",
+                        &(psDefn->UOMAngle) );
+    if( psDefn->UOMAngle != KvUserDefined )
+    {
+        GTIFGetUOMAngleInfo( psDefn->UOMAngle, NULL,
+                             &(psDefn->UOMAngleInDegrees) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for a datum setting, and then use the datum to derive     */
+/*      an ellipsoid.                                                   */
+/* -------------------------------------------------------------------- */
+    GetMetadataElement( "GEOTIFF_NUM::2050::GeogGeodeticDatumGeoKey",
+                        &(psDefn->Datum) );
+
+    if( psDefn->Datum != KvUserDefined )
+    {
+        GTIFGetDatumInfo( psDefn->Datum, NULL, &(psDefn->Ellipsoid) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for an explicit ellipsoid.  Use the ellipsoid to          */
+/*      derive the ellipsoid characteristics, if possible.              */
+/* -------------------------------------------------------------------- */
+    GetMetadataElement( "GEOTIFF_NUM::2056::GeogEllipsoidGeoKey",
+                        &(psDefn->Ellipsoid) );
+
+    if( psDefn->Ellipsoid != KvUserDefined )
+    {
+        GTIFGetEllipsoidInfo( psDefn->Ellipsoid, NULL,
+                              &(psDefn->SemiMajor), &(psDefn->SemiMinor) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for overridden ellipsoid parameters.  It would be nice    */
+/*      to warn if they conflict with provided information, but for     */
+/*      now we just override.                                           */
+/* -------------------------------------------------------------------- */
+    GetMetadataElement( "GEOTIFF_NUM::2057::GeogSemiMajorAxisGeoKey",
+                        &(psDefn->SemiMajor) );
+    GetMetadataElement( "GEOTIFF_NUM::2058::GeogSemiMinorAxisGeoKey",
+                        &(psDefn->SemiMinor) );
+    
+    if( GetMetadataElement( "GEOTIFF_NUM::2059::GeogInvFlatteningGeoKey",
+                            &dfInvFlattening ) == 1 )
+    {
+        if( dfInvFlattening != 0.0 )
+            psDefn->SemiMinor = 
+                psDefn->SemiMajor * (1 - 1.0/dfInvFlattening);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get the prime meridian info.                                    */
+/* -------------------------------------------------------------------- */
+    GetMetadataElement( "GEOTIFF_NUM::2051::GeogPrimeMeridianGeoKey",
+                        &(psDefn->PM) );
+
+    if( psDefn->PM != KvUserDefined )
+    {
+        GTIFGetPMInfo( psDefn->PM, NULL, &(psDefn->PMLongToGreenwich) );
+    }
+    else
+    {
+        GetMetadataElement( "GEOTIFF_NUM::2061::GeogPrimeMeridianLongGeoKey",
+                            &(psDefn->PMLongToGreenwich) );
+
+        psDefn->PMLongToGreenwich =
+            GTIFAngleToDD( psDefn->PMLongToGreenwich,
+                           psDefn->UOMAngle );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Have the projection units of measure been overridden?  We       */
+/*      should likely be doing something about angular units too,       */
+/*      but these are very rarely not decimal degrees for actual        */
+/*      file coordinates.                                               */
+/* -------------------------------------------------------------------- */
+    GetMetadataElement( "GEOTIFF_NUM::3076::ProjLinearUnitsGeoKey",
+                        &(psDefn->UOMLength) );
+
+    if( psDefn->UOMLength != KvUserDefined )
+    {
+        GTIFGetUOMLengthInfo( psDefn->UOMLength, NULL,
+                              &(psDefn->UOMLengthInMeters) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle a variety of user defined transform types.               */
+/* -------------------------------------------------------------------- */
+    if( GetMetadataElement( "GEOTIFF_NUM::3075::ProjCoordTransGeoKey",
+                            &(psDefn->CTProjection) ) == 1)
+    {
+        FetchProjParms();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to set the zoned map system information.                    */
+/* -------------------------------------------------------------------- */
+    psDefn->MapSys = GTIFProjToMapSys( psDefn->ProjCode, &(psDefn->Zone) );
+
+/* -------------------------------------------------------------------- */
+/*      If this is UTM, and we were unable to extract the projection    */
+/*      parameters from the CSV file, just set them directly now,       */
+/*      since it's pretty easy, and a common case.                      */
+/* -------------------------------------------------------------------- */
+    if( (psDefn->MapSys == MapSys_UTM_North
+         || psDefn->MapSys == MapSys_UTM_South)
+        && psDefn->CTProjection == KvUserDefined )
+    {
+        psDefn->CTProjection = CT_TransverseMercator;
+        psDefn->nParms = 7;
+        psDefn->ProjParmId[0] = ProjNatOriginLatGeoKey;
+        psDefn->ProjParm[0] = 0.0;
+            
+        psDefn->ProjParmId[1] = ProjNatOriginLongGeoKey;
+        psDefn->ProjParm[1] = psDefn->Zone*6 - 183.0;
+        
+        psDefn->ProjParmId[4] = ProjScaleAtNatOriginGeoKey;
+        psDefn->ProjParm[4] = 0.9996;
+        
+        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParm[5] = 500000.0;
+        
+        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        if( psDefn->MapSys == MapSys_UTM_North )
+            psDefn->ProjParm[6] = 0.0;
+        else
+            psDefn->ProjParm[6] = 10000000.0;
+    }
+
+    pszProjection = GTIFGetOGISDefn( psDefn );
+}
+
+/************************************************************************/
 /*                             OpenZoomLevel()                          */
 /************************************************************************/
 
@@ -443,11 +1422,9 @@ CPLErr MrSIDDataset::OpenZoomLevel( int iZoom )
 /* -------------------------------------------------------------------- */
 /*      Handle sample type and color space.                             */
 /* -------------------------------------------------------------------- */
-    poDefaultPixel =
-        new Pixel( poMrSidFile->getDefaultPixelValue() );
-    eSampleType = poDefaultPixel->getProperties().getSampleType();
-    poColorSpace =
-        new ColorSpace( poDefaultPixel->getProperties().colorSpace() );
+    poDefaultPixel = new Pixel( poMrSidFile->getDefaultPixelValue() );
+    eSampleType = poMrSidFile->getSampleType();
+    poColorSpace = new ColorSpace( poMrSidFile->colorSpace() );
     switch ( eSampleType )
     {
         case ImageBufferInfo::UINT16:
@@ -477,22 +1454,29 @@ CPLErr MrSIDDataset::OpenZoomLevel( int iZoom )
 /* -------------------------------------------------------------------- */
 /*      Take georeferencing.                                            */
 /* -------------------------------------------------------------------- */
-    if ( poMrSidNav->hasWorldInfo()
-         && poMrSidNav->xu(adfGeoTransform[0])
-         && poMrSidNav->yu(adfGeoTransform[3])
-         && poMrSidNav->xres(adfGeoTransform[1])
-         && poMrSidNav->yres(adfGeoTransform[5])
-         && poMrSidNav->xrot(adfGeoTransform[2])
-         && poMrSidNav->yrot(adfGeoTransform[4]) )
+    if ( poMrSidFile->hasWorldInfo()
+         && poMrSidFile->xu(adfGeoTransform[0])
+         && poMrSidFile->yu(adfGeoTransform[3])
+         && poMrSidFile->xres(adfGeoTransform[1])
+         && poMrSidFile->yres(adfGeoTransform[5])
+         && poMrSidFile->xrot(adfGeoTransform[2])
+         && poMrSidFile->yrot(adfGeoTransform[4]) )
     {
+        if ( adfGeoTransform[3] > 0 ) // Nothern hemisphere
+            adfGeoTransform[5] = - adfGeoTransform[5];
+        adfGeoTransform[0] = adfGeoTransform[0] - adfGeoTransform[1] / 2;
+        adfGeoTransform[3] = adfGeoTransform[3] - adfGeoTransform[5] / 2;
         bHasGeoTransfom = TRUE;
     }
 
     if ( iZoom != 0 )
     {
         nCurrentZoomLevel = iZoom;
-        nRasterXSize /= 1<<iZoom;
-        nRasterYSize /= 1<<iZoom;
+        poMrSidFile->getDimensionsAtLevel( nCurrentZoomLevel );
+        nRasterXSize =
+            poMrSidFile->getDimensionsAtLevel( nCurrentZoomLevel ).width;
+        nRasterYSize =
+            poMrSidFile->getDimensionsAtLevel( nCurrentZoomLevel ).height;
     }
     else
     {
@@ -572,11 +1556,14 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
             while ( *++pszTemp );
 
             poDS->SetMetadataItem( pszKey, pszElement );
+
             CPLFree( pszElement );
             CPLFree( pszKey );
             i++;
         }
     }
+
+    poDS->GetGTIFDefn();
 
 /* -------------------------------------------------------------------- */
 /*   Take number of resolution levels (we will use them as overviews).  */
