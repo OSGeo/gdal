@@ -9,6 +9,13 @@
 
  *
  * $Log$
+ * Revision 1.18  2005/02/22 02:04:33  kruland
+ * Corrected decl of FieldDefn constructor.
+ * Implemented first cut at Feature.SetField() -- needs to accept any for value.
+ * Added constructor for FeatureDefn.
+ * Make Geometry.GetEnvelope return a 4-tuple.
+ * Implemented Geometry.Centroid()
+ *
  * Revision 1.17  2005/02/21 23:09:33  hobu
  * Added all of the Geometry and FieldDefn classes/methods
  *
@@ -182,6 +189,8 @@ typedef void OGRFeatureDefnShadow;
 typedef void OGRGeometryShadow;
 typedef void OSRCoordinateTransformationShadow;
 typedef void OGRFieldDefnShadow;
+
+typedef double *double_4;
 
 %}
 
@@ -602,6 +611,11 @@ class OGRFeatureShadow {
 public:
 %extend {
 
+  %feature("kwargs") OGRFeatureShadow;
+  OGRFeatureShadow( OGRFeatureDefnShadow *feature_def = 0 ) {
+    return (OGRFeatureShadow*) OGR_F_Create( feature_def );
+  }
+
   void Destroy() {
     OGR_F_Destroy(self);
   }
@@ -700,6 +714,14 @@ public:
       
   int GetFieldIndex(const char* name) {
     return OGR_F_GetFieldIndex(self, name);
+  }
+
+  void SetField( int index, const char*value ) {
+    OGR_F_SetFieldString( self, index, value);
+  }
+
+  void SetField( const char *name, const char*value ) {
+    OGR_F_SetFieldString( self, OGR_F_GetFieldIndex(self, name), value );
   }
   
   int GetFID() {
@@ -893,8 +915,8 @@ public:
 %extend {
 
   %feature("kwargs") OGRFieldDefnShadow;
-  OGRFieldDefnShadow* OGRFieldDefnShadow( const char* name="unnamed", 
-                                          OGRFieldType field_type=OFTString) {
+  OGRFieldDefnShadow( const char* name="unnamed", 
+                      OGRFieldType field_type=OFTString) {
     return (OGRFieldDefnShadow*) OGR_Fld_Create(name, field_type);
   }
 
@@ -1215,11 +1237,15 @@ public:
     OGR_G_FlattenTo2D(self);
   }
     
-  %newobject GetEnvelope;
-  OGREnvelope GetEnvelope() {
-    OGREnvelope extent;
-    OGR_G_GetEnvelope(self, &extent);
-    return extent;
+  void GetEnvelope(double_4 argout) {
+    OGR_G_GetEnvelope(self, (OGREnvelope*)argout);
+  }
+
+  %newobject Centroid;
+  OGRGeometryShadow* Centroid() {
+    OGRGeometryShadow *pt = new_OGRGeometryShadow( wkbPoint );
+    OGRErr rcode = OGR_G_Centroid( self, pt );
+    return pt;
   }
   
   int WkbSize() {
