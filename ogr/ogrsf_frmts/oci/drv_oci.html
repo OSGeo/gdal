@@ -106,6 +106,13 @@ control the Y dimension info written into the USER_SDO_GEOM_METADATA table.
 By default fixed values of -100000,100000,0.002 are used for layers with
 a third dimension.<p>
 
+<li> <b>SRID</b>: By default this driver will attempt to find an existing
+row in the MDSYS.CS_SRS table with a well known text coordinate system
+exactly matching the one for this dataset.  If one is not found, a new
+row will be added to this table.  The SRID creation option allows the user
+to force use of an existing Oracle SRID item even it if does not exactly
+match the WKT the driver expects.<p>
+
 </ul>
 
 <h3>Example</h3>
