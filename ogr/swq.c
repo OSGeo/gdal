@@ -19,6 +19,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/03/26 16:08:20  warmerda
+ * fixed table_def parsing when table name is quoted (literal)
+ *
  * Revision 1.20  2003/03/21 03:39:10  warmerda
  * allow more than one LEFT JOIN per SELECT
  *
@@ -1541,6 +1544,12 @@ static int swq_parse_table_def( swq_select *select_info,
     if( *token == NULL )
         *token = swq_token( *input, input, is_literal );
 
+    if( *token == NULL )
+    {
+        strcpy( swq_error, "Corrupt table definition, insufficient tokens." );
+        return -1;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Do we have a datasource literal?                                */
 /* -------------------------------------------------------------------- */
@@ -1548,27 +1557,34 @@ static int swq_parse_table_def( swq_select *select_info,
     {
         datasource = *token;
         *token = swq_token( *input, input, is_literal );
+
+        if( *token == NULL )
+        {
+            *token = datasource;
+            datasource = NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Get the table name.  Remove the '.' used to qualify it          */
 /*      relative to the datasource name if found.                       */
 /* -------------------------------------------------------------------- */
-    if( *token == NULL )
+    if( datasource != NULL && (*token)[0] != '.' )
     {
-        strcpy( swq_error, "Corrupt table definition, insufficient tokens." );
-        return -1;
+        table = datasource;
+        datasource = NULL;
     }
-
-    if( (*token)[0] == '.' )
+    else if( (*token)[0] == '.' )
     {
         table = swq_strdup( (*token) + 1 );
         SWQ_FREE( *token );
+        *token = swq_token( *input, input, is_literal );
     }
     else
+    {
         table = *token;
-
-    *token = swq_token( *input, input, is_literal );
+        *token = swq_token( *input, input, is_literal );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Was an alias provided?                                          */
