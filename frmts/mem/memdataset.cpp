@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/10/26 20:03:28  warmerda
+ * added C entry point for creating MEMRasterBand
+ *
  * Revision 1.3  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -47,6 +50,21 @@ CPL_CVSID("$Id$");
 static GDALDriver	*poMEMDriver = NULL;
 
 /************************************************************************/
+/*                        MEMCreateRasterBand()                         */
+/************************************************************************/
+
+GDALRasterBandH MEMCreateRasterBand( GDALDataset *poDS, int nBand, 
+                                    GByte *pabyData, GDALDataType eType, 
+                                    int nPixelOffset, int nLineOffset, 
+                                    int bAssumeOwnership )
+
+{
+    return (GDALRasterBandH) 
+        new MEMRasterBand( poDS, nBand, pabyData, eType, nPixelOffset, 
+                           nLineOffset, bAssumeOwnership );
+}
+
+/************************************************************************/
 /*                           MEMRasterBand()                            */
 /************************************************************************/
 
@@ -56,6 +74,8 @@ MEMRasterBand::MEMRasterBand( GDALDataset *poDS, int nBand,
                               int bAssumeOwnership )
 
 {
+    CPLDebug( "MEM", "MEMRasterBand(%p)", this );
+
     this->poDS = poDS;
     this->nBand = nBand;
 
@@ -86,8 +106,12 @@ MEMRasterBand::MEMRasterBand( GDALDataset *poDS, int nBand,
 MEMRasterBand::~MEMRasterBand()
 
 {
+    CPLDebug( "MEM", "~MEMRasterBand(%p)", this );
     if( bOwnData )
+    {
+        CPLDebug( "MEM", "~MEMRasterBand() - free raw data." );
         VSIFree( pabyData );
+    }
 }
 
 

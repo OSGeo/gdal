@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/10/26 20:03:28  warmerda
+ * added C entry point for creating MEMRasterBand
+ *
  * Revision 1.3  2000/07/20 13:38:48  warmerda
  * make classes public with CPL_DLL
  *
@@ -46,6 +49,8 @@
 
 CPL_C_START
 void	GDALRegister_MEM(void);
+GDALRasterBandH CPL_DLL MEMCreateRasterBand( GDALDataset *, int, GByte *,
+                                             GDALDataType, int, int, int );
 CPL_C_END
 
 /************************************************************************/
