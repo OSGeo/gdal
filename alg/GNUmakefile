@@ -2,7 +2,7 @@ GDAL_ROOT	=	..
 
 include ../GDALmake.opt
 
-OBJ	=	gdalmediancut.o gdaldither.o
+OBJ	=	gdalmediancut.o gdaldither.o gdal_crs.o gdaltransformer.o
 
 default:	$(OBJ)
 
