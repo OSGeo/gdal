@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.36  2004/09/08 17:55:13  dron
+ * Few problems fixed.
+ *
  * Revision 1.35  2004/06/19 21:37:31  dron
  * Use HDF-EOS library for appropriate datasets; major cpde rewrite.
  *
@@ -1052,9 +1055,12 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 case EOS_SWATH:
                 {
                     int32   hSW,  nDimensions, nStrBufSize;
-                    char    **papszDimList, **papszGeolocations, **papszDimMap;
-                    char    *pszDimList, *pszGeoList, *pszDimMaps;
-                    int32   *paiRank, *paiNumType, *paiOffset, *paiIncrement;
+                    char    **papszDimList = NULL,
+                            **papszGeolocations = NULL, **papszDimMap = NULL;
+                    char    *pszDimList = NULL,
+                            *pszGeoList = NULL, *pszDimMaps = NULL;
+                    int32   *paiRank = NULL, *paiNumType = NULL,
+                            *paiOffset = NULL, *paiIncrement = NULL;
                     int     nDimCount;
                     
                     if( poOpenInfo->eAccess == GA_ReadOnly )
@@ -1251,7 +1257,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                             CPLFree( paiEdges );
                             CSLDestroy( papszGeoDimList );
                         }
-                    }*/
+                    } */
 
                     CSLDestroy( papszDimMap );
                     CSLDestroy( papszGeolocations );
@@ -1273,10 +1279,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
                 case EOS_GRID:
                 {
-                    int32   hGD, iProjCode, iZoneCode, iSphereCode;
+                    int32   hGD, iProjCode = 0, iZoneCode = 0, iSphereCode = 0;
                     int32   nXSize, nYSize;
                     char    szDimList[8192];
-                    char    **papszDimList;
+                    char    **papszDimList = NULL;
                     int     nDimCount;
                     double  adfUpLeft[2], adfLowRight[2], adfProjParms[15];
                     
@@ -1333,6 +1339,13 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     if ( GDprojinfo( hGD, &iProjCode, &iZoneCode,
                                      &iSphereCode, adfProjParms) >= 0 )
                     {
+#if DEBUG
+                        CPLDebug( "HDF4Image",
+                                  "Grid projection: "
+                                  "projection code: %d, zone code %d, "
+                                  "sphere code %d",
+                                  iProjCode, iZoneCode, iSphereCode );
+#endif
                         OGRSpatialReference oSRS;
                         oSRS.importFromUSGS( iProjCode, iZoneCode,
                                              adfProjParms, iSphereCode );
@@ -1346,12 +1359,40 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     if ( GDgridinfo( hGD, &nXSize, &nYSize,
                                      adfUpLeft, adfLowRight ) >= 0 )
                     {
-                        poDS->adfGeoTransform[0] = adfUpLeft[0];
-                        poDS->adfGeoTransform[3] = adfUpLeft[1];
-                        poDS->adfGeoTransform[1] =
-                            (adfLowRight[0] - adfUpLeft[0]) / nXSize;
-                        poDS->adfGeoTransform[5] =
-                            (adfLowRight[1] - adfUpLeft[1]) / nYSize;
+#if DEBUG
+                        CPLDebug( "HDF4Image",
+                                  "Grid geolocation: "
+                                  "top left X %f, top left Y %f, "
+                                  "low right X %f, low right Y %f, "
+                                  "cols %d, rows %d",
+                                  adfUpLeft[0], adfUpLeft[1],
+                                  adfLowRight[0], adfLowRight[1],
+                                  nXSize, nYSize );
+#endif
+                        if ( iProjCode )
+                        {
+                            // For projected systems coordinates are in meters
+                            poDS->adfGeoTransform[0] = adfUpLeft[0];
+                            poDS->adfGeoTransform[3] = adfUpLeft[1];
+                            poDS->adfGeoTransform[1] =
+                                (adfLowRight[0] - adfUpLeft[0]) / nXSize;
+                            poDS->adfGeoTransform[5] =
+                                (adfLowRight[1] - adfUpLeft[1]) / nYSize;
+                        }
+                        else
+                        {
+                            // Handle angular geographic coordinates here
+                            poDS->adfGeoTransform[0] =
+                                CPLPackedDMSToDec(adfUpLeft[0]);
+                            poDS->adfGeoTransform[3] =
+                                CPLPackedDMSToDec(adfUpLeft[1]);
+                            poDS->adfGeoTransform[1] =
+                                (CPLPackedDMSToDec(adfLowRight[0]) -
+                                 CPLPackedDMSToDec(adfUpLeft[0])) / nXSize;
+                            poDS->adfGeoTransform[5] =
+                                (CPLPackedDMSToDec(adfLowRight[1]) -
+                                 CPLPackedDMSToDec(adfUpLeft[1])) / nYSize;
+                        }
                         poDS->adfGeoTransform[2] = 0.0;
                         poDS->adfGeoTransform[4] = 0.0;
                         poDS->bHasGeoTransfom = TRUE;
@@ -1464,63 +1505,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     default:
                         break;
                 }
-/* -------------------------------------------------------------------- */
-/*  Part which differs for different types of SDSs.                     */
-/* -------------------------------------------------------------------- */
-            switch ( poDS->iSubdatasetType )
-            {
-
-/* -------------------------------------------------------------------- */
-/*  HDF, created by GDAL.                                               */
-/* -------------------------------------------------------------------- */
-                case GDAL_HDF4:
-                {
-                    const char  *pszValue;
-
-                    CPLDebug( "HDF4Image",
-                              "Input dataset interpreted as GDAL_HDF4" );
-
-                    if ( (pszValue =
-                          CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                            "Projection")) )
-                    {
-                        if ( poDS->pszProjection )
-                            CPLFree( poDS->pszProjection );
-                        poDS->pszProjection = CPLStrdup( pszValue );
-                    }
-                    if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                                       "TransformationMatrix")) )
-                    {
-                        int i = 0;
-                        char *pszString = (char *) pszValue; 
-                        while ( *pszValue && i < 6 )
-                        {
-                            poDS->adfGeoTransform[i++] = strtod(pszString, &pszString);
-                            pszString++;
-                        }
-                        poDS->bHasGeoTransfom = TRUE;
-                    }
-                    for( i = 1; i <= poDS->nBands; i++ )
-                    {
-                        if ( (pszValue =
-                              CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                                CPLSPrintf("BandDesc%d", i))) )
-                            poDS->GetRasterBand( i )->SetDescription( pszValue );
-                    }
-                    for( i = 1; i <= poDS->nBands; i++ )
-                    {
-                        if ( (pszValue =
-                              CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                                CPLSPrintf("NoDataValue%d", i))) )
-                            poDS->GetRasterBand(i)->SetNoDataValue(atof(pszValue));
-                    }
-                }
-                break;
-
-                default:
-                break;
-            }
-
         }
         break;
 
@@ -1617,6 +1601,52 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
     switch ( poDS->iSubdatasetType )
     {
+/* -------------------------------------------------------------------- */
+/*  HDF, created by GDAL.                                               */
+/* -------------------------------------------------------------------- */
+                case GDAL_HDF4:
+                {
+                    const char  *pszValue;
+
+                    CPLDebug( "HDF4Image",
+                              "Input dataset interpreted as GDAL_HDF4" );
+
+                    if ( (pszValue =
+                          CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                            "Projection")) )
+                    {
+                        if ( poDS->pszProjection )
+                            CPLFree( poDS->pszProjection );
+                        poDS->pszProjection = CPLStrdup( pszValue );
+                    }
+                    if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                                       "TransformationMatrix")) )
+                    {
+                        int i = 0;
+                        char *pszString = (char *) pszValue; 
+                        while ( *pszValue && i < 6 )
+                        {
+                            poDS->adfGeoTransform[i++] = strtod(pszString, &pszString);
+                            pszString++;
+                        }
+                        poDS->bHasGeoTransfom = TRUE;
+                    }
+                    for( i = 1; i <= poDS->nBands; i++ )
+                    {
+                        if ( (pszValue =
+                              CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                                CPLSPrintf("BandDesc%d", i))) )
+                            poDS->GetRasterBand( i )->SetDescription( pszValue );
+                    }
+                    for( i = 1; i <= poDS->nBands; i++ )
+                    {
+                        if ( (pszValue =
+                              CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                                CPLSPrintf("NoDataValue%d", i))) )
+                            poDS->GetRasterBand(i)->SetNoDataValue(atof(pszValue));
+                    }
+                }
+                break;
 
 /* -------------------------------------------------------------------- */
 /*      SeaWiFS Level 3 Standard Mapped Image Products.                 */
