@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/09/03 17:03:45  warmerda
+ * Completed partial help line.
+ *
  * Revision 1.8  1999/07/23 14:27:47  warmerda
  * CPLSetErrorHandler returns old handler
  *
@@ -307,7 +310,7 @@ static void CPLDefaultErrorHandler( CPLErr eErrClass, int nError,
  * </pre>
  *
  * Pass NULL to come back to the default behavior.  The default behaviour
- * is to write the message to 
+ * is to write the message to stderr. 
  *
  * The msg will be a partially formatted error message not containing the
  * "ERROR %d:" portion emitted by the default handler.  Message formatting
