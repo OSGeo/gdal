@@ -52,7 +52,9 @@ Release 1.?
  o Added DGNElemTypeHasDispHdr(), and use it in DGNParseCore() to avoid trying
    to read disp hdr, or attributes from inappropriate elements.
 
- o Fixed DGNCreateCellHeaderFromGroup() to not pre-transform the bounds. 
+ o Fixed DGNCreateCellHeaderFromGroup() to not pre-transform the bounds.  
+
+ o Fixed missing handling of min/max Z in DGNCreateMultiPointElem(). (Marius)
 
 Release 1.9
 -----------

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2003/11/21 16:17:33  warmerda
+ * fix missing handling of min/max Z in DGNCreateMultiPointElem()
+ *
  * Revision 1.35  2003/11/19 05:26:19  warmerda
  * added DGNElemTypeHasDispHdr
  *
@@ -373,7 +376,7 @@ typedef struct {
  unsigned short levels[4];         /*!< Levels used in cell */
     
     DGNPoint    rnglow;            /*!< X/Y/Z minimums for cell */
-    DGNPoint    rnghigh;           /*!< X/Y/Z minimums for cell */
+    DGNPoint    rnghigh;           /*!< X/Y/Z maximums for cell */
     
     double      trans[9];          /*!< 2D/3D Transformation Matrix */
     DGNPoint    origin;            /*!< Cell Origin */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/11/21 16:17:33  warmerda
+ * fix missing handling of min/max Z in DGNCreateMultiPointElem()
+ *
  * Revision 1.16  2003/11/21 14:43:59  warmerda
  * removed extra bounds transformation in DGNCreateCellHeaderFromGroup()
  *
@@ -809,7 +812,7 @@ static void DGNWriteBounds( DGNInfo *psInfo, DGNElemCore *psElement,
     DGNInverseTransformPointToInt( psInfo, psMin, psElement->raw_data + 4 );
     DGNInverseTransformPointToInt( psInfo, psMax, psElement->raw_data + 16 );
 
-    /* convert from twos completement to "binary offset" format. */
+    /* convert from twos complement to "binary offset" format. */
 
     psElement->raw_data[5] ^= 0x80;
     psElement->raw_data[9] ^= 0x80;
@@ -934,9 +937,11 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
     for( i = 1; i < nPointCount; i++ )
     {
         sMin.x = MIN(pasVertices[i].x,sMin.x);
-        sMax.x = MAX(pasVertices[i].x,sMax.x);
         sMin.y = MIN(pasVertices[i].y,sMin.y);
+        sMin.z = MIN(pasVertices[i].z,sMin.z);
+        sMax.x = MAX(pasVertices[i].x,sMax.x);
         sMax.y = MAX(pasVertices[i].y,sMax.y);
+        sMax.z = MAX(pasVertices[i].z,sMax.z);
     }
 
     DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
