@@ -190,7 +190,7 @@ dnl ---------------------------------------------------------------------------
 dnl Select a GIF Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(gif,[  --with-gif[=ARG]         Include GIF support (ARG=internal, no or path)],,)
+AC_ARG_WITH(gif,[  --with-gif[=ARG]        Include GIF support (ARG=internal, no or path)],,)
 
 if test "$with_gif" = "no" ; then
 
@@ -235,7 +235,7 @@ dnl ---------------------------------------------------------------------------
 dnl Select a libtiff library to use.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(libtiff,[  --with-libtiff=ARG         Libtiff library to use (ARG=internal, yes or path)],,)
+AC_ARG_WITH(libtiff,[  --with-libtiff=ARG      Libtiff library to use (ARG=internal, yes or path)],,)
 
 if test "$with_libtiff" = "yes" -o "$with_libtiff" = "" ; then
 
@@ -274,7 +274,7 @@ dnl ---------------------------------------------------------------------------
 dnl Select a libgeotiff library to use.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(geotiff,[  --with-geotiff=ARG         Libgeotiff library to use (ARG=internal, yes or path)],,)
+AC_ARG_WITH(geotiff,[  --with-geotiff=ARG      Libgeotiff library to use (ARG=internal, yes or path)],,)
 
 if test "$with_geotiff" = "yes" -o "$with_geotiff" = "" ; then
 
