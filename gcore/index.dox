@@ -97,6 +97,9 @@ A popular web mapping application with GDAL support.<p>
 <li> <a href="http://www.vterrain.org">Virtual Terrain Project</a>: 
 The VTP libraries now use GDAL.<p>
 
+<li> <a href="http://thuban.intevation.org">Thuban</a>: 
+A multi-platform interactive geographic data viewer.<p>
+
 <li> <a href="http://www.terrainengine.com">Demeter</a>: 
 A another OpenGL based terrain engine somewhat similar to VTP.<p>
 
