@@ -169,7 +169,12 @@ These are:
 	The JasPer Project Home Page</a>.<p>
 
 	JasPer itself is a bridge for working with several image file formats.
-	Only JP2 and JPC parts of JasPer used in GDAL.
+	Only JP2 and JPC parts of JasPer used in GDAL.<p>
+
+	You need modified JasPer library to build this driver. Modified version
+	can be downloaded from
+	<a href="ftp://ftp.remotesensing.org/gdal/jasper-1.600.0.uuid.tar.gz">
+	ftp://ftp.remotesensing.org/gdal/jasper-1.700.2.uuid.tar.gz</a>
 
 </ul>
 
