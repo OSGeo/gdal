@@ -96,7 +96,7 @@ distclean:	dist-clean
 dist-clean:	clean
 	rm -f GDALmake.opt port/cpl_config.h config.cache config.status
 	rm -f libtool
-	rm -rf autom4.cache
+	rm -rf autom4te.cache
 	find . -name "*.lo" -exec rm -f '{}' ';'
 	find . -name .libs -exec rm -rf '{}' ';'
 
@@ -142,9 +142,6 @@ install-actions:
 ifneq ($(PYTHON),no)
 	(cd pymod; $(MAKE) install)
 endif
-	$(INSTALL_DATA) $(GDAL_LIB) $(INST_LIB)
-ifeq ($(HAVE_LD_SHARED),yes)
-	$(INSTALL_DATA) $(GDAL_SLIB) $(INST_LIB)
-endif
+	$(INSTALL_LIB) $(LIBGDAL-yes) $(INST_LIB)
 	for f in data/*.* ; do $(INSTALL_DATA) $$f $(INST_DATA) ; done
 
