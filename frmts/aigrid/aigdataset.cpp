@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/11/09 06:22:51  warmerda
+ * fixed geotransform, added limited projection support
+ *
  * Revision 1.6  2000/04/20 14:05:16  warmerda
  * added support for provided min/max
  *
@@ -49,6 +52,8 @@
  */
 
 #include "gdal_priv.h"
+#include "cpl_string.h"
+#include "ogr_spatialref.h"
 #include "aigrid.h"
 
 CPL_C_START
@@ -70,6 +75,9 @@ class CPL_DLL AIGDataset : public GDALDataset
     
     AIGInfo_t	*psInfo;
 
+    char	**papszPrj;
+    char	*pszProjection;
+
   public:
                 AIGDataset();
                 ~AIGDataset();
@@ -77,6 +85,7 @@ class CPL_DLL AIGDataset : public GDALDataset
     static GDALDataset *Open( GDALOpenInfo * );
 
     virtual CPLErr GetGeoTransform( double * );
+    virtual const char *GetProjectionRef(void);
 };
 
 /************************************************************************/
@@ -218,6 +227,8 @@ AIGDataset::AIGDataset()
 
 {
     psInfo = NULL;
+    papszPrj = NULL;
+    pszProjection = CPLStrdup("");
 }
 
 /************************************************************************/
@@ -227,6 +238,8 @@ AIGDataset::AIGDataset()
 AIGDataset::~AIGDataset()
 
 {
+    CPLFree( pszProjection );
+    CSLDestroy( papszPrj );
     if( psInfo != NULL )
         AIGClose( psInfo );
 }
@@ -277,6 +290,26 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->SetBand( 1, new AIGRasterBand( poDS, 1 ) );
 
+/* -------------------------------------------------------------------- */
+/*	Try to read projection file.					*/
+/* -------------------------------------------------------------------- */
+    const char	*pszPrjFilename;
+    VSIStatBuf   sStatBuf;
+
+    pszPrjFilename = CPLFormFilename( psInfo->pszCoverName, "prj", "adf" );
+    if( VSIStat( pszPrjFilename, &sStatBuf ) == 0 )
+    {
+        OGRSpatialReference	oSRS;
+
+        poDS->papszPrj = CSLLoad( pszPrjFilename );
+
+        if( oSRS.importFromESRI( poDS->papszPrj ) == OGRERR_NONE )
+        {
+            CPLFree( poDS->pszProjection );
+            oSRS.exportToWkt( &(poDS->pszProjection) );
+        }
+    }
+
     return( poDS );
 }
 
@@ -288,16 +321,27 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 CPLErr AIGDataset::GetGeoTransform( double * padfTransform )
 
 {
-    padfTransform[0] = psInfo->dfLLX;
+    padfTransform[0] = psInfo->dfLLX - psInfo->dfCellSizeX*0.5;
     padfTransform[1] = psInfo->dfCellSizeX;
     padfTransform[2] = 0;
 
-    padfTransform[3] = psInfo->dfURY;
+    padfTransform[3] = psInfo->dfURY + psInfo->dfCellSizeY*0.5;
     padfTransform[4] = 0;
-    padfTransform[5] = psInfo->dfCellSizeY;
+    padfTransform[5] = -psInfo->dfCellSizeY;
     
-    return( CE_Failure );
+    return( CE_None );
 }
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *AIGDataset::GetProjectionRef()
+
+{
+    return pszProjection;
+}
+
 
 /************************************************************************/
 /*                          GDALRegister_AIG()                        */
