@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2004/04/02 18:01:35  warmerda
+ * Finished docs for commandline processor function.
+ *
  * Revision 1.54  2004/04/02 17:58:29  warmerda
  * added --optfile support in general commandline processor
  *
@@ -1751,6 +1754,22 @@ int GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
  *  --config key value: set system configuration option. 
  *  --debug [on/off/value]: set debug level.
  *  --help-general: report detailed help on general options. 
+ *
+ * The argument array is replaced "in place" and should be freed with 
+ * CSLDestroy() when no longer needed.  The typical usage looks something
+ * like the following.  Note that the formats should be registered so that
+ * the --formats and --format options will work properly.
+ *
+ *  int main( int argc, char ** argv )
+ *  { 
+ *    GDALAllRegister();
+ *
+ *    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
+ *    if( argc < 1 )
+ *        exit( -argc );
+ *
+ * @param nArgc number of values in the argument list.
+ * @param Pointer to the argument list array (will be updated in place). 
  *
  * @return updated nArgc argument count.  Return of 0 requests terminate 
  * without error, return of -1 requests exit with error code.
