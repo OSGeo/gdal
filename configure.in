@@ -576,7 +576,7 @@ if test "$with_hdf4" = "no" ; then
 
 elif test "$with_hdf4" = "yes" -o "$with_hdf4" = "" ; then
 
-  AC_CHECK_LIB(mfhdf,SDreaddata,HAVE_HDF4=yes,HAVE_HDF4=no,)
+  AC_CHECK_LIB(mfhdf,SDreaddata,HAVE_HDF4=yes,HAVE_HDF4=no, -ldf)
 
 
   if test "$HAVE_HDF4" = "yes" ; then   
