@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2004/05/12 19:25:54  dron
+ * SRS_DN_WGS72 constant added.
+ *
  * Revision 1.44  2004/05/10 17:05:14  warmerda
  * added AutoIdentifyEPSG()
  *
@@ -329,6 +332,7 @@ typedef enum {
 
 #define SRS_DN_NAD27            "North_American_Datum_1927"
 #define SRS_DN_NAD83            "North_American_Datum_1983"
+#define SRS_DN_WGS72            "WGS_1972"
 #define SRS_DN_WGS84            "WGS_1984"
 
 #define SRS_WGS84_SEMIMAJOR     6378137.0                                
