@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.18  2005/02/22 23:30:14  kruland
+ * Increment the reference count in the Dataset factory methods: Open, OpenShared.
+ *
  * Revision 1.17  2005/02/20 19:42:53  kruland
  * Rename the Swig shadow classes so the names do not give the impression that
  * they are any part of the GDAL/OSR apis.  There were no bugs with the old
@@ -92,6 +95,7 @@ using namespace std;
 #include "gdal_alg.h"
 
 typedef double *double_2;
+typedef double *double_4;
 typedef double *double_6;
 
 typedef void GDALDriverShadow;
@@ -179,14 +183,20 @@ GDALDriverShadow* GetDriverByName( char const *name ) {
 %newobject Open;
 %inline %{
 GDALDatasetShadow* Open( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
-  return (GDALDatasetShadow*) GDALOpen( name, eAccess );
+  GDALDatasetShadow *ds = GDALOpen( name, eAccess );
+  if ( ds ) 
+    GDALReferenceDataset( ds );
+  return (GDALDatasetShadow*) ds;
 }
 %}
 
 %newobject OpenShared;
 %inline %{
 GDALDatasetShadow* OpenShared( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
-  return (GDALDatasetShadow*) GDALOpenShared( name, eAccess );
+  GDALDatasetShadow *ds = GDALOpenShared( name, eAccess );
+  if ( ds ) 
+    GDALReferenceDataset( ds );
+  return (GDALDatasetShadow*) ds;
 }
 %}
 
