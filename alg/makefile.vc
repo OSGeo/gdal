@@ -8,7 +8,7 @@ GDAL_ROOT	=	..
 !INCLUDE ..\nmake.opt
 
 !IFDEF INCLUDE_OGR_FRMTS
-OGR_OGR_RELATED =	contour.obj
+OBJ_OGR_RELATED =	contour.obj
 !ENDIF
 
 OBJ =	gdaldither.obj gdalmediancut.obj gdal_crs.obj gdaltransformer.obj \
