@@ -15,6 +15,10 @@ clean:
 docs:	
 	(cd ..; $(MAKE) docs)
 
+gdaldrivermanager.o:	gdaldrivermanager.cpp ../GDALmake.opt
+	$(CXX) -c $(CXXFLAGS) -DINST_DATA=\"$(INST_DATA)\" \
+		$(GDAL_INCLUDE) $*.cpp -o $*.o
+
 %.o:	%.c
 	$(CC) -c $(CFLAGS) $(GDAL_INCLUDE) $*.c -o $*.o
 
@@ -22,4 +26,4 @@ docs:
 	$(CXX) -c $(CXXFLAGS) $(GDAL_INCLUDE) $*.cpp -o $*.o
 
 install:
-	cp *.h $(INST_INCLUDE)
+	$(INSTALL) *.h $(INST_INCLUDE)
