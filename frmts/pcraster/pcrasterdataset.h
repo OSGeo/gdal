@@ -35,6 +35,7 @@ namespace gdal {
 //! This class specialises the GDALDataset class for PCRaster datasets.
 /*!
   PCRaster raster datasets are currently formatted by the CSF 2.0 data format.
+  A PCRasterDataset consists of one band.
 
   More info about PCRaster can be found at http://www.pcraster.nl and
   http://pcraster.geog.uu.nl
@@ -46,7 +47,14 @@ class PCRasterDataset: public GDALDataset
 
 public:
 
-  static GDALDataset* Open             (GDALOpenInfo* info);
+  static GDALDataset* open             (GDALOpenInfo* info);
+
+  static GDALDataset* createCopy       (char const* filename,
+                                        GDALDataset* source,
+                                        int strict,
+                                        char** options,
+                                        GDALProgressFunc progress,
+                                        void* progressData);
 
 private:
 
@@ -64,6 +72,9 @@ private:
 
   //! Cell representation.
   CSF_CR           d_cellRepresentation;
+
+  //! Value scale.
+  CSF_VS           d_valueScale;
 
   //! No data value.
   double           d_missingValue;
@@ -97,6 +108,8 @@ public:
   CPLErr           GetGeoTransform     (double* transform);
 
   CSF_CR           cellRepresentation  () const;
+
+  CSF_VS           valueScale          () const;
 
   double           missingValue        () const;
 

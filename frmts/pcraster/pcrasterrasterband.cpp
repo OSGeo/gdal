@@ -15,11 +15,6 @@
 #define INCLUDED_CSF
 #endif
 
-#ifndef INCLUDED_PCRTYPES
-#include "pcrtypes.h"
-#define INCLUDED_PCRTYPES
-#endif
-
 // Module headers.
 #ifndef INCLUDED_PCRASTERDATASET
 #include "pcrasterdataset.h"
@@ -54,11 +49,8 @@
 /*!
   \param     dataset The dataset we are a part of.
   \todo      What about unknown data types?
+  \todo      Convert assertions to exceptions.
 */
-#ifndef INCLUDED_IOSTREAM
-#include <iostream>
-#define INCLUDED_IOSTREAM
-#endif
 PCRasterRasterBand::PCRasterRasterBand(PCRasterDataset* dataset)
 
   : GDALRasterBand(), d_dataset(dataset)
@@ -67,7 +59,7 @@ PCRasterRasterBand::PCRasterRasterBand(PCRasterDataset* dataset)
   this->poDS = dataset;
   this->nBand = 1;
 
-  this->eDataType = PCRType2GDALType(dataset->cellRepresentation());
+  this->eDataType = PCRasterType2GDALType(dataset->cellRepresentation());
   assert(eDataType != GDT_Unknown);
 
   // This results in a buffer of one row.
@@ -94,11 +86,21 @@ double PCRasterRasterBand::GetNoDataValue(int* success)
   if(success) {
     *success = 1;
   }
+
   return d_dataset->missingValue();
 }
 
 
 
+//!
+/*!
+  \param     .
+  \return    .
+  \exception .
+  \warning   .
+  \sa        .
+  \todo      Convert assertions to exceptions.
+*/
 CPLErr PCRasterRasterBand::IReadBlock(int nBlockXoff, int nBlockYoff,
          void* buffer)
 {
@@ -111,18 +113,10 @@ CPLErr PCRasterRasterBand::IReadBlock(int nBlockXoff, int nBlockYoff,
   size_t nrCellsRead = RgetRow(dataset->map(), nBlockYoff, buffer);
   assert(static_cast<int>(nrCellsRead) == this->nBlockXSize);
 
-  switch(dataset->cellRepresentation()) {
-    case(CR_REAL4): {
-      // Missing value in the buffer is a NAN. Replace by valid value.
-      std::for_each(static_cast<REAL4*>(buffer),
-         static_cast<REAL4*>(buffer) + nrCellsRead,
-         pcr::AlterFromStdMV<REAL4>(static_cast<REAL4>(
-         d_dataset->missingValue())));
-      break;
-    }
-    default: {
-      break;
-    }
+  if(dataset->cellRepresentation() == CR_REAL4) {
+    // Missing value in the buffer is a NAN. Replace by valid value.
+    alterFromStdMV(buffer, nrCellsRead, dataset->cellRepresentation(),
+           d_dataset->missingValue());
   }
 
   return CE_None;
