@@ -10,11 +10,13 @@ DLLNAME	=	SoftmapSF.dll
 # Remove SUPPORT_ATL_NET and change atl_net to atl_vc6 to work
 # with VC++ 6.x instead of VC++ .NET
 
-EXTRAFLAGS =	-I$(SFOLEDB)\atl_net -I$(SFOLEDB) \
+EXTRAFLAGS =	-I$(SFOLEDB) \
+#		-I$(SFOLEDB)\atl_net -DSUPPORT_ATL_NET \
+		-I$(SFOLEDB)\atl_vc6 \
 		-I$(MSDASDK)\include\oledb -I$(OGR) /W2 \
 		-I$(OGR)\ogrsf_frmts -I$(VCDIR)\ATL\Include \
+		-DCACHE_OGRDATASOURCE \
 		-DSUPPORT_ADSK_GEOM_EXTENT \
-		-DSUPPORT_ATL_NET \
 #		-DSUPPORT_2D_FLATTEN
 
 !INCLUDE $(GDAL_ROOT)/nmake.opt
@@ -70,6 +72,9 @@ sftraceback.cpp:	$(SFOLEDB)\sftraceback.cpp
 
 SFRS.cpp:	$(SFOLEDB)\SFRS.cpp
 	copy $(SFOLEDB)\SFRS.cpp
+
+SFDSCache.cpp:	$(SFOLEDB)\SFDSCache.cpp
+	copy $(SFOLEDB)\SFDSCache.cpp
 
 ogrvirtualarray.cpp:	$(SFOLEDB)\ogrvirtualarray.cpp
 	copy $(SFOLEDB)\ogrvirtualarray.cpp
