@@ -22,8 +22,7 @@ dnl ---------------------------------------------------------------------------
 
 AC_DEFUN(AC_UNIX_STDIO_64,
 [
-  AC_DEFINE(UNIX_STDIO_64, 1, [Define to 1 if you have fseek64, ftell64])
-  AC_ARG_WITH(unix_stdio_64,[  --with-unix-stdio-64[=ARG] Utilize 64 stdio api - yes/no)],,)
+  AC_ARG_WITH(unix_stdio_64,[  --with-unix-stdio-64[=ARG] Utilize 64 stdio api (yes/no)],,)
 
   AC_MSG_CHECKING([for 64bit file io])
 
@@ -78,7 +77,7 @@ AC_DEFUN(AC_UNIX_STDIO_64,
   if test "$with_unix_stdio_64" = "yes" ; then
     AC_MSG_RESULT([yes])
 
-    AC_DEFINE(UNIX_STDIO_64)
+    AC_DEFINE(UNIX_STDIO_64, [Define to 1 if you have fseek64, ftell64])
     AC_DEFINE(VSI_LARGE_API_SUPPORTED, 1, [Define to 1, if you have 64 bit
     STDIO API])
 
