@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/03/01 04:13:40  warmerda
+ * Made swq_error static.
+ *
  * Revision 1.3  2001/11/07 12:45:42  danmo
  * Use #ifdef _WIN32 instead of WIN32 for strcasecmp check
  *
@@ -52,7 +55,7 @@
 #  define strcasecmp stricmp
 #endif
 
-char	swq_error[1024];
+static char	swq_error[1024];
 
 /************************************************************************/
 /*                           swq_isalphanum()                           */
