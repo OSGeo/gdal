@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.78  2003/08/18 13:26:01  warmerda
+ * added SetTMVariant() and related definitions
+ *
  * Revision 1.77  2003/06/19 17:10:26  warmerda
  * a couple fixes in last commit
  *
@@ -2062,10 +2065,10 @@ double OGRSpatialReference::GetNormProjParm( const char * pszName,
     if( dfToDegrees != 1.0 && IsAngularParameter(pszName) )
         dfRawResult *= dfToDegrees;
 
-    if( dfFromGreenwich != 0.0 && IsLongitudeParameter( pszName ) )
-        return dfRawResult + dfFromGreenwich;
-    else if( dfToMeter != 1.0 && IsLinearParameter( pszName ) )
+    if( dfToMeter != 1.0 && IsLinearParameter( pszName ) )
         return dfRawResult * dfToMeter;
+    else if( dfFromGreenwich != 0.0 && IsLongitudeParameter( pszName ) )
+        return dfRawResult + dfFromGreenwich;
     else
         return dfRawResult;
 }
@@ -2169,6 +2172,47 @@ OGRErr OSRSetTM( OGRSpatialReferenceH hSRS,
 
 {
     return ((OGRSpatialReference *) hSRS)->SetTM( 
+        dfCenterLat, dfCenterLong, 
+        dfScale, 
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
+/*                            SetTMVariant()                            */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetTMVariant( 
+    const char *pszVariantName,
+    double dfCenterLat, double dfCenterLong,
+    double dfScale,
+    double dfFalseEasting,
+    double dfFalseNorthing )
+
+{
+    SetProjection( pszVariantName );
+    SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
+    SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
+    SetNormProjParm( SRS_PP_SCALE_FACTOR, dfScale );
+    SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          OSRSetTMVariant()                           */
+/************************************************************************/
+
+OGRErr OSRSetTMVariant( OGRSpatialReferenceH hSRS, 
+                        const char *pszVariantName,
+                        double dfCenterLat, double dfCenterLong,
+                        double dfScale,
+                        double dfFalseEasting,
+                        double dfFalseNorthing )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetTMVariant( 
+        pszVariantName,
         dfCenterLat, dfCenterLong, 
         dfScale, 
         dfFalseEasting, dfFalseNorthing );
