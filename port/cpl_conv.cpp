@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2004/06/01 20:40:02  warmerda
+ * expanded tabs
+ *
  * Revision 1.38  2004/03/28 16:22:02  warmerda
  * const correctness changes in scan functions
  *
@@ -355,7 +358,7 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
     int nActuallyRead, nOriginalOffset;
 
     if ( nBufferSize == 0 || pszBuffer == NULL || fp == NULL )
-	return NULL;
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Let the OS level call read what it things is one line.  This    */
@@ -370,7 +373,7 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
     
     nActuallyRead = strlen(pszBuffer);
     if ( nActuallyRead == 0 )
-	return NULL;
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Trim off \n, \r or \r\n if it appears at the end.  We don't     */
@@ -602,13 +605,13 @@ long CPLScanLong( const char *pszString, int nMaxLength )
     char    *pszValue = (char *)CPLMalloc( nMaxLength + 1);
 
 /* -------------------------------------------------------------------- */
-/*	Compute string into local buffer, and terminate it.		*/
+/*      Compute string into local buffer, and terminate it.             */
 /* -------------------------------------------------------------------- */
     strncpy( pszValue, pszString, nMaxLength );
     pszValue[nMaxLength] = '\0';
 
 /* -------------------------------------------------------------------- */
-/*	Use atol() to fetch out the result                              */
+/*      Use atol() to fetch out the result                              */
 /* -------------------------------------------------------------------- */
     iValue = atol( pszValue );
 
@@ -642,13 +645,13 @@ GUIntBig CPLScanUIntBig( const char *pszString, int nMaxLength )
     char        *pszValue = (char *)CPLMalloc( nMaxLength + 1);
 
 /* -------------------------------------------------------------------- */
-/*	Compute string into local buffer, and terminate it.		*/
+/*      Compute string into local buffer, and terminate it.             */
 /* -------------------------------------------------------------------- */
     strncpy( pszValue, pszString, nMaxLength );
     pszValue[nMaxLength] = '\0';
 
 /* -------------------------------------------------------------------- */
-/*	Fetch out the result                                            */
+/*      Fetch out the result                                            */
 /* -------------------------------------------------------------------- */
 #if defined(WIN32) && defined(_MSC_VER)
     iValue = _atoi64( pszValue );
@@ -695,20 +698,20 @@ double CPLScanDouble( const char *pszString, int nMaxLength, char *pszLocale )
     char    *pszValue = (char *)CPLMalloc( nMaxLength + 1);
 
 /* -------------------------------------------------------------------- */
-/*	Compute string into local buffer, and terminate it.		*/
+/*      Compute string into local buffer, and terminate it.             */
 /* -------------------------------------------------------------------- */
     strncpy( pszValue, pszString, nMaxLength );
     pszValue[nMaxLength] = '\0';
 
 /* -------------------------------------------------------------------- */
-/*	Make a pass through converting 'D's to 'E's.			*/
+/*      Make a pass through converting 'D's to 'E's.                    */
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nMaxLength; i++ )
         if ( pszValue[i] == 'd' || pszValue[i] == 'D' )
             pszValue[i] = 'E';
 
 /* -------------------------------------------------------------------- */
-/*	Use atof() to fetch out the result                              */
+/*      Use atof() to fetch out the result                              */
 /* -------------------------------------------------------------------- */
 #if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
     char        *pszCurLocale = NULL;
@@ -1300,7 +1303,7 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
  *
  *  degrees * 1000000 + minutes * 1000 + seconds
  *
- * Example:	ang = 120025045.25 yields
+ * Example:     ang = 120025045.25 yields
  *              deg = 120
  *              min = 25
  *              sec = 45.25

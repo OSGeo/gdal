@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2004/06/01 20:40:02  warmerda
+ * expanded tabs
+ *
  * Revision 1.8  2003/11/24 20:45:00  warmerda
  * make CollectResultsInfo() public
  *
@@ -89,7 +92,7 @@ class CPL_DLL CPLODBCSession {
     CPLODBCSession();
     ~CPLODBCSession();
 
-    int		EstablishSession( const char *pszDSN, 
+    int         EstablishSession( const char *pszDSN, 
                                   const char *pszUserid, 
                                   const char *pszPassword );
     const char  *GetLastError();
@@ -115,7 +118,7 @@ class CPL_DLL CPLODBCSession {
 class CPL_DLL CPLODBCStatement {
 
     CPLODBCSession     *m_poSession;
-    HSTMT		m_hStmt;
+    HSTMT               m_hStmt;
 
     short          m_nColCount;
     char         **m_papszColNames;
