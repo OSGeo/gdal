@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.18  2000/07/20 13:15:03  warmerda
+ * don't redeclare CPL_DLL
+ *
  * Revision 1.17  2000/07/06 20:30:03  warmerda
  * Removed extra NULL definition.
  *
@@ -168,10 +171,12 @@ typedef int             GBool;
 #  define CPL_C_END
 #endif
 
+#ifndef CPL_DLL
 #if defined(WIN32) && !defined(CPL_DISABLE_DLL)
 #  define CPL_DLL     __declspec(dllexport)
 #else
 #  define CPL_DLL
+#endif
 #endif
 
 
