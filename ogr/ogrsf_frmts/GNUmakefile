@@ -12,6 +12,7 @@ default:
 	(cd gml; $(MAKE) $*)
 	(cd avc; $(MAKE) $*)
 	(cd rec; $(MAKE) $*)
+	(cd mem; $(MAKE) $*)
 ifeq ($(HAVE_OGDI),yes)
 	(cd ogdi; $(MAKE) $*)
 endif
@@ -44,6 +45,7 @@ clean:
 	(cd gml; $(MAKE) clean)
 	(cd avc; $(MAKE) clean)
 	(cd rec; $(MAKE) clean)
+	(cd mem; $(MAKE) clean)
 ifeq ($(HAVE_OGDI),yes)
 	(cd ogdi; $(MAKE) clean)
 endif

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/04/08 19:32:06  warmerda
+ * added memory driver
+ *
  * Revision 1.12  2003/02/03 21:17:03  warmerda
  * added .rec driver
  *
@@ -87,6 +90,7 @@ void OGRRegisterAll()
     RegisterOGRGML();
     RegisterOGRAVCBin();
     RegisterOGRREC();
+    RegisterOGRMEM();
 //    RegisterOGRE00();
 #ifdef OGDI_ENABLED
     RegisterOGROGDI();
