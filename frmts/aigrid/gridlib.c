@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2004/04/05 19:59:05  warmerda
+ * Fixed 0x01 support, wasn't including nMin.
+ *
  * Revision 1.22  2004/03/26 20:38:58  warmerda
  * Added support for 0x20 blocks as per bug 533
  *
@@ -290,9 +293,9 @@ CPLErr AIGProcessRaw1BitBlock( GByte *pabyCur, int nDataSize, int nMin,
     for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
     {
         if( pabyCur[i>>3] & (0x80 >> (i&0x7)) )
-            panData[i] = 1;
+            panData[i] = 1 + nMin;
         else
-            panData[i] = 0;
+            panData[i] = 0 + nMin;
     }
 
     return( CE_None );
