@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.5  2005/02/18 18:01:34  hobu
+ * Started working on the geometry constructors with a lot
+ * of help from Kevin
+ *
  * Revision 1.4  2005/02/17 00:01:37  hobu
  * quick start on the datasource/driver stuff
  *
@@ -28,6 +32,7 @@
 */
 
 %module ogr
+%import gdal_typemaps.i
 
 %init %{
   if ( OGRGetDriverCount() == 0 ) {
@@ -35,6 +40,7 @@
   }
 %}
 
+typedef int OGRErr;
   
 %pythoncode %{
 
@@ -109,13 +115,17 @@ using namespace std;
 
 #include "ogr_api.h"
 #include "ogr_core.h"
+#include "cpl_string.h"
 
 %}
 
+/* OGR Driver */
 
 %rename (Driver) OGRSFDriverH;
 
 class OGRSFDriverH {
+  OGRSFDriverH();
+  ~OGRSFDriverH();
 public:
 %extend {
 
@@ -147,7 +157,7 @@ public:
     }
       return ds;
   }
-
+  
 %newobject Open;
 %feature( "kwargs" ) Open;
   OGRDataSourceH *Open( const char* name, 
@@ -156,7 +166,6 @@ public:
 
       return ds;
   }
-
 
   int DeleteDataSource( const char *name ) {
     return OGR_Dr_DeleteDataSource( self, name );
@@ -170,27 +179,209 @@ public:
   }
 
 
+} /* %extend */
+}; /* class OGRSFDriverH */
+
+
+/* OGR DataSource */
+
+%rename (DataSource) OGRDataSourceH;
+
+class OGRDataSourceH {
+  OGRDataSourceH();
+  ~OGRDataSourceH();
+public:
+%extend {
+
+%immutable;
+  char const *name;
+%mutable;
+
+  void Destroy() {
+    OGR_DS_Destroy(self);
+  }
+
+  void Release() {
+    OGRReleaseDataSource(self);
+  }
+  
+  int Reference() {
+    return OGR_DS_Reference(self);
+  }
+  
+  int Dereference() {
+    return OGR_DS_Dereference(self);
+  }
+  
+  int GetRefCount() {
+    return OGR_DS_GetRefCount(self);
+  }
+  
+  int GetSummaryRefCount() {
+    return OGR_DS_GetSummaryRefCount(self);
+  }
+  
+  int GetLayerCount() {
+    return OGR_DS_GetLayerCount(self);
+  }
+  
+
+  const char * GetName() {
+    return OGR_DS_GetName(self);
+  }
+  
+  OGRErr DeleteLayer(int index){
+    return OGR_DS_DeleteLayer(self, index);
+  }
+  
+%newobject GetLayerByIndex;
+%feature( "kwargs" ) GetLayerByIndex;
+  OGRLayerH *GetLayerByIndex( int index=0) {
+    OGRLayerH* layer = (OGRLayerH*) OGR_DS_GetLayer(self, index);
+
+      return layer;
+  }
+
+%newobject GetLayerByName;
+  OGRLayerH *GetLayerByName( const char* layer_name) {
+    OGRLayerH* layer = (OGRLayerH*) OGR_DS_GetLayerByName(self, layer_name);
+
+      return layer;
+  }
+
+%pythoncode {
+    def __len__(self):
+        """Returns the number of layers on the datasource"""
+        return self.GetLayerCount()
+
+    def __getitem__(self, value):
+        """Support dictionary, list, and slice -like access to the datasource.
+ds[0] would return the first layer on the datasource.
+ds['aname'] would return the layer named "aname".
+ds[0:4] would return a list of the first four layers."""
+        import types
+        if isinstance(value, types.SliceType):
+            output = []
+            for i in xrange(value.start,value.stop,step=value.step):
+                try:
+                    output.append(self.GetLayer(i))
+                except OGRError: #we're done because we're off the end
+                    return output
+            return output
+        if isinstance(value, types.IntType):
+            if value > len(self)-1:
+                raise IndexError
+            return self.GetLayer(value)
+        elif isinstance(value,types.StringType):
+            return self.GetLayer(value)
+        else:
+            raise TypeError, 'Input %s is not of String or Int type' % type(value)
+
+    def GetLayer(self,iLayer=0):
+        """Return the layer given an index or a name"""
+        import types
+        if isinstance(iLayer, types.StringType):
+            return self.GetLayerByName(iLayer)
+        elif isinstance(iLayer, types.IntType):
+            return self.GetLayerByIndex(iLayer)
+        else:
+            raise TypeError, "Input %s is not of String or Int type" % type(iLayer)
 }
-};
+
+} /* %extend */
+
+
+}; /* class OGRDataSourceH */
+
+
+
 
 %{
 char const *OGRSFDriverH_name_get( OGRSFDriverH *h ) {
   return OGR_Dr_GetName( h );
 }
 
+char const *OGRDataSourceH_name_get( OGRDataSourceH *h ) {
+  return OGR_DS_GetName( h );
+}
+
 %}
 
 %rename (GetDriverCount) OGRGetDriverCount;
+%rename (GetOpenDSCount) OGRGetOpenDSCount;
+%rename (SetGenerate_DB2_V72_BYTE_ORDER) OGRSetGenerate_DB2_V72_BYTE_ORDER;
+%rename (GetOpenDS) OGRGetOpenDS;
 
+
+%apply (THROW_OGR_ERROR) {OGRErr};
 %inline %{
+  OGRSFDriverH* GetDriverByName( char const *name ) {
+    return (OGRSFDriverH*) OGRGetDriverByName( name );
+  }
+  
+  OGRSFDriverH* GetDriver(int driver_number) {
+    return (OGRSFDriverH*) OGRGetDriver(driver_number);
+  }
+  
+  
+  
+  int OGRGetDriverCount();
+  int OGRGetOpenDSCount();
 
-OGRSFDriverH* GetDriverByName( char const *name ) {
-  return (OGRSFDriverH*) OGRGetDriverByName( name );
-}
+    
+  OGRErr OGRSetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER);
+  
+  
+  char* OGRErrors[10] = { "None",
+                              "Not enough data",
+                              "Unsupported geometry type",
+                              "Unsupported operation",
+                              "Corrupt data",
+                              "General Error",
+                              "Unsupported SRS"
+                            };
+  
 
-int OGRGetDriverCount();
-
-OGRSFDriverH* GetDriver(int driver_number) {
-  return (OGRSFDriverH*) OGRGetDriver(driver_number);
-}
 %}
+%clear (OGRErr);
+
+%newobject GetOpenDS;
+%inline %{
+  OGRDataSourceH* GetOpenDS(int ds_number) {
+    OGRDataSourceH* layer = (OGRDataSourceH*) OGRGetOpenDS(ds_number);
+    return layer;
+  }
+  
+%}
+
+%newobject CreateGeometryFromWkb;
+%inline %{
+  OGRGeometryH CreateGeometryFromWkb( unsigned char * bin_string, 
+                                       OGRSpatialReferenceH *reference ) {
+    OGRGeometryH geom;
+    OGRErr err = OGR_G_CreateFromWkb(bin_string,
+                                      reference,
+                                      &geom);
+    if (err != 0 )
+       throw err;
+    return geom;
+  }
+ 
+%}
+
+%apply (char **ignorechange) { (char **) };
+%newobject CreateGeometryFromWkt;
+%inline %{
+  OGRGeometryH CreateGeometryFromWkt( char **val, 
+                                       OGRSpatialReferenceH *reference ) {
+    OGRGeometryH geom;
+    OGRErr err = OGR_G_CreateFromWkt(val,
+                                      reference,
+                                      &geom);
+    if (err != 0 )
+       throw err;
+    return geom;
+  }
+ 
+%}
+%clear (char **);
