@@ -23,6 +23,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/12/16 19:29:23  fwarmerdam
+ * dont try to open mysql: targets
+ *
  * Revision 1.14  2004/02/19 06:27:57  warmerda
  * more prefixes to avoid trying to open
  *
@@ -611,6 +614,7 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
          || EQUALN(pszCompositeName,"gltp:",5)
          || EQUALN(pszCompositeName,"DODS:",5)
          || EQUALN(pszCompositeName,"ODBC:",5))
+         || EQUALN(pszCompositeName,"MYSQL:",5))
         && !EQUAL(CPLGetExtension( pszCompositeName ), "fdd")
         && !EQUALN(pszCompositeName,"PROMPT",6) )
     {
