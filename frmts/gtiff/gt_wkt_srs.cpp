@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2005/02/17 21:58:08  fwarmerdam
+ * Avoid leak of pszGeogName.
+ *
  * Revision 1.50  2005/02/07 13:30:30  dron
  * Memory leak removed.
  *
@@ -347,10 +350,12 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     double	dfInvFlattening, dfSemiMajor;
     char        szGCSName[200];
     
-    if( hGTIF != NULL 
-        && GTIFKeyGet( hGTIF, GeogCitationGeoKey, szGCSName, 0, sizeof(szGCSName)))
+    if( !GTIFGetGCSInfo( psDefn->GCS, &pszGeogName, NULL, NULL, NULL )
+        && hGTIF != NULL 
+        && GTIFKeyGet( hGTIF, GeogCitationGeoKey, szGCSName, 0, 
+                       sizeof(szGCSName)) )
         pszGeogName = CPLStrdup(szGCSName);
-    GTIFGetGCSInfo( psDefn->GCS, &pszGeogName, NULL, NULL, NULL );
+
     GTIFGetDatumInfo( psDefn->Datum, &pszDatumName, NULL );
     GTIFGetPMInfo( psDefn->PM, &pszPMName, NULL );
     GTIFGetEllipsoidInfo( psDefn->Ellipsoid, &pszSpheroidName, NULL, NULL );
