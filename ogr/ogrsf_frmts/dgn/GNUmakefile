@@ -10,7 +10,7 @@ CPPFLAGS	+=	-I.. -I../..
 
 CPL_DIR	=	$(GDAL_ROOT)/port
 
-DIST_REV =	1.7
+DIST_REV =	1.9
 DIST_DIR =	dgnlib-$(DIST_REV)
 DIST_FILE = 	dgnlib-$(DIST_REV).zip
 DIST_FILES =	dgnread.cpp dgnopen.cpp dgnlib.h dgnlibp.h dgnfloat.cpp \
