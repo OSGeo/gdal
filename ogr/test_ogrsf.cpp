@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/11/26 02:15:36  warmerda
+ * Fixed report of SRS problems.
+ *
  * Revision 1.8  1999/11/18 19:02:19  warmerda
  * expanded tabs
  *
@@ -232,7 +235,7 @@ static void TestOGRLayerFeatureCount( OGRLayer *poLayer )
             printf( "ERROR: Feature SRS differs from layer SRS.\n"
                     "Feature SRS = %s\n"
                     "Layer SRS = %s\n",
-                    pszLayerSRSWKT, pszFeatureSRSWKT );
+                    pszFeatureSRSWKT, pszLayerSRSWKT );
             CPLFree( pszLayerSRSWKT );
             CPLFree( pszFeatureSRSWKT );
         }
