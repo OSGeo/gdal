@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.44  2003/08/08 01:58:56  warmerda
+ * Fixed progress monitor percentage in GetHistogram as per Peter Lenson's
+ * suggestion.
+ *
  * Revision 1.43  2003/05/21 04:43:29  warmerda
  * avoid warnings about unused formal parameters
  *
@@ -1991,8 +1995,8 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
         int  iXBlock, iYBlock, nXCheck, nYCheck;
         GDALRasterBlock *poBlock;
 
-        if( !pfnProgress( iSampleBlock/(double)nBlocksPerRow*nBlocksPerColumn,
-                          NULL, pProgressData ) )
+        if( !pfnProgress(iSampleBlock/((double)nBlocksPerRow*nBlocksPerColumn),
+                         NULL, pProgressData ) )
             return CE_Failure;
 
         iYBlock = iSampleBlock / nBlocksPerRow;
