@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/10/19 16:22:32  warmerda
+ * fixed bug with OGR_G_GetGeometryRef() for interior rings of polygons
+ *
  * Revision 1.1  2002/09/26 18:11:51  warmerda
  * New
  *
@@ -275,7 +278,7 @@ OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
                 ((OGRPolygon *)hGeom)->getExteriorRing();
         else
             return (OGRGeometryH) 
-                ((OGRPolygon *)hGeom)->getInteriorRing(iSubGeom);
+                ((OGRPolygon *)hGeom)->getInteriorRing(iSubGeom-1);
 
       case wkbMultiPoint:
       case wkbMultiLineString:
