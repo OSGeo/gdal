@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2000/03/23 16:54:35  warmerda
+ * fixed up geotransform initialization
+ *
  * Revision 1.19  2000/03/14 15:16:21  warmerda
  * initialize adfGeoTransform[]
  *
@@ -533,8 +536,13 @@ GTiffDataset::GTiffDataset()
     papoOverviewDS = NULL;
     nDirOffset = 0;
 
-    for( int i = 0; i < 6; i++ )
-        adfGeoTransform[i] = 0.0;}
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
+}
 
 /************************************************************************/
 /*                           ~GTiffDataset()                            */
@@ -603,7 +611,7 @@ void GTiffDataset::WriteGeoTIFFInfo()
 /* -------------------------------------------------------------------- */
     if( adfGeoTransform[0] == 0.0 && adfGeoTransform[1] == 1.0
         && adfGeoTransform[2] == 0.0 && adfGeoTransform[3] == 0.0
-        && adfGeoTransform[4] == 0.0 && adfGeoTransform[5] == -1.0 )
+        && adfGeoTransform[4] == 0.0 && ABS(adfGeoTransform[5]) == 1.0 )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -756,7 +764,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
         nPhotometric = PHOTOMETRIC_MINISBLACK;
     
 /* -------------------------------------------------------------------- */
-/*      Get strip layout (won't work for tiled images!)                 */
+/*      Get strip/tile layout.                                          */
 /* -------------------------------------------------------------------- */
     if( TIFFIsTiled(hTIFF) )
     {
