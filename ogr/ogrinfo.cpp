@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/03/19 20:28:30  warmerda
+ * destroy registrar on exit to help find memory leaks
+ *
  * Revision 1.19  2003/03/05 15:36:22  warmerda
  * Added -summary to Usage().
  *
@@ -326,6 +329,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     delete poDS;
 
+    delete OGRSFDriverRegistrar::GetRegistrar();
 #ifdef DBMALLOC
     malloc_dump(1);
 #endif
