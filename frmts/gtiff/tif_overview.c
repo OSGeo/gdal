@@ -44,7 +44,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * $Log: tif_overview.c,v $
+ * tif_overview.c,v
+ * Revision 1.6  2004/07/26 14:27:45  warmerda
+ * updated from libtiff CVS
+ *
  * Revision 1.5  2004/07/26 14:27:27  warmerda
  * improve error check for overview failure, fix warnings, fix header
  *
@@ -550,14 +553,15 @@ void TIFFBuildOverviews( TIFF *hTIFF, int nOverviews, int * panOvList,
                       &panRedMap, &panGreenMap, &panBlueMap ) )
     {
         uint16		*panRed2, *panGreen2, *panBlue2;
+        int             nColorCount = 1 << nBitsPerPixel;
 
-        panRed2 = (uint16 *) _TIFFmalloc(2*256);
-        panGreen2 = (uint16 *) _TIFFmalloc(2*256);
-        panBlue2 = (uint16 *) _TIFFmalloc(2*256);
+        panRed2 = (uint16 *) _TIFFmalloc(2*nColorCount);
+        panGreen2 = (uint16 *) _TIFFmalloc(2*nColorCount);
+        panBlue2 = (uint16 *) _TIFFmalloc(2*nColorCount);
 
-        memcpy( panRed2, panRedMap, 512 );
-        memcpy( panGreen2, panGreenMap, 512 );
-        memcpy( panBlue2, panBlueMap, 512 );
+        memcpy( panRed2, panRedMap, 2 * nColorCount );
+        memcpy( panGreen2, panGreenMap, 2 * nColorCount );
+        memcpy( panBlue2, panBlueMap, 2 * nColorCount );
 
         panRedMap = panRed2;
         panGreenMap = panGreen2;
