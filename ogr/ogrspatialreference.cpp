@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/03/16 19:04:55  warmerda
+ * added SetTMG(), SetAuthority() and StripCTParms()
+ *
  * Revision 1.11  2000/02/25 13:23:25  warmerda
  * removed include of ogr_geometry.h
  *
@@ -1113,6 +1116,24 @@ OGRErr OGRSpatialReference::SetTMSO( double dfCenterLat, double dfCenterLong,
 }
 
 /************************************************************************/
+/*                               SetTMG()                               */
+/************************************************************************/
+
+OGRErr 
+OGRSpatialReference::SetTMG( double dfCenterLat, double dfCenterLong,
+                             double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    SetProjection( SRS_PT_TUNISIA_MINING_GRID );
+    SetProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
+    SetProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                              SetACEA()                               */
 /************************************************************************/
 
@@ -1685,4 +1706,80 @@ int OGRSpatialReference::GetUTMZone( int * pbNorth )
         return 0;
     else
         return (int) dfZone;
+}
+
+/************************************************************************/
+/*                            SetAuthority()                            */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetAuthority( const char *pszTargetKey,
+                                          const char * pszAuthority, 
+                                          int nCode )
+
+{
+    OGR_SRSNode	 *poNode;
+    char         **papszNodePath;
+    int          iPath;
+
+/* -------------------------------------------------------------------- */
+/*      Find the node below which the authority should be put.          */
+/* -------------------------------------------------------------------- */
+    papszNodePath = CSLTokenizeStringComplex( pszTargetKey,"|",FALSE,FALSE);
+
+    for( poNode = GetRoot(), iPath = 0; 
+         poNode != NULL && papszNodePath[iPath] != NULL; 
+         iPath++ )
+    {
+        poNode = poNode->GetNode( papszNodePath[iPath] );
+    }
+
+    CSLDestroy( papszNodePath );
+
+    if( poNode == NULL )
+        return OGRERR_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      For now we assume there is no authority child.  Eventually      */
+/*      we will have to handle this properly.                           */
+/* -------------------------------------------------------------------- */
+    /* CPLAssert( poNode->GetNode( "AUTHORITY" ) == NULL ); */
+
+/* -------------------------------------------------------------------- */
+/*      Create a new authority node.                                    */
+/* -------------------------------------------------------------------- */
+    char   szCode[32];
+    OGR_SRSNode *poAuthNode;
+
+    sprintf( szCode, "%d", nCode );
+
+    poAuthNode = new OGR_SRSNode( "AUTHORITY" );
+    poAuthNode->AddChild( new OGR_SRSNode( pszAuthority ) );
+    poAuthNode->AddChild( new OGR_SRSNode( szCode ) );
+    
+    poNode->AddChild( poAuthNode );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            StripCTParms()                            */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::StripCTParms( OGR_SRSNode * poCurrent )
+
+{
+    if( poCurrent == NULL )
+        poCurrent = GetRoot();
+    
+    if( poCurrent == NULL )
+        return OGRERR_NONE;
+
+    poCurrent->DestroyChild( poCurrent->FindChild( "AUTHORITY" ) );
+    poCurrent->DestroyChild( poCurrent->FindChild( "AXIS" ) );
+    poCurrent->DestroyChild( poCurrent->FindChild( "TOWGS84" ) );
+    
+    for( int iChild = 0; iChild < poCurrent->GetChildCount(); iChild++ )
+        StripCTParms( poCurrent->GetChild( iChild ) );
+
+    return OGRERR_NONE;
 }
