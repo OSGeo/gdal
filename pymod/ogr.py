@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.6  2003/03/03 02:46:05  warmerda
+# added ogr.Driver class
+#
 # Revision 1.5  2003/01/08 18:15:48  warmerda
 # added loads of stuff
 #
@@ -88,13 +91,19 @@ OJRight = 2
 wkbXDR = 0
 wkbNDR = 1
 
+###############################################################################
+#     Do this on module instantiation.
+
+_gdal.OGRRegisterAll()
+    
+#############################################################################
+# Various free standing functions.
 
 def Open( filename, update = 0 ):
-    _gdal.OGRRegisterAll()
     
     ds_o = _gdal.OGROpen( filename, update, None )
     if ds_o is None:
-        return None
+        raise ValueError, 'Unable to open: ' + filename
     else:
         return DataSource( ds_o )
 
@@ -104,9 +113,51 @@ def GetDriverCount():
 def GetDriver( driver_index ):
     dr_o = _gdal.OGRGetDriver( driver_index )
     if dr_o is None:
-        return None
+        raise IndexError
     else:
-        return SFDriver( dr_o )
+        return Driver( dr_o )
+
+def GetDriverByName( name ):
+    count = GetDriverCount()
+    for i in range(count):
+        dr = GetDriver( i )
+        if dr.GetName() == name:
+            return dr
+
+    raise ValueError, 'Unable to find ogr.Driver named "%s".' % name 
+
+#############################################################################
+# OGRSFDriver
+
+class Driver:
+
+    def __init__(self,obj=None):
+        if obj is None:
+            raise ValueError, 'OGRDriver may not be directly instantiated.'
+        self._o = obj
+
+    def GetName( self ):
+        return _gdal.OGR_Dr_GetName( self._o )
+
+    def TestCapability( self, cap ):
+        return _gdal.OGR_Dr_TestCapability( self._o, cap )
+
+    def Open( self, filename, update = 0 ):
+        ds_o = _gdal.OGR_Dr_Open( self._o, filename, update )
+        if ds_o is None:
+            return None
+        else:
+            return DataSource( ds_o )
+
+    def CreateDataSource( self, filename, options = None ):
+        ds_o = _gdal.OGR_Dr_CreateDataSource( self._o, filename, None )
+        if ds_o is None:
+            return None
+        else:
+            return DataSource( ds_o )
+
+#############################################################################
+# OGRDataSource
 
 class DataSource:
     def __init__(self,obj=None):
@@ -167,6 +218,8 @@ class DataSource:
     def ReleaseResultsSet( self, layer ):
         _gdal.OGR_DS_ReleaseResultsSet( self._o, layer._o )
 
+#############################################################################
+# OGRLayer
 
 class Layer:
     def __init__(self,obj=None):
@@ -243,6 +296,9 @@ class Layer:
 
     def RollbackTransaction( self ):
         return _gdal.OGR_L_RollbackTransaction( self._o )
+
+#############################################################################
+# OGRFeature
 
 class Feature:
     def __init__(self,feature_def=None,obj=None):
@@ -399,6 +455,9 @@ class FeatureDefn:
     def GetReferenceCount( self ):
         return _gdal.OGR_FD_GetReferenceCount( self._o )
         
+#############################################################################
+# OGRFieldDefn
+
 class FieldDefn:
     
     def __init__(self,name='unnamed',field_type=OFTString, obj=None):
@@ -443,6 +502,9 @@ class FieldDefn:
     def SetPrecision( self, precision ):
         _gdal.OGR_Fld_SetPrecision( self._o, precision )
     
+#############################################################################
+# OGRGeometry
+
 def CreateGeometryFromWkb( bin_string, srs = None ):
     if srs is not None:
         srs_o = srs._o
@@ -572,3 +634,6 @@ def BuildPolygonFromEdges( edges, bBestEffort=0, bAutoClose=0, Tolerance=0 ):
         return Geometry( obj = _o )
     else:
         return None;
+
+
+
