@@ -31,6 +31,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.2  2004/10/19 20:16:28  fwarmerdam
+# Fixed up error reporting somewhat.
+#
 # Revision 1.1  2002/05/07 03:12:25  warmerda
 # New
 #
@@ -54,11 +57,15 @@ if dataset is None:
 
 gcps = dataset.GetGCPs()
 
-if gcps is None:
+if gcps is None or len(gcps) == 0:
     print 'No GCPs found on file ' + filename
     sys.exit(1)
 
 geotransform = gdal.GCPsToGeoTransform( gcps )
+
+if geotransform is None:
+    print 'Unable to extract a geotransform.'
+    sys.exit( 1 ) 
 
 print geotransform[1]
 print geotransform[4]
