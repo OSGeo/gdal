@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2002/02/18 21:12:23  warmerda
+ * added OGRBuildPolygonFromEdges
+ *
  * Revision 1.29  2001/11/01 16:56:08  warmerda
  * added createGeometry and destroyGeometry methods
  *
@@ -666,5 +669,8 @@ class CPL_DLL OGRGeometryFactory
     static void   destroyGeometry( OGRGeometry * );
     static OGRGeometry *createGeometry( OGRwkbGeometryType );
 };
+
+OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
+                                      int bBestEffort, OGRErr * peErr = NULL );
 
 #endif /* ndef _OGR_GEOMETRY_H_INCLUDED */
