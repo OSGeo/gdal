@@ -215,6 +215,6 @@ to me, and I hope similar efforts on my part will contribute to his memory.<p>
 */
 
 /*!
-\page ISO8211 Example
+\page ISO8211_Example
 \include 8211view.cpp
 */
