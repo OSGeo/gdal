@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2002/12/09 16:11:32  warmerda
+ * fixed constness of get authority calls
+ *
  * Revision 1.58  2002/12/01 21:16:10  warmerda
  * added Get/set angular units methods
  *
@@ -2726,13 +2729,15 @@ OGRErr OSRSetAuthority( OGRSpatialReferenceH hSRS,
  * returned is internal and should not be freed or modified.
  */
 
-const char *OGRSpatialReference::GetAuthorityCode( const char *pszTargetKey )
+const char *
+OGRSpatialReference::GetAuthorityCode( const char *pszTargetKey ) const
 
 {
 /* -------------------------------------------------------------------- */
 /*      Find the node below which the authority should be put.          */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode  *poNode = GetAttrNode( pszTargetKey );
+    OGR_SRSNode  *poNode = 
+        ((OGRSpatialReference *) this)->GetAttrNode( pszTargetKey );
 
     if( poNode == NULL )
         return NULL;
@@ -2786,13 +2791,15 @@ const char *OSRGetAuthorityCode( OGRSpatialReferenceH hSRS,
  * returned is internal and should not be freed or modified.
  */
 
-const char *OGRSpatialReference::GetAuthorityName( const char *pszTargetKey )
+const char *
+OGRSpatialReference::GetAuthorityName( const char *pszTargetKey ) const
 
 {
 /* -------------------------------------------------------------------- */
 /*      Find the node below which the authority should be put.          */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode  *poNode = GetAttrNode( pszTargetKey );
+    OGR_SRSNode  *poNode = 
+        ((OGRSpatialReference *) this)->GetAttrNode( pszTargetKey );
 
     if( poNode == NULL )
         return NULL;

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2002/12/09 16:11:02  warmerda
+ * fixed constness of get authority calls
+ *
  * Revision 1.40  2002/12/01 21:16:10  warmerda
  * added Get/set angular units methods
  *
@@ -335,8 +338,8 @@ class CPL_DLL OGRSpatialReference
                               const char * pszAuthority, 
                               int nCode );
 
-    const char *GetAuthorityCode( const char * pszTargetKey );
-    const char *GetAuthorityName( const char * pszTargetKey );
+    const char *GetAuthorityCode( const char * pszTargetKey ) const;
+    const char *GetAuthorityName( const char * pszTargetKey ) const;
                            
     OGRErr      SetProjParm( const char *, double );
     double      GetProjParm( const char *, double =0.0, OGRErr* = NULL ) const;
