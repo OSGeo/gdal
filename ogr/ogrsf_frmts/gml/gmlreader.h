@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/01/25 21:23:21  warmerda
+ * handle IGMLReader destructor properly in gmlreader.cpp
+ *
  * Revision 1.4  2002/01/25 21:17:34  warmerda
  * provided IGMLReader destructor implementation
  *
@@ -159,7 +162,7 @@ public:
 class CPL_DLL IGMLReader
 {
 public:
-    virtual 	~IGMLReader() {};
+    virtual 	~IGMLReader();
 
     virtual int  IsClassListLocked() const = 0;
     virtual void SetClassListLocked( int bFlag ) = 0;
