@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/02/17 22:17:36  fwarmerdam
+ * some adjustments to deciding whether to use direct io or not
+ *
  * Revision 1.22  2005/02/16 22:08:21  fwarmerdam
  * split out v3 driver, added dataset::IRasterIO
  *
@@ -631,25 +634,19 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      We need various criteria to skip out to block based methods.    */
 /* -------------------------------------------------------------------- */
-    if( nYSize == 1 )
-        return GDALDataset::BlockBasedRasterIO( 
-            eRWFlag, nXOff, nYOff, nXSize, nYSize,
-            pData, nBufXSize, nBufYSize, eBufType, 
-            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace );
+    int bUseBlockedIO = bForceCachedIO;
 
-#ifdef notdef
-    if ( nBandCount > 1 && nXSize == nBufXSize && nYSize == nBufYSize )
+    if( nYSize == 1 || nXSize * nYSize < 100 )
+        bUseBlockedIO = TRUE;
+
+    if( CSLTestBoolean( CPLGetConfigOption( "GDAL_ONE_BIG_READ", "NO") ) )
+        bUseBlockedIO = FALSE;
+
+    if( bUseBlockedIO )
         return GDALDataset::BlockBasedRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
             nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace );
-    else
-        return GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                       pData,
-                                       nBufXSize, nBufYSize, eBufType,
-                                       nBandCount, panBandMap,
-                                       nPixelSpace, nLineSpace, nBandSpace );
-#endif
 
     CPLDebug( "MrSID", "RasterIO() - using optimized dataset level IO." );
     
