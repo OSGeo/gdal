@@ -149,25 +149,37 @@ AC_DEFUN(AM_PATH_PYTHON,
   fi
   if test "$PYTHON" != no ; then
     AC_MSG_CHECKING([where .py files should go])
-changequote(, )dnl
-    pythondir=`$PYTHON -c '
+changequote(,)dnl
+    python_prefix="`$PYTHON -c '
 import sys
-if sys.version[0] > "1" or sys.version[2] > "4":
-  print "%s/lib/python%s/site-packages" % (sys.prefix, sys.version[:3])
-else:
-  print "%s/lib/python%s" % (sys.prefix, sys.version[:3])'`
+print sys.prefix'`"
 changequote([, ])dnl
-    AC_MSG_RESULT($pythondir)
-    AC_MSG_CHECKING([where python extensions should go])
-changequote(, )dnl
-    pyexecdir=`$PYTHON -c '
+changequote(,)dnl
+    python_execprefix="`$PYTHON -c '
 import sys
-if sys.version[0] > "1" or sys.version[2] > "4":
-  print "%s/lib/python%s/site-packages" % (sys.exec_prefix, sys.version[:3])
-else:
-  print "%s/lib/python%s/sharedmodules" % (sys.exec_prefix, sys.version[:3])'`
+print sys.prefix'`"
 changequote([, ])dnl
-    AC_MSG_RESULT($pyexecdir)
+changequote(,)dnl
+    python_version="`$PYTHON -c '
+import sys
+print sys.version[:3]'`"
+changequote([, ])dnl
+
+    pythondir=$python_prefix/lib/python${python_version}/site-packages
+    pythonexecdir=$python_exec/lib/python${python_version}/site-packages
+
+    AC_MSG_RESULT(found)
+
+    dnl Verify that we have the makefile needed later.
+    
+    AC_MSG_CHECKING([Python makefile])
+    py_mf=$python_execprefix/lib/python${python_version}/config/Makefile
+    if test -f $py_mf ; then
+      AC_MSG_RESULT(found)
+    else
+      AC_MSG_RESULT([missing, python disabled.])
+      PYTHON=no
+    fi
   else
     # these defaults are version independent ...
     pythondir='$(prefix)/lib/site-python'
