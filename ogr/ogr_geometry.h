@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2004/08/20 21:21:28  warmerda
+ * added support for managing a persistent geos::GeometryFactory
+ *
  * Revision 1.48  2004/07/10 04:54:23  warmerda
  * added GEOS methods, and closeRings
  *
@@ -207,6 +210,7 @@ class OGRRawPoint
 
 namespace geos { 
     class Geometry;
+    class GeometryFactory;
 };
 
 /************************************************************************/
@@ -718,6 +722,8 @@ class CPL_DLL OGRGeometryFactory
     static OGRGeometry * forceToMultiPolygon( OGRGeometry * );
     static OGRGeometry * forceToMultiPoint( OGRGeometry * );
     static OGRGeometry * forceToMultiLineString( OGRGeometry * );
+
+    static geos::GeometryFactory *getGEOSGeometryFactory();
 
 };
 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/08/20 21:21:28  warmerda
+ * added support for managing a persistent geos::GeometryFactory
+ *
  * Revision 1.21  2004/07/10 04:54:01  warmerda
  * added GEOS methods
  *
@@ -831,3 +834,26 @@ OGRGeometryFactory::createFromGEOS( const geos::Geometry *geosGeom )
 
 #endif /* HAVE_GEOS */
 }
+
+/************************************************************************/
+/*                       getGEOSGeometryFactory()                       */
+/************************************************************************/
+
+geos::GeometryFactory *OGRGeometryFactory::getGEOSGeometryFactory() 
+
+{
+#ifndef HAVE_GEOS 
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return NULL;
+#else
+
+    static geos::GeometryFactory *poSavedFactory = NULL;
+
+    if( poSavedFactory == NULL )
+        poSavedFactory = new geos::GeometryFactory();
+
+    return poSavedFactory;
+#endif /* HAVE_GEOS */
+}
+
