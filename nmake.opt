@@ -3,11 +3,16 @@
 VCDIR   = 	F:\VisualStudio\VC98
 PYDIR   =	C:\Python
 
+# Location to install .exe, .dll and python stuff
+
+BINDIR = D:\bin
+PY_INST_DIR = c:\usr\pymod
+
 # Location of MS Data Access SDK 
 MSDASDK =	F:\MSDASDK
 
 INC	=	-I$(GDAL_ROOT)\port -I$(GDAL_ROOT)\ogr -I$(GDAL_ROOT)\core
-OPTFLAGS=	/Zi /nologo /Fd$(GDAL_ROOT)\gdal.pdb
+OPTFLAGS=	/nologo /Zi /Fd$(GDAL_ROOT)\gdal.pdb
 
 CFLAGS	=	$(OPTFLAGS) $(INC) $(EXTRAFLAGS)
 MAKE	=	nmake /nologo
@@ -22,4 +27,5 @@ GDALLIB	=    $(GDAL_ROOT)/gdal.lib
 
 .cpp.obj:	
 	$(CC) $(CFLAGS) /c $*.cpp
+
 
