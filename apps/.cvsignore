@@ -12,3 +12,4 @@ gdal-config-inst
 gdaltindex
 gdalwarp
 gdalwarptest
+gdal_contour

@@ -4,7 +4,7 @@ include ../GDALmake.opt
 
 OBJ	=	gdalmediancut.o gdaldither.o gdal_crs.o gdaltransformer.o \
 		gdalsimplewarp.o gdalwarper.o gdalwarpkernel.o \
-		gdalwarpoperation.o gdalchecksum.o gdal_rpc.o
+		gdalwarpoperation.o gdalchecksum.o gdal_rpc.o contour.o
 
 CPPFLAGS	+=	$(GDAL_INCLUDE)
 
