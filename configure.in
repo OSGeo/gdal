@@ -625,7 +625,6 @@ if test "$HAVE_JASPER" != "no" ; then
   
   dnl Test whether we have UUID JasPer hack
 
-  AC_CHECK_LIB(jasper,jp2_uuid_getdata,HAVE_JASPER_UUID=yes,HAVE_JASPER_UUID=no,)
   AC_CHECK_LIB(jasper,jp2_encode_uuid,HAVE_JASPER_UUID=yes,HAVE_JASPER_UUID=no,)
 
   if test "$HAVE_JASPER_UUID" = "yes" ; then
