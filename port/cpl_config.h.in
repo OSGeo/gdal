@@ -79,18 +79,6 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define to 1 if the system has the type `u_char'. */
-#undef HAVE_U_CHAR
-
-/* Define to 1 if the system has the type `u_int'. */
-#undef HAVE_U_INT
-
-/* Define to 1 if the system has the type `u_long'. */
-#undef HAVE_U_LONG
-
-/* Define to 1 if the system has the type `u_short'. */
-#undef HAVE_U_SHORT
-
 /* Define to 1 if you have the `vprintf' function. */
 #undef HAVE_VPRINTF
 
