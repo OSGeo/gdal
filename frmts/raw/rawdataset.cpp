@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/03/31 13:36:40  warmerda
+ * RawRasterBand no longer depends on RawDataset
+ *
  * Revision 1.2  1999/08/13 02:36:57  warmerda
  * added write support
  *
@@ -42,7 +45,7 @@
 /*                           RawRasterBand()                            */
 /************************************************************************/
 
-RawRasterBand::RawRasterBand( RawDataset *poDS, int nBand,
+RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
                               FILE * fpRaw, unsigned int nImgOffset,
                               int nPixelOffset, int nLineOffset,
                               GDALDataType eDataType, int bNativeOrder )
@@ -57,6 +60,12 @@ RawRasterBand::RawRasterBand( RawDataset *poDS, int nBand,
     this->nPixelOffset = nPixelOffset;
     this->nLineOffset = nLineOffset;
     this->bNativeOrder = bNativeOrder;
+
+    CPLDebug( "GDALRaw", 
+              "RawRasterBand(%p,%d,%p,\n"
+              "              Off=%d,PixOff=%d,LineOff=%d,%s,%d)\n",
+              poDS, nBand, fpRaw, nImgOffset, nPixelOffset, nLineOffset, 
+              GDALGetDataTypeName(eDataType), bNativeOrder );
 
 /* -------------------------------------------------------------------- */
 /*      Treat one scanline as the block size.                           */

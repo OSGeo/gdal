@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/03/31 13:36:41  warmerda
+ * RawRasterBand no longer depends on RawDataset
+ *
  * Revision 1.2  1999/08/13 02:36:57  warmerda
  * added write support
  *
@@ -77,7 +80,7 @@ class RawRasterBand : public GDALRasterBand
 
   public:
 
-                 RawRasterBand( RawDataset *poDS, int nBand, FILE * fpRaw, 
+                 RawRasterBand( GDALDataset *poDS, int nBand, FILE * fpRaw, 
                                 unsigned int nImgOffset, int nPixelOffset,
                                 int nLineOffset,
                                 GDALDataType eDataType, int bNativeOrder );
