@@ -1,2 +1,4 @@
 ogrwcts
 wctsclient
+.libs
+*.lo
