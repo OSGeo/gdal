@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/02/25 18:03:20  warmerda
+ * added AddType() method to HFADictionary
+ *
  * Revision 1.11  2003/02/21 15:40:58  dron
  * Added support for writing large (>4 GB) Erdas Imagine files.
  *
@@ -360,12 +363,14 @@ class HFADictionary
 {
   public:
     int		nTypes;
+    int         nTypesMax;
     HFAType	**papoTypes;
     
     		HFADictionary( const char * );
                 ~HFADictionary();
 
     HFAType	*FindType( const char * );
+    void        AddType( HFAType * );
 
     static int	GetItemSize( char );
 
