@@ -6,7 +6,7 @@
  *
  * Project:  Shapelib
  * Purpose:  Primary include file for Shapelib.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -37,8 +37,14 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.7  2002/01/15 14:33:07  warmerda
+ * Revision 1.8  2002/04/16 16:22:07  warmerda
  * updated
+ *
+ * Revision 1.24  2002/04/10 16:59:54  warmerda
+ * added SHPRewindObject
+ *
+ * Revision 1.23  2002/01/15 14:36:07  warmerda
+ * updated email address
  *
  * Revision 1.22  2002/01/15 14:32:00  warmerda
  * try to improve SHPAPI_CALL docs
@@ -292,6 +298,9 @@ SHPObject SHPAPI_CALL1(*)
 SHPObject SHPAPI_CALL1(*)
       SHPCreateSimpleObject( int nSHPType, int nVertices,
                              double * padfX, double * padfY, double * padfZ );
+
+int SHPAPI_CALL
+      SHPRewindObject( SHPHandle hSHP, SHPObject * psObject );
 
 void SHPAPI_CALL
       SHPClose( SHPHandle hSHP );
