@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.7  2005/02/24 16:33:07  kruland
+ * Marked missing methods.
+ *
  * Revision 1.6  2005/02/20 19:42:53  kruland
  * Rename the Swig shadow classes so the names do not give the impression that
  * they are any part of the GDAL/OSR apis.  There were no bugs with the old
@@ -79,6 +82,12 @@ public:
     return GDALGetMetadata( self, pszDomain );
   }
 %clear char **;
+
+// NEEDED
+// Register
+// Deregister
+// MajorObject - GetDescription
+// MajorObject - SetDescription
 
 }
 };
