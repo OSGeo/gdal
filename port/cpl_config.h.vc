@@ -34,6 +34,8 @@
 /* Define to 1 if you have the <locale.h> header file. */
 #define HAVE_LOCALE_H 1
 
+#define HAVE_FLOAT_H 1
+
 /* Define to 1 if you have the `localtime_r' function. */
 #undef HAVE_LOCALTIME_R
 
@@ -41,6 +43,7 @@
 #undef HAVE_DBMALLOC_H
 #undef HAVE_LIBDBMALLOC
 #undef WORDS_BIGENDIAN
+
 
 /* The size of a `int', as computed by sizeof. */
 #define SIZEOF_INT 4
