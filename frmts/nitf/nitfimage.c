@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/02/21 03:57:43  fwarmerdam
+ * Declare variables at beginning of blocks as required by C standard.
+ *
  * Revision 1.31  2005/02/18 19:28:15  fwarmerdam
  * added NITFIHFieldOffset
  *
@@ -1899,6 +1902,9 @@ int NITFRPCGeoToImage( NITFRPC00BInfo *psRPC,
 GUInt32 NITFIHFieldOffset( NITFImage *psImage, const char *pszFieldName )
 
 {
+    char szTemp[128];
+    int nNICOM;
+    GUInt32 nWrkOffset;
     GUInt32 nIMOffset = 
         psImage->psFile->pasSegmentInfo[psImage->iSegment].nSegmentHeaderStart;
 
@@ -1926,7 +1932,7 @@ GUInt32 NITFIHFieldOffset( NITFImage *psImage, const char *pszFieldName )
 /*      Keep working offset from here on in since everything else is    */
 /*      variable.                                                       */
 /* -------------------------------------------------------------------- */
-    GUInt32 nWrkOffset = 372 + nIMOffset;
+    nWrkOffset = 372 + nIMOffset;
 
     if( psImage->bHaveIGEOLO )
         nWrkOffset += 60;
@@ -1934,8 +1940,7 @@ GUInt32 NITFIHFieldOffset( NITFImage *psImage, const char *pszFieldName )
 /* -------------------------------------------------------------------- */
 /*      Comments.                                                       */
 /* -------------------------------------------------------------------- */
-    char       szTemp[128];
-    int nNICOM = atoi(NITFGetField(szTemp,psImage->pachHeader,nWrkOffset,1));
+    nNICOM = atoi(NITFGetField(szTemp,psImage->pachHeader,nWrkOffset,1));
         
     if( EQUAL(pszFieldName,"NICOM") )
         return nWrkOffset;
