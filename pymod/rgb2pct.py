@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.3  2003/05/28 19:47:34  warmerda
+# upgrade progress reporting
+#
 # Revision 1.2  2002/12/04 15:49:13  warmerda
 # re-enable cleanup, and fix color count support
 #
@@ -41,9 +44,6 @@
 import gdal
 import sys
 import os.path
-
-def progress_cb( complete, message, cb_data ):
-    print '%s %3d%%' % (cb_data, int(complete*100.0))
 
 def Usage():
     print 'Usage: rgb2pct.py [-n colors] [-of format] source_file dest_file'
@@ -112,7 +112,7 @@ err = gdal.ComputeMedianCutPCT( src_ds.GetRasterBand(1),
                                 src_ds.GetRasterBand(2),
                                 src_ds.GetRasterBand(3),
                                 color_count, ct,
-                                callback = progress_cb,
+                                callback = gdal.TermProgress,
                                 callback_data = 'Generate PCT' )
 
 # Create the working file.  We have to use TIFF since there are few formats
@@ -135,7 +135,7 @@ err = gdal.DitherRGB2PCT( src_ds.GetRasterBand(1),
                           src_ds.GetRasterBand(3),
                           tif_ds.GetRasterBand(1),
                           ct,
-                          callback = progress_cb,
+                          callback = gdal.TermProgress,
                           callback_data = 'Generate PCT' )
 
 tif_ds = None
