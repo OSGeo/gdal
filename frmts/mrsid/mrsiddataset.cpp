@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2004/05/02 15:47:26  dron
+ * Updated to DSDK 4.0.7.646.
+ *
  * Revision 1.10  2004/04/27 08:45:59  dron
  * Read strip height from image and use it as BlockYSize.
  *
@@ -1205,10 +1208,8 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 #include "lt_base.h"
 #include "lt_fileSpec.h"
 #include "lti_geoCoord.h"
-#include "lti_pixelProps.h"
-#include "lti_pixelData.h"
+#include "lti_pixel.h"
 #include "lti_scene.h"
-#include "lti_bufferProps.h"
 #include "lti_bufferData.h"
 #include "lti_metadataDatabase.h"
 #include "lti_metadataRecord.h"
@@ -1265,9 +1266,8 @@ class MrSIDRasterBand : public GDALRasterBand
 {
     friend class MrSIDDataset;
 
-    LTIPixelProps   *poPixelProps;
-    LTIBufferProps  *poBufferProps;
-    LTIBufferData   *poBuffer;
+    LTIPixel        *poPixel;
+    LTISceneBuffer  *poBuffer;
 
     int             nBlockSize;
 
@@ -1300,20 +1300,16 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDS, int nBand )
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = poDS->poImageReader->getStripHeight();
     nBlockSize = nBlockXSize * nBlockYSize;
-    poPixelProps = new LTIPixelProps( poDS->eColorSpace, poDS->nBands,
-                                      poDS->eSampleType );
-    poBufferProps = new LTIBufferProps( *poPixelProps,
-		                        nBlockXSize, nBlockYSize,
-					LTIBufferProps::LAYOUT_BSQ,
-					0, 0, 0, 0 );
+    poPixel = new LTIPixel( poDS->eColorSpace, poDS->nBands,
+                            poDS->eSampleType );
 
 /* -------------------------------------------------------------------- */
 /*      Set NoData values.                                              */
 /* -------------------------------------------------------------------- */
-     const LTIPixelData *poNDPixel = poDS->poImageReader->getNoDataPixel();
+     const LTIPixel *poNDPixel = poDS->poImageReader->getNoDataPixel();
      if ( poNDPixel )
      {
-	 dfNoDataValue = poNDPixel->getSampleFloat32( nBand );
+	 dfNoDataValue = poNDPixel->getSampleValueFloat32( nBand );
 	 bNoDataSet = TRUE;
      }
      else
@@ -1329,10 +1325,8 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDS, int nBand )
 
 MrSIDRasterBand::~MrSIDRasterBand()
 {
-    if ( poPixelProps )
-        delete poPixelProps;
-    if ( poBufferProps )
-        delete poBufferProps;
+    if ( poPixel )
+        delete poPixel;
 }
 
 /************************************************************************/
@@ -1343,11 +1337,10 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                     void * pImage )
 {
     MrSIDDataset    *poGDS = (MrSIDDataset *)poDS;
-    int             i, j;
     const LTIScene  oScene( nBlockXOff * nBlockXSize,
 		            nBlockYOff * nBlockYSize,
 		            nBlockXSize, nBlockYSize, 1.0 );
-    poBuffer = new LTIBufferData( *poBufferProps );
+    poBuffer = new LTISceneBuffer( *poPixel, nBlockXSize, nBlockYSize, NULL );
 
     try 
     {
@@ -1361,8 +1354,7 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    memcpy( pImage, (GByte *)poBuffer->getData() + nBlockSize * (nBand - 1),
-	    nBlockSize );
+    memcpy( pImage, poBuffer->getTotalBandData(nBand - 1), nBlockSize );
 
     delete poBuffer;
     return CE_None;
@@ -1628,9 +1620,10 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     MrSIDDataset        *poDS;
+    const LTFileSpec    oFileSpec( poOpenInfo->pszFilename );
 
     poDS = new MrSIDDataset();
-    poDS->poImageReader = new MrSIDImageReader( poOpenInfo->pszFilename );
+    poDS->poImageReader = new MrSIDImageReader( oFileSpec );
     if ( !LT_SUCCESS( poDS->poImageReader->initialize() ) )
     {
         delete poDS;
@@ -1646,7 +1639,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->poMetadata =
         new LTIMetadataDatabase( poDS->poImageReader->getMetadata() );
     const GUInt32       iNumRecs = poDS->poMetadata->getIndexCount();
-    int                 i;
+    GUInt32             i;
 
     for ( i = 0; i < iNumRecs; i++ )
     {
@@ -1716,7 +1709,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Take georeferencing.                                            */
 /* -------------------------------------------------------------------- */
     poDS->GetGTIFDefn();
-    if ( poDS->poMetadata->has(LTI_METADATA_TAG_IMAGE__XY_ORIGIN) )
+    if ( !poDS->poImageReader->isGeoCoordImplicit() )
     {
         const LTIGeoCoord& oGeo = poDS->poImageReader->getGeoCoord();
         oGeo.get( poDS->adfGeoTransform[0], poDS->adfGeoTransform[3],
@@ -1754,7 +1747,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Fetch the projection parameters for a particular projection     */
 /*      from MrSID metadata, and fill the GTIFDefn structure out        */
 /*      with them.                                                      */
-/*      Explicitly copied from geo_normalize.c of the GeoTIFF package.  */
+/*      Copied from geo_normalize.c of the GeoTIFF package.             */
 /************************************************************************/
 
 void MrSIDDataset::FetchProjParms()
