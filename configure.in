@@ -726,7 +726,7 @@ else
   ORIG_LIBS="$LIBS"
   LIBS="-L$HDF_LIB_DIR $LIBS"
 
-  AC_CHECK_LIB(mfhdf,SDreaddata,HDF_LIB_NAME=-lmfhdf,HDF_LIB_NAME=missing,-ldf)
+  AC_CHECK_LIB(mfhdf,SDreaddata,HDF_LIB_NAME="-lmfhdf -ldf",HDF_LIB_NAME=missing,-ldf)
   if test "$HDF_LIB_NAME" = "missing" ; then
     AC_CHECK_LIB(hdf4,SDreaddata,HDF_LIB_NAME=-lhdf4,HDF_LIB_NAME=missing,)
   fi
