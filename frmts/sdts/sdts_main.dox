@@ -1,4 +1,4 @@
-/*! \page SDTS_AL_main
+/*! \page sdts_al_main
 
 <center>
 <title>SDTS Abstraction Library</title>
@@ -145,7 +145,7 @@ A typical session in which we inspect the contents of a transfer, and then
 extract polygon and line layers might look like this:<p>
 
 <pre>
-warmerda@cs46980-c[134]% sdts2shp data/SC01CATD.DDF -v
+warmerda[134]% sdts2shp data/SC01CATD.DDF -v
 Layers:
   ASCF: `Attribute Primary         '
   AHDR: `Attribute Primary         '
@@ -155,9 +155,12 @@ Layers:
   LE01: `Line                      '
   PC01: `Polygon                   '
 
-warmerda@cs46980-c[135]% sdts2shp data/SC01CATD.DDF -m PC01 -o pc01.shp
-warmerda@cs46980-c[136]% sdts2shp data/SC01CATD.DDF -m LE01 -o le01.shp
+warmerda[135]% sdts2shp data/SC01CATD.DDF -m PC01 -o pc01.shp
+warmerda[136]% sdts2shp data/SC01CATD.DDF -m LE01 -o le01.shp
 </pre>
+
+A <a href="sdts2shp.zip">prebuilt executable</a> is available for
+Windows.<p>
 
 <!--------------------------------------------------------------------------->
 
@@ -196,9 +199,9 @@ The precise license text is:<p>
 
 <h2>Author and Acknowledgements</h2>
 
-The primary author of SDTS_AL is <a href="http://members.home.com/warmerda">
+The primary author of SDTS_AL is <a href="http://pobox.com/~warmerdam">
 Frank Warmerdam</a>, and I can be reached at 
-<a href="mailto:warmerda@home.com">warmerda@home.com</a>.  I am eager to 
+<a href="mailto:warmerdam@pobox.com">warmerdam@pobox.com</a>.  I am eager to 
 receive bug reports, and also open to praise or suggestions.<p>
 
 I would like to thank:<p>

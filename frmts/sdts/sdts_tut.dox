@@ -240,7 +240,7 @@ subfield.<p>
         for( iSF=0; iSF < poFDefn->GetSubfieldCount(); iSF++ )
         {
             DDFSubfieldDefn	*poSFDefn = poFDefn->GetSubfield( iSF );
-<pre>
+</pre>
 
 Then each of the significant ISO8211 field types is translated to an
 appropriate DBF field type.  In cases where the nWidth field is zero, 
