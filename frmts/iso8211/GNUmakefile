@@ -14,7 +14,7 @@ OBJ =	ddfmodule.o ddfutils.o ddffielddefn.o ddfrecord.o ddffield.o \
 
 default:	$(ISOLIB) 8211view
 
-all:	8211dump 8211view docs
+all:	$(ISOLIB) 8211dump 8211view docs
 
 clean:
 	rm -rf *.o 8211dump 8211view $(DISTDIR) $(DISTDIR).tar.gz html/*
