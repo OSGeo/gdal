@@ -42,7 +42,7 @@ sdts2shp:	sdts2shp.cpp $(SDTSLIB)
 		$(SHPDIR)/shpopen.o $(SHPDIR)/dbfopen.o \
 		$(LIBS) -o sdts2shp
 
-install-obj:	$(foreach file,$(OBJ),../o/$(file)) ../o/sdtsdataset.o
+install-obj:	$(SDTSLIB) $(foreach file,$(OBJ),../o/$(file)) ../o/sdtsdataset.o
 
 ../o/%.o:	%.o
 	cp $*.o ../o

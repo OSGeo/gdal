@@ -84,7 +84,7 @@ test:	8211dump
 	fi
 
 
-install-obj:	$(foreach file,$(OBJ),../o/$(file))
+install-obj:	$(ISOLIB) $(foreach file,$(OBJ),../o/$(file))
 
 ../o/%.o:	%.o
 	cp $*.o ../o
