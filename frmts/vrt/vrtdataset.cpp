@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/04/19 19:43:38  warmerda
+ * added CreateCopy method
+ *
  * Revision 1.2  2001/11/18 15:46:45  warmerda
  * added SRS and GeoTransform
  *
@@ -246,6 +249,97 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                           VRTCreateCopy()                            */
+/************************************************************************/
+
+static GDALDataset *
+VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
+               int bStrict, char ** papszOptions, 
+               GDALProgressFunc pfnProgress, void * pProgressData )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Try to create the output file.                                  */
+/* -------------------------------------------------------------------- */
+    FILE	*fp;
+
+    fp = VSIFOpen( pszFilename, "wt" );
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Unable to create file %s.",
+                  pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the root node.                                           */
+/* -------------------------------------------------------------------- */
+    VSIFPrintf( fp, "<VRTDataset rasterXSize=\"%d\" rasterYSize=\"%d\">\n", 
+                poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize() );
+
+/* -------------------------------------------------------------------- */
+/*      Do we have an SRS?                                              */
+/* -------------------------------------------------------------------- */
+    if( poSrcDS->GetProjectionRef() != NULL
+        && strlen(poSrcDS->GetProjectionRef()) > 0 )
+        VSIFPrintf( fp, "  <SRS>%s</SRS>\n", 
+                    poSrcDS->GetProjectionRef() );
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a geotransform?                                      */
+/* -------------------------------------------------------------------- */
+    double adfGeoTransform[6];
+
+    if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+    {
+        VSIFPrintf( fp, "  <GeoTransform>%24.16e,%24.16e,%24.16e,%24.16e,%24.16e,%24.16e</GeoTransform>\n", 
+                    adfGeoTransform[0],
+                    adfGeoTransform[1],
+                    adfGeoTransform[2],
+                    adfGeoTransform[3],
+                    adfGeoTransform[4],
+                    adfGeoTransform[5] );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Loop over all the bands.					*/
+/* -------------------------------------------------------------------- */
+    for( int iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+    {
+        GDALRasterBand *poBand = poSrcDS->GetRasterBand( iBand+1 );
+
+        VSIFPrintf( fp, "  <VRTRasterBand band=\"%d\">\n", iBand+1 );
+
+/* -------------------------------------------------------------------- */
+/*      Setup SimpleSource mapping.                                     */
+/* -------------------------------------------------------------------- */
+        VSIFPrintf( fp, "    <SimpleSource>\n" );
+        VSIFPrintf( fp, "      <SourceFilename>%s</SourceFilename>\n",
+                    poSrcDS->GetDescription() );
+        VSIFPrintf( fp, "      <SourceBand>%d</SourceBand>\n", iBand+1 );
+        VSIFPrintf( fp, "      <SrcRect xOff=\"%d\" yOff=\"%d\""
+                    " xSize=\"%d\" ySize=\"%d\"/>\n", 
+                    0, 0, 
+                    poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize() );
+        VSIFPrintf( fp, "      <DstRect xOff=\"%d\" yOff=\"%d\""
+                    " xSize=\"%d\" ySize=\"%d\"/>\n", 
+                    0, 0, 
+                    poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize() );
+        VSIFPrintf( fp, "    </SimpleSource>\n" );
+
+        VSIFPrintf( fp, "  </VRTRasterBand>\n" );
+    }
+
+    VSIFPrintf( fp, "</VRTDataset>\n" );
+
+    VSIFClose( fp );
+
+    return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+}
+
+
+/************************************************************************/
 /*                          GDALRegister_VRT()                          */
 /************************************************************************/
 
@@ -262,6 +356,7 @@ void GDALRegister_VRT()
         poDriver->pszLongName = "Virtual Raster";
         
         poDriver->pfnOpen = VRTDataset::Open;
+        poDriver->pfnCreateCopy = VRTCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
