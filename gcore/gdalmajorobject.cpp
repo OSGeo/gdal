@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/07/26 01:36:28  warmerda
+ * Implement support for forwarding non-default domains to the SetMetadata()
+ * method in SetMetadataItem().
+ *
  * Revision 1.6  2003/04/30 17:13:48  warmerda
  * added docs for many C functions
  *
@@ -312,12 +316,29 @@ CPLErr GDALMajorObject::SetMetadataItem( const char * pszName,
 {
     if( pszDomain != NULL && !EQUAL(pszDomain,"") )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "Non-default domain not supported for this object." );
-        return CE_Failure;
-    }
+        CPLErr eErr;
 
-    papszMetadata = CSLSetNameValue( papszMetadata, pszName, pszValue );
+        CPLErrorReset();
+
+        char **papszWrkMD = GetMetadata( pszDomain );
+
+        if( CPLGetLastErrorType() != CE_None )
+            return CPLGetLastErrorType();
+
+        papszWrkMD = CSLDuplicate( papszWrkMD );
+
+        papszWrkMD = CSLSetNameValue( papszWrkMD, pszName, pszValue );
+
+        eErr = SetMetadata( papszWrkMD, pszDomain );
+
+        CSLDestroy( papszWrkMD );
+
+        return eErr;
+    }
+    else
+    {
+        papszMetadata = CSLSetNameValue( papszMetadata, pszName, pszValue );
+    }
 
     return CE_None;
 }
