@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.25  2004/07/10 05:05:24  warmerda
+# added closerings
+#
 # Revision 1.24  2004/03/31 15:34:06  warmerda
 # Added "name" parameter for FeatureDefn constructor.
 #
@@ -788,6 +791,9 @@ class Geometry:
 
     def FlattenTo2D( self ):
         _gdal.OGR_G_FlattenTo2D( self._o )
+    
+    def CloseRings( self ):
+        _gdal.OGR_G_CloseRings( self._o )
     
     def AssignSpatialReference( self, srs ):
         _gdal.OGR_G_AssignSpatialReference( self._o, srs._o )

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.98  2004/07/10 05:05:23  warmerda
+ * added closerings
+ *
  * Revision 1.97  2004/05/21 18:38:02  warmerda
  * added GetMinimum, GetMaximum, GetOffset and GetScale methods
  *
@@ -2715,6 +2718,7 @@ int    OGR_G_WkbSize( OGRGeometryH hGeom );
 OGRwkbGeometryType OGR_G_GetGeometryType( OGRGeometryH );
 const char *OGR_G_GetGeometryName( OGRGeometryH );
 void   OGR_G_FlattenTo2D( OGRGeometryH );
+void   OGR_G_CloseRings( OGRGeometryH );
 char  *OGR_G_ExportToGML( OGRGeometryH );
 OGRGeometryH OGR_G_CreateFromGML( const char * );
 

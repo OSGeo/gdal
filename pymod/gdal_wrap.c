@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.91  2004/05/21 18:38:02  warmerda
- * added GetMinimum, GetMaximum, GetOffset and GetScale methods
+ * Revision 1.92  2004/07/10 05:05:24  warmerda
+ * added closerings
  *
  ************************************************************************/
 
@@ -7115,6 +7115,26 @@ static PyObject *_wrap_OGR_G_FlattenTo2D(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OGR_G_CloseRings(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _arg0;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGR_G_CloseRings",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_CloseRings. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    OGR_G_CloseRings(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_OGR_G_ExportToGML(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     char * _result;
@@ -10338,6 +10358,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_G_AssignSpatialReference", _wrap_OGR_G_AssignSpatialReference, 1 },
 	 { "OGR_G_CreateFromGML", _wrap_OGR_G_CreateFromGML, 1 },
 	 { "OGR_G_ExportToGML", _wrap_OGR_G_ExportToGML, 1 },
+	 { "OGR_G_CloseRings", _wrap_OGR_G_CloseRings, 1 },
 	 { "OGR_G_FlattenTo2D", _wrap_OGR_G_FlattenTo2D, 1 },
 	 { "OGR_G_GetGeometryName", _wrap_OGR_G_GetGeometryName, 1 },
 	 { "OGR_G_GetGeometryType", _wrap_OGR_G_GetGeometryType, 1 },
