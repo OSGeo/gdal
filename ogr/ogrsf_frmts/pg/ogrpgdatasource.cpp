@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/04/23 15:10:10  warmerda
+ * Added support for enumerating views.
+ *
  * Revision 1.21  2004/04/02 17:44:55  warmerda
  * SELECT in caps for readability
  *
@@ -270,7 +273,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         hResult = PQexec(hPGConn, 
                          "DECLARE mycursor CURSOR for "
                          "SELECT relname FROM pg_class "
-                         "WHERE relkind = 'r' AND relname !~ '^pg'" );
+                         "WHERE (relkind in ('r','v') AND relname !~ '^pg'" );
     }
 
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
