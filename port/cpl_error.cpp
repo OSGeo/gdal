@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/11/30 17:30:10  warmerda
+ * added CPLGetLastErrorType
+ *
  * Revision 1.13  2000/03/31 14:37:48  warmerda
  * only use vsnprintf where available
  *
@@ -79,6 +82,7 @@
  */
 static char gszCPLLastErrMsg[2000] = "";
 static int  gnCPLLastErrNo = 0;
+static CPLErr geCPLLastErrType = CE_None;
 
 static CPLErrorHandler gpfnCPLErrorHandler = CPLDefaultErrorHandler;
 
@@ -155,6 +159,7 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
      * it, otherwise print the error to stderr and return.
      */
     gnCPLLastErrNo = err_no;
+    geCPLLastErrType = eErrClass;
 
     if( gpfnCPLErrorHandler )
         gpfnCPLErrorHandler(eErrClass, err_no, gszCPLLastErrMsg);
@@ -254,6 +259,7 @@ void    CPLErrorReset()
 {
     gnCPLLastErrNo = CPLE_None;
     gszCPLLastErrMsg[0] = '\0';
+    geCPLLastErrType = CE_None;
 }
 
 
@@ -273,6 +279,24 @@ void    CPLErrorReset()
 int     CPLGetLastErrorNo()
 {
     return gnCPLLastErrNo;
+}
+
+/**********************************************************************
+ *                          CPLGetLastErrorType()
+ **********************************************************************/
+
+/**
+ * Fetch the last error type.
+ *
+ * This is the error class, not the error number.
+ *
+ * @return the error number of the last error to occur, or CE_None (0)
+ * if there are no posted errors.
+ */
+
+CPLErr CPLGetLastErrorType()
+{
+    return geCPLLastErrType;
 }
 
 /**********************************************************************

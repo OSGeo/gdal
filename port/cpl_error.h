@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/11/30 17:30:10  warmerda
+ * added CPLGetLastErrorType
+ *
  * Revision 1.13  2000/08/24 18:08:17  warmerda
  * made default and quiet error handlers public on windows
  *
@@ -101,6 +104,7 @@ void CPL_DLL CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...);
 void CPL_DLL CPLErrorV(CPLErr, int, const char *, va_list );
 void CPL_DLL CPLErrorReset();
 int CPL_DLL CPLGetLastErrorNo();
+CPLErr CPL_DLL CPLGetLastErrorType();
 const char CPL_DLL * CPLGetLastErrorMsg();
 
 typedef void (*CPLErrorHandler)(CPLErr, int, const char*);
