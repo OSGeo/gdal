@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/07/17 17:09:30  warmerda
+ * added support for complex data
+ *
  * Revision 1.3  2000/06/26 22:18:33  warmerda
  * added scaled progress support
  *
@@ -109,6 +112,21 @@ GTIFFBuildOverviews( const char * pszFilename,
           case GDT_Float64:
             nBandBits = 64;
             nBandFormat = SAMPLEFORMAT_IEEEFP;
+            break;
+
+          case GDT_CInt16:
+            nBandBits = 32;
+            nBandFormat = SAMPLEFORMAT_COMPLEXINT;
+            break;
+
+          case GDT_CFloat32:
+            nBandBits = 64;
+            nBandFormat = SAMPLEFORMAT_COMPLEXIEEEFP;
+            break;
+
+          case GDT_CFloat64:
+            nBandBits = 128;
+            nBandFormat = SAMPLEFORMAT_COMPLEXIEEEFP;
             break;
 
           default:

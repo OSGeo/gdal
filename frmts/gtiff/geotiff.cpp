@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2000/07/17 17:09:11  warmerda
+ * added support for complex data
+ *
  * Revision 1.34  2000/07/17 14:52:51  warmerda
  * added preliminary complex support
  *
@@ -223,6 +226,8 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
 /* -------------------------------------------------------------------- */
     uint16		nSampleFormat = poDS->nSampleFormat;
 
+    eDataType = GDT_Unknown;
+
     if( poDS->nBitsPerSample <= 8 )
         eDataType = GDT_Byte;
     else if( poDS->nBitsPerSample <= 16 )
@@ -236,8 +241,6 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
     {
         if( nSampleFormat == SAMPLEFORMAT_COMPLEXINT )
             eDataType = GDT_CInt16;
-        else if( nSampleFormat == SAMPLEFORMAT_COMPLEXIEEEFP )
-            eDataType = GDT_CFloat32;
         else if( nSampleFormat == SAMPLEFORMAT_IEEEFP )
             eDataType = GDT_Float32;
         else if( nSampleFormat == SAMPLEFORMAT_INT )
@@ -245,8 +248,13 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
         else
             eDataType = GDT_UInt32;
     }
-    else
-        eDataType = GDT_Unknown;
+    else if( poDS->nBitsPerSample == 64 )
+    {
+        if( nSampleFormat == SAMPLEFORMAT_IEEEFP )
+            eDataType = GDT_Float64;
+        else if( nSampleFormat == SAMPLEFORMAT_COMPLEXIEEEFP )
+            eDataType = GDT_CFloat32;
+    }
 
 /* -------------------------------------------------------------------- */
 /*	Establish block size for strip or tiles.			*/
