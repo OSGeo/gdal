@@ -164,8 +164,7 @@ install-lib:
 	rm -f $(INST_LIB)/$(GDAL_SLIB_B)
 	rm -f $(INST_LIB)/$(GDAL_SLIB_B).$(GDAL_VER_MAJOR)
 	rm -f $(INST_LIB)/$(GDAL_SLIB_B).$(GDAL_VER)
-	$(INSTALL_LIB) $(GDAL_SLIB) $(INST_LIB)
-	mv $(INST_LIB)/$(GDAL_SLIB_B) $(INST_LIB)/$(GDAL_SLIB_B).$(GDAL_VER)
+	$(INSTALL_LIB) $(GDAL_SLIB) $(INST_LIB)/$(GDAL_SLIB_B).$(GDAL_VER)
 	(cd $(INST_LIB) ; \
 	 ln -s $(GDAL_SLIB_B).$(GDAL_VER_MAJOR) $(GDAL_SLIB_B))
 	(cd $(INST_LIB) ; \
