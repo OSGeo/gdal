@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.16  2005/02/23 18:23:00  fwarmerdam
+#  Added -seperate to the usage message.
+#
 #  Revision 1.15  2004/09/02 22:06:24  warmerda
 #  Added a bit of commandline error reporting.
 #
@@ -273,7 +276,7 @@ def Usage():
     print 'Usage: gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*'
     print '                     [-ps pixelsize_x pixelsize_y] [-separate] [-v] [-pct]'
     print '                     [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init value]'
-    print '                     input_files'
+    print '                     [-seperate] input_files'
     print
 
 # =============================================================================
