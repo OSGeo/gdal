@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/01/19 20:31:12  warmerda
+ * expand tabs
+ *
  * Revision 1.2  1999/10/01 14:47:51  warmerda
  * major upgrade: generic, string feature codes, etc
  *
@@ -142,7 +145,7 @@ OGRFeature *OGRNTFFeatureClassLayer::GetFeature( long nFeatureId )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding feature.                                 */
 /* -------------------------------------------------------------------- */
-    OGRFeature	*poFeature = new OGRFeature( poFeatureDefn );
+    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
     poFeature->SetField( 0, pszFCId );
     poFeature->SetField( 1, pszFCName );

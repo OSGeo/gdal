@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/01/19 20:31:12  warmerda
+ * expand tabs
+ *
  * Revision 1.7  1999/11/04 21:11:37  warmerda
  * Added TestCapability().
  *
@@ -90,7 +93,7 @@ OGRNTFDataSource::OGRNTFDataSource()
 OGRNTFDataSource::~OGRNTFDataSource()
 
 {
-    int		i;
+    int         i;
 
     for( i = 0; i < nNTFFileCount; i++ )
         delete papoNTFFileReader[i];
@@ -189,7 +192,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 
 {
     VSIStatBuf      stat;
-    char	    **papszFileList = NULL;
+    char            **papszFileList = NULL;
 
     pszName = CPLStrdup( pszFilename );
 
@@ -267,7 +270,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 /*      open ... we don't want to occupy alot of file handles when      */
 /*      handling a whole directory.                                     */
 /* -------------------------------------------------------------------- */
-    int		i;
+    int         i;
 
     papoNTFFileReader = (NTFFileReader **)
         CPLCalloc(sizeof(void*), CSLCount(papszFileList));
@@ -276,9 +279,9 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
     {
         if( bTestOpen )
         {
-            char	szHeader[80];
-            FILE	*fp;
-            int		j;
+            char        szHeader[80];
+            FILE        *fp;
+            int         j;
 
             fp = VSIFOpen( papszFileList[i], "rb" );
             if( fp == NULL )
@@ -306,7 +309,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 
         }
 
-        NTFFileReader	*poFR;
+        NTFFileReader   *poFR;
 
         poFR = new NTFFileReader( this );
 
@@ -330,7 +333,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
         return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*      Establish generic layers.					*/
+/*      Establish generic layers.                                       */
 /* -------------------------------------------------------------------- */
     EstablishGenericLayers();
     
@@ -340,11 +343,11 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 /* -------------------------------------------------------------------- */
     for( int iSrcFile = 0; iSrcFile < nNTFFileCount; iSrcFile++ )
     {
-        NTFFileReader	*poSrcReader = papoNTFFileReader[iSrcFile];
+        NTFFileReader   *poSrcReader = papoNTFFileReader[iSrcFile];
         
         for( int iSrcFC = 0; iSrcFC < poSrcReader->GetFCCount(); iSrcFC++ )
         {
-            int	        iDstFC;
+            int         iDstFC;
             char       *pszSrcFCName, *pszSrcFCNum;
 
             poSrcReader->GetFeatureClass( iSrcFC, &pszSrcFCNum, &pszSrcFCName);
@@ -400,11 +403,11 @@ void OGRNTFDataSource::ResetReading()
 OGRFeature *OGRNTFDataSource::GetNextFeature()
 
 {
-    OGRFeature	*poFeature = NULL;
+    OGRFeature  *poFeature = NULL;
 
 /* -------------------------------------------------------------------- */
-/*	If we have already read all the conventional features, we 	*/
-/*	should try and return feature class features.			*/    
+/*      If we have already read all the conventional features, we       */
+/*      should try and return feature class features.                   */    
 /* -------------------------------------------------------------------- */
     if( iCurrentReader == nNTFFileCount )
     {

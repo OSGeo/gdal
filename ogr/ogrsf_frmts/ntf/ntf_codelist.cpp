@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/01/19 20:31:12  warmerda
+ * expand tabs
+ *
  * Revision 1.1  2001/01/17 19:08:46  warmerda
  * New
  *
@@ -45,7 +48,7 @@
 NTFCodeList::NTFCodeList( NTFRecord * poRecord )
 
 {
-    int		iThisField;
+    int         iThisField;
     const char  *pszText;
 
     CPLAssert( EQUAL(poRecord->GetField(1,2),"42") );
@@ -63,8 +66,8 @@ NTFCodeList::NTFCodeList( NTFRecord * poRecord )
          *pszText != '\0' && iThisField < nNumCode; 
          iThisField++ )
     {
-        char	szVal[128], szDes[128];
-        int	iLen;
+        char    szVal[128], szDes[128];
+        int     iLen;
 
         iLen = 0;
         while( *pszText != '\\' && *pszText != '\0' )

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/01/19 20:31:12  warmerda
+ * expand tabs
+ *
  * Revision 1.11  2001/01/17 19:08:37  warmerda
  * added CODELIST support
  *
@@ -71,7 +74,7 @@
 #include "ntf.h"
 #include "cpl_string.h"
 
-#define MAX_LINK	5000
+#define MAX_LINK        5000
 
 /************************************************************************/
 /*                         TranslateCodePoint()                         */
@@ -89,7 +92,7 @@ static OGRFeature *TranslateCodePoint( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
@@ -130,7 +133,7 @@ static OGRFeature *TranslateAddressPoint( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
@@ -171,13 +174,13 @@ static OGRFeature *TranslateOscarPoint( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
     // Geometry
-    int		nGeomId;
+    int         nGeomId;
     
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
@@ -206,13 +209,13 @@ static OGRFeature *TranslateOscarLine( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
     // Geometry
-    int		nGeomId;
+    int         nGeomId;
     
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
@@ -242,13 +245,13 @@ static OGRFeature *TranslateOscarRoutePoint( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
     // Geometry
-    int		nGeomId;
+    int         nGeomId;
     
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
@@ -262,11 +265,11 @@ static OGRFeature *TranslateOscarRoutePoint( NTFFileReader *poReader,
                                     NULL );
 
     // PARENT_OSODR
-    char	**papszTypes, **papszValues;
+    char        **papszTypes, **papszValues;
 
     if( poReader->ProcessAttRecGroup( papoGroup, &papszTypes, &papszValues ) )
     {
-        char	**papszOSODRList = NULL;
+        char    **papszOSODRList = NULL;
 
         for( int i = 0; papszTypes != NULL && papszTypes[i] != NULL; i++ )
         {
@@ -300,13 +303,13 @@ static OGRFeature *TranslateOscarRouteLine( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
     // Geometry
-    int		nGeomId;
+    int         nGeomId;
     
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
@@ -320,11 +323,11 @@ static OGRFeature *TranslateOscarRouteLine( NTFFileReader *poReader,
                                     NULL );
 
     // PARENT_OSODR
-    char	**papszTypes, **papszValues;
+    char        **papszTypes, **papszValues;
 
     if( poReader->ProcessAttRecGroup( papoGroup, &papszTypes, &papszValues ) )
     {
-        char	**papszOSODRList = NULL;
+        char    **papszOSODRList = NULL;
 
         for( int i = 0; papszTypes != NULL && papszTypes[i] != NULL; i++ )
         {
@@ -357,7 +360,7 @@ static OGRFeature *TranslateOscarComment( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_COMMENT )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // RECORD_TYPE
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 4 )) );
@@ -385,13 +388,13 @@ static OGRFeature *TranslateOscarNetworkPoint( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
     // Geometry
-    int		nGeomId;
+    int         nGeomId;
     
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
@@ -421,13 +424,13 @@ static OGRFeature *TranslateOscarNetworkLine( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
     // Geometry
-    int		nGeomId;
+    int         nGeomId;
     
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
@@ -457,13 +460,13 @@ static OGRFeature *TranslateBasedataPoint( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
     // Geometry
-    int		nGeomId;
+    int         nGeomId;
     
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
@@ -494,13 +497,13 @@ static OGRFeature *TranslateBasedataLine( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
     // Geometry
-    int		nGeomId;
+    int         nGeomId;
     
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
@@ -530,13 +533,13 @@ static OGRFeature *TranslateBoundarylineCollection( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_ATTREC )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // COLL_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
     // NUM_PARTS
-    int		nNumLinks = atoi(papoGroup[0]->GetField( 9, 12 ));
+    int         nNumLinks = atoi(papoGroup[0]->GetField( 9, 12 ));
     
     if( nNumLinks > MAX_LINK )
     {
@@ -548,7 +551,7 @@ static OGRFeature *TranslateBoundarylineCollection( NTFFileReader *poReader,
     poFeature->SetField( 1, nNumLinks );
 
     // POLY_ID
-    int		i, anList[MAX_LINK];
+    int         i, anList[MAX_LINK];
 
     for( i = 0; i < nNumLinks; i++ )
         anList[i] = atoi(papoGroup[0]->GetField( 15+i*8, 20+i*8 ));
@@ -582,13 +585,13 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
         && papoGroup[3]->GetType() == NRT_GEOMETRY )
     {
         
-        OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+        OGRFeature      *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
         // POLY_ID
         poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
         // NUM_PARTS
-        int		nNumLinks = atoi(papoGroup[2]->GetField( 9, 12 ));
+        int             nNumLinks = atoi(papoGroup[2]->GetField( 9, 12 ));
     
         if( nNumLinks > MAX_LINK )
         {
@@ -600,7 +603,7 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
         poFeature->SetField( 4, nNumLinks );
 
         // DIR
-        int		i, anList[MAX_LINK];
+        int             i, anList[MAX_LINK];
 
         for( i = 0; i < nNumLinks; i++ )
             anList[i] = atoi(papoGroup[2]->GetField( 19+i*7, 19+i*7 ));
@@ -614,7 +617,7 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
         poFeature->SetField( 6, nNumLinks, anList );
 
         // RingStart
-        int	nRingList = 0;
+        int     nRingList = 0;
         poFeature->SetField( 7, 1, &nRingList );
 
         // Attributes
@@ -636,7 +639,7 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
 /* -------------------------------------------------------------------- */
 /*      First we do validation of the grouping.                         */
 /* -------------------------------------------------------------------- */
-    int		iRec;
+    int         iRec;
     
     for( iRec = 0;
          papoGroup[iRec] != NULL && papoGroup[iRec+1] != NULL
@@ -656,12 +659,12 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
 /*      Collect the chains for each of the rings, and just aggregate    */
 /*      these into the master list without any concept of where the     */
 /*      boundaries are.  The boundary information will be emmitted      */
-/*	in the RingStart field.						*/
+/*      in the RingStart field.                                         */
 /* -------------------------------------------------------------------- */
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
-    int		nNumLink = 0;
-    int		anDirList[MAX_LINK*2], anGeomList[MAX_LINK*2];
-    int		anRingStart[MAX_LINK], nRings = 0;
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    int         nNumLink = 0;
+    int         anDirList[MAX_LINK*2], anGeomList[MAX_LINK*2];
+    int         anRingStart[MAX_LINK], nRings = 0;
 
     for( iRec = 0;
          papoGroup[iRec] != NULL && papoGroup[iRec+1] != NULL
@@ -669,7 +672,7 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
              && papoGroup[iRec+1]->GetType() == NRT_CHAIN;
          iRec += 2 )
     {
-        int		i, nLineCount;
+        int             i, nLineCount;
 
         nLineCount = atoi(papoGroup[iRec+1]->GetField(9,12));
 
@@ -708,7 +711,7 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
 
     
 /* -------------------------------------------------------------------- */
-/*	collect information for whole complex polygon.			*/
+/*      collect information for whole complex polygon.                  */
 /* -------------------------------------------------------------------- */
     // POLY_ID
     poFeature->SetField( 0, atoi(papoGroup[iRec]->GetField( 3, 8 )) );
@@ -739,10 +742,10 @@ static OGRFeature *TranslateBoundarylineLink( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_ATTREC )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // Geometry
-    int		nGeomId;
+    int         nGeomId;
     
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[0],
                                                              &nGeomId));
@@ -776,13 +779,13 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
         && papoGroup[2]->GetType() == NRT_CHAIN  )
     {
         
-        OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+        OGRFeature      *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
         // POLY_ID
         poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
         // NUM_PARTS
-        int		nNumLinks = atoi(papoGroup[2]->GetField( 9, 12 ));
+        int             nNumLinks = atoi(papoGroup[2]->GetField( 9, 12 ));
     
         if( nNumLinks > MAX_LINK )
         {
@@ -795,7 +798,7 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
         poFeature->SetField( 3, nNumLinks );
 
         // DIR
-        int		i, anList[MAX_LINK];
+        int             i, anList[MAX_LINK];
 
         for( i = 0; i < nNumLinks; i++ )
             anList[i] = atoi(papoGroup[2]->GetField( 19+i*7, 19+i*7 ));
@@ -809,7 +812,7 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
         poFeature->SetField( 5, nNumLinks, anList );
 
         // RingStart
-        int	nRingList = 0;
+        int     nRingList = 0;
         poFeature->SetField( 6, 1, &nRingList );
 
         // Attributes
@@ -827,7 +830,7 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
 /* -------------------------------------------------------------------- */
 /*      First we do validation of the grouping.                         */
 /* -------------------------------------------------------------------- */
-    int		iRec;
+    int         iRec;
     
     for( iRec = 0;
          papoGroup[iRec] != NULL && papoGroup[iRec+1] != NULL
@@ -846,12 +849,12 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
 /*      Collect the chains for each of the rings, and just aggregate    */
 /*      these into the master list without any concept of where the     */
 /*      boundaries are.  The boundary information will be emmitted      */
-/*	in the RingStart field.						*/
+/*      in the RingStart field.                                         */
 /* -------------------------------------------------------------------- */
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
-    int		nNumLink = 0;
-    int		anDirList[MAX_LINK*2], anGeomList[MAX_LINK*2];
-    int		anRingStart[MAX_LINK], nRings = 0;
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    int         nNumLink = 0;
+    int         anDirList[MAX_LINK*2], anGeomList[MAX_LINK*2];
+    int         anRingStart[MAX_LINK], nRings = 0;
 
     for( iRec = 0;
          papoGroup[iRec] != NULL && papoGroup[iRec+1] != NULL
@@ -859,7 +862,7 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
              && papoGroup[iRec+1]->GetType() == NRT_CHAIN;
          iRec += 2 )
     {
-        int		i, nLineCount;
+        int             i, nLineCount;
 
         nLineCount = atoi(papoGroup[iRec+1]->GetField(9,12));
 
@@ -898,7 +901,7 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
 
     
 /* -------------------------------------------------------------------- */
-/*	collect information for whole complex polygon.			*/
+/*      collect information for whole complex polygon.                  */
 /* -------------------------------------------------------------------- */
     // POLY_ID
     poFeature->SetField( 0, atoi(papoGroup[iRec]->GetField( 3, 8 )) );
@@ -926,13 +929,13 @@ static OGRFeature *TranslateBL2000Link( NTFFileReader *poReader,
         || papoGroup[2]->GetType() != NRT_ATTREC )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
     // Geometry
-    int		nGeomId;
+    int         nGeomId;
     
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
@@ -962,13 +965,13 @@ static OGRFeature *TranslateBL2000Collection( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_ATTREC )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // COLL_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
     // NUM_PARTS
-    int		nNumLinks = atoi(papoGroup[0]->GetField( 9, 12 ));
+    int         nNumLinks = atoi(papoGroup[0]->GetField( 9, 12 ));
     
     if( nNumLinks > MAX_LINK )
     {
@@ -981,7 +984,7 @@ static OGRFeature *TranslateBL2000Collection( NTFFileReader *poReader,
     poFeature->SetField( 1, nNumLinks );
 
     // POLY_ID / COLL_ID_REFS
-    int		i, anList[MAX_LINK], anCollList[MAX_LINK];
+    int         i, anList[MAX_LINK], anCollList[MAX_LINK];
     int         nPolys=0, nCollections=0;
 
     for( i = 0; i < nNumLinks; i++ )
@@ -1022,13 +1025,13 @@ static OGRFeature *TranslateMeridianPoint( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
     // Geometry
-    int		nGeomId;
+    int         nGeomId;
     
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
@@ -1060,13 +1063,13 @@ static OGRFeature *TranslateMeridianLine( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
     // Geometry
-    int		nGeomId;
+    int         nGeomId;
     
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
@@ -1099,7 +1102,7 @@ static OGRFeature *TranslateStrategiNode( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_NODEREC )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // NODE_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
@@ -1108,7 +1111,7 @@ static OGRFeature *TranslateStrategiNode( NTFFileReader *poReader,
     poFeature->SetField( 1, atoi(papoGroup[0]->GetField( 9, 14 )) );
 
     // NUM_LINKS
-    int		nNumLinks = atoi(papoGroup[0]->GetField( 15, 18 ));
+    int         nNumLinks = atoi(papoGroup[0]->GetField( 15, 18 ));
     
     if( nNumLinks > MAX_LINK )
     {
@@ -1121,7 +1124,7 @@ static OGRFeature *TranslateStrategiNode( NTFFileReader *poReader,
     poFeature->SetField( 2, nNumLinks );
 
     // DIR
-    int		i, anList[MAX_LINK];
+    int         i, anList[MAX_LINK];
 
     for( i = 0; i < nNumLinks; i++ )
         anList[i] = atoi(papoGroup[0]->GetField( 19+i*12, 19+i*12 ));
@@ -1144,7 +1147,7 @@ static OGRFeature *TranslateStrategiNode( NTFFileReader *poReader,
     if( EQUAL(poFeature->GetDefnRef()->GetFieldDefn(6)->GetNameRef(),
               "ORIENT") )
     {
-        double	adfList[MAX_LINK];
+        double  adfList[MAX_LINK];
 
         for( i = 0; i < nNumLinks; i++ )
             adfList[i] =
@@ -1174,7 +1177,7 @@ static OGRFeature *TranslateStrategiText( NTFFileReader *poReader,
         || papoGroup[3]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
@@ -1220,13 +1223,13 @@ static OGRFeature *TranslateStrategiPoint( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
     // Geometry
-    int		nGeomId;
+    int         nGeomId;
     
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
@@ -1258,13 +1261,13 @@ static OGRFeature *TranslateStrategiLine( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
     // Geometry
-    int		nGeomId;
+    int         nGeomId;
     
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
@@ -1295,7 +1298,7 @@ static OGRFeature *TranslateLandrangerPoint( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
@@ -1326,7 +1329,7 @@ static OGRFeature *TranslateLandrangerLine( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
@@ -1358,7 +1361,7 @@ static OGRFeature *TranslateProfilePoint( NTFFileReader *poReader,
             && papoGroup[1]->GetType() != NRT_GEOMETRY3D) )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
@@ -1375,7 +1378,7 @@ static OGRFeature *TranslateProfilePoint( NTFFileReader *poReader,
                                     NULL );
 
     // Set HEIGHT/elevation
-    OGRPoint	*poPoint = (OGRPoint *) poFeature->GetGeometryRef();
+    OGRPoint    *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
     
     if( poPoint != NULL && poPoint->getCoordinateDimension() == 3 )
     {
@@ -1405,7 +1408,7 @@ static OGRFeature *TranslateProfileLine( NTFFileReader *poReader,
             && papoGroup[1]->GetType() != NRT_GEOMETRY3D) )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
@@ -1435,7 +1438,7 @@ static OGRFeature *TranslateProfileLine( NTFFileReader *poReader,
     }
     else if( poLine != NULL )
     {
-        double	dfAccum = 0.0;
+        double  dfAccum = 0.0;
         
         for( int i = 0; i < poLine->getNumPoints(); i++ )
         {
@@ -1461,7 +1464,7 @@ static OGRFeature *TranslateLandlinePoint( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
@@ -1503,7 +1506,7 @@ static OGRFeature *TranslateLandlineLine( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
@@ -1538,7 +1541,7 @@ static OGRFeature *TranslateLandlineName( NTFFileReader *poReader,
         || papoGroup[2]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
         
     // NAME_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
@@ -1547,7 +1550,7 @@ static OGRFeature *TranslateLandlineName( NTFFileReader *poReader,
     poFeature->SetField( 1, papoGroup[0]->GetField( 9, 12 ) );
         
     // TEXT
-    int 	nNumChar = atoi(papoGroup[0]->GetField(13,14));
+    int         nNumChar = atoi(papoGroup[0]->GetField(13,14));
     poFeature->SetField( 2, papoGroup[0]->GetField( 15, 15+nNumChar-1) );
     
     // FONT
@@ -1594,9 +1597,9 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
                                     ... )
 
 {
-    va_list	hVaArgs;
+    va_list     hVaArgs;
     OGRFeatureDefn *poDefn;
-    OGRNTFLayer		*poLayer;
+    OGRNTFLayer         *poLayer;
 
 /* -------------------------------------------------------------------- */
 /*      Does this layer already exist?  If so, we do nothing            */
@@ -1611,7 +1614,7 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
     if( poLayer == NULL )
     {
 /* -------------------------------------------------------------------- */
-/*      Create a new feature definition.				*/
+/*      Create a new feature definition.                                */
 /* -------------------------------------------------------------------- */
         poDefn = new OGRFeatureDefn( pszLayerName );
         poDefn->SetGeomType( eGeomType );
@@ -1622,9 +1625,9 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
         va_start(hVaArgs, poClass);
         while( TRUE )
         {
-            const char	*pszFieldName = va_arg(hVaArgs, const char *);
+            const char  *pszFieldName = va_arg(hVaArgs, const char *);
             OGRFieldType     eType;
-            int		 nWidth, nPrecision;
+            int          nWidth, nPrecision;
             
             if( pszFieldName == NULL )
                 break;
@@ -1633,7 +1636,7 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
             nWidth = va_arg(hVaArgs, int);
             nPrecision = va_arg(hVaArgs, int);
             
-            OGRFieldDefn	 oFieldDefn( pszFieldName, eType );
+            OGRFieldDefn         oFieldDefn( pszFieldName, eType );
             oFieldDefn.SetWidth( nWidth );
             oFieldDefn.SetPrecision( nPrecision );
             
@@ -1643,14 +1646,14 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
         va_end(hVaArgs);
 
 /* -------------------------------------------------------------------- */
-/*	Add attributes collected in the generic class survey.		*/
+/*      Add attributes collected in the generic class survey.           */
 /* -------------------------------------------------------------------- */
         if( poClass != NULL )
         {
             for( int iGAtt = 0; iGAtt < poClass->nAttrCount; iGAtt++ )
             {
                 const char      *pszFormat = poClass->papszAttrFormats[iGAtt];
-                OGRFieldDefn	oFieldDefn( poClass->papszAttrNames[iGAtt],
+                OGRFieldDefn    oFieldDefn( poClass->papszAttrNames[iGAtt],
                                             OFTInteger );
 
                 if( EQUALN(pszFormat,"I",1) )

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/01/19 20:31:12  warmerda
+ * expand tabs
+ *
  * Revision 1.2  1999/11/04 21:11:52  warmerda
  * Added TestCapability().
  *
@@ -41,7 +44,7 @@
 
 /************************************************************************/
 /* ==================================================================== */
-/*			      OGRNTFDriver			        */
+/*                            OGRNTFDriver                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -81,7 +84,7 @@ int OGRNTFDriver::TestCapability( const char * )
 OGRDataSource *OGRNTFDriver::Open( const char * pszFilename, int bUpdate )
 
 {
-    OGRNTFDataSource	*poDS = new OGRNTFDataSource;
+    OGRNTFDataSource    *poDS = new OGRNTFDataSource;
 
     if( !poDS->Open( pszFilename, TRUE ) )
     {

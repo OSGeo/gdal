@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/01/19 20:31:12  warmerda
+ * expand tabs
+ *
  * Revision 1.6  2001/01/17 19:08:37  warmerda
  * added CODELIST support
  *
@@ -52,16 +55,16 @@
 #include "ntf.h"
 #include "cpl_string.h"
 
-#define MAX_LINK	200
+#define MAX_LINK        200
 
 /************************************************************************/
 /* ==================================================================== */
-/*			    NTFGenericClass				*/
-/*									*/
-/*	The NTFGenericClass class exists to hold aggregated 	        */
-/*	information for each type of record encountered in a set of	*/
-/*	NTF files, primarily the list of attributes actually		*/
-/*	encountered.							*/
+/*                          NTFGenericClass                             */
+/*                                                                      */
+/*      The NTFGenericClass class exists to hold aggregated             */
+/*      information for each type of record encountered in a set of     */
+/*      NTF files, primarily the list of attributes actually            */
+/*      encountered.                                                    */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -104,7 +107,7 @@ void NTFGenericClass::CheckAddAttr( const char * pszName,
                                     int nWidth )
 
 {
-    int		iAttrOffset;
+    int         iAttrOffset;
 
     if( EQUAL(pszName,"TX") )
         pszName = "TEXT";
@@ -140,7 +143,7 @@ void NTFGenericClass::CheckAddAttr( const char * pszName,
 void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
 
 {
-    NTFRecord	**papoGroup = NULL;
+    NTFRecord   **papoGroup = NULL;
 
     if( poReader->GetNTFLevel() > 2 )
         poReader->IndexFile();
@@ -166,7 +169,7 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
 /* -------------------------------------------------------------------- */
 /*      Get the class corresponding to the anchor record.               */
 /* -------------------------------------------------------------------- */
-        NTFGenericClass	*poClass = GetGClass( papoGroup[0]->GetType() );
+        NTFGenericClass *poClass = GetGClass( papoGroup[0]->GetType() );
 
         poClass->nFeatureCount++;
         
@@ -175,20 +178,20 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
 /* -------------------------------------------------------------------- */
         for( int iRec = 0; papoGroup[iRec] != NULL; iRec++ )
         {
-            NTFRecord	*poRecord = papoGroup[iRec];
+            NTFRecord   *poRecord = papoGroup[iRec];
 
             switch( poRecord->GetType() )
             {
               case NRT_ATTREC:
               {
-                  char	**papszTypes, **papszValues;
+                  char  **papszTypes, **papszValues;
 
                   poReader->ProcessAttRec( poRecord, NULL,
                                            &papszTypes, &papszValues );
 
                   for( int iAtt = 0; papszTypes[iAtt] != NULL; iAtt++ )
                   {
-                      NTFAttDesc	*poAttDesc;
+                      NTFAttDesc        *poAttDesc;
 
                       poAttDesc = poReader->GetAttDesc( papszTypes[iAtt] );
                       if( poAttDesc != NULL )
@@ -229,7 +232,7 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
               case NRT_LINEREC:
                 if( poReader->GetNTFLevel() < 3 )
                 {
-                    NTFAttDesc	*poAttDesc;
+                    NTFAttDesc  *poAttDesc;
                       
                     poAttDesc = poReader->GetAttDesc(poRecord->GetField(9,10));
                     if( poAttDesc != NULL )
@@ -259,14 +262,14 @@ static void AddGenericAttributes( NTFFileReader * poReader,
                                   OGRFeature * poFeature )
 
 {
-    char	**papszTypes, **papszValues;
+    char        **papszTypes, **papszValues;
 
     if( !poReader->ProcessAttRecGroup( papoGroup, &papszTypes, &papszValues ) )
         return;
 
     for( int iAtt = 0; papszTypes != NULL && papszTypes[iAtt] != NULL; iAtt++ )
     {
-        int		iField;
+        int             iField;
         
         if( EQUAL(papszTypes[iAtt],"TX") )
             iField = poFeature->GetFieldIndex("TEXT");
@@ -300,7 +303,7 @@ static OGRFeature *TranslateGenericNode( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // NODE_ID
     poFeature->SetField( "NODE_ID", atoi(papoGroup[0]->GetField( 3, 8 )) );
@@ -310,8 +313,8 @@ static OGRFeature *TranslateGenericNode( NTFFileReader *poReader,
     poFeature->SetField( "GEOM_ID", papoGroup[1]->GetField(3,8) );
 
     // NUM_LINKS
-    int 	nLinkCount=0;
-    int		*panLinks = NULL;
+    int         nLinkCount=0;
+    int         *panLinks = NULL;
 
     if( papoGroup[0]->GetLength() > 18 )
     {
@@ -356,14 +359,14 @@ static OGRFeature *TranslateGenericCollection( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_COLLECT )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // COLL_ID
     poFeature->SetField( "COLL_ID", atoi(papoGroup[0]->GetField( 3, 8 )) );
 
     // NUM_PARTS
-    int 	nPartCount=0;
-    int		*panParts = NULL;
+    int         nPartCount=0;
+    int         *panParts = NULL;
 
     if( papoGroup[0]->GetLength() > 18 )
     {
@@ -405,13 +408,13 @@ static OGRFeature *TranslateGenericText( NTFFileReader *poReader,
                                          NTFRecord **papoGroup )
 
 {
-    int		iRec;
+    int         iRec;
     
     if( CSLCount((char **) papoGroup) < 2
         || papoGroup[0]->GetType() != NRT_TEXTREC )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // TEXT_ID
     poFeature->SetField( "TEXT_ID", atoi(papoGroup[0]->GetField( 3, 8 )) );
@@ -435,7 +438,7 @@ static OGRFeature *TranslateGenericText( NTFFileReader *poReader,
     // TEXTREP information
     for( iRec = 0; papoGroup[iRec] != NULL; iRec++ )
     {
-        NTFRecord	*poRecord = papoGroup[iRec];
+        NTFRecord       *poRecord = papoGroup[iRec];
         
         if( poRecord->GetType() == NRT_TEXTREP )
         {
@@ -465,13 +468,13 @@ static OGRFeature *TranslateGenericName( NTFFileReader *poReader,
                                          NTFRecord **papoGroup )
 
 {
-    int		iRec;
+    int         iRec;
     
     if( CSLCount((char **) papoGroup) < 2
         || papoGroup[0]->GetType() != NRT_NAMEREC )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // NAME_ID
     poFeature->SetField( "NAME_ID", atoi(papoGroup[0]->GetField( 3, 8 )) );
@@ -480,7 +483,7 @@ static OGRFeature *TranslateGenericName( NTFFileReader *poReader,
     poFeature->SetField( "TEXT_CODE", papoGroup[0]->GetField( 8, 12 ) );
 
     // TEXT
-    int	nNumChar = atoi(papoGroup[0]->GetField(13,14));
+    int nNumChar = atoi(papoGroup[0]->GetField(13,14));
 
     poFeature->SetField( "TEXT", papoGroup[0]->GetField( 15, 15+nNumChar-1));
 
@@ -503,7 +506,7 @@ static OGRFeature *TranslateGenericName( NTFFileReader *poReader,
     // NAMEPOSTN information
     for( iRec = 0; papoGroup[iRec] != NULL; iRec++ )
     {
-        NTFRecord	*poRecord = papoGroup[iRec];
+        NTFRecord       *poRecord = papoGroup[iRec];
         
         if( poRecord->GetType() == NRT_NAMEPOSTN )
         {
@@ -538,7 +541,7 @@ static OGRFeature *TranslateGenericPoint( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
     poFeature->SetField( "POINT_ID", atoi(papoGroup[0]->GetField( 3, 8 )) );
@@ -553,12 +556,12 @@ static OGRFeature *TranslateGenericPoint( NTFFileReader *poReader,
     // Handle singular attribute in pre-level 3 POINTREC.
     if( poReader->GetNTFLevel() < 3 )
     {
-        char	szValType[3];
+        char    szValType[3];
 
         strcpy( szValType, papoGroup[0]->GetField(9,10) );
         if( !EQUAL(szValType,"  ") )
         {
-            char	*pszProcessedValue;
+            char        *pszProcessedValue;
 
             if( poReader->ProcessAttValue(szValType,
                                           papoGroup[0]->GetField(11,16),
@@ -589,7 +592,7 @@ static OGRFeature *TranslateGenericLine( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
         
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
     poFeature->SetField( "LINE_ID", atoi(papoGroup[0]->GetField( 3, 8 )) );
@@ -604,12 +607,12 @@ static OGRFeature *TranslateGenericLine( NTFFileReader *poReader,
     // Handle singular attribute in pre-level 3 LINEREC.
     if( poReader->GetNTFLevel() < 3 )
     {
-        char	szValType[3];
+        char    szValType[3];
 
         strcpy( szValType, papoGroup[0]->GetField(9,10) );
         if( !EQUAL(szValType,"  ") )
         {
-            char	*pszProcessedValue;
+            char        *pszProcessedValue;
 
             if( poReader->ProcessAttValue(szValType,
                                           papoGroup[0]->GetField(11,16),
@@ -642,13 +645,13 @@ static OGRFeature *TranslateGenericPoly( NTFFileReader *poReader,
         && papoGroup[0]->GetType() == NRT_POLYGON
         && papoGroup[1]->GetType() == NRT_CHAIN )
     {
-        OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+        OGRFeature      *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
         // POLY_ID
         poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
         // NUM_PARTS
-        int		nNumLinks = atoi(papoGroup[1]->GetField( 9, 12 ));
+        int             nNumLinks = atoi(papoGroup[1]->GetField( 9, 12 ));
     
         if( nNumLinks > MAX_LINK )
             return poFeature;
@@ -656,7 +659,7 @@ static OGRFeature *TranslateGenericPoly( NTFFileReader *poReader,
         poFeature->SetField( "NUM_PARTS", nNumLinks );
 
         // DIR
-        int		i, anList[MAX_LINK];
+        int             i, anList[MAX_LINK];
 
         for( i = 0; i < nNumLinks; i++ )
             anList[i] = atoi(papoGroup[1]->GetField( 19+i*7, 19+i*7 ));
@@ -670,7 +673,7 @@ static OGRFeature *TranslateGenericPoly( NTFFileReader *poReader,
         poFeature->SetField( "GEOM_ID_OF_LINK", nNumLinks, anList );
 
         // RingStart
-        int	nRingList = 0;
+        int     nRingList = 0;
         poFeature->SetField( "RingStart", 1, &nRingList );
 
         // ATTREC Attributes
@@ -695,7 +698,7 @@ static OGRFeature *TranslateGenericPoly( NTFFileReader *poReader,
 /* -------------------------------------------------------------------- */
 /*      First we do validation of the grouping.                         */
 /* -------------------------------------------------------------------- */
-    int		iRec;
+    int         iRec;
     
     for( iRec = 0;
          papoGroup[iRec] != NULL && papoGroup[iRec+1] != NULL
@@ -715,12 +718,12 @@ static OGRFeature *TranslateGenericPoly( NTFFileReader *poReader,
 /*      Collect the chains for each of the rings, and just aggregate    */
 /*      these into the master list without any concept of where the     */
 /*      boundaries are.  The boundary information will be emmitted      */
-/*	in the RingStart field.						*/
+/*      in the RingStart field.                                         */
 /* -------------------------------------------------------------------- */
-    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
-    int		nNumLink = 0;
-    int		anDirList[MAX_LINK*2], anGeomList[MAX_LINK*2];
-    int		anRingStart[MAX_LINK], nRings = 0;
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    int         nNumLink = 0;
+    int         anDirList[MAX_LINK*2], anGeomList[MAX_LINK*2];
+    int         anRingStart[MAX_LINK], nRings = 0;
 
     for( iRec = 0;
          papoGroup[iRec] != NULL && papoGroup[iRec+1] != NULL
@@ -728,7 +731,7 @@ static OGRFeature *TranslateGenericPoly( NTFFileReader *poReader,
              && papoGroup[iRec+1]->GetType() == NRT_CHAIN;
          iRec += 2 )
     {
-        int		i, nLineCount;
+        int             i, nLineCount;
 
         nLineCount = atoi(papoGroup[iRec+1]->GetField(9,12));
 
@@ -764,7 +767,7 @@ static OGRFeature *TranslateGenericPoly( NTFFileReader *poReader,
 
     
 /* -------------------------------------------------------------------- */
-/*	collect information for whole complex polygon.			*/
+/*      collect information for whole complex polygon.                  */
 /* -------------------------------------------------------------------- */
     // POLY_ID
     poFeature->SetField( 0, atoi(papoGroup[iRec]->GetField( 3, 8 )) );
@@ -790,14 +793,14 @@ static OGRFeature *TranslateGenericPoly( NTFFileReader *poReader,
 void OGRNTFDataSource::EstablishGenericLayers()
 
 {
-    int		iType;
+    int         iType;
     
 /* -------------------------------------------------------------------- */
 /*      Pick an initial NTFFileReader to build the layers against.      */
 /* -------------------------------------------------------------------- */
     for( int iFile = 0; iFile < nNTFFileCount; iFile++ )
     {
-        NTFFileReader	*poPReader = NULL;
+        NTFFileReader   *poPReader = NULL;
         
         poPReader = papoNTFFileReader[iFile];
         if( poPReader->GetProductId() != NPC_UNKNOWN )
@@ -808,7 +811,7 @@ void OGRNTFDataSource::EstablishGenericLayers()
 /* -------------------------------------------------------------------- */
         for( iType = 0; iType < 99; iType++ )
         {
-            NTFGenericClass	*poClass = aoGenericClass + iType;
+            NTFGenericClass     *poClass = aoGenericClass + iType;
         
             if( poClass->nFeatureCount == 0 )
                 continue;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/01/19 20:31:12  warmerda
+ * expand tabs
+ *
  * Revision 1.5  2001/01/17 19:08:37  warmerda
  * added CODELIST support
  *
@@ -59,8 +62,8 @@ static void NTFCount( const char * pszFile );
 int main( int argc, char ** argv )
 
 {
-    const char	*pszMode = "-d";
-    char	**papszOptions = NULL;
+    const char  *pszMode = "-d";
+    char        **papszOptions = NULL;
     
     if( argc == 1 )
         printf( "Usage: ntfdump [-s n] [-g] [-d] [-c] [-codelist] files\n" );
@@ -135,7 +138,7 @@ static void NTFCount( const char * pszFile )
 static void NTFDump( const char * pszFile, char **papszOptions )
 
 {
-    OGRFeature	       *poFeature;
+    OGRFeature         *poFeature;
     OGRNTFDataSource   oDS;
 
     oDS.SetOptionList( papszOptions );

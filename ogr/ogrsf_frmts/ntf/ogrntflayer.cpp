@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/01/19 20:31:12  warmerda
+ * expand tabs
+ *
  * Revision 1.5  2000/12/06 19:31:43  warmerda
  * initialize all members variables
  *
@@ -120,7 +123,7 @@ void OGRNTFLayer::ResetReading()
 OGRFeature *OGRNTFLayer::GetNextFeature()
 
 {
-    OGRFeature	*poFeature = NULL;
+    OGRFeature  *poFeature = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Have we processed all features already?                         */
@@ -137,7 +140,7 @@ OGRFeature *OGRNTFLayer::GetNextFeature()
         nCurrentPos = -1;
     }
 
-    NTFFileReader	*poCurrentReader = poDS->GetFileReader(iCurrentReader);
+    NTFFileReader       *poCurrentReader = poDS->GetFileReader(iCurrentReader);
     if( poCurrentReader->GetFP() == NULL )
     {
         poCurrentReader->Open();
