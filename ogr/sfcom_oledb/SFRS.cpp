@@ -2,6 +2,145 @@
 #include "stdafx.h"
 #include "SF.h"
 #include "SFRS.h"
+#include "ogr_geometry.h"
+#include "oledb_sf.h"
+
+
+OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape );
+
+
+
+#define MIN(a,b) ( a < b ? a : b)
+
+
+
+
+struct SFIStream : IStream
+{
+
+	// CTOR/DTOR
+	SFIStream(void *pByte, int nStreamSize)
+	{
+		m_cRef   = 1;
+		m_pStream  = pByte;
+		m_nSize    = nStreamSize;
+		m_nSeekPos = 0;
+	}
+
+	~SFIStream()
+	{
+		// fill in later		
+	
+	}
+
+
+	// IUNKOWN
+	HRESULT STDMETHODCALLTYPE	QueryInterface (REFIID riid, void **ppv) 
+	{
+		if (riid == IID_IUnknown||
+			riid == IID_IStream || 
+			riid == IID_ISequentialStream)
+		{
+			*ppv = (IStream *) this;		
+		}
+		else
+		{
+			*ppv = 0;
+			return E_NOINTERFACE;
+		}
+
+		return NOERROR;
+	};
+
+    ULONG STDMETHODCALLTYPE		AddRef (void) {return ++m_cRef;};    
+	ULONG STDMETHODCALLTYPE		Release (void )
+	{
+		if (--m_cRef ==0)
+		{
+			delete this;
+			return 0;
+		}
+		return m_cRef;
+	};
+
+	
+	// ISEQUENTIAL STREAM
+
+	HRESULT STDMETHODCALLTYPE	Read(void *pDest, ULONG cbToRead, ULONG *pcbActuallyRead)
+	{
+		ULONG pcbDiscardedResult;
+
+		if (!pcbActuallyRead)
+			pcbActuallyRead = &pcbDiscardedResult;
+
+
+		*pcbActuallyRead = MIN(cbToRead, m_nSize - m_nSeekPos);
+		memcpy(pDest, m_pStream,*pcbActuallyRead);
+		m_nSeekPos+= *pcbActuallyRead;
+
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE	Write(void const *pv, ULONG, ULONG *) {return S_FALSE;}
+
+	//	ISTREAM
+
+	HRESULT STDMETHODCALLTYPE	Seek(LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPos)
+	{
+		ULONG nNewPos;
+
+		switch(dwOrigin)
+		{
+		case STREAM_SEEK_SET:
+			nNewPos = dlibMove.QuadPart;
+			break;
+		case STREAM_SEEK_CUR:
+			nNewPos = dlibMove.QuadPart + m_nSeekPos;
+			break;
+		case STREAM_SEEK_END:
+			nNewPos = m_nSize - dlibMove.QuadPart;
+			break;
+		default:
+			return STG_E_INVALIDFUNCTION; 
+		}
+
+		if (nNewPos < 0 || nNewPos > m_nSize)
+			return STG_E_INVALIDPOINTER;
+
+		m_nSeekPos = nNewPos;
+		return S_OK;
+	}
+
+
+	HRESULT STDMETHODCALLTYPE	SetSize(ULARGE_INTEGER) {return S_FALSE;}
+	HRESULT STDMETHODCALLTYPE	CopyTo(IStream *,ULARGE_INTEGER,ULARGE_INTEGER *,ULARGE_INTEGER*) 
+	{
+		return S_FALSE;
+	}
+	HRESULT STDMETHODCALLTYPE	Commit(DWORD) {return S_FALSE;}
+	HRESULT STDMETHODCALLTYPE	Revert() {return S_FALSE;}
+	HRESULT STDMETHODCALLTYPE	LockRegion(ULARGE_INTEGER,ULARGE_INTEGER,DWORD){return S_FALSE;}
+	HRESULT STDMETHODCALLTYPE	UnlockRegion(ULARGE_INTEGER,ULARGE_INTEGER,DWORD) {return S_FALSE;}
+	HRESULT STDMETHODCALLTYPE	Stat(STATSTG *poStat,DWORD fStatFlag) 
+	{
+			if (!poStat)
+				return STG_E_INVALIDPOINTER;
+			
+			poStat->cbSize.QuadPart = m_nSize;
+			poStat->type =  STGTY_LOCKBYTES; 
+
+			return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE	Clone(IStream **) {return S_FALSE;}
+
+	// Data Members
+
+	int		m_cRef;
+	void	*m_pStream;
+	ULONG	m_nSize;
+	ULONG	m_nSeekPos;
+};
 
 
 ATLCOLUMNINFO CShapeFile::colInfo;
@@ -55,10 +194,10 @@ void	CVirtualArray::Initialize(int nArraySize, DBFHandle hDBF, SHPHandle hSHP)
 
 	int i;
 	int			nOffset = 0;
-
+	SchemaInfo		sInfo;
+		
 	for (i=0;i < DBFGetFieldCount(hDBF); i++)
 	{
-		SchemaInfo		sInfo;
 		DBFFieldType	eType;
 		int				nWidth;
 
@@ -88,7 +227,17 @@ void	CVirtualArray::Initialize(int nArraySize, DBFHandle hDBF, SHPHandle hSHP)
 		aSchemaInfo.Add(sInfo);
 	}
 
-	m_nPackedRecordLength = nOffset;
+
+	if (hSHP)
+	{
+		memset(&sInfo,0,sizeof(SchemaInfo));
+		sInfo.nOffset = nOffset;
+		aSchemaInfo.Add(sInfo);
+	}
+
+	m_nPackedRecordLength = nOffset  // for records
+                                + 4  // for pointer to BLOB contining Geometry
+                                + 4; // for size of array pointed to by above buffer;
 }
 
 
@@ -102,9 +251,9 @@ BYTE &CVirtualArray::operator[](int iIndex)
 	if (m_ppasArray[iIndex])
 		return *(m_ppasArray[iIndex]);
 
-	pBuffer = m_ppasArray[iIndex] = (BYTE *) malloc(m_nPackedRecordLength);
+	pBuffer = m_ppasArray[iIndex] = (BYTE *) calloc(m_nPackedRecordLength,1);
 
-	for (i=0; i < aSchemaInfo.GetSize(); i++)
+	for (i=0; i < aSchemaInfo.GetSize()-1; i++)
 	{
 		switch(aSchemaInfo[i].eType)
 		{
@@ -118,9 +267,27 @@ BYTE &CVirtualArray::operator[](int iIndex)
 				pszStr = DBFReadStringAttribute(m_hDBFHandle,iIndex,i);
 
 				strcpy((char *) &(pBuffer[aSchemaInfo[i].nOffset]),pszStr);
-				break;
+			break;
 		}
 	}
+
+
+	// Read in the shape and change it to a WKB format.
+	OGRGeometry *poShape = SHPReadOGRObject(m_hSHPHandle,iIndex);
+	void		*pByte   = malloc(poShape->WkbSize());
+	poShape->exportToWkb((OGRwkbByteOrder) 1, (unsigned char *) pByte);
+	
+#define USE_ISTREAM
+#ifdef  USE_ISTREAM
+	IStream	*pStream = new SFIStream(pByte,poShape->WkbSize());
+	*((void **) &(pBuffer[aSchemaInfo[aSchemaInfo.GetSize()-1].nOffset])) = pStream;
+#else
+	*((void **) &(pBuffer[aSchemaInfo[aSchemaInfo.GetSize()-1].nOffset])) = pByte;
+	*((int *) &(pBuffer[aSchemaInfo[aSchemaInfo.GetSize()-1].nOffset+4])) = poShape->WkbSize();
+#endif
+	
+    delete poShape;
+	
 	return *(m_ppasArray[iIndex]);
 }
 
@@ -170,16 +337,23 @@ DBTYPE DBFType2OLEType(DBFFieldType eDBFType,int *pnOffset, int nWidth)
 HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
 {	
 	USES_CONVERSION;
-	LPTSTR		szFile = OLE2T(m_strCommandText);
+	LPSTR		szFile = OLE2A(m_strCommandText);
 	DBFHandle	hDBF;
+	SHPHandle	hSHP;
 	int			nFields;
 	int			i;
 	int			nOffset = 0;
 	
 
-	hDBF = DBFOpen(szFile,"r");
+	hDBF = DBFOpen("c:\\anno.dbf","r");
 
 	if (!hDBF)
+		return DB_E_ERRORSINCOMMAND;
+
+
+	hSHP = SHPOpen("c:\\anno.shp","r");
+	
+	if (!hSHP)
 		return DB_E_ERRORSINCOMMAND;
 
 	*pcRowsAffected = DBFGetRecordCount(hDBF);
@@ -199,7 +373,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
 		ATLCOLUMNINFO colInfo;
 		memset(&colInfo, 0, sizeof(ATLCOLUMNINFO));
 		
-		colInfo.pwszName	= ::SysAllocString(T2OLE(szFieldName));
+		colInfo.pwszName	= ::SysAllocString(A2OLE(szFieldName));
 		colInfo.iOrdinal	= i+1;
 		colInfo.dwFlags		= DBCOLUMNFLAGS_ISFIXEDLENGTH;
 		colInfo.ulColumnSize= (nWidth > 8 ? nWidth : 8);
@@ -212,8 +386,27 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
 		m_paColInfo.Add(colInfo);
 	}
 
+	
 
-	m_rgRowData.Initialize(*pcRowsAffected,hDBF,NULL);
+	ATLCOLUMNINFO colInfo;
+	memset(&colInfo, 0, sizeof(ATLCOLUMNINFO));
+	
+	colInfo.pwszName	= ::SysAllocString(A2OLE("OGIS_GEOMETRY"));
+	colInfo.iOrdinal	= i+1;
+	colInfo.dwFlags		= DBCOLUMNFLAGS_ISFIXEDLENGTH;
+	colInfo.ulColumnSize= 4;
+	colInfo.bPrecision  = 0;
+	colInfo.bScale		= 0;
+	colInfo.columnid.uName.pwszName = colInfo.pwszName;
+	colInfo.cbOffset	= nOffset;
+	colInfo.wType		= (DBTYPE_BYTES | DBTYPE_BYREF);
+
+#ifdef USE_ISTREAM
+	colInfo.wType		= (DBTYPE_IUNKNOWN);
+#endif
+	m_paColInfo.Add(colInfo);
+
+	m_rgRowData.Initialize(*pcRowsAffected,hDBF,hSHP);
 
 	return S_OK;
 }

@@ -6,98 +6,99 @@
 --------------------Configuration: SF - Win32 Debug--------------------
 </h3>
 <h3>Command Lines</h3>
-Creating temporary file "D:\TEMP\RSP267.tmp" with contents
+Creating temporary file "c:\windows\TEMP\RSPA1F4.TMP" with contents
 [
-/nologo /MTd /W3 /Gm /ZI /Od /I "..\..\frmts\shapelib" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /FR"Debug/" /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
-"F:\gdal\ogr\sfcom_oledb\SF.cpp"
-"F:\gdal\ogr\sfcom_oledb\SFRS.cpp"
-"F:\gdal\frmts\shapelib\dbfopen.c"
-"F:\gdal\frmts\shapelib\shpopen.c"
+/nologo /MTd /W3 /Gm /ZI /Od /I "..\..\frmts\shapelib" /I "..\..\ogr\\" /I "..\..\port" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /FR"Debug/" /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\gdal\ogr\sfcom_oledb\SFRS.cpp"
 ]
-Creating command line "cl.exe @D:\TEMP\RSP267.tmp" 
-Creating temporary file "D:\TEMP\RSP268.tmp" with contents
-[
-/nologo /MTd /W3 /Gm /ZI /Od /I "..\..\frmts\shapelib" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /FR"Debug/" /Fp"Debug/SF.pch" /Yc"stdafx.h" /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
-"F:\gdal\ogr\sfcom_oledb\StdAfx.cpp"
-]
-Creating command line "cl.exe @D:\TEMP\RSP268.tmp" 
-Creating temporary file "D:\TEMP\RSP269.tmp" with contents
+Creating command line "cl.exe @c:\windows\TEMP\RSPA1F4.TMP" 
+Creating temporary file "c:\windows\TEMP\RSPA1F5.TMP" with contents
 [
 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"Debug/SF.pdb" /debug /machine:I386 /def:".\SF.def" /out:"Debug/SF.dll" /implib:"Debug/SF.lib" /pdbtype:sept 
+.\Debug\cpl_conv.obj
+.\Debug\cpl_dir.obj
+.\Debug\cpl_error.obj
+.\Debug\cpl_string.obj
+.\Debug\cpl_vsisimple.obj
+.\Debug\cplgetsymbol.obj
+.\Debug\dbfopen.obj
+.\Debug\ogrcurve.obj
+.\Debug\ogrgeometry.obj
+.\Debug\ogrgeometrycollection.obj
+.\Debug\ogrgeometryfactory.obj
+.\Debug\ogrlinearring.obj
+.\Debug\ogrlinestring.obj
+.\Debug\ogrmultilinestring.obj
+.\Debug\ogrmultipoint.obj
+.\Debug\ogrmultipolygon.obj
+.\Debug\ogrpoint.obj
+.\Debug\ogrpolygon.obj
+.\Debug\ogrsurface.obj
+.\Debug\ogrutils.obj
 .\Debug\SF.obj
 .\Debug\SFRS.obj
+.\Debug\shape2ogr.obj
+.\Debug\shpopen.obj
 .\Debug\StdAfx.obj
 .\Debug\SF.res
-.\Debug\dbfopen.obj
-.\Debug\shpopen.obj
 ]
-Creating command line "link.exe @D:\TEMP\RSP269.tmp"
-Creating temporary file "D:\TEMP\RSP26A.bat" with contents
+Creating command line "link.exe @c:\windows\TEMP\RSPA1F5.TMP"
+Creating temporary file "c:\windows\TEMP\RSPA1F6.BAT" with contents
 [
 @echo off
 regsvr32 /s /c ".\Debug\SF.dll"
 echo regsvr32 exec. time > ".\Debug\regsvr32.trg"
 ]
-Creating command line "D:\TEMP\RSP26A.bat"
+Creating command line "c:\windows\TEMP\RSPA1F6.BAT"
 Compiling...
-StdAfx.cpp
-Compiling...
-SF.cpp
 SFRS.cpp
-Generating Code...
-Compiling...
-dbfopen.c
-f:\gdal\frmts\shapelib\dbfopen.c(97) : warning C4013: 'malloc' undefined; assuming extern returning int
-f:\gdal\frmts\shapelib\dbfopen.c(99) : warning C4013: 'realloc' undefined; assuming extern returning int
-f:\gdal\frmts\shapelib\dbfopen.c(198) : warning C4013: 'strcmp' undefined; assuming extern returning int
-f:\gdal\frmts\shapelib\dbfopen.c(207) : warning C4013: 'strlen' undefined; assuming extern returning int
-f:\gdal\frmts\shapelib\dbfopen.c(208) : warning C4013: 'strcpy' undefined; assuming extern returning int
-f:\gdal\frmts\shapelib\dbfopen.c(220) : warning C4013: 'calloc' undefined; assuming extern returning int
-f:\gdal\frmts\shapelib\dbfopen.c(263) : warning C4101: 'nType' : unreferenced local variable
-f:\gdal\frmts\shapelib\dbfopen.c(262) : warning C4101: 'pszTitle' : unreferenced local variable
-f:\gdal\frmts\shapelib\dbfopen.c(335) : warning C4013: 'free' undefined; assuming extern returning int
-f:\gdal\frmts\shapelib\dbfopen.c(489) : warning C4013: 'strncpy' undefined; assuming extern returning int
-f:\gdal\frmts\shapelib\dbfopen.c(527) : warning C4101: 'pszSField' : unreferenced local variable
-f:\gdal\frmts\shapelib\dbfopen.c(525) : warning C4101: 'i' : unreferenced local variable
-f:\gdal\frmts\shapelib\dbfopen.c(525) : warning C4101: 'j' : unreferenced local variable
-f:\gdal\frmts\shapelib\dbfopen.c(916) : warning C4013: 'memcpy' undefined; assuming extern returning int
-f:\gdal\frmts\shapelib\dbfopen.c(873) : warning C4101: 'szFormat' : unreferenced local variable
-f:\gdal\frmts\shapelib\dbfopen.c(873) : warning C4101: 'szSField' : unreferenced local variable
-f:\gdal\frmts\shapelib\dbfopen.c(871) : warning C4101: 'j' : unreferenced local variable
-f:\gdal\frmts\shapelib\dbfopen.c(935) : warning C4101: 'pszSField' : unreferenced local variable
-f:\gdal\frmts\shapelib\dbfopen.c(933) : warning C4101: 'i' : unreferenced local variable
-f:\gdal\frmts\shapelib\dbfopen.c(933) : warning C4101: 'j' : unreferenced local variable
-shpopen.c
-f:\gdal\frmts\shapelib\shpopen.c(151) : warning C4013: 'malloc' undefined; assuming extern returning int
-f:\gdal\frmts\shapelib\shpopen.c(153) : warning C4013: 'realloc' undefined; assuming extern returning int
-f:\gdal\frmts\shapelib\shpopen.c(182) : warning C4013: 'memcpy' undefined; assuming extern returning int
-f:\gdal\frmts\shapelib\shpopen.c(256) : warning C4013: 'free' undefined; assuming extern returning int
-f:\gdal\frmts\shapelib\shpopen.c(281) : warning C4013: 'strcmp' undefined; assuming extern returning int
-f:\gdal\frmts\shapelib\shpopen.c(306) : warning C4013: 'strlen' undefined; assuming extern returning int
-f:\gdal\frmts\shapelib\shpopen.c(307) : warning C4013: 'strcpy' undefined; assuming extern returning int
-f:\gdal\frmts\shapelib\shpopen.c(273) : warning C4101: 'iField' : unreferenced local variable
-f:\gdal\frmts\shapelib\shpopen.c(521) : warning C4101: 'panSHX' : unreferenced local variable
-f:\gdal\frmts\shapelib\shpopen.c(690) : warning C4013: 'calloc' undefined; assuming extern returning int
-f:\gdal\frmts\shapelib\shpopen.c(821) : warning C4244: '=' : conversion from 'double ' to 'int ', possible loss of data
-f:\gdal\frmts\shapelib\shpopen.c(807) : warning C4101: 'j' : unreferenced local variable
-f:\gdal\frmts\shapelib\shpopen.c(1121) : warning C4101: 'nRecordOffset' : unreferenced local variable
-f:\gdal\frmts\shapelib\shpopen.c(1121) : warning C4101: 'i' : unreferenced local variable
-f:\gdal\frmts\shapelib\shpopen.c(1121) : warning C4101: 'j' : unreferenced local variable
-Generating Code...
+c:\gdal\ogr\sfcom_oledb\sfrs.cpp(95) : warning C4244: '=' : conversion from '__int64' to 'unsigned long', possible loss of data
+c:\gdal\ogr\sfcom_oledb\sfrs.cpp(98) : warning C4244: '=' : conversion from '__int64' to 'unsigned long', possible loss of data
+c:\gdal\ogr\sfcom_oledb\sfrs.cpp(101) : warning C4244: '=' : conversion from '__int64' to 'unsigned long', possible loss of data
 Linking...
-   Creating library Debug/SF.lib and object Debug/SF.exp
 <h3>Output Window</h3>
 Performing registration
 RegSvr32: DllRegisterServer in .\Debug\SF.dll succeeded.
 
-Creating command line "bscmake.exe /nologo /o"Debug/SF.bsc"  .\Debug\StdAfx.sbr .\Debug\SF.sbr .\Debug\SFRS.sbr .\Debug\dbfopen.sbr .\Debug\shpopen.sbr"
+Creating temporary file "c:\windows\TEMP\RSPA2A3.TMP" with contents
+[
+/o"Debug/SF.bsc" 
+.\Debug\StdAfx.sbr
+.\Debug\cpl_conv.sbr
+.\Debug\cpl_dir.sbr
+.\Debug\cpl_error.sbr
+.\Debug\cpl_string.sbr
+.\Debug\cpl_vsisimple.sbr
+.\Debug\cplgetsymbol.sbr
+.\Debug\dbfopen.sbr
+.\Debug\ogrcurve.sbr
+.\Debug\ogrgeometry.sbr
+.\Debug\ogrgeometrycollection.sbr
+.\Debug\ogrgeometryfactory.sbr
+.\Debug\ogrlinearring.sbr
+.\Debug\ogrlinestring.sbr
+.\Debug\ogrmultilinestring.sbr
+.\Debug\ogrmultipoint.sbr
+.\Debug\ogrmultipolygon.sbr
+.\Debug\ogrpoint.sbr
+.\Debug\ogrpolygon.sbr
+.\Debug\ogrsurface.sbr
+.\Debug\ogrutils.sbr
+.\Debug\SF.sbr
+.\Debug\SFRS.sbr
+.\Debug\shape2ogr.sbr
+.\Debug\shpopen.sbr]
+Creating command line "bscmake.exe @c:\windows\TEMP\RSPA2A3.TMP"
 Creating browse info file...
+Microsoft Browse Information Maintenance Utility Version 6.00.8168
+Copyright (C) Microsoft Corp 1990-1998. All rights reserved.
+
 <h3>Output Window</h3>
 
 
 
 <h3>Results</h3>
-SF.dll - 0 error(s), 35 warning(s)
+SF.dll - 0 error(s), 3 warning(s)
 </pre>
 </body>
 </html>

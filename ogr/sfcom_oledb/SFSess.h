@@ -69,7 +69,7 @@ public:
 		//if (hFile == INVALID_HANDLE_VALUE)
 			return E_FAIL; // User doesn't have a c:\ drive
 		//FindClose(hFile);
-		lstrcpynW(trData.m_szTable, T2OLE("Testing"), SIZEOF_MEMBER(CTABLESRow, m_szTable));
+		lstrcpynW(trData.m_szTable, A2OLE(  "Testing"), SIZEOF_MEMBER(CTABLESRow, m_szTable));
 		if (!m_rgRowData.Add(trData))
 			return E_OUTOFMEMORY;
 		*pcRowsAffected = 1;
@@ -87,7 +87,7 @@ public:
 		HANDLE hFile = INVALID_HANDLE_VALUE;
 		TCHAR szDir[MAX_PATH + 1];
 		//DWORD cbCurDir = GetCurrentDirectory(MAX_PATH, szDir);
-		strcpy(szDir,"Testing");
+		strcpy(szDir,T2A("Testing"));
 		lstrcat(szDir, _T("\\*.*"));
 		//hFile = FindFirstFile(szDir, &wf);
 		//if (hFile == INVALID_HANDLE_VALUE)

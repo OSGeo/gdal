@@ -44,15 +44,16 @@ RSC=rc.exe
 # PROP Use_Debug_Libraries 1
 # PROP Output_Dir "Debug"
 # PROP Intermediate_Dir "Debug"
+# PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /Yu"stdafx.h" /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /ZI /Od /I "..\..\frmts\shapelib" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /FR /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /ZI /Od /I "..\..\frmts\shapelib" /I "..\..\ogr\\" /I "..\..\port" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /FR /FD /GZ /c
 # SUBTRACT CPP /YX /Yc /Yu
 # ADD BASE RSC /l 0x1009 /d "_DEBUG"
 # ADD RSC /l 0x1009 /d "_DEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
-# ADD BSC32 /nologo
+# SUBTRACT BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
 # ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
@@ -227,9 +228,11 @@ SOURCE="$(InputPath)"
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "ReleaseUMinDependency"
 # PROP Intermediate_Dir "ReleaseUMinDependency"
+# PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /O1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_UNICODE" /D "_ATL_STATIC_REGISTRY" /D "_ATL_MIN_CRT" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MT /W3 /O1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_UNICODE" /D "_ATL_STATIC_REGISTRY" /D "_ATL_MIN_CRT" /Yu"stdafx.h" /FD /c
+# ADD CPP /nologo /MT /W3 /O1 /I "..\..\frmts\shapelib\\" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_UNICODE" /D "_ATL_STATIC_REGISTRY" /D "_ATL_MIN_CRT" /FR /FD /c
+# SUBTRACT CPP /YX /Yc /Yu
 # ADD BASE RSC /l 0x1009 /d "NDEBUG"
 # ADD RSC /l 0x1009 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -271,7 +274,83 @@ SOURCE="$(InputPath)"
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=..\..\port\cpl_conv.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\port\cpl_dir.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\port\cpl_error.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\port\cpl_string.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\port\cpl_vsisimple.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\port\cplgetsymbol.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\frmts\shapelib\dbfopen.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrcurve.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrgeometry.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrgeometrycollection.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrgeometryfactory.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrlinearring.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrlinestring.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrmultilinestring.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrmultipoint.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrmultipolygon.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrpoint.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrpolygon.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrsurface.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogrutils.cpp
 # End Source File
 # Begin Source File
 
@@ -296,24 +375,11 @@ SOURCE=.\SFRS.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\shape2ogr.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\frmts\shapelib\shpopen.c
-
-!IF  "$(CFG)" == "SF - Win32 Debug"
-
-# ADD CPP /I "..\..\frmts\shapelib"
-
-!ELSEIF  "$(CFG)" == "SF - Win32 Unicode Debug"
-
-!ELSEIF  "$(CFG)" == "SF - Win32 Release MinSize"
-
-!ELSEIF  "$(CFG)" == "SF - Win32 Release MinDependency"
-
-!ELSEIF  "$(CFG)" == "SF - Win32 Unicode Release MinSize"
-
-!ELSEIF  "$(CFG)" == "SF - Win32 Unicode Release MinDependency"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
@@ -326,11 +392,87 @@ SOURCE=.\StdAfx.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=..\..\port\cpl_config.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\port\cpl_conv.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\port\cpl_error.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\port\cpl_port.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\port\cpl_string.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\port\cpl_vsi.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\geometryidl.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogr_core.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogr_feature.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogr_geometry.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogr_p.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\ogr_spatialref.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\oledb_sf.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\oledb_sup.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\oledbgis.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\Resource.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\sfclsid.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\sfcprovider.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\sfcrowset.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\SFDS.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\sfiiddef.h
 # End Source File
 # Begin Source File
 
@@ -343,6 +485,10 @@ SOURCE=.\SFSess.h
 # Begin Source File
 
 SOURCE=..\..\frmts\shapelib\shapefil.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\spatialreferenceidl.h
 # End Source File
 # Begin Source File
 
