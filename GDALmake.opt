@@ -18,7 +18,11 @@ CFLAGS	=	-Wall $(OD_FLAGS)
 
 GDAL_INCLUDE	=	-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/core
 
-LIBS		=	-ldl -lm
+LIBS		=	-lm
+
+ifeq ($(MAKE_MODE),)
+LIBS	:=    -ldl $(LIBS) 
+endif
 
 GDAL_LIBS	=	$(GDAL_ROOT)/frmts/*.o \
 			$(GDAL_ROOT)/frmts/geotiff/libgeotiff/libgeotiff.a \
