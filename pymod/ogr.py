@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.3  2002/10/24 20:37:18  warmerda
+# fixed srs support in CreateFrom functions
+#
 # Revision 1.2  2002/10/24 16:51:17  warmerda
 # added lots of OGRGeometryH support
 #
@@ -313,11 +316,19 @@ class FieldDefn:
 
 
 def CreateGeometryFromWkb( bin_string, srs = None ):
-    _obj = _gdal.OGR_G_CreateFromWkb( bin_string, srs )
+    if srs is not None:
+        srs_o = srs._o
+    else:
+        srs_o = ''
+    _obj = _gdal.OGR_G_CreateFromWkb( bin_string, srs_o )
     return Geometry( obj = _obj )
 
 def CreateGeometryFromWkt( string, srs = None ):
-    _obj = _Gdal.OGR_G_CreateFromWkt( string, srs )
+    if srs is not None:
+        srs_o = srs._o
+    else:
+        srs_o = ''
+    _obj = _gdal.OGR_G_CreateFromWkt( string, srs_o )
     return Geometry( obj = _obj )
 
 class Geometry:
