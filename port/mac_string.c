@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/04/30 18:16:16  warmerda
+ * added big pre10 ifdef
+ *
  * Revision 1.1  2001/04/30 18:15:39  warmerda
  * New
  *
@@ -39,6 +42,8 @@
 #include <stdlib.h>
  
 #include "cpl_port.h"
+
+#ifdef macos_pre10
  
 int strcasecmp(char * str1, char * str2)
 {
@@ -86,3 +91,5 @@ char * strdup (char *instr)
  	 
     return temp;
 }
+
+#endif /* defined(macos_pre10) */
