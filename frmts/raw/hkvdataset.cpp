@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/06/19 18:21:08  warmerda
+ * removed stat buf from GDALOpenInfo
+ *
  * Revision 1.21  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -623,7 +626,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      We assume the dataset is passed as a directory.  Check for      */
 /*      an attrib and blob file as a minimum.                           */
 /* -------------------------------------------------------------------- */
-    if( !poOpenInfo->bStatOK || !VSI_ISDIR(poOpenInfo->sStat.st_mode) )
+    if( !poOpenInfo->bIsDirectory )
         return NULL;
     
     pszFilename = CPLFormFilename(poOpenInfo->pszFilename, "image_data", NULL);
