@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/07/08 20:26:48  warmerda
+ * Added concept of an OGRFeatureDefn being associated with SFCTable.
+ *
  * Revision 1.5  1999/06/26 05:34:17  warmerda
  * Added support for poSRS, and use creating geometry
  *
@@ -52,6 +55,7 @@
 #include <atldbcli.h>
 
 class OGRFeature;
+class OGRFeatureDefn;
 class OGRGeometry;
 class OGRSpatialReference;
 
@@ -93,6 +97,9 @@ class SFCTable : public CTable<CDynamicAccessor>
 
     OGRSpatialReference * poSRS;
 
+    OGRFeatureDefn * poDefn;
+    ULONG        *panColOrdinal;
+
   public:
     		SFCTable();
     virtual     ~SFCTable();
@@ -117,6 +124,8 @@ class SFCTable : public CTable<CDynamicAccessor>
     OGRGeometry *GetOGRGeometry();
 
     OGRFeature  *GetOGRFeature();
+
+    OGRFeatureDefn *GetOGRFeatureDefn();
 };
 
 #endif /* ndef SFCTABLE_H_INCLUDED */
