@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/04/22 20:44:41  warmerda
+ * added (partial) cell library support
+ *
  * Revision 1.6  2002/04/16 17:56:07  warmerda
  * Initialize ch.
  *
@@ -598,6 +601,22 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
                    psCell->rnghigh.x, psCell->rnghigh.y ); 
           fprintf( fp, "  origin=(%.5f,%.5f)\n", 
                    psCell->origin.x, psCell->origin.y );
+          fprintf( fp, "  xscale=%g, yscale=%g, rotation=%g\n", 
+                   psCell->xscale, psCell->yscale, psCell->rotation );
+      }
+      break;
+
+      case DGNST_CELL_LIBRARY:
+      {
+          DGNElemCellLibrary	*psCell = (DGNElemCellLibrary*) psElement;
+
+          fprintf( fp, 
+                "  name=%s, class=%x, levels=%02x%02x%02x%02x, numwords=%d\n", 
+                   psCell->name, psCell->cclass, 
+                   psCell->levels[0], psCell->levels[1], psCell->levels[2], 
+                   psCell->levels[3], psCell->numwords );
+          fprintf( fp, "  dispsymb=%d, description=%s\n", 
+                   psCell->dispsymb, psCell->description );
       }
       break;
 

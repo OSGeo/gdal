@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/04/22 20:44:40  warmerda
+ * added (partial) cell library support
+ *
  * Revision 1.19  2002/03/14 21:38:52  warmerda
  * added DGNWriteElement, DGNResizeElement, make offset/size manditory
  *
@@ -311,7 +314,36 @@ typedef struct {
     double      trans[9];          /*!< 2D/3D Transformation Matrix */
     DGNPoint    origin;            /*!< Cell Origin */
 
+    double      xscale;
+    double      yscale;
+    double      rotation;
+
 } DGNElemCellHeader;
+
+/** 
+ * Cell Library.
+ *
+ * The core.stype code is DGNST_CELL_LIBRARY.
+ *
+ * Returned for DGNT_CELL_LIBRARY(1).
+ */
+
+typedef struct {
+    DGNElemCore core;
+
+    short       celltype;          /*!< Cell type. */
+    short       attindx;           /*!< Attribute linkage. */
+    char        name[7];           /*!< Cell name */
+
+    int         numwords;          /*!< Number of words in cell definition */
+
+    short       dispsymb;          /*!< Display symbol */
+ unsigned short cclass;            /*!< Class bitmap */
+ unsigned short levels[4];         /*!< Levels used in cell */
+
+    char        description[28];   /*!< Description */
+    
+} DGNElemCellLibrary;
 
 /** 
  * Tag Value.
@@ -395,6 +427,9 @@ typedef struct {
 
 /** DGNElemCore style: Element uses DGNElemTagSet structure */
 #define DGNST_TAG_SET             10
+
+/** DGNElemCore style: Element uses DGNElemCellLibrary structure */
+#define DGNST_CELL_LIBRARY        11
 
 /* -------------------------------------------------------------------- */
 /*      Element types                                                   */
