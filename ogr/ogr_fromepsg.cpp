@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2003/11/19 20:40:58  warmerda
+ * Add support for faking EPSG coordinate systems from PROJ.4 definitions
+ *
  * Revision 1.29  2003/06/23 14:48:42  warmerda
  * make OGREPSTDatumNameMassage() public
  *
@@ -1152,6 +1155,10 @@ static double OGR_FetchParm( double *padfProjParms, int *panParmIds,
       case FalseOriginLong:
       case SphericalOriginLong:
       case InitialLongitude:
+        // Note that the EPSG values are already relative to greenwich.
+        // This shift is really making it relative to the provided prime
+        // meridian, so that when SetTM() and company the correction back
+        // ends up back relative to greenwich.
         dfResult = dfResult + dfFromGreenwich;
         break;
 
@@ -1400,6 +1407,27 @@ OGRErr OGRSpatialReference::importFromEPSG( int nCode )
         eErr = SetEPSGGeogCS( this, nCode );
     else
         eErr = SetEPSGProjCS( this, nCode );
+
+/* -------------------------------------------------------------------- */
+/*      If we get it as an unsupported code, try looking it up in       */
+/*      the PROJ.4 support file(s).                                     */
+/* -------------------------------------------------------------------- */
+    static int bLoopingToProj4 = FALSE;
+
+    if( eErr == OGRERR_UNSUPPORTED_SRS && !bLoopingToProj4 )
+    {
+        char szWrkDefn[100];
+
+        sprintf( szWrkDefn, "+init=epsg:%d", nCode );
+        bLoopingToProj4 = TRUE;
+        CPLPushErrorHandler( CPLQuietErrorHandler );
+        eErr = SetFromUserInput( szWrkDefn );
+        CPLPopErrorHandler();
+        bLoopingToProj4 = FALSE;
+
+        if( eErr != OGRERR_NONE )
+            eErr = OGRERR_UNSUPPORTED_SRS;
+    }
 
     if( eErr == OGRERR_UNSUPPORTED_SRS )
     {
