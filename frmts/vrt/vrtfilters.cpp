@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/03/16 18:34:35  warmerda
+ * added support for relativeToVRT attribute on SourceFilename
+ *
  * Revision 1.3  2003/09/11 19:53:32  warmerda
  * avoid type casting warnings
  *
@@ -508,10 +511,11 @@ FilterData( int nXSize, int nYSize, GDALDataType eType,
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr VRTKernelFilteredSource::XMLInit( CPLXMLNode *psTree )
+CPLErr VRTKernelFilteredSource::XMLInit( CPLXMLNode *psTree, 
+                                         const char *pszVRTPath )
 
 {
-    CPLErr eErr = VRTFilteredSource::XMLInit( psTree );
+    CPLErr eErr = VRTFilteredSource::XMLInit( psTree, pszVRTPath );
     int    nNewKernelSize, i, nCoefs;
     double *padfNewCoefs;
 
@@ -600,7 +604,7 @@ CPLXMLNode *VRTKernelFilteredSource::SerializeToXML()
 /*                       VRTParseFilterSources()                        */
 /************************************************************************/
 
-VRTSource *VRTParseFilterSources( CPLXMLNode *psChild )
+VRTSource *VRTParseFilterSources( CPLXMLNode *psChild, const char *pszVRTPath )
 
 {
     VRTSource *poSrc;
@@ -608,7 +612,7 @@ VRTSource *VRTParseFilterSources( CPLXMLNode *psChild )
     if( EQUAL(psChild->pszValue,"KernelFilteredSource") )
     {
         poSrc = new VRTKernelFilteredSource();
-        if( poSrc->XMLInit( psChild ) == CE_None )
+        if( poSrc->XMLInit( psChild, pszVRTPath ) == CE_None )
             return poSrc;
         else
             delete poSrc;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/03/16 18:34:35  warmerda
+ * added support for relativeToVRT attribute on SourceFilename
+ *
  * Revision 1.16  2003/12/10 15:44:42  warmerda
  * Fix problem with NULL pszDomain values.
  *
@@ -292,7 +295,8 @@ CPLErr VRTRasterBand::AddSource( VRTSource *poNewSource )
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree )
+CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree, 
+                               const char *pszVRTPath )
 
 {
 /* -------------------------------------------------------------------- */
@@ -399,7 +403,7 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree )
         VRTSource *poSource;
         
         CPLErrorReset();
-        poSource = poDriver->ParseSource( psChild );
+        poSource = poDriver->ParseSource( psChild, pszVRTPath );
         if( poSource != NULL )
             AddSource( poSource );
         else if( CPLGetLastErrorType() != CE_None )
@@ -563,7 +567,7 @@ CPLErr VRTRasterBand::SetMetadata( char **papszNewMD, const char *pszDomain )
             if( psTree == NULL )
                 return CE_Failure;
 
-            poSource = poDriver->ParseSource( psTree );
+            poSource = poDriver->ParseSource( psTree, NULL );
             CPLDestroyXMLNode( psTree );
 
             if( poSource != NULL )

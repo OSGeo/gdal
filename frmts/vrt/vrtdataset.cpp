@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/03/16 18:34:35  warmerda
+ * added support for relativeToVRT attribute on SourceFilename
+ *
  * Revision 1.13  2003/07/17 20:31:12  warmerda
  * moved out driver and VRTCreateCopy() code
  *
@@ -99,6 +102,8 @@ VRTDataset::VRTDataset( int nXSize, int nYSize )
     nGCPCount = 0;
     pasGCPList = NULL;
     pszGCPProjection = CPLStrdup("");
+
+    pszVRTPath = NULL;
     
     GDALRegister_VRT();
     poDriver = (GDALDriver *) GDALGetDriverByName( "VRT" );
@@ -120,6 +125,7 @@ VRTDataset::~VRTDataset()
         GDALDeinitGCPs( nGCPCount, pasGCPList );
         CPLFree( pasGCPList );
     }
+    CPLFree( pszVRTPath );
 }
 
 /************************************************************************/
@@ -404,6 +410,8 @@ CPLErr VRTDataset::GetGeoTransform( double * padfGeoTransform )
 GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
+    char *pszVRTPath = NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Does this appear to be a virtual dataset definition XML         */
 /*      file?                                                           */
@@ -447,6 +455,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         
         pszXML[nLength] = '\0';
+        pszVRTPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
     }
 /* -------------------------------------------------------------------- */
 /*      Or use the filename as the XML input.                           */
@@ -459,7 +468,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Turn the XML representation into a VRTDataset.                  */
 /* -------------------------------------------------------------------- */
-    VRTDataset *poDS = (VRTDataset *) OpenXML( pszXML );
+    VRTDataset *poDS = (VRTDataset *) OpenXML( pszXML, pszVRTPath );
 
     if( poDS != NULL )
         poDS->bNeedsFlush = FALSE;
@@ -476,7 +485,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      of the dataset.                                                 */
 /************************************************************************/
 
-GDALDataset *VRTDataset::OpenXML( const char *pszXML )
+GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath )
 
 {
  /* -------------------------------------------------------------------- */
@@ -509,6 +518,8 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML )
                           atoi(CPLGetXMLValue(psTree,"rasterYSize","0")));
 
     poDS->eAccess = GA_ReadOnly;
+    if( pszVRTPath != NULL )
+        poDS->pszVRTPath = CPLStrdup(pszVRTPath);
 
     /* -------------------------------------------------------------------- */
     /*	Check for an SRS node.						*/
@@ -609,7 +620,7 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML )
             VRTRasterBand  *poBand;
 
             poBand = new VRTRasterBand( poDS, nBands+1 );
-            if( poBand->XMLInit( psChild ) == CE_None )
+            if( poBand->XMLInit( psChild, poDS->pszVRTPath ) == CE_None )
             {
                 poDS->SetBand( ++nBands, poBand );
             }
@@ -692,7 +703,7 @@ VRTDataset::Create( const char * pszName,
 
     if( EQUALN(pszName,"<VRTDataset",11) )
     {
-        GDALDataset *poDS = OpenXML( pszName );
+        GDALDataset *poDS = OpenXML( pszName, NULL );
         poDS->SetDescription( "<FromXML>" );
         return poDS;
     }

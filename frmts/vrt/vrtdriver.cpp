@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/03/16 18:34:35  warmerda
+ * added support for relativeToVRT attribute on SourceFilename
+ *
  * Revision 1.2  2003/07/27 11:16:06  dron
  * Check NULL pointer in GetMetadata()/SetMetadata().
  *
@@ -111,7 +114,7 @@ void VRTDriver::AddSourceParser( const char *pszElementName,
 /*                            ParseSource()                             */
 /************************************************************************/
 
-VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc )
+VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath )
 
 {
     const char *pszParserFunc;
@@ -130,7 +133,7 @@ VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc )
     if( pfnParser == NULL )
         return NULL;
     else
-        return pfnParser( psSrc );
+        return pfnParser( psSrc, pszVRTPath );
 }
 
 /************************************************************************/
