@@ -3,13 +3,20 @@
 if [ $# -lt 1 ] ; then
   echo "Usage: mkgdaldist version [-install]"
   echo
-  echo "Example: mkgdaldist 1.1.1"
+  echo "Example: mkgdaldist 1.1.4"
   exit
 fi
 
 GDAL_VERSION=$1
 COMPRESSED_VERSION=`echo $GDAL_VERSION | tr -d .`
 
+if test "$GDAL_VERSION" != "`cat VERSION`" ; then
+  echo
+  echo "NOTE: local VERSION file (`cat VERSION`) does not match supplied version ($GDAL_VERSION)."
+  echo "      Consider updating local VERSION file, and commiting to CVS." 
+  echo
+fi
+  
 rm -rf dist_wrk  
 mkdir dist_wrk
 cd dist_wrk
@@ -23,12 +30,17 @@ cvs checkout gdal
 
 if [ \! -d gdal ] ; then
   echo "cvs checkout reported an error ... abandoning mkgdaldist"
+  cd ..
+  rm -rf dist_wrk
   exit
 fi
 
 find gdal -name CVS -exec rm -rf {} \;
 
 rm -rf gdal/viewer
+
+rm -f gdal/VERSION
+echo $GDAL_VERSION > gdal/VERSION
 
 mv gdal gdal-${GDAL_VERSION}
 
