@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/03/23 03:25:32  warmerda
+ * Added nodata support
+ *
  * Revision 1.5  2000/08/16 15:51:17  warmerda
  * allow floating (datasetless) raw bands
  *
@@ -59,10 +62,11 @@ class RawRasterBand;
 class CPL_DLL RawDataset : public GDALDataset
 {
     friend	RawRasterBand;
-    
+
   public:
                  RawDataset();
                  ~RawDataset();
+
 };
 
 /************************************************************************/
@@ -81,6 +85,9 @@ class CPL_DLL RawRasterBand : public GDALRasterBand
     int		nLineOffset;
     int		bNativeOrder;
 
+    int		bNoDataSet;
+    double	dfNoDataValue;
+    
     int		nLoadedScanline;
     void	*pLineBuffer;
 
@@ -104,5 +111,11 @@ class CPL_DLL RawRasterBand : public GDALRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
 
+    virtual double GetNoDataValue( int *pbSuccess = NULL );
+
     CPLErr       AccessLine( int iLine );
+
+    void	 StoreNoDataValue( double );
 };
+
+

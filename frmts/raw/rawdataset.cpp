@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/03/23 03:25:32  warmerda
+ * Added nodata support
+ *
  * Revision 1.7  2001/01/03 18:54:25  warmerda
  * improved seek error message
  *
@@ -111,11 +114,14 @@ RawRasterBand::RawRasterBand( FILE * fpRaw, unsigned int nImgOffset,
     this->nPixelOffset = nPixelOffset;
     this->nLineOffset = nLineOffset;
     this->bNativeOrder = bNativeOrder;
-
+    
     CPLDebug( "GDALRaw", 
               "RawRasterBand(floating,Off=%d,PixOff=%d,LineOff=%d,%s,%d)\n",
               nImgOffset, nPixelOffset, nLineOffset, 
               GDALGetDataTypeName(eDataType), bNativeOrder );
+
+    dfNoDataValue = 0.0;
+    bNoDataSet = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Treat one scanline as the block size.                           */
@@ -292,6 +298,34 @@ CPLErr RawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     }
 
     return eErr;
+}
+
+/************************************************************************/
+/*                          StoreNoDataValue()                          */
+/*                                                                      */
+/*      This is a helper function for datasets to associate a no        */
+/*      data value with this band, it isn't intended to be called by    */
+/*      applications.                                                   */
+/************************************************************************/
+
+void RawRasterBand::StoreNoDataValue( double dfValue )
+
+{
+    bNoDataSet = TRUE;
+    dfNoDataValue = dfValue;
+}
+
+/************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double RawRasterBand::GetNoDataValue( int * pbSuccess )
+
+{
+    if( pbSuccess )
+        *pbSuccess = bNoDataSet;
+
+    return dfNoDataValue;
 }
 
 /************************************************************************/
