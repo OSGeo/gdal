@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2001/10/04 17:29:47  warmerda
+ * hopefully fixed #if tests
+ *
  * Revision 1.53  2001/09/26 17:54:17  warmerda
  * added use of TIFFRewriteDirectory() where available
  *
@@ -1231,7 +1234,7 @@ GTiffDataset::~GTiffDataset()
     {
         WriteGeoTIFFInfo();
 #if defined(TIFFLIB_VERSION)
-#if  TIFFLIB_VERSION >= 20010926
+#if  TIFFLIB_VERSION > 20010925 && TIFFLIB_VERSION != 20011807
         TIFFRewriteDirectory( hTIFF );
 #endif
 #endif
