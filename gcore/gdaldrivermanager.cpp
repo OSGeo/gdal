@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.13  2002/10/21 18:05:42  warmerda
+ * added AutoSkipDrivers() method on driver manager
+ *
  * Revision 1.12  2002/09/04 06:52:35  warmerda
  * added GDALDestroyDriverManager
  *
@@ -415,6 +418,50 @@ void GDALDriverManager::SetHome( const char * pszNewHome )
 {
     CPLFree( pszHome );
     pszHome = CPLStrdup(pszNewHome);
+}
+
+/************************************************************************/
+/*                          AutoSkipDrivers()                           */
+/************************************************************************/
+
+/**
+ * This method unload undesirable drivers.
+ *
+ * All drivers specified in the space delimited list in the GDAL_SKIP 
+ * environmentvariable) will be deregistered and destroyed.  This method 
+ * should normally be called after registration of standard drivers to allow 
+ * the user a way of unloading undesired drivers.  The GDALAllRegister()
+ * function already invokes AutoSkipDrivers() at the end, so if that functions
+ * is called, it should not be necessary to call this method from application
+ * code. 
+ */
+
+void GDALDriverManager::AutoSkipDrivers()
+
+{
+    if( getenv( "GDAL_SKIP" ) == NULL )
+        return;
+
+    char **papszList = CSLTokenizeString( getenv("GDAL_SKIP") );
+
+    for( int i = 0; i < CSLCount(papszList); i++ )
+    {
+        GDALDriver *poDriver = GetDriverByName( papszList[i] );
+
+        if( poDriver == NULL )
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Unable to find driver %s to unload from GDAL_SKIP environment variable.", 
+                      papszList[i] );
+        else
+        {
+            CPLDebug( "GDAL", "AutoSkipDriver(%s)", papszList[i] );
+            DeregisterDriver( poDriver );
+            delete poDriver;
+        }
+            
+    }
+
+    CSLDestroy( papszList );
 }
 
 /************************************************************************/
