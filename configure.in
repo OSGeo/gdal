@@ -1,3 +1,7 @@
+dnl Disable configure caching ... it causes lots of hassles.
+define([AC_CACHE_LOAD], )
+define([AC_CACHE_SAVE], )
+
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(GDALmake.opt.in)
 AC_CONFIG_HEADER(port/cpl_config.h)
