@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/05/28 18:53:43  warmerda
+ * added XML escaping support
+ *
  * Revision 1.10  2002/04/26 14:55:26  warmerda
  * Added CPLEscapeString() and CPLUnescapeString() (unescape untested)
  *
@@ -123,6 +126,7 @@ void CPL_DLL CSLSetNameValueSeparator( char ** papszStrList,
                                        const char *pszSeparator );
 
 #define CPLES_BackslashQuotable 0
+#define CPLES_XML               1
 
 char CPL_DLL *CPLEscapeString( const char *pszString, int nLength, 
                                int nScheme );
