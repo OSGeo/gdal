@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/11/04 14:23:46  warmerda
+ * added check after create
+ *
  * Revision 1.4  2003/05/15 14:47:24  warmerda
  * implement quaternion support on write
  *
@@ -53,6 +56,21 @@ CPL_CVSID("$Id$");
 int main( int argc, char ** argv )
 
 {
+    DGNElemCore *pEllipse;
+    DGNHandle hDGN;
+
+    hDGN = DGNOpen( "D:\\Test.dgn", 1 );
+
+    pEllipse = DGNCreateArcElem( hDGN, DGNT_ELLIPSE,
+                               100.0, 500.0, 50.0, 40.0, 40.0,
+                               0.0, 360.0, 0.0, NULL );
+   
+    DGNUpdateElemCore( hDGN, pEllipse, 15, 0, 3, 1, 0 );
+    DGNWriteElement( hDGN, pEllipse );
+    DGNFreeElement( hDGN, pEllipse );
+
+    DGNClose( hDGN );
+#ifdef notdef
     DGNHandle hNewDGN;
     DGNElemCore *psMembers[2];
     DGNPoint   asPoints[10];
@@ -65,6 +83,12 @@ int main( int argc, char ** argv )
                          DGNCF_USE_SEED_UNITS
                          | DGNCF_USE_SEED_ORIGIN, 
                          0.0, 0.0, 0.0, 0, 0, "", "" );
+
+    if( hNewDGN == NULL )
+    {
+        printf( "DGNCreate failed.\n" );
+        exit( 10 );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write one line segment to it.                                   */
@@ -234,6 +258,7 @@ int main( int argc, char ** argv )
     DGNClose( hNewDGN );
 
     return 0;
+#endif
 }
 
 
