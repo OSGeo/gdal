@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/09/06 03:26:10  warmerda
+ * converted to use SFAccessorImpl.h
+ *
  * Revision 1.7  2001/08/17 14:25:49  warmerda
  * added ICommandWithParameters implmentation
  *
@@ -55,6 +58,7 @@
 #include "sfutil.h"
 #include "IColumnsRowsetImpl.h"
 #include "ICommandWithParametersImpl.h"
+#include "SFAccessorImpl.h" 
 
 /************************************************************************/
 /*                              SchemaInfo                              */
@@ -96,32 +100,32 @@ private:
 
 class CShapeFile
 {
-public:
-	static ATLCOLUMNINFO colInfo;
-
-	template <class T>
-		static ATLCOLUMNINFO * GetColumnInfo(T* pT, ULONG* pcCols)
+  public:
+    template <class T>
+        static ATLCOLUMNINFO * GetColumnInfo(T* pT, ULONG* pcCols)
 	{	
-		USES_CONVERSION;
+            USES_CONVERSION;
 
-
-		CComQIPtr<ICommand> spCommand = pT->GetUnknown();
-		if (spCommand == NULL)
-		{
-			if (pcCols != NULL)
-				*pcCols = pT->m_paColInfo.GetSize();
-			return pT->m_paColInfo.m_aT;
-		}
-		CComPtr<IRowset> pRowset;
-		if (pT->m_paColInfo.m_aT == NULL)
-		{
-			LONG cRows;
-			HRESULT hr = spCommand->Execute(NULL, IID_IRowset, NULL, &cRows, (IUnknown**)&pRowset);
-		}
-		if (pcCols != NULL)
-			*pcCols = pT->m_paColInfo.GetSize();
-		return pT->m_paColInfo.m_aT;
-
+            CComQIPtr<ICommand> spCommand = pT->GetUnknown();
+            if (spCommand == NULL)
+            {
+                if (pcCols != NULL)
+                    *pcCols = pT->m_paColInfo.GetSize();
+                return pT->m_paColInfo.m_aT;
+            }
+            
+            CPLDebug( "OGR_OLEDB",
+                      "CShapeFile::GetColumnInfo() - spCommand != NULL!" );
+            
+            CComPtr<IRowset> pRowset;
+            if (pT->m_paColInfo.m_aT == NULL)
+            {
+                LONG cRows;
+                HRESULT hr = spCommand->Execute(NULL, IID_IRowset, NULL, &cRows, (IUnknown**)&pRowset);
+            }
+            if (pcCols != NULL)
+                *pcCols = pT->m_paColInfo.GetSize();
+            return pT->m_paColInfo.m_aT;
 	}
 };
 
@@ -145,7 +149,7 @@ public:
 /************************************************************************/
 class ATL_NO_VTABLE CSFCommand : 
 	public CComObjectRootEx<CComSingleThreadModel>,
-	public IAccessorImpl<CSFCommand>,
+	public SFAccessorImpl<CSFCommand>,
 	public ICommandTextImpl<CSFCommand>,
 	public ICommandPropertiesImpl<CSFCommand>,
 	public IObjectWithSiteImpl<CSFCommand>,
@@ -173,7 +177,7 @@ public:
 		HRESULT hr = CConvertHelper::FinalConstruct();
 		if (FAILED (hr))
 			return hr;
-		hr = IAccessorImpl<CSFCommand>::FinalConstruct();
+		hr = SFAccessorImpl<CSFCommand>::FinalConstruct();
 		if (FAILED(hr))
 			return hr;
                 m_bHasParamaters = TRUE;
@@ -181,7 +185,7 @@ public:
 	}
 	void FinalRelease()
 	{
-		IAccessorImpl<CSFCommand>::FinalRelease();
+		SFAccessorImpl<CSFCommand>::FinalRelease();
 	}
         
         HRESULT ExtractSpatialQuery( DBPARAMS * );
@@ -230,7 +234,7 @@ template <class T, class Storage, class CreatorClass,
     class RowsetInterface = IRowsetImpl < T, IRowset, RowClass> >
 class CSFRowsetImpl :
 	public CComObjectRootEx<CreatorClass::_ThreadModel>,
-	public IAccessorImpl<T>,
+	public SFAccessorImpl<T>,
 	public IRowsetIdentityImpl<T, RowClass>,
 	public IRowsetCreatorImpl<T>,
 	public IRowsetInfoImpl<T, CreatorClass::_PropClass>,
@@ -258,7 +262,7 @@ END_COM_MAP()
 
 	HRESULT FinalConstruct()
 	{
-		HRESULT hr = IAccessorImpl<T>::FinalConstruct();
+		HRESULT hr = SFAccessorImpl<T>::FinalConstruct();
 		if (FAILED(hr))
 			return hr;
 		return CConvertHelper::FinalConstruct();
