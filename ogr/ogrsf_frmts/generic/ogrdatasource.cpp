@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/03/19 05:12:34  warmerda
+ * fixed memory leak
+ *
  * Revision 1.11  2003/03/05 05:13:49  warmerda
  * added getlayerbyname, implement join support
  *
@@ -429,6 +432,8 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
 
     CPLFree( sFieldList.names );
     CPLFree( sFieldList.types );
+    CPLFree( sFieldList.table_ids );
+    CPLFree( sFieldList.ids );
 
     if( pszError != NULL )
     {
