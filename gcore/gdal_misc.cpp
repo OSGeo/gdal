@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2002/05/06 21:37:29  warmerda
+ * added GDALGCPsToGeoTransform
+ *
  * Revision 1.33  2002/04/25 16:18:41  warmerda
  * added extra checking
  *
@@ -1285,6 +1288,173 @@ const char *GDALDecToDMS( double dfAngle, const char * pszAxis,
     sprintf( szBuffer, szFormat, nDegrees, nMinutes, dfSeconds );
 
     return( szBuffer );
+}
+
+/************************************************************************/
+/*                       GDALGCPsToGeoTransform()                       */
+/************************************************************************/
+
+/**
+ * Generate Geotransform from GCPs. 
+ *
+ * Given a set of GCPs perform first order fit as a geotransform. 
+ * 
+ * @param nGCPCount the number of GCPs being passed in.
+ * @param pasGCPs the list of GCP structures. 
+ * @param padfGeoTransform the six double array in which the affine 
+ * geotransformation will be returned. 
+ * @param bApproxOK If FALSE the function will fail if the geotransform is not 
+ * essentially an exact fit (within 0.25 pixel) for all GCPs. 
+ * 
+ * @return TRUE on success or FALSE if there aren't enough points to prepare a
+ * geotransform, or if bApproxOK is FALSE and the fit is poor.
+ */
+
+int GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
+                            double *padfGeoTransform, int bApproxOK )
+
+{
+    int   iAnchor=0, iPnt1, iPnt2, i;
+    double adfDPixel[2], adfDLine[2], adfDX[2], adfDY[2];
+
+/* -------------------------------------------------------------------- */
+/*      Recognise a few special cases.                                  */
+/* -------------------------------------------------------------------- */
+    if( nGCPCount < 2 )
+        return FALSE;
+
+    if( nGCPCount == 2 )
+    {
+        if( pasGCPs[1].dfGCPPixel == pasGCPs[0].dfGCPPixel 
+            || pasGCPs[1].dfGCPLine == pasGCPs[0].dfGCPLine )
+            return FALSE;
+
+        padfGeoTransform[1] = (pasGCPs[1].dfGCPX - pasGCPs[0].dfGCPX)
+            / (pasGCPs[1].dfGCPPixel - pasGCPs[0].dfGCPPixel);
+        padfGeoTransform[2] = 0.0;
+
+        padfGeoTransform[4] = 0.0;
+        padfGeoTransform[5] = (pasGCPs[1].dfGCPY - pasGCPs[0].dfGCPY)
+            / (pasGCPs[1].dfGCPLine - pasGCPs[0].dfGCPLine);
+        
+        padfGeoTransform[0] = pasGCPs[0].dfGCPX 
+            - pasGCPs[0].dfGCPPixel * padfGeoTransform[1]
+            - pasGCPs[0].dfGCPLine * padfGeoTransform[2];
+        
+        padfGeoTransform[3] = pasGCPs[0].dfGCPY 
+            - pasGCPs[0].dfGCPPixel * padfGeoTransform[4]
+            - pasGCPs[0].dfGCPLine * padfGeoTransform[5];
+
+        return TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We use the first point as our anchor.  Select two other         */
+/*      points that don't have the same Pixel value to analyse.         */
+/* -------------------------------------------------------------------- */
+    iPnt1 = -1;
+    iPnt2 = -1;
+    for( i = 1; (iPnt1 == -1 || iPnt2 == -1 ) && i < nGCPCount; i++ )
+    {
+        double dfDPixel = pasGCPs[i].dfGCPPixel-pasGCPs[iAnchor].dfGCPPixel;
+        double dfDLine = pasGCPs[i].dfGCPLine - pasGCPs[iAnchor].dfGCPLine;
+        double dfDX = pasGCPs[i].dfGCPX - pasGCPs[iAnchor].dfGCPX;
+        double dfDY = pasGCPs[i].dfGCPY - pasGCPs[iAnchor].dfGCPY;
+        
+        if( iPnt1 == -1 && ABS(dfDPixel) > 0.001 )
+        {
+            iPnt1 = i;
+            adfDPixel[0] = dfDPixel;
+            adfDLine[0] = dfDLine;
+            adfDX[0] = dfDX;
+            adfDY[0] = dfDY;
+        }
+        else if( iPnt2 == -1 )
+        {
+            iPnt2 = i;
+            adfDPixel[1] = dfDPixel;
+            adfDLine[1] = dfDLine;
+            adfDX[1] = dfDX;
+            adfDY[1] = dfDY;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If necessary, scale one of the points to avoid divide by        */
+/*      zeros.                                                          */
+/* -------------------------------------------------------------------- */
+    if( ABS((adfDLine[0] / adfDPixel[0] - adfDLine[1])) < 0.0001 )
+    {
+        adfDX[1] *= 2;
+        adfDY[1] *= 2;
+        adfDPixel[1] *= 2;
+        adfDLine[1] *= 2;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Compute X related coefficients.                                 */
+/* -------------------------------------------------------------------- */
+    padfGeoTransform[2] = 
+        (adfDX[1] - (adfDPixel[1] * adfDX[0]) / adfDPixel[0]) 
+        / (adfDLine[1] - (adfDLine[0]*adfDPixel[1]) / adfDPixel[0]);
+
+    padfGeoTransform[1] = (adfDX[0] - adfDLine[0] * padfGeoTransform[2])
+        / adfDPixel[0];
+
+/* -------------------------------------------------------------------- */
+/*      Compute Y related coefficients.                                 */
+/* -------------------------------------------------------------------- */
+    padfGeoTransform[5] = 
+        (adfDY[1] - (adfDPixel[1] * adfDY[0]) / adfDPixel[0])
+        / (adfDLine[1] - (adfDLine[0]*adfDPixel[1]) / adfDPixel[0]);
+
+    padfGeoTransform[4] = 
+        (adfDY[0] - adfDLine[0] * padfGeoTransform[5]) / adfDPixel[0];
+
+/* -------------------------------------------------------------------- */
+/*      Compute top/left origin.                                        */
+/* -------------------------------------------------------------------- */
+
+    padfGeoTransform[0] = pasGCPs[0].dfGCPX 
+        - pasGCPs[0].dfGCPPixel * padfGeoTransform[1]
+        - pasGCPs[0].dfGCPLine * padfGeoTransform[2];
+        
+    padfGeoTransform[3] = pasGCPs[0].dfGCPY 
+        - pasGCPs[0].dfGCPPixel * padfGeoTransform[4]
+        - pasGCPs[0].dfGCPLine * padfGeoTransform[5];
+
+/* -------------------------------------------------------------------- */
+/*      Now check if any of the input points fit this poorly.           */
+/* -------------------------------------------------------------------- */
+    if( !bApproxOK )
+    {
+        double dfPixelSize = ABS(padfGeoTransform[1]) 
+            + ABS(padfGeoTransform[2])
+            + ABS(padfGeoTransform[4])
+            + ABS(padfGeoTransform[5]);
+
+        for( i = 0; i < nGCPCount; i++ )
+        {
+            double	dfErrorX, dfErrorY;
+
+            dfErrorX = 
+                (pasGCPs[i].dfGCPPixel * padfGeoTransform[1]
+                 + pasGCPs[i].dfGCPLine * padfGeoTransform[2]
+                 + padfGeoTransform[0]) 
+                - pasGCPs[i].dfGCPX;
+            dfErrorY = 
+                (pasGCPs[i].dfGCPPixel * padfGeoTransform[4]
+                 + pasGCPs[i].dfGCPLine * padfGeoTransform[5]
+                 + padfGeoTransform[3]) 
+                - pasGCPs[i].dfGCPY;
+
+            if( ABS(dfErrorX) > 0.25 * dfPixelSize 
+                || ABS(dfErrorY) > 0.25 * dfPixelSize )
+                return FALSE;
+        }
+    }
+
+    return TRUE;
 }
 
 /************************************************************************/

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2002/05/06 21:37:29  warmerda
+ * added GDALGCPsToGeoTransform
+ *
  * Revision 1.46  2002/04/24 16:25:04  warmerda
  * Ensure that GDAL{Read,Write}WorldFile() are exported on Windows.
  *
@@ -348,6 +351,9 @@ typedef struct
 void CPL_DLL GDALInitGCPs( int, GDAL_GCP * );
 void CPL_DLL GDALDeinitGCPs( int, GDAL_GCP * );
 GDAL_GCP CPL_DLL *GDALDuplicateGCPs( int, const GDAL_GCP * );
+
+int CPL_DLL GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs, 
+                                    double *padfGeoTransform, int bApproxOK ); 
 
 /* ==================================================================== */
 /*      major objects (dataset, and, driver, drivermanager).            */
