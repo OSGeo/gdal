@@ -1,0 +1,16 @@
+
+OBJ	=	\
+	egif_lib.obj dgif_lib.obj gifalloc.obj gif_err.obj \
+	\
+	gifdataset.obj
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	copy *.obj ..\o
+
+clean:
+	-del *.obj
+
