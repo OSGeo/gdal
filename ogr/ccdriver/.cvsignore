@@ -7,3 +7,12 @@
 *.opt
 *.dll
 *.lib
+Cover.exp
+Cover.h
+Cover.res
+Cover.tlb
+CoverageIdl.h
+CoverageIdl_i.c
+CoverageIdl_i.p
+Cover_i.c
+dlldata.c
