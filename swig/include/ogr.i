@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.26  2005/03/14 21:33:33  hobu
+ * rename method names that are common to both gdal and ogr
+ * for the C# only
+ *
  * Revision 1.25  2005/03/10 17:13:57  hobu
  * #ifdefs for csharp
  *
@@ -1327,6 +1331,7 @@ OGRErr OGRSetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER);
 void OGRRegisterAll();
 
 
+#ifdef SWIGCSHARP
 %inline %{
 OGRDriverShadow* OGR_GetDriverByName( char const *name ) {
   return (OGRDriverShadow*) OGRGetDriverByName( name );
@@ -1338,7 +1343,22 @@ OGRDriverShadow* OGR_GetDriver(int driver_number) {
 
 }
 %}
+#endif
 
+
+#ifdef SWIGPYTHON
+%inline %{
+OGRDriverShadow* GetDriverByName( char const *name ) {
+  return (OGRDriverShadow*) OGRGetDriverByName( name );
+}
+  
+OGRDriverShadow* GetDriver(int driver_number) {
+  return (OGRDriverShadow*) OGRGetDriver(driver_number);
+  
+
+}
+%}
+#endif
 
 %newobject GetOpenDS;
 %inline %{
@@ -1348,7 +1368,7 @@ OGRDriverShadow* OGR_GetDriver(int driver_number) {
   }
 %}
 
-
+#ifdef SWIGCSHARP
 %feature( "kwargs" ) OGR_Open;
 %newobject Open;
 %inline %{
@@ -1368,4 +1388,26 @@ OGRDriverShadow* OGR_GetDriver(int driver_number) {
   }
  
 %}
+#endif
 
+#ifdef SWIGPYTHON
+%feature( "kwargs" ) Open;
+%newobject Open;
+%inline %{
+  OGRDataSourceShadow *Open( const char * filename, int update=0 ) {
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(filename,update, NULL);
+    return ds;
+  }
+ 
+%}
+
+%feature( "kwargs" ) OpenShared;
+%newobject OpenShared;
+%inline %{
+  OGRDataSourceShadow *OpenShared( const char * filename, int update=0 ) {
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(filename,update, NULL);
+    return ds;
+  }
+ 
+%}
+#endif
