@@ -28,6 +28,10 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.40  2005/02/02 04:36:53  fwarmerdam
+# Default index to 0 in geometry GetX/Y/Z.
+# Added GetFeaturesRead() and SetNextByIndex() methods on layer.
+#
 # Revision 1.39  2005/01/22 23:47:06  hobu
 # Support for slicing and index access on DataSources and Layers:
 # for layer in ds:
@@ -579,6 +583,9 @@ ds[0:4] would return a list of the first four features."""
             newfeat = Feature( obj = f_o )
             newfeat.thisown = 1
             return newfeat
+
+    def SetNextByIndex( self, new_index ):
+        return _gdal.OGR_L_SetNextByIndex( self._o, new_index )
         
     def SetFeature( self, feat ):
         return _gdal.OGR_L_SetFeature( self._o, feat._o )
@@ -637,6 +644,9 @@ ds[0:4] would return a list of the first four features."""
             return osr.SpatialReference( srs_o )
         else:
             return None
+
+    def GetFeaturesRead( self ):
+        return _gdal.OGR_L_GetFeaturesRead( self._o )
 
 #############################################################################
 # OGRFeature
@@ -1037,13 +1047,13 @@ class Geometry:
     def GetPointCount( self):
         return _gdal.OGR_G_GetPointCount( self._o )
 
-    def GetX( self, i ):
+    def GetX( self, i = 0):
         return _gdal.OGR_G_GetX( self._o, i )
 
-    def GetY( self, i ):
+    def GetY( self, i = 0):
         return _gdal.OGR_G_GetY( self._o, i )
 
-    def GetZ( self, i ):
+    def GetZ( self, i = 0 ):
         return _gdal.OGR_G_GetZ( self._o, i )
 
     def SetPoint( self, i, x, y, z = 0):
