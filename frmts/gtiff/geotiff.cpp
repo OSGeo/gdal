@@ -25,6 +25,10 @@
  * The GeoTIFF driver implemenation.
  * 
  * $Log$
+ * Revision 1.8  1999/07/23 19:22:04  warmerda
+ * Added support for writing geotransform information to newly created tiff
+ * files.
+ *
  * Revision 1.7  1999/05/17 01:36:17  warmerda
  * Added support for reading tiled tiff files.
  *
@@ -93,12 +97,17 @@ class GTiffDataset : public GDALDataset
     char	*pszProjection;
     double	adfGeoTransform[6];
 
+    int		bNewDataset;            /* product of Create() */
+
+    void	WriteGeoTIFFInfo();
+
   public:
                  GTiffDataset();
                  ~GTiffDataset();
 
     virtual const char *GetProjectionRef(void);
     virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr SetGeoTransform( double * );
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -364,6 +373,7 @@ GTiffDataset::GTiffDataset()
     bLoadedStripDirty = FALSE;
     pabyBlockBuf = NULL;
     hTIFF = NULL;
+    bNewDataset = FALSE;
 }
 
 /************************************************************************/
@@ -374,6 +384,8 @@ GTiffDataset::~GTiffDataset()
 
 {
     FlushCache();
+
+    WriteGeoTIFFInfo();
 
     XTIFFClose( hTIFF );
     hTIFF = NULL;
@@ -401,6 +413,48 @@ void GTiffDataset::FlushCache()
     CPLFree( pabyBlockBuf );
     pabyBlockBuf = NULL;
     nLoadedBlock = -1;
+}
+
+/************************************************************************/
+/*                          WriteGeoTIFFInfo()                          */
+/************************************************************************/
+
+void GTiffDataset::WriteGeoTIFFInfo()
+
+{
+/* -------------------------------------------------------------------- */
+/*      If the geotransform is the default, don't bother writing it.    */
+/* -------------------------------------------------------------------- */
+    if( adfGeoTransform[0] == 0.0 && adfGeoTransform[1] == 1.0
+        && adfGeoTransform[2] == 0.0 && adfGeoTransform[3] == 0.0
+        && adfGeoTransform[4] == 0.0 && adfGeoTransform[5] == -1.0 )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Write the transform.  We ignore the rotational coefficients     */
+/*      for now.  We will fix this up later. (notdef)                   */
+/* -------------------------------------------------------------------- */
+    double	adfPixelScale[3], adfTiePoints[6];
+
+    adfPixelScale[0] = adfGeoTransform[1];
+    adfPixelScale[1] = fabs(adfGeoTransform[5]);
+    adfPixelScale[2] = 0.0;
+
+    TIFFSetField( hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale );
+
+    adfTiePoints[0] = 0.0;
+    adfTiePoints[1] = 0.0;
+    adfTiePoints[2] = 0.0;
+    adfTiePoints[3] = adfGeoTransform[0];
+    adfTiePoints[4] = adfGeoTransform[3];
+    adfTiePoints[5] = 0.0;
+        
+    TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints );
+
+/* -------------------------------------------------------------------- */
+/*      notdef: add writing of GeoTIFF projection definition.           */
+/* -------------------------------------------------------------------- */
+    
 }
 
 
@@ -599,6 +653,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
     poDS->eAccess = GA_Update;
+    poDS->bNewDataset = TRUE;
         
 /* -------------------------------------------------------------------- */
 /*      Setup some standard flags.                                      */
@@ -665,6 +720,26 @@ CPLErr GTiffDataset::GetGeoTransform( double * padfTransform )
     memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
 
     return( CE_None );
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr GTiffDataset::SetGeoTransform( double * padfTransform )
+
+{
+    if( bNewDataset )
+    {
+        memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
+        return( CE_None );
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+      "SetGeoTransform() is only supported on newly created GeoTIFF files." );
+        return CE_Failure;
+    }
 }
 
 
