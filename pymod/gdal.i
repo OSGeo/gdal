@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2000/11/29 16:58:59  warmerda
+ * fixed MajorObject handling
+ *
  * Revision 1.24  2000/11/17 17:17:04  warmerda
  * added importfromESRI, and preliminary (nonworking) modern swig support
  *
@@ -844,7 +847,7 @@ py_GDALGetMetadata(PyObject *self, PyObject *args) {
 #ifdef SWIGTYPE_GDALDatasetH
         if (SWIG_ConvertPtr(_argc0,(void **) &hObject,NULL,0) ) 
 #else
-        if (SWIG_GetPtr_2(_argc0,(void **) &hObject,NULL )) 
+        if (SWIG_GetPtr(_argc0,(void **) &hObject,NULL )) 
 #endif
 	{
             PyErr_SetString(PyExc_TypeError,
@@ -895,7 +898,7 @@ py_GDALGetDescription(PyObject *self, PyObject *args) {
 #ifdef SWIGTYPE_GDALDatasetH
         if (SWIG_ConvertPtr(_argc0,(void **) &hObject,NULL,0) ) 
 #else
-        if (SWIG_GetPtr_2(_argc0,(void **) &hObject,NULL )) 
+        if (SWIG_GetPtr(_argc0,(void **) &hObject,NULL )) 
 #endif
 	{
             PyErr_SetString(PyExc_TypeError,
