@@ -53,9 +53,9 @@
 #include <Error.h>
 #include <escaping.h>
 
-#include <gdal_priv.h>		// GDAL
-#include <gdal.h>
-#include <ogr_spatialref.h>
+#include "gdal_priv.h"		// GDAL
+#include "ogr_spatialref.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -101,9 +101,6 @@ GDALRegister_DODS()
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "DAP 3.x servers" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#DODS" );
-#if 0
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mem" );
-#endif
 
         poDriver->pfnOpen = DODSDataset::Open;
 
@@ -188,6 +185,14 @@ The specification given was: " + filename);
 	throw Error(
 "Failed to find a Band Specification in the DAP server/layer-specification.\n\
 The specification given was: " + filename);
+
+    // Special check to see if we need to transpose x and y. We do [lon]
+    // comes before [lat]. 
+    if( strstr( filename.c_str(), "[lon]") != NULL 
+        && strstr( strstr( filename.c_str(), "[lon]"), "[lat]" ) != NULL )
+        d_bNeedTranspose = TRUE;
+    else
+        d_bNeedTranspose = FALSE;
 
     // Parse the band specification. The format is:
     // <dim spec><dim spec><dim spec>* where <dim spec> may be:
@@ -385,7 +390,7 @@ DODSDataset::get_var_info(DAS &das, DDS &dds) throw(Error)
       default:
 	throw Error("The DODS GDAL driver supports only numeric data types.");
     }
-	
+
     DBG(cerr << "Finished recording values." << endl);
 }
 
@@ -454,6 +459,19 @@ DODSDataset::get_geo_info(DAS &das, DDS &dds) throw(Error)
     DBG2(das.print(stderr));
     DBG2(at->print(stderr));
 
+    // Check for flipx/flipy requests.
+    value = at->get_attr("FlipX");
+    if( value == "" || value == "no" || value == "NO" )
+        d_bFlipX = FALSE;
+    else
+        d_bFlipX = TRUE;
+	
+    value = at->get_attr("FlipY");
+    if( value == "" || value == "no" || value == "NO" )
+        d_bFlipY = FALSE;
+    else
+        d_bFlipY = TRUE;
+	
     // Grab the lat/lon corner points
     value = at->get_attr(nlat);
     if (value == "" || value == "None")
@@ -600,7 +618,7 @@ DODSDataset::build_constraint(int iXOffset, int iYOffset,
 	    break;
 	    // The index from the band spec is ones-based
 	  case dim_spec::index: 
-	    oss << "[" << i->start-1 << "]";
+	    oss << "[" << i->start << "]";
 	    break;
 	    // The start and stop values from the band spec are ones-based
 	  case dim_spec::range:
@@ -624,6 +642,8 @@ bracket sub-expressions could not be parsed.");
 	    break;
 	}
     }
+
+    CPLDebug( "DODS", "constraint = %s", oss.str().c_str() );
 
     return oss.str();
 }
@@ -657,6 +677,24 @@ DODSDataset::get_raster(int iXOffset, int iYOffset, int iXSize, int iYSize,
     // Grab the DataDDS
     AISConnect *poUrl = GetConnect();
     DataDDS data;
+    CPLDebug( "DODS", "get_raster(%d,%d,%d,%d,bands=%d-%d)",
+              iXOffset, iYOffset, 
+              iXSize, iYSize,
+              iStartBandNum, iEndBandNum );
+
+/* -------------------------------------------------------------------- */
+/*      If flipping is enabled, transform the request window now.       */
+/* -------------------------------------------------------------------- */
+    if( d_bFlipY )
+        iYOffset = GetRasterYSize() - iYOffset - iYSize;
+
+    if( d_bFlipX )
+        iXOffset = GetRasterXSize() - iXOffset - iXSize;
+
+              
+/* -------------------------------------------------------------------- */
+/*      Request the raw data with an appropriate constraint.            */
+/* -------------------------------------------------------------------- */
     poUrl->request_data(data, build_constraint(iXOffset, iYOffset, 
 					       iXSize, iYSize,
 					       iStartBandNum, iEndBandNum));
@@ -681,9 +719,109 @@ DODSDataset::get_raster(int iXOffset, int iYOffset, int iXSize, int iYSize,
       default:
 	throw InternalErr("Expected an Array or Grid variable!");
     }
-	
-	
+
+
     poA->buf2val(&pImage);	// !Suck the data out of the Array!
+
+/* -------------------------------------------------------------------- */
+/*      Do we need to apply a transposition?  If so, do it now.         */
+/* -------------------------------------------------------------------- */
+    if( d_bNeedTranspose )
+    {
+        GByte *pabyDataCopy;
+        int nItemSize = GDALGetDataTypeSize( d_eDatatype ) / 8;
+        int iY;
+
+        CPLAssert( iStartBandNum == iEndBandNum );
+
+        CPLDebug( "DODS", "Applying transposition" );
+
+        // make a copy of the original
+        pabyDataCopy = (GByte *) CPLMalloc(nItemSize * iXSize * iYSize);
+        memcpy( pabyDataCopy, pImage, nItemSize * iXSize * iYSize );
+        memset( pImage, 0, nItemSize * iXSize * iYSize );
+
+        for( iY = 0; iY < iYSize; iY++ )
+        {
+            GDALCopyWords( pabyDataCopy + iY * nItemSize, 
+                           d_eDatatype, nItemSize * iYSize,
+                           ((GByte *) pImage) + iY * iXSize * nItemSize, 
+                           d_eDatatype, nItemSize, 
+                           iXSize );
+        }
+
+        // cleanup
+        CPLFree( pabyDataCopy );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we need "y" flipping?                                        */
+/* -------------------------------------------------------------------- */
+    if( d_bFlipY )
+    {
+        GByte *pabyDataCopy;
+        int nItemSize = GDALGetDataTypeSize( d_eDatatype ) / 8;
+        int iY;
+
+        CPLAssert( iStartBandNum == iEndBandNum );
+
+        CPLDebug( "DODS", "Applying Y flip." );
+
+        // make a copy of the original
+        pabyDataCopy = (GByte *) CPLMalloc(nItemSize * iXSize * iYSize);
+        memcpy( pabyDataCopy, pImage, nItemSize * iXSize * iYSize );
+        memset( pImage, 0, nItemSize * iXSize * iYSize );
+
+        for( iY = 0; iY < iYSize; iY++ )
+        {
+            int iYNew = GetRasterYSize() - iY - 1;
+
+            GDALCopyWords( pabyDataCopy + iY * nItemSize * iXSize,
+                           d_eDatatype, nItemSize,
+                           ((GByte *) pImage) + iYNew * nItemSize * iXSize, 
+                           d_eDatatype, nItemSize,
+                           iXSize );
+        }
+
+        // cleanup
+        CPLFree( pabyDataCopy );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we need "x" flipping?                                        */
+/* -------------------------------------------------------------------- */
+    if( d_bFlipX )
+    {
+        GByte *pabyDataCopy;
+        int nItemSize = GDALGetDataTypeSize( d_eDatatype ) / 8;
+        int iY;
+
+        CPLAssert( iStartBandNum == iEndBandNum );
+
+        CPLDebug( "DODS", "Applying X flip." );
+
+        // make a copy of the original
+        pabyDataCopy = (GByte *) CPLMalloc(nItemSize * iXSize * iYSize);
+        memcpy( pabyDataCopy, pImage, nItemSize * iXSize * iYSize );
+        memset( pImage, 0, nItemSize * iXSize * iYSize );
+
+        for( iY = 0; iY < iYSize; iY++ )
+        {
+            GByte *pabySrc, *pabyDst;
+
+            pabySrc = pabyDataCopy + iY * nItemSize * iXSize;
+            pabyDst = ((GByte *) pImage) + iY * nItemSize * iXSize
+                + (iXSize-1) * nItemSize;
+
+            GDALCopyWords( pabySrc, d_eDatatype, nItemSize, 
+                           pabyDst, d_eDatatype, -nItemSize,
+                           iXSize );
+        }
+
+        // cleanup
+        CPLFree( pabyDataCopy );
+    }
+
 }
 
 
@@ -976,11 +1114,31 @@ DODSDataset::IRasterIO(GDALRWFlag eRWFlag,
 		       int nPixelSpace, int nLineSpace, int nBandSpace)
 {
     try {
-	// nBandSpace must be the default value of nLineSapce*nBufYSize.
-	if (nBandSpace != nLineSpace * nBufYSize && nBandCount > 1 ) {
-	    throw Error(
-"The DODS/OPeNDAP driver requires that nBandSpace be the\n\
-default value, either 0 or nLineSpace * nBufYSize.");
+        int bUseBlockOriented = FALSE;
+        const char *pszConfig;
+
+	if( nBandSpace != nLineSpace * nBufYSize && nBandCount > 1 )
+            bUseBlockOriented = TRUE;
+
+        if( nXSize == 1 || nYSize == 1 )
+            bUseBlockOriented = TRUE;
+
+        if( d_bNeedTranspose )
+            bUseBlockOriented = TRUE;
+
+        pszConfig = CPLGetConfigOption( "DODS_BLOCK_ORIENTED", NULL );
+        if( pszConfig )
+            bUseBlockOriented = CSLTestBoolean(pszConfig);
+
+        // Just use the block oriented approach if the request has 
+        // unusual interleaving, or if it seems small (and thus likely to 
+        // be part of a long sequence of small requests). 
+        if( bUseBlockOriented ) {
+            return GDALDataset::IRasterIO( 
+                eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                pData, nBufXSize, nBufYSize, eBufType, 
+                nBandCount, panBandMap, 
+                nPixelSpace, nLineSpace, nBandSpace );
 	}
 	
 	// This loop iterates over the bands in the panBandMap array using
@@ -1090,6 +1248,34 @@ DODSRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     DODSDataset *poDODS = dynamic_cast<DODSDataset *>(poDS);
 
     try {
+        int bUseBlockOriented = FALSE;
+        int nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
+        const char *pszConfig;
+
+        if (nPixelSpace != nBufDataSize 
+            || nLineSpace != nPixelSpace * nBufXSize)
+            bUseBlockOriented = TRUE;
+
+        if( nXSize == 1 || nYSize == 1 )
+            bUseBlockOriented = TRUE;
+
+        if( poDODS->d_bNeedTranspose )
+            bUseBlockOriented = TRUE;
+
+        pszConfig = CPLGetConfigOption( "DODS_BLOCK_ORIENTED", NULL );
+        if( pszConfig )
+            bUseBlockOriented = CSLTestBoolean(pszConfig);
+
+        // Just use the block oriented approach if the request has 
+        // unusual interleaving, or if it seems small (and thus likely to 
+        // be part of a long sequence of small requests). 
+        if( bUseBlockOriented ) {
+            return GDALRasterBand::IRasterIO( 
+                eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                pData, nBufXSize, nBufYSize, eBufType, 
+                nPixelSpace, nLineSpace );
+	}
+	
 	poDODS->irasterio_helper(eRWFlag, nXOff, nYOff, nXSize, nYSize,
 				 GetRasterDataType(),
 				 pData, nBufXSize, nBufYSize, eBufType,
@@ -1126,6 +1312,8 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 {
     DODSDataset *poDODS = dynamic_cast<DODSDataset *>(poDS);
 
+    CPLDebug( "DODS", "Read whole band as block." );
+
     try {
 	// If the x or y block offsets are ever non-zero, something is wrong.
 	if (nBlockXOff != 0 || nBlockYOff != 0)
@@ -1143,6 +1331,11 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 // $Log$
+// Revision 1.10  2004/06/17 18:08:26  warmerda
+// Added support for transposing and flipping grids if needed.
+// Added support for falling back to "whole image at once" block based
+// mechanism if interleaving request is odd or a directive says to.
+//
 // Revision 1.9  2004/03/24 18:36:56  warmerda
 // Ensure that geographic coordiante systems are supported without requiring
 // the projected coordinate system.
