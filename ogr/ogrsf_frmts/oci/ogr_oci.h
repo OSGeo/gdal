@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/01/14 15:09:28  warmerda
+ * additions to OGROCITableLayer
+ *
  * Revision 1.6  2003/01/10 22:31:19  warmerda
  * various additions
  *
@@ -297,6 +300,7 @@ class OGROCITableLayer : public OGROCILayer
     int                 bValidTable;
 
     OGRSpatialReference *poSRS;
+    int                 nSRID;
 
     int                 nOrdinalCount;
     int                 nOrdinalMax;
@@ -304,12 +308,16 @@ class OGROCITableLayer : public OGROCILayer
 
     OCIArray           *hOrdVARRAY;
 
+    char              **papszOptions;
+
     void                PushOrdinal( double );
 
     char               *TranslateToSDOGeometry( OGRGeometry * );
     OGRErr              TranslateElementGroup( OGRGeometry *poGeometry,
                                                OGROCIStringBuf *poElemInfo );
 
+    void                ParseDIMINFO( const char *, double *, double *,
+                                      double * );
     void                FinalizeNewLayer();
     
   public:
@@ -341,6 +349,8 @@ class OGROCITableLayer : public OGROCILayer
     virtual int         TestCapability( const char * );
 
     // following methods are not base class overrides
+    void                SetOptions( char ** );
+
     int                 IsValid() { return bValidTable; }
     void                SetDimension( int );
     void		SetLaunderFlag( int bFlag ) 
