@@ -25,3 +25,12 @@
 \include jdemdataset.cpp
 */
 
+/*!
+\page NEWS
+<center>
+<title>NEWS</title>
+</center>
+
+\include NEWS
+*/
+
