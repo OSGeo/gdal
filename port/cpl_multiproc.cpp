@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/05/06 18:30:54  warmerda
+ * fix unix createmutex to implicitly acquire it
+ *
  * Revision 1.3  2003/04/23 04:36:54  warmerda
  * pthreads based implementation
  *
@@ -498,6 +501,9 @@ void *CPLCreateMutex()
 
     hMutex = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
     *hMutex = hMutexSrc;
+
+    // mutexes are implicitly acquired when created.
+    CPLAcquireMutex( hMutex, 0.0 );
 
     return (void *) hMutex;
 }
