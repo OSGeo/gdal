@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/12/03 15:11:05  warmerda
+ * added iField to IndexAllFeature, and default to -1
+ *
  * Revision 1.3  2003/03/21 02:58:00  warmerda
  * added drop index support
  *
@@ -89,9 +92,9 @@ public:
 
     virtual OGRErr CreateIndex( int iField ) = 0;
     virtual OGRErr DropIndex( int iField ) = 0;
-    virtual OGRErr IndexAllFeatures( int iField ) = 0;
+    virtual OGRErr IndexAllFeatures( int iField = -1 ) = 0;
 
-    virtual OGRErr AddToIndex( OGRFeature *poFeature ) = 0;
+    virtual OGRErr AddToIndex( OGRFeature *poFeature, int iField = -1 ) = 0;
     virtual OGRErr RemoveFromIndex( OGRFeature *poFeature ) = 0;
 
     virtual OGRAttrIndex *GetFieldIndex( int iField ) = 0;
