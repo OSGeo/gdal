@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/11/17 17:41:39  warmerda
+ * added --formats option
+ *
  * Revision 1.16  2002/08/08 13:02:01  warmerda
  * added the -al commandline switch
  *
@@ -155,6 +158,25 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUALN(papszArgv[iArg],"-al",2) )
         {
             bAllLayers = TRUE;
+        }
+        else if( EQUAL(papszArgv[iArg],"--formats") )
+        {
+            OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
+        
+            printf( "Loaded OGR Format Drivers:\n" );
+
+            for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
+            {
+                OGRSFDriver *poDriver = poR->GetDriver(iDriver);
+
+                if( poDriver->TestCapability( ODrCCreateDataSource ) )
+                    printf( "  -> \"%s\" (read/write)\n", 
+                            poDriver->GetName() );
+                else
+                    printf( "  -> \"%s\" (readonly)\n", 
+                            poDriver->GetName() );
+            }
+            exit( 0 );
         }
         else if( papszArgv[iArg][0] == '-' )
         {
@@ -309,7 +331,7 @@ static void Usage()
 {
     printf( "Usage: ogrinfo [-ro] [-q] [-where restricted_where]\n"
             "               [-spat xmin ymin xmax ymax] [-fid fid]\n"
-            "               [-sql statement] [-al]\n"
+            "               [-sql statement] [-al] [--formats]\n"
             "               datasource_name [layer [layer ...]]\n");
     exit( 1 );
 }
