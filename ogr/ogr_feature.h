@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/02/06 17:10:28  warmerda
+ * export entry points from DLL
+ *
  * Revision 1.16  2001/01/19 21:10:47  warmerda
  * replaced tabs
  *
@@ -174,7 +177,7 @@ typedef union {
  * Definition of an attribute of an OGRFeatureDefn.
  */
 
-class OGRFieldDefn
+class CPL_DLL OGRFieldDefn
 {
   private:
     char                *pszName;
@@ -236,7 +239,7 @@ class OGRFieldDefn
  * OGRFeatureDefn with additional translator specific information. 
  */
 
-class OGRFeatureDefn
+class CPL_DLL OGRFeatureDefn
 {
   private:
     int         nRefCount;
@@ -276,9 +279,7 @@ class OGRFeatureDefn
  * A simple feature, including geometry and attributes.
  */
 
-
-
-class OGRFeature
+class CPL_DLL OGRFeature
 {
   private:
 

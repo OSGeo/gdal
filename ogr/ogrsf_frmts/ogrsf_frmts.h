@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2001/02/06 17:10:28  warmerda
+ * export entry points from DLL
+ *
  * Revision 1.17  2001/01/19 21:13:50  warmerda
  * expanded tabs
  *
@@ -113,7 +116,7 @@
  *
  */
 
-class OGRLayer
+class CPL_DLL OGRLayer
 {
   public:
     virtual     ~OGRLayer(){}
@@ -162,7 +165,7 @@ class OGRLayer
  * are also destroyed.
  */ 
 
-class OGRDataSource
+class CPL_DLL OGRDataSource
 {
   public:
 
@@ -199,7 +202,7 @@ class OGRDataSource
  * OGRSFDriverRegistrar.
  */
 
-class OGRSFDriver
+class CPL_DLL OGRSFDriver
 {
   public:
     virtual     ~OGRSFDriver();
@@ -224,7 +227,7 @@ class OGRSFDriver
  *
  */
 
-class OGRSFDriverRegistrar
+class CPL_DLL OGRSFDriverRegistrar
 {
     int         nDrivers;
     OGRSFDriver **papoDrivers;
@@ -250,19 +253,19 @@ class OGRSFDriverRegistrar
 /*      Various available registration methods.                         */
 /* -------------------------------------------------------------------- */
 CPL_C_START
-void    OGRRegisterAll();
+void CPL_DLL OGRRegisterAll();
 
-void    RegisterOGRShape();
-void    RegisterOGRNTF();
-void    RegisterOGRFME();
-void    RegisterOGRSDTS();
-void    RegisterOGRTiger();
-void    RegisterOGRS57();
-void    RegisterOGRTAB();
-void    RegisterOGRMIF();
-void    RegisterOGROGDI();
-void    RegisterOGRPG();
-void    RegisterOGRDGN();
+void CPL_DLL RegisterOGRShape();
+void CPL_DLL RegisterOGRNTF();
+void CPL_DLL RegisterOGRFME();
+void CPL_DLL RegisterOGRSDTS();
+void CPL_DLL RegisterOGRTiger();
+void CPL_DLL RegisterOGRS57();
+void CPL_DLL RegisterOGRTAB();
+void CPL_DLL RegisterOGRMIF();
+void CPL_DLL RegisterOGROGDI();
+void CPL_DLL RegisterOGRPG();
+void CPL_DLL RegisterOGRDGN();
 CPL_C_END
 
 

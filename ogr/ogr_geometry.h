@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2001/02/06 17:10:28  warmerda
+ * export entry points from DLL
+ *
  * Revision 1.24  2001/01/19 21:10:47  warmerda
  * replaced tabs
  *
@@ -185,7 +188,7 @@ class OGREnvelope
  * time.
  */
  
-class OGRGeometry
+class CPL_DLL OGRGeometry
 {
   private:
     OGRSpatialReference * poSRS;                // may be NULL
@@ -256,7 +259,7 @@ class OGRGeometry
  * Implements SFCOM IPoint methods.
  */
 
-class OGRPoint : public OGRGeometry
+class CPL_DLL OGRPoint : public OGRGeometry
 {
     double      x;
     double      y;
@@ -307,7 +310,7 @@ class OGRPoint : public OGRGeometry
  * Abstract curve base class.
  */
 
-class OGRCurve : public OGRGeometry
+class CPL_DLL OGRCurve : public OGRGeometry
 {
   public:
     // ICurve methods
@@ -327,7 +330,7 @@ class OGRCurve : public OGRGeometry
  * Concrete representation of a multi-vertex line.
  */
 
-class OGRLineString : public OGRCurve
+class CPL_DLL OGRLineString : public OGRCurve
 {
   protected:
     int         nPointCount;
@@ -401,7 +404,7 @@ class OGRLineString : public OGRCurve
  * data model.  It exists to serve as a component of an OGRPolygon.
  */
 
-class OGRLinearRing : public OGRLineString
+class CPL_DLL OGRLinearRing : public OGRLineString
 {
   private:
     friend class OGRPolygon; 
@@ -435,7 +438,7 @@ class OGRLinearRing : public OGRLineString
  * Abstract base class for 2 dimensional objects like polygons.
  */
 
-class OGRSurface : public OGRGeometry
+class CPL_DLL OGRSurface : public OGRGeometry
 {
   public:
     virtual double      get_Area() = 0;
@@ -456,7 +459,7 @@ class OGRSurface : public OGRGeometry
  * OGRMultiPolygon must be used for this.
  */
 
-class OGRPolygon : public OGRSurface
+class CPL_DLL OGRPolygon : public OGRSurface
 {
     int         nRingCount;
     OGRLinearRing **papoRings;
@@ -513,7 +516,7 @@ class OGRPolygon : public OGRSurface
  * Subclasses may impose additional restrictions on the contents.
  */
 
-class OGRGeometryCollection : public OGRGeometry
+class CPL_DLL OGRGeometryCollection : public OGRGeometry
 {
     int         nGeomCount;
     OGRGeometry **papoGeoms;
@@ -563,7 +566,7 @@ class OGRGeometryCollection : public OGRGeometry
  * of it's methods. 
  */
 
-class OGRMultiPolygon : public OGRGeometryCollection
+class CPL_DLL OGRMultiPolygon : public OGRGeometryCollection
 {
   public:
     // Non standard (OGRGeometry).
@@ -583,7 +586,7 @@ class OGRMultiPolygon : public OGRGeometryCollection
  * A collection of OGRPoints.
  */
 
-class OGRMultiPoint : public OGRGeometryCollection
+class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
 {
   public:
     // Non standard (OGRGeometry).
@@ -603,7 +606,7 @@ class OGRMultiPoint : public OGRGeometryCollection
  * A collection of OGRLineStrings.
  */
 
-class OGRMultiLineString : public OGRGeometryCollection
+class CPL_DLL OGRMultiLineString : public OGRGeometryCollection
 {
   public:
     // Non standard (OGRGeometry).
@@ -624,7 +627,7 @@ class OGRMultiLineString : public OGRGeometryCollection
  * Create geometry objects from well known text/binary.
  */
 
-class OGRGeometryFactory
+class CPL_DLL OGRGeometryFactory
 {
   public:
     static OGRErr createFromWkb( unsigned char *, OGRSpatialReference *,

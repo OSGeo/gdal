@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2001/02/06 17:10:28  warmerda
+ * export entry points from DLL
+ *
  * Revision 1.27  2001/01/22 13:59:55  warmerda
  * added SetSOC
  *
@@ -139,7 +142,7 @@
  * of an SRS definition.
  */
 
-class OGR_SRSNode
+class CPL_DLL OGR_SRSNode
 {
     char        *pszValue;
 
@@ -194,7 +197,7 @@ class OGR_SRSNode
  * how to use this class.
  */
 
-class OGRSpatialReference
+class CPL_DLL OGRSpatialReference
 {
     int         nRefCount;
 
@@ -430,7 +433,7 @@ class OGRSpatialReference
  * Also, see OGRCreateSpatialReference() for creating transformations.
  */
  
-class OGRCoordinateTransformation
+class CPL_DLL OGRCoordinateTransformation
 {
 public:
     virtual ~OGRCoordinateTransformation();
