@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/04/02 17:43:17  warmerda
+ * improved error message
+ *
  * Revision 1.7  2004/03/12 22:13:07  warmerda
  * major upgrade with normalized sequen nested sequence support
  *
@@ -181,11 +184,12 @@ int OGRDODSDataSource::Open( const char * pszNewName )
 /* -------------------------------------------------------------------- */
 /*      We presume we only work with version 3 servers.                 */
 /* -------------------------------------------------------------------- */
+
     if (version.empty() || version.find("/3.") == string::npos)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "I connected to the URL but could not get a DAP 3.x version string from the server");
-        return FALSE;
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "I connected to the URL but could not get a DAP 3.x version string\n"
+                  "from the server.  I will continue to connect but access may fail.");
     }
 
 /* -------------------------------------------------------------------- */
