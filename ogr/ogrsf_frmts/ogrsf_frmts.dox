@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/08/04 17:22:35  warmerda
+ * avoid comments in code blocks
+ *
  * Revision 1.17  2003/05/28 19:17:31  warmerda
  * fixup stuff for docs
  *
@@ -162,7 +165,7 @@
     OGRDataSourceH	*hDS;
     OGRSFDriverH        *pahDriver;
 
-    hDS = OGROpen( "polygon.shp", 0 /*bUpdate*/, pahDriver );
+    hDS = OGROpen( "polygon.shp", 0, pahDriver );
     if( hDS == NULL )
     {
         return;
