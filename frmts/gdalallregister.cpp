@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.9  1999/06/03 14:05:33  warmerda
+ * added SDTS support
+ *
  * Revision 1.8  1999/05/17 01:51:43  warmerda
  * Removed unused variable.
  *
@@ -61,6 +64,7 @@ void GDALRegister_OGDI(void);
 void GDALRegister_HFA(void);
 void GDALRegister_AIGrid(void);
 void GDALRegister_CEOS(void);
+void GDALRegister_SDTS(void);
 void GDALRegister_ELAS(void);
 CPL_C_END
 
@@ -104,6 +108,10 @@ void GDALAllRegister()
     
 #ifdef FRMT_aigrid
     GDALRegister_AIGrid();
+#endif
+
+#ifdef FRMT_sdts
+    GDALRegister_SDTS();
 #endif
 
 #ifdef FRMT_ogdi
