@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/03/31 13:42:06  warmerda
+ * added gcp support methods
+ *
  * Revision 1.13  2000/03/23 16:53:55  warmerda
  * default geotransform is 0,1,0,0,0,1
  *
@@ -61,6 +64,7 @@
  */
 
 #include "gdal_priv.h"
+#include "cpl_string.h"
 
 /************************************************************************/
 /*                            GDALDataset()                             */
@@ -76,6 +80,7 @@ GDALDataset::GDALDataset()
     nBands = 0;
     papoBands = NULL;
     nRefCount = 1;
+    papszMetadata = NULL;
 }
 
 /************************************************************************/
@@ -106,6 +111,7 @@ GDALDataset::~GDALDataset()
     }
 
     CPLFree( papoBands );
+    CSLDestroy( papszMetadata );
 }
 
 /************************************************************************/
@@ -621,5 +627,127 @@ int GDALDereferenceDataset( GDALDatasetH hDataset )
 
 {
     return ((GDALDataset *) hDataset)->Dereference();
+}
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+/**
+ * Fetch dataset wide metadata.
+ *
+ * The returned string list is owned by the GDALDataset, and may change at
+ * any time.  It is formated as a "Name=value" list with the last pointer
+ * value being NULL.  Use the the CPL StringList functions such as 
+ * CSLFetchNameValue() to manipulate it. 
+ *
+ * Note that relatively few formats return any metadata at this time. 
+ *
+ * This method does the same thing as the C function GDALGetDatasetMetadata().
+ * 
+ * @return NULL or a string list. 
+ */
+
+char **GDALDataset::GetMetadata()
+
+{
+    return papszMetadata;
+}
+
+/************************************************************************/
+/*                       GDALGetDatasetMetadata()                       */
+/************************************************************************/
+
+char **GDALGetDatasetMetadata( GDALDatasetH hDataset )
+
+{
+    return ((GDALDataset *) hDataset)->GetMetadata();
+}
+
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+/**
+ * Get number of GCPs. 
+ *
+ * This method is the same as the C function GDALGetGCPCount(). 
+ *
+ * @return number of GCPs for this dataset.  Zero if there are none.
+ */
+
+int GDALDataset::GetGCPCount()
+
+{
+    return 0;
+}
+
+/************************************************************************/
+/*                          GDALGetGCPCount()                           */
+/************************************************************************/
+
+int GDALGetGCPCount( GDALDatasetH hDS )
+
+{
+    return ((GDALDataset *) hDS)->GetGCPCount();
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+/**
+ * Get output projection for GCPs. 
+ *
+ * This method is the same as the C function GDALGetGCPProjection(). 
+ *
+ * The projection string follows the normal rules from GetProjectionRef().
+ * 
+ * @return internal projection string or "" if there are no GCPs. 
+ */
+
+const char *GDALDataset::GetGCPProjection()
+
+{
+    return "";
+}
+
+/************************************************************************/
+/*                        GDALGetGCPProjection()                        */
+/************************************************************************/
+
+const char *GDALGetGCPProjection( GDALDatasetH hDS )
+
+{
+    return ((GDALDataset *) hDS)->GetGCPProjection();
+}
+
+/************************************************************************/
+/*                               GetGCPs()                              */
+/************************************************************************/
+
+/**
+ * Fetch GCPs.
+ *
+ * This method is the same as the C function GDALGetGCPs(). 
+ *
+ * @return pointer to internal GCP structure list.  It should not be modified, 
+ * and may change on the next GDAL call. 
+ */ 
+
+const GDAL_GCP *GDALDataset::GetGCPs()
+
+{
+    return NULL;
+}
+
+/************************************************************************/
+/*                            GDALGetGCPs()                             */
+/************************************************************************/
+
+const GDAL_GCP *GDALGetGCPs( GDALDatasetH hDS )
+
+{
+    return ((GDALDataset *) hDS)->GetGCPs();
 }
 
