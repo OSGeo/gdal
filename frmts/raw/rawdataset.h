@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/05/02 16:00:17  dron
+ * Implemented RawRasterBand::IRasterIO() method. Introduced `dirty' flag.
+ *
  * Revision 1.10  2003/03/18 06:00:26  warmerda
  * Added FlushCache() method on rawrasterband.
  *
@@ -104,11 +107,17 @@ class CPL_DLL RawRasterBand : public GDALRasterBand
     
     int		nLoadedScanline;
     void	*pLineBuffer;
+    int         bDirty;
 
     int         Seek( vsi_l_offset, int );
     size_t      Read( void *, size_t, size_t );
     size_t      Write( void *, size_t, size_t );
 
+    CPLErr          AccessBlock( vsi_l_offset nBlockOff, int nBlockSize,
+                                   void * pData );
+    virtual CPLErr  IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              int, int );
   public:
 
                  RawRasterBand( GDALDataset *poDS, int nBand, FILE * fpRaw, 
@@ -127,16 +136,15 @@ class CPL_DLL RawRasterBand : public GDALRasterBand
 
     // should override RasterIO eventually.
     
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr  IReadBlock( int, int, void * );
+    virtual CPLErr  IWriteBlock( int, int, void * );
 
-    virtual CPLErr SetNoDataValue( double );
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual CPLErr  SetNoDataValue( double );
+    virtual double  GetNoDataValue( int *pbSuccess = NULL );
 
-    virtual CPLErr FlushCache();
+    virtual CPLErr  FlushCache();
 
-    CPLErr         AccessLine( int iLine );
-
+    CPLErr          AccessLine( int iLine );
     // this is deprecated.
     void	 StoreNoDataValue( double );
 };
