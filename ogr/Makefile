@@ -1,7 +1,7 @@
 
 EXTRAFLAGS =	-I$(VCDIR)\ATL\Include \
 		-I$(MSDASDK)\include\oledb \
-		-I. -Iogrsf_frmts /W3
+		-I. -Iogrsf_frmts -I..\frmts\gtiff\libgeotiff /W3
 
 GDAL_ROOT = 	..
 
@@ -17,7 +17,7 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
 		ogrmultipolygon.obj ogrmultilinestring.obj \
                 ogrmultipoint.obj ogrfeature.obj ogrfeaturedefn.obj \
 		ogrfielddefn.obj ogr_srsnode.obj ogrspatialreference.obj \
-		ogr_srs_proj4.obj
+		ogr_srs_proj4.obj ogr_fromepsg.obj ogrct.obj
 
 OBJ_OLEDB =	oledb_sup.obj \
 		sfcenumerator.obj sfcdatasource.obj sfctable.obj
