@@ -5363,7 +5363,7 @@ static PyObject *_wrap_OSRSetStatePlaneWithUnits(PyObject *self, PyObject *args)
     return _resultobj;
 }
 
-static PyObject *_wrap_OGRSetACEA(PyObject *self, PyObject *args) {
+static PyObject *_wrap_OSRSetACEA(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRErr * _result;
     OGRSpatialReferenceH  _arg0;
@@ -5377,17 +5377,17 @@ static PyObject *_wrap_OGRSetACEA(PyObject *self, PyObject *args) {
     char _ptemp[128];
 
     self = self;
-    if(!PyArg_ParseTuple(args,"Odddddd:OGRSetACEA",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5,&_arg6)) 
+    if(!PyArg_ParseTuple(args,"Odddddd:OSRSetACEA",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5,&_arg6)) 
         return NULL;
     if (_argo0) {
         if (_argo0 == Py_None) { _arg0 = NULL; }
         else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGRSetACEA. Expected _OGRSpatialReferenceH.");
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetACEA. Expected _OGRSpatialReferenceH.");
         return NULL;
         }
     }
     _result = (OGRErr *) malloc(sizeof(OGRErr ));
-    *(_result) = OGRSetACEA(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6);
+    *(_result) = OSRSetACEA(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6);
     SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
     _resultobj = Py_BuildValue("s",_ptemp);
     return _resultobj;
@@ -5564,17 +5564,26 @@ static PyObject *_wrap_OSRSetEckertVI(PyObject *self, PyObject *args) {
 static PyObject *_wrap_OSRSetEquirectangular(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRErr * _result;
-    double  _arg0;
+    OGRSpatialReferenceH  _arg0;
     double  _arg1;
     double  _arg2;
     double  _arg3;
+    double  _arg4;
+    PyObject * _argo0 = 0;
     char _ptemp[128];
 
     self = self;
-    if(!PyArg_ParseTuple(args,"dddd:OSRSetEquirectangular",&_arg0,&_arg1,&_arg2,&_arg3)) 
+    if(!PyArg_ParseTuple(args,"Odddd:OSRSetEquirectangular",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4)) 
         return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetEquirectangular. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
     _result = (OGRErr *) malloc(sizeof(OGRErr ));
-    *(_result) = OSRSetEquirectangular(_arg0,_arg1,_arg2,_arg3);
+    *(_result) = OSRSetEquirectangular(_arg0,_arg1,_arg2,_arg3,_arg4);
     SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
     _resultobj = Py_BuildValue("s",_ptemp);
     return _resultobj;
@@ -5610,17 +5619,26 @@ static PyObject *_wrap_OSRSetGS(PyObject *self, PyObject *args) {
 static PyObject *_wrap_OSRSetGnomonic(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRErr * _result;
-    double  _arg0;
+    OGRSpatialReferenceH  _arg0;
     double  _arg1;
     double  _arg2;
     double  _arg3;
+    double  _arg4;
+    PyObject * _argo0 = 0;
     char _ptemp[128];
 
     self = self;
-    if(!PyArg_ParseTuple(args,"dddd:OSRSetGnomonic",&_arg0,&_arg1,&_arg2,&_arg3)) 
+    if(!PyArg_ParseTuple(args,"Odddd:OSRSetGnomonic",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4)) 
         return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetGnomonic. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
     _result = (OGRErr *) malloc(sizeof(OGRErr ));
-    *(_result) = OSRSetGnomonic(_arg0,_arg1,_arg2,_arg3);
+    *(_result) = OSRSetGnomonic(_arg0,_arg1,_arg2,_arg3,_arg4);
     SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
     _resultobj = Py_BuildValue("s",_ptemp);
     return _resultobj;
@@ -10241,7 +10259,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRSetCS", _wrap_OSRSetCS, METH_VARARGS },
 	 { "OSRSetCEA", _wrap_OSRSetCEA, METH_VARARGS },
 	 { "OSRSetAE", _wrap_OSRSetAE, METH_VARARGS },
-	 { "OGRSetACEA", _wrap_OGRSetACEA, METH_VARARGS },
+	 { "OSRSetACEA", _wrap_OSRSetACEA, METH_VARARGS },
 	 { "OSRSetStatePlaneWithUnits", _wrap_OSRSetStatePlaneWithUnits, METH_VARARGS },
 	 { "OSRGetUTMZone", _wrap_OSRGetUTMZone, METH_VARARGS },
 	 { "OSRSetUTM", _wrap_OSRSetUTM, METH_VARARGS },
