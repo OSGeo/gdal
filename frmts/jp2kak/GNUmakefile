@@ -14,7 +14,7 @@ APPOBJ  = $(KAKDIR)/apps/make/args.o $(KAKDIR)/apps/make/image_in.o \
 
 #CXXFLAGS :=	$(CXXFLAGS) -DFILEIO_DEBUG
 
-CPPFLAGS	=	$(GDAL_INCLUDE) $(KAKINC) -I.
+CPPFLAGS	=	$(GDAL_INCLUDE) $(KAKINC) -I. $(CPPFLAGS)
 
 default:	$(OBJ)
 

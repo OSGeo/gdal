@@ -4,7 +4,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	ecwdataset.o
 
-CPPFLAGS	=	$(GDAL_INCLUDE) -DFRMT_ecw
+CPPFLAGS	=	$(GDAL_INCLUDE) -DFRMT_ecw $(CPPFLAGS)
 
 default:	$(OBJ)
 
