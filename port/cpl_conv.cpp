@@ -23,6 +23,9 @@
  * cpl_conv.c: Various CPL convenience functions (from cpl_conv.h).
  *
  * $Log$
+ * Revision 1.4  1999/01/02 20:29:53  warmerda
+ * Allow zero length allocations
+ *
  * Revision 1.3  1998/12/15 19:01:07  warmerda
  * Added CPLReadLine().
  *
@@ -45,6 +48,9 @@ void *CPLCalloc( size_t nCount, size_t nSize )
 {
     void	*pReturn;
 
+    if( nSize == 0 )
+        return NULL;
+    
     pReturn = VSICalloc( nCount, nSize );
     if( pReturn == NULL )
     {
@@ -65,6 +71,9 @@ void *CPLMalloc( size_t nSize )
 {
     void	*pReturn;
 
+    if( nSize == 0 )
+        return NULL;
+    
     pReturn = VSIMalloc( nSize );
     if( pReturn == NULL )
     {
