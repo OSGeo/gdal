@@ -58,6 +58,10 @@ Release 1.?
 
  o Added surface type to DGNCreateComplexHeaderElem().  (Marius)
 
+ o DGNRad50ToAscii() reimplemented to correct a few problems.  New version
+   provided by Armin Berg (iez.com). 
+
+
 Release 1.9
 -----------
 
