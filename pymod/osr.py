@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.42  2004/05/15 17:57:40  warmerda
+# Fixed SRS_UL_FOOT_CONV.
+#
 # Revision 1.41  2004/05/12 19:27:31  dron
 # Added well known datum and units names.
 #
@@ -185,7 +188,7 @@ SRS_PP_ZONE                     = "zone"
 
 SRS_UL_METER			= "Meter"
 SRS_UL_FOOT			= "Foot (International)"
-SRS_UL_FOOT_CONV                    "0.3048"
+SRS_UL_FOOT_CONV                = "0.3048"
 SRS_UL_US_FOOT			= "U.S. Foot"
 SRS_UL_US_FOOT_CONV             = "0.3048006"
 SRS_UL_NAUTICAL_MILE		= "Nautical Mile"
