@@ -21,7 +21,7 @@ FMEOBJ = fme\*.obj
 !ENDIF
 
 default:
-	for %d in ( $(DIRLIST) ) do ..\..\submake.bat %d
+	for %d in ( $(DIRLIST) ) do call ..\..\submake.bat %d
 
 	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj \
 				 sdts\*.obj s57\*.obj tiger\*.obj gml\*.obj \
@@ -44,4 +44,4 @@ default:
 clean:
 	-del ogrsf_frmts.lib
 	-del ogrsf_frmts_sup.lib
-	for %d in ( $(DIRLIST) ) do ..\..\submake.bat %d clean
+	for %d in ( $(DIRLIST) ) do call ..\..\submake.bat %d clean
