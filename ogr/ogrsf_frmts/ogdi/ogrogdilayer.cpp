@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/02/22 13:08:54  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.8  2005/02/02 20:54:27  fwarmerdam
  * track m_nFeaturesRead
  *
@@ -84,7 +87,6 @@ OGROGDILayer::OGROGDILayer( OGROGDIDataSource *poODS,
 
     m_pszOGDILayerName = CPLStrdup(pszName);
 
-    m_poFilterGeom = NULL;
     m_sFilterBounds = *(m_poODS->GetGlobalBounds());
 
     m_iNextShapeId = 0;
@@ -119,9 +121,6 @@ OGROGDILayer::~OGROGDILayer()
 
     CPLFree(m_pszOGDILayerName);
 
-    if( m_poFilterGeom != NULL )
-        delete m_poFilterGeom;
-
     // Note: we do not delete m_poSpatialRef since it is owned by the dataset
 }
 
@@ -132,18 +131,14 @@ OGROGDILayer::~OGROGDILayer()
 void OGROGDILayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
 {
-    if( m_poFilterGeom != NULL )
-    {
-        delete m_poFilterGeom;
-        m_poFilterGeom = NULL;
-    }
+    if( !InstallFilter( poGeomIn ) )
+        return;
 
-    if( poGeomIn != NULL )
+    if( m_poFilterGeom != NULL )
     {
         OGREnvelope     oEnv;
         ecs_Result     *psResult;
 
-        m_poFilterGeom = poGeomIn->clone();
         m_poFilterGeom->getEnvelope(&oEnv);
 
         m_sFilterBounds.north = oEnv.MaxY;
@@ -340,8 +335,10 @@ OGRFeature *OGROGDILayer::GetNextFeature()
 /* -------------------------------------------------------------------- */
 /*      Do we need to apply an attribute test?                          */
 /* -------------------------------------------------------------------- */
-    if( m_poAttrQuery != NULL
-        && !m_poAttrQuery->Evaluate( poFeature ) )
+    if( (m_poAttrQuery != NULL
+         && !m_poAttrQuery->Evaluate( poFeature ) ) 
+        || (m_poFilterGeom != NULL 
+            && !FilterGeometry( poFeature->GetGeometryRef() ) ) )
     {
         delete poFeature;
         goto TryAgain;
@@ -419,7 +416,7 @@ int OGROGDILayer::TestCapability( const char * pszCap )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return poFilterGeom == NULL;
+        return m_poFilterGeom == NULL;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
