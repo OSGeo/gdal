@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/04/02 20:44:37  warmerda
+ * preserve APBB (actual bits per pixel) field as metadata
+ *
  * Revision 1.16  2004/03/17 21:16:58  warmerda
  * Added GCP support for the corner points if they dont produce a nice geotransform
  *
@@ -760,6 +763,12 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
                  sRPCInfo.LAT_OFF + 2 * sRPCInfo.LAT_SCALE );
         poDS->SetMetadataItem( "RPC_MAX_LAT", szValue );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Assign any other tidbits of metadata we would like to           */
+/*      preserve.                                                       */
+/* -------------------------------------------------------------------- */
+    poDS->SetMetadataItem( "NITF_ABPP", CPLSPrintf( "%d", psImage->nABPP ) );
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */

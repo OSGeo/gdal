@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2004/04/02 20:44:37  warmerda
+ * preserve APBB (actual bits per pixel) field as metadata
+ *
  * Revision 1.22  2004/02/09 05:43:11  warmerda
  * Fixed typo.
  *
@@ -190,6 +193,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                                      nOffset+19, 8) );
         NITFTrimWhite( NITFGetField( psImage->szICAT, pachHeader, 
                                      nOffset+27, 8) );
+        psImage->nABPP = atoi(NITFGetField(szTemp,pachHeader,nOffset+35,2));
     }
 
     nOffset += 38;
@@ -386,6 +390,9 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         atoi(NITFGetField(szTemp, pachHeader, nOffset+14, 4));
     psImage->nBitsPerSample = 
         atoi(NITFGetField(szTemp, pachHeader, nOffset+18, 2));
+
+    if( psImage->nABPP == 0 )
+        psImage->nABPP = psImage->nBitsPerSample;
 
     nOffset += 20;
 
