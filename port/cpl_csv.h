@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/06/27 16:14:22  warmerda
+ * export CSV functions with CPL_DLL
+ *
  * Revision 1.1  2000/04/05 21:55:59  warmerda
  * New
  *
@@ -49,18 +52,18 @@ typedef enum {
     CC_Integer
 } CSVCompareCriteria;
 
-const char  *CSVFilename( const char * );
+const char CPL_DLL *CSVFilename( const char * );
 
-char  **CSVReadParseLine( FILE * );
-char  **CSVScanLines( FILE *, int, const char *, CSVCompareCriteria );
-char  **CSVScanFile( const char *, int, const char *,
+char CPL_DLL  **CSVReadParseLine( FILE * );
+char CPL_DLL **CSVScanLines( FILE *, int, const char *, CSVCompareCriteria );
+char CPL_DLL **CSVScanFile( const char *, int, const char *,
                             CSVCompareCriteria );
-char  **CSVScanFileByName( const char *, const char *, const char *,
+char CPL_DLL **CSVScanFileByName( const char *, const char *, const char *,
                                   CSVCompareCriteria );
-int  CSVGetFieldId( FILE *, const char * );
-int  CSVGetFileFieldId( const char *, const char * );
+int CPL_DLL CSVGetFieldId( FILE *, const char * );
+int CPL_DLL CSVGetFileFieldId( const char *, const char * );
 
-void  CSVDeaccess( const char * );
+void CPL_DLL CSVDeaccess( const char * );
 
 const char  *CSVGetField( const char *, const char *, const char *,
                                  CSVCompareCriteria, const char * );
