@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/11/20 05:18:09  warmerda
+ * added AddBand() implementation
+ *
  * Revision 1.10  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -364,6 +367,73 @@ CPLErr MEMDataset::SetGeoTransform( double *padfGeoTransform )
 {
     memcpy( adfGeoTransform, padfGeoTransform, sizeof(double) * 6 );
     bGeoTransformSet = TRUE;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                              AddBand()                               */
+/*                                                                      */
+/*      Add a new band to the dataset, allowing creation options to     */
+/*      specify the existing memory to use, otherwise create new        */
+/*      memory.                                                         */
+/************************************************************************/
+
+CPLErr MEMDataset::AddBand( GDALDataType eType, char **papszOptions )
+
+{
+    int nBandId = GetRasterCount() + 1;
+    GByte *pData;
+    int   nPixelSize = (GDALGetDataTypeSize(eType) / 8);
+
+/* -------------------------------------------------------------------- */
+/*      Do we need to allocate the memory ourselves?  This is the       */
+/*      simple case.                                                    */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue( papszOptions, "DATAPOINTER" ) == NULL )
+    {
+
+        pData = (GByte *) 
+            CPLCalloc(nPixelSize, GetRasterXSize() * GetRasterYSize() );
+
+        if( pData == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                      "Unable to create band arrays ... out of memory." );
+            return CE_Failure;
+        }
+
+        SetBand( nBandId,
+                 new MEMRasterBand( this, nBandId, pData, eType, nPixelSize, 
+                                    nPixelSize * GetRasterXSize(), TRUE ) );
+
+        return CE_None;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get layout of memory and other flags.                           */
+/* -------------------------------------------------------------------- */
+    const char *pszOption;
+    int nPixelOffset, nLineOffset;
+
+    pData = (GByte *) strtol(CSLFetchNameValue(papszOptions,"DATAPOINTER"),
+                            NULL, 0 );
+    
+    pszOption = CSLFetchNameValue(papszOptions,"PIXELOFFSET");
+    if( pszOption == NULL )
+        nPixelOffset = nPixelSize;
+    else
+        nPixelOffset = atoi(pszOption);
+
+    pszOption = CSLFetchNameValue(papszOptions,"LINEOFFSET");
+    if( pszOption == NULL )
+        nLineOffset = GetRasterXSize() * nPixelOffset;
+    else
+        nLineOffset = atoi(pszOption);
+
+    SetBand( nBandId,
+             new MEMRasterBand( this, nBandId, pData, eType, 
+                                nPixelOffset, nLineOffset, FALSE ) );
 
     return CE_None;
 }
