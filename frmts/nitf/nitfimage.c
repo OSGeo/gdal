@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2005/03/15 08:16:47  fwarmerdam
+ * Improve rounding of seconds when writing IGEOLO.
+ *
  * Revision 1.33  2005/02/25 14:49:31  fwarmerdam
  * Fixed offset to NICOM in NITFIHFieldOffset().
  *
@@ -1277,7 +1280,17 @@ static void NITFEncodeDMSLoc( char *pszTarget, double dfValue,
     nMinutes = (int) dfValue;
     dfValue = (dfValue-nMinutes) * 60.0;
 
-    nSeconds = (int) dfValue;
+    nSeconds = (int) (dfValue+0.5);
+    if (nSeconds == 60)
+    {
+        nSeconds = 0;
+        nMinutes += 1;
+        if (nMinutes == 60)
+        {
+            nMinutes = 0;
+            nDegrees += 1;
+        }
+    }
 
     if( EQUAL(pszAxis,"Lat") )
         sprintf( pszTarget, "%02d%02d%02d%c", 
