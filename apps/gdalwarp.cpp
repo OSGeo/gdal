@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/04/01 19:51:18  warmerda
+ * Added the -dstnodata commandline switch.
+ *
  * Revision 1.3  2004/03/17 05:49:26  warmerda
  * Fixed assert check in GDALWarpCreateOutput().
  *
@@ -104,8 +107,8 @@ static void Usage()
         "    [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]\n"
         "    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
         "    [-wo \"NAME=VALUE\"] [-ot Byte/Int16/...] [-wt Byte/Int16]\n"
-        "    [-rn] [-rb] [-rc] [-rcs] [-srcnodata value [value...]]\n" 
-        "    [-wm memory_in_mb] [-multi] [-q]\n"
+        "    [-srcnodata value [value...]] [-dstnodata value [value...]]\n" 
+        "    [-rn] [-rb] [-rc] [-rcs] [-wm memory_in_mb] [-multi] [-q]\n"
         "    [-of format] [-co \"NAME=VALUE\"]* srcfile dstfile\n" );
     exit( 1 );
 }
@@ -160,6 +163,7 @@ int main( int argc, char ** argv )
     GDALDataType        eOutputType = GDT_Unknown, eWorkingType = GDT_Unknown; 
     GDALResampleAlg     eResampleAlg = GRA_NearestNeighbour;
     const char          *pszSrcNodata = NULL;
+    const char          *pszDstNodata = NULL;
     int                 bMulti = FALSE;
 
     GDALAllRegister();
@@ -239,6 +243,10 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-srcnodata") && i < argc-1 )
         {
             pszSrcNodata = argv[++i];
+        }
+        else if( EQUAL(argv[i],"-dstnodata") && i < argc-1 )
+        {
+            pszDstNodata = argv[++i];
         }
         else if( EQUAL(argv[i],"-tr") && i < argc-2 )
         {
@@ -380,10 +388,20 @@ int main( int argc, char ** argv )
         hDstDS = GDALWarpCreateOutput( hSrcDS, pszDstFilename, pszFormat, 
                                        pszSourceSRS, pszTargetSRS, nOrder,
                                        papszCreateOptions, eOutputType );
+        bCreateOutput = TRUE;
 
-        if( CSLFetchNameValue( papszWarpOptions, "INIT_DEST" ) == NULL )
+        if( CSLFetchNameValue( papszWarpOptions, "INIT_DEST" ) == NULL 
+            && pszDstNodata == NULL )
+        {
             papszWarpOptions = CSLSetNameValue(papszWarpOptions,
                                                "INIT_DEST", "0");
+        }
+        else if( CSLFetchNameValue( papszWarpOptions, "INIT_DEST" ) == NULL )
+        {
+            papszWarpOptions = CSLSetNameValue(papszWarpOptions,
+                                               "INIT_DEST", "NO_DATA" );
+        }
+
         CSLDestroy( papszCreateOptions );
         papszCreateOptions = NULL;
     }
@@ -476,6 +494,45 @@ int main( int argc, char ** argv )
             {
                 psWO->padfSrcNoDataReal[i] = psWO->padfSrcNoDataReal[i-1];
                 psWO->padfSrcNoDataImag[i] = psWO->padfSrcNoDataImag[i-1];
+            }
+        }
+
+        CSLDestroy( papszTokens );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If the output dataset was created, and we have a destination    */
+/*      nodata value, go through marking the bands with the information.*/
+/* -------------------------------------------------------------------- */
+    if( pszDstNodata != NULL && bCreateOutput )
+    {
+        char **papszTokens = CSLTokenizeString( pszDstNodata );
+        int  nTokenCount = CSLCount(papszTokens);
+
+        psWO->padfDstNoDataReal = (double *) 
+            CPLMalloc(psWO->nBandCount*sizeof(double));
+        psWO->padfDstNoDataImag = (double *) 
+            CPLMalloc(psWO->nBandCount*sizeof(double));
+
+        for( i = 0; i < psWO->nBandCount; i++ )
+        {
+            if( i < nTokenCount )
+            {
+                CPLStringToComplex( papszTokens[i], 
+                                    psWO->padfDstNoDataReal + i,
+                                    psWO->padfDstNoDataImag + i );
+            }
+            else
+            {
+                psWO->padfDstNoDataReal[i] = psWO->padfDstNoDataReal[i-1];
+                psWO->padfDstNoDataImag[i] = psWO->padfDstNoDataImag[i-1];
+            }
+
+            if( bCreateOutput )
+            {
+                GDALSetRasterNoDataValue( 
+                    GDALGetRasterBand( hDstDS, psWO->panDstBands[i] ), 
+                    psWO->padfDstNoDataReal[i] );
             }
         }
 
