@@ -25,7 +25,7 @@ CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(CPPFLAGS)
 default:	$(OBJ)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(O_OBJ)
 
 ../o/%.o:	libjpeg/%.c
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $< -o $@
