@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2003/09/11 22:47:54  aamici
+ * add class constructors and destructors where needed in order to
+ * let the mingw/cygwin binutils produce sensible partially linked objet files
+ * with 'ld -r'.
+ *
  * Revision 1.45  2003/08/27 15:40:37  warmerda
  * added support for generating DB2 V7.2 compatible WKB
  *
@@ -344,6 +349,8 @@ class CPL_DLL OGRPoint : public OGRGeometry
 class CPL_DLL OGRCurve : public OGRGeometry
 {
   public:
+            OGRCurve();
+    virtual ~OGRCurve();
     // ICurve methods
     virtual double get_Length() = 0;
     virtual void StartPoint(OGRPoint *) = 0;
@@ -451,6 +458,7 @@ class CPL_DLL OGRLinearRing : public OGRLineString
   public:
                         OGRLinearRing();
                         OGRLinearRing( OGRLinearRing * );
+                        ~OGRLinearRing();
 
     // Non standard.
     virtual const char *getGeometryName();
@@ -611,6 +619,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
 class CPL_DLL OGRMultiPolygon : public OGRGeometryCollection
 {
   public:
+            OGRMultiPolygon();
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName();
     virtual OGRwkbGeometryType getGeometryType();
@@ -636,6 +645,7 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
     OGRErr  importFromWkt_Bracketed( char ** );
 
   public:
+            OGRMultiPoint();
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName();
     virtual OGRwkbGeometryType getGeometryType();
@@ -658,6 +668,8 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
 class CPL_DLL OGRMultiLineString : public OGRGeometryCollection
 {
   public:
+            OGRMultiLineString();
+            ~OGRMultiLineString();
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName();
     virtual OGRwkbGeometryType getGeometryType();

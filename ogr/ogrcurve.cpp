@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/09/11 22:47:53  aamici
+ * add class constructors and destructors where needed in order to
+ * let the mingw/cygwin binutils produce sensible partially linked objet files
+ * with 'ld -r'.
+ *
  * Revision 1.8  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -60,6 +65,14 @@
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");
+
+OGRCurve::OGRCurve()
+{
+}
+
+OGRCurve::~OGRCurve()
+{
+}
 
 /************************************************************************/
 /*                            get_IsClosed()                            */

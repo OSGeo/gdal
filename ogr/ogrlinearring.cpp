@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/09/11 22:47:54  aamici
+ * add class constructors and destructors where needed in order to
+ * let the mingw/cygwin binutils produce sensible partially linked objet files
+ * with 'ld -r'.
+ *
  * Revision 1.14  2003/07/08 13:59:35  warmerda
  * added poSrcRing check in copy constructor, bug 361
  *
@@ -82,6 +87,14 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRLinearRing::OGRLinearRing()
+
+{
+}
+
+/************************************************************************/
+/*                          ~OGRLinearRing()                            */
+/************************************************************************/
+OGRLinearRing::~OGRLinearRing()
 
 {
 }
