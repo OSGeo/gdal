@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.31  2004/03/19 06:30:06  warmerda
+ * Changed to compute exact min/max for -mm instead of approximate.
+ *
  * Revision 1.30  2003/11/24 17:46:58  warmerda
  * Report full geotransform when image is not northup.
  *
@@ -388,7 +391,7 @@ int main( int argc, char ** argv )
         
             if( bComputeMinMax )
             {
-                GDALComputeRasterMinMax( hBand, TRUE, adfCMinMax );
+                GDALComputeRasterMinMax( hBand, FALSE, adfCMinMax );
                 printf( "  Computed Min/Max=%.3f,%.3f", 
                         adfCMinMax[0], adfCMinMax[1] );
             }
