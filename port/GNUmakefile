@@ -13,18 +13,16 @@ OBJ	=	cpl_conv.o cpl_error.o cpl_string.o cpl_vsisimple.o \
 
 LIB	=	cpl.a
 
-default:	$(OBJ)
-
-$(LIB):		$(OBJ)
+default:	$(LIB)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(LIB)
 
 %.o:	%.c
 	$(CC) -c $(CFLAGS) $*.c -o $*.o
 
 %.o:	%.cpp
-	$(CXX) -c $(CFLAGS) $*.cpp -o $*.o
+	$(CXX) -c $(CXXFLAGS) $*.cpp -o $*.o
 
 $(LIB): $(OBJ)
 	rm -f $(LIB)
