@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.107  2004/02/19 14:31:44  dron
+ * Replace COMPRESSION_DEFLATE with COMPRESSION_ADOBE_DEFLATE.
+ *
  * Revision 1.106  2004/02/12 14:29:55  warmerda
  * Fiddled with rules when reading georeferencing information.  Now if there
  * are tiepoints and a transformation matrix, we will build a geotransform
@@ -2639,7 +2642,7 @@ TIFF *GTiffCreate( const char * pszFilename,
         else if( EQUAL( pszValue, "PACKBITS" ))
             nCompression = COMPRESSION_PACKBITS;
         else if( EQUAL( pszValue, "DEFLATE" ) || EQUAL( pszValue, "ZIP" ))
-            nCompression = COMPRESSION_DEFLATE;
+            nCompression = COMPRESSION_ADOBE_DEFLATE;
         else
             CPLError( CE_Warning, CPLE_IllegalArg, 
                       "COMPRESS=%s value not recognised, ignoring.",
