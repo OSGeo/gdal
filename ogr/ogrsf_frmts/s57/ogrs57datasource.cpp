@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/09/09 18:20:58  warmerda
+ * fixed serious leak ... S57Readers never destroyed!
+ *
  * Revision 1.18  2002/05/14 21:33:30  warmerda
  * use macros for options, pass PRESERVE_EMPTY_NUMBERS opt
  *
@@ -135,6 +138,10 @@ OGRS57DataSource::~OGRS57DataSource()
         delete papoLayers[i];
 
     CPLFree( papoLayers );
+
+    for( i = 0; i < nModules; i++ )
+        delete papoModules[i];
+    CPLFree( papoModules );
 
     CPLFree( pszName );
 
