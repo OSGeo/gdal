@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/01/27 16:50:49  warmerda
+ * added check for .asc
+ *
  * Revision 1.2  2004/01/22 21:15:37  warmerda
  * parse url into components
  *
@@ -107,6 +110,8 @@ int OGRDODSDataSource::Open( const char * pszNewName )
     if( strcmp(pszWrkURL+nLen-4,".das") == 0 )
         pszWrkURL[nLen-4] = '\0';
     else if( strcmp(pszWrkURL+nLen-4,".dds") == 0 )
+        pszWrkURL[nLen-4] = '\0';
+    else if( strcmp(pszWrkURL+nLen-4,".asc") == 0 )
         pszWrkURL[nLen-4] = '\0';
     else if( strcmp(pszWrkURL+nLen-5,".dods") == 0 )
         pszWrkURL[nLen-5] = '\0';
