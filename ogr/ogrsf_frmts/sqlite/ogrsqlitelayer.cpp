@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/08/20 21:43:12  warmerda
+ * avoid doing alot of work in GetExtent() if we have no geometry
+ *
  * Revision 1.4  2004/07/13 15:11:19  warmerda
  * implemented SetFeature, transaction support
  *
@@ -164,6 +167,13 @@ CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         poFeatureDefn->AddFieldDefn( &oField );
         panFieldOrdinals[poFeatureDefn->GetFieldCount() - 1] = iCol+1;
     }
+
+/* -------------------------------------------------------------------- */
+/*      If we have no geometry source, we know our geometry type is     */
+/*      none.                                                           */
+/* -------------------------------------------------------------------- */
+    if( pszGeomColumn == NULL )
+        poFeatureDefn->SetGeomType( wkbNone );
 
     return CE_None;
 }
@@ -433,4 +443,3 @@ OGRErr OGRSQLiteLayer::RollbackTransaction()
 {
     return poDS->SoftRollback();
 }
-

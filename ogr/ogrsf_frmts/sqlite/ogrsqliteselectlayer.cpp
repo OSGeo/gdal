@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/08/20 21:43:12  warmerda
+ * avoid doing alot of work in GetExtent() if we have no geometry
+ *
  * Revision 1.2  2004/07/11 19:23:51  warmerda
  * read implementation working well
  *
@@ -145,19 +148,6 @@ int OGRSQLiteSelectLayer::TestCapability( const char * pszCap )
 
 {
     return OGRSQLiteLayer::TestCapability( pszCap );
-}
-
-/************************************************************************/
-/*                             GetExtent()                              */
-/*                                                                      */
-/*      Since SELECT layers currently cannot ever have geometry, we     */
-/*      can optimize the GetExtent() method!                            */
-/************************************************************************/
-
-OGRErr OGRSQLiteSelectLayer::GetExtent(OGREnvelope *, int )
-
-{
-    return OGRERR_FAILURE;
 }
 
 /************************************************************************/
