@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/03/05 14:26:57  warmerda
+ * expanded tabs
+ *
  * Revision 1.7  2002/01/23 20:45:05  warmerda
  * handle <?...?> and comment elements
  *
@@ -95,7 +98,7 @@ typedef struct {
 static char ReadChar( ParseContext *psContext )
 
 {
-    char	chReturn;
+    char        chReturn;
 
     chReturn = psContext->pszInput[psContext->nInputOffset++];
 
@@ -157,7 +160,7 @@ static void AddToToken( ParseContext *psContext, char chNewChar )
 static TokenType ReadToken( ParseContext *psContext )
 
 {
-    char	chNext;
+    char        chNext;
 
     psContext->nTokenSize = 0;
     psContext->pszToken[0] = '\0';
@@ -598,8 +601,8 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Parse error at EOF, not all elements have been closed,\n"
-		  "starting with %s\n",
-		  sContext.papsStack[sContext.nStackSize-1]->pszValue );
+                  "starting with %s\n",
+                  sContext.papsStack[sContext.nStackSize-1]->pszValue );
     }
 
 /* -------------------------------------------------------------------- */
@@ -684,7 +687,7 @@ CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent,
 /* -------------------------------------------------------------------- */
     else if( psNode->eType == CXT_Comment )
     {
-        int	i;
+        int     i;
 
         CPLAssert( psNode->psChild == NULL );
 
@@ -701,7 +704,7 @@ CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent,
 /* -------------------------------------------------------------------- */
     else if( psNode->eType == CXT_Element )
     {
-        CPLXMLNode	*psChild = psNode->psChild;
+        CPLXMLNode      *psChild = psNode->psChild;
         char *pszIndent;
         
         pszIndent =  (char *) CPLCalloc(nIndent + 1,1);
@@ -727,7 +730,7 @@ CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent,
         }
         else
         {
-            int		bJustText = TRUE;
+            int         bJustText = TRUE;
 
             strcat( *ppszText + *pnLength, ">" );
 
@@ -787,7 +790,7 @@ CPLXMLNode *CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType,
                               const char *pszText )
 
 {
-    CPLXMLNode	*psNode;
+    CPLXMLNode  *psNode;
 
 /* -------------------------------------------------------------------- */
 /*      Create new node.                                                */
@@ -806,7 +809,7 @@ CPLXMLNode *CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType,
             poParent->psChild = psNode;
         else
         {
-            CPLXMLNode	*psLink = poParent->psChild;
+            CPLXMLNode  *psLink = poParent->psChild;
 
             while( psLink->psNext != NULL )
                 psLink = psLink->psNext;
@@ -842,8 +845,8 @@ void CPLDestroyXMLNode( CPLXMLNode *psNode )
 CPLXMLNode *CPLGetXMLNode( CPLXMLNode *poRoot, const char *pszPath )
 
 {
-    char	**papszTokens;
-    int		iToken = 0;
+    char        **papszTokens;
+    int         iToken = 0;
 
     papszTokens = CSLTokenizeStringComplex( pszPath, ".", FALSE, FALSE );
 
@@ -881,7 +884,7 @@ const char *CPLGetXMLValue( CPLXMLNode *poRoot, const char *pszPath,
                             const char *pszDefault )
 
 {
-    CPLXMLNode	*psTarget;
+    CPLXMLNode  *psTarget;
 
     psTarget = CPLGetXMLNode( poRoot, pszPath );
     if( psTarget == NULL )

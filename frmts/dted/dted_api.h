@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/03/05 14:26:01  warmerda
+ * expanded tabs
+ *
  * Revision 1.7  2002/01/28 18:18:07  warmerda
  * Added DTEDPtStreamSetMetadata
  *
@@ -92,7 +95,7 @@
 #define CPLMalloc malloc
 #define CPLCalloc calloc
 #define CPLFree free
-#define GInt16	short
+#define GInt16  short
 #define GByte   unsigned char
 #define VSIFSeek fseek
 #define CPLAssert assert
@@ -112,19 +115,19 @@ CPL_C_START
 #define DTED_NODATA_VALUE -32767
 
 typedef struct {
-  FILE		*fp;
+  FILE          *fp;
   int           bUpdate;
 
-  int		nXSize;
-  int		nYSize;
+  int           nXSize;
+  int           nYSize;
 
-  double	dfULCornerX;		/* in long/lat degrees */
+  double        dfULCornerX;            /* in long/lat degrees */
   double        dfULCornerY;
-  double	dfPixelSizeX;
+  double        dfPixelSizeX;
   double        dfPixelSizeY;
 
   int           nUHLOffset;
-  char		*pachUHLRecord;
+  char          *pachUHLRecord;
 
   int           nDSIOffset;
   char          *pachDSIRecord;
@@ -132,7 +135,7 @@ typedef struct {
   int           nACCOffset;
   char          *pachACCRecord;
 
-  int		nDataOffset;
+  int           nDataOffset;
 
 } DTEDInfo;
 
@@ -156,7 +159,7 @@ const char *DTEDCreate( const char *pszFilename,
 /*      Metadata support.                                               */
 /* -------------------------------------------------------------------- */
 typedef enum {
-    DTEDMD_VERTACCURACY = 1, 		/* UHL 29+4 */
+    DTEDMD_VERTACCURACY = 1,            /* UHL 29+4 */
     DTEDMD_SECURITYCODE = 2,            /* UHL 33+3, DSI 4+1 */
     DTEDMD_PRODUCER = 3,                /* DSI 103+8 */
     DTEDMD_COMPILATION_DATE = 4,        /* DSI 160+4 */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/03/05 14:25:43  warmerda
+ * expanded tabs
+ *
  * Revision 1.8  2001/12/19 22:04:48  warmerda
  * ensure setting spatial filter resets reading
  *
@@ -288,7 +291,7 @@ OGRFeature *OGRS57Layer::GetFeature( long nFeatureId )
 
     if( poReader != NULL )
     {
-        OGRFeature	*poFeature;
+        OGRFeature      *poFeature;
 
         poFeature = poReader->ReadFeature( nFeatureId, poFeatureDefn );
         if( poFeature != NULL &&  poFeature->GetGeometryRef() != NULL )
