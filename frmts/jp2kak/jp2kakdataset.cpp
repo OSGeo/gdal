@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2003/04/17 16:47:42  warmerda
+ * added ROI processing while encoding
+ *
  * Revision 1.5  2003/04/16 19:55:35  warmerda
  * added esoteric creation options
  *
@@ -90,6 +93,11 @@
 // Application level includes
 #include "kdu_file_io.h"
 #include "jp2.h"
+
+// ROI related.
+#include "kdu_roi_processing.h"
+#include "kdu_image.h"
+#include "jp2kak_roi.h"
 
 CPL_CVSID("$Id$");
 
@@ -690,7 +698,7 @@ JP2KAKDataset::~JP2KAKDataset()
 
 {
     CPLFree( pszProjection );
-
+    
     if( poInput != NULL )
     {
         oCodeStream.destroy();
@@ -1314,6 +1322,37 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Do we have a high res region of interest?                       */
+/* -------------------------------------------------------------------- */
+    kdu_roi_image  *poROIImage = NULL;
+    char **papszROIDefs = CSLFetchNameValueMultiple( papszOptions, "ROI" );
+    int iROI;
+    
+    for( iROI = 0; papszROIDefs != NULL && papszROIDefs[iROI] != NULL; iROI++ )
+    {
+        kdu_dims region;
+        char **papszTokens = CSLTokenizeStringComplex( papszROIDefs[iROI], ",",
+                                                       FALSE, FALSE );
+
+        if( CSLCount(papszTokens) != 4 )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Skipping corrupt ROI def = \n%s", 
+                      papszROIDefs[iROI] );
+            continue;
+        }
+
+        region.pos.x = atoi(papszTokens[0]);
+        region.pos.y = atoi(papszTokens[1]);
+        region.size.x = atoi(papszTokens[2]);
+        region.size.y = atoi(papszTokens[3]);
+
+        CSLDestroy( papszTokens );
+
+        poROIImage = new kdu_roi_rect(oCodeStream,region);
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Set some particular parameters.                                 */
 /* -------------------------------------------------------------------- */
     oCodeStream.access_siz()->parse_string(
@@ -1336,6 +1375,9 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
                           "ORGgen_plt", "yes", 
                           "Cmodes", NULL, 
                           "Clevels", NULL,
+                          "Rshift", NULL,
+                          "Rlevels", NULL,
+                          "Rweight", NULL,
                           NULL, NULL };
 
     for( iParm = 0; apszParms[iParm] != NULL; iParm += 2 )
@@ -1438,13 +1480,21 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
     kdu_push_ifc  *engines = new kdu_push_ifc[num_components];
     kdu_line_buf  *lines = new kdu_line_buf[num_components];
     kdu_sample_allocator allocator;
-
     for (c=0; c < num_components; c++)
     {
         kdu_resolution res = oTile.access_component(c).access_resolution(); 
+        kdu_roi_node *roi_node = NULL;
+
+        if( poROIImage != NULL )
+        {
+            kdu_dims  dims;
+            
+            res.get_dims(dims);
+            roi_node = poROIImage->acquire_node(c,dims);
+        }
 
         lines[c].pre_create(&allocator,nXSize,bReversible,bReversible);
-        engines[c] = kdu_analysis(res,&allocator,bReversible);
+        engines[c] = kdu_analysis(res,&allocator,bReversible,1.0F,roi_node);
     }
 
     allocator.finalize();
@@ -1560,6 +1610,9 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
     delete[] lines;
 
     CPLFree( pabyBuffer );
+
+    if( poROIImage != NULL )
+        delete poROIImage;
 
 /* -------------------------------------------------------------------- */
 /*      Finish flushing out results.                                    */
