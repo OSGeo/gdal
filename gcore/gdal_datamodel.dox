@@ -40,8 +40,7 @@ from authorities such as EPSG.
 </ul>
 
 For more information on OpenGIS WKT coordinate system definitions, and 
-mechanisms to manipulate them, refer to the 
-<a href="http://gdal.velocet.ca/projects/opengis/ogrhtml/osr_tutorial.html">
+mechanisms to manipulate them, refer to the <a href="osr_tutorial.html">
 osr_tutorial</a> document and/or the OGRSpatialReference class documentation.
 
 The coordinate system returned by GDALDataset::GetProjectionRef() 
