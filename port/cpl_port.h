@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2005/03/01 20:44:38  fwarmerdam
+ * Check for _MSC_VER instead of WIN32.
+ *
  * Revision 1.37  2005/03/01 19:57:55  fwarmerdam
  * Added CPLIsNan and CPLIsInf macros.
  *
@@ -278,7 +281,7 @@ int strncasecmp(char * str1, char * str2, int len);
 char * strdup (char *instr);
 #endif
 
-#ifdef WIN32
+#ifdef _MSC_VER
 #  define CPLIsNan(x) _isnan(x)
 #  define CPLIsInf(x) _isinf(x)
 #else
