@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/07/18 13:58:58  warmerda
+ * no RTileType for float tiles
+ *
  * Revision 1.13  2000/04/20 14:05:03  warmerda
  * added more raw float magic codes
  *
@@ -111,37 +114,6 @@ CPLErr AIGProcessRaw32BitFloatBlock( GByte *pabyCur, int nDataSize, int nMin,
 #endif
         
         pafData[i] = fWork;
-    }
-
-    return( CE_None );
-}
-
-/************************************************************************/
-/*                      AIGProcessRaw32bitBlock()                       */
-/*                                                                      */
-/*      Process a block using ``0x43'' (32 bit) raw format.             */
-/************************************************************************/
-
-static 
-CPLErr AIGProcessRaw32BitBlock( GByte *pabyCur, int nDataSize, int nMin,
-                                int nBlockXSize, int nBlockYSize,
-                                GUInt32 * panData )
-
-{
-    int		i;
-
-    (void) nDataSize;
-
-    CPLAssert( nDataSize >= nBlockXSize*nBlockYSize*4 );
-    
-/* -------------------------------------------------------------------- */
-/*      Collect raw data.                                               */
-/* -------------------------------------------------------------------- */
-    for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
-    {
-        memcpy( panData + i, pabyCur, 4 );
-        panData[i] = CPL_MSBWORD32( panData[i] ) + nMin;
-        pabyCur += 4;
     }
 
     return( CE_None );
@@ -477,33 +449,43 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
     nDataSize = nBlockSize;
     
 /* -------------------------------------------------------------------- */
+/*      Handle float files directly.                                    */
+/* -------------------------------------------------------------------- */
+    if( nCellType == AIG_CELLTYPE_FLOAT )
+    {
+        AIGProcessRaw32BitFloatBlock( pabyRaw + 2, nDataSize, 0, 
+                                      nBlockXSize, nBlockYSize, 
+                                      (float *) panData );
+        CPLFree( pabyRaw );
+
+        return CE_None;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Collect minimum value.                                          */
 /* -------------------------------------------------------------------- */
     pabyCur = pabyRaw + 2;
-    if( (nCellType == AIG_CELLTYPE_INT || pabyCur[0] != 0x00)
-        && (pabyCur[0] < FLOAT_MAGIC_BEGIN || pabyCur[0] > FLOAT_MAGIC_END) )
-    {
-        nMinSize = pabyCur[1];
-        pabyCur += 2;
 
-        if( nMinSize == 4 )
-        {
-            memcpy( &nMin, pabyCur, 4 );
-            nMin = CPL_MSBWORD32( nMin );
-            pabyCur += 4;
-        }
-        else
-        {
-            nMin = 0;
-            for( i = 0; i < nMinSize; i++ )
-            {
-                nMin = nMin * 256 + *pabyCur;
-                pabyCur++;
-            }
-        }
-            
-        nDataSize -= 2+nMinSize;
+    nMinSize = pabyCur[1];
+    pabyCur += 2;
+    
+    if( nMinSize == 4 )
+    {
+        memcpy( &nMin, pabyCur, 4 );
+        nMin = CPL_MSBWORD32( nMin );
+        pabyCur += 4;
     }
+    else
+    {
+        nMin = 0;
+        for( i = 0; i < nMinSize; i++ )
+        {
+            nMin = nMin * 256 + *pabyCur;
+            pabyCur++;
+        }
+    }
+    
+    nDataSize -= 2+nMinSize;
     
 /* -------------------------------------------------------------------- */
 /*	Call an apppropriate handler depending on magic code.		*/
@@ -528,22 +510,10 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
                                 nBlockXSize, nBlockYSize,
                                 panData );
     }
-    else if( nCellType == AIG_CELLTYPE_INT && nMagic == 0x00 )
+    else if( nMagic == 0x00 )
     {
         AIGProcessIntConstBlock( pabyCur, nDataSize, nMin,
                                  nBlockXSize, nBlockYSize, panData );
-    }
-    else if( nMagic == 0x00
-             || (nMagic >= FLOAT_MAGIC_BEGIN && nMagic <= FLOAT_MAGIC_END) )
-    {
-        if( nCellType == AIG_CELLTYPE_FLOAT )
-            AIGProcessRaw32BitFloatBlock( pabyCur, nDataSize, 0,
-                                          nBlockXSize, nBlockYSize,
-                                          (float *) panData );
-        else
-            AIGProcessRaw32BitBlock( pabyCur, nDataSize, nMin,
-                                     nBlockXSize, nBlockYSize,
-                                     panData );
     }
     else if( nMagic == 0x10 )
     {
@@ -588,13 +558,10 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
 /*      Translate any no data values.  We assume any negative values    */
 /*      in an integer block are no data.                                */
 /* -------------------------------------------------------------------- */
-    if( nCellType == AIG_CELLTYPE_INT )
+    for( i = nBlockXSize * nBlockYSize - 1; i >= 0; i-- )
     {
-        for( i = nBlockXSize * nBlockYSize - 1; i >= 0; i-- )
-        {
-            if( ((GInt32) panData[i]) == ESRI_GRID_NO_DATA )
-                panData[i] = GRID_NO_DATA;
-        }
+        if( ((GInt32) panData[i]) == ESRI_GRID_NO_DATA )
+            panData[i] = GRID_NO_DATA;
     }
     
     return CE_None;

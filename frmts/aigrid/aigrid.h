@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/07/18 13:58:58  warmerda
+ * no RTileType for float tiles
+ *
  * Revision 1.6  2000/04/20 14:05:02  warmerda
  * added more raw float magic codes
  *
@@ -58,9 +61,6 @@ CPL_C_START
 #define GRID_NO_DATA 65536
 
 #define ESRI_GRID_NO_DATA -2147483647
-
-#define FLOAT_MAGIC_BEGIN   0x3f
-#define FLOAT_MAGIC_END     0x4f
 
 /* ==================================================================== */
 /*      Grid Instance                                                   */

@@ -20,23 +20,28 @@ static void DumpMagic( AIGInfo_t * psInfo, int bVerbose )
             continue;
 
         VSIFSeek( psInfo->fpGrid, psInfo->panBlockOffset[i]+2, SEEK_SET );
-        VSIFRead( &byMagic, 1, 1, psInfo->fpGrid );
 
-        if( byMagic != 0 && byMagic != 0x43 && byMagic != 0x04
-            && byMagic != 0x08 && byMagic != 0x10 && byMagic != 0xd7 
-            && byMagic != 0xdf && byMagic != 0xe0 && byMagic != 0xfc
-            && byMagic != 0xf8 && byMagic != 0xff && byMagic != 0x41
-            && byMagic != 0x40 && byMagic != 0x42 && byMagic != 0xf0
-            && byMagic != 0xcf && byMagic != 0x01
-            && (psInfo->nCellType == AIG_CELLTYPE_INT
-              || (byMagic <= FLOAT_MAGIC_BEGIN && byMagic >= FLOAT_MAGIC_END)))
-            bReport = TRUE;
+        if( psInfo->nCellType == AIG_CELLTYPE_INT )
+        {
+            VSIFRead( &byMagic, 1, 1, psInfo->fpGrid );
 
-        
+            if( byMagic != 0 && byMagic != 0x43 && byMagic != 0x04
+                && byMagic != 0x08 && byMagic != 0x10 && byMagic != 0xd7 
+                && byMagic != 0xdf && byMagic != 0xe0 && byMagic != 0xfc
+                && byMagic != 0xf8 && byMagic != 0xff && byMagic != 0x41
+                && byMagic != 0x40 && byMagic != 0x42 && byMagic != 0xf0
+                && byMagic != 0xcf && byMagic != 0x01 )
+                bReport = TRUE;
 
-        if( byMagic == 0 && psInfo->panBlockSize[i] > 8 
-            && psInfo->nCellType == AIG_CELLTYPE_INT )
-            bReport = TRUE;
+            if( byMagic == 0 && psInfo->panBlockSize[i] > 8 )
+                bReport = TRUE;
+        }
+        else
+        {
+            if( psInfo->panBlockSize[i] !=
+                psInfo->nBlockXSize*psInfo->nBlockYSize*sizeof(float) )
+                bReport = TRUE;
+        }
 
         if( bReport )
         {
