@@ -29,6 +29,10 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.15  2004/11/20 02:02:14  gwalter
+# Add option to specify offsets in
+# CopyDatasetInfo (for geocoding info).
+#
 # Revision 1.14  2004/03/23 21:11:27  warmerda
 # some Numeric distributions dont have NumericInt, but NumericInteger instead
 #
@@ -237,13 +241,61 @@ def NumericTypeCodeToGDALTypeCode( numeric_code ):
     else:
         return None
     
-def CopyDatasetInfo( src, dst ):
-    if src.GetGCPCount() > 0:
-        dst.SetGCPs( src.GetGCPs(), src.GetGCPProjection() )
+def CopyDatasetInfo( src, dst, xoff=0, yoff=0 ):
+    """
+    Copy georeferencing information and metadata from one dataset to another.
+    src: input dataset
+    dst: output dataset - It can be a ROI - 
+    xoff, yoff:  dst's offset with respect to src in pixel/line.  
+    
+    Notes: Destination dataset must have update access.  Certain formats
+           do not support creation of geotransforms and/or gcps.
 
-    dst.SetGeoTransform( src.GetGeoTransform() )
-    dst.SetProjection( src.GetProjection() )
+    """
+
     dst.SetMetadata( src.GetMetadata() )
+                    
 
 
+    #Check for geo transform
+    gt = src.GetGeoTransform()
+    if gt != (0,1,0,0,0,1):
+        dst.SetProjection( src.GetProjectionRef() )
         
+        if (xoff == 0) and (yoff == 0):
+            dst.SetGeoTransform( gt  )
+        else:
+            ngt = [gt[0],gt[1],gt[2],gt[3],gt[4],gt[5]]
+            ngt[0] = gt[0] + xoff*gt[1] + yoff*gt[2];
+            ngt[3] = gt[3] + xoff*gt[4] + yoff*gt[5];
+            dst.SetGeoTransform( ( ngt[0], ngt[1], ngt[2], ngt[3], ngt[4], ngt[5] ) )
+            
+    #Check for GCPs
+    elif src.GetGCPCount() > 0:
+        
+        if (xoff == 0) and (yoff == 0):
+            dst.SetGCPs( src.GetGCPs(), src.GetGCPProjection() )
+        else:
+            gcps = src.GetGCPs()
+            #Shift gcps
+            new_gcps = []
+            for gcp in gcps:
+                ngcp = gdal.GCP()
+                ngcp.GCPX = gcp.GCPX 
+                ngcp.GCPY = gcp.GCPY
+                ngcp.GCPZ = gcp.GCPZ
+                ngcp.GCPPixel = gcp.GCPPixel - xoff
+                ngcp.GCPLine = gcp.GCPLine - yoff
+                ngcp.Info = gcp.Info
+                ngcp.Id = gcp.Id
+                new_gcps.append(ngcp)
+
+            try:
+                dst.SetGCPs( new_gcps , src.GetGCPProjection() )
+            except:
+                print "Failed to set GCPs"
+                return
+
+    return
+        
+
