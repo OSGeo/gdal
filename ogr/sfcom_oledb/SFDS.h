@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/05/08 20:27:48  warmerda
+ * added support for caching OGRDataSources
+ *
  * Revision 1.16  2002/05/06 15:12:39  warmerda
  * improve IErrorInfo support
  *
@@ -120,13 +123,12 @@ class ATL_NO_VTABLE MyIDBInitializeImpl : public IDBInitializeImpl<T>
                 char *pszDataSource;
                 IUnknown *pIU;
                 QueryInterface(IID_IUnknown, (void **) &pIU);		
+                OGRDataSource *poDS;
 			
-                SFRegisterOGRFormats();
-
                 pszDataSource = SFGetInitDataSource(pIU);
 
-                OGRDataSource *poDS;
-                poDS = OGRSFDriverRegistrar::Open( pszDataSource, FALSE );
+
+                poDS = SFDSCacheOpenDataSource( pszDataSource );
                 CPLDebug( "OGR_OLEDB", "Open(%s) = %p", pszDataSource, poDS );
 
                 if (poDS)
@@ -136,15 +138,7 @@ class ATL_NO_VTABLE MyIDBInitializeImpl : public IDBInitializeImpl<T>
                     SFSetOGRDataSource(pIU,poDS,(void *) this);
                 }
                 else
-                {
-                    if( strlen(CPLGetLastErrorMsg()) > 0 )
-                        hr = SFReportError(E_FAIL,IID_IDBInitialize,0,
-                                           "%s", CPLGetLastErrorMsg() );
-                    else
-                        hr = SFReportError(E_FAIL,IID_IDBInitialize,0,
-                                           "Failed to open: %s",
-                                           pszDataSource);
-                }
+                    hr = E_FAIL;
 			
                 free(pszDataSource);
             }
@@ -179,6 +173,10 @@ class ATL_NO_VTABLE CSFSource :
         public ISpecifyPropertyPagesImpl<CSFSource>
 	{
 public:
+                     CSFSource()
+                { CPLDebug( "OGR_OLEDB", "CSFSource(): %p", this ); }
+            virtual ~CSFSource()
+                { CPLDebug( "OGR_OLEDB", "~CSFSource(): %p", this ); }
 	HRESULT FinalConstruct()
 	{
             // verify the 

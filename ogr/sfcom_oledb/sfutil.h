@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/05/08 20:27:48  warmerda
+ * added support for caching OGRDataSources
+ *
  * Revision 1.8  2002/05/06 15:12:39  warmerda
  * improve IErrorInfo support
  *
@@ -68,5 +71,9 @@ HRESULT	     	SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,
                               char *pszText, ...);
 void		SFRegisterOGRFormats();
 int             SFWkbGeomTypeToDBGEOM( OGRwkbGeometryType );
+OGRDataSource *SFDSCacheOpenDataSource( const char *pszDataSourceName );
+void           SFDSCacheReleaseDataSource( OGRDataSource * );
+void           SFDSCacheCleanup();
+
 
 void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... );

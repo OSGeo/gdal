@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/05/08 20:27:48  warmerda
+ * added support for caching OGRDataSources
+ *
  * Revision 1.17  2002/05/06 15:12:39  warmerda
  * improve IErrorInfo support
  *
@@ -284,7 +287,7 @@ void SFClearOGRDataSource(void *pKey)
 		if (pInfo->pKey == pKey)
 		{
 			*pPrev = pInfo->next;		
-			delete pInfo->pOGR;
+                        SFDSCacheReleaseDataSource( pInfo->pOGR );
 			delete pInfo;
 			break;
 		}
