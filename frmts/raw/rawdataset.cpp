@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/12/14 19:18:38  ldjohn
+ * Typecast offset parameter to Seek for large file support.
+ *
  * Revision 1.12  2001/12/12 18:41:33  warmerda
  * don't pass vsi_l_offset values in debug calls
  *
@@ -181,7 +184,7 @@ CPLErr RawRasterBand::AccessLine( int iLine )
     if( nLoadedScanline == iLine )
         return CE_None;
 
-    if( Seek( nImgOffset + iLine * nLineOffset, SEEK_SET ) == -1
+    if( Seek( nImgOffset + (vsi_l_offset) iLine * nLineOffset, SEEK_SET ) == -1
         || Read( pLineBuffer, nPixelOffset, nBlockXSize ) 
                                        < (size_t) nBlockXSize )
     {
@@ -289,7 +292,8 @@ CPLErr RawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Write to disk.                                                  */
 /* -------------------------------------------------------------------- */
-    if( Seek( nImgOffset + nBlockYOff * nLineOffset, SEEK_SET ) == -1 )
+    if( Seek( nImgOffset + (vsi_l_offset) nBlockYOff * nLineOffset,
+              SEEK_SET ) == -1 ) 
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to scanline %d @ %d to write to file.\n",
