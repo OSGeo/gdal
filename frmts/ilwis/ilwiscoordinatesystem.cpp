@@ -253,6 +253,7 @@ static IlwisEllips iwEllips[] =
 #define ILW_Standard_Parallel_2 "Standard Parallel 2"
 #define ILW_Scale_Factor "Scale Factor"
 #define ILW_Latitude_True_Scale "Latitude of True Scale"
+#define ILW_Height_Persp_Center "Height Persp. Center"
 
 double ReadPrjParms(string section, string entry, string filename)
 {
@@ -269,7 +270,7 @@ static int fetchParms(string csyFileName, double * padfPrjParams)
 		int     i;
 
 		//Fill all projection parameters with zero
-    for ( i = 0; i < 12; i++ )
+    for ( i = 0; i < 13; i++ )
         padfPrjParams[i] = 0.0;
 		
 		string pszProj = ReadElement("CoordSystem", "Projection", csyFileName);
@@ -298,6 +299,7 @@ static int fetchParms(string csyFileName, double * padfPrjParams)
 		padfPrjParams[9] = ReadPrjParms("Projection", "Scale Factor", csyFileName);
 		padfPrjParams[10] = ReadPrjParms("Projection", "Latitude of True Scale", csyFileName);
 		padfPrjParams[11] = ReadPrjParms("Projection", "Zone", csyFileName);
+    padfPrjParams[12] = ReadPrjParms("Projection", ILW_Height_Persp_Center, csyFileName);
 
 		return true;
 }
@@ -385,7 +387,7 @@ static int scaleFromLATTS( string sEllips, double phits, double &scale )
  * Import coordinate system from ILWIS projection definition.
  *
  * The method will import projection definition in ILWIS, 
- * It uses 12 parameters to define the coordinate system
+ * It uses 13 parameters to define the coordinate system
  * and datum/ellipsoid specieied in the padfPrjParams array. 
  *
  * @param padfPrjParams Array of 10 coordinate system parameters:
@@ -402,6 +404,7 @@ static int scaleFromLATTS( string sEllips, double phits, double &scale )
  * [9]  Scale Factor
  * [10] Latitude_Of_True_Scale
  * [11] Zone
+ * [12] Satellite Height
 **/ 
 
 CPLErr ILWISDataset::ReadProjection( string csyFileName )
@@ -433,9 +436,9 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
 		}
 
 /* -------------------------------------------------------------------- */
-/*      Fetch array containing 12 coordinate system parameters          */
+/*      Fetch array containing 13 coordinate system parameters          */
 /* -------------------------------------------------------------------- */
-    double     padfPrjParams[12];
+    double     padfPrjParams[13];
 		fetchParms(csyFileName, padfPrjParams);
 		
 		OGRSpatialReference oSRS;
@@ -636,6 +639,20 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
 				oSRS.SetVDG(	padfPrjParams[6],
 											padfPrjParams[3], padfPrjParams[4] );
 		}
+		else if( EQUALN( pszProj.c_str(), "GeoStationary Satellite", 23 ) )
+		{
+        oSRS.SetGEOS( padfPrjParams[6], 
+                 padfPrjParams[12], 
+                 padfPrjParams[3], 
+                 padfPrjParams[4] );
+    }
+		else if( EQUALN( pszProj.c_str(), "MSG Perspective", 15 ) )
+		{
+        oSRS.SetGEOS( padfPrjParams[6], 
+                 padfPrjParams[12], 
+                 padfPrjParams[3], 
+                 padfPrjParams[4] );
+    }
 		else
     {
         oSRS.SetLocalCS( pszProj.c_str() );
@@ -958,6 +975,17 @@ void WriteVanderGrinten(string csFileName, OGRSpatialReference oSRS)
 											oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
 }
 
+void WriteGeoStatSat(string csFileName, OGRSpatialReference oSRS)
+{
+				WriteProjectionName(csFileName, "GeoStationary Satellite");
+				WriteFalseEastNorth(csFileName, oSRS);
+				WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+											oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
+				WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000"); 
+				WriteElement("Projection", ILW_Height_Persp_Center, csFileName, 
+											oSRS.GetNormProjParm(SRS_PP_SATELLITE_HEIGHT, 35785831.0));
+}
+
 /************************************************************************/
 /*                          WriteProjection()                           */
 /************************************************************************/
@@ -1135,6 +1163,10 @@ CPLErr ILWISDataset::WriteProjection()
 		else if( EQUAL(pszProjName,SRS_PT_VANDERGRINTEN) )
     {
 				WriteVanderGrinten(csFileName, oSRS);  
+		}
+		else if( EQUAL(pszProjName,SRS_PT_GEOSTATIONARY_SATELLITE) )
+    {
+				WriteGeoStatSat(csFileName, oSRS);  
 		}
 		else
     {
