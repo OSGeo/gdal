@@ -28,6 +28,11 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.10  2003/06/12 20:21:52  warmerda
+ * Don't depend on .jp2 extension for JP2 files, trust 16bit magic header.
+ * Still requires a known extension for JPC streams *and* now tests the two
+ * byte magic header.
+ *
  * Revision 1.9  2003/05/28 18:18:14  warmerda
  * debugging report for YCbCr processing added
  *
@@ -129,8 +134,15 @@ transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
 static const unsigned int jp2_uuid_box_type = 0x75756964;
 
 static unsigned char msi_uuid2[16] =
-	{0xb1,0x4b,0xf8,0xbd,0x08,0x3d,0x4b,0x43,
-         0xa5,0xae,0x8c,0xd7,0xd5,0xa6,0xce,0x03}; 
+{0xb1,0x4b,0xf8,0xbd,0x08,0x3d,0x4b,0x43,
+ 0xa5,0xae,0x8c,0xd7,0xd5,0xa6,0xce,0x03}; 
+
+static unsigned char jp2_header[] = 
+{0x00,0x00,0x00,0x0c,0x6a,0x50,0x20,0x20,0x0d,0x0a,0x87,0x0a};
+
+static unsigned char jpc_header[] = 
+{0xff,0x4f};
+
 
 /************************************************************************/
 /* ==================================================================== */
@@ -472,7 +484,7 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 void JP2KAKRasterBand::ProcessTile( kdu_tile tile, GByte *pabyDest, 
-                                    int nTileXOff, int nTileYOff )
+                                    int /*nTileXOff*/, int /*nTileYOff*/ )
 
 {
     // Open tile-components and create processing engines and resources
@@ -524,7 +536,7 @@ void JP2KAKRasterBand::ProcessTile( kdu_tile tile, GByte *pabyDest,
 /************************************************************************/
 
 void JP2KAKRasterBand::ProcessYCbCrTile( kdu_tile tile, GByte *pabyDest, 
-                                         int nTileXOff, int nTileYOff )
+                                         int /*nTileXOff*/, int /*nTileYOff*/ )
 
 {
     // Open tile-components and create processing engines and resources
@@ -645,10 +657,10 @@ void JP2KAKRasterBand::ApplyPalette( jp2_palette oJP2Palette )
     {
         GDALColorEntry sEntry;
 
-        sEntry.c1 = (int) MAX(0,MIN(255,pafLUT[iColor + nCount*0]*256+128));
-        sEntry.c2 = (int) MAX(0,MIN(255,pafLUT[iColor + nCount*1]*256+128));
-        sEntry.c3 = (int) MAX(0,MIN(255,pafLUT[iColor + nCount*2]*256+128));
-        sEntry.c4 = (int) MAX(0,MIN(255,pafLUT[iColor + nCount*3]*256+128));
+        sEntry.c1 = (short) MAX(0,MIN(255,pafLUT[iColor + nCount*0]*256+128));
+        sEntry.c2 = (short) MAX(0,MIN(255,pafLUT[iColor + nCount*1]*256+128));
+        sEntry.c3 = (short) MAX(0,MIN(255,pafLUT[iColor + nCount*2]*256+128));
+        sEntry.c4 = (short) MAX(0,MIN(255,pafLUT[iColor + nCount*3]*256+128));
 
         oCT.SetColorEntry( iColor, &sEntry );
     }
@@ -792,12 +804,28 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poOpenInfo->fp == NULL )
         return NULL;
-    
-    pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
-    if( !EQUAL(pszExtension,"jpc") && !EQUAL(pszExtension,"j2k") 
-        && !EQUAL(pszExtension,"jp2") && !EQUAL(pszExtension,"jpx") )
+
+    if( poOpenInfo->nHeaderBytes < 16 )
         return NULL;
 
+/* -------------------------------------------------------------------- */
+/*      Any extension is supported for JP2 files.  Only selected        */
+/*      extensions are supported for JPC files since the standard       */
+/*      prefix is so short (two bytes).                                 */
+/* -------------------------------------------------------------------- */
+    if( memcmp( poOpenInfo->pabyHeader, jp2_header, sizeof(jp2_header) ) == 0 )
+        pszExtension = "jp2";
+    else if( memcmp( poOpenInfo->pabyHeader, jpc_header, sizeof(jpc_header) ) == 0 )
+    {
+        pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
+        if( !EQUAL(pszExtension,"jpc") && !EQUAL(pszExtension,"j2k") 
+            && !EQUAL(pszExtension,"jp2") && !EQUAL(pszExtension,"jpx") 
+            && !EQUAL(pszExtension,"j2c") )
+            return NULL;
+    }
+    else
+        return NULL;
+        
 /* -------------------------------------------------------------------- */
 /*      Initialize Kakadu warning/error reporting subsystem.            */
 /* -------------------------------------------------------------------- */
