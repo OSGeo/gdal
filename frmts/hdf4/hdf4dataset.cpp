@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.29  2005/03/29 12:42:53  dron
+ * Added AnyTypeToDouble() method.
+ *
  * Revision 1.28  2004/09/08 17:55:13  dron
  * Few problems fixed.
  *
@@ -218,7 +221,7 @@ char *SPrintArray( GDALDataType eDataType, void *paDataArray,
                      (i < nValues - 1)?pszDelimiter:"" );
                 break;
             case GDT_UInt16:
-                sprintf( pszField, "%d%s", ((GUInt16 *)paDataArray)[i],
+                sprintf( pszField, "%u%s", ((GUInt16 *)paDataArray)[i],
                      (i < nValues - 1)?pszDelimiter:"" );
                 break;
             case GDT_Int16:
@@ -227,7 +230,7 @@ char *SPrintArray( GDALDataType eDataType, void *paDataArray,
                      (i < nValues - 1)?pszDelimiter:"" );
                 break;
             case GDT_UInt32:
-                sprintf( pszField, "%d%s", ((GUInt32 *)paDataArray)[i],
+                sprintf( pszField, "%u%s", ((GUInt32 *)paDataArray)[i],
                      (i < nValues - 1)?pszDelimiter:"" );
                 break;
             case GDT_Int32:
@@ -253,7 +256,7 @@ char *SPrintArray( GDALDataType eDataType, void *paDataArray,
 /************************************************************************/
 /*              Translate HDF4 data type into GDAL data type            */
 /************************************************************************/
-GDALDataType HDF4Dataset::GetDataType( int32 iNumType )
+inline GDALDataType HDF4Dataset::GetDataType( int32 iNumType ) const
 {
     switch (iNumType)
     {
@@ -287,7 +290,7 @@ GDALDataType HDF4Dataset::GetDataType( int32 iNumType )
 /*		Return the human readable name of data type		*/
 /************************************************************************/
 
-const char *HDF4Dataset::GetDataTypeName( int32 iNumType )
+const char *HDF4Dataset::GetDataTypeName( int32 iNumType ) const
 {
     switch (iNumType)
     {
@@ -321,10 +324,10 @@ const char *HDF4Dataset::GetDataTypeName( int32 iNumType )
 }
 
 /************************************************************************/
-/*		Return the size of data type in bytes           	*/
+/*  Return the size of data type in bytes           	                */
 /************************************************************************/
 
-int HDF4Dataset::GetDataTypeSize( int32 iNumType )
+inline int HDF4Dataset::GetDataTypeSize( int32 iNumType ) const
 {
     switch (iNumType)
     {
@@ -346,6 +349,39 @@ int HDF4Dataset::GetDataTypeSize( int32 iNumType )
 	    return 8;
 	default:
 	    return 0;
+    }
+}
+
+/************************************************************************/
+/*  Convert value stored in the input buffer to double value.           */
+/************************************************************************/
+
+double HDF4Dataset::AnyTypeToDouble( int32 iNumType, void *pData ) const
+{
+    switch ( iNumType )
+    {
+        case DFNT_INT8:
+            return (double)*(char *)pData;
+        case DFNT_UINT8:
+            return (double)*(unsigned char *)pData;
+        case DFNT_INT16:
+            return (double)*(short *)pData;
+        case DFNT_UINT16:
+            return (double)*(unsigned short *)pData;
+        case DFNT_INT32:
+            return (double)*(long *)pData;
+        case DFNT_UINT32:
+            return (double)*(unsigned long *)pData;
+        case DFNT_INT64:
+            return (double)*(char *)pData;
+        case DFNT_UINT64:
+            return (double)*(GIntBig *)pData;
+        case DFNT_FLOAT32:
+            return (double)*(float *)pData;
+        case DFNT_FLOAT64:
+            return (double)*(double *)pData;
+        default:
+            return 0.0;
     }
 }
 
