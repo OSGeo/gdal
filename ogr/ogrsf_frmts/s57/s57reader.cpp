@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2000/09/13 19:19:24  warmerda
+ * added checking on NATF:ATTL values
+ *
  * Revision 1.18  2000/06/16 18:10:05  warmerda
  * expanded tabs
  *
@@ -591,8 +594,29 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
     for( iAttr = 0; iAttr < nAttrCount; iAttr++ )
     {
         int     nAttrId = poRecord->GetIntSubfield("NATF",0,"ATTL",iAttr);
+        const char *pszAcronym;
+
+        if( nAttrId < 1 || nAttrId >= poRegistrar->GetMaxAttrIndex()
+            || (pszAcronym = poRegistrar->GetAttrAcronym(nAttrId)) == NULL )
+        {
+            static int bAttrWarningIssued = FALSE;
+
+            if( !bAttrWarningIssued )
+            {
+                bAttrWarningIssued = TRUE;
+                CPLError( CE_Warning, CPLE_AppDefined,
+                        "Illegal feature attribute id (NATF:ATTL[%d]) of %d\n"
+                        "on feature FIDN=%d, FIDS=%d.\n"
+                        "Skipping attribute, no more warnings will be issued.",
+                          iAttr, nAttrId, 
+                          poFeature->GetFieldAsInteger( "FIDN" ),
+                          poFeature->GetFieldAsInteger( "FIDS" ) );
+            }
+
+            continue;
+        }
         
-        poFeature->SetField( poRegistrar->GetAttrAcronym(nAttrId),
+        poFeature->SetField( pszAcronym, 
                           poRecord->GetStringSubfield("NATF",0,"ATVL",iAttr) );
     }
 }
