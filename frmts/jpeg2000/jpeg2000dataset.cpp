@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.11  2003/02/03 15:13:53  warmerda
+ * avoid warning
+ *
  * Revision 1.10  2003/01/30 16:25:35  dron
  * Support for reading and writing GeoJP2 information via hacked JasPer.
  *
@@ -602,7 +605,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 			CPLMalloc( box->data.bpcc.numcmpts * sizeof(int) );
 		    pabSignedness = (int *)
 			CPLMalloc( box->data.bpcc.numcmpts * sizeof(int) );
-		    for ( iBand = 0; iBand < box->data.bpcc.numcmpts; iBand++ )
+		    for( iBand=0; iBand < (int)box->data.bpcc.numcmpts; iBand++)
 		    {
 			paiDepth[iBand] = box->data.bpcc.bpcs[iBand] && 0x7F;
 			pabSignedness[iBand] = box->data.bpcc.bpcs[iBand] >> 7;
