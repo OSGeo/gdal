@@ -4,7 +4,7 @@ GDAL_ROOT	=	../../..
 include $(GDAL_ROOT)/GDALmake.opt
 
 OGR_OBJ =	ogravcbindriver.o ogravcbindatasource.o ogravcbinlayer.o \
-		ogravclayer.o
+		ogravclayer.o ogravcdatasource.o
 
 AVC_OBJ	=	avc_bin.o avc_binwr.o avc_e00gen.o avc_e00parse.o \
 		avc_e00write.o avc_e00read.o avc_mbyte.o avc_misc.o \

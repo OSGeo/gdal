@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/02/14 23:01:04  warmerda
+ * added region and attribute support
+ *
  * Revision 1.1  2002/02/13 20:48:18  warmerda
  * New
  *
@@ -46,12 +49,14 @@ CPL_CVSID("$Id$");
 /*                           OGRAVCLayer()                           */
 /************************************************************************/
 
-OGRAVCLayer::OGRAVCLayer()
+OGRAVCLayer::OGRAVCLayer( AVCFileType eSectionTypeIn, 
+                          OGRAVCDataSource *poDSIn )
 
 {
     poFilterGeom = NULL;
-    poSRS = NULL;
-    eSectionType = AVCFileUnknown;
+    eSectionType = eSectionTypeIn;
+    
+    poDS = poDSIn;
 }
 
 /************************************************************************/
@@ -66,9 +71,6 @@ OGRAVCLayer::~OGRAVCLayer()
         delete poFeatureDefn;
         poFeatureDefn = NULL;
     }
-
-    if( poSRS != NULL )
-        delete poSRS;
 
     if( poFilterGeom != NULL )
         delete poFilterGeom;
@@ -110,19 +112,16 @@ int OGRAVCLayer::TestCapability( const char * pszCap )
 OGRSpatialReference *OGRAVCLayer::GetSpatialRef()
 
 {
-    return poSRS;
+    return poDS->GetSpatialRef();
 }
 
 /************************************************************************/
 /*                       SetupFeatureDefinition()                       */
 /************************************************************************/
 
-int OGRAVCLayer::SetupFeatureDefinition( AVCFileType eSectionTypeIn,
-                                         const char *pszName )
+int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
 
 {
-    eSectionType = eSectionTypeIn;
-
     switch( eSectionType )
     {
       case AVCFileARC:
@@ -145,12 +144,33 @@ int OGRAVCLayer::SetupFeatureDefinition( AVCFileType eSectionTypeIn,
         return TRUE;
 
       case AVCFilePAL:
+      case AVCFileRPL:
         {
             poFeatureDefn = new OGRFeatureDefn( pszName );
             poFeatureDefn->SetGeomType( wkbPolygon );
 
             OGRFieldDefn	oArcIds( "ArcIds", OFTIntegerList );
             poFeatureDefn->AddFieldDefn( &oArcIds );
+        }
+        return TRUE;
+
+      case AVCFileCNT:
+        {
+            poFeatureDefn = new OGRFeatureDefn( pszName );
+            poFeatureDefn->SetGeomType( wkbPoint );
+
+            OGRFieldDefn	oLabelIds( "LabelIds", OFTIntegerList );
+            poFeatureDefn->AddFieldDefn( &oLabelIds );
+        }
+        return TRUE;
+
+      case AVCFileLAB:
+        {
+            poFeatureDefn = new OGRFeatureDefn( pszName );
+            poFeatureDefn->SetGeomType( wkbPoint );
+
+            OGRFieldDefn	oPolyId( "PolyId", OFTInteger );
+            poFeatureDefn->AddFieldDefn( &oPolyId );
         }
         return TRUE;
 
@@ -213,8 +233,10 @@ OGRFeature *OGRAVCLayer::TranslateFeature( void *pAVCFeature )
 
 /* ==================================================================== */
 /*      PAL (Polygon)                                                   */
+/*      RPL (Region)                                                    */
 /* ==================================================================== */
       case AVCFilePAL:
+      case AVCFileRPL:
       {
           AVCPal *psPAL = (AVCPal *) pAVCFeature;
 
@@ -223,11 +245,6 @@ OGRFeature *OGRAVCLayer::TranslateFeature( void *pAVCFeature )
 /* -------------------------------------------------------------------- */
           OGRFeature *poOGRFeature = new OGRFeature( GetLayerDefn() );
           poOGRFeature->SetFID( psPAL->nPolyId );
-
-/* -------------------------------------------------------------------- */
-/*      Apply polygon geometry ... for now we just skip - later we      */
-/*      will try to collect the arcs and form polygons.                 */
-/* -------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------- */
 /*      Apply attributes.                                               */
@@ -244,7 +261,166 @@ OGRFeature *OGRAVCLayer::TranslateFeature( void *pAVCFeature )
           return poOGRFeature;
       }
 
+/* ==================================================================== */
+/*      CNT (Centroid)                                                  */
+/* ==================================================================== */
+      case AVCFileCNT:
+      {
+          AVCCnt *psCNT = (AVCCnt *) pAVCFeature;
+
+/* -------------------------------------------------------------------- */
+/*      Create feature.                                                 */
+/* -------------------------------------------------------------------- */
+          OGRFeature *poOGRFeature = new OGRFeature( GetLayerDefn() );
+          poOGRFeature->SetFID( psCNT->nPolyId );
+
+/* -------------------------------------------------------------------- */
+/*      Apply Geometry                                                  */
+/* -------------------------------------------------------------------- */
+          poOGRFeature->SetGeometryDirectly( 
+              new OGRPoint( psCNT->sCoord.x, psCNT->sCoord.y ) );
+
+/* -------------------------------------------------------------------- */
+/*      Apply attributes.                                               */
+/* -------------------------------------------------------------------- */
+          poOGRFeature->SetField( 0, psCNT->numLabels, psCNT->panLabelIds );
+
+          return poOGRFeature;
+      }
+
+/* ==================================================================== */
+/*      LAB (Label)                                                     */
+/* ==================================================================== */
+      case AVCFileLAB:
+      {
+          AVCLab *psLAB = (AVCLab *) pAVCFeature;
+
+/* -------------------------------------------------------------------- */
+/*      Create feature.                                                 */
+/* -------------------------------------------------------------------- */
+          OGRFeature *poOGRFeature = new OGRFeature( GetLayerDefn() );
+          poOGRFeature->SetFID( psLAB->nValue );
+
+/* -------------------------------------------------------------------- */
+/*      Apply Geometry                                                  */
+/* -------------------------------------------------------------------- */
+          poOGRFeature->SetGeometryDirectly( 
+              new OGRPoint( psLAB->sCoord1.x, psLAB->sCoord1.y ) );
+
+/* -------------------------------------------------------------------- */
+/*      Apply attributes.                                               */
+/* -------------------------------------------------------------------- */
+          poOGRFeature->SetField( 0, psLAB->nPolyId );
+
+          return poOGRFeature;
+      }
+
       default:
         return NULL;
     }
+}
+
+/************************************************************************/
+/*                       AppendTableDefinition()                        */
+/*                                                                      */
+/*      Add fields to this layers feature definition based on the       */
+/*      definition from the coverage.                                   */
+/************************************************************************/
+
+int OGRAVCLayer::AppendTableDefinition( AVCTableDef *psTableDef )
+
+{
+    for( int iField = 0; iField < psTableDef->numFields; iField++ )
+    {
+        AVCFieldInfo *psFInfo = psTableDef->pasFieldDef + iField;
+        char	szFieldName[128];
+
+        /* Strip off white space */
+        strcpy( szFieldName, psFInfo->szName );
+        if( strstr(szFieldName," ") != NULL )
+            *(strstr(szFieldName," ")) = '\0';
+        
+        OGRFieldDefn  oFDefn( szFieldName, OFTInteger );
+
+        if( psFInfo->nIndex < 0 )
+            continue;
+
+        switch( psFInfo->nType1*10 )
+        {
+          case AVC_FT_DATE:
+          case AVC_FT_CHAR:
+            oFDefn.SetType( OFTString );
+            oFDefn.SetWidth( psFInfo->nFmtWidth );
+            break;
+
+          case AVC_FT_FIXINT:
+          case AVC_FT_BININT:
+            oFDefn.SetType( OFTInteger );
+            oFDefn.SetWidth( psFInfo->nFmtWidth );
+            break;
+
+          case AVC_FT_FIXNUM:
+          case AVC_FT_BINFLOAT:
+            oFDefn.SetType( OFTReal );
+            oFDefn.SetWidth( psFInfo->nFmtWidth );
+            if( psFInfo->nFmtPrec > 0 )
+                oFDefn.SetPrecision( psFInfo->nFmtPrec );
+            break;
+        }
+
+        poFeatureDefn->AddFieldDefn( &oFDefn );
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                        TranslateTableFields()                        */
+/************************************************************************/
+
+int OGRAVCLayer::TranslateTableFields( OGRFeature *poFeature, 
+                                       int nFieldBase, 
+                                       AVCTableDef *psTableDef,
+                                       AVCField *pasFields )
+
+{
+    int	iOutField = nFieldBase;
+
+    for( int iField=0; iField < psTableDef->numFields; iField++ )
+    {
+        AVCFieldInfo *psFInfo = psTableDef->pasFieldDef + iField;
+        int           nType = psFInfo->nType1 * 10;
+
+        if( psFInfo->nIndex < 0 )
+            continue;
+        
+        if (nType ==  AVC_FT_DATE || nType == AVC_FT_CHAR ||
+            nType == AVC_FT_FIXINT || nType == AVC_FT_FIXNUM)
+        {
+            poFeature->SetField( iOutField++, pasFields[iField].pszStr );
+        }
+        else if (nType == AVC_FT_BININT && psFInfo->nSize == 4)
+        {
+            poFeature->SetField( iOutField++, pasFields[iField].nInt32 );
+        }
+        else if (nType == AVC_FT_BININT && psFInfo->nSize == 2)
+        {
+            poFeature->SetField( iOutField++, pasFields[iField].nInt16 );
+        }
+        else if (nType == AVC_FT_BINFLOAT && psFInfo->nSize == 4)
+        {
+            poFeature->SetField( iOutField++, pasFields[iField].fFloat );
+        }
+        else if (nType == AVC_FT_BINFLOAT && psFInfo->nSize == 8)
+        {
+            poFeature->SetField( iOutField++, pasFields[iField].dDouble );
+        }
+        else
+        {
+            CPLAssert( FALSE );
+            return FALSE;
+        }
+    }
+
+    return TRUE;
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/02/14 23:01:04  warmerda
+ * added region and attribute support
+ *
  * Revision 1.1  2002/02/13 20:48:18  warmerda
  * New
  *
@@ -45,15 +48,27 @@ CPL_CVSID("$Id$");
 
 OGRAVCBinLayer::OGRAVCBinLayer( OGRAVCBinDataSource *poDSIn,
                                 AVCE00Section *psSectionIn )
+        : OGRAVCLayer( psSectionIn->eType, poDSIn )
 
 {
     psSection = psSectionIn;
-    poDS = poDSIn;
     hFile = NULL;
     poArcLayer = NULL;
     bNeedReset = FALSE;
 
-    SetupFeatureDefinition( psSection->eType, psSection->pszName );
+    hTable = NULL;
+    nTableBaseField = -1;
+
+    SetupFeatureDefinition( psSection->pszName );
+    
+    szTableName[0] = '\0';
+    if( psSection->eType == AVCFilePAL )
+        sprintf( szTableName, "%s.PAT", poDS->GetCoverageName() );
+    else if( psSection->eType == AVCFileRPL )
+        sprintf( szTableName, "%s.PAT%s", poDS->GetCoverageName(),
+                 psSectionIn->pszName );
+
+    CheckSetupTable();
 }
 
 /************************************************************************/
@@ -80,41 +95,12 @@ void OGRAVCBinLayer::ResetReading()
     }
 
     bNeedReset = FALSE;
-}
 
-/************************************************************************/
-/*                           GetRawFeature()                            */
-/*                                                                      */
-/*      Note that the returned feature remains owned by the AVC         */
-/*      library and won't last long.                                    */
-/************************************************************************/
-
-void *OGRAVCBinLayer::GetRawFeature( long nFID )
-
-{
-/* -------------------------------------------------------------------- */
-/*      If we haven't started yet, open the file now.                   */
-/* -------------------------------------------------------------------- */
-    if( hFile == NULL )
+    if( hTable != NULL )
     {
-        hFile = AVCBinReadOpen(poDS->GetInfo()->pszCoverPath, 
-                               psSection->pszFilename, 
-                               poDS->GetInfo()->eCoverType, 
-                               psSection->eType,
-                               poDS->GetInfo()->psDBCSInfo);
+        AVCBinReadClose( hTable );
+        hTable = NULL;
     }
-
-/* -------------------------------------------------------------------- */
-/*      Sequential reading order will be confused by having hFile       */
-/*      opened, but doing a random read.  Note that the next            */
-/*      sequential read will need to reset the reading.                 */
-/* -------------------------------------------------------------------- */
-    bNeedReset = TRUE;
-
-/* -------------------------------------------------------------------- */
-/*      Read the feature/record.                                        */
-/* -------------------------------------------------------------------- */
-    return AVCBinReadObject( hFile, nFID );
 }
 
 /************************************************************************/
@@ -124,13 +110,60 @@ void *OGRAVCBinLayer::GetRawFeature( long nFID )
 OGRFeature *OGRAVCBinLayer::GetFeature( long nFID )
 
 {
+/* -------------------------------------------------------------------- */
+/*      If we haven't started yet, open the file now.                   */
+/* -------------------------------------------------------------------- */
+    if( hFile == NULL )
+    {
+        AVCE00ReadPtr psInfo = ((OGRAVCBinDataSource *) poDS)->GetInfo();
+
+        hFile = AVCBinReadOpen(psInfo->pszCoverPath, 
+                               psSection->pszFilename, 
+                               psInfo->eCoverType, 
+                               psSection->eType,
+                               psInfo->psDBCSInfo);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read the raw feature - the -3 fid is a special flag             */
+/*      indicating serial access.                                       */
+/* -------------------------------------------------------------------- */
     void *pFeature;
 
-    pFeature = GetRawFeature( nFID );
+    if( nFID == -3 )
+        pFeature = AVCBinReadNextObject( hFile );
+    else
+    {
+        bNeedReset = TRUE;
+        pFeature = AVCBinReadObject( hFile, nFID );
+    }
+        
     if( pFeature == NULL )
         return NULL;
 
-    return TranslateFeature( pFeature );
+/* -------------------------------------------------------------------- */
+/*      Translate the feature.                                          */
+/* -------------------------------------------------------------------- */
+    OGRFeature *poFeature;
+
+    poFeature = TranslateFeature( pFeature );
+    if( poFeature == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      If this is a polygon layer, try to assemble the arcs to form    */
+/*      the whole polygon geometry.                                     */
+/* -------------------------------------------------------------------- */
+    if( psSection->eType == AVCFilePAL 
+        || psSection->eType == AVCFileRPL )
+        FormPolygonGeometry( poFeature, (AVCPal *) pFeature );
+
+/* -------------------------------------------------------------------- */
+/*      If we have an attribute table, append the attributes now.       */
+/* -------------------------------------------------------------------- */
+    AppendTableFields( poFeature );
+
+    return poFeature;
 }
 
 /************************************************************************/
@@ -143,50 +176,10 @@ OGRFeature *OGRAVCBinLayer::GetNextFeature()
     if( bNeedReset )
         ResetReading();
 
-/* -------------------------------------------------------------------- */
-/*      If we haven't started yet, open the file now.                   */
-/* -------------------------------------------------------------------- */
-    if( hFile == NULL )
-    {
-        hFile = AVCBinReadOpen(poDS->GetInfo()->pszCoverPath, 
-                               psSection->pszFilename, 
-                               poDS->GetInfo()->eCoverType, 
-                               psSection->eType,
-                               poDS->GetInfo()->psDBCSInfo);
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Read a feature/record.                                          */
-/* -------------------------------------------------------------------- */
-    void	*pFeature;
-
-    pFeature = AVCBinReadNextObject( hFile );
-
-/* -------------------------------------------------------------------- */
-/*      If we are out of features, close the file, and reset            */
-/*      conditions.                                                     */
-/* -------------------------------------------------------------------- */
-    if( pFeature == NULL )
-    {
-        AVCBinReadClose( hFile );
-        hFile = NULL;
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Translate the feature                                           */
-/* -------------------------------------------------------------------- */
-    OGRFeature *poFeature = TranslateFeature( pFeature );
+    OGRFeature *poFeature = GetFeature( -3 );
 
     if( poFeature == NULL )
-        return NULL;
-
-/* -------------------------------------------------------------------- */
-/*      If this is a polygon layer, try to assemble the arcs to form    */
-/*      the whole polygon geometry.                                     */
-/* -------------------------------------------------------------------- */
-    if( psSection->eType == AVCFilePAL )
-        FormPolygonGeometry( poFeature, (AVCPal *) pFeature );
+        ResetReading();
 
     return poFeature;
 }
@@ -270,3 +263,115 @@ int OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
 
     return eErr == OGRERR_NONE;
 }
+
+/************************************************************************/
+/*                          CheckSetupTable()                           */
+/*                                                                      */
+/*      Check if the named table exists, and if so, setup access to     */
+/*      it (open it), and add it's fields to the feature class          */
+/*      definition.                                                     */
+/************************************************************************/
+
+int OGRAVCBinLayer::CheckSetupTable()
+
+{
+    if( szTableName[0] == '\0' )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Scan for the indicated section.                                 */
+/* -------------------------------------------------------------------- */
+    AVCE00ReadPtr psInfo = ((OGRAVCBinDataSource *) poDS)->GetInfo();
+    int           iSection;
+    AVCE00Section *psSection = NULL;
+    char	  szPaddedName[65];
+    
+    sprintf( szPaddedName, "%s%32s", szTableName, " " );
+    szPaddedName[32] = '\0';
+
+    for( iSection = 0; iSection < psInfo->numSections; iSection++ )
+    {
+        if( EQUAL(szPaddedName,psInfo->pasSections[iSection].pszName) 
+            && psInfo->pasSections[iSection].eType == AVCFileTABLE )
+            psSection = psInfo->pasSections + iSection;
+    }
+
+    if( psSection == NULL )
+    {
+        szTableName[0] = '\0';
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try opening the table.                                          */
+/* -------------------------------------------------------------------- */
+    hTable = AVCBinReadOpen( psInfo->pszInfoPath,  szTableName,
+                             psInfo->eCoverType, AVCFileTABLE,
+                             psInfo->psDBCSInfo);
+    
+    if( hTable == NULL )
+    {
+        szTableName[0] = '\0';
+        return FALSE;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Setup attributes.                                               */
+/* -------------------------------------------------------------------- */
+    nTableBaseField = poFeatureDefn->GetFieldCount();
+    
+    AppendTableDefinition( hTable->hdr.psTableDef );
+
+/* -------------------------------------------------------------------- */
+/*      Close table so we don't have to many files open at once.        */
+/* -------------------------------------------------------------------- */
+    AVCBinReadClose( hTable );
+
+    hTable = NULL;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                         AppendTableFields()                          */
+/************************************************************************/
+
+int OGRAVCBinLayer::AppendTableFields( OGRFeature *poFeature )
+
+{
+    AVCE00ReadPtr psInfo = ((OGRAVCBinDataSource *) poDS)->GetInfo();
+
+    if( szTableName[0] == '\0' )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Open the table if it is currently closed.                       */
+/* -------------------------------------------------------------------- */
+    if( hTable == NULL )
+    {
+        hTable = AVCBinReadOpen( psInfo->pszInfoPath,  szTableName,
+                                 psInfo->eCoverType, AVCFileTABLE,
+                                 psInfo->psDBCSInfo);
+    }
+
+    if( hTable == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Read the info record.                                           */
+/* -------------------------------------------------------------------- */
+    int	nRecordId = poFeature->GetFID();
+    void *hRecord;
+
+    hRecord = AVCBinReadObject( hTable, nRecordId );
+    if( hRecord == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Translate it.                                                   */
+/* -------------------------------------------------------------------- */
+    return TranslateTableFields( poFeature, nTableBaseField, 
+                                 hTable->hdr.psTableDef, 
+                                 (AVCField *) hRecord );
+}
+

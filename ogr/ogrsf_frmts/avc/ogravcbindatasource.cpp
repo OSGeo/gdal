@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/02/14 23:01:04  warmerda
+ * added region and attribute support
+ *
  * Revision 1.1  2002/02/13 20:48:18  warmerda
  * New
  *
@@ -95,6 +98,7 @@ int OGRAVCBinDataSource::Open( const char * pszNewName, int bTestOpen )
         return FALSE;
 
     pszName = CPLStrdup( pszNewName );
+    pszCoverageName = CPLStrdup( psAVC->pszCoverName );
 
 /* -------------------------------------------------------------------- */
 /*      Create layers for the "interesting" sections of the coverage.   */
@@ -113,8 +117,38 @@ int OGRAVCBinDataSource::Open( const char * pszNewName, int bTestOpen )
         {
           case AVCFileARC:
           case AVCFilePAL:
+          case AVCFileCNT:
+          case AVCFileLAB:
+          case AVCFileRPL:
             papoLayers[nLayers++] = new OGRAVCBinLayer( this, psSec );
             break;
+
+          case AVCFilePRJ:
+          {
+              char 	**papszPRJ;
+              AVCBinFile *hFile;
+              
+              hFile = AVCBinReadOpen(psAVC->pszCoverPath, 
+                                     psSec->pszFilename, 
+                                     psAVC->eCoverType, 
+                                     psSec->eType,
+                                     psAVC->psDBCSInfo);
+              if( hFile && poSRS == NULL )
+              {
+                  papszPRJ = AVCBinReadNextPrj( hFile );
+
+                  poSRS = new OGRSpatialReference();
+                  if( poSRS->importFromESRI( papszPRJ ) != OGRERR_NONE )
+                  {
+                      CPLError( CE_Warning, CPLE_AppDefined, 
+                                "Failed to parse PRJ section, ignoring." );
+                      delete poSRS;
+                      poSRS = NULL;
+                  }
+                  AVCBinReadClose( hFile );
+              }
+          }
+          break;
 
           default:
             ;
