@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/11/27 14:35:28  warmerda
+ * Added support for uncompressing 4bit images.
+ *
  * Revision 1.22  2002/11/27 03:19:21  warmerda
  * added support for uncompressing 1bit data
  *
@@ -723,6 +726,22 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
                     pabyDest[nPixelsOutput>>3] &= ~(1<<(nPixelsOutput & 0x7));
                     nPixelsOutput++;
                 }
+            }
+        }
+        else if( nDataType == EPT_u4 )
+        {
+            int		i;
+
+            CPLAssert( nDataValue >= 0 && nDataValue < 16 );
+            
+            for( i = 0; i < nRepeatCount; i++ )
+            {
+                if( (nPixelsOutput & 0x1) == 0 )
+                    pabyDest[nPixelsOutput>>1] = nDataValue;
+                else
+                    pabyDest[nPixelsOutput>>1] |= (nDataValue<<4);
+
+                nPixelsOutput++;
             }
         }
         else
