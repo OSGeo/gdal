@@ -44,6 +44,10 @@ test1$(EXE):	test1.o $(DEP_LIBS)
 	$(CXX) $(LNK_FLAGS) test1.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o test1$(EXE)
 
+gdalwarptest$(EXE): gdalwarptest.o $(DEP_LIBS)
+	$(CXX) $(LNK_FLAGS) gdalwarptest.o $(XTRAOBJ) \
+		$(CONFIG_LIBS) -o gdalwarptest$(EXE)
+
 clean:
 	rm -f *.o $(BIN_LIST) core gdal-config gdal-config-inst
 
