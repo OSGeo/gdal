@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/04/16 17:56:07  warmerda
+ * Initialize ch.
+ *
  * Revision 1.5  2002/03/14 21:38:05  warmerda
  * removed DGN_DEBUG macro
  *
@@ -408,7 +411,7 @@ void DGNRad50ToAscii(unsigned short rad50, char *str )
     unsigned char cTimes;
     unsigned short value;
     unsigned short temp;
-    char ch;
+    char ch = '\0';
 
     while (rad50 > 0)
     {
