@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.11  2004/02/03 20:38:50  dron
+ * Fixes in coordinate hadling; recognize more projections.
+ *
  * Revision 1.10  2004/02/01 17:29:34  dron
  * Format parsing logic completely rewritten. Start using importFromUSGS().
  *
@@ -379,10 +382,20 @@ static long USGSMnemonicToCode( const char* pszMnemonic )
 {
     if ( EQUAL(pszMnemonic, "UTM") )
         return 1L;
+    else if ( EQUAL(pszMnemonic, "LCC") )
+        return 4L;
+    else if ( EQUAL(pszMnemonic, "PS") )
+        return 6L;
+    else if ( EQUAL(pszMnemonic, "PC") )
+        return 7L;
     else if ( EQUAL(pszMnemonic, "TM") )
         return 9L;
+    else if ( EQUAL(pszMnemonic, "OM") )
+        return 20L;
+    else if ( EQUAL(pszMnemonic, "SOM") )
+        return 22L;
     else
-        return 0L;
+        return 1L;  // UTM by default
 }
 
 static long USGSEllipsoidToCode( const char* pszMnemonic )
@@ -556,7 +569,6 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
     long        iProjSys, iZone, iDatum;
-    int         bNorth = TRUE;
     // Coordinates of pixel's centers
     double	dfULX = 0.5, dfULY = 0.5;
     double	dfURX = poDS->nRasterXSize - 0.5, dfURY = 0.5;
@@ -610,10 +622,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     pszTemp = strstr( pszHeader, CORNER_UPPER_LEFT );
     if ( pszTemp )
     {
-        pszTemp += strlen( CORNER_UPPER_LEFT ) + 26;
-        if ( *pszTemp == 'S' )
-            bNorth = FALSE;
-        pszTemp += 2;
+        pszTemp += strlen( CORNER_UPPER_LEFT ) + 28;
         dfULX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
         pszTemp += CORNER_VALUE_SIZE + 1;
         dfULY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
@@ -672,9 +681,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Calculate transformation matrix
     poDS->adfGeoTransform[1] = (dfURX - dfLLX) / (poDS->nRasterXSize - 1);
-    poDS->adfGeoTransform[5] = (bNorth) ?
-                                (dfURY - dfLLY) / (poDS->nRasterYSize - 1)
-                                : (dfLLY - dfURY) / (poDS->nRasterYSize - 1);
+    poDS->adfGeoTransform[5] = (dfLLY - dfURY) / (poDS->nRasterYSize - 1);
     poDS->adfGeoTransform[0] = dfULX - poDS->adfGeoTransform[1] / 2;
     poDS->adfGeoTransform[3] = dfULY - poDS->adfGeoTransform[5] / 2;
     poDS->adfGeoTransform[2] = 0.0;
