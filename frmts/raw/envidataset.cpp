@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/02/27 09:50:41  dron
+ * SUFFIX and INTERLEAVE creation options added; reference pixels supported.
+ *
  * Revision 1.9  2003/02/17 21:30:02  dron
  * Write support via Create() method added.
  *
@@ -346,7 +349,11 @@ void ENVIDataset::FlushCache()
     VSIFPrintf( fp, "band names = {\n" );
     for ( int i = 1; i <= nBands; i++ )
     {
-	VSIFPrintf( fp, "%s", GetRasterBand( i )->GetDescription() );
+	const char  *pszDescription = GetRasterBand( i )->GetDescription();
+
+	if ( EQUAL( pszDescription, "" ) )
+	    pszDescription = CPLSPrintf( "Band %d", i );
+	VSIFPrintf( fp, "%s", pszDescription );
 	if ( i != nBands )
 	    VSIFPrintf( fp, ",\n" );
     }
@@ -440,13 +447,13 @@ char **ENVIDataset::SplitList( const char *pszCleanInput )
         if( pszInput[iFEnd] == '\0' )
             break;
 
-        iChar = iFEnd+1;
-        iFEnd = iFEnd-1;
+        iChar = iFEnd + 1;
+        iFEnd = iFEnd - 1;
 
         while( iFEnd > iFStart && pszInput[iFEnd] == ' ' )
             iFEnd--;
 
-        pszInput[iFEnd+1] = '\0';
+        pszInput[iFEnd + 1] = '\0';
         papszReturn = CSLAddString( papszReturn, pszInput + iFStart );
     }
 
@@ -478,12 +485,14 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
         return FALSE;
     }
 
-    adfGeoTransform[0] = atof(papszFields[3]);
-    adfGeoTransform[1] = atof(papszFields[5]);
+    adfGeoTransform[1] = atof(papszFields[5]);	    // Pixel width
+    adfGeoTransform[5] = -atof(papszFields[6]);	    // Pixel height
+    adfGeoTransform[0] =			    // Upper left X coordinate
+	atof(papszFields[3]) - (atof(papszFields[1]) - 1) * adfGeoTransform[1];
+    adfGeoTransform[3] =			    // Upper left Y coordinate
+	atof(papszFields[4]) - (atof(papszFields[2]) - 1) * adfGeoTransform[5];
     adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = atof(papszFields[4]);
     adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = -atof(papszFields[6]);
 
     if( EQUALN(papszFields[0],"UTM",3) && nCount >= 9 )
     {
@@ -912,7 +921,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 GDALDataset *ENVIDataset::Create( const char * pszFilename,
                                   int nXSize, int nYSize, int nBands,
                                   GDALDataType eType,
-                                  char ** /* papszOptions */ )
+                                  char ** papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -986,8 +995,13 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
 /*      Create the .hdr filename.                                       */
 /* -------------------------------------------------------------------- */
     const char	*pszHDRFilename;
+    const char	*pszSuffix;
 
-    pszHDRFilename = CPLResetExtension(pszFilename, "hdr" );
+    pszSuffix = CSLFetchNameValue( papszOptions, "SUFFIX" );
+    if ( pszSuffix && EQUAL( pszSuffix, "ADD" ))
+	pszHDRFilename = CPLFormFilename( NULL, pszFilename, "hdr" );
+    else
+	pszHDRFilename = CPLResetExtension(pszFilename, "hdr" );
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -1005,6 +1019,8 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
 /*      Write out the header.                                           */
 /* -------------------------------------------------------------------- */
     int		iBigEndian;
+    const char	*pszInterleaving;
+    
 #ifdef CPL_LSB
     iBigEndian = 0;
 #else
@@ -1016,7 +1032,19 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
 		nXSize, nYSize, nBands );
     VSIFPrintf( fp, "header offset = 0\nfile type = ENVI Standard\n" );
     VSIFPrintf( fp, "data type = %d\n", iENVIType );
-    VSIFPrintf( fp, "interleave = bsq\n" );
+    pszInterleaving = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
+    if ( pszInterleaving )
+    {
+	if ( EQUAL( pszInterleaving, "bip" ) )
+	    pszInterleaving = "bip";		    // interleaved by pixel
+	else if ( EQUAL( pszInterleaving, "bil" ) )
+	    pszInterleaving = "bil";		    // interleaved by line
+	else
+	    pszInterleaving = "bsq";		// band sequental by default
+    }
+    else
+	pszInterleaving = "bsq";
+    VSIFPrintf( fp, "interleave = %s\n", pszInterleaving);
     VSIFPrintf( fp, "byte order = %d\n", iBigEndian );
 
     VSIFClose( fp );
