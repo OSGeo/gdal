@@ -68,6 +68,22 @@ files for details on patents affecting BSB format.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/bsb/bsbdataset.cpp</tt>.<p>
 
+<h2><a name="BT">BT -- VTP .bt Binary Terrain Format</a></h2>
+
+The .bt format is used for elevation data in the VTP software.  The
+driver includes support for reading and writing .bt 1.3 format including
+support for Int16, Int32 and Float32 pixel data types.<p>
+
+Projections in external .prj files are read and written, and support for
+most internally defined coordinate systems is also available.<p>
+
+
+NOTE: Implemented as <tt>gdal/frmts/raw/btdataset.cpp</tt>.<p>
+
+See Also: The <a href="http://www.vterrain.org/Implementation/Formats/BT.html">
+BT file format</a> is defined on the <a href="http://www.vterrain.org/">
+VTP</a> web site.<p>
+
 <h2><a name="CEOS">CEOS -- CEOS Image</a></h2>
 
 This is a simple, read-only reader for ceos image files.  To use, select
