@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.37 2002/04/10 17:35:22 warmerda Exp $
+ * $Id: shpopen.c,v 1.38 2002/05/07 16:43:39 warmerda Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.38  2002/05/07 16:43:39  warmerda
+ * Removed debugging printf.
+ *
  * Revision 1.37  2002/04/10 17:35:22  warmerda
  * fixed bug in ring reversal code
  *
@@ -153,7 +156,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: shpopen.c,v 1.37 2002/04/10 17:35:22 warmerda Exp $";
+  "$Id: shpopen.c,v 1.38 2002/05/07 16:43:39 warmerda Exp $";
 
 #include "shapefil.h"
 
@@ -1819,9 +1822,6 @@ SHPRewindObject( SHPHandle hSHP, SHPObject * psObject )
             int   i;
 
             bAltered++;
-            printf( "Reverse Ring %d of Object %d\n", 
-                    iOpRing, psObject->nShapeId );
-
             for( i = 0; i < nVertCount/2; i++ )
             {
                 double dfSaved;
