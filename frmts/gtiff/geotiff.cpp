@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2000/06/26 21:09:55  warmerda
+ * improved flushing before building overviews
+ *
  * Revision 1.30  2000/06/26 19:40:28  warmerda
  * Various fixes for ::Create(), including flushing the directory to disk at
  * end of create so that overviews can be safely added.
@@ -677,6 +680,8 @@ CPLErr GTiffDataset::IBuildOverviews(
     CPLErr       eErr = CE_None;
     int          i;
     GTiffDataset *poODS;
+
+    TIFFFlush( hTIFF );
 
 /* -------------------------------------------------------------------- */
 /*      Our TIFF overview support currently only works safely if all    */
