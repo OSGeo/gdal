@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/05/21 05:09:54  warmerda
+ * expand tabs
+ *
  * Revision 1.1  2003/04/08 19:32:47  warmerda
  * New
  *
@@ -81,7 +84,7 @@ OGRMemDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGRMemLayer	*poLayer;
+    OGRMemLayer *poLayer;
 
     poLayer = new OGRMemLayer( pszLayerName, poSRS, eType );
 
