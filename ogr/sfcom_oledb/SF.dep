@@ -1,0 +1,37 @@
+# Microsoft Developer Studio Generated Dependency File, included by SF.mak
+
+..\..\frmts\shapelib\dbfopen.c : \
+	"..\..\frmts\shapelib\shapefil.h"\
+	
+
+.\SF.cpp : \
+	"..\..\..\visualstudio\vc98\include\basetsd.h"\
+	"..\..\frmts\shapelib\shapefil.h"\
+	".\SF.h"\
+	".\SF_i.c"\
+	".\SFDS.h"\
+	".\SFRS.h"\
+	".\SFSess.h"\
+	".\StdAfx.h"\
+	
+
+.\SF.rc : \
+	".\SF.rgs"\
+	
+
+.\SFRS.cpp : \
+	"..\..\..\visualstudio\vc98\include\basetsd.h"\
+	"..\..\frmts\shapelib\shapefil.h"\
+	".\SF.h"\
+	".\SFRS.h"\
+	".\StdAfx.h"\
+	
+
+..\..\frmts\shapelib\shpopen.c : \
+	"..\..\frmts\shapelib\shapefil.h"\
+	
+
+.\StdAfx.cpp : \
+	"..\..\..\visualstudio\vc98\include\basetsd.h"\
+	".\StdAfx.h"\
+	

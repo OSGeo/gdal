@@ -1,0 +1,27 @@
+HKCR
+{
+	SF.SF.1 = s 'SF OLE DB Provider'
+	{
+		CLSID = s '{C9BD5075-0D6D-11D3-94FF-00104B238935}'
+	}
+	SF.SF = s 'SF OLE DB Provider'
+	{
+		CLSID = s '{C9BD5075-0D6D-11D3-94FF-00104B238935}'
+		CurVer = s 'SF.SF.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {C9BD5075-0D6D-11D3-94FF-00104B238935} = s 'SF OLE DB Provider'
+		{
+			ProgID = s 'SF.SF.1'
+			VersionIndependentProgID = s 'SF.SF'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			'OLE DB Provider' = s 'SF OLE DB Provider'
+			OLEDB_SERVICES = d '4294967295'
+			'TypeLib' = s '{C9BD5066-0D6D-11D3-94FF-00104B238935}'
+		}
+	}
+}
