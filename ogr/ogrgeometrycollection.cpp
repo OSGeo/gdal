@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/03/07 21:32:52  warmerda
+ * fixed bug with coordinate dimension reading from WKB
+ *
  * Revision 1.18  2003/01/07 16:44:27  warmerda
  * added removeGeometry
  *
@@ -493,6 +496,8 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
     nDataOffset = 9;
     if( nBytesAvailable != -1 )
         nBytesAvailable -= nDataOffset;
+
+    nCoordinateDimension = 0; // unknown
 
 /* -------------------------------------------------------------------- */
 /*      Get the Geoms.                                                  */
