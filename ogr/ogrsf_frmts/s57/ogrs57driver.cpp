@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/11/21 14:35:25  warmerda
+ * dont do open if update requested
+ *
  * Revision 1.3  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -70,22 +73,22 @@ const char *OGRS57Driver::GetName()
 OGRDataSource *OGRS57Driver::Open( const char * pszFilename, int bUpdate )
 
 {
-    OGRS57DataSource    *poDS = new OGRS57DataSource;
+    OGRS57DataSource    *poDS;
 
+    if( bUpdate )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "S57 Driver doesn't support update." );
+        return NULL;
+    }
+
+    poDS = new OGRS57DataSource;
     if( !poDS->Open( pszFilename, TRUE ) )
     {
         delete poDS;
         poDS = NULL;
     }
 
-    if( poDS != NULL && bUpdate )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "S57 Driver doesn't support update." );
-        delete poDS;
-        poDS = NULL;
-    }
-    
     return poDS;
 }
 
