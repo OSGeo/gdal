@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/03/05 15:36:22  warmerda
+ * Added -summary to Usage().
+ *
  * Revision 1.18  2003/02/25 14:56:25  warmerda
  * Added the -so (summary only) switch.
  *
@@ -337,7 +340,7 @@ int main( int nArgc, char ** papszArgv )
 static void Usage()
 
 {
-    printf( "Usage: ogrinfo [-ro] [-q] [-where restricted_where]\n"
+    printf( "Usage: ogrinfo [-ro] [-q] [-where restricted_where] [-summary]\n"
             "               [-spat xmin ymin xmax ymax] [-fid fid]\n"
             "               [-sql statement] [-al] [-so] [--formats]\n"
             "               datasource_name [layer [layer ...]]\n");
