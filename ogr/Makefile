@@ -15,11 +15,11 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
 		ogrlinestring.obj ogrpolygon.obj ogrlinearring.obj \
 		ogrutils.obj ogrgeometry.obj ogrgeometrycollection.obj \
 		ogrmultipolygon.obj ogrmultilinestring.obj \
-		ogrmultipoint.obj 
+                ogrmultipoint.obj
 
 OBJ_OLEDB =	oledb_sup.obj oledbsuprowset.obj oledb_sf.obj
 
-default:	test1.exe sfdump.exe
+default:        test1.exe sfdump.exe shape2ogr.obj
 
 geometryidl.h: geometryidl.idl spatialreferenceidl.h
 	midl geometryidl.idl
