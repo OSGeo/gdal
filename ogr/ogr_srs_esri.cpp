@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/05/08 21:52:55  warmerda
+ * fixed C morphToESRI func, added ESRI unit remapping
+ *
  * Revision 1.21  2003/02/25 04:53:16  warmerda
  * Added support for the LAMBERT projection.  Added support for defining a
  * GEOGCS from the SPHEROID if there is no known DATUM.   Fixed bug with
@@ -120,6 +123,18 @@ char *apszArgMapping[] = {
 char *apszDatumMapping[] = {
     "North_American_1927", SRS_DN_NAD27,
     "North_American_1983", SRS_DN_NAD83,
+    NULL, NULL }; 
+ 
+char *apszUnitMapping[] = {
+    "Meter", "meter",
+    "Meter", "metre",
+    "Foot", "foot",
+    "Foot", "feet",
+    "Foot_US", SRS_UL_US_FOOT,
+    "Degree", "degree",
+    "Degree", "degrees",
+    "Degree", SRS_UA_DEGREE,
+    "Radian", SRS_UA_RADIAN,
     NULL, NULL }; 
  
 /* -------------------------------------------------------------------- */
@@ -712,6 +727,13 @@ OGRErr OGRSpatialReference::morphToESRI()
                               apszDatumMapping+1, apszDatumMapping, 2 );
 
 /* -------------------------------------------------------------------- */
+/*      Translate UNIT keywords that are misnamed, or even the wrong    */
+/*      case.                                                           */
+/* -------------------------------------------------------------------- */
+    GetRoot()->applyRemapper( "UNIT", 
+                              apszUnitMapping+1, apszUnitMapping, 2 );
+
+/* -------------------------------------------------------------------- */
 /*      Try to insert a D_ in front of the datum name.                  */
 /* -------------------------------------------------------------------- */
     OGR_SRSNode *poDatum;
@@ -744,7 +766,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 OGRErr OSRMorphToESRI( OGRSpatialReferenceH hSRS )
 
 {
-    return ((OGRSpatialReference *) hSRS)->morphFromESRI();
+    return ((OGRSpatialReference *) hSRS)->morphToESRI();
 }
 
 /************************************************************************/
