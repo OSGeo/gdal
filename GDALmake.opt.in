@@ -40,15 +40,20 @@ GDAL_VER	=	1.0
 GDAL_LIB	= 	$(GDAL_ROOT)/gdal.a
 GDAL_SLIB	=	$(GDAL_ROOT)/gdal.$(GDAL_VER).so
 
+CPL_LIB		=	$(GDAL_ROOT)/port/cpl.a
+
 ifneq ($(TOPDIR),)
 OGDI_LIBS	=	-L$(TOPDIR)/bin/linux -logdi -lzlib
 OGDI_FLAG	=	ENABLED
 OGDI_FRMT	=	ogdi
 endif
 
-GDAL_LIBS	=	$(GDAL_LIB) $(GDAL_ROOT)/frmts/o/*.a $(OGDI_LIBS)
+
+GDAL_LIBS	=	$(GDAL_LIB) $(GDAL_ROOT)/frmts/o/*.a $(CPL_LIB) \
+			$(OGDI_LIBS)
 GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
-			$(GDAL_ROOT)/core/*.o $(GDAL_ROOT)/port/*.o
+			$(GDAL_ROOT)/core/*.o
+
 
 
 #
