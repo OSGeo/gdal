@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/09/22 13:31:48  warmerda
+ * added sdts
+ *
  * Revision 1.2  1999/09/13 14:34:20  warmerda
  * added feature reporting
  *
@@ -62,6 +65,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     RegisterOGRShape();
     RegisterOGRNTF();
+    RegisterOGRSDTS();
 
 /* -------------------------------------------------------------------- */
 /*      Processing command line arguments.                              */
