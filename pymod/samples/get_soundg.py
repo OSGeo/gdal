@@ -31,6 +31,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.2  2003/08/27 19:09:13  warmerda
+#  handle remapping if some fields can't be copied
+#
 #  Revision 1.1  2003/07/16 20:25:08  warmerda
 #  New
 #
@@ -78,13 +81,17 @@ field_count = src_defn.GetFieldCount()
 #############################################################################-
 # Copy the SOUNDG schema, and add an ELEV field.
 
+out_mapping = []
 for fld_index in range(field_count):
     src_fd = src_defn.GetFieldDefn( fld_index )
     
     fd = ogr.FieldDefn( src_fd.GetName(), src_fd.GetType() )
     fd.SetWidth( src_fd.GetWidth() )
     fd.SetPrecision( src_fd.GetPrecision() )
-    shp_layer.CreateField( fd )
+    if shp_layer.CreateField( fd ) != 0:
+        out_mapping.append( -1 )
+    else:
+        out_mapping.append( shp_layer.GetLayerDefn().GetFieldCount() - 1 )
 
 fd = ogr.FieldDefn( 'ELEV', ogr.OFTReal )
 fd.SetWidth( 12 )
@@ -105,7 +112,7 @@ while feat is not None:
         feat2 = ogr.Feature(feature_def=shp_layer.GetLayerDefn())
 
         for fld_index in range(field_count):
-            feat2.SetField( fld_index, feat.GetField( fld_index ) )
+            feat2.SetField( out_mapping[fld_index], feat.GetField( fld_index ) )
 
         feat2.SetField( 'ELEV', pnt.GetZ( 0 ) )
         feat2.SetGeometry( pnt )
