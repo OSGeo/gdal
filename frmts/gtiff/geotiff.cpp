@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.100  2003/12/22 15:08:16  dron
+ * Check, whether all bands in input dataset has the same data type.
+ *
  * Revision 1.99  2003/08/25 13:57:54  warmerda
  * Added support for XRESOLUTION, YRESOLUTION and RESOLUTIONUNIT.
  *
@@ -2787,13 +2790,37 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
 {
     TIFF	*hTIFF;
-    int		nBands = poSrcDS->GetRasterCount();
     int		nXSize = poSrcDS->GetRasterXSize();
     int		nYSize = poSrcDS->GetRasterYSize();
+    int		nBands = poSrcDS->GetRasterCount();
+    int         iBand;
     GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     CPLErr      eErr = CE_None;
     uint16	nPlanarConfig;
         
+/* -------------------------------------------------------------------- */
+/*      Check, whether all bands in input dataset has the same type.    */
+/* -------------------------------------------------------------------- */
+    for ( iBand = 2; iBand <= nBands; iBand++ )
+    {
+        if ( eType != poSrcDS->GetRasterBand(iBand)->GetRasterDataType() )
+        {
+            if ( bStrict )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+            "Unable to export GeoTIFF file with different datatypes per\n"
+            "different bands. All bands should have the same types in TIFF." );
+                return NULL;
+            }
+            else
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+            "Unable to export GeoTIFF file with different datatypes per\n"
+            "different bands. All bands should have the same types in TIFF." );
+            }
+        }
+    }
+
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
 
@@ -2997,9 +3024,7 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         nTileSize =  nPixelSize * nBlockXSize * nBlockYSize;
         pabyTile = (GByte *) CPLMalloc(nTileSize);
 
-        for( int iBand = 0; 
-             eErr == CE_None && iBand < nBands; 
-             iBand++ )
+        for(iBand = 0; eErr == CE_None && iBand < nBands; iBand++ )
         {
             GDALRasterBand *poBand = poSrcDS->GetRasterBand(iBand+1);
 
