@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/02/14 23:01:04  warmerda
+ * added region and attribute support
+ *
  * Revision 1.1  2002/02/13 20:48:18  warmerda
  * New
  *
@@ -39,6 +42,8 @@
 #include "ogrsf_frmts.h"
 #include "avc.h"
 
+class OGRAVCDataSource;
+
 /************************************************************************/
 /*                             OGRAVCLayer                              */
 /************************************************************************/
@@ -46,19 +51,26 @@
 class OGRAVCLayer : public OGRLayer
 {
   protected:
-    OGRSpatialReference *poSRS;
     OGRFeatureDefn      *poFeatureDefn;
     OGRGeometry		*poFilterGeom;
 
+    OGRAVCDataSource    *poDS;
+    
     AVCFileType         eSectionType;
 
-    int                 SetupFeatureDefinition( AVCFileType eSectionType,
-                                                const char *pszName ); 
+    int                 SetupFeatureDefinition( const char *pszName ); 
+    int                 AppendTableDefinition( AVCTableDef *psTableDef );
 
     OGRFeature          *TranslateFeature( void * );
 
+    int                 TranslateTableFields( OGRFeature *poFeature, 
+                                              int nFieldBase, 
+                                              AVCTableDef *psTableDef,
+                                              AVCField *pasFields );
+
   public:
-                        OGRAVCLayer();
+                        OGRAVCLayer( AVCFileType eSectionType, 
+                                     OGRAVCDataSource *poDS );
     			~OGRAVCLayer();
 
     OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
@@ -69,6 +81,25 @@ class OGRAVCLayer : public OGRLayer
     virtual OGRSpatialReference *GetSpatialRef();
     
     virtual int         TestCapability( const char * );
+};
+
+/************************************************************************/
+/*                         OGRAVCDataSource                             */
+/************************************************************************/
+
+class OGRAVCDataSource : public OGRDataSource
+{
+  protected:
+    OGRSpatialReference *poSRS;
+    char		*pszCoverageName;
+
+  public:
+		        OGRAVCDataSource();
+    			~OGRAVCDataSource();
+
+    OGRSpatialReference *GetSpatialRef();
+
+    const char          *GetCoverageName();
 };
 
 /* ==================================================================== */
@@ -86,13 +117,20 @@ class OGRAVCBinLayer : public OGRAVCLayer
     AVCE00Section       *psSection;
     AVCBinFile          *hFile;
 
-    OGRAVCBinDataSource *poDS;
-    
     OGRAVCBinLayer      *poArcLayer;
     int                 bNeedReset;
 
+    char		szTableName[128];
+    AVCBinFile          *hTable;
+    int                 nTableBaseField;
+
+    OGRSpatialReference *poSRS;
+
     int                 FormPolygonGeometry( OGRFeature *poFeature,
                                              AVCPal *psPAL );
+
+    int                 CheckSetupTable();
+    int                 AppendTableFields( OGRFeature *poFeature );
 
   public:
                         OGRAVCBinLayer( OGRAVCBinDataSource *poDS,
@@ -105,16 +143,13 @@ class OGRAVCBinLayer : public OGRAVCLayer
     OGRFeature *	GetFeature( long nFID );
 
     int                 TestCapability( const char * );
-
-    // special for use assembling polygons
-    void *              GetRawFeature( long nFID );
 };
 
 /************************************************************************/
 /*                         OGRAVCBinDataSource                          */
 /************************************************************************/
 
-class OGRAVCBinDataSource : public OGRDataSource
+class OGRAVCBinDataSource : public OGRAVCDataSource
 {
     OGRLayer            **papoLayers;
     int			nLayers;
