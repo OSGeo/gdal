@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2003/03/18 19:03:44  gwalter
+ * Add flushing, fix coordinate interpretation.
+ *
  * Revision 1.25  2003/03/13 18:34:02  gwalter
  * Fix data type determination in CreateCopy.
  *
@@ -452,32 +455,32 @@ void MFFDataset::ScanForGCPs()
 
         if( nCorner == 0 )
         {
-            dfRasterX = 0;
-            dfRasterY = 0;
+            dfRasterX = 0.5;
+            dfRasterY = 0.5;
             pszBase = "TOP_LEFT_CORNER";
         }
         else if( nCorner == 1 )
         {
-            dfRasterX = GetRasterXSize()-1.0;
-            dfRasterY = 0;
+            dfRasterX = GetRasterXSize()-0.5;
+            dfRasterY = 0.5;
             pszBase = "TOP_RIGHT_CORNER";
         }
         else if( nCorner == 2 )
         {
-            dfRasterX = GetRasterXSize()-1;
-            dfRasterY = GetRasterYSize()-1;
+            dfRasterX = GetRasterXSize()-0.5;
+            dfRasterY = GetRasterYSize()-0.5;
             pszBase = "BOTTOM_RIGHT_CORNER";
         }
         else if( nCorner == 3 )
         {
-            dfRasterX = 0;
-            dfRasterY = GetRasterYSize()-1;
+            dfRasterX = 0.5;
+            dfRasterY = GetRasterYSize()-0.5;
             pszBase = "BOTTOM_LEFT_CORNER";
         }
         else if( nCorner == 4 )
         {
-            dfRasterX = (GetRasterXSize()-1)/2.0;
-            dfRasterY = (GetRasterYSize()-1)/2.0;
+            dfRasterX = GetRasterXSize()/2.0;
+            dfRasterY = GetRasterYSize()/2.0;
             pszBase = "CENTRE";
         }
 
@@ -537,8 +540,8 @@ void MFFDataset::ScanForGCPs()
             pasGCPList[nGCPCount].dfGCPX = atof(papszTokens[3]);
             pasGCPList[nGCPCount].dfGCPY = atof(papszTokens[2]);
             pasGCPList[nGCPCount].dfGCPZ = 0.0;
-            pasGCPList[nGCPCount].dfGCPPixel = atof(papszTokens[1]);
-            pasGCPList[nGCPCount].dfGCPLine = atof(papszTokens[0]);
+            pasGCPList[nGCPCount].dfGCPPixel = atof(papszTokens[1])+0.5;
+            pasGCPList[nGCPCount].dfGCPLine = atof(papszTokens[0])+0.5;
 
             nGCPCount++;
         }
@@ -1405,20 +1408,39 @@ MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
           char *srcProjection=NULL;
           char *newGCPProjection=NULL;
 
-          padfTiepoints[0]=tempGeoTransform[0];
-          padfTiepoints[1]=tempGeoTransform[3];
-          padfTiepoints[2]=tempGeoTransform[0]+tempGeoTransform[1]*(poSrcDS->GetRasterXSize()-1);
-          padfTiepoints[3]=tempGeoTransform[3]+tempGeoTransform[4]*(poSrcDS->GetRasterXSize()-1);
-          padfTiepoints[4]=tempGeoTransform[0]+tempGeoTransform[2]*(poSrcDS->GetRasterYSize()-1);
-          padfTiepoints[5]=tempGeoTransform[3]+tempGeoTransform[5]*(poSrcDS->GetRasterYSize()-1);
-          padfTiepoints[6]=tempGeoTransform[0]+tempGeoTransform[1]*(poSrcDS->GetRasterXSize()-1)+
-                           tempGeoTransform[2]*(poSrcDS->GetRasterYSize()-1);
-          padfTiepoints[7]=tempGeoTransform[3]+tempGeoTransform[4]*(poSrcDS->GetRasterXSize()-1)+
-                           tempGeoTransform[5]*(poSrcDS->GetRasterYSize()-1);
-          padfTiepoints[8]=tempGeoTransform[0]+tempGeoTransform[1]*(poSrcDS->GetRasterXSize()-1)/2.0+
-                           tempGeoTransform[2]*(poSrcDS->GetRasterYSize()-1)/2.0;
-          padfTiepoints[9]=tempGeoTransform[3]+tempGeoTransform[4]*(poSrcDS->GetRasterXSize()-1)/2.0+
-                           tempGeoTransform[5]*(poSrcDS->GetRasterYSize()-1)/2.0;
+          padfTiepoints[0]=tempGeoTransform[0] + tempGeoTransform[1]*0.5 +\
+                           tempGeoTransform[2]*0.5;
+
+          padfTiepoints[1]=tempGeoTransform[3] + tempGeoTransform[4]*0.5 +\
+                           tempGeoTransform[5]*0.5;
+
+          padfTiepoints[2]=tempGeoTransform[0] + tempGeoTransform[2]*0.5 +\
+                           tempGeoTransform[1]*(poSrcDS->GetRasterXSize()-0.5);
+
+          padfTiepoints[3]=tempGeoTransform[3] + tempGeoTransform[5]*0.5 +\
+                           tempGeoTransform[4]*(poSrcDS->GetRasterXSize()-0.5);
+
+          padfTiepoints[4]=tempGeoTransform[0] + tempGeoTransform[1]*0.5 +\
+                           tempGeoTransform[2]*(poSrcDS->GetRasterYSize()-0.5);
+
+          padfTiepoints[5]=tempGeoTransform[3] + tempGeoTransform[4]*0.5 +\
+                           tempGeoTransform[5]*(poSrcDS->GetRasterYSize()-0.5);
+
+          padfTiepoints[6]=tempGeoTransform[0] +\
+                           tempGeoTransform[1]*(poSrcDS->GetRasterXSize()-0.5) +\
+                           tempGeoTransform[2]*(poSrcDS->GetRasterYSize()-0.5);
+
+          padfTiepoints[7]=tempGeoTransform[3]+\
+                           tempGeoTransform[4]*(poSrcDS->GetRasterXSize()-0.5)+\
+                           tempGeoTransform[5]*(poSrcDS->GetRasterYSize()-0.5);
+
+          padfTiepoints[8]=tempGeoTransform[0]+\
+                           tempGeoTransform[1]*(poSrcDS->GetRasterXSize())/2.0+\
+                           tempGeoTransform[2]*(poSrcDS->GetRasterYSize())/2.0;
+
+          padfTiepoints[9]=tempGeoTransform[3]+\
+                           tempGeoTransform[4]*(poSrcDS->GetRasterXSize())/2.0+\
+                           tempGeoTransform[5]*(poSrcDS->GetRasterYSize())/2.0;
 
           srcProjection = CPLStrdup(poSrcDS->GetProjectionRef());
           oUTMorLL.importFromWkt(&srcProjection);
@@ -1585,6 +1607,14 @@ MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     VSIFClose( fp );
    
     /* End of georeferencing stuff */
+
+    /* Make sure image data gets flushed */
+    for( iBand = 0; iBand < poDS->GetRasterCount(); iBand++ )
+    {
+        RawRasterBand *poDstBand =  (RawRasterBand *) poDS->GetRasterBand( iBand+1 );
+        poDstBand->FlushCache();
+    }
+
 
     if( !pfnProgress( 1.0, NULL, pProgressData ) )
     {
