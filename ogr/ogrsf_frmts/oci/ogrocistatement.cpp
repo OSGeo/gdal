@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/04/11 16:28:23  warmerda
+ * fixed nMode handling, add indicators for binders
+ *
  * Revision 1.9  2003/04/10 17:53:17  warmerda
  * added bindscalar and bindobject
  *
@@ -182,7 +185,8 @@ CPLErr OGROCIStatement::Prepare( const char *pszSQLStatement )
 /************************************************************************/
 
 CPLErr OGROCIStatement::BindObject( const char *pszPlaceName, 
-                                    void *pahObjects, OCIType *hTDO )
+                                    void *pahObjects, OCIType *hTDO,
+                                    void **papIndicators )
 
 {
     OCIBind *hBindOrd = NULL;
@@ -199,7 +203,7 @@ CPLErr OGROCIStatement::BindObject( const char *pszPlaceName,
     if( poSession->Failed(
             OCIBindObject( hBindOrd, poSession->hError, hTDO,
                            (dvoid **) pahObjects, (ub4 *)0, 
-                           (dvoid **)0, (ub4 *)0),
+                           (dvoid **)papIndicators, (ub4 *)0),
             "OCIBindObject()" ) )
         return CE_Failure;
 
@@ -285,8 +289,7 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
     if( poSession->Failed( 
         OCIStmtExecute( poSession->hSvcCtx, hStatement, 
                         poSession->hError, (ub4)bSelect ? 0 : 1, (ub4)0, 
-                        (OCISnapshot *)NULL, (OCISnapshot *)NULL, 
-                        (ub4) (bSelect ? OCI_DEFAULT : OCI_COMMIT_ON_SUCCESS)),
+                        (OCISnapshot *)NULL, (OCISnapshot *)NULL, nMode ),
         pszCommandText ) )
         return CE_Failure;
 
