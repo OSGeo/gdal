@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2002/07/18 08:27:05  dron
+ * Improved multidimesional SDS arrays handling.
+ *
  * Revision 1.4  2002/07/17 16:24:31  dron
  * MODIS support improved a bit.
  *
@@ -74,6 +77,7 @@ class HDF4ImageDataset : /*public GDALDataset,*/ public HDF4Dataset
     int32	iSDS;
     int32	iRank, iNumType, nAttrs;
     int32	aiDimSizes[MAX_VAR_DIMS];
+    int		iXDim, iYDim, iBandDim;
     char	szName[65];
 
 //    double      adfGeoTransform[6];
@@ -216,25 +220,26 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	iStart[0] = nBlockXOff;	iStride[0] = 1;	iEdges[0] = nBlockXSize;
 	break;
         case 3: // 3Dim: volume
-	switch( poGDS->iDataType )
-	{
-	    case MODIS_L1B:
-	    case MOD02QKM_L1B:
-	    case MODIS_UNK:
-	    iStart[0] = nBand - 1;	iStride[0] = 1;	iEdges[0] = 1;
-	    iStart[1] = nBlockYOff;	iStride[1] = 1;	iEdges[1] = nBlockYSize;
-	    iStart[2] = nBlockXOff;	iStride[2] = 1;	iEdges[2] = nBlockXSize;
-	    break;
-	    default:
-	    iStart[2] = nBand - 1;	iStride[2] = 1;	iEdges[2] = 1;
-	    iStart[0] = nBlockYOff;	iStride[0] = 1;	iEdges[0] = nBlockYSize;
-	    iStart[1] = nBlockXOff;	iStride[1] = 1;	iEdges[1] = nBlockXSize;
-	    break;
-	}		
+	iStart[poGDS->iBandDim] = nBand - 1;
+	iStride[poGDS->iBandDim] = 1;
+	iEdges[poGDS->iBandDim] = 1;
+	
+	iStart[poGDS->iYDim] = nBlockYOff;
+	iStride[poGDS->iYDim] = 1;
+	iEdges[poGDS->iYDim] = nBlockYSize;
+	
+	iStart[poGDS->iXDim] = nBlockXOff;
+	iStride[poGDS->iXDim] = 1;
+	iEdges[poGDS->iXDim] = nBlockXSize;
 	break;
         case 2: // 2Dim: rows/cols
-	iStart[0] = nBlockYOff;	iStride[0] = 1;	iEdges[0] = nBlockYSize;
-	iStart[1] = nBlockXOff;	iStride[1] = 1;	iEdges[1] = nBlockXSize;
+	iStart[poGDS->iYDim] = nBlockYOff;
+	iStride[poGDS->iYDim] = 1;
+	iEdges[poGDS->iYDim] = nBlockYSize;
+	
+	iStart[poGDS->iXDim] = nBlockXOff;
+	iStride[poGDS->iXDim] = 1;
+	iEdges[poGDS->iXDim] = nBlockXSize;
 	break;
     }
 
@@ -446,31 +451,32 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     {
 	case 2:
 	poDS->nBands = 1;
-        poDS->nRasterXSize = poDS->aiDimSizes[1];
-        poDS->nRasterYSize = poDS->aiDimSizes[0];
+        poDS->iXDim = 1;
+        poDS->iYDim = 0;
         break;
 	case 3:
-	switch( poDS->iDataType)
+	if( poDS->aiDimSizes[0] < poDS->aiDimSizes[2] )
 	{
-            case MODIS_L1B:
-	    case MOD02QKM_L1B:
-	    poDS->nBands = poDS->aiDimSizes[0];
-            poDS->nRasterXSize = poDS->aiDimSizes[2];
-            poDS->nRasterYSize = poDS->aiDimSizes[1];
-            break;
-	    default:
-	    poDS->nBands = poDS->aiDimSizes[2];
-            poDS->nRasterXSize = poDS->aiDimSizes[1];
-            poDS->nRasterYSize = poDS->aiDimSizes[0];
-	    break;
+	    poDS->iBandDim = 0;
+            poDS->iXDim = 2;
+            poDS->iYDim = 1;
 	}
+	else
+	{
+	    poDS->iBandDim = 2;
+            poDS->iXDim = 1;
+            poDS->iYDim = 0;
+	}
+        poDS->nBands = poDS->aiDimSizes[poDS->iBandDim];
 	break;
-	case 4:
+	case 4: // FIXME
 	poDS->nBands = poDS->aiDimSizes[2] * poDS->aiDimSizes[3];
         break;
 	default:
 	break;
     }
+    poDS->nRasterXSize = poDS->aiDimSizes[poDS->iXDim];
+    poDS->nRasterYSize = poDS->aiDimSizes[poDS->iYDim];
     for( i = 1; i <= poDS->nBands; i++ )
         poDS->SetBand( i, new HDF4ImageRasterBand( poDS, i ) );
 
