@@ -1,3 +1,8 @@
+2001-02-08  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* frmts/gif/{e,d}gif_lib.c: Fixed to use binary mode if O_BINARY
+	is defined rather than based on __MSDOS__.
+
 2001-02-06  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* Export various OGR classes, and entry points from DLL.
