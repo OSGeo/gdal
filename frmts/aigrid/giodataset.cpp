@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/03/27 13:38:57  warmerda
+ * Fixed SetBand() call in Create().
+ *
  * Revision 1.10  2000/03/23 23:03:08  warmerda
  * Fixed Create() method to use SetBand().
  *
@@ -613,7 +616,7 @@ GDALDataset *GIODataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->SetBand( 0, new GIORasterBand( poDS, 1 ) );
+    poDS->SetBand( 1, new GIORasterBand( poDS, 1 ) );
 
     return poDS;
 }
