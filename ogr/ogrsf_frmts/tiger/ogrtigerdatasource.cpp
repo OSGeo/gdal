@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2004/08/17 20:54:00  warmerda
+ * Avoid out-of-buffer read for very short filenames.
+ *
  * Revision 1.29  2004/02/12 16:00:41  warmerda
  * weaken test for candidate files so all Dynamap files found
  *
@@ -396,6 +399,8 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
              candidateFileList != NULL && candidateFileList[i] != NULL; 
              i++ ) 
         {
+            int nCandidateLen = strlen(candidateFileList[i]);
+
             if( papszLimitedFileList != NULL 
                 && CSLFindString(papszLimitedFileList,
                                  CPLGetBasename(candidateFileList[i])) == -1 )
@@ -403,8 +408,9 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
                 continue;
             }
 
-            if( candidateFileList[i][strlen(candidateFileList[i])-4] == '.'
-                && candidateFileList[i][strlen(candidateFileList[i])-1] == '1')
+            if( nCandidateLen > 4 
+                && candidateFileList[i][nCandidateLen-4] == '.'
+                && candidateFileList[i][nCandidateLen-1] == '1')
             {
                 char       szModule[128];
 
