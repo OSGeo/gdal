@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  1999/03/15 20:18:29  warmerda
+ * Fixed data range function.
+ *
  * Revision 1.10  1999/03/15 20:06:36  warmerda
  * Changed TIFF_BuildOverviews() to TIFFBuildOverviews().
  *
@@ -544,7 +547,7 @@ static CPLErr ImagineToGeoTIFFDataRange( HFABand * poBand, TIFF *hTIFF)
     dfMin = poBinInfo->GetDoubleField( "minimum" );
     dfMax = poBinInfo->GetDoubleField( "maximum" );
 
-    if( dfMax > dfMin )
+    if( dfMax < dfMin )
         return CE_Failure;
     
     if( dfMin < 0 || dfMin > 65536 || dfMax < 0 || dfMax > 65535
