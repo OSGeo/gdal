@@ -54,7 +54,7 @@ NetCDF Driver:
     - Pretty much tied to form of netCDF used in GMT for now. 
 
 VTerrain .bt Driver: 
-    - New driver ... still kind of broken, please avoid use. 
+    - New driver for VTerrain .bt elevation format.
 
 ECW Driver:
     - support supersampled reads efficiently. 
