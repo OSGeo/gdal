@@ -1,0 +1,17 @@
+
+OBJ	=	ogrsqlitedriver.obj ogrsqlitedatasource.obj \
+		ogrsqlitelayer.obj ogrsqlitetablelayer.obj  \
+		ogrsqliteselectlayer.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS = -I.. -I..\.. $(SQLITE_INC)
+
+default:	$(OBJ)
+
+clean:
+	-del *.lib
+	-del *.obj *.pdb
+	-del *.exe
