@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/03/14 21:39:09  warmerda
+ * added DGNLoadRawElement, max_element_count
+ *
  * Revision 1.12  2002/02/22 22:17:42  warmerda
  * Ensure that components of complex chain/shapes are spatially selected
  * based on the decision made for their owner (header).
@@ -95,6 +98,7 @@ typedef struct {
 
     int         index_built;
     int	        element_count;
+    int         max_element_count;
     DGNElementInfo *element_index;
 
     int         got_color_table;
@@ -137,5 +141,6 @@ void DGN2IEEEDouble( void * );
 void DGNBuildIndex( DGNInfo * );
 void DGNRad50ToAscii( unsigned short rad50, char *str );
 void DGNSpatialFilterToUOR( DGNInfo *);
+int  DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel );
 
 #endif /* ndef _DGNLIBP_H_INCLUDED */
