@@ -16,3 +16,4 @@ SF.tlb
 sftraceback.cpp
 sfutil.cpp
 SF_i.c
+SFRS.cpp
