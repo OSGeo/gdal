@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/06/13 13:38:39  warmerda
+ * Improved reporting of binary data in Dump method.
+ * Fixed GetRepeatCount() so that short field data can be properly detected.
+ *
  * Revision 1.9  1999/11/18 19:03:04  warmerda
  * expanded tabs
  *
@@ -102,8 +106,8 @@ void DDFField::Dump( FILE * fp )
     fprintf( fp, "      Data = `" );
     for( int i = 0; i < MIN(nDataSize,40); i++ )
     {
-        if( pachData[i] < 32 && pachData[i] > 126 )
-            fprintf( fp, "%c", '^' );
+        if( pachData[i] < 32 || pachData[i] > 126 )
+            fprintf( fp, "\\%02X", pachData[i] );
         else
             fprintf( fp, "%c", pachData[i] );
     }
@@ -257,9 +261,14 @@ int DDFField::GetRepeatCount()
         {
             int nBytesConsumed;
             DDFSubfieldDefn * poThisSFDefn = poDefn->GetSubfield( iSF );
-            
-            poThisSFDefn->GetDataLength( pachData+iOffset, nDataSize - iOffset,
-                                         &nBytesConsumed);
+
+            if( poThisSFDefn->GetWidth() > nDataSize - iOffset )
+                nBytesConsumed = poThisSFDefn->GetWidth();
+            else
+                poThisSFDefn->GetDataLength( pachData+iOffset, 
+                                             nDataSize - iOffset,
+                                             &nBytesConsumed);
+
             iOffset += nBytesConsumed;
             if( iOffset > nDataSize )
                 return iRepeatCount - 1;
