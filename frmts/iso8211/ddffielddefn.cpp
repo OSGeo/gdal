@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/09/20 19:29:16  warmerda
+ * make forgiving of UNIT/FIELD terminator mixup in Tiger SDTS files
+ *
  * Revision 1.1  1999/04/27 18:45:05  warmerda
  * New
  *
@@ -154,22 +157,25 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
 /*      format statements.                                              */
 /* -------------------------------------------------------------------- */
 
-    _fieldName = DDFFetchVariable( pachFieldArea + iFDOffset,
-                                   nFieldEntrySize - iFDOffset,
-                                   DDF_UNIT_TERMINATOR,
-                                   &nCharsConsumed );
+    _fieldName =
+        DDFFetchVariable( pachFieldArea + iFDOffset,
+                          nFieldEntrySize - iFDOffset,
+                          DDF_UNIT_TERMINATOR, DDF_FIELD_TERMINATOR,
+                          &nCharsConsumed );
     iFDOffset += nCharsConsumed;
     
-    _arrayDescr = DDFFetchVariable( pachFieldArea + iFDOffset,
-                                    nFieldEntrySize - iFDOffset,
-                                    DDF_UNIT_TERMINATOR,
-                                    &nCharsConsumed );
+    _arrayDescr =
+        DDFFetchVariable( pachFieldArea + iFDOffset,
+                          nFieldEntrySize - iFDOffset,
+                          DDF_UNIT_TERMINATOR, DDF_FIELD_TERMINATOR, 
+                          &nCharsConsumed );
     iFDOffset += nCharsConsumed;
     
-    _formatControls = DDFFetchVariable( pachFieldArea + iFDOffset,
-                                        nFieldEntrySize - iFDOffset,
-                                        DDF_UNIT_TERMINATOR,
-                                        &nCharsConsumed );
+    _formatControls =
+        DDFFetchVariable( pachFieldArea + iFDOffset,
+                          nFieldEntrySize - iFDOffset,
+                          DDF_UNIT_TERMINATOR, DDF_FIELD_TERMINATOR, 
+                          &nCharsConsumed );
     
 /* -------------------------------------------------------------------- */
 /*      Parse the subfield info.                                        */
@@ -396,8 +402,8 @@ int DDFFieldDefn::ApplyFormats()
         || _formatControls[strlen(_formatControls)-1] != ')' )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Format controls for `%s' field missing brackets.\n",
-                  pszTag );
+                  "Format controls for `%s' field missing brackets:%s\n",
+                  pszTag, _formatControls );
         
         return FALSE;
     }

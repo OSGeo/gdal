@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/09/20 19:29:30  warmerda
+ * make forgiving of UNIT/FIELD terminator mixup in Tiger SDTS files
+ *
  * Revision 1.5  1999/08/13 03:26:29  warmerda
  * added Rewind()
  *
@@ -67,7 +70,8 @@ typedef enum {
 
 long DDFScanInt( const char *pszString, int nMaxChars );
 int  DDFScanVariable( const char * pszString, int nMaxChars, int nDelimChar );
-char *DDFFetchVariable( const char *pszString, int nMaxChars, int nDelimChar,
+char *DDFFetchVariable( const char *pszString, int nMaxChars,
+                        int nDelimChar1, int nDelimChar2,
                         int *pnConsumedChars );
 
 #define DDF_FIELD_TERMINATOR	30

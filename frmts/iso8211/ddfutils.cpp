@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/09/20 19:29:16  warmerda
+ * make forgiving of UNIT/FIELD terminator mixup in Tiger SDTS files
+ *
  * Revision 1.3  1999/05/06 14:41:03  warmerda
  * Removed unused variable.
  *
@@ -87,17 +90,20 @@ int DDFScanVariable( const char *pszRecord, int nMaxChars, int nDelimChar )
 /*      it as a new string (with CPLStrdup()).                          */
 /************************************************************************/
 
-char * DDFFetchVariable( const char *pszRecord, int nMaxChars, int nDelimChar,
+char * DDFFetchVariable( const char *pszRecord, int nMaxChars,
+                         int nDelimChar1, int nDelimChar2,
                          int *pnConsumedChars )
 
 {
     int 	i;
     char	*pszReturn;
 
-    for( i = 0; i < nMaxChars-1 && pszRecord[i] != nDelimChar; i++ ) {}
+    for( i = 0; i < nMaxChars-1 && pszRecord[i] != nDelimChar1
+                                && pszRecord[i] != nDelimChar2; i++ ) {}
 
     *pnConsumedChars = i;
-    if( i < nMaxChars && pszRecord[i] == nDelimChar )
+    if( i < nMaxChars
+        && (pszRecord[i] == nDelimChar1 || pszRecord[i] == nDelimChar2) )
         (*pnConsumedChars)++;
 
     pszReturn = (char *) CPLMalloc(i+1);
