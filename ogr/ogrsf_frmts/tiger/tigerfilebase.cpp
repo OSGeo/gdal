@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/10/15 19:04:21  warmerda
+ * ensure primary file gets closed - bug 414
+ *
  * Revision 1.15  2003/01/11 15:29:55  warmerda
  * expanded tabs
  *
@@ -109,6 +112,12 @@ TigerFileBase::~TigerFileBase()
 {
     CPLFree( pszModule );
     CPLFree( pszShortModule );
+
+    if( fpPrimary != NULL )
+    {
+        VSIFClose( fpPrimary );
+        fpPrimary = NULL;
+    }
 }
 
 /************************************************************************/
