@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.18  2003/02/06 04:50:57  warmerda
+# added the Fixup() method on OGRSpatialReference
+#
 # Revision 1.17  2003/01/24 19:45:17  warmerda
 # fixed handling of CloneGeogCS() failing
 #
@@ -141,6 +144,9 @@ class SpatialReference:
     
     def FixupOrdering(self):
         return _gdal.OSRFixupOrdering( self._o )
+    
+    def Fixup(self):
+        return _gdal.OSRFixup( self._o )
     
     def MorphToESRI(self):
         return _gdal.OSRMorphToESRI( self._o )
