@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/01/23 04:56:01  warmerda
+ * support worldfiles if no corners in .hdr
+ *
  * Revision 1.19  2004/01/20 16:22:56  dron
  * More clean usage of CPLFormCIFilename().
  *
@@ -109,11 +112,9 @@ CPL_C_END
 class EHdrDataset : public RawDataset
 {
     FILE	*fpImage;	// image data file.
-    
-    double	dfULXMap;
-    double	dfULYMap;
-    double	dfXDim;
-    double	dfYDim;
+
+    int         bGotTransform;
+    double      adfGeoTransform[6];
 
     char	*pszProjection;
 
@@ -138,6 +139,13 @@ EHdrDataset::EHdrDataset()
 {
     fpImage = NULL;
     pszProjection = CPLStrdup("");
+    bGotTransform = FALSE;
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -170,14 +178,15 @@ const char *EHdrDataset::GetProjectionRef()
 CPLErr EHdrDataset::GetGeoTransform( double * padfTransform )
 
 {
-    padfTransform[0] = dfULXMap - dfXDim * 0.5;
-    padfTransform[1] = dfXDim;
-    padfTransform[2] = 0.0;
-    padfTransform[3] = dfULYMap + dfYDim * 0.5;
-    padfTransform[4] = 0.0;
-    padfTransform[5] = - dfYDim;
-
-    return( CE_None );
+    if( bGotTransform )
+    {
+        memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
+        return CE_None;
+    }
+    else
+    {
+        return GDALDataset::GetGeoTransform( padfTransform );
+    }
 }
 
 /************************************************************************/
@@ -347,7 +356,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                   "The selected file is an ESRI BIL header file, but to\n"
                   "open ESRI BIL datasets, the data file should be selected\n"
                   "instead of the .hdr file.  Please try again selecting\n"
-                "the data file (often with the extension .bil) corresponding\n"
+                  "the data file (often with the extension .bil) corresponding\n"
                   "to the header file: %s\n", 
                   poOpenInfo->pszFilename );
         return NULL;
@@ -363,14 +372,6 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
-    poDS->dfULXMap = dfULXMap;
-    poDS->dfULYMap = dfULYMap;
-    poDS->dfXDim = dfXDim;
-    poDS->dfYDim = dfYDim;
-
-    if( dfYLLCorner != -123.456 )
-        poDS->dfULYMap = dfYLLCorner + (nRows-1) * dfYDim;
-
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
 
@@ -473,11 +474,38 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     
 /* -------------------------------------------------------------------- */
+/*      If we didn't get bounds in the .hdr, look for a worldfile.      */
+/* -------------------------------------------------------------------- */
+    if( dfYLLCorner != -123.456 )
+        dfULYMap = dfYLLCorner + (nRows-1) * dfYDim;
+
+    if( dfULYMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0 )
+    {
+        poDS->bGotTransform = TRUE;
+        poDS->adfGeoTransform[0] = dfULXMap - dfXDim * 0.5;
+        poDS->adfGeoTransform[1] = dfXDim;
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] = dfULYMap + dfYDim * 0.5;
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = - dfYDim;
+    }
+    
+    if( !poDS->bGotTransform )
+        poDS->bGotTransform = 
+            GDALReadWorldFile( poOpenInfo->pszFilename, "blw", 
+                               poDS->adfGeoTransform );
+
+    if( !poDS->bGotTransform )
+        poDS->bGotTransform = 
+            GDALReadWorldFile( poOpenInfo->pszFilename, "wld", 
+                               poDS->adfGeoTransform );
+
+/* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+        poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+        return( poDS );
 }
 
 /************************************************************************/
