@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirwrite.c,v 1.12 2002/03/15 11:05:56 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirwrite.c,v 1.13 2002/04/03 21:06:49 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -349,19 +349,7 @@ TIFFWriteDirectory(TIFF* tif)
                 if( fip->field_bit != FIELD_CUSTOM )
                     ResetFieldBit(fields, fip->field_bit);
 	}
-#ifdef notdef        
-        /*
-        ** Write custom tags.
-        */
-	for (fi = 0, nfi = td->td_customValueCount; fi < nfi; fi++) {
-            TIFFTagValue *tv = td->td_customValues + fi;
-            
-            if (!TIFFWriteNormalTag(tif, dir, tv->info))
-                goto bad;
 
-            dir++;
-        }
-#endif                
 	/*
 	 * Write directory.
 	 */
