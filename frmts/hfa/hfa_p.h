@@ -1,7 +1,6 @@
 /******************************************************************************
  * $Id$
  *
- * Name:     hfa_p.h
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Private class declarations for the HFA classes used to read
  *           Erdas Imagine (.img) files.  Public (C callable) declarations
@@ -31,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/01/22 17:39:26  warmerda
+ * Added HFABand, and other stuff
+ *
  * Revision 1.2  1999/01/04 22:52:47  warmerda
  * field access working
  *
@@ -53,6 +55,7 @@
 class HFAEntry;
 class HFAType;
 class HFADictionary;
+class HFABand;
 
 /************************************************************************/
 /*                              HFAInfo_t                               */
@@ -76,15 +79,62 @@ typedef struct {
 
     int		nXSize;
     int		nYSize;
-    int		nBands;
 
-    int		nDataType;	/* one of Eimg_Layer pixelType values, EPT_* */
+    int		nBands;
+    HFABand	**papoBand;
+
+    void	*pMapInfo;
+    void        *pDatum;
+    void        *pProParameters;
 
 } HFAInfo_t;
 
 #define HFA_PRIVATE
 
 #include "hfa.h"
+
+/************************************************************************/
+/*                               HFABand                                */
+/************************************************************************/
+
+class HFABand
+{
+    int		nBlocks;
+    int		*panBlockStart;
+    int		*panBlockSize;
+    int		*panBlockFlag;
+
+#define BFLG_VALID	0x01    
+#define BFLG_COMPRESSED	0x02
+
+    int		nPCTColors;
+    double	*apadfPCT[3];
+
+    CPLErr	LoadBlockInfo();
+    
+  public:
+    		HFABand( HFAInfo_t *, HFAEntry * );
+                ~HFABand();
+                
+    HFAInfo_t	*psInfo;
+                         
+    int		nDataType;
+    HFAEntry	*poNode;
+    
+    int		nBlockXSize;
+    int		nBlockYSize;
+
+    int		nWidth;
+    int		nHeight;
+
+    int		nBlocksPerRow;
+    int		nBlocksPerColumn;
+
+    CPLErr	GetRasterBlock( int nXBlock, int nYBlock, void * pData );
+
+    CPLErr	GetPCT( int *, double **, double **, double ** );
+};
+
 
 /************************************************************************/
 /*                               HFAEntry                               */
@@ -212,6 +262,7 @@ class HFAType
 
     void	Dump( FILE * );
 
+    int		GetInstBytes( GByte * pabyData );
     void	*ExtractInstValue( const char * pszField,
                                GByte *pabyData, int nDataOffset, int nDataSize,
                                char chReqType );
