@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/03/12 20:52:07  warmerda
+ * implemented support for gml:Box
+ *
  * Revision 1.9  2003/03/06 20:29:27  warmerda
  * added GML import/export entry points
  *
@@ -117,6 +120,7 @@ char   CPL_DLL *OGR_G_ExportToGML( OGRGeometryH );
 #if defined(_CPL_MINIXML_H_INCLUDED)
 OGRGeometryH CPL_DLL OGR_G_CreateFromGMLTree( const CPLXMLNode * );
 CPLXMLNode CPL_DLL *OGR_G_ExportToGMLTree( OGRGeometryH );
+CPLXMLNode CPL_DLL *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH );
 #endif
 
 void   CPL_DLL OGR_G_AssignSpatialReference( OGRGeometryH, 
