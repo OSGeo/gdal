@@ -23,6 +23,40 @@ OPT_GDAL_FORMATS=
 EXTRA_INCLUDES=
 
 dnl ---------------------------------------------------------------------------
+dnl Check if libz is available.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(libz,[  --with-libz[=ARG]       Include libz support (ARG=internal or link argument)],,)
+
+if test "$with_libz" = "external" -o "$with_libz" = "" ; then
+
+  AC_CHECK_LIB(z,deflateInit_,LIBZ_SETTING=external,LIBZ_SETTING=internal,)
+
+  if test "$LIBZ_SETTING" = "external" ; then   
+    LIBS="-lz $LIBS"
+  else
+    echo "Using internal libz implementation."
+  fi
+
+elif test "$with_libz" = "internal" ; then
+  LIBZ_SETTING=internal
+  echo "Using internal libz implementation."
+
+else
+
+  LIBZ_SETTING=external
+  LIBS="$with_libz $LIBS"
+
+  echo "using $with_libz for libz."
+fi
+
+AC_SUBST(LIBZ_SETTING,$LIBZ_SETTING)
+
+if test "$LIBZ_SETTING" = "internal" ; then
+  OPT_GDAL_FORMATS="zlib $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl Check if GRASS library is available.
 dnl ---------------------------------------------------------------------------
 
@@ -40,9 +74,6 @@ elif test "$with_grass" = "yes" -o "$with_grass" = "" ; then
 
   if test "$GRASS_SETTING" = "external" ; then   
     LIBS="-lgrass5 $LIBS"
-    echo "libgrass found."
-  else
-    echo "libgrass not found."
   fi
 
 else
@@ -74,7 +105,7 @@ if test "$with_png" = "no" ; then
 
 elif test "$with_png" = "yes" -o "$with_png" = "" ; then
 
-  AC_CHECK_LIB(png,png_create_read_struct,PNG_SETTING=external,PNG_SETTING=internal,-lz)
+  AC_CHECK_LIB(png,png_create_read_struct,PNG_SETTING=external,PNG_SETTING=internal,$LIBS)
 
   if test "$PNG_SETTING" = "external" ; then   
     LIBS="-lpng $LIBS"
