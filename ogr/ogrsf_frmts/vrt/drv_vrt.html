@@ -1,0 +1,91 @@
+<html>
+<head>
+<title>Virtual Format</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>Virtual Format</h1>
+
+OGR Virtual Format is a driver that transforms features read from other
+drivers based on criteria specified in an XML control file.  It is primarily
+used to derive spatial layers from flat tables with spatial information in
+attribute columns.  It can also be used to associated coordinate system
+information with a datasource, merge layers from different datasources into
+a single data source, or even just to provide an anchor file for access to 
+non-file oriented datasources.<p>
+
+The virtual files are currently normally prepared by hand.<p>
+
+<h2>Creation Issues</h2>
+
+Currently the ODBC VRT driver is read-only, so new features, tables and
+datasources cannot normally be created by OGR applications.  This limitation
+may be removed in the future. <p>
+
+<h1>Virtual File Format</h1>
+
+The root element of the XML control file is <b>OGRVRTDataSource</b>.  It has
+an <b>OGRVRTLayer</b> child for each layer in the virtual datasource.  That
+element may have the following subelements:
+
+<ul>
+<li> <b>SrcDataSource</b> (manditory): The value is the name of the datasource
+that this layer will be derived from.  The element may optionally have
+a <b>relativeToVRT</b> attribute which defaults to "0", but if "1" indicates
+that the source datasource should be interpreted as relative to the virtual
+file. <p>
+
+<li> <b>SrcLayer</b> (manditory): The value is the name of the layer on the
+source data source from which this virtual layer should be derived.<p>
+
+<li> <b>FID</b> (optional): Name of the attribute column from which the 
+FID of features should be derived.  If not provided, the FID of the source
+features will be used directly.<p>
+
+<li> <b>GeometryType</b>: The geometry type to be assigned to the layer. 
+If not provided it will be taken from the source layer.  The value should
+be one of "wkbPoint", "wkbLineString", "wkbPolygon", "wkbMultiPoint", 
+"wkbMultiLineString", "wkbMultiPolygon", or "wkbGeometryCollection".  Optionally
+"25D" may be appended to mark it as including Z coordinates.<p>
+
+<li> <b>LayerSRS</b> (optional): The value of this element is the spatial
+reference to use for the layer.  If not provided, it is inherited from the
+source layer.  The value may be WKT or any other input that is accepted
+by the OGRSpatialReference::SetUserInput() method. <p>
+
+<li> <b>GeometryField</b> (optional): This element is used to define
+how the geometry for features should be derived.  If not provided the
+geometry of the source feature is copied directly.  The type of geometry
+encoding is indicated with the <b>encoding</b> attribute which may have the
+value "WKT" or "PointFromColumns" (some other values may be supported in the
+future).  If the encoding is "WKT" then the <b>field</b> attribute will have
+the name of the field containing the WKT geometry.  If the encoding is 
+"PointFromColumns" then the <b>x</b>, <b>y</b> and <b>z</b> attributes
+will have the names of the columns to be used for the X, Y and Z coordinates.
+The <b>z</b> attribute is optional.<p>
+</ul>
+
+<h2>Example: ODBC Point Layer</h2>
+
+In the following example (disease.ovf) the worms table from the ODBC
+database DISEASE is used to form a spatial layer.  The virtual file 
+uses the "x" and "y" columns to get the spatial location.  It also marks
+the layer as a point layer, and as being in the WGS84 coordinate system.<p>
+
+<pre>
+&lt;OGRVRTDataSource&gt;
+
+    &lt;OGRVRTLayer name="worms"&gt;
+        &lt;SrcDataSource&gt;ODBC:DISEASE,worms&lt;/SrcDataSource&gt; 
+ 	&lt;SrcLayer&gt;worms&lt;/SrcLayer&gt; 
+	&lt;GeometryType&gt;wkbPoint&lt;/GeometryType&gt; 
+        &lt;LayerSRS&gt;WGS84&lt;/LayerSRS&gt;
+	&lt;GeometryField encoding="PointFromColumns" x="x" y="y"/&gt; 
+    &lt;/OGRVRTLayer&gt;
+
+&lt;/OGRVRTDataSource&gt;
+</pre>
+
+</body>
+</html>
