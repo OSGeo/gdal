@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/09/25 21:20:13  warmerda
+ * avoid initialization warnings
+ *
  * Revision 1.6  2000/08/15 19:28:26  warmerda
  * added help topic
  *
@@ -231,7 +234,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Compute layout of data.                                         */
 /* -------------------------------------------------------------------- */
-    int		nSkipBytes, nBytesPerPixel, nBytesPerLine, i;
+    int		nSkipBytes, nBytesPerPixel=0, nBytesPerLine, i;
 
     if( nBandTypes < 5 )
         nBytesPerPixel = 1;

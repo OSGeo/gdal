@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/09/25 21:20:13  warmerda
+ * avoid initialization warnings
+ *
  * Revision 1.12  2000/08/24 14:26:09  warmerda
  * improved handling of read-only file sets
  *
@@ -300,8 +303,8 @@ void MFFDataset::ScanForGCPs()
 
     for( nCorner = 0; nCorner < 5; nCorner++ )
     {
-        const char * pszBase;
-        double       dfRasterX, dfRasterY;
+        const char * pszBase=NULL;
+        double       dfRasterX=0.0, dfRasterY=0.0;
         char         szLatName[40], szLongName[40];
 
         if( nCorner == 0 )

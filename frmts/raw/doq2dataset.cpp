@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/09/25 21:20:13  warmerda
+ * avoid initialization warnings
+ *
  * Revision 1.7  2000/08/15 19:28:26  warmerda
  * added help topic
  *
@@ -170,7 +173,7 @@ const char *DOQ2Dataset::GetDescriptionRef()
 GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int		nWidth, nHeight, nBandStorage, nBandTypes;
+    int		nWidth=0, nHeight=0, nBandStorage=0, nBandTypes=0;
     
 /* -------------------------------------------------------------------- */
 /*	We assume the user is pointing to the binary (ie. .bil) file.	*/
@@ -180,16 +183,16 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     int         nLineCount = 0;
     const char *pszLine;
-    int		nBytesPerPixel;
-    const char *pszDatumLong, *pszDatumShort;
-    const char *pszUnits;
+    int		nBytesPerPixel=0;
+    const char *pszDatumLong=NULL, *pszDatumShort=NULL;
+    const char *pszUnits=NULL;
     char *pszQuadname = NULL;
     char *pszQuadquad = NULL;
     char *pszState = NULL;
-    int	        nZone, nProjType;
-    int		nSkipBytes, nBytesPerLine, i;
+    int	        nZone=0, nProjType=0;
+    int		nSkipBytes=0, nBytesPerLine, i;
     double      dfULXMap=0.0, dfULYMap = 0.0;
-    double      dfXDim, dfYDim;
+    double      dfXDim=0.0, dfYDim=0.0;
 
     pszLine = CPLReadLine( poOpenInfo->fp );
     if(! EQUALN(pszLine,"BEGIN_USGS_DOQ_HEADER", 21) )
