@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/11/06 14:34:22  warmerda
+ * Fixed bug in YLLCENTER handling.  Added case for alternate line ordering.
+ *
  * Revision 1.5  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -234,7 +237,7 @@ AAIGDataset::AAIGDataset()
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = -1.0;
+    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -314,7 +317,7 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[5] = - dfCellSize;
     }
     else if( EQUAL(papszTokens[4],"xllcenter") 
-             && EQUAL(papszTokens[4],"yllcenter") 
+             && EQUAL(papszTokens[6],"yllcenter") 
              && EQUAL(papszTokens[8],"cellsize") )
     {
         double	dfCellSize = atof( papszTokens[9] );
@@ -323,6 +326,20 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[1] = dfCellSize;
         poDS->adfGeoTransform[2] = 0.0;
         poDS->adfGeoTransform[3] = atof( papszTokens[7] )
+            + poDS->nRasterYSize * dfCellSize - 0.5 * dfCellSize;
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = - dfCellSize;
+    }
+    else if( EQUAL(papszTokens[6],"xllcenter") 
+             && EQUAL(papszTokens[8],"yllcenter") 
+             && EQUAL(papszTokens[4],"cellsize") )
+    {
+        double	dfCellSize = atof( papszTokens[5] );
+
+        poDS->adfGeoTransform[0] = atof( papszTokens[7] ) + 0.5 * dfCellSize;
+        poDS->adfGeoTransform[1] = dfCellSize;
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] = atof( papszTokens[9] )
             + poDS->nRasterYSize * dfCellSize - 0.5 * dfCellSize;
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = - dfCellSize;
