@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2003/02/06 04:50:57  warmerda
+ * added the Fixup() method on OGRSpatialReference
+ *
  * Revision 1.51  2003/01/08 18:17:24  warmerda
  * implemented a few new functions including custom CreateLayer
  *
@@ -418,6 +421,7 @@ py_GDALCreateCopy(PyObject *self, PyObject *args) {
     PyProgressData sProgressInfo;
 
     self = self;
+    sProgressInfo.nLastReported = -1;
     sProgressInfo.psPyCallback = NULL;
     sProgressInfo.psPyCallbackData = NULL;
     if(!PyArg_ParseTuple(args,"sss|iO!OO:GDALCreateCopy",	
@@ -1265,6 +1269,7 @@ py_GDALComputeMedianCutPCT(PyObject *self, PyObject *args) {
     PyProgressData sProgressInfo;
 
     self = self;
+    sProgressInfo.nLastReported = -1;
     sProgressInfo.psPyCallback = NULL;
     sProgressInfo.psPyCallbackData = NULL;
     if(!PyArg_ParseTuple(args,"sssis|OO:GDALComputeMedianCutPCT",	
@@ -1318,6 +1323,7 @@ py_GDALDitherRGB2PCT(PyObject *self, PyObject *args) {
     PyProgressData sProgressInfo;
 
     self = self;
+    sProgressInfo.nLastReported = -1;
     sProgressInfo.psPyCallback = NULL;
     sProgressInfo.psPyCallbackData = NULL;
     if(!PyArg_ParseTuple(args,"sssss|OO:GDALDitherRGB2PCT",	
@@ -1377,6 +1383,7 @@ int     OSRMorphToESRI( OGRSpatialReferenceH );
 int     OSRMorphFromESRI( OGRSpatialReferenceH );
 int     OSRValidate( OGRSpatialReferenceH );
 int     OSRFixupOrdering( OGRSpatialReferenceH );
+int     OSRFixup( OGRSpatialReferenceH );
 int     OSRStripCTParms( OGRSpatialReferenceH );
 
 int     OSRSetAttrValue( OGRSpatialReferenceH hSRS, const char * pszNodePath,
