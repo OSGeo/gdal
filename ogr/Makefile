@@ -18,7 +18,7 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
 		ogrmultipolygon.obj ogrmultilinestring.obj \
                 ogrmultipoint.obj ogrfeature.obj ogrfeaturedefn.obj \
 		ogrfielddefn.obj ogr_srsnode.obj ogrspatialreference.obj \
-		ogr_srs_proj4.obj ogr_fromepsg.obj ogrct.obj
+		ogr_srs_proj4.obj ogr_fromepsg.obj ogrct.obj ogrfeaturestyle.obj
 
 OBJ_OLEDB =	oledb_sup.obj \
 		sfcenumerator.obj sfcdatasource.obj sfctable.obj
@@ -65,6 +65,10 @@ test3.exe:      test3.obj $(OBJ_OGR)
 
 test_ogrsf.exe:      test_ogrsf.obj $(OBJ_OGR)
         cl test_ogrsf.obj $(OBJ_OGR) $(OGR_FRMTS) \
+			$(ALL_LIBS)
+
+test_rep.exe:      test_rep.obj $(OBJ_OGR)
+        cl test_rep.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS)
 
 ogrinfo.exe:      ogrinfo.obj $(OBJ_OGR)

@@ -7,7 +7,7 @@ OBJ	=	ogrgeometryfactory.o ogrpoint.o ogrcurve.o ogrlinestring.o \
 		ogrgeometrycollection.o ogrmultipolygon.o ogrsurface.o \
 		ogrmultipoint.o ogrmultilinestring.o \
 		\
-		ogrfeature.o ogrfeaturedefn.o ogrfielddefn.o \
+		ogrfeature.o ogrfeaturedefn.o ogrfeaturestyle.o ogrfielddefn.o \
 		ogrspatialreference.o ogr_srsnode.o ogr_srs_proj4.o \
 		ogr_fromepsg.o ogrct.o
 
