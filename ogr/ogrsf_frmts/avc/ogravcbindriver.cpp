@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/02/14 14:36:05  warmerda
+ * don't indicate create ability
+ *
  * Revision 1.1  2002/02/13 20:48:18  warmerda
  * New
  *
@@ -88,10 +91,7 @@ OGRDataSource *OGRAVCBinDriver::Open( const char * pszFilename,
 int OGRAVCBinDriver::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,ODrCCreateDataSource) )
-        return TRUE;
-    else
-        return FALSE;
+    return FALSE;
 }
 
 /************************************************************************/
