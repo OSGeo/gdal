@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Define some core portability services for cross-platform OGR code.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/05/08 13:27:22  warmerda
+ * dont use C++ comments in this c includable file
+ *
  * Revision 1.18  2003/04/29 19:03:58  warmerda
  * removed extra comma
  *
@@ -166,17 +169,17 @@ typedef int     OGRBoolean;
 
 typedef enum 
 {
-    wkbUnknown = 0,             // non-standard
-    wkbPoint = 1,               // rest are standard WKB type codes
+    wkbUnknown = 0,             /* non-standard */
+    wkbPoint = 1,               /* rest are standard WKB type codes */
     wkbLineString = 2,
     wkbPolygon = 3,
     wkbMultiPoint = 4,
     wkbMultiLineString = 5,
     wkbMultiPolygon = 6,
     wkbGeometryCollection = 7,
-    wkbNone = 100,              // non-standard, for pure attribute records
-    wkbLinearRing = 101,        // non-standard, just for createGeometry() call
-    wkbPoint25D = 0x80000001,       // 2.5D extensions as per 99-402
+    wkbNone = 100,              /* non-standard, for pure attribute records */
+    wkbLinearRing = 101,        /* non-standard, just for createGeometry() */
+    wkbPoint25D = 0x80000001,   /* 2.5D extensions as per 99-402 */
     wkbLineString25D = 0x80000002,
     wkbPolygon25D = 0x80000003,
     wkbMultiPoint25D = 0x80000004,
@@ -247,7 +250,7 @@ typedef union {
     int         Integer;
     double      Real;
     char       *String;
-    // wchar    *WideString;
+    /* wchar    *WideString; */
     
     struct {
         int     nCount;
@@ -264,10 +267,12 @@ typedef union {
         char    **paList;
     } StringList;
 
-//    union {
-//        int   nCount;
-//        wchar *paList;
-//    } WideStringList;
+    /*
+    union {
+        int   nCount;
+        wchar *paList;
+    } WideStringList;
+    */
 
     struct {
         int     nMarker1;
