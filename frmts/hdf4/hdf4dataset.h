@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.15  2005/03/29 12:42:53  dron
+ * Added AnyTypeToDouble() method.
+ *
  * Revision 1.14  2004/06/19 21:37:31  dron
  * Use HDF-EOS library for appropriate datasets; major cpde rewrite.
  *
@@ -125,10 +128,12 @@ class HDF4Dataset : public GDALDataset
     char	**papszGlobalMetadata;
     char	**papszSubDatasets;
 
-    GDALDataType GetDataType( int32 );
-    const char  *GetDataTypeName( int32 );
-    int         GetDataTypeSize( int32 );
-    char        **TranslateHDF4Attributes( int32, int32, char *, int32, int32, char ** );
+    GDALDataType GetDataType( int32 ) const;
+    const char  *GetDataTypeName( int32 ) const;
+    int         GetDataTypeSize( int32 ) const;
+    double      AnyTypeToDouble( int32, void * ) const;
+    char        **TranslateHDF4Attributes( int32, int32, char *,
+                                           int32, int32, char ** );
     char        ** TranslateHDF4EOSAttributes( int32, int32, int32, char ** );
     CPLErr      ReadGlobalAttributes( int32 );
 
