@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/01/03 22:16:44  fwarmerdam
+ * added OGRLayer::SetSpatialFilterRect()
+ *
  * Revision 1.22  2004/11/21 22:08:49  fwarmerdam
  * added Release() and DestroyDataSource() methods on OGRDataSource
  *
@@ -1198,6 +1201,34 @@ error code.
  @param hGeom handle to the geometry to use as a filtering region.  NULL may
  be passed indicating that the current spatial filter should be cleared,
  but no new one instituted.
+ 
+ */
+
+/** 
+ \fn void OGRLayer::SetSpatialFilterRect( double dfMinX, double dfMinY, 
+                                          double dfMaxX, double dfMaxY );
+
+ Set a new rectangular spatial filter. 
+
+ This method set rectangle to be used as a spatial filter when 
+ fetching features via the GetNextFeature() method.  Only features that
+ geometrically intersect the given rectangle will be returned.  
+
+ The x/y values should be in the same coordinate system as the layer as
+ a whole (as returned by OGRLayer::GetSpatialRef()).   Internally this 
+ method is normally implemented as creating a 5 vertex closed rectangular
+ polygon and passing it to OGRLayer::SetSpatialFilter().  It exists as
+ a convenience. 
+
+ The only way to clear a spatial filter set with this method is to 
+ call OGRLayer::SetSpatialFilter(NULL). 
+
+ This method is the same as the C function OGR_L_SetSpatialFilterRect().
+
+ @param dfMinX the minimum X coordinate for the rectangular region.
+ @param dfMinY the minimum Y coordinate for the rectangular region.
+ @param dfMaxX the maximum X coordinate for the rectangular region.
+ @param dfMaxY the maximum Y coordinate for the rectangular region.
  
  */
 

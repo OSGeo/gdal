@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/01/03 22:17:00  fwarmerdam
+ * added OGRLayer::SetSpatialFilterRect()
+ *
  * Revision 1.20  2004/08/17 15:41:31  warmerda
  * dont compute extents for wkbNone layers
  *
@@ -577,6 +580,41 @@ void OGR_L_SetSpatialFilter( OGRLayerH hLayer, OGRGeometryH hGeom )
 
 {
     ((OGRLayer *) hLayer)->SetSpatialFilter( (OGRGeometry *) hGeom );
+}
+
+/************************************************************************/
+/*                        SetSpatialFilterRect()                        */
+/************************************************************************/
+
+void OGRLayer::SetSpatialFilterRect( double dfMinX, double dfMinY, 
+                                     double dfMaxX, double dfMaxY )
+
+{
+    OGRLinearRing  oRing;
+    OGRPolygon oPoly;
+
+    oRing.addPoint( dfMinX, dfMinY );
+    oRing.addPoint( dfMinX, dfMaxY );
+    oRing.addPoint( dfMaxX, dfMaxY );
+    oRing.addPoint( dfMaxX, dfMinY );
+    oRing.addPoint( dfMinX, dfMinY );
+
+    oPoly.addRing( &oRing );
+
+    SetSpatialFilter( &oPoly );
+}
+
+/************************************************************************/
+/*                     OGR_L_SetSpatialFilterRect()                     */
+/************************************************************************/
+
+void OGR_L_SetSpatialFilterRect( OGRLayerH hLayer, 
+                                 double dfMinX, double dfMinY, 
+                                 double dfMaxX, double dfMaxY )
+
+{
+    ((OGRLayer *) hLayer)->SetSpatialFilterRect( dfMinX, dfMinY, 
+                                                 dfMaxX, dfMaxY );
 }
 
 /************************************************************************/

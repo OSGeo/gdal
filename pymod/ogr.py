@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.35  2005/01/03 22:19:09  fwarmerdam
+# added OGRLayer::SetSpatialFilterRect()
+#
 # Revision 1.34  2004/12/16 22:13:27  hobu
 # typo in the Clone() method of Feature
 #
@@ -425,6 +428,9 @@ class Layer:
         else:
             geom_o = geom._o
         _gdal.OGR_L_SetSpatialFilter( self._o, geom_o )
+
+    def SetSpatialFilterRect( self, minx, miny, maxx, maxy ):
+        _gdal.OGR_L_SetSpatialFilterRect( self._o, minx, miny, maxx, maxy )
 
     def GetSpatialFilter( self ):
         geom_o = _gdal.OGR_L_GetSpatialGeometry( self._o )

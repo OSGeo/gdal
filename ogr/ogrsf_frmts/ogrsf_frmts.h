@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2005/01/03 22:16:44  fwarmerdam
+ * added OGRLayer::SetSpatialFilterRect()
+ *
  * Revision 1.46  2004/11/21 22:08:49  fwarmerdam
  * added Release() and DestroyDataSource() methods on OGRDataSource
  *
@@ -199,6 +202,8 @@ class CPL_DLL OGRLayer
 
     virtual OGRGeometry *GetSpatialFilter() = 0;
     virtual void        SetSpatialFilter( OGRGeometry * ) = 0;
+    virtual void        SetSpatialFilterRect( double dfMinX, double dfMinY,
+                                              double dfMaxX, double dfMaxY );
 
     virtual OGRErr      SetAttributeFilter( const char * );
 
