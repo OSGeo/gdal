@@ -1,7 +1,8 @@
 
 DGNLIB_OBJ	=	dgnfloat.obj dgnhelp.obj dgnread.obj dgnwrite.obj \
 			dgnopen.obj dgnstroke.obj
-CPLLIB_OBJ	=	cpl_conv.obj cpl_error.obj cpl_vsisimple.obj
+CPLLIB_OBJ	=	cpl_conv.obj cpl_error.obj cpl_vsisimple.obj \
+			cpl_string.obj 
 OBJ = $(CPLLIB_OBJ) $(DGNLIB_OBJ)
 
 default:	wininclude dgndump.exe dgnwritetest.exe dgnlib.dll

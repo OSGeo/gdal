@@ -23,6 +23,7 @@ DIST_FILES =	dgnread.cpp dgnopen.cpp dgnlib.h dgnlibp.h dgnfloat.cpp \
 		$(CPL_DIR)/cpl_vsi.h $(CPL_DIR)/cpl_vsisimple.cpp \
 		$(CPL_DIR)/cpl_conv.h $(CPL_DIR)/cpl_conv.cpp \
 		$(CPL_DIR)/cpl_error.h $(CPL_DIR)/cpl_error.cpp \
+		$(CPL_DIR)/cpl_string.h $(CPL_DIR)/cpl_string.cpp \
 		$(CPL_DIR)/cpl_config.h.vc
 
 default:	$(OBJ) $(OBJ_OGR)
