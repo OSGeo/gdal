@@ -46,6 +46,11 @@
  */
 
 /* -------------------------------------------------------------------- */
+/*      Runtime check of various configuration items.                   */
+/* -------------------------------------------------------------------- */
+void CPLVerifyConfiguration();
+
+/* -------------------------------------------------------------------- */
 /*      Safe malloc() API.  Thin cover over VSI functions with fatal    */
 /*      error reporting if memory allocation fails.                     */
 /* -------------------------------------------------------------------- */
