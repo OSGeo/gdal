@@ -23,6 +23,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/07/11 16:08:11  warmerda
+ * added FMECACHE_MAX_RETENTION
+ *
  * Revision 1.1  2002/05/24 06:23:57  warmerda
  * New
  *
@@ -330,11 +333,11 @@ class OGRFMECacheIndex
     int         ExpireOldCaches( IFMESession * );
 };
 
-// The number of seconds a spatial cache should be retained in the
-// cache index before cleaning up if unused.
-// Default: 1hour
+// The number of seconds an unreferenced spatial cache should be retained in
+// the cache index before cleaning up if unused.
+// Default: 15 minutes
 #ifndef FMECACHE_RETENTION
-#  define FMECACHE_RETENTION    3600   
+#  define FMECACHE_RETENTION    900
 #endif
 
 // The number of seconds before a "referenced" data source in the cache
@@ -342,6 +345,14 @@ class OGRFMECacheIndex
 #ifndef FMECACHE_REF_TIMEOUT
 #  define FMECACHE_REF_TIMEOUT  FMECACHE_RETENTION*3
 #endif
+
+// The number of seconds from creation a spatial cache should be retained in
+// the cache index before cleaning it up. 
+// Default: 1hour
+#ifndef FMECACHE_MAX_RETENTION
+#  define FMECACHE_MAX_RETENTION    3600   
+#endif
+
 
 CPL_C_START
 void RegisterOGRFME();
