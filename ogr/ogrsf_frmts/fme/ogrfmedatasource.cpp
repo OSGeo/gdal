@@ -23,6 +23,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/12/17 18:01:49  fwarmerdam
+ * Fixed last change.  Might as well use legal C++ syntax!
+ *
  * Revision 1.15  2004/12/16 19:29:23  fwarmerdam
  * dont try to open mysql: targets
  *
@@ -613,7 +616,7 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
          || EQUALN(pszCompositeName,"OCI:",4)
          || EQUALN(pszCompositeName,"gltp:",5)
          || EQUALN(pszCompositeName,"DODS:",5)
-         || EQUALN(pszCompositeName,"ODBC:",5))
+         || EQUALN(pszCompositeName,"ODBC:",5)
          || EQUALN(pszCompositeName,"MYSQL:",5))
         && !EQUAL(CPLGetExtension( pszCompositeName ), "fdd")
         && !EQUALN(pszCompositeName,"PROMPT",6) )
