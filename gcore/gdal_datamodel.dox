@@ -72,6 +72,11 @@ In case of north up images, the GT(2) and GT(4) coefficients are zero, and
 the GT(1) is pixel width, and GT(5) is pixel height.  The (GT(0),GT(3))
 position is the top left corner of the top left pixel of the raster.
 
+Note that the pixel/line coordinates in the above are from (0.0,0.0) at the
+top left corner of the top left pixel to (width_in_pixels,height_in_pixels)
+at the bottom right corner of the bottom right pixel.  The pixel/line location
+of the center of the top left pixel would therefore be (0.5,0.5). 
+
 <h3>GCPs</h3>
 
 A dataset can have a set of control points relating one or more positions
