@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/08/28 21:30:17  warmerda
+ * restructure to use cln_GetNextObject
+ *
  * Revision 1.4  2000/08/25 21:31:04  warmerda
  * added colortable support
  *
@@ -71,6 +74,7 @@ class CPL_DLL OGDIDataset : public GDALDataset
     ecs_Region	sGlobalBounds;
     ecs_Region  sCurrentBounds;
     int         nCurrentBand;
+    int         nCurrentIndex;
 
     char	*pszProjection;
 
@@ -109,7 +113,8 @@ class OGDIRasterBand : public GDALRasterBand
                               void *, int, int, GDALDataType,
                               int, int );
 
-    CPLErr         EstablishAccess( int nXOff, int nXSize, int nBufXSize );
+    CPLErr         EstablishAccess( int nYOff, int nXOff, int nXSize, 
+                                    int nBufXSize );
 
   public:
 

@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/08/28 21:30:17  warmerda
+ * restructure to use cln_GetNextObject
+ *
  * Revision 1.5  2000/08/28 20:15:07  warmerda
  * added projection translation
  *
@@ -71,7 +74,7 @@ OGDIRasterBand::OGDIRasterBand( OGDIDataset *poDS, int nBand,
 /* -------------------------------------------------------------------- */
 /*      Make this layer current.                                        */
 /* -------------------------------------------------------------------- */
-    EstablishAccess( 0, poDS->GetRasterXSize(), poDS->GetRasterXSize() );
+    EstablishAccess( 0, 0, poDS->GetRasterXSize(), poDS->GetRasterXSize() );
 
 /* -------------------------------------------------------------------- */
 /*      Get the raster info.                                            */
@@ -186,22 +189,10 @@ CPLErr OGDIRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Establish access at the desired resolution.                     */
 /* -------------------------------------------------------------------- */
-    eErr = EstablishAccess( nXOff, nXSize, nBufXSize );
+    eErr = EstablishAccess( nYOff, nXOff, nXSize, nBufXSize );
     if( eErr != CE_None )
         return eErr;
 
-/* -------------------------------------------------------------------- */
-/*      Establish the start scanline we want.                           */
-/* -------------------------------------------------------------------- */
-    double	dfNorthEdge;
-    int         nStartIndex;
-
-    dfNorthEdge =  poODS->sGlobalBounds.north 
-        - nYOff * poODS->sGlobalBounds.ns_res;
-    
-    nStartIndex = (int) ((poODS->sCurrentBounds.north - dfNorthEdge)
-                         / poODS->sCurrentBounds.ns_res + 0.01);
-    
 /* -------------------------------------------------------------------- */
 /*      Read back one scanline at a time, till request is satisfied.    */
 /* -------------------------------------------------------------------- */
@@ -209,21 +200,26 @@ CPLErr OGDIRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
     for( iScanline = 0; iScanline < nBufYSize; iScanline++ )
     {
-        char		szId[32];
         ecs_Result	*psResult;
         void		*pLineData;
-
         pLineData = ((unsigned char *) pData) + iScanline * nLineSpace;
 
-        sprintf( szId, "%d", iScanline + nStartIndex );
+        poODS->nCurrentIndex++;
+#ifdef notdef
+        char		szId[32];
 
+        sprintf( szId, "%d", poODS->nCurrentIndex );
         psResult = cln_GetObject( poODS->nClientID, szId );
+#else
+        psResult = cln_GetNextObject( poODS->nClientID );
+#endif
         if( ECSERROR(psResult) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s", psResult->message );
             return( CE_Failure );
         }
+
         
         if( eFamily == Matrix )
         {
@@ -250,7 +246,8 @@ int OGDIRasterBand::HasArbitraryOverviews()
 /*                          EstablishAccess()                           */
 /************************************************************************/
 
-CPLErr OGDIRasterBand::EstablishAccess( int nWinXOff, int nWinXSize, 
+CPLErr OGDIRasterBand::EstablishAccess( int nYOff, 
+                                        int nWinXOff, int nWinXSize, 
                                         int nBufXSize )
 
 {
@@ -276,6 +273,7 @@ CPLErr OGDIRasterBand::EstablishAccess( int nWinXOff, int nWinXSize,
         }
 
         poODS->nCurrentBand = nBand;
+        poODS->nCurrentIndex = -1;
     }
         
 /* -------------------------------------------------------------------- */
@@ -290,20 +288,23 @@ CPLErr OGDIRasterBand::EstablishAccess( int nWinXOff, int nWinXSize,
         + poODS->sGlobalBounds.west;
     sWin.ew_res = poODS->sGlobalBounds.ew_res*(nWinXSize/(double)nBufXSize);
 
-    sWin.north = poODS->sGlobalBounds.north;
+    sWin.north = poODS->sGlobalBounds.north 
+        - nYOff*poODS->sGlobalBounds.ns_res;
     sWin.ns_res = sWin.ew_res;
 
-    nYSize = (int) ((poODS->sGlobalBounds.north - poODS->sGlobalBounds.south
-                     + sWin.ns_res*0.9) / sWin.ns_res);
+    nYSize = (int) ((sWin.north - poODS->sGlobalBounds.south + sWin.ns_res*0.9)
+                    / sWin.ns_res);
     sWin.south = sWin.north - nYSize * sWin.ns_res;
 
-    if( ABS(sWin.west - poODS->sCurrentBounds.west) > 0.0001 
+    if( poODS->nCurrentIndex == -1 
+        || ABS(sWin.west - poODS->sCurrentBounds.west) > 0.0001 
         || ABS(sWin.east - poODS->sCurrentBounds.east) > 0.0001 
-        || ABS(sWin.north - poODS->sCurrentBounds.east) > 0.0001 
-        || ABS(sWin.south - poODS->sCurrentBounds.east) > 0.0001 
+        || ABS(sWin.north+poODS->nCurrentIndex*sWin.ns_res
+               -poODS->sCurrentBounds.north) > 0.0001
         || ABS(sWin.ew_res/poODS->sCurrentBounds.ew_res - 1.0) > 0.0001
         || ABS(sWin.ns_res/poODS->sCurrentBounds.ns_res - 1.0) > 0.0001 )
     {
+        CPLDebug( "OGDIRasterBand", "<EstablishAccess: Set Region>\n" );
         psResult = cln_SelectRegion( poODS->nClientID, &sWin );
         if( ECSERROR(psResult) )
         {
@@ -313,6 +314,7 @@ CPLErr OGDIRasterBand::EstablishAccess( int nWinXOff, int nWinXSize,
         }
         
         poODS->sCurrentBounds = sWin;
+        poODS->nCurrentIndex = 0;
     }
 
     return CE_None;
@@ -357,6 +359,7 @@ OGDIDataset::OGDIDataset()
 {
     nClientID = -1;
     nCurrentBand = -1;
+    nCurrentIndex = -1;
 }
 
 /************************************************************************/
