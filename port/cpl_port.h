@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2002/07/15 13:31:46  warmerda
+ * CPL_SWAPDOUBLE had alignment problem, use CPL_SWAP64PTR
+ *
  * Revision 1.30  2002/04/18 18:55:06  dron
  * added <ctype.h> at the list of standard include files
  *
@@ -339,17 +342,7 @@ m * this version of the CPL_SWAP64() macro with a less efficient one.
             (uint64)(((uint64)(x) & (uint64)0xff00000000000000ULL) >> 56) ))
 */
 
-#define CPL_SWAPDOUBLE(p) {                             \
-        double _tmp = *(double *)(p);                     \
-        ((GByte *)(p))[0] = ((GByte *)&_tmp)[7];          \
-        ((GByte *)(p))[1] = ((GByte *)&_tmp)[6];          \
-        ((GByte *)(p))[2] = ((GByte *)&_tmp)[5];          \
-        ((GByte *)(p))[3] = ((GByte *)&_tmp)[4];          \
-        ((GByte *)(p))[4] = ((GByte *)&_tmp)[3];          \
-        ((GByte *)(p))[5] = ((GByte *)&_tmp)[2];          \
-        ((GByte *)(p))[6] = ((GByte *)&_tmp)[1];          \
-        ((GByte *)(p))[7] = ((GByte *)&_tmp)[0];          \
-}
+#define CPL_SWAPDOUBLE(p) CPL_SWAP64PTR(p)
 
 #ifdef CPL_MSB
 #  define CPL_MSBWORD16(x)      (x)
