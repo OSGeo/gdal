@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/07/27 00:51:08  warmerda
+ * added arg to get driver out of Open()
+ *
  * Revision 1.1  1999/07/05 18:58:32  warmerda
  * New
  *
@@ -83,10 +86,14 @@ OGRSFDriverRegistrar *OGRSFDriverRegistrar::GetRegistrar()
 /************************************************************************/
 
 OGRDataSource *OGRSFDriverRegistrar::Open( const char * pszName,
-                                           int bUpdate )
+                                           int bUpdate,
+                                           OGRSFDriver ** ppoDriver )
 
 {
     OGRDataSource	*poDS;
+
+    if( ppoDriver != NULL )
+        *ppoDriver = NULL;
 
     GetRegistrar();
     
@@ -96,7 +103,12 @@ OGRDataSource *OGRSFDriverRegistrar::Open( const char * pszName,
     {
         poDS = poRegistrar->papoDrivers[iDriver]->Open( pszName, bUpdate );
         if( poDS != NULL )
+        {
+            if( ppoDriver != NULL )
+                *ppoDriver = poRegistrar->papoDrivers[iDriver];
+            
             return poDS;
+        }
 
         if( CPLGetLastErrorNo() != CPLE_None )
             return NULL;
