@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/06/26 21:44:07  warmerda
+ * added CPLE_UserInterrupt for progress terminations
+ *
  * Revision 1.11  2000/03/31 14:11:55  warmerda
  * added CPLErrorV
  *
@@ -128,6 +131,7 @@ CPL_C_END
 #define CPLE_NotSupported		6
 #define CPLE_AssertionFailed		7
 #define CPLE_NoWriteAccess		8
+#define CPLE_UserInterrupt              9
 
 /* 100 - 299 reserved for GDAL */
 
