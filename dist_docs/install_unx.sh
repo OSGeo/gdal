@@ -39,23 +39,32 @@ if test ! -d $PREFIX/share/gdal ; then
 fi
 
 ###############################################################################
-# The following is inded to use sed to "burn" an updated INST_DATA location
+# The following is intended to "burn" an updated INST_DATA location
 # into the given file over the preformatted message embedded in the so.
 # Look at core/gdaldrivermanager.cpp for a clue as to what is going on there.
 #
 
-NEW_INST_DATA=$PREFIX/share/gdal
-EMBEDDED='__INST_DATA_TARGET:                                                                                                                                      '
-ORIG=${EMBEDDED:0:${#NEW_INST_DATA}+19}
+SHARED_LIB=libgdal.1.1.so
 
-sed -e "s#$ORIG#__INST_DATA_TARGET:$NEW_INST_DATA#" < lib/libgdal.1.1.so > $PREFIX/lib/libgdal.1.1.so
+for SHARED_LIB in lib/* ; do
+  cp $SHARED_LIB $PREFIX/lib
+  bin/burnpath $PREFIX/$SHARED_LIB __INST_DATA_TARGET: $PREFIX/share/gdal
+done
 
 ###############################################################################
 # Copy the rest of the files.
 #
- 
+
 cp share/gdal/* $PREFIX/share/gdal
-cp bin/* $PREFIX/bin
+
+for EXECUTABLE in bin/* ; do
+  if test "$EXECUTABLE" == "bin/gdal-config" -o "$EXECUTABLE" == "bin/burnpath" ; then
+    /bin/true
+  else
+    cp $EXECUTABLE $PREFIX/bin
+    bin/burnpath $PREFIX/$EXECUTABLE __INST_DATA_TARGET: $PREFIX/share/gdal
+  fi
+done
 
 echo "Installation of GDAL to $PREFIX complete."
 
