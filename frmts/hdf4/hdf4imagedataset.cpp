@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.45  2005/03/28 13:33:50  dron
+ * Restore support for HDF-EOS Swath GCPs extraction (preliminary version).
+ *
  * Revision 1.44  2005/03/21 14:07:39  dron
  * More fixes for geotransformation handling.
  *
@@ -71,42 +74,6 @@
  *
  * Revision 1.31  2003/09/28 05:45:02  dron
  * More logic to distinguish dimesions.
- *
- * Revision 1.30  2003/09/05 18:15:43  dron
- * Fixes in ASTER DEM zone detection.
- *
- * Revision 1.29  2003/06/30 14:44:28  dron
- * Fixed problem introduced with Hyperion support.
- *
- * Revision 1.28  2003/06/26 20:42:31  dron
- * Support for Hyperion Level 1 data product.
- *
- * Revision 1.27  2003/06/25 08:26:18  dron
- * Support for Aster Level 1A/1B/2 products.
- *
- * Revision 1.26  2003/06/12 15:07:56  dron
- * Added support for SeaWiFS Level 3 Standard Mapped Image Products.
- *
- * Revision 1.25  2003/06/10 09:32:31  dron
- * Added support for MODIS Level 3 products.
- *
- * Revision 1.24  2003/05/21 14:11:43  dron
- * MODIS Level 1B earth-view (EV) product now supported.
- *
- * Revision 1.23  2003/03/31 12:51:35  dron
- * GetNoData()/SetNoData() functions added.
- *
- * Revision 1.22  2003/02/28 17:07:37  dron
- * Global metadata now combined with local ones.
- *
- * Revision 1.21  2003/01/28 21:19:04  dron
- * DFNT_CHAR8 type was used instead of DFNT_INT8
- *
- * Revision 1.20  2003/01/27 16:45:16  dron
- * Fixed problems with wrong count in SDsetattr() calls.
- *
- * Revision 1.19  2002/12/30 15:07:45  dron
- * SetProjCS() call removed.
  */
 
 #include <string.h>
@@ -245,7 +212,7 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                         void * pImage )
 {
     HDF4ImageDataset    *poGDS = (HDF4ImageDataset *) poDS;
-    int32               iStart[MAX_NC_DIMS], iEdges[MAX_NC_DIMS];
+    int32               aiStart[MAX_NC_DIMS], aiEdges[MAX_NC_DIMS];
     CPLErr              eErr = CE_None;
 
     if( poGDS->eAccess == GA_Update )
@@ -266,7 +233,7 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 an image at a time to form a volume.
                 A rank 4 dataset may be thought of as a series of volumes.
 
-                The "iStart" array specifies the multi-dimensional index of the
+                The "aiStart" array specifies the multi-dimensional index of the
                 starting corner of the hyperslab to read. The values are zero
                 based.
 
@@ -285,33 +252,35 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 switch ( poGDS->iRank )
                 {
                     case 4:     // 4Dim: volume-time
-                    // FIXME: needs sample file. Does not work currently.
-                    iStart[3] = 0/* range: 0--aiDimSizes[3]-1 */;       iEdges[3] = 1;
-                    iStart[2] = 0/* range: 0--aiDimSizes[2]-1 */;       iEdges[2] = 1;
-                    iStart[1] = nBlockYOff; iEdges[1] = nBlockYSize;
-                    iStart[0] = nBlockXOff; iEdges[0] = nBlockXSize;
-                    break;
+                        // FIXME: needs sample file. Does not work currently.
+                        aiStart[3] = 0/* range: 0--aiDimSizes[3]-1 */;
+                        aiEdges[3] = 1;
+                        aiStart[2] = 0/* range: 0--aiDimSizes[2]-1 */;
+                        aiEdges[2] = 1;
+                        aiStart[1] = nBlockYOff; aiEdges[1] = nBlockYSize;
+                        aiStart[0] = nBlockXOff; aiEdges[0] = nBlockXSize;
+                        break;
                     case 3: // 3Dim: volume
-                    iStart[poGDS->iBandDim] = nBand - 1;
-                    iEdges[poGDS->iBandDim] = 1;
-                
-                    iStart[poGDS->iYDim] = nBlockYOff;
-                    iEdges[poGDS->iYDim] = nBlockYSize;
-                
-                    iStart[poGDS->iXDim] = nBlockXOff;
-                    iEdges[poGDS->iXDim] = nBlockXSize;
-                    break;
+                        aiStart[poGDS->iBandDim] = nBand - 1;
+                        aiEdges[poGDS->iBandDim] = 1;
+                    
+                        aiStart[poGDS->iYDim] = nBlockYOff;
+                        aiEdges[poGDS->iYDim] = nBlockYSize;
+                    
+                        aiStart[poGDS->iXDim] = nBlockXOff;
+                        aiEdges[poGDS->iXDim] = nBlockXSize;
+                        break;
                     case 2: // 2Dim: rows/cols
-                    iStart[poGDS->iYDim] = nBlockYOff;
-                    iEdges[poGDS->iYDim] = nBlockYSize;
-                
-                    iStart[poGDS->iXDim] = nBlockXOff;
-                    iEdges[poGDS->iXDim] = nBlockXSize;
-                    break;
+                        aiStart[poGDS->iYDim] = nBlockYOff;
+                        aiEdges[poGDS->iYDim] = nBlockYSize;
+                    
+                        aiStart[poGDS->iXDim] = nBlockXOff;
+                        aiEdges[poGDS->iXDim] = nBlockXSize;
+                        break;
                 }
                 
                 // Read HDF SDS array
-                SDreaddata( iSDS, iStart, NULL, iEdges, pImage );
+                SDreaddata( iSDS, aiStart, NULL, aiEdges, pImage );
                 
                 SDendaccess( iSDS );
             }
@@ -325,13 +294,13 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 CPLMalloc(nBlockXSize*nBlockYSize*poGDS->iRank*nBlockYSize);
             int     i, j;
             
-            iStart[poGDS->iYDim] = nBlockYOff;
-            iEdges[poGDS->iYDim] = nBlockYSize;
+            aiStart[poGDS->iYDim] = nBlockYOff;
+            aiEdges[poGDS->iYDim] = nBlockYSize;
             
-            iStart[poGDS->iXDim] = nBlockXOff;
-            iEdges[poGDS->iXDim] = nBlockXSize;
+            aiStart[poGDS->iXDim] = nBlockXOff;
+            aiEdges[poGDS->iXDim] = nBlockXSize;
 
-            GRreadimage( poGDS->iGR, iStart, NULL, iEdges, pbBuffer );
+            GRreadimage( poGDS->iGR, aiStart, NULL, aiEdges, pbBuffer );
 
             for ( i = 0, j = (nBand - 1) * nDataTypeSize;
                   i < nBlockXSize * nDataTypeSize;
@@ -355,25 +324,25 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                             switch ( poGDS->iRank )
                             {
                                 case 3: // 3Dim: volume
-                                    iStart[poGDS->iBandDim] = nBand - 1;
-                                    iEdges[poGDS->iBandDim] = 1;
+                                    aiStart[poGDS->iBandDim] = nBand - 1;
+                                    aiEdges[poGDS->iBandDim] = 1;
                                 
-                                    iStart[poGDS->iYDim] = nBlockYOff;
-                                    iEdges[poGDS->iYDim] = nBlockYSize;
+                                    aiStart[poGDS->iYDim] = nBlockYOff;
+                                    aiEdges[poGDS->iYDim] = nBlockYSize;
                                 
-                                    iStart[poGDS->iXDim] = nBlockXOff;
-                                    iEdges[poGDS->iXDim] = nBlockXSize;
+                                    aiStart[poGDS->iXDim] = nBlockXOff;
+                                    aiEdges[poGDS->iXDim] = nBlockXSize;
                                     break;
                                 case 2: // 2Dim: rows/cols
-                                    iStart[poGDS->iYDim] = nBlockYOff;
-                                    iEdges[poGDS->iYDim] = nBlockYSize;
+                                    aiStart[poGDS->iYDim] = nBlockYOff;
+                                    aiEdges[poGDS->iYDim] = nBlockYSize;
                                 
-                                    iStart[poGDS->iXDim] = nBlockXOff;
-                                    iEdges[poGDS->iXDim] = nBlockXSize;
+                                    aiStart[poGDS->iXDim] = nBlockXOff;
+                                    aiEdges[poGDS->iXDim] = nBlockXSize;
                                     break;
                             }
                             GDreadfield( hGD, poGDS->pszFieldName,
-                                         iStart, NULL, iEdges, pImage );
+                                         aiStart, NULL, aiEdges, pImage );
                             GDdetach( hGD );
                         }
                         break;
@@ -387,25 +356,25 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                             switch ( poGDS->iRank )
                             {
                                 case 3: // 3Dim: volume
-                                    iStart[poGDS->iBandDim] = nBand - 1;
-                                    iEdges[poGDS->iBandDim] = 1;
+                                    aiStart[poGDS->iBandDim] = nBand - 1;
+                                    aiEdges[poGDS->iBandDim] = 1;
                                 
-                                    iStart[poGDS->iYDim] = nBlockYOff;
-                                    iEdges[poGDS->iYDim] = nBlockYSize;
+                                    aiStart[poGDS->iYDim] = nBlockYOff;
+                                    aiEdges[poGDS->iYDim] = nBlockYSize;
                                 
-                                    iStart[poGDS->iXDim] = nBlockXOff;
-                                    iEdges[poGDS->iXDim] = nBlockXSize;
+                                    aiStart[poGDS->iXDim] = nBlockXOff;
+                                    aiEdges[poGDS->iXDim] = nBlockXSize;
                                     break;
                                 case 2: // 2Dim: rows/cols
-                                    iStart[poGDS->iYDim] = nBlockYOff;
-                                    iEdges[poGDS->iYDim] = nBlockYSize;
+                                    aiStart[poGDS->iYDim] = nBlockYOff;
+                                    aiEdges[poGDS->iYDim] = nBlockYSize;
                                 
-                                    iStart[poGDS->iXDim] = nBlockXOff;
-                                    iEdges[poGDS->iXDim] = nBlockXSize;
+                                    aiStart[poGDS->iXDim] = nBlockXOff;
+                                    aiEdges[poGDS->iXDim] = nBlockXSize;
                                     break;
                             }
                             SWreadfield( hSW, poGDS->pszFieldName,
-                                         iStart, NULL, iEdges, pImage );
+                                         aiStart, NULL, aiEdges, pImage );
                             SWdetach( hSW );
                         }
                         break;
@@ -431,7 +400,7 @@ CPLErr HDF4ImageRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                          void * pImage )
 {
     HDF4ImageDataset    *poGDS = (HDF4ImageDataset *)poDS;
-    int32               iStart[MAX_NC_DIMS], iEdges[MAX_NC_DIMS];
+    int32               aiStart[MAX_NC_DIMS], aiEdges[MAX_NC_DIMS];
     CPLErr              eErr = CE_None;
 
     CPLAssert( poGDS != NULL
@@ -445,17 +414,17 @@ CPLErr HDF4ImageRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             {
                 int32   iSDS = SDselect( poGDS->hSD, poGDS->iDataset );
 
-                iStart[poGDS->iBandDim] = nBand - 1;
-                iEdges[poGDS->iBandDim] = 1;
+                aiStart[poGDS->iBandDim] = nBand - 1;
+                aiEdges[poGDS->iBandDim] = 1;
             
-                iStart[poGDS->iYDim] = nBlockYOff;
-                iEdges[poGDS->iYDim] = nBlockYSize;
+                aiStart[poGDS->iYDim] = nBlockYOff;
+                aiEdges[poGDS->iYDim] = nBlockYSize;
             
-                iStart[poGDS->iXDim] = nBlockXOff;
-                iEdges[poGDS->iXDim] = nBlockXSize;
+                aiStart[poGDS->iXDim] = nBlockXOff;
+                aiEdges[poGDS->iXDim] = nBlockXSize;
 
-                if ( (SDwritedata( iSDS, iStart, NULL,
-                                   iEdges, (VOIDP)pImage )) < 0 )
+                if ( (SDwritedata( iSDS, aiStart, NULL,
+                                   aiEdges, (VOIDP)pImage )) < 0 )
                     eErr = CE_Failure;
 
                 SDendaccess( iSDS );
@@ -465,14 +434,14 @@ CPLErr HDF4ImageRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         case 2:
             {
                 int32 iSDS = SDselect( poGDS->hSD, nBand - 1 );
-                iStart[poGDS->iYDim] = nBlockYOff;
-                iEdges[poGDS->iYDim] = nBlockYSize;
+                aiStart[poGDS->iYDim] = nBlockYOff;
+                aiEdges[poGDS->iYDim] = nBlockYSize;
             
-                iStart[poGDS->iXDim] = nBlockXOff;
-                iEdges[poGDS->iXDim] = nBlockXSize;
+                aiStart[poGDS->iXDim] = nBlockXOff;
+                aiEdges[poGDS->iXDim] = nBlockXSize;
 
-                if ( (SDwritedata( iSDS, iStart, NULL,
-                                   iEdges, (VOIDP)pImage )) < 0 )
+                if ( (SDwritedata( iSDS, aiStart, NULL,
+                                   aiEdges, (VOIDP)pImage )) < 0 )
                     eErr = CE_Failure;
 
                 SDendaccess( iSDS );
@@ -634,6 +603,31 @@ HDF4ImageDataset::~HDF4ImageDataset()
         }
 
         CPLFree( pasGCPList );
+    }
+    if ( hHDF4 )
+    {
+        switch ( iDatasetType )
+        {
+            case HDF4_EOS:
+                switch ( iSubdatasetType )
+                {
+                    case EOS_SWATH:
+                        SWclose( hHDF4 );
+                        break;
+                    case EOS_GRID:
+                        GDclose( hHDF4 );
+                    default:
+                        break;
+                        
+                }
+                break;
+            case HDF4_SDS:
+            case HDF4_GR:
+                hHDF4 = Hclose( hHDF4 );
+                break;
+            default:
+                break;
+        }
     }
 }
 
@@ -1361,9 +1355,13 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     else
         poDS->iSubdatasetType = UNKNOWN;
 
-    // Does our file still here?
+    // Is our file still here?
     if ( !Hishdf( poDS->pszFilename ) )
+    {
+        CSLDestroy( papszSubdatasetName );
+        CPLFree( poDS->pszFilename );
         return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
@@ -1395,7 +1393,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
                 case EOS_SWATH:
                 {
-                    int32   hSW,  nDimensions, nStrBufSize;
+                    int32   hSW,  nDimensions, nStrBufSize, iNumType;
                     char    **papszDimList = NULL,
                         **papszGeolocations = NULL, **papszDimMap = NULL;
                     char    *pszDimList = NULL,
@@ -1403,6 +1401,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     int32   *paiRank = NULL, *paiNumType = NULL,
                         *paiOffset = NULL, *paiIncrement = NULL;
                     int     nDimCount;
+                    //void    *pNoDataValue;
                     
                     if( poOpenInfo->eAccess == GA_ReadOnly )
                         poDS->hHDF4 = SWopen( poDS->pszFilename, DFACC_READ );
@@ -1410,9 +1409,25 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                         poDS->hHDF4 = SWopen( poDS->pszFilename, DFACC_WRITE );
                     
                     if( poDS->hHDF4 <= 0 )
+                    {
+                        CPLDebug( "HDF4Image", "Can't open HDF4 file %s",
+                                  poDS->pszFilename );
+                        CPLFree( poDS->pszFilename );
+                        CPLFree( poDS->pszSubdatasetName );
+                        CPLFree( poDS->pszFieldName );
                         return( NULL );
+                    }
 
                     hSW = SWattach( poDS->hHDF4, poDS->pszSubdatasetName );
+                    if( hSW < 0 )
+                    {
+                        CPLDebug( "HDF4Image", "Can't attach to subdataset %s",
+                                  poDS->pszSubdatasetName );
+                        CPLFree( poDS->pszFilename );
+                        CPLFree( poDS->pszSubdatasetName );
+                        CPLFree( poDS->pszFieldName );
+                        return( NULL );
+                    }
 
                     nDimensions = SWnentries( hSW, HDFE_NENTDIM, &nStrBufSize );
                     pszDimList = (char *)CPLMalloc( nStrBufSize + 1 );
@@ -1464,7 +1479,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                       }*/
 
                     // Retrieve NODATA value. FIXME: doesn't work.
-                    //SWgetfillvalue( hGD, poDS->pszFieldName, );
+                    //pNoDataValue = CPLMalloc( GetDataTypeSize(poDS->iNumType) );
+                    //SWgetfillvalue( hSW, poDS->pszFieldName, pNoDataValue );
 
 /* -------------------------------------------------------------------- */
 /*      Special case to pull parent metadata into MODIS_L1B             */
@@ -1480,142 +1496,280 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  Retrieve geolocation fields.                                        */
 /* -------------------------------------------------------------------- */
-#ifdef notdef
-                      char    szXGeo[8192], szYGeo[8192];
-                      int32   nDataFields, nDimMaps;
+                    char    szXGeo[8192], szYGeo[8192];
+                    int32   nDataFields, nDimMaps;
+                    void    *pLat = NULL, *pLong = NULL;
+                    int32   nLatCount = 0, nLongCount = 0;
+                    int32   nXPoints, nYPoints;
+                    int     j;
 
-                      nDataFields = SWnentries( hSW, HDFE_NENTGFLD, &nStrBufSize );
-                      pszGeoList = (char *)CPLMalloc( nStrBufSize + 1 );
-                      paiRank = (int32 *)CPLMalloc( nDataFields * sizeof(int32) );
-                      paiNumType = (int32 *)CPLMalloc( nDataFields * sizeof(int32) );
-                      SWinqgeofields( hSW, pszGeoList, paiRank, paiNumType );
+                    nDataFields = SWnentries( hSW, HDFE_NENTGFLD, &nStrBufSize );
+                    pszGeoList = (char *)CPLMalloc( nStrBufSize + 1 );
+                    paiRank = (int32 *)CPLMalloc( nDataFields * sizeof(int32) );
+                    paiNumType = (int32 *)CPLMalloc( nDataFields * sizeof(int32) );
+                    if ( nDataFields !=
+                         SWinqgeofields(hSW, pszGeoList, paiRank, paiNumType) )
+                    {
+                        CPLDebug( "HDF4Image",
+                        "Can't get the list of geolocation fields in swath %s",
+                        poDS->pszSubdatasetName );
+                    }
 
-                      #if DEBUG
-                      CPLDebug( "HDF4Image",
-                      "Number of geolocation fields in swath %s: %d",
-                      poDS->pszSubdatasetName, nDataFields );
-                      CPLDebug( "HDF4Image",
-                      "List of geolocation fields in swath %s: %s",
-                      poDS->pszSubdatasetName, pszGeoList );
-                      CPLDebug( "HDF4Image", "Geolocation fields ranks: %s",
-                      SPrintArray( GDT_UInt32, paiRank, nDataFields, "," ) );
-                      #endif
-                      papszGeolocations = CSLTokenizeString2( pszGeoList, ",",
-                      CSLT_HONOURSTRINGS );
-                      // Read geolocation data
-                      nDimMaps = SWnentries( hSW, HDFE_NENTMAP, &nStrBufSize );
-                      pszDimMaps = (char *)CPLMalloc( nStrBufSize + 1 );
-                      paiOffset = (int32 *)CPLMalloc( nDataFields * sizeof(int32) );
-                      paiIncrement = (int32 *)CPLMalloc( nDataFields * sizeof(int32) );
-                      SWinqmaps( hSW, pszDimMaps, paiOffset, paiIncrement );
+#if DEBUG
+                    else
+                    {
+                        char    *pszTmp;
+                        CPLDebug( "HDF4Image",
+                                  "Number of geolocation fields in swath %s: %d",
+                                  poDS->pszSubdatasetName, nDataFields );
+                        CPLDebug( "HDF4Image",
+                                  "List of geolocation fields in swath %s: %s",
+                                  poDS->pszSubdatasetName, pszGeoList );
+                        pszTmp = SPrintArray( GDT_UInt32, paiRank,
+                                              nDataFields, "," );
+                        CPLDebug( "HDF4Image",
+                                  "Geolocation fields ranks: %s", pszTmp );
+                    }
+#endif
 
-                      #if DEBUG
-                      CPLDebug( "HDF4Image",
-                      "List of geolocation maps in swath %s: %s",
-                      poDS->pszSubdatasetName, pszDimMaps );
-                      CPLDebug( "HDF4Image", "Geolocation map offsets: %s",
-                      SPrintArray( GDT_UInt32, paiOffset, nDataFields, "," ) );
-                      CPLDebug( "HDF4Image", "Geolocation map increments: %s",
-                      SPrintArray( GDT_UInt32, paiIncrement,
-                      nDataFields, "," ) );
-                      #endif
+                    papszGeolocations = CSLTokenizeString2( pszGeoList, ",",
+                                                        CSLT_HONOURSTRINGS );
+                    // Read geolocation data
+                    nDimMaps = SWnentries( hSW, HDFE_NENTMAP, &nStrBufSize );
+                    pszDimMaps = (char *)CPLMalloc( nStrBufSize + 1 );
+                    paiOffset = (int32 *)CPLMalloc( nDimMaps * sizeof(int32) );
+                    memset( paiOffset, 0, nDimMaps * sizeof(int32) );
+                    paiIncrement = (int32 *)CPLMalloc( nDimMaps * sizeof(int32) );
+                    memset( paiIncrement, 0, nDimMaps * sizeof(int32) );
+                    if ( nDimMaps !=
+                         SWinqmaps(hSW, pszDimMaps, paiOffset, paiIncrement) )
+                    {
+                        CPLDebug( "HDF4Image",
+                        "Can't get the list of geolocation maps in swath %s",
+                                  poDS->pszSubdatasetName );
+                    }
 
-                      papszDimMap = CSLTokenizeString2( pszDimMaps, ",",
-                      CSLT_HONOURSTRINGS );
-                      for ( i = 0; i < CSLCount(papszDimMap); i++ )
-                      {
-                      if ( strstr(papszDimMap[i], papszDimList[poDS->iXDim]) )
-                      {
-                      strncpy( szXGeo, papszDimList[poDS->iXDim], 8192 );
-                      char *pszTemp1 = papszDimMap[i];
-                      char *pszTemp2 = szXGeo;
-                      while ( *pszTemp1 && *pszTemp1 != '/' )
-                      *pszTemp2++ = *pszTemp1++;
-                      *pszTemp2 = '\0';
-                      }
+#if DEBUG
+                    else
+                    {
+                        char    *pszTmp;
+            
+                        CPLDebug( "HDF4Image",
+                                  "List of geolocation maps in swath %s: %s",
+                                  poDS->pszSubdatasetName, pszDimMaps );
+                        pszTmp = SPrintArray( GDT_Int32, paiOffset,
+                                               nDimMaps, "," );
+                        CPLDebug( "HDF4Image",
+                                  "Geolocation map offsets: %s", pszTmp );
+                        CPLFree( pszTmp );
+                        pszTmp = SPrintArray( GDT_Int32, paiIncrement,
+                                               nDimMaps, "," );
+                        CPLDebug( "HDF4Image",
+                                  "Geolocation map increments: %s", pszTmp );
+                        CPLFree( pszTmp );
+                    }
+#endif
 
-                      else if ( strstr(papszDimMap[i], papszDimList[poDS->iYDim]) )
-                      {
-                      strncpy( szYGeo, papszDimList[poDS->iYDim], 8192 );
-                      char *pszTemp1 = papszDimMap[i];
-                      char *pszTemp2 = szYGeo;
-                      while ( *pszTemp1 && *pszTemp1 != '/' )
-                      *pszTemp2++ = *pszTemp1++;
-                      *pszTemp2 = '\0';
-                      }
-                      }
+                    papszDimMap = CSLTokenizeString2( pszDimMaps, ",",
+                                                      CSLT_HONOURSTRINGS );
+                    for ( i = 0; i < CSLCount(papszDimMap); i++ )
+                    {
+                        if ( strstr(papszDimMap[i], papszDimList[poDS->iXDim]) )
+                        {
+                            strncpy( szXGeo, papszDimList[poDS->iXDim], 8192 );
+                            char *pszTemp1 = papszDimMap[i];
+                            char *pszTemp2 = szXGeo;
+                            while ( *pszTemp1 && *pszTemp1 != '/' )
+                                *pszTemp2++ = *pszTemp1++;
+                            *pszTemp2 = '\0';
+                        }
+                        else if ( strstr(papszDimMap[i], papszDimList[poDS->iYDim]) )
+                        {
+                            strncpy( szYGeo, papszDimList[poDS->iYDim], 8192 );
+                            char *pszTemp1 = papszDimMap[i];
+                            char *pszTemp2 = szYGeo;
+                            while ( *pszTemp1 && *pszTemp1 != '/' )
+                                *pszTemp2++ = *pszTemp1++;
+                            *pszTemp2 = '\0';
+                        }
+                    }
 
-                      for ( i = 0; i < CSLCount(papszGeolocations); i++ )
-                      {
-                      int32   *paiStart, *paiEdges;
-                      if ( EQUALN(papszGeolocations[i], "Latitude", 8) )
-                      {
-                      char    szGeoDimList[8192];
-                      char    **papszGeoDimList = NULL;
-                      int32   iRank, iNumType;
-                      int32   aiDimSizes[MAX_VAR_DIMS];
-                      double  *padfLat;
-                      int     iGCP;
-                            
-                      SWfieldinfo( hSW, papszGeolocations[i], &iRank,
-                      aiDimSizes, &iNumType, szGeoDimList );
-                      papszGeoDimList = CSLTokenizeString2( szGeoDimList,
-                      ",", CSLT_HONOURSTRINGS );
+                    for ( i = 0; i < CSLCount(papszGeolocations); i++ )
+                    {
+                        char    szGeoDimList[8192];
+                        char    **papszGeoDimList = NULL;
+                        int32   iRank;
+                        int32   aiDimSizes[MAX_VAR_DIMS];
 
-                      #if DEBUG
-                      CPLDebug( "HDF4Image",
-                      "List of dimensions in geolocation field %s: %s",
-                      papszGeolocations[i], szGeoDimList );
-                      #endif
+                        SWfieldinfo( hSW, papszGeolocations[i], &iRank,
+                                     aiDimSizes, &iNumType, szGeoDimList );
+                        papszGeoDimList = CSLTokenizeString2( szGeoDimList,
+                                                ",", CSLT_HONOURSTRINGS );
 
-                      paiStart = (int32 *)CPLMalloc( iRank * sizeof(int32) );
-                      paiEdges = (int32 *)CPLMalloc( iRank * sizeof(int32) );
-                      paiStart[0] = 0;
-                      paiStart[1] = 0;
-                      paiEdges[0] =
-                      aiDimSizes[CSLFindString( papszGeoDimList,
-                      szXGeo )];
-                      paiEdges[1] =
-                      aiDimSizes[CSLFindString( papszGeoDimList,
-                      szYGeo )];
-                      poDS->nGCPCount = paiEdges[0] * paiEdges[1];
-                      poDS->pasGCPList = (GDAL_GCP *)
-                      CPLCalloc( poDS->nGCPCount, sizeof( GDAL_GCP ) );
-                      GDALInitGCPs( poDS->nGCPCount, poDS->pasGCPList );
-                      padfLat = (double *)
-                      CPLMalloc( poDS->nGCPCount * sizeof(double));
-                            
-                      SWreadfield( hSW, papszGeolocations[i],
-                      paiStart, NULL, paiEdges, padfLat );
+#if DEBUG
+                        CPLDebug( "HDF4Image",
+                        "List of dimensions in geolocation field %s: %s",
+                                  papszGeolocations[i], szGeoDimList );
+#endif
 
-                      for ( iGCP = 0; iGCP < poDS->nGCPCount; iGCP++ )
-                      {
+                        nXPoints = aiDimSizes[CSLFindString( papszGeoDimList,
+                                                             szXGeo )];
+                        nYPoints = aiDimSizes[CSLFindString( papszGeoDimList,
+                                                             szYGeo )];
+                        if ( strstr( papszGeolocations[i], "Latitude" ) )
+                        {
+                            nLatCount = nXPoints * nYPoints;
+                            pLat = CPLMalloc( nLatCount *
+                                              poDS->GetDataTypeSize(iNumType) );
+                            if (SWreadfield( hSW, papszGeolocations[i], NULL,
+                                             NULL, NULL, (VOIDP)pLat ) < 0)
+                            {
+                                CPLDebug( "HDF4Image",
+                                          "Can't read geolocation field %s",
+                                          papszGeolocations[i]);
+                                CPLFree( pLat );
+                                pLat = NULL;
+                            }
+                        }
+                        else if ( strstr( papszGeolocations[i], "Longitude" ) )
+                        {
+                            nLongCount = nXPoints * nYPoints;
+                            pLong = CPLMalloc( nLongCount *
+                                               poDS->GetDataTypeSize(iNumType) );
+                            if (SWreadfield( hSW, papszGeolocations[i], NULL,
+                                             NULL, NULL, (VOIDP)pLong ) < 0)
+                            {
+                                CPLDebug( "HDF4Image",
+                                          "Can't read geolocation field %s",
+                                          papszGeolocations[i]);
+                                CPLFree( pLong );
+                                pLong = NULL;
+                            }
+                        }
+
+                        CSLDestroy( papszGeoDimList );
+                    }
+
+                    if ( nLatCount && nLongCount && nLatCount == nLongCount
+                         && pLat && pLong )
+                    {
+                        poDS->nGCPCount = nLatCount;
+                        
+                        poDS->pasGCPList = (GDAL_GCP *)
+                            CPLCalloc( poDS->nGCPCount, sizeof( GDAL_GCP ) );
+                        GDALInitGCPs( poDS->nGCPCount, poDS->pasGCPList );
+
+                        for ( i = 0; i < nYPoints; i++ )
+                        {
+                            for ( j = 0; j < nXPoints; j++ )
+                            {
+                                int iGCP =  i * nXPoints + j;
                                 // GCPs in Level 1A dataset are in geocentric
                                 // coordinates. Convert them in geodetic (we
                                 // will convert latitudes only, longitudes
                                 // does not need to be converted, because
                                 // they are the same).
                                 // This calculation valid for WGS84 datum only.
-                                poDS->pasGCPList[iGCP].dfGCPY = 
-                                atan(tan(padfLat[iGCP]*PI/180)/0.99330562)*180/PI;
-                                poDS->pasGCPList[iGCP].dfGCPX = 0.0;//pdfLong[iGCP];
-                                poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
+                                /*poDS->pasGCPList[iGCP].dfGCPY = 
+                                    atan(tan(padfLat[iGCP]*PI/180)/0.99330562)*180/PI;*/
+                                switch ( iNumType )
+                                {
+                                    case DFNT_INT8:
+                                        poDS->pasGCPList[iGCP].dfGCPY =
+                                            (double)((char *)pLat)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPX =
+                                            (double)((char *)pLong)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
+                                        break;
+                                    case DFNT_UINT8:
+                                        poDS->pasGCPList[iGCP].dfGCPY =
+                                            (double)((unsigned char *)pLat)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPX =
+                                            (double)((unsigned char *)pLong)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
+                                        break;
+                                    case DFNT_INT16:
+                                        poDS->pasGCPList[iGCP].dfGCPY =
+                                            (double)((short *)pLat)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPX =
+                                            (double)((short *)pLong)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
+                                        break;
+                                    case DFNT_UINT16:
+                                        poDS->pasGCPList[iGCP].dfGCPY =
+                                            (double)((unsigned short *)pLat)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPX =
+                                            (double)((unsigned short *)pLong)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
+                                        break;
+                                    case DFNT_INT32:
+                                        poDS->pasGCPList[iGCP].dfGCPY =
+                                            (double)((long *)pLat)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPX =
+                                            (double)((long *)pLong)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
+                                        break;
+                                    case DFNT_UINT32:
+                                        poDS->pasGCPList[iGCP].dfGCPY =
+                                            (double)((unsigned long *)pLat)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPX =
+                                            (double)((unsigned long *)pLong)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
+                                        break;
+                                    case DFNT_INT64:
+                                        poDS->pasGCPList[iGCP].dfGCPY =
+                                            (double)((GIntBig *)pLat)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPX =
+                                            (double)((GIntBig *)pLong)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
+                                        break;
+                                    case DFNT_UINT64:
+                                        poDS->pasGCPList[iGCP].dfGCPY =
+                                            (double)((GIntBig *)pLat)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPX =
+                                            (double)((GIntBig *)pLong)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
+                                        break;
+                                    case DFNT_FLOAT32:
+                                        poDS->pasGCPList[iGCP].dfGCPY =
+                                            (double)((float *)pLat)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPX =
+                                            (double)((float *)pLong)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
+                                        break;
+                                    case DFNT_FLOAT64:
+                                        poDS->pasGCPList[iGCP].dfGCPY =
+                                            (double)((double *)pLat)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPX =
+                                            (double)((double *)pLong)[iGCP];
+                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
+                                        break;
+                                    default:
+                                        poDS->pasGCPList[iGCP].dfGCPY = 0.0;
+                                        poDS->pasGCPList[iGCP].dfGCPX = 0.0;
+                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
+                                        break;
+                                }
 
                                 poDS->pasGCPList[iGCP].dfGCPPixel =
-                                piLatticeX[iGCP] + 0.5;
+                                    paiOffset[poDS->iXDim] +
+                                    j * paiIncrement[poDS->iXDim] + 0.5;
                                 poDS->pasGCPList[iGCP].dfGCPLine =
-                                piLatticeY[iGCP] + 0.5;
-                                poDS->nGCPCount++;
-                                }
+                                    paiOffset[poDS->iYDim] +
+                                    i * paiIncrement[poDS->iYDim] + 0.5;
 
-                                CPLFree( padfLat );
-                                CPLFree( paiStart );
-                                CPLFree( paiEdges );
-                                CSLDestroy( papszGeoDimList );
-                                }
-                                } 
-#endif // geolocation.
+                                /*poDS->pasGCPList[i].dfGCPPixel =
+                                    piLatticeX[i] + 0.5;
+                                poDS->pasGCPList[i].dfGCPLine =
+                                    piLatticeY[i] + 0.5;*/
+                            }
+                        }
+                    }
 
+                    if ( pLat )
+                        CPLFree( pLat );
+                    if ( pLong )
+                        CPLFree( pLong );
                     CSLDestroy( papszDimMap );
                     CSLDestroy( papszGeolocations );
                     CPLFree( paiOffset );
@@ -1734,9 +1888,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                         {
                             // For projected systems coordinates are in meters
                             poDS->adfGeoTransform[1] =
-                                (adfLowRight[0] - adfUpLeft[0]) / nXSize;
+                                (adfLowRight[0] - adfUpLeft[0]) / (nXSize - 1);
                             poDS->adfGeoTransform[5] =
-                                (adfLowRight[1] - adfUpLeft[1]) / nYSize;
+                                (adfLowRight[1] - adfUpLeft[1]) / (nYSize - 1);
                             poDS->adfGeoTransform[0] =
                                 adfUpLeft[0] - poDS->adfGeoTransform[1] / 2;
                             poDS->adfGeoTransform[3] =
@@ -1747,10 +1901,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                             // Handle angular geographic coordinates here
                             poDS->adfGeoTransform[1] =
                                 (CPLPackedDMSToDec(adfLowRight[0]) -
-                                 CPLPackedDMSToDec(adfUpLeft[0])) / nXSize;
+                                 CPLPackedDMSToDec(adfUpLeft[0])) / (nXSize-1);
                             poDS->adfGeoTransform[5] =
                                 (CPLPackedDMSToDec(adfLowRight[1]) -
-                                 CPLPackedDMSToDec(adfUpLeft[1])) / nYSize;
+                                 CPLPackedDMSToDec(adfUpLeft[1])) / (nYSize-1);
                             poDS->adfGeoTransform[0] =
                                 CPLPackedDMSToDec(adfUpLeft[0])
                                 - poDS->adfGeoTransform[1] / 2;
