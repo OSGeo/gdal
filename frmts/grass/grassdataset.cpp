@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/12/03 14:05:36  warmerda
+ * Modified to try and map byte nodata values outside the min/max range.
+ *
  * Revision 1.13  2002/12/03 05:24:31  warmerda
  * implement nodata support for all pixel types
  *
@@ -176,11 +179,41 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
     G_get_cellhd( (char *) pszCellName, (char *) pszMapset, &sCellInfo );
     nGRSType = G_raster_map_type( (char *) pszCellName, (char *) pszMapset );
 
+/* -------------------------------------------------------------------- */
+/*      Get min/max values.                                             */
+/* -------------------------------------------------------------------- */
+    struct FPRange sRange;
+
+    if( G_read_fp_range( (char *) pszCellName, (char *) pszMapset, 
+                         &sRange ) == -1 )
+    {
+        bHaveMinMax = FALSE;
+    }
+    else
+    {
+        bHaveMinMax = TRUE;
+        G_get_fp_range_min_max( &sRange, &dfCellMin, &dfCellMax );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Setup band type, and preferred nodata value.                    */
+/* -------------------------------------------------------------------- */
     dfNoData = 0.0;
     if( nGRSType == CELL_TYPE && sCellInfo.format == 0 )
     {
-        this->eDataType = GDT_Byte;
-        dfNoData = 0.0;
+        if( bHaveMinMax && dfCellMin < 1.0 && dfCellMax > 254.0 )
+        {
+            this->eDataType = GDT_UInt16;
+            dfNoData = 256.0;
+        }
+        else
+        {
+            this->eDataType = GDT_Byte;
+            if( dfCellMax < 255.0 )
+                dfNoData = 255.0;
+            else
+                dfNoData = 0.0;
+        }
     }
     else if( nGRSType == CELL_TYPE && sCellInfo.format == 1 )
     {
@@ -190,7 +223,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
     else if( nGRSType == CELL_TYPE )
     {
         this->eDataType = GDT_UInt32;
-        dfNoData = 12345.0;
+        dfNoData = 65535.0;
     }
     else if( nGRSType == FCELL_TYPE )
     {
@@ -244,22 +277,6 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
         }
 
         G_free_colors( &sGrassColors );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Get min/max values.                                             */
-/* -------------------------------------------------------------------- */
-    struct FPRange sRange;
-
-    if( G_read_fp_range( (char *) pszCellName, (char *) pszMapset, 
-                         &sRange ) == -1 )
-    {
-        bHaveMinMax = FALSE;
-    }
-    else
-    {
-        bHaveMinMax = TRUE;
-        G_get_fp_range_min_max( &sRange, &dfCellMin, &dfCellMax );
     }
 }
 
