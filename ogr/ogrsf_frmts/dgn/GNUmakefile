@@ -12,7 +12,7 @@ LIBS	:=	../ogrsf_frmts.a ../../ogr.a $(CPL_LIB) $(LIBS)
 
 CPL_DIR	=	$(GDAL_ROOT)/port
 
-DIST_REV =	1.5
+DIST_REV =	1.6
 DIST_DIR =	dgnlib-$(DIST_REV)
 DIST_FILE = 	dgnlib-$(DIST_REV).zip
 DIST_FILES =	dgnread.cpp dgnopen.cpp dgnlib.h dgnlibp.h dgnfloat.cpp \
@@ -22,7 +22,8 @@ DIST_FILES =	dgnread.cpp dgnopen.cpp dgnlib.h dgnlibp.h dgnfloat.cpp \
 		$(CPL_DIR)/cpl_config.h $(CPL_DIR)/cpl_port.h \
 		$(CPL_DIR)/cpl_vsi.h $(CPL_DIR)/cpl_vsisimple.cpp \
 		$(CPL_DIR)/cpl_conv.h $(CPL_DIR)/cpl_conv.cpp \
-		$(CPL_DIR)/cpl_error.h $(CPL_DIR)/cpl_error.cpp
+		$(CPL_DIR)/cpl_error.h $(CPL_DIR)/cpl_error.cpp \
+		$(CPL_DIR)/cpl_config.h.vc
 
 default:	$(OBJ) $(OBJ_OGR)
 
@@ -52,6 +53,7 @@ dist:
 	mkdir $(DIST_DIR)
 	cp $(DIST_FILES) $(DIST_DIR)
 	cp Makefile.dist $(DIST_DIR)/Makefile
+	cp Makefile.vc.dist $(DIST_DIR)/Makefile.vc
 	zip -r $(DIST_FILE) $(DIST_DIR)
 
 web-docs-update:	docs
