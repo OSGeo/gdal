@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/05/02 19:50:52  warmerda
+ * added SUPPORT_2D_FLATTEN to ensure 2D geometries
+ *
  * Revision 1.4  2002/04/30 19:47:36  warmerda
  * dont lose last character off strings as long as the field width
  *
@@ -275,9 +278,20 @@ int OGRVirtualArray::FillGeometry( OGRGeometry *poGeom,
 
 {
     int      nOffset = pColInfo->cbOffset;
+    int      bGeomCopy = FALSE;
 
     if( poGeom == NULL )
         return TRUE;
+
+#ifdef SUPPORT_2D_FLATTEN
+    if( poGeom->getCoordinateDimension() == 3 )
+    {
+        CPLDebug( "OGR_OLEDB", "Flattening 3D geometry to 2D." );
+        poGeom = poGeom->clone();
+        poGeom->flattenTo2D();
+        bGeomCopy = TRUE;
+    }
+#endif
     
     int                 nSize = poGeom->WkbSize();
 
@@ -315,6 +329,12 @@ int OGRVirtualArray::FillGeometry( OGRGeometry *poGeom,
     else
         CPLDebug( "OGR_OLEDB", "Geometry to big (%d bytes).", nSize );
 #endif
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup if a temporary 2D geometry was created.                 */
+/* -------------------------------------------------------------------- */
+    if( bGeomCopy )
+        delete poGeom;
 
     return TRUE;
 }
