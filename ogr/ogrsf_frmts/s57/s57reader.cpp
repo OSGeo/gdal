@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2001/09/04 16:21:11  warmerda
+ * improved handling of corrupt line geometries
+ *
  * Revision 1.27  2001/08/30 21:18:35  warmerda
  * removed debug info
  *
@@ -918,7 +921,12 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
         if( poSRecord == NULL )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Couldn't find spatial record %d.\n", nRCID );
+                      "Couldn't find spatial record %d.\n"
+                      "Feature OBJL=%s, RCID=%d may have corrupt or"
+                      "missing geometry.",
+                      nRCID,
+                      poFeature->GetDefnRef()->GetName(),
+                      poFRecord->GetIntSubfield( "FRID", 0, "RCID", 0 ) );
             continue;
         }
     
@@ -969,6 +977,14 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
 
             if( FetchPoint( RCNM_VC, nVC_RCID, &dfX, &dfY ) )
                 poLine->addPoint( dfX, dfY );
+            else
+                CPLError( CE_Warning, CPLE_AppDefined, 
+                          "Unable to fetch start node RCID%d.\n"
+                          "Feature OBJL=%s, RCID=%d may have corrupt or"
+                          " missing geometry.", 
+                          nVC_RCID, 
+                          poFeature->GetDefnRef()->GetName(),
+                          poFRecord->GetIntSubfield( "FRID", 0, "RCID", 0 ) );
         }
         
 /* -------------------------------------------------------------------- */
@@ -1011,11 +1027,19 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
 
             if( FetchPoint( RCNM_VC, nVC_RCID, &dfX, &dfY ) )
                 poLine->addPoint( dfX, dfY );
+            else
+                CPLError( CE_Warning, CPLE_AppDefined, 
+                          "Unable to fetch end node RCID=%d.\n"
+                          "Feature OBJL=%s, RCID=%d may have corrupt or"
+                          " missing geometry.", 
+                          nVC_RCID, 
+                          poFeature->GetDefnRef()->GetName(),
+                          poFRecord->GetIntSubfield( "FRID", 0, "RCID", 0 ) );
         }
     }
 
-    poFeature->SetGeometryDirectly( poLine );
-    CPLAssert( poLine->getNumPoints() > 0 );
+    if( poLine->getNumPoints() >= 2 )
+        poFeature->SetGeometryDirectly( poLine );
 }
 
 /************************************************************************/
