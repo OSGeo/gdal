@@ -119,7 +119,7 @@ QGIS supports vector, raster, and database formats.<p>
 A another OpenGL based terrain engine somewhat similar to VTP.<p>
 
 <li> <a href="http://www.cadcorp.com/">Cadcorp SIS</a>: A Windows GIS has
-recently implemented a GDAL plugin (still prerelease).<p>
+recently implemented a GDAL plugin.<p>
 
 <li> <a href="http://www.safe.com/">FME</a>: A GIS translator package
 includes a GDAL plugin (still prerelease).<p>
