@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2002/10/04 15:13:25  dron
+ * WORLDFILE support
+ *
  * Revision 1.3  2002/09/23 15:47:00  dron
  * CreateCopy() enabled.
  *
@@ -42,6 +45,7 @@
  */
 
 #include "gdal_priv.h"
+#include "cpl_string.h"
 
 #define uchar unsigned char
 #define longlong long long
@@ -64,8 +68,8 @@ class JPEG2000Dataset : public GDALDataset
 {
     friend class JPEG2000RasterBand;
 
-//    double      adfGeoTransform[6];
-    char        *pszProjection;
+    double      adfGeoTransform[6];
+    int		bGeoTransformValid;
 
     FILE	*fp;
     jas_stream_t *sStream;
@@ -77,8 +81,7 @@ class JPEG2000Dataset : public GDALDataset
     
     static GDALDataset *Open( GDALOpenInfo * );
 
-//    CPLErr 	GetGeoTransform( double * padfTransform );
-    const char *GetProjectionRef();
+    CPLErr 	GetGeoTransform( double* );
 };
 
 /************************************************************************/
@@ -117,7 +120,7 @@ JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDS, int nBand,
     // Maximum possible depth for JPEG2000 is 38!
     switch ( bSignedness )
     {
-	case 1:		// Signed component
+	case 1:				// Signed component
 	if (iDepth <= 8)
 	    this->eDataType = GDT_Byte; // FIXME: should be signed
 	else if (iDepth <= 16)
@@ -125,7 +128,7 @@ JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDS, int nBand,
 	else if (iDepth <= 32)
             this->eDataType = GDT_Int32;
 	break;
-	case 0:		// Unsigned component
+	case 0:				// Unsigned component
 	default:
 	if (iDepth <= 8)
 	    this->eDataType = GDT_Byte;
@@ -208,8 +211,14 @@ JPEG2000Dataset::JPEG2000Dataset()
 
 {
     fp = NULL;
-    pszProjection = "";
     nBands = 0;
+    bGeoTransformValid = FALSE;
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -230,21 +239,16 @@ JPEG2000Dataset::~JPEG2000Dataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-/*CPLErr JPEG2000Dataset::GetGeoTransform( double * padfTransform )
+CPLErr JPEG2000Dataset::GetGeoTransform( double * padfTransform )
 
 {
-    memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
-    return CE_None;
-}*/
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *JPEG2000Dataset::GetProjectionRef()
-
-{
-    return pszProjection;
+    if( bGeoTransformValid )
+    {
+        memcpy( padfTransform, adfGeoTransform, sizeof(adfGeoTransform[0]) * 6 );
+        return CE_None;
+    }
+    else
+        return CE_Failure;
 }
 
 /************************************************************************/
@@ -266,7 +270,10 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 	return NULL;
     iFormat = jas_image_getfmt( sS );
     if ( !(pszFormatName = jas_image_fmttostr( iFormat )) )
+    {
+	jas_stream_close( sS );
 	return NULL;
+    }
     if ( strlen( pszFormatName ) < 3 ||
         (!EQUALN( pszFormatName, "jp2", 3 ) &&
 	 !EQUALN( pszFormatName, "jpc", 3 ) &&
@@ -290,7 +297,11 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->sStream = sS;
 
     if ( !(poDS->sImage = jas_image_decode(poDS->sStream, iFormat, 0)) )
+    {
+        jas_stream_close( sS );
+	delete poDS;
         return NULL;
+    }
 
     poDS->nBands = jas_image_numcmpts( poDS->sImage );
     poDS->nRasterXSize = jas_image_cmptwidth( poDS->sImage, 0 );
@@ -308,6 +319,13 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 	    jas_image_cmptsgnd(poDS->sImage, iBand - 1) ) );
         
     }
+
+/* -------------------------------------------------------------------- */
+/*      Check for world file.                                           */
+/* -------------------------------------------------------------------- */
+    poDS->bGeoTransformValid = 
+        GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+                           poDS->adfGeoTransform );
 
     return( poDS );
 }
@@ -432,7 +450,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
     }
 
-     // FIXME: 1. determine colormodel; 2. won't works
+    // FIXME: 1. determine colormodel; 2. won't works
     // jas_image_setcolormodel( sImage, 0 );
     if ( (jas_image_encode( sImage, sStream, jas_image_strtofmt("jp2"), 0 )) < 0 )
     {
@@ -450,13 +468,24 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     jas_matrix_destroy( sMatrix );
     CPLFree( paiScanline );
     CPLFree( sComps );
-    jas_image_destroy( sImage );
-    jas_image_clearfmts();
     if ( jas_stream_close( sStream ) )
     {
         CPLError( CE_Failure, CPLE_FileIO, "Unable to close file %s.\n",
 		  pszFilename );
         return NULL;
+    }
+    jas_image_destroy( sImage );
+    jas_image_clearfmts();
+
+/* -------------------------------------------------------------------- */
+/*      Do we need a world file?                                          */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
+    {
+    	double      adfGeoTransform[6];
+	
+	poSrcDS->GetGeoTransform( adfGeoTransform );
+	GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform );
     }
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
