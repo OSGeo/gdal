@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/03/02 14:18:32  warmerda
+ * Fixed bug with writing min/max sample value
+ *
  * Revision 1.5  1999/02/15 19:33:05  warmerda
  * Added reporting, and logic to -v 98 and -v 99.
  *
@@ -500,8 +503,6 @@ static CPLErr ImagineToGeoTIFFDataRange( HFABand * poBand, TIFF *hTIFF)
     dfMax = poBinInfo->GetDoubleField( "maximum" );
 
     if( dfMax > dfMin )
-        return CE_None;
-    else
         return CE_Failure;
     
     if( dfMin < 0 || dfMin > 65536 || dfMax < 0 || dfMax > 65535
