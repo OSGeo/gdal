@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.19  2000/09/25 19:58:43  warmerda
+ * ensure win32 doesn't get defined in Cygnus builds
+ *
  * Revision 1.18  2000/07/20 13:15:03  warmerda
  * don't redeclare CPL_DLL
  *
@@ -115,11 +118,15 @@
 #  define WIN32
 #endif
 
+#include "cpl_config.h"
+
+#ifdef IGNORE_WIN32
+#  undef WIN32
+#endif
+
 /* ==================================================================== */
 /*	Standard include files.						*/
 /* ==================================================================== */
-
-#include "cpl_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
