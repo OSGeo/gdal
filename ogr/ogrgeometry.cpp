@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/02/22 12:39:32  fwarmerdam
+ * Rename Equal to Equals, and Intersect to Intersects.
+ * Intersects() now always uses GEOS if available.  Also, Intersects()
+ * returns TRUE if the other geometry is NULL.
+ *
  * Revision 1.27  2004/09/16 18:29:21  fwarmerdam
  * Disable GEOS Insersect().  Is is very expensive for the common case of a
  * bounding rectangle intersection.  We need something better eventually.
@@ -263,33 +268,34 @@ void OGR_G_AssignSpatialReference( OGRGeometryH hGeom,
 }
 
 /************************************************************************/
-/*                             Intersect()                              */
+/*                             Intersects()                             */
 /************************************************************************/
 
 /**
  * Do these features intersect?
  *
- * Currently this is not implemented in a rigerous fashion (even if GEOS is
- * available), and generally just tests whether the envelopes of the two 
- * features intersect.  Eventually this will be made rigerous.  
+ * Determines whether two geometries intersect.  If GEOS is enabled, then
+ * this is done in rigerous fashion otherwise TRUE is returned if the
+ * envelopes (bounding boxes) of the two features overlap. 
  *
  * The poOtherGeom argument may be safely NULL, but in this case the method
- * will always return FALSE.  
+ * will always return TRUE.   That is, a NULL geometry is treated as being
+ * everywhere. 
  *
- * This method is the same as the C function OGR_G_Intersect().
+ * This method is the same as the C function OGR_G_Intersects().
  *
  * @param poOtherGeom the other geometry to test against.  
  *
  * @return TRUE if the geometries intersect, otherwise FALSE.
  */
 
-OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom ) const
+OGRBoolean OGRGeometry::Intersects( OGRGeometry *poOtherGeom ) const
 
 {
     OGREnvelope         oEnv1, oEnv2;
 
     if( this == NULL || poOtherGeom == NULL )
-        return FALSE;
+        return TRUE;
 
     this->getEnvelope( &oEnv1 );
     poOtherGeom->getEnvelope( &oEnv2 );
@@ -305,15 +311,6 @@ OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom ) const
     // actual intersection.
     return TRUE;
 #else
-    
-    // temporary shortcut till we can add the proper rectangle shortcut. 
-    return TRUE;
-
-    // Is one of our geometries a simple unrotated rectangle?  If so, 
-    // the envelope overlap is sufficient. 
-
-    // we should really have a special case for simple box geometries
-    // to avoid the expense of using GEOS .. add later.
     
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
 
@@ -342,6 +339,14 @@ OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom ) const
 #endif /* HAVE_GEOS */
 }
 
+// Old API compatibility function.                                 
+
+OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom ) const
+
+{
+    return Intersects( poOtherGeom );
+}
+
 /************************************************************************/
 /*                          OGR_G_Intersect()                           */
 /************************************************************************/
@@ -352,7 +357,7 @@ OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom ) const
  * just tests whether the envelopes of the two features intersect.  Eventually
  * this will be made rigerous.
  *
- * This function is the same as the CPP method OGRGeometry::Intersect.
+ * This function is the same as the CPP method OGRGeometry::Intersects.
  *
  * @param hGeom handle on the first geometry.
  * @param hOtherGeom handle on the other geometry to test against.
@@ -360,10 +365,16 @@ OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom ) const
  * @return TRUE if the geometries intersect, otherwise FALSE.
  */
 
+int OGR_G_Intersects( OGRGeometryH hGeom, OGRGeometryH hOtherGeom )
+
+{
+    return ((OGRGeometry *) hGeom)->Intersects( (OGRGeometry *) hOtherGeom );
+}
+
 int OGR_G_Intersect( OGRGeometryH hGeom, OGRGeometryH hOtherGeom )
 
 {
-    return ((OGRGeometry *) hGeom)->Intersect( (OGRGeometry *) hOtherGeom );
+    return ((OGRGeometry *) hGeom)->Intersects( (OGRGeometry *) hOtherGeom );
 }
 
 /************************************************************************/
@@ -623,7 +634,7 @@ int OGR_G_GetCoordinateDimension( OGRGeometryH hGeom )
  */
 
 /**
- * \fn int OGRGeometry::Equal( OGRGeometry *poOtherGeom );
+ * \fn int OGRGeometry::Equals( OGRGeometry *poOtherGeom ) const;
  *
  * Returns two if two geometries are equivalent.
  *
@@ -632,23 +643,38 @@ int OGR_G_GetCoordinateDimension( OGRGeometryH hGeom )
  * @return TRUE if equivalent or FALSE otherwise.
  */
 
+
+// Backward compatibility method.
+
+int OGRGeometry::Equal( OGRGeometry *poOtherGeom ) const
+{
+    return Equals( poOtherGeom );
+}
+
 /************************************************************************/
-/*                            OGR_G_Equal()                             */
+/*                            OGR_G_Equals()                            */
 /************************************************************************/
+
 /**
  * Returns two if two geometries are equivalent.
  *
- * This function is the same as the CPP method OGRGeometry::Equal() method.
+ * This function is the same as the CPP method OGRGeometry::Equals() method.
  *
  * @param hGeom handle on the first geometry.
  * @param hOther handle on the other geometry to test against.
  * @return TRUE if equivalent or FALSE otherwise.
  */
 
+int OGR_G_Equals( OGRGeometryH hGeom, OGRGeometryH hOther )
+
+{
+    return ((OGRGeometry *) hGeom)->Equals( (OGRGeometry *) hOther );
+}
+
 int OGR_G_Equal( OGRGeometryH hGeom, OGRGeometryH hOther )
 
 {
-    return ((OGRGeometry *) hGeom)->Equal( (OGRGeometry *) hOther );
+    return ((OGRGeometry *) hGeom)->Equals( (OGRGeometry *) hOther );
 }
 
 
