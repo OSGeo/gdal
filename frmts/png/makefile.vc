@@ -1,18 +1,24 @@
+GDAL_ROOT	=	..\..
+!INCLUDE $(GDAL_ROOT)\nmake.opt
 
 OBJ	=	\
 	pngdataset.obj
 
-GDAL_ROOT	=	..\..
 
+#EXTRAFLAGS = 	-I..\zlib -Ilibpng
+!IFDEF PNG_EXTERNAL_LIB
+EXTRAFLAGS = 	-I..\zlib -I$(PNGDIR)
+!ELSE
 EXTRAFLAGS = 	-I..\zlib -Ilibpng
-
-!INCLUDE $(GDAL_ROOT)\nmake.opt
+!ENDIF
 
 default:	$(OBJ)
 	copy *.obj ..\o
+!IFNDEF PNG_EXTERNAL_LIB
 	cd libpng
 	$(MAKE) /f makefile.vc
 	cd ..
+!ENDIF
 
 clean:
 	-del *.obj
