@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/06/21 20:53:07  warmerda
+ * Avoid crashing if InitDataSource() returns NULL.
+ *
  * Revision 1.8  1999/06/12 17:15:42  kshih
  * Make use of datasource property
  * Add schema rowsets
@@ -505,6 +508,8 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
 
 
 	szBaseFile = GetInitDataSource(this);
+	if( szBaseFile == NULL )
+		return DB_E_ERRORSINCOMMAND;
 
     strcpy(szFilename,szBaseFile);
     strcat(szFilename,".dbf");
