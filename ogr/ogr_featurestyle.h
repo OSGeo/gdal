@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/05/11 00:39:43  warmerda
+ * make asStyle*[] using methods non-inline
+ *
  * Revision 1.6  2002/06/25 14:47:31  warmerda
  * CPL_DLL export style api
  *
@@ -345,41 +348,14 @@ public:
     
     /*****************************************************************/
     
-    inline GBool Parse()
-        { return OGRStyleTool::Parse(asStylePen,m_pasStyleValue,(int)OGRSTPenLast);
-        }
-
-    inline const char *GetParamStr(OGRSTPenParam eParam, GBool &bValueIsNull)
-        {   return OGRStyleTool::GetParamStr(asStylePen[eParam],
-                                             m_pasStyleValue[eParam],
-                                             bValueIsNull);
-        }
-    inline int GetParamNum(OGRSTPenParam eParam,GBool &bValueIsNull)
-        {  return OGRStyleTool::GetParamNum(asStylePen[eParam],
-                  m_pasStyleValue[eParam],bValueIsNull);
-        }
-    inline double GetParamDbl(OGRSTPenParam eParam,GBool &bValueIsNull)
-        {  return OGRStyleTool::GetParamDbl(asStylePen[eParam],
-                                            m_pasStyleValue[eParam],bValueIsNull);
-        }
-    inline void SetParamStr(OGRSTPenParam eParam, const char *pszParamString)
-        {   OGRStyleTool::SetParamStr(asStylePen[eParam],m_pasStyleValue[eParam],
-                                      pszParamString);
-        }
-    inline void SetParamNum(OGRSTPenParam eParam, int nParam)
-        {  OGRStyleTool::SetParamNum(asStylePen[eParam],
-                                     m_pasStyleValue[eParam],nParam);
-        }
-    
-    inline void SetParamDbl(OGRSTPenParam eParam, double dfParam)
-        {   OGRStyleTool::SetParamDbl(asStylePen[eParam],
-                                      m_pasStyleValue[eParam],dfParam);
-        }
-    inline const char *GetStyleString()
-        {   return OGRStyleTool::GetStyleString(asStylePen,m_pasStyleValue,
-                                                (int)OGRSTPenLast);
-        }
-    
+    GBool Parse();
+    const char *GetParamStr(OGRSTPenParam eParam, GBool &bValueIsNull);
+    int GetParamNum(OGRSTPenParam eParam,GBool &bValueIsNull);
+    double GetParamDbl(OGRSTPenParam eParam,GBool &bValueIsNull);
+    void SetParamStr(OGRSTPenParam eParam, const char *pszParamString);
+    void SetParamNum(OGRSTPenParam eParam, int nParam);
+    void SetParamDbl(OGRSTPenParam eParam, double dfParam);
+    const char *GetStyleString();
 };
 
 extern OGRStyleParamId CPL_DLL asStyleBrush[];
@@ -415,42 +391,14 @@ public:
 
     /*****************************************************************/
     
-    inline GBool Parse()
-        { return OGRStyleTool::Parse(asStyleBrush,m_pasStyleValue,
-                                     (int)OGRSTBrushLast);
-        }
-
-    inline const char *GetParamStr(OGRSTBrushParam eParam, GBool &bValueIsNull)
-        {   return OGRStyleTool::GetParamStr(asStyleBrush[eParam],
-                                             m_pasStyleValue[eParam],
-                                             bValueIsNull);
-        }
-    inline int GetParamNum(OGRSTBrushParam eParam,GBool &bValueIsNull)
-        {  return OGRStyleTool::GetParamNum(asStyleBrush[eParam],
-                  m_pasStyleValue[eParam],bValueIsNull);
-        }
-    inline double GetParamDbl(OGRSTBrushParam eParam,GBool &bValueIsNull)
-        {  return OGRStyleTool::GetParamDbl(asStyleBrush[eParam],
-                                            m_pasStyleValue[eParam],bValueIsNull);
-        }
-    inline void SetParamStr(OGRSTBrushParam eParam, const char *pszParamString)
-        {   OGRStyleTool::SetParamStr(asStyleBrush[eParam],m_pasStyleValue[eParam],
-                                      pszParamString);
-        }
-    inline void SetParamNum(OGRSTBrushParam eParam, int nParam)
-        {  OGRStyleTool::SetParamNum(asStyleBrush[eParam],
-                                     m_pasStyleValue[eParam],nParam);
-        }
-    
-    inline void SetParamDbl(OGRSTBrushParam eParam, double dfParam)
-        {   OGRStyleTool::SetParamDbl(asStyleBrush[eParam],
-                                      m_pasStyleValue[eParam],dfParam);
-        }
-    inline const char *GetStyleString()
-        {   return OGRStyleTool::GetStyleString(asStyleBrush,m_pasStyleValue,
-                                                (int)OGRSTBrushLast);
-        }
-    
+     GBool Parse();
+     const char *GetParamStr(OGRSTBrushParam eParam, GBool &bValueIsNull);
+     int GetParamNum(OGRSTBrushParam eParam,GBool &bValueIsNull);
+     double GetParamDbl(OGRSTBrushParam eParam,GBool &bValueIsNull);
+     void SetParamStr(OGRSTBrushParam eParam, const char *pszParamString);
+     void SetParamNum(OGRSTBrushParam eParam, int nParam);
+     void SetParamDbl(OGRSTBrushParam eParam, double dfParam);
+     const char *GetStyleString();
 };
 
 extern OGRStyleParamId CPL_DLL asStyleSymbol[];
@@ -493,42 +441,14 @@ public:
 
     /*****************************************************************/
     
-    inline GBool Parse()
-        { return OGRStyleTool::Parse(asStyleSymbol,m_pasStyleValue,
-                                     (int)OGRSTSymbolLast);
-        }
-
-    inline const char *GetParamStr(OGRSTSymbolParam eParam, GBool &bValueIsNull)
-        {   return OGRStyleTool::GetParamStr(asStyleSymbol[eParam],
-                                             m_pasStyleValue[eParam],
-                                             bValueIsNull);
-        }
-    inline int GetParamNum(OGRSTSymbolParam eParam,GBool &bValueIsNull)
-        {  return OGRStyleTool::GetParamNum(asStyleSymbol[eParam],
-                  m_pasStyleValue[eParam],bValueIsNull);
-        }
-    inline double GetParamDbl(OGRSTSymbolParam eParam,GBool &bValueIsNull)
-        {  return OGRStyleTool::GetParamDbl(asStyleSymbol[eParam],
-                                            m_pasStyleValue[eParam],bValueIsNull);
-        }
-    inline void SetParamStr(OGRSTSymbolParam eParam, const char *pszParamString)
-        {   OGRStyleTool::SetParamStr(asStyleSymbol[eParam],m_pasStyleValue[eParam],
-                                      pszParamString);
-        }
-    inline void SetParamNum(OGRSTSymbolParam eParam, int nParam)
-        {  OGRStyleTool::SetParamNum(asStyleSymbol[eParam],
-                                     m_pasStyleValue[eParam],nParam);
-        }
-    
-    inline void SetParamDbl(OGRSTSymbolParam eParam, double dfParam)
-        {   OGRStyleTool::SetParamDbl(asStyleSymbol[eParam],
-                                      m_pasStyleValue[eParam],dfParam);
-        }
-    inline const char *GetStyleString()
-        {   return OGRStyleTool::GetStyleString(asStyleSymbol,m_pasStyleValue,
-                                                (int)OGRSTSymbolLast);
-        }
-    
+     GBool Parse();
+     const char *GetParamStr(OGRSTSymbolParam eParam, GBool &bValueIsNull);
+     int GetParamNum(OGRSTSymbolParam eParam,GBool &bValueIsNull);
+     double GetParamDbl(OGRSTSymbolParam eParam,GBool &bValueIsNull);
+     void SetParamStr(OGRSTSymbolParam eParam, const char *pszParamString);
+     void SetParamNum(OGRSTSymbolParam eParam, int nParam);
+     void SetParamDbl(OGRSTSymbolParam eParam, double dfParam);
+     const char *GetStyleString();
 };
 
 extern OGRStyleParamId CPL_DLL asStyleLabel[];
@@ -579,42 +499,14 @@ public:
     
     /*****************************************************************/
     
-    inline GBool Parse()
-        { return OGRStyleTool::Parse(asStyleLabel,m_pasStyleValue,
-                                     (int)OGRSTLabelLast);
-        }
-
-    inline const char *GetParamStr(OGRSTLabelParam eParam, GBool &bValueIsNull)
-        {   return OGRStyleTool::GetParamStr(asStyleLabel[eParam],
-                                             m_pasStyleValue[eParam],
-                                             bValueIsNull);
-        }
-    inline int GetParamNum(OGRSTLabelParam eParam,GBool &bValueIsNull)
-        {  return OGRStyleTool::GetParamNum(asStyleLabel[eParam],
-                  m_pasStyleValue[eParam],bValueIsNull);
-        }
-    inline double GetParamDbl(OGRSTLabelParam eParam,GBool &bValueIsNull)
-        {  return OGRStyleTool::GetParamDbl(asStyleLabel[eParam],
-                                            m_pasStyleValue[eParam],bValueIsNull);
-        }
-    inline void SetParamStr(OGRSTLabelParam eParam, const char *pszParamString)
-        {   OGRStyleTool::SetParamStr(asStyleLabel[eParam],m_pasStyleValue[eParam],
-                                      pszParamString);
-        }
-    inline void SetParamNum(OGRSTLabelParam eParam, int nParam)
-        {  OGRStyleTool::SetParamNum(asStyleLabel[eParam],
-                                     m_pasStyleValue[eParam],nParam);
-        }
-    
-    inline void SetParamDbl(OGRSTLabelParam eParam, double dfParam)
-        {   OGRStyleTool::SetParamDbl(asStyleLabel[eParam],
-                                      m_pasStyleValue[eParam],dfParam);
-        }
-    inline const char *GetStyleString()
-        {   return OGRStyleTool::GetStyleString(asStyleLabel,m_pasStyleValue,
-                                                (int)OGRSTLabelLast);
-        }
-    
+     GBool Parse();
+     const char *GetParamStr(OGRSTLabelParam eParam, GBool &bValueIsNull);
+     int GetParamNum(OGRSTLabelParam eParam,GBool &bValueIsNull);
+     double GetParamDbl(OGRSTLabelParam eParam,GBool &bValueIsNull);
+     void SetParamStr(OGRSTLabelParam eParam, const char *pszParamString);
+     void SetParamNum(OGRSTLabelParam eParam, int nParam);
+     void SetParamDbl(OGRSTLabelParam eParam, double dfParam);
+     const char *GetStyleString();
 };
 
 #endif
