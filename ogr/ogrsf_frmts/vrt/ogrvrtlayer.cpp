@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/03/25 13:23:41  warmerda
+ * Fixed typo in error message.
+ *
  * Revision 1.4  2003/12/30 18:34:57  warmerda
  * Added support for SrcSQL instead of SrcLayer.
  *
@@ -210,7 +213,7 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory )
         if( poSrcLayer == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to file layer '%s' on datasource '%s'.", 
+                  "Failed to find layer '%s' on datasource '%s'.", 
                       pszLayerName, pszSrcDSName );
             CPLFree( pszSrcDSName );
             return FALSE;
