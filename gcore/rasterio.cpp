@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/07/13 13:08:53  warmerda
+ * fixed GDALSwapWords with skip value different from word size
+ *
  * Revision 1.11  2000/06/05 17:24:05  warmerda
  * added real complex support
  *
@@ -269,7 +272,7 @@ void GDALSwapWords( void *pData, int nWordSize, int nWordCount,
             pabyData[0] = pabyData[1];
             pabyData[1] = byTemp;
 
-            pabyData += nWordSize;
+            pabyData += nWordSkip;
         }
         break;
         
@@ -287,7 +290,7 @@ void GDALSwapWords( void *pData, int nWordSize, int nWordCount,
             pabyData[1] = pabyData[2];
             pabyData[2] = byTemp;
 
-            pabyData += nWordSize;
+            pabyData += nWordSkip;
         }
         break;
 
@@ -313,7 +316,7 @@ void GDALSwapWords( void *pData, int nWordSize, int nWordCount,
             pabyData[3] = pabyData[4];
             pabyData[4] = byTemp;
 
-            pabyData += nWordSize;
+            pabyData += nWordSkip;
         }
         break;
 
