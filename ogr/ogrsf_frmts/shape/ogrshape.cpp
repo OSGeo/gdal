@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/07/08 20:11:49  warmerda
+ * fixed computation of feature count when spatial filter is in effect.
+ *
  * Revision 1.3  1999/07/08 20:05:45  warmerda
  * added GetFeatureCount()
  *
@@ -145,12 +148,20 @@ OGRFeature *OGRShapeLayer::GetNextFeature( long * pnFeatureId )
 
 /************************************************************************/
 /*                          GetFeatureCount()                           */
+/*                                                                      */
+/*      If a spatial filter is in effect, we turn control over to       */
+/*      the generic counter.  Otherwise we return the total count.      */
+/*      Eventually we should consider implementing a more efficient     */
+/*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-int OGRShapeLayer::GetFeatureCount( int )
+int OGRShapeLayer::GetFeatureCount( int bForce )
 
 {
-    return nTotalShapeCount;
+    if( poFilterGeom != NULL )
+        return OGRLayer::GetFeatureCount( bForce );
+    else
+        return nTotalShapeCount;
 }
 
 
