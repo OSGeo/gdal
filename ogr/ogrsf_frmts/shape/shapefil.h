@@ -37,8 +37,11 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.6  2001/11/01 16:30:30  warmerda
+ * Revision 1.7  2002/01/15 14:33:07  warmerda
  * updated
+ *
+ * Revision 1.22  2002/01/15 14:32:00  warmerda
+ * try to improve SHPAPI_CALL docs
  *
  * Revision 1.21  2001/11/01 16:29:55  warmerda
  * move pabyRec into SHPInfo for thread safety
@@ -112,12 +115,6 @@
 extern "C" {
 #endif
 
-#ifndef SHPAPI_CALL
-#define SHPAPI_CALL
-#endif
-
-#define SHPAPI_CALL1(x)      * SHPAPI_CALL
-    
 /************************************************************************/
 /*                        Configuration options.                        */
 /************************************************************************/
@@ -135,6 +132,48 @@ extern "C" {
 /* -------------------------------------------------------------------- */
 #define DISABLE_MULTIPATCH_MEASURE
 
+/* -------------------------------------------------------------------- */
+/*      SHPAPI_CALL                                                     */
+/*                                                                      */
+/*      The following two macros are present to allow forcing           */
+/*      various calling conventions on the Shapelib API.                */
+/*                                                                      */
+/*      To force __stdcall conventions (needed to call Shapelib         */
+/*      from Visual Basic and/or Dephi I believe) the makefile could    */
+/*      be modified to define:                                          */
+/*                                                                      */
+/*        /DSHPAPI_CALL=__stdcall                                       */
+/*                                                                      */
+/*      If it is desired to force export of the Shapelib API without    */
+/*      using the shapelib.def file, use the following definition.      */
+/*                                                                      */
+/*        /DSHAPELIB_DLLEXPORT                                          */
+/*                                                                      */
+/*      To get both at once it will be necessary to hack this           */
+/*      include file to define:                                         */
+/*                                                                      */
+/*        #define SHPAPI_CALL __declspec(dllexport) __stdcall           */
+/*        #define SHPAPI_CALL1 __declspec(dllexport) * __stdcall        */
+/*                                                                      */
+/*      The complexity of the situtation is partly caused by the        */
+/*      peculiar requirement of Visual C++ that __stdcall appear        */
+/*      after any "*"'s in the return value of a function while the     */
+/*      __declspec(dllexport) must appear before them.                  */
+/* -------------------------------------------------------------------- */
+
+#ifdef SHAPELIB_DLLEXPORT
+#  define SHPAPI_CALL __declspec(dllexport)
+#  define SHPAPI_CALL1(x)  __declspec(dllexport) x
+#endif
+
+#ifndef SHPAPI_CALL
+#  define SHPAPI_CALL
+#endif
+
+#ifndef SHPAPI_CALL1
+#  define SHPAPI_CALL1(x)      x SHPAPI_CALL
+#endif
+    
 /************************************************************************/
 /*                             SHP Support.                             */
 /************************************************************************/

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.39 2001/12/11 22:41:03 warmerda Exp $
+ * $Id: dbfopen.c,v 1.41 2002/01/15 14:31:49 warmerda Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -34,6 +34,12 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.41  2002/01/15 14:31:49  warmerda
+ * compute rather than copying nHeaderLength in DBFCloneEmpty()
+ *
+ * Revision 1.40  2002/01/09 04:32:35  warmerda
+ * fixed to read correct amount of header
+ *
  * Revision 1.39  2001/12/11 22:41:03  warmerda
  * improve io related error checking when reading header
  *
@@ -156,7 +162,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: dbfopen.c,v 1.39 2001/12/11 22:41:03 warmerda Exp $";
+  "$Id: dbfopen.c,v 1.41 2002/01/15 14:31:49 warmerda Exp $";
 
 #include "shapefil.h"
 
@@ -366,7 +372,7 @@ DBFOpen( const char * pszFilename, const char * pszAccess )
     psDBF->pszHeader = (char *) pabyBuf;
 
     fseek( psDBF->fp, 32, 0 );
-    if( fread( pabyBuf, nHeadLen, 1, psDBF->fp ) != 1 )
+    if( fread( pabyBuf, nHeadLen-32, 1, psDBF->fp ) != 1 )
     {
         fclose( psDBF->fp );
         free( pabyBuf );
@@ -1250,7 +1256,7 @@ DBFCloneEmpty(DBFHandle psDBF, const char * pszFilename )
    
    newDBF->nFields = psDBF->nFields;
    newDBF->nRecordLength = psDBF->nRecordLength;
-   newDBF->nHeaderLength = psDBF->nHeaderLength;
+   newDBF->nHeaderLength = 32 * (psDBF->nFields+1);
     
    newDBF->panFieldOffset = (void *) malloc ( sizeof(int) * psDBF->nFields ); 
    memcpy ( newDBF->panFieldOffset, psDBF->panFieldOffset, sizeof(int) * psDBF->nFields );
