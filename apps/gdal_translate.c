@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/04/30 23:21:47  warmerda
+ * uses new CreateCopy when possible
+ *
  * Revision 1.12  2000/03/31 13:43:42  warmerda
  * added source window
  *
@@ -258,6 +261,31 @@ int main( int argc, char ** argv )
         printf( "\n" );
         Usage();
         exit( 1 );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      The short form is to CreateCopy().  We use this if the input    */
+/*      matches the whole dataset.  Eventually we should rewrite        */
+/*      this entire program to use virtual datasets to construct a      */
+/*      virtual input source to copy from.                              */
+/* -------------------------------------------------------------------- */
+    if( eOutputType == GDT_Unknown 
+        && nBandCount == GDALGetRasterCount(hDataset)
+        && anSrcWin[0] == 0 && anSrcWin[1] == 0 
+        && anSrcWin[2] == GDALGetRasterXSize(hDataset)
+        && anSrcWin[3] == GDALGetRasterYSize(hDataset) 
+        && nOXSize == 0 && nOYSize == 0 )
+    {
+        
+        hOutDS = GDALCreateCopy( hDriver, pszDest, hDataset, 
+                                 TRUE, papszCreateOptions, 
+                                 GDALDummyProgress, NULL );
+        if( hOutDS != NULL )
+            GDALClose( hOutDS );
+        
+        GDALClose( hDataset );
+
+        exit( hOutDS == NULL );
     }
 
 /* -------------------------------------------------------------------- */
