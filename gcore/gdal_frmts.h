@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/07/05 23:53:53  nemec
+ * Add FIT file format
+ *
  * Revision 1.5  2001/05/15 13:20:32  warmerda
  * added fujibas
  *
@@ -81,6 +84,7 @@ void CPL_DLL GDALRegister_Envisat(void);
 void CPL_DLL GDALRegister_FITS(void);
 void CPL_DLL GDALRegister_ECW(void);
 void CPL_DLL GDALRegister_FujiBAS(void);
+void CPL_DLL GDALRegister_FIT(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */

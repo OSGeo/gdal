@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.34  2001/07/05 23:53:53  nemec
+ * Add FIT file format
+ *
  * Revision 1.33  2001/05/15 13:24:42  warmerda
  * added fujibas
  *
@@ -253,6 +256,10 @@ void GDALAllRegister()
     GDALRegister_HKV();
     GDALRegister_EFF();
     GDALRegister_FujiBAS();
+#endif
+
+#ifdef FRMT_fit
+    GDALRegister_FIT();
 #endif
 
 /* -------------------------------------------------------------------- */
