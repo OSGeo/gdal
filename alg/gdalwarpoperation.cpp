@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/06/05 17:10:13  warmerda
+ * changed to report approximately correct completion amount in multi case
+ *
  * Revision 1.12  2003/05/27 20:49:26  warmerda
  * added REPORT_TIMINGS support
  *
@@ -630,6 +633,8 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
 
             dfProgressBase = dfPixelsProcessed / dfTotalPixels;
             dfProgressScale = dfChunkPixels / dfTotalPixels;
+
+            dfPixelsProcessed += dfChunkPixels;
             
             papThreadDataList[iThread*3+1] = (void *) this;
             papThreadDataList[iThread*3+2] = (void *) panThisChunk;
