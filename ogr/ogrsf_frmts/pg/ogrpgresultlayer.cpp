@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/05/08 02:14:49  warmerda
+ * added GetFeature() on table, generalize FID support a bit
+ *
  * Revision 1.3  2003/05/21 03:59:42  warmerda
  * expand tabs
  *
@@ -130,6 +133,7 @@ OGRFeatureDefn *OGRPGResultLayer::ReadResultDefinition()
         if( EQUAL(oField.GetNameRef(),"ogc_fid") )
         {
             bHasFid = TRUE;
+            pszFIDColumn = CPLStrdup(oField.GetNameRef());
             continue;
         }
         else if( nTypeOID == poDS->GetGeometryOID() )

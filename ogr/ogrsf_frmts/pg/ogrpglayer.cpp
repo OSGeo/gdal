@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/05/08 02:14:49  warmerda
+ * added GetFeature() on table, generalize FID support a bit
+ *
  * Revision 1.13  2003/05/21 03:59:42  warmerda
  * expand tabs
  *
@@ -103,6 +106,9 @@ OGRPGLayer::OGRPGLayer()
     pszGeomColumn = NULL;
     pszQueryStatement = NULL;
 
+    bHasFid = FALSE;
+    pszFIDColumn = NULL;
+
     iNextShapeId = 0;
 
     poSRS = NULL;
@@ -112,6 +118,8 @@ OGRPGLayer::OGRPGLayer()
     pszCursorName = "OGRPGLayerReader";
     hCursorResult = NULL;
     bCursorActive = FALSE;
+
+    poFeatureDefn = NULL;
 }
 
 /************************************************************************/
@@ -123,14 +131,18 @@ OGRPGLayer::~OGRPGLayer()
 {
     ResetReading();
 
-    if( pszGeomColumn != NULL )
-        CPLFree( pszGeomColumn );
+    CPLFree( pszGeomColumn );
+    CPLFree( pszFIDColumn );
+    CPLFree( pszQueryStatement );
 
     if( poFilterGeom != NULL )
         delete poFilterGeom;
 
     if( poSRS != NULL )
         poSRS->Dereference();
+
+    if( poFeatureDefn )
+        delete poFeatureDefn;
 }
 
 /************************************************************************/
@@ -189,6 +201,152 @@ OGRFeature *OGRPGLayer::GetNextFeature()
 
         delete poFeature;
     }
+}
+/************************************************************************/
+/*                          RecordToFeature()                           */
+/*                                                                      */
+/*      Convert the indicated record of the current result set into     */
+/*      a feature.                                                      */
+/************************************************************************/
+
+OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Create a feature from the current result.                       */
+/* -------------------------------------------------------------------- */
+    int         iField;
+    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+
+    poFeature->SetFID( iNextShapeId );
+
+/* ==================================================================== */
+/*      Transfer all result fields we can.                              */
+/* ==================================================================== */
+    for( iField = 0; 
+         iField < PQnfields(hCursorResult);
+         iField++ )
+    {
+        int     iOGRField;
+
+/* -------------------------------------------------------------------- */
+/*      Handle FID.                                                     */
+/* -------------------------------------------------------------------- */
+        if( bHasFid && EQUAL(PQfname(hCursorResult,iField),pszFIDColumn) )
+            poFeature->SetFID( atoi(PQgetvalue(hCursorResult,iRecord,iField)));
+
+/* -------------------------------------------------------------------- */
+/*      Handle PostGIS geometry                                         */
+/* -------------------------------------------------------------------- */
+        if( bHasPostGISGeometry
+            && (EQUAL(PQfname(hCursorResult,iField),pszGeomColumn)
+                || EQUAL(PQfname(hCursorResult,iField),"astext") ) )
+        {
+            char        *pszWKT;
+            char        *pszPostSRID;
+            OGRGeometry *poGeometry = NULL;
+            
+            pszWKT = PQgetvalue( hCursorResult, iRecord, iField );
+            pszPostSRID = pszWKT;
+
+            // optionally strip off PostGIS SRID identifier.  This
+            // happens if we got a raw geometry field.
+            if( EQUALN(pszPostSRID,"SRID=",5) )
+            {
+                while( *pszPostSRID != '\0' && *pszPostSRID != ';' )
+                    pszPostSRID++;
+                if( *pszPostSRID == ';' )
+                    pszPostSRID++;
+            }
+
+            OGRGeometryFactory::createFromWkt( &pszPostSRID, NULL, 
+                                               &poGeometry );
+            if( poGeometry != NULL )
+                poFeature->SetGeometryDirectly( poGeometry );
+
+            continue;
+        }
+/* -------------------------------------------------------------------- */
+/*      Handle raw binary geometry ... this hasn't been tested in a     */
+/*      while.                                                          */
+/* -------------------------------------------------------------------- */
+        else if( EQUAL(PQfname(hCursorResult,iField),"WKB_GEOMETRY") )
+        {
+            if( bWkbAsOid )
+            {
+                poFeature->SetGeometryDirectly( 
+                    OIDToGeometry( (Oid) atoi(
+                        PQgetvalue( hCursorResult, 
+                                    iRecord, iField ) ) ) );
+            }
+            else
+            {
+                poFeature->SetGeometryDirectly( 
+                    BYTEAToGeometry( 
+                        PQgetvalue( hCursorResult, 
+                                    iRecord, iField ) ) );
+            }
+            continue;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Transfer regular data fields.                                   */
+/* -------------------------------------------------------------------- */
+        iOGRField = 
+            poFeatureDefn->GetFieldIndex(PQfname(hCursorResult,iField));
+
+        if( iOGRField < 0 )
+            continue;
+
+        if( PQgetisnull( hCursorResult, iRecord, iField ) )
+            continue;
+
+        if( poFeatureDefn->GetFieldDefn(iOGRField)->GetType() == OFTIntegerList)
+        {
+            char **papszTokens;
+            int *panList, nCount, i;
+
+            papszTokens = CSLTokenizeStringComplex( 
+                PQgetvalue( hCursorResult, iRecord, iField ),
+                "{,}", FALSE, FALSE );
+
+            nCount = CSLCount(papszTokens);
+            panList = (int *) CPLCalloc(sizeof(int),nCount);
+
+            for( i = 0; i < nCount; i++ )
+                panList[i] = atoi(papszTokens[i]);
+            poFeature->SetField( iOGRField, nCount, panList );
+            CPLFree( panList );
+            CSLDestroy( papszTokens );
+        }
+        else if( poFeatureDefn->GetFieldDefn(iOGRField)->GetType() == OFTRealList)
+        {
+            char **papszTokens;
+            int nCount, i;
+            double *padfList;
+
+            papszTokens = CSLTokenizeStringComplex( 
+                PQgetvalue( hCursorResult, iRecord, iField ),
+                "{,}", FALSE, FALSE );
+
+            nCount = CSLCount(papszTokens);
+            padfList = (double *) CPLCalloc(sizeof(double),nCount);
+
+            for( i = 0; i < nCount; i++ )
+                padfList[i] = atof(papszTokens[i]);
+            poFeature->SetField( iOGRField, nCount, padfList );
+            CPLFree( padfList );
+            CSLDestroy( papszTokens );
+        }
+        else
+        {
+            poFeature->SetField( iOGRField, 
+                                 PQgetvalue( hCursorResult, 
+                                             iRecord, iField ) );
+        }
+    }
+
+    return poFeature;
 }
 
 /************************************************************************/
@@ -279,129 +437,14 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
         return NULL;
     }
 
+    
 /* -------------------------------------------------------------------- */
 /*      Create a feature from the current result.                       */
 /* -------------------------------------------------------------------- */
-    int         iField;
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
-
-    if( EQUAL(PQfname(hCursorResult,0),"OGC_FID") )
-    {
-        poFeature->SetFID( atoi(PQgetvalue(hCursorResult,nResultOffset,0)) );
-    }
-    else
-        poFeature->SetFID( iNextShapeId );
-
-    iNextShapeId++;
-
-    for( iField = 0; 
-         iField < PQnfields(hCursorResult);
-         iField++ )
-    {
-        int     iOGRField;
-
-        if( bHasPostGISGeometry
-            && (EQUAL(PQfname(hCursorResult,iField),pszGeomColumn)
-                || EQUAL(PQfname(hCursorResult,iField),"astext") ) )
-        {
-            char        *pszWKT;
-            char        *pszPostSRID;
-            OGRGeometry *poGeometry = NULL;
-            
-            pszWKT = PQgetvalue( hCursorResult, nResultOffset, iField );
-            pszPostSRID = pszWKT;
-
-            // optionally strip off PostGIS SRID identifier.  This
-            // happens if we got a raw geometry field.
-            if( EQUALN(pszPostSRID,"SRID=",5) )
-            {
-                while( *pszPostSRID != '\0' && *pszPostSRID != ';' )
-                    pszPostSRID++;
-                if( *pszPostSRID == ';' )
-                    pszPostSRID++;
-            }
-
-            OGRGeometryFactory::createFromWkt( &pszPostSRID, NULL, 
-                                               &poGeometry );
-            if( poGeometry != NULL )
-                poFeature->SetGeometryDirectly( poGeometry );
-
-            continue;
-        }
-        else if( EQUAL(PQfname(hCursorResult,iField),"WKB_GEOMETRY") )
-        {
-            if( bWkbAsOid )
-            {
-                poFeature->SetGeometryDirectly( 
-                    OIDToGeometry( (Oid) atoi(
-                        PQgetvalue( hCursorResult, 
-                                    nResultOffset, iField ) ) ) );
-            }
-            else
-            {
-                poFeature->SetGeometryDirectly( 
-                    BYTEAToGeometry( 
-                        PQgetvalue( hCursorResult, 
-                                    nResultOffset, iField ) ) );
-            }
-            continue;
-        }
-
-        iOGRField = 
-            poFeatureDefn->GetFieldIndex(PQfname(hCursorResult,iField));
-
-        if( iOGRField < 0 )
-            continue;
-
-        if( PQgetisnull( hCursorResult, nResultOffset, iField ) )
-            continue;
-
-        if( poFeatureDefn->GetFieldDefn(iOGRField)->GetType() == OFTIntegerList)
-        {
-            char **papszTokens;
-            int *panList, nCount, i;
-
-            papszTokens = CSLTokenizeStringComplex( 
-                PQgetvalue( hCursorResult, nResultOffset, iField ),
-                "{,}", FALSE, FALSE );
-
-            nCount = CSLCount(papszTokens);
-            panList = (int *) CPLCalloc(sizeof(int),nCount);
-
-            for( i = 0; i < nCount; i++ )
-                panList[i] = atoi(papszTokens[i]);
-            poFeature->SetField( iOGRField, nCount, panList );
-            CPLFree( panList );
-            CSLDestroy( papszTokens );
-        }
-        else if( poFeatureDefn->GetFieldDefn(iOGRField)->GetType() == OFTRealList)
-        {
-            char **papszTokens;
-            int nCount, i;
-            double *padfList;
-
-            papszTokens = CSLTokenizeStringComplex( 
-                PQgetvalue( hCursorResult, nResultOffset, iField ),
-                "{,}", FALSE, FALSE );
-
-            nCount = CSLCount(papszTokens);
-            padfList = (double *) CPLCalloc(sizeof(double),nCount);
-
-            for( i = 0; i < nCount; i++ )
-                padfList[i] = atof(papszTokens[i]);
-            poFeature->SetField( iOGRField, nCount, padfList );
-            CPLFree( padfList );
-            CSLDestroy( papszTokens );
-        }
-        else
-        {
-            poFeature->SetField( iOGRField, 
-                                 PQgetvalue( hCursorResult, 
-                                             nResultOffset, iField ) );
-        }
-    }
+    OGRFeature *poFeature = RecordToFeature( nResultOffset );
 
     nResultOffset++;
+    iNextShapeId++;
 
     return poFeature;
 }
@@ -578,7 +621,7 @@ int OGRPGLayer::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,OLCRandomRead) )
-        return TRUE;
+        return FALSE;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return poFilterGeom == NULL || bHasPostGISGeometry;

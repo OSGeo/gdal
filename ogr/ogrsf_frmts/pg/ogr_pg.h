@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/05/08 02:14:49  warmerda
+ * added GetFeature() on table, generalize FID support a bit
+ *
  * Revision 1.13  2004/04/30 17:52:42  warmerda
  * added layer name laundering
  *
@@ -111,16 +114,18 @@ class OGRPGLayer : public OGRLayer
 
     int                 bHasWkb;
     int                 bWkbAsOid;
-    int                 bHasFid;
     int                 bHasPostGISGeometry;
     char                *pszGeomColumn;
+
+    int                 bHasFid;
+    char                *pszFIDColumn;
 
   public:
                         OGRPGLayer();
     virtual             ~OGRPGLayer();
 
     virtual void        ResetReading();
-    virtual OGRFeature *GetNextRawFeature();
+
     virtual OGRFeature *GetNextFeature();
 
     virtual OGRFeature *GetFeature( long nFeatureId );
@@ -134,6 +139,10 @@ class OGRPGLayer : public OGRLayer
     virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int         TestCapability( const char * );
+
+    /* custom methods */
+    virtual OGRFeature *RecordToFeature( int iRecord );
+    virtual OGRFeature *GetNextRawFeature();
 };
 
 /************************************************************************/
@@ -162,6 +171,7 @@ class OGRPGTableLayer : public OGRPGLayer
                                          int bUpdate, int nSRSId = -2 );
                         ~OGRPGTableLayer();
 
+    virtual OGRFeature *GetFeature( long nFeatureId );
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/05/08 02:14:49  warmerda
+ * added GetFeature() on table, generalize FID support a bit
+ *
  * Revision 1.17  2004/04/30 17:52:42  warmerda
  * added layer name laundering
  *
@@ -191,9 +194,11 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
         pszType = PQgetvalue(hResult, iRecord, 1 );
         pszFormatType = PQgetvalue(hResult,iRecord,3);
 
+        /* TODO: Add detection of other primary key to use as FID */
         if( EQUAL(oField.GetNameRef(),"ogc_fid") )
         {
             bHasFid = TRUE;
+            pszFIDColumn = CPLStrdup(oField.GetNameRef());
             continue;
         }
         else if( EQUAL(pszType,"geometry") )
@@ -409,24 +414,34 @@ char *OGRPGTableLayer::BuildFields()
     if( pszGeomColumn )
         nSize += strlen(pszGeomColumn);
 
+    if( bHasFid )
+        nSize += strlen(pszFIDColumn);
+
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
         nSize += strlen(poFeatureDefn->GetFieldDefn(i)->GetNameRef()) + 4;
 
     pszFieldList = (char *) CPLMalloc(nSize);
+    pszFieldList[0] = '\0';
+
+    if( bHasFid && poFeatureDefn->GetFieldIndex( pszFIDColumn ) == -1 )
+        sprintf( pszFieldList, "\"%s\"", pszFIDColumn );
 
     if( pszGeomColumn )
     {
+        if( strlen(pszFieldList) > 0 )
+            strcat( pszFieldList, ", " );
+
         if( bHasPostGISGeometry )
         {
-            sprintf( pszFieldList, "AsText(\"%s\")", pszGeomColumn );
+            sprintf( pszFieldList+strlen(pszFieldList), 
+                     "AsText(\"%s\")", pszGeomColumn );
         }
         else
         {
-            sprintf( pszFieldList, "\"%s\"", pszGeomColumn );
+            sprintf( pszFieldList+strlen(pszFieldList), 
+                     "\"%s\"", pszGeomColumn );
         }
     }
-    else
-        pszFieldList[0] = '\0';
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
@@ -733,6 +748,9 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCCreateField) )
         return bUpdateAccess;
 
+    else if( EQUAL(pszCap,OLCRandomRead) )
+        return bHasFid;
+
     else 
         return OGRPGLayer::TestCapability( pszCap );
 }
@@ -854,6 +872,76 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 }
 
 /************************************************************************/
+/*                             GetFeature()                             */
+/************************************************************************/
+
+OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
+
+{
+    if( pszFIDColumn == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "OGRPGTableLayer::GetFeature() - Not supported without FID column." );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Discard any existing resultset.                                 */
+/* -------------------------------------------------------------------- */
+    ResetReading();
+
+/* -------------------------------------------------------------------- */
+/*      Issue query for a single record.                                */
+/* -------------------------------------------------------------------- */
+    OGRFeature  *poFeature = NULL;
+    PGresult    *hResult;
+    PGconn      *hPGConn = poDS->GetPGConn();
+    char        *pszFieldList = BuildFields();
+    char        *pszCommand = (char *) CPLMalloc(strlen(pszFieldList)+2000);
+
+    poDS->FlushSoftTransaction();
+    hResult = PQexec(hPGConn, "BEGIN");
+    PQclear( hResult );
+
+    sprintf( pszCommand, 
+             "DECLARE mycursor CURSOR for "
+             "SELECT %s FROM \"%s\" WHERE %s = %ld", 
+             pszFieldList, poFeatureDefn->GetName(), pszFIDColumn, 
+             nFeatureId );
+    CPLFree( pszFieldList );
+
+    hResult = PQexec(hPGConn, pszCommand );
+    CPLFree( pszCommand );
+
+    if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
+    {
+        PQclear( hResult );
+        hResult = PQexec(hPGConn, "FETCH ALL in mycursor" );
+
+        if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK )
+        {
+            hCursorResult = hResult;
+            poFeature = RecordToFeature( 0 );
+            hCursorResult = NULL;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    PQclear( hResult );
+
+    hResult = PQexec(hPGConn, "CLOSE mycursor");
+    PQclear( hResult );
+
+    hResult = PQexec(hPGConn, "COMMIT");
+    PQclear( hResult );
+
+
+    return poFeature;
+}
+
+/************************************************************************/
 /*                          GetFeatureCount()                           */
 /*                                                                      */
 /*      If a spatial filter is in effect, we turn control over to       */
@@ -948,6 +1036,7 @@ OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
         {
             nSRSId = atoi(PQgetvalue(hResult,0,0));
         }
+        PQclear( hResult );
 
         poDS->SoftCommit();
     }
