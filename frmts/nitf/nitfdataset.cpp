@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/12/18 20:15:43  warmerda
+ * support writing IGEOLO
+ *
  * Revision 1.4  2002/12/18 06:35:15  warmerda
  * implement nodata support for mapped data
  *
@@ -75,6 +78,7 @@ class NITFDataset : public GDALDataset
 
     virtual const char *GetProjectionRef(void);
     virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr SetGeoTransform( double * );
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -522,6 +526,52 @@ CPLErr NITFDataset::GetGeoTransform( double *padfGeoTransform )
 }
 
 /************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr NITFDataset::SetGeoTransform( double *padfGeoTransform )
+
+{
+    double dfULX, dfULY, dfURX, dfURY, dfLRX, dfLRY, dfLLX, dfLLY;
+
+    if( psImage->chICORDS != 'G' )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "Writing non-geographic coordinates not currently supported by NITF drivre." );
+        return CE_Failure;
+    }
+
+
+    dfULX = padfGeoTransform[0];
+    dfULY = padfGeoTransform[3];
+    dfURX = dfULX + padfGeoTransform[1] * nRasterXSize;
+    dfURY = dfULY + padfGeoTransform[4] * nRasterXSize;
+    dfLRX = dfULX + padfGeoTransform[1] * nRasterXSize
+                  + padfGeoTransform[2] * nRasterYSize;
+    dfLRY = dfULY + padfGeoTransform[4] * nRasterXSize
+                  + padfGeoTransform[5] * nRasterYSize;
+    dfLLX = dfULX + padfGeoTransform[2] * nRasterYSize;
+    dfLLY = dfULY + padfGeoTransform[5] * nRasterYSize;
+
+    if( fabs(dfULX) > 180 || fabs(dfURX) > 180 
+        || fabs(dfLRX) > 180 || fabs(dfLLX) > 180 
+        || fabs(dfULY) >  90 || fabs(dfURY) >  90
+        || fabs(dfLRY) >  90 || fabs(dfLLY) >  90 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Attempt to write geographic bound outside of legal range." );
+        return CE_Failure;
+    }
+
+    if( NITFWriteIGEOLO( psImage, psImage->chICORDS, 
+                         dfULX, dfULY, dfURX, dfURY, 
+                         dfLRX, dfLRY, dfLLX, dfLLY ) )
+        return CE_Failure;
+    else
+        return CE_None;
+}
+
+/************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
@@ -640,6 +690,20 @@ NITFCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Do we have lat/long georeferencing information?                 */
+/* -------------------------------------------------------------------- */
+    double adfGeoTransform[6];
+    int    bWriteGeoTransform = FALSE;
+
+    if( EQUALN(poSrcDS->GetProjectionRef(),"GEOGCS",6)
+        && poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+    {
+        papszFullOptions = 
+            CSLSetNameValue( papszFullOptions, "ICORDS", "G" );
+        bWriteGeoTransform = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create the output dataset.                                      */
 /* -------------------------------------------------------------------- */
     int nXSize = poSrcDS->GetRasterXSize();
@@ -649,6 +713,12 @@ NITFCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
                                               poSrcDS->GetRasterCount(),
                                               eType, papszFullOptions );
     CSLDestroy( papszFullOptions );
+
+/* -------------------------------------------------------------------- */
+/*      Set the georeferencing.                                         */
+/* -------------------------------------------------------------------- */
+    if( bWriteGeoTransform )
+        poDstDS->SetGeoTransform( adfGeoTransform );
 
 /* -------------------------------------------------------------------- */
 /*      Loop copying bands.                                             */

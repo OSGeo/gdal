@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/12/18 20:16:04  warmerda
+ * support writing IGEOLO
+ *
  * Revision 1.6  2002/12/18 06:35:15  warmerda
  * implement nodata support for mapped data
  *
@@ -181,8 +184,14 @@ int       CPL_DLL  NITFWriteImageBlock( NITFImage *, int nBlockX, int nBlockY,
                                         int nBand, void *pData );
 int       CPL_DLL  NITFWriteImageLine( NITFImage *, int nLine, int nBand, 
                                        void *pData );
-int       CPL_DLL  NITFWriteLUT( NITFImage *, int nBand, int nColors, 
+int       CPL_DLL  NITFWriteLUT( NITFImage *psImage, int nBand, int nColors, 
                                  unsigned char *pabyLUT );
+int       CPL_DLL  NITFWriteIGEOLO( NITFImage *psImage, char chICORDS, 
+                                    double dfULX, double dfULY,
+                                    double dfURX, double dfURY,
+                                    double dfLRX, double dfLRY,
+                                    double dfLLX, double dfLLY );
+
 
 #define BLKREAD_OK    0
 #define BLKREAD_NULL  1
