@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_jpeg.c,v 1.3 2000/09/18 21:27:13 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_jpeg.c,v 1.5 2001/07/20 15:00:35 warmerda Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -46,6 +46,11 @@
 
 #ifdef FAR
 #undef FAR
+#endif
+
+/* The windows RPCNDR.H file defines boolean. */
+#ifdef __RPCNDR_H__
+#define HAVE_BOOLEAN
 #endif
 
 #include "jpeglib.h"
@@ -556,10 +561,6 @@ alloc_downsampled_buffers(TIFF* tif, jpeg_component_info* comp_info,
 		sp->ds_buffer[ci] = buf;
 	}
 	sp->samplesperclump = samples_per_clump;
-	/* Cb,Cr both have sampling factors 1 */
-	/* so downsampled width of Cb is # of clumps per line */
-	sp->bytesperline = sizeof(JSAMPLE) * samples_per_clump *
-		comp_info[1].downsampled_width;
 	return (1);
 }
 
@@ -635,13 +636,13 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 	/*
 	 * Check image parameters and set decompression parameters.
 	 */
+	segment_width = td->td_imagewidth;
+	segment_height = td->td_imagelength - tif->tif_row;
 	if (isTiled(tif)) {
-		segment_width = td->td_tilewidth;
-		segment_height = td->td_tilelength;
+		if (segment_height > td->td_tilelength)
+			segment_height = td->td_tilelength;
 		sp->bytesperline = TIFFTileRowSize(tif);
 	} else {
-		segment_width = td->td_imagewidth;
-		segment_height = td->td_imagelength - tif->tif_row;
 		if (segment_height > td->td_rowsperstrip)
 			segment_height = td->td_rowsperstrip;
 		sp->bytesperline = TIFFScanlineSize(tif);
@@ -696,11 +697,11 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 	if (td->td_planarconfig == PLANARCONFIG_CONTIG &&
 	    sp->photometric == PHOTOMETRIC_YCBCR &&
 	    sp->jpegcolormode == JPEGCOLORMODE_RGB) {
-		/* Convert YCbCr to RGB */
+    	/* Convert YCbCr to RGB */
 		sp->cinfo.d.jpeg_color_space = JCS_YCbCr;
 		sp->cinfo.d.out_color_space = JCS_RGB;
 	} else {
-		/* Suppress colorspace handling */
+			/* Suppress colorspace handling */
 		sp->cinfo.d.jpeg_color_space = JCS_UNKNOWN;
 		sp->cinfo.d.out_color_space = JCS_UNKNOWN;
 		if (td->td_planarconfig == PLANARCONFIG_CONTIG &&
@@ -738,113 +739,103 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
  * Decode a chunk of pixels.
  * "Standard" case: returned data is not downsampled.
  */
-static int
+/*ARGSUSED*/ static int
 JPEGDecode(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 {
 	JPEGState *sp = JState(tif);
 	tsize_t nrows;
-	JSAMPROW bufptr[1];
 
-	(void) s;
-	assert(sp != NULL);
 	/* data is expected to be read in multiples of a scanline */
-	nrows = cc / sp->bytesperline;
-	if (cc % sp->bytesperline)
-		TIFFWarning(tif->tif_name, "fractional scanline not read");
+	if (nrows = sp->cinfo.d.image_height)
+		do {
+			JSAMPROW bufptr = (JSAMPROW)buf;
 
-	while (nrows-- > 0) {
-		bufptr[0] = (JSAMPROW) buf;
-		if (TIFFjpeg_read_scanlines(sp, bufptr, 1) != 1)
-			return (0);
-		if (nrows > 0)
-			tif->tif_row++;
-		buf += sp->bytesperline;
-	}
+			if (TIFFjpeg_read_scanlines(sp, &bufptr, 1) != 1)
+				return (0);
+			++tif->tif_row;
+			buf += sp->bytesperline;
+			cc -= sp->bytesperline;
+		} while (--nrows > 0);
 	/* Close down the decompressor if we've finished the strip or tile. */
-	if (sp->cinfo.d.output_scanline == sp->cinfo.d.output_height) {
-		if (TIFFjpeg_finish_decompress(sp) != TRUE)
-			return (0);
-	}
-	return (1);
+	return sp->cinfo.d.output_scanline < sp->cinfo.d.output_height
+	    || TIFFjpeg_finish_decompress(sp);
 }
 
 /*
  * Decode a chunk of pixels.
  * Returned data is downsampled per sampling factors.
  */
-static int
+/*ARGSUSED*/ static int
 JPEGDecodeRaw(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 {
 	JPEGState *sp = JState(tif);
-	JSAMPLE* inptr;
-	JSAMPLE* outptr;
 	tsize_t nrows;
-	JDIMENSION clumps_per_line, nclump;
-	int clumpoffset, ci, xpos, ypos;
-	jpeg_component_info* compptr;
-	int samples_per_clump = sp->samplesperclump;
 
-	(void) s;
-	assert(sp != NULL);
 	/* data is expected to be read in multiples of a scanline */
-	nrows = cc / sp->bytesperline;
-	if (cc % sp->bytesperline)
-		TIFFWarning(tif->tif_name, "fractional scanline not read");
+	if (nrows = sp->cinfo.d.image_height) {
+		/* Cb,Cr both have sampling factors 1, so this is correct */
+		JDIMENSION clumps_per_line = sp->cinfo.d.comp_info[1].downsampled_width;
+		int samples_per_clump = sp->samplesperclump;
+	
+		do {
+			jpeg_component_info *compptr;
+			int ci, clumpoffset;
 
-	/* Cb,Cr both have sampling factors 1, so this is correct */
-	clumps_per_line = sp->cinfo.d.comp_info[1].downsampled_width;
+			/* Reload downsampled-data buffer if needed */
+			if (sp->scancount >= DCTSIZE) {
+				int n = sp->cinfo.d.max_v_samp_factor * DCTSIZE;
 
-	while (nrows-- > 0) {
-		/* Reload downsampled-data buffer if needed */
-		if (sp->scancount >= DCTSIZE) {
-			int n = sp->cinfo.d.max_v_samp_factor * DCTSIZE;
-			if (TIFFjpeg_read_raw_data(sp, sp->ds_buffer, n) != n)
-				return (0);
-			sp->scancount = 0;
-		}
-		/*
-		 * Fastest way to unseparate the data is to make one pass
-		 * over the scanline for each row of each component.
-		 */
-		clumpoffset = 0;		/* first sample in clump */
-		for (ci = 0, compptr = sp->cinfo.d.comp_info;
-		     ci < sp->cinfo.d.num_components;
-		     ci++, compptr++) {
-		    int hsamp = compptr->h_samp_factor;
-		    int vsamp = compptr->v_samp_factor;
-		    for (ypos = 0; ypos < vsamp; ypos++) {
-			inptr = sp->ds_buffer[ci][sp->scancount*vsamp + ypos];
-			outptr = ((JSAMPLE*) buf) + clumpoffset;
-			if (hsamp == 1) {
-			    /* fast path for at least Cb and Cr */
-			    for (nclump = clumps_per_line; nclump-- > 0; ) {
-				outptr[0] = *inptr++;
-				outptr += samples_per_clump;
-			    }
-			} else {
-			    /* general case */
-			    for (nclump = clumps_per_line; nclump-- > 0; ) {
-				for (xpos = 0; xpos < hsamp; xpos++)
-				    outptr[xpos] = *inptr++;
-				outptr += samples_per_clump;
+				if (TIFFjpeg_read_raw_data(sp, sp->ds_buffer, n)
+					!= n)
+					return (0);
+				sp->scancount = 0;
+			}
+			/*
+			 * Fastest way to unseparate data is to make one pass
+			 * over the scanline for each row of each component.
+			 */
+			clumpoffset = 0;	/* first sample in clump */
+			for (ci = 0, compptr = sp->cinfo.d.comp_info;
+			     ci < sp->cinfo.d.num_components;
+			     ci++, compptr++) {
+			    int hsamp = compptr->h_samp_factor;
+			    int vsamp = compptr->v_samp_factor;
+			    int ypos;
+
+			    for (ypos = 0; ypos < vsamp; ypos++) {
+				JSAMPLE *inptr = sp->ds_buffer[ci][sp->scancount*vsamp + ypos];
+				JSAMPLE *outptr = (JSAMPLE*)buf + clumpoffset;
+				JDIMENSION nclump;
+
+				if (hsamp == 1) {
+				    /* fast path for at least Cb and Cr */
+				    for (nclump = clumps_per_line; nclump-- > 0; ) {
+					outptr[0] = *inptr++;
+					outptr += samples_per_clump;
+				    }
+				} else {
+					int xpos;
+
+				    /* general case */
+				    for (nclump = clumps_per_line; nclump-- > 0; ) {
+					for (xpos = 0; xpos < hsamp; xpos++)
+					    outptr[xpos] = *inptr++;
+					outptr += samples_per_clump;
+				    }
+				}
+				clumpoffset += hsamp;
 			    }
 			}
-			clumpoffset += hsamp;
-		    }
-		}
-		sp->scancount++;
-		if (nrows > 0)
-			tif->tif_row++;
-		buf += sp->bytesperline;
+			++sp->scancount;
+			++tif->tif_row;
+			buf += sp->bytesperline;
+			cc -= sp->bytesperline;
+		} while (--nrows > 0);
 	}
 
         /* Close down the decompressor if done. */
-        if (sp->cinfo.d.output_scanline >= sp->cinfo.d.output_height) {
-            if (TIFFjpeg_finish_decompress(sp) != TRUE)
-                return (0);
-        }
-
-	return (1);
+        return sp->cinfo.d.output_scanline < sp->cinfo.d.output_height
+       	    || TIFFjpeg_finish_decompress(sp);
 }
 
 
