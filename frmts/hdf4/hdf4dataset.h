@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.13  2003/11/07 15:49:14  dron
+ * Added GetDataType() and GetDataTypeName().
+ *
  * Revision 1.12  2003/06/26 20:42:31  dron
  * Support for Hyperion Level 1 data product.
  *
@@ -140,7 +143,9 @@ class HDF4Dataset : public GDALDataset
     char	**papszGlobalMetadata;
     char	**papszSubDatasets;
 
+    GDALDataType GetDataType( int32 );
     const char  *GetDataTypeName( int32 );
+    int         GetDataTypeSize( int32 );
     char        **TranslateHDF4Attributes( int32, int32, char *, int32, int32, char ** );
     char        ** TranslateHDF4EOSAttributes( int32, int32, int32, char ** );
     CPLErr      ReadGlobalAttributes( int32 );
