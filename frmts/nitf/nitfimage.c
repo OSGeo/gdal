@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/12/18 06:49:21  warmerda
+ * implement support for mapped files without a map (BMRLNTH==0)
+ *
  * Revision 1.7  2002/12/18 06:35:15  warmerda
  * implement nodata support for mapped data
  *
@@ -426,7 +429,8 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         GUInt32  nIMDATOFF;
         GUInt16  nBMRLNTH, nTMRLNTH, nTPXCDLNTH;
         int      i;
-        int nBlockCount = psImage->nBlocksPerRow * psImage->nBlocksPerColumn;
+        int nBlockCount = psImage->nBlocksPerRow * psImage->nBlocksPerColumn
+            * psImage->nBands;
 
         CPLAssert( psImage->szIC[0] == 'M' || psImage->szIC[1] == 'M' );
 
@@ -441,8 +445,6 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         CPL_MSBPTR16( &nTMRLNTH );
         CPL_MSBPTR16( &nTPXCDLNTH );
 
-        CPLAssert( nBMRLNTH == 4 ); /* offsets are 4 byte */
-
         if( nTPXCDLNTH == 8 )
         {
             GByte byNodata;
@@ -454,14 +456,29 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         else
             VSIFSeek( psFile->fp, (nTPXCDLNTH+7)/8, SEEK_CUR );
 
-        VSIFRead( psImage->panBlockStart, 4, nBlockCount, psFile->fp );
-
-        for( i=0; i < psImage->nBlocksPerRow * psImage->nBlocksPerColumn; i++ )
+        if( nBMRLNTH == 4 )
         {
-            CPL_MSBPTR32( psImage->panBlockStart + i );
-            if( psImage->panBlockStart[i] != 0xffffffff )
-                psImage->panBlockStart[i] 
-                    += psSegInfo->nSegmentStart + nIMDATOFF;
+            VSIFRead( psImage->panBlockStart, 4, nBlockCount, psFile->fp );
+            for( i=0; i < nBlockCount; i++ )
+            {
+                CPL_MSBPTR32( psImage->panBlockStart + i );
+                if( psImage->panBlockStart[i] != 0xffffffff )
+                    psImage->panBlockStart[i] 
+                        += psSegInfo->nSegmentStart + nIMDATOFF;
+            }
+        }
+        else
+        {
+            for( i=0; i < nBlockCount; i++ )
+            {
+                if( EQUAL(psImage->szIC,"M4") )
+                    psImage->panBlockStart[i] = 6144 * i
+                        + psSegInfo->nSegmentStart + nIMDATOFF;
+                else if( EQUAL(psImage->szIC,"NM") )
+                    psImage->panBlockStart[i] = 
+                        psImage->nBlockOffset * i
+                        + psSegInfo->nSegmentStart + nIMDATOFF;
+            }
         }
     }
 
