@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2000/06/19 14:18:01  warmerda
+ * added help link
+ *
  * Revision 1.27  2000/06/09 14:21:53  warmerda
  * Don't try to write geotiff info to read-only files.
  *
@@ -1331,6 +1334,7 @@ void GDALRegister_GTiff()
         
         poDriver->pszShortName = "GTiff";
         poDriver->pszLongName = "GeoTIFF";
+        poDriver->pszHelpTopic = "frmt_gtiff.html";
         
         poDriver->pfnOpen = GTiffDataset::Open;
         poDriver->pfnCreate = GTiffDataset::Create;
