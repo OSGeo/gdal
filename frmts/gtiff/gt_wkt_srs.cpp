@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2002/09/04 06:46:30  warmerda
+ * fixed two memory leaks
+ *
  * Revision 1.23  2002/02/07 20:29:23  warmerda
  * fixed bug if no DATUM node available
  *
@@ -212,6 +215,7 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
 
         GTIFGetPCSInfo( psDefn->PCS, &pszPCSName, NULL, NULL, NULL, NULL );
         oSRS.SetNode( "PROJCS", pszPCSName );
+        CPLFree( pszPCSName );
     }
     
 /* ==================================================================== */
@@ -430,6 +434,8 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
             oSRS.SetLinearUnits( pszUnitsName, psDefn->UOMLengthInMeters );
         else
             oSRS.SetLinearUnits( "unknown", psDefn->UOMLengthInMeters );
+
+        CPLFree( pszUnitsName );
     }
     
 /* -------------------------------------------------------------------- */
