@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2003/03/05 15:49:59  dron
+ * Fixed typo when reading SENSOR metadata record.
+ *
  * Revision 1.4  2003/02/18 15:07:49  dron
  * IRS-1C/1D support added.
  *
@@ -371,7 +374,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 	poDS->iSatellite = IRS;
 
     // Read sensor name
-    pszSatName[FAST_SENSORNAME_SIZE] = '\0';
+    pszSensorName[FAST_SENSORNAME_SIZE] = '\0';
     memcpy( pszSensorName, pszHeader + 110, FAST_SENSORNAME_SIZE );
     poDS->SetMetadataItem( "SENSOR", pszSensorName );
 
