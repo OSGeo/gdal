@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/01/14 22:13:35  warmerda
+ * added isClockwise() method on OGRLinearRing
+ *
  * Revision 1.11  2002/10/24 20:38:45  warmerda
  * fixed bug byte swapping point count in exporttowkb
  *
@@ -305,3 +308,31 @@ OGRGeometry *OGRLinearRing::clone()
 
     return poNewLinearRing;
 }
+
+/************************************************************************/
+/*                            isClockwise()                             */
+/************************************************************************/
+
+/**
+ * Returns TRUE if the ring has clockwise winding.
+ *
+ * @return TRUE if clockwise otherwise FALSE.
+ */
+
+int OGRLinearRing::isClockwise()
+
+{
+    double dfSum = 0.0;
+
+    for( int iVert = 0; iVert < nPointCount-1; iVert++ )
+    {
+        dfSum += paoPoints[iVert].x * paoPoints[iVert+1].y
+            - paoPoints[iVert].y * paoPoints[iVert+1].x;
+    }
+
+    dfSum += paoPoints[nPointCount-1].x * paoPoints[0].y
+        - paoPoints[nPointCount-1].y * paoPoints[0].x;
+
+    return dfSum < 0.0;
+}
+
