@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/03/11 17:29:04  warmerda
+ * added multipolygon support
+ *
  * Revision 1.3  2002/03/07 22:38:04  warmerda
  * use ogr_gml_geom.h
  *
@@ -261,6 +264,37 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
         AppendString( ppszText, pnLength, pnMaxLength,
                       "</gml:Polygon>" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      MultiPolygon                                                    */
+/* -------------------------------------------------------------------- */
+    else if( poGeometry->getGeometryType() == wkbMultiPolygon 
+             || poGeometry->getGeometryType() == wkbMultiPolygon25D )
+    {
+        OGRMultiPolygon	*poMPoly = (OGRMultiPolygon *) poGeometry;
+        int             iMember;
+
+        AppendString( ppszText, pnLength, pnMaxLength,
+                      "<gml:MultiPolygon>" );
+
+        for( int iMember = 0; iMember < poMPoly->getNumGeometries(); iMember++)
+        {
+            OGRGeometry *poMember = poMPoly->getGeometryRef( iMember );
+
+            AppendString( ppszText, pnLength, pnMaxLength,
+                          "<gml:polygonMember>" );
+            
+            if( !OGR2GMLGeometryAppend( poMember, 
+                                        ppszText, pnLength, pnMaxLength ) )
+                return FALSE;
+            
+            AppendString( ppszText, pnLength, pnMaxLength,
+                          "</gml:polygonMember>" );
+        }
+
+        AppendString( ppszText, pnLength, pnMaxLength,
+                      "</gml:MultiPolygon>" );
     }
     else
         return FALSE;
