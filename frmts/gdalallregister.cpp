@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.4  1999/01/27 18:33:45  warmerda
+ * Use FMRT_ macros to test if format avail
+ *
  * Revision 1.3  1999/01/11 15:30:16  warmerda
  * added OGDI
  *
@@ -43,7 +46,10 @@ void GDALRegister_GDB(void);
 void GDALRegister_GTiff(void);
 void GDALRegister_GXF(void);
 void GDALRegister_OGDI(void);
+void GDALRegister_HFA(void);
 CPL_C_END
+
+static char *szConfiguredFormats = "GDAL_FORMATS";
 
 /************************************************************************/
 /*                          GDALAllRegister()                           */
@@ -54,10 +60,23 @@ CPL_C_END
 void GDALAllRegister()
 
 {
-/*    GDALRegister_GDB();	*/
+#ifdef FRMT_gdb    
+    GDALRegister_GDB();
+#endif    
+
+#ifdef FRMT_gtiff    
     GDALRegister_GTiff();
+#endif    
+
+#ifdef FRMT_gxf
     GDALRegister_GXF();
-#ifdef OGDI_ENABLED
+#endif    
+
+#ifdef FRMT_hfa
+    GDALRegister_HFA();
+#endif
+    
+#ifdef FRMT_ogdi
     GDALRegister_OGDI();
 #endif
 }
