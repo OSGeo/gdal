@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/04/06 15:04:23  fwarmerdam
+ * added TIGER2004 support
+ *
  * Revision 1.31  2004/09/22 16:17:06  fwarmerdam
  * Make GDT support work even if version number seems weird.
  *
@@ -179,7 +182,8 @@ TigerVersion TigerClassifyVersion( int nVersionCode )
 ** ????    ????
 **
 ** 0206 to 0299   TIGER/Line Files, 2002
-** 0300 and up    TIGER/Line Files, 2003
+** 0300 to 0399   TIGER/Line Files, 2003
+** 0400+          TIGER/Line Files, 2004 - one sample is 0405
 ** ????
 */
 
@@ -221,8 +225,10 @@ TigerVersion TigerClassifyVersion( int nVersionCode )
         nVersion = TIGER_UA2000;
     else if( nVersionCode >=  206 /*0206*/ && nVersionCode < 300 /* 2003 */ )
         nVersion = TIGER_2002;
-    else if( nVersionCode >=  300 /*0300*/ )
+    else if( nVersionCode >=  300 /*0300*/ && nVersionCode <= 400 )
         nVersion = TIGER_2003;
+    else if( nVersionCode >=  400 )
+        nVersion = TIGER_2004;
 
     return nVersion;
 }
@@ -246,6 +252,7 @@ char * TigerVersionString( TigerVersion nVersion )
   if (nVersion == TIGER_UA2000) { return "TIGER_UA2000"; }
   if (nVersion == TIGER_2002) { return "TIGER_2002"; }
   if (nVersion == TIGER_2003) { return "TIGER_2003"; }
+  if (nVersion == TIGER_2004) { return "TIGER_2004"; }
   if (nVersion == TIGER_Unknown) { return "TIGER_Unknown"; }
   return "???";
 }

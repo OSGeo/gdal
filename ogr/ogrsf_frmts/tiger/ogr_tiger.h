@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/04/06 15:04:23  fwarmerdam
+ * added TIGER2004 support
+ *
  * Revision 1.19  2005/02/22 12:50:22  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -135,6 +138,7 @@ typedef enum {
     TIGER_UA2000 = 10,
     TIGER_2002 = 11,
     TIGER_2003 = 12,
+    TIGER_2004 = 13,
     TIGER_Unknown
 } TigerVersion;
 

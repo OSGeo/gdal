@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/04/06 15:04:23  fwarmerdam
+ * added TIGER2004 support
+ *
  * Revision 1.13  2003/08/27 02:26:03  warmerda
  * fixed bug with UGA, BLKGRP and VTF fields in 2002 RTS redistricting format
  *
@@ -190,6 +193,66 @@ static TigerRecordInfo rtA_2003_info =
   {
     rtA_2003_fields,
     sizeof(rtA_2003_fields) / sizeof(TigerFieldInfo),
+    210
+  };
+
+
+static TigerFieldInfo rtA_2004_fields[] = {
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
+  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
+  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1,     1 },
+  { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       1,   1,     1 },
+  { "STATECU",    'L', 'N', OFTInteger,   26,  27,   2,       1,   1,     1 },
+  { "COUNTYCU",   'L', 'N', OFTInteger,   28,  30,   3,       1,   1,     1 },
+
+  { "TRACT",      'L', 'N', OFTInteger,   31,  36,   6,       1,   1,     1 },
+  { "BLOCK",      'L', 'N', OFTInteger,   37,  40,   4,       1,   1,     1 },
+  { "BLOCKSUFCU", 'L', 'A', OFTString,    41,  41,   1,       1,   1,     1 },
+
+  { "RS_A1",      'L', 'A', OFTString,    42,  42,   1,       1,   1,     1 },
+  { "AIANHHFPCU", 'L', 'N', OFTInteger,   43,  47,   5,       1,   1,     1 },
+  { "AIANHHCU",   'L', 'N', OFTInteger,   48,  51,   4,       1,   1,     1 },
+  { "AIHHTLICU",  'L', 'A', OFTString,    52,  52,   1,       1,   1,     1 },
+  { "ANRCCU",     'L', 'N', OFTInteger,   53,  57,   5,       1,   1,     1 },
+  { "AITSCECU",   'L', 'N', OFTInteger,   58,  60,   3,       1,   1,     1 },
+  { "AITSCU",     'L', 'N', OFTInteger,   61,  65,   5,       1,   1,     1 },
+  { "CONCITCU",   'L', 'N', OFTInteger,   66,  70,   5,       1,   1,     1 },
+  { "COUSUBCU",   'L', 'N', OFTInteger,   71,  75,   5,       1,   1,     1 },
+  { "SUBMCDCU",   'L', 'N', OFTInteger,   76,  80,   5,       1,   1,     1 },
+  { "PLACECU",    'L', 'N', OFTInteger,   81,  85,   5,       1,   1,     1 },
+  { "SDELMCU",    'L', 'A', OFTString,    86,  90,   5,       1,   1,     1 },
+  { "SDSECCU",    'L', 'A', OFTString,    91,  95,   5,       1,   1,     1 },
+  { "SDUNICU",    'L', 'A', OFTString,    96, 100,   5,       1,   1,     1 },
+  { "RS_A20",     'L', 'A', OFTString,   101, 104,   4,       1,   1,     1 },
+  { "RS_A21",     'L', 'A', OFTString,   105, 108,   4,       1,   1,     1 },
+  { "RS_A22",     'L', 'A', OFTString,   109, 112,   4,       1,   1,     1 },
+  { "CDCU",       'R', 'N', OFTInteger,  113, 114,   2,       1,   1,     1 },
+  { "ZCTA5CU",    'L', 'A', OFTString,   115, 119,   5,       1,   1,     1 },
+  { "ZCTA3CU",    'R', 'A', OFTString,   120, 122,   3,       1,   1,     1 },
+  { "RS_A4",      'R', 'A', OFTString,   123, 128,   6,       1,   1,     1 },
+  { "RS_A5",      'R', 'A', OFTString,   129, 131,   3,       1,   1,     1 },
+  { "RS_A6",      'R', 'A', OFTString,   132, 134,   3,       1,   1,     1 },
+  { "RS_A7",      'R', 'A', OFTString,   135, 139,   5,       1,   1,     1 },
+  { "RS_A8",      'R', 'A', OFTString,   140, 145,   6,       1,   1,     1 },
+  { "RS_A9",      'L', 'A', OFTString,   146, 151,   6,       1,   1,     1 },
+  { "CBSACU",     'L', 'A', OFTInteger,  152, 156,   5,       1,   1,     1 },
+  { "CSACU",      'L', 'A', OFTInteger,  157, 159,   3,       1,   1,     1 },
+  { "NECTACU",    'L', 'A', OFTInteger,  160, 164,   5,       1,   1,     1 },
+  { "CNECTACU",   'L', 'A', OFTInteger,  165, 167,   3,       1,   1,     1 },
+  { "METDIVCU",   'L', 'A', OFTInteger,  168, 172,   5,       1,   1,     1 },
+  { "NECTADIVCU", 'L', 'A', OFTInteger,  173, 177,   5,       1,   1,     1 },
+  { "RS_A14",     'L', 'A', OFTString,   178, 181,   4,       1,   1,     1 },
+  { "UACU",       'L', 'N', OFTInteger,  182, 186,   5,       1,   1,     1 },
+  { "URCU",       'L', 'A', OFTString,   187, 187,   1,       1,   1,     1 },
+  { "RS_A17",     'L', 'A', OFTString,   188, 193,   6,       1,   1,     1 },
+  { "RS_A18",     'L', 'A', OFTString,   194, 199,   6,       1,   1,     1 },
+  { "RS_A19",     'L', 'A', OFTString,   200, 210,  11,       1,   1,     1 },
+};
+static TigerRecordInfo rtA_2004_info =
+  {
+    rtA_2004_fields,
+    sizeof(rtA_2004_fields) / sizeof(TigerFieldInfo),
     210
   };
 
@@ -375,7 +438,9 @@ TigerPolygon::TigerPolygon( OGRTigerDataSource * poDSIn,
     fpRTS = NULL;
     bUsingRTS = TRUE;
 
-    if( poDS->GetVersion() >= TIGER_2003 ) {
+    if( poDS->GetVersion() >= TIGER_2004 ) {
+        psRTAInfo = &rtA_2004_info;
+    } else if( poDS->GetVersion() >= TIGER_2003 ) {
         psRTAInfo = &rtA_2003_info;
     } else if( poDS->GetVersion() >= TIGER_2002 ) {
         psRTAInfo = &rtA_2002_info;
