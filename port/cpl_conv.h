@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/12/03 04:42:02  warmerda
+ * improved finder cleanup support
+ *
  * Revision 1.15  2002/08/15 09:23:24  dron
  * Added CPLGetDirname() function
  *
@@ -123,6 +126,7 @@ void          CPL_DLL CPLPushFileFinder( CPLFileFinder pfnFinder );
 CPLFileFinder CPL_DLL CPLPopFileFinder();
 void          CPL_DLL CPLPushFinderLocation( const char * );
 void          CPL_DLL CPLPopFinderLocation();
+void          CPL_DLL CPLFinderClean();
 
 /* -------------------------------------------------------------------- */
 /*      Safe version of stat() that works properly on stuff like "C:".  */
