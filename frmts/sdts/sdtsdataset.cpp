@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/07/09 18:14:45  warmerda
+ * upgraded projection support to use WKT
+ *
  * Revision 1.7  2001/07/05 13:12:40  warmerda
  * added UnitType support
  *
@@ -53,6 +56,7 @@
 
 #include "sdts_al.h"
 #include "gdal_priv.h"
+#include "ogr_spatialref.h"
 
 /**
  \file sdtsdataset.cpp
@@ -220,37 +224,36 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try to establish the projection string.  For now we only        */
 /*      support UTM and GEO.                                            */
 /* -------------------------------------------------------------------- */
+    OGRSpatialReference   oSRS;
     SDTS_XREF   *poXREF = poTransfer->GetXREF();
-    char        szPROJ4[256], szP4Datum[64];
-
-    if( EQUAL(poXREF->pszDatum,"NAS") )
-        strcpy(szP4Datum, "+ellps=clrk66 ");
-    else if( EQUAL(poXREF->pszDatum, "NAX") )
-        strcpy(szP4Datum, "+ellps=GRS80 ");
-    else if( EQUAL(poXREF->pszDatum, "WGA") )
-        strcpy(szP4Datum, "+ellps=WGS60 ");
-    else if( EQUAL(poXREF->pszDatum, "WGB") )
-        strcpy(szP4Datum, "+ellps=WGS66 ");
-    else if( EQUAL(poXREF->pszDatum, "WGC") )
-        strcpy(szP4Datum, "+ellps=WGS72 ");
-    else if( EQUAL(poXREF->pszDatum, "WGE") )
-        strcpy(szP4Datum, "+ellps=WGS84 ");
-    else
-        strcpy(szP4Datum, "+ellps=WGS83 "); /* default */
 
     if( EQUAL(poXREF->pszSystemName,"UTM") )
-    {
-        sprintf( szPROJ4, "+proj=utm +zone=%d %s",
-                 poXREF->nZone, szP4Datum );
+    {									
+        oSRS.SetUTM( poXREF->nZone );
     }
     else if( EQUAL(poXREF->pszSystemName,"GEO") )
     {
-        sprintf( szPROJ4, "+proj=longlat %s", szP4Datum );
+        /* we set datum later */
     }
     else
-        sprintf( szPROJ4, "unknown" );
+        oSRS.SetLocalCS( poXREF->pszSystemName );
 
-    poDS->pszProjection = CPLStrdup( szPROJ4 );
+    if( oSRS.IsLocal() )
+        /* don't try to set datum. */;
+    else if( EQUAL(poXREF->pszDatum,"NAS") )
+        oSRS.SetWellKnownGeogCS( "NAD27" );
+    else if( EQUAL(poXREF->pszDatum, "NAX") )
+        oSRS.SetWellKnownGeogCS( "NAD83" );
+    else if( EQUAL(poXREF->pszDatum, "WGC") )
+        oSRS.SetWellKnownGeogCS( "WGS72" );
+    else if( EQUAL(poXREF->pszDatum, "WGE") )
+        oSRS.SetWellKnownGeogCS( "WGS84" );
+    else
+        oSRS.SetWellKnownGeogCS( "WGS84" );
+
+    poDS->pszProjection = NULL;
+    if( oSRS.exportToWkt( &poDS->pszProjection ) != OGRERR_NONE )
+        poDS->pszProjection = CPLStrdup("");
 
     return( poDS );
 }
