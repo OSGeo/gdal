@@ -3,7 +3,7 @@ GDAL_ROOT = ..
 
 
 EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
-		-DFRMT_sdts -DFRMT_raw -DFRMT_gxf
+		-DFRMT_sdts -DFRMT_raw -DFRMT_gxf -DFRMT_ceos2
 
 !INCLUDE $(GDAL_ROOT)/nmake.opt
 
@@ -25,6 +25,10 @@ subdirs:
 	cd ..\sdts
 	$(MAKE) /f makefile.vc
 	cd ..\raw
+	$(MAKE) /f makefile.vc
+	cd ..\ceos
+	$(MAKE) /f makefile.vc
+	cd ..\ceos2
 	$(MAKE) /f makefile.vc
 	cd ..\gxf
 	$(MAKE) /f makefile.vc
@@ -53,6 +57,10 @@ clean:
 	cd ..\gxf
 	$(MAKE) /f makefile.vc clean
 	cd ..\raw
+	$(MAKE) /f makefile.vc clean
+	cd ..\ceos2
+	$(MAKE) /f makefile.vc clean
+	cd ..\ceos
 	$(MAKE) /f makefile.vc clean
 	cd ..
 
