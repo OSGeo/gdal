@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/12/29 03:48:58  warmerda
+ * fixed memory bug in CreateFeature()
+ *
  * Revision 1.3  2002/12/28 20:06:31  warmerda
  * minor CreateFeature improvements
  *
@@ -576,6 +579,9 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
     }
 
     strcat( pszCommand, ") VALUES (" );
+
+    CPLAssert( strlen(pszCommand) < nCommandBufSize );
+
 /* -------------------------------------------------------------------- */
 /*      Set the geometry                                                */
 /* -------------------------------------------------------------------- */
@@ -592,7 +598,7 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
 #endif
         if( pszSDO_GEOMETRY != NULL 
             && strlen(pszCommand) + strlen(pszSDO_GEOMETRY) 
-            > nCommandBufSize - 10000 )
+            > nCommandBufSize - 50 )
         {
             nCommandBufSize = 
                 strlen(pszCommand) + strlen(pszSDO_GEOMETRY) + 10000;
