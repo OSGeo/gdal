@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2000/07/09 20:49:54  warmerda
+ * added exportToPrettyWkt()
+ *
  * Revision 1.18  2000/06/09 13:26:03  warmerda
  * avoid using an inverse flattening of zero
  *
@@ -704,6 +707,34 @@ OGRSpatialReference *OGRSpatialReference::Clone()
     poNewRef->poRoot = poRoot->Clone();
 
     return poNewRef;
+}
+
+/************************************************************************/
+/*                         exportToPrettyWkt()                          */
+/*                                                                      */
+/*      Translate into a nicely formatted string for display to a       */
+/*      person.                                                         */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::exportToPrettyWkt( char ** ppszResult, 
+                                               int bSimplify )
+
+{
+    return poRoot->exportToPrettyWkt( ppszResult, bSimplify, 1 );
+}
+
+/************************************************************************/
+/*                        OSRExportToPrettyWkt()                        */
+/************************************************************************/
+
+OGRErr OSRExportToPrettyWkt( OGRSpatialReferenceH hSRS, char ** ppszReturn,
+                             int bSimplify)
+
+{
+    *ppszReturn = NULL;
+
+    return ((OGRSpatialReference *) hSRS)->exportToPrettyWkt( ppszReturn,
+                                                              bSimplify );
 }
 
 /************************************************************************/
