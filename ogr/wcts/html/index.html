@@ -17,16 +17,16 @@ Note that this is not yet a specification, it is a proposal that might be
 adopted as a specification at some point, likely after further changes.  Thus
 <i>WCTS</i> is a protocol in flux.<p>
 
-This implementation is based on the <a href="http://gdal.velocet.ca/projects/opengis/ogrhtml/class_OGRSpatialReference.html">OGRSpatialReference</a> class
-within the <a href="http://www.remotesensing.org/gdal">GDAL/OGR</a> library.
+This implementation is based on the <a href="http://www.gdal.org/ogr/classOGRSpatialReference.html">OGRSpatialReference</a> class
+within the <a href="http://www.gdal.org/">GDAL/OGR</a> library.
 The underlying projections engine is 
 <a href="http://www.remotesensing.org/proj">PROJ.4</a>, and the GML support
-from <a href="http://gdal.velocet.ca/projects/opengis">OGR</a> is used.<p>
+from <a href="http://www.gdal.org/ogr">OGR</a> is used.<p>
 
 The code implementing the server can be found in the GDAL/OGR CVS tree
 in the gdal/ogr/wcts directory, along with some sample request documents.
 Currently all the server specific code is in the 
-<a href="http://www.remotesensing.org/gdal/srctree/ogr/wcts/ogrwcts.cpp">
+<a href="http://www.gdal.org/srctree/ogr/wcts/ogrwcts.cpp">
 ogrwcts.cpp</a> file in this directory.<p>
 
 Some <a href="imp_details.html">Implementation Details</a> on features and
@@ -35,21 +35,21 @@ limitations of the server are available.  There is also an
 
 Some sample XML input requests are available for the following requests:<p>
 <ul>
-<li> <a href="http://www.remotesensing.org/gdal/srctree/ogr/wcts/req_getcap.xml">GetCapabilities</a><p>
-<li> <a href="http://www.remotesensing.org/gdal/srctree/ogr/wcts/req_istransformable.xml">IsTransformable</a><p>
-<li> <a href="http://www.remotesensing.org/gdal/srctree/ogr/wcts/req_transform.xml">Transform</a><p>
-<li> <a href="http://www.remotesensing.org/gdal/srctree/ogr/wcts/req_remote.xml">Transform using FileURL</a><p>
+<li> <a href="http://www.gdal.org/srctree/ogr/wcts/req_getcap.xml">GetCapabilities</a><p>
+<li> <a href="http://www.gdal.org/srctree/ogr/wcts/req_istransformable.xml">IsTransformable</a><p>
+<li> <a href="http://www.gdal.org/srctree/ogr/wcts/req_transform.xml">Transform</a><p>
+<li> <a href="http://www.gdal.org/srctree/ogr/wcts/req_remote.xml">Transform using FileURL</a><p>
 </ul>
 
-A development server is running at http://gdal.velocet.ca/cgi-bin/wcts.  Some
+A development server is running at http://maps.gdal.org/cgi-bin/ogrwcts.  Some
 sample KVP encoded requests are:<p>
 
 <ul>
-<li> <a href="http://gdal.velocet.ca/cgi-bin/ogrwcts?REQUEST=GetCapabilities">
-http://gdal.velocet.ca/cgi-bin/ogrwcts?REQUEST=GetCapabilities</a>: Fetch
+<li> <a href="http://maps.gdal.org/cgi-bin/ogrwcts?REQUEST=GetCapabilities">
+http://maps.gdal.org/cgi-bin/ogrwcts?REQUEST=GetCapabilities</a>: Fetch
 the capabilities.<p>
 
-<li> <a href="http://gdal.velocet.ca/cgi-bin/ogrwcts?REQUEST=IsTransformable&SOURCECRS=EPSG:4001&TARGETCRS=EPSG:4002">http://gdal.velocet.ca/cgi-bin/ogrwcts?REQUEST=IsTransformable&SOURCECRS=EPSG:4001&TARGETCRS=EPSG:4002</a>: Test
+<li> <a href="http://maps.gdal.org/cgi-bin/ogrwcts?REQUEST=IsTransformable&SOURCECRS=EPSG:4001&TARGETCRS=EPSG:4002">http://maps.gdal.org/cgi-bin/ogrwcts?REQUEST=IsTransformable&SOURCECRS=EPSG:4001&TARGETCRS=EPSG:4002</a>: Test
 if EPSG:4001 can be transformed to EPSG:4002.<p>
 
 </ul>
