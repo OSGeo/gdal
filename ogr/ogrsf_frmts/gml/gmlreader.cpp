@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/05/12 16:09:37  warmerda
+ * Write classes file in binary mode.
+ *
  * Revision 1.14  2003/05/12 16:07:15  warmerda
  * Open classes file in binary mode to avoid problem reported in
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=335
@@ -709,7 +712,7 @@ int GMLReader::SaveClasses( const char *pszFile )
     
     CPLDestroyXMLNode( psRoot );
  
-    fp = VSIFOpen( pszFile, "w" );
+    fp = VSIFOpen( pszFile, "wb" );
     
     if( fp == NULL )
         bSuccess = FALSE;
