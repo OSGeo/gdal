@@ -51,6 +51,7 @@ AC_C_BIGENDIAN
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(vsnprintf)
 AC_CHECK_FUNCS(snprintf)
+AC_CHECK_FUNCS(atoll)
 
 dnl Make sure at least these are checked under C++.  Prototypes missing on 
 dnl some platforms.
@@ -839,9 +840,9 @@ else
     AC_MSG_RESULT([found.])
 
     HAVE_MRSID=yes
-    CPPFLAGS="-D_REENTRANT $CPPFLAGS"
     MRSID_INCLUDE="-I$with_mrsid/include"
     LIBS="-lMrSIDDecode -llt_xTrans -lpthread $LIBS"
+    MRSID_FLAGS=-DMRSID_DSDK_VERSION_32
 
     if test -r "$with_mrsid/bin/lib/libMrSIDDecode.a" ; then
       LIBS="-L$with_mrsid/bin/lib $LIBS"
@@ -858,8 +859,26 @@ else
     fi
 
   else
-    HAVE_MRSID=no
-    AC_MSG_ERROR([not found.])
+    AC_MSG_RESULT([not found.])
+
+    AC_MSG_CHECKING([for lt_base.h in $with_mrsid/include/support])
+    if test -r "$with_mrsid/include/support/lt_base.h" ; then
+      AC_MSG_RESULT([found MrSID DSDK version 4.0.x.])
+
+      HAVE_MRSID=yes
+      MRSID_INCLUDE="-I$with_mrsid/include/base -I$with_mrsid/include/mrsid_readers -I$with_mrsid/include/support"
+      LIBS="-lMrSIDDecode -llt_xTrans -lpthread $LIBS"
+
+      if test -r "$with_mrsid/bin/lib/libMrSIDDecode.a" ; then
+        LIBS="-L$with_mrsid/bin/lib $LIBS"
+      else
+        LIBS="-L$with_mrsid/lib $LIBS"
+      fi
+
+    else
+      HAVE_MRSID=no
+      AC_MSG_ERROR([not found.])
+    fi
   fi
 
 fi
@@ -868,7 +887,8 @@ AC_SUBST(HAVE_MRSID,$HAVE_MRSID)
 AC_SUBST(MRSID_INCLUDE,$MRSID_INCLUDE)
 AC_SUBST(MRSID_FLAGS,$MRSID_FLAGS)
 
-if test "x$HAVE_MRSID" != "xno" ; then
+if test "$HAVE_MRSID" != "no" ; then
+  CPPFLAGS="-D_REENTRANT $CPPFLAGS"
   OPT_GDAL_FORMATS="mrsid $OPT_GDAL_FORMATS"
 fi
 
