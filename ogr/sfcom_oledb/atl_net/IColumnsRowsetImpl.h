@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/09/04 14:14:06  warmerda
+ * added debug in PopulateRowset()
+ *
  * Revision 1.4  2002/08/29 19:02:21  warmerda
  * modified mechanism for processing the SRS substantially
  *
@@ -240,6 +243,9 @@ class ATL_NO_VTABLE IColumnsRowsetImpl : public IColumnsRowset
                                    OGRLayer *poLayer )
                 {
                     USES_CONVERSION;
+
+                    CPLDebug( "OGR_OLEDB",
+                        "PopulateRowset() called for CColumnsRowsetRowset." );
                     
                     for (ULONG i = 0 ; i < numCols; i++)
                     {
