@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/07/10 17:43:20  warmerda
+ * Fixed error supression.
+ *
  * Revision 1.13  2002/06/12 21:12:24  warmerda
  * update to metadata based driver info
  *
@@ -289,14 +292,13 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     AIGInfo_t	*psInfo;
-    CPLErrorHandler pfnOldHandler;
     
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    pfnOldHandler = CPLSetErrorHandler( NULL );
+    CPLPushErrorHandler( CPLQuietErrorHandler );
     psInfo = AIGOpen( poOpenInfo->pszFilename, "r" );
-    CPLSetErrorHandler( pfnOldHandler );
+    CPLPopErrorHandler();
     
     if( psInfo == NULL )
     {
