@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.49  2005/01/29 00:58:38  fwarmerdam
+ * Fixed to use 0 for inv flattening of spherical ellipsoid.  Bug 751.
+ *
  * Revision 1.48  2005/01/28 03:42:05  fwarmerdam
  * Fixed spelling of Azimuthal, per bug 751.
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=751
@@ -1607,7 +1610,10 @@ CPLErr HFADataset::ReadProjection()
     if( psPro->proSpheroid.b == 0.0 )
         ((Eprj_ProParameters *) psPro)->proSpheroid.b = 6356752.3;
 
-    dfInvFlattening = 1.0/(1.0 - psPro->proSpheroid.b/psPro->proSpheroid.a);
+    if( fabs(psPro->proSpheroid.b - psPro->proSpheroid.a) < 0.001 )
+        dfInvFlattening = 0.0; /* special value for sphere. */
+    else
+        dfInvFlattening = 1.0/(1.0-psPro->proSpheroid.b/psPro->proSpheroid.a);
 
 /* -------------------------------------------------------------------- */
 /*      Handle different projection methods.                            */
