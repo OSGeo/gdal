@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/03/02 21:10:57  warmerda
+ * added lots of projections
+ *
  * Revision 1.2  1999/02/24 16:24:15  warmerda
  * Continuing to evolve
  *
@@ -834,7 +837,6 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
       case CT_LambertConfConic_1SP:
       case CT_Mercator:
       case CT_ObliqueStereographic:
-      case CT_PolarStereographic:
       case CT_TransverseMercator:
       case CT_TransvMercator_SouthOriented:
 /* -------------------------------------------------------------------- */
@@ -923,6 +925,7 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
 
 /* -------------------------------------------------------------------- */
       case CT_CassiniSoldner:
+      case CT_Polyconic:
 /* -------------------------------------------------------------------- */
         if( GTIFKeyGet(psGTIF, ProjNatOriginLongGeoKey, 
                        &dfNatOriginLong, 0, 1 ) == 0
@@ -946,6 +949,113 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
         psDefn->ProjParmId[0] = ProjNatOriginLatGeoKey;
         psDefn->ProjParm[1] = dfNatOriginLong;
         psDefn->ProjParmId[1] = ProjNatOriginLongGeoKey;
+        psDefn->ProjParm[5] = dfFalseEasting;
+        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParm[6] = dfFalseNorthing;
+        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        psDefn->nParms = 7;
+        break;
+
+/* -------------------------------------------------------------------- */
+      case CT_Stereographic:
+      case CT_AzimuthalEquidistant:
+      case CT_MillerCylindrical:
+      case CT_Equirectangular:
+      case CT_Gnomonic:
+      case CT_LambertAzimEqualArea:
+      case CT_Orthographic:
+/* -------------------------------------------------------------------- */
+        if( GTIFKeyGet(psGTIF, ProjNatOriginLongGeoKey, 
+                       &dfNatOriginLong, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjFalseOriginLongGeoKey, 
+                          &dfNatOriginLong, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjCenterLongGeoKey, 
+                          &dfNatOriginLong, 0, 1 ) == 0 )
+            dfNatOriginLong = 0.0;
+
+        if( GTIFKeyGet(psGTIF, ProjNatOriginLatGeoKey, 
+                       &dfNatOriginLat, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjFalseOriginLatGeoKey, 
+                          &dfNatOriginLat, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjCenterLatGeoKey, 
+                          &dfNatOriginLat, 0, 1 ) == 0 )
+            dfNatOriginLat = 0.0;
+
+        /* notdef: should transform to decimal degrees at this point */
+
+        psDefn->ProjParm[0] = dfNatOriginLat;
+        psDefn->ProjParmId[0] = ProjCenterLatGeoKey;
+        psDefn->ProjParm[1] = dfNatOriginLong;
+        psDefn->ProjParmId[1] = ProjCenterLongGeoKey;
+        psDefn->ProjParm[5] = dfFalseEasting;
+        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParm[6] = dfFalseNorthing;
+        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        psDefn->nParms = 7;
+        break;
+
+/* -------------------------------------------------------------------- */
+      case CT_Robinson:
+      case CT_Sinusoidal:
+      case CT_VanDerGrinten:
+/* -------------------------------------------------------------------- */
+        if( GTIFKeyGet(psGTIF, ProjNatOriginLongGeoKey, 
+                       &dfNatOriginLong, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjFalseOriginLongGeoKey, 
+                          &dfNatOriginLong, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjCenterLongGeoKey, 
+                          &dfNatOriginLong, 0, 1 ) == 0 )
+            dfNatOriginLong = 0.0;
+
+        /* notdef: should transform to decimal degrees at this point */
+
+        psDefn->ProjParm[1] = dfNatOriginLong;
+        psDefn->ProjParmId[1] = ProjCenterLongGeoKey;
+        psDefn->ProjParm[5] = dfFalseEasting;
+        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParm[6] = dfFalseNorthing;
+        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        psDefn->nParms = 7;
+        break;
+
+/* -------------------------------------------------------------------- */
+      case CT_PolarStereographic:
+/* -------------------------------------------------------------------- */
+        if( GTIFKeyGet(psGTIF, ProjStraightVertPoleLongGeoKey, 
+                       &dfNatOriginLong, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjNatOriginLongGeoKey, 
+                          &dfNatOriginLong, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjFalseOriginLongGeoKey, 
+                          &dfNatOriginLong, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjCenterLongGeoKey, 
+                          &dfNatOriginLong, 0, 1 ) == 0 )
+            dfNatOriginLong = 0.0;
+
+        if( GTIFKeyGet(psGTIF, ProjNatOriginLatGeoKey, 
+                       &dfNatOriginLat, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjFalseOriginLatGeoKey, 
+                          &dfNatOriginLat, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjCenterLatGeoKey, 
+                          &dfNatOriginLat, 0, 1 ) == 0 )
+            dfNatOriginLat = 0.0;
+
+        if( GTIFKeyGet(psGTIF, ProjScaleAtNatOriginGeoKey,
+                       &dfNatOriginScale, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjScaleAtCenterGeoKey,
+                          &dfNatOriginScale, 0, 1 ) == 0 )
+            dfNatOriginScale = 1.0;
+            
+        /* notdef: should transform to decimal degrees at this point */
+
+        psDefn->ProjParm[0] = dfNatOriginLat;
+        psDefn->ProjParmId[0] = ProjNatOriginLatGeoKey;;
+        psDefn->ProjParm[1] = dfNatOriginLong;
+        psDefn->ProjParmId[1] = ProjStraightVertPoleLongGeoKey;
+        psDefn->ProjParm[4] = dfNatOriginScale;
+        psDefn->ProjParmId[4] = ProjScaleAtCenterGeoKey;
         psDefn->ProjParm[5] = dfFalseEasting;
         psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
         psDefn->ProjParm[6] = dfFalseNorthing;
@@ -991,7 +1101,7 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
         psDefn->ProjParmId[2] = ProjFalseOriginLatGeoKey;
         psDefn->ProjParm[3] = dfNatOriginLong;
         psDefn->ProjParmId[3] = ProjFalseOriginLongGeoKey;
-        psDefn->ProjParm[5] = dfNatOriginScale;
+        psDefn->ProjParm[5] = dfFalseEasting;
         psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
         psDefn->ProjParm[6] = dfFalseNorthing;
         psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
@@ -999,7 +1109,50 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
         psDefn->nParms = 7;
         break;
 
-        
+/* -------------------------------------------------------------------- */
+      case CT_AlbersEqualArea:
+/* -------------------------------------------------------------------- */
+        if( GTIFKeyGet(psGTIF, ProjStdParallel1GeoKey, 
+                       &dfStdParallel1, 0, 1 ) == 0 )
+            dfStdParallel1 = 0.0;
+
+        if( GTIFKeyGet(psGTIF, ProjStdParallel2GeoKey, 
+                       &dfStdParallel2, 0, 1 ) == 0 )
+            dfStdParallel1 = 0.0;
+
+        if( GTIFKeyGet(psGTIF, ProjNatOriginLongGeoKey, 
+                       &dfNatOriginLong, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjFalseOriginLongGeoKey, 
+                          &dfNatOriginLong, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjCenterLongGeoKey, 
+                          &dfNatOriginLong, 0, 1 ) == 0 )
+            dfNatOriginLong = 0.0;
+
+        if( GTIFKeyGet(psGTIF, ProjNatOriginLatGeoKey, 
+                       &dfNatOriginLat, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjFalseOriginLatGeoKey, 
+                          &dfNatOriginLat, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjCenterLatGeoKey, 
+                          &dfNatOriginLat, 0, 1 ) == 0 )
+            dfNatOriginLat = 0.0;
+
+        /* notdef: should transform to decimal degrees at this point */
+
+        psDefn->ProjParm[0] = dfStdParallel1;
+        psDefn->ProjParmId[0] = ProjStdParallel1GeoKey;
+        psDefn->ProjParm[1] = dfStdParallel2;
+        psDefn->ProjParmId[1] = ProjStdParallel1GeoKey;
+        psDefn->ProjParm[2] = dfNatOriginLat;
+        psDefn->ProjParmId[2] = ProjNatOriginLatGeoKey;
+        psDefn->ProjParm[3] = dfNatOriginLong;
+        psDefn->ProjParmId[3] = ProjNatOriginLongGeoKey;
+        psDefn->ProjParm[5] = dfFalseEasting;
+        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParm[6] = dfFalseNorthing;
+        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        psDefn->nParms = 7;
+        break;
     }
 }
 
@@ -1151,6 +1304,20 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 
         psDefn->PMLongToGreenwich =
             GTIFAngleToDD( psDefn->PMLongToGreenwich, nGeogUOMAngle );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Have the projection units of measure been overridden?  We       */
+/*      should likely be doing something about angular units too,       */
+/*      but these are very rarely not decimal degrees for actual        */
+/*      file coordinates.                                               */
+/* -------------------------------------------------------------------- */
+    GTIFKeyGet(psGTIF,ProjLinearUnitsGeoKey,&(psDefn->UOMLength),0,1);
+
+    if( psDefn->UOMLength != KvUserDefined )
+    {
+        GTIFGetUOMLengthInfo( psDefn->UOMLength, NULL,
+                              &(psDefn->UOMLengthInMeters) );
     }
 
 /* -------------------------------------------------------------------- */
