@@ -1,3 +1,8 @@
+2001-03-24  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* configure: Make --with-ogr default, and user must indicate 
+	--without-ogr.
+
 2001-03-22  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* frmts/raw/ehdrdataset.cpp: added support for files generated
