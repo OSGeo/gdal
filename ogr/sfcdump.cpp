@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/07/07 19:38:57  warmerda
+ * added -provider any support
+ *
  * Revision 1.5  1999/06/10 19:18:22  warmerda
  * added support for the spatial ref schema rowset
  *
@@ -285,6 +288,30 @@ static SFCDataSource * SFCOpenDataSource( const char * pszProvider,
         return NULL;
     }
 
+/* -------------------------------------------------------------------- */
+/*      If any provider is OK, try them all.                            */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszProvider,"") || EQUAL(pszProvider,"any") )
+    {
+        SFCDataSource      *poDS;
+
+        poDS = oEnumerator.OpenAny( pszDataSource );
+        if( poDS != NULL )
+        {
+            printf( "Data source opened with %S provider.\n", 
+                    oEnumerator.m_szName );
+            return poDS;
+        }
+
+        printf( "Attempt to access datasource %s failed,\n"
+                " all providers tried.\n", 
+                pszDataSource );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the requested provider.                                    */
+/* -------------------------------------------------------------------- */
     if( !oEnumerator.Find((char*) pszProvider) )
     {
         printf( "Can't find OLE DB provider `%s'.\n", pszProvider );
