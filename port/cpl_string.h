@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/07/12 22:37:05  warmerda
+ * added CSLFetchBoolean
+ *
  * Revision 1.11  2002/05/28 18:53:43  warmerda
  * added XML escaping support
  *
@@ -106,6 +109,8 @@ char CPL_DLL **CSLInsertString(char **papszStrList, int nInsertAtLineNo,
 char CPL_DLL **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
                          int nNumToRemove, char ***ppapszRetStrings);
 int CPL_DLL CSLFindString( char **, const char * );
+int CPL_DLL CSLFetchBoolean( char **papszStrList, const char *pszKey, 
+                             int bDefault );
 
 const char CPL_DLL *CPLSPrintf(char *fmt, ...);
 char CPL_DLL **CSLAppendPrintf(char **papszStrList, char *fmt, ...);

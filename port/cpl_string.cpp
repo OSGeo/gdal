@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.24  2002/07/12 22:37:05  warmerda
+ * added CSLFetchBoolean
+ *
  * Revision 1.23  2002/07/09 20:25:25  warmerda
  * expand tabs
  *
@@ -771,6 +774,41 @@ char **CSLAppendPrintf(char **papszStrList, char *fmt, ...)
     return CSLAddString(papszStrList, gszCPLSPrintfBuffer[nCurrent]);
 }
 
+/**
+ * Check for boolean key value.
+ *
+ * In a StringList of "Name=Value" pairs, look to see if there is a key
+ * with the given name, and if it can be interpreted as being TRUE.  If
+ * the key appears without any "=Value" portion it will be considered true. 
+ * If the value is NO, FALSE or 0 it will be considered FALSE otherwise
+ * if the key appears in the list it will be considered TRUE.  If the key
+ * doesn't appear at all, the indicated default value will be returned. 
+ * 
+ * @param papszStrList the string list to search.
+ * @param pszKey the key value to look for (case insensitive).
+ * @param bDefault the value to return if the key isn't found at all. 
+ * 
+ * @return TRUE or FALSE 
+ **********************************************************************/
+
+int CSLFetchBoolean( char **papszStrList, const char *pszKey, int bDefault )
+
+{
+    const char *pszValue;
+
+    if( CSLFindString( papszStrList, pszKey ) != -1 )
+        return TRUE;
+
+    pszValue = CSLFetchNameValue(papszStrList, pszKey );
+    if( pszValue == NULL )
+        return bDefault;
+    else if( EQUAL(pszValue,"NO") 
+             || EQUAL(pszValue,"FALSE") 
+             || EQUAL(pszValue,"0") )
+        return FALSE;
+    else
+        return TRUE;
+}
 
 /**********************************************************************
  *                       CSLFetchNameValue()
