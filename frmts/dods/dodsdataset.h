@@ -133,6 +133,9 @@ private:
     int d_iVarRank;		//< Variable rank from DDS.
     vector<dim_spec> d_oBandSpec; //< The result of parsing the BandExpr
     int d_iNumBands;		//< Number of bands, from BandExpr
+    int d_bNeedTranspose;       // do we need an x/y transpose?
+    int d_bFlipX;    
+    int d_bFlipY;              
 
     double d_dfLLLat, d_dfLLLon, d_dfURLat, d_dfURLon;
     string d_oWKT;		//< Constructed WKT string
@@ -231,6 +234,11 @@ public:
 };
 
 // $Log$
+// Revision 1.5  2004/06/17 18:08:26  warmerda
+// Added support for transposing and flipping grids if needed.
+// Added support for falling back to "whole image at once" block based
+// mechanism if interleaving request is odd or a directive says to.
+//
 // Revision 1.4  2004/01/29 22:56:18  jimg
 // Second major attempt to optimize the driver. This implementation provides a
 // specialization of GDALDataset::IRasterIO() which recognizes when the caller
