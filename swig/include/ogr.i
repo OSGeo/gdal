@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.12  2005/02/21 16:53:30  kruland
+ * Changed name of SpatialReference shadow type.
+ *
  * Revision 1.11  2005/02/21 16:52:39  hobu
  * GetFieldAs* methods that take in string or int input for Feature
  *
@@ -141,7 +144,7 @@ using namespace std;
 #include "cpl_port.h"
 #include "cpl_string.h"
 
-typedef void SpatialReference;
+typedef void OSRSpatialReferenceShadow;
 
 %}
 
@@ -263,7 +266,7 @@ public:
   %newobject CreateLayer;
   %feature( "kwargs" ) CreateLayer;
   OGRLayerH *CreateLayer(const char* name, 
-              SpatialReference* reference,
+              OSRSpatialReferenceShadow* reference,
               OGRwkbGeometryType geom_type=wkbUnknown,
               char** options=0) {
     OGRLayerH* layer = (OGRLayerH*) OGR_DS_CreateLayer( self,
@@ -520,8 +523,8 @@ public:
   }
   
   %newobject GetSpatialRef;
-  SpatialReference *GetSpatialRef() {
-    return (SpatialReference*) OGR_L_GetSpatialRef(self);
+  OSRSpatialReferenceShadow *GetSpatialRef() {
+    return (OSRSpatialReferenceShadow*) OGR_L_GetSpatialRef(self);
   }
   
   GIntBig GetFeatureRead() {
@@ -892,7 +895,7 @@ char const *OGRDataSourceH_name_get( OGRDataSourceH *h ) {
 %apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
 %inline %{
   OGRGeometryH CreateGeometryFromWkb( int len, char *bin_string, 
-                                      SpatialReference *reference=NULL ) {
+                                      OSRSpatialReferenceShadow *reference=NULL ) {
     OGRGeometryH geom;
     OGRErr err = OGR_G_CreateFromWkb( (unsigned char *) bin_string,
                                       reference,
@@ -911,7 +914,7 @@ char const *OGRDataSourceH_name_get( OGRDataSourceH *h ) {
 %newobject CreateGeometryFromWkt;
 %inline %{
   OGRGeometryH CreateGeometryFromWkt( char **val, 
-                                      SpatialReference *reference=NULL ) {
+                                      OSRSpatialReferenceShadow *reference=NULL ) {
     OGRGeometryH geom;
     OGRErr err = OGR_G_CreateFromWkt(val,
                                       reference,
