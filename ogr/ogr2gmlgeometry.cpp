@@ -27,13 +27,20 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************
  *
+ * Independent Security Audit 2003/04/17 Andrey Kiselev:
+ *   Completed audit of this module. All functions may be used without buffer
+ *   overflows and stack corruptions if caller could be trusted.
+ *
  * Security Audit 2003/03/28 warmerda:
  *   Completed security audit.  I believe that this module may be safely used 
- *   to generate GML from arbitrary but well fromed OGRGeomety objects that
+ *   to generate GML from arbitrary but well formed OGRGeomety objects that
  *   come from a potentially hostile source, but through a trusted OGR importer
  *   without compromising the system.
  *
  * $Log$
+ * Revision 1.6  2003/04/17 08:22:06  dron
+ * Completed secutity audit, fix in MakeGMLCoordinate().
+ *
  * Revision 1.5  2003/03/28 06:00:14  warmerda
  * Completed security audit.  Fixed issue with very large coordinate values
  * potentially causing a buffer overrun.
@@ -101,7 +108,7 @@ static void MakeGMLCoordinate( char *pszTarget,
             sprintf( pszTarget, "%.16g,%.16g,%.16g", x, y, z );
         else if( fabs(x) > 100000000.0 || fabs(y) > 100000000.0 
                  || fabs(z) > 100000000.0 )
-            sprintf( pszTarget, "%.16g,%.16g", x, y );
+            sprintf( pszTarget, "%.16g,%.16g,%.16g", x, y, z );
         else
             sprintf( pszTarget, "%.3f,%.3f,%.3f", x, y, z );
     }
