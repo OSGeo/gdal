@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/02/19 06:59:36  warmerda
+ * Fixed a couple memory leaks.
+ *
  * Revision 1.6  2003/05/21 03:58:49  warmerda
  * expand tabs
  *
@@ -87,7 +90,12 @@ OGROGDIDataSource::~OGROGDIDataSource()
     CPLFree( m_papoLayers );
 
     if (m_nClientID != -1)
-        cln_DestroyClient( m_nClientID );
+    {
+        ecs_Result *psResult;
+
+        psResult = cln_DestroyClient( m_nClientID );
+        ecs_CleanUp( psResult );
+    }
 
     if (m_poSpatialRef)
         delete m_poSpatialRef;
@@ -130,14 +138,17 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
         
         if (pszFamily && pszFamily != pszWorkingName + 4)
         {
+            *pszFamily = '\0';
+            pszFamily++;
+
             pszLyrName = strrchr(pszWorkingName, ':');
             if (pszLyrName == pszWorkingName + 4)
                 pszLyrName = NULL;
 
             if( pszLyrName != NULL )
             {
-                *pszFamily = '\0';
                 *pszLyrName = '\0';
+                pszLyrName++;
             }
         }
 
@@ -145,6 +156,8 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
 /*      Open the client interface.                                      */
 /* -------------------------------------------------------------------- */
         psResult = cln_CreateClient(&m_nClientID, pszWorkingName);
+        CPLFree( pszWorkingName );
+
         if( ECSERROR( psResult ) )
         {
             if (!bTestOpen)
