@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/09/15 14:06:25  fwarmerdam
+ * added dumping of cone in DGNDumpElement()
+ * A bunch of changes related to quaternion handling... not sure if it all
+ * is working or not.  Contributed by user.
+ *
  * Revision 1.21  2003/12/01 16:58:13  warmerda
  * Replaced DGNRad50ToAscii() with new implementation from Armin Berg.
  * This one correctly decodes values with embedded spaces, though I am
@@ -913,6 +918,24 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
       }
       break;
 
+      case DGNST_CONE:
+      {
+          DGNElemCone *psCone = (DGNElemCone *) psElement;
+
+          fprintf( fp, 
+                   "  center_1=(%g,%g,%g) radius=%g\n"
+                   "  center_2=(%g,%g,%g) radius=%g\n"
+                   "  quat=%d,%d,%d,%d unknown=%d\n", 
+                   psCone->center_1.x, psCone->center_1.y, psCone->center_1.z,
+                   psCone->radius_1, 
+                   psCone->center_2.x, psCone->center_2.y, psCone->center_2.z,
+                   psCone->radius_2, 
+                   psCone->quat[0], psCone->quat[1],
+                   psCone->quat[2], psCone->quat[3],
+                   psCone->unknown );
+      }
+      break;
+
       default:
         break;
     }
@@ -1225,14 +1248,86 @@ void DGNQuaternionToMatrix( int *quat, float *mat )
   mat[2*3+2] = (float) (-q[0]*q[0] - q[1]*q[1] + q[2]*q[2] + q[3]*q[3]);
 }
 
-/* FIXME: Add function to directly transform a vertex using a quaternion?
-   See below for sketched implementation. kintel 20030819.
-void DGNTransformVertex( int *quat, DGNPoint &v1, DGNPoint &v2 )
+/************************************************************************/
+/*                  DGNTransformPointWithQuaternion()                   */
+/************************************************************************/
+
+void DGNTransformPointWithQuaternionVertex( int *quat, DGNPoint *v1, DGNPoint *v2 )
 {
-  float x,y,z,w;
-  // FIXME: Convert quat to x,y,z,w
-  v2.x = w*w*v1.x + 2*y*w*v1.z - 2*z*w*v1.y + x*x*v1.x + 2*y*x*v1.y + 2*z*x*v1.z - z*z*v1.x - y*y*v1.x; 
-  v2.y = 2*x*y*v1.x + y*y*v1.y + 2*z*y*v1.z + 2*w*z*v1.x - z*z*v1.y + w*w*v1.y - 2*x*w*v1.z - x*x*v1.y; 
-  v2.z = 2*x*z*v1.x + 2*y*z*v1.y + z*z*v1.z - 2*w*y*v1.x - y*y*v1.z + 2*w*x*v1.y - x*x*v1.z + w*w*v1.z;
-}
+
+/* ==================================================================== */
+/*      Original code provided by kintel 20030819, but assumed to be    */
+/*      incomplete.                                                     */
+/* ==================================================================== */
+
+#ifdef notdef
+    See below for sketched implementation. kintel 20030819.
+                               float x,y,z,w;
+    // FIXME: Convert quat to x,y,z,w
+    v2.x = w*w*v1.x + 2*y*w*v1.z - 2*z*w*v1.y + x*x*v1.x + 2*y*x*v1.y + 2*z*x*v1.z - z*z*v1.x - y*y*v1.x; 
+    v2.y = 2*x*y*v1.x + y*y*v1.y + 2*z*y*v1.z + 2*w*z*v1.x - z*z*v1.y + w*w*v1.y - 2*x*w*v1.z - x*x*v1.y; 
+    v2.z = 2*x*z*v1.x + 2*y*z*v1.y + z*z*v1.z - 2*w*y*v1.x - y*y*v1.z + 2*w*x*v1.y - x*x*v1.z + w*w*v1.z;
+#endif
+
+/* ==================================================================== */
+/*      Impelementation provided by Peggy Jung - 2004/03/05.            */
+/*      peggy.jung at moskito-gis dot de.  I haven't tested it.         */
+/* ==================================================================== */
+
+/*  Version: 0.1                                 Datum: 26.01.2004
+ 
+IN:
+x,y,z               // DGNPoint &v1
+quat[]              // 
+ 
+OUT:
+newX, newY, newZ    // DGNPoint &v2
+
+A u t o r  :  Peggy Jung
 */
+/*
+    double ROT[12];  //rotation matrix for a given quaternion
+    double xx, xy, xz, xw, yy, yz, yw, zz, zw;
+    double a, b, c, d, n, x, y, z;
+
+    x = v1->x;
+    y = v1->y;
+    z = v1->z;
+ 
+    n = sqrt((double)PDP2PC_long(quat[0])*(double)PDP2PC_long(quat[0])+(double)PDP2PC_long(quat[1])*(double)PDP2PC_long(quat[1])+
+             (double)PDP2PC_long(quat[2])*(double)PDP2PC_long(quat[2])+(double)PDP2PC_long(quat[3])*(double)PDP2PC_long(quat[3]));
+ 
+    a = (double)PDP2PC_long(quat[0])/n; //w
+    b = (double)PDP2PC_long(quat[1])/n; //x
+    c = (double)PDP2PC_long(quat[2])/n; //y
+    d = (double)PDP2PC_long(quat[3])/n; //z
+ 
+    xx      = b*b;
+    xy      = b*c;
+    xz      = b*d;
+    xw      = b*a;
+ 
+    yy      = c*c;
+    yz      = c*d;
+    yw      = c*a;
+ 
+    zz      = d*d;
+    zw      = d+a;
+ 
+    ROT[0] = 1 - 2 * yy - 2 * zz ;
+    ROT[1] =     2 * xy - 2 * zw ;
+    ROT[2] =     2 * xz + 2 * yw ;
+ 
+    ROT[4] =     2 * xy + 2 * zw ;
+    ROT[5] = 1 - 2 * xx - 2 * zz ;
+    ROT[6] =     2 * yz - 2 * xw ;
+ 
+    ROT[8] =     2 * xz - 2 * yw ;
+    ROT[9] =     2 * yz + 2 * xw ;
+    ROT[10] = 1 - 2 * xx - 2 * yy ;
+ 
+    v2->x = ROT[0]*x + ROT[1]*y + ROT[2]*z;
+    v2->y = ROT[4]*x + ROT[5]*y + ROT[6]*z;
+    v2->z = ROT[8]*x + ROT[9]*y + ROT[10]*z;
+*/
+}
