@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/12/10 21:35:00  fwarmerdam
+ * preliminary support for writing JPEG2000 compressed data
+ *
  * Revision 1.18  2004/04/30 17:38:28  warmerda
  * clean up metadata
  *
@@ -363,7 +366,7 @@ void NITFClose( NITFFile *psFile )
 /*      Create a new uncompressed NITF file.                            */
 /************************************************************************/
 
-NITFFile *NITFCreate( const char *pszFilename, 
+int NITFCreate( const char *pszFilename, 
                       int nPixels, int nLines, int nBands, 
                       int nBitsPerSample, const char *pszPVType,
                       char **papszOptions )
@@ -375,6 +378,10 @@ NITFFile *NITFCreate( const char *pszFilename,
     int         nOffset = 0, iBand, nImageSize, nIHSize, nNPPBH, nNPPBV;
     int         nNBPR, nNBPC;
     const char *pszIREP;
+    const char *pszIC = CSLFetchNameValue(papszOptions,"IC");
+
+    if( pszIC == NULL )
+        pszIC = "NC";
 
 /* -------------------------------------------------------------------- */
 /*      Open new file.                                                  */
@@ -386,7 +393,7 @@ NITFFile *NITFCreate( const char *pszFilename,
                   "Unable to create file %s,\n"
                   "check path and permissions.",
                   pszFilename );
-        return NULL;
+        return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -525,7 +532,14 @@ NITFFile *NITFCreate( const char *pszFilename,
     }
 
     PLACE (pachIMHDR+nOffset, NICOM    , "0"                            );
-    PLACE (pachIMHDR+nOffset+1, IC     , "NC"                           );
+    OVR( 2,pachIMHDR+nOffset+1, IC     , "NC"                           );
+
+    if( pszIC[0] != 'N' )
+    {
+        OVR( 4,pachIMHDR+nOffset+3, COMRAT , "    "                     );
+        nOffset += 4;
+    }
+
     PLACE (pachIMHDR+nOffset+3, NBANDS , CPLSPrintf("%d",nBands)        );
 
     nOffset += 4;
@@ -616,14 +630,22 @@ NITFFile *NITFCreate( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Grow file to full required size by writing one byte at the end. */
 /* -------------------------------------------------------------------- */
-    VSIFSeek( fp, nImageSize-1, SEEK_CUR );
-
-    achHeader[0] = '\0';
-    VSIFWrite( achHeader, 1, 1, fp );
+    {
+        const char *pszIC = CSLFetchNameValue(papszOptions,"IC");
+    
+        if( pszIC != NULL && EQUAL(pszIC,"C8") )
+            /* don't extend file */;
+        else
+        {
+            VSIFSeek( fp, nImageSize-1, SEEK_CUR );
+            achHeader[0] = '\0';
+            VSIFWrite( achHeader, 1, 1, fp );
+        }
+    }
 
     VSIFClose( fp );
 
-    return NULL;
+    return TRUE;
 }
 
 /************************************************************************/

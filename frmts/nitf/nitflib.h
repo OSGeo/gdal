@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/12/10 21:35:00  fwarmerdam
+ * preliminary support for writing JPEG2000 compressed data
+ *
  * Revision 1.14  2004/12/10 21:27:24  fwarmerdam
  * Added ICHIPB support
  *
@@ -126,7 +129,7 @@ typedef struct {
 NITFFile CPL_DLL *NITFOpen( const char *pszFilename, int bUpdatable );
 void     CPL_DLL  NITFClose( NITFFile * );
 
-NITFFile CPL_DLL *NITFCreate( const char *pszFilename, 
+int      CPL_DLL  NITFCreate( const char *pszFilename, 
                               int nPixels, int nLines, int nBands, 
                               int nBitsPerSample, const char *pszPVType,
                               char **papszOptions );
