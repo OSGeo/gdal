@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  1999/11/04 21:11:21  warmerda
+ * Added TestCapability() methods for creation overhaul.
+ *
  * Revision 1.10  1999/10/04 13:28:43  warmerda
  * added DEM_SAMPLE support
  *
@@ -515,6 +518,7 @@ class OGRNTFDataSource : public OGRDataSource
     const char	        *GetName() { return pszName; }
     int			GetLayerCount();
     OGRLayer		*GetLayer( int );
+    int                 TestCapability( const char * );
 
     // Note: these are specific to NTF for now, but eventually might
     // might be available as part of a more object oriented approach to
@@ -551,6 +555,7 @@ class OGRNTFDriver : public OGRSFDriver
                 
     const char *GetName();
     OGRDataSource *Open( const char *, int );
+    int                 TestCapability( const char * );
 };
 
 #endif /* ndef _NTF_H_INCLUDED */
