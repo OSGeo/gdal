@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_zip.c,v 1.2 1999/12/07 17:11:38 mwelles Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_zip.c,v 1.3 2002/03/06 14:07:27 warmerda Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler
@@ -331,10 +331,10 @@ TIFFInitZIP(TIFF* tif, int scheme)
 	 * override parent get/set field methods.
 	 */
 	_TIFFMergeFieldInfo(tif, zipFieldInfo, N(zipFieldInfo));
-	sp->vgetparent = tif->tif_vgetfield;
-	tif->tif_vgetfield = ZIPVGetField;	/* hook for codec tags */
-	sp->vsetparent = tif->tif_vsetfield;
-	tif->tif_vsetfield = ZIPVSetField;	/* hook for codec tags */
+	sp->vgetparent = tif->tif_tagmethods.vgetfield;
+	tif->tif_tagmethods.vgetfield = ZIPVGetField;	/* hook for codec tags */
+	sp->vsetparent = tif->tif_tagmethods.vsetfield;
+	tif->tif_tagmethods.vsetfield = ZIPVSetField;	/* hook for codec tags */
 
 	/* Default values for codec-specific fields */
 	sp->zipquality = Z_DEFAULT_COMPRESSION;	/* default comp. level */

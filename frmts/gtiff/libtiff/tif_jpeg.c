@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_jpeg.c,v 1.5 2001/07/20 15:00:35 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_jpeg.c,v 1.8 2002/03/06 14:07:27 warmerda Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -639,6 +639,7 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 	segment_width = td->td_imagewidth;
 	segment_height = td->td_imagelength - tif->tif_row;
 	if (isTiled(tif)) {
+                segment_width = td->td_tilewidth;
 		if (segment_height > td->td_tilelength)
 			segment_height = td->td_tilelength;
 		sp->bytesperline = TIFFTileRowSize(tif);
@@ -657,8 +658,12 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 	}
 	if (sp->cinfo.d.image_width != segment_width ||
 	    sp->cinfo.d.image_height != segment_height) {
-		TIFFError(module, "Improper JPEG strip/tile size");
-		return (0);
+		TIFFError(module, 
+                 "Improper JPEG strip/tile size, expected %dx%d, got %dx%d",
+                          segment_width, 
+                          segment_height,
+                          sp->cinfo.d.image_width, 
+                          sp->cinfo.d.image_height);
 	}
 	if (sp->cinfo.d.num_components !=
 	    (td->td_planarconfig == PLANARCONFIG_CONTIG ?
@@ -674,8 +679,20 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 		/* Component 0 should have expected sampling factors */
 		if (sp->cinfo.d.comp_info[0].h_samp_factor != sp->h_sampling ||
 		    sp->cinfo.d.comp_info[0].v_samp_factor != sp->v_sampling) {
-			TIFFError(module, "Improper JPEG sampling factors");
-			return (0);
+			TIFFWarning(module, 
+                                    "Improper JPEG sampling factors %d,%d\n"
+                                    "Apparently should be %d,%d,"
+                                    "decompressor will try reading with "
+                                    "sampling %d,%d",
+                                    sp->cinfo.d.comp_info[0].h_samp_factor,
+                                    sp->cinfo.d.comp_info[0].v_samp_factor,
+                                    sp->h_sampling, 
+                                    sp->v_sampling,
+                                    sp->cinfo.d.comp_info[0].h_samp_factor,
+                                    sp->cinfo.d.comp_info[0].v_samp_factor );
+
+                        sp->h_sampling= sp->cinfo.d.comp_info[0].h_samp_factor;
+                        sp->v_sampling= sp->cinfo.d.comp_info[0].v_samp_factor;
 		}
 		/* Rest should have sampling factors 1,1 */
 		for (ci = 1; ci < sp->cinfo.d.num_components; ci++) {
@@ -1426,11 +1443,11 @@ TIFFInitJPEG(TIFF* tif, int scheme)
 	 * override parent get/set field methods.
 	 */
 	_TIFFMergeFieldInfo(tif, jpegFieldInfo, N(jpegFieldInfo));
-	sp->vgetparent = tif->tif_vgetfield;
-	tif->tif_vgetfield = JPEGVGetField;	/* hook for codec tags */
-	sp->vsetparent = tif->tif_vsetfield;
-	tif->tif_vsetfield = JPEGVSetField;	/* hook for codec tags */
-	tif->tif_printdir = JPEGPrintDir;	/* hook for codec tags */
+	sp->vgetparent = tif->tif_tagmethods.vgetfield;
+	tif->tif_tagmethods.vgetfield = JPEGVGetField;	/* hook for codec tags */
+	sp->vsetparent = tif->tif_tagmethods.vsetfield;
+	tif->tif_tagmethods.vsetfield = JPEGVSetField;	/* hook for codec tags */
+	tif->tif_tagmethods.printdir = JPEGPrintDir;	/* hook for codec tags */
 
 	/* Default values for codec-specific fields */
 	sp->jpegtables = NULL;

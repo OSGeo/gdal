@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiff.h,v 1.8 2001/08/10 02:37:52 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiff.h,v 1.13 2002/03/27 03:55:42 dbmalloc Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -79,7 +79,7 @@ typedef	char int8;
 typedef	unsigned char uint8;
 typedef	short int16;
 typedef	unsigned short uint16;	/* sizeof (uint16) must == 2 */
-#if defined(__alpha) || (defined(_MIPS_SZLONG) && _MIPS_SZLONG == 64) || defined(__LP64__)
+#if defined(__alpha) || (defined(_MIPS_SZLONG) && _MIPS_SZLONG == 64) || defined(__LP64__) || defined(__arch64__)
 typedef	int int32;
 typedef	unsigned int uint32;	/* sizeof (uint32) must == 4 */
 #else
@@ -169,7 +169,9 @@ typedef	enum {
 #define	    COMPRESSION_NONE		1	/* dump mode */
 #define	    COMPRESSION_CCITTRLE	2	/* CCITT modified Huffman RLE */
 #define	    COMPRESSION_CCITTFAX3	3	/* CCITT Group 3 fax encoding */
+#define     COMPRESSION_CCITT_T4        3       /* CCITT T.4 (TIFF 6 name) */
 #define	    COMPRESSION_CCITTFAX4	4	/* CCITT Group 4 fax encoding */
+#define     COMPRESSION_CCITT_T6        4       /* CCITT T.6 (TIFF 6 name) */
 #define	    COMPRESSION_LZW		5       /* Lempel-Ziv  & Welch */
 #define	    COMPRESSION_OJPEG		6	/* !6.0 JPEG */
 #define	    COMPRESSION_JPEG		7	/* %JPEG DCT compression */
@@ -177,7 +179,7 @@ typedef	enum {
 #define	    COMPRESSION_CCITTRLEW	32771	/* #1 w/ word alignment */
 #define	    COMPRESSION_PACKBITS	32773	/* Macintosh RLE */
 #define	    COMPRESSION_THUNDERSCAN	32809	/* ThunderScan RLE */
-/* codes 32895-32898 are reserved for ANSI IT8 TIFF/IT <dkelly@etsinc.com) */
+/* codes 32895-32898 are reserved for ANSI IT8 TIFF/IT <dkelly@apago.com) */
 #define	    COMPRESSION_IT8CTPAD	32895   /* IT8 CT w/padding */
 #define	    COMPRESSION_IT8LW		32896   /* IT8 Linework RLE */
 #define	    COMPRESSION_IT8MP		32897   /* IT8 Monochrome picture */
@@ -201,6 +203,8 @@ typedef	enum {
 #define	    PHOTOMETRIC_SEPARATED	5	/* !color separations */
 #define	    PHOTOMETRIC_YCBCR		6	/* !CCIR 601 */
 #define	    PHOTOMETRIC_CIELAB		8	/* !1976 CIE L*a*b* */
+#define	    PHOTOMETRIC_ICCLAB		9	/* ICC L*a*b* [Adobe TIFF Technote 4] */
+#define	    PHOTOMETRIC_ITULAB		10	/* ITU L*a*b* */
 #define     PHOTOMETRIC_LOGL		32844	/* CIE Log2(L) */
 #define     PHOTOMETRIC_LOGLUV		32845	/* CIE Log2(L) (u',v') */
 #define	TIFFTAG_THRESHHOLDING		263	/* +thresholding used on data */
@@ -249,10 +253,12 @@ typedef	enum {
 #define	    GRAYRESPONSEUNIT_100000S	5	/* hundred-thousandths */
 #define	TIFFTAG_GRAYRESPONSECURVE	291	/* $gray scale response curve */
 #define	TIFFTAG_GROUP3OPTIONS		292	/* 32 flag bits */
+#define	TIFFTAG_T4OPTIONS		292	/* TIFF 6.0 proper name alias */
 #define	    GROUP3OPT_2DENCODING	0x1	/* 2-dimensional coding */
 #define	    GROUP3OPT_UNCOMPRESSED	0x2	/* data not compressed */
 #define	    GROUP3OPT_FILLBITS		0x4	/* fill to byte boundary */
 #define	TIFFTAG_GROUP4OPTIONS		293	/* 32 flag bits */
+#define TIFFTAG_T6OPTIONS               293     /* TIFF 6.0 proper name */
 #define	    GROUP4OPT_UNCOMPRESSED	0x2	/* data not compressed */
 #define	TIFFTAG_RESOLUTIONUNIT		296	/* units of resolutions */
 #define	    RESUNIT_NONE		1	/* no meaningful units */
@@ -287,7 +293,8 @@ typedef	enum {
 #define	TIFFTAG_CONSECUTIVEBADFAXLINES	328	/* max consecutive bad lines */
 #define	TIFFTAG_SUBIFD			330	/* subimage descriptors */
 #define	TIFFTAG_INKSET			332	/* !inks in separated image */
-#define	    INKSET_CMYK			1	/* !cyan-magenta-yellow-black */
+#define	    INKSET_CMYK			1	/* !cyan-magenta-yellow-black color */
+#define	    INKSET_MULTIINK		2	/* !multi-ink or hi-fi color */
 #define	TIFFTAG_INKNAMES		333	/* !ascii names of inks */
 #define	TIFFTAG_NUMBEROFINKS		334	/* !number of inks */
 #define	TIFFTAG_DOTRANGE		336	/* !0% and 100% dot codes */
@@ -305,7 +312,12 @@ typedef	enum {
 #define	    SAMPLEFORMAT_COMPLEXIEEEFP	6	/* !complex ieee floating */
 #define	TIFFTAG_SMINSAMPLEVALUE		340	/* !variable MinSampleValue */
 #define	TIFFTAG_SMAXSAMPLEVALUE		341	/* !variable MaxSampleValue */
+#define	TIFFTAG_CLIPPATH		343	/* %ClipPath [Adobe TIFF technote 2] */
+#define	TIFFTAG_XCLIPPATHUNITS	344	/* %XClipPathUnits [Adobe TIFF technote 2] */
+#define	TIFFTAG_YCLIPPATHUNITS	344	/* %YClipPathUnits [Adobe TIFF technote 2] */
+#define	TIFFTAG_INDEXED			345	/* %Indexed [Adobe TIFF Technote 3] */
 #define	TIFFTAG_JPEGTABLES		347	/* %JPEG table stream */
+#define	TIFFTAG_OPIPROXY		351	/* %OPI Proxy [Adobe TIFF technote] */
 /*
  * Tags 512-521 are obsoleted by Technical Note #2
  * which specifies a revised JPEG-in-TIFF scheme.
@@ -327,6 +339,8 @@ typedef	enum {
 #define	    YCBCRPOSITION_CENTERED	1	/* !as in PostScript Level 2 */
 #define	    YCBCRPOSITION_COSITED	2	/* !as in CCIR 601-1 */
 #define	TIFFTAG_REFERENCEBLACKWHITE	532	/* !colorimetry info */
+#define	TIFFTAG_XMLPACKET		700		/* %XML packet [Adobe XMP technote 9-14-02] (dkelly@apago.com) */
+#define TIFFTAG_OPIIMAGEID		32781	/* %OPI ImageID [Adobe TIFF technote] */
 /* tags 32952-32956 are private tags registered to Island Graphics */
 #define TIFFTAG_REFPTS			32953	/* image reference points */
 #define TIFFTAG_REGIONTACKPOINT		32954	/* region-xform tack point */
@@ -361,7 +375,7 @@ typedef	enum {
 #define	TIFFTAG_COPYRIGHT		33432	/* copyright string */
 /* IPTC TAG from RichTIFF specifications */
 #define TIFFTAG_RICHTIFFIPTC    33723
-/* 34016-34029 are reserved for ANSI IT8 TIFF/IT <dkelly@etsinc.com) */
+/* 34016-34029 are reserved for ANSI IT8 TIFF/IT <dkelly@apago.com) */
 #define TIFFTAG_IT8SITE			34016	/* site name */
 #define TIFFTAG_IT8COLORSEQUENCE	34017	/* color seq. [RGB,CMYK,etc] */
 #define TIFFTAG_IT8HEADER		34018	/* DDES Header */
@@ -376,6 +390,9 @@ typedef	enum {
 #define TIFFTAG_IT8PIXELINTENSITYRANGE	34027	/* MP pixel intensity value */
 #define TIFFTAG_IT8TRANSPARENCYINDICATOR 34028	/* HC transparency switch */
 #define TIFFTAG_IT8COLORCHARACTERIZATION 34029	/* color character. table */
+#define TIFFTAG_IT8HCUSAGE			34030	/* HC usage indicator */
+#define TIFFTAG_IT8TRAPINDICATOR	34031	/* Trapping indicator (untrapped=0, trapped=1) */
+#define TIFFTAG_IT8CMYKEQUIVALENT	34032	/* CMYK color equivalents */
 /* tags 34232-34236 are private tags registered to Texas Instruments */
 #define TIFFTAG_FRAMECOUNT              34232   /* Sequence Frame Count */
 /* tag 34750 is a private tag registered to Adobe? */

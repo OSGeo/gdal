@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirinfo.c,v 1.8 2001/05/09 01:33:16 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirinfo.c,v 1.15 2002/04/03 20:14:20 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -63,10 +63,19 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       TRUE,	FALSE,	"ImageLength" },
     { TIFFTAG_IMAGELENGTH,	 1, 1, TIFF_SHORT,	FIELD_IMAGEDIMENSIONS,
       TRUE,	FALSE,	"ImageLength" },
+/* XXX LONG for compatibility with some broken TIFF writers */
+    { TIFFTAG_BITSPERSAMPLE,	-1,-1, TIFF_LONG,	FIELD_BITSPERSAMPLE,
+      FALSE,	FALSE,	"BitsPerSample" },
     { TIFFTAG_BITSPERSAMPLE,	-1,-1, TIFF_SHORT,	FIELD_BITSPERSAMPLE,
       FALSE,	FALSE,	"BitsPerSample" },
+/* XXX LONG for compatibility with some broken TIFF writers */
+    { TIFFTAG_COMPRESSION,	-1, 1, TIFF_LONG,	FIELD_COMPRESSION,
+      FALSE,	FALSE,	"Compression" },
     { TIFFTAG_COMPRESSION,	-1, 1, TIFF_SHORT,	FIELD_COMPRESSION,
       FALSE,	FALSE,	"Compression" },
+/* XXX LONG for compatibility with some broken TIFF writers */
+    { TIFFTAG_PHOTOMETRIC,	 1, 1, TIFF_LONG,	FIELD_PHOTOMETRIC,
+      FALSE,	FALSE,	"PhotometricInterpretation" },
     { TIFFTAG_PHOTOMETRIC,	 1, 1, TIFF_SHORT,	FIELD_PHOTOMETRIC,
       FALSE,	FALSE,	"PhotometricInterpretation" },
     { TIFFTAG_THRESHHOLDING,	 1, 1, TIFF_SHORT,	FIELD_THRESHHOLDING,
@@ -135,7 +144,7 @@ const TIFFFieldInfo tiffFieldInfo[] = {
     { TIFFTAG_TRANSFERFUNCTION,	-1,-1, TIFF_SHORT,	FIELD_TRANSFERFUNCTION,
       TRUE,	FALSE,	"TransferFunction" },
 #endif
-    { TIFFTAG_SOFTWARE,		-1,-1, TIFF_ASCII,	FIELD_SOFTWARE,
+    { TIFFTAG_SOFTWARE,		-1,-1, TIFF_ASCII,	FIELD_CUSTOM,
       TRUE,	FALSE,	"Software" },
     { TIFFTAG_DATETIME,		20,20, TIFF_ASCII,	FIELD_DATETIME,
       TRUE,	FALSE,	"DateTime" },
@@ -211,6 +220,8 @@ const TIFFFieldInfo tiffFieldInfo[] = {
     { TIFFTAG_REFERENCEBLACKWHITE,6,6,TIFF_LONG,	FIELD_REFBLACKWHITE,
       TRUE,	FALSE,	"ReferenceBlackWhite" },
 #endif
+    { TIFFTAG_XMLPACKET,	-1,-3, TIFF_UNDEFINED,	FIELD_XMLPACKET,
+      FALSE,	TRUE,	"XMLPacket" },
 /* begin SGI tags */
     { TIFFTAG_MATTEING,		 1, 1, TIFF_SHORT,	FIELD_EXTRASAMPLES,
       FALSE,	FALSE,	"Matteing" },
@@ -304,14 +315,10 @@ _TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], int n)
 	tp = &tif->tif_fieldinfo[tif->tif_nfields];
 	for (i = 0; i < n; i++)
 		tp[i] = (TIFFFieldInfo*) &info[i];	/* XXX */
-	/*
-	 * NB: the core tags are presumed sorted correctly.
-	 */
-	if (tif->tif_nfields > 0)
-		qsort(tif->tif_fieldinfo, (size_t) (tif->tif_nfields += n),
-		    sizeof (TIFFFieldInfo*), tagCompare);
-	else
-		tif->tif_nfields += n;
+
+        /* Sort the field info by tag number */
+        qsort(tif->tif_fieldinfo, (size_t) (tif->tif_nfields += n),
+              sizeof (TIFFFieldInfo*), tagCompare);
 }
 
 void
@@ -335,21 +342,35 @@ _TIFFPrintFieldInfo(TIFF* tif, FILE* fd)
 	}
 }
 
-const int tiffDataWidth[] = {
-    1,	/* nothing */
-    1,	/* TIFF_BYTE */
-    1,	/* TIFF_ASCII */
-    2,	/* TIFF_SHORT */
-    4,	/* TIFF_LONG */
-    8,	/* TIFF_RATIONAL */
-    1,	/* TIFF_SBYTE */
-    1,	/* TIFF_UNDEFINED */
-    2,	/* TIFF_SSHORT */
-    4,	/* TIFF_SLONG */
-    8,	/* TIFF_SRATIONAL */
-    4,	/* TIFF_FLOAT */
-    8,	/* TIFF_DOUBLE */
-};
+/*
+ * Return size of TIFFDataType in bytes
+ */
+int
+TIFFDataWidth(TIFFDataType type)
+{
+	switch(type)
+	{
+	case 0:  /* nothing */
+	case 1:  /* TIFF_BYTE */
+	case 2:  /* TIFF_ASCII */
+	case 6:  /* TIFF_SBYTE */
+	case 7:  /* TIFF_UNDEFINED */
+		return 1;
+	case 3:  /* TIFF_SHORT */
+	case 8:  /* TIFF_SSHORT */
+		return 2;
+	case 4:  /* TIFF_LONG */
+	case 9:  /* TIFF_SLONG */
+	case 11: /* TIFF_FLOAT */
+		return 4;
+	case 5:  /* TIFF_RATIONAL */
+	case 10: /* TIFF_SRATIONAL */
+	case 12: /* TIFF_DOUBLE */
+		return 8;
+	default:
+		return 1; /* will return safe value for unknown sizes */
+	}
+}
 
 /*
  * Return nearest TIFFDataType to the sample type of an image.
@@ -408,4 +429,41 @@ _TIFFFieldWithTag(TIFF* tif, ttag_t tag)
 		/*NOTREACHED*/
 	}
 	return (fip);
+}
+
+const TIFFFieldInfo*
+_TIFFFindOrRegisterFieldInfo( TIFF *tif, ttag_t tag, TIFFDataType dt )
+
+{
+    const TIFFFieldInfo *fld;
+
+    fld = _TIFFFindFieldInfo( tif, tag, dt );
+    if( fld == NULL )
+    {
+        fld = _TIFFCreateAnonFieldInfo( tif, tag, dt );
+        _TIFFMergeFieldInfo( tif, fld, 1 );
+    }
+
+    return fld;
+}
+
+TIFFFieldInfo*
+_TIFFCreateAnonFieldInfo(TIFF *tif, ttag_t tag, TIFFDataType field_type)
+{
+    TIFFFieldInfo *fld;
+
+    fld = _TIFFmalloc(sizeof (TIFFFieldInfo));
+    _TIFFmemset( fld, 0, sizeof(TIFFFieldInfo) );
+
+    fld->field_tag = tag;
+    fld->field_readcount = TIFF_VARIABLE;
+    fld->field_writecount = TIFF_VARIABLE;
+    fld->field_type = field_type;
+    fld->field_bit = FIELD_CUSTOM;
+    fld->field_oktochange = TRUE;
+    fld->field_passcount = TRUE;
+    fld->field_name = (char *) _TIFFmalloc(32);
+    sprintf( fld->field_name, "Tag %d", (int) tag );
+
+    return fld;    
 }

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_close.c,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_close.c,v 1.3 2002/04/03 20:13:31 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -32,19 +32,30 @@
 void
 TIFFClose(TIFF* tif)
 {
-	if (tif->tif_mode != O_RDONLY)
-		/*
-		 * Flush buffered data and directory (if dirty).
-		 */
-		TIFFFlush(tif);
-	(*tif->tif_cleanup)(tif);
-	TIFFFreeDirectory(tif);
-	if (tif->tif_rawdata && (tif->tif_flags&TIFF_MYBUFFER))
-		_TIFFfree(tif->tif_rawdata);
-	if (isMapped(tif))
-		TIFFUnmapFileContents(tif, tif->tif_base, tif->tif_size);
-	(void) TIFFCloseFile(tif);
-	if (tif->tif_fieldinfo)
-		_TIFFfree(tif->tif_fieldinfo);
-	_TIFFfree(tif);
+    if (tif->tif_mode != O_RDONLY)
+        /*
+         * Flush buffered data and directory (if dirty).
+         */
+        TIFFFlush(tif);
+    (*tif->tif_cleanup)(tif);
+    TIFFFreeDirectory(tif);
+        
+    /* Clean up client info links */
+    while( tif->tif_clientinfo )
+    {
+        TIFFClientInfoLink *link = tif->tif_clientinfo;
+
+        tif->tif_clientinfo = link->next;
+        _TIFFfree( link->name );
+        _TIFFfree( link );
+    }
+
+    if (tif->tif_rawdata && (tif->tif_flags&TIFF_MYBUFFER))
+        _TIFFfree(tif->tif_rawdata);
+    if (isMapped(tif))
+        TIFFUnmapFileContents(tif, tif->tif_base, tif->tif_size);
+    (void) TIFFCloseFile(tif);
+    if (tif->tif_fieldinfo)
+        _TIFFfree(tif->tif_fieldinfo);
+    _TIFFfree(tif);
 }

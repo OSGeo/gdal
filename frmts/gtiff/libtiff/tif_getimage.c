@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.15 2001/09/24 19:40:37 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.19 2002/03/26 10:35:27 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -55,6 +55,10 @@ TIFFRGBAImageOK(TIFF* tif, char emsg[1024])
     uint16 photometric;
     int colorchannels;
 
+    if (!(*tif->tif_setupdecode)(tif)) {
+	sprintf(emsg, "Sorry, requested compression method is not configured");
+	return (0);
+    }
     switch (td->td_bitspersample) {
     case 1: case 2: case 4:
     case 8: case 16:
@@ -220,12 +224,28 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
     TIFFGetFieldDefaulted(tif, TIFFTAG_EXTRASAMPLES,
 	&extrasamples, &sampleinfo);
     if (extrasamples == 1)
+    {
 	switch (sampleinfo[0]) {
 	case EXTRASAMPLE_ASSOCALPHA:	/* data is pre-multiplied */
 	case EXTRASAMPLE_UNASSALPHA:	/* data is not pre-multiplied */
 	    img->alpha = sampleinfo[0];
 	    break;
 	}
+    }
+
+#if DEFAULT_EXTRASAMPLE_AS_ALPHA == 1
+    if( !TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &img->photometric))
+        img->photometric = PHOTOMETRIC_MINISWHITE;
+
+    if( extrasamples == 0 
+        && img->samplesperpixel == 4 
+        && img->photometric == PHOTOMETRIC_RGB )
+    {
+        img->alpha = EXTRASAMPLE_ASSOCALPHA;
+        extrasamples = 1;
+    }
+#endif
+
     colorchannels = img->samplesperpixel - extrasamples;
     TIFFGetFieldDefaulted(tif, TIFFTAG_COMPRESSION, &compress);
     TIFFGetFieldDefaulted(tif, TIFFTAG_PLANARCONFIG, &planarconfig);
@@ -401,7 +421,7 @@ TIFFReadRGBAImage(TIFF* tif,
     TIFFRGBAImage img;
     int ok;
 
-    if (TIFFRGBAImageBegin(&img, tif, stop, emsg)) {
+    if (TIFFRGBAImageOK(tif, emsg) && TIFFRGBAImageBegin(&img, tif, stop, emsg)) {
 	/* XXX verify rwidth and rheight against width and height */
 	ok = TIFFRGBAImageGet(&img, raster+(rheight-img.height)*rwidth,
 	    rwidth, img.height);
@@ -457,11 +477,11 @@ gtTileContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
     uint16 orientation;
     uint32 col, row, y, rowstoread, ret = 1;
     uint32 pos;
-    uint32 tw, th;
+    uint32 tw, th, tile_row_size;
     u_char* buf;
     int32 fromskew, toskew;
     uint32 nrow;
- 
+
     buf = (u_char*) _TIFFmalloc(TIFFTileSize(tif));
     if (buf == 0) {
 	TIFFError(TIFFFileName(tif), "No space for tile buffer");
@@ -472,7 +492,7 @@ gtTileContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
     y = setorientation(img, h);
     orientation = img->orientation;
     toskew = -(int32) (orientation == ORIENTATION_TOPLEFT ? tw+w : tw-w);
-    for (row = 0; row < h; row += nrow) 
+    for (row = 0; row < h; row += nrow)
     {
         rowstoread = th - (row + img->row_offset) % th;
     	nrow = (row + rowstoread > h ? h - row : rowstoread);
@@ -484,8 +504,36 @@ gtTileContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
                 ret = 0;
                 break;
             }
+	    
+            tile_row_size = TIFFTileRowSize(tif);
+            pos = ((row+img->row_offset) % th) * tile_row_size;
 
-            pos = ((row+img->row_offset) % th) * TIFFTileRowSize(tif);
+	    if(orientation == ORIENTATION_BOTLEFT)
+	    /* Vertically mirror rows in tile according to `Orientation' tag */
+            {
+                u_char *wrk_line, *top_line, *bottom_line;
+                uint32 t_row;
+
+                wrk_line = (u_char*)_TIFFmalloc(tile_row_size);
+                if (wrk_line == 0)
+	        {
+                    TIFFError(TIFFFileName(tif), "No space for tile row buffer");
+                    return (0);
+                }
+    
+                for(t_row = 0; t_row < th / 2; t_row++)
+                {
+
+                    top_line = buf + tile_row_size * t_row;
+                    bottom_line = buf + tile_row_size * (th-t_row-1);
+
+                    _TIFFmemcpy(wrk_line, top_line, tile_row_size);
+                    _TIFFmemcpy(top_line, bottom_line, tile_row_size);
+                    _TIFFmemcpy(bottom_line, wrk_line, tile_row_size);
+                }
+
+                _TIFFfree(wrk_line);
+            }
 
     	    if (col + tw > w) 
             {
@@ -2294,7 +2342,7 @@ TIFFReadRGBAStrip(TIFF* tif, uint32 row, uint32 * raster )
 	return (0);
     }
 
-    if (TIFFRGBAImageBegin(&img, tif, 0, emsg)) {
+    if (TIFFRGBAImageOK(tif, emsg) && TIFFRGBAImageBegin(&img, tif, 0, emsg)) {
 
         img.row_offset = row;
         img.col_offset = 0;
@@ -2358,7 +2406,7 @@ TIFFReadRGBATile(TIFF* tif, uint32 col, uint32 row, uint32 * raster)
      * Setup the RGBA reader.
      */
     
-    if ( !TIFFRGBAImageBegin(&img, tif, 0, emsg)) {
+    if (!TIFFRGBAImageOK(tif, emsg) || !TIFFRGBAImageBegin(&img, tif, 0, emsg)) {
 	TIFFError(TIFFFileName(tif), emsg);
         return( 0 );
     }

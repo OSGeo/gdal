@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirwrite.c,v 1.9 2001/09/26 17:42:18 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirwrite.c,v 1.12 2002/03/15 11:05:56 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -41,6 +41,7 @@ extern	void TIFFCvtNativeToIEEEDouble(TIFF*, uint32, double*);
 
 static	int TIFFWriteNormalTag(TIFF*, TIFFDirEntry*, const TIFFFieldInfo*);
 static	void TIFFSetupShortLong(TIFF*, ttag_t, TIFFDirEntry*, uint32);
+static	void TIFFSetupShort(TIFF*, ttag_t, TIFFDirEntry*, uint16);
 static	int TIFFSetupShortPair(TIFF*, ttag_t, TIFFDirEntry*);
 static	int TIFFWritePerSampleShorts(TIFF*, ttag_t, TIFFDirEntry*);
 static	int TIFFWritePerSampleAnys(TIFF*, TIFFDataType, ttag_t, TIFFDirEntry*);
@@ -142,8 +143,9 @@ TIFFWriteDirectory(TIFF* tif)
 	 */
 	nfields = 0;
 	for (b = 0; b <= FIELD_LAST; b++)
-		if (TIFFFieldSet(tif, b))
+		if (TIFFFieldSet(tif, b) && b != FIELD_CUSTOM)
 			nfields += (b < FIELD_SUBFILETYPE ? 2 : 1);
+        nfields += td->td_customValueCount;
 	dirsize = nfields * sizeof (TIFFDirEntry);
 	data = (char*) _TIFFmalloc(dirsize);
 	if (data == NULL) {
@@ -181,12 +183,35 @@ TIFFWriteDirectory(TIFF* tif)
 	}								/*XXX*/
 	for (fi = 0, nfi = tif->tif_nfields; nfi > 0; nfi--, fi++) {
 		const TIFFFieldInfo* fip = tif->tif_fieldinfo[fi];
-		if (!FieldSet(fields, fip->field_bit))
-			continue;
-		switch (fip->field_bit) {
+
+                /*
+                ** For custom fields, we test to see if the custom field
+                ** is set or not.  For normal fields, we just use the
+                ** FieldSet test. 
+                */
+                if( fip->field_bit == FIELD_CUSTOM )
+                {
+                    int ci, is_set = FALSE;
+
+                    for( ci = 0; ci < td->td_customValueCount; ci++ )
+                        is_set |= (td->td_customValues[ci].info == fip);
+
+                    if( !is_set )
+                        continue;
+                }
+		else if (!FieldSet(fields, fip->field_bit))
+                    continue;
+
+
+                /*
+                ** Handle other fields.
+                */
+		switch (fip->field_bit)
+                {
 		case FIELD_STRIPOFFSETS:
 			/*
 			 * We use one field bit for both strip and tile
+
 			 * offsets, and so must be careful in selecting
 			 * the appropriate field descriptor (so that tags
 			 * are written in sorted order).
@@ -234,6 +259,14 @@ TIFFWriteDirectory(TIFF* tif)
 			    dir++, td->td_tilewidth);
 			TIFFSetupShortLong(tif, TIFFTAG_TILELENGTH,
 			    dir, td->td_tilelength);
+			break;
+		case FIELD_COMPRESSION:
+			TIFFSetupShort(tif, TIFFTAG_COMPRESSION,
+			    dir, td->td_compression);
+			break;
+		case FIELD_PHOTOMETRIC:
+			TIFFSetupShort(tif, TIFFTAG_PHOTOMETRIC,
+			    dir, td->td_photometric);
 			break;
 		case FIELD_POSITION:
 			WriteRationalPair(TIFF_RATIONAL,
@@ -312,8 +345,23 @@ TIFFWriteDirectory(TIFF* tif)
 			break;
 		}
 		dir++;
-		ResetFieldBit(fields, fip->field_bit);
+                
+                if( fip->field_bit != FIELD_CUSTOM )
+                    ResetFieldBit(fields, fip->field_bit);
 	}
+#ifdef notdef        
+        /*
+        ** Write custom tags.
+        */
+	for (fi = 0, nfi = td->td_customValueCount; fi < nfi; fi++) {
+            TIFFTagValue *tv = td->td_customValues + fi;
+            
+            if (!TIFFWriteNormalTag(tif, dir, tv->info))
+                goto bad;
+
+            dir++;
+        }
+#endif                
 	/*
 	 * Write directory.
 	 */
@@ -534,6 +582,18 @@ TIFFSetupShortLong(TIFF* tif, ttag_t tag, TIFFDirEntry* dir, uint32 v)
 		dir->tdir_type = (short) TIFF_SHORT;
 		dir->tdir_offset = TIFFInsertData(tif, (int) TIFF_SHORT, v);
 	}
+}
+
+/*
+ * Setup a SHORT directory entry
+ */
+static void
+TIFFSetupShort(TIFF* tif, ttag_t tag, TIFFDirEntry* dir, uint16 v)
+{
+	dir->tdir_tag = (uint16) tag;
+	dir->tdir_count = 1;
+	dir->tdir_type = (short) TIFF_SHORT;
+	dir->tdir_offset = TIFFInsertData(tif, (int) TIFF_SHORT, v);
 }
 #undef MakeShortDirent
 
@@ -782,8 +842,8 @@ TIFFWriteAnyArray(TIFF* tif,
 	char* w = buf;
 	int i, status = 0;
 
-	if (n * tiffDataWidth[type] > sizeof buf)
-		w = (char*) _TIFFmalloc(n * tiffDataWidth[type]);
+	if (n * TIFFDataWidth(type) > sizeof buf)
+		w = (char*) _TIFFmalloc(n * TIFFDataWidth(type));
 	switch (type) {
 	case TIFF_BYTE:
 		{ uint8* bp = (uint8*) w;
@@ -931,7 +991,7 @@ TIFFWriteData(TIFF* tif, TIFFDirEntry* dir, char* cp)
 		}
 	}
 	dir->tdir_offset = tif->tif_dataoff;
-	cc = dir->tdir_count * tiffDataWidth[dir->tdir_type];
+	cc = dir->tdir_count * TIFFDataWidth(dir->tdir_type);
 	if (SeekOK(tif, dir->tdir_offset) &&
 	    WriteOK(tif, cp, cc)) {
 		tif->tif_dataoff += (cc + 1) & ~1;
