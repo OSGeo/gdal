@@ -50,6 +50,8 @@ clean:
 	$(MAKE) /f makefile.vc clean 
 	cd ..\sdts
 	$(MAKE) /f makefile.vc clean
+	cd ..\gxf
+	$(MAKE) /f makefile.vc clean
 	cd ..\raw
 	$(MAKE) /f makefile.vc clean
 	cd ..
