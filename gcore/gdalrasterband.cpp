@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.45  2003/09/23 15:51:10  warmerda
+ * Fixed two doc errors in ReadBlock() docs.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=397
+ *
  * Revision 1.44  2003/08/08 01:58:56  warmerda
  * Fixed progress monitor percentage in GetHistogram as per Peter Lenson's
  * suggestion.
@@ -374,7 +378,7 @@ CPLErr GDALRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
                  nXValid = nXBlockSize;
 
              if( iYBlock * nYBlockSize > poBand->GetYSize() )
-                 nYValid = poBand->GetXSize() - iYBlock * nYBlockSize;
+                 nYValid = poBand->GetYSize() - iYBlock * nYBlockSize;
              else
                  nYValid = nYBlockSize;
 
@@ -383,7 +387,7 @@ CPLErr GDALRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
              {
                  for( int iX = 0; iX < nXValid; iX++ )
                  {
-                     pabyHistogram[pabyData[iX + iY * nXBlockSize]] += 1;
+                     panHistogram[pabyData[iX + iY * nXBlockSize]] += 1;
                  }
              }
          }
