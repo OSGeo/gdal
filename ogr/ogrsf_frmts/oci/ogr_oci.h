@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/01/06 17:57:44  warmerda
+ * lots of updates
+ *
  * Revision 1.2  2002/12/28 04:38:36  warmerda
  * converted to unix file conventions
  *
@@ -166,6 +169,32 @@ class CPL_DLL OGROCIStatement {
 };
 
 /************************************************************************/
+/*                           OGROCIStringBuf                            */
+/************************************************************************/
+class OGROCIStringBuf 
+{
+  char *pszString;
+  int  nLen;
+  int  nBufSize;
+
+  void UpdateEnd();
+
+public:
+
+    OGROCIStringBuf();
+    ~OGROCIStringBuf();
+
+    void MakeRoomFor( int );
+    void Append( const char * );
+    void Appendf( int nMax, const char *pszFormat, ... );
+    char *StealString();
+
+    char GetLast();
+    char *GetEnd() { UpdateEnd(); return pszString + nLen; }
+    char *GetString() { return pszString; }
+};
+
+/************************************************************************/
 /*                             OGROCILayer                              */
 /************************************************************************/
 
@@ -195,6 +224,9 @@ class OGROCILayer : public OGRLayer
 
     char               *pszGeomName;
     int                iGeomColumn;
+
+    char               *pszFIDName;
+    int                iFIDColumn;
 
     OGRGeometry        *TranslateGeometry();
     OGRGeometry        *TranslateGeometryElement( int nGType, int nDimension,
@@ -231,6 +263,10 @@ class OGROCILayer : public OGRLayer
 class OGROCITableLayer : public OGROCILayer
 {
     int			bUpdateAccess;
+    int                 nDimension;
+    int                 bNewLayer;
+    OGREnvelope         sExtent;
+    int                 iNextFIDToWrite;
 
     OGRFeatureDefn     *ReadTableDefinition(const char *);
 
@@ -245,11 +281,17 @@ class OGROCITableLayer : public OGROCILayer
     int			bPreservePrecision;
 
     char               *TranslateToSDOGeometry( OGRGeometry * );
+    OGRErr              TranslateElementGroup( OGRGeometry *poGeometry,
+                                               OGROCIStringBuf *poElemInfo,
+                                               int &nLastOrdinate,
+                                               OGROCIStringBuf *poOrdinates );
+
+    void                FinalizeNewLayer();
     
   public:
     			OGROCITableLayer( OGROCIDataSource *,
                                          const char * pszName,
-                                         int bUpdate );
+                                         int bUpdate, int bNew );
     			~OGROCITableLayer();
 
     virtual void	ResetReading();
@@ -271,7 +313,8 @@ class OGROCITableLayer : public OGROCILayer
 
     virtual int         TestCapability( const char * );
 
-    // follow methods are not base class overrides
+    // following methods are not base class overrides
+    void                SetDimension( int );
     void		SetLaunderFlag( int bFlag ) 
 				{ bLaunderColumnNames = bFlag; }
     void		SetPrecisionFlag( int bFlag ) 
