@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.9  2002/09/25 14:44:40  warmerda
+ * Fixed iDataType initialization.
+ *
  * Revision 1.8  2002/09/06 10:42:23  dron
  * Georeferencing for ASTER Level 1b datasets and ASTER DEMs.
  *
@@ -788,7 +791,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-	poDS->iDataType == UNKNOWN;
+	poDS->iDataType = UNKNOWN;
 	poDS->pszDataType = "UNKNOWN";
     }
 
