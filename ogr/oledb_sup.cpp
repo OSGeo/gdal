@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/04/01 17:52:58  warmerda
+ * added reporting of column info
+ *
  * Revision 1.2  1999/03/31 15:11:16  warmerda
  * Use char * instead of LPWSTR, better multi-provider support
  *
@@ -333,6 +336,36 @@ HRESULT OledbSupGetTableRowset( IOpenRowset * pIOpenRowset,
 }
 
 /************************************************************************/
+/*                        GetNoteStringBitvals()                        */
+/************************************************************************/
+
+static char*	GetNoteStringBitvals
+	(
+	Note* 	rgNote,
+	int     cNote,
+	DWORD   dwValue 
+	)
+{
+	static char buff[400];
+	int j;
+
+	assert(rgNote != NULL);
+
+	// Make a string that combines all the bits ORed together.
+
+	strcpy(buff, "");
+	for (j=0; j < cNote; j++) {
+		if (rgNote[j].dwFlag & dwValue) {
+			if (buff[0])
+				strcat( buff, " | " );
+			strcat( buff, rgNote[j].szText );
+		}
+	}
+	assert(strlen(buff) < sizeof(buff));
+	return buff;
+}
+
+/************************************************************************/
 /*                           GetNoteString()                            */
 /************************************************************************/
 
@@ -503,4 +536,145 @@ HRESULT DumpErrorHResult
 
    return hr_return;
 }
+
+/************************************************************************/
+/*                          WriteColumnInfo()                           */
+/*                                                                      */
+/*      Dump info about one column to selected file handle.  Just       */
+/*      used by DumpColumnsInfo().                                      */
+/************************************************************************/
+
+void OledbSupWriteColumnInfo(FILE *fp, DBCOLUMNINFO* p )
+
+{
+    DBID 	    *pCol;
+    DBKIND      eKind;
+    wchar_t 	wszGuidBuff[MAX_GUID_STRING];
+    wchar_t     wszNameBuff[MAX_GUID_STRING];    
+    
+    static char *szDbcolkind[] = { "Guid+Name", "Guid+PropID", "Name", 
+                                   "Guid+Name", "Guid+PropID", "PropID", "Guid" };
+
+    assert(p != NULL);
+
+    // For DBTYPEENUM.  Doesn't need to be in order.
+    // Below we mask off the high bits.
+    static Note typenotes[] = 
+    {
+        NOTE(DBTYPE_EMPTY),
+        NOTE(DBTYPE_NULL),
+        NOTE(DBTYPE_I2),
+        NOTE(DBTYPE_I4),
+        NOTE(DBTYPE_R4),
+        NOTE(DBTYPE_R8),
+        NOTE(DBTYPE_CY),
+        NOTE(DBTYPE_DATE),
+        NOTE(DBTYPE_BSTR),
+        NOTE(DBTYPE_IDISPATCH),
+        NOTE(DBTYPE_ERROR),
+        NOTE(DBTYPE_BOOL),
+        NOTE(DBTYPE_VARIANT),
+        NOTE(DBTYPE_IUNKNOWN),
+        NOTE(DBTYPE_DECIMAL),
+        NOTE(DBTYPE_UI1),
+        NOTE(DBTYPE_ARRAY),
+        NOTE(DBTYPE_BYREF),
+        NOTE(DBTYPE_I1),
+        NOTE(DBTYPE_UI2),
+        NOTE(DBTYPE_UI4),
+        NOTE(DBTYPE_I8),
+        NOTE(DBTYPE_UI8),
+        NOTE(DBTYPE_GUID),
+        NOTE(DBTYPE_VECTOR),
+        NOTE(DBTYPE_RESERVED),
+        NOTE(DBTYPE_BYTES),
+        NOTE(DBTYPE_STR),
+        NOTE(DBTYPE_WSTR),
+        NOTE(DBTYPE_NUMERIC),
+        NOTE(DBTYPE_UDT),
+        NOTE(DBTYPE_DBDATE),
+        NOTE(DBTYPE_DBTIME),
+        NOTE(DBTYPE_DBTIMESTAMP),
+    };
+
+    static Note flagnotes[] = 
+    {
+        NOTE(DBCOLUMNFLAGS_ISBOOKMARK),
+        NOTE(DBCOLUMNFLAGS_MAYDEFER),
+        NOTE(DBCOLUMNFLAGS_WRITE),
+        NOTE(DBCOLUMNFLAGS_WRITEUNKNOWN),
+        NOTE(DBCOLUMNFLAGS_ISFIXEDLENGTH),
+        NOTE(DBCOLUMNFLAGS_ISNULLABLE),
+        NOTE(DBCOLUMNFLAGS_MAYBENULL),
+        NOTE(DBCOLUMNFLAGS_ISLONG),
+        NOTE(DBCOLUMNFLAGS_ISROWID),
+        NOTE(DBCOLUMNFLAGS_ISROWVER),
+        NOTE(DBCOLUMNFLAGS_CACHEDEFERRED),
+    };
+
+    pCol = & p->columnid;
+    eKind = pCol->eKind;
+
+    // stringize GUID for pretty printing
+    switch (eKind)
+    {
+        case DBKIND_GUID_NAME:
+        case DBKIND_GUID_PROPID:
+        case DBKIND_GUID:
+            StringFromGUID2( pCol->uGuid.guid, wszGuidBuff, sizeof(wszGuidBuff) );
+            break;
+        case DBKIND_PGUID_NAME:
+        case DBKIND_PGUID_PROPID:          
+            StringFromGUID2( *(pCol->uGuid.pguid), wszGuidBuff, sizeof(wszGuidBuff) );
+            break;
+        default:
+            wcscpy( wszGuidBuff, L"<none>" );
+            break;    
+    }
+        
+    // stringize name or propID for pretty printing   
+    switch (eKind)
+    {
+        case DBKIND_GUID_NAME:
+        case DBKIND_NAME:
+        case DBKIND_PGUID_NAME:
+            swprintf( wszNameBuff, L"[name=%.50S]", pCol->uName.pwszName ? pCol->uName.pwszName : L"(unknown)" );
+            break;
+        case DBKIND_GUID_PROPID:
+        case DBKIND_PGUID_PROPID:
+        case DBKIND_PROPID:
+            swprintf( wszNameBuff, L"[propid=%lu]", pCol->uName.ulPropid );
+            break;
+        default:
+            wcscpy( wszNameBuff, L"" );
+            break;    
+    }   
+
+    // pretty print column info
+    fprintf( fp, "ColumnId [kind=%.40s] [guid=%.40S] %.60S\n", 
+              szDbcolkind[eKind], wszGuidBuff, wszNameBuff );
+
+    // Now move on to other stuff...
+    // Name in DBCOLUMNINFO different than name in DBCOLUMNID (maybe).
+    fprintf(fp, "  Name          = '%.50S'\n", p->pwszName );
+    fprintf(fp, "  iOrdinal      = %d\n", p->iOrdinal);
+    fprintf(fp, "  wType         = %.100s\n", 
+            GetNoteString( typenotes, NUMELEM(typenotes),
+                           p->wType & (~DBTYPE_BYREF) & (~DBTYPE_ARRAY) & (~DBTYPE_VECTOR) ) );
+    if (p->wType & DBTYPE_BYREF)
+        fprintf(fp, "      (BYREF)\n");
+    if (p->wType & DBTYPE_ARRAY)
+        fprintf(fp, "      (ARRAY)\n");
+    if (p->wType & DBTYPE_VECTOR)
+        fprintf(fp, "      (VECTOR)\n");
+    fprintf(fp, "  ulColumnSize  = %ld\n", p->ulColumnSize );
+    fprintf(fp, "  bPrecision    = %d\n",  p->bPrecision );
+    fprintf(fp, "  bScale        = %d\n",  p->bScale );
+    fprintf(fp, "  dwFlags       = %s\n\n",
+             GetNoteStringBitvals( flagnotes, NUMELEM(flagnotes), p->dwFlags ) );
+	
+
+}
+
+
 
