@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.12  2003/10/20 17:26:01  warmerda
+ * Fixed memory leak when scanning for GCPs.
+ *
  * Revision 1.11  2003/07/08 20:28:09  warmerda
  * avoid warings
  *
@@ -327,6 +330,7 @@ void BSBDataset::ScanForGCPs()
 
             nGCPCount++;
         }
+        CSLDestroy( papszTokens );
     }
 
 /* -------------------------------------------------------------------- */
