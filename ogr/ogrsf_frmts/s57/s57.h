@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/11/18 18:58:37  warmerda
+ * added s57FileCollector()
+ *
  * Revision 1.4  1999/11/16 21:47:32  warmerda
  * updated class occurance collection
  *
@@ -52,6 +55,10 @@
 
 OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
                                       int bBestEffort, OGRErr * peErr = NULL );
+
+class S57Reader;
+
+char **S57FileCollector( const char * pszDataset );
 
 /* -------------------------------------------------------------------- */
 /*      RCNM values.                                                    */
