@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/17 14:43:10  warmerda
+ * Added Polygon, linestring and curve support.  Changed IGeometryTmpl to
+ * also include COM interface class as an argument.
+ *
  * Revision 1.2  1999/05/14 13:28:38  warmerda
  * client and service now working for IPoint
  *
@@ -45,19 +49,14 @@
 
 #include "sfclsid.h"
 
-//const IID IID_IGeometry = {0x6A124031,0xFE38,0x11d0,{0xBE,0xCE,0x00,0x80,0x5F,0x7C,0x42,0x68}};
-
-const IID IID_IPoint = 
-      {0x6A124035,0xFE38,0x11d0,{0xBE,0xCE,0x00,0x80,0x5F,0x7C,0x42,0x68}};
-
-const IID IID_IGeometryFactory = 
-      {0x6A124033,0xFE38,0x11d0,{0xBE,0xCE,0x00,0x80,0x5F,0x7C,0x42,0x68}};
-
-const IID IID_ISpatialReferenceFactory = 
-      {0x620600B1,0xFEA1,0x11d0,{0xB0,0x4B,0x00,0x80,0xC7,0xF7,0x94,0x81}};
+#include "sfiiddef.h"
 
 unsigned char abyPoint[21] = { 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x59,
                                0x40, 0, 0, 0, 0, 0, 0, 0x69, 0x40 };
+
+void TestInternalPoint( IGeometryFactory * pIGeometryFactory );
+void TestFileGeometry( IGeometryFactory *, const char * );
+void ReportGeometry( IGeometry * );
 
 /************************************************************************/
 /*                                main()                                */
@@ -92,6 +91,39 @@ void main( int nArgc, char ** papszArgv )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Report on the internal point, or if a file is given on the      */
+/*      command line, report on the binary geometry in that file.       */
+/* -------------------------------------------------------------------- */
+    if( nArgc > 1 )
+        TestFileGeometry( pIGeometryFactory, papszArgv[1] );
+    else
+        TestInternalPoint( pIGeometryFactory );
+
+/* -------------------------------------------------------------------- */
+/*      Error and cleanup.                                              */
+/* -------------------------------------------------------------------- */
+  error:    
+
+    if( pIGeometryFactory != NULL )
+        pIGeometryFactory->Release();
+
+    OleSupUninitialize();
+}    
+
+/************************************************************************/
+/*                         TestBinaryGeometry()                         */
+/*                                                                      */
+/*      Make a geometry object from binary data, and report on the      */
+/*      object.                                                         */
+/************************************************************************/
+
+void TestBinaryGeometry( IGeometryFactory * pIGeometryFactory, 
+                         unsigned char * pabyData, int nDataBytes )
+
+{
+    HRESULT      hr;
+
+/* -------------------------------------------------------------------- */
 /*      Try to create a SafeArray holding our point in well known       */
 /*      binary format.                                                  */
 /* -------------------------------------------------------------------- */
@@ -100,11 +132,11 @@ void main( int nArgc, char ** papszArgv )
     void                *pSafeData;
     
     aoBounds[0].lLbound = 0;
-    aoBounds[0].cElements = sizeof(abyPoint);
+    aoBounds[0].cElements = nDataBytes;
 
     pArray = SafeArrayCreate(VT_UI1, 1, aoBounds);
     hr = SafeArrayAccessData( pArray, &pSafeData );
-    memcpy( pSafeData, abyPoint, sizeof(abyPoint) );
+    memcpy( pSafeData, pabyData, nDataBytes );
     SafeArrayUnaccessData( pArray );
     
 /* -------------------------------------------------------------------- */
@@ -124,52 +156,231 @@ void main( int nArgc, char ** papszArgv )
     hr = pIGeometryFactory->CreateFromWKB( oVarData, NULL,
                                            &pIGeometry );
 
-    printf( "pIGeometry = %p\n", pIGeometry );
-
     if( FAILED(hr) || pIGeometryFactory == NULL ) 
     {
-        DumpErrorHResult( hr, "CoCreateInstance" );
-        goto error;
+        DumpErrorHResult( hr, "pIGeometryFactory->CreateFromWKB()" );
+        return;
     }
 
 /* -------------------------------------------------------------------- */
-/*      Try to get a point interface on this geometry object.           */
+/*      Report the geometry.                                            */
 /* -------------------------------------------------------------------- */
-    IPoint      *pIPoint;
+    ReportGeometry( pIGeometry );
+}
 
-    hr = pIGeometry->QueryInterface( IID_IPoint, (void **) &pIPoint );
+/************************************************************************/
+/*                         TestInternalPoint()                          */
+/************************************************************************/
 
-    printf( "IPoint = %p\n", pIPoint );
+void TestInternalPoint( IGeometryFactory * pIGeometryFactory )
 
-    if( FAILED(hr) || pIPoint == NULL ) 
+{
+    TestBinaryGeometry( pIGeometryFactory, abyPoint, sizeof(abyPoint) );
+}
+
+/************************************************************************/
+/*                          TestFileGeometry()                          */
+/************************************************************************/
+
+#define MAX_DATA      1000000
+
+void TestFileGeometry( IGeometryFactory * pIGeometryFactory, 
+                       const char * pszFilename )
+
+{
+    FILE      *fp;
+    unsigned char abyData[MAX_DATA];
+    int      nBytes;
+
+/* -------------------------------------------------------------------- */
+/*      Read the file.                                                  */
+/* -------------------------------------------------------------------- */
+    fp = fopen( pszFilename, "rb" );
+    if( fp == NULL )
     {
-        DumpErrorHResult( hr, "QueryInterface(IPoint)" );
-        goto error;
+        perror( "fopen" );
+        return;
     }
+    
+    nBytes = fread( abyData, 1, MAX_DATA, fp );
+
+    fclose( fp );
 
 /* -------------------------------------------------------------------- */
-/*      Get information on point.                                       */
+/*      Test this binary data.                                          */
 /* -------------------------------------------------------------------- */
+    TestBinaryGeometry( pIGeometryFactory, abyData, nBytes );
+}
+
+
+/************************************************************************/
+/*                            ReportPoint()                             */
+/************************************************************************/
+
+static void ReportPoint( IPoint * pIPoint, const char * pszPrefix  )
+
+{									
     double            x, y;
+    HRESULT           hr;
     
     hr = pIPoint->Coords( &x, &y );
 
     if( FAILED(hr) ) 
     {
         DumpErrorHResult( hr, "IPoint->Coord()" );
-        goto error;
+        return;
     }
 
-    printf( "X = %f, Y = %f\n", x, y );
+    printf( "%s X = %f, Y = %f\n", pszPrefix, x, y );
+}
+
+/************************************************************************/
+/*                          ReportLineString()                          */
+/************************************************************************/
+
+static void ReportLineString( ILineString * pILineString, 
+                              const char * pszPrefix  )
+
+{					
+    long            nPointCount;
+    HRESULT           hr;
+
+    hr = pILineString->get_NumPoints( &nPointCount );
+    if( FAILED(hr) ) 
+    {
+        DumpErrorHResult( hr, "ILineString->get_NumPoints()" );
+        return;
+    }
+
+    printf( "%s NumPoints = %ld\n", pszPrefix, nPointCount );
+
+    for( int i = 0; i < nPointCount; i++ )
+    {
+        IPoint      *pIPoint = NULL;
+
+        hr = pILineString->Point( i, &pIPoint );
+        if( FAILED(hr) ) 
+        {
+            DumpErrorHResult( hr, "ILineString->Point()" );
+            return;
+        }
+
+        ReportPoint( pIPoint, "     " );
+
+        pIPoint->Release();
+    }
+}
+
+/************************************************************************/
+/*                           ReportPolygon()                            */
+/************************************************************************/
+
+static void ReportPolygon( IPolygon * pIPolygon,
+                           const char * pszPrefix  )
+
+{					
+    long            nRingCount;
+    HRESULT         hr;
+    ILinearRing     *pILinearRing;
+
+/* -------------------------------------------------------------------- */
+/*      Report on the exterior ring.                                    */
+/* -------------------------------------------------------------------- */
+    hr = pIPolygon->ExteriorRing( &pILinearRing );
+    if( FAILED(hr) ) 
+    {
+        DumpErrorHResult( hr, "IPolygon->ExteriorRing()" );
+        return;
+    }
+
+    printf( "%sExterior Ring:\n", pszPrefix );
+
+    ReportLineString( pILinearRing, pszPrefix );
+
+    pILinearRing->Release();
+
+/* -------------------------------------------------------------------- */
+/*      Report on interior count.                                       */
+/* -------------------------------------------------------------------- */
+    long            ringCount;
+
+    hr = pIPolygon->get_NumInteriorRings( &ringCount );
+    if( FAILED(hr) ) 
+    {
+        DumpErrorHResult( hr, "IPolygon->get_NumInteriorRings()" );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Report on interior rings.                                       */
+/* -------------------------------------------------------------------- */
     
+    printf( "%s NumInternalRings = %ld\n", pszPrefix, ringCount );
+
+    for( int i = 0; i < ringCount; i++ )
+    {
+        hr = pIPolygon->InteriorRing( i, &pILinearRing );
+        if( FAILED(hr) ) 
+        {
+            DumpErrorHResult( hr, "IPolygon->InternalRing()" );
+            return;
+        }
+
+        ReportLineString( pILinearRing, "     " );
+
+        pILinearRing->Release();
+    }
+}
+
+
+/************************************************************************/
+/*                           ReportGeometry()                           */
+/************************************************************************/
+
+void ReportGeometry( IGeometry * pIGeometry )
+
+{
+    HRESULT      hr;
+
 /* -------------------------------------------------------------------- */
-/*      Error and cleanup.                                              */
+/*      Try as a point.                                                 */
 /* -------------------------------------------------------------------- */
-  error:    
+    IPoint      *pIPoint;
+    
+    hr = pIGeometry->QueryInterface( IID_IPoint, (void **) &pIPoint );
+    if( !FAILED(hr) )
+    {
+        ReportPoint( pIPoint, "IPoint:" );
+        return;
+    }
 
-    if( pIGeometryFactory != NULL )
-        pIGeometryFactory->Release();
+/* -------------------------------------------------------------------- */
+/*      Try as a linestring.                                            */
+/* -------------------------------------------------------------------- */
+    ILineString      *pILineString;
+    
+    hr = pIGeometry->QueryInterface( IID_ILineString, 
+                                     (void **) &pILineString );
+    if( !FAILED(hr) )
+    {
+        printf( "LineString: \n" );
+        ReportLineString( pILineString, "  " );
+        return;
+    }
 
-    OleSupUninitialize();
-}    
+/* -------------------------------------------------------------------- */
+/*      Try as a polygon.                                               */
+/* -------------------------------------------------------------------- */
+    IPolygon      *pIPolygon;
+    
+    hr = pIGeometry->QueryInterface( IID_IPolygon, 
+                                     (void **) &pIPolygon );
+    if( !FAILED(hr) )
+    {
+        printf( "Polygon: \n" );
+        ReportPolygon( pIPolygon, "  " );
+        return;
+    }
 
+    printf( "Geometry unrecognised.\n" );
+}

@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/17 14:43:10  warmerda
+ * Added Polygon, linestring and curve support.  Changed IGeometryTmpl to
+ * also include COM interface class as an argument.
+ *
  * Revision 1.1  1999/05/14 14:08:04  warmerda
  * New
  *
@@ -37,8 +41,8 @@
 /*                         OGRComGeometryTmpl()                         */
 /************************************************************************/
 
-template<class GC> 
-OGRComGeometryTmpl<GC>::OGRComGeometryTmpl<GC>( GC * poGeometryIn )
+template<class GC,class IC> 
+OGRComGeometryTmpl<GC,IC>::OGRComGeometryTmpl<GC,IC>( GC * poGeometryIn )
 
 {
     poGeometry = poGeometryIn;
@@ -53,8 +57,8 @@ OGRComGeometryTmpl<GC>::OGRComGeometryTmpl<GC>( GC * poGeometryIn )
 /*                               AddRef()                               */
 /************************************************************************/
 
-template<class GC> 
-STDMETHODIMP_(ULONG) OGRComGeometryTmpl<GC>::AddRef()
+template<class GC,class IC> 
+STDMETHODIMP_(ULONG) OGRComGeometryTmpl<GC,IC>::AddRef()
 {
    // Increment the reference count
    m_cRef++;
@@ -66,8 +70,8 @@ STDMETHODIMP_(ULONG) OGRComGeometryTmpl<GC>::AddRef()
 /*                              Release()                               */
 /************************************************************************/
 
-template<class GC> STDMETHODIMP_(ULONG) 
-OGRComGeometryTmpl<GC>::Release()
+template<class GC,class IC> STDMETHODIMP_(ULONG) 
+OGRComGeometryTmpl<GC,IC>::Release()
 {
    // Decrement the reference count
    m_cRef--;
@@ -95,8 +99,8 @@ OGRComGeometryTmpl<GC>::Release()
 /*                           get_Dimension()                            */
 /************************************************************************/
 
-template<class GC> STDMETHODIMP 
-OGRComGeometryTmpl<GC>::get_Dimension( long * dimension )
+template<class GC,class IC> STDMETHODIMP 
+OGRComGeometryTmpl<GC,IC>::get_Dimension( long * dimension )
 
 {
     *dimension = poGeometry->getDimension();
@@ -108,8 +112,8 @@ OGRComGeometryTmpl<GC>::get_Dimension( long * dimension )
 /*                        get_SpatialReference()                        */
 /************************************************************************/
 
-template<class GC> STDMETHODIMP 
-OGRComGeometryTmpl<GC>::get_SpatialReference( ISpatialReference ** sRef )
+template<class GC,class IC> STDMETHODIMP 
+OGRComGeometryTmpl<GC,IC>::get_SpatialReference( ISpatialReference ** sRef )
 
 {
     *sRef = NULL;      // none available for now. 
@@ -121,8 +125,8 @@ OGRComGeometryTmpl<GC>::get_SpatialReference( ISpatialReference ** sRef )
 /*                      putref_SpatialReference()                       */
 /************************************************************************/
 
-template<class GC> STDMETHODIMP 
-OGRComGeometryTmpl<GC>::putref_SpatialReference( ISpatialReference * sRef )
+template<class GC,class IC> STDMETHODIMP 
+OGRComGeometryTmpl<GC,IC>::putref_SpatialReference( ISpatialReference * sRef )
 
 {
     // we should eventually do something. 
@@ -134,8 +138,8 @@ OGRComGeometryTmpl<GC>::putref_SpatialReference( ISpatialReference * sRef )
 /*                            get_IsEmpty()                             */
 /************************************************************************/
 
-template<class GC> STDMETHODIMP 
-OGRComGeometryTmpl<GC>::get_IsEmpty( VARIANT_BOOL* isEmpty )
+template<class GC,class IC> STDMETHODIMP 
+OGRComGeometryTmpl<GC,IC>::get_IsEmpty( VARIANT_BOOL* isEmpty )
 
 {
     VarBoolFromUI1( (BYTE) poGeometry->IsEmpty(), isEmpty );
@@ -147,8 +151,8 @@ OGRComGeometryTmpl<GC>::get_IsEmpty( VARIANT_BOOL* isEmpty )
 /*                              SetEmpty()                              */
 /************************************************************************/
 
-template<class GC> STDMETHODIMP 
-OGRComGeometryTmpl<GC>::SetEmpty(void)
+template<class GC,class IC> STDMETHODIMP 
+OGRComGeometryTmpl<GC,IC>::SetEmpty(void)
 
 {
     // notdef ... how will we do this?
@@ -160,8 +164,8 @@ OGRComGeometryTmpl<GC>::SetEmpty(void)
 /*                            get_IsSimple()                            */
 /************************************************************************/
 
-template<class GC> STDMETHODIMP 
-OGRComGeometryTmpl<GC>::get_IsSimple( VARIANT_BOOL * isEmpty )
+template<class GC,class IC> STDMETHODIMP 
+OGRComGeometryTmpl<GC,IC>::get_IsSimple( VARIANT_BOOL * isEmpty )
 
 {
     VarBoolFromUI1( (BYTE) poGeometry->IsSimple(), isEmpty );
@@ -173,8 +177,8 @@ OGRComGeometryTmpl<GC>::get_IsSimple( VARIANT_BOOL * isEmpty )
 /*                              Envelope()                              */
 /************************************************************************/
 
-template<class GC> STDMETHODIMP 
-OGRComGeometryTmpl<GC>::Envelope( IGeometry ** envelope )
+template<class GC,class IC> STDMETHODIMP 
+OGRComGeometryTmpl<GC,IC>::Envelope( IGeometry ** envelope )
 
 {
     return E_FAIL;
@@ -184,8 +188,8 @@ OGRComGeometryTmpl<GC>::Envelope( IGeometry ** envelope )
 /*                               Clone()                                */
 /************************************************************************/
 
-template<class GC> STDMETHODIMP 
-OGRComGeometryTmpl<GC>::Clone( IGeometry ** newShape )
+template<class GC,class IC> STDMETHODIMP 
+OGRComGeometryTmpl<GC,IC>::Clone( IGeometry ** newShape )
 
 {
     // notdef
@@ -198,8 +202,8 @@ OGRComGeometryTmpl<GC>::Clone( IGeometry ** newShape )
 /*                              Project()                               */
 /************************************************************************/
 
-template<class GC> STDMETHODIMP 
-OGRComGeometryTmpl<GC>::Project( ISpatialReference * newSystem,
+template<class GC,class IC> STDMETHODIMP 
+OGRComGeometryTmpl<GC,IC>::Project( ISpatialReference * newSystem,
                                  IGeometry ** result )
 
 {
@@ -213,8 +217,8 @@ OGRComGeometryTmpl<GC>::Project( ISpatialReference * newSystem,
 /*                              Extent2D()                              */
 /************************************************************************/
 
-template<class GC> STDMETHODIMP 
-OGRComGeometryTmpl<GC>::Extent2D( double * minX, double *minY,
+template<class GC,class IC> STDMETHODIMP 
+OGRComGeometryTmpl<GC,IC>::Extent2D( double * minX, double *minY,
                                   double * maxX, double *maxY )
 
 {

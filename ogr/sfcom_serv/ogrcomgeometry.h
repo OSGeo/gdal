@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/17 14:43:10  warmerda
+ * Added Polygon, linestring and curve support.  Changed IGeometryTmpl to
+ * also include COM interface class as an argument.
+ *
  * Revision 1.3  1999/05/14 14:08:39  warmerda
  * OGRComGeometry converted to template OGRComGeometryTmpl
  *
@@ -115,7 +119,7 @@ class OGRComGeometryFactory : public IGeometryFactory
 /*      OGRComGeometryTmpl.                                             */
 /************************************************************************/
 
-template<class GC> class OGRComGeometryTmpl : public IGeometry
+template<class GC, class IC> class OGRComGeometryTmpl : public IC
 {
   public:
                          OGRComGeometryTmpl( GC * );
@@ -146,7 +150,7 @@ template<class GC> class OGRComGeometryTmpl : public IGeometry
 /************************************************************************/
 /*                             OGRComPoint                              */
 /************************************************************************/
-class OGRComPoint : public OGRComGeometryTmpl<OGRPoint>
+class OGRComPoint : public OGRComGeometryTmpl<OGRPoint,IPoint>
 {
   public:
                          OGRComPoint( OGRPoint * );
@@ -160,4 +164,56 @@ class OGRComPoint : public OGRComGeometryTmpl<OGRPoint>
     STDMETHOD(get_Y)( double *y );
 };
 
+/************************************************************************/
+/*                          OGRComLineString                            */
+/*                                                                      */
+/*      Note that we use the OGRComLineString for ICurve, and           */
+/*      ILinearRing as well.                                            */
+/************************************************************************/
+
+class OGRComLineString : public OGRComGeometryTmpl<OGRLineString,
+                                                     ILineString>
+{
+  public:
+                         OGRComLineString( OGRLineString * );
+
+    // IUnknown
+    STDMETHODIMP         QueryInterface(REFIID, void**);
+
+    // ICurve
+    STDMETHOD(get_Length)(double *);
+    STDMETHOD(StartPoint)(IPoint **);
+    STDMETHOD(EndPoint)(IPoint **);
+    STDMETHOD(get_IsClosed)(VARIANT_BOOL *);
+    STDMETHOD(Value)(double, IPoint **);
+
+    // ILineString
+    STDMETHOD(get_NumPoints)(long * numPoints);
+    STDMETHOD(Point)(long index, IPoint ** point );
+};
+
+/************************************************************************/
+/*                            OGRComPolygon                             */
+/************************************************************************/
+class OGRComPolygon : public OGRComGeometryTmpl<OGRPolygon,IPolygon>
+{
+  public:
+                         OGRComPolygon( OGRPolygon * );
+
+    // IUnknown
+    STDMETHODIMP         QueryInterface(REFIID, void**);
+    
+    // ISurface
+    STDMETHOD(get_Area)(double * area );
+    STDMETHOD(Centroid)(IPoint **result );
+    STDMETHOD(PointOnSurface)(IPoint ** result );
+    
+    // IPolygon
+    STDMETHOD(ExteriorRing)(ILinearRing **exteriorRing);
+    STDMETHOD(get_NumInteriorRings)( long * count );
+    STDMETHOD(InteriorRing)( long ring_index, ILinearRing **interiorRing );
+};
+
 #endif /* ndef _OGRCOMGEOMETRY_H_INCLUDED */
+
+

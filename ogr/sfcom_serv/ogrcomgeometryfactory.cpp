@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/17 14:43:10  warmerda
+ * Added Polygon, linestring and curve support.  Changed IGeometryTmpl to
+ * also include COM interface class as an argument.
+ *
  * Revision 1.2  1999/05/14 13:28:38  warmerda
  * client and service now working for IPoint
  *
@@ -131,7 +135,7 @@ OGRComGeometryFactory::CreateFromWKB( VARIANT wkb,
 
 {
     OGRGeometry      *poOGRGeometry = NULL;
-    OGRErr           eErr;
+    OGRErr           eErr = OGRERR_NONE;
     unsigned char    *pabyRawData;
 
     assert( wkb.vt == (VT_UI1 | VT_ARRAY) );
@@ -148,13 +152,32 @@ OGRComGeometryFactory::CreateFromWKB( VARIANT wkb,
             *geometry = new OGRComPoint( (OGRPoint *) poOGRGeometry );
             (*geometry)->AddRef();
         }
+        else if( poOGRGeometry->getGeometryType() == wkbLineString )
+        {
+            *geometry = new OGRComLineString( (OGRLineString *) 
+                                              poOGRGeometry );
+            (*geometry)->AddRef();
+        }
+        else if( poOGRGeometry->getGeometryType() == wkbPolygon )
+        {
+            *geometry = new OGRComPolygon( (OGRPolygon *) poOGRGeometry );
+            (*geometry)->AddRef();
+        }
         else
+        {
+            printf( "Didn't recognise type of OGRGeometry\n" );
             eErr = OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+        }
+    }
+    else
+    {
+        printf( "OGRGeometryFactory::createFromWkb() failed.\n" );
     }
 
-    // notdef: what should be return as error codes?
-
-    return ResultFromScode( S_OK );
+    if( eErr != OGRERR_NONE )
+        return E_FAIL;
+    else
+        return ResultFromScode( S_OK );
 }
 
 /************************************************************************/
@@ -167,6 +190,6 @@ OGRComGeometryFactory::CreateFromWKT( BSTR wrt,
                                       IGeometry **geometry )
 
 {
-    return ResultFromScode( S_OK );
+    return E_FAIL;
 }
 

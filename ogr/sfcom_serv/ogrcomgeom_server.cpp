@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/17 14:43:10  warmerda
+ * Added Polygon, linestring and curve support.  Changed IGeometryTmpl to
+ * also include COM interface class as an argument.
+ *
  * Revision 1.2  1999/05/14 13:28:38  warmerda
  * client and service now working for IPoint
  *
@@ -41,15 +45,7 @@
 
 #include "ogrcomgeometry.h"
 #include "sfclsid.h"
-
-const IID IID_IGeometry = 
- {0x6A124031,0xFE38,0x11d0,{0xBE,0xCE,0x00,0x80,0x5F,0x7C,0x42,0x68}};
-
-const IID IID_IGeometryFactory = 
- {0x6A124033,0xFE38,0x11d0,{0xBE,0xCE,0x00,0x80,0x5F,0x7C,0x42,0x68}};
-
-const IID IID_IPoint = 
- {0x6A124035,0xFE38,0x11d0,{0xBE,0xCE,0x00,0x80,0x5F,0x7C,0x42,0x68}};
+#include "sfiiddef.h"
 
 /************************************************************************/
 /*                         DllGetClassObject()                          */

@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/17 14:43:10  warmerda
+ * Added Polygon, linestring and curve support.  Changed IGeometryTmpl to
+ * also include COM interface class as an argument.
+ *
  * Revision 1.3  1999/05/14 14:08:39  warmerda
  * OGRComGeometry converted to template OGRComGeometryTmpl
  *
@@ -47,7 +51,7 @@
 /************************************************************************/
 
 OGRComPoint::OGRComPoint( OGRPoint * poPointIn ) 
-        : OGRComGeometryTmpl<OGRPoint>( poPointIn )
+        : OGRComGeometryTmpl<OGRPoint,IPoint>( poPointIn )
 
 {
 }
