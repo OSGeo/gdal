@@ -28,6 +28,11 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.23  2004/03/18 18:55:53  warmerda
+# Avoid using hex constants for large 25D geometry type values as it causes
+# warnings on Python 2.3 and may have compatibility issues.   See:
+# http://bugzilla.remotesensing.org/show_bug.cgi?id=521
+#
 # Revision 1.22  2004/02/25 15:14:59  warmerda
 # added GetEnvelope() method on Geometry
 #
@@ -104,6 +109,7 @@ from _gdal import ptrcreate, ptrfree, ptrvalue, ptrset, ptrcast, ptradd, ptrmap,
 
 # OGRwkbGeometryType
 
+wkb25Bit = -2147483648 # 0x80000000
 wkbUnknown = 0
 wkbPoint = 1  
 wkbLineString = 2
@@ -114,13 +120,13 @@ wkbMultiPolygon = 6
 wkbGeometryCollection = 7
 wkbNone = 100
 wkbLinearRing = 101
-wkbPoint25D = 0x80000001   
-wkbLineString25D = 0x80000002
-wkbPolygon25D = 0x80000003
-wkbMultiPoint25D = 0x80000004
-wkbMultiLineString25D = 0x80000005
-wkbMultiPolygon25D = 0x80000006
-wkbGeometryCollection25D = 0x80000007
+wkbPoint25D =              wkbPoint              + wkb25Bit
+wkbLineString25D =         wkbLineString         + wkb25Bit
+wkbPolygon25D =            wkbPolygon            + wkb25Bit
+wkbMultiPoint25D =         wkbMultiPoint         + wkb25Bit
+wkbMultiLineString25D =    wkbMultiLineString    + wkb25Bit
+wkbMultiPolygon25D =       wkbMultiPolygon       + wkb25Bit
+wkbGeometryCollection25D = wkbGeometryCollection + wkb25Bit
 
 # OGRFieldType
 
@@ -847,6 +853,3 @@ def BuildPolygonFromEdges( edges, bBestEffort=0, bAutoClose=0, Tolerance=0 ):
         return Geometry( obj = _o )
     else:
         return None;
-
-
-
