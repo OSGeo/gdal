@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/09/19 18:30:02  warmerda
+ * Added -gcp switch to attached GCPs to an image.
+ *
  * Revision 1.16  2003/08/28 13:42:20  warmerda
  * support multiple -b switches to select a set of bands
  *
@@ -141,6 +144,7 @@ static void Usage()
             "       [-scale [src_min src_max [dst_min dst_max]]]\n"
             "       [-srcwin xoff yoff xsize ysize] [-a_srs srs_def]\n"
             "       [-projwin ulx uly lrx lry] [-co \"NAME=VALUE\"]*\n"
+            "       [-gcp pixel line easting northing]*\n" 
             "       [-mo \"META-TAG=VALUE\"]* [-quiet]\n"
             "       src_dataset dst_dataset\n\n" );
 
@@ -189,6 +193,8 @@ int main( int argc, char ** argv )
     char                *pszOutputSRS = NULL;
     int                 bQuiet = FALSE;
     GDALProgressFunc    pfnProgress = GDALTermProgress;
+    int                 nGCPCount = 0;
+    GDAL_GCP            *pasGCPs = NULL;
 
     anSrcWin[0] = 0;
     anSrcWin[1] = 0;
@@ -265,6 +271,26 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-not_strict")  )
             bStrict = FALSE;
             
+        else if( EQUAL(argv[i],"-gcp") && i < argc - 4 )
+        {
+            /* -gcp pixel line easting northing [elev] */
+
+            nGCPCount++;
+            pasGCPs = (GDAL_GCP *) 
+                CPLRealloc( pasGCPs, sizeof(GDAL_GCP) * nGCPCount );
+            GDALInitGCPs( 1, pasGCPs + nGCPCount - 1 );
+
+            pasGCPs[nGCPCount-1].dfGCPPixel = atof(argv[++i]);
+            pasGCPs[nGCPCount-1].dfGCPLine = atof(argv[++i]);
+            pasGCPs[nGCPCount-1].dfGCPX = atof(argv[++i]);
+            pasGCPs[nGCPCount-1].dfGCPY = atof(argv[++i]);
+            if( argv[i+1] != NULL 
+                && (atof(argv[i+1]) != 0.0 || argv[i+1][0] == '0') )
+                pasGCPs[nGCPCount-1].dfGCPZ = atof(argv[++i]);
+
+            /* should set id and info? */
+        }   
+
         else if( EQUAL(argv[i],"-co") && i < argc-1 )
         {
             papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
@@ -527,6 +553,7 @@ int main( int argc, char ** argv )
         && anSrcWin[2] == GDALGetRasterXSize(hDataset)
         && anSrcWin[3] == GDALGetRasterYSize(hDataset) 
         && pszOXSize == NULL && pszOYSize == NULL 
+        && nGCPCount == 0
         && pszOutputSRS == NULL )
     {
         
@@ -573,18 +600,22 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     poVDS = new VRTDataset( nOXSize, nOYSize );
 
-    if( pszOutputSRS != NULL )
+    if( nGCPCount == 0 )
     {
-        poVDS->SetProjection( pszOutputSRS );
-    }
-    else
-    {
-        pszProjection = GDALGetProjectionRef( hDataset );
-        if( pszProjection != NULL && strlen(pszProjection) > 0 )
-            poVDS->SetProjection( pszProjection );
+        if( pszOutputSRS != NULL )
+        {
+            poVDS->SetProjection( pszOutputSRS );
+        }
+        else
+        {
+            pszProjection = GDALGetProjectionRef( hDataset );
+            if( pszProjection != NULL && strlen(pszProjection) > 0 )
+                poVDS->SetProjection( pszProjection );
+        }
     }
     
-    if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
+    if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None 
+        && nGCPCount == 0 )
     {
         adfGeoTransform[0] += anSrcWin[0] * adfGeoTransform[1]
             + anSrcWin[1] * adfGeoTransform[2];
@@ -598,8 +629,23 @@ int main( int argc, char ** argv )
         
         poVDS->SetGeoTransform( adfGeoTransform );
     }
-    
-    if( GDALGetGCPCount( hDataset ) > 0 )
+
+    if( nGCPCount != 0 )
+    {
+        const char *pszGCPProjection = pszOutputSRS;
+
+        if( pszGCPProjection == NULL )
+            pszGCPProjection = GDALGetGCPProjection( hDataset );
+        if( pszGCPProjection == NULL )
+            pszGCPProjection = "";
+
+        poVDS->SetGCPs( nGCPCount, pasGCPs, pszGCPProjection );
+
+        GDALDeinitGCPs( nGCPCount, pasGCPs );
+        CPLFree( pasGCPs );
+    }
+
+    else if( GDALGetGCPCount( hDataset ) > 0 )
     {
         GDAL_GCP *pasGCPs;
         int       nGCPs = GDALGetGCPCount( hDataset );
@@ -620,7 +666,7 @@ int main( int argc, char ** argv )
         GDALDeinitGCPs( nGCPs, pasGCPs );
         CPLFree( pasGCPs );
     }
-        
+
     poVDS->SetMetadata( ((GDALDataset*)hDataset)->GetMetadata() );
     AttachMetadata( (GDALDatasetH) poVDS, papszMetadataOptions );
 
