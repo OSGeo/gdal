@@ -51,7 +51,7 @@ import:
 
 	rm -rf safe
 	mkdir safe
-	mv cpl_serv.h cpl_serv.h geo_config.h safe
+	mv cpl_serv.h geo_config.h safe
 
 	copymatch.sh ~/osrs/geotiff/libgeotiff *.cpp *.c *.h *.inc
 	copymatch.sh ~/osrs/geotiff/libgeotiff/libxtiff xtiff.c xtiffio.h
