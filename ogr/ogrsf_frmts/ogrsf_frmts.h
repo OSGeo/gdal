@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2002/04/25 02:24:13  warmerda
+ * added ExecuteSWQ() method
+ *
  * Revision 1.23  2002/02/18 20:56:24  warmerda
  * added AVC registration
  *
@@ -210,6 +213,11 @@ class CPL_DLL OGRDataSource
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
     OGRStyleTable       *GetStyleTable(){return m_poStyleTable;}
+
+    virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
+                                    OGREnvelope *psEnvelope,
+                                    const char *pszDialect );
+    virtual void        ReleaseResultSet( OGRLayer * poLayer );
     
   protected:
     OGRStyleTable *m_poStyleTable;
