@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.13  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.12  2002/08/31 10:01:36  dron
  * Fixes in function declarations
  *
@@ -72,8 +75,6 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poL1BDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_L1B(void);
@@ -752,7 +753,6 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new L1BDataset();
 
-    poDS->poDriver = poL1BDriver;
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
     
@@ -1357,9 +1357,9 @@ void GDALRegister_L1B()
 {
     GDALDriver	*poDriver;
 
-    if( poL1BDriver == NULL )
+    if( GDALGetDriverByName( "L1B" ) == NULL )
     {
-        poL1BDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "L1B" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

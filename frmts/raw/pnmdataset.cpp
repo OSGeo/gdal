@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.5  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -50,8 +53,6 @@
 #include <ctype.h>
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poPNMDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_PNM(void);
@@ -173,8 +174,6 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new PNMDataset();
 
-    poDS->poDriver = poPNMDriver;
-    
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
@@ -305,9 +304,9 @@ void GDALRegister_PNM()
 {
     GDALDriver	*poDriver;
 
-    if( poPNMDriver == NULL )
+    if( GDALGetDriverByName( "PNG" ) == NULL )
     {
-        poPNMDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "PNM" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

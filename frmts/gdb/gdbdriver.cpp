@@ -25,6 +25,9 @@
  * The GDB driver implemenation is the GDAL Driver for GeoGateway.
  * 
  * $Log$
+ * Revision 1.5  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.4  2001/11/11 23:50:59  warmerda
  * added required class keyword to friend declarations
  *
@@ -44,8 +47,6 @@
 #include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poGDBDriver = NULL;
 
 GDAL_C_START
 void	GDALRegister_GDB(void);
@@ -199,7 +200,6 @@ GDALDataset *GDBDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new GDBDataset();
 
     poDS->fp = fp;
-    poDS->poDriver = poGDBDriver;
     poDS->nRasterXSize = GDBChanXSize( fp );
     poDS->nRasterYSize = GDBChanYSize( fp );
     poDS->nBands = GDBChanNum(fp);
@@ -226,9 +226,9 @@ void GDALRegister_GDB()
 {
     GDALDriver	*poDriver;
 
-    if( poGDBDriver == NULL )
+    if( GDALGetDriverByName( "GDB" ) == NULL )
     {
-        poGDBDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->pszShortName = "GDB";
         poDriver->pszLongName = "PCI GeoGateway Bridge";

@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.14  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.13  2002/06/15 00:07:23  aubin
  * mods to enable 64bit file i/o
  *
@@ -82,8 +85,6 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poFITDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_FIT(void);
@@ -1288,9 +1289,9 @@ void GDALRegister_FIT()
 {
     GDALDriver	*poDriver;
 
-    if( poFITDriver == NULL )
+    if( GDALGetDriverByName( "FIT" ) == NULL )
     {
-        poFITDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "FIT" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

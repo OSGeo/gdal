@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2002/09/04 06:50:36  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.6  2002/07/19 22:05:15  warmerda
  * added support for NO1 (encrypted) files
  *
@@ -53,8 +56,6 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poBSBDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_BSB(void);
@@ -360,8 +361,6 @@ GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new BSBDataset();
 
-    poDS->poDriver = poBSBDriver;
-    
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
@@ -428,9 +427,9 @@ void GDALRegister_BSB()
 {
     GDALDriver	*poDriver;
 
-    if( poBSBDriver == NULL )
+    if( GDALGetDriverByName( "BSB" ) == NULL )
     {
-        poBSBDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "BSB" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

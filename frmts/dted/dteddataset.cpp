@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.9  2002/06/12 21:12:24  warmerda
  * update to metadata based driver info
  *
@@ -61,8 +64,6 @@
 #include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver       *poDTEDDriver = NULL;
 
 CPL_C_START
 void    GDALRegister_DTED(void);
@@ -199,7 +200,6 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new DTEDDataset();
 
     poDS->psDTED = psDTED;
-    poDS->poDriver = poDTEDDriver;
     
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
@@ -397,9 +397,9 @@ void GDALRegister_DTED()
 {
     GDALDriver  *poDriver;
 
-    if( poDTEDDriver == NULL )
+    if( GDALGetDriverByName( "DTED" ) == NULL )
     {
-        poDTEDDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "DTED" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.13  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -80,8 +83,6 @@ CPL_CVSID("$Id$");
 
  exclude
 */
-
-static GDALDriver       *poSDTSDriver = NULL;
 
 CPL_C_START
 void    GDALRegister_SDTS(void);
@@ -219,7 +220,6 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->poTransfer = poTransfer;
     poDS->poRL = poRL;
-    poDS->poDriver = poSDTSDriver;
     
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
@@ -376,9 +376,9 @@ void GDALRegister_SDTS()
 {
     GDALDriver  *poDriver;
 
-    if( poSDTSDriver == NULL )
+    if( GDALGetDriverByName( "SDTS" ) == NULL )
     {
-        poSDTSDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "SDTS" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

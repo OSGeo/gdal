@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.4  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -49,8 +52,6 @@
 
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poXPMDriver = NULL;
 
 static unsigned char *ParseXPM( const char *pszInput,
                                 int *pnXSize, int *pnYSize, 
@@ -413,9 +414,9 @@ void GDALRegister_XPM()
 {
     GDALDriver	*poDriver;
 
-    if( poXPMDriver == NULL )
+    if( GDALGetDriverByName( "XPM" ) == NULL )
     {
-        poXPMDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "XPM" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2002/09/04 06:50:36  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.28  2002/07/18 20:16:11  gwalter
  * Fix to recognize esrin pri's gcps.
  *
@@ -120,8 +123,6 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poCEOSDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_SAR_CEOS(void);
@@ -1025,8 +1026,6 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new SAR_CEOSDataset();
 
-    poDS->poDriver = poCEOSDriver;
-
     psVolume = &(poDS->sVolume);
     InitCeosSARVolume( psVolume, 0 );
 
@@ -1436,9 +1435,9 @@ void GDALRegister_SAR_CEOS()
 {
     GDALDriver	*poDriver;
 
-    if( poCEOSDriver == NULL )
+    if( GDALGetDriverByName( "SAR_CEOS" ) == NULL )
     {
-        poCEOSDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "SAR_CEOS" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

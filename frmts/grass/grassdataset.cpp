@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.11  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -71,8 +74,6 @@
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver *poGRASSDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_GRASS(void);
@@ -584,9 +585,9 @@ void GDALRegister_GRASS()
 {
     GDALDriver	*poDriver;
 
-    if( poGRASSDriver == NULL )
+    if( GDALGetDriverByName( "GRASS" ) == NULL )
     {
-        poGRASSDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "GRASS" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.12  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.11  2002/07/13 04:16:39  warmerda
  * added WORLDFILE support
  *
@@ -71,8 +74,6 @@ CPL_CVSID("$Id$");
 CPL_C_START
 #include "gif_lib.h"
 CPL_C_END
-
-static GDALDriver	*poGIFDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_GIF(void);
@@ -615,9 +616,9 @@ void GDALRegister_GIF()
 {
     GDALDriver	*poDriver;
 
-    if( poGIFDriver == NULL )
+    if( GDALGetDriverByName( "GIF" ) == NULL )
     {
-        poGIFDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "GIF" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

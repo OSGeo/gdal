@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.14  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.13  2002/07/13 04:16:39  warmerda
  * added WORLDFILE support
  *
@@ -77,8 +80,6 @@ CPL_CVSID("$Id$");
 CPL_C_START
 #include "jpeglib.h"
 CPL_C_END
-
-static GDALDriver	*poJPGDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_JPEG(void);
@@ -610,9 +611,9 @@ void GDALRegister_JPEG()
 {
     GDALDriver	*poDriver;
 
-    if( poJPGDriver == NULL )
+    if( GDALGetDriverByName( "JPEG" ) == NULL )
     {
-        poJPGDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "JPEG" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

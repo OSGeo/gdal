@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.7  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -54,8 +57,6 @@
 #include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poELASDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_ELAS(void);
@@ -338,7 +339,6 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    poDS->poDriver = poELASDriver;
     poDS->eAccess = poOpenInfo->eAccess;
 
 /* -------------------------------------------------------------------- */
@@ -651,9 +651,9 @@ void GDALRegister_ELAS()
 {
     GDALDriver	*poDriver;
 
-    if( poELASDriver == NULL )
+    if( GDALGetDriverByName( "ELAS" ) == NULL )
     {
-        poELASDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "ELAS" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.18  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.17  2002/07/13 04:16:39  warmerda
  * added WORLDFILE support
  *
@@ -102,8 +105,6 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poPNGDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_PNG(void);
@@ -978,9 +979,9 @@ void GDALRegister_PNG()
 {
     GDALDriver	*poDriver;
 
-    if( poPNGDriver == NULL )
+    if( GDALGetDriverByName( "PNG" ) == NULL )
     {
-        poPNGDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "PNG" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.22  2002/06/19 18:21:08  warmerda
  * removed stat buf from GDALOpenInfo
  *
@@ -103,8 +106,6 @@
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poHKVDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_HKV(void);
@@ -674,7 +675,6 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new HKVDataset();
 
     poDS->pszPath = CPLStrdup( poOpenInfo->pszFilename );
-    poDS->poDriver = poHKVDriver;
     poDS->papszAttrib = papszAttrib;
     
 /* -------------------------------------------------------------------- */
@@ -1063,9 +1063,9 @@ void GDALRegister_HKV()
 {
     GDALDriver	*poDriver;
 
-    if( poHKVDriver == NULL )
+    if( GDALGetDriverByName( "MFF2" ) == NULL )
     {
-        poHKVDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "MFF2" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

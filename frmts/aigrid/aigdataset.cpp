@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/09/04 06:50:36  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.14  2002/07/10 17:43:20  warmerda
  * Fixed error supression.
  *
@@ -130,8 +133,6 @@ class AIGRasterBand : public GDALRasterBand
     virtual double GetMaximum( int *pbSuccess );
     virtual double GetNoDataValue( int *pbSuccess );
 };
-
-static GDALDriver	*poAIGDriver = NULL;
 
 /************************************************************************/
 /*                           AIGRasterBand()                            */
@@ -314,7 +315,6 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new AIGDataset();
 
     poDS->psInfo = psInfo;
-    poDS->poDriver = poAIGDriver;
 
 /* -------------------------------------------------------------------- */
 /*      Establish raster info.                                          */
@@ -390,9 +390,9 @@ void GDALRegister_AIGrid()
 {
     GDALDriver	*poDriver;
 
-    if( poAIGDriver == NULL )
+    if( GDALGetDriverByName( "AIG" ) == NULL )
     {
-        poAIGDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "AIG" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

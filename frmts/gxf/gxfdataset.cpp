@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.12  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.11  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -71,8 +74,6 @@ CPL_CVSID("$Id$");
 #ifndef PI
 #  define PI 3.14159265358979323846
 #endif
-
-static GDALDriver	*poGXFDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_GXF(void);
@@ -277,7 +278,6 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new GXFDataset();
 
     poDS->hGXF = hGXF;
-    poDS->poDriver = poGXFDriver;
     
 /* -------------------------------------------------------------------- */
 /*	Establish the projection.					*/
@@ -308,9 +308,9 @@ void GDALRegister_GXF()
 {
     GDALDriver	*poDriver;
 
-    if( poGXFDriver == NULL )
+    if( GDALGetDriverByName( "GXF" ) == NULL )
     {
-        poGXFDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "GXF" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

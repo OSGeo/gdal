@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.22  2002/06/20 14:11:27  warmerda
  * added support for 1 bit files
  *
@@ -362,8 +365,6 @@ class HFARasterBand : public GDALRasterBand
     virtual CPLErr SetMetadata( char **, const char * = "" );
     virtual CPLErr SetMetadataItem( const char *, const char *, const char * = "" );
 };
-
-static GDALDriver	*poHFADriver = NULL;
 
 /************************************************************************/
 /*                           HFARasterBand()                            */
@@ -1426,7 +1427,6 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new HFADataset();
 
     poDS->hHFA = hHFA;
-    poDS->poDriver = poHFADriver;
     poDS->eAccess = poOpenInfo->eAccess;
 
 /* -------------------------------------------------------------------- */
@@ -1799,6 +1799,9 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     CPLError( CE_Failure, CPLE_UserInterrupt, 
                               "User terminated" );
                     delete poDS;
+
+                    GDALDriver *poHFADriver = 
+                        (GDALDriver *) GDALGetDriverByName( "HFA" );
                     poHFADriver->Delete( pszFilename );
                     return NULL;
                 }
@@ -1837,6 +1840,9 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLError( CE_Failure, CPLE_UserInterrupt, 
                   "User terminated" );
         delete poDS;
+
+        GDALDriver *poHFADriver = 
+            (GDALDriver *) GDALGetDriverByName( "HFA" );
         poHFADriver->Delete( pszFilename );
         return NULL;
     }
@@ -1853,9 +1859,9 @@ void GDALRegister_HFA()
 {
     GDALDriver	*poDriver;
 
-    if( poHFADriver == NULL )
+    if( GDALGetDriverByName( "HFA" ) == NULL )
     {
-        poHFADriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "HFA" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

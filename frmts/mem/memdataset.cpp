@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.9  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -61,8 +64,6 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poMEMDriver = NULL;
 
 /************************************************************************/
 /*                        MEMCreateRasterBand()                         */
@@ -408,7 +409,6 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
     MEMDataset *poDS;
 
     poDS = new MEMDataset();
-    poDS->poDriver = poMEMDriver;
 
     poDS->nRasterXSize = atoi(CSLFetchNameValue(papszOptions,"PIXELS"));
     poDS->nRasterYSize = atoi(CSLFetchNameValue(papszOptions,"LINES"));
@@ -516,7 +516,6 @@ GDALDataset *MEMDataset::Create( const char * pszFilename,
     MEMDataset *poDS;
 
     poDS = new MEMDataset();
-    poDS->poDriver = poMEMDriver;
 
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
@@ -549,9 +548,9 @@ void GDALRegister_MEM()
 {
     GDALDriver	*poDriver;
 
-    if( poMEMDriver == NULL )
+    if( GDALGetDriverByName( "MEM" ) == NULL )
     {
-        poMEMDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "MEM" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
