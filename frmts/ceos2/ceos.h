@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/10/18 17:04:09  warmerda
+ * added hacks to determine record length and pd pixels/line for Telaviv ERS data
+ *
  * Revision 1.4  2000/04/05 21:40:33  warmerda
  * fixed CCL_MSB to CPL_MSB
  *
@@ -128,6 +131,7 @@ Link_t *AddLink( Link_t *psList, Link_t *psLink );
 #define __CEOS_REC_PRODTYPE 18
 #define __CEOS_REC_RECORDSIZE 19
 #define __CEOS_REC_SUFFIX_SIZE 20
+#define __CEOS_REC_PDBPR 21
 
 /* Defines for Recipe Types */
 
@@ -196,6 +200,7 @@ struct CeosSARImageDesc
     int   FileDescriptorLength;
     int32 PixelOrder;
     int32 LineOrder;
+    int   PixelDataBytesPerRecord;
 };
 
 typedef struct

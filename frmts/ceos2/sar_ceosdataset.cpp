@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2001/10/18 17:04:09  warmerda
+ * added hacks to determine record length and pd pixels/line for Telaviv ERS data
+ *
  * Revision 1.18  2001/09/28 14:43:06  warmerda
  * Added true and platform heading metadata.
  * Added ERS2 DATASET SUMMARY record code.
@@ -110,6 +113,9 @@ char *CeosExtension[][6] = {
 
 /* Ers-1: basename, not extension */
 { "vdf_dat", "lea_%02d", "dat_%02d", "tra_%02d", "nul_dat", "base" },
+
+/* Ers-2 from Telaviv */
+{ "volume", "leader", "image", "trailer", "nul_dat", "whole" },
 
 /* end marker */
 { NULL, NULL, NULL, NULL, NULL, NULL } 
@@ -886,6 +892,11 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                 pszFilename = CPLStrdup(
                     CPLFormFilename(pszPath,pszBasename,
                                     CeosExtension[e][iFile]));
+            }
+            else if( EQUAL(CeosExtension[e][5],"whole") )
+            {
+                pszFilename = CPLStrdup(
+                    CPLFormFilename(pszPath,CeosExtension[e][iFile],""));
             }
             
             // This is for SAR SLC as per the SAR Toolbox (from ASF).
