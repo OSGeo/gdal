@@ -255,6 +255,28 @@ AC_DEFUN(AC_LD_SHARED,
     LD_SHARED="$with_ld_shared"
   fi
 
+  dnl Check For Cygwin case.  Actually verify that the produced DLL works.
+
+  if test ! -z "`uname -a | grep CYGWIN`" \
+        -a "$LD_SHARED" = "/bin/true" \
+	-a -z "`gcc -shared conftest2.o -o libconftest.dll`" ; then
+    if test -z "`${CC} conftest1.c -L./ -lconftest -o conftest1 2>&1`"; then
+      LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
+      if test -z "$LD_LIBRARY_PATH" ; then
+        LD_LIBRARY_PATH="`pwd`"
+      else
+        LD_LIBRARY_PATH="`pwd`:$LD_LIBRARY_PATH"
+      fi
+      export LD_LIBRARY_PATH
+      if test -z "`./conftest1 2>&1`" ; then
+        echo "checking for Cygwin gcc -shared ... yes"
+        LD_SHARED="c++ -shared"
+        SO_EXT="dll"
+      fi
+      LD_LIBRARY_PATH="$LD_LIBRARY_PATH_OLD"
+    fi
+  fi
+
   if test "$LD_SHARED" = "/bin/true" \
 	-a -z "`${CXX} -shared $IRIX_ALL conftest2.o -o libconftest.so 2>&1|grep -v WARNING`" ; then
     if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
