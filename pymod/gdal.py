@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.41  2003/03/02 17:18:47  warmerda
+# Updated default args for CPLError.
+#
 # Revision 1.40  2003/03/02 17:11:27  warmerda
 # added error handling support
 #
@@ -147,7 +150,7 @@ from gdalconst import *
 def Debug(msg_class, message):
     _gdal.CPLDebug( msg_class, message )
 
-def Error(err_class = 3, err_code = 1, msg = 'error' ):
+def Error(err_class = CE_Failure, err_code = CPLE_AppDefined, msg = 'error' ):
     _gdal.CPLError( err_class, err_code, msg )
 
 def ErrorReset():
