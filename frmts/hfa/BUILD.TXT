@@ -1,0 +1,34 @@
+	Building img2tif
+	================
+
+
+Windows (NT/2000/98/etc)
+------------------------
+
+Ensure that VC++ is installed properly.  The appropriate path and environment
+variables will need to be setup if they aren't already.  This can usualy
+be done by running C:\Program Files\Visual Stdio\VC98\VCVARS32.BAT or
+something similar in the command window. 
+
+Then just run buildwin.bat to build img2tif.exe and hfatest.exe
+
+
+
+Unix
+----
+
+Edit port/cpl_config.h and modify to be appropriate to your platform.  The
+most common change is to define WORDS_BIGENDIAN on big endian platforms like
+Sun and SGI.  Other changes may be needed to get large file support working
+or deal with other quirks. 
+
+Run build.sh and it should build img2tif and hfatest executables. 
+
+
+To use the Imagine library yourself just link against the object files
+created from the port and hfa directories. 
+
+
+
+
+
