@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/10/05 20:53:00  fwarmerdam
+ * Added try around some setup stuff to try and recover somewhat gracefully.
+ *
  * Revision 1.17  2004/01/19 16:54:44  warmerda
  * added logic to capture field types
  *
@@ -201,8 +204,9 @@ int GMLReader::SetupParser()
         
         catch (const XMLException& toCatch)
         {
-            printf( "Error during initialization! Message:\n%s\n", 
-                    tr_strdup(toCatch.getMessage()) );
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Exception initializing Xerces based GML reader.\n%s", 
+                      tr_strdup(toCatch.getMessage()) );
             return FALSE;
         }
         bXercesInitialized = TRUE;
@@ -213,33 +217,41 @@ int GMLReader::SetupParser()
         CleanupParser();
 
     // Create and initialize parser.
-    m_poSAXReader = XMLReaderFactory::createXMLReader();
+    try{
+        m_poSAXReader = XMLReaderFactory::createXMLReader();
     
-    m_poGMLHandler = new GMLHandler( this );
+        m_poGMLHandler = new GMLHandler( this );
 
-    m_poSAXReader->setContentHandler( m_poGMLHandler );
-    m_poSAXReader->setErrorHandler( m_poGMLHandler );
-    m_poSAXReader->setLexicalHandler( m_poGMLHandler );
-    m_poSAXReader->setEntityResolver( m_poGMLHandler );
-    m_poSAXReader->setDTDHandler( m_poGMLHandler );
+        m_poSAXReader->setContentHandler( m_poGMLHandler );
+        m_poSAXReader->setErrorHandler( m_poGMLHandler );
+        m_poSAXReader->setLexicalHandler( m_poGMLHandler );
+        m_poSAXReader->setEntityResolver( m_poGMLHandler );
+        m_poSAXReader->setDTDHandler( m_poGMLHandler );
 
 #if (OGR_GML_VALIDATION)
-    m_poSAXReader->setFeature(
-        XMLString::transcode("http://xml.org/sax/features/validation"), true);
-    m_poSAXReader->setFeature(
-        XMLString::transcode("http://xml.org/sax/features/namespaces"), true);
+        m_poSAXReader->setFeature(
+            XMLString::transcode("http://xml.org/sax/features/validation"), true);
+        m_poSAXReader->setFeature(
+            XMLString::transcode("http://xml.org/sax/features/namespaces"), true);
 
-    m_poSAXReader->setFeature( XMLUni::fgSAX2CoreNameSpaces, true );
-    m_poSAXReader->setFeature( XMLUni::fgXercesSchema, true );
+        m_poSAXReader->setFeature( XMLUni::fgSAX2CoreNameSpaces, true );
+        m_poSAXReader->setFeature( XMLUni::fgXercesSchema, true );
 
 //    m_poSAXReader->setDoSchema(true);
 //    m_poSAXReader->setValidationSchemaFullChecking(true);
 #else
-    m_poSAXReader->setFeature(
-        XMLString::transcode("http://xml.org/sax/features/validation"), false);
-    m_poSAXReader->setFeature(
-        XMLString::transcode("http://xml.org/sax/features/namespaces"), false);
+        m_poSAXReader->setFeature(
+            XMLString::transcode("http://xml.org/sax/features/validation"), false);
+        m_poSAXReader->setFeature(
+            XMLString::transcode("http://xml.org/sax/features/namespaces"), false);
 #endif
+    }
+    catch (...)
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Exception initializing Xerces based GML reader.\n" );
+        return FALSE;
+    }
 
     m_bReadStarted = FALSE;
 
@@ -301,8 +313,9 @@ GMLFeature *GMLReader::NextFeature()
     }
     catch (const XMLException& toCatch)
     {
-        printf( "Error during NextFeature()! Message:\n%s\n", 
-                tr_strdup( toCatch.getMessage() ) );
+        CPLDebug( "GML", 
+                  "Error during NextFeature()! Message:\n%s", 
+                  tr_strdup( toCatch.getMessage() ) );
     }
 
     return poReturn;
