@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/12/15 15:59:25  warmerda
+ * added CPL_DLL on contour stuff.
+ *
  * Revision 1.15  2003/10/16 16:44:05  warmerda
  * added support for fixed levels
  *
@@ -216,9 +219,11 @@ typedef struct
     int    nNextID;
 } OGRContourWriterInfo;
 
-CPLErr OGRContourWriter( double, int, double *, double *, void *pInfo );
+CPLErr CPL_DLL 
+OGRContourWriter( double, int, double *, double *, void *pInfo );
 
-CPLErr GDALContourGenerate( GDALRasterBandH hBand, 
+CPLErr CPL_DLL
+GDALContourGenerate( GDALRasterBandH hBand, 
                             double dfContourInterval, double dfContourBase,
                             int nFixedLevelCount, double *padfFixedLevels,
                             int bUseNoData, double dfNoDataValue, 
