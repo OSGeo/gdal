@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2001/12/12 20:18:06  warmerda
+ * added support for units in proj.4 to WKT
+ *
  * Revision 1.21  2001/11/07 22:08:51  warmerda
  * dont put + in to_meter value
  *
@@ -466,7 +469,6 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     {
         for( i = 0; ogr_pj_ellps[i] != NULL; i += 4 )
         {
-
             if( !EQUAL(ogr_pj_ellps[i],pszValue) )
                 continue;
 
@@ -533,7 +535,28 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /* -------------------------------------------------------------------- */
 /*      Linear units translation                                        */
 /* -------------------------------------------------------------------- */
-    /* add here */
+    pszValue = CSLFetchNameValue(papszNV, "to_meter");
+
+    if( pszValue != NULL && atof(pszValue) > 0.0 )
+    {
+        CPLAssert( IsProjected() || IsLocal() );
+        SetLinearUnits( "unknown", atof(pszValue) );
+    }
+    else if( (pszValue = CSLFetchNameValue(papszNV, "units")) != NULL )
+    {
+        if( EQUAL(pszValue,"meter" ) )
+            SetLinearUnits( SRS_UL_METER, 1.0 );
+        else if( EQUAL(pszValue,"us-ft" ) )
+            SetLinearUnits( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV) );
+        else if( EQUAL(pszValue,"ft" ) )
+            SetLinearUnits( SRS_UL_FOOT, atof(SRS_UL_FOOT_CONV) );
+        else if( EQUAL(pszValue,"yd" ) )
+            SetLinearUnits( pszValue, 0.9144 );
+        else if( EQUAL(pszValue,"us-yd" ) )
+            SetLinearUnits( pszValue, 0.914401828803658 );
+        else // This case is untranslatable.  Should add all proj.4 unts
+            SetLinearUnits( pszValue, 1.0 );
+    }
 
     CSLDestroy( papszNV );
     
