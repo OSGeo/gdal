@@ -1,11 +1,11 @@
-/**********************************************************************
+/******************************************************************************
  * $Id$
  *
  * Project:  GML Reader
  * Purpose:  Public Declarations for OGR free GML Reader code.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
- **********************************************************************
+ ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,26 +25,28 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
+ ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/01/24 17:39:08  warmerda
+ * added xml serialization and geometry support
+ *
  * Revision 1.1  2002/01/04 19:46:30  warmerda
  * New
- *
- *
- **********************************************************************/
+ */
 
-#ifndef _CPL_GMLREADER_H_INCLUDED
-#define _CPL_GMLREADER_H_INCLUDED
+#ifndef _GMLREADER_H_INCLUDED
+#define _GMLREADER_H_INCLUDED
 
 #include "cpl_port.h"
+#include "cpl_minixml.h"
 
 typedef enum {
     GMLPT_Untyped = 0,
     GMLPT_String = 1,
     GMLPT_Integer = 2,
     GMLPT_Real = 3,
-    GMLPT_Complex
+    GMLPT_Complex = 4
 } GMLPropertyType;
 
 /************************************************************************/
@@ -77,17 +79,21 @@ class CPL_DLL GMLFeatureClass
 {
     char        *m_pszName;
     char        *m_pszElementName;
+    char	*m_pszGeometryElement;
     int          m_nPropertyCount;
     GMLPropertyDefn **m_papoProperty;
 
     int          m_bSchemaLocked;
 
 public:
-	    GMLFeatureClass( const char *pszName );
+	    GMLFeatureClass( const char *pszName = "" );
            ~GMLFeatureClass();
 
     const char *GetElementName() const;
     void        SetElementName( const char *pszElementName );
+
+    const char *GetGeometryElement() const { return m_pszGeometryElement; }
+    void        SetGeometryElement( const char *pszElementName );
 
     const char *GetName() { return m_pszName; } const
     int         GetPropertyCount() const { return m_nPropertyCount; }
@@ -100,6 +106,9 @@ public:
 
     int         IsSchemaLocked() const { return m_bSchemaLocked; }
     void        SetSchemaLocked( int bLock ) { m_bSchemaLocked = bLock; }
+
+    CPLXMLNode *SerializeToXML();
+    int         InitializeFromXML( CPLXMLNode * );
 };
 
 /************************************************************************/
@@ -113,11 +122,16 @@ class CPL_DLL GMLFeature
     int		     m_nPropertyCount;
     char           **m_papszProperty;
 
+    char	    *m_pszGeometry;
+
 public:
 		    GMLFeature( GMLFeatureClass * );
 	           ~GMLFeature();
 
     GMLFeatureClass*GetClass() const { return m_poClass; }
+
+    void	    SetGeometryDirectly( char * );
+    const char     *GetGeometry() const { return m_pszGeometry; }
 
     void            SetProperty( int i, const char *pszValue );
     void            SetProperty( const char *pszName, const char *pszValue )
@@ -151,11 +165,15 @@ public:
     virtual GMLFeatureClass *GetClass( const char *pszName ) const = 0;
 
     virtual int        AddClass( GMLFeatureClass *poClass ) = 0;
+    virtual void       ClearClasses() = 0;
 
     virtual GMLFeature *NextFeature() = 0;
+
+    virtual int  LoadClasses( const char *pszFile = NULL ) = 0;
+    virtual int  SaveClasses( const char *pszFile = NULL ) = 0;
 };
 
 IGMLReader *CreateGMLReader();
 
 
-#endif /* _CPL_GMLREADER_H_INCLUDED */
+#endif /* _GMLREADER_H_INCLUDED */
