@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  1999/10/01 14:49:42  warmerda
+ * added Getmodule()
+ *
  * Revision 1.19  1999/09/22 13:35:31  warmerda
  * added SDTSPolygonReader::AssembleRings()
  *
@@ -311,6 +314,8 @@ public:
 
     SDTSFeature	       *GetIndexedFeatureRef( int );
     char **		ScanModuleReferences( const char * = "ATID" );
+
+    DDFModule          *GetModule() { return &oDDFModule; }
 };
 
 
