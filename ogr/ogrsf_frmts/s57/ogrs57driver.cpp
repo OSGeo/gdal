@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/08/30 20:11:51  warmerda
+ * keep the S57ClassRegistrar on the driver, not the datasource
+ *
  * Revision 1.6  2003/11/15 21:50:52  warmerda
  * Added limited creation support
  *
@@ -53,6 +56,17 @@
 
 CPL_CVSID("$Id$");
 
+S57ClassRegistrar *OGRS57Driver::poRegistrar = NULL;
+
+/************************************************************************/
+/*                            OGRS57Driver()                            */
+/************************************************************************/
+
+OGRS57Driver::OGRS57Driver()
+
+{
+}
+
 /************************************************************************/
 /*                           ~OGRS57Driver()                            */
 /************************************************************************/
@@ -60,6 +74,11 @@ CPL_CVSID("$Id$");
 OGRS57Driver::~OGRS57Driver()
 
 {
+    if( poRegistrar != NULL )
+    {
+        delete poRegistrar;
+        poRegistrar = NULL;
+    }
 }
 
 /************************************************************************/
@@ -129,6 +148,30 @@ int OGRS57Driver::TestCapability( const char * pszCap )
         return TRUE;
     else
         return FALSE;
+}
+
+/************************************************************************/
+/*                          GetS57Registrar()                           */
+/************************************************************************/
+
+S57ClassRegistrar *OGRS57Driver::GetS57Registrar()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Instantiate the class registrar if possible.                    */
+/* -------------------------------------------------------------------- */
+    if( poRegistrar == NULL )
+    {
+        poRegistrar = new S57ClassRegistrar();
+
+        if( !poRegistrar->LoadInfo( NULL, FALSE ) )
+        {
+            delete poRegistrar;
+            poRegistrar = NULL;
+        }
+    }
+
+    return poRegistrar;
 }
 
 /************************************************************************/
