@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/12/14 22:59:14  warmerda
+ * added Krovak in ESRI compatible way
+ *
  * Revision 1.16  2002/12/13 06:35:45  warmerda
  * fixed rotatin sign in TOWGS84 from method 9607
  *
@@ -1193,6 +1196,15 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
       case 9818:
         poSRS->SetPolyconic( OGR_FP( NatOriginLat ), OGR_FP( NatOriginLong ),
                              OGR_FP( FalseEasting ), OGR_FP( FalseNorthing ) );
+        break;
+
+      case 9819:
+        poSRS->SetKrovak( OGR_FP( ProjCenterLat ), OGR_FP( ProjCenterLong ),
+                          OGR_FP( Azimuth ), 
+                          OGR_FP( PseudoStdParallelLat ),
+                          OGR_FP( PseudoStdParallelScaleFactor ),
+                          OGR_FP( ProjCenterEasting ), 
+                          OGR_FP( ProjCenterNorthing ) );
         break;
 
       default:
