@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.30  2004/10/04 21:02:07  fwarmerdam
+# Added Centroid() method
+#
 # Revision 1.29  2004/09/17 15:07:57  fwarmerdam
 # added getArea
 #
@@ -852,6 +855,17 @@ class Geometry:
 
     def GetArea( self ):
         return _gdal.OGR_G_GetArea( self._o )
+
+    def Centroid( self, pnt_geom = None ):
+
+        if pnt_geom is None:
+            pnt_geom = Geometry( type = wkbPoint )
+            
+        err_code = _gdal.OGR_G_Centroid( self._o, pnt_geom._o )
+        if err_code != 0:
+            raise ValueError, 'Error in Centroid operation.  ' + _gdal.CPLGetLastErrorMsg()
+
+        return pnt_geom
 
     def GetPointCount( self):
         return _gdal.OGR_G_GetPointCount( self._o )
