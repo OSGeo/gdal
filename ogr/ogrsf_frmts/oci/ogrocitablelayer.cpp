@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/12/28 20:06:31  warmerda
+ * minor CreateFeature improvements
+ *
  * Revision 1.2  2002/12/28 04:38:36  warmerda
  * converted to unix file conventions
  *
@@ -507,6 +510,8 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
 
             for( iVert = 0; iVert < poRing->getNumPoints(); iVert++ )
             {
+                CPLAssert( iOff < nBufSize - 60 );
+
                 if( iVert != 0 || iRing != -1 )
                     pszResult[iOff++] = ',';
                 
@@ -541,7 +546,7 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
     unsigned int        nCommandBufSize;;
     OGRErr              eErr;
 
-    nCommandBufSize = 40000;
+    nCommandBufSize = 2000;
     pszCommand = (char *) CPLMalloc(nCommandBufSize);
 
 /* -------------------------------------------------------------------- */
@@ -656,6 +661,7 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
         {
             strcat( pszCommand+nOffset, pszStrValue );
         }
+        nOffset += strlen(pszCommand+nOffset);
     }
 
     strcat( pszCommand+nOffset, ")" );
@@ -666,9 +672,15 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
     OGROCIStatement oInsert( poSession );
 
     if( oInsert.Execute( pszCommand ) != CE_None )
+    {
+        CPLFree( pszCommand );
         return OGRERR_FAILURE;
+    }
     else
+    {
+        CPLFree( pszCommand );
         return OGRERR_NONE;
+    }
 }
 
 /************************************************************************/
