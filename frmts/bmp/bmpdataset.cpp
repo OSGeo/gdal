@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/05/29 14:58:01  dron
+ * Workaround for files with extra bytes at the end of data stream.
+ *
  * Revision 1.20  2003/05/20 08:59:10  dron
  * BMPDataset::IRasterIO() method added.
  *
@@ -327,7 +330,8 @@ BMPRasterBand::BMPRasterBand( BMPDataset *poDS, int nBand )
         ((poDS->GetRasterXSize() * poDS->sInfoHeader.iBitCount + 31) & ~31) / 8;
     nBlockYSize = 1;
 
-    CPLDebug( "BMP", "Band %d: set nBlockXSize=%d, nBlockYSize=%d, nScanSize=%d",
+    CPLDebug( "BMP",
+              "Band %d: set nBlockXSize=%d, nBlockYSize=%d, nScanSize=%d",
               nBand, nBlockXSize, nBlockYSize, nScanSize );
 
     pabyScan = (GByte *) CPLMalloc( nScanSize );
@@ -352,10 +356,10 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     BMPDataset  *poGDS = (BMPDataset *) poDS;
     GUInt32     iScanOffset;
     int         i, j;
-    int         nBlockSize = nBlockXSize * nBlockYSize;
 
     if ( poGDS->sInfoHeader.iHeight > 0 )
-        iScanOffset = poGDS->sFileHeader.iSize - (nBlockYOff + 1) * nScanSize;
+        iScanOffset = nScanSize * poGDS->GetRasterYSize() -
+            (nBlockYOff + 1) * nScanSize;
     else
         iScanOffset = poGDS->sFileHeader.iOffBits + nBlockYOff * nScanSize;
 
@@ -365,7 +369,7 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	// in update state and data for this block will be available later
         if( poGDS->eAccess == GA_Update )
         {
-            memset( pImage, 0, nBlockSize );
+            memset( pImage, 0, nBlockXSize );
             return CE_None;
         }
         else
@@ -381,7 +385,7 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         // XXX
         if( poGDS->eAccess == GA_Update )
         {
-            memset( pImage, 0, nBlockSize );
+            memset( pImage, 0, nBlockXSize );
             return CE_None;
         }
         else
@@ -392,11 +396,10 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
     }
 
-    if ( poGDS->sInfoHeader.iBitCount == 8  ||
-         poGDS->sInfoHeader.iBitCount == 24 ||
+    if ( poGDS->sInfoHeader.iBitCount == 24 ||
          poGDS->sInfoHeader.iBitCount == 32 )
     {
-        for ( i = 0, j = 0; i < nBlockSize; i++ )
+        for ( i = 0, j = 0; i < nBlockXSize; i++ )
         {
             // Colour triplets in BMP file organized in reverse order:
             // blue, green, red
@@ -404,9 +407,13 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             j += iBytesPerPixel;
         }
     }
-    if ( poGDS->sInfoHeader.iBitCount == 16 )
+    else if ( poGDS->sInfoHeader.iBitCount == 8 )
     {
-        for ( i = 0, j = 0; i < nBlockSize; i++ )
+        memcpy( pImage, pabyScan, nBlockXSize );
+    }
+    else if ( poGDS->sInfoHeader.iBitCount == 16 )
+    {
+        for ( i = 0, j = 0; i < nBlockXSize; i++ )
         {
             switch ( nBand )
             {
@@ -427,7 +434,7 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     else if ( poGDS->sInfoHeader.iBitCount == 4 )
     {
-        for ( i = 0, j = 0; i < nBlockSize; i++ )
+        for ( i = 0, j = 0; i < nBlockXSize; i++ )
         {
             // Most significant part of the byte represents leftmost pixel
             if ( i & 0x01 )
@@ -438,7 +445,7 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     else if ( poGDS->sInfoHeader.iBitCount == 1 )
     {
-        for ( i = 0, j = 0; i < nBlockSize; i++ )
+        for ( i = 0, j = 0; i < nBlockXSize; i++ )
         {
             switch ( i & 0x7 )
             {
