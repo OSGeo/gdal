@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.5  2002/12/03 04:43:11  warmerda
+# remove time checking!
+#
 # Revision 1.4  2001/03/23 03:41:16  warmerda
 # fixed bug in print statement
 #
@@ -58,10 +61,6 @@ def Usage():
 def trHandleCode(code, gen_dict_line, report_error, output_format):
 
     import time
-    old_time = time.clock()
-    while time.clock() < old_time + 2.0:
-        pass
-    
     if prj_srs.ImportFromEPSG( code ) != 0:
         if report_error:
             print 'Unable to lookup ',code,', either not a valid EPSG'
