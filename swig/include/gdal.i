@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.8  2005/02/15 21:40:00  kruland
+ * Stripped out all the extras by no longer including gdal.h or gdal_priv.h.
+ * Added CreateShared() method.
+ *
  * Revision 1.7  2005/02/15 16:51:20  kruland
  * Removed use of <vector> and <algorith> stdlib includes.  Added typedefs for
  * the fixed size array types which are needed for new mapping mechanism.
@@ -58,34 +62,10 @@ typedef double double_2[2];
 
 %import gdal_typemaps.i
 
-//
-//  Include gdal.h
-//
+typedef int GDALAccess;
 
-#define CPL_DLL
-#define CPL_C_START extern "C" {
-#define CPL_C_END }
-
-// Structures which need to be ignored.
-%ignore GDALDriverManager;
-%ignore GDALColorInterp;
-
-// Must be ignored to prevent undefined symbol problems.
-%ignore GDALGetRasterMetadata;
-%ignore GDALDefaultBuildOverviews;
-%ignore GDALDatasetAdviseRead;
-%ignore GDALRasterAdviseRead;
-
-// Provide definitions for these below.
-%ignore GDALGetDriverByName;
-%ignore GDALOpen;
-
-%include "gcore/gdal.h"
-
-%pythoncode%{
-def AllRegister():
-    _gdal.GDALAllRegister()
-%}
+%rename (AllRegister) GDALAllRegister;
+void GDALAllRegister();
 
 
 //
@@ -243,12 +223,7 @@ def SerializeXMLTree( tree ):
 
 %include "Band.i"
 
-//************************************************************************
-//
-// Define the extensions for ColorTable (nee GDALColorTable)
-//
-//************************************************************************
-%rename (ColorTable) GDALColorTable;
+%include "ColorTable.i"
 
 //************************************************************************
 //
@@ -269,7 +244,10 @@ GDALDataset* Open( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
 }
 %}
 
-%ignore GDALRasterBand;
-%ignore GDALDataset;
-%ignore GDALDriver;
-%include "gcore/gdal_priv.h"
+%newobject OpenShared;
+%inline %{
+GDALDataset* OpenShared( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
+  return (GDALDataset*) GDALOpenShared( name, eAccess );
+}
+%}
+
