@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2001/01/12 21:19:25  warmerda
+ * added progressive support
+ *
  * Revision 1.2  2000/07/07 15:11:01  warmerda
  * added QUALITY=n creation option
  *
@@ -382,6 +385,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
     int  nQuality = 75;
+    int  bProgressive = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
@@ -419,6 +423,11 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                       CSLFetchNameValue(papszOptions,"QUALITY") );
             return NULL;
         }
+    }
+
+    if( CSLFetchNameValue(papszOptions,"PROGRESSIVE") != NULL )
+    {
+        bProgressive = TRUE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -462,6 +471,9 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     jpeg_set_defaults( &sCInfo );
     
     jpeg_set_quality( &sCInfo, nQuality, TRUE );
+
+    if( bProgressive )
+        jpeg_simple_progression( &sCInfo );
 
     jpeg_start_compress( &sCInfo, TRUE );
 
