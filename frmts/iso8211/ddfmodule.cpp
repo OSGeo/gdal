@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/06 14:23:10  warmerda
+ * added Close(), and minor optimizations
+ *
  * Revision 1.1  1999/04/27 18:45:05  warmerda
  * New
  *
@@ -63,14 +66,38 @@ DDFModule::DDFModule()
 DDFModule::~DDFModule()
 
 {
+    Close();
+}
+
+/************************************************************************/
+/*                               Close()                                */
+/************************************************************************/
+
+/**
+ * Close an ISO 8211 file.
+ */
+
+void DDFModule::Close()
+
+{
     if( fpDDF != NULL )
+    {
         VSIFClose( fpDDF );
-    
+        fpDDF = NULL;
+    }
+
+    nFieldDefnCount = 0;
     if( paoFieldDefns != NULL )
+    {
         delete[] paoFieldDefns;
+        paoFieldDefns = NULL;
+    }
 
     if( poRecord != NULL )
+    {
         delete poRecord;
+        poRecord = NULL;
+    }
 }
 
 /************************************************************************/
@@ -261,9 +288,26 @@ void DDFModule::Dump( FILE * fp )
 DDFFieldDefn *DDFModule::FindFieldDefn( const char *pszFieldName )
 
 {
+/* -------------------------------------------------------------------- */
+/*      This pass tries to reduce the cost of comparing strings by      */
+/*      first checking the first character, and by using strcmp()       */
+/* -------------------------------------------------------------------- */
     for( int i = 0; i < nFieldDefnCount; i++ )
     {
-        if( EQUAL( pszFieldName, paoFieldDefns[i].GetName()) )
+        const char *pszThisName = paoFieldDefns[i].GetName();
+        
+        if( *pszThisName == *pszFieldName
+            && strcmp( pszFieldName+1, pszThisName+1) == 0 )
+            return paoFieldDefns + i;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Now do a more general check.  Application code may not          */
+/*      always use the correct name case.                               */
+/* -------------------------------------------------------------------- */
+    for( int i = 0; i < nFieldDefnCount; i++ )
+    {
+        if( EQUAL( pszFieldName, paoFieldDefns[i].GetName()) == 0 )
             return paoFieldDefns + i;
     }
 
