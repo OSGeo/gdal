@@ -10,3 +10,5 @@ gdalinfo
 gdal-config
 gdal-config-inst
 gdaltindex
+gdalwarp
+gdalwarptest
