@@ -23,6 +23,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/09/04 18:44:48  warmerda
+ * try to make aggregates into multipolygons
+ *
  * Revision 1.2  2002/07/11 16:08:11  warmerda
  * added FMECACHE_MAX_RETENTION
  *
@@ -261,7 +264,8 @@ class OGRFMEDataSource : public OGRDataSource
     
     int                 TestCapability( const char * );
 
-    OGRGeometry        *ProcessGeometry( OGRFMELayer *, IFMEFeature * );
+    OGRGeometry        *ProcessGeometry( OGRFMELayer *, IFMEFeature *,
+                                         OGRwkbGeometryType );
     OGRFeature         *ProcessFeature( OGRFMELayer *, IFMEFeature * );
     void                ResetReading();
 
