@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/06/09 21:00:10  warmerda
+ * added support for spatial table identification
+ *
  * Revision 1.1  1999/06/08 03:50:25  warmerda
  * New
  *
@@ -36,14 +39,149 @@
 #include "sfcdatasource.h"
 #include "ogr_geometry.h"
 #include "sfctable.h"
+#include "cpl_string.h"
+
+#include <atldbsch.h>
+
+/************************************************************************/
+/*                           SFCDataSource()                            */
+/************************************************************************/
+
+SFCDataSource::SFCDataSource()
+
+{
+    nSRInitialized = FALSE;
+    papszSRName = NULL;
+}
+
+/************************************************************************/
+/*                           ~SFCDataSource()                           */
+/************************************************************************/
+
+SFCDataSource::~SFCDataSource()
+
+{
+    CSLDestroy( papszSRName );
+}
+
+/************************************************************************/
+/*                          GetSFTableCount()                           */
+/************************************************************************/
+
+int SFCDataSource::GetSFTableCount()
+
+{
+    if( !nSRInitialized )
+        Reinitialize();
+
+    return CSLCount( papszSRName );
+}
+
+/************************************************************************/
+/*                           GetSFTableName()                           */
+/************************************************************************/
+
+const char *SFCDataSource::GetSFTableName( int i )
+
+{
+    if( !nSRInitialized )
+        Reinitialize();
+
+    return( papszSRName[i] );
+}
+
+/************************************************************************/
+/*                             AddSFTable()                             */
+/************************************************************************/
+
+void SFCDataSource::AddSFTable( const char * pszTableName )
+
+{
+    papszSRName = CSLAddString( papszSRName, pszTableName );
+}
 
 /************************************************************************/
 /*                            Reinitialize()                            */
 /************************************************************************/
 
+/**
+ * Reinitialize SFTable list.  
+ *
+ * This method can be called to trigger rebuilding of the list of tables
+ * returned by GetSFCTableName().   Otherwise it is built on the first
+ * request for SFTables, and cached - not reflecting additions or deletions.
+ *
+ * This method will try to build the list of simple features tables by 
+ * traversing the DBSCHEMA_OGIS_FEATURE_TABLES schema rowset.  If that doesn't
+ * exist, it will traverse the DBSCHEMA_TABLES schema rowset, selecting only
+ * those tables with OGIS style geometry columns apparent present. 
+ */
+
 void SFCDataSource::Reinitialize()
 
 {
+/* -------------------------------------------------------------------- */
+/*      Reinitialize list.                                              */
+/* -------------------------------------------------------------------- */
+    nSRInitialized = TRUE;
+    CSLDestroy( papszSRName );
+    papszSRName = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      For now we just go straight to the table of tables.             */
+/* -------------------------------------------------------------------- */
+    UseTables();
+}
+
+/************************************************************************/
+/*                             UseTables()                              */
+/*                                                                      */
+/*      This method attempts to construct a list of spatial tables      */
+/*      from the general tables DBSCHEMA_TABLES rowset.                 */
+/************************************************************************/
+
+void SFCDataSource::UseTables()
+
+{
+    CSession           oSession;
+    CTables            oTables;
+
+    if( FAILED(oSession.Open(*this)) )
+    {
+        printf( "Failed to create CSession.\n" );
+        return;
+    }
+
+    if( FAILED(oTables.Open(oSession)) )
+    {
+        printf( "Failed to create CTables rowset. \n" );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      For now we use the most expensive approach to deciding if       */
+/*      this table could be instantiated as a spatial table             */
+/*      ... actually go ahead and try.  Eventually we should use the    */
+/*      DBSCHEMA_COLUMNS or something else to try and do this more      */
+/*      cheaply.                                                        */
+/* -------------------------------------------------------------------- */
+    while( oTables.MoveNext() == S_OK )
+    {
+        SFCTable      *poSFCTable;
+
+        // skip system tables.
+        if( !EQUAL(oTables.m_szType,"TABLE") )
+            continue;
+
+        poSFCTable = CreateSFCTable( oTables.m_szName );
+        if( poSFCTable == NULL )
+            continue;
+
+        if( poSFCTable->HasGeometry() )
+            AddSFTable( oTables.m_szName );
+
+        delete poSFCTable;
+    }
 }
 
 /************************************************************************/

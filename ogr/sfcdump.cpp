@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/06/09 21:00:10  warmerda
+ * added support for spatial table identification
+ *
  * Revision 1.2  1999/06/08 17:51:16  warmerda
  * cleaned up using SFC classes
  *
@@ -45,19 +48,7 @@
 #include "sfctable.h"
 #include "ogr_geometry.h"
 #include "cpl_conv.h"
-
-#ifdef notdef
-#include "ogr_geometry.h"
-
-#include "geometryidl.h"
-#include "spatialreferenceidl.h"
-
-// Get various classid.
-#include "msdaguid.h"
-//#include "MSjetoledb.h"
-#include "sfclsid.h"
-#include "sfiiddef.h"
-#endif
+#include <atldbsch.h>
 
 static int      bVerbose = TRUE;
 
@@ -66,6 +57,8 @@ static SFCDataSource * SFCOpenDataSource( const char * pszProvider,
                                           const char * pszDataStore );
 static void SFCDumpTableSchema( SFCTable * );
 static void SFCDumpTableGeometry( SFCTable * );
+static void SFCDumpTables( SFCDataSource * );
+static void SFCDumpSFTables( SFCDataSource * );
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -74,9 +67,11 @@ static void SFCDumpTableGeometry( SFCTable * );
 static void Usage()
 
 {
-    printf("Usage: sfcdump [-provider provider_clsid_alias] [-ds datasource]\n"
-           "              [-table tablename] [-column geom_column_name]\n"
-           "              [-action {dumpprov,dumpgeom,dumpschema}] -quiet\n" );
+    printf(
+      "Usage: sfcdump [-provider provider_clsid_alias] [-ds datasource]\n"
+      "           [-table tablename] [-column geom_column_name]\n"
+      "           [-action {dumpprov,dumpgeom,dumpschema,dumptables,dumpsftables}]\n"
+      "-quiet\n" );
 
     OleSupUninitialize();
     exit( 1 );
@@ -161,6 +156,26 @@ void main( int nArgc, char ** papszArgv )
         goto CleanupAndExit;
 
 /* -------------------------------------------------------------------- */
+/*      If the action is to dump tables, do it now, without trying      */
+/*      to open a table.                                                */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszAction,"dumptables") )
+    {
+        SFCDumpTables( poDS );
+        goto CleanupAndExit;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If the action is to dump SF tables, do it now, without trying   */
+/*      to open a table.                                                */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszAction,"dumpsftables") )
+    {
+        SFCDumpSFTables( poDS );
+        goto CleanupAndExit;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Open the requested table.                                       */
 /* -------------------------------------------------------------------- */
     SFCTable      *poTable;
@@ -212,9 +227,7 @@ static void SFCDumpTableSchema( SFCTable * poTable )
 static void SFCDumpTableGeometry( SFCTable * poTable )
 
 {
-    HRESULT      hr;
-
-    while( !FAILED((hr = poTable->MoveNext())) )
+    while( poTable->MoveNext() == S_OK )
     {
         OGRGeometry * poGeom;
 
@@ -309,3 +322,49 @@ static void SFCDumpProviders()
     }
 }
 
+/************************************************************************/
+/*                           SFCDumpTables()                            */
+/************************************************************************/
+
+static void SFCDumpTables( SFCDataSource * poDS )
+
+{
+    CSession           oSession;
+    CTables            oTables;
+
+    if( FAILED(oSession.Open(*poDS)) )
+    {
+        printf( "Failed to create CSession.\n" );
+        return;
+    }
+
+    if( FAILED(oTables.Open(oSession)) )
+    {
+        printf( "Failed to create CTables rowset. \n" );
+        return;
+    }
+
+    while( oTables.MoveNext() == S_OK )
+    {
+        printf( "%s: %s\n", 
+                oTables.m_szName, oTables.m_szType );
+    }
+}
+
+/************************************************************************/
+/*                          SFCDumpSFTables()                           */
+/************************************************************************/
+
+static void SFCDumpSFTables( SFCDataSource * poDS )
+
+{
+    int                nSFCount = poDS->GetSFTableCount();
+
+    printf( "SF Tables\n" );
+    printf( "=========\n" );
+
+    for( int i = 0; i < nSFCount; i++ )
+    {
+        printf( "%s\n", poDS->GetSFTableName( i ) );
+    }
+}

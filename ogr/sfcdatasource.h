@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/06/09 21:00:10  warmerda
+ * added support for spatial table identification
+ *
  * Revision 1.3  1999/06/08 19:05:27  warmerda
  * fixed up documentation
  *
@@ -80,21 +83,26 @@ class SFCTable;
 
 class SFCDataSource : public CDataSource
 {
-    int		nSRCount;
+    int         nSRInitialized;
     char	**papszSRName;
+
+    void        UseOGISFeaturesTables();
+    void        UseTables();
+
+    void        AddSFTable( const char * );
 
   public:
 
-    /** Reinitialize table list, and other info */
+                SFCDataSource();
+                ~SFCDataSource();
+
     void	Reinitialize();
 
-#ifdef notdef    
     /** Get number of spatial tables available from this datasource */
     int		GetSFTableCount();
 
     /** Get name of a given spatial table. */
     const char	*GetSFTableName( int );
-#endif
     
     SFCTable	*CreateSFCTable( const char * pszTablename,
                                  OGRGeometry * poFilterGeometry = NULL,
