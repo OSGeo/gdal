@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/09/21 16:24:20  warmerda
+ * added transform() and transformTo() methods
+ *
  * Revision 1.12  2001/08/30 02:06:19  warmerda
  * fixed array overrun error in exportToWkt()
  *
@@ -668,5 +671,38 @@ OGRBoolean OGRGeometryCollection::Equal( OGRGeometry * poOther )
     }
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                             transform()                              */
+/************************************************************************/
+
+OGRErr OGRGeometryCollection::transform( OGRCoordinateTransformation *poCT )
+
+{
+    for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
+    {
+        OGRErr	eErr;
+
+        eErr = papoGeoms[iGeom]->transform( poCT );
+        if( eErr != OGRERR_NONE )
+        {
+            if( iGeom != 0 )
+            {
+                CPLDebug("OGR", 
+                         "OGRGeometryCollection::transform() failed for a geometry other\n"
+                         "than the first, meaning some geometries are transformed\n"
+                         "and some are not!\n" );
+
+                return OGRERR_FAILURE;
+            }
+
+            return eErr;
+        }
+    }
+
+    assignSpatialReference( poCT->GetTargetCS() );
+
+    return OGRERR_NONE;
 }
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/09/21 16:24:20  warmerda
+ * added transform() and transformTo() methods
+ *
  * Revision 1.9  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -172,6 +175,75 @@ OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom )
         return TRUE;
 }
 
+/************************************************************************/
+/*                            transformTo()                             */
+/************************************************************************/
+
+/**
+ * Transform geometry to new spatial reference system.
+ *
+ * This method will transform the coordinates of a geometry from
+ * their current spatial reference system to a new target spatial
+ * reference system.  Normally this means reprojecting the vectors,
+ * but it could include datum shifts, and changes of units. 
+ *
+ * This method will only work if the geometry already has an assigned
+ * spatial reference system, and if it is transformable to the target
+ * coordinate system.
+ *
+ * Because this method requires internal creation and initialization of an
+ * OGRCoordinateTransformation object it is significantly more expensive to
+ * use this method to transform many geometries than it is to create the
+ * OGRCoordinateTransformation in advance, and call transform() with that
+ * transformation.  This method exists primarily for convenience when only
+ * transforming a single geometry.
+ * 
+ * @param poSR spatial reference system to transform to.
+ *
+ * @return OGRERR_NONE on success, or an error code.
+ */
+
+OGRErr OGRGeometry::transformTo( OGRSpatialReference *poSR )
+
+{
+    OGRCoordinateTransformation *poCT;
+    OGRErr eErr;
+
+    if( getSpatialReference() == NULL || poSR == NULL )
+        return OGRERR_FAILURE;
+
+    poCT = OGRCreateCoordinateTransformation( getSpatialReference(), poSR );
+    if( poCT == NULL )
+        return OGRERR_FAILURE;
+
+    eErr = transform( poCT );
+
+    delete poCT;
+
+    return eErr;
+}
+
+/**
+ * \fn OGRErr OGRGeometry::transform( OGRCoordinateTransformation *poCT );
+ *
+ * Apply arbitrary coordinate transformation to geometry.
+ *
+ * This method will transform the coordinates of a geometry from
+ * their current spatial reference system to a new target spatial
+ * reference system.  Normally this means reprojecting the vectors,
+ * but it could include datum shifts, and changes of units. 
+ * 
+ * Note that this method does not require that the geometry already
+ * have a spatial reference system.  It will be assumed that they can
+ * be treated as having the source spatial reference system of the
+ * OGRCoordinateTransformation object, and the actual SRS of the geometry
+ * will be ignored.  On successful completion the output OGRSpatialReference
+ * of the OGRCoordinateTransformation will be assigned to the geometry.
+ *
+ * @param poCT the transformation to apply.
+ *
+ * @return OGRERR_NONE on success or an error code.
+ */
 
 /**
  * \fn int OGRGeometry::getDimension();

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/09/21 16:24:20  warmerda
+ * added transform() and transformTo() methods
+ *
  * Revision 1.13  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -751,5 +754,37 @@ OGRBoolean OGRPolygon::Equal( OGRGeometry * poOther )
     return TRUE;
 }
 
+/************************************************************************/
+/*                             transform()                              */
+/************************************************************************/
+
+OGRErr OGRPolygon::transform( OGRCoordinateTransformation *poCT )
+
+{
+    for( int iRing = 0; iRing < nRingCount; iRing++ )
+    {
+        OGRErr	eErr;
+
+        eErr = papoRings[iRing]->transform( poCT );
+        if( eErr != OGRERR_NONE )
+        {
+            if( iRing != 0 )
+            {
+                CPLDebug("OGR", 
+                         "OGRPolygon::transform() failed for a ring other\n"
+                         "than the first, meaning some rings are transformed\n"
+                         "and some are not!\n" );
+
+                return OGRERR_FAILURE;
+            }
+
+            return eErr;
+        }
+    }
+
+    assignSpatialReference( poCT->GetTargetCS() );
+
+    return OGRERR_NONE;
+}
 
 

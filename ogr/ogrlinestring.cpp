@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2001/09/21 16:24:20  warmerda
+ * added transform() and transformTo() methods
+ *
  * Revision 1.20  2001/07/19 18:25:07  warmerda
  * expanded tabs
  *
@@ -989,3 +992,51 @@ OGRBoolean OGRLineString::Equal( OGRGeometry * poOther )
     return TRUE;
 }
 
+/************************************************************************/
+/*                             transform()                              */
+/************************************************************************/
+
+OGRErr OGRLineString::transform( OGRCoordinateTransformation *poCT )
+
+{
+    double	*xyz;
+    int		i;
+
+/* -------------------------------------------------------------------- */
+/*      Because we don't want to partially transform this geometry      */
+/*      (if some points fail after some have succeeded) we will         */
+/*      instead make a copy of the points to operate on.                */
+/* -------------------------------------------------------------------- */
+    xyz = (double *) CPLMalloc(sizeof(double) * nPointCount * 3);
+    if( xyz == NULL )
+        return OGRERR_NOT_ENOUGH_MEMORY;
+
+    for( i = 0; i < nPointCount; i++ )
+    {
+        xyz[i  ] = paoPoints[i].x;
+        xyz[i+nPointCount] = paoPoints[i].y;
+        if( padfZ )
+            xyz[i+nPointCount*2] = padfZ[i];
+        else
+            xyz[i+nPointCount*2] = 0.0;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Transform and reapply.                                          */
+/* -------------------------------------------------------------------- */
+    if( !poCT->Transform( nPointCount, xyz, xyz + nPointCount, 
+                          xyz+nPointCount*2 ) )
+    {
+        CPLFree( xyz );
+        return OGRERR_FAILURE;
+    }
+    else
+    {
+        setPoints( nPointCount, xyz, xyz+nPointCount, xyz+nPointCount*2 );
+        CPLFree( xyz );
+
+        assignSpatialReference( poCT->GetTargetCS() );
+
+        return OGRERR_NONE;
+    }
+}
