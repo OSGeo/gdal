@@ -1008,9 +1008,9 @@ else
     fi
   fi
   if test "$with_xerces_inc" != "" ; then
-    XERCES_INCLUDE="-I$with_xerces_inc"
+    XERCES_INCLUDE="-I$with_xerces_inc -I$with_xerces_inc/xercesc"
   else
-    XERCES_INCLUDE="-I$with_xerces/include/xercesc"
+    XERCES_INCLUDE="-I$with_xerces/include -I$with_xerces/include/xercesc"
   fi
 
   echo '#include <util/PlatformUtils.hpp>' > conftest.cpp
