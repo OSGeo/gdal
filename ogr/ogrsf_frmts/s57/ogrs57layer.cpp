@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/12/14 19:40:18  warmerda
+ * added optimized feature counting, and extents collection
+ *
  * Revision 1.5  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -59,12 +62,15 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRS57Layer::OGRS57Layer( OGRS57DataSource *poDSIn,
-                          OGRFeatureDefn * poDefnIn )
+                          OGRFeatureDefn * poDefnIn,
+                          int nFeatureCountIn )
 
 {
     poFilterGeom = NULL;
 
     poDS = poDSIn;
+
+    nFeatureCount = nFeatureCountIn;
 
     poFeatureDefn = poDefnIn;
 
@@ -175,7 +181,7 @@ OGRFeature *OGRS57Layer::GetNextFeature()
 
 {
     OGRFeature  *poFeature = NULL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read features till we find one that satisfies our current       */
 /*      spatial criteria.                                               */
@@ -214,8 +220,14 @@ int OGRS57Layer::TestCapability( const char * pszCap )
         return FALSE;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return FALSE;
+        return TRUE;
 
+    else if( EQUAL(pszCap,OLCFastGetExtent) )
+    {
+        OGREnvelope oEnvelope;
+
+        return GetExtent( &oEnvelope, FALSE ) == OGRERR_NONE;
+    }
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
 
@@ -232,3 +244,27 @@ OGRSpatialReference *OGRS57Layer::GetSpatialRef()
 {
     return poDS->GetSpatialRef();
 }
+
+/************************************************************************/
+/*                             GetExtent()                              */
+/************************************************************************/
+
+OGRErr OGRS57Layer::GetExtent( OGREnvelope *psExtent, int bForce )
+
+{
+    return poDS->GetDSExtent( psExtent, bForce );
+}
+
+/************************************************************************/
+/*                          GetFeatureCount()                           */
+/************************************************************************/
+int OGRS57Layer::GetFeatureCount (int bForce)
+{
+    
+    if( poFilterGeom != NULL || m_poAttrQuery != NULL 
+        || nFeatureCount == -1 )
+        return OGRLayer::GetFeatureCount( bForce );
+    else
+        return nFeatureCount;
+}
+

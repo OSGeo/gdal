@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/12/14 19:40:18  warmerda
+ * added optimized feature counting, and extents collection
+ *
  * Revision 1.12  2001/11/21 14:35:44  warmerda
  * dont managed updates directly anymore
  *
@@ -276,7 +279,8 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
                 poDefn = poModule->GenerateObjectClassDefn( poRegistrar,
                                                             iClass );
                 if( poDefn != NULL )
-                    AddLayer( new OGRS57Layer( this, poDefn ) );
+                    AddLayer( new OGRS57Layer( this, poDefn, 
+                                               panClassCount[iClass] ) );
                 else
                 {
                     bGeneric = TRUE;
@@ -348,4 +352,52 @@ S57Reader * OGRS57DataSource::GetModule( int i )
         return NULL;
     else
         return papoModules[i];
+}
+
+/************************************************************************/
+/*                            GetDSExtent()                             */
+/************************************************************************/
+
+OGRErr OGRS57DataSource::GetDSExtent( OGREnvelope *psExtent, int bForce )
+
+{
+/* -------------------------------------------------------------------- */
+/*      If we have it, return it immediately.                           */
+/* -------------------------------------------------------------------- */
+    if( bExtentsSet )
+    {
+        *psExtent = oExtents;
+        return OGRERR_NONE;
+    }
+
+    if( nModules == 0 )
+        return OGRERR_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise try asking each of the readers for it.                */
+/* -------------------------------------------------------------------- */
+    for( int iModule=0; iModule < nModules; iModule++ )
+    {
+        OGREnvelope	oModuleEnvelope;
+        OGRErr          eErr;
+
+        eErr = papoModules[iModule]->GetExtent( &oModuleEnvelope, bForce );
+        if( eErr != OGRERR_NONE )
+            return eErr;
+
+        if( iModule == 0 )
+            oExtents = oModuleEnvelope;
+        else
+        {
+            oExtents.MinX = MIN(oExtents.MinX,oModuleEnvelope.MinX);
+            oExtents.MaxX = MAX(oExtents.MaxX,oModuleEnvelope.MaxX);
+            oExtents.MinY = MIN(oExtents.MinY,oModuleEnvelope.MinY);
+            oExtents.MaxX = MAX(oExtents.MaxY,oModuleEnvelope.MaxY);
+        }
+    }
+
+    *psExtent = oExtents;
+    bExtentsSet = TRUE;
+
+    return OGRERR_NONE;
 }

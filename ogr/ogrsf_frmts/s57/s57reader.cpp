@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2001/12/14 19:40:18  warmerda
+ * added optimized feature counting, and extents collection
+ *
  * Revision 1.29  2001/09/12 17:09:44  warmerda
  * add auto-update support
  *
@@ -2032,5 +2035,118 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
     }
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                             GetExtent()                              */
+/*                                                                      */
+/*      Scan all the cached records collecting spatial bounds as        */
+/*      efficiently as possible for this transfer.                      */
+/************************************************************************/
+
+OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
+
+{
+#define INDEX_COUNT	4
+
+    DDFRecordIndex	*apoIndex[INDEX_COUNT];
+
+/* -------------------------------------------------------------------- */
+/*      If we aren't forced to get the extent say no if we haven't      */
+/*      already indexed the iso8211 records.                            */
+/* -------------------------------------------------------------------- */
+    if( !bForce && !bFileIngested )
+        return OGRERR_FAILURE;
+
+    Ingest();
+
+/* -------------------------------------------------------------------- */
+/*      We will scan all the low level vector elements for extents      */
+/*      coordinates.                                                    */
+/* -------------------------------------------------------------------- */
+    int		bGotExtents = FALSE;
+    int         nXMin=0, nXMax=0, nYMin=0, nYMax=0;
+
+    apoIndex[0] = &oVI_Index;
+    apoIndex[1] = &oVC_Index;
+    apoIndex[2] = &oVE_Index;
+    apoIndex[3] = &oVF_Index;
+
+    for( int iIndex = 0; iIndex < INDEX_COUNT; iIndex++ )
+    {
+        DDFRecordIndex	*poIndex = apoIndex[iIndex];
+
+        for( int iVIndex = 0; iVIndex < poIndex->GetCount(); iVIndex++ )
+        {
+            DDFRecord *poRecord = poIndex->GetByIndex( iVIndex );
+            DDFField	*poSG3D = poRecord->FindField( "SG3D" );
+            DDFField    *poSG2D = poRecord->FindField( "SG2D" );
+
+            if( poSG3D != NULL )
+            {
+                int     i, nVCount = poSG3D->GetRepeatCount();
+                GInt32	*panData, nX, nY;
+
+                panData = (GInt32 *) poSG3D->GetData();
+                for( i = 0; i < nVCount; i++ )
+                {
+                    nX = CPL_LSBWORD32(panData[i*3+1]);
+                    nY = CPL_LSBWORD32(panData[i*3+0]);
+
+                    if( bGotExtents )
+                    {
+                        nXMin = MIN(nXMin,nX);
+                        nXMax = MAX(nXMax,nX);
+                        nYMin = MIN(nYMin,nY);
+                        nYMax = MAX(nYMax,nY);
+                    }
+                    else
+                    {
+                        nXMin = nXMax = nX; 
+                        nYMin = nYMax = nY;
+                        bGotExtents = TRUE;
+                    }
+                }
+            }
+            else if( poSG2D != NULL )
+            {
+                int     i, nVCount = poSG2D->GetRepeatCount();
+                GInt32	*panData, nX, nY;
+
+                panData = (GInt32 *) poSG2D->GetData();
+                for( i = 0; i < nVCount; i++ )
+                {
+                    nX = CPL_LSBWORD32(panData[i*2+1]);
+                    nY = CPL_LSBWORD32(panData[i*2+0]);
+
+                    if( bGotExtents )
+                    {
+                        nXMin = MIN(nXMin,nX);
+                        nXMax = MAX(nXMax,nX);
+                        nYMin = MIN(nYMin,nY);
+                        nYMax = MAX(nYMax,nY);
+                    }
+                    else
+                    {
+                        nXMin = nXMax = nX; 
+                        nYMin = nYMax = nY;
+                        bGotExtents = TRUE;
+                    }
+                }
+            }
+        }
+    }
+
+    if( !bGotExtents )
+        return OGRERR_FAILURE;
+    else
+    {
+        psExtent->MinX = nXMin / (double) nCOMF;
+        psExtent->MaxX = nXMax / (double) nCOMF;
+        psExtent->MinY = nYMin / (double) nCOMF;
+        psExtent->MaxY = nYMax / (double) nCOMF;
+
+        return OGRERR_NONE;
+    }
 }
 
