@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/08/24 19:41:19  warmerda
+ * fixed cloning problems
+ *
  * Revision 1.12  2001/08/24 16:30:55  warmerda
  * added DDFRecord update in place methods for S57 updating
  *
@@ -416,7 +419,7 @@ class DDFRecord
     DDFField* AddField( DDFFieldDefn * );
 
     int SetFieldRaw( DDFField *poField, int iIndexWithinField, 
-                     char *pachRawData, int nRawDataSize );
+                     const char *pachRawData, int nRawDataSize );
 
     // This is really just for the DDFModule class.
     int         Read();

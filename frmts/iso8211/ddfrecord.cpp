@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/08/24 19:41:19  warmerda
+ * fixed cloning problems
+ *
  * Revision 1.11  2001/08/24 16:30:55  warmerda
  * added DDFRecord update in place methods for S57 updating
  *
@@ -728,7 +731,9 @@ DDFRecord *DDFRecord::CloneOn( DDFModule *poTargetModule )
                              poField->GetDataSize() );
     }
 
-    poModule = poTargetModule;
+    poModule->RemoveCloneRecord( poClone );
+    poClone->poModule = poTargetModule;
+    poTargetModule->AddCloneRecord( poClone );
 
     return poClone;
 }
@@ -953,7 +958,7 @@ DDFField *DDFRecord::AddField( DDFFieldDefn *poDefn )
 
 int
 DDFRecord::SetFieldRaw( DDFField *poField, int iIndexWithinField,
-                        char *pachRawData, int nRawDataSize )
+                        const char *pachRawData, int nRawDataSize )
 
 {
     int		iTarget, nRepeatCount;
