@@ -133,6 +133,12 @@ HAVE_DODS = yes
 endif
 
 #
+# SQLite 
+#
+SQLITE_INC = @SQLITE_INC@
+HAVE_SQLITE = @HAVE_SQLITE@
+
+#
 # JPEG2000 via Kakadu Support.
 #
 KAKDIR = @KAKDIR@
