@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/02/17 18:47:05  warmerda
+ * added geometry support
+ *
  * Revision 1.1  2004/02/17 16:22:19  warmerda
  * New
  *
@@ -67,46 +70,6 @@ OGRDODSGridLayer::OGRDODSGridLayer( OGRDODSDataSource *poDSIn,
     }
         
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
-
-/* -------------------------------------------------------------------- */
-/*      X/Y/Z fields.                                                   */
-/* -------------------------------------------------------------------- */
-#ifdef notdef
-    if( poOGRLayerInfo != NULL )
-    {
-        AttrTable *poField = poOGRLayerInfo->find_container("x_field");
-        if( poField != NULL )
-            oXField.Initialize( poField );
-
-        poField = poOGRLayerInfo->find_container("y_field");
-        if( poField != NULL )
-            oYField.Initialize( poField );
-
-        poField = poOGRLayerInfo->find_container("z_field");
-        if( poField != NULL )
-            oZField.Initialize( poField );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      If we have no layerinfo, then check if there are obvious x/y    */
-/*      fields.                                                         */
-/* -------------------------------------------------------------------- */
-    else
-    {
-        string x, y;
-
-        x = pszTargetIn;
-        x += ".lon";
-        y = pszTargetIn;
-        y += ".lat";
-        
-        if( poDS->oDDS.var( x ) != NULL && poDS->oDDS.var( y ) != NULL )
-        {
-            oXField.Initialize( "lon", "dds" );
-            oYField.Initialize( "lat", "dds" );
-        }
-    }
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the target variable.                                      */
@@ -252,6 +215,71 @@ OGRDODSGridLayer::OGRDODSGridLayer( OGRDODSDataSource *poDSIn,
     }
 
     poFeatureDefn->AddFieldDefn( &oArrayField );
+
+/* -------------------------------------------------------------------- */
+/*      X/Y/Z fields.                                                   */
+/* -------------------------------------------------------------------- */
+    if( poOGRLayerInfo != NULL )
+    {
+        AttrTable *poField = poOGRLayerInfo->find_container("x_field");
+        if( poField != NULL )
+        {
+            oXField.Initialize( poField );
+            oXField.iFieldIndex = 
+                poFeatureDefn->GetFieldIndex( oXField.pszFieldName );
+        }
+
+        poField = poOGRLayerInfo->find_container("y_field");
+        if( poField != NULL )
+        {
+            oYField.Initialize( poField );
+            oYField.iFieldIndex = 
+                poFeatureDefn->GetFieldIndex( oYField.pszFieldName );
+        }
+
+        poField = poOGRLayerInfo->find_container("z_field");
+        if( poField != NULL )
+        {
+            oZField.Initialize( poField );
+            oZField.iFieldIndex = 
+                poFeatureDefn->GetFieldIndex( oZField.pszFieldName );
+        }
+
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we have no layerinfo, then check if there are obvious x/y    */
+/*      fields.                                                         */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        if( poFeatureDefn->GetFieldIndex( "lat" ) != -1
+            && poFeatureDefn->GetFieldIndex( "lon" ) != -1 )
+        {
+            oXField.Initialize( "lon", "dds" );
+            oXField.iFieldIndex = poFeatureDefn->GetFieldIndex( "lon" );
+            oYField.Initialize( "lat", "dds" );
+            oYField.iFieldIndex = poFeatureDefn->GetFieldIndex( "lat" );
+        }
+        else if( poFeatureDefn->GetFieldIndex( "latitude" ) != -1
+            && poFeatureDefn->GetFieldIndex( "longitude" ) != -1 )
+        {
+            oXField.Initialize( "longitude", "dds" );
+            oXField.iFieldIndex = poFeatureDefn->GetFieldIndex( "longitude" );
+            oYField.Initialize( "latitude", "dds" );
+            oYField.iFieldIndex = poFeatureDefn->GetFieldIndex( "latitude" );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set the layer geometry type if we have point inputs.            */
+/* -------------------------------------------------------------------- */
+    if( oZField.iFieldIndex >= 0 )
+        poFeatureDefn->SetGeomType( wkbPoint25D );
+    else if( oXField.iFieldIndex >= 0 && oYField.iFieldIndex >= 0 )
+        poFeatureDefn->SetGeomType( wkbPoint );
+    else
+        poFeatureDefn->SetGeomType( wkbNone );
 }
 
 /************************************************************************/
@@ -373,6 +401,22 @@ OGRFeature *OGRDODSGridLayer::GetFeature( long nFeatureId )
 /* -------------------------------------------------------------------- */
     ArrayEntryToField( poTargetArray, pRawData, nFeatureId, 
                        poFeature, nDimCount );
+
+/* -------------------------------------------------------------------- */
+/*      Do we have geometry information?                                */
+/* -------------------------------------------------------------------- */
+    if( oXField.iFieldIndex >= 0 && oYField.iFieldIndex >= 0 )
+    {
+        OGRPoint *poPoint = new OGRPoint();
+
+        poPoint->setX( poFeature->GetFieldAsDouble( oXField.iFieldIndex ) );
+        poPoint->setY( poFeature->GetFieldAsDouble( oYField.iFieldIndex ) );
+
+        if( oZField.iFieldIndex >= 0 )
+            poPoint->setZ( poFeature->GetFieldAsDouble(oZField.iFieldIndex) );
+
+        poFeature->SetGeometryDirectly( poPoint );
+    }
 
     return poFeature;
 }

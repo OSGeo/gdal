@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/02/17 18:47:05  warmerda
+ * added geometry support
+ *
  * Revision 1.4  2004/02/17 05:46:43  warmerda
  * Added grid/array support
  *
@@ -226,6 +229,10 @@ class OGRDODSGridLayer : public OGRDODSLayer
 {
     Array              *poTargetArray;
     Grid               *poTargetGrid; // NULL if simple array used.
+
+    OGRDODSFieldDefn    oXField;
+    OGRDODSFieldDefn    oYField;
+    OGRDODSFieldDefn    oZField;
 
     int                 nDimCount;
     OGRDODSDim         *paoDimensions;
