@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.14  2005/02/17 21:12:48  kruland
+ * Added some more module level functions.
+ *
  * Revision 1.13  2005/02/17 17:27:13  kruland
  * Changed the handling of fixed size double arrays to make it fit more
  * naturally with GDAL/OSR usage.  Declare as typedef double * double_17;
@@ -104,6 +107,42 @@ typedef int CPLErr;
 //************************************************************************
 %rename (AllRegister) GDALAllRegister;
 void GDALAllRegister();
+
+%rename (GetCacheMax) GDALGetCacheMax;
+int GDALGetCacheMax();
+
+%rename (SetCacheMax) GDALSetCacheMax;
+void GDALSetCacheMax( int nBytes );
+    
+%rename (GetCacheUsed) GDALGetCacheUsed;
+int GDALGetCacheUsed();
+    
+%rename (GetDataTypeSize) GDALGetDataTypeSize;
+int GDALGetDataTypeSize( GDALDataType );
+
+%rename (DataTypeIsComplex) GDALDataTypeIsComplex;
+int GDALDataTypeIsComplex( GDALDataType );
+
+%rename (GetDataTypeName) GDALGetDataTypeName;
+const char *GDALGetDataTypeName( GDALDataType );
+
+%rename (GetDataTypeByName) GDALGetDataTypeByName;
+GDALDataType GDALGetDataTypeByName( const char * );
+
+%rename (GetColorInterpretationName) GDALGetColorInterpretationName;
+const char *GDALGetColorInterpretationName( GDALColorInterp );
+
+%rename (GetPaletteInterpretationName) GDALGetPaletteInterpretationName;
+const char *GDALGetPaletteInterpretationName( GDALPaletteInterp );
+
+%rename (DecToDMS) GDALDecToDMS;
+const char *GDALDecToDMS( double, const char *, int = 2 );
+
+%rename (PackedDMSToDec) GDALPackedDMSToDec;
+double GDALPackedDMSToDec( double );
+
+%rename (DecToPackedDMS) GDALDecToPackedDMS;
+double GDALDecToPackedDMS( double );
 
 //************************************************************************
 //
