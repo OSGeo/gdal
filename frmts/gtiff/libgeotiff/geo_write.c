@@ -18,6 +18,17 @@
 static int WriteKey(GTIF* gt, KeyEntry* entptr,GeoKey* keyptr);
 static int SortKeys(GTIF* gt,int *sortkeys);
 
+/**
+This function flushes all the GeoTIFF keys that have been set with the 
+GTIFKeySet() function into the associated 
+TIFF file.
+
+@param gt The GeoTIFF handle returned by GTIFNew.
+
+GTIFKeySet() should be called before 
+GTIFFree() is used to deallocate a GeoTIFF access handle.
+ */
+
 int GTIFWriteKeys(GTIF *gt)
 {
 	int i;
@@ -110,7 +121,6 @@ static int WriteKey(GTIF* gt, KeyEntry* entptr,GeoKey* keyptr)
 			break;
 		default:
 			return 0; /* failure */
-			break;
 	}
 	
 	return 1; /* success */
@@ -125,22 +135,22 @@ static int WriteKey(GTIF* gt, KeyEntry* entptr,GeoKey* keyptr)
 
 static int SortKeys(GTIF* gt,int *sortkeys)
 {
-	int loc;
-	int nkeys=0;
-	geokey_t key,kmin,kmax;
-	int *index = gt->gt_keyindex;
-	GeoKey* keys=gt->gt_keys;
+    int loc;
+    int nkeys=0;
+    geokey_t key,kmin,kmax;
+    int *index = gt->gt_keyindex;
 	
-	kmin = gt->gt_keymin; kmax=gt->gt_keymax;
-	for (key=kmin; key<=kmax; key++)
-	{
-		if (loc=index[key])
-		{
-			sortkeys[nkeys] = loc;
-			nkeys++;
-		}
-	}
+    kmin = (geokey_t) gt->gt_keymin;
+    kmax = (geokey_t) gt->gt_keymax;
+    for (key=kmin; key<=kmax; key++)
+    {
+        if ( (loc=index[key]) != 0 )
+        {
+            sortkeys[nkeys] = loc;
+            nkeys++;
+        }
+    }
 	
-	return nkeys==gt->gt_num_keys;
+    return nkeys==gt->gt_num_keys;
 }
 

@@ -30,19 +30,34 @@
 #define CPL_SERV_H_INCLUDED
 
 /* ==================================================================== */
-/*      We will use WIN32 as a standard windows define.                 */
-/* ==================================================================== */
-#if defined(_WIN32) && !defined(WIN32)
-#  define WIN32
-#endif
-
-/* ==================================================================== */
 /*	Standard include files.						*/
 /* ==================================================================== */
 
 #include "geo_config.h"
-#include "geotiff.h"
-#include "geo_tiffp.h"
+#include <stdio.h>
+
+#include <math.h>
+
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#endif
+#if defined(HAVE_STRINGS_H) && !defined(HAVE_STRING_H)
+#  include <strings.h>
+#endif
+#ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+#endif
+
+/**********************************************************************
+ * Do we want to build as a DLL on windows?
+ **********************************************************************/
+#if !defined(CPL_DLL)
+#  if defined(_WIN32) && defined(BUILD_AS_DLL)
+#    define CPL_DLL     __declspec(dllexport)
+#  else
+#    define CPL_DLL
+#  endif
+#endif
 
 /* ==================================================================== */
 /*      Other standard services.                                        */
@@ -54,10 +69,6 @@
 #  define CPL_C_START
 #  define CPL_C_END
 #endif
-
-/* #  define CPL_DLL     __declspec(dllexport) */
-
-#define CPL_DLL
 
 #ifndef NULL
 #  define NULL	0
@@ -85,7 +96,7 @@
 #endif
 
 #ifndef EQUAL
-#ifdef WIN32
+#if defined(_WIN32) && !defined(__CYGWIN__)
 #  define EQUALN(a,b,n)           (strnicmp(a,b,n)==0)
 #  define EQUAL(a,b)              (stricmp(a,b)==0)
 #else
@@ -117,10 +128,10 @@
 /*      error reporting if memory allocation fails.                     */
 /* -------------------------------------------------------------------- */
 CPL_C_START
-void CPL_DLL *CPLMalloc( size_t );
-void CPL_DLL *CPLCalloc( size_t, size_t );
-void CPL_DLL *CPLRealloc( void *, size_t );
-char CPL_DLL *CPLStrdup( const char * );
+void  *CPLMalloc( int );
+void  *CPLCalloc( int, int );
+void  *CPLRealloc( void *, int );
+char  *CPLStrdup( const char * );
 
 #define CPLFree	VSIFree
 
@@ -132,7 +143,6 @@ const char *CPLReadLine( FILE * );
 /*=====================================================================
                    Error handling functions (cpl_error.c)
  =====================================================================*/
-CPL_C_START
 
 typedef enum
 {
@@ -144,13 +154,13 @@ typedef enum
   
 } CPLErr;
 
-void CPL_DLL CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...);
-void CPL_DLL CPLErrorReset();
-int CPL_DLL CPLGetLastErrorNo();
-const char CPL_DLL * CPLGetLastErrorMsg();
-void CPL_DLL CPLSetErrorHandler(void(*pfnErrorHandler)(CPLErr,int,
+void  CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...);
+void  CPLErrorReset();
+int  CPLGetLastErrorNo();
+const char  * CPLGetLastErrorMsg();
+void  CPLSetErrorHandler(void(*pfnErrorHandler)(CPLErr,int,
                                                        const char *));
-void CPL_DLL _CPLAssert( const char *, const char *, int );
+void  _CPLAssert( const char *, const char *, int );
 
 #ifdef DEBUG
 #  define CPLAssert(expr)  ((expr) ? (void)(0) : _CPLAssert(#expr,__FILE__,__LINE__))

@@ -23,8 +23,17 @@
  * cpl_serv.c: Various Common Portability Library derived convenience functions
  *
  * $Log$
- * Revision 1.1  1999/03/10 18:24:34  warmerda
- * New
+ * Revision 1.2  1999/09/08 18:12:55  warmerda
+ * reimported
+ *
+ * Revision 1.4  1999/06/25 04:35:26  warmerda
+ * Fixed to actually support long lines.
+ *
+ * Revision 1.3  1999/03/17 20:43:03  geotiff
+ * Avoid use of size_t keyword
+ *
+ * Revision 1.2  1999/03/10 18:22:39  geotiff
+ * Added string.h, fixed backslash escaping
  *
  * Revision 1.1  1999/03/09 15:57:04  geotiff
  * New
@@ -32,6 +41,7 @@
  */
 
 #include "cpl_serv.h"
+#include "geo_tiffp.h"
 
 #ifdef HAVE_STRING_H
 #  include <string.h>
@@ -44,7 +54,7 @@
 /*                             CPLCalloc()                              */
 /************************************************************************/
 
-void *CPLCalloc( size_t nCount, size_t nSize )
+void *CPLCalloc( int nCount, int nSize )
 
 {
     void	*pReturn;
@@ -67,7 +77,7 @@ void *CPLCalloc( size_t nCount, size_t nSize )
 /*                             CPLMalloc()                              */
 /************************************************************************/
 
-void *CPLMalloc( size_t nSize )
+void *CPLMalloc( int nSize )
 
 {
     void	*pReturn;
@@ -90,7 +100,7 @@ void *CPLMalloc( size_t nSize )
 /*                             CPLRealloc()                             */
 /************************************************************************/
 
-void * CPLRealloc( void * pData, size_t nNewSize )
+void * CPLRealloc( void * pData, int nNewSize )
 
 {
     void	*pReturn;
@@ -145,9 +155,6 @@ char *CPLStrdup( const char * pszString )
 /*      DKReadLine().  Pointer to an internal buffer is returned.       */
 /*      The application shouldn't free it, or depend on it's value      */
 /*      past the next call to CPLReadLine()                             */
-/*                                                                      */
-/*      TODO: Allow arbitrarily long lines ... currently limited to     */
-/*      512 characters.                                                 */
 /************************************************************************/
 
 const char *CPLReadLine( FILE * fp )
@@ -155,23 +162,41 @@ const char *CPLReadLine( FILE * fp )
 {
     static char	*pszRLBuffer = NULL;
     static int	nRLBufferSize = 0;
-    int		nLength;
+    int		nLength, nReadSoFar = 0;
 
 /* -------------------------------------------------------------------- */
-/*      Allocate our working buffer.  Eventually this should grow as    */
-/*      needed ... we will implement that aspect later.                 */
+/*      Loop reading chunks of the line till we get to the end of       */
+/*      the line.                                                       */
 /* -------------------------------------------------------------------- */
-    if( nRLBufferSize < 512 )
-    {
-        nRLBufferSize = 512;
-        pszRLBuffer = (char *) CPLRealloc(pszRLBuffer, nRLBufferSize);
-    }
+    do {
+/* -------------------------------------------------------------------- */
+/*      Grow the working buffer if we have it nearly full.  Fail out    */
+/*      of read line if we can't reallocate it big enough (for          */
+/*      instance for a _very large_ file with no newlines).             */
+/* -------------------------------------------------------------------- */
+        if( nRLBufferSize-nReadSoFar < 128 )
+        {
+            nRLBufferSize = nRLBufferSize*2 + 128;
+            pszRLBuffer = (char *) VSIRealloc(pszRLBuffer, nRLBufferSize);
+            if( pszRLBuffer == NULL )
+            {
+                nRLBufferSize = 0;
+                return NULL;
+            }
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Do the actual read.                                             */
 /* -------------------------------------------------------------------- */
-    if( VSIFGets( pszRLBuffer, nRLBufferSize, fp ) == NULL )
-        return NULL;
+        if( VSIFGets( pszRLBuffer+nReadSoFar, nRLBufferSize-nReadSoFar, fp )
+            == NULL )
+            return NULL;
+
+        nReadSoFar = strlen(pszRLBuffer);
+
+    } while( nReadSoFar == nRLBufferSize - 1
+             && pszRLBuffer[nRLBufferSize-2] != 13
+             && pszRLBuffer[nRLBufferSize-2] != 10 );
 
 /* -------------------------------------------------------------------- */
 /*      Clear CR and LF off the end.                                    */

@@ -7,7 +7,15 @@
 #ifndef __xtiffio_h
 #define __xtiffio_h
 
+#include "cpl_serv.h"
 #include "tiffio.h"
+
+/**
+ * \file xtiffio.h
+ *
+ * Definitions relating GeoTIFF functions from geotiff.h to the TIFF
+ * library (usually libtiff).
+ */
 
 /* 
  *  Define public Tag names and values here 
@@ -46,9 +54,9 @@
 extern "C" {
 #endif
 
-extern TIFF* XTIFFOpen(const char* name, const char* mode);
-extern TIFF* XTIFFFdOpen(int fd, const char* name, const char* mode);
-extern void  XTIFFClose(TIFF *tif);
+extern TIFF CPL_DLL * XTIFFOpen(const char* name, const char* mode);
+extern TIFF CPL_DLL * XTIFFFdOpen(int fd, const char* name, const char* mode);
+extern void CPL_DLL XTIFFClose(TIFF *tif);
 
 #if defined(__cplusplus)
 }

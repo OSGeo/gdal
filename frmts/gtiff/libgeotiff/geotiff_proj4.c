@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geotiff_proj4.c,v 1.1 1999/03/10 18:24:35 warmerda Exp $
+ * $Id: geotiff_proj4.c,v 1.10 1999/07/06 15:05:51 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to convert a normalized GeoTIFF definition into a PROJ.4
@@ -29,8 +29,26 @@
  ******************************************************************************
  *
  * $Log: geotiff_proj4.c,v $
- * Revision 1.1  1999/03/10 18:24:35  warmerda
- * New
+ * Revision 1.10  1999/07/06 15:05:51  warmerda
+ * Fixed up LCC_1SP notes.
+ *
+ * Revision 1.9  1999/05/04 16:24:49  warmerda
+ * Fixed projection string formating with zones.
+ *
+ * Revision 1.8  1999/05/04 12:27:01  geotiff
+ * only emit proj unsupported warning if DEBUG defined
+ *
+ * Revision 1.7  1999/05/04 03:14:59  warmerda
+ * fixed use of foot instead of ft for units
+ *
+ * Revision 1.6  1999/05/03 17:50:31  warmerda
+ * avoid warnings on IRIX
+ *
+ * Revision 1.5  1999/04/29 23:02:24  warmerda
+ * added mapsys utm test.
+ *
+ * Revision 1.4  1999/03/18 21:35:42  geotiff
+ * Added reprojection functions
  *
  * Revision 1.3  1999/03/10 18:11:17  geotiff
  * Removed comment about this not being the master ... now it is.
@@ -43,8 +61,7 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
+#include "cpl_serv.h"
 #include "geotiff.h"
 #include "geo_normalize.h"
 #include "geovalues.h"
@@ -74,7 +91,7 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
     }
     else if( psDefn->UOMLength == Linear_Foot )
     {
-        strcpy( szUnits, "+units=foot " );
+        strcpy( szUnits, "+units=ft " );
     }
     else if( psDefn->UOMLength == Linear_Foot_US_Survey )
     {
@@ -110,9 +127,20 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
 /* ==================================================================== */
 
 /* -------------------------------------------------------------------- */
+/*      UTM - special case override on transverse mercator so things    */
+/*      will be more meaningful to the user.                            */
+/* -------------------------------------------------------------------- */
+    if( psDefn->MapSys == MapSys_UTM_North )
+    {
+        sprintf( szProjection+strlen(szProjection),
+                 "+proj=utm +zone=%d ",
+                 psDefn->Zone );
+    }
+    
+/* -------------------------------------------------------------------- */
 /*      Transverse Mercator                                             */
 /* -------------------------------------------------------------------- */
-    if( psDefn->CTProjection == CT_TransverseMercator )
+    else if( psDefn->CTProjection == CT_TransverseMercator )
     {
         sprintf( szProjection+strlen(szProjection),
            "+proj=tmerc +lat_0=%.9f +lon_0=%.9f +k=%f +x_0=%.3f +y_0=%.3f ",
@@ -341,9 +369,15 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
 /*      LambertConfConic_1SP                                            */
 /* -------------------------------------------------------------------- */
-    else if( psDefn->CTProjection == CT_LambertConfConic_2SP )
+    else if( psDefn->CTProjection == CT_LambertConfConic_1SP )
     {
         /* this appears to be an unsupported formulation with PROJ.4 */
+
+        /* to at least some degree this can be treated similarly to
+         * the 2SP case.
+         *
+         * See http://www.mentorsoftwareinc.com/CC/asknorm/ASK0699.HTM#Q2
+         */
     }
     
 /* -------------------------------------------------------------------- */
@@ -408,4 +442,148 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
 
     return( strdup( szProjection ) );
 }
+
+#if !defined(HAVE_LIBPROJ) || !defined(HAVE_PROJECTS_H)
+
+int GTIFProj4ToLatLong( GTIFDefn * psDefn, int nPoints,
+                        double *padfX, double *padfY )
+{
+#ifdef DEBUG    
+    fprintf( stderr,
+             "GTIFProj4ToLatLong() - PROJ.4 support not compiled in.\n" );
+#endif    
+    return FALSE;
+}
+
+int GTIFProj4FromLatLong( GTIFDefn * psDefn, int nPoints,
+                          double *padfX, double *padfY )
+{
+#ifdef DEBUG    
+    fprintf( stderr,
+             "GTIFProj4FromLatLong() - PROJ.4 support not compiled in.\n" );
+#endif    
+    return FALSE;
+}
+#else
+
+#include "projects.h"
+
+/************************************************************************/
+/*                        GTIFProj4FromLatLong()                        */
+/*                                                                      */
+/*      Convert lat/long values to projected coordinate for a           */
+/*      particular definition.                                          */
+/************************************************************************/
+
+int GTIFProj4FromLatLong( GTIFDefn * psDefn, int nPoints,
+                          double *padfX, double *padfY )
+
+{
+    char	*pszProjection, **papszArgs;
+    PJ		*psPJ;
+    int		i;
+    
+/* -------------------------------------------------------------------- */
+/*      Get a projection definition.                                    */
+/* -------------------------------------------------------------------- */
+    pszProjection = GTIFGetProj4Defn( psDefn );
+
+    if( pszProjection == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Parse into tokens for pj_init(), and initialize the projection. */
+/* -------------------------------------------------------------------- */
+    
+    papszArgs = CSLTokenizeStringComplex( pszProjection, " +", TRUE, FALSE );
+    free( pszProjection );
+
+    psPJ = pj_init( CSLCount(papszArgs), papszArgs );
+
+    CSLDestroy( papszArgs );
+
+    if( psPJ == NULL )
+    {
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Process each of the points.                                     */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nPoints; i++ )
+    {
+        UV	sUV;
+
+        sUV.u = padfX[i] * DEG_TO_RAD;
+        sUV.v = padfY[i] * DEG_TO_RAD;
+
+        sUV = pj_fwd( sUV, psPJ );
+
+        padfX[i] = sUV.u;
+        padfY[i] = sUV.v;
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                         GTIFProj4ToLatLong()                         */
+/*                                                                      */
+/*      Convert projection coordinates to lat/long for a particular     */
+/*      definition.                                                     */
+/************************************************************************/
+
+int GTIFProj4ToLatLong( GTIFDefn * psDefn, int nPoints,
+                        double *padfX, double *padfY )
+
+{
+    char	*pszProjection, **papszArgs;
+    PJ		*psPJ;
+    int		i;
+    
+/* -------------------------------------------------------------------- */
+/*      Get a projection definition.                                    */
+/* -------------------------------------------------------------------- */
+    pszProjection = GTIFGetProj4Defn( psDefn );
+
+    if( pszProjection == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Parse into tokens for pj_init(), and initialize the projection. */
+/* -------------------------------------------------------------------- */
+    
+    papszArgs = CSLTokenizeStringComplex( pszProjection, " +", TRUE, FALSE );
+    free( pszProjection );
+
+    psPJ = pj_init( CSLCount(papszArgs), papszArgs );
+
+    CSLDestroy( papszArgs );
+
+    if( psPJ == NULL )
+    {
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Process each of the points.                                     */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nPoints; i++ )
+    {
+        UV	sUV;
+
+        sUV.u = padfX[i];
+        sUV.v = padfY[i];
+
+        sUV = pj_inv( sUV, psPJ );
+
+        padfX[i] = sUV.u * RAD_TO_DEG;
+        padfY[i] = sUV.v * RAD_TO_DEG;
+    }
+
+    return TRUE;
+}
+
+
+#endif /* has projects.h and -lproj */
 

@@ -23,8 +23,23 @@
  * cpl_csv.c: Support functions for accessing CSV files.
  *
  * $Log$
- * Revision 1.1  1999/03/10 18:24:34  warmerda
- * New
+ * Revision 1.2  1999/09/08 18:12:55  warmerda
+ * reimported
+ *
+ * Revision 1.6  1999/06/26 17:28:51  warmerda
+ * Fixed reading of records with newlines embedded in quoted strings.
+ *
+ * Revision 1.5  1999/05/04 03:07:24  warmerda
+ * avoid warning
+ *
+ * Revision 1.4  1999/04/28 19:59:56  warmerda
+ * added some doxygen style documentation
+ *
+ * Revision 1.3  1999/03/17 19:53:15  geotiff
+ * sys includes moved to cpl_serv.h
+ *
+ * Revision 1.2  1999/03/10 16:54:42  geotiff
+ * Added use of the GEOTIFF_CSV environment variable to locate CSV files.
  *
  * Revision 1.1  1999/03/09 15:57:04  geotiff
  * New
@@ -38,10 +53,7 @@
  */
 
 #include "cpl_csv.h"
-
-#ifdef HAVE_STDLIB_H
-#  include <stdlib.h>
-#endif
+#include "geo_tiffp.h"
 
 /* ==================================================================== */
 /*      The CSVTable is a persistant set of info about an open CSV      */
@@ -188,17 +200,59 @@ char **CSVReadParseLine( FILE * fp )
 
 {
     const char	*pszLine;
+    char	*pszWorkLine;
+    char	**papszReturn;
 
     CPLAssert( fp != NULL );
     if( fp == NULL )
         return( NULL );
     
     pszLine = CPLReadLine( fp );
-
     if( pszLine == NULL )
         return( NULL );
 
-    return( CSLTokenizeStringComplex( pszLine, ",", TRUE, TRUE ) );
+/* -------------------------------------------------------------------- */
+/*      If there are no quotes, then this is the simple case.           */
+/*      Parse, and return tokens.                                       */
+/* -------------------------------------------------------------------- */
+    if( strchr(pszLine,'\"') == NULL )
+        return CSLTokenizeStringComplex( pszLine, ",", TRUE, TRUE );
+
+/* -------------------------------------------------------------------- */
+/*      We must now count the quotes in our working string, and as      */
+/*      long as it is odd, keep adding new lines.                       */
+/* -------------------------------------------------------------------- */
+    pszWorkLine = CPLStrdup( pszLine );
+
+    while( TRUE )
+    {
+        int		i, nCount = 0;
+
+        for( i = 0; pszWorkLine[i] != '\0'; i++ )
+        {
+            if( pszWorkLine[i] == '\"'
+                && (i == 0 || pszWorkLine[i-1] != '\\') )
+                nCount++;
+        }
+
+        if( nCount % 2 == 0 )
+            break;
+
+        pszLine = CPLReadLine( fp );
+        if( pszLine == NULL )
+            break;
+
+        pszWorkLine = (char *)
+            CPLRealloc(pszWorkLine,
+                       strlen(pszWorkLine) + strlen(pszLine) + 1);
+        strcat( pszWorkLine, pszLine );
+    }
+    
+    papszReturn = CSLTokenizeStringComplex( pszWorkLine, ",", TRUE, TRUE );
+
+    CPLFree( pszWorkLine );
+
+    return papszReturn;
 }
 
 /************************************************************************/
@@ -509,6 +563,50 @@ const char * CSVFilename( const char *pszBasename )
 /*      Applications can use this to set a function that will           */
 /*      massage CSV filenames.                                          */
 /************************************************************************/
+
+/**
+ * Override CSV file search method.
+ *
+ * @param CSVFileOverride The pointer to a function which will return the
+ * full path for a given filename.
+  *
+
+This function allows an application to override how the GTIFGetDefn() and related function find the CSV (Comma Separated
+Value) values required. The pfnHook argument should be a pointer to a function that will take in a CSV filename and return a
+full path to the file. The returned string should be to an internal static buffer so that the caller doesn't have to free the result.
+
+<b>Example:</b><br>
+
+The listgeo utility uses the following override function if the user
+specified a CSV file directory with the -t commandline switch (argument
+put into CSVDirName).  <p>
+
+<pre>
+
+    ...
+
+
+    SetCSVFilenameHook( CSVFileOverride );
+
+    ...
+
+
+static const char *CSVFileOverride( const char * pszInput )
+
+{
+    static char         szPath[1024];
+
+#ifdef WIN32
+    sprintf( szPath, "%s\\%s", CSVDirName, pszInput );
+#else    
+    sprintf( szPath, "%s/%s", CSVDirName, pszInput );
+#endif    
+
+    return( szPath );
+}
+</pre>
+
+*/
 
 void SetCSVFilenameHook( const char *(*pfnNewHook)( const char * ) )
 

@@ -227,7 +227,6 @@ _XTIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 	default:
 		/* call the inherited method */
 		return (PARENT(xt,vsetfield))(tif,tag,ap);
-		break;
 	}
 	if (status) {
 		/* we have to override the print method here,
@@ -293,7 +292,6 @@ _XTIFFVGetField(TIFF* tif, ttag_t tag, va_list ap)
 	default:
 		/* return inherited method */
 		return (PARENT(xt,vgetfield))(tif,tag,ap);
-		break;
 	}
 	return (1);
 }
@@ -427,9 +425,28 @@ void _XTIFFInitialize(void)
 }
 
 
-/*
- * Public File I/O Routines.
+/**
+ * GeoTIFF compatible TIFF file open function.
+ *
+ * @param name The filename of a TIFF file to open.
+ * @param mode The open mode ("r", "w" or "a").
+ *
+ * @return a TIFF * for the file, or NULL if the open failed.
+ *
+This function is used to open GeoTIFF files instead of TIFFOpen() from
+libtiff.  Internally it calls TIFFOpen(), but sets up some extra hooks
+so that GeoTIFF tags can be extracted from the file.  If XTIFFOpen() isn't
+used, GTIFNew() won't work properly.  Files opened
+with XTIFFOpen() should be closed with XTIFFClose().
+
+The name of the file to be opened should be passed as <b>name</b>, and an
+opening mode ("r", "w" or "a") acceptable to TIFFOpen() should be passed as the
+<b>mode</b>.<p>
+
+If XTIFFOpen() fails it will return NULL.  Otherwise, normal TIFFOpen()
+error reporting steps will have already taken place.<p>
  */
+
 TIFF*
 XTIFFOpen(const char* name, const char* mode)
 {
@@ -462,6 +479,15 @@ XTIFFFdOpen(int fd, const char* name, const char* mode)
 	return tif;
 }
 
+/**
+ * Close a file opened with XTIFFOpen().
+ *
+ * @param tif The file handle returned by XTIFFOpen().
+ * 
+ * If a GTIF structure was created with GTIFNew()
+ * for this file, it should be freed with GTIFFree()
+ * <i>before</i> calling XTIFFClose().
+*/
 
 void
 XTIFFClose(TIFF *tif)

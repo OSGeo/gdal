@@ -34,6 +34,7 @@
  *
  **********************************************************************/
 
+#include "geotiff.h"
 #include "xtiffio.h"
 
 /*
@@ -81,7 +82,7 @@ extern "C" {
  */
 typedef int        (*GTGetFunction) (tiff_t *tif, pinfo_t tag, int *count, void *value );
 typedef int        (*GTSetFunction) (tiff_t *tif, pinfo_t tag, int  count, void *value );
-typedef tagtype_t  (*GTTypeFunction)  (tiff_t *tif, pinfo_t tag);
+typedef tagtype_t  (*GTTypeFunction) (tiff_t *tif, pinfo_t tag);
 typedef struct     _TIFFMethod {
 	GTGetFunction get;
 	GTSetFunction set;

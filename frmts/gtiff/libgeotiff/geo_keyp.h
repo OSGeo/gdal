@@ -74,7 +74,6 @@ struct gtiff {
    int        gt_nshorts;  /* number of SHORT vals  */
    int        gt_ndoubles; /* number of DOUBLE vals */
    int        gt_nascii;   /* number of ASCII chars */
-   
 };  
 
 typedef enum {

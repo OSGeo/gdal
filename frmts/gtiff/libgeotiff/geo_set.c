@@ -9,11 +9,84 @@
  *  Permission granted to use this software, so long as this copyright
  *  notice accompanies any products derived therefrom.
  *
+ * $Log: geo_set.c,v $
+ * Revision 1.5  1999/05/04 03:09:33  warmerda
+ * avoid warnings
+ *
+ * Revision 1.4  1999/05/03 17:50:31  warmerda
+ * avoid warnings on IRIX
+ *
+ * Revision 1.3  1999/04/28 19:59:38  warmerda
+ * added some doxygen style documentation
+ *
+ * Revision 1.2  1999/03/11 17:39:38  geotiff
+ * Added fix for case where a key is being overwritten.
+ *
  **********************************************************************/
 
 #include "geotiff.h"   /* public interface        */
 #include "geo_tiffp.h" /* external TIFF interface */
 #include "geo_keyp.h"  /* private interface       */
+
+#include <assert.h>
+
+/**
+This function writes a geokey_t value to a GeoTIFF file.
+
+@param gtif The geotiff information handle from GTIFNew().
+
+@param keyID The geokey_t name (such as ProjectedCSTypeGeoKey).
+This must come from the list of legal geokey_t values
+(an enumeration) listed below.
+
+@param val The <b>val</b> argument is a pointer to the
+variable into which the value should be read.  The type of the variable
+varies depending on the geokey_t given.  While there is no ready mapping
+of geokey_t values onto types, in general code values are of type <i>short</i>,
+citations are strings, and everything else is of type <i>double</i>.  Note
+that pointer's to <i>int</i> should never be passed to GTIFKeyGet() for
+integer values as they will be shorts, and the int's may not be properly
+initialized (and will be grossly wrong on MSB systems).
+
+@param index Indicates how far into the list of values
+for this geokey to offset. Should normally be zero.
+
+@param count Indicates how many values
+to read.  At this time all keys except for strings have only one value,
+so <b>index</b> should be zero, and <b>count</b> should be one.<p>
+
+
+
+The <b>key</b> indicates the key name to be written to the
+file and should from the geokey_t enumeration 
+(eg. <tt>ProjectedCSTypeGeoKey</tt>).  The full list of possible geokey_t
+values can be found in geokeys.inc, or in the online documentation for
+GTIFKeyGet().<p>
+
+The <b>type</b> should be one of TYPE_SHORT, TYPE_ASCII, or TYPE_DOUBLE and
+will indicate the type of value being passed at the end of the argument
+list (the key value).  The <b>count</b> should be one except for strings
+when it should be the length of the string (or zero to for this to be
+computed internally).<p>
+
+The actual value is passed at the end of the argument list, and should be
+a short, a double, or a char * value.  Note that short and double values
+are passed as is, not as pointers.<p>
+
+Note that key values aren't actually flushed to the file untill
+GTIFWriteKeys() is called.  Till then 
+the new values are just kept with the GTIF structure.<p>
+
+<b>Example:</b><p>
+
+<pre>
+    GTIFKeySet(gtif, GTRasterTypeGeoKey, TYPE_SHORT, 1, 
+               RasterPixelIsArea);
+    GTIFKeySet(gtif, GTCitationGeoKey, TYPE_ASCII, 0, 
+               "UTM 11 North / NAD27" );
+</pre>
+
+ */
 
 int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
 {
@@ -37,6 +110,9 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
 			val=va_arg(ap, char*);
 			count = strlen(val) + 1; /* force = string length */
 			break;
+          default:
+            assert( FALSE );
+            break;
 	}
 	va_end(ap);
 	
@@ -92,12 +168,35 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
 	    default:
 			va_end(ap);
 	    	return 0;
-	    	break;
 	  }
 	   gtif->gt_nshorts += sizeof(KeyEntry)/sizeof(pinfo_t);
 	}
 
-	
+        /* this fixes a bug where if a request is made to write a duplicate
+           key, we must initialize the data to a valid value.
+           Bryan Wells (bryan@athena.bangor.autometric.com) */
+        
+        else /* no new values, but still have something to write */
+        {
+           switch (type)
+           {
+            case TYPE_SHORT:  
+                        if (count > 1) return 0;
+                        data = (char *)&key->gk_data; /* store value *in* data */
+                        break;
+            case TYPE_DOUBLE:
+                        data = key->gk_data;
+                        break;
+            case TYPE_ASCII:
+                        data = key->gk_data;
+                        data[--count] = '|'; /* replace NULL with '|' */
+                        break;
+            default:
+                return 0;
+          }
+
+        }
+        
 	_GTIFmemcpy(data, val, count*key->gk_size);
 	
 	gtif->gt_flags |= FLAG_FILE_MODIFIED;

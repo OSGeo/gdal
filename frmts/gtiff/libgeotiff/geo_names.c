@@ -104,8 +104,6 @@ char *GTIFValueName(geokey_t key, int value)
 
 static int FindCode(KeyInfo *info,char *key)
 {
-   static char errmsg[80];
-   
    while (info->ki_key>=0 && strcmp(info->ki_name,key) ) info++;
 
    if (info->ki_key<0)

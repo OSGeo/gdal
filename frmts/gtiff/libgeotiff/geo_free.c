@@ -22,6 +22,17 @@
  *
  **********************************************************************/
 
+/**
+  
+This function deallocates an existing GeoTIFF access handle previously
+created with GTIFNew().  If the handle was
+used to write GeoTIFF keys to the TIFF file, the 
+GTIFWriteKeys() function should be used
+to flush results to the file before calling GTIFFree().  GTIFFree()
+should be called before XTIFFClose() is
+called on the corresponding TIFF file handle.<p>
+
+*/
 
 void GTIFFree(GTIF* gtif)
 {

@@ -28,16 +28,29 @@ static int ReadKey(GTIF* gt, KeyEntry* entptr,GeoKey* keyptr);
  **********************************************************************/
 
 
-/*
+/**
  * Given an open TIFF file, look for GTIF keys and 
- *  values and return GTIF structure. The TIFF file is
- *  declared "void" to allow TIFF handlers other than libtiff to operate.
+ *  values and return GTIF structure.
+
+This function creates a GeoTIFF information interpretation handle
+(GTIF *) based on a passed in TIFF handle originally from 
+XTIFFOpen().  Even though the argument 
+(<b>tif</b>) is shown as type <tt>void *</tt>, it is really normally
+of type <tt>TIFF *</tt>.<p>
+
+The returned GTIF handle can be used to read or write GeoTIFF tags 
+using the various GTIF functions.  The handle should be destroyed using
+GTIFFree() before the file is closed with TIFFClose().<p>
+
+If the file accessed has no GeoTIFF keys, an valid (but empty) GTIF is
+still returned.  GTIFNew() is used both for existing files being read, and
+for new TIFF files that will have GeoTIFF tags written to them.<p>
+
  */
  
 GTIF* GTIFNew(void *tif)
 {
 	GTIF* gt=(GTIF*)0;
-	int status=1;
 	int count,bufcount,index;
 	GeoKey *keyptr;
 	pinfo_t *data;
@@ -172,7 +185,6 @@ static int ReadKey(GTIF* gt, KeyEntry* entptr,GeoKey* keyptr)
 			break;
 		default:
 			return 0; /* failure */
-			break;
 	}
 	keyptr->gk_size = _gtiff_size[keyptr->gk_type];
 	
