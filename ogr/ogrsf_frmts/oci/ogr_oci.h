@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/02/06 21:14:21  warmerda
+ * handle element info indirectly
+ *
  * Revision 1.10  2003/01/14 22:15:13  warmerda
  * added pseudo-sql commands DELLAYER and VALLAYER
  *
@@ -131,6 +134,7 @@ class CPL_DLL OGROCISession {
     OCIDescribe*hDescribe;
     OCIType    *hGeometryTDO;
     OCIType    *hOrdinatesTDO;
+    OCIType    *hElemInfoTDO;
 
     char       *pszUserid;
     char       *pszPassword;
@@ -319,7 +323,12 @@ class OGROCITableLayer : public OGROCILayer
     int                 nOrdinalMax;
     double             *padfOrdinals;
 
+    int                 nElemInfoCount;
+    int                 nElemInfoMax;
+    int                *panElemInfo;
+
     OCIArray           *hOrdVARRAY;
+    OCIArray           *hElemInfoVARRAY;
 
     char              **papszOptions;
 
@@ -327,10 +336,10 @@ class OGROCITableLayer : public OGROCILayer
     void                ReportTruncation( OGRFieldDefn * );
 
     void                PushOrdinal( double );
+    void                PushElemInfo( int, int, int );
 
     char               *TranslateToSDOGeometry( OGRGeometry * );
-    OGRErr              TranslateElementGroup( OGRGeometry *poGeometry,
-                                               OGROCIStringBuf *poElemInfo );
+    OGRErr              TranslateElementGroup( OGRGeometry *poGeometry );
 
     void                ParseDIMINFO( const char *, double *, double *,
                                       double * );
