@@ -18,13 +18,11 @@ default:	$(OBJ)
 clean:
 	rm -f *.o hfatest img2tif
 
-%.o:	%.cpp
-	$(CXX) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port \
-		$*.cpp -o $*.o
-
 %.o:	%.c
-	$(CC) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port \
-		$*.c -o $*.o
+	$(CC) -c $(CFLAGS) $(GDAL_INCLUDE) $*.c -o $*.o
+
+%.o:	%.cpp
+	$(CXX) -c $(CXXFLAGS) $(GDAL_INCLUDE) $*.cpp -o $*.o
 
 %.o:	addtiffo_src/%.cpp
 	$(CXX) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port \

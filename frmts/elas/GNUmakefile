@@ -5,25 +5,21 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	elasdataset.o
 
-ALL_C_FLAGS	=	$(GDAL_INCLUDE) $(CFLAGS)
-
-
-
 default:	$(OBJ)
 
 clean:
 	rm -f *.o
 
-%.o:	%.cpp
-	$(CXX) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port \
-		$*.cpp -o $*.o
+install-obj:	$(foreach file,$(OBJ),../o/$(file))
 
 %.o:	%.c
-	$(CC) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port \
-		$*.c -o $*.o
+	$(CC) -c $(CFLAGS) $(GDAL_INCLUDE) $*.c -o $*.o
 
-install-obj:	$(foreach file,$(OBJ),../o/$(file))
+%.o:	%.cpp
+	$(CXX) -c $(CXXFLAGS) $(GDAL_INCLUDE) $*.cpp -o $*.o
+
 
 ../o/%.o:	%.o
 	cp $*.o ../o
+
 

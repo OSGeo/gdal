@@ -4,9 +4,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	geotiff.o gt_wkt_srs.o
 
-ALL_C_FLAGS	=	-Ilibgeotiff -Ilibtiff $(GDAL_INCLUDE) $(CFLAGS)
-
-
+TIFF_OPTS	=	-Ilibgeotiff -Ilibtiff
 
 default:	$(OBJ)
 
@@ -15,13 +13,11 @@ clean:
 	(cd libtiff; $(MAKE) clean)
 	(cd libgeotiff; $(MAKE) clean)
 
-%.o:	%.cpp
-	$(CXX) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port \
-		$*.cpp -o $*.o
-
 %.o:	%.c
-	$(CC) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port \
-		$*.c -o $*.o
+	$(CC) -c $(CFLAGS) $(GDAL_INCLUDE) $(TIFF_OPTS) $*.c -o $*.o
+
+%.o:	%.cpp
+	$(CXX) -c $(CXXFLAGS) $(GDAL_INCLUDE) $(TIFF_OPTS) $*.cpp -o $*.o
 
 
 gt_test:	gt_test.o gt_gs.o cpl_csv.o

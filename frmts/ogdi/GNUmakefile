@@ -4,7 +4,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	ogdidataset.o
 
-ALL_C_FLAGS	=	-I$(TOPDIR)/include $(GDAL_INCLUDE) $(CFLAGS)
+OGDI_FLAGS	=	-I$(TOPDIR)/include
 
 
 
@@ -13,9 +13,11 @@ default:	$(OBJ)
 clean:
 	rm -f *.o
 
-%.o:	%.cpp
-	$(CXX) -c $(ALL_C_FLAGS) $*.cpp -o $*.o
+%.o:	%.c
+	$(CC) -c $(CFLAGS) $(GDAL_INCLUDE) $(OGDI_FLAGS) $*.c -o $*.o
 
+%.o:	%.cpp
+	$(CXX) -c $(CXXFLAGS) $(GDAL_INCLUDE) $(OGDI_FLAGS) $*.cpp -o $*.o
 
 install-obj:	$(foreach file,$(OBJ),../o/$(file))
 

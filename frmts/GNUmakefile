@@ -7,8 +7,6 @@ OBJ	=	o/gdalallregister.o
 
 FRMT_FLAGS	=	$(foreach FRMT, $(GDAL_FORMATS), -DFRMT_$(FRMT))
 
-ALL_C_FLAGS	=	$(GDAL_INCLUDE) $(CFLAGS) $(FRMT_FLAGS)
-
 default:	$(OBJ) sub-libs
 
 sub-libs:
@@ -31,8 +29,9 @@ clean:
 	done
 
 o/gdalallregister.o:	gdalallregister.cpp
-	$(CXX) -c $(ALL_C_FLAGS) -DGDAL_FORMATS="$(GDAL_FORMATS)" \
-		-I../core gdalallregister.cpp -o o/gdalallregister.o
+	$(CXX) -c $(CXXFLAGS) $(GDAL_INCLUDE) \
+		-DGDAL_FORMATS="$(GDAL_FORMATS)" \
+		gdalallregister.cpp -o o/gdalallregister.o
 
 
 
