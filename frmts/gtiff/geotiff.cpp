@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.119  2004/10/07 20:15:03  fwarmerdam
+ * various improvements to alpha handling
+ *
  * Revision 1.118  2004/10/06 13:11:21  fwarmerdam
  * added BigTIFF test
  *
@@ -365,6 +368,8 @@ class GTiffRasterBand : public GDALRasterBand
 {
     friend class GTiffDataset;
 
+    GDALColorInterp         eBandInterp;
+
   public:
 
                    GTiffRasterBand( GTiffDataset *, int );
@@ -434,6 +439,59 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
     {
         if( nSampleFormat == SAMPLEFORMAT_COMPLEXIEEEFP )
             eDataType = GDT_CFloat64;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to work out band color interpretation.                      */
+/* -------------------------------------------------------------------- */
+    if( poDS->nPhotometric == PHOTOMETRIC_RGB )
+    {
+        if( nBand == 1 )
+            eBandInterp = GCI_RedBand;
+        else if( nBand == 2 )
+            eBandInterp = GCI_GreenBand;
+        else if( nBand == 3 )
+            eBandInterp = GCI_BlueBand;
+        else
+        {
+            uint16 *v;
+            uint16 count = 0;
+
+            if( TIFFGetField( poDS->hTIFF, TIFFTAG_EXTRASAMPLES, &count, &v) )
+            {
+                if( nBand - 3 <= count && v[nBand-4] == EXTRASAMPLE_ASSOCALPHA )
+                    eBandInterp = GCI_AlphaBand;
+                else
+                    eBandInterp = GCI_Undefined;
+            }
+            else if( nBand == 4 )
+                eBandInterp = GCI_AlphaBand;
+            else
+                eBandInterp = GCI_Undefined;
+        }
+    }
+    else if( poDS->nPhotometric == PHOTOMETRIC_MINISBLACK && nBand == 1 )
+        eBandInterp = GCI_GrayIndex;
+    else if( poDS->nPhotometric == PHOTOMETRIC_PALETTE && nBand == 1 ) 
+        eBandInterp = GCI_PaletteIndex;
+    else
+    {
+        uint16 *v;
+        uint16 count = 0;
+
+        if( TIFFGetField( poDS->hTIFF, TIFFTAG_EXTRASAMPLES, &count, &v ) )
+        {
+            int nBaseSamples;
+            nBaseSamples = poDS->nSamplesPerPixel - count;
+
+            if( nBand > nBaseSamples 
+                && v[nBand-nBaseSamples-1] == EXTRASAMPLE_ASSOCALPHA )
+                eBandInterp = GCI_AlphaBand;
+            else
+                eBandInterp = GCI_Undefined;
+        }
+        else
+            eBandInterp = GCI_Undefined;
     }
 
 /* -------------------------------------------------------------------- */
@@ -654,6 +712,8 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 GDALColorInterp GTiffRasterBand::GetColorInterpretation()
 
 {
+    return eBandInterp;
+
     GTiffDataset	*poGDS = (GTiffDataset *) poDS;
 
     if( poGDS->nPhotometric == PHOTOMETRIC_RGB )
@@ -669,7 +729,7 @@ GDALColorInterp GTiffRasterBand::GetColorInterpretation()
         else
             return GCI_Undefined;
     }
-    else if( poGDS->nPhotometric == PHOTOMETRIC_PALETTE )
+    else if( poGDS->nPhotometric == PHOTOMETRIC_PALETTE && nBand == 1 )
     {
         return GCI_PaletteIndex;
     }
@@ -2853,8 +2913,13 @@ TIFF *GTiffCreate( const char * pszFilename,
         int nExtraSamples = nBands - nSamplesAccountedFor;
 
         v = (uint16 *) CPLMalloc( sizeof(uint16) * nExtraSamples );
-        
-        for( i = 0; i < nExtraSamples; i++ )
+
+        if( CSLFetchBoolean(papszParmList,"ALPHA",FALSE) )
+            v[0] = EXTRASAMPLE_ASSOCALPHA;
+        else
+            v[0] = EXTRASAMPLE_UNSPECIFIED;
+            
+        for( i = 1; i < nExtraSamples; i++ )
             v[i] = EXTRASAMPLE_UNSPECIFIED;
 
         TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, nExtraSamples, v );
@@ -3078,7 +3143,7 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     else if( poSrcDS->GetRasterBand(1)->GetColorTable() != NULL )
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Unable to export color table to GeoTIFF file.  Color\n"
-                  "tables can only be written to 1 bit 8bit GeoTIFF files." );
+                  "tables can only be written to 1 band 8bit GeoTIFF files." );
 
 /* -------------------------------------------------------------------- */
 /* 	Transfer some TIFF specific metadata, if available.             */
