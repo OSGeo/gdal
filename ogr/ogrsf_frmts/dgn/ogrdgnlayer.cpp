@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/03/07 19:29:46  warmerda
+ * added support for stroking curves
+ *
  * Revision 1.5  2001/03/07 15:20:13  warmerda
  * Only apply the _gv_color property if the color lookup is successful.
  *
@@ -216,25 +219,50 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
     switch( psElement->stype )
     {
       case DGNST_MULTIPOINT:
-      {
-          OGRLineString	*poLine = new OGRLineString();
-          DGNElemMultiPoint *psEMP = (DGNElemMultiPoint *) psElement;
+        if( psElement->type == DGNT_CURVE )
+        {
+            DGNElemMultiPoint *psEMP = (DGNElemMultiPoint *) psElement;
+            OGRLineString	*poLine = new OGRLineString();
+            DGNPoint		*pasPoints;
+            int			nPoints;
 
-          if( psEMP->num_vertices > 0 )
-          {
-              poLine->setNumPoints( psEMP->num_vertices );
-              for( int i = 0; i < psEMP->num_vertices; i++ )
-              {
-                  poLine->setPoint( i, 
-                                    psEMP->vertices[i].x,
-                                    psEMP->vertices[i].y,
-                                    psEMP->vertices[i].z );
-              }
-              
-              poFeature->SetGeometryDirectly( poLine );
-          }
-      }
-      break;
+            nPoints = 5 * psEMP->num_vertices;
+            pasPoints = (DGNPoint *) CPLMalloc(sizeof(DGNPoint) * nPoints);
+            
+            DGNStrokeCurve( hDGN, psEMP, nPoints, pasPoints );
+
+            poLine->setNumPoints( nPoints );
+            for( int i = 0; i < nPoints; i++ )
+            {
+                poLine->setPoint( i, 
+                                  pasPoints[i].x,
+                                  pasPoints[i].y,
+                                  pasPoints[i].z );
+            }
+
+            poFeature->SetGeometryDirectly( poLine );
+            CPLFree( pasPoints );
+        }
+        else
+        {
+            OGRLineString	*poLine = new OGRLineString();
+            DGNElemMultiPoint *psEMP = (DGNElemMultiPoint *) psElement;
+            
+            if( psEMP->num_vertices > 0 )
+            {
+                poLine->setNumPoints( psEMP->num_vertices );
+                for( int i = 0; i < psEMP->num_vertices; i++ )
+                {
+                    poLine->setPoint( i, 
+                                      psEMP->vertices[i].x,
+                                      psEMP->vertices[i].y,
+                                      psEMP->vertices[i].z );
+                }
+                
+                poFeature->SetGeometryDirectly( poLine );
+            }
+        }
+        break;
 
       case DGNST_ARC:
       {

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/03/07 19:29:46  warmerda
+ * added support for stroking curves
+ *
  * Revision 1.9  2001/03/07 13:56:44  warmerda
  * updated copyright to be held by Avenza Systems
  *
@@ -370,7 +373,8 @@ int  CPL_DLL         DGNLookupColor( DGNHandle, int, int *, int *, int * );
 void CPL_DLL         DGNDumpElement( DGNHandle, DGNElemCore *, FILE * );
 const char CPL_DLL  *DGNTypeToName( int );
 
-int CPL_DLL          DGNStrokeArc( DGNHandle, DGNElemArc *, int, DGNPoint * );
+int CPL_DLL   DGNStrokeArc( DGNHandle, DGNElemArc *, int, DGNPoint * );
+int CPL_DLL   DGNStrokeCurve( DGNHandle, DGNElemMultiPoint*, int, DGNPoint * );
 
 
 CPL_C_END

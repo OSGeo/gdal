@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/03/07 19:29:46  warmerda
+ * added support for stroking curves
+ *
  * Revision 1.2  2001/03/07 13:56:44  warmerda
  * updated copyright to be held by Avenza Systems
  *
@@ -122,6 +125,183 @@ int DGNStrokeArc( DGNHandle hFile, DGNElemArc *psArc,
 }
 
 /************************************************************************/
+/*                           DGNStrokeCurve()                           */
+/************************************************************************/
+
+/**
+ * Generate a polyline approximation of an curve.
+ *
+ * Produce a series of equidistant points along a microstation curve element.
+ * Currently this only works for 2D.
+ *
+ * @param hFile the DGN file to which the arc belongs (currently not used).
+ * @param psCurve the curve to be approximated.
+ * @param nPoints the number of points to use to approximate the curve.
+ * @param pasPoints the array of points into which to put the results. 
+ * There must be room for at least nPoints points.
+ *
+ * @return TRUE on success or FALSE on failure.
+ */
+
+int DGNStrokeCurve( DGNHandle hFile, DGNElemMultiPoint *psCurve, 
+                    int nPoints, DGNPoint * pasPoints )
+
+{
+    int		k, nDGNPoints, iOutPoint;
+    double	*padfMx, *padfMy, *padfD, dfTotalD = 0, dfStepSize, dfD;
+    double	*padfTx, *padfTy;
+    DGNPoint	*pasDGNPoints = psCurve->vertices;
+
+    nDGNPoints = psCurve->num_vertices;
+
+    if( nDGNPoints < 6 )
+        return FALSE;
+
+    if( nPoints < nDGNPoints - 4 )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Compute the Compute the slopes/distances of the segments.       */
+/* -------------------------------------------------------------------- */
+    padfMx = (double *) CPLMalloc(sizeof(double) * nDGNPoints);
+    padfMy = (double *) CPLMalloc(sizeof(double) * nDGNPoints);
+    padfD  = (double *) CPLMalloc(sizeof(double) * nDGNPoints);
+    padfTx = (double *) CPLMalloc(sizeof(double) * nDGNPoints);
+    padfTy = (double *) CPLMalloc(sizeof(double) * nDGNPoints);
+
+    for( k = 0; k < nDGNPoints-1; k++ )
+    {
+        padfD[k] = sqrt( (pasDGNPoints[k+1].x-pasDGNPoints[k].x)
+                           * (pasDGNPoints[k+1].x-pasDGNPoints[k].x)
+                         + (pasDGNPoints[k+1].y-pasDGNPoints[k].y)
+                           * (pasDGNPoints[k+1].y-pasDGNPoints[k].y) );
+        if( padfD[k] == 0.0 )
+        {
+            padfD[k] = 0.0001;
+            padfMx[k] = 0.0;
+            padfMy[k] = 0.0;
+        }
+        else
+        {
+            padfMx[k] = (pasDGNPoints[k+1].x - pasDGNPoints[k].x) / padfD[k];
+            padfMy[k] = (pasDGNPoints[k+1].y - pasDGNPoints[k].y) / padfD[k];
+        }
+        if( k > 1 && k < nDGNPoints - 3 )
+            dfTotalD += padfD[k];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Compuete the Tx, and Ty coefficients for each segment.          */
+/* -------------------------------------------------------------------- */
+    for( k = 2; k < nDGNPoints - 2; k++ )
+    {
+        if( fabs(padfMx[k+1] - padfMx[k]) == 0.0
+            && fabs(padfMx[k-1] - padfMx[k-2]) == 0.0 )
+        {
+            padfTx[k] = (padfMx[k+1] + padfMx[k]) / 2;
+        }
+        else
+        {
+            padfTx[k] = (padfMx[k-1] * fabs( padfMx[k+1] - padfMx[k])
+                    + padfMx[k] * fabs( padfMx[k-1] - padfMx[k-2] ))
+           / (ABS(padfMx[k+1] - padfMx[k]) + ABS(padfMx[k-1] - padfMx[k-2]));
+        }
+
+        if( fabs(padfMy[k+1] - padfMy[k]) == 0.0
+            && fabs(padfMy[k-1] - padfMy[k-2]) == 0.0 )
+        {
+            padfTy[k] = (padfMy[k+1] + padfMy[k]) / 2;
+        }
+        else
+        {
+            padfTy[k] = (padfMy[k-1] * fabs( padfMy[k+1] - padfMy[k])
+                    + padfMy[k] * fabs( padfMy[k-1] - padfMy[k-2] ))
+            / (ABS(padfMy[k+1] - padfMy[k]) + ABS(padfMy[k-1] - padfMy[k-2]));
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Determine a step size in D.  We scale things so that we have    */
+/*      roughly equidistant steps in D, but assume we also want to      */
+/*      include every node along the way.                               */
+/* -------------------------------------------------------------------- */
+    dfStepSize = dfTotalD / (nPoints - (nDGNPoints - 4) - 1);
+
+/* ==================================================================== */
+/*      Process each of the segments.                                   */
+/* ==================================================================== */
+    dfD = dfStepSize;
+    iOutPoint = 0;
+
+    for( k = 2; k < nDGNPoints - 3; k++ )
+    {
+        double	dfAx, dfAy, dfBx, dfBy, dfCx, dfCy;
+
+/* -------------------------------------------------------------------- */
+/*      Compute the "x" coefficients for this segment.                  */
+/* -------------------------------------------------------------------- */
+        dfCx = padfTx[k];
+        dfBx = (3.0 * (pasDGNPoints[k+1].x - pasDGNPoints[k].x) / padfD[k]
+                - 2.0 * padfTx[k] - padfTx[k+1]) / padfD[k];
+        dfAx = (padfTx[k] + padfTx[k+1] 
+                - 2 * (pasDGNPoints[k+1].x - pasDGNPoints[k].x) / padfD[k])
+            / (padfD[k] * padfD[k]);
+
+/* -------------------------------------------------------------------- */
+/*      Compute the Y coefficients for this segment.                    */
+/* -------------------------------------------------------------------- */
+        dfCy = padfTy[k];
+        dfBy = (3.0 * (pasDGNPoints[k+1].y - pasDGNPoints[k].y) / padfD[k]
+                - 2.0 * padfTy[k] - padfTy[k+1]) / padfD[k];
+        dfAy = (padfTy[k] + padfTy[k+1] 
+                - 2 * (pasDGNPoints[k+1].y - pasDGNPoints[k].y) / padfD[k])
+            / (padfD[k] * padfD[k]);
+
+/* -------------------------------------------------------------------- */
+/*      Add the start point for this segment.                           */
+/* -------------------------------------------------------------------- */
+        pasPoints[iOutPoint].x = pasDGNPoints[k].x;
+        pasPoints[iOutPoint].y = pasDGNPoints[k].y;
+        pasPoints[iOutPoint].z = 0.0;
+        iOutPoint++;
+
+/* -------------------------------------------------------------------- */
+/*      Step along, adding intermediate points.                         */
+/* -------------------------------------------------------------------- */
+        while( dfD < padfD[k] && iOutPoint < nPoints - (nDGNPoints-k-1) )
+        {
+            pasPoints[iOutPoint].x = dfAx * dfD * dfD * dfD
+                                   + dfBx * dfD * dfD
+                                   + dfCx * dfD 
+                                   + pasDGNPoints[k].x;
+            pasPoints[iOutPoint].y = dfAy * dfD * dfD * dfD
+                                   + dfBy * dfD * dfD
+                                   + dfCy * dfD 
+                                   + pasDGNPoints[k].y;
+            pasPoints[iOutPoint].z = 0.0;
+            iOutPoint++;
+
+            dfD += dfStepSize;
+        }
+
+        dfD -= padfD[k];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add the start point for this segment.                           */
+/* -------------------------------------------------------------------- */
+    while( iOutPoint < nPoints )
+    {
+        pasPoints[iOutPoint].x = pasDGNPoints[nDGNPoints-3].x;
+        pasPoints[iOutPoint].y = pasDGNPoints[nDGNPoints-3].y;
+        pasPoints[iOutPoint].z = 0.0;
+        iOutPoint++;
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                                main()                                */
 /*                                                                      */
 /*      test mainline                                                   */
@@ -150,5 +330,6 @@ int main( int argc, char ** argv )
 
     exit( 0 );
 }
+
 #endif
 
