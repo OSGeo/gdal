@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/03/05 17:27:00  fwarmerdam
+ * updated to support NDF1 and rotated datasets
+ *
  * Revision 1.2  2005/03/05 17:07:30  fwarmerdam
  * Fixed up an off-by-half-a-pixel error in geotransform.
  *
@@ -157,7 +160,8 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 50 )
         return NULL;
 
-    if( !EQUALN((const char *)poOpenInfo->pabyHeader,"NDF_REVISION=2",14) )
+    if( !EQUALN((const char *)poOpenInfo->pabyHeader,"NDF_REVISION=2",14) 
+        && !EQUALN((const char *)poOpenInfo->pabyHeader,"NDF_REVISION=0",14) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -233,7 +237,16 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
         const char *pszFilename;
 
         sprintf( szKey, "BAND%d_FILENAME", iBand+1 );
-        pszFilename = poDS->Get(szKey,"");
+        pszFilename = poDS->Get(szKey,NULL);
+
+        // NDF1 file do not include the band filenames.
+        if( pszFilename == NULL )
+        {
+            char szBandExtension[15];
+            sprintf( szBandExtension, "I%d", iBand+1 );
+            pszFilename = CPLResetExtension( poOpenInfo->pszFilename, 
+                                             szBandExtension );
+        }
 
         FILE *fpRaw = VSIFOpenL( pszFilename, "rb" );
         if( fpRaw == NULL )
@@ -282,31 +295,41 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Get geotransform.  For now we assume northup.                   */
+/*      Get geotransform.                                               */
 /* -------------------------------------------------------------------- */
     char **papszUL = CSLTokenizeString2( 
         poDS->Get("UPPER_LEFT_CORNER",""), ",", 0 );
-    char **papszLR = CSLTokenizeString2( 
-        poDS->Get("LOWER_RIGHT_CORNER",""), ",", 0 );
+    char **papszUR = CSLTokenizeString2( 
+        poDS->Get("UPPER_RIGHT_CORNER",""), ",", 0 );
+    char **papszLL = CSLTokenizeString2( 
+        poDS->Get("LOWER_LEFT_CORNER",""), ",", 0 );
     
-    if( CSLCount(papszUL) == 4 && CSLCount(papszLR) == 4 )
+    if( CSLCount(papszUL) == 4 
+        && CSLCount(papszUR) == 4 
+        && CSLCount(papszLL) == 4 )
     {
         poDS->adfGeoTransform[0] = atof(papszUL[2]);
         poDS->adfGeoTransform[1] = 
-            (atof(papszLR[2]) - atof(papszUL[2])) / (poDS->nRasterXSize-1);
-        poDS->adfGeoTransform[2] = 0;
+            (atof(papszUR[2]) - atof(papszUL[2])) / (poDS->nRasterXSize-1);
+        poDS->adfGeoTransform[2] = 
+            (atof(papszUR[3]) - atof(papszUL[3])) / (poDS->nRasterXSize-1);
+
         poDS->adfGeoTransform[3] = atof(papszUL[3]);
-        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[4] = 
+            (atof(papszLL[2]) - atof(papszUL[2])) / (poDS->nRasterYSize-1);
         poDS->adfGeoTransform[5] = 
-            (atof(papszLR[3]) - atof(papszUL[3])) / (poDS->nRasterYSize-1);
+            (atof(papszLL[3]) - atof(papszUL[3])) / (poDS->nRasterYSize-1);
 
         // Move origin up-left half a pixel.
-        poDS->adfGeoTransform[0] -=  poDS->adfGeoTransform[1] * 0.5;
-        poDS->adfGeoTransform[3] -=  poDS->adfGeoTransform[5] * 0.5;
+        poDS->adfGeoTransform[0] -= poDS->adfGeoTransform[1] * 0.5;
+        poDS->adfGeoTransform[0] -= poDS->adfGeoTransform[4] * 0.5;
+        poDS->adfGeoTransform[3] -= poDS->adfGeoTransform[2] * 0.5;
+        poDS->adfGeoTransform[3] -= poDS->adfGeoTransform[5] * 0.5;
     }
 
     CSLDestroy( papszUL );
-    CSLDestroy( papszLR );
+    CSLDestroy( papszLL );
+    CSLDestroy( papszUR );
                       
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
