@@ -1,0 +1,162 @@
+/*! \page osr_tutorial
+
+<center>
+<title>OGR Projections Tutorial</title>
+</center>
+
+<h2>Introduction</h2>
+
+The OGRSpatialReference, and OGRCoordinateTransformation classes provide
+services to represent coordinate systems (projections and datums) and to
+transform between them.  These services are loosely modelled on the 
+OpenGIS Coordinate Transformations specification, and use the same 
+Well Known Text format for describing coordinate systems. 
+
+<h2>Defining a Geographic Coordinate System</h2>
+
+Coordinate systems are encapsulated in the OGRSpatialReference class.  There
+are a number of ways of initializing an OGRSpatialReference object to a
+valid coordinate system.  There are two primary kinds of coordinate systems.
+The first is geographic (positions are measured in long/lat) and the second
+is projected (such as UTM - positions are measured in meters or feet).  
+
+A Geographic coordinate system contains information on the datum (which implies
+an spheroid described by a semi-major axis, and inverse flattening), prime 
+meridian(normally Greenwich), and an angular units type which is normally 
+degrees.  The following code initializes a geographic coordinate system 
+on supplying all this information along with a user visible name for the
+geographic coordinate system. 
+
+<pre>
+	OGRSpatialReference oSRS;
+
+	oSRS.SetGeogCS( "My geographic coordinate system",
+	                "WGS_1984", 
+			"My WGS84 Spheroid", 
+			SRS_WGS84_SEMIMAJOR, SRS_WGS84_INVFLATTENING, 
+			"Greenwich", 0.0, 
+			"degree", SRS_UA_DEGREE_CONV );
+</pre>
+
+Of these values, the names "My geographic coordinate system", "My WGS84 
+Spheroid", "Greenwich" and "degree" are not keys, but are used for display
+to the user.  However, the datum name "WGS_1984" is used as a key to identify
+the datum, and there are rules on what values can be used.  NOTE: Prepare
+writeup somewhere on valid datums! 
+
+The OGRSpatialReference has built in support for a few well known coordinate
+systems, which include "NAD27", "NAD83", "WGS72" and "WGS84" which can be
+defined in a single call to SetWellKnownGeogCS(). 
+
+<pre>
+	oSRS.SetWellKnownGeogCS( "WGS84" );
+</pre>
+
+Furthermore, any geographic coordinate system in the EPSG database can
+be set by it's GCS code number if the EPSG database is available. 
+
+<pre>
+	oSRS.SetWellKnownGeogCS( "EPSG:4326" );
+</pre>
+
+For serializization, and transmission of projection definitions to other
+packages, the OpenGIS Well Known Text format for coordinate systems is
+used.  An OGRSpatialReference can be initialized from well known text, or
+converted back into well known text.
+
+<pre>
+	char	*pszWKT = NULL;
+
+	oSRS.SetWellKnownGeogCS( "WGS84" );
+	oSRS.exportToWkt( &pszWKT );
+	printf( "%s\n", pszWKT );
+</pre>
+
+gives something like:
+
+<pre>
+GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,
+AUTHORITY["EPSG",7030]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG",6326]],
+PRIMEM["Greenwich",0,AUTHORITY["EPSG",8901]],UNIT["DMSH",0.0174532925199433,
+AUTHORITY["EPSG",9108]],AXIS["Lat",NORTH],AXIS["Long",EAST],AUTHORITY["EPSG",
+4326]]
+</pre>
+
+or in more readable form:
+
+<pre>
+GEOGCS["WGS 84",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG",7030]],
+        TOWGS84[0,0,0,0,0,0,0],
+        AUTHORITY["EPSG",6326]],
+    PRIMEM["Greenwich",0,AUTHORITY["EPSG",8901]],
+    UNIT["DMSH",0.0174532925199433,AUTHORITY["EPSG",9108]],
+    AXIS["Lat",NORTH],
+    AXIS["Long",EAST],
+    AUTHORITY["EPSG",4326]]
+</pre>
+
+The OGRSpatialReference::importFromWkt() method can be used to set an 
+OGRSpatialReference from a WKT coordinate system definition.  
+
+<h2>Defining a Projected Coordinate System</h2>
+
+A projected coordinate system (such as UTM, Lambert Conformal Conic, etc) 
+requires and underlying geographic coordinate system as well as a definition
+for the projection transform used to translate between linear positions
+(in meters or feet) and angular long/lat positions.  The following code
+defines a UTM zone 17 projected coordinate system with and underlying 
+geographic coordinate system (datum) of WGS84.
+
+<pre>
+	OGRSpatialReference	oSRS;
+
+	oSRS.SetProjCS( "UTM 17 (WGS84) in northern hemisphere." );
+	oSRS.SetWellKnownGeogCS( "WGS84" );
+	oSRS.SetUTM( 17, FALSE );
+</pre>
+
+Calling SetProjCS() sets a user
+name for the projected coordinate system and establishes that the system
+is projected.  The SetWellKnownGeogCS() associates a geographic coordinate
+system, and the SetUTM() call sets detailed projection transformation 
+parameters.  At this time the above order is important in order to 
+create a valid definition, but in the future the object will automatically
+reorder the internal representation as needed to remain valid.  For now
+<b>be careful of the order of steps defining an OGRSpatialReference!</b>
+
+The above definition would give a WKT version that looks something like
+the following.  Note that the UTM 17 was expanded into the details 
+transverse mercator definition of the UTM zone.  
+
+<pre>
+PROJCS["UTM 17 (WGS84) in northern hemisphere.",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG",7030]],
+            TOWGS84[0,0,0,0,0,0,0],
+            AUTHORITY["EPSG",6326]],
+        PRIMEM["Greenwich",0,AUTHORITY["EPSG",8901]],
+        UNIT["DMSH",0.0174532925199433,AUTHORITY["EPSG",9108]],
+        AXIS["Lat",NORTH],
+        AXIS["Long",EAST],
+        AUTHORITY["EPSG",4326]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",-81],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0]]
+</pre>
+
+There are methods for many projection methods; however at this time they 
+are not generally documented.  Consult the ogr_spatialref.h include file
+for details of available methods.  
+
+... add coordinate transformation, pointers to OpenGIS WKT documentation and
+so on ...
+
+*/
