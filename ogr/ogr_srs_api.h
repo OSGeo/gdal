@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2003/02/06 04:53:12  warmerda
+ * added Fixup() method
+ *
  * Revision 1.25  2003/01/08 18:14:28  warmerda
  * added FixupOrdering()
  *
@@ -286,6 +289,7 @@ int CPL_DLL OSRDereference( OGRSpatialReferenceH );
 
 OGRErr CPL_DLL OSRValidate( OGRSpatialReferenceH );
 OGRErr CPL_DLL OSRFixupOrdering( OGRSpatialReferenceH );
+OGRErr CPL_DLL OSRFixup( OGRSpatialReferenceH );
 OGRErr CPL_DLL OSRStripCTParms( OGRSpatialReferenceH );
 
 OGRErr CPL_DLL OSRImportFromEPSG( OGRSpatialReferenceH, int );
