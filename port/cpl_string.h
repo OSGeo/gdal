@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/03/11 21:33:03  warmerda
+ * added URL encode/decode support, untested
+ *
  * Revision 1.13  2003/01/30 19:15:55  warmerda
  * added some docs
  *
@@ -150,6 +153,7 @@ void CPL_DLL CSLSetNameValueSeparator( char ** papszStrList,
 
 #define CPLES_BackslashQuotable 0
 #define CPLES_XML               1
+#define CPLES_URL               2   /* unescape only for now */
 
 char CPL_DLL *CPLEscapeString( const char *pszString, int nLength, 
                                int nScheme );

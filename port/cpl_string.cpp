@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.28  2003/03/11 21:33:02  warmerda
+ * added URL encode/decode support, untested
+ *
  * Revision 1.27  2003/01/30 19:15:55  warmerda
  * added some docs
  *
@@ -1113,6 +1116,11 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
  * to embed as CDATA within an XML element.  The '\0' is not escaped and 
  * should not be included in the input.
  *
+ * CPLES_URL(2): Everything except alphanumerics and the underscore are 
+ * converted to a percent followed by a two digit hex encoding of the character
+ * (leading zero supplied if needed).  This is the mechanism used for encoding
+ * values to be passed in URLs.
+ *
  * @param pszString the string to escape.  
  * @param nLength The number of bytes of data to preserve.  If this is -1
  * the strlen(pszString) function will be used to compute the length.
@@ -1157,6 +1165,27 @@ char *CPLEscapeString( const char *pszInput, int nLength,
             }
             else
                 pszOutput[iOut++] = pszInput[iIn];
+        }
+        pszOutput[iOut] = '\0';
+    }
+    else if( nScheme == CPLES_URL ) /* Untested at implementation */
+    {
+        int iOut = 0, iIn;
+
+        for( iIn = 0; iIn < nLength; iIn++ )
+        {
+            if( (pszInput[iIn] >= 'a' && pszInput[iIn] <= 'z')
+                || (pszInput[iIn] >= 'A' && pszInput[iIn] <= 'Z')
+                || (pszInput[iIn] >= '0' && pszInput[iIn] <= '9')
+                || pszInput[iIn] == '_' )
+            {
+                pszOutput[iOut++] = pszInput[iIn++];
+            }
+            else
+            {
+                sprintf( pszOutput, "%%%02X", pszInput[iIn++] );
+                iOut += 3;
+            }
         }
         pszOutput[iOut] = '\0';
     }
@@ -1272,6 +1301,43 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
                 pszOutput[iOut++] = pszInput[iIn];
             }
         }
+    }
+    else if( nScheme == CPLES_URL )
+    {
+        for( iIn = 0; pszInput[iIn] != '\0'; iIn++ )
+        {
+            if( pszInput[iIn] == '%' )
+            {
+                int nHexChar = 0;
+
+                if( pszInput[iIn+1] >= 'A' && pszInput[iIn+1] <= 'F' )
+                    nHexChar += 16 * (pszInput[iIn+1] - 'A' + 10);
+                else if( pszInput[iIn+1] >= 'a' && pszInput[iIn+1] <= 'f' )
+                    nHexChar += 16 * (pszInput[iIn+1] - 'a' + 10);
+                else if( pszInput[iIn+1] >= '0' && pszInput[iIn+1] <= '9' )
+                    nHexChar += 16 * (pszInput[iIn+1] - '0');
+                    
+                if( pszInput[iIn+2] >= 'A' && pszInput[iIn+2] <= 'F' )
+                    nHexChar += pszInput[iIn+2] - 'A' + 10;
+                else if( pszInput[iIn+2] >= 'a' && pszInput[iIn+2] <= 'f' )
+                    nHexChar += pszInput[iIn+2] - 'a' + 10;
+                else if( pszInput[iIn+2] >= '0' && pszInput[iIn+2] <= '9' )
+                    nHexChar += pszInput[iIn+2] - '0';
+
+                pszOutput[iOut++] = nHexChar;
+                iIn += 2;
+            }
+            else if( pszInput[iIn] == '+' )
+            {
+                pszOutput[iOut++] = ' ';
+                iIn++;
+            }   
+            else
+            {
+                pszOutput[iOut++] = pszInput[iIn];
+            }
+        }
+        
     }
     else /* if( nScheme == CPLES_BackslashQuoteable ) */
     {
