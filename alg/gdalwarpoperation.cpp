@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/07/24 16:48:40  warmerda
+ * fixed bug with window size, and origin in ComputeSourceWindow
+ *
  * Revision 1.14  2003/07/04 11:52:22  dron
  * GRA_CubicSpline added to the list of validated algorithms.
  *
@@ -1476,8 +1479,8 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
 /* -------------------------------------------------------------------- */
 /*      return bounds.                                                  */
 /* -------------------------------------------------------------------- */
-    *pnSrcXOff = MAX(0,(int) floor( dfMinXOut ) + nResWinSize );
-    *pnSrcYOff = MAX(0,(int) floor( dfMinYOut ) + nResWinSize );
+    *pnSrcXOff = MAX(0,(int) floor( dfMinXOut ) - nResWinSize );
+    *pnSrcYOff = MAX(0,(int) floor( dfMinYOut ) - nResWinSize );
     *pnSrcXSize = MIN( GDALGetRasterXSize(psOptions->hSrcDS) - *pnSrcXOff,
                        ((int) ceil( dfMaxXOut )) - *pnSrcXOff + nResWinSize );
     *pnSrcYSize = MIN( GDALGetRasterYSize(psOptions->hSrcDS) - *pnSrcYOff,
