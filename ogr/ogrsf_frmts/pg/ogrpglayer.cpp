@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/11/15 16:10:12  warmerda
+ * fixed some escaping issues with string field values
+ *
  * Revision 1.7  2001/09/28 04:03:52  warmerda
  * partially upraded to PostGIS 0.6
  *
@@ -833,15 +836,18 @@ OGRErr OGRPGLayer::CreateFeature( OGRFeature *poFeature )
     }
 
     /* Set the other fields */
+    int nOffset = strlen(szCommand);
+
     bNeedComma = TRUE;
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         const char *pszStrValue = poFeature->GetFieldAsString(i);
 
         if( i > 0 )
-            strcat( szCommand, ", " );
+            strcat( szCommand+nOffset, ", " );
 
-        if( strlen(pszStrValue) + strlen(szCommand) > sizeof(szCommand)-50)
+        if( strlen(pszStrValue) + strlen(szCommand+nOffset) + nOffset 
+            > sizeof(szCommand)-50)
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Internal command buffer to short for INSERT command." );
@@ -850,17 +856,35 @@ OGRErr OGRPGLayer::CreateFeature( OGRFeature *poFeature )
         
         if( poFeatureDefn->GetFieldDefn(i)->GetType() == OFTString )
         {
-            strcat( szCommand, "'" );
-            strcat( szCommand, pszStrValue );
-            strcat( szCommand, "'" );
+            int		iChar;
+
+            /* We need to quote and escape string fields. */
+            strcat( szCommand+nOffset, "'" );
+
+            nOffset += strlen(szCommand+nOffset);
+            
+            for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
+            {
+                if( pszStrValue[iChar] == '\\' 
+                    || pszStrValue[iChar] == '\'' )
+                {
+                    szCommand[nOffset++] = '\\';
+                    szCommand[nOffset++] = pszStrValue[iChar];
+                }
+                else
+                    szCommand[nOffset++] = pszStrValue[iChar];
+            }
+            szCommand[nOffset] = '\0';
+            
+            strcat( szCommand+nOffset, "'" );
         }
         else
         {
-            strcat( szCommand, pszStrValue );
+            strcat( szCommand+nOffset, pszStrValue );
         }
     }
 
-    strcat( szCommand, ")" );
+    strcat( szCommand+nOffset, ")" );
 
 /* -------------------------------------------------------------------- */
 /*      Execute the insert.                                             */
