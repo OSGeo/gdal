@@ -23,6 +23,9 @@
 /* Define if you have the <stdint.h> header file.  */
 #undef HAVE_STDINT_H
 
+/* Define to 1 if you have the <sys/types.h> header file. */
+#define HAVE_SYS_TYPES_H 1
+
 #undef HAVE_LIBDL 
 
 /* Define to 1 if you have the <locale.h> header file. */
@@ -35,6 +38,19 @@
 #undef HAVE_DBMALLOC_H
 #undef HAVE_LIBDBMALLOC
 #undef WORDS_BIGENDIAN
+
+/* The size of a `int', as computed by sizeof. */
+#define SIZEOF_INT 4
+
+/* The size of a `long', as computed by sizeof. */
+#define SIZEOF_LONG 4
+
+/* Set the native cpu bit order */
+#define HOST_FILLORDER FILLORDER_LSB2MSB
+
+/* Define as 0 or 1 according to the floating point format suported by the
+   machine */
+#define HAVE_IEEEFP 1
 
 /* #define CPL_DISABLE_DLL */
 
