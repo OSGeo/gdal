@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/06/12 17:15:42  kshih
+ * Make use of datasource property
+ * Add schema rowsets
+ *
  * Revision 1.2  1999/06/04 15:18:32  warmerda
  * Added copyright header.
  *
@@ -51,6 +55,9 @@ class ATL_NO_VTABLE CSFSource :
 public:
 	HRESULT FinalConstruct()
 	{
+		// Do all my initialization here.
+
+		// verify the 
 		return FInit();
 	}
 DECLARE_REGISTRY_RESOURCEID(IDR_SF)

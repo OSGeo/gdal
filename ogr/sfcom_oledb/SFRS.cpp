@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/06/12 17:15:42  kshih
+ * Make use of datasource property
+ * Add schema rowsets
+ *
  * Revision 1.7  1999/06/08 17:44:10  warmerda
  * Fixed sequential Read() with SFIStream ... seek position wasn't
  * being incremented after reads.
@@ -40,6 +44,7 @@
 #include "stdafx.h"
 #include "SF.h"
 #include "SFRS.h"
+#include "SFSess.h"
 #include "ogr_geometry.h"
 #include "oledb_sf.h"
 
@@ -414,6 +419,73 @@ DBTYPE DBFType2OLEType(DBFFieldType eDBFType,int *pnOffset, int nWidth)
     return eDBType;
 }
 
+
+/************************************************************************/
+/*                         GetInitDataSource()                          */
+/*  Returns char * to allocated string.  Caller responsible for freeing */
+/************************************************************************/
+static char *GetInitDataSource(CSFRowset *pRowset)
+{
+	IRowsetInfo *pRInfo;
+	HRESULT		hr;
+	char		*pszDataSource = NULL;
+
+	hr = pRowset->QueryInterface(IID_IRowsetInfo,(void **) &pRInfo);
+
+	if (SUCCEEDED(hr))
+	{
+		IGetDataSource	*pIGetDataSource;
+		hr = pRInfo->GetSpecification(IID_IGetDataSource, (IUnknown **) &pIGetDataSource);
+		pRInfo->Release();
+
+		if (SUCCEEDED(hr))
+		{
+			IDBProperties *pIDBProp;
+
+			hr = pIGetDataSource->GetDataSource(IID_IDBProperties, (IUnknown **) &pIDBProp);
+			pIGetDataSource->Release();
+
+			if (SUCCEEDED(hr))
+			{
+				DBPROPIDSET sPropIdSets[1];
+				DBPROPID	rgPropIds[1];
+
+				ULONG		nPropSets;
+				DBPROPSET	*rgPropSets;
+
+				rgPropIds[0] = DBPROP_INIT_DATASOURCE;
+
+				sPropIdSets[0].cPropertyIDs = 1;
+				sPropIdSets[0].guidPropertySet = DBPROPSET_DBINIT;
+				sPropIdSets[0].rgPropertyIDs = rgPropIds;
+
+				pIDBProp->GetProperties(1,sPropIdSets,&nPropSets,&rgPropSets);
+
+				if (rgPropSets)
+				{
+					USES_CONVERSION;
+					char *pszSource = (char *)  OLE2A(rgPropSets[0].rgProperties[0].vValue.bstrVal);
+					pszDataSource = (char *) malloc(1+strlen(pszSource));
+					strcpy(pszDataSource,pszSource);
+				}
+
+				if (rgPropSets)
+				{
+					int i;
+					for (i=0; i < nPropSets; i++)
+					{
+						CoTaskMemFree(rgPropSets[i].rgProperties);
+					}
+					CoTaskMemFree(rgPropSets);
+				}
+
+				pIDBProp->Release();
+			}
+		}
+	}
+
+	return pszDataSource;
+}
 /************************************************************************/
 /*                         CSFRowset::Execute()                         */
 /************************************************************************/
@@ -421,15 +493,19 @@ DBTYPE DBFType2OLEType(DBFFieldType eDBFType,int *pnOffset, int nWidth)
 HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
 {	
     USES_CONVERSION;
-    LPSTR		szBaseFile = OLE2A(m_strCommandText);
+    LPSTR		szBaseFile;
     DBFHandle	hDBF;
     SHPHandle	hSHP;
+
+
     char            szFilename[512];
     int			nFields;
     int			i;
     int			nOffset = 0;
-	
-	
+
+
+	szBaseFile = GetInitDataSource(this);
+
     strcpy(szFilename,szBaseFile);
     strcat(szFilename,".dbf");
     hDBF = DBFOpen(szFilename,"r");
