@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.37  2002/12/06 16:59:58  gwalter
+# Added serialize() methods to GCP and ColorTable classes.
+#
 # Revision 1.36  2002/12/04 19:15:21  warmerda
 # fixed gdal.RasterBand.GetRasterColorTable() method
 #
@@ -263,6 +266,22 @@ class GCP:
               % (self.Id, self.GCPPixel, self.GCPLine,
                  self.GCPX, self.GCPY, self.GCPZ, self.Info)
         return str
+
+    def serialize(self,with_Z=0):
+        base = [CXT_Element,'GCP']
+        base.append([CXT_Attribute,'Id',[CXT_Text,self.Id]])
+        pixval = '%0.4E' % self.GCPPixel       
+        lineval = '%0.4E' % self.GCPLine
+        xval = '%0.12E' % self.GCPX
+        yval = '%0.12E' % self.GCPY
+        zval = '%0.12E' % self.GCPZ
+        base.append([CXT_Attribute,'Pixel',[CXT_Text,pixval]])
+        base.append([CXT_Attribute,'Line',[CXT_Text,lineval]])
+        base.append([CXT_Attribute,'X',[CXT_Text,xval]])
+        base.append([CXT_Attribute,'Y',[CXT_Text,yval]])
+        if with_Z:
+            base.append([CXT_Attribute,'Z',[CXT_Text,yval]])        
+        return base
 
 def GCPsToGeoTransform( gcp_list, approx_ok = 1 ):
         tuple_list = []
@@ -593,4 +612,17 @@ class ColorTable:
                          % (i,entry[0],entry[1],entry[2],entry[3]))
 
         return str
+
+    def serialize(self):
+        base=[CXT_Element,'ColorTable']
+        for i in range(self.GetCount()):
+            centry=self.GetColorEntry(i)
+            ebase=[CXT_Element,'Entry']
+            ebase.append([CXT_Attribute,'c1',[CXT_Text,str(centry[0])]])
+            ebase.append([CXT_Attribute,'c2',[CXT_Text,str(centry[1])]])
+            ebase.append([CXT_Attribute,'c3',[CXT_Text,str(centry[2])]])
+            ebase.append([CXT_Attribute,'c4',[CXT_Text,str(centry[3])]])
+            base.append(ebase)
+
+        return base
 
