@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/08/28 18:24:42  warmerda
+ * added TestForLayer() optimization
+ *
  * Revision 1.1  1999/08/28 03:13:35  warmerda
  * New
  *
@@ -217,6 +220,7 @@ class NTFFileReader
                                        char **ppszAttName, 
                                        char **ppszAttValue );
 
+    int		      TestForLayer( OGRNTFLayer * );
     OGRFeature       *ReadOGRFeature( OGRNTFLayer * = NULL );
     NTFRecord	    **ReadRecordGroup();
     NTFRecord        *ReadRecord();

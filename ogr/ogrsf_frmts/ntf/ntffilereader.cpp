@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/08/28 18:24:42  warmerda
+ * added TestForLayer() optimization
+ *
  * Revision 1.1  1999/08/28 03:13:35  warmerda
  * New
  *
@@ -312,7 +315,7 @@ int NTFFileReader::Open( const char * pszFilenameIn )
     dfTileYSize = atoi(poRecord->GetField(33+74,42+74));
 
     nSavedFeatureId = nBaseFeatureId;
-    nStartPos = nPreSavedPos;
+    nStartPos = VSIFTell(fp);
     
 /* -------------------------------------------------------------------- */
 /*      Ensure we have appropriate layers defined.                      */
@@ -1032,6 +1035,7 @@ OGRFeature * NTFFileReader::ReadOGRFeature( OGRNTFLayer * poTargetLayer )
 
         poFeature->SetField( iTileRefField, GetTileName() );
         poFeature->SetFID( nSavedFeatureId );
+
         nSavedFeatureId++;
     }
 
@@ -1045,6 +1049,26 @@ OGRFeature * NTFFileReader::ReadOGRFeature( OGRNTFLayer * poTargetLayer )
                    || nFeatureCount == nSavedFeatureId - nBaseFeatureId );
         nFeatureCount = nSavedFeatureId - nBaseFeatureId;
     }
-    
+
     return( poFeature );
 }
+
+/************************************************************************/
+/*                            TestForLayer()                            */
+/*                                                                      */
+/*      Return indicator of whether this file contains any features     */
+/*      of the indicated layer type.                                    */
+/************************************************************************/
+
+int NTFFileReader::TestForLayer( OGRNTFLayer * poLayer )
+
+{
+    for( int i = 0; i < 100; i++ )
+    {
+        if( apoTypeTranslation[i] == poLayer )
+            return TRUE;
+    }
+
+    return FALSE;
+}
+

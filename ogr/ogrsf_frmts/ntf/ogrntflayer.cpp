@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/08/28 18:24:42  warmerda
+ * added TestForLayer() optimization
+ *
  * Revision 1.1  1999/08/28 03:13:35  warmerda
  * New
  *
@@ -155,12 +158,16 @@ OGRFeature *OGRNTFLayer::GetNextFeature()
 
 /* -------------------------------------------------------------------- */
 /*      If we get NULL the file must be all consumed, advance to the    */
-/*      next file.                                                      */
+/*      next file that contains features for this layer.                */
 /* -------------------------------------------------------------------- */
     if( poFeature == NULL )
     {
         poCurrentReader->Close();
-        iCurrentReader++;
+        do { 
+            iCurrentReader++;
+        } while( iCurrentReader < poDS->GetFileCount()
+                 && !poDS->GetFileReader(iCurrentReader)->TestForLayer(this) );
+
         nCurrentPos = -1;
         nCurrentFID = 1;
 
