@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/07/29 18:01:31  warmerda
+ * added support for translation of OGIS WKT projdefs to proj.4
+ *
  * Revision 1.3  1999/03/02 21:09:48  warmerda
  * add GDALDecToDMS()
  *
@@ -44,6 +47,7 @@
 #include "gdal_priv.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_spatialref.h"
 
 typedef struct { double u, v; }	UV;
 
@@ -141,18 +145,54 @@ CPLErr GDALProjDef::SetProjectionString( const char * pszProjectionIn )
 {
     char	**args;
 
-    pszProjection = CPLStrdup( pszProjectionIn );
+    if( psPJ != NULL && pfn_pj_free != NULL )
+    {
+        pfn_pj_free( psPJ );
+        psPJ = NULL;
+    }
+
+    if( pszProjection != NULL )
+        CPLFree( pszProjection );
     
+    pszProjection = CPLStrdup( pszProjectionIn );
+
     if( !LoadProjLibrary() )
     {
         return CE_Failure;
     }
 
-    args = CSLTokenizeStringComplex( pszProjection, " +", TRUE, FALSE );
+/* -------------------------------------------------------------------- */
+/*      If this is an OGIS string we will try and translate it to       */
+/*      PROJ.4 format.                                                  */
+/* -------------------------------------------------------------------- */
+    char	*pszProj4Projection = NULL;
+    
+    if( EQUALN(pszProjection,"PROJCS",6) || EQUALN(pszProjection,"GEOGCS",6) )
+    {
+        OGRSpatialReference 	oSRS;
+        char			*pszProjRef = pszProjection;
+
+        if( oSRS.importFromWkt( &pszProjRef ) != OGRERR_NONE
+            || oSRS.exportToProj4( &pszProj4Projection ) != OGRERR_NONE )
+            return CE_Failure;
+    }
+    else
+    {
+        pszProj4Projection = CPLStrdup( pszProjection );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Tokenize, and pass tokens to PROJ.4 initialization function.    */
+/* -------------------------------------------------------------------- */
+    args = CSLTokenizeStringComplex( pszProj4Projection, " +", TRUE, FALSE );
 
     psPJ = pfn_pj_init( CSLCount(args), args );
 
+/* -------------------------------------------------------------------- */
+/*      Cleanup.                                                        */
+/* -------------------------------------------------------------------- */
     CSLDestroy( args );
+    CPLFree( pszProj4Projection );
 
     if( psPJ == NULL )
         return CE_Failure;
@@ -276,3 +316,4 @@ const char *GDALDecToDMS( double dfAngle, const char * pszAxis,
 
     return( szBuffer );
 }
+
