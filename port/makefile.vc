@@ -13,11 +13,15 @@ LIB	=	cpl.lib
 
 !INCLUDE ..\nmake.opt
 
-default:	$(LIB)
+default:	cpl_config.h $(LIB)
 
 $(LIB):	$(OBJ)
 	lib /out:cpl.lib *.obj
 
 clean:
 	del *.obj *.lib
+
+cpl_config.h:	cpl_config.h.vc
+	copy cpl_config.h.vc cpl_config.h
+
 
