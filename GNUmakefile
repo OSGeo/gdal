@@ -80,7 +80,7 @@ configure:	configure.in aclocal.m4
 	autoconf
 
 GDALmake.opt:	GDALmake.opt.in config.status
-	config.status
+	./config.status
 
 docs:
 	(cd html; rm -f *.*)
