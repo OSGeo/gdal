@@ -1,4 +1,12 @@
 /******************************************************************************
+ * $Id$
+ *
+ * Name:     gdal.h
+ * Project:  GDAL Core
+ * Purpose:  GDAL Core C/Public declarations.
+ * Author:   Frank Warmerdam, warmerda@home.com
+ *
+ ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,12 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * gdal.h
- *
- * This is the primary public C/C++ include file for application code
- * that calls the GDAL library.
- * 
  * $Log$
+ * Revision 1.15  2000/03/06 02:19:56  warmerda
+ * added lots of new functions
+ *
  * Revision 1.14  2000/01/31 14:24:36  warmerda
  * implemented dataset delete
  *
@@ -115,6 +121,40 @@ typedef enum {
     GF_Write = 1
 } GDALRWFlag;
 
+/*! Types of color interpretation for raster bands. */
+typedef enum
+{
+    GCI_Undefined=0,
+    GCI_GrayIndex=1,
+    GCI_PaletteIndex=2,
+    GCI_RedBand=3,
+    GCI_GreenBand=4,
+    GCI_BlueBand=5,
+    GCI_AlphaBand=6,
+    GCI_HueBand=7,
+    GCI_SaturationBand=8,
+    GCI_LightnessBand=9,
+    GCI_CyanBand=10,
+    GCI_MagentaBand=11,
+    GCI_YellowBand=12,
+    GCI_BlackBand=13
+} GDALColorInterp;
+
+/*! Translate a GDALColorInterp into a user displayable string. */
+const char *GDALGetColorInterpretationName( GDALColorInterp );
+
+/*! Types of color interpretations for a GDALColorTable. */
+typedef enum 
+{
+    GPI_Gray=0,
+    GPI_RGB=1,
+    GPI_CMYK=2,
+    GPI_HLS=3
+} GDALPaletteInterp;
+
+/*! Translate a GDALPaletteInterp into a user displayable string. */
+const char *GDALGetPaletteInterpretationName( GDALPaletteInterp );
+
 /* -------------------------------------------------------------------- */
 /*      GDAL Specific error codes.                                      */
 /*                                                                      */
@@ -129,9 +169,9 @@ typedef enum {
 typedef void *GDALMajorObjectH;
 typedef void *GDALDatasetH;
 typedef void *GDALRasterBandH;
-typedef void *GDALGeorefH;
 typedef void *GDALDriverH;
 typedef void *GDALProjDefH;
+typedef void *GDALColorTableH;
 
 /* ==================================================================== */
 /*      Registration/driver related.                                    */
@@ -149,7 +189,6 @@ int CPL_DLL         GDALGetDriverCount();
 GDALDriverH CPL_DLL GDALGetDriver( int );
 int         CPL_DLL GDALRegisterDriver( GDALDriverH );
 void        CPL_DLL GDALDeregisterDriver( GDALDriverH );
-void        CPL_DLL GDALMoveDriver( GDALDriverH, int );
 CPLErr	    CPL_DLL GDALDeleteDataset( GDALDriverH, const char * );
 
 const char CPL_DLL *GDALGetDriverShortName( GDALDriverH );
@@ -165,13 +204,14 @@ void CPL_DLL   GDALClose( GDALDatasetH );
 int CPL_DLL	GDALGetRasterXSize( GDALDatasetH );
 int CPL_DLL	GDALGetRasterYSize( GDALDatasetH );
 int CPL_DLL	GDALGetRasterCount( GDALDatasetH );
-GDALGeorefH CPL_DLL GDALGetRasterGeoref( GDALDatasetH );
 GDALRasterBandH CPL_DLL GDALGetRasterBand( GDALDatasetH, int );
 const char CPL_DLL *GDALGetProjectionRef( GDALDatasetH );
 CPLErr CPL_DLL  GDALSetProjection( GDALDatasetH, const char * );
 CPLErr CPL_DLL  GDALGetGeoTransform( GDALDatasetH, double * );
 CPLErr CPL_DLL  GDALSetGeoTransform( GDALDatasetH, double * );
 void CPL_DLL   *GDALGetInternalHandle( GDALDatasetH, const char * );
+int CPL_DLL     GDALReferenceDataset( GDALDatasetH );
+int CPL_DLL     GDALDereferenceDataset( GDALDatasetH );
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
@@ -189,6 +229,13 @@ CPLErr CPL_DLL GDALRasterIO( GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
                               int nPixelSpace, int nLineSpace );
 CPLErr CPL_DLL GDALReadBlock( GDALRasterBandH, int, int, void * );
 CPLErr CPL_DLL GDALWriteBlock( GDALRasterBandH, int, int, void * );
+int CPL_DLL GDALGetRasterBandXSize( GDALRasterBandH );
+int CPL_DLL GDALGetRasterBandYSize( GDALRasterBandH );
+
+GDALColorInterp CPL_DLL GDALGetRasterColorInterpretation( GDALRasterBandH );
+GDALColorTableH CPL_DLL GDALGetRasterColorTable( GDALRasterBandH );
+int CPL_DLL             GDALGetOverviewCount( GDALRasterBandH );
+GDALRasterBandH CPL_DLL GDALGetOverview( GDALRasterBandH, int );
 
 /* need to add functions related to block cache */
 
@@ -200,6 +247,26 @@ void CPL_DLL
                    void * pDstData, GDALDataType eDstType, int nDstPixelOffset,
                    int nWordCount );
 
+
+/* ==================================================================== */
+/*      Color tables.                                                   */
+/* ==================================================================== */
+typedef struct
+{
+    short      c1;      /* gray, red, cyan or hue */
+    short      c2;      /* green, magenta, or lightness */
+    short      c3;      /* blue, yellow, or saturation */
+    short      c4;      /* alpha or blackband */
+} GDALColorEntry;
+
+GDALColorTableH CPL_DLL GDALCreateColorTable( GDALPaletteInterp );
+void CPL_DLL            GDALDestroyColorTable( GDALColorTableH );
+GDALColorTableH CPL_DLL GDALCloneColorTable( GDALColorTableH );
+GDALPaletteInterp CPL_DLL GDALGetPaletteInterpretation( GDALColorTableH );
+int CPL_DLL             GDALGetColorEntryCount( GDALColorTableH );
+const GDALColorEntry CPL_DLL *GDALGetColorEntry( GDALColorTableH, int );
+int CPL_DLL GDALGetColorEntryAsRGB( GDALColorTableH, int, GDALColorEntry *);
+void CPL_DLL GDALSetColorEntry( GDALColorTableH, int, const GDALColorEntry * );
 
 /* ==================================================================== */
 /*      Projections                                                     */
