@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2004/10/06 14:01:19  fwarmerdam
+ * added MYSQL support.
+ *
  * Revision 1.20  2004/07/20 19:19:11  warmerda
  * added CSV
  *
@@ -129,6 +132,9 @@ void OGRRegisterAll()
 #endif
 #ifdef PG_ENABLED
     RegisterOGRPG();
+#endif
+#ifdef MYSQL_ENABLED
+    RegisterOGRMySQL();
 #endif
 #ifdef OCI_ENABLED
     RegisterOGROCI();
