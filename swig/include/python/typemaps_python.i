@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.22  2005/02/23 17:45:35  kruland
+ * Change the optional_int macro to perform a cast to support the integer
+ * typedefs such as GDALDataType.
+ *
  * Revision 1.21  2005/02/22 15:36:17  kruland
  * Added ARRAY_TYPEMAP(4) for ogr.Geometry.GetEnvelope().
  * Added a char* typemap (tostring argin), which calls str() on its argument
@@ -606,7 +610,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     $1 = 0;
   }
   else if ( PyArg_Parse( $input, #argstring ,&val ) ) {
-    $1 = &val;
+    $1 = ($1_type) &val;
   }
   else {
     PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
