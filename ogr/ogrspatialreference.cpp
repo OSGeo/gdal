@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.71  2003/02/25 04:55:41  warmerda
+ * Added SetGeogCSFrom() method. Modified SetWellKnownGeogCS() to use it.
+ * Modfied SetGeogCS() to replace an existing GEOGCS node if there is one.
+ *
  * Revision 1.70  2003/02/14 22:15:04  warmerda
  * expand tabs
  *
@@ -111,133 +115,6 @@
  *
  * Revision 1.43  2002/01/18 04:51:05  warmerda
  * added PROJ.4 support to SetFromUserInput()
- *
- * Revision 1.42  2001/12/06 18:18:47  warmerda
- * added preliminary xml srs support
- *
- * Revision 1.41  2001/11/15 16:26:03  warmerda
- * added check in StripCTParms
- *
- * Revision 1.40  2001/11/09 21:05:07  warmerda
- * fixed local_cs stripping
- *
- * Revision 1.39  2001/10/19 15:38:04  warmerda
- * fixed well known geogcses to use degree instead of DMSH
- *
- * Revision 1.38  2001/10/11 19:27:12  warmerda
- * upgraded validation infrastructure
- *
- * Revision 1.37  2001/10/10 20:42:43  warmerda
- * added ESRI WKT morphing support
- *
- * Revision 1.36  2001/09/21 16:29:21  warmerda
- * fixed typos in docs
- *
- * Revision 1.35  2001/09/21 16:21:02  warmerda
- * added Clear(), and SetFromUserInput() methods
- *
- * Revision 1.34  2001/09/11 19:04:59  warmerda
- * fixed logic in GetLinearUnits() to work on nodes with authority defn
- *
- * Revision 1.33  2001/08/13 11:23:58  warmerda
- * improved IsSame() test
- *
- * Revision 1.32  2001/07/19 18:25:07  warmerda
- * expanded tabs
- *
- * Revision 1.31  2001/07/18 05:03:05  warmerda
- * added CPL_CVSID
- *
- * Revision 1.30  2001/07/16 03:34:55  warmerda
- * various fixes, and improvements suggested by Ben Driscoe on gdal list
- *
- * Revision 1.29  2001/07/13 12:33:10  warmerda
- * Fixed crash on OGRSpatialReference if PROJECTION missing.
- *
- * Revision 1.28  2001/04/04 16:09:57  warmerda
- * clarify units and definition of TOWGS84
- *
- * Revision 1.27  2001/01/22 13:59:55  warmerda
- * added SetSOC
- *
- * Revision 1.26  2001/01/19 22:14:49  warmerda
- * fixed SetNode to replace existing value properly if it exists
- *
- * Revision 1.25  2001/01/19 21:10:47  warmerda
- * replaced tabs
- *
- * Revision 1.24  2000/11/17 17:26:02  warmerda
- * set a name in SetUTM()
- *
- * Revision 1.23  2000/11/09 06:21:32  warmerda
- * added limited ESRI prj support
- *
- * Revision 1.22  2000/10/20 04:20:17  warmerda
- * overwrite existing linear units node if one exists
- *
- * Revision 1.21  2000/10/16 21:26:07  warmerda
- * added some level of LOCAL_CS support
- *
- * Revision 1.20  2000/10/13 20:59:49  warmerda
- * ensure we can set the PROJCS name on an existing PROJCS
- *
- * Revision 1.19  2000/07/09 20:49:54  warmerda
- * added exportToPrettyWkt()
- *
- * Revision 1.18  2000/06/09 13:26:03  warmerda
- * avoid using an inverse flattening of zero
- *
- * Revision 1.17  2000/05/30 22:45:45  warmerda
- * added OSRCloneGeogCS()
- *
- * Revision 1.16  2000/03/24 14:49:56  warmerda
- * added WGS84 related methods
- *
- * Revision 1.15  2000/03/22 01:09:43  warmerda
- * added SetProjCS and SetWellKnownTextCS
- *
- * Revision 1.14  2000/03/20 22:40:59  warmerda
- * Added C API and some documentation.
- *
- * Revision 1.13  2000/03/20 14:58:39  warmerda
- * added CloneGeogCS, IsProjected, isGeogCS, and GeogCSMatch
- *
- * Revision 1.12  2000/03/16 19:04:55  warmerda
- * added SetTMG(), SetAuthority() and StripCTParms()
- *
- * Revision 1.11  2000/02/25 13:23:25  warmerda
- * removed include of ogr_geometry.h
- *
- * Revision 1.10  2000/01/11 22:12:39  warmerda
- * Ensure GEOGCS node is always at position 1 under PROJCS
- *
- * Revision 1.9  2000/01/06 19:46:10  warmerda
- * added special logic for setting, and recognising UTM
- *
- * Revision 1.8  1999/11/18 19:02:19  warmerda
- * expanded tabs
- *
- * Revision 1.7  1999/10/05 17:53:11  warmerda
- * GetLinearUnits() should look for UNIT not UNITS.
- *
- * Revision 1.6  1999/09/29 16:37:05  warmerda
- * added several new projection set methods
- *
- * Revision 1.5  1999/09/17 16:15:15  warmerda
- * Added angular units to SetGeogCS().  Use OGRPrintDouble(). Added SetLCC1SP().
- *
- * Revision 1.4  1999/07/29 17:29:45  warmerda
- * added various help methods for projections
- *
- * Revision 1.3  1999/07/14 05:23:38  warmerda
- * Added projection set methods, and #defined tokens
- *
- * Revision 1.2  1999/07/05 17:19:26  warmerda
- * initial implementation
- *
- * Revision 1.1  1999/06/25 20:20:54  warmerda
- * New
- *
  */
 
 #include "ogr_spatialref.h"
@@ -1253,6 +1130,23 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
     bNormInfoSet = FALSE;
 
 /* -------------------------------------------------------------------- */
+/*      Do we already have a GEOGCS?  If so, blow it away so it can     */
+/*      be properly replaced.                                           */
+/* -------------------------------------------------------------------- */
+    if( GetAttrNode( "GEOGCS" ) != NULL )
+    {
+        OGR_SRSNode *poPROJCS;
+
+        if( EQUAL(GetRoot()->GetValue(),"GEOGCS") )
+            Clear();
+        else if( (poPROJCS = GetAttrNode( "PROJCS" )) != NULL
+                 && poPROJCS->FindChild( "GEOGCS" ) != -1 )
+            poPROJCS->DestroyChild( poPROJCS->FindChild( "GEOGCS" ) );
+        else
+            return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Set defaults for various parameters.                            */
 /* -------------------------------------------------------------------- */
     if( pszGeogName == NULL )
@@ -1391,23 +1285,14 @@ OGRErr OSRSetGeogCS( OGRSpatialReferenceH hSRS,
 OGRErr OGRSpatialReference::SetWellKnownGeogCS( const char * pszName )
 
 {
-    OGR_SRSNode  *poGeogCS = NULL;
-    OGRErr       eErr = OGRERR_FAILURE;
-    char         *pszWKT = NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Do we already have a GEOGCS?                                    */
-/* -------------------------------------------------------------------- */
-    if( GetAttrNode( "GEOGCS" ) != NULL )
-        return OGRERR_FAILURE;
+    OGRSpatialReference   oSRS2;
+    OGRErr eErr;
 
 /* -------------------------------------------------------------------- */
 /*      Check for EPSG authority numbers.                               */
 /* -------------------------------------------------------------------- */
     if( EQUALN(pszName, "EPSG:",5) )
     {
-        OGRSpatialReference   oSRS2;
-
         eErr = oSRS2.importFromEPSG( atoi(pszName+5) );
         if( eErr != OGRERR_NONE )
             return eErr;
@@ -1415,12 +1300,14 @@ OGRErr OGRSpatialReference::SetWellKnownGeogCS( const char * pszName )
         if( !oSRS2.IsGeographic() )
             return OGRERR_FAILURE;
 
-        poGeogCS = oSRS2.GetRoot()->Clone();
+        return CopyGeogCSFrom( &oSRS2 );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Check for simple names.                                         */
 /* -------------------------------------------------------------------- */
+    char         *pszWKT = NULL;
+
     if( EQUAL(pszName, "WGS84") )
         pszWKT = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]";
 
@@ -1433,24 +1320,20 @@ OGRErr OGRSpatialReference::SetWellKnownGeogCS( const char * pszName )
     else if( EQUAL(pszName, "NAD83") )
         pszWKT = "GEOGCS[\"NAD83\",DATUM[\"North_American_Datum_1983\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6269\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4269\"]]";
 
-    if( pszWKT != NULL )
-    {
-        poGeogCS = new OGR_SRSNode;
-        poGeogCS->importFromWkt(&pszWKT);
-    }
-
-    if( poGeogCS == NULL )
+    else
         return OGRERR_FAILURE;
 
 /* -------------------------------------------------------------------- */
-/*      Attach below the PROJCS if there is one, or make this the root. */
+/*      Import the WKT                                                  */
 /* -------------------------------------------------------------------- */
-    if( GetRoot() != NULL && EQUAL(GetRoot()->GetValue(),"PROJCS") )
-        poRoot->InsertChild( poGeogCS, 1 );
-    else
-        SetRoot( poGeogCS );
+    eErr = oSRS2.importFromWkt( &pszWKT );
+    if( eErr != OGRERR_NONE )
+        return eErr;
 
-    return OGRERR_NONE;
+/* -------------------------------------------------------------------- */
+/*      Copy over.                                                      */
+/* -------------------------------------------------------------------- */
+    return CopyGeogCSFrom( &oSRS2 );
 }
 
 /************************************************************************/
@@ -1461,6 +1344,78 @@ OGRErr OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS, const char *pszName )
 
 {
     return ((OGRSpatialReference *) hSRS)->SetWellKnownGeogCS( pszName );
+}
+
+/************************************************************************/
+/*                           CopyGeogCSFrom()                           */
+/************************************************************************/
+
+/**
+ * Copy GEOGCS from another OGRSpatialReference.
+ *
+ * The GEOGCS information is copied into this OGRSpatialReference from another.
+ * If this object has a PROJCS root already, the GEOGCS is installed within
+ * it, otherwise it is installed as the root.
+ * 
+ * @param poSrsSRS the spatial reference to copy the GEOGCS information from.
+ * 
+ * @return OGRERR_NONE on success or an error code.
+ */
+
+
+OGRErr OGRSpatialReference::CopyGeogCSFrom( 
+    const OGRSpatialReference * poSrcSRS )
+
+{
+    const OGR_SRSNode  *poGeogCS = NULL;
+
+    bNormInfoSet = FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Do we already have a GEOGCS?  If so, blow it away so it can     */
+/*      be properly replaced.                                           */
+/* -------------------------------------------------------------------- */
+    if( GetAttrNode( "GEOGCS" ) != NULL )
+    {
+        OGR_SRSNode *poPROJCS;
+
+        if( EQUAL(GetRoot()->GetValue(),"GEOGCS") )
+            Clear();
+        else if( (poPROJCS = GetAttrNode( "PROJCS" )) != NULL
+                 && poPROJCS->FindChild( "GEOGCS" ) != -1 )
+            poPROJCS->DestroyChild( poPROJCS->FindChild( "GEOGCS" ) );
+        else
+            return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the GEOGCS node on the source.                             */
+/* -------------------------------------------------------------------- */
+    poGeogCS = poSrcSRS->GetAttrNode( "GEOGCS" );
+    if( poGeogCS == NULL )
+        return OGRERR_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      Attach below the PROJCS if there is one, or make this the root. */
+/* -------------------------------------------------------------------- */
+    if( GetRoot() != NULL && EQUAL(GetRoot()->GetValue(),"PROJCS") )
+        poRoot->InsertChild( poGeogCS->Clone(), 1 );
+    else
+        SetRoot( poGeogCS->Clone() );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         OSRCopyGeogCSFrom()                          */
+/************************************************************************/
+
+OGRErr OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS, 
+                          OGRSpatialReferenceH hSrcSRS )
+
+{
+    return ((OGRSpatialReference *) hSRS)->CopyGeogCSFrom( 
+        (const OGRSpatialReference *) hSrcSRS );
 }
 
 /************************************************************************/
