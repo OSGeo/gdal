@@ -1,12 +1,12 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.27 2003/01/09 17:33:26 warmerda Exp $
+ * $Id: mitab_coordsys.cpp,v 1.28 2003/03/21 14:20:42 warmerda Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
  * Language: C++
  * Purpose:  Implementation translation between MIF CoordSys format, and
  *           and OGRSpatialRef format.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  **********************************************************************
  * Copyright (c) 1999-2001, Frank Warmerdam
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.28  2003/03/21 14:20:42  warmerda
+ * fixed up regional mercator handling, was screwing up transverse mercator
+ *
  * Revision 1.27  2003/01/09 17:33:26  warmerda
  * fixed ellipsoid extraction for datum 999/9999
  *
@@ -558,7 +561,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
         break;
 
         /*--------------------------------------------------------------
-         * Mercator
+         * Regional Mercator
          *-------------------------------------------------------------*/
       case 26:
         poSR->SetMercator( GetMIFParm( papszNextField, 1, 0.0 ), 
@@ -904,7 +907,14 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
     {
         nProjection = 10;
         parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         nParmCount = 1;
+
+        if( parms[1] != 0.0 )
+        {
+            nProjection = 26;
+            nParmCount = 2;
+        }
     }
 
     else if( EQUAL(pszProjection,SRS_PT_MILLER_CYLINDRICAL) )
