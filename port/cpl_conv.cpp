@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/03/05 03:37:19  warmerda
+ * Improve support for recovering CPLReadLine() working buffer.
+ *
  * Revision 1.10  2001/01/19 21:16:41  warmerda
  * expanded tabs
  *
@@ -251,6 +254,10 @@ char *CPLStrdup( const char * pszString )
  * Note that CPLReadLine() uses VSIFGets(), so any hooking of VSI file
  * services should apply to CPLReadLine() as well.
  *
+ * CPLReadLine() maintains an internal buffer, which will appear as a 
+ * single block memory leak in some circumstances.  CPLReadLine() may 
+ * be called with a NULL FILE * at any time to free this working buffer.
+ *
  * @param fp file pointer opened with VSIFOpen().
  * @return pointer to an internal buffer containing a line of text read
  * from the file or NULL if the end of file was encountered.
@@ -262,6 +269,16 @@ const char *CPLReadLine( FILE * fp )
     static char *pszRLBuffer = NULL;
     static int  nRLBufferSize = 0;
     int         nLength, nReadSoFar = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup case.                                                   */
+/* -------------------------------------------------------------------- */
+    if( fp == NULL )
+    {
+        CPLFree( pszRLBuffer );
+        nRLBufferSize = 0;
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Loop reading chunks of the line till we get to the end of       */
@@ -289,7 +306,12 @@ const char *CPLReadLine( FILE * fp )
 /* -------------------------------------------------------------------- */
         if( VSIFGets( pszRLBuffer+nReadSoFar, nRLBufferSize-nReadSoFar, fp )
             == NULL )
+        {
+            CPLFree( pszRLBuffer );
+            nRLBufferSize = 0;
+
             return NULL;
+        }
 
         nReadSoFar = strlen(pszRLBuffer);
 
