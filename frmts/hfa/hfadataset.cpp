@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.27  2003/04/14 19:06:02  warmerda
+ * Don't override a meaningful SRS name with the psPro->proName.
+ *
  * Revision 1.26  2003/03/18 21:07:02  dron
  * Added HFADataset::Delete() method.
  *
@@ -1324,7 +1327,8 @@ CPLErr HFADataset::ReadProjection()
 
     else if( oSRS.IsProjected() && psPro->proNumber != EPRJ_STATE_PLANE )
     {
-        oSRS.SetProjCS( psPro->proName );
+        if( EQUAL(oSRS.GetRoot()->GetChild(0)->GetValue(),"unnamed") )
+            oSRS.SetProjCS( psPro->proName );
 
         if( psMapInfo && EQUAL(psMapInfo->units,"feet") )
         {
