@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/06/22 19:22:16  warmerda
+ * Made some oddidies in field definitions non-fatal.
+ *
  * Revision 1.6  2000/11/30 20:33:18  warmerda
  * make having more formats than data items a warning, not an error
  *
@@ -126,7 +129,10 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
         break;
 
       default:
-        CPLAssert( FALSE );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unrecognised data_struct_code value %c.\n"
+                  "Field %s initialization incorrect.\n",
+                  pachFieldArea[0], pszTag );
         _data_struct_code = elementary;
     }
 
@@ -161,7 +167,10 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
         break;
 
       default:
-        CPLAssert( FALSE );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unrecognised data_type_code value %c.\n"
+                  "Field %s initialization incorrect.\n",
+                  pachFieldArea[1], pszTag );
         _data_type_code = char_string;
     }
     
