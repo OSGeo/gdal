@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/12/21 05:45:28  warmerda
+ * Fixed to check for wkbLineString instead of wkbPoint.
+ *
  * Revision 1.3  1999/11/18 19:02:19  warmerda
  * expanded tabs
  *
@@ -69,7 +72,7 @@ const char * OGRMultiLineString::getGeometryName()
 OGRErr OGRMultiLineString::addGeometry( OGRGeometry * poNewGeom )
 
 {
-    if( poNewGeom->getGeometryType() != wkbPoint )
+    if( poNewGeom->getGeometryType() != wkbLineString )
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
     return OGRGeometryCollection::addGeometry( poNewGeom );
