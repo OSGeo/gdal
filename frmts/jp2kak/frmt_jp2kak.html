@@ -26,7 +26,7 @@ library.  This is a high quality and high performance JPEG2000 library in wide
 used in the geospatial and general imaging community.  However, it is not free,
 and so normally builds of GDAL from source will not include support for this
 driver unless the builder purchases a license for the library and configures
-accordingly.  GDAL includes <a href="frmt_jpeg2000">another JPEG2000 driver</a>
+accordingly.  GDAL includes <a href="frmt_jpeg2000.html">another JPEG2000 driver</a>
 based on the free JasPer library.<p>
 
 When reading images this driver will represent the bands as being 
@@ -55,8 +55,6 @@ the resulting image should be 20% of the size of the uncompressed image.
 A value of 100 will result in use of the lossless compression algorithm . 
 Actual final image size may not exactly match that requested depending on 
 various factors.<P>
-
-NOTE: QUALITY=100 will not be lossless for 16bit images.<p>
 
 <li> <b>LAYERS=n</b>: Control the number of layers produced.  These are 
 sort of like resolution layers, but not exactly.  The default value is
