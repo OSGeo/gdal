@@ -5,7 +5,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	ogrogdidriver.o ogrogdidatasource.o ogrogdilayer.o
 
-CPPLAGS	+=	-I.. -I../.. $(OGDI_INCLUDE)
+CPPLAGS	:=	-I.. -I../.. $(OGDI_INCLUDE) $(CPPFLAGS)
 
 default:	$(O_OBJ)
 
