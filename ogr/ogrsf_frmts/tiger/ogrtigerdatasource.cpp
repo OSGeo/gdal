@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/07/04 05:40:35  warmerda
+ * upgraded to support FILE, and Tiger2000 schema
+ *
  * Revision 1.7  2001/01/19 21:15:20  warmerda
  * expanded tabs
  *
@@ -72,6 +75,49 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include <ctype.h>
+
+/************************************************************************/
+/*                        TigerClassifyVersion()                        */
+/************************************************************************/
+
+TigerVersion TigerClassifyVersion( int nVersionCode )
+
+{
+    TigerVersion	nVersion;
+    int                 nYear, nMonth;
+
+    nVersion = TIGER_Unknown;
+    if( nVersionCode == 0 )
+        nVersion = TIGER_1990_Precensus;
+    else if( nVersionCode == 2 )
+        nVersion = TIGER_1990;
+    else if( nVersionCode == 3 )
+        nVersion = TIGER_1992;
+    else if( nVersionCode == 5 )
+        nVersion = TIGER_1994;
+    else if( nVersionCode == 21 )
+        nVersion = TIGER_1994;
+    else if( nVersionCode == 24 )
+        nVersion = TIGER_1995;
+
+    nYear = nVersionCode % 100;
+    nMonth = nVersionCode / 100;
+
+    nVersionCode = nYear * 100 + nMonth;
+
+    if( nVersion != TIGER_Unknown )
+        /* do nothing */;
+    else if( nVersionCode >= 9706 && nVersionCode <= 9810 )
+        nVersion = TIGER_1997;
+    else if( nVersionCode >= 9812 && nVersionCode <= 9904 )
+        nVersion = TIGER_1998;
+    else if( nVersionCode >= 6 /*0006*/ && nVersionCode <= 8 /*0008*/ )
+        nVersion = TIGER_1999;
+    else if( nVersionCode >= 10 /*0010*/ && nVersionCode <= 11 /*0011*/ )
+        nVersion = TIGER_2000_Redistricting;
+
+    return nVersion;
+}
 
 /************************************************************************/
 /*                         OGRTigerDataSource()                         */
@@ -245,7 +291,6 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
         {
             char        szHeader[80];
             FILE        *fp;
-            int         nVersion;
             char        *pszFilename;
 
             pszFilename = BuildFilename( papszFileList[i], "1" );
@@ -270,10 +315,12 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
                 || !isdigit(szHeader[3]) || !isdigit(szHeader[4]) )
                 continue;
 
-            nVersion = atoi(TigerFileBase::GetField( szHeader, 2, 5 ));
+            nVersionCode = atoi(TigerFileBase::GetField( szHeader, 2, 5 ));
+            nVersion = TigerClassifyVersion( nVersionCode );
 
-            if( nVersion != 0 && nVersion != 2 && nVersion != 3
-                && nVersion != 5 && nVersion != 21 && nVersion != 24
+            if( nVersionCode != 0 && nVersionCode != 2 && nVersionCode != 3
+                && nVersionCode != 5 && nVersionCode != 21 
+                && nVersionCode != 24
                 && szHeader[3] != '9' && szHeader[3] != '0' )
                 continue;
 

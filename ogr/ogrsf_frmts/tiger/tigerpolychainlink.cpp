@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/07/04 05:40:35  warmerda
+ * upgraded to support FILE, and Tiger2000 schema
+ *
  * Revision 1.3  2001/01/19 21:15:20  warmerda
  * expanded tabs
  *
@@ -57,12 +60,15 @@ TigerPolyChainLink::TigerPolyChainLink( OGRTigerDataSource * poDSIn,
     poFeatureDefn->SetGeomType( wkbNone );
 
 /* -------------------------------------------------------------------- */
-/*      Fields from type 9 record.                                      */
+/*      Fields from type I record.                                      */
 /* -------------------------------------------------------------------- */
     oField.Set( "MODULE", OFTString, 8 );
     poFeatureDefn->AddFieldDefn( &oField );
     
     oField.Set( "TLID", OFTInteger, 10 );
+    poFeatureDefn->AddFieldDefn( &oField );
+    
+    oField.Set( "FILE", OFTString, 5 );
     poFeatureDefn->AddFieldDefn( &oField );
     
     oField.Set( "STATE", OFTInteger, 2 );
@@ -156,6 +162,7 @@ OGRFeature *TigerPolyChainLink::GetFeature( int nRecordId )
     OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
     SetField( poFeature, "TLID", achRecord, 6, 15 );
+    SetField( poFeature, "FILE", achRecord, 16, 20 );
     SetField( poFeature, "STATE", achRecord, 16, 17 );
     SetField( poFeature, "COUNTY", achRecord, 18, 20 );
     SetField( poFeature, "RTLINK", achRecord, 21, 21 );

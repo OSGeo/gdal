@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/07/04 05:40:35  warmerda
+ * upgraded to support FILE, and Tiger2000 schema
+ *
  * Revision 1.6  2001/01/19 21:15:20  warmerda
  * expanded tabs
  *
@@ -55,6 +58,36 @@
 
 class OGRTigerDataSource;
 
+/*
+** TIGER Versions
+**
+** 0000           TIGER/Line Precensus Files, 1990 
+** 0002           TIGER/Line Initial Voting District Codes Files, 1990 
+** 0003           TIGER/Line Files, 1990 
+** 0005           TIGER/Line Files, 1992 
+** 0021           TIGER/Line Files, 1994 
+** 0024           TIGER/Line Files, 1995 
+** 0697 to 1098   TIGER/Line Files, 1997 
+** 1298 to 0499   TIGER/Line Files, 1998 
+** 0600 to 0800   TIGER/Line Files, 1999 
+** 1000 to 1100   TIGER/Line Files, Redistricting Census 2000
+*/
+
+typedef enum {
+    TIGER_1990_Precensus,
+    TIGER_1990,
+    TIGER_1992,
+    TIGER_1994,
+    TIGER_1995,
+    TIGER_1997,
+    TIGER_1998,
+    TIGER_1999,
+    TIGER_2000_Redistricting,
+    TIGER_Unknown
+} TigerVersion;
+
+TigerVersion TigerClassifyVersion( int );
+
 /************************************************************************/
 /*                            TigerFileBase                             */
 /************************************************************************/
@@ -76,9 +109,19 @@ protected:
   int                 OpenFile( const char *, const char * );
   void                EstablishFeatureCount();
 
+  static int	      EstablishRecordLength( FILE * );
+ 
+  void		      SetupVersion();
+
+  int		      nVersionCode;
+  TigerVersion	      nVersion;
+
 public:
                       TigerFileBase();
   virtual            ~TigerFileBase();
+
+  TigerVersion        GetVersion() { return nVersion; }
+  int                 GetVersionCode() { return nVersionCode; }
 
   virtual const char *GetShortModule() { return pszShortModule; }
   virtual const char *GetModule() { return pszModule; }
@@ -220,6 +263,7 @@ class TigerPolygon : public TigerFileBase
 {
   FILE               *fpRTS;
   int                 bUsingRTS;
+  int                 nRTSRecLen;
 
 public:
                       TigerPolygon( OGRTigerDataSource *, const char * );
@@ -384,9 +428,15 @@ class OGRTigerDataSource : public OGRDataSource
     int                 nModules;
     char                **papszModules;
     
+    int		        nVersionCode;
+    TigerVersion	nVersion;
+
   public:
                         OGRTigerDataSource();
                         ~OGRTigerDataSource();
+
+    TigerVersion        GetVersion() { return nVersion; }
+    int                 GetVersionCode() { return nVersionCode; }
 
     void                SetOptionList( char ** );
     const char         *GetOption( const char * );

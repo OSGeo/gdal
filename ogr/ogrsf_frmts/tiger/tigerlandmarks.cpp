@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/04 05:40:35  warmerda
+ * upgraded to support FILE, and Tiger2000 schema
+ *
  * Revision 1.4  2001/01/19 21:15:20  warmerda
  * expanded tabs
  *
@@ -63,6 +66,9 @@ TigerLandmarks::TigerLandmarks( OGRTigerDataSource * poDSIn,
 /*      Fields from type 5 record.                                      */
 /* -------------------------------------------------------------------- */
     oField.Set( "MODULE", OFTString, 8 );
+    poFeatureDefn->AddFieldDefn( &oField );
+    
+    oField.Set( "FILE", OFTString, 5 );
     poFeatureDefn->AddFieldDefn( &oField );
     
     oField.Set( "STATE", OFTInteger, 2 );

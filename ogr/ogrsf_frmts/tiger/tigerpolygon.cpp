@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/07/04 05:40:35  warmerda
+ * upgraded to support FILE, and Tiger2000 schema
+ *
  * Revision 1.3  2001/01/19 21:15:20  warmerda
  * expanded tabs
  *
@@ -63,6 +66,9 @@ TigerPolygon::TigerPolygon( OGRTigerDataSource * poDSIn,
 /*      Fields from type 9 record.                                      */
 /* -------------------------------------------------------------------- */
     oField.Set( "MODULE", OFTString, 8 );
+    poFeatureDefn->AddFieldDefn( &oField );
+    
+    oField.Set( "FILE", OFTString, 5 );
     poFeatureDefn->AddFieldDefn( &oField );
     
     oField.Set( "STATE", OFTInteger, 2 );
@@ -178,14 +184,49 @@ TigerPolygon::TigerPolygon( OGRTigerDataSource * poDSIn,
         oField.Set( "CDCU", OFTInteger, 2 );
         poFeatureDefn->AddFieldDefn( &oField );
 
-        oField.Set( "STSENATE", OFTString, 6 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "STHOUSE", OFTString, 6 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "VTD00", OFTString, 6 );
-        poFeatureDefn->AddFieldDefn( &oField );
+        if( poDS->GetVersion() < TIGER_2000_Redistricting )
+        {
+            oField.Set( "STSENATE", OFTString, 6 );
+            poFeatureDefn->AddFieldDefn( &oField );
+            
+            oField.Set( "STHOUSE", OFTString, 6 );
+            poFeatureDefn->AddFieldDefn( &oField );
+            
+            oField.Set( "VTD00", OFTString, 6 );
+            poFeatureDefn->AddFieldDefn( &oField );
+        }
+        else
+        {
+            oField.Set( "SLDU", OFTString, 3 );
+            poFeatureDefn->AddFieldDefn( &oField );
+            
+            oField.Set( "SLDL", OFTString, 3 );
+            poFeatureDefn->AddFieldDefn( &oField );
+            
+            oField.Set( "UGA", OFTString, 5 );
+            poFeatureDefn->AddFieldDefn( &oField );
+            
+            oField.Set( "BLKGRP", OFTInteger, 1 );
+            poFeatureDefn->AddFieldDefn( &oField );
+            
+            oField.Set( "VTD", OFTString, 6 );
+            poFeatureDefn->AddFieldDefn( &oField );
+            
+            oField.Set( "STATECOL", OFTInteger, 2 );
+            poFeatureDefn->AddFieldDefn( &oField );
+            
+            oField.Set( "COUNTYCOL", OFTInteger, 3 );
+            poFeatureDefn->AddFieldDefn( &oField );
+            
+            oField.Set( "BLOCKCOL", OFTInteger, 5 );
+            poFeatureDefn->AddFieldDefn( &oField );
+            
+            oField.Set( "BLKSUFCOL", OFTString, 1 );
+            poFeatureDefn->AddFieldDefn( &oField );
+            
+            oField.Set( "ZCTA5", OFTString, 5 );
+            poFeatureDefn->AddFieldDefn( &oField );
+        }
     }
 }
 
@@ -232,6 +273,8 @@ int TigerPolygon::SetModule( const char * pszModule )
             fpRTS = VSIFOpen( pszFilename, "rb" );
 
             CPLFree( pszFilename );
+
+            nRTSRecLen = EstablishRecordLength( fpRTS );
         }
     }
     
@@ -282,6 +325,7 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
     OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
+    SetField( poFeature, "FILE", achRecord, 6, 10 );
     SetField( poFeature, "STATE", achRecord, 6, 7 );
     SetField( poFeature, "COUNTY", achRecord, 8, 10 );
     SetField( poFeature, "CENID", achRecord, 11, 15 );
@@ -310,7 +354,6 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
     if( fpRTS != NULL )
     {
         char    achRTSRec[120];
-        int     nRTSRecLen = 120 + nRecordLength - 98;
 
         if( VSIFSeek( fpRTS, nRecordId * nRTSRecLen, SEEK_SET ) != 0 )
         {
@@ -344,9 +387,26 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
         SetField( poFeature, "BLK00", achRTSRec, 78, 81 );
         SetField( poFeature, "RS10", achRTSRec, 82, 82 );
         SetField( poFeature, "CDCU", achRTSRec, 83, 84 );
-        SetField( poFeature, "STSENATE", achRTSRec, 85, 90 );
-        SetField( poFeature, "STHOUSE", achRTSRec, 91, 96 );
-        SetField( poFeature, "VTD00", achRTSRec, 97, 102 );
+
+        if( GetVersion() < TIGER_2000_Redistricting )
+        {
+            SetField( poFeature, "STSENATE", achRTSRec, 85, 90 );
+            SetField( poFeature, "STHOUSE", achRTSRec, 91, 96 );
+            SetField( poFeature, "VTD00", achRTSRec, 97, 102 );
+        }
+        else
+        {
+            SetField( poFeature, "SLDU", achRTSRec, 85, 87 );
+            SetField( poFeature, "SLDL", achRTSRec, 88, 90 );
+            SetField( poFeature, "UGA", achRTSRec, 91, 96 );
+            SetField( poFeature, "BLKGRP", achRTSRec, 97, 102 );
+            SetField( poFeature, "VTD", achRTSRec, 97, 102 );
+            SetField( poFeature, "STATECOL", achRTSRec, 103, 104 );
+            SetField( poFeature, "COUNTYCOL", achRTSRec, 105, 107 );
+            SetField( poFeature, "BLOCKCOL", achRTSRec, 108, 112 );
+            SetField( poFeature, "BLKSUFCOL", achRTSRec, 113, 113 );
+            SetField( poFeature, "ZCTA5", achRTSRec, 114, 118 );
+        }
     }
     
     return poFeature;

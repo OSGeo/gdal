@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/07/04 05:40:35  warmerda
+ * upgraded to support FILE, and Tiger2000 schema
+ *
  * Revision 1.6  2001/07/04 03:08:21  warmerda
  * fixed FRADDL width
  *
@@ -252,11 +255,34 @@ TigerCompleteChain::TigerCompleteChain( OGRTigerDataSource * poDSIn,
         oField.Set( "AIRR", OFTInteger, 4 );
         poFeatureDefn->AddFieldDefn( &oField );
 
-        oField.Set( "VTDL", OFTString, 4 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "VTDR", OFTString, 4 );
-        poFeatureDefn->AddFieldDefn( &oField );
+        if( poDS->GetVersion() >= TIGER_2000_Redistricting )
+        {
+            oField.Set( "ANRCL", OFTInteger, 5 );
+            poFeatureDefn->AddFieldDefn( &oField );
+            
+            oField.Set( "ANRCR", OFTInteger, 5 );
+            poFeatureDefn->AddFieldDefn( &oField );
+            
+            oField.Set( "AITSCEL", OFTInteger, 3 );
+            poFeatureDefn->AddFieldDefn( &oField );
+            
+            oField.Set( "AITSCER", OFTInteger, 3 );
+            poFeatureDefn->AddFieldDefn( &oField );
+            
+            oField.Set( "AITL", OFTInteger, 5 );
+            poFeatureDefn->AddFieldDefn( &oField );
+            
+            oField.Set( "AITR", OFTInteger, 5 );
+            poFeatureDefn->AddFieldDefn( &oField );
+        }
+        else
+        {
+            oField.Set( "VTDL", OFTString, 4 );
+            poFeatureDefn->AddFieldDefn( &oField );
+            
+            oField.Set( "VTDR", OFTString, 4 );
+            poFeatureDefn->AddFieldDefn( &oField );
+        }
     }
 }
 
@@ -450,8 +476,21 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
         SetField( poFeature, "BLK90R", achRT3Rec, 74, 77 );
         SetField( poFeature, "AIRL", achRT3Rec, 78, 81 );
         SetField( poFeature, "AIRR", achRT3Rec, 82, 85 );
-        SetField( poFeature, "VTDL", achRT3Rec, 104, 107 );
-        SetField( poFeature, "VTDR", achRT3Rec, 108, 111 );
+
+        if( GetVersion() >= TIGER_2000_Redistricting )
+        {
+            SetField( poFeature, "ANRCL", achRT3Rec, 86, 90 );
+            SetField( poFeature, "ANRCR", achRT3Rec, 91, 95 );
+            SetField( poFeature, "AITSCEL", achRT3Rec, 96, 98 );
+            SetField( poFeature, "AITSCER", achRT3Rec, 99, 101 );
+            SetField( poFeature, "AITSL", achRT3Rec, 102, 106 );
+            SetField( poFeature, "AITSR", achRT3Rec, 107, 111 );
+        }
+        else
+        {
+            SetField( poFeature, "VTDL", achRT3Rec, 104, 107 );
+            SetField( poFeature, "VTDR", achRT3Rec, 108, 111 );
+        }
     }
 
 /* -------------------------------------------------------------------- */

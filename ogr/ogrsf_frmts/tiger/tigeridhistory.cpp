@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/07/04 05:40:35  warmerda
+ * upgraded to support FILE, and Tiger2000 schema
+ *
  * Revision 1.3  2001/01/19 21:15:20  warmerda
  * expanded tabs
  *
@@ -60,6 +63,9 @@ TigerIDHistory::TigerIDHistory( OGRTigerDataSource * poDSIn,
 /*      Fields from type 9 record.                                      */
 /* -------------------------------------------------------------------- */
     oField.Set( "MODULE", OFTString, 8 );
+    poFeatureDefn->AddFieldDefn( &oField );
+    
+    oField.Set( "FILE", OFTString, 5 );
     poFeatureDefn->AddFieldDefn( &oField );
     
     oField.Set( "STATE", OFTInteger, 2 );
@@ -158,6 +164,7 @@ OGRFeature *TigerIDHistory::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
     OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
+    SetField( poFeature, "FILE", achRecord, 6, 10 );
     SetField( poFeature, "STATE", achRecord, 6, 7 );
     SetField( poFeature, "COUNTY", achRecord, 8, 10 );
     SetField( poFeature, "TLID", achRecord, 11, 20 );

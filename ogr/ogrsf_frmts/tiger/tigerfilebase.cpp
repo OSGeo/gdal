@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/04 05:40:35  warmerda
+ * upgraded to support FILE, and Tiger2000 schema
+ *
  * Revision 1.4  2001/01/19 21:15:20  warmerda
  * expanded tabs
  *
@@ -58,6 +61,8 @@ TigerFileBase::TigerFileBase()
     fpPrimary = NULL;
     poFeatureDefn = NULL;
     nFeatures = 0;
+    nVersionCode = 0;
+    nVersion = TIGER_Unknown;
 }
 
 /************************************************************************/
@@ -110,11 +115,80 @@ int TigerFileBase::OpenFile( const char * pszModuleToOpen,
             if( pszShortModule[i] == '.' )
                 pszShortModule[i] = '\0';
         }
-        
+
+        SetupVersion();
+
         return TRUE;
     }
     else
         return FALSE;
+}
+
+/************************************************************************/
+/*                            SetupVersion()                            */
+/************************************************************************/
+
+void TigerFileBase::SetupVersion()
+
+{
+    char	aszRecordHead[6];
+
+    VSIFSeek( fpPrimary, 0, SEEK_SET );
+    VSIFRead( aszRecordHead, 1, 5, fpPrimary );
+    aszRecordHead[5] = '\0';
+    nVersionCode = atoi(aszRecordHead+1);
+    VSIFSeek( fpPrimary, 0, SEEK_SET );
+
+    nVersion = TigerClassifyVersion( nVersionCode );
+}
+
+/************************************************************************/
+/*                       EstablishRecordLength()                        */
+/************************************************************************/
+
+int TigerFileBase::EstablishRecordLength( FILE * fp )
+
+{
+    char        chCurrent;
+    int	        nRecLen = 0;
+    
+    if( VSIFSeek( fp, 0, SEEK_SET ) != 0 )
+        return -1;
+
+/* -------------------------------------------------------------------- */
+/*      Read through to the end of line.                                */
+/* -------------------------------------------------------------------- */
+    chCurrent = '\0';
+    while( VSIFRead( &chCurrent, 1, 1, fp ) == 1
+           && chCurrent != 10
+           && chCurrent != 13 )
+    {
+        nRecLen++;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Is the file zero length?                                        */
+/* -------------------------------------------------------------------- */
+    if( nRecLen == 0 )
+    {
+        return -1;
+    }
+    
+    nRecLen++; /* for the 10 or 13 we encountered */
+
+/* -------------------------------------------------------------------- */
+/*      Read through line terminator characters.  We are trying to      */
+/*      handle cases of CR, CR/LF and LF/CR gracefully.                 */
+/* -------------------------------------------------------------------- */
+    while( VSIFRead( &chCurrent, 1, 1, fp ) == 1
+           && (chCurrent == 10 || chCurrent == 13 ) )
+    {
+        nRecLen++;
+    }
+
+    VSIFSeek( fp, 0, SEEK_SET );
+
+    return nRecLen;
 }
 
 /************************************************************************/
@@ -124,48 +198,16 @@ int TigerFileBase::OpenFile( const char * pszModuleToOpen,
 void TigerFileBase::EstablishFeatureCount()
 
 {
-    char        chCurrent;
-    
-    nRecordLength = 0;
-    
     if( fpPrimary == NULL )
         return;
 
-    if( VSIFSeek( fpPrimary, 0, SEEK_SET ) != 0 )
-        return;
+    nRecordLength = EstablishRecordLength( fpPrimary );
 
-/* -------------------------------------------------------------------- */
-/*      Read through to the end of line.                                */
-/* -------------------------------------------------------------------- */
-    chCurrent = '\0';
-    while( VSIFRead( &chCurrent, 1, 1, fpPrimary ) == 1
-           && chCurrent != 10
-           && chCurrent != 13 )
-    {
-        nRecordLength++;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Is the file zero length?                                        */
-/* -------------------------------------------------------------------- */
-    if( nRecordLength == 0 )
+    if( nRecordLength == -1 )
     {
         nRecordLength = 1;
         nFeatures = 0;
-
         return;
-    }
-    
-    nRecordLength++; /* for the 10 or 13 we encountered */
-
-/* -------------------------------------------------------------------- */
-/*      Read through line terminator characters.  We are trying to      */
-/*      handle cases of CR, CR/LF and LF/CR gracefully.                 */
-/* -------------------------------------------------------------------- */
-    while( VSIFRead( &chCurrent, 1, 1, fpPrimary ) == 1
-           && (chCurrent == 10 || chCurrent == 13 ) )
-    {
-        nRecordLength++;
     }
 
 /* -------------------------------------------------------------------- */
