@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/03/27 21:25:25  warmerda
+ * added working default implementation of GetFeature()
+ *
  * Revision 1.10  2001/11/15 21:19:21  warmerda
  * added transaction semantics
  *
@@ -204,6 +207,17 @@ OGRErr OGRLayer::SetAttributeFilter( const char *pszQuery )
 OGRFeature *OGRLayer::GetFeature( long nFeatureId )
 
 {
+    OGRFeature *poFeature;
+
+    ResetReading();
+    while( (poFeature = GetNextFeature()) != NULL )
+    {
+        if( poFeature->GetFID() == nFeatureId )
+            return poFeature;
+        else
+            delete poFeature;
+    }
+    
     return NULL;
 }
 
