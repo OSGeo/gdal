@@ -19,54 +19,42 @@ INST_H_FILES	=	ogr_core.h ogr_feature.h ogr_geometry.h ogr_p.h \
 
 OGR_LIB  =	ogr.a
 
-LIBS	:=	$(OGR_LIB) $(CPL_LIB) $(LIBS) $(PG_LIB) $(OGDI_LIBS)
-
 FRMTS_LIB = 	ogrsf_frmts/ogrsf_frmts.a
 
 LINCLUDE =	-Iogrsf_frmts -I. -I$(GDAL_ROOT)/port 
 
-ifeq ($(OGDI_FLAG),ENABLED)
-CFLAGS   :=	$(CFLAGS) -DOGDI_ENABLED
-CXXFLAGS :=	$(CXXFLAGS) -DOGDI_ENABLED
-endif
+default:	sublibs lib apps
 
-default:	lib ogrinfo ogr2ogr
+all:	sublibs apps test_ogrsf$(EXE) docs
 
-all:	sublibs test1 test2 test_ogrsf ogrinfo ogr2ogr docs ogrtindex
-
-apps:	ogrinfo ogr2ogr
+apps:	ogrinfo$(EXE) ogr2ogr$(EXE) ogrtindex$(EXE)
 
 clean:
-	rm -f *.o test1 test2 ogrinfo ogr2ogr ogrtindex sdts2mi testepsg 
-	rm -f test_ogrsf $(OGR_LIB)
+	rm -f *.o ogrinfo$(EXE) ogr2ogr$(EXE) ogrtindex$(EXE) 
+	rm -f sdts2mi$(EXE) testepsg$(EXE)
+	rm -f test_ogrsf$(EXE) $(OGR_LIB)
 	(cd ogrsf_frmts; $(MAKE) clean)
 
 very-clean: clean
-	rm -rf html
+	rm -rf html rtf
 
-test1:	test1.o $(OGR_LIB)
-	$(CXX) $(LNK_FLAGS) test1.o $(LIBS) -o test1
+ogrinfo$(EXE):	ogrinfo.o  $(EXE_DEP_LIBS)
+	$(CXX) $(LNK_FLAGS) ogrinfo.o $(CONFIG_LIBS) -o ogrinfo$(EXE)
 
-test2:	test2.o $(OGR_LIB) $(FRMTS_LIB)
-	$(CXX) $(LNK_FLAGS) test2.o $(FRMTS_LIB) $(LIBS) -o test2
+test_ogrsf$(EXE):	test_ogrsf.o  $(EXE_DEP_LIBS)
+	$(CXX) $(LNK_FLAGS) test_ogrsf.o $(CONFIG_LIBS) -o test_ogrsf$(EXE)
 
-test_ogrsf:	test_ogrsf.o $(OGR_LIB) $(FRMTS_LIB)
-	$(CXX) $(LNK_FLAGS) test_ogrsf.o $(FRMTS_LIB) $(LIBS) -o test_ogrsf
+ogr2ogr$(EXE):	ogr2ogr.o  $(EXE_DEP_LIBS)
+	$(CXX) $(LNK_FLAGS) ogr2ogr.o $(CONFIG_LIBS) -o ogr2ogr$(EXE)
 
-ogrinfo:	ogrinfo.o $(OGR_LIB) $(FRMTS_LIB)
-	$(CXX) $(LNK_FLAGS) ogrinfo.o $(FRMTS_LIB) $(LIBS) -o ogrinfo
+sdts2mi$(EXE):	sdts2mi.o  $(EXE_DEP_LIBS)
+	$(CXX) $(LNK_FLAGS) sdts2mi.o $(CONFIG_LIBS) -o sdts2mi$(EXE)
 
-ogr2ogr:	ogr2ogr.o $(OGR_LIB) $(FRMTS_LIB)
-	$(CXX) $(LNK_FLAGS) ogr2ogr.o $(FRMTS_LIB) $(LIBS) -o ogr2ogr
+testepsg$(EXE):	testepsg.o  $(EXE_DEP_LIBS)
+	$(CXX) $(LNK_FLAGS) testepsg.o $(CONFIG_LIBS) -o testepsg$(EXE)
 
-sdts2mi:	sdts2mi.o $(OGR_LIB) $(FRMTS_LIB)
-	$(CXX) $(LNK_FLAGS) sdts2mi.o $(FRMTS_LIB) $(LIBS) -o sdts2mi
-
-testepsg:	testepsg.o $(OGR_LIB) $(FRMTS_LIB)
-	$(CXX) $(LNK_FLAGS) testepsg.o $(FRMTS_LIB) $(LIBS) -o testepsg
-
-ogrtindex:	ogrtindex.o $(OGR_LIB) $(FRMTS_LIB)
-	$(CXX) $(LNK_FLAGS) ogrtindex.o $(FRMTS_LIB) $(LIBS) -o ogrtindex
+ogrtindex$(EXE):	ogrtindex.o  $(EXE_DEP_LIBS)
+	$(CXX) $(LNK_FLAGS) ogrtindex.o $(CONFIG_LIBS) -o ogrtindex$(EXE)
 
 $(FRMTS_LIB):
 	(cd ogrsf_frmts; $(MAKE))
@@ -80,10 +68,12 @@ docs:
 	rm -rf html/*
 	doxygen
 
-
 $(OGR_LIB):	$(OBJ)
 	$(AR) r $(OGR_LIB) $?
 	$(RANLIB) $(OGR_LIB)
+
+$(GDAL_SLIB):	$(GDALA_DEP)
+	(cd ..; $(MAKE) check-lib)
 
 %.o:	%.c
 	$(CC) -c $(LINCLUDE) $(CFLAGS) $*.c -o $*.o
