@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/01/22 14:48:19  warmerda
+ * Fixed pabyWorkBuffer memory leak in IRasterIO().
+ *
  * Revision 1.4  2001/11/11 23:50:59  warmerda
  * added required class keyword to friend declarations
  *
@@ -193,6 +196,7 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  nBufXSize, nBufYSize );
     if( eNCSErr != NCS_SUCCESS )
     {
+        CPLFree( pabyWorkBuffer );
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s", NCSGetErrorText(eNCSErr) );
         
@@ -218,6 +222,7 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
         if( eRStatus != NCSECW_READ_OK )
         {
+            CPLFree( pabyWorkBuffer );
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "NCScbmReadViewLineBIL failed." );
             return CE_Failure;
@@ -230,6 +235,8 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                            eBufType, nPixelSpace, nBufXSize );
         }
     }
+
+    CPLFree( pabyWorkBuffer );
 
     return CE_None;
 }
