@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2004/01/23 16:15:22  warmerda
+ * DGN_LEVEL_SYMBOLOGY has no disphdr, DGNParseCore() wont read negative attr
+ *
  * Revision 1.43  2003/11/24 14:17:40  warmerda
  * Added a bunch more no-disphdr elements as per email from Marius.
  *
@@ -1100,6 +1103,7 @@ int DGNElemTypeHasDispHdr( int nElemType )
       case 0:
       case DGNT_TCB:
       case DGNT_CELL_LIBRARY:
+      case DGNT_LEVEL_SYMBOLOGY:
       case 32:
       case 44:
       case 48:
@@ -1154,10 +1158,22 @@ int DGNParseCore( DGNInfo *psDGN, DGNElemCore *psElement )
         nAttIndex = psData[30] + psData[31] * 256;
 
         psElement->attr_bytes = psDGN->nElemBytes - nAttIndex*2 - 32;
-        psElement->attr_data = (unsigned char *) 
-            CPLMalloc(psElement->attr_bytes);
-        memcpy( psElement->attr_data, psData + nAttIndex * 2 + 32,
+        if( psElement->attr_bytes > 0 )
+        {
+            psElement->attr_data = (unsigned char *) 
+                CPLMalloc(psElement->attr_bytes);
+            memcpy( psElement->attr_data, psData + nAttIndex * 2 + 32,
+                    psElement->attr_bytes );
+        }
+        else
+        {
+            CPLError(
+                CE_Warning, CPLE_AppDefined, 
+                "Computed %d bytes for attribute info on element,\n"
+                "perhaps this element type doesn't really have a disphdr?",
                 psElement->attr_bytes );
+            psElement->attr_bytes = 0;
+        }
     }
     
     return TRUE;

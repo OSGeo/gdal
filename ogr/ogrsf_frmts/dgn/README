@@ -52,6 +52,9 @@ Release 1.?
  o Added DGNElemTypeHasDispHdr(), and use it in DGNParseCore() to avoid trying
    to read disp hdr, or attributes from inappropriate elements.
 
+ o Check if a negative amount of attribute information is being read in
+   DGNParseCore(), and if so just issue a warning, and skip attempt.
+
  o Fixed DGNCreateCellHeaderFromGroup() to not pre-transform the bounds.  
 
  o Fixed missing handling of min/max Z in DGNCreateMultiPointElem(). (Marius)
