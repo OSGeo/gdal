@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2002/04/08 17:50:09  warmerda
+ * Ensure Equal operator tests first vertex too.
+ *
  * Revision 1.26  2002/03/05 14:25:14  warmerda
  * expand tabs
  *
@@ -1008,7 +1011,7 @@ OGRBoolean OGRLineString::Equal( OGRGeometry * poOther )
     if( getNumPoints() != poOLine->getNumPoints() )
         return FALSE;
 
-    for( int iPoint = 1; iPoint < getNumPoints(); iPoint++ )
+    for( int iPoint = 0; iPoint < getNumPoints(); iPoint++ )
     {
         if( getX(iPoint) != poOLine->getX(iPoint)
             || getY(iPoint) != poOLine->getY(iPoint) 
