@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/07/09 20:25:25  warmerda
+ * expand tabs
+ *
  * Revision 1.12  2002/05/28 18:54:05  warmerda
  * added escaping/unescaping support
  *
@@ -1039,8 +1042,8 @@ int CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
                     const char *pszValue )
 
 {
-    char	**papszTokens;
-    int		iToken = 0;
+    char        **papszTokens;
+    int         iToken = 0;
 
     papszTokens = CSLTokenizeStringComplex( pszPath, ".", FALSE, FALSE );
 

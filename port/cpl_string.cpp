@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/07/09 20:25:25  warmerda
+ * expand tabs
+ *
  * Revision 1.22  2002/05/28 18:53:43  warmerda
  * added XML escaping support
  *
@@ -1062,7 +1065,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
                        int nScheme )
 
 {
-    char	*pszOutput;
+    char        *pszOutput;
     char        *pszShortOutput;
 
     if( nLength == -1 )
@@ -1174,7 +1177,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
 
 {
     char *pszOutput;
-    int	iOut=0, iIn;
+    int iOut=0, iIn;
 
     pszOutput = (char *) CPLMalloc(strlen(pszInput)+1);
     pszOutput[0] = '\0';
