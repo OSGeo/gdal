@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/06/01 13:07:59  warmerda
+ * added speed up for indexing into fixes size object arrays
+ *
  * Revision 1.6  1999/02/15 19:06:18  warmerda
  * Disable warning on field offsets for Intergraph delivery
  *
@@ -490,12 +493,19 @@ void *HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
             int		nExtraOffset = 0;
             int		iIndexCounter;
 
-            for( iIndexCounter = 0;
-                 iIndexCounter < nIndexValue;
-                 iIndexCounter++ )
+            if( poItemObjectType->nBytes > 0 )
             {
-                nExtraOffset +=
-                    poItemObjectType->GetInstBytes( pabyData + nExtraOffset );
+                nExtraOffset = poItemObjectType->nBytes * nIndexValue;
+            }
+            else
+            {
+                for( iIndexCounter = 0;
+                     iIndexCounter < nIndexValue;
+                     iIndexCounter++ )
+                {
+                    nExtraOffset +=
+                        poItemObjectType->GetInstBytes(pabyData+nExtraOffset);
+                }
             }
 
             pabyRawData = pabyData + nExtraOffset;
