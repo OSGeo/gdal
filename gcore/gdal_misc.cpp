@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/17 02:00:45  vgough
+ * made pure_virtual C linkage
+ *
  * Revision 1.2  1999/05/16 19:32:13  warmerda
  * Added __pure_virtual.
  *
@@ -47,6 +50,7 @@
 
 #ifdef __GNUC__
 
+extern "C"
 void __pure_virtual()
 
 {
