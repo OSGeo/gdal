@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.96  2003/07/18 12:48:30  warmerda
+ * Install GDALDefaultCSVFilename incase we are using an external libgeotiff
+ *
  * Revision 1.95  2003/07/08 15:39:03  warmerda
  * avoid warnings
  *
@@ -166,6 +169,7 @@ CPL_C_START
 void	GDALRegister_GTiff(void);
 char *  GTIFGetOGISDefn( GTIFDefn * );
 int     GTIFSetFromOGISDefn( GTIF *, const char * );
+const char * GDALDefaultCSVFilename( const char *pszBasename );
 CPL_C_END
 
 static void GTiffOneTimeInit();
@@ -3383,6 +3387,10 @@ static void GTiffOneTimeInit()
 
     TIFFSetWarningHandler( GTiffWarningHandler );
     TIFFSetErrorHandler( GTiffErrorHandler );
+
+    // This only really needed if we are linked to an external libgeotiff
+    // with its own (lame) file searching logic. 
+    SetCSVFilenameHook( GDALDefaultCSVFilename );
 }
 
 /************************************************************************/
