@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.15  2002/11/23 18:57:06  warmerda
+ * added CREATIONOPTIONS metadata on driver
+ *
  * Revision 1.14  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -623,6 +626,8 @@ void GDALRegister_JPEG()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jpg" );
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jpeg" );
 
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>\n"
 "   <Option name='PROGRESSIVE' type='boolean'/>\n"
