@@ -1,3 +1,13 @@
+2003-03-05  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* ogr/swq, etc: Implemented JOIN support in the generic ExecuteSQL()
+	processor. 
+
+	* ogr/ogrsf_frmts/generic/ogr_miattrindc.cpp: 
+	Implemented support for generic ogr attribute indexes and the ability
+	to accelerate simple WHERE clauses using the attribute index.  Applied
+	only to Shape driver so far. 
+
 2003-02-26  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* configure/aclocal.m4: added --without-ld-shared configure switch
