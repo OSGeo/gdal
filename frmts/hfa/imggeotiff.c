@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/06/01 12:29:51  warmerda
+ * Ensure ImagineToGeoTIFFProjection() has C linkaged even if compiled with c++.
+ *
  * Revision 1.3  1999/03/02 14:18:09  warmerda
  * Don't write geotiff info if no mapinfo
  *
@@ -56,6 +59,10 @@
 #define MapSys_State_Plane	-9003
 
 int	GTIFMapSysToPCS( int MapSys, int Datum, int nZone );
+
+CPL_C_START
+CPLErr ImagineToGeoTIFFProjection( HFAHandle hHFA, TIFF * hTIFF );
+CPL_C_END
 
 /* ==================================================================== */
 /*      Table relating USGS and ESRI state plane zones.                 */
