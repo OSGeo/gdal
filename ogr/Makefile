@@ -3,7 +3,7 @@ LINKFLAGS =	/Zi /MTd
 EXTRAFLAGS =	-I$(MSDASDK)\inc \
 		-I"$(VCDIR)\ATL\Include" -DWIN32 \
 		-I. -Iogrsf_frmts -I..\frmts\gtiff\libgeotiff \
-		$(PROJ_FLAGS) $(PROJ_INCLUDE)
+		$(PROJ_FLAGS) $(PROJ_INCLUDE) $(GEOS_CFLAGS)
 
 GDAL_ROOT = 	..
 
