@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2003/05/12 14:52:56  warmerda
+ * Use _MSC_VER to test for Microsoft Visual C++ compiler.
+ *
  * Revision 1.32  2002/10/24 20:24:40  warmerda
  * avoid using variable names likely to conflict in macros
  *
@@ -183,7 +186,7 @@ typedef int             GBool;
 /*      64bit support                                                   */
 /* -------------------------------------------------------------------- */
 
-#ifdef WIN32
+#if defined(WIN32) && defined(_MSC_VER)
 
 #define VSI_LARGE_API_SUPPORTED
 typedef __int64          GIntBig;
@@ -213,7 +216,7 @@ typedef unsigned long    GUIntBig;
 #endif
 
 #ifndef CPL_DLL
-#if defined(WIN32) && !defined(CPL_DISABLE_DLL)
+#if defined(_MSC_VER) && !defined(CPL_DISABLE_DLL)
 #  define CPL_DLL     __declspec(dllexport)
 #else
 #  define CPL_DLL
