@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/05/21 03:42:01  warmerda
+ * Expanded tabs
+ *
  * Revision 1.4  2002/11/11 20:35:42  warmerda
  * added support for converting to vax floating point
  *
@@ -55,19 +58,19 @@ typedef struct dbl {
 /*                           DGN2IEEEDouble()                           */
 /************************************************************************/
 
-void	DGN2IEEEDouble(void * dbl)
+void    DGN2IEEEDouble(void * dbl)
 
 {
-    double64_t	dt;
-    GUInt32	sign;
-    GUInt32  	exponent;
-    GUInt32	rndbits;
-    unsigned char	*src;
-    unsigned char	*dest;
+    double64_t  dt;
+    GUInt32     sign;
+    GUInt32     exponent;
+    GUInt32     rndbits;
+    unsigned char       *src;
+    unsigned char       *dest;
 
 /* -------------------------------------------------------------------- */
-/* 	Arrange the VAX double so that it may be accessed by a 		*/
-/*	double64_t structure, (two GUInt32s).				*/
+/*      Arrange the VAX double so that it may be accessed by a          */
+/*      double64_t structure, (two GUInt32s).                           */
 /* -------------------------------------------------------------------- */
     src =  (unsigned char *) dbl;
     dest = (unsigned char *) &dt;
@@ -92,12 +95,12 @@ void	DGN2IEEEDouble(void * dbl)
 #endif
 
 /* -------------------------------------------------------------------- */
-/*	Save the sign of the double					*/
+/*      Save the sign of the double                                     */
 /* -------------------------------------------------------------------- */
-    sign 	 = dt.hi & 0x80000000;
+    sign         = dt.hi & 0x80000000;
 
 /* -------------------------------------------------------------------- */
-/*	Adjust the exponent so that we may work with it			*/	
+/*      Adjust the exponent so that we may work with it                 */      
 /* -------------------------------------------------------------------- */
     exponent = dt.hi >> 23;
     exponent = exponent & 0x000000ff;
@@ -106,10 +109,10 @@ void	DGN2IEEEDouble(void * dbl)
         exponent = exponent -129 + 1023;
 
 /* -------------------------------------------------------------------- */
-/*	Save the bits that we are discarding so we can round properly	*/
+/*      Save the bits that we are discarding so we can round properly   */
 /* -------------------------------------------------------------------- */
     rndbits = dt.lo & 0x00000007;
-	
+        
     dt.lo = dt.lo >> 3;
     dt.lo = (dt.lo & 0x1fffffff) | (dt.hi << 29);
 
@@ -117,7 +120,7 @@ void	DGN2IEEEDouble(void * dbl)
         dt.lo = dt.lo | 0x00000001;
 
 /* -------------------------------------------------------------------- */
-/*	Shift the hi-order int over 3 and insert the exponent and sign	*/
+/*      Shift the hi-order int over 3 and insert the exponent and sign  */
 /* -------------------------------------------------------------------- */
     dt.hi = dt.hi >> 3;
     dt.hi = dt.hi & 0x000fffff;
@@ -127,7 +130,7 @@ void	DGN2IEEEDouble(void * dbl)
 
 #ifdef CPL_LSB
 /* -------------------------------------------------------------------- */
-/*	Change the number to a byte swapped format			*/
+/*      Change the number to a byte swapped format                      */
 /* -------------------------------------------------------------------- */
     src = (unsigned char *) &dt;
     dest = (unsigned char *) dbl;
@@ -149,14 +152,14 @@ void	DGN2IEEEDouble(void * dbl)
 /*                           IEEE2DGNDouble()                           */
 /************************************************************************/
 
-void	IEEE2DGNDouble(void * dbl)
+void    IEEE2DGNDouble(void * dbl)
 
 {
-    double64_t 	dt;
-    GInt32	exponent;
-    GInt32	sign;
-    GByte	*src,*dest;
-	
+    double64_t  dt;
+    GInt32      exponent;
+    GInt32      sign;
+    GByte       *src,*dest;
+        
 #ifdef CPL_LSB
     src  = (GByte *) dbl;
     dest = (GByte *) &dt;
@@ -173,18 +176,18 @@ void	IEEE2DGNDouble(void * dbl)
     memcpy( &dt, dbl, 8 );
 #endif
 
-    sign 	 = dt.hi & 0x80000000;
+    sign         = dt.hi & 0x80000000;
     exponent = dt.hi >> 20;
     exponent = exponent & 0x000007ff;
 
 /* -------------------------------------------------------------------- */
-/*	An exponent of zero means a zero value.				*/
+/*      An exponent of zero means a zero value.                         */
 /* -------------------------------------------------------------------- */
     if (exponent)
         exponent = exponent -1023+129;
 
 /* -------------------------------------------------------------------- */
-/*	In the case of overflow, return the largest number we can	*/
+/*      In the case of overflow, return the largest number we can       */
 /* -------------------------------------------------------------------- */
     if (exponent > 255)
     {
@@ -204,10 +207,10 @@ void	IEEE2DGNDouble(void * dbl)
         dest[7] = 0xff;
 
         return;
-    }	
+    }   
 
 /* -------------------------------------------------------------------- */
-/*	In the case of of underflow return zero				*/
+/*      In the case of of underflow return zero                         */
 /* -------------------------------------------------------------------- */
     else if ((exponent < 0 ) ||
              (exponent == 0 && sign == 0))
@@ -228,18 +231,18 @@ void	IEEE2DGNDouble(void * dbl)
     else
     {
 /* -------------------------------------------------------------------- */
-/*	    Shift the fraction 3 bits left and set the exponent and sign*/
+/*          Shift the fraction 3 bits left and set the exponent and sign*/
 /* -------------------------------------------------------------------- */
         dt.hi = dt.hi << 3;
         dt.hi = dt.hi | (dt.lo >> 29);
         dt.hi = dt.hi & 0x007fffff;
         dt.hi = dt.hi | (exponent << 23) | sign;
-	    
-        dt.lo =	dt.lo << 3;
+            
+        dt.lo = dt.lo << 3;
     }
 
 /* -------------------------------------------------------------------- */
-/*	Convert the double back to VAX format				*/
+/*      Convert the double back to VAX format                           */
 /* -------------------------------------------------------------------- */
     src = (GByte *) &dt;
     dest = (GByte *) dbl;

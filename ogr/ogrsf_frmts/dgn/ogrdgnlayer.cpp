@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2003/05/21 03:42:01  warmerda
+ * Expanded tabs
+ *
  * Revision 1.26  2003/05/15 14:47:24  warmerda
  * implement quaternion support on write
  *
@@ -134,7 +137,7 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN,
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
     
-    OGRFieldDefn	oField( "", OFTInteger );
+    OGRFieldDefn        oField( "", OFTInteger );
 
 /* -------------------------------------------------------------------- */
 /*      Element type                                                    */
@@ -146,7 +149,7 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN,
     poFeatureDefn->AddFieldDefn( &oField );
 
 /* -------------------------------------------------------------------- */
-/*	Level number.							*/
+/*      Level number.                                                   */
 /* -------------------------------------------------------------------- */
     oField.SetName( "Level" );
     oField.SetType( OFTInteger );
@@ -246,7 +249,7 @@ void OGRDGNLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
     if( poGeomIn != NULL )
     {
-        OGREnvelope	oEnvelope;
+        OGREnvelope     oEnvelope;
         
         poFilterGeom = poGeomIn->clone();
 
@@ -319,8 +322,8 @@ void OGRDGNLayer::ConsiderBrush( DGNElemCore *psElement, const char *pszPen,
                                  OGRFeature *poFeature )
 
 {
-    int		gv_red, gv_green, gv_blue;
-    char		szFullStyle[256];
+    int         gv_red, gv_green, gv_blue;
+    char                szFullStyle[256];
     int                 nFillColor;
 
     if( DGNGetShapeFillInfo( hDGN, psElement, &nFillColor ) 
@@ -349,7 +352,7 @@ void OGRDGNLayer::ConsiderBrush( DGNElemCore *psElement, const char *pszPen,
 OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
 {
-    OGRFeature	*poFeature = new OGRFeature( poFeatureDefn );
+    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
     poFeature->SetFID( psElement->element_id );
     poFeature->SetField( "Type", psElement->type );
@@ -376,8 +379,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 /* -------------------------------------------------------------------- */
 /*      Lookup color.                                                   */
 /* -------------------------------------------------------------------- */
-    char	gv_color[128];
-    int		gv_red, gv_green, gv_blue;
+    char        gv_color[128];
+    int         gv_red, gv_green, gv_blue;
     char        szFSColor[128], szPen[256];
 
     szFSColor[0] = '\0';
@@ -426,7 +429,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
       case DGNST_MULTIPOINT:
         if( psElement->type == DGNT_SHAPE )
         {
-            OGRLinearRing	*poLine = new OGRLinearRing();
+            OGRLinearRing       *poLine = new OGRLinearRing();
             OGRPolygon          *poPolygon = new OGRPolygon();
             DGNElemMultiPoint *psEMP = (DGNElemMultiPoint *) psElement;
             
@@ -448,9 +451,9 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
         else if( psElement->type == DGNT_CURVE )
         {
             DGNElemMultiPoint *psEMP = (DGNElemMultiPoint *) psElement;
-            OGRLineString	*poLine = new OGRLineString();
-            DGNPoint		*pasPoints;
-            int			nPoints;
+            OGRLineString       *poLine = new OGRLineString();
+            DGNPoint            *pasPoints;
+            int                 nPoints;
 
             nPoints = 5 * psEMP->num_vertices;
             pasPoints = (DGNPoint *) CPLMalloc(sizeof(DGNPoint) * nPoints);
@@ -473,7 +476,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
         }
         else
         {
-            OGRLineString	*poLine = new OGRLineString();
+            OGRLineString       *poLine = new OGRLineString();
             DGNElemMultiPoint *psEMP = (DGNElemMultiPoint *) psElement;
             
             if( psEMP->num_vertices > 0 )
@@ -496,10 +499,10 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
       case DGNST_ARC:
       {
-          OGRLineString	*poLine = new OGRLineString();
+          OGRLineString *poLine = new OGRLineString();
           DGNElemArc    *psArc = (DGNElemArc *) psElement;
-          DGNPoint	asPoints[90];
-          int		nPoints;
+          DGNPoint      asPoints[90];
+          int           nPoints;
 
           nPoints = (int) (MAX(1,ABS(psArc->sweepang) / 5) + 1);
           DGNStrokeArc( hDGN, psArc, nPoints, asPoints );
@@ -520,9 +523,9 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
       case DGNST_TEXT:
       {
-          OGRPoint	*poPoint = new OGRPoint();
+          OGRPoint      *poPoint = new OGRPoint();
           DGNElemText   *psText = (DGNElemText *) psElement;
-          char		*pszOgrFS;
+          char          *pszOgrFS;
 
           poPoint->setX( psText->origin.x );
           poPoint->setY( psText->origin.y );
@@ -634,7 +637,7 @@ OGRFeature *OGRDGNLayer::GetNextFeature()
 
     while( (psElement = DGNReadElement( hDGN )) != NULL )
     {
-        OGRFeature	*poFeature;
+        OGRFeature      *poFeature;
 
         if( psElement->deleted )
         {
@@ -750,7 +753,7 @@ int OGRDGNLayer::GetFeatureCount( int bForce )
 OGRErr OGRDGNLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 
 {
-    double	adfExtents[6];
+    double      adfExtents[6];
 
     if( !DGNGetExtents( hDGN, adfExtents ) )
         return OGRERR_FAILURE;

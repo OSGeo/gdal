@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/05/21 03:42:01  warmerda
+ * Expanded tabs
+ *
  * Revision 1.16  2003/05/15 14:47:23  warmerda
  * implement quaternion support on write
  *
@@ -369,7 +372,7 @@ int DGNLookupColor( DGNHandle hDGN, int color_index,
                     int * red, int * green, int * blue )
 
 {
-    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+    DGNInfo     *psDGN = (DGNInfo *) hDGN;
 
     if( color_index < 0 || color_index > 255  )
         return FALSE;
@@ -651,7 +654,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 
     if( psElement->properties != 0 )
     {
-        int	nClass;
+        int     nClass;
 
         fprintf( fp, "  properties=%d", psElement->properties );
         if( psElement->properties & DGNPF_HOLE )
@@ -692,8 +695,8 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
     {
       case DGNST_MULTIPOINT:
       {
-          DGNElemMultiPoint	*psLine = (DGNElemMultiPoint *) psElement;
-          int			i;
+          DGNElemMultiPoint     *psLine = (DGNElemMultiPoint *) psElement;
+          int                   i;
           
           for( i=0; i < psLine->num_vertices; i++ )
               fprintf( fp, "  (%.6f,%.6f,%.6f)\n", 
@@ -705,7 +708,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 
       case DGNST_CELL_HEADER:
       {
-          DGNElemCellHeader	*psCell = (DGNElemCellHeader*) psElement;
+          DGNElemCellHeader     *psCell = (DGNElemCellHeader*) psElement;
 
           fprintf( fp, "  totlength=%d, name=%s, class=%x, levels=%02x%02x%02x%02x\n", 
                    psCell->totlength, psCell->name, psCell->cclass, 
@@ -723,7 +726,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 
       case DGNST_CELL_LIBRARY:
       {
-          DGNElemCellLibrary	*psCell = (DGNElemCellLibrary*) psElement;
+          DGNElemCellLibrary    *psCell = (DGNElemCellLibrary*) psElement;
 
           fprintf( fp, 
                 "  name=%s, class=%x, levels=%02x%02x%02x%02x, numwords=%d\n", 
@@ -737,7 +740,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 
       case DGNST_ARC:
       {
-          DGNElemArc	*psArc = (DGNElemArc *) psElement;
+          DGNElemArc    *psArc = (DGNElemArc *) psElement;
 
           if( psInfo->dimension == 2 )
               fprintf( fp, "  origin=(%.5f,%.5f), rotation=%f\n",
@@ -763,7 +766,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 
       case DGNST_TEXT:
       {
-          DGNElemText	*psText = (DGNElemText *) psElement;
+          DGNElemText   *psText = (DGNElemText *) psElement;
 
           fprintf( fp, 
                    "  origin=(%.5f,%.5f), rotation=%f\n"
@@ -782,7 +785,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 
       case DGNST_COMPLEX_HEADER:
       {
-          DGNElemComplexHeader	*psHdr = (DGNElemComplexHeader *) psElement;
+          DGNElemComplexHeader  *psHdr = (DGNElemComplexHeader *) psElement;
 
           fprintf( fp, 
                    "  totlength=%d, numelems=%d\n",
@@ -794,7 +797,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
       case DGNST_COLORTABLE:
       {
           DGNElemColorTable *psCT = (DGNElemColorTable *) psElement;
-          int			i;
+          int                   i;
 
           fprintf( fp, "  screen_flag: %d\n", psCT->screen_flag );
           for( i = 0; i < 256; i++ )
@@ -860,7 +863,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 
       case DGNST_TAG_SET:
       {
-          DGNElemTagSet	*psTagSet = (DGNElemTagSet*) psElement;
+          DGNElemTagSet *psTagSet = (DGNElemTagSet*) psElement;
           int            iTag;
 
           fprintf( fp, "  tagSetName=%s, tagSet=%d, tagCount=%d, flags=%d\n", 
@@ -958,7 +961,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 const char *DGNTypeToName( int nType )
 
 {
-    static char	szNumericResult[16];
+    static char szNumericResult[16];
 
     switch( nType )
     {

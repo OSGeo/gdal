@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/05/21 03:42:01  warmerda
+ * Expanded tabs
+ *
  * Revision 1.4  2002/11/11 20:34:22  warmerda
  * added create support
  *
@@ -73,7 +76,7 @@ const char *OGRDGNDriver::GetName()
 OGRDataSource *OGRDGNDriver::Open( const char * pszFilename, int bUpdate )
 
 {
-    OGRDGNDataSource	*poDS;
+    OGRDGNDataSource    *poDS;
 
     poDS = new OGRDGNDataSource();
 
@@ -98,7 +101,7 @@ OGRDataSource *OGRDGNDriver::CreateDataSource( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      Return a new OGRDataSource()                                    */
 /* -------------------------------------------------------------------- */
-    OGRDGNDataSource	*poDS = NULL;
+    OGRDGNDataSource    *poDS = NULL;
 
     poDS = new OGRDGNDataSource();
     

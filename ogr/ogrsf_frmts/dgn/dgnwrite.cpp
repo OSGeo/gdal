@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/05/21 03:42:01  warmerda
+ * Expanded tabs
+ *
  * Revision 1.9  2003/05/15 14:47:24  warmerda
  * implement quaternion support on write
  *
@@ -98,7 +101,7 @@ static void DGNPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
 int DGNResizeElement( DGNHandle hDGN, DGNElemCore *psElement, int nNewSize )
 
 {
-    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+    DGNInfo     *psDGN = (DGNInfo *) hDGN;
 
 /* -------------------------------------------------------------------- */
 /*      Check various conditions.                                       */
@@ -211,7 +214,7 @@ int DGNResizeElement( DGNHandle hDGN, DGNElemCore *psElement, int nNewSize )
 int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
 
 {
-    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+    DGNInfo     *psDGN = (DGNInfo *) hDGN;
 
 /* ==================================================================== */
 /*      If this element hasn't been positioned yet, place it at the     */
@@ -727,7 +730,7 @@ int DGNUpdateElemCoreExtended( DGNHandle hDGN, DGNElemCore *psElement )
 /* -------------------------------------------------------------------- */
     if( psElement->raw_data[30] == 0 && psElement->raw_data[31] == 0 )
     {
-        int	nAttIndex = (psElement->raw_bytes - 32) / 2;
+        int     nAttIndex = (psElement->raw_bytes - 32) / 2;
         
         psElement->raw_data[30] = nAttIndex % 256;
         psElement->raw_data[31] = nAttIndex / 256;
@@ -1493,7 +1496,7 @@ DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType,
                                  int nNumElems, DGNElemCore **papsElems )
 
 {
-    int		nTotalLength = 5;
+    int         nTotalLength = 5;
     int         i, nLevel;
     DGNElemCore *psCH;
     DGNPoint    sMin, sMax;
@@ -1770,7 +1773,7 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
                               double dfRotation )
 
 {
-    int		nTotalLength = 5;
+    int         nTotalLength = 5;
     int         i, nLevel;
     DGNElemCore *psCH;
     DGNPoint    sMin, sMax;
@@ -2011,7 +2014,7 @@ int DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement,
     DGNUpdateElemCoreExtended( hDGN, psElement );
 
 /* -------------------------------------------------------------------- */
-/*	Figure out what the linkage index is.				*/
+/*      Figure out what the linkage index is.                           */
 /* -------------------------------------------------------------------- */
     for( iLinkage = 0; ; iLinkage++ )
     {

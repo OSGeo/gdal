@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/05/21 03:42:01  warmerda
+ * Expanded tabs
+ *
  * Revision 1.10  2002/11/11 20:33:56  warmerda
  * add support for reporting extents
  *
@@ -92,10 +95,10 @@ int main( int argc, char ** argv )
 {
     DGNHandle   hDGN;
     DGNElemCore *psElement;
-    const char	*pszFilename = NULL;
+    const char  *pszFilename = NULL;
     int         bSummary = FALSE, iArg, bRaw = FALSE, bReportExtents = FALSE;
-    char	achRaw[64];
-    double	dfSFXMin=0.0, dfSFXMax=0.0, dfSFYMin=0.0, dfSFYMax=0.0;
+    char        achRaw[64];
+    double      dfSFXMin=0.0, dfSFXMax=0.0, dfSFYMin=0.0, dfSFYMax=0.0;
 
     memset( achRaw, 0, 64 );
 
@@ -164,12 +167,12 @@ int main( int argc, char ** argv )
     }
     else
     {
-        const DGNElementInfo 	*pasEI;
-        int			nCount, i, nLevel, nType;
-        int			anLevelTypeCount[128*64];
-        int			anLevelCount[64];
-        int			anTypeCount[128];
-        double			adfExtents[6];
+        const DGNElementInfo    *pasEI;
+        int                     nCount, i, nLevel, nType;
+        int                     anLevelTypeCount[128*64];
+        int                     anLevelCount[64];
+        int                     anTypeCount[128];
+        double                  adfExtents[6];
 
         DGNGetExtents( hDGN, adfExtents );
         printf( "X Range: %.2f to %.2f\n", 
@@ -248,15 +251,15 @@ static void DGNDumpRawElement( DGNHandle hDGN, DGNElemCore *psCore,
                                FILE *fpOut )
 
 {
-    int		i, iChar = 0;
-    char	szLine[80];
+    int         i, iChar = 0;
+    char        szLine[80];
 
     fprintf( fpOut, "  Raw Data (%d bytes):\n", psCore->raw_bytes );
     for( i = 0; i < psCore->raw_bytes; i++ )
     {
-        char	szHex[3];
+        char    szHex[3];
 
-        if( (i % 16) == 0 )						
+        if( (i % 16) == 0 )                                             
         {
             sprintf( szLine, "%6d: %71s", i, " " );
             iChar = 0;

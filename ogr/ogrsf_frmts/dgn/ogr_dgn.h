@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/05/21 03:42:01  warmerda
+ * Expanded tabs
+ *
  * Revision 1.7  2002/11/11 20:35:05  warmerda
  * added create support
  *
@@ -69,14 +72,14 @@ class OGRDGNLayer : public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
 
-    OGRGeometry		*poFilterGeom;
-    int			iNextShapeId;
-    int			nTotalShapeCount;
+    OGRGeometry         *poFilterGeom;
+    int                 iNextShapeId;
+    int                 nTotalShapeCount;
 
     DGNHandle           hDGN;
     int                 bUpdate;
 
-    OGRFeature	       *ElementToFeature( DGNElemCore * );
+    OGRFeature         *ElementToFeature( DGNElemCore * );
 
     void                ConsiderBrush( DGNElemCore *, const char *pszPen,
                                        OGRFeature *poFeature );
@@ -87,19 +90,19 @@ class OGRDGNLayer : public OGRLayer
   public:
                         OGRDGNLayer( const char * pszName, DGNHandle hDGN,
                                      int bUpdate );
-    			~OGRDGNLayer();
+                        ~OGRDGNLayer();
 
-    OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
-    void		SetSpatialFilter( OGRGeometry * );
+    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
+    void                SetSpatialFilter( OGRGeometry * );
 
-    void		ResetReading();
-    OGRFeature *	GetNextFeature();
+    void                ResetReading();
+    OGRFeature *        GetNextFeature();
     OGRFeature *        GetFeature( long nFeatureId );
 
     virtual int         GetFeatureCount( int bForce = TRUE );
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
-    OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     int                 TestCapability( const char * );
 
@@ -113,18 +116,18 @@ class OGRDGNLayer : public OGRLayer
 class OGRDGNDataSource : public OGRDataSource
 {
     OGRDGNLayer     **papoLayers;
-    int			nLayers;
+    int                 nLayers;
     
-    char		*pszName;
+    char                *pszName;
     DGNHandle           hDGN;
 
     char                **papszOptions;
     
   public:
-    			OGRDGNDataSource();
-    			~OGRDGNDataSource();
+                        OGRDGNDataSource();
+                        ~OGRDGNDataSource();
 
-    int			Open( const char *, int bTestOpen, int bUpdate );
+    int                 Open( const char *, int bTestOpen, int bUpdate );
     int                 PreCreate( const char *, char ** );
 
     OGRLayer           *CreateLayer( const char *, 
@@ -132,9 +135,9 @@ class OGRDGNDataSource : public OGRDataSource
                                      OGRwkbGeometryType = wkbUnknown,
                                      char ** = NULL );
 
-    const char	        *GetName() { return pszName; }
-    int			GetLayerCount() { return nLayers; }
-    OGRLayer		*GetLayer( int );
+    const char          *GetName() { return pszName; }
+    int                 GetLayerCount() { return nLayers; }
+    OGRLayer            *GetLayer( int );
 
     int                 TestCapability( const char * );
 };
@@ -146,7 +149,7 @@ class OGRDGNDataSource : public OGRDataSource
 class OGRDGNDriver : public OGRSFDriver
 {
   public:
-    		~OGRDGNDriver();
+                ~OGRDGNDriver();
                 
     const char *GetName();
     OGRDataSource *Open( const char *, int );

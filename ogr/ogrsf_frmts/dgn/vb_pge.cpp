@@ -13,6 +13,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/05/21 03:42:01  warmerda
+ * Expanded tabs
+ *
  * Revision 1.1  2002/03/25 20:07:05  warmerda
  * New
  *
@@ -53,7 +56,7 @@ static char *pszErrorMessage = NULL;
 static void CPLPGEErrorCollector( CPLErr eErrType, int nErrorCode, 
                                   const char *pszMessage )
 
-{	
+{       
     if( pszErrorMessage == NULL )
     {
         pszErrorMessage = (char *) CPLMalloc(strlen(pszMessage)+1);

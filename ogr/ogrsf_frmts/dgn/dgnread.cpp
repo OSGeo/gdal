@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2003/05/21 03:42:01  warmerda
+ * Expanded tabs
+ *
  * Revision 1.36  2003/05/12 18:48:57  warmerda
  * added preliminary 3D write support
  *
@@ -168,7 +171,7 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * );
 int DGNGotoElement( DGNHandle hDGN, int element_id )
 
 {
-    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+    DGNInfo     *psDGN = (DGNInfo *) hDGN;
 
     DGNBuildIndex( psDGN );
 
@@ -196,7 +199,7 @@ int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
 /*      Read the first four bytes to get the level, type, and word      */
 /*      count.                                                          */
 /* -------------------------------------------------------------------- */
-    int		nType, nWords, nLevel;
+    int         nType, nWords, nLevel;
 
     if( VSIFRead( psDGN->abyElem, 1, 4, psDGN->fp ) != 4 )
         return FALSE;
@@ -313,7 +316,7 @@ int DGNGetElementExtents( DGNHandle hDGN, DGNElemCore *psElement,
                           DGNPoint *psMin, DGNPoint *psMax )
 
 {
-    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+    DGNInfo     *psDGN = (DGNInfo *) hDGN;
     GUInt32 anMin[3], anMax[3];
     int bResult;
 
@@ -530,7 +533,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       {
           DGNElemMultiPoint *psLine;
           int                i, count;
-          int		     pntsize = psDGN->dimension * 4;
+          int                pntsize = psDGN->dimension * 4;
 
           count = psDGN->abyElem[36] + psDGN->abyElem[37]*256;
           psLine = (DGNElemMultiPoint *) 
@@ -703,7 +706,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       case DGNT_TEXT:
       {
           DGNElemText *psText;
-          int	      num_chars, text_off;
+          int         num_chars, text_off;
 
           if( psDGN->dimension == 2 )
               num_chars = psDGN->abyElem[58];
@@ -900,9 +903,9 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
 DGNElemCore *DGNReadElement( DGNHandle hDGN )
 
 {
-    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+    DGNInfo     *psDGN = (DGNInfo *) hDGN;
     DGNElemCore *psElement = NULL;
-    int		nType, nLevel;
+    int         nType, nLevel;
     int         bInsideFilter;
 
 /* -------------------------------------------------------------------- */
@@ -918,7 +921,7 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
         
         if( psDGN->has_spatial_filter )
         {
-            GUInt32	nXMin, nXMax, nYMin, nYMax;
+            GUInt32     nXMin, nXMax, nYMin, nYMax;
             
             if( !psDGN->sf_converted_to_uor )
                 DGNSpatialFilterToUOR( psDGN );
@@ -972,7 +975,7 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
 int DGNParseCore( DGNInfo *psDGN, DGNElemCore *psElement )
 
 {
-    GByte	*psData = psDGN->abyElem+0;
+    GByte       *psData = psDGN->abyElem+0;
 
     psElement->level = psData[0] & 0x3f;
     psElement->complex = psData[0] & 0x80;
@@ -1026,7 +1029,7 @@ static DGNElemCore *DGNParseColorTable( DGNInfo * psDGN )
         psDGN->abyElem[36] + psDGN->abyElem[37] * 256;
 
     memcpy( psColorTable->color_info[255], psDGN->abyElem+38, 3 );
-    memcpy( psColorTable->color_info, psDGN->abyElem+41, 765 );	
+    memcpy( psColorTable->color_info, psDGN->abyElem+41, 765 ); 
     if( !psDGN->got_color_table )
     {
         memcpy( psDGN->color_table, psColorTable->color_info, 768 );
@@ -1270,7 +1273,7 @@ void DGNFreeElement( DGNHandle hDGN, DGNElemCore *psElement )
 
     if( psElement->stype == DGNST_TAG_SET )
     {
-        int		iTag;
+        int             iTag;
 
         DGNElemTagSet *psTagSet = (DGNElemTagSet *) psElement;
         CPLFree( psTagSet->tagSetName );
@@ -1311,7 +1314,7 @@ void DGNFreeElement( DGNHandle hDGN, DGNElemCore *psElement )
 void DGNRewind( DGNHandle hDGN )
 
 {
-    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+    DGNInfo     *psDGN = (DGNInfo *) hDGN;
 
     VSIRewind( psDGN->fp );
 
@@ -1414,7 +1417,7 @@ void DGNInverseTransformPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
 const DGNElementInfo *DGNGetElementIndex( DGNHandle hDGN, int *pnElementCount )
 
 {
-    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+    DGNInfo     *psDGN = (DGNInfo *) hDGN;
 
     DGNBuildIndex( psDGN );
 
@@ -1448,8 +1451,8 @@ const DGNElementInfo *DGNGetElementIndex( DGNHandle hDGN, int *pnElementCount )
 int DGNGetExtents( DGNHandle hDGN, double * padfExtents )
 
 {
-    DGNInfo	*psDGN = (DGNInfo *) hDGN;
-    DGNPoint	sMin, sMax;
+    DGNInfo     *psDGN = (DGNInfo *) hDGN;
+    DGNPoint    sMin, sMax;
 
     DGNBuildIndex( psDGN );
 
@@ -1486,7 +1489,7 @@ int DGNGetExtents( DGNHandle hDGN, double * padfExtents )
 void DGNBuildIndex( DGNInfo *psDGN )
 
 {
-    int	nMaxElements, nType, nLevel;
+    int nMaxElements, nType, nLevel;
     long nLastOffset;
     GUInt32 anRegion[6];
 
@@ -1502,7 +1505,7 @@ void DGNBuildIndex( DGNInfo *psDGN )
     nLastOffset = VSIFTell( psDGN->fp );
     while( DGNLoadRawElement( psDGN, &nType, &nLevel ) )
     {
-        DGNElementInfo	*psEI;
+        DGNElementInfo  *psEI;
 
         if( psDGN->element_count == nMaxElements )
         {
@@ -1532,7 +1535,7 @@ void DGNBuildIndex( DGNInfo *psDGN )
 
         else if( nType == DGNT_GROUP_DATA && nLevel == DGN_GDL_COLOR_TABLE )
         {
-            DGNElemCore	*psCT = DGNParseColorTable( psDGN );
+            DGNElemCore *psCT = DGNParseColorTable( psDGN );
             DGNFreeElement( (DGNHandle) psDGN, psCT );
             psEI->stype = DGNST_COLORTABLE;
         }
@@ -1558,7 +1561,7 @@ void DGNBuildIndex( DGNInfo *psDGN )
         }
         else if( nType == DGNT_TCB )
         {
-            DGNElemCore	*psTCB = DGNParseTCB( psDGN );
+            DGNElemCore *psTCB = DGNParseTCB( psDGN );
             DGNFreeElement( (DGNHandle) psDGN, psTCB );
             psEI->stype = DGNST_TCB;
         }
