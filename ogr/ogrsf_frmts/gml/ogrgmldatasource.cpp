@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/04/03 16:23:49  warmerda
+ * Added support for XSISCHEMA creation option which may be INTERNAL, EXTERNAL
+ * or OFF.  EXTERNAL (write an associated .xsd file) is the default.
+ *
  * Revision 1.11  2003/03/13 14:40:00  warmerda
  * added missing xs:sequence
  *
@@ -82,6 +86,8 @@ OGRGMLDataSource::OGRGMLDataSource()
 
     poReader = NULL;
     fpOutput = NULL;
+
+    papszCreateOptions = NULL;
 }
 
 /************************************************************************/
@@ -121,6 +127,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
             VSIFClose( fpOutput );
     }
 
+    CSLDestroy( papszCreateOptions );
     CPLFree( pszName );
 
     for( int i = 0; i < nLayers; i++ )
@@ -354,12 +361,25 @@ int OGRGMLDataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write out schema info if provided in creation options.          */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue( papszOptions, "XSISCHEMAURI" ) != NULL )
+    const char *pszSchemaURI = CSLFetchNameValue(papszOptions,"XSISCHEMAURI");
+    const char *pszSchemaOpt = CSLFetchNameValue( papszOptions, "XSISCHEMA" );
+
+    if( pszSchemaURI != NULL )
     {
         VSIFPrintf( fpOutput, 
               "     xmlns:xsi=\"http://www.w3c.org/2001/XMLSchema-instance\"\n"
               "     xsi:schemaLocation=\"%s\"\n", 
                     CSLFetchNameValue( papszOptions, "XSISCHEMAURI" ) );
+    }
+    else if( pszSchemaOpt == NULL || EQUAL(pszSchemaOpt,"EXTERNAL") )
+    {
+        char *pszBasename = CPLStrdup(CPLGetBasename( pszName ));
+
+        VSIFPrintf( fpOutput, 
+              "     xmlns:xsi=\"http://www.w3c.org/2001/XMLSchema-instance\"\n"
+              "     xsi:schemaLocation=\". %s\"\n", 
+                    CPLResetExtension( pszBasename, "xsd" ) );
+        CPLFree( pszBasename );
     }
 
     VSIFPrintf( fpOutput, "%s", 
@@ -471,10 +491,45 @@ void OGRGMLDataSource::GrowExtents( OGREnvelope *psGeomBounds )
 void OGRGMLDataSource::InsertHeader()
 
 {
+    FILE 	*fpSchema;
+    int         nSchemaStart;
+
     if( fpOutput == NULL || fpOutput == stdout )
         return;
 
-    int  nSchemaStart = VSIFTell( fpOutput );
+/* -------------------------------------------------------------------- */
+/*      Do we want to write the schema within the GML instance doc      */
+/*      or to a separate file?  For now we only support external.       */
+/* -------------------------------------------------------------------- */
+    const char *pszSchemaURI = CSLFetchNameValue(papszCreateOptions,
+                                                 "XSISCHEMAURI");
+    const char *pszSchemaOpt = CSLFetchNameValue( papszCreateOptions, 
+                                                  "XSISCHEMA" );
+
+    if( pszSchemaURI != NULL )
+        return;
+
+    if( pszSchemaOpt == NULL || EQUAL(pszSchemaOpt,"EXTERNAL") )
+    {
+        const char *pszXSDFilename = CPLResetExtension( pszName, "xsd" );
+
+        fpSchema = VSIFOpen( pszXSDFilename, "wt" );
+        if( fpSchema == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Failed to open file %.500s for schema output.", 
+                      pszXSDFilename );
+            return;
+        }
+        fprintf( fpSchema, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" );
+    }
+    else if( EQUAL(pszSchemaOpt,"INTERNAL") )
+    {
+        nSchemaStart = VSIFTell( fpOutput );
+        fpSchema = fpOutput;
+    }
+    else							       
+        return;
 
 /* ==================================================================== */
 /*      Write the schema section at the end of the file.  Once          */
@@ -488,22 +543,22 @@ void OGRGMLDataSource::InsertHeader()
     const char *pszTargetNameSpace = "http://gdal.velocet.ca/ogr";
     const char *pszPrefix = "ogr";
 
-    VSIFPrintf( fpOutput, 
+    VSIFPrintf( fpSchema, 
                 "<xs:schema targetNamespace=\"%s\" xmlns:%s=\"%s\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:gml=\"http://www.opengis.net/gml\" elementFormDefault=\"qualified\" version=\"1.0\">\n", 
                 pszTargetNameSpace, pszPrefix, pszTargetNameSpace );
     
-    VSIFPrintf( fpOutput, 
+    VSIFPrintf( fpSchema, 
                 "<xs:import namespace=\"http://www.opengis.net/gml\" schemaLocation=\"http://schemas.cubewerx.com/schemas/gml/2.1.2/feature.xsd\"/>" );
 
 /* -------------------------------------------------------------------- */
 /*      Define the FeatureCollection                                    */
 /* -------------------------------------------------------------------- */
-    VSIFPrintf( fpOutput, 
+    VSIFPrintf( fpSchema, 
                 "<xs:element name=\"FeatureCollection\" type=\"%s:FeatureCollectionType\" substitutionGroup=\"gml:_FeatureCollection\"/>\n", 
                 pszPrefix );
 
     VSIFPrintf( 
-        fpOutput, 
+        fpSchema, 
         "<xs:complexType name=\"FeatureCollectionType\">\n"
         "  <xs:complexContent>\n"
         "    <xs:extension base=\"gml:AbstractFeatureCollectionType\">\n"
@@ -526,12 +581,12 @@ void OGRGMLDataSource::InsertHeader()
 /*      Emit initial stuff for a feature type.                          */
 /* -------------------------------------------------------------------- */
         VSIFPrintf( 
-            fpOutput,
+            fpSchema,
             "<xs:element name=\"%s\" type=\"%s:%s_Type\" substitutionGroup=\"gml:_Feature\"/>\n",
             poFDefn->GetName(), pszPrefix, poFDefn->GetName() );
 
         VSIFPrintf( 
-            fpOutput, 
+            fpSchema, 
             "<xs:complexType name=\"%s_Type\">\n"
             "  <xs:complexContent>\n"
             "    <xs:extension base=\"gml:AbstractFeatureType\">\n"
@@ -544,7 +599,7 @@ void OGRGMLDataSource::InsertHeader()
 /*      particulars if available.                                       */
 /* -------------------------------------------------------------------- */
         VSIFPrintf( 
-            fpOutput,
+            fpSchema,
             "<xs:element name=\"geometryProperty\" type=\"gml:geometryPropertyType\" nillable=\"true\" minOccurs=\"1\" maxOccurs=\"1\"/>\n" );
             
 /* -------------------------------------------------------------------- */
@@ -563,7 +618,7 @@ void OGRGMLDataSource::InsertHeader()
                 else
                     nWidth = 16;
 
-                VSIFPrintf( fpOutput, 
+                VSIFPrintf( fpSchema, 
                             "    <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\">\n"
                             "      <xs:simpleType>\n"
                             "        <xs:restriction base=\"xs:integer\">\n"
@@ -587,7 +642,7 @@ void OGRGMLDataSource::InsertHeader()
                 else
                     nWidth = 33;
 
-                VSIFPrintf( fpOutput, 
+                VSIFPrintf( fpSchema, 
                             "    <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\">\n"
                             "      <xs:simpleType>\n"
                             "        <xs:restriction base=\"xs:decimal\">\n"
@@ -607,7 +662,7 @@ void OGRGMLDataSource::InsertHeader()
                 else
                     sprintf( szMaxLength, "%d", poFieldDefn->GetWidth() );
 
-                VSIFPrintf( fpOutput, 
+                VSIFPrintf( fpSchema, 
                             "    <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\">\n"
                             "      <xs:simpleType>\n"
                             "        <xs:restriction base=\"xs:string\">\n"
@@ -626,63 +681,70 @@ void OGRGMLDataSource::InsertHeader()
 /* -------------------------------------------------------------------- */
 /*      Finish off feature type.                                        */
 /* -------------------------------------------------------------------- */
-        VSIFPrintf( fpOutput, 
+        VSIFPrintf( fpSchema, 
                     "      </xs:sequence>\n"
                     "    </xs:extension>\n"
                     "  </xs:complexContent>\n"
                     "</xs:complexType>\n" );
     } /* next layer */
 
-    VSIFPrintf( fpOutput, "</xs:schema>\n" );
+    VSIFPrintf( fpSchema, "</xs:schema>\n" );
 
 /* ==================================================================== */
 /*      Move schema to the start of the file.                           */
 /* ==================================================================== */
-
+    if( fpSchema == fpOutput )
+    {
 /* -------------------------------------------------------------------- */
 /*      Read the schema into memory.                                    */
 /* -------------------------------------------------------------------- */
-    int nSchemaSize = VSIFTell( fpOutput ) - nSchemaStart;
-    char *pszSchema = (char *) CPLMalloc(nSchemaSize+1);
+        int nSchemaSize = VSIFTell( fpOutput ) - nSchemaStart;
+        char *pszSchema = (char *) CPLMalloc(nSchemaSize+1);
     
-    VSIFSeek( fpOutput, nSchemaStart, SEEK_SET );
+        VSIFSeek( fpOutput, nSchemaStart, SEEK_SET );
 
-    VSIFRead( pszSchema, 1, nSchemaSize, fpOutput );
-    pszSchema[nSchemaSize] = '\0';
+        VSIFRead( pszSchema, 1, nSchemaSize, fpOutput );
+        pszSchema[nSchemaSize] = '\0';
     
 /* -------------------------------------------------------------------- */
 /*      Move file data down by "schema size" bytes from after <?xml>    */
 /*      header so we have room insert the schema.  Move in pretty       */
 /*      big chunks.                                                     */
 /* -------------------------------------------------------------------- */
-    int nChunkSize = MIN(nSchemaStart-nSchemaInsertLocation,250000);
-    char *pszChunk = (char *) CPLMalloc(nChunkSize);
-    int nEndOfUnmovedData = nSchemaStart;
+        int nChunkSize = MIN(nSchemaStart-nSchemaInsertLocation,250000);
+        char *pszChunk = (char *) CPLMalloc(nChunkSize);
+        int nEndOfUnmovedData = nSchemaStart;
 
-    for( nEndOfUnmovedData = nSchemaStart;
-         nEndOfUnmovedData > nSchemaInsertLocation; )
-    {
-        int nBytesToMove = 
-            MIN(nChunkSize, nEndOfUnmovedData - nSchemaInsertLocation );
+        for( nEndOfUnmovedData = nSchemaStart;
+             nEndOfUnmovedData > nSchemaInsertLocation; )
+        {
+            int nBytesToMove = 
+                MIN(nChunkSize, nEndOfUnmovedData - nSchemaInsertLocation );
 
-        VSIFSeek( fpOutput, nEndOfUnmovedData - nBytesToMove, SEEK_SET );
-        VSIFRead( pszChunk, 1, nBytesToMove, fpOutput );
-        VSIFSeek( fpOutput, nEndOfUnmovedData - nBytesToMove + nSchemaSize, 
-                  SEEK_SET );
-        VSIFWrite( pszChunk, 1, nBytesToMove, fpOutput );
+            VSIFSeek( fpOutput, nEndOfUnmovedData - nBytesToMove, SEEK_SET );
+            VSIFRead( pszChunk, 1, nBytesToMove, fpOutput );
+            VSIFSeek( fpOutput, nEndOfUnmovedData - nBytesToMove + nSchemaSize, 
+                      SEEK_SET );
+            VSIFWrite( pszChunk, 1, nBytesToMove, fpOutput );
         
-        nEndOfUnmovedData -= nBytesToMove;
-    }
+            nEndOfUnmovedData -= nBytesToMove;
+        }
 
-    CPLFree( pszChunk );
+        CPLFree( pszChunk );
 
 /* -------------------------------------------------------------------- */
 /*      Write the schema in the opened slot.                            */
 /* -------------------------------------------------------------------- */
-    VSIFSeek( fpOutput, nSchemaInsertLocation, SEEK_SET );
-    VSIFWrite( pszSchema, 1, nSchemaSize, fpOutput );
+        VSIFSeek( fpOutput, nSchemaInsertLocation, SEEK_SET );
+        VSIFWrite( pszSchema, 1, nSchemaSize, fpOutput );
 
-    VSIFSeek( fpOutput, 0, SEEK_END );
+        VSIFSeek( fpOutput, 0, SEEK_END );
 
-    nBoundedByLocation += nSchemaSize;
+        nBoundedByLocation += nSchemaSize;
+    }
+/* -------------------------------------------------------------------- */
+/*      Close external schema files.                                    */
+/* -------------------------------------------------------------------- */
+    else
+        VSIFClose( fpSchema );
 }
