@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_flush.c,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_flush.c,v 1.3 2000/09/15 20:52:42 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -64,9 +64,4 @@ TIFFFlushData(TIFF* tif)
 	}
 	return (TIFFFlushData1(tif));
 }
-
-
-
-
-
 

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.6 2000/09/25 13:48:45 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.7 2000/10/20 17:35:36 warmerda Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -1247,23 +1247,56 @@ DECLARESepPutFunc(putRGBUAseparate16bittile)
     TIFFRGBValue* clamptab = ycbcr->clamptab
 
 /*
- * 8-bit packed YCbCr samples w/ 4,4 subsampling => RGB
+ * 8-bit packed YCbCr samples => RGB 
+ * This function is generic for different sampling sizes, 
+ * and can handle blocks sizes that aren't multiples of the
+ * sampling size.  However, it is substantially less optimized
+ * than the specific sampling cases.  It is used as a fallback
+ * for difficult blocks.
  */
-DECLAREContigPutFunc(putcontig8bitYCbCr44tile)
+#ifdef notdef
+static void putcontig8bitYCbCrGenericTile( 
+    TIFFRGBAImage* img, 
+    uint32* cp, 
+    uint32 x, uint32 y, 
+    uint32 w, uint32 h, 
+    int32 fromskew, int32 toskew, 
+    u_char* pp,
+    int h_group, 
+    int v_group )
+
 {
     YCbCrSetup;
+    
     uint32* cp1 = cp+w+toskew;
     uint32* cp2 = cp1+w+toskew;
     uint32* cp3 = cp2+w+toskew;
     int32 incr = 3*w+4*toskew;
+    int     Cb, Cr;
+    int     group_size = v_group * h_group + 2;
 
     (void) y;
-    /* XXX adjust fromskew */
+    fromskew = (fromskew * group_size) / h_group;
+
+    for( yy = 0; yy < h; yy++ )
+    {
+        u_char *pp_line;
+        int     y_line_group = yy / v_group;
+        int     y_remainder = yy - y_line_group * v_group;
+
+        pp_line = pp + v_line_group * 
+
+        
+        for( xx = 0; xx < w; xx++ )
+        {
+            Cb = pp
+        }
+    }
     for (; h >= 4; h -= 4) {
 	x = w>>2;
 	do {
-	    int Cb = pp[16];
-	    int Cr = pp[17];
+	    Cb = pp[16];
+	    Cr = pp[17];
 
 	    YCbCrtoRGB(cp [0], pp[ 0]);
 	    YCbCrtoRGB(cp [1], pp[ 1]);
@@ -1289,6 +1322,105 @@ DECLAREContigPutFunc(putcontig8bitYCbCr44tile)
 	pp += fromskew;
     }
 }
+#endif
+
+/*
+ * 8-bit packed YCbCr samples w/ 4,4 subsampling => RGB
+ */
+DECLAREContigPutFunc(putcontig8bitYCbCr44tile)
+{
+    YCbCrSetup;
+    uint32* cp1 = cp+w+toskew;
+    uint32* cp2 = cp1+w+toskew;
+    uint32* cp3 = cp2+w+toskew;
+    int32 incr = 3*w+4*toskew;
+
+    (void) y;
+    /* adjust fromskew */
+    fromskew = (fromskew * 18) / 4;
+    if ((h & 3) == 0 && (w & 3) == 0) {				        
+        for (; h >= 4; h -= 4) {
+            x = w>>2;
+            do {
+                int Cb = pp[16];
+                int Cr = pp[17];
+
+                YCbCrtoRGB(cp [0], pp[ 0]);
+                YCbCrtoRGB(cp [1], pp[ 1]);
+                YCbCrtoRGB(cp [2], pp[ 2]);
+                YCbCrtoRGB(cp [3], pp[ 3]);
+                YCbCrtoRGB(cp1[0], pp[ 4]);
+                YCbCrtoRGB(cp1[1], pp[ 5]);
+                YCbCrtoRGB(cp1[2], pp[ 6]);
+                YCbCrtoRGB(cp1[3], pp[ 7]);
+                YCbCrtoRGB(cp2[0], pp[ 8]);
+                YCbCrtoRGB(cp2[1], pp[ 9]);
+                YCbCrtoRGB(cp2[2], pp[10]);
+                YCbCrtoRGB(cp2[3], pp[11]);
+                YCbCrtoRGB(cp3[0], pp[12]);
+                YCbCrtoRGB(cp3[1], pp[13]);
+                YCbCrtoRGB(cp3[2], pp[14]);
+                YCbCrtoRGB(cp3[3], pp[15]);
+
+                cp += 4, cp1 += 4, cp2 += 4, cp3 += 4;
+                pp += 18;
+            } while (--x);
+            cp += incr, cp1 += incr, cp2 += incr, cp3 += incr;
+            pp += fromskew;
+        }
+    } else {
+        while (h > 0) {
+            for (x = w; x > 0;) {
+                int Cb = pp[16];
+                int Cr = pp[17];
+                switch (x) {
+                default:
+                    switch (h) {
+                    default: YCbCrtoRGB(cp3[3], pp[15]); /* FALLTHROUGH */
+                    case 3:  YCbCrtoRGB(cp2[3], pp[11]); /* FALLTHROUGH */
+                    case 2:  YCbCrtoRGB(cp1[3], pp[ 7]); /* FALLTHROUGH */
+                    case 1:  YCbCrtoRGB(cp [3], pp[ 3]); /* FALLTHROUGH */
+                    }                                    /* FALLTHROUGH */
+                case 3:
+                    switch (h) {
+                    default: YCbCrtoRGB(cp3[2], pp[14]); /* FALLTHROUGH */
+                    case 3:  YCbCrtoRGB(cp2[2], pp[10]); /* FALLTHROUGH */
+                    case 2:  YCbCrtoRGB(cp1[2], pp[ 6]); /* FALLTHROUGH */
+                    case 1:  YCbCrtoRGB(cp [2], pp[ 2]); /* FALLTHROUGH */
+                    }                                    /* FALLTHROUGH */
+                case 2:
+                    switch (h) {
+                    default: YCbCrtoRGB(cp3[1], pp[13]); /* FALLTHROUGH */
+                    case 3:  YCbCrtoRGB(cp2[1], pp[ 9]); /* FALLTHROUGH */
+                    case 2:  YCbCrtoRGB(cp1[1], pp[ 5]); /* FALLTHROUGH */
+                    case 1:  YCbCrtoRGB(cp [1], pp[ 1]); /* FALLTHROUGH */
+                    }                                    /* FALLTHROUGH */
+                case 1:
+                    switch (h) {
+                    default: YCbCrtoRGB(cp3[0], pp[12]); /* FALLTHROUGH */
+                    case 3:  YCbCrtoRGB(cp2[0], pp[ 8]); /* FALLTHROUGH */
+                    case 2:  YCbCrtoRGB(cp1[0], pp[ 4]); /* FALLTHROUGH */
+                    case 1:  YCbCrtoRGB(cp [0], pp[ 0]); /* FALLTHROUGH */
+                    }                                    /* FALLTHROUGH */
+                }
+                if (x < 4) {
+                    cp += x; cp1 += x; cp2 += x; cp3 += x;
+                    x = 0;
+                }
+                else {
+                    cp += 4; cp1 += 4; cp2 += 4; cp3 += 4;
+                    x -= 4;
+                }
+                pp += 18;
+            }
+            if (h <= 4)
+                break;
+            h -= 4;
+            cp += incr, cp1 += incr, cp2 += incr, cp3 += incr;
+            pp += fromskew;
+        }
+    }
+}
 
 /*
  * 8-bit packed YCbCr samples w/ 4,2 subsampling => RGB
@@ -1300,27 +1432,72 @@ DECLAREContigPutFunc(putcontig8bitYCbCr42tile)
     int32 incr = 2*toskew+w;
 
     (void) y;
-    /* XXX adjust fromskew */
-    for (; h >= 2; h -= 2) {
-	x = w>>2;
-	do {
-	    int Cb = pp[8];
-	    int Cr = pp[9];
-
-	    YCbCrtoRGB(cp [0], pp[0]);
-	    YCbCrtoRGB(cp [1], pp[1]);
-	    YCbCrtoRGB(cp [2], pp[2]);
-	    YCbCrtoRGB(cp [3], pp[3]);
-	    YCbCrtoRGB(cp1[0], pp[4]);
-	    YCbCrtoRGB(cp1[1], pp[5]);
-	    YCbCrtoRGB(cp1[2], pp[6]);
-	    YCbCrtoRGB(cp1[3], pp[7]);
-
-	    cp += 4, cp1 += 4;
-	    pp += 10;
-	} while (--x);
-	cp += incr, cp1 += incr;
-	pp += fromskew;
+    fromskew = (fromskew * 10) / 4;
+    if ((h & 3) == 0 && (w & 1) == 0) {
+        for (; h >= 2; h -= 2) {
+            x = w>>2;
+            do {
+                int Cb = pp[8];
+                int Cr = pp[9];
+                
+                YCbCrtoRGB(cp [0], pp[0]);
+                YCbCrtoRGB(cp [1], pp[1]);
+                YCbCrtoRGB(cp [2], pp[2]);
+                YCbCrtoRGB(cp [3], pp[3]);
+                YCbCrtoRGB(cp1[0], pp[4]);
+                YCbCrtoRGB(cp1[1], pp[5]);
+                YCbCrtoRGB(cp1[2], pp[6]);
+                YCbCrtoRGB(cp1[3], pp[7]);
+                
+                cp += 4, cp1 += 4;
+                pp += 10;
+            } while (--x);
+            cp += incr, cp1 += incr;
+            pp += fromskew;
+        }
+    } else {
+        while (h > 0) {
+            for (x = w; x > 0;) {
+                int Cb = pp[8];
+                int Cr = pp[9];
+                switch (x) {
+                default:
+                    switch (h) {
+                    default: YCbCrtoRGB(cp1[3], pp[ 7]); /* FALLTHROUGH */
+                    case 1:  YCbCrtoRGB(cp [3], pp[ 3]); /* FALLTHROUGH */
+                    }                                    /* FALLTHROUGH */
+                case 3:
+                    switch (h) {
+                    default: YCbCrtoRGB(cp1[2], pp[ 6]); /* FALLTHROUGH */
+                    case 1:  YCbCrtoRGB(cp [2], pp[ 2]); /* FALLTHROUGH */
+                    }                                    /* FALLTHROUGH */
+                case 2:
+                    switch (h) {
+                    default: YCbCrtoRGB(cp1[1], pp[ 5]); /* FALLTHROUGH */
+                    case 1:  YCbCrtoRGB(cp [1], pp[ 1]); /* FALLTHROUGH */
+                    }                                    /* FALLTHROUGH */
+                case 1:
+                    switch (h) {
+                    default: YCbCrtoRGB(cp1[0], pp[ 4]); /* FALLTHROUGH */
+                    case 1:  YCbCrtoRGB(cp [0], pp[ 0]); /* FALLTHROUGH */
+                    }                                    /* FALLTHROUGH */
+                }
+                if (x < 4) {
+                    cp += x; cp1 += x;
+                    x = 0;
+                }
+                else {
+                    cp += 4; cp1 += 4;
+                    x -= 4;
+                }
+                pp += 10;
+            }
+            if (h <= 2)
+                break;
+            h -= 2;
+            cp += incr, cp1 += incr;
+            pp += fromskew;
+        }
     }
 }
 
@@ -1347,9 +1524,27 @@ DECLAREContigPutFunc(putcontig8bitYCbCr41tile)
 	    cp += 4;
 	    pp += 6;
 	} while (--x);
+
+        if( (w&3) != 0 )
+        {
+	    int Cb = pp[4];
+	    int Cr = pp[5];
+
+            switch( (w&3) ) {
+              case 3: YCbCrtoRGB(cp [2], pp[2]);
+              case 2: YCbCrtoRGB(cp [1], pp[1]);
+              case 1: YCbCrtoRGB(cp [0], pp[0]);
+              case 0: break;
+            }
+
+            cp += (w&3);
+            pp += 6;
+        }
+
 	cp += toskew;
 	pp += fromskew;
     } while (--h);
+
 }
 
 /*
@@ -1362,23 +1557,58 @@ DECLAREContigPutFunc(putcontig8bitYCbCr22tile)
     int32 incr = 2*toskew+w;
 
     (void) y;
-    /* XXX adjust fromskew */
-    for (; h >= 2; h -= 2) {
-	x = w>>1;
-	do {
-	    int Cb = pp[4];
-	    int Cr = pp[5];
+    fromskew = (fromskew * 6) / 2;
+    if ((h & 1) == 0 && (w & 1) == 0) {
+        for (; h >= 2; h -= 2) {
+            x = w>>1;
+            do {
+                int Cb = pp[4];
+                int Cr = pp[5];
 
-	    YCbCrtoRGB(cp [0], pp[0]);
-	    YCbCrtoRGB(cp [1], pp[1]);
-	    YCbCrtoRGB(cp1[0], pp[2]);
-	    YCbCrtoRGB(cp1[1], pp[3]);
+                YCbCrtoRGB(cp [0], pp[0]);
+                YCbCrtoRGB(cp [1], pp[1]);
+                YCbCrtoRGB(cp1[0], pp[2]);
+                YCbCrtoRGB(cp1[1], pp[3]);
 
-	    cp += 2, cp1 += 2;
-	    pp += 6;
-	} while (--x);
-	cp += incr, cp1 += incr;
-	pp += fromskew;
+                cp += 2, cp1 += 2;
+                pp += 6;
+            } while (--x);
+            cp += incr, cp1 += incr;
+            pp += fromskew;
+        }
+    } else {
+        while (h > 0) {
+            for (x = w; x > 0;) {
+                int Cb = pp[4];
+                int Cr = pp[5];
+                switch (x) {
+                default:
+                    switch (h) {
+                    default: YCbCrtoRGB(cp1[1], pp[ 3]); /* FALLTHROUGH */
+                    case 1:  YCbCrtoRGB(cp [1], pp[ 1]); /* FALLTHROUGH */
+                    }                                    /* FALLTHROUGH */
+                case 1:
+                    switch (h) {
+                    default: YCbCrtoRGB(cp1[0], pp[ 2]); /* FALLTHROUGH */
+                    case 1:  YCbCrtoRGB(cp [0], pp[ 0]); /* FALLTHROUGH */
+                    }                                    /* FALLTHROUGH */
+                }
+                if (x < 2) {
+                    cp += x; cp1 += x;
+                    x = 0;
+                }
+                else {
+                    cp += 2; cp1 += 2;
+                    x -= 2;
+                }
+                pp += 6;
+            }
+            if (h <= 2)
+                break;
+            h -= 2;
+            cp += incr, cp1 += incr;
+            pp += fromskew;
+        }
     }
 }
 
@@ -1390,19 +1620,31 @@ DECLAREContigPutFunc(putcontig8bitYCbCr21tile)
     YCbCrSetup;
 
     (void) y;
-    /* XXX adjust fromskew */
+    fromskew = (fromskew * 4) / 2;
     do {
 	x = w>>1;
 	do {
 	    int Cb = pp[2];
 	    int Cr = pp[3];
 
-	    YCbCrtoRGB(cp[0], pp[0]);
+	    YCbCrtoRGB(cp[0], pp[0]); 
 	    YCbCrtoRGB(cp[1], pp[1]);
 
 	    cp += 2;
 	    pp += 4;
 	} while (--x);
+
+        if( (w&1) != 0 )
+        {
+	    int Cb = pp[2];
+	    int Cr = pp[3];
+            
+            YCbCrtoRGB(cp [0], pp[0]);
+
+	    cp += 1;
+	    pp += 4;
+        }
+
 	cp += toskew;
 	pp += fromskew;
     } while (--h);
@@ -1416,7 +1658,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr11tile)
     YCbCrSetup;
 
     (void) y;
-    /* XXX adjust fromskew */
+    fromskew *= 3;
     do {
         x = w; /* was x = w>>1; patched 2000/09/25 warmerda@home.com */ 
 	do {
@@ -1542,12 +1784,12 @@ initYCbCrConversion(TIFFRGBAImage* img)
      */
     TIFFGetFieldDefaulted(img->tif, TIFFTAG_YCBCRSUBSAMPLING, &hs, &vs);
     switch ((hs<<4)|vs) {
-    case 0x44: return (&putcontig8bitYCbCr44tile);
-    case 0x42: return (&putcontig8bitYCbCr42tile);
-    case 0x41: return (&putcontig8bitYCbCr41tile);
-    case 0x22: return (&putcontig8bitYCbCr22tile);
-    case 0x21: return (&putcontig8bitYCbCr21tile);
-    case 0x11: return (&putcontig8bitYCbCr11tile);
+    case 0x44: return (putcontig8bitYCbCr44tile);
+    case 0x42: return (putcontig8bitYCbCr42tile);
+    case 0x41: return (putcontig8bitYCbCr41tile);
+    case 0x22: return (putcontig8bitYCbCr22tile);
+    case 0x21: return (putcontig8bitYCbCr21tile);
+    case 0x11: return (putcontig8bitYCbCr11tile);
     }
     return (NULL);
 }

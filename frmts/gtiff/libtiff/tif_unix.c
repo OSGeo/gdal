@@ -29,9 +29,7 @@
  */
 #include "tiffiop.h"
 #include <sys/types.h>
-#ifndef WIN32
 #include <unistd.h>
-#endif
 #include <stdlib.h>
 
 static tsize_t
