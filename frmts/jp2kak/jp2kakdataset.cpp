@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.24  2004/07/29 16:38:28  warmerda
+ * fixed up error trapping when opening subfile
+ *
  * Revision 1.23  2004/07/28 14:39:48  warmerda
  * added jp2 subfile support
  *
@@ -1020,12 +1023,29 @@ const GDAL_GCP *JP2KAKDataset::GetGCPs()
 GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    kdu_compressed_source *poRawInput = NULL;
+    subfile_source *poRawInput = NULL;
     const char  *pszExtension = NULL;
     int         bIsJPIP = FALSE;
     int         bIsSubfile = FALSE;
     GByte      *pabyHeader = NULL;
 
+/* -------------------------------------------------------------------- */
+/*      Initialize Kakadu warning/error reporting subsystem.            */
+/* -------------------------------------------------------------------- */
+    if( !kakadu_initialized )
+    {
+        kakadu_initialized = TRUE;
+
+        kdu_cpl_error_message oErrHandler( CE_Failure );
+        kdu_cpl_error_message oWarningHandler( CE_Warning );
+        
+        kdu_customize_warnings(new kdu_cpl_error_message( CE_Warning ) );
+        kdu_customize_errors(new kdu_cpl_error_message( CE_Failure ) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check header                                                    */
+/* -------------------------------------------------------------------- */
     if( poOpenInfo->fp == NULL )
     {
         pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
@@ -1040,12 +1060,19 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             static GByte abySubfileHeader[16];
 
-            poRawInput = new subfile_source( poOpenInfo->pszFilename );
-            poRawInput->seek( 0 );
+            try
+            {
+                poRawInput = new subfile_source( poOpenInfo->pszFilename );
+                poRawInput->seek( 0 );
 
-            poRawInput->read( abySubfileHeader, 16 );
-            poRawInput->seek( 0 );
-            
+                poRawInput->read( abySubfileHeader, 16 );
+                poRawInput->seek( 0 );
+            }
+            catch( ... )
+            {
+                return NULL;
+            }
+
             pabyHeader = abySubfileHeader;
 
             bIsSubfile = TRUE;
@@ -1082,20 +1109,6 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
     }
         
-/* -------------------------------------------------------------------- */
-/*      Initialize Kakadu warning/error reporting subsystem.            */
-/* -------------------------------------------------------------------- */
-    if( !kakadu_initialized )
-    {
-        kakadu_initialized = TRUE;
-
-        kdu_cpl_error_message oErrHandler( CE_Failure );
-        kdu_cpl_error_message oWarningHandler( CE_Warning );
-        
-        kdu_customize_warnings(new kdu_cpl_error_message( CE_Warning ) );
-        kdu_customize_errors(new kdu_cpl_error_message( CE_Failure ) );
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Try to open the file in a manner depending on the extension.    */
 /* -------------------------------------------------------------------- */
