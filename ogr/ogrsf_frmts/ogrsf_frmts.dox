@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/04/22 19:35:16  warmerda
+ * Added SyncToDisk
+ *
  * Revision 1.15  2003/04/03 23:39:11  danmo
  * Small updates to C API docs (Normand S.)
  *
@@ -867,6 +870,31 @@ This method is the same as the C function OGR_DS_GetSummaryRefCount().
 @return the current summary reference count for the datasource and its layers.
 */
 
+/**
+ \fn OGRErr OGRDataSource::SyncToDisk();
+
+Flush pending changes to disk.
+
+This call is intended to force the datasource to flush any pending writes to
+disk, and leave the disk file in a consistent state.  It would not normally
+have any effect on read-only datasources. 
+
+Some data sources do not implement this method, and will still return 
+OGRERR_NONE.  An error is only returned if an error occurs while attempting
+to flush to disk.  
+
+The default implementation of this method just calls the SyncToDisk() method
+on each of the layers.  Conceptionally, calling SyncToDisk() on a datasource
+should include any work that might be accomplished by calling SyncToDisk()
+on layers in that data source.
+
+This method is the same as the C function OGR_DS_SyncToDisk().
+
+@return OGRERR_NONE if no error occurs (even if nothing is done) or an
+error code.
+*/
+
+
 
 /************************************************************************/
 /*                               OGRLayer                               */
@@ -935,7 +963,7 @@ This method is the same as the C function OGR_DS_GetSummaryRefCount().
 
  This function is the same as the CPP method OGRLayer::GetNextFeature().
 
- @hLayer handle to the layer from which feature are read.
+ @param hLayer handle to the layer from which feature are read.
  @return an handle to a feature, or NULL if no more features are available. 
 
 */
@@ -1542,6 +1570,24 @@ OGRLayers will return FALSE for any unrecognised capabilities.<p>
 
 */
 
+/**
+ \fn OGRErr OGRLayer::SyncToDisk();
+
+Flush pending changes to disk.
+
+This call is intended to force the layer to flush any pending writes to
+disk, and leave the disk file in a consistent state.  It would not normally
+have any effect on read-only datasources. 
+
+Some layers do not implement this method, and will still return 
+OGRERR_NONE.  The default implementation just returns OGRERR_NONE.  An error
+is only returned if an error occurs while attempting to flush to disk.  
+
+This method is the same as the C function OGR_L_SyncToDisk().
+
+@return OGRERR_NONE if no error occurs (even if nothing is done) or an
+error code.
+*/
 
 /**
  \fn int OGRLayer::Reference();

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2003/04/22 19:36:04  warmerda
+ * Added SyncToDisk
+ *
  * Revision 1.36  2003/04/08 21:21:29  warmerda
  * added OGRGetDriverByName
  *
@@ -192,6 +195,8 @@ class CPL_DLL OGRLayer
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
 
+    virtual OGRErr      SyncToDisk();
+
     OGRStyleTable       *GetStyleTable(){return m_poStyleTable;}
     void                 SetStyleTable(OGRStyleTable *poStyleTable){m_poStyleTable = poStyleTable;}
 
@@ -259,6 +264,8 @@ class CPL_DLL OGRDataSource
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect );
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
+
+    virtual OGRErr      SyncToDisk();
 
     int                 Reference();
     int                 Dereference();

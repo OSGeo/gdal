@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/04/22 19:36:04  warmerda
+ * Added SyncToDisk
+ *
  * Revision 1.15  2003/03/19 20:35:05  warmerda
  * added reference counting support
  *
@@ -571,4 +574,24 @@ OGRErr OGRLayer::InitializeIndexSupport( const char *pszFilename )
     }
 
     return eErr;
+}
+
+/************************************************************************/
+/*                             SyncToDisk()                             */
+/************************************************************************/
+
+OGRErr OGRLayer::SyncToDisk()
+
+{
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          OGR_L_SyncToDisk()                          */
+/************************************************************************/
+
+OGRErr OGR_L_SyncToDisk( OGRLayerH hDS )
+
+{
+    return ((OGRLayer *) hDS)->SyncToDisk();
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/04/22 19:36:04  warmerda
+ * Added SyncToDisk
+ *
  * Revision 1.16  2003/04/08 19:31:58  warmerda
  * added CopyLayer and CopyDataSource entry points
  *
@@ -890,6 +893,40 @@ OGRLayerH OGR_DS_GetLayer( OGRDataSourceH hDS, int iLayer )
 const char *OGR_DS_GetName( OGRDataSourceH hDS )
 
 {
-    return ((OGRDataSource *)hDS)->GetName();
+
 }
 
+/************************************************************************/
+/*                             SyncToDisk()                             */
+/************************************************************************/
+
+OGRErr OGRDataSource::SyncToDisk()
+
+{
+    int i;
+    OGRErr eErr;
+
+    for( i = 0; i < GetLayerCount(); i++ )
+    {
+        OGRLayer *poLayer = GetLayer(i);
+
+        if( poLayer )
+        {
+            eErr = poLayer->SyncToDisk();
+            if( eErr != OGRERR_NONE )
+                return eErr;
+        }
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         OGR_DS_SyncToDisk()                          */
+/************************************************************************/
+
+OGRErr OGR_DS_SyncToDisk( OGRDataSourceH hDS )
+
+{
+    return ((OGRDataSource *) hDS)->SyncToDisk();
+}
