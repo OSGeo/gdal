@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/05/24 04:09:24  warmerda
+ * fixed CPL_DLL declarations
+ *
  * Revision 1.1  2002/05/24 04:01:01  warmerda
  * New
  *
@@ -54,10 +57,10 @@
 
 CPL_C_START
 
-void *CPL_DLL CPLLockFile( const char *pszPath, double dfWaitInSeconds );
+void CPL_DLL *CPLLockFile( const char *pszPath, double dfWaitInSeconds );
 void  CPL_DLL CPLUnlockFile( void *hLock );
 
-void *CPL_DLL CPLCreateMutex();
+void CPL_DLL *CPLCreateMutex();
 int   CPL_DLL CPLAcquireMutex( void *hMutex, double dfWaitInSeconds );
 void  CPL_DLL CPLReleaseMutex( void *hMutex );
 void  CPL_DLL CPLDestroyMutex( void *hMutex );
