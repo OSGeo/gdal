@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/08/16 21:29:48  warmerda
+ * added output support
+ *
  * Revision 1.3  2004/07/31 04:50:22  warmerda
  * started write support
  *
@@ -82,6 +85,8 @@ int OGRCSVDataSource::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCDeleteLayer) )
         return TRUE;
     else
         return FALSE;
@@ -206,7 +211,149 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename )
     papoLayers = (OGRCSVLayer **) CPLRealloc(papoLayers, 
                                              sizeof(void*) * nLayers);
     
-    papoLayers[nLayers-1] = new OGRCSVLayer( CPLGetBasename(pszFilename), fp );
+    papoLayers[nLayers-1] = 
+        new OGRCSVLayer( CPLGetBasename(pszFilename), fp, FALSE );
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                            CreateLayer()                             */
+/************************************************************************/
+
+OGRLayer *
+OGRCSVDataSource::CreateLayer( const char *pszLayerName, 
+                               OGRSpatialReference *poSpatialRef,
+                               OGRwkbGeometryType eGType,
+                               char ** papszOptions  )
+
+{
+
+/* -------------------------------------------------------------------- */
+/*      Verify that the datasource is a directory.                      */
+/* -------------------------------------------------------------------- */
+    VSIStatBuf sStatBuf;
+
+    if( VSIStat( pszName, &sStatBuf ) != 0 
+        || !VSI_ISDIR( sStatBuf.st_mode ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Attempt to create csv layer (file) against a non-directory datasource." );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      What filename would we use?                                     */
+/* -------------------------------------------------------------------- */
+    const char *pszFilename;
+
+    pszFilename = CPLFormFilename( pszName, pszLayerName, "csv" );
+
+/* -------------------------------------------------------------------- */
+/*      does this file already exist?                                   */
+/* -------------------------------------------------------------------- */
+    
+    if( VSIStat( pszName, &sStatBuf ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Attempt to create layer %s, but file %s already exists.",
+                  pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the empty file.                                          */
+/* -------------------------------------------------------------------- */
+    FILE *fp;
+
+    fp = VSIFOpen( pszFilename, "w+b" );
+
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Failed to create %s:\n%s", 
+                  pszFilename, VSIStrerror( errno ) );
+                  
+                  
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create a layer.                                                 */
+/* -------------------------------------------------------------------- */
+    nLayers++;
+    papoLayers = (OGRCSVLayer **) CPLRealloc(papoLayers, 
+                                             sizeof(void*) * nLayers);
+    
+    papoLayers[nLayers-1] = new OGRCSVLayer( pszLayerName, fp, TRUE );
+
+/* -------------------------------------------------------------------- */
+/*      Was a partiuclar CRLF order requested?                          */
+/* -------------------------------------------------------------------- */
+    const char *pszCRLFFormat = CSLFetchNameValue( papszOptions, "LINEFORMAT");
+    int bUseCRLF;
+
+    if( pszCRLFFormat == NULL )
+    {
+#ifdef WIN32
+        bUseCRLF = TRUE;
+#else
+        bUseCRLF = FALSE;
+#endif
+    }
+    else if( EQUAL(pszCRLFFormat,"CRLF") )
+        bUseCRLF = TRUE;
+    else if( EQUAL(pszCRLFFormat,"LF") )
+        bUseCRLF = FALSE;
+    else
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "LINEFORMAT=%s not understood, use one of CRLF or LF.",
+                  pszCRLFFormat );
+#ifdef WIN32
+        bUseCRLF = TRUE;
+#else
+        bUseCRLF = FALSE;
+#endif
+    }
+    
+    papoLayers[nLayers-1]->SetCRLF( bUseCRLF );
+
+    return papoLayers[nLayers-1];
+}
+
+/************************************************************************/
+/*                            DeleteLayer()                             */
+/************************************************************************/
+
+OGRErr OGRCSVDataSource::DeleteLayer( int iLayer )
+
+{
+    char *pszFilename;
+
+    if( iLayer < 0 || iLayer >= nLayers )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Layer %d not in legal range of 0 to %d.", 
+                  iLayer, nLayers-1 );
+        return OGRERR_FAILURE;
+    }
+
+    pszFilename = 
+        CPLStrdup(CPLFormFilename(pszName,papoLayers[iLayer]->GetLayerDefn()->GetName(),"csv"));
+
+    delete papoLayers[iLayer];
+
+    while( iLayer < nLayers - 1 )
+    {
+        papoLayers[iLayer] = papoLayers[iLayer+1];
+        iLayer++;
+    }
+
+    nLayers--;
+
+    VSIUnlink( pszFilename );
+    CPLFree( pszFilename );
+
+    return OGRERR_NONE;
 }
