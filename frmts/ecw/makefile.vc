@@ -1,5 +1,5 @@
 
-EXTRAFLAGS = 	-I$(ECWDIR)/include /DWIN32 -DFRMT_ecw
+EXTRAFLAGS = 	-I$(ECWDIR)\include /DWIN32 -DFRMT_ecw
 
 OBJ	=	ecwdataset.obj 
 
@@ -10,6 +10,16 @@ GDAL_ROOT	=	..\..
 default:	$(OBJ)
 	copy *.obj ..\o
 
+all:	default testecw.exe
+
 clean:
 	-del *.obj
+	-del *.exe
+
+testecw.exe:	testecw.cpp
+	$(CC) /MD $(EXTRAFLAGS) testecw.cpp $(ECWLIB)
+
+ecw_example1.exe:	ecw_example1.c
+	$(CC) /MD $(EXTRAFLAGS) ecw_example1.c $(ECWLIB)
+	
 
