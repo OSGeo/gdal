@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/11/04 16:26:29  warmerda
+ * Implemented addGeometryDirectly().
+ *
  * Revision 1.7  1999/09/01 11:50:40  warmerda
  * Fixed CPLAssert on legal geometry types.
  *
@@ -236,10 +239,47 @@ OGRGeometry * OGRGeometryCollection::getGeometryRef( int i )
 OGRErr OGRGeometryCollection::addGeometry( OGRGeometry * poNewGeom )
 
 {
+    OGRGeometry	*poClone = poNewGeom->clone();
+    OGRErr	eErr;
+
+    eErr = addGeometryDirectly( poClone );
+    if( eErr != OGRERR_NONE )
+        delete poClone;
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                        addGeometryDirectly()                         */
+/*                                                                      */
+/*      Add a new geometry to a collection.  Subclasses should          */
+/*      override this to verify the type of the new geometry, and       */
+/*      then call this method to actually add it.                       */
+/************************************************************************/
+
+/**
+ * Add a geometry directly to the container.
+ *
+ * Some subclasses of OGRGeometryCollection restrict the types of geometry
+ * that can be added, and may return an error.  Ownership of the passed
+ * geometry is taken by the container rather than cloning as addGeometry()
+ * does.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param poNewGeom geometry to add to the container.
+ *
+ * @return OGRERR_NONE if successful, or OGRERR_UNSUPPORTED_GEOMETRY_TYPE if
+ * the geometry type is illegal for the type of geometry container.
+ */
+
+OGRErr OGRGeometryCollection::addGeometryDirectly( OGRGeometry * poNewGeom )
+
+{
     papoGeoms = (OGRGeometry **) OGRRealloc( papoGeoms,
                                              sizeof(void*) * (nGeomCount+1) );
 
-    papoGeoms[nGeomCount] = poNewGeom->clone();
+    papoGeoms[nGeomCount] = poNewGeom;
 
     nGeomCount++;
 
