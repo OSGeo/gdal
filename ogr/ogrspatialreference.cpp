@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.75  2003/05/30 18:34:41  warmerda
+ * clear existing authority node in SetLinearUnits if one exists
+ *
  * Revision 1.74  2003/05/28 19:16:43  warmerda
  * fixed up argument names and stuff for docs
  *
@@ -938,6 +941,8 @@ OGRErr OGRSpatialReference::SetLinearUnits( const char * pszUnitsName,
         poUnits = poCS->GetChild( poCS->FindChild( "UNIT" ) );
         poUnits->GetChild(0)->SetValue( pszUnitsName );
         poUnits->GetChild(1)->SetValue( szValue );
+        if( poUnits->FindChild( "AUTHORITY" ) != -1 )
+            poUnits->DestroyChild( poUnits->FindChild( "AUTHORITY" ) );
     }
     else
     {
