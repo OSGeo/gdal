@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/10/04 12:52:22  warmerda
+ * Added DTM_ as a prefix to raster layer names.
+ *
  * Revision 1.2  1999/10/04 11:36:53  warmerda
  * Added HEIGHT attribute.
  *
@@ -228,16 +231,19 @@ OGRNTFRasterLayer::OGRNTFRasterLayer( OGRNTFDataSource *poDSIn,
                                       NTFFileReader * poReaderIn )
 
 {
-    poReader = poReaderIn;
-    poDS = poDSIn;
-    poFilterGeom = NULL;
+    char	szLayerName[128];
 
-    poFeatureDefn = new OGRFeatureDefn( poReaderIn->GetTileName() );
+    sprintf( szLayerName, "DTM_%s", poReaderIn->GetTileName() );
+    poFeatureDefn = new OGRFeatureDefn( szLayerName );
     poFeatureDefn->SetGeomType( wkbPoint25D );
 
     OGRFieldDefn      oHeight( "HEIGHT", OFTInteger );
     oHeight.SetWidth(5);
     poFeatureDefn->AddFieldDefn( &oHeight );
+
+    poReader = poReaderIn;
+    poDS = poDSIn;
+    poFilterGeom = NULL;
 
     pafColumn = (float *) CPLCalloc(sizeof(float),
                                     poReader->GetRasterYSize());
