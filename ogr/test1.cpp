@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/03/29 21:36:14  warmerda
+ * New
+ *
  * Revision 1.1  1999/03/29 21:21:10  warmerda
  * New
  *
@@ -36,6 +39,7 @@
 #include "ogr_geometry.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static void ReportBin( const char * );
 static void CreateBin( OGRGeometry *, const char * );
@@ -77,6 +81,8 @@ int main( int nArgc, char ** papszArgv )
             CreateBin( &oLine, papszArgv[2] );
         }
     }
+
+    return 0;
 }
 
 /************************************************************************/
