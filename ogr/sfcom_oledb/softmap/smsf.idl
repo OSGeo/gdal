@@ -18,6 +18,15 @@ library SFLib
 	importlib("stdole2.tlb");
 
 	[
+		object,
+		uuid(E3023002-F731-46E2-AF00-C3E835F0C68E),
+	]
+	interface IDataSourceKey : IUnknown
+	{
+		HRESULT GetKey([out] ULONG* nKey);
+	};
+
+	[
 		uuid(C9BD5075-0D6D-11D3-94FF-00104B238935),
 		helpstring("SF OLE DB Provider")
 	]
