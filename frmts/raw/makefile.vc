@@ -1,5 +1,6 @@
 
-OBJ	=	rawdataset.obj ehdrdataset.obj pauxdataset.obj doq1dataset.obj
+OBJ	=	rawdataset.obj ehdrdataset.obj pauxdataset.obj doq1dataset.obj\
+		hkvdataset.obj mffdataset.obj
 
 GDAL_ROOT	=	..\..
 
