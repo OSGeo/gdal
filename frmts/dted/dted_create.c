@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2004/05/13 00:28:57  gwalter
+ * Fix latitude/longitude mixup in header.
+ *
  * Revision 1.10  2004/01/30 18:27:25  gwalter
  * Fixed bug in tile sizing.
  *
@@ -260,11 +263,11 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
     DTEDFormat( achRecord + 264, "0000000.0" );
     DTEDFormat( achRecord + 264, "0000000.0" );
 
-    DTEDFormat( achRecord + 273, "%04d", (3600 / (nXSize-1)) * 10 );
-    DTEDFormat( achRecord + 277, "%04d", (3600 / (nYSize-1)) * 10 );
+    DTEDFormat( achRecord + 273, "%04d", (3600 / (nYSize-1)) * 10 );
+    DTEDFormat( achRecord + 277, "%04d", (3600 / (nXSize-1)) * 10 );
 
-    DTEDFormat( achRecord + 281, "%04d", nXSize );
-    DTEDFormat( achRecord + 285, "%04d", nYSize );
+    DTEDFormat( achRecord + 281, "%04d", nYSize );
+    DTEDFormat( achRecord + 285, "%04d", nXSize );
     DTEDFormat( achRecord + 289, "%02d", 0 );
 
     if( VSIFWrite( achRecord, DTED_DSI_SIZE, 1, fp ) != 1 )
