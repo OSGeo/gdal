@@ -1,5 +1,7 @@
 GDAL_ROOT = .
 
+!INCLUDE nmake.opt
+
 ##############################################################################
 # The following determines whether we are linking all the OGR formats 
 # into the DLL, or only the minimum spatial reference related stuff required
@@ -20,8 +22,6 @@ OGR_INCLUDE =	/INCLUDE:_OCTNewCoordinateTransformation /INCLUDE:_OGRFree \
 LIBOBJ = port\*.obj core\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ)
 	
 DISTDIR	=	gdal_$(VERSION)
-
-!INCLUDE nmake.opt
 
 default:	port_dir ogr_dir core_dir frmts_dir $(GDAL_DLL) \
 		apps_dir pymod_dir
