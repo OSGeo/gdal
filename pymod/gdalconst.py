@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.4  2002/06/27 15:41:49  warmerda
+# added minixml read/write stuff
+#
 # Revision 1.3  2000/07/19 13:58:13  warmerda
 # fixed complex type codes
 #
@@ -83,4 +86,10 @@ GPI_Gray=0
 GPI_RGB=1
 GPI_CMYK=2
 GPI_HLS=3
+
+CXT_Element=0
+CXT_Text=1
+CXT_Attribute=2
+CXT_Comment=3
+
 
