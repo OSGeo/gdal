@@ -1,0 +1,46 @@
+/*
+ *  EPSG/POSC Ellipsoid-referenced Vertical CS
+ *   Note: these should correspond exactly with the Ellipsoid database.
+ */
+ValuePair(VertCS_Airy_1830_ellipsoid,	5001)
+ValuePair(VertCS_Airy_Modified_1849_ellipsoid,	5002)
+ValuePair(VertCS_ANS_ellipsoid,	5003)
+ValuePair(VertCS_Bessel_1841_ellipsoid,	5004)
+ValuePair(VertCS_Bessel_Modified_ellipsoid,	5005)
+ValuePair(VertCS_Bessel_Namibia_ellipsoid,	5006)
+ValuePair(VertCS_Clarke_1858_ellipsoid,	5007)
+ValuePair(VertCS_Clarke_1866_ellipsoid,	5008)
+ValuePair(VertCS_Clarke_1880_Benoit_ellipsoid,	5010)
+ValuePair(VertCS_Clarke_1880_IGN_ellipsoid,	5011)
+ValuePair(VertCS_Clarke_1880_RGS_ellipsoid,	5012)
+ValuePair(VertCS_Clarke_1880_Arc_ellipsoid,	5013)
+ValuePair(VertCS_Clarke_1880_SGA_1922_ellipsoid,	5014)
+ValuePair(VertCS_Everest_1830_1937_Adjustment_ellipsoid,	5015)
+ValuePair(VertCS_Everest_1830_1967_Definition_ellipsoid,	5016)
+ValuePair(VertCS_Everest_1830_1975_Definition_ellipsoid,	5017)
+ValuePair(VertCS_Everest_1830_Modified_ellipsoid,	5018)
+ValuePair(VertCS_GRS_1980_ellipsoid,	5019)
+ValuePair(VertCS_Helmert_1906_ellipsoid,	5020)
+ValuePair(VertCS_INS_ellipsoid,	5021)
+ValuePair(VertCS_International_1924_ellipsoid,	5022)
+ValuePair(VertCS_International_1967_ellipsoid,	5023)
+ValuePair(VertCS_Krassowsky_1940_ellipsoid,	5024)
+ValuePair(VertCS_NWL_9D_ellipsoid,	5025)
+ValuePair(VertCS_NWL_10D_ellipsoid,	5026)
+ValuePair(VertCS_Plessis_1817_ellipsoid,	5027)
+ValuePair(VertCS_Struve_1860_ellipsoid,	5028)
+ValuePair(VertCS_War_Office_ellipsoid,	5029)
+ValuePair(VertCS_WGS_84_ellipsoid,	5030)
+ValuePair(VertCS_GEM_10C_ellipsoid,	5031)
+ValuePair(VertCS_OSU86F_ellipsoid,	5032)
+ValuePair(VertCS_OSU91A_ellipsoid,	5033)
+/*
+ *  Other established Vertical CS
+ */
+ValuePair(VertCS_Newlyn,	5101)
+ValuePair(VertCS_North_American_Vertical_Datum_1929,	5102)
+ValuePair(VertCS_North_American_Vertical_Datum_1988,	5103)
+ValuePair(VertCS_Yellow_Sea_1956,	5104)
+ValuePair(VertCS_Baltic_Sea,	5105)
+ValuePair(VertCS_Caspian_Sea,	5106)
+/* end of list */
