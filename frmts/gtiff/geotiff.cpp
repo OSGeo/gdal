@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.71  2002/09/30 21:14:12  warmerda
+ * added support for overviews of RGBA files
+ *
  * Revision 1.70  2002/09/04 06:46:05  warmerda
  * added CSVDeaccess as a driver cleanup action
  *
@@ -739,6 +742,9 @@ class GTiffRGBABand : public GDALRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
 
     virtual GDALColorInterp GetColorInterpretation();
+
+    virtual int    GetOverviewCount();
+    virtual GDALRasterBand *GetOverview( int );
 };
 
 
@@ -879,6 +885,33 @@ GDALColorInterp GTiffRGBABand::GetColorInterpretation()
         return GCI_BlueBand;
     else
         return GCI_AlphaBand;
+}
+
+/************************************************************************/
+/*                          GetOverviewCount()                          */
+/************************************************************************/
+
+int GTiffRGBABand::GetOverviewCount()
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+
+    return poGDS->nOverviewCount;
+}
+
+/************************************************************************/
+/*                            GetOverview()                             */
+/************************************************************************/
+
+GDALRasterBand *GTiffRGBABand::GetOverview( int i )
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+
+    if( i < 0 || i >= poGDS->nOverviewCount )
+        return NULL;
+    else
+        return poGDS->papoOverviewDS[i]->GetRasterBand(nBand);
 }
 
 /************************************************************************/
@@ -2165,7 +2198,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 /*      If this is a "base" raster, we should scan for any              */
 /*      associated overviews.                                           */
 /* -------------------------------------------------------------------- */
-    if( bBase && !bTreatAsRGBA )
+    if( bBase )
     {
         while( TIFFReadDirectory( hTIFF ) != 0 )
         {
