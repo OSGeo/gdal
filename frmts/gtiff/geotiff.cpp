@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2000/03/31 13:36:07  warmerda
+ * added gcp's and metadata
+ *
  * Revision 1.21  2000/03/23 18:47:52  warmerda
  * added support for writing tiled TIFF
  *
@@ -100,6 +103,7 @@
 #include "geotiff.h"
 #include "gdal_priv.h"
 #include "geo_normalize.h"
+#include "cpl_string.h"
 
 static GDALDriver	*poGTiffDriver = NULL;
 
@@ -144,6 +148,7 @@ class GTiffDataset : public GDALDataset
 
     char	*pszProjection;
     double	adfGeoTransform[6];
+    int		bGeoTransformValid;
 
     int		bNewDataset;            /* product of Create() */
 
@@ -155,6 +160,9 @@ class GTiffDataset : public GDALDataset
     int		nOverviewCount;
     GTiffDataset **papoOverviewDS;
 
+    int		nGCPCount;
+    GDAL_GCP	*pasGCPList;
+
   public:
                  GTiffDataset();
                  ~GTiffDataset();
@@ -163,6 +171,10 @@ class GTiffDataset : public GDALDataset
     virtual CPLErr SetProjection( const char * );
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
+
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
 
     CPLErr	   OpenOffset( TIFF *, uint32 nDirOffset, int );
 
@@ -548,12 +560,16 @@ GTiffDataset::GTiffDataset()
     papoOverviewDS = NULL;
     nDirOffset = 0;
 
+    bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+
+    nGCPCount = 0;
+    pasGCPList = NULL;
 }
 
 /************************************************************************/
@@ -584,6 +600,14 @@ GTiffDataset::~GTiffDataset()
     if( bBase )
     {
         XTIFFClose( hTIFF );
+    }
+
+    if( nGCPCount > 0 )
+    {
+        for( int i = 0; i < nGCPCount; i++ )
+            CPLFree( pasGCPList[i].pszId );
+
+        CPLFree( pasGCPList );
     }
 }
 
@@ -823,15 +847,39 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
     {
         adfGeoTransform[1] = padfScale[0];
         adfGeoTransform[5] = - ABS(padfScale[1]);
-    }
+
         
-    if( TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
-        && nCount >= 6 )
+        if( TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
+            && nCount >= 6 )
+        {
+            adfGeoTransform[0] =
+                padfTiePoints[3] - padfTiePoints[0] * adfGeoTransform[1];
+            adfGeoTransform[3] =
+                padfTiePoints[4] - padfTiePoints[1] * adfGeoTransform[5];
+
+            bGeoTransformValid = TRUE;
+        }
+    }
+
+    else if( TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
+            && nCount >= 6 )
     {
-        adfGeoTransform[0] =
-            padfTiePoints[3] - padfTiePoints[0] * adfGeoTransform[1];
-        adfGeoTransform[3] =
-            padfTiePoints[4] - padfTiePoints[1] * adfGeoTransform[5];
+        nGCPCount = nCount / 6;
+        pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nGCPCount);
+        
+        for( int iGCP = 0; iGCP < nGCPCount; iGCP++ )
+        {
+            char	szID[32];
+
+            sprintf( szID, "%d", iGCP+1 );
+            pasGCPList[iGCP].pszId = CPLStrdup( szID );
+            pasGCPList[iGCP].pszInfo = "";
+            pasGCPList[iGCP].dfGCPPixel = padfTiePoints[iGCP*6+0];
+            pasGCPList[iGCP].dfGCPLine = padfTiePoints[iGCP*6+1];
+            pasGCPList[iGCP].dfGCPX = padfTiePoints[iGCP*6+3];
+            pasGCPList[iGCP].dfGCPY = padfTiePoints[iGCP*6+4];
+            pasGCPList[iGCP].dfGCPZ = padfTiePoints[iGCP*6+5];
+        }
     }
         
 /* -------------------------------------------------------------------- */
@@ -884,6 +932,39 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
     }
     
     GTIFFree( hGTIF );
+
+/* -------------------------------------------------------------------- */
+/*      Capture some other potentially interesting information.         */
+/* -------------------------------------------------------------------- */
+    char	*pszText;
+
+    if( TIFFGetField( hTIFF, TIFFTAG_DOCUMENTNAME, &pszText ) )
+    {
+        papszMetadata = 
+            CSLSetNameValue( papszMetadata, "TIFFTAG_DOCUMENTNAME", 
+                             pszText );
+    }
+
+    if( TIFFGetField( hTIFF, TIFFTAG_IMAGEDESCRIPTION, &pszText ) )
+    {
+        papszMetadata = 
+            CSLSetNameValue( papszMetadata, "TIFFTAG_IMAGEDESCRIPTION", 
+                             pszText );
+    }
+
+    if( TIFFGetField( hTIFF, TIFFTAG_SOFTWARE, &pszText ) )
+    {
+        papszMetadata = 
+            CSLSetNameValue( papszMetadata, "TIFFTAG_SOFTWARE", 
+                             pszText );
+    }
+
+    if( TIFFGetField( hTIFF, TIFFTAG_DATETIME, &pszText ) )
+    {
+        papszMetadata = 
+            CSLSetNameValue( papszMetadata, "TIFFTAG_DATETIME", 
+                             pszText );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If this is a "base" raster, we should scan for any              */
@@ -1107,7 +1188,10 @@ CPLErr GTiffDataset::GetGeoTransform( double * padfTransform )
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
 
-    return( CE_None );
+    if( bGeoTransformValid )
+        return CE_None;
+    else
+        return CE_Failure;
 }
 
 /************************************************************************/
@@ -1120,6 +1204,7 @@ CPLErr GTiffDataset::SetGeoTransform( double * padfTransform )
     if( bNewDataset )
     {
         memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
+        bGeoTransformValid = TRUE;
         return( CE_None );
     }
     else
@@ -1130,6 +1215,38 @@ CPLErr GTiffDataset::SetGeoTransform( double * padfTransform )
     }
 }
 
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int GTiffDataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *GTiffDataset::GetGCPProjection()
+
+{
+    if( nGCPCount > 0 )
+        return pszProjection;
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                               GetGCP()                               */
+/************************************************************************/
+
+const GDAL_GCP *GTiffDataset::GetGCPs()
+
+{
+    return pasGCPList;
+}
 
 /************************************************************************/
 /*                          GDALRegister_GTiff()                        */
