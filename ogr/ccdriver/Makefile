@@ -22,8 +22,9 @@ Cover.dll:	Cover.h CoverageIdl.h $(LOC_OBJ) Cover.res
 		$(LOC_OBJ) $(GDAL_LIB) $(OLE_LIBS) Cover.res
 
 clean:
-	del *.obj *.exe Cover.dll Cover.h Cover_i.c Cover.tlb Cover.res
-	del CoverageIdl.h *.pdb *.ilk
+	del *.obj Cover.dll Cover.h Cover_i.c Cover.tlb Cover.res
+	del CoverageIdl.h *.pdb *.ilk *.exp CoverageIdl_i.c
+	del CoverageIdl_p.c dlldata.c
 
 Cover.h:      Cover.idl
 	midl /tlb Cover.tlb /h Cover.h /IF:/opengis/coverage \
