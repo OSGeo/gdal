@@ -1,3 +1,46 @@
+GDAL 1.1.7 - Overview of Changes
+--------------------------------
+
+ o Add XPM (X11 Pixmap) format.
+
+ o Added rough ENVI raster format read support.
+
+ o Added --version support (and supporting GDALVersionInfo() function).
+
+ o Special hooks for getting raw record data from sar ceos files and Envisat
+   via the metadata api.
+
+ o Upgraded TIFF/GeoTIFF support to CVS version ... includes new extension
+   API and removes need for private libtiff include files entirely.
+
+ o gdal_translate now has scaling option (-scale). 
+
+ o Added utility documentation.
+
+OGR 1.1.7 - Overview of Changes
+-------------------------------
+
+ o Added Arc/Info binary coverage format read support.
+
+ o Added ogrtindex for building MapServer compatible OGR tile indexes.
+
+ o Added default implementation of GetFeature(fid) method on OGRLayer.
+
+ o Shape driver now supports reading and creating free standing .dbf files
+   for layers without geometry.
+
+ o Added utility documentation.
+
+ o Fixed major memory/file handle leak in SDTS access.
+
+ o Added ADSK_GEOM_EXTENT support for OLE DB provider.
+
+ o Ensure shapefiles written with correct polygon ring winding direction
+   plus various other shapefile support fixes.
+
+ o GML read/write working reasonable well, including use of .gfs files.
+
+
 GDAL 1.1.6 - Overview of Changes
 --------------------------------
 
@@ -27,6 +70,8 @@ GDAL 1.1.6 - Overview of Changes
 
  o geotiff: upgraded libtiff support to approximately libtiff 3.5.7.
 
+ o DGN: Added support for complex shapes, shapes assembled from many elements.
+   Various other improvements.
 
 
 OGR 1.1.6 - Overview of Changes
@@ -41,7 +86,7 @@ OGR 1.1.6 - Overview of Changes
    coordinate systems as NULL fields, and setting ISLONG on geometry fields.
    Also made thread safe. 
 
- o DGN: Thread SHAPE elements as polygons.  Set style information for text.
+ o DGN: Threat SHAPE elements as polygons.  Set style information for text.
    Added 3D support for most elements. 
 
  o Fixed bugs in WKT format for some OGR geometry types (ie. multipoint).
