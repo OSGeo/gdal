@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2003/04/16 17:48:23  warmerda
+ * Additional of rudimentary JP2 palette support.
+ *
  * Revision 1.3  2003/02/09 21:31:40  warmerda
  * Added support for debug fileio.  Fixed setting of ORGgen_plt.
  *
@@ -159,6 +162,8 @@ class JP2KAKRasterBand : public GDALRasterBand
 
     kdu_codestream oCodeStream;
 
+    GDALColorTable oCT;
+
   public:
 
     		JP2KAKRasterBand( int, int, kdu_codestream, int );
@@ -169,8 +174,12 @@ class JP2KAKRasterBand : public GDALRasterBand
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
 
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorTable *GetColorTable();
+
     // internal
 
+    void        ApplyPalette( jp2_palette oJP2Palette );
     void        ProcessYCbCrTile(kdu_tile tile, GByte *pabyBuffer, 
                                  int nTileXOff, int nTileYOff );
     void        ProcessTile(kdu_tile tile, GByte *pabyBuffer, 
@@ -552,6 +561,99 @@ void JP2KAKRasterBand::ProcessYCbCrTile( kdu_tile tile, GByte *pabyDest,
 }
 
 /************************************************************************/
+/*                            ApplyPalette()                            */
+/************************************************************************/
+
+void JP2KAKRasterBand::ApplyPalette( jp2_palette oJP2Palette )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Do we have a reasonable LUT configuration?  RGB or RGBA?        */
+/* -------------------------------------------------------------------- */
+    if( !oJP2Palette.exists() )
+        return;
+
+    if( oJP2Palette.get_num_luts() == 0 || oJP2Palette.get_num_entries() == 0 )
+        return;
+
+    if( oJP2Palette.get_num_luts() < 3 )
+    {
+        CPLDebug( "JP2KAK", "JP2KAKRasterBand::ApplyPalette()\n"
+                  "Odd get_num_luts() value (%d)", 
+                  oJP2Palette.get_num_luts() );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Fetch the lut entries.  Note that they are normalized in the    */
+/*      -0.5 to 0.5 range.                                              */
+/* -------------------------------------------------------------------- */
+    float *pafLUT;
+    int   iColor, nCount = oJP2Palette.get_num_entries();
+
+    pafLUT = (float *) CPLCalloc(sizeof(float)*4, nCount);
+
+    oJP2Palette.get_lut(0, pafLUT + 0);
+    oJP2Palette.get_lut(1, pafLUT + nCount);
+    oJP2Palette.get_lut(2, pafLUT + nCount*2);
+
+    if( oJP2Palette.get_num_luts() == 4 )
+    {
+        oJP2Palette.get_lut( 2, pafLUT + nCount*3 );
+    }
+    else
+    {
+        for( iColor = 0; iColor < nCount; iColor++ )
+        {
+            pafLUT[nCount*3 + iColor] = 0.5;
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Apply to GDAL colortable.                                       */
+/* -------------------------------------------------------------------- */
+    for( iColor=0; iColor < nCount; iColor++ )
+    {
+        GDALColorEntry sEntry;
+
+        sEntry.c1 = (int) MAX(0,MIN(255,pafLUT[iColor + nCount*0]*256+128));
+        sEntry.c2 = (int) MAX(0,MIN(255,pafLUT[iColor + nCount*1]*256+128));
+        sEntry.c3 = (int) MAX(0,MIN(255,pafLUT[iColor + nCount*2]*256+128));
+        sEntry.c4 = (int) MAX(0,MIN(255,pafLUT[iColor + nCount*3]*256+128));
+
+        oCT.SetColorEntry( iColor, &sEntry );
+    }
+
+    CPLFree( pafLUT );
+}
+
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp JP2KAKRasterBand::GetColorInterpretation()
+
+{
+    if( oCT.GetColorEntryCount() > 0 )
+        return GCI_PaletteIndex;
+    else
+        return GCI_GrayIndex;
+}
+
+/************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable *JP2KAKRasterBand::GetColorTable()
+
+{
+    if( oCT.GetColorEntryCount() > 0 )
+        return &oCT;
+    else
+        return NULL;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*				JP2KAKDataset				*/
 /* ==================================================================== */
@@ -685,6 +787,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try to open the file in a manner depending on the extension.    */
 /* -------------------------------------------------------------------- */
     kdu_compressed_source *poInput;
+    jp2_palette oJP2Palette;
 
     try
     {
@@ -695,6 +798,8 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             jp2_src = new jp2_source;
             jp2_src->open( poOpenInfo->pszFilename, true );
             poInput = jp2_src;
+
+            oJP2Palette = jp2_src->access_palette();
         }
         else
 #ifndef FILEIO_DEBUG
@@ -776,9 +881,13 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
     
         for( iBand = 1; iBand <= poDS->nBands; iBand++ )
         {
-            poDS->SetBand( iBand, 
-                           new JP2KAKRasterBand(iBand,0,poDS->oCodeStream,
-                                                nResCount) );
+            JP2KAKRasterBand *poBand = 
+                new JP2KAKRasterBand(iBand,0,poDS->oCodeStream, nResCount );
+
+            if( iBand == 1 && oJP2Palette.exists() )
+                poBand->ApplyPalette( oJP2Palette );
+
+            poDS->SetBand( iBand, poBand );
         }
 
 /* -------------------------------------------------------------------- */
@@ -1089,6 +1198,12 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Do we want to write a pseudo-colored image?                     */
+/* -------------------------------------------------------------------- */
+    int bHaveCT = poPrototypeBand->GetColorTable() != NULL
+        && poSrcDS->GetRasterCount() == 1;
+
+/* -------------------------------------------------------------------- */
 /*      How many layers?                                                */
 /* -------------------------------------------------------------------- */
     int      layer_count;
@@ -1226,11 +1341,49 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
         
         // Set colour space information (mandatory)
         jp2_colour colour = jp2_out.access_colour();
-        
-        if( poSrcDS->GetRasterCount() == 3 )
+
+        if( bHaveCT || poSrcDS->GetRasterCount() == 3 )
             colour.init( JP2_sRGB_SPACE );
         else
             colour.init( JP2_sLUM_SPACE );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write JP2 pseudocolor table if available.                       */
+/* -------------------------------------------------------------------- */
+    if( bIsJP2 && bHaveCT )
+    {
+        jp2_palette oJP2Palette;
+        GDALColorTable *poCT = poPrototypeBand->GetColorTable();
+        int  iColor, nCount = poCT->GetColorEntryCount();
+        kdu_int32 *panLUT = (kdu_int32 *) 
+            		CPLMalloc(sizeof(kdu_int32) * nCount * 3);
+        
+        oJP2Palette = jp2_out.access_palette();
+        oJP2Palette.init( 3, nCount );
+
+        for( iColor = 0; iColor < nCount; iColor++ )
+        {
+            GDALColorEntry sEntry;
+
+            poCT->GetColorEntryAsRGB( iColor, &sEntry );
+            panLUT[iColor + nCount * 0] = sEntry.c1;
+            panLUT[iColor + nCount * 1] = sEntry.c2;
+            panLUT[iColor + nCount * 2] = sEntry.c3;
+        }
+
+        oJP2Palette.set_lut( 0, panLUT + nCount * 0, 8, false );
+        oJP2Palette.set_lut( 1, panLUT + nCount * 1, 8, false );
+        oJP2Palette.set_lut( 2, panLUT + nCount * 2, 8, false );
+
+        CPLFree( panLUT );
+
+        jp2_channels oJP2Channels = jp2_out.access_channels();
+
+        oJP2Channels.init( 3 );
+        oJP2Channels.set_colour_mapping( 0, 0, 0 );
+        oJP2Channels.set_colour_mapping( 1, 0, 1 );
+        oJP2Channels.set_colour_mapping( 2, 0, 2 );
     }
 
 /* -------------------------------------------------------------------- */
