@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/02/06 14:14:09  warmerda
+ * fixed up documentation
+ *
  * Revision 1.7  2000/03/14 21:38:17  warmerda
  * added method to translate geometrytype to name
  *
@@ -256,7 +259,7 @@ OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom )
 
 /**
  * \fn OGRErr OGRGeometry::exportToWkb( OGRwkbByteOrder eOrder,
- *                                      unsigned char * pabyDstBuffer );
+                                        unsigned char * pabyDstBuffer );
  *
  * Convert a geometry into well known binary format.
  *
@@ -347,7 +350,7 @@ OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom )
  */
 
 /**
- * \fn void OGRGeometry::Empty();
+ * \fn void OGRGeometry::empty();
  *
  * Clear geometry information.  This restores the geometry to it's initial
  * state after construction, and before assignment of actual geometry.
@@ -361,7 +364,7 @@ OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom )
 /************************************************************************/
 
 /**
- * \fn void OGRGeometryTypeToName()
+ * \fn const char *OGRGeometryTypeToName(OGRwkbGeometryType)
  *
  * Fetch a human readable name corresponding to an OGRwkBGeometryType value.
  * The returned value should not be modified, or freed by the application.

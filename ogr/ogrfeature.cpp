@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/02/06 14:14:09  warmerda
+ * fixed up documentation
+ *
  * Revision 1.15  2000/08/25 20:17:34  danmo
  * Init m_poStyleTable=NULL in constructor
  *
@@ -1334,8 +1337,6 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
 /************************************************************************/
 
 /**
- * \fn const char *OGRFeature::GetStyleString();
- *
  * representation to use for this Feature
  *
  * @return a reference to a representation in string format
@@ -1354,11 +1355,9 @@ const char *OGRFeature::GetStyleString()
 /************************************************************************/
 
 /**
- * \fn const char *OGRFeature::SetStyleString();
- *
  * representation to use for this Feature
  *
- * @Set a string representation to the feature
+ * Set a string representation to the feature
  */
 
 void OGRFeature::SetStyleString(const char *pszString)
@@ -1370,6 +1369,9 @@ void OGRFeature::SetStyleString(const char *pszString)
     
 }
 
+/************************************************************************/
+/*                           SetStyleTable()                            */
+/************************************************************************/
 void OGRFeature::SetStyleTable(OGRStyleTable *poStyleTable)
 {
     m_poStyleTable = poStyleTable;
