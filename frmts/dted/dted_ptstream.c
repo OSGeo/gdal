@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/04/14 19:47:29  warmerda
+ * added better boundary support, and trimming
+ *
  * Revision 1.7  2003/05/30 16:17:21  warmerda
  * fix warnings with casting and unused parameters
  *
@@ -53,15 +56,23 @@
 
 #include "dted_api.h"
 
+CPL_CVSID("$Id$");
+
 typedef struct {
+    char     *pszFilename;
     DTEDInfo *psInfo;
 
     GInt16 **papanProfiles;
+
+    int    nLLLong;
+    int    nLLLat;
 } DTEDCachedFile;
 
 typedef struct {
     int nLevel;
     char *pszPath;
+
+    double  dfPixelSize;
 
     int nOpenFiles;
     DTEDCachedFile *pasCF;
@@ -113,9 +124,129 @@ void *DTEDCreatePtStream( const char *pszPath, int nLevel )
     for( i = 0; i < DTEDMD_MAX+1; i++ )
         psStream->apszMetadata[i] = NULL;
 
-    
+    if( nLevel == 0 )
+        psStream->dfPixelSize = 1.0 / 120.0;
+    else if( nLevel == 1 )
+        psStream->dfPixelSize = 1.0 / 1200.0;
+    else if( nLevel == 2 )
+        psStream->dfPixelSize = 1.0 / 3600.0;
+    else
+        psStream->dfPixelSize = 1.0 / 3600.0;
     
     return (void *) psStream;
+}
+
+/************************************************************************/
+/*                        DTEDPtStreamNewTile()                         */
+/*                                                                      */
+/*      Create a new DTED file file, add it to our list, and make it    */
+/*      "current".                                                      */
+/************************************************************************/
+
+static int DTEDPtStreamNewTile( DTEDPtStream *psStream, 
+                                int nCrLong, int nCrLat )
+
+{
+    DTEDInfo        *psInfo;
+    char            szFile[128];
+    char            chNSHemi, chEWHemi;
+    char            *pszFullFilename;
+    const char      *pszError;
+
+    /* work out filename */
+    if( nCrLat < 0 )
+        chNSHemi = 's';
+    else
+        chNSHemi = 'n';
+
+    if( nCrLong < 0 )
+        chEWHemi = 'w';
+    else
+        chEWHemi = 'e';
+
+    sprintf( szFile, "%c%03d%c%03d.dt%d", 
+             chEWHemi, ABS(nCrLong), chNSHemi, ABS(nCrLat),
+             psStream->nLevel );
+
+    pszFullFilename = 
+        CPLStrdup(CPLFormFilename( psStream->pszPath, szFile, NULL ));
+
+    /* create the dted file */
+    pszError = DTEDCreate( pszFullFilename, psStream->nLevel, 
+                           nCrLat, nCrLong );
+    if( pszError != NULL )
+    {
+#ifndef AVOID_CPL
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Failed to create DTED file `%s'.\n%s", 
+                  pszFullFilename, pszError );
+#endif
+        return FALSE;
+    }
+
+    psInfo = DTEDOpen( pszFullFilename, "rb+", FALSE );
+
+    if( psInfo == NULL )
+    {
+        CPLFree( pszFullFilename );
+        return FALSE;
+    }
+
+    /* add cached file to stream */
+    psStream->nOpenFiles++;
+    psStream->pasCF = 
+        CPLRealloc(psStream->pasCF, 
+                   sizeof(DTEDCachedFile)*psStream->nOpenFiles);
+
+    psStream->pasCF[psStream->nOpenFiles-1].psInfo = psInfo;
+    psStream->pasCF[psStream->nOpenFiles-1].papanProfiles =
+        CPLCalloc(sizeof(GInt16*),psInfo->nXSize);
+    psStream->pasCF[psStream->nOpenFiles-1].pszFilename = pszFullFilename;
+    psStream->pasCF[psStream->nOpenFiles-1].nLLLat = nCrLat;
+    psStream->pasCF[psStream->nOpenFiles-1].nLLLong = nCrLong;
+
+    psStream->nLastFile = psStream->nOpenFiles-1;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                           DTEDWritePtLL()                            */
+/************************************************************************/
+
+static int DTEDWritePtLL( DTEDPtStream *psStream, 
+                          DTEDCachedFile *psCF, 
+                          double dfLong, double dfLat, double dfElev )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Determine what profile this belongs in, and initialize the      */
+/*      profile if it doesn't already exist.                            */
+/* -------------------------------------------------------------------- */
+    DTEDInfo *psInfo = psCF->psInfo;
+    int iProfile, i, iRow;
+
+    iProfile = (int) ((dfLong - psInfo->dfULCornerX) / psInfo->dfPixelSizeX);
+    iProfile = MAX(0,MIN(psInfo->nXSize-1,iProfile));
+
+    if( psCF->papanProfiles[iProfile] == NULL )
+    {
+        psCF->papanProfiles[iProfile] = 
+            CPLMalloc(sizeof(GInt16) * psInfo->nYSize);
+
+        for( i = 0; i < psInfo->nYSize; i++ )
+            psCF->papanProfiles[iProfile][i] = DTED_NODATA_VALUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Establish where we fit in the profile.                          */
+/* -------------------------------------------------------------------- */
+    iRow = (int) ((psInfo->dfULCornerY-dfLat) / psInfo->dfPixelSizeY);
+    iRow = MAX(0,MIN(psInfo->nYSize-1,iRow));
+
+    psCF->papanProfiles[iProfile][iRow] = (GInt16) floor(dfElev+0.5);
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -129,132 +260,133 @@ int DTEDWritePt( void *hStream, double dfLong, double dfLat, double dfElev )
 
 {
     DTEDPtStream *psStream = (DTEDPtStream *) hStream;
-    int          i, iProfile, iRow;
+    int          i;
     DTEDInfo     *psInfo;
+    int          bOnBoundary = FALSE;
 
+/* -------------------------------------------------------------------- */
+/*      Determine if we are in a boundary region ... that is in the     */
+/*      area of the edge "pixel" that is shared with adjacent           */
+/*      tiles.                                                          */
+/* -------------------------------------------------------------------- */
+    if( (floor(dfLong - 0.5*psStream->dfPixelSize) 
+         != floor(dfLong + 0.5*psStream->dfPixelSize))
+        || (floor(dfLat - 0.5*psStream->dfPixelSize) 
+            != floor(dfLat + 0.5*psStream->dfPixelSize)) )
+    {
+        bOnBoundary = TRUE;
+        psStream->nLastFile = -1;
+    }
+
+/* ==================================================================== */
+/*      Handle case where the tile is not on a boundary.  We only       */
+/*      need one output tile.                                           */
+/* ==================================================================== */
 /* -------------------------------------------------------------------- */
 /*      Is the last file used still applicable?                         */
 /* -------------------------------------------------------------------- */
-    if( psStream->nLastFile != -1 )
+    if( !bOnBoundary )
     {
-        psInfo = psStream->pasCF[psStream->nLastFile].psInfo;
-
-        if( dfLat > psInfo->dfULCornerY
-            || dfLat < psInfo->dfULCornerY - 1.0 - psInfo->dfPixelSizeY
-            || dfLong < psInfo->dfULCornerX
-            || dfLong > psInfo->dfULCornerX + 1.0 + psInfo->dfPixelSizeX )
-            psStream->nLastFile = -1;
-    }
+        if( psStream->nLastFile != -1 )
+        {
+            psInfo = psStream->pasCF[psStream->nLastFile].psInfo;
+            
+            if( dfLat > psInfo->dfULCornerY
+                || dfLat < psInfo->dfULCornerY - 1.0 - psInfo->dfPixelSizeY
+                || dfLong < psInfo->dfULCornerX
+                || dfLong > psInfo->dfULCornerX + 1.0 + psInfo->dfPixelSizeX )
+                psStream->nLastFile = -1;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Search for the file to write to.                                */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < psStream->nOpenFiles && psStream->nLastFile == -1; i++ )
-    {
-        psInfo = psStream->pasCF[i].psInfo;
-
-        if( !(dfLat > psInfo->dfULCornerY
-              || dfLat < psInfo->dfULCornerY - 1.0 - psInfo->dfPixelSizeY
-              || dfLong < psInfo->dfULCornerX
-              || dfLong > psInfo->dfULCornerX + 1.0 + psInfo->dfPixelSizeX) )
+        for( i = 0; i < psStream->nOpenFiles && psStream->nLastFile == -1; i++ )
         {
-            psStream->nLastFile = i;
+            psInfo = psStream->pasCF[i].psInfo;
+            
+            if( !(dfLat > psInfo->dfULCornerY
+                  || dfLat < psInfo->dfULCornerY - 1.0 - psInfo->dfPixelSizeY
+                  || dfLong < psInfo->dfULCornerX
+                  || dfLong > psInfo->dfULCornerX + 1.0 + psInfo->dfPixelSizeX) )
+            {
+                psStream->nLastFile = i;
+            }
         }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      If none found, create a new file.                               */
 /* -------------------------------------------------------------------- */
-    if( psStream->nLastFile == -1 )
-    {
-        DTEDInfo        *psInfo;
-        char            szFile[128];
-        char            chNSHemi, chEWHemi;
-        int             nCrLong, nCrLat;
-        char            *pszFullFilename;
-        const char      *pszError;
-
-        nCrLong = (int) floor(dfLong);
-        nCrLat = (int) floor(dfLat);
-
-        /* work out filename */
-        if( nCrLat < 0 )
-            chNSHemi = 's';
-        else
-            chNSHemi = 'n';
-
-        if( nCrLong < 0 )
-            chEWHemi = 'w';
-        else
-            chEWHemi = 'e';
-
-        sprintf( szFile, "%c%03d%c%03d.dt%d", 
-                 chEWHemi, ABS(nCrLong), chNSHemi, ABS(nCrLat),
-                 psStream->nLevel );
-
-        pszFullFilename = 
-            CPLStrdup(CPLFormFilename( psStream->pszPath, szFile, NULL ));
-
-        /* create the dted file */
-        pszError = DTEDCreate( pszFullFilename, psStream->nLevel, 
-                               nCrLat, nCrLong );
-        if( pszError != NULL )
+        if( psStream->nLastFile == -1 )
         {
-#ifndef AVOID_CPL
-            CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Failed to create DTED file `%s'.\n%s", 
-                      pszFullFilename, pszError );
-#endif
-            return FALSE;
+            int nCrLong, nCrLat;
+            
+            nCrLong = (int) floor(dfLong);
+            nCrLat = (int) floor(dfLat);
+            
+            if( !DTEDPtStreamNewTile( psStream, nCrLong, nCrLat ) )
+                return FALSE;
         }
 
-        psInfo = DTEDOpen( pszFullFilename, "rb+", FALSE );
-
-        CPLFree( pszFullFilename );
-
-        if( psInfo == NULL )
-            return FALSE;
-
-        /* add cached file to stream */
-        psStream->nOpenFiles++;
-        psStream->pasCF = 
-            CPLRealloc(psStream->pasCF, 
-                       sizeof(DTEDCachedFile)*psStream->nOpenFiles);
-
-        psStream->pasCF[psStream->nOpenFiles-1].psInfo = psInfo;
-        psStream->pasCF[psStream->nOpenFiles-1].papanProfiles =
-            CPLCalloc(sizeof(GInt16*),psInfo->nXSize);
-
-        psStream->nLastFile = psStream->nOpenFiles-1;
+/* -------------------------------------------------------------------- */
+/*      Write data out to selected tile.                                */
+/* -------------------------------------------------------------------- */
+        return DTEDWritePtLL( psStream, psStream->pasCF + psStream->nLastFile, 
+                              dfLong, dfLat, dfElev );
     }
 
-/* -------------------------------------------------------------------- */
-/*      Determine what profile this belongs in, and initialize the      */
-/*      profile if it doesn't already exist.                            */
-/* -------------------------------------------------------------------- */
-    psInfo = psStream->pasCF[psStream->nLastFile].psInfo;
-
-    iProfile = (int) ((dfLong - psInfo->dfULCornerX) / psInfo->dfPixelSizeX);
-    iProfile = MAX(0,MIN(psInfo->nXSize-1,iProfile));
-
-    if( psStream->pasCF[psStream->nLastFile].papanProfiles[iProfile] == NULL )
+/* ==================================================================== */
+/*      Handle case where we are on a boundary.  We may be writing      */
+/*      the value to as many as four tiles.                             */
+/* ==================================================================== */
+    else
     {
-        psStream->pasCF[psStream->nLastFile].papanProfiles[iProfile] = 
-            CPLMalloc(sizeof(GInt16) * psInfo->nYSize);
+        int nLatMin, nLatMax, nLongMin, nLongMax;
+        int nCrLong, nCrLat;
 
-        for( i = 0; i < psInfo->nYSize; i++ )
-            psStream->pasCF[psStream->nLastFile].papanProfiles[iProfile][i] =
-                DTED_NODATA_VALUE;
+        nLongMin = (int) floor( dfLong - 0.5*psStream->dfPixelSize );
+        nLongMax = (int) floor( dfLong + 0.5*psStream->dfPixelSize );
+        nLatMin = (int) floor( dfLat - 0.5*psStream->dfPixelSize );
+        nLatMax = (int) floor( dfLat + 0.5*psStream->dfPixelSize );
+
+        for( nCrLong = nLongMin; nCrLong <= nLongMax; nCrLong++ )
+        {
+            for( nCrLat = nLatMin; nCrLat <= nLatMax; nCrLat++ )
+            {
+                psStream->nLastFile = -1;
+
+/* -------------------------------------------------------------------- */
+/*      Find this tile in our existing list.                            */
+/* -------------------------------------------------------------------- */
+                for( i = 0; i < psStream->nOpenFiles; i++ )
+                {
+                    if( psStream->pasCF[i].nLLLong == nCrLong
+                        && psStream->pasCF[i].nLLLat == nCrLat )
+                    {
+                        psStream->nLastFile = i;
+                        break;
+                    }
+                }
+
+/* -------------------------------------------------------------------- */
+/*      Create the tile if not found.                                   */
+/* -------------------------------------------------------------------- */
+                if( psStream->nLastFile == -1 )
+                {
+                    if( !DTEDPtStreamNewTile( psStream, nCrLong, nCrLat ) )
+                        return FALSE;
+                }
+
+/* -------------------------------------------------------------------- */
+/*      Write to the tile.                                              */
+/* -------------------------------------------------------------------- */
+                if( !DTEDWritePtLL( psStream, 
+                                    psStream->pasCF + psStream->nLastFile, 
+                                    dfLong, dfLat, dfElev ) )
+                    return FALSE;
+            }
+        }
     }
-
-/* -------------------------------------------------------------------- */
-/*      Establish where we fit in the profile.                          */
-/* -------------------------------------------------------------------- */
-    iRow = (int) ((psInfo->dfULCornerY-dfLat) / psInfo->dfPixelSizeY);
-    iRow = MAX(0,MIN(psInfo->nYSize-1,iRow));
-
-    psStream->pasCF[psStream->nLastFile].papanProfiles[iProfile][iRow] = 
-        (GInt16) dfElev;
     
     return TRUE;
 }
@@ -465,3 +597,59 @@ void DTEDPtStreamSetMetadata( void *hStream, DTEDMetaDataCode eCode,
     }
 }
 
+/************************************************************************/
+/*                   DTEDPtStreamTrimEdgeOnlyTiles()                    */
+/*                                                                      */
+/*      Erase all tiles that only have boundary values set.             */
+/************************************************************************/
+
+void DTEDPtStreamTrimEdgeOnlyTiles( void *hStream )
+
+{
+    DTEDPtStream *psStream = (DTEDPtStream *) hStream;
+    int iFile;
+
+    for( iFile = psStream->nOpenFiles-1; iFile >= 0; iFile-- )
+    {
+        DTEDInfo        *psInfo = psStream->pasCF[iFile].psInfo;
+        GInt16          **papanProfiles = psStream->pasCF[iFile].papanProfiles;
+        int             iProfile, iPixel, bGotNonEdgeData = FALSE;
+
+        for( iProfile = 1; iProfile < psInfo->nXSize-1; iProfile++ )
+        {
+            if( papanProfiles[iProfile] == NULL )
+                continue;
+
+            for( iPixel = 1; iPixel < psInfo->nYSize-1; iPixel++ )
+            {
+                if( papanProfiles[iProfile][iPixel] != DTED_NODATA_VALUE )
+                {
+                    bGotNonEdgeData = TRUE;
+                    break;
+                }
+            }
+        }
+        
+        if( bGotNonEdgeData )
+            continue;
+
+        /* Remove this tile */
+        
+        for( iProfile = 0; iProfile < psInfo->nXSize; iProfile++ )
+        {
+            if( papanProfiles[iProfile] != NULL )
+                CPLFree( papanProfiles[iProfile] );
+        }
+        CPLFree( papanProfiles );
+        
+        DTEDClose( psInfo );
+
+        VSIUnlink( psStream->pasCF[iFile].pszFilename );
+        CPLFree( psStream->pasCF[iFile].pszFilename );
+
+        memmove( psStream->pasCF + iFile, 
+                 psStream->pasCF + iFile + 1, 
+                 sizeof(DTEDCachedFile) * (psStream->nOpenFiles-iFile-1) );
+        psStream->nOpenFiles--;
+    }
+}

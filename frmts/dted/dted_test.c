@@ -1,34 +1,71 @@
+#include "gdal.h"
 #include "dted_api.h"
-#include <stdio.h>
 
+/************************************************************************/
+/*                               Usage()                                */
+/************************************************************************/
+
+static void Usage()
+
+{
+    printf( "Usage: dted_test [-trim] [-fill n] [-level n] <in_file> [<out_level>]\n" );
+    exit(0);
+}
+
+/************************************************************************/
+/*                                main()                                */
+/************************************************************************/
 int main( int argc, char ** argv )
 
 {
-    DTEDInfo    *psInfo;
-    int         iY, iX, nOutLevel;
+    GDALDatasetH hSrcDS;
+    int         iY, iX, nOutLevel=0, nXSize, nYSize, iArg, nFillDist=0;
     void        *pStream;
     GInt16      *panData;
-    const char  *pszFilename;
+    const char  *pszFilename = NULL;
+    GDALRasterBandH hSrcBand;
+    double       adfGeoTransform[6];
+    int          bEnableTrim = FALSE;
 
-    if( argc > 1 )
-        pszFilename = argv[1];
-    else
+/* -------------------------------------------------------------------- */
+/*      Identify arguments.                                             */
+/* -------------------------------------------------------------------- */
+
+    for( iArg = 1; iArg < argc; iArg++ )
     {
-        printf( "Usage: dted_test <in_file> [<out_level>]\n" );
-        exit(0);
-    }
+        if( EQUAL(argv[iArg],"-trim") )
+            bEnableTrim = TRUE;
 
-    if( argc > 2 )
-        nOutLevel = atoi(argv[2]);
-    else
-        nOutLevel = 0;
-    
+        else if( EQUAL(argv[iArg],"-fill") )
+            nFillDist = atoi(argv[++iArg]);
+
+        else if( EQUAL(argv[iArg],"-level") )
+            nOutLevel = atoi(argv[++iArg]);
+        else
+        {
+            if( pszFilename != NULL )
+                Usage();
+            pszFilename = argv[iArg];
+        }
+    }		
+
+    if( pszFilename == NULL )
+        Usage();
+
 /* -------------------------------------------------------------------- */
 /*      Open input file.                                                */
 /* -------------------------------------------------------------------- */
-    psInfo = DTEDOpen( pszFilename, "rb", FALSE );
-    if( psInfo == NULL )
+    GDALAllRegister();
+    hSrcDS = GDALOpen( pszFilename, GA_ReadOnly );
+    if( hSrcDS == NULL )
         exit(1);
+
+    hSrcBand = GDALGetRasterBand( hSrcDS, 1 );
+
+    nXSize = GDALGetRasterXSize( hSrcDS );
+    nYSize = GDALGetRasterYSize( hSrcDS );
+
+    GDALGetGeoTransform( hSrcDS, adfGeoTransform );
 
 /* -------------------------------------------------------------------- */
 /*      Create output stream.                                           */
@@ -41,21 +78,23 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Process all the profiles.                                       */
 /* -------------------------------------------------------------------- */
-    panData = (GInt16 *) malloc(sizeof(GInt16) * psInfo->nYSize);
+    panData = (GInt16 *) malloc(sizeof(GInt16) * nXSize);
 
-    for( iX = 0; iX < psInfo->nXSize; iX++ )
+    for( iY = 0; iY < nYSize; iY++ )
     {
-        DTEDReadProfile( psInfo, iX, panData );
-        
-        for( iY = 0; iY < psInfo->nYSize; iY++ )
+        GDALRasterIO( hSrcBand, GF_Read, 0, iY, nXSize, 1, 
+                      panData, nXSize, 1, GDT_Int16, 0, 0 );
+                      
+        for( iX = 0; iX < nXSize; iX++ )
         {
             DTEDWritePt( pStream, 
-                         psInfo->dfULCornerX + iX * psInfo->dfPixelSizeX
-                         + psInfo->dfPixelSizeX * 0.5,
-                         psInfo->dfULCornerY 
-                         - (psInfo->nYSize-iY-1) * psInfo->dfPixelSizeX
-                         - psInfo->dfPixelSizeY * 0.5,
-                         panData[iY] );
+                         adfGeoTransform[0] 
+                         + adfGeoTransform[1] * (iX + 0.5)
+                         + adfGeoTransform[2] * (iY + 0.5),
+                         adfGeoTransform[3] 
+                         + adfGeoTransform[4] * (iX + 0.5)
+                         + adfGeoTransform[5] * (iY + 0.5),
+                         panData[iX] );
         }
     }
 
@@ -64,9 +103,14 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
-    DTEDFillPtStream( pStream, 2 );
+    if( bEnableTrim )
+        DTEDPtStreamTrimEdgeOnlyTiles( pStream );
+
+    if( nFillDist > 0 )
+        DTEDFillPtStream( pStream, nFillDist );
+
     DTEDClosePtStream( pStream );
-    DTEDClose( psInfo );
+    GDALClose( hSrcDS );
 
     exit( 0 );
 }
