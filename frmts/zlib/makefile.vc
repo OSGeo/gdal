@@ -12,5 +12,5 @@ default:	$(OBJ)
 	copy *.obj ..\o
 
 clean:
-	del *.obj
+	-del *.obj
 

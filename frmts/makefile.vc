@@ -48,7 +48,7 @@ o\gdalallregister.obj:	gdalallregister.cpp
 	copy gdalallregister.obj o
 
 clean:
-	del o\*.obj *.obj
+	-del o\*.obj *.obj
 	cd ceos
 	$(MAKE) /f makefile.vc clean
 	cd ..\aigrid

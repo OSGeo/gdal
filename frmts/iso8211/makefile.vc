@@ -10,7 +10,8 @@ default:	$(OBJ)
 	copy *.obj ..\o
 
 clean:
-	del *.obj
+	-del *.obj
+	-del *.exe
 
 all:	default 8211view.exe 8211dump.exe
 

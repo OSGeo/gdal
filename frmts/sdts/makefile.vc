@@ -17,5 +17,5 @@ default:	$(OBJ)
 base:	    $(BOBJ)
 
 clean:
-	del *.obj
+	-del *.obj
 

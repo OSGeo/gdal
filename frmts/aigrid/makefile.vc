@@ -15,5 +15,5 @@ aitest.exe:	$(OBJ) aitest.c
 			$(GDAL_ROOT)/port/cpl.lib
 	
 clean:
-	del *.obj
+	-del *.obj
 

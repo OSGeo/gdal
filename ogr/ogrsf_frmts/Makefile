@@ -37,7 +37,7 @@ fme-update:
 	lib ogrsf_frmts.lib fme\*.obj
 
 clean:
-	del ogrsf_frmts.lib
+	-del ogrsf_frmts.lib
 	cd generic 
 	$(MAKE) clean
 	cd ..\shape 

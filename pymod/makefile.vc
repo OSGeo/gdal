@@ -15,7 +15,7 @@ $(PYGDAL_DLL):	$(OBJ)
 		/out:$(PYGDAL_DLL)
 	
 clean:
-	del *.obj *.dll *.lib
+	-del *.obj *.dll *.lib
 
 install:	$(PYGDAL_DLL)
 	copy *.py $(PY_INST_DIR)

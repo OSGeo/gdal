@@ -24,7 +24,7 @@ gdal2raw.exe:	gdal2raw.c $(GDALLIB) $(XTRAOBJ)
 	$(CC) $(CFLAGS) gdal2raw.c $(XTRAOBJ) $(LIBS) 
 	
 clean:
-	del *.obj *.exe
+	-del *.obj *.exe
 
 install:	default
 	copy *.exe $(BINDIR)

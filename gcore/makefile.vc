@@ -15,5 +15,5 @@ GDAL_ROOT	=	..
 default:	$(OBJ)
 
 clean:
-	del *.obj
+	-del *.obj
 
