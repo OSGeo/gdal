@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/02/06 14:30:48  warmerda
+ * don't crash if polygons missing point geometry
+ *
  * Revision 1.7  2001/01/19 20:31:12  warmerda
  * expand tabs
  *
@@ -680,8 +683,9 @@ static OGRFeature *TranslateGenericPoly( NTFFileReader *poReader,
         AddGenericAttributes( poReader, papoGroup, poFeature );
 
         // Read point geometry
-        if( papoGroup[2]->GetType() == NRT_GEOMETRY
-            || papoGroup[2]->GetType() == NRT_GEOMETRY3D )
+        if( papoGroup[2] != NULL
+            && (papoGroup[2]->GetType() == NRT_GEOMETRY
+                || papoGroup[2]->GetType() == NRT_GEOMETRY3D) )
         {
             poFeature->SetGeometryDirectly(
                 poReader->ProcessGeometry(papoGroup[2]));
