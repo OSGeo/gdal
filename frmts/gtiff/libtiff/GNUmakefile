@@ -72,8 +72,5 @@ import:
 
 install-obj:	$(O_OBJ)
 
-../../o/%.o:	%.o
-	cp $*.o ../../o
-
-%.o:	%.c
-	$(CC) -c -I$(GDAL_ROOT)/port $(ALL_C_FLAGS) $*.c -o $*.o
+../../o/%.o:	%.c
+	$(CC) -c -I$(GDAL_ROOT)/port $(ALL_C_FLAGS) $< -o $@
