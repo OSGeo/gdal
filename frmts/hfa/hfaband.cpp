@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2003/07/29 10:09:43  dron
+ * Fixed problem with creation of ordinary files larger 2GB.
+ *
  * Revision 1.33  2003/06/10 17:14:22  warmerda
  * fixed setting of maxLimit and numBins in SetPCT when nColors!=256
  *
@@ -326,7 +329,7 @@ CPLErr	HFABand::LoadBlockInfo()
         int	nLogvalid, nCompressType;
 
         sprintf( szVarName, "blockinfo[%d].offset", iBlock );
-        panBlockStart[iBlock] = poDMS->GetIntField( szVarName );
+        panBlockStart[iBlock] = (GUInt32)poDMS->GetIntField( szVarName );
         
         sprintf( szVarName, "blockinfo[%d].size", iBlock );
         panBlockSize[iBlock] = poDMS->GetIntField( szVarName );
