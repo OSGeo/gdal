@@ -30,14 +30,14 @@ Terrain</a> project for more information on VTP.<p>
 
 <h2>Creation Issues</h2>
 
-GDAL supports export of geographic (but not UTM) USGS DEM and CDED data
+GDAL supports export of geographic (and UTM) USGS DEM and CDED data
 files, including the ability to generate CDED 2.0 50K products to Canadian
 federal govenment specifications. <p>
 
-Input data must already be sampled in a geographic coordinate system.  By 
-default the entire area of the input file will be output, but for CDED50K
-products the output file will be sampled at the production specified resolution
-and on product tile boundaries.<P>
+Input data must already be sampled in a geographic or UTM coordinate
+system.  By default the entire area of the input file will be output,
+but for CDED50K products the output file will be sampled at the
+production specified resolution and on product tile boundaries.<P>
 
 If the input file has appropriate coordinate system information set, 
 export to specific product formats can take input in different coordinate
@@ -76,7 +76,11 @@ code field of the generated file.<p>
 specified.  A number of fields (including the Data Producer) will be copied
 from the template file if provided, and are otherwise left blank. 
 
-<li> <b>ZRESOLUTION</b>: Value to place in Z resolution field, defaults to 1.0.
+<li> <b>ZRESOLUTION=float</b>: DEM's store elevation information as
+positive integers, and these integers are scaled using the "z resolution."
+By default, this resolution is written as 1.0.  However, you may specify a
+different resolution here, if you would like your integers to be scaled
+into floating point numbers. 
 
 </ul>
 
