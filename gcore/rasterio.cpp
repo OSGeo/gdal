@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2003/04/30 17:13:48  warmerda
+ * added docs for many C functions
+ *
  * Revision 1.25  2003/04/28 20:47:09  warmerda
  * block oriented dataset io now working well
  *
@@ -428,6 +431,23 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*                           GDALSwapWords()                            */
 /************************************************************************/
 
+/**
+ * Byte swap words in-place.
+ *
+ * This function will byte swap a set of 2, 4 or 8 byte words "in place" in
+ * a memory array.  No assumption is made that the words being swapped are
+ * word aligned in memory.  Use the CPL_LSB and CPL_MSB macros from cpl_port.h
+ * to determine if the current platform is big endian or little endian.  Use
+ * The macros like CPL_SWAP32() to byte swap single values without the overhead
+ * of a function call. 
+ * 
+ * @param pData pointer to start of data buffer.
+ * @param nWordSize size of words being swapped in bytes. Normally 2, 4 or 8.
+ * @param nWordCount the number of words to be swapped in this call. 
+ * @param nWordSkip the byte offset from the start of one word to the start of
+ * the next. For packed buffers this is the same as nWordSize. 
+ */
+
 void GDALSwapWords( void *pData, int nWordSize, int nWordCount,
                     int nWordSkip )
 
@@ -441,7 +461,7 @@ void GDALSwapWords( void *pData, int nWordSize, int nWordCount,
         break;
 
       case 2:
-        CPLAssert( nWordSize >= 2 );
+        CPLAssert( nWordSkip >= 2 || nWordCount == 1 );
         for( i = 0; i < nWordCount; i++ )
         {
             GByte       byTemp;
@@ -455,7 +475,7 @@ void GDALSwapWords( void *pData, int nWordSize, int nWordCount,
         break;
         
       case 4:
-        CPLAssert( nWordSize >= 4 );
+        CPLAssert( nWordSkip >= 4 || nWordCount == 1 );
         for( i = 0; i < nWordCount; i++ )
         {
             GByte       byTemp;
@@ -473,7 +493,7 @@ void GDALSwapWords( void *pData, int nWordSize, int nWordCount,
         break;
 
       case 8:
-        CPLAssert( nWordSize >= 8 );
+        CPLAssert( nWordSkip >= 8 || nWordCount == 1 );
         for( i = 0; i < nWordCount; i++ )
         {
             GByte       byTemp;
@@ -506,6 +526,30 @@ void GDALSwapWords( void *pData, int nWordSize, int nWordCount,
 /************************************************************************/
 /*                           GDALCopyWords()                            */
 /************************************************************************/
+
+/**
+ * Copy pixel words from buffer to buffer.
+ *
+ * This function is used to copy pixel word values from one memory buffer
+ * to another, with support for conversion between data types, and differing
+ * step factors.  The data type conversion is done using the normal GDAL 
+ * rules.  Values assigned to a lower range integer type are clipped.  For
+ * instance assigning GDT_Int16 values to a GDT_Byte buffer will cause values
+ * less the 0 to be set to 0, and values larger than 255 to be set to 255. 
+ * Assignment from floating point to integer uses default C type casting
+ * semantics.   Assignment from non-complex to complex will result in the 
+ * imaginary part being set to zero on output.  Assigment from complex to 
+ * non-complex will result in the complex portion being lost and the real
+ * component being preserved (<i>not magnitidue!</i>). 
+ *
+ * No assumptions are made about the source or destination words occuring
+ * on word boundaries.  It is assumed that all values are in native machine
+ * byte order. 
+ *
+ * @param pSrcData 
+ *
+ * 
+ */ 
 
 void 
 GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,

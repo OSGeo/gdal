@@ -4,7 +4,7 @@
  * Project:  GDAL Core
  * Purpose:  Base class for format specific band class implementation.  This
  *           base class provides default implementation for many methods.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.39  2003/04/30 17:13:48  warmerda
+ * added docs for many C functions
+ *
  * Revision 1.38  2003/04/25 19:49:18  warmerda
  * added bJustInitialize flag for fetching blocks
  *
@@ -78,69 +81,6 @@
  *
  * Revision 1.22  2001/07/05 13:13:40  warmerda
  * added UnitType from C support
- *
- * Revision 1.21  2000/10/06 15:25:48  warmerda
- * added setnodata, and some other methods
- *
- * Revision 1.20  2000/08/25 14:26:51  warmerda
- * added GDALHasArbitraryOverviews
- *
- * Revision 1.19  2000/08/16 15:50:52  warmerda
- * fixed some bugs with floating (datasetless) bands
- *
- * Revision 1.18  2000/07/12 00:19:29  warmerda
- * Removed extra line feed.
- *
- * Revision 1.17  2000/06/05 17:24:05  warmerda
- * added real complex support
- *
- * Revision 1.16  2000/04/21 21:56:59  warmerda
- * moved metadata to GDALMajorObject
- *
- * Revision 1.15  2000/03/31 13:42:27  warmerda
- * added metadata support
- *
- * Revision 1.14  2000/03/24 00:09:05  warmerda
- * rewrote cache management
- *
- * Revision 1.13  2000/03/10 13:54:37  warmerda
- * fixed use of overviews in gethistogram
- *
- * Revision 1.12  2000/03/09 23:22:03  warmerda
- * added GetHistogram
- *
- * Revision 1.11  2000/03/08 19:59:16  warmerda
- * added GDALFlushRasterCache
- *
- * Revision 1.10  2000/03/06 21:50:37  warmerda
- * added min/max support
- *
- * Revision 1.9  2000/03/06 02:22:01  warmerda
- * added overviews, colour tables, and many other methods
- *
- * Revision 1.8  2000/02/28 16:34:28  warmerda
- * added arg window check in RasterIO()
- *
- * Revision 1.7  1999/11/17 16:18:10  warmerda
- * fixed example code
- *
- * Revision 1.6  1999/10/21 13:24:37  warmerda
- * Fixed some build breaking variable name differences.
- *
- * Revision 1.5  1999/10/01 14:44:02  warmerda
- * added documentation
- *
- * Revision 1.4  1998/12/31 18:54:25  warmerda
- * Implement initial GDALRasterBlock support, and block cache
- *
- * Revision 1.3  1998/12/06 22:17:09  warmerda
- * Fill out rasterio support.
- *
- * Revision 1.2  1998/12/06 02:52:08  warmerda
- * Added new methods, and C cover functions.
- *
- * Revision 1.1  1998/12/03 18:32:01  warmerda
- * New
  */
 
 #include "gdal_priv.h"
@@ -331,6 +271,10 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
 /*                            GDALRasterIO()                            */
 /************************************************************************/
 
+/**
+ * @see GDALRasterBand::Rasterio()
+ */
+
 CPLErr GDALRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
                      int nXOff, int nYOff,
                      int nXSize, int nYSize,
@@ -477,6 +421,10 @@ CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
 /*                           GDALReadBlock()                            */
 /************************************************************************/
 
+/**
+ * @see GDALRasterBand::ReadBlock()
+ */
+
 CPLErr GDALReadBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
                       void * pData )
 
@@ -588,6 +536,10 @@ CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
 /*                           GDALWriteBlock()                           */
 /************************************************************************/
 
+/**
+ * @see GDALRasterBand::WriteBlock()
+ */
+
 CPLErr GDALWriteBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
                        void * pData )
 
@@ -618,6 +570,10 @@ GDALDataType GDALRasterBand::GetRasterDataType()
 /************************************************************************/
 /*                       GDALGetRasterDataType()                        */
 /************************************************************************/
+
+/**
+ * @see GDALRasterBand::GetRasterDataType()
+ */
 
 GDALDataType GDALGetRasterDataType( GDALRasterBandH hBand )
 
@@ -663,6 +619,10 @@ void GDALRasterBand::GetBlockSize( int * pnXSize, int *pnYSize )
 /************************************************************************/
 /*                          GDALGetBlockSize()                          */
 /************************************************************************/
+
+/**
+ * @see GDALRasterBand::GetBlockSize()
+ */
 
 void GDALGetBlockSize( GDALRasterBandH hBand, int * pnXSize, int * pnYSize )
 
@@ -766,6 +726,10 @@ CPLErr GDALRasterBand::FlushCache()
 /************************************************************************/
 /*                        GDALFlushRasterCache()                        */
 /************************************************************************/
+
+/**
+ * @see GDALRasterBand::FlushCache()
+ */
 
 CPLErr GDALFlushRasterCache( GDALRasterBandH hBand )
 
@@ -955,6 +919,10 @@ GDALAccess GDALRasterBand::GetAccess()
 /*                        GDALGetRasterAccess()                         */
 /************************************************************************/
 
+/**
+ * @see GDALRasterBand::GetAccess()
+ */
+
 GDALAccess GDALGetRasterAccess( GDALRasterBandH hBand )
 
 {
@@ -989,6 +957,10 @@ char **GDALRasterBand::GetCategoryNames()
 /************************************************************************/
 /*                     GDALGetRasterCategoryNames()                     */
 /************************************************************************/
+
+/**
+ * @see GDALRasterBand::GetCategoryNames()
+ */
 
 char **GDALGetRasterCategoryNames( GDALRasterBandH hBand )
 
@@ -1027,6 +999,10 @@ CPLErr GDALRasterBand::SetCategoryNames( char ** )
 /************************************************************************/
 /*                        GDALSetCategoryNames()                        */
 /************************************************************************/
+
+/**
+ * @see GDALRasterBand::SetCategoryNames()
+ */
 
 CPLErr GDALSetRasterCategoryNames( GDALRasterBandH hBand, char ** papszNames )
 
@@ -1067,6 +1043,10 @@ double GDALRasterBand::GetNoDataValue( int *pbSuccess )
 /*                      GDALGetRasterNoDataValue()                      */
 /************************************************************************/
 
+/**
+ * @see GDALRasterBand::GetNoDataValue()
+ */
+
 double GDALGetRasterNoDataValue( GDALRasterBandH hBand, int *pbSuccess )
 
 {
@@ -1103,6 +1083,10 @@ CPLErr GDALRasterBand::SetNoDataValue( double )
 /************************************************************************/
 /*                         GDALSetRasterNoDataValue()                   */
 /************************************************************************/
+
+/**
+ * @see GDALRasterBand::SetNoDataValue()
+ */
 
 CPLErr GDALSetRasterNoDataValue( GDALRasterBandH hBand, double dfValue )
 
@@ -1170,6 +1154,10 @@ double GDALRasterBand::GetMaximum( int *pbSuccess )
 /*                        GDALGetRasterMaximum()                        */
 /************************************************************************/
 
+/**
+ * @see GDALRasterBand::GetMaximum()
+ */
+
 double GDALGetRasterMaximum( GDALRasterBandH hBand, int *pbSuccess )
 
 {
@@ -1232,6 +1220,10 @@ double GDALRasterBand::GetMinimum( int *pbSuccess )
 /*                        GDALGetRasterMinimum()                        */
 /************************************************************************/
 
+/**
+ * @see GDALRasterBand::GetMinimum()
+ */
+
 double GDALGetRasterMinimum( GDALRasterBandH hBand, int *pbSuccess )
 
 {
@@ -1264,6 +1256,10 @@ GDALColorInterp GDALRasterBand::GetColorInterpretation()
 /*                  GDALGetRasterColorInterpretation()                  */
 /************************************************************************/
 
+/**
+ * @see GDALRasterBand::GetColorInterpretation()
+ */
+
 GDALColorInterp GDALGetRasterColorInterpretation( GDALRasterBandH hBand )
 
 {
@@ -1293,6 +1289,10 @@ CPLErr GDALRasterBand::SetColorInterpretation( GDALColorInterp eColorInterp )
 /************************************************************************/
 /*                  GDALSetRasterColorInterpretation()                  */
 /************************************************************************/
+
+/**
+ * @see GDALRasterBand::SetColorInterpretation()
+ */
 
 CPLErr GDALSetRasterColorInterpretation( GDALRasterBandH hBand,
                                          GDALColorInterp eColorInterp )
@@ -1326,6 +1326,10 @@ GDALColorTable *GDALRasterBand::GetColorTable()
 /************************************************************************/
 /*                      GDALGetRasterColorTable()                       */
 /************************************************************************/
+
+/**
+ * @see GDALRasterBand::GetColorTable()
+ */
 
 GDALColorTableH GDALGetRasterColorTable( GDALRasterBandH hBand )
 
@@ -1364,6 +1368,10 @@ CPLErr GDALRasterBand::SetColorTable( GDALColorTable * poCT )
 /*                      GDALSetRasterColorTable()                       */
 /************************************************************************/
 
+/**
+ * @see GDALRasterBand::SetColorTable()
+ */
+
 CPLErr GDALSetRasterColorTable( GDALRasterBandH hBand, GDALColorTableH hCT )
 
 {
@@ -1399,6 +1407,10 @@ int GDALRasterBand::HasArbitraryOverviews()
 /*                     GDALHasArbitraryOverviews()                      */
 /************************************************************************/
 
+/**
+ * @see GDALRasterBand::HasArbitraryOverviews()
+ */
+
 int GDALHasArbitraryOverviews( GDALRasterBandH hBand )
 
 {
@@ -1429,6 +1441,10 @@ int GDALRasterBand::GetOverviewCount()
 /************************************************************************/
 /*                        GDALGetOverviewCount()                        */
 /************************************************************************/
+
+/**
+ * @see GDALRasterBand::GetOverviewCount()
+ */
 
 int GDALGetOverviewCount( GDALRasterBandH hBand )
 
@@ -1463,6 +1479,10 @@ GDALRasterBand * GDALRasterBand::GetOverview( int i )
 /************************************************************************/
 /*                          GDALGetOverview()                           */
 /************************************************************************/
+
+/**
+ * @see GDALRasterBand::GetOverview()
+ */
 
 GDALRasterBandH GDALGetOverview( GDALRasterBandH hBand, int i )
 
@@ -1593,6 +1613,10 @@ const char *GDALRasterBand::GetUnitType()
 /*                       GDALGetRasterUnitType()                        */
 /************************************************************************/
 
+/**
+ * @see GDALRasterBand::GetUnitType()
+ */
+
 const char *GDALGetRasterUnitType( GDALRasterBandH hBand )
 
 {
@@ -1621,6 +1645,10 @@ int GDALRasterBand::GetXSize()
 /*                       GDALGetRasterBandXSize()                       */
 /************************************************************************/
 
+/**
+ * @see GDALRasterBand::GetXSize()
+ */
+
 int GDALGetRasterBandXSize( GDALRasterBandH hBand )
 
 {
@@ -1648,6 +1676,10 @@ int GDALRasterBand::GetYSize()
 /************************************************************************/
 /*                       GDALGetRasterBandYSize()                       */
 /************************************************************************/
+
+/**
+ * @see GDALRasterBand::GetYSize()
+ */
 
 int GDALGetRasterBandYSize( GDALRasterBandH hBand )
 
@@ -1927,6 +1959,10 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
 /************************************************************************/
 /*                       GDALGetRasterHistogram()                       */
 /************************************************************************/
+
+/**
+ * @see GDALRasterBand::GetHistogram()
+ */
 
 CPLErr GDALGetRasterHistogram( GDALRasterBandH hBand, 
                                double dfMin, double dfMax, 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/04/30 17:13:48  warmerda
+ * added docs for many C functions
+ *
  * Revision 1.18  2003/02/03 05:09:31  warmerda
  * populate GDALOpenInfo header data using large file API if needed
  *
@@ -187,6 +190,8 @@ GDALOpenInfo::~GDALOpenInfo()
 /************************************************************************/
 
 /**
+ * \fn GDALDatasetH GDALOpen( const char * pszFilename, GDALAccess eAccess );
+ *
  * Open a raster file as a GDALDataset.
  *
  * See Also: GDALOpenShared()
@@ -313,6 +318,17 @@ GDALDatasetH GDALOpenShared( const char *pszFilename, GDALAccess eAccess )
 /*                             GDALClose()                              */
 /************************************************************************/
 
+/**
+ * Close GDAL dataset. 
+ *
+ * For non-shared datasets (opened with GDALOpen()) the dataset is closed
+ * using the C++ "delete" operator, recovering all dataset related resources.  
+ * For shared datasets (opened with GDALOpenShared()) the dataset is 
+ * dereferenced, and closed only if the referenced count has dropped below 1.
+ *
+ * @param hDS The dataset to close.  May be cast from a "GDALDataset *". 
+ */
+
 void GDALClose( GDALDatasetH hDS )
 
 {
@@ -347,6 +363,16 @@ void GDALClose( GDALDatasetH hDS )
 /************************************************************************/
 /*                        GDALDumpOpenDataset()                         */
 /************************************************************************/
+
+/**
+ * List open datasets.
+ *
+ * Dumps a list of all open datasets (shared or not) to the indicated 
+ * text file (may be stdout or stderr).   This function is primariliy intended
+ * to assist in debugging "dataset leaks" and reference counting issues. 
+ * The information reported includes the dataset name, referenced count, 
+ * shared status, driver name, size, and band count. 
+ */
 
 int GDALDumpOpenDatasets( FILE *fp )
    

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2003/04/30 17:13:48  warmerda
+ * added docs for many C functions
+ *
  * Revision 1.43  2003/03/13 14:37:17  warmerda
  * better end of range checking in GDALTermProgress
  *
@@ -335,6 +338,16 @@ GDALDataType GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
 /************************************************************************/
 /*                        GDALGetDataTypeSize()                         */
 /************************************************************************/
+
+/**
+ * Get data type size in bits.
+ *
+ * Returns the size of a a GDT_* type in bits, <b>not bytes</b>!
+ *
+ * @param data type, such as GDT_Byte. 
+ * @return the number of bits or zero if it is not recognised.
+ */
+
 int GDALGetDataTypeSize( GDALDataType eDataType )
 
 {
@@ -371,6 +384,14 @@ int GDALGetDataTypeSize( GDALDataType eDataType )
 /*                       GDALDataTypeIsComplex()                        */
 /************************************************************************/
 
+/**
+ * Is data type complex? 
+ *
+ * @return TRUE if the passed type is complex (one of GDT_CInt16, GDT_CInt32, 
+ * GDT_CFloat32 or GDT_CFloat64), that is it consists of a real and imaginary
+ * component. 
+ */
+
 int GDALDataTypeIsComplex( GDALDataType eDataType )
 
 {
@@ -390,6 +411,19 @@ int GDALDataTypeIsComplex( GDALDataType eDataType )
 /************************************************************************/
 /*                        GDALGetDataTypeName()                         */
 /************************************************************************/
+
+/**
+ * Get name of data type.
+ *
+ * Returns a symbolic name for the data type.  This is essentially the
+ * the enumerated item name with the GDT_ prefix removed.  So GDT_Byte returns
+ * "Byte".  The returned strings are static strings and should not be modified
+ * or freed by the application.  These strings are useful for reporting
+ * datatypes in debug statements, errors and other user output. 
+ *
+ * @param eDataType type to get name of.
+ * @return string corresponding to type.
+ */
 
 const char *GDALGetDataTypeName( GDALDataType eDataType )
 

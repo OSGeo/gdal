@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2003/04/30 17:13:48  warmerda
+ * added docs for many C functions
+ *
  * Revision 1.36  2003/04/25 19:49:51  warmerda
  * first crack at RasterIO implementation
  *
@@ -249,6 +252,10 @@ void GDALDataset::FlushCache()
 /*                           GDALFlushCache()                           */
 /************************************************************************/
 
+/**
+ * @see GDALDataset::FlushCache().
+ */
+
 void GDALFlushCache( GDALDatasetH hDS )
 
 {
@@ -305,6 +312,10 @@ CPLErr GDALDataset::AddBand( GDALDataType eType, char **papszOptions )
 /************************************************************************/
 /*                            GDALAddBand()                             */
 /************************************************************************/
+
+/**
+ * @see GDALDataset::AddBand().
+ */
 
 CPLErr GDALAddBand( GDALDatasetH hDataset, 
                     GDALDataType eType, char **papszOptions )
@@ -386,6 +397,10 @@ int GDALDataset::GetRasterXSize()
 /*                         GDALGetRasterXSize()                         */
 /************************************************************************/
 
+/**
+ * @see GDALDataset::GetRasterXSize().
+ */
+
 int GDALGetRasterXSize( GDALDatasetH hDataset )
 
 {
@@ -416,6 +431,10 @@ int GDALDataset::GetRasterYSize()
 /************************************************************************/
 /*                         GDALGetRasterYSize()                         */
 /************************************************************************/
+
+/**
+ * @see GDALDataset::GetRasterYSize().
+ */
 
 int GDALGetRasterYSize( GDALDatasetH hDataset )
 
@@ -457,6 +476,10 @@ GDALRasterBand * GDALDataset::GetRasterBand( int nBandId )
 /*                         GDALGetRasterBand()                          */
 /************************************************************************/
 
+/**
+ * @see GDALDataset::GetRasterBand().
+ */
+
 GDALRasterBandH GDALGetRasterBand( GDALDatasetH hDS, int nBandId )
 
 {
@@ -484,6 +507,10 @@ int GDALDataset::GetRasterCount()
 /************************************************************************/
 /*                         GDALGetRasterCount()                         */
 /************************************************************************/
+
+/**
+ * @see GDALDataset::GetRasterCount().
+ */
 
 int GDALGetRasterCount( GDALDatasetH hDS )
 
@@ -523,6 +550,10 @@ const char *GDALDataset::GetProjectionRef()
 /*                        GDALGetProjectionRef()                        */
 /************************************************************************/
 
+/**
+ * @see GDALDataset::GetProjectionRef()
+ */
+
 const char *GDALGetProjectionRef( GDALDatasetH hDS )
 
 {
@@ -559,6 +590,10 @@ CPLErr GDALDataset::SetProjection( const char * )
 /************************************************************************/
 /*                         GDALSetProjection()                          */
 /************************************************************************/
+
+/**
+ * @see GDALDataset::SetProjection()
+ */
 
 CPLErr GDALSetProjection( GDALDatasetH hDS, const char * pszProjection )
 
@@ -620,6 +655,10 @@ CPLErr GDALDataset::GetGeoTransform( double * padfTransform )
 /*                        GDALGetGeoTransform()                         */
 /************************************************************************/
 
+/**
+ * @see GDALDataset::GetGeoTransform()
+ */
+
 CPLErr GDALGetGeoTransform( GDALDatasetH hDS, double * padfTransform )
 
 {
@@ -658,6 +697,10 @@ CPLErr GDALDataset::SetGeoTransform( double * )
 /*                        GDALSetGeoTransform()                         */
 /************************************************************************/
 
+/**
+ * @see GDALDataset::SetGeoTransform()
+ */
+
 CPLErr GDALSetGeoTransform( GDALDatasetH hDS, double * padfTransform )
 
 {
@@ -689,6 +732,10 @@ void *GDALDataset::GetInternalHandle( const char * )
 /*                       GDALGetInternalHandle()                        */
 /************************************************************************/
 
+/**
+ * @see GDALDataset::GetInternalHandle()
+ */
+
 void *GDALGetInternalHandle( GDALDatasetH hDS, const char * pszRequest )
 
 {
@@ -717,6 +764,10 @@ GDALDriver * GDALDataset::GetDriver()
 /************************************************************************/
 /*                        GDALGetDatasetDriver()                        */
 /************************************************************************/
+
+/**
+ * @see GDALDataset::GetDriver()
+ */
 
 GDALDriverH GDALGetDatasetDriver( GDALDatasetH hDataset )
 
@@ -748,6 +799,10 @@ int GDALDataset::Reference()
 /*                        GDALReferenceDataset()                        */
 /************************************************************************/
 
+/**
+ * @see GDALDataset::Reference()
+ */
+
 int GDALReferenceDataset( GDALDatasetH hDataset )
 
 {
@@ -778,6 +833,10 @@ int GDALDataset::Dereference()
 /************************************************************************/
 /*                       GDALDereferenceDataset()                       */
 /************************************************************************/
+
+/**
+ * @see GDALDataset::Dereference()
+ */
 
 int GDALDereferenceDataset( GDALDatasetH hDataset )
 
@@ -839,6 +898,10 @@ int GDALDataset::GetGCPCount()
 /*                          GDALGetGCPCount()                           */
 /************************************************************************/
 
+/**
+ * @see GDALDataset::GetGCPCount()
+ */
+
 int GDALGetGCPCount( GDALDatasetH hDS )
 
 {
@@ -869,6 +932,10 @@ const char *GDALDataset::GetGCPProjection()
 /*                        GDALGetGCPProjection()                        */
 /************************************************************************/
 
+/**
+ * @see GDALDataset::GetGCPProjection()
+ */
+
 const char *GDALGetGCPProjection( GDALDatasetH hDS )
 
 {
@@ -897,6 +964,10 @@ const GDAL_GCP *GDALDataset::GetGCPs()
 /************************************************************************/
 /*                            GDALGetGCPs()                             */
 /************************************************************************/
+
+/**
+ * @see GDALDataset::GetGCPs()
+ */
 
 const GDAL_GCP *GDALGetGCPs( GDALDatasetH hDS )
 
@@ -947,6 +1018,10 @@ CPLErr GDALDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
 /************************************************************************/
 /*                            GDALSetGCPs()                             */
 /************************************************************************/
+
+/**
+ * @see GDALDataset::SetGCPs()
+ */
 
 CPLErr GDALSetGCPs( GDALDatasetH hDS, int nGCPCount, 
                     const GDAL_GCP *pasGCPList, 
@@ -1026,6 +1101,10 @@ CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
 /************************************************************************/
 /*                         GDALBuildOverviews()                         */
 /************************************************************************/
+
+/**
+ * @see GDALDataset::BuildOverviews()
+ */
 
 CPLErr GDALBuildOverviews( GDALDatasetH hDataset,
                            const char *pszResampling, 
@@ -1295,6 +1374,10 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
 /*                        GDALDatasetRasterIO()                         */
 /************************************************************************/
 
+/**
+ * @see GDALDataset::RasterIO()
+ */
+
 CPLErr GDALDatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
                             int nXOff, int nYOff, int nXSize, int nYSize,
                             void * pData, int nBufXSize, int nBufYSize,
@@ -1337,6 +1420,10 @@ GDALDataset **GDALDataset::GetOpenDatasets( int *pnCount )
 /*                        GDALGetOpenDatasets()                         */
 /************************************************************************/
 
+/**
+ * @see GDALDataset::GetOpenDatasets()
+ */
+
 void GDALGetOpenDatasets( GDALDatasetH ***hDS, int *pnCount )
 
 {
@@ -1346,6 +1433,10 @@ void GDALGetOpenDatasets( GDALDatasetH ***hDS, int *pnCount )
 /************************************************************************/
 /*                             GDALGetAccess()                          */
 /************************************************************************/
+
+/**
+ * @see GDALDataset::GetAccess()
+ */
 
 int GDALGetAccess( GDALDatasetH hDS )
 {

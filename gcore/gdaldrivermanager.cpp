@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.15  2003/04/30 17:13:48  warmerda
+ * added docs for many C functions
+ *
  * Revision 1.14  2002/12/03 04:41:41  warmerda
  * call CPLFinderClean() to cleanup memory
  *
@@ -213,6 +216,10 @@ int GDALDriverManager::GetDriverCount()
 /*                         GDALGetDriverCount()                         */
 /************************************************************************/
 
+/**
+ * @see GDALDriverManager::GetDriverCount()
+ */
+
 int GDALGetDriverCount()
 
 {
@@ -245,6 +252,10 @@ GDALDriver * GDALDriverManager::GetDriver( int iDriver )
 /************************************************************************/
 /*                           GDALGetDriver()                            */
 /************************************************************************/
+
+/**
+ * @see GDALDriverManager::GetDriver()
+ */
 
 GDALDriverH GDALGetDriver( int iDriver )
 
@@ -317,6 +328,10 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
 /*                         GDALRegisterDriver()                         */
 /************************************************************************/
 
+/**
+ * @see GDALDriverManager::GetRegisterDriver()
+ */
+
 int GDALRegisterDriver( GDALDriverH hDriver )
 
 {
@@ -364,6 +379,10 @@ void GDALDriverManager::DeregisterDriver( GDALDriver * poDriver )
 /*                        GDALDeregisterDriver()                        */
 /************************************************************************/
 
+/**
+ * @see GDALDriverManager::GetDeregisterDriver()
+ */
+
 void GDALDeregisterDriver( GDALDriverH hDriver )
 
 {
@@ -402,6 +421,10 @@ GDALDriver * GDALDriverManager::GetDriverByName( const char * pszName )
 /************************************************************************/
 /*                        GDALGetDriverByName()                         */
 /************************************************************************/
+
+/**
+ * @see GDALDriverManager::GetDriverByName()
+ */
 
 GDALDriverH GDALGetDriverByName( const char * pszName )
 
