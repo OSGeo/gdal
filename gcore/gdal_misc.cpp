@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2004/04/02 17:58:29  warmerda
+ * added --optfile support in general commandline processor
+ *
  * Revision 1.53  2004/04/02 17:32:40  warmerda
  * added GDALGeneralCmdLineProcessor()
  *
@@ -1814,6 +1817,55 @@ int GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             }
 
             CPLSetConfigOption( "CPL_DEBUG", papszArgv[iArg+1] );
+            iArg += 1;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      --optfile                                                       */
+/*                                                                      */
+/*      Annoyingly the options inserted by --optfile will *not* be      */
+/*      processed properly if they are general options.                 */
+/* -------------------------------------------------------------------- */
+        else if( EQUAL(papszArgv[iArg],"--optfile") )
+        {
+            const char *pszLine;
+            FILE *fpOptFile;
+
+            if( iArg + 1 >= nArgc )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "--optfile option given without filename." );
+                CSLDestroy( papszReturn );
+                return -1;
+            }
+
+            fpOptFile = VSIFOpen( papszArgv[iArg+1], "rb" );
+
+            if( fpOptFile == NULL )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Unable to open optfile '%s'.\n%s",
+                          papszArgv[iArg+1], VSIStrerror( errno ) );
+                CSLDestroy( papszReturn );
+                return -1;
+            }
+            
+            while( (pszLine = CPLReadLine( fpOptFile )) != NULL )
+            {
+                char **papszTokens;
+                int i;
+
+                if( pszLine[0] == '#' || strlen(pszLine) == 0 )
+                    continue;
+
+                papszTokens = CSLTokenizeString( pszLine );
+                for( i = 0; papszTokens != NULL && papszTokens[i] != NULL; i++)
+                    papszReturn = CSLAddString( papszReturn, papszTokens[i] );
+                CSLDestroy( papszTokens );
+            }
+
+            VSIFClose( fpOptFile );
+                
             iArg += 1;
         }
 
