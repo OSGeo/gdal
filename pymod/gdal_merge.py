@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.5  2002/12/12 14:54:42  warmerda
+#  added the -pct flag to copy over a pct
+#
 #  Revision 1.4  2002/12/12 14:48:12  warmerda
 #  removed broken options arg to gdal.Create()
 #
@@ -112,6 +115,12 @@ class file_info:
         self.lrx = self.ulx + self.geotransform[1] * self.xsize
         self.lry = self.uly + self.geotransform[5] * self.ysize
 
+        ct = fh.GetRasterBand(1).GetRasterColorTable()
+        if ct is not None:
+            self.ct = ct.Clone()
+        else:
+            self.ct = None
+
         return 1
 
     def report( self ):
@@ -189,7 +198,7 @@ class file_info:
 
 # =============================================================================
 def Usage():
-    print 'Usage: gdal_merge.py [-o out_filename] [-f out_format] [-v]'
+    print 'Usage: gdal_merge.py [-o out_filename] [-f out_format] [-v] [-pct]'
     print '                     [-ps pixelsize_x pixelsize_y] [-separate]'
     print '                     [-ul_lr ulx uly lrx lry] input_files'
     print
@@ -208,6 +217,7 @@ if __name__ == '__main__':
     ulx = None
     psize_x = None
     separate = 0
+    copy_pct = 0
 
     # Parse command line arguments.
     i = 1
@@ -223,6 +233,9 @@ if __name__ == '__main__':
 
         elif arg == '-separate':
             separate = 1
+
+        elif arg == '-pct':
+            copy_pct = 1
 
         elif arg == '-f':
             i = i + 1
@@ -295,6 +308,9 @@ if __name__ == '__main__':
         t_fh = Driver.Create( out_file, xsize, ysize, bands,
                               file_infos[0].band_type )
         t_fh.SetGeoTransform( geotransform )
+
+        if copy_pct:
+            t_fh.GetRasterBand(1).SetRasterColorTable(file_infos[0].ct)
 
     # Copy data from source files into output file.
     t_band = 1
