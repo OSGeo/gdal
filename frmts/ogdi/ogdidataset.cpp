@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/06/28 19:18:35  warmerda
+ * allow double quotes to be used in filename toprotect colons
+ *
  * Revision 1.10  2001/06/23 22:40:53  warmerda
  * added SUBDATASETS support
  *
@@ -456,16 +459,21 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 
 /* -------------------------------------------------------------------- */
 /*      Has the user hardcoded a layer and family in the URL?           */
+/*      Honour quoted strings for the layer name, since some layers     */
+/*      (ie. RPF/CADRG) have embedded colons.                           */
 /* -------------------------------------------------------------------- */
-    int       nC1=-1, nC2=-1, i;
+    int       nC1=-1, nC2=-1, i, bInQuotes = FALSE;
     char      *pszURL = CPLStrdup(poOpenInfo->pszFilename);
 
     for( i = strlen(pszURL)-1; i > 0; i-- )
     {
         if( pszURL[i] == '/' )
             break;
-        
-        if( pszURL[i] == ':' )
+
+        if( pszURL[i] == '"' && pszURL[i-1] != '\\' )
+            bInQuotes = !bInQuotes;
+            
+        else if( pszURL[i] == ':' && !bInQuotes )
         {
             if( nC1 == -1 )
             {
@@ -513,11 +521,30 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
+        char	*pszLayerName = CPLStrdup( pszURL+nC2+1 );
+        
+        if( pszLayerName[0] == '"' )
+        {
+            int		nOut = 0;
+
+            for( i = 1; pszLayerName[i] != '\0'; i++ )
+            {
+                if( pszLayerName[i+1] == '"' && pszLayerName[i] == '\\' )
+                    pszLayerName[nOut++] = pszLayerName[++i];
+                else if( pszLayerName[i] != '"' )
+                    pszLayerName[nOut++] = pszLayerName[i];
+                else 
+                    break;
+            }
+            pszLayerName[nOut] = '\0';
+        }
 
         if( EQUAL(pszURL+nC1+1,"Image") )
-            papszImages = CSLAddString( papszImages, pszURL+nC2+1 );
+            papszImages = CSLAddString( papszImages, pszLayerName );
         else
-            papszMatrices = CSLAddString( papszMatrices, pszURL+nC2+1 );
+            papszMatrices = CSLAddString( papszMatrices, pszLayerName );
+
+        CPLFree( pszLayerName );
     }
 
     CPLFree( pszURL );
@@ -693,12 +720,12 @@ void OGDIDataset::AddSubDataset( const char *pszType, const char *pszLayer )
     sprintf( szName, "SUBDATASET_%d_NAME", nCount+1 );
     papszSubDatasets = 
         CSLSetNameValue( papszSubDatasets, szName, 
-              CPLSPrintf( "%s:%s:%s", GetDescription(), pszLayer, pszType ) );
+              CPLSPrintf( "%s:\"%s\":%s", GetDescription(), pszLayer, pszType ) );
 
     sprintf( szName, "SUBDATASET_%d_DESC", nCount+1 );
     papszSubDatasets = 
         CSLSetNameValue( papszSubDatasets, szName, 
-              CPLSPrintf( "%s:%s", pszLayer, pszType ) );
+              CPLSPrintf( "%s as %s", pszLayer, pszType ) );
 }
 
 /************************************************************************/
