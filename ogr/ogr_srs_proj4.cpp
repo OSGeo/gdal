@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2004/09/10 20:29:16  fwarmerdam
+ * Re bug 423: fixed up SRS_PT_SWISS_OBLIQUE_CYLINDRICAL to use somerc.
+ *
  * Revision 1.47  2004/05/12 14:27:47  warmerda
  * added translation for nzgd49 and potsdam using epsg codes
  *
@@ -1345,7 +1348,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
-    
+
     else if( EQUAL(pszProjection,SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
     {
         /* not clear how ProjParm[3] - angle from rectified to skewed grid -
@@ -1397,10 +1400,11 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
 
+    /* Note: This never really gets used currently.  See bug 423 */
     else if( EQUAL(pszProjection,SRS_PT_SWISS_OBLIQUE_CYLINDRICAL) )
     {
         sprintf( szProj4+strlen(szProj4),
-                 "+proj=omerc +lat_0=%.16g +lonc=%.16g"
+                 "+proj=somerc +lat_0=%.16g +lon_0=%.16g"
                  " +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
