@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/12/26 00:20:19  mbp
+ * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
+ * first round implementation of TIGER_2002 support
+ *
  * Revision 1.10  2001/07/19 16:05:49  warmerda
  * clear out tabs
  *
@@ -66,6 +70,187 @@
 
 CPL_CVSID("$Id$");
 
+
+static TigerFieldInfo rt1_2002_fields[] = {
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
+  { "TLID",       'R', 'N', OFTInteger,    6,  15,  10,       1,   1,     1 },
+  { "SIDE1",      'R', 'N', OFTInteger,   16,  16,   1,       1,   1,     1 },
+  { "SOURCE",     'L', 'A', OFTString,    17,  17,   1,       1,   1,     1 },
+  { "FEDIRP",     'L', 'A', OFTString,    18,  19,   2,       1,   1,     1 },
+  { "FENAME",     'L', 'A', OFTString,    20,  49,  30,       1,   1,     1 },
+  { "FETYPE",     'L', 'A', OFTString,    50,  53,   4,       1,   1,     1 },
+  { "FEDIRS",     'L', 'A', OFTString,    54,  55,   2,       1,   1,     1 },
+  { "CFCC",       'L', 'A', OFTString,    56,  58,   3,       1,   1,     1 },
+  { "FRADDL",     'R', 'A', OFTString,    59,  69,  11,       1,   1,     1 },
+  { "TOADDL",     'R', 'A', OFTString,    70,  80,  11,       1,   1,     1 },
+  { "FRADDR",     'R', 'A', OFTString,    81,  91,  11,       1,   1,     1 },
+  { "TOADDR",     'R', 'A', OFTString,    92, 102,  11,       1,   1,     1 },
+  { "FRIADDL",    'L', 'A', OFTString,   103, 103,   1,       1,   1,     1 },
+  { "TOIADDL",    'L', 'A', OFTString,   104, 104,   1,       1,   1,     1 },
+  { "FRIADDR",    'L', 'A', OFTString,   105, 105,   1,       1,   1,     1 },
+  { "TOIADDR",    'L', 'A', OFTString,   106, 106,   1,       1,   1,     1 },
+  { "ZIPL",       'L', 'N', OFTInteger,  107, 111,   5,       1,   1,     1 },
+  { "ZIPR",       'L', 'N', OFTInteger,  112, 116,   5,       1,   1,     1 },
+  { "AIANHHFPL",  'L', 'N', OFTInteger,  117, 121,   5,       1,   1,     1 },
+  { "AIANHHFPR",  'L', 'N', OFTInteger,  122, 126,   5,       1,   1,     1 },
+  { "AIHHTLIL",   'L', 'A', OFTString,   127, 127,   1,       1,   1,     1 },
+  { "AIHHTLIR",   'L', 'A', OFTString,   128, 128,   1,       1,   1,     1 },
+  { "CENSUS1",    'L', 'A', OFTString,   129, 129,   1,       1,   1,     1 },
+  { "CENSUS2",    'L', 'A', OFTString,   130, 130,   1,       1,   1,     1 },
+  { "STATEL",     'L', 'N', OFTInteger,  131, 132,   2,       1,   1,     1 },
+  { "STATER",     'L', 'N', OFTInteger,  133, 134,   2,       1,   1,     1 },
+  { "COUNTYL",    'L', 'N', OFTInteger,  135, 137,   3,       1,   1,     1 },
+  { "COUNTYR",    'L', 'N', OFTInteger,  138, 140,   3,       1,   1,     1 },
+
+  { "COUSUBL",    'L', 'N', OFTInteger,  141, 145,   5,       1,   1,     1 },
+  { "COUSUBR",    'L', 'N', OFTInteger,  146, 150,   5,       1,   1,     1 },
+  { "SUBMCDL",    'L', 'N', OFTInteger,  151, 155,   5,       1,   1,     1 },
+  { "SUBMCDR",    'L', 'N', OFTInteger,  156, 160,   5,       1,   1,     1 },
+  { "PLACEL",     'L', 'N', OFTInteger,  161, 165,   5,       1,   1,     1 },
+  { "PLACER",     'L', 'N', OFTInteger,  166, 170,   5,       1,   1,     1 },
+  { "TRACTL",     'L', 'N', OFTInteger,  171, 176,   6,       1,   1,     1 },
+  { "TRACTR",     'L', 'N', OFTInteger,  177, 182,   6,       1,   1,     1 },
+  { "BLOCKL",     'L', 'N', OFTInteger,  183, 186,   4,       1,   1,     1 },
+  { "BLOCKR",     'L', 'N', OFTInteger,  187, 190,   4,       1,   1,     1 }
+};
+static TigerRecordInfo rt1_2002_info =
+  {
+    rt1_2002_fields,
+    sizeof(rt1_2002_fields) / sizeof(TigerFieldInfo),
+    228
+  };
+
+static TigerFieldInfo rt1_fields[] = {
+  // fieldname    fmt  type OFTType      beg  end   len  bDefine bSet bWrite
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
+  { "TLID",       'R', 'N', OFTInteger,    6,  15,  10,       1,   1,     1 },
+  { "SIDE1",      'R', 'N', OFTInteger,   16,  16,   1,       1,   1,     1 },
+  { "SOURCE",     'L', 'A', OFTString,    17,  17,   1,       1,   1,     1 },
+  { "FEDIRP",     'L', 'A', OFTString,    18,  19,   2,       1,   1,     1 },
+  { "FENAME",     'L', 'A', OFTString,    20,  49,  30,       1,   1,     1 },
+  { "FETYPE",     'L', 'A', OFTString,    50,  53,   4,       1,   1,     1 },
+  { "FEDIRS",     'L', 'A', OFTString,    54,  55,   2,       1,   1,     1 },
+  { "CFCC",       'L', 'A', OFTString,    56,  58,   3,       1,   1,     1 },
+  { "FRADDL",     'R', 'A', OFTString,    59,  69,  11,       1,   1,     1 },
+  { "TOADDL",     'R', 'A', OFTString,    70,  80,  11,       1,   1,     1 },
+  { "FRADDR",     'R', 'A', OFTString,    81,  91,  11,       1,   1,     1 },
+  { "TOADDR",     'R', 'A', OFTString,    92, 102,  11,       1,   1,     1 },
+  { "FRIADDL",    'L', 'A', OFTString,   103, 103,   1,       1,   1,     1 },
+  { "TOIADDL",    'L', 'A', OFTString,   104, 104,   1,       1,   1,     1 },
+  { "FRIADDR",    'L', 'A', OFTString,   105, 105,   1,       1,   1,     1 },
+  { "TOIADDR",    'L', 'A', OFTString,   106, 106,   1,       1,   1,     1 },
+  { "ZIPL",       'L', 'N', OFTInteger,  107, 111,   5,       1,   1,     1 },
+  { "ZIPR",       'L', 'N', OFTInteger,  112, 116,   5,       1,   1,     1 },
+  { "FAIRL",      'L', 'N', OFTInteger,  117, 121,   5,       1,   1,     1 },
+  { "FAIRR",      'L', 'N', OFTInteger,  122, 126,   5,       1,   1,     1 },
+  { "TRUSTL",     'L', 'A', OFTString,   127, 127,   1,       1,   1,     1 },
+  { "TRUSTR",     'L', 'A', OFTString,   128, 128,   1,       1,   1,     1 },
+  { "CENSUS1",    'L', 'A', OFTString,   129, 129,   1,       1,   1,     1 },
+  { "CENSUS2",    'L', 'A', OFTString,   130, 130,   1,       1,   1,     1 },
+  { "STATEL",     'L', 'N', OFTInteger,  131, 132,   2,       1,   1,     1 },
+  { "STATER",     'L', 'N', OFTInteger,  133, 134,   2,       1,   1,     1 },
+  { "COUNTYL",    'L', 'N', OFTInteger,  135, 137,   3,       1,   1,     1 },
+  { "COUNTYR",    'L', 'N', OFTInteger,  138, 140,   3,       1,   1,     1 },
+
+  { "FMCDL",      'L', 'N', OFTInteger,  141, 145,   5,       1,   1,     1 },
+  { "FMCDR",      'L', 'N', OFTInteger,  146, 150,   5,       1,   1,     1 },
+  { "FSMCDL",     'L', 'N', OFTInteger,  151, 155,   5,       1,   1,     1 },
+  { "FSMCDR",     'L', 'N', OFTInteger,  156, 160,   5,       1,   1,     1 },
+  { "FPLL",       'L', 'N', OFTInteger,  161, 165,   5,       1,   1,     1 },
+  { "FPLR",       'L', 'N', OFTInteger,  166, 170,   5,       1,   1,     1 },
+  { "CTBNAL",     'L', 'N', OFTInteger,  171, 176,   6,       1,   1,     1 },
+  { "CTBNAR",     'L', 'N', OFTInteger,  177, 182,   6,       1,   1,     1 },
+  { "BLKL",       'L', 'N', OFTInteger,  183, 186,   4,       1,   1,     1 },
+  { "BLKR",       'L', 'N', OFTInteger,  187, 190,   4,       1,   1,     1 }
+}; 
+static TigerRecordInfo rt1_info =
+  {
+    rt1_fields,
+    sizeof(rt1_fields) / sizeof(TigerFieldInfo),
+    228
+  };
+
+static TigerRecordInfo rt2_info =
+  {
+    NULL,	// RT2 is handled specially in the code below; the only
+    0,		// thing from this structure that is used is the reclen
+    208
+  };
+
+
+static TigerFieldInfo rt3_2000_Redistricting_fields[] = {
+  // fieldname    fmt  type OFTType       beg  end  len  bDefine bSet bWrite
+  { "TLID",       'R', 'N', OFTInteger,     6,  15,  10,       0,   0,     1 },
+  { "STATE90L",   'L', 'N', OFTInteger,    16,  17,   2,       1,   1,     1 },
+  { "STATE90R",   'L', 'N', OFTInteger,    18,  19,   2,       1,   1,     1 },
+  { "COUN90L",    'L', 'N', OFTInteger,    20,  22,   3,       1,   1,     1 },
+  { "COUN90R",    'L', 'N', OFTInteger,    23,  25,   3,       1,   1,     1 },
+  { "FMCD90L",    'L', 'N', OFTInteger,    26,  30,   5,       1,   1,     1 },
+  { "FMCD90R",    'L', 'N', OFTInteger,    31,  35,   5,       1,   1,     1 },
+  { "FPL90L",     'L', 'N', OFTInteger,    36,  40,   5,       1,   1,     1 },
+  { "FPL90R",     'L', 'N', OFTInteger,    41,  45,   5,       1,   1,     1 },
+  { "CTBNA90L",   'L', 'N', OFTInteger,    46,  51,   6,       1,   1,     1 },
+  { "CTBNA90R",   'L', 'N', OFTInteger,    52,  57,   6,       1,   1,     1 },
+  { "AIR90L",     'L', 'N', OFTInteger,    58,  61,   4,       1,   1,     1 },
+  { "AIR90R",     'L', 'N', OFTInteger,    62,  65,   4,       1,   1,     1 },
+  { "TRUST90L",   'L', 'A', OFTInteger,    66,  66,   1,       1,   1,     1 },  //  otype mismatch
+  { "TRUST90R",   'L', 'A', OFTInteger,    67,  67,   1,       1,   1,     1 },  //  otype mismatch
+  { "BLK90L",     'L', 'A', OFTString,     70,  73,   4,       1,   1,     1 },
+  { "BLK90R",     'L', 'A', OFTString,     74,  77,   4,       1,   1,     1 },
+  { "AIRL",       'L', 'N', OFTInteger,    78,  81,   4,       1,   1,     1 },
+  { "AIRR",       'L', 'N', OFTInteger,    82,  85,   4,       1,   1,     1 },
+
+  { "ANRCL",      'L', 'N', OFTInteger,    86,  90,   5,       1,   1,     1 },
+  { "ANRCR",      'L', 'N', OFTInteger,    91,  95,   5,       1,   1,     1 },
+  { "AITSCEL",    'L', 'N', OFTInteger,    96,  98,   3,       1,   1,     1 },
+  { "AITSCER",    'L', 'N', OFTInteger,    99, 101,   3,       1,   1,     1 },
+  { "AITL",       'L', 'N', OFTInteger,   102, 106,   5 ,      1,   1,     1 }, // change to AITSL
+  { "AITR",       'L', 'N', OFTInteger,   107, 111,   5,       1,   1,     1 }  // change to AITSR
+  // make the above two changes after debugging; keep as AITL and AITR
+  // during debugging to facilitate diffing output of tigerinfo with
+  // that of previous version, which (erroneously) used AITL and AITR.
+};
+static TigerRecordInfo rt3_2000_Redistricting_info  =
+  {
+    rt3_2000_Redistricting_fields,
+    sizeof(rt3_2000_Redistricting_fields) / sizeof(TigerFieldInfo),
+    111
+  };
+
+static TigerFieldInfo rt3_fields[] = {
+  // fieldname    fmt  type OFTType       beg  end  len  bDefine bSet bWrite
+  { "TLID",       'R', 'N', OFTInteger,     6,  15,  10,       0,   0,     1 },
+  { "STATE90L",   'L', 'N', OFTInteger,    16,  17,   2,       1,   1,     1 },
+  { "STATE90R",   'L', 'N', OFTInteger,    18,  19,   2,       1,   1,     1 },
+  { "COUN90L",    'L', 'N', OFTInteger,    20,  22,   3,       1,   1,     1 },
+  { "COUN90R",    'L', 'N', OFTInteger,    23,  25,   3,       1,   1,     1 },
+  { "FMCD90L",    'L', 'N', OFTInteger,    26,  30,   5,       1,   1,     1 },
+  { "FMCD90R",    'L', 'N', OFTInteger,    31,  35,   5,       1,   1,     1 },
+  { "FPL90L",     'L', 'N', OFTInteger,    36,  40,   5,       1,   1,     1 },
+  { "FPL90R",     'L', 'N', OFTInteger,    41,  45,   5,       1,   1,     1 },
+  { "CTBNA90L",   'L', 'N', OFTInteger,    46,  51,   6,       1,   1,     1 },
+  { "CTBNA90R",   'L', 'N', OFTInteger,    52,  57,   6,       1,   1,     1 },
+  { "AIR90L",     'L', 'N', OFTInteger,    58,  61,   4,       1,   1,     1 },
+  { "AIR90R",     'L', 'N', OFTInteger,    62,  65,   4,       1,   1,     1 },
+  { "TRUST90L",   'L', 'A', OFTInteger,    66,  66,   1,       1,   1,     1 },  //  otype mismatch
+  { "TRUST90R",   'L', 'A', OFTInteger,    67,  67,   1,       1,   1,     1 },  //  otype mismatch
+  { "BLK90L",     'L', 'A', OFTString,     70,  73,   4,       1,   1,     1 },
+  { "BLK90R",     'L', 'A', OFTString,     74,  77,   4,       1,   1,     1 },
+  { "AIRL",       'L', 'N', OFTInteger,    78,  81,   4,       1,   1,     1 },
+  { "AIRR",       'L', 'N', OFTInteger,    82,  85,   4,       1,   1,     1 },
+ 
+  { "VTDL",       'L', 'A', OFTString,    104, 107,   4,       1,   1,     1 },
+  { "VTDR",       'L', 'A', OFTString,    108, 111,   4,       1,   1,     1 }
+
+};
+static TigerRecordInfo rt3_info =
+  {
+    rt3_fields,
+    sizeof(rt3_fields) / sizeof(TigerFieldInfo),
+    111
+  };
+
 /************************************************************************/
 /*                         TigerCompleteChain()                         */
 /************************************************************************/
@@ -74,226 +259,44 @@ TigerCompleteChain::TigerCompleteChain( OGRTigerDataSource * poDSIn,
                                         const char * pszPrototypeModule )
 
 {
-    OGRFieldDefn        oField("",OFTInteger);
-
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "CompleteChain" );
     poFeatureDefn->SetGeomType( wkbLineString );
 
+
+    if (poDS->GetVersion() >= TIGER_2002) {
+      psRT1Info = &rt1_2002_info;
+      bUsingRT3 = FALSE;
+    } else {
+      psRT1Info = &rt1_info;
+      bUsingRT3 = TRUE;
+    }
+
+    psRT2Info = &rt2_info;
+
+    if (poDS->GetVersion() >= TIGER_2000_Redistricting) {
+      psRT3Info = &rt3_2000_Redistricting_info;
+    } else {
+      psRT3Info = &rt3_info;
+    }
+
     fpRT3 = NULL;
-    bUsingRT3 = TRUE;
 
     panShapeRecordId = NULL;
     fpShape = NULL;
     
-/* -------------------------------------------------------------------- */
-/*      Fields from type 1 record.                                      */
-/* -------------------------------------------------------------------- */
-    oField.Set( "MODULE", OFTString, 8 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "TLID", OFTInteger, 10 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "SIDE1", OFTInteger, 1 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "SOURCE", OFTString, 1 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FEDIRP", OFTString, 2 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FENAME", OFTString, 30 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FETYPE", OFTString, 4 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FEDIRS", OFTString, 2 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "CFCC", OFTString, 3 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FRADDL", OFTString, 11 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "TOADDL", OFTString, 11 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FRADDR", OFTString, 11 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "TOADDR", OFTString, 11 );
-    poFeatureDefn->AddFieldDefn( &oField );
+    /* -------------------------------------------------------------------- */
+    /*      Fields from type 1 record.                                      */
+    /* -------------------------------------------------------------------- */
 
-    oField.Set( "FRIADDL", OFTInteger, 1 );
-    poFeatureDefn->AddFieldDefn( &oField );
+    AddFieldDefns( psRT1Info, poFeatureDefn );
 
-    oField.Set( "TOIADDL", OFTInteger, 1 );
-    poFeatureDefn->AddFieldDefn( &oField );
-
-    oField.Set( "FRIADDR", OFTInteger, 1 );
-    poFeatureDefn->AddFieldDefn( &oField );
-
-    oField.Set( "TOIADDR", OFTInteger, 1 );
-    poFeatureDefn->AddFieldDefn( &oField );
-
-    oField.Set( "ZIPL", OFTInteger, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-
-    oField.Set( "ZIPR", OFTInteger, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-
-    oField.Set( "FAIRL", OFTInteger, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-
-    oField.Set( "FAIRR", OFTInteger, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-
-    oField.Set( "TRUSTL", OFTString, 1 );
-    poFeatureDefn->AddFieldDefn( &oField );
-
-    oField.Set( "TRUSTR", OFTString, 1 );
-    poFeatureDefn->AddFieldDefn( &oField );
-
-    oField.Set( "CENSUS1", OFTString, 1 );
-    poFeatureDefn->AddFieldDefn( &oField );
-
-    oField.Set( "CENSUS2", OFTString, 1 );
-    poFeatureDefn->AddFieldDefn( &oField );
-
-    oField.Set( "STATEL", OFTInteger, 2 );
-    poFeatureDefn->AddFieldDefn( &oField );
-
-    oField.Set( "STATER", OFTInteger, 2 );
-    poFeatureDefn->AddFieldDefn( &oField );
-
-    oField.Set( "COUNTYL", OFTInteger, 3 );
-    poFeatureDefn->AddFieldDefn( &oField );
-
-    oField.Set( "COUNTYR", OFTInteger, 3 );
-    poFeatureDefn->AddFieldDefn( &oField );
-
-    oField.Set( "FMCDL", OFTInteger, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FMCDR", OFTInteger, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FSMCDL", OFTInteger, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FSMCDR", OFTInteger, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FPLL", OFTInteger, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FPLR", OFTInteger, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "CTBNAL", OFTInteger, 6 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "CTBNAR", OFTInteger, 6 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "BLKL", OFTString, 4 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "BLKR", OFTString, 4 );
-    poFeatureDefn->AddFieldDefn( &oField );
-
-/* -------------------------------------------------------------------- */
-/*      Fields from type 3 record.  Eventually we should verify that    */
-/*      a .RT3 file is available before adding these fields.            */
-/* -------------------------------------------------------------------- */
-    if( bUsingRT3 )
-    {
-        oField.Set( "STATE90L", OFTInteger, 2 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "STATE90R", OFTInteger, 2 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "COUN90L", OFTInteger, 3 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "COUN90R", OFTInteger, 3 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "FMCD90L", OFTInteger, 5 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "FMCD90R", OFTInteger, 5 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "FPL90L", OFTInteger, 5 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "FPL90R", OFTInteger, 5 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "CTBNA90L", OFTInteger, 6 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "CTBNA90R", OFTInteger, 6 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "AIR90L", OFTInteger, 4 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "AIR90R", OFTInteger, 4 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "TRUST90L", OFTInteger, 1 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "TRUST90R", OFTInteger, 1 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "BLK90L", OFTString, 4 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "BLK90R", OFTString, 4 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "AIRL", OFTInteger, 4 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        oField.Set( "AIRR", OFTInteger, 4 );
-        poFeatureDefn->AddFieldDefn( &oField );
-
-        if( poDS->GetVersion() >= TIGER_2000_Redistricting )
-        {
-            oField.Set( "ANRCL", OFTInteger, 5 );
-            poFeatureDefn->AddFieldDefn( &oField );
-            
-            oField.Set( "ANRCR", OFTInteger, 5 );
-            poFeatureDefn->AddFieldDefn( &oField );
-            
-            oField.Set( "AITSCEL", OFTInteger, 3 );
-            poFeatureDefn->AddFieldDefn( &oField );
-            
-            oField.Set( "AITSCER", OFTInteger, 3 );
-            poFeatureDefn->AddFieldDefn( &oField );
-            
-            oField.Set( "AITL", OFTInteger, 5 );
-            poFeatureDefn->AddFieldDefn( &oField );
-            
-            oField.Set( "AITR", OFTInteger, 5 );
-            poFeatureDefn->AddFieldDefn( &oField );
-        }
-        else
-        {
-            oField.Set( "VTDL", OFTString, 4 );
-            poFeatureDefn->AddFieldDefn( &oField );
-            
-            oField.Set( "VTDR", OFTString, 4 );
-            poFeatureDefn->AddFieldDefn( &oField );
-        }
+    /* -------------------------------------------------------------------- */
+    /*      Fields from type 3 record.  Eventually we should verify that    */
+    /*      a .RT3 file is available before adding these fields.            */
+    /* -------------------------------------------------------------------- */
+    if( bUsingRT3 ) {
+      AddFieldDefns( psRT3Info, poFeatureDefn );
     }
 }
 
@@ -369,7 +372,7 @@ int TigerCompleteChain::SetModule( const char * pszModule )
 OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
 
 {
-    char        achRecord[228];
+    char        achRecord[OGR_TIGER_RECBUF_LEN];
 
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
@@ -393,7 +396,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
         return NULL;
     }
 
-    if( VSIFRead( achRecord, 228, 1, fpPrimary ) != 1 )
+    if( VSIFRead( achRecord, psRT1Info->reclen, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %s1",
@@ -401,57 +404,22 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set fields.                                                     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set fields.                                                     */
+    /* -------------------------------------------------------------------- */
+
     OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
-    SetField( poFeature, "TLID", achRecord, 6, 15 );
-    SetField( poFeature, "SIDE1", achRecord, 16, 16 );
-    SetField( poFeature, "SOURCE", achRecord, 17, 17 );
-    SetField( poFeature, "FEDIRP", achRecord, 18, 19 );
-    SetField( poFeature, "FENAME", achRecord, 20, 49 );
-    SetField( poFeature, "FETYPE", achRecord, 50, 53 );
-    SetField( poFeature, "FEDIRS", achRecord, 54, 55 );
-    SetField( poFeature, "CFCC", achRecord, 56, 58 );
-    SetField( poFeature, "FRADDL", achRecord, 59, 69 );
-    SetField( poFeature, "TOADDL", achRecord, 70, 80 );
-    SetField( poFeature, "FRADDR", achRecord, 81, 91 );
-    SetField( poFeature, "TOADDR", achRecord, 92, 102 );
-    SetField( poFeature, "FRIADDL", achRecord, 103, 103 );
-    SetField( poFeature, "TOIADDL", achRecord, 104, 104 );
-    SetField( poFeature, "FRIADDR", achRecord, 105, 105 );
-    SetField( poFeature, "TOIADDR", achRecord, 106, 106 );
-    SetField( poFeature, "ZIPL", achRecord, 107, 111 );
-    SetField( poFeature, "ZIPR", achRecord, 112, 116 );
-    SetField( poFeature, "FAIRL", achRecord, 117, 121 );
-    SetField( poFeature, "FAIRR", achRecord, 122, 126 );
-    SetField( poFeature, "TRUSTL", achRecord, 127, 127 );
-    SetField( poFeature, "TRUSTR", achRecord, 128, 128 );
-    SetField( poFeature, "CENSUS1", achRecord, 129, 129 );
-    SetField( poFeature, "CENSUS2", achRecord, 130, 130 );
-    SetField( poFeature, "STATEL", achRecord, 131, 132 );
-    SetField( poFeature, "STATER", achRecord, 133, 134 );
-    SetField( poFeature, "COUNTYL", achRecord, 135, 137 );
-    SetField( poFeature, "COUNTYR", achRecord, 138, 140 );
-    SetField( poFeature, "FMCDL", achRecord, 141, 145 );
-    SetField( poFeature, "FMCDR", achRecord, 146, 150 );
-    SetField( poFeature, "FSMCDL", achRecord, 151, 155 );
-    SetField( poFeature, "FSMCDR", achRecord, 156, 160 );
-    SetField( poFeature, "FPLL", achRecord, 161, 165 );
-    SetField( poFeature, "FPLR", achRecord, 166, 170 );
-    SetField( poFeature, "CTBNAL", achRecord, 171, 176 );
-    SetField( poFeature, "CTBNAR", achRecord, 177, 182 );
-    SetField( poFeature, "BLKL", achRecord, 183, 186 );
-    SetField( poFeature, "BLKR", achRecord, 187, 190 );
+    SetFields( psRT1Info, poFeature, achRecord );
 
-/* -------------------------------------------------------------------- */
-/*      Read RT3 record, and apply fields.                              */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Read RT3 record, and apply fields.                              */
+    /* -------------------------------------------------------------------- */
+
     if( fpRT3 != NULL )
     {
-        char    achRT3Rec[111];
-        int     nRT3RecLen = 111 + nRecordLength - 228;
+        char    achRT3Rec[OGR_TIGER_RECBUF_LEN];
+        int     nRT3RecLen = psRT3Info->reclen + nRecordLength - psRT1Info->reclen;
 
         if( VSIFSeek( fpRT3, nRecordId * nRT3RecLen, SEEK_SET ) != 0 )
         {
@@ -461,7 +429,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
             return NULL;
         }
 
-        if( VSIFRead( achRT3Rec, 111, 1, fpRT3 ) != 1 )
+        if( VSIFRead( achRT3Rec, psRT3Info->reclen, 1, fpRT3 ) != 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to read record %d of %s3",
@@ -469,39 +437,8 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
             return NULL;
         }
 
-        SetField( poFeature, "STATE90L", achRT3Rec, 16, 17 );
-        SetField( poFeature, "STATE90R", achRT3Rec, 18, 19 );
-        SetField( poFeature, "COUN90L", achRT3Rec, 20, 22 );
-        SetField( poFeature, "COUN90R", achRT3Rec, 23, 25 );
-        SetField( poFeature, "FMCD90L", achRT3Rec, 26, 30 );
-        SetField( poFeature, "FMCD90R", achRT3Rec, 31, 35 );
-        SetField( poFeature, "FPL90L", achRT3Rec, 36, 40 );
-        SetField( poFeature, "FPL90R", achRT3Rec, 41, 45 );
-        SetField( poFeature, "CTBNA90L", achRT3Rec, 46, 51 );
-        SetField( poFeature, "CTBNA90R", achRT3Rec, 52, 57 );
-        SetField( poFeature, "AIR90L", achRT3Rec, 58, 61 );
-        SetField( poFeature, "AIR90R", achRT3Rec, 62, 65 );
-        SetField( poFeature, "TRUST90L", achRT3Rec, 66, 66 );
-        SetField( poFeature, "TRUST90R", achRT3Rec, 67, 67 );
-        SetField( poFeature, "BLK90L", achRT3Rec, 70, 73 );
-        SetField( poFeature, "BLK90R", achRT3Rec, 74, 77 );
-        SetField( poFeature, "AIRL", achRT3Rec, 78, 81 );
-        SetField( poFeature, "AIRR", achRT3Rec, 82, 85 );
+	SetFields( psRT3Info, poFeature, achRT3Rec );
 
-        if( GetVersion() >= TIGER_2000_Redistricting )
-        {
-            SetField( poFeature, "ANRCL", achRT3Rec, 86, 90 );
-            SetField( poFeature, "ANRCR", achRT3Rec, 91, 95 );
-            SetField( poFeature, "AITSCEL", achRT3Rec, 96, 98 );
-            SetField( poFeature, "AITSCER", achRT3Rec, 99, 101 );
-            SetField( poFeature, "AITSL", achRT3Rec, 102, 106 );
-            SetField( poFeature, "AITSR", achRT3Rec, 107, 111 );
-        }
-        else
-        {
-            SetField( poFeature, "VTDL", achRT3Rec, 104, 107 );
-            SetField( poFeature, "VTDR", achRT3Rec, 108, 111 );
-        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -544,8 +481,8 @@ void TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
 /* -------------------------------------------------------------------- */
 /*      Read all the sequential records with the same TLID.             */
 /* -------------------------------------------------------------------- */
-    char        achShapeRec[208];
-    int         nShapeRecLen = 208 + nRecordLength - 228;
+    char        achShapeRec[OGR_TIGER_RECBUF_LEN];
+    int         nShapeRecLen = psRT2Info->reclen + nRecordLength - psRT1Info->reclen;
 
     for( ; TRUE; nShapeRecId++ )
     {
@@ -558,7 +495,7 @@ void TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
             return;
         }
 
-        if( VSIFRead( achShapeRec, 208, 1, fpShape ) != 1 )
+        if( VSIFRead( achShapeRec, psRT2Info->reclen, 1, fpShape ) != 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to read record %d of %s2",
@@ -675,8 +612,8 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
 /* -------------------------------------------------------------------- */
     int         nMaxChainToRead = nChainId - iTestChain;
     int         nChainsRead = 0;
-    char        achShapeRec[208];
-    int         nShapeRecLen = 208 + nRecordLength - 228;
+    char        achShapeRec[OGR_TIGER_RECBUF_LEN];
+    int         nShapeRecLen = psRT2Info->reclen + nRecordLength - psRT1Info->reclen;
 
     while( nChainsRead < nMaxChainToRead )
     {
@@ -689,7 +626,7 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
             return -1;
         }
 
-        if( VSIFRead( achShapeRec, 208, 1, fpShape ) != 1 )
+        if( VSIFRead( achShapeRec, psRT2Info->reclen, 1, fpShape ) != 1 )
         {
             if( !VSIFEof( fpShape ) )
                 CPLError( CE_Failure, CPLE_FileIO,
@@ -782,17 +719,10 @@ int TigerCompleteChain::SetWriteModule( const char *pszFileCode, int nRecLen,
 /*                           CreateFeature()                            */
 /************************************************************************/
 
-#define WRITE_REC_LEN_RT1 228
-#define WRITE_REC_LEN_RT2 208
-#define WRITE_REC_LEN_RT3 111
-
-/* max of above */
-#define WRITE_REC_LEN WRITE_REC_LEN_RT1
-
 OGRErr TigerCompleteChain::CreateFeature( OGRFeature *poFeature )
 
 {
-    char        szRecord[WRITE_REC_LEN+1];
+    char        szRecord[OGR_TIGER_RECBUF_LEN];
     OGRLineString *poLine = (OGRLineString *) poFeature->GetGeometryRef();
 
     if( poLine == NULL 
@@ -800,104 +730,31 @@ OGRErr TigerCompleteChain::CreateFeature( OGRFeature *poFeature )
             && poLine->getGeometryType() != wkbLineString25D) )
         return OGRERR_FAILURE;
 
-/* -------------------------------------------------------------------- */
-/*      Write basic data record ("RT1")                                 */
-/* -------------------------------------------------------------------- */
-
-    if( !SetWriteModule( "1", WRITE_REC_LEN_RT1+2, poFeature ) )
+    /* -------------------------------------------------------------------- */
+    /*      Write basic data record ("RT1")                                 */
+    /* -------------------------------------------------------------------- */
+    if( !SetWriteModule( "1", psRT1Info->reclen+2, poFeature ) )
         return OGRERR_FAILURE;
-
-    memset( szRecord, ' ', WRITE_REC_LEN_RT1 );
-
-    WriteField( poFeature, "TLID", szRecord, 6, 15, 'R', 'N' );
-    WriteField( poFeature, "SIDE1", szRecord, 16, 16, 'R', 'N' );
-    WriteField( poFeature, "SOURCE", szRecord, 17, 17, 'L', 'A' );
-    WriteField( poFeature, "FEDIRP", szRecord, 18, 19, 'L', 'A' );
-    WriteField( poFeature, "FENAME", szRecord, 20, 49, 'L', 'A' );
-    WriteField( poFeature, "FETYPE", szRecord, 50, 53, 'L', 'A' );
-    WriteField( poFeature, "FEDIRS", szRecord, 54, 55, 'L', 'A' );
-    WriteField( poFeature, "CFCC", szRecord, 56, 58, 'L', 'A' );
-    WriteField( poFeature, "FRADDL", szRecord, 59, 69, 'R', 'A' );
-    WriteField( poFeature, "TOADDL", szRecord, 70, 80, 'R', 'A' );
-    WriteField( poFeature, "FRADDR", szRecord, 81, 91, 'R', 'A' );
-    WriteField( poFeature, "TOADDR", szRecord, 92, 102, 'R', 'A' );
-    WriteField( poFeature, "FRIADDL", szRecord, 103, 103, 'L', 'A' );
-    WriteField( poFeature, "TOIADDL", szRecord, 104, 104, 'L', 'A' );
-    WriteField( poFeature, "FRIADDR", szRecord, 105, 105, 'L', 'A' );
-    WriteField( poFeature, "TOIADDR", szRecord, 106, 106, 'L', 'A' );
-    WriteField( poFeature, "ZIPL", szRecord, 107, 111, 'L', 'N' );
-    WriteField( poFeature, "ZIPR", szRecord, 112, 116, 'L', 'N' );
-    WriteField( poFeature, "FAIRL", szRecord, 117, 121, 'L', 'N' );
-    WriteField( poFeature, "FAIRR", szRecord, 122, 126, 'L', 'N' );
-    WriteField( poFeature, "TRUSTL", szRecord, 127, 127, 'L', 'A' );
-    WriteField( poFeature, "TRUSTR", szRecord, 128, 128, 'L', 'A' );
-    WriteField( poFeature, "CENSUS1", szRecord, 129, 129, 'L', 'A' );
-    WriteField( poFeature, "CENSUS2", szRecord, 130, 130, 'L', 'A' );
-    WriteField( poFeature, "STATEL", szRecord, 131, 132, 'L', 'N' );
-    WriteField( poFeature, "STATER", szRecord, 133, 134, 'L', 'N' );
-    WriteField( poFeature, "COUNTYL", szRecord, 135, 137, 'L', 'N' );
-    WriteField( poFeature, "COUNTYR", szRecord, 138, 140, 'L', 'N' );
-    WriteField( poFeature, "FMCDL", szRecord, 141, 145, 'L', 'N' );
-    WriteField( poFeature, "FMCDR", szRecord, 146, 150, 'L', 'N' );
-    WriteField( poFeature, "FSMCDL", szRecord, 151, 155, 'L', 'N' );
-    WriteField( poFeature, "FSMCDR", szRecord, 156, 160, 'L', 'N' );
-    WriteField( poFeature, "FPLL", szRecord, 161, 165, 'L', 'N' );
-    WriteField( poFeature, "FPLR", szRecord, 166, 170, 'L', 'N' );
-    WriteField( poFeature, "CTBNAL", szRecord, 171, 176, 'L', 'N' );
-    WriteField( poFeature, "CTBNAR", szRecord, 177, 182, 'L', 'N' );
-    WriteField( poFeature, "BLKL", szRecord, 183, 186, 'L', 'N' );
-    WriteField( poFeature, "BLKR", szRecord, 187, 190, 'L', 'N' );
-
+    memset( szRecord, ' ', psRT1Info->reclen );
+    WriteFields( psRT1Info, poFeature, szRecord );
     WritePoint( szRecord, 191, poLine->getX(0), poLine->getY(0) );
     WritePoint( szRecord, 210, 
                 poLine->getX(poLine->getNumPoints()-1), 
                 poLine->getY(poLine->getNumPoints()-1) );
+    WriteRecord( szRecord, psRT1Info->reclen, "1" );
 
-    WriteRecord( szRecord, WRITE_REC_LEN_RT1, "1" );
+    /* -------------------------------------------------------------------- */
+    /*      Write geographic entity codes (RT3)                             */
+    /* -------------------------------------------------------------------- */
+    if (bUsingRT3) {
+      memset( szRecord, ' ', psRT3Info->reclen );
+      WriteFields( psRT3Info, poFeature, szRecord );
+      WriteRecord( szRecord, psRT3Info->reclen, "3", fpRT3 );
+    }
 
-/* -------------------------------------------------------------------- */
-/*      Write geographic entity codes (RT3)                             */
-/* -------------------------------------------------------------------- */
-
-    memset( szRecord, ' ', WRITE_REC_LEN_RT3 );
-
-    WriteField( poFeature, "TLID", szRecord, 6, 15, 'R', 'N' );
-    WriteField( poFeature, "STATE90L", szRecord, 16, 17, 'L', 'N' );
-    WriteField( poFeature, "STATE90R", szRecord, 18, 19, 'L', 'N' );
-    WriteField( poFeature, "COUN90L", szRecord, 20, 22, 'L', 'N' );
-    WriteField( poFeature, "COUN90R", szRecord, 23, 25, 'L', 'N' );
-    WriteField( poFeature, "FMCD90L", szRecord, 26, 30, 'L', 'N' );
-    WriteField( poFeature, "FMCD90R", szRecord, 31, 35, 'L', 'N' );
-    WriteField( poFeature, "FPL90L", szRecord, 36, 40, 'L', 'N' );
-    WriteField( poFeature, "FPL90R", szRecord, 41, 45, 'L', 'N' );
-    WriteField( poFeature, "CTBNA90L", szRecord, 46, 51, 'L', 'N' );
-    WriteField( poFeature, "CTBNA90R", szRecord, 52, 57, 'L', 'N' );
-    WriteField( poFeature, "AIR90L", szRecord, 58, 61, 'L', 'N' );
-    WriteField( poFeature, "AIR90R", szRecord, 62, 65, 'L', 'N' );
-    WriteField( poFeature, "TRUST90L", szRecord, 66, 66, 'L', 'A' );
-    WriteField( poFeature, "TRUST90R", szRecord, 67, 67, 'L', 'A' );
-    WriteField( poFeature, "BLK90L", szRecord, 70, 73, 'L', 'A' );
-    WriteField( poFeature, "BLK90R", szRecord, 74, 77, 'L', 'A' );
-    WriteField( poFeature, "AIRL", szRecord, 78, 81, 'L', 'N' );
-    WriteField( poFeature, "AIRR", szRecord, 82, 85, 'L', 'N' );
-
-    /* Census 2000 */
-    WriteField( poFeature, "ANRCL", szRecord, 86, 90, 'L', 'N' );
-    WriteField( poFeature, "ANRCR", szRecord, 91, 95, 'L', 'N' );
-    WriteField( poFeature, "AITSCEL", szRecord, 96, 98, 'L', 'N' );
-    WriteField( poFeature, "AITSCER", szRecord, 99, 101, 'L', 'N' );
-    WriteField( poFeature, "AITSL", szRecord, 102, 106, 'L', 'N' );
-    WriteField( poFeature, "AITSR", szRecord, 107, 111, 'L', 'N' );
-
-    /* Pre 2000 */
-    WriteField( poFeature, "VTDL", szRecord, 104, 107, 'L', 'A' );
-    WriteField( poFeature, "VTDR", szRecord, 108, 111, 'L', 'A' );
-
-    WriteRecord( szRecord, WRITE_REC_LEN_RT3, "3", fpRT3 );
-
-/* -------------------------------------------------------------------- */
-/*      Write shapes sections (RT2)                                     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Write shapes sections (RT2)                                     */
+    /* -------------------------------------------------------------------- */
     if( poLine->getNumPoints() > 2 )
     {
         int     nPoints = poLine->getNumPoints();
@@ -908,7 +765,7 @@ OGRErr TigerCompleteChain::CreateFeature( OGRFeature *poFeature )
             int         i;
             char        szTemp[5];
 
-            memset( szRecord, ' ', WRITE_REC_LEN_RT2 );
+            memset( szRecord, ' ', psRT2Info->reclen );
 
             WriteField( poFeature, "TLID", szRecord, 6, 15, 'R', 'N' );
             
@@ -926,7 +783,7 @@ OGRErr TigerCompleteChain::CreateFeature( OGRFeature *poFeature )
                 iPoint++;
             }
             
-            WriteRecord( szRecord, WRITE_REC_LEN_RT2, "2", fpShape );
+            WriteRecord( szRecord, psRT2Info->reclen, "2", fpShape );
 
             nRTSQ++;
         }

@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/12/26 00:20:19  mbp
+ * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
+ * first round implementation of TIGER_2002 support
+ *
  * Revision 1.7  2001/07/19 16:05:49  warmerda
  * clear out tabs
  *
@@ -58,6 +62,25 @@ CPL_CVSID("$Id$");
 
 #define FILE_CODE "4"
 
+static TigerFieldInfo rt4_fields[] = {
+  // fieldname    fmt  type  OFTType         beg  end  len  bDefine bSet bWrite
+  { "MODULE",     ' ',  ' ', OFTString,        0,   0,   8,       1,   0,     0 },
+  { "TLID",       'R',  'N', OFTInteger,       6,  15,  10,       1,   1,     1 },
+  { "RTSQ",       'R',  'N', OFTInteger,      16,  18,   3,       1,   1,     1 },
+  { "FEAT",       ' ',  ' ', OFTIntegerList,   0,   0,   8,       1,   0,     0 }
+  // Note: we don't mention the FEAT1, FEAT2, FEAT3, FEAT4, FEAT5 fields
+  // here because they're handled separately in the code below; they correspond
+  // to the FEAT array field here.
+};
+
+static TigerRecordInfo rt4_info =
+  {
+    rt4_fields,
+    sizeof(rt4_fields) / sizeof(TigerFieldInfo),
+    58
+  };
+
+
 /************************************************************************/
 /*                            TigerAltName()                            */
 /************************************************************************/
@@ -68,24 +91,17 @@ TigerAltName::TigerAltName( OGRTigerDataSource * poDSIn,
 {
     OGRFieldDefn        oField("",OFTInteger);
 
+    psRT4Info = &rt4_info;
+
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "AltName" );
     poFeatureDefn->SetGeomType( wkbNone );
 
-/* -------------------------------------------------------------------- */
-/*      Fields from type 4 record.                                      */
-/* -------------------------------------------------------------------- */
-    oField.Set( "MODULE", OFTString, 8 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "TLID", OFTInteger, 10 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "RTSQ", OFTInteger, 3 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FEAT", OFTIntegerList, 8 );
-    poFeatureDefn->AddFieldDefn( &oField );
+    /* -------------------------------------------------------------------- */
+    /*      Fields from type 4 record.                                      */
+    /* -------------------------------------------------------------------- */
+
+    AddFieldDefns( psRT4Info, poFeatureDefn );
 }
 
 /************************************************************************/
@@ -119,7 +135,7 @@ int TigerAltName::SetModule( const char * pszModule )
 OGRFeature *TigerAltName::GetFeature( int nRecordId )
 
 {
-    char        achRecord[58];
+    char        achRecord[OGR_TIGER_RECBUF_LEN];
 
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
@@ -143,7 +159,7 @@ OGRFeature *TigerAltName::GetFeature( int nRecordId )
         return NULL;
     }
 
-    if( VSIFRead( achRecord, 58, 1, fpPrimary ) != 1 )
+    if( VSIFRead( achRecord, psRT4Info->reclen, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %s4",
@@ -151,16 +167,15 @@ OGRFeature *TigerAltName::GetFeature( int nRecordId )
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set fields.                                                     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set fields.                                                     */
+    /* -------------------------------------------------------------------- */
+
     OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
     int         anFeatList[5];
     int         nFeatCount=0;
 
-    poFeature->SetField( "TLID", GetField( achRecord, 6, 15 ));
-    poFeature->SetField( "RTSQ", GetField( achRecord, 16, 18 ));
-
+    SetFields( psRT4Info, poFeature, achRecord );
 
     for( int iFeat = 0; iFeat < 5; iFeat++ )
     {
@@ -181,22 +196,19 @@ OGRFeature *TigerAltName::GetFeature( int nRecordId )
 /*                           CreateFeature()                            */
 /************************************************************************/
 
-#define WRITE_REC_LEN 58
-
 OGRErr TigerAltName::CreateFeature( OGRFeature *poFeature )
 
 {
-    char        szRecord[WRITE_REC_LEN+1];
+  char        szRecord[OGR_TIGER_RECBUF_LEN];
     const int   *panValue;
     int         nValueCount = 0;
 
-    if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
+    if( !SetWriteModule( FILE_CODE, psRT4Info->reclen+2, poFeature ) )
         return OGRERR_FAILURE;
 
-    memset( szRecord, ' ', WRITE_REC_LEN );
+    memset( szRecord, ' ', psRT4Info->reclen );
 
-    WriteField( poFeature, "TLID", szRecord, 6, 15, 'R', 'N' );
-    WriteField( poFeature, "RTSQ", szRecord, 16, 18, 'R', 'N' );
+    WriteFields( psRT4Info, poFeature, szRecord );
 
     panValue = poFeature->GetFieldAsIntegerList( "FEAT", &nValueCount );
     for( int i = 0; i < nValueCount; i++ )
@@ -207,7 +219,7 @@ OGRErr TigerAltName::CreateFeature( OGRFeature *poFeature )
         strncpy( szRecord + 18 + 8 * i, szWork, 8 );
     }
 
-    WriteRecord( szRecord, WRITE_REC_LEN, FILE_CODE );
+    WriteRecord( szRecord, psRT4Info->reclen, FILE_CODE );
 
     return OGRERR_NONE;
 }

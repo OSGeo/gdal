@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/12/26 00:20:19  mbp
+ * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
+ * first round implementation of TIGER_2002 support
+ *
  * Revision 1.6  2001/07/19 16:05:49  warmerda
  * clear out tabs
  *
@@ -55,6 +59,21 @@ CPL_CVSID("$Id$");
 
 #define FILE_CODE       "Z"
 
+static TigerFieldInfo rtZ_fields[] = {
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
+  { "TLID",       'R', 'N', OFTInteger,    6,  15,  10,       1,   1,     1 },
+  { "RTSQ",       'R', 'N', OFTInteger,   16,  18,   3,       1,   1,     1 },
+  { "ZIP4L",      'L', 'N', OFTInteger,   19,  22,   4,       1,   1,     1 },
+  { "ZIP4R",      'L', 'N', OFTInteger,   23,  26,   4,       1,   1,     1 }
+};
+static TigerRecordInfo rtZ_info =
+  {
+    rtZ_fields,
+    sizeof(rtZ_fields) / sizeof(TigerFieldInfo),
+    26
+  };
+
 /************************************************************************/
 /*                           TigerZipPlus4()                            */
 /************************************************************************/
@@ -69,23 +88,14 @@ TigerZipPlus4::TigerZipPlus4( OGRTigerDataSource * poDSIn,
     poFeatureDefn = new OGRFeatureDefn( "ZipPlus4" );
     poFeatureDefn->SetGeomType( wkbNone );
 
-/* -------------------------------------------------------------------- */
-/*      Fields from type R record.                                      */
-/* -------------------------------------------------------------------- */
-    oField.Set( "MODULE", OFTString, 8 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "TLID", OFTInteger, 10 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "RTSQ", OFTInteger, 3 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "ZIP4L", OFTInteger, 4 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "ZIP4R", OFTInteger, 4 );
-    poFeatureDefn->AddFieldDefn( &oField );
+    psRTZInfo = &rtZ_info;
+
+    /* -------------------------------------------------------------------- */
+    /*      Fields from type Z record.                                      */
+    /* -------------------------------------------------------------------- */
+
+    AddFieldDefns( psRTZInfo, poFeatureDefn );
+
 }
 
 /************************************************************************/
@@ -119,7 +129,7 @@ int TigerZipPlus4::SetModule( const char * pszModule )
 OGRFeature *TigerZipPlus4::GetFeature( int nRecordId )
 
 {
-    char        achRecord[26];
+    char        achRecord[OGR_TIGER_RECBUF_LEN];
 
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
@@ -143,7 +153,7 @@ OGRFeature *TigerZipPlus4::GetFeature( int nRecordId )
         return NULL;
     }
 
-    if( VSIFRead( achRecord, sizeof(achRecord), 1, fpPrimary ) != 1 )
+    if( VSIFRead( achRecord, psRTZInfo->reclen, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %sZ",
@@ -156,10 +166,7 @@ OGRFeature *TigerZipPlus4::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
     OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
-    SetField( poFeature, "TLID", achRecord, 6, 15 );
-    SetField( poFeature, "RTSQ", achRecord, 16, 18 );
-    SetField( poFeature, "ZIP4L", achRecord, 19, 22 );
-    SetField( poFeature, "ZIP4R", achRecord, 23, 26 );
+    SetFields( psRTZInfo, poFeature, achRecord );
 
     return poFeature;
 }
@@ -168,24 +175,19 @@ OGRFeature *TigerZipPlus4::GetFeature( int nRecordId )
 /*                           CreateFeature()                            */
 /************************************************************************/
 
-#define WRITE_REC_LEN 26
-
 OGRErr TigerZipPlus4::CreateFeature( OGRFeature *poFeature )
 
 {
-    char        szRecord[WRITE_REC_LEN+1];
+  char        szRecord[OGR_TIGER_RECBUF_LEN];
 
-    if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
+    if( !SetWriteModule( FILE_CODE, psRTZInfo->reclen+2, poFeature ) )
         return OGRERR_FAILURE;
 
-    memset( szRecord, ' ', WRITE_REC_LEN );
+    memset( szRecord, ' ', psRTZInfo->reclen );
 
-    WriteField( poFeature, "TLID", szRecord, 6, 15, 'R', 'N' );
-    WriteField( poFeature, "RTSQ", szRecord, 16, 18, 'R', 'N' );
-    WriteField( poFeature, "ZIP4L", szRecord, 19, 22, 'L', 'N' );
-    WriteField( poFeature, "ZIP4R", szRecord, 23, 26, 'L', 'N' );
+    WriteFields( psRTZInfo, poFeature, szRecord );
 
-    WriteRecord( szRecord, WRITE_REC_LEN, FILE_CODE );
+    WriteRecord( szRecord, psRTZInfo->reclen, FILE_CODE );
 
     return OGRERR_NONE;
 }

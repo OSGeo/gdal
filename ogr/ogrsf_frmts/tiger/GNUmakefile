@@ -3,16 +3,35 @@ GDAL_ROOT	=	../../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	tigerfilebase.o tigercompletechain.o tigeraltname.o \
-		tigerfeatureids.o tigerzipcodes.o tigerlandmarks.o \
-		tigerarealandmarks.o tigerkeyfeatures.o tigerpolychainlink.o \
-		tigerpolygon.o tigerpip.o tigerentitynames.o tigeridhistory.o \
-		tigertlidrange.o tigerzipplus4.o \
-		ogrtigerdriver.o ogrtigerdatasource.o ogrtigerlayer.o 
+OBJ     =  ogrtigerdriver.o           \
+	   ogrtigerdatasource.o       \
+	   ogrtigerlayer.o            \
+	   tigerfilebase.o            \
+	   tigercompletechain.o       \
+	   tigeraltname.o             \
+	   tigerfeatureids.o          \
+	   tigerzipcodes.o            \
+	   tigerlandmarks.o           \
+	   tigerarealandmarks.o       \
+	   tigerkeyfeatures.o         \
+	   tigerpolygon.o             \
+	   tigerpolygoncorrections.o  \
+	   tigerentitynames.o         \
+	   tigerpolygoneconomic.o     \
+	   tigeridhistory.o           \
+	   tigerpolychainlink.o       \
+	   tigerpip.o                 \
+	   tigertlidrange.o           \
+	   tigerzerocellid.o          \
+	   tigeroverunder.o           \
+	   tigerzipplus4.o	      \
+	   tigerpoint.o
+
+
 
 ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port $(CFLAGS)
 
-LIBS	:=	../ogrsf_frmts.a ../../ogr.a $(CPL_LIB) $(LIBS) 
+LIBS	:=	../ogrsf_frmts.a ../../ogr.a $(CPL_LIB) $(LIBS)
 
 
 default:	$(OBJ)
@@ -30,6 +49,3 @@ clean:
 
 tigerinfo:	tigerinfo.o $(OBJ)
 	$(CXX) $(LNK_FLAGS) tigerinfo.o $(LIBS) -o tigerinfo
-
-
-

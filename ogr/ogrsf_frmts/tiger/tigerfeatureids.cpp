@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/12/26 00:20:19  mbp
+ * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
+ * first round implementation of TIGER_2002 support
+ *
  * Revision 1.7  2001/07/19 16:05:49  warmerda
  * clear out tabs
  *
@@ -58,6 +62,54 @@ CPL_CVSID("$Id$");
 
 #define FILE_CODE "5"
 
+static TigerFieldInfo rt5_2002_fields[] = {
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
+  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
+  { "FEAT",       'R', 'N', OFTInteger,   11,  18,   8,       1,   1,     1 },
+  { "FEDIRP",     'L', 'A', OFTString,    19,  20,   2,       1,   1,     1 },
+  { "FENAME",     'L', 'A', OFTString,    21,  50,  30,       1,   1,     1 },
+  { "FETYPE",     'L', 'A', OFTString,    51,  54,   4,       1,   1,     1 },
+  { "FEDIRS",     'L', 'A', OFTString,    55,  56,   2,       1,   1,     1 },
+};
+static TigerRecordInfo rt5_2002_info =
+  {
+    rt5_2002_fields,
+    sizeof(rt5_2002_fields) / sizeof(TigerFieldInfo),
+    56
+  };
+
+static TigerFieldInfo rt5_fields[] = {
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
+  { "FILE",       'L', 'N', OFTInteger,    2,   6,   5,       1,   1,     1 },  //  otype mismatch
+  { "STATE",      'L', 'N', OFTInteger,    2,   3,   2,       1,   1,     1 },
+  { "COUNTY",     'L', 'N', OFTInteger,    4,   6,   3,       1,   1,     1 },
+  { "FEAT",       'R', 'N', OFTInteger,    7,  14,   8,       1,   1,     1 },
+  { "FEDIRP",     'L', 'A', OFTString,    15,  16,   2,       1,   1,     1 },
+  { "FENAME",     'L', 'A', OFTString,    17,  46,  30,       1,   1,     1 },
+  { "FETYPE",     'L', 'A', OFTString,    47,  50,   4,       1,   1,     1 },
+  { "FEDIRS",     'L', 'A', OFTString,    51,  52,   2,       1,   1,     1 }
+};
+// Note 1: the OGR Type for "FILE" was (erroneously) OFTString in
+// earlier versions of tigerfeatureids.cpp (with type code 'N'!).
+// Note 2: notice that the FILE field overlaps the STATE and COUNTY
+// fields in the record; I'm not sure if this is as it should be, but
+// I'm leaving it as is while converting this file to use the
+// TigerFieldInfo stuff.  Notice also that in this case all three of
+// these fields have bDefine=bSet=bWrite=1, whereas there is at least
+// one other case (tigerlandmarks.cpp) of a similar situation with a
+// FILE field that overlaps STATE and COUNTY fields, and yet in that
+// case the FILE field has bSet=0.  I'm not sure if that is deliberate
+// or an omission, but I'm preserving the way the original code was.
+// mbp Fri Dec 20 22:01:35 2002
+static TigerRecordInfo rt5_info =
+  {
+    rt5_fields,
+    sizeof(rt5_fields) / sizeof(TigerFieldInfo),
+    52
+  };
+
 /************************************************************************/
 /*                            TigerFeatureIds()                         */
 /************************************************************************/
@@ -66,41 +118,18 @@ TigerFeatureIds::TigerFeatureIds( OGRTigerDataSource * poDSIn,
                                   const char * pszPrototypeModule )
 
 {
-    OGRFieldDefn        oField("",OFTInteger);
+  OGRFieldDefn        oField("",OFTInteger);
+  poDS = poDSIn;
+  poFeatureDefn = new OGRFeatureDefn( "FeatureIds" );
+  poFeatureDefn->SetGeomType( wkbNone );
 
-    poDS = poDSIn;
-    poFeatureDefn = new OGRFeatureDefn( "FeatureIds" );
-    poFeatureDefn->SetGeomType( wkbNone );
+  if (poDS->GetVersion() >= TIGER_2002) {
+    psRT5Info = &rt5_2002_info;
+  } else {
+    psRT5Info = &rt5_info;
+  }
 
-/* -------------------------------------------------------------------- */
-/*      Fields from type 5 record.                                      */
-/* -------------------------------------------------------------------- */
-    oField.Set( "MODULE", OFTString, 8 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FILE", OFTString, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "STATE", OFTInteger, 2 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "COUNTY", OFTInteger, 3 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FEAT", OFTInteger, 8 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FEDIRP", OFTString, 2 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FENAME", OFTString, 30 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FETYPE", OFTString, 4 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FEDIRS", OFTString, 2 );
-    poFeatureDefn->AddFieldDefn( &oField );
+  AddFieldDefns( psRT5Info, poFeatureDefn );
 }
 
 /************************************************************************/
@@ -134,7 +163,7 @@ int TigerFeatureIds::SetModule( const char * pszModule )
 OGRFeature *TigerFeatureIds::GetFeature( int nRecordId )
 
 {
-    char        achRecord[52];
+    char        achRecord[OGR_TIGER_RECBUF_LEN];
 
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
@@ -158,7 +187,7 @@ OGRFeature *TigerFeatureIds::GetFeature( int nRecordId )
         return NULL;
     }
 
-    if( VSIFRead( achRecord, sizeof(achRecord), 1, fpPrimary ) != 1 )
+    if( VSIFRead( achRecord, psRT5Info->reclen, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %s5",
@@ -166,19 +195,9 @@ OGRFeature *TigerFeatureIds::GetFeature( int nRecordId )
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set fields.                                                     */
-/* -------------------------------------------------------------------- */
     OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
-    SetField( poFeature, "FILE", achRecord, 2, 6 );
-    SetField( poFeature, "STATE", achRecord, 2, 3 );
-    SetField( poFeature, "COUNTY", achRecord, 4, 6 );
-    SetField( poFeature, "FEAT", achRecord, 7, 14 );
-    SetField( poFeature, "FEDIRP", achRecord, 15, 16 );
-    SetField( poFeature, "FENAME", achRecord, 17, 46 );
-    SetField( poFeature, "FETYPE", achRecord, 47, 50 );
-    SetField( poFeature, "FEDIRS", achRecord, 51, 52 );
+    SetFields( psRT5Info, poFeature, achRecord );
 
     return poFeature;
 }
@@ -187,28 +206,19 @@ OGRFeature *TigerFeatureIds::GetFeature( int nRecordId )
 /*                           CreateFeature()                            */
 /************************************************************************/
 
-#define WRITE_REC_LEN 52
-
 OGRErr TigerFeatureIds::CreateFeature( OGRFeature *poFeature )
 
 {
-    char        szRecord[WRITE_REC_LEN+1];
+    char        szRecord[OGR_TIGER_RECBUF_LEN];
 
-    if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
+    if( !SetWriteModule( FILE_CODE, psRT5Info->reclen+2, poFeature ) )
         return OGRERR_FAILURE;
 
-    memset( szRecord, ' ', WRITE_REC_LEN );
+    memset( szRecord, ' ', psRT5Info->reclen );
 
-    WriteField( poFeature, "FILE", szRecord, 2, 6, 'L', 'N' );
-    WriteField( poFeature, "STATE", szRecord, 2, 3, 'L', 'N' );
-    WriteField( poFeature, "COUNTY", szRecord, 4, 6, 'L', 'N' );
-    WriteField( poFeature, "FEAT", szRecord, 7, 14, 'R', 'N' );
-    WriteField( poFeature, "FEDIRP", szRecord, 15, 16, 'L', 'A' );
-    WriteField( poFeature, "FENAME", szRecord, 17, 46, 'L', 'A' );
-    WriteField( poFeature, "FETYPE", szRecord, 47, 50, 'L', 'A' );
-    WriteField( poFeature, "FEDIRS", szRecord, 51, 52, 'L', 'A' );
+    WriteFields( psRT5Info, poFeature, szRecord);
 
-    WriteRecord( szRecord, WRITE_REC_LEN, FILE_CODE );
+    WriteRecord( szRecord, psRT5Info->reclen, FILE_CODE );
 
     return OGRERR_NONE;
 }

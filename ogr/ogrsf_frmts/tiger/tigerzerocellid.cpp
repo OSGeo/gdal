@@ -2,11 +2,11 @@
  * $Id$
  *
  * Project:  TIGER/Line Translator
- * Purpose:  Implements TigerAreaLandmarks, providing access to .RT8 files.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Purpose:  Implements TigerZeroCellID, providing access to .RTT files.
+ * Author:   Mark Phillips, mbp@geomtech.com
  *
  ******************************************************************************
- * Copyright (c) 1999, Frank Warmerdam
+ * Copyright (c) 2002, Frank Warmerdam, Mark Phillips
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,33 +28,9 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.9  2002/12/26 00:20:19  mbp
+ * Revision 1.1  2002/12/26 00:20:19  mbp
  * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
  * first round implementation of TIGER_2002 support
- *
- * Revision 1.8  2001/07/19 16:05:49  warmerda
- * clear out tabs
- *
- * Revision 1.7  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.6  2001/07/04 23:25:32  warmerda
- * first round implementation of writer
- *
- * Revision 1.5  2001/07/04 05:40:35  warmerda
- * upgraded to support FILE, and Tiger2000 schema
- *
- * Revision 1.4  2001/01/19 21:15:20  warmerda
- * expanded tabs
- *
- * Revision 1.3  2000/01/13 05:18:11  warmerda
- * added support for multiple versions
- *
- * Revision 1.2  1999/12/22 15:38:15  warmerda
- * major update
- *
- * Revision 1.1  1999/12/15 19:59:17  warmerda
- * New
  *
  */
 
@@ -63,55 +39,52 @@
 
 CPL_CVSID("$Id$");
 
-#define FILE_CODE "8"
+#define FILE_CODE       "T"
 
-static TigerFieldInfo rt8_fields[] = {
+static TigerFieldInfo rtT_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },  //  otype mismatch
-  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
-  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
-  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1,     1 },
-  { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       1,   1,     1 },
-  { "LAND",       'R', 'N', OFTInteger,   26,  35,  10,       1,   1,     1 }
+  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
+  { "TZID",       'R', 'N', OFTInteger,   11,  20,  10,       1,   1,     1 },
+  { "SOURCE",     'L', 'A', OFTString,    21,  30,  10,       1,   1,     1 },
+  { "FTRP",       'L', 'A', OFTString,    31,  47,  17,       1,   1,     1 }
 };
-
-static TigerRecordInfo rt8_info =
+static TigerRecordInfo rtT_info =
   {
-    rt8_fields,
-    sizeof(rt8_fields) / sizeof(TigerFieldInfo),
-    36
+    rtT_fields,
+    sizeof(rtT_fields) / sizeof(TigerFieldInfo),
+    47
   };
 
 /************************************************************************/
-/*                         TigerAreaLandmarks()                         */
+/*                           TigerZeroCellID()                           */
 /************************************************************************/
 
-TigerAreaLandmarks::TigerAreaLandmarks( OGRTigerDataSource * poDSIn,
-                                  const char * pszPrototypeModule )
+TigerZeroCellID::TigerZeroCellID( OGRTigerDataSource * poDSIn,
+                              const char * pszPrototypeModule )
 
 {
     OGRFieldDefn        oField("",OFTInteger);
 
     poDS = poDSIn;
-    poFeatureDefn = new OGRFeatureDefn( "AreaLandmarks" );
+    poFeatureDefn = new OGRFeatureDefn( "ZeroCellID" );
     poFeatureDefn->SetGeomType( wkbNone );
 
-    psRT8Info = &rt8_info;
+    psRTTInfo = &rtT_info;
 
-    /* -------------------------------------------------------------------- */
-    /*      Fields from type 8 record.                                      */
-    /* -------------------------------------------------------------------- */
+/* -------------------------------------------------------------------- */
+/*      Fields from type T record.                                      */
+/* -------------------------------------------------------------------- */
 
-    AddFieldDefns( psRT8Info, poFeatureDefn );
+    AddFieldDefns( psRTTInfo, poFeatureDefn );
 
 }
 
 /************************************************************************/
-/*                        ~TigerAreaLandmarks()                         */
+/*                           ~TigerZeroCellID()                           */
 /************************************************************************/
 
-TigerAreaLandmarks::~TigerAreaLandmarks()
+TigerZeroCellID::~TigerZeroCellID()
 
 {
 }
@@ -120,7 +93,7 @@ TigerAreaLandmarks::~TigerAreaLandmarks()
 /*                             SetModule()                              */
 /************************************************************************/
 
-int TigerAreaLandmarks::SetModule( const char * pszModule )
+int TigerZeroCellID::SetModule( const char * pszModule )
 
 {
     if( !OpenFile( pszModule, FILE_CODE ) )
@@ -135,7 +108,7 @@ int TigerAreaLandmarks::SetModule( const char * pszModule )
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *TigerAreaLandmarks::GetFeature( int nRecordId )
+OGRFeature *TigerZeroCellID::GetFeature( int nRecordId )
 
 {
     char        achRecord[OGR_TIGER_RECBUF_LEN];
@@ -143,7 +116,7 @@ OGRFeature *TigerAreaLandmarks::GetFeature( int nRecordId )
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Request for out-of-range feature %d of %s8",
+                  "Request for out-of-range feature %d of %sZ",
                   nRecordId, pszModule );
         return NULL;
     }
@@ -157,15 +130,15 @@ OGRFeature *TigerAreaLandmarks::GetFeature( int nRecordId )
     if( VSIFSeek( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to %d of %s8",
+                  "Failed to seek to %d of %sZ",
                   nRecordId * nRecordLength, pszModule );
         return NULL;
     }
 
-    if( VSIFRead( achRecord, psRT8Info->reclen, 1, fpPrimary ) != 1 )
+    if( VSIFRead( achRecord, psRTTInfo->reclen, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read record %d of %s8",
+                  "Failed to read record %d of %sZ",
                   nRecordId, pszModule );
         return NULL;
     }
@@ -175,7 +148,7 @@ OGRFeature *TigerAreaLandmarks::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
     OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
-    SetFields( psRT8Info, poFeature, achRecord );
+    SetFields( psRTTInfo, poFeature, achRecord );
 
     return poFeature;
 }
@@ -184,19 +157,19 @@ OGRFeature *TigerAreaLandmarks::GetFeature( int nRecordId )
 /*                           CreateFeature()                            */
 /************************************************************************/
 
-OGRErr TigerAreaLandmarks::CreateFeature( OGRFeature *poFeature )
+OGRErr TigerZeroCellID::CreateFeature( OGRFeature *poFeature )
 
 {
     char        szRecord[OGR_TIGER_RECBUF_LEN];
 
-    if( !SetWriteModule( FILE_CODE, psRT8Info->reclen+2, poFeature ) )
+    if( !SetWriteModule( FILE_CODE, psRTTInfo->reclen+2, poFeature ) )
         return OGRERR_FAILURE;
 
-    memset( szRecord, ' ', psRT8Info->reclen );
+    memset( szRecord, ' ', psRTTInfo->reclen );
 
-    WriteFields( psRT8Info, poFeature, szRecord);
+    WriteFields( psRTTInfo, poFeature, szRecord );
 
-    WriteRecord( szRecord, psRT8Info->reclen, FILE_CODE );
+    WriteRecord( szRecord, psRTTInfo->reclen, FILE_CODE );
 
     return OGRERR_NONE;
 }

@@ -2,11 +2,11 @@
  * $Id$
  *
  * Project:  TIGER/Line Translator
- * Purpose:  Implements TigerKeyFeatures, providing access to .RT9 files.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Purpose:  Implements TigerPolygonEconomic, providing access to .RTE files.
+ * Author:   Mark Phillips, mbp@geomtech.com
  *
  ******************************************************************************
- * Copyright (c) 1999, Frank Warmerdam
+ * Copyright (c) 2002, Frank Warmerdam, Mark Phillips
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,33 +28,9 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.9  2002/12/26 00:20:19  mbp
+ * Revision 1.1  2002/12/26 00:20:19  mbp
  * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
  * first round implementation of TIGER_2002 support
- *
- * Revision 1.8  2001/07/19 16:05:49  warmerda
- * clear out tabs
- *
- * Revision 1.7  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.6  2001/07/04 23:25:32  warmerda
- * first round implementation of writer
- *
- * Revision 1.5  2001/07/04 05:40:35  warmerda
- * upgraded to support FILE, and Tiger2000 schema
- *
- * Revision 1.4  2001/01/19 21:15:20  warmerda
- * expanded tabs
- *
- * Revision 1.3  2000/01/13 05:18:11  warmerda
- * added support for multiple versions
- *
- * Revision 1.2  1999/12/22 15:38:15  warmerda
- * major update
- *
- * Revision 1.1  1999/12/15 19:59:17  warmerda
- * New
  *
  */
 
@@ -63,61 +39,59 @@
 
 CPL_CVSID("$Id$");
 
-#define FILE_CODE "9"
+#define FILE_CODE       "E"
 
-static TigerFieldInfo rt9_fields[] = {
-  // fieldname    fmt  type  OFTType      beg  end  len  bDefine bSet bWrite
+static TigerFieldInfo rtE_fields[] = {
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },  //  otype mismatch
-  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
-  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
+  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
   { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1,     1 },
   { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       1,   1,     1 },
-  { "SOURCE",     'L', 'A', OFTString,    26,  26,   1,       1,   1,     1 },
-  { "CFCC",       'L', 'A', OFTString,    27,  29,   3,       1,   1,     1 },
-  { "KGLNAME",    'L', 'A', OFTString,    30,  59,  30,       1,   1,     1 },
-  { "KGLADD",     'R', 'A', OFTString,    60,  70,  11,       1,   1,     1 },
-  { "KGLZIP",     'L', 'N', OFTInteger,   71,  75,   5,       1,   1,     1 },
-  { "KGLZIP4",    'L', 'N', OFTInteger,   76,  79,   4,       1,   1,     1 },
-  { "FEAT",       'R', 'N', OFTInteger,   80,  87,   8,       1,   1,     1 }
+  { "STATEEC",    'L', 'N', OFTInteger,   26,  27,   2,       1,   1,     1 },
+  { "COUNTYEC",   'L', 'N', OFTInteger,   28,  30,   3,       1,   1,     1 },
+  { "CONCITEC",   'L', 'N', OFTInteger,   31,  35,   5,       1,   1,     1 },
+  { "COUSUBEC",   'L', 'N', OFTInteger,   36,  40,   5,       1,   1,     1 },
+  { "PLACEEC",    'L', 'N', OFTInteger,   41,  45,   5,       1,   1,     1 },
+  { "AIANHHFPEC", 'L', 'N', OFTInteger,   46,  50,   5,       1,   1,     1 },
+  { "AIANHHEC",   'L', 'N', OFTInteger,   51,  54,   4,       1,   1,     1 },
+  { "AIAHHTLIEC", 'L', 'A', OFTString,    55,  55,   1,       1,   1,     1 },
+  { "RS-E1",      'L', 'A', OFTString,    56,  73,  18,       1,   1,     1 }
 };
-
-static TigerRecordInfo rt9_info =
+static TigerRecordInfo rtE_info =
   {
-    rt9_fields,
-    sizeof(rt9_fields) / sizeof(TigerFieldInfo),
-    88
+    rtE_fields,
+    sizeof(rtE_fields) / sizeof(TigerFieldInfo),
+    73
   };
 
 /************************************************************************/
-/*                         TigerKeyFeatures()                         */
+/*                           TigerPolygonEconomic()                           */
 /************************************************************************/
 
-TigerKeyFeatures::TigerKeyFeatures( OGRTigerDataSource * poDSIn,
-                                  const char * pszPrototypeModule )
+TigerPolygonEconomic::TigerPolygonEconomic( OGRTigerDataSource * poDSIn,
+                              const char * pszPrototypeModule )
 
 {
     OGRFieldDefn        oField("",OFTInteger);
 
     poDS = poDSIn;
-    poFeatureDefn = new OGRFeatureDefn( "KeyFeatures" );
+    poFeatureDefn = new OGRFeatureDefn( "PolygonEconomic" );
     poFeatureDefn->SetGeomType( wkbNone );
 
-    psRT9Info = &rt9_info;
+    psRTEInfo = &rtE_info;
 
     /* -------------------------------------------------------------------- */
-    /*      Fields from type 9 record.                                      */
+    /*      Fields from type E record.                                      */
     /* -------------------------------------------------------------------- */
 
-    AddFieldDefns( psRT9Info, poFeatureDefn );
-
+    AddFieldDefns( psRTEInfo, poFeatureDefn );
 }
 
 /************************************************************************/
-/*                        ~TigerKeyFeatures()                         */
+/*                           ~TigerPolygonEconomic()                           */
 /************************************************************************/
 
-TigerKeyFeatures::~TigerKeyFeatures()
+TigerPolygonEconomic::~TigerPolygonEconomic()
 
 {
 }
@@ -126,7 +100,7 @@ TigerKeyFeatures::~TigerKeyFeatures()
 /*                             SetModule()                              */
 /************************************************************************/
 
-int TigerKeyFeatures::SetModule( const char * pszModule )
+int TigerPolygonEconomic::SetModule( const char * pszModule )
 
 {
     if( !OpenFile( pszModule, FILE_CODE ) )
@@ -141,7 +115,7 @@ int TigerKeyFeatures::SetModule( const char * pszModule )
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *TigerKeyFeatures::GetFeature( int nRecordId )
+OGRFeature *TigerPolygonEconomic::GetFeature( int nRecordId )
 
 {
     char        achRecord[OGR_TIGER_RECBUF_LEN];
@@ -149,41 +123,39 @@ OGRFeature *TigerKeyFeatures::GetFeature( int nRecordId )
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Request for out-of-range feature %d of %s9",
+                  "Request for out-of-range feature %d of %sZ",
                   nRecordId, pszModule );
         return NULL;
     }
 
-    /* -------------------------------------------------------------------- */
-    /*      Read the raw record data from the file.                         */
-    /* -------------------------------------------------------------------- */
-
+/* -------------------------------------------------------------------- */
+/*      Read the raw record data from the file.                         */
+/* -------------------------------------------------------------------- */
     if( fpPrimary == NULL )
         return NULL;
 
     if( VSIFSeek( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to %d of %s9",
+                  "Failed to seek to %d of %sZ",
                   nRecordId * nRecordLength, pszModule );
         return NULL;
     }
 
-    if( VSIFRead( achRecord, psRT9Info->reclen, 1, fpPrimary ) != 1 )
+    if( VSIFRead( achRecord, psRTEInfo->reclen, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read record %d of %s9",
+                  "Failed to read record %d of %sZ",
                   nRecordId, pszModule );
         return NULL;
     }
 
-    /* -------------------------------------------------------------------- */
-    /*      Set fields.                                                     */
-    /* -------------------------------------------------------------------- */
-
+/* -------------------------------------------------------------------- */
+/*      Set fields.                                                     */
+/* -------------------------------------------------------------------- */
     OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
-    SetFields( psRT9Info, poFeature, achRecord );
+    SetFields( psRTEInfo, poFeature, achRecord );
 
     return poFeature;
 }
@@ -192,19 +164,19 @@ OGRFeature *TigerKeyFeatures::GetFeature( int nRecordId )
 /*                           CreateFeature()                            */
 /************************************************************************/
 
-OGRErr TigerKeyFeatures::CreateFeature( OGRFeature *poFeature )
+OGRErr TigerPolygonEconomic::CreateFeature( OGRFeature *poFeature )
 
 {
     char        szRecord[OGR_TIGER_RECBUF_LEN];
 
-    if( !SetWriteModule( FILE_CODE, psRT9Info->reclen+2, poFeature ) )
+    if( !SetWriteModule( FILE_CODE, psRTEInfo->reclen+2, poFeature ) )
         return OGRERR_FAILURE;
 
-    memset( szRecord, ' ', psRT9Info->reclen );
+    memset( szRecord, ' ', psRTEInfo->reclen );
 
-    WriteFields( psRT9Info, poFeature, szRecord );
+    WriteFields( psRTEInfo, poFeature, szRecord);
 
-    WriteRecord( szRecord, psRT9Info->reclen, FILE_CODE );
+    WriteRecord( szRecord, psRTEInfo->reclen, FILE_CODE );
 
     return OGRERR_NONE;
 }

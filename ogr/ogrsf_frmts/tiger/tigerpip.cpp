@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/12/26 00:20:19  mbp
+ * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
+ * first round implementation of TIGER_2002 support
+ *
  * Revision 1.7  2001/07/19 16:05:49  warmerda
  * clear out tabs
  *
@@ -58,163 +62,81 @@ CPL_CVSID("$Id$");
 
 #define FILE_CODE "P"
 
+static TigerFieldInfo rtP_2002_fields[] = {
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
+  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
+  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1,     1 },
+  { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       1,   1,     1 },
+  { "POLYLONG",   'R', 'N', OFTInteger,   26,  35,  10,       1,   1,     1 },
+  { "POLYLAT",    'R', 'N', OFTInteger,   36,  44,   9,       1,   1,     1 },
+  { "WATER",      'L', 'N', OFTInteger,   45,  45,   1,       1,   1,     1 },
+};
+static TigerRecordInfo rtP_2002_info =
+  {
+    rtP_2002_fields,
+    sizeof(rtP_2002_fields) / sizeof(TigerFieldInfo),
+    45
+  };
+
+static TigerFieldInfo rtP_fields[] = {
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
+  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       1,   1,     1 },  //  otype mismatch
+  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
+  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
+  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1,     1 },
+  { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       1,   1,     1 }
+};
+static TigerRecordInfo rtP_info =
+  {
+    rtP_fields,
+    sizeof(rtP_fields) / sizeof(TigerFieldInfo),
+    44
+  };
+
+
 /************************************************************************/
 /*                              TigerPIP()                              */
 /************************************************************************/
 
 TigerPIP::TigerPIP( OGRTigerDataSource * poDSIn,
-                            const char * pszPrototypeModule )
-
+                            const char * pszPrototypeModule ) 
+  : TigerPoint(TRUE)
 {
-    OGRFieldDefn        oField("",OFTInteger);
+  poDS = poDSIn;
+  poFeatureDefn = new OGRFeatureDefn( "PIP" );
+  poFeatureDefn->SetGeomType( wkbPoint );
 
-    poDS = poDSIn;
-    poFeatureDefn = new OGRFeatureDefn( "PIP" );
-    poFeatureDefn->SetGeomType( wkbPoint );
-
-/* -------------------------------------------------------------------- */
-/*      Fields from type P record.                                      */
-/* -------------------------------------------------------------------- */
-    oField.Set( "MODULE", OFTString, 8 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "FILE", OFTString, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "STATE", OFTInteger, 2 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "COUNTY", OFTInteger, 3 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "CENID", OFTString, 5 );
-    poFeatureDefn->AddFieldDefn( &oField );
-    
-    oField.Set( "POLYID", OFTInteger, 10 );
-    poFeatureDefn->AddFieldDefn( &oField );
+  if (poDS->GetVersion() >= TIGER_2002) {
+    psRTPInfo = &rtP_2002_info;
+  } else {
+    psRTPInfo = &rtP_info;
+  }
+  AddFieldDefns( psRTPInfo, poFeatureDefn );
 }
-
-/************************************************************************/
-/*                           ~TigerPIP()                                */
-/************************************************************************/
 
 TigerPIP::~TigerPIP()
-
-{
-}
-
-/************************************************************************/
-/*                             SetModule()                              */
-/************************************************************************/
+{}
 
 int TigerPIP::SetModule( const char * pszModule )
-
 {
-    if( !OpenFile( pszModule, FILE_CODE ) )
-        return FALSE;
-
-    EstablishFeatureCount();
-    
-    return TRUE;
+  return TigerPoint::SetModule( pszModule, FILE_CODE );
 }
-
-/************************************************************************/
-/*                             GetFeature()                             */
-/************************************************************************/
 
 OGRFeature *TigerPIP::GetFeature( int nRecordId )
-
 {
-    char        achRecord[44];
-
-    if( nRecordId < 0 || nRecordId >= nFeatures )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Request for out-of-range feature %d of %sP",
-                  nRecordId, pszModule );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Read the raw record data from the file.                         */
-/* -------------------------------------------------------------------- */
-    if( fpPrimary == NULL )
-        return NULL;
-
-    if( VSIFSeek( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to %d of %sP",
-                  nRecordId * nRecordLength, pszModule );
-        return NULL;
-    }
-
-    if( VSIFRead( achRecord, sizeof(achRecord), 1, fpPrimary ) != 1 )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read record %d of %sP",
-                  nRecordId, pszModule );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Set fields.                                                     */
-/* -------------------------------------------------------------------- */
-    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
-
-    SetField( poFeature, "FILE", achRecord, 6, 10 );
-    SetField( poFeature, "STATE", achRecord, 6, 7 );
-    SetField( poFeature, "COUNTY", achRecord, 8, 10 );
-    SetField( poFeature, "CENID", achRecord, 11, 15 );
-    SetField( poFeature, "POLYID", achRecord, 16, 25 );
-
-/* -------------------------------------------------------------------- */
-/*      Set geometry                                                    */
-/* -------------------------------------------------------------------- */
-    double      dfX, dfY;
-
-    dfX = atoi(GetField(achRecord, 26, 35)) / 1000000.0;
-    dfY = atoi(GetField(achRecord, 36, 44)) / 1000000.0;
-
-    if( dfX != 0.0 || dfY != 0.0 )
-    {
-        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );
-    }
-        
-    return poFeature;
+  return TigerPoint::GetFeature( nRecordId,
+				 psRTPInfo,
+				 26, 35,
+				 36, 44 );
 }
-
-/************************************************************************/
-/*                           CreateFeature()                            */
-/************************************************************************/
-
-#define WRITE_REC_LEN 44
 
 OGRErr TigerPIP::CreateFeature( OGRFeature *poFeature )
-
 {
-    char        szRecord[WRITE_REC_LEN+1];
-    OGRPoint    *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
-
-    if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
-        return OGRERR_FAILURE;
-
-    memset( szRecord, ' ', WRITE_REC_LEN );
-
-    WriteField( poFeature, "FILE", szRecord, 6, 10, 'L', 'N' );
-    WriteField( poFeature, "STATE", szRecord, 6, 7, 'L', 'N' );
-    WriteField( poFeature, "COUNTY", szRecord, 8, 10, 'L', 'N' );
-    WriteField( poFeature, "CENID", szRecord, 11, 15, 'L', 'A' );
-    WriteField( poFeature, "POLYID", szRecord, 16, 25, 'R', 'N' );
-
-    if( poPoint != NULL 
-        && (poPoint->getGeometryType() == wkbPoint
-            || poPoint->getGeometryType() == wkbPoint25D) )
-        WritePoint( szRecord, 26, poPoint->getX(), poPoint->getY() );
-    else
-        return OGRERR_FAILURE;
-
-    WriteRecord( szRecord, WRITE_REC_LEN, FILE_CODE );
-
-    return OGRERR_NONE;
+  return TigerPoint::CreateFeature( poFeature, 
+				    psRTPInfo,
+				    26,
+				    FILE_CODE );
 }
+
