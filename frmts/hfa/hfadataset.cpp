@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.41  2004/08/27 03:22:28  warmerda
+ * hack to support IGNOREUTM option: bug 597
+ *
  * Revision 1.40  2004/07/16 20:40:32  warmerda
  * Added a series of patches from Andreas Wimmer which:
  *  o Add lots of improved support for metadata.
@@ -387,6 +390,8 @@ class CPL_DLL HFADataset : public GDALDataset
     int         bGeoDirty;
     double      adfGeoTransform[6];
     char	*pszProjection;
+
+    int         bIgnoreUTM;
 
     CPLErr      ReadProjection();
     CPLErr      WriteProjection();
@@ -970,6 +975,7 @@ HFADataset::HFADataset()
     bGeoDirty = FALSE;
     pszProjection = CPLStrdup("");
     this->bMetadataDirty = FALSE;
+    bIgnoreUTM = FALSE;
 }
 
 /************************************************************************/
@@ -1116,7 +1122,7 @@ CPLErr HFADataset::WriteProjection()
     }
 
     /* FIXME/NOTDEF/TODO: Add State Plane */
-    else if( oSRS.GetUTMZone( NULL ) != 0 )
+    else if( !bIgnoreUTM && oSRS.GetUTMZone( NULL ) != 0 )
     {
         int	bNorth, nZone;
 
@@ -2076,7 +2082,21 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
 /* -------------------------------------------------------------------- */
 /*      Open the dataset normally.                                      */
 /* -------------------------------------------------------------------- */
-    return (GDALDataset *) GDALOpen( pszFilenameIn, GA_Update );
+    HFADataset *poDS = (HFADataset *) GDALOpen( pszFilenameIn, GA_Update );
+
+/* -------------------------------------------------------------------- */
+/*      Special creation option to disable checking for UTM             */
+/*      parameters when writing the projection.  This is a special      */
+/*      hack for sam.gillingham@nrm.qld.gov.au.                         */
+/* -------------------------------------------------------------------- */
+    if( poDS != NULL )
+    {
+        poDS->bIgnoreUTM = CSLFetchBoolean( papszParmList, "IGNOREUTM",
+                                            FALSE );
+    }
+
+    return poDS;
+
 }
 
 /************************************************************************/
