@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/06/26 20:59:13  warmerda
+ * implement efficient spatial and attribute query support
+ *
  * Revision 1.4  2001/06/20 16:10:24  warmerda
  * fixed PostGIS autodetect
  *
@@ -126,8 +129,9 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     PQsetNoticeProcessor( hPGConn, OGRPGNoticeProcessor, this );
 
 /* -------------------------------------------------------------------- */
-/*	Test to see if this database instance has support for the	*/
-/*	PostGIS Geometry type.  					*/
+/*      Test to see if this database instance has support for the       */
+/*      PostGIS Geometry type.  If so, disable sequential scanning      */
+/*      so we will get the value of the gist indexes.                   */
 /* -------------------------------------------------------------------- */
     PGresult            *hResult;
     
@@ -149,6 +153,9 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
     if( hResult )
         PQclear( hResult );
+
+    hResult = PQexec(hPGConn, "SET ENABLE_SEQSCAN = OFF");
+    PQclear( hResult );
 
     hResult = PQexec(hPGConn, "COMMIT");
     PQclear( hResult );

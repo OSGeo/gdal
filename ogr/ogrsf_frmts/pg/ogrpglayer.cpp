@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/06/26 20:59:13  warmerda
+ * implement efficient spatial and attribute query support
+ *
  * Revision 1.4  2001/06/19 22:29:12  warmerda
  * upgraded to include PostGIS support
  *
@@ -59,6 +62,8 @@ OGRPGLayer::OGRPGLayer( OGRPGDataSource *poDSIn, const char * pszTableName,
     poDS = poDSIn;
 
     poFilterGeom = NULL;
+    pszQuery = NULL;
+    pszWHERE = CPLStrdup( "" );
     
     bUpdateAccess = bUpdate;
     bHasWkb = FALSE;
@@ -91,6 +96,9 @@ OGRPGLayer::~OGRPGLayer()
 
     if( pszGeomColumn != NULL )
         CPLFree( pszGeomColumn );
+
+    CPLFree( pszQuery );
+    CPLFree( pszWHERE );
 }
 
 /************************************************************************/
@@ -215,6 +223,67 @@ void OGRPGLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
     if( poGeomIn != NULL )
         poFilterGeom = poGeomIn->clone();
+
+    BuildWhere();
+
+    ResetReading();
+}
+
+/************************************************************************/
+/*                             BuildWhere()                             */
+/*                                                                      */
+/*      Build the WHERE statement appropriate to the current set of     */
+/*      criteria (spatial and attribute queries).                       */
+/************************************************************************/
+
+void OGRPGLayer::BuildWhere()
+
+{
+    char	szWHERE[4096];
+
+    CPLFree( pszWHERE );
+    pszWHERE = NULL;
+
+    szWHERE[0] = '\0';
+
+    if( poFilterGeom != NULL && bHasPostGISGeometry )
+    {
+        OGREnvelope  sEnvelope;
+
+        poFilterGeom->getEnvelope( &sEnvelope );
+        sprintf( szWHERE, 
+                 "WHERE %s && 'BOX3D(%.12f %.12f, %.12f %.12f)'::box3d ",
+                 pszGeomColumn, 
+                 sEnvelope.MinX, sEnvelope.MinY, 
+                 sEnvelope.MaxX, sEnvelope.MaxY );
+    }
+
+    if( pszQuery != NULL )
+    {
+        if( strlen(szWHERE) == 0 )
+            sprintf( szWHERE, "WHERE %s ", pszQuery  );
+        else
+            sprintf( szWHERE+strlen(szWHERE), "AND %s ", pszQuery );
+    }
+
+    pszWHERE = CPLStrdup(szWHERE);
+}
+
+/************************************************************************/
+/*                         SetAttributeFilter()                         */
+/************************************************************************/
+
+OGRErr OGRPGLayer::SetAttributeFilter( const char *pszQuery )
+
+{
+    CPLFree( this->pszQuery );
+    this->pszQuery = CPLStrdup( pszQuery );
+
+    BuildWhere();
+
+    ResetReading();
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -262,6 +331,7 @@ OGRFeature *OGRPGLayer::GetNextFeature()
             return NULL;
 
         if( (poFilterGeom == NULL
+            || bHasPostGISGeometry
             || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
@@ -279,7 +349,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 
 {
     PGconn	*hPGConn = poDS->GetPGConn();
-    char	szCommand[1024];
+    char	szCommand[4096];
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to establish an initial query?                       */
@@ -291,8 +361,13 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 
         sprintf( szCommand, 
                  "DECLARE %s CURSOR for "
-                 "SELECT * FROM %s", 
-                 pszCursorName, poFeatureDefn->GetName() );
+                 "SELECT * FROM %s "
+                 "%s", 
+                 pszCursorName, poFeatureDefn->GetName(), pszWHERE );
+
+        CPLDebug( "OGR_PG", "PQexec(%s)\n", 
+                  szCommand );
+
         hCursorResult = PQexec(hPGConn, szCommand );
         PQclear( hCursorResult );
 
@@ -767,7 +842,7 @@ int OGRPGLayer::GetFeatureCount( int bForce )
 /*      Use a more brute force mechanism if we have a spatial query     */
 /*      in play.                                                        */
 /* -------------------------------------------------------------------- */
-    if( poFilterGeom != NULL )
+    if( poFilterGeom != NULL && !bHasPostGISGeometry )
         return OGRLayer::GetFeatureCount( bForce );
 
 /* -------------------------------------------------------------------- */
@@ -778,7 +853,7 @@ int OGRPGLayer::GetFeatureCount( int bForce )
 /* -------------------------------------------------------------------- */
     PGconn		*hPGConn = poDS->GetPGConn();
     PGresult            *hResult;
-    char		szCommand[1024];
+    char		szCommand[4096];
     int			nCount = 0;
 
     hResult = PQexec(hPGConn, "BEGIN");
@@ -786,8 +861,13 @@ int OGRPGLayer::GetFeatureCount( int bForce )
 
     sprintf( szCommand, 
              "DECLARE countCursor CURSOR for "
-             "SELECT count(*) FROM %s", 
-             poFeatureDefn->GetName() );
+             "SELECT count(*) FROM %s "
+             "%s",
+             poFeatureDefn->GetName(), pszWHERE );
+
+    CPLDebug( "OGR_PG", "PQexec(%s)\n", 
+              szCommand );
+
     hResult = PQexec(hPGConn, szCommand);
     PQclear( hResult );
 
@@ -822,10 +902,10 @@ int OGRPGLayer::TestCapability( const char * pszCap )
         return bUpdateAccess;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return poFilterGeom == NULL;
+        return poFilterGeom == NULL || bHasPostGISGeometry;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
-        return FALSE;
+        return TRUE;
 
     else if( EQUAL(pszCap,OLCCreateField) )
         return TRUE;

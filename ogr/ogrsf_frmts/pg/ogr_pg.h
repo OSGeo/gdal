@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/06/26 20:59:13  warmerda
+ * implement efficient spatial and attribute query support
+ *
  * Revision 1.4  2001/06/19 22:29:12  warmerda
  * upgraded to include PostGIS support
  *
@@ -80,6 +83,10 @@ class OGRPGLayer : public OGRLayer
     int			bHasPostGISGeometry;
     char		*pszGeomColumn;
 
+    void		BuildWhere(void);
+    char	        *pszQuery;
+    char		*pszWHERE;
+
   public:
     			OGRPGLayer( OGRPGDataSource *,
                                     const char * pszName,
@@ -88,6 +95,8 @@ class OGRPGLayer : public OGRLayer
 
     OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
     void		SetSpatialFilter( OGRGeometry * );
+
+    virtual OGRErr      SetAttributeFilter( const char * );
 
     void		ResetReading();
     OGRFeature *	GetNextRawFeature();
