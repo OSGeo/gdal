@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2004/04/23 20:27:24  warmerda
+ * completed mapsheet support for CDED50K
+ *
  * Revision 1.7  2004/04/23 19:43:00  warmerda
  * added partial NTS mapsheet db support
  *
@@ -670,8 +673,7 @@ USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
     fpNTS = VSIFOpen( pszNTSFilename, "rb" );
     if( fpNTS == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,  
-                  "Unable to find NTS mapsheet lookup file: %s", 
+        CPLDebug( "Unable to find NTS mapsheet lookup file: %s", 
                   pszNTSFilename );
         return FALSE;
     }
@@ -728,8 +730,7 @@ USGSDEM_LookupNTSByTile( const char *pszTile, char *pszName,
     fpNTS = VSIFOpen( pszNTSFilename, "rb" );
     if( fpNTS == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,  
-                  "Unable to find NTS mapsheet lookup file: %s", 
+        CPLDebug( "Unable to find NTS mapsheet lookup file: %s", 
                   pszNTSFilename );
         return FALSE;
     }
@@ -785,10 +786,19 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
     double dfULY = (psWInfo->dfULY+psWInfo->dfURY)*0.5;
 
     // Try looking up TOPLEFT as a NTS mapsheet name.
-    if( pszTOPLEFT != NULL && strstr(pszTOPLEFT,",") == NULL )
+    if( pszTOPLEFT != NULL && strstr(pszTOPLEFT,",") == NULL
+        && (strlen(pszTOPLEFT) == 6 || strlen(pszTOPLEFT) == 7) )
     {
-        if( !USGSDEM_LookupNTSByTile( pszTOPLEFT, NULL, &dfULX, &dfULY ) )
+        char szTrimmedTile[7];
+
+        strncpy( szTrimmedTile, pszTOPLEFT, 6 );
+        szTrimmedTile[6] = '\0';
+
+        if( !USGSDEM_LookupNTSByTile( szTrimmedTile, NULL, &dfULX, &dfULY ) )
             return FALSE;
+
+        if( EQUAL(pszTOPLEFT+6,"e") )
+            dfULX += 0.25;
     }
 
     // Assume TOPLEFT is a long/lat corner.
@@ -815,6 +825,21 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
                       "TOPLEFT must be on a 15\" boundary for CDED50K, but is not." );
             return FALSE;
         }
+    }
+    else if( strlen(psWInfo->pszFilename) == 12 
+             && psWInfo->pszFilename[6] == '_'
+             && EQUAL(psWInfo->pszFilename+8,".dem") )
+    {
+        char szTrimmedTile[7];
+
+        strncpy( szTrimmedTile, psWInfo->pszFilename, 6 );
+        szTrimmedTile[6] = '\0';
+
+        if( !USGSDEM_LookupNTSByTile( szTrimmedTile, NULL, &dfULX, &dfULY ) )
+            return FALSE;
+
+        if( EQUALN(psWInfo->pszFilename+7,"e",1) )
+            dfULX += 0.25;
     }
 
 /* -------------------------------------------------------------------- */
@@ -866,10 +891,32 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
 /*      this?                                                           */
 /* -------------------------------------------------------------------- */
     char szTile[10];
+    char chEWFlag = ' ';
 
     if( USGSDEM_LookupNTSByLoc( dfULX, dfULY, szTile, NULL ) )
     {
-        
+        chEWFlag = 'w';
+    }
+    else if( USGSDEM_LookupNTSByLoc( dfULX-0.25, dfULY, szTile, NULL ) )
+    {
+        chEWFlag = 'e';
+    }
+
+    if( chEWFlag != ' ' )
+    {
+        CPLFree( psWInfo->pszFilename );
+        psWInfo->pszFilename = 
+            CPLStrdup( CPLSPrintf("%sDEM%c", szTile, chEWFlag ) );
+    }
+    else
+    {
+        if( !EQUALN(psWInfo->pszFilename+6,"DEM",3) 
+            || strlen(psWInfo->pszFilename) != 10 )
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Internal filename required to be of 'nnnannDEMz', the output\n"
+                      "filename is not of the required format, and the tile could not be\n"
+                      "identified in the NTS mapsheet list (or the NTS mapsheet could not\n"
+                      "be found).  Correct output filename for correct CDED production." );
     }
 
 /* -------------------------------------------------------------------- */
