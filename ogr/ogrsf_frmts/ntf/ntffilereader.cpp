@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/09/13 14:07:59  warmerda
+ * added nrt_comment, geometry3d, and landline99 support
+ *
  * Revision 1.4  1999/08/31 17:49:56  warmerda
  * Drop duplicate vertices in ProcessGeometry()
  *
@@ -73,6 +76,7 @@ NTFFileReader::NTFFileReader( OGRNTFDataSource * poDataSource )
 
     pszTileName = NULL;
     pszProduct = NULL;
+    pszPVName = NULL;
     pszFilename = NULL;
 
     apoCGroup[0] = NULL;
@@ -86,11 +90,15 @@ NTFFileReader::NTFFileReader( OGRNTFDataSource * poDataSource )
     pfnRecordGrouper = DefaultNTFRecordGrouper;
 
     dfXYMult = 1.0;
+    dfZMult = 1.0;
     dfXOrigin = 0;
     dfYOrigin = 0;
     nNTFLevel = 0;
     dfTileXSize = 0;
     dfTileYSize = 0;
+
+    nCoordWidth = 6;
+    nZWidth = 6;
 }
 
 /************************************************************************/
@@ -148,6 +156,9 @@ void NTFFileReader::ClearDefs()
     
     CPLFree( pszProduct );
     pszProduct = NULL;
+
+    CPLFree( pszPVName );
+    pszPVName = NULL;
     
     CPLFree( pszTileName );
     pszTileName = NULL;
@@ -266,10 +277,17 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 /* -------------------------------------------------------------------- */
         else if( poRecord->GetType() == NRT_DHR )
         {
+            int		iChar;
             pszProduct = CPLStrdup(poRecord->GetField(3,22));
-            for( int iChar = strlen(pszProduct)-1;
+            for( iChar = strlen(pszProduct)-1;
                  iChar > 0 && pszProduct[iChar] == ' ';
                  pszProduct[iChar--] = '\0' ) {}
+
+            pszPVName = CPLStrdup(poRecord->GetField(76+3,76+22));
+            for( iChar = strlen(pszPVName)-1;
+                 iChar > 0 && pszPVName[iChar] == ' ';
+                 pszPVName[iChar--] = '\0' ) {}
+
         }
 
         delete poRecord;
@@ -290,10 +308,14 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 /* -------------------------------------------------------------------- */
 /*      Classify the product type.                                      */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszProduct,"LAND-LINE",9) )
+    if( EQUALN(pszProduct,"LAND-LINE",9) && atof(pszPVName+5) < 1.3 )
         nProduct = NPC_LANDLINE;
+    else if( EQUALN(pszProduct,"LAND-LINE",9) )
+        nProduct = NPC_LANDLINE99;
     else if( EQUAL(pszProduct,"OS_LANDRANGER_CONT") ) // Panorama
         nProduct = NPC_LANDRANGER_CONT;
+    else if( EQUAL(pszProduct,"L-F_PROFILE_CON") ) // Panorama
+        nProduct = NPC_LANDFORM_PROFILE_CONT;
     else if( EQUALN(pszProduct,"Strategi",8) )
         nProduct = NPC_STRATEGI;
     else if( EQUALN(pszProduct,"Meridian",8) )
@@ -331,11 +353,16 @@ int NTFFileReader::Open( const char * pszFilenameIn )
     if( nCoordWidth == 0 )
         nCoordWidth = 10;
     
+    nZWidth = atoi(poRecord->GetField(31,35));                // ZLEN
+    if( nZWidth == 0 )
+        nZWidth = 10;
+    
     dfXYMult = atoi(poRecord->GetField(21,30)) / 1000.0;      // XY_MULT
     dfXOrigin = atoi(poRecord->GetField(47,56));
     dfYOrigin = atoi(poRecord->GetField(57,66));
     dfTileXSize = atoi(poRecord->GetField(23+74,32+74));
     dfTileYSize = atoi(poRecord->GetField(33+74,42+74));
+    dfZMult = atoi(poRecord->GetField(37,46)) / 1000.0;
 
     nSavedFeatureId = nBaseFeatureId;
     nStartPos = VSIFTell(fp);
@@ -380,7 +407,10 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
     int            nGType, nNumCoord;
     OGRGeometry    *poGeometry = NULL;
 
-    if( poRecord->GetType() != NRT_GEOMETRY )
+    if( poRecord->GetType() == NRT_GEOMETRY3D )
+        return ProcessGeometry3D( poRecord, pnGeomId );
+
+    else if( poRecord->GetType() != NRT_GEOMETRY )
         return NULL;
 
     nGType = atoi(poRecord->GetField(9,9));            // GTYPE
@@ -430,6 +460,82 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
                 dfXLast = dfX;
                 dfYLast = dfY;
                 poLine->setPoint( nOutCount++, dfX, dfY );
+            }
+        }
+        poLine->setNumPoints( nOutCount );
+    }
+
+    return poGeometry;
+}
+
+/************************************************************************/
+/*                         ProcessGeometry3D()                          */
+/************************************************************************/
+
+OGRGeometry *NTFFileReader::ProcessGeometry3D( NTFRecord * poRecord,
+                                               int * pnGeomId )
+
+{
+    int            nGType, nNumCoord;
+    OGRGeometry    *poGeometry = NULL;
+
+    if( poRecord->GetType() != NRT_GEOMETRY3D )
+        return NULL;
+
+    nGType = atoi(poRecord->GetField(9,9));            // GTYPE
+    nNumCoord = atoi(poRecord->GetField(10,13));       // NUM_COORD
+    if( pnGeomId != NULL )
+        *pnGeomId = atoi(poRecord->GetField(3,8));     // GEOM_ID
+
+    if( nGType == 1 )
+    {
+        double      dfX, dfY, dfZ;
+        
+        dfX = atoi(poRecord->GetField(14,14+GetXYLen()-1)) * GetXYMult() 
+            + GetXOrigin();
+        dfY = atoi(poRecord->GetField(14+GetXYLen(),14+GetXYLen()*2-1))
+            * GetXYMult() + GetYOrigin();
+        dfZ = atoi(poRecord->GetField(14+1+2*GetXYLen(),
+                                      14+1+2*GetXYLen()+nZWidth-1)) * dfZMult;
+
+      
+        poGeometry = new OGRPoint( dfX, dfY, dfZ );
+    }
+    
+    else if( nGType == 2 )
+    {
+        OGRLineString      *poLine = new OGRLineString;
+        double             dfX, dfY, dfZ, dfXLast, dfYLast;
+        int                iCoord, nOutCount = 0;
+
+        poGeometry = poLine;
+        poLine->setNumPoints( nNumCoord );
+        for( iCoord = 0; iCoord < nNumCoord; iCoord++ )
+        {
+            int            iStart = 14 + iCoord * (GetXYLen()*2+nZWidth+2);
+
+            dfX = atoi(poRecord->GetField(iStart+0,
+                                          iStart+GetXYLen()-1)) 
+                * GetXYMult() + GetXOrigin();
+            dfY = atoi(poRecord->GetField(iStart+GetXYLen(),
+                                          iStart+GetXYLen()*2-1)) 
+                * GetXYMult() + GetYOrigin();
+
+            dfZ = atoi(poRecord->GetField(iStart+1+2*GetXYLen(),
+                                          iStart+1+2*GetXYLen()+nZWidth-1))
+                * dfZMult;
+
+            if( iCoord == 0 )
+            {
+                dfXLast = dfX;
+                dfYLast = dfY;
+                poLine->setPoint( nOutCount++, dfX, dfY, dfZ );
+            }
+            else if( dfXLast != dfX || dfYLast != dfY )
+            {
+                dfXLast = dfX;
+                dfYLast = dfY;
+                poLine->setPoint( nOutCount++, dfX, dfY, dfZ );
             }
         }
         poLine->setNumPoints( nOutCount );
@@ -937,7 +1043,8 @@ int DefaultNTFRecordGrouper( NTFFileReader *, NTFRecord ** papoGroup,
             || poCandidate->GetType() == NRT_POLYGON
             || poCandidate->GetType() == NRT_CPOLY
             || poCandidate->GetType() == NRT_COLLECT
-            || poCandidate->GetType() == NRT_TEXTREC) )
+            || poCandidate->GetType() == NRT_TEXTREC
+            || poCandidate->GetType() == NRT_COMMENT) )
     {
         return FALSE;
     }
