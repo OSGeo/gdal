@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/03/20 22:39:31  warmerda
+ * Added C API.
+ *
  * Revision 1.1  2000/03/16 19:04:14  warmerda
  * New
  *
@@ -37,6 +40,8 @@
 #define _OGR_SRS_API_H_INCLUDED
 
 #include "ogr_core.h"
+
+CPL_C_START
 
 /* -------------------------------------------------------------------- */
 /*      Axis orientations (corresponds to CS_AxisOrientationEnum).      */
@@ -178,6 +183,75 @@ typedef enum {
 
 #define SRS_WGS84_SEMIMAJOR     6378137.0                                
 #define SRS_WGS84_INVFLATTENING 298.257223563
-                                
+
+/* -------------------------------------------------------------------- */
+/*      C Wrappers for C++ objects and methods.                         */
+/* -------------------------------------------------------------------- */
+
+typedef void *OGRSpatialReferenceH;                               
+typedef void *OGRCoordinateTransformationH;
+
+OGRSpatialReferenceH OSRNewSpatialReference( const char * /* = NULL */);
+void    OSRDestroySpatialReference( OGRSpatialReferenceH );
+
+int     OSRReference( OGRSpatialReferenceH );
+int     OSRDereference( OGRSpatialReferenceH );
+
+OGRErr  OSRImportFromEPSG( OGRSpatialReferenceH, int );
+OGRErr  OSRImportFromWkt( OGRSpatialReferenceH, char ** );
+OGRErr  OSRExportToWkt( OGRSpatialReferenceH, char ** );
+
+OGRErr  OSRSetAttrValue( OGRSpatialReferenceH hSRS, const char * pszNodePath,
+                         const char * pszNewNodeValue );
+const char *OSRGetAttrValue( OGRSpatialReferenceH hSRS,
+                             const char * pszName, int iChild /* = 0 */ );
+
+OGRErr  OSRSetLinearUnits( OGRSpatialReferenceH, const char *, double );
+double  OSRGetLinearUnits( OGRSpatialReferenceH, char ** );
+
+int     OSRIsGeographic( OGRSpatialReferenceH );
+int     OSRIsProjected( OGRSpatialReferenceH );
+int     OSRIsSameGeogCS( OGRSpatialReferenceH, OGRSpatialReferenceH );
+int     OSRIsSame( OGRSpatialReferenceH, OGRSpatialReferenceH );
+
+OGRErr  OSRSetGeogCS( OGRSpatialReferenceH hSRS,
+                      const char * pszGeogName,
+                      const char * pszDatumName,
+                      const char * pszEllipsoidName,
+                      double dfSemiMajor, double dfInvFlattening,
+                      const char * pszPMName /* = NULL */,
+                      double dfPMOffset /* = 0.0 */,
+                      const char * pszUnits /* = NULL */,
+                      double dfConvertToRadians /* = 0.0 */ );
+
+double  OSRGetSemiMajor( OGRSpatialReferenceH, OGRErr * /* = NULL */ );
+double  OSRGetSemiMinor( OGRSpatialReferenceH, OGRErr * /* = NULL */ );
+double  OSRGetInvFlattening( OGRSpatialReferenceH, OGRErr * /* = NULL */ );
+
+OGRErr  OSRSetAuthority( OGRSpatialReferenceH hSRS,
+                         const char * pszTargetKey,
+                         const char * pszAuthority,
+                         int nCode );
+OGRErr  OSRSetProjParm( OGRSpatialReferenceH, const char *, double );
+double  OSRGetProjParm( OGRSpatialReferenceH hSRS,
+                        const char * pszParmName, 
+                        double dfDefault /* = 0.0 */,
+                        OGRErr * /* = NULL */ );
+
+OGRErr  OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth );
+int     OSRGetUTM( OGRSpatialReferenceH hSRS, int *pbNorth );
+
+/* -------------------------------------------------------------------- */
+/*      OGRCoordinateTransform C API.                                   */
+/* -------------------------------------------------------------------- */
+OGRCoordinateTransformationH
+OCTNewCoordinateTransformation( OGRSpatialReferenceH hSourceSRS,
+                                OGRSpatialReferenceH hTargetSRS );
+void OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH );
+
+int OCTTransform( OGRCoordinateTransformationH hCT,
+                  int nCount, double *x, double *y, double *z );
+
+CPL_C_END
 
 #endif /* ndef _OGR_SRS_API_H_INCLUDED */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/03/20 22:40:23  warmerda
+ * Added C API.
+ *
  * Revision 1.1  2000/03/20 15:00:11  warmerda
  * New
  *
@@ -130,6 +133,16 @@ OGRCoordinateTransformation::~OGRCoordinateTransformation()
 }
 
 /************************************************************************/
+/*                 OCTDestroyCoordinateTransformation()                 */
+/************************************************************************/
+
+void OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH hCT )
+
+{
+    delete (OGRCoordinateTransformation *) hCT;
+}
+
+/************************************************************************/
 /*                 OGRCreateCoordinateTransformation()                  */
 /************************************************************************/
 
@@ -160,6 +173,20 @@ OGRCreateCoordinateTransformation( OGRSpatialReference *poSource,
     {
         return poCT;
     }
+}
+
+/************************************************************************/
+/*                   OCTNewCoordinateTransformation()                   */
+/************************************************************************/
+
+OGRCoordinateTransformationH OCTNewCoordinateTransformation(
+    OGRSpatialReferenceH hSourceSRS, OGRSpatialReferenceH hTargetSRS )
+
+{
+    return (OGRCoordinateTransformationH) 
+        OGRCreateCoordinateTransformation( 
+            (OGRSpatialReference *) hSourceSRS,
+            (OGRSpatialReference *) hTargetSRS );
 }
 
 /************************************************************************/
@@ -353,7 +380,7 @@ int OGRProj4CT::Transform( int nCount, double *x, double *y, double *z )
 /* -------------------------------------------------------------------- */
 /*      Do we need to translate to WGS84?                               */
 /* -------------------------------------------------------------------- */
-    if( 1/*padfSourceBursaWolf != NULL || padfTargetBursaWolf != NULL*/)
+    if( padfSourceBursaWolf != NULL || padfTargetBursaWolf != NULL )
     {
         double	dfXGC, dfYGC, dfZGC;
         double  dfSrcESquared, dfNU, dfTrgESquared;
@@ -448,5 +475,14 @@ int OGRProj4CT::Transform( int nCount, double *x, double *y, double *z )
     return TRUE;
 }
 
+/************************************************************************/
+/*                            OCTTransform()                            */
+/************************************************************************/
 
+int OCTTransform( OGRCoordinateTransformationH hTransform,
+                  int nCount, double *x, double *y, double *z )
 
+{
+    return ((OGRCoordinateTransformation*) hTransform)->
+        Transform( nCount, x, y,z );
+}
