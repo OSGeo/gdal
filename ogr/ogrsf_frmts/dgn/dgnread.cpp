@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2002/11/12 19:45:27  warmerda
+ * added support to parse view infos in TCB
+ *
  * Revision 1.32  2002/11/11 20:38:13  warmerda
  * provide external extents call, add inverse to int function
  *
@@ -1101,6 +1104,7 @@ static DGNElemCore *DGNParseTCB( DGNInfo * psDGN )
 {
     DGNElemTCB *psTCB;
     DGNElemCore *psElement;
+    int iView;
 
     psTCB = (DGNElemTCB *) CPLCalloc(sizeof(DGNElemTCB),1);
     psElement = (DGNElemCore *) psTCB;
@@ -1158,6 +1162,40 @@ static DGNElemCore *DGNParseTCB( DGNInfo * psDGN )
             && psTCB->subunits_per_master != 0 )
             psDGN->scale = 1.0 
                 / (psTCB->uor_per_subunit * psTCB->subunits_per_master);
+    }
+
+    /* Collect views */
+    for( iView = 0; iView < 8; iView++ )
+    {
+        unsigned char *pabyRawView = psDGN->abyElem + 46 + iView*118;
+        DGNViewInfo *psView = psTCB->views + iView;
+        int i;
+
+        psView->flags = pabyRawView[0] + pabyRawView[1] * 256;
+        memcpy( psView->levels, pabyRawView + 2, 8 );
+        
+        psView->origin.x = DGN_INT32( pabyRawView + 10 );
+        psView->origin.y = DGN_INT32( pabyRawView + 14 );
+        psView->origin.z = DGN_INT32( pabyRawView + 18 );
+
+        DGNTransformPoint( psDGN, &(psView->origin) );
+
+        psView->delta.x = DGN_INT32( pabyRawView + 22 );
+        psView->delta.y = DGN_INT32( pabyRawView + 26 );
+        psView->delta.z = DGN_INT32( pabyRawView + 30 );
+
+        psView->delta.x *= psDGN->scale;
+        psView->delta.y *= psDGN->scale;
+        psView->delta.z *= psDGN->scale;
+
+        memcpy( psView->transmatrx, pabyRawView + 34, sizeof(double) * 9 );
+        for( i = 0; i < 9; i++ )
+            DGN2IEEEDouble( psView->transmatrx + i );
+
+        memcpy( &(psView->conversion), pabyRawView + 106, sizeof(double) );
+        DGN2IEEEDouble( &(psView->conversion) );
+
+        psView->activez = DGN_INT32( pabyRawView + 114 );
     }
 
     return psElement;
