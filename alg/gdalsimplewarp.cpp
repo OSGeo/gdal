@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/12/07 22:58:42  warmerda
+ * added initialization support for simple warper
+ *
  * Revision 1.3  2002/12/06 21:43:28  warmerda
  * removed luts
  *
@@ -42,6 +45,7 @@
 
 #include "gdal_priv.h"
 #include "gdal_alg.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -53,7 +57,7 @@ int GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                          int nBandCount, int *panBandList, 
                          GDALTransformerFunc pfnTransform, void *pTransformArg,
                          GDALProgressFunc pfnProgress, void *pProgressArg, 
-                         const char **papszWarpOptions )
+                         char **papszWarpOptions )
 
 {
     int		iBand, bCancelled = FALSE;
@@ -131,6 +135,38 @@ int GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
 
 /* -------------------------------------------------------------------- */
+/*      Establish the value we will use to initialize the bands.  We    */
+/*      default to -1 indicating the initial value should be read       */
+/*      and preserved from the source file, but allow this to be        */
+/*      overridden by passed                                            */
+/*      option(s).                                                      */
+/* -------------------------------------------------------------------- */
+    int         *panBandInit;
+
+    panBandInit = (int *) CPLCalloc(sizeof(int),nBandCount);
+    if( CSLFetchNameValue( papszWarpOptions, "INIT" ) )
+    {
+        int  iBand, nTokenCount;
+        char **papszTokens = 
+            CSLTokenizeStringComplex( CSLFetchNameValue( papszWarpOptions, 
+                                                         "INIT" ),
+                                      " ,", FALSE, FALSE );
+
+        nTokenCount = CSLCount(papszTokens);
+
+        for( iBand = 0; iBand < nBandCount; iBand++ )
+        {
+            if( nTokenCount == 0 )
+                panBandInit[iBand] = 0;
+            else
+                panBandInit[iBand] = 
+                    atoi(papszTokens[MIN(iBand,nTokenCount-1)]);
+        }
+
+        CSLDestroy(papszTokens);
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Loop over all the scanlines in the output image.                */
 /* -------------------------------------------------------------------- */
     int iDstY;
@@ -142,7 +178,15 @@ int GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         // Clear output buffer to "transparent" value.  Shouldn't we
         // really be reading from the destination file to support overlay?
         for( iBand = 0; iBand < nBandCount; iBand++ )
-            memset( papabyDstLine[iBand], 0, nDstXSize );
+        {
+            if( panBandInit[iBand] == -1 )
+                GDALRasterIO( GDALGetRasterBand(hDstDS,iBand+1), GF_Read,
+                              0, iDstY, nDstXSize, 1, 
+                              papabyDstLine[iBand], nDstXSize, 1, GDT_Byte, 
+                              0, 0 );
+            else
+                memset( papabyDstLine[iBand], panBandInit[iBand], nDstXSize );
+        }
 
         // Set point to transform.
         for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
