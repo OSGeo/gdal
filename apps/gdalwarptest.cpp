@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/05/28 18:18:43  warmerda
+ * added -q (quiet) flag
+ *
  * Revision 1.9  2003/05/21 14:40:40  warmerda
  * fix error message
  *
@@ -72,7 +75,7 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
 
 static double	       dfMinX=0.0, dfMinY=0.0, dfMaxX=0.0, dfMaxY=0.0;
 static double	       dfXRes=0.0, dfYRes=0.0;
-static int             nForcePixels=0, nForceLines=0;
+static int             nForcePixels=0, nForceLines=0, bQuiet = FALSE;
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -87,7 +90,7 @@ static void Usage()
         "    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
         "    [-wo \"NAME=VALUE\"] [-ot Byte/Int16/...] [-wt Byte/Int16]\n"
         "    [-rn] [-rb] [-rc] [-srcnodata value [value...]]\n" 
-        "    [-wm memory_in_mb] [-multi]\n"
+        "    [-wm memory_in_mb] [-multi] [-q]\n"
         "    [-of format] [-co \"NAME=VALUE\"]* srcfile dstfile\n" );
     exit( 1 );
 }
@@ -184,6 +187,10 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-multi") )
         {
             bMulti = TRUE;
+        }   
+        else if( EQUAL(argv[i],"-q") )
+        {
+            bQuiet = TRUE;
         }   
         else if( EQUAL(argv[i],"-of") && i < argc-1 )
         {
@@ -405,7 +412,8 @@ int main( int argc, char ** argv )
     psWO->pfnTransformer = pfnTransformer;
     psWO->pTransformerArg = hTransformArg;
 
-    psWO->pfnProgress = GDALTermProgress;
+    if( !bQuiet )
+        psWO->pfnProgress = GDALTermProgress;
 
     if( dfWarpMemoryLimit != 0.0 )
         psWO->dfWarpMemoryLimit = dfWarpMemoryLimit;
@@ -629,7 +637,8 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
-    printf( "Creating output file is that %dP x %dL.\n", nPixels, nLines );
+    if( !bQuiet )
+        printf( "Creating output file is that %dP x %dL.\n", nPixels, nLines );
 
     hDstDS = GDALCreate( hDriver, pszFilename, nPixels, nLines, 
                          GDALGetRasterCount(hSrcDS), eDT,
