@@ -38,6 +38,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/08/12 14:44:04  warmerda
+ * cleanup
+ *
  * Revision 1.1  2002/08/09 21:36:17  warmerda
  * New
  *
@@ -55,7 +58,7 @@
 // IFRowsetImpl
 template <class T, class RowsetInterface,
 	  class RowClass = CSimpleRow,
-	  class MapClass = CAtlMap < RowClass::KeyType, RowClass* > >
+	  class MapClass = CSimpleMap < RowClass::KeyType, RowClass* > >
 class ATL_NO_VTABLE IFRowsetImpl : public RowsetInterface
 {
 public:
