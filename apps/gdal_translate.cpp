@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/08/06 17:47:54  warmerda
+ * added the -projwin switch
+ *
  * Revision 1.1  2002/06/24 19:59:57  warmerda
  * New
  *
@@ -92,7 +95,8 @@ static void Usage()
             "             CInt32/CFloat32/CFloat64}] [-not_strict]\n"
             "       [-of format] [-b band] [-outsize xsize[%%] ysize[%%]]\n"
             "       [-scale [src_min src_max [dst_min dst_max]]]\n"
-            "       [-srcwin xoff yoff xsize ysize] [-co \"NAME=VALUE\"]*\n"
+            "       [-srcwin xoff yoff xsize ysize]\n"
+            "       [-projwin ulx uly lrx lry] [-co \"NAME=VALUE\"]*\n"
             "       src_dataset dst_dataset\n\n" );
 
     printf( "%s\n\n", GDALVersionInfo( "--version" ) );
@@ -136,11 +140,14 @@ int main( int argc, char ** argv )
     int                 bScale = FALSE, bHaveScaleSrc = FALSE;
     double	        dfScaleSrcMin=0.0, dfScaleSrcMax=255.0;
     double              dfScaleDstMin=0.0, dfScaleDstMax=255.0;
+    double              dfULX, dfULY, dfLRX, dfLRY;
 
     anSrcWin[0] = 0;
     anSrcWin[1] = 0;
     anSrcWin[2] = 0;
     anSrcWin[3] = 0;
+
+    dfULX = dfULY = dfLRX = dfLRY = 0.0;
 
 /* -------------------------------------------------------------------- */
 /*      Register standard GDAL drivers, and identify output driver.     */
@@ -230,6 +237,14 @@ int main( int argc, char ** argv )
             anSrcWin[3] = atoi(argv[++i]);
         }   
 
+        else if( EQUAL(argv[i],"-projwin") && i < argc-4 )
+        {
+            dfULX = atof(argv[++i]);
+            dfULY = atof(argv[++i]);
+            dfLRX = atof(argv[++i]);
+            dfLRY = atof(argv[++i]);
+        }   
+
         else if( argv[i][0] == '-' )
         {
             printf( "Option %s incomplete, or not recognised.\n\n", 
@@ -297,6 +312,54 @@ int main( int argc, char ** argv )
         panBandList = (int *) CPLMalloc(sizeof(int)*nBandCount);
         for( i = 0; i < nBandCount; i++ )
             panBandList[i] = i+1;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Compute the source window from the projected source window      */
+/*      if the projected coordinates were provided.  Note that the      */
+/*      projected coordinates are in ulx, uly, lrx, lry format,         */
+/*      while the anSrcWin is xoff, yoff, xsize, ysize with the         */
+/*      xoff,yoff being the ulx, uly in pixel/line.                     */
+/* -------------------------------------------------------------------- */
+    if( dfULX != 0.0 || dfULY != 0.0 
+        || dfLRX != 0.0 || dfLRY != 0.0 )
+    {
+        double	adfGeoTransform[6];
+
+        GDALGetGeoTransform( hDataset, adfGeoTransform );
+
+        if( adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0 )
+        {
+            fprintf( stderr, 
+                     "The -projwin option was used, but the geotransform is,\n"
+                     "this configuration is not supported.\n" );
+            exit( 1 );
+        }
+
+        anSrcWin[0] = (int) 
+            ((dfULX - adfGeoTransform[0]) / adfGeoTransform[1] + 0.001);
+        anSrcWin[1] = (int) 
+            ((dfULY - adfGeoTransform[3]) / adfGeoTransform[5] + 0.001);
+
+        anSrcWin[2] = (int) ((dfLRX - dfULX) / adfGeoTransform[1] + 0.5);
+        anSrcWin[3] = (int) ((dfLRY - dfULY) / adfGeoTransform[5] + 0.5);
+
+        fprintf( stdout, 
+                 "Computed -srcin %d %d %d %d from projected window.\n",
+                 anSrcWin[0], 
+                 anSrcWin[1], 
+                 anSrcWin[2], 
+                 anSrcWin[3] );
+
+        if( anSrcWin[0] < 0 || anSrcWin[1] < 0 
+            || anSrcWin[0] + anSrcWin[2] > GDALGetRasterXSize(hDataset) 
+            || anSrcWin[1] + anSrcWin[3] > GDALGetRasterYSize(hDataset) )
+        {
+            fprintf( stderr, 
+                     "Computed -srcwin falls outside raster size of %dx%d.\n",
+                     GDALGetRasterXSize(hDataset), 
+                     GDALGetRasterYSize(hDataset) );
+        }
     }
 
 /* -------------------------------------------------------------------- */
