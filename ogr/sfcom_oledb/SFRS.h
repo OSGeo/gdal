@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/08/17 14:25:49  warmerda
+ * added ICommandWithParameters implmentation
+ *
  * Revision 1.6  2001/06/01 18:04:17  warmerda
  * added mnBufferSize to CVirtualArray
  *
@@ -51,6 +54,7 @@
 #include "resource.h"       // main symbols
 #include "sfutil.h"
 #include "IColumnsRowsetImpl.h"
+#include "ICommandWithParametersImpl.h"
 
 /************************************************************************/
 /*                              SchemaInfo                              */
@@ -147,6 +151,7 @@ class ATL_NO_VTABLE CSFCommand :
 	public IObjectWithSiteImpl<CSFCommand>,
 	public IConvertTypeImpl<CSFCommand>,
 	public IColumnsInfoImpl<CSFCommand>,
+        public ICommandWithParametersImpl<CSFCommand>,
 	public CSFCommandSupportsErrorInfoImpl
 {
 public:
@@ -155,6 +160,7 @@ BEGIN_COM_MAP(CSFCommand)
 	COM_INTERFACE_ENTRY(IObjectWithSite)
 	COM_INTERFACE_ENTRY(IAccessor)
 	COM_INTERFACE_ENTRY(ICommandProperties)
+	COM_INTERFACE_ENTRY(ICommandWithParameters)
 	COM_INTERFACE_ENTRY2(ICommandText, ICommand)
 	COM_INTERFACE_ENTRY(IColumnsInfo)
 	COM_INTERFACE_ENTRY(IConvertType)
@@ -170,14 +176,19 @@ public:
 		hr = IAccessorImpl<CSFCommand>::FinalConstruct();
 		if (FAILED(hr))
 			return hr;
+                m_bHasParamaters = TRUE;
 		return CUtlProps<CSFCommand>::FInit();
 	}
 	void FinalRelease()
 	{
 		IAccessorImpl<CSFCommand>::FinalRelease();
 	}
+        
+        HRESULT ExtractSpatialQuery( DBPARAMS * );
+        
 	HRESULT WINAPI Execute(IUnknown * pUnkOuter, REFIID riid, DBPARAMS * pParams, 
 						  LONG * pcRowsAffected, IUnknown ** ppRowset);
+
 	static ATLCOLUMNINFO* GetColumnInfo(CSFCommand* pv, ULONG* pcInfo)
 	{
 		return CShapeFile::GetColumnInfo(pv,pcInfo);
