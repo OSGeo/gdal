@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2002/10/10 21:07:06  warmerda
+ * added support for writing GeoJP2 section
+ *
  * Revision 1.2  2002/10/08 23:02:39  warmerda
  * added create support, and GeoJP2 read support
  *
@@ -54,8 +57,10 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT, int *pnSize, 
-                                  unsigned char **ppabyBuffer );
+CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT, 
+                                  const double *padfGeoTransform,
+                                  int nGCPCount, const GDAL_GCP *pasGCPList,
+                                  int *pnSize, unsigned char **ppabyBuffer );
 CPLErr CPL_DLL GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer, 
                           char **ppszWKT, double *padfGeoTransform,
                           int *pnGCPCount, GDAL_GCP **ppasGCPList );
@@ -65,6 +70,8 @@ static int kakadu_initialized = FALSE;
 
 static void
 transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision);
+
+static const unsigned int jp2_uuid_box_type = 0x75756964;
 
 static unsigned char msi_uuid2[16] =
 	{0xb1,0x4b,0xf8,0xbd,0x08,0x3d,0x4b,0x43,
@@ -906,6 +913,51 @@ transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision)
 }
 
 /************************************************************************/
+/*                       JP2KAKWriteGeoTIFFInfo()                       */
+/************************************************************************/
+
+void JP2KAKWriteGeoTIFFInfo( jp2_target jp2_out, GDALDataset *poSrcDS )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Prepare the memory buffer containing the degenerate GeoTIFF     */
+/*      file.                                                           */
+/* -------------------------------------------------------------------- */
+    const char *pszWKT;
+    double	adfGeoTransform[6];
+    int         nGTBufSize = 0;
+    unsigned char *pabyGTBuf = NULL;
+
+    if( GDALGetGCPCount( poSrcDS ) > 0 )
+        pszWKT = poSrcDS->GetGCPProjection();
+    else
+        pszWKT = poSrcDS->GetProjectionRef();
+
+    poSrcDS->GetGeoTransform(adfGeoTransform);
+
+    if( GTIFMemBufFromWkt( pszWKT, adfGeoTransform, 
+                           poSrcDS->GetGCPCount(), poSrcDS->GetGCPs(), 
+                           &nGTBufSize, &pabyGTBuf ) != CE_None )
+        return;
+
+    if( nGTBufSize == 0 )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Write to a box on the JP2 file.                                 */
+/* -------------------------------------------------------------------- */
+    jp2_output_box &uuid_box = jp2_out.open_box( jp2_uuid_box_type );
+
+    uuid_box.write( (kdu_byte *) msi_uuid2, sizeof(msi_uuid2) );
+
+    uuid_box.write( (kdu_byte *) pabyGTBuf, nGTBufSize );
+
+    uuid_box.close();
+
+    CPLFree( pabyGTBuf );
+}
+
+/************************************************************************/
 /*                             CreateCopy()                             */
 /************************************************************************/
 
@@ -1034,6 +1086,24 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
             colour.init( JP2_sRGB_SPACE );
         else
             colour.init( JP2_sLUM_SPACE );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set the GeoTIFF box if georeferencing is available, and this    */
+/*      is a JP2 file.                                                  */
+/* -------------------------------------------------------------------- */
+    double	adfGeoTransform[6];
+    if( bIsJP2
+        && ((poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None
+             && (adfGeoTransform[0] != 0.0 
+                 || adfGeoTransform[1] != 1.0 
+                 || adfGeoTransform[2] != 0.0 
+                 || adfGeoTransform[3] != 0.0 
+                 || adfGeoTransform[4] != 0.0 
+                 || ABS(adfGeoTransform[5]) != 1.0))
+            || poSrcDS->GetGCPCount() > 0) )
+    {
+        JP2KAKWriteGeoTIFFInfo( jp2_out, poSrcDS );
     }
 
 /* -------------------------------------------------------------------- */
