@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2002/05/16 01:26:57  warmerda
+ * move up variable declaration to avoid VC++ error
+ *
  * Revision 1.1  2002/05/08 16:32:20  dron
  * NOAA Polar Orbiter Dataset reader added (not full implementation yet).
  *
@@ -356,6 +359,8 @@ void L1BDataset::FetchGCPs()
 GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
+    int i = 0;
+
     if( poOpenInfo->fp == NULL /*|| poOpenInfo->nHeaderBytes < 200*/ )
         return NULL;
 
@@ -483,7 +488,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    for ( int i = 1; i <= poDS->nBands; i++ )
+    for( i = 1; i <= poDS->nBands; i++ )
         poDS->SetBand( i, new L1BRasterBand( poDS, i ));
 
 /* -------------------------------------------------------------------- */
