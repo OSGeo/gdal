@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/07/24 09:33:07  dron
+ * Added MrSIDRasterBand::IRasterIO().
+ *
  * Revision 1.4  2003/05/27 21:08:38  warmerda
  * avoid int/short casting warnings
  *
@@ -129,6 +132,10 @@ class MrSIDRasterBand : public GDALRasterBand
 
     int             nBlockSize;
 
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              int, int );
+
   public:
 
                 MrSIDRasterBand( MrSIDDataset *, int );
@@ -160,10 +167,6 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDS, int nBand )
     poImageBufInfo = new ImageBufferInfo( ImageBufferInfo::BIP,
                                           *poDS->poColorSpace,
                                           poDS->eSampleType );
-
-    CPLDebug( "MrSID",
-              "Band %d: set nBlockXSize=%d, nBlockYSize=%d, nBlockSize=%d",
-              nBand, nBlockXSize, nBlockYSize, nBlockSize );
 }
 
 /************************************************************************/
@@ -174,6 +177,106 @@ MrSIDRasterBand::~MrSIDRasterBand()
 {
     if ( poImageBufInfo )
         delete poImageBufInfo;
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr MrSIDRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+                                   int nXOff, int nYOff, int nXSize, int nYSize,
+                                   void * pData, int nBufXSize, int nBufYSize,
+                                   GDALDataType eBufType,
+                                   int nPixelSpace, int nLineSpace )
+    
+{
+    MrSIDDataset *poGDS = (MrSIDDataset *) poDS;
+
+/* -------------------------------------------------------------------- */
+/*      Fallback to default implementation if the whole scanline        */
+/*      without subsampling requested.                                  */
+/* -------------------------------------------------------------------- */
+    if ( nXSize == poGDS->GetRasterXSize()
+         && nXSize == nBufXSize
+         && nYSize == nBufYSize )
+    {
+        return GDALRasterBand::IRasterIO( eRWFlag, nXOff, nYOff,
+                                          nXSize, nYSize, pData,
+                                          nBufXSize, nBufYSize, eBufType,
+                                          nPixelSpace, nLineSpace );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Use MrSID zooming/panning abilities otherwise.                  */
+/* -------------------------------------------------------------------- */
+    int         nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
+    int         iLine;
+    int         nNewXSize, nNewYSize, iSrcOffset;
+
+    ImgRect     imageSupport( nXOff, nYOff, nXOff + nXSize, nYOff + nYSize );
+    IntDimension targetDims( nBufXSize, nBufYSize );
+
+    /* Again, fallback to default if we can't zoom/pan */
+    if ( !poGDS->poMrSidNav->fitWithin( imageSupport, targetDims ) )
+    {
+        return GDALRasterBand::IRasterIO( eRWFlag, nXOff, nYOff,
+                                          nXSize, nYSize, pData,
+                                          nBufXSize, nBufYSize, eBufType,
+                                          nPixelSpace, nLineSpace );
+    }
+
+    poImageBuf = new ImageBuffer( *poImageBufInfo );
+    try
+    {
+        poGDS->poMrSidNav->loadImage( *poImageBuf );
+    }
+    catch ( Exception oException )
+    {
+        delete poImageBuf;
+        CPLError( CE_Failure, CPLE_AppDefined, oException.what() );
+        return CE_Failure;
+    }
+
+    nNewXSize = poImageBuf->getBounds().width();
+    nNewYSize = poImageBuf->getBounds().height();
+    iSrcOffset = (nBand - 1) * poImageBufInfo->bytesPerSample();
+
+    for ( iLine = 0; iLine < nBufYSize; iLine++ )
+    {
+        int     iDstLineOff = iLine * nLineSpace;
+
+        if ( nNewXSize == nBufXSize && nNewYSize == nBufYSize )
+        {
+            GDALCopyWords( (GByte *)poImageBuf->getData()
+                           + iSrcOffset + iLine * poImageBuf->getRowBytes(),
+                           eDataType, poImageBufInfo->pixelIncrement(),
+                           (GByte *)pData + iDstLineOff, eBufType, nPixelSpace,
+                           nBufXSize );
+        }
+        else
+        {
+            double  dfSrcXInc = (double)nNewXSize / nBufXSize;
+            double  dfSrcYInc = (double)nNewYSize / nBufYSize;
+
+            int     iSrcLineOff = iSrcOffset
+                + (int)(iLine * dfSrcYInc) * poImageBuf->getRowBytes();
+            int     iPixel;
+
+            for ( iPixel = 0; iPixel < nBufXSize; iPixel++ )
+            {
+                GDALCopyWords( (GByte *)poImageBuf->getData() + iSrcLineOff
+                               + (int)(iPixel * dfSrcXInc) * poImageBufInfo->pixelIncrement() ,
+                               eDataType, poImageBufInfo->pixelIncrement(),
+                               (GByte *)pData + iDstLineOff +
+                               iPixel * nBufDataSize,
+                               eBufType, nPixelSpace, 1 );
+            }
+        }
+    }
+
+    delete poImageBuf;
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -1475,7 +1578,6 @@ CPLErr MrSIDDataset::OpenZoomLevel( int iZoom )
     if ( iZoom != 0 )
     {
         nCurrentZoomLevel = iZoom;
-        poMrSidFile->getDimensionsAtLevel( nCurrentZoomLevel );
         nRasterXSize =
             poMrSidFile->getDimensionsAtLevel( nCurrentZoomLevel ).width;
         nRasterYSize =
@@ -1573,11 +1675,6 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->nOverviewCount = poDS->poMrSidFile->nlev() - 1;
 
-    CPLDebug( "MrSID",
-              "Opened image: width %d, height %d, bands %d, overviews %d",
-              poDS->nRasterXSize, poDS->nRasterYSize, poDS->nBands,
-              poDS->nOverviewCount );
-
     if ( poDS->nOverviewCount > 0 )
     {
         int         i;
@@ -1600,6 +1697,11 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Band objects will be created in separate function.              */
 /* -------------------------------------------------------------------- */
     poDS->OpenZoomLevel( 0 );
+
+    CPLDebug( "MrSID",
+              "Opened image: width %d, height %d, bands %d, overviews %d",
+              poDS->nRasterXSize, poDS->nRasterYSize, poDS->nBands,
+              poDS->nOverviewCount );
 
     return( poDS );
 }
