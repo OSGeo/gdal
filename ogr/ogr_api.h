@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2005/02/02 19:59:47  fwarmerdam
+ * added SetNextByIndex support
+ *
  * Revision 1.23  2005/01/03 22:15:48  fwarmerdam
  * added SetSpatialFilterRect
  *
@@ -325,6 +328,7 @@ void   CPL_DLL OGR_L_SetSpatialFilterRect( OGRLayerH,
 OGRErr CPL_DLL OGR_L_SetAttributeFilter( OGRLayerH, const char * );
 void   CPL_DLL OGR_L_ResetReading( OGRLayerH );
 OGRFeatureH CPL_DLL OGR_L_GetNextFeature( OGRLayerH );
+OGRErr CPL_DLL OGR_L_SetNextByIndex( OGRLayerH, long );
 OGRFeatureH CPL_DLL OGR_L_GetFeature( OGRLayerH, long );
 OGRErr CPL_DLL OGR_L_SetFeature( OGRLayerH, OGRFeatureH );
 OGRErr CPL_DLL OGR_L_CreateFeature( OGRLayerH, OGRFeatureH );
@@ -342,6 +346,7 @@ int    CPL_DLL OGR_L_Reference( OGRLayerH );
 int    CPL_DLL OGR_L_Dereference( OGRLayerH );
 int    CPL_DLL OGR_L_GetRefCount( OGRLayerH );
 OGRErr CPL_DLL OGR_L_SyncToDisk( OGRLayerH );
+GIntBig CPL_DLL OGR_L_GetFeaturesRead( OGRLayerH );
 
 /* OGRDataSource */
 
