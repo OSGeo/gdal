@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.9  2005/02/16 16:53:45  kruland
+ * Minor comment change.
+ *
  * Revision 1.8  2005/02/15 20:53:11  kruland
  * Added typemap(in) char ** from PyString which allows the pointer (to char*)
  * to change but assumes the contents do not change.
@@ -57,7 +60,7 @@
  *
  * %{
  *   ....
- *   typedef double_6[6];
+ *   typedef double double_6[6];
  * %}
  */
 
