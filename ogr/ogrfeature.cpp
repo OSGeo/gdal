@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/10/01 14:46:11  warmerda
+ * handle unknown fields gracefully
+ *
  * Revision 1.7  1999/08/30 16:33:51  warmerda
  * Use provided formatting in GetAsString() for real fields.
  *
@@ -322,7 +325,9 @@ int OGRFeature::GetFieldAsInteger( int iField )
 {
     OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
     
-    CPLAssert( poFDefn != NULL );
+    CPLAssert( poFDefn != NULL || iField == -1 );
+    if( poFDefn == NULL )
+        return 0;
     
     if( poFDefn->GetType() == OFTInteger )
         return pauFields[iField].Integer;
@@ -360,7 +365,9 @@ double OGRFeature::GetFieldAsDouble( int iField )
 {
     OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
     
-    CPLAssert( poFDefn != NULL );
+    CPLAssert( poFDefn != NULL || iField == -1 );
+    if( poFDefn == NULL )
+        return 0.0;
     
     if( poFDefn->GetType() == OFTReal )
         return pauFields[iField].Real;
@@ -400,7 +407,9 @@ const char *OGRFeature::GetFieldAsString( int iField )
     OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
     static char		szTempBuffer[80];
 
-    CPLAssert( poFDefn != NULL );
+    CPLAssert( poFDefn != NULL || iField == -1 );
+    if( poFDefn == NULL )
+        return "";
     
     if( poFDefn->GetType() == OFTString )
     {
@@ -549,7 +558,9 @@ const int *OGRFeature::GetFieldAsIntegerList( int iField, int *pnCount )
 {
     OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL );
+    CPLAssert( poFDefn != NULL || iField == -1 );
+    if( poFDefn == NULL )
+        return NULL;
     
     if( poFDefn->GetType() == OFTIntegerList )
     {
@@ -589,7 +600,9 @@ const double *OGRFeature::GetFieldAsDoubleList( int iField, int *pnCount )
 {
     OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL );
+    CPLAssert( poFDefn != NULL || iField == -1 );
+    if( poFDefn == NULL )
+        return NULL;
     
     if( poFDefn->GetType() == OFTRealList )
     {
@@ -627,7 +640,9 @@ char **OGRFeature::GetFieldAsStringList( int iField )
 {
     OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL );
+    CPLAssert( poFDefn != NULL || iField == -1 );
+    if( poFDefn == NULL )
+        return NULL;
     
     if( poFDefn->GetType() == OFTStringList )
     {
@@ -660,7 +675,9 @@ void OGRFeature::SetField( int iField, int nValue )
 {
     OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL );
+    CPLAssert( poFDefn != NULL || iField == -1 );
+    if( poFDefn == NULL )
+        return;
     
     if( poFDefn->GetType() == OFTInteger )
     {
@@ -704,7 +721,9 @@ void OGRFeature::SetField( int iField, double dfValue )
 {
     OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL );
+    CPLAssert( poFDefn != NULL || iField == -1 );
+    if( poFDefn == NULL )
+        return;
     
     if( poFDefn->GetType() == OFTReal )
     {
@@ -747,7 +766,9 @@ void OGRFeature::SetField( int iField, const char * pszValue )
 {
     OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL );
+    CPLAssert( poFDefn != NULL || iField == -1 );
+    if( poFDefn == NULL )
+        return;
     
     if( poFDefn->GetType() == OFTString )
     {
@@ -785,6 +806,10 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
 {
     OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
 
+    CPLAssert( poFDefn != NULL || iField == -1 );
+    if( poFDefn == NULL )
+        return;
+    
     if( poFDefn->GetType() == OFTIntegerList )
     {
         OGRField	uField;
@@ -815,6 +840,10 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
 {
     OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
 
+    CPLAssert( poFDefn != NULL || iField == -1 );
+    if( poFDefn == NULL )
+        return;
+    
     if( poFDefn->GetType() == OFTRealList )
     {
         OGRField	uField;
@@ -844,6 +873,10 @@ void OGRFeature::SetField( int iField, char ** papszValues )
 {
     OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
 
+    CPLAssert( poFDefn != NULL || iField == -1 );
+    if( poFDefn == NULL )
+        return;
+    
     if( poFDefn->GetType() == OFTStringList )
     {
         OGRField	uField;
@@ -876,7 +909,9 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
 {
     OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL );
+    CPLAssert( poFDefn != NULL || iField == -1 );
+    if( poFDefn == NULL )
+        return;
     
     if( poFDefn->GetType() == OFTInteger )
     {
