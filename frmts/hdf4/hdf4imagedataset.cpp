@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.30  2003/09/05 18:15:43  dron
+ * Fixes in ASTER DEM zone detection.
+ *
  * Revision 1.29  2003/06/30 14:44:28  dron
  * Fixed problem introduced with Hyperion support.
  *
@@ -226,7 +229,7 @@ class HDF4ImageRasterBand : public GDALRasterBand
 /************************************************************************/
 
 HDF4ImageRasterBand::HDF4ImageRasterBand( HDF4ImageDataset *poDS, int nBand,
-                                          GDALDataType eType)
+                                          GDALDataType eType )
 
 {
     this->poDS = poDS;
@@ -1279,12 +1282,11 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
                         // GCPs in Level 1A dataset are in geocentric
                         // coordinates. Convert them in geodetic (we will
-                        // convert longitudes only, latitudes does not need to
+                        // convert latitudes only, longitudes does not need to
                         // be converted, because they are the same).
-                        // This calculation valid foe WGS84 datum only.
-                        pdfLat[index] =
+                        // This calculation valid for WGS84 datum only.
+                        poDS->pasGCPList[index].dfGCPY = 
                             atan(tan(pdfLat[index]*PI/180)/0.99330562)*180/PI;
-                        poDS->pasGCPList[index].dfGCPY = pdfLat[index];
                         poDS->pasGCPList[index].dfGCPX = pdfLong[index];
                         poDS->pasGCPList[index].dfGCPZ = 0.0;
 
@@ -1295,11 +1297,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                         poDS->nGCPCount++;
                     }
                 }
-
-                CPLFree( pdfLat );
-                CPLFree( pdfLong );
-                CPLFree( piLatticeX );
-                CPLFree( piLatticeY );
             }
 
             if ( pdfLat )
@@ -1503,12 +1500,11 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
                         // GCPs in Level 1B dataset are in geocentric
                         // coordinates. Convert them in geodetic (we will
-                        // convert longitudes only, latitudes does not need to
+                        // convert latitudes only, longitudes does not need to
                         // be converted, because they are the same).
-                        // This calculation valid foe WGS84 datum only.
-                        pdfLat[index] =
+                        // This calculation valid for WGS84 datum only.
+                        poDS->pasGCPList[index].dfGCPY = 
                             atan(tan(pdfLat[index]*PI/180)/0.99330562)*180/PI;
-                        poDS->pasGCPList[index].dfGCPY = pdfLat[index];
                         poDS->pasGCPList[index].dfGCPX = pdfLong[index];
                         poDS->pasGCPList[index].dfGCPZ = 0.0;
 
@@ -1536,9 +1532,11 @@ CleanupAndBreakAsterL1B:
         {
             CPLDebug( "HDF4Image", "Input dataset interpreted as ASTER_L2" );
 
-            if ( strlen( poDS->szName ) >= 5 &&
-                 EQUAL( CSLFetchNameValue( poDS->papszGlobalMetadata,
-                    CPLSPrintf("MPMETHOD%s", &poDS->szName[4]) ), "UTM" ) )
+            // XXX: We will rely on the first available MPMETHODn
+            // and UTMZONECODEn records.
+            if ( EQUAL( CSLFetchNameValue( poDS->papszGlobalMetadata,
+                                           "MPMETHOD1" ),
+                        "UTM" ) )
             {
                 oSRS.SetWellKnownGeogCS( "WGS84" );
                 
@@ -1555,7 +1553,7 @@ CleanupAndBreakAsterL1B:
                                     &dfCenterY, &dfCenterX );
                 
                 iUTMZone = atoi( CSLFetchNameValue( poDS->papszGlobalMetadata,
-                                CPLSPrintf("UTMZONECODE%s", &poDS->szName[4]) ) );
+                                                    "UTMZONECODE1" ) );
                 if( iUTMZone > 0 )
                     oSRS.SetUTM( iUTMZone, TRUE );
                 else
@@ -1755,8 +1753,8 @@ CleanupAndBreakAsterL2:
                                 &dfCenterY, &dfCenterX );
             
             // Calculate UTM zone from scene center coordinates
-            iUTMZone = 30 + (int) ((dfCenterX + 3.0) / 6.0);
-            if( dfCenterY > 0 )                 // FIXME: does it right?
+            iUTMZone = 30 + (int) ((dfCenterX + 6.0) / 6.0);
+            if( dfCenterY > 0 )
                 oSRS.SetUTM( iUTMZone, TRUE );
             else
                 oSRS.SetUTM( - iUTMZone, FALSE );
