@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/11/07 12:45:42  danmo
+ * Use #ifdef _WIN32 instead of WIN32 for strcasecmp check
+ *
  * Revision 1.2  2001/06/26 00:59:39  warmerda
  * fixed strcasecmp on WIN32
  *
@@ -45,7 +48,7 @@
 #  define FALSE 0
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #  define strcasecmp stricmp
 #endif
 
