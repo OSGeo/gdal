@@ -360,39 +360,6 @@ OGRFeature *IMapInfoFile::GetFeature(long nFeatureId)
       return NULL;
 }
 
-/**********************************************************************
- *                   IMapInfoFile::GetSpatialFilter()
- *
- * Standard OGR GetSpatialFilter implementation.  This methode is used
- * to retreive the SpacialFilter object.
- **********************************************************************/
-OGRGeometry *IMapInfoFile::GetSpatialFilter()
-{
-    return m_poFilterGeom;
-}
-
-
-/**********************************************************************
- *                   IMapInfoFile::SetSpatialFilter()
- *
- * Standard OGR SetSpatialFiltere implementation.  This methode is used
- * to set a SpatialFilter for this OGRLayer
- **********************************************************************/
-void IMapInfoFile::SetSpatialFilter (OGRGeometry * poGeomIn )
-
-{
-    if( m_poFilterGeom != NULL )
-    {
-        delete m_poFilterGeom;
-        m_poFilterGeom = NULL;
-    }
-
-    if( poGeomIn != NULL )
-        m_poFilterGeom = poGeomIn->clone();
-
-    ResetReading();
-}
-
 /************************************************************************/
 /*                            CreateField()                             */
 /*                                                                      */
