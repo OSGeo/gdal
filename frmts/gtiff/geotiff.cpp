@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.101  2004/01/01 19:49:50  dron
+ * Use uint16 insted of int16 for the count of tie points.
+ *
  * Revision 1.100  2003/12/22 15:08:16  dron
  * Check, whether all bands in input dataset has the same data type.
  *
@@ -2258,9 +2261,9 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 /* -------------------------------------------------------------------- */
     if( bBaseIn )
     {
-        char *pszTabWKT = NULL;
+        char    *pszTabWKT = NULL;
         double	*padfTiePoints, *padfScale, *padfMatrix;
-        int16	nCount;
+        uint16	nCount;
 
         adfGeoTransform[0] = 0.0;
         adfGeoTransform[1] = 1.0;
