@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.12  2005/02/24 18:39:14  kruland
+ * Using the GetProjectionMethods() custom code from old interface for the
+ * python binding.  Defined access to plain C-api for other bindings.
+ * Added GetWellKnownGeogCSAsWKT() global method.
+ *
  * Revision 1.11  2005/02/24 17:53:37  kruland
  * import the generic typemap.i file.
  *
@@ -181,71 +186,104 @@ typedef int OGRErr;
  *
  */
 
-// NEEDED GLOBALS 
-// GetWellKnowGeogCSAsWKT 
-
-/******************************************************************************
- *
- *  Projection Methods pseudo object.
- *
- */
-
-/*
- * The previous gdal.i interface defined a list with the following structure:
- *
- * ProjectionMethod = ( MethodName (string),
-                        UserMethodName (string),
-                        ParameterList [
-                          ( ParameterName (string),
-                            UserParamName (string),
-                            Type (string),
-                            Default (double ) )
-                          ....
-                         ]
-                       )
-  *
-  * MethodName is returned by OPTGetProjectionMethods().
-  *
-  * papszparameters = OPTGetParameterList( MethodName, &UserMethodName ).
-  *
-  * ParameterName is an entry in papszparameters (char **)
-  * 
-  * OPTGetParameterInfo ( MethodName, ParameterName, &UserParamName, &Type, &Default )
-  */
-
+/************************************************************************/
+/*                        GetWellKnownGeogCSAsWKT()                     */
+/************************************************************************/
 %inline %{
-struct ProjectionMethod {
-  char *MethodName;
-  char *UserMethodName;
-  char **papszParameters;
+OGRErr GetWellKnownGeogCSAsWKT( const char *name, char **argout ) {
+  OGRSpatialReferenceH srs = OSRNewSpatialReference("");
+  OSRSetWellKnownGeogCS( srs, name );
+  OGRErr rcode = OSRExportToWkt ( srs, argout );  
+  OSRDestroySpatialReference( srs );
+  return rcode;
+}
+%}
 
-  ProjectionMethod( char const *MethodName ) {
-    this->MethodName = CPLStrdup( MethodName );
-    this->papszParameters = OPTGetParameterList( MethodName, &this->UserMethodName );
-  }
+/************************************************************************/
+/*                        GetProjectionMethods()                        */
+/************************************************************************/
+/*
+ * Python has it's own custom interface to GetProjectionMethods().which returns
+ * fairly complex strucutre.
+ *
+ * All other languages will have a more simplistic interface which is
+ * exactly the same as the C api.
+ * 
+ */
+#ifdef SWIGPYTHON
+%{
+static PyObject *
+py_OPTGetProjectionMethods(PyObject *self, PyObject *args) {
 
-  ~ProjectionMethod() {
-    CPLFree( this->MethodName );
-    CPLFree( this->UserMethodName );
-    CSLDestroy( this->papszParameters );
-  }
-}; /* struct ProjectionMethod */
-%} /* %inline */
+    PyObject *py_MList;
+    char     **papszMethods;
+    int      iMethod;
+    
+    self = self;
+    args = args;
 
-%extend ProjectionMethod {
-%immutable;
-  char *MethodName;
-  char *UserMethodName;
-%pythoncode {
-  def __str__(self):
-    return "%s(%s)" % (self.MethodName, self.UserMethodName)
-}  /* %pythoncode */
-}  /* %extend */
+    papszMethods = OPTGetProjectionMethods();
+    py_MList = PyList_New(CSLCount(papszMethods));
+
+    for( iMethod = 0; papszMethods[iMethod] != NULL; iMethod++ )
+    {
+	char    *pszUserMethodName;
+	char    **papszParameters;
+	PyObject *py_PList;
+	int       iParam;
+
+	papszParameters = OPTGetParameterList( papszMethods[iMethod], 
+					       &pszUserMethodName );
+        if( papszParameters == NULL )
+            return NULL;
+
+	py_PList = PyList_New(CSLCount(papszParameters));
+	for( iParam = 0; papszParameters[iParam] != NULL; iParam++ )
+       	{
+	    char    *pszType;
+	    char    *pszUserParamName;
+            double  dfDefault;
+
+	    OPTGetParameterInfo( papszMethods[iMethod], 
+				 papszParameters[iParam], 
+				 &pszUserParamName, 
+				 &pszType, &dfDefault );
+	    PyList_SetItem(py_PList, iParam, 
+			   Py_BuildValue("(sssd)", 
+					 papszParameters[iParam], 
+					 pszUserParamName, 
+                                         pszType, dfDefault ));
+	}
+	
+	CSLDestroy( papszParameters );
+
+	PyList_SetItem(py_MList, iMethod, 
+		       Py_BuildValue("(ssO)", 
+		                     papszMethods[iMethod], 
+				     pszUserMethodName, 
+		                     py_PList));
+    }
+
+    CSLDestroy( papszMethods );
+
+    return py_MList;
+}
+%}
+%native(GetProjectionMethods) py_OPTGetProjectionMethods;
+
+#else
 
 %rename (GetProjectionMethods) OPTGetProjectionMethods;
-%apply (char **options) { (char **) };
-char ** OPTGetProjectionMethods();
-%clear (char **);
+char **OptGetProjectionMethods();
+
+%rename (GetProjectionMethodParameterList) OPTGetParameterList;
+char **OPTGetParameterList( char *method, char **username );
+
+%rename (GetProjectionMethodParamInfo) OPTGetParameterInfo;
+void OPTGetParameterInfo( char *method, char *param, char **usrname,
+                          char **type, double *default );
+
+#endif
 
 /******************************************************************************
  *
