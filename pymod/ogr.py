@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.9  2003/03/20 17:53:30  warmerda
+# added OGR OpenShared and reference coutnting stuff
+#
 # Revision 1.8  2003/03/07 16:28:55  warmerda
 # lots of 'NULL' fixes
 #
@@ -114,6 +117,14 @@ def Open( filename, update = 0 ):
     else:
         return DataSource( ds_o )
 
+def OpenShared( filename, update = 0 ):
+    
+    ds_o = _gdal.OGROpenShared( filename, update, 'NULL' )
+    if ds_o is None or ds_o == 'NULL':
+        raise ValueError, 'Unable to open: ' + filename
+    else:
+        return DataSource( ds_o )
+
 def GetDriverCount():
     return _gdal.OGRGetDriverCount()
 
@@ -131,7 +142,17 @@ def GetDriverByName( name ):
         if dr.GetName() == name:
             return dr
 
-    raise ValueError, 'Unable to find ogr.Driver named "%s".' % name 
+    raise ValueError, 'Unable to find ogr.Driver named "%s".' % name
+
+def GetOpenDSCount():
+    return _gdal.OGRGetOpenDSCount()
+
+def GetOpenDS( i ):
+    _o = _gdal.OGRGetOpenDS( i )
+    if _o is None or _o == 'NULL':
+        return None
+    else:
+        return DataSource( obj = _o )
 
 #############################################################################
 # OGRSFDriver
@@ -159,7 +180,7 @@ class Driver:
     def CreateDataSource( self, filename, options = None ):
         ds_o = _gdal.OGR_Dr_CreateDataSource( self._o, filename, "NULL" )
         if ds_o is None or ds_o == 'NULL':
-            raise ValueError, CPLGetLastErrorMsg()
+            raise ValueError, _gdal.CPLGetLastErrorMsg()
         else:
             return DataSource( ds_o )
 
@@ -178,6 +199,22 @@ class DataSource:
     def Destroy(self):
         _gdal.OGR_DS_Destroy( self._o )
         self._o = None
+
+    def Release(self):
+        _gdal.OGRReleaseDataSource( self._o )
+        self._o = None
+
+    def Reference(self):
+        return _gdal.OGR_DS_Reference(self._o)
+    
+    def Dereference(self):
+        return _gdal.OGR_DS_Dereference(self._o)
+
+    def GetRefCount(self):
+        return _gdal.OGR_DS_GetRefCount(self._o)
+
+    def GetSummaryRefCount(self):
+        return _gdal.OGR_DS_GetSummaryRefCount(self._o)
 
     def GetName(self):
         return _gdal.OGR_DS_GetName( self._o )
@@ -236,6 +273,15 @@ class Layer:
         if obj is None:
             raise ValueError, 'OGRLayer may not be directly instantiated.'
         self._o = obj
+
+    def Reference(self):
+        return _gdal.OGR_L_Reference(self._o)
+    
+    def Dereference(self):
+        return _gdal.OGR_L_Dereference(self._o)
+
+    def GetRefCount(self):
+        return _gdal.OGR_L_GetRefCount(self._o)
 
     def SetSpatialFilter( self, geom ):
         if geom is None:
