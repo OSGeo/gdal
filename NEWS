@@ -1,3 +1,79 @@
+GDAL 1.2.2 - Overview of Changes
+--------------------------------
+
+GRASS Driver: 
+    - Add Radim's version of the driver submitted by Radim.  This version
+      uses GRASS 5.7 libraries directly instead of using libgrass. 
+
+DODS Driver:
+    - Added support for spatial_ref, FlipX and FlipY .das info.
+
+CPG Driver:
+    - added new driver for Convair Polarmetric format. 
+
+HDF Driver:
+    - Significant bugs fixed. 
+
+USGS DEM Driver:
+    - Support writing UTM projected files.
+
+PNG Driver:
+    - Upgraded to libpng 1.2.6. 
+
+MrSID Driver:
+    - Substantial performance improvements. 
+    - Support for DSDK 4.x 
+    - Support JPEG2000 files via MrSID SDK. 
+
+NITF Driver:
+    - Support JPEG2000 compressed files (with Kakadu support)
+
+ESRI BIL:
+    - Support .clr color files.
+
+VRT Driver:
+    - Added support for describing raw files with VRTRawRasterBand. 
+    - Added support for virtual warped files with VRTWarpedRasterBand.
+
+GeoTIFF Driver:
+    - Fix support for 16bit image color tables. 
+    - Write ExtraSamples tag for files with more samples than expected
+      in photometric interpretation. 
+    - External overviews now built for read-only files. 
+
+Erdas Imagine Driver:
+    - Fixed support for compressed floating point layers. 
+    - Various other fixes for compatible with newer Imagine versions.
+    - improved metadata handling.
+
+gdal_merge.py:
+    - sets projection on output file.
+
+
+OGR 1.2.2 - Overview of Changes
+-------------------------------
+
+SQLite Driver:
+    - New read/write driver implemented for SQLite databases.
+
+CSV Driver:
+    - New read/write driver implemented for comma seperated value files.
+
+S-57 Driver:
+    - Substantial performance improvements.
+
+ODBC Driver:
+    - Arbitrary length field values now supported. 
+
+GEOS:
+    - Integration a series of methods utilizing GEOS when available.  Note
+      that Intersect() is still just an envelope comparison.
+
+OGRSpatialReference:
+    - Fixed Swiss Oblique Mercator support. 
+
+ =============================================================================
+
 GDAL 1.2.1 - Overview of Changes
 --------------------------------
 
