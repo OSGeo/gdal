@@ -57,4 +57,16 @@ cpl_vsisimple.o:	cpl_vsisimple.cpp
 8211view:	8211view.o libiso8211.a
 	$(CXX) $(CXXFLAGS) 8211view.o libiso8211.a $(LIBS) -o 8211view
 
+8211dump:	8211dump.o libiso8211.a
+	$(CXX) $(CXXFLAGS) 8211dump.o libiso8211.a $(LIBS) -o 8211dump
 
+
+test:	8211dump
+	@./teststream.sh >& t1.out
+	@if test "`diff t1.out teststream.out`" = '' ; then \
+	    echo "******* Stream 1 Succeeded *********"; \
+	    rm t1.out; \
+	else \
+	    echo "******* Stream 1 Failed *********"; \
+	    diff t1.out teststream.out; \
+	fi
