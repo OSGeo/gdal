@@ -1,8 +1,5 @@
 
-VSTUDIO =       F:\VisualStudio
-MSDASDK =       C:\MSDASDK
-
-EXTRAFLAGS =	-I$(VSTUDIO)\VC98\ATL\Include \
+EXTRAFLAGS =	-I$(VCDIR)\ATL\Include \
 		-I$(MSDASDK)\include\oledb \
 		-I. -Iogrsf_frmts /W3
 
@@ -26,6 +23,18 @@ OBJ_OLEDB =	oledb_sup.obj oledbsuprowset.obj oledb_sf.obj \
 
 default:        test1.exe sfcdump.exe test2.exe
 
+frmts:
+	cd ogrsf_frmts
+	$(MAKE) 
+	cd ..
+
+oledb:
+	cd sfcom_oledb
+	$(MAKE)
+	cd ..
+
+all:	frmts oledb default
+
 geometryidl.h: geometryidl.idl spatialreferenceidl.h
 	midl geometryidl.idl
 
@@ -44,7 +53,7 @@ sfcdump.exe:	geometryidl.h sfcdump.obj ogr.lib ogroledb.lib
 test1.exe:	test1.obj $(OBJ_OGR) 
 	cl test1.obj $(OBJ_OGR) $(ALL_LIBS)
 
-test2.exe:	test2.obj $(OBJ_OGR) 
+test2.exe:	test2.obj $(OBJ_OGR)
 	cl /Zi test2.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
 			$(ALL_LIBS)
 
