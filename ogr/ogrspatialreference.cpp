@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/03/20 14:58:39  warmerda
+ * added CloneGeogCS, IsProjected, isGeogCS, and GeogCSMatch
+ *
  * Revision 1.12  2000/03/16 19:04:55  warmerda
  * added SetTMG(), SetAuthority() and StripCTParms()
  *
@@ -270,18 +273,32 @@ void OGRSpatialReference::SetRoot( OGR_SRSNode * poNewRoot )
  * the first encountered will be returned.  Use GetNode() on a subtree to be
  * more specific. 
  *
- * @param pszNodeName the name of the node to search for.
+ * @param pszNodePath the name of the node to search for.  May contain multiple
+ * components such as "GEOGCS|UNITS".
  *
  * @return a pointer to the node found, or NULL if none.
  */
 
-OGR_SRSNode *OGRSpatialReference::GetAttrNode( const char * pszNodeName )
+OGR_SRSNode *OGRSpatialReference::GetAttrNode( const char * pszNodePath )
 
 {
-    if( poRoot == NULL )
+    char	**papszPathTokens;
+    OGR_SRSNode *poNode;
+
+    papszPathTokens = CSLTokenizeStringComplex(pszNodePath, "|", TRUE, FALSE);
+
+    if( CSLCount( papszPathTokens ) < 1 )
         return NULL;
 
-    return poRoot->GetNode( pszNodeName );
+    poNode = GetRoot();
+    for( int i = 0; poNode != NULL && papszPathTokens[i] != NULL; i++ )
+    {
+        poNode = poNode->GetNode( papszPathTokens[i] );
+    }
+
+    CSLDestroy( papszPathTokens );
+
+    return poNode;
 }
 
 /************************************************************************/
@@ -1782,4 +1799,114 @@ OGRErr OGRSpatialReference::StripCTParms( OGR_SRSNode * poCurrent )
         StripCTParms( poCurrent->GetChild( iChild ) );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            IsProjected()                             */
+/************************************************************************/
+
+int OGRSpatialReference::IsProjected() 
+
+{
+    return GetAttrNode("PROJCS") != NULL;
+}
+
+/************************************************************************/
+/*                            IsGeographic()                            */
+/************************************************************************/
+
+int OGRSpatialReference::IsGeographic() 
+
+{
+    if( GetRoot() == NULL )
+        return FALSE;
+
+    return EQUAL(GetRoot()->GetValue(),"GEOGCS");
+}
+
+/************************************************************************/
+/*                            CloneGeogCS()                             */
+/************************************************************************/
+
+OGRSpatialReference *OGRSpatialReference::CloneGeogCS()
+
+{
+    OGR_SRSNode	*poGeogCS;
+    OGRSpatialReference * poNewSRS;
+
+    poGeogCS = GetAttrNode( "GEOGCS" );
+    if( poGeogCS == NULL )
+        return NULL;
+
+    poNewSRS = new OGRSpatialReference();
+    poNewSRS->SetRoot( poGeogCS->Clone() );
+
+    return poNewSRS;
+}
+
+/************************************************************************/
+/*                            IsSameGeogCS()                            */
+/************************************************************************/
+
+int OGRSpatialReference::IsSameGeogCS( OGRSpatialReference *poOther )
+
+{
+    const char *pszThisValue, *pszOtherValue;
+
+/* -------------------------------------------------------------------- */
+/*      Does the datum name match?  Note that we assume                 */
+/*      compatibility if either is missing a datum.                     */
+/* -------------------------------------------------------------------- */
+    pszThisValue = this->GetAttrValue( "DATUM" );
+    pszOtherValue = poOther->GetAttrValue( "DATUM" );
+
+    if( pszThisValue != NULL && pszOtherValue != NULL 
+        && !EQUAL(pszThisValue,pszOtherValue) )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Do the prime meridians match?  If missing assume a value of zero.*/
+/* -------------------------------------------------------------------- */
+    pszThisValue = this->GetAttrValue( "PRIMEM", 1 );
+    if( pszThisValue == NULL )
+        pszThisValue = "0.0";
+
+    pszOtherValue = poOther->GetAttrValue( "PRIMEM", 1 );
+    if( pszOtherValue == NULL )
+        pszOtherValue = "0.0";
+
+    if( atof(pszOtherValue) != atof(pszThisValue) )
+        return FALSE;
+    
+/* -------------------------------------------------------------------- */
+/*      Do the units match?                                             */
+/* -------------------------------------------------------------------- */
+    pszThisValue = this->GetAttrValue( "GEOGCS|UNITS", 1 );
+    if( pszThisValue == NULL )
+        pszThisValue = SRS_UA_DEGREE_CONV;
+
+    pszOtherValue = poOther->GetAttrValue( "GEOGCS|UNITS", 1 );
+    if( pszOtherValue == NULL )
+        pszOtherValue = SRS_UA_DEGREE_CONV;
+
+    if( ABS(atof(pszOtherValue) - atof(pszThisValue)) > 0.00000001 )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Does the spheroid match.  Check semi major, and inverse         */
+/*      flattening.                                                     */
+/* -------------------------------------------------------------------- */
+    pszThisValue = this->GetAttrValue( "SPHEROID", 1 );
+    pszOtherValue = poOther->GetAttrValue( "SPHEROID", 1 );
+    if( pszThisValue != NULL && pszOtherValue != NULL 
+        && ABS(atof(pszThisValue) - atof(pszOtherValue)) > 0.01 )
+        return FALSE;
+
+    pszThisValue = this->GetAttrValue( "SPHEROID", 2 );
+    pszOtherValue = poOther->GetAttrValue( "SPHEROID", 2 );
+    if( pszThisValue != NULL && pszOtherValue != NULL 
+        && ABS(atof(pszThisValue) - atof(pszOtherValue)) > 0.0001 )
+        return FALSE;
+    
+    return TRUE;
 }
