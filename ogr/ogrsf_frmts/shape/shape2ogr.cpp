@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/04/17 20:01:39  warmerda
+ * Ensure Z coordinate preserved on read.
+ *
  * Revision 1.16  2002/04/16 16:21:28  warmerda
  * Ensure polygons written with correct winding.
  *
@@ -119,7 +122,8 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
              || psShape->nSHPType == SHPT_POINTM
              || psShape->nSHPType == SHPT_POINTZ )
     {
-        poOGR = new OGRPoint( psShape->padfX[0], psShape->padfY[0] );
+        poOGR = new OGRPoint( psShape->padfX[0], psShape->padfY[0],
+                              psShape->padfZ[0] );
     }
 
 /* -------------------------------------------------------------------- */
@@ -136,7 +140,8 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
         {
             OGRPoint	*poPoint;
 
-            poPoint = new OGRPoint( psShape->padfX[i], psShape->padfY[i] );
+            poPoint = new OGRPoint( psShape->padfX[i], psShape->padfY[i],
+                                    psShape->padfZ[i] );
             
             poOGRMPoint->addGeometry( poPoint );
 
@@ -206,7 +211,8 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
             
             poRing->setPoints( nRingPoints, 
                                psShape->padfX + nRingStart,
-                               psShape->padfY + nRingStart );
+                               psShape->padfY + nRingStart,
+                               psShape->padfZ + nRingStart );
 
             poOGRPoly->addRing( poRing );
 
