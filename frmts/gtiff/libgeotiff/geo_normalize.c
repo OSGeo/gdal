@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c,v 1.18 1999/12/10 21:28:12 warmerda Exp $
+ * $Id: geo_normalize.c,v 1.19 2000/06/09 14:05:43 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.c,v $
+ * Revision 1.19  2000/06/09 14:05:43  warmerda
+ * added default knowledge of NAD27/NAD83/WGS72/WGS84
+ *
  * Revision 1.18  1999/12/10 21:28:12  warmerda
  * fixed Stereographic to look for ProjCenterLat/Long
  *
@@ -352,15 +355,56 @@ int GTIFGetGCSInfo( int nGCSCode, char ** ppszName,
                                "HORIZCS_CODE", szSearchKey, CC_Integer,
                                "GEOD_DATUM_CODE" ) );
 
+/* -------------------------------------------------------------------- */
+/*      Handle some "well known" GCS codes directly if the table        */
+/*      wasn't found.                                                   */
+/* -------------------------------------------------------------------- */
     if( nDatum < 1 )
-        return FALSE;
+    {
+        const char * pszName = NULL;
+        nPM = PM_Greenwich;
+        nUOMAngle = Angular_DMS_Hemisphere; 
+        if( nGCSCode == GCS_NAD27 )
+        {
+            nDatum = Datum_North_American_Datum_1927;
+            pszName = "NAD27";
+        }
+        else if( nGCSCode == GCS_NAD83 )
+        {
+            nDatum = Datum_North_American_Datum_1983;
+            pszName = "NAD83";
+        }
+        else if( nGCSCode == GCS_WGS_84 )
+        {
+            nDatum = Datum_WGS84;
+            pszName = "WGS 84";
+        }
+        else if( nGCSCode == GCS_WGS_72 )
+        {
+            nDatum = Datum_WGS72;
+            pszName = "WGS 82";
+        }
+        else
+            return FALSE;
 
-    if( pnDatum != NULL )
-        *pnDatum = nDatum;
-    
+        if( ppszName != NULL )
+            *ppszName = CPLStrdup( pszName );
+        if( pnDatum != NULL )
+            *pnDatum = nDatum;
+        if( pnPM != NULL )
+            *pnPM = nPM;
+        if( pnUOMAngle != NULL )
+            *pnUOMAngle = nUOMAngle;
+
+        return TRUE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Get the PM.                                                     */
 /* -------------------------------------------------------------------- */
+    if( pnDatum != NULL )
+        *pnDatum = nDatum;
+    
     nPM = atoi(CSVGetField( CSVFilename("horiz_cs.csv" ),
                             "HORIZCS_CODE", szSearchKey, CC_Integer,
                             "PRIME_MERIDIAN_CODE" ) );
@@ -404,7 +448,7 @@ int GTIFGetGCSInfo( int nGCSCode, char ** ppszName,
 /*      where that is provided.                                         */
 /************************************************************************/
 
-int GTIFGetEllipsoidInfo( int nGCSCode, char ** ppszName,
+int GTIFGetEllipsoidInfo( int nEllipseCode, char ** ppszName,
                           double * pdfSemiMajor, double * pdfSemiMinor )
 
 {
@@ -415,14 +459,64 @@ int GTIFGetEllipsoidInfo( int nGCSCode, char ** ppszName,
 /* -------------------------------------------------------------------- */
 /*      Get the semi major axis.                                        */
 /* -------------------------------------------------------------------- */
-    sprintf( szSearchKey, "%d", nGCSCode );
+    sprintf( szSearchKey, "%d", nEllipseCode );
 
     dfSemiMajor =
         atof(CSVGetField( CSVFilename("ellipsoid.csv" ),
                           "ELLIPSOID_CODE", szSearchKey, CC_Integer,
                           "SEMI_MAJOR_AXIS" ) );
+
+/* -------------------------------------------------------------------- */
+/*      Try some well known ellipsoids.                                 */
+/* -------------------------------------------------------------------- */
     if( dfSemiMajor == 0.0 )
-        return FALSE;
+    {
+        double     dfInvFlattening, dfSemiMinor;
+        const char *pszName = NULL;
+        
+        if( nEllipseCode == Ellipse_Clarke_1866 )
+        {
+            pszName = "Clarke 1866";
+            dfSemiMajor = 6378206.4;
+            dfSemiMinor = 6356583.8;
+            dfInvFlattening = 0.0;
+        }
+        else if( nEllipseCode == Ellipse_GRS_1980 )
+        {
+            pszName = "GRS 1980";
+            dfSemiMajor = 6378137.0;
+            dfSemiMinor = 0.0;
+            dfInvFlattening = 298.257222101;
+        }
+        else if( nEllipseCode == Ellipse_WGS_84 )
+        {
+            pszName = "WGS 84";
+            dfSemiMajor = 6378137.0;
+            dfSemiMinor = 0.0;
+            dfInvFlattening = 298.257223563;
+        }
+        else if( nEllipseCode == 7043 )
+        {
+            pszName = "WGS 72";
+            dfSemiMajor = 6378135.0;
+            dfSemiMinor = 0.0;
+            dfInvFlattening = 298.26;
+        }
+        else
+            return FALSE;
+
+        if( dfSemiMinor == 0.0 )
+            dfSemiMinor = dfSemiMajor * (1 - 1.0/dfInvFlattening);
+
+        if( pdfSemiMinor != NULL )
+            *pdfSemiMinor = dfSemiMinor;
+        if( pdfSemiMajor != NULL )
+            *pdfSemiMajor = dfSemiMajor;
+        if( ppszName != NULL )
+            *ppszName = CPLStrdup( pszName );
+
+        return TRUE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*	Get the translation factor into meters.				*/
@@ -488,7 +582,7 @@ int GTIFGetPMInfo( int nPMCode, char ** ppszName, double *pdfOffset )
 /* -------------------------------------------------------------------- */
 /*      Use a special short cut for Greenwich, since it is so common.   */
 /* -------------------------------------------------------------------- */
-    if( nPMCode == 7022 /* PM_Greenwich */ )
+    if( nPMCode == PM_Greenwich )
     {
         if( pdfOffset != NULL )
             *pdfOffset = 0.0;
@@ -556,12 +650,48 @@ int GTIFGetDatumInfo( int nDatumCode, char ** ppszName, short * pnEllipsoid )
                                    "GEOD_DATUM_CODE", szSearchKey, CC_Integer,
                                    "ELLIPSOID_CODE" ) );
 
-    if( nEllipsoid < 1 )
-        return FALSE;
-
     if( pnEllipsoid != NULL )
         *pnEllipsoid = nEllipsoid;
     
+/* -------------------------------------------------------------------- */
+/*      Handle a few built-in datums.                                   */
+/* -------------------------------------------------------------------- */
+    if( nEllipsoid < 1 )
+    {
+        const char *pszName = NULL;
+        
+        if( nDatumCode == Datum_North_American_Datum_1927 )
+        {
+            nEllipsoid = Ellipse_Clarke_1866;
+            pszName = "North American Datum 1927";
+        }
+        else if( nDatumCode == Datum_North_American_Datum_1983 )
+        {
+            nEllipsoid = Ellipse_GRS_1980;
+            pszName = "North American Datum 1983";
+        }
+        else if( nDatumCode == Datum_WGS84 )
+        {
+            nEllipsoid = Ellipse_WGS_84;
+            pszName = "World Geodetic System 1984";
+        }
+        else if( nDatumCode == Datum_WGS72 )
+        {
+            nEllipsoid = 7043; /* WGS7 */
+            pszName = "World Geodetic System 1972";
+        }
+        else
+            return FALSE;
+
+        if( pnEllipsoid != NULL )
+            *pnEllipsoid = nEllipsoid;
+
+        if( ppszName != NULL )
+            *ppszName = CPLStrdup( pszName );
+
+        return TRUE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Get the name, if requested.                                     */
 /* -------------------------------------------------------------------- */
