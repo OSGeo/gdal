@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/07/12 19:21:34  warmerda
+ * fixed cleanup of GCPs
+ *
  * Revision 1.8  2000/06/05 17:24:06  warmerda
  * added real complex support
  *
@@ -107,12 +110,6 @@ MFFDataset::MFFDataset()
     pafpBandFiles = NULL;
     nGCPCount = 0;
     pasGCPList = NULL;
-    if( nGCPCount > 0 )
-    {
-        GDALDeinitGCPs( nGCPCount, pasGCPList );
-        CPLFree( pasGCPList );
-    }
-
 }
 
 /************************************************************************/
@@ -132,6 +129,12 @@ MFFDataset::~MFFDataset()
                 VSIFClose( pafpBandFiles[i] );
         }
         CPLFree( pafpBandFiles );
+    }
+
+    if( nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
     }
 }
 
