@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2002/11/04 21:15:15  warmerda
+ * improved geometry creation error reporting
+ *
  * Revision 1.44  2002/10/24 20:29:14  warmerda
  * fixed CreateFromWkb
  *
@@ -1994,7 +1997,16 @@ py_OGR_G_CreateFromWkb(PyObject *self, PyObject *args) {
     eErr = OGR_G_CreateFromWkb( wkb_in, hSRS, &hGeom );
 
     if( eErr != CE_None )
+    {
+        if( eErr == OGRERR_CORRUPT_DATA )
+            PyErr_SetString(PyExc_ValueError,
+	                    "Corrupt WKB geometry passed to OGR_G_CreateFromWkb." );
+	else
+            PyErr_SetString(PyExc_ValueError,
+	                    "OGR_G_CreateFromWkb failed." );
+
         return NULL;
+    }
     else
     {
 	char _ptemp[128];
@@ -2040,7 +2052,16 @@ py_OGR_G_CreateFromWkt(PyObject *self, PyObject *args) {
     eErr = OGR_G_CreateFromWkt( &wkt_in, hSRS, &hGeom );
 
     if( eErr != CE_None )
+    {
+        if( eErr == OGRERR_CORRUPT_DATA )
+            PyErr_SetString(PyExc_ValueError,
+	                    "Corrupt WKT geometry passed to OGR_G_CreateFromWkt." );
+	else
+            PyErr_SetString(PyExc_ValueError,
+	                    "OGR_G_CreateFromWkt failed." );
+
         return NULL;
+    }
     else
     {
 	char _ptemp[128];
