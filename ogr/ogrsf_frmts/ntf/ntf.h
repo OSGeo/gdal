@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/09/08 00:59:09  warmerda
+ * Added limiting list of files for OGRNTFDataSource::Open() for FME IDs.
+ *
  * Revision 1.3  1999/08/30 16:47:29  warmerda
  * added feature class layer, and new product codes
  *
@@ -362,7 +365,8 @@ class OGRNTFDataSource : public OGRDataSource
     			OGRNTFDataSource();
     			~OGRNTFDataSource();
 
-    int                 Open( const char * pszName, int bTestOpen = FALSE );
+    int                 Open( const char * pszName, int bTestOpen = FALSE,
+                              char ** papszFileList = NULL );
     
     const char	        *GetName() { return pszName; }
     int			GetLayerCount();
