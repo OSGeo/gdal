@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/12/18 06:35:15  warmerda
+ * implement nodata support for mapped data
+ *
  * Revision 1.6  2002/12/17 22:01:27  warmerda
  * implemented support for IC=M4 overview.ovr
  *
@@ -211,11 +214,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     NITFGetField( psImage->szIC, pachHeader, nOffset, 2 );
     nOffset += 2;
 
-    if( psImage->szIC[1] == '1' 
-        || psImage->szIC[1] == '3' 
-        || psImage->szIC[1] == '4' 
-        || psImage->szIC[1] == '5' 
-        || psImage->szIC[1] == '3' )
+    if( psImage->szIC[0] != 'N' )
     {
         NITFGetField( psImage->szCOMRAT, pachHeader, nOffset, 4 );
         nOffset += 4;
@@ -443,8 +442,18 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         CPL_MSBPTR16( &nTPXCDLNTH );
 
         CPLAssert( nBMRLNTH == 4 ); /* offsets are 4 byte */
-        
-        VSIFSeek( psFile->fp, (nTPXCDLNTH+7)/8, SEEK_CUR );
+
+        if( nTPXCDLNTH == 8 )
+        {
+            GByte byNodata;
+
+            psImage->bNoDataSet = TRUE;
+            VSIFRead( &byNodata, 1, 1, psFile->fp );
+            psImage->nNoDataValue = byNodata;
+        }
+        else
+            VSIFSeek( psFile->fp, (nTPXCDLNTH+7)/8, SEEK_CUR );
+
         VSIFRead( psImage->panBlockStart, 4, nBlockCount, psFile->fp );
 
         for( i=0; i < psImage->nBlocksPerRow * psImage->nBlocksPerColumn; i++ )
