@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.33  2004/04/13 15:09:41  warmerda
+ * clean up arguments
+ *
  * Revision 1.32  2004/04/02 17:33:22  warmerda
  * added GDALGeneralCmdLineProcessor()
  *
@@ -459,10 +462,12 @@ int main( int argc, char ** argv )
 
     GDALClose( hDataset );
 
+    CSLDestroy( argv );
+    
     GDALDumpOpenDatasets( stderr );
 
     GDALDestroyDriverManager();
-    
+
     exit( 0 );
 }
 
