@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/09/15 16:06:19  fwarmerdam
+ * Report 3D Cell header better.
+ *
  * Revision 1.23  2004/09/15 16:00:47  fwarmerdam
  * Report 3D values for Cell Header range and origin.
  *
@@ -734,8 +737,21 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
                    psCell->rnghigh.x, psCell->rnghigh.y, psCell->rnghigh.z );
           fprintf( fp, "  origin=(%.5f,%.5f,%.5f)\n",
                    psCell->origin.x, psCell->origin.y, psCell->origin.z);
-          fprintf( fp, "  xscale=%g, yscale=%g, rotation=%g\n",
-                   psCell->xscale, psCell->yscale, psCell->rotation );
+          
+          if( psInfo->dimension == 2 )
+              fprintf( fp, "  xscale=%g, yscale=%g, rotation=%g\n",
+                       psCell->xscale, psCell->yscale, psCell->rotation );
+          else
+              fprintf( fp, "  trans=%g,%g,%g,%g,%g,%g,%g,%g,%g\n",
+                       psCell->trans[0],
+                       psCell->trans[1],
+                       psCell->trans[2],
+                       psCell->trans[3],
+                       psCell->trans[4],
+                       psCell->trans[5],
+                       psCell->trans[6],
+                       psCell->trans[7],
+                       psCell->trans[8] );
       }
       break;
 
