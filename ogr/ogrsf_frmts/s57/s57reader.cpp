@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2001/12/19 22:44:53  warmerda
+ * added ADD_SOUNDG_DEPTH support
+ *
  * Revision 1.31  2001/12/17 22:36:12  warmerda
  * added readFeature() method
  *
@@ -160,6 +163,7 @@ S57Reader::S57Reader( const char * pszFilename )
     papszOptions = NULL;
     bSplitMultiPoint = FALSE;
     bGenerateLNAM = FALSE;
+    bAddSOUNDGDepth = FALSE;
 }
 
 /************************************************************************/
@@ -280,6 +284,7 @@ OGRFeature *S57Reader::NextPendingMultiPoint()
     OGRFeatureDefn *poDefn = poMultiPoint->GetDefnRef();
     OGRFeature  *poPoint = new OGRFeature( poDefn );
     OGRMultiPoint *poMPGeom = (OGRMultiPoint *) poMultiPoint->GetGeometryRef();
+    OGRPoint	*poSrcPoint;
 
     poPoint->SetFID( poMultiPoint->GetFID() );
     
@@ -288,7 +293,11 @@ OGRFeature *S57Reader::NextPendingMultiPoint()
         poPoint->SetField( i, poMultiPoint->GetRawFieldRef(i) );
     }
 
-    poPoint->SetGeometry( poMPGeom->getGeometryRef( iPointOffset++ ) );
+    poSrcPoint = (OGRPoint *) poMPGeom->getGeometryRef( iPointOffset++ );
+    poPoint->SetGeometry( poSrcPoint );
+
+    if( poPoint != NULL )
+        poPoint->SetField( "DEPTH", poSrcPoint->getZ() );
 
     if( iPointOffset >= poMPGeom->getNumGeometries() )
         ClearPendingMultiPoint();
@@ -313,6 +322,14 @@ void S57Reader::SetOptions( char ** papszOptionsIn )
         bSplitMultiPoint = TRUE;
     else
         bSplitMultiPoint = FALSE;
+
+    pszOptionValue = CSLFetchNameValue( papszOptions, "ADD_SOUNDG_DEPTH" );
+    if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
+        bAddSOUNDGDepth = TRUE;
+    else
+        bAddSOUNDGDepth = FALSE;
+
+    CPLAssert( !bAddSOUNDGDepth || bSplitMultiPoint );
 
     pszOptionValue = CSLFetchNameValue( papszOptions, "LNAM_REFS" );
     if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
@@ -1533,6 +1550,16 @@ OGRFeatureDefn *S57Reader::GenerateObjectClassDefn( S57ClassRegistrar *poCR,
             break;
         }
 
+        poFDefn->AddFieldDefn( &oField );
+    }
+
+
+/* -------------------------------------------------------------------- */
+/*      Do we need to add DEPTH attributes to soundings?                */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(poCR->GetAcronym(),"SOUNDG") && bAddSOUNDGDepth )
+    {
+        OGRFieldDefn    oField( "DEPTH", OFTReal );
         poFDefn->AddFieldDefn( &oField );
     }
 
