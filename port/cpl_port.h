@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.8  1999/02/02 21:32:38  warmerda
+ * Added CPL_{MSB,LSB}WORD{16,32} macros.
+ *
  * Revision 1.7  1999/02/02 19:02:36  warmerda
  * Removed duplicates of base types, and CPL_LSB
  *
@@ -209,5 +212,16 @@ m * this version of the CPL_SWAP64() macro with a less efficient one.
 	((GByte *)(p))[7] = ((GByte *)&_tmp)[0];          \
 }
 
+#ifdef CPL_MSB
+#  define CPL_MSBWORD16(x)	(x)
+#  define CPL_LSBWORD16(x)	CPL_SWAP16(x)
+#  define CPL_MSBWORD32(x)	(x)
+#  define CPL_LSBWORD32(x)	CPL_SWAP32(x)
+#else
+#  define CPL_LSBWORD16(x)	(x)
+#  define CPL_MSBWORD16(x)	CPL_SWAP16(x)
+#  define CPL_LSBWORD32(x)	(x)
+#  define CPL_MSBWORD32(x)	CPL_SWAP32(x)
+#endif
 
 #endif /* ndef CPL_BASE_H_INCLUDED */
