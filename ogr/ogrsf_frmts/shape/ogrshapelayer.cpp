@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/08/21 21:44:27  warmerda
+ * fixed count logic if attribute query in play
+ *
  * Revision 1.5  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -194,7 +197,7 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
 int OGRShapeLayer::GetFeatureCount( int bForce )
 
 {
-    if( poFilterGeom != NULL )
+    if( poFilterGeom != NULL || m_poAttrQuery != NULL )
         return OGRLayer::GetFeatureCount( bForce );
     else
         return nTotalShapeCount;
