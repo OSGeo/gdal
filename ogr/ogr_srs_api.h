@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/03/20 23:33:51  warmerda
+ * updated docs a bit
+ *
  * Revision 1.2  2000/03/20 22:39:31  warmerda
  * Added C API.
  *
@@ -42,6 +45,14 @@
 #include "ogr_core.h"
 
 CPL_C_START
+
+/**
+ * \file ogr_srs_api.h
+ * 
+ * C spatial reference system services and defines.
+ * 
+ * See also: ogr_spatialref.h
+ */
 
 /* -------------------------------------------------------------------- */
 /*      Axis orientations (corresponds to CS_AxisOrientationEnum).      */

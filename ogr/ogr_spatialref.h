@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2000/03/20 23:33:51  warmerda
+ * updated docs a bit
+ *
  * Revision 1.17  2000/03/20 23:08:05  warmerda
  * Added docs.
  *
@@ -85,6 +88,12 @@
 #define _OGR_SPATIALREF_H_INCLUDED
 
 #include "ogr_srs_api.h"
+
+/**
+ * \file ogr_spatialref.h
+ *
+ * Coordinate systems services.
+ */
 
 /************************************************************************/
 /*                             OGR_SRSNode                              */
@@ -371,7 +380,7 @@ class OGRSpatialReference
 /**
  * Object for transforming between coordinate systems.
  *
- * See also: OGRCreateSpatialReference.
+ * Also, see OGRCreateSpatialReference() for creating transformations.
  */
  
 class OGRCoordinateTransformation
