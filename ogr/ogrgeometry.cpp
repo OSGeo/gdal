@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2005/04/06 20:43:00  fwarmerdam
+ * fixed a variety of method signatures for documentation
+ *
  * Revision 1.28  2005/02/22 12:39:32  fwarmerdam
  * Rename Equal to Equals, and Intersect to Intersects.
  * Intersects() now always uses GEOS if available.  Also, Intersects()
@@ -526,7 +529,7 @@ OGRErr OGR_G_Transform( OGRGeometryH hGeom,
 }
 
 /**
- * \fn int OGRGeometry::getDimension();
+ * \fn int OGRGeometry::getDimension() const;
  *
  * Get the dimension of this object.
  *
@@ -565,7 +568,7 @@ int OGR_G_GetDimension( OGRGeometryH hGeom )
 }
 
 /**
- * \fn int OGRGeometry::getCoordinateDimension();
+ * \fn int OGRGeometry::getCoordinateDimension() const;
  *
  * Get the dimension of the coordinates in this object.
  *
@@ -603,7 +606,7 @@ int OGR_G_GetCoordinateDimension( OGRGeometryH hGeom )
 
 
 /**
- * \fn OGRBoolean OGRGeometry::IsEmpty();
+ * \fn OGRBoolean OGRGeometry::IsEmpty() const;
  *
  * Returns TRUE (non-zero) if the object has no points.  Normally this
  * returns FALSE except between when an object is instantiated and points
@@ -617,7 +620,7 @@ int OGR_G_GetCoordinateDimension( OGRGeometryH hGeom )
  */
 
 /**
- * \fn OGRBoolean OGRGeometry::IsSimple();
+ * \fn OGRBoolean OGRGeometry::IsSimple() const;
  *
  * Returns TRUE if the geometry is simple.
  * 
@@ -679,7 +682,7 @@ int OGR_G_Equal( OGRGeometryH hGeom, OGRGeometryH hOther )
 
 
 /**
- * \fn int OGRGeometry::WkbSize();
+ * \fn int OGRGeometry::WkbSize() const;
  *
  * Returns size of related binary representation.
  *
@@ -719,7 +722,7 @@ int OGR_G_WkbSize( OGRGeometryH hGeom )
 }
 
 /**
- * \fn void OGRGeometry::getEnvelope(OGREnvelope *psEnvelope);
+ * \fn void OGRGeometry::getEnvelope(OGREnvelope *psEnvelope) const;
  *
  * Computes and returns the bounding envelope for this geometry in the
  * passed psEnvelope structure.
@@ -801,7 +804,7 @@ OGRErr OGR_G_ImportFromWkb( OGRGeometryH hGeom,
 
 /**
  * \fn OGRErr OGRGeometry::exportToWkb( OGRwkbByteOrder eByteOrder,
-                                        unsigned char * pabyData );
+                                        unsigned char * pabyData ) const;
  *
  * Convert a geometry into well known binary format.
  *
@@ -897,7 +900,7 @@ OGRErr OGR_G_ImportFromWkt( OGRGeometryH hGeom, char ** ppszSrcText )
 }
 
 /**
- * \fn OGRErr OGRGeometry::exportToWkt( char ** ppszDstText );
+ * \fn OGRErr OGRGeometry::exportToWkt( char ** ppszDstText ) const;
  *
  * Convert a geometry into well known text format.
  *
@@ -915,8 +918,6 @@ OGRErr OGR_G_ImportFromWkt( OGRGeometryH hGeom, char ** ppszSrcText )
 /*                         OGR_G_ExportToWkt()                          */
 /************************************************************************/
 /**
- * \fn OGRErr ;
- *
  * Convert a geometry into well known text format.
  *
  * This function relates to the SFCOM IWks::ExportToWKT() method.
@@ -937,7 +938,7 @@ OGRErr OGR_G_ExportToWkt( OGRGeometryH hGeom, char **ppszSrcText )
 }
 
 /**
- * \fn OGRwkbGeometryType OGRGeometry::getGeometryType();
+ * \fn OGRwkbGeometryType OGRGeometry::getGeometryType() const;
  *
  * Fetch geometry type.
  *
@@ -973,7 +974,7 @@ OGRwkbGeometryType OGR_G_GetGeometryType( OGRGeometryH hGeom )
 }
 
 /**
- * \fn const char * OGRGeometry::getGeometryName();
+ * \fn const char * OGRGeometry::getGeometryName() const;
  *
  * Fetch WKT name for geometry type.
  *
@@ -1007,7 +1008,7 @@ const char *OGR_G_GetGeometryName( OGRGeometryH hGeom )
 }
 
 /**
- * \fn OGRGeometry *OGRGeometry::clone();
+ * \fn OGRGeometry *OGRGeometry::clone() const;
  *
  * Make a copy of this object.
  *
@@ -1111,8 +1112,6 @@ void OGR_G_Empty( OGRGeometryH hGeom )
 /************************************************************************/
 
 /**
- * \fn const char *OGRGeometryTypeToName(OGRwkbGeometryType)
- *
  * Fetch a human readable name corresponding to an OGRwkBGeometryType value.
  * The returned value should not be modified, or freed by the application.
  *
