@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/01/07 21:13:35  warmerda
+ * executequery() now takes query as input, getfeature moved
+ *
  * Revision 1.5  2003/01/07 18:16:26  warmerda
  * fixed some egrarious errors in geometry support
  *
@@ -160,7 +163,7 @@ OGRFeature *OGROCILayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
     if( iNextShapeId == 0 && poStatement == NULL )
     {
-        if( !ExecuteQuery() )
+        if( !ExecuteQuery(pszQueryStatement) )
             return NULL;
     }
 
@@ -250,21 +253,22 @@ void OGROCILayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 /*      The OGROCIStatement is used for most of the work.               */
 /************************************************************************/
 
-int OGROCILayer::ExecuteQuery()
+int OGROCILayer::ExecuteQuery( const char *pszReqQuery )
 
 {
     OGROCISession      *poSession = poDS->GetSession();
 
-    CPLAssert( pszQueryStatement != NULL );
+    CPLAssert( pszReqQuery != NULL );
     CPLAssert( poStatement == NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Execute the query.                                              */
 /* -------------------------------------------------------------------- */
     poStatement = new OGROCIStatement( poSession );
-    if( poStatement->Execute( pszQueryStatement ) != CE_None )
+    if( poStatement->Execute( pszReqQuery ) != CE_None )
     {
         delete poStatement;
+        poStatement = NULL;
         return FALSE;
     }
     nResultOffset = 0;
@@ -667,18 +671,6 @@ int OGROCILayer::GetOrdinalPoint( int iOrdinal, int nDimension,
     return TRUE;
 }
                                        
-/************************************************************************/
-/*                             GetFeature()                             */
-/************************************************************************/
-
-OGRFeature *OGROCILayer::GetFeature( long nFeatureId )
-
-{
-    /* This should be implemented! */
-
-    return NULL;
-}
-
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
