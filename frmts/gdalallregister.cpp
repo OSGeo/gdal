@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.73  2004/12/26 16:17:31  fwarmerdam
+ * added ida format
+ *
  * Revision 1.72  2004/12/09 16:37:18  fwarmerdam
  * re-enable ILWIS
  *
@@ -427,6 +430,7 @@ void GDALAllRegister()
     GDALRegister_BT();
     GDALRegister_LAN();
     GDALRegister_CPG();
+    GDALRegister_IDA();
 #endif
 
 #ifdef FRMT_jp2kak

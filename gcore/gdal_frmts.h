@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2004/12/26 16:16:33  fwarmerdam
+ * added ida format
+ *
  * Revision 1.33  2004/12/20 16:14:00  fwarmerdam
  * added GDALRegister_JP2ECW()
  *
@@ -194,6 +197,7 @@ void CPL_DLL GDALRegister_AirSAR(void);
 void CPL_DLL GDALRegister_RS2(void);
 void CPL_DLL GDALRegister_ILWIS(void);
 void CPL_DLL GDALRegister_PCRaster(void);
+void CPL_DLL GDALRegister_IDA(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
