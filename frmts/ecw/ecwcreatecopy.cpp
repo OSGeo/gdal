@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/01/15 07:48:41  fwarmerdam
+ * dos to unix linefeeds
+ *
  * Revision 1.4  2004/12/20 22:16:35  fwarmerdam
  * implement seperate ECW/JPEG2000 create entry points
  *
