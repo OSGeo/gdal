@@ -3,10 +3,10 @@
  *
  * Project:  Microstation DGN Access Library
  * Purpose:  Temporary low level DGN dumper application.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 2000, Frank Warmerdam (warmerda@home.com)
+ * Copyright (c) 2000, Frank Warmerdam (warmerdam@pobox.com)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/12/28 21:27:38  warmerda
+ * added summary report
+ *
  * Revision 1.1  2000/12/14 17:11:18  warmerda
  * New
  *
@@ -44,15 +47,97 @@ int main( int argc, char ** argv )
 {
     DGNHandle   hDGN;
     DGNElemCore *psElement;
+    const char	*pszFilename;
+    int         bSummary = FALSE;
 
-    hDGN = DGNOpen( argv[1] );
+    if( argc < 2 )
+    {
+        printf( "Usage: dgndump [-s] filename.dgn\n" );
+        exit( 1 );
+    }
+    
+    if( strcmp(argv[1],"-s") == 0 )
+    {
+        bSummary = TRUE;
+        pszFilename = argv[2];
+    }
+    else
+        pszFilename = argv[1];
+
+    hDGN = DGNOpen( pszFilename );
     if( hDGN == NULL )
         exit( 1 );
 
-    while( (psElement=DGNReadElement(hDGN)) != NULL )
+    if( !bSummary )
     {
-        DGNDumpElement( hDGN, psElement, stdout );
-        DGNFreeElement( hDGN, psElement );
+        while( (psElement=DGNReadElement(hDGN)) != NULL )
+        {
+            DGNDumpElement( hDGN, psElement, stdout );
+            DGNFreeElement( hDGN, psElement );
+        }
+    }
+    else
+    {
+        const DGNElementInfo 	*pasEI;
+        int			nCount, i, nLevel, nType;
+        int			anLevelTypeCount[128*64];
+        int			anLevelCount[64];
+        int			anTypeCount[128];
+
+        pasEI = DGNGetElementIndex( hDGN, &nCount );
+
+        printf( "Total Elements: %d\n", nCount );
+        
+        memset( anLevelTypeCount, 0, 128*64*sizeof(int) );
+        memset( anLevelCount, 0, 64*sizeof(int) );
+        memset( anTypeCount, 0, 128*sizeof(int) );
+
+        for( i = 0; i < nCount; i++ )
+        {
+            anLevelTypeCount[pasEI[i].level * 128 + pasEI[i].type]++;
+            anLevelCount[pasEI[i].level]++;
+            anTypeCount[pasEI[i].type]++;
+        }
+
+        printf( "\n" );
+        printf( "Per Type Report\n" );
+        printf( "===============\n" );
+
+        for( nType = 0; nType < 128; nType++ )
+        {
+            if( anTypeCount[nType] != 0 )
+            {
+                printf( "Type %s: %d\n", 
+                        DGNTypeToName( nType ), 
+                        anTypeCount[nType] );
+            }
+        }
+
+        printf( "\n" );
+        printf( "Per Level Report\n" );
+        printf( "================\n" );
+
+        for( nLevel = 0; nLevel < 64; nLevel++ )
+        {
+            if( anLevelCount[nLevel] == 0 )
+                continue;
+
+            printf( "Level %d, %d elements:\n", 
+                    nLevel, 
+                    anLevelCount[nLevel] );
+
+            for( nType = 0; nType < 128; nType++ )
+            {
+                if( anLevelTypeCount[nLevel * 128 + nType] != 0 )
+                {
+                    printf( "  Type %s: %d\n", 
+                            DGNTypeToName( nType ), 
+                            anLevelTypeCount[nLevel*128 + nType] );
+                }
+            }
+
+            printf( "\n" );
+        }
     }
 
     DGNClose( hDGN );
