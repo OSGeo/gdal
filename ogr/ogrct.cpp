@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/03/24 14:49:31  warmerda
+ * fetch TOWGS84 coefficients
+ *
  * Revision 1.3  2000/03/20 23:08:18  warmerda
  * Added docs.
  *
@@ -264,26 +267,26 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
     const char *pszValue;
 
     pszValue = poSRSSource->GetAttrValue( "SPHEROID", 1 );
-    if( pszValue == NULL )
+    if( pszValue == NULL || atof(pszValue) == 0.0 )
         return FALSE;
     else
         dfSourceSemiMajor = atof(pszValue);
 
     pszValue = poSRSSource->GetAttrValue( "SPHEROID", 2 );
-    if( pszValue == NULL )
+    if( pszValue == NULL || atof(pszValue) == 0.0 )
         return FALSE;
     else
         dfSourceSemiMinor = dfSourceSemiMajor
             * (1 - 1.0 / atof(pszValue));
 
     pszValue = poSRSTarget->GetAttrValue( "SPHEROID", 1 );
-    if( pszValue == NULL )
+    if( pszValue == NULL || atof(pszValue) == 0.0 )
         return FALSE;
     else
         dfTargetSemiMajor = atof(pszValue);
 
     pszValue = poSRSTarget->GetAttrValue( "SPHEROID", 2 );
-    if( pszValue == NULL )
+    if( pszValue == NULL || atof(pszValue) == 0.0 )
         return FALSE;
     else
         dfTargetSemiMinor = dfTargetSemiMajor
@@ -341,6 +344,39 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
             return FALSE;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Do we need Bursa-Wolf coefficients?                             */
+/* -------------------------------------------------------------------- */
+    if( !poSRSSource->IsSameGeogCS( poSRSTarget ) )
+    {
+        double adfCoeffs[7];
+
+        if( poSRSSource->GetTOWGS84( adfCoeffs ) == OGRERR_NONE 
+            && (adfCoeffs[0] != 0.0 
+                || adfCoeffs[1] != 0.0 
+                || adfCoeffs[2] != 0.0 
+                || adfCoeffs[3] != 0.0 
+                || adfCoeffs[4] != 0.0 
+                || adfCoeffs[5] != 0.0 
+                || adfCoeffs[6] != 0.0) )
+        {
+            padfSourceBursaWolf = (double *) CPLMalloc(sizeof(double)*7);
+            memcpy( padfSourceBursaWolf, adfCoeffs, sizeof(double)*7 );
+        }
+
+        if( poSRSTarget->GetTOWGS84( adfCoeffs ) == OGRERR_NONE 
+            && (adfCoeffs[0] != 0.0 
+                || adfCoeffs[1] != 0.0 
+                || adfCoeffs[2] != 0.0 
+                || adfCoeffs[3] != 0.0 
+                || adfCoeffs[4] != 0.0 
+                || adfCoeffs[5] != 0.0 
+                || adfCoeffs[6] != 0.0) )
+        {
+            padfTargetBursaWolf = (double *) CPLMalloc(sizeof(double)*7);
+            memcpy( padfTargetBursaWolf, adfCoeffs, sizeof(double)*7 );
+        }
+    }
 
     return TRUE;
 }
