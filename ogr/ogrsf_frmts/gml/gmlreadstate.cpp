@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/01/24 17:38:11  warmerda
+ * added MatchPath
+ *
  * Revision 1.1  2002/01/04 19:46:30  warmerda
  * New
  *
@@ -132,4 +135,33 @@ const char *GMLReadState::GetLastComponent() const
         return "";
     else
         return m_papszPathComponents[m_nPathLength-1];
+}
+
+/************************************************************************/
+/*                             MatchPath()                              */
+/*                                                                      */
+/*      Compare the passed in path to the current one and see if        */
+/*      they match.  It is assumed that the passed in path may          */
+/*      contain one or more elements and must match the tail of the     */
+/*      current path.  However, the passed in path does not need all    */
+/*      the components of the current read state path.                  */
+/*                                                                      */
+/*      Returns TRUE if the paths match.                                */
+/************************************************************************/
+
+int GMLReadState::MatchPath( const char *pszPathIn )
+
+{
+    int	iOffset;
+    int nInputLength = strlen(pszPathIn);
+    int nInternalLength = strlen(m_pszPath);
+
+    if( nInputLength > nInternalLength )
+        return FALSE;
+
+    iOffset = nInternalLength - nInputLength;
+    if( iOffset > 0 && m_pszPath[iOffset-1] != '|' )
+        return FALSE;
+
+    return strcmp(pszPathIn,m_pszPath + iOffset) == 0;
 }
