@@ -263,6 +263,30 @@ Details on the supporting code, and format can be found on the
 
 NOTE: Implemented as <tt>gdal/frmts/gxf/gxfdataset.cpp</tt>.<p>
 
+<h2><a name="IDA">IDA -- Image Display and Analysis</h2>
+
+GDAL supports reading and writing IDA images with some limitations.  IDA 
+images are the image format of WinDisp 4.  The files are always one band only
+of 8bit data.  IDA files often have the extension .img though that is not
+required.<p>
+
+Projection and georeferencing information is read though some projections
+(ie. Meteosat, and Hammer-Aitoff) are not supported.  When writing IDA files
+the projection must have a false easting and false northing of zero and the
+center of the image must be at (0,0) for the projection selected.  In essence
+this makes it hard to write images to IDA without careful arrangement of the
+georeferencing to match IDA epectations.<p>
+
+The support coordinate systems in IDA are Geographic, Lambert Conformal Conic,
+Lambert Azimuth Equal Area, Albers Equal-Area Conic and Goodes Homolosine.<p>
+
+IDA files typically contain values scaled to 8bit via a slope and offset.  
+These are returned as the slope and offset values of the bands and they must
+be used if the data is to be rescaled to original raw values for analysis. <p>
+
+NOTE: Implemented as <tt>gdal/frmts/raw/idadataset.cpp</tt>. <p>
+
+See Also: <A href="http://www.fao.org/giews/english/windisp/windisp.htm">WinDisp</a><p>
 
 <h2><a name="ILWIS">ILWIS -- Raster Map</h2>
 
@@ -363,6 +387,22 @@ with no georeferencing information.  For read, and creation all data types
 (real, integer and complex in bit depths of 8, 16, 32) should be supported. <p>
 
 NOTE: Implemented as <tt>gdal/frmts/raw/hkvdataset.cpp</tt>.<p>
+
+<h2><a name="NDF">NDF -- NLAPS Data Format</a></h2>
+
+GDAL has limited support for reading NLAPS Data Format files.  This is a
+format primarily used by the Eros Data Center for distribution of Landsat 
+data.  NDF datasets consist of a header file (often with the extension .H1)
+and one or more associated raw data files (often .I1, .I2, ...).  To open
+a dataset select the header file. <p>
+
+The NDF driver only supports 8bit data.  The only supported projection is
+UTM.<p>
+
+NOTE: Implemented as <tt>gdal/frmts/raw/ndfdataset.cpp</tt>.<p>
+
+See Also: <a href="http://landsat.usgs.gov/documents/NLAPSII.pdf">NLAPS
+Data Format Specification</a>.<p>					
 
 <h2><a name="netCDF">netCDF -- Network Common Data Format</a></h2>
 
