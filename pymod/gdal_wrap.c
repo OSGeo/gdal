@@ -445,6 +445,7 @@ SWIG_GetPtrObj(PyObject *obj, void **ptr, char *type) {
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
 #include "gdal_py.h"
+#include "cpl_minixml.h"
 
 CPL_CVSID("$Id$");
 
@@ -1716,6 +1717,125 @@ py_OPTGetProjectionMethods(PyObject *self, PyObject *args) {
     CSLDestroy( papszMethods );
 
     return py_MList;
+}
+
+/************************************************************************/
+/*                          XMLTreeToPyList()                           */
+/************************************************************************/
+
+static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
+
+{
+    PyObject *pyList;
+    int      nChildCount = 0, iChild;
+    CPLXMLNode *psChild;
+
+    for( psChild = psTree->psChild; 
+         psChild != NULL; 
+         psChild = psChild->psNext )
+        nChildCount++;
+
+    pyList = PyList_New(nChildCount+2);
+
+    PyList_SetItem( pyList, 0, Py_BuildValue( "i", (int) psTree->eType ) );
+    PyList_SetItem( pyList, 1, Py_BuildValue( "s", psTree->pszValue ) );
+
+    for( psChild = psTree->psChild, iChild = 2; 
+         psChild != NULL; 
+         psChild = psChild->psNext, iChild++ )
+    {
+        PyList_SetItem( pyList, iChild, XMLTreeToPyList( psChild ) );
+    }
+
+    return pyList; 
+}
+
+/************************************************************************/
+/*                         CPLParseXMLString()                          */
+/************************************************************************/
+static PyObject *
+py_CPLParseXMLString(PyObject *self, PyObject *args) {
+
+    char *pszText = NULL;
+    CPLXMLNode  *psXMLTree = NULL;
+    PyObject    *pyList;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:CPLParseXMLString", &pszText ))
+        return NULL;
+
+    psXMLTree = CPLParseXMLString( pszText );
+    if( psXMLTree == NULL )
+    {
+	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
+	return NULL;
+    }
+
+    pyList = XMLTreeToPyList( psXMLTree );
+    CPLDestroyXMLNode( psXMLTree );
+
+    return pyList;
+}
+
+/************************************************************************/
+/*                          PyListToXMLTree()                           */
+/************************************************************************/
+
+static CPLXMLNode *PyListToXMLTree( PyObject *pyList )
+
+{
+    int      nChildCount = 0, iChild, nType;
+    CPLXMLNode *psThisNode;
+    CPLXMLNode *psChild;
+    char       *pszText = NULL;
+
+    nChildCount = PyList_Size(pyList) - 2;
+    if( nChildCount < 0 )
+    {
+        PyErr_SetString(PyExc_TypeError,"Error in input XMLTree." );
+	return NULL;
+    }
+
+    PyArg_Parse( PyList_GET_ITEM(pyList,0), "i", &nType );
+    PyArg_Parse( PyList_GET_ITEM(pyList,1), "s", &pszText );
+    psThisNode = CPLCreateXMLNode( NULL, (CPLXMLNodeType) nType, pszText );
+
+    for( iChild = 0; iChild < nChildCount; iChild++ )
+    {
+        psChild = PyListToXMLTree( PyList_GET_ITEM(pyList,iChild+2) );
+        CPLAddXMLChild( psThisNode, psChild );
+    }
+
+    return psThisNode;
+}
+
+/************************************************************************/
+/*                         CPLSerializeXMLTree()                        */
+/************************************************************************/
+static PyObject *
+py_CPLSerializeXMLTree(PyObject *self, PyObject *args) {
+
+    char *pszText = NULL;
+    CPLXMLNode  *psXMLTree = NULL;
+    PyObject    *pyList = NULL, *pyResult = NULL;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O!:CPLSerializeXMLTree", 
+			 &PyList_Type, &pyList ))
+        return NULL;
+
+    psXMLTree = PyListToXMLTree( pyList );
+    if( psXMLTree == NULL )
+	return NULL;
+
+    pszText = CPLSerializeXMLTree( psXMLTree );
+
+    CPLDestroyXMLNode( psXMLTree );
+
+    pyResult = Py_BuildValue( "s", pszText );
+    CPLFree( pszText );
+
+    return pyResult;
 }
 #ifdef __cplusplus
 extern "C" {
@@ -3838,6 +3958,8 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALColorEntry_c2_set", _wrap_GDALColorEntry_c2_set, METH_VARARGS },
 	 { "GDALColorEntry_c1_get", _wrap_GDALColorEntry_c1_get, METH_VARARGS },
 	 { "GDALColorEntry_c1_set", _wrap_GDALColorEntry_c1_set, METH_VARARGS },
+	 { "CPLSerializeXMLTree", py_CPLSerializeXMLTree, METH_VARARGS },
+	 { "CPLParseXMLString", py_CPLParseXMLString, METH_VARARGS },
 	 { "OPTGetProjectionMethods", py_OPTGetProjectionMethods, METH_VARARGS },
 	 { "OCTTransform", py_OCTTransform, METH_VARARGS },
 	 { "OCTDestroyCoordinateTransformation", _wrap_OCTDestroyCoordinateTransformation, METH_VARARGS },

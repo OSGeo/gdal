@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.32  2002/06/27 15:41:49  warmerda
+# added minixml read/write stuff
+#
 # Revision 1.31  2002/05/28 18:52:23  warmerda
 # added GDALOpenShared
 #
@@ -128,6 +131,12 @@ def GetLastErrorNo():
     
 def GetLastErrorMsg():
     return _gdal.CPLGetLastErrorMsg()
+
+def ParseXMLString( text ):
+    return _gdal.CPLParseXMLString( text )
+    
+def SerializeXMLTree( tree ):
+    return _gdal.CPLSerializeXMLTree( tree )
     
 def GetCacheMax():
     return _gdal.GDALGetCacheMax()
