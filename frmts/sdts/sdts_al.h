@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  1999/11/12 13:12:35  warmerda
+ * make adfTransform public
+ *
  * Revision 1.21  1999/11/04 22:52:53  warmerda
  * added dynamic ATID support
  *
@@ -623,14 +626,14 @@ class SDTSRasterReader
     int		nXStart;		/* SOCI */
     int		nYStart;		/* SORI */
 
+    double	adfTransform[6];
+    
+  public:
     char	szINTR[4];		/* CE is center, TL is top left */
     char	szFMT[32];
     char	szUNITS[64];
     char	szLabel[64];
 
-    double	adfTransform[6];
-    
-  public:
     		SDTSRasterReader();
                 ~SDTSRasterReader();
 
