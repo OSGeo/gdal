@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/01/16 03:59:27  warmerda
+ * added CPLTokenizeString2
+ *
  * Revision 1.18  2001/12/11 22:40:26  warmerda
  * cleanup CPLReadLine buffer in CSLLoad()
  *
@@ -556,13 +559,13 @@ int CSLFindString( char ** papszList, const char * pszTarget )
  **********************************************************************/
 char    **CSLTokenizeString( const char *pszString )
 {
-    return CSLTokenizeStringComplex( pszString, " ", TRUE, FALSE );
+    return CSLTokenizeString2( pszString, " ", CSLT_HONOURSTRINGS );
 }
 
 /************************************************************************/
 /*                      CSLTokenizeStringComplex()                      */
 /*                                                                      */
-/*      The ultimate tokenizer?                                         */
+/*      Obsolete tokenizing api.                                        */
 /************************************************************************/
 
 char ** CSLTokenizeStringComplex( const char * pszString,
@@ -570,9 +573,32 @@ char ** CSLTokenizeStringComplex( const char * pszString,
                                   int bHonourStrings, int bAllowEmptyTokens )
 
 {
+    int 	nFlags = 0;
+
+    if( bHonourStrings )
+        nFlags |= CSLT_HONOURSTRINGS;
+    if( bAllowEmptyTokens )
+        nFlags |= CSLT_ALLOWEMPTYTOKENS;
+
+    return CSLTokenizeString2( pszString, pszDelimiters, nFlags );
+}
+
+/************************************************************************/
+/*                         CSLTokenizeString2()                         */
+/*                                                                      */
+/*      The ultimate tokenizer?                                         */
+/************************************************************************/
+
+char ** CSLTokenizeString2( const char * pszString,
+                            const char * pszDelimiters,
+                            int nCSLTFlags )
+
+{
     char        **papszRetList = NULL;
     char        *pszToken;
     int         nTokenMax, nTokenLen;
+    int		bHonourStrings = (nCSLTFlags & CSLT_HONOURSTRINGS);
+    int		bAllowEmptyTokens = (nCSLTFlags & CSLT_ALLOWEMPTYTOKENS);
 
     pszToken = (char *) CPLCalloc(10,1);
     nTokenMax = 10;
@@ -599,6 +625,12 @@ char ** CSLTokenizeStringComplex( const char * pszString,
                but don't copy over the quotes */
             if( bHonourStrings && *pszString == '"' )
             {
+                if( nCSLTFlags & CSLT_PRESERVEQUOTES )
+                {
+                    pszToken[nTokenLen] = *pszString;
+                    nTokenLen++;
+                }
+
                 if( bInString )
                 {
                     bInString = FALSE;
@@ -615,17 +647,28 @@ char ** CSLTokenizeStringComplex( const char * pszString,
                in processing them we will unescape the quotes */
             if( bInString && pszString[0] == '\\' && pszString[1] == '"' )
             {
+                if( nCSLTFlags & CSLT_PRESERVEESCAPES )
+                {
+                    pszToken[nTokenLen] = *pszString;
+                    nTokenLen++;
+                }
+
                 pszString++;
             }
 
             /* Within string constants a \\ sequence reduces to \ */
-            else if( bInString
+            else if( bInString 
                      && pszString[0] == '\\' && pszString[1] == '\\' )
             {
+                if( nCSLTFlags & CSLT_PRESERVEESCAPES )
+                {
+                    pszToken[nTokenLen] = *pszString;
+                    nTokenLen++;
+                }
                 pszString++;
             }
 
-            if( nTokenLen >= nTokenMax-1 )
+            if( nTokenLen >= nTokenMax-2 )
             {
                 nTokenMax = nTokenMax * 2 + 10;
                 pszToken = (char *) CPLRealloc( pszToken, nTokenMax );
