@@ -1,4 +1,4 @@
-.TH "gdal_translate" 1 "16 Oct 2003" "Doxygen" \" -*- nroff -*-
+.TH "gdal_translate" 1 "1 Sep 2004" "Doxygen" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -16,12 +16,14 @@ gdal_translate
        [-scale [src_min src_max [dst_min dst_max]]]       
        [-srcwin xoff yoff xsize ysize] [-a_srs srs_def]
        [-projwin xoff yoff xsize ysize] [-co "NAME=VALUE"]*
+       [-gcp pixel line easting northing]*
        [-mo "META-TAG=VALUE"]* [-quiet]
        src_dataset dst_dataset
+.fi
 .PP
 .SH "DESCRIPTION"
 .PP
-The gdal_translate utility can be used to convert raster data between different formats, potentially peforming some operations like subsettings, resampling, and rescaling pixels in the process.
+The gdal_translate utility can be used to convert raster data between different formats, potentially performing some operations like subsettings, resampling, and rescaling pixels in the process.
 .PP
 .IP "\fB\fB-ot\fP: For the output bands to be of the indicated data type.\fP" 1c
 .IP "\fB\fB-not_strict\fP:\fP" 1c
@@ -35,17 +37,19 @@ Set the size of the output file. Outsize is in pixels and lines unless '%' is at
 .IP "\fB\fB-scale\fP \fI[src_min src_max [dst_min dst_max]]\fP:\fP" 1c
 Rescale the input pixels values from the range \fIsrc_min\fP to \fIsrc_max\fP to the range \fIdst_min\fP to \fIdst_max\fP. If omitted the output range is 0 to 255. If omitted the input range is automatically computed from the source data. 
 .IP "\fB\fB-srcwin\fP \fIxoff yoff xsize ysize\fP:\fP" 1c
-Selects a subwindow from the source image for copying. 
-.IP "\fB\fB-a_srs\fP \fIsrs_def\fP:\fP" 1c
-Override the projection for the output file. The srs_def may be any of the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing the wkt.  
+Selects a subwindow from the source image for copying based on pixel/line location.  
 .IP "\fB\fB-projwin\fP \fIulx uly lrx lry\fP:\fP" 1c
 Selects a subwindow from the source image for copying (like -srcwin) but with the corners given in georeferenced coordinates.  
+.IP "\fB\fB-a_srs\fP \fIsrs_def\fP:\fP" 1c
+Override the projection for the output file. The srs_def may be any of the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing the wkt.  
 .IP "\fB\fB-mo\fP \fI'KEY=VALUE'\fP:\fP" 1c
 passes a metadata key and value to set on the output dataset if possible. 
 .IP "\fB\fB-co\fP \fI'NAME=VALUE'\fP:\fP" 1c
 passes a creation option to the output format driver. Multiple \fB-co\fP options may be listed. See format specific documentation for legal creation options for each format. 
 .IP "\fB\fB-mo\fP \fI'META-TAG=VALUE'\fP:\fP" 1c
 Add the indicated metadata values to the output dataset. 
+.IP "\fB\fB-gcp\fP \fIpixel line easting northing\fP:\fP" 1c
+Add the indicated ground control point to the output dataset. This option may be provided multiple times to provide a set of GCPs.  
 .IP "\fB\fB-quiet\fP:\fP" 1c
 Supress progress monitor and other non-error output. 
 .IP "\fB\fIsrc_dataset\fP:\fP" 1c
@@ -59,7 +63,8 @@ The destination file name.
 .PP
 .nf
 
-% gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
+gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
+.fi
 .PP
 .SH "AUTHORS"
 .PP

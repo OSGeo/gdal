@@ -1,4 +1,4 @@
-.TH "gdaladdo" 1 "16 Oct 2003" "Doxygen" \" -*- nroff -*-
+.TH "gdaladdo" 1 "1 Sep 2004" "Doxygen" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -11,6 +11,7 @@ gdaladdo \- builds or rebuilds overview images
 
 gdaladdo [-r {nearest,average,average_mp,average_magphase,mode}]
                 filename levels
+.fi
 .PP
 .SH "DESCRIPTION"
 .PP
@@ -28,11 +29,27 @@ A list of integral overview levels to build.
 .PP
 Selecting a level value like \fI2\fP causes an overview level that is 1/2 the resolution (in each dimension) of the base layer to be computed. If the file has existing overview levels at a level selected, those levels will be recomputed and rewritten in place.
 .PP
-Some format drivers do not support overviews at all. Many format drivers store overviews in a secondary file with the extension .ovr. The GeoTIFF driver stores overviews internally to the file operated on.
+Some format drivers do not support overviews at all. Many format drivers store overviews in a secondary file with the extension .ovr. The GeoTIFF driver stores overviews internally to the file operated on. That file may be compressed. It is controlled via the COMPRESS_OVERVIEW system option. All compression methods, supported by the GeoTIFF driver, available here.
 .SH "EXAMPLE"
 .PP
 .PP
- gdaladdo -r average abc.tif 2 4 8 16
+Create overviews, embedded in the supplied TIFF file:
+.PP
+.PP
+.nf
+
+gdaladdo -r average abc.tif 2 4 8 16
+.fi
+.PP
+.PP
+Create an external compressed GeoTIFF overview file from the ERDAS .IMG file:
+.PP
+.PP
+.nf
+
+gdaladdo --config COMPRESS_OVERVIEW DEFLATE erdas.img 2 4 8 16
+.fi
+.PP
 .SH "AUTHORS"
 .PP
 Frank Warmerdam <warmerdam@pobox.com> Silke Reimer <silke@intevation.de> 

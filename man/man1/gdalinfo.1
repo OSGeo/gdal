@@ -1,4 +1,4 @@
-.TH "gdalinfo" 1 "16 Oct 2003" "Doxygen" \" -*- nroff -*-
+.TH "gdalinfo" 1 "1 Sep 2004" "Doxygen" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -9,15 +9,12 @@ gdalinfo \- lists information about a raster dataset
 .PP
 .nf
 
-gdalinfo [--version] [--formats] [-mm] [-nogcp] [-nomd] datasetname
+gdalinfo [-mm] [-nogcp] [-nomd] datasetname
+.fi
 .PP
 .SH "DESCRIPTION"
 .PP
 The gdalinfo program lists various information about a GDAL supported raster dataset. 
-.IP "\fB\fB--version\fP\fP" 1c
-Print version of the GDAL library and exit. 
-.IP "\fB\fB--formats\fP\fP" 1c
-Print a list of supported file formats. 
 .IP "\fB\fB-mm\fP\fP" 1c
 Force computation of the actual min/max values for each band in the dataset. 
 .IP "\fB\fB-nogcp\fP\fP" 1c
@@ -32,7 +29,7 @@ The gdalinfo will report all of the following (if known):
 .IP "\(bu" 2
 The format driver used to access the file. 
 .IP "\(bu" 2
-Raster size (in pixel and lines). 
+Raster size (in pixels and lines). 
 .IP "\(bu" 2
 The coordinate system for the file (in OGC WKT). 
 .IP "\(bu" 2
@@ -68,7 +65,7 @@ Band pseudo-color tables.
 .PP
 .nf
 
-warmerda@gdal[138]% gdalinfo ~/openev/utm.tif 
+gdalinfo ~/openev/utm.tif 
 Driver: GTiff/GeoTIFF
 Size is 512, 512
 Coordinate System is:
@@ -94,6 +91,7 @@ Upper Right (  471440.000, 3751320.000) (117d18'32.07"W, 33d54'13.08"N)
 Lower Right (  471440.000, 3720600.000) (117d18'28.50"W, 33d37'35.61"N)
 Center      (  456080.000, 3735960.000) (117d28'27.39"W, 33d45'52.46"N)
 Band 1 Block=512x16 Type=Byte, ColorInterp=Gray
+.fi
 .PP
 .SH "AUTHORS"
 .PP
