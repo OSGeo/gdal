@@ -1,11 +1,11 @@
 /**********************************************************************
- * $Id: mitab_spatialref.cpp,v 1.39 2002/12/19 20:46:01 warmerda Exp $
+ * $Id: mitab_spatialref.cpp,v 1.40 2003/03/21 14:20:42 warmerda Exp $
  *
  * Name:     mitab_spatialref.cpp
  * Project:  MapInfo TAB Read/Write library
  * Language: C++
  * Purpose:  Implementation of the SpatialRef stuff in the TABFile class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  **********************************************************************
  * Copyright (c) 1999-2001, Frank Warmerdam
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_spatialref.cpp,v $
+ * Revision 1.40  2003/03/21 14:20:42  warmerda
+ * fixed up regional mercator handling, was screwing up transverse mercator
+ *
  * Revision 1.39  2002/12/19 20:46:01  warmerda
  * fixed spelling of Provisional_South_American_Datum_1956
  *
@@ -39,7 +42,8 @@
  * Revision 1.37  2002/10/15 14:33:30  warmerda
  * Added untested support in mitab_spatialref.cpp, and mitab_coordsys.cpp for
  * projections Regional Mercator (26), Polyconic (27), Azimuthal Equidistant -
- * All origin latitudes (28), and Lambert Azimuthal Equal Area - any aspect (29).
+ * All origin latitudes (28), and Lambert Azimuthal Equal Area - any aspect 
+ * (29).
  *
  * Revision 1.36  2002/09/05 15:38:16  warmerda
  * one more ogc datum name
@@ -1132,6 +1136,9 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
+
+        if( parms[1] != 0.0 )
+            sTABProj.nProjId = 26;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_MILLER_CYLINDRICAL) )
@@ -1194,8 +1201,6 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
         parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
-        if( parms[1] != 0.0 )
-            sTABProj.nProjId = 26;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_CASSINI_SOLDNER) )
