@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/10/16 16:44:05  warmerda
+ * added support for fixed levels
+ *
  * Revision 1.14  2003/10/15 20:22:16  warmerda
  * removed C++ contour definitions
  *
@@ -217,6 +220,7 @@ CPLErr OGRContourWriter( double, int, double *, double *, void *pInfo );
 
 CPLErr GDALContourGenerate( GDALRasterBandH hBand, 
                             double dfContourInterval, double dfContourBase,
+                            int nFixedLevelCount, double *padfFixedLevels,
                             int bUseNoData, double dfNoDataValue, 
                             void *hLayer, int iIDField, int iElevField,
                             GDALProgressFunc pfnProgress, void *pProgressArg );

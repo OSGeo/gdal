@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/10/16 16:44:05  warmerda
+ * added support for fixed levels
+ *
  * Revision 1.2  2003/10/15 20:40:58  warmerda
  * reworked to avoid quadratic behavior in the number of contours
  *
@@ -53,6 +56,9 @@ CPL_CVSID("$Id$");
 
 #define JOIN_DIST 0.0001
 
+/************************************************************************/
+/*                           GDALContourItem                            */
+/************************************************************************/
 class GDALContourItem
 {
 public:
@@ -75,6 +81,9 @@ public:
     int    Merge( GDALContourItem * );
 };
 
+/************************************************************************/
+/*                           GDALContourLevel                           */
+/************************************************************************/
 class GDALContourLevel 
 {
     double dfLevel;
@@ -96,6 +105,9 @@ public:
     int    InsertContour( GDALContourItem * );
 };
 
+/************************************************************************/
+/*                         GDALContourGenerator                         */
+/************************************************************************/
 class GDALContourGenerator
 {
     int    nWidth;
@@ -114,6 +126,7 @@ class GDALContourGenerator
     int     bNoDataActive;
     double  dfNoDataValue;
 
+    int     bFixedLevels;
     double  dfContourInterval;
     double  dfContourOffset;
 
@@ -147,6 +160,7 @@ public:
         { this->dfContourInterval = dfContourInterval;
           this->dfContourOffset = dfContourOffset; }
 
+    void                SetFixedLevels( int, double * );
     CPLErr 		FeedLine( double *padfScanline );
     CPLErr              EjectContours( int bOnlyUnused = FALSE );
     
@@ -225,6 +239,7 @@ GDALContourGenerator::GDALContourGenerator( int nWidthIn, int nHeightIn,
     nLevelMax = 0;
     nLevelCount = 0;
     papoLevels = NULL;
+    bFixedLevels = FALSE;
 }
 
 /************************************************************************/
@@ -235,6 +250,19 @@ GDALContourGenerator::~GDALContourGenerator()
 
 {
     
+}
+
+/************************************************************************/
+/*                           SetFixedLevels()                           */
+/************************************************************************/
+
+void GDALContourGenerator::SetFixedLevels( int nFixedLevelCount, 
+                                           double *padfFixedLevels )
+
+{
+    bFixedLevels = TRUE;
+    for( int i = 0; i < nFixedLevelCount; i++ )
+        FindLevel( padfFixedLevels[i] );
 }
 
 /************************************************************************/
@@ -417,17 +445,71 @@ CPLErr GDALContourGenerator::ProcessRect(
     
 {
 /* -------------------------------------------------------------------- */
-/*      Identify the range of contour levels we have to deal with.      */
+/*      Identify the range of elevations over this rect.                */
 /* -------------------------------------------------------------------- */
     int iStartLevel, iEndLevel;
 
     double dfMin = MIN(MIN(dfUpLeft,dfUpRight),MIN(dfLoLeft,dfLoRight));
     double dfMax = MAX(MAX(dfUpLeft,dfUpRight),MAX(dfLoLeft,dfLoRight));
     
-    iStartLevel = (int) floor((dfMin - dfContourOffset) / dfContourInterval);
-    iEndLevel = (int)   floor((dfMax - dfContourOffset) / dfContourInterval);
 
-    if( iStartLevel == iEndLevel )
+/* -------------------------------------------------------------------- */
+/*      Compute the set of levels to compute contours for.              */
+/* -------------------------------------------------------------------- */
+
+    /* 
+    ** If we are using fixed levels, then find the min/max in the levels
+    ** table.
+    */
+    if( bFixedLevels )
+    {
+        int nStart=0, nEnd=nLevelCount-1, nMiddle;
+
+        iStartLevel = -1;
+        while( nStart <= nEnd )
+        {
+            nMiddle = (nEnd + nStart) / 2;
+            
+            double dfMiddleLevel = papoLevels[nMiddle]->GetLevel();
+            
+            if( dfMiddleLevel < dfMin )
+                nStart = nMiddle + 1;
+            else if( dfMiddleLevel > dfMin )
+                nEnd = nMiddle - 1;
+            else
+            {
+                iStartLevel = nMiddle;
+                break;
+            }
+        }
+
+        if( iStartLevel == -1 )
+            iStartLevel = nEnd + 1;
+
+        iEndLevel = iStartLevel;
+        while( iEndLevel < nLevelCount-1 
+               && papoLevels[iEndLevel+1]->GetLevel() < dfMax )
+            iEndLevel++;
+
+        if( iStartLevel >= nLevelCount )
+            return CE_None;
+
+        CPLAssert( iStartLevel >= 0 && iStartLevel < nLevelCount );
+        CPLAssert( iEndLevel >= 0 && iEndLevel < nLevelCount );
+    }
+
+    /*
+    ** Otherwise figure out the start and end using the base and offset.
+    */
+    else
+    {
+        iStartLevel = (int) 
+            ceil((dfMin - dfContourOffset) / dfContourInterval);
+        iEndLevel = (int)   
+            floor((dfMax - dfContourOffset) / dfContourInterval);
+    }
+
+    if( iStartLevel > iEndLevel )
         return CE_None;
 
 /* -------------------------------------------------------------------- */
@@ -435,9 +517,15 @@ CPLErr GDALContourGenerator::ProcessRect(
 /* -------------------------------------------------------------------- */
     int iLevel;
 
-    for( iLevel = iStartLevel+1; iLevel <= iEndLevel; iLevel++ )
+    for( iLevel = iStartLevel; iLevel <= iEndLevel; iLevel++ )
     {
-        double dfLevel = iLevel * dfContourInterval + dfContourOffset;
+        double dfLevel;
+
+        if( bFixedLevels )
+            dfLevel = papoLevels[iLevel]->GetLevel();
+        else
+            dfLevel = iLevel * dfContourInterval + dfContourOffset;
+
         int  nPoints = 0; 
         double adfX[4], adfY[4];
         CPLErr eErr;
@@ -1200,6 +1288,7 @@ CPLErr OGRContourWriter( double dfLevel,
 
 CPLErr GDALContourGenerate( GDALRasterBandH hBand, 
                             double dfContourInterval, double dfContourBase,
+                            int nFixedLevelCount, double *padfFixedLevels,
                             int bUseNoData, double dfNoDataValue, 
                             OGRLayerH hLayer, int iIDField, int iElevField,
                             GDALProgressFunc pfnProgress, void *pProgressArg )
@@ -1238,7 +1327,10 @@ CPLErr GDALContourGenerate( GDALRasterBandH hBand,
 
     GDALContourGenerator oCG( nXSize, nYSize, OGRContourWriter, &oCWI );
 
-    oCG.SetContourLevels( dfContourInterval, dfContourBase );
+    if( nFixedLevelCount > 0 )
+        oCG.SetFixedLevels( nFixedLevelCount, padfFixedLevels );
+    else
+        oCG.SetContourLevels( dfContourInterval, dfContourBase );
 
     if( bUseNoData )
         oCG.SetNoData( dfNoDataValue );
