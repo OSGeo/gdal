@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/06/12 02:11:58  warmerda
+ * Removed unused variables.
+ *
  * Revision 1.5  2001/07/18 04:00:49  warmerda
  * added CPL_CVSID
  *
@@ -167,7 +170,6 @@ vsi_l_offset VSIFTellL( FILE * fp )
 
 {
     HANDLE hFile = (HANDLE) fp;
-    DWORD  dwMoveHigh=0, dwMoveLow;
     LARGE_INTEGER   li;
 
     li.HighPart = 0;
