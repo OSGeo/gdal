@@ -226,8 +226,12 @@ DODSDataset::connect_to_server() throw(Error)
     AISConnect *poConnection = new AISConnect(d_oURL);
     string version = poConnection->request_version();
     if (version.empty() || version.find("/3.") == string::npos)
-	throw Error("I connected to the URL but could not get a DAP 3.x version string from the server");
-    
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "I connected to the URL but could not get a DAP 3.x version string\n"
+                  "from the server.  I will continue to connect but access may fail.");
+    }
+
     return poConnection;
 }
 
@@ -944,7 +948,7 @@ DODSDataset::IRasterIO(GDALRWFlag eRWFlag,
 {
     try {
 	// nBandSpace must be the default value of nLineSapce*nBufYSize.
-	if (nBandSpace != nLineSpace * nBufYSize) {
+	if (nBandSpace != nLineSpace * nBufYSize && nBandCount > 1 ) {
 	    throw Error(
 "The DODS/OPeNDAP driver requires that nBandSpace be the\n\
 default value, either 0 or nLineSpace * nBufYSize.");
@@ -1110,6 +1114,11 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 // $Log$
+// Revision 1.8  2004/03/23 18:53:11  warmerda
+// Treat a version string that is not apparently DAP 3.x as a warning.
+// Don't worry about nBandSpace in IRasterIO() if there is only one
+// band being operated on.
+//
 // Revision 1.7  2004/01/29 22:56:07  jimg
 // Second major attempt to optimize the driver. This implementation provides a
 // specialization of GDALDataset::IRasterIO() which recognizes when the caller
