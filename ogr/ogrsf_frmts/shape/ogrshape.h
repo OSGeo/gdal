@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/03/03 05:06:46  warmerda
+ * implemented DeleteDataSource
+ *
  * Revision 1.10  2002/06/15 00:07:23  aubin
  * mods to enable 64bit file i/o
  *
@@ -181,6 +184,7 @@ class OGRShapeDriver : public OGRSFDriver
 
     virtual OGRDataSource *CreateDataSource( const char *pszName,
                                              char ** = NULL );
+    OGRErr              DeleteDataSource( const char *pszDataSource );
     
     int                 TestCapability( const char * );
 };
