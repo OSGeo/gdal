@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/11/29 14:09:36  warmerda
+ * Extended shapefile OGR driver to support MULTIPOLYGON objects.
+ *
  * Revision 1.8  2000/01/26 22:05:45  warmerda
  * fixed bug with 2d/3d arcs
  *
@@ -331,18 +334,72 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         CPLFree( padfZ );
     }
 /* ==================================================================== */
-/*      Polygons.                                                       */
+/*      Polygons/MultiPolygons                                          */
 /* ==================================================================== */
     else if( hSHP->nShapeType == SHPT_POLYGON
              || hSHP->nShapeType == SHPT_POLYGONM
              || hSHP->nShapeType == SHPT_POLYGONZ )
     {
-        OGRPolygon	*poPoly = (OGRPolygon *) poGeom;
+        OGRPolygon	*poPoly;
+        OGRLinearRing   *poRing, **papoRings=NULL;
         double		*padfX=NULL, *padfY=NULL, *padfZ=NULL;
         int		iPoint, iRing, nRings, nVertex=0, *panRingStart;
         SHPObject	*psShape;
 
-        if( poGeom->getGeometryType() != wkbPolygon )
+        /* Collect list of rings */
+
+        if( poGeom->getGeometryType() == wkbPolygon )
+        {
+            poPoly =  (OGRPolygon *) poGeom;
+
+            nRings = poPoly->getNumInteriorRings()+1;
+            papoRings = (OGRLinearRing **) CPLMalloc(sizeof(void*)*nRings);
+            for( iRing = 0; iRing < nRings; iRing++ )
+            {
+                if( iRing == 0 )
+                    papoRings[iRing] = poPoly->getExteriorRing();
+                else
+                    papoRings[iRing] = poPoly->getInteriorRing( iRing-1 );
+            }
+        }
+        else if( poGeom->getGeometryType() == wkbMultiPolygon
+                 || poGeom->getGeometryType() == wkbGeometryCollection )
+        {
+            OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
+            int		iGeom;
+
+            nRings = 0;
+            for( iGeom=0; iGeom < poGC->getNumGeometries(); iGeom++ )
+            {
+                poPoly =  (OGRPolygon *) poGC->getGeometryRef( iGeom );
+
+                if( poPoly->getGeometryType() != wkbPolygon )
+                {
+                    CPLFree( papoRings );
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                              "Attempt to write non-polygon (%s) geometry to "
+                              " type shapefile.",
+                              poGeom->getGeometryName() );
+
+                    return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+                }
+
+                papoRings = (OGRLinearRing **) CPLRealloc(papoRings, 
+                     sizeof(void*) * (nRings+poPoly->getNumInteriorRings()+1));
+                for( iRing = 0; 
+                     iRing < poPoly->getNumInteriorRings()+1; 
+                     iRing++ )
+                {
+                    if( iRing == 0 )
+                        papoRings[nRings+iRing] = poPoly->getExteriorRing();
+                    else
+                        papoRings[nRings+iRing] = 
+                            poPoly->getInteriorRing( iRing-1 );
+                }
+                nRings += poPoly->getNumInteriorRings()+1;
+            }
+        }
+        else 
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Attempt to write non-polygon (%s) geometry to "
@@ -352,27 +409,23 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
 
-        nRings = poPoly->getNumInteriorRings()+1;
-        panRingStart = (int *) CPLMalloc(sizeof(int) * nRings);
+        /* count vertices */
+        nVertex = 0;
+        for( iRing = 0; iRing < nRings; iRing++ )
+            nVertex += papoRings[iRing]->getNumPoints();
 
+        panRingStart = (int *) CPLMalloc(sizeof(int) * nRings);
+        padfX = (double *) CPLMalloc(sizeof(double)*nVertex);
+        padfY = (double *) CPLMalloc(sizeof(double)*nVertex);
+        padfZ = (double *) CPLMalloc(sizeof(double)*nVertex);
+
+        /* collect vertices */
+        nVertex = 0;
         for( iRing = 0; iRing < nRings; iRing++ )
         {
-            OGRLinearRing *poRing;
-
-            if( iRing == 0 )
-                poRing = poPoly->getExteriorRing();
-            else
-                poRing = poPoly->getInteriorRing( iRing-1 );
-
+            poRing = papoRings[iRing];
             panRingStart[iRing] = nVertex;
 
-            padfX = (double *)
-             CPLRealloc(padfX,sizeof(double)*(nVertex+poRing->getNumPoints()));
-            padfY = (double *) 
-             CPLRealloc(padfY,sizeof(double)*(nVertex+poRing->getNumPoints()));
-            padfZ = (double *) 
-             CPLRealloc(padfZ,sizeof(double)*(nVertex+poRing->getNumPoints()));
-            
             for( iPoint = 0; iPoint < poRing->getNumPoints(); iPoint++ )
             {
                 padfX[nVertex] = poRing->getX( iPoint );
@@ -387,6 +440,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
         
+        CPLFree( papoRings );
+        CPLFree( panRingStart );
         CPLFree( padfX );
         CPLFree( padfY );
         CPLFree( padfZ );
