@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/04/23 13:56:36  warmerda
+ * added stub implementation.  Don't check for __unix__
+ *
  * Revision 1.6  1999/04/21 20:06:05  warmerda
  * Removed incorrect comment.
  *
@@ -53,7 +56,9 @@
 /* ==================================================================== */
 /*                  Unix Implementation                                 */
 /* ==================================================================== */
-#if defined(__unix__) && defined(HAVE_DLFCN_H)
+#if defined(HAVE_DLFCN_H)
+
+#define GOT_GETSYMBOL
 
 #include <dlfcn.h>
 
@@ -103,6 +108,8 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 /* ==================================================================== */
 #ifdef _WIN32
 
+#define GOT_GETSYMBOL
+
 #include <windows.h>
 
 /************************************************************************/
@@ -146,3 +153,21 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
 #endif /* def _WIN32 */
 
+/* ==================================================================== */
+/*      Dummy implementation.                                           */
+/* ==================================================================== */
+
+#ifndef GOT_GETSYMBOL
+
+/************************************************************************/
+/*                            CPLGetSymbol()                            */
+/*                                                                      */
+/*      Dummy implementation.                                           */
+/************************************************************************/
+
+void *CPLGetSymbol(const char *, const char *)
+
+{
+    return NULL;
+}
+#endif
