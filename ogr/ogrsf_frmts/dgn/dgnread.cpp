@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2002/03/12 17:11:31  warmerda
+ * ensure tag elements are indexed
+ *
  * Revision 1.23  2002/03/12 17:07:26  warmerda
  * added tagset and tag value element support
  *
@@ -1300,12 +1303,21 @@ void DGNBuildIndex( DGNInfo *psDGN )
         else if( nType == DGNT_TEXT )
             psEI->stype = DGNST_TEXT;
 
+        else if( nType == DGNT_TAG_VALUE )
+            psEI->stype = DGNST_TAG_VALUE;
+
+        else if( nType == DGNT_APPLICATION_ELEM )
+        {
+            if( nLevel == 24 )
+                psEI->stype = DGNST_TAG_SET;
+            else
+                psEI->stype = DGNST_CORE;
+        }
         else if( nType == DGNT_TCB )
         {
             DGNElemCore	*psTCB = DGNParseTCB( psDGN );
             DGNFreeElement( (DGNHandle) psDGN, psTCB );
             psEI->stype = DGNST_TCB;
-            
         }
         else
             psEI->stype = DGNST_CORE;
