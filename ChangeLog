@@ -1,3 +1,11 @@
+2001-03-22  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* frmts/raw/ehdrdataset.cpp: added support for files generated
+	by Arc/Info GRID which have a number of quirks, but can include
+	nodata values, and projections (in .prj file). 
+
+	* frmts/raw/rawdataset: added support for nodata values.
+
 2001-03-21  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* GDALmake.opt.in: added port/*.o to GDAL_OBJ so that we don't
