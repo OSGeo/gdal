@@ -2,7 +2,7 @@
 default: gdal_wrap.cpp osr_wrap.cpp
 	python setup.py build
 
-gdal_wrap.cpp:	gdal.i gdal_typemaps.i Driver.i Dataset.i Band.i
+gdal_wrap.cpp:	gdal.i gdal_typemaps.i Driver.i Dataset.i Band.i ColorTable.i
 	swig -python -c++ -I../.. -o $@ $<
 
 osr_wrap.cpp:  osr.i
