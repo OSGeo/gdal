@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2004/04/24 15:45:04  warmerda
+ * Added GRS80 spheroid support.
+ *
  * Revision 1.30  2004/04/19 19:32:25  warmerda
  * added INTERNATIONAL1909
  *
@@ -818,6 +821,12 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
             {
                 OGRSpatialReference oGCS;
                 oGCS.importFromEPSG( 4008 );
+                CopyGeogCSFrom( &oGCS );
+            }
+            else if( EQUAL(pszSpheroid,"GRS80") )
+            {
+                OGRSpatialReference oGCS;
+                oGCS.importFromEPSG( 4019 );
                 CopyGeogCSFrom( &oGCS );
             }
             else
