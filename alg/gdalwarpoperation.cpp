@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/04/28 20:47:59  warmerda
+ * use dataset level RasterIO call
+ *
  * Revision 1.6  2003/04/23 05:18:57  warmerda
  * added multithread support
  *
@@ -914,23 +917,18 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 /* -------------------------------------------------------------------- */
     if( pszInitDest == NULL )
     {
-        for( iBand = 0; iBand < psOptions->nBandCount; iBand++ )
+        eErr = GDALDatasetRasterIO( psOptions->hDstDS, GF_Read, 
+                                    nDstXOff, nDstYOff, nDstXSize, nDstYSize,
+                                    pDstBuffer, nDstXSize, nDstYSize, 
+                                    psOptions->eWorkingDataType, 
+                                    psOptions->nBandCount, 
+                                    psOptions->panDstBands,
+                                    0, 0, 0 );
+
+        if( eErr != CE_None )
         {
-            GDALRasterBandH hBand = 
-                GDALGetRasterBand( psOptions->hDstDS,
-                                   psOptions->panDstBands[iBand] );
-
-            eErr = GDALRasterIO( hBand, GF_Read,
-                                 nDstXOff, nDstYOff, nDstXSize, nDstYSize,
-                                 ((GByte *) pDstBuffer) + iBand * nBandSize, 
-                                 nDstXSize, nDstYSize, 
-                                 psOptions->eWorkingDataType, 0, 0 );
-
-            if( eErr != CE_None )
-            {
-                CPLFree( pDstBuffer );
-                return eErr;
-            }
+            CPLFree( pDstBuffer );
+            return eErr;
         }
     }
 
@@ -946,20 +944,13 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 /* -------------------------------------------------------------------- */
     if( eErr == CE_None )
     {
-        for( iBand = 0; 
-             iBand < psOptions->nBandCount && eErr == CE_None; 
-             iBand++ )
-        {
-            GDALRasterBandH hBand = 
-                GDALGetRasterBand( psOptions->hDstDS,
-                                   psOptions->panDstBands[iBand] );
-
-            eErr = GDALRasterIO( hBand, GF_Write,
-                                 nDstXOff, nDstYOff, nDstXSize, nDstYSize,
-                                 ((GByte *) pDstBuffer) + iBand * nBandSize, 
-                                 nDstXSize, nDstYSize, 
-                                 psOptions->eWorkingDataType, 0, 0 );
-        }
+        eErr = GDALDatasetRasterIO( psOptions->hDstDS, GF_Write, 
+                                    nDstXOff, nDstYOff, nDstXSize, nDstYSize,
+                                    pDstBuffer, nDstXSize, nDstYSize, 
+                                    psOptions->eWorkingDataType, 
+                                    psOptions->nBandCount, 
+                                    psOptions->panDstBands,
+                                    0, 0, 0 );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1065,30 +1056,30 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 
     oWK.papabySrcImage = (GByte **) 
         CPLCalloc(sizeof(GByte*),psOptions->nBandCount);
+    oWK.papabySrcImage[0] = (GByte *)
+        VSIMalloc( nWordSize * nSrcXSize * nSrcYSize * psOptions->nBandCount );
 
-    for( i = 0; i < psOptions->nBandCount && eErr == CE_None; i++ )
+    if( oWK.papabySrcImage[0] == NULL )
     {
-        GDALRasterBandH hBand = 
-            GDALGetRasterBand( psOptions->hSrcDS, psOptions->panSrcBands[i] );
-
-        oWK.papabySrcImage[i] = (GByte *) 
-            VSIMalloc( nWordSize * nSrcXSize * nSrcYSize );
-
-        if( oWK.papabySrcImage[i] == NULL )
-        {
-            CPLError( CE_Failure, CPLE_OutOfMemory, 
-                      "Failed to allocate %d byte source buffer.",
-                      nWordSize * nSrcXSize * nSrcYSize );
-            eErr = CE_Failure;
-        }
-
-        if( eErr == CE_None )
-            eErr = GDALRasterIO( hBand, GF_Read, 
-                                 nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize, 
-                                 oWK.papabySrcImage[i], nSrcXSize, nSrcYSize,
-                                 psOptions->eWorkingDataType, 0, 0 );
+        CPLError( CE_Failure, CPLE_OutOfMemory, 
+                  "Failed to allocate %d byte source buffer.",
+                  nWordSize * nSrcXSize * nSrcYSize * psOptions->nBandCount );
+        eErr = CE_Failure;
     }
-    
+        
+    for( i = 0; i < psOptions->nBandCount && eErr == CE_None; i++ )
+        oWK.papabySrcImage[i] = ((GByte *) oWK.papabySrcImage[0])
+            + nWordSize * nSrcXSize * nSrcYSize * i;
+
+    if( eErr == CE_None )
+        eErr = 
+            GDALDatasetRasterIO( psOptions->hSrcDS, GF_Read, 
+                                 nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize, 
+                                 oWK.papabySrcImage[0], nSrcXSize, nSrcYSize,
+                                 psOptions->eWorkingDataType, 
+                                 psOptions->nBandCount, psOptions->panSrcBands,
+                                 0, 0, 0 );
+
 /* -------------------------------------------------------------------- */
 /*      Initialize destination buffer.                                  */
 /* -------------------------------------------------------------------- */
@@ -1177,12 +1168,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < psOptions->nBandCount; i++ )
-    {
-        if( oWK.papabySrcImage[i] != NULL )
-            VSIFree( oWK.papabySrcImage[i] );
-    }
-
+    CPLFree( oWK.papabySrcImage[0] );
     CPLFree( oWK.papabySrcImage );
     CPLFree( oWK.papabyDstImage );
     
