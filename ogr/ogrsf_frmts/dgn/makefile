@@ -1,6 +1,7 @@
 
-OBJ	=	dgnopen.obj dgnread.obj dgnfloat.obj dgnstroke.obj \
-		ogrdgndriver.obj ogrdgndatasource.obj ogrdgnlayer.obj 
+LL_OBJ	=	dgnopen.obj dgnread.obj dgnfloat.obj dgnstroke.obj
+OGR_OBJ	=	ogrdgndriver.obj ogrdgndatasource.obj ogrdgnlayer.obj 
+OBJ	=	$(LL_OBJ) $(OGR_OBJ)
 
 EXTRAFLAGS =	-I.. -I..\..
 
@@ -12,6 +13,9 @@ default:	$(OBJ)
 
 clean:
 	-del *.obj *.pdb
+
+dgndump.exe:	$(LL_OBJ) dgndump.obj
+	cl /Zi dgndump.obj $(LL_OBJ) $(GDAL_ROOT)/port/cpl.lib $(LIBS)
 
 
 
