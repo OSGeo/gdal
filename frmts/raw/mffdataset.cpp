@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/08/24 14:26:09  warmerda
+ * improved handling of read-only file sets
+ *
  * Revision 1.11  2000/08/15 19:28:26  warmerda
  * added help topic
  *
@@ -483,7 +486,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     char       **papszDirFiles;
     char       *pszTargetBase, *pszTargetPath;
-    int        nRawBand;
+    int        nRawBand, nSkipped=0;
 
     pszTargetPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
     pszTargetBase = CPLStrdup(CPLGetBasename( poOpenInfo->pszFilename ));
@@ -528,6 +531,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLError( CE_Warning, CPLE_OpenFailed, 
                       "Unable to open %s ... skipping.\n", 
                       pszRawFilename );
+            nSkipped++;
             continue;
         }
 
@@ -605,6 +609,34 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 
         poDS->SetBand( nBand, poBand );
     }
+
+    CPLFree(pszTargetPath);
+    CPLFree(pszTargetBase);
+    CSLDestroy(papszDirFiles);
+
+/* -------------------------------------------------------------------- */
+/*      Check if we have bands.                                         */
+/* -------------------------------------------------------------------- */
+    if( poDS->GetRasterCount() == 0 )
+    {
+        if( nSkipped > 0 && poOpenInfo->eAccess )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Failed to open %d files that were apparently bands.\n"
+                      "Perhaps this dataset is readonly?\n", 
+                      nSkipped );
+            delete poDS;
+            return NULL;
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "MFF header file read successfully, but no bands\n"
+                      "were successfully found and opened." );
+            delete poDS;
+            return NULL;
+        }
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
@@ -646,13 +678,6 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Any GCPs in header file?                                        */
 /* -------------------------------------------------------------------- */
     poDS->ScanForGCPs();
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
-    CPLFree(pszTargetPath);
-    CPLFree(pszTargetBase);
-    CSLDestroy(papszDirFiles);
 
     return( poDS );
 }
