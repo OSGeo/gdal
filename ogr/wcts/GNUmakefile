@@ -16,10 +16,7 @@ BIN	=	ogrwcts
 default:	$(BIN)
 
 clean:
-	rm -f *.o ogrinfo$(EXE) ogr2ogr$(EXE) ogrtindex$(EXE) 
-	rm -f sdts2mi$(EXE) testepsg$(EXE)
-	rm -f test_ogrsf$(EXE) $(OGR_LIB)
-	(cd ogrsf_frmts; $(MAKE) clean)
+	rm -f *.o ogrwcts
 
 $(BIN):	$(WCTS_OBJ)
 	$(CXX) $(LNK_FLAGS) $(WCTS_OBJ) $(CONFIG_LIBS) $(CURL_LIB) -o $(BIN)
