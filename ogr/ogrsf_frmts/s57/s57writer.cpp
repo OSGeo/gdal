@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/06/02 18:53:31  warmerda
+ * Do empty number marker stuff for real fields too.
+ *
  * Revision 1.7  2004/06/02 18:45:11  warmerda
  * Added special logic for EMPTY_NUMBER_MARKER.
  *
@@ -1013,6 +1016,8 @@ int S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
     for( int iAttr = 0; papszAttrList[iAttr] != NULL; iAttr++ )
     {
         int iField = poFeature->GetFieldIndex( papszAttrList[iAttr] );
+        OGRFieldType eFldType = 
+            poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
         GInt16 nATTL;
         const char *pszATVL;
         
@@ -1034,7 +1039,7 @@ int S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
 
         // Special hack to handle special "empty" marker in integer fields.
         if( atoi(pszATVL) == EMPTY_NUMBER_MARKER 
-            && poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType() == OFTInteger )
+            && (eFldType == OFTInteger || eFldType == OFTReal) )
             pszATVL = "";
 
         // Watch for really long data.
