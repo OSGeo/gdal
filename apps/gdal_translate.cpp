@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/01/24 18:01:18  fwarmerdam
+ * Added -sds option for copying subdatasets.
+ *
  * Revision 1.26  2004/10/12 14:15:22  fwarmerdam
  * Added srcwin checking.
  *
@@ -154,6 +157,7 @@ CPL_CVSID("$Id$");
 
 static int ArgIsNumeric( const char * );
 static void AttachMetadata( GDALDatasetH, char ** );
+static int bSubCall = FALSE;
 
 /*  ******************************************************************* */
 /*                               Usage()                                */
@@ -172,7 +176,7 @@ static void Usage()
             "       [-srcwin xoff yoff xsize ysize] [-a_srs srs_def]\n"
             "       [-projwin ulx uly lrx lry] [-co \"NAME=VALUE\"]*\n"
             "       [-gcp pixel line easting northing]*\n" 
-            "       [-mo \"META-TAG=VALUE\"]* [-quiet]\n"
+            "       [-mo \"META-TAG=VALUE\"]* [-quiet] [-sds]\n"
             "       src_dataset dst_dataset\n\n" );
 
     printf( "%s\n\n", GDALVersionInfo( "--version" ) );
@@ -222,6 +226,8 @@ int main( int argc, char ** argv )
     GDALProgressFunc    pfnProgress = GDALTermProgress;
     int                 nGCPCount = 0;
     GDAL_GCP            *pasGCPs = NULL;
+    int                 iSrcFileArg = -1, iDstFileArg = -1;
+    int                 bCopySubDatasets = FALSE;
 
     anSrcWin[0] = 0;
     anSrcWin[1] = 0;
@@ -296,6 +302,9 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-not_strict")  )
             bStrict = FALSE;
+            
+        else if( EQUAL(argv[i],"-sds")  )
+            bCopySubDatasets = TRUE;
             
         else if( EQUAL(argv[i],"-gcp") && i < argc - 4 )
         {
@@ -398,10 +407,15 @@ int main( int argc, char ** argv )
             exit( 2 );
         }
         else if( pszSource == NULL )
+        {
+            iSrcFileArg = i;
             pszSource = argv[i];
-
+        }
         else if( pszDest == NULL )
+        {
             pszDest = argv[i];
+            iDstFileArg = i;
+        }
 
         else
         {
@@ -423,7 +437,7 @@ int main( int argc, char ** argv )
 /*      Attempt to open source file.                                    */
 /* -------------------------------------------------------------------- */
 
-    hDataset = GDALOpen( pszSource, GA_ReadOnly );
+    hDataset = GDALOpenShared( pszSource, GA_ReadOnly );
     
     if( hDataset == NULL )
     {
@@ -434,15 +448,50 @@ int main( int argc, char ** argv )
         exit( 1 );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Handle subdatasets.                                             */
+/* -------------------------------------------------------------------- */
     if( CSLCount(GDALGetMetadata( hDataset, "SUBDATASETS" )) > 0 )
     {
-        fprintf( stderr,
-                 "Input file contains subdatasets. Please, select one of them for reading.\n" );
+        if( !bCopySubDatasets )
+        {
+            fprintf( stderr,
+                     "Input file contains subdatasets. Please, select one of them for reading.\n" );
+        }
+        else
+        {
+            char **papszSubdatasets = GDALGetMetadata(hDataset,"SUBDATASETS");
+            char *pszSubDest = (char *) CPLMalloc(strlen(pszDest)+32);
+            int i;
+            int bOldSubCall = bSubCall;
+
+            argv[iDstFileArg] = pszSubDest;
+            bSubCall = TRUE;
+            for( i = 0; papszSubdatasets[i] != NULL; i += 2 )
+            {
+                argv[iSrcFileArg] = strstr(papszSubdatasets[i],"=")+1;
+                sprintf( pszSubDest, "%s%d", pszDest, i/2 + 1 );
+                if( main( argc, argv ) != 0 )
+                    break;
+            }
+
+            bSubCall = bOldSubCall;
+            CPLFree( pszSubDest );
+        }
+
         GDALClose( hDataset );
-        GDALDestroyDriverManager();
-        exit( 1 );
+
+        if( !bSubCall )
+        {
+            GDALDumpOpenDatasets( stderr );
+            GDALDestroyDriverManager();
+        }
+        return 1;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Collect some information from the source file.                  */
+/* -------------------------------------------------------------------- */
     nRasterXSize = GDALGetRasterXSize( hDataset );
     nRasterYSize = GDALGetRasterYSize( hDataset );
 
@@ -617,13 +666,16 @@ int main( int argc, char ** argv )
 
         CPLFree( panBandList );
 
-        GDALDumpOpenDatasets( stderr );
-        GDALDestroyDriverManager();
-    
+        if( !bSubCall )
+        {
+            GDALDumpOpenDatasets( stderr );
+            GDALDestroyDriverManager();
+        }
+
         CSLDestroy( argv );
         CSLDestroy( papszCreateOptions );
 
-        exit( hOutDS == NULL );
+        return hOutDS == NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -810,8 +862,12 @@ int main( int argc, char ** argv )
     GDALClose( hDataset );
 
     CPLFree( panBandList );
-    GDALDumpOpenDatasets( stderr );
-    GDALDestroyDriverManager();
+
+    if( !bSubCall )
+    {
+        GDALDumpOpenDatasets( stderr );
+        GDALDestroyDriverManager();
+    }
 
     CSLDestroy( argv );
     CSLDestroy( papszCreateOptions );
