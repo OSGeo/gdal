@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2002/04/16 16:12:53  warmerda
+ * Fixed help topic.
+ *
  * Revision 1.1  2002/04/12 20:13:01  warmerda
  * New
  *
@@ -410,7 +413,7 @@ void GDALRegister_XPM()
         
         poDriver->pszShortName = "XPM";
         poDriver->pszLongName = "X11 PixMap Format (.xpm)";
-        poDriver->pszHelpTopic = "frmt_various.html#various";
+        poDriver->pszHelpTopic = "frmt_various.html#XPM";
         
         poDriver->pfnOpen = XPMDataset::Open;
         poDriver->pfnCreateCopy = XPMCreateCopy;
