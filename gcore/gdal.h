@@ -26,6 +26,9 @@
  * that calls the GDAL library.
  * 
  * $Log$
+ * Revision 1.4  1998/12/06 22:16:27  warmerda
+ * Added GDALCreate().
+ *
  * Revision 1.3  1998/12/06 02:50:36  warmerda
  * Added three new functions.
  *
@@ -80,18 +83,23 @@ typedef void *GDALMajorObjectH;
 typedef void *GDALDatasetH;
 typedef void *GDALRasterBandH;
 typedef void *GDALGeorefH;
+typedef void *GDALDriverH;
 
 /* ==================================================================== */
-/*      Registration related.                                           */
+/*      Registration/driver related.                                    */
 /* ==================================================================== */
 
 void GDALAllRegister( void );
+
+GDALDatasetH CPL_DLL GDALCreate( GDALDriverH hDriver,
+                                 const char *, int, int, int, GDALDataType,
+                                 char ** );
+GDALDatasetH CPL_DLL GDALOpen( const char *, GDALAccess );
 
 /* ==================================================================== */
 /*      GDALDataset class ... normally this represents one file.        */
 /* ==================================================================== */
 
-GDALDatasetH CPL_DLL GDALOpen( const char *, GDALAccess );
 void CPL_DLL   GDALClose( GDALDatasetH );
 
 int CPL_DLL	GDALGetRasterXSize( GDALDatasetH );
