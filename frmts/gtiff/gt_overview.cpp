@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2004/09/09 18:59:21  fwarmerdam
+ * Adjusted to properly support colormaps with up to 65536 entries.
+ *
  * Revision 1.11  2004/04/14 09:51:36  dron
  * Added support for COMPRESS_OVERVIEW option.
  *
@@ -265,29 +268,27 @@ GTIFFBuildOverviews( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Do we have a palette?  If so, create a TIFF compatible version. */
 /* -------------------------------------------------------------------- */
-    unsigned short	anTRed[256], anTGreen[256], anTBlue[256];
+    unsigned short	anTRed[65536], anTGreen[65536], anTBlue[65536];
     unsigned short      *panRed=NULL, *panGreen=NULL, *panBlue=NULL;
 
     if( nPhotometric == PHOTOMETRIC_PALETTE )
     {
         GDALColorTable *poCT = papoBandList[0]->GetColorTable();
+        int nColorCount = MIN(65536,poCT->GetColorEntryCount());
 
-        for( int iColor = 0; iColor < 256; iColor++ )
+        memset( anTRed, 0, 65536 * 2 );
+        memset( anTGreen, 0, 65536 * 2 );
+        memset( anTBlue, 0, 65536 * 2 );
+
+        for( int iColor = 0; iColor < nColorCount; iColor++ )
         {
-            if( iColor < poCT->GetColorEntryCount() )
-            {
-                GDALColorEntry  sRGB;
+            GDALColorEntry  sRGB;
 
-                poCT->GetColorEntryAsRGB( iColor, &sRGB );
+            poCT->GetColorEntryAsRGB( iColor, &sRGB );
 
-                anTRed[iColor] = (unsigned short) (256 * sRGB.c1);
-                anTGreen[iColor] = (unsigned short) (256 * sRGB.c2);
-                anTBlue[iColor] = (unsigned short) (256 * sRGB.c3);
-            }
-            else
-            {
-                anTRed[iColor] = anTGreen[iColor] = anTBlue[iColor] = 0;
-            }
+            anTRed[iColor] = (unsigned short) (256 * sRGB.c1);
+            anTGreen[iColor] = (unsigned short) (256 * sRGB.c2);
+            anTBlue[iColor] = (unsigned short) (256 * sRGB.c3);
         }
 
         panRed = anTRed;
