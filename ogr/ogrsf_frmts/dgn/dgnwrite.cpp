@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/06/27 14:50:53  warmerda
+ * avoid warnings
+ *
  * Revision 1.11  2003/06/12 17:33:17  warmerda
  * improved DNGO_CAPTURE_RAW_DATA flag documnentation
  *
@@ -182,8 +185,8 @@ int DGNResizeElement( DGNHandle hDGN, DGNElemCore *psElement, int nNewSize )
 /* -------------------------------------------------------------------- */
     int nWords = (nNewSize / 2) - 2;
 
-    psElement->raw_data[2] = nWords % 256;
-    psElement->raw_data[3] = nWords / 256;
+    psElement->raw_data[2] = (unsigned char) (nWords % 256);
+    psElement->raw_data[3] = (unsigned char) (nWords / 256);
 
     return TRUE;
 }
@@ -260,9 +263,9 @@ int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
         DGNElementInfo *psInfo;
         
         psInfo = psDGN->element_index + psDGN->element_count;
-        psInfo->level = psElement->level;
-        psInfo->type = psElement->type;
-        psInfo->stype = psElement->stype;
+        psInfo->level = (unsigned char) psElement->level;
+        psInfo->type = (unsigned char) psElement->type;
+        psInfo->stype = (unsigned char) psElement->stype;
         psInfo->offset = psElement->offset;
         if( psElement->complex )
             psInfo->flags = DGNEIF_COMPLEX;
@@ -393,8 +396,8 @@ DGNHandle
         memcpy( pabyRawTCB+1120, pszMasterUnits, 2 );
         memcpy( pabyRawTCB+1122, pszSubUnits, 2 );
 
-        DGN_WRITE_INT32( nUORPerSubUnit, pabyRawTCB+1116 );
-        DGN_WRITE_INT32( nSubUnitsPerMasterUnit, pabyRawTCB+1112 );
+        DGN_WRITE_INT32( (unsigned char) nUORPerSubUnit, pabyRawTCB+1116 );
+        DGN_WRITE_INT32((unsigned char)nSubUnitsPerMasterUnit,pabyRawTCB+1112);
     }
     else
     {
@@ -414,7 +417,7 @@ DGNHandle
 
         IEEE2DGNDouble( pabyRawTCB+1240 );
         IEEE2DGNDouble( pabyRawTCB+1248 );
-        IEEE2DGNDouble( pabyRawTCB+1246 );
+        IEEE2DGNDouble( pabyRawTCB+1256 );
     }
 
 /* -------------------------------------------------------------------- */
@@ -490,7 +493,7 @@ DGNElemCore *DGNCloneElement( DGNHandle hDGNSrc, DGNHandle hDGNDst,
                               DGNElemCore *psSrcElement )
 
 {
-    DGNElemCore *psClone;
+    DGNElemCore *psClone = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Per structure specific copying.  The core is fixed up later.    */
@@ -619,6 +622,11 @@ DGNElemCore *DGNCloneElement( DGNHandle hDGNSrc, DGNHandle hDGNDst,
 
         psClone = (DGNElemCore *) psTS;
     }
+    else
+    {
+        CPLAssert( FALSE );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Copy core raw data, and attributes.                             */
@@ -719,16 +727,16 @@ int DGNUpdateElemCoreExtended( DGNHandle hDGN, DGNElemCore *psElement )
 /* -------------------------------------------------------------------- */
 /*      Setup first four bytes.                                         */
 /* -------------------------------------------------------------------- */
-    rd[0] = psElement->level;
+    rd[0] = (GByte) psElement->level;
     if( psElement->complex )
         rd[0] |= 0x80;
 
-    rd[1] = psElement->type;
+    rd[1] = (GByte) psElement->type;
     if( psElement->deleted )
         rd[1] |= 0x80;
 
-    rd[2] = nWords % 256;
-    rd[3] = nWords / 256;
+    rd[2] = (GByte) (nWords % 256);
+    rd[3] = (GByte) (nWords / 256);
 
 /* -------------------------------------------------------------------- */
 /*      If the attribute offset hasn't been set, set it now under       */
@@ -738,20 +746,20 @@ int DGNUpdateElemCoreExtended( DGNHandle hDGN, DGNElemCore *psElement )
     {
         int     nAttIndex = (psElement->raw_bytes - 32) / 2;
         
-        psElement->raw_data[30] = nAttIndex % 256;
-        psElement->raw_data[31] = nAttIndex / 256;
+        psElement->raw_data[30] = (GByte) (nAttIndex % 256);
+        psElement->raw_data[31] = (GByte) (nAttIndex / 256);
     }
 /* -------------------------------------------------------------------- */
 /*      Handle the graphic properties.                                  */
 /* -------------------------------------------------------------------- */
     if( psElement->raw_bytes > 36 && psElement->type != DGNT_CELL_LIBRARY )
     {
-        rd[28] = psElement->graphic_group % 256;
-        rd[29] = psElement->graphic_group / 256;
-        rd[32] = psElement->properties % 256;
-        rd[33] = psElement->properties / 256;
-        rd[34] = psElement->style | (psElement->weight << 3);
-        rd[35] = psElement->color;
+        rd[28] = (GByte) (psElement->graphic_group % 256);
+        rd[29] = (GByte) (psElement->graphic_group / 256);
+        rd[32] = (GByte) (psElement->properties % 256);
+        rd[33] = (GByte) (psElement->properties / 256);
+        rd[34] = (GByte) (psElement->style | (psElement->weight << 3));
+        rd[35] = (GByte) psElement->color;
     }
     
     return TRUE;
@@ -890,8 +898,8 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
         psCore->raw_bytes = 38 + psDGN->dimension * 4 * nPointCount;
         psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
 
-        psCore->raw_data[36] = nPointCount % 256;
-        psCore->raw_data[37] = nPointCount/256;
+        psCore->raw_data[36] = (unsigned char) (nPointCount % 256);
+        psCore->raw_data[37] = (unsigned char) (nPointCount/256);
 
         for( i = 0; i < nPointCount; i++ )
             DGNInverseTransformPointToInt( psDGN, pasVertices + i, 
@@ -1241,8 +1249,8 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
     psCore->raw_bytes += (psCore->raw_bytes % 2);
     psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
 
-    psCore->raw_data[36] = nFontId;
-    psCore->raw_data[37] = nJustification;
+    psCore->raw_data[36] = (unsigned char) nFontId;
+    psCore->raw_data[37] = (unsigned char) nJustification;
 
     nIntValue = (int) (dfLengthMult * 1000.0 / (psDGN->scale * 6.0));
     DGN_WRITE_INT32( nIntValue, psCore->raw_data + 38 );
@@ -1279,8 +1287,7 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
         nBase = 74;
     }
 
-
-    psCore->raw_data[nBase] = strlen(pszText);
+    psCore->raw_data[nBase] = (unsigned char) strlen(pszText);
     psCore->raw_data[nBase+1] = 0; /* edflds? */
     memcpy( psCore->raw_data + nBase+2, pszText, strlen(pszText) );
     
@@ -1387,8 +1394,8 @@ DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag,
     psCore->raw_bytes = 806;
     psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
 
-    psCore->raw_data[36] = nScreenFlag % 256;
-    psCore->raw_data[37] = nScreenFlag / 256;
+    psCore->raw_data[36] = (unsigned char) (nScreenFlag % 256);
+    psCore->raw_data[37] = (unsigned char) (nScreenFlag / 256);
 
     memcpy( psCore->raw_data + 38, abyColorInfo[255], 3 );
     memcpy( psCore->raw_data + 41, abyColorInfo, 783 );
@@ -1460,10 +1467,10 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType,
     psCore->raw_bytes = 48;
     psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
 
-    psCore->raw_data[36] = nTotLength % 256;
-    psCore->raw_data[37] = nTotLength / 256;
-    psCore->raw_data[38] = nNumElems % 256;
-    psCore->raw_data[39] = nNumElems / 256;
+    psCore->raw_data[36] = (unsigned char) (nTotLength % 256);
+    psCore->raw_data[37] = (unsigned char) (nTotLength / 256);
+    psCore->raw_data[38] = (unsigned char) (nNumElems % 256);
+    psCore->raw_data[39] = (unsigned char) (nNumElems / 256);
 
 /* -------------------------------------------------------------------- */
 /*      Set the core raw data.                                          */
@@ -1505,7 +1512,7 @@ DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType,
     int         nTotalLength = 5;
     int         i, nLevel;
     DGNElemCore *psCH;
-    DGNPoint    sMin, sMax;
+    DGNPoint    sMin = {0.0,0.0,0.0}, sMax = {0.0,0.0,0.0};
 
     if( nNumElems < 1 || papsElems == NULL )
     {
@@ -1634,15 +1641,15 @@ DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName,
         psCore->raw_bytes = 124;
     psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
 
-    psCore->raw_data[36] = nTotLength % 256;
-    psCore->raw_data[37] = nTotLength / 256;
+    psCore->raw_data[36] = (unsigned char) (nTotLength % 256);
+    psCore->raw_data[37] = (unsigned char) (nTotLength / 256);
     
     DGNAsciiToRad50( pszName, (unsigned short *) (psCore->raw_data + 38) );
     if( strlen(pszName) > 3 )
         DGNAsciiToRad50( pszName+3, (unsigned short *) (psCore->raw_data+40) );
 
-    psCore->raw_data[42] = nClass % 256;
-    psCore->raw_data[43] = nClass / 256;
+    psCore->raw_data[42] = (unsigned char) (nClass % 256);
+    psCore->raw_data[43] = (unsigned char) (nClass / 256);
 
     memcpy( psCore->raw_data + 44, panLevels, 8 );
 
@@ -1782,7 +1789,7 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
     int         nTotalLength = 5;
     int         i, nLevel;
     DGNElemCore *psCH;
-    DGNPoint    sMin, sMax;
+    DGNPoint    sMin={0.0,0.0,0.0}, sMax={0.0,0.0,0.0};
     unsigned char abyLevelsOccuring[8] = {0,0,0,0,0,0,0,0};
 
     if( nNumElems < 1 || papsElems == NULL )
@@ -1898,11 +1905,11 @@ int DGNAddMSLink( DGNHandle hDGN, DGNElemCore *psElement,
         nLinkageSize = 8;
         abyLinkage[0] = 0x00;
         abyLinkage[1] = 0x00;
-        abyLinkage[2] = nEntityNum % 256;
-        abyLinkage[3] = nEntityNum / 256;;
-        abyLinkage[4] = nMSLink % 256;
-        abyLinkage[5] = (nMSLink / 256) % 256;
-        abyLinkage[6] = nMSLink / 65536;
+        abyLinkage[2] = (GByte) (nEntityNum % 256);
+        abyLinkage[3] = (GByte) (nEntityNum / 256);
+        abyLinkage[4] = (GByte) (nMSLink % 256);
+        abyLinkage[5] = (GByte) ((nMSLink / 256) % 256);
+        abyLinkage[6] = (GByte) (nMSLink / 65536);
         abyLinkage[7] = 0x01;
     }
     else
@@ -1910,16 +1917,16 @@ int DGNAddMSLink( DGNHandle hDGN, DGNElemCore *psElement,
         nLinkageSize = 16;
         abyLinkage[0] = 0x07;
         abyLinkage[1] = 0x10;
-        abyLinkage[2] = nLinkageType % 256;
-        abyLinkage[3] = nLinkageType / 256;
-        abyLinkage[4] = 0x81;
-        abyLinkage[5] = 0x0F;
-        abyLinkage[6] = nEntityNum % 256;
-        abyLinkage[7] = nEntityNum / 256;;
-        abyLinkage[8] = nMSLink % 256;
-        abyLinkage[9] = (nMSLink / 256) % 256;
-        abyLinkage[10] = (nMSLink / 65536) % 256;
-        abyLinkage[11] = nMSLink / 16777216;
+        abyLinkage[2] = (GByte) (nLinkageType % 256);
+        abyLinkage[3] = (GByte) (nLinkageType / 256);
+        abyLinkage[4] = (GByte) (0x81);
+        abyLinkage[5] = (GByte) (0x0F);
+        abyLinkage[6] = (GByte) (nEntityNum % 256);
+        abyLinkage[7] = (GByte) (nEntityNum / 256);
+        abyLinkage[8] = (GByte) (nMSLink % 256);
+        abyLinkage[9] = (GByte) ((nMSLink / 256) % 256);
+        abyLinkage[10] = (GByte) ((nMSLink / 65536) % 256);
+        abyLinkage[11] = (GByte) (nMSLink / 16777216);
         abyLinkage[12] = 0x00;
         abyLinkage[13] = 0x00;
         abyLinkage[14] = 0x00;
@@ -2009,8 +2016,8 @@ int DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement,
 
         psCT->totlength += (nLinkSize / 2);
 
-        psElement->raw_data[36] = psCT->totlength % 256;
-        psElement->raw_data[37] = psCT->totlength / 256;
+        psElement->raw_data[36] = (unsigned char) (psCT->totlength % 256);
+        psElement->raw_data[37] = (unsigned char) (psCT->totlength / 256);
     }
 
 /* -------------------------------------------------------------------- */
@@ -2026,10 +2033,10 @@ int DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement,
     {
         if( DGNGetLinkage( hDGN, psElement, iLinkage, NULL, NULL, NULL, NULL )
             == NULL )
-            return iLinkage - 1;
+            break;
     }
 
-    return -1;
+    return iLinkage-1;
 }
 
 /************************************************************************/
@@ -2059,7 +2066,7 @@ int DGNAddShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElement,
     { 0x07, 0x10, 0x41, 0x00, 0x02, 0x08, 0x01, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-    abyFillInfo[8] = nColor;
+    abyFillInfo[8] = (unsigned char) nColor;
 
     return DGNAddRawAttrLink( hDGN, psElement, 16, abyFillInfo );
 }
