@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.88  2004/12/02 18:26:07  fwarmerdam
+ * added CPL_DLL specifier on two functions.
+ *
  * Revision 1.87  2004/11/22 20:06:50  fwarmerdam
  * Updated to 1.2.5.
  *
@@ -417,6 +420,11 @@ CPLErr CPL_DLL GDALDatasetRasterIO(
     int nBandCount, int *panBandCount, 
     int nPixelSpace, int nLineSpace, int nBandSpace);
 
+CPLErr CPL_DLL GDALDatasetAdviseRead( GDALDatasetH hDS, 
+    int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
+    int nBXSize, int nBYSize, GDALDataType eBDataType,
+    int nBandCount, int *panBandCount, char **papszOptions );
+
 const char CPL_DLL *GDALGetProjectionRef( GDALDatasetH );
 CPLErr CPL_DLL  GDALSetProjection( GDALDatasetH, const char * );
 CPLErr CPL_DLL  GDALGetGeoTransform( GDALDatasetH, double * );
@@ -445,6 +453,10 @@ void CPL_DLL    GDALFlushCache( GDALDatasetH hDS );
 GDALDataType CPL_DLL GDALGetRasterDataType( GDALRasterBandH );
 void CPL_DLL    GDALGetBlockSize( GDALRasterBandH,
                                   int * pnXSize, int * pnYSize );
+
+CPLErr CPL_DLL GDALRasterAdviseRead( GDALRasterBandH hRB, 
+    int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
+    int nBXSize, int nBYSize, GDALDataType eBDataType, char **papszOptions );
 
 CPLErr CPL_DLL GDALRasterIO( GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
                               int nDSXOff, int nDSYOff,
@@ -491,11 +503,11 @@ int CPL_DLL GDALGetRandomRasterSample( GDALRasterBandH, int, float * );
 GDALRasterBandH CPL_DLL GDALGetRasterSampleOverview( GDALRasterBandH, int );
 CPLErr CPL_DLL GDALFillRaster( GDALRasterBandH hBand, double dfRealValue,
 		       double dfImaginaryValue );
-CPLErr GDALComputeBandStats( GDALRasterBandH hBand, int nSampleStep, 
+CPLErr CPL_DLL GDALComputeBandStats( GDALRasterBandH hBand, int nSampleStep, 
                              double *pdfMean, double *pdfStdDev, 
                              GDALProgressFunc pfnProgress,
                              void *pProgressData );
-CPLErr GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand, 
+CPLErr CPL_DLL  GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand, 
                                         int nOverviewCount, 
                                         GDALRasterBandH *pahOverviews, 
                                         GDALProgressFunc pfnProgress, 
