@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/07/11 15:31:26  warmerda
+ * fixed problems with multi-band large spill files
+ *
  * Revision 1.16  2001/06/10 20:32:06  warmerda
  * added support for external large image files
  *
@@ -306,8 +309,13 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 /* -------------------------------------------------------------------- */
 /*      Get the info structure.                                         */
 /* -------------------------------------------------------------------- */
+    int	nLayerStackCount, nLayerStackIndex;
+
     poDMS = poNode->GetNamedChild( "ExternalRasterDMS" );
     CPLAssert( poDMS != NULL );
+
+    nLayerStackCount = poDMS->GetIntField( "layerStackCount" );
+    nLayerStackIndex = poDMS->GetIntField( "layerStackIndex" );
 
 /* -------------------------------------------------------------------- */
 /*      Open raw data file.                                             */
@@ -384,7 +392,9 @@ CPLErr	HFABand::LoadExternalBlockInfo()
     {
         int	nRow, nColumn, nBit;
 
-        panBlockStart[iBlock] = nBlockStart + nBlockSize * iBlock;
+        panBlockStart[iBlock] = nBlockStart 
+            + nBlockSize * iBlock * nLayerStackCount
+            + nLayerStackIndex * nBlockSize;
         
         panBlockSize[iBlock] = nBlockSize;
         
@@ -695,13 +705,13 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
     int		iBlock;
     FILE	*fpData;
 
+    if( LoadBlockInfo() != CE_None )
+        return CE_Failure;
+
     if( fpExternal != NULL )
         fpData = fpExternal;
     else
         fpData = psInfo->fp;
-
-    if( LoadBlockInfo() != CE_None )
-        return CE_Failure;
 
     iBlock = nXBlock + nYBlock * nBlocksPerRow;
     
