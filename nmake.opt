@@ -3,7 +3,7 @@
 # Edit as required. GDAL_HOME is used for convenience here,
 # but this particular relative organization is not mandatory.
 
-GDAL_HOME = "D:\Program Files\GDAL"
+GDAL_HOME = "D:\Build\GDAL"
 BINDIR = $(GDAL_HOME)\bin
 PY_INST_DIR = $(GDAL_HOME)\pymod
 LIBDIR = $(GDAL_HOME)\lib
@@ -12,7 +12,7 @@ DATADIR = $(GDAL_HOME)\data
 
 # Set this to the installed directory containing python.  If you don't
 # have python just let it point to a directory that does not exist (as now). 
-PYDIR   =	D:\Software\Python22
+PYDIR   =	"D:\Program Files\Python22"
 
 # Uncomment the first for an optimized build or the second for a debug build.
 OPTFLAGS=	/nologo /Ox /MD

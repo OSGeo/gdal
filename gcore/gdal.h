@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.71  2003/07/18 04:46:48  sperkins
+ * added CPL_DLL to GDALFillRaster
+ *
  * Revision 1.70  2003/06/27 20:03:11  warmerda
  * updated version to 1.1.9
  *
@@ -432,7 +435,7 @@ CPLErr CPL_DLL GDALGetRasterHistogram( GDALRasterBandH hBand,
                                        void * pProgressData );
 int CPL_DLL GDALGetRandomRasterSample( GDALRasterBandH, int, float * );
 GDALRasterBandH CPL_DLL GDALGetRasterSampleOverview( GDALRasterBandH, int );
-CPLErr GDALFillRaster( GDALRasterBandH hBand, double dfRealValue,
+CPLErr CPL_DLL GDALFillRaster( GDALRasterBandH hBand, double dfRealValue,
 		       double dfImaginaryValue );
 CPLErr GDALComputeBandStats( GDALRasterBandH hBand, int nSampleStep, 
                              double *pdfMean, double *pdfStdDev, 
