@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2004/07/04 06:26:30  dron
+ * Added support for decoding JPEG2000 format using MrSID DSDK.
+ *
  * Revision 1.11  2004/05/02 15:47:26  dron
  * Updated to DSDK 4.0.7.646.
  *
@@ -1214,6 +1217,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 #include "lti_metadataDatabase.h"
 #include "lti_metadataRecord.h"
 #include "MrSIDImageReader.h"
+#include "J2KImageReader.h"
 
 LT_USE_NAMESPACE(LizardTech)
 
@@ -1227,8 +1231,7 @@ class MrSIDDataset : public GDALDataset
 {
     friend class MrSIDRasterBand;
 
-    MrSIDImageReader    *poImageReader;
-//    LTINavigator        *poNavigator;
+    LTIImageReader      *poImageReader;
     LTIMetadataDatabase *poMetadata;
 
     LTIDataType         eSampleType;
@@ -1607,10 +1610,14 @@ int MrSIDDataset::GetMetadataElement( const char *pszKey, void *pValue,
 
 GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    if( poOpenInfo->fp == NULL )
+    int     bIsJP2 = FALSE;
+
+    if ( poOpenInfo->fp == NULL )
         return NULL;
 
-    if( !EQUALN((const char *) poOpenInfo->pabyHeader, "msid", 4) )
+    if ( EQUALN((const char *) poOpenInfo->pabyHeader + 4, "jP  ", 4) )
+        bIsJP2 = TRUE;
+    else if ( !EQUALN((const char *) poOpenInfo->pabyHeader, "msid", 4) )
         return NULL;
 
     VSIFCloseL( poOpenInfo->fp );
@@ -1623,7 +1630,10 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
     const LTFileSpec    oFileSpec( poOpenInfo->pszFilename );
 
     poDS = new MrSIDDataset();
-    poDS->poImageReader = new MrSIDImageReader( oFileSpec );
+    if ( bIsJP2 )
+        poDS->poImageReader = new J2KImageReader( oFileSpec, true );
+    else
+        poDS->poImageReader = new MrSIDImageReader( oFileSpec );
     if ( !LT_SUCCESS( poDS->poImageReader->initialize() ) )
     {
         delete poDS;
