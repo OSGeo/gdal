@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/01/10 22:30:40  warmerda
+ * collect type info for SDO_ORDINATE_ARRAY and added CleanName()
+ *
  * Revision 1.4  2003/01/09 21:47:34  warmerda
  * avoid debug info on schema
  *
@@ -83,6 +86,7 @@ OGROCISession::OGROCISession()
     hSvcCtx = NULL;
     hDescribe = NULL;
     hGeometryTDO = NULL;
+    hOrdinatesTDO = NULL;
 }
 
 /************************************************************************/
@@ -150,6 +154,7 @@ int OGROCISession::EstablishSession( const char *pszUserid,
                         (size_t)0, (dvoid **)0 ), 
         "OCIHandleAlloc(Describe)" ) )
         return FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Try to get the MDSYS.SDO_GEOMETRY type object.                  */
 /* -------------------------------------------------------------------- */
@@ -179,6 +184,37 @@ int OGROCISession::EstablishSession( const char *pszUserid,
         OCIObjectPin(hEnv, hError, hGeomTypeRef, (OCIComplexObject *)0, 
                      OCI_PIN_ANY, OCI_DURATION_SESSION, 
                      OCI_LOCK_NONE, (dvoid **)&hGeometryTDO),
+        "OCIObjectPin" ) )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Try to get the MDSYS.SDO_GEOMETRY type object.                  */
+/* -------------------------------------------------------------------- */
+    if( Failed( 
+        OCIDescribeAny(hSvcCtx, hError, 
+                       (text *) "MDSYS.SDO_ORDINATE_ARRAY", 
+                       (ub4) strlen("MDSYS.SDO_ORDINATE_ARRAY"),
+                       OCI_OTYPE_NAME, (ub1)1, (ub1)OCI_PTYPE_TYPE, 
+                       hDescribe ), 
+        "OCIDescribeAny(MDSYS.SDO_ORDINATE_ARRAY)" ) )
+        return FALSE;
+
+    if( Failed( 
+        OCIAttrGet((dvoid *)hDescribe, (ub4)OCI_HTYPE_DESCRIBE,
+                   (dvoid *)&hGeomParam, (ub4 *)0, (ub4)OCI_ATTR_PARAM, 
+                   hError), "OCIGetAttr(ATTR_PARAM)") )
+        return FALSE;
+
+    if( Failed( 
+        OCIAttrGet((dvoid *)hGeomParam, (ub4)OCI_DTYPE_PARAM,
+                   (dvoid *)&hGeomTypeRef, (ub4 *)0, (ub4)OCI_ATTR_REF_TDO, 
+                   hError), "OCIAttrGet(ATTR_REF_TDO)" ) )
+        return FALSE;
+
+    if( Failed( 
+        OCIObjectPin(hEnv, hError, hGeomTypeRef, (OCIComplexObject *)0, 
+                     OCI_PIN_ANY, OCI_DURATION_SESSION, 
+                     OCI_LOCK_NONE, (dvoid **)&hOrdinatesTDO),
         "OCIObjectPin" ) )
         return FALSE;
 
@@ -216,7 +252,7 @@ int OGROCISession::Failed( sword nStatus, const char *pszFunction )
         szErrorMsg[sizeof(szErrorMsg)-1] = '\0';
 
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "OCI_ERROR in %s: %s", pszFunction, szErrorMsg );
+                  "%s in %s", szErrorMsg, pszFunction );
         return TRUE;
     }
     else if( nStatus == OCI_NEED_DATA )
@@ -376,3 +412,27 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
     return CE_None;
 }
 
+/************************************************************************/
+/*                             CleanName()                              */
+/*                                                                      */
+/*      Modify a name in-place to be a well formed Oracle name.         */
+/************************************************************************/
+
+void OGROCISession::CleanName( char * pszName )
+
+{
+    int   i;
+
+    if( strlen(pszName) > 30 )
+        pszName[30] = '\0';
+
+    for( i = 0; pszName[i] != '\0'; i++ )
+    {
+        pszName[i] = toupper(pszName[i]);
+        
+        if( (pszName[i] < '0' || pszName[i] > '9')
+            && (pszName[i] < 'A' || pszName[i] > 'Z')
+            && pszName[i] != '_' )
+            pszName[i] = '_';
+    }
+}
