@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/10/06 13:35:27  warmerda
+ * Fixed GrassErrorHandler typedef as per:
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=408
+ *
  * Revision 1.14  2002/12/03 14:05:36  warmerda
  * Modified to try and map byte nodata values outside the min/max range.
  *
@@ -494,7 +498,7 @@ CPLErr GRASSDataset::GetGeoTransform( double * padfGeoTransform )
 /*                                Open()                                */
 /************************************************************************/
 
-typedef int (*GrassErrorHandler)();
+typedef int (*GrassErrorHandler)(...);
 
 GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 
