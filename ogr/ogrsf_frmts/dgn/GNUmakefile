@@ -12,11 +12,11 @@ LIBS	:=	../ogrsf_frmts.a ../../ogr.a $(CPL_LIB) $(LIBS)
 
 CPL_DIR	=	$(GDAL_ROOT)/port
 
-DIST_REV =	1.3
+DIST_REV =	1.4
 DIST_DIR =	dgnlib-$(DIST_REV)
 DIST_FILE = 	dgnlib-$(DIST_REV).zip
 DIST_FILES =	dgnread.cpp dgnopen.cpp dgnlib.h dgnlibp.h dgnfloat.cpp \
-		dgnstroke.cpp dgnwrite.cpp dgndump.c README \
+		dgnstroke.cpp dgnwrite.cpp dgndump.c dgnhelp.cpp README \
 		\
 		$(CPL_DIR)/cpl_config.h $(CPL_DIR)/cpl_port.h \
 		$(CPL_DIR)/cpl_vsi.h $(CPL_DIR)/cpl_vsisimple.cpp \
