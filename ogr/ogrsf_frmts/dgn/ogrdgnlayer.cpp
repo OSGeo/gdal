@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/11/09 15:59:23  warmerda
+ * set style information for text, drop _gv_ogrfs
+ *
  * Revision 1.9  2001/11/06 14:44:41  warmerda
  * Removed printf() statement.
  *
@@ -146,14 +149,6 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN )
     oField.SetName( "_gv_color" );
     oField.SetType( OFTString);
     oField.SetWidth( 12 );
-    poFeatureDefn->AddFieldDefn( &oField );
-
-/* -------------------------------------------------------------------- */
-/*      _gv_ogrfs                                                       */
-/* -------------------------------------------------------------------- */
-    oField.SetName( "_gv_ogrfs" );
-    oField.SetType( OFTString);
-    oField.SetWidth( 30 );
     poFeatureDefn->AddFieldDefn( &oField );
 }
 
@@ -311,10 +306,22 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
           poFeature->SetGeometryDirectly( poPoint );
 
           pszOgrFS = (char *) CPLMalloc(strlen(psText->string) + 150);
-          sprintf( pszOgrFS, 
-                   "LABEL(t:\"%s\")", 
-                   psText->string );
-          poFeature->SetField( "_gv_ogrfs", pszOgrFS );
+          if( DGNLookupColor( hDGN, psElement->color, 
+                              &gv_red, &gv_green, &gv_blue ) )
+          {
+              sprintf( pszOgrFS, 
+                       "LABEL(t:\"%s\",c:#%02x%02x%02x)", 
+                       psText->string,
+                       gv_red, gv_green, gv_blue );
+          }
+          else
+          {
+              sprintf( pszOgrFS, 
+                       "LABEL(t:\"%s\")", 
+                       psText->string );
+          }
+
+          poFeature->SetStyleString( pszOgrFS );
           CPLFree( pszOgrFS );
       }
       break;
