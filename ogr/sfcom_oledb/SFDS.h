@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/08/13 13:59:42  warmerda
+ * removed MEDC related property page stuff
+ *
  * Revision 1.19  2002/08/13 13:44:10  warmerda
  * removed custom MEDC property pages
  *
@@ -90,7 +93,6 @@
 
 #include "resource.h"       // main symbols
 #include "SFRS.h"
-//#include "IDataSourceKey.h"
 
 // IDBInitializeImpl
 template <class T>
@@ -184,8 +186,6 @@ class ATL_NO_VTABLE CSFSource :
 	public IPersistImpl<CSFSource>,
 	public IInternalConnectionImpl<CSFSource>,
 	public CDataSourceISupportErrorInfoImpl,
-        public IServiceProviderImpl<CSFSource>,
-        public ISpecifyPropertyPagesImpl<CSFSource>,
 	public IDataSourceKeyImpl<CSFSource>
 	{
 public:
@@ -249,8 +249,6 @@ BEGIN_COM_MAP(CSFSource)
     COM_INTERFACE_ENTRY(IPersist)
     COM_INTERFACE_ENTRY(IInternalConnection)
     COM_INTERFACE_ENTRY(ISupportErrorInfo)
-    COM_INTERFACE_ENTRY(IServiceProvider)     
-    COM_INTERFACE_ENTRY(ISpecifyPropertyPages)
     COM_INTERFACE_ENTRY(IDataSourceKey)
 END_COM_MAP()
 
