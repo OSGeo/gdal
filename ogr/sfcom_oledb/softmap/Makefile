@@ -24,7 +24,8 @@ OGR_LIBS =	$(OGR)\ogrsf_frmts\ogrsf_frmts.lib \
 		$(GDAL_ROOT)\port\cpl.lib  $(OGDILIB)
 !ENDIF
 
-LOC_OBJ =       SF.obj SFRS.obj sfutil.obj sftraceback.obj sfregister.obj
+LOC_OBJ =       SF.obj SFRS.obj sfutil.obj sftraceback.obj sfregister.obj \
+		ogrvirtualarray.obj
 
 default:	$(DLLNAME)
 
@@ -44,7 +45,7 @@ $(DLLNAME):	SF.h $(LOC_OBJ) $(PROJ).res
 clean:
 	-del *.obj *.exe *.dll $(PROJ).res $(DLLNAME)
 	-del *.lib *.ilk *.exp *.pdb SF.h SF.tlb SF_i.c
-	-del sf.cpp sfutil.cpp sftraceback.cpp SFRS.cpp
+	-del sf.cpp sfutil.cpp sftraceback.cpp SFRS.cpp ogrvirtualarray.cpp
 
 install:      $(DLLNAME)
 	regsvr32 $(DLLNAME)
@@ -63,6 +64,9 @@ sftraceback.cpp:	$(SFOLEDB)\sftraceback.cpp
 
 SFRS.cpp:	$(SFOLEDB)\SFRS.cpp
 	copy $(SFOLEDB)\SFRS.cpp
+
+ogrvirtualarray.cpp:	$(SFOLEDB)\ogrvirtualarray.cpp
+	copy $(SFOLEDB)\ogrvirtualarray.cpp
 
 
 
