@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/04/25 20:56:28  warmerda
+ * expanded tabs
+ *
  * Revision 1.12  2002/03/12 18:11:38  warmerda
  * ESRI WKT false easting/northing not necessariliy in meters
  *
@@ -516,7 +519,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Try to convert any false easting or northing to meters.		*/
+/*      Try to convert any false easting or northing to meters.         */
 /* -------------------------------------------------------------------- */
     double dfLinearUnits = GetLinearUnits();
 

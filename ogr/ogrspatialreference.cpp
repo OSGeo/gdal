@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2002/04/25 20:56:28  warmerda
+ * expanded tabs
+ *
  * Revision 1.50  2002/04/18 14:22:45  warmerda
  * made OGRSpatialReference and co 'const correct'
  *
@@ -1243,7 +1246,7 @@ OGRErr OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS, const char *pszName )
 OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 
 {
-    int	    bESRI = FALSE;
+    int     bESRI = FALSE;
     OGRErr  err;
 
     if( EQUALN(pszDefinition,"ESRI::",6) )
