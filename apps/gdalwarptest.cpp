@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/03/02 05:24:02  warmerda
+ * added -srcnodata option
+ *
  * Revision 1.1  2003/02/22 02:03:41  warmerda
  * New
  *
@@ -62,7 +65,7 @@ static void Usage()
         "    [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]\n"
         "    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
         "    [-wo \"NAME=VALUE\"] [-ot Byte/Int16/...] [-wt Byte/Int16]\n"
-        "    [-rn] [-rb] [-rc]\n" 
+        "    [-rn] [-rb] [-rc] [-srcnodata value [value...]]\n" 
         "    [-of format] [-co \"NAME=VALUE\"]* srcfile dstfile\n" );
     exit( 1 );
 }
@@ -106,6 +109,7 @@ int main( int argc, char ** argv )
     char                **papszCreateOptions = NULL;
     GDALDataType        eOutputType = GDT_Unknown, eWorkingType = GDT_Unknown; 
     GDALResampleAlg     eResampleAlg = GRA_NearestNeighbour;
+    const char          *pszSrcNodata = NULL;
 
     GDALAllRegister();
 
@@ -164,6 +168,10 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-et") && i < argc-1 )
         {
             dfErrorThreshold = atof(argv[++i]);
+        }
+        else if( EQUAL(argv[i],"-srcnodata") && i < argc-1 )
+        {
+            pszSrcNodata = argv[++i];
         }
         else if( EQUAL(argv[i],"-tr") && i < argc-2 )
         {
@@ -353,6 +361,50 @@ int main( int argc, char ** argv )
     psWO->pTransformerArg = hTransformArg;
 
 /* -------------------------------------------------------------------- */
+/*      Setup band mapping.                                             */
+/* -------------------------------------------------------------------- */
+    psWO->nBandCount = GDALGetRasterCount(hSrcDS);
+    psWO->panSrcBands = (int *) CPLMalloc(psWO->nBandCount*sizeof(int));
+    psWO->panDstBands = (int *) CPLMalloc(psWO->nBandCount*sizeof(int));
+
+    for( i = 0; i < psWO->nBandCount; i++ )
+    {
+        psWO->panSrcBands[i] = i+1;
+        psWO->panDstBands[i] = i+1;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Setup NODATA options.                                           */
+/* -------------------------------------------------------------------- */
+    if( pszSrcNodata != NULL )
+    {
+        char **papszTokens = CSLTokenizeString( pszSrcNodata );
+        int  nTokenCount = CSLCount(papszTokens);
+
+        psWO->padfSrcNoDataReal = (double *) 
+            CPLMalloc(psWO->nBandCount*sizeof(double));
+        psWO->padfSrcNoDataImag = (double *) 
+            CPLMalloc(psWO->nBandCount*sizeof(double));
+
+        for( i = 0; i < psWO->nBandCount; i++ )
+        {
+            if( i < nTokenCount )
+            {
+                CPLStringToComplex( papszTokens[i], 
+                                    psWO->padfSrcNoDataReal + i,
+                                    psWO->padfSrcNoDataImag + i );
+            }
+            else
+            {
+                psWO->padfSrcNoDataReal[i] = psWO->padfSrcNoDataReal[i-1];
+                psWO->padfSrcNoDataImag[i] = psWO->padfSrcNoDataImag[i-1];
+            }
+        }
+
+        CSLDestroy( papszTokens );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Initialize and execute the warp.                                */
 /* -------------------------------------------------------------------- */
     GDALWarpOperation oWO;
@@ -363,6 +415,7 @@ int main( int argc, char ** argv )
                                GDALGetRasterXSize( hDstDS ),
                                GDALGetRasterYSize( hDstDS ) );
     }
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
@@ -526,7 +579,7 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
     hDstDS = GDALCreate( hDriver, pszFilename, nPixels, nLines, 
                          GDALGetRasterCount(hSrcDS), eDT,
                          papszCreateOptions );
-
+    
     if( hDstDS == NULL )
         return NULL;
 
