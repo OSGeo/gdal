@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/03/20 20:20:14  warmerda
+ * Added % handling, fixed completion, fixed adGeoTransform (Mark Salazar)
+ *
  * Revision 1.16  2001/02/19 15:12:17  warmerda
  * fixed windowing problem with -srcwin
  *
@@ -96,7 +99,7 @@ static void Usage()
     printf( "Usage: gdal_translate \n"
             "       [-ot {Byte/UInt16/UInt32/Int32/Float32/Float64/CInt16/\n"
             "             CInt32/CFloat32/CFloat64}]\n"
-            "       [-of format] [-b band] [-outsize xsize ysize]\n"
+            "       [-of format] [-b band] [-outsize xsize[%] ysize[%]]\n"
             "       [-srcwin xoff yoff xsize ysize] [-co \"NAME=VALUE\"]*\n"
             "       src_dataset dst_dataset\n\n" );
 
@@ -126,6 +129,7 @@ int main( int argc, char ** argv )
     double		adfGeoTransform[6];
     GDALDataType	eOutputType = GDT_Unknown;
     int			nOXSize = 0, nOYSize = 0;
+    char		*pszOXSize=NULL, *pszOYSize=NULL;
     char                **papszCreateOptions = NULL;
     int                 anSrcWin[4];
     const char          *pszProjection;
@@ -180,8 +184,8 @@ int main( int argc, char ** argv )
 
         else if( EQUAL(argv[i],"-outsize") && i < argc-2 )
         {
-            nOXSize = atoi(argv[++i]);
-            nOYSize = atoi(argv[++i]);
+            pszOXSize = argv[++i];
+            pszOYSize = argv[++i];
         }   
 
         else if( EQUAL(argv[i],"-srcwin") && i < argc-4 )
@@ -293,7 +297,7 @@ int main( int argc, char ** argv )
         && anSrcWin[0] == 0 && anSrcWin[1] == 0 
         && anSrcWin[2] == GDALGetRasterXSize(hDataset)
         && anSrcWin[3] == GDALGetRasterYSize(hDataset) 
-        && nOXSize == 0 && nOYSize == 0 )
+        && pszOXSize == NULL && pszOYSize == NULL )
     {
         
         hOutDS = GDALCreateCopy( hDriver, pszDest, hDataset, 
@@ -316,10 +320,17 @@ int main( int argc, char ** argv )
         eOutputType = GDALGetRasterDataType(hBand);
     }
 
-    if( nOXSize == 0 )
+    if( pszOXSize == NULL )
     {
         nOXSize = anSrcWin[2];
         nOYSize = anSrcWin[3];
+    }
+    else
+    {
+        nOXSize = (pszOXSize[strlen(pszOXSize)-1]=='%' 
+                   ? atof(pszOXSize)/100*anSrcWin[2] : atoi(pszOXSize));
+        nOYSize = (pszOYSize[strlen(pszOYSize)-1]=='%' 
+                   ? atof(pszOYSize)/100*anSrcWin[3] : atoi(pszOYSize));
     }
     
 /* -------------------------------------------------------------------- */
@@ -345,8 +356,8 @@ int main( int argc, char ** argv )
     {
         adfGeoTransform[0] += anSrcWin[0] * adfGeoTransform[1]
                             + anSrcWin[1] * adfGeoTransform[2];
-        adfGeoTransform[3] += anSrcWin[2] * adfGeoTransform[4]
-                            + anSrcWin[3] * adfGeoTransform[5];
+        adfGeoTransform[3] += anSrcWin[0] * adfGeoTransform[4]
+                            + anSrcWin[1] * adfGeoTransform[5];
 
         adfGeoTransform[1] *= anSrcWin[2] / (double) nOXSize;
         adfGeoTransform[2] *= anSrcWin[3] / (double) nOYSize;
@@ -406,7 +417,7 @@ int main( int argc, char ** argv )
                           0, 0 );
 
             dfComplete = (i / (double) nBandCount)
-                + ((iBlockY+1) / (double) nOYSize*nBandCount);
+                + ((iBlockY+1) / ((double) nOYSize*nBandCount));
             
             GDALTermProgress( dfComplete, NULL, NULL );
         }
