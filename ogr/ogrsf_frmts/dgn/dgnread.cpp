@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/03/12 17:07:26  warmerda
+ * added tagset and tag value element support
+ *
  * Revision 1.22  2002/02/22 22:17:42  warmerda
  * Ensure that components of complex chain/shapes are spatially selected
  * based on the decision made for their owner (header).
@@ -103,6 +106,7 @@ CPL_CVSID("$Id$");
 
 static DGNElemCore *DGNParseTCB( DGNInfo * );
 static DGNElemCore *DGNParseColorTable( DGNInfo * );
+static DGNElemCore *DGNParseTagSet( DGNInfo * );
 
 /************************************************************************/
 /*                           DGNGotoElement()                           */
@@ -613,6 +617,56 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       }
       break;
 
+      case DGNT_TAG_VALUE:
+      {
+          DGNElemTagValue *psTag;
+
+          psTag = (DGNElemTagValue *) 
+              CPLCalloc(sizeof(DGNElemTagValue),1);
+          psElement = (DGNElemCore *) psTag;
+          psElement->stype = DGNST_TAG_VALUE;
+          DGNParseCore( psDGN, psElement );
+
+          psTag->tagType = psDGN->abyElem[74] + psDGN->abyElem[75] * 256;
+          memcpy( &(psTag->tagSet), psDGN->abyElem + 68, 4 );
+          psTag->tagSet = CPL_LSBWORD32(psTag->tagSet);
+          psTag->tagIndex = psDGN->abyElem[72] + psDGN->abyElem[73] * 256;
+          psTag->tagLength = psDGN->abyElem[150] + psDGN->abyElem[151] * 256;
+
+          if( psTag->tagType == 1 )
+          {
+              psTag->tagValue.string = 
+                  CPLStrdup( (char *) psDGN->abyElem + 152 );
+          }
+          else if( psTag->tagType == 3 )
+          {
+              memcpy( &(psTag->tagValue.integer), 
+                      psDGN->abyElem + 152, 4 );
+              psTag->tagValue.integer = 
+                  CPL_LSBWORD32( psTag->tagValue.integer );
+          }
+          else if( psTag->tagType == 4 )
+          {
+              memcpy( &(psTag->tagValue.real), 
+                      psDGN->abyElem + 152, 8 );
+              DGN2IEEEDouble( &(psTag->tagValue.real) );
+          }
+      }
+      break;
+
+      case DGNT_APPLICATION_ELEM:
+        if( nLevel == 24 )
+        {
+            psElement = DGNParseTagSet( psDGN );
+        }
+        else
+        {
+            psElement = (DGNElemCore *) CPLCalloc(sizeof(DGNElemCore),1);
+            psElement->stype = DGNST_CORE;
+            DGNParseCore( psDGN, psElement );
+        }
+        break;
+
       default:
       {
           psElement = (DGNElemCore *) CPLCalloc(sizeof(DGNElemCore),1);
@@ -808,6 +862,110 @@ static DGNElemCore *DGNParseColorTable( DGNInfo * psDGN )
 }
 
 /************************************************************************/
+/*                           DGNParseTagSet()                           */
+/************************************************************************/
+
+static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
+
+{
+    DGNElemCore *psElement;
+    DGNElemTagSet *psTagSet;
+    int          nDataOffset, iTag;
+            
+    psTagSet = (DGNElemTagSet *) CPLCalloc(sizeof(DGNElemTagSet),1);
+    psElement = (DGNElemCore *) psTagSet;
+    psElement->stype = DGNST_TAG_SET;
+
+    DGNParseCore( psDGN, psElement );
+
+/* -------------------------------------------------------------------- */
+/*      Parse the overall information.                                  */
+/* -------------------------------------------------------------------- */
+    psTagSet->tagCount = 
+        psDGN->abyElem[44] + psDGN->abyElem[45] * 256;
+    psTagSet->flags = 
+        psDGN->abyElem[46] + psDGN->abyElem[47] * 256;
+    psTagSet->tagSetName = CPLStrdup( (const char *) (psDGN->abyElem + 48) );
+
+/* -------------------------------------------------------------------- */
+/*      Get the tag set number out of the attributes, if available.     */
+/* -------------------------------------------------------------------- */
+    psTagSet->tagSet = -1;
+
+    if( psElement->attr_bytes >= 8 
+        && psElement->attr_data[0] == 0x03
+        && psElement->attr_data[1] == 0x10
+        && psElement->attr_data[2] == 0x2f
+        && psElement->attr_data[3] == 0x7d )
+        psTagSet->tagSet = psElement->attr_data[4];
+
+/* -------------------------------------------------------------------- */
+/*      Parse each of the tag definitions.                              */
+/* -------------------------------------------------------------------- */
+    psTagSet->tagList = (DGNTagDef *) 
+        CPLMalloc(sizeof(DGNTagDef) * psTagSet->tagCount);
+
+    nDataOffset = 48 + strlen(psTagSet->tagSetName) + 1 + 1; 
+    for( iTag = 0; iTag < psTagSet->tagCount; iTag++ )
+    {
+        DGNTagDef *tagDef = psTagSet->tagList + iTag;
+
+        CPLAssert( nDataOffset < psDGN->nElemBytes );
+
+        /* collect tag name. */
+        tagDef->name = CPLStrdup( (char *) psDGN->abyElem + nDataOffset );
+        nDataOffset += strlen(tagDef->name)+1;
+
+        /* Get tag id */
+        tagDef->id = psDGN->abyElem[nDataOffset]
+            + psDGN->abyElem[nDataOffset+1] * 256;
+        nDataOffset += 2;
+
+        CPLAssert( tagDef->id == iTag+1 );
+
+        /* Get User Prompt */
+        tagDef->prompt = CPLStrdup( (char *) psDGN->abyElem + nDataOffset );
+        nDataOffset += strlen(tagDef->prompt)+1;
+
+
+        /* Get type */
+        tagDef->type = psDGN->abyElem[nDataOffset]
+            + psDGN->abyElem[nDataOffset+1] * 256;
+        nDataOffset += 2;
+
+        CPLAssert( tagDef->type == 1 || tagDef->type == 2 || tagDef->type == 3
+                   || tagDef->type == 4 );
+
+        /* skip five zeros */
+        nDataOffset += 5;
+
+        /* Get the default */
+        if( tagDef->type == 1 )
+        {
+            tagDef->defaultValue.string = 
+                CPLStrdup( (char *) psDGN->abyElem + nDataOffset );
+            nDataOffset += strlen(tagDef->defaultValue.string)+1;
+        }
+        else if( tagDef->type == 3 )
+        {
+            memcpy( &(tagDef->defaultValue.integer), 
+                    psDGN->abyElem + nDataOffset, 4 );
+            tagDef->defaultValue.integer = 
+                CPL_LSBWORD32( tagDef->defaultValue.integer );
+            nDataOffset += 4;
+        }
+        else if( tagDef->type == 4 )
+        {
+            memcpy( &(tagDef->defaultValue.real), 
+                    psDGN->abyElem + nDataOffset, 8 );
+            DGN2IEEEDouble( &(tagDef->defaultValue.real) );
+            nDataOffset += 8;
+        }
+    }
+    return psElement;
+}
+
+/************************************************************************/
 /*                            DGNParseTCB()                             */
 /************************************************************************/
 
@@ -897,8 +1055,32 @@ void DGNFreeElement( DGNHandle hDGN, DGNElemCore *psElement )
 {
     if( psElement->attr_data != NULL )
         VSIFree( psElement->attr_data );
+
     if( psElement->raw_data != NULL )
         VSIFree( psElement->raw_data );
+
+    if( psElement->stype == DGNST_TAG_SET )
+    {
+        int		iTag;
+
+        DGNElemTagSet *psTagSet = (DGNElemTagSet *) psElement;
+        CPLFree( psTagSet->tagSetName );
+
+        for( iTag = 0; iTag < psTagSet->tagCount; iTag++ )
+        {
+            CPLFree( psTagSet->tagList[iTag].name );
+            CPLFree( psTagSet->tagList[iTag].prompt );
+
+            if( psTagSet->tagList[iTag].type == 4 )
+                CPLFree( psTagSet->tagList[iTag].defaultValue.string );
+        }
+    }
+    else if( psElement->stype == DGNST_TAG_VALUE )
+    {
+        if( ((DGNElemTagValue *) psElement)->tagType == 4 )
+            CPLFree( ((DGNElemTagValue *) psElement)->tagValue.string );
+    }
+
     CPLFree( psElement );
 }
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/03/12 17:07:26  warmerda
+ * added tagset and tag value element support
+ *
  * Revision 1.17  2002/02/06 20:33:02  warmerda
  * preliminary addition of tagset support
  *
@@ -319,6 +322,8 @@ typedef struct {
  * Returned for DGNT_TAG_VALUE(37).
  */
 
+typedef union { char *string; int integer; double real; } tagValueUnion;
+
 typedef struct {
     DGNElemCore core;
 
@@ -326,7 +331,7 @@ typedef struct {
     int         tagSet;            /*!< Which tag set does this relate to? */
     int         tagIndex;          /*!< Tag index within tag set. */
     int         tagLength;         /*!< Length of tag information (text) */
-    char       *tagValue;          /*!< Textual value of tag */
+    tagValueUnion tagValue;        /*!< Textual value of tag */
 
 } DGNElemTagValue;
 
@@ -338,9 +343,23 @@ typedef struct {
  * Returned for DGNT_APPLICATION_ELEM(66), Level: 24.
  */
 
+typedef struct _DGNTagDef {
+    char	*name;
+    int         id;
+    char        *prompt;
+    int         type;
+    tagValueUnion defaultValue;
+} DGNTagDef;
+
 typedef struct {
     DGNElemCore core;
 
+    int        tagCount;
+    int        tagSet; 
+    int        flags;
+    char       *tagSetName;
+
+    DGNTagDef  *tagList;
 
 } DGNElemTagSet;
 
@@ -400,7 +419,7 @@ typedef struct {
 #define DGNT_BSPLINE              21
 #define DGNT_SHARED_CELL_DEFN     34
 #define DGNT_SHARED_CELL_ELEM     35
-#define DGNT_TAG_VALUE_ELEM       37
+#define DGNT_TAG_VALUE            37
 #define DGNT_APPLICATION_ELEM     66
 
 /* -------------------------------------------------------------------- */
