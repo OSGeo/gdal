@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.96  2004/05/10 17:09:15  warmerda
+ * added autoidentifyepsg
+ *
  * Revision 1.95  2004/05/06 19:27:06  dron
  * Added OSRSetProjection() wrapper.
  *
@@ -1550,6 +1553,7 @@ int     OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS,
 	                           int nZone, int bNAD83, 
                                    const char *pszOverrideUnitsName, 
                                    double dfOverrideUnits );
+int     OSRAutoIdentifyEPSG( OGRSpatialReferenceH hSRS );
 
 /** Albers Conic Equal Area */
 int OSRSetACEA( OGRSpatialReferenceH hSRS, double dfStdP1, double dfStdP2,

@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.40  2004/05/10 17:09:15  warmerda
+# added autoidentifyepsg
+#
 # Revision 1.39  2004/05/06 19:28:04  dron
 # Added SetProjection() method.
 #
@@ -421,6 +424,9 @@ class SpatialReference:
         return _gdal.OSRSetStatePlaneWithUnits(self._o, zone, is_nad83,
                                                overrideunitsname, 
                                                overrideunits )
+
+    def AutoIdentifyEPSG( self ):
+        return _gdal.OSRAutoIdentifyEPSG( self._o )
 
     def SetAttrValue( self, node_path, value ):
         return _gdal.OSRSetAttrValue( self._o, node_path, value )
