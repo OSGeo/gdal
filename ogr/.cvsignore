@@ -19,4 +19,6 @@ spatialreferenceidl_p.c
 *.pdb
 *.ilk
 *.lib
+sdts2mi
+epsgtest
 
