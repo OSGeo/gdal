@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2004/07/10 04:45:20  warmerda
+ * added dialect option
+ *
  * Revision 1.22  2004/02/19 17:17:42  warmerda
  * clean finder for easier memory leak testing
  *
@@ -124,6 +127,7 @@ int main( int nArgc, char ** papszArgv )
     OGRGeometry *poSpatialFilter = NULL;
     int         nRepeatCount = 1, bAllLayers = FALSE;
     const char  *pszSQLStatement = NULL;
+    const char  *pszDialect = NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
@@ -166,6 +170,11 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-sql") && papszArgv[iArg+1] != NULL )
         {
             pszSQLStatement = papszArgv[++iArg];
+        }
+        else if( EQUAL(papszArgv[iArg],"-dialect") 
+                 && papszArgv[iArg+1] != NULL )
+        {
+            pszDialect = papszArgv[++iArg];
         }
         else if( EQUAL(papszArgv[iArg],"-rc") && papszArgv[iArg+1] != NULL )
         {
@@ -280,7 +289,7 @@ int main( int nArgc, char ** papszArgv )
             printf( "layer names ignored in combination with -sql.\n" );
         
         poResultSet = poDS->ExecuteSQL( pszSQLStatement, poSpatialFilter, 
-                                        NULL );
+                                        pszDialect );
 
         if( poResultSet != NULL )
         {
