@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/01/28 18:18:48  warmerda
+ * Added DTEDPtStreamSetMetadata
+ *
  * Revision 1.2  2001/11/23 16:43:34  warmerda
  * rough interpolate implementation
  *
@@ -52,6 +55,8 @@ typedef struct {
     DTEDCachedFile *pasCF;
 
     int nLastFile;
+
+    char *apszMetadata[DTEDMD_MAX+1];
 } DTEDPtStream;
 
 /************************************************************************/
@@ -62,6 +67,7 @@ void *DTEDCreatePtStream( const char *pszPath, int nLevel )
 
 {
     DTEDPtStream *psStream;
+    int          i;
 
     psStream = (DTEDPtStream *) CPLCalloc( sizeof(DTEDPtStream), 1 );
     psStream->nLevel = nLevel;
@@ -70,6 +76,9 @@ void *DTEDCreatePtStream( const char *pszPath, int nLevel )
     psStream->pasCF = NULL;
     psStream->nLastFile = -1;
 
+    for( i = 0; i < DTEDMD_MAX+1; i++ )
+        psStream->apszMetadata[i] = NULL;
+    
     return (void *) psStream;
 }
 
@@ -215,7 +224,7 @@ void DTEDClosePtStream( void *hStream )
 
 {
     DTEDPtStream *psStream = (DTEDPtStream *) hStream;
-    int	          iFile;
+    int	          iFile, iMD;
 
 /* -------------------------------------------------------------------- */
 /*      Flush all DTED files.                                           */
@@ -237,12 +246,23 @@ void DTEDClosePtStream( void *hStream )
 
         CPLFree( psCF->papanProfiles );
 
+        for( iMD = 0; iMD < DTEDMD_MAX+1; iMD++ )
+        {
+            if( psStream->apszMetadata[iMD] != NULL )
+                DTEDSetMetadata( psCF->psInfo, iMD, 
+                                 psStream->apszMetadata[iMD] );
+        }
+
         DTEDClose( psCF->psInfo );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Final cleanup.                                                  */
 /* -------------------------------------------------------------------- */
+
+    for( iMD = 0; iMD < DTEDMD_MAX+1; iMD++ )
+        CPLFree( psStream->apszMetadata[iMD] );
+
     CPLFree( psStream->pasCF );
     CPLFree( psStream->pszPath );
     CPLFree( psStream );
@@ -383,3 +403,21 @@ void DTEDFillPtStream( void *hStream, int nPixelSearchDist )
 
     CPLFree( pafKernel );
 }
+
+/************************************************************************/
+/*                      DTEDPtStreamSetMetadata()                       */
+/************************************************************************/
+
+void DTEDPtStreamSetMetadata( void *hStream, DTEDMetaDataCode eCode, 
+                              const char *pszValue )
+
+{
+    DTEDPtStream *psStream = (DTEDPtStream *) hStream;
+
+    if( eCode >= 0 && eCode < DTEDMD_MAX+1 )
+    {
+        CPLFree( psStream->apszMetadata[eCode] );
+        psStream->apszMetadata[eCode] = CPLStrdup( pszValue );
+    }
+}
+
