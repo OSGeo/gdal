@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/06/09 13:26:47  warmerda
+ * default spheroid information to WGS84 if we don't have any
+ *
  * Revision 1.10  2000/02/14 20:21:08  warmerda
  * avoid reporting error for unknown datum
  *
@@ -176,7 +179,7 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
     char	*pszPMName = NULL;
     char	*pszSpheroidName = NULL;
     char	*pszAngularUnits = NULL;
-    double	dfInvFlattening;
+    double	dfInvFlattening, dfSemiMajor;
     
     GTIFGetGCSInfo( psDefn->GCS, &pszGeogName, NULL, NULL, NULL );
     GTIFGetDatumInfo( psDefn->Datum, &pszDatumName, NULL );
@@ -190,16 +193,21 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
     if( pszDatumName != NULL )
         WKTMassageDatum( &pszDatumName );
 
+    dfSemiMajor = psDefn->SemiMajor;
     if( psDefn->SemiMajor == 0.0 )
-        dfInvFlattening = 0.0;
+    {
+        pszSpheroidName = "unretrievable - using WGS84";
+        dfSemiMajor = SRS_WGS84_SEMIMAJOR;
+        dfInvFlattening = SRS_WGS84_INVFLATTENING;
+    }
     else if( (psDefn->SemiMinor / psDefn->SemiMajor) < 0.99999999999999999
              || (psDefn->SemiMinor / psDefn->SemiMajor) > 1.00000000000000001 )
         dfInvFlattening = -1.0 / (psDefn->SemiMinor/psDefn->SemiMajor - 1.0);
     else
         dfInvFlattening = 0.0; /* special flag for infinity */
-    
-    oSRS.SetGeogCS( pszGeogName, pszDatumName, pszSpheroidName,
-                    psDefn->SemiMajor, dfInvFlattening,
+
+    oSRS.SetGeogCS( pszGeogName, pszDatumName, 
+                    pszSpheroidName, dfSemiMajor, dfInvFlattening,
                     pszPMName,
                     psDefn->PMLongToGreenwich / psDefn->UOMAngleInDegrees,
                     pszAngularUnits,
