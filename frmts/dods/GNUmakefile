@@ -3,7 +3,7 @@ GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	dodsdataset.o 
+OBJ	=	dodsdataset2.o 
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) -I$(DODS_INC)
 
