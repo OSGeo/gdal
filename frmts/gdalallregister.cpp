@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.49  2002/10/10 10:43:37  dron
+ * Fix for buiding GDAL with JasPer software under Windows.
+ *
  * Revision 1.48  2002/10/05 12:05:21  dron
  * JPEG2000, L1B and HDF4 registrations moved in front of RAW (to avoid
  * problems with PAux). Removed extra JPEG2000 registration. FAST registration
@@ -306,7 +309,9 @@ void GDALAllRegister()
 #endif
 
 #ifdef FRMT_jpeg2000
-    GDALRegister_JP2KAK();
+// JPEG2000 support using Kakadu toolkit
+//    GDALRegister_JP2KAK();
+// JPEG2000 support using JasPer toolkit
     GDALRegister_JPEG2000();
 #endif
 
