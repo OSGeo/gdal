@@ -150,14 +150,15 @@ rectangle of source data should be mapped into the VRTRasterBands space.
 Simple Source (so it shares the SourceFilename, SourceBand, SrcRect and 
 DestRect elements, but it also passes the data through a simple filtering 
 kernel specified with the Kernel element.  The Kernel element should have
-two child elements, Size and Coefs.  The size must always be an odd number,
+two child elements, Size and Coefs and optionally the boolean attribute
+normalized (defaults to false=0).  The size must always be an odd number,
 and the Coefs must have Size * Size entries separated by spaces.
 
 \code
     <KernelFilteredSource>
       <SourceFilename>/debian/home/warmerda/openev/utm.tif</SourceFilename>
       <SourceBand>1</SourceBand>
-      <Kernel>
+      <Kernel normalized="1">
         <Size>3</Size>
         <Coefs>0.11111111 0.11111111 0.11111111 0.11111111 0.11111111 0.11111111 0.11111111 0.11111111 0.11111111</Coefs>
       </Kernel>
