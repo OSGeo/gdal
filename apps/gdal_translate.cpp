@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/01/27 20:58:11  fwarmerdam
+ * Added -a_ullr switch.
+ *
  * Revision 1.27  2005/01/24 18:01:18  fwarmerdam
  * Added -sds option for copying subdatasets.
  *
@@ -173,10 +176,11 @@ static void Usage()
             "             CInt16/CInt32/CFloat32/CFloat64}] [-not_strict]\n"
             "       [-of format] [-b band] [-outsize xsize[%%] ysize[%%]]\n"
             "       [-scale [src_min src_max [dst_min dst_max]]]\n"
-            "       [-srcwin xoff yoff xsize ysize] [-a_srs srs_def]\n"
-            "       [-projwin ulx uly lrx lry] [-co \"NAME=VALUE\"]*\n"
+            "       [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry]\n"
+            "       [-a_srs srs_def] [-a_ullr ulx uly lrx lry]\n"
             "       [-gcp pixel line easting northing]*\n" 
             "       [-mo \"META-TAG=VALUE\"]* [-quiet] [-sds]\n"
+            "       [-co \"NAME=VALUE\"]*\n"
             "       src_dataset dst_dataset\n\n" );
 
     printf( "%s\n\n", GDALVersionInfo( "--version" ) );
@@ -222,12 +226,14 @@ int main( int argc, char ** argv )
     double              dfULX, dfULY, dfLRX, dfLRY;
     char                **papszMetadataOptions = NULL;
     char                *pszOutputSRS = NULL;
-    int                 bQuiet = FALSE;
+    int                 bQuiet = FALSE, bGotBounds = FALSE;
     GDALProgressFunc    pfnProgress = GDALTermProgress;
     int                 nGCPCount = 0;
     GDAL_GCP            *pasGCPs = NULL;
     int                 iSrcFileArg = -1, iDstFileArg = -1;
     int                 bCopySubDatasets = FALSE;
+    double              adfULLR[4];
+
 
     anSrcWin[0] = 0;
     anSrcWin[1] = 0;
@@ -324,6 +330,18 @@ int main( int argc, char ** argv )
                 pasGCPs[nGCPCount-1].dfGCPZ = atof(argv[++i]);
 
             /* should set id and info? */
+        }   
+
+        else if( EQUAL(argv[i],"-a_ullr") && i < argc - 4 )
+        {
+            adfULLR[0] = atof(argv[i+1]);
+            adfULLR[1] = atof(argv[i+2]);
+            adfULLR[2] = atof(argv[i+3]);
+            adfULLR[3] = atof(argv[i+4]);
+
+            bGotBounds = TRUE;
+            
+            i += 4;
         }   
 
         else if( EQUAL(argv[i],"-co") && i < argc-1 )
@@ -651,7 +669,7 @@ int main( int argc, char ** argv )
         && anSrcWin[2] == GDALGetRasterXSize(hDataset)
         && anSrcWin[3] == GDALGetRasterYSize(hDataset) 
         && pszOXSize == NULL && pszOYSize == NULL 
-        && nGCPCount == 0
+        && nGCPCount == 0 && !bGotBounds
         && pszOutputSRS == NULL )
     {
         
@@ -717,8 +735,20 @@ int main( int argc, char ** argv )
                 poVDS->SetProjection( pszProjection );
         }
     }
-    
-    if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None 
+
+    if( bGotBounds )
+    {
+        adfGeoTransform[0] = adfULLR[0];
+        adfGeoTransform[1] = (adfULLR[2] - adfULLR[0]) / nOXSize;
+        adfGeoTransform[2] = 0.0;
+        adfGeoTransform[3] = adfULLR[1];
+        adfGeoTransform[4] = 0.0;
+        adfGeoTransform[5] = (adfULLR[3] - adfULLR[1]) / nOYSize;
+
+        poVDS->SetGeoTransform( adfGeoTransform );
+    }
+
+    else if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None 
         && nGCPCount == 0 )
     {
         adfGeoTransform[0] += anSrcWin[0] * adfGeoTransform[1]
