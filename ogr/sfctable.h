@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/12/30 16:53:48  warmerda
+ * provide app access to poSRS
+ *
  * Revision 1.7  1999/11/18 19:02:20  warmerda
  * expanded tabs
  *
@@ -115,6 +118,7 @@ class SFCTable : public CTable<CDynamicAccessor>
     void        ReleaseIUnknowns();
     
     int         GetSpatialRefID();
+    OGRSpatialReference *GetSpatialRef() { return poSRS; }
 
     int         GetGeometryColumn();
 
