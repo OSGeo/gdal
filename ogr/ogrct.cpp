@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/06/11 18:02:03  warmerda
+ * add PROJ.4 normalization and EPSG support
+ *
  * Revision 1.14  2002/03/05 14:25:14  warmerda
  * expand tabs
  *
@@ -101,9 +104,11 @@ static projUV       (*pfn_pj_fwd)(projUV, projPJ) = NULL;
 static projUV       (*pfn_pj_inv)(projUV, projPJ) = NULL;
 static void     (*pfn_pj_free)(projPJ) = NULL;
 static int      (*pfn_pj_transform)(projPJ, projPJ, long, int, 
-                                    double *, double *, double * );
-static int         *(*pfn_pj_get_errno_ref)(void);
-static char        *(*pfn_pj_strerrno)(int);
+                                    double *, double *, double * ) = NULL;
+static int         *(*pfn_pj_get_errno_ref)(void) = NULL;
+static char        *(*pfn_pj_strerrno)(int) = NULL;
+static char        *(*pfn_pj_get_def)(projPJ,int) = NULL;
+static void         (*pfn_pj_dalloc)(void *) = NULL;
 
 #ifdef WIN32
 #  define LIBNAME      "proj.dll"
@@ -163,6 +168,10 @@ static int LoadProjLibrary()
     pfn_pj_transform = pj_transform;
     pfn_pj_get_errno_ref = pj_get_errno_ref;
     pfn_pj_get_strerrno = pj_get_strerrno;
+    pfn_pj_dalloc = pj_dalloc;
+#ifdef PJ_VERSION >= 446
+    pfn_pj_get_def = pj_get_def;
+#endif    
 #else
     CPLPushErrorHandler( CPLQuietErrorHandler );
 
@@ -186,6 +195,10 @@ static int LoadProjLibrary()
         CPLGetSymbol( LIBNAME, "pj_get_errno_ref" );
     pfn_pj_strerrno = (char *(*)(int))
         CPLGetSymbol( LIBNAME, "pj_strerrno" );
+    pfn_pj_get_def = (char *(*)(projPJ,int))
+        CPLGetSymbol( LIBNAME, "pj_get_def" );
+    pfn_pj_dalloc = (void (*)(void*))
+        CPLGetSymbol( LIBNAME, "pj_dalloc" );
 #endif
 
     if( pfn_pj_transform == NULL )
@@ -199,6 +212,47 @@ static int LoadProjLibrary()
     }
 
     return( TRUE );
+}
+
+/************************************************************************/
+/*                         OCTProj4Normalize()                          */
+/*                                                                      */
+/*      This function is really just here since we already have all     */
+/*      the code to load libproj.so.  It is intended to "normalize"     */
+/*      a proj.4 definition, expanding +init= definitions and so        */
+/*      forth as possible.                                              */
+/************************************************************************/
+
+char *OCTProj4Normalize( const char *pszProj4Src )
+
+{
+    char        **papszArgs;
+    char        *pszNewProj4Def, *pszCopy;
+    projPJ      psPJSource = NULL;
+
+    if( !LoadProjLibrary() || pfn_pj_dalloc == NULL || pfn_pj_get_def == NULL )
+        return CPLStrdup( pszProj4Src );
+
+    papszArgs = CSLTokenizeStringComplex( pszProj4Src, " +",TRUE,FALSE );
+    
+    psPJSource = pfn_pj_init( CSLCount(papszArgs), papszArgs );
+
+    CSLDestroy( papszArgs );
+
+    if( psPJSource == NULL )
+        return CPLStrdup( pszProj4Src );
+
+    pszNewProj4Def = pfn_pj_get_def( psPJSource, 0 );
+
+    pfn_pj_dalloc( psPJSource );
+
+    if( pszNewProj4Def == NULL )
+        return CPLStrdup( pszProj4Src );
+
+    pszCopy = CPLStrdup( pszNewProj4Def );
+    pfn_pj_dalloc( pszNewProj4Def );
+
+    return pszCopy;
 }
 
 /************************************************************************/
