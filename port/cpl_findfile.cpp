@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/10/24 16:41:16  warmerda
+ * Added /usr/local/share/gdal (not /usr/local/share) to default locations.
+ *
  * Revision 1.5  2003/10/24 16:30:10  warmerda
  * fixed serious bug in default finder ... only last location used
  *
@@ -66,7 +69,7 @@ static void CPLFinderInit()
     {
         bFinderInitialized = TRUE;
         CPLPushFileFinder( CPLDefaultFindFile );
-        CPLPushFinderLocation( "/usr/local/share" );
+        CPLPushFinderLocation( "/usr/local/share/gdal" );
         CPLPushFinderLocation( "." );
     }
 }
