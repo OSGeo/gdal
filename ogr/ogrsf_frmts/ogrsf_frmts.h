@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/08/28 03:12:43  warmerda
+ * Added NTF.
+ *
  * Revision 1.6  1999/07/27 00:50:39  warmerda
  * added a number of OGRLayer methods
  *
@@ -185,6 +188,7 @@ class OGRSFDriverRegistrar
 /* -------------------------------------------------------------------- */
 CPL_C_START
 void	RegisterOGRShape();
+void	RegisterOGRNTF();
 CPL_C_END
 
 
