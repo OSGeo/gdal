@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/03/02 05:24:35  warmerda
+ * added GDALChecksumImage
+ *
  * Revision 1.9  2002/12/09 18:56:10  warmerda
  * added missing CPL_DLL
  *
@@ -85,6 +88,10 @@ int CPL_DLL GDALDitherRGB2PCT( GDALRasterBandH hRed,
                        GDALColorTableH hColorTable, 
                        GDALProgressFunc pfnProgress, 
                        void * pProgressArg );
+
+int CPL_DLL GDALChecksumImage( GDALRasterBandH hBand, 
+                               int nXOff, int nYOff, int nXSize, int nYSize );
+                               
 
 /*
  * Warp Related.
