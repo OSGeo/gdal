@@ -1037,7 +1037,7 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG )
 /************************************************************************/
 /*                            SetGTParmIds()                            */
 /*                                                                      */
-/*      This is hardcoded logic to set the GeoTIFF parmaeter            */
+/*      This is hardcoded logic to set the GeoTIFF parameter            */
 /*      identifiers for all the EPSG supported projections.  As the     */
 /*      trf_method.csv table grows with new projections, this code      */
 /*      will need to be updated.                                        */
@@ -1311,9 +1311,9 @@ int GTIFGetProjTRFInfo( /* COORD_OP_CODE from coordinate_operation.csv */
 static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
 
 {
-    double	dfNatOriginLong, dfNatOriginLat, dfRectGridAngle;
-    double	dfFalseEasting, dfFalseNorthing, dfNatOriginScale;
-    double	dfStdParallel1, dfStdParallel2, dfAzimuth;
+    double dfNatOriginLong = 0.0, dfNatOriginLat = 0.0, dfRectGridAngle = 0.0;
+    double dfFalseEasting = 0.0, dfFalseNorthing = 0.0, dfNatOriginScale = 1.0;
+    double dfStdParallel1 = 0.0, dfStdParallel2 = 0.0, dfAzimuth = 0.0;
 
 /* -------------------------------------------------------------------- */
 /*      Get the false easting, and northing if available.               */
