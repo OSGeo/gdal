@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2004/05/10 17:05:14  warmerda
+ * added AutoIdentifyEPSG()
+ *
  * Revision 1.35  2004/05/04 17:54:06  warmerda
  * keep longitudes greenwich relative
  *
@@ -1663,4 +1666,84 @@ OGRErr OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS,
                                                           dfOverrideUnit );
 }
 
+/************************************************************************/
+/*                          AutoIdentifyEPSG()                          */
+/************************************************************************/
 
+/**
+ * Set EPSG authority info if possible.
+ *
+ * This method inspects a WKT definition, and adds EPSG authority nodes
+ * where an aspect of the coordinate system can be easily and safely 
+ * corresponded with an EPSG identifier.  In practice, this method will 
+ * evolve over time.  In theory it can add authority nodes for any object
+ * (ie. spheroid, datum, GEOGCS, units, and PROJCS) that could have an 
+ * authority node.  Mostly this is useful to inserting appropriate 
+ * PROJCS codes for common formulations (like UTM n WGS84). 
+ *
+ * If it success the OGRSpatialReference is updated in place, and the 
+ * method return OGRERR_NONE.  If the method fails to identify the 
+ * general coordinate system OGRERR_UNSUPPORTED_SRS is returned but no 
+ * error message is posted via CPLError(). 
+ *
+ * This method is the same as the C function OSRAutoIdentifyEPSG().
+ *
+ * @return OGRERR_NONE or OGRERR_UNSUPPORTED_SRS.
+ */
+
+OGRErr OGRSpatialReference::AutoIdentifyEPSG()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Is this a UTM coordinate system with a common GEOGCS?           */
+/* -------------------------------------------------------------------- */
+    int nZone, bNorth;
+    if( (nZone = GetUTMZone( &bNorth )) != 0 
+        && GetAuthorityCode( "PROJCS") == NULL )
+    {
+        const char *pszAuthName, *pszAuthCode;
+
+        pszAuthName = GetAuthorityName( "PROJCS|GEOGCS" );
+        pszAuthCode = GetAuthorityCode( "PROJCS|GEOGCS" );
+        if( EQUAL(pszAuthName,"EPSG") && atoi(pszAuthCode) == 4326 )
+        { // WGS84
+            if( bNorth ) 
+                SetAuthority( "PROJCS", "EPSG", 32600 + nZone );
+            else
+                SetAuthority( "PROJCS", "EPSG", 32700 + nZone );
+        }
+        else if( EQUAL(pszAuthName,"EPSG") && atoi(pszAuthCode) == 4267 
+                 && nZone >= 3 && nZone <= 22 && bNorth )
+            SetAuthority( "PROJCS", "EPSG", 26700 + nZone ); // NAD27
+        else if( EQUAL(pszAuthName,"EPSG") && atoi(pszAuthCode) == 4269
+                 && nZone >= 3 && nZone <= 23 && bNorth )
+            SetAuthority( "PROJCS", "EPSG", 26900 + nZone ); // NAD83
+        else if( EQUAL(pszAuthName,"EPSG") && atoi(pszAuthCode) == 4322 )
+        { // WGS72
+            if( bNorth ) 
+                SetAuthority( "PROJCS", "EPSG", 32200 + nZone );
+            else
+                SetAuthority( "PROJCS", "EPSG", 32300 + nZone );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Return.                                                         */
+/* -------------------------------------------------------------------- */
+    if( IsProjected() && GetAuthorityCode("PROJCS") != NULL )
+        return OGRERR_NONE;
+    else if( IsGeographic() && GetAuthorityCode("GEOGCS") != NULL )
+        return OGRERR_NONE;
+    else
+        return OGRERR_UNSUPPORTED_SRS;
+}
+
+/************************************************************************/
+/*                        OSRAutoIdentifyEPSG()                         */
+/************************************************************************/
+
+OGRErr OSRAutoIdentifyEPSG( OGRSpatialReferenceH hSRS )
+
+{
+    return ((OGRSpatialReference *) hSRS)->AutoIdentifyEPSG();
+}
