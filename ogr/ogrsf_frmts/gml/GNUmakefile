@@ -19,7 +19,7 @@ endif
 
 # By default, XML validation is disabled.  Uncomment the following line to
 # enable XML schema validation in the parser.
-ALL_C_FLAGS :=  -DOGR_GML_VALIDATION=1 $(ALL_C_FLAGS)
+#ALL_C_FLAGS :=  -DOGR_GML_VALIDATION=1 $(ALL_C_FLAGS)
 
 default:	$(CORE_OBJ) $(OGR_OBJ)
 
