@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/02/13 21:58:36  dron
+ * Fixed problem with cleaning formats before using.
+ *
  * Revision 1.10  2003/02/06 20:27:09  dron
  * More PNM standard complience in header reading.
  *
@@ -87,7 +90,7 @@ class PNMDataset : public RawDataset
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
-                                GDALDataType eType, char ** papszParmList );
+                                GDALDataType eType, char ** papszOptions );
 };
 
 /************************************************************************/
@@ -273,7 +276,7 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 GDALDataset *PNMDataset::Create( const char * pszFilename,
                                  int nXSize, int nYSize, int nBands,
                                  GDALDataType eType,
-                                 char ** /* papszParmList */ )
+                                 char ** papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -318,12 +321,25 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
 /*      Write out the header.                                           */
 /* -------------------------------------------------------------------- */
     char	szHeader[500];
-    int		nMaxValue;
+    const char	*pszMaxValue = NULL;
+    int		nMaxValue = 0;
 
-    if ( eType == GDT_Byte )
-	nMaxValue = 255;
+    pszMaxValue = CSLFetchNameValue( papszOptions, "MAXVAL" );
+    if ( pszMaxValue )
+    {
+	nMaxValue = atoi( pszMaxValue );
+	if ( eType == GDT_Byte && (nMaxValue > 255 || nMaxValue < 0) )
+	    nMaxValue = 255;
+	else if ( nMaxValue > 65535 || nMaxValue < 0 )
+	    nMaxValue = 65535;
+    }
     else
-	nMaxValue = 65535;
+    {
+	if ( eType == GDT_Byte )
+	    nMaxValue = 255;
+	else
+	    nMaxValue = 65535;
+    }
 	
 
     memset( szHeader, 0, sizeof(szHeader) );
