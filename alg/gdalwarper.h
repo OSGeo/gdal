@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/08/11 19:01:25  warmerda
+ * Added prototypes for GDALAutoCreateWarpedVRT and GDALCreateWarpedVRT
+ *
  * Revision 1.12  2004/08/09 14:38:27  warmerda
  * added serialize/deserialize support for warpoptions and transformers
  *
@@ -218,12 +221,16 @@ GDALCreateAndReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 /*                           VRTWarpedDataset                           */
 /************************************************************************/
 
-GDALDatasetH CPL_DLL GDALCreateWarpedVRT( GDALDatasetH hSrcDS, 
-                                          const char *pszSrcWKT, 
-                                          const char *pszDstWKT, 
-                                          GDALResampleAlg eResampleAlg, 
-                                          double dfMaxError, 
-                                          const GDALWarpOptions *psOptions );
+GDALDatasetH CPL_DLL 
+GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS, 
+                         const char *pszSrcWKT, const char *pszDstWKT, 
+                         GDALResampleAlg eResampleAlg, 
+                         double dfMaxError, const GDALWarpOptions *psOptions );
+
+GDALDatasetH CPL_DLL 
+GDALCreateWarpedVRT( GDALDatasetH hSrcDS, 
+                     int nPixels, int nLines, double *padfGeoTransform,
+                     GDALWarpOptions *psOptions );
 
 CPL_C_END
 
