@@ -1,0 +1,56 @@
+<html>
+<head>
+<title>ODBC RDBMS</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>ODBC RDBMS</h1>
+
+OGR optionally supports spatial and non-spatial tables accessed via ODBC. 
+ODBC is a generic access layer for access to many database systems, and
+data that can be represented as a database (collection of tables). ODBC
+support is potentially available on Unix and Windows platforms, but is
+only included in unix builds by special configuration options.<p>
+
+ODBC datasources are accessed using a datasource name of the form
+<b>ODBC:<i>userid</i>/<i>password</i>@<i>dsn</i>,<i>table_list</i></b>.
+With optional items dropped the following are also acceptable:
+
+<ul>
+<li> <b>ODBC:<i>userid</i>/<i>password</i>@<i>dsn</i></b>
+<li> <b>ODBC:<i>userid</i>@<i>dsn</i>,<i>table_list</i></b>
+<li> <b>ODBC:<i>dsn</i>,<i>table_list</i></b>
+<li> <b>ODBC:<i>dsn</i></b>
+</ul>
+
+The <b><i>dsn</i></b> is the ODBC Data Source Name.  Normally ODBC datasources
+are setup using an ODBC Administration tool, and assigned a DSN.  That DSN
+is what is used to access the datasource.<p>
+
+By default the ODBC searches for GEOMETRY_COLUMNS table.  If found it is
+used to identify the set of spatial tables that should be treated as layers
+by OGR.  If not found, then all tables in the datasource are returned as
+non-spatial layers.  However, if a table list (a list of comma seperated table
+names) is provided, then only those tables will be represented as layers
+(non-spatial).  Fetching the full definition of all tables in a complicated
+database can be quite timeconsuming, so the ability to restrict the set of
+tables accessed is primarily a performance issue.<p>
+
+If the GEOMETRY_COLUMNS table is found, it is used to select a column to 
+be the geometry source.  However, it is currently a hardcoded assumption
+that the geometry is in WKT format.<p>
+
+<h2>Creation Issues</h2>
+
+Currently the ODBC OGR driver is read-only, so new features, tables and
+datasources cannot normally be created by OGR applications.  This limitation
+may be removed in the future. <p>
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/odbc/htm/odch21apr.asp">MSDN ODBC API Reference</a><p>
+</ul>
+
+</body>
+</html>
