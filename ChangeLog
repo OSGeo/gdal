@@ -1,5 +1,10 @@
 2000-10-30  Frank Warmerdam  <warmerda@cs46980-c>
 
+	* Added error related entry points to gdal.i/gdal.py for python.
+
+	* Fixed ehdrdataset.cpp to report error if the user selects the
+	.hdr file instead of the .bil file.  
+
 	* Fixed bug with GetRasterColorTable in gdal.py, and 
 	GetRasterNoDataValue in gdal.i.
 
