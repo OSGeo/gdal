@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/04/06 14:34:37  fwarmerdam
+ * Added TIGER_LFIELD_AS_STRING configuration option to force "L" numeric
+ * fields to be treated as strings to preserve leading zeros.
+ *
  * Revision 1.17  2003/10/15 19:09:23  warmerda
  * fix featuredefn memory leak
  *
@@ -87,6 +91,7 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -514,16 +519,26 @@ int TigerFileBase::SetWriteModule( const char *pszExtension, int nRecLen,
 void TigerFileBase::AddFieldDefns(TigerRecordInfo *psRTInfo,
                                   OGRFeatureDefn  *poFeatureDefn)
 {
-  OGRFieldDefn        oField("",OFTInteger);
-  int i;
-  for (i=0; i<psRTInfo->nFieldCount; ++i) {
-    if (psRTInfo->pasFields[i].bDefine) {
-      oField.Set( psRTInfo->pasFields[i].pszFieldName,
-                  psRTInfo->pasFields[i].OGRtype,
-                  psRTInfo->pasFields[i].nLen );
-      poFeatureDefn->AddFieldDefn( &oField );
+    OGRFieldDefn        oField("",OFTInteger);
+    int i, bLFieldHack;
+
+    bLFieldHack = 
+        CSLTestBoolean( CPLGetConfigOption( "TIGER_LFIELD_AS_STRING", "NO" ) );
+    
+    for (i=0; i<psRTInfo->nFieldCount; ++i) {
+        if (psRTInfo->pasFields[i].bDefine) {
+            OGRFieldType eFT = psRTInfo->pasFields[i].OGRtype;
+
+            if( bLFieldHack 
+                && psRTInfo->pasFields[i].cFmt == 'L' 
+                && psRTInfo->pasFields[i].cType == 'N' )
+                eFT = OFTString;
+
+            oField.Set( psRTInfo->pasFields[i].pszFieldName, eFT, 
+                        psRTInfo->pasFields[i].nLen );
+            poFeatureDefn->AddFieldDefn( &oField );
+        }
     }
-  }
 }
 
 /************************************************************************/
