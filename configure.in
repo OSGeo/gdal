@@ -26,7 +26,7 @@ dnl ---------------------------------------------------------------------------
 dnl Check if GRASS library is available.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(png,[  --with-grass[=ARG]      Include GRASS support (ARG=no or libgrass path)],,)
+AC_ARG_WITH(grass,[  --with-grass[=ARG]      Include GRASS support (ARG=no or libgrass path)],,)
 
 if test "$with_grass" = "no" ; then
 
