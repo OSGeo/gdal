@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/07/27 00:52:17  warmerda
+ * added random access, write and capability methods
+ *
  * Revision 1.5  1999/07/26 13:59:25  warmerda
  * added feature writing api
  *
@@ -58,13 +61,14 @@
 /*                           OGRShapeLayer()                            */
 /************************************************************************/
 
-OGRShapeLayer::OGRShapeLayer( SHPHandle hSHPIn, DBFHandle hDBFIn )
+OGRShapeLayer::OGRShapeLayer( SHPHandle hSHPIn, DBFHandle hDBFIn, int bUpdate )
 
 {
     poFilterGeom = NULL;
     
     hSHP = hSHPIn;
     hDBF = hDBFIn;
+    bUpdateAccess = bUpdate;
 
     iNextShapeId = 0;
 
@@ -123,7 +127,7 @@ void OGRShapeLayer::ResetReading()
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
-OGRFeature *OGRShapeLayer::GetNextFeature( long * pnFeatureId )
+OGRFeature *OGRShapeLayer::GetNextFeature()
 
 {
     OGRFeature	*poFeature;
@@ -135,9 +139,6 @@ OGRFeature *OGRShapeLayer::GetNextFeature( long * pnFeatureId )
             return NULL;
         }
     
-        if( pnFeatureId != NULL )
-            *pnFeatureId = iNextShapeId;
-
         poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
                                        iNextShapeId++ );
 
@@ -163,24 +164,22 @@ OGRFeature *OGRShapeLayer::GetFeature( long nFeatureId )
 /*                             SetFeature()                             */
 /************************************************************************/
 
-OGRErr OGRShapeLayer::SetFeature( OGRFeature *poFeature, long nFeatureId )
+OGRErr OGRShapeLayer::SetFeature( OGRFeature *poFeature )
 
 {
-    return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature, 
-                               &nFeatureId );
+    return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature );
 }
 
 /************************************************************************/
 /*                           CreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature, long *pnFeatureId )
+OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
 
 {
-    *pnFeatureId = OGRNullFID;
-
-    return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature, 
-                               pnFeatureId );
+    poFeature->SetFID( OGRNullFID );
+    
+    return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature );
 }
 
 /************************************************************************/
@@ -208,10 +207,12 @@ int OGRShapeLayer::GetFeatureCount( int bForce )
 int OGRShapeLayer::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,OLCRandomRead) 
-        || EQUAL(pszCap,OLCSequentialWrite) 
-        || EQUAL(pszCap,OLCRandomWrite) )
+    if( EQUAL(pszCap,OLCRandomRead) )
         return TRUE;
+
+    else if( EQUAL(pszCap,OLCSequentialWrite) 
+             || EQUAL(pszCap,OLCRandomWrite) )
+        return bUpdateAccess;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return poFilterGeom == NULL;
@@ -317,7 +318,7 @@ OGRDataSource *OGRShapeDriver::Open( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     OGRShapeLayer	*poLayer;
 
-    poLayer = new OGRShapeLayer( hSHP, hDBF );
+    poLayer = new OGRShapeLayer( hSHP, hDBF, bUpdate );
     
     return new OGRShapeDataSource( pszFilename, poLayer );
 }

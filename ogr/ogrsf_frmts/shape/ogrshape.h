@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/07/27 00:52:17  warmerda
+ * added random access, write and capability methods
+ *
  * Revision 1.3  1999/07/26 13:59:25  warmerda
  * added feature writing api
  *
@@ -55,7 +58,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape );
 OGRFeatureDefn *SHPReadOGRFeatureDefn( SHPHandle hSHP, DBFHandle hDBF );
 OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            OGRFeatureDefn *poFeatureDefn,
-                           OGRFeature *poFeature, long * pnFeatureId );
+                           OGRFeature *poFeature );
 
 /************************************************************************/
 /*                            OGRShapeLayer                             */
@@ -70,21 +73,23 @@ class OGRShapeLayer : public OGRLayer
 
     SHPHandle		hSHP;
     DBFHandle		hDBF;
+
+    int			bUpdateAccess;
     
   public:
-    			OGRShapeLayer( SHPHandle hSHP, DBFHandle hDBF );
+    			OGRShapeLayer( SHPHandle hSHP, DBFHandle hDBF,
+                                       int bUpdate );
     			~OGRShapeLayer();
 
     OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
     void		SetSpatialFilter( OGRGeometry * );
 
     void		ResetReading();
-    OGRFeature *	GetNextFeature( long * );
+    OGRFeature *	GetNextFeature();
 
     OGRFeature         *GetFeature( long nFeatureId );
-    OGRErr              SetFeature( OGRFeature *poFeature, long nFeatureId );
-    OGRErr              CreateFeature( OGRFeature *poFeature,
-                                       long * pnFeatureId );
+    OGRErr              SetFeature( OGRFeature *poFeature );
+    OGRErr              CreateFeature( OGRFeature *poFeature );
     
     OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
 
