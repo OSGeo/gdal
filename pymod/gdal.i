@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2002/05/28 18:52:23  warmerda
+ * added GDALOpenShared
+ *
  * Revision 1.35  2002/05/10 02:58:58  warmerda
  * added GDALGCPsToGeoTransform
  *
@@ -142,6 +145,7 @@ void GDALAllRegister( void );
 void GDALRegister_NUMPY( void );
 
 GDALDatasetH  GDALOpen( const char *, GDALAccess );
+GDALDatasetH  GDALOpenShared( const char *, GDALAccess );
 
 GDALDriverH  GDALGetDriverByName( const char * );
 int          GDALGetDriverCount();

@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.31  2002/05/28 18:52:23  warmerda
+# added GDALOpenShared
+#
 # Revision 1.30  2002/05/10 02:58:58  warmerda
 # added GDALGCPsToGeoTransform
 #
@@ -150,6 +153,15 @@ def GetPaletteInterpretationName(type):
 def Open(file,access=GA_ReadOnly):
     _gdal.GDALAllRegister()
     _obj = _gdal.GDALOpen(file,access)
+    if _obj is None or _obj == "NULL" :
+        return None;
+    else:
+        _gdal.GDALDereferenceDataset( _obj )
+        return Dataset(_obj)
+
+def OpenShared(file,access=GA_ReadOnly):
+    _gdal.GDALAllRegister()
+    _obj = _gdal.GDALOpenShared(file,access)
     if _obj is None or _obj == "NULL" :
         return None;
     else:
@@ -401,6 +413,18 @@ class Band:
         self.XSize = _gdal.GDALGetRasterBandXSize(self._o)
         self.YSize = _gdal.GDALGetRasterBandYSize(self._o)
         
+    def GetMetadata(self, domain = None):
+        if domain is None:
+            return _gdal.GDALGetMetadata(self._o)
+        else:
+            return _gdal.GDALGetMetadata(self._o, domain)
+
+    def SetMetadata(self, metadata, domain = None):
+        if domain is None:
+            return _gdal.GDALSetMetadata(self._o, metadata)
+        else:
+            return _gdal.GDALSetMetadata(self._o, metadatadomain)
+
     def GetDescription(self):
         return _gdal.GDALGetDescription( self._o )
     
