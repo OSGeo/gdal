@@ -104,12 +104,12 @@ XERCES_INCLUDE	=	@XERCES_INCLUDE@
 #
 # FMEObjects
 #
-ifeq ($(FME_HOME),)
+ifeq (@X_FME_HOME@,)
 HAVE_FME        =       no
 FME_INCLUDE	=	
 else
 HAVE_FME        =       yes
-FME_INCLUDE	=	-I$(FME_HOME)/fmeobjects/cpp
+FME_INCLUDE	=	-I@X_FME_HOME@/fmeobjects/cpp
 endif
 
 
