@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2000/07/19 19:43:29  warmerda
+ * updated for numpy support
+ *
  * Revision 1.15  2000/07/13 17:37:32  warmerda
  * added CloneGeogCS
  *
@@ -83,7 +86,10 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
+#include "gdal_py.h"
 %}
+
+%native(NumPyArrayToGDALFilename) py_NumPyArrayToGDALFilename;
 
 typedef int GDALDataType;
 typedef int GDALAccess;
@@ -116,10 +122,8 @@ typedef void *GDALColorTableH;
 /* ==================================================================== */
 
 void GDALAllRegister( void );
+void GDALRegister_NUMPY( void );
 
-GDALDatasetH  GDALCreate( GDALDriverH hDriver,
-                                 const char *, int, int, int, GDALDataType,
-                                 char ** );
 GDALDatasetH  GDALOpen( const char *, GDALAccess );
 
 GDALDriverH  GDALGetDriverByName( const char * );
@@ -166,16 +170,6 @@ GDALColorTableH  GDALGetRasterColorTable( GDALRasterBandH );
 int              GDALGetOverviewCount( GDALRasterBandH );
 GDALRasterBandH  GDALGetOverview( GDALRasterBandH, int );
 CPLErr           GDALFlushRasterCache( GDALRasterBandH );
-
-/* need to add functions related to block cache */
-
-/* helper functions */
-void  GDALSwapWords( void *pData, int nWordSize, int nWordCount,
-                            int nWordSkip );
-void 
-    GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
-                   void * pDstData, GDALDataType eDstType, int nDstPixelOffset,
-                   int nWordCount );
 
 
 /* ==================================================================== */
@@ -424,6 +418,75 @@ py_GDALCreateCopy(PyObject *self, PyObject *args) {
 %}
 
 %native(GDALCreateCopy) py_GDALCreateCopy;
+
+%{
+/************************************************************************/
+/*                             GDALCreate()                             */
+/************************************************************************/
+static PyObject *
+py_GDALCreate(PyObject *self, PyObject *args) {
+
+    PyObject *poPyOptions=NULL;
+    char *pszSwigDriver=NULL, *pszFilename=NULL;
+    int  nXSize, nYSize, nBands, nDataType;
+    GDALDriverH hDriver = NULL;
+    GDALDatasetH hTargetDS = NULL;   
+    char **papszOptions = NULL;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ssiiii|O:GDALCreate",	
+			 &pszSwigDriver, &pszFilename, 
+			 &nXSize, &nYSize, &nBands, &nDataType,
+			 &PyList_Type, &poPyOptions ))
+        return NULL;
+
+    if (SWIG_GetPtr(pszSwigDriver,(void **) &hDriver, "_GDALDriverH" )) {
+        PyErr_SetString(PyExc_TypeError,
+	   	        "Type error in argument 1 of GDALCreate."
+			" Expected _GDALDriverH.");
+        return NULL;
+    }
+	
+    if( poPyOptions != NULL )
+    {
+        int i;
+
+	for( i = 0; i < PyList_Size(poPyOptions); i++ )
+        {
+            char *pszItem = NULL;
+
+	    if( !PyArg_Parse(PyList_GET_ITEM(poPyOptions,i), "s", 
+			     &pszItem) )
+            {
+	        PyErr_SetString(PyExc_ValueError, "bad option list item");
+	        return NULL;
+            }
+            papszOptions = CSLAddString( papszOptions, pszItem );
+        }
+    }
+
+    hTargetDS = GDALCreate( hDriver, pszFilename, nXSize, nYSize, nBands, 
+			    nDataType, papszOptions );
+	
+    CSLDestroy( papszOptions );
+
+    if( hTargetDS == NULL )
+    {
+        Py_INCREF(Py_None);
+	return Py_None;
+    }
+    else
+    {
+        char  szSwigTarget[48];
+
+	SWIG_MakePtr( szSwigTarget, hTargetDS, "_GDALDatasetH" );	
+	return Py_BuildValue( "s", szSwigTarget );
+    }
+}
+
+%}
+
+%native(GDALCreate) py_GDALCreate;
 
 %{
 /************************************************************************/

@@ -1,7 +1,7 @@
 #******************************************************************************
 #  $Id$
 # 
-#  Name:     gdalconst.py
+#  Name:     gdal.py
 #  Project:  GDAL Python Interface
 #  Purpose:  GDAL Shadow Class Implementations
 #  Author:   Frank Warmerdam, warmerda@home.com
@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.14  2000/07/19 19:43:29  warmerda
+# updated for numpy support
+#
 # Revision 1.13  2000/06/27 16:48:57  warmerda
 # added progress func support
 #
@@ -125,7 +128,18 @@ class Driver:
         self.LongName = _gdal.GDALGetDriverLongName(self._o)
         self.HelpTopic = _gdal.GDALGetDriverHelpTopic(self._o)
 
-    def CreateCopy(self, filename, source_ds, strict=1, options=None,
+    def Create(self, filename, xsize, ysize, bands=1, datatype=GDT_Byte,
+               options = []):
+        target_ds = _gdal.GDALCreate( self._o, filename, xsize, ysize,
+                                      bands, datatype, options )
+
+        if target_ds is None:
+            return None
+        else:
+            _gdal.GDALDereferenceDataset( target_ds )
+            return Dataset(target_ds)
+    
+    def CreateCopy(self, filename, source_ds, strict=1, options=[],
                    callback = None, callback_data = None ):
         target_ds = _gdal.GDALCreateCopy( self._o, filename, source_ds._o,
                                           strict, options,
@@ -216,6 +230,10 @@ class Dataset:
         return _gdal.GDALBuildOverviews(self._o, resampling, overviewlist, [],
                                         callback, callback_data )
 
+    def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None):
+        import gdalnumeric
+        return gdalnumeric.DatasetReadAsArray( self, xoff, yoff, xsize, ysize )
+    
 class Band:            
     def __init__(self, _obj):
         self._o = _obj
@@ -249,10 +267,15 @@ class Band:
 
         if len(buf_string) < buf_xsize * buf_ysize \
            * (_gdal.GDALGetDataTypeSize(buf_type) / 8):
-            raise ValueError, "raster buffer to small in WriteRaster"
+            raise ValueError, "raster buffer too small in WriteRaster"
         else:    
             return _gdal.GDALWriteRaster(self._o, xoff, yoff, xsize, ysize,
                                    buf_string, buf_xsize, buf_ysize,buf_type)
+
+    def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None):
+        import gdalnumeric
+
+        return gdalnumeric.BandReadAsArray( self, xoff, yoff, xsize, ysize )
     
     def GetRasterColorInterpretation(self):
         return _gdal.GDALGetRasterColorInterpretation(self._o)
