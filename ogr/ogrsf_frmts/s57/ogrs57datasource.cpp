@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/11/15 21:50:52  warmerda
+ * Added limited creation support
+ *
  * Revision 1.24  2003/11/12 21:24:12  warmerda
  * updates to new featuredefn generators
  *
@@ -122,6 +125,7 @@ OGRS57DataSource::OGRS57DataSource()
 
     nModules = 0;
     papoModules = NULL;
+    poWriter = NULL;
 
     pszName = NULL;
 
@@ -167,6 +171,12 @@ OGRS57DataSource::~OGRS57DataSource()
     CSLDestroy( papszOptions );
 
     delete poSpatialRef;
+
+    if( poWriter != NULL )
+    {
+        poWriter->Close();
+        delete poWriter;
+    }
 }
 
 /************************************************************************/
@@ -507,4 +517,82 @@ OGRErr OGRS57DataSource::GetDSExtent( OGREnvelope *psExtent, int bForce )
     bExtentsSet = TRUE;
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                               Create()                               */
+/*                                                                      */
+/*      Create a new S57 file, and represent it as a datasource.        */
+/************************************************************************/
+
+int OGRS57DataSource::Create( const char *pszFilename, char **papszOptions )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Instantiate the class registrar if possible.                    */
+/* -------------------------------------------------------------------- */
+    poRegistrar = new S57ClassRegistrar();
+
+    if( !poRegistrar->LoadInfo( NULL, FALSE ) )
+    {
+        delete poRegistrar;
+        poRegistrar = NULL;
+        
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to load s57objectclasses.csv, unable to continue." );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the S-57 file with definition record.                    */
+/* -------------------------------------------------------------------- */
+    poWriter = new S57Writer();
+
+    if( !poWriter->CreateS57File( pszFilename ) )
+        return FALSE;
+
+    poWriter->SetClassBased( poRegistrar );
+    pszName = CPLStrdup( pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Add the primitive layers if they are called for.                */
+/* -------------------------------------------------------------------- */
+    OGRFeatureDefn  *poDefn;
+    int nOptionFlags = S57M_RETURN_LINKAGES | S57M_LNAM_REFS;
+
+    poDefn = S57GenerateVectorPrimitiveFeatureDefn( RCNM_VI, nOptionFlags );
+    AddLayer( new OGRS57Layer( this, poDefn ) );
+    
+    poDefn = S57GenerateVectorPrimitiveFeatureDefn( RCNM_VC, nOptionFlags );
+    AddLayer( new OGRS57Layer( this, poDefn ) );
+    
+    poDefn = S57GenerateVectorPrimitiveFeatureDefn( RCNM_VE, nOptionFlags );
+    AddLayer( new OGRS57Layer( this, poDefn ) );
+    
+    poDefn = S57GenerateVectorPrimitiveFeatureDefn( RCNM_VF, nOptionFlags );
+    AddLayer( new OGRS57Layer( this, poDefn ) );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize a feature definition for each object class.          */
+/* -------------------------------------------------------------------- */
+    for( int iClass = 0; iClass < MAX_CLASSES; iClass++ )
+    {
+        poDefn = 
+            S57GenerateObjectClassDefn( poRegistrar, iClass, nOptionFlags );
+        
+        if( poDefn == NULL )
+            continue;
+
+        AddLayer( new OGRS57Layer( this, poDefn, 0, iClass ) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write out "header" records.                                     */
+/* -------------------------------------------------------------------- */
+    poWriter->WriteDSID( pszFilename, "20010409", "03.1", 540, "" );
+
+    poWriter->WriteDSPM();
+
+
+    return TRUE;
 }

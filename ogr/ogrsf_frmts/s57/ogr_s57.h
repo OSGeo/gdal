@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/11/15 21:50:52  warmerda
+ * Added limited creation support
+ *
  * Revision 1.7  2003/09/05 19:12:05  warmerda
  * added RETURN_PRIMITIVES support to get low level prims
  *
@@ -76,12 +79,14 @@ class OGRS57Layer : public OGRLayer
 
     int                 nCurrentModule;
     int                 nRCNM;
+    int                 nOBJL;
     int                 nNextFEIndex;
     int                 nFeatureCount;
 
   public:
                         OGRS57Layer( OGRS57DataSource * poDS,
-                                     OGRFeatureDefn *, int nFeatureCount = -1);
+                                     OGRFeatureDefn *, int nFeatureCount = -1,
+                                     int nOBJL = -1 );
     virtual             ~OGRS57Layer();
 
     OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
@@ -97,6 +102,7 @@ class OGRS57Layer : public OGRLayer
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
+    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
     int                 TestCapability( const char * );
 
     virtual OGRSpatialReference *GetSpatialRef();
@@ -120,6 +126,8 @@ class OGRS57DataSource : public OGRDataSource
     int                 nModules;
     S57Reader           **papoModules;
 
+    S57Writer           *poWriter;
+
     static S57ClassRegistrar *poRegistrar;
 
     int                 bClassCountSet;
@@ -136,6 +144,7 @@ class OGRS57DataSource : public OGRDataSource
     const char         *GetOption( const char * );
     
     int                 Open( const char * pszName, int bTestOpen = FALSE );
+    int                 Create( const char *pszName, char **papszOptions );
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
@@ -147,6 +156,7 @@ class OGRS57DataSource : public OGRDataSource
 
     int                 GetModuleCount() { return nModules; }
     S57Reader          *GetModule( int );
+    S57Writer          *GetWriter() { return poWriter; }
 
     S57ClassRegistrar  *GetS57Registrar() { return poRegistrar; }
 
@@ -164,6 +174,8 @@ class OGRS57Driver : public OGRSFDriver
                 
     const char *GetName();
     OGRDataSource *Open( const char *, int );
+    virtual OGRDataSource *CreateDataSource( const char *pszName,
+                                             char ** = NULL );
     int                 TestCapability( const char * );
 };
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/11/15 21:50:52  warmerda
+ * Added limited creation support
+ *
  * Revision 1.11  2003/09/09 16:42:51  warmerda
  * fixed email
  *
@@ -78,7 +81,8 @@ CPL_CVSID("$Id$");
 
 OGRS57Layer::OGRS57Layer( OGRS57DataSource *poDSIn,
                           OGRFeatureDefn * poDefnIn,
-                          int nFeatureCountIn )
+                          int nFeatureCountIn,
+                          int nOBJLIn)
 
 {
     poFilterGeom = NULL;
@@ -88,6 +92,8 @@ OGRS57Layer::OGRS57Layer( OGRS57DataSource *poDSIn,
     nFeatureCount = nFeatureCountIn;
 
     poFeatureDefn = poDefnIn;
+
+    nOBJL = nOBJLIn;
 
     nNextFEIndex = 0;
     nCurrentModule = -1;
@@ -101,7 +107,7 @@ OGRS57Layer::OGRS57Layer( OGRS57DataSource *poDSIn,
     else if( EQUAL(poDefnIn->GetName(),OGRN_VF) )
         nRCNM = RCNM_VF;
     else 
-        nRCNM = 100;
+        nRCNM = 100;  /* feature */
 }
 
 /************************************************************************/
@@ -244,8 +250,10 @@ int OGRS57Layer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCRandomRead) )
         return FALSE;
 
-    else if( EQUAL(pszCap,OLCSequentialWrite) 
-             || EQUAL(pszCap,OLCRandomWrite) )
+    else if( EQUAL(pszCap,OLCSequentialWrite) )
+        return TRUE;
+
+    else if( EQUAL(pszCap,OLCRandomWrite) )
         return FALSE;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
@@ -320,3 +328,44 @@ OGRFeature *OGRS57Layer::GetFeature( long nFeatureId )
         return NULL;
 }
 
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
+
+OGRErr OGRS57Layer::CreateFeature( OGRFeature *poFeature )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Set RCNM if not already set.                                    */
+/* -------------------------------------------------------------------- */
+    int iRCNMFld = poFeature->GetFieldIndex( "RCNM" );
+
+    if( iRCNMFld != -1 )
+    {
+        if( !poFeature->IsFieldSet( iRCNMFld ) )
+            poFeature->SetField( iRCNMFld, nRCNM );
+        else
+            CPLAssert( poFeature->GetFieldAsInteger( iRCNMFld ) == nRCNM );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set OBJL if not already set.                                    */
+/* -------------------------------------------------------------------- */
+    if( nOBJL != -1 )
+    {
+        int iOBJLFld = poFeature->GetFieldIndex( "OBJL" );
+
+        if( !poFeature->IsFieldSet( iOBJLFld ) )
+            poFeature->SetField( iOBJLFld, nOBJL );
+        else
+            CPLAssert( poFeature->GetFieldAsInteger( iOBJLFld ) == nOBJL );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the isolated node feature.                               */
+/* -------------------------------------------------------------------- */
+    if( poDS->GetWriter()->WriteCompleteFeature( poFeature ) )
+        return OGRERR_NONE;
+    else
+        return OGRERR_FAILURE;
+}
