@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2001/12/15 15:47:54  warmerda
+ * don't replace existing descriptions
+ *
  * Revision 1.22  2001/12/15 15:42:27  warmerda
  * *** empty log message ***
  *
@@ -177,7 +180,9 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 
         if( poDS != NULL )
         {
-            poDS->SetDescription( pszFilename );
+            if( poDS->GetDescription() == NULL 
+                || strlen(poDS->GetDescription()) > 0 )
+                poDS->SetDescription( pszFilename );
 
             if( poDS->poDriver == NULL )
                 poDS->poDriver = this;
