@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/07/23 14:28:26  warmerda
+ * supress errors in AIGOpen() since we don't know if it's really AIG yet
+ *
  * Revision 1.2  1999/06/26 21:00:38  warmerda
  * Relax checking that filename is a directory ... AIGOpen() now handles.
  *
@@ -169,13 +172,20 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     AIGInfo_t	*psInfo;
+    CPLErrorHandler pfnOldHandler;
     
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
+    pfnOldHandler = CPLSetErrorHandler( NULL );
     psInfo = AIGOpen( poOpenInfo->pszFilename, "r" );
+    CPLSetErrorHandler( pfnOldHandler );
+    
     if( psInfo == NULL )
+    {
+        CPLErrorReset();
         return NULL;
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
