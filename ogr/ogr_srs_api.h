@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/08/30 20:06:14  warmerda
+ * added projection method list functions
+ *
  * Revision 1.9  2000/08/28 20:13:23  warmerda
  * added importFromProj4
  *
@@ -291,6 +294,19 @@ void CPL_DLL
 
 int CPL_DLL OCTTransform( OGRCoordinateTransformationH hCT,
                   int nCount, double *x, double *y, double *z );
+
+/* -------------------------------------------------------------------- */
+/*      Projection transform dictionary query.                          */
+/* -------------------------------------------------------------------- */
+
+char ** OPTGetProjectionMethods();
+char ** OPTGetParameterList( const char * pszProjectionMethod,
+                             char ** ppszUserName );
+int OPTGetParameterInfo( const char * pszProjectionMethod,
+                         const char * pszParameterName,
+                         char ** ppszUserName,
+                         char ** ppszType,
+                         double *pdfDefaultValue );
 
 CPL_C_END
 

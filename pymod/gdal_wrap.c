@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.18  2000/07/27 21:34:08  warmerda
- * added description, and driver access
+ * Revision 1.19  2000/08/30 20:06:14  warmerda
+ * added projection method list functions
  *
  ************************************************************************/
 
@@ -1131,9 +1131,10 @@ py_GDALGetDescription(PyObject *self, PyObject *args) {
 
     GDALMajorObjectH  hObject;
     char *_argc0 = NULL;
+    char *pszDomain = NULL;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"s:GDALGetDescription",&_argc0))
+    if(!PyArg_ParseTuple(args,"s:GDALGetDescription",&_argc0, &pszDomain))
         return NULL;
 
     if (_argc0) {
@@ -1344,6 +1345,66 @@ py_OCTTransform(PyObject *self, PyObject *args) {
     CPLFree( z );
 
     return pnts;
+}
+
+/************************************************************************/
+/*                        OPTGetProjectionMethods()                     */
+/************************************************************************/
+static PyObject *
+py_OPTGetProjectionMethods(PyObject *self, PyObject *args) {
+
+    PyObject *py_MList;
+    char     **papszMethods;
+    int      iMethod;
+    
+    self = self;
+    args = args;
+
+    papszMethods = OPTGetProjectionMethods();
+    py_MList = PyList_New(CSLCount(papszMethods));
+
+    for( iMethod = 0; papszMethods[iMethod] != NULL; iMethod++ )
+    {
+	char    *pszUserMethodName;
+	char    **papszParameters;
+	PyObject *py_PList;
+	int       iParam;
+
+	papszParameters = OPTGetParameterList( papszMethods[iMethod], 
+					       &pszUserMethodName );
+        if( papszParameters == NULL )
+            return NULL;
+
+	py_PList = PyList_New(CSLCount(papszParameters));
+	for( iParam = 0; papszParameters[iParam] != NULL; iParam++ )
+       	{
+	    char    *pszType;
+	    char    *pszUserParamName;
+            double  dfDefault;
+
+	    OPTGetParameterInfo( papszMethods[iMethod], 
+				 papszParameters[iParam], 
+				 &pszUserParamName, 
+				 &pszType, &dfDefault );
+	    PyList_SetItem(py_PList, iParam, 
+			   Py_BuildValue("(sssd)", 
+					 papszParameters[iParam], 
+					 pszUserParamName, 
+                                         pszType, dfDefault ));
+	}
+	
+	CSLDestroy( papszParameters );
+
+	PyList_SetItem(py_MList, iMethod, 
+		       Py_BuildValue("(ssO)", 
+		                     papszMethods[iMethod], 
+				     pszUserMethodName, 
+		                     py_PList));
+    }
+
+    CSLDestroy( papszMethods );
+
+    return py_MList;
 }
 static PyObject *_wrap_CPLDebug(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -3271,6 +3332,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALColorEntry_c2_set", _wrap_GDALColorEntry_c2_set, 1 },
 	 { "GDALColorEntry_c1_get", _wrap_GDALColorEntry_c1_get, 1 },
 	 { "GDALColorEntry_c1_set", _wrap_GDALColorEntry_c1_set, 1 },
+	 { "OPTGetProjectionMethods", py_OPTGetProjectionMethods, 1 },
 	 { "OCTTransform", py_OCTTransform, 1 },
 	 { "OCTDestroyCoordinateTransformation", _wrap_OCTDestroyCoordinateTransformation, 1 },
 	 { "OCTNewCoordinateTransformation", _wrap_OCTNewCoordinateTransformation, 1 },

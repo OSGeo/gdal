@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.5  2000/08/30 20:06:14  warmerda
+# added projection method list functions
+#
 # Revision 1.4  2000/07/13 17:37:32  warmerda
 # added CloneGeogCS
 #
@@ -43,6 +46,9 @@
 #
 
 import _gdal
+
+def GetProjectionMethods():
+    return _gdal.OPTGetProjectionMethods()
 
 class SpatialReference:
 
