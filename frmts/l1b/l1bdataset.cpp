@@ -5,6 +5,8 @@
  * Purpose:  Can read NOAA-9(F)-NOAA-17(M) AVHRR datasets
  * Author:   Andrey Kiselev, dron@remotesensing.org
  *
+ * Some format info at: http://www.sat.dundee.ac.uk/noaa1b.html
+ *
  ******************************************************************************
  * Copyright (c) 2002, Andrey Kiselev <dron@remotesensing.org>
  *
@@ -28,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.21  2005/01/28 20:29:37  fwarmerdam
+ * added format info url.
+ *
  * Revision 1.20  2003/07/08 21:23:23  warmerda
  * avoid warnings
  *
