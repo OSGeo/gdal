@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2002/11/29 20:56:37  warmerda
+ * added LCC1SP conversion to PROJ.4, missing reverse
+ *
  * Revision 1.28  2002/11/25 03:28:16  warmerda
  * added/improved documentation
  *
@@ -990,6 +993,19 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0),
                  GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                 GetProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+    
+    else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=lcc +lat_1=%.9f +lat_0=%.9f +lon_0=%.9f"
+                 " +k_0=%.9f +x_0=%.3f +y_0=%.3f ",
+                 GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                 GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                 GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                 GetProjParm(SRS_PP_SCALE_FACTOR,1.0),
                  GetProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
