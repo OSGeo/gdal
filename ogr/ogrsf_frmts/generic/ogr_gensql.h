@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/04/29 19:35:50  warmerda
+ * fixes for selecting FID
+ *
  * Revision 1.2  2002/04/25 16:07:55  warmerda
  * fleshed out DISTINCT support
  *
@@ -63,6 +66,8 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
 
     int         nNextIndexFID;
     OGRFeature  *poSummaryFeature;
+
+    int         iFIDFieldIndex;
 
     OGRField    *pasOrderByIndex;
 

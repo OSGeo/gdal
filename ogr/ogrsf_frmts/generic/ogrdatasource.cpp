@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/04/29 19:35:50  warmerda
+ * fixes for selecting FID
+ *
  * Revision 1.5  2002/04/25 03:42:04  warmerda
  * fixed spatial filter support on SQL results
  *
@@ -144,9 +147,9 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
     char **papszFieldList;
     swq_field_type *paeFieldType;
     
-    papszFieldList = (char **) CPLMalloc( sizeof(char *) * nFieldCount );
+    papszFieldList = (char **) CPLMalloc( sizeof(char *) * (nFieldCount+1) );
     paeFieldType = (swq_field_type *)  
-        CPLMalloc( sizeof(swq_field_type) * nFieldCount );
+        CPLMalloc( sizeof(swq_field_type) * (nFieldCount+1) );
     
     for( int iField = 0; iField < nFieldCount; iField++ )
     {
@@ -161,6 +164,23 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
         else
             paeFieldType[iField] = SWQ_OTHER;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Expand '*' in 'SELECT *' now before we add the pseudo field     */
+/*      'FID'.                                                          */
+/* -------------------------------------------------------------------- */
+    pszError = 
+        swq_select_expand_wildcard( psSelectInfo, nFieldCount, papszFieldList);
+
+    if( pszError != NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "SQL: %s", pszError );
+        return NULL;
+    }
+
+    papszFieldList[nFieldCount] = "FID";
+    paeFieldType[nFieldCount++] = SWQ_INTEGER;
 
 /* -------------------------------------------------------------------- */
 /*      Finish the parse operation.                                     */
