@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/12/15 16:07:41  warmerda
+ * Added CHG_TYPE for landline plus product
+ *
  * Revision 1.18  2003/01/10 22:27:35  warmerda
  * Corrected width of CENSUS_CODE ... should be 7 according to
  * GREATER_LONDON_AUTHORITY.NTF.
@@ -1603,6 +1606,12 @@ static OGRFeature *TranslateLandlinePoint( NTFFileReader *poReader,
         poFeature->SetField( 4, papoGroup[0]->GetField( 23, 28 ) );
     }
 
+    // CHG_TYPE (optional)
+    if( poFeature->GetFieldIndex("CHG_TYPE") == 5 )
+    {
+        poFeature->SetField( 5, papoGroup[0]->GetField( 22, 22 ) );
+    }
+
     return poFeature;
 }
 
@@ -1637,6 +1646,11 @@ static OGRFeature *TranslateLandlineLine( NTFFileReader *poReader,
         poFeature->SetField( 2, papoGroup[0]->GetField( 23, 28 ) );
     }
 
+    // CHG_TYPE (optional)
+    if( poFeature->GetFieldIndex("CHG_TYPE") == 3 )
+    {
+        poFeature->SetField( 3, papoGroup[0]->GetField( 22, 22 ) );
+    }
     return poFeature;
 }
 
@@ -1688,6 +1702,13 @@ static OGRFeature *TranslateLandlineName( NTFFileReader *poReader,
     {
         poFeature->SetField( 8, papoGroup[0]->GetField( 15+nNumChar+2,
                                                         15+nNumChar+2+5) );
+    }
+
+    // CHG_TYPE (optional)
+    if( poFeature->GetFieldIndex("CHG_TYPE") == 9 )
+    {
+        poFeature->SetField( 9, papoGroup[0]->GetField( 15+nNumChar+1, 
+                                                        15+nNumChar+1 ) );
     }
 
     // Geometry
@@ -1893,6 +1914,7 @@ void NTFFileReader::EstablishLayers()
                         "ORIENT", OFTReal, 5, 1,
                         "DISTANCE", OFTReal, 6, 3,
                         "CHG_DATE", OFTString, 6, 0, 
+                        "CHG_TYPE", OFTString, 1, 0, 
                         NULL );
                         
         EstablishLayer( "LANDLINE99_LINE", wkbLineString,
@@ -1900,6 +1922,7 @@ void NTFFileReader::EstablishLayers()
                         "LINE_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTString, 4, 0,
                         "CHG_DATE", OFTString, 6, 0, 
+                        "CHG_TYPE", OFTString, 1, 0, 
                         NULL );
                         
         EstablishLayer( "LANDLINE99_NAME", wkbPoint,
@@ -1913,6 +1936,7 @@ void NTFFileReader::EstablishLayers()
                         "ORIENT", OFTReal, 5, 1,
                         "TEXT_HT_GROUND", OFTReal, 10, 3,
                         "CHG_DATE", OFTString, 6, 0,
+                        "CHG_TYPE", OFTString, 1, 0, 
                         NULL );
     }
     else if( GetProductId() == NPC_LANDRANGER_CONT )
