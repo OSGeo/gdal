@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2005/03/09 17:04:44  fwarmerdam
+ * added CEA support
+ *
  * Revision 1.51  2005/02/17 21:58:08  fwarmerdam
  * Avoid leak of pszGeogName.
  *
@@ -229,6 +232,11 @@ static char *papszDatumEquiv[] =
     "European_Reference_System_1989",
     NULL
 };
+
+// older libgeotiff's won't list this.
+#ifndef CT_CylindricalEqualArea
+# define CT_CylindricalEqualArea 28
+#endif
 
 /************************************************************************/
 /*                          WKTMassageDatum()                           */
@@ -556,6 +564,11 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
           case CT_NewZealandMapGrid:
             oSRS.SetNZMG( adfParm[0], adfParm[1],
                           adfParm[5], adfParm[6] );
+            break;
+
+          case CT_CylindricalEqualArea:
+            oSRS.SetCEA( adfParm[0], adfParm[1],
+                         adfParm[5], adfParm[6] );
             break;
         }
 
@@ -1473,6 +1486,31 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
         GTIFKeySet(psGTIF, ProjFalseNorthingGeoKey, TYPE_DOUBLE, 1,
                    poSRS->GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) );
     }
+
+    else if( EQUAL(pszProjection,SRS_PT_CYLINDRICAL_EQUAL_AREA) )
+    {
+	GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
+                   ModelTypeProjected);
+	GTIFKeySet(psGTIF, ProjectedCSTypeGeoKey, TYPE_SHORT, 1,
+                   KvUserDefined );
+	GTIFKeySet(psGTIF, ProjectionGeoKey, TYPE_SHORT, 1,
+                   KvUserDefined );
+
+	GTIFKeySet(psGTIF, ProjCoordTransGeoKey, TYPE_SHORT, 1, 
+		   CT_CylindricalEqualArea );
+
+        GTIFKeySet(psGTIF, ProjNatOriginLongGeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
+        
+        GTIFKeySet(psGTIF, ProjStdParallel1GeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_STANDARD_PARALLEL_1, 0.0 ) );
+        
+        GTIFKeySet(psGTIF, ProjFalseEastingGeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_FALSE_EASTING, 0.0 ) );
+        
+        GTIFKeySet(psGTIF, ProjFalseNorthingGeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) );
+    }
     
     else
     {
@@ -1626,12 +1664,13 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
 /* -------------------------------------------------------------------- */
     hGTIF = GTIFNew(hTIFF);
 
-    if( GTIFGetDefn( hGTIF, &sGTIFDefn ) )
+    if( hGTIF != NULL && GTIFGetDefn( hGTIF, &sGTIFDefn ) )
         *ppszWKT = GTIFGetOGISDefn( hGTIF, &sGTIFDefn );
     else
         *ppszWKT = NULL;
     
-    GTIFFree( hGTIF );
+    if( hGTIF )
+        GTIFFree( hGTIF );
 
 /* -------------------------------------------------------------------- */
 /*      Get geotransform or tiepoints.                                  */
