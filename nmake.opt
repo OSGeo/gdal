@@ -95,27 +95,19 @@ JPEG_SUPPORTED = 1
 # Uncomment the following for MrSID support.
 # You will likely require /MD and /EHsc in OPTFLAGS. 
 #MRSID_DIR =	d:\projects\mrsid
-# Following suitable for the MrSID DSDK version 3.x.x
-#MRSID_INCLUDE = -I$(MRSID_DIR)\include
-#MRSID_LIB =	/LIBPATH:$(MRSID_DIR)\lib \
-#		MrSIDDecode_md.lib lt_xTrans_md.lib advapi32.lib user32.lib
-# Uncomment, if you have DSDK version 3.1.x
-#MRSID_FLAGS =	-DMRSID_DSDK_VERSION_31
-# Uncomment, if you have DSDK version 3.2.x
-#MRSID_FLAGS =	-DMRSID_DSDK_VERSION_32
-# Following suitable for the MrSID DSDK version 4.0.x.
 #MRSID_INCLUDE = -I$(MRSID_DIR)\include\base -I$(MRSID_DIR)\include\support \
 #		-I$(MRSID_DIR)\include\metadata \
 #		-I$(MRSID_DIR)\include\mrsid_readers \
 #		-I$(MRSID_DIR)\include\j2k_readers
-# MRSID_LIB =	$(MRSID_DIR)\lib\Release_md\lti_dsdk_dll.lib advapi32.lib user32.lib
-#MRSID_FLAGS =	-DMRSID_DSDK_VERSION_40
+#MRSID_LIB =	$(MRSID_DIR)\lib\Release_md\lti_dsdk_dll.lib advapi32.lib user32.lib
 # Enable these, if you have the MrSID Encoding SDK and want
 # to create MrSID files
 #MRSID_FLAGS =	-DMRSID_ESDK_VERSION_40 $(MRSID_FLAGS)
 #MRSID_INCLUDE = -I$(MRSID_DIR)\include\mrsid_writers \
 #		-I$(MRSID_DIR)\include\j2k_writers $(MRSID_INCLUDE)
-#MRSID_LIB =	$(MRSID_DIR)\lib\Release_md\lti_esdk_dll.lib $(MRSID_LIB)
+#MRSID_LIB =	$(MRSID_DIR)\lib\Release_md\lti_esdk_dll.lib $(MRSID_LIB)-
+# Enable the following if you prefer to build MrSID support as a plugin.
+#MRSID_PLUGIN = YES
 
 # PostGIS Libraries
 #PG_INC_DIR = n:\pkg\libpq_win32\include
@@ -200,8 +192,14 @@ GDALLIB	=    $(GDAL_ROOT)/gdal.lib
 ODBCLIB = odbc32.lib
 !ENDIF
 
+!IFDEF MRSID_DIR
+!IFNDEF MRSID_PLUGIN
+MRSID_ELIB = $(MRSID_LIB)
+!ENDIF
+!ENDIF
+
 EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(OCI_LIB) $(PG_LIB) $(ODBCLIB) \
-		$(ECWLIB) $(HDF4_LIB) $(FME_LIB) $(JASPER_LIB) $(MRSID_LIB) \
+		$(ECWLIB) $(HDF4_LIB) $(FME_LIB) $(JASPER_LIB) $(MRSID_ELIB) \
 		$(FITS_LIB) $(JPEG_LIB) $(PNG_LIB) $(NETCDF_LIB) $(PROJ4_LIB) \
 		$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIB) $(SQLITE_LIB) \
 		$(MYSQL_LIB) $(GEOS_LIB) $(ADD_LIBS)
