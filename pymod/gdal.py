@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.25  2001/08/23 03:37:59  warmerda
+# added GetCacheUsed() method
+#
 # Revision 1.24  2001/06/26 02:22:39  warmerda
 # added metadata domain support, and GetSubDatasets
 #
@@ -113,6 +116,9 @@ def GetCacheMax():
 
 def SetCacheMax( new_max ):
     _gdal.GDALSetCacheMax( new_max )
+    
+def GetCacheUsed():
+    return _gdal.GDALGetCacheUsed()
     
 def GetDataTypeSize(type):
     return _gdal.GDALGetDataTypeSize(type)
