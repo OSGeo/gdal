@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.116  2004/09/25 05:21:27  fwarmerdam
+ * report only available compression types if we can query
+ *
  * Revision 1.115  2004/09/24 02:48:39  fwarmerdam
  * Try to avoid unnecessary calls to TIFFReadDirectory() when scanning
  * for overviews in files with only one directory.
@@ -3761,24 +3764,52 @@ void GDALRegister_GTiff()
     if( GDALGetDriverByName( "GTiff" ) == NULL )
     {
         GDALDriver	*poDriver;
+        char szCreateOptions[2048];
+        char szOptionalCompressItems[500];
 
         poDriver = new GDALDriver();
+        
+/* -------------------------------------------------------------------- */
+/*      Determine which compression codecs are available that we        */
+/*      want to advertise.  If we are using an old libtiff we won't     */
+/*      be able to find out so we just assume all are available.        */
+/* -------------------------------------------------------------------- */
+        strcpy( szOptionalCompressItems, 
+                "       <Value>NONE</Value>" );
 
-        poDriver->SetDescription( "GTiff" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoTIFF" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_gtiff.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/tiff" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "tif" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte UInt16 Int16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+#if TIFFLIB_VERSION <= 20040919
+        strcat( szOptionalCompressItems, 
+                "       <Value>PACKBITS</Value>"
+                "       <Value>JPEG</Value>"
+                "       <Value>LZW</Value>"
+                "       <Value>DEFLATE</Value>" );
+#else
+        TIFFCodec	*c, *codecs = TIFFGetConfiguredCODECs();
+
+        for( c = codecs; c->name; c++ )
+        {
+            if( c->scheme == COMPRESSION_PACKBITS )
+                strcat( szOptionalCompressItems,
+                        "       <Value>PACKBITS</Value>" );
+            else if( c->scheme == COMPRESSION_JPEG )
+                strcat( szOptionalCompressItems,
+                        "       <Value>JPEG</Value>" );
+            else if( c->scheme == COMPRESSION_LZW )
+                strcat( szOptionalCompressItems,
+                        "       <Value>LZW</Value>" );
+            else if( c->scheme == COMPRESSION_ADOBE_DEFLATE )
+                strcat( szOptionalCompressItems,
+                        "       <Value>DEFLATE</Value>" );
+        }
+#endif        
+
+/* -------------------------------------------------------------------- */
+/*      Build full creation option list.                                */
+/* -------------------------------------------------------------------- */
+        sprintf( szCreateOptions, "%s%s%s", 
 "<CreationOptionList>"
-"   <Option name='COMPRESS' type='string-select'>"
-"       <Value>NONE</Value>"
-"       <Value>PACKBITS</Value>"
-"       <Value>JPEG</Value>"
-"       <Value>LZW</Value>"
-"       <Value>DEFLATE</Value>"
+"   <Option name='COMPRESS' type='string-select'>",
+                 szOptionalCompressItems,
 "   </Option>"
 "   <Option name='INTERLEAVE' type='string-select'>"
 "       <Value>BAND</Value>"
@@ -3799,7 +3830,19 @@ void GDALRegister_GTiff()
 "       <Value>ITULAB</Value>"
 "   </Option>"
 "</CreationOptionList>" );
-
+                 
+/* -------------------------------------------------------------------- */
+/*      Set the driver details.                                         */
+/* -------------------------------------------------------------------- */
+        poDriver->SetDescription( "GTiff" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoTIFF" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_gtiff.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/tiff" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "tif" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte UInt16 Int16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+                                   szCreateOptions );
 
         poDriver->pfnOpen = GTiffDataset::Open;
         poDriver->pfnCreate = GTiffDataset::Create;
