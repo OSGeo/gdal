@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/01/29 21:01:03  warmerda
+ * added sequences within sequences support
+ *
  * Revision 1.1  2004/01/21 20:08:29  warmerda
  * New
  *
@@ -51,6 +54,7 @@ OGRDODSFieldDefn::OGRDODSFieldDefn()
     iFieldIndex = -1;
     pszFieldValue = NULL;
     bValid = FALSE;
+    pszPathToSequence = NULL;
 }
 
 /************************************************************************/
@@ -63,6 +67,7 @@ OGRDODSFieldDefn::~OGRDODSFieldDefn()
     CPLFree( pszFieldName );
     CPLFree( pszFieldScope );
     CPLFree( pszFieldValue );
+    CPLFree( pszPathToSequence );
 }
 
 /************************************************************************/
