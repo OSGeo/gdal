@@ -47,7 +47,7 @@ ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DJPEG_SUPPORT
 endif
 
 ifeq ($(JPEG_SETTING),internal)
-ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -I../../jpeg
+ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -I../../jpeg/libjpeg
 endif
 
 default:	$(OBJ)
