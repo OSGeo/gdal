@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/01/28 18:28:28  warmerda
+ * minor simplification of code
+ *
  * Revision 1.4  1999/01/28 18:03:07  warmerda
  * Fixed some byte swapping problems, and problems with accessing data from
  * the file that isn't on a word boundary.
@@ -597,15 +600,13 @@ int HFAField::GetInstBytes( GByte * pabyData )
 int HFAField::GetInstCount( GByte * pabyData )
 
 {
-    GUInt32	*panInfo = (GUInt32 *) pabyData;
-    
     if( chPointer == '\0' )
         return nItemCount;
     else
     {
         GInt32 nCount;
 
-        memcpy( &nCount, panInfo+0, 4 );
+        memcpy( &nCount, pabyData, 4 );
         HFAStandard( 4, &nCount );
         return nCount;
     }
@@ -630,8 +631,7 @@ void HFAField::DumpInstValue(  FILE *fpOut,
 /*      Special case for arrays of chars or uchars which are printed    */
 /*      as a string.                                                    */
 /* -------------------------------------------------------------------- */
-    if( (chItemType == 'c' || chItemType == 'C')
-        && GetInstCount( pabyData ) > 0 )
+    if( (chItemType == 'c' || chItemType == 'C') && nEntries > 0 )
     {
         pReturn = ExtractInstValue( NULL, 0,
                                     pabyData, nDataOffset, nDataSize,
