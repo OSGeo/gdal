@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/03/28 14:52:32  warmerda
+ * moved docs to non-WIN32 section
+ *
  * Revision 1.4  2001/07/18 04:00:49  warmerda
  * added CPL_CVSID
  *
@@ -65,22 +68,6 @@ CPL_CVSID("$Id$");
  * Returns NULL if an error happened or if the directory could not
  * be read.
  **********************************************************************/
-
-/**
- * Read names in a directory.
- *
- * This function abstracts access to directory contains.  It returns a
- * list of strings containing the names of files, and directories in this
- * directory.  The resulting string list becomes the responsibility of the
- * application and should be freed with CSLDestroy() when no longer needed.
- *
- * Note that no error is issued via CPLError() if the directory path is
- * invalid, though NULL is returned.
- *
- * @param pszPath the relative, or absolute path of a directory to read.
- * @return The list of entries in the directory, or NULL if the directory
- * doesn't exist.
- */
 
 char **CPLReadDir(const char *pszPath)
 {
@@ -132,6 +119,23 @@ char **CPLReadDir(const char *pszPath)
  * Returns NULL if an error happened or if the directory could not
  * be read.
  **********************************************************************/
+
+/**
+ * Read names in a directory.
+ *
+ * This function abstracts access to directory contains.  It returns a
+ * list of strings containing the names of files, and directories in this
+ * directory.  The resulting string list becomes the responsibility of the
+ * application and should be freed with CSLDestroy() when no longer needed.
+ *
+ * Note that no error is issued via CPLError() if the directory path is
+ * invalid, though NULL is returned.
+ *
+ * @param pszPath the relative, or absolute path of a directory to read.
+ * @return The list of entries in the directory, or NULL if the directory
+ * doesn't exist.
+ */
+
 char **CPLReadDir(const char *pszPath)
 {
     DIR           *hDir;
