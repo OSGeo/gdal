@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_datasource.cpp,v 1.8 2004/07/07 15:42:46 fwarmerdam Exp $
+ * $Id: mitab_ogr_datasource.cpp,v 1.9 2004/10/15 01:52:30 fwarmerdam Exp $
  *
  * Name:     mitab_ogr_datasource.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
@@ -31,6 +31,11 @@
  **********************************************************************
  *
  * $Log: mitab_ogr_datasource.cpp,v $
+ * Revision 1.9  2004/10/15 01:52:30  fwarmerdam
+ * Modified CreateLayer() to use  -1000,-1000,1000,1000 bounds for GEOGCS
+ * much like in mitab_bounds.cpp.  This ensures that geographic files in
+ * the range 0-360 works as well as -180 to 180.
+ *
  * Revision 1.8  2004/07/07 15:42:46  fwarmerdam
  * fixed up some single layer creation issues
  *
@@ -392,7 +397,7 @@ OGRTABDataSource::CreateLayer( const char * pszLayerName,
     if( poSRSIn != NULL && poSRSIn->GetRoot() != NULL
         && EQUAL(poSRSIn->GetRoot()->GetValue(),"GEOGCS") )
     {
-        poFile->SetBounds( -180, -90, 180, 90 );
+        poFile->SetBounds( -1000, -1000, 1000, 1000 );
     }
     else
     {
