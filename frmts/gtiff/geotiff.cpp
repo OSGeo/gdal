@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.130  2005/02/10 04:31:11  fwarmerdam
+ * added option to keep YCbCr in raw form
+ *
  * Revision 1.129  2005/01/15 16:15:09  fwarmerdam
  * trimmed revision history.
  *
@@ -388,6 +391,32 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
                 eBandInterp = GCI_Undefined;
         }
     }
+    else if( poDS->nPhotometric == PHOTOMETRIC_YCBCR )
+    {
+        if( nBand == 1 )
+            eBandInterp = GCI_YCbCr_YBand;
+        else if( nBand == 2 )
+            eBandInterp = GCI_YCbCr_CbBand;
+        else if( nBand == 3 )
+            eBandInterp = GCI_YCbCr_CrBand;
+        else
+        {
+            uint16 *v;
+            uint16 count = 0;
+
+            if( TIFFGetField( poDS->hTIFF, TIFFTAG_EXTRASAMPLES, &count, &v) )
+            {
+                if( nBand - 3 <= count && v[nBand-4] == EXTRASAMPLE_ASSOCALPHA )
+                    eBandInterp = GCI_AlphaBand;
+                else
+                    eBandInterp = GCI_Undefined;
+            }
+            else if( nBand == 4 )
+                eBandInterp = GCI_AlphaBand;
+            else
+                eBandInterp = GCI_Undefined;
+        }
+    }
     else if( poDS->nPhotometric == PHOTOMETRIC_MINISBLACK && nBand == 1 )
         eBandInterp = GCI_GrayIndex;
     else if( poDS->nPhotometric == PHOTOMETRIC_PALETTE && nBand == 1 ) 
@@ -714,28 +743,6 @@ GDALColorInterp GTiffRasterBand::GetColorInterpretation()
 
 {
     return eBandInterp;
-
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-
-    if( poGDS->nPhotometric == PHOTOMETRIC_RGB )
-    {
-        if( nBand == 1 )
-            return GCI_RedBand;
-        else if( nBand == 2 )
-            return GCI_GreenBand;
-        else if( nBand == 3 )
-            return GCI_BlueBand;
-        else if( nBand == 4 )
-            return GCI_AlphaBand;
-        else
-            return GCI_Undefined;
-    }
-    else if( poGDS->nPhotometric == PHOTOMETRIC_PALETTE && nBand == 1 )
-    {
-        return GCI_PaletteIndex;
-    }
-    else
-        return GCI_GrayIndex;
 }
 
 /************************************************************************/
@@ -2354,11 +2361,13 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 /*      Should we treat this via the RGBA interface?                    */
 /* -------------------------------------------------------------------- */
     if( !bTreatAsBitmap
-        && (nPhotometric == PHOTOMETRIC_YCBCR
-            || nPhotometric == PHOTOMETRIC_CIELAB
-            || nPhotometric == PHOTOMETRIC_LOGL
-            || nPhotometric == PHOTOMETRIC_LOGLUV
-            || nBitsPerSample < 8 ) )
+        && (nPhotometric == PHOTOMETRIC_CIELAB ||
+            nPhotometric == PHOTOMETRIC_LOGL ||
+            nPhotometric == PHOTOMETRIC_LOGLUV ||
+            ( nPhotometric == PHOTOMETRIC_YCBCR 
+            && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
+                                                  "YES") )) ||
+            nBitsPerSample < 8 ) )
     {
         char	szMessage[1024];
 
