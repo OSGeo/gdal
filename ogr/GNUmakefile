@@ -76,6 +76,7 @@ docs:
 	doxygen
 	cp ogrsf_frmts/*/drv_*.html html
 	cp ogrsf_frmts/ogr_formats.html html
+	cp ogr_feature_style.html html
 
 install-docs:
 	$(INSTALL_DIR) $(INST_DOCS)/ogr
