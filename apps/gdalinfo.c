@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.5  1999/10/21 13:22:59  warmerda
+ * Print band type symbolically rather than numerically.
+ *
  * Revision 1.4  1999/10/01 14:45:14  warmerda
  * prettied up
  *
@@ -109,7 +112,8 @@ int main( int argc, char ** argv )
     for( i = 0; i < GDALGetRasterCount( hDataset ); i++ )
     {
         hBand = GDALGetRasterBand( hDataset, i+1 );
-        printf( "Band %d Type = %d\n", i+1, GDALGetRasterDataType( hBand ) );
+        printf( "Band %d Type = %s\n", i+1,
+                GDALGetDataTypeName(GDALGetRasterDataType(hBand)) );
     }
 
     GDALClose( hDataset );
