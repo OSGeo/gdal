@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2004/03/10 18:18:29  warmerda
+ * Avoid warning.
+ *
  * Revision 1.9  2002/06/07 14:08:35  warmerda
  * Fixed last fix.
  *
@@ -362,7 +365,7 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
     ds_data = strstr(sph_data,"DS_NAME");
     if( ds_data != NULL )
     {
-        self->dsd_offset = (ds_data - sph_data) + MPH_SIZE;
+        self->dsd_offset = (int) (ds_data - sph_data) + MPH_SIZE;
         *(ds_data-1) = '\0';
     }
 
