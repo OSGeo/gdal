@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2005/03/15 21:18:47  fwarmerdam
+ * Added -sql to usage message.
+ *
  * Revision 1.25  2004/10/30 15:50:41  fwarmerdam
  * added -skipfailures doc
  *
@@ -527,7 +530,8 @@ static void Usage()
     OGRSFDriverRegistrar        *poR = OGRSFDriverRegistrar::GetRegistrar();
 
     printf( "Usage: ogr2ogr [-skipfailures] [-append] [-update] [-f format_name]\n"
-            "               [-select field_list] [-where restricted_where]\n"
+            "               [-select field_list] [-where restricted_where] \n"
+            "               [-sql <sql statement>] \n" 
             "               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]\n"
             "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
             "               [[-dsco NAME=VALUE] ...] dst_datasource_name\n"
@@ -549,6 +553,7 @@ static void Usage()
             " -select field_list: Comma-delimited list of fields from input layer to\n"
             "                     copy to the new layer (defaults to all)\n" 
             " -where restricted_where: Attribute query (like SQL WHERE)\n" 
+            " -sql statement: Execute given SQL statement and save result.\n"
             " -skipfailures: skip features or layers that fail to convert\n"
             " -spat xmin ymin xmax ymax: spatial query extents\n"
             " -dsco NAME=VALUE: Dataset creation option (format specific)\n"
