@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2002/04/22 20:42:40  warmerda
+ * fixed problem with tag set ids > 255
+ *
  * Revision 1.26  2002/04/08 21:25:59  warmerda
  * removed tagDef->id = iTag+1 assumption
  *
@@ -297,7 +300,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
 
               psCell->origin.x = DGN_INT32( psDGN->abyElem + 84 );
               psCell->origin.y = DGN_INT32( psDGN->abyElem + 88 );
-#ifdef notdef
+
+              {
               double a, b, c, d, a2, c2;
               a = DGN_INT32( psDGN->abyElem + 68 );
               b = DGN_INT32( psDGN->abyElem + 72 );
@@ -313,7 +317,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
                   psCell->rotation = psCell->rotation * 180 / PI;
               else
                   psCell->rotation = 360 - psCell->rotation * 180 / PI;
-#endif
+              }
           }
           else
           {
@@ -332,6 +336,48 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           DGNTransformPoint( psDGN, &(psCell->rnglow) );
           DGNTransformPoint( psDGN, &(psCell->rnghigh) );
           DGNTransformPoint( psDGN, &(psCell->origin) );
+      }
+      break;
+
+      case DGNT_CELL_LIBRARY:
+      {
+          DGNElemCellLibrary *psCell;
+          int                 iWord;
+
+          psCell = (DGNElemCellLibrary *) 
+              CPLCalloc(sizeof(DGNElemCellLibrary),1);
+          psElement = (DGNElemCore *) psCell;
+          psElement->stype = DGNST_CELL_LIBRARY;
+          DGNParseCore( psDGN, psElement );
+
+          DGNRad50ToAscii( psDGN->abyElem[32] + psDGN->abyElem[33] * 256, 
+                           psCell->name + 0 );
+          DGNRad50ToAscii( psDGN->abyElem[34] + psDGN->abyElem[35] * 256, 
+                           psCell->name + 3 );
+
+          psElement->properties = psDGN->abyElem[38] 
+              + psDGN->abyElem[39] * 256;
+
+          psCell->dispsymb = psDGN->abyElem[40] + psDGN->abyElem[41] * 256;
+
+          psCell->cclass = psDGN->abyElem[42] + psDGN->abyElem[43] * 256;
+          psCell->levels[0] = psDGN->abyElem[44] + psDGN->abyElem[45] * 256;
+          psCell->levels[1] = psDGN->abyElem[46] + psDGN->abyElem[47] * 256;
+          psCell->levels[2] = psDGN->abyElem[48] + psDGN->abyElem[49] * 256;
+          psCell->levels[3] = psDGN->abyElem[50] + psDGN->abyElem[51] * 256;
+
+          psCell->numwords = psDGN->abyElem[36] + psDGN->abyElem[37] * 256;
+
+          memset( psCell->description, 0, sizeof(psCell->description) );
+          
+          for( iWord = 0; iWord < 9; iWord++ )
+          {
+              int iOffset = 52 + iWord * 2;
+
+              DGNRad50ToAscii( psDGN->abyElem[iOffset] 
+                               + psDGN->abyElem[iOffset+1] * 256, 
+                               psCell->description + iWord * 3 );
+          }
       }
       break;
 
@@ -813,7 +859,8 @@ int DGNParseCore( DGNInfo *psDGN, DGNElemCore *psElement )
     psElement->deleted = psData[1] & 0x80;
     psElement->type = psData[1] & 0x7f;
 
-    if( psDGN->nElemBytes >= 36 )
+    if( psDGN->nElemBytes >= 36 
+        && psElement->type != DGNT_CELL_LIBRARY )
     {
         psElement->graphic_group = psData[28] + psData[29] * 256;
         psElement->properties = psData[32] + psData[33] * 256;
@@ -904,7 +951,8 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
         && psElement->attr_data[1] == 0x10
         && psElement->attr_data[2] == 0x2f
         && psElement->attr_data[3] == 0x7d )
-        psTagSet->tagSet = psElement->attr_data[4];
+        psTagSet->tagSet = psElement->attr_data[4]
+            + psElement->attr_data[5] * 256;
 
 /* -------------------------------------------------------------------- */
 /*      Parse each of the tag definitions.                              */
