@@ -2,6 +2,8 @@ GDAL_ROOT	=	../..
 
 include ../../GDALmake.opt
 
+LINCLUDE =	-I../ogrsf_frmts -I.. -I$(GDAL_ROOT)/port 
+
 WCTS_OBJ	=	ogrwcts.o
 
 BIN	=	ogrwcts
