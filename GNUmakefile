@@ -115,7 +115,7 @@ install-docs:
 web-update:	docs
 	cp html/*.* $(WEB_DIR)
 
-install:	all install-actions
+install:	default install-actions
 
 install-actions:
 	$(INSTALL_DIR) $(INST_BIN)
