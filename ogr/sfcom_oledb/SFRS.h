@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/11/21 16:27:22  warmerda
+ * added MAXOPENROWS at Bruces request
+ *
  * Revision 1.10  2001/10/24 17:20:08  warmerda
  * added destructor debug output
  *
@@ -221,6 +224,7 @@ BEGIN_PROPSET_MAP(CSFCommand)
 		PROPERTY_INFO_ENTRY_VALUE(CANSCROLLBACKWARDS,VARIANT_FALSE)
 		PROPERTY_INFO_ENTRY(LITERALBOOKMARKS)
 		PROPERTY_INFO_ENTRY(ORDEREDBOOKMARKS)
+		PROPERTY_INFO_ENTRY_VALUE(MAXOPENROWS,1000)
 	END_PROPERTY_SET(DBPROPSET_ROWSET)
 END_PROPSET_MAP()
 		CSimpleArray<ATLCOLUMNINFO>		m_paColInfo;
