@@ -113,6 +113,7 @@ GDAL_SLIB_LINK	=	-L$(GDAL_ROOT) -lgdal.$(GDAL_VER)
 HAVE_OGR_PG     = @HAVE_PG@
 PG_LIB	=	@PG_LIB@
 PG_INC	=	@PG_INC@
+LIBS	+=	$(PG_LIB)
 
 #
 # HDF4 Support.
@@ -203,7 +204,7 @@ GDAL_FORMATS = 	gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 xpm \
 #
 
 ifeq ($(HAVE_LIBTOOL), yes)
-CONFIG_LIBS	=	$(LIBGDAL) $(PG_LIB)
+CONFIG_LIBS	=	$(LIBGDAL)
 CONFIG_LIBS_INS	=	-L$(INST_LIB) -lgdal
 EXE_DEP_LIBS	=	$(LIBGDAL)
 else
