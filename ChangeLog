@@ -1,3 +1,8 @@
+2001-08-30  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* frmts/ceos2/sar_ceosdataset.cpp: added four corner support for ERS
+	products with map projection record.
+
 2001-08-29  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* ogr/ogrsf_frmts/ntf: add support for GType 5 - add ntfstroke.cpp.
