@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.87  2004/03/26 17:12:31  warmerda
- * added fill wrapper
+ * Revision 1.88  2004/04/02 17:40:44  warmerda
+ * added GDALGeneralCmdLineProcessor() support
  *
  ************************************************************************/
 
@@ -2867,6 +2867,15 @@ py_CPLPopErrorHandler(PyObject *self, PyObject *args)
 
     Py_INCREF(Py_None);
     return Py_None;
+}
+
+char **PyGDALGeneralCmdLineProcessor( char **papszArgs, int nOptions )
+{
+    if( GDALGeneralCmdLineProcessor( CSLCount(papszArgs), &papszArgs, 
+                                     nOptions ) <= 0 )
+        return NULL;
+    else
+        return papszArgs;
 }
 
 /************************************************************************/
@@ -6710,6 +6719,29 @@ static PyObject *_wrap_OCTDestroyCoordinateTransformation(PyObject *self, PyObje
     return _resultobj;
 }
 
+static PyObject *_wrap_PyGDALGeneralCmdLineProcessor(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    stringList  _result;
+    stringList  _arg0;
+    int  _arg1;
+    char * _argc0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"si:PyGDALGeneralCmdLineProcessor",&_argc0,&_arg1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_stringList")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PyGDALGeneralCmdLineProcessor. Expected _stringList.");
+        return NULL;
+        }
+    }
+    _result = (stringList )PyGDALGeneralCmdLineProcessor(_arg0,_arg1);
+    SWIG_MakePtr(_ptemp, (char *) _result,"_stringList");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OGR_G_DestroyGeometry(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRGeometryH  _arg0;
@@ -10148,6 +10180,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_G_GetDimension", _wrap_OGR_G_GetDimension, 1 },
 	 { "OGR_G_CreateGeometry", _wrap_OGR_G_CreateGeometry, 1 },
 	 { "OGR_G_DestroyGeometry", _wrap_OGR_G_DestroyGeometry, 1 },
+	 { "PyGDALGeneralCmdLineProcessor", _wrap_PyGDALGeneralCmdLineProcessor, 1 },
 	 { "CPLPopErrorHandler", py_CPLPopErrorHandler, 1 },
 	 { "CPLPushErrorHandler", py_CPLPushErrorHandler, 1 },
 	 { "CPLError", py_CPLError, 1 },

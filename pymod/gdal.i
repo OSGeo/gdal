@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.93  2004/04/02 17:40:43  warmerda
+ * added GDALGeneralCmdLineProcessor() support
+ *
  * Revision 1.92  2004/03/26 17:12:31  warmerda
  * added fill wrapper
  *
@@ -2635,6 +2638,22 @@ py_CPLPopErrorHandler(PyObject *self, PyObject *args)
 %}
 
 %native(CPLPopErrorHandler) py_CPLPopErrorHandler;
+
+/************************************************************************/
+/*                    GDALGeneralCmdLineProcessor()                     */
+/************************************************************************/
+stringList PyGDALGeneralCmdLineProcessor( stringList papszArgs, int nOptions );
+
+%{
+char **PyGDALGeneralCmdLineProcessor( char **papszArgs, int nOptions )
+{
+    if( GDALGeneralCmdLineProcessor( CSLCount(papszArgs), &papszArgs, 
+                                     nOptions ) <= 0 )
+        return NULL;
+    else
+        return papszArgs;
+}
+%}
 
 /* -------------------------------------------------------------------- */
 /*      OGR_API Stuff.							*/

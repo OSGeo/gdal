@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.4  2004/04/02 17:40:44  warmerda
+# added GDALGeneralCmdLineProcessor() support
+#
 # Revision 1.3  2003/05/28 19:47:34  warmerda
 # upgrade progress reporting
 #
@@ -58,24 +61,29 @@ format = 'GTiff'
 src_filename = None
 dst_filename = None
 
+gdal.AllRegister()
+argv = gdal.GeneralCmdLineProcessor( sys.argv )
+if argv is None:
+    sys.exit( 0 )
+
 # Parse command line arguments.
 i = 1
-while i < len(sys.argv):
-    arg = sys.argv[i]
+while i < len(argv):
+    arg = argv[i]
 
     if arg == '-of':
         i = i + 1
-        format = sys.argv[i]
+        format = argv[i]
 
     elif arg == '-n':
         i = i + 1
-        color_count = int(sys.argv[i])
+        color_count = int(argv[i])
 
     elif src_filename is None:
-        src_filename = sys.argv[i]
+        src_filename = argv[i]
 
     elif dst_filename is None:
-        dst_filename = sys.argv[i]
+        dst_filename = argv[i]
 
     else:
         Usage()

@@ -27,6 +27,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.3  2004/04/02 17:40:44  warmerda
+#  added GDALGeneralCmdLineProcessor() support
+#
 #  Revision 1.2  2002/09/04 18:11:17  warmerda
 #  fixed to emit center of pixel
 #
@@ -59,22 +62,27 @@ if __name__ == '__main__':
     dstfile = None
     band_num = 1
 
+    gdal.AllRegister()
+    argv = gdal.GeneralCmdLineProcessor( sys.argv )
+    if argv is None:
+        sys.exit( 0 )
+
     # Parse command line arguments.
     i = 1
-    while i < len(sys.argv):
-        arg = sys.argv[i]
+    while i < len(argv):
+        arg = argv[i]
 
         if arg == '-srcwin':
-            srcwin = (int(sys.argv[i+1]),int(sys.argv[i+2]),
-                      int(sys.argv[i+3]),int(sys.argv[i+4]))
+            srcwin = (int(argv[i+1]),int(argv[i+2]),
+                      int(argv[i+3]),int(argv[i+4]))
             i = i + 4
 
         elif arg == '-skip':
-            skip = int(sys.argv[i+1])
+            skip = int(argv[i+1])
             i = i + 1
 
         elif arg == '-band':
-            band_num = int(sys.argv[i+1])
+            band_num = int(argv[i+1])
             i = i + 1
 
         elif arg[0] == '-':

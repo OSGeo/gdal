@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.61  2004/04/02 17:40:44  warmerda
+# added GDALGeneralCmdLineProcessor() support
+#
 # Revision 1.60  2004/03/26 17:12:31  warmerda
 # added fill wrapper
 #
@@ -198,6 +201,20 @@ def SerializeXMLTree( tree ):
 ###############################################################################
 # GDAL Services not related to objects.
 
+def GeneralCmdLineProcessor( args, options = 0 ):
+    ErrorReset()
+    in_sl = _gdal.ListToStringList( args )
+    out_sl = _gdal.PyGDALGeneralCmdLineProcessor( in_sl, options )
+    out = _gdal.StringListToList( out_sl )
+    _gdal.CSLDestroy( in_sl )
+    _gdal.CSLDestroy( out_sl )
+    if len(out) == 0 and GetLastErrorNo() != 0:
+        raise ValueError, GetLastErrorMsg()
+    if len(out) == 0:
+        return None
+    else:
+        return out
+
 def GetCacheMax():
     return _gdal.GDALGetCacheMax()
 
@@ -240,6 +257,9 @@ def DecToPackedDMS(angle):
 def TermProgress( ratio, msg = '', ptr = None ):
     return _gdal.GDALTermProgress( ratio, msg, 'NULL' )
 
+def AllRegister():
+    _gdal.GDALAllRegister()
+    
 def GetDriverList():
     list = []
     _gdal.GDALAllRegister()

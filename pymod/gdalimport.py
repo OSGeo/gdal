@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.3  2004/04/02 17:40:44  warmerda
+# added GDALGeneralCmdLineProcessor() support
+#
 # Revision 1.2  2000/06/27 16:48:57  warmerda
 # added progress func support
 #
@@ -41,7 +44,12 @@ import gdal
 import sys
 import os.path
 
-if len(sys.argv) < 2:
+gdal.AllRegister()
+argv = gdal.GeneralCmdLineProcessor( sys.argv )
+if argv is None:
+    sys.exit( 0 )
+
+if len(argv) < 2:
     print "Usage: gdalimport.py source_file [newfile]"
     sys.exit(1)
 
@@ -49,7 +57,7 @@ def progress_cb( complete, message, cb_data ):
     print cb_data, complete
     
 
-filename = sys.argv[1]
+filename = argv[1]
 dataset = gdal.Open( filename )
 if dataset is None:
     print 'Unable to open ', filename
@@ -60,7 +68,7 @@ if geotiff is None:
     print 'GeoTIFF driver not registered.'
     sys.exit(1)
 
-if len(sys.argv) < 3: 
+if len(argv) < 3: 
     newbase, ext = os.path.splitext(os.path.basename(filename))
     newfile = newbase + ".tif"
     i = 0
@@ -68,7 +76,7 @@ if len(sys.argv) < 3:
         i = i+1
         newfile = newbase+"_"+str(i)+".tif"
 else:
-    newfile = sys.argv[2]
+    newfile = argv[2]
 
 print 'Importing to Tiled GeoTIFF file:', newfile
 new_dataset = geotiff.CreateCopy( newfile, dataset, 0,
