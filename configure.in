@@ -6,6 +6,9 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT(GDALmake.opt.in)
 AC_CONFIG_HEADER(port/cpl_config.h)
 
+dnl We autoconf 2.52+ for libtool support on cygwin/mingw hosts
+AC_PREREQ(2.52)
+
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
