@@ -43,6 +43,14 @@ Release 1.4
  o Added preliminary support for reading cell header structures based
    on input from Mike Cane. 
 
+ o Moved a bunch of stuff into dgnread.cpp. 
+
+ o Build default colortable into dgnhelp.cpp for use of DGNLookupColor(). 
+
+ o Added DGNGetShapeFillInfo(). 
+
+
+
 
 Release 1.3
 -----------
