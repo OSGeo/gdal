@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2000/12/15 14:48:18  warmerda
+ * fixed handling of nongeographic/projected model types
+ *
  * Revision 1.17  2000/12/15 13:57:08  warmerda
  * fixed handling of non-geographic/projected model types for Geotiff
  *
@@ -178,7 +181,7 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
     OGRSpatialReference	oSRS;
 
     if( psDefn->Model != ModelTypeProjected 
-        && psDefn->Model != ModelTypeGeograhic )
+        && psDefn->Model != ModelTypeGeographic )
         return CPLStrdup("");
     
 /* -------------------------------------------------------------------- */
