@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/02/13 14:57:08  warmerda
+ * Corrected bug in north/south handling for UTM.
+ * Fix submitted by Vladimir Slepnev.
+ *
  * Revision 1.7  2003/01/27 14:21:28  warmerda
  * Fixed byte_order test.
  *
@@ -406,7 +410,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     if( EQUALN(papszFields[0],"UTM",3) && nCount >= 9 )
     {
         oSRS.SetUTM( atoi(papszFields[7]), 
-                     EQUAL(papszFields[8],"South") );
+                     !EQUAL(papszFields[8],"South") );
         oSRS.SetWellKnownGeogCS( "WGS84" );
     }
     else if( EQUALN(papszFields[0],"State Plane (NAD 27)",19)
