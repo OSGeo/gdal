@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.109  2005/01/03 22:19:09  fwarmerdam
+ * added OGRLayer::SetSpatialFilterRect()
+ *
  * Revision 1.108  2004/12/17 18:48:56  fwarmerdam
  * added dataset level read/write methods
  *
@@ -3294,6 +3297,7 @@ typedef void *OGRSFDriverH;
 
 OGRGeometryH  OGR_L_GetSpatialFilter( OGRLayerH );
 void    OGR_L_SetSpatialFilter( OGRLayerH, OGRGeometryH );
+void    OGR_L_SetSpatialFilterRect( OGRLayerH, double, double, double, double);
 int     OGR_L_SetAttributeFilter( OGRLayerH, NULLableString );
 void    OGR_L_ResetReading( OGRLayerH );
 OGRFeatureH  OGR_L_GetNextFeature( OGRLayerH );

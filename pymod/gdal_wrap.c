@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.102  2004/12/17 18:48:56  fwarmerdam
- * added dataset level read/write methods
+ * Revision 1.103  2005/01/03 22:19:09  fwarmerdam
+ * added OGRLayer::SetSpatialFilterRect()
  *
  ************************************************************************/
 
@@ -9882,6 +9882,30 @@ static PyObject *_wrap_OGR_L_SetSpatialFilter(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OGR_L_SetSpatialFilterRect(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRLayerH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sdddd:OGR_L_SetSpatialFilterRect",&_argc0,&_arg1,&_arg2,&_arg3,&_arg4)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_L_SetSpatialFilterRect. Expected _OGRLayerH.");
+        return NULL;
+        }
+    }
+    OGR_L_SetSpatialFilterRect(_arg0,_arg1,_arg2,_arg3,_arg4);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_OGR_L_SetAttributeFilter(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     int  _result;
@@ -11259,6 +11283,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_L_GetNextFeature", _wrap_OGR_L_GetNextFeature, 1 },
 	 { "OGR_L_ResetReading", _wrap_OGR_L_ResetReading, 1 },
 	 { "OGR_L_SetAttributeFilter", _wrap_OGR_L_SetAttributeFilter, 1 },
+	 { "OGR_L_SetSpatialFilterRect", _wrap_OGR_L_SetSpatialFilterRect, 1 },
 	 { "OGR_L_SetSpatialFilter", _wrap_OGR_L_SetSpatialFilter, 1 },
 	 { "OGR_L_GetSpatialFilter", _wrap_OGR_L_GetSpatialFilter, 1 },
 	 { "OGR_F_SetStyleString", _wrap_OGR_F_SetStyleString, 1 },
