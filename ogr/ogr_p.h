@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/20 14:36:04  warmerda
+ * added well known text parsing prototypes
+ *
  * Revision 1.1  1999/03/29 21:21:10  warmerda
  * New
  *
@@ -41,12 +44,27 @@
 /*      of stuff easily.                                                */
 /* -------------------------------------------------------------------- */
 
-#include "cpl_port.h"
+#include "cpl_string.h"
+#include "cpl_conv.h"
 
 #ifdef CPL_MSB 
 #  define OGR_SWAP(x) 	(x == wkbNDR)
 #else
 #  define OGR_SWAP(x) 	(x == wkbXDR)
 #endif
+
+/* -------------------------------------------------------------------- */
+/*      helper function for parsing well known text format vector objects.*/
+/* -------------------------------------------------------------------- */
+
+#define OGR_WKT_TOKEN_MAX	64
+
+const char * OGRWktReadToken( const char * pszInput, char * pszToken );
+
+const char * OGRWktReadPoints( const char * pszInput,
+                               OGRRawPoint **ppaoPoints, int * pnMaxPoints,
+                               int * pnReadPoints );
+
+const char *OGRMakeWktCoordinate( double, double );
 
 #endif /* ndef _OGR_P_H_INCLUDED */
