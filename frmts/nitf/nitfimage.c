@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/12/18 20:16:04  warmerda
+ * support writing IGEOLO
+ *
  * Revision 1.8  2002/12/18 06:49:21  warmerda
  * implement support for mapped files without a map (BMRLNTH==0)
  *
@@ -849,6 +852,95 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
     CPLFree( pabyLineBuf );
 
     return BLKREAD_OK;
+}
+
+/************************************************************************/
+/*                          NITFEncodeDMSLoc()                          */
+/************************************************************************/
+
+static void NITFEncodeDMSLoc( char *pszTarget, double dfValue, 
+                              const char *pszAxis )
+
+{
+    char chHemisphere;
+    int  nDegrees, nMinutes, nSeconds;
+
+    if( EQUAL(pszAxis,"Lat") )
+    {
+        if( dfValue < 0.0 )
+            chHemisphere = 'S';
+        else
+            chHemisphere = 'N';
+    }
+    else
+    {
+        if( dfValue < 0.0 )
+            chHemisphere = 'W';
+        else
+            chHemisphere = 'E';
+    }
+
+    dfValue = fabs(dfValue);
+
+    nDegrees = (int) dfValue;
+    dfValue = (dfValue-nDegrees) * 60.0;
+
+    nMinutes = (int) dfValue;
+    dfValue = (dfValue-nMinutes) * 60.0;
+
+    nSeconds = (int) dfValue;
+
+    if( EQUAL(pszAxis,"Lat") )
+        sprintf( pszTarget, "%02d%02d%02d%c", 
+                 nDegrees, nMinutes, nSeconds, chHemisphere );
+    else
+        sprintf( pszTarget, "%03d%02d%02d%c", 
+                 nDegrees, nMinutes, nSeconds, chHemisphere );
+}
+
+/************************************************************************/
+/*                          NITFWriteIGEOLO()                           */
+/************************************************************************/
+
+int NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
+                     double dfULX, double dfULY,
+                     double dfURX, double dfURY,
+                     double dfLRX, double dfLRY,
+                     double dfLLX, double dfLLY )
+
+{
+    char szIGEOLO[61];
+
+    if( chICORDS != 'G' )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "Currently NITFWriteIGEOLO() only supports writing ICORDS=G style." );
+        return FALSE;
+    }
+
+    if( psImage->chICORDS == ' ' )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, 
+                 "Apparently no space reserved for IGEOLO info in NITF file.\n"
+                 "NITFWriteIGEOGLO() fails." );
+        return FALSE;
+    }
+
+    NITFEncodeDMSLoc( szIGEOLO +  0, dfULY, "Lat" );
+    NITFEncodeDMSLoc( szIGEOLO +  7, dfULX, "Long" );
+    NITFEncodeDMSLoc( szIGEOLO + 15, dfURY, "Lat" );
+    NITFEncodeDMSLoc( szIGEOLO + 22, dfURX, "Long" );
+    NITFEncodeDMSLoc( szIGEOLO + 30, dfLRY, "Lat" );
+    NITFEncodeDMSLoc( szIGEOLO + 37, dfLRX, "Long" );
+    NITFEncodeDMSLoc( szIGEOLO + 45, dfLLY, "Lat" );
+    NITFEncodeDMSLoc( szIGEOLO + 52, dfLLX, "Long" );
+
+    VSIFSeek( psImage->psFile->fp, 
+              psImage->psFile->pasSegmentInfo[psImage->iSegment].nSegmentHeaderStart
+              + 372, SEEK_SET );
+    VSIFWrite( szIGEOLO, 1, 60, psImage->psFile->fp );
+
+    return TRUE;
 }
 
 /************************************************************************/
