@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapheaderblock.cpp,v 1.24 2002/06/28 18:32:37 julien Exp $
+ * $Id: mitab_mapheaderblock.cpp,v 1.25 2003/08/12 23:17:21 dmorissette Exp $
  *
  * Name:     mitab_mapheaderblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapheaderblock.cpp,v $
+ * Revision 1.25  2003/08/12 23:17:21  dmorissette
+ * Added reading of v500+ coordsys affine params (Anthony D. - Encom)
+ *
  * Revision 1.24  2002/06/28 18:32:37  julien
  * Add SetSpatialFilter() in TABSeamless class (Bug 164, MapServer)
  * Use double for comparison in Coordsys2Int() in mitab_mapheaderblock.cpp
@@ -202,6 +205,7 @@ TABMAPHeaderBlock::TABMAPHeaderBlock(TABAccess eAccessMode /*= TABRead*/):
     for(i=0; i<5; i++)
         m_sProj.adDatumParams[i] = 0.0;
 
+    m_sProj.nAffineFlag = 0;    // Only in version 500 and up
 
 }
 
@@ -333,6 +337,26 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf, int nSize,
         m_sProj.adDatumParams[i] = ReadDouble();
         if (m_nMAPVersionNumber <= 200)
             m_sProj.adDatumParams[i] = 0.0;
+    }
+
+    m_sProj.nAffineFlag = 0;
+    if (m_nMAPVersionNumber >= 500 && m_nSizeUsed > 512)
+    {
+        // Read Affine parameters A,B,C,D,E,F 
+        // only if version 500+ and block is larger than 512 bytes
+        int nInUse = ReadByte();
+        if (nInUse)
+        {
+            m_sProj.nAffineFlag = 1;
+            m_sProj.nAffineUnits = ReadByte();
+            GotoByteInBlock(0x0208); // Skip unused bytes
+            m_sProj.dAffineParamA = ReadDouble();
+            m_sProj.dAffineParamB = ReadDouble();
+            m_sProj.dAffineParamC = ReadDouble();
+            m_sProj.dAffineParamD = ReadDouble();
+            m_sProj.dAffineParamE = ReadDouble();
+            m_sProj.dAffineParamF = ReadDouble();
+        }
     }
 
     return 0;

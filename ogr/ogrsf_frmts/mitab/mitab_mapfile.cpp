@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.28 2002/08/27 17:18:43 warmerda Exp $
+ * $Id: mitab_mapfile.cpp,v 1.29 2003/08/12 23:17:21 dmorissette Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.29  2003/08/12 23:17:21  dmorissette
+ * Added reading of v500+ coordsys affine params (Anthony D. - Encom)
+ *
  * Revision 1.28  2002/08/27 17:18:43  warmerda
  * improved CPL error testing
  *
@@ -228,8 +231,18 @@ int TABMAPFile::Open(const char *pszFname, const char *pszAccess,
     {
         /*-----------------------------------------------------------------
          * Read access: try to read header block
+         * First try with a 512 bytes block to check the .map version.
+         * If it's version 500 or more then read again a 1024 bytes block
          *----------------------------------------------------------------*/
         poBlock = TABCreateMAPBlockFromFile(fp, 0, 512);
+
+        if (poBlock && poBlock->GetBlockClass() == TABMAP_HEADER_BLOCK &&
+            ((TABMAPHeaderBlock*)poBlock)->m_nMAPVersionNumber >= 500)
+        {
+            // Version 500 or higher.  Read 1024 bytes block instead of 512
+            delete poBlock;
+            poBlock = TABCreateMAPBlockFromFile(fp, 0, 1024);
+        }
 
         if (poBlock==NULL || poBlock->GetBlockClass() != TABMAP_HEADER_BLOCK)
         {

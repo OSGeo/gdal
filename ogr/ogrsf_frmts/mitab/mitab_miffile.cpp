@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.35 2003/01/30 22:42:39 daniel Exp $
+ * $Id: mitab_miffile.cpp,v 1.37 2003/12/19 07:54:50 fwarmerdam Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -10,7 +10,7 @@
  * Author:   Stephane Villeneuve, stephane.v@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999-2001, Stephane Villeneuve
+ * Copyright (c) 1999-2003, Stephane Villeneuve
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,12 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.37  2003/12/19 07:54:50  fwarmerdam
+ * write mif header on close if not already written out
+ *
+ * Revision 1.36  2003/08/13 02:49:02  dmorissette
+ * Use tab as default delimiter if not explicitly specified (Anthony D, bug 37)
+ *
  * Revision 1.35  2003/01/30 22:42:39  daniel
  * Fixed crash in ParseMIFHeader() when .mif doesn't contain a DATA line
  *
@@ -135,7 +141,12 @@ MIFFile::MIFFile()
     m_pszFname = NULL;
     m_pszVersion = NULL;
     m_pszCharset = NULL;
-    m_pszDelimiter = CPLStrdup(",");
+
+    // Tab is default delimiter in MIF spec if not explicitly specified.  Use
+    // that by default for read mode. In write mode, we will use "," as 
+    // delimiter since it's more common than tab (we do this in Open())
+    m_pszDelimiter = CPLStrdup("\t");
+
     m_pszUnique = NULL;
     m_pszIndex = NULL;
     m_pszCoordSys = NULL;
@@ -212,6 +223,10 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess,
     {
         m_eAccessMode = TABWrite;
         pszAccess = "wt";
+
+        // In write mode, use "," as delimiter since it's more common than tab
+        CPLFree(m_pszDelimiter);
+        m_pszDelimiter = CPLStrdup(",");
     }
     else
     {
@@ -889,7 +904,10 @@ int MIFFile::WriteMIFHeader()
     m_bHeaderWrote = TRUE;
     m_poMIFFile->WriteLine("Version %s\n", m_pszVersion);
     m_poMIFFile->WriteLine("Charset \"%s\"\n", m_pszCharset);
-    m_poMIFFile->WriteLine("Delimiter \"%s\"\n", m_pszDelimiter);
+
+    // Delimiter is not required if you use \t as delimiter
+    if ( !EQUAL(m_pszDelimiter, "\t") )
+        m_poMIFFile->WriteLine("Delimiter \"%s\"\n", m_pszDelimiter);
 
     bFound = FALSE;
     for(iField=0; iField<m_poDefn->GetFieldCount(); iField++)
@@ -998,6 +1016,11 @@ int MIFFile::WriteMIFHeader()
  **********************************************************************/
 int MIFFile::Close()
 {
+    /* flush .mif header if not already written */
+    if ( m_poDefn != NULL && m_bHeaderWrote == FALSE)
+    {
+        WriteMIFHeader();     
+    }
 
     if (m_poMIDFile)
     {

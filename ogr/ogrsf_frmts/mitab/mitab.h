@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.69 2002/10/15 23:30:49 daniel Exp $
+ * $Id: mitab.h,v 1.71 2003/08/07 03:20:46 dmorissette Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo MIF Read/Write library
@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.71  2003/08/07 03:20:46  dmorissette
+ * Added mitab_c_getlibversion() to C API. (Uffe K. - bug 21)
+ *
+ * Revision 1.70  2003/07/24 02:47:58  daniel
+ * Version 1.2.4
+ *
  * Revision 1.69  2002/10/15 23:30:49  daniel
  * Version 1.2.3
  *
@@ -165,7 +171,8 @@
 /*---------------------------------------------------------------------
  * Current version of the MITAB library... always useful!
  *--------------------------------------------------------------------*/
-#define MITAB_VERSION "1.2.3 (2002-10-15)"
+#define MITAB_VERSION      "1.2.4 (2003-07-23)"
+#define MITAB_VERSION_INT  1002004  /* version x.y.z -> xxxyyyzzz */
 
 #ifndef PI
 #  define PI 3.14159265358979323846
