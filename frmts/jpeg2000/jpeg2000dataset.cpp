@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2002/10/10 11:31:12  dron
+ * Fix for buiding GDAL with JasPer software under Windows.
+ *
  * Revision 1.5  2002/10/08 07:58:05  dron
  * Added encoding options.
  *
@@ -169,20 +172,53 @@ CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	    switch( eDataType )
 	    {
 	        case GDT_Int16:
-                *((GInt16*)pImage)++ = (GInt16)jas_matrix_get(sMatrix, i, j);
+		{
+		    GInt16* ptr = (GInt16*)pImage;
+		    *ptr = (GInt16)jas_matrix_get(sMatrix, i, j);
+		    ptr++;
+		    pImage = ptr;
+		}
+		// The following would not compile in visual C++ 6.0
+		// I think there is a precidence resolution problem
+		// the error is: error C2105: '++' needs l-value
+                //*((GInt16*)pImage)++ = (GInt16)jas_matrix_get(sMatrix, i, j);
 		break;
 	        case GDT_Int32:
-                *((GInt32*)pImage)++ = (GInt32)jas_matrix_get(sMatrix, i, j);
+		{
+		    GInt32* ptr = (GInt32*)pImage;
+		    *ptr = (GInt32)jas_matrix_get(sMatrix, i, j);
+		    ptr++;
+		    pImage = ptr;
+		}
+                //*((GInt32*)pImage)++ = (GInt32)jas_matrix_get(sMatrix, i, j);
 		break;
 	        case GDT_UInt16:
-                *((GUInt16*)pImage)++ = (GUInt16)jas_matrix_get(sMatrix, i, j);
+		{
+		    GUInt16* ptr = (GUInt16*)pImage;
+		    *ptr = (GUInt16)jas_matrix_get(sMatrix, i, j);
+		    ptr++;
+		    pImage = ptr;
+		}
+                //*((GUInt16*)pImage)++ = (GUInt16)jas_matrix_get(sMatrix, i, j);
 		break;
 	        case GDT_UInt32:
-                *((GUInt32*)pImage)++ = (GUInt32)jas_matrix_get(sMatrix, i, j);
+		{
+		    GUInt32* ptr = (GUInt32*)pImage;
+		    *ptr = (GUInt32)jas_matrix_get(sMatrix, i, j);
+		    ptr++;
+		    pImage = ptr;
+		}
+                //*((GUInt32*)pImage)++ = (GUInt32)jas_matrix_get(sMatrix, i, j);
 		break;
 	        case GDT_Byte:
 	        default:
-                *((GByte*)pImage)++ = (GByte)jas_matrix_get(sMatrix, i, j);
+		{
+		    GByte* ptr = (GByte*)pImage;
+		    *ptr = (GByte)jas_matrix_get(sMatrix, i, j);
+		    ptr++;
+		    pImage = ptr;
+		}
+                //*((GByte*)pImage)++ = (GByte)jas_matrix_get(sMatrix, i, j);
 		break;
 	    }
 
