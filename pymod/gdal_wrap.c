@@ -1895,6 +1895,141 @@ py_CPLDebug(PyObject *self, PyObject *args) {
     return Py_None;
 }
 
+
+/************************************************************************/
+/*                              CPLError()                              */
+/************************************************************************/
+static PyObject *
+py_CPLError(PyObject *self, PyObject *args) {
+
+    char *pszText = NULL;
+    int  nErrClass, nErrCode;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"iis:CPLError", &nErrClass, &nErrCode, &pszText))
+        return NULL;
+
+    CPLError( nErrClass, nErrCode, "%s", pszText );
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+
+typedef struct _PyErrorHandlerData {
+    PyObject *psPyErrorHandler;
+    struct _PyErrorHandlerData *psPrevious;
+} PyErrorHandlerData;
+
+static PyErrorHandlerData *psPyHandlerStack = NULL;
+
+/************************************************************************/
+/*                        PyErrorHandlerProxy()                         */
+/************************************************************************/
+
+void PyErrorHandlerProxy( CPLErr eErrType, int nErrorCode, const char *pszMsg )
+
+{
+    PyObject *psArgs;
+    PyObject *psResult;
+
+    assert( psPyHandlerStack != NULL );
+    if( psPyHandlerStack == NULL )
+        return;
+
+    psArgs = Py_BuildValue("(iis)", (int) eErrType, nErrorCode, pszMsg );
+
+    psResult = PyEval_CallObject( psPyHandlerStack->psPyErrorHandler, psArgs);
+    Py_XDECREF(psArgs);
+
+    if( psResult != NULL )
+    {
+        Py_XDECREF( psResult );
+    }
+}
+
+/************************************************************************/
+/*                        CPLPushErrorHandler()                         */
+/************************************************************************/
+static PyObject *
+py_CPLPushErrorHandler(PyObject *self, PyObject *args) {
+
+    PyObject *psPyCallback = NULL;
+    PyErrorHandlerData *psCBData = NULL;
+    char *pszCallbackName = NULL;
+    CPLErrorHandler pfnHandler = NULL;
+
+    self = self;
+
+    if(!PyArg_ParseTuple(args,"O:CPLPushErrorHandler",	&psPyCallback ) )
+        return NULL;
+
+    psCBData = (PyErrorHandlerData *) CPLCalloc(sizeof(PyErrorHandlerData),1);
+    psCBData->psPrevious = psPyHandlerStack;
+    psPyHandlerStack = psCBData;
+
+    if( PyArg_Parse( psPyCallback, "s", &pszCallbackName ) )
+    {
+        if( EQUAL(pszCallbackName,"CPLQuietErrorHandler") )
+	    pfnHandler = CPLQuietErrorHandler;
+        else if( EQUAL(pszCallbackName,"CPLDefaultErrorHandler") )
+	    pfnHandler = CPLDefaultErrorHandler;
+        else if( EQUAL(pszCallbackName,"CPLLoggingErrorHandler") )
+            pfnHandler = CPLLoggingErrorHandler;
+        else
+        {
+	    PyErr_SetString(PyExc_ValueError,
+   	            "Unsupported callback name in CPLPushErrorHandler");
+            return NULL;
+        }
+    }
+    else
+    {
+	PyErr_Clear();
+	pfnHandler = PyErrorHandlerProxy;
+        psCBData->psPyErrorHandler = psPyCallback;
+        Py_INCREF( psPyCallback );
+    }
+
+    CPLPushErrorHandler( pfnHandler );
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+
+
+/************************************************************************/
+/*                         CPLPopErrorHandler()                         */
+/************************************************************************/
+
+static PyObject *
+py_CPLPopErrorHandler(PyObject *self, PyObject *args) 
+{
+    PyErrorHandlerData *psCBData = NULL;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,":CPLPopErrorHandler" ) )
+        return NULL;
+
+    CPLPopErrorHandler();
+
+    if( psPyHandlerStack != NULL )
+    {								
+	psCBData = psPyHandlerStack;
+        psPyHandlerStack = psCBData->psPrevious;
+
+        if( psCBData->psPyErrorHandler != NULL )
+        {
+            Py_XDECREF( psCBData->psPyErrorHandler );
+        }
+        CPLFree( psCBData );	
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 /************************************************************************/
 /*                         OGR_G_CreateFromWkb()			*/
 /* 									*/
@@ -3395,6 +3530,31 @@ static PyObject *_wrap_GDALFlushCacheBlock(PyObject *self, PyObject *args) {
     if(!PyArg_ParseTuple(args,":GDALFlushCacheBlock")) 
         return NULL;
     _result = (int )GDALFlushCacheBlock();
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALChecksumImage(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    GDALRasterBandH  _arg0;
+    int  _arg1;
+    int  _arg2;
+    int  _arg3;
+    int  _arg4;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oiiii:GDALChecksumImage",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALChecksumImage. Expected _GDALRasterBandH.");
+        return NULL;
+        }
+    }
+    _result = (int )GDALChecksumImage(_arg0,_arg1,_arg2,_arg3,_arg4);
     _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
@@ -7722,6 +7882,9 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_G_GetDimension", _wrap_OGR_G_GetDimension, METH_VARARGS },
 	 { "OGR_G_CreateGeometry", _wrap_OGR_G_CreateGeometry, METH_VARARGS },
 	 { "OGR_G_DestroyGeometry", _wrap_OGR_G_DestroyGeometry, METH_VARARGS },
+	 { "CPLPopErrorHandler", py_CPLPopErrorHandler, METH_VARARGS },
+	 { "CPLPushErrorHandler", py_CPLPushErrorHandler, METH_VARARGS },
+	 { "CPLError", py_CPLError, METH_VARARGS },
 	 { "CPLDebug", py_CPLDebug, METH_VARARGS },
 	 { "CPLSerializeXMLTree", py_CPLSerializeXMLTree, METH_VARARGS },
 	 { "CPLParseXMLString", py_CPLParseXMLString, METH_VARARGS },
@@ -7770,6 +7933,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRReference", _wrap_OSRReference, METH_VARARGS },
 	 { "OSRDestroySpatialReference", _wrap_OSRDestroySpatialReference, METH_VARARGS },
 	 { "OSRNewSpatialReference", _wrap_OSRNewSpatialReference, METH_VARARGS },
+	 { "GDALChecksumImage", _wrap_GDALChecksumImage, METH_VARARGS },
 	 { "GDALDitherRGB2PCT", py_GDALDitherRGB2PCT, METH_VARARGS },
 	 { "GDALComputeMedianCutPCT", py_GDALComputeMedianCutPCT, METH_VARARGS },
 	 { "GDALGetRasterNoDataValue", py_GDALGetRasterNoDataValue, METH_VARARGS },
