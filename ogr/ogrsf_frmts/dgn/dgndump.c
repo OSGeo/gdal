@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/11/11 20:33:56  warmerda
+ * add support for reporting extents
+ *
  * Revision 1.9  2002/03/14 21:38:27  warmerda
  * pass update arg to DGNOpen
  *
@@ -90,7 +93,7 @@ int main( int argc, char ** argv )
     DGNHandle   hDGN;
     DGNElemCore *psElement;
     const char	*pszFilename = NULL;
-    int         bSummary = FALSE, iArg, bRaw = FALSE;
+    int         bSummary = FALSE, iArg, bRaw = FALSE, bReportExtents = FALSE;
     char	achRaw[64];
     double	dfSFXMin=0.0, dfSFXMax=0.0, dfSFYMin=0.0, dfSFYMax=0.0;
 
@@ -115,6 +118,10 @@ int main( int argc, char ** argv )
             achRaw[MAX(0,MIN(63,atoi(argv[iArg+1])))] = 1;
             bRaw = TRUE;
             iArg++;
+        }
+        else if( strcmp(argv[iArg],"-extents") == 0 )
+        {
+            bReportExtents = TRUE;
         }
         else if( argv[iArg][0] == '-' || pszFilename != NULL )
             Usage();
@@ -141,6 +148,16 @@ int main( int argc, char ** argv )
             DGNDumpElement( hDGN, psElement, stdout );
             if( achRaw[psElement->type] != 0 )
                 DGNDumpRawElement( hDGN, psElement, stdout );
+
+            if( bReportExtents )
+            {
+                DGNPoint sMin, sMax;
+                if( DGNGetElementExtents( hDGN, psElement, &sMin, &sMax ) )
+                    printf( "  Extents: (%.6f,%.6f,%.6f)\n"
+                            "        to (%.6f,%.6f,%.6f)\n",
+                            sMin.x, sMin.y, sMin.z, 
+                            sMax.x, sMax.y, sMax.z );
+            }
 
             DGNFreeElement( hDGN, psElement );
         }
