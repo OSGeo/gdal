@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/10/01 14:50:37  warmerda
+ * added newzealandmapgrid and gridskewangle
+ *
  * Revision 1.4  1999/09/15 20:33:33  warmerda
  * Handle UOMAngle properly.  Translate PM and angular projection parms back
  * into the UOMAngle units from degrees.
@@ -248,7 +251,7 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
 
           case CT_ObliqueMercator: /* hotine */
             oSRS.SetHOM( adfParm[0], adfParm[1],
-                         adfParm[2], 0.0,
+                         adfParm[2], adfParm[3],
                          adfParm[4],
                          adfParm[5], adfParm[6] );
             break;
@@ -329,6 +332,11 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
           case CT_AlbersEqualArea:
             oSRS.SetACEA( adfParm[0], adfParm[1],
                           adfParm[2], adfParm[3],
+                          adfParm[5], adfParm[6] );
+            break;
+
+          case CT_NewZealandMapGrid:
+            oSRS.SetNZMG( adfParm[0], adfParm[1],
                           adfParm[5], adfParm[6] );
             break;
         }
