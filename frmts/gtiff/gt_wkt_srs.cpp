@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2000/12/15 13:57:08  warmerda
+ * fixed handling of non-geographic/projected model types for Geotiff
+ *
  * Revision 1.16  2000/12/05 23:04:12  warmerda
  * added write support for lots of projections
  *
@@ -174,7 +177,8 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
 {
     OGRSpatialReference	oSRS;
 
-    if( psDefn->Model == KvUserDefined )
+    if( psDefn->Model != ModelTypeProjected 
+        && psDefn->Model != ModelTypeGeograhic )
         return CPLStrdup("");
     
 /* -------------------------------------------------------------------- */
