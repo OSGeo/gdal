@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/04/01 14:46:46  warmerda
+ * Reintroduce rev 1.5 migration of main entry point to C API.
+ *
  * Revision 1.6  2003/03/31 15:55:42  danmo
  * Added C API function docs
  *
@@ -67,6 +70,7 @@
  */
 
 #include "ogr_geometry.h"
+#include "ogr_api.h"
 #include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
@@ -178,14 +182,15 @@ static void AddEdgeToRing( OGRLinearRing * poRing, OGRLineString * poLine,
  *
  */
 
-OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
-                                      int bBestEffort, 
-                                      int bAutoClose,
-                                      double dfTolerance, 
-                                      OGRErr * peErr )
+OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
+                                       int bBestEffort, 
+                                       int bAutoClose,
+                                       double dfTolerance, 
+                                       OGRErr * peErr )
 
 {
     int         bSuccess = TRUE;
+    OGRGeometryCollection *poLines = (OGRGeometryCollection *) hLines;
     OGRPolygon  *poPolygon = new OGRPolygon();
 
 /* -------------------------------------------------------------------- */
@@ -330,6 +335,6 @@ OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
             *peErr = OGRERR_FAILURE;
     }
     
-    return poPolygon;
+    return (OGRGeometryH) poPolygon;
 }
 
