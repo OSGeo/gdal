@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  1999/12/30 02:41:21  warmerda
+ * Added support for generating TIFF files of other than 1 or 3 bands.
+ *
  * Revision 1.14  1999/06/01 12:49:04  warmerda
  * Add error check of tile size, abort if not multiple of 16.
  *
@@ -81,9 +84,9 @@ CPLErr CopyPyramidsToTiff( HFAHandle, HFABand *, TIFF *, int );
 void   TIFFBuildOverviews( const char *, int, int * );
 CPL_C_END
 
-static void ImagineToGeoTIFF( HFAHandle, HFABand *, HFABand *, HFABand *,
+static void ImagineToGeoTIFF( HFAHandle, HFABand **, int, int *,
                               const char *, int, int, int );
-static CPLErr RGBComboValidate( HFAHandle, int, int, int );
+static CPLErr RGBComboValidate( HFAHandle, HFABand **, int, int * );
 static int    ValidateDataType( HFAHandle, int );
 static void   ReportOnBand( HFABand * poBand );
 static void   ReportOnProjection( HFABand * poBand );
@@ -129,13 +132,14 @@ void Usage()
 int main( int nArgc, char ** papszArgv )
 
 {
-    int		i, nBandCount, nBand, nRed=0, nGreen=0, nBlue=0;
+    int		i, nHFABandCount, nBand;
     const char	*pszSrcFilename = NULL;
     const char	*pszDstBasename = NULL;
     HFAHandle   hHFA;
     int		nCompressFlag = COMPRESSION_NONE;
     int		nOverviewCount=0, anOverviews[100];
     int		bDictDump = FALSE, bTreeDump = FALSE, bWriteInStrips = FALSE;
+    int		nBandCount=0, anBandList[512];
         
 /* -------------------------------------------------------------------- */
 /*      Parse commandline options.                                      */
@@ -183,9 +187,15 @@ int main( int nArgc, char ** papszArgv )
         }
         else if( EQUAL(papszArgv[i],"-rgb") && i+3 < nArgc )
         {
-            nRed = atoi(papszArgv[++i]);
-            nGreen = atoi(papszArgv[++i]);
-            nBlue = atoi(papszArgv[++i]);
+            nBandCount = 3;
+            anBandList[0] = atoi(papszArgv[++i]) - 1;
+            anBandList[1] = atoi(papszArgv[++i]) - 1;
+            anBandList[2] = atoi(papszArgv[++i]) - 1;
+        }
+        else if( EQUAL(papszArgv[i],"-rgbn") && i+3 < nArgc )
+        {
+            while( i+1 < nArgc && atoi(papszArgv[i+1]) > 0 )
+                anBandList[nBandCount++] = atoi(papszArgv[++i]) - 1;
         }
         else if( EQUAL(papszArgv[i],"-?") )
         {
@@ -317,16 +327,17 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Loop over all bands, generating each TIFF file.                 */
 /* -------------------------------------------------------------------- */
-    HFAGetRasterInfo( hHFA, NULL, NULL, &nBandCount );
+    HFAGetRasterInfo( hHFA, NULL, NULL, &nHFABandCount );
 
 /* -------------------------------------------------------------------- */
 /*      Has the user requested an RGB image?                            */
 /* -------------------------------------------------------------------- */
-    if( nRed > 0 )
+    if( nBandCount > 0 )
     {
         char	szFilename[512];
 
-        if( RGBComboValidate( hHFA, nRed, nGreen, nBlue ) == CE_Failure )
+        if( RGBComboValidate( hHFA, hHFA->papoBand,
+                              nBandCount, anBandList ) == CE_Failure )
             exit( 1 );
 
         if( strstr(pszDstBasename,".") == NULL )
@@ -335,13 +346,20 @@ int main( int nArgc, char ** papszArgv )
             sprintf( szFilename, "%s", pszDstBasename );
 
         if( gnReportOn )
-            printf( "Translating bands %d,%d,%d to an RGB TIFF file %s.\n",
-                    nRed, nGreen, nBlue, szFilename );
+        {
+            printf( "Translating bands " );
+            for( i = 0; i < nBandCount; i++ )
+            {
+                if( i != 0 )
+                    printf( "," );
+                printf( "%d", anBandList[i]+1 );
+            }
+            
+            printf( " to an RGB TIFF file %s.\n",
+                    szFilename );
+        }
         
-        ImagineToGeoTIFF( hHFA,
-                          hHFA->papoBand[nRed-1],
-                          hHFA->papoBand[nGreen-1],
-                          hHFA->papoBand[nBlue-1],
+        ImagineToGeoTIFF( hHFA, hHFA->papoBand, nBandCount, anBandList,
                           szFilename,
                           nCompressFlag,
                           nOverviewCount == 0,
@@ -361,16 +379,16 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     else
     {
-        for( nBand = 1; nBand <= nBandCount; nBand++ )
+        for( nBand = 1; nBand <= nHFABandCount; nBand++ )
         {
             char	szFilename[512];
 
             if( !ValidateDataType( hHFA, nBand ) )
                 continue;
 
-            if( nBandCount == 1 && strstr(pszDstBasename,".tif") != NULL )
+            if( nHFABandCount == 1 && strstr(pszDstBasename,".tif") != NULL )
                 sprintf( szFilename, "%s", pszDstBasename );
-            else if( nBandCount == 1 )
+            else if( nHFABandCount == 1 )
                 sprintf( szFilename, "%s.tif", pszDstBasename );
             else
                 sprintf( szFilename, "%s%d.tif", pszDstBasename, nBand );
@@ -378,8 +396,8 @@ int main( int nArgc, char ** papszArgv )
             if( gnReportOn )
                 printf( "Translating band %d to an TIFF file %s.\n",
                         nBand, szFilename );
-        
-            ImagineToGeoTIFF( hHFA, hHFA->papoBand[nBand-1], NULL, NULL,
+
+            ImagineToGeoTIFF( hHFA, hHFA->papoBand, 1, &nBand,
                               szFilename, nCompressFlag,
                               nOverviewCount == 0,
                               bWriteInStrips );
@@ -802,9 +820,8 @@ static CPLErr CopyOneBand( HFABand * poBand, TIFF * hTIFF, int nSample )
 /************************************************************************/
 
 static void ImagineToGeoTIFF( HFAHandle hHFA,
-                              HFABand * poRedBand,
-                              HFABand * poGreenBand,
-                              HFABand * poBlueBand,
+                              HFABand ** papoBandList,
+                              int nBandCount, int * panBandList,
                               const char * pszDstFilename,
                               int nCompressFlag, int bCopyOverviews,
                               int bWriteInStrips )
@@ -818,9 +835,9 @@ static void ImagineToGeoTIFF( HFAHandle hHFA,
 
     HFAGetRasterInfo( hHFA, &nXSize, &nYSize, NULL );
 
-    nDataType = poRedBand->nDataType;
-    nBlockXSize = poRedBand->nBlockXSize;
-    nBlockYSize = poRedBand->nBlockYSize;
+    nDataType = papoBandList[panBandList[0]]->nDataType;
+    nBlockXSize = papoBandList[panBandList[0]]->nBlockXSize;
+    nBlockYSize = papoBandList[panBandList[0]]->nBlockYSize;
 
 /* -------------------------------------------------------------------- */
 /*      Tile sizes must be a multiple of 16.                            */
@@ -834,25 +851,13 @@ static void ImagineToGeoTIFF( HFAHandle hHFA,
         
         exit( 1 );
     }
-    
+
 /* -------------------------------------------------------------------- */
-/*      Verify some conditions of similarity on the bands.  These       */
-/*      should be checked before calling this function with a user      */
-/*      error.  This is just an extra check.                            */
+/*      Fetch PCT, if available.                                        */
 /* -------------------------------------------------------------------- */
-
-    CPLAssert( poBlueBand == NULL
-               || (poBlueBand->nDataType == nDataType
-                   && poGreenBand->nDataType == nDataType) );
-
-    CPLAssert( poBlueBand == NULL
-               || (poBlueBand->nBlockXSize == nBlockXSize
-                   && poGreenBand->nBlockXSize == nBlockXSize
-                   && poGreenBand->nBlockYSize == nBlockYSize
-                   && poGreenBand->nBlockYSize == nBlockYSize) );
-
-    if( poBlueBand == NULL )
-        poRedBand->GetPCT( &nColors, &padfRed, &padfGreen, &padfBlue );
+    if( nBandCount == 1 )
+        papoBandList[panBandList[0]]->GetPCT( &nColors, &padfRed,
+                                              &padfGreen, &padfBlue );
     else
         nColors = 0;
 
@@ -876,14 +881,14 @@ static void ImagineToGeoTIFF( HFAHandle hHFA,
     if( nDataType == EPT_s16 || nDataType == EPT_s8 )
         TIFFSetField( hTIFF, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_INT );
 
-    if( poBlueBand == NULL )
+    if( nBandCount == 1 )
     {
         TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, 1 );
         TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG );
     }
     else
     {
-        TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, 3 );
+        TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, nBandCount );
         TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_SEPARATE );
     }
         
@@ -902,7 +907,7 @@ static void ImagineToGeoTIFF( HFAHandle hHFA,
 
     if( nColors > 0 )
         TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE );
-    else if( poBlueBand == NULL )
+    else if( nBandCount < 3 )
         TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
     else
         TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
@@ -910,8 +915,8 @@ static void ImagineToGeoTIFF( HFAHandle hHFA,
 /* -------------------------------------------------------------------- */
 /*	Do we have min/max value information?				*/
 /* -------------------------------------------------------------------- */
-    if( poBlueBand == NULL )
-        ImagineToGeoTIFFDataRange( poRedBand, hTIFF );
+    if( nBandCount == 1 )
+        ImagineToGeoTIFFDataRange( papoBandList[panBandList[0]], hTIFF );
 
 /* -------------------------------------------------------------------- */
 /*      Copy over one, or three bands of raster data.                   */
@@ -919,23 +924,18 @@ static void ImagineToGeoTIFF( HFAHandle hHFA,
 
     if( bWriteInStrips )
     {
-        CopyOneBandToStrips( poRedBand, hTIFF, 0 );
-
-        if( poBlueBand != NULL )
-        {
-            CopyOneBandToStrips( poGreenBand, hTIFF, 1 );
-            CopyOneBandToStrips( poBlueBand, hTIFF, 2 );
-        }
+        int		iBand;
+        
+        for( iBand = 0; iBand < nBandCount; iBand++ )
+            CopyOneBandToStrips( papoBandList[panBandList[iBand]], hTIFF,
+                                 iBand );
     }
     else
     {
-        CopyOneBand( poRedBand, hTIFF, 0 );
-
-        if( poBlueBand != NULL )
-        {
-            CopyOneBand( poGreenBand, hTIFF, 1 );
-            CopyOneBand( poBlueBand, hTIFF, 2 );
-        }
+        int		iBand;
+        
+        for( iBand = 0; iBand < nBandCount; iBand++ )
+            CopyOneBand( papoBandList[panBandList[iBand]], hTIFF, iBand );
     }
     
 /* -------------------------------------------------------------------- */
@@ -947,13 +947,14 @@ static void ImagineToGeoTIFF( HFAHandle hHFA,
 /*      Write Palette                                                   */
 /* -------------------------------------------------------------------- */
     if( nColors > 0 )
-        ImagineToGeoTIFFPalette( poRedBand, hTIFF );
+        ImagineToGeoTIFFPalette( papoBandList[panBandList[0]], hTIFF );
 
 /* -------------------------------------------------------------------- */
 /*      Write overviews                                                 */
 /* -------------------------------------------------------------------- */
     if( bCopyOverviews )
-        CopyPyramidsToTiff( hHFA, poRedBand, hTIFF, nCompressFlag );
+        CopyPyramidsToTiff( hHFA, papoBandList[panBandList[0]], hTIFF,
+                            nCompressFlag );
 
     XTIFFClose( hTIFF );
 }
@@ -1047,80 +1048,72 @@ CPLErr CopyPyramidsToTiff( HFAHandle psInfo, HFABand *poBand, TIFF * hTIFF,
 /************************************************************************/
 
 static CPLErr RGBComboValidate( HFAHandle hHFA,
-                                int nRed, int nBlue, int nGreen )
+                                HFABand ** papoBands,
+                                int nBandCount, int * panBandList )
 
 {
-    int		nBandCount;
-    HFABand     *poRed, *poGreen, *poBlue;
+    int		nHFABandCount, iBand;
     
-    HFAGetRasterInfo( hHFA, NULL, NULL, &nBandCount );
+    HFAGetRasterInfo( hHFA, NULL, NULL, &nHFABandCount );
 
 /* -------------------------------------------------------------------- */
 /*      Check that band numbers exist.                                  */
 /* -------------------------------------------------------------------- */
-    if( nRed < 1 || nRed > nBandCount )
+    for( iBand = 0; iBand < nBandCount; iBand++ )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Selected red band (%d) not legal.  Only %d bands are "
-                  "available.\n", nRed );
-        return CE_Failure;
-    }
-
-    if( nGreen < 1 || nGreen > nBandCount )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Selected green band (%d) not legal.  Only %d bands are "
-                  "available.\n", nGreen );
-        return CE_Failure;
-    }
-
-    if( nBlue < 1 || nBlue > nBandCount )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Selected blue band (%d) not legal.  Only %d bands are "
-                  "available.\n", nBlue );
-        return CE_Failure;
+        if( panBandList[iBand] < 0 || panBandList[iBand] >= nHFABandCount )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Selected band (%d) not legal.  Only %d bands are "
+                      "available.\n", panBandList[iBand]+1, nHFABandCount );
+            return CE_Failure;
+        }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Verify that all the bands have the same datatype, tile size,    */
 /*      and so forth.                                                   */
 /* -------------------------------------------------------------------- */
-    poRed = hHFA->papoBand[nRed-1];
-    poGreen = hHFA->papoBand[nGreen-1];
-    poBlue = hHFA->papoBand[nBlue-1];
+    int		bBandsMatch = TRUE;
 
-    if( poRed->nDataType != poGreen->nDataType
-        || poRed->nDataType != poBlue->nDataType )
+    for( iBand = 1; iBand < nBandCount; iBand++ )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Datatypes of different bands do not match.  They are\n"
-                  "%d (red), %d (green), and %d (blue).\n",
-                  poRed->nDataType, poGreen->nDataType, poBlue->nDataType );
-        return CE_Failure;
+        HFABand	*poBandTest = papoBands[panBandList[iBand]];
+        HFABand	*poBandBase = papoBands[panBandList[iBand]];
+        
+        if( poBandTest->nDataType != poBandBase->nDataType )
+            bBandsMatch = FALSE;
     }
     
-    if( poRed->nBlockXSize != poGreen->nBlockXSize
-        || poRed->nBlockXSize != poBlue->nBlockXSize 
-        || poRed->nBlockYSize != poGreen->nBlockYSize
-        || poRed->nBlockYSize != poBlue->nBlockYSize )
+    if( !bBandsMatch )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Tile sizes of different bands do not match.  They are\n"
-                  "%dx%d (red), %dx%d (green), and %dx%d (blue).\n",
-                  poRed->nBlockXSize, poRed->nBlockYSize,
-                  poGreen->nBlockXSize, poGreen->nBlockYSize,
-                  poBlue->nBlockXSize, poBlue->nBlockYSize );
+                  "Datatypes of different bands do not match.\n" );
         return CE_Failure;
+    }
+
+    for( iBand = 1; iBand < nBandCount; iBand++ )
+    {
+        HFABand	*poBandTest = papoBands[panBandList[iBand]];
+        HFABand	*poBandBase = papoBands[panBandList[iBand]];
+        
+        if( poBandTest->nBlockXSize != poBandBase->nBlockXSize
+         || poBandTest->nBlockYSize != poBandBase->nBlockYSize )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Tile sizes of different bands do not match.\n" );
+            return CE_Failure;
+        }
     }
     
 /* -------------------------------------------------------------------- */
 /*	Verify that each of the bands is legal.				*/
 /* -------------------------------------------------------------------- */
-    if( !ValidateDataType( hHFA, nRed )
-        || !ValidateDataType( hHFA, nGreen )
-        || !ValidateDataType( hHFA, nBlue ) )
-        return CE_Failure;
+    for( iBand = 1; iBand < nBandCount; iBand++ )
+    {
+        if( !ValidateDataType( hHFA, panBandList[iBand]+1 ) )
+            return CE_Failure;
+    }
 
     return CE_None;
 }
