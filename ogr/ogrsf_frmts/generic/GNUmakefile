@@ -6,7 +6,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 OBJ	=	ogrsfdriverregistrar.o ogrlayer.o ogrdatasource.o \
 		ogrsfdriver.o ogrregisterall.o
 
-ifeq ($(OGDI_FLAG),ENABLED)
+ifeq ($(HAVE_OGDI),yes)
 CFLAGS   :=	$(CFLAGS) -DOGDI_ENABLED
 CXXFLAGS :=	$(CXXFLAGS) -DOGDI_ENABLED
 endif
