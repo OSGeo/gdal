@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/11/01 16:46:15  warmerda
+ * use default CPLLoggingErrorHandler now
+ *
  * Revision 1.5  2001/10/22 21:28:25  warmerda
  * updated logging rules
  *
@@ -54,62 +57,6 @@ BEGIN_OBJECT_MAP(ObjectMap)
 OBJECT_ENTRY(CLSID_SF, CSFSource)
 END_OBJECT_MAP()
 
-/************************************************************************/
-/*                       CPLDefaultErrorHandler()                       */
-/************************************************************************/
-
-static void OGR_OLEDBErrorHandler( CPLErr eErrClass, int nError, 
-                                   const char * pszErrorMsg )
-
-{
-    static int       bLogInit = FALSE;
-    static FILE *    fpLog = stderr;
-
-    if( !bLogInit )
-    {
-        const char *cpl_log = NULL;
-
-        bLogInit = TRUE;
-
-        if( getenv("CPL_LOG") != NULL )
-            cpl_log = getenv("CPL_LOG");
-
-        fpLog = stderr;
-        if( cpl_log != NULL && EQUAL(cpl_log,"OFF") )
-        {
-            fpLog = NULL;
-        }
-        else if( cpl_log != NULL )
-        {
-            char      path[5000];
-            int       i = 0;
-
-            strcpy( path, cpl_log );
-
-            while( (fpLog = fopen( path, "rt" )) != NULL ) 
-            {
-                fclose( fpLog );
-
-                sprintf( path, "%s_%d", cpl_log, i++ );
-            }
-
-            fpLog = fopen( path, "wt" );
-        }
-    }
-
-    if( fpLog == NULL )
-        return;
-
-    if( eErrClass == CE_Debug )
-        fprintf( fpLog, "%s\n", pszErrorMsg );
-    else if( eErrClass == CE_Warning )
-        fprintf( fpLog, "Warning %d: %s\n", nError, pszErrorMsg );
-    else
-        fprintf( fpLog, "ERROR %d: %s\n", nError, pszErrorMsg );
-
-    fflush( fpLog );
-}
-
 /////////////////////////////////////////////////////////////////////////////
 // DLL Entry Point
 
@@ -118,7 +65,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID /*lpReserved*/)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
     {
-        CPLSetErrorHandler( OGR_OLEDBErrorHandler );
+        CPLSetErrorHandler( CPLLoggingErrorHandler );
         CPLDebug( "OGR_OLEDB", "DllMain" );
         _Module.Init(ObjectMap, hInstance, &LIBID_SFLib);
         DisableThreadLibraryCalls(hInstance);
