@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.5 1999/11/14 18:12:47 stephane Exp $
+ * $Id: mitab_miffile.cpp,v 1.7 1999/12/14 04:02:31 daniel Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.7  1999/12/14 04:02:31  daniel
+ * Added bforceFlags to GetBounds() and GetFeatureCountByType()
+ *
+ * Revision 1.6  1999/12/14 02:20:55  daniel
+ * Added bTestOpen flag on Open()
+ *
  * Revision 1.5  1999/11/14 18:12:47  stephane
  * add a test if it's a empty line for unknown feature type
  *
@@ -109,21 +115,18 @@ MIFFile::~MIFFile()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int MIFFile::Open(const char *pszFname, const char *pszAccess)
+int MIFFile::Open(const char *pszFname, const char *pszAccess,
+                  GBool bTestOpenNoError /*=FALSE*/ )
 {
     char *pszTmpFname = NULL;
     int nFnameLen = 0;
     
     if (m_poMIDFile)
     {
-#ifndef OGR
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Open() failed: object already contains an open file");
-#else
-	CPLErrorReset();
-#endif
-        return -1;
+                     "Open() failed: object already contains an open file");
 
+        return -1;
     }
 
     /*-----------------------------------------------------------------
@@ -141,41 +144,44 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess)
     }
     else
     {
-#ifndef OGR
-        CPLError(CE_Failure, CPLE_FileIO,
+        if (!bTestOpenNoError)
+            CPLError(CE_Failure, CPLE_FileIO,
                  "Open() failed: access mode \"%s\" not supported", pszAccess);
-#else
-	CPLErrorReset();
-#endif
+        else
+            CPLErrorReset();
+
         return -1;
     }
 
     /*-----------------------------------------------------------------
-     * Make sure filename has a .MID extension... 
+     * Make sure filename has a .MIF or .MID extension... 
      *----------------------------------------------------------------*/
     m_pszFname = CPLStrdup(pszFname);
     nFnameLen = strlen(m_pszFname);
     if (nFnameLen > 4 && (strcmp(m_pszFname+nFnameLen-4, ".MID")==0 ||
                      strcmp(m_pszFname+nFnameLen-4, ".MIF")==0 ) )
-        strcpy(m_pszFname+nFnameLen-4, ".MID");
+        strcpy(m_pszFname+nFnameLen-4, ".MIF");
     else if (nFnameLen > 4 && (strcmp(m_pszFname+nFnameLen-4, ".mid")==0 ||
                           strcmp(m_pszFname+nFnameLen-4, ".mif")==0 ) )
-        strcpy(m_pszFname+nFnameLen-4, ".mid");
+        strcpy(m_pszFname+nFnameLen-4, ".mif");
     else
     {
-#ifndef OGR
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Open() failed for %s: invalid filename extension",
-                 m_pszFname);
-#else
-	CPLErrorReset();
-#endif
+        if (!bTestOpenNoError)
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Open() failed for %s: invalid filename extension",
+                     m_pszFname);
+        else
+            CPLErrorReset();
+
         CPLFree(m_pszFname);
         return -1;
     }
 
     pszTmpFname = CPLStrdup(m_pszFname);
 
+    /*-----------------------------------------------------------------
+     * Open .MIF file
+     *----------------------------------------------------------------*/
 
 #ifndef _WIN32
     /*-----------------------------------------------------------------
@@ -183,42 +189,6 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess)
      * We do it even for write access because if a file with the same
      * extension already exists we want to overwrite it.
      *----------------------------------------------------------------*/
-    TABAdjustFilenameExtension(m_pszFname);
-#endif
-
-    m_poMIDFile = new MIDDATAFile;
-
-    if (m_poMIDFile->Open(pszTmpFname, pszAccess) !=0)
-    {
-	CPLFree(pszTmpFname);
-	Close();
-#ifndef OGR	
-	CPLError(CE_Failure, CPLE_NotSupported,
-                 "Unable to open the MID file.");
-#else
-	CPLErrorReset();
-#endif
-
-	return -1;
-    }
-    /*-----------------------------------------------------------------
-     * Handle .MID file... depends on access mode.
-     *----------------------------------------------------------------*/
-    if (m_eAccessMode == TABWrite)
-    {
-	m_pszVersion = CPLStrdup("300");
-	m_pszCharset = CPLStrdup("Neutral");
-    }
-
-    /*-----------------------------------------------------------------
-     * Open .MIF file
-     *----------------------------------------------------------------*/
-    if (nFnameLen > 4 && strcmp(pszTmpFname+nFnameLen-4, ".MID")==0)
-        strcpy(pszTmpFname+nFnameLen-4, ".MIF");
-    else 
-        strcpy(pszTmpFname+nFnameLen-4, ".mif");
-
-#ifndef _WIN32
     TABAdjustFilenameExtension(pszTmpFname);
 #endif
 
@@ -226,17 +196,46 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess)
 
     if (m_poMIFFile->Open(pszTmpFname, pszAccess) != 0)
     {
+        if (!bTestOpenNoError)
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Unable to open %s.", pszTmpFname);
+        else
+            CPLErrorReset();
+
         CPLFree(pszTmpFname);
         Close();
-#ifndef OGR
-	CPLError(CE_Failure, CPLE_NotSupported,
-                 "Unable to open the MID file.");
-#else
-	CPLErrorReset();
-#endif
 
         return -1;
     }
+
+    /*-----------------------------------------------------------------
+     * Open .MID file
+     *----------------------------------------------------------------*/
+    if (nFnameLen > 4 && strcmp(pszTmpFname+nFnameLen-4, ".MIF")==0)
+        strcpy(pszTmpFname+nFnameLen-4, ".MID");
+    else 
+        strcpy(pszTmpFname+nFnameLen-4, ".mid");
+
+#ifndef _WIN32
+    TABAdjustFilenameExtension(pszTmpFname);
+#endif
+
+    m_poMIDFile = new MIDDATAFile;
+
+    if (m_poMIDFile->Open(pszTmpFname, pszAccess) !=0)
+    {
+        if (!bTestOpenNoError)
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Unable to open %s.", pszTmpFname);
+        else
+            CPLErrorReset();
+
+	CPLFree(pszTmpFname);
+	Close();
+
+	return -1;
+    }
+
 
     CPLFree(pszTmpFname);
     pszTmpFname = NULL;
@@ -246,40 +245,47 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess)
      *----------------------------------------------------------------*/
     if (m_eAccessMode == TABRead && ParseMIFHeader() != 0)
     {
-        CPLFree(pszTmpFname);
         Close();
 
-#ifndef OGR  
-	CPLError(CE_Failure, CPLE_NotSupported,
-                 "Unable to read the header file.");
-#else
-	CPLErrorReset();
-#endif
+        if (!bTestOpenNoError)
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Failed parsing header in %s.", m_pszFname);
+        else
+            CPLErrorReset();
+
 	return -1;
+    }
+
+    /*-----------------------------------------------------------------
+     * In write access, set some defaults
+     *----------------------------------------------------------------*/
+    if (m_eAccessMode == TABWrite)
+    {
+	m_pszVersion = CPLStrdup("300");
+	m_pszCharset = CPLStrdup("Neutral");
     }
 
     m_nLastFeatureId  = 0;
     if (m_eAccessMode == TABRead && CountNumberFeature() != 0)
     {
-	CPLFree(pszTmpFname);
         Close();
-#ifndef OGR
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Unable to count the number of feature.");
-#else
-	CPLErrorReset();
-#endif
+        if (!bTestOpenNoError)
+            CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unable to count the number of features in %s.", m_pszFname);
+        else
+            CPLErrorReset();
+
        return -1;
     }
 
     /* Put the MID file at the correct location, on the first feature */
     if (m_eAccessMode == TABRead && (m_poMIDFile->GetLine() == NULL))
     {
-	CPLFree(pszTmpFname);
         Close();
-#ifdef OGR
-	CPLErrorReset();
-#endif
+
+        if (bTestOpenNoError)
+            CPLErrorReset();
+
         return -1;
     }
 
@@ -316,7 +322,9 @@ int MIFFile::ParseMIFHeader()
     char **papszToken;
     int i = 0;
 
-    m_poDefn = new OGRFeatureDefn("TABFeature");
+    char *pszFeatureClassName = TABGetBasename(m_pszFname);
+    m_poDefn = new OGRFeatureDefn(pszFeatureClassName);
+    CPLFree(pszFeatureClassName);
     // Ref count defaults to 0... set it to 1
     m_poDefn->Reference();
 
@@ -1277,14 +1285,41 @@ int MIFFile::SetBounds(double dXMin, double dYMin,
 
 
 /**********************************************************************
+ *                   MIFFile::GetFeatureCountByType()
+ *
+ * Return number of features of each type.
+ *
+ * NOTE: The current implementation always returns -1 for MIF files
+ *       since this would require scanning the whole file.
+ *
+ * When properly implemented, the bForce flag will force scanning the
+ * whole file by default.
+ *
+ * Returns 0 on success, or silently returns -1 (with no error) if this
+ * information is not available.
+ **********************************************************************/
+int MIFFile::GetFeatureCountByType(int &numPoints, int &numLines,
+                                   int &numRegions, int &numTexts,
+                                   GBool /*bForce = TRUE */)
+{
+    numPoints = numLines = numRegions = numTexts = 0;
+    return -1;
+}
+
+/**********************************************************************
  *                   MIFFile::GetBounds()
  *
  * Fetch projection coordinates bounds of a dataset.
  *
- * Returns 0 on success, -1 on error.
+ * Pass bForce=FALSE to avoid a scan of the whole file if the bounds
+ * are not already available.
+ *
+ * Returns 0 on success, -1 on error or if bounds are not available and
+ * bForce=FALSE.
  **********************************************************************/
 int MIFFile::GetBounds(double &dXMin, double &dYMin, 
-                       double &dXMax, double &dYMax)
+                       double &dXMax, double &dYMax,
+                       GBool bForce /*= TRUE*/ )
 {
     
     if (m_bBoundsSet == FALSE)

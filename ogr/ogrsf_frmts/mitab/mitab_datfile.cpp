@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_datfile.cpp,v 1.7 1999/11/09 07:34:35 daniel Exp $
+ * $Id: mitab_datfile.cpp,v 1.8 1999/12/14 03:58:29 daniel Exp $
  *
  * Name:     mitab_datfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log: mitab_datfile.cpp,v $
+ * Revision 1.8  1999/12/14 03:58:29  daniel
+ * Fixed date read/write (bytes were reversed)
+ *
  * Revision 1.7  1999/11/09 07:34:35  daniel
  * Return default values when deleted attribute records are encountered
  *
@@ -907,9 +910,9 @@ const char *TABDATFile::ReadDateField()
         return "";
     }
 
-    nDay   = m_poRecordBlock->ReadByte();
-    nMonth = m_poRecordBlock->ReadByte();
     nYear  = m_poRecordBlock->ReadInt16();
+    nMonth = m_poRecordBlock->ReadByte();
+    nDay   = m_poRecordBlock->ReadByte();
 
     if (CPLGetLastErrorNo() != 0)
         return "";
@@ -1129,9 +1132,9 @@ int TABDATFile::WriteDateField(const char *pszValue)
 
     CSLDestroy(papszTok);
 
-    m_poRecordBlock->WriteByte(nDay);
-    m_poRecordBlock->WriteByte(nMonth);
     m_poRecordBlock->WriteInt16(nYear);
+    m_poRecordBlock->WriteByte(nMonth);
+    m_poRecordBlock->WriteByte(nDay);
 
     if (CPLGetLastErrorNo() != 0)
         return -1;

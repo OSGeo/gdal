@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_utils.h,v 1.4 1999/09/28 13:33:32 daniel Exp $
+ * $Id: mitab_utils.h,v 1.5 1999/12/14 02:08:16 daniel Exp $
  *
  * Name:     mitab_utils.h
  * Project:  MapInfo TAB Read/Write library
@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log: mitab_utils.h,v $
+ * Revision 1.5  1999/12/14 02:08:16  daniel
+ * Added TABGetBasename() + TAB_CSLLoad()
+ *
  * Revision 1.4  1999/09/28 13:33:32  daniel
  * Moved definition for PI to mitab.h
  *
@@ -63,6 +66,8 @@ int TABCloseRing(OGRLineString *poRing);
 
 
 GBool TABAdjustFilenameExtension(char *pszFname);
+char *TABGetBasename(const char *pszFname);
+char **TAB_CSLLoad(const char *pszFname);
 
 #endif /* _MITAB_UTILS_H_INCLUDED_ */
 

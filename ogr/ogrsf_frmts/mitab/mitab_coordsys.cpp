@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.5 1999/11/12 05:51:57 daniel Exp $
+ * $Id: mitab_coordsys.cpp,v 1.6 1999/11/20 04:53:41 daniel Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.6  1999/11/20 04:53:41  daniel
+ * Fixed warning on return value in MITABExtractCoordSysBounds()
+ *
  * Revision 1.5  1999/11/12 05:51:57  daniel
  * Added MITABExtractCoordSysBounds()
  *
@@ -961,7 +964,7 @@ GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
     char	**papszFields;
 
     if( pszCoordSys == NULL )
-        return NULL;
+        return FALSE;
     
     papszFields = CSLTokenizeStringComplex( pszCoordSys, " ,()", TRUE, FALSE );
 

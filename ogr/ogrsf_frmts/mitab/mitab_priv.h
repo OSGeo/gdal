@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.11 1999/11/14 04:43:56 daniel Exp $
+ * $Id: mitab_priv.h,v 1.13 1999/12/14 02:07:12 daniel Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -28,6 +28,12 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.13  1999/12/14 02:07:12  daniel
+ * Added TABRelation class
+ *
+ * Revision 1.12  1999/11/20 15:49:42  daniel
+ * Initial definition for TABINDFile and TABINDNode
+ *
  * Revision 1.11  1999/11/14 04:43:56  daniel
  * Support dataset with no .MAP/.ID files
  *
@@ -68,7 +74,9 @@
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_feature.h"
 
+class TABFile;
 class TABFeature;
 class TABMAPToolBlock;
 class TABMAPIndexBlock;
@@ -139,6 +147,16 @@ typedef enum
     TABFDate,
     TABFLogical
 } TABFieldType;
+
+#define TABFIELDTYPE_2_STRING(type)     \
+   (type == TABFChar ? "Char" :         \
+    type == TABFInteger ? "Integer" :   \
+    type == TABFSmallInt ? "SmallInt" : \
+    type == TABFDecimal ? "Decimal" :   \
+    type == TABFFloat ? "Float" :       \
+    type == TABFDate ? "Date" :         \
+    type == TABFLogical ? "Logical" :   \
+    "Unknown field type"   )
 
 /*---------------------------------------------------------------------
  * TABDATFieldDef
@@ -386,6 +404,10 @@ class TABRawBinBlock
     int         WriteDouble(double dValue);
     int         WriteZeros(int nBytesToWrite);
     int         WritePaddedString(int nFieldSize, const char *pszString);
+
+    // This semi-private method gives a direct access to the internal 
+    // buffer... to be used with extreme care!!!!!!!!!
+    GByte *     GetCurDataPtr() { return (m_pabyBuf + m_nCurPos); } ;
 };
 
 
@@ -826,6 +848,104 @@ class TABMAPFile
 };
 
 
+
+/*---------------------------------------------------------------------
+ *                      class TABINDNode
+ *
+ * An index node in a .IND file.
+ *
+ * This class takes care of reading child nodes as necessary when looking
+ * for a given key value in the index tree.
+ *--------------------------------------------------------------------*/
+
+class TABINDNode
+{
+  private:
+    FILE        *m_fp;
+    TABAccess   m_eAccessMode;
+    TABINDNode *m_poCurChildNode;
+
+    int         m_nSubTreeDepth;
+    int         m_nKeyLength;
+    TABFieldType m_eFieldType;
+
+    GInt32      m_nCurDataBlockPtr;
+    int         m_nCurIndexEntry;
+    TABRawBinBlock *m_poDataBlock;
+    int         m_numEntriesInNode;
+    GInt32      m_nPrevNodePtr;
+    GInt32      m_nNextNodePtr;
+
+    int         GotoNodePtr(GInt32 nNewNodePtr);
+    GInt32      ReadIndexEntry(int nEntryNo, GByte *pKeyValue);
+    int         IndexKeyCmp(GByte *pKeyValue, int nEntryNo);
+
+   public:
+    TABINDNode();
+    ~TABINDNode();
+
+    int         InitNode(FILE *fp, int nBlockPtr, 
+                         int nKeyLength, int nSubTreeDepth);
+
+    int         SetFieldType(TABFieldType eType);
+    TABFieldType GetFieldType()         {return m_eFieldType;};
+
+    int         GetKeyLength()          {return m_nKeyLength;};
+
+    GInt32      FindFirst(GByte *pKeyValue);
+    GInt32      FindNext(GByte *pKeyValue);
+
+#ifdef DEBUG
+    void Dump(FILE *fpOut = NULL);
+#endif
+
+};
+
+
+/*---------------------------------------------------------------------
+ *                      class TABINDFile
+ *
+ * Class to handle table field index (.IND) files... we use this
+ * class as the main entry point to open and search the table field indexes.
+ * Note that .IND files are supported for read access only.
+ *--------------------------------------------------------------------*/
+
+class TABINDFile
+{
+  private:
+    char        *m_pszFname;
+    FILE        *m_fp;
+    TABAccess   m_eAccessMode;
+
+    int         m_numIndexes;
+    TABINDNode  **m_papoIndexRootNodes;
+    GByte       **m_papbyKeyBuffers;
+
+    int         ValidateIndexNo(int nIndexNumber);
+
+   public:
+    TABINDFile();
+    ~TABINDFile();
+
+    int         Open(const char *pszFname, const char *pszAccess, 
+                     GBool bTestOpenNoError=FALSE);
+    int         Close();
+
+    int         GetNumIndexes() {return m_numIndexes;};
+    int         SetIndexFieldType(int nIndexNumber, TABFieldType eType);
+    GByte      *BuildKey(int nIndexNumber, GInt32 nValue);
+    GByte      *BuildKey(int nIndexNumber, const char *pszStr);
+    GByte      *BuildKey(int nIndexNumber, double dValue);
+    GInt32      FindFirst(int nIndexNumber, GByte *pKeyValue);
+    GInt32      FindNext(int nIndexNumber, GByte *pKeyValue);
+
+#ifdef DEBUG
+    void Dump(FILE *fpOut = NULL);
+#endif
+
+};
+
+
 /*---------------------------------------------------------------------
  *                      class TABDATFile
  *
@@ -902,6 +1022,68 @@ class TABDATFile
 
 };
 
+
+/*---------------------------------------------------------------------
+ *                      class TABRelation
+ *
+ * Class that maintains a relation between 2 tables through a field
+ * in each table (the SQL "where table1.field1=table2.field2" found in 
+ * TABView datasets).
+ *
+ * An instance of this class is used to read data records from the
+ * combined tables as if they were a single one.
+ *--------------------------------------------------------------------*/
+
+class TABRelation
+{
+  private:
+    /* Information about the main table.
+     */
+    TABFile     *m_poMainTable;
+    char        *m_pszMainFieldName;
+    int         m_nMainFieldNo;
+
+    /* Information about the related table.  
+     * NOTE: The related field MUST be indexed.
+     */
+    TABFile     *m_poRelTable;
+    char        *m_pszRelFieldName;
+    int         m_nRelFieldNo;
+
+    TABINDFile  *m_poRelINDFileRef;
+    int         m_nRelFieldIndexNo;
+
+    /* Main and Rel table field map:
+     * For each field in the source tables, -1 means that the field is not
+     * selected, and a value >=0 is the index of this field in the combined
+     * FeatureDefn
+     */
+    int         *m_panMainTableFieldMap;
+    int         *m_panRelTableFieldMap;
+
+    OGRFeatureDefn *m_poDefn;
+    TABFeature *m_poCurFeature;
+
+    void        ResetAllMembers();
+    GByte       *BuildMainKey(TABFeature *poFeature);
+
+   public:
+    TABRelation();
+    ~TABRelation();
+
+    int         Init(const char *pszViewName,
+                     TABFile *poMainTable, TABFile *poRelTable,
+                     const char *pszMainFieldName,
+                     const char *pszRelFieldName,
+                     char **papszSelectedFields);
+
+    OGRFeatureDefn *GetFeatureDefn()  {return m_poDefn;};
+    TABFieldType    GetNativeFieldType(int nFieldId);
+    TABFeature     *GetFeatureRef(int nFeatureId);
+
+};
+
+
 /*---------------------------------------------------------------------
  *                      class MIDDATAFile
  *
@@ -932,7 +1114,7 @@ class MIDDATAFile
      double GetYTrans(double);
      double GetXMultiplier(){return m_dfXMultiplier;}
      const char *GetDelimiter(){return m_pszDelimiter;}
-     void SetDelimiter(const char *pszDelimiter){m_pszDelimiter = pszDelimiter;}
+     void SetDelimiter(const char *pszDelimiter){m_pszDelimiter=pszDelimiter;}
 
      private:
        FILE *m_fp;

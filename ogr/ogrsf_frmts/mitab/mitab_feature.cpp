@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.14 1999/11/14 04:47:54 daniel Exp $
+ * $Id: mitab_feature.cpp,v 1.15 1999/12/14 02:04:54 daniel Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.15  1999/12/14 02:04:54  daniel
+ * Added CloneTABFeature() method
+ *
  * Revision 1.14  1999/11/14 04:47:54  daniel
  * Fixed precision in writing angles.  Also changed the way ARCs start/end
  * angles are handled on read and write.
@@ -102,6 +105,80 @@ TABFeature::TABFeature(OGRFeatureDefn *poDefnIn):
  **********************************************************************/
 TABFeature::~TABFeature()
 {
+}
+
+
+/**********************************************************************
+ *                     TABFeature::CopyTABFeatureBase()
+ *
+ * Used by CloneTABFeature() to copy the basic (fields, geometry, etc.)
+ * TABFeature members.
+ *
+ * The newly created feature is owned by the caller, and will have it's own
+ * reference to the OGRFeatureDefn.
+ *
+ * It is possible to create the clone with a different OGRFeatureDefn,
+ * in this case, the fields won't be copied of course.
+ *
+ **********************************************************************/
+void TABFeature::CopyTABFeatureBase(TABFeature *poDestFeature)
+{
+    /*-----------------------------------------------------------------
+     * Copy fields only if OGRFeatureDefn is the same
+     *----------------------------------------------------------------*/
+    OGRFeatureDefn *poThisDefnRef = GetDefnRef();
+
+    if (poThisDefnRef == poDestFeature->GetDefnRef())
+    {
+        for( int i = 0; i < poThisDefnRef->GetFieldCount(); i++ )
+        {
+            poDestFeature->SetField( i, GetRawFieldRef( i ) );
+        }
+    }
+
+    /*-----------------------------------------------------------------
+     * Copy the geometry
+     *----------------------------------------------------------------*/
+    poDestFeature->SetGeometry( GetGeometryRef() );
+
+    double dXMin, dYMin, dXMax, dYMax;
+    GetMBR(dXMin, dYMin, dXMax, dYMax);
+    poDestFeature->SetMBR(dXMin, dYMin, dXMax, dYMax);
+
+    // m_nMapInfoType is not carried but it is not required anyways.
+    // it will default to TAB_GEOM_NONE
+}
+
+
+/**********************************************************************
+ *                     TABRegion::CloneTABFeature()
+ *
+ * Duplicate feature, including stuff specific to each TABFeature type.
+ *
+ * The newly created feature is owned by the caller, and will have it's own
+ * reference to the OGRFeatureDefn.
+ *
+ * It is possible to create the clone with a different OGRFeatureDefn,
+ * in this case, the fields won't be copied of course.
+ *
+ * This method calls the generic TABFeature::CopyTABFeatureBase() and 
+ * then copies any members specific to its own type.
+ **********************************************************************/
+TABFeature *TABFeature::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
+{
+    /*-----------------------------------------------------------------
+     * Alloc new feature and copy the base stuff
+     *----------------------------------------------------------------*/
+    TABFeature *poNew = new TABFeature(poNewDefn ? poNewDefn : GetDefnRef());
+
+    CopyTABFeatureBase(poNew);
+
+    /*-----------------------------------------------------------------
+     * And members specific to this class
+     *----------------------------------------------------------------*/
+    // Nothing to do for this class
+
+    return poNew;
 }
 
 /**********************************************************************
@@ -375,6 +452,33 @@ TABPoint::~TABPoint()
 }
 
 /**********************************************************************
+ *                     TABPoint::CloneTABFeature()
+ *
+ * Duplicate feature, including stuff specific to each TABFeature type.
+ *
+ * This method calls the generic TABFeature::CloneTABFeature() and 
+ * then copies any members specific to its own type.
+ **********************************************************************/
+TABFeature *TABPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
+{
+    /*-----------------------------------------------------------------
+     * Alloc new feature and copy the base stuff
+     *----------------------------------------------------------------*/
+    TABPoint *poNew = new TABPoint(poNewDefn ? poNewDefn : GetDefnRef());
+
+    CopyTABFeatureBase(poNew);
+
+    /*-----------------------------------------------------------------
+     * And members specific to this class
+     *----------------------------------------------------------------*/
+    // ITABFeatureSymbol
+    *(poNew->GetSymbolDefRef()) = *GetSymbolDefRef();
+
+    return poNew;
+}
+
+
+/**********************************************************************
  *                   TABPoint::ValidateMapInfoType()
  *
  * Check the feature's geometry part and return the corresponding
@@ -637,7 +741,8 @@ void TABPoint::DumpMIF(FILE *fpOut /*=NULL*/)
         fprintf(fpOut, "  m_nUnknown_      = 0x%2.2x (%d)\n", 
                 poFeature->m_nUnknown_, poFeature->m_nUnknown_);
         fprintf(fpOut, "  m_nCustomStyle   = 0x%2.2x (%d)\n", 
-                poFeature->m_nCustomStyle, poFeature->m_nCustomStyle);
+                poFeature->GetCustomSymbolStyle(), 
+                poFeature->GetCustomSymbolStyle());
 
         poFeature->DumpFontDef(fpOut);
     }
@@ -669,6 +774,39 @@ TABFontPoint::TABFontPoint(OGRFeatureDefn *poDefnIn):
  **********************************************************************/
 TABFontPoint::~TABFontPoint()
 {
+}
+
+/**********************************************************************
+ *                     TABFontPoint::CloneTABFeature()
+ *
+ * Duplicate feature, including stuff specific to each TABFeature type.
+ *
+ * This method calls the generic TABFeature::CloneTABFeature() and 
+ * then copies any members specific to its own type.
+ **********************************************************************/
+TABFeature *TABFontPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
+{
+    /*-----------------------------------------------------------------
+     * Alloc new feature and copy the base stuff
+     *----------------------------------------------------------------*/
+    TABFontPoint *poNew = new TABFontPoint(poNewDefn ? poNewDefn : 
+                                                       GetDefnRef());
+
+    CopyTABFeatureBase(poNew);
+
+    /*-----------------------------------------------------------------
+     * And members specific to this class
+     *----------------------------------------------------------------*/
+    // ITABFeatureSymbol
+    *(poNew->GetSymbolDefRef()) = *GetSymbolDefRef();
+
+    // ITABFeatureFont
+    *(poNew->GetFontDefRef()) = *GetFontDefRef();
+
+    poNew->SetSymbolAngle( GetSymbolAngle() );
+    poNew->SetFontStyleTABValue( GetFontStyleTABValue() );
+
+    return poNew;
 }
 
 /**********************************************************************
@@ -927,6 +1065,38 @@ TABCustomPoint::~TABCustomPoint()
 }
 
 /**********************************************************************
+ *                     TABCustomPoint::CloneTABFeature()
+ *
+ * Duplicate feature, including stuff specific to each TABFeature type.
+ *
+ * This method calls the generic TABFeature::CloneTABFeature() and 
+ * then copies any members specific to its own type.
+ **********************************************************************/
+TABFeature *TABCustomPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
+{
+    /*-----------------------------------------------------------------
+     * Alloc new feature and copy the base stuff
+     *----------------------------------------------------------------*/
+    TABCustomPoint *poNew = new TABCustomPoint(poNewDefn ? poNewDefn : 
+                                                           GetDefnRef());
+
+    CopyTABFeatureBase(poNew);
+
+    /*-----------------------------------------------------------------
+     * And members specific to this class
+     *----------------------------------------------------------------*/
+    // ITABFeatureSymbol
+    *(poNew->GetSymbolDefRef()) = *GetSymbolDefRef();
+
+    // ITABFeatureFont
+    *(poNew->GetFontDefRef()) = *GetFontDefRef();
+
+    poNew->SetCustomSymbolStyle( GetCustomSymbolStyle() );
+
+    return poNew;
+}
+
+/**********************************************************************
  *                   TABCustomPoint::ReadGeometryFromMAPFile()
  *
  * Fill the geometry and representation (color, etc...) part of the
@@ -1076,6 +1246,34 @@ TABPolyline::TABPolyline(OGRFeatureDefn *poDefnIn):
  **********************************************************************/
 TABPolyline::~TABPolyline()
 {
+}
+
+/**********************************************************************
+ *                     TABPolyline::CloneTABFeature()
+ *
+ * Duplicate feature, including stuff specific to each TABFeature type.
+ *
+ * This method calls the generic TABFeature::CloneTABFeature() and 
+ * then copies any members specific to its own type.
+ **********************************************************************/
+TABFeature *TABPolyline::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
+{
+    /*-----------------------------------------------------------------
+     * Alloc new feature and copy the base stuff
+     *----------------------------------------------------------------*/
+    TABPolyline *poNew = new TABPolyline(poNewDefn ? poNewDefn : GetDefnRef());
+
+    CopyTABFeatureBase(poNew);
+
+    /*-----------------------------------------------------------------
+     * And members specific to this class
+     *----------------------------------------------------------------*/
+    // ITABFeaturePen
+    *(poNew->GetPenDefRef()) = *GetPenDefRef();
+
+    poNew->m_bSmooth = m_bSmooth;
+
+    return poNew;
 }
 
 /**********************************************************************
@@ -1724,6 +1922,40 @@ TABRegion::~TABRegion()
 }
 
 /**********************************************************************
+ *                     TABRegion::CloneTABFeature()
+ *
+ * Duplicate feature, including stuff specific to each TABFeature type.
+ *
+ * This method calls the generic TABFeature::CopyTABFeatureBase() and 
+ * then copies any members specific to its own type.
+ **********************************************************************/
+TABFeature *TABRegion::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
+{
+    /*-----------------------------------------------------------------
+     * Alloc new feature and copy the base stuff
+     *----------------------------------------------------------------*/
+    TABRegion *poNew = new TABRegion(poNewDefn ? poNewDefn : GetDefnRef());
+
+    CopyTABFeatureBase(poNew);
+
+    /*-----------------------------------------------------------------
+     * And members specific to this class
+     *----------------------------------------------------------------*/
+    // ITABFeaturePen
+    *(poNew->GetPenDefRef()) = *GetPenDefRef();
+
+    // ITABFeatureBrush
+    *(poNew->GetBrushDefRef()) = *GetBrushDefRef();
+
+    poNew->m_bSmooth = m_bSmooth;
+    poNew->m_bCentroid = m_bCentroid;
+    poNew->m_dfCentroidX = m_dfCentroidX;
+    poNew->m_dfCentroidY = m_dfCentroidY;
+
+    return poNew;
+}
+
+/**********************************************************************
  *                   TABRegion::ValidateMapInfoType()
  *
  * Check the feature's geometry part and return the corresponding
@@ -2162,6 +2394,40 @@ TABRectangle::~TABRectangle()
 }
 
 /**********************************************************************
+ *                     TABRectangle::CloneTABFeature()
+ *
+ * Duplicate feature, including stuff specific to each TABFeature type.
+ *
+ * This method calls the generic TABFeature::CopyTABFeatureBase() and 
+ * then copies any members specific to its own type.
+ **********************************************************************/
+TABFeature *TABRectangle::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
+{
+    /*-----------------------------------------------------------------
+     * Alloc new feature and copy the base stuff
+     *----------------------------------------------------------------*/
+    TABRectangle *poNew = new TABRectangle(poNewDefn ? poNewDefn : 
+                                                       GetDefnRef());
+
+    CopyTABFeatureBase(poNew);
+
+    /*-----------------------------------------------------------------
+     * And members specific to this class
+     *----------------------------------------------------------------*/
+    // ITABFeaturePen
+    *(poNew->GetPenDefRef()) = *GetPenDefRef();
+
+    // ITABFeatureBrush
+    *(poNew->GetBrushDefRef()) = *GetBrushDefRef();
+
+    poNew->m_bRoundCorners = m_bRoundCorners;
+    poNew->m_dRoundXRadius = m_dRoundXRadius;
+    poNew->m_dRoundYRadius = m_dRoundYRadius;
+
+    return poNew;
+}
+
+/**********************************************************************
  *                   TABRectangle::ValidateMapInfoType()
  *
  * Check the feature's geometry part and return the corresponding
@@ -2513,6 +2779,41 @@ TABEllipse::~TABEllipse()
 }
 
 /**********************************************************************
+ *                     TABEllipse::CloneTABFeature()
+ *
+ * Duplicate feature, including stuff specific to each TABFeature type.
+ *
+ * This method calls the generic TABFeature::CopyTABFeatureBase() and 
+ * then copies any members specific to its own type.
+ **********************************************************************/
+TABFeature *TABEllipse::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
+{
+    /*-----------------------------------------------------------------
+     * Alloc new feature and copy the base stuff
+     *----------------------------------------------------------------*/
+    TABEllipse *poNew = new TABEllipse(poNewDefn ? poNewDefn : 
+                                                   GetDefnRef());
+
+    CopyTABFeatureBase(poNew);
+
+    /*-----------------------------------------------------------------
+     * And members specific to this class
+     *----------------------------------------------------------------*/
+    // ITABFeaturePen
+    *(poNew->GetPenDefRef()) = *GetPenDefRef();
+
+    // ITABFeatureBrush
+    *(poNew->GetBrushDefRef()) = *GetBrushDefRef();
+
+    poNew->m_dCenterX = m_dCenterX;
+    poNew->m_dCenterY = m_dCenterY;
+    poNew->m_dXRadius = m_dXRadius;
+    poNew->m_dYRadius = m_dYRadius;
+
+    return poNew;
+}
+
+/**********************************************************************
  *                   TABEllipse::ValidateMapInfoType()
  *
  * Check the feature's geometry part and return the corresponding
@@ -2808,6 +3109,40 @@ TABArc::TABArc(OGRFeatureDefn *poDefnIn):
  **********************************************************************/
 TABArc::~TABArc()
 {
+}
+
+/**********************************************************************
+ *                     TABArc::CloneTABFeature()
+ *
+ * Duplicate feature, including stuff specific to each TABFeature type.
+ *
+ * This method calls the generic TABFeature::CopyTABFeatureBase() and 
+ * then copies any members specific to its own type.
+ **********************************************************************/
+TABFeature *TABArc::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
+{
+    /*-----------------------------------------------------------------
+     * Alloc new feature and copy the base stuff
+     *----------------------------------------------------------------*/
+    TABArc *poNew = new TABArc(poNewDefn ? poNewDefn : GetDefnRef());
+
+    CopyTABFeatureBase(poNew);
+
+    /*-----------------------------------------------------------------
+     * And members specific to this class
+     *----------------------------------------------------------------*/
+    // ITABFeaturePen
+    *(poNew->GetPenDefRef()) = *GetPenDefRef();
+
+    poNew->SetStartAngle( GetStartAngle() );
+    poNew->SetEndAngle( GetEndAngle() );
+
+    poNew->m_dCenterX = m_dCenterX;
+    poNew->m_dCenterY = m_dCenterY;
+    poNew->m_dXRadius = m_dXRadius;
+    poNew->m_dYRadius = m_dYRadius;
+
+    return poNew;
 }
 
 /**********************************************************************
@@ -3223,6 +3558,50 @@ TABText::TABText(OGRFeatureDefn *poDefnIn):
 TABText::~TABText()
 {
     CPLFree(m_pszString);
+}
+
+/**********************************************************************
+ *                     TABText::CloneTABFeature()
+ *
+ * Duplicate feature, including stuff specific to each TABFeature type.
+ *
+ * This method calls the generic TABFeature::CopyTABFeatureBase() and 
+ * then copies any members specific to its own type.
+ **********************************************************************/
+TABFeature *TABText::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
+{
+    /*-----------------------------------------------------------------
+     * Alloc new feature and copy the base stuff
+     *----------------------------------------------------------------*/
+    TABText *poNew = new TABText(poNewDefn ? poNewDefn : GetDefnRef());
+
+    CopyTABFeatureBase(poNew);
+
+    /*-----------------------------------------------------------------
+     * And members specific to this class
+     *----------------------------------------------------------------*/
+    // ITABFeaturePen
+    *(poNew->GetPenDefRef()) = *GetPenDefRef();
+
+    // ITABFeatureFont
+    *(poNew->GetFontDefRef()) = *GetFontDefRef();
+
+
+    poNew->SetTextString( GetTextString() );
+    poNew->SetTextAngle( GetTextAngle() );
+    poNew->SetTextBoxHeight( GetTextBoxHeight() );
+    poNew->SetTextBoxWidth( GetTextBoxWidth() );
+    poNew->SetFontStyleTABValue( GetFontStyleTABValue() );
+    poNew->SetFontBGColor( GetFontBGColor() );
+    poNew->SetFontFGColor( GetFontFGColor() );
+
+    poNew->SetTextJustification( GetTextJustification() );
+    poNew->SetTextSpacing( GetTextSpacing() );
+    // Note: Text arrow/line coordinates are not transported... but 
+    //       we ignore them most of the time anyways.
+    poNew->SetTextLineType( TABTLNoLine );
+
+    return poNew;
 }
 
 /**********************************************************************

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.21 1999/11/14 17:49:18 stephane Exp $
+ * $Id: mitab_tabfile.cpp,v 1.23 1999/12/14 04:03:03 daniel Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.23  1999/12/14 04:03:03  daniel
+ * Added bforceFlags to GetBounds() and GetFeatureCountByType()
+ *
+ * Revision 1.22  1999/12/14 02:13:40  daniel
+ * Added .IND file support, bTestOpen flag on open(), + minor changes
+ *
  * Revision 1.21  1999/11/14 17:49:18  stephane
  * Add missing ifndef OGR in open
  *
@@ -125,6 +131,7 @@ TABFile::TABFile()
     m_poCurFeature = NULL;
     m_nCurFeatureId = 0;
     m_nLastFeatureId = 0;
+    m_panIndexNo = NULL;
 
     m_bBoundsSet = FALSE;
 }
@@ -164,6 +171,11 @@ void TABFile::ResetReading()
  *
  * Supported access modes are "r" (read-only) and "w" (create new dataset).
  *
+ * Set bTestOpenNoError=TRUE to silently return -1 with no error message
+ * if the file cannot be opened.  This is intended to be used in the
+ * context of a TestOpen() function.  The default value is FALSE which
+ * means that an error is reported if the file cannot be opened.
+ *
  * Note that dataset extents will have to be set using SetBounds() before
  * any feature can be written to a newly created dataset.
  *
@@ -173,7 +185,8 @@ void TABFile::ResetReading()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABFile::Open(const char *pszFname, const char *pszAccess)
+int TABFile::Open(const char *pszFname, const char *pszAccess,
+                  GBool bTestOpenNoError /*=FALSE*/ )
 {
     char *pszTmpFname = NULL;
     int nFnameLen = 0;
@@ -181,12 +194,9 @@ int TABFile::Open(const char *pszFname, const char *pszAccess)
    
     if (m_poMAPFile)
     {
-#ifndef OGR
-        CPLError(CE_Failure, CPLE_FileIO,
+        CPLError(CE_Failure, CPLE_AssertionFailed,
                  "Open() failed: object already contains an open file");
-#else
-	CPLErrorReset();
-#endif
+
         return -1;
     }
 
@@ -205,12 +215,12 @@ int TABFile::Open(const char *pszFname, const char *pszAccess)
     }
     else
     {
-#ifndef OGR
-        CPLError(CE_Failure, CPLE_FileIO,
+        if (!bTestOpenNoError)
+            CPLError(CE_Failure, CPLE_FileIO,
                  "Open() failed: access mode \"%s\" not supported", pszAccess);
-#else
-	CPLErrorReset();
-#endif
+        else
+            CPLErrorReset();
+
         return -1;
     }
 
@@ -230,13 +240,13 @@ int TABFile::Open(const char *pszFname, const char *pszAccess)
         strcpy(m_pszFname+nFnameLen-4, ".tab");
     else
     {
-#ifndef OGR
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Open() failed for %s: invalid filename extension",
-                 m_pszFname);
-#else
-	CPLErrorReset();
-#endif
+        if (!bTestOpenNoError)
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Open() failed for %s: invalid filename extension",
+                     m_pszFname);
+        else
+            CPLErrorReset();
+
         CPLFree(m_pszFname);
         return -1;
     }
@@ -262,14 +272,15 @@ int TABFile::Open(const char *pszFname, const char *pszAccess)
          * Open .TAB file... since it's a small text file, we will just load
          * it as a stringlist in memory.
          *------------------------------------------------------------*/
-        m_papszTABFile = CSLLoad(m_pszFname);
+        m_papszTABFile = TAB_CSLLoad(m_pszFname);
         if (m_papszTABFile == NULL)
         {
-            // Failed... an error has already been produced.
+            if (!bTestOpenNoError)
+            {
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Failed opening %s.", m_pszFname);
+            }
             CPLFree(m_pszFname);
-#ifdef OGR
-	    CPLErrorReset();
-#endif
             return -1;
         }
 
@@ -290,14 +301,14 @@ int TABFile::Open(const char *pszFname, const char *pszAccess)
 
         if ( !bFieldsFound )
         {
-#ifndef OGR
-           CPLError(CE_Failure, CPLE_NotSupported,
-                     "%s contains no table field definition.  "
-                     "This type of .TAB file cannot be read by this library.",
-                     m_pszFname);
-#else
-	    CPLErrorReset();
-#endif
+            if (!bTestOpenNoError)
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "%s contains no table field definition.  "
+                      "This type of .TAB file cannot be read by this library.",
+                         m_pszFname);
+            else
+                CPLErrorReset();
+
             CPLFree(m_pszFname);
 
             return -1;
@@ -333,9 +344,9 @@ int TABFile::Open(const char *pszFname, const char *pszAccess)
         // Open Failed... an error has already been reported, just return.
         CPLFree(pszTmpFname);
         Close();
-#ifdef OGR
-	CPLErrorReset();
-#endif
+        if (bTestOpenNoError)
+            CPLErrorReset();
+
         return -1;
     }
 
@@ -350,9 +361,9 @@ int TABFile::Open(const char *pszFname, const char *pszAccess)
         // Failed... an error has already been reported, just return.
         CPLFree(pszTmpFname);
         Close();
-#ifdef OGR
-	CPLErrorReset();
-#endif
+        if (bTestOpenNoError)
+            CPLErrorReset();
+
         return -1;
     }
 
@@ -383,12 +394,12 @@ int TABFile::Open(const char *pszFname, const char *pszAccess)
         {
             // File exists, but Open Failed... 
             // we have to produce an error message
-#ifndef OGR
-            CPLError(CE_Failure, CPLE_FileIO, 
-                     "Open() failed for %s", pszTmpFname);
-#else
-            CPLErrorReset();
-#endif
+            if (!bTestOpenNoError)
+                CPLError(CE_Failure, CPLE_FileIO, 
+                         "Open() failed for %s", pszTmpFname);
+            else
+                CPLErrorReset();
+
 	    CPLFree(pszTmpFname);
             Close();
             return -1;
@@ -400,9 +411,9 @@ int TABFile::Open(const char *pszFname, const char *pszAccess)
         // an error has already been reported, just return.
         CPLFree(pszTmpFname);
         Close();
-#ifdef OGR
-	CPLErrorReset();
-#endif
+        if (bTestOpenNoError)
+            CPLErrorReset();
+
         return -1;
     }
 
@@ -445,7 +456,9 @@ int TABFile::ParseTABFile()
         return -1;
     }
 
-    m_poDefn = new OGRFeatureDefn("TABFeature");
+    char *pszFeatureClassName = TABGetBasename(m_pszFname);
+    m_poDefn = new OGRFeatureDefn(pszFeatureClassName);
+    CPLFree(pszFeatureClassName);
     // Ref count defaults to 0... set it to 1
     m_poDefn->Reference();
 
@@ -500,6 +513,9 @@ int TABFile::ParseTABFile()
                 CSLDestroy(papszTok);
                 return -1;
             }
+
+            // Alloc the array to keep track of indexed fields
+            m_panIndexNo = (int *)CPLCalloc(numFields, sizeof(int));
 
             iLine++;
             poFieldDefn = NULL;
@@ -620,6 +636,18 @@ int TABFile::ParseTABFile()
                     CSLDestroy(papszTok);
                     return -1;
                 }
+                /*-----------------------------------------------------
+                 * Keep track of index number if present
+                 *----------------------------------------------------*/
+                if (numTok >= 4 && EQUAL(papszTok[numTok-2], "index"))
+                {
+                    m_panIndexNo[iField] = atoi(papszTok[numTok-1]);
+                }
+                else
+                {
+                    m_panIndexNo[iField] = 0;
+                }
+
                 /*-----------------------------------------------------
                  * Add the FieldDefn to the FeatureDefn and continue with
                  * the next one.
@@ -810,6 +838,9 @@ int TABFile::Close()
     m_pszVersion = NULL;
     CPLFree(m_pszCharset);
     m_pszCharset = NULL;
+
+    CPLFree(m_panIndexNo);
+    m_panIndexNo = NULL;
 
     return 0;
 }
@@ -1268,7 +1299,9 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
      *----------------------------------------------------------------*/
     if (m_poDefn== NULL)
     {
-        m_poDefn = new OGRFeatureDefn("TABFeature");
+        char *pszFeatureClassName = TABGetBasename(m_pszFname);
+        m_poDefn = new OGRFeatureDefn(pszFeatureClassName);
+        CPLFree(pszFeatureClassName);
     }
 
     /*-----------------------------------------------------------------
@@ -1353,6 +1386,8 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
  *
  * Returns TABFUnknown if file is not opened, or if specified field index is
  * invalid.
+ *
+ * Note that field ids are positive and start at 0.
  **********************************************************************/
 TABFieldType TABFile::GetNativeFieldType(int nFieldId)
 {
@@ -1361,6 +1396,80 @@ TABFieldType TABFile::GetNativeFieldType(int nFieldId)
         return m_poDATFile->GetFieldType(nFieldId);
     }
     return TABFUnknown;
+}
+
+
+
+/**********************************************************************
+ *                   TABFile::GetFieldIndexNumber()
+ *
+ * Returns the field's index number that was specified in the .TAB header
+ * or 0 if the specified field is not indexed.
+ *
+ * Note that field ids are positive and start at 0
+ * and valid index ids are positive and start at 1.
+ **********************************************************************/
+int  TABFile::GetFieldIndexNumber(int nFieldId)
+{
+    if (m_panIndexNo == NULL || nFieldId < 0 || 
+        m_poDATFile== NULL || nFieldId >= m_poDATFile->GetNumFields())
+        return 0;  // no index
+
+    return m_panIndexNo[nFieldId];
+}
+
+/**********************************************************************
+ *                   TABFile::GetINDFileRef()
+ *
+ * Opens the .IND file for this dataset and returns a reference to
+ * the handle.  
+ * If the .IND file has already been opened then the same handle is 
+ * returned directly.
+ * If the .IND file does not exist then the function silently returns NULL.
+ *
+ * Note that the returned TABINDFile handle is only a reference to an
+ * object that is owned by this class.  Callers can use it but cannot
+ * destroy the object.  The object will remain valid for as long as 
+ * the TABFile will remain open.
+ **********************************************************************/
+TABINDFile  *TABFile::GetINDFileRef()
+{
+    if (m_pszFname == NULL)
+        return NULL;
+
+    if (m_eAccessMode == TABRead && m_poINDFile == NULL)
+    {
+        /*-------------------------------------------------------------
+         * File is not opened yet... do it now.
+         *
+         * Note: We can pass the .TAB's filename directly and the
+         * TABINDFile class will automagically adjust the extension.
+         *------------------------------------------------------------*/
+        m_poINDFile = new TABINDFile;
+   
+        if ( m_poINDFile->Open(m_pszFname, "r", TRUE) != 0)
+        {
+            // File could not be opened... probably does not exist
+            delete m_poINDFile;
+            m_poINDFile = NULL;
+        }
+        else if (m_panIndexNo && m_poDATFile)
+        {
+            /*---------------------------------------------------------
+             * Pass type information for each indexed field.
+             *--------------------------------------------------------*/
+            for(int i=0; i<m_poDATFile->GetNumFields(); i++)
+            {
+                if (m_panIndexNo[i] > 0)
+                {
+                    m_poINDFile->SetIndexFieldType(m_panIndexNo[i],
+                                                   GetNativeFieldType(i));
+                }
+            }
+        }
+    }
+
+    return m_poINDFile;
 }
 
 
@@ -1410,10 +1519,14 @@ int TABFile::SetBounds(double dXMin, double dYMin,
  *
  * Fetch projection coordinates bounds of a dataset.
  *
+ * The bForce flag has no effect on TAB files since the bounds are
+ * always in the header.
+ *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABFile::GetBounds(double &dXMin, double &dYMin, 
-                       double &dXMax, double &dYMax)
+                       double &dXMax, double &dYMax,
+                       GBool /*bForce = TRUE*/)
 {
     TABMAPHeaderBlock *poHeader;
 
@@ -1433,6 +1546,45 @@ int TABFile::GetBounds(double &dXMin, double &dYMin,
 
     return 0;
 }
+
+
+/**********************************************************************
+ *                   TABFile::GetFeatureCountByType()
+ *
+ * Return number of features of each type.
+ *
+ * Note that the sum of the 4 returned values may be different from
+ * the total number of features since features with NONE geometry
+ * are not taken into account here.
+ *
+ * Note: the bForce flag has nmo effect on .TAB files since the info
+ * is always in the header.
+ *
+ * Returns 0 on success, or silently returns -1 (with no error) if this
+ * information is not available.
+ **********************************************************************/
+int TABFile::GetFeatureCountByType(int &numPoints, int &numLines,
+                                   int &numRegions, int &numTexts,
+                                   GBool /* bForce = TRUE*/ )
+{
+    TABMAPHeaderBlock *poHeader;
+
+    if (m_poMAPFile && (poHeader=m_poMAPFile->GetHeaderBlock()) != NULL)
+    {
+        numPoints  = poHeader->m_numPointObjects;
+        numLines   = poHeader->m_numLineObjects;
+        numRegions = poHeader->m_numRegionObjects;
+        numTexts   = poHeader->m_numTextObjects;
+    }
+    else
+    {
+        numPoints = numLines = numRegions = numTexts = 0;
+        return -1;
+    }
+
+    return 0;
+}
+
 
 /**********************************************************************
  *                   TABFile::SetMIFCoordSys()

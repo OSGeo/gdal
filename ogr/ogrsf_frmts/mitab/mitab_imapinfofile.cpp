@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_imapinfofile.cpp,v 1.2 1999/11/08 19:15:44 stephane Exp $
+ * $Id: mitab_imapinfofile.cpp,v 1.3 1999/12/14 02:14:50 daniel Exp $
  *
  * Name:     mitab_imapinfo
  * Project:  MapInfo mid/mif Tab Read/Write library
@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log: mitab_imapinfofile.cpp,v $
+ * Revision 1.3  1999/12/14 02:14:50  daniel
+ * Added static SmartOpen() method + TABView support
+ *
  * Revision 1.2  1999/11/08 19:15:44  stephane
  * Add headers method
  *
@@ -39,7 +42,9 @@
  **********************************************************************/
 
 #include "mitab.h"
+#include "mitab_utils.h"
 
+#include <ctype.h>      /* isspace() */
 
 /**********************************************************************
  *                   IMapInfoFile::IMapInfoFile()
@@ -65,6 +70,82 @@ IMapInfoFile::~IMapInfoFile()
 	m_poFilterGeom = NULL;
     }
 }
+
+/**********************************************************************
+ *                   IMapInfoFile::SmartOpen()
+ *
+ * Use this static method to automatically open any flavour of MapInfo
+ * dataset.  This method will detect the file type, create an object
+ * of the right type, and open the file.
+ *
+ * Call GetFileClass() on the returned object if you need to find out
+ * its exact type.  (To access format-specific methods for instance)
+ *
+ * Returns the new object ptr. , or NULL if the open failed.
+ **********************************************************************/
+IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
+                                      GBool bTestOpenNoError /*=FALSE*/)
+{
+    IMapInfoFile *poFile = NULL;
+    int nLen = 0;
+
+    if (pszFname)
+        nLen = strlen(pszFname);
+
+    if (nLen > 4 && (EQUAL(pszFname + nLen-4, ".MIF") ||
+                     EQUAL(pszFname + nLen-4, ".MID") ) )
+    {
+        /*-------------------------------------------------------------
+         * MIF/MID file
+         *------------------------------------------------------------*/
+        poFile = new MIFFile;
+    }
+    else if (nLen > 4 && EQUAL(pszFname + nLen-4, ".TAB"))
+    {
+        /*-------------------------------------------------------------
+         * .TAB file ... is it a TABFileView or a TABFile?
+         * We have to read the .tab header to find out.
+         *------------------------------------------------------------*/
+        FILE *fp;
+        const char *pszLine;
+        char *pszAdjFname = CPLStrdup(pszFname);
+
+        TABAdjustFilenameExtension(pszAdjFname);
+        fp = VSIFOpen(pszAdjFname, "r");
+        while(poFile == NULL && fp && (pszLine = CPLReadLine(fp)) != NULL)
+        {
+            while (isspace(*pszLine))  pszLine++;
+            if (EQUALN(pszLine, "Fields", 6))
+                poFile = new TABFile;
+            else if (EQUALN(pszLine, "create view", 11))
+                poFile = new TABView;
+        }
+
+        if (fp)
+            VSIFClose(fp);
+
+        CPLFree(pszAdjFname);
+    }
+
+    /*-----------------------------------------------------------------
+     * Perform the open() call
+     *----------------------------------------------------------------*/
+    if (poFile && poFile->Open(pszFname, "r", bTestOpenNoError) != 0)
+    {
+        delete poFile;
+        poFile = NULL;
+    }
+
+    if (!bTestOpenNoError && poFile == NULL)
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "%s could not be opened as a MapInfo dataset.", pszFname);
+    }
+
+    return poFile;
+}
+
+
 
 /**********************************************************************
  *                   IMapInfoFile::GetNextFeature()
