@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/05/20 18:35:38  warmerda
+ * added error reporting if SRS import fails
+ *
  * Revision 1.7  2003/05/06 18:11:29  warmerda
  * added -multi in usage
  *
@@ -96,10 +99,19 @@ char *SanitizeSRS( const char *pszUserInput )
     OGRSpatialReferenceH hSRS;
     char *pszResult = NULL;
 
+    CPLErrorReset();
+    
     hSRS = OSRNewSpatialReference( NULL );
     if( OSRSetFromUserInput( hSRS, pszUserInput ) == OGRERR_NONE )
         OSRExportToWkt( hSRS, &pszResult );
-
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Translating source or target SRS failed:\n%s",
+                  pszUserInput );
+        exit( 1 );
+    }
+    
     OSRDestroySpatialReference( hSRS );
 
     return pszResult;
