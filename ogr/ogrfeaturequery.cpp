@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/03/04 05:46:31  warmerda
+ * added EvaluateAgainstIndices for OGRFeatureQuery
+ *
  * Revision 1.6  2002/04/29 19:31:55  warmerda
  * added support for FID field
  *
@@ -52,6 +55,8 @@
 #include <assert.h>
 #include "ogr_feature.h"
 #include "ogr_p.h"
+#include "ogrsf_frmts.h" 
+#include "ogr_attrind.h"
 
 CPL_CVSID("$Id$");
 
@@ -339,4 +344,70 @@ int OGRFeatureQuery::Evaluate( OGRFeature *poFeature )
     return swq_expr_evaluate( (swq_expr *) pSWQExpr, 
                               (swq_op_evaluator) OGRFeatureQueryEvaluator, 
                               (void *) poFeature );
+}
+
+/************************************************************************/
+/*                       EvaluateAgainstIndices()                       */
+/*                                                                      */
+/*      Attempt to return a list of FIDs matching the given             */
+/*      attribute query conditions utilizing attribute indices.         */
+/*      Returns NULL if the result cannot be computed from the          */
+/*      available indices, or an "OGRNullFID" terminated list of        */
+/*      FIDs if it can.                                                 */
+/*                                                                      */
+/*      For now we only support equality tests on a single indexed      */
+/*      attribute field.  Eventually we should make this support        */
+/*      multi-part queries with ranges.                                 */
+/************************************************************************/
+
+long *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer, 
+                                               OGRErr *peErr )
+
+{
+    swq_expr *psExpr = (swq_expr *) pSWQExpr;
+    OGRAttrIndex *poIndex;
+
+    if( peErr != NULL )
+        *peErr = OGRERR_NONE;
+
+/* -------------------------------------------------------------------- */
+/*      Does the expression meet our requirements?  Do we have an       */
+/*      index on the targetted field?                                   */
+/* -------------------------------------------------------------------- */
+    if( psExpr == NULL || psExpr->operation != SWQ_EQ 
+        || poLayer->GetIndex() == NULL )
+        return NULL;
+
+    poIndex = poLayer->GetIndex()->GetFieldIndex( psExpr->field_index );
+    if( poIndex == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      OK, we have an index, now we need to query it.                  */
+/* -------------------------------------------------------------------- */
+    OGRField sValue;
+    OGRFieldDefn *poFieldDefn;
+
+    poFieldDefn = poLayer->GetLayerDefn()->GetFieldDefn(psExpr->field_index);
+
+    switch( poFieldDefn->GetType() )
+    {
+      case OFTInteger:
+        sValue.Integer = psExpr->int_value;
+        break;
+
+      case OFTReal:
+        sValue.Real = psExpr->float_value;
+        break;
+
+      case OFTString:
+        sValue.String = psExpr->string_value;
+        break;
+
+      default:
+        CPLAssert( FALSE );
+        return NULL;
+    }
+
+    return poIndex->GetAllMatches( &sValue );
 }

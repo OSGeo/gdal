@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2003/03/04 05:46:31  warmerda
+ * added EvaluateAgainstIndices for OGRFeatureQuery
+ *
  * Revision 1.25  2003/01/08 22:03:44  warmerda
  * added StealGeometry() method on OGRFeature
  *
@@ -345,6 +348,8 @@ class CPL_DLL OGRFeature
 /*                           OGRFeatureQuery                            */
 /************************************************************************/
 
+class OGRLayer;
+
 class CPL_DLL OGRFeatureQuery
 {
   private:
@@ -357,6 +362,8 @@ class CPL_DLL OGRFeatureQuery
 
     OGRErr      Compile( OGRFeatureDefn *, const char * );
     int         Evaluate( OGRFeature * );
+
+    long       *EvaluateAgainstIndices( OGRLayer *, OGRErr * );
 };
 
 #endif /* ndef _OGR_FEATURE_H_INCLUDED */
