@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/03/06 20:29:27  warmerda
+ * added GML import/export entry points
+ *
  * Revision 1.8  2003/03/05 05:08:49  warmerda
  * added GetLayerByName
  *
@@ -83,6 +86,8 @@ typedef void *OGRCoordinateTransformationH;
 
 #endif
 
+struct _CPLXMLNode;
+
 /* From base OGRGeometry class */
 
 OGRErr CPL_DLL OGR_G_CreateFromWkb( unsigned char *, OGRSpatialReferenceH, 
@@ -105,6 +110,14 @@ OGRwkbGeometryType CPL_DLL OGR_G_GetGeometryType( OGRGeometryH );
 const char CPL_DLL *OGR_G_GetGeometryName( OGRGeometryH );
 void   CPL_DLL OGR_G_DumpReadable( OGRGeometryH, FILE *, const char * );
 void   CPL_DLL OGR_G_FlattenTo2D( OGRGeometryH );
+
+OGRGeometryH CPL_DLL OGR_G_CreateFromGML( const char * );
+char   CPL_DLL *OGR_G_ExportToGML( OGRGeometryH );
+
+#if defined(_CPL_MINIXML_H_INCLUDED)
+OGRGeometryH CPL_DLL OGR_G_CreateFromGMLTree( const CPLXMLNode * );
+CPLXMLNode CPL_DLL *OGR_G_ExportToGMLTree( OGRGeometryH );
+#endif
 
 void   CPL_DLL OGR_G_AssignSpatialReference( OGRGeometryH, 
                                              OGRSpatialReferenceH );

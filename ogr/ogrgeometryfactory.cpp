@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/03/06 20:29:27  warmerda
+ * added GML import/export entry points
+ *
  * Revision 1.15  2003/02/19 02:57:49  warmerda
  * added wkbLinearRing support
  *
@@ -543,5 +546,34 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
     poMP->addGeometry( poGeom );
 
     return poMP;
+}
+
+/************************************************************************/
+/*                           createFromGML()                            */
+/************************************************************************/
+
+/**
+ * Create geometry from GML.
+ *
+ * This method translates a fragment of GML containing only the geometry
+ * portion into a corresponding OGRGeometry.  There are many limitations
+ * on the forms of GML geometries supported by this parser, but they are
+ * too numerous to list here. 
+ *
+ * The C function OGR_G_CreateFromGML() is the same as this method.
+ *
+ * @param pszData The GML fragment for the geometry.
+ *
+ * @return a geometry on succes, or NULL on error.  
+ */
+
+OGRGeometry *OGRGeometryFactory::createFromGML( const char *pszData )
+
+{
+    OGRGeometryH hGeom;
+
+    hGeom = OGR_G_CreateFromGML( pszData );
+    
+    return (OGRGeometry *) hGeom;
 }
 
