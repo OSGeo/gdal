@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/02/18 04:55:02  warmerda
+ * Set bHasWarned flag.
+ *
  * Revision 1.6  1999/07/23 14:04:34  warmerda
  * Removed extra printf.
  *
@@ -84,6 +87,7 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
 /*      Allocate info structure.                                        */
 /* -------------------------------------------------------------------- */
     psInfo = (AIGInfo_t *) CPLCalloc(sizeof(AIGInfo_t),1);
+    psInfo->bHasWarned = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Read the header file.                                           */
