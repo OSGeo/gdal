@@ -82,3 +82,11 @@ test:	8211dump
 	    echo "******* Stream 1 Failed *********"; \
 	    diff t1.out teststream.out; \
 	fi
+
+
+install-obj:	$(foreach file,$(OBJ),../o/$(file))
+
+../o/%.o:	%.o
+	cp $*.o ../o
+
+
