@@ -1,5 +1,5 @@
-VERSION =	1.0
-DISTDIR =	sdts-$(VERSION)
+VERSION =	1_0
+DISTDIR =	sdts_$(VERSION)
 WEB_DIR =	/u/www/projects/sdts
 
 SHPDIR		=	../shapelib
@@ -22,10 +22,13 @@ LIBS	:=	$(SDTSLIB) $(ISO8211DIR)/libiso8211.a $(CPL_LIB) $(LIBS)
 
 default:	$(SDTSLIB) sdtsdataset.o
 
-all:	sdts2ascii sdts2shp
+all:	sdts2shp
 
-clean:
-	rm -rf *.o sdts2ascii 8211dump $(DISTDIR) html man $(DISTDIR).tar.gz
+clean:	clean-dist
+	rm -rf *.o sdts2shp html man
+
+clean-dist:
+	rm -rf $(DISTDIR) $(DISTDIR).zip $(DISTDIR).tar.gz
 
 %.o:	%.cpp
 	$(CXX) -c $(ALL_CXX_FLAGS) -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port \
@@ -37,12 +40,6 @@ clean:
 
 $(SDTSLIB):	$(OBJ)
 	ar r $(SDTSLIB) $?
-
-sdts2ascii:	sdts2ascii.o $(SDTSLIB)
-	$(CXX) sdts2ascii.o $(LIBS) -o sdts2ascii
-
-sdtsinfo:	sdtsinfo.o $(SDTSLIB)
-	$(CXX) sdtsinfo.o $(LIBS) -o sdtsinfo
 
 sdts2shp:	sdts2shp.cpp $(SDTSLIB)
 	$(CXX) $(ALL_C_FLAGS) -I$(SHPDIR) sdts2shp.cpp \
@@ -68,17 +65,19 @@ dist:	docs
 	cp html/* $(DISTDIR)/html
 	autoconf
 	cp *.cpp *.h configure Makefile.in $(DISTDIR)
+	cp makefile.vc.dist $(DISTDIR)/Makefile.vc
 	rm $(DISTDIR)/sdtsdataset.cpp
 	cp $(ISO8211DIR)/{*.cpp,*.h} $(DISTDIR)
 	rm configure
 	cp $(GDAL_ROOT)/port/{cpl_error*,cpl_port*,cpl_string*} $(DISTDIR)
 	cp $(GDAL_ROOT)/port/{cpl_vsisimple.cpp,cpl_config.h.in} $(DISTDIR)
 	cp $(GDAL_ROOT)/port/{cpl_vsi.h,cpl_conv.*} $(DISTDIR)
+	cp $(GDAL_ROOT)/port/cpl_config.h.in $(DISTDIR)/cpl_config.h
 	cp $(SHPDIR)/{shpopen.c,dbfopen.c,shapefil.h} $(DISTDIR)
 	rm $(DISTDIR)/*.o
 	tar czf $(DISTDIR).tar.gz $(DISTDIR)
+	zip -r $(DISTDIR).zip $(DISTDIR)
 
 update-web:	dist docs
 	cp html/* $(WEB_DIR)
-	cp $(DISTDIR).tar.gz $(WEB_DIR)
-	cp $(DISTDIR).tar.gz /u/ftp/pub/outgoing
+	cp $(DISTDIR).tar.gz $(DISTDIR).zip /u/ftp/pub/outgoing
