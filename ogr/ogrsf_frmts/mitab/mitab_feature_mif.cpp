@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature_mif.cpp,v 1.23 2002/10/29 21:09:20 warmerda Exp $
+ * $Id: mitab_feature_mif.cpp,v 1.24 2002/11/27 22:51:52 daniel Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_feature_mif.cpp,v $
+ * Revision 1.24  2002/11/27 22:51:52  daniel
+ * Bug 1631:Do not produce an error if .mid data records end with a stray ','
+ * Treat tabs (\t) as a blank space delimiter when reading .mif coordinates
+ *
  * Revision 1.23  2002/10/29 21:09:20  warmerda
  * Ensure that a blank line in a mid file is treated as one field containing
  * an empty string.
@@ -141,10 +145,17 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
 
     papszToken = CSLTokenizeStringComplex(pszLine,
                                           fp->GetDelimiter(),TRUE,TRUE); 
+
+    // Ensure that a blank line in a mid file is treated as one field 
+    // containing an empty string.
     if( nFields == 1 && CSLCount(papszToken) == 0 && pszLine[0] == '\0' )
         papszToken = CSLAddString(papszToken,"");
 
-    if (CSLCount(papszToken) != nFields)
+    // Make sure we found at least the expected number of field values.
+    // Note that it is possible to have a stray delimiter at the end of
+    // the line (mif/mid files from Geomedia), so don't produce an error
+    // if we find more tokens than expected.
+    if (CSLCount(papszToken) < nFields)
     {
         CSLDestroy(papszToken);
         return -1;
@@ -262,7 +273,8 @@ int TABPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     char               **papszToken;
     const char *pszLine;
     double dfX,dfY;
-    papszToken = CSLTokenizeString(fp->GetSavedLine());
+    papszToken = CSLTokenizeString2(fp->GetSavedLine(), 
+                                    " \t", CSLT_HONOURSTRINGS);
      
     if (CSLCount(papszToken) !=3)
     {
@@ -278,7 +290,7 @@ int TABPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     // Read optional SYMBOL line...
     pszLine = fp->GetLastLine();
-    papszToken = CSLTokenizeStringComplex(pszLine," ,()",
+    papszToken = CSLTokenizeStringComplex(pszLine," ,()\t",
                                           TRUE,FALSE);
     if (CSLCount(papszToken) == 4 && EQUAL(papszToken[0], "SYMBOL") )
     {
@@ -346,7 +358,8 @@ int TABFontPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     char               **papszToken;
     const char *pszLine;
     double dfX,dfY;
-    papszToken = CSLTokenizeString(fp->GetSavedLine());
+    papszToken = CSLTokenizeString2(fp->GetSavedLine(), 
+                                    " \t", CSLT_HONOURSTRINGS);
 
     if (CSLCount(papszToken) !=3)
     {
@@ -359,7 +372,7 @@ int TABFontPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     
     CSLDestroy(papszToken);
     
-    papszToken = CSLTokenizeStringComplex(fp->GetLastLine()," ,()",
+    papszToken = CSLTokenizeStringComplex(fp->GetLastLine()," ,()\t",
                                           TRUE,FALSE);
 
     if (CSLCount(papszToken) !=7)
@@ -432,7 +445,8 @@ int TABCustomPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     const char          *pszLine;
     double               dfX,dfY;
 
-    papszToken = CSLTokenizeString(fp->GetSavedLine());
+    papszToken = CSLTokenizeString2(fp->GetSavedLine(), 
+                                    " \t", CSLT_HONOURSTRINGS);
 
     
     if (CSLCount(papszToken) !=3)
@@ -446,7 +460,7 @@ int TABCustomPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     CSLDestroy(papszToken);
     
-    papszToken = CSLTokenizeStringComplex(fp->GetLastLine()," ,()",
+    papszToken = CSLTokenizeStringComplex(fp->GetLastLine()," ,()\t",
                                           TRUE,FALSE);
     if (CSLCount(papszToken) !=5)
     {
@@ -521,7 +535,8 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     OGREnvelope          sEnvelope;
     
 
-    papszToken = CSLTokenizeString(fp->GetLastLine());
+    papszToken = CSLTokenizeString2(fp->GetLastLine(), 
+                                    " \t", CSLT_HONOURSTRINGS);
     
     if (CSLCount(papszToken) < 1)
     {
@@ -611,7 +626,8 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 for (i=0;i<nNumPoints;i++)
                 {
                     CSLDestroy(papszToken);
-                    papszToken = CSLTokenizeString(fp->GetLine());
+                    papszToken = CSLTokenizeString2(fp->GetLine(), 
+                                                    " \t", CSLT_HONOURSTRINGS);
                     poLine->setPoint(i,fp->GetXTrans(atof(papszToken[0])),
                                      fp->GetYTrans(atof(papszToken[1])));
                 }
@@ -635,7 +651,8 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
             for (i=0;i<nNumPoints;i++)
             {
                 CSLDestroy(papszToken);
-                papszToken = CSLTokenizeString(fp->GetLine());
+                papszToken = CSLTokenizeString2(fp->GetLine(), 
+                                                " \t", CSLT_HONOURSTRINGS);
     
                 if (CSLCount(papszToken) != 2)
                   return -1;
@@ -791,7 +808,8 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     /*=============================================================
      * REGION (Similar to PLINE MULTIPLE)
      *============================================================*/
-    papszToken = CSLTokenizeString(fp->GetLastLine());
+    papszToken = CSLTokenizeString2(fp->GetLastLine(), 
+                                    " \t", CSLT_HONOURSTRINGS);
     
     if (CSLCount(papszToken) ==2)
       numLineSections = atoi(papszToken[1]);
@@ -832,7 +850,7 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
             pszLine = fp->GetLine();
             if (pszLine)
             {
-                papszToken = CSLTokenizeStringComplex(pszLine," ,",
+                papszToken = CSLTokenizeStringComplex(pszLine," ,\t",
                                                       TRUE,FALSE);
                 if (CSLCount(papszToken) == 2)
                 {              
@@ -1006,7 +1024,8 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     OGRPolygon          *poPolygon;
     OGRLinearRing       *poRing;
 
-    papszToken = CSLTokenizeString(fp->GetLastLine());
+    papszToken = CSLTokenizeString2(fp->GetLastLine(), 
+                                    " \t", CSLT_HONOURSTRINGS);
 
     if (CSLCount(papszToken) <  5)
     {
@@ -1038,7 +1057,8 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         else
         {
             CSLDestroy(papszToken);
-            papszToken = CSLTokenizeString(fp->GetLine());
+            papszToken = CSLTokenizeString2(fp->GetLine(), 
+                                            " \t", CSLT_HONOURSTRINGS);
             if (CSLCount(papszToken) !=1 )
               m_dRoundXRadius = m_dRoundYRadius = atof(papszToken[1])/2.0;
         }
@@ -1204,7 +1224,8 @@ int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     OGRPolygon          *poPolygon;
     OGRLinearRing       *poRing;
 
-    papszToken = CSLTokenizeString(fp->GetLastLine());
+    papszToken = CSLTokenizeString2(fp->GetLastLine(), 
+                                    " \t", CSLT_HONOURSTRINGS);
 
     if (CSLCount(papszToken) != 5)
     {
@@ -1338,7 +1359,8 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     double               dXMin,dXMax, dYMin,dYMax;
     int                  numPts;
     
-    papszToken = CSLTokenizeString(fp->GetLastLine());
+    papszToken = CSLTokenizeString2(fp->GetLastLine(), 
+                                    " \t", CSLT_HONOURSTRINGS);
 
     if (CSLCount(papszToken) == 5)
     {
@@ -1348,7 +1370,8 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         dYMax = fp->GetYTrans(atof(papszToken[4]));
 
         CSLDestroy(papszToken);
-        papszToken = CSLTokenizeString(fp->GetLine());
+        papszToken = CSLTokenizeString2(fp->GetLine(), 
+                                        " \t", CSLT_HONOURSTRINGS);
         if (CSLCount(papszToken) != 2)
         {
             CSLDestroy(papszToken);
@@ -1484,12 +1507,14 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     char               **papszToken;
     const char          *pszString;
   
-    papszToken = CSLTokenizeString(fp->GetLastLine());
+    papszToken = CSLTokenizeString2(fp->GetLastLine(), 
+                                    " \t", CSLT_HONOURSTRINGS);
 
     if (CSLCount(papszToken) == 1)
     {
         CSLDestroy(papszToken);
-        papszToken = CSLTokenizeString(fp->GetLine());
+        papszToken = CSLTokenizeString2(fp->GetLine(), 
+                                        " \t", CSLT_HONOURSTRINGS);
         if (CSLCount(papszToken) != 1)
         {
             CSLDestroy(papszToken);
@@ -1515,7 +1540,8 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     m_pszString = CPLStrdup(pszString);
 
     CSLDestroy(papszToken);
-    papszToken = CSLTokenizeString(fp->GetLine());
+    papszToken = CSLTokenizeString2(fp->GetLine(), 
+                                    " \t", CSLT_HONOURSTRINGS);
     if (CSLCount(papszToken) != 4)
     {
         CSLDestroy(papszToken);
@@ -1810,7 +1836,8 @@ int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     double              dfX,dfY;
     OGREnvelope         sEnvelope;
 
-    papszToken = CSLTokenizeString(fp->GetLastLine());
+    papszToken = CSLTokenizeString2(fp->GetLastLine(), 
+                                    " \t", CSLT_HONOURSTRINGS);
      
     if (CSLCount(papszToken) !=2)
     {
@@ -1828,7 +1855,8 @@ int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     for(i=0; i<nNumPoint; i++)
     {
         pszLine = fp->GetLine();
-        papszToken = CSLTokenizeString(fp->GetLastLine());
+        papszToken = CSLTokenizeString2(fp->GetLastLine(), 
+                                        " \t", CSLT_HONOURSTRINGS);
         if (CSLCount(papszToken) !=2)
         {
             CSLDestroy(papszToken);
@@ -1864,7 +1892,7 @@ int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     while (((pszLine = fp->GetLine()) != NULL) && 
            fp->IsValidFeature(pszLine) == FALSE)
     {
-        papszToken = CSLTokenizeStringComplex(pszLine," ,()",
+        papszToken = CSLTokenizeStringComplex(pszLine," ,()\t",
                                               TRUE,FALSE);
         if (CSLCount(papszToken) == 4 && EQUAL(papszToken[0], "SYMBOL") )
         {

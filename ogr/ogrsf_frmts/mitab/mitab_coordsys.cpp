@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.23 2002/04/01 19:49:24 warmerda Exp $
+ * $Id: mitab_coordsys.cpp,v 1.26 2002/12/12 20:12:18 warmerda Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,17 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.26  2002/12/12 20:12:18  warmerda
+ * fixed signs of rotational parameters for TOWGS84 in WKT
+ *
+ * Revision 1.25  2002/10/15 14:33:30  warmerda
+ * Added untested support in mitab_spatialref.cpp, and mitab_coordsys.cpp for
+ * projections Regional Mercator (26), Polyconic (27), Azimuthal Equidistant -
+ * All origin latitudes (28), and Lambert Azimuthal Equal Area - any aspect (29).
+ *
+ * Revision 1.24  2002/09/23 13:16:04  warmerda
+ * fixed leak in MITABExtractCoordSysBounds()
+ *
  * Revision 1.23  2002/04/01 19:49:24  warmerda
  * added support for cassini/soldner - proj 30
  *
@@ -366,16 +377,18 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
         /*--------------------------------------------------------------
          * Lambert Azimuthal Equal Area
          *-------------------------------------------------------------*/
-      case 4:
+      case 4: 
+      case 29:
         poSR->SetLAEA( GetMIFParm( papszNextField, 1, 0.0 ),
                        GetMIFParm( papszNextField, 0, 0.0 ),
                        0.0, 0.0 );
         break;
 
         /*--------------------------------------------------------------
-         * Azimuthal Equidistant (Polar aspect only)
+         * Azimuthal Equidistant 
          *-------------------------------------------------------------*/
-      case 5:
+      case 5:  /* polar aspect only */
+      case 28: /* all aspects */
         poSR->SetAE( GetMIFParm( papszNextField, 1, 0.0 ),
                      GetMIFParm( papszNextField, 0, 0.0 ),
                      0.0, 0.0 );
@@ -404,6 +417,21 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
                       GetMIFParm( papszNextField, 3, 1.0 ),
                       GetMIFParm( papszNextField, 4, 0.0 * dfUnitsConv ),
                       GetMIFParm( papszNextField, 5, 0.0 * dfUnitsConv ) );
+        break;
+
+        /*--------------------------------------------------------------
+         * Transverse Mercator
+         *-------------------------------------------------------------*/
+      case 8:
+      case 21:
+      case 22:
+      case 23:
+      case 24:
+        poSR->SetTM( GetMIFParm( papszNextField, 1, 0.0 ),
+                     GetMIFParm( papszNextField, 0, 0.0 ),
+                     GetMIFParm( papszNextField, 2, 1.0 ),
+                     GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv,
+                     GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv );
         break;
 
         /*--------------------------------------------------------------
@@ -474,21 +502,6 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
         break;
 
         /*--------------------------------------------------------------
-         * Transverse Mercator
-         *-------------------------------------------------------------*/
-      case 8:
-      case 21:
-      case 22:
-      case 23:
-      case 24:
-        poSR->SetTM( GetMIFParm( papszNextField, 1, 0.0 ),
-                     GetMIFParm( papszNextField, 0, 0.0 ),
-                     GetMIFParm( papszNextField, 2, 1.0 ),
-                     GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv,
-                     GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv );
-        break;
-
-        /*--------------------------------------------------------------
          * Gall
          *-------------------------------------------------------------*/
       case 17:
@@ -522,12 +535,42 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
          * Stereographic
          *-------------------------------------------------------------*/
       case 20:
+      case 31: /* double stereographic */
         poSR->SetStereographic( 
             GetMIFParm( papszNextField, 1, 0.0 ),
             GetMIFParm( papszNextField, 0, 0.0 ),
             GetMIFParm( papszNextField, 2, 1.0 ),
             GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv,
             GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv );
+        break;
+
+        /*--------------------------------------------------------------
+         * Swiss Oblique Mercator / Cylindrical
+         *-------------------------------------------------------------*/
+      case 25:
+        poSR->SetSOC( GetMIFParm( papszNextField, 1, 0.0 ),
+                      GetMIFParm( papszNextField, 0, 0.0 ),
+                      GetMIFParm( papszNextField, 2, 0.0 ) * dfUnitsConv,
+                      GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv );
+        break;
+
+        /*--------------------------------------------------------------
+         * Mercator
+         *-------------------------------------------------------------*/
+      case 26:
+        poSR->SetMercator( GetMIFParm( papszNextField, 1, 0.0 ), 
+                           GetMIFParm( papszNextField, 0, 0.0 ),
+                           1.0, 0.0, 0.0 );
+        break;
+
+        /*--------------------------------------------------------------
+         * Polygonic
+         *-------------------------------------------------------------*/
+      case 27:
+        poSR->SetPolyconic( GetMIFParm( papszNextField, 1, 0.0 ), 
+                            GetMIFParm( papszNextField, 0, 0.0 ),
+                          GetMIFParm( papszNextField, 2, 0.0 ) * dfUnitsConv,
+                          GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv );
         break;
 
         /*--------------------------------------------------------------
@@ -539,16 +582,6 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
             GetMIFParm( papszNextField, 0, 0.0 ),
             GetMIFParm( papszNextField, 2, 0.0 ) * dfUnitsConv,
             GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv );
-        break;
-
-        /*--------------------------------------------------------------
-         * Swiss Oblique Mercator / Cylindrical
-         *-------------------------------------------------------------*/
-      case 25:
-        poSR->SetSOC( GetMIFParm( papszNextField, 1, 0.0 ),
-                      GetMIFParm( papszNextField, 0, 0.0 ),
-                      GetMIFParm( papszNextField, 2, 0.0 ) * dfUnitsConv,
-                      GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv );
         break;
 
       default:
@@ -684,7 +717,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
                      atof(SRS_UA_DEGREE_CONV) );
 
     poSR->SetTOWGS84( adfDatumParm[0], adfDatumParm[1], adfDatumParm[2],
-                      adfDatumParm[3], adfDatumParm[4], adfDatumParm[5], 
+                      -adfDatumParm[3], -adfDatumParm[4], -adfDatumParm[5], 
                       adfDatumParm[6] );
 
 /* -------------------------------------------------------------------- */
@@ -770,6 +803,9 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
         parms[2] = 90.0;
         nParmCount = 3;
+
+        if( ABS((ABS(parms[1]) - 90)) > 0.001 )
+            nProjection = 28;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_CYLINDRICAL_EQUAL_AREA) )
@@ -832,11 +868,26 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
         parms[2] = 90.0;
         nParmCount = 3;
+
+        if( ABS((ABS(parms[1]) - 90)) > 0.001 )
+            nProjection = 28;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
     {
         nProjection = 3;
+        parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[2] = poSR->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
+        parms[3] = poSR->GetProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
+        parms[4] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
+        parms[5] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        nParmCount = 6;
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM) )
+    {
+        nProjection = 19;
         parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSR->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
@@ -865,16 +916,6 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         nProjection = 13;
         parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         nParmCount = 1;
-    }
-
-    else if( EQUAL(pszProjection,SRS_PT_NEW_ZEALAND_MAP_GRID) )
-    {
-        nProjection = 18;
-        parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
-        parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
-        parms[2] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[3] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
-        nParmCount = 4;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_SWISS_OBLIQUE_CYLINDRICAL) )
@@ -912,16 +953,6 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         nParmCount = 5;
     }
 
-    else if( EQUAL(pszProjection,SRS_PT_CASSINI_SOLDNER) )
-    {
-        nProjection = 30;
-        parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
-        parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
-        parms[2] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[3] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
-        nParmCount = 4;
-    }
-
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )
     {
         nProjection = 8;
@@ -933,6 +964,36 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         nParmCount = 5;
     }
     
+    else if( EQUAL(pszProjection,SRS_PT_CASSINI_SOLDNER) )
+    {
+        nProjection = 30;
+        parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[2] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
+        parms[3] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        nParmCount = 4;
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_NEW_ZEALAND_MAP_GRID) )
+    {
+        nProjection = 18;
+        parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[2] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
+        parms[3] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        nParmCount = 4;
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_POLYCONIC) )
+    {
+        nProjection = 27;
+        parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[2] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
+        parms[3] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        nParmCount = 4;
+    }
+
     /* ==============================================================
      * Translate Datum and Ellipsoid
      * ============================================================== */
@@ -1168,9 +1229,11 @@ GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
         dYMin = atof(papszFields[++iBounds]);
         dXMax = atof(papszFields[++iBounds]);
         dYMax = atof(papszFields[++iBounds]);
+        CSLDestroy( papszFields );
         return TRUE;
     }
 
+    CSLDestroy( papszFields );
     return FALSE;
 }
 
