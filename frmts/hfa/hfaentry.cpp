@@ -33,6 +33,9 @@
  * Implementation of the HFAEntry class.
  *
  * $Log$
+ * Revision 1.6  2001/01/03 16:20:10  warmerda
+ * Converted to large file API
+ *
  * Revision 1.5  2000/10/12 19:30:32  warmerda
  * substantially improved write support
  *
@@ -92,11 +95,11 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn, GUInt32 nPos,
     GInt32	anEntryNums[6];
     int		i;
 
-    if( VSIFSeek( psHFA->fp, nFilePos, SEEK_SET ) == -1
-        || VSIFRead( anEntryNums, sizeof(GInt32), 6, psHFA->fp ) < 1 )
+    if( VSIFSeekL( psHFA->fp, nFilePos, SEEK_SET ) == -1
+        || VSIFReadL( anEntryNums, sizeof(GInt32), 6, psHFA->fp ) < 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "VSIFRead() failed in HFAEntry()." );
+                  "VSIFReadL() failed in HFAEntry()." );
         return;
     }
 
@@ -111,11 +114,11 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn, GUInt32 nPos,
 /* -------------------------------------------------------------------- */
 /*      Read the name, and type.                                        */
 /* -------------------------------------------------------------------- */
-    if( VSIFRead( szName, 1, 64, psHFA->fp ) < 1
-        || VSIFRead( szType, 1, 32, psHFA->fp ) < 1 )
+    if( VSIFReadL( szName, 1, 64, psHFA->fp ) < 1
+        || VSIFReadL( szType, 1, 32, psHFA->fp ) < 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "VSIFRead() failed in HFAEntry()." );
+                  "VSIFReadL() failed in HFAEntry()." );
         return;
     }
 }
@@ -251,17 +254,17 @@ void HFAEntry::LoadData()
 /*      Allocate buffer, and read data.                                 */
 /* -------------------------------------------------------------------- */
     pabyData = (GByte *) CPLMalloc(nDataSize);
-    if( VSIFSeek( psHFA->fp, nDataPos, SEEK_SET ) < 0 )
+    if( VSIFSeekL( psHFA->fp, nDataPos, SEEK_SET ) < 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "VSIFSeek() failed in HFAEntry::LoadData()." );
+                  "VSIFSeekL() failed in HFAEntry::LoadData()." );
         return;
     }
 
-    if( VSIFRead( pabyData, 1, nDataSize, psHFA->fp ) < 1 )
+    if( VSIFReadL( pabyData, 1, nDataSize, psHFA->fp ) < 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "VSIFRead() failed in HFAEntry::LoadData()." );
+                  "VSIFReadL() failed in HFAEntry::LoadData()." );
         return;
     }
 
@@ -639,8 +642,8 @@ CPLErr HFAEntry::FlushToDisk()
 /* -------------------------------------------------------------------- */
         GUInt32		nLong;
 
-        fflush( psHFA->fp );
-        if( VSIFSeek( psHFA->fp, nFilePos, SEEK_SET ) != 0 )
+        VSIFFlushL( psHFA->fp );
+        if( VSIFSeekL( psHFA->fp, nFilePos, SEEK_SET ) != 0 )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
                       "Failed to seek to %d for writing, out of disk space?",
@@ -650,40 +653,40 @@ CPLErr HFAEntry::FlushToDisk()
 
         nLong = nNextPos;
         HFAStandard( 4, &nLong );
-        VSIFWrite( &nLong, 4, 1, psHFA->fp );
+        VSIFWriteL( &nLong, 4, 1, psHFA->fp );
 
         if( poPrev != NULL )
             nLong = poPrev->nFilePos;
         else
             nLong = 0;
         HFAStandard( 4, &nLong );
-        VSIFWrite( &nLong, 4, 1, psHFA->fp );
+        VSIFWriteL( &nLong, 4, 1, psHFA->fp );
 
         if( poParent != NULL )
             nLong = poParent->nFilePos;
         else
             nLong = 0;
         HFAStandard( 4, &nLong );
-        VSIFWrite( &nLong, 4, 1, psHFA->fp );
+        VSIFWriteL( &nLong, 4, 1, psHFA->fp );
 
         nLong = nChildPos;
         HFAStandard( 4, &nLong );
-        VSIFWrite( &nLong, 4, 1, psHFA->fp );
+        VSIFWriteL( &nLong, 4, 1, psHFA->fp );
 
         
         nLong = nDataPos;
         HFAStandard( 4, &nLong );
-        VSIFWrite( &nLong, 4, 1, psHFA->fp );
+        VSIFWriteL( &nLong, 4, 1, psHFA->fp );
 
         nLong = nDataSize;
         HFAStandard( 4, &nLong );
-        VSIFWrite( &nLong, 4, 1, psHFA->fp );
+        VSIFWriteL( &nLong, 4, 1, psHFA->fp );
 
-        VSIFWrite( szName, 1, 64, psHFA->fp );
-        VSIFWrite( szType, 1, 32, psHFA->fp );
+        VSIFWriteL( szName, 1, 64, psHFA->fp );
+        VSIFWriteL( szType, 1, 32, psHFA->fp );
 
         nLong = 0; /* Should we keep the time, or set it more reasonably? */
-        if( VSIFWrite( &nLong, 4, 1, psHFA->fp ) != 1 )
+        if( VSIFWriteL( &nLong, 4, 1, psHFA->fp ) != 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
                       "Failed to write HFAEntry %s(%s), out of disk space?",
@@ -694,11 +697,11 @@ CPLErr HFAEntry::FlushToDisk()
 /* -------------------------------------------------------------------- */
 /*      Write out the data.                                             */
 /* -------------------------------------------------------------------- */
-        fflush( psHFA->fp );
+        VSIFFlushL( psHFA->fp );
         if( nDataSize > 0 && pabyData != NULL )
         {
-            if( VSIFSeek( psHFA->fp, nDataPos, SEEK_SET ) != 0 
-                || VSIFWrite( pabyData, nDataSize, 1, psHFA->fp ) != 1 )
+            if( VSIFSeekL( psHFA->fp, nDataPos, SEEK_SET ) != 0 
+                || VSIFWriteL( pabyData, nDataSize, 1, psHFA->fp ) != 1 )
             {
                 CPLError( CE_Failure, CPLE_FileIO, 
                           "Failed to write %d bytes HFAEntry %s(%s) data,\n"
@@ -708,7 +711,7 @@ CPLErr HFAEntry::FlushToDisk()
             }
         }
 
-        fflush( psHFA->fp );
+        VSIFFlushL( psHFA->fp );
     }
 
 /* -------------------------------------------------------------------- */

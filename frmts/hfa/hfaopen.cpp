@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.12  2001/01/03 16:20:10  warmerda
+ * Converted to large file API
+ *
  * Revision 1.11  2000/10/31 18:02:32  warmerda
  * Added external and unnamed overview support
  *
@@ -84,7 +87,7 @@ static char * HFAGetDictionary( HFAHandle hHFA )
     int		nDictMax = 100;
     int		nDictSize = 0;
     
-    VSIFSeek( hHFA->fp, hHFA->nDictionaryPos, SEEK_SET );
+    VSIFSeekL( hHFA->fp, hHFA->nDictionaryPos, SEEK_SET );
 
     while( TRUE )
     {
@@ -94,7 +97,7 @@ static char * HFAGetDictionary( HFAHandle hHFA )
             pszDictionary = (char *) CPLRealloc(pszDictionary, nDictMax );
         }
 
-        if( VSIFRead( pszDictionary + nDictSize, 1, 1, hHFA->fp ) < 1
+        if( VSIFReadL( pszDictionary + nDictSize, 1, 1, hHFA->fp ) < 1
             || pszDictionary[nDictSize] == '\0'
             || (nDictSize > 2 && pszDictionary[nDictSize-2] == ','
                 && pszDictionary[nDictSize-1] == '.') )
@@ -125,9 +128,9 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszAccess,"r") || EQUAL(pszAccess,"rb" ) )
-        fp = VSIFOpen( pszFilename, "rb" );
+        fp = VSIFOpenL( pszFilename, "rb" );
     else
-        fp = VSIFOpen( pszFilename, "r+b" );
+        fp = VSIFOpenL( pszFilename, "r+b" );
 
     /* should this be changed to use some sort of CPLFOpen() which will
        set the error? */
@@ -143,7 +146,7 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
 /* -------------------------------------------------------------------- */
 /*      Read and verify the header.                                     */
 /* -------------------------------------------------------------------- */
-    if( VSIFRead( szHeader, 16, 1, fp ) < 1 )
+    if( VSIFReadL( szHeader, 16, 1, fp ) < 1 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to read 16 byte header failed for\n%s.",
@@ -174,33 +177,33 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
 /* -------------------------------------------------------------------- */
 /*	Where is the header?						*/
 /* -------------------------------------------------------------------- */
-    VSIFRead( &nHeaderPos, sizeof(GInt32), 1, fp );
+    VSIFReadL( &nHeaderPos, sizeof(GInt32), 1, fp );
     HFAStandard( 4, &nHeaderPos );
 
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
-    VSIFSeek( fp, nHeaderPos, SEEK_SET );
+    VSIFSeekL( fp, nHeaderPos, SEEK_SET );
 
-    VSIFRead( &(psInfo->nVersion), sizeof(GInt32), 1, fp );
+    VSIFReadL( &(psInfo->nVersion), sizeof(GInt32), 1, fp );
     HFAStandard( 4, &(psInfo->nVersion) );
     
-    VSIFRead( szHeader, 4, 1, fp ); /* skip freeList */
+    VSIFReadL( szHeader, 4, 1, fp ); /* skip freeList */
 
-    VSIFRead( &(psInfo->nRootPos), sizeof(GInt32), 1, fp );
+    VSIFReadL( &(psInfo->nRootPos), sizeof(GInt32), 1, fp );
     HFAStandard( 4, &(psInfo->nRootPos) );
     
-    VSIFRead( &(psInfo->nEntryHeaderLength), sizeof(GInt16), 1, fp );
+    VSIFReadL( &(psInfo->nEntryHeaderLength), sizeof(GInt16), 1, fp );
     HFAStandard( 2, &(psInfo->nEntryHeaderLength) );
 
-    VSIFRead( &(psInfo->nDictionaryPos), sizeof(GInt32), 1, fp );
+    VSIFReadL( &(psInfo->nDictionaryPos), sizeof(GInt32), 1, fp );
     HFAStandard( 4, &(psInfo->nDictionaryPos) );
 
 /* -------------------------------------------------------------------- */
 /*      Collect file size.                                              */
 /* -------------------------------------------------------------------- */
-    VSIFSeek( fp, 0, SEEK_END );
-    psInfo->nEndOfFile = VSIFTell( fp );
+    VSIFSeekL( fp, 0, SEEK_END );
+    psInfo->nEndOfFile = VSIFTellL( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Instantiate the root entry.                                     */
@@ -248,10 +251,10 @@ HFAInfo_t *HFAGetDependent( HFAInfo_t *psBase, const char *pszFilename )
     pszDependent = CPLStrdup( 
         CPLFormFilename( psBase->pszPath, pszFilename, NULL ) );
     
-    fp = VSIFOpen( pszDependent, "rb" );
+    fp = VSIFOpenL( pszDependent, "rb" );
     if( fp != NULL )
     {
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         psBase->psDependent = HFAOpen( pszDependent, "rb" );
     }
 
@@ -326,7 +329,7 @@ void HFAClose( HFAHandle hHFA )
 
     delete hHFA->poRoot;
 
-    VSIFClose( hHFA->fp );
+    VSIFCloseL( hHFA->fp );
 
     if( hHFA->poDictionary != NULL )
         delete hHFA->poDictionary;
@@ -1114,7 +1117,7 @@ HFAHandle HFACreateLL( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Create the file in the file system.                             */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( pszFilename, "w+b" );
+    fp = VSIFOpenL( pszFilename, "w+b" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -1145,11 +1148,11 @@ HFAHandle HFACreateLL( const char * pszFilename )
 /* -------------------------------------------------------------------- */
     GInt32	nHeaderPos;
 
-    VSIFWrite( (void *) "EHFA_HEADER_TAG", 1, 16, fp );
+    VSIFWriteL( (void *) "EHFA_HEADER_TAG", 1, 16, fp );
 
     nHeaderPos = 20;
     HFAStandard( 4, &nHeaderPos );
-    VSIFWrite( &nHeaderPos, 4, 1, fp );
+    VSIFWriteL( &nHeaderPos, 4, 1, fp );
 
 /* -------------------------------------------------------------------- */
 /*      Write the Ehfa_File node, locked in at offset 20.               */
@@ -1169,11 +1172,11 @@ HFAHandle HFACreateLL( const char * pszFilename )
     HFAStandard( 2, &nEntryHeaderLength );
     HFAStandard( 4, &nDictionaryPtr );
 
-    VSIFWrite( &nVersion, 4, 1, fp );
-    VSIFWrite( &nFreeList, 4, 1, fp );
-    VSIFWrite( &nRootEntry, 4, 1, fp );
-    VSIFWrite( &nEntryHeaderLength, 2, 1, fp );
-    VSIFWrite( &nDictionaryPtr, 4, 1, fp );
+    VSIFWriteL( &nVersion, 4, 1, fp );
+    VSIFWriteL( &nFreeList, 4, 1, fp );
+    VSIFWriteL( &nRootEntry, 4, 1, fp );
+    VSIFWriteL( &nEntryHeaderLength, 2, 1, fp );
+    VSIFWriteL( &nDictionaryPtr, 4, 1, fp );
 
 /* -------------------------------------------------------------------- */
 /*      Write the dictionary, locked in at location 38.  Note that      */
@@ -1192,12 +1195,12 @@ HFAHandle HFACreateLL( const char * pszFilename )
     for( iChunk = 0; aszDefaultDD[iChunk] != NULL; iChunk++ )
         strcat( psInfo->pszDictionary, aszDefaultDD[iChunk] );
 
-    VSIFWrite( (void *) psInfo->pszDictionary, 1, 
-               strlen(psInfo->pszDictionary)+1, fp );
+    VSIFWriteL( (void *) psInfo->pszDictionary, 1, 
+                strlen(psInfo->pszDictionary)+1, fp );
 
     psInfo->poDictionary = new HFADictionary( psInfo->pszDictionary );
 
-    psInfo->nEndOfFile = VSIFTell( fp );
+    psInfo->nEndOfFile = VSIFTellL( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Create a root entry.                                            */
@@ -1264,8 +1267,8 @@ CPLErr HFAFlush( HFAHandle hHFA )
 
         nRootPos = hHFA->nRootPos = hHFA->poRoot->GetFilePos();
         HFAStandard( 4, &nRootPos );
-        VSIFSeek( hHFA->fp, 20 + 8, SEEK_SET );
-        VSIFWrite( &nRootPos, 4, 1, hHFA->fp );
+        VSIFSeekL( hHFA->fp, 20 + 8, SEEK_SET );
+        VSIFWriteL( &nRootPos, 4, 1, hHFA->fp );
     }
 
     return CE_None;
@@ -1448,8 +1451,8 @@ HFAHandle HFACreate( const char * pszFilename,
         poEhfa_Layer->SetStringField( "type", "raster" );
         poEhfa_Layer->SetIntField( "dictionaryPtr", nLDict );
 
-        VSIFSeek( psInfo->fp, nLDict, SEEK_SET );
-        VSIFWrite( (void *) szLDict, strlen(szLDict)+1, 1, psInfo->fp );
+        VSIFSeekL( psInfo->fp, nLDict, SEEK_SET );
+        VSIFWriteL( (void *) szLDict, strlen(szLDict)+1, 1, psInfo->fp );
     }
 
 /* -------------------------------------------------------------------- */

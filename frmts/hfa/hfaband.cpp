@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/01/03 16:20:10  warmerda
+ * Converted to large file API
+ *
  * Revision 1.13  2000/12/29 16:37:32  warmerda
  * Use GUInt32 for all file offsets
  *
@@ -490,7 +493,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 /*      Otherwise we really read the data.                              */
 /* -------------------------------------------------------------------- */
-    if( VSIFSeek( psInfo->fp, panBlockStart[iBlock], SEEK_SET ) != 0 )
+    if( VSIFSeekL( psInfo->fp, panBlockStart[iBlock], SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
                   "Seek to %d failed.\n", panBlockStart[iBlock] );
@@ -508,7 +511,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 
         pabyCData = (GByte *) CPLMalloc(panBlockSize[iBlock]);
 
-        if( VSIFRead( pabyCData, panBlockSize[iBlock], 1, psInfo->fp ) != 1 )
+        if( VSIFReadL( pabyCData, panBlockSize[iBlock], 1, psInfo->fp ) != 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
                       "Read of %d bytes at %d failed.\n", 
@@ -530,7 +533,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 /*      Read uncompressed data directly into the return buffer.         */
 /* -------------------------------------------------------------------- */
-    if( VSIFRead( pData, panBlockSize[iBlock], 1, psInfo->fp ) != 1 )
+    if( VSIFReadL( pData, panBlockSize[iBlock], 1, psInfo->fp ) != 1 )
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
@@ -596,7 +599,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 /*      Move to the location that the data sits.                        */
 /* -------------------------------------------------------------------- */
-    if( VSIFSeek( psInfo->fp, panBlockStart[iBlock], SEEK_SET ) != 0 )
+    if( VSIFSeekL( psInfo->fp, panBlockStart[iBlock], SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
                   "Seek to %d failed.\n", panBlockStart[iBlock] );
@@ -640,7 +643,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 /*      Write uncompressed data.				        */
 /* -------------------------------------------------------------------- */
-    if( VSIFWrite( pData, panBlockSize[iBlock], 1, psInfo->fp ) != 1 )
+    if( VSIFWriteL( pData, panBlockSize[iBlock], 1, psInfo->fp ) != 1 )
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
@@ -722,9 +725,9 @@ CPLErr HFABand::GetPCT( int * pnColors,
                 poColumnEntry = poNode->GetNamedChild("Descriptor_Table.Blue");
 
 
-            VSIFSeek( psInfo->fp, poColumnEntry->GetIntField("columnDataPtr"),
+            VSIFSeekL( psInfo->fp, poColumnEntry->GetIntField("columnDataPtr"),
                       SEEK_SET );
-            VSIFRead( apadfPCT[iColumn], sizeof(double), nPCTColors,
+            VSIFReadL( apadfPCT[iColumn], sizeof(double), nPCTColors,
                       psInfo->fp);
 
             for( i = 0; i < nPCTColors; i++ )
@@ -838,8 +841,8 @@ CPLErr HFABand::SetPCT( int nColors,
                 padfFileData[iColor] = padfValues[iColor];
                 HFAStandard( 8, padfFileData + iColor );
             }
-            VSIFSeek( psInfo->fp, nOffset, SEEK_SET );
-            VSIFWrite( padfFileData, 8, nColors, psInfo->fp );
+            VSIFSeekL( psInfo->fp, nOffset, SEEK_SET );
+            VSIFWriteL( padfFileData, 8, nColors, psInfo->fp );
             CPLFree( padfFileData );
         }
 
