@@ -27,12 +27,12 @@ gdal_wrap.c:	gdal.i
 
 $(GDALMODULE).$(SO_EXT):	$(OBJ) $(EXE_DEP_LIBS)
 	$(LD_SHARED) $(OBJ) \
-		$(GDAL_SLIB_LINK) $(PYTHON_LIBS) $(LIBS) -o $@
+		$(GDAL_SLIB_LINK) $(PYTHON_LIBS) $(CONFIG_LIBS) -o $@
 
 %.lo:	%.o ;
 
 $(GDALMODULE).la:	$(OBJ:.o=.lo) $(EXE_DEP_LIBS)
-	$(LD) $(OBJ:.o=.lo) $(PYTHON_LIBS) $(LIBS) -o $@ \
+	$(LD) $(OBJ:.o=.lo) $(PYTHON_LIBS) $(CONFIG_LIBS) -o $@ \
 		-rpath $(INST_PYMOD) \
 		-no-undefined \
 		-avoid-version \
