@@ -1,0 +1,23 @@
+
+GDAL_ROOT	=	../../..
+
+include $(GDAL_ROOT)/GDALmake.opt
+
+OBJ	=	ogrpgdriver.o ogrpgdatasource.o ogrpglayer.o
+
+ALL_C_FLAGS	=	$(PG_INC) -I.. -I../.. -I$(GDAL_ROOT)/port \
+		$(CFLAGS)
+
+default:	$(OBJ)
+
+clean:
+	rm -f *.o
+
+%.o:	%.cpp
+	$(CXX) -c $(ALL_C_FLAGS) $*.cpp -o $*.o
+	ar r ../ogrsf_frmts.a $*.o
+
+%.o:	%.c
+	$(CC) -c $(ALL_C_FLAGS) $*.c -o $*.o
+	ar r ../ogrsf_frmts.a $*.o
+
