@@ -29,6 +29,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.42  2005/03/14 21:32:26  fwarmerdam
+ * Added special support for pulling parent metadata down in MODIS L1B
+ * mode, and using the GRing to derive corner coordinates.
+ *
  * Revision 1.41  2005/02/24 01:49:24  fwarmerdam
  * Establish iBandDim for rank-3 HDFEOS datasets (swath/grid).
  *
@@ -163,6 +167,8 @@ class HDF4ImageDataset : public HDF4Dataset
     char**              GetGridAttrs( int32 hGD, char **papszMetadata );
     void                CaptureNRLGeoTransform(void);
     void                CaptureCoastwatchGCTPInfo(void);
+    void                PullParentMetadata();
+    void                CaptureGRing();
 
   public:
                 HDF4ImageDataset();
@@ -847,6 +853,101 @@ void HDF4ImageDataset::ReadCoordinates( const char *pszString,
 }
 
 /************************************************************************/
+/*                         PullParentMetadata()                         */
+/*                                                                      */
+/*      Copy all metadata from the parent dataset to this dataset.      */
+/*      This is currently just used for MODIS_L1B datasets, though      */
+/*      it might have broader applicability.                            */
+/************************************************************************/
+
+void HDF4ImageDataset::PullParentMetadata()
+
+{
+    GDALDataset *poParentDS;
+
+    poParentDS = (GDALDataset *) GDALOpenShared( pszFilename, GA_ReadOnly );
+    if( poParentDS != NULL )
+    {
+        char **papszParentMD = poParentDS->GetMetadata();
+
+        papszLocalMetadata = CSLInsertStrings( papszLocalMetadata,
+                                                0, papszParentMD );
+        GDALClose( poParentDS );
+    }
+}
+
+/************************************************************************/
+/*                            CaptureGRing()                            */
+/************************************************************************/
+
+void HDF4ImageDataset::CaptureGRing()
+
+{
+    const char *pszGRingLat, *pszGRingLong, *pszGRingSeq;
+
+/* -------------------------------------------------------------------- */
+/*      Get required metadata items.                                    */
+/* -------------------------------------------------------------------- */
+    pszGRingLat = GetMetadataItem( "GRINGPOINTLATITUDE" );
+    pszGRingLong = GetMetadataItem( "GRINGPOINTLONGITUDE" );
+    pszGRingSeq = GetMetadataItem( "GRINGPOINTSEQUENCENO" );
+
+    if( pszGRingLat == NULL || pszGRingLong == NULL || pszGRingSeq == NULL )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Parse lists.                                                    */
+/* -------------------------------------------------------------------- */
+    char **papszLatList = CSLTokenizeStringComplex( pszGRingLat, ",",
+                                                    FALSE, FALSE );
+    char **papszLongList = CSLTokenizeStringComplex( pszGRingLong, ",",
+                                                    FALSE, FALSE );
+
+    if( CSLCount(papszLatList) != 4 || CSLCount(papszLongList) != 4 )
+    {
+        CSLDestroy( papszLatList );
+        CSLDestroy( papszLongList );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Setup GCPs.                                                     */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oSRS;
+    oSRS.SetWellKnownGeogCS( "WGS84" );
+    CPLFree( pszProjection );
+    oSRS.exportToWkt( &pszProjection );
+
+
+    nGCPCount = 4;
+    pasGCPList = (GDAL_GCP *)CPLCalloc( nGCPCount, sizeof( GDAL_GCP ) );
+    GDALInitGCPs( nGCPCount, pasGCPList );
+    
+    pasGCPList[0].dfGCPPixel = 0.0; 
+    pasGCPList[0].dfGCPLine = 0.0;
+    pasGCPList[0].dfGCPX = atof(papszLongList[0]);
+    pasGCPList[0].dfGCPY = atof(papszLatList[0]);
+    
+    pasGCPList[1].dfGCPPixel = GetRasterXSize(); 
+    pasGCPList[1].dfGCPLine = 0.0;
+    pasGCPList[1].dfGCPX = atof(papszLongList[1]);
+    pasGCPList[1].dfGCPY = atof(papszLatList[1]);
+    
+    pasGCPList[2].dfGCPPixel = GetRasterXSize(); 
+    pasGCPList[2].dfGCPLine = GetRasterYSize();
+    pasGCPList[2].dfGCPX = atof(papszLongList[2]);
+    pasGCPList[2].dfGCPY = atof(papszLatList[2]);
+    
+    pasGCPList[3].dfGCPPixel = 0.0;
+    pasGCPList[3].dfGCPLine = GetRasterYSize();
+    pasGCPList[3].dfGCPX = atof(papszLongList[3]);
+    pasGCPList[3].dfGCPY = atof(papszLatList[3]);
+
+    CSLDestroy( papszLatList );
+    CSLDestroy( papszLongList );
+}
+
+/************************************************************************/
 /*                       CaptureNRLGeoTransform()                       */
 /*                                                                      */
 /*      Capture geotransform and coordinate system from NRL (Navel      */
@@ -1360,9 +1461,21 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     //SWgetfillvalue( hGD, poDS->pszFieldName, );
 
 /* -------------------------------------------------------------------- */
+/*      Special case to pull parent metadata into MODIS_L1B             */
+/*      subdatasets, and to try and extract georeferencing from it.     */
+/* -------------------------------------------------------------------- */
+                    if( EQUAL(poDS->pszSubdatasetName,"MODIS_SWATH_Type_L1B"))
+                    {
+                        poDS->PullParentMetadata();
+                        poDS->SetMetadata( poDS->papszLocalMetadata );
+                        poDS->CaptureGRing();
+                    }
+
+/* -------------------------------------------------------------------- */
 /*  Retrieve geolocation fields.                                        */
 /* -------------------------------------------------------------------- */
-                    /*char    szXGeo[8192], szYGeo[8192];
+#ifdef notdef
+                      char    szXGeo[8192], szYGeo[8192];
                       int32   nDataFields, nDimMaps;
 
                       nDataFields = SWnentries( hSW, HDFE_NENTGFLD, &nStrBufSize );
@@ -1469,7 +1582,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                       SWreadfield( hSW, papszGeolocations[i],
                       paiStart, NULL, paiEdges, padfLat );
 
-                      for ( iGCP = 0; iGCP < poDS->nGCPCount, iGCP++ )
+                      for ( iGCP = 0; iGCP < poDS->nGCPCount; iGCP++ )
                       {
                                 // GCPs in Level 1A dataset are in geocentric
                                 // coordinates. Convert them in geodetic (we
@@ -1477,15 +1590,15 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                 // does not need to be converted, because
                                 // they are the same).
                                 // This calculation valid for WGS84 datum only.
-                                poDS->pasGCPList[index].dfGCPY = 
-                                atan(tan(padfLat[index]*PI/180)/0.99330562)*180/PI;
-                                poDS->pasGCPList[index].dfGCPX = 0.0;//pdfLong[index];
-                                poDS->pasGCPList[index].dfGCPZ = 0.0;
+                                poDS->pasGCPList[iGCP].dfGCPY = 
+                                atan(tan(padfLat[iGCP]*PI/180)/0.99330562)*180/PI;
+                                poDS->pasGCPList[iGCP].dfGCPX = 0.0;//pdfLong[iGCP];
+                                poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
 
-                                poDS->pasGCPList[index].dfGCPPixel =
-                                piLatticeX[index] + 0.5;
-                                poDS->pasGCPList[index].dfGCPLine =
-                                piLatticeY[index] + 0.5;
+                                poDS->pasGCPList[iGCP].dfGCPPixel =
+                                piLatticeX[iGCP] + 0.5;
+                                poDS->pasGCPList[iGCP].dfGCPLine =
+                                piLatticeY[iGCP] + 0.5;
                                 poDS->nGCPCount++;
                                 }
 
@@ -1494,7 +1607,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                 CPLFree( paiEdges );
                                 CSLDestroy( papszGeoDimList );
                                 }
-                                } */
+                                } 
+#endif // geolocation.
 
                     CSLDestroy( papszDimMap );
                     CSLDestroy( papszGeolocations );
