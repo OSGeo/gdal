@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/02/18 20:36:50  warmerda
+ * added attribute query
+ *
  * Revision 1.3  2002/02/15 02:35:16  warmerda
  * added preliminary text support
  *
@@ -93,7 +96,10 @@ void OGRAVCLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
     }
 
     if( poGeomIn != NULL )
+    {
         poFilterGeom = poGeomIn->clone();
+        poFilterGeom->getEnvelope( &sFilterEnvelope );
+    }
 
     ResetReading();
 }
@@ -133,10 +139,10 @@ int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
             poFeatureDefn->SetGeomType( wkbLineString );
 
             OGRFieldDefn	oUserId( "UserId", OFTInteger );
-            OGRFieldDefn	oFNode( "FNode", OFTInteger );
-            OGRFieldDefn	oTNode( "TNode", OFTInteger );
-            OGRFieldDefn	oLPoly( "LPoly", OFTInteger );
-            OGRFieldDefn	oRPoly( "RPoly", OFTInteger );
+            OGRFieldDefn	oFNode( "FNODE#", OFTInteger );
+            OGRFieldDefn	oTNode( "TNODE#", OFTInteger );
+            OGRFieldDefn	oLPoly( "LPOLY#", OFTInteger );
+            OGRFieldDefn	oRPoly( "RPOLY#", OFTInteger );
 
             poFeatureDefn->AddFieldDefn( &oUserId );
             poFeatureDefn->AddFieldDefn( &oFNode );
@@ -171,6 +177,9 @@ int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
         {
             poFeatureDefn = new OGRFeatureDefn( pszName );
             poFeatureDefn->SetGeomType( wkbPoint );
+
+            OGRFieldDefn	oValueId( "ValueId", OFTInteger );
+            poFeatureDefn->AddFieldDefn( &oValueId );
 
             OGRFieldDefn	oPolyId( "PolyId", OFTInteger );
             poFeatureDefn->AddFieldDefn( &oPolyId );
@@ -333,7 +342,8 @@ OGRFeature *OGRAVCLayer::TranslateFeature( void *pAVCFeature )
 /* -------------------------------------------------------------------- */
 /*      Apply attributes.                                               */
 /* -------------------------------------------------------------------- */
-          poOGRFeature->SetField( 0, psLAB->nPolyId );
+          poOGRFeature->SetField( 0, psLAB->nValue );
+          poOGRFeature->SetField( 1, psLAB->nPolyId );
 
           return poOGRFeature;
       }
@@ -377,6 +387,126 @@ OGRFeature *OGRAVCLayer::TranslateFeature( void *pAVCFeature )
 }
 
 /************************************************************************/
+/*                        MatchesSpatialFilter()                        */
+/************************************************************************/
+
+int OGRAVCLayer::MatchesSpatialFilter( void *pFeature )
+
+{
+    if( poFilterGeom == NULL )
+        return TRUE;
+
+    switch( eSectionType )
+    {
+/* ==================================================================== */
+/*      ARC                                                             */
+/*                                                                      */
+/*      Check each line segment for possible intersection.              */
+/* ==================================================================== */
+      case AVCFileARC:
+      {
+          AVCArc *psArc = (AVCArc *) pFeature;
+
+          for( int iVert = 0; iVert < psArc->numVertices-1; iVert++ )
+          {
+              AVCVertex *psV1 = psArc->pasVertices + iVert;
+              AVCVertex *psV2 = psArc->pasVertices + iVert + 1;
+
+              if( (psV1->x < sFilterEnvelope.MinX
+                   && psV2->x < sFilterEnvelope.MinX)
+                  || (psV1->x > sFilterEnvelope.MaxX
+                      && psV2->x > sFilterEnvelope.MaxX)
+                  || (psV1->y < sFilterEnvelope.MinY
+                      && psV2->y < sFilterEnvelope.MinY)
+                  || (psV1->y > sFilterEnvelope.MaxY
+                      && psV2->y > sFilterEnvelope.MaxY) )
+                  /* This segment is completely outside extents */;
+              else
+                  return TRUE;
+          }
+
+          return FALSE;
+      }
+
+/* ==================================================================== */
+/*      PAL (Polygon)                                                   */
+/*      RPL (Region)                                                    */
+/*                                                                      */
+/*      Check against the polygon bounds stored in the PAL.             */
+/* ==================================================================== */
+      case AVCFilePAL:
+      case AVCFileRPL:
+      {
+          AVCPal *psPAL = (AVCPal *) pFeature;
+
+          if( psPAL->sMin.x > sFilterEnvelope.MaxX
+              || psPAL->sMax.x < sFilterEnvelope.MinX
+              || psPAL->sMin.y > sFilterEnvelope.MaxY
+              || psPAL->sMax.y < sFilterEnvelope.MinY )
+              return FALSE;
+          else
+              return TRUE;
+      }
+
+/* ==================================================================== */
+/*      CNT (Centroid)                                                  */
+/* ==================================================================== */
+      case AVCFileCNT:
+      {
+          AVCCnt *psCNT = (AVCCnt *) pFeature;
+          
+          if( psCNT->sCoord.x < sFilterEnvelope.MinX
+              || psCNT->sCoord.x > sFilterEnvelope.MaxX
+              || psCNT->sCoord.y < sFilterEnvelope.MinY
+              || psCNT->sCoord.y > sFilterEnvelope.MaxY )
+              return FALSE;
+          else
+              return TRUE;
+      }
+
+/* ==================================================================== */
+/*      LAB (Label)                                                     */
+/* ==================================================================== */
+      case AVCFileLAB:
+      {
+          AVCLab *psLAB = (AVCLab *) pFeature;
+
+          if( psLAB->sCoord1.x < sFilterEnvelope.MinX
+              || psLAB->sCoord1.x > sFilterEnvelope.MaxX
+              || psLAB->sCoord1.y < sFilterEnvelope.MinY
+              || psLAB->sCoord1.y > sFilterEnvelope.MaxY )
+              return FALSE;
+          else
+              return TRUE;
+      }
+
+/* ==================================================================== */
+/*      TXT/TX6 (Text)							*/
+/* ==================================================================== */
+      case AVCFileTXT:
+      case AVCFileTX6:
+      {
+          AVCTxt *psTXT = (AVCTxt *) pFeature;
+
+          if( psTXT->numVerticesLine == 0 )
+              return TRUE;
+
+          if( psTXT->pasVertices[0].x < sFilterEnvelope.MinX
+              || psTXT->pasVertices[0].x > sFilterEnvelope.MaxX
+              || psTXT->pasVertices[0].y < sFilterEnvelope.MinY
+              || psTXT->pasVertices[0].y > sFilterEnvelope.MaxY )
+              return FALSE;
+          else
+              return TRUE;
+      }
+
+      default:
+        return TRUE;
+    }
+    
+}
+
+/************************************************************************/
 /*                       AppendTableDefinition()                        */
 /*                                                                      */
 /*      Add fields to this layers feature definition based on the       */
@@ -399,6 +529,10 @@ int OGRAVCLayer::AppendTableDefinition( AVCTableDef *psTableDef )
         OGRFieldDefn  oFDefn( szFieldName, OFTInteger );
 
         if( psFInfo->nIndex < 0 )
+            continue;
+
+        // Skip FNODE#, TNODE#, LPOLY# and RPOLY# from AAT table.
+        if( eSectionType == AVCFileARC && iField < 4 )
             continue;
 
         switch( psFInfo->nType1*10 )
@@ -450,6 +584,10 @@ int OGRAVCLayer::TranslateTableFields( OGRFeature *poFeature,
         if( psFInfo->nIndex < 0 )
             continue;
         
+        // Skip FNODE#, TNODE#, LPOLY# and RPOLY# from AAT table.
+        if( eSectionType == AVCFileARC && iField < 4 )
+            continue;
+
         if (nType ==  AVC_FT_DATE || nType == AVC_FT_CHAR ||
             nType == AVC_FT_FIXINT || nType == AVC_FT_FIXNUM)
         {
