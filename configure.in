@@ -33,7 +33,6 @@ AC_UNIX_STDIO_64
 OPT_GDAL_FORMATS=
 EXTRA_INCLUDES=
 
-
 dnl ---------------------------------------------------------------------------
 dnl Check if libz is available.
 dnl ---------------------------------------------------------------------------
@@ -496,6 +495,19 @@ dnl ---------------------------------------------------------------------------
 AC_COMPILER_WFLAGS
 AC_COMPILER_PIC
 AC_LD_SHARED
+
+dnl ---------------------------------------------------------------------------
+dnl Check for cygwin .exe extension
+dnl ---------------------------------------------------------------------------
+if test /bin/true.exe ; then
+  EXE_EXT=.exe
+  SO_EXT=dll
+else
+  EXE_EXT=
+fi
+export EXE_EXT
+
+AC_SUBST(EXE_EXT,$EXE_EXT)
 
 dnl ---------------------------------------------------------------------------
 dnl Python Checks
