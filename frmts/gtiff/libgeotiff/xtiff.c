@@ -156,6 +156,31 @@ XTIFFFdOpen(int fd, const char* name, const char* mode)
     return tif;
 }
 
+TIFF*
+XTIFFClientOpen(const char* name, const char* mode, thandle_t thehandle,
+	    TIFFReadWriteProc RWProc, TIFFReadWriteProc RWProc2,
+	    TIFFSeekProc SProc, TIFFCloseProc CProc,
+	    TIFFSizeProc SzProc,
+	    TIFFMapFileProc MFProvc, TIFFUnmapFileProc UMFProc )
+{
+    TIFF *tif;
+    
+    /* Set up the callback */
+    _XTIFFInitialize();	
+    
+    /* Open the file; the callback will set everything up
+     */
+    tif = TIFFClientOpen(name, mode, thehandle,
+                         RWProc, RWProc2,
+                         SProc, CProc,
+                         SzProc,
+                         MFProvc, UMFProc);
+    
+    if (!tif) return tif;
+    
+    return tif;
+}
+
 /**
  * Close a file opened with XTIFFOpen().
  *
