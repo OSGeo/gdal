@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.24  2003/09/15 20:45:00  warmerda
+ * add pngw and pgw support
+ *
  * Revision 1.23  2003/07/08 21:27:34  warmerda
  * avoid warnings
  *
@@ -769,6 +772,12 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
                            poDS->adfGeoTransform );
     if( !poDS->bGeoTransformValid )
 	GDALReadWorldFile( poOpenInfo->pszFilename, ".tifw", 
+                           poDS->adfGeoTransform );
+    if( !poDS->bGeoTransformValid )
+	GDALReadWorldFile( poOpenInfo->pszFilename, ".pngw", 
+                           poDS->adfGeoTransform );
+    if( !poDS->bGeoTransformValid )
+	GDALReadWorldFile( poOpenInfo->pszFilename, ".pgw", 
                            poDS->adfGeoTransform );
     return poDS;
 }
