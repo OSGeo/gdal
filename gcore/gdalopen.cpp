@@ -26,6 +26,9 @@
  *
  * 
  * $Log$
+ * Revision 1.12  2001/12/12 17:21:21  warmerda
+ * Use CPLStat instead of VSIStat().
+ *
  * Revision 1.11  2001/08/20 13:40:28  warmerda
  * modified message on failure to open if not a file
  *
@@ -90,7 +93,7 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn )
 /* -------------------------------------------------------------------- */
 /*      Collect information about the file.                             */
 /* -------------------------------------------------------------------- */
-    if( VSIStat( pszFilename, &sStat ) == 0 )
+    if( CPLStat( pszFilename, &sStat ) == 0 )
     {
         bStatOK = TRUE;
 
