@@ -593,7 +593,8 @@ bracket sub-expressions could not be parsed."); break;
 GDALDataset *
 DODSDataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if( !EQUALN(poOpenInfo->pszFilename,"http://",7) )
+    if( !EQUALN(poOpenInfo->pszFilename,"http://",7) 
+        && !EQUALN(poOpenInfo->pszFilename,"https://",8) )
         return NULL;
 
     DBG(cerr << "Entering the DODS GDAL driver." << endl);
@@ -746,6 +747,9 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void * pImage)
 }
 
 // $Log$
+// Revision 1.4  2004/01/08 20:23:28  warmerda
+// allow https datasets as well.
+//
 // Revision 1.3  2003/12/16 00:48:51  warmerda
 // Don't attempt to open as DODS dataset unless it is prefixed by http://
 //
