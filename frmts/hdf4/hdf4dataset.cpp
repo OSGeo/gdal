@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.13  2002/11/08 18:29:04  dron
+ * Added Create() method.
+ *
  * Revision 1.12  2002/11/07 13:23:44  dron
  * Support for projection information writing.
  *
@@ -99,6 +102,8 @@ HDF4Dataset::HDF4Dataset()
 {
     fp = NULL;
     hHDF4 = 0;
+    hSD = 0;
+    hGR = 0;
     papszGlobalMetadata = NULL;
     papszSubDatasets = NULL;
 }
@@ -110,9 +115,13 @@ HDF4Dataset::HDF4Dataset()
 HDF4Dataset::~HDF4Dataset()
 
 {
-    if ( !papszSubDatasets )
+    if ( hSD )
+	SDend( hSD );
+    if ( hGR )
+	GRend( hGR );
+    if ( papszSubDatasets )
 	CSLDestroy( papszSubDatasets );
-    if ( !papszGlobalMetadata )
+    if ( papszGlobalMetadata )
 	CSLDestroy( papszGlobalMetadata );
     if( fp != NULL )
         VSIFClose( fp );
@@ -156,6 +165,7 @@ char *SPrintArray(signed char *piaDataArray, int nValues, char * pszDelimiter)
         strcat( pszString, pszField );
     }
     
+    CPLFree( pszField );
     return pszString;
 }
 
@@ -175,6 +185,7 @@ char *SPrintArray(GByte *piaDataArray, int nValues, char * pszDelimiter)
         strcat( pszString, pszField );
     }
     
+    CPLFree( pszField );
     return pszString;
 }
 
@@ -194,6 +205,7 @@ char *SPrintArray(GInt16 *piaDataArray, int nValues, char * pszDelimiter)
         strcat( pszString, pszField );
     }
     
+    CPLFree( pszField );
     return pszString;
 }
 
@@ -213,6 +225,7 @@ char *SPrintArray(GUInt16 *piaDataArray, int nValues, char * pszDelimiter)
         strcat( pszString, pszField );
     }
     
+    CPLFree( pszField );
     return pszString;
 }
 
@@ -232,6 +245,7 @@ char *SPrintArray(GInt32 *piaDataArray, int nValues, char * pszDelimiter)
         strcat( pszString, pszField );
     }
     
+    CPLFree( pszField );
     return pszString;
 }
 
@@ -251,6 +265,7 @@ char *SPrintArray(GUInt32 *piaDataArray, int nValues, char * pszDelimiter)
         strcat( pszString, pszField );
     }
     
+    CPLFree( pszField );
     return pszString;
 }
 
@@ -270,6 +285,7 @@ char *SPrintArray(GIntBig *piaDataArray, int nValues, char * pszDelimiter)
         strcat( pszString, pszField );
     }
     
+    CPLFree( pszField );
     return pszString;
 }
 
@@ -289,6 +305,7 @@ char *SPrintArray(GUIntBig *piaDataArray, int nValues, char * pszDelimiter)
         strcat( pszString, pszField );
     }
     
+    CPLFree( pszField );
     return pszString;
 }
 
@@ -308,6 +325,7 @@ char *SPrintArray(float *pfaDataArray, int nValues, char * pszDelimiter)
         strcat( pszString, pszField );
     }
     
+    CPLFree( pszField );
     return pszString;
 }
 
@@ -327,6 +345,7 @@ char *SPrintArray(double *pdfaDataArray, int nValues, char * pszDelimiter)
         strcat( pszString, pszField );
     }
     
+    CPLFree( pszField );
     return pszString;
 }
 
@@ -563,6 +582,7 @@ char** HDF4Dataset::TranslateHDF4Attributes( int32 iHandle,
     char **papszMetadata )
 {
     int8	*pbData = NULL;
+    char	*pszTemp = NULL;
     
     // Allocate a buffer to hold the attribute data.
     switch (iNumType)
@@ -619,50 +639,53 @@ char** HDF4Dataset::TranslateHDF4Attributes( int32 iHandle,
         papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pbData );
 	break;
         case DFNT_INT8:
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
-	    SPrintArray((signed char *)pbData, nValues, ", ") );
+	pszTemp = SPrintArray( (signed char *)pbData, nValues, ", " );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
         case DFNT_UINT8:
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
-	    SPrintArray((GByte *)pbData, nValues, ", ") );
+	pszTemp = SPrintArray( (GByte *)pbData, nValues, ", " );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
         case DFNT_INT16:
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
-	    SPrintArray((GInt16 *)pbData, nValues, ", ") );
+	pszTemp = SPrintArray( (GInt16 *)pbData, nValues, ", " );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
         case DFNT_UINT16:
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
-	    SPrintArray((GUInt16 *)pbData, nValues, ", ") );
+	pszTemp = SPrintArray( (GUInt16 *)pbData, nValues, ", " );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
         case DFNT_INT32:
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
-	    SPrintArray((GInt32 *)pbData, nValues, ", ") );
+	pszTemp = SPrintArray( (GInt32 *)pbData, nValues, ", " );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
         case DFNT_UINT32:
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
-	    SPrintArray((GUInt32 *)pbData, nValues, ", ") );
+	pszTemp = SPrintArray( (GUInt32 *)pbData, nValues, ", " );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
         case DFNT_INT64:
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
-	    SPrintArray((GIntBig *)pbData, nValues, ", ") );
+	pszTemp = SPrintArray( (GIntBig *)pbData, nValues, ", " );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
         case DFNT_UINT64:
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
-	    SPrintArray((GUIntBig *)pbData, nValues, ", ") );
+	pszTemp = SPrintArray( (GUIntBig *)pbData, nValues, ", " );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
         case DFNT_FLOAT32:
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
-	    SPrintArray((float *)pbData, nValues, ", ") );
+	pszTemp = SPrintArray((float *)pbData, nValues, ", ");
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
         case DFNT_FLOAT64:
-        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
-	    SPrintArray((double *)pbData, nValues, ", ") );
+	pszTemp = SPrintArray((double *)pbData, nValues, ", ");
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pszTemp );
 	break;
 	default:
 	break;
     }
     
-    CPLFree( pbData );
+    if ( pszTemp )
+	CPLFree( pszTemp );
+    if ( pbData )
+	CPLFree( pbData );
 
     return papszMetadata;
 }
@@ -735,7 +758,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     HDF4Dataset 	*poDS;
 
-    poDS = new HDF4Dataset( );
+    poDS = new HDF4Dataset();
 
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
@@ -836,6 +859,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*  Make a list of subdatasets from SDSs contained in input HDF file.	*/
 /* -------------------------------------------------------------------- */
     char	szName[65], szTemp[1024];
+    char	*pszString;
     int32	iSDS;
     int32	iRank; 			// Number of dimensions in the SDS
     int32	iNumType, nAttrs;
@@ -853,22 +877,28 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 	// Sort known datasets. We will display only image bands
 	if ( (poDS->iDataType == ASTER_L1A || poDS->iDataType == ASTER_L1B ) &&
-			!EQUALN( szName, "ImageData", 9 ) )
+	     !EQUAL( szName, "ImageData" ) )
 		continue;
-	else if ( (poDS->iDataType == AST14DEM ) && !EQUALN( szName, "Band", 4 ) )
+	else if ( (poDS->iDataType == AST14DEM ) && !EQUAL( szName, "Band" ) )
+		continue;
+	else if ( (poDS->iDataType == SEAWIFS_L1A ) &&
+		  !EQUAL( szName, "l1a_data" ) )
 		continue;
 	
 	// Add datasets with multiple dimensions to the list of GDAL subdatasets
         nCount = CSLCount( poDS->papszSubDatasets ) / 2;
-        sprintf( szTemp, "SUBDATASET_%d_NAME", nCount+1 );
+        sprintf( szTemp, "SUBDATASET_%d_NAME", nCount + 1 );
 	// We will use SDS index as an identificator, because SDS names
 	// are not unique. Filename also needed for further file opening
-        poDS->papszSubDatasets = CSLSetNameValue( poDS->papszSubDatasets, szTemp, 
-              CPLSPrintf( "HDF4_SDS:%s:%s:%d", poDS->pszDataType, poOpenInfo->pszFilename, i ) );
-        sprintf( szTemp, "SUBDATASET_%d_DESC", nCount+1 );
-        poDS->papszSubDatasets = CSLSetNameValue( poDS->papszSubDatasets, szTemp, 
-              CPLSPrintf( "[%s] %s (%s)", SPrintArray((GInt32 *)aiDimSizes, iRank, "x"),
-		          szName, poDS->GetDataTypeName(iNumType) ) );
+        poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets, szTemp, 
+              CPLSPrintf("HDF4_SDS:%s:%s:%d", poDS->pszDataType,
+			 poOpenInfo->pszFilename, i));
+        sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
+	pszString = SPrintArray( (GInt32 *)aiDimSizes, iRank, "x" );
+        poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets, szTemp,
+	    CPLSPrintf( "[%s] %s (%s)", pszString,
+		        szName, poDS->GetDataTypeName(iNumType)) );
+	CPLFree( pszString );
 
 	SDendaccess( iSDS );
     }
@@ -896,13 +926,15 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 			  aiDimSizes, &nAttrs ) != 0 )
 	    return NULL;
         nCount = CSLCount( poDS->papszSubDatasets ) / 2;
-        sprintf( szTemp, "SUBDATASET_%d_NAME", nCount+1 );
-        poDS->papszSubDatasets = CSLSetNameValue( poDS->papszSubDatasets, szTemp,
-              CPLSPrintf( "HDF4_GR:UNKNOWN:%s:%d", poOpenInfo->pszFilename, i ) );
-        sprintf( szTemp, "SUBDATASET_%d_DESC", nCount+1 );
-        poDS->papszSubDatasets = CSLSetNameValue( poDS->papszSubDatasets, szTemp,
-              CPLSPrintf( "[%sx%d] %s (%s)", SPrintArray((GInt32 *)aiDimSizes, 2, "x"),
-		          iRank, szName, poDS->GetDataTypeName(iNumType) ) );
+        sprintf( szTemp, "SUBDATASET_%d_NAME", nCount + 1 );
+        poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets, szTemp,
+              CPLSPrintf( "HDF4_GR:UNKNOWN:%s:%d", poOpenInfo->pszFilename, i));
+        sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
+	pszString = SPrintArray( (GInt32 *)aiDimSizes, 2, "x" );
+        poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets, szTemp,
+              CPLSPrintf( "[%sx%d] %s (%s)", pszString,
+		          iRank, szName, poDS->GetDataTypeName(iNumType)) );
+	CPLFree( pszString );
 
 	GRendaccess( iGR );
     }
@@ -911,6 +943,19 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = poDS->nRasterYSize = 512; // XXX: bogus values
     
     Hclose( hHDF4 );
+
+/* -------------------------------------------------------------------- */
+/*      If we have single subdataset only, open it immediately          */
+/* -------------------------------------------------------------------- */
+    if ( CSLCount( poDS->papszSubDatasets ) / 2 == 1 )
+    {
+	char *pszSDSName;
+	pszSDSName = CPLStrdup( CSLFetchNameValue( poDS->papszSubDatasets,
+				        "SUBDATASET_1_NAME" ));
+	delete poDS;
+	poDS = (HDF4Dataset *) GDALOpen( pszSDSName, GA_ReadOnly );
+	CPLFree( pszSDSName );
+    }
 
     return( poDS );
 }

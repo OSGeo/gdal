@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.12  2002/11/08 18:29:04  dron
+ * Added Create() method.
+ *
  * Revision 1.11  2002/11/07 13:23:44  dron
  * Support for projection information writing.
  *
@@ -86,6 +89,8 @@ CPL_C_END
 const char	*pszGDALSignature =
 	"Created with GDAL (http://www.remotesensing.org/gdal/)";
 
+#define MAX_DIMS         20	/* FIXME: maximum number of dimensions in sds */
+
 /************************************************************************/
 /* ==================================================================== */
 /*				HDF4ImageDataset                        */
@@ -119,7 +124,10 @@ class HDF4ImageDataset : public HDF4Dataset
 		~HDF4ImageDataset();
     
     static GDALDataset *Open( GDALOpenInfo * );
-
+    static GDALDataset *Create( const char * pszFilename,
+                                int nXSize, int nYSize, int nBands,
+                                GDALDataType eType, char ** papszParmList );
+    virtual void FlushCache( void );
     CPLErr 	GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
     CPLErr	SetProjection( const char * );
@@ -143,6 +151,7 @@ class HDF4ImageRasterBand : public GDALRasterBand
     
     GDALDataType GetDataType( int32 );
     virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IWriteBlock( int, int, void * );
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
 };
@@ -215,9 +224,9 @@ HDF4ImageRasterBand::HDF4ImageRasterBand( HDF4ImageDataset *poDS, int nBand )
 CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                       void * pImage )
 {
-    HDF4ImageDataset *poGDS = (HDF4ImageDataset *) poDS;
-#define MAX_DIMS         20	/* FIXME: maximum number of dimensions in sds */
-    int32	iStart[MAX_DIMS], iEdges[MAX_DIMS];
+    HDF4ImageDataset	*poGDS = (HDF4ImageDataset *) poDS;
+    int32		iStart[MAX_DIMS], iEdges[MAX_DIMS];
+    CPLErr		eErr = CE_None;
 
     switch ( poGDS->iSubdatasetType )
     {
@@ -307,6 +316,7 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     	    SDreaddata(poGDS->iSDS, iStart, NULL, iEdges, (uchar8 *)pImage);
     	    break;
             default:
+	    eErr = CE_Failure;
     	    break;
         }
         break;
@@ -349,14 +359,62 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     	    GRreadimage(poGDS->iGR, iStart, NULL, iEdges, (uchar8 *)pImage);
     	    break;
             default:
+	    eErr = CE_Failure;
     	    break;
         }
 	break;
 	default:
+	eErr = CE_Failure;
 	break;
     }
 
-    return CE_None;
+    return eErr;
+}
+
+/************************************************************************/
+/*                            IWriteBlock()                             */
+/************************************************************************/
+
+CPLErr HDF4ImageRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
+                                     void * pImage )
+
+{
+    HDF4ImageDataset	*poGDS = (HDF4ImageDataset *)poDS;
+    int32		iStart[MAX_DIMS], iEdges[MAX_DIMS];
+    CPLErr		eErr = CE_None;
+
+    CPLAssert( poGDS != NULL
+               && nBlockXOff >= 0
+               && nBlockYOff >= 0
+               && pImage != NULL );
+
+    switch ( poGDS->iRank )
+    {
+	case 3:
+	iStart[poGDS->iBandDim] = nBand - 1;
+	iEdges[poGDS->iBandDim] = 1;
+    
+	iStart[poGDS->iYDim] = nBlockYOff;
+	iEdges[poGDS->iYDim] = nBlockYSize;
+    
+	iStart[poGDS->iXDim] = nBlockXOff;
+	iEdges[poGDS->iXDim] = nBlockXSize;
+	break;
+	case 2:
+	iStart[poGDS->iYDim] = nBlockYOff;
+	iEdges[poGDS->iYDim] = nBlockYSize;
+    
+	iStart[poGDS->iXDim] = nBlockXOff;
+	iEdges[poGDS->iXDim] = nBlockXSize;
+	break;
+	default:
+	eErr = CE_Failure;
+	break;
+    }
+    
+    SDwritedata( poGDS->iSDS, iStart, NULL, iEdges, (VOIDP)pImage );
+
+    return eErr;
 }
 
 /************************************************************************/
@@ -417,8 +475,8 @@ GDALColorInterp HDF4ImageRasterBand::GetColorInterpretation()
 HDF4ImageDataset::HDF4ImageDataset()
 
 {
-    fp = NULL;
-    hHDF4 = 0;
+    iSDS = 0;
+    iGR = 0;
     papszSubdatasetName = NULL;
     iSubdatasetType = HDF4_UNKNOWN;
     papszLocalMetadata = NULL;
@@ -433,14 +491,16 @@ HDF4ImageDataset::HDF4ImageDataset()
 HDF4ImageDataset::~HDF4ImageDataset()
 
 {
-    if ( !papszSubdatasetName )
+    FlushCache();
+    
+    if ( iSDS )
+	SDendaccess( iSDS );
+    if ( iGR )
+	GRendaccess( iGR );
+    if ( papszSubdatasetName )
 	CSLDestroy( papszSubdatasetName );
-    if ( !papszLocalMetadata )
+    if ( papszLocalMetadata )
 	CSLDestroy( papszLocalMetadata );
-    if( fp != NULL )
-        VSIFClose( fp );
-    if( hHDF4 > 0 )
-	Hclose(hHDF4);
     if( poColorTable != NULL )
         delete poColorTable;
 
@@ -476,6 +536,16 @@ CPLErr HDF4ImageDataset::SetProjection( const char *pszString )
 {
     pszProjection = (char *)pszString;
     return CE_None;
+}
+
+/************************************************************************/
+/*                             FlushCache()                             */
+/************************************************************************/
+
+void HDF4ImageDataset::FlushCache()
+
+{
+    GDALDataset::FlushCache();
 }
 
 /************************************************************************/
@@ -583,7 +653,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     int32	iAttribute, nValues, iAttrNumType;
     char	szAttrName[MAX_NC_NAME];
     
-    poDS->hHDF4 = Hopen( poDS->pszFilename, DFACC_READ, 0 );
+    if( poOpenInfo->eAccess == GA_ReadOnly )
+	poDS->hHDF4 = Hopen( poDS->pszFilename, DFACC_READ, 0 );
+    else
+	poDS->hHDF4 = Hopen( poDS->pszFilename, DFACC_WRITE, 0 );
     
     if( poDS->hHDF4 <= 0 )
         return( NULL );
@@ -649,15 +722,13 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 			  &poDS->iInterlaceMode, poDS->aiDimSizes, &poDS->nAttrs ) != 0 )
 	    return NULL;
 
-        // Read Attributes:
-        // Loop trough the all attributes
-        /*for ( iAttribute = 0; iAttribute < poDS->nAttrs; iAttribute++ )
+        for ( iAttribute = 0; iAttribute < poDS->nAttrs; iAttribute++ )
         {
-            // Get information about the attribute.
             GRattrinfo( poDS->iGR, iAttribute, szAttrName, &iAttrNumType, &nValues );
-            papszLocalMetadata = poDS->TranslateHDF4Attributes( poDS->iGR, iAttribute, szAttrName,
-			                   iAttrNumType, nValues, papszLocalMetadata );
-	}*/
+            poDS->papszLocalMetadata = 
+		poDS->TranslateHDF4Attributes( poDS->iGR, iAttribute,
+		    szAttrName, iAttrNumType, nValues, poDS->papszLocalMetadata );
+	}
 	// Read color table
 	GDALColorEntry oEntry;
 	 
@@ -831,6 +902,74 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
+
+GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
+				       int nXSize, int nYSize, int nBands,
+				       GDALDataType eType,
+				       char **papszOptions )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Choose rank for the created dataset. Currently only 3D dataset  */
+/*      may be created dynamically                                      */
+/* -------------------------------------------------------------------- */
+    int32	    iRank = 3;
+
+    if ( CSLFetchNameValue( papszOptions, "RANK" ) != NULL &&
+	 EQUAL( CSLFetchNameValue( papszOptions, "RANK" ), "2" ) )
+	CPLDebug("HDF4Image", "Can't create 2D SDS dynamically. "
+			 "Single 3D SDS will be created");
+
+/* -------------------------------------------------------------------- */
+/*      Create the dataset.                                             */
+/* -------------------------------------------------------------------- */
+    int32	    hSD, iSDS;
+    int		    iXDim = 1, iYDim = 0, iBandDim = 2;
+    const char	    *pszSDSName;
+    int32	    aiDimSizes[MAX_VAR_DIMS];
+
+    hSD = SDstart( pszFilename, DFACC_CREATE );
+    aiDimSizes[iXDim] = nXSize;
+    aiDimSizes[iYDim] = nYSize;
+    aiDimSizes[iBandDim] = nBands;
+
+    if ( iRank == 3 )
+    {
+	pszSDSName = "3-dimensional Scientific Dataset";
+	switch ( eType )
+	{
+	    case GDT_Float64:
+	    iSDS = SDcreate( hSD, pszSDSName, DFNT_FLOAT64, iRank, aiDimSizes );
+	    break;
+	    case GDT_Float32:
+	    iSDS = SDcreate( hSD, pszSDSName, DFNT_FLOAT32, iRank, aiDimSizes );
+	    break;
+	    case GDT_UInt32:
+	    iSDS = SDcreate( hSD, pszSDSName, DFNT_UINT32, iRank, aiDimSizes );
+	    break;
+	    case GDT_UInt16:
+	    iSDS = SDcreate( hSD, pszSDSName, DFNT_UINT16, iRank, aiDimSizes );
+	    break;
+	    case GDT_Int32:
+	    iSDS = SDcreate( hSD, pszSDSName, DFNT_INT32, iRank, aiDimSizes );
+	    break;
+	    case GDT_Int16:
+	    iSDS = SDcreate( hSD, pszSDSName, DFNT_INT16, iRank, aiDimSizes );
+	    break;
+	    case GDT_Byte:
+	    default:
+	    iSDS = SDcreate( hSD, pszSDSName, DFNT_UCHAR8, iRank, aiDimSizes );
+	    break;
+	}
+    }
+    else					    // Should never happen
+	return NULL;
+
+    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+}    
+/************************************************************************/
 /*                      HDF4ImageCreateCopy()                           */
 /************************************************************************/
 
@@ -855,7 +994,7 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int32	    iRank = 3;
     int		    iBand;
     GDALRasterBand  *poBand;
-    GDALDataType    iNumType;
+    GDALDataType    eType;
 
     if ( CSLFetchNameValue( papszOptions, "RANK" ) != NULL &&
 	 EQUAL( CSLFetchNameValue( papszOptions, "RANK" ), "2" ) )
@@ -865,11 +1004,11 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
 	iBand = 1;
 	poBand = poSrcDS->GetRasterBand( iBand );
-	iNumType = poBand->GetRasterDataType();
+	eType = poBand->GetRasterDataType();
 	while( iBand <= nBands )
 	{
 	    poBand = poSrcDS->GetRasterBand( iBand++ );
-	    if ( iNumType != poBand->GetRasterDataType() )
+	    if ( eType != poBand->GetRasterDataType() )
 	    {
 		CPLDebug("HDF4Image", "Can't create 3D SDS because of different"
 			 "band depths. Set of 2D SDSs will be created");
@@ -878,6 +1017,7 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	    }
 	}
     }
+
 /* -------------------------------------------------------------------- */
 /*      Do we need compression?                                         */
 /*      NOTE: current NCSA HDF library implementation do not allow      */
@@ -934,12 +1074,12 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	    poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
 	    nXBlocks = (poBand->GetXSize() + nBlockXSize - 1) / nBlockXSize;
 	    nYBlocks = (poBand->GetYSize() + nBlockYSize - 1) / nBlockYSize;
-	    iNumType = poBand->GetRasterDataType();
+	    eType = poBand->GetRasterDataType();
 	    pabyData = (GByte *) CPLMalloc( nBlockXSize * nBlockYSize *
-					    GDALGetDataTypeSize( iNumType ) / 8 );
+					    GDALGetDataTypeSize( eType ) / 8 );
 	    pszSDSName = poBand->GetDescription();
 	    
-	    switch ( iNumType )
+	    switch ( eType )
 	    {
 		case GDT_Float64:
 		iSDS = SDcreate( hSD, pszSDSName, DFNT_FLOAT64, iRank, aiDimSizes );
@@ -969,7 +1109,7 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	    {
 		if ( iCompType != COMP_CODE_SKPHUFF )
 		    sCompInfo.skphuff.skp_size =
-			GDALGetDataTypeSize( iNumType ) / 8;
+			GDALGetDataTypeSize( eType ) / 8;
 		SDsetcompress( iSDS, iCompType, &sCompInfo ); 
 	    }
 #endif
@@ -1005,7 +1145,7 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     else if ( iRank == 3 )
     {
 	pszSDSName = "3-dimensional Scientific Dataset";
-	switch ( iNumType )
+	switch ( eType )
 	{
 	    case GDT_Float64:
 	    iSDS = SDcreate( hSD, pszSDSName, DFNT_FLOAT64, iRank, aiDimSizes );
@@ -1033,7 +1173,7 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 #if 0
 	if ( iCompType != COMP_CODE_NONE )
 	    if ( iCompType != COMP_CODE_SKPHUFF )
-		sCompInfo.skphuff.skp_size = GDALGetDataTypeSize( iNumType ) / 8;
+		sCompInfo.skphuff.skp_size = GDALGetDataTypeSize( eType ) / 8;
 	    SDsetcompress( iSDS, iCompType, &sCompInfo );
 #endif
 
@@ -1044,7 +1184,7 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	    nXBlocks = (poBand->GetXSize() + nBlockXSize - 1) / nBlockXSize;
 	    nYBlocks = (poBand->GetYSize() + nBlockYSize - 1) / nBlockYSize;
 	    pabyData = (GByte *) CPLMalloc( nBlockXSize * nBlockYSize *
-					    GDALGetDataTypeSize( iNumType ) / 8 );
+					    GDALGetDataTypeSize( eType ) / 8 );
 	    
 	    for( iYBlock = 0; iYBlock < nYBlocks; iYBlock++ )
 	    {
@@ -1156,6 +1296,7 @@ void GDALRegister_HDF4Image()
                                    "frmt_hdf4.html" );
 
         poDriver->pfnOpen = HDF4ImageDataset::Open;
+        poDriver->pfnCreate = HDF4ImageDataset::Create;
         poDriver->pfnCreateCopy = HDF4ImageCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
