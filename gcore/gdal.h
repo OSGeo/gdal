@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2000/04/26 18:25:29  warmerda
+ * added missing CPL_DLL attributes
+ *
  * Revision 1.21  2000/04/21 21:54:37  warmerda
  * updated metadata API
  *
@@ -126,7 +129,7 @@ typedef enum {
 } GDALDataType;
 
 int CPL_DLL GDALGetDataTypeSize( GDALDataType );
-const char *CPL_DLL GDALGetDataTypeName( GDALDataType );
+const char CPL_DLL *GDALGetDataTypeName( GDALDataType );
 
 /*! Flag indicating read/write, or read-only access to data. */
 typedef enum {
@@ -159,7 +162,7 @@ typedef enum
 } GDALColorInterp;
 
 /*! Translate a GDALColorInterp into a user displayable string. */
-const char *GDALGetColorInterpretationName( GDALColorInterp );
+const char CPL_DLL *GDALGetColorInterpretationName( GDALColorInterp );
 
 /*! Types of color interpretations for a GDALColorTable. */
 typedef enum 
@@ -171,7 +174,7 @@ typedef enum
 } GDALPaletteInterp;
 
 /*! Translate a GDALPaletteInterp into a user displayable string. */
-const char *GDALGetPaletteInterpretationName( GDALPaletteInterp );
+const char CPL_DLL *GDALGetPaletteInterpretationName( GDALPaletteInterp );
 
 /* -------------------------------------------------------------------- */
 /*      GDAL Specific error codes.                                      */
@@ -195,13 +198,13 @@ typedef void *GDALColorTableH;
 /*      Callback "progress" function.                                   */
 /* -------------------------------------------------------------------- */
 typedef int (*GDALProgressFunc)(double,const char *, void *);
-int GDALDummyProgress( double, const char *, void *);
+int CPL_DLL GDALDummyProgress( double, const char *, void *);
 
 /* ==================================================================== */
 /*      Registration/driver related.                                    */
 /* ==================================================================== */
 
-void GDALAllRegister( void );
+void CPL_DLL GDALAllRegister( void );
 
 GDALDatasetH CPL_DLL GDALCreate( GDALDriverH hDriver,
                                  const char *, int, int, int, GDALDataType,
@@ -247,9 +250,9 @@ typedef struct
     double	dfGCPZ;
 } GDAL_GCP;
 
-void GDALInitGCPs( int, GDAL_GCP * );
-void GDALDeinitGCPs( int, GDAL_GCP * );
-GDAL_GCP *GDALDuplicateGCPs( int, const GDAL_GCP * );
+void CPL_DLL GDALInitGCPs( int, GDAL_GCP * );
+void CPL_DLL GDALDeinitGCPs( int, GDAL_GCP * );
+GDAL_GCP CPL_DLL *GDALDuplicateGCPs( int, const GDAL_GCP * );
 
 /* ==================================================================== */
 /*      major objects (dataset, and, driver, drivermanager).            */

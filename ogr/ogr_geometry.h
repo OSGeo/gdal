@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2000/04/26 18:25:55  warmerda
+ * added missing CPL_DLL attributes
+ *
  * Revision 1.21  2000/03/14 21:38:17  warmerda
  * added method to translate geometrytype to name
  *
@@ -132,7 +135,7 @@ enum OGRwkbGeometryType
 
 #define ogrZMarker 0x21125711
 
-const char * CPL_DLL OGRGeometryTypeToName( OGRwkbGeometryType );
+const char CPL_DLL * OGRGeometryTypeToName( OGRwkbGeometryType );
 
 enum OGRwkbByteOrder
 {

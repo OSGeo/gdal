@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/04/26 18:25:56  warmerda
+ * added missing CPL_DLL attributes
+ *
  * Revision 1.4  2000/03/22 01:09:43  warmerda
  * added SetProjCS and SetWellKnownTextCS
  *
@@ -205,34 +208,36 @@ typedef enum {
 typedef void *OGRSpatialReferenceH;                               
 typedef void *OGRCoordinateTransformationH;
 
-OGRSpatialReferenceH OSRNewSpatialReference( const char * /* = NULL */);
-void    OSRDestroySpatialReference( OGRSpatialReferenceH );
+OGRSpatialReferenceH CPL_DLL
+      OSRNewSpatialReference( const char * /* = NULL */);
+void CPL_DLL OSRDestroySpatialReference( OGRSpatialReferenceH );
 
-int     OSRReference( OGRSpatialReferenceH );
-int     OSRDereference( OGRSpatialReferenceH );
+int CPL_DLL OSRReference( OGRSpatialReferenceH );
+int CPL_DLL OSRDereference( OGRSpatialReferenceH );
 
-OGRErr  OSRImportFromEPSG( OGRSpatialReferenceH, int );
-OGRErr  OSRImportFromWkt( OGRSpatialReferenceH, char ** );
-OGRErr  OSRExportToWkt( OGRSpatialReferenceH, char ** );
+OGRErr CPL_DLL OSRImportFromEPSG( OGRSpatialReferenceH, int );
+OGRErr CPL_DLL OSRImportFromWkt( OGRSpatialReferenceH, char ** );
+OGRErr CPL_DLL OSRExportToWkt( OGRSpatialReferenceH, char ** );
 
-OGRErr  OSRSetAttrValue( OGRSpatialReferenceH hSRS, const char * pszNodePath,
-                         const char * pszNewNodeValue );
-const char *OSRGetAttrValue( OGRSpatialReferenceH hSRS,
-                             const char * pszName, int iChild /* = 0 */ );
+OGRErr CPL_DLL OSRSetAttrValue( OGRSpatialReferenceH hSRS,
+                                const char * pszNodePath,
+                                const char * pszNewNodeValue );
+const char CPL_DLL * OSRGetAttrValue( OGRSpatialReferenceH hSRS,
+                           const char * pszName, int iChild /* = 0 */ );
 
-OGRErr  OSRSetLinearUnits( OGRSpatialReferenceH, const char *, double );
-double  OSRGetLinearUnits( OGRSpatialReferenceH, char ** );
+OGRErr CPL_DLL OSRSetLinearUnits( OGRSpatialReferenceH, const char *, double );
+double CPL_DLL OSRGetLinearUnits( OGRSpatialReferenceH, char ** );
 
-int     OSRIsGeographic( OGRSpatialReferenceH );
-int     OSRIsProjected( OGRSpatialReferenceH );
-int     OSRIsSameGeogCS( OGRSpatialReferenceH, OGRSpatialReferenceH );
-int     OSRIsSame( OGRSpatialReferenceH, OGRSpatialReferenceH );
+int CPL_DLL OSRIsGeographic( OGRSpatialReferenceH );
+int CPL_DLL OSRIsProjected( OGRSpatialReferenceH );
+int CPL_DLL OSRIsSameGeogCS( OGRSpatialReferenceH, OGRSpatialReferenceH );
+int CPL_DLL OSRIsSame( OGRSpatialReferenceH, OGRSpatialReferenceH );
 
-OGRErr  OSRSetProjCS( OGRSpatialReferenceH hSRS, const char * pszName );
-OGRErr  OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS,
-                               const char * pszName );
+OGRErr CPL_DLL OSRSetProjCS( OGRSpatialReferenceH hSRS, const char * pszName );
+OGRErr CPL_DLL OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS,
+                                      const char * pszName );
 
-OGRErr  OSRSetGeogCS( OGRSpatialReferenceH hSRS,
+OGRErr CPL_DLL OSRSetGeogCS( OGRSpatialReferenceH hSRS,
                       const char * pszGeogName,
                       const char * pszDatumName,
                       const char * pszEllipsoidName,
@@ -242,32 +247,33 @@ OGRErr  OSRSetGeogCS( OGRSpatialReferenceH hSRS,
                       const char * pszUnits /* = NULL */,
                       double dfConvertToRadians /* = 0.0 */ );
 
-double  OSRGetSemiMajor( OGRSpatialReferenceH, OGRErr * /* = NULL */ );
-double  OSRGetSemiMinor( OGRSpatialReferenceH, OGRErr * /* = NULL */ );
-double  OSRGetInvFlattening( OGRSpatialReferenceH, OGRErr * /* = NULL */ );
+double CPL_DLL OSRGetSemiMajor( OGRSpatialReferenceH, OGRErr * /* = NULL */ );
+double CPL_DLL OSRGetSemiMinor( OGRSpatialReferenceH, OGRErr * /* = NULL */ );
+double CPL_DLL OSRGetInvFlattening( OGRSpatialReferenceH, OGRErr * /*=NULL*/);
 
-OGRErr  OSRSetAuthority( OGRSpatialReferenceH hSRS,
+OGRErr CPL_DLL OSRSetAuthority( OGRSpatialReferenceH hSRS,
                          const char * pszTargetKey,
                          const char * pszAuthority,
                          int nCode );
-OGRErr  OSRSetProjParm( OGRSpatialReferenceH, const char *, double );
-double  OSRGetProjParm( OGRSpatialReferenceH hSRS,
+OGRErr CPL_DLL OSRSetProjParm( OGRSpatialReferenceH, const char *, double );
+double CPL_DLL OSRGetProjParm( OGRSpatialReferenceH hSRS,
                         const char * pszParmName, 
                         double dfDefault /* = 0.0 */,
                         OGRErr * /* = NULL */ );
 
-OGRErr  OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth );
-int     OSRGetUTMZone( OGRSpatialReferenceH hSRS, int *pbNorth );
+OGRErr CPL_DLL OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth );
+int    CPL_DLL OSRGetUTMZone( OGRSpatialReferenceH hSRS, int *pbNorth );
 
 /* -------------------------------------------------------------------- */
 /*      OGRCoordinateTransform C API.                                   */
 /* -------------------------------------------------------------------- */
-OGRCoordinateTransformationH
+OGRCoordinateTransformationH CPL_DLL
 OCTNewCoordinateTransformation( OGRSpatialReferenceH hSourceSRS,
                                 OGRSpatialReferenceH hTargetSRS );
-void OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH );
+void CPL_DLL
+      OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH );
 
-int OCTTransform( OGRCoordinateTransformationH hCT,
+int CPL_DLL OCTTransform( OGRCoordinateTransformationH hCT,
                   int nCount, double *x, double *y, double *z );
 
 CPL_C_END
