@@ -1,3 +1,8 @@
+2002-07-02  Simon Perkins  <s.perkins@lanl.gov>
+
+	* frmts/fits/fitsdataset.cpp: Backpedalling... Special creation
+	options for b-scaled FITS files eliminated to reduce weirdness.
+
 2002-07-01  Simon Perkins  <s.perkins@lanl.gov>
 
 	* frmts/fits/fitsdataset.cpp: Modified creation options for FITS
