@@ -114,5 +114,7 @@ ifneq ($(PYTHON),no)
 	(cd pymod; $(MAKE) install)
 endif
 	$(INSTALL) $(GDAL_LIB) $(INST_LIB)
+ifeq ($(HAVE_LD_SHARED),yes)
 	$(INSTALL) $(GDAL_SLIB) $(INST_LIB)
+endif
 	for f in data/*.csv ; do $(INSTALL) $$f $(INST_DATA) ; done
