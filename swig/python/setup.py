@@ -2,6 +2,12 @@
 
 import sys
 import os
+import string
+
+from os import path
+from glob import glob
+from distutils.core import setup, Extension
+from distutils.sysconfig import parse_makefile,expand_makefile_vars
 
 from distutils.core import setup, Extension
 
@@ -59,6 +65,48 @@ if sys.platform == 'win32':
     libraries.append('gdal')
     extra_link_args = ['/NODEFAULTLIB:MSVCRT']
 
+elif sys.platform == 'cygwin':
+    TOP_DIR = "../.."
+     
+    DICT = parse_makefile(os.path.join(TOP_DIR,"GDALMake.opt"))
+     
+    library_dirs = [TOP_DIR+"/","./"]
+    prefix = string.split(DICT[expand_makefile_vars("prefix",DICT)])[0]
+    prefix_lib = prefix + "/lib"
+    library_dirs.append(prefix_lib)
+     
+    extra_link_args = []
+     
+    print "\nLIBRARY_DIRS:\n\t",library_dirs
+     
+    libraries = ["gdal"]
+    gdal_libs = ["LIBS","PG_LIB","MYSQL_LIB"]
+    for gdal_lib in gdal_libs:
+        for lib in string.split(DICT[expand_makefile_vars(gdal_lib,DICT)]):
+            if lib[0:2] == "-l":
+                libraries.append(lib[2:])
+    libraries.append("stdc++")
+     
+    print "\nLIBRARIES:\n\t",libraries
+     
+    include_dirs=[path.join(TOP_DIR,"gcore"), path.join(TOP_DIR,"port"),
+        path.join(TOP_DIR,"ogr"), path.join(TOP_DIR,"pymod"), ] # only necessary
+     
+    include_files = [
+      glob(path.join(TOP_DIR,"gcore", "*.h")),
+      glob(path.join(TOP_DIR,"port", "*.h")),
+      glob(path.join(TOP_DIR,"alg", "*.h")),
+      glob(path.join(TOP_DIR,"ogr", "*.h")), 
+      glob(path.join(TOP_DIR,"ogr", "ogrsf_frmts", "*.h"))
+            ]
+     
+    IF=[]
+    for i in include_files:
+      IF.extend(i)
+    include_files=IF
+    del IF
+     
+    print "\nINCLUDE_FILES:",include_files
 else:
     libraries = ['gdal']
     library_dirs = ['../../']
