@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.5  1999/02/04 22:14:46  warmerda
+ * added aigrid format
+ *
  * Revision 1.4  1999/01/27 18:33:45  warmerda
  * Use FMRT_ macros to test if format avail
  *
@@ -47,6 +50,7 @@ void GDALRegister_GTiff(void);
 void GDALRegister_GXF(void);
 void GDALRegister_OGDI(void);
 void GDALRegister_HFA(void);
+void GDALRegister_AIGrid(void);
 CPL_C_END
 
 static char *szConfiguredFormats = "GDAL_FORMATS";
@@ -76,6 +80,10 @@ void GDALAllRegister()
     GDALRegister_HFA();
 #endif
     
+#ifdef FRMT_aigrid
+    GDALRegister_AIGrid();
+#endif
+
 #ifdef FRMT_ogdi
     GDALRegister_OGDI();
 #endif
