@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.37 2001/07/04 05:18:09 warmerda Exp $
+ * $Id: dbfopen.c,v 1.39 2001/12/11 22:41:03 warmerda Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -34,6 +34,12 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.39  2001/12/11 22:41:03  warmerda
+ * improve io related error checking when reading header
+ *
+ * Revision 1.38  2001/11/28 16:07:31  warmerda
+ * Cleanup to avoid compiler warnings as suggested by Richard Hash.
+ *
  * Revision 1.37  2001/07/04 05:18:09  warmerda
  * do last fix properly
  *
@@ -150,7 +156,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: dbfopen.c,v 1.37 2001/07/04 05:18:09 warmerda Exp $";
+  "$Id: dbfopen.c,v 1.39 2001/12/11 22:41:03 warmerda Exp $";
 
 #include "shapefil.h"
 
@@ -274,7 +280,7 @@ DBFOpen( const char * pszFilename, const char * pszAccess )
 {
     DBFHandle		psDBF;
     unsigned char		*pabyBuf;
-    int			nFields, nRecords, nHeadLen, nRecLen, iField, i;
+    int			nFields, nHeadLen, nRecLen, iField, i;
     char		*pszBasename, *pszFullname;
 
 /* -------------------------------------------------------------------- */
@@ -334,9 +340,15 @@ DBFOpen( const char * pszFilename, const char * pszAccess )
 /*  Read Table Header info                                              */
 /* -------------------------------------------------------------------- */
     pabyBuf = (unsigned char *) malloc(500);
-    fread( pabyBuf, 32, 1, psDBF->fp );
+    if( fread( pabyBuf, 32, 1, psDBF->fp ) != 1 )
+    {
+        fclose( psDBF->fp );
+        free( pabyBuf );
+        free( psDBF );
+        return NULL;
+    }
 
-    psDBF->nRecords = nRecords = 
+    psDBF->nRecords = 
      pabyBuf[4] + pabyBuf[5]*256 + pabyBuf[6]*256*256 + pabyBuf[7]*256*256*256;
 
     psDBF->nHeaderLength = nHeadLen = pabyBuf[8] + pabyBuf[9]*256;
@@ -354,7 +366,13 @@ DBFOpen( const char * pszFilename, const char * pszAccess )
     psDBF->pszHeader = (char *) pabyBuf;
 
     fseek( psDBF->fp, 32, 0 );
-    fread( pabyBuf, nHeadLen, 1, psDBF->fp );
+    if( fread( pabyBuf, nHeadLen, 1, psDBF->fp ) != 1 )
+    {
+        fclose( psDBF->fp );
+        free( pabyBuf );
+        free( psDBF );
+        return NULL;
+    }
 
     psDBF->panFieldOffset = (int *) malloc(sizeof(int) * nFields);
     psDBF->panFieldSize = (int *) malloc(sizeof(int) * nFields);
@@ -822,7 +840,6 @@ DBFIsAttributeNULL( DBFHandle psDBF, int iRecord, int iField )
         /* empty string fields are considered NULL */
         return strlen(pszValue) == 0;
     }
-    return FALSE;
 }
 
 /************************************************************************/
