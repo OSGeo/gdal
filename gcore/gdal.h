@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.72  2004/01/18 16:43:37  dron
+ * Added GDALGetDataTypeByName() function.
+ *
  * Revision 1.71  2003/07/18 04:46:48  sperkins
  * added CPL_DLL to GDALFillRaster
  *
@@ -168,6 +171,7 @@ typedef enum {
 int CPL_DLL GDALGetDataTypeSize( GDALDataType );
 int CPL_DLL GDALDataTypeIsComplex( GDALDataType );
 const char CPL_DLL *GDALGetDataTypeName( GDALDataType );
+GDALDataType GDALGetDataTypeByName( const char * );
 GDALDataType CPL_DLL GDALDataTypeUnion( GDALDataType, GDALDataType );
 
 /*! Flag indicating read/write, or read-only access to data. */
