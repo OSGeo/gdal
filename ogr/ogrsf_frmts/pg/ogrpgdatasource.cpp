@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/06/20 16:10:24  warmerda
+ * fixed PostGIS autodetect
+ *
  * Revision 1.3  2001/06/19 22:29:12  warmerda
  * upgraded to include PostGIS support
  *
@@ -260,9 +263,9 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
     if( pszGeomType == NULL )
     {
         if( bHavePostGIS )
-            pszGeomType = "bytea";
-        else
             pszGeomType = "geometry";
+        else
+            pszGeomType = "bytea";
     }
 
     hResult = PQexec(hPGConn, "BEGIN");
