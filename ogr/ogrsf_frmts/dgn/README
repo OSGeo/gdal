@@ -52,6 +52,14 @@ Release 1.7
  o Improved calcuation of bounding box in DGLCreateTextElem() based on code
    from Matt Kelder. 
 
+ o Added preliminary 3D write support. 
+
+ o Modified DGNCreateTextElem() arguments, and deprecated DGNCreateArcElem2D()
+   in favour of DGNCreateArcElem().
+
+ o Report transformation matrix for ViewInfo when dumping.
+
+
 Release 1.6
 -----------
 
