@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  CVirtualArray (OLE DB records reader) implementation.
+ * Purpose:  CVirtualArray/CSFCommand (OLE DB records reader) implementation.
  * Author:   Ken Shih, kshih@home.com
  *
  ******************************************************************************
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/06/04 15:30:41  warmerda
+ * Added function headers.
+ *
  * Revision 1.4  1999/06/04 15:20:00  warmerda
  * Added copyright header.
  *
@@ -39,15 +42,15 @@
 #include "ogr_geometry.h"
 #include "oledb_sf.h"
 
-
 OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape );
-
-
 
 #define MIN(a,b) ( a < b ? a : b)
 
-
-
+/************************************************************************/
+/*                              SFIStream                               */
+/*                                                                      */
+/*      Simple class to hold give IStream semantics on a byte array.    */
+/************************************************************************/
 
 struct SFIStream : IStream
 {
@@ -70,7 +73,7 @@ struct SFIStream : IStream
 
     // IUNKOWN
     HRESULT STDMETHODCALLTYPE	QueryInterface (REFIID riid, void **ppv) 
-	{
+        {
             if (riid == IID_IUnknown||
                 riid == IID_IStream || 
                 riid == IID_ISequentialStream)
@@ -100,7 +103,8 @@ struct SFIStream : IStream
 	
     // ISEQUENTIAL STREAM
 
-    HRESULT STDMETHODCALLTYPE	Read(void *pDest, ULONG cbToRead, ULONG *pcbActuallyRead)
+    HRESULT STDMETHODCALLTYPE	Read(void *pDest, ULONG cbToRead, 
+                                     ULONG *pcbActuallyRead)
 	{
             ULONG pcbDiscardedResult;
 
@@ -119,7 +123,8 @@ struct SFIStream : IStream
 
     //	ISTREAM
 
-    HRESULT STDMETHODCALLTYPE	Seek(LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPos)
+    HRESULT STDMETHODCALLTYPE	Seek(LARGE_INTEGER dlibMove, DWORD dwOrigin, 
+                                     ULARGE_INTEGER *plibNewPos)
 	{
             ULONG nNewPos;
 
@@ -147,7 +152,8 @@ struct SFIStream : IStream
 
 
     HRESULT STDMETHODCALLTYPE	SetSize(ULARGE_INTEGER) {return S_FALSE;}
-    HRESULT STDMETHODCALLTYPE	CopyTo(IStream *,ULARGE_INTEGER,ULARGE_INTEGER *,ULARGE_INTEGER*) 
+    HRESULT STDMETHODCALLTYPE	CopyTo(IStream *,ULARGE_INTEGER,
+                                       ULARGE_INTEGER *,ULARGE_INTEGER*) 
 	{
             return S_FALSE;
 	}
@@ -179,6 +185,10 @@ struct SFIStream : IStream
 
 ATLCOLUMNINFO CShapeFile::colInfo;
 
+/************************************************************************/
+/*                           CVirtualArray()                            */
+/************************************************************************/
+
 CVirtualArray::CVirtualArray()
 {
     m_ppasArray = NULL;
@@ -187,11 +197,18 @@ CVirtualArray::CVirtualArray()
     m_hSHPHandle = NULL;
 }
 
+/************************************************************************/
+/*                           ~CVirtualArray()                           */
+/************************************************************************/
 
 CVirtualArray::~CVirtualArray()
 {
-	//RemoveAll();
+    //RemoveAll();
 }
+
+/************************************************************************/
+/*                      CVirtualArray::RemoveAll()                      */
+/************************************************************************/
 
 void CVirtualArray::RemoveAll()
 {
@@ -218,8 +235,14 @@ void CVirtualArray::RemoveAll()
     m_hSHPHandle = NULL;
 }
 
+/************************************************************************/
+/*                     CVirtualArray::Initialize()                      */
+/*                                                                      */
+/*      Initialize the record cache.                                    */
+/************************************************************************/
 
-void	CVirtualArray::Initialize(int nArraySize, DBFHandle hDBF, SHPHandle hSHP)
+void	CVirtualArray::Initialize(int nArraySize, 
+                                  DBFHandle hDBF, SHPHandle hSHP)
 {
     m_ppasArray   = (BYTE **) calloc(nArraySize, sizeof(BYTE *));
     m_nArraySize  = nArraySize;
@@ -274,6 +297,12 @@ void	CVirtualArray::Initialize(int nArraySize, DBFHandle hDBF, SHPHandle hSHP)
         + 4; // for size of array pointed to by above buffer;
 }
 
+/************************************************************************/
+/*                      CVirtualArray::operator[]                       */
+/*                                                                      */
+/*      Fetch request record from the record cache, possibly having     */
+/*      to add it to the cache.                                         */
+/************************************************************************/
 
 BYTE &CVirtualArray::operator[](int iIndex) 
 {
@@ -292,10 +321,12 @@ BYTE &CVirtualArray::operator[](int iIndex)
         switch(aSchemaInfo[i].eType)
         {
             case FTInteger:	
-                *((int *) &(pBuffer[aSchemaInfo[i].nOffset])) = DBFReadIntegerAttribute(m_hDBFHandle,iIndex,i);
+                *((int *) &(pBuffer[aSchemaInfo[i].nOffset])) = 
+                    DBFReadIntegerAttribute(m_hDBFHandle,iIndex,i);
                 break;
             case FTDouble:
-                *((double *) &(pBuffer[aSchemaInfo[i].nOffset])) = DBFReadDoubleAttribute(m_hDBFHandle,iIndex,i);
+                *((double *) &(pBuffer[aSchemaInfo[i].nOffset])) = 
+                    DBFReadDoubleAttribute(m_hDBFHandle,iIndex,i);
                 break;
             case FTString:
                 pszStr = DBFReadStringAttribute(m_hDBFHandle,iIndex,i);
@@ -305,7 +336,6 @@ BYTE &CVirtualArray::operator[](int iIndex)
         }
     }
 
-
     // Read in the shape and change it to a WKB format.
     OGRGeometry *poShape = SHPReadOGRObject(m_hSHPHandle,iIndex);
     void		*pByte   = malloc(poShape->WkbSize());
@@ -314,10 +344,14 @@ BYTE &CVirtualArray::operator[](int iIndex)
 #define USE_ISTREAM
 #ifdef  USE_ISTREAM
     IStream	*pStream = new SFIStream(pByte,poShape->WkbSize());
-    *((void **) &(pBuffer[aSchemaInfo[aSchemaInfo.GetSize()-1].nOffset])) = pStream;
+    *((void **) &(pBuffer[aSchemaInfo[aSchemaInfo.GetSize()-1].nOffset])) = 
+        pStream;
 #else
-    *((void **) &(pBuffer[aSchemaInfo[aSchemaInfo.GetSize()-1].nOffset])) = pByte;
-    *((int *) &(pBuffer[aSchemaInfo[aSchemaInfo.GetSize()-1].nOffset+4])) = poShape->WkbSize();
+    *((void **) &(pBuffer[aSchemaInfo[aSchemaInfo.GetSize()-1].nOffset])) = 
+        pByte;
+
+    *((int *) &(pBuffer[aSchemaInfo[aSchemaInfo.GetSize()-1].nOffset+4])) = 
+        poShape->WkbSize();
 #endif
 	
     delete poShape;
@@ -325,26 +359,26 @@ BYTE &CVirtualArray::operator[](int iIndex)
     return *(m_ppasArray[iIndex]);
 }
 
+/************************************************************************/
+/*                         CSFComand::Execute()                         */
+/************************************************************************/
 
-
-
-
-
-
-/////////////////////////////////////////////////////////////////////////////
-// CSFCommand
-HRESULT CSFCommand::Execute(IUnknown * pUnkOuter, REFIID riid, DBPARAMS * pParams, 
-								 LONG * pcRowsAffected, IUnknown ** ppRowset)
+HRESULT CSFCommand::Execute(IUnknown * pUnkOuter, REFIID riid, 
+                            DBPARAMS * pParams,  LONG * pcRowsAffected, 
+                            IUnknown ** ppRowset)
 {
     CSFRowset* pRowset;
-    return CreateRowset(pUnkOuter, riid, pParams, pcRowsAffected, ppRowset, pRowset);
+    return CreateRowset(pUnkOuter, riid, pParams, pcRowsAffected, ppRowset, 
+                        pRowset);
 }
 
+/************************************************************************/
+/*                          DBFType2OLEType()                           */
+/************************************************************************/
 
 DBTYPE DBFType2OLEType(DBFFieldType eDBFType,int *pnOffset, int nWidth)
 {
     DBTYPE eDBType;
-
 
     switch(eDBFType)
     {
@@ -368,6 +402,11 @@ DBTYPE DBFType2OLEType(DBFFieldType eDBFType,int *pnOffset, int nWidth)
 
     return eDBType;
 }
+
+/************************************************************************/
+/*                         CSFRowset::Execute()                         */
+/************************************************************************/
+
 HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
 {	
     USES_CONVERSION;
@@ -425,7 +464,6 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     }
 
 	
-
     ATLCOLUMNINFO colInfo;
     memset(&colInfo, 0, sizeof(ATLCOLUMNINFO));
 	
