@@ -25,6 +25,10 @@
  * The GDALDataset class.
  * 
  * $Log$
+ * Revision 1.6  1999/05/16 20:04:58  warmerda
+ * Don't emit an error message when SetProjection() is called for datasets
+ * that don't implement the call.
+ *
  * Revision 1.5  1999/04/21 04:16:51  warmerda
  * experimental docs
  *
@@ -287,9 +291,6 @@ const char *GDALGetProjectionRef( GDALDatasetH hDS )
 CPLErr GDALDataset::SetProjection( const char * )
 
 {
-    CPLError( CE_Failure, CPLE_NotSupported,
-              "SetProjection() not supported for this dataset." );
-    
     return CE_Failure;
 }
 
