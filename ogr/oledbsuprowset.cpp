@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/06/02 17:13:33  warmerda
+ * added initial stub implementation of AccessRowset
+ *
  * Revision 1.4  1999/04/07 11:54:56  warmerda
  * Added dumping stuff.
  *
@@ -102,6 +105,16 @@ OledbSupRowset::~OledbSupRowset()
       pIRowset->Release();
       pIRowset = NULL;
    }
+}
+
+/************************************************************************/
+/*                            AccessRowset()                            */
+/************************************************************************/
+
+HRESULT OledbSupRowset::AccessRowset( IRowset * pIRowset )
+
+{
+    return ResultFromScode(S_OK);
 }
 
 /************************************************************************/
