@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.28  2004/12/20 06:40:32  fwarmerdam
+ * fixed up for reading non-byte data
+ *
  * Revision 1.27  2004/12/20 05:44:46  fwarmerdam
  * stripped out old full res mode - use TryWin and AdviseRead
  *
@@ -150,9 +153,10 @@ class CPL_DLL ECWDataset : public GDALDataset
     FILE        *fpVSIL;
     
     CNCSJP2FileView *poFileView;
-    NCSFileViewFileInfo *psFileInfo;
+    NCSFileViewFileInfoEx *psFileInfo;
 
     GDALDataType eRasterDataType;
+    NCSEcwCellType eNCSRequestDataType;
 
     // Current view window. 
     int         bWinActive;
@@ -578,7 +582,8 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     papCurLineBuf = (void **) CPLMalloc(sizeof(void*) * nWinBandCount );
     for( int iBand = 0; iBand < nWinBandCount; iBand++ )
-        papCurLineBuf[iBand] = CPLMalloc(nBufXSize * 32);
+        papCurLineBuf[iBand] = 
+            CPLMalloc(nBufXSize * (GDALGetDataTypeSize(eRasterDataType)/8) );
         
     return CE_None;
 }
@@ -678,7 +683,7 @@ int ECWDataset::TryWinRasterIO( GDALRWFlag eFlag,
                     break;
             }
 
-            GDALCopyWords( papCurLineBuf, eRasterDataType,
+            GDALCopyWords( papCurLineBuf[iWinBand], eRasterDataType,
                            GDALGetDataTypeSize( eRasterDataType ) / 8, 
                            pabyData + nBandSpace * iBand 
                            + iBufLine * nLineSpace, eDT, nPixelSpace,
@@ -706,8 +711,10 @@ CPLErr ECWDataset::LoadNextLine()
     }
 
     NCSEcwReadStatus  eRStatus;
-    eRStatus = poFileView->ReadLineBIL( (UINT8 **) papCurLineBuf );
-
+    eRStatus = poFileView->ReadLineBIL( eNCSRequestDataType, nWinBandCount,
+                                        papCurLineBuf );
+//    eRStatus = poFileView->ReadLineBIL( (UINT8 **) papCurLineBuf );
+//
     if( eRStatus != NCSECW_READ_OK )
         return CE_Failure;
 
@@ -964,7 +971,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Fetch general file information.                                 */
 /* -------------------------------------------------------------------- */
-    poDS->psFileInfo = (NCSFileViewFileInfo *) poFileView->GetFileInfo();
+    poDS->psFileInfo = poFileView->GetFileInfo();
 
     CPLDebug( "ECW", "FileInfo: SizeXY=%d,%d Bands=%d\n"
               "       OriginXY=%g,%g  CellIncrementXY=%g,%g\n",
@@ -983,12 +990,53 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = poDS->psFileInfo->nSizeY;
 
 /* -------------------------------------------------------------------- */
+/*      Establish the GDAL data type that corresponds.  A few NCS       */
+/*      data types have no direct corresponding value in GDAL so we     */
+/*      will coerce to something sufficiently similar.                  */
+/* -------------------------------------------------------------------- */
+    poDS->eNCSRequestDataType = poDS->psFileInfo->eCellType;
+    switch( poDS->psFileInfo->eCellType )
+    {
+        case NCSCT_UINT8:
+            poDS->eRasterDataType = GDT_Byte;
+            break;
+
+        case NCSCT_UINT16:
+            poDS->eRasterDataType = GDT_UInt16;
+            break;
+
+        case NCSCT_UINT32:
+        case NCSCT_UINT64:
+            poDS->eRasterDataType = GDT_UInt32;
+            poDS->eNCSRequestDataType = NCSCT_UINT32;
+            break;
+
+        case NCSCT_INT8:
+        case NCSCT_INT16:
+            poDS->eRasterDataType = GDT_Int16;
+            poDS->eNCSRequestDataType = NCSCT_INT16;
+            break;
+
+        case NCSCT_INT32:
+        case NCSCT_INT64:
+            poDS->eRasterDataType = GDT_Int32;
+            poDS->eNCSRequestDataType = NCSCT_INT32;
+            break;
+
+        case NCSCT_IEEE4:
+            poDS->eRasterDataType = GDT_Float32;
+            break;
+
+        case NCSCT_IEEE8:
+            poDS->eRasterDataType = GDT_Float64;
+            break;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     for( i=0; i < poDS->psFileInfo->nBands; i++ )
-    {
         poDS->SetBand( i+1, new ECWRasterBand( poDS, i+1 ) );
-    }
 
     poDS->ECW2WKTProjection();
 
@@ -1072,6 +1120,9 @@ void ECWDataset::ECW2WKTProjection()
 
     CPLDebug( "ECW", "projection=%s, datum=%s",
               psFileInfo->szProjection, psFileInfo->szDatum );
+
+    if( EQUAL(psFileInfo->szProjection,"RAW") )
+        return;
 
     if( ECWGetCSList() == NULL )
         return;
