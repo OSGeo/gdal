@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/03/06 18:57:07  warmerda
+ * Fixed bug in 1:1 special case code.
+ *
  * Revision 1.7  2000/03/06 02:22:13  warmerda
  * added overview support
  *
@@ -82,7 +85,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         && nPixelSpace == GDALGetDataTypeSize(eBufType)/8
         && nLineSpace == nPixelSpace * nXSize
         && nBlockXSize == poDS->GetRasterXSize()
-        && nBufXSize == nXSize )
+        && nBufXSize == nXSize 
+        && nBufYSize == nYSize )
     {
         for( iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff++ )
         {
