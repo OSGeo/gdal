@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/05/27 17:34:22  warmerda
+ * fixed problem with scanlines split over multiple text lines
+ *
  * Revision 1.22  2003/05/02 16:06:36  dron
  * Memory leak fixed.
  *
@@ -205,7 +208,7 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     AAIGDataset *poODS = (AAIGDataset *) poDS;
     const char  *pszLine;
     char        **papszTokens;
-    int         i;
+    int         iPixel;
 
     if( nBlockYOff < 0 || nBlockYOff > poODS->nRasterYSize - 1 
         || nBlockXOff != 0 )
@@ -225,33 +228,43 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    pszLine = CPLReadLine( poODS->fp );
-    if( pszLine == NULL )
+    for( iPixel = 0; iPixel < poODS->nRasterXSize; )
     {
-        CPLError( CE_Failure, CPLE_FileIO, "Can't read line from input file." );
-        return CE_Failure;
-    }
+        pszLine = CPLReadLine( poODS->fp );
+        if( pszLine == NULL )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, "Can't read line from input file." );
+            return CE_Failure;
+        }
 
+        papszTokens = CSLTokenizeString( pszLine );
+        if( papszTokens == NULL )
+            return CE_Failure;
+
+
+
+
+        for( int iToken = 0; 
+             papszTokens[iToken] != NULL && iPixel < poODS->nRasterXSize; 
+             iToken++ )
+        {
+            if( pImage != NULL )
+            {
+                if( eDataType == GDT_Float32 )
+                    ((float *) pImage)[iPixel] = atof(papszTokens[iToken]);
+                else
+                    ((GInt16 *) pImage)[iPixel] = atoi(papszTokens[iToken]);
+            }
+
+            iPixel++;
+        }
+
+        CSLDestroy( papszTokens );
+    }
+    
     if( nBlockYOff < poODS->nRasterYSize - 1 )
         panLineOffset[nBlockYOff + 1] = VSIFTell( poODS->fp );
 
-    if( pImage == NULL )
-        return CE_None;
-
-    papszTokens = CSLTokenizeString( pszLine );
-    if( papszTokens == NULL )
-        return CE_Failure;
-
-    for( i = 0; i < poODS->nRasterXSize && papszTokens[i] != NULL; i++ )
-    {
-        if( eDataType == GDT_Float32 )
-            ((float *) pImage)[i] = atof(papszTokens[i]);
-        else
-            ((GInt16 *) pImage)[i] = atoi(papszTokens[i]);
-    }
-
-    CSLDestroy( papszTokens );
-    
     return CE_None;
 }
 
