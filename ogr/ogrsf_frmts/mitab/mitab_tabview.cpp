@@ -701,11 +701,11 @@ int TABView::Close()
         m_pszFname[strlen(m_pszFname)-4] = '\0';
         char *pszFile = CPLStrdup(CPLSPrintf("%s2.map", m_pszFname));
         TABAdjustFilenameExtension(pszFile);
-        unlink(pszFile);
+        VSIUnlink(pszFile);
 
         sprintf(pszFile, "%s2.id", m_pszFname);
         TABAdjustFilenameExtension(pszFile);
-        unlink(pszFile);
+        VSIUnlink(pszFile);
 
         CPLFree(pszFile);
     }
