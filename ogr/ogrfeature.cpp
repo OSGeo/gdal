@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/07/05 17:19:52  warmerda
+ * added docs
+ *
  * Revision 1.1  1999/06/11 19:21:02  warmerda
  * New
  *
@@ -39,6 +42,18 @@
 /************************************************************************/
 /*                             OGRFeature()                             */
 /************************************************************************/
+
+/**
+ * Constructor
+ *
+ * Note that the OGRFeature will increment the reference count of it's
+ * defining OGRFeatureDefn.  Destruction of the OGRFeatureDefn before
+ * destruction of all OGRFeatures that depend on it is likely to result in
+ * a crash. 
+ *
+ * @param poDefnIn feature class (layer) definition to which the feature will
+ * adhere.
+ */
 
 OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn )
 
@@ -87,8 +102,34 @@ OGRFeature::~OGRFeature()
 }
 
 /************************************************************************/
+/*                             GetDefnRef()                             */
+/************************************************************************/
+
+/**
+ * \fn OGRFeatureDefn *OGRFeature::GetDefnRef();
+ *
+ * Fetch feature definition.
+ *
+ * @return a reference to the feature definition object.
+ */
+
+/************************************************************************/
 /*                        SetGeometryDirectly()                         */
 /************************************************************************/
+
+/**
+ * Set feature geometry.
+ *
+ * This method updates the features geometry, and operate exactly as
+ * SetGeometry(), except that this method assumes ownership of the
+ * passed geometry.
+ *
+ * @param poGeomIn new geometry to apply to feature.
+ *
+ * @return OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if
+ * the geometry type is illegal for the OGRFeatureDefn (checking not yet
+ * implemented). 
+ */ 
 
 OGRErr OGRFeature::SetGeometryDirectly( OGRGeometry * poGeomIn )
 
@@ -107,6 +148,20 @@ OGRErr OGRFeature::SetGeometryDirectly( OGRGeometry * poGeomIn )
 /*                            SetGeometry()                             */
 /************************************************************************/
 
+/**
+ * Set feature geometry.
+ *
+ * This method updates the features geometry, and operate exactly as
+ * SetGeometryDirectly(), except that this method does not assume ownership
+ * of the passed geometry, but instead makes a copy of it. 
+ *
+ * @param poGeomIn new geometry to apply to feature.
+ *
+ * @return OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if
+ * the geometry type is illegal for the OGRFeatureDefn (checking not yet
+ * implemented). 
+ */ 
+
 OGRErr OGRFeature::SetGeometry( OGRGeometry * poGeomIn )
 
 {
@@ -121,8 +176,30 @@ OGRErr OGRFeature::SetGeometry( OGRGeometry * poGeomIn )
 }
 
 /************************************************************************/
+/*                           GetGeometryRef()                           */
+/************************************************************************/
+
+/**
+ * \fn OGRGeometry *OGRFeature::GetGeometryRef();
+ *
+ * Fetch pointer to feature geometry.
+ *
+ * @return pointer to internal feature geometry.  This object should
+ * not be modified.
+ */
+
+/************************************************************************/
 /*                               Clone()                                */
 /************************************************************************/
+
+/**
+ * Duplicate feature.
+ *
+ * The newly created feature is owned by the caller, and will have it's own
+ * reference to the OGRFeatureDefn.
+ *
+ * @return new feature, exactly matching this feature.
+ */
 
 OGRFeature *OGRFeature::Clone()
 
@@ -140,8 +217,79 @@ OGRFeature *OGRFeature::Clone()
 }
 
 /************************************************************************/
+/*                           GetFieldCount()                            */
+/************************************************************************/
+
+/**
+ * \fn int OGRFeature::GetFieldCount();
+ *
+ * Fetch number of fields on this feature.  This will always be the same
+ * as the field count for the OGRFeatureDefn.
+ *
+ * @return count of fields.
+ */
+
+/************************************************************************/
+/*                          GetFieldDefnRef()                           */
+/************************************************************************/
+
+/**
+ * \fn OGRFieldDefn *OGRFeature::GetFieldDefnRef( int iField );
+ *
+ * Fetch definition for this field.
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ *
+ * @return the field definition (from the OGRFeatureDefn).  This is an
+ * internal reference, and should not be deleted or modified.
+ */
+
+/************************************************************************/
+/*                           GetFieldIndex()                            */
+/************************************************************************/
+
+/**
+ * \fn int OGRFeature::GetFieldIndex( const char * pszName );
+ * 
+ * Fetch the field index given field name.
+ *
+ * This is a cover for the OGRFeatureDefn::GetFieldIndex() method. 
+ *
+ * @param pszName the name of the field to search for. 
+ *
+ * @return the field index, or -1 if no matching field is found.
+ */
+
+/************************************************************************/
+/*                           GetRawFieldRef()                           */
+/************************************************************************/
+
+/**
+ * \fn OGRField *OGRFeature::GetRawFieldRef( int iField );
+ *
+ * Fetch a pointer to the internal field value given the index.  
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ *
+ * @return the returned pointer is to an internal data structure, and should
+ * not be freed, or modified. 
+ */
+
+/************************************************************************/
 /*                         GetFieldAsInteger()                          */
 /************************************************************************/
+
+/**
+ * Fetch field value as integer.
+ *
+ * OFTString features will be translated using atoi().  OFTReal fields
+ * will be cast to integer.   Other field types, or errors will result in
+ * a return value of zero.
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ *
+ * @return the field value.
+ */
 
 int OGRFeature::GetFieldAsInteger( int iField )
 
@@ -169,6 +317,18 @@ int OGRFeature::GetFieldAsInteger( int iField )
 /*                          GetFieldAsDouble()                          */
 /************************************************************************/
 
+/**
+ * Fetch field value as a double.
+ *
+ * OFTString features will be translated using atof().  OFTInteger fields
+ * will be cast to double.   Other field types, or errors will result in
+ * a return value of zero.
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ *
+ * @return the field value.
+ */
+
 double OGRFeature::GetFieldAsDouble( int iField )
 
 {
@@ -194,6 +354,19 @@ double OGRFeature::GetFieldAsDouble( int iField )
 /************************************************************************/
 /*                          GetFieldAsString()                          */
 /************************************************************************/
+
+/**
+ * Fetch field value as a string.
+ *
+ * OFTReal and OFTInteger fields will be translated to string using
+ * sprintf(), but not necessarily using the established formatting rules.
+ * Other field types, or errors will result in a return value of zero.
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ *
+ * @return the field value.  This string is internal, and should not be
+ * modified, or freed.  It's lifetime may be very brief. 
+ */
 
 const char *OGRFeature::GetFieldAsString( int iField )
 
@@ -228,6 +401,18 @@ const char *OGRFeature::GetFieldAsString( int iField )
 /*                              SetField()                              */
 /************************************************************************/
 
+/**
+ * Set field to integer value. 
+ *
+ * OFTInteger and OFTReal fields will be set directly.  OFTString fields
+ * will be assigned a string representation of the value, but not necessarily
+ * taking into account formatting constraints on this field.  Other field
+ * types may be unaffected.
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ * @param nValue the value to assign.
+ */
+
 void OGRFeature::SetField( int iField, int nValue )
 
 {
@@ -259,6 +444,18 @@ void OGRFeature::SetField( int iField, int nValue )
 /************************************************************************/
 /*                              SetField()                              */
 /************************************************************************/
+
+/**
+ * Set field to double value. 
+ *
+ * OFTInteger and OFTReal fields will be set directly.  OFTString fields
+ * will be assigned a string representation of the value, but not necessarily
+ * taking into account formatting constraints on this field.  Other field
+ * types may be unaffected.
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ * @param dfValue the value to assign.
+ */
 
 void OGRFeature::SetField( int iField, double dfValue )
 
@@ -292,6 +489,17 @@ void OGRFeature::SetField( int iField, double dfValue )
 /*                              SetField()                              */
 /************************************************************************/
 
+/**
+ * Set field to string value. 
+ *
+ * OFTInteger fields will be set based on an atoi() conversion of the string.
+ * OFTReal fields will be set based on an atof() conversion of the string.
+ * Other field types may be unaffected.
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ * @param pszValue the value to assign.
+ */
+
 void OGRFeature::SetField( int iField, const char * pszValue )
 
 {
@@ -320,6 +528,18 @@ void OGRFeature::SetField( int iField, const char * pszValue )
 /*                              SetField()                              */
 /************************************************************************/
 
+/**
+ * Set field.
+ *
+ * The passed value OGRField must be of exactly the same type as the
+ * target field, or an application crash may occur.  The passed value
+ * is copied, and will not be affected.  It remains the responsibility of
+ * the caller. 
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ * @param puValue the value to assign.
+ */
+
 void OGRFeature::SetField( int iField, OGRField * puValue )
 
 {
@@ -347,6 +567,16 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
 /************************************************************************/
 /*                            DumpReadable()                            */
 /************************************************************************/
+
+/**
+ * Dump this feature in a human readable form.
+ *
+ * This dumps the attributes, and geometry; however, it doesn't definition
+ * information (other than field types and names), nor does it report the
+ * geometry spatial reference system.
+ *
+ * @param fpOut the stream to write to, such as strout.
+ */
 
 void OGRFeature::DumpReadable( FILE * fpOut )
 

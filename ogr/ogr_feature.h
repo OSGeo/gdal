@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/07/05 17:18:39  warmerda
+ * added docs
+ *
  * Revision 1.2  1999/06/11 19:21:27  warmerda
  * Fleshed out operational definitions
  *
@@ -41,6 +44,18 @@
 
 #include "ogr_geometry.h"
 
+/**
+ * \file ogr_feature.h
+ *
+ * Simple feature classes.
+ */
+
+/**
+ * List of feature field types.  This list is likely to be extended in the
+ * future ... avoid coding applications based on the assumption that all
+ * field types can be known.
+ */
+
 enum OGRFieldType
 {
     OFTInteger = 0,
@@ -53,6 +68,10 @@ enum OGRFieldType
     OFTWideStringList = 7,
     OFTBinary = 8,
 };
+
+/**
+ * Display justification for field values.
+ */
 
 enum OGRJustification
 {
@@ -97,7 +116,7 @@ typedef union {
 /************************************************************************/
 
 /**
- * Definition of an attribute of a OGRFeatureDefn.
+ * Definition of an attribute of an OGRFeatureDefn.
  */
 
 class OGRFieldDefn
@@ -144,7 +163,19 @@ class OGRFieldDefn
 /************************************************************************/
 
 /**
- * Definition of a feature class or feature table.
+ * Definition of a feature class or feature layer.
+ *
+ * This object contains schema information for a set of OGRFeatures.  In
+ * table based systems, an OGRFeatureDefn is essentially a layer.  In more
+ * object oriented approaches (such as SF CORBA) this can represent a class
+ * of features but doesn't necessarily relate to all of a layer, or just one
+ * layer.
+ *
+ * This object also can contain some other information such as a name, the
+ * base geometry type and potentially other metadata.
+ *
+ * It is reasonable for different translators to derive classes from
+ * OGRFeatureDefn with additional translator specific information. 
  */
 
 class OGRFeatureDefn
@@ -203,13 +234,13 @@ class OGRFeature
     
     OGRErr		SetGeometryDirectly( OGRGeometry * );
     OGRErr		SetGeometry( OGRGeometry * );
-    OGRGeometry        *GetGeometryRef( OGRGeometry * ) { return poGeometry; }
+    OGRGeometry        *GetGeometryRef() { return poGeometry; }
 
     OGRFeature	       *Clone();
 
     int			GetFieldCount() { return poDefn->GetFieldCount(); }
-    OGRFieldDefn       *GetFieldDefnRef( int i )
-        			      { return poDefn->GetFieldDefn(i); }
+    OGRFieldDefn       *GetFieldDefnRef( int iField )
+        			      { return poDefn->GetFieldDefn(iField); }
     int			GetFieldIndex( const char * pszName)
                                       { return poDefn->GetFieldIndex(pszName);}
     

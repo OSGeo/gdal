@@ -28,9 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/07/05 17:19:52  warmerda
+ * added docs
+ *
  * Revision 1.1  1999/06/11 19:21:02  warmerda
  * New
- *
  */
 
 #include "ogr_feature.h"
@@ -39,6 +41,13 @@
 /************************************************************************/
 /*                            OGRFieldDefn()                            */
 /************************************************************************/
+
+/**
+ * Constructor.
+ *
+ * @param pszNameIn the name of the new field.
+ * @param eTypeIn the type of the new field.
+ */
 
 OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn )
 
@@ -49,6 +58,14 @@ OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn )
 /************************************************************************/
 /*                            OGRFieldDefn()                            */
 /************************************************************************/
+
+/**
+ * Constructor.
+ *
+ * Create by cloning an existing field definition.
+ *
+ * @param poPrototype the field definition to clone.
+ */
 
 OGRFieldDefn::OGRFieldDefn( OGRFieldDefn *poPrototype )
 
@@ -92,12 +109,56 @@ OGRFieldDefn::~OGRFieldDefn()
 /*                              SetName()                               */
 /************************************************************************/
 
+/**
+ * Reset the name of this field.
+ *
+ * @param pszNameIn the new name to apply.
+ */
+
 void OGRFieldDefn::SetName( const char * pszNameIn )
 
 {
     CPLFree( pszName );
     pszName = CPLStrdup( pszNameIn );
 }
+
+/************************************************************************/
+/*                             GetNameRef()                             */
+/************************************************************************/
+
+/**
+ * \fn const char *OGRFieldDefn::GetNameRef();
+ *
+ * Fetch name of this field.
+ *
+ * @return pointer to an internal name string that should not be freed or
+ * modified.
+ */
+
+/************************************************************************/
+/*                              GetType()                               */
+/************************************************************************/
+
+/**
+ * \fn OGRFieldType OGRFieldDefn::GetType();
+ *
+ * Fetch type of this field.
+ *
+ * @return field type.
+ */
+
+/************************************************************************/
+/*                              SetType()                               */
+/************************************************************************/
+
+/**
+ * \fn void OGRFieldDefn::SetType( OGRFieldType eType );
+ *
+ * Set the type of this field.  This should never be done to an OGRFieldDefn
+ * that is already part of an OGRFeatureDefn.
+ *
+ * @param eType the new field type.
+ */
 
 /************************************************************************/
 /*                             SetDefault()                             */
@@ -128,6 +189,15 @@ void OGRFieldDefn::SetDefault( const OGRField * puDefaultIn )
 /************************************************************************/
 /*                          GetFieldTypeName()                          */
 /************************************************************************/
+
+/**
+ * Fetch human readable name for a field type.
+ *
+ * @param eType the field type to get name for.
+ *
+ * @return pointer to an internal static name string. It should not be
+ * modified or freed.
+ */
 
 const char * OGRFieldDefn::GetFieldTypeName( OGRFieldType eType )
 
@@ -166,3 +236,79 @@ const char * OGRFieldDefn::GetFieldTypeName( OGRFieldType eType )
         return "(unknown)";
     }
 }
+
+/************************************************************************/
+/*                             GetJustify()                             */
+/************************************************************************/
+
+/**
+ * \fn OGRJustification OGRFieldDefn::GetJustify();
+ *
+ * Get the justification for this field.
+ *
+ * @return the justification.
+ */
+
+/************************************************************************/
+/*                             SetJustify()                             */
+/************************************************************************/
+
+/**
+ * \fn void OGRFieldDefn::SetJustify( OGRJustification eJustify );
+ *
+ * Set the justification for this field.
+ *
+ * @param eJustify the new justification.
+ */
+
+/************************************************************************/
+/*                              GetWidth()                              */
+/************************************************************************/
+
+/**
+ * \fn int OGRFieldDefn::GetWidth();
+ *
+ * Get the formatting width for this field.
+ *
+ * @return the width, zero means no specified width. 
+ */
+
+/************************************************************************/
+/*                              SetWidth()                              */
+/************************************************************************/
+
+/**
+ * \fn void OGRFieldDefn::SetWidth( int nWidth );
+ *
+ * Set the formatting width for this field in characters.
+ *
+ * @param nWidth the new width.
+ */
+
+/************************************************************************/
+/*                            GetPrecision()                            */
+/************************************************************************/
+
+/**
+ * \fn int OGRFieldDefn::GetPrecision();
+ *
+ * Get the formatting precision for this field.  This should normally be
+ * zero for fields of types other than OFTReal.
+ *
+ * @return the precision.
+ */
+
+/************************************************************************/
+/*                            SetPrecision()                            */
+/************************************************************************/
+
+/**
+ * \fn void OGRFieldDefn::SetPrecision( int nPrecision );
+ *
+ * Set the formatting precision for this field in characters.
+ * 
+ * This should normally be zero for fields of types other than OFTReal. 
+ *
+ * @param nPrecision the new precision. 
+ */
+
