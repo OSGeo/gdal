@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/03/23 16:01:16  warmerda
+ * added storage of type and fetch methods
+ *
  * Revision 1.1  1999/03/23 13:56:13  warmerda
  * New
  *
@@ -58,6 +61,7 @@ class SDTS_CATDEntry
 {
   public:
     string	osModule;
+    string	osType;
     string	osFile;
     string	osExternalFlag;
 };
@@ -161,6 +165,10 @@ int SDTS_CATD::Read( string osFilename )
         if( poSubfield != NULL )
             poSubfield->getA( poEntry->osExternalFlag );
 
+        poSubfield = oRecord.getSubfield( "CATD", 0, "TYPE", 0 );
+        if( poSubfield != NULL )
+            poSubfield->getA( poEntry->osType );
+
 /* -------------------------------------------------------------------- */
 /*      Add the entry to the list.                                      */
 /* -------------------------------------------------------------------- */
@@ -195,7 +203,7 @@ int SDTS_CATD::Read( string osFilename )
 /*                         getModuleFilePath()                          */
 /************************************************************************/
 
-string SDTS_CATD::getModuleFilePath( string osModule )
+string SDTS_CATD::getModuleFilePath( const string &osModule )
 
 {
     int		i;
@@ -230,3 +238,35 @@ string SDTS_CATD::getModuleFilePath( string osModule )
 
     return osFullPath;
 }
+
+/************************************************************************/
+/*                           getEntryModule()                           */
+/************************************************************************/
+
+const string &SDTS_CATD::getEntryModule( int iEntry )
+
+{
+    static string	osEmpty("");
+    
+    if( iEntry < 0 || iEntry >= nEntries )
+        return osEmpty;
+    else
+        return papoEntries[iEntry]->osModule;
+}
+
+/************************************************************************/
+/*                            getEntryType()                            */
+/************************************************************************/
+
+const string &SDTS_CATD::getEntryType( int iEntry )
+
+{
+    static string	osEmpty("");
+    
+    if( iEntry < 0 || iEntry >= nEntries )
+        return osEmpty;
+    else
+        return papoEntries[iEntry]->osType;
+}
+
+
