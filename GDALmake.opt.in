@@ -1,8 +1,10 @@
 CC	=	@CC@
 CXX	=	@CXX@
 
-OPTFLAGS =	-O
-DBGFLAGS =	-g -DDEBUG
+CXX_OPTFLAGS =	@CXXFLAGS@
+C_OPTFLAGS =	@CFLAGS@
+CXX_DBGFLAGS =	-g -DDEBUG
+C_DBGFLAGS =	-g -DDEBUG
 
 #
 #	Whether we use debug flags, or optimization is determined by
@@ -10,19 +12,23 @@ DBGFLAGS =	-g -DDEBUG
 #	This is similar to the OGDI builds. 
 #
 ifeq ($(CFG),debug)
-OD_FLAGS =	$(DBGFLAGS)
+C_ODFLAGS =	$(CXX_DBGFLAGS)
+CXX_ODFLAGS =	$(C_DBGFLAGS)
 endif
 
 ifeq ($(CFG),gprof)
-OD_FLAGS =	-pg
+C_ODFLAGS =	-pg
+CXX_ODFLAGS =	-pg
 LNK_FLAGS =	-pg
 endif
 
-ifeq ($(OD_FLAGS),)
-OD_FLAGS =	$(OPTFLAGS)
+ifeq ($(CFG),)
+C_ODFLAGS =	$(C_OPTFLAGS)
+CXX_ODFLAGS =	$(CXX_OPTFLAGS)
 endif
 
-CFLAGS	=	-Wall $(OD_FLAGS)
+CFLAGS		=	@C_WFLAGS@ $(C_ODFLAGS)
+CXXFLAGS	=	@CXX_WFLAGS@ $(CXX_ODFLAGS)
 
 GDAL_INCLUDE	=	-I$(GDAL_ROOT) -I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/core
 

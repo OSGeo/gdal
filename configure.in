@@ -18,4 +18,6 @@ dnl Checks for library functions.
 AC_C_BIGENDIAN
 AC_FUNC_VPRINTF
 
+AC_COMPILER_WFLAGS
+
 AC_OUTPUT(GDALmake.opt)
