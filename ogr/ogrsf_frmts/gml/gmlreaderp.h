@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/06/27 17:11:23  warmerda
+ * removed DOMString.hpp, and added XERCES namespace support
+ *
  * Revision 1.6  2003/05/21 03:48:35  warmerda
  * Expand tabs
  *
@@ -58,12 +61,15 @@
 #define INFINITY INFINITY_XERCES
 #endif
 
-#include <dom/DOMString.hpp>
 #include <util/PlatformUtils.hpp>
 #include <sax2/DefaultHandler.hpp>
 #include <sax2/ContentHandler.hpp>
 #include <sax2/SAX2XMLReader.hpp>
 #include <sax2/XMLReaderFactory.hpp>
+
+#ifdef XERCES_CPP_NAMESPACE_USE
+XERCES_CPP_NAMESPACE_USE
+#endif
 
 /************************************************************************/
 /*          XMLCh / char translation functions - trstring.cpp           */
