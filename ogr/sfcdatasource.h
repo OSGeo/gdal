@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/06/08 16:07:10  warmerda
+ * Removed short doc for CreateSFCTable.
+ *
  * Revision 1.1  1999/06/08 03:50:25  warmerda
  * New
  *
@@ -96,7 +99,6 @@ class SFCDataSource : public CDataSource
     const char	*GetSFTableName( int );
 #endif
     
-    /** Instantiate a spatial table */
     SFCTable	*CreateSFCTable( const char * pszTablename,
                                  OGRGeometry * poFilterGeometry = NULL,
                                  const char * pszFilterOperator = NULL );
