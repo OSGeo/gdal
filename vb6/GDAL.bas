@@ -1,0 +1,130 @@
+'*****************************************************************************
+' $Id$
+'
+' Project:  GDAL VB6 Bindings
+' Purpose:  Main GDAL Public Module - public non-class GDAL declarations.
+' Author:   Frank Warmerdam, warmerdam@pobox.com
+'
+'*****************************************************************************
+' Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
+'
+' Permission is hereby granted, free of charge, to any person obtaining a
+' copy of this software and associated documentation files (the "Software"),
+' to deal in the Software without restriction, including without limitation
+' the rights to use, copy, modify, merge, publish, distribute, sublicense,
+' and/or sell copies of the Software, and to permit persons to whom the
+' Software is furnished to do so, subject to the following conditions:
+'
+' The above copyright notice and this permission notice shall be included
+' in all copies or substantial portions of the Software.
+'
+' THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+' OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+' FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+' THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+' LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+' FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+' DEALINGS IN THE SOFTWARE.
+'*****************************************************************************
+'
+' $Log$
+' Revision 1.1  2005/03/16 19:40:49  fwarmerdam
+' new
+'
+'
+
+Attribute VB_Name = "GDAL"
+
+Public Const GA_ReadOnly As Long = 1
+Public Const GA_Update As Long = 1
+
+Public Const GDT_Unknown As Long = 0
+Public Const GDT_Byte As Long = 1
+Public Const GDT_UInt16 As Long = 2
+Public Const GDT_Int16 As Long = 3
+Public Const GDT_UInt32 As Long = 4
+Public Const GDT_Int32 As Long = 5
+Public Const GDT_Float32 As Long = 6
+Public Const GDT_Float64 As Long = 7
+Public Const GDT_CInt16 As Long = 8
+Public Const GDT_CInt32 As Long = 9
+Public Const GDT_CFloat32 As Long = 10
+Public Const GDT_CFloat64 As Long = 11
+Public Const GDT_TypeCount As Long = 12
+
+Public Const GF_Read As Long = 0
+Public Const GF_Write As Long = 1
+
+Public Const DMD_SHORTNAME As String = "DMD_SHORTNAME"
+Public Const DMD_LONGNAME As String = "DMD_LONGNAME"
+Public Const DMD_HELPTOPIC As String = "DMD_HELPTOPIC"
+Public Const DMD_MIMETYPE As String = "DMD_MIMETYPE"
+Public Const DMD_EXTENSION As String = "DMD_EXTENSION"
+Public Const DMD_CREATIONOPTIONLIST As String = "DMD_CREATIONOPTIONLIST"
+Public Const DMD_CREATIONDATATYPES As String = "DMD_CREATIONDATATYPES"
+
+Public Const DCAP_CREATE As String = "DCAP_CREATE"
+Public Const DCAP_CREATECOPY As String = "DCAP_CREATECOPY"
+
+' ----------------------------------------------------------------------------
+Public Function GetLastErrorMsg() As String
+    GetLastErrorMsg = CStr2VB(GDALCore.CPLGetLastErrorMsg())
+End Function
+
+' ----------------------------------------------------------------------------
+Public Sub AllRegister()
+    Call GDALCore.GDALAllRegister
+End Sub
+' ----------------------------------------------------------------------------
+Public Function GetDriverByName(DriverName As String) As GDALDriver
+    Dim drv_c As Long
+    drv_c = GDALCore.GDALGetDriverByName(DriverName)
+    If drv_c <> 0 Then
+        Set GetDriverByName = New GDALDriver
+        GetDriverByName.CInit (drv_c)
+    End If
+End Function
+
+' ----------------------------------------------------------------------------
+Public Function GetDriver(ByVal DriverIndex As Long) As GDALDriver
+    Dim drv_c As Long
+    drv_c = GDALCore.GDALGetDriver(DriverIndex)
+    If drv_c <> 0 Then
+        Set GetDriver = New GDALDriver
+        GetDriver.CInit (drv_c)
+    End If
+End Function
+
+' ----------------------------------------------------------------------------
+Public Function GetDriverCount() As Long
+    GetDriverCount = GDALCore.GDALGetDriverCount()
+End Function
+
+' ----------------------------------------------------------------------------
+Public Function GetDataTypeName(ByVal DataType As Long) As String
+    GetDataTypeName = GDALCore.CStr2VB(GDALCore.GDALGetDataTypeName(DataType))
+End Function
+
+' ----------------------------------------------------------------------------
+Public Function GetDataTypeSize(ByVal DataType As Long) As Long
+    GetDataTypeSize = GDALCore.GDALGetDataTypeSize(DataType)
+End Function
+
+' ----------------------------------------------------------------------------
+Public Function OpenDS(Filename As String, ByVal Access As Long) As GDALDataset
+    obj = GDALCore.GDALOpen(Filename, Access)
+    If obj <> 0 Then
+        Set OpenDS = New GDALDataset
+        OpenDS.CInit (obj)
+    End If
+End Function
+
+' ----------------------------------------------------------------------------
+Public Function OpenSharedDS(Filename As String, Access As Long) As GDALDataset
+    obj = GDALCore.GDALOpenShared(Filename, Access)
+    If obj <> 0 Then
+        Set OpenDS = New GDALDataset
+        OpenDS.CInit (obj)
+    End If
+End Function
+
