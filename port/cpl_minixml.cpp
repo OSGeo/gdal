@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/04/01 16:08:21  warmerda
+ * allow periods in tokens
+ *
  * Revision 1.9  2002/03/07 22:19:20  warmerda
  * don't do operations within CPLAssert(), in UnreadChar()
  *
@@ -326,6 +329,7 @@ static TokenType ReadToken( ParseContext *psContext )
              (chNext >= 'A' && chNext <= 'Z')
                  || (chNext >= 'a' && chNext <= 'z')
                  || chNext == '_'
+                 || chNext == '.'
                  || chNext == ':'
                  || (chNext >= '0' && chNext <= '9');
              chNext = ReadChar(psContext) ) 
