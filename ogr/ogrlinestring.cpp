@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2003/01/06 16:18:40  warmerda
+ * getEnvlope() crash fix if there are no points
+ *
  * Revision 1.33  2002/09/11 13:47:17  warmerda
  * preliminary set of fixes for 3D WKB enum
  *
@@ -983,6 +986,9 @@ void OGRLineString::getEnvelope( OGREnvelope * poEnvelope )
 
 {
     double      dfMinX, dfMinY, dfMaxX, dfMaxY;
+
+    if( nPointCount == 0 )
+        return;
     
     dfMinX = dfMaxX = paoPoints[0].x;
     dfMinY = dfMaxY = paoPoints[0].y;
