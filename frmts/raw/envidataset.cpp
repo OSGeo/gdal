@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2005/03/16 11:04:00  lichun
+ * FlushCache() now always writes the whole header file
+ * in the case of classes the type will be Classified and the class names and colors are written
+ *
  * Revision 1.23  2005/02/28 15:42:05  fwarmerdam
  * Call RawDataset::FlushCache() instead of GDALDataset::FlushCache()
  *
@@ -310,6 +314,9 @@ class ENVIDataset : public RawDataset
     
     char        **SplitList( const char * );
 
+    enum Interleave { BSQ, BIL, BIP } interleave;
+    static int GetEnviType(GDALDataType eType);
+
   public:
     		ENVIDataset();
     	        ~ENVIDataset();
@@ -381,39 +388,138 @@ void ENVIDataset::FlushCache()
     if ( !bHeaderDirty )
         return;
 
-    VSIFSeek( fp, 0, SEEK_END );
+    VSIFSeek( fp, 0, SEEK_SET );
+
+/* -------------------------------------------------------------------- */
+/*      Rewrite out the header.                                           */
+/* -------------------------------------------------------------------- */
+    int		iBigEndian;
+
+    const char	*pszInterleaving;
+    char** catNames;
+    
+#ifdef CPL_LSB
+    iBigEndian = 0;
+#else
+    iBigEndian = 1;
+#endif
+
+    VSIFPrintf( fp, "ENVI\n" );
+    if (0 != pszDescription)
+      VSIFPrintf( fp, "description = {\n%s}\n", pszDescription);
+    VSIFPrintf( fp, "samples = %d\nlines   = %d\nbands   = %d\n",
+		nRasterXSize, nRasterYSize, nBands );
+
+		GDALRasterBand* band = GetRasterBand(1);
+		catNames = band->GetCategoryNames();
+    VSIFPrintf( fp, "header offset = 0\n");
+    if (0 == catNames)
+      VSIFPrintf( fp, "file type = ENVI Standard\n" );
+    else
+      VSIFPrintf( fp, "file type = ENVI Classification\n" );
+    int iENVIType = GetEnviType(band->GetRasterDataType());
+    VSIFPrintf( fp, "data type = %d\n", iENVIType );
+    switch (interleave)
+    {
+    case BIP:
+      pszInterleaving = "bip";		    // interleaved by pixel
+      break;
+    case BIL:
+	    pszInterleaving = "bil";		    // interleaved by line
+      break;
+    case BSQ:
+	    pszInterleaving = "bsq";		// band sequental by default
+      break;
+    default:
+    	pszInterleaving = "bsq";
+      break;
+    }
+    VSIFPrintf( fp, "interleave = %s\n", pszInterleaving);
+    VSIFPrintf( fp, "byte order = %d\n", iBigEndian );
+
+
+/* -------------------------------------------------------------------- */
+/*      Write class and color information                               */
+/* -------------------------------------------------------------------- */
+		catNames = band->GetCategoryNames();
+    if (0 != catNames)
+    {
+		  int nrClasses = 0;
+		  while (*catNames++)
+			  ++nrClasses;
+
+		  if (nrClasses > 0)
+		  {
+			  VSIFPrintf( fp, "classes = %d\n", nrClasses );
+
+			  GDALColorTable* colorTable = band->GetColorTable();
+			  if (0 != colorTable)
+			  {
+				  int nrColors = colorTable->GetColorEntryCount();
+				  if (nrColors > nrClasses)
+					  nrColors = nrClasses;
+				  VSIFPrintf( fp, "class lookup = {\n");
+				  for (int i = 0; i < nrColors; ++i)
+				  {
+					  const GDALColorEntry* color = colorTable->GetColorEntry(i);
+					  VSIFPrintf(fp, "%d, %d, %d", color->c1, color->c2, color->c3);
+					  if (i < nrColors - 1)
+					  {
+						  VSIFPrintf(fp, ", ");
+						  if (0 == (i+1) % 5)
+							  VSIFPrintf(fp, "\n");
+					  }
+				  }
+				  VSIFPrintf(fp, "}\n");
+			  }
+
+			  catNames = band->GetCategoryNames();
+			  if (0 != *catNames)
+			  {
+				  VSIFPrintf( fp, "class names = {\n%s", *catNames++);
+          int i = 0;
+          while (*catNames) {
+					  VSIFPrintf( fp, ",");
+					  if (0 == (++i) % 5)
+						  VSIFPrintf(fp, "\n");
+					  VSIFPrintf( fp, " %s", *catNames++);
+          }
+				  VSIFPrintf( fp, "}\n");
+			  }
+      }
+		}
 
 /* -------------------------------------------------------------------- */
 /*      Write the rest of header.                                       */
 /* -------------------------------------------------------------------- */
     if ( pszProjection && !EQUAL(pszProjection, "") )
     {
-	const char	*pszHemisphere;
-	double		dfPixelY;
-	int		bNorth;
-	int		iUTMZone;
-	OGRSpatialReference oSRS;
+	    const char	*pszHemisphere;
+	    double		dfPixelY;
+	    int		bNorth;
+	    int		iUTMZone;
+	    OGRSpatialReference oSRS;
 
-	char	*pszProj = pszProjection;
+	    char	*pszProj = pszProjection;
 
-	oSRS.importFromWkt( &pszProj );
-        iUTMZone = oSRS.GetUTMZone( &bNorth );
-	if ( iUTMZone )
-	{
-	    if ( bNorth )
+	    oSRS.importFromWkt( &pszProj );
+            iUTMZone = oSRS.GetUTMZone( &bNorth );
+	    if ( iUTMZone )
 	    {
-		pszHemisphere = "North";
-		dfPixelY = -adfGeoTransform[5];
+	      if ( bNorth )
+	      {
+		      pszHemisphere = "North";
+		      dfPixelY = -adfGeoTransform[5];
+	      }
+	      else
+	      {
+		      pszHemisphere = "South";
+		      dfPixelY = adfGeoTransform[5];
+	      }
+  	    VSIFPrintf( fp, "map info = {UTM, 1, 1, %f, %f, %f, %f, %d, %s}\n",
+	    	adfGeoTransform[0], adfGeoTransform[3], adfGeoTransform[1],
+		    dfPixelY, iUTMZone, pszHemisphere);
 	    }
-	    else
-	    {
-		pszHemisphere = "South";
-		dfPixelY = adfGeoTransform[5];
-	    }
-	    VSIFPrintf( fp, "map info = {UTM, 1, 1, %f, %f, %f, %f, %d, %s}\n",
-		adfGeoTransform[0], adfGeoTransform[3], adfGeoTransform[1],
-		dfPixelY, iUTMZone, pszHemisphere);
-	}
     } else {
       // Suppose we are in North hemisphere.
       double dfPixelY = -adfGeoTransform[5];
@@ -427,13 +533,13 @@ void ENVIDataset::FlushCache()
     VSIFPrintf( fp, "band names = {\n" );
     for ( int i = 1; i <= nBands; i++ )
     {
-	const char  *pszDescription = GetRasterBand( i )->GetDescription();
+	    const char  *pszDescription = GetRasterBand( i )->GetDescription();
 
-	if ( EQUAL( pszDescription, "" ) )
-	    pszDescription = CPLSPrintf( "Band %d", i );
-	VSIFPrintf( fp, "%s", pszDescription );
-	if ( i != nBands )
-	    VSIFPrintf( fp, ",\n" );
+	    if ( EQUAL( pszDescription, "" ) )
+	        pszDescription = CPLSPrintf( "Band %d", i );
+	    VSIFPrintf( fp, "%s", pszDescription );
+	    if ( i != nBands )
+	        VSIFPrintf( fp, ",\n" );
     }
     VSIFPrintf( fp, "}\n" );
 }
@@ -972,18 +1078,21 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     
     if( EQUALN(pszInterleave, "bsq", 3) )
     {
+        poDS->interleave = BSQ;
         nLineOffset = nDataSize * nSamples;
         nPixelOffset = nDataSize;
         nBandOffset = (vsi_l_offset)nLineOffset * nLines;
     }
     else if( EQUALN(pszInterleave, "bil", 3) )
     {
+        poDS->interleave = BIL;
         nLineOffset = nDataSize * nSamples * nBands;
         nPixelOffset = nDataSize;
         nBandOffset = (vsi_l_offset)nDataSize * nSamples;
     }
     else if( EQUALN(pszInterleave, "bip", 3) )
     {
+        poDS->interleave = BIP;
         nLineOffset = nDataSize * nSamples * nBands;
         nPixelOffset = nDataSize * nBands;
         nBandOffset = nDataSize;
@@ -1083,6 +1192,51 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     return( poDS );
 }
 
+int ENVIDataset::GetEnviType(GDALDataType eType)
+{
+  int iENVIType;
+  switch( eType )
+  {
+      case GDT_Byte:
+	      iENVIType = 1;
+	      break;
+      case GDT_Int16:
+	      iENVIType = 2;
+	      break;
+      case GDT_Int32:
+	      iENVIType = 3;
+	      break;
+      case GDT_Float32:
+	      iENVIType = 4;
+	      break;
+      case GDT_Float64:
+	      iENVIType = 5;
+	      break;
+      case GDT_CFloat32:
+	      iENVIType = 6;
+	      break;
+      case GDT_CFloat64:
+	      iENVIType = 9;
+	      break;
+      case GDT_UInt16:
+	      iENVIType = 12;
+	      break;
+      case GDT_UInt32:
+	      iENVIType = 13;
+	      break;
+
+	/* 14=Int64, 15=UInt64 */
+
+      default:
+        CPLError( CE_Failure, CPLE_AppDefined,
+              "Attempt to create ENVI .hdr labelled dataset with an illegal\n"
+              "data type (%s).\n",
+              GDALGetDataTypeName(eType) );
+      	return NULL;
+  }
+  return iENVIType;
+}
+
 /************************************************************************/
 /*                               Create()                               */
 /************************************************************************/
@@ -1096,47 +1250,9 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Verify input options.                                           */
 /* -------------------------------------------------------------------- */
-    int		iENVIType;
-
-    switch( eType )
-    {
-      case GDT_Byte:
-	iENVIType = 1;
-	break;
-      case GDT_Int16:
-	iENVIType = 2;
-	break;
-      case GDT_Int32:
-	iENVIType = 3;
-	break;
-      case GDT_Float32:
-	iENVIType = 4;
-	break;
-      case GDT_Float64:
-	iENVIType = 5;
-	break;
-      case GDT_CFloat32:
-	iENVIType = 6;
-	break;
-      case GDT_CFloat64:
-	iENVIType = 9;
-	break;
-      case GDT_UInt16:
-	iENVIType = 12;
-	break;
-      case GDT_UInt32:
-	iENVIType = 13;
-	break;
-
-	/* 14=Int64, 15=UInt64 */
-
-      default:
-        CPLError( CE_Failure, CPLE_AppDefined,
-              "Attempt to create ENVI .hdr labelled dataset with an illegal\n"
-              "data type (%s).\n",
-              GDALGetDataTypeName(eType) );
-	return NULL;
-    }
+    int	iENVIType = GetEnviType(eType);
+    if (0 == iENVIType)
+      return 0;
 
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
