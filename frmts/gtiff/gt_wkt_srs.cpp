@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2004/10/18 21:12:44  fwarmerdam
+ * Always emit angular units as degrees.
+ *
  * Revision 1.48  2004/07/10 05:02:57  warmerda
  * Fixed improper projection parameters for false easting/northing for LCC.
  *
@@ -1481,6 +1484,12 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
                         dfLinearUOM);
     }
     
+/* -------------------------------------------------------------------- */
+/*      Write angular units.  Always Degrees for now.                   */
+/* -------------------------------------------------------------------- */
+    GTIFKeySet(psGTIF, GeogAngularUnitsGeoKey, TYPE_SHORT, 1, 
+               Angular_Degree );
+
 /* -------------------------------------------------------------------- */
 /*      Try to write a citation from the main coordinate system         */
 /*      name.                                                           */
