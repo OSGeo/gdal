@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/04/30 19:47:36  warmerda
+ * dont lose last character off strings as long as the field width
+ *
  * Revision 1.3  2002/04/25 20:15:26  warmerda
  * upgraded to use ExecuteSQL()
  *
@@ -353,10 +356,11 @@ int OGRVirtualArray::FillOGRField( OGRFeature *poFeature, int iField,
         case OFTString:
         {
             const char *pszStr = poFeature->GetFieldAsString(iField);
-            int nStringWidth = MIN(strlen(pszStr),pColInfo->ulColumnSize - 1);
+            int nStringWidth = MIN(strlen(pszStr),pColInfo->ulColumnSize);
 
             strncpy((char *) pabyBuffer + nOffset,pszStr,nStringWidth);
-            pabyBuffer[nOffset+nStringWidth] = '\0';
+            if( nStringWidth < pColInfo->ulColumnSize )
+                pabyBuffer[nOffset+nStringWidth] = '\0';
         }
         break;
     }
