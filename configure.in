@@ -420,52 +420,37 @@ dnl ---------------------------------------------------------------------------
 dnl Select an PostgreSQL Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
-PG_HOME=
-PG_LIB=
-PG_INC=
+PG_CONFIG=no
 
-AC_ARG_WITH(pg,[  --with-pg[=ARG]         Include PostgreSQL OGR Support (ARG=PG_HOME)],,)
+AC_ARG_WITH(pg,[  --with-pg[=ARG]         Include PostgreSQL OGR Support (ARG=path to pg_config)],,)
 
 if test "$with_pg" = "yes" -o "$with_pg" = "" ; then
-  if test -d /usr/local/pgsql -a -r /usr/local/pgsql/include/libpq-fe.h ; then
-    with_pg=/usr/local/pgsql
-  fi
+  AC_PATH_PROG(PG_CONFIG, pg_config, no)
+else 
+  PG_CONFIG=$with_pg
 fi
 
-if test "$with_pg" = "no" -o "$OGR_ENABLED" = "no" ; then
+AC_MSG_CHECKING([for PostgreSQL])
+
+if test "$PG_CONFIG" = "no" ; then
 
   HAVE_PG=no
-  echo "PostgreSQL support disabled."
+  PG_LIB=
+  PG_INC=
 
-elif test "$with_pg" = "yes" -o "$with_pg" = "" ; then
-
-  AC_CHECK_HEADERS(libpq-fe.h)
-  AC_CHECK_LIB(pq,PQconnectcb,HAVE_PG=yes,HAVE_PG=no,)
-
-  if test "$HAVE_PG" = "yes" -a "$av_cv_header_libpq_fe_h" = "no" ; then   
-    HAVE_PG=no
-  fi
-
-  if test "$HAVE_PG" = "yes" ; then   
-    PG_LIB=-lpq
-    echo "PostgreSQL support enabled."
-  else
-    echo "PostgreSQL support unavailable."
-  fi
+  AC_MSG_RESULT([no])
 
 else
 
   HAVE_PG=yes
-  PG_HOME=$with_pg
-  PG_LIB="-L$with_pg/lib -lpq"
-  PG_INC="-I$with_pg/include"
+  PG_LIB="-L`$PG_CONFIG --libdir`"
+  PG_INC="-I`$PG_CONFIG --includedir`"
 
-  echo "using PostgreSQL tree from $with_pg ."
+  AC_MSG_RESULT([yes])
 
 fi
 
 AC_SUBST(HAVE_PG,$HAVE_PG)
-AC_SUBST(PG_HOME,$PG_HOME)
 AC_SUBST(PG_INC,$PG_INC)
 AC_SUBST(PG_LIB,$PG_LIB)
 

@@ -78,7 +78,6 @@ OGRFRMTS_LIB	=	$(GDAL_ROOT)/ogr/ogrsf_frmts/ogrsf_frmts.a
 # OGR/PostgreSQL support.
 #
 HAVE_OGR_PG     = @HAVE_PG@
-PG_HOME =	@PG_HOME@
 PG_LIB	=	@PG_LIB@
 PG_INC	=	@PG_INC@
 
