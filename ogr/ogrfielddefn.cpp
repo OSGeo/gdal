@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/11/04 21:07:09  warmerda
+ * Added the Set() method.
+ *
  * Revision 1.2  1999/07/05 17:19:52  warmerda
  * added docs
  *
@@ -312,3 +315,31 @@ const char * OGRFieldDefn::GetFieldTypeName( OGRFieldType eType )
  * @param nPrecision the new precision. 
  */
 
+/************************************************************************/
+/*                                Set()                                 */
+/************************************************************************/
+
+/**
+ * Set defining parameters for a field in one call.
+ *
+ * @param pszNameIn the new name to assign.
+ * @param eTypeIn the new type (one of the OFT values like OFTInteger).	
+ * @param nWidthIn the preferred formatting width.  Defaults to zero indicating
+ * undefined.
+ * @param nPrecisionIn number of decimals places for formatting, defaults to
+ * zero indicating undefined.
+ * @param eJustifyIn the formatting justification (OJLeft or OJRight), defaults
+ * to OJUndefined.
+ */
+
+void OGRFieldDefn::Set( const char *pszNameIn,
+                        OGRFieldType eTypeIn,
+                        int nWidthIn, int nPrecisionIn,
+                        OGRJustification eJustifyIn )
+{
+    SetName( pszNameIn );
+    SetType( eTypeIn );
+    SetWidth( nWidthIn );
+    SetPrecision( nPrecisionIn );
+    SetJustify( eJustifyIn );
+}
