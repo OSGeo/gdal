@@ -9,3 +9,4 @@ gdaladdo
 gdalinfo
 gdal-config
 gdal-config-inst
+gdaltindex
