@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/05/22 19:44:26  warmerda
+ * Fixed another bug like the last.
+ *
  * Revision 1.10  2003/05/22 19:14:51  warmerda
  * Fixed possible problem with writing one byte past end of
  * pszDest in ExpandFormat() as reported by Ben Discoe.
@@ -457,7 +460,7 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
                 
             for( int i = 0; i < nRepeat; i++ )
             {
-                if( (int) (strlen(pszExpandedContents) + strlen(pszDest))
+                if( (int) (strlen(pszExpandedContents) + strlen(pszDest) + 1)
                     > nDestMax )
                 {
                     nDestMax = 
