@@ -1,3 +1,7 @@
+2001-09-24  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* frmts/gtiff/libtiff/tif_vsi.c: fixed implementation of SizeProc. 
+
 2001-09-21  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* ogr/ogr_geometry.h: added transform() and transformTo() methods.
