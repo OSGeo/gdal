@@ -1,4 +1,4 @@
-VERSION =	1_0
+VERSION =	1_1
 DISTDIR =	sdts_$(VERSION)
 WEB_DIR =	/u/www/projects/sdts
 
@@ -11,12 +11,9 @@ include $(GDAL_ROOT)/GDALmake.opt
 OBJ	=	sdtsiref.o sdtscatd.o sdtslinereader.o sdtslib.o \
 		sdtspointreader.o sdtsattrreader.o sdtstransfer.o \
 		sdtspolygonreader.o sdtsxref.o sdtsrasterreader.o \
-		sdtsindexedreader.o \
-		\
-		ogrsdtsdriver.o ogrsdtsdatasource.o ogrsdtslayer.o
+		sdtsindexedreader.o
 
-ALL_CXX_FLAGS =	-I$(GDAL_HOME)/ogr/ogrsf_frmts -I$(ISO8211DIR) \
-		$(GDAL_INCLUDE) $(CXXFLAGS)
+ALL_CXX_FLAGS =	-I$(ISO8211DIR) $(GDAL_INCLUDE) $(CXXFLAGS)
 
 SDTSLIB	=	libsdts_al.a
 LIBS	:=	$(SDTSLIB) $(ISO8211DIR)/libiso8211.a $(CPL_LIB) $(LIBS)
@@ -25,7 +22,7 @@ LIBS	:=	$(SDTSLIB) $(ISO8211DIR)/libiso8211.a $(CPL_LIB) $(LIBS)
 
 default:	$(SDTSLIB) sdtsdataset.o
 
-all:	sdts2shp
+all:	$(SDTSLIB) sdts2shp
 
 clean:	clean-dist
 	rm -rf *.o sdts2shp html man
@@ -68,7 +65,7 @@ dist:	docs
 	autoconf
 	cp *.cpp *.h configure Makefile.in $(DISTDIR)
 	cp makefile.vc.dist $(DISTDIR)/Makefile.vc
-	rm $(DISTDIR)/{ogrsdtsdriver.cpp,sdtsdataset.cpp}
+	rm $(DISTDIR)/sdtsdataset.cpp
 	cp $(ISO8211DIR)/{*.cpp,*.h} $(DISTDIR)
 	rm configure
 	cp $(GDAL_ROOT)/port/{cpl_error*,cpl_port*,cpl_string*} $(DISTDIR)
