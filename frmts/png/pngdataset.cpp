@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.16  2002/06/18 02:49:23  warmerda
+ * fixed multiline string constants
+ *
  * Revision 1.15  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -985,10 +988,10 @@ void GDALRegister_PNG()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "png" );
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/png" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "
-<CreationOptionList>
-   <Option name='WORLDFILE' type='boolean' description='Generate world file'/>
-</CreationOptionList>" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+"<CreationOptionList>\n"
+"   <Option name='WORLDFILE' type='boolean' description='Create world file'/>\n"
+"</CreationOptionList>\n" );
 
         poDriver->pfnOpen = PNGDataset::Open;
         poDriver->pfnCreateCopy = PNGCreateCopy;
