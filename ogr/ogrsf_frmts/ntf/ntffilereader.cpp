@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2004/11/17 19:30:15  fwarmerdam
+ * further fixes to stroking 3pt arcs
+ *
  * Revision 1.31  2003/02/19 07:00:50  warmerda
  * expand tabs
  *
@@ -731,7 +734,7 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
 /* -------------------------------------------------------------------- */
     else if( nGType == 5 && nNumCoord == 3 )
     {
-        double  adfX[3], adfY[3], dfCenterX, dfCenterY, dfRadius;
+        double  adfX[3], adfY[3];
         int     iCoord;
 
         for( iCoord = 0; iCoord < nNumCoord; iCoord++ )
@@ -746,14 +749,8 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
                 * GetXYMult() + GetYOrigin();
         }
 
-        NTFArcCenterFromEdgePoints( adfX[0], adfY[0], adfX[1], adfY[1], 
-                                    adfX[2], adfY[2], &dfCenterX, &dfCenterY );
-        dfRadius = sqrt( (dfCenterX - adfX[0]) * (dfCenterX - adfX[0])
-                         + (dfCenterY - adfY[0]) * (dfCenterY - adfY[0]) );
-
-        poGeometry = NTFStrokeArcToOGRGeometry_Points( dfCenterX, dfCenterY,
-                                                       dfRadius, 
-                                                       adfX[0], adfY[0], 
+        poGeometry = NTFStrokeArcToOGRGeometry_Points( adfX[0], adfY[0], 
+                                                       adfX[1], adfY[1],
                                                        adfX[2], adfY[2], 72 );
     }
 

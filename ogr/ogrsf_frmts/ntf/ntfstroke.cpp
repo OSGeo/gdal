@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/11/17 19:30:15  fwarmerdam
+ * further fixes to stroking 3pt arcs
+ *
  * Revision 1.3  2004/09/13 20:20:03  fwarmerdam
  * Fixed bug in NTFStrokeArcToOGRGeometry_Angles which resulted in
  * wrong quadrant for angles (in some? cases) - Safe bug 11672.
@@ -146,14 +149,18 @@ int NTFArcCenterFromEdgePoints( double x_c0, double y_c0,
 /************************************************************************/
 
 OGRGeometry *
-NTFStrokeArcToOGRGeometry_Points( double dfCenterX, double dfCenterY, 
-                                  double dfRadius, 
-                                  double dfStartX, double dfStartY,
+NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
+                                  double dfAlongX, double dfAlongY,
                                   double dfEndX, double dfEndY,
                                   int nVertexCount )
     
 {
-    double      dfStartAngle, dfEndAngle;
+    double      dfStartAngle, dfEndAngle, dfAlongAngle;
+    double      dfCenterX, dfCenterY, dfRadius;
+
+    if( !NTFArcCenterFromEdgePoints( dfStartX, dfStartY, dfAlongX, dfAlongY, 
+                                     dfEndX, dfEndY, &dfCenterX, &dfCenterY ) )
+        return NULL;
 
     if( dfStartX == dfEndX && dfStartY == dfEndY )
     {
@@ -168,14 +175,47 @@ NTFStrokeArcToOGRGeometry_Points( double dfCenterX, double dfCenterY,
         dfDeltaY = dfStartY - dfCenterY;
         dfStartAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / PI;
 
+        dfDeltaX = dfAlongX - dfCenterX;
+        dfDeltaY = dfAlongY - dfCenterY;
+        dfAlongAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / PI;
+
         dfDeltaX = dfEndX - dfCenterX;
         dfDeltaY = dfEndY - dfCenterY;
         dfEndAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / PI;
 
-        if( dfEndAngle < dfStartAngle )
+#ifdef notdef
+        if( dfStartAngle > dfAlongAngle && dfAlongAngle > dfEndAngle )
+        {
+            double dfTempAngle;
+
+            dfTempAngle = dfStartAngle;
+            dfStartAngle = dfEndAngle;
+            dfEndAngle = dfTempAngle;
+        }
+#endif
+
+        while( dfAlongAngle < dfStartAngle )
+            dfAlongAngle += 360.0;
+
+        while( dfEndAngle < dfAlongAngle )
             dfEndAngle += 360.0;
+
+        if( dfEndAngle - dfStartAngle > 360.0 )
+        {
+            double dfTempAngle;
+
+            dfTempAngle = dfStartAngle;
+            dfStartAngle = dfEndAngle;
+            dfEndAngle = dfTempAngle;
+
+            while( dfEndAngle < dfStartAngle )
+                dfStartAngle -= 360.0;
+        }
     }
 
+    dfRadius = sqrt( (dfCenterX - dfStartX) * (dfCenterX - dfStartX)
+                     + (dfCenterY - dfStartY) * (dfCenterY - dfStartY) );
+    
     return NTFStrokeArcToOGRGeometry_Angles( dfCenterX, dfCenterY, 
                                              dfRadius, 
                                              dfStartAngle, dfEndAngle,
