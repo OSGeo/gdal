@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2004/10/08 12:22:09  fwarmerdam
+ * Cast bytes passed to fabs(): Martin Daly
+ *
  * Revision 1.2  2004/10/05 18:25:45  fwarmerdam
  * Added help pointer.
  *
@@ -355,10 +358,10 @@ CPLErr AirSARDataset::LoadLine( int iLine )
         
         M[M11] = (byte[2] / 254.0 + 1.5) * pow(2.0,byte[1]) * gen_fac;
         M[M12] = byte[3] * M[M11] / 127.0;
-        M[M13] = byte[4] * fabs(byte[4]) * M[M11] / (127*127);
-        M[M14] = byte[5] * fabs(byte[5]) * M[M11] / (127*127);
-        M[M23] = byte[6] * fabs(byte[6]) * M[M11] / (127*127);
-        M[M24] = byte[7] * fabs(byte[7]) * M[M11] / (127*127);
+        M[M13] = byte[4] * fabs((double) byte[4]) * M[M11] / (127*127);
+        M[M14] = byte[5] * fabs((double) byte[5]) * M[M11] / (127*127);
+        M[M23] = byte[6] * fabs((double) byte[6]) * M[M11] / (127*127);
+        M[M24] = byte[7] * fabs((double) byte[7]) * M[M11] / (127*127);
         M[M33] = byte[8] * M[M11] / 127;
         M[M34] = byte[9] * M[M11] / 127;
         M[M44] = byte[10] * M[M11] / 127;
