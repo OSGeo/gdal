@@ -11,8 +11,10 @@ GDAL_ROOT = .
 OGR_OBJ = ogr\ogrsf_frmts\ogrsf_frmts.lib ogr\ogr.lib
 OGR_INCLUDE = /INCLUDE:_OCTNewCoordinateTransformation \
 		/INCLUDE:_OGRRegisterAll \
+		/INCLUDE:_OGRFeatureStylePuller \
 		/INCLUDE:_OSRValidate \
-		/INCLUDE:_OPTGetProjectionMethods
+		/INCLUDE:_OPTGetProjectionMethods \
+		/INCLUDE:_OGR_G_GetPointCount 
 !ELSE
 OGR_OBJ = ogr\ogr.lib
 OGR_INCLUDE =	/INCLUDE:_OCTNewCoordinateTransformation /INCLUDE:_OGRFree \
@@ -116,7 +118,7 @@ lib_dist:	default
 
 $(GDAL_DLL):	lib
 	link /dll /debug $(OGR_INCLUDE) $(LIBOBJ) \
-		$(ECWLIB) $(OGDILIB) $(XERCES_LIB) \
+		$(ECWLIB) $(OGDILIB) $(XERCES_LIB) $(FME_LIB) \
 		 /out:$(GDAL_DLL) /implib:gdal_i.lib $(LINKER_FLAGS)
 
 install: $(GDAL_DLL) apps_dir pymod_dir
