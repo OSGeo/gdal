@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/08/13 15:59:39  warmerda
+ * Fixed bug with CPLExtractRelativePath.
+ *
  * Revision 1.16  2004/08/11 18:41:46  warmerda
  * added CPLExtractRelativePath
  *
@@ -665,7 +668,7 @@ const char *CPLExtractRelativePath( const char *pszBaseDir,
                                     int *pbGotRelative )
 
 {
-    int nBasePathLen = strlen(pszBaseDir);
+    int nBasePathLen;
 
 /* -------------------------------------------------------------------- */
 /*      If we don't have a basedir, then we can't relativize the path.  */
@@ -678,6 +681,8 @@ const char *CPLExtractRelativePath( const char *pszBaseDir,
         return pszTarget;
     }
 
+    nBasePathLen = strlen(pszBaseDir);
+
 /* -------------------------------------------------------------------- */
 /*      One simple case is where neither file has a path.  We return    */
 /*      the original target filename and it is relative.                */
@@ -689,6 +694,18 @@ const char *CPLExtractRelativePath( const char *pszBaseDir,
     {
         if( pbGotRelative != NULL )
             *pbGotRelative = TRUE;
+
+        return pszTarget;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      By this point, if we don't have a base path, we can't have a    */
+/*      meaningful common prefix.                                       */
+/* -------------------------------------------------------------------- */
+    if( nBasePathLen == 0 )
+    {
+        if( pbGotRelative != NULL )
+            *pbGotRelative = FALSE;
 
         return pszTarget;
     }
