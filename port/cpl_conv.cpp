@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/12/10 19:46:04  warmerda
+ * modified CPLReadLine() to seek back if it overreads past a CR or LF
+ *
  * Revision 1.16  2002/12/09 18:52:51  warmerda
  * added DMS conversion
  *
@@ -285,7 +288,7 @@ const char *CPLReadLine( FILE * fp )
 {
     static char *pszRLBuffer = NULL;
     static int  nRLBufferSize = 0;
-    int         nLength, nReadSoFar = 0;
+    int         nLength, nReadSoFar = 0, nStripped = 0, i;
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup case.                                                   */
@@ -346,12 +349,32 @@ const char *CPLReadLine( FILE * fp )
         && (pszRLBuffer[nLength-1] == 10 || pszRLBuffer[nLength-1] == 13) )
     {
         pszRLBuffer[--nLength] = '\0';
+        nStripped++;
     }
     
     if( nLength > 0
         && (pszRLBuffer[nLength-1] == 10 || pszRLBuffer[nLength-1] == 13) )
     {
         pszRLBuffer[--nLength] = '\0';
+        nStripped++;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check that there aren't any extra CR or LF characters           */
+/*      embedded in what is left.  I have encountered files with        */
+/*      embedded CR (13) characters that should have acted as line      */
+/*      terminators but got sucked up by VSIFGetc().                    */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nLength; i++ )
+    {
+        if( pszRLBuffer[i] == 10 || pszRLBuffer[i] == 13 )
+        {
+            /* we need to chop off the buffer here, and seek the input back
+               to after the character that should have been the line
+               terminator. */
+            VSIFSeek( fp, (i+1) - (nLength+nStripped), SEEK_CUR );
+            pszRLBuffer[i] = '\0';
+        }
     }
 
     return( pszRLBuffer );
