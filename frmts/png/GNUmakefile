@@ -23,8 +23,8 @@ default:	$(OBJ)
 clean:
 	rm -f *.o
 
-%.o:	libpng/%.c
-	$(CC) -c $(XTRA_OPT) $(GDAL_INCLUDE) $(CFLAGS) libpng/$*.c -o $*.o
+../o/%.o:	libpng/%.c
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 all:	$(OBJ)
 
