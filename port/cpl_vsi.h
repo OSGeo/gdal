@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.5  1999/05/23 02:43:57  warmerda
+ * Added documentation block.
+ *
  * Revision 1.4  1999/02/25 04:48:11  danmo
  * Added VSIStat() macros specific to _WIN32 (for MSVC++)
  *
@@ -50,6 +53,24 @@
 #define CPL_VSI_H_INCLUDED
 
 #include "cpl_port.h"
+/**
+ * \file cpl_vsi.h
+ *
+ * Standard C Covers
+ *
+ * The VSI functions are intended to be hookable aliases for Standard C
+ * I/O, memory allocation and other system functions. They are intended
+ * to allow virtualization of disk I/O so that non file data sources
+ * can be made to appear as files, and so that additional error trapping
+ * and reporting can be interested.  The memory access API is aliased
+ * so that special application memory management services can be used.
+ *
+ * Is is intended that each of these functions retains exactly the same
+ * calling pattern as the original Standard C functions they relate to.
+ * This means we don't have to provide custom documentation, and also means
+ * that the default implementation is very simple.
+ */
+
 
 /* -------------------------------------------------------------------- */
 /*      We need access to ``struct stat''.                              */
