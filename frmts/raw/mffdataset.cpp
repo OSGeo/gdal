@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/03/11 21:00:30  gwalter
+ * More georeferencing-related updates.
+ *
  * Revision 1.22  2003/03/03 20:10:06  gwalter
  * Updated MFF and HKV (MFF2) georeferencing support.
  *
@@ -109,6 +112,15 @@ CPL_C_START
 void	GDALRegister_MFF(void);
 CPL_C_END
 
+typedef enum {
+  MFFPRJ_NONE,
+  MFFPRJ_LL,
+  MFFPRJ_UTM,
+  MFFPRJ_UNRECOGNIZED
+} ;
+
+static int         GetMFFProjectionType(const char * pszNewProjection);
+
 /************************************************************************/
 /* ==================================================================== */
 /*				MFFDataset				*/
@@ -128,6 +140,7 @@ class MFFDataset : public RawDataset
 
     void        ScanForGCPs();
     void        ScanForProjectionInfo();
+ 
 
   public:
     		MFFDataset();
@@ -555,7 +568,16 @@ void MFFDataset::ScanForProjectionInfo()
         pszGCPProjection=CPLStrdup("");
         return;
     }
-
+    else if ((!EQUAL(pszProjName,"utm")) && (!EQUAL(pszProjName,"ll")))
+    {
+        CPLError(CE_Warning,CPLE_AppDefined,
+                 "Warning- only utm and lat/long projections are currently supported.");
+        CPLFree( pszProjection );
+        CPLFree( pszGCPProjection );
+        pszProjection=CPLStrdup("");
+        pszGCPProjection=CPLStrdup("");
+        return;
+    }
     mffEllipsoids = new MFFSpheroidList;
 
     if( EQUAL(pszProjName,"utm") )
@@ -579,10 +601,12 @@ void MFFDataset::ScanForProjectionInfo()
             oProj.SetUTM( nZone, 1 );
      
         if (pszOriginLong != NULL)
-        {
             oProj.SetProjParm(SRS_PP_CENTRAL_MERIDIAN,atof(pszOriginLong));
-        }
+        
     }
+
+    if (pszOriginLong != NULL)
+        oLL.SetProjParm(SRS_PP_LONGITUDE_OF_ORIGIN,atof(pszOriginLong));
 
     if ((pszSpheroidName == NULL))
     {
@@ -629,7 +653,6 @@ void MFFDataset::ScanForProjectionInfo()
         OGRCoordinateTransformation *poTransform = NULL;
         double *dfPrjX, *dfPrjY; 
         int gcp_index;
-        GDAL_GCP *prj_gcps;
         int    bSuccess = TRUE;
 
         dfPrjX = (double *) CPLMalloc(nGCPCount*sizeof(double));
@@ -652,21 +675,15 @@ void MFFDataset::ScanForProjectionInfo()
 
         if( bSuccess )
         {
-            prj_gcps = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nGCPCount);
-            GDALInitGCPs(nGCPCount,prj_gcps);
 
             for(gcp_index=0;gcp_index<nGCPCount;gcp_index++)
             {
-                prj_gcps[gcp_index].dfGCPX = dfPrjX[gcp_index];
-                prj_gcps[gcp_index].dfGCPY = dfPrjY[gcp_index];
-                prj_gcps[gcp_index].dfGCPZ = 0.0;
-                prj_gcps[gcp_index].dfGCPPixel = pasGCPList[gcp_index].dfGCPPixel;
-                prj_gcps[gcp_index].dfGCPLine = pasGCPList[gcp_index].dfGCPLine;
+                pasGCPList[gcp_index].dfGCPX = dfPrjX[gcp_index];
+                pasGCPList[gcp_index].dfGCPY = dfPrjY[gcp_index];
 
             }
-            transform_ok = GDALGCPsToGeoTransform(nGCPCount,prj_gcps,adfGeoTransform,0);
+            transform_ok = GDALGCPsToGeoTransform(nGCPCount,pasGCPList,adfGeoTransform,0);
 
-            GDALDeinitGCPs(nGCPCount,prj_gcps);
         }
         CPLFree(dfPrjX);
         CPLFree(dfPrjY);
@@ -1019,6 +1036,45 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
     return( poDS );
 }
 
+int GetMFFProjectionType(const char *pszNewProjection)
+{
+    OGRSpatialReference *oSRS;
+    char *modifiableProjection = NULL;
+
+    if( !EQUALN(pszNewProjection,"GEOGCS",6)
+       && !EQUALN(pszNewProjection,"PROJCS",6)
+       && !EQUAL(pszNewProjection,"") )
+      {
+          return MFFPRJ_UNRECOGNIZED;       
+      }
+      else if (EQUAL(pszNewProjection,""))
+      { 
+          return MFFPRJ_NONE;  
+      }
+      else
+      {
+          /* importFromWkt updates the pointer, so don't use pszNewProjection directly */
+             modifiableProjection=CPLStrdup(pszNewProjection);
+
+             oSRS = new OGRSpatialReference;
+             oSRS->importFromWkt(&modifiableProjection);
+
+             if ((oSRS->GetAttrValue("PROJECTION") != NULL) && 
+                 (EQUAL(oSRS->GetAttrValue("PROJECTION"),SRS_PT_TRANSVERSE_MERCATOR)))
+             {
+               return MFFPRJ_UTM;
+             }
+             else if ((oSRS->GetAttrValue("PROJECTION") == NULL) && (oSRS->IsGeographic()))
+             {
+                  return MFFPRJ_LL;
+             }
+             else
+             {
+                  return MFFPRJ_UNRECOGNIZED;
+             }
+      }
+}
+
 /************************************************************************/
 /*                               Create()                               */
 /************************************************************************/
@@ -1284,70 +1340,19 @@ MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                   "Couldn't open %s for appending.\n", pszFilenameGEO );
         return NULL;
     }  
-
-    int georef_created = FALSE;
     
 
     /* MFF requires corner and center gcps */
-    double	*padfTiepoints, gcppix, gcpline;
+    double	*padfTiepoints;
+    int src_prj;
+    int georef_created = FALSE;
 
     padfTiepoints = (double *) 
         CPLMalloc(2*sizeof(double)*5);
 
-    /* Try to locate the corner and center GCP's- want to copy MFF */
-    /* GCPs directly if present.  Check that the coordinates are   */
-    /* in lat/long first though (GEOGCS as opposed to PROJCS at    */ 
-    /* the start of the projection string).                        */
+    src_prj = GetMFFProjectionType(poSrcDS->GetProjectionRef());
 
-    if (( poSrcDS->GetGCPCount() > 4 ) && 
-        ( poSrcDS->GetGCPProjection() != NULL ) &&
-        ( EQUALN(poSrcDS->GetGCPProjection(),"GEOGCS",6)))
-    {
-        const GDAL_GCP *pasGCPs = poSrcDS->GetGCPs();
-        char foundinfo[10]="00000\n";
-
-        for( int iGCP = 0; iGCP < poSrcDS->GetGCPCount(); iGCP++ )
-        {
-          gcppix=pasGCPs[iGCP].dfGCPPixel;
-          gcpline=pasGCPs[iGCP].dfGCPLine;
-          
-          if ((gcppix == 0.0) && (gcpline == 0.0))
-          {
-            padfTiepoints[0]=pasGCPs[iGCP].dfGCPX;
-            padfTiepoints[1]=pasGCPs[iGCP].dfGCPY;
-            foundinfo[0]='1';
-          } 
-          else if ((gcppix == poSrcDS->GetRasterXSize()-1) && (gcpline == 0.0))
-          {
-            padfTiepoints[2]=pasGCPs[iGCP].dfGCPX;
-            padfTiepoints[3]=pasGCPs[iGCP].dfGCPY;
-            foundinfo[1]='1';
-          } 
-          else if ((gcppix == 0.0) && (gcpline == poSrcDS->GetRasterYSize()-1))
-          {
-            padfTiepoints[4]=pasGCPs[iGCP].dfGCPX;
-            padfTiepoints[5]=pasGCPs[iGCP].dfGCPY;
-            foundinfo[2]='1';
-          } 
-          else if ((gcppix == poSrcDS->GetRasterXSize()-1) && (gcpline == poSrcDS->GetRasterYSize()-1))
-          {
-            padfTiepoints[6]=pasGCPs[iGCP].dfGCPX;
-            padfTiepoints[7]=pasGCPs[iGCP].dfGCPY;
-            foundinfo[3]='1';
-          } 
-          else if ((gcppix == (poSrcDS->GetRasterXSize()-1)/2.0) && (gcpline == (poSrcDS->GetRasterYSize()-1)/2.0))
-          {
-            padfTiepoints[8]=pasGCPs[iGCP].dfGCPX;
-            padfTiepoints[9]=pasGCPs[iGCP].dfGCPY;
-            foundinfo[4]='1';
-          } 
-       }
-       if EQUAL(foundinfo,"11111\n")
-           georef_created = TRUE;
-
-    }
-
-    if (georef_created != TRUE)
+    if ((src_prj != MFFPRJ_NONE) && (src_prj != MFFPRJ_UNRECOGNIZED))
     {
       double *tempGeoTransform=NULL; 
 
@@ -1507,7 +1512,7 @@ MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
              else
              {
                   CPLError( CE_Warning, CPLE_AppDefined,
-                  "Unrecognized projection- assuming lat/long.");
+                  "Unrecognized projection- no georeferencing information transferred.");
                   fprintf(fp,"PROJECTION_NAME = LL\n");
              }
              eq_radius = oSRS->GetSemiMajor(&ogrerrorEq);
