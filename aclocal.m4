@@ -18,7 +18,14 @@ AC_DEFUN(MY_TEST_BIGENDIAN,
   else
     AC_MSG_RESULT([Unable to build and link bigendian test program, guess no.])    ac_cv_c_bigendian=no
   fi
+
   rm -f conftest*
+
+  if test $ac_cv_c_bigendian = yes ; then
+    AC_DEFINE(WORDS_BIGENDIAN, 1,
+             [Define if your processor stores words with the most significant
+              byte first (like Motorola and SPARC, unlike Intel and VAX).])
+  fi
 ])
 
 dnl ---------------------------------------------------------------------------
