@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.42  2003/03/07 16:27:03  warmerda
+# some NULL fixes
+#
 # Revision 1.41  2003/03/02 17:18:47  warmerda
 # Updated default args for CPLError.
 #
@@ -226,7 +229,7 @@ def DitherRGB2PCT( red, green, blue, target, ct,
 
 def RGBFile2PCTFile( src_filename, dst_filename ):
     src_ds = Open(src_filename)
-    if src_ds is None:
+    if src_ds is None or src_ds == 'NULL':
         return 1
 
     ct = ColorTable()
@@ -325,7 +328,7 @@ class Driver:
         target_ds = _gdal.GDALCreate( self._o, filename, xsize, ysize,
                                       bands, datatype, options )
 
-        if target_ds is None:
+        if target_ds is None or target_ds == 'NULL':
             return None
         else:
             _gdal.GDALDereferenceDataset( target_ds )
@@ -336,7 +339,7 @@ class Driver:
         target_ds = _gdal.GDALCreateCopy( self._o, filename, source_ds._o,
                                           strict, options,
                                           callback, callback_data )
-        if target_ds is None:
+        if target_ds is None or target_ds == 'NULL':
             return None
         else:
             _gdal.GDALDereferenceDataset( target_ds )
@@ -555,7 +558,7 @@ class Band:
 
     def GetRasterColorTable(self):
         _ct = _gdal.GDALGetRasterColorTable( self._o )
-        if _ct is None:
+        if _ct is None or _ct == 'NULL':
             return None
         else:
             return ColorTable( _ct )
@@ -588,7 +591,7 @@ class Band:
 
     def GetOverview(self, ov_index ):
         _o = _gdal.GDALGetOverview( self._o, ov_index )
-        if _o is None:
+        if _o is None or _o == 'NULL':
             return None
         else:
             return Band( _obj = _o )
