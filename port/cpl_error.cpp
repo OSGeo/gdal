@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.21  2001/12/14 19:45:17  warmerda
+ * Avoid use of errno in prototype.
+ *
  * Revision 1.20  2001/11/27 17:01:06  warmerda
  * added timestamp to debug messages
  *
@@ -496,7 +499,7 @@ void CPLLoggingErrorHandler( CPLErr eErrClass, int nError,
  * A valid error handler is a C function with the following prototype:
  *
  * <pre>
- *     void MyErrorHandler(CPLErr eErrClass, int errno, const char *msg)
+ *     void MyErrorHandler(CPLErr eErrClass, int err_no, const char *msg)
  * </pre>
  *
  * Pass NULL to come back to the default behavior.  The default behaviour
