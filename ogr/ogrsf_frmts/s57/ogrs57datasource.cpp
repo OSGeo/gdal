@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/12/17 22:34:43  warmerda
+ * ensure SPLIT_MULTIPOINT option is passed to S57Reader
+ *
  * Revision 1.13  2001/12/14 19:40:18  warmerda
  * added optimized feature counting, and extents collection
  *
@@ -116,7 +119,7 @@ OGRS57DataSource::~OGRS57DataSource()
 }
 
 /************************************************************************/
-/*                             SetOptions()                             */
+/*                           SetOptionList()                            */
 /************************************************************************/
 
 void OGRS57DataSource::SetOptionList( char ** papszNewOptions )
@@ -196,6 +199,11 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
     if( GetOption("UPDATES") != NULL )
         papszReaderOptions = CSLSetNameValue( papszReaderOptions, 
                                               "UPDATES", GetOption("UPDATES"));
+                                              
+    if( GetOption("SPLIT_MULTIPOINT") != NULL )
+        papszReaderOptions = CSLSetNameValue( papszReaderOptions, 
+                                              "SPLIT_MULTIPOINT", 
+                                              GetOption("SPLIT_MULTIPOINT"));
                                               
     poModule->SetOptions( papszReaderOptions );
     CSLDestroy( papszReaderOptions );
