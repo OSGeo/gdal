@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/06/20 14:10:58  warmerda
+ * don't return CE_Failure for missing tiles, just zero quietly
+ *
  * Revision 1.19  2002/05/21 15:09:12  warmerda
  * read/write support for GDAL_MetaData table now supported
  *
@@ -729,14 +732,10 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
     if( !panBlockFlag[iBlock] & BFLG_VALID )
     {
-        int	nBytes;
+        memset( pData, 0, 
+                HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
 
-        nBytes = HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8;
-
-        while( nBytes > 0 )
-            ((GByte *) pData)[--nBytes] = 0;
-        
-        return( CE_Failure );
+        return( CE_None );
     }
 
 /* -------------------------------------------------------------------- */
