@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.8  2005/02/20 19:46:04  kruland
+ * Use the new fixed size typemap for (double **) arguments in ExportToPCI and
+ * ExportToUSGS.
+ *
  * Revision 1.7  2005/02/20 19:42:53  kruland
  * Rename the Swig shadow classes so the names do not give the impression that
  * they are any part of the GDAL/OSR apis.  There were no bugs with the old
@@ -441,36 +445,20 @@ public:
   }
 
 %apply (char **argout) { (char **) };
-%apply (double_17 argout) { (double_17 parms ) };
-  OGRErr ExportToPCI( char **proj, char **units, double_17 parms ) {
-    double *parmptr = 0;
-    if ( OGRErr rc = OSRExportToPCI( self, proj, units, &parmptr ) != 0 ) {
-      return rc;
-    }
-    double *tmpptr = parmptr;
-    for(int i=0;i<17;i++)
-      *(parms++) = *(parmptr++);
-    CPLFree( tmpptr );
-    return 0;
+%apply (double_17 *argout) { (double_17 *parms ) };
+  OGRErr ExportToPCI( char **proj, char **units, double_17 *parms ) {
+    return OSRExportToPCI( self, proj, units, parms );
   }
 %clear (char **);
-%clear (double_17 parms);
+%clear (double_17 *parms);
 
 %apply (long *OUTPUT) { (long*) };
-%apply (double_15 argout) { (double_15 parms) }
-  OGRErr ExportToUSGS( long *code, long *zone, double_15 parms, long *datum ) {
-    double *parmptr = 0;
-    if ( OGRErr rc = OSRExportToUSGS( self, code, zone, &parmptr, datum ) != 0 ) {
-      return rc;
-    }
-    double *tmpptr = parmptr;
-    for(int i=0;i<15;i++)
-      *(parms++) = *(parmptr++);
-    CPLFree( tmpptr );
-    return 0;
+%apply (double_15 *argout) { (double_15 *parms) }
+  OGRErr ExportToUSGS( long *code, long *zone, double_15 *parms, long *datum ) {
+    return OSRExportToUSGS( self, code, zone, parms, datum );
   }
 %clear (long*);
-%clear (double_15 parms);
+%clear (double_15 *parms);
 
   OGRErr ExportToXML( char **argout, const char *dialect = "" ) {
     return OSRExportToXML( self, argout, dialect );
