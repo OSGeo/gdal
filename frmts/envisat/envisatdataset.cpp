@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/05/16 03:29:50  warmerda
+ * ensure fpImage is closed on cleanup
+ *
  * Revision 1.10  2002/04/26 14:53:22  warmerda
  * added EscapedRecord for metadata
  *
@@ -122,6 +125,7 @@ class EnvisatDataset : public RawDataset
 EnvisatDataset::EnvisatDataset()
 {
     hEnvisatFile = NULL;
+    fpImage = NULL;
     nGCPCount = 0;
     pasGCPList = NULL;
     papszTempMD = NULL;
@@ -136,6 +140,9 @@ EnvisatDataset::~EnvisatDataset()
 {
     if( hEnvisatFile != NULL )
         EnvisatFile_Close( hEnvisatFile );
+
+    if( fpImage != NULL )
+        VSIFClose( fpImage );
 
     if( nGCPCount > 0 )
     {
