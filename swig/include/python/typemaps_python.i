@@ -9,6 +9,12 @@
 
  *
  * $Log$
+ * Revision 1.16  2005/02/18 17:28:07  kruland
+ * Fixed bugs in THROW_OGR_ERROR typemap.  When no error is found, and no
+ * argouts, return None.
+ * Fixed bug in IF_ERR_RETURN_NONE typemap to return None if there are no
+ * argouts to return.
+ *
  * Revision 1.15  2005/02/18 16:54:35  kruland
  * Removed IGNORE_RC exception macro.
  * Removed fragments.i %include because it's not included in swig 1.3.24.
@@ -87,13 +93,9 @@
 
 /*
  *
- * Define a simple return code typemap
- * which checks if the return code from
- * the wrapped method is non-zero.
- * If non-zero, return None.  Otherwise,
- * return normally.  It is particularly
- * useful when the return value is through
- * arguments.
+ * Define a simple return code typemap which checks if the return code from
+ * the wrapped method is non-zero. If non-zero, return None.  Otherwise,
+ * return any argout or None.
  *
  * Applied like this:
  * %apply (IF_ERR_RETURN_NONE) {CPLErr};
@@ -113,22 +115,38 @@
     resultobj = Py_None;
     Py_INCREF(resultobj);
   }
+  if (resultobj == 0) {
+    resultobj = Py_None;
+    Py_INCREF(resultobj);
+  }
 }
 
 /*
  * Another output typemap which will raise an
- * exception on error.
- *
+ * exception on error.  If there is no error,
+ * and no other argout typemaps create a return value,
+ * then it will return 0.
  */
 %typemap(out) THROW_OGR_ERROR
 {
   /* %typemap(out) THROW_OGR_ERROR */
   resultobj = 0;
   if ( result != 0) {
-    char *errMsg = "OGR Error %02d";
-    sprintf(errMsg,result);
+    char errMsg[13];
+    sprintf(errMsg,"OGR Error %02d",result);
     PyErr_SetString( PyExc_RuntimeError, errMsg );
     SWIG_fail;
+  }
+}
+%typemap(ret) THROW_OGR_ERROR
+{
+  /* %typemap(ret) THROW_OGR_ERROR */
+  if (resultobj == Py_None ) {
+    Py_DECREF(resultobj);
+    resultobj = 0;
+  }
+  if (resultobj == 0) {
+    resultobj = PyInt_FromLong( 0 );
   }
 }
 
