@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/01/26 05:51:40  warmerda
+ * added metadata read/write support
+ *
  * Revision 1.5  2001/11/23 16:43:47  warmerda
  * added nodata constant
  *
@@ -107,6 +110,7 @@ CPL_C_START
 
 typedef struct {
   FILE		*fp;
+  int           bUpdate;
 
   int		nXSize;
   int		nYSize;
@@ -116,8 +120,13 @@ typedef struct {
   double	dfPixelSizeX;
   double        dfPixelSizeY;
 
+  int           nUHLOffset;
   char		*pachUHLRecord;
+
+  int           nDSIOffset;
   char          *pachDSIRecord;
+
+  int           nACCOffset;
   char          *pachACCRecord;
 
   int		nDataOffset;
@@ -139,6 +148,20 @@ void DTEDClose( DTEDInfo * );
 
 const char *DTEDCreate( const char *pszFilename, 
                         int nLevel, int nLLOriginLat, int nLLOriginLong );
+
+/* -------------------------------------------------------------------- */
+/*      Metadata support.                                               */
+/* -------------------------------------------------------------------- */
+typedef enum {
+    DTEDMD_VERTACCURACY = 1, 		/* UHL 29+4 */
+    DTEDMD_SECURITYCODE = 2,            /* UHL 33+3, DSI 4+1 */
+    DTEDMD_PRODUCER = 3,                /* DSI 103+8 */
+    DTEDMD_COMPILATION_DATE = 4,        /* DSI 160+4 */
+} DTEDMetaDataCode;
+
+    
+char *DTEDGetMetadata( DTEDInfo *, DTEDMetaDataCode );
+int   DTEDSetMetadata( DTEDInfo *, DTEDMetaDataCode, const char *);
 
 /* -------------------------------------------------------------------- */
 /*      Point stream writer API.                                        */
