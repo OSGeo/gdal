@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/01/08 22:03:44  warmerda
+ * added StealGeometry() method on OGRFeature
+ *
  * Revision 1.24  2002/11/12 19:42:41  warmerda
  * copy style string in SetFrom()
  *
@@ -339,6 +342,31 @@ OGRErr OGR_F_SetGeometry( OGRFeatureH hFeat, OGRGeometryH hGeom )
 
 {
     return ((OGRFeature *) hFeat)->SetGeometry((OGRGeometry *) hGeom);
+}
+
+/************************************************************************/
+/*                           StealGeometry()                            */
+/************************************************************************/
+
+/**
+ * Take away ownership of geometry.
+ *
+ * Fetch the geometry from this feature, and clear the reference to the
+ * geometry on the feature.  This is a mechanism for the application to
+ * take over ownship of the geometry from the feature without copying. 
+ * Sort of an inverse to SetGeometryDirectly().
+ *
+ * After this call the OGRFeature will have a NULL geometry.
+ *
+ * @return the pointer to the geometry.
+ */
+
+OGRGeometry *OGRFeature::StealGeometry()
+
+{
+    OGRGeometry *poReturn = poGeometry;
+    poGeometry = NULL;
+    return poReturn;
 }
 
 /************************************************************************/
