@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.7 2000/10/20 17:35:36 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.8 2001/03/13 19:07:02 warmerda Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -818,6 +818,29 @@ DECLAREContigPutFunc(putgreytile)
     while (h-- > 0) {
 	for (x = w; x-- > 0;)
 	    *cp++ = BWmap[*pp++][0];
+	cp += toskew;
+	pp += fromskew;
+    }
+}
+
+/*
+ * 16-bit greyscale => colormap/RGB
+ */
+DECLAREContigPutFunc(put16bitbwtile)
+{
+    uint32** BWmap = img->BWmap;
+
+    (void) y;
+    while (h-- > 0) {
+        uint16 *wp = (uint16 *) pp;
+
+	for (x = w; x-- > 0;)
+        {
+            /* use high order byte of 16bit value */
+
+	    *cp++ = BWmap[*(wp++) >> 8][0];
+            pp += 2;
+        }
 	cp += toskew;
 	pp += fromskew;
     }
@@ -1810,6 +1833,9 @@ makebwmap(TIFFRGBAImage* img)
     int i;
     uint32* p;
 
+    if( nsamples == 0 )
+        nsamples = 1;
+
     img->BWmap = (uint32**) _TIFFmalloc(
 	256*sizeof (uint32 *)+(256*nsamples*sizeof(uint32)));
     if (img->BWmap == NULL) {
@@ -1843,6 +1869,7 @@ makebwmap(TIFFRGBAImage* img)
 	    GREY(i&0xf);
 	    break;
 	case 8:
+        case 16:
 	    GREY(i);
 	    break;
 	}
@@ -1862,6 +1889,11 @@ setupMap(TIFFRGBAImage* img)
     int32 x, range;
 
     range = (int32)((1L<<img->bitspersample)-1);
+    
+    /* treat 16 bit the same as eight bit */
+    if( img->bitspersample == 16 )
+        range = (int32) 255;
+
     img->Map = (TIFFRGBValue*) _TIFFmalloc((range+1) * sizeof (TIFFRGBValue));
     if (img->Map == NULL) {
 	TIFFError(TIFFFileName(img->tif),
@@ -1875,7 +1907,7 @@ setupMap(TIFFRGBAImage* img)
 	for (x = 0; x <= range; x++)
 	    img->Map[x] = (TIFFRGBValue) ((x * 255) / range);
     }
-    if (img->bitspersample <= 8 &&
+    if (img->bitspersample <= 16 &&
 	(img->photometric == PHOTOMETRIC_MINISBLACK ||
 	 img->photometric == PHOTOMETRIC_MINISWHITE)) {
 	/*
@@ -2072,10 +2104,11 @@ pickTileContigCase(TIFFRGBAImage* img)
 	case PHOTOMETRIC_MINISWHITE:
 	case PHOTOMETRIC_MINISBLACK:
 	    switch (img->bitspersample) {
-	    case 8:	put = putgreytile; break;
-	    case 4: put = put4bitbwtile; break;
-	    case 2: put = put2bitbwtile; break;
-	    case 1: put = put1bitbwtile; break;
+            case 16: put = put16bitbwtile; break;
+	    case 8:  put = putgreytile; break;
+	    case 4:  put = put4bitbwtile; break;
+	    case 2:  put = put2bitbwtile; break;
+	    case 1:  put = put1bitbwtile; break;
 	    }
 	    break;
 	case PHOTOMETRIC_YCBCR:
