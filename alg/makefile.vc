@@ -1,0 +1,15 @@
+#
+# Algorithms
+#
+
+OBJ	=	gdaldither.obj gdalmediancut.obj
+
+GDAL_ROOT	=	..
+
+!INCLUDE ..\nmake.opt
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj
+
