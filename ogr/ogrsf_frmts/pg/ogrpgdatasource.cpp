@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/10/04 14:03:09  warmerda
+ * added column name laundering support
+ *
  * Revision 1.13  2002/05/09 16:48:08  warmerda
  * upgrade to quote table and field names
  *
@@ -576,9 +579,11 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGRPGLayer	*poLayer;
+    OGRPGTableLayer	*poLayer;
 
     poLayer = new OGRPGTableLayer( this, pszLayerName, TRUE, nSRSId );
+
+    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",FALSE) );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */

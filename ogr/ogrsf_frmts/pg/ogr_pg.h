@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/10/04 14:03:09  warmerda
+ * added column name laundering support
+ *
  * Revision 1.9  2002/05/09 16:03:19  warmerda
  * major upgrade to support SRS better and add ExecuteSQL
  *
@@ -140,6 +143,8 @@ class OGRPGTableLayer : public OGRPGLayer
 
     char	        *pszQuery;
     char		*pszWHERE;
+
+    int			bLaunderColumnNames;
     
   public:
     			OGRPGTableLayer( OGRPGDataSource *,
@@ -150,20 +155,24 @@ class OGRPGTableLayer : public OGRPGLayer
     virtual void	ResetReading();
     virtual int         GetFeatureCount( int );
 
-    OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
-    void		SetSpatialFilter( OGRGeometry * );
+    virtual OGRGeometry *GetSpatialFilter() { return poFilterGeom; }
+    virtual void	SetSpatialFilter( OGRGeometry * );
 
     virtual OGRErr      SetAttributeFilter( const char * );
 
-    OGRErr              SetFeature( OGRFeature *poFeature );
-    OGRErr              CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      SetFeature( OGRFeature *poFeature );
+    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
     
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
     
     virtual OGRSpatialReference *GetSpatialRef();
 
-    int                 TestCapability( const char * );
+    virtual int         TestCapability( const char * );
+
+    // follow methods are not base class overrides
+    void		SetLaunderFlag( int bFlag ) 
+				{ bLaunderColumnNames = bFlag; }
 };
 
 /************************************************************************/

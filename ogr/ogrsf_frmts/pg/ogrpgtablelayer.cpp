@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/10/04 14:03:09  warmerda
+ * added column name laundering support
+ *
  * Revision 1.5  2002/09/19 17:40:42  warmerda
  * Make initial ResetReading() call to set full query expression in constructor.
  *
@@ -77,6 +80,8 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     poFeatureDefn = ReadTableDefinition( pszTableName );
     
     ResetReading();
+
+    bLaunderColumnNames = TRUE;
 }
 
 /************************************************************************/
@@ -515,7 +520,8 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
             pszCommand = (char *) CPLRealloc(pszCommand, nCommandBufSize );
         }
         
-        if( poFeatureDefn->GetFieldDefn(i)->GetType() == OFTString )
+        if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger
+            && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTReal )
         {
             int		iChar;
 
@@ -602,37 +608,66 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
+OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 
 {
     PGconn		*hPGConn = poDS->GetPGConn();
     PGresult            *hResult;
     char		szCommand[1024];
     char		szFieldType[256];
+    OGRFieldDefn        oField( poFieldIn );
 
+/* -------------------------------------------------------------------- */
+/*      Do we want to "launder" the column names into Postgres          */
+/*      friendly format?                                                */
+/* -------------------------------------------------------------------- */
+    if( bLaunderColumnNames )
+    {
+        char	*pszSafeName = CPLStrdup( oField.GetNameRef() );
+        int	i;
+
+        for( i = 0; pszSafeName[i] != '\0'; i++ )
+        {
+            pszSafeName[i] = tolower( pszSafeName[i] );
+            if( pszSafeName[i] == '-' || pszSafeName[i] == '#' )
+                pszSafeName[i] = '_';
+        }
+        oField.SetName( pszSafeName );
+        CPLFree( pszSafeName );
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Work out the PostgreSQL type.                                   */
 /* -------------------------------------------------------------------- */
-    if( poField->GetType() == OFTInteger )
+    if( oField.GetType() == OFTInteger )
     {
         strcpy( szFieldType, "INTEGER" );
     }
-    else if( poField->GetType() == OFTReal )
+    else if( oField.GetType() == OFTReal )
     {
         strcpy( szFieldType, "FLOAT8" );
     }
-    else if( poField->GetType() == OFTString )
+    else if( oField.GetType() == OFTString )
     {
-        if( poField->GetWidth() == 0 )
+        if( oField.GetWidth() == 0 )
             strcpy( szFieldType, "VARCHAR" );
         else
-            sprintf( szFieldType, "CHAR(%d)", poField->GetWidth() );
+            sprintf( szFieldType, "CHAR(%d)", oField.GetWidth() );
+    }
+    else if( bApproxOK )
+    {
+        CPLError( CE_Warning, CPLE_NotSupported,
+                  "Can't create field %s with type %s on PostgreSQL layers.  Creating as VARCHAR.",
+                  oField.GetNameRef(),
+                  OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
+        strcpy( szFieldType, "VARCHAR" );
     }
     else
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't create fields of type %s on PostgreSQL layers.\n",
-                  OGRFieldDefn::GetFieldTypeName(poField->GetType()) );
+                  "Can't create field %s with type %s on PostgreSQL layers.",
+                  oField.GetNameRef(),
+                  OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
 
         return OGRERR_FAILURE;
     }
@@ -645,7 +680,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
     PQclear( hResult );
 
     sprintf( szCommand, "ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s", 
-             poFeatureDefn->GetName(), poField->GetNameRef(), szFieldType );
+             poFeatureDefn->GetName(), oField.GetNameRef(), szFieldType );
     hResult = PQexec(hPGConn, szCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
@@ -664,7 +699,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
     hResult = PQexec(hPGConn, "COMMIT");
     PQclear( hResult );
 
-    poFeatureDefn->AddFieldDefn( poField );
+    poFeatureDefn->AddFieldDefn( &oField );
 
     return OGRERR_NONE;
 }
