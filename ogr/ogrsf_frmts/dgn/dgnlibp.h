@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/01/10 16:12:18  warmerda
+ * added extents capture
+ *
  * Revision 1.3  2000/12/28 21:28:43  warmerda
  * added element index support
  *
@@ -62,6 +65,14 @@ typedef struct {
     int         index_built;
     int	        element_count;
     DGNElementInfo *element_index;
+
+    int         got_bounds;
+    GUInt32	min_x;
+    GUInt32	min_y;
+    GUInt32	min_z;
+    GUInt32	max_x;
+    GUInt32	max_y;
+    GUInt32	max_z;
 
 } DGNInfo;
 
