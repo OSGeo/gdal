@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2003/11/03 21:37:34  warmerda
+ * fixed southern hemisphere UTM support
+ *
  * Revision 1.27  2003/08/14 14:36:24  warmerda
  * some ESRI .prj files use Central_Parallel instead of latitude_of_origin
  *
@@ -620,7 +623,7 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
             double      dfYShift = OSR_GDV( papszPrj, "Yshift", 0.0 );
 
             SetUTM( (int) OSR_GDV( papszPrj, "zone", 0.0 ),
-                    dfYShift >= 0.0 );
+                    dfYShift == 0.0 );
         }
         else
         {
