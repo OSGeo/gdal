@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/10/31 03:53:22  warmerda
+ * fixed special types
+ *
  * Revision 1.2  2002/10/31 03:24:49  warmerda
  * fixed assert
  *
@@ -1469,7 +1472,7 @@ typedef struct {
 
 typedef struct {
 	Fax3BaseState b;
-	const u_char* bitmap;		/* bit reversal table */
+	const unsigned char* bitmap;		/* bit reversal table */
 	GUInt32	data;			/* current i/o byte/word */
 	int	bit;			/* current i/o bit in byte */
 	int	EOLcnt;			/* count of EOL codes recognized */
@@ -1487,7 +1490,7 @@ typedef struct {
 	int	data;			/* current i/o byte */
 	int	bit;			/* current i/o bit in byte */
 	Ttag    tag;	                /* encoding state */
-	u_char*	refline;		/* reference line for 2d decoding */
+	unsigned char*	refline;		/* reference line for 2d decoding */
 	int	k;			/* #rows left that can be 2d encoded */
 	int	maxk;			/* max #rows that can be 2d encoded */
 } Fax3EncodeState;
@@ -1496,7 +1499,7 @@ typedef struct {
 
 #define	is2DEncoding(sp) \
 	(sp->b.groupoptions & GROUP3OPT_2DENCODING)
-#define	isAligned(p,t)	((((u_long)(p)) & (sizeof (t)-1)) == 0)
+#define	isAligned(p,t)	((((unsigned long)(p)) & (sizeof (t)-1)) == 0)
 
 /*
  * Group 3 and Group 4 Decoding.
@@ -1513,12 +1516,12 @@ typedef struct {
     GUInt32 BitAcc;			/* bit accumulator */		\
     int BitsAvail;			/* # valid bits in BitAcc */	\
     int RunLength;			/* length of current run */	\
-    u_char* cp;				/* next byte of input data */	\
-    u_char* ep;				/* end of input data */		\
+    unsigned char* cp;				/* next byte of input data */	\
+    unsigned char* ep;				/* end of input data */		\
     GUInt32* pa;				/* place to stuff next run */	\
     GUInt32* thisrun;			/* current row's run array */	\
     int EOLcnt;				/* # EOL codes recognized */	\
-    const u_char* bitmap = sp->bitmap;	/* input data bit reverser */	\
+    const unsigned char* bitmap = sp->bitmap;	/* input data bit reverser */	\
     const TIFFFaxTabEnt* TabEnt
 #define	DECLARE_STATE_2D(tif, sp, mod)					\
     DECLARE_STATE(tif, sp, mod);					\
@@ -1666,7 +1669,7 @@ _TIFFFax3fillruns(unsigned char* buf, GUInt32* runs, GUInt32* erun,
 			    do {
 				    *lp++ = 0L;
 			    } while (--nw);
-			    cp = (u_char*) lp;
+			    cp = (unsigned char*) lp;
 			}
 			ZERO(n, cp);
 			run &= 7;
@@ -1701,7 +1704,7 @@ _TIFFFax3fillruns(unsigned char* buf, GUInt32* runs, GUInt32* erun,
 			    do {
 				*lp++ = -1L;
 			    } while (--nw);
-			    cp = (u_char*) lp;
+			    cp = (unsigned char*) lp;
 			}
 			FILL(n, cp);
 			run &= 7;
