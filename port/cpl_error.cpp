@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.19  2001/11/15 16:11:08  warmerda
+ * use vsnprintf() for debug calls if it is available
+ *
  * Revision 1.18  2001/11/02 22:07:58  warmerda
  * added logging error handler
  *
@@ -214,6 +217,8 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
     va_list args;
     const char      *pszDebug = getenv("CPL_DEBUG");
 
+#define ERROR_MAX 25000
+
 /* -------------------------------------------------------------------- */
 /*      Does this message pass our current criteria?                    */
 /* -------------------------------------------------------------------- */
@@ -237,7 +242,7 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 /* -------------------------------------------------------------------- */
 /*      Format the error message                                        */
 /* -------------------------------------------------------------------- */
-    pszMessage = (char *) VSIMalloc(25000);
+    pszMessage = (char *) VSIMalloc(ERROR_MAX);
     if( pszMessage == NULL )
         return;
         
@@ -245,7 +250,12 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
     strcat( pszMessage, ": " );
     
     va_start(args, pszFormat);
+#if defined(HAVE_VSNPRINTF)
+    vsnprintf(pszMessage+strlen(pszMessage), ERROR_MAX - strlen(pszMessage), 
+              pszFormat, args);
+#else
     vsprintf(pszMessage+strlen(pszMessage), pszFormat, args);
+#endif
     va_end(args);
 
 /* -------------------------------------------------------------------- */
