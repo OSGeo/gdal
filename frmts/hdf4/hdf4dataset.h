@@ -1,12 +1,12 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  Hierarchical Data Format Release 4 (HDF4) Reader
+ * Project:  Hierarchical Data Format Release 4 (HDF4)
  * Purpose:  Header file for HDF4 datasets reader.
  * Author:   Andrey Kiselev, dron@at1895.spb.edu
  *
  ******************************************************************************
- * Copyright (c) 2002, Andrey Kiselev <a_kissel@eudoramail.com>
+ * Copyright (c) 2002, Andrey Kiselev <dron@at1895.spb.edu>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2002/10/25 14:28:54  dron
+ * Initial support for HDF4 creation.
+ *
  * Revision 1.4  2002/09/06 10:42:23  dron
  * Georeferencing for ASTER Level 1b datasets and ASTER DEMs.
  *
@@ -73,7 +76,7 @@ typedef enum			// Types of data products:
 class HDF4Dataset : public GDALDataset
 {
 
-  protected:  
+  protected:
 	  
     FILE	*fp;
     int32	hHDF4, hSD, hGR;
@@ -81,6 +84,7 @@ class HDF4Dataset : public GDALDataset
     HDF4Datatype iDataType;
     char	*pszDataType;
     
+    char	**papszGlobalMetadata;
     char	**papszSubDatasets;
 
   public:
@@ -89,10 +93,11 @@ class HDF4Dataset : public GDALDataset
     
     const char *HDF4Dataset::GetDataTypeName( int32 );
     virtual char **GetMetadata( const char * pszDomain = "" );
-    void TranslateHDF4Attributes( int32, int32, char *, int32,
-        int32, const char *pszDomain = NULL );
-    void TranslateHDF4EOSAttributes( int32, int32, int32, const char *pszDomain = NULL );
-    CPLErr ReadGlobalAttributes( int32, char *pszDomain = NULL );
+    char** TranslateHDF4Attributes( int32, int32, char *, int32,
+				  int32, char **papszMetadata );
+    char** TranslateHDF4EOSAttributes( int32, int32, int32,
+				     char **papszMetadata );
+    CPLErr ReadGlobalAttributes( int32 );
     static GDALDataset *Open( GDALOpenInfo * );
 
 };

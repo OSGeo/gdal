@@ -1,14 +1,14 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  Hierarchical Data Format Release 4 (HDF4) Reader
+ * Project:  Hierarchical Data Format Release 4 (HDF4)
  * Purpose:  HDF4 Datasets. Open HDF4 file, fetch metadata and list of
  *           subdatasets.
  *           This driver initially based on code supplied by Markus Neteler
  * Author:   Andrey Kiselev, dron@at1895.spb.edu
  *
  ******************************************************************************
- * Copyright (c) 2002, Andrey Kiselev <a_kissel@eudoramail.com>
+ * Copyright (c) 2002, Andrey Kiselev <dron@at1895.spb.edu>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.10  2002/10/25 14:28:54  dron
+ * Initial support for HDF4 creation.
+ *
  * Revision 1.9  2002/09/25 14:44:40  warmerda
  * Fixed iDataType initialization.
  *
@@ -88,6 +91,7 @@ HDF4Dataset::HDF4Dataset()
 {
     fp = NULL;
     hHDF4 = 0;
+    papszGlobalMetadata = NULL;
     papszSubDatasets = NULL;
 }
 
@@ -98,7 +102,10 @@ HDF4Dataset::HDF4Dataset()
 HDF4Dataset::~HDF4Dataset()
 
 {
-    CSLDestroy( papszSubDatasets );
+    if ( !papszSubDatasets )
+	CSLDestroy( papszSubDatasets );
+    if ( !papszGlobalMetadata )
+	CSLDestroy( papszGlobalMetadata );
     if( fp != NULL )
         VSIFClose( fp );
     if( hHDF4 > 0 )
@@ -456,8 +463,8 @@ char ** SLTokenizeHDFEOSAttrs( const char * pszString )
 /************************************************************************/
 /*         Translate HDF4-EOS attributes in GDAL metadata items         */
 /************************************************************************/
-void HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle, int32 iAttribute,
-		int32 nValues, const char *pszDomain )
+char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
+    int32 iAttribute, int32 nValues, char **papszMetadata )
 {
     char	*pszData;
     
@@ -526,7 +533,8 @@ void HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle, int32 iAttribute,
 		    i += j;
 		    i += 2;
 	            pszAttrValue = papszAttrList[i];
-	            SetMetadataItem( pszAttrName, pszAttrValue, pszDomain );
+	            papszMetadata =
+			CSLAddNameValue( papszMetadata, pszAttrName, pszAttrValue );
 		    break;
 	        }
 	    }
@@ -535,14 +543,16 @@ void HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle, int32 iAttribute,
     
     CSLDestroy( papszAttrList );
     CPLFree( pszData );
+
+    return papszMetadata;
 }
 
 /************************************************************************/
 /*         Translate HDF4 attributes in GDAL metadata items             */
 /************************************************************************/
-void HDF4Dataset::TranslateHDF4Attributes( int32 iHandle, int32 iAttribute,
-	        char *pszAttrName, int32 iNumType, int32 nValues,
-		const char *pszDomain )
+char** HDF4Dataset::TranslateHDF4Attributes( int32 iHandle,
+    int32 iAttribute, char *pszAttrName, int32 iNumType, int32 nValues,
+    char **papszMetadata )
 {
     int8	*pbData = NULL;
     
@@ -593,63 +603,65 @@ void HDF4Dataset::TranslateHDF4Attributes( int32 iHandle, int32 iAttribute,
     switch (iNumType)
     {
         case DFNT_CHAR8: // The same as DFNT_CHAR
-        SetMetadataItem( pszAttrName, pbData, pszDomain );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pbData );
 	break;
 	case DFNT_UCHAR8: // The same as DFNT_UCHAR
-        SetMetadataItem( pszAttrName, pbData, pszDomain );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName, pbData );
 	break;
         case DFNT_INT8:
-        SetMetadataItem( pszAttrName,
-	    SPrintArray((signed char *)pbData, nValues, ", "), pszDomain );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
+	    SPrintArray((signed char *)pbData, nValues, ", ") );
 	break;
         case DFNT_UINT8:
-        SetMetadataItem( pszAttrName,
-	    SPrintArray((GByte *)pbData, nValues, ", "), pszDomain );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
+	    SPrintArray((GByte *)pbData, nValues, ", ") );
 	break;
         case DFNT_INT16:
-        SetMetadataItem( pszAttrName,
-	    SPrintArray((GInt16 *)pbData, nValues, ", "), pszDomain );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
+	    SPrintArray((GInt16 *)pbData, nValues, ", ") );
 	break;
         case DFNT_UINT16:
-        SetMetadataItem( pszAttrName,
-	    SPrintArray((GUInt16 *)pbData, nValues, ", "), pszDomain );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
+	    SPrintArray((GUInt16 *)pbData, nValues, ", ") );
 	break;
         case DFNT_INT32:
-        SetMetadataItem( pszAttrName,
-	    SPrintArray((GInt32 *)pbData, nValues, ", "), pszDomain );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
+	    SPrintArray((GInt32 *)pbData, nValues, ", ") );
 	break;
         case DFNT_UINT32:
-        SetMetadataItem( pszAttrName,
-	    SPrintArray((GUInt32 *)pbData, nValues, ", "), pszDomain );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
+	    SPrintArray((GUInt32 *)pbData, nValues, ", ") );
 	break;
         case DFNT_INT64:
-        SetMetadataItem( pszAttrName,
-	    SPrintArray((GIntBig *)pbData, nValues, ", "), pszDomain );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
+	    SPrintArray((GIntBig *)pbData, nValues, ", ") );
 	break;
         case DFNT_UINT64:
-        SetMetadataItem( pszAttrName,
-	    SPrintArray((GUIntBig *)pbData, nValues, ", "), pszDomain );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
+	    SPrintArray((GUIntBig *)pbData, nValues, ", ") );
 	break;
         case DFNT_FLOAT32:
-        SetMetadataItem( pszAttrName,
-	    SPrintArray((float *)pbData, nValues, ", "), pszDomain );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
+	    SPrintArray((float *)pbData, nValues, ", ") );
 	break;
         case DFNT_FLOAT64:
-        SetMetadataItem( pszAttrName,
-	    SPrintArray((double *)pbData, nValues, ", "), pszDomain );
+        papszMetadata = CSLSetNameValue( papszMetadata, pszAttrName,
+	    SPrintArray((double *)pbData, nValues, ", ") );
 	break;
 	default:
 	break;
     }
     
     CPLFree( pbData );
+
+    return papszMetadata;
 }
 
 /************************************************************************/
-/*                          ReadGlobalAttributess()                     */
+/*                          ReadGlobalAttributes()                      */
 /************************************************************************/
 
-CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler, char *pszDomain )
+CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler )
 {
     int32	iAttribute, nValues, iNumType, nAttributes;
     char	szAttrName[MAX_NC_NAME];
@@ -673,11 +685,12 @@ CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler, char *pszDomain )
 	     EQUALN( szAttrName, "product_summary", 15 ) ||
 	     EQUALN( szAttrName, "dem_specific", 12 ) ||
 	     EQUALN( szAttrName, "level_1_carryover", 17 ) )
-            TranslateHDF4EOSAttributes( iHandler, iAttribute, nValues );
+            papszGlobalMetadata = TranslateHDF4EOSAttributes( iHandler,
+		iAttribute, nValues, papszGlobalMetadata );
 	else if ( !EQUALN( szAttrName, "structmetadata.", 15 ) ) // Not interesting for us
-	    TranslateHDF4Attributes( iHandler, iAttribute, szAttrName,
-				iNumType, nValues );
-     }
+	    papszGlobalMetadata = TranslateHDF4Attributes( iHandler,
+		iAttribute, szAttrName,	iNumType, nValues, papszGlobalMetadata );
+    }
     return CE_None;
 }
 
@@ -690,7 +703,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 {
     int		i;
     
-    if( poOpenInfo->fp == NULL /*|| poOpenInfo->nHeaderBytes < 200*/ )
+    if( poOpenInfo->fp == NULL )
         return NULL;
 
     // We have special routine in the HDF library for format checking!
@@ -722,69 +735,77 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->hSD = SDstart( poOpenInfo->pszFilename, DFACC_READ );
     if ( poDS->hSD == -1 )
+    {
+	delete poDS;
         return NULL;
+    }
    
 /* -------------------------------------------------------------------- */
 /*		Now read Global Attributes.				*/
 /* -------------------------------------------------------------------- */
     if ( poDS->ReadGlobalAttributes( poDS->hSD ) != CE_None )
+    {
+	delete poDS;
         return NULL;
+    }
+
+    poDS->SetMetadata( poDS->papszGlobalMetadata, "" );
 
 /* -------------------------------------------------------------------- */
 /*		Determine type of file we read.				*/
 /* -------------------------------------------------------------------- */
     const char	*pszValue;
     
-    if ( (pszValue = poDS->GetMetadataItem( "Title", 0 )) &&
-	 EQUAL( pszValue, "SeaWiFS Level-1A Data" ) )
+    if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
+	 && EQUAL( pszValue, "SeaWiFS Level-1A Data" ) )
     {
 	poDS->iDataType = SEAWIFS_L1A;
 	poDS->pszDataType = "SEAWIFS_L1A";
     }
-    else if ( (pszValue = poDS->GetMetadataItem( "Title", 0 )) &&
-	       EQUAL( pszValue, "SeaWiFS Level-2 Data" ) )
+    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
+	&& EQUAL( pszValue, "SeaWiFS Level-2 Data" ) )
     {
 	poDS->iDataType = SEAWIFS_L2;
 	poDS->pszDataType = "SEAWIFS_L2";
     }
-    else if ( (pszValue = poDS->GetMetadataItem( "Title", 0 )) &&
-	       EQUAL( pszValue, "SeaWiFS Level-3 Standard Mapped Image" ) )
+    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
+	&& EQUAL( pszValue, "SeaWiFS Level-3 Standard Mapped Image" ) )
     {
 	poDS->iDataType = SEAWIFS_L3;
 	poDS->pszDataType = "SEAWIFS_L3";
     }
-    else if ( (pszValue = poDS->GetMetadataItem( "SHORTNAME", 0 )) &&
-	       EQUAL( pszValue, "ASTL1A" ) )
+    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "SHORTNAME"))
+	&& EQUAL( pszValue, "ASTL1A" ) )
     {
         poDS->iDataType = ASTER_L1A;
 	poDS->pszDataType = "ASTER_L1A";
     }
-    else if ( (pszValue = poDS->GetMetadataItem( "SHORTNAME", 0 )) &&
-	       EQUAL( pszValue, "ASTL1B" ) )
+    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "SHORTNAME"))
+	&& EQUAL( pszValue, "ASTL1B" ) )
     {
         poDS->iDataType = ASTER_L1B;
 	poDS->pszDataType = "ASTER_L1B";
     }
-    else if ( (pszValue = poDS->GetMetadataItem( "SHORTNAME", 0 )) &&
-	       EQUAL( pszValue, "AST14DEM" ) )
+    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "SHORTNAME"))
+	&& EQUAL( pszValue, "AST14DEM" ) )
     {
         poDS->iDataType = AST14DEM;
 	poDS->pszDataType = "AST14DEM";
     }
-    else if ( (pszValue = poDS->GetMetadataItem( "ALGORITHMPACKAGENAME", 0 )) &&
-	       EQUAL( pszValue, "MODIS Level 1B channel subset" ) ) // FIXME: does it right?
+    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "ALGORITHMPACKAGENAME"))
+	&& EQUAL( pszValue, "MODIS Level 1B channel subset" ) ) // FIXME: does it right?
     {
         poDS->iDataType = MODIS_L1B;
 	poDS->pszDataType = "MODIS_L1B";
     }
-    else if ( (pszValue = poDS->GetMetadataItem( "LONGNAME", 0 )) &&
-	       EQUAL( pszValue, "MODIS/Terra Calibrated Radiances 5-Min L1B Swath 250m" ) )
+    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "LONGNAME") )
+	&& EQUAL( pszValue, "MODIS/Terra Calibrated Radiances 5-Min L1B Swath 250m" ))
     {
         poDS->iDataType = MOD02QKM_L1B;
 	poDS->pszDataType = "MOD02QKM_L1B";
     }
-    else if ( (pszValue = poDS->GetMetadataItem( "ASSOCIATEDINSTRUMENTSHORTNAME", 0 )) &&
-	       EQUAL( pszValue, "MODIS" ) )
+    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "ASSOCIATEDINSTRUMENTSHORTNAME"))
+	&& EQUAL( pszValue, "MODIS" ) )
     {
         poDS->iDataType = MODIS_UNK;
 	poDS->pszDataType = "MODIS_UNK";
