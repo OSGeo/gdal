@@ -21,6 +21,12 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.18  1999/07/27 00:53:28  warmerda
+ * ensure that whole old field value clear on write of string
+ *
+ * Revision 1.1  1999/07/05 18:58:07  warmerda
+ * New
+ *
  * Revision 1.17  1999/06/11 19:14:12  warmerda
  * Fixed some memory leaks.
  *
@@ -76,7 +82,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: dbfopen.c,v 1.17 1999/06/11 19:14:12 warmerda Exp $";
+  "$Id: dbfopen.c,v 1.18 1999/07/27 00:53:28 warmerda Exp $";
 
 #include "shapefil.h"
 
@@ -801,6 +807,7 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
 	    sprintf(szSField, szFormat, (int) *((double *) pValue) );
 	    if( strlen(szSField) > psDBF->panFieldSize[iField] )
 	        szSField[psDBF->panFieldSize[iField]] = '\0';
+
 	    strncpy((char *) (pabyRec+psDBF->panFieldOffset[iField]),
 		    szSField, strlen(szSField) );
 	}
@@ -821,7 +828,11 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
 	if( strlen((char *) pValue) > psDBF->panFieldSize[iField] )
 	    j = psDBF->panFieldSize[iField];
 	else
+        {
+            memset( pabyRec+psDBF->panFieldOffset[iField], ' ',
+                    psDBF->panFieldSize[iField] );
 	    j = strlen((char *) pValue);
+        }
 
 	strncpy((char *) (pabyRec+psDBF->panFieldOffset[iField]),
 		(char *) pValue, j );

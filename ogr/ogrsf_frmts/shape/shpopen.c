@@ -21,6 +21,9 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.23  1999/07/27 00:53:46  warmerda
+ * added support for rewriting shapes
+ *
  * Revision 1.22  1999/06/11 19:19:11  warmerda
  * Cleanup pabyRec static buffer on SHPClose().
  *
@@ -94,7 +97,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: shpopen.c,v 1.22 1999/06/11 19:19:11 warmerda Exp $";
+  "$Id: shpopen.c,v 1.23 1999/07/27 00:53:46 warmerda Exp $";
 
 #include "shapefil.h"
 
@@ -287,7 +290,8 @@ SHPHandle SHPOpen( const char * pszLayer, const char * pszAccess )
 /*      ensure the result string indicates binary to avoid common       */
 /*      problems on Windows.                                            */
 /* -------------------------------------------------------------------- */
-    if( strcmp(pszAccess,"rb+") == 0 || strcmp(pszAccess,"r+b") == 0 )
+    if( strcmp(pszAccess,"rb+") == 0 || strcmp(pszAccess,"r+b") == 0
+        || strcmp(pszAccess,"r+") == 0 )
         pszAccess = "r+b";
     else
         pszAccess = "rb";
@@ -823,15 +827,12 @@ int SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     uchar	*pabyRec;
     int32	i32;
 
-    assert( nShapeId == -1 );
-    
     psSHP->bUpdated = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Add the new entity to the in memory index.                      */
 /* -------------------------------------------------------------------- */
-    psSHP->nRecords++;
-    if( psSHP->nRecords > psSHP->nMaxRecords )
+    if( nShapeId == -1 && psSHP->nRecords+1 > psSHP->nMaxRecords )
     {
 	psSHP->nMaxRecords =(int) ( psSHP->nMaxRecords * 1.3 + 100);
 
@@ -844,8 +845,6 @@ int SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
 /*      Initialize record.                                              */
 /* -------------------------------------------------------------------- */
-    psSHP->panRecOffset[psSHP->nRecords-1] = nRecordOffset = psSHP->nFileSize;
-    
     pabyRec = (uchar *) malloc(psObject->nVertices * 4 * sizeof(double) 
 			       + psObject->nParts * 8 + 128);
     
@@ -1073,9 +1072,28 @@ int SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Establish where we are going to put this record. If we are      */
+/*      rewriting and existing record, and it will fit, then put it     */
+/*      back where the original came from.  Otherwise write at the end. */
+/* -------------------------------------------------------------------- */
+    if( nShapeId == -1 || psSHP->panRecSize[nShapeId] < nRecordSize-8 )
+    {
+        if( nShapeId == -1 )
+            nShapeId = psSHP->nRecords++;
+
+        psSHP->panRecOffset[nShapeId] = nRecordOffset = psSHP->nFileSize;
+        psSHP->panRecSize[nShapeId] = nRecordSize-8;
+        psSHP->nFileSize += nRecordSize;
+    }
+    else
+    {
+        nRecordOffset = psSHP->panRecOffset[nShapeId];
+    }
+    
+/* -------------------------------------------------------------------- */
 /*      Set the shape type, record number, and record size.             */
 /* -------------------------------------------------------------------- */
-    i32 = psSHP->nRecords-1+1;					/* record # */
+    i32 = nShapeId+1;					/* record # */
     if( !bBigEndian ) SwapWord( 4, &i32 );
     ByteCopy( &i32, pabyRec, 4 );
 
@@ -1090,12 +1108,15 @@ int SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
 /*      Write out record.                                               */
 /* -------------------------------------------------------------------- */
-    fseek( psSHP->fpSHP, nRecordOffset, 0 );
-    fwrite( pabyRec, nRecordSize, 1, psSHP->fpSHP );
+    if( fseek( psSHP->fpSHP, nRecordOffset, 0 ) != 0
+        || fwrite( pabyRec, nRecordSize, 1, psSHP->fpSHP ) < 1 )
+    {
+        printf( "Error in fseek() or fwrite().\n" );
+        free( pabyRec );
+        return -1;
+    }
+    
     free( pabyRec );
-
-    psSHP->panRecSize[psSHP->nRecords-1] = nRecordSize-8;
-    psSHP->nFileSize += nRecordSize;
 
 /* -------------------------------------------------------------------- */
 /*	Expand file wide bounds based on this shape.			*/
@@ -1120,7 +1141,7 @@ int SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 	psSHP->adBoundsMax[3] = MAX(psSHP->adBoundsMax[3],psObject->padfM[i]);
     }
 
-    return( psSHP->nRecords - 1 );
+    return( nShapeId  );
 }
 
 /************************************************************************/
