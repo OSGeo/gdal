@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/01/25 20:39:19  warmerda
+ * added prescan, and resetreading.  Provide stub if Xerces missing
+ *
  * Revision 1.2  2002/01/24 17:37:33  warmerda
  * added to/from XML support
  *
@@ -35,6 +38,34 @@
  * New
  */
 
+/************************************************************************/
+/* ==================================================================== */
+/*                  No XERCES Library                                   */
+/* ==================================================================== */
+/************************************************************************/
+#if HAVE_XERCES == 0
+
+/************************************************************************/
+/*                          CreateGMLReader()                           */
+/************************************************************************/
+
+IGMLReader *CreateGMLReader()
+
+{
+    CPLError( CE_Failure, CPLE_AppDefined,
+              "Unable to create Xerces C++ based GML reader, Xerces support\n"
+              "not configured into GDAL/OGR." );
+    return NULL;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*                  With XERCES Library                                 */
+/* ==================================================================== */
+/************************************************************************/
+#else /* HAVE_XERCES == 1 */
+
+#include "gmlreaderp.h"
 #include "gmlreaderp.h"
 #include "cpl_conv.h"
 
@@ -73,6 +104,8 @@ GMLReader::GMLReader()
     
     m_poState = NULL;
     m_poCompleteFeature = NULL;
+
+    m_pszFilename = NULL;
 }
 
 /************************************************************************/
@@ -171,6 +204,8 @@ void GMLReader::CleanupParser()
 
     delete m_poGMLHandler;
     m_poGMLHandler = NULL;
+
+    m_bReadStarted = FALSE;
 }
 
 /************************************************************************/
@@ -636,4 +671,47 @@ int GMLReader::SaveClasses( const char *pszFile )
 
     return bSuccess;
 }
+
+/************************************************************************/
+/*                          PrescanForSchema()                          */
+/*                                                                      */
+/*      For now we use a pretty dumb approach of just doing a normal    */
+/*      scan of the whole file, building up the schema information.     */
+/*      Eventually we hope to do a more efficient scan when just        */
+/*      looking for schema information.                                 */
+/************************************************************************/
+
+int GMLReader::PrescanForSchema()
+
+{
+    GMLFeature	*poFeature;
+
+    if( m_pszFilename == NULL )
+        return FALSE;
+
+    ClearClasses();
+    if( !SetupParser() )
+        return FALSE;
+
+    while( (poFeature = NextFeature()) != NULL )
+    {
+        delete poFeature;
+    }
+
+    CleanupParser();
+
+    return GetClassCount() > 0;
+}
+
+/************************************************************************/
+/*                            ResetReading()                            */
+/************************************************************************/
+
+void GMLReader::ResetReading()
+
+{
+    CleanupParser();
+}
+
+#endif /* HAVE_XERCES == 1 */
 
