@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2002/07/25 15:58:02  warmerda
+ * Fixed docs for how to compute inverse flattening.
+ *
  * Revision 1.52  2002/07/25 13:13:36  warmerda
  * fixed const correctness of some docs
  *
@@ -965,7 +968,7 @@ double OSRGetLinearUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
  * 
  * @param dfInvFlattening the inverse flattening for the spheroid.
  * This can be computed from the semi minor axis as 
- * 1/f = 1 / (semimajor/semiminor - 1.0).
+ * 1/f = 1.0 / (1.0 - semiminor/semimajor).
  *
  * @param pszPMName the name of the prime merdidian (not to serve as a key)
  * If this is NULL a default value of "Greenwich" will be used. 
