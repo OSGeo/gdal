@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/03/31 15:55:42  danmo
+ * Added C API function docs
+ *
  * Revision 1.16  2003/03/06 20:29:27  warmerda
  * added GML import/export entry points
  *
@@ -203,6 +206,31 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 /************************************************************************/
 /*                        OGR_G_CreateFromWkb()                         */
 /************************************************************************/
+/**
+ * Create a geometry object of the appropriate type from it's well known
+ * binary representation.
+ *
+ * Note that if nBytes is passed as zero, no checking can be done on whether
+ * the pabyData is sufficient.  This can result in a crash if the input
+ * data is corrupt.  This function returns no indication of the number of
+ * bytes from the data source actually used to represent the returned
+ * geometry object.  Use OGR_G_WkbSize() on the returned geometry to
+ * establish the number of bytes it required in WKB format.
+ *
+ * The OGRGeometryFactory::createFromWkb() CPP method  is the same as this
+ * function.
+ *
+ * @param pabyData pointer to the input BLOB data.
+ * @param hSRS handle to the spatial reference to be assigned to the
+ *             created geometry object.  This may be NULL.
+ * @param phGeometry the newly created geometry object will 
+ * be assigned to the indicated handle on return.  This will be NULL in case
+ *                  of failure.
+ *
+ * @return OGRERR_NONE if all goes well, otherwise any of
+ * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
+ * OGRERR_CORRUPT_DATA may be returned.
+ */
 
 OGRErr CPL_DLL OGR_G_CreateFromWkb( unsigned char *pabyData, 
                                     OGRSpatialReferenceH hSRS,
@@ -324,6 +352,26 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
 /************************************************************************/
 /*                        OGR_G_CreateFromWkt()                         */
 /************************************************************************/
+/**
+ * Create a geometry object of the appropriate type from it's well known
+ * text representation.
+ *
+ * The OGRGeometryFactory::createFromWkt CPP method is the same as this
+ * function.
+ *
+ * @param ppszData input zero terminated string containing well known text
+ *                representation of the geometry to be created.  The pointer
+ *                is updated to point just beyond that last character consumed.
+ * @param hSRS handle to the spatial reference to be assigned to the
+ *             created geometry object.  This may be NULL.
+ * @param phGeometry the newly created geometry object will be assigned to the
+ *                  indicated handle on return.  This will be NULL if the
+ *                  method fails. 
+ *
+ * @return OGRERR_NONE if all goes well, otherwise any of
+ * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
+ * OGRERR_CORRUPT_DATA may be returned.
+ */
 
 OGRErr CPL_DLL OGR_G_CreateFromWkt( char **ppszData, 
                                     OGRSpatialReferenceH hSRS,
@@ -393,6 +441,20 @@ OGRGeometryFactory::createGeometry( OGRwkbGeometryType eGeometryType )
 /************************************************************************/
 /*                        OGR_G_CreateGeometry()                        */
 /************************************************************************/
+/** 
+ * Create an empty geometry of desired type.
+ *
+ * This is equivelent to allocating the desired geometry with new, but
+ * the allocation is guaranteed to take place in the context of the 
+ * GDAL/OGR heap. 
+ *
+ * This function is the same as the CPP method 
+ * OGRGeometryFactory::createGeometry.
+ *
+ * @param eGeometryType the type code of the geometry to be created.
+ *
+ * @return handle to the newly create geometry or NULL on failure.
+ */
 
 OGRGeometryH OGR_G_CreateGeometry( OGRwkbGeometryType eGeometryType )
 
@@ -408,7 +470,7 @@ OGRGeometryH OGR_G_CreateGeometry( OGRwkbGeometryType eGeometryType )
 /**
  * Destroy geometry object.
  *
- * Equivelent to invoking delete on a geometry, but it guaranteed to take 
+ * Equivalent to invoking delete on a geometry, but it guaranteed to take 
  * place within the context of the GDAL/OGR heap.
  *
  * This method is the same as the C function OGR_G_DestroyGeometry().
@@ -426,6 +488,17 @@ void OGRGeometryFactory::destroyGeometry( OGRGeometry *poGeom )
 /************************************************************************/
 /*                        OGR_G_DestroyGeometry()                       */
 /************************************************************************/
+/**
+ * Destroy geometry object.
+ *
+ * Equivalent to invoking delete on a geometry, but it guaranteed to take 
+ * place within the context of the GDAL/OGR heap.
+ *
+ * This function is the same as the CPP method 
+ * OGRGeometryFactory::destroyGeometry.
+ *
+ * @param hGeom handle to the geometry to delete.
+ */
 
 void OGR_G_DestroyGeometry( OGRGeometryH hGeom )
 

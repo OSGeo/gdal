@@ -28,8 +28,8 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.5  2003/01/02 21:45:23  warmerda
- * move OGRBuildPolygonsFromEdges into C API
+ * Revision 1.6  2003/03/31 15:55:42  danmo
+ * Added C API function docs
  *
  * Revision 1.4  2002/03/05 15:15:07  warmerda
  * fixed zero tolerance problems
@@ -67,7 +67,6 @@
  */
 
 #include "ogr_geometry.h"
-#include "ogr_api.h"
 #include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
@@ -164,16 +163,29 @@ static void AddEdgeToRing( OGRLinearRing * poRing, OGRLineString * poLine,
 /************************************************************************/
 /*                      OGRBuildPolygonFromEdges()                      */
 /************************************************************************/
+/**
+ * Build a ring from a bunch of arcs.
+ *
+ * @param poLines line string geometry handle to add to the ring.
+ * @param bBestEffort not yet implemented.
+ * @param bAutoClose indicates if the ring should be close when first and
+ * last points of the ring are the same.
+ * @param dfTolerance tolerance inside witch two arcs are condisidered
+ * close enough to be assembly.
+ * @param peErr OGRERR_NONE on success, or OGRERR_FAILURE on failure.
+ * @return an handle of the new geometry, a polygon.
+ *
+ *
+ */
 
-OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
-                                       int bBestEffort, 
-                                       int bAutoClose,
-                                       double dfTolerance, 
-                                       OGRErr * peErr )
+OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
+                                      int bBestEffort, 
+                                      int bAutoClose,
+                                      double dfTolerance, 
+                                      OGRErr * peErr )
 
 {
     int         bSuccess = TRUE;
-    OGRGeometryCollection *poLines = (OGRGeometryCollection *) hLines;
     OGRPolygon  *poPolygon = new OGRPolygon();
 
 /* -------------------------------------------------------------------- */
@@ -318,6 +330,6 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
             *peErr = OGRERR_FAILURE;
     }
     
-    return (OGRGeometryH) poPolygon;
+    return poPolygon;
 }
 
