@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2005/01/13 16:32:27  fwarmerdam
+ * added support for fipszone for stateplane
+ *
  * Revision 1.36  2005/01/13 15:18:05  fwarmerdam
  * use SetLinearUnitsAndUpdateParameters()
  *
@@ -740,7 +743,10 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
     else if( EQUAL(pszProj,"STATEPLANE") )
     {
         int nZone = (int) OSR_GDV( papszPrj, "zone", 0.0 );
-        nZone = ESRIToUSGSZone( nZone );
+        if( nZone != 0 )
+            nZone = ESRIToUSGSZone( nZone );
+        else
+            nZone = (int) OSR_GDV( papszPrj, "fipszone", 0.0 );
 
         if( nZone != 0 )
         {
