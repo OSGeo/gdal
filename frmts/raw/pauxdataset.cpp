@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/12/08 04:46:16  warmerda
+ * added support for color table
+ *
  * Revision 1.13  2001/11/11 23:51:00  warmerda
  * added required class keyword to friend declarations
  *
@@ -134,6 +137,8 @@ class PAuxDataset : public RawDataset
 
 class PAuxRasterBand : public RawRasterBand
 {
+    GDALColorTable	*poCT;
+
   public:
 
                  PAuxRasterBand( GDALDataset *poDS, int nBand, FILE * fpRaw, 
@@ -145,6 +150,9 @@ class PAuxRasterBand : public RawRasterBand
 
     virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual CPLErr SetNoDataValue( double );
+
+    virtual GDALColorTable *GetColorTable();
+    virtual GDALColorInterp GetColorInterpretation();
 };
 
 /************************************************************************/
@@ -160,6 +168,49 @@ PAuxRasterBand::PAuxRasterBand( GDALDataset *poDS, int nBand,
                          eDataType, bNativeOrder )
 
 {
+    PAuxDataset *poPDS = (PAuxDataset *) poDS;
+
+    poCT = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      See if we have colors.  Currently we must have color zero,      */
+/*      but this shouldn't really be a limitation.                      */
+/* -------------------------------------------------------------------- */
+    char	szTarget[128];
+
+    sprintf( szTarget, "METADATA_IMG_%d_Class_%d_Color", nBand, 0 );
+    if( CSLFetchNameValue( poPDS->papszAuxLines, szTarget ) != NULL )
+    {
+        const char *pszLine;
+        int         i;
+
+        poCT = new GDALColorTable();
+
+        for( i = 0; i < 256; i++ )
+        {
+            int	nRed, nGreen, nBlue;
+
+            sprintf( szTarget, "METADATA_IMG_%d_Class_%d_Color", nBand, i );
+            pszLine = CSLFetchNameValue( poPDS->papszAuxLines, szTarget );
+            while( pszLine && *pszLine == ' ' )
+                pszLine++;
+
+            if( pszLine != NULL
+                && EQUALN(pszLine, "(RGB:",5)
+                && sscanf( pszLine+5, "%d %d %d", 
+                           &nRed, &nGreen, &nBlue ) == 3 )
+            {
+                GDALColorEntry    oColor;
+                
+                oColor.c1 = nRed;
+                oColor.c2 = nGreen;
+                oColor.c3 = nBlue;
+                oColor.c4 = 255;
+
+                poCT->SetColorEntry( i, &oColor );
+            }
+        }
+    }
 }
 
 /************************************************************************/
@@ -169,6 +220,8 @@ PAuxRasterBand::PAuxRasterBand( GDALDataset *poDS, int nBand,
 PAuxRasterBand::~PAuxRasterBand()
 
 {
+    if( poCT != NULL )
+        delete poCT;
 }
 
 /************************************************************************/
@@ -223,6 +276,28 @@ CPLErr PAuxRasterBand::SetNoDataValue( double dfNewValue )
     return CE_None;
 }
 
+/************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable *PAuxRasterBand::GetColorTable()
+
+{
+    return poCT;
+}
+
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp PAuxRasterBand::GetColorInterpretation()
+
+{
+    if( poCT == NULL )
+        return GCI_Undefined;
+    else
+        return GCI_PaletteIndex;
+}
 
 /************************************************************************/
 /* ==================================================================== */
