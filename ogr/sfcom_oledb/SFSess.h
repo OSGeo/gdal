@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/04/10 20:07:59  warmerda
+ * Added ADSK_GEOM_EXTENT support
+ *
  * Revision 1.18  2002/01/13 01:41:46  warmerda
  * add proper support for restrictions
  *
@@ -493,6 +496,9 @@ public:
 	WCHAR	m_szColumnName[129];
 	unsigned int m_nGeomType;
 	int		m_nSpatialRefId;
+#ifdef SUPPORT_ADSK_GEOM_EXTENT    
+	BYTE    m_abyADSK_GEOM_EXTENT[93];
+#endif        
 	
 	OGISGeometry_Row()
 	{
@@ -502,6 +508,10 @@ public:
 		m_szColumnName[0] = NULL;
 		m_nGeomType = 0;
 		m_nSpatialRefId = 0;
+#ifdef SUPPORT_ADSK_GEOM_EXTENT    
+                memset( m_abyADSK_GEOM_EXTENT, 0,
+                        sizeof(m_abyADSK_GEOM_EXTENT) );
+#endif                
 	}
 
 BEGIN_PROVIDER_COLUMN_MAP(OGISGeometry_Row)
@@ -511,13 +521,32 @@ BEGIN_PROVIDER_COLUMN_MAP(OGISGeometry_Row)
 	PROVIDER_COLUMN_ENTRY("COLUMN_NAME",4,m_szColumnName)
 	PROVIDER_COLUMN_ENTRY("GEOM_TYPE",5,m_nGeomType)
 	PROVIDER_COLUMN_ENTRY("SPATIAL_REF_SYSTEM_ID",6,m_nSpatialRefId)
+#ifdef SUPPORT_ADSK_GEOM_EXTENT    
+	PROVIDER_COLUMN_ENTRY("ADSK_GEOM_EXTENT",7,m_abyADSK_GEOM_EXTENT)
+#endif
 END_PROVIDER_COLUMN_MAP()
 };
 
 class CSFSessionSchemaOGISGeoColumns:
-public CRowsetImpl<CSFSessionSchemaOGISGeoColumns,OGISGeometry_Row,CSFSession>
+public CCRRowsetImpl<CSFSessionSchemaOGISGeoColumns,OGISGeometry_Row,CSFSession>
 {
   public:
+    DBSTATUS GetRCDBStatus(CSimpleRow* poRC,
+                           ATLCOLUMNINFO*poColInfo,
+                           void *pSrcData)
+        {
+#ifdef SUPPORT_ADSK_GEOM_EXTENT            
+            OGISGeometry_Row      *poRow = (OGISGeometry_Row *) pSrcData;
+
+            if( lstrcmpW(poColInfo->pwszName,L"ADSK_GEOM_EXTENT") == 0 )
+            {
+                if( poRow->m_abyADSK_GEOM_EXTENT[0] == 0 )
+                    return DBSTATUS_S_ISNULL;
+            }
+#endif            
+            return DBSTATUS_S_OK;
+        }
+
     HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
 	{
             USES_CONVERSION;
@@ -561,6 +590,33 @@ public CRowsetImpl<CSFSessionSchemaOGISGeoColumns,OGISGeometry_Row,CSFSession>
                 }
                 else
                     trData.m_nSpatialRefId = poDS->GetLayerCount() + 1;
+
+#ifdef SUPPORT_ADSK_GEOM_EXTENT    
+                OGREnvelope sExtent;
+                
+                if( pLayer->GetExtent( &sExtent, FALSE ) == OGRERR_NONE )
+                {
+                    OGRPolygon oExtentPoly;
+                    OGRLinearRing oExtentRing;
+
+                    oExtentRing.addPoint( sExtent.MinX, sExtent.MinY );
+                    oExtentRing.addPoint( sExtent.MinX, sExtent.MaxY );
+                    oExtentRing.addPoint( sExtent.MaxX, sExtent.MaxY );
+                    oExtentRing.addPoint( sExtent.MaxX, sExtent.MinY );
+                    oExtentRing.addPoint( sExtent.MinX, sExtent.MinY );
+
+                    oExtentPoly.addRing( &oExtentRing );
+
+                    CPLDebug( "FME_OLEDB",
+                              "ADSK_GEOM_EXTENT(%f,%f,%f,%f) -> %d bytes",
+                              sExtent.MinX, sExtent.MaxX,
+                              sExtent.MinY, sExtent.MaxY,
+                              oExtentPoly.WkbSize() );
+                    
+                    oExtentPoly.exportToWkb( wkbNDR,
+                                             trData.m_abyADSK_GEOM_EXTENT+0 );
+                }
+#endif
 
                 m_rgRowData.Add(trData);
             }
