@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/10/17 04:04:05  fwarmerdam
+ * fixed bug with cleanup order in ReleaseDataSource, issue with vrt
+ *
  * Revision 1.15  2003/10/10 19:12:06  warmerda
  * Ensure registrar is created before trying to use it.
  *
@@ -379,8 +382,6 @@ OGRErr OGRSFDriverRegistrar::ReleaseDataSource( OGRDataSource * poDS )
               "ReleaseDataSource(%s/%p) dereferenced and now destroying.",
               poDS->GetName(), poDS );
 
-    delete poDS;
-
     CPLFree( papszOpenDSRawName[iDS] );
     memmove( papszOpenDSRawName + iDS, papszOpenDSRawName + iDS + 1, 
              sizeof(char *) * (nOpenDSCount - iDS - 1) );
@@ -400,6 +401,11 @@ OGRErr OGRSFDriverRegistrar::ReleaseDataSource( OGRDataSource * poDS )
         CPLFree( papoOpenDSDriver );
         papoOpenDSDriver = NULL;
     }
+
+    // We are careful to only do the delete poDS after adjusting the
+    // table, as if it is a virtual dataset, other removals may happen
+    // in the meantime.
+    delete poDS;
 
     return OGRERR_NONE;
 }
