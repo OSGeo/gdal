@@ -63,7 +63,7 @@ if sys.platform == 'win32':
             
     # don't forget to add gdal to the list :)
     libraries.append('gdal')
-    extra_link_args = ['/NODEFAULTLIB:MSVCRT']
+    extra_link_args = []#['/NODEFAULTLIB:MSVCRT']
 
 elif sys.platform == 'cygwin':
     TOP_DIR = "../.."
@@ -145,7 +145,7 @@ ogr_module = Extension('_ogr',
 setup( name = 'Gdal Wrapper',
        version = 'ng using swig 1.3',
        description = 'Swig 1.3 wrapper over gdal',
-       py_modules = ['gdal', 'osr', 'ogr'],
+       py_modules = ['gdal', 'osr', 'ogr','gdalconst'],
        url="http://www.gdal.org",
        ext_modules = [gdal_module,
                       gdalconst_module,
