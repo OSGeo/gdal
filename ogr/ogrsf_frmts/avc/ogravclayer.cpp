@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/02/15 02:35:16  warmerda
+ * added preliminary text support
+ *
  * Revision 1.2  2002/02/14 23:01:04  warmerda
  * added region and attribute support
  *
@@ -174,6 +177,26 @@ int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
         }
         return TRUE;
 
+      case AVCFileTXT:
+      case AVCFileTX6:
+        {
+            poFeatureDefn = new OGRFeatureDefn( pszName );
+            poFeatureDefn->SetGeomType( wkbPoint );
+
+            OGRFieldDefn	oUserId( "UserId", OFTInteger );
+            poFeatureDefn->AddFieldDefn( &oUserId );
+
+            OGRFieldDefn	oText( "Text", OFTString );
+            poFeatureDefn->AddFieldDefn( &oText );
+
+            OGRFieldDefn	oHeight( "Height", OFTReal );
+            poFeatureDefn->AddFieldDefn( &oHeight );
+
+            OGRFieldDefn	oLevel( "Level", OFTInteger );
+            poFeatureDefn->AddFieldDefn( &oLevel );
+        }
+        return TRUE;
+
       default:
         poFeatureDefn = NULL;
         return FALSE;
@@ -311,6 +334,39 @@ OGRFeature *OGRAVCLayer::TranslateFeature( void *pAVCFeature )
 /*      Apply attributes.                                               */
 /* -------------------------------------------------------------------- */
           poOGRFeature->SetField( 0, psLAB->nPolyId );
+
+          return poOGRFeature;
+      }
+
+/* ==================================================================== */
+/*      TXT/TX6 (Text)							*/
+/* ==================================================================== */
+      case AVCFileTXT:
+      case AVCFileTX6:
+      {
+          AVCTxt *psTXT = (AVCTxt *) pAVCFeature;
+
+/* -------------------------------------------------------------------- */
+/*      Create feature.                                                 */
+/* -------------------------------------------------------------------- */
+          OGRFeature *poOGRFeature = new OGRFeature( GetLayerDefn() );
+          poOGRFeature->SetFID( psTXT->nTxtId );
+
+/* -------------------------------------------------------------------- */
+/*      Apply Geometry                                                  */
+/* -------------------------------------------------------------------- */
+          if( psTXT->numVerticesLine > 0 )
+              poOGRFeature->SetGeometryDirectly( 
+                  new OGRPoint( psTXT->pasVertices[0].x, 
+                                psTXT->pasVertices[0].y ) );
+
+/* -------------------------------------------------------------------- */
+/*      Apply attributes.                                               */
+/* -------------------------------------------------------------------- */
+          poOGRFeature->SetField( 0, psTXT->nUserId );
+          poOGRFeature->SetField( 1, psTXT->pszText );
+          poOGRFeature->SetField( 2, psTXT->dHeight );
+          poOGRFeature->SetField( 3, psTXT->nLevel );
 
           return poOGRFeature;
       }
