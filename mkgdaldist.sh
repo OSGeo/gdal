@@ -56,16 +56,8 @@ rm -rf dist_wrk
 
 TARGETDIR=remotesensing.org:/ftp/remotesensing/pub/gdal
 if test "$2" = "-install" ; then
-  if test \! -d $TARGETDIR ; then
-    echo "Can't find $TARGETDIR ... -install failed."
-    exit
-  fi
 
-  echo "Installing: " $TARGETDIR/gdal-${GDAL_VERSION}.tar.gz
-  rm -f $TARGETDIR/gdal-${GDAL_VERSION}.tar.gz
-  scp gdal-${GDAL_VERSION}.tar.gz $TARGETDIR
-
-  echo "Installing: " $TARGETDIR/gdal${COMPRESSED_VERSION}.zip
-  rm -f $TARGETDIR/gdal${COMPRESSED_VERSION}.zip
-  scp gdal${COMPRESSED_VERSION}.zip $TARGETDIR
+  echo "Installing: " $TARGETDIR/gdal-${GDAL_VERSION}.tar.gz 
+  echo "       and: " $TARGETDIR/gdal${COMPRESSED_VERSION}.zip
+  scp gdal-${GDAL_VERSION}.tar.gz $TARGETDIR/gdal${COMPRESSED_VERSION}.zip $TARGETDIR
 fi
