@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  NOAA Polar Orbiter Level 1b Dataset Reader (AVHRR)
- * Purpose:  Partial implementation, can read NOAA-9(F)-NOAA-17(M) AVHRR data
+ * Purpose:  Can read NOAA-9(F)-NOAA-17(M) AVHRR datasets
  * Author:   Andrey Kiselev, a_kissel@eudoramail.com
  *
  ******************************************************************************
@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.9  2002/06/26 12:28:36  dron
+ * 8-bit selective extract subsets supported
+ *
  * Revision 1.8  2002/06/25 18:11:26  dron
  * Added support for 16-bit selective extract subsets
  *
@@ -178,7 +181,6 @@ class L1BDataset : public GDALDataset
     friend class L1BRasterBand;
 
     GByte	 pabyTBMHeader[TBM_HEADER_SIZE];
-//    GByte	 pabyDataHeader[DATASET_HEADER_SIZE];
     char	pszRevolution[6]; // Five-digit number identifying spacecraft revolution
     int		iSource; // Source of data (receiving station name)
     int		iProcCenter; // Data processing center
@@ -284,7 +286,8 @@ CPLErr L1BRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     L1BDataset *poGDS = (L1BDataset *) poDS;
     GUInt32 iword, jword;
     GUInt32 *iRawScan = NULL;			// Packed scanline buffer
-    GUInt16 *iScan1 = NULL, *iScan2 = NULL;	// Unpacked scanline buffers
+    GUInt16 *iScan1 = NULL, *iScan2 = NULL;	// Unpacked 16-bit scanline buffers
+    GByte *byScan = NULL;			// Unpacked 8-bit scanline buffer
     int iDataOffset, i, j;
 	    
 /* -------------------------------------------------------------------- */
@@ -337,7 +340,14 @@ CPLErr L1BRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	CPLFree(iScan2);
 	break;
 	case UNPACKED8BIT:
-	break;
+	iScan1 = (GUInt16 *)CPLMalloc(poGDS->GetRasterXSize()
+			              * poGDS->nBands * sizeof(GUInt16));
+	byScan = (GByte *)CPLMalloc(poGDS->nRecordSize);
+	VSIFRead(byScan, 1, poGDS->nRecordSize, poGDS->fp);
+        for (i = 0; i < poGDS->GetRasterXSize() * poGDS->nBands; i++)
+	    iScan1[i] = byScan[poGDS->nRecordDataStart / (int)sizeof(byScan[0]) + i];
+	CPLFree(byScan);
+        break;
         default: // Should never be here
 	break;
     }
@@ -741,10 +751,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
     VSIFSeek( poDS->fp, 0, SEEK_SET );
-    // Skip TBM (Terabit memory) Header record
-//    VSIFSeek( poDS->fp, TBM_HEADER_SIZE, SEEK_SET );
     VSIFRead( poDS->pabyTBMHeader, 1, TBM_HEADER_SIZE, poDS->fp );
-//    VSIFRead( poDS->abyDataHeader, 1, DATASET_HEADER_SIZE, poDS->fp );
 
     // Determine processing center where the dataset was created
     if ( EQUALN((const char *) poDS->pabyTBMHeader + 30, "CMS", 3) )
@@ -837,6 +844,8 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 	poDS->iDataFormat = PACKED10BIT;
     else if ( EQUALN((const char *)poDS->pabyTBMHeader + 117, "16", 2) )
         poDS->iDataFormat = UNPACKED16BIT;
+    else if ( EQUALN((const char *)poDS->pabyTBMHeader + 117, "08", 2) )
+        poDS->iDataFormat = UNPACKED8BIT;
     else
 	goto bad;
 
