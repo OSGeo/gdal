@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/05/02 19:51:36  warmerda
+ * improve wkbGeomTypeToDBGEOM for other 3D geom types
+ *
  * Revision 1.15  2001/11/09 20:48:58  warmerda
  * added functions for processing WKT and getting provider options
  *
@@ -404,11 +407,10 @@ void CPL_ATLTrace2( DWORD category, UINT level, const char * format, ... )
 /*                            SFReportError()                           */
 /************************************************************************/
 
-
 HRESULT	SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,
                       char *pszText)
 {
-    static	IClassFactory *m_pErrorObjectFactory;
+    static	IClassFactory *m_pErrorObjectFactory = NULL;
 
     if (FAILED(passed_hr))
     {
@@ -453,6 +455,7 @@ HRESULT	SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,
         ErrorInfo.dwMinor = providerCode;
         ErrorInfo.clsid   = CLSID_SF;
         ErrorInfo.iid     = iid;
+        ErrorInfo.dispid  = 0;
 
         hr = pErrorRecords->AddErrorRecord(&ErrorInfo,ErrorInfo.dwMinor,
                                            &dispparams,NULL,0);
@@ -463,6 +466,70 @@ HRESULT	SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,
         // the object to the Automation DLL. pErrorRecords->Release();
         pErrorInfo->Release();
 
+/* -------------------------------------------------------------------- */
+/*      For debugging purposes, lets try and verify that we can get     */
+/*      the error information back out now in a manner similar to       */
+/*      what RowsetViewer does.                                         */
+/* -------------------------------------------------------------------- */
+#ifdef notdef
+        pErrorInfo = NULL;
+        pErrorRecords = NULL;
+	ULONG cErrorRecords = 0;
+	
+	CComBSTR cstrDescription;
+	CComBSTR cstrSource;
+	CComBSTR cstrSQLInfo;
+	INT iResult = 0;
+	static LCID lcid = GetSystemDefaultLCID(); 
+        
+	if((hr = GetErrorInfo(0, &pErrorInfo))==S_OK && pErrorInfo)
+        {
+            //The Error Object may support multiple Errors (IErrorRecords)
+            if(SUCCEEDED(hr = pErrorInfo->QueryInterface(&pErrorRecords)))
+            {
+                //Multiple Errors
+                hr = pErrorRecords->GetRecordCount(&cErrorRecords);
+            }
+            else
+            {
+                //Only a single Error Object
+                cErrorRecords = 1;
+            }
+
+            //Get the Description
+            hr = pErrorInfo->GetDescription(&cstrDescription);
+            
+            //Get the Source - this will be the window title...
+            hr = pErrorInfo->GetSource(&cstrSource);
+            
+            ERRORINFO ErrorInfo = { passed_hr, 0 };
+
+            //Loop through the records
+            for(ULONG i=0; i<cErrorRecords; i++)
+            {
+                //ErrorRecords
+                if(pErrorRecords)
+                {
+                    pErrorInfo->Release();
+                    hr = pErrorRecords->GetErrorInfo(i, lcid, &pErrorInfo);
+
+		    //Get the Basic ErrorInfo
+                    hr = pErrorRecords->GetBasicErrorInfo(i, &ErrorInfo);
+                }
+                else
+                {
+		    //ErrorInfo is only available...
+                    hr = pErrorInfo->GetGUID(&ErrorInfo.iid);
+                }
+
+                //Get the Description
+                hr = pErrorInfo->GetDescription(&cstrDescription);
+				
+                //Get the Source - this will be the window title...
+                hr = pErrorInfo->GetSource(&cstrSource);
+            }
+        }
+#endif
     }
     return passed_hr;
 }
@@ -471,22 +538,18 @@ HRESULT	SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,
 /*                       SFWkbGeomTypeToDBGEOM()                        */
 /************************************************************************/
 
-int             SFWkbGeomTypeToDBGEOM( OGRwkbGeometryType in )
+int SFWkbGeomTypeToDBGEOM( OGRwkbGeometryType in )
 
 {
-    switch( in )
+    switch( wkbFlatten(in) )
     {
         case wkbPoint:
-        case wkbPoint25D:
             return  DBGEOM_POINT;
                         
         case wkbLineString:
-        case wkbLineString25D:
             return DBGEOM_LINESTRING;
-            break;
                         
         case wkbPolygon:
-        case wkbPolygon25D:
             return DBGEOM_POLYGON;
                         
         case wkbMultiPoint:
@@ -500,7 +563,6 @@ int             SFWkbGeomTypeToDBGEOM( OGRwkbGeometryType in )
                         
         case wkbGeometryCollection:
             return DBGEOM_COLLECTION;
-            break;
                         
         case wkbUnknown:
         case wkbNone:
