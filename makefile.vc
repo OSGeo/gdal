@@ -18,7 +18,7 @@ DISTDIR	=	gdal_$(VERSION)
 
 !INCLUDE nmake.opt
 
-default:	port_dir ogr core_dir frmts_dir $(GDAL_DLL) apps_dir
+default:	port_dir ogr_dir core_dir frmts_dir $(GDAL_DLL) apps_dir
 
 lib:
 	if exist gdal.lib del gdal.lib
@@ -69,7 +69,7 @@ apps_dir:
 	$(MAKE) /f makefile.vc
 	cd ..
 
-ogr:      port_dir
+ogr_dir:      port_dir
 	cd frmts/iso8211
 	$(MAKE) /f makefile.vc
 	cd ..\sdts	
@@ -85,7 +85,7 @@ lib_dist:	default
 	zip -r $(DISTDIR).zip $(DISTDIR)
 
 $(GDAL_DLL):	lib
-	link /dll $(OGR_INCLUDE) $(LIBOBJ) /out:$(GDAL_DLL) /implib:gdal_i.lib
+	link /dll /debug $(OGR_INCLUDE) $(LIBOBJ) /out:$(GDAL_DLL) /implib:gdal_i.lib
 
 install: $(GDAL_DLL) apps_dir
 	copy $(GDAL_DLL) $(BINDIR)
