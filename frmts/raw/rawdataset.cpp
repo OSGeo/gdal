@@ -3,7 +3,7 @@
  *
  * Project:  Generic Raw Binary Driver
  * Purpose:  Implementation of RawDataset and RawRasterBand classes.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerda@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/07/16 19:29:09  warmerda
+ * use overviews in IRasterIO() on reads when appropriate
+ *
  * Revision 1.19  2003/07/08 21:10:19  warmerda
  * avoid warnings
  *
@@ -493,6 +496,19 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* ==================================================================== */
     if ( eRWFlag == GF_Read )
     {
+/* -------------------------------------------------------------------- */
+/*      Do we have overviews that would be appropriate to satisfy       */
+/*      this request?                                                   */
+/* -------------------------------------------------------------------- */
+        if( (nBufXSize < nXSize || nBufYSize < nYSize)
+            && GetOverviewCount() > 0 )
+        {
+            if( OverviewRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                                  pData, nBufXSize, nBufYSize, 
+                                  eBufType, nPixelSpace, nLineSpace ) == CE_None )
+                return CE_None;
+        }
+
 /* ==================================================================== */
 /*   1. Simplest case when we should get contiguous block               */
 /*   of uninterleaved pixels.                                           */
