@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2000/08/18 15:24:48  warmerda
+ * added GDALTermProgress
+ *
  * Revision 1.29  2000/07/11 14:35:43  warmerda
  * added documentation
  *
@@ -227,6 +230,7 @@ typedef void *GDALColorTableH;
 
 typedef int (*GDALProgressFunc)(double,const char *, void *);
 int CPL_DLL GDALDummyProgress( double, const char *, void *);
+int CPL_DLL GDALTermProgress( double, const char *, void *);
 int CPL_DLL GDALScaledProgress( double, const char *, void *);
 void CPL_DLL *GDALCreateScaledProgress( double, double,
                                         GDALProgressFunc, void * );

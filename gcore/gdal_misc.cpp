@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2000/08/18 15:24:48  warmerda
+ * added GDALTermProgress
+ *
  * Revision 1.19  2000/08/09 16:25:42  warmerda
  * don't crash if block is null
  *
@@ -587,6 +590,49 @@ void GDALDestroyScaledProgress( void * pData )
 
 {
     CPLFree( pData );
+}
+
+/************************************************************************/
+/*                          GDALTermProgress()                          */
+/************************************************************************/
+
+int GDALTermProgress( double dfComplete, const char *pszMessage, void * )
+
+{
+    static double dfLastComplete = -1.0;
+
+    if( dfLastComplete > dfComplete )
+    {
+        if( dfLastComplete > 1.0 )
+            dfLastComplete = -1.0;
+        else
+            dfLastComplete = dfComplete;
+    }
+
+    if( floor(dfLastComplete*10) != floor(dfComplete*10) )
+    {
+        int    nPercent = (int) floor(dfComplete*100);
+
+        if( nPercent == 0 && pszMessage != NULL )
+            fprintf( stdout, "%s:", pszMessage );
+
+        if( nPercent == 100 )
+            fprintf( stdout, "%d - done.\n", (int) floor(dfComplete*100) );
+        else
+        {
+            fprintf( stdout, "%d.", (int) floor(dfComplete*100) );
+            fflush( stdout );
+        }
+    }
+    else if( floor(dfLastComplete*30) != floor(dfComplete*30) )
+    {
+        fprintf( stdout, "." );
+        fflush( stdout );
+    }
+
+    dfLastComplete = dfComplete;
+
+    return TRUE;
 }
 
 /************************************************************************/
