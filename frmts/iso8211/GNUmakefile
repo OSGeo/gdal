@@ -12,7 +12,7 @@ ISOLIB = libiso8211.a
 OBJ =	ddfmodule.o ddfutils.o ddffielddefn.o ddfrecord.o ddffield.o \
 	ddfsubfielddefn.o
 
-default:	$(ISOLIB) 8211view
+default:	$(ISOLIB)
 
 all:	$(ISOLIB) 8211dump 8211view docs
 
