@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.37  2005/02/17 22:21:49  fwarmerdam
+ * avoid memory leak
+ *
  * Revision 1.36  2005/01/10 18:25:06  fwarmerdam
  * added support for getting/setting LAYER_TYPE metadata
  *
@@ -2172,6 +2175,8 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
 	}
         else
             papszGDALMD = CSLAddString( papszGDALMD, papszMD[iColumn] );
+
+        CPLFree( pszKey );
     }
 
     if ( pszBinValues != NULL )
