@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/08/22 16:54:30  warmerda
+ * dont try to extract gcps if there is no prefix data
+ *
  * Revision 1.14  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -604,6 +607,20 @@ void SAR_CEOSDataset::ScanForGCPs()
 {
     int    iScanline, nStep, nGCPMax = 15;
 
+/* -------------------------------------------------------------------- */
+/*      Do we have a standard 180 bytes of prefix data (192 bytes       */
+/*      including the record marker information)?  If not, it is        */
+/*      unlikely that the GCPs are available.                           */
+/* -------------------------------------------------------------------- */
+    if( sVolume.ImageDesc.ImageDataStart < 192 )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Just sample fix scanlines through the image for GCPs, to        */
+/*      return 15 GCPs.  That is an adequate coverage for most          */
+/*      purposes.  A GCP is collected from the beginning, middle and    */
+/*      end of each scanline.                                           */
+/* -------------------------------------------------------------------- */
     nGCPCount = 0;
     pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nGCPMax);
 
