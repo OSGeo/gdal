@@ -1,3 +1,3 @@
 test.py
-gdal.pyc
+*.pyc
 gdal_wrap.doc
