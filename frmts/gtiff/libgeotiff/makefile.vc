@@ -1,0 +1,27 @@
+
+EXTRAFLAGS =	-I..\libtiff
+
+OBJ	= \
+	xtiff.obj \
+	geo_free.obj \
+	geo_get.obj \
+	geo_names.obj \
+	geo_new.obj \
+	geo_print.obj \
+	geo_set.obj \
+	geo_tiffp.obj \
+	geo_write.obj \
+	geo_normalize.obj \
+	cpl_csv.obj \
+	geotiff_proj4.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	copy *.obj ..\..\o
+
+clean:
+	del *.obj
+

@@ -1,0 +1,23 @@
+
+OBJ	=	gdalopen.obj gdaldrivermanager.obj gdaldriver.obj \
+		gdaldataset.obj gdalrasterband.obj gdal_misc.obj \
+		rasterio.obj gdalrasterblock.obj gdalprojdef.obj
+
+GDAL_ROOT	=	..
+
+GDALLIB	=	..\gdal.lib
+LIBS	=	$(GDALLIB)
+
+!INCLUDE ..\nmake.opt
+
+default:	gdal_translate.exe gdalinfo.exe
+
+gdalinfo.exe:	gdalinfo.c $(GDALLIB)
+	$(CC) $(CFLAGS) gdalinfo.c $(LIBS) 
+	
+gdal_translate.exe:	gdal_translate.c $(GDALLIB)
+	$(CC) $(CFLAGS) gdal_translate.c $(LIBS) 
+	
+clean:
+	del *.obj *.exe
+

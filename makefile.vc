@@ -1,0 +1,30 @@
+GDAL_ROOT = ..
+
+!INCLUDE nmake.opt
+
+default:	port_dir core_dir frmts_dir lib apps_dir
+
+lib:	
+	del gdal.lib
+	lib /out:gdal.lib port\*.obj core\*.obj frmts\o\*.obj 
+
+port_dir:
+	cd port
+	$(MAKE) /f makefile.vc
+	cd ..
+
+core_dir:
+	cd core
+	$(MAKE) /f makefile.vc
+	cd ..
+
+frmts_dir:
+	cd frmts
+	$(MAKE) /f makefile.vc
+	cd ..
+
+apps_dir:
+	cd apps
+	$(MAKE) /f makefile.vc
+	cd ..
+

@@ -1,0 +1,14 @@
+
+OBJ	=	hfaband.obj hfadataset.obj hfadictionary.obj hfaentry.obj \
+		hfafield.obj hfaopen.obj hfatype.obj
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	copy *.obj ..\o
+
+clean:
+	del *.obj
+

@@ -1,0 +1,14 @@
+
+INC	=	-I$(GDAL_ROOT)\port -I$(GDAL_ROOT)\core
+OPTFLAGS=	/Zi /nologo
+
+CFLAGS	=	$(OPTFLAGS) $(INC) $(EXTRAFLAGS)
+MAKE	=	nmake /nologo
+
+CC	=	cl
+
+.c.obj:	
+	$(CC) $(CFLAGS) /c $*.c
+
+.cpp.obj:	
+	$(CC) $(CFLAGS) /c $*.cpp

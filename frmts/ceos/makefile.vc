@@ -1,0 +1,13 @@
+
+cOBJ	=	ceosopen.obj ceosdataset.obj 
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	copy *.obj ..\o
+
+clean:
+	del *.obj
+

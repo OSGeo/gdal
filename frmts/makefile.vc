@@ -1,0 +1,31 @@
+
+GDAL_ROOT = ..
+
+EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff
+
+!INCLUDE $(GDAL_ROOT)/nmake.opt
+
+default:	o\gdalallregister.obj subdirs
+
+subdirs:
+	cd ceos
+	$(MAKE) /f makefile.vc
+	cd ..\aigrid
+	$(MAKE) /f makefile.vc
+	cd ..\elas
+	$(MAKE) /f makefile.vc
+	cd ..\hfa
+	$(MAKE) /f makefile.vc
+	cd ..\gtiff
+	$(MAKE) /f makefile.vc
+	cd ..\ceos
+	$(MAKE) /f makefile.vc
+	cd ..
+
+o\gdalallregister.obj:	gdalallregister.cpp
+	$(CC) $(CFLAGS) /c gdalallregister.cpp
+	copy gdalallregister.obj o
+
+clean:
+	del o\*.obj *.obj
+
