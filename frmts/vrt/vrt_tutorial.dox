@@ -129,6 +129,43 @@ of a raster band as it's text value.
   <Description>Crop Classification Layer</Description>
 \endcode
 
+<li> <b>UnitType</b>: This optional element contains the vertical units for
+elevation band data.  One of "m" for meters or "ft" for feet. Default 
+assumption is meters.<p>
+
+\code
+  <UnitType>ft</UnitType>
+\endcode
+
+<li> <b>Offset</b>: This optional element contains the offset that should be
+applied when computing "real" pixel values from scaled pixel values.   The
+default is 0.0.<p>
+
+\code
+  <Offset>0.0</Offset>
+\endcode
+
+<li> <b>Scale</b>: This optional element contains the scale that should be
+applied when computing "real" pixel values from scaled pixel values.   The
+default is 1.0.<p>
+
+\code
+  <Scale>0.0</Scale>
+\endcode
+
+<li> <b>CategoryNames</b>: This optional element contains a list of Category
+subelements with the names of the categories for classied images. <p>
+
+\code
+  <CategoryNames>
+    <Category>Missing</Category>
+    <Category>Non-Crop</Category>
+    <Category>Wheat</Category>
+    <Category>Corn</Category>
+    <Category>Soybeans</Category>
+  </CategoryNames>
+\endcode
+
 <li> <b><SimpleSource></b>: The SimpleSource indicates that raster data
 should be read from a separate dataset, indicating the dataset, and band to be
 read from, and how the data should map into this bands raster space.  
