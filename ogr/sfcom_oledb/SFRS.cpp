@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2001/09/06 03:25:55  warmerda
+ * added debug report on spatial envelope, and g_nNextSFAccessorHandle
+ *
  * Revision 1.22  2001/08/17 14:25:22  warmerda
  * added spatial and attribute query support
  *
@@ -118,6 +121,8 @@ void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... );
 
 static OGRGeometry      *poGeometry = NULL;
 static DBPROPOGISENUM   eFilterOp = DBPROP_OGIS_ENVELOPE_INTERSECTS;
+
+int g_nNextSFAccessorHandle = 1;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -398,8 +403,6 @@ public:
     CComPtr<IDataConvert> m_spConvert;
 };
 
-
-ATLCOLUMNINFO CShapeFile::colInfo;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -859,6 +862,19 @@ HRESULT CSFCommand::ExtractSpatialQuery( DBPARAMS *pParams )
     eFilterOp = (DBPROPOGISENUM) 
         *((int *) (((unsigned char *) pParams->pData) 
                    + rgBindings[1].obValue));
+
+    if( poGeometry != NULL )
+    {
+        OGREnvelope sEnvelope;
+        
+        poGeometry->getEnvelope( &sEnvelope );
+        CPLDebug( "OGR_OLEDB", 
+                  "Using %d spatial query with extents:\n"
+                  "  xmin=%.4f, ymin=%.4f, xmax=%.4f, ymax=%.4f\n",
+                  eFilterOp, 
+                  sEnvelope.MinX, sEnvelope.MinY,
+                  sEnvelope.MaxX, sEnvelope.MaxY );
+    }
 
     return S_OK;
 }
