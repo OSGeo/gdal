@@ -1,6 +1,7 @@
 VERSION =	1_0
 DISTDIR =	gxf3_$(VERSION)
 WEB_DIR =	/u/www/projects/gxf
+SHARED_LIB =	gdal_GXF.so
 
 GDAL_ROOT	=	../..
 
@@ -29,6 +30,12 @@ install-obj:	$(foreach file,$(OBJ),../o/$(file))
 
 ../o/%.o:	%.o
 	cp $*.o ../o
+
+$(SHARED_LIB):	$(OBJ)
+	$(LD_SHARED) $(OBJ) $(GDAL_SLIB_LINK) $(LIBS) -o $(SHARED_LIB) 
+
+install-lib:	$(SHARED_LIB)
+	cp $(SHARED_LIB) $(GDAL_ROOT)/lib
 
 docs:
 	rm -rf html
