@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.14  2004/04/02 16:38:38  warmerda
+ * Also disable creation type metadata.
+ *
  * Revision 1.13  2004/04/02 15:17:49  warmerda
  * Disable BSB creation.
  *
@@ -704,8 +707,8 @@ void GDALRegister_BSB()
                                    "Maptech BSB Nautical Charts" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#BSB" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 #ifdef BSB_CREATE
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>\n"
 "   <Option name='NA' type='string'/>\n"
