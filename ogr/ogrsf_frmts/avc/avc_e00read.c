@@ -230,6 +230,7 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
         CPLError(CE_Failure, CPLE_OpenFailed, 
                  "Invalid coverage (%s): directory does not appear to "
                  "contain any supported vector coverage file.",  pszCoverPath);
+        CPLFree(psInfo->pszCoverName);
         CPLFree(psInfo->pszCoverPath);
         CPLFree(psInfo->pszInfoPath);
         CPLFree(psInfo);
@@ -280,6 +281,7 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
         CPLError(CE_Failure, CPLE_OpenFailed, 
              "Invalid coverage (%s): 'info' directory not found or invalid.", 
                                               pszCoverPath);
+        CPLFree(psInfo->pszCoverName);
         CPLFree(psInfo->pszCoverPath);
         CPLFree(psInfo->pszInfoPath);
         CPLFree(psInfo);
@@ -292,6 +294,7 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
      *----------------------------------------------------------------*/
     if (CPLGetLastErrorNo() != 0)
     {
+        CPLFree(psInfo->pszCoverName);
         CPLFree(psInfo->pszCoverPath);
         CPLFree(psInfo->pszInfoPath);
         CPLFree(psInfo);
