@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/10/14 15:26:03  warmerda
+ * added format setting
+ *
  * Revision 1.4  2003/10/10 19:05:46  warmerda
  * implementation migrated to gdal/alg
  *
@@ -59,7 +62,7 @@ static void Usage()
 {
     printf( 
         "Usage: gdal_contour [-b <band>] [-off <offset>] [-a <attribute_name>]\n"
-        "                    [-3d] [-inodata] [-snodata n]\n"
+        "                    [-3d] [-inodata] [-snodata n] [-f <formatname>]\n"
         "                    <src_filename> <dst_filename> <interval>\n" );
     exit( 1 );
 }
@@ -78,6 +81,7 @@ int main( int argc, char ** argv )
     const char *pszSrcFilename = NULL;
     const char *pszDstFilename = NULL;
     const char *pszElevAttrib = NULL;
+    const char *pszFormat = "ESRI Shapefile";
 
     GDALAllRegister();
     OGRRegisterAll();
@@ -103,6 +107,10 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-b") && i < argc-1 )
         {
             nBandIn = atoi(argv[++i]);
+        }
+        else if( EQUAL(argv[i],"-f") && i < argc-1 )
+        {
+            pszFormat = argv[++i];
         }
         else if( EQUAL(argv[i],"-3d")  )
         {
@@ -172,10 +180,17 @@ int main( int argc, char ** argv )
 /*      Create the outputfile.                                          */
 /* -------------------------------------------------------------------- */
     OGRDataSourceH hDS;
-    OGRSFDriverH hDriver = OGRGetDriverByName( "ESRI Shapefile" );
+    OGRSFDriverH hDriver = OGRGetDriverByName( pszFormat );
     OGRFieldDefnH hFld;
     OGRLayerH hLayer;
     int nElevField = -1;
+
+    if( hDriver == NULL )
+    {
+        fprintf( stderr, "Unable to find format driver named %s.\n", 
+                 pszFormat );
+        exit( 10 );
+    }
 
     hDS = OGR_Dr_CreateDataSource( hDriver, pszDstFilename, NULL );
     if( hDS == NULL )
