@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/11/21 19:55:49  warmerda
+ * added pt stream api
+ *
  * Revision 1.3  2001/11/13 15:43:41  warmerda
  * preliminary dted creation working
  *
@@ -131,6 +134,13 @@ void DTEDClose( DTEDInfo * );
 
 const char *DTEDCreate( const char *pszFilename, 
                         int nLevel, int nLLOriginLat, int nLLOriginLong );
+
+/* -------------------------------------------------------------------- */
+/*      Point stream writer API.                                        */
+/* -------------------------------------------------------------------- */
+void *DTEDCreatePtStream( const char *pszPath, int nLevel );
+int   DTEDWritePt( void *hStream, double dfLong, double dfLat, double dfElev );
+void  DTEDClosePtStream( void *hStream );
 
 CPL_C_END
 
