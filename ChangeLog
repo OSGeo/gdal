@@ -1,3 +1,8 @@
+2001-09-25  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* frmts/gtiff/geotiff.cpp: added GDALReadTabFile() provided by
+	Petri J. Riipinen.  
+
 2001-09-24  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* frmts/gtiff/libtiff: upgraded to approximately libtiff 3.5.7.
