@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.99  2004/11/11 18:32:03  fwarmerdam
- * Added SetBonne support
+ * Revision 1.100  2004/11/23 20:01:54  fwarmerdam
+ * fixed a small init bug with pyprogressproxy stuff
  *
  ************************************************************************/
 
@@ -1389,6 +1389,7 @@ py_GDALBuildOverviews(PyObject *self, PyObject *args) {
     PyProgressData sProgressInfo;
 
     self = self;
+    sProgressInfo.nLastReported = -1;
     sProgressInfo.psPyCallback = NULL;
     sProgressInfo.psPyCallbackData = NULL;
     if(!PyArg_ParseTuple(args,"ssO!O!|OO:GDALBuildOverviews",	
