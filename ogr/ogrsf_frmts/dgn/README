@@ -57,7 +57,7 @@ Release 1.4
 
  o Added DGNGetShapeFillInfo(). 
 
-
+ o DGNGetShapeFillInfo() now tries to handle multi-part attribute linkages.
 
 
 Release 1.3
