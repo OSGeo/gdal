@@ -17,6 +17,7 @@ AC_CHECK_HEADERS(fcntl.h unistd.h dbmalloc.h dlfcn.h)
 dnl Checks for library functions.
 AC_C_BIGENDIAN
 AC_FUNC_VPRINTF
+AC_CHECK_FUNC(vsnprintf, AC_DEFINE(HAVE_VSNPRINTF))
 
 AC_COMPILER_WFLAGS
 AC_COMPILER_PIC
