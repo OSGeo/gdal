@@ -40,7 +40,7 @@
  *
  */
 
-#include "tiffiop.h"
+#include "tiffio.h"
 #include "tif_ovrcache.h"
 #include <assert.h>
 #include "cpl_port.h"
@@ -114,7 +114,7 @@ TIFFOvrCache *TIFFCreateOvrCache( TIFF *hTIFF, int nDirOffset )
     if( psCache->pabyRow1Blocks == NULL
         || psCache->pabyRow2Blocks == NULL )
     {
-        TIFFError( hTIFF->tif_name,
+        TIFFError( "TIFFCreateOvrCache",
                    "Can't allocate memory for overview cache." );
         return NULL;
     }
