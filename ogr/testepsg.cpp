@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/01/18 15:30:57  warmerda
+ * add usage reporting
+ *
  * Revision 1.4  2001/12/06 18:18:47  warmerda
  * added preliminary xml srs support
  *
@@ -61,6 +64,9 @@ int main( int nArgc, char ** papszArgv )
 {
     OGRSpatialReference oSRS;
     int i;
+
+    if( nArgc < 2 )
+        Usage();
 
     for( i = 1; i < nArgc; i++ )
     {
