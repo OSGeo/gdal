@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/05/28 19:17:31  warmerda
+ * fixup stuff for docs
+ *
  * Revision 1.16  2003/04/22 19:35:16  warmerda
  * Added SyncToDisk
  *
@@ -146,7 +149,7 @@
   @param pszName the name of the file, or data source to open.
   @param bUpdate FALSE for read-only access (the default) or TRUE for 
          read-write access.
-  @param pahDriver if non-NULL, this argument will be updated with a 
+  @param pahDriverList if non-NULL, this argument will be updated with a 
          pointer to the driver which was used to open the data source.
 
   @return NULL on error or if the pass name is not supported by this driver,
@@ -240,7 +243,7 @@
 
 /**
  
-  \fn OGRSFDriver *OGRSFDriverRegistrar::GetDriver( int idriver );
+  \fn OGRSFDriver *OGRSFDriverRegistrar::GetDriver( int iDriver );
 
   Fetch the indicated driver.
 
@@ -424,6 +427,25 @@
 */
 
 
+/**
+ \fn OGRDataSource *OGRSFDriver::CreateDataSource( const char *pszName, 
+                                        char ** papszOptions );
+
+ This method attempts to create a new data source based on the passed
+ driver.  The papszOptions argument can be used to control driver specific
+ creation options.  These options are normally documented in the format
+ specific documentation. 
+
+ This method is the same as the C function OGR_Dr_CreateDataSource().
+
+ @param pszName the name for the new data source.
+ @param papszOptions a StringList of name=value options.  Options are driver
+specific, and driver information can be found at the following url:  
+http://gdal.velocet.ca/projects/opengis/ogrhtml/ogr_formats.html 
+
+ @return NULL is returned on failure, or a new OGRDataSource on 
+success. 
+*/
 
 /** 
 
@@ -593,38 +615,16 @@ success.
 
  Execute an SQL statement against the data store. 
 
- The dialects supported will vary by driver, but all datasources should
- support a minimal SELECT statement like the following.  The WHERE clause
- can be any where clause supported by OGR_L_SetAttributeFilter().
-
-   SELECT <field-list> FROM table-name [WHERE <where-expr>] 
-       [ORDER BY <sort specification list>]
-
-   <field-list> ::= DISTINCT fieldname | <field-spec> 
-                 | <field-spec> , <field-list>
-
-   <field-spec> ::= fieldname 
-                 | <field_func> ( [DISTINCT] <field-func> )
-                 | Count(*)
-
-   <field-func> ::= AVG | MAX | MIN | SUM | COUNT
-
-
-   <sort specification list> ::=
-              <sort specification> [ { <comma> <sort specification> }... ]
-
-   <sort specification> ::= <sort key> [ <ordering specification> ]
-
-   <sort key> ::=  <column name>
-
-   <ordering specification> ::= ASC | DESC
-
  The result of an SQL query is either NULL for statements that are in error,
  or that have no results set, or an OGRLayer handle representing a results
  set from the query.  Note that this OGRLayer is in addition to the layers
  in the data store and must be destroyed with 
  OGR_DS_ReleaseResultsSet() before the data source is closed 
  (destroyed).  
+
+ For more information on the SQL dialect supported internally by OGR
+ review the <a href="ogr_sql.html">OGR SQL</a> document.  Some drivers (ie.
+ Oracle and PostGIS) pass the SQL directly through to the underlying RDBMS.
 
  This function is the same as the CPP method OGRDataSource::ExecuteSQL();
 
@@ -640,7 +640,7 @@ success.
 */
 
 /**
- \fn void OGRDataSource::ReleaseResultsSet(OGRLayer *poResultsSet);
+ \fn void OGRDataSource::ReleaseResultSet(OGRLayer *poResultsSet);
 
  Release results of ExecuteSQL().
 
@@ -701,7 +701,7 @@ success.
 
 
 /**
- \fn int OGR_DS_TestCapability( OGRDataSourceH hDS, const char *pszCap );
+ \fn int OGR_DS_TestCapability( OGRDataSourceH hDS, const char *pszCapability );
 
  Test if capability is available.
 
@@ -727,8 +727,8 @@ success.
 */ 
 
 /**
- \fn OGRLayer *OGRDataSource::CreateLayer( const char *pszLayerName, 
-                                OGRSpatialReference *poSRS = NULL,
+ \fn OGRLayer *OGRDataSource::CreateLayer( const char *pszName, 
+                                OGRSpatialReference *poSpatialRef = NULL,
                                 OGRwkbGeometryType eGType = wkbUnknown,
                                 char ** papszOptions = NULL );
 
@@ -737,9 +737,9 @@ indicated name, coordinate system, geometry type.  The papszOptions argument
 can be used to control driver specific creation options.  These options are
 normally documented in the format specific documentation. 
 
- @param pszLayerName the name for the new layer.  This should ideally not 
+ @param pszName the name for the new layer.  This should ideally not 
 match any existing layer on the datasource.
- @param poSRS the coordinate system to use for the new layer, or NULL if
+ @param poSpatialRef the coordinate system to use for the new layer, or NULL if
 no coordinate system is available. 
  @param eGType the geometry type for the layer.  Use wkbUnknown if there
 are no constraints on the types geometry to be written. 
@@ -790,6 +790,7 @@ normally documented in the format specific documentation.
 
 This function is the same as the CPP method OGRDataSource::CreateLayer().
 
+ @param hDS The dataset handle.
  @param pszName the name for the new layer.  This should ideally not 
 match any existing layer on the datasource.
  @param hSpatialRef handle to the coordinate system to use for the new layer,
