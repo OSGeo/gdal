@@ -30,6 +30,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/04/01 17:13:37  fwarmerdam
+ * GWKSetPixel() now rounds properly for integer outputs.
+ * Fixes in GWKGeneralCase() fixes for edges of bilinear/cubic resamples.
+ *
  * Revision 1.21  2004/12/13 19:39:21  fwarmerdam
  * dont use the bilinear and cubic short funcs for GUInt16 per bug 709
  *
@@ -829,7 +833,7 @@ static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
         else if( dfReal > 255.0 )
             pabyDst[iDstOffset] = 255;
         else
-            pabyDst[iDstOffset] = (GByte) dfReal;
+            pabyDst[iDstOffset] = (GByte) (dfReal+0.5);
         break;
 
       case GDT_Int16:
@@ -838,7 +842,7 @@ static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
         else if( dfReal > 32767 )
             ((GInt16 *) pabyDst)[iDstOffset] = 32767;
         else
-            ((GInt16 *) pabyDst)[iDstOffset] = (GInt16) dfReal;
+            ((GInt16 *) pabyDst)[iDstOffset] = (GInt16) floor(dfReal+0.5);
         break;
 
       case GDT_UInt16:
@@ -847,7 +851,7 @@ static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
         else if( dfReal > 65535 )
             ((GUInt16 *) pabyDst)[iDstOffset] = 65535;
         else
-            ((GUInt16 *) pabyDst)[iDstOffset] = (GUInt16) dfReal;
+            ((GUInt16 *) pabyDst)[iDstOffset] = (GUInt16) (dfReal+0.5);
         break;
 
       case GDT_UInt32:
@@ -856,7 +860,7 @@ static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
         else if( dfReal > 4294967295.0 )
             ((GUInt32 *) pabyDst)[iDstOffset] = (GUInt32) 4294967295.0;
         else
-            ((GUInt32 *) pabyDst)[iDstOffset] = (GUInt32) dfReal;
+            ((GUInt32 *) pabyDst)[iDstOffset] = (GUInt32) (dfReal+0.5);
         break;
 
       case GDT_Int32:
@@ -865,7 +869,7 @@ static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
         else if( dfReal > 2147483647.0 )
             ((GInt32 *) pabyDst)[iDstOffset] = 2147483647;
         else
-            ((GInt32 *) pabyDst)[iDstOffset] = (GInt32) dfReal;
+            ((GInt32 *) pabyDst)[iDstOffset] = (GInt32) floor(dfReal+0.5);
         break;
 
       case GDT_Float32:
@@ -882,13 +886,13 @@ static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
         else if( dfReal > 32767 )
             ((GInt16 *) pabyDst)[iDstOffset*2] = 32767;
         else
-            ((GInt16 *) pabyDst)[iDstOffset*2] = (GInt16) dfReal;
+            ((GInt16 *) pabyDst)[iDstOffset*2] = (GInt16) floor(dfReal+0.5);
         if( dfImag < -32768 )
             ((GInt16 *) pabyDst)[iDstOffset*2+1] = -32768;
         else if( dfImag > 32767 )
             ((GInt16 *) pabyDst)[iDstOffset*2+1] = 32767;
         else
-            ((GInt16 *) pabyDst)[iDstOffset*2+1] = (GInt16) dfImag;
+            ((GInt16 *) pabyDst)[iDstOffset*2+1] = (GInt16) floor(dfImag+0.5);
         break;
 
       case GDT_CInt32:
@@ -897,13 +901,13 @@ static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
         else if( dfReal > 2147483647.0 )
             ((GInt32 *) pabyDst)[iDstOffset*2] = (GInt32) 2147483647.0;
         else
-            ((GInt32 *) pabyDst)[iDstOffset*2] = (GInt32) dfReal;
+            ((GInt32 *) pabyDst)[iDstOffset*2] = (GInt32) floor(dfReal+0.5);
         if( dfImag < -2147483648.0 )
             ((GInt32 *) pabyDst)[iDstOffset*2+1] = (GInt32) -2147483648.0;
         else if( dfImag > 2147483647.0 )
             ((GInt32 *) pabyDst)[iDstOffset*2+1] = (GInt32) 2147483647.0;
         else
-            ((GInt32 *) pabyDst)[iDstOffset*2+1] = (GInt32) dfImag;
+            ((GInt32 *) pabyDst)[iDstOffset*2+1] = (GInt32) floor(dfImag+0.5);
         break;
 
       case GDT_CFloat32:
@@ -1827,8 +1831,8 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
             // We test against the value before casting to avoid the
             // problem of asymmetric truncation effects around zero.  That is
             // -0.5 will be 0 when cast to an int. 
-            if( padfX[iDstX] < poWK->nSrcXOff + nResWinSize
-                || padfY[iDstX] < poWK->nSrcYOff + nResWinSize )
+            if( padfX[iDstX] < poWK->nSrcXOff - nResWinSize
+                || padfY[iDstX] < poWK->nSrcYOff - nResWinSize )
                 continue;
 
             int iSrcX, iSrcY, iSrcOffset;
@@ -1836,8 +1840,8 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
             iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
             iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
 
-            if( iSrcX >= nSrcXSize - nResWinSize 
-                || iSrcY >= nSrcYSize - nResWinSize )
+            if( iSrcX >= nSrcXSize + nResWinSize 
+                || iSrcY >= nSrcYSize + nResWinSize )
                 continue;
 
             iSrcOffset = iSrcX + iSrcY * nSrcXSize;
@@ -1853,11 +1857,15 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
                 continue;
 
 /* -------------------------------------------------------------------- */
-/*      Do not try to apply transparent source pixels to the destination.*/
+/*      Do not try to apply transparent source pixels to the            */
+/*      destination.  This currently ignores the multi-pixel input      */
+/*      of bilinear and cubic resamples.                                */
 /* -------------------------------------------------------------------- */
             double  dfDensity = 1.0;
 
-            if( poWK->pafUnifiedSrcDensity != NULL )
+            if( poWK->pafUnifiedSrcDensity != NULL 
+                && iSrcX >= 0 && iSrcY >= 0 
+                && iSrcX < nSrcXSize && iSrcY < nSrcYSize )
             {
                 dfDensity = poWK->pafUnifiedSrcDensity[iSrcOffset];
                 if( dfDensity < 0.00001 )
