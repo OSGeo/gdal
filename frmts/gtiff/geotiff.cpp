@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.122  2004/10/21 15:51:06  fwarmerdam
+ * Still write geotiff coordinate system info in WriteGeoTIFFInfo()
+ * even if we don't have a geotransform.
+ *
  * Revision 1.121  2004/10/19 13:21:12  fwarmerdam
  * Be careful to avoid unused argument warnings.
  *
@@ -1959,8 +1963,6 @@ void GTiffDataset::WriteGeoTIFFInfo()
 	
 	pszProjection = CPLStrdup( GetGCPProjection() );
     }
-    else
-	return;
 
 /* -------------------------------------------------------------------- */
 /*	Write out projection definition.				*/
