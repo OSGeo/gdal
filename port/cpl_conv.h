@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/02/01 20:39:50  warmerda
+ * ensure CPLReadLine() is exported from DLL
+ *
  * Revision 1.13  2001/12/12 17:06:57  warmerda
  * added CPLStat
  *
@@ -59,7 +62,7 @@
 /* -------------------------------------------------------------------- */
 CPL_C_START
 
-void CPLVerifyConfiguration();
+void CPL_DLL CPLVerifyConfiguration();
 
 /* -------------------------------------------------------------------- */
 /*      Safe malloc() API.  Thin cover over VSI functions with fatal    */
@@ -75,7 +78,7 @@ char CPL_DLL *CPLStrdup( const char * );
 /* -------------------------------------------------------------------- */
 /*      Read a line from a text file, and strip of CR/LF.               */
 /* -------------------------------------------------------------------- */
-const char *CPLReadLine( FILE * );
+const char CPL_DLL *CPLReadLine( FILE * );
 
 /* -------------------------------------------------------------------- */
 /*      Fetch a function from DLL / so.                                 */
