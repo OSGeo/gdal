@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/03/10 18:10:27  warmerda
+ * Avoid warning.
+ *
  * Revision 1.3  2003/05/21 03:48:35  warmerda
  * Expand tabs
  *
@@ -80,7 +83,7 @@ void tr_strcpy( char *pszCString, const XMLCh *panXMLString )
 
 {
     while( *panXMLString != 0 )
-        *(pszCString++) = *(panXMLString++);
+        *(pszCString++) = (char) *(panXMLString++);
     *pszCString = 0;
 }
 
