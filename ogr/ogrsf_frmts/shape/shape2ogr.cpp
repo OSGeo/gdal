@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2003/11/09 18:54:53  warmerda
+ * added auto-FID field creation if new file has no fields on first feature wrt
+ *
  * Revision 1.28  2003/10/18 19:01:10  warmerda
  * added Radims patch to recognise multipolygons on read properly - bug 213
  *
@@ -1074,6 +1077,28 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 /* -------------------------------------------------------------------- */
     if( poFeature->GetFID() == OGRNullFID )
         poFeature->SetFID( DBFGetRecordCount( hDBF ) );
+
+/* -------------------------------------------------------------------- */
+/*      If this is the first feature to be written, verify that we      */
+/*      have at least one attribute in the DBF file.  If not, create    */
+/*      a dummy FID attribute to satisfy the requirement that there     */
+/*      be at least one attribute.                                      */
+/* -------------------------------------------------------------------- */
+    if( DBFGetRecordCount( hDBF ) == 0 && DBFGetFieldCount( hDBF ) == 0 )
+    {
+        CPLDebug( "OGR", 
+               "Created dummy FID field for shapefile since schema is empty.");
+        DBFAddField( hDBF, "FID", FTInteger, 11, 0 );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write out dummy field value if it exists.                       */
+/* -------------------------------------------------------------------- */
+    if( DBFGetFieldCount( hDBF ) == 1 && poDefn->GetFieldCount() == 0 )
+    {
+        DBFWriteIntegerAttribute( hDBF, poFeature->GetFID(), 0, 
+                                  poFeature->GetFID() );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write all the fields.                                           */
