@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/04/04 13:14:00  fwarmerdam
+ * Added HFAGetClassNames() (bug 819).
+ *
  * Revision 1.11  2003/05/13 19:32:10  warmerda
  * support for reading and writing opacity provided by Diana Esch-Mosher
  *
@@ -203,6 +206,7 @@ void    CPL_DLL HFADumpDictionary( HFAHandle, FILE * );
 CPLErr  CPL_DLL HFAGetDataRange( HFAHandle, int, double *, double * );
 char  CPL_DLL **HFAGetMetadata( HFAHandle hHFA, int nBand );
 CPLErr  CPL_DLL HFASetMetadata( HFAHandle hHFA, int nBand, char ** );
+char  CPL_DLL **HFAGetClassNames( HFAHandle hHFA, int nBand );
 
 /* -------------------------------------------------------------------- */
 /*      data types.                                                     */
