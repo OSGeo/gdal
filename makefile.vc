@@ -142,10 +142,21 @@ install: $(GDAL_DLL) apps_dir pymod_dir
 	if exist $(PYDIR)\python.exe $(MAKE) /f makefile.vc install
 	cd ..
 	xcopy /y /r /d /f data\*.* $(DATADIR)
+!IFDEF HTMLDIR
+	-mkdir $(HTMLDIR)
+	cd frmts
+	$(MAKE) /f makefile.vc html-install
+	cd ..
+!ENDIF
 !IFDEF INCLUDE_OGR_FRMTS
 	cd ogr
 	$(MAKE) install
 	cd ..
+!IFDEF HTMLDIR
+	cd ogr\ogrsf_frmts
+	$(MAKE) /f Makefile html-install
+	cd ..\..
+!ENDIF
 !ENDIF
 
 devinstall: install
