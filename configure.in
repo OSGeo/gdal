@@ -6,13 +6,25 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT(GDALmake.opt.in)
 AC_CONFIG_HEADER(port/cpl_config.h)
 
-dnl We autoconf 2.52+ for libtool support on cygwin/mingw hosts
+dnl We require autoconf 2.52+ for libtool support on cygwin/mingw hosts
 AC_PREREQ(2.52)
 
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
-AC_PROG_RANLIB
+AC_PROG_LIBTOOL
+
+dnl switch between libtool and native build system
+AC_ARG_WITH(libtool, [  --without-libtool          Don't use libtool to build the library],,)
+
+if test "$with_libtool" = "no"; then
+  AC_PROG_RANLIB
+  AC_LD_SHARED
+  AC_COMPILER_PIC
+else
+  with_libtool=yes
+fi
+AC_SUBST(HAVE_LIBTOOL,$with_libtool)
 
 dnl Checks for libraries.
 AC_CHECK_LIB(dl,dlopen,,,)
@@ -37,18 +49,6 @@ AC_UNIX_STDIO_64
 
 OPT_GDAL_FORMATS=
 EXTRA_INCLUDES=
-
-dnl ---------------------------------------------------------------------------
-dnl switch between libtool and native build system
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(libtool, [  --with-libtool          Use libtool for building the library],,)
-
-if test "$with_libtool" != "no" -a "$with_libtool" != ""; then
-  AC_PROG_LIBTOOL
-else
-  AC_COMPILER_PIC
-fi
 
 dnl ---------------------------------------------------------------------------
 dnl Check if user requests /usr/local to be included.
@@ -936,7 +936,6 @@ AC_SUBST(XERCES_INCLUDE,$XERCES_INCLUDE)
 dnl ---------------------------------------------------------------------------
 
 AC_COMPILER_WFLAGS
-AC_LD_SHARED
 
 dnl ---------------------------------------------------------------------------
 dnl Check for cygwin .exe extension
