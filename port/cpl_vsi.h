@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.3  1999/01/28 18:31:25  warmerda
+ * Test on _WIN32 rather than WIN32.  It seems to be more reliably defined.
+ *
  * Revision 1.2  1998/12/04 21:42:57  danmo
  * Added #ifndef WIN32 arounf #include <unistd.h>
  *
@@ -48,7 +51,7 @@
 /* -------------------------------------------------------------------- */
 /*      We need access to ``struct stat''.                              */
 /* -------------------------------------------------------------------- */
-#ifndef WIN32
+#ifndef _WIN32
 #  include <unistd.h>
 #endif
 #include <sys/stat.h>
