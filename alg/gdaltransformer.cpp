@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/12/05 21:45:01  warmerda
+ * fixed a few GenImgProj bugs
+ *
  * Revision 1.2  2002/12/05 16:37:46  warmerda
  * fixed method name
  *
@@ -95,8 +98,8 @@ CPLErr GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Setup sample points all around the edge of the input raster.    */
 /* -------------------------------------------------------------------- */
-    int    nSamplePoints=0, abSuccess[80];
-    double adfX[80], adfY[80], adfZ[80], dfRatio;
+    int    nSamplePoints=0, abSuccess[84];
+    double adfX[84], adfY[84], adfZ[84], dfRatio;
     int    nInXSize = GDALGetRasterXSize( hSrcDS );
     int    nInYSize = GDALGetRasterYSize( hSrcDS );
 
@@ -129,7 +132,7 @@ CPLErr GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
         adfZ[nSamplePoints++] = 0.0;
     }
 
-    CPLAssert( nSamplePoints == 80 );
+    CPLAssert( nSamplePoints == 84 );
 
 /* -------------------------------------------------------------------- */
 /*      Transform them to the output coordinate system.                 */
@@ -248,8 +251,8 @@ typedef struct {
 /************************************************************************/
 
 void *
-GDALCreateGenImgProjTransformer( GDALDataset *poSrcDS, const char *pszSrcWKT,
-                                 GDALDataset *poDstDS, const char *pszDstWKT,
+GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
+                                 GDALDatasetH hDstDS, const char *pszDstWKT,
                                  int bGCPUseOK, double dfGCPErrorThreshold )
 
 {
@@ -264,7 +267,7 @@ GDALCreateGenImgProjTransformer( GDALDataset *poSrcDS, const char *pszSrcWKT,
 /* -------------------------------------------------------------------- */
 /*      Get forward and inverse geotransform for the source image.      */
 /* -------------------------------------------------------------------- */
-    poSrcDS->GetGeoTransform( psInfo->adfSrcGeoTransform );
+    GDALGetGeoTransform( hSrcDS, psInfo->adfSrcGeoTransform );
     InvGeoTransform( psInfo->adfSrcGeoTransform, 
                      psInfo->adfSrcInvGeoTransform );
 
@@ -282,20 +285,20 @@ GDALCreateGenImgProjTransformer( GDALDataset *poSrcDS, const char *pszSrcWKT,
 /*      Get forward and inverse geotransform for destination image.     */
 /*      If we have no destination use a unit transform.                 */
 /* -------------------------------------------------------------------- */
-    if( poDstDS )
+    if( hDstDS )
     {
-        poDstDS->GetGeoTransform( psInfo->adfDstGeoTransform );
+        GDALGetGeoTransform( hDstDS, psInfo->adfDstGeoTransform );
         InvGeoTransform( psInfo->adfDstGeoTransform, 
                          psInfo->adfDstInvGeoTransform );
     }
     else
     {
         psInfo->adfDstGeoTransform[0] = 0.0;
-        psInfo->adfDstGeoTransform[0] = 1.0;
-        psInfo->adfDstGeoTransform[0] = 0.0;
-        psInfo->adfDstGeoTransform[0] = 0.0;
-        psInfo->adfDstGeoTransform[0] = 0.0;
-        psInfo->adfDstGeoTransform[0] = 1.0;
+        psInfo->adfDstGeoTransform[1] = 1.0;
+        psInfo->adfDstGeoTransform[2] = 0.0;
+        psInfo->adfDstGeoTransform[3] = 0.0;
+        psInfo->adfDstGeoTransform[4] = 0.0;
+        psInfo->adfDstGeoTransform[5] = 1.0;
         memcpy( psInfo->adfDstInvGeoTransform, psInfo->adfDstGeoTransform,
                 sizeof(double) * 6 );
     }
