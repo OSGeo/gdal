@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.85  2004/02/08 09:13:56  aamici
+ * optimize Band.ReadAsArray performance avoiding memory copy.
+ *
  * Revision 1.84  2004/02/05 17:08:57  dron
  * Added wrapper for OSRSetHOM2PNO().
  *
@@ -942,7 +945,7 @@ py_GDALCreate(PyObject *self, PyObject *args) {
 static PyObject *
 py_GDALReadRaster(PyObject *self, PyObject *args) {
 
-    PyObject *result;
+    PyObject *result = NULL;
     GDALRasterBandH  _arg0;
     char *_argc0 = NULL;
     int  _arg1;
@@ -956,9 +959,9 @@ py_GDALReadRaster(PyObject *self, PyObject *args) {
     int  result_size;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"siiiiiii:GDALReadRaster",
+    if(!PyArg_ParseTuple(args,"siiiiiii|O:GDALReadRaster",
                          &_argc0,&_arg1,&_arg2,&_arg3,&_arg4,
-                         &_arg5,&_arg6,&_arg7)) 
+                         &_arg5,&_arg6,&_arg7,&result))
         return NULL;
 
     if (_argc0) {
@@ -969,18 +972,36 @@ py_GDALReadRaster(PyObject *self, PyObject *args) {
             return NULL;
         }
     }
-	
-    result_size = _arg5 * _arg6 * (GDALGetDataTypeSize(_arg7)/8);
-    result = PyString_FromStringAndSize(NULL,result_size);
-    if( !result )
-	return NULL;
-    result_string = PyString_AsString(result);
+
+    /* we either receive a buffer object to use or
+     * allocate a suitable string object */
+    if( result && result != Py_None )
+    {
+	if( PyObject_AsWriteBuffer(result, &result_string, &result_size) )
+	{
+	    PyErr_SetString(PyExc_TypeError, "No writable buffer from object");
+	    return NULL;
+	}
+	if( result_size != _arg5 * _arg6 * (GDALGetDataTypeSize(_arg7)/8) )
+	{
+	    PyErr_SetString(PyExc_TypeError, "Unaligned buffer");
+	    return NULL;
+	}
+
+	Py_INCREF(result);
+    } else {
+	result_size = _arg5 * _arg6 * (GDALGetDataTypeSize(_arg7)/8);
+	result = PyString_FromStringAndSize(NULL, result_size);
+	if( !result )
+	    return NULL;
+	result_string = PyString_AsString(result);
+    }
 
     if( GDALRasterIO(_arg0, GF_Read, _arg1, _arg2, _arg3, _arg4, 
 		     (void *) result_string, 
 		     _arg5, _arg6, _arg7, 0, 0 ) != CE_None )
     {
-        Py_XDECREF(result);
+	Py_XDECREF(result);
 	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
 	return NULL;
     }
