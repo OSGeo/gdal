@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/11/27 03:19:21  warmerda
+ * added support for uncompressing 1bit data
+ *
  * Revision 1.21  2002/10/05 01:15:49  warmerda
  * Fixed uncompress logic for nNumBits == 32 as per report from Michael Dougherty.
  *
@@ -699,9 +702,34 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
                 ((float *) pabyDest)[nPixelsOutput++] = (float) nDataValue;
             }
         }
+        else if( nDataType == EPT_u1 )
+        {
+            int		i;
+
+            CPLAssert( nDataValue == 0 || nDataValue == 1 );
+            
+            if( nDataValue == 1 )
+            {
+                for( i = 0; i < nRepeatCount; i++ )
+                {
+                    pabyDest[nPixelsOutput>>3] |= (1 << (nPixelsOutput & 0x7));
+                    nPixelsOutput++;
+                }
+            }
+            else
+            {
+                for( i = 0; i < nRepeatCount; i++ )
+                {
+                    pabyDest[nPixelsOutput>>3] &= ~(1<<(nPixelsOutput & 0x7));
+                    nPixelsOutput++;
+                }
+            }
+        }
         else
         {
-            CPLAssert( FALSE );
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Attempt to uncompress an unsupported pixel data type.");
+            return CE_Failure;
         }
     }
 
