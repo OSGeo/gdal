@@ -1,0 +1,23 @@
+
+ECW_SDK =	D:\Software\ECW_SDK
+EXTRAFLAGS = 	-I$(ECW_SDK)/include /DWIN32 $(ECWDEF)
+LINK_FLAGS =	$(ECW_SDK)/lib/NCSEcw.lib $(ECW_SDK)/lib/NCSUtil.lib
+
+OBJ	=	ecwdataset.obj 
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	copy *.obj ..\o
+
+clean:
+	-del *.obj
+
+testecw.exe:	testecw.obj
+	cl testecw.obj $(LINK_FLAGS)
+
+ecw_example1.exe:	ecw_example1.obj
+	cl ecw_example1.obj $(LINK_FLAGS)
+
