@@ -1,0 +1,25 @@
+GDAL_ROOT	=	../..
+
+include ../../GDALmake.opt
+
+WCTS_OBJ	=	ogrwcts.o
+
+BIN	=	ogrwcts
+
+default:	$(BIN)
+
+clean:
+	rm -f *.o ogrinfo$(EXE) ogr2ogr$(EXE) ogrtindex$(EXE) 
+	rm -f sdts2mi$(EXE) testepsg$(EXE)
+	rm -f test_ogrsf$(EXE) $(OGR_LIB)
+	(cd ogrsf_frmts; $(MAKE) clean)
+
+$(BIN):	$(WCTS_OBJ)
+	$(CXX) $(LNK_FLAGS) $(WCTS_OBJ) $(CONFIG_LIBS) -o $(BIN)
+
+%.o:	%.c
+	$(CC) -c $(LINCLUDE) $(CFLAGS) $*.c -o $*.o
+
+%.o:	%.cpp
+	$(CXX) -c $(LINCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
+
