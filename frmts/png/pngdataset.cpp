@@ -43,6 +43,10 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.14  2002/04/20 10:12:05  dron
+ * Added support for GDALWriteWolrldFile()
+ * New option WORLDFILE=YES
+ *
  * Revision 1.13  2002/04/20 09:51:03  dron
  * *** empty log message ***
  *
@@ -947,7 +951,12 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue(papszOptions,"WORLDFILE")  != NULL
         || CSLFindString( papszOptions, "WORLDFILE") != -1 )
-	GDALWriteWorldFile( pszFilename, "wld", poDS->adfGeoTransform );
+    {
+    	double      adfGeoTransform[6];
+	
+	poSrcDS->GetGeoTransform( adfGeoTransform );
+	GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform );
+    }
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 }
