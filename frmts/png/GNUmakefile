@@ -14,7 +14,7 @@ else
 OBJ	=	pngdataset.o
 endif
 
-XTRA_OPT	=	-I../zlib
+XTRA_OPT	:=	$(XTRA_OPT) -I../zlib
 
 default:	$(OBJ)
 
