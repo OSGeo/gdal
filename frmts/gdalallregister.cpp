@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.56  2003/04/23 12:23:17  dron
+ * Added MrSID format.
+ *
  * Revision 1.55  2003/02/19 07:14:56  dron
  * EFF support removed.
  *
@@ -371,6 +374,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_fit
     GDALRegister_FIT();
+#endif
+
+#ifdef FRMT_mrsid
+    GDALRegister_MrSID();
 #endif
 
 /* -------------------------------------------------------------------- */
