@@ -29,6 +29,11 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.70  2004/12/02 19:53:02  fwarmerdam
+# Added GDALComputeBandStats()
+# Implement generic mechanism for progress callbacks, and use for
+# ComputeBandStats, Create and CreateCopy().
+#
 # Revision 1.69  2004/11/11 03:15:49  fwarmerdam
 # Don't call GDALAllRegister() in other methods unless there are zero
 # drivers registered.
@@ -517,9 +522,11 @@ class Driver(MajorObject):
 
     def Create(self, filename, xsize, ysize, bands=1, datatype=GDT_Byte,
                options = []):
-        target_ds = _gdal.GDALCreate( self._o, filename, xsize, ysize,
-                                      bands, datatype, options )
 
+        options_c = _gdal.ListToStringList( options )
+        target_ds = _gdal.GDALCreate( self._o, filename, xsize, ysize,
+                                      bands, datatype, options_c )
+        _gdal.CSLDestroy(options_c)
         if target_ds is None or target_ds == 'NULL':
             return None
         else:
@@ -528,9 +535,14 @@ class Driver(MajorObject):
     
     def CreateCopy(self, filename, source_ds, strict=1, options=[],
                    callback = None, callback_data = None ):
+        options_c = _gdal.ListToStringList( options )
+        (prog_cb, prog_info) = \
+                  _gdal.MakeProgressInfo( callback, callback_data )
         target_ds = _gdal.GDALCreateCopy( self._o, filename, source_ds._o,
-                                          strict, options,
-                                          callback, callback_data )
+                                          strict, options_c,
+                                          prog_cb, prog_info )
+        _gdal.CSLDestroy(options_c)
+        _gdal.ptrfree( prog_info )
         if target_ds is None or target_ds == 'NULL':
             return None
         else:
@@ -688,6 +700,32 @@ class Dataset(MajorObject):
 
         return result
 
+    def AdviseRead( self, nXOff, nYOff, nXSize, nYSize,
+                    nBufXSize = None, nBufYSize = None,
+                    eDT = None, BandMap = None, options = [] ):
+        if BandMap is None:
+            BandMap = range(1,self.RasterCount+1)
+        if eDT is None:
+            eDT = self._band[0].DataType
+        if nBufXSize is None:
+            nBufXSize = nXSize
+        if nBufYSize is None:
+            nBufYSize = nYSize
+
+        IntBandMap = _gdal.ptrcreate('int',0,len(BandMap))
+        for i in range(len(BandMap)):
+            _gdal.ptrset( IntBandMap, BandMap[i], i )
+
+        sl_options = _gdal.ListToStringList( options )
+        result = _gdal.GDALDatasetAdviseRead( self._o,
+                                              nXOff, nYOff, nXSize, nYSize,
+                                              nBufXSize, nBufYSize, eDT,
+                                              len(BandMap), IntBandMap,
+                                              sl_options )
+        _gdal.CSLDestroy( sl_options )
+        _gdal.ptrfree( IntBandMap )
+        return result
+
 ###############################################################################
 
 class Band(MajorObject):
@@ -843,6 +881,25 @@ class Band(MajorObject):
 
     def Fill( self, real_fill, imag_fill = 0.0 ):
         return _gdal.GDALFillRaster( self._o, real_fill, imag_fill )
+
+    def ComputeBandStats( self, samplestep = 1,
+                          progress_cb = None, progress_data = None ):
+        mean_p = _gdal.ptrcreate( 'double',0,1)
+        stddev_p = _gdal.ptrcreate( 'double',0,1)
+        (prog_cb, prog_info) = \
+                  _gdal.MakeProgressInfo( progress_cb, progress_data )
+        result = _gdal.GDALComputeBandStats( self._o, samplestep,
+                                             mean_p, stddev_p,
+                                             prog_cb, prog_info )
+        mean_stddev = ( _gdal.ptrvalue(mean_p,0), _gdal.ptrvalue(stddev_p,0) )
+        _gdal.ptrfree( mean_p )
+        _gdal.ptrfree( stddev_p )
+        _gdal.ptrfree( prog_info )
+
+        if result != 0:
+            raise ValueError, GetLastErrorMsg()
+        else:
+            return mean_stddev
 
 ###############################################################################
 
