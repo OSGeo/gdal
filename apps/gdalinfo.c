@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.7  2000/01/31 03:55:25  warmerda
+ * Improved formatting.
+ *
  * Revision 1.6  1999/12/30 02:40:17  warmerda
  * Report driver used.
  *
@@ -89,11 +92,11 @@ int main( int argc, char ** argv )
             GDALGetProjectionRef( hDataset ) );
 
     GDALGetGeoTransform( hDataset, adfGeoTransform );
-    printf( "Origin = (%g,%g)\n",
+    printf( "Origin = (%.6f,%.6f)\n",
             adfGeoTransform[0], adfGeoTransform[3] );
     
     GDALGetGeoTransform( hDataset, adfGeoTransform );
-    printf( "Pixel Size = (%g,%g)\n",
+    printf( "Pixel Size = (%.6f,%.6f)\n",
             adfGeoTransform[1], adfGeoTransform[5] );
 
     hProjDef = GDALCreateProjDef( GDALGetProjectionRef( hDataset ) );
