@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/11/19 02:50:30  danmo
+ * Added TAB + MIF registration
+ *
  * Revision 1.2  1999/09/07 14:11:21  warmerda
  * Added registration of NTF format support.
  *
@@ -55,4 +58,6 @@ void	SFRegisterOGRFormats()
     // Add formats to be registered here.
     RegisterOGRShape();
     RegisterOGRNTF();
+    RegisterOGRTAB();
+    RegisterOGRMIF();
 }
