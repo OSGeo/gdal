@@ -1,6 +1,8 @@
 
 GDAL_ROOT	=	../../..
 
+include $(GDAL_ROOT)/GDALmake.opt
+
 OBJ	=	ogrsdtsdriver.o ogrsdtsdatasource.o ogrsdtslayer.o
 
 FRMTSLIB = 	../ogr.a
@@ -11,17 +13,12 @@ ISOLIB  =	$(ISODIR)/libiso8211.a
 SDTSDIR = 	$(GDAL_ROOT)/frmts/sdts
 SDTSLIB =	$(SDTSDIR)/libsdts_al.a
 
-LINCLUDE =	-I.. -I../.. -I$(GDAL_ROOT)/port -I$(SDTSDIR) -I$(ISODIR)
+CPPFLAGS +=	-I.. -I../.. -I$(SDTSDIR) -I$(ISODIR)
 
-include $(GDAL_ROOT)/GDALmake.opt
-
-default:	$(O_OBJ) libs
+default:	$(O_OBJ)
 
 clean:
 	rm -f *.o *-marker
-
-%.o:	%.cpp
-	$(CXX) -c $(LINCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 
 install-libs:	isolib-marker sdtslib-marker
 	@echo Done adding ISO8211 and SDTS libraries into $(FRMTSLIB)
