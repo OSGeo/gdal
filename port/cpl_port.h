@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2004/01/06 21:42:32  warmerda
+ * "Fix" for bug 455 related to CPL_IS_LSB macro.
+ *
  * Revision 1.35  2003/12/11 03:16:02  warmerda
  * Added CPL_IS_LSB macro with value 0 (MSB) or 1 (LSB).
  *
@@ -287,10 +290,10 @@ char * strdup (char *instr);
 #define CPL_LSB
 #endif
 
-#ifdef CPL_MSB
-#  define CPL_IS_LSB 0
-#else
+#if defined(CPL_LSB)
 #  define CPL_IS_LSB 1
+#else
+#  define CPL_IS_LSB 0
 #endif
 
 /*---------------------------------------------------------------------
