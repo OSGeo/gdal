@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2001/09/21 16:21:02  warmerda
+ * added Clear(), and SetFromUserInput() methods
+ *
  * Revision 1.34  2001/09/11 19:04:59  warmerda
  * fixed logic in GetLinearUnits() to work on nodes with authority defn
  *
@@ -312,6 +315,26 @@ void OSRDestroySpatialReference( OGRSpatialReferenceH hSRS )
 
 {
     delete ((OGRSpatialReference *) hSRS);
+}
+
+/************************************************************************/
+/*                               Clear()                                */
+/************************************************************************/
+
+/**
+ * Wipe current definition.
+ *
+ * Returns OGRSpatialReference to a state with no definition, as it 
+ * exists when first created.  It does not affect reference counts.
+ */
+
+void OGRSpatialReference::Clear()
+
+{
+    if( poRoot )
+        delete poRoot;
+
+    poRoot = NULL;
 }
 
 /************************************************************************/
@@ -1421,6 +1444,108 @@ OGRErr OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS, const char *pszName )
 
 {
     return ((OGRSpatialReference *) hSRS)->SetWellKnownGeogCS( pszName );
+}
+
+/************************************************************************/
+/*                          SetFromUserInput()                          */
+/************************************************************************/
+
+/**
+ * Set spatial reference from various text formats.
+ *
+ * This method will examine the provided input, and try to deduce the
+ * format, and then use it to initialize the spatial reference system.  It
+ * may take the following forms:
+ *
+ * <ol>
+ * <li> Well Known Text definition - passed on to importFromWKT().
+ * <li> "EPSG:n" - number passed on to importFromEPSG(). 
+ * <li> filename - file read for WKT definition, passed on to importFromWKT().
+ * <li> well known name accepted by SetWellKnownGeogCS(), such as NAD27, NAD83,
+ * WGS84 or WGS72. 
+ * </ol>
+ *
+ * It is expected that this method will be extended in the future to support
+ * XML and perhaps a simplified "minilanguage" for indicating common UTM and
+ * State Plane definitions. 
+ *
+ * This method is intended to be flexible, but by it's nature it is 
+ * imprecise as it must guess information about the format intended.  When
+ * possible applications should call the specific method appropriate if the
+ * input is known to be in a particular format. 
+ *
+ * This method does the same thing as the OSRSetFromUserInput() function.
+ * 
+ * @param pszDefinition text definition to try to deduce SRS from.
+ *
+ * @return OGRERR_NONE on success, or an error code if the name isn't
+ * recognised, the definition is corrupt, or an EPSG value can't be 
+ * successfully looked up.
+ */ 
+
+OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Is it a recognised syntax?                                      */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszDefinition,"PROJCS",6)
+        || EQUALN(pszDefinition,"GEOGCS",6)
+        || EQUALN(pszDefinition,"LOCAL_CS",8) )
+    {
+        return importFromWkt( (char **) &pszDefinition );
+    }
+
+    if( EQUALN(pszDefinition,"EPSG:",5) )
+    {
+        return importFromEPSG( atoi(pszDefinition+5) );
+    }
+
+    if( EQUAL(pszDefinition,"NAD27") 
+        || EQUAL(pszDefinition,"NAD83") 
+        || EQUAL(pszDefinition,"WGS84") 
+        || EQUAL(pszDefinition,"WGS72") )
+    {
+        Clear();
+        return SetWellKnownGeogCS( pszDefinition );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to open it as a file.                                       */
+/* -------------------------------------------------------------------- */
+    FILE	*fp;
+    char	szBuffer[40000], *pszBufPtr;
+    int		nBytes;
+
+    fp = VSIFOpen( pszDefinition, "rt" );
+    if( fp == NULL )
+        return OGRERR_NONE;
+
+    nBytes = VSIFRead( szBuffer, 1, sizeof(szBuffer), fp );
+    VSIFClose( fp );
+
+    if( nBytes == sizeof(szBuffer) )
+    {
+        CPLDebug( "OGR", 
+                  "OGRSpatialReference::SetFromUserInput(%s), opened file\n"
+                  "but it is to large for our generous buffer.  Is it really\n"
+                  "just a WKT definition?" );
+        return OGRERR_FAILURE;
+    }
+
+    pszBufPtr = szBuffer;
+
+    return importFromWkt( &pszBufPtr );
+}
+
+/************************************************************************/
+/*                        OSRSetFromUserInput()                         */
+/************************************************************************/
+
+OGRErr OSRSetFromUserInput( OGRSpatialReferenceH hSRS, const char *pszDef )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetFromUserInput( pszDef );
 }
 
 /************************************************************************/
