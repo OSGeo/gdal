@@ -24,7 +24,7 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj ogr_api.obj \
 		ogrfeaturestyle.obj ogr_srs_esri.obj ogrfeaturequery.obj \
 		ogr_srs_validate.obj ogr_srs_xml.obj ograssemblepolygon.obj \
 		ogr2gmlgeometry.obj gml2ogrgeometry.obj ogr_srs_pci.obj \
-		ogr_srs_usgs.obj
+		ogr_srs_usgs.obj ogr_srs_dict.obj
 
 OBJ_OLEDB =	oledb_sup.obj \
 		sfcenumerator.obj sfcdatasource.obj sfctable.obj
