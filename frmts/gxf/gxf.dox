@@ -1,0 +1,28 @@
+/*! \page index
+
+<center>
+<title>GXF-3</title>
+</center>
+
+<h2>Introduction</h2>
+
+The GXF-3 library is intended to make correct implementation of GXF-3 file
+format readers easy.  It consists of free (OpenSource) C source code for 
+functions to read GXF-3 raster files, and an example program using them to 
+convert GXF data to GeoTIFF format.<p>
+
+GXF (Grid eXchange File) is a standard ASCII file format for exchanging 
+gridded data among different software systems. Software that supports the 
+GXF standard will be able to import properly formatted GXF files and export 
+grids in GXF format.  GXF-3 is an adopted standard format of the
+Gravity/Magnetics Committee of the Society of Exploration Geophysicists (SEG).
+GXF-3 is the primary gridded data interchange format for 
+<a href="www.Geosoft.com">Geosoft</a>.<p>
+
+<h2>Resources</h2>
+
+<ul>
+<li> <a href="gxfopen.h.html">GXF-3 API Documentation</a>
+<li> <a href="gxfr3d9_1.pdf">GXF-3 File Format Specification (pdf)</a>
+</ul>
+*/
