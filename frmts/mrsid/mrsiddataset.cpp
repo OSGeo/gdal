@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/02/02 14:58:46  fwarmerdam
+ * Added a few debug statements.
+ *
  * Revision 1.18  2004/11/14 21:18:22  dron
  * Initial support for MrSID Encoding SDK.
  *
@@ -1224,6 +1227,12 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
     return( poDS );
 }
 
+/************************************************************************/
+/************************************************************************/
+/*                            DSDK 4.x                                  */
+/************************************************************************/
+/************************************************************************/
+
 #else /* DSDK 4.0.x */
 
 #include "lt_types.h"
@@ -1403,10 +1412,14 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 #ifdef MRSID_ESDK_VERSION_40
     if( poGDS->eAccess == GA_Update )
     {
+        CPLDebug( "MrSID", 
+                  "IReadBlock() - DSDK 4.0 - read on updatable file fails." );
         memset( pImage, 0, nBlockSize * GDALGetDataTypeSize(eDataType) / 8 );
         return CE_None;
     }
 #endif /* MRSID_ESDK_VERSION_40 */
+
+    CPLDebug( "MrSID", "IReadBlock(%d,%d)", nBlockXOff, nBlockYOff );
 
     if ( !poGDS->bPrevBlockRead
          || poGDS->nPrevBlockXOff != nBlockXOff
@@ -1418,14 +1431,18 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         // XXX: The scene, passed to LTIImageStage::read() call must be
         // inside the image boundaries. So we should detect the last strip and
         // form the scene properly.
-       if(!LT_SUCCESS( poGDS->poLTINav->setSceneAsULWH(
-                                nCol, nLine,
-                                (nCol+nBlockXSize>poGDS->GetRasterXSize())?
-                                (poGDS->GetRasterXSize()-nCol):nBlockXSize,
-                                (nLine+nBlockYSize>poGDS->GetRasterYSize())?
-                                (poGDS->GetRasterYSize()-nLine):nBlockYSize,
-                                poGDS->dfCurrentMag) ))
-
+        CPLDebug( "MrSID", 
+                  "IReadBlock - read() %dx%d block at %d,%d.", 
+                  nBlockXSize, nBlockYSize, nCol, nLine );
+                  
+        if(!LT_SUCCESS( poGDS->poLTINav->setSceneAsULWH(
+                            nCol, nLine,
+                            (nCol+nBlockXSize>poGDS->GetRasterXSize())?
+                            (poGDS->GetRasterXSize()-nCol):nBlockXSize,
+                            (nLine+nBlockYSize>poGDS->GetRasterYSize())?
+                            (poGDS->GetRasterYSize()-nLine):nBlockYSize,
+                            poGDS->dfCurrentMag) ))
+            
         {
             CPLError( CE_Failure, CPLE_AppDefined,
             "MrSIDRasterBand::IReadBlock(): Failed to set scene position." );
