@@ -29,7 +29,8 @@ endif
 
 ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port $(CFLAGS)
 
-
+# temporary work-around against topdir/GNUmakefile intrusion!
+.PRECIOUS:	ogrregisterall.o 
 
 default:	$(O_OBJ)
 

@@ -3,7 +3,7 @@ GDAL_ROOT	=	../../..
 
 OBJ	=	ogrsdtsdriver.o ogrsdtsdatasource.o ogrsdtslayer.o
 
-FRMTSLIB = 	../ogrsf_frmts.a
+FRMTSLIB = 	../ogr.a
 
 ISODIR	=	$(GDAL_ROOT)/frmts/iso8211
 ISOLIB  =	$(ISODIR)/libiso8211.a
