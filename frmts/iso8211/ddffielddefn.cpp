@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/01/06 18:59:18  warmerda
+ * make enum identifiers more unique
+ *
  * Revision 1.19  2004/01/06 18:53:41  warmerda
  * made data_type_code and data_struct_code global for HP C++ builds
  *
@@ -257,28 +260,28 @@ int DDFFieldDefn::GenerateDDREntry( char **ppachData,
 
     *ppachData = (char *) CPLMalloc( *pnLength+1 );
     
-    if( _data_struct_code == elementary )
+    if( _data_struct_code == dsc_elementary )
         (*ppachData)[0] = '0';
-    else if( _data_struct_code == vector )
+    else if( _data_struct_code == dsc_vector )
         (*ppachData)[0] = '1';
-    else if( _data_struct_code == array )
+    else if( _data_struct_code == dsc_array )
         (*ppachData)[0] = '2';
-    else if( _data_struct_code == concatenated )
+    else if( _data_struct_code == dsc_concatenated )
         (*ppachData)[0] = '3';
     
-    if( _data_type_code == char_string )
+    if( _data_type_code == dtc_char_string )
         (*ppachData)[1] = '0';
-    else if( _data_type_code == implicit_point )
+    else if( _data_type_code == dtc_implicit_point )
         (*ppachData)[1] = '1';
-    else if( _data_type_code == explicit_point )
+    else if( _data_type_code == dtc_explicit_point )
         (*ppachData)[1] = '2';
-    else if( _data_type_code == explicit_point_scaled )
+    else if( _data_type_code == dtc_explicit_point_scaled )
         (*ppachData)[1] = '3';
-    else if( _data_type_code == char_bit_string )
+    else if( _data_type_code == dtc_char_bit_string )
         (*ppachData)[1] = '4';
-    else if( _data_type_code == bit_string )
+    else if( _data_type_code == dtc_bit_string )
         (*ppachData)[1] = '5';
-    else if( _data_type_code == mixed_data_type )
+    else if( _data_type_code == dtc_mixed_data_type )
         (*ppachData)[1] = '6';
 
     (*ppachData)[2] = '0';
@@ -325,19 +328,19 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
     switch( pachFieldArea[0] )
     {
       case '0':
-        _data_struct_code = elementary;
+        _data_struct_code = dsc_elementary;
         break;
 
       case '1':
-        _data_struct_code = vector;
+        _data_struct_code = dsc_vector;
         break;
 
       case '2':
-        _data_struct_code = array;
+        _data_struct_code = dsc_array;
         break;
 
       case '3':
-        _data_struct_code = concatenated;
+        _data_struct_code = dsc_concatenated;
         break;
 
       default:
@@ -345,37 +348,37 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
                   "Unrecognised data_struct_code value %c.\n"
                   "Field %s initialization incorrect.\n",
                   pachFieldArea[0], pszTag );
-        _data_struct_code = elementary;
+        _data_struct_code = dsc_elementary;
     }
 
     switch( pachFieldArea[1] )
     {
       case '0':
-        _data_type_code = char_string;
+        _data_type_code = dtc_char_string;
         break;
         
       case '1':
-        _data_type_code = implicit_point;
+        _data_type_code = dtc_implicit_point;
         break;
         
       case '2':
-        _data_type_code = explicit_point;
+        _data_type_code = dtc_explicit_point;
         break;
         
       case '3':
-        _data_type_code = explicit_point_scaled;
+        _data_type_code = dtc_explicit_point_scaled;
         break;
         
       case '4':
-        _data_type_code = char_bit_string;
+        _data_type_code = dtc_char_bit_string;
         break;
         
       case '5':
-        _data_type_code = bit_string;
+        _data_type_code = dtc_bit_string;
         break;
         
       case '6':
-        _data_type_code = mixed_data_type;
+        _data_type_code = dtc_mixed_data_type;
         break;
 
       default:
@@ -383,7 +386,7 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
                   "Unrecognised data_type_code value %c.\n"
                   "Field %s initialization incorrect.\n",
                   pachFieldArea[1], pszTag );
-        _data_type_code = char_string;
+        _data_type_code = dtc_char_string;
     }
     
 /* -------------------------------------------------------------------- */
@@ -414,7 +417,7 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
 /* -------------------------------------------------------------------- */
 /*      Parse the subfield info.                                        */
 /* -------------------------------------------------------------------- */
-    if( _data_struct_code != elementary )
+    if( _data_struct_code != dsc_elementary )
     {
         if( !BuildSubfields() )
             return FALSE;
@@ -452,19 +455,19 @@ void DDFFieldDefn::Dump( FILE * fp )
 
     switch( _data_struct_code )
     {
-      case elementary:
+      case dsc_elementary:
         pszValue = "elementary";
         break;
         
-      case vector:
+      case dsc_vector:
         pszValue = "vector";
         break;
         
-      case array:
+      case dsc_array:
         pszValue = "array";
         break;
         
-      case concatenated:
+      case dsc_concatenated:
         pszValue = "concatenated";
         break;
         
@@ -477,31 +480,31 @@ void DDFFieldDefn::Dump( FILE * fp )
 
     switch( _data_type_code )
     {
-      case char_string:
+      case dtc_char_string:
         pszValue = "char_string";
         break;
         
-      case implicit_point:
+      case dtc_implicit_point:
         pszValue = "implicit_point";
         break;
         
-      case explicit_point:
+      case dtc_explicit_point:
         pszValue = "explicit_point";
         break;
         
-      case explicit_point_scaled:
+      case dtc_explicit_point_scaled:
         pszValue = "explicit_point_scaled";
         break;
         
-      case char_bit_string:
+      case dtc_char_bit_string:
         pszValue = "char_bit_string";
         break;
         
-      case bit_string:
+      case dtc_bit_string:
         pszValue = "bit_string";
         break;
         
-      case mixed_data_type:
+      case dtc_mixed_data_type:
         pszValue = "mixed_data_type";
         break;
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/01/06 18:59:18  warmerda
+ * make enum identifiers more unique
+ *
  * Revision 1.18  2004/01/06 18:53:41  warmerda
  * made data_type_code and data_struct_code global for HP C++ builds
  *
@@ -208,14 +211,14 @@ class DDFModule
 /*                             DDFFieldDefn                             */
 /************************************************************************/
 
-  typedef enum { elementary, vector, array, concatenated } DDF_data_struct_code;
-  typedef enum { char_string, 
-                 implicit_point, 
-                 explicit_point, 
-                 explicit_point_scaled, 
-                 char_bit_string, 
-                 bit_string, 
-                 mixed_data_type } DDF_data_type_code;
+  typedef enum { dsc_elementary, dsc_vector, dsc_array, dsc_concatenated } DDF_data_struct_code;
+  typedef enum { dtc_char_string, 
+                 dtc_implicit_point, 
+                 dtc_explicit_point, 
+                 dtc_explicit_point_scaled, 
+                 dtc_char_bit_string, 
+                 dtc_bit_string, 
+                 dtc_mixed_data_type } DDF_data_type_code;
 
 /**
  * Information from the DDR defining one field.  Note that just because
