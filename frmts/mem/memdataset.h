@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/06/10 21:31:57  warmerda
+ * preserve projection and geotransform
+ *
  * Revision 1.7  2002/05/29 16:01:54  warmerda
  * fixed SetColorInterpretation
  *
@@ -70,9 +73,20 @@ class MEMRasterBand;
 
 class CPL_DLL MEMDataset : public GDALDataset
 {
+    int         bGeoTransformSet;
+    double	adfGeoTransform[6];
+
+    char        *pszProjection;
+
   public:
                  MEMDataset();
                  ~MEMDataset();
+
+    virtual const char *GetProjectionRef(void);
+    virtual CPLErr SetProjection( const char * );
+
+    virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr SetGeoTransform( double * );
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
