@@ -30,6 +30,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/10/03 03:01:21  warmerda
+ * Up width of real fields derived from "Rn,m" formats by one to account for
+ * the implicit decimal in NTF that is explicit in the length in OGR.
+ *
  * Revision 1.7  1999/10/01 14:47:51  warmerda
  * major upgrade: generic, string feature codes, etc
  *
@@ -1387,7 +1391,7 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
                 else if( EQUALN(pszFormat,"R",1) )
                 {
                     oFieldDefn.SetType( OFTReal );
-                    oFieldDefn.SetWidth( poClass->panAttrMaxWidth[iGAtt] );
+                    oFieldDefn.SetWidth( poClass->panAttrMaxWidth[iGAtt]+1 );
                     if( pszFormat[2] == ',' )
                         oFieldDefn.SetPrecision(atoi(pszFormat+3));
                     else if( pszFormat[3] == ',' )
