@@ -28,6 +28,11 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2001/07/06 22:02:55  nemec
+ * Fixed some bugs related to large files (fseek64 when available, trap otherwise)
+ * Better support for different file layouts (upper left, lower left, etc.)
+ * Fixed files with dimensinos that aren't exact multiples of the page size
+ *
  * Revision 1.2  2001/07/06 18:46:25  nemec
  * Cleanup files - improve Windows build, make proper copyright notice
  *
@@ -138,8 +143,10 @@ FITRasterBand::FITRasterBand( FITDataset *poDS, int nBand )
     bytesPerComponent = (GDALGetDataTypeSize(eDataType) / 8);
     bytesPerPixel = poDS->nBands * bytesPerComponent;
     recordSize = bytesPerPixel * nBlockXSize * nBlockYSize;
-    numXBlocks = poDS->info->xSize / nBlockXSize;
-    numYBlocks = poDS->info->ySize / nBlockYSize;
+    numXBlocks =
+        (unsigned long) ceil((double) poDS->info->xSize / nBlockXSize);
+    numYBlocks =
+        (unsigned long) ceil((double) poDS->info->ySize / nBlockYSize);
 
     tmpImage = (char *) malloc(recordSize);
     if (! tmpImage)
@@ -188,13 +195,64 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     FITDataset	*poFIT_DS = (FITDataset *) poDS;
 
-    unsigned long tilenum = nBlockYOff * numXBlocks + nBlockXOff;
-    unsigned long offset = poFIT_DS->info->dataOffset + recordSize * tilenum;
-//     CPLDebug("FIT, "RasterBand::IReadBlock %i %i -- (tile %lu * %lu + %u) -- %lu\n",
-//            nBlockXOff, nBlockYOff, tilenum, recordSize,
-//            poFIT_DS->info->dataOffset, offset);
+    uint64 tilenum = 0;
 
-    VSIFSeek( poFIT_DS->fp, offset, SEEK_SET );
+    switch (poFIT_DS->info->space) {
+    case 1:
+        // iflUpperLeftOrigin - from upper left corner
+        // scan right then down
+        tilenum = nBlockYOff * numXBlocks + nBlockXOff;
+        break;
+    case 2:
+        // iflUpperRightOrigin - from upper right corner
+        // scan left then down
+        tilenum = numYBlocks * numXBlocks + (numXBlocks-1-nBlockXOff);
+        break;
+    case 3:
+        // iflLowerRightOrigin - from lower right corner
+        // scan left then up
+        tilenum = (numYBlocks-1-nBlockYOff) * numXBlocks +
+            (numXBlocks-1-nBlockXOff);
+        break;
+    case 4:
+        // iflLowerLeftOrigin - from lower left corner
+        // scan right then up
+        tilenum = (numYBlocks-1-nBlockYOff) * numXBlocks + nBlockXOff;
+        break;
+    case 5:
+        // iflLeftUpperOrigin -* from upper left corner
+        // scan down then right
+        tilenum = nBlockXOff * numYBlocks + nBlockYOff;
+        break;
+    case 6:
+        // iflRightUpperOrigin - from upper right corner
+        // scan down then left
+        tilenum = (numXBlocks-1-nBlockXOff) * numYBlocks + nBlockYOff;
+        break;
+    case 7:
+        // iflRightLowerOrigin - from lower right corner
+        // scan up then left
+        tilenum = nBlockXOff * numYBlocks + (numYBlocks-1-nBlockYOff);
+        break;
+    case 8:
+        // iflLeftLowerOrigin -* from lower left corner
+        // scan up then right
+        tilenum = (numXBlocks-1-nBlockXOff) * numYBlocks +
+            (numYBlocks-1-nBlockYOff);
+        break;
+    default:
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "FIT - unrecognized image space %i",
+                 poFIT_DS->info->space);
+        tilenum = 0;
+    } // switch
+
+    uint64 offset = poFIT_DS->info->dataOffset + recordSize * tilenum;
+//     CPLDebug("FIT", "%i RasterBand::IReadBlock %i %i (out of %i %i) -- %i",
+//              poFIT_DS->info->space,
+//              nBlockXOff, nBlockYOff, numXBlocks, numYBlocks, tilenum);
+
+    VSIFSeekL( poFIT_DS->fp, offset, SEEK_SET );
 
     // XXX - should handle status
     // fast path is single component (ll?) - no copy needed
@@ -842,6 +900,20 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = head->xSize;
     poDS->nRasterYSize = head->ySize;
     poDS->nBands = head->cSize;
+
+/* -------------------------------------------------------------------- */
+/*      Check if 64 bit seek is needed.                                 */
+/* -------------------------------------------------------------------- */
+    uint64 maxseek = head->cSize * head->xSize * head->ySize *
+        GDALGetDataTypeSize(fitDataType(poDS->info->dtype));
+//     if (maxseek & 0xffff0000) // unsigned long
+    if (maxseek & 0xffff8000) // signed long
+#ifdef VSI_LARGE_API_SUPPORTED
+        CPLDebug("FIT", "Using 64 bit version of fseek");
+#else
+        CPLError(CE_Fatal, CPLE_NotSupported, 
+                 "FIT - need 64 bit version of fseek");
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Verify all "unused" header values.                              */
