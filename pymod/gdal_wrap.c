@@ -7084,6 +7084,28 @@ static PyObject *_wrap_OGR_DS_GetLayer(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OGR_DS_DeleteLayer(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRDataSourceH  _arg0;
+    int  _arg1;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oi:OGR_DS_DeleteLayer",&_argo0,&_arg1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_DS_DeleteLayer. Expected _OGRDataSourceH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_DS_DeleteLayer(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OGR_DS_TestCapability(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     int  _result;
@@ -7283,6 +7305,28 @@ static PyObject *_wrap_OGR_Dr_CreateDataSource(PyObject *self, PyObject *args) {
         Py_INCREF(Py_None);
         _resultobj = Py_None;
     }
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_Dr_DeleteDataSource(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRSFDriverH  _arg0;
+    char * _arg1;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Os:OGR_Dr_DeleteDataSource",&_argo0,&_arg1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_Dr_DeleteDataSource. Expected _OGRSFDriverH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_Dr_DeleteDataSource(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
@@ -7764,6 +7808,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGRGetDriverCount", _wrap_OGRGetDriverCount, METH_VARARGS },
 	 { "OGRRegisterDriver", _wrap_OGRRegisterDriver, METH_VARARGS },
 	 { "OGROpen", _wrap_OGROpen, METH_VARARGS },
+	 { "OGR_Dr_DeleteDataSource", _wrap_OGR_Dr_DeleteDataSource, METH_VARARGS },
 	 { "OGR_Dr_CreateDataSource", _wrap_OGR_Dr_CreateDataSource, METH_VARARGS },
 	 { "OGR_Dr_TestCapability", _wrap_OGR_Dr_TestCapability, METH_VARARGS },
 	 { "OGR_Dr_Open", _wrap_OGR_Dr_Open, METH_VARARGS },
@@ -7772,6 +7817,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_DS_ReleaseResultSet", _wrap_OGR_DS_ReleaseResultSet, METH_VARARGS },
 	 { "OGR_DS_ExecuteSQL", _wrap_OGR_DS_ExecuteSQL, METH_VARARGS },
 	 { "OGR_DS_TestCapability", _wrap_OGR_DS_TestCapability, METH_VARARGS },
+	 { "OGR_DS_DeleteLayer", _wrap_OGR_DS_DeleteLayer, METH_VARARGS },
 	 { "OGR_DS_GetLayer", _wrap_OGR_DS_GetLayer, METH_VARARGS },
 	 { "OGR_DS_GetLayerCount", _wrap_OGR_DS_GetLayerCount, METH_VARARGS },
 	 { "OGR_DS_GetName", _wrap_OGR_DS_GetName, METH_VARARGS },
