@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/08/26 01:08:04  warmerda
+ * Cast return result of GetProcAddress() for use with MingW.
+ *
  * Revision 1.12  2002/11/20 17:16:48  warmerda
  * Added debug report from dummy CPLGetSymbol().
  *
@@ -171,7 +174,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
         return NULL;
     }
 
-    pSymbol = GetProcAddress( (HINSTANCE) pLibrary, pszSymbolName );
+    pSymbol = (void *) GetProcAddress( (HINSTANCE) pLibrary, pszSymbolName );
 
     if( pSymbol == NULL )
     {
