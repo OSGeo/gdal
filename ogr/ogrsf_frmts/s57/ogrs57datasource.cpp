@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/06/07 20:50:58  warmerda
+ * make CSV location configurable with env variable
+ *
  * Revision 1.6  1999/11/29 14:04:53  warmerda
  * use LNAM_REFS
  *
@@ -190,7 +193,7 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
     {
         poRegistrar = new S57ClassRegistrar();
 
-        if( !poRegistrar->LoadInfo( "/home/warmerda/data/s57", FALSE ) )
+        if( !poRegistrar->LoadInfo( NULL, FALSE ) )
         {
             delete poRegistrar;
             poRegistrar = NULL;

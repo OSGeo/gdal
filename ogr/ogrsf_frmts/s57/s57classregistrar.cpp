@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/06/07 20:50:58  warmerda
+ * make CSV location configurable with env variable
+ *
  * Revision 1.2  1999/11/18 19:01:25  warmerda
  * expanded tabs
  *
@@ -78,6 +81,12 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory, int bReportErr )
 {
     const char  *pszFilename;
     FILE        *fp;
+
+    if( pszDirectory == NULL && getenv( "S57_CSV" ) != NULL )
+        pszDirectory = getenv( "S57_CSV" );
+
+    if( pszDirectory == NULL )
+        pszDirectory = ".";
 
 /* ==================================================================== */
 /*      Read the s57objectclasses file.                                 */
