@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2004/11/05 06:15:08  fwarmerdam
+ * Don't double free the warpoptions array.
+ *
  * Revision 1.11  2004/11/05 05:53:43  fwarmerdam
  * Avoid various memory leaks.
  *
@@ -609,8 +612,6 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    CSLDestroy( papszWarpOptions );
-
     if( hApproxArg != NULL )
         GDALDestroyApproxTransformer( hApproxArg );
 
