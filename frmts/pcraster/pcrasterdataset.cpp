@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/11/25 15:00:41  kdejong
+ * Replace and by &&, moved free out of std namespace
+ *
  * Revision 1.7  2004/11/22 10:40:23  kdejong
  * Added PCRasterRasterBand::Minimum and Maximum. Improved documentation, layout. Removed unused code. Layout.
  *
@@ -207,7 +210,7 @@ GDALDataset* PCRasterDataset::createCopy(char const* filename,
 
   double transform[6];
   if(source->GetGeoTransform(transform) == CE_None) {
-    if(transform[2] == 0.0 and transform[4] == 0.0) {
+    if(transform[2] == 0.0 && transform[4] == 0.0) {
       west = static_cast<REAL8>(transform[0]);
       north = static_cast<REAL8>(transform[3]);
       cellSize = static_cast<REAL8>(transform[1]);
@@ -263,7 +266,7 @@ GDALDataset* PCRasterDataset::createCopy(char const* filename,
     // Get row from source.
     if(raster->RasterIO(GF_Read, 0, row, nrCols, 1, buffer, nrCols, 1,
          raster->GetRasterDataType(), 0, 0) != CE_None) {
-      std::free(buffer);
+      free(buffer);
       CPLError(CE_Failure, CPLE_FileIO,
          "PCRaster driver: Error reading from source raster");
     }
@@ -276,7 +279,7 @@ GDALDataset* PCRasterDataset::createCopy(char const* filename,
     RputRow(map, row, buffer);
 
     if(!progress((row + 1) / (static_cast<double>(nrRows)), 0, progressData)) {
-      std::free(buffer);
+      free(buffer);
       CPLError(CE_Failure, CPLE_UserInterrupt,
          "PCRaster driver: User terminated CreateCopy()");
     }
@@ -285,7 +288,7 @@ GDALDataset* PCRasterDataset::createCopy(char const* filename,
   Mclose(map);
   map = 0;
 
-  std::free(buffer);
+  free(buffer);
   buffer = 0;
 
   return errorCode != CE_None ? 0
