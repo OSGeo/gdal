@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/08/28 03:12:06  warmerda
+ * Improve debug message for left over reference count message.
+ *
  * Revision 1.2  1999/07/05 17:19:52  warmerda
  * added docs
  *
@@ -73,8 +76,8 @@ OGRFeatureDefn::~OGRFeatureDefn()
     if( nRefCount != 0 )
     {
         CPLDebug( "OGRFeatureDefn",
-                  "OGRFeatureDefn with a ref count of %d deleted!\n",
-                  nRefCount );
+                  "OGRFeatureDefn %s with a ref count of %d deleted!\n",
+                  pszFeatureClassName, nRefCount );
     }
     
     CPLFree( pszFeatureClassName );
