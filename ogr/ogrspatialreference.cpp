@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2001/07/13 12:33:10  warmerda
+ * Fixed crash on OGRSpatialReference if PROJECTION missing.
+ *
  * Revision 1.28  2001/04/04 16:09:57  warmerda
  * clarify units and definition of TOWGS84
  *
@@ -2438,7 +2441,8 @@ int OGRSpatialReference::GetUTMZone( int * pbNorth )
 {
     const char  *pszProjection = GetAttrValue( "PROJECTION" );
 
-    if( !EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )
+    if( pszProjection == NULL
+        || !EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )
         return 0;
 
     if( GetProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 ) != 0.0 )
