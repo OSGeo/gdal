@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/06/05 15:27:07  dron
+ * Use bilinear interpolation instead of cubic near the image borders.
+ *
  * Revision 1.10  2003/06/05 11:15:34  dron
  * Added bilinear and bicubic interpolators for Byte and Short datatypes.
  *
@@ -1286,11 +1289,11 @@ static int GWKCubicResample( GDALWarpKernel *poWK, int iBand,
     double  dfDeltaY = dfSrcY - iSrcY;
     int     i, j;
 
-    // Get the nearest neighbour at the image borders
+    // Get the bilinear interpolation at the image borders
     if ( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
          || dfSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
-        return GWKGetPixelValue( poWK, iBand, iSrcOffset,
-                                 pdfDensity, pdfReal, pdfImag );
+        return GWKBilinearResample( poWK, iBand, dfSrcX, dfSrcY,
+                                    pdfDensity, pdfReal, pdfImag );
 
     for ( i = -1; i < 3; i++ )
     {
@@ -1333,13 +1336,11 @@ static int GWKCubicResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
     double  dfDeltaY = dfSrcY - iSrcY;
     int     i, j;
 
-    // Get the nearest neighbour at the image borders
+    // Get the bilinear interpolation at the image borders
     if ( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
          || dfSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
-    {
-        *pbValue = poWK->papabySrcImage[iBand][iSrcOffset];
-        return TRUE;
-    }
+        return GWKBilinearResampleNoMasksByte( poWK, iBand, dfSrcX, dfSrcY,
+                                               pbValue);
 
     for ( i = -1; i < 3; i++ )
     {
@@ -1375,13 +1376,11 @@ static int GWKCubicResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
     double  dfDeltaY = dfSrcY - iSrcY;
     int     i, j;
 
-    // Get the nearest neighbour at the image borders
+    // Get the bilinear interpolation at the image borders
     if ( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
          || dfSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
-    {
-        *piValue = ((GInt16 *)poWK->papabySrcImage[iBand])[iSrcOffset];
-        return TRUE;
-    }
+        return GWKBilinearResampleNoMasksShort( poWK, iBand, dfSrcX, dfSrcY,
+                                                piValue);
 
     for ( i = -1; i < 3; i++ )
     {
