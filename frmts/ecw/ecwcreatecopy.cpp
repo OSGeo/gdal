@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/02/25 17:01:47  fwarmerdam
+ * initialize adfGeoTransform in case GetGeoTransform fails
+ *
  * Revision 1.11  2005/02/25 16:44:39  fwarmerdam
  * modified WriteReadLine() to do a dataset level read
  *
@@ -769,7 +772,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
 
     const char *pszWKT = poSrcDS->GetProjectionRef();
-    double adfGeoTransform[6];
+    double adfGeoTransform[6] = { 0, 1, 0, 0, 0, 1 };;
 
     poSrcDS->GetGeoTransform( adfGeoTransform );
 
