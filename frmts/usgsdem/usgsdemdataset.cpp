@@ -5,6 +5,9 @@
  * Purpose:  All code for USGS DEM Reader
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
+ * Portions of this module derived from the VTP USGS DEM driver by Ben
+ * Discoe, see http://www.vterrain.org
+ *
  ******************************************************************************
  * Copyright (c) 2001, Frank Warmerdam <warmerdam@pobox.com>
  *
@@ -28,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2001/11/27 16:09:26  warmerda
+ * Added credit notes
+ *
  * Revision 1.2  2001/11/27 15:16:53  warmerda
  * Added header check before trying to open.
  *
