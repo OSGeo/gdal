@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/12/05 16:37:46  warmerda
+ * fixed method name
+ *
  * Revision 1.1  2002/12/05 05:43:23  warmerda
  * New
  *
@@ -468,7 +471,7 @@ void *GDALCreateReprojectionTransformer( const char *pszSrcWKT,
 /*                  GDALDestroyReprojectionTransform()                  */
 /************************************************************************/
 
-void GDALDestroyReprojectionTransform( void *pTransformAlg )
+void GDALDestroyReprojectionTransformer( void *pTransformAlg )
 
 {
     GDALReprojectionTransformInfo *psInfo = 
