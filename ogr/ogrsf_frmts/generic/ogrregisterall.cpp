@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/01/19 20:34:38  fwarmerdam
+ * added autoloaddrivers call
+ *
  * Revision 1.21  2004/10/06 14:01:19  fwarmerdam
  * added MYSQL support.
  *
@@ -104,6 +107,8 @@ CPL_CVSID("$Id$");
 void OGRRegisterAll()
 
 {
+    OGRSFDriverRegistrar::GetRegistrar()->AutoLoadDrivers();
+
     RegisterOGRShape();
     RegisterOGRNTF();
     RegisterOGRSDTS();
@@ -142,5 +147,7 @@ void OGRRegisterAll()
 #ifdef FME_ENABLED
     RegisterOGRFME();
 #endif
+
+    
 }
 
