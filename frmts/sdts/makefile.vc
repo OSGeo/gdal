@@ -1,0 +1,17 @@
+
+OBJ	=	sdtsiref.obj sdtscatd.obj sdtslinereader.obj sdtslib.obj \
+		sdtspointreader.obj sdtsattrreader.obj sdtstransfer.obj \
+		sdtspolygonreader.obj sdtsxref.obj sdtsrasterreader.obj 
+
+EXTRAFLAGS = 	-I..\iso8211
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	copy *.obj ..\o
+
+clean:
+	del *.obj
+
