@@ -37,9 +37,15 @@ OBJ	= \
 
 GDAL_ROOT	=	..\..\..
 
-EXTRAFLAGS = 	-I..\..\zlib -I..\..\jpeg -DJPEG_SUPPORT
+EXTRAFLAGS = 	-I..\..\zlib -DZIP_SUPPORT $(JPEG_FLAGS)
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!IFDEF JPEG_SUPPORTED
+JPEG_FLAGS =	-I..\..\jpeg -DJPEG_SUPPORT 
+!ENDIF
+
+
 
 default:	$(OBJ)
 	copy *.obj ..\..\o
