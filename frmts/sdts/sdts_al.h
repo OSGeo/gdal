@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/06/03 14:04:10  warmerda
+ * Added SDTS_XREF and SDTSRasterReader
+ *
  * Revision 1.5  1999/05/11 14:05:59  warmerda
  * added SDTSTransfer and SDTSPolygonreader
  *
@@ -76,8 +79,36 @@ class SDTS_IREF
     double	dfXScale;			/* SFAX */
     double      dfYScale;			/* SFAY */
 
+    double	dfXOffset;			/* XORG */
+    double	dfYOffset;			/* YORG */
+
+    double      dfXRes;				/* XHRS */
+    double      dfYRes;				/* YHRS */
+
     char  	*pszCoordinateFormat;		/* HFMT */
                 
+};
+
+/************************************************************************/
+/*                              SDTS_XREF                               */
+/*                                                                      */
+/*      Class for reading the XREF (projection) module.         	*/
+/************************************************************************/
+class SDTS_XREF
+{
+  public:
+    		SDTS_XREF();
+		~SDTS_XREF();
+
+    int         Read( const char *pszFilename );
+
+    char	*pszSystemName;			/* RSNM */
+				  /* one of GEO, SPCS, UTM, UPS, OTHR, UNSP */
+
+    char	*pszDatum;			/* HDAT */
+				  /* one of NAS, NAX, WGA, WGB, WGC, WGE */
+
+    int		nZone;		      		/* ZONE */
 };
 
 /************************************************************************/
@@ -92,7 +123,8 @@ typedef enum {
   SLTPoint,
   SLTLine,
   SLTAttr,
-  SLTPoly
+  SLTPoly,
+  SLTRaster
 } SDTSLayerType;
 
 class SDTS_CATD
@@ -308,6 +340,46 @@ class SDTSRawPolygon
 };
 
 /************************************************************************/
+/*                           SDTSRasterReader                           */
+/*                                                                      */
+/*      Class for reading any of the raster cell files.                 */
+/************************************************************************/
+
+class SDTSRasterReader
+{
+    DDFModule	oDDFModule;
+
+    char	szModule[20];
+
+    int		nXSize;
+    int		nYSize;
+    int		nXBlockSize;
+    int		nYBlockSize;
+
+    int		nXStart;		/* SOCI */
+    int		nYStart;		/* SORI */
+
+    char	szINTR[4];		/* CE is center, TL is top left */
+    
+  public:
+    		SDTSRasterReader();
+                ~SDTSRasterReader();
+
+    int         Open( SDTS_CATD * poCATD, const char * pszModule  );
+    void	Close();
+
+    int		GetRasterType() { return 1; }  /* 1 = int16 */
+
+    int		GetXSize() { return nXSize; }
+    int		GetYSize() { return nYSize; }
+    
+    int		GetBlockXSize() { return nXBlockSize; }
+    int		GetBlockYSize() { return nYBlockSize; }
+    
+    int		GetBlock( int nXOffset, int nYOffset, void * pData );
+};
+
+/************************************************************************/
 /*                             SDTSTransfer                             */
 /************************************************************************/
 
@@ -327,15 +399,18 @@ class SDTSTransfer
     SDTSLineReader *GetLayerLineReader( int );
     SDTSPointReader *GetLayerPointReader( int );
     SDTSAttrReader *GetLayerAttrReader( int );
+    SDTSRasterReader *GetLayerRasterReader( int );
     DDFModule	*GetLayerModuleReader( int );
 
     SDTS_CATD	*GetCATD() { return &oCATD ; }
     SDTS_IREF	*GetIREF() { return &oIREF; }
+    SDTS_XREF   *GetXREF() { return &oXREF; }
                 
   private:
 
     SDTS_CATD	oCATD;
     SDTS_IREF	oIREF;
+    SDTS_XREF   oXREF;
 
     int		nLayers;
     int		*panLayerCATDEntry;
