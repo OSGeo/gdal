@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRSpatialReference class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2001/01/19 22:14:49  warmerda
+ * fixed SetNode to replace existing value properly if it exists
+ *
  * Revision 1.25  2001/01/19 21:10:47  warmerda
  * replaced tabs
  *
@@ -893,11 +896,12 @@ OGRErr OGRSpatialReference::SetNode( const char * pszNodePath,
             if( EQUAL(poNode->GetChild( j )->GetValue(),papszPathTokens[i]) )
             {
                 poNode = poNode->GetChild(j);
+                j = -1;
                 break;
             }
         }
 
-        if( j == poNode->GetChildCount() )
+        if( j != -1 )
         {
             OGR_SRSNode *poNewNode = new OGR_SRSNode( papszPathTokens[i] );
             poNode->AddChild( poNewNode );
