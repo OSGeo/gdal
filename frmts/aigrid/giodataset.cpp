@@ -3,7 +3,7 @@
  *
  * Project:  Arc/Info Binary Grid Driver
  * Purpose:  Implements GDAL interface to ArcView GRIDIO Library.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/02/13 17:23:44  warmerda
+ * added support for writing INT datasets
+ *
  * Revision 1.19  2002/11/23 18:54:17  warmerda
  * added CREATIONDATATYPES metadata for drivers
  *
@@ -358,6 +361,8 @@ GIODataset::~GIODataset()
 void GIODataset::WriteGeoreference()
 
 {
+    return;
+
 /* -------------------------------------------------------------------- */
 /*      If this is a created dataset, we will write the                 */
 /*      georeferencing out directly.  We do this by hand, since         */
@@ -582,6 +587,7 @@ GDALDataset *GIODataset::Create( const char * pszFilename,
 {
     double            adfBox[4];
     int               nChannel;
+    int               nCellType;
     
 /* -------------------------------------------------------------------- */
 /*      Do some rudimentary argument checking.                          */
@@ -589,18 +595,34 @@ GDALDataset *GIODataset::Create( const char * pszFilename,
     if( nBands != 1 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "AIGrid2 driver only supports one band datasets, not\n"
+                  "GIO driver only supports one band datasets, not\n"
                   "%d bands as requested for %s.\n", 
                   nBands, pszFilename );
 
         return NULL;
     }
 
-    if( eType != GDT_Float32 )
+    if( eType == GDT_Float32 )
+    {
+        nCellType = CELLFLOAT;
+    }
+    else if( eType == GDT_Int32 )
+    {
+        nCellType = CELLINT;
+    }
+    else if( eType == GDT_Byte || eType == GDT_Int16 || eType == GDT_UInt16 )
+    {
+        nCellType = CELLINT;
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "GIO driver only supports Float32, and Int32 datasets, not\n"
+                  "%s as requested for %s.  Treating as Int32.", 
+                  GDALGetDataTypeName(eType), pszFilename );
+    }
+    else
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "AIGrid2 driver only supports Float32 datasets, not\n"
-                  "%s as requested for %s.\n", 
+                  "GIO driver only supports Float32, and Int32 datasets, not\n"
+                  "%s as requested for %s.", 
                   GDALGetDataTypeName(eType), pszFilename );
 
         return NULL;
@@ -622,19 +644,19 @@ GDALDataset *GIODataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     double      adfAdjustedBox[4];
     
-    adfBox[0] = -0.5;
-    adfBox[1] = -0.5;
-    adfBox[2] = nXSize-0.5;
-    adfBox[3] = nYSize-0.5;
+    adfBox[0] = 10;
+    adfBox[1] = 15;
+    adfBox[2] = nXSize*3+10;
+    adfBox[3] = nYSize*3+15;
 
-    pfnAccessWindowSet( adfBox, 1.0, adfAdjustedBox ); 
+    pfnAccessWindowSet( adfBox, 3.0, adfAdjustedBox ); 
     
 /* -------------------------------------------------------------------- */
 /*      Create the file.                                                */
 /* -------------------------------------------------------------------- */
     nChannel = pfnCellLayerCreate( (char *) pszFilename, 
-                                   WRITEONLY, ROWIO, CELLFLOAT,
-                                   1.0, adfBox );
+                                   WRITEONLY, ROWIO, nCellType,
+                                   3.0, adfBox );
 
     if( nChannel < 0 )
     {
@@ -663,13 +685,13 @@ GDALDataset *GIODataset::Create( const char * pszFilename,
     poDS->nBands = 1;
 
     poDS->adfGeoTransform[0] = adfBox[0];
-    poDS->adfGeoTransform[1] = 1.0;
+    poDS->adfGeoTransform[1] = 3.0;
     poDS->adfGeoTransform[2] = 0.0;
     poDS->adfGeoTransform[3] = adfBox[3];
     poDS->adfGeoTransform[4] = 0.0;
-    poDS->adfGeoTransform[5] = -1.0;
+    poDS->adfGeoTransform[5] = -3.0;
 
-    poDS->nCellType = CELLFLOAT;
+    poDS->nCellType = nCellType;
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
