@@ -148,7 +148,9 @@ uint32 TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Write directory, and return byte offset.                        */
 /* -------------------------------------------------------------------- */
-    TIFFWriteCheck( hTIFF, bTiled, "TIFFBuildOverviews" );
+    if( TIFFWriteCheck( hTIFF, bTiled, "TIFFBuildOverviews" ) == 0 )
+        return 0;
+
     TIFFWriteDirectory( hTIFF );
     TIFFSetDirectory( hTIFF, TIFFNumberOfDirectories(hTIFF)-1 );
 

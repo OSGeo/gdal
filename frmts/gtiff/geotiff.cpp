@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.108  2004/03/01 18:36:47  warmerda
+ * improve error checking for overview generation
+ *
  * Revision 1.107  2004/02/19 14:31:44  dron
  * Replace COMPRESSION_DEFLATE with COMPRESSION_ADOBE_DEFLATE.
  *
@@ -1561,6 +1564,19 @@ CPLErr GTiffDataset::IBuildOverviews(
     TIFFFlush( hTIFF );
 
 /* -------------------------------------------------------------------- */
+/*      If we don't have read access, then create the overviews externally.*/
+/* -------------------------------------------------------------------- */
+    if( GetAccess() != GA_Update )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "File open for read-only accessing, creating overviews externally." );
+
+        return GDALDataset::IBuildOverviews( 
+            pszResampling, nOverviews, panOverviewList, 
+            nBands, panBandList, pfnProgress, pProgressData );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Our TIFF overview support currently only works safely if all    */
 /*      bands are handled at the same time.                             */
 /* -------------------------------------------------------------------- */
@@ -1609,7 +1625,7 @@ CPLErr GTiffDataset::IBuildOverviews(
 /*      which are new.  We assume that band 1 of the file is            */
 /*      representative.                                                 */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < nOverviews; i++ )
+    for( i = 0; i < nOverviews && eErr == CE_None; i++ )
     {
         int   j;
 
@@ -1643,11 +1659,18 @@ CPLErr GTiffDataset::IBuildOverviews(
                                     nPhotometric, nSampleFormat, 
                                     panRed, panGreen, panBlue, FALSE );
 
+            if( nOverviewOffset == 0 )
+            {
+                eErr = CE_Failure;
+                continue;
+            }
+
             poODS = new GTiffDataset();
             if( poODS->OpenOffset( hTIFF, nOverviewOffset, FALSE, 
                                    GA_Update ) != CE_None )
             {
                 delete poODS;
+                eErr = CE_Failure;
             }
             else
             {
