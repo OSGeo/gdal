@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.53  2003/12/02 16:39:05  warmerda
+# added GDALGetColorEntry support
+#
 # Revision 1.52  2003/09/01 15:03:34  dron
 # Added DecToDMS() wrapper.
 #
@@ -589,10 +592,10 @@ class Band(MajorObject):
         return _gdal.GDALChecksumImage( self._o, xoff, yoff, xsize, ysize )
 
 class ColorTable:
-    def __init__(self, _obj = None):
+    def __init__(self, _obj = None, mode = GPI_RGB ):
         if _obj is None:
             self.own_o = 1
-            self._o = _gdal.GDALCreateColorTable( GPI_RGB )
+            self._o = _gdal.GDALCreateColorTable( mode )
         else:
             self.own_o = 0
             self._o = _obj
@@ -614,14 +617,38 @@ class ColorTable:
 
     def GetColorEntry( self, i ):
         entry = _gdal.GDALGetColorEntry( self._o, i )
-        if entry is None:
+        if entry is None or entry == 'NULL':
             return (0,0,0,0)
         else:
-            return (_gdal.GDALColorEntry_c1_get( entry ),
-                    _gdal.GDALColorEntry_c2_get( entry ),
-                    _gdal.GDALColorEntry_c3_get( entry ),
-                    _gdal.GDALColorEntry_c4_get( entry ))
-
+            entry = ptrcast(entry,'short_p')
+            return (ptrvalue(entry, 0),
+                    ptrvalue(entry, 1),
+                    ptrvalue(entry, 2),
+                    ptrvalue(entry, 3) )
+        
+    def GetColorEntryAsRGB( self, i ):
+        entry = ptrcreate( 'short', 0, 4 )
+        _gdal.GDALGetColorEntryAsRGB( self._o, i,
+                                      ptrcast(entry,'GDALColorEntry_p') )
+        res = (ptrvalue(entry, 0),
+               ptrvalue(entry, 1),
+               ptrvalue(entry, 2),
+               ptrvalue(entry, 3) )
+        ptrfree( entry )
+        return res
+        
+    def SetColorEntry( self, i, color ):
+        entry = ptrcreate( 'short', 0, 4 )
+        for j in range(4):
+            if j >= len(color):
+                ptrset( entry, 255, j )
+            else:
+                ptrset( entry, int(color[j]), j )
+        res = _gdal.GDALSetColorEntry( self._o, i,
+                                       ptrcast(entry,'GDALColorEntry_p') )
+        ptrfree( entry )
+        return res
+    
     def __str__(self):
         str = ''
         count = self.GetCount()

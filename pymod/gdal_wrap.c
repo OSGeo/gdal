@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.76  2003/10/09 15:27:52  warmerda
- * added OGRLayer::DeleteFeature() support
+ * Revision 1.77  2003/12/02 16:39:05  warmerda
+ * added GDALGetColorEntry support
  *
  ************************************************************************/
 
@@ -9319,178 +9319,6 @@ static PyObject *_wrap_OGRSetGenerate_DB2_V72_BYTE_ORDER(PyObject *self, PyObjec
     return _resultobj;
 }
 
-#define GDALColorEntry_c1_set(_swigobj,_swigval) (_swigobj->c1 = _swigval,_swigval)
-static PyObject *_wrap_GDALColorEntry_c1_set(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    short  _result;
-    GDALColorEntry * _arg0;
-    short  _arg1;
-    char * _argc0 = 0;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"sh:GDALColorEntry_c1_set",&_argc0,&_arg1)) 
-        return NULL;
-    if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALColorEntry_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALColorEntry_c1_set. Expected _GDALColorEntry_p.");
-        return NULL;
-        }
-    }
-    _result = (short )GDALColorEntry_c1_set(_arg0,_arg1);
-    _resultobj = Py_BuildValue("h",_result);
-    return _resultobj;
-}
-
-#define GDALColorEntry_c1_get(_swigobj) ((short ) _swigobj->c1)
-static PyObject *_wrap_GDALColorEntry_c1_get(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    short  _result;
-    GDALColorEntry * _arg0;
-    char * _argc0 = 0;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"s:GDALColorEntry_c1_get",&_argc0)) 
-        return NULL;
-    if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALColorEntry_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALColorEntry_c1_get. Expected _GDALColorEntry_p.");
-        return NULL;
-        }
-    }
-    _result = (short )GDALColorEntry_c1_get(_arg0);
-    _resultobj = Py_BuildValue("h",_result);
-    return _resultobj;
-}
-
-#define GDALColorEntry_c2_set(_swigobj,_swigval) (_swigobj->c2 = _swigval,_swigval)
-static PyObject *_wrap_GDALColorEntry_c2_set(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    short  _result;
-    GDALColorEntry * _arg0;
-    short  _arg1;
-    char * _argc0 = 0;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"sh:GDALColorEntry_c2_set",&_argc0,&_arg1)) 
-        return NULL;
-    if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALColorEntry_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALColorEntry_c2_set. Expected _GDALColorEntry_p.");
-        return NULL;
-        }
-    }
-    _result = (short )GDALColorEntry_c2_set(_arg0,_arg1);
-    _resultobj = Py_BuildValue("h",_result);
-    return _resultobj;
-}
-
-#define GDALColorEntry_c2_get(_swigobj) ((short ) _swigobj->c2)
-static PyObject *_wrap_GDALColorEntry_c2_get(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    short  _result;
-    GDALColorEntry * _arg0;
-    char * _argc0 = 0;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"s:GDALColorEntry_c2_get",&_argc0)) 
-        return NULL;
-    if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALColorEntry_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALColorEntry_c2_get. Expected _GDALColorEntry_p.");
-        return NULL;
-        }
-    }
-    _result = (short )GDALColorEntry_c2_get(_arg0);
-    _resultobj = Py_BuildValue("h",_result);
-    return _resultobj;
-}
-
-#define GDALColorEntry_c3_set(_swigobj,_swigval) (_swigobj->c3 = _swigval,_swigval)
-static PyObject *_wrap_GDALColorEntry_c3_set(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    short  _result;
-    GDALColorEntry * _arg0;
-    short  _arg1;
-    char * _argc0 = 0;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"sh:GDALColorEntry_c3_set",&_argc0,&_arg1)) 
-        return NULL;
-    if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALColorEntry_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALColorEntry_c3_set. Expected _GDALColorEntry_p.");
-        return NULL;
-        }
-    }
-    _result = (short )GDALColorEntry_c3_set(_arg0,_arg1);
-    _resultobj = Py_BuildValue("h",_result);
-    return _resultobj;
-}
-
-#define GDALColorEntry_c3_get(_swigobj) ((short ) _swigobj->c3)
-static PyObject *_wrap_GDALColorEntry_c3_get(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    short  _result;
-    GDALColorEntry * _arg0;
-    char * _argc0 = 0;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"s:GDALColorEntry_c3_get",&_argc0)) 
-        return NULL;
-    if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALColorEntry_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALColorEntry_c3_get. Expected _GDALColorEntry_p.");
-        return NULL;
-        }
-    }
-    _result = (short )GDALColorEntry_c3_get(_arg0);
-    _resultobj = Py_BuildValue("h",_result);
-    return _resultobj;
-}
-
-#define GDALColorEntry_c4_set(_swigobj,_swigval) (_swigobj->c4 = _swigval,_swigval)
-static PyObject *_wrap_GDALColorEntry_c4_set(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    short  _result;
-    GDALColorEntry * _arg0;
-    short  _arg1;
-    char * _argc0 = 0;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"sh:GDALColorEntry_c4_set",&_argc0,&_arg1)) 
-        return NULL;
-    if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALColorEntry_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALColorEntry_c4_set. Expected _GDALColorEntry_p.");
-        return NULL;
-        }
-    }
-    _result = (short )GDALColorEntry_c4_set(_arg0,_arg1);
-    _resultobj = Py_BuildValue("h",_result);
-    return _resultobj;
-}
-
-#define GDALColorEntry_c4_get(_swigobj) ((short ) _swigobj->c4)
-static PyObject *_wrap_GDALColorEntry_c4_get(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    short  _result;
-    GDALColorEntry * _arg0;
-    char * _argc0 = 0;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"s:GDALColorEntry_c4_get",&_argc0)) 
-        return NULL;
-    if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALColorEntry_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALColorEntry_c4_get. Expected _GDALColorEntry_p.");
-        return NULL;
-        }
-    }
-    _result = (short )GDALColorEntry_c4_get(_arg0);
-    _resultobj = Py_BuildValue("h",_result);
-    return _resultobj;
-}
-
 #define OGREnvelope_MinX_set(_swigobj,_swigval) (_swigobj->MinX = _swigval,_swigval)
 static PyObject *_wrap_OGREnvelope_MinX_set(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -9672,14 +9500,6 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGREnvelope_MaxX_set", _wrap_OGREnvelope_MaxX_set, 1 },
 	 { "OGREnvelope_MinX_get", _wrap_OGREnvelope_MinX_get, 1 },
 	 { "OGREnvelope_MinX_set", _wrap_OGREnvelope_MinX_set, 1 },
-	 { "GDALColorEntry_c4_get", _wrap_GDALColorEntry_c4_get, 1 },
-	 { "GDALColorEntry_c4_set", _wrap_GDALColorEntry_c4_set, 1 },
-	 { "GDALColorEntry_c3_get", _wrap_GDALColorEntry_c3_get, 1 },
-	 { "GDALColorEntry_c3_set", _wrap_GDALColorEntry_c3_set, 1 },
-	 { "GDALColorEntry_c2_get", _wrap_GDALColorEntry_c2_get, 1 },
-	 { "GDALColorEntry_c2_set", _wrap_GDALColorEntry_c2_set, 1 },
-	 { "GDALColorEntry_c1_get", _wrap_GDALColorEntry_c1_get, 1 },
-	 { "GDALColorEntry_c1_set", _wrap_GDALColorEntry_c1_set, 1 },
 	 { "OGRSetGenerate_DB2_V72_BYTE_ORDER", _wrap_OGRSetGenerate_DB2_V72_BYTE_ORDER, 1 },
 	 { "OGRBuildPolygonFromEdges", py_OGRBuildPolygonFromEdges, 1 },
 	 { "OGRRegisterAll", _wrap_OGRRegisterAll, 1 },
@@ -10038,6 +9858,8 @@ SWIGEXPORT(void,init_gdal)() {
 	 SWIG_RegisterMapping("_GDALRWFlag","_GDALDataType",0);
 	 SWIG_RegisterMapping("_GDALRWFlag","_GDALAccess",0);
 	 SWIG_RegisterMapping("_stringList","_char_pp",0);
+	 SWIG_RegisterMapping("_short_p","_GDALColorEntry",0);
+	 SWIG_RegisterMapping("_GDALColorEntry","_short_p",0);
 	 SWIG_RegisterMapping("_GDALPaletteInterp","_OGRJustification",0);
 	 SWIG_RegisterMapping("_GDALPaletteInterp","_OGRFieldType",0);
 	 SWIG_RegisterMapping("_GDALPaletteInterp","_OGRwkbGeometryType",0);
