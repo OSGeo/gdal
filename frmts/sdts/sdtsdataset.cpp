@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/06/03 21:14:01  warmerda
+ * added GetGeoTransform() and GetProjectionRef() support
+ *
  * Revision 1.1  1999/06/03 13:46:07  warmerda
  * New
  *
@@ -55,16 +58,18 @@ class SDTSDataset : public GDALDataset
     friend	SDTSRasterBand;
     
     SDTSTransfer *poTransfer;
+    SDTSRasterReader *poRL;
+
+    char	*pszProjection;
 
   public:
+    virtual	~SDTSDataset();
+    
     static GDALDataset *Open( GDALOpenInfo * );
-};
 
-/************************************************************************/
-/* ==================================================================== */
-/*                            SDTSRasterBand                             */
-/* ==================================================================== */
-/************************************************************************/
+    virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * );
+};
 
 class SDTSRasterBand : public GDALRasterBand
 {
@@ -81,37 +86,22 @@ class SDTSRasterBand : public GDALRasterBand
 
 
 /************************************************************************/
-/*                           SDTSRasterBand()                            */
+/*                            ~SDTSDataset()                            */
 /************************************************************************/
 
-SDTSRasterBand::SDTSRasterBand( SDTSDataset *poDS, int nBand,
-                                SDTSRasterReader * poRL )
+SDTSDataset::~SDTSDataset()
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->poRL = poRL;
+    if( poTransfer != NULL )
+        delete poTransfer;
 
-    CPLAssert( poRL->GetRasterType() == 1 );
-    eDataType = GDT_Int16;
+    if( poRL != NULL )
+        delete poRL;
 
-    nBlockXSize = poRL->GetBlockXSize();
-    nBlockYSize = poRL->GetBlockYSize();
+    if( pszProjection != NULL )
+        CPLFree( pszProjection );
 }
 
-/************************************************************************/
-/*                             IReadBlock()                             */
-/************************************************************************/
-
-CPLErr SDTSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
-
-{
-    if( poRL->GetBlock( nBlockXOff, nBlockYOff, pImage ) )
-        return CE_None;
-    else
-        return CE_Failure;
-}
 
 /************************************************************************/
 /*                                Open()                                */
@@ -161,7 +151,6 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         if( poTransfer->GetLayerType( i ) == SLTRaster )
         {
-            printf( "Get raster reader.\n" );
             poRL = poTransfer->GetLayerRasterReader( i );
             break;
         }
@@ -184,6 +173,7 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
     SDTSDataset	*poDS = new SDTSDataset();
 
     poDS->poTransfer = poTransfer;
+    poDS->poRL = poRL;
     poDS->poDriver = poSDTSDriver;
     
 /* -------------------------------------------------------------------- */
@@ -202,7 +192,105 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
     for( i = 0; i < poDS->nBands; i++ )
         poDS->papoBands[i] = new SDTSRasterBand( poDS, i+1, poRL );
 
+/* -------------------------------------------------------------------- */
+/*      Try to establish the projection string.  For now we only        */
+/*      support UTM and GEO.                                            */
+/* -------------------------------------------------------------------- */
+    SDTS_XREF	*poXREF = poTransfer->GetXREF();
+    char	szPROJ4[256], szP4Datum[64];
+
+    if( EQUAL(poXREF->pszDatum,"NAS") )
+        strcpy(szP4Datum, "+ellps=clrk66 ");
+    else if( EQUAL(poXREF->pszDatum, "NAX") )
+        strcpy(szP4Datum, "+ellps=GRS80 ");
+    else if( EQUAL(poXREF->pszDatum, "WGA") )
+        strcpy(szP4Datum, "+ellps=WGS60 ");
+    else if( EQUAL(poXREF->pszDatum, "WGB") )
+        strcpy(szP4Datum, "+ellps=WGS66 ");
+    else if( EQUAL(poXREF->pszDatum, "WGC") )
+        strcpy(szP4Datum, "+ellps=WGS72 ");
+    else if( EQUAL(poXREF->pszDatum, "WGE") )
+        strcpy(szP4Datum, "+ellps=WGS84 ");
+    else
+        strcpy(szP4Datum, "+ellps=WGS83 "); /* default */
+
+    if( EQUAL(poXREF->pszSystemName,"UTM") )
+    {
+        sprintf( szPROJ4, "+proj=utm +zone=%d %s",
+                 poXREF->nZone, szP4Datum );
+    }
+    else if( EQUAL(poXREF->pszSystemName,"GEO") )
+    {
+        sprintf( szPROJ4, "+proj=longlat %s", szP4Datum );
+    }
+    else
+        sprintf( szPROJ4, "unknown" );
+
+    poDS->pszProjection = CPLStrdup( szPROJ4 );
+
     return( poDS );
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr SDTSDataset::GetGeoTransform( double * padfTransform )
+
+{
+    if( poRL->GetTransform( padfTransform ) )
+        return CE_None;
+    else
+        return CE_Failure;
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *SDTSDataset::GetProjectionRef()
+
+{
+    return pszProjection;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*                            SDTSRasterBand                             */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                           SDTSRasterBand()                            */
+/************************************************************************/
+
+SDTSRasterBand::SDTSRasterBand( SDTSDataset *poDS, int nBand,
+                                SDTSRasterReader * poRL )
+
+{
+    this->poDS = poDS;
+    this->nBand = nBand;
+    this->poRL = poRL;
+
+    CPLAssert( poRL->GetRasterType() == 1 );
+    eDataType = GDT_Int16;
+
+    nBlockXSize = poRL->GetBlockXSize();
+    nBlockYSize = poRL->GetBlockYSize();
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr SDTSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                  void * pImage )
+
+{
+    if( poRL->GetBlock( nBlockXOff, nBlockYOff, pImage ) )
+        return CE_None;
+    else
+        return CE_Failure;
 }
 
 /************************************************************************/
