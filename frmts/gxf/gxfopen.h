@@ -1,4 +1,11 @@
 /******************************************************************************
+ * $Id$
+ *
+ * Project:  GXF Reader
+ * Purpose:  GXF-3 access function declarations.
+ * Author:   Frank Warmerdam, warmerda@home.com
+ *
+ ******************************************************************************
  * Copyright (c) 1998, Global Geomatics
  * Copyright (c) 1998, Frank Warmerdam
  *
@@ -21,9 +28,11 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * gxfopen.h: Includes for underlying GXF reading code.
- *
  * $Log$
+ * Revision 1.6  1999/10/27 20:22:33  warmerda
+ * Added Doxygen style documentation.
+ * Added GXFGetPosition() function.
+ *
  * Revision 1.5  1999/01/11 15:33:06  warmerda
  * Added function
  *
@@ -44,15 +53,21 @@
 #ifndef _GXFOPEN_H_INCLUDED
 #define _GXFOPEN_H_INCLUDED
 
+/**
+ * \file gxfopen.h
+ *
+ * Public GXF-3 function definitions.
+ */
+
 /* -------------------------------------------------------------------- */
 /*      Include standard portability stuff.                             */
 /* -------------------------------------------------------------------- */
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-typedef void *GXFHandle;
-
 CPL_C_START
+
+typedef void *GXFHandle;
 
 GXFHandle GXFOpen( const char * pszFilename );
 
@@ -70,6 +85,9 @@ char	*GXFGetMapProjectionAsPROJ4( GXFHandle );
 
 CPLErr  GXFGetRawPosition( GXFHandle, double *, double *, double *, double *,
                            double * );
+CPLErr  GXFGetPosition( GXFHandle, double *, double *, double *, double *,
+                        double * );
+
 CPLErr  GXFGetPROJ4Position( GXFHandle, double *, double *, double *, double *,
                              double * );
 
@@ -85,5 +103,45 @@ void     GXFClose( GXFHandle hGXF );
 #define GXFS_LR_UP	4
 
 CPL_C_END
+
+/* -------------------------------------------------------------------- */
+/*      This is consider to be a private structure.                     */
+/* -------------------------------------------------------------------- */
+typedef struct {
+    FILE	*fp;
+
+    int		nRawXSize;
+    int		nRawYSize;
+    int		nSense;		/* GXFS_ codes */
+    int		nGType;		/* 0 is uncompressed */
+
+    double	dfXPixelSize;
+    double	dfYPixelSize;
+    double	dfRotation;
+    double	dfXOrigin;	/* lower left corner */
+    double	dfYOrigin;	/* lower left corner */
+
+    char	szDummy[64];
+    double	dfSetDummyTo;
+
+    char	*pszTitle;
+
+    double	dfTransformScale;
+    double	dfTransformOffset;
+    char	*pszTransformName;
+
+    char	**papszMapProjection;
+    char	**papszMapDatumTransform;
+
+    char	*pszUnitName;
+    double	dfUnitToMeter;
+    
+
+    double	dfZMaximum;
+    double	dfZMinimum;
+
+    long	*panRawLineOffset;
+    
+} GXFInfo_t;
 
 #endif /* ndef _GXFOPEN_H_INCLUDED */
