@@ -1,1 +1,2 @@
-<GetCapabilities service="WCTS" version="0.0.3"/>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<GetCapabilities service="WCTS" version="0.1.0"/>
