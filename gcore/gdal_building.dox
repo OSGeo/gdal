@@ -91,17 +91,57 @@ Once the environment is setup, you can cd to the GDAL root directory
 and do the following:<p>
 
 <pre>
-C:\\GDAL&gt; nmake /f makefile.vc
+C:\\GDAL> nmake /f makefile.vc
 </pre>
 
+Once the build has completed successfully, you can also install the required
+GDAL files for using GDAL utilities using the install makefile target. 
+Ensure that BINDIR, and DATADIR are set appropriately in the nmake.opt file
+before doing this. 
+
+<pre>
+C:\\GDAL> nmake /f makefile.vc install
+</pre>
+
+If you wish to build your own applications using GDAL you can use the following
+command to install all the required libraries, and include files as well.
+Ensure that LIBDIR and INCDIR are properly set in the nmake.opt file. 
+
+<pre>
+C:\\GDAL> nmake /f makefile.vc devinstall
+</pre>
+
+Projects linking against GDAL should include the directory specified in
+INCDIR in the include path, and the directory specified in LIBDIR in their
+/LIBPATH.  To use gdal link against the gdal_i.lib stub library.  
+
+<h3>Basic Options</h3>
+
 There are lots of options that can be tweaked by hand in the nmake.opt
-file in the GDAL root directory. 
+file in the GDAL root directory.  
 
 <ul>
 <li> <b>BINDIR</b>: Directory in which to install executables, and DLLs if 
 you use the "nmake /f makefile.vc install" command.
 
-<li> <b>PY_INST_DIR</b>: Directory to install python modules in.
+<li> <b>LIBDIR</b>: Directory in which to install stub library (gdal_i.lib).
+
+<li> <b>INCDIR</b>: Directory in which to install GDAL/OGR include files.
+
+<li> <b>DATADIR</b>: Directory in which to install GDAL required data files.
+
+<li> <b>OPTFLAGS</b>: Set this to contain the desired compiler flags for
+compiling.  The default is a debug build but there is usually a suitable
+alternative for optimized builds commented out in the template file. 
+
+</ul>
+
+<h3>Advanced Options</h3>
+
+<ul>
+
+<li> <b>PY_INST_DIR</b>: Directory to install python modules in.  Only
+required if Python support is being built. 
 
 <li> <b>PYDIR</b>: The directory where your python tree is installed.
 Used to find python include files.  If this is set to a directory that
@@ -116,10 +156,6 @@ the GDAL dll, or comment out to omit OGR formats from build.
 <li> <b>SETARGV</b>:  Point this to the setargv.obj file distributed with
 Visual Studio to get wildcard expanasion for commandline arguments or
 leave commented out to omit this.
-
-<li> <b>OPTFLAGS</b>: Set this to contain the desired compiler flags for
-compiling.  The default is a debug build but there is usually a suitable
-alternative for optimized builds commented out in the template file. 
 
 <li> <b>ECWDIR/ECWLIB</b>: Uncomment these to enable building with ECW
 support, correcting ECWDIR to point to the install location on your system.
