@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2004/02/07 17:31:21  dron
+ * Added OSRExportToUSGS() method.
+ *
  * Revision 1.58  2004/02/05 17:07:59  dron
  * Support for HOM projection, specified by two points on centerline.
  *
@@ -195,13 +198,13 @@ class CPL_DLL OGRSpatialReference
     OGRSpatialReference *Clone() const;
     OGRSpatialReference *CloneGeogCS() const;
 
-    OGRErr      importFromWkt( char ** );
     OGRErr      exportToWkt( char ** );
     OGRErr      exportToPrettyWkt( char **, int = FALSE) const;
     OGRErr      exportToProj4( char ** ) const;
     OGRErr      exportToPCI( char **, char **, double ** ) const;
-
+    OGRErr      exportToUSGS( long *, long *, double **, long * ) const;
     OGRErr      exportToXML( char **, const char * = NULL ) const;
+    OGRErr      importFromWkt( char ** );
     OGRErr      importFromProj4( const char * );
     OGRErr      importFromEPSG( int );
     OGRErr      importFromESRI( char ** );
@@ -332,13 +335,11 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetGnomonic(double dfCenterLat, double dfCenterLong,
                             double dfFalseEasting, double dfFalseNorthing );
 
-    /** Hotine Oblique Mercator using azimuth angle */
     OGRErr      SetHOM( double dfCenterLat, double dfCenterLong,
                         double dfAzimuth, double dfRectToSkew,
                         double dfScale,
                         double dfFalseEasting, double dfFalseNorthing );
 
-    /** Hotine Oblique Mercator using two points on centerline */
     OGRErr      SetHOM2PNO( double dfCenterLat,
                             double dfLat1, double dfLong1,
                             double dfLat2, double dfLong2,
