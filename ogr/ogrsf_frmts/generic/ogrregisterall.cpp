@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/14 18:10:44  svillene
+ * add RegisterOGRMIF RegisterOGRTAB
+ *
  * Revision 1.1  1999/11/04 21:10:51  warmerda
  * New
  *
@@ -47,5 +50,7 @@ void OGRRegisterAll()
     RegisterOGRSDTS();
     RegisterOGRTiger();
     RegisterOGRS57();
+    RegisterOGRTAB();
+    RegisterOGRMIF();
 }
 
