@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/12/19 22:44:53  warmerda
+ * added ADD_SOUNDG_DEPTH support
+ *
  * Revision 1.16  2001/12/17 22:35:16  warmerda
  * added ReadFeature method
  *
@@ -260,6 +263,7 @@ class S57Reader
     int                 bGenerateLNAM;
     
     int                 bSplitMultiPoint;
+    int                 bAddSOUNDGDepth;
     int                 iPointOffset;
     OGRFeature          *poMultiPoint;
 

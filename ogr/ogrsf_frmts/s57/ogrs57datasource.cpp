@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/12/19 22:44:53  warmerda
+ * added ADD_SOUNDG_DEPTH support
+ *
  * Revision 1.15  2001/12/19 22:03:58  warmerda
  * iniitialize bExtentsSet
  *
@@ -95,11 +98,22 @@ OGRS57DataSource::OGRS57DataSource()
 
     pszName = NULL;
 
-    papszOptions = NULL;
-
     poSpatialRef = new OGRSpatialReference( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]]");
     
     bExtentsSet = FALSE;
+
+
+/* -------------------------------------------------------------------- */
+/*      Allow initialization of options from the environment.           */
+/* -------------------------------------------------------------------- */
+    papszOptions = NULL;
+
+    if( getenv("OGR_S57_OPTIONS") != NULL )
+    {
+        papszOptions = 
+            CSLTokenizeStringComplex( getenv("OGR_S57_OPTIONS"), ",",
+                                      FALSE, FALSE );
+    }
 }
 
 /************************************************************************/
@@ -209,6 +223,11 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
         papszReaderOptions = CSLSetNameValue( papszReaderOptions, 
                                               "SPLIT_MULTIPOINT", 
                                               GetOption("SPLIT_MULTIPOINT"));
+                                              
+    if( GetOption("ADD_SOUNDG_DEPTH") != NULL )
+        papszReaderOptions = CSLSetNameValue( papszReaderOptions, 
+                                              "ADD_SOUNDG_DEPTH", 
+                                              GetOption("ADD_SOUNDG_DEPTH"));
                                               
     poModule->SetOptions( papszReaderOptions );
     CSLDestroy( papszReaderOptions );
