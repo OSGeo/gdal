@@ -2,8 +2,7 @@
  * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  IAccessor implementation that doesn't suffer IAccessorImpl's
- *           problem with confusion of accessor handle ids. 
+ * Purpose:  RowsetInterface implementation specifically for columns rowset.
  * Author:   Frank Warmerdam <warmerdam@pobox.com>
  *
  * This code is closely derived from the code in ATLDB.H for IRowsetImpl.
@@ -35,6 +34,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/01/31 16:47:41  warmerda
+ * fix up docs a bit
+ *
  * Revision 1.2  2001/10/15 15:21:07  warmerda
  * pass raw data points to GetRCDBStatus
  *
@@ -61,7 +63,7 @@ class ATL_NO_VTABLE ICRRowsetImpl : public RowsetInterface
     ~ICRRowsetImpl()
     {
         for (int i = 0; i < m_rgRowHandles.GetSize(); i++)
-        delete (m_rgRowHandles.GetValueAt(i));
+            delete (m_rgRowHandles.GetValueAt(i));
     }
     HRESULT RefRows(ULONG cRows, const HROW rghRows[], ULONG rgRefCounts[],
                     DBROWSTATUS rgRowStatus[], BOOL bAdd)
