@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.2  2005/02/22 23:33:07  kruland
+ * Implement GetCount, and GetColorTableEntry correctly.
+ *
  * Revision 1.1  2005/02/15 21:37:43  kruland
  * Interface definition for ColorTable object.  Cut&Paste from gdal_priv.h.
  *
@@ -34,8 +37,16 @@ public:
 
     GDALPaletteInterp GetPaletteInterpretation() const;
 
+%rename (GetCount) GetColorEntryCount;
     int           GetColorEntryCount() const;
-    const GDALColorEntry *GetColorEntry( int ) const;
+
+    GDALColorEntry* GetColorEntry(int);
     int           GetColorEntryAsRGB( int, GDALColorEntry * ) const;
     void          SetColorEntry( int, const GDALColorEntry * );
+
+/* NEEDED 
+ *
+ * __str__;
+ * serialize();
+ */
 };
