@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/04/17 21:51:42  warmerda
+ * added metadata support
+ *
  * Revision 1.3  2000/04/07 19:39:16  warmerda
  * added some metadata
  *
@@ -83,6 +86,7 @@ static CeosTypeCode_t QuadToTC( int a, int b, int c, int d )
 }
 
 #define LEADER_DATASET_SUMMARY_TC  QuadToTC( 18, 10, 18, 20 )
+#define LEADER_RADIOMETRIC_COMPENSATION_TC QuadToTC( 18, 51, 18, 20 )
 #define VOLUME_DESCRIPTOR_RECORD_TC QuadToTC( 192, 192, 18, 18 )
 
 #define PROC_PARAM_RECORD_TYPECODE { 18, 120, 18, 20 }
@@ -203,42 +207,163 @@ const GDAL_GCP *SAR_CEOSDataset::GetGCPs()
 void SAR_CEOSDataset::ScanForMetadata() 
 
 {
+    char szField[128], szVolId[128];
     CeosRecord_t *record;
 
 /* -------------------------------------------------------------------- */
-/*      Get the acquisition date.                                       */
-/* -------------------------------------------------------------------- */
-    record = FindCeosRecord( sVolume.RecordList, LEADER_DATASET_SUMMARY_TC,
-                             __CEOS_LEADER_FILE, -1, -1 );
-    if( record != NULL )
-    {
-        char szTime[33];
-
-        szTime[0] = '\0';
-        szTime[32] = '\0';
-
-        GetCeosField( record, 69, "A32", szTime );
-
-        papszMetadata = 
-            CSLSetNameValue( papszMetadata, "CEOS_ACQUISITION_TIME", szTime );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Get the acquisition date.                                       */
+/*      Get the volume id (with the sensor name)                        */
 /* -------------------------------------------------------------------- */
     record = FindCeosRecord( sVolume.RecordList, VOLUME_DESCRIPTOR_RECORD_TC,
                              __CEOS_VOLUME_DIR_FILE, -1, -1 );
+    szVolId[0] = '\0';
     if( record != NULL )
     {
-        char szField[17];
+        szVolId[16] = '\0';
 
-        szField[0] = '\0';
-        szField[16] = '\0';
-
-        GetCeosField( record, 61, "A16", szField );
+        GetCeosField( record, 61, "A16", szVolId );
 
         papszMetadata = 
             CSLSetNameValue( papszMetadata, "CEOS_LOGICAL_VOLUME_ID", 
+                             szVolId );
+
+/* -------------------------------------------------------------------- */
+/*      Processing facility                                             */
+/* -------------------------------------------------------------------- */
+        szField[0] = '\0';
+        szField[12] = '\0';
+
+        GetCeosField( record, 149, "A12", szField );
+
+        if( !EQUALN(szField,"            ",12) )
+            papszMetadata = 
+                CSLSetNameValue( papszMetadata, "CEOS_PROCESSING_FACILITY", 
+                                 szField );
+
+/* -------------------------------------------------------------------- */
+/*      Agency                                                          */
+/* -------------------------------------------------------------------- */
+        szField[8] = '\0';
+
+        GetCeosField( record, 141, "A8", szField );
+
+        if( !EQUALN(szField,"            ",8) )
+            papszMetadata = 
+                CSLSetNameValue( papszMetadata, "CEOS_PROCESSING_AGENCY", 
+                                 szField );
+
+/* -------------------------------------------------------------------- */
+/*      Country                                                         */
+/* -------------------------------------------------------------------- */
+        szField[12] = '\0';
+
+        GetCeosField( record, 129, "A12", szField );
+
+        if( !EQUALN(szField,"            ",12) )
+            papszMetadata = 
+                CSLSetNameValue( papszMetadata, "CEOS_PROCESSING_COUNTRY", 
+                                 szField );
+/* -------------------------------------------------------------------- */
+/*      software id.                                                    */
+/* -------------------------------------------------------------------- */
+        szField[12] = '\0';
+
+        GetCeosField( record, 33, "A12", szField );
+
+        if( !EQUALN(szField,"            ",12) )
+            papszMetadata = 
+                CSLSetNameValue( papszMetadata, "CEOS_SOFTWARE_ID", 
+                                 szField );
+    }
+
+/* ==================================================================== */
+/*      Dataset summary record.                                         */
+/* ==================================================================== */
+    record = FindCeosRecord( sVolume.RecordList, LEADER_DATASET_SUMMARY_TC,
+                             __CEOS_LEADER_FILE, -1, -1 );
+
+    if( record == NULL )
+        record = FindCeosRecord( sVolume.RecordList, LEADER_DATASET_SUMMARY_TC,
+                                 __CEOS_TRAILER_FILE, -1, -1 );
+
+    if( record != NULL )
+    {
+/* -------------------------------------------------------------------- */
+/*      Get the acquisition date.                                       */
+/* -------------------------------------------------------------------- */
+        szField[0] = '\0';
+        szField[32] = '\0';
+
+        GetCeosField( record, 69, "A32", szField );
+
+        papszMetadata = 
+            CSLSetNameValue( papszMetadata, "CEOS_ACQUISITION_TIME", szField );
+
+/* -------------------------------------------------------------------- */
+/*      Look Angle.                                                     */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 477, "A8", szField );
+        szField[8] = '\0';
+
+        if( !EQUALN(szField,"        ",8 ) )
+            papszMetadata = 
+                CSLSetNameValue( papszMetadata, "CEOS_SENSOR_CLOCK_ANGLE", 
+                                 szField );
+
+/* -------------------------------------------------------------------- */
+/*      Ascending/Descending                                            */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 101, "A16", szField );
+        szField[16] = '\0';
+
+        if( strstr(szVolId,"RSAT") != NULL 
+            && !EQUALN(szField,"                ",16 ) )
+            papszMetadata = 
+                CSLSetNameValue( papszMetadata, "CEOS_ASC_DES", 
+                                 szField );
+
+/* -------------------------------------------------------------------- */
+/*      Ellipsoid                                                       */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 165, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            papszMetadata = 
+                CSLSetNameValue( papszMetadata, "CEOS_ELLIPSOID", szField );
+
+/* -------------------------------------------------------------------- */
+/*      Semimajor, semiminor axis                                       */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 181, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            papszMetadata = 
+                CSLSetNameValue( papszMetadata, "CEOS_SEMI_MAJOR", szField );
+
+        GetCeosField( record, 197, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            papszMetadata = 
+                CSLSetNameValue( papszMetadata, "CEOS_SEMI_MINOR", szField );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get the beam mode, for radarsat.                                */
+/* -------------------------------------------------------------------- */
+    record = FindCeosRecord( sVolume.RecordList, 
+                             LEADER_RADIOMETRIC_COMPENSATION_TC,
+                             __CEOS_LEADER_FILE, -1, -1 );
+
+    if( strstr(szVolId,"RSAT") != NULL && record != NULL )
+    {
+        szField[16] = '\0';
+
+        GetCeosField( record, 4189, "A16", szField );
+
+        papszMetadata = 
+            CSLSetNameValue( papszMetadata, "CEOS_BEAM_TYPE", 
                              szField );
     }
 }
