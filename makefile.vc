@@ -10,7 +10,8 @@ OGR_INCLUDE = /INCLUDE:_OCTNewCoordinateTransformation \
 # Uncomment the following (instead of the above) to include only the
 # coordinate transform services in GDAL DLL, not all of OGR.
 #OGR_OBJ = ogr\ogr.lib
-#OGR_INCLUDE =	/INCLUDE:_OCTNewCoordinateTransformation /INCLUDE:_OGRFree
+#OGR_INCLUDE =	/INCLUDE:_OCTNewCoordinateTransformation /INCLUDE:_OGRFree \
+#		/INCLUDE:_OPTGetParameterList
 
 LIBOBJ = port\*.obj core\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ)
 	
