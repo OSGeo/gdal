@@ -112,6 +112,11 @@ else
 	true
 fi
 
+if [ -x "$src".exe ] ; then
+  src=${src}.exe
+  echo "Cygwin hack - actually installing "$src
+fi
+
 if [ x"$dir_arg" != x ]; then
 	dst=$src
 	src=""
