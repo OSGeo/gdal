@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_fax3.c,v 1.22 2004/02/05 09:53:39 dron Exp $ */
+/* $Id: tif_fax3.c,v 1.25 2004/06/06 10:20:12 dron Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -309,8 +309,8 @@ Fax3Decode2D(TIFF* tif, tidata_t buf, tsize_t occ, tsample_t s)
  * this is <8 bytes.  We optimize the code here to reflect the
  * machine characteristics.
  */
-#if defined(__alpha) || _MIPS_SZLONG == 64 || defined(__LP64__) || defined(__arch64__) || defined(_LP64)
-#define FILL(n, cp)							    \
+#if SIZEOF_LONG == 8
+# define FILL(n, cp)							    \
     switch (n) {							    \
     case 15:(cp)[14] = 0xff; case 14:(cp)[13] = 0xff; case 13: (cp)[12] = 0xff;\
     case 12:(cp)[11] = 0xff; case 11:(cp)[10] = 0xff; case 10: (cp)[9] = 0xff;\
@@ -319,7 +319,7 @@ Fax3Decode2D(TIFF* tif, tidata_t buf, tsize_t occ, tsample_t s)
     case  3: (cp)[2] = 0xff; case  2: (cp)[1] = 0xff;			      \
     case  1: (cp)[0] = 0xff; (cp) += (n); case 0:  ;			      \
     }
-#define ZERO(n, cp)							\
+# define ZERO(n, cp)							\
     switch (n) {							\
     case 15:(cp)[14] = 0; case 14:(cp)[13] = 0; case 13: (cp)[12] = 0;	\
     case 12:(cp)[11] = 0; case 11:(cp)[10] = 0; case 10: (cp)[9] = 0;	\
@@ -329,13 +329,13 @@ Fax3Decode2D(TIFF* tif, tidata_t buf, tsize_t occ, tsample_t s)
     case  1: (cp)[0] = 0; (cp) += (n); case 0:  ;			\
     }
 #else
-#define FILL(n, cp)							    \
+# define FILL(n, cp)							    \
     switch (n) {							    \
     case 7: (cp)[6] = 0xff; case 6: (cp)[5] = 0xff; case 5: (cp)[4] = 0xff; \
     case 4: (cp)[3] = 0xff; case 3: (cp)[2] = 0xff; case 2: (cp)[1] = 0xff; \
     case 1: (cp)[0] = 0xff; (cp) += (n); case 0:  ;			    \
     }
-#define ZERO(n, cp)							\
+# define ZERO(n, cp)							\
     switch (n) {							\
     case 7: (cp)[6] = 0; case 6: (cp)[5] = 0; case 5: (cp)[4] = 0;	\
     case 4: (cp)[3] = 0; case 3: (cp)[2] = 0; case 2: (cp)[1] = 0;	\
@@ -763,7 +763,7 @@ static	int32 find1span(u_char*, int32, int32);
  * table.  The ``base'' of the bit string is supplied
  * along with the start+end bit indices.
  */
-INLINE static int32
+inline static int32
 find0span(u_char* bp, int32 bs, int32 be)
 {
 	int32 bits = be - bs;
@@ -822,7 +822,7 @@ find0span(u_char* bp, int32 bs, int32 be)
 	return (span);
 }
 
-INLINE static int32
+inline static int32
 find1span(u_char* bp, int32 bs, int32 be)
 {
 	int32 bits = be - bs;
@@ -1126,8 +1126,14 @@ Fax3VSetField(TIFF* tif, ttag_t tag, va_list ap)
 		DecoderState(tif)->fill = va_arg(ap, TIFFFaxFillFunc);
 		return (1);			/* NB: pseudo tag */
 	case TIFFTAG_GROUP3OPTIONS:
+		/* XXX: avoid reading options if compression mismatches. */
+		if (tif->tif_dir.td_compression == COMPRESSION_CCITTFAX3)
+			sp->groupoptions = va_arg(ap, uint32);
+		break;
 	case TIFFTAG_GROUP4OPTIONS:
-		sp->groupoptions = va_arg(ap, uint32);
+		/* XXX: avoid reading options if compression mismatches. */
+		if (tif->tif_dir.td_compression == COMPRESSION_CCITTFAX4)
+			sp->groupoptions = va_arg(ap, uint32);
 		break;
 	case TIFFTAG_BADFAXLINES:
 		sp->badfaxlines = va_arg(ap, uint32);

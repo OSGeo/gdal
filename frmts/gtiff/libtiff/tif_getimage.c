@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.36 2003/12/21 22:13:14 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.37 2004/04/20 14:22:21 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -262,7 +262,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 	}
     }
 
-#if DEFAULT_EXTRASAMPLE_AS_ALPHA == 1
+#ifdef DEFAULT_EXTRASAMPLE_AS_ALPHA
     if( !TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &img->photometric))
         img->photometric = PHOTOMETRIC_MINISWHITE;
 

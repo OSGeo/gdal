@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffio.h,v 1.30 2004/01/30 20:22:18 dron Exp $ */
+/* $Id: tiffio.h,v 1.34 2004/07/11 20:09:07 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -97,7 +97,7 @@ typedef	void* thandle_t;	/* client data handle */
 #endif
 
 #ifndef NULL
-#define	NULL	0
+# define NULL	(void *)0
 #endif
 
 /*
@@ -314,6 +314,7 @@ extern	int TIFFIsTiled(TIFF*);
 extern	int TIFFIsByteSwapped(TIFF*);
 extern	int TIFFIsUpSampled(TIFF*);
 extern	int TIFFIsMSB2LSB(TIFF*);
+extern	int TIFFIsBigEndian(TIFF*);
 extern	uint32 TIFFCurrentRow(TIFF*);
 extern	tdir_t TIFFCurrentDirectory(TIFF*);
 extern	tdir_t TIFFNumberOfDirectories(TIFF*);
@@ -425,7 +426,7 @@ extern	uint32 LogLuv32fromXYZ(float*, int);
 #endif /* LOGLUV_PUBLIC */
 
 /*
-** New stuff going public in 3.6.x.
+** Stuff, related to tag handling and creating custom tags.
 */
 extern  int  TIFFGetTagListCount( TIFF * );
 extern  ttag_t TIFFGetTagListEntry( TIFF *, int tag_index );
@@ -456,7 +457,10 @@ typedef struct _TIFFTagValue {
 
 extern	void TIFFMergeFieldInfo(TIFF*, const TIFFFieldInfo[], int);
 extern	const TIFFFieldInfo* TIFFFindFieldInfo(TIFF*, ttag_t, TIFFDataType);
+extern  const TIFFFieldInfo* TIFFFindFieldInfoByName(TIFF* , const char *,
+						     TIFFDataType);
 extern	const TIFFFieldInfo* TIFFFieldWithTag(TIFF*, ttag_t);
+extern	const TIFFFieldInfo* TIFFFieldWithName(TIFF*, const char *);
 
 typedef	int (*TIFFVSetMethod)(TIFF*, ttag_t, va_list);
 typedef	int (*TIFFVGetMethod)(TIFF*, ttag_t, va_list);

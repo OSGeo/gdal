@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirread.c,v 1.27 2004/01/11 15:30:19 dron Exp $ */
+/* $Id: tif_dirread.c,v 1.30 2004/04/29 07:42:33 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -409,6 +409,8 @@ TIFFReadDirectory(TIFF* tif)
 		case TIFFTAG_MINSAMPLEVALUE:
 		case TIFFTAG_MAXSAMPLEVALUE:
 		case TIFFTAG_BITSPERSAMPLE:
+		case TIFFTAG_DATATYPE:
+		case TIFFTAG_SAMPLEFORMAT:
 			/*
 			 * The 5.0 spec says the Compression tag has
 			 * one value, while earlier specs say it has
@@ -426,14 +428,11 @@ TIFFReadDirectory(TIFF* tif)
 				    dp->tdir_type, dp->tdir_offset);
 				if (!TIFFSetField(tif, dp->tdir_tag, (int)v))
 					goto bad;
-				break;
+			} else {
+				if (!TIFFFetchPerSampleShorts(tif, dp, &iv) ||
+				    !TIFFSetField(tif, dp->tdir_tag, iv))
+					goto bad;
 			}
-			/* fall thru... */
-		case TIFFTAG_DATATYPE:
-		case TIFFTAG_SAMPLEFORMAT:
-			if (!TIFFFetchPerSampleShorts(tif, dp, &iv) ||
-			    !TIFFSetField(tif, dp->tdir_tag, iv))
-				goto bad;
 			break;
 		case TIFFTAG_SMINSAMPLEVALUE:
 		case TIFFTAG_SMAXSAMPLEVALUE:
@@ -490,11 +489,9 @@ TIFFReadDirectory(TIFF* tif)
 		case TIFFTAG_DOTRANGE:
 			(void) TIFFFetchShortPair(tif, dp);
 			break;
-#ifdef COLORIMETRY_SUPPORT
 		case TIFFTAG_REFERENCEBLACKWHITE:
 			(void) TIFFFetchRefBlackWhite(tif, dp);
 			break;
-#endif
 /* BEGIN REV 4.0 COMPATIBILITY */
 		case TIFFTAG_OSUBFILETYPE:
 			v = 0;
@@ -1203,7 +1200,6 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp)
 				ok = (fip->field_passcount ?
 					TIFFSetField(tif, dp->tdir_tag, 1, c)
 				      : TIFFSetField(tif, dp->tdir_tag, c));
-				ok = TIFFSetField(tif, dp->tdir_tag, c);
 			  }
 			}
 			break;
@@ -1377,7 +1373,6 @@ TIFFFetchExtraSamples(TIFF* tif, TIFFDirEntry* dir)
 }
 #undef NITEMS
 
-#ifdef COLORIMETRY_SUPPORT
 /*
  * Fetch and set the RefBlackWhite tag.
  */
@@ -1409,7 +1404,6 @@ TIFFFetchRefBlackWhite(TIFF* tif, TIFFDirEntry* dir)
 		_TIFFfree(cp);
 	return (ok);
 }
-#endif
 
 /*
  * Replace a single strip (tile) of uncompressed data by

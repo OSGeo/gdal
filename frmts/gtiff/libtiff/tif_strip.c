@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_strip.c,v 1.3 2003/11/07 11:26:38 dron Exp $ */
+/* $Id: tif_strip.c,v 1.5 2004/07/10 20:04:47 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -44,8 +44,8 @@ TIFFComputeStrip(TIFF* tif, uint32 row, tsample_t sample)
 	if (td->td_planarconfig == PLANARCONFIG_SEPARATE) {
 		if (sample >= td->td_samplesperpixel) {
 			TIFFError(tif->tif_name,
-			    "%u: Sample out of range, max %u",
-			    sample, td->td_samplesperpixel);
+			    "%lu: Sample out of range, max %lu",
+			    (u_long) sample, (u_long) td->td_samplesperpixel);
 			return ((tstrip_t) 0);
 		}
 		strip += sample*td->td_stripsperimage;
@@ -62,8 +62,7 @@ TIFFNumberOfStrips(TIFF* tif)
 	TIFFDirectory *td = &tif->tif_dir;
 	tstrip_t nstrips;
 
-	nstrips = (td->td_rowsperstrip == (uint32) -1 ?
-	     (td->td_imagelength != 0 ? 1 : 0) :
+	nstrips = (td->td_rowsperstrip == (uint32) -1 ? 1 :
 	     TIFFhowmany(td->td_imagelength, td->td_rowsperstrip));
 	if (td->td_planarconfig == PLANARCONFIG_SEPARATE)
 		nstrips *= td->td_samplesperpixel;

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirinfo.c,v 1.24 2003/12/19 18:29:49 dron Exp $ */
+/* $Id: tif_dirinfo.c,v 1.26 2004/06/06 10:17:26 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -242,15 +242,8 @@ const TIFFFieldInfo tiffFieldInfo[] = {
     { TIFFTAG_COPYRIGHT,	-1,-1, TIFF_ASCII,	FIELD_COPYRIGHT,
       TRUE,	FALSE,	"Copyright" },
 /* end Pixar tags */
-#ifdef IPTC_SUPPORT
-#ifdef PHOTOSHOP_SUPPORT
     { TIFFTAG_RICHTIFFIPTC, -1,-1, TIFF_LONG,   FIELD_RICHTIFFIPTC, 
       FALSE,    TRUE,   "RichTIFFIPTC" },
-#else
-    { TIFFTAG_RICHTIFFIPTC, -1,-3, TIFF_UNDEFINED, FIELD_RICHTIFFIPTC, 
-      FALSE,    TRUE,   "RichTIFFIPTC" },
-#endif
-#endif
     { TIFFTAG_PHOTOSHOP,    -1,-3, TIFF_BYTE,   FIELD_PHOTOSHOP, 
       FALSE,    TRUE,   "Photoshop" },
     { TIFFTAG_ICCPROFILE,	-1,-3, TIFF_UNDEFINED,	FIELD_ICCPROFILE,
@@ -293,6 +286,15 @@ tagCompare(const void* a, const void* b)
 		return (ta->field_tag < tb->field_tag ? -1 : 1);
 	else
 		return ((int)tb->field_type - (int)ta->field_type);
+}
+
+static int
+tagNameCompare(const void* a, const void* b)
+{
+	const TIFFFieldInfo* ta = *(const TIFFFieldInfo**) a;
+	const TIFFFieldInfo* tb = *(const TIFFFieldInfo**) b;
+
+        return strcmp(ta->field_name, tb->field_name);
 }
 
 void
@@ -403,7 +405,7 @@ _TIFFFindFieldInfo(TIFF* tif, ttag_t tag, TIFFDataType dt)
 	if (last && last->field_tag == tag &&
 	    (dt == TIFF_ANY || dt == last->field_type))
 		return (last);
-	/* NB: if table gets big, use sorted search (e.g. binary search) */
+	/* NB: use sorted search (e.g. binary search) */
 	if(dt != TIFF_ANY) {
             TIFFFieldInfo key = {0, 0, 0, 0, 0, 0, 0, 0};
             key.field_tag = tag;
@@ -422,6 +424,34 @@ _TIFFFindFieldInfo(TIFF* tif, ttag_t tag, TIFFDataType dt)
 	return ((const TIFFFieldInfo *)0);
 }
 
+const TIFFFieldInfo*
+_TIFFFindFieldInfoByName(TIFF* tif, const char *field_name, TIFFDataType dt)
+{
+	static const TIFFFieldInfo *last = NULL;
+	int i, n;
+
+	if (last && streq(last->field_name, field_name) &&
+	    (dt == TIFF_ANY || dt == last->field_type))
+		return (last);
+	/* NB: use sorted search (e.g. binary search) */
+	if(dt != TIFF_ANY) {
+            TIFFFieldInfo key = {0, 0, 0, 0, 0, 0, 0, 0};
+            key.field_name = (char *)field_name;
+            key.field_type = dt;
+            return((const TIFFFieldInfo *) bsearch(&key, 
+						   tif->tif_fieldinfo, 
+						   tif->tif_nfields,
+						   sizeof(TIFFFieldInfo), 
+						   tagNameCompare));
+        } else for (i = 0, n = tif->tif_nfields; i < n; i++) {
+		const TIFFFieldInfo* fip = tif->tif_fieldinfo[i];
+		if (streq(fip->field_name, field_name) &&
+		    (dt == TIFF_ANY || fip->field_type == dt))
+			return (last = fip);
+	}
+	return ((const TIFFFieldInfo *)0);
+}
+
 #include <assert.h>
 #include <stdio.h>
 
@@ -431,7 +461,21 @@ _TIFFFieldWithTag(TIFF* tif, ttag_t tag)
 	const TIFFFieldInfo* fip = _TIFFFindFieldInfo(tif, tag, TIFF_ANY);
 	if (!fip) {
 		TIFFError("TIFFFieldWithTag",
-		    "Internal error, unknown tag 0x%x", (u_int) tag);
+			  "Internal error, unknown tag 0x%x", (u_int) tag);
+		assert(fip != NULL);
+		/*NOTREACHED*/
+	}
+	return (fip);
+}
+
+const TIFFFieldInfo*
+_TIFFFieldWithName(TIFF* tif, const char *field_name)
+{
+	const TIFFFieldInfo* fip =
+		_TIFFFindFieldInfoByName(tif, field_name, TIFF_ANY);
+	if (!fip) {
+		TIFFError("TIFFFieldWithName",
+			  "Internal error, unknown tag %s", field_name);
 		assert(fip != NULL);
 		/*NOTREACHED*/
 	}
