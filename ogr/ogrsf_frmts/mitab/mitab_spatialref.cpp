@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_spatialref.cpp,v 1.33 2002/03/01 19:00:15 warmerda Exp $
+ * $Id: mitab_spatialref.cpp,v 1.34 2002/04/01 19:49:24 warmerda Exp $
  *
  * Name:     mitab_spatialref.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_spatialref.cpp,v $
+ * Revision 1.34  2002/04/01 19:49:24  warmerda
+ * added support for cassini/soldner - proj 30
+ *
  * Revision 1.33  2002/03/01 19:00:15  warmerda
  * False Easting/Northing should be in the linear units of measure in MapInfo,
  * but in OGRSpatialReference/WKT they are always in meters.  Convert accordingly.
@@ -722,6 +725,16 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                                 sTABProj.adProjParams[3] * dfConv );
         break;
 
+        /*--------------------------------------------------------------
+         * Cassini/Soldner
+         *-------------------------------------------------------------*/
+      case 30:
+        m_poSpatialRef->SetCS( sTABProj.adProjParams[1],
+                               sTABProj.adProjParams[0],
+                               sTABProj.adProjParams[2] * dfConv,
+                               sTABProj.adProjParams[3] * dfConv );
+        break;
+
       default:
         break;
     }
@@ -1125,6 +1138,17 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
         parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_CASSINI_SOLDNER) )
+    {
+        sTABProj.nProjId = 30;
+        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) 
+            / dfLinearConv;
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) 
+            / dfLinearConv;
     }
 
     /* ==============================================================
