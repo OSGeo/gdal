@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/11/19 20:41:17  warmerda
+ * avoid memory leak
+ *
  * Revision 1.20  2003/03/19 20:28:30  warmerda
  * destroy registrar on exit to help find memory leaks
  *
@@ -327,6 +330,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Close down.                                                     */
 /* -------------------------------------------------------------------- */
+    CSLDestroy( papszLayers );
     delete poDS;
 
     delete OGRSFDriverRegistrar::GetRegistrar();
