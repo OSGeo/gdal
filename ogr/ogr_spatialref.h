@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.64  2005/01/13 05:17:37  fwarmerdam
+ * added SetLinearUnitsAndUpdateParameters
+ *
  * Revision 1.63  2005/01/05 21:02:33  fwarmerdam
  * added Goode Homolosine
  *
@@ -248,7 +251,9 @@ class CPL_DLL OGRSpatialReference
 
     OGRErr      SetNode( const char *, const char * );
     OGRErr      SetNode( const char *, double );
-
+    
+    OGRErr      SetLinearUnitsAndUpdateParameters( const char *pszName, 
+                                                   double dfInMeters );
     OGRErr      SetLinearUnits( const char *pszName, double dfInMeters );
     double      GetLinearUnits( char ** = NULL ) const;
 
