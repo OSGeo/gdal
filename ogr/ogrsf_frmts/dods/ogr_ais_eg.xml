@@ -27,4 +27,14 @@
 
     <ancillary url="/home/warmerda/dods/natl_prof_bot.cdp.das"/>
   </entry>
+  <entry>
+    <primary regexp="http://opendap.aviso.oceanobs.com/dodsC/en/h/msla_oer_en_err*"/>
+
+    <ancillary url="/home/warmerda/dods/msla_oer_en_err.das"/>
+  </entry>
+  <entry>
+    <primary regexp="http://data.nodc.noaa.gov/cgi-bin/nph-dods/pathfinder/Version5.0/Monthly/2001/200105.s04m1pfv50-bsst-16b.hdf*"/>
+
+    <ancillary url="/home/warmerda/dods/200105.s04m1pfv50-bsst-16b.das"/>
+  </entry>
 </ais>
