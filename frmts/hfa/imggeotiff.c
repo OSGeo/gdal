@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/01/28 16:21:24  warmerda
+ * defined PI if needed
+ *
  * Revision 1.1  1999/01/22 17:40:43  warmerda
  * New
  *
@@ -41,6 +44,10 @@
 #include "geo_tiffp.h"
 #include "geo_keyp.h"
 #include "geovalues.h"
+
+#ifndef PI
+#  define PI 3.14159265358979323846
+#endif
 
 #define RAD_TO_DEG	(180/PI)
 #define MapSys_State_Plane	-9003
