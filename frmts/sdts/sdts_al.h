@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/08/16 15:45:46  warmerda
+ * added IsSecondary()
+ *
  * Revision 1.9  1999/08/10 02:52:13  warmerda
  * introduce use of SDTSApplyModIdList to capture multi-attributes
  *
@@ -253,6 +256,8 @@ class SDTSAttrReader
     DDFModule	oDDFModule;
 
     SDTS_IREF	*poIREF;
+
+    int		bIsSecondary;
     
   public:
     		SDTSAttrReader( SDTS_IREF * );
@@ -262,6 +267,8 @@ class SDTSAttrReader
     DDFField	*GetNextRecord( SDTSModId * = NULL,
                                 DDFRecord ** = NULL );
     void	Close();
+
+    int		IsSecondary() { return bIsSecondary; }
 };
 
 /************************************************************************/

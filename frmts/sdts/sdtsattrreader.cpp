@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/08/16 15:45:46  warmerda
+ * added IsSecondary()
+ *
  * Revision 1.4  1999/08/16 13:58:30  warmerda
  * added support for secondary attribute modules
  *
@@ -88,7 +91,14 @@ void SDTSAttrReader::Close()
 int SDTSAttrReader::Open( const char *pszFilename )
 
 {
-    return( oDDFModule.Open( pszFilename ) );
+    int		bSuccess;
+
+    bSuccess = oDDFModule.Open( pszFilename );
+
+    if( bSuccess )
+        bIsSecondary = (oDDFModule.FindFieldDefn("ATTS") != NULL);
+
+    return bSuccess;
 }
 
 /************************************************************************/

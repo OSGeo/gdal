@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/08/16 15:45:46  warmerda
+ * added IsSecondary()
+ *
  * Revision 1.6  1999/08/16 13:58:30  warmerda
  * added support for secondary attribute modules
  *
@@ -155,7 +158,8 @@ int main( int nArgc, char ** papszArgv )
         if( oCATD.GetEntryType(i) == SLTAttr )
         {
             if( oAttrReader.Open(
-                	oCATD.GetModuleFilePath( oCATD.GetEntryModule(i)) ) )
+                	oCATD.GetModuleFilePath( oCATD.GetEntryModule(i)) )
+                && oAttrReader.IsSecondary() )
             {
                 DDFField	*poATTP;
                 SDTSModId	oModId;
