@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2004/06/01 14:51:19  warmerda
+ * expand tabs
+ *
  * Revision 1.44  2003/11/17 20:10:46  warmerda
  * added support for writing FFPT linkages
  *
@@ -1111,7 +1114,7 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
 
     for( int i = 0; i < nFDefnCount; i++ )
     {
-        if( EQUAL(papoFDefnList[i]->GetName(),pszFDName) )		
+        if( EQUAL(papoFDefnList[i]->GetName(),pszFDName) )              
         {
             poFDefn = papoFDefnList[i];
             break;
