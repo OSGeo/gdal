@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/09/01 19:39:48  warmerda
+ * added support for f64, and returning geotransform
+ *
  * Revision 1.7  2000/08/25 21:31:34  warmerda
  * added overview support
  *
@@ -73,6 +76,8 @@ class CPL_DLL HFADataset : public GDALDataset
     friend	HFARasterBand;
     
     HFAHandle	hHFA;
+
+    double      adfGeoTransform[6];
 
   public:
                 HFADataset();
@@ -143,6 +148,10 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand )
 
       case EPT_f32:
         eDataType = GDT_Float32;
+        break;
+
+      case EPT_f64:
+        eDataType = GDT_Float64;
         break;
 
       default:
@@ -292,6 +301,32 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     HFAGetRasterInfo( hHFA, &poDS->nRasterXSize, &poDS->nRasterYSize,
                       &poDS->nBands );
+
+/* -------------------------------------------------------------------- */
+/*      Get geotransform.                                               */
+/* -------------------------------------------------------------------- */
+    const Eprj_MapInfo  *psMapinfo = HFAGetMapInfo( hHFA );
+    
+    if( psMapinfo == NULL )
+    {
+        poDS->adfGeoTransform[0] = 0.0;
+        poDS->adfGeoTransform[1] = 1.0;
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] = 0.0;
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = 1.0;
+    }
+    else
+    {
+        poDS->adfGeoTransform[0] = psMapinfo->upperLeftCenter.x 
+            - psMapinfo->pixelSize.width*0.5;
+        poDS->adfGeoTransform[1] = psMapinfo->pixelSize.width;
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] = psMapinfo->upperLeftCenter.y
+            + psMapinfo->pixelSize.height*0.5;
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = - psMapinfo->pixelSize.height;
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -315,17 +350,9 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
 CPLErr HFADataset::GetGeoTransform( double * padfTransform )
 
 {
-#ifdef notdef    
-    padfTransform[0] = sGlobalBounds.west;
-    padfTransform[1] = sGlobalBounds.ew_res;
-    padfTransform[2] = 0.0;
+    memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
 
-    padfTransform[3] = sGlobalBounds.north;
-    padfTransform[4] = 0.0;
-    padfTransform[5] = -sGlobalBounds.ns_res;
-#endif
-    
-    return( CE_Failure );
+    return CE_None;
 }
 
 /************************************************************************/
