@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/03/14 21:38:05  warmerda
+ * removed DGN_DEBUG macro
+ *
  * Revision 1.4  2002/03/12 17:07:26  warmerda
  * added tagset and tag value element support
  *
@@ -515,10 +518,8 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 
     fprintf( fp, "\n" );
 
-#ifdef DGN_DEBUG
     fprintf( fp, "  offset=%d  size=%d bytes\n", 
              psElement->offset, psElement->size );
-#endif    
 
     fprintf( fp, 
              "  graphic_group:%-3d color:%d weight:%d style:%d\n", 
