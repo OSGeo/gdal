@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/02/19 13:57:49  warmerda
+ * support grids defined via ogr_layer_info
+ *
  * Revision 1.5  2004/02/17 05:46:43  warmerda
  * Added grid/array support
  *
@@ -182,7 +185,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
 
     for( dv_i = oDAS.attr_begin(); dv_i != oDAS.attr_end(); dv_i++ )
     {
-        if( EQUAL(oDAS.get_name(dv_i).c_str(),"ogr_layer_info") 
+        if( EQUALN(oDAS.get_name(dv_i).c_str(),"ogr_layer_info",14) 
             && oDAS.is_container( dv_i ) )
         {
             AttrTable *poAttr = oDAS.get_attr_table( dv_i );
@@ -203,6 +206,10 @@ int OGRDODSDataSource::Open( const char * pszNewName )
                     new OGRDODSSequenceLayer(this,
                                              target_container.c_str(),
                                              poAttr) );
+            else if( poVar->type() == dods_grid_c 
+                     || poVar->type() == dods_array_c )
+                AddLayer( new OGRDODSGridLayer(this,target_container.c_str(),
+                                               poAttr) );
         }
     }
     
