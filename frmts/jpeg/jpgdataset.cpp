@@ -1,0 +1,504 @@
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  JPEG JFIF Driver
+ * Purpose:  Implement GDAL JPEG Support based on IJG libjpeg.
+ * Author:   Frank Warmerdam, warmerda@home.com
+ *
+ ******************************************************************************
+ * Copyright (c) 2000, Frank Warmerdam
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ******************************************************************************
+ * 
+ * $Log$
+ * Revision 1.1  2000/04/28 20:57:57  warmerda
+ * New
+ *
+ */
+
+#include "gdal_priv.h"
+
+CPL_C_START
+#include "jpeglib.h"
+CPL_C_END
+
+static GDALDriver	*poJPGDriver = NULL;
+
+CPL_C_START
+void	GDALRegister_JPEG(void);
+CPL_C_END
+
+
+/************************************************************************/
+/* ==================================================================== */
+/*				JPGDataset				*/
+/* ==================================================================== */
+/************************************************************************/
+
+class JPGRasterBand;
+
+class JPGDataset : public GDALDataset
+{
+    friend	JPGRasterBand;
+
+    struct jpeg_decompress_struct sDInfo;
+    struct jpeg_error_mgr sJErr;
+
+    FILE   *fpImage;
+    int    nLoadedScanline;
+    GByte  *pabyScanline;
+
+    CPLErr LoadScanline(int);
+    void   Restart();
+
+  public:
+                 JPGDataset();
+                 ~JPGDataset();
+
+    static GDALDataset *Open( GDALOpenInfo * );
+};
+
+/************************************************************************/
+/* ==================================================================== */
+/*                            JPGRasterBand                             */
+/* ==================================================================== */
+/************************************************************************/
+
+class JPGRasterBand : public GDALRasterBand
+{
+    friend	JPGDataset;
+
+  public:
+
+                   JPGRasterBand( JPGDataset *, int );
+
+    virtual CPLErr IReadBlock( int, int, void * );
+
+    virtual GDALColorInterp GetColorInterpretation();
+};
+
+
+/************************************************************************/
+/*                           JPGRasterBand()                            */
+/************************************************************************/
+
+JPGRasterBand::JPGRasterBand( JPGDataset *poDS, int nBand )
+
+{
+    this->poDS = poDS;
+    this->nBand = nBand;
+    eDataType = GDT_Byte;
+    nBlockXSize = poDS->nRasterXSize;;
+    nBlockYSize = 1;
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                  void * pImage )
+
+{
+    JPGDataset	*poGDS = (JPGDataset *) poDS;
+    CPLErr      eErr;
+    int         i, nXSize = GetXSize();
+    
+    CPLAssert( nBlockXOff == 0 );
+
+/* -------------------------------------------------------------------- */
+/*      Load the desired scanline into the working buffer.              */
+/* -------------------------------------------------------------------- */
+    eErr = poGDS->LoadScanline( nBlockYOff );
+    if( eErr != CE_None )
+        return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Transfer between the working buffer the the callers buffer.     */
+/* -------------------------------------------------------------------- */
+    if( poGDS->GetRasterCount() == 1 )
+        memcpy( pImage, poGDS->pabyScanline, nXSize );
+    else
+    {
+        for( i = 0; i < nXSize; i++ )
+            ((GByte *) pImage)[i] = poGDS->pabyScanline[i*3+nBand-1];
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp JPGRasterBand::GetColorInterpretation()
+
+{
+    JPGDataset	*poGDS = (JPGDataset *) poDS;
+
+    if( poGDS->nBands == 1 )
+        return GCI_GrayIndex;
+
+    else if( nBand == 1 )
+        return GCI_RedBand;
+
+    else if( nBand == 2 )
+        return GCI_GreenBand;
+
+    else 
+        return GCI_BlueBand;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*                             JPGDataset                               */
+/* ==================================================================== */
+/************************************************************************/
+
+
+/************************************************************************/
+/*                            JPGDataset()                              */
+/************************************************************************/
+
+JPGDataset::JPGDataset()
+
+{
+    pabyScanline = NULL;
+    nLoadedScanline = -1;
+}
+
+/************************************************************************/
+/*                           ~JPGDataset()                            */
+/************************************************************************/
+
+JPGDataset::~JPGDataset()
+
+{
+    FlushCache();
+
+    jpeg_abort_decompress( &sDInfo );
+    jpeg_destroy_decompress( &sDInfo );
+
+    if( fpImage != NULL )
+        VSIFClose( fpImage );
+
+    if( pabyScanline != NULL )
+        CPLFree( pabyScanline );
+}
+
+/************************************************************************/
+/*                            LoadScanline()                            */
+/************************************************************************/
+
+CPLErr JPGDataset::LoadScanline( int iLine )
+
+{
+    if( nLoadedScanline == iLine )
+        return CE_None;
+
+    if( pabyScanline == NULL )
+        pabyScanline = (GByte *)CPLMalloc(GetRasterCount() * GetRasterXSize());
+
+    if( iLine < nLoadedScanline )
+        Restart();
+        
+    while( nLoadedScanline < iLine )
+    {
+        JSAMPLE	*ppSamples;
+            
+        ppSamples = pabyScanline;
+        jpeg_read_scanlines( &sDInfo, &ppSamples, 1 );
+        nLoadedScanline++;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                              Restart()                               */
+/*                                                                      */
+/*      Restart compressor at the beginning of the file.                */
+/************************************************************************/
+
+void JPGDataset::Restart()
+
+{
+    jpeg_abort_decompress( &sDInfo );
+    jpeg_destroy_decompress( &sDInfo );
+    jpeg_create_decompress( &sDInfo );
+
+    VSIRewind( fpImage );
+
+    jpeg_stdio_src( &sDInfo, fpImage );
+    jpeg_read_header( &sDInfo, TRUE );
+    
+    if( GetRasterCount() == 1 )
+        sDInfo.out_color_space = JCS_GRAYSCALE;
+    else
+        sDInfo.out_color_space = JCS_RGB;
+    nLoadedScanline = -1;
+    jpeg_start_decompress( &sDInfo );
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
+
+{
+/* -------------------------------------------------------------------- */
+/*	First we check to see if the file has the expected header	*/
+/*	bytes.								*/    
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->nHeaderBytes < 10 )
+        return NULL;
+
+    if( poOpenInfo->pabyHeader[0] != 0xff
+        || poOpenInfo->pabyHeader[1] != 0xd8
+        || poOpenInfo->pabyHeader[2] != 0xff
+        || poOpenInfo->pabyHeader[3] != 0xe0
+        || poOpenInfo->pabyHeader[6] != 'J'
+        || poOpenInfo->pabyHeader[7] != 'F'
+        || poOpenInfo->pabyHeader[8] != 'I'
+        || poOpenInfo->pabyHeader[9] != 'F' )
+        return NULL;
+
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The JPEG driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create a corresponding GDALDataset.                             */
+/* -------------------------------------------------------------------- */
+    JPGDataset 	*poDS;
+
+    poDS = new JPGDataset();
+
+    poDS->eAccess = GA_ReadOnly;
+
+    poDS->sDInfo.err = jpeg_std_error( &(poDS->sJErr) );
+
+    jpeg_create_decompress( &(poDS->sDInfo) );
+
+/* -------------------------------------------------------------------- */
+/*	Read pre-image data after ensuring the file is rewound.         */
+/* -------------------------------------------------------------------- */
+    VSIRewind( poOpenInfo->fp );
+
+    poDS->fpImage = poOpenInfo->fp;
+    poOpenInfo->fp = NULL;
+
+    jpeg_stdio_src( &(poDS->sDInfo), poDS->fpImage );
+    jpeg_read_header( &(poDS->sDInfo), TRUE );
+
+    if( poDS->sDInfo.data_precision != 8 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "GDAL JPEG Driver doesn't support files with precision of"
+                  " other than 8 bits." );
+        delete poDS;
+        return NULL;
+    }
+
+    jpeg_start_decompress( &(poDS->sDInfo) );
+
+/* -------------------------------------------------------------------- */
+/*      Capture some information from the file that is of interest.     */
+/* -------------------------------------------------------------------- */
+    poDS->nRasterXSize = poDS->sDInfo.image_width;
+    poDS->nRasterYSize = poDS->sDInfo.image_height;
+
+    if( poDS->sDInfo.jpeg_color_space == JCS_GRAYSCALE )
+    {
+        poDS->nBands = 1;
+        poDS->sDInfo.out_color_space = JCS_GRAYSCALE;
+    }
+    else if( poDS->sDInfo.jpeg_color_space == JCS_RGB 
+             || poDS->sDInfo.jpeg_color_space == JCS_YCbCr )
+    {
+        poDS->nBands = 3;
+        poDS->sDInfo.out_color_space = JCS_RGB;
+    }
+    else
+    {
+        delete poDS;
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "Unrecognised jpeg_color_space value of %d.\n", 
+                  poDS->sDInfo.jpeg_color_space );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create band information objects.                                */
+/* -------------------------------------------------------------------- */
+    for( int iBand = 0; iBand < poDS->nBands; iBand++ )
+        poDS->SetBand( iBand+1, new JPGRasterBand( poDS, iBand+1 ) );
+
+/* -------------------------------------------------------------------- */
+/*      Open overviews.                                                 */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+    return poDS;
+}
+
+/************************************************************************/
+/*                           JPEGCreateCopy()                           */
+/************************************************************************/
+
+static GDALDataset *
+JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
+                int bStrict, char ** papszOptions, 
+                GDALProgressFunc pfnProgress, void * pProgressData )
+
+{
+    int  nBands = poSrcDS->GetRasterCount();
+    int  nXSize = poSrcDS->GetRasterXSize();
+    int  nYSize = poSrcDS->GetRasterYSize();
+
+/* -------------------------------------------------------------------- */
+/*      Some some rudimentary checks                                    */
+/* -------------------------------------------------------------------- */
+    if( nBands != 1 && nBands != 3 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "JPEG driver doesn't support %d bands.  Must be 1 (grey) "
+                  "or 3 (RGB) bands.\n", nBands );
+
+        return NULL;
+    }
+
+    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte && bStrict )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "JPEG driver doesn't support data type %s. "
+                  "Only eight bit byte bands supported.\n", 
+                  GDALGetDataTypeName( 
+                      poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
+
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the dataset.                                             */
+/* -------------------------------------------------------------------- */
+    FILE	*fpImage;
+
+    fpImage = VSIFOpen( pszFilename, "wb" );
+    if( fpImage == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Unable to create jpeg file %s.\n", 
+                  pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize JPG access to the file.                              */
+/* -------------------------------------------------------------------- */
+    struct jpeg_compress_struct sCInfo;
+    struct jpeg_error_mgr sJErr;
+    
+    sCInfo.err = jpeg_std_error( &sJErr );
+    jpeg_create_compress( &sCInfo );
+    
+    jpeg_stdio_dest( &sCInfo, fpImage );
+    
+    sCInfo.image_width = nXSize;
+    sCInfo.image_height = nYSize;
+    sCInfo.input_components = nBands;
+
+    if( nBands == 1 )
+    {
+        sCInfo.in_color_space = JCS_GRAYSCALE;
+    }
+    else
+    {
+        sCInfo.in_color_space = JCS_RGB;
+    }
+
+    jpeg_set_defaults( &sCInfo );
+    
+    jpeg_set_quality( &sCInfo, 75, TRUE );
+
+    jpeg_start_compress( &sCInfo, TRUE );
+
+/* -------------------------------------------------------------------- */
+/*      Loop over image, copying image data.                            */
+/* -------------------------------------------------------------------- */
+    GByte 	*pabyScanline;
+    CPLErr      eErr;
+
+    pabyScanline = (GByte *) CPLMalloc( nBands * nXSize );
+
+    for( int iLine = 0; iLine < nYSize; iLine++ )
+    {
+        JSAMPLE      *ppSamples;
+
+        for( int iBand = 0; iBand < nBands; iBand++ )
+        {
+            GDALRasterBand * poBand = poSrcDS->GetRasterBand( iBand+1 );
+            eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
+                                     pabyScanline + iBand, nXSize, 1, GDT_Byte,
+                                     nBands, nBands * nXSize );
+        }
+
+        ppSamples = pabyScanline;
+        jpeg_write_scanlines( &sCInfo, &ppSamples, 1 );
+    }
+
+    CPLFree( pabyScanline );
+
+    jpeg_finish_compress( &sCInfo );
+    jpeg_destroy_compress( &sCInfo );
+
+    VSIFClose( fpImage );
+
+    return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+}
+
+/************************************************************************/
+/*                         GDALRegister_JPEG()                          */
+/************************************************************************/
+
+void GDALRegister_JPEG()
+
+{
+    GDALDriver	*poDriver;
+
+    if( poJPGDriver == NULL )
+    {
+        poJPGDriver = poDriver = new GDALDriver();
+        
+        poDriver->pszShortName = "JPEG";
+        poDriver->pszLongName = "JPEG JFIF";
+        
+        poDriver->pfnOpen = JPGDataset::Open;
+        poDriver->pfnCreateCopy = JPEGCreateCopy;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
+}
+
