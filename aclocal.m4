@@ -1,3 +1,34 @@
+dnl ---------------------------------------------------------------------------
+dnl Check for Unix 64 bit STDIO API (fseek64, ftell64 like on IRIX).
+dnl ---------------------------------------------------------------------------
+
+AC_DEFUN(AC_UNIX_STDIO_64,
+[
+  AC_ARG_WITH(unix_stdio_64,[  --with-unix-stdio-64[=ARG] Utilize 64 stdio api - yes/no)],,)
+
+  AC_MSG_CHECKING([for 64bit file io...])
+
+  if test "$with_unix_stdio_64" = "" ; then
+    echo '#include <stdio.h>' > conftest.c
+    echo 'void abc() { long long off=0; fseek64(NULL, SEEK_SET, off); off = ftell(NULL); }' >> conftest.c
+    if test -z "${CC} -c conftest.c" ; then
+      with_unix_stdio_64=yes
+    fi
+    rm -f conftest*
+  fi
+
+  if test "$with_unix_stdio_64" = "yes" ; then
+    AC_MSG_RESULT([yes])
+
+    AC_DEFINE(UNIX_STDIO_64)
+    AC_DEFINE(VSI_LARGE_API_SUPPORTED)
+    AC_DEFINE(HAVE_LONG_LONG)
+  else
+    AC_MSG_RESULT([no])
+  fi
+
+])
+
 AC_DEFUN(AC_COMPILER_WFLAGS,
 [
 	# Remove -g from compile flags, we will add via CFG variable if
