@@ -113,12 +113,12 @@ ogr_apps:
 lib_dist:	default
 	rm -rf $(DISTDIR)
 	mkdir $(DISTDIR)
-	cp gdal.lib port/*.h core/*.h ogr/*.h $(DISTDIR)
+	cp gdal.lib port\*.h core\*.h ogr\*.h $(DISTDIR)
 	zip -r $(DISTDIR).zip $(DISTDIR)
 
 $(GDAL_DLL):	lib
 	link /dll /debug $(OGR_INCLUDE) $(LIBOBJ) \
-		$(ECWLIB) $(OGDILIB) $(XERCES_LIB) $(FME_LIB) \
+		$(ECWLIB) $(OGDILIB) $(XERCES_LIB) $(FME_LIB) $(JASPER_LIB)\
 		 /out:$(GDAL_DLL) /implib:gdal_i.lib $(LINKER_FLAGS)
 
 install: $(GDAL_DLL) apps_dir pymod_dir
@@ -130,7 +130,4 @@ install: $(GDAL_DLL) apps_dir pymod_dir
 !IFDEF INCLUDE_OGR_FRMTS
 	cd ..\ogr
 	$(MAKE) install
-!ENDIF
-	cd ..
-	
-	
+!

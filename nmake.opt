@@ -40,6 +40,11 @@ OPTFLAGS=	/nologo /Zi /Fd$(GDAL_ROOT)\gdal.pdb
 #XERCES_INCLUDE = -I$(XERCES_DIR)/include -I$(XERCES_DIR)/include/xercesc
 #XERCES_LIB = $(XERCES_DIR)/lib/xerces-c_1.lib
 
+# Uncomment for JPEG2000 support
+#JASPER_DIR = S:\projects_libs\jasper-1.500.4
+#JASPER_INCLUDE = -I$(JASPER_DIR)\src\libjasper\include\jasper
+#JASPER_LIB = $(JASPER_DIR)src\msvc\Win32_Release\libjasper.lib
+
 # Uncomment the following and update to enable FME support.
 #FME_DIR =	d:\Software\fme
 
