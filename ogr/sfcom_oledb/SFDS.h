@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/05/28 19:35:31  warmerda
+ * added ROSETCONVERSIONSONCOMMAND property
+ *
  * Revision 1.9  1999/11/22 17:17:18  warmerda
  * reformat
  *
@@ -68,12 +71,14 @@ class ATL_NO_VTABLE MyIDBInitializeImpl : public IDBInitializeImpl<T>
   public:
     virtual ~MyIDBInitializeImpl()
 	{
+            
             SFClearOGRDataSource((void *) this);
 	}
 
     STDMETHOD(Initialize)(void)
 	{
             HRESULT hr;
+            CPLDebug( "OGR_OLEDB", "MyIDBInitializeImpl::Initialize()" );
             hr =IDBInitializeImpl<T>::Initialize();
 
             if (SUCCEEDED(hr))
@@ -88,7 +93,6 @@ class ATL_NO_VTABLE MyIDBInitializeImpl : public IDBInitializeImpl<T>
 
                 OGRDataSource *poDS;
                 poDS = OGRSFDriverRegistrar::Open( pszDataSource, FALSE );
-
 
                 if (poDS)
                 {
@@ -105,10 +109,8 @@ class ATL_NO_VTABLE MyIDBInitializeImpl : public IDBInitializeImpl<T>
             }
 	
             return hr;
-		
 	}
 };
-
 
 class ATL_NO_VTABLE CDataSourceISupportErrorInfoImpl : public ISupportErrorInfo
 {
@@ -134,16 +136,12 @@ class ATL_NO_VTABLE CSFSource :
 	public CDataSourceISupportErrorInfoImpl
 	{
 public:
-
-	
-
 	HRESULT FinalConstruct()
 	{
-		
-
-		// verify the 
-		return FInit();
+            // verify the 
+            return FInit();
 	}
+        
 DECLARE_REGISTRY_RESOURCEID(IDR_SF)
 BEGIN_PROPSET_MAP(CSFSource)
 	BEGIN_PROPERTY_SET(DBPROPSET_DATASOURCEINFO)
@@ -155,6 +153,7 @@ BEGIN_PROPSET_MAP(CSFSource)
 		PROPERTY_INFO_ENTRY(DSOTHREADMODEL) // Default is APT, but provider is SINGLE
 		PROPERTY_INFO_ENTRY(SUPPORTEDTXNISOLEVELS)
 		PROPERTY_INFO_ENTRY(USERNAME)
+		PROPERTY_INFO_ENTRY(ROWSETCONVERSIONSONCOMMAND)
 	END_PROPERTY_SET(DBPROPSET_DATASOURCEINFO)
 	BEGIN_PROPERTY_SET(DBPROPSET_DBINIT)
 		PROPERTY_INFO_ENTRY(AUTH_PASSWORD)
@@ -191,9 +190,6 @@ BEGIN_COM_MAP(CSFSource)
 	COM_INTERFACE_ENTRY(ISupportErrorInfo)
 END_COM_MAP()
 public:
-
-
-
-
+ 
 };
 #endif //__CSFSource_H_
