@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2000/07/13 17:27:48  warmerda
+ * added SetDescription after create
+ *
  * Revision 1.14  2000/06/27 16:47:28  warmerda
  * added cancel support for CopyCreate progress func
  *
@@ -139,8 +142,13 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
     }
     else
     {
-        return( pfnCreate( pszFilename, nXSize, nYSize, nBands, eType,
-                           papszParmList ) );
+        GDALDataset *poDS;
+
+        poDS = pfnCreate( pszFilename, nXSize, nYSize, nBands, eType,
+                          papszParmList );
+
+        if( poDS != NULL )
+            poDS->SetDescription( pszFilename );
     }
 }
 
