@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/09/26 13:51:02  warmerda
+ * Add documentation
+ *
  * Revision 1.2  2003/09/25 17:09:49  warmerda
  * added some more methods
  *
@@ -99,6 +102,7 @@ int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
     SQLINTEGER nNativeError;
     SQLSMALLINT nTextLength;
 
+    m_szLastError[0] = '\0';
 
     if( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
         return FALSE;
@@ -114,6 +118,22 @@ int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
 /************************************************************************/
 /*                          EstablishSession()                          */
 /************************************************************************/
+
+/**
+ * Connect to database and logon.
+ *
+ * @param pszDSN The name of the DSN being used to connect.  This is not
+ * optional.
+ *
+ * @param pszUserid the userid to logon as, may be NULL if not not required,
+ * or provided by the DSN. 
+ *
+ * @param pszPassword the password to logon with.   May be NULL if not required
+ * or provided by the DSN.
+ *
+ * @return TRUE on success or FALSE on failure.  Call GetLastError() to get
+ * details on failure. 
+ */
 
 int CPLODBCSession::EstablishSession( const char *pszDSN, 
                                       const char *pszUserid, 
@@ -147,6 +167,24 @@ int CPLODBCSession::EstablishSession( const char *pszDSN,
     }
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                            GetLastError()                            */
+/************************************************************************/
+
+/**
+ * Returns the last ODBC error message.
+ *
+ * @return pointer to an internal buffer with the error message in it. 
+ * Do not free or alter.  Will be an empty (but not NULL) string if there is
+ * no pending error info.
+ */
+
+const char *CPLODBCSession::GetLastError()
+
+{
+    return m_szLastError;
 }
 
 /************************************************************************/
@@ -202,6 +240,21 @@ CPLODBCStatement::~CPLODBCStatement()
 /************************************************************************/
 /*                             ExecuteSQL()                             */
 /************************************************************************/
+
+/**
+ * Execute an SQL statement.
+ *
+ * This method will execute the passed (or stored) SQL statement, 
+ * and initialize information about the resultset if there is one. 
+ * If a NULL statement is passed, the internal stored statement that
+ * has been previously set via Append() or Appendf() calls will be used. 
+ *
+ * @param pszStatement the SQL statement to execute, or NULL if the
+ * internally saved one should be used. 
+ *
+ * @return TRUE on success or FALSE if there is an error.  Error details
+ * can be fetched with OGRODBCSession::GetLastError().
+ */
 
 int CPLODBCStatement::ExecuteSQL( const char *pszStatement )
 
@@ -281,6 +334,12 @@ int CPLODBCStatement::CollectResultsInfo()
 /*                            GetColCount()                             */
 /************************************************************************/
 
+/**
+ * Fetch the resultset column count. 
+ *
+ * @return the column count, or zero if there is no resultset.
+ */
+
 int CPLODBCStatement::GetColCount()
 
 {
@@ -290,6 +349,15 @@ int CPLODBCStatement::GetColCount()
 /************************************************************************/
 /*                             GetColName()                             */
 /************************************************************************/
+
+/**
+ * Fetch a column name.
+ *
+ * @param iCol the zero based column index.
+ *
+ * @return NULL on failure (out of bounds column), or a pointer to an
+ * internal copy of the column name. 
+ */
 
 const char *CPLODBCStatement::GetColName( int iCol )
 
@@ -304,6 +372,19 @@ const char *CPLODBCStatement::GetColName( int iCol )
 /*                             GetColType()                             */
 /************************************************************************/
 
+/**
+ * Fetch a column type.
+ *
+ * The return type code is a an ODBC SQL_ code, one of SQL_UNKNOWN_TYPE, 
+ * SQL_CHAR, SQL_NUMERIC, SQL_DECIMAL, SQL_INTEGER, SQL_SMALLINT, SQL_FLOAT,
+ * SQL_REAL, SQL_DOUBLE, SQL_DATETIME, SQL_VARCHAR, SQL_TYPE_DATE, 
+ * SQL_TYPE_TIME, SQL_TYPE_TIMESTAMPT.
+ *
+ * @param iCol the zero based column index.
+ *
+ * @return type code or -1 if the column is illegal.
+ */
+
 short CPLODBCStatement::GetColType( int iCol )
 
 {
@@ -316,6 +397,14 @@ short CPLODBCStatement::GetColType( int iCol )
 /************************************************************************/
 /*                             GetColSize()                             */
 /************************************************************************/
+
+/**
+ * Fetch the column width.
+ *
+ * @param iCol the zero based column index.
+ *
+ * @return column width, zero for unknown width columns.
+ */
 
 short CPLODBCStatement::GetColSize( int iCol )
 
@@ -330,6 +419,15 @@ short CPLODBCStatement::GetColSize( int iCol )
 /*                          GetColPrecision()                           */
 /************************************************************************/
 
+/**
+ * Fetch the column precision.
+ *
+ * @param iCol the zero based column index.
+ *
+ * @return column precision, may be zero or the same as column size for
+ * columns to which it does not apply. 
+ */
+
 short CPLODBCStatement::GetColPrecision( int iCol )
 
 {
@@ -343,6 +441,14 @@ short CPLODBCStatement::GetColPrecision( int iCol )
 /*                           GetColNullable()                           */
 /************************************************************************/
 
+/**
+ * Fetch the column nullability.
+ *
+ * @param iCol the zero based column index.
+ *
+ * @return TRUE if the column may contains or FALSE otherwise.
+ */
+
 short CPLODBCStatement::GetColNullable( int iCol )
 
 {
@@ -354,9 +460,27 @@ short CPLODBCStatement::GetColNullable( int iCol )
 
 /************************************************************************/
 /*                               Fetch()                                */
-/*                                                                      */
-/*      Fetch one row from a results set.                               */
 /************************************************************************/
+
+/**
+ * Fetch a new record.
+ *
+ * Requests the next row in the current resultset using the SQLFetchScroll()
+ * call.  Note that many ODBC drivers only support the default forward
+ * fetching one record at a time.  Only SQL_FETCH_NEXT (the default) should
+ * be considered reliable on all drivers. 
+ *
+ * Currently it isn't clear how to determine whether an error or a normal
+ * out of data condition has occured if Fetch() fails. 
+ *
+ * @param nOrientation One of SQL_FETCH_NEXT, SQL_FETCH_LAST, SQL_FETCH_PRIOR,
+ * SQL_FETCH_ABSOLUTE, or SQL_FETCH_RELATIVE (default is SQL_FETCH_NEXT).
+ *
+ * @param nOffset the offset (number of records), ignored for some 
+ * orientations.  
+ *
+ * @return TRUE if a new row is successfully fetched, or FALSE if not.
+ */
 
 int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 
@@ -408,6 +532,19 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 /*                             GetColData()                             */
 /************************************************************************/
 
+/**
+ * Fetch column data. 
+ *
+ * Fetches the data contents of the requested column for the currently loaded
+ * row.  The result is returned as a string regardless of the column type.  
+ * NULL is returned if an illegal column is given, or if the actual column
+ * is "NULL". 
+ * 
+ * @param iCol the zero based column to fetch. 
+ *
+ * @return pointer to internal column data or NULL on failure.
+ */
+
 const char *CPLODBCStatement::GetColData( int iCol )
 
 {
@@ -420,6 +557,17 @@ const char *CPLODBCStatement::GetColData( int iCol )
 /************************************************************************/
 /*                              GetColId()                              */
 /************************************************************************/
+
+/**
+ * Fetch column index.
+ *
+ * Gets the column index corresponding with the passed name.  The
+ * name comparisons are case insensitive. 
+ *
+ * @param pszColName the name to search for. 
+ *
+ * @return the column index, or -1 if not found.
+ */
 
 int CPLODBCStatement::GetColId( const char *pszColName )
 
@@ -468,6 +616,14 @@ int CPLODBCStatement::Failed( int nResultCode )
 /*                         Append(const char *)                         */
 /************************************************************************/
 
+/**
+ * Append text to internal command.
+ *
+ * The passed text is appended to the internal SQL command text. 
+ *
+ * @param pszText text to append.
+ */
+
 void CPLODBCStatement::Append( const char *pszText )
 
 {
@@ -495,6 +651,14 @@ void CPLODBCStatement::Append( const char *pszText )
 /*                             Append(int)                              */
 /************************************************************************/
 
+/**
+ * Append to internal command.
+ *
+ * The passed value is formatted and appended to the internal SQL command text.
+ *
+ * @param nValue value to append to the command.
+ */
+
 void CPLODBCStatement::Append( int nValue )
 
 {
@@ -508,6 +672,14 @@ void CPLODBCStatement::Append( int nValue )
 /*                            Append(double)                            */
 /************************************************************************/
 
+/**
+ * Append to internal command.
+ *
+ * The passed value is formatted and appended to the internal SQL command text.
+ *
+ * @param dfValue value to append to the command.
+ */
+
 void CPLODBCStatement::Append( double dfValue )
 
 {
@@ -520,6 +692,18 @@ void CPLODBCStatement::Append( double dfValue )
 /************************************************************************/
 /*                              Appendf()                               */
 /************************************************************************/
+
+/**
+ * Append to internal command.
+ *
+ * The passed format is used to format other arguments and the result is
+ * appended to the internal command text.  Long results may not be formatted
+ * properly, and should be appended with the direct Append() methods.
+ *
+ * @param pszFormat printf() style format string.
+ * 
+ * @return FALSE if formatting fails dueto result being too large.
+ */
 
 int CPLODBCStatement::Appendf( const char *pszFormat, ... )
 
@@ -548,6 +732,10 @@ int CPLODBCStatement::Appendf( const char *pszFormat, ... )
 /*                               Clear()                                */
 /************************************************************************/
 
+/**
+ * Clear internal command text.
+ */
+
 void CPLODBCStatement::Clear()
 
 {
@@ -561,6 +749,27 @@ void CPLODBCStatement::Clear()
 /************************************************************************/
 /*                             GetColumns()                             */
 /************************************************************************/
+
+/**
+ * Fetch column definitions for a table.
+ *
+ * The SQLColumn() method is used to fetch the definitions for the columns
+ * of a table (or other queriable object such as a view).  The column
+ * definitions are digested and used to populate the CPLODBCStatement
+ * column definitions essentially as if a "SELECT * FROM tablename" had
+ * been done; however, no resultset will be available.
+ *
+ * @param pszTable the name of the table to query information on.  This
+ * should not be empty.
+ *
+ * @param pszCatalog the catalog to find the table in, use NULL (the
+ * default) if no catalog is available. 
+ *
+ * @param pszSchema the schema to find the table in, use NULL (the
+ * default) if no schema is available. 
+ *
+ * @return TRUE on success or FALSE on failure. 
+ */
 
 int CPLODBCStatement::GetColumns( const char *pszTable, 
                                   const char *pszCatalog,
@@ -647,6 +856,19 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
 /*                             DumpResult()                             */
 /************************************************************************/
 
+/**
+ * Dump resultset to file.
+ *
+ * The contents of the current resultset are dumped in a simply formatted
+ * form to the provided file.  If requested, the schema definition will
+ * be written first. 
+ *
+ * @param fp the file to write to.  stdout or stderr are acceptable. 
+ *
+ * @param bShowSchema TRUE to force writing schema information for the rowset
+ * before the rowset data itself.  Default is FALSE.
+ */
+
 void CPLODBCStatement::DumpResult( FILE *fp, int bShowSchema )
 
 {
@@ -695,6 +917,17 @@ void CPLODBCStatement::DumpResult( FILE *fp, int bShowSchema )
 /*                            GetTypeName()                             */
 /************************************************************************/
 
+/**
+ * Get name for SQL column type.
+ *
+ * Returns a pointer to an internal static string name for the 
+ * indicate type code (as returned from CPLODBCStatement::GetColType().
+ *
+ * @param nTypeCode the SQL_ code, such as SQL_CHAR.
+ *
+ * @return internal string, "UNKNOWN" if code not recognised. 
+ */
+
 const char *CPLODBCStatement::GetTypeName( int nTypeCode )
 
 {
@@ -741,6 +974,6 @@ const char *CPLODBCStatement::GetTypeName( int nTypeCode )
         return "TIMESTAMP";
 
       default:
-        return "TIMESTAMP";
+        return "UNKNOWN";
     }
 }
