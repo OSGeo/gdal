@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2004/10/26 15:59:06  fwarmerdam
+ * Added rw+ for formats with Create().
+ *
  * Revision 1.60  2004/08/09 14:40:41  warmerda
  * return name for GDT_Unknown
  *
@@ -1988,8 +1991,10 @@ int GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 GDALDriverH hDriver = GDALGetDriver(iDr);
                 const char *pszRWFlag;
                 
-                if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL )
-                    || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) )
+                if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) )
+                    pszRWFlag = "rw+";
+                else if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, 
+                                              NULL ) )
                     pszRWFlag = "rw";
                 else
                     pszRWFlag = "ro";
