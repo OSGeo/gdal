@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.15  2002/04/12 20:19:49  warmerda
+ * improved debug info
+ *
  * Revision 1.14  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -1025,8 +1028,9 @@ static void	HFADumpNode( HFAEntry *poEntry, int nIndent, int bVerbose,
         szSpaces[i] = ' ';
     szSpaces[nIndent*2] = '\0';
 
-    fprintf( fp, "%s%s(%s) %d @ %d\n", szSpaces,
+    fprintf( fp, "%s%s(%s) @ %d + %d @ %d\n", szSpaces,
              poEntry->GetName(), poEntry->GetType(),
+             poEntry->GetFilePos(),
              poEntry->GetDataSize(), poEntry->GetDataPos() );
 
     if( bVerbose )
