@@ -3,10 +3,10 @@
  *
  * Project:  Microstation DGN Access Library
  * Purpose:  Definitions of public structures and API of DGN Library.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 2000, Frank Warmerdam (warmerda@home.com)
+ * Copyright (c) 2000, Frank Warmerdam (warmerdam@pobox.com)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/12/28 21:28:43  warmerda
+ * added element index support
+ *
  * Revision 1.2  2000/12/14 17:10:57  warmerda
  * implemented TCB, Ellipse, TEXT
  *
@@ -57,6 +60,14 @@ typedef struct {
     double z;
 } DGNPoint;
 
+typedef struct {
+    unsigned char	level;
+    unsigned char       type;
+    unsigned char       stype;
+    unsigned char       flags;
+    long                offset;
+} DGNElementInfo;  
+
 /* -------------------------------------------------------------------- */
 /*      DGNElemCore                                                     */
 /* -------------------------------------------------------------------- */
@@ -69,6 +80,7 @@ typedef struct {
     GUInt32     size;
 #endif
 
+    int         element_id;     /** Element number (zero based) */
     int         stype;          /** Structure type: (DGNST_*) */
     int		level;		/** Element Level: 0-63 */
     int		type;		/** Element type (DGNT_) */
@@ -211,6 +223,7 @@ typedef struct {
 #define DGNT_ARC                  16
 #define DGNT_TEXT                 17
 #define DGNT_BSPLINE              21
+#define DGNT_APPLICATION_ELEM     66
 
 /* -------------------------------------------------------------------- */
 /*      Line Styles                                                     */
@@ -240,13 +253,16 @@ typedef struct {
 typedef void *DGNHandle;
 
 DGNHandle CPL_DLL    DGNOpen( const char * );
+const DGNElementInfo CPL_DLL *DGNGetElementIndex( DGNHandle, int * );
 DGNElemCore CPL_DLL *DGNReadElement( DGNHandle );
 void CPL_DLL         DGNFreeElement( DGNHandle, DGNElemCore * );
 void CPL_DLL         DGNRewind( DGNHandle );
+int  CPL_DLL         DGNGotoElement( DGNHandle, int );
 void CPL_DLL         DGNClose( DGNHandle );
 
 void CPL_DLL         DGNDumpElement( DGNHandle, DGNElemCore *, FILE * );
 const char CPL_DLL  *DGNTypeToName( int );
+
 
 CPL_C_END
 

@@ -3,10 +3,10 @@
  *
  * Project:  Microstation DGN Access Library
  * Purpose:  DGN Access Library element reading code.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 2000, Frank Warmerdam (warmerda@home.com)
+ * Copyright (c) 2000, Frank Warmerdam (warmerdam@pobox.com)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/12/28 21:28:59  warmerda
+ * added element index support
+ *
  * Revision 1.2  2000/12/14 17:10:57  warmerda
  * implemented TCB, Ellipse, TEXT
  *
@@ -39,29 +42,47 @@
 #include "dgnlibp.h"
 
 /************************************************************************/
-/*                           DGNReadElement()                           */
+/*                           DGNGotoElement()                           */
 /************************************************************************/
 
-DGNElemCore *DGNReadElement( DGNHandle hDGN )
+int DGNGotoElement( DGNHandle hDGN, int element_id )
 
 {
     DGNInfo	*psDGN = (DGNInfo *) hDGN;
-    DGNElemCore *psElement = NULL;
 
+    DGNBuildIndex( psDGN );
+
+    if( element_id < 0 || element_id >= psDGN->element_count )
+        return FALSE;
+
+    if( VSIFSeek( psDGN->fp, psDGN->element_index[element_id].offset, 
+                  SEEK_SET ) != 0 )
+        return FALSE;
+
+    psDGN->next_element_id = element_id;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                         DGNLoadRawElement()                          */
+/************************************************************************/
+
+static int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
+
+{
 /* -------------------------------------------------------------------- */
 /*      Read the first four bytes to get the level, type, and word      */
 /*      count.                                                          */
 /* -------------------------------------------------------------------- */
     int		nType, nWords, nLevel;
 
-#ifdef DGN_DEBUG
-    GUInt32     nOffset;
-
-    nOffset = VSIFTell( psDGN->fp );
-#endif
-
     if( VSIFRead( psDGN->abyElem, 1, 4, psDGN->fp ) != 4 )
-        return NULL;
+        return FALSE;
+
+    /* Is this an 0xFFFF endof file marker? */
+    if( psDGN->abyElem[0] == 0xff && psDGN->abyElem[1] == 0xff )
+        return FALSE;
 
     nWords = psDGN->abyElem[2] + psDGN->abyElem[3]*256;
     nType = psDGN->abyElem[1] & 0x7f;
@@ -71,12 +92,47 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
 /*      Read the rest of the element data into the working buffer.      */
 /* -------------------------------------------------------------------- */
     if( (int) VSIFRead( psDGN->abyElem + 4, 2, nWords, psDGN->fp ) != nWords )
-    {
-        return NULL;
-    }
+        return FALSE;
 
     psDGN->nElemBytes = nWords * 2 + 4;
+
+    psDGN->next_element_id++;
+
+/* -------------------------------------------------------------------- */
+/*      Return requested info.                                          */
+/* -------------------------------------------------------------------- */
+    if( pnType != NULL )
+        *pnType = nType;
     
+    if( pnLevel != NULL )
+        *pnLevel = nLevel;
+    
+    return TRUE;
+}
+
+/************************************************************************/
+/*                           DGNReadElement()                           */
+/************************************************************************/
+
+DGNElemCore *DGNReadElement( DGNHandle hDGN )
+
+{
+    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+    DGNElemCore *psElement = NULL;
+    int		nType, nLevel;
+
+#ifdef DGN_DEBUG
+    GUInt32     nOffset;
+
+    nOffset = VSIFTell( psDGN->fp );
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Load the element data into the current buffer.                  */
+/* -------------------------------------------------------------------- */
+    if( !DGNLoadRawElement( psDGN, &nType, &nLevel ) )
+        return NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Handle based on element type.                                   */
 /* -------------------------------------------------------------------- */
@@ -273,6 +329,11 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
       break;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Collect some additional generic information.                    */
+/* -------------------------------------------------------------------- */
+    psElement->element_id = psDGN->next_element_id - 1;
+
 #ifdef DGN_DEBUG
     psElement->offset = nOffset;
     psElement->size = psDGN->nElemBytes;
@@ -327,7 +388,7 @@ void DGNRewind( DGNHandle hDGN )
 
     VSIRewind( psDGN->fp );
 
-    psDGN->nElementOffset = 0;
+    psDGN->next_element_id = 0;
 }
 
 
@@ -509,6 +570,9 @@ const char *DGNTypeToName( int nType )
 
       case DGNT_BSPLINE:
         return "B-Spline";
+
+      case DGNT_APPLICATION_ELEM:
+        return "Application Element";
         
       default:
         sprintf( szNumericResult, "%d", nType );
@@ -526,4 +590,88 @@ void DGNTransformPoint( DGNInfo *psDGN, DGNPoint *psPoint )
     psPoint->x = psPoint->x * psDGN->scale + psDGN->origin_x;
     psPoint->y = psPoint->y * psDGN->scale + psDGN->origin_y;
     psPoint->z = psPoint->z * psDGN->scale + psDGN->origin_z;
+}
+
+/************************************************************************/
+/*                         DGNGetElementIndex()                         */
+/************************************************************************/
+
+const DGNElementInfo *DGNGetElementIndex( DGNHandle hDGN, int *pnElementCount )
+
+{
+    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+
+    DGNBuildIndex( psDGN );
+
+    if( pnElementCount != NULL )
+        *pnElementCount = psDGN->element_count;
+    
+    return psDGN->element_index;
+}
+
+/************************************************************************/
+/*                           DGNBuildIndex()                            */
+/************************************************************************/
+
+void DGNBuildIndex( DGNInfo *psDGN )
+
+{
+    int	nMaxElements, nType, nLevel;
+    long nLastOffset;
+
+    if( psDGN->index_built ) 
+        return;
+
+    psDGN->index_built = TRUE;
+    
+    DGNRewind( psDGN );
+
+    nMaxElements = 0;
+
+    nLastOffset = VSIFTell( psDGN->fp );
+    while( DGNLoadRawElement( psDGN, &nType, &nLevel ) )
+    {
+        DGNElementInfo	*psEI;
+
+        if( psDGN->element_count == nMaxElements )
+        {
+            nMaxElements = (int) (nMaxElements * 1.5) + 500;
+            
+            psDGN->element_index = (DGNElementInfo *) 
+                CPLRealloc( psDGN->element_index, 
+                            nMaxElements * sizeof(DGNElementInfo) );
+        }
+
+        psEI = psDGN->element_index + psDGN->element_count;
+        psEI->level = nLevel;
+        psEI->type = nType;
+        psEI->flags = 0;
+        psEI->offset = nLastOffset;
+
+        if( nType == DGNT_LINE || nType == DGNT_LINE_STRING
+            || nType == DGNT_SHAPE || nType == DGNT_CURVE
+            || nType == DGNT_BSPLINE )
+            psEI->stype = DGNST_MULTIPOINT;
+
+        else if( nType == DGNT_GROUP_DATA && nLevel == DGN_GDL_COLOR_TABLE )
+            psEI->stype = DGNST_COLORTABLE;
+        
+        else if( nType == DGNT_ELLIPSE )
+            psEI->stype = DGNST_ELLIPSE;
+        
+        else if( nType == DGNT_TEXT )
+            psEI->stype = DGNST_TEXT;
+
+        else if( nType == DGNT_TCB )
+            psEI->stype = DGNST_TCB;
+
+        else
+            psEI->stype = DGNST_CORE;
+
+        psDGN->element_count++;
+
+        nLastOffset = VSIFTell( psDGN->fp );
+    }
+
+    DGNRewind( psDGN );
 }

@@ -4,10 +4,10 @@
  * Project:  Microstation DGN Access Library
  * Purpose:  Internal (privatE) datastructures, and prototypes for DGN Access 
  *           Library.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 2000, Frank Warmerdam (warmerda@home.com)
+ * Copyright (c) 2000, Frank Warmerdam (warmerdam@pobox.com)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/12/28 21:28:43  warmerda
+ * added element index support
+ *
  * Revision 1.2  2000/12/14 17:10:57  warmerda
  * implemented TCB, Ellipse, TEXT
  *
@@ -44,7 +47,7 @@
 
 typedef struct {
     FILE	*fp;
-    int		nElementOffset;
+    int		next_element_id;
 
     int         nElemBytes;
     GByte	abyElem[65540];
@@ -55,6 +58,11 @@ typedef struct {
     double	origin_x;
     double	origin_y;
     double	origin_z;
+
+    int         index_built;
+    int	        element_count;
+    DGNElementInfo *element_index;
+
 } DGNInfo;
 
 #define DGN_INT32( p )	((p)[2] \
@@ -65,5 +73,6 @@ typedef struct {
 int DGNParseCore( DGNInfo *, DGNElemCore * );
 void DGNTransformPoint( DGNInfo *, DGNPoint * );
 void DGN2IEEEDouble( void * );
+void DGNBuildIndex( DGNInfo * );
 
 #endif /* ndef _DGNLIBP_H_INCLUDED */

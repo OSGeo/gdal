@@ -3,10 +3,10 @@
  *
  * Project:  Microstation DGN Access Library
  * Purpose:  DGN Access Library file open code.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 2000, Frank Warmerdam (warmerda@home.com)
+ * Copyright (c) 2000, Frank Warmerdam (warmerdam@pobox.com)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/12/28 21:28:59  warmerda
+ * added element index support
+ *
  * Revision 1.2  2000/12/14 17:10:57  warmerda
  * implemented TCB, Ellipse, TEXT
  *
@@ -64,14 +67,18 @@ DGNHandle DGNOpen( const char * pszFilename )
 /* -------------------------------------------------------------------- */
     psDGN = (DGNInfo *) CPLCalloc(sizeof(DGNInfo),1);
     psDGN->fp = fp;
-    psDGN->nElementOffset = 0;
+    psDGN->next_element_id = 0;
 
     psDGN->got_tcb = FALSE;
     psDGN->dimension = 2;
     psDGN->scale = 1.0;
     psDGN->origin_x = 0.0;
     psDGN->origin_y = 0.0;
-    psDGN->origin_z = 0.0;
+    psDGN->origin_z = 0.0;					       
+
+    psDGN->index_built = FALSE;
+    psDGN->element_count = 0;
+    psDGN->element_index = NULL;
 
     return (DGNHandle) psDGN;
 }
