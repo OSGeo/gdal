@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_open.c,v 1.8 2003/01/31 16:42:42 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_open.c,v 1.9 2003/07/26 03:54:29 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -32,19 +32,19 @@
 void _TIFFSetDefaultCompressionState(TIFF* tif);
 
 static const long typemask[13] = {
-	0L,		/* TIFF_NOTYPE */
-	0x000000ffL,	/* TIFF_BYTE */
-	0xffffffffL,	/* TIFF_ASCII */
-	0x0000ffffL,	/* TIFF_SHORT */
-	0xffffffffL,	/* TIFF_LONG */
-	0xffffffffL,	/* TIFF_RATIONAL */
-	0x000000ffL,	/* TIFF_SBYTE */
-	0x000000ffL,	/* TIFF_UNDEFINED */
-	0x0000ffffL,	/* TIFF_SSHORT */
-	0xffffffffL,	/* TIFF_SLONG */
-	0xffffffffL,	/* TIFF_SRATIONAL */
-	0xffffffffL,	/* TIFF_FLOAT */
-	0xffffffffL,	/* TIFF_DOUBLE */
+	(long)0L,		/* TIFF_NOTYPE */
+	(long)0x000000ffL,	/* TIFF_BYTE */
+	(long)0xffffffffL,	/* TIFF_ASCII */
+	(long)0x0000ffffL,	/* TIFF_SHORT */
+	(long)0xffffffffL,	/* TIFF_LONG */
+	(long)0xffffffffL,	/* TIFF_RATIONAL */
+	(long)0x000000ffL,	/* TIFF_SBYTE */
+	(long)0x000000ffL,	/* TIFF_UNDEFINED */
+	(long)0x0000ffffL,	/* TIFF_SSHORT */
+	(long)0xffffffffL,	/* TIFF_SLONG */
+	(long)0xffffffffL,	/* TIFF_SRATIONAL */
+	(long)0xffffffffL,	/* TIFF_FLOAT */
+	(long)0xffffffffL,	/* TIFF_DOUBLE */
 };
 static const int bigTypeshift[13] = {
 	0,		/* TIFF_NOTYPE */
