@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2002/04/25 20:15:26  warmerda
+ * upgraded to use ExecuteSQL()
+ *
  * Revision 1.36  2002/04/17 19:53:17  warmerda
  * added SELECT COUNT(*) support
  *
@@ -136,6 +139,10 @@
 #include "sfutil.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_C_START
+#include "swq.h"
+CPL_C_END
 
 // I use a length of 1024, because anything larger will trigger treatment
 // as a BLOB by the code in CDynamicAccessor::BindColumns() in ATLDBCLI.H.
@@ -475,76 +482,74 @@ CSFRowset::~CSFRowset()
 }
 
 /************************************************************************/
-/*                            ParseCommand()                            */
+/*                        ProcessSpecialFields()                        */
 /*                                                                      */
-/*      For now this method just extracts the list of selected          */
-/*      fields, and sets them in m_panOGRIndex.                         */
+/*      The FID and OGIS_GEOMETRY fields aren't real fields as far      */
+/*      as the underlying OGR code is concerned so we extract them      */
+/*      from the list of requested fields (if present) and return an    */
+/*      indication to the provider of whether it should add these       */
+/*      special fields.                                                 */
+/*                                                                      */
+/*      Note that FID and OGIS_GEOMETRY will not work properly in       */
+/*      the WHERE or ORDER BY clauses because of their special          */
+/*      outside-ogr handling.                                           */
 /************************************************************************/
 
-int CSFRowset::ParseCommand( const char *pszCommand, 
-                             OGRLayer *poLayer )
+char *CSFRowset::ProcessSpecialFields( const char *pszRawCommand, 
+                                       int *pbAddFID, int *pbAddGeometry )
 
 {
-    char      **papszTokens;
-    OGRFeatureDefn *poDefn = poLayer->GetLayerDefn();
+    swq_select *select_info = NULL;
+    const char *error;
+    int        i;
 
-    papszTokens = CSLTokenizeStringComplex( pszCommand, " ,", 
-                                            FALSE, FALSE );
-
-    if( CSLCount(papszTokens) > 1 
-        && EQUAL(papszTokens[0],"SELECT") 
-        && !EQUAL(papszTokens[1],"*") )
+    error = swq_select_preparse( pszRawCommand, &select_info );
+    if( error != NULL )
     {
-        int      iToken, iOGRIndex;
+        CPLDebug( "OLEDB", "swq_select_preparse() failed, leaving command.");
+        return CPLStrdup( pszRawCommand );
+    }
 
-        for( iToken = 1; 
-             papszTokens[iToken] != NULL && !EQUAL(papszTokens[iToken],"FROM");
-             iToken++ )
+    *pbAddFID = FALSE;
+    *pbAddGeometry = FALSE;
+
+    for( i = 0; i < select_info->result_columns; i++ )
+    {
+        swq_col_def *def = select_info->column_defs + i;
+
+        if( i == 0 && def->col_func_name == NULL 
+            && strcmp(def->field_name,"*") == 0 )
         {
-            iOGRIndex = poDefn->GetFieldIndex( papszTokens[iToken] );
+            *pbAddFID = TRUE;
+            *pbAddGeometry = TRUE;
+        }
+        else if( def->col_func_name == NULL
+                 && (stricmp(def->field_name,"OGIS_GEOMETRY") == 0 
+                     || stricmp(def->field_name,"FID") == 0) )
+        {
+            if( stricmp(def->field_name,"FID") == 0 )
+                *pbAddFID = TRUE;
+            else 
+                *pbAddGeometry = TRUE;
 
-            if( EQUAL(papszTokens[iToken],"FID") )
-            {
-                iOGRIndex = -1;
-                m_panOGRIndex.Add( iOGRIndex );
-            }
-            else if( EQUAL(papszTokens[iToken],"OGIS_GEOMETRY") )
-            {
-                iOGRIndex = -2;
-                m_panOGRIndex.Add( iOGRIndex );
-            }
-            else if( EQUAL(papszTokens[iToken],"count(*)") )
-            {
-                iOGRIndex = -3;
-                m_panOGRIndex.Add( iOGRIndex );
-                m_nResultCount = 0;
-            }
-            else if( iOGRIndex == -1 )
-            {
-                CPLDebug( "OGR_OLEDB", "Unrecognised field `%s', skipping.", 
-                          papszTokens[iToken] );
-            }
-            else
-                m_panOGRIndex.Add( iOGRIndex );
+            /* Strip one item out of the list of columns */
+            swq_free( def->field_name );
+            memmove( def, def + 1, 
+                     sizeof(swq_col_def) * (select_info->result_columns-i-1));
+            select_info->result_columns--;
+            i--;
         }
     }
-    else
-    {
-        int      iOGRIndex;
 
-        iOGRIndex = -1;
-        m_panOGRIndex.Add(iOGRIndex);
+    char *new_command;
 
-        for( iOGRIndex = 0; iOGRIndex < poDefn->GetFieldCount(); iOGRIndex++ ) 
-            m_panOGRIndex.Add(iOGRIndex);
-        
-        iOGRIndex = -2;
-        m_panOGRIndex.Add(iOGRIndex);
-    }
+    swq_reform_command( select_info );
+    new_command = CPLStrdup( select_info->raw_select );
+    swq_select_free( select_info );
 
-    CSLDestroy(papszTokens);
-
-    return TRUE;
+    CPLDebug( "OGR_OLEDB", "Reformed statement as:%s\n", new_command );
+    
+    return new_command;
 }
 
 /************************************************************************/
@@ -558,143 +563,103 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     // Get the appropriate Data Source
     OGRDataSource *poDS;
     char	*pszCommand;
-    char        *pszLayerName;
-    char        *pszWHERE = NULL;
     IUnknown    *pIUnknown;
-
-    m_nResultCount = -1;
+    int         bAddFID = TRUE, bAddGeometry = TRUE;
 
     QueryInterface(IID_IUnknown,(void **) &pIUnknown);
     poDS = SFGetOGRDataSource(pIUnknown);
     assert(poDS);
 	
-    // Get the appropriate layer, spatial filters and name filtering here!
-    OGRLayer	*pLayer = NULL;
-    OGRGeometry *pGeomFilter = NULL;
-	
     pszCommand = OLE2A(m_strCommandText);
     CPLDebug( "OGR_OLEDB", "CSFRowset::Execute(%s)", pszCommand );
 
+    m_iLayer = -1;
+    m_poLayer = NULL;
+    m_poDS = poDS;
+    
 /* -------------------------------------------------------------------- */
-/*      Try to extract a layer from the command.  For now our           */
-/*      handling for SQL is very primitive.                             */
+/*      Does the command start with select?  If so, generate a          */
+/*      synthetic layer.                                                */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszCommand,"SELECT ",7) )
+    if( EQUALN(pszCommand,"SELECT",6) )
     {
-        int      iCmdOffset;
+        char *pszCleanCommand;
 
-        pszLayerName = NULL;
-        for( iCmdOffset = 0; pszCommand[iCmdOffset] != NULL; iCmdOffset++ )
+        pszCleanCommand = 
+            ProcessSpecialFields( pszCommand, &bAddFID, &bAddGeometry );
+
+        m_poLayer = m_poDS->ExecuteSQL( pszCleanCommand, poGeometry, NULL );
+        CPLFree( pszCleanCommand );
+
+        if( m_poLayer == NULL )
         {
-            if( EQUALN(pszCommand+iCmdOffset,"FROM ",4) )
+            return SFReportError(DB_E_ERRORSINCOMMAND,IID_IUnknown,0,
+                                 "ExecuteSQL() failed.");
+        }
+    }
+/* -------------------------------------------------------------------- */
+/*      Otherwise we assume it is a simple table name, and we grab it.  */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        for ( int i=0; i < poDS->GetLayerCount(); i++)
+        {
+            m_poLayer = poDS->GetLayer(i);
+            
+            if( stricmp(pszCommand,
+                         m_poLayer->GetLayerDefn()->GetName()) == 0 )
             {
-                iCmdOffset += 4;
-                while( pszCommand[iCmdOffset] == ' ' )
-                    iCmdOffset++;
-
-                if( pszCommand[iCmdOffset] == '.' )
-                    iCmdOffset++;
-                
-                pszLayerName = CPLStrdup(pszCommand+iCmdOffset);
-                for( int iLN = 0; pszLayerName[iLN] != '\0'; iLN++ )
-                {
-                    if( pszLayerName[iLN] == ' ' )
-                    {
-                        pszLayerName[iLN] = '\0';
-                        break;
-                    }
-                }
-                CPLDebug( "OGR_OLEDB", 
-                          "Parsed layer name %s out of SQL statement.",
-                          pszLayerName );
-            }
-
-            else if( EQUALN(pszCommand+iCmdOffset,"WHERE ",6) )
-            {
-                iCmdOffset += 6;
-                while( pszCommand[iCmdOffset] == ' ' )
-                    iCmdOffset++;
-
-                pszWHERE = CPLStrdup( pszCommand + iCmdOffset );
-                CPLDebug( "OGR_OLEDB", 
-                          "Parsed WHERE clause `%s' out of SQL Statement.", 
-                          pszWHERE );
+                m_iLayer = i;
                 break;
             }
         }
-    }
-    else
-    {
-        pszLayerName = CPLStrdup( pszCommand );
-    }
-	
-    if (pszLayerName == NULL)
-    {
-        return SFReportError(DB_E_ERRORSINCOMMAND,IID_IUnknown,0,
-                             "Unable to extract layer name from SQL statement.");
-    }
 
-    // Now check to see which layer is specified.
-    int i;
-	
-    for (i=0; i < poDS->GetLayerCount(); i++)
-    {
-        pLayer = poDS->GetLayer(i);
-		
-        OGRFeatureDefn *poDefn = pLayer->GetLayerDefn();
-		
-        if (!stricmp(pszLayerName,poDefn->GetName()))
+        if( m_iLayer == -1 )
         {
-            break;
+            m_poLayer = NULL;
+            return SFReportError(DB_E_ERRORSINCOMMAND,IID_IUnknown,0,
+                                 "Invalid Layer Name");
         }
-        pLayer = NULL;
+
+        m_poLayer->SetSpatialFilter(poGeometry);
     }
 
-    CPLFree( pszLayerName );
-	
-    // Make sure a valid layer was found!
-    if (pLayer == NULL)
+/* -------------------------------------------------------------------- */
+/*      Setup field map.  We use all fields plus FID and OGIS_GEOMETRY. */
+/* -------------------------------------------------------------------- */
+    int      iOGRIndex;
+    OGRFeatureDefn *poDefn = m_poLayer->GetLayerDefn();
+
+    /* FID */
+    if( bAddFID )
     {
-        return SFReportError(DB_E_ERRORSINCOMMAND,IID_IUnknown,0,
-                             "Invalid Layer Name");
+        iOGRIndex = -1;
+        m_panOGRIndex.Add(iOGRIndex);
     }
-
-    m_poDS = poDS;
-    m_iLayer = i;
     
-    // extract list of fields requested
-    
-    ParseCommand( pszCommand, pLayer );
-
-    // Now that we have a layer set a filter if necessary.
-    if (poGeometry)
-        pLayer->SetSpatialFilter(poGeometry);
-    else
-        pLayer->SetSpatialFilter(NULL);
-
-    if( pszWHERE != NULL )
+    /* All the regular attributes */
+    for( iOGRIndex = 0; iOGRIndex < poDefn->GetFieldCount(); iOGRIndex++ ) 
+        m_panOGRIndex.Add(iOGRIndex);
+        
+    /* OGIS_GEOMETRY */
+    if( bAddGeometry )
     {
-        pLayer->SetAttributeFilter( pszWHERE );
-        CPLFree( pszWHERE );
+        iOGRIndex = -2;
+        m_panOGRIndex.Add(iOGRIndex);
     }
-    else
-        pLayer->SetAttributeFilter( NULL );
-	
-    if (pcRowsAffected || m_nResultCount != -1 )
+
+/* -------------------------------------------------------------------- */
+/*      Try and count the records.                                      */
+/* -------------------------------------------------------------------- */
+    if (pcRowsAffected)
     {
         int      nTotalRows;
 
-        nTotalRows = pLayer->GetFeatureCount( m_nResultCount != -1 );
+        nTotalRows = m_poLayer->GetFeatureCount( FALSE );
         if( nTotalRows != -1 )
         {
             if( pcRowsAffected != NULL )
                 *pcRowsAffected = nTotalRows;
-            if( m_nResultCount != -1 )
-            {
-                m_nResultCount = nTotalRows;
-                if( pcRowsAffected != NULL )
-                    *pcRowsAffected = nTotalRows;
-            }
         }
         else
             CPLDebug( "OGR_OLEDB", 
@@ -703,11 +668,14 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
                       pszCommand );
     }
 
-    // Setup to define fields. 
+/* -------------------------------------------------------------------- */
+/*      Define column information for each field.                       */
+/* -------------------------------------------------------------------- */
     int  iField;
     int nOffset = 0;
     ATLCOLUMNINFO colInfo;
-    OGRFeatureDefn *poDefn = pLayer->GetLayerDefn();
+
+    poDefn = m_poLayer->GetLayerDefn();
 
     // define all fields.
     for( iField = 0; iField < m_panOGRIndex.GetSize(); iField++ )
@@ -767,23 +735,6 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
 #endif
         }
         
-        // Add the COUNT column.
-        else if( nOGRIndex == -3 )
-        {
-            colInfo.pwszName = ::SysAllocString(A2OLE("COUNT"));
-            colInfo.iOrdinal = iField+1;
-            colInfo.dwFlags  = 0;
-            colInfo.columnid.uName.pwszName = colInfo.pwszName;
-            colInfo.cbOffset	= nOffset;
-            colInfo.bScale	= ~0;
-            colInfo.bPrecision  = ~0;
-            colInfo.ulColumnSize = 4;
-            colInfo.wType = DBTYPE_I4;
-            
-            nOffset += 8; // keep 8byte aligned.
-            m_paColInfo.Add(colInfo);
-        }
-
         else
         {
             OGRFieldDefn	*poField;
@@ -842,7 +793,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
         CPLDebug( "OGR_OLEDB", "Defined field `%S'", colInfo.pwszName );
     }
 
-    m_rgRowData.Initialize(pLayer,nOffset,this);
+    m_rgRowData.Initialize(m_poLayer,nOffset,this);
 
     return S_OK;
 }
