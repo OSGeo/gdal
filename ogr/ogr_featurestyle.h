@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/03/17 01:43:53  warmerda
+ * Don't leave in trailing comma in enum (as submitted by Dale).
+ *
  * Revision 1.4  2001/01/19 21:10:47  warmerda
  * replaced tabs
  *
@@ -66,7 +69,7 @@ typedef enum ogr_style_tool_units_id
     OGRSTUPoints,
     OGRSTUMM,
     OGRSTUCM,
-    OGRSTUInches,
+    OGRSTUInches
 } OGRSTUnitId;
 
 typedef enum ogr_style_tool_param_pen_id
