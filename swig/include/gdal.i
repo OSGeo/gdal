@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.5  2005/02/15 06:01:15  kruland
+ * Moved the Dataset definition to Dataset.i.
+ *
  * Revision 1.4  2005/02/14 23:50:16  hobu
  * Added log info
  *
@@ -232,79 +235,7 @@ def SerializeXMLTree( tree ):
 
 %include "Driver.i"
 
-//************************************************************************
-//
-// Define the extensions for Dataset (nee GDALDataset)
-//
-//************************************************************************
-%rename (Dataset) GDALDataset;
-
-%ignore GDALDataset::AdviseRead;
-
-%ignore GDALDataset::GetGeoTransform( double * );
-%ignore GDALDataset::SetGeoTransform( double * );
-
-%ignore GDALDataset::GetGCPs();
-
-%ignore GDALDataset::BuildOverviews( const char *, int, int*, int, int*, GDALProgressFunc, void *);
-%feature("kwargs") GDALDataset::BuildOverviews;
-
-
-%apply (char **dict) { char **papszMetadata };
-%apply (int nList, int* pList) { (int overviewlist, int *pOverviews) };
-
-%extend GDALDataset {
-
-%immutable;
-  int RasterXSize;
-  int RasterYSize;
-%mutable;
-
-  char const *GetProjection() {
-    return self->GetProjectionRef();
-  }
-
-  std::vector<double>
-  GetGeoTransform() {
-    double c_transform[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-    std::vector<double> retval(6);
-    if ( GDALGetGeoTransform( self, c_transform ) == 0 ) {
-      retval[1] = 1.0;
-      retval[5] = 1.0;
-    }
-    else {
-      std::copy( c_transform, c_transform+6, retval.begin() );
-    }
-    return retval;
-  }
-
-  int SetGeoTransform( std::vector<double> trans ) {
-    double c_transform[6];
-    std::copy( trans.begin(), trans.begin()+6, c_transform );
-    return GDALSetGeoTransform( self, c_transform );
-  }
-
-  // The int,int* arguments are typemapped.  The name of the first argument
-  // becomes the kwarg name for it.
-  int BuildOverviews( const char *resampling = "NEAREST", int overviewlist = 0 , int *pOverviews = 0 ) {
-    return GDALBuildOverviews( self, resampling, overviewlist, pOverviews, 0, 0, 0, 0);
-  }
-
-  void GetGCPs( int *nGCPs, GDAL_GCP const **pGCPs ) {
-    *nGCPs = self->GetGCPCount();
-    *pGCPs = self->GetGCPs();
-  }
-
-};
-
-%{
-int GDALDataset_RasterXSize_get( GDALDataset *h ) {
-  return GDALGetRasterXSize( h );
-}
-int GDALDataset_RasterYSize_get( GDALDataset *h ) {
-  return GDALGetRasterYSize( h );
-}
-%}
+%include "Dataset.i"
 
 //************************************************************************
 //
@@ -420,5 +351,6 @@ GDALDataset* Open( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
 }
 %}
 
+%ignore GDALDataset;
 %ignore GDALDriver;
 %include "gcore/gdal_priv.h"
