@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/10/09 14:16:32  warmerda
+ * changed the way that character field widths are extracted from catalog
+ *
  * Revision 1.6  2002/10/04 14:03:09  warmerda
  * added column name laundering support
  *
@@ -120,7 +123,8 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
         PQclear( hResult );
         sprintf( szCommand, 
                  "DECLARE mycursor CURSOR for "
-                 "SELECT a.attname, t.typname, a.attlen "
+                 "SELECT a.attname, t.typname, a.attlen,"
+                 "       format_type(a.atttypid,a.atttypmod) "
                  "FROM pg_class c, pg_attribute a, pg_type t "
                  "WHERE c.relname = '%s' "
                  "AND a.attnum > 0 AND a.attrelid = c.oid "
@@ -153,9 +157,20 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
     {
         const char	*pszType;
         OGRFieldDefn    oField( PQgetvalue( hResult, iRecord, 0 ), OFTString);
+        int             nWidth;
 
         pszType = PQgetvalue(hResult, iRecord, 1 );
-        
+
+        nWidth = atoi(PQgetvalue(hResult,iRecord,2));
+        if( nWidth == -1 )
+        {
+            const char *pszFormatType = PQgetvalue(hResult,iRecord,3);
+            if( EQUALN(pszFormatType,"character(",10) )
+                nWidth = atoi(pszFormatType+10);
+            else
+                nWidth = 0;
+        }
+
         if( EQUAL(oField.GetNameRef(),"ogc_fid") )
         {
             bHasFid = TRUE;
@@ -178,6 +193,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
         if( EQUAL(pszType,"varchar") )
         {
             oField.SetType( OFTString );
+            oField.SetWidth( nWidth );
         }
         else if( EQUALN(pszType,"int",3) )
         {
@@ -189,7 +205,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
         }
         else
         {
-            oField.SetWidth( atoi(PQgetvalue(hResult,iRecord,2)) );
+            oField.SetWidth( nWidth );
         }
         
         poDefn->AddFieldDefn( &oField );
