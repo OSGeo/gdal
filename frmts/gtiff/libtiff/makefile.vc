@@ -28,7 +28,7 @@ OBJ	= \
 	tif_strip.obj \
 	tif_thunder.obj \
 	tif_tile.obj \
-	tif_unix.obj \
+	tif_vsi.obj \
 	tif_version.obj \
 	tif_warning.obj \
 	tif_write.obj \
