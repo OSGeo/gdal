@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/03/31 13:41:45  warmerda
+ * added gcp support functions
+ *
  * Revision 1.9  2000/03/24 00:09:19  warmerda
  * added sort-of random sampling
  *
@@ -523,3 +526,65 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
 
     return nActualSamples;
 }
+
+/************************************************************************/
+/*                            GDALInitGCPs()                            */
+/************************************************************************/
+
+void GDALInitGCPs( int nCount, GDAL_GCP * psGCP )
+
+{
+    for( int iGCP = 0; iGCP < nCount; iGCP++ )
+    {
+        memset( psGCP, 0, sizeof(GDAL_GCP) );
+        psGCP->pszId = CPLStrdup("");
+        psGCP->pszInfo = CPLStrdup("");
+        psGCP++;
+    }
+}
+
+/************************************************************************/
+/*                           GDALDeinitGCPs()                           */
+/************************************************************************/
+
+void GDALDeinitGCPs( int nCount, GDAL_GCP * psGCP )
+
+{
+    for( int iGCP = 0; iGCP < nCount; iGCP++ )
+    {
+        CPLFree( psGCP->pszId );
+        CPLFree( psGCP->pszInfo );
+        psGCP++;
+    }
+}
+
+/************************************************************************/
+/*                         GDALDuplicateGCPs()                          */
+/************************************************************************/
+
+GDAL_GCP *GDALDuplicateGCPs( int nCount, const GDAL_GCP *pasGCPList )
+
+{
+    GDAL_GCP	*pasReturn;
+
+    pasReturn = (GDAL_GCP *) CPLMalloc(sizeof(GDAL_GCP) * nCount);
+    GDALInitGCPs( nCount, pasReturn );
+
+    for( int iGCP = 0; iGCP < nCount; iGCP++ )
+    {
+        CPLFree( pasReturn[iGCP].pszId );
+        pasReturn[iGCP].pszId = CPLStrdup( pasGCPList[iGCP].pszId );
+
+        CPLFree( pasReturn[iGCP].pszInfo );
+        pasReturn[iGCP].pszInfo = CPLStrdup( pasGCPList[iGCP].pszInfo );
+
+        pasReturn[iGCP].dfGCPPixel = pasGCPList[iGCP].dfGCPPixel;
+        pasReturn[iGCP].dfGCPLine = pasGCPList[iGCP].dfGCPLine;
+        pasReturn[iGCP].dfGCPX = pasGCPList[iGCP].dfGCPX;
+        pasReturn[iGCP].dfGCPY = pasGCPList[iGCP].dfGCPY;
+        pasReturn[iGCP].dfGCPZ = pasGCPList[iGCP].dfGCPZ;
+    }
+
+    return pasReturn;
+}
+                             
