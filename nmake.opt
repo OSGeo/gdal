@@ -24,6 +24,9 @@ INCLUDE_OGR_FRMTS = YES
 #OPTFLAGS=	/nologo /Ox 
 OPTFLAGS=	/nologo /Zi /Fd$(GDAL_ROOT)\gdal.pdb
 
+# Comment out the following to disable JPEG support.
+JPEG_SUPPORTED = 1
+
 # Uncomment the following and update to enable ECW support.
 #ECWDIR  = 	D:\Software\ECW_SDK
 #ECWLIB  =       $(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
