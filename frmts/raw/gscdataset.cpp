@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/10/03 06:07:31  warmerda
+ * Added nodata support.
+ *
  * Revision 1.1  2002/10/03 05:40:48  warmerda
  * New
  *
@@ -176,17 +179,20 @@ GDALDataset *GSCDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
+    RawRasterBand *poBand;
 #ifdef CPL_LSB
     int	bNative = TRUE;
 #else
     int bNative = FALSE;
 #endif
 
-    poDS->SetBand( 1, 
-            new RawRasterBand( poDS, 1, poDS->fpImage,
-                               nRecordLen * 2 + 4,
-                               sizeof(float), nRecordLen,
-                               GDT_Float32, bNative, FALSE ) );
+    poBand = new RawRasterBand( poDS, 1, poDS->fpImage,
+                                nRecordLen * 2 + 4,
+                                sizeof(float), nRecordLen,
+                                GDT_Float32, bNative, FALSE );
+    poDS->SetBand( 1, poBand );
+
+    poBand->SetNoDataValue( -1.0000000150474662199e+30 );
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
