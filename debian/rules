@@ -17,6 +17,7 @@ config.status: configure
 	dh_testdir
 
 	./configure --prefix=/usr \
+		--mandir=\$$\{prefix\}/share/man \
 		--with-threads \
 		--with-grass=no \
 		--with-libtiff=internal \
@@ -61,9 +62,6 @@ install: build
 		"INST_PYMOD=\$$(prefix)$(inst_pymod)"
 	$(MAKE) install-docs prefix=$(CURDIR)/debian/tmp/usr \
 		"INST_DOCS=\$$(prefix)/share/doc/libgdal-doc"
-
-	dh_installman -p tmp debian/*.1
-
 
 binary-arch: build install
 	dh_testdir
