@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/03/30 17:33:51  warmerda
+ * fixed last fix for ecwp:
+ *
  * Revision 1.18  2004/03/30 17:00:07  warmerda
  * Allow "ecwp:" urls to be opened.
  *
@@ -587,7 +590,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"ecw")
          || poOpenInfo->fp == NULL)
-        && !EQUALN(poOpenInfo->pszFilename,"ecwp",5) )
+        && !EQUALN(poOpenInfo->pszFilename,"ecwp:",5) )
         return( NULL );
 
 /* -------------------------------------------------------------------- */
