@@ -3,6 +3,7 @@ GDAL_ROOT	=	../..
 include $(GDAL_ROOT)/GDALmake.opt
 
 ifeq ($(GIF_SETTING),internal)
+XTRA_OPT =	-Ilibungif
 OBJ	=	egif_lib.o dgif_lib.o gifalloc.o gif_err.o \
 		\
 		gifdataset.o
@@ -20,6 +21,9 @@ clean:
 
 %.o:	%.cpp
 	$(CXX) -c $(CXXFLAGS) $(GDAL_INCLUDE) $(XTRA_OPT) $*.cpp -o $*.o
+
+%.o:	libungif/%.c
+	$(CC) -c $(CFLAGS) $(GDAL_INCLUDE) $(XTRA_OPT) libungif/$*.c -o $*.o
 
 
 all:	$(OBJ)
