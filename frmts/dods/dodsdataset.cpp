@@ -219,7 +219,31 @@ DODSDataset::connect_to_server() throw(Error)
     if (d_oURL.find("http://") == string::npos
 	&& d_oURL.find("https://") == string::npos)
 	throw Error(
-"The URL does not start with 'http' or 'https,' I won't try connecting.");
+            "The URL does not start with 'http' or 'https,' I won't try connecting.");
+
+/* -------------------------------------------------------------------- */
+/*      Do we want to override the .dodsrc file setting?  Only do       */
+/*      the putenv() if there isn't already a DODS_CONF in the          */
+/*      environment.                                                    */
+/* -------------------------------------------------------------------- */
+    if( CPLGetConfigOption( "DODS_CONF", NULL ) != NULL 
+        && getenv("DODS_CONF") == NULL )
+    {
+        static char szDODS_CONF[1000];
+            
+        sprintf( szDODS_CONF, "DODS_CONF=%.980s", 
+                 CPLGetConfigOption( "DODS_CONF", "" ) );
+        putenv( szDODS_CONF );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we have a overridding AIS file location, apply it now.       */
+/* -------------------------------------------------------------------- */
+    if( CPLGetConfigOption( "DODS_AIS_FILE", NULL ) != NULL )
+    {
+        string oAISFile = CPLGetConfigOption( "DODS_AIS_FILE", "" );
+        RCReader::instance()->set_ais_database( oAISFile );
+    }
 
     // can we get version information from it?
     // for now all we care about is some response... 10/31/03 jhrg
@@ -457,29 +481,31 @@ DODSDataset::get_geo_info(DAS &das, DDS &dds) throw(Error)
     d_oWKT = "";		// initialize in case this code fails...
 
     value = at->get_attr(pcs);
-    if (value == "" || value == "None")
-	get_geo_ref_error(d_oVarName, pcs);
-    DBG(cerr << pcs << ": " << value << endl);
-    oSRS.SetProjCS(value.c_str());
+    if (value != "" && value != "None")
+    {
+        DBG(cerr << pcs << ": " << value << endl);
+        oSRS.SetProjCS(value.c_str());
 
+        // Loop over params, if present.
+        AttrTable *parm = at->find_container(norm_proj_param);
+        if (parm) {
+            DBG(cerr << "Found the Param attributes." << endl);
+            AttrTable::Attr_iter i = parm->attr_begin();
+            for (i = parm->attr_begin(); i != parm->attr_end(); ++i) {
+                DBG(cerr << "Attribute: " << parm->get_name(i)
+                    << " = " << parm->get_attr(i) << endl);
+                oSRS.SetNormProjParm(parm->get_name(i).c_str(), 
+                                     strtod(parm->get_attr(i).c_str(), 0));
+            }
+        }
+    }
+
+    // Set the GCS.
     value = at->get_attr(gcs);
     if (value == "" || value == "None")
 	get_geo_ref_error(d_oVarName, gcs);
     DBG(cerr << gcs << ": " << value << endl);
     oSRS.SetWellKnownGeogCS(value.c_str());
-
-    // Loop over params, if present.
-    AttrTable *parm = at->find_container(norm_proj_param);
-    if (parm) {
-	DBG(cerr << "Found the Param attributes." << endl);
-	AttrTable::Attr_iter i = parm->attr_begin();
-	for (i = parm->attr_begin(); i != parm->attr_end(); ++i) {
-	    DBG(cerr << "Attribute: " << parm->get_name(i)
-		<< " = " << parm->get_attr(i) << endl);
-	    oSRS.SetNormProjParm(parm->get_name(i).c_str(), 
-				 strtod(parm->get_attr(i).c_str(), 0));
-	}
-    }
 
     char *pszWKT = NULL;
     oSRS.exportToWkt(&pszWKT);
@@ -717,6 +743,9 @@ DODSDataset::irasterio_helper(GDALRWFlag eRWFlag,
 			      int nPixelSpace, int nLineSpace)
     throw(Error)
 {
+    CPLDebug( "DODS", "irasterio_helper(%d,%d,%d,%d)", 
+              nXOff, nYOff, nXSize, nYSize );
+
     // NB: The parameters nPixelSpace and nLineSpace are for data that are
     // pixel- and line-interlaced. The DAP does not normally externalize data
     // that way, even if it is stored like that.
@@ -1114,6 +1143,10 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 // $Log$
+// Revision 1.9  2004/03/24 18:36:56  warmerda
+// Ensure that geographic coordiante systems are supported without requiring
+// the projected coordinate system.
+//
 // Revision 1.8  2004/03/23 18:53:11  warmerda
 // Treat a version string that is not apparently DAP 3.x as a warning.
 // Don't worry about nBandSpace in IRasterIO() if there is only one
