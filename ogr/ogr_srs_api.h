@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2003/06/10 09:31:12  dron
+ * Added OSRSetAngularUnits() and OSRGetAngularUnits().
+ *
  * Revision 1.30  2003/05/30 15:39:53  warmerda
  * Added override units capability for SetStatePlane()
  *
@@ -324,6 +327,8 @@ OGRErr CPL_DLL OSRSetAttrValue( OGRSpatialReferenceH hSRS,
 const char CPL_DLL * OSRGetAttrValue( OGRSpatialReferenceH hSRS,
                            const char * pszName, int iChild /* = 0 */ );
 
+OGRErr CPL_DLL OSRSetAngularUnits( OGRSpatialReferenceH, const char *, double );
+double CPL_DLL OSRGetAngularUnits( OGRSpatialReferenceH, char ** );
 OGRErr CPL_DLL OSRSetLinearUnits( OGRSpatialReferenceH, const char *, double );
 double CPL_DLL OSRGetLinearUnits( OGRSpatialReferenceH, char ** );
 
