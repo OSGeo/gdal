@@ -95,6 +95,8 @@ AC_DEFUN(AC_LD_SHARED,
   echo 'void g(); void g(){}' > conftest2.c
   ${CC} ${C_PIC} -c conftest2.c
 
+  SO_EXT="so"
+  export SO_EXT
   LD_SHARED="/bin/true"
   if test -z "`${CXX} -shared conftest2.o -o libconftest.so 2>&1`" ; then
     if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
@@ -137,12 +139,35 @@ AC_DEFUN(AC_LD_SHARED,
     fi
   fi
 
+  if test "$LD_SHARED" = "/bin/true" \
+          -a -z "`${CC} -dynamiclib conftest2.o -o libconftest.so 2>&1`" ; then
+    if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
+      DYLD_LIBRARY_PATH_OLD="$DYLD_LIBRARY_PATH"
+      if test -z "$DYLD_LIBRARY_PATH" ; then
+        DYLD_LIBRARY_PATH="`pwd`"
+      else
+        DYLD_LIBRARY_PATH="`pwd`:$DYLD_LIBRARY_PATH"
+      fi
+      export DYLD_LIBRARY_PATH
+      if test -z "`./conftest1 2>&1`" ; then
+        echo "checking for ${CC} -dynamiclib ... yes"
+        LD_SHARED="${CC} -dynamiclib"
+	SO_EXT=dylib
+      fi
+      DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH_OLD"
+    fi
+  fi
+
   if test "$LD_SHARED" = "/bin/true" ; then
     echo "checking for ld -shared ... no"
+    if test ! -x /bin/true ; then
+      LD_SHARED=/usr/bin/true
+    fi
   fi
   rm -f conftest* libconftest* 
 
   AC_SUBST(LD_SHARED,$LD_SHARED)
+  AC_SUBST(SO_EXT,$SO_EXT)
 ])
 
 dnl
