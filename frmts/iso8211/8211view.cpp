@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/06 14:25:15  warmerda
+ * added support for binary strings
+ *
  * Revision 1.2  1999/04/28 05:16:47  warmerda
  * added usage
  *
@@ -181,6 +184,24 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
                                              &nBytesConsumed ) );
         break;
         
+      case DDFBinaryString:
+      {
+          int	i;
+          GByte	*pabyBString = (GByte *)
+              poSFDefn->ExtractStringData( pachFieldData, nBytesRemaining,
+                                           &nBytesConsumed );
+
+          printf( "        %s = 0x", poSFDefn->GetName() );
+          for( i = 0; i < MIN(nBytesConsumed,24); i++ )
+              printf( "%02X", pabyBString[i] );
+
+          if( nBytesConsumed > 24 )
+              printf( "%s", "..." );
+
+          printf( "\n" );
+      }
+      break;
+      
     }
 
     return nBytesConsumed;
