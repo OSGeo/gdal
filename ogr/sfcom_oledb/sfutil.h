@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/08/09 21:33:52  warmerda
+ * prepare some .net compatibility macros
+ *
  * Revision 1.9  2002/05/08 20:27:48  warmerda
  * added support for caching OGRDataSources
  *
@@ -59,6 +62,14 @@
 #include <stdio.h>
 #include "ogrsf_frmts.h"
 #include <oledb.h>
+
+#ifdef SUPPORT_ATL_NET
+#  define SF_SIMPLE_ARRAY CAtlArray
+#  define GET_SIZE_MACRO GetCount
+#else
+#  define SF_SIMPLE_ARRAY CSimpleArray
+#  define GET_SIZE_MACRO GetSize
+#endif
 
 OGRDataSource  *SFGetOGRDataSource(IUnknown *pUnk);
 void		SFSetOGRDataSource(IUnknown *pUnk,OGRDataSource *pOGR,void *);
