@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2004/04/24 15:47:19  warmerda
+ * Added uom 9122 improvements.
+ *
  * Revision 1.32  2004/03/04 18:04:45  warmerda
  * added importFromDict() support
  *
@@ -330,7 +333,8 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
 
         /* We do a special override of some of the DMS formats name */
         if( nUOMAngleCode == 9102 || nUOMAngleCode == 9107
-            || nUOMAngleCode == 9108 || nUOMAngleCode == 9110 )
+            || nUOMAngleCode == 9108 || nUOMAngleCode == 9110 
+            || nUOMAngleCode == 9122 )
             pszUOMName = "degree";
 
         // For some reason, (FactorB) is not very precise in EPSG, use
@@ -355,6 +359,7 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
           case 9107:
           case 9108:
           case 9110:
+          case 9122:
             pszUOMName = "degree";
             dfInDegrees = 1.0;
             break;
