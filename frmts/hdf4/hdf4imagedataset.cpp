@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.46  2005/03/29 12:49:50  dron
+ * Fixes in HDF-EOS Grid georeferencing; fetch NoData for Grid datasets.
+ *
  * Revision 1.45  2005/03/28 13:33:50  dron
  * Restore support for HDF-EOS Swath GCPs extraction (preliminary version).
  *
@@ -1368,6 +1371,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int32       iAttribute, nValues, iAttrNumType;
     char        szAttrName[MAX_NC_NAME];
+    double      dfNoData;
+    int         bNoDataSet = FALSE;
     
 /* -------------------------------------------------------------------- */
 /*      Select SDS or GR to read from.                                  */
@@ -1385,6 +1390,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         case HDF4_EOS:
         {
+            void    *pNoDataValue = NULL;
+
             switch ( poDS->iSubdatasetType )
             {
 
@@ -1401,7 +1408,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     int32   *paiRank = NULL, *paiNumType = NULL,
                         *paiOffset = NULL, *paiIncrement = NULL;
                     int     nDimCount;
-                    //void    *pNoDataValue;
                     
                     if( poOpenInfo->eAccess == GA_ReadOnly )
                         poDS->hHDF4 = SWopen( poDS->pszFilename, DFACC_READ );
@@ -1501,7 +1507,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     void    *pLat = NULL, *pLong = NULL;
                     int32   nLatCount = 0, nLongCount = 0;
                     int32   nXPoints, nYPoints;
-                    int     j;
+                    int     j, iDataSize;
 
                     nDataFields = SWnentries( hSW, HDFE_NENTGFLD, &nStrBufSize );
                     pszGeoList = (char *)CPLMalloc( nStrBufSize + 1 );
@@ -1616,11 +1622,11 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                                              szXGeo )];
                         nYPoints = aiDimSizes[CSLFindString( papszGeoDimList,
                                                              szYGeo )];
+                        iDataSize = poDS->GetDataTypeSize( iNumType );
                         if ( strstr( papszGeolocations[i], "Latitude" ) )
                         {
                             nLatCount = nXPoints * nYPoints;
-                            pLat = CPLMalloc( nLatCount *
-                                              poDS->GetDataTypeSize(iNumType) );
+                            pLat = CPLMalloc( nLatCount * iDataSize );
                             if (SWreadfield( hSW, papszGeolocations[i], NULL,
                                              NULL, NULL, (VOIDP)pLat ) < 0)
                             {
@@ -1634,8 +1640,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                         else if ( strstr( papszGeolocations[i], "Longitude" ) )
                         {
                             nLongCount = nXPoints * nYPoints;
-                            pLong = CPLMalloc( nLongCount *
-                                               poDS->GetDataTypeSize(iNumType) );
+                            pLong = CPLMalloc( nLongCount * iDataSize );
                             if (SWreadfield( hSW, papszGeolocations[i], NULL,
                                              NULL, NULL, (VOIDP)pLong ) < 0)
                             {
@@ -1672,84 +1677,13 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                 // This calculation valid for WGS84 datum only.
                                 /*poDS->pasGCPList[iGCP].dfGCPY = 
                                     atan(tan(padfLat[iGCP]*PI/180)/0.99330562)*180/PI;*/
-                                switch ( iNumType )
-                                {
-                                    case DFNT_INT8:
-                                        poDS->pasGCPList[iGCP].dfGCPY =
-                                            (double)((char *)pLat)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPX =
-                                            (double)((char *)pLong)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
-                                        break;
-                                    case DFNT_UINT8:
-                                        poDS->pasGCPList[iGCP].dfGCPY =
-                                            (double)((unsigned char *)pLat)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPX =
-                                            (double)((unsigned char *)pLong)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
-                                        break;
-                                    case DFNT_INT16:
-                                        poDS->pasGCPList[iGCP].dfGCPY =
-                                            (double)((short *)pLat)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPX =
-                                            (double)((short *)pLong)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
-                                        break;
-                                    case DFNT_UINT16:
-                                        poDS->pasGCPList[iGCP].dfGCPY =
-                                            (double)((unsigned short *)pLat)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPX =
-                                            (double)((unsigned short *)pLong)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
-                                        break;
-                                    case DFNT_INT32:
-                                        poDS->pasGCPList[iGCP].dfGCPY =
-                                            (double)((long *)pLat)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPX =
-                                            (double)((long *)pLong)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
-                                        break;
-                                    case DFNT_UINT32:
-                                        poDS->pasGCPList[iGCP].dfGCPY =
-                                            (double)((unsigned long *)pLat)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPX =
-                                            (double)((unsigned long *)pLong)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
-                                        break;
-                                    case DFNT_INT64:
-                                        poDS->pasGCPList[iGCP].dfGCPY =
-                                            (double)((GIntBig *)pLat)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPX =
-                                            (double)((GIntBig *)pLong)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
-                                        break;
-                                    case DFNT_UINT64:
-                                        poDS->pasGCPList[iGCP].dfGCPY =
-                                            (double)((GIntBig *)pLat)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPX =
-                                            (double)((GIntBig *)pLong)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
-                                        break;
-                                    case DFNT_FLOAT32:
-                                        poDS->pasGCPList[iGCP].dfGCPY =
-                                            (double)((float *)pLat)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPX =
-                                            (double)((float *)pLong)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
-                                        break;
-                                    case DFNT_FLOAT64:
-                                        poDS->pasGCPList[iGCP].dfGCPY =
-                                            (double)((double *)pLat)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPX =
-                                            (double)((double *)pLong)[iGCP];
-                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
-                                        break;
-                                    default:
-                                        poDS->pasGCPList[iGCP].dfGCPY = 0.0;
-                                        poDS->pasGCPList[iGCP].dfGCPX = 0.0;
-                                        poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
-                                        break;
-                                }
+                                poDS->pasGCPList[iGCP].dfGCPX =
+                                    poDS->AnyTypeToDouble(iNumType,
+                                    (void *)((char *)pLong + iGCP * iDataSize));
+                                poDS->pasGCPList[iGCP].dfGCPY =
+                                    poDS->AnyTypeToDouble(iNumType,
+                                    (void *)((char *)pLat + iGCP * iDataSize));
+                                poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
 
                                 poDS->pasGCPList[iGCP].dfGCPPixel =
                                     paiOffset[poDS->iXDim] +
@@ -1888,29 +1822,25 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                         {
                             // For projected systems coordinates are in meters
                             poDS->adfGeoTransform[1] =
-                                (adfLowRight[0] - adfUpLeft[0]) / (nXSize - 1);
+                                (adfLowRight[0] - adfUpLeft[0]) / nXSize;
                             poDS->adfGeoTransform[5] =
-                                (adfLowRight[1] - adfUpLeft[1]) / (nYSize - 1);
-                            poDS->adfGeoTransform[0] =
-                                adfUpLeft[0] - poDS->adfGeoTransform[1] / 2;
-                            poDS->adfGeoTransform[3] =
-                                adfUpLeft[1] - poDS->adfGeoTransform[5] / 2;
+                                (adfLowRight[1] - adfUpLeft[1]) / nYSize;
+                            poDS->adfGeoTransform[0] = adfUpLeft[0];
+                            poDS->adfGeoTransform[3] = adfUpLeft[1];
                         }
                         else
                         {
                             // Handle angular geographic coordinates here
                             poDS->adfGeoTransform[1] =
                                 (CPLPackedDMSToDec(adfLowRight[0]) -
-                                 CPLPackedDMSToDec(adfUpLeft[0])) / (nXSize-1);
+                                 CPLPackedDMSToDec(adfUpLeft[0])) / nXSize;
                             poDS->adfGeoTransform[5] =
                                 (CPLPackedDMSToDec(adfLowRight[1]) -
-                                 CPLPackedDMSToDec(adfUpLeft[1])) / (nYSize-1);
+                                 CPLPackedDMSToDec(adfUpLeft[1])) / nYSize;
                             poDS->adfGeoTransform[0] =
-                                CPLPackedDMSToDec(adfUpLeft[0])
-                                - poDS->adfGeoTransform[1] / 2;
+                                CPLPackedDMSToDec(adfUpLeft[0]);
                             poDS->adfGeoTransform[3] =
-                                CPLPackedDMSToDec(adfUpLeft[1])
-                                - poDS->adfGeoTransform[5] / 2;
+                                CPLPackedDMSToDec(adfUpLeft[1]);
                         }
                         poDS->adfGeoTransform[2] = 0.0;
                         poDS->adfGeoTransform[4] = 0.0;
@@ -1918,7 +1848,17 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     }
 
                     // Retrieve NODATA value
-                    //GDgetfillvalue( hGD, poDS->pszFieldName, );
+                    pNoDataValue =
+                        CPLMalloc( poDS->GetDataTypeSize(poDS->iNumType) );
+                    if ( GDgetfillvalue( hGD, poDS->pszFieldName,
+                                         pNoDataValue ) != -1 )
+                    {
+                        dfNoData = poDS->AnyTypeToDouble( poDS->iNumType,
+                                                          pNoDataValue );
+                        bNoDataSet = TRUE;
+                    }
+                    CPLFree( pNoDataValue );
+
                     poDS->papszLocalMetadata = 
                         poDS->GetGridAttrs( hGD, poDS->papszLocalMetadata );
 
@@ -2122,8 +2062,13 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     for( i = 1; i <= poDS->nBands; i++ )
-        poDS->SetBand( i, new HDF4ImageRasterBand( poDS, i,
-                                                   poDS->GetDataType( poDS->iNumType ) ) );
+    {
+        HDF4ImageRasterBand *poBand = new HDF4ImageRasterBand( poDS, i,
+                                    poDS->GetDataType( poDS->iNumType ) );
+        poDS->SetBand( i, poBand );
+        if ( bNoDataSet )
+            poBand->SetNoDataValue( dfNoData );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Now we will handle particular types of HDF products. Every      */
