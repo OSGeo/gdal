@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2001/11/18 00:52:15  warmerda
+ * removed GDALProjDef
+ *
  * Revision 1.27  2001/11/16 21:36:01  warmerda
  * added the AddBand() method on GDALDataset
  *
@@ -160,29 +163,6 @@ class CPL_DLL GDALMajorObject
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                          const char * pszValue,
                                          const char * pszDomain = "" );
-};
-
-/* ******************************************************************** */
-/*                             GDALProjDef                              */
-/* ******************************************************************** */
-
-//! Encapsulates a projections definition.
-
-class CPL_DLL GDALProjDef
-{
-    void	*psPJ;
-
-    char	*pszProjection;
-
-  public:
-    		GDALProjDef( const char * = NULL );
-                ~GDALProjDef();
-
-    CPLErr	ToLongLat( double * padfX, double * padfY );
-    CPLErr	FromLongLat( double * padfX, double * padfY );
-
-    const char  *GetProjectionString( void ) { return pszProjection; }
-    CPLErr	SetProjectionString( const char * );
 };
 
 /* ******************************************************************** */
