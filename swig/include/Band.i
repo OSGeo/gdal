@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.9  2005/02/22 23:27:39  kruland
+ * Implement GetRasterColorTable/SetRasterColorTable.
+ *
  * Revision 1.8  2005/02/20 19:42:53  kruland
  * Rename the Swig shadow classes so the names do not give the impression that
  * they are any part of the GDAL/OSR apis.  There were no bugs with the old
@@ -203,12 +206,18 @@ public:
     GDALFlushRasterCache( self );
   }
 
+  %newobject GetRasterColorTable;
+  GDALColorTable *GetRasterColorTable() {
+    return (GDALColorTable*) GDALGetRasterColorTable( self );
+  }
+
+  int SetRasterColorTable( GDALColorTable *arg ) {
+    return GDALSetRasterColorTable( self, arg );
+  }
+
 /* NEEDED */
 /* ReadAsArray */
 /* WriteArray */
-/* GetRasterColorInterpretation */
-/* GetRasterColorTable */
-/* SetRasterColorTable */
 /* GetHistogram */
 /* ComputeBandStats */
 /* AdviseRead */
