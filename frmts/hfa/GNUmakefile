@@ -7,7 +7,7 @@ HFAOBJ  =	hfaopen.o hfaentry.o hfadictionary.o hfafield.o hfatype.o \
 		hfaband.o
 OBJ	=	$(HFAOBJ) hfadataset.o 
 
-ALL_C_FLAGS	=	$(GDAL_INCLUDE) $(CPPFLAGS)
+ALL_C_FLAGS	=	$(GDAL_INCLUDE) $(CFLAGS)
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 
