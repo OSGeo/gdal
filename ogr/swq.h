@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/04/29 19:32:47  warmerda
+ * added swq_select_parse, fix problem with where parsing and sorting code
+ *
  * Revision 1.6  2002/04/25 19:32:06  warmerda
  * added swq_select_reform_command
  *
@@ -171,6 +174,9 @@ typedef struct {
 
 const char *swq_select_preparse( const char *select_statement, 
                                  swq_select **select_info );
+const char *swq_select_expand_wildcard( swq_select *select_info,
+                                        int field_count, 
+                                        char **field_list );
 const char *swq_select_parse( swq_select *select_info,
                               int field_count, 
                               char **field_list,
