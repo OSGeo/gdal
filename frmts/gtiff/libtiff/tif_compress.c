@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_compress.c,v 1.5 2002/04/08 15:32:05 dron Exp $ */
+/* $Id: tif_compress.c,v 1.6 2004/09/02 13:27:38 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -37,16 +37,9 @@ TIFFNoEncode(TIFF* tif, char* method)
 	const TIFFCodec* c = TIFFFindCODEC(tif->tif_dir.td_compression);
 
 	if (c) { 
-	  if (! strncmp(c->name, "LZW", 3) ){ 
-	    TIFFError(tif->tif_name, 
-		      "%s %s encoding is no longer implemented due to Unisys patent enforcement", 
-		      c->name, method); 
-	  } else { 
-	    TIFFError(tif->tif_name, "%s %s encoding is not implemented",
-		      c->name, method);
-	  }
-	}
-	else { 
+	        TIFFError(tif->tif_name, "%s %s encoding is not implemented",
+                          c->name, method);
+	} else { 
 		TIFFError(tif->tif_name,
 			  "Compression scheme %u %s encoding is not implemented",
 		    tif->tif_dir.td_compression, method);
@@ -231,3 +224,5 @@ TIFFUnRegisterCODEC(TIFFCodec* c)
 	TIFFError("TIFFUnRegisterCODEC",
 	    "Cannot remove compression scheme %s; not registered", c->name);
 }
+
+/* vim: set ts=8 sts=8 sw=8 noet: */
