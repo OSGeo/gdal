@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/03/20 19:11:30  warmerda
+ * free pszBasename after it is used
+ *
  * Revision 1.16  2003/03/04 05:49:05  warmerda
  * added attribute indexing support
  *
@@ -431,7 +434,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
         nShapeType = SHPT_NULL;
     else
         nShapeType = -1;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Has the application overridden this with a special creation     */
 /*      option?                                                         */
@@ -589,8 +592,6 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
         CPLFree( pszWKT );
     }
 
-    CPLFree( pszBasename );
-
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
@@ -600,6 +601,8 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
                                  eType );
     
     poLayer->InitializeIndexSupport( pszBasename );
+
+    CPLFree( pszBasename );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
