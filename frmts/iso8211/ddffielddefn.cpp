@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/09/05 19:13:02  warmerda
+ * added repeating support when creating fields
+ *
  * Revision 1.14  2003/09/03 20:36:26  warmerda
  * added subfield writing support
  *
@@ -214,6 +217,9 @@ int DDFFieldDefn::Create( const char *pszTag, const char *pszFieldName,
 
     if( pszFormat != NULL )
         _formatControls = CPLStrdup( pszFormat );
+
+    if( pszDescription != NULL && *pszDescription == '*' )
+        bRepeatingSubfields = TRUE;
 
     return TRUE;
 }
