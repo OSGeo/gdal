@@ -40,6 +40,14 @@ Boundaryline:
 	as read).  This is the only product from which polygons can be
 	constructed.
 	
+Boundary Line 2000:
+	BL2000_LINK
+	BL2000_POLY
+	BL2000_COLLECTIONS
+
+	Similar to Boundaryline, but with different attributes, feature code
+	is largely unused, and the _POLY layer doesn't have a seed point.
+	
 BaseData.GB:
 	BASEDATA_POINT
 	BASEDATA_LINE

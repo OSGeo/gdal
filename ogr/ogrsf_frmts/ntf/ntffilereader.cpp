@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/12/06 19:31:16  warmerda
+ * added BL2000 support
+ *
  * Revision 1.12  2000/09/28 16:30:31  warmerda
  * avoid warnings
  *
@@ -409,8 +412,12 @@ int NTFFileReader::Open( const char * pszFilenameIn )
         nProduct = NPC_STRATEGI;
     else if( EQUALN(pszProduct,"Meridian",8) )
         nProduct = NPC_MERIDIAN;
-    else if( EQUAL(pszProduct,NTF_BOUNDARYLINE) )
+    else if( EQUAL(pszProduct,NTF_BOUNDARYLINE) 
+             && EQUALN(pszPVName,"A10N_FC",7) )
         nProduct = NPC_BOUNDARYLINE;
+    else if( EQUAL(pszProduct,NTF_BOUNDARYLINE) 
+             && EQUALN(pszPVName,"A20N_FC",7) )
+        nProduct = NPC_BL2000;
     else if( EQUALN(pszProduct,"BaseData.GB",11) )
         nProduct = NPC_BASEDATA;
     else if( EQUALN(pszProduct,"OSCAR_ASSET",11) )
@@ -1215,10 +1222,24 @@ int DefaultNTFRecordGrouper( NTFFileReader *, NTFRecord ** papoGroup,
         && papoGroup[1]->GetType() == NRT_CHAIN )
     {
         // We keep going till we get the seed geometry.
-        int 	iRec;
+        int 	iRec, bGotCPOLY=FALSE;
 
-        for( iRec = 0; papoGroup[iRec] != NULL; iRec++ ) {}
+        for( iRec = 0; papoGroup[iRec] != NULL; iRec++ ) 
+        {
+            if( papoGroup[iRec]->GetType() == NRT_CPOLY )
+                bGotCPOLY = TRUE;
+        }
 
+        if( bGotCPOLY 
+            && poCandidate->GetType() != NRT_GEOMETRY
+            && poCandidate->GetType() != NRT_ATTREC )
+            return FALSE;
+
+        /*
+         * this logic assumes we always get a point geometry with a CPOLY
+         * but that isn't always true, for instance with BL2000 data.  The
+         * preceed check will handle this case.
+         */
         if( papoGroup[iRec-1]->GetType() != NRT_GEOMETRY )
             return TRUE;
         else

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/12/06 19:31:16  warmerda
+ * added BL2000 support
+ *
  * Revision 1.8  1999/10/03 03:01:21  warmerda
  * Up width of real fields derived from "Rn,m" formats by one to account for
  * the implicit decimal in NTF that is explicit in the length in OGR.
@@ -61,7 +64,7 @@
 #include "ntf.h"
 #include "cpl_string.h"
 
-#define MAX_LINK	200
+#define MAX_LINK	400
 
 /************************************************************************/
 /*                         TranslateCodePoint()                         */
@@ -732,6 +735,232 @@ static OGRFeature *TranslateBoundarylineLink( NTFFileReader *poReader,
     // Attributes
     poReader->ApplyAttributeValues( poFeature, papoGroup,
                                     "FC", 1, "LK", 2, "HW", 3,
+                                    NULL );
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                        TranslateBL2000Poly()                         */
+/************************************************************************/
+
+static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
+                                        OGRNTFLayer *poLayer,
+                                        NTFRecord **papoGroup )
+
+{
+/* ==================================================================== */
+/*      Traditional POLYGON record groups.                              */
+/* ==================================================================== */
+    if( CSLCount((char **) papoGroup) == 3 
+        && papoGroup[0]->GetType() == NRT_POLYGON
+        && papoGroup[1]->GetType() == NRT_ATTREC 
+        && papoGroup[2]->GetType() == NRT_CHAIN  )
+    {
+        
+        OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+
+        // POLY_ID
+        poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
+
+        // NUM_PARTS
+        int		nNumLinks = atoi(papoGroup[2]->GetField( 9, 12 ));
+    
+        if( nNumLinks > MAX_LINK )
+            return poFeature;
+    
+        poFeature->SetField( 3, nNumLinks );
+
+        // DIR
+        int		i, anList[MAX_LINK];
+
+        for( i = 0; i < nNumLinks; i++ )
+            anList[i] = atoi(papoGroup[2]->GetField( 19+i*7, 19+i*7 ));
+
+        poFeature->SetField( 4, nNumLinks, anList );
+
+        // GEOM_ID_OF_LINK
+        for( i = 0; i < nNumLinks; i++ )
+            anList[i] = atoi(papoGroup[2]->GetField( 13+i*7, 18+i*7 ));
+
+        poFeature->SetField( 5, nNumLinks, anList );
+
+        // RingStart
+        int	nRingList = 0;
+        poFeature->SetField( 6, 1, &nRingList );
+
+        // Attributes
+        poReader->ApplyAttributeValues( poFeature, papoGroup,
+                                        "PI", 1, "HA", 2,
+                                        NULL );
+
+        return poFeature;
+    }
+
+/* ==================================================================== */
+/*      CPOLYGON Group                                                  */
+/* ==================================================================== */
+
+/* -------------------------------------------------------------------- */
+/*      First we do validation of the grouping.                         */
+/* -------------------------------------------------------------------- */
+    int		iRec;
+    
+    for( iRec = 0;
+         papoGroup[iRec] != NULL && papoGroup[iRec+1] != NULL
+             && papoGroup[iRec]->GetType() == NRT_POLYGON
+             && papoGroup[iRec+1]->GetType() == NRT_CHAIN;
+         iRec += 2 ) {}
+
+    if( CSLCount((char **) papoGroup) != iRec + 2 )
+        return NULL;
+
+    if( papoGroup[iRec]->GetType() != NRT_CPOLY
+        || papoGroup[iRec+1]->GetType() != NRT_ATTREC )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Collect the chains for each of the rings, and just aggregate    */
+/*      these into the master list without any concept of where the     */
+/*      boundaries are.  The boundary information will be emmitted      */
+/*	in the RingStart field.						*/
+/* -------------------------------------------------------------------- */
+    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    int		nNumLink = 0;
+    int		anDirList[MAX_LINK*2], anGeomList[MAX_LINK*2];
+    int		anRingStart[MAX_LINK], nRings = 0;
+
+    for( iRec = 0;
+         papoGroup[iRec] != NULL && papoGroup[iRec+1] != NULL
+             && papoGroup[iRec]->GetType() == NRT_POLYGON
+             && papoGroup[iRec+1]->GetType() == NRT_CHAIN;
+         iRec += 2 )
+    {
+        int		i, nLineCount;
+
+        nLineCount = atoi(papoGroup[iRec+1]->GetField(9,12));
+
+        anRingStart[nRings++] = nNumLink;
+        
+        for( i = 0; i < nLineCount && nNumLink < MAX_LINK*2; i++ )
+        {
+            anDirList[nNumLink] =
+                atoi(papoGroup[iRec+1]->GetField( 19+i*7, 19+i*7 ));
+            anGeomList[nNumLink] =
+                atoi(papoGroup[iRec+1]->GetField( 13+i*7, 18+i*7 ));
+            nNumLink++;
+        }
+
+        if( nNumLink == MAX_LINK*2 )
+        {
+            delete poFeature;
+            return NULL;
+        }
+    }
+
+    // NUM_PART
+    poFeature->SetField( 3, nNumLink );
+
+    // DIR
+    poFeature->SetField( 4, nNumLink, anDirList );
+
+    // GEOM_ID_OF_LINK
+    poFeature->SetField( 5, nNumLink, anGeomList );
+
+    // RingStart
+    poFeature->SetField( 6, nRings, anRingStart );
+
+    
+/* -------------------------------------------------------------------- */
+/*	collect information for whole complex polygon.			*/
+/* -------------------------------------------------------------------- */
+    // POLY_ID
+    poFeature->SetField( 0, atoi(papoGroup[iRec]->GetField( 3, 8 )) );
+
+    // Attributes
+    poReader->ApplyAttributeValues( poFeature, papoGroup,
+                                    "PI", 1, "HA", 2,
+                                    NULL );
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                        TranslateBL2000Link()                         */
+/************************************************************************/
+
+static OGRFeature *TranslateBL2000Link( NTFFileReader *poReader,
+                                        OGRNTFLayer *poLayer,
+                                        NTFRecord **papoGroup )
+
+{
+    if( CSLCount((char **) papoGroup) != 3
+        || papoGroup[0]->GetType() != NRT_LINEREC
+        || papoGroup[1]->GetType() != NRT_GEOMETRY
+        || papoGroup[2]->GetType() != NRT_ATTREC )
+        return NULL;
+        
+    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+
+    // LINE_ID
+    poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
+
+    // Geometry
+    int		nGeomId;
+    
+    poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
+                                                             &nGeomId));
+
+    // GEOM_ID
+    poFeature->SetField( 1, nGeomId );
+
+    // Attributes
+    poReader->ApplyAttributeValues( poFeature, papoGroup,
+                                    "FC", 2, "LK", 3, 
+                                    NULL );
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                     TranslateBL2000Collection()                      */
+/************************************************************************/
+
+static OGRFeature *TranslateBL2000Collection( NTFFileReader *poReader,
+                                              OGRNTFLayer *poLayer,
+                                              NTFRecord **papoGroup )
+
+{
+    if( CSLCount((char **) papoGroup) < 2
+        || papoGroup[0]->GetType() != NRT_COLLECT
+        || papoGroup[1]->GetType() != NRT_ATTREC )
+        return NULL;
+        
+    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+
+    // COLL_ID
+    poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
+
+    // NUM_PARTS
+    int		nNumLinks = atoi(papoGroup[0]->GetField( 9, 12 ));
+    
+    if( nNumLinks > MAX_LINK )
+        return poFeature;
+    
+    poFeature->SetField( 1, nNumLinks );
+
+    // POLY_ID
+    int		i, anList[MAX_LINK];
+
+    for( i = 0; i < nNumLinks; i++ )
+        anList[i] = atoi(papoGroup[0]->GetField( 15+i*8, 20+i*8 ));
+
+    poFeature->SetField( 2, nNumLinks, anList );
+
+    // Attributes
+    poReader->ApplyAttributeValues( poFeature, papoGroup,
+                                    "AI", 3, "OP", 4, "NM", 5, "TY", 6, 
+                                    "AC", 7, "NB", 8, "NA", 9,
                                     NULL );
 
     return poFeature;
@@ -1670,6 +1899,39 @@ void NTFFileReader::EstablishLayers()
                         "ADMIN_AREA_ID", OFTInteger, 6, 0, 
                         "OPCS_CODE", OFTString, 6, 0,
                         "ADMIN_NAME", OFTString, 0, 0,
+                        NULL );
+    }
+    else if( GetProductId() == NPC_BL2000 )
+    {
+        EstablishLayer( "BL2000_LINK", wkbLineString,
+                        TranslateBL2000Link, NRT_LINEREC, NULL,
+                        "LINE_ID", OFTInteger, 6, 0,
+                        "GEOM_ID", OFTInteger, 6, 0,
+                        "FEAT_CODE", OFTString, 4, 0,
+                        "GLOBAL_LINK_ID", OFTInteger, 10, 0,
+                        NULL );
+        EstablishLayer( "BL2000_POLY", wkbNone,
+                        TranslateBL2000Poly, NRT_POLYGON, NULL,
+                        "POLY_ID", OFTInteger, 6, 0,
+                        "GLOBAL_SEED_ID", OFTInteger, 6, 0,
+                        "HECTARES", OFTReal, 12, 3,
+                        "NUM_PARTS", OFTInteger, 4, 0, 
+                        "DIR", OFTIntegerList, 1, 0,
+                        "GEOM_ID_OF_LINK", OFTIntegerList, 6, 0,
+                        "RingStart", OFTIntegerList, 6, 0,
+                        NULL );
+        EstablishLayer( "BL2000_COLLECTIONS", wkbNone,
+                        TranslateBL2000Collection, NRT_COLLECT, NULL,
+                        "COLL_ID", OFTInteger, 6, 0,
+                        "NUM_PARTS", OFTInteger, 4, 0,
+                        "POLY_ID", OFTIntegerList, 6, 0,
+                        "ADMIN_AREA_ID", OFTInteger, 6, 0, 
+                        "CENSUS_CODE", OFTString, 6, 0,
+                        "ADMIN_NAME", OFTString, 0, 0,
+                        "AREA_TYPE", OFTString, 2, 0,
+                        "AREA_CODE", OFTString, 3, 0,
+                        "NON_TYPE_CODE", OFTString, 3, 0,
+                        "NON_INLAND_AREA", OFTReal, 12, 3,
                         NULL );
     }
     else if( GetProductId() == NPC_BASEDATA )

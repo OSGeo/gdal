@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/12/06 19:31:16  warmerda
+ * added BL2000 support
+ *
  * Revision 1.11  1999/11/04 21:11:21  warmerda
  * Added TestCapability() methods for creation overhaul.
  *
@@ -137,6 +140,8 @@
 
 #define NPC_LANDRANGER_DTM	16
 #define NPC_LANDFORM_PROFILE_DTM 17
+
+#define NPC_BL2000              18
 
 /************************************************************************/
 /*                              NTFRecord                               */
