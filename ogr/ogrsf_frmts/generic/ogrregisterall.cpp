@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/10/07 05:07:41  warmerda
+ * Only include ODBC support if enabled.
+ *
  * Revision 1.14  2003/10/06 19:16:38  warmerda
  * added ODBC support
  *
@@ -94,7 +97,9 @@ void OGRRegisterAll()
     RegisterOGRAVCBin();
     RegisterOGRREC();
     RegisterOGRMEM();
+#ifdef ODBC_ENABLED
     RegisterOGRODBC();
+#endif
 //    RegisterOGRE00();
 #ifdef OGDI_ENABLED
     RegisterOGROGDI();
