@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/04/25 19:33:23  warmerda
+ * avoid warning
+ *
  * Revision 1.9  2002/04/25 19:32:06  warmerda
  * added swq_select_reform_command
  *
@@ -491,7 +494,7 @@ swq_subexpr_compile( char **tokens,
 {
     swq_expr	*op;
     const char  *error;
-    int         op_code;
+    int         op_code = 0;
 
     *tokens_consumed = 0;
     *expr_out = NULL;
