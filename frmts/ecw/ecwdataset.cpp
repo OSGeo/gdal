@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/04/05 20:49:34  warmerda
+ * allow jpeg2000 files to be handled
+ *
  * Revision 1.19  2004/03/30 17:33:51  warmerda
  * fixed last fix for ecwp:
  *
@@ -98,6 +101,8 @@
 CPL_CVSID("$Id$");
 
 #ifdef FRMT_ecw
+
+static unsigned char jpc_header[] = {0xff,0x4f};
 
 /* As of July 2002 only uncompress support is available on Unix */
 #ifdef WIN32
@@ -588,11 +593,15 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      This has to either be a file on disk ending in .ecw or a        */
 /*      ecwp: protocol url.                                             */
 /* -------------------------------------------------------------------- */
-    if( (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"ecw")
-         || poOpenInfo->fp == NULL)
-        && !EQUALN(poOpenInfo->pszFilename,"ecwp:",5) )
+    if( poOpenInfo->nHeaderBytes >= 16 
+        && memcmp( poOpenInfo->pabyHeader, jpc_header, 
+                   sizeof(jpc_header) ) == 0 )
+        /* accept JPEG2000 files /;
+    else if( (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"ecw")
+              || poOpenInfo->fp == NULL)
+             && !EQUALN(poOpenInfo->pszFilename,"ecwp:",5) )
         return( NULL );
-
+    
 /* -------------------------------------------------------------------- */
 /*      Open the client interface.                                      */
 /* -------------------------------------------------------------------- */
