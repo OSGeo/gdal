@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/11/23 18:54:17  warmerda
+ * added CREATIONDATATYPES metadata for drivers
+ *
  * Revision 1.17  2002/10/02 13:10:16  warmerda
  * Fixed bug in setting of Y offset derived from yllcenter,  was off 1 pixel.
  * As per GRASS RT bug https://intevation.de/rt/webrt?serial_num=1332.
@@ -631,6 +634,8 @@ void GDALRegister_AAIGrid()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#AAIGrid" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "asc" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte UInt16 Int16 Float32" );
 
         poDriver->pfnOpen = AAIGDataset::Open;
         poDriver->pfnCreateCopy = AAIGCreateCopy;

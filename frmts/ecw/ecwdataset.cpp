@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/11/23 18:54:17  warmerda
+ * added CREATIONDATATYPES metadata for drivers
+ *
  * Revision 1.10  2002/10/01 19:34:27  warmerda
  * fixed problems with supersampling by forcing through fullres blocks
  *
@@ -731,6 +734,8 @@ void GDALRegister_ECW()
         poDriver->pfnOpen = ECWDataset::Open;
 #ifdef HAVE_COMPRESS
         poDriver->pfnCreateCopy = ECWCreateCopy;
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte" );
 #endif
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

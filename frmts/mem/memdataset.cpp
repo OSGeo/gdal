@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/11/23 18:54:17  warmerda
+ * added CREATIONDATATYPES metadata for drivers
+ *
  * Revision 1.11  2002/11/20 05:18:09  warmerda
  * added AddBand() implementation
  *
@@ -625,6 +628,8 @@ void GDALRegister_MEM()
         poDriver->SetDescription( "MEM" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "In Memory Raster" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64" );
 
         poDriver->pfnOpen = MEMDataset::Open;
         poDriver->pfnCreate = MEMDataset::Create;

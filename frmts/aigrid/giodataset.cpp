@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/11/23 18:54:17  warmerda
+ * added CREATIONDATATYPES metadata for drivers
+ *
  * Revision 1.18  2002/09/04 06:50:36  warmerda
  * avoid static driver pointers
  *
@@ -728,6 +731,8 @@ void GDALRegister_AIGrid2()
                                    "Arc/Info Binary Grid (avgridio.dll)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#GIO" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Float32" );
         
         poDriver->pfnOpen = GIODataset::Open;
         poDriver->pfnCreate = GIODataset::Create;

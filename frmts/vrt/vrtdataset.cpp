@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/11/23 18:54:17  warmerda
+ * added CREATIONDATATYPES metadata for drivers
+ *
  * Revision 1.7  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -782,6 +785,8 @@ void GDALRegister_VRT()
         poDriver->SetDescription( "VRT" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Virtual Raster" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64" );
         
         poDriver->pfnOpen = VRTDataset::Open;
         poDriver->pfnCreateCopy = VRTCreateCopy;

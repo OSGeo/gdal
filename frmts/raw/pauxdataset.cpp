@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/11/23 18:54:17  warmerda
+ * added CREATIONDATATYPES metadata for drivers
+ *
  * Revision 1.21  2002/10/07 19:27:02  warmerda
  * Fixed small memory leak in ::Open().
  *
@@ -1144,6 +1147,8 @@ void GDALRegister_PAux()
                                    "PCI .aux Labelled" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#PAux" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte Int16 UInt16 Float32" );
 
         poDriver->pfnOpen = PAuxDataset::Open;
         poDriver->pfnCreate = PAuxDataset::Create;

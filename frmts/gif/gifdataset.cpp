@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.14  2002/11/23 18:54:17  warmerda
+ * added CREATIONDATATYPES metadata for drivers
+ *
  * Revision 1.13  2002/10/28 19:25:00  warmerda
  * Ensure that MakeMapObject is called with sizes that are powers of 2.
  *
@@ -640,6 +643,8 @@ void GDALRegister_GIF()
                                    "frmt_gif.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gif" );
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/gif" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte" );
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>\n"

@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2002/11/23 18:54:17  warmerda
+ * added CREATIONDATATYPES metadata for drivers
+ *
  * Revision 1.6  2002/10/10 11:31:12  dron
  * Fix for buiding GDAL with JasPer software under Windows.
  *
@@ -625,6 +628,8 @@ void GDALRegister_JPEG2000()
                                    "JPEG-2000 part 1 (ISO/IEC 15444-1)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_jpeg2000.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte Int16 UInt16" );
 
         poDriver->pfnOpen = JPEG2000Dataset::Open;
         poDriver->pfnCreateCopy = JPEG2000CreateCopy;
