@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/10/05 19:56:51  fwarmerdam
+ * If a reader has been instantiated, delete it in ~OGRGMLLayer().
+ *
  * Revision 1.13  2004/07/20 17:32:03  warmerda
  * restructure GetNextFeature() to apply spatial and attribute queries
  *
@@ -126,6 +129,9 @@ OGRGMLLayer::~OGRGMLLayer()
 
     if( poFilterGeom != NULL )
         delete poFilterGeom;
+
+    if( !bWriter )
+        delete poDS->GetReader();
 }
 
 /************************************************************************/
