@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/10/07 13:14:18  warmerda
+ * added association id support
+ *
  * Revision 1.22  2002/10/07 12:56:04  warmerda
  * Added DGN_ASSOC_ID.
  *
@@ -565,6 +568,7 @@ int  CPL_DLL         DGNGotoElement( DGNHandle, int );
 void CPL_DLL         DGNClose( DGNHandle );
 int  CPL_DLL         DGNLookupColor( DGNHandle, int, int *, int *, int * );
 int  CPL_DLL         DGNGetShapeFillInfo( DGNHandle, DGNElemCore *, int * );
+int  CPL_DLL         DGNGetAssocID( DGNHandle, DGNElemCore * );
 
 void CPL_DLL         DGNDumpElement( DGNHandle, DGNElemCore *, FILE * );
 const char CPL_DLL  *DGNTypeToName( int );

@@ -37,6 +37,8 @@ Release 1.5
  o Fixed collection of background color in color table (color 255) as per
    bug report by Henk Jan Priester (Justcroft Technical Systems). 
 
+ o Added support for association ids (DGNLT_ASSOC_ID, DGNGetAssocID()). 
+
 Release 1.4
 -----------
 
