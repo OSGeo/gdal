@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/08/17 15:40:40  warmerda
+ * track capabilities and update mode better
+ *
  * Revision 1.4  2004/08/16 21:29:48  warmerda
  * added output support
  *
@@ -85,9 +88,9 @@ int OGRCSVDataSource::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
-        return TRUE;
+        return bUpdate;
     else if( EQUAL(pszCap,ODsCDeleteLayer) )
-        return TRUE;
+        return bUpdate;
     else
         return FALSE;
 }
@@ -185,9 +188,17 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename )
 /* -------------------------------------------------------------------- */
     FILE       * fp;
 
-    fp = VSIFOpen( pszFilename, "r" );
+    if( bUpdate )
+        fp = VSIFOpen( pszFilename, "rb+" );
+    else
+        fp = VSIFOpen( pszFilename, "rb" );
     if( fp == NULL )
+    {
+        CPLError( CE_Warning, CPLE_OpenFailed, 
+                  "Failed to open %s, %s.", 
+                  pszFilename, VSIStrerror( errno ) );
         return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read and parse a line.  Did we get multiple fields?             */
@@ -212,7 +223,7 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename )
                                              sizeof(void*) * nLayers);
     
     papoLayers[nLayers-1] = 
-        new OGRCSVLayer( CPLGetBasename(pszFilename), fp, FALSE );
+        new OGRCSVLayer( CPLGetBasename(pszFilename), fp, FALSE, bUpdate );
 
     return TRUE;
 }
@@ -228,7 +239,6 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
                                char ** papszOptions  )
 
 {
-
 /* -------------------------------------------------------------------- */
 /*      Verify that the datasource is a directory.                      */
 /* -------------------------------------------------------------------- */
@@ -285,7 +295,7 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
     papoLayers = (OGRCSVLayer **) CPLRealloc(papoLayers, 
                                              sizeof(void*) * nLayers);
     
-    papoLayers[nLayers-1] = new OGRCSVLayer( pszLayerName, fp, TRUE );
+    papoLayers[nLayers-1] = new OGRCSVLayer( pszLayerName, fp, TRUE, TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Was a partiuclar CRLF order requested?                          */
