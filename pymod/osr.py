@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.6  2000/08/30 20:31:25  warmerda
+# added some more methods
+#
 # Revision 1.5  2000/08/30 20:06:14  warmerda
 # added projection method list functions
 #
@@ -110,6 +113,12 @@ class SpatialReference:
 
     def SetUTM(self, zone, is_north = 1):
         return _gdal.OSRSetUTM(self._o, zone, is_north )
+
+    def SetAttrValue( self, node_path, value ):
+        return _gdal.OSRSetAttrValue( self._o, node_path, value )
+    
+    def SetProjParm( self, name, value ):
+        return _gdal.OSRSetProjParm( self._o, name, value )
 
     
 class CoordinateTransformation:
