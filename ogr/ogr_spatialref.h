@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2002/12/16 17:06:51  warmerda
+ * added GetPrimeMeridian() method
+ *
  * Revision 1.44  2002/12/15 23:42:59  warmerda
  * added initial support for normalizing proj params
  *
@@ -319,6 +322,8 @@ class CPL_DLL OGRSpatialReference
 
     OGRErr      SetAngularUnits( const char *pszName, double dfInRadians );
     double      GetAngularUnits( char ** = NULL ) const;
+
+    double      GetPrimeMeridian( char ** = NULL ) const;
 
     int         IsGeographic() const;
     int         IsProjected() const;
