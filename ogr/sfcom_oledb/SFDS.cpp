@@ -29,17 +29,19 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/08/30 15:27:05  warmerda
+ * fixed include file order to resolve properties bug - stdafx.h first\!
+ *
  * Revision 1.1  2002/08/29 18:55:44  warmerda
  * New
  *
  */
 
-#include <assert.h>
-#include "cpl_error.h"
 #include "stdafx.h"
+#include <assert.h>
 #include "SF.h"
-#include "SFSess.h"
 #include "SFDS.h"
+
 #include "cpl_string.h"
 
 /************************************************************************/
@@ -53,6 +55,7 @@ CSFSource::CSFSource()
     m_bSRSListInitialized = FALSE;
     m_nSRSCount = 0;
     m_papszSRSList = NULL;
+
 }
 
 /************************************************************************/
@@ -69,6 +72,8 @@ CSFSource::~CSFSource()
     }
 
     CSLDestroy( m_papszSRSList );
+    
+//    DumpProperties();
 }
 
 /************************************************************************/
@@ -189,4 +194,61 @@ int CSFSource::GetSRSID( const char *pszWKT )
         nSRSID = CSLFindString( m_papszSRSList, "" );
 
     return nSRSID;
+}
+
+/************************************************************************/
+/*                           FinalConstruct()                           */
+/************************************************************************/
+HRESULT CSFSource::FinalConstruct()
+{
+    HRESULT hr;
+
+    CPLDebug( "OGR_OLEDB", "FinalConstruct() -> FInit()" );
+
+    hr = FInit();
+
+//    DumpProperties();
+
+    return hr;
+}
+
+/************************************************************************/
+/*                           DumpProperties()                           */
+/************************************************************************/
+
+void CSFSource::DumpProperties()
+
+{
+    CUtlProps<CSFSource> *pUtlProps = static_cast<CUtlProps<CSFSource> *>(this);
+
+    CPLDebug( "OGR_OLEDB", "pUtlProps = %p", pUtlProps );
+
+    CPLDebug( "OGR_OLEDB", 
+              "m_pUProp = %p,"
+              "m_cUPropSet = %d,"
+              "sizeof(UPROPVAL) = %d, sizeof(ATL::UPROPVAL) = %d"
+              ,
+              pUtlProps->m_pUProp,
+              pUtlProps->m_cUPropSet,
+              sizeof(UPROPVAL), sizeof(ATL::UPROPVAL) );
+
+    for( int ulPropSet = 0; ulPropSet < pUtlProps->m_cUPropSet; ulPropSet++ )
+    {
+        CPLDebug( "OGR_OLEDB", "Property Set %d", ulPropSet );
+            
+        UPROPVAL* pUPropVal = pUtlProps->m_pUProp[ulPropSet].pUPropVal;
+        for(ULONG ulPropId=0; 
+            ulPropId < pUtlProps->m_pUProp[ulPropSet].cPropIds; 
+            ulPropId++)
+        {
+            UPROPVAL *pThisProp = pUPropVal + ulPropId;
+
+            CPLDebug( "OGR_OLEDB", "[%d]pUPropVal[%d].pCColumnIds = %p", 
+                      ulPropSet, ulPropId, pThisProp->pCColumnIds );
+        }
+/*
+  delete[] m_pUProp[ulPropSet].rgpUPropInfo;
+  delete[] m_pUProp[ulPropSet].pUPropVal;
+*/
+    }
 }
