@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2001/08/15 15:05:44  warmerda
+ * return magnitude for complex samples in random sampler
+ *
  * Revision 1.24  2001/07/18 04:04:30  warmerda
  * added CPL_CVSID
  *
@@ -884,7 +887,7 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
          iSampleBlock < nBlocksPerRow * nBlocksPerColumn;
          iSampleBlock += nSampleRate )
     {
-        double dfValue = 0.0;
+        double dfValue = 0.0, dfReal, dfImag;
         int  iXBlock, iYBlock, iOffset;
         GDALRasterBlock *poBlock;
 
@@ -924,16 +927,24 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
                 dfValue = ((double *) poBlock->GetDataRef())[iOffset];
                 break;
               case GDT_CInt16:
-                dfValue = ((GInt16 *) poBlock->GetDataRef())[iOffset*2];
+                dfReal = ((GInt16 *) poBlock->GetDataRef())[iOffset*2];
+                dfImag = ((GInt16 *) poBlock->GetDataRef())[iOffset*2+1];
+                dfValue = sqrt(dfReal*dfReal + dfImag*dfImag);
                 break;
               case GDT_CInt32:
-                dfValue = ((GInt32 *) poBlock->GetDataRef())[iOffset*2];
+                dfReal = ((GInt32 *) poBlock->GetDataRef())[iOffset*2];
+                dfImag = ((GInt32 *) poBlock->GetDataRef())[iOffset*2+1];
+                dfValue = sqrt(dfReal*dfReal + dfImag*dfImag);
                 break;
               case GDT_CFloat32:
-                dfValue = ((float *) poBlock->GetDataRef())[iOffset*2];
+                dfReal = ((float *) poBlock->GetDataRef())[iOffset*2];
+                dfImag = ((float *) poBlock->GetDataRef())[iOffset*2+1];
+                dfValue = sqrt(dfReal*dfReal + dfImag*dfImag);
                 break;
               case GDT_CFloat64:
-                dfValue = ((double *) poBlock->GetDataRef())[iOffset*2];
+                dfReal = ((double *) poBlock->GetDataRef())[iOffset*2];
+                dfImag = ((double *) poBlock->GetDataRef())[iOffset*2+1];
+                dfValue = sqrt(dfReal*dfReal + dfImag*dfImag);
                 break;
               default:
                 CPLAssert( FALSE );
