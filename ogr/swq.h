@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/04/25 19:32:06  warmerda
+ * added swq_select_reform_command
+ *
  * Revision 1.5  2002/04/25 16:06:57  warmerda
  * added more general distinct support
  *
@@ -174,6 +177,10 @@ const char *swq_select_parse( swq_select *select_info,
                               swq_field_type *field_types,
                               int parse_flags );
 void swq_select_free( swq_select *select_info );
+
+const char *swq_reform_command( swq_select *select_info );
+void swq_free( void * );
+void *swq_malloc( int );
 
 const char *swq_select_finish_summarize( swq_select *select_info );
 const char *swq_select_summarize( swq_select *select_info, 

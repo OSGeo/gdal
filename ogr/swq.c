@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/04/25 19:32:06  warmerda
+ * added swq_select_reform_command
+ *
  * Revision 1.8  2002/04/25 16:06:57  warmerda
  * added more general distinct support
  *
@@ -72,6 +75,26 @@ static char	swq_error[1024];
 
 #define SWQ_OP_IS_LOGICAL(op) ((op) == SWQ_OR || (op) == SWQ_AND || (op) == SWQ_NOT)
 #define SWQ_OP_IS_POSTUNARY(op) ((op) == SWQ_ISNULL || (op) == SWQ_ISNOTNULL)
+
+/************************************************************************/
+/*                              swq_free()                              */
+/************************************************************************/
+
+void swq_free( void *pMemory )
+
+{
+    SWQ_FREE( pMemory );
+}
+
+/************************************************************************/
+/*                             swq_malloc()                             */
+/************************************************************************/
+
+void *swq_malloc( int nSize )
+
+{
+    return SWQ_MALLOC(nSize);
+}
 
 /************************************************************************/
 /*                           swq_isalphanum()                           */
@@ -1690,6 +1713,141 @@ void swq_select_free( swq_select *select_info )
         SWQ_FREE( select_info->order_defs );
 
     SWQ_FREE( select_info );
+}
+
+/************************************************************************/
+/*                         swq_reform_command()                         */
+/*                                                                      */
+/*      Rebuild the command string from the components in the           */
+/*      swq_select structure.  The where expression is taken from       */
+/*      the whole_where_clause instead of being reformed.  The          */
+/*      results of forming the command are applied to the raw_select    */
+/*      field.                                                          */
+/************************************************************************/
+
+#define CHECK_COMMAND( new_bytes ) grow_command( &command, &max_cmd_size, &cmd_size, new_bytes );
+
+static void grow_command( char **p_command, int *max_cmd_size, int *cmd_size,
+                          int new_bytes );
+
+const char *swq_reform_command( swq_select *select_info )
+
+{
+    char	*command;
+    int         max_cmd_size = 10;
+    int         cmd_size = 0;
+    int         i;
+
+    command = SWQ_MALLOC(max_cmd_size);
+
+    strcpy( command, "SELECT " );
+
+/* -------------------------------------------------------------------- */
+/*      Handle the field list.                                          */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < select_info->result_columns; i++ )
+    {
+        swq_col_def *def = select_info->column_defs + i;
+        const char *distinct = "";
+
+        if( def->distinct_flag )
+            distinct = "DISTINCT ";
+
+        if( i != 0 )
+        {
+            CHECK_COMMAND(3);
+            strcat( command + cmd_size, ", " );
+        }
+
+        if( def->col_func_name != NULL )
+        {
+            CHECK_COMMAND( strlen(def->col_func_name) 
+                           + strlen(def->field_name) + 15 );
+            sprintf( command + cmd_size, "%s(%s%s)", 
+                     def->col_func_name, distinct, def->field_name );
+        }
+        else
+        {
+            CHECK_COMMAND( strlen(def->field_name) + 15 );
+            sprintf( command + cmd_size, "%s%s", distinct, def->field_name );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle the FROM tablename.                                      */
+/* -------------------------------------------------------------------- */
+    CHECK_COMMAND( 10 + strlen(select_info->from_table) );
+    sprintf( command + cmd_size, " FROM %s", select_info->from_table );
+
+/* -------------------------------------------------------------------- */
+/*      Add WHERE statement if it exists.                               */
+/* -------------------------------------------------------------------- */
+    if( select_info->whole_where_clause != NULL )
+    {
+        CHECK_COMMAND( 12 + strlen(select_info->whole_where_clause) );
+        sprintf( command + cmd_size, " WHERE %s", 
+                 select_info->whole_where_clause );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add order by clause(s) if appropriate.                          */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < select_info->order_specs; i++ )
+    {
+        swq_order_def *def = select_info->order_defs + i;
+
+        if( i == 0 )
+        {
+            CHECK_COMMAND( 12 );
+            sprintf( command + cmd_size, " ORDER BY " );
+        }
+        else
+        {
+            CHECK_COMMAND( 3 );
+            sprintf( command + cmd_size, ", " );
+        }
+
+        CHECK_COMMAND( strlen(def->field_name)+1 );
+        strcat( command + cmd_size, def->field_name );
+
+        CHECK_COMMAND( 6 );
+        if( def->ascending_flag )
+            strcat( command + cmd_size, " ASC" );
+        else
+            strcat( command + cmd_size, " DESC" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Assign back to the select info.                                 */
+/* -------------------------------------------------------------------- */
+    SWQ_FREE( select_info->raw_select );
+    select_info->raw_select = command;
+
+    return NULL;
+}
+
+/* helper for the swq_reform_command() function. */
+
+static void grow_command( char **p_command, int *max_cmd_size, int *cmd_size,
+                          int new_bytes )
+
+{
+    char *new_command;
+
+    *cmd_size += strlen(*p_command + *cmd_size);
+
+    if( *cmd_size + new_bytes < *max_cmd_size - 1 )
+        return;
+
+    *max_cmd_size = 2 * *max_cmd_size;
+    if( *max_cmd_size < *cmd_size + new_bytes )
+        *max_cmd_size = *cmd_size + new_bytes + 100;
+
+    new_command = SWQ_MALLOC(*max_cmd_size);
+
+    strcpy( new_command, *p_command );
+    SWQ_FREE( *p_command );
+    *p_command = new_command;
 }
 
 
