@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2003/04/16 19:55:35  warmerda
+ * added esoteric creation options
+ *
  * Revision 1.4  2003/04/16 17:48:23  warmerda
  * Additional of rudimentary JP2 palette support.
  *
@@ -1311,7 +1314,7 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Set some additional parameters.                                 */
+/*      Set some particular parameters.                                 */
 /* -------------------------------------------------------------------- */
     oCodeStream.access_siz()->parse_string(
         CPLSPrintf("Clayers=%d",layer_count));
@@ -1324,9 +1327,31 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
     else
         oCodeStream.access_siz()->parse_string("Creversible=no");
 
-    oCodeStream.access_siz()->parse_string("ORGgen_plt=yes");
-    oCodeStream.access_siz()->parse_string("Corder=PCRL");
-    oCodeStream.access_siz()->parse_string("Cprecincts={512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}");
+/* -------------------------------------------------------------------- */
+/*      Set some user-overridable parameters.                           */
+/* -------------------------------------------------------------------- */
+    int iParm;
+    char *apszParms[] = { "Corder", "PCRL", 
+                          "Cprecincts", "{512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}",
+                          "ORGgen_plt", "yes", 
+                          "Cmodes", NULL, 
+                          "Clevels", NULL,
+                          NULL, NULL };
+
+    for( iParm = 0; apszParms[iParm] != NULL; iParm += 2 )
+    {
+        const char *pszValue = 
+            CSLFetchNameValue( papszOptions, apszParms[iParm] );
+        
+        if( pszValue == NULL )
+            pszValue = apszParms[iParm+1];
+
+        if( pszValue != NULL )
+        {
+            oCodeStream.access_siz()->parse_string(
+                CPLSPrintf( "%s=%s", apszParms[iParm], pszValue ) );
+        }
+    }
 
     oCodeStream.access_siz()->finalize_all();
         
