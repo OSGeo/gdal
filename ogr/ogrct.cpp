@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/01/21 22:04:34  warmerda
+ * don't report errors for pj_get_def or pj_dalloc missing
+ *
  * Revision 1.19  2002/12/09 17:24:33  warmerda
  * fixed PROJ_STATIC settings for pj_strerrno
  *
@@ -216,10 +219,14 @@ static int LoadProjLibrary()
         CPLGetSymbol( pszLibName, "pj_get_errno_ref" );
     pfn_pj_strerrno = (char *(*)(int))
         CPLGetSymbol( pszLibName, "pj_strerrno" );
+
+    CPLPushErrorHandler( CPLQuietErrorHandler );
     pfn_pj_get_def = (char *(*)(projPJ,int))
         CPLGetSymbol( pszLibName, "pj_get_def" );
     pfn_pj_dalloc = (void (*)(void*))
         CPLGetSymbol( pszLibName, "pj_dalloc" );
+    CPLPopErrorHandler();
+
 #endif
 
     if( pfn_pj_transform == NULL )
