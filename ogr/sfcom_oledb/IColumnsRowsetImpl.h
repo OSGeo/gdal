@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/05/31 02:55:30  warmerda
+ * return NULL values for OGC IColumnRowset fields on non-spatial fields
+ *
  * Revision 1.2  2001/05/30 20:27:51  warmerda
  * strip LFs
  *
@@ -44,6 +47,7 @@
 
 #include <atlcom.h>
 #include <atldb.h>
+#include "ICRRowsetImpl.h"
 
 #define PROVIDER_COLUMN_ENTRY_DBID(name, dbid, ordinal, member) \
 { \
@@ -66,76 +70,75 @@
 
 class CColumnsRowsetRow
 {
-public:
+  public:
 
-	WCHAR    m_DBCOLUMN_IDNAME[129];
-	GUID     m_DBCOLUMN_GUID;
-   ULONG    m_DBCOLUMN_PROPID;
-   WCHAR    m_DBCOLUMN_NAME[129];
-   ULONG    m_DBCOLUMN_NUMBER;
-   USHORT   m_DBCOLUMN_TYPE;
-   IUnknown *m_DBCOLUMN_TYPEINFO;
-   ULONG    m_DBCOLUMN_COLUMNSIZE;
-   USHORT   m_DBCOLUMN_PRECISION;
-   USHORT   m_DBCOLUMN_SCALE;
-   ULONG    m_DBCOLUMN_FLAGS;
-   WCHAR    m_DBCOLUMN_BASECOLUMNNAME[129];
-   WCHAR    m_DBCOLUMN_BASETABLENAME[129];   
-   BOOL     m_DBCOLUMN_KEYCOLUMN;
+    WCHAR    m_DBCOLUMN_IDNAME[129];
+    GUID     m_DBCOLUMN_GUID;
+    ULONG    m_DBCOLUMN_PROPID;
+    WCHAR    m_DBCOLUMN_NAME[129];
+    ULONG    m_DBCOLUMN_NUMBER;
+    USHORT   m_DBCOLUMN_TYPE;
+    IUnknown *m_DBCOLUMN_TYPEINFO;
+    ULONG    m_DBCOLUMN_COLUMNSIZE;
+    USHORT   m_DBCOLUMN_PRECISION;
+    USHORT   m_DBCOLUMN_SCALE;
+    ULONG    m_DBCOLUMN_FLAGS;
+    WCHAR    m_DBCOLUMN_BASECOLUMNNAME[129];
+    WCHAR    m_DBCOLUMN_BASETABLENAME[129];   
+    BOOL     m_DBCOLUMN_KEYCOLUMN;
 
-   // special to our provider.
-   unsigned int m_nGeomType;
-   int	    m_nSpatialRefId;
-   WCHAR    m_pszSpatialRefSystem[10240];
+    // special to our provider.
+    unsigned int m_nGeomType;
+    int	    m_nSpatialRefId;
+    WCHAR    m_pszSpatialRefSystem[10240];
    
-	CColumnsRowsetRow()
+    CColumnsRowsetRow()
 	{
-		ClearMembers();
+            ClearMembers();
 	}
 
-	void ClearMembers()
+    void ClearMembers()
 	{
-      m_DBCOLUMN_IDNAME[0] = NULL;
-      m_DBCOLUMN_GUID = GUID_NULL;
-      m_DBCOLUMN_PROPID = 0;
-      m_DBCOLUMN_NAME[0] = 0;
-      m_DBCOLUMN_NUMBER = 0;
-      m_DBCOLUMN_TYPE = 0;
-      m_DBCOLUMN_TYPEINFO = 0;
-      m_DBCOLUMN_COLUMNSIZE = 0;
-      m_DBCOLUMN_PRECISION = 0;
-      m_DBCOLUMN_SCALE = 0;
-      m_DBCOLUMN_FLAGS = 0;
-      m_DBCOLUMN_BASECOLUMNNAME[0] = NULL;
-      m_DBCOLUMN_BASETABLENAME[0] = NULL;
-      m_DBCOLUMN_KEYCOLUMN = FALSE;
-      m_nGeomType = 0;
-      m_nSpatialRefId = 0;
-      lstrcpyW(m_pszSpatialRefSystem,L"" );
-   }
+            m_DBCOLUMN_IDNAME[0] = NULL;
+            m_DBCOLUMN_GUID = GUID_NULL;
+            m_DBCOLUMN_PROPID = 0;
+            m_DBCOLUMN_NAME[0] = 0;
+            m_DBCOLUMN_NUMBER = 0;
+            m_DBCOLUMN_TYPE = 0;
+            m_DBCOLUMN_TYPEINFO = 0;
+            m_DBCOLUMN_COLUMNSIZE = 0;
+            m_DBCOLUMN_PRECISION = 0;
+            m_DBCOLUMN_SCALE = 0;
+            m_DBCOLUMN_FLAGS = 0;
+            m_DBCOLUMN_BASECOLUMNNAME[0] = NULL;
+            m_DBCOLUMN_BASETABLENAME[0] = NULL;
+            m_DBCOLUMN_KEYCOLUMN = FALSE;
+            m_nGeomType = 0;
+            m_nSpatialRefId = 0;
+            lstrcpyW(m_pszSpatialRefSystem,L"" );
+        }
 
 
-BEGIN_PROVIDER_COLUMN_MAP(CColumnsRowsetRow)
+    BEGIN_PROVIDER_COLUMN_MAP(CColumnsRowsetRow)
 	PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_IDNAME", DBCOLUMN_IDNAME, 1, m_DBCOLUMN_IDNAME)
-   PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_GUID", DBCOLUMN_GUID, 2, m_DBCOLUMN_GUID)
-   PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_PROPID", DBCOLUMN_PROPID, 3, m_DBCOLUMN_PROPID)
-   PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_NAME", DBCOLUMN_NAME, 4, m_DBCOLUMN_NAME)
-   PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_NUMBER", DBCOLUMN_NUMBER, 5, m_DBCOLUMN_NUMBER)
-   PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_TYPE", DBCOLUMN_TYPE, 6, m_DBCOLUMN_TYPE)
-   PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_TYPEINFO", DBCOLUMN_TYPEINFO, 7, m_DBCOLUMN_TYPEINFO)
-   PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_COLUMNSIZE", DBCOLUMN_COLUMNSIZE, 8, m_DBCOLUMN_COLUMNSIZE)
-   PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_PRECISION", DBCOLUMN_PRECISION, 9, m_DBCOLUMN_PRECISION)
-   PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_SCALE", DBCOLUMN_SCALE, 10, m_DBCOLUMN_SCALE)
-   PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_FLAGS", DBCOLUMN_FLAGS, 11, m_DBCOLUMN_FLAGS)
-   PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_BASECOLUMNNAME", DBCOLUMN_BASECOLUMNNAME, 12, m_DBCOLUMN_BASECOLUMNNAME)
-   PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_BASETABLENAME", DBCOLUMN_BASETABLENAME, 13, m_DBCOLUMN_BASETABLENAME)
-   PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_KEYCOLUMN", DBCOLUMN_KEYCOLUMN, 14, m_DBCOLUMN_KEYCOLUMN)
-    PROVIDER_COLUMN_ENTRY("GEOM_TYPE",15,m_nGeomType)
-    PROVIDER_COLUMN_ENTRY("SPATIAL_REF_SYSTEM_ID",16,m_nSpatialRefId)
-    PROVIDER_COLUMN_ENTRY("SPATIAL_REF_SYSTEM_WKT",17,m_pszSpatialRefSystem)
-END_PROVIDER_COLUMN_MAP()
-};
-
+        PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_GUID", DBCOLUMN_GUID, 2, m_DBCOLUMN_GUID)
+        PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_PROPID", DBCOLUMN_PROPID, 3, m_DBCOLUMN_PROPID)
+        PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_NAME", DBCOLUMN_NAME, 4, m_DBCOLUMN_NAME)
+        PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_NUMBER", DBCOLUMN_NUMBER, 5, m_DBCOLUMN_NUMBER)
+        PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_TYPE", DBCOLUMN_TYPE, 6, m_DBCOLUMN_TYPE)
+        PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_TYPEINFO", DBCOLUMN_TYPEINFO, 7, m_DBCOLUMN_TYPEINFO)
+        PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_COLUMNSIZE", DBCOLUMN_COLUMNSIZE, 8, m_DBCOLUMN_COLUMNSIZE)
+        PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_PRECISION", DBCOLUMN_PRECISION, 9, m_DBCOLUMN_PRECISION)
+        PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_SCALE", DBCOLUMN_SCALE, 10, m_DBCOLUMN_SCALE)
+        PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_FLAGS", DBCOLUMN_FLAGS, 11, m_DBCOLUMN_FLAGS)
+        PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_BASECOLUMNNAME", DBCOLUMN_BASECOLUMNNAME, 12, m_DBCOLUMN_BASECOLUMNNAME)
+        PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_BASETABLENAME", DBCOLUMN_BASETABLENAME, 13, m_DBCOLUMN_BASETABLENAME)
+        PROVIDER_COLUMN_ENTRY_DBID("DBCOLUMN_KEYCOLUMN", DBCOLUMN_KEYCOLUMN, 14, m_DBCOLUMN_KEYCOLUMN)
+        PROVIDER_COLUMN_ENTRY("GEOM_TYPE",15,m_nGeomType)
+        PROVIDER_COLUMN_ENTRY("SPATIAL_REF_SYSTEM_ID",16,m_nSpatialRefId)
+        PROVIDER_COLUMN_ENTRY("SPATIAL_REF_SYSTEM_WKT",17,m_pszSpatialRefSystem)
+        END_PROVIDER_COLUMN_MAP()
+        };
 
 template <class T, class CreatorClass>
 class ATL_NO_VTABLE IColumnsRowsetImpl : public IColumnsRowset
@@ -143,9 +146,30 @@ class ATL_NO_VTABLE IColumnsRowsetImpl : public IColumnsRowset
   public:
 
     class CColumnsRowsetRowset : 
-        public CRowsetImpl< CColumnsRowsetRowset , CColumnsRowsetRow, CreatorClass>
+        public CRowsetImpl< CColumnsRowsetRowset , CColumnsRowsetRow, CreatorClass, CSimpleArray<CColumnsRowsetRow>, CSimpleRow, ICRRowsetImpl< CColumnsRowsetRowset,IRowset > >
         {
           public:
+
+            DBSTATUS GetRCDBStatus(CSimpleRow* poRC,
+                                   ATLCOLUMNINFO*poColInfo)
+            {
+                T* pT = (T*) this;
+                ULONG      row_id = poRC->m_iRowset;
+                CColumnsRowsetRow *psRow;
+
+                if( lstrcmpW(poColInfo->pwszName,L"GEOM_TYPE") != 0
+                    && lstrcmpW(poColInfo->pwszName,
+                                L"SPATIAL_REF_SYSTEM_ID") != 0
+                    && lstrcmpW(poColInfo->pwszName,
+                                L"SPATIAL_REF_SYSTEM_WKT") != 0 )
+                    return DBSTATUS_S_OK;
+
+                psRow = &(m_rgRowData[row_id]);
+                if( lstrcmpW(psRow->m_DBCOLUMN_NAME,L"OGIS_GEOMETRY") == 0 )
+                    return DBSTATUS_S_OK;
+                
+                return DBSTATUS_S_ISNULL;
+            }
 
             HRESULT PopulateRowset(ULONG numCols, DBCOLUMNINFO *pColInfo,
                                    OGRDataSource *poDS, int iLayer )
