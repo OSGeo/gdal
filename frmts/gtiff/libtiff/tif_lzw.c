@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_lzw.c,v 1.9 2001/09/25 01:59:13 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_lzw.c,v 1.10 2002/04/03 20:18:16 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -161,7 +161,6 @@ static	int LZWDecode(TIFF*, tidata_t, tsize_t, tsample_t);
 #ifdef LZW_COMPAT
 static	int LZWDecodeCompat(TIFF*, tidata_t, tsize_t, tsample_t);
 #endif
-static	void cl_hash(LZWEncodeState*);
 
 /*
  * LZW Decoder.

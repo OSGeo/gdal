@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffio.h,v 1.11 2001/09/26 17:42:18 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffio.h,v 1.13 2002/03/27 03:53:49 dbmalloc Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -359,6 +359,55 @@ extern	uint32 LogLuv24fromXYZ(float*, int);
 extern	uint32 LogLuv32fromXYZ(float*, int);
 #endif
 #endif /* LOGLUV_PUBLIC */
+
+/*
+** New stuff going public in 3.6.x.
+*/
+extern  int  TIFFGetTagListCount( TIFF * );
+extern  ttag_t TIFFGetTagListEntry( TIFF *, int tag_index );
+    
+#define	TIFF_ANY	TIFF_NOTYPE	/* for field descriptor searching */
+#define	TIFF_VARIABLE	-1		/* marker for variable length tags */
+#define	TIFF_SPP	-2		/* marker for SamplesPerPixel tags */
+#define	TIFF_VARIABLE2	-3		/* marker for uint32 var-length tags */
+
+#define FIELD_CUSTOM    65    
+
+typedef	struct {
+	ttag_t	field_tag;		/* field's tag */
+	short	field_readcount;	/* read count/TIFF_VARIABLE/TIFF_SPP */
+	short	field_writecount;	/* write count/TIFF_VARIABLE */
+	TIFFDataType field_type;	/* type of associated data */
+        unsigned short field_bit;	/* bit in fieldsset bit vector */
+	unsigned char field_oktochange;	/* if true, can change while writing */
+	unsigned char field_passcount;	/* if true, pass dir count on set */
+	char	*field_name;		/* ASCII name */
+} TIFFFieldInfo;
+
+typedef struct _TIFFTagValue {
+    const TIFFFieldInfo  *info;
+    int             count;
+    void           *value;
+} TIFFTagValue;
+
+extern	void TIFFMergeFieldInfo(TIFF*, const TIFFFieldInfo[], int);
+extern	const TIFFFieldInfo* TIFFFindFieldInfo(TIFF*, ttag_t, TIFFDataType);
+extern	const TIFFFieldInfo* TIFFFieldWithTag(TIFF*, ttag_t);
+
+typedef	int (*TIFFVSetMethod)(TIFF*, ttag_t, va_list);
+typedef	int (*TIFFVGetMethod)(TIFF*, ttag_t, va_list);
+typedef	void (*TIFFPrintMethod)(TIFF*, FILE*, long);
+    
+typedef struct {
+    TIFFVSetMethod	vsetfield;	/* tag set routine */
+    TIFFVGetMethod	vgetfield;	/* tag get routine */
+    TIFFPrintMethod	printdir;	/* directory print routine */
+} TIFFTagMethods;
+        
+extern  TIFFTagMethods *TIFFAccessTagMethods( TIFF * );
+extern  void *TIFFGetClientInfo( TIFF *, const char * );
+extern  void TIFFSetClientInfo( TIFF *, void *, const char * );
+    
 #if defined(__cplusplus)
 }
 #endif

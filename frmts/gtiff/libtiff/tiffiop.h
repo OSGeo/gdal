@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffiop.h,v 1.3 2000/01/28 20:56:59 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffiop.h,v 1.4 2002/02/24 15:02:00 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -49,6 +49,12 @@
 #define	FALSE	0
 #endif
 
+typedef struct client_info {
+    struct client_info *next;
+    void      *data;
+    char      *name;
+} TIFFClientInfoLink;
+
 /*
  * Typedefs for ``method pointers'' used internally.
  */
@@ -61,9 +67,6 @@ typedef	int (*TIFFPreMethod)(TIFF*, tsample_t);
 typedef	int (*TIFFCodeMethod)(TIFF*, tidata_t, tsize_t, tsample_t);
 typedef	int (*TIFFSeekMethod)(TIFF*, uint32);
 typedef	void (*TIFFPostMethod)(TIFF*, tidata_t, tsize_t);
-typedef	int (*TIFFVSetMethod)(TIFF*, ttag_t, va_list);
-typedef	int (*TIFFVGetMethod)(TIFF*, ttag_t, va_list);
-typedef	void (*TIFFPrintMethod)(TIFF*, FILE*, long);
 typedef	uint32 (*TIFFStripMethod)(TIFF*, uint32);
 typedef	void (*TIFFTileMethod)(TIFF*, uint32*, uint32*);
 
@@ -91,7 +94,6 @@ struct tiff {
 	toff_t		tif_nextdiroff;	/* file offset of following directory */
 	TIFFDirectory	tif_dir;	/* internal rep of current directory */
 	TIFFHeader	tif_header;	/* file's header block */
-        tidata_t        tif_clientdir;  /* client TIFF directory */
 	const int*	tif_typeshift;	/* data type shift counts */
 	const long*	tif_typemask;	/* data type masks */
 	uint32		tif_row;	/* current scanline */
@@ -149,9 +151,8 @@ struct tiff {
 /* tag support */
 	TIFFFieldInfo**	tif_fieldinfo;	/* sorted table of registered tags */
 	int		tif_nfields;	/* # entries in registered tag table */
-	TIFFVSetMethod	tif_vsetfield;	/* tag set routine */
-	TIFFVGetMethod	tif_vgetfield;	/* tag get routine */
-	TIFFPrintMethod	tif_printdir;	/* directory print routine */
+        TIFFTagMethods  tif_tagmethods; /* tag get/set/print routines */
+        TIFFClientInfoLink *tif_clientinfo; /* extra client information. */
 };
 
 #define	isPseudoTag(t)	(t > 0xffff)	/* is tag value normal or pseudo */

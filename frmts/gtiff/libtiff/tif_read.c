@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_read.c,v 1.6 2000/08/14 16:21:54 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_read.c,v 1.7 2002/01/18 19:05:27 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -153,8 +153,9 @@ TIFFReadEncodedStrip(TIFF* tif, tstrip_t strip, tdata_t buf, tsize_t size)
 		size = stripsize;
 	else if (size > stripsize)
 		size = stripsize;
-	if (TIFFFillStrip(tif, strip) && (*tif->tif_decodestrip)(tif,
-	    (tidata_t) buf, size, (tsample_t)(strip / td->td_stripsperimage))) {
+	if (TIFFFillStrip(tif, strip) 
+            && (*tif->tif_decodestrip)(tif, (tidata_t) buf, size, 
+                         (tsample_t)(strip / td->td_stripsperimage)) > 0 ) {
 		(*tif->tif_postdecode)(tif, (tidata_t) buf, size);
 		return (size);
 	} else

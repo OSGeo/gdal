@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_print.c,v 1.5 2001/03/02 04:59:52 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_print.c,v 1.7 2002/03/27 06:31:29 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -351,8 +351,6 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		_TIFFprintAsciiTag(fd, "Date & Time", td->td_datetime);
 	if (TIFFFieldSet(tif,FIELD_HOSTCOMPUTER))
 		_TIFFprintAsciiTag(fd, "Host Computer", td->td_hostcomputer);
-	if (TIFFFieldSet(tif,FIELD_SOFTWARE))
-		_TIFFprintAsciiTag(fd, "Software", td->td_software);
 	if (TIFFFieldSet(tif,FIELD_COPYRIGHT))
 		_TIFFprintAsciiTag(fd, "Copyright", td->td_copyright);
 	if (TIFFFieldSet(tif,FIELD_DOCUMENTNAME))
@@ -481,8 +479,77 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		fputc('\n', fd);
 	}
 #endif
-	if (tif->tif_printdir)
-		(*tif->tif_printdir)(tif, fd, flags);
+        /*
+        ** Custom tag support.
+        */
+        {
+            int  i, count;
+
+            count = TIFFGetTagListCount( tif );
+            for( i = 0; i < count; i++ )
+            {
+                ttag_t  tag = TIFFGetTagListEntry( tif, i );
+                const TIFFFieldInfo *fld;
+
+                fld = TIFFFieldWithTag( tif, tag );
+                if( fld == NULL )
+                    continue;
+
+                if( fld->field_passcount )
+                {
+                    int count, i;
+                    void *raw_data;
+                    
+                    if( TIFFGetField( tif, tag, &count, &raw_data ) != 1 )
+                        continue;
+
+                    fprintf(fd, "  %s: ", fld->field_name );
+
+                    for( i = 0; i < count; i++ )
+                    {
+                        if( fld->field_type == TIFF_SHORT )
+                            fprintf( fd, "%d",
+                                     (int) ((short *) raw_data)[i] );
+                        else if( fld->field_type == TIFF_ASCII )
+                        {
+                            fprintf( fd, "%s",
+                                     (char *) raw_data );
+                            break;
+                        }
+                        else if( fld->field_type == TIFF_DOUBLE )
+                            fprintf( fd, "%f",
+                                     ((double *) raw_data)[i] );
+                        else if( fld->field_type == TIFF_FLOAT )
+                            fprintf( fd, "%f",
+                                     (float) ((double *) raw_data)[i] );
+                        else if( fld->field_type == TIFF_LONG )
+                            fprintf( fd, "%d",
+                                     (int) ((long *) raw_data)[i] );
+                        else
+                        {
+                            fprintf( fd,
+                                     "<unsupported data type in TIFFPrint>" );
+                            break;
+                        }
+
+                        if( i < count-1 )
+                            fprintf( fd, "," );
+                    }
+                    fprintf( fd, "\n" );
+                } 
+                else if( !fld->field_passcount
+                         && fld->field_type == TIFF_ASCII )
+                {
+                    char *data;
+                    
+                    if( TIFFGetField( tif, tag, &data ) )
+                        fprintf(fd, "  %s: %s\n", fld->field_name, data );
+                }
+            }
+        }
+        
+	if (tif->tif_tagmethods.printdir)
+		(*tif->tif_tagmethods.printdir)(tif, fd, flags);
 	if ((flags & TIFFPRINT_STRIPS) &&
 	    TIFFFieldSet(tif,FIELD_STRIPOFFSETS)) {
 		tstrip_t s;

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.h,v 1.3 2001/03/02 04:59:52 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.h,v 1.8 2002/03/27 06:33:59 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -34,7 +34,7 @@
  * Internal format of a TIFF directory entry.
  */
 typedef	struct {
-#define	FIELD_SETLONGS	3
+#define	FIELD_SETLONGS	4
 	/* bit vector of fields that are set */
 	u_long	td_fieldsset[FIELD_SETLONGS];
 
@@ -69,7 +69,6 @@ typedef	struct {
 	char*	td_imagedescription;
 	char*	td_make;
 	char*	td_model;
-	char*	td_software;
         char*   td_copyright;
 	char*	td_pagename;
 	tstrip_t td_stripsperimage;
@@ -119,6 +118,10 @@ typedef	struct {
  	float*	td_matrixWorldToScreen;
  	float*	td_matrixWorldToCamera;
  	/* End Pixar Tag Values. */
+	uint32	td_xmlpacketLength;
+	void	*td_xmlpacketData;
+		int     td_customValueCount;
+        TIFFTagValue *td_customValues;
 } TIFFDirectory;
 
 /*
@@ -169,7 +172,7 @@ typedef	struct {
 #define FIELD_ARTIST			27
 #define FIELD_DATETIME			28
 #define FIELD_HOSTCOMPUTER		29
-#define FIELD_SOFTWARE			30
+/* unused - was FIELD_SOFTWARE          30 */
 #define	FIELD_EXTRASAMPLES		31
 #define FIELD_SAMPLEFORMAT		32
 #define	FIELD_SMINSAMPLEVALUE		33
@@ -203,8 +206,11 @@ typedef	struct {
 #define FIELD_MATRIX_WORLDTOSCREEN	60
 #define FIELD_MATRIX_WORLDTOCAMERA	61
 #define FIELD_COPYRIGHT			62
+#define FIELD_XMLPACKET			63
 /* end of support for well-known tags; codec-private tags follow */
-#define	FIELD_CODEC			63	/* base of codec-private tags */
+#define	FIELD_CODEC			64	/* base of codec-private tags */
+/*      FIELD_CUSTOM (see tiffio.h)     65 */
+
 /*
  * Pseudo-tags don't normally need field bits since they
  * are not written to an output file (by definition).
@@ -228,23 +234,6 @@ typedef	struct {
         ((v) & (tif)->tif_typemask[type]) << (tif)->tif_typeshift[type] : \
 	(v) & (tif)->tif_typemask[type]))
 
-typedef	struct {
-	ttag_t	field_tag;		/* field's tag */
-	short	field_readcount;	/* read count/TIFF_VARIABLE/TIFF_SPP */
-	short	field_writecount;	/* write count/TIFF_VARIABLE */
-	TIFFDataType field_type;	/* type of associated data */
-	u_short	field_bit;		/* bit in fieldsset bit vector */
-	u_char	field_oktochange;	/* if true, can change while writing */
-	u_char	field_passcount;	/* if true, pass dir count on set */
-	char	*field_name;		/* ASCII name */
-} TIFFFieldInfo;
-
-#define	TIFF_ANY	TIFF_NOTYPE	/* for field descriptor searching */
-#define	TIFF_VARIABLE	-1		/* marker for variable length tags */
-#define	TIFF_SPP	-2		/* marker for SamplesPerPixel tags */
-#define	TIFF_VARIABLE2	-3		/* marker for uint32 var-length tags */
-
-extern	const int tiffDataWidth[];	/* table of tag datatype widths */
 
 #define BITn(n)				(((u_long)1L)<<((n)&0x1f)) 
 #define BITFIELDn(tif, n)		((tif)->tif_dir.td_fieldsset[(n)/32]) 
@@ -258,12 +247,19 @@ extern	const int tiffDataWidth[];	/* table of tag datatype widths */
 #if defined(__cplusplus)
 extern "C" {
 #endif
+extern	int TIFFDataWidth(TIFFDataType);	/* table of tag datatype widths */
 extern	void _TIFFSetupFieldInfo(TIFF*);
-extern	void _TIFFMergeFieldInfo(TIFF*, const TIFFFieldInfo[], int);
 extern	void _TIFFPrintFieldInfo(TIFF*, FILE*);
-extern	const TIFFFieldInfo* _TIFFFindFieldInfo(TIFF*, ttag_t, TIFFDataType);
-extern	const TIFFFieldInfo* _TIFFFieldWithTag(TIFF*, ttag_t);
 extern	TIFFDataType _TIFFSampleToTagType(TIFF*);
+extern  const TIFFFieldInfo* _TIFFFindOrRegisterInfo( TIFF *tif, ttag_t tag,
+                                                      TIFFDataType dt );
+extern  TIFFFieldInfo* _TIFFCreateAnonFieldInfo( TIFF *tif, ttag_t tag,
+                                                 TIFFDataType dt );
+
+#define _TIFFMergeFieldInfo TIFFMergeFieldInfo
+#define _TIFFFindFieldInfo  TIFFFindFieldInfo
+#define _TIFFFieldWithTag   TIFFFieldWithTag
+    
 #if defined(__cplusplus)
 }
 #endif
