@@ -1,36 +1,39 @@
 
-# Location of Visual C++ directory (avoid spaces!)
-VCDIR   = 	C:\PROGRA~1\VISUAL~1\VC98
+# Location of Visual C++ directory
+VCDIR   = 	D:\Software\VStudio\VC98
+PYDIR   =	D:\Software\Python20
 
-# Location of Python 
-PYDIR   =	C:\PROGRA~1\Python20
+# Enable all OGR formats, or only raster formats?  Comment out to disable
+# vector formats. 
+INCLUDE_OGR_FRMTS = YES
 
-# Enable the following if VCDIR set properly, to get wildcard support.
-#SETARGV =	$(VCDIR)\lib\setargv.obj
+# Enable the following if VCDIR set properly.
+SETARGV =	$(VCDIR)\lib\setargv.obj
 
-# Enable the following for ECW (ERMapper Wavelet) support.
-#ECWDIR  = 	D:\Software\ECW_SDK
-#ECWLIB  =       $(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
-#		$(ECWDIR)\lib\NCSUtil.lib
+ECWDIR  = 	D:\Software\ECW_SDK
+ECWLIB  =       $(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
+		$(ECWDIR)\lib\NCSUtil.lib
 
-# Enable the following for OGDI support.
-#OGDIDIR =	D:\warmerda\iii\devdir
-#OGDIVER =	31
-#OGDILIB =	$(OGDIDIR)\lib\$(TARGET)\ogdi$(OGDIVER).lib \
-#		$(OGDIDIR)\lib\$(TARGET)\zlib_ogdi$(OGDIVER).lib
+OGDIDIR =	D:\warmerda\iii\devdir
+OGDIVER =	31
+OGDILIB =	$(OGDIDIR)\lib\$(TARGET)\ogdi$(OGDIVER).lib \
+		$(OGDIDIR)\lib\$(TARGET)\zlib_ogdi$(OGDIVER).lib
 
 # Location to install .exe, .dll and python stuff
 
 BINDIR = D:\bin
 PY_INST_DIR = D:\bin\pymod
+#BINDIR = D:\warmerda\openev_fw\bin
+#PY_INST_DIR = D:\warmerda\openev_fw\pymod
 
-# Location of MS Data Access SDK - Only for OLE DB stuff.
-# MSDASDK =	D:\Software\MDAC_2.6
+# Location of MS Data Access SDK 
+#MSDASDK =	D:\Software\MDAC_2.6
 
 VERSION =	11
 GDAL_DLL =	gdal$(VERSION).dll
 
 INC	=	-I$(GDAL_ROOT)\port -I$(GDAL_ROOT)\ogr -I$(GDAL_ROOT)\core
+#OPTFLAGS=	/nologo /Zi /MD /Fd$(GDAL_ROOT)\gdal.pdb
 OPTFLAGS=	/nologo /Zi /Fd$(GDAL_ROOT)\gdal.pdb
 #OPTFLAGS=	/nologo /Zi /MDd /Fd$(GDAL_ROOT)\gdal.pdb
 #LINKER_FLAGS =	/NODEFAULTLIB:LIBC 
