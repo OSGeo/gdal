@@ -63,7 +63,7 @@ int main()
 
     // Establish reprojection transformer. 
 
-    psWarpOptions->pTransformArg = 
+    psWarpOptions->pTransformerArg = 
         GDALCreateGenImgProjTransformer( hSrcDS, 
                                          GDALGetProjectionRef(hSrcDS), 
                                          hDstDS,
@@ -80,11 +80,14 @@ int main()
 		                  GDALGetRasterXSize( hDstDS ), 
 			          GDALGetRasterYSize( hDstDS ) );
 
-    GDALDestroyGenImgProjTransformer( hGenImgProjArg );
+    GDALDestroyGenImgProjTransformer( psWarpOptions->pTransformerArg );
     GDALDestroyWarpOptions( psWarpOptions );
 
     GDALClose( hDstDS );
     GDALClose( hSrcDS );
+
+    return 0;
+}
 \endcode
 
 This example opens the existing input and output files (in.tif and out.tif).
@@ -148,6 +151,13 @@ options passed to the warper.  Currently supported options include:
  or indicates that it should be initialized to the NO_DATA value in
  padfDstNoDataReal/padfDstNoDataImag.  If this value isn't set the
  destination image will be read and the source warp overlayed on it.
+
+<li> WRITE_FLUSH=YES/NO: This option forces a flush to disk of data after
+ each chunk is processed.  In some cases this helps ensure a serial 
+ writing of the output data otherwise a block of data may be written to disk
+ each time a block of data is read for the input buffer resulting in alot
+ of extra seeking around the disk, and reduced IO throughput.  The default
+ at this time is NO.
 </ul>
 
 </ol>
