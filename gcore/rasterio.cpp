@@ -24,6 +24,9 @@
  *               of GDALRasterBand::IRasterIO() which is rather complex.
  *
  * $Log$
+ * Revision 1.3  1999/01/02 21:14:01  warmerda
+ * Added write support
+ *
  * Revision 1.2  1998/12/31 18:54:25  warmerda
  * Implement initial GDALRasterBlock support, and block cache
  *
@@ -42,7 +45,7 @@
 /*      normally only be overridden by formats with overviews.          */
 /************************************************************************/
 
-CPLErr GDALRasterBand::IRasterIO( GDALRWFlag /* notdef: eRWFlag */,
+CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
@@ -102,6 +105,9 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag /* notdef: eRWFlag */,
                 {
                     return( CE_Failure );
                 }
+
+                if( eRWFlag == GF_Write )
+                    poBlock->MarkDirty();
                 
                 pabySrcBlock = (GByte *) poBlock->GetDataRef();
             }
@@ -111,11 +117,15 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag /* notdef: eRWFlag */,
 /* -------------------------------------------------------------------- */
             iSrcOffset = (iSrcX - nLBlockX*nBlockXSize
                 + (iSrcY - nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
-            
+
             if( eDataType == eBufType )
             {
-                memcpy( ((GByte *) pData) + iBufOffset,
-                        pabySrcBlock + iSrcOffset, nBandDataSize );
+                if( eRWFlag == GF_Read )
+                    memcpy( ((GByte *) pData) + iBufOffset,
+                            pabySrcBlock + iSrcOffset, nBandDataSize );
+                else
+                    memcpy( pabySrcBlock + iSrcOffset, 
+                            ((GByte *) pData) + iBufOffset, nBandDataSize );
             }
             else
             {
