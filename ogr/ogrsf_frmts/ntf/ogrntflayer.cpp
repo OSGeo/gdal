@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/12/06 19:31:43  warmerda
+ * initialize all members variables
+ *
  * Revision 1.4  1999/09/29 16:44:08  warmerda
  * added spatial ref handling
  *
@@ -62,6 +65,10 @@ OGRNTFLayer::OGRNTFLayer( OGRNTFDataSource *poDSIn,
     poDS = poDSIn;
     poFeatureDefn = poFeatureDefine;
     pfnTranslator = pfnTranslatorIn;
+
+    iCurrentReader = -1;
+    nCurrentPos = -1;
+    nCurrentFID = 1;
 }
 
 /************************************************************************/
