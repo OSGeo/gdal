@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/11/22 18:41:45  warmerda
+ * fixed bug in complex overview generation
+ *
  * Revision 1.4  2000/08/18 15:25:06  warmerda
  * added cascading overview regeneration to speed up averaged overviews
  *
@@ -197,7 +200,7 @@ GDALDownsampleChunkC32R( int nSrcWidth, int nSrcHeight,
         if( nSrcYOff2 > nChunkYOff + nChunkYSize )
             nSrcYOff2 = nChunkYOff + nChunkYSize;
 
-        pafSrcScanline = pafChunk + ((nSrcYOff-nChunkYOff) * nSrcWidth);
+        pafSrcScanline = pafChunk + ((nSrcYOff-nChunkYOff) * nSrcWidth) * 2;
 
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
