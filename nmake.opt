@@ -3,6 +3,9 @@
 VCDIR   = 	D:\Software\VStudio\VC98
 PYDIR   =	D:\Software\Python20
 
+# Enable the following if VCDIR set properly.
+#SETARGV =	$(VCDIR)\lib\setargv.obj
+
 #ECWDIR  = 	D:\Software\ECW_SDK
 #ECWLIB  =       $(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
 #		$(ECWDIR)\lib\NCSUtil.lib
@@ -20,13 +23,15 @@ BINDIR = D:\bin
 PY_INST_DIR = D:\bin\pymod
 
 # Location of MS Data Access SDK 
-MSDASDK =	F:\MSDASDK
+MSDASDK =	D:\Software\MDAC_2.6
 
 VERSION =	11
 GDAL_DLL =	gdal$(VERSION).dll
 
 INC	=	-I$(GDAL_ROOT)\port -I$(GDAL_ROOT)\ogr -I$(GDAL_ROOT)\core
-OPTFLAGS=	/nologo /Zi /Fd$(GDAL_ROOT)\gdal.pdb
+#OPTFLAGS=	/nologo /Zi /Fd$(GDAL_ROOT)\gdal.pdb
+OPTFLAGS=	/nologo /Zi /MDd /Fd$(GDAL_ROOT)\gdal.pdb
+#LINKER_FLAGS =	/NODEFAULTLIB:LIBC 
 
 CFLAGS	=	$(OPTFLAGS) $(INC) $(EXTRAFLAGS)
 MAKE	=	nmake /nologo
