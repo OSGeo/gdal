@@ -4,7 +4,7 @@
  * Name:     gdal.h
  * Project:  GDAL Core
  * Purpose:  GDAL Core C/Public declarations.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1998, 2002 Frank Warmerdam
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.64  2003/04/30 15:48:31  warmerda
+ * Fixed email address, trimmed log messages.
+ *
  * Revision 1.63  2003/04/25 19:46:13  warmerda
  * added GDALDatasetRasterIO
  *
@@ -91,133 +94,6 @@
  *
  * Revision 1.43  2002/04/16 13:26:08  warmerda
  * upgrade to version 1.1.7
- *
- * Revision 1.42  2002/02/04 19:23:09  warmerda
- * *** empty log message ***
- *
- * Revision 1.41  2002/01/13 03:12:04  warmerda
- * added version/release information
- *
- * Revision 1.40  2001/12/10 17:43:22  warmerda
- * fixed GDALAddBand() prototype
- *
- * Revision 1.39  2001/11/18 00:52:15  warmerda
- * removed GDALProjDef
- *
- * Revision 1.38  2001/11/16 21:36:01  warmerda
- * added the AddBand() method on GDALDataset
- *
- * Revision 1.37  2001/10/17 21:47:02  warmerda
- * added SetGCPs() on GDALDataset
- *
- * Revision 1.36  2001/07/05 13:13:40  warmerda
- * added UnitType from C support
- *
- * Revision 1.35  2001/05/01 18:09:25  warmerda
- * added GDALReadWorldFile()
- *
- * Revision 1.34  2001/01/30 22:32:42  warmerda
- * added AVERAGE_MP (magnitude preserving averaging) overview resampling type
- *
- * Revision 1.33  2000/10/06 18:30:01  warmerda
- * Fixed CPL_DLL position for GDALGetRasterCategoryNames().
- *
- * Revision 1.32  2000/10/06 15:23:03  warmerda
- * added some new functions
- *
- * Revision 1.31  2000/08/25 14:26:51  warmerda
- * added GDALHasArbitraryOverviews
- *
- * Revision 1.30  2000/08/18 15:24:48  warmerda
- * added GDALTermProgress
- *
- * Revision 1.29  2000/07/11 14:35:43  warmerda
- * added documentation
- *
- * Revision 1.28  2000/06/27 17:30:21  warmerda
- * added GDALGetRasterSampleOverview
- *
- * Revision 1.27  2000/06/26 22:17:49  warmerda
- * added scaled progress support
- *
- * Revision 1.26  2000/06/26 18:47:31  warmerda
- * added GDALBuildOverviews
- *
- * Revision 1.25  2000/06/26 15:26:21  warmerda
- * added GDALGetDescription
- *
- * Revision 1.24  2000/06/05 17:24:05  warmerda
- * added real complex support
- *
- * Revision 1.23  2000/04/30 23:22:16  warmerda
- * added CreateCopy support
- *
- * Revision 1.22  2000/04/26 18:25:29  warmerda
- * added missing CPL_DLL attributes
- *
- * Revision 1.21  2000/04/21 21:54:37  warmerda
- * updated metadata API
- *
- * Revision 1.20  2000/03/31 13:41:25  warmerda
- * added gcps
- *
- * Revision 1.19  2000/03/24 00:09:05  warmerda
- * rewrote cache management
- *
- * Revision 1.18  2000/03/09 23:22:03  warmerda
- * added GetHistogram
- *
- * Revision 1.17  2000/03/08 19:59:16  warmerda
- * added GDALFlushRasterCache
- *
- * Revision 1.16  2000/03/06 21:50:37  warmerda
- * added min/max support
- *
- * Revision 1.15  2000/03/06 02:19:56  warmerda
- * added lots of new functions
- *
- * Revision 1.14  2000/01/31 14:24:36  warmerda
- * implemented dataset delete
- *
- * Revision 1.13  1999/11/11 21:59:06  warmerda
- * added GetDriver() for datasets
- *
- * Revision 1.12  1999/10/21 13:23:28  warmerda
- * Added C callable driver related functions.
- *
- * Revision 1.11  1999/10/01 14:44:02  warmerda
- * added documentation
- *
- * Revision 1.10  1999/07/23 19:35:22  warmerda
- * added GDALSwapWords(), GDALCopyWords()
- *
- * Revision 1.9  1999/05/23 02:46:26  warmerda
- * Added documentation short description.
- *
- * Revision 1.8  1999/04/21 04:16:13  warmerda
- * experimental docs
- *
- * Revision 1.7  1999/03/02 21:09:48  warmerda
- * add GDALDecToDMS()
- *
- * Revision 1.6  1999/01/11 15:36:17  warmerda
- * Added projections support, and a few other things.
- *
- * Revision 1.5  1998/12/31 18:53:33  warmerda
- * Add GDALGetDriverByName
- *
- * Revision 1.4  1998/12/06 22:16:27  warmerda
- * Added GDALCreate().
- *
- * Revision 1.3  1998/12/06 02:50:36  warmerda
- * Added three new functions.
- *
- * Revision 1.2  1998/12/03 18:34:05  warmerda
- * Update to use CPL
- *
- * Revision 1.1  1998/10/18 06:15:10  warmerda
- * Initial implementation.
- *
  */
 
 #ifndef GDAL_H_INCLUDED
