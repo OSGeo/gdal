@@ -793,6 +793,7 @@ class ITABFeaturePen
     void        SetPenColor(GInt32 clr)  {m_sPenDef.rgbColor = clr;};
 
     void        DumpPenDef(FILE *fpOut = NULL);
+    const char *GetPenStyleString();
 };
 
 class ITABFeatureBrush
@@ -819,6 +820,7 @@ class ITABFeatureBrush
                                           {m_sBrushDef.bTransparentFill=val;};
 
     void        DumpBrushDef(FILE *fpOut = NULL);
+    const char *GetBrushStyleString();
 };
 
 class ITABFeatureFont
@@ -863,6 +865,7 @@ class ITABFeatureSymbol
     void        SetSymbolColor(GInt32 clr)  { m_sSymbolDef.rgbColor = clr;};
 
     void        DumpSymbolDef(FILE *fpOut = NULL);
+    const char *GetSymbolStyleString(double dfAngle = 0.0);
 };
 
 
@@ -895,6 +898,8 @@ class TABFeature: public OGRFeature
     double      m_dYMax;
 
     void        CopyTABFeatureBase(TABFeature *poDestFeature);
+
+    static int         m_nStyleId;
 
   public:
              TABFeature(OGRFeatureDefn *poDefnIn );
@@ -1423,6 +1428,8 @@ class TABText: public TABFeature,
     GBool       IsFontBGColorUsed();
     int         GetFontStyleTABValue()           {return m_nFontStyle;};
     void        SetFontStyleTABValue(int nStyle){m_nFontStyle=(GInt16)nStyle;};
+
+    const char *GetLabelStyleString();
 
 };
 

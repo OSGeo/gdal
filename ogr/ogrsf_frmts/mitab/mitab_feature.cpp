@@ -118,10 +118,16 @@
 
 #include "mitab.h"
 #include "mitab_utils.h"
-
+#include "ogr_featurestyle.h"
 /*=====================================================================
  *                      class TABFeature
  *====================================================================*/
+
+
+/*--------------------------------------------------------------------
+  Used to create a stylename @MITAB_%d
+  -------------------------------------------------------------------- */
+int TABFeature::m_nStyleId = 1;
 
 
 /**********************************************************************
@@ -597,6 +603,8 @@ int TABPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     OGRGeometry         *poGeometry;
     TABMAPObjectBlock   *poObjBlock;
     GBool               bComprCoord;
+    char                *pszCurrentStyle;
+    const char          *pszName;
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
@@ -635,6 +643,23 @@ int TABPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
 
     SetMBR(dX, dY, dX, dY);
 
+    
+    pszCurrentStyle = CPLStrdup(GetSymbolStyleString());
+    if (m_poStyleTable && (pszName = m_poStyleTable->
+			   GetStyleName(pszCurrentStyle)) != NULL)
+    {
+	SetStyleString(pszName);
+    }
+    else
+    {
+	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
+	if (m_poStyleTable)
+	  m_poStyleTable->AddStyle(pszName,
+				   pszCurrentStyle);
+	SetStyleString(pszName);
+    }
+    CPLFree(pszCurrentStyle);
+    
     return 0;
 }
 
@@ -884,7 +909,9 @@ int TABFontPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     OGRGeometry         *poGeometry;
     TABMAPObjectBlock   *poObjBlock;
     GBool               bComprCoord;
-
+    const char          *pszName;
+    char                *pszCurrentStyle;
+    
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
      *----------------------------------------------------------------*/
@@ -950,6 +977,22 @@ int TABFontPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
 
     SetMBR(dX, dY, dX, dY);
 
+    pszCurrentStyle =  CPLStrdup(GetSymbolStyleString(GetSymbolAngle()));
+    if (m_poStyleTable && (pszName = m_poStyleTable->
+			   GetStyleName(pszCurrentStyle)) != NULL)
+    {
+	SetStyleString(pszName);
+    }
+    else
+    {
+	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
+	if (m_poStyleTable)
+	  m_poStyleTable->AddStyle(pszName,
+				   pszCurrentStyle);
+	SetStyleString(pszName);
+    }
+    CPLFree(pszCurrentStyle);
+    
     return 0;
 }
 
@@ -1171,7 +1214,8 @@ int TABCustomPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     OGRGeometry         *poGeometry;
     TABMAPObjectBlock   *poObjBlock;
     GBool               bComprCoord;
-
+    char                *pszCurrentStyle;
+    const char          *pszName;
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
      *----------------------------------------------------------------*/
@@ -1214,7 +1258,23 @@ int TABCustomPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     poGeometry = new OGRPoint(dX, dY);
     
     SetGeometryDirectly(poGeometry);
-
+    
+    pszCurrentStyle =  CPLStrdup(GetSymbolStyleString());
+    if (m_poStyleTable && (pszName = m_poStyleTable->
+			   GetStyleName(pszCurrentStyle)) != NULL)
+    {
+	SetStyleString(pszName);
+    }
+    else
+    {
+	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
+	if (m_poStyleTable)
+	  m_poStyleTable->AddStyle(pszName,
+				   pszCurrentStyle);
+	SetStyleString(pszName);
+    }
+    CPLFree(pszCurrentStyle);
+    
     SetMBR(dX, dY, dX, dY);
 
     return 0;
@@ -1502,7 +1562,9 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     OGRLineString       *poLine;
     TABMAPObjectBlock   *poObjBlock;
     GBool               bComprCoord;
-
+    char                *pszCurrentStyle;
+    const char          *pszName;
+    
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
      *----------------------------------------------------------------*/
@@ -1735,7 +1797,22 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     SetGeometryDirectly(poGeometry);
 
     SetMBR(dXMin, dYMin, dXMax, dYMax);
-
+    
+    pszCurrentStyle =  CPLStrdup(GetPenStyleString());
+    if (m_poStyleTable && (pszName = m_poStyleTable->
+			   GetStyleName(pszCurrentStyle)) != NULL)
+    {
+	SetStyleString(pszName);
+    }
+    else
+    {
+	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
+	if (m_poStyleTable)
+	  m_poStyleTable->AddStyle(pszName,
+				   pszCurrentStyle);
+	SetStyleString(pszName);
+    }
+    CPLFree(pszCurrentStyle);
     return 0;
 }
 
@@ -2206,6 +2283,9 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     OGRLinearRing       *poRing;
     TABMAPObjectBlock   *poObjBlock;
     GBool               bComprCoord;
+    char                *pszCurrentStyle;
+    const char          *pszName;
+    
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
@@ -2356,6 +2436,24 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     SetGeometryDirectly(poGeometry);
 
     SetMBR(dXMin, dYMin, dXMax, dYMax);
+
+
+    pszCurrentStyle =  CPLStrdup(CPLSPrintf("%s;%s",GetPenStyleString(),GetBrushStyleString()));
+    if (m_poStyleTable && (pszName = m_poStyleTable->
+			   GetStyleName(pszCurrentStyle)) != NULL)
+    {
+	SetStyleString(pszName);
+    }
+    else
+    {
+	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
+	if (m_poStyleTable)
+	  m_poStyleTable->AddStyle(pszName,
+				   pszCurrentStyle);
+	SetStyleString(pszName);
+    }
+    CPLFree(pszCurrentStyle);
+    
 
     return 0;
 }
@@ -2917,7 +3015,9 @@ int TABRectangle::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     OGRLinearRing       *poRing;
     TABMAPObjectBlock   *poObjBlock;
     GBool               bComprCoord;
-
+    char                *pszCurrentStyle;
+    const char          *pszName;
+    
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
      *----------------------------------------------------------------*/
@@ -3031,6 +3131,24 @@ int TABRectangle::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
 
     poPolygon->addRingDirectly(poRing);
     SetGeometryDirectly(poPolygon);
+    
+    pszCurrentStyle =  CPLStrdup(CPLSPrintf("%s;%s",GetPenStyleString(),
+					    GetBrushStyleString()));
+    if (m_poStyleTable && (pszName = m_poStyleTable->
+			   GetStyleName(pszCurrentStyle)) != NULL)
+    {
+	SetStyleString(pszName);
+    }
+    else
+    {
+	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
+	if (m_poStyleTable)
+	  m_poStyleTable->AddStyle(pszName,
+				   pszCurrentStyle);
+	SetStyleString(pszName);
+    }
+    CPLFree(pszCurrentStyle);
+        
 
     return 0;
 }
@@ -3298,7 +3416,9 @@ int TABEllipse::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     OGRLinearRing       *poRing;
     TABMAPObjectBlock   *poObjBlock;
     GBool               bComprCoord;
-
+    char                *pszCurrentStyle;
+    const char          *pszName;
+    
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
      *----------------------------------------------------------------*/
@@ -3365,6 +3485,22 @@ int TABEllipse::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     poPolygon->addRingDirectly(poRing);
     SetGeometryDirectly(poPolygon);
 
+    pszCurrentStyle =  CPLStrdup(CPLSPrintf("%s;%s",GetPenStyleString(),GetBrushStyleString()));
+    if (m_poStyleTable && (pszName = m_poStyleTable->
+			   GetStyleName(pszCurrentStyle)) != NULL)
+    {
+	SetStyleString(pszName);
+    }
+    else
+    {
+	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
+	if (m_poStyleTable)
+	  m_poStyleTable->AddStyle(pszName,
+				   pszCurrentStyle);
+	SetStyleString(pszName);
+    }
+    CPLFree(pszCurrentStyle);
+      
     return 0;
 }
 
@@ -3630,7 +3766,9 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     TABMAPObjectBlock   *poObjBlock;
     GBool               bComprCoord;
     int                 numPts;
-
+    char                *pszCurrentStyle;
+    const char          *pszName;
+    
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
      *----------------------------------------------------------------*/
@@ -3773,6 +3911,21 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
 
     SetGeometryDirectly(poLine);
 
+    pszCurrentStyle =  CPLStrdup(GetPenStyleString());
+    if (m_poStyleTable && (pszName = m_poStyleTable->
+			   GetStyleName(pszCurrentStyle)) != NULL)
+    {
+	SetStyleString(pszName);
+    }
+    else
+    {
+	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
+	if (m_poStyleTable)
+	  m_poStyleTable->AddStyle(pszName,
+				   pszCurrentStyle);
+	SetStyleString(pszName);
+    }
+    CPLFree(pszCurrentStyle);
     return 0;
 }
 
@@ -4090,7 +4243,9 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     OGRGeometry         *poGeometry;
     TABMAPObjectBlock   *poObjBlock;
     GBool               bComprCoord;
-
+    char                *pszCurrentStyle;
+    const char          *pszName;
+    
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
      *----------------------------------------------------------------*/
@@ -4255,6 +4410,24 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
                                                         (m_dHeight*dSin);
     m_dWidth = ABS(m_dWidth);
 
+    
+    
+    pszCurrentStyle =  CPLStrdup(GetLabelStyleString());
+    if (m_poStyleTable && (pszName = m_poStyleTable->
+			   GetStyleName(pszCurrentStyle)) != NULL)
+    {
+	SetStyleString(pszName);
+    }
+    else
+    {
+	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
+	if (m_poStyleTable)
+	  m_poStyleTable->AddStyle(pszName,
+				   pszCurrentStyle);
+	SetStyleString(pszName);
+    }
+    CPLFree(pszCurrentStyle);
+    
     return 0;
 }
 
@@ -4391,6 +4564,48 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
     return 0;
 }
 
+
+/**********************************************************************
+ *                   TABText::GetLabelStyleString()
+ *
+ *  This is not the correct location, it should be in ITABFeatureFont,
+ *  but it's really more easy to put it here.  This fct return a complete
+ * string for the representation with the string to display
+ **********************************************************************/
+const char *TABText::GetLabelStyleString()
+{
+    const char *pszStyle = NULL;
+    int    nOGRStyle  = 1;
+    char szPattern[20];
+    int nAngle = 0;
+    int nJustification = 1;
+    
+    szPattern[0] = '\0';
+    
+
+    switch(GetTextJustification())
+    {
+      case TABTJCenter:
+	nJustification = 2;
+	break;
+      case TABTJRight:
+	nJustification = 1;
+	break;
+      case TABTJLeft:
+      default:
+	nJustification =1;
+	break;
+    }
+
+    
+    if (IsFontBGColorUsed())
+      pszStyle=CPLSPrintf("LABEL(t:\"%s\",a:%f,s:%f,c:#%6.6x,b:#%6.6x,p:%d)",GetTextString(),GetTextAngle(), GetTextBoxHeight(),GetFontFGColor(),GetFontBGColor(),nJustification);
+    else
+      pszStyle=CPLSPrintf("LABEL(t:\"%s\",a:%f,s:%f,c:#%6.6x,p:%d)",GetTextString(),GetTextAngle(), GetTextBoxHeight(),GetFontFGColor(),nJustification);
+     
+    return pszStyle;
+    
+}  
 
 /**********************************************************************
  *                   TABText::GetTextString()
@@ -4982,6 +5197,140 @@ void ITABFeaturePen::DumpPenDef(FILE *fpOut /*=NULL*/)
     fflush(fpOut);
 }
 
+/**********************************************************************
+ *                   ITABFeaturePen::GetPenStyleString()
+ *
+ *  Return a PEN() string. All representations info for the pen are here.
+ **********************************************************************/
+const char *ITABFeaturePen::GetPenStyleString()
+{
+    const char *pszStyle = NULL;
+    int    nOGRStyle  = 0;
+    char szPattern[20];
+    
+    szPattern[0] = '\0';
+
+    // For now, I only add the 25 first styles 
+    switch (GetPenPattern())
+    {
+      case 1:
+	nOGRStyle =1; 
+	break;
+      case 2:
+	nOGRStyle = 0;
+	break;
+      case 3:
+	nOGRStyle = 3; 
+	strcpy(szPattern,"1 1");
+	break;
+      case 4:
+	nOGRStyle = 3;
+	strcpy(szPattern,"2 1");
+	break;
+      case 5:
+	nOGRStyle = 3;
+	strcpy(szPattern,"3 1");
+	break;
+      case 6:
+	nOGRStyle = 3;
+	strcpy(szPattern,"6 1");
+	break;
+      case 7:
+	nOGRStyle = 4;
+	strcpy(szPattern,"12 2");
+	break;
+      case 8:
+	nOGRStyle = 4;
+	strcpy(szPattern,"24 4");
+	break;
+      case 9:
+	nOGRStyle = 3;
+	strcpy(szPattern,"4 3");
+	break;
+      case 10:
+	nOGRStyle = 5;
+	strcpy(szPattern,"1 4");
+	break;
+      case 11:
+	nOGRStyle = 3;
+	strcpy(szPattern,"4 6");
+	break;
+      case 12:
+	nOGRStyle = 3;
+	strcpy(szPattern,"6 4");
+	break;
+      case 13:
+	nOGRStyle = 4;
+	strcpy(szPattern,"12 12");
+	break;
+      case 14:
+	nOGRStyle = 6;
+	strcpy(szPattern,"8 2 1 2");
+	break;
+      case 15:
+	nOGRStyle = 6;
+	strcpy(szPattern,"12 1 1 1");
+	break;
+      case 16:
+	nOGRStyle = 6;
+	strcpy(szPattern,"12 1 3 1");
+	break;
+      case 17:
+	nOGRStyle = 6;
+	strcpy(szPattern,"24 6 4 6");
+	break;
+      case 18:
+	nOGRStyle = 7;
+	strcpy(szPattern,"24 3 3 3 3 3");
+	break;
+      case 19:
+	nOGRStyle = 7;
+	strcpy(szPattern,"24 3 3 3 3 3 3 3");
+	break;
+      case 20:
+	nOGRStyle = 7;
+	strcpy(szPattern,"6 3 1 3 1 3");
+	break;
+      case 21:
+	nOGRStyle = 7;
+	strcpy(szPattern,"12 2 1 2 1 2");
+	break;
+      case 22:
+	nOGRStyle = 7;
+	strcpy(szPattern,"12 2 1 2 1 2 1 2");
+	break;
+      case 23:
+	nOGRStyle = 6;
+	strcpy(szPattern,"4 1 1 1");
+	break;
+      case 24:
+	nOGRStyle = 7;
+	strcpy(szPattern,"4 1 1 1 1");
+	break;
+      case 25:
+	nOGRStyle = 6;
+	strcpy(szPattern,"4 1 1 1 2 1 1 1");
+	break;
+
+	default:
+	nOGRStyle = 0;
+	break;
+    }
+    
+    if (strlen(szPattern) != 0)
+      pszStyle =CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\"mapinfo-pen-%d."
+			   "ogr-pen-%d\",p:\"%spx\")",
+			   GetPenWidthPixel(),
+			   m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle,
+			   szPattern);
+    else
+      pszStyle =CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\"mapinfo-pen-%d.ogr-pen-%d\")",
+			   GetPenWidthPixel(),
+			   m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle);
+
+    return pszStyle;
+}
+
 /*=====================================================================
  *                      class ITABFeatureBrush
  *====================================================================*/
@@ -5009,6 +5358,44 @@ void ITABFeatureBrush::DumpBrushDef(FILE *fpOut /*=NULL*/)
 
     fflush(fpOut);
 }
+
+
+/**********************************************************************
+ *                   ITABFeatureBrush::GetBrushStyleString()
+ *
+ *  Return a Brush() string. All representations info for the Brush are here.
+ **********************************************************************/
+const char *ITABFeatureBrush::GetBrushStyleString()
+{
+    const char *pszStyle = NULL;
+    int    nOGRStyle  = 0;
+    char szPattern[20];
+    
+    szPattern[0] = '\0';
+    
+    if (m_sBrushDef.nFillPattern == 1)
+      nOGRStyle = 1;
+    else if (m_sBrushDef.nFillPattern == 3)
+      nOGRStyle = 2;
+    else if (m_sBrushDef.nFillPattern == 4)
+      nOGRStyle = 3;
+    else if (m_sBrushDef.nFillPattern == 5)
+      nOGRStyle = 5;
+    else if (m_sBrushDef.nFillPattern == 6)
+      nOGRStyle = 4;
+    else if (m_sBrushDef.nFillPattern == 7)
+      nOGRStyle = 6;
+    else if (m_sBrushDef.nFillPattern == 8)
+      nOGRStyle = 7;
+	  
+    pszStyle =CPLSPrintf("BRUSH(fc:#%6.6x,bc:#%6.6x,id:\"mapinfo-brush-%d.ogr-brush-%d\")",
+			 m_sBrushDef.rgbFGColor,
+			 m_sBrushDef.rgbBGColor,
+			 m_sBrushDef.nFillPattern,nOGRStyle);
+     
+     return pszStyle;
+    
+}  
 
 /*=====================================================================
  *                      class ITABFeatureFont
@@ -5057,3 +5444,79 @@ void ITABFeatureSymbol::DumpSymbolDef(FILE *fpOut /*=NULL*/)
 
     fflush(fpOut);
 }
+
+/**********************************************************************
+ *                   ITABFeatureSymbol::GetSymbolStyleString()
+ *
+ *  Return a Symbol() string. All representations info for the Symbol are here.
+ **********************************************************************/
+const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle)
+{
+    const char *pszStyle = NULL;
+    int    nOGRStyle  = 1;
+    char szPattern[20];
+    int nAngle = 0;
+    
+    szPattern[0] = '\0';
+    
+    if (m_sSymbolDef.nSymbolNo == 31)
+      nOGRStyle = 0;
+    else if (m_sSymbolDef.nSymbolNo == 32)
+      nOGRStyle = 6;
+    else if (m_sSymbolDef.nSymbolNo == 33)
+    {
+	nAngle = 45;
+	nOGRStyle = 6;
+    }
+    else if (m_sSymbolDef.nSymbolNo == 34)
+      nOGRStyle = 4;
+    else if (m_sSymbolDef.nSymbolNo == 35)
+      nOGRStyle = 10;
+    else if (m_sSymbolDef.nSymbolNo == 36)
+      nOGRStyle = 8;
+    else if (m_sSymbolDef.nSymbolNo == 37)
+    {
+	nAngle = 180;
+	nOGRStyle = 8;
+    }
+    else if (m_sSymbolDef.nSymbolNo == 38)
+      nOGRStyle = 5;
+     else if (m_sSymbolDef.nSymbolNo == 39)
+    {
+	nAngle = 45;
+	nOGRStyle = 5;
+    }
+    else if (m_sSymbolDef.nSymbolNo == 40)
+      nOGRStyle = 3;
+    else if (m_sSymbolDef.nSymbolNo == 41)
+      nOGRStyle = 9;
+    else if (m_sSymbolDef.nSymbolNo == 42)
+      nOGRStyle = 7;
+    else if (m_sSymbolDef.nSymbolNo == 43)
+    {
+	nAngle = 180;
+	nOGRStyle = 7;
+    }
+    else if (m_sSymbolDef.nSymbolNo == 44)
+      nOGRStyle = 6;
+    else if (m_sSymbolDef.nSymbolNo == 45)
+      nOGRStyle = 8;
+    else if (m_sSymbolDef.nSymbolNo == 46)
+      nOGRStyle = 4;
+    else if (m_sSymbolDef.nSymbolNo == 49)
+      nOGRStyle = 1;
+    else if (m_sSymbolDef.nSymbolNo == 50)
+      nOGRStyle = 2;
+
+    nAngle += (int)dfAngle;
+    
+    pszStyle=CPLSPrintf("SYMBOL(a:%d,c:#%6.6x,s:%dpt,id:\"mapinfo-sym-%d.ogr-sym-%d\")",
+			nAngle,
+			m_sSymbolDef.rgbColor,
+			m_sSymbolDef.nPointSize,
+			m_sSymbolDef.nSymbolNo,
+			nOGRStyle);
+     
+    return pszStyle;
+    
+}  

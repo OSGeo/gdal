@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/08/18 21:52:53  svillene
+ * Add OGR Representation
+ *
  * Revision 1.12  1999/11/14 18:13:08  svillene
  * add RegisterOGRTAB RegisterOGRMIF
  *
@@ -101,8 +104,8 @@
 class OGRLayer
 {
   public:
-    virtual 	~OGRLayer() {}
-
+    virtual 	~OGRLayer(){}
+                 OGRLayer(){m_poStyleTable = NULL;}
     virtual OGRGeometry *GetSpatialFilter() = 0;
     virtual void	SetSpatialFilter( OGRGeometry * ) = 0;
 
@@ -124,7 +127,14 @@ class OGRLayer
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
+
+    OGRStyleTable       *GetStyleTable(){return m_poStyleTable;}
+    void                 SetStyleTable(OGRStyleTable *poStyleTable){m_poStyleTable = poStyleTable;}
+
+ protected:
+    OGRStyleTable *m_poStyleTable;
 };
+
 
 /************************************************************************/
 /*                            OGRDataSource                             */
@@ -143,7 +153,8 @@ class OGRLayer
 class OGRDataSource
 {
   public:
-    
+
+    OGRDataSource();
     virtual 	~OGRDataSource();
 
     virtual const char  *GetName() = 0;
@@ -157,6 +168,10 @@ class OGRDataSource
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
+    OGRStyleTable       *GetStyleTable(){return m_poStyleTable;}
+    
+  protected:
+    OGRStyleTable *m_poStyleTable;
 };
 
 /************************************************************************/
