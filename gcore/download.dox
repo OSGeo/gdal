@@ -67,11 +67,11 @@ build GDAL from source.<p>
 
 <h3>CVS</h3>
 
-The GDAL source is available by anonymous CVS from the cvs.remotesensing.org
+The GDAL source is available by anonymous CVS from the cvs.maptools.org
 server:
 
 <pre>
-% export CVSROOT=:pserver:anonymous@cvs.remotesensing.org:/cvs
+% export CVSROOT=:pserver:cvsanon@cvs.maptools.org:/cvs/maptools/cvsroot
 % cvs login
 Password: <just hit enter>
 % cvs checkout gdal
