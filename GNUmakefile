@@ -9,9 +9,12 @@ default:	lib GDALmake.opt
 
 lib:	$(GDAL_LIB)
 
-$(GDAL_LIB):	port-target core-target frmts-target
+$(GDAL_LIB):	port-target core-target frmts-target force-lib
+
+force-lib:
 	ar r $(GDAL_LIB) $(GDAL_OBJ)
-	ld -share --whole-archive $(GDAL_LIBS) -o $(GDAL_SLIB)
+	$(CXX) -shared -Wl,-soname,gdal.1.0.so -o $(GDAL_SLIB) \
+		$(GDAL_OBJ) $(GDAL_LIBS) $(LIBS)
 
 port-target:
 	(cd port; $(MAKE))
