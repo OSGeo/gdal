@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2001/09/25 19:24:19  warmerda
+ * Added support for reading MapInfo .tab files.  Code supplied by Petri
+ * J. Riipinen <petri.riipinen@nic.fi>.
+ *
  * Revision 1.51  2001/09/24 15:57:08  warmerda
  * improved error handling
  *
@@ -1023,6 +1027,138 @@ GDALColorTable *GTiffBitmapBand::GetColorTable()
 }
 
 /************************************************************************/
+/*                         GDALReadTabFile()                            */
+/*                                                                      */
+/*      Helper function for translator implementators wanting           */
+/*      support for MapInfo .tab-files.                                 */
+/************************************************************************/
+ 
+static int GDALReadTabFile( const char * pszBaseFilename, 
+                            double *padfGeoTransform )
+
+{
+    const char	*pszTAB;
+    FILE	*fpTAB;
+    char	**papszLines;
+    char    **papszTok=NULL;
+    int 	bTypeRasterFound = FALSE;
+    int		bInsideTableDef = FALSE;
+    int		iLine, numLines=0;
+    double 	dfMinWorldX = 1e99, dfMinWorldY = 1e99;
+    double	dfMaxWorldX = -1e99, dfMaxWorldY = -1e99;
+    double 	dfMinRasterX = 1e99, dfMinRasterY = 1e99;
+    double	dfMaxRasterX = -1e99, dfMaxRasterY = -1e99;
+    int 	bCoordinateCount = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Try lower case, then upper case.                                */
+/* -------------------------------------------------------------------- */
+    pszTAB = CPLResetExtension( pszBaseFilename, "tab" );
+
+    fpTAB = VSIFOpen( pszTAB, "rt" );
+
+#ifndef WIN32
+    if( fpTAB == NULL )
+    {
+        pszTAB = CPLResetExtension( pszBaseFilename, "TAB" );
+        fpTAB = VSIFOpen( pszTAB, "rt" );
+    }
+#endif
+    
+    if( fpTAB == NULL )
+        return FALSE;
+
+    VSIFClose( fpTAB );
+
+/* -------------------------------------------------------------------- */
+/*      We found the file, now load and parse it.                       */
+/* -------------------------------------------------------------------- */
+    papszLines = CSLLoad( pszTAB );
+
+    numLines = CSLCount(papszLines);
+
+    // Iterate all lines in the TAB-file
+    for(iLine=0; iLine<numLines; iLine++)
+    {
+        CSLDestroy(papszTok);
+        papszTok = CSLTokenizeStringComplex(papszLines[iLine], " \t(),;", 
+                                            TRUE, FALSE);
+
+        if (CSLCount(papszTok) < 2)
+            continue;
+
+        // Did we find table definition
+        if (EQUAL(papszTok[0], "Definition") && EQUAL(papszTok[1], "Table") )
+        {
+            bInsideTableDef = TRUE;
+        }
+        else if (bInsideTableDef && (EQUAL(papszTok[0], "Type")) )
+        {
+            // Only RASTER-type will be handled
+            if (EQUAL(papszTok[1], "RASTER"))
+            {
+            	bTypeRasterFound = TRUE;
+            }
+            else
+            {
+                CSLDestroy(papszTok);
+                CSLDestroy(papszLines);
+                return FALSE;
+            }
+        }
+        else if (bTypeRasterFound && bInsideTableDef)
+        {
+            // A line with 'Label' contains coordinates
+            if ( EQUAL(papszTok[4], "Label") )
+            {
+		// Find minimum & maximum values from the world coordinates 
+                // in this line
+                dfMinWorldX = MIN(dfMinWorldX, atof(papszTok[0]));
+                dfMaxWorldX = MAX(dfMaxWorldX, atof(papszTok[0]));
+                dfMinWorldY = MIN(dfMinWorldY, atof(papszTok[1]));
+                dfMaxWorldY = MAX(dfMaxWorldY, atof(papszTok[1]));
+
+		// Find minimum & maximum values from the raster coordinates 
+                // in this line
+                dfMinRasterX = MIN(dfMinRasterX, atof(papszTok[2]));
+                dfMaxRasterX = MAX(dfMaxRasterX, atof(papszTok[2]));
+                dfMinRasterY = MIN(dfMinRasterY, atof(papszTok[3]));
+                dfMaxRasterY = MAX(dfMaxRasterY, atof(papszTok[3]));
+
+                bCoordinateCount++;
+            }
+            else
+            {
+		// We hit something other than coordinates, but correct number
+	        // of coordinates have been found and now min-max values 
+		// should be resolved.
+                if ( bCoordinateCount == 4 )
+                {
+                    padfGeoTransform[0] = dfMinWorldX;
+                    padfGeoTransform[1] = (dfMaxWorldX-dfMinWorldX)/(dfMaxRasterX-dfMinRasterX);
+                    padfGeoTransform[2] = 0;
+                    padfGeoTransform[3] = dfMaxWorldY;
+                    padfGeoTransform[4] = 0;
+                    padfGeoTransform[5] = -(dfMaxWorldY-dfMinWorldY)/(dfMaxRasterY-dfMinRasterY);
+
+                    CSLDestroy(papszTok);
+                    CSLDestroy(papszLines);
+                    return TRUE;					
+                }
+            }
+        }
+    }
+
+    CPLDebug( "GDAL", 
+              "GDALReadTabFile(%s) found file, but not 4 lines of coordinates.",
+              pszTAB );
+
+    CSLDestroy(papszTok);
+    CSLDestroy(papszLines);
+    return FALSE;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                            GTiffDataset                              */
 /* ==================================================================== */
@@ -1708,6 +1844,11 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
         {
             bGeoTransformValid = 
                 GDALReadWorldFile( GetDescription(), "wld", adfGeoTransform );
+        }
+        if( !bGeoTransformValid )
+        {
+            bGeoTransformValid = 
+                GDALReadTabFile( GetDescription(), adfGeoTransform );
         }
     }
 
