@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2003/02/25 04:53:38  warmerda
+ * added OSRCopyGeogCSFrom
+ *
  * Revision 1.26  2003/02/06 04:53:12  warmerda
  * added Fixup() method
  *
@@ -326,6 +329,8 @@ OGRErr CPL_DLL OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS,
                                       const char * pszName );
 OGRErr CPL_DLL OSRSetFromUserInput( OGRSpatialReferenceH hSRS, 
                                     const char * );
+OGRErr CPL_DLL OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS, 
+                                  OGRSpatialReferenceH hSrcSRS );
 
 OGRErr CPL_DLL OSRSetGeogCS( OGRSpatialReferenceH hSRS,
                       const char * pszGeogName,
