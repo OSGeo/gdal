@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.91  2005/02/11 14:21:28  fwarmerdam
+ * added GEOS projection support
+ *
  * Revision 1.90  2005/01/13 05:17:37  fwarmerdam
  * added SetLinearUnitsAndUpdateParameters
  *
@@ -2915,6 +2918,41 @@ OGRErr OSRSetGH( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
+/*                              SetGEOS()                               */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetGEOS( double dfCentralMeridian,
+                                     double dfSatelliteHeight,
+                                     double dfFalseEasting,
+                                     double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_GEOSTATIONARY_SATELLITE );
+    SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCentralMeridian );
+    SetNormProjParm( SRS_PP_SATELLITE_HEIGHT, dfSatelliteHeight );
+    SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                              OSRSetGEOS()                             */
+/************************************************************************/
+
+OGRErr OSRSetGEOS( OGRSpatialReferenceH hSRS, 
+                   double dfCentralMeridian,
+                   double dfSatelliteHeight,
+                   double dfFalseEasting,
+                   double dfFalseNorthing )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetGEOS( 
+        dfCentralMeridian, dfSatelliteHeight,
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                            SetGnomonic()                             */
 /************************************************************************/
 
@@ -4567,7 +4605,8 @@ int OGRSpatialReference::IsLongitudeParameter( const char *pszParameterName )
 int OGRSpatialReference::IsLinearParameter( const char *pszParameterName )
 
 {
-    if( EQUALN(pszParameterName,"false_",6) )
+    if( EQUALN(pszParameterName,"false_",6) 
+        || EQUAL(pszParameterName,SRS_PP_SATELLITE_HEIGHT) )
         return TRUE;
     else
         return FALSE;

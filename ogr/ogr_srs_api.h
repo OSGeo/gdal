@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2005/02/11 14:21:28  fwarmerdam
+ * added GEOS projection support
+ *
  * Revision 1.48  2005/01/05 21:02:33  fwarmerdam
  * added Goode Homolosine
  *
@@ -241,6 +244,7 @@ typedef enum {
 #define SRS_PT_EQUIDISTANT_CONIC "Equidistant_Conic"
 #define SRS_PT_EQUIRECTANGULAR  "Equirectangular"
 #define SRS_PT_GALL_STEREOGRAPHIC "Gall_Stereographic"
+#define SRS_PT_GEOSTATIONARY_SATELLITE "Geostationary_Satellite"
 #define SRS_PT_GOODE_HOMOLOSINE "Goode_Homolosine"
 #define SRS_PT_GNOMONIC         "Gnomonic"
 #define SRS_PT_HOTINE_OBLIQUE_MERCATOR                                  \
@@ -318,6 +322,7 @@ typedef enum {
 #define SRS_PP_LANDSAT_NUMBER           "landsat_number"
 #define SRS_PP_PATH_NUMBER              "path_number"
 #define SRS_PP_PERSPECTIVE_POINT_HEIGHT "perspective_point_height"
+#define SRS_PP_SATELLITE_HEIGHT         "satellite_height"
 #define SRS_PP_FIPSZONE                 "fipszone"
 #define SRS_PP_ZONE                     "zone"
 
@@ -521,6 +526,10 @@ OGRErr CPL_DLL OSRSetGS( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
     
 /** Goode Homolosine */
 OGRErr CPL_DLL OSRSetGH( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
+                         double dfFalseEasting, double dfFalseNorthing );
+    
+/** GEOS - Geostationary Satellite View */
+OGRErr CPL_DLL OSRSetGEOS( OGRSpatialReferenceH hSRS, double dfSatelliteHeight,
                          double dfFalseEasting, double dfFalseNorthing );
     
 /** Gnomonic */

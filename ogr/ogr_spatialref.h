@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.65  2005/02/11 14:21:28  fwarmerdam
+ * added GEOS projection support
+ *
  * Revision 1.64  2005/01/13 05:17:37  fwarmerdam
  * added SetLinearUnitsAndUpdateParameters
  *
@@ -350,6 +353,10 @@ class CPL_DLL OGRSpatialReference
     /** Equirectangular */
     OGRErr      SetEquirectangular(double dfCenterLat, double dfCenterLong,
                             double dfFalseEasting, double dfFalseNorthing );
+
+    /** Geostationary Satellite */
+    OGRErr      SetGEOS( double dfCentralMeridian, double dfSatelliteHeight, 
+                         double dfFalseEasting, double dfFalseNorthing );
 
     /** Goode Homolosine */
     OGRErr      SetGH( double dfCentralMeridian, 
