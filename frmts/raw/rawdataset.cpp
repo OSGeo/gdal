@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/08/16 15:51:17  warmerda
+ * allow floating (datasetless) raw bands
+ *
  * Revision 1.5  2000/08/09 16:26:27  warmerda
  * improved error checking
  *
@@ -78,6 +81,46 @@ RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
 /* -------------------------------------------------------------------- */
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
+
+/* -------------------------------------------------------------------- */
+/*      Allocate working scanline.                                      */
+/* -------------------------------------------------------------------- */
+    nLoadedScanline = -1;
+    pLineBuffer = CPLMalloc( nPixelOffset * nBlockXSize );
+}
+
+/************************************************************************/
+/*                           RawRasterBand()                            */
+/************************************************************************/
+
+RawRasterBand::RawRasterBand( FILE * fpRaw, unsigned int nImgOffset,
+                              int nPixelOffset, int nLineOffset,
+                              GDALDataType eDataType, int bNativeOrder,
+                              int nXSize, int nYSize )
+
+{
+    this->poDS = NULL;
+    this->nBand = 1;
+    this->eDataType = eDataType;
+
+    this->fpRaw = fpRaw;
+    this->nImgOffset = nImgOffset;
+    this->nPixelOffset = nPixelOffset;
+    this->nLineOffset = nLineOffset;
+    this->bNativeOrder = bNativeOrder;
+
+    CPLDebug( "GDALRaw", 
+              "RawRasterBand(floating,Off=%d,PixOff=%d,LineOff=%d,%s,%d)\n",
+              nImgOffset, nPixelOffset, nLineOffset, 
+              GDALGetDataTypeName(eDataType), bNativeOrder );
+
+/* -------------------------------------------------------------------- */
+/*      Treat one scanline as the block size.                           */
+/* -------------------------------------------------------------------- */
+    nBlockXSize = nXSize;
+    nBlockYSize = 1;
+    nRasterXSize = nXSize;
+    nRasterYSize = nYSize;
 
 /* -------------------------------------------------------------------- */
 /*      Allocate working scanline.                                      */

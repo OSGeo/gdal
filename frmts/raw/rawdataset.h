@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/08/16 15:51:17  warmerda
+ * allow floating (datasetless) raw bands
+ *
  * Revision 1.4  2000/07/20 13:38:56  warmerda
  * make classes public with CPL_DLL
  *
@@ -87,6 +90,12 @@ class CPL_DLL RawRasterBand : public GDALRasterBand
                                 unsigned int nImgOffset, int nPixelOffset,
                                 int nLineOffset,
                                 GDALDataType eDataType, int bNativeOrder );
+
+                 RawRasterBand( FILE * fpRaw, 
+                                unsigned int nImgOffset, int nPixelOffset,
+                                int nLineOffset,
+                                GDALDataType eDataType, int bNativeOrder,
+                                int nXSize, int nYSize );
 
                  ~RawRasterBand();
 
