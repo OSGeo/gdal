@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.112  2005/02/21 04:10:32  fwarmerdam
+ * added SetRasterColorInterpretation
+ *
  * Revision 1.111  2005/02/02 19:59:03  fwarmerdam
  * added SetNextByIndex and GetFeaturesRead
  *
@@ -735,6 +738,8 @@ int  GDALGetRasterBandXSize( GDALRasterBandH );
 int  GDALGetRasterBandYSize( GDALRasterBandH );
 
 GDALColorInterp  GDALGetRasterColorInterpretation( GDALRasterBandH );
+int              GDALSetRasterColorInterpretation( GDALRasterBandH,
+                                                   GDALColorInterp );	
 GDALColorTableH  GDALGetRasterColorTable( GDALRasterBandH );
 int              GDALSetRasterColorTable( GDALRasterBandH, GDALColorTableH );
 

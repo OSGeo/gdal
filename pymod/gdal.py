@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.74  2005/02/21 04:10:32  fwarmerdam
+# added SetRasterColorInterpretation
+#
 # Revision 1.73  2005/02/15 03:31:26  fwarmerdam
 # added Register and Deregister methods on gdal.Driver
 #
@@ -835,6 +838,9 @@ class Band(MajorObject):
     
     def GetRasterColorInterpretation(self):
         return _gdal.GDALGetRasterColorInterpretation(self._o)
+
+    def SetRasterColorInterpretation(self, interp):
+        return _gdal.GDALSetRasterColorInterpretation(self._o, interp )
 
     def GetRasterColorTable(self):
         _ct = _gdal.GDALGetRasterColorTable( self._o )

@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.105  2005/02/02 19:59:03  fwarmerdam
- * added SetNextByIndex and GetFeaturesRead
+ * Revision 1.106  2005/02/21 04:10:32  fwarmerdam
+ * added SetRasterColorInterpretation
  *
  ************************************************************************/
 
@@ -4618,6 +4618,27 @@ static PyObject *_wrap_GDALGetRasterColorInterpretation(PyObject *self, PyObject
         }
     }
     _result = (GDALColorInterp )GDALGetRasterColorInterpretation(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALSetRasterColorInterpretation(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    GDALRasterBandH  _arg0;
+    GDALColorInterp  _arg1;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"si:GDALSetRasterColorInterpretation",&_argc0,&_arg1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALSetRasterColorInterpretation. Expected _GDALRasterBandH.");
+        return NULL;
+        }
+    }
+    _result = (int )GDALSetRasterColorInterpretation(_arg0,_arg1);
     _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
@@ -11605,6 +11626,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALGetRasterMinimum", _wrap_GDALGetRasterMinimum, 1 },
 	 { "GDALSetRasterColorTable", _wrap_GDALSetRasterColorTable, 1 },
 	 { "GDALGetRasterColorTable", _wrap_GDALGetRasterColorTable, 1 },
+	 { "GDALSetRasterColorInterpretation", _wrap_GDALSetRasterColorInterpretation, 1 },
 	 { "GDALGetRasterColorInterpretation", _wrap_GDALGetRasterColorInterpretation, 1 },
 	 { "GDALGetRasterBandYSize", _wrap_GDALGetRasterBandYSize, 1 },
 	 { "GDALGetRasterBandXSize", _wrap_GDALGetRasterBandXSize, 1 },
