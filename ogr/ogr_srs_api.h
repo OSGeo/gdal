@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2005/02/17 16:34:17  fwarmerdam
+ * OSRCloneCS() should be OSRClone().
+ *
  * Revision 1.49  2005/02/11 14:21:28  fwarmerdam
  * added GEOS projection support
  *
@@ -369,7 +372,7 @@ typedef void *OGRCoordinateTransformationH;
 OGRSpatialReferenceH CPL_DLL
       OSRNewSpatialReference( const char * /* = NULL */);
 OGRSpatialReferenceH CPL_DLL OSRCloneGeogCS( OGRSpatialReferenceH );
-OGRSpatialReferenceH CPL_DLL OSRCloneCS( OGRSpatialReferenceH );
+OGRSpatialReferenceH CPL_DLL OSRClone( OGRSpatialReferenceH );
 void CPL_DLL OSRDestroySpatialReference( OGRSpatialReferenceH );
 
 int CPL_DLL OSRReference( OGRSpatialReferenceH );
