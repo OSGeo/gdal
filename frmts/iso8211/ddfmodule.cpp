@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/08/16 15:44:29  warmerda
+ * Fixed bug in FindFieldDefn().
+ *
  * Revision 1.6  1999/08/13 03:26:14  warmerda
  * added Rewind()
  *
@@ -410,7 +413,7 @@ DDFFieldDefn *DDFModule::FindFieldDefn( const char *pszFieldName )
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nFieldDefnCount; i++ )
     {
-        if( EQUAL( pszFieldName, paoFieldDefns[i].GetName()) == 0 )
+        if( EQUAL(pszFieldName, paoFieldDefns[i].GetName()) )
             return paoFieldDefns + i;
     }
 
