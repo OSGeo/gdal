@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/09/29 21:42:38  warmerda
+ * preliminary write support implemented
+ *
  * Revision 1.8  2000/09/01 19:39:48  warmerda
  * added support for f64, and returning geotransform
  *
@@ -84,6 +87,9 @@ class CPL_DLL HFADataset : public GDALDataset
                 ~HFADataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Create( const char * pszFilename,
+                                int nXSize, int nYSize, int nBands,
+                                GDALDataType eType, char ** papszParmList );
 
 #ifdef notdef    
     virtual const char *GetProjectionRef(void);
@@ -109,6 +115,8 @@ class HFARasterBand : public GDALRasterBand
     virtual        ~HFARasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IWriteBlock( int, int, void * );
+
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
 };
@@ -213,6 +221,20 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
+/*                            IWriteBlock()                             */
+/************************************************************************/
+
+CPLErr HFARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
+                                   void * pImage )
+
+{
+    HFADataset	*poODS = (HFADataset *) poDS;
+
+    return( HFASetRasterBlock( poODS->hHFA, nBand, nBlockXOff, nBlockYOff,
+                               pImage ) );
+}
+
+/************************************************************************/
 /*                       GetColorInterpretation()                       */
 /************************************************************************/
 
@@ -259,6 +281,8 @@ HFADataset::HFADataset()
 HFADataset::~HFADataset()
 
 {
+    FlushCache();
+    
     if( hHFA != NULL )
         HFAClose( hHFA );
 }
@@ -284,7 +308,13 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    hHFA = HFAOpen( poOpenInfo->pszFilename, "r" );
+    if( poOpenInfo->eAccess == GA_Update )
+        hHFA = HFAOpen( poOpenInfo->pszFilename, "r+" );
+    else
+        hHFA = HFAOpen( poOpenInfo->pszFilename, "r" );
+
+    if( hHFA == NULL )
+        return NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -356,6 +386,85 @@ CPLErr HFADataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
+
+GDALDataset *HFADataset::Create( const char * pszFilenameIn,
+                                 int nXSize, int nYSize, int nBands,
+                                 GDALDataType eType,
+                                 char ** papszParmList )
+
+{
+    int		nHfaDataType;
+
+/* -------------------------------------------------------------------- */
+/*      Translate the data type.                                        */
+/* -------------------------------------------------------------------- */
+    switch( eType )
+    {
+      case GDT_Byte:
+        nHfaDataType = EPT_u8;
+        break;
+        
+      case GDT_UInt16:
+        nHfaDataType = EPT_u16;
+        break;
+        
+      case GDT_Int16:
+        nHfaDataType = EPT_s16;
+        break;
+        
+      case GDT_Int32:
+        nHfaDataType = EPT_s32;
+        break;
+        
+      case GDT_UInt32:
+        nHfaDataType = EPT_u32;
+        break;
+        
+      case GDT_Float32:
+        nHfaDataType = EPT_f32;
+        break;
+
+      case GDT_Float64:
+        nHfaDataType = EPT_f64;
+        break;
+        
+      case GDT_CFloat32:
+        nHfaDataType = EPT_c64;
+        break;
+        
+      case GDT_CFloat64:
+        nHfaDataType = EPT_c128;
+        break;
+
+      default:
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                 "Data type %s not supported by Erdas Imagine (HFA) format.\n",
+                  GDALGetDataTypeName( eType ) );
+        return NULL;
+        
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the new file.                                            */
+/* -------------------------------------------------------------------- */
+    HFAHandle hHFA;
+
+    hHFA = HFACreate( pszFilenameIn, nXSize, nYSize, nBands, 
+                      nHfaDataType, papszParmList );
+    if( hHFA == NULL )
+        return NULL;
+
+    HFAClose( hHFA );
+
+/* -------------------------------------------------------------------- */
+/*      Open the dataset normally.                                      */
+/* -------------------------------------------------------------------- */
+    return (GDALDataset *) GDALOpen( pszFilenameIn, GA_Update );
+}
+
+/************************************************************************/
 /*                          GDALRegister_HFA()                        */
 /************************************************************************/
 
@@ -373,6 +482,7 @@ void GDALRegister_HFA()
         poDriver->pszHelpTopic = "frmt_various.html#HFA";
         
         poDriver->pfnOpen = HFADataset::Open;
+        poDriver->pfnCreate = HFADataset::Create;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }

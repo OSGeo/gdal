@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/09/29 21:42:38  warmerda
+ * preliminary write support implemented
+ *
  * Revision 1.2  1999/01/22 17:36:47  warmerda
  * Added GetInstBytes(), track unknown sizes properly
  *
@@ -180,6 +183,78 @@ void HFAType::Dump( FILE * fp )
 }
 
 /************************************************************************/
+/*                            SetInstValue()                            */
+/************************************************************************/
+
+CPLErr 
+HFAType::SetInstValue( const char * pszFieldPath,
+                       GByte *pabyData, int nDataOffset, int nDataSize,
+                       char chReqType, void *pValue )
+
+{
+    int		nArrayIndex = 0, nNameLen, iField, nByteOffset;
+    const char	*pszRemainder;
+
+/* -------------------------------------------------------------------- */
+/*      Parse end of field name, possible index value and               */
+/*      establish where the remaining fields (if any) would start.      */
+/* -------------------------------------------------------------------- */
+    if( strchr(pszFieldPath,'[') != NULL )
+    {
+        const char	*pszEnd = strchr(pszFieldPath,'[');
+        
+        nArrayIndex = atoi(pszEnd+1);
+        nNameLen = pszEnd - pszFieldPath;
+
+        pszRemainder = strchr(pszFieldPath,'.');
+        if( pszRemainder != NULL )
+            pszRemainder++;
+    }
+
+    else if( strchr(pszFieldPath,'.') != NULL )
+    {
+        const char	*pszEnd = strchr(pszFieldPath,'.');
+        
+        nNameLen = pszEnd - pszFieldPath;
+
+        pszRemainder = pszEnd + 1;
+    }
+
+    else
+    {
+        nNameLen = strlen(pszFieldPath);
+        pszRemainder = NULL;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Find this field within this type, if possible.                  */
+/* -------------------------------------------------------------------- */
+    nByteOffset = 0;
+    for( iField = 0; iField < nFields; iField++ )
+    {
+        if( EQUALN(pszFieldPath,papoFields[iField]->pszFieldName,nNameLen)
+            && papoFields[iField]->pszFieldName[nNameLen] == '\0' )
+        {
+            break;
+        }
+
+        nByteOffset += papoFields[iField]->GetInstBytes(pabyData+nByteOffset);
+    }
+
+    if( iField == nFields )
+        return CE_Failure;
+
+/* -------------------------------------------------------------------- */
+/*      Extract this field value, and return.                           */
+/* -------------------------------------------------------------------- */
+    return( papoFields[iField]->SetInstValue( pszRemainder, nArrayIndex,
+                                              pabyData + nByteOffset,
+                                              nDataOffset + nByteOffset,
+                                              nDataSize - nByteOffset,
+                                              chReqType, pValue ) );
+}
+
+/************************************************************************/
 /*                          ExtractInstValue()                          */
 /*                                                                      */
 /*      Extract the value of a field instance within this type.         */
@@ -197,9 +272,10 @@ void HFAType::Dump( FILE * fp )
 /*                                                the third abc struct. */
 /************************************************************************/
 
-void *HFAType::ExtractInstValue( const char * pszFieldPath,
-                               GByte *pabyData, int nDataOffset, int nDataSize,
-                                 char chReqType )
+void *
+HFAType::ExtractInstValue( const char * pszFieldPath,
+                           GByte *pabyData, int nDataOffset, int nDataSize,
+                           char chReqType )
 
 {
     int		nArrayIndex = 0, nNameLen, iField, nByteOffset;

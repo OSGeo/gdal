@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/09/29 21:42:38  warmerda
+ * preliminary write support implemented
+ *
  * Revision 1.4  1999/01/28 16:24:09  warmerda
  * Handle HFAStandardWord().
  *
@@ -48,6 +51,7 @@
 #define _HFA_P_H_INCLUDED
 
 #include "cpl_port.h"
+#include "cpl_error.h"
 
 #ifdef CPL_LSB
 #  define HFAStandard(n,p)	{}
@@ -69,12 +73,14 @@ class HFABand;
 typedef struct {
     FILE	*fp;
 
+    GUInt32     nEndOfFile;
     GUInt32	nRootPos;
     GUInt32	nDictionaryPos;
     
     GInt16	nEntryHeaderLength;
     GInt32	nVersion;
 
+    int         bTreeDirty;
     HFAEntry	*poRoot;
 
     HFADictionary *poDictionary;
@@ -91,6 +97,9 @@ typedef struct {
     void        *pProParameters;
 
 } HFAInfo_t;
+
+GUInt32 HFAAllocateSpace( HFAInfo_t *, GUInt32 );
+CPLErr  HFAParseBandInfo( HFAInfo_t * );
 
 #define HFA_PRIVATE
 
@@ -134,6 +143,7 @@ class HFABand
     int		nBlocksPerColumn;
 
     CPLErr	GetRasterBlock( int nXBlock, int nYBlock, void * pData );
+    CPLErr	SetRasterBlock( int nXBlock, int nYBlock, void * pData );
 
     CPLErr	GetPCT( int *, double **, double **, double ** );
 };
@@ -148,7 +158,8 @@ class HFABand
 /************************************************************************/
 class HFAEntry
 {
-    GInt32	nFilePos;
+    int         bDirty;
+    GUInt32	nFilePos;
     
     HFAInfo_t	*psHFA;
     HFAEntry	*poParent;
@@ -172,12 +183,20 @@ class HFAEntry
     void	LoadData();
 
     void	*GetFieldValue( const char *, char );
+    CPLErr      SetFieldValue( const char *, char, void * );
 
 public:
     		HFAEntry( HFAInfo_t * psHFA, GUInt32 nPos,
                           HFAEntry * poParent, HFAEntry *poPrev);
 
+                HFAEntry( HFAInfo_t *psHFA, 
+                          const char *pszNodeName,
+                          const char *pszTypeName,
+                          HFAEntry *poParent );
+                          
     virtual     ~HFAEntry();                
+
+    GUInt32	GetFilePos() { return nFilePos; }
 
     const char	*GetName() { return szName; }
     const char  *GetType() { return szType; }
@@ -193,7 +212,17 @@ public:
     double	GetDoubleField( const char *, CPLErr * = NULL );
     const char	*GetStringField( const char *, CPLErr * = NULL );
 
+    CPLErr      SetIntField( const char *, int );
+    CPLErr      SetDoubleField( const char *, double );
+    CPLErr      SetStringField( const char *, const char * );
+
     void	DumpFieldValues( FILE *, const char * = NULL );
+
+    void        SetPosition();
+    CPLErr      FlushToDisk();
+
+    void	MarkDirty();
+    GByte      *MakeData( int nSize = 0 );
 };
 
 /************************************************************************/
@@ -230,6 +259,10 @@ class HFAField
     void	*ExtractInstValue( const char * pszField, int nIndexValue,
                                GByte *pabyData, int nDataOffset, int nDataSize,
                                char chReqType );
+
+    CPLErr      SetInstValue( const char * pszField, int nIndexValue,
+                              GByte *pabyData, int nDataOffset, int nDataSize,
+                              char chReqType, void *pValue );
 
     void	DumpInstValue( FILE *fpOut, 
                                GByte *pabyData, int nDataOffset, int nDataSize,
@@ -269,6 +302,9 @@ class HFAType
     void	*ExtractInstValue( const char * pszField,
                                GByte *pabyData, int nDataOffset, int nDataSize,
                                char chReqType );
+    CPLErr      SetInstValue( const char * pszField,
+                              GByte *pabyData, int nDataOffset, int nDataSize,
+                              char chReqType, void * pValue );
     void	DumpInstValue( FILE *fpOut, 
                                GByte *pabyData, int nDataOffset, int nDataSize,
                                const char *pszPrefix = NULL );

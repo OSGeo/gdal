@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.5  2000/09/29 21:42:38  warmerda
+ * preliminary write support implemented
+ *
  * Revision 1.4  1999/01/28 16:25:19  warmerda
  * Added implementation of HFAStandard().
  *
@@ -99,7 +102,6 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
     char	szHeader[16];
     HFAInfo_t	*psInfo;
     GUInt32	nHeaderPos;
-    HFAEntry	*poNode;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -147,6 +149,7 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
     psInfo = (HFAInfo_t *) CPLCalloc(sizeof(HFAInfo_t),1);
 
     psInfo->fp = fp;
+    psInfo->bTreeDirty = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*	Where is the header?						*/
@@ -169,9 +172,15 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
     
     VSIFRead( &(psInfo->nEntryHeaderLength), sizeof(GInt16), 1, fp );
     HFAStandard( 2, &(psInfo->nEntryHeaderLength) );
-    
+
     VSIFRead( &(psInfo->nDictionaryPos), sizeof(GInt32), 1, fp );
     HFAStandard( 4, &(psInfo->nDictionaryPos) );
+
+/* -------------------------------------------------------------------- */
+/*      Collect file size.                                              */
+/* -------------------------------------------------------------------- */
+    VSIFSeek( fp, 0, SEEK_END );
+    psInfo->nEndOfFile = VSIFTell( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Instantiate the root entry.                                     */
@@ -183,6 +192,26 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
 /* -------------------------------------------------------------------- */
     psInfo->pszDictionary = HFAGetDictionary( psInfo );
     psInfo->poDictionary = new HFADictionary( psInfo->pszDictionary );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize the band information.                                */
+/* -------------------------------------------------------------------- */
+    HFAParseBandInfo( psInfo );
+
+    return psInfo;
+}
+
+/************************************************************************/
+/*                          HFAParseBandInfo()                          */
+/*                                                                      */
+/*      This is used by HFAOpen() and HFACreate() to initialize the     */
+/*      band structures.                                                */
+/************************************************************************/
+
+CPLErr HFAParseBandInfo( HFAInfo_t *psInfo )
+
+{
+    HFAEntry	*poNode;
 
 /* -------------------------------------------------------------------- */
 /*      Find the first band node.                                       */
@@ -202,7 +231,7 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
                      || poNode->GetIntField("height") != psInfo->nYSize )
             {
                 CPLAssert( FALSE );
-                continue;
+                return CE_Failure;
             }
 
             psInfo->papoBand = (HFABand **)
@@ -215,7 +244,7 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
         poNode = poNode->GetNext();
     }
 
-    return psInfo;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -226,6 +255,9 @@ void HFAClose( HFAHandle hHFA )
 
 {
     int		i;
+
+    if( hHFA->bTreeDirty )
+        HFAFlush( hHFA );
     
     delete hHFA->poRoot;
 
@@ -328,6 +360,20 @@ CPLErr HFAGetRasterBlock( HFAHandle hHFA, int nBand,
         return CE_Failure;
 
     return( hHFA->papoBand[nBand-1]->GetRasterBlock(nXBlock,nYBlock,pData) );
+}
+
+/************************************************************************/
+/*                         HFASetRasterBlock()                          */
+/************************************************************************/
+
+CPLErr HFASetRasterBlock( HFAHandle hHFA, int nBand,
+                          int nXBlock, int nYBlock, void * pData )
+
+{
+    if( nBand < 1 || nBand > hHFA->nBands )
+        return CE_Failure;
+
+    return( hHFA->papoBand[nBand-1]->SetRasterBlock(nXBlock,nYBlock,pData) );
 }
 
 /************************************************************************/
@@ -673,3 +719,305 @@ void HFAStandard( int nBytes, void * pData )
     }
 }
 #endif
+
+/* ==================================================================== */
+/*      Default data dictionary.  Emitted verbatim into the imagine     */
+/*      file.                                                           */
+/* ==================================================================== */
+
+static char szDefaultDD[] = 
+"{1:lversion,1:LfreeList,1:LrootEntryPtr,1:sentryHeaderLength,1:LdictionaryPtr,}Ehfa_File,{1:e2:raster,vector,type,1:LdictionaryPtr,}Ehfa_Layer,{1:Lnext,1:Lprev,1:Lparent,1:Lchild,1:Ldata,1:ldataSize,64:cname,32:ctype,1:tmodTime,}Ehfa_Entry,{16:clabel,1:LheaderPtr,}Ehfa_HeaderTag,{1:LfreeList,1:lfreeSize,}Ehfa_FreeListNode,{1:lsize,1:Lptr,}Ehfa_Data,{1:sfileCode,1:Loffset,1:lsize,1:e2:false,true,logvalid,1:e2:no compression,ESRI GRID compression,compressionType,}Edms_VirtualBlockInfo,{1:lmin,1:lmax,}Edms_FreeIDList,{1:lnumvirtualblocks,1:lnumobjectsperblock,1:lnextobjectnum,1:e2:no compression,RLC compression,compressionType,0:poEdms_VirtualBlockInfo,blockinfo,0:poEdms_FreeIDList,freelist,1:tmodTime,}Edms_State,{1:lwidth,1:lheight,1:e3:thematic,athematic,fft of real-valued data,layerType,1:e13:u1,u2,u4,u8,s8,u16,s16,u32,s32,f32,f64,c64,c128,pixelType,1:lblockWidth,1:lblockHeight,}Eimg_Layer_SubSample,{1:lwidth,1:lheight,1:e3:thematic,athematic,fft of real-valued data,layerType,1:e13:u1,u2,u4,u8,s8,u16,s16,u32,s32,f32,f64,c64,c128,pixelType,1:lblockWidth,1:lblockHeight,}Eimg_Layer,{1:dx,1:dy,}Eprj_Coordinate,{1:dwidth,1:dheight,}Eprj_Size,{0:pcproName,1:*oEprj_Coordinate,upperLeftCenter,1:*oEprj_Coordinate,lowerRightCenter,1:*oEprj_Size,pixelSize,0:pcunits,}Eprj_MapInfo,{1:dminimum,1:dmaximum,1:dmean,1:dmedian,1:dmode,1:dstddev,}Esta_Statistics,{1:lskipFactorX,1:lskipFactorY,}Esta_SkipFactors,{1:lnumRows,}Edsc_Table,{1:lnumRows,1:LcolumnDataPtr,1:e4:integer,real,complex,string,dataType,1:lmaxNumChars,}Edsc_Column,{1:lnumrows,1:lnumcolumns,1:e13:EGDA_TYPE_U1,EGDA_TYPE_U2,EGDA_TYPE_U4,EGDA_TYPE_U8,EGDA_TYPE_S8,EGDA_TYPE_U16,EGDA_TYPE_S16,EGDA_TYPE_U32,EGDA_TYPE_S32,EGDA_TYPE_F32,EGDA_TYPE_F64,EGDA_TYPE_C64,EGDA_TYPE_C128,datatype,1:e4:EGDA_SCALAR_OBJECT,EGDA_TABLE_OBJECT,EGDA_MATRIX_OBJECT,EGDA_RASTER_OBJECT,objecttype,}Egda_BaseData,{1:lnumBins,1:e4:direct,linear,logarithmic,explicit,binFunctionType,1:dminLimit,1:dmaxLimit,1:*bbinLimits,}Edsc_BinFunction,{1:lversion,1:lnumobjects,1:e2:EAOI_UNION,EAOI_INTERSECTION,operation,}Eaoi_AreaOfInterest,.";
+
+/************************************************************************/
+/*                            HFACreateLL()                             */
+/*                                                                      */
+/*      Low level creation of an Imagine file.  Writes out the          */
+/*      Ehfa_HeaderTag, dictionary and Ehfa_File.                       */
+/************************************************************************/
+
+HFAHandle HFACreateLL( const char * pszFilename )
+
+{
+    FILE	*fp;
+    HFAInfo_t   *psInfo;
+
+/* -------------------------------------------------------------------- */
+/*      Create the file in the file system.                             */
+/* -------------------------------------------------------------------- */
+    fp = VSIFOpen( pszFilename, "w+b" );
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Creation of file %s failed.", 
+                  pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the HFAInfo_t                                            */
+/* -------------------------------------------------------------------- */
+    psInfo = (HFAInfo_t *) CPLCalloc(sizeof(HFAInfo_t),1);
+
+    psInfo->fp = fp;
+    psInfo->nXSize = 0;
+    psInfo->nYSize = 0;
+    psInfo->nBands = 0;
+    psInfo->papoBand = NULL;
+    psInfo->pMapInfo = NULL;
+    psInfo->pDatum = NULL;
+    psInfo->pProParameters = NULL;
+    psInfo->bTreeDirty = FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Write out the Ehfa_HeaderTag                                    */
+/* -------------------------------------------------------------------- */
+    GInt32	nHeaderPos;
+
+    VSIFWrite( (void *) "EHFA_HEADER_TAG", 1, 16, fp );
+
+    nHeaderPos = 20;
+    HFAStandard( 4, &nHeaderPos );
+    VSIFWrite( &nHeaderPos, 4, 1, fp );
+
+/* -------------------------------------------------------------------- */
+/*      Write the Ehfa_File node, locked in at offset 20.               */
+/* -------------------------------------------------------------------- */
+    GInt32	nVersion = 1, nFreeList = 0, nRootEntry = 0;
+    GInt16      nEntryHeaderLength = 128;
+    GInt32	nDictionaryPtr = 38;
+    
+    psInfo->nEntryHeaderLength = nEntryHeaderLength;
+    psInfo->nRootPos = 0; 
+    psInfo->nDictionaryPos = nDictionaryPtr;
+    psInfo->nVersion = nVersion;
+
+    HFAStandard( 4, &nVersion );
+    HFAStandard( 4, &nFreeList );
+    HFAStandard( 4, &nRootEntry );
+    HFAStandard( 2, &nEntryHeaderLength );
+    HFAStandard( 4, &nDictionaryPtr );
+
+    VSIFWrite( &nVersion, 4, 1, fp );
+    VSIFWrite( &nFreeList, 4, 1, fp );
+    VSIFWrite( &nRootEntry, 4, 1, fp );
+    VSIFWrite( &nEntryHeaderLength, 2, 1, fp );
+    VSIFWrite( &nDictionaryPtr, 4, 1, fp );
+
+/* -------------------------------------------------------------------- */
+/*      Write the dictionary, locked in at location 38.                 */
+/* -------------------------------------------------------------------- */
+    VSIFWrite( (void *) szDefaultDD, 1, strlen(szDefaultDD)+1, fp );
+
+    psInfo->pszDictionary = CPLStrdup(szDefaultDD);
+    psInfo->poDictionary = new HFADictionary( psInfo->pszDictionary );
+
+    psInfo->nEndOfFile = VSIFTell( fp );
+
+/* -------------------------------------------------------------------- */
+/*      Create a root entry.                                            */
+/* -------------------------------------------------------------------- */
+    psInfo->poRoot = new HFAEntry( psInfo, "root", "root", NULL );
+
+    return psInfo;
+}
+
+/************************************************************************/
+/*                          HFAAllocateSpace()                          */
+/*                                                                      */
+/*      Return an area in the file to the caller to write the           */
+/*      requested number of bytes.  Currently this is always at the     */
+/*      end of the file, but eventually we might actually keep track    */
+/*      of free space.  The HFAInfo_t's concept of file size is         */
+/*      updated, even if nothing ever gets written to this region.      */
+/*                                                                      */
+/*      Returns the offset to the requested space, or zero one          */
+/*      failure.                                                        */
+/************************************************************************/
+
+GUInt32 HFAAllocateSpace( HFAInfo_t *psInfo, GUInt32 nBytes )
+
+{
+    /* should check if this will wrap over 4GB limit */
+
+    psInfo->nEndOfFile += nBytes;
+    return psInfo->nEndOfFile - nBytes;
+}
+
+/************************************************************************/
+/*                              HFAFlush()                              */
+/*                                                                      */
+/*      Write out any dirty tree information to disk, putting the       */
+/*      disk file in a consistent state.                                */
+/************************************************************************/
+
+CPLErr HFAFlush( HFAHandle hHFA )
+
+{
+    CPLErr	eErr;
+
+    if( !hHFA->bTreeDirty )
+        return CE_None;
+
+    CPLAssert( hHFA->poRoot != NULL );
+
+/* -------------------------------------------------------------------- */
+/*      Flush HFAEntry tree to disk.                                    */
+/* -------------------------------------------------------------------- */
+    eErr = hHFA->poRoot->FlushToDisk();
+    if( eErr != CE_None )
+        return eErr;
+
+    hHFA->bTreeDirty = FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      do we need to update the Ehfa_File pointer to the root node?    */
+/* -------------------------------------------------------------------- */
+    if( hHFA->nRootPos != hHFA->poRoot->GetFilePos() )
+    {
+        GUInt32		nRootPos;
+
+        nRootPos = hHFA->nRootPos = hHFA->poRoot->GetFilePos();
+        HFAStandard( 4, &nRootPos );
+        VSIFSeek( hHFA->fp, 20 + 8, SEEK_SET );
+        VSIFWrite( &nRootPos, 4, 1, hHFA->fp );
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                             HFACreate()                              */
+/************************************************************************/
+
+HFAHandle HFACreate( const char * pszFilename, 
+                     int nXSize, int nYSize, int nBands, 
+                     int nDataType, char ** papszOptions )
+
+{
+    HFAHandle	psInfo;
+    int		nBlockSize = 64;
+
+/* -------------------------------------------------------------------- */
+/*      Create the low level structure.                                 */
+/* -------------------------------------------------------------------- */
+    psInfo = HFACreateLL( pszFilename );
+    if( psInfo == NULL )
+        return NULL;
+
+/* ==================================================================== */
+/*      Create each band (layer)                                        */
+/* ==================================================================== */
+    
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+        HFAEntry	*poEimg_Layer;
+        char		szName[128];
+
+        sprintf( szName, "Layer_%d", iBand+1 );
+
+/* -------------------------------------------------------------------- */
+/*      Create the Eimg_Layer for the band.                             */
+/* -------------------------------------------------------------------- */
+        poEimg_Layer = 
+            new HFAEntry( psInfo, szName, "Eimg_Layer", psInfo->poRoot );
+
+        poEimg_Layer->SetIntField( "width", nXSize );
+        poEimg_Layer->SetIntField( "height", nYSize );
+        poEimg_Layer->SetStringField( "layerType", "athematic" );
+        poEimg_Layer->SetIntField( "pixelType", nDataType );
+        poEimg_Layer->SetIntField( "blockWidth", nBlockSize );
+        poEimg_Layer->SetIntField( "blockHeight", nBlockSize );
+
+/* -------------------------------------------------------------------- */
+/*      Work out some details about the tiling scheme.                  */
+/* -------------------------------------------------------------------- */
+        int	nBlocksPerRow, nBlocksPerColumn, nBlocks, nBytesPerBlock;
+        
+        nBlocksPerRow = (nXSize + nBlockSize - 1) / nBlockSize;
+        nBlocksPerColumn = (nYSize + nBlockSize - 1) / nBlockSize;
+        nBlocks = nBlocksPerRow * nBlocksPerColumn;
+
+        nBytesPerBlock = (nBlockSize * nBlockSize 
+            * HFAGetDataTypeBits(nDataType) + 7) / 8;
+
+/* -------------------------------------------------------------------- */
+/*      Create the RasterDMS (block list).  This is a complex type      */
+/*      with pointers, and variable size.  We set the superstructure    */
+/*      ourselves rather than trying to have the HFA type management    */
+/*      system do it for us (since this would be hard to implement).    */
+/* -------------------------------------------------------------------- */
+        int	nDmsSize;
+        HFAEntry *poEdms_State;
+        GByte	*pabyData;
+        
+        poEdms_State = 
+            new HFAEntry( psInfo, "RasterDMS", "Edms_State", poEimg_Layer );
+
+        nDmsSize = 14 * nBlocks + 38;
+        pabyData = poEdms_State->MakeData( nDmsSize );
+
+        /* set some simple values */
+        poEdms_State->SetIntField( "numvirtualblocks", nBlocks );
+        poEdms_State->SetIntField( "numobjectsperblock", 
+                                   nBlockSize*nBlockSize );
+        poEdms_State->SetIntField( "nextobjectnum", 
+                                   nBlockSize*nBlockSize*nBlocks );
+        poEdms_State->SetStringField( "compressionType", "no compression" );
+
+        /* we need to hardcode file offset into the data, so locate it now */
+        poEdms_State->SetPosition();
+
+        /* Set block info headers */
+        GUInt32		nValue;
+        
+        /* blockinfo count */
+        nValue = nBlocks;
+        HFAStandard( 4, &nValue );
+        memcpy( pabyData + 14, &nValue, 4 );
+
+        /* blockinfo position */
+        nValue = poEdms_State->GetDataPos() + 22;
+        HFAStandard( 4, &nValue );
+        memcpy( pabyData + 18, &nValue, 4 );
+
+        /* Set each blockinfo */
+        for( int iBlock = 0; iBlock < nBlocks; iBlock++ )
+        {
+            GInt16  nValue16;
+            int	    nOffset = 22 + 14*iBlock;
+
+            /* fileCode */
+            nValue16 = 0;
+            HFAStandard( 2, &nValue16 );
+            memcpy( pabyData + nOffset, &nValue16, 2 );
+            
+            /* offset */
+            nValue = HFAAllocateSpace( psInfo, nBytesPerBlock );
+            HFAStandard( 4, &nValue );
+            memcpy( pabyData + nOffset + 2, &nValue, 4 );
+            
+            /* size */
+            nValue = nBytesPerBlock;
+            HFAStandard( 4, &nValue );
+            memcpy( pabyData + nOffset + 6, &nValue, 4 );
+            
+            /* logValid (true) */
+            nValue16 = 1;
+            HFAStandard( 2, &nValue16 );
+            memcpy( pabyData + nOffset + 10, &nValue16, 2 );
+            
+            /* compressionType (no compression) */
+            nValue16 = 0;
+            HFAStandard( 2, &nValue16 );
+            memcpy( pabyData + nOffset + 12, &nValue16, 2 );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize the band information.                                */
+/* -------------------------------------------------------------------- */
+    HFAParseBandInfo( psInfo );
+
+    return psInfo;
+}
+

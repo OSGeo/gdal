@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/09/29 21:42:38  warmerda
+ * preliminary write support implemented
+ *
  * Revision 1.7  1999/06/01 13:07:59  warmerda
  * added speed up for indexing into fixes size object arrays
  *
@@ -341,6 +344,209 @@ void HFAField::Dump( FILE * fp )
 }
 
 /************************************************************************/
+/*                            SetInstValue()                            */
+/************************************************************************/
+
+CPLErr
+HFAField::SetInstValue( const char * pszField, int nIndexValue,
+                        GByte *pabyData, int nDataOffset, int nDataSize,
+                        char chReqType, void *pValue )
+
+{
+    int			nInstItemCount = GetInstCount( pabyData );
+
+/* -------------------------------------------------------------------- */
+/*      Check the index value is valid.                                 */
+/*                                                                      */
+/*      Eventually this will have to account for variable fields.       */
+/* -------------------------------------------------------------------- */
+    if( nIndexValue < 0 || nIndexValue >= nInstItemCount )
+    {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      For now pointer operations are not supported.                   */
+/* -------------------------------------------------------------------- */
+    if( chPointer != '\0' )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+             "HFAField::SetInstValue() not supported yet through pointers." );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      pointers to char or uchar arrays requested as strings are       */
+/*      handled as a special case.                                      */
+/* -------------------------------------------------------------------- */
+    if( (chItemType == 'c' || chItemType == 'C') && chReqType == 's' )
+    {
+        memset( pabyData, 0, nBytes );
+        strncpy( (char *) pabyData, (char *) pValue, nBytes );
+
+        return CE_None;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Translate the passed type into different representations.       */
+/* -------------------------------------------------------------------- */
+    int		nIntValue;
+    double      dfDoubleValue;
+
+    if( chReqType == 's' )
+    {
+        nIntValue = atoi((char *) pValue);
+        dfDoubleValue = atof((char *) pValue);
+    }
+    else if( chReqType == 'd' )
+    {
+        dfDoubleValue = *((double *) pValue);
+        nIntValue = (int) dfDoubleValue;
+    }
+    else if( chReqType == 'i' )
+    {
+        dfDoubleValue = *((int *) pValue);
+        nIntValue = *((int *) pValue);
+    }
+    else if( chReqType == 'p' )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+            "HFAField::SetInstValue() not supported yet for pointer values." );
+        
+        return CE_Failure;
+    }
+    else
+    {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle by type.                                                 */
+/* -------------------------------------------------------------------- */
+    switch( chItemType )
+    {
+      case 'c':
+      case 'C':
+        if( chReqType == 's' )
+            pabyData[nIndexValue] = ((char *) pValue)[0];
+        else
+            pabyData[nIndexValue] = (char) nIntValue;
+        break;
+
+      case 'e':
+      case 's':
+      {
+          if( chItemType == 'e' && chReqType == 's' )
+          {
+              nIntValue = CSLFindString( papszEnumNames, (char *) pValue );
+              if( nIntValue == -1 )
+              {
+                  CPLError( CE_Failure, CPLE_AppDefined, 
+                            "Attempt to set enumerated field with unknown"
+                            " value `%s'.", 
+                            (char *) pValue );
+                  return CE_Failure;
+              }
+          }
+
+          unsigned short nNumber = nIntValue;
+
+          HFAStandard( 2, &nNumber );
+          memcpy( pabyData + nIndexValue*2, &nNumber, 2 );
+      }
+      break;
+
+      case 'S':
+      {
+          short nNumber;
+
+          nNumber = nIntValue;
+          HFAStandard( 2, &nNumber );
+          memcpy( pabyData + nIndexValue*2, &nNumber, 2 );
+      }
+      break;
+        
+      case 't':
+      case 'l':
+      {
+          GUInt32	nNumber = nIntValue;
+
+          HFAStandard( 4, &nNumber );
+          memcpy( pabyData + nIndexValue*4, &nNumber, 4 );
+      }
+      break;
+      
+      case 'L':
+      {
+          GInt32	nNumber = nIntValue;
+          
+          HFAStandard( 4, &nNumber );
+          memcpy( pabyData + nIndexValue*4, &nNumber, 4 );
+      }
+      break;
+      
+      case 'f':
+      {
+          float		fNumber = (float) dfDoubleValue;
+          
+          HFAStandard( 4, &fNumber );
+          memcpy( pabyData + nIndexValue*4, &fNumber, 4 );
+      }
+      break;
+        
+      case 'd':
+      {
+          double	dfNumber = dfDoubleValue;
+          
+          HFAStandard( 8, &dfNumber );
+          memcpy( pabyData + nIndexValue*8, &dfNumber, 8 );
+      }
+      break;
+
+      case 'o':
+        if( poItemObjectType != NULL )
+        {
+            int		nExtraOffset = 0;
+            int		iIndexCounter;
+
+            if( poItemObjectType->nBytes > 0 )
+            {
+                nExtraOffset = poItemObjectType->nBytes * nIndexValue;
+            }
+            else
+            {
+                for( iIndexCounter = 0;
+                     iIndexCounter < nIndexValue;
+                     iIndexCounter++ )
+                {
+                    nExtraOffset +=
+                        poItemObjectType->GetInstBytes(pabyData+nExtraOffset);
+                }
+            }
+
+            if( pszField != NULL && strlen(pszField) > 0 )
+            {
+                return( poItemObjectType->
+                            SetInstValue( pszField, pabyData + nExtraOffset,
+                                          nDataOffset + nExtraOffset,
+                                          nDataSize - nExtraOffset,
+                                          chReqType, pValue ) );
+            }
+        }
+        break;
+
+      default:
+        CPLAssert( FALSE );
+        return CE_Failure;
+        break;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                          ExtractInstValue()                          */
 /*                                                                      */
 /*      Extract the value of an instance of a field.                    */
@@ -349,9 +555,10 @@ void HFAField::Dump( FILE * fp )
 /*      substructure.                                                   */
 /************************************************************************/
 
-void *HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
-                               GByte *pabyData, int nDataOffset, int nDataSize,
-                               char chReqType )
+void *
+HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
+                            GByte *pabyData, int nDataOffset, int nDataSize,
+                            char chReqType )
 
 {
     char		*pszStringRet = NULL;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/09/29 21:42:38  warmerda
+ * preliminary write support implemented
+ *
  * Revision 1.6  2000/08/10 14:39:47  warmerda
  * implemented compressed block support
  *
@@ -415,6 +418,84 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /*      Byte swap to local byte order if required.  It appears that     */
 /*      raster data is always stored in Intel byte order in Imagine     */
 /*      files.                                                          */
+/* -------------------------------------------------------------------- */
+
+#ifdef CPL_MSB             
+    if( HFAGetDataTypeBits(nDataType) == 16 )
+    {
+        int		ii;
+
+        for( ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
+        {
+            unsigned char *pabyData = (unsigned char *) pData;
+            int		nTemp;
+
+            nTemp = pabyData[ii*2];
+            pabyData[ii*2] = pabyData[ii*2+1];
+            pabyData[ii*2+1] = nTemp;
+        }
+    }
+#endif /* def CPL_MSB */
+
+    return( CE_None );
+}
+
+/************************************************************************/
+/*                           SetRasterBlock()                           */
+/************************************************************************/
+
+CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
+
+{
+    int		iBlock;
+
+    if( LoadBlockInfo() != CE_None )
+        return CE_Failure;
+
+    iBlock = nXBlock + nYBlock * nBlocksPerRow;
+    
+/* -------------------------------------------------------------------- */
+/*      Move to the location that the data sits.                        */
+/* -------------------------------------------------------------------- */
+    if( VSIFSeek( psInfo->fp, panBlockStart[iBlock], SEEK_SET ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Seek to %d failed.\n", panBlockStart[iBlock] );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Byte swap to local byte order if required.  It appears that     */
+/*      raster data is always stored in Intel byte order in Imagine     */
+/*      files.                                                          */
+/* -------------------------------------------------------------------- */
+
+#ifdef CPL_MSB             
+    if( HFAGetDataTypeBits(nDataType) == 16 )
+    {
+        int		ii;
+
+        for( ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
+        {
+            unsigned char *pabyData = (unsigned char *) pData;
+            int		nTemp;
+
+            nTemp = pabyData[ii*2];
+            pabyData[ii*2] = pabyData[ii*2+1];
+            pabyData[ii*2+1] = nTemp;
+        }
+    }
+#endif /* def CPL_MSB */
+
+/* -------------------------------------------------------------------- */
+/*      Write uncompressed data.				        */
+/* -------------------------------------------------------------------- */
+    if( VSIFWrite( pData, panBlockSize[iBlock], 1, psInfo->fp ) != 1 )
+        return CE_Failure;
+
+/* -------------------------------------------------------------------- */
+/*      Swap back, since we don't really have permission to change      */
+/*      the callers buffer.                                             */
 /* -------------------------------------------------------------------- */
 
 #ifdef CPL_MSB             

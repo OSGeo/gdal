@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/09/29 21:42:38  warmerda
+ * preliminary write support implemented
+ *
  * Revision 1.3  1999/01/22 17:39:09  warmerda
  * Added projections structures, and various other calls
  *
@@ -141,6 +144,11 @@ CPL_C_START
 HFAHandle HFAOpen( const char * pszFilename, const char * pszMode );
 void	HFAClose( HFAHandle );
 
+HFAHandle HFACreateLL( const char *pszFilename );
+HFAHandle HFACreate( const char *pszFilename, int nXSize, int nYSize, 
+                     int nBands, int nDataType, char ** papszOptions );
+CPLErr  HFAFlush( HFAHandle );
+
 const Eprj_MapInfo *HFAGetMapInfo( HFAHandle );
 const Eprj_Datum *HFAGetDatum( HFAHandle );
 const Eprj_ProParameters *HFAGetProParameters( HFAHandle );
@@ -150,6 +158,8 @@ CPLErr	HFAGetRasterInfo( HFAHandle hHFA, int *pnXSize, int *pnYSize,
 CPLErr  HFAGetBandInfo( HFAHandle hHFA, int nBand, int * pnDataType,
                         int * pnBlockXSize, int * pnBlockYSize );
 CPLErr  HFAGetRasterBlock( HFAHandle hHFA, int nBand, int nXBlock, int nYBlock,
+                           void * pData );
+CPLErr  HFASetRasterBlock( HFAHandle hHFA, int nBand, int nXBlock, int nYBlock,
                            void * pData );
 int     HFAGetDataTypeBits( int );
 CPLErr	HFAGetPCT( HFAHandle, int, int *, double **, double **, double ** );

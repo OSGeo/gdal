@@ -33,6 +33,9 @@
  * Implementation of the HFAEntry class.
  *
  * $Log$
+ * Revision 1.4  2000/09/29 21:42:38  warmerda
+ * preliminary write support implemented
+ *
  * Revision 1.3  1999/01/22 17:37:30  warmerda
  * fixed types in GetFieldValue() calls
  *
@@ -49,6 +52,8 @@
 
 /************************************************************************/
 /*                              HFAEntry()                              */
+/*                                                                      */
+/*      Construct an HFAEntry from the source file.                     */
 /************************************************************************/
 
 HFAEntry::HFAEntry( HFAInfo_t * psHFAIn, GUInt32 nPos,
@@ -58,6 +63,7 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn, GUInt32 nPos,
     psHFA = psHFAIn;
     
     nFilePos = nPos;
+    bDirty = FALSE;
 
     poParent = poParentIn;
     poPrev = poPrevIn;
@@ -109,6 +115,65 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn, GUInt32 nPos,
                   "VSIFRead() failed in HFAEntry()." );
         return;
     }
+}
+
+/************************************************************************/
+/*                              HFAEntry()                              */
+/*                                                                      */
+/*      Construct an HFAEntry in memory, with the intention that it     */
+/*      would be written to disk later.                                 */
+/************************************************************************/
+
+HFAEntry::HFAEntry( HFAInfo_t * psHFAIn, 
+                    const char * pszNodeName, 
+                    const char * pszTypeName,
+                    HFAEntry * poParentIn )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Initialize Entry                                                */
+/* -------------------------------------------------------------------- */
+    psHFA = psHFAIn;
+    
+    nFilePos = 0;
+
+    poParent = poParentIn;
+    poPrev = poNext = poChild = NULL;
+
+    nDataPos = nDataSize = 0;
+    nNextPos = nChildPos = 0;
+
+    memset( szName, 0, 64 );
+    strncpy( szName, pszNodeName, 64 );
+    memset( szType, 0, 32 );
+    strncpy( szType, pszTypeName, 32 );
+
+    pabyData = NULL;
+    poType = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Update the previous or parent node to refer to this one.        */
+/* -------------------------------------------------------------------- */
+    if( poParent == NULL )
+    {
+        /* do nothing */
+    }
+    else if( poParent->poChild == NULL )
+    {
+        poParent->poChild = this;
+        poParent->MarkDirty();
+    }
+    else
+    {
+        poPrev = poParent->poChild;
+        while( poPrev->poNext != NULL )
+            poPrev = poPrev->poNext;
+
+        poPrev->poNext = this;
+        poPrev->MarkDirty();
+    }
+
+    MarkDirty();
 }
 
 /************************************************************************/
@@ -204,6 +269,42 @@ void HFAEntry::LoadData()
     if( poType == NULL )
         return;
 }
+
+/************************************************************************/
+/*                              MakeData()                              */
+/*                                                                      */
+/*      Create a data block on the this HFAEntry in memory.  By         */
+/*      default it will create the data the correct size for fixed      */
+/*      sized types, or do nothing for variable length types.           */
+/*      However, the caller can supply a desired size for variable      */
+/*      sized fields.                                                   */
+/************************************************************************/
+
+GByte *HFAEntry::MakeData( int nSize )
+
+{
+    if( poType == NULL )
+    {
+        poType = psHFA->poDictionary->FindType( szType );
+        if( poType == NULL )
+            return NULL;
+    }
+
+    if( nSize == 0 && poType->nBytes > 0 )
+        nSize = poType->nBytes;
+
+    if( (int) nDataSize < nSize && nSize > 0 )
+    {
+        pabyData = (GByte *) CPLRealloc(pabyData, nSize);
+        memset( pabyData + nDataSize, 0, nSize - nDataSize );
+        nDataSize = nSize;
+
+        MarkDirty();
+    }
+
+    return pabyData;
+}
+
 
 /************************************************************************/
 /*                          DumpFieldValues()                           */
@@ -386,5 +487,249 @@ const char *HFAEntry::GetStringField( const char * pszFieldPath, CPLErr *peErr)
     }
 }
 
+/************************************************************************/
+/*                           SetFieldValue()                            */
+/************************************************************************/
+        
+CPLErr HFAEntry::SetFieldValue( const char * pszFieldPath,
+                                char chReqType, void *pValue )
 
+{
+    HFAEntry	*poEntry = this;
+    
+/* -------------------------------------------------------------------- */
+/*      Is there a node path in this string?                            */
+/* -------------------------------------------------------------------- */
+    if( strchr(pszFieldPath,':') != NULL )
+    {
+        poEntry = GetNamedChild( pszFieldPath );
+        if( poEntry == NULL )
+            return CE_Failure;
+        
+        pszFieldPath = strchr(pszFieldPath,':') + 1;
+    }
 
+/* -------------------------------------------------------------------- */
+/*      Do we have the data and type for this node?  Try loading        */
+/*      from a file, or instantiating a new node.                       */
+/* -------------------------------------------------------------------- */
+    LoadData();
+    if( MakeData() == NULL 
+        || pabyData == NULL
+        || poType == NULL )
+    {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Extract the instance information.                               */
+/* -------------------------------------------------------------------- */
+
+    return( poType->SetInstValue( pszFieldPath,
+                                  pabyData, nDataPos, nDataSize,
+                                  chReqType, pValue ) );
+}
+
+/************************************************************************/
+/*                           SetStringField()                           */
+/************************************************************************/
+
+CPLErr HFAEntry::SetStringField( const char * pszFieldPath, 
+                                 const char * pszValue )
+
+{
+    return SetFieldValue( pszFieldPath, 's', (void *) pszValue );
+}
+
+/************************************************************************/
+/*                            SetIntField()                             */
+/************************************************************************/
+
+CPLErr HFAEntry::SetIntField( const char * pszFieldPath, int nValue )
+
+{
+    return SetFieldValue( pszFieldPath, 'i', &nValue );
+}
+
+/************************************************************************/
+/*                           SetDoubleField()                           */
+/************************************************************************/
+
+CPLErr HFAEntry::SetDoubleField( const char * pszFieldPath,
+                                 double dfValue )
+
+{
+    return SetFieldValue( pszFieldPath, 'd', &dfValue );
+}
+
+/************************************************************************/
+/*                            SetPosition()                             */
+/*                                                                      */
+/*      Set the disk position for this entry, and recursively apply     */
+/*      to any children of this node.  The parent will take care of     */
+/*      our siblings.                                                   */
+/************************************************************************/
+
+void HFAEntry::SetPosition()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Establish the location of this entry, and it's data.            */
+/* -------------------------------------------------------------------- */
+    if( nFilePos == 0 )
+    {
+        nFilePos = HFAAllocateSpace( psHFA, 
+                                     psHFA->nEntryHeaderLength 
+                                     + nDataSize );
+
+        if( nDataSize > 0 )
+            nDataPos = nFilePos + psHFA->nEntryHeaderLength;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Force all children to set their position.                       */
+/* -------------------------------------------------------------------- */
+    for( HFAEntry *poThisChild = poChild; 
+         poThisChild != NULL;
+         poThisChild = poThisChild->poNext )
+    {
+        poThisChild->SetPosition();
+    }
+}
+
+/************************************************************************/
+/*                            FlushToDisk()                             */
+/*                                                                      */
+/*      Write this entry, and it's data to disk if the entries          */
+/*      information is dirty.  Also force children to do the same.      */
+/************************************************************************/
+
+CPLErr HFAEntry::FlushToDisk()
+
+{
+    CPLErr	eErr = CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      If we are the root node, call SetPosition() on the whole        */
+/*      tree to ensure that all entries have an allocated position.     */
+/* -------------------------------------------------------------------- */
+    if( poParent == NULL )
+        SetPosition();
+
+/* ==================================================================== */
+/*      Only write this node out if it is dirty.                        */
+/* ==================================================================== */
+    if( bDirty )
+    {
+/* -------------------------------------------------------------------- */
+/*      Ensure we know where the relative entries are located.          */
+/* -------------------------------------------------------------------- */
+        if( poNext != NULL )
+            nNextPos = poNext->nFilePos;
+        if( poChild != NULL )
+            nChildPos = poChild->nFilePos;
+
+/* -------------------------------------------------------------------- */
+/*      Write the Ehfa_Entry fields.                                    */
+/* -------------------------------------------------------------------- */
+        GUInt32		nLong;
+
+        if( VSIFSeek( psHFA->fp, nFilePos, SEEK_SET ) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                      "Failed to seek to %d for writing, out of disk space?",
+                      nFilePos );
+            return CE_Failure;
+        }
+
+        nLong = nNextPos;
+        HFAStandard( 4, &nLong );
+        VSIFWrite( &nLong, 4, 1, psHFA->fp );
+
+        if( poPrev != NULL )
+            nLong = poPrev->nFilePos;
+        else
+            nLong = 0;
+        HFAStandard( 4, &nLong );
+        VSIFWrite( &nLong, 4, 1, psHFA->fp );
+
+        if( poParent != NULL )
+            nLong = poParent->nFilePos;
+        else
+            nLong = 0;
+        HFAStandard( 4, &nLong );
+        VSIFWrite( &nLong, 4, 1, psHFA->fp );
+
+        nLong = nChildPos;
+        HFAStandard( 4, &nLong );
+        VSIFWrite( &nLong, 4, 1, psHFA->fp );
+
+        
+        nLong = nDataPos;
+        HFAStandard( 4, &nLong );
+        VSIFWrite( &nLong, 4, 1, psHFA->fp );
+
+        nLong = nDataSize;
+        HFAStandard( 4, &nLong );
+        VSIFWrite( &nLong, 4, 1, psHFA->fp );
+
+        VSIFWrite( szName, 1, 64, psHFA->fp );
+        VSIFWrite( szType, 1, 64, psHFA->fp );
+
+        nLong = 0; /* Should we keep the time, or set it more reasonably? */
+        if( VSIFWrite( &nLong, 4, 1, psHFA->fp ) != 1 )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                      "Failed to write HFAEntry %s(%s), out of disk space?",
+                      szName, szType );
+            return CE_Failure;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Write out the data.                                             */
+/* -------------------------------------------------------------------- */
+        if( nDataSize > 0 && pabyData != NULL )
+        {
+            if( VSIFSeek( psHFA->fp, nDataPos, SEEK_SET ) != 0 
+                || VSIFWrite( pabyData, nDataSize, 1, psHFA->fp ) != 1 )
+            {
+                CPLError( CE_Failure, CPLE_FileIO, 
+                          "Failed to write %d bytes HFAEntry %s(%s) data,\n"
+                          "out of disk space?",
+                          nDataSize, szName, szType );
+                return CE_Failure;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Process all the children of this node                           */
+/* -------------------------------------------------------------------- */
+    for( HFAEntry *poThisChild = poChild; 
+         poThisChild != NULL;
+         poThisChild = poThisChild->poNext )
+    {
+        eErr = poThisChild->FlushToDisk();
+        if( eErr != CE_None )
+            return eErr;
+    }
+
+    bDirty = FALSE;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                             MarkDirty()                              */
+/*                                                                      */
+/*      Mark this node as dirty (in need of writing to disk), and       */
+/*      also mark the tree as a whole as being dirty.                   */
+/************************************************************************/
+
+void HFAEntry::MarkDirty()
+
+{
+    bDirty = TRUE;
+    psHFA->bTreeDirty = TRUE;
+}
