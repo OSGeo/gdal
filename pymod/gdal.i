@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2000/07/25 17:45:03  warmerda
+ * added access to CPLDebug
+ *
  * Revision 1.16  2000/07/19 19:43:29  warmerda
  * updated for numpy support
  *
@@ -90,6 +93,8 @@
 %}
 
 %native(NumPyArrayToGDALFilename) py_NumPyArrayToGDALFilename;
+
+void CPLDebug( const char *, const char * );
 
 typedef int GDALDataType;
 typedef int GDALAccess;

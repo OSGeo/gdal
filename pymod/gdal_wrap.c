@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.16  2000/07/19 19:43:29  warmerda
- * updated for numpy support
+ * Revision 1.17  2000/07/25 17:45:03  warmerda
+ * added access to CPLDebug
  *
  ************************************************************************/
 
@@ -1320,6 +1320,20 @@ py_OCTTransform(PyObject *self, PyObject *args) {
 
     return pnts;
 }
+static PyObject *_wrap_CPLDebug(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _arg0;
+    char * _arg1;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:CPLDebug",&_arg0,&_arg1)) 
+        return NULL;
+    CPLDebug(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_GDALGetDataTypeSize(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     int  _result;
@@ -3328,6 +3342,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALGetColorInterpretationName", _wrap_GDALGetColorInterpretationName, 1 },
 	 { "GDALGetDataTypeName", _wrap_GDALGetDataTypeName, 1 },
 	 { "GDALGetDataTypeSize", _wrap_GDALGetDataTypeSize, 1 },
+	 { "CPLDebug", _wrap_CPLDebug, 1 },
 	 { "NumPyArrayToGDALFilename", py_NumPyArrayToGDALFilename, 1 },
 	 { NULL, NULL }
 };

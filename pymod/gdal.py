@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.15  2000/07/25 17:45:03  warmerda
+# added access to CPLDebug
+#
 # Revision 1.14  2000/07/19 19:43:29  warmerda
 # updated for numpy support
 #
@@ -66,6 +69,9 @@
 import _gdal
 from gdalconst import *
 
+def Debug(msg_class, message):
+    _gdal.CPLDebug( msg_class, message )
+    
 def GetCacheMax():
     return _gdal.GDALGetCacheMax()
 
