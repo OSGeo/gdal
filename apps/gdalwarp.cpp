@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/03/17 05:49:26  warmerda
+ * Fixed assert check in GDALWarpCreateOutput().
+ *
  * Revision 1.2  2003/09/19 17:52:21  warmerda
  * removed planned -gcp option
  *
@@ -601,7 +604,7 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
 /* -------------------------------------------------------------------- */
     if( dfXRes != 0.0 && dfYRes != 0.0 )
     {
-        CPLAssert( nPixels == 0 && nLines == 0 );
+        CPLAssert( nForcePixels == 0 && nForceLines == 0 );
         if( dfMinX == 0.0 && dfMinY == 0.0 && dfMaxX == 0.0 && dfMaxY == 0.0 )
         {
             dfMinX = adfDstGeoTransform[0];
