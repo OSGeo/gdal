@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.10  2000/06/26 18:46:31  warmerda
+# Added Dataset.BuildOverviews
+#
 # Revision 1.9  2000/06/26 17:58:15  warmerda
 # added driver, createcopy support
 #
@@ -177,6 +180,9 @@ class Dataset:
             gcp_list.append(gcp)
 
         return gcp_list
+
+    def BuildOverviews(self, resampling="NEAREST", overviewlist = [2,4,8] ):
+        return _gdal.GDALBuildOverviews(self._o, resampling, overviewlist, [])
 
 class Band:            
     def __init__(self, _obj):

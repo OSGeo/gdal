@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.9  2000/06/26 17:58:15  warmerda
- * added driver, createcopy support
+ * Revision 1.10  2000/06/26 18:46:31  warmerda
+ * Added Dataset.BuildOverviews
  *
  ************************************************************************/
 
@@ -560,6 +560,54 @@ char *SWIG_GetPtr(char *_c, void **ptr, char *_t)
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
+
+/************************************************************************/
+/*                           GDALBuildOverviews()                       */
+/************************************************************************/
+static PyObject *
+py_GDALBuildOverviews(PyObject *self, PyObject *args) {
+
+    char *pszSwigDS = NULL;
+    GDALDatasetH hDS = NULL;   
+    char *pszResampling = "NEAREST";
+    PyObject *psPyOverviewList = NULL, *psPyBandList = NULL;
+    int   nOverviews, *panOverviewList, i;
+    CPLErr eErr;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ssO!O!:GDALBuildOverviews",	
+			 &pszSwigDS, &pszResampling, 
+		         &PyList_Type, &psPyOverviewList, 
+			 &PyList_Type, &psPyBandList ) )
+        return NULL;
+
+    if (SWIG_GetPtr(pszSwigDS,(void **) &hDS, "_GDALDatasetH" )) {
+        PyErr_SetString(PyExc_TypeError,
+	   	        "Type error in argument 1 of GDALCreateCopy."
+			" Expected _GDALDatasetH.");
+        return NULL;
+    }
+
+    nOverviews = PyList_Size(psPyOverviewList);
+    panOverviewList = (int *) CPLCalloc(sizeof(int),nOverviews);
+    for( i = 0; i < nOverviews; i++ )
+    {
+	if( !PyArg_Parse( PyList_GET_ITEM(psPyOverviewList,i), "i", 
+			  panOverviewList+i) )
+        {
+	    PyErr_SetString(PyExc_ValueError, "bad overview value");
+	    return NULL;
+        }
+    }
+
+    eErr = GDALBuildOverviews( hDS, pszResampling, nOverviews, panOverviewList,
+			       0, NULL, NULL, NULL );
+
+    CPLFree( panOverviewList );
+
+    return Py_BuildValue( "i", eErr );
+}
+
 
 /************************************************************************/
 /*                           GDALCreateCopy()                           */
@@ -3048,6 +3096,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALWriteRaster", py_GDALWriteRaster, 1 },
 	 { "GDALReadRaster", py_GDALReadRaster, 1 },
 	 { "GDALCreateCopy", py_GDALCreateCopy, 1 },
+	 { "GDALBuildOverviews", py_GDALBuildOverviews, 1 },
 	 { "GDALFlushCacheBlock", _wrap_GDALFlushCacheBlock, 1 },
 	 { "GDALGetCacheUsed", _wrap_GDALGetCacheUsed, 1 },
 	 { "GDALGetCacheMax", _wrap_GDALGetCacheMax, 1 },

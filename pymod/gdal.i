@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/06/26 18:46:31  warmerda
+ * Added Dataset.BuildOverviews
+ *
  * Revision 1.9  2000/06/26 17:58:15  warmerda
  * added driver, createcopy support
  *
@@ -203,6 +206,58 @@ int   GDALFlushCacheBlock();
 /*      Special custom functions.                                       */
 /* ==================================================================== */
 
+
+%{
+/************************************************************************/
+/*                           GDALBuildOverviews()                       */
+/************************************************************************/
+static PyObject *
+py_GDALBuildOverviews(PyObject *self, PyObject *args) {
+
+    char *pszSwigDS = NULL;
+    GDALDatasetH hDS = NULL;   
+    char *pszResampling = "NEAREST";
+    PyObject *psPyOverviewList = NULL, *psPyBandList = NULL;
+    int   nOverviews, *panOverviewList, i;
+    CPLErr eErr;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ssO!O!:GDALBuildOverviews",	
+			 &pszSwigDS, &pszResampling, 
+		         &PyList_Type, &psPyOverviewList, 
+			 &PyList_Type, &psPyBandList ) )
+        return NULL;
+
+    if (SWIG_GetPtr(pszSwigDS,(void **) &hDS, "_GDALDatasetH" )) {
+        PyErr_SetString(PyExc_TypeError,
+	   	        "Type error in argument 1 of GDALCreateCopy."
+			" Expected _GDALDatasetH.");
+        return NULL;
+    }
+
+    nOverviews = PyList_Size(psPyOverviewList);
+    panOverviewList = (int *) CPLCalloc(sizeof(int),nOverviews);
+    for( i = 0; i < nOverviews; i++ )
+    {
+	if( !PyArg_Parse( PyList_GET_ITEM(psPyOverviewList,i), "i", 
+			  panOverviewList+i) )
+        {
+	    PyErr_SetString(PyExc_ValueError, "bad overview value");
+	    return NULL;
+        }
+    }
+
+    eErr = GDALBuildOverviews( hDS, pszResampling, nOverviews, panOverviewList,
+			       0, NULL, NULL, NULL );
+
+    CPLFree( panOverviewList );
+
+    return Py_BuildValue( "i", eErr );
+}
+
+%}
+
+%native(GDALBuildOverviews) py_GDALBuildOverviews;
 
 %{
 /************************************************************************/
