@@ -24,6 +24,9 @@
  * gxfopen.h: Includes for underlying GXF reading code.
  *
  * $Log$
+ * Revision 1.2  1998/12/06 02:54:26  warmerda
+ * new functions
+ *
  * Revision 1.1  1998/12/02 19:37:04  warmerda
  * New
  *
@@ -35,17 +38,19 @@
 /* -------------------------------------------------------------------- */
 /*      Include standard portability stuff.                             */
 /* -------------------------------------------------------------------- */
-#include "gdal_port.h"
-#include "gdal_vsi.h"
+#include "cpl_conv.h"
+#include "cpl_string.h"
 
 typedef void *GXFHandle;
 
+CPL_C_START
+
 GXFHandle GXFOpen( const char * pszFilename );
 
-GBSErr   GXFGetRawInfo( GXFHandle hGXF, int *pnXSize, int *pnYSize );
-GBSErr   GXFGetNUInfo( GXFHandle hGXF, int *pnXSize, int *pnYSize );
+CPLErr   GXFGetRawInfo( GXFHandle hGXF, int *pnXSize, int *pnYSize );
+CPLErr   GXFGetInfo( GXFHandle hGXF, int *pnXSize, int *pnYSize, int *pnSense);
 
-GBSErr   GXFGetRawScanline( GXFHandle, int iScanline, double * padfLineBuf );
+CPLErr   GXFGetRawScanline( GXFHandle, int iScanline, double * padfLineBuf );
 
 void     GXFClose( GXFHandle hGXF );
 
@@ -57,5 +62,7 @@ void     GXFClose( GXFHandle hGXF );
 #define GXFS_UR_LEFT	3
 #define GXFS_LR_LEFT	-4
 #define GXFS_LR_UP	4
+
+CPL_C_END
 
 #endif /* ndef _GXFOPEN_H_INCLUDED */
