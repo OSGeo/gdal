@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/08/23 14:24:14  warmerda
+ * Added GXFClose() on failed open to recover resources.
+ *
  * Revision 1.14  2004/04/27 14:30:55  warmerda
  * Cast CPLErr properly.
  *
@@ -340,6 +343,7 @@ GXFHandle GXFOpen( const char * pszFilename )
 /* -------------------------------------------------------------------- */
     if( !EQUALN(szTitle,"#GRID",5) )
     {
+        GXFClose( psGXF );
         CPLError( CE_Failure, CPLE_WrongFormat,
                   "Didn't parse through to #GRID successfully in.\n"
                   "file `%s'.\n",
