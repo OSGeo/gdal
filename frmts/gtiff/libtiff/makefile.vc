@@ -38,6 +38,8 @@ OBJ	= \
 
 GDAL_ROOT	=	..\..\..
 
+EXTRAFLAGS = 	-I..\..\zlib
+
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 default:	$(OBJ)
