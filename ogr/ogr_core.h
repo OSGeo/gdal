@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/01/14 20:08:49  warmerda
+ * fixed another bug in OGREnvelope.Merge
+ *
  * Revision 1.14  2003/01/07 17:51:55  warmerda
  * fixed OGREnvelope.Merge()
  *
@@ -99,7 +102,7 @@ class OGREnvelope
         if( IsInit() )
         {
             MinX = MIN(MinX,sOther.MinX);
-            MaxX = MAX(MaxX,sOther.MinX);
+            MaxX = MAX(MaxX,sOther.MaxX);
             MinY = MIN(MinY,sOther.MinY);
             MaxY = MAX(MaxY,sOther.MaxY);
         }
