@@ -15,16 +15,12 @@ OBJ	=	cpl_conv.o cpl_error.o cpl_string.o cpl_vsisimple.o \
 		cpl_vsil_unix_stdio_64.o cpl_minixml.o cpl_multiproc.o \
 		cpl_list.o
 
+CPPFLAGS	:=
+
 default:	$(OBJ)
 
 clean:
 	rm -f *.o $(LIB)
-
-%.o:	%.c
-	$(CC) -c $(CFLAGS) $*.c -o $*.o
-
-%.o:	%.cpp
-	$(CXX) -c $(CXXFLAGS) $*.cpp -o $*.o
 
 install:
 	for f in *.h ; do $(INSTALL_DATA) $$f $(INST_INCLUDE) ; done

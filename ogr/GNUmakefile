@@ -8,7 +8,7 @@ INST_H_FILES	=	ogr_core.h ogr_feature.h ogr_geometry.h ogr_p.h \
 		ogr_spatialref.h ogr_srs_api.h ogrsf_frmts/ogrsf_frmts.h \
 		ogr_featurestyle.h ogr_api.h
 
-LINCLUDE =	-Iogrsf_frmts -I. -I$(GDAL_ROOT)/port 
+CPPFLAGS	+=	-Iogrsf_frmts -I.
 
 default:	lib apps
 
@@ -79,12 +79,6 @@ gdalso:	$(GDAL_SLIB)
 
 $(GDAL_SLIB):
 	(cd ..; $(MAKE) check-lib)
-
-%.o:	%.c
-	$(CC) -c $(LINCLUDE) $(CFLAGS) $*.c -o $*.o
-
-%.o:	%.cpp
-	$(CXX) -c $(LINCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 
 web-update:	docs
 	cp html/* /u/www/projects/opengis/ogrhtml

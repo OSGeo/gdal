@@ -7,7 +7,7 @@ OTHER_OPTS :=	$(OTHER_OPTS) -DDISABLE_USER_DEFINED_CRS
 
 include ../../GDALmake.opt
 
-LINCLUDE =	-I../ogrsf_frmts -I.. -I$(GDAL_ROOT)/port $(OTHER_OPTS)
+CPPFLAGS	+=	-I../ogrsf_frmts -I.. $(OTHER_OPTS)
 
 WCTS_OBJ	=	ogrwcts.o
 C_WCTS_OBJ	=	wctsclient.o
@@ -28,10 +28,3 @@ $(BIN):	$(WCTS_OBJ)
 $(C_BIN):	$(C_WCTS_OBJ)
 	$(CXX) $(LNK_FLAGS) $(C_WCTS_OBJ) $(CONFIG_LIBS) $(CURL_LIB) \
 		-o $(C_BIN)
-
-%.o:	%.c
-	$(CC) -c $(LINCLUDE) $(CFLAGS) $*.c -o $*.o
-
-%.o:	%.cpp
-	$(CXX) -c $(LINCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
-

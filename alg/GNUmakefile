@@ -6,6 +6,8 @@ OBJ	=	gdalmediancut.o gdaldither.o gdal_crs.o gdaltransformer.o \
 		gdalsimplewarp.o gdalwarper.o gdalwarpkernel.o \
 		gdalwarpoperation.o gdalchecksum.o gdal_rpc.o
 
+CPPFLAGS	+=	$(GDAL_INCLUDE)
+
 default:	$(OBJ)
 
 clean:
@@ -13,12 +15,6 @@ clean:
 
 docs:	
 	(cd ..; $(MAKE) docs)
-
-%.o:	%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
-
-%.o:	%.cpp
-	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 
 install:
 	for f in *.h ; do $(INSTALL_DATA) $$f $(INST_INCLUDE) ; done
