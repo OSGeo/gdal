@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/08/09 21:33:33  warmerda
+ * minor .net hack
+ *
  * Revision 1.20  2002/08/08 22:02:51  warmerda
  * mark as multithreaded
  *
@@ -103,7 +106,7 @@
 #define BLOB_IUNKNOWN
 
 /************************************************************************/
-/*                            CVirtualArray                             */
+/*                           OGRVirtualArray                            */
 /************************************************************************/
 
 class CSFRowset;
@@ -117,6 +120,7 @@ public:
 	void	Initialize(OGRLayer *pOGRLayer,int, CSFRowset *);
 	BYTE    *GetRow(int iIndex, HRESULT &hr );
         int     CheckRows( int iIndex, int nCount );
+
 private:
         OGRFeature *GetFeature( int iIndex );
         void        ResetCache( int, int );
@@ -290,7 +294,7 @@ END_PROPSET_MAP()
 /************************************************************************/
 
 template <class T, class Storage, class CreatorClass,
-    class ArrayType = CSimpleArray<Storage>,
+    class ArrayType = SF_SIMPLE_ARRAY<Storage>,
     class RowClass = CSimpleRow,
     class RowsetInterface = IFRowsetImpl < T, IRowset, RowClass> >
 class CSFRowsetImpl :
