@@ -34,6 +34,7 @@ endif
 
 core-target:
 	(cd core; $(MAKE))
+	(cd alg; $(MAKE))
 
 frmts-target:
 	(cd frmts; $(MAKE))
