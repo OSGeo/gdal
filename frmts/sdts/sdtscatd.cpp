@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/12/23 14:17:58  warmerda
+ * Don't treat Lineage modules as being the same as Line modules.
+ *
  * Revision 1.9  1999/11/30 21:44:33  warmerda
  * Test for "Line" not "Line ".  TYPE is not always padded, for instance
  * coming out of Arc/Info's SDTSEXPORT command.
@@ -308,7 +311,8 @@ SDTSLayerType SDTS_CATD::GetEntryType( int iEntry )
     else if( EQUALN(papoEntries[iEntry]->pszType,"Attribute Secondary",17) )
         return SLTAttr;
     
-    else if( EQUALN(papoEntries[iEntry]->pszType,"Line",4) )
+    else if( EQUAL(papoEntries[iEntry]->pszType,"Line")
+             || EQUALN(papoEntries[iEntry]->pszType,"Line ",5) )
         return SLTLine;
     
     else if( EQUALN(papoEntries[iEntry]->pszType,"Point-Node",10) )
