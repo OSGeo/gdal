@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/01/27 16:34:56  fwarmerdam
+ * Fixed gml test.  Don't try to read any old XML file!
+ *
  * Revision 1.16  2005/01/27 04:06:32  fwarmerdam
  * added 3L0 XSD support
  *
@@ -182,7 +185,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         szHeader[sizeof(szHeader)-1] = '\0';
 
         if( szHeader[0] != '<' 
-            && strstr(szHeader,"opengis.net/gml") == NULL )
+            || strstr(szHeader,"opengis.net/gml") == NULL )
         {
             VSIFClose( fp );
             return FALSE;
@@ -414,6 +417,8 @@ int OGRGMLDataSource::Create( const char *pszFilename,
     VSIFPrintf( fpOutput, "%s", 
                 "     xmlns:ogr=\"http://ogr.maptools.org/\"\n" );
     VSIFPrintf( fpOutput, "%s", 
+                "     xmlns=\"http://ogr.maptools.org/\"\n" );
+    VSIFPrintf( fpOutput, "%s", 
                 "     xmlns:gml=\"http://www.opengis.net/gml\">\n" );
 
 /* -------------------------------------------------------------------- */
@@ -586,7 +591,7 @@ void OGRGMLDataSource::InsertHeader()
 /* -------------------------------------------------------------------- */
 /*      Emit the start of the schema section.                           */
 /* -------------------------------------------------------------------- */
-    const char *pszTargetNameSpace = "http://gdal.velocet.ca/ogr";
+    const char *pszTargetNameSpace = "http://ogr.maptools.org/";
     const char *pszPrefix = "ogr";
 
     VSIFPrintf( fpSchema, 
@@ -594,7 +599,7 @@ void OGRGMLDataSource::InsertHeader()
                 pszTargetNameSpace, pszPrefix, pszTargetNameSpace );
     
     VSIFPrintf( fpSchema, 
-                "<xs:import namespace=\"http://www.opengis.net/gml\" schemaLocation=\"http://schemas.cubewerx.com/schemas/gml/2.1.2/feature.xsd\"/>" );
+                "<xs:import namespace=\"http://www.opengis.net/gml\" schemaLocation=\"http://schemas.opengeospatial.net/gml/2.1.2/feature.xsd\"/>" );
 
 /* -------------------------------------------------------------------- */
 /*      Define the FeatureCollection                                    */
