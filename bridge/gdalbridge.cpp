@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/08/28 20:16:14  warmerda
+ * added lots of OGRSpatialReference stuff
+ *
  * Revision 1.7  2000/08/25 20:03:40  warmerda
  * added more entry points
  *
@@ -231,6 +234,110 @@ int GDALBridgeInitialize( const char * pszTargetDir )
     
     GDALSetColorEntry = (void (*)(GDALColorTableH, int, const GDALColorEntry*))
         GBGetSymbol( szPath, "GDALSetColorEntry" );
+
+/* -------------------------------------------------------------------- */
+/*      OSR API                                                         */
+/* -------------------------------------------------------------------- */
+    OSRNewSpatialReference = (OGRSpatialReferenceH (*)( const char * ))
+        GBGetSymbol( szPath, "OSRNewSpatialReference" );
+
+    OSRCloneGeogCS = (OGRSpatialReferenceH (*)(OGRSpatialReferenceH))
+        GBGetSymbol( szPath, "OSRCloneGeogCS" );
+
+    OSRDestroySpatialReference = (void (*)(OGRSpatialReferenceH))
+        GBGetSymbol( szPath, "OSRDestroySpatialReference" );
+
+    OSRReference = (int (*)(OGRSpatialReferenceH))
+        GBGetSymbol( szPath, "OSRReference" );
+
+    OSRDereference = (int (*)(OGRSpatialReferenceH))
+        GBGetSymbol( szPath, "OSRDereference" );
+
+    OSRImportFromEPSG = (OGRErr (*)(OGRSpatialReferenceH,int))
+        GBGetSymbol( szPath, "OSRImportFromEPSG" );
+
+    OSRImportFromWkt = (OGRErr (*)(OGRSpatialReferenceH,char **))
+        GBGetSymbol( szPath, "OSRImportFromWkt" );
+
+    OSRImportFromProj4 = (OGRErr (*)(OGRSpatialReferenceH,const char *))
+        GBGetSymbol( szPath, "OSRImportFromProj4" );
+
+    OSRExportToWkt = (OGRErr (*)(OGRSpatialReferenceH, char **))
+        GBGetSymbol( szPath, "OSRExportToWkt" );
+    
+    OSRExportToPrettyWkt = (OGRErr (*)(OGRSpatialReferenceH, char **, int))
+        GBGetSymbol( szPath, "OSRExportToPrettyWkt" );
+    
+    OSRExportToProj4 = (OGRErr (*)(OGRSpatialReferenceH, char **))
+        GBGetSymbol( szPath, "OSRExportToProj4" );
+    
+    OSRSetAttrValue = (OGRErr (*)(OGRSpatialReferenceH, const char *, 
+                                  const char *))
+        GBGetSymbol( szPath, "OSRSetAttrValue" );
+    
+    OSRGetAttrValue = (const char *(*)(OGRSpatialReferenceH, const char *,int))
+        GBGetSymbol( szPath, "OSRGetAttrValue" );
+    
+    OSRSetLinearUnits = (OGRErr (*)(OGRSpatialReferenceH, const char *,double))
+        GBGetSymbol( szPath, "OSRSetLinearUnits" );
+    
+    OSRGetLinearUnits = (double (*)(OGRSpatialReferenceH, char **))
+        GBGetSymbol( szPath, "OSRGetLinearUnits" );
+    
+    OSRIsGeographic = (int (*)(OGRSpatialReferenceH))
+        GBGetSymbol( szPath, "OSRIsGeographic" );
+    
+    OSRIsProjected = (int (*)(OGRSpatialReferenceH))
+        GBGetSymbol( szPath, "OSRIsProjected" );
+    
+    OSRIsSameGeogCS = (int (*)(OGRSpatialReferenceH,OGRSpatialReferenceH))
+        GBGetSymbol( szPath, "OSRIsSameGeogCS" );
+    
+    OSRIsSame = (int (*)(OGRSpatialReferenceH,OGRSpatialReferenceH))
+        GBGetSymbol( szPath, "OSRIsSame" );
+    
+    OSRSetProjCS = (OGRErr (*)(OGRSpatialReferenceH,const char*))
+        GBGetSymbol( szPath, "OSRSetProjCS" );
+
+    OSRSetWellKnownGeogCS = (OGRErr (*)(OGRSpatialReferenceH, const char *))
+        GBGetSymbol( szPath, "OSRSetWellKnownGeogCS" );
+
+    OSRSetGeogCS = (OGRErr (*)( OGRSpatialReferenceH hSRS,
+                                const char * pszGeogName,
+                                const char * pszDatumName,
+                                const char * pszEllipsoidName,
+                                double dfSemiMajor, double dfInvFlattening,
+                                const char * pszPMName /* = NULL */,
+                                double dfPMOffset /* = 0.0 */,
+                                const char * pszUnits /* = NULL */,
+                                double dfConvertToRadians /* = 0.0 */ ))
+        GBGetSymbol( szPath, "OSRSetGeogCS" );
+        
+    OSRGetSemiMajor = (double (*)(OGRSpatialReferenceH, OGRErr *))
+        GBGetSymbol( szPath, "OSRGetSemiMajor" );
+
+    OSRGetSemiMinor = (double (*)(OGRSpatialReferenceH, OGRErr *))
+        GBGetSymbol( szPath, "OSRGetSemiMinor" );
+
+    OSRGetInvFlattening = (double (*)(OGRSpatialReferenceH, OGRErr *))
+        GBGetSymbol( szPath, "OSRGetInvFlattening" );
+
+    OSRSetAuthority = (OGRErr (*)(OGRSpatialReferenceH, const char *, 
+                                  const char *, int))
+        GBGetSymbol( szPath, "OSRSetAuthority" );
+
+    OSRSetProjParm = (OGRErr (*)(OGRSpatialReferenceH, const char *, double))
+        GBGetSymbol( szPath, "OSRSetProjParm" );
+
+    OSRGetProjParm = (double (*)(OGRSpatialReferenceH, const char *, 
+                                 double, OGRErr *))
+        GBGetSymbol( szPath, "OSRGetProjParm" );
+
+    OSRSetUTM = (OGRErr (*)(OGRSpatialReferenceH, int, int))
+        GBGetSymbol( szPath, "OSRSetUTM" );
+
+    OSRGetUTMZone = (int (*)(OGRSpatialReferenceH, int *))
+        GBGetSymbol( szPath, "OSRGetUTMZone" );
 
     return TRUE;
 }

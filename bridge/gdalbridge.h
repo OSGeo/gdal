@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/08/28 20:16:14  warmerda
+ * added lots of OGRSpatialReference stuff
+ *
  * Revision 1.5  2000/08/25 20:03:40  warmerda
  * added more entry points
  *
@@ -169,6 +172,17 @@ typedef enum
 
 #define CPLE_WrongFormat	200
 
+typedef int OGRErr;
+
+#define OGRERR_NONE                0
+#define OGRERR_NOT_ENOUGH_DATA     1    /* not enough data to deserialize */
+#define OGRERR_NOT_ENOUGH_MEMORY   2
+#define OGRERR_UNSUPPORTED_GEOMETRY_TYPE 3
+#define OGRERR_UNSUPPORTED_OPERATION 4
+#define OGRERR_CORRUPT_DATA        5
+#define OGRERR_FAILURE             6
+#define OGRERR_UNSUPPORTED_SRS     7
+
 /* -------------------------------------------------------------------- */
 /*      Define handle types related to various internal classes.        */
 /* -------------------------------------------------------------------- */
@@ -179,6 +193,7 @@ typedef void *GDALRasterBandH;
 typedef void *GDALDriverH;
 typedef void *GDALProjDefH;
 typedef void *GDALColorTableH;
+typedef void *OGRSpatialReferenceH;
 
 /* ==================================================================== */
 /*      Registration/driver related.                                    */
@@ -338,6 +353,138 @@ GDAL_ENTRY void (*pGDALDestroyProjDef)( GDALProjDefH ) GDAL_NULL;
 
 GDAL_ENTRY const char *(*pGDALDecToDMS)( double, const char *, int ) GDAL_NULL;
 #define GDALDecToDMS pGDALDecToDMS
+
+/* -------------------------------------------------------------------- */
+/*      ogr_srs_api.h services.                                         */
+/* -------------------------------------------------------------------- */
+
+GDAL_ENTRY OGRSpatialReferenceH 
+	(*pOSRNewSpatialReference)( const char * ) GDAL_NULL;
+#define OSRNewSpatialReference pOSRNewSpatialReference
+
+GDAL_ENTRY OGRSpatialReferenceH 
+	(*pOSRCloneGeogCS)( OGRSpatialReferenceH ) GDAL_NULL;
+#define OSRCloneGeogCS pOSRCloneGeogCS
+
+GDAL_ENTRY void 
+	(*pOSRDestroySpatialReference)( OGRSpatialReferenceH ) GDAL_NULL;
+#define OSRDestroySpatialReference pOSRDestroySpatialReference
+
+GDAL_ENTRY int (*pOSRReference)( OGRSpatialReferenceH ) GDAL_NULL;
+#define OSRReference pOSRReference
+
+GDAL_ENTRY int (*pOSRDereference)( OGRSpatialReferenceH ) GDAL_NULL;
+#define OSRDereference pOSRDereference
+
+GDAL_ENTRY OGRErr (*pOSRImportFromEPSG)( OGRSpatialReferenceH, int ) GDAL_NULL;
+#define OSRImportFromEPSG pOSRImportFromEPSG
+
+GDAL_ENTRY OGRErr 
+	(*pOSRImportFromWkt)( OGRSpatialReferenceH, char ** ) GDAL_NULL;
+#define OSRImportFromWkt pOSRImportFromWkt
+
+GDAL_ENTRY OGRErr 
+	(*pOSRImportFromProj4)( OGRSpatialReferenceH, const char *) GDAL_NULL;
+#define OSRImportFromProj4 pOSRImportFromProj4
+
+GDAL_ENTRY OGRErr 
+	(*pOSRExportToWkt)( OGRSpatialReferenceH, char ** ) GDAL_NULL;
+#define OSRExportToWkt pOSRExportToWkt
+
+GDAL_ENTRY OGRErr 
+       (*pOSRExportToPrettyWkt)( OGRSpatialReferenceH, char **, int) GDAL_NULL;
+#define OSRExportToPrettyWkt pOSRExportToPrettyWkt
+
+GDAL_ENTRY OGRErr 
+	(*pOSRExportToProj4)( OGRSpatialReferenceH, char **) GDAL_NULL;
+#define OSRExportToProj4 pOSRExportToProj4
+
+GDAL_ENTRY OGRErr 
+	(*pOSRSetAttrValue)( OGRSpatialReferenceH hSRS,
+                             const char * pszNodePath,
+                             const char * pszNewNodeValue ) GDAL_NULL;
+#define OSRSetAttrValue pOSRSetAttrValue
+
+GDAL_ENTRY const char * (*pOSRGetAttrValue)( OGRSpatialReferenceH hSRS,
+                           const char * pszName, int iChild ) GDAL_NULL;
+#define OSRGetAttrValue pOSRGetAttrValue
+
+GDAL_ENTRY OGRErr (*pOSRSetLinearUnits)( OGRSpatialReferenceH, const char *, 
+                                         double ) GDAL_NULL;
+#define OSRSetLinearUnits pOSRSetLinearUnits
+
+GDAL_ENTRY double (*pOSRGetLinearUnits)( OGRSpatialReferenceH, 
+                                         char ** ) GDAL_NULL;
+#define OSRGetLinearUnits pOSRGetLinearUnits
+
+GDAL_ENTRY int (*pOSRIsGeographic)( OGRSpatialReferenceH ) GDAL_NULL;
+#define OSRIsGeographic pOSRIsGeographic
+
+GDAL_ENTRY int (*pOSRIsProjected)( OGRSpatialReferenceH ) GDAL_NULL;
+#define OSRIsProjected pOSRIsProjected
+
+GDAL_ENTRY int (*pOSRIsSameGeogCS)( OGRSpatialReferenceH, 
+                                    OGRSpatialReferenceH ) GDAL_NULL;
+#define OSRIsSameGeogCS pOSRIsSameGeogCS
+
+GDAL_ENTRY int (*pOSRIsSame)( OGRSpatialReferenceH, 
+                              OGRSpatialReferenceH ) GDAL_NULL;
+#define OSRIsSame pOSRIsSame
+
+GDAL_ENTRY OGRErr (*pOSRSetProjCS)( OGRSpatialReferenceH hSRS, 
+                                    const char * pszName ) GDAL_NULL;
+#define OSRSetProjCS pOSRSetProjCS
+
+GDAL_ENTRY OGRErr (*pOSRSetWellKnownGeogCS)( OGRSpatialReferenceH hSRS,
+                                             const char * pszName ) GDAL_NULL;
+#define OSRSetWellKnownGeogCS pOSRSetWellKnownGeogCS
+
+GDAL_ENTRY OGRErr (*pOSRSetGeogCS)( OGRSpatialReferenceH hSRS,
+                      const char * pszGeogName,
+                      const char * pszDatumName,
+                      const char * pszEllipsoidName,
+                      double dfSemiMajor, double dfInvFlattening,
+                      const char * pszPMName /* = NULL */,
+                      double dfPMOffset /* = 0.0 */,
+                      const char * pszUnits /* = NULL */,
+                      double dfConvertToRadians /* = 0.0 */ ) GDAL_NULL;
+#define OSRSetGeogCS pOSRSetGeogCS
+
+GDAL_ENTRY double (*pOSRGetSemiMajor)( OGRSpatialReferenceH, 
+                                       OGRErr * /* = NULL */ ) GDAL_NULL;
+#define OSRGetSemiMajor pOSRGetSemiMajor
+
+GDAL_ENTRY double (*pOSRGetSemiMinor)( OGRSpatialReferenceH, 
+                                       OGRErr * /* = NULL */ ) GDAL_NULL;
+#define OSRGetSemiMinor pOSRGetSemiMinor
+
+GDAL_ENTRY double (*pOSRGetInvFlattening)( OGRSpatialReferenceH, 
+                                           OGRErr * /*=NULL*/) GDAL_NULL;
+#define OSRGetInvFlattening pOSRGetInvFlattening
+
+GDAL_ENTRY OGRErr (*pOSRSetAuthority)( OGRSpatialReferenceH hSRS,
+                                       const char * pszTargetKey,
+                                       const char * pszAuthority,
+                                       int nCode ) GDAL_NULL;
+#define OSRSetAuthority pOSRSetAuthority
+
+GDAL_ENTRY OGRErr (*pOSRSetProjParm)( OGRSpatialReferenceH, 
+                                      const char *, double ) GDAL_NULL;
+#define OSRSetProjParm pOSRSetProjParm
+
+GDAL_ENTRY double (*pOSRGetProjParm)( OGRSpatialReferenceH hSRS,
+                                      const char * pszParmName, 
+                                      double dfDefault /* = 0.0 */,
+                                      OGRErr * /* = NULL */ ) GDAL_NULL;
+#define OSRGetProjParm pOSRGetProjParm
+
+GDAL_ENTRY OGRErr (*pOSRSetUTM)( OGRSpatialReferenceH hSRS, 
+                                 int nZone, int bNorth ) GDAL_NULL;
+#define OSRSetUTM pOSRSetUTM
+
+GDAL_ENTRY int (*pOSRGetUTMZone)( OGRSpatialReferenceH hSRS, 
+                                  int *pbNorth ) GDAL_NULL;
+#define OSRGetUTMZone pOSRGetUTMZone
 
 /* -------------------------------------------------------------------- */
 /*      This is the real entry point.  It tries to load the shared      */
