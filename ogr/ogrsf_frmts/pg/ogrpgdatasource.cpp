@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/04/30 00:45:45  warmerda
+ * default to launder being on
+ *
  * Revision 1.23  2004/04/28 12:45:46  warmerda
  * Fixed screwup in table selection query.
  *
@@ -621,7 +624,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
 
     poLayer = new OGRPGTableLayer( this, pszLayerName, TRUE, nSRSId );
 
-    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",FALSE) );
+    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
 
 /* -------------------------------------------------------------------- */
