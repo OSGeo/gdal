@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/02/06 07:42:14  dron
+ * Support for HOM projection, specified by two points on centerline.
+ *
  * Revision 1.4  2002/03/05 14:25:14  warmerda
  * expand tabs
  *
@@ -102,6 +105,7 @@ static char *papszProjectionSupported[] =
     SRS_PT_OBLIQUE_STEREOGRAPHIC,
     SRS_PT_POLAR_STEREOGRAPHIC,
     SRS_PT_HOTINE_OBLIQUE_MERCATOR,
+    SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN,
     SRS_PT_LABORDE_OBLIQUE_MERCATOR,
     SRS_PT_SWISS_OBLIQUE_CYLINDRICAL,
     SRS_PT_AZIMUTHAL_EQUIDISTANT,
@@ -228,6 +232,17 @@ static char *papszProjWithParms[] = {
     SRS_PP_LONGITUDE_OF_CENTER,
     SRS_PP_AZIMUTH,
     SRS_PP_RECTIFIED_GRID_ANGLE,
+    SRS_PP_SCALE_FACTOR,
+    SRS_PP_FALSE_EASTING,
+    SRS_PP_FALSE_NORTHING,
+    NULL,
+
+    SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN,
+    SRS_PP_LATITUDE_OF_CENTER,
+    SRS_PP_LATITUDE_OF_POINT_1,
+    SRS_PP_LONGITUDE_OF_POINT_1,
+    SRS_PP_LATITUDE_OF_POINT_2,
+    SRS_PP_LONGITUDE_OF_POINT_2
     SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
