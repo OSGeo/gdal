@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/05/09 17:09:08  warmerda
+ * Ensure nSRSId is set before creating any features.
+ *
  * Revision 1.2  2002/05/09 16:48:08  warmerda
  * upgrade to quote table and field names
  *
@@ -426,6 +429,10 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
     if( bHasPostGISGeometry )
     {
         char	*pszWKT = NULL;
+
+        // Do we need to force nSRSId to be set?
+        if( nSRSId == -2 )
+            GetSpatialRef();
 
         poFeature->GetGeometryRef()->exportToWkt( &pszWKT );
         
