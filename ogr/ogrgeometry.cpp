@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/31 20:42:28  warmerda
+ * added empty method
+ *
  * Revision 1.2  1999/05/31 11:05:08  warmerda
  * added some documentation
  *
@@ -294,3 +297,11 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix )
  * shared with many geometry objects, and should not be modified.
  */
 
+/**
+ * \fn void OGRGeometry::Empty();
+ *
+ * Clear geometry information.  This restores the geometry to it's initial
+ * state after construction, and before assignment of actual geometry.
+ *
+ * This method relates to the SFCOM IGeometry::Empty() method.
+ */
