@@ -62,7 +62,7 @@ AC_DEFUN(AC_LD_SHARED,
   else
     echo "checking for ld -shared ... no"
   fi
-  rm -f conftest*
+  rm -f conftest* libconftest* 
 
   AC_SUBST(LD_SHARED,$LD_SHARED)
 ])
