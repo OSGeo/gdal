@@ -7,17 +7,18 @@
 
 <h1>PostgreSQL</h1>
 
-This is an experimental driver for prototyping options for using PostgreSQL
-(and PostgreSQL extended with 
-<a href="http://postgis.refractions.net/">PostGIS</a>)
-as a vector database.<p>
+This driver implements support for access to spatial tables in 
+PostgreSQL extended with the 
+<a href="http://postgis.refractions.net/">PostGIS</a> spatial data support. 
+Some support exists in the driver for use with PostgreSQL without PostGIS
+but this has not been recently tested and is likely decayed.<p>
 
 When opening a database, it's name should be specified in the form
 "PG:dbname=<databasename>".  We use
 <a href="http://www.postgresql.org/docs/programmer/libpq-chapter.htm#AEN3240">
 PQconnectcb()</a> to make the connection, so any other options and defaults
 that would apply to it, apply to the name here.  The PG: prefix is used
-to mark the name as a postgress connection string.<p>
+to mark the name as a postgres connection string.<p>
 
 Currently all regular user tables are assumed to be layers from an OGR
 point of view, with the table names as the layer names.  Named views are
