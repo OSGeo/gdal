@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.41  2005/04/02 22:02:12  fwarmerdam
+ * initialize variables
+ *
  * Revision 1.40  2005/04/02 21:22:21  fwarmerdam
  * added GML and GeoTIFF box direct reading
  *
@@ -1413,7 +1416,7 @@ int ECWDataset::ParseGMLCoverageDesc()
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psRG = CPLSearchXMLNode( psXML, "=RectifiedGrid" );
     CPLXMLNode *psOriginPoint = NULL;
-    const char *pszOffset1, *pszOffset2;
+    const char *pszOffset1=NULL, *pszOffset2=NULL;
 
     if( psRG != NULL )
     {
