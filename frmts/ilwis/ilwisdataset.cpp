@@ -1502,11 +1502,6 @@ CPLErr ILWISRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
     CPLErr eErr = CE_None;
     int nXSize = dataset->GetRasterXSize();
-<<<<<<< ilwisdataset.cpp
-=======
-    int bSuccess;
-    string sStoreType;
->>>>>>> 1.7
     GDALDataType eType = GetRasterDataType();
     int nBlockSize = nBlockXSize * nBlockYSize * nSizePerPixel;
     void *pData;
