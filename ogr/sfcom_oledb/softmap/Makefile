@@ -6,10 +6,10 @@ SFOLEDB   =     ..
 PROJ	=	smsf
 DLLNAME	=	SoftmapSF.dll
 
+# Add -DATL_CPL_TRACE to get detailed ATL traces.
 EXTRAFLAGS =	-I$(SFOLEDB) \
 		-I$(MSDASDK)\include\oledb -I$(OGR) -I$(SFOLEDB) /W2 \
-		-I$(OGR)\ogrsf_frmts \
-		-I$(VCDIR)\ATL\Include
+		-I$(OGR)\ogrsf_frmts -I$(VCDIR)\ATL\Include
 
 !INCLUDE $(GDAL_ROOT)/nmake.opt
 
