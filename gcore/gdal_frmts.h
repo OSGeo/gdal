@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/08/13 16:59:53  dron
+ * New driver: EOSAT FAST format
+ *
  * Revision 1.14  2002/07/16 13:30:27  dron
  * New driver: HDF4 dataset.
  *
@@ -113,6 +116,7 @@ void CPL_DLL GDALRegister_FujiBAS(void);
 void CPL_DLL GDALRegister_FIT(void);
 void CPL_DLL GDALRegister_VRT(void);
 void CPL_DLL GDALRegister_USGSDEM(void);
+void CPL_DLL GDALRegister_FAST(void);
 void CPL_DLL GDALRegister_HDF4(void);
 void CPL_DLL GDALRegister_HDF4Image(void);
 void CPL_DLL GDALRegister_L1B(void);
