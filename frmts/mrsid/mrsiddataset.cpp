@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/04/02 19:26:08  kmelero
+ * Added read support for WKT.  (kmelero@sanz.com)
+ *
  * Revision 1.26  2005/04/02 19:04:00  kmelero
  * Added setting WKT in MrSID file.  (kmelero@sanz.com)
  *
@@ -1012,6 +1015,17 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
         adfGeoTransform[0] = adfGeoTransform[0] - adfGeoTransform[1] / 2;
         adfGeoTransform[3] = adfGeoTransform[3] - adfGeoTransform[5] / 2;
 	bHasGeoTransform = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read wkt.                                                       */
+/* -------------------------------------------------------------------- */
+    if ( !poImageReader->isGeoCoordImplicit() )
+    {
+        const LTIGeoCoord& oGeo = poImageReader->getGeoCoord();
+
+	if( oGeo.getWKT() )
+	  pszProjection = (char*)oGeo.getWKT();
     }
 
 /* -------------------------------------------------------------------- */
