@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2004/12/10 21:35:00  fwarmerdam
+ * preliminary support for writing JPEG2000 compressed data
+ *
  * Revision 1.24  2004/12/10 21:24:20  fwarmerdam
  * fix RPC offset, added ichipb metadata
  *
@@ -109,6 +112,10 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
+
+static void NITFPatchImageLength( const char *pszFilename,
+                                  long nImageOffset, 
+                                  GIntBig nPixelCount );
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1092,12 +1099,10 @@ const GDAL_GCP *NITFDataset::GetGCPs()
 }
 
 /************************************************************************/
-/*                         NITFDatasetCreate()                          */
+/*                         GDALToNITFDataType()                         */
 /************************************************************************/
 
-static GDALDataset *
-NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
-                   GDALDataType eType, char **papszOptions )
+static const char *GDALToNITFDataType( GDALDataType eType )
 
 {
     const char *pszPVType;
@@ -1138,11 +1143,44 @@ NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
         return NULL;
     }
 
-    NITFCreate( pszFilename, nXSize, nYSize, nBands, 
-                GDALGetDataTypeSize( eType ), pszPVType, 
-                papszOptions );
+    return pszPVType;
+}
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+/************************************************************************/
+/*                         NITFDatasetCreate()                          */
+/************************************************************************/
+
+static GDALDataset *
+NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
+                   GDALDataType eType, char **papszOptions )
+
+{
+    const char *pszPVType = GDALToNITFDataType( eType );
+
+    if( pszPVType == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      We disallow any IC value except NC when creating this way.      */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue( papszOptions, "IC" ) != NULL 
+        && !EQUAL(CSLFetchNameValue( papszOptions, "IC" ),"NC") )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Only IC=NC (uncompressed) allow with direct NITF file creation." );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the file.                                                */
+/* -------------------------------------------------------------------- */
+
+    if( !NITFCreate( pszFilename, nXSize, nYSize, nBands, 
+                     GDALGetDataTypeSize( eType ), pszPVType, 
+                     papszOptions ) )
+        return NULL;
+    else
+        return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
 }
 
 /************************************************************************/
@@ -1158,9 +1196,43 @@ NITFCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     GDALDataType eType;
     GDALRasterBand *poBand1 = poSrcDS->GetRasterBand(1);
     char  **papszFullOptions = CSLDuplicate( papszOptions );
+    int   bJPEG2000 = FALSE;
+    GDALDataset *poDstDS = NULL;
+    GDALDriver *poJ2KDriver = NULL;
 
     if( poBand1 == NULL )
         return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      We disallow any IC value except NC when creating this way.      */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue( papszOptions, "IC" ) != NULL )
+    {
+        if( EQUAL(CSLFetchNameValue( papszOptions, "IC" ),"NC") )
+            /* ok */;
+        else if( EQUAL(CSLFetchNameValue( papszOptions, "IC" ),"C8") )
+        {
+            poJ2KDriver = 
+                GetGDALDriverManager()->GetDriverByName( "ECW" );
+            if( poJ2KDriver == NULL )
+            {
+                CPLError( 
+                    CE_Failure, CPLE_AppDefined, 
+                    "Unable to write JPEG2000 compressed NITF file.\n"
+                    "No 'subfile' JPEG2000 write supporting drivers are\n"
+                    "configured." );
+                return NULL;
+            }
+            bJPEG2000 = TRUE;
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Only IC=NC (uncompressed) and IC=C8 (JPEG2000) allowed\n"
+                      "with NITF CreateCopy method." );
+            return NULL;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Get the data type.  Complex integers isn't supported by         */
@@ -1187,8 +1259,8 @@ NITFCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
                 CSLSetNameValue( papszFullOptions, "IREP", "RGB/LUT" );
             papszFullOptions = 
                 CSLSetNameValue( papszFullOptions, "LUT_SIZE", 
-                  CPLSPrintf("%d", 
-                             poBand1->GetColorTable()->GetColorEntryCount()) );
+                                 CPLSPrintf("%d", 
+                                            poBand1->GetColorTable()->GetColorEntryCount()) );
         }
         else if( GDALDataTypeIsComplex(eType) )
             papszFullOptions = 
@@ -1214,15 +1286,122 @@ NITFCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Create the output dataset.                                      */
+/*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
     int nXSize = poSrcDS->GetRasterXSize();
     int nYSize = poSrcDS->GetRasterYSize();
+    const char *pszPVType = GDALToNITFDataType( eType );
 
-    GDALDataset *poDstDS = NITFDatasetCreate( pszFilename, nXSize, nYSize,
-                                              poSrcDS->GetRasterCount(),
-                                              eType, papszFullOptions );
+    if( pszPVType == NULL )
+        return NULL;
+
+    NITFCreate( pszFilename, nXSize, nYSize, poSrcDS->GetRasterCount(),
+                GDALGetDataTypeSize( eType ), pszPVType, 
+                papszFullOptions );
+
     CSLDestroy( papszFullOptions );
+
+/* ==================================================================== */
+/*      Loop copying bands to an uncompressed file.                     */
+/* ==================================================================== */
+    if( !bJPEG2000 )
+    {
+        poDstDS = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+        if( poDstDS == NULL )
+            return NULL;
+        
+        for( int iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+        {
+            GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
+            GDALRasterBand *poDstBand = poDstDS->GetRasterBand( iBand+1 );
+
+/* -------------------------------------------------------------------- */
+/*      Do we need to copy a colortable or other metadata?              */
+/* -------------------------------------------------------------------- */
+            GDALColorTable *poCT;
+
+            poCT = poSrcBand->GetColorTable();
+            if( poCT != NULL )
+                poDstBand->SetColorTable( poCT );
+
+/* -------------------------------------------------------------------- */
+/*      Copy image data.                                                */
+/* -------------------------------------------------------------------- */
+            void           *pData;
+            CPLErr         eErr;
+
+            pData = CPLMalloc(nXSize * GDALGetDataTypeSize(eType) / 8);
+
+            for( int iLine = 0; iLine < nYSize; iLine++ )
+            {
+                eErr = poSrcBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
+                                            pData, nXSize, 1, eType, 0, 0 );
+                if( eErr != CE_None )
+                {
+                    return NULL;
+                }
+            
+                eErr = poDstBand->RasterIO( GF_Write, 0, iLine, nXSize, 1, 
+                                            pData, nXSize, 1, eType, 0, 0 );
+
+                if( eErr != CE_None )
+                {
+                    return NULL;
+                }
+
+                if( !pfnProgress( (iBand + (iLine+1) / (double) nYSize)
+                                  / (double) poSrcDS->GetRasterCount(), 
+                                  NULL, pProgressData ) )
+                {
+                    CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+                    delete poDstDS;
+                    return NULL;
+                }
+            }
+
+            CPLFree( pData );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      JPEG2000 case.  We need to write the data through a J2K         */
+/*      driver in pixel interleaved form.                               */
+/* -------------------------------------------------------------------- */
+    else if( bJPEG2000 )
+    {
+        NITFFile *psFile = NITFOpen( pszFilename, TRUE );
+        GDALDataset *poJ2KDataset = NULL;
+        int nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
+        char *apszOptions[] = { 
+//            "PROFILE=NPJE", 
+            "CODESTREAM_ONLY=TRUE", 
+            NULL };
+
+        char *pszDSName = CPLStrdup( 
+            CPLSPrintf( "J2K_SUBFILE:%d,%d,%s", nImageOffset, -1,
+                        pszFilename ) );
+
+        NITFClose( psFile );
+
+        poJ2KDataset = 
+            poJ2KDriver->CreateCopy( pszDSName, poSrcDS, FALSE, apszOptions, 
+                                     pfnProgress, pProgressData );
+        if( poJ2KDataset == NULL )
+            return NULL;
+
+        delete poJ2KDataset;
+
+        // Now we need to figure out the actual length of the file
+        // and correct the image segment size information.
+        GIntBig nPixelCount = nXSize * ((GIntBig) nYSize) * 
+            poSrcDS->GetRasterCount();
+
+        NITFPatchImageLength( pszFilename, nImageOffset, nPixelCount );
+
+        poDstDS = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+        if( poDstDS == NULL )
+            return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Set the georeferencing.                                         */
@@ -1230,64 +1409,79 @@ NITFCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     if( bWriteGeoTransform )
         poDstDS->SetGeoTransform( adfGeoTransform );
 
-/* -------------------------------------------------------------------- */
-/*      Loop copying bands.                                             */
-/* -------------------------------------------------------------------- */
-    for( int iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
-    {
-        GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
-        GDALRasterBand *poDstBand = poDstDS->GetRasterBand( iBand+1 );
-
-/* -------------------------------------------------------------------- */
-/*      Do we need to copy a colortable or other metadata?              */
-/* -------------------------------------------------------------------- */
-        GDALColorTable *poCT;
-
-        poCT = poSrcBand->GetColorTable();
-        if( poCT != NULL )
-            poDstBand->SetColorTable( poCT );
-
-/* -------------------------------------------------------------------- */
-/*      Copy image data.                                                */
-/* -------------------------------------------------------------------- */
-        void           *pData;
-        CPLErr         eErr;
-
-        pData = CPLMalloc(nXSize * GDALGetDataTypeSize(eType) / 8);
-
-        for( int iLine = 0; iLine < nYSize; iLine++ )
-        {
-            eErr = poSrcBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                        pData, nXSize, 1, eType, 0, 0 );
-            if( eErr != CE_None )
-            {
-                return NULL;
-            }
-            
-            eErr = poDstBand->RasterIO( GF_Write, 0, iLine, nXSize, 1, 
-                                        pData, nXSize, 1, eType, 0, 0 );
-
-            if( eErr != CE_None )
-            {
-                return NULL;
-            }
-
-            if( !pfnProgress( (iBand + (iLine+1) / (double) nYSize)
-                              / (double) poSrcDS->GetRasterCount(), 
-                              NULL, pProgressData ) )
-            {
-                CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-                delete poDstDS;
-                return NULL;
-            }
-        }
-
-        CPLFree( pData );
-    }
-
     return poDstDS;
 }
 
+/************************************************************************/
+/*                        NITFPatchImageLength()                        */
+/*                                                                      */
+/*      Fixup various stuff we don't know till we have written the      */
+/*      imagery.  In particular the file length, image data length      */
+/*      and the compression ratio achieved.                             */
+/************************************************************************/
+
+static void NITFPatchImageLength( const char *pszFilename,
+                                  long nImageOffset,
+                                  GIntBig nPixelCount )
+
+{
+    FILE *fpVSIL = VSIFOpenL( pszFilename, "r+b" );
+    if( fpVSIL == NULL )
+        return;
+    
+    VSIFSeekL( fpVSIL, 0, SEEK_END );
+    GIntBig nFileLen = VSIFTellL( fpVSIL );
+
+/* -------------------------------------------------------------------- */
+/*      Update total file length.                                       */
+/* -------------------------------------------------------------------- */
+    VSIFSeekL( fpVSIL, 342, SEEK_SET );
+    VSIFWriteL( (void *) CPLSPrintf("%012d",nFileLen), 
+                1, 12, fpVSIL );
+    
+/* -------------------------------------------------------------------- */
+/*      Update the image data length.                                   */
+/* -------------------------------------------------------------------- */
+    VSIFSeekL( fpVSIL, 369, SEEK_SET );
+    VSIFWriteL( (void *) CPLSPrintf("%010d",nFileLen-nImageOffset), 
+                1, 10, fpVSIL );
+
+/* -------------------------------------------------------------------- */
+/*      Update COMRAT, the compression rate variable.  It is a bit      */
+/*      hard to know right here whether we have an IGEOLO segment,      */
+/*      so the COMRAT will either be at offset 778 or 838.              */
+/* -------------------------------------------------------------------- */
+    char szIC[2];
+    VSIFSeekL( fpVSIL, 779-2, SEEK_SET );
+    VSIFReadL( szIC, 2, 1, fpVSIL );
+    if( szIC[0] != 'C' && szIC[1] != '8' )
+    {
+        VSIFSeekL( fpVSIL, 839-2, SEEK_SET );
+        VSIFReadL( szIC, 2, 1, fpVSIL );
+    }
+    
+    if( szIC[0] != 'C' && szIC[1] != '8' )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Unable to locate COMRAT to update in NITF header." );
+    }
+    else
+    {
+        char szCOMRAT[5];
+
+        double dfRate = (nFileLen-nImageOffset) * 8 / (double) nPixelCount;
+        dfRate = MAX(0.01,MIN(99.99,dfRate));
+        
+        // We emit in wxyz format with an implicit decimal place
+        // between wx and yz as per spec for lossy compression. 
+        // We really should have a special case for lossless compression.
+        sprintf( szCOMRAT, "%04d", (int) (dfRate * 100));
+        VSIFWriteL( szCOMRAT, 4, 1, fpVSIL );
+    }
+    
+    VSIFCloseL( fpVSIL );
+}
+        
 /************************************************************************/
 /*                          GDALRegister_NITF()                         */
 /************************************************************************/
@@ -1317,3 +1511,5 @@ void GDALRegister_NITF()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
+
+
