@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/01/26 21:22:18  warmerda
+ * added tentative MakeValueSafe implementation
+ *
  * Revision 1.6  2000/01/12 04:12:55  warmerda
  * Fixed bug in InsertChild().
  *
@@ -477,3 +480,65 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput )
 
     return OGRERR_NONE;
 }
+
+/************************************************************************/
+/*                           MakeValueSafe()                            */
+/************************************************************************/
+
+/**
+ * Massage value string, stripping special characters so it will be a
+ * database safe string.
+ *
+ * The operation is also applies to all subnodes of the current node.
+ */
+
+
+void OGR_SRSNode::MakeValueSafe()
+
+{
+    int		i, j;
+
+/* -------------------------------------------------------------------- */
+/*      First process subnodes.                                         */
+/* -------------------------------------------------------------------- */
+    for( int iChild = 0; iChild < GetChildCount(); iChild++ )
+    {
+        GetChild(iChild)->MakeValueSafe();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Skip numeric nodes.                                             */
+/* -------------------------------------------------------------------- */
+    if( (pszValue[0] >= '0' && pszValue[0] <= '9') || pszValue[0] != '.' )
+        return;
+    
+/* -------------------------------------------------------------------- */
+/*      Translate non-alphanumeric values to underscores.               */
+/* -------------------------------------------------------------------- */
+    for( i = 0; pszValue[i] != '\0'; i++ )
+    {
+        if( !(pszValue[i] >= 'A' && pszValue[i] <= 'Z')
+            && !(pszValue[i] >= 'a' && pszValue[i] <= 'z')
+            && !(pszValue[i] >= '0' && pszValue[i] <= '9') )
+        {
+            pszValue[i] = '_';
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Remove repeated and trailing underscores.                       */
+/* -------------------------------------------------------------------- */
+    for( i = 1, j = 0; pszValue[i] != '\0'; i++ )
+    {
+        if( pszValue[j] == '_' && pszValue[i] == '_' )
+            continue;
+
+        pszValue[++j] = pszValue[i];
+    }
+    
+    if( pszValue[j] == '_' )
+        pszValue[j] = '\0';
+    else
+        pszValue[j+1] = '\0';
+}
+

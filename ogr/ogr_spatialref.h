@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/01/26 21:22:18  warmerda
+ * added tentative MakeValueSafe implementation
+ *
  * Revision 1.11  2000/01/11 22:12:13  warmerda
  * added InsertChild
  *
@@ -110,6 +113,8 @@ class OGR_SRSNode
 
     const char  *GetValue() { return pszValue; }
     void        SetValue( const char * );
+
+    void	MakeValueSafe();
 
     OGR_SRSNode *Clone();
 
