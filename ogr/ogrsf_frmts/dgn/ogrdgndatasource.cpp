@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2004/08/17 20:56:48  warmerda
+ * Keep track of how many bytes we get when reading info for testopen.
+ *
  * Revision 1.9  2003/05/21 03:42:01  warmerda
  * Expanded tabs
  *
@@ -115,16 +118,17 @@ int OGRDGNDataSource::Open( const char * pszNewName,
     {
         FILE    *fp;
         GByte   abyHeader[512];
+        int     nHeaderBytes = 0;
 
         fp = VSIFOpen( pszNewName, "rb" );
         if( fp == NULL )
             return FALSE;
 
-        VSIFRead( abyHeader, 1, sizeof(abyHeader), fp );
+        nHeaderBytes = (int) VSIFRead( abyHeader, 1, sizeof(abyHeader), fp );
 
         VSIFClose( fp );
 
-        if( !DGNTestOpen( abyHeader, sizeof(abyHeader) ) )
+        if( !DGNTestOpen( abyHeader, nHeaderBytes ) )
             return FALSE;
     }
 
