@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/04/04 15:25:13  warmerda
+ * Fixed embarrasing bug in GDALCopyWords() for some cases.
+ *
  * Revision 1.8  2000/03/06 18:57:07  warmerda
  * Fixed bug in 1:1 special case code.
  *
@@ -339,8 +342,8 @@ void
         // source or destination is not contiguous
         for( i = 0; i < nWordCount; i++ )
         {
-            memcpy( ((GByte *)pSrcData) + i * nSrcPixelOffset,
-                    ((GByte *)pDstData) + i * nDstPixelOffset,
+            memcpy( ((GByte *)pDstData) + i * nDstPixelOffset,
+                    ((GByte *)pSrcData) + i * nSrcPixelOffset,
                     nWordSize );
         }
 
