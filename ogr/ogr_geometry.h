@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  1999/07/08 20:26:03  warmerda
+ * No longer override getGeometryType() on OGRLinearRing.
+ *
  * Revision 1.12  1999/07/07 04:23:07  danmo
  * Fixed typo in  #define _OGR_..._H_INCLUDED  line
  *
@@ -359,7 +362,6 @@ class OGRLinearRing : public OGRLineString
 
     // Non standard.
     virtual const char *getGeometryName();
-    virtual OGRwkbGeometryType getGeometryType();
     virtual OGRGeometry *clone();
     
     // IWks Interface - Note this isnt really a first class object
