@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/03/02 04:37:43  danmo
+ * Return empty string for LOCAL_CS in exportToProj4().
+ *
  * Revision 1.16  2001/01/22 14:00:28  warmerda
  * added untested support for Swiss Oblique Cylindrical
  *
@@ -546,7 +549,13 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
 /*      Handle the projection definition.                               */
 /* ==================================================================== */
 
-    if( pszProjection == NULL )
+    if( IsLocal() )
+    {
+        /* LOCAL_CS (NonEarth): return an empty PROJ4 string */
+        *ppszProj4 = CPLStrdup("");
+        return OGRERR_NONE;
+    }
+    else if( pszProjection == NULL )
     {
         sprintf( szProj4+strlen(szProj4), "+proj=longlat " );
     }
