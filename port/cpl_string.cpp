@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.25  2002/10/07 19:35:38  dron
+ * Fixed description for CSLFetchBoolean()
+ *
  * Revision 1.24  2002/07/12 22:37:05  warmerda
  * added CSLFetchBoolean
  *
@@ -774,7 +777,9 @@ char **CSLAppendPrintf(char **papszStrList, char *fmt, ...)
     return CSLAddString(papszStrList, gszCPLSPrintfBuffer[nCurrent]);
 }
 
-/**
+/**********************************************************************
+ *                       CSLFetchBoolean()
+ *
  * Check for boolean key value.
  *
  * In a StringList of "Name=Value" pairs, look to see if there is a key
