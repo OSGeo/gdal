@@ -47,13 +47,13 @@ OGR_ENABLED = @OGR_ENABLED@
 prefix		=	@prefix@
 exec_prefix	=	@exec_prefix@
 INST_PREFIX	=	@exec_prefix@
-INST_INCLUDE	=	@exec_prefix@/include
-INST_DATA 	=	@exec_prefix@/share/gdal
+INST_INCLUDE	=	@includedir@
+INST_DATA 	=	@datadir@
 INST_LIB	=	@libdir@
 INST_BIN	=	@bindir@
 INST_PYMOD      =       @pymoddir@
 INST_DOCS	=	@exec_prefix@/doc
-INST_MAN	=	@exec_prefix@/man
+INST_MAN	=	@mandir@
 
 #
 #	Whether we use debug flags, or optimization is determined by
