@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2004/04/15 17:34:11  warmerda
+ * Left rather than right justify the origin code.
+ *
  * Revision 1.5  2004/04/01 21:06:36  warmerda
  * Added creation options for PRODUCER, OriginCode, and ProcessCode.
  * Added support for reprojecting to NAD83.
@@ -260,7 +263,7 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
     pszOption = CSLFetchNameValue( psWInfo->papszOptions, "OriginCode" );
 
     if( pszOption != NULL )
-        TextFillR( achARec + 140, 4, pszOption );  // Should be YT for Yukon.
+        TextFill( achARec + 140, 4, pszOption );  // Should be YT for Yukon.
 
     else if( pszTemplate == NULL )
         TextFill( achARec + 140, 4, "" );
