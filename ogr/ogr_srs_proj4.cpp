@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2001/11/02 22:21:15  warmerda
+ * fixed memory leak
+ *
  * Revision 1.19  2001/10/11 19:23:30  warmerda
  * fixed datum names
  *
@@ -207,6 +210,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     if( pszProj == NULL )
     {
         CPLDebug( "OGR_PROJ4", "Can't find +proj= in:\n%s", pszProj4 );
+        CSLDestroy( papszNV );
         return OGRERR_CORRUPT_DATA;
     }
 
@@ -423,6 +427,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else
     {
         CPLDebug( "OGR_PROJ4", "Unsupported projection: %s", pszProj );
+        CSLDestroy( papszNV );
         return OGRERR_CORRUPT_DATA;
     }
 
@@ -493,6 +498,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         {
             CPLDebug( "OGR_PROJ4", "Can't find ellipse definition in:\n%s", 
                       pszProj4 );
+            CSLDestroy( papszNV );
             return OGRERR_UNSUPPORTED_SRS;
         }
         
@@ -503,6 +509,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         {
             CPLDebug( "OGR_PROJ4", "Can't find ellipse definition in:\n%s", 
                       pszProj4 );
+            CSLDestroy( papszNV );
             return OGRERR_UNSUPPORTED_SRS;
         }
 
@@ -524,6 +531,8 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /*      Linear units translation                                        */
 /* -------------------------------------------------------------------- */
     /* add here */
+
+    CSLDestroy( papszNV );
     
     return OGRERR_NONE;
 }
