@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/09/01 20:58:01  warmerda
+ * added CPL_DLL for entry points
+ *
  * Revision 1.10  2000/08/30 20:06:14  warmerda
  * added projection method list functions
  *
@@ -299,14 +302,14 @@ int CPL_DLL OCTTransform( OGRCoordinateTransformationH hCT,
 /*      Projection transform dictionary query.                          */
 /* -------------------------------------------------------------------- */
 
-char ** OPTGetProjectionMethods();
-char ** OPTGetParameterList( const char * pszProjectionMethod,
+char CPL_DLL ** OPTGetProjectionMethods();
+char CPL_DLL ** OPTGetParameterList( const char * pszProjectionMethod,
                              char ** ppszUserName );
-int OPTGetParameterInfo( const char * pszProjectionMethod,
-                         const char * pszParameterName,
-                         char ** ppszUserName,
-                         char ** ppszType,
-                         double *pdfDefaultValue );
+int CPL_DLL OPTGetParameterInfo( const char * pszProjectionMethod,
+                                 const char * pszParameterName,
+                                 char ** ppszUserName,
+                                 char ** ppszType,
+                                 double *pdfDefaultValue );
 
 CPL_C_END
 
