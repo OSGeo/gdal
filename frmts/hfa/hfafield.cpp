@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/02/15 19:06:18  warmerda
+ * Disable warning on field offsets for Intergraph delivery
+ *
  * Revision 1.5  1999/01/28 18:28:28  warmerda
  * minor simplification of code
  *
@@ -375,10 +378,12 @@ void *HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
 
         if( nOffset != (GUInt32) (nDataOffset + 8) )
         {
+#ifdef notdef            
             CPLError( CE_Warning, CPLE_AppDefined,
                       "%s.%s points at %d, not %d as expected\n",
                       pszFieldName, pszField ? pszField : "",
                       nOffset, nDataOffset+8 );
+#endif            
         }
         
         pabyData += 8;
