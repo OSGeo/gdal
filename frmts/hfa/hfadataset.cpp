@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/10/13 20:58:37  warmerda
+ * added to projections list
+ *
  * Revision 1.11  2000/10/13 18:09:40  warmerda
  * fixed degree/radian translation
  *
@@ -87,6 +90,7 @@ static const char *apszDatumMap[] = {
     /* Imagine name, WKT name */
     "NAD27", "North_American_Datum_1927",
     "NAD83", "North_American_Datum_1983",
+    "WGS84", "WGS_1984",
     NULL, NULL 
 };
 
@@ -538,11 +542,11 @@ CPLErr HFADataset::WriteProjection()
     }
     else if( EQUAL(pszProjName,SRS_PT_STEREOGRAPHIC) )
     {
-        sPro.proNumber = EPRJ_STEREOGRAPHIC;
-        sPro.proName = "Stereographic";
+        sPro.proNumber = EPRJ_STEREOGRAPHIC_EXTENDED;
+        sPro.proName = "Stereographic (Extended)";
+        sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
         sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
         sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*D2R;
-        /* hopefully the scale factor is 1.0! */
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
@@ -628,6 +632,55 @@ CPLErr HFADataset::WriteProjection()
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
         sPro.proParams[12] = 1.0;
+    }
+    else if( EQUAL(pszProjName,SRS_PT_ROBINSON) )
+    {
+        sPro.proNumber = EPRJ_ROBINSON;
+        sPro.proName = "Robinson";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*D2R;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_MOLLWEIDE) )
+    {
+        sPro.proNumber = EPRJ_MOLLWEIDE;
+        sPro.proName = "Mollweide";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_ECKERT_IV) )
+    {
+        sPro.proNumber = EPRJ_ECKERT_IV;
+        sPro.proName = "Eckert IV";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_ECKERT_VI) )
+    {
+        sPro.proNumber = EPRJ_ECKERT_VI;
+        sPro.proName = "Eckert VI";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_GALL_STEREOGRAPHIC) )
+    {
+        sPro.proNumber = EPRJ_GALL_STEREOGRAPHIC;
+        sPro.proName = "Gall Stereographic";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_CASSINI_SOLDNER) )
+    {
+        sPro.proNumber = EPRJ_CASSINI;
+        sPro.proName = "Cassini";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*D2R;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
     else
     {
@@ -823,6 +876,43 @@ CPLErr HFADataset::ReadProjection()
                          psPro->proParams[2], 
                          psPro->proParams[6], psPro->proParams[7] );
         break;
+
+      case EPRJ_ROBINSON:
+        oSRS.SetRobinson( psPro->proParams[4]*R2D, 
+                          psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_MOLLWEIDE:
+        oSRS.SetMollweide( psPro->proParams[4]*R2D, 
+                           psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_ECKERT_IV:
+        oSRS.SetEckertIV( psPro->proParams[4]*R2D, 
+                          psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_ECKERT_VI:
+        oSRS.SetEckertVI( psPro->proParams[4]*R2D, 
+                          psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_GALL_STEREOGRAPHIC:
+        oSRS.SetGS( psPro->proParams[4]*R2D, 
+                    psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_CASSINI:
+        oSRS.SetCS( psPro->proParams[5]*R2D, psPro->proParams[4]*R2D, 
+                    psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_STEREOGRAPHIC_EXTENDED:
+        oSRS.SetStereographic( psPro->proParams[5]*R2D,psPro->proParams[4]*R2D,
+                               psPro->proParams[2],
+                               psPro->proParams[6], psPro->proParams[7] );
+        break;
+
 
       default:
         /* we do nothing for unsupported projections for now */
