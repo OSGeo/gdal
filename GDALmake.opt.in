@@ -83,8 +83,6 @@ GDAL_SLIB	=	$(GDAL_ROOT)/libgdal.$(GDAL_VER).$(SO_EXT)
 GDAL_SLIB_LINK	=	-L$(GDAL_ROOT) -lgdal.$(GDAL_VER)
 #GDAL_SLIB_SONAME = 	-Wl,-soname,libgdal.so.$(sover)
 
-CPL_LIB		=	$(GDAL_ROOT)/port/cpl.a
-
 #
 # OGR/PostgreSQL support.
 #

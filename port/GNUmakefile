@@ -15,9 +15,7 @@ OBJ	=	cpl_conv.o cpl_error.o cpl_string.o cpl_vsisimple.o \
 		cpl_vsil_unix_stdio_64.o cpl_minixml.o cpl_multiproc.o \
 		cpl_list.o
 
-LIB	=	cpl.a
-
-default:	$(LIB)
+default:	$(OBJ)
 
 clean:
 	rm -f *.o $(LIB)
@@ -28,14 +26,8 @@ clean:
 %.o:	%.cpp
 	$(CXX) -c $(CXXFLAGS) $*.cpp -o $*.o
 
-$(LIB): $(OBJ)
-	rm -f $(LIB)
-	$(AR) rc $(LIB) $(OBJ)
-	$(RANLIB) $(LIB)
-
-install:	$(LIB)
+install:
 	for f in *.h ; do $(INSTALL_DATA) $$f $(INST_INCLUDE) ; done
-	$(INSTALL_DATA) cpl.a $(INST_LIB)
 
 xmlreformat:	xmlreformat.o $(LIB)
 	$(CXX) $(CXXFLAGS) xmlreformat.o $(LIB) -o xmlreformat
