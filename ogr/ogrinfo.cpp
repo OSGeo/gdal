@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/06/26 20:58:45  warmerda
+ * added spatial query option
+ *
  * Revision 1.8  2001/06/19 15:48:36  warmerda
  * added feature attribute query support
  *
@@ -63,7 +66,7 @@ int     bVerbose = TRUE;
 
 static void Usage();
 
-static void ReportOnLayer( OGRLayer *, const char * );
+static void ReportOnLayer( OGRLayer *, const char *, OGRGeometry * );
 
 /************************************************************************/
 /*                                main()                                */
@@ -75,6 +78,7 @@ int main( int nArgc, char ** papszArgv )
     const char *pszWHERE = NULL;
     const char  *pszDataSource = NULL;
     char        **papszLayers = NULL;
+    OGRGeometry *poSpatialFilter = NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
@@ -90,6 +94,24 @@ int main( int nArgc, char ** papszArgv )
             bReadOnly = TRUE;
         else if( EQUAL(papszArgv[iArg],"-q") )
             bVerbose = FALSE;
+        else if( EQUAL(papszArgv[iArg],"-spat") 
+                 && papszArgv[iArg+1] != NULL 
+                 && papszArgv[iArg+2] != NULL 
+                 && papszArgv[iArg+3] != NULL 
+                 && papszArgv[iArg+4] != NULL )
+        {
+            OGRLinearRing  oRing;
+
+            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
+            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+4]) );
+            oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+4]) );
+            oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+2]) );
+            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
+
+            poSpatialFilter = new OGRPolygon();
+            ((OGRPolygon *) poSpatialFilter)->addRing( &oRing );
+            iArg += 4;
+        }
         else if( EQUAL(papszArgv[iArg],"-where") && papszArgv[iArg+1] != NULL )
         {
             pszWHERE = papszArgv[++iArg];
@@ -177,6 +199,7 @@ int main( int nArgc, char ** papszArgv )
             printf( "%d: %s",
                     iLayer+1,
                     poLayer->GetLayerDefn()->GetName() );
+
             if( poLayer->GetLayerDefn()->GetGeomType() != wkbUnknown )
                 printf( " (%s)", 
                         OGRGeometryTypeToName( 
@@ -187,7 +210,7 @@ int main( int nArgc, char ** papszArgv )
         else if( CSLFindString( papszLayers,
                                 poLayer->GetLayerDefn()->GetName() ) != -1 )
         {
-            ReportOnLayer( poLayer, pszWHERE );
+            ReportOnLayer( poLayer, pszWHERE, poSpatialFilter );
         }
     }
 
@@ -210,7 +233,9 @@ int main( int nArgc, char ** papszArgv )
 static void Usage()
 
 {
-    printf( "Usage: ogrinfo [-ro] [-q] datasource_name [layer [layer ...]]\n");
+    printf( "Usage: ogrinfo [-ro] [-q] [-where restricted_where]\n"
+            "               [-spat xmin ymin xmax ymax]\n"
+            "               datasource_name [layer [layer ...]]\n");
     exit( 1 );
 }
 
@@ -218,11 +243,24 @@ static void Usage()
 /*                           ReportOnLayer()                            */
 /************************************************************************/
 
-static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE )
+static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE, 
+                           OGRGeometry *poSpatialFilter )
 
 {
     OGRFeatureDefn      *poDefn = poLayer->GetLayerDefn();
 
+/* -------------------------------------------------------------------- */
+/*      Set filters if provided.                                        */
+/* -------------------------------------------------------------------- */
+    if( pszWHERE != NULL )
+        poLayer->SetAttributeFilter( pszWHERE );
+
+    if( poSpatialFilter != NULL )
+        poLayer->SetSpatialFilter( poSpatialFilter );
+
+/* -------------------------------------------------------------------- */
+/*      Report various overall information.                             */
+/* -------------------------------------------------------------------- */
     printf( "\n" );
     
     printf( "Layer name: %s\n", poDefn->GetName() );
@@ -255,12 +293,6 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE )
                 poField->GetWidth(),
                 poField->GetPrecision() );
     }
-
-/* -------------------------------------------------------------------- */
-/*      Set attribute filter if provided.                               */
-/* -------------------------------------------------------------------- */
-    if( pszWHERE != NULL )
-        poLayer->SetAttributeFilter( pszWHERE );
 
 /* -------------------------------------------------------------------- */
 /*      Read, and dump features.                                        */
