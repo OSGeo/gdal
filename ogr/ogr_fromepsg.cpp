@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/03/20 14:59:05  warmerda
+ * fixed semi major axis check
+ *
  * Revision 1.1  2000/03/16 19:04:14  warmerda
  * New
  *
@@ -560,7 +563,7 @@ EPSGGetEllipsoidInfo( int nCode, char ** ppszName,
                                   "ELLIPSOID_CODE", szSearchKey, CC_Integer,
                                   "SEMI_MINOR_AXIS" )) * dfToMeters;
 
-            if( dfSemiMajor != 0.0 && dfSemiMajor != *pdfSemiMajor )
+            if( dfSemiMajor != 0.0 && dfSemiMajor != dfSemiMinor )
                 *pdfInvFlattening = 
                     -1.0 / (dfSemiMinor/dfSemiMajor - 1.0);
             else
