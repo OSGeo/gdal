@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2003/05/15 14:47:24  warmerda
+ * implement quaternion support on write
+ *
  * Revision 1.25  2003/05/12 18:48:57  warmerda
  * added preliminary 3D write support
  *
@@ -879,7 +882,7 @@ DGNElemCore **OGRDGNLayer::TranslateLabel( OGRFeature *poFeature )
     papsGroup = (DGNElemCore **) CPLCalloc(sizeof(void*),2);
     papsGroup[0] = 
         DGNCreateTextElem( hDGN, pszText, 0, DGNJ_LEFT_BOTTOM, 
-                           dfCharHeight, dfCharHeight, dfRotation, 
+                           dfCharHeight, dfCharHeight, dfRotation, NULL,
                            poPoint->getX(), 
                            poPoint->getY(), 
                            poPoint->getZ() );

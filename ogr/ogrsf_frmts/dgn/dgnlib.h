@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2003/05/15 14:47:24  warmerda
+ * implement quaternion support on write
+ *
  * Revision 1.30  2003/05/12 18:48:57  warmerda
  * added preliminary 3D write support
  *
@@ -235,7 +238,7 @@ typedef struct {
   double        secondary_axis; /*!< Secondary axis length */
 
   double	rotation;       /*!< Counterclockwise rotation in degrees */
-  long          quat[4];
+  int           quat[4];
 
   double	startang;       /*!< Start angle (degrees counterclockwise of primary axis) */
   double	sweepang;       /*!< Sweep angle (degrees) */
@@ -634,6 +637,7 @@ int  CPL_DLL         DGNGetElementExtents( DGNHandle, DGNElemCore *,
 void CPL_DLL         DGNDumpElement( DGNHandle, DGNElemCore *, FILE * );
 const char CPL_DLL  *DGNTypeToName( int );
 
+void CPL_DLL  DGNRotationToQuaternion( double, int * );
 int CPL_DLL   DGNStrokeArc( DGNHandle, DGNElemArc *, int, DGNPoint * );
 int CPL_DLL   DGNStrokeCurve( DGNHandle, DGNElemMultiPoint*, int, DGNPoint * );
 void CPL_DLL  DGNSetSpatialFilter( DGNHandle hDGN, 
@@ -679,13 +683,13 @@ DGNElemCore CPL_DLL  *
                                 double dfOriginZ, 
                                 double dfPrimaryAxis, double dfSecondaryAxis,
                                 double dfStartAngle, double dfSweepAngle,
-                                double dfRotation, long *panQuaternion );
+                                double dfRotation, int *panQuaternion );
 
 DGNElemCore CPL_DLL *
              DGNCreateTextElem( DGNHandle hDGN, const char *pszText, 
                                 int nFontId, int nJustification, 
                                 double dfLengthMult, double dfHeightMult, 
-                                double dfRotation, 
+                                double dfRotation, int *panQuaternion,
                        double dfOriginX, double dfOriginY, double dfOriginZ );
 
 DGNElemCore CPL_DLL *

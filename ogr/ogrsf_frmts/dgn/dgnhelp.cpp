@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/05/15 14:47:23  warmerda
+ * implement quaternion support on write
+ *
  * Revision 1.15  2003/05/12 18:48:57  warmerda
  * added preliminary 3D write support
  *
@@ -742,7 +745,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
                        psArc->origin.y, 
                        psArc->rotation );
           else
-              fprintf( fp, "  origin=(%.5f,%.5f,%.5f), quat=%ld,%ld,%ld,%ld\n",
+              fprintf( fp, "  origin=(%.5f,%.5f,%.5f), quat=%d,%d,%d,%d\n",
                        psArc->origin.x, 
                        psArc->origin.y, 
                        psArc->origin.z, 
@@ -1160,4 +1163,21 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
     }
              
     return NULL;
+}
+
+/************************************************************************/
+/*                         DGNRotationToQuat()                          */
+/*                                                                      */
+/*      Compute a quaternion for a given Z rotation.                    */
+/************************************************************************/
+
+void DGNRotationToQuaternion( double dfRotation, int *panQuaternion )
+
+{
+    double dfRadianRot = (dfRotation / 180.0)  * PI;
+
+    panQuaternion[0] = (int) (cos(-dfRadianRot/2.0) * 2147483647);
+    panQuaternion[1] = 0;
+    panQuaternion[2] = 0;
+    panQuaternion[3] = (int) (sin(-dfRadianRot/2.0) * 2147483647);
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/05/15 14:47:24  warmerda
+ * implement quaternion support on write
+ *
  * Revision 1.8  2003/05/12 18:48:57  warmerda
  * added preliminary 3D write support
  *
@@ -910,29 +913,6 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
 /*                         DGNCreateArcElem2D()                         */
 /************************************************************************/
 
-/**
- * Create Arc or Ellipse element.
- *
- * Create a new 2D arc or ellipse element.  The start angle, and sweep angle
- * are ignored for DGNT_ELLIPSE but used for DGNT_ARC.
- *
- * The newly created element will still need to be written to file using
- * DGNWriteElement(). Also the level and other core values will be defaulted.
- * Use DGNUpdateElemCore() on the element before writing to set these values.
- *
- * @param hDGN the DGN file on which the element will eventually be written.
- * @param nType either DGNT_ELLIPSE or DGNT_ARC to select element type. 
- * @param dfOriginX the origin (center of rotation) of the arc (X).
- * @param dfOriginY the origin (center of rotation) of the arc (Y).
- * @param dfPrimaryAxis the length of the primary axis.
- * @param dfSecondaryAxis the length of the secondary axis. 
- * @param dfRotation Counterclockwise rotation in degrees. 
- * @param dfStartAngle start angle, degrees counterclockwise of primary axis.
- * @param dfSweepAngle sweep angle, degrees
- * 
- * @return the new element (DGNElemArc) or NULL on failure.
- */
-
 DGNElemCore *
 DGNCreateArcElem2D( DGNHandle hDGN, int nType, 
                     double dfOriginX, double dfOriginY,
@@ -941,141 +921,10 @@ DGNCreateArcElem2D( DGNHandle hDGN, int nType,
                     double dfStartAngle, double dfSweepAngle )
 
 {
-    DGNElemArc *psArc;
-    DGNElemCore *psCore;
-    DGNInfo *psDGN = (DGNInfo *) hDGN;
-    DGNPoint sMin, sMax, sOrigin;
-
-    CPLAssert( psDGN->dimension == 2 );
-    CPLAssert( nType == DGNT_ARC || nType == DGNT_ELLIPSE );
-
-/* -------------------------------------------------------------------- */
-/*      Allocate element.                                               */
-/* -------------------------------------------------------------------- */
-    psArc = (DGNElemArc *) CPLCalloc( sizeof(DGNElemArc), 1 );
-    psCore = &(psArc->core);
-
-    DGNInitializeElemCore( hDGN, psCore );
-    psCore->stype = DGNST_ARC;
-    psCore->type = nType;
-
-/* -------------------------------------------------------------------- */
-/*      Set arc specific information in the structure.                  */
-/* -------------------------------------------------------------------- */
-    sOrigin.x = dfOriginX;
-    sOrigin.y = dfOriginY;
-    sOrigin.z = 0.0;
-
-    psArc->origin = sOrigin;
-    psArc->primary_axis = dfPrimaryAxis;
-    psArc->secondary_axis = dfSecondaryAxis;
-    psArc->rotation = dfRotation;
-    memset( psArc->quat, 0, sizeof(long) * 4 );
-    psArc->startang = dfStartAngle;
-    psArc->sweepang = dfSweepAngle;
-
-/* -------------------------------------------------------------------- */
-/*      Setup Raw data for the arc section.                             */
-/* -------------------------------------------------------------------- */
-    if( nType == DGNT_ARC )
-    {
-        GInt32 nAngle;
-        double dfScaledAxis;
-
-        psCore->raw_bytes = 80;
-        psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
-
-        /* start angle */
-        nAngle = (int) (dfStartAngle * 360000.0);
-        DGN_WRITE_INT32( nAngle, psCore->raw_data + 36 );
-
-        /* sweep angle */
-        if( dfSweepAngle < 0.0 )
-        {
-            nAngle = (int) (ABS(dfSweepAngle) * 360000.0);
-            nAngle |= 0x80000000;
-        }
-        else if( dfSweepAngle > 364.9999 )
-        {
-            nAngle = 0;
-        }
-        else
-        {
-            nAngle = (int) (dfSweepAngle * 360000.0);
-        }
-        DGN_WRITE_INT32( nAngle, psCore->raw_data + 40 );
-
-        /* axes */
-        dfScaledAxis = dfPrimaryAxis / psDGN->scale;
-        memcpy( psCore->raw_data + 44, &dfScaledAxis, 8 );
-        IEEE2DGNDouble( psCore->raw_data + 44 );
-
-        dfScaledAxis = dfSecondaryAxis / psDGN->scale;
-        memcpy( psCore->raw_data + 52, &dfScaledAxis, 8 );
-        IEEE2DGNDouble( psCore->raw_data + 52 );
-
-        /* rotation */
-        nAngle = (int) (dfRotation * 360000.0);
-        DGN_WRITE_INT32( nAngle, psCore->raw_data + 60 );
-
-        /* origin */
-        DGNInverseTransformPoint( psDGN, &sOrigin );
-        memcpy( psCore->raw_data + 64, &(sOrigin.x), 8 );
-        memcpy( psCore->raw_data + 72, &(sOrigin.y), 8 );
-        IEEE2DGNDouble( psCore->raw_data + 64 );
-        IEEE2DGNDouble( psCore->raw_data + 72 );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Setup Raw data for the ellipse section.                         */
-/* -------------------------------------------------------------------- */
-    else
-    {
-        GInt32 nAngle;
-        double dfScaledAxis;
-
-        psCore->raw_bytes = 72;
-        psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
-
-        /* axes */
-        dfScaledAxis = dfPrimaryAxis / psDGN->scale;
-        memcpy( psCore->raw_data + 36, &dfScaledAxis, 8 );
-        IEEE2DGNDouble( psCore->raw_data + 36 );
-
-        dfScaledAxis = dfSecondaryAxis / psDGN->scale;
-        memcpy( psCore->raw_data + 44, &dfScaledAxis, 8 );
-        IEEE2DGNDouble( psCore->raw_data + 44 );
-
-        /* rotation */
-        nAngle = (int) (dfRotation * 360000.0);
-        DGN_WRITE_INT32( nAngle, psCore->raw_data + 52 );
-
-        /* origin */
-        DGNInverseTransformPoint( psDGN, &sOrigin );
-        memcpy( psCore->raw_data + 56, &(sOrigin.x), 8 );
-        memcpy( psCore->raw_data + 64, &(sOrigin.y), 8 );
-        IEEE2DGNDouble( psCore->raw_data + 56 );
-        IEEE2DGNDouble( psCore->raw_data + 64 );
-
-        psArc->startang = 0.0;
-        psArc->sweepang = 360.0;
-    }
-    
-/* -------------------------------------------------------------------- */
-/*      Set the core raw data, including the bounds.                    */
-/* -------------------------------------------------------------------- */
-    DGNUpdateElemCoreExtended( hDGN, psCore );
-
-    sMin.x = dfOriginX - MAX(dfPrimaryAxis,dfSecondaryAxis);
-    sMin.y = dfOriginY - MAX(dfPrimaryAxis,dfSecondaryAxis);
-    sMin.z = 0.0;
-    sMax.x = dfOriginX + MAX(dfPrimaryAxis,dfSecondaryAxis);
-    sMax.y = dfOriginY + MAX(dfPrimaryAxis,dfSecondaryAxis);
-    sMax.z = 0.0;
-
-    DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
-    
-    return psCore;
+    return DGNCreateArcElem( hDGN, nType, dfOriginX, dfOriginY, 0.0, 
+                             dfPrimaryAxis, dfSecondaryAxis, 
+                             dfStartAngle, dfSweepAngle, 
+                             dfRotation, NULL );
 }
                                  
 /************************************************************************/
@@ -1112,15 +961,15 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
                   double dfOriginX, double dfOriginY, double dfOriginZ,
                   double dfPrimaryAxis, double dfSecondaryAxis, 
                   double dfStartAngle, double dfSweepAngle,
-                  double dfRotation, long *panQuaternion )
+                  double dfRotation, int *panQuaternion )
 
 {
     DGNElemArc *psArc;
     DGNElemCore *psCore;
     DGNInfo *psDGN = (DGNInfo *) hDGN;
     DGNPoint sMin, sMax, sOrigin;
+    GInt32 nAngle;
 
-    CPLAssert( psDGN->dimension == 3 );
     CPLAssert( nType == DGNT_ARC || nType == DGNT_ELLIPSE );
 
 /* -------------------------------------------------------------------- */
@@ -1143,18 +992,14 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
     psArc->origin = sOrigin;
     psArc->primary_axis = dfPrimaryAxis;
     psArc->secondary_axis = dfSecondaryAxis;
-    memset( psArc->quat, 0, sizeof(long) * 4 );
+    memset( psArc->quat, 0, sizeof(int) * 4 );
     psArc->startang = dfStartAngle;
     psArc->sweepang = dfSweepAngle;
 
     psArc->rotation = dfRotation;
     if( panQuaternion == NULL )
     {
-        /* should derive from rotation */
-        psArc->quat[0] = -2147483647;
-        psArc->quat[1] = 0;
-        psArc->quat[2] = 0;
-        psArc->quat[3] = 0;
+        DGNRotationToQuaternion( dfRotation, psArc->quat );
     }
     else
     {
@@ -1166,10 +1011,12 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
     if( nType == DGNT_ARC )
     {
-        GInt32 nAngle;
         double dfScaledAxis;
 
-        psCore->raw_bytes = 100;
+        if( psDGN->dimension == 3 )
+            psCore->raw_bytes = 100;
+        else
+            psCore->raw_bytes = 80;
         psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
 
         /* start angle */
@@ -1201,20 +1048,36 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
         memcpy( psCore->raw_data + 52, &dfScaledAxis, 8 );
         IEEE2DGNDouble( psCore->raw_data + 52 );
 
-        /* quaternion */
-        DGN_WRITE_INT32( psArc->quat[0], psCore->raw_data + 60 );
-        DGN_WRITE_INT32( psArc->quat[1], psCore->raw_data + 64 );
-        DGN_WRITE_INT32( psArc->quat[2], psCore->raw_data + 68 );
-        DGN_WRITE_INT32( psArc->quat[3], psCore->raw_data + 72 );
-
-        /* origin */
-        DGNInverseTransformPoint( psDGN, &sOrigin );
-        memcpy( psCore->raw_data + 76, &(sOrigin.x), 8 );
-        memcpy( psCore->raw_data + 84, &(sOrigin.y), 8 );
-        memcpy( psCore->raw_data + 92, &(sOrigin.z), 8 );
-        IEEE2DGNDouble( psCore->raw_data + 76 );
-        IEEE2DGNDouble( psCore->raw_data + 84 );
-        IEEE2DGNDouble( psCore->raw_data + 92 );
+        if( psDGN->dimension == 3 )
+        {
+            /* quaternion */
+            DGN_WRITE_INT32( psArc->quat[0], psCore->raw_data + 60 );
+            DGN_WRITE_INT32( psArc->quat[1], psCore->raw_data + 64 );
+            DGN_WRITE_INT32( psArc->quat[2], psCore->raw_data + 68 );
+            DGN_WRITE_INT32( psArc->quat[3], psCore->raw_data + 72 );
+            
+            /* origin */
+            DGNInverseTransformPoint( psDGN, &sOrigin );
+            memcpy( psCore->raw_data + 76, &(sOrigin.x), 8 );
+            memcpy( psCore->raw_data + 84, &(sOrigin.y), 8 );
+            memcpy( psCore->raw_data + 92, &(sOrigin.z), 8 );
+            IEEE2DGNDouble( psCore->raw_data + 76 );
+            IEEE2DGNDouble( psCore->raw_data + 84 );
+            IEEE2DGNDouble( psCore->raw_data + 92 );
+        }
+        else
+        {
+            /* rotation */
+            nAngle = (int) (dfRotation * 360000.0);
+            DGN_WRITE_INT32( nAngle, psCore->raw_data + 60 );
+            
+            /* origin */
+            DGNInverseTransformPoint( psDGN, &sOrigin );
+            memcpy( psCore->raw_data + 64, &(sOrigin.x), 8 );
+            memcpy( psCore->raw_data + 72, &(sOrigin.y), 8 );
+            IEEE2DGNDouble( psCore->raw_data + 64 );
+            IEEE2DGNDouble( psCore->raw_data + 72 );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1224,7 +1087,10 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
     {
         double dfScaledAxis;
 
-        psCore->raw_bytes = 92;
+        if( psDGN->dimension == 3 )
+            psCore->raw_bytes = 92;
+        else
+            psCore->raw_bytes = 72;
         psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
 
         /* axes */
@@ -1236,21 +1102,37 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
         memcpy( psCore->raw_data + 44, &dfScaledAxis, 8 );
         IEEE2DGNDouble( psCore->raw_data + 44 );
 
-        /* quaternion */
-        DGN_WRITE_INT32( psArc->quat[0], psCore->raw_data + 52 );
-        DGN_WRITE_INT32( psArc->quat[1], psCore->raw_data + 56 );
-        DGN_WRITE_INT32( psArc->quat[2], psCore->raw_data + 60 );
-        DGN_WRITE_INT32( psArc->quat[3], psCore->raw_data + 64 );
-
-        /* origin */
-        DGNInverseTransformPoint( psDGN, &sOrigin );
-        memcpy( psCore->raw_data + 68, &(sOrigin.x), 8 );
-        memcpy( psCore->raw_data + 76, &(sOrigin.y), 8 );
-        memcpy( psCore->raw_data + 84, &(sOrigin.z), 8 );
-        IEEE2DGNDouble( psCore->raw_data + 68 );
-        IEEE2DGNDouble( psCore->raw_data + 76 );
-        IEEE2DGNDouble( psCore->raw_data + 84 );
-
+        if( psDGN->dimension == 3 )
+        {
+            /* quaternion */
+            DGN_WRITE_INT32( psArc->quat[0], psCore->raw_data + 52 );
+            DGN_WRITE_INT32( psArc->quat[1], psCore->raw_data + 56 );
+            DGN_WRITE_INT32( psArc->quat[2], psCore->raw_data + 60 );
+            DGN_WRITE_INT32( psArc->quat[3], psCore->raw_data + 64 );
+            
+            /* origin */
+            DGNInverseTransformPoint( psDGN, &sOrigin );
+            memcpy( psCore->raw_data + 68, &(sOrigin.x), 8 );
+            memcpy( psCore->raw_data + 76, &(sOrigin.y), 8 );
+            memcpy( psCore->raw_data + 84, &(sOrigin.z), 8 );
+            IEEE2DGNDouble( psCore->raw_data + 68 );
+            IEEE2DGNDouble( psCore->raw_data + 76 );
+            IEEE2DGNDouble( psCore->raw_data + 84 );
+        }
+        else
+        {
+            /* rotation */
+            nAngle = (int) (dfRotation * 360000.0);
+            DGN_WRITE_INT32( nAngle, psCore->raw_data + 52 );
+            
+            /* origin */
+            DGNInverseTransformPoint( psDGN, &sOrigin );
+            memcpy( psCore->raw_data + 56, &(sOrigin.x), 8 );
+            memcpy( psCore->raw_data + 64, &(sOrigin.y), 8 );
+            IEEE2DGNDouble( psCore->raw_data + 56 );
+            IEEE2DGNDouble( psCore->raw_data + 64 );
+        }
+        
         psArc->startang = 0.0;
         psArc->sweepang = 360.0;
     }
@@ -1292,6 +1174,7 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
  * @param dfLengthMult character width in master units.
  * @param dfHeightMult character height in master units.
  * @param dfRotation Counterclockwise text rotation in degrees.
+ * @param panQuaternion 3D orientation quaternion (NULL to use rotation).
  * @param dfOriginX Text origin (X).
  * @param dfOriginY Text origin (Y).
  * @param dfOriginZ Text origin (Z).
@@ -1303,7 +1186,7 @@ DGNElemCore *
 DGNCreateTextElem( DGNHandle hDGN, const char *pszText, 
                    int nFontId, int nJustification, 
                    double dfLengthMult, double dfHeightMult, 
-                   double dfRotation, 
+                   double dfRotation, int *panQuaternion,
                    double dfOriginX, double dfOriginY, double dfOriginZ )
 
 {
@@ -1370,12 +1253,23 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
     }
     else
     {
-        /* notdef */
+        int anQuaternion[4];
+
+        if( panQuaternion == NULL )
+            DGNRotationToQuaternion( dfRotation, anQuaternion );
+        else
+            memcpy( anQuaternion, panQuaternion, sizeof(int) * 4 );
+
+        DGN_WRITE_INT32( anQuaternion[0], psCore->raw_data + 46 );
+        DGN_WRITE_INT32( anQuaternion[1], psCore->raw_data + 50 );
+        DGN_WRITE_INT32( anQuaternion[2], psCore->raw_data + 54 );
+        DGN_WRITE_INT32( anQuaternion[3], psCore->raw_data + 58 );
 
         DGNInverseTransformPointToInt( psDGN, &(psText->origin), 
                                        psCore->raw_data + 62 );
         nBase = 74;
     }
+
 
     psCore->raw_data[nBase] = strlen(pszText);
     psCore->raw_data[nBase+1] = 0; /* edflds? */
