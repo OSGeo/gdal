@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2003/01/06 17:43:13  warmerda
+ * fixed buffer sizing problem for 3D geometries
+ *
  * Revision 1.34  2003/01/06 16:18:40  warmerda
  * getEnvlope() crash fix if there are no points
  *
@@ -839,7 +842,7 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
 OGRErr OGRLineString::exportToWkt( char ** ppszReturn )
 
 {
-    int         nMaxString = nPointCount * 16 * 2 + 20;
+    int         nMaxString = nPointCount * 20 * 3 + 20;
     int         nRetLen = 0;
 
     *ppszReturn = (char *) VSIMalloc( nMaxString );
