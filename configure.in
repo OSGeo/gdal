@@ -415,19 +415,19 @@ if test "$with_ogdi" = "no" ; then
 
 elif test "$with_ogdi" = "yes" -o "$with_ogdi" = "" ; then
 
-  AC_CHECK_LIB(ogdi,cln_GetLayerCapabilities,HAVE_OGDI=yes,HAVE_OGDI=no,)
+  AC_CHECK_LIB(ogdi31,cln_GetLayerCapabilities,HAVE_OGDI=yes,HAVE_OGDI=no,)
 
   if test "$HAVE_OGDI" = "yes" ; then   
-    LIBS="-logdi $LIBS"
+    LIBS="-logdi31 $LIBS"
   fi
 
 else
 
   HAVE_OGDI=yes
-  LIBS="-L$with_ogdi -L$with_ogdi/lib -logdi $LIBS"
+  LIBS="-L$with_ogdi -L$with_ogdi/lib -logdi31 $LIBS"
   OGDI_INCLUDE="-I$with_ogdi -I$with_ogdi/include"
 
-  echo "using libogdi from $with_ogdi."
+  echo "using libogdi31 from $with_ogdi."
 
 fi
 
