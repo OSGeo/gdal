@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.32  2004/10/21 18:59:00  fwarmerdam
+ * Ensure that an empty path in CPLGetXMLValue() means the current node.
+ *
  * Revision 1.31  2004/08/11 18:42:00  warmerda
  * fix quirks with CPLSetXMLValue()
  *
@@ -1190,7 +1193,8 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
  * @param psRoot the subtree in which to search.  This should be a node of 
  * type CXT_Element.  NULL is safe. 
  *
- * @param pszPath the list of element names in the path (dot separated). 
+ * @param pszPath the list of element names in the path (dot separated).  An
+ * empty path means get the value of the psRoot node.
  *
  * @param pszDefault the value to return if a corresponding value is not
  * found, may be NULL.
@@ -1198,13 +1202,17 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
  * @return the requested value or pszDefault if not found.
  */
 
-const char *CPLGetXMLValue( CPLXMLNode *poRoot, const char *pszPath, 
+const char *CPLGetXMLValue( CPLXMLNode *psRoot, const char *pszPath, 
                             const char *pszDefault )
 
 {
     CPLXMLNode  *psTarget;
 
-    psTarget = CPLGetXMLNode( poRoot, pszPath );
+    if( pszPath == NULL || *pszPath == '\0' )
+        psTarget  = psRoot;
+    else
+        psTarget = CPLGetXMLNode( psRoot, pszPath );
+
     if( psTarget == NULL )
         return pszDefault;
 
