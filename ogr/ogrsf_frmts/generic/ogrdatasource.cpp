@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/03/04 05:47:49  warmerda
+ * added CREATE INDEX support
+ *
  * Revision 1.9  2003/03/03 05:06:27  warmerda
  * added support for DeleteDataSource and DeleteLayer
  *
@@ -61,6 +64,7 @@
 #include "ogr_api.h"
 #include "ogr_p.h"
 #include "ogr_gensql.h"
+#include "ogr_attrind.h"
 
 CPL_C_START
 #include "swq.h"
@@ -152,6 +156,104 @@ OGRErr OGR_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer )
 }
 
 /************************************************************************/
+/*                       ProcessSQLCreateIndex()                        */
+/*                                                                      */
+/*      The correct syntax for creating an index in our dialect of      */
+/*      SQL is:                                                         */
+/*                                                                      */
+/*        CREATE INDEX ON <layername> USING <columnname>                */
+/************************************************************************/
+
+OGRErr OGRDataSource::ProcessSQLCreateIndex( const char *pszSQLCommand )
+
+{
+    char **papszTokens = CSLTokenizeString( pszSQLCommand );
+
+/* -------------------------------------------------------------------- */
+/*      Do some general syntax checking.                                */
+/* -------------------------------------------------------------------- */
+    if( CSLCount(papszTokens) != 6 
+        || !EQUAL(papszTokens[0],"CREATE")
+        || !EQUAL(papszTokens[1],"INDEX")
+        || !EQUAL(papszTokens[2],"ON")
+        || !EQUAL(papszTokens[4],"USING") )
+    {
+        CSLDestroy( papszTokens );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Syntax error in CREATE INDEX command.\n"
+                  "Was '%s'\n"
+                  "Should be of form 'CREATE INDEX ON <table> USING <field>'",
+                  pszSQLCommand );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the named layer.                                           */
+/* -------------------------------------------------------------------- */
+    int  i;
+    OGRLayer *poLayer;
+
+    for( i = 0; i < GetLayerCount(); i++ )
+    {
+        poLayer = GetLayer(i);
+        
+        if( EQUAL(poLayer->GetLayerDefn()->GetName(),papszTokens[3]) )
+            break;
+    }
+
+    if( i >= GetLayerCount() )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "CREATE INDEX ON failed, no such layer as `%s'.",
+                  papszTokens[3] );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Does this layer even support attribute indexes?                 */
+/* -------------------------------------------------------------------- */
+    if( poLayer->GetIndex() == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "CREATE INDEX ON not supported by this driver." );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the named field.                                           */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < poLayer->GetLayerDefn()->GetFieldCount(); i++ )
+    {
+        if( EQUAL(papszTokens[5],
+                  poLayer->GetLayerDefn()->GetFieldDefn(i)->GetNameRef()) )
+            break;
+    }
+
+    CSLDestroy( papszTokens );
+
+    if( i >= poLayer->GetLayerDefn()->GetFieldCount() )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "`%s' failed, field not found.",
+                  pszSQLCommand );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Attempt to create the index.                                    */
+/* -------------------------------------------------------------------- */
+    OGRErr eErr;
+
+    eErr = poLayer->GetIndex()->CreateIndex( i );
+    if( eErr == OGRERR_NONE )
+        eErr = poLayer->GetIndex()->IndexAllFeatures( i );
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 
@@ -162,6 +264,15 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
 {
     const char *pszError;
     swq_select *psSelectInfo = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Handle CREATE INDEX statements specially.                       */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszSQLCommand,"CREATE INDEX",12) )
+    {
+        ProcessSQLCreateIndex( pszSQLCommand );
+        return NULL;
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Preparse the SQL statement.                                     */
