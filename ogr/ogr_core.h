@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/01/06 17:56:03  warmerda
+ * Added Merge and IsInit() method on OGREnvelope
+ *
  * Revision 1.12  2002/11/08 18:25:45  warmerda
  * remove extranious comma in enum, confuses HPUX compiler
  *
@@ -87,6 +90,24 @@ class OGREnvelope
     double      MaxX;
     double      MinY;
     double      MaxY;
+
+    int  IsInit() { return MinX != 0 || MinY != 0 || MaxX != 0 || MaxY != 0; }
+    void Merge( OGREnvelope & sOther ) {
+        if( IsInit() )
+        {
+            MinX = MIN(MinX,sOther.MinX);
+            MaxX = MAX(MaxX,sOther.MinX);
+            MinY = MIN(MinY,sOther.MinY);
+            MaxY = MAX(MaxY,sOther.MaxX);
+        }
+        else
+        {
+            MinX = sOther.MinX;
+            MaxX = sOther.MaxX;
+            MinY = sOther.MinY;
+            MaxY = sOther.MaxY;
+        }
+    }
 };
 #else
 typedef struct
