@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/09/01 19:12:09  warmerda
+ * fixed const mismatch
+ *
  * Revision 1.8  2000/08/28 20:16:14  warmerda
  * added lots of OGRSpatialReference stuff
  *
@@ -229,7 +232,7 @@ int GDALBridgeInitialize( const char * pszTargetDir )
         GBGetSymbol( szPath, "GDALGetColorEntry" );
 
     GDALGetColorEntryAsRGB = (int (*)(GDALColorTableH,int,
-                                      const GDALColorEntry*))
+                                      GDALColorEntry*))
         GBGetSymbol( szPath, "GDALGetColorEntryAsRGB" );
     
     GDALSetColorEntry = (void (*)(GDALColorTableH, int, const GDALColorEntry*))
