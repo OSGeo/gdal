@@ -926,7 +926,7 @@ py_GDALSetGCPs(PyObject *self, PyObject *args) {
 
     if( eErr != CE_None )
     {	
-	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
+	PyErr_SetString(PyExc_ValueError,CPLGetLastErrorMsg());
 	return NULL;
     }
 
