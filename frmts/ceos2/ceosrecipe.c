@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/07/06 15:43:01  gwalter
+ * Updated to extract more metadata and
+ * recognize more sar ceos files.
+ *
  * Revision 1.14  2004/01/05 20:13:36  warmerda
  * check guessed record length
  *
@@ -103,6 +107,7 @@ CeosStringType_t CeosInterleaveType[] = { { "BSQ", __CEOS_IL_BAND },
 					  { NULL, 0 } };
 
 #define IMAGE_OPT { 63, 192, 18, 18 }
+#define IMAGE_JERS_OPT { 50, 192, 18, 18 }    /* Some JERS data uses this instead of IMAGE_OPT */
 #define PROC_DATA_REC { 50, 11, 18, 20 }
 #define PROC_DATA_REC_ALT { 50, 11, 31, 20 }
 #define DATA_SET_SUMMARY { 18, 10, 18, 20 }
@@ -160,6 +165,55 @@ CeosRecipeType_t RadarSatRecipe[] =
     { 0, 0, 0, { 0, 0, 0, 0 }, 0, 0, 0 } /* Last record is Zero */
 } ;
 
+CeosRecipeType_t JersRecipe[] =
+{
+    { __CEOS_REC_NUMCHANS, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      233, 4, __CEOS_REC_TYP_I }, /* Number of channels */
+    { __CEOS_REC_INTERLEAVE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      269, 4, __CEOS_REC_TYP_A }, /* Interleaving type */
+    { __CEOS_REC_DATATYPE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      429, 4, __CEOS_REC_TYP_A }, /* Data type */
+    { __CEOS_REC_BPR, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      0, 0, __CEOS_REC_TYP_A }, /* For Defeault CEOS, this is done using other vals */
+    { __CEOS_REC_LINES, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      237, 8, __CEOS_REC_TYP_I }, /* How many lines */
+    { __CEOS_REC_TBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      261, 4, __CEOS_REC_TYP_I },
+    { __CEOS_REC_BBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      265, 4, __CEOS_REC_TYP_I }, /* Bottom border pixels */
+    { __CEOS_REC_PPL, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      249, 8, __CEOS_REC_TYP_I }, /* Pixels per line */
+    { __CEOS_REC_LBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      245, 4, __CEOS_REC_TYP_I }, /* Left Border Pixels */
+    { __CEOS_REC_RBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      257, 4, __CEOS_REC_TYP_I }, /* Isn't available for RadarSAT */
+    { __CEOS_REC_BPP, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      225, 4, __CEOS_REC_TYP_I }, /* Bytes Per Pixel */
+    { __CEOS_REC_RPL, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      273, 2, __CEOS_REC_TYP_I }, /* Records per line */
+    { __CEOS_REC_PPR, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      0, 0, __CEOS_REC_TYP_I }, /* Pixels Per Record -- need to fill record type */
+    { __CEOS_REC_PDBPR, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      281, 8, __CEOS_REC_TYP_I }, /* pixel data bytes per record */
+    { __CEOS_REC_IDS, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      277, 4, __CEOS_REC_TYP_I }, /* Prefix data per record */
+    { __CEOS_REC_FDL, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      9, 4, __CEOS_REC_TYP_B }, /* Length of Imagry Options Header */
+    { __CEOS_REC_PIXORD, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      0, 0, __CEOS_REC_TYP_I }, /* Must be calculated */
+    { __CEOS_REC_LINORD, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      0, 0, __CEOS_REC_TYP_I }, /* Must be calculated */
+    { __CEOS_REC_PRODTYPE, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      0, 0, __CEOS_REC_TYP_I },
+
+    { __CEOS_REC_RECORDSIZE, 1, __CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC,
+      9, 4, __CEOS_REC_TYP_B }, /* The processed image record size */
+
+    { __CEOS_REC_SUFFIX_SIZE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      289, 4, __CEOS_REC_TYP_I }, /* Suffix data per record */
+    { 0, 0, 0, { 0, 0, 0, 0 }, 0, 0, 0 } /* Last record is Zero */
+} ;
+
 CeosRecipeType_t ScanSARRecipe[] =
 {
     { __CEOS_REC_NUMCHANS, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
@@ -203,6 +257,7 @@ void RegisterRecipes( void )
 
     AddRecipe( ScanSARRecipeFCN, ScanSARRecipe );
     AddRecipe( CeosDefaultRecipe, RadarSatRecipe );
+    AddRecipe( CeosDefaultRecipe, JersRecipe );
     /*  AddRecipe( CeosDefaultRecipe, AtlantisRecipe ); */
 }
 
