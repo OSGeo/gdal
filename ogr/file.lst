@@ -14,6 +14,7 @@ OBJ =	ogrgeometryfactory.o \
 	ogr_api.o \
 	ogrfeature.o \
 	ogrfeaturedefn.o \
+	ogrfeaturequery.o\
 	ogrfeaturestyle.o \
 	ogrfielddefn.o \
 	ogrspatialreference.o \
