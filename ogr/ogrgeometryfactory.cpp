@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/06/09 13:48:54  warmerda
+ * added DB2 V7.2 byte order hack
+ *
  * Revision 1.19  2003/06/04 13:50:54  warmerda
  * applied patch for IBM DB2 V7.2 WKB bug (with byte order flag)
  *
@@ -151,34 +154,24 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 /*      Get the byte order byte.  The extra tests are to work around    */
 /*      bug sin the WKB of DB2 v7.2 as identified by Safe Software.     */
 /* -------------------------------------------------------------------- */
-    eByteOrder = (OGRwkbByteOrder) *pabyData;
+    eByteOrder = DB2_V72_FIX_BYTE_ORDER((OGRwkbByteOrder) *pabyData);
+
 
     if( eByteOrder != wkbXDR && eByteOrder != wkbNDR )
     {
-#define HACK_FOR_IBM_DB2_V72
-
-#ifdef HACK_FOR_IBM_DB2_V72
-        if(((eByteOrder & 0x31) == eByteOrder) && ((eByteOrder & 0x1) == 1))
-            eByteOrder = wkbNDR;
-        else if(((eByteOrder&0x31) == eByteOrder) && ((eByteOrder & 0x1) == 0))
-            eByteOrder = wkbXDR;
-        else
-#endif
-        {
-            CPLDebug( "OGR", 
-                   "OGRGeometryFactory::createFromWkb() - got corrupt data.\n"
-                      "%X%X%X%X%X%X%X%X\n", 
-                      pabyData[0],
-                      pabyData[1],
-                      pabyData[2],
-                      pabyData[3],
-                      pabyData[4],
-                      pabyData[5],
-                      pabyData[6],
-                      pabyData[7],
-                      pabyData[8] );
-            return OGRERR_CORRUPT_DATA;
-        }
+        CPLDebug( "OGR", 
+                  "OGRGeometryFactory::createFromWkb() - got corrupt data.\n"
+                  "%X%X%X%X%X%X%X%X\n", 
+                  pabyData[0],
+                  pabyData[1],
+                  pabyData[2],
+                  pabyData[3],
+                  pabyData[4],
+                  pabyData[5],
+                  pabyData[6],
+                  pabyData[7],
+                  pabyData[8] );
+        return OGRERR_CORRUPT_DATA;
     }
 
 /* -------------------------------------------------------------------- */
