@@ -1,0 +1,53 @@
+#include "resource.h"
+#include "afxres.h"
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEU)
+#ifdef _WIN32
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+#pragma code_page(1252)
+#endif //_WIN32
+
+#include "gdal.h"
+
+#ifndef _MAC
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION GDAL_VERSION_MAJOR,GDAL_VERSION_MINOR,GDAL_VERSION_REV,GDAL_VERSION_BUILD
+ PRODUCTVERSION GDAL_VERSION_MAJOR,GDAL_VERSION_MINOR,GDAL_VERSION_REV,GDAL_VERSION_BUILD
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "000004b0"
+        BEGIN
+            VALUE "CompanyName", "GDAL\0"
+            VALUE "FileDescription", "Geospatial Data Abstraction Library Dynamic Link Library\0"
+            VALUE "FileVersion", GDAL_RELEASE_NAME "\0"
+            VALUE "InternalName", "GDAL\0"
+            VALUE "LegalCopyright", "Copyright (c) 1998, 2005 Frank Warmerdam <warmerdam@pobox.com>"
+            VALUE "ProductName", "GDAL\0"
+            VALUE "ProductVersion", GDAL_RELEASE_NAME "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0, 1200
+    END
+END
+
+#endif    // !_MAC
+
+#endif    // Neutral resources
