@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/01/05 22:38:17  warmerda
+ * stripped out some junk
+ *
  * Revision 1.4  2003/10/29 16:47:38  warmerda
  * Improved width/precision handling for real numbers.
  *
@@ -292,14 +295,5 @@ int OGRODBCLayer::TestCapability( const char * pszCap )
 OGRSpatialReference *OGRODBCLayer::GetSpatialRef()
 
 {
-    if( poSRS == NULL && nSRSId > -1 )
-    {
-        poSRS = poDS->FetchSRS( nSRSId );
-        if( poSRS != NULL )
-            poSRS->Reference();
-        else
-            nSRSId = -1;
-    }
-
     return poSRS;
 }
