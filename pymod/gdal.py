@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.55  2004/01/18 16:52:39  dron
+# Added wrapper for GDALGetDataTypeByName().
+#
 # Revision 1.54  2003/12/05 18:01:08  warmerda
 # Added ptrptr functions
 #
@@ -171,6 +174,9 @@ def GetDataTypeSize(type):
 
 def GetDataTypeName(type):
     return _gdal.GDALGetDataTypeName(type)
+
+def GetDataTypeByName(name):
+    return _gdal.GDALGetDataTypeByName(name)
 
 def GetColorInterpretationName(type):
     return _gdal.GDALGetColorInterpretationName(type)
