@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2003/10/09 15:28:07  warmerda
+ * added OGRLayer::DeleteFeature() support
+ *
  * Revision 1.39  2003/10/06 19:15:40  warmerda
  * added ODBC support
  *
@@ -186,6 +189,7 @@ class CPL_DLL OGRLayer
     virtual OGRFeature *GetFeature( long nFID );
     virtual OGRErr      SetFeature( OGRFeature *poFeature );
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      DeleteFeature( long nFID );
 
     virtual OGRFeatureDefn *GetLayerDefn() = 0;
 

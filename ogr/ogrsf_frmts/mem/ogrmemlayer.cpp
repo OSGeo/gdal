@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/10/09 15:30:23  warmerda
+ * added OGRLayer::DeleteFeature() support
+ *
  * Revision 1.2  2003/04/08 20:58:16  warmerda
  * added support for adding fields when existing features exist
  *
@@ -219,6 +222,27 @@ OGRErr OGRMemLayer::CreateFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*                           DeleteFeature()                            */
+/************************************************************************/
+
+OGRErr OGRMemLayer::DeleteFeature( long nFID )
+
+{
+    if( nFID < 0 || nFID >= nMaxFeatureCount 
+        || papoFeatures[nFID] == NULL )
+    {
+        return OGRERR_FAILURE;
+    }
+    else 
+    {
+        delete papoFeatures[nFID];
+        papoFeatures[nFID] = NULL;
+        nFeatureCount--;
+        return OGRERR_NONE;
+    }
+}
+
+/************************************************************************/
 /*                          GetFeatureCount()                           */
 /*                                                                      */
 /*      If a spatial filter is in effect, we turn control over to       */
@@ -273,6 +297,9 @@ int OGRMemLayer::TestCapability( const char * pszCap )
         return FALSE;
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
+        return TRUE;
+
+    else if( EQUAL(pszCap,OLCDeleteFeature) )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCCreateField) )

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.75  2003/10/09 15:27:52  warmerda
+ * added OGRLayer::DeleteFeature() support
+ *
  * Revision 1.74  2003/09/22 05:48:50  warmerda
  * added GML geometry support
  *
@@ -2688,6 +2691,7 @@ OGRFeatureH  OGR_L_GetNextFeature( OGRLayerH );
 OGRFeatureH  OGR_L_GetFeature( OGRLayerH, long );
 int     OGR_L_SetFeature( OGRLayerH, OGRFeatureH );
 int     OGR_L_CreateFeature( OGRLayerH, OGRFeatureH );
+int     OGR_L_DeleteFeature( OGRLayerH, long );
 OGRFeatureDefnH  OGR_L_GetLayerDefn( OGRLayerH );
 OGRSpatialReferenceH  OGR_L_GetSpatialRef( OGRLayerH );
 int     OGR_L_GetFeatureCount( OGRLayerH, int );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/10/09 15:30:07  warmerda
+ * added OGRLayer::DeleteFeature() support
+ *
  * Revision 1.18  2003/05/28 19:18:04  warmerda
  * fixup argument names for docs
  *
@@ -605,3 +608,24 @@ OGRErr OGR_L_SyncToDisk( OGRLayerH hDS )
 {
     return ((OGRLayer *) hDS)->SyncToDisk();
 }
+
+/************************************************************************/
+/*                           DeleteFeature()                            */
+/************************************************************************/
+
+OGRErr OGRLayer::DeleteFeature( long nFID )
+
+{
+    return OGRERR_UNSUPPORTED_OPERATION;
+}
+
+/************************************************************************/
+/*                        OGR_L_DeleteFeature()                         */
+/************************************************************************/
+
+OGRErr OGR_L_DeleteFeature( OGRLayerH hDS, long nFID )
+
+{
+    return ((OGRLayer *) hDS)->DeleteFeature( nFID );
+}
+

@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.75  2003/09/22 05:48:50  warmerda
- * added GML geometry support
+ * Revision 1.76  2003/10/09 15:27:52  warmerda
+ * added OGRLayer::DeleteFeature() support
  *
  ************************************************************************/
 
@@ -8324,6 +8324,27 @@ static PyObject *_wrap_OGR_L_CreateFeature(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OGR_L_DeleteFeature(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRLayerH  _arg0;
+    long  _arg1;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sl:OGR_L_DeleteFeature",&_argc0,&_arg1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_L_DeleteFeature. Expected _OGRLayerH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_L_DeleteFeature(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OGR_L_GetLayerDefn(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRFeatureDefnH  _result;
@@ -9704,6 +9725,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_L_GetFeatureCount", _wrap_OGR_L_GetFeatureCount, 1 },
 	 { "OGR_L_GetSpatialRef", _wrap_OGR_L_GetSpatialRef, 1 },
 	 { "OGR_L_GetLayerDefn", _wrap_OGR_L_GetLayerDefn, 1 },
+	 { "OGR_L_DeleteFeature", _wrap_OGR_L_DeleteFeature, 1 },
 	 { "OGR_L_CreateFeature", _wrap_OGR_L_CreateFeature, 1 },
 	 { "OGR_L_SetFeature", _wrap_OGR_L_SetFeature, 1 },
 	 { "OGR_L_GetFeature", _wrap_OGR_L_GetFeature, 1 },
