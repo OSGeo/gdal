@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/09/16 14:16:28  warmerda
+ * XY_ORIGIN is center of pixel, not top left corner.
+ *
  * Revision 1.13  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -416,8 +419,8 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 	poDS->pszProjection = CPLStrdup("");
     }
 
-    poDS->dfULX = dfULXMap;
-    poDS->dfULY = dfULYMap;
+    poDS->dfULX = dfULXMap - dfXDim * 0.5;
+    poDS->dfULY = dfULYMap + dfXDim * 0.5;
 
     poDS->dfXPixelSize = dfXDim;
     poDS->dfYPixelSize = dfYDim;
