@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  1999/09/13 02:07:01  warmerda
+ * reduced STRING_BUFFER_SIZE
+ *
  * Revision 1.16  1999/09/07 14:41:46  warmerda
  * Add transport of integer, real and string lists as simple 80char strings.
  * Eventually we should look into more appropriate means of accomplishing this.
@@ -74,7 +77,12 @@
 #include "ogr_geometry.h"
 #include "sfutil.h"
 
-#define		STRING_BUFFER_SIZE	10240
+// I use a length of 1024, because anything larger will trigger treatment
+// as a BLOB by the code in CDynamicAccessor::BindColumns() in ATLDBCLI.H.
+// Treatment as a BLOB (with an sequential stream object created) results
+// in the failure of a later CanConvert() test in 
+// IAccessorImpl::ValidateBindsFromMetaData().
+#define		STRING_BUFFER_SIZE	1024
 
 void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... );
 
