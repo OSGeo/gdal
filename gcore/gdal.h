@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2003/01/27 21:55:52  warmerda
+ * various documentation improvements
+ *
  * Revision 1.59  2002/12/21 17:28:35  warmerda
  * actually, lets use 1.1.8.0
  *
@@ -327,7 +330,6 @@ typedef void *GDALColorTableH;
 /* -------------------------------------------------------------------- */
 /*      Callback "progress" function.                                   */
 /* -------------------------------------------------------------------- */
-/*! Progresss function signature, see GDALDummyProgress() for details. */
 
 typedef int (*GDALProgressFunc)(double,const char *, void *);
 int CPL_DLL GDALDummyProgress( double, const char *, void *);

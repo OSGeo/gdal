@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2003/01/27 21:55:52  warmerda
+ * various documentation improvements
+ *
  * Revision 1.40  2002/12/11 21:21:46  warmerda
  * fixed debug format problem
  *
@@ -683,65 +686,10 @@ void GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
 /**
  * Stub progress function.
  *
- * Many long running operations within GDAL the option of passing a
- * progress function.  The progress function is intended to provide a 
- * way of displaying a progress indicator to the user, and for the user
- * to terminate the process prematurely.  Applications not desiring 
- * to utilize this support should normally pass GDALDummyProgress as
- * the pfnProgress argument and NULL as the pData argument.  
- * 
- * Applications wishing to take advantage of the progress semantics should
- * pass a function implementing GDALProgressFunc semantics. 
- *
- * <pre>
- * typedef int (*GDALProgressFunc)(double dfComplete,
- *                                 const char *pszMessage, 
- *                                 void *pData);
- * </pre>
- *
- * @param dfComplete Passed in the with ratio of the operation that is
- * complete, and is a value between 0.0 and 1.0.  
- * 
- * @param pszMessage This is normally passed in as NULL, but will occasionally
- * be passed in with a message about what is happening that may be displayed
- * to the user. 
- *
- * @param pData Application data (as passed via pData into GDAL operation).
- *
- * @return TRUE if the operation should continue, or FALSE if the user
- * has requested a cancel. 
- * 
- * For example, an application might implement the following simple
- * text progress reporting mechanism, using pData to pass a default message:
- *
- * <pre>
- * int MyTextProgress( double dfComplete, const char *pszMessage, void *pData)
- * {
- *     if( pszMessage != NULL )
- *         printf( "%d%% complete: %s\n", (int) (dfComplete*100), pszMessage );
- *     else if( pData != NULL )
- *         printf( "%d%% complete:%s\n", (int) (dfComplete*100),
- *                 (char *) pData );
- *     else
- *         printf( "%d%% complete.\n", (int) (dfComplete*100) );
- *     
- *     return TRUE;
- * }
- * </pre>
- *
- * This could be utilized with the GDALDataset::BuildOverviews() method like
- * this:
- *
- * <pre>
- *      int       anOverviewList[3] = {2, 4, 8};
- *
- *      poDataset->BuildOverviews( "NEAREST", 3, anOverviewList, 0, NULL, 
- *                                 MyTextProgress, "building overviews" );
- * </pre>
- * 
- * More often that implementing custom progress functions, applications 
- * will just use existing progress functions like GDALDummyProgress(), and 
- * GDALScaledProgress().  Python scripts also can pass progress functions.
+ * This is a stub (does nothing) implementation of the GDALProgressFunc()
+ * semantics.  It is primarily useful for passing to functions that take
+ * a GDALProgressFunc() argument but for which the application does not want
+ * to use one of the other progress functions that actually do something.
  */
 
 int GDALDummyProgress( double, const char *, void * )
@@ -760,6 +708,13 @@ typedef struct {
     double dfMax;
 } GDALScaledProgressInfo;
 
+/**
+ * Scaled progress transformer.
+ *
+ * This is the progress function that should be passed along with the
+ * callback data returned by GDALCreateScaledProgress().
+ */
+
 int GDALScaledProgress( double dfComplete, const char *pszMessage, 
                         void *pData )
 
@@ -774,6 +729,50 @@ int GDALScaledProgress( double dfComplete, const char *pszMessage,
 /************************************************************************/
 /*                      GDALCreateScaledProgress()                      */
 /************************************************************************/
+
+/**
+ * Create scaled progress transformer.
+ *
+ * Sometimes when an operations wants to report progress it actually
+ * invokes several subprocesses which also take GDALProgressFunc()s, 
+ * and it is desirable to map the progress of each sub operation into
+ * a portion of 0.0 to 1.0 progress of the overall process.  The scaled
+ * progress function can be used for this. 
+ *
+ * For each subsection a scaled progress function is created and
+ * instead of passing the overall progress func down to the sub functions,
+ * the GDALScaledProgress() function is passed instead.
+ *
+ * @param dfMin the value to which 0.0 in the sub operation is mapped.
+ * @param dfMax the value to which 1.0 is the sub operation is mapped.
+ * @param pfnProgress the overall progress function.
+ * @param dData the overall progress function callback data. 
+ *
+ * @return pointer to pass as pProgressArg to sub functions.  Should be freed
+ * with GDALDestroyScaledProgress(). 
+ *
+ * Example:
+ *
+ * \code
+ *   int MyOperation( ..., GDALProgressFunc pfnProgress, void *pProgressData );
+ *
+ *   {
+ *       void *pScaledProgress;
+ *
+ *       pScaledProgress = GDALCreateScaledProgress( 0.0, 0.5, pfnProgress, 
+ *                                                   pProgressData );
+ *       GDALDoLongSlowOperation( ..., GDALScaledProgressFunc, pProgressData );
+ *       GDALDestroyScaledProgress( pScaledProgress );
+ *
+ *       pScaledProgress = GDALCreateScaledProgress( 0.5, 1.0, pfnProgress, 
+ *                                                   pProgressData );
+ *       GDALDoAnotherOperation( ..., GDALScaledProgressFunc, pProgressData );
+ *       GDALDestroyScaledProgress( pScaledProgress );
+ *
+ *       return ...;
+ *   }
+ * \endcode
+ */
 
 void *GDALCreateScaledProgress( double dfMin, double dfMax, 
                                 GDALProgressFunc pfnProgress, 
@@ -800,6 +799,15 @@ void *GDALCreateScaledProgress( double dfMin, double dfMax,
 /*                     GDALDestroyScaledProgress()                      */
 /************************************************************************/
 
+/**
+ * Cleanup scaled progress handle.
+ *
+ * This function cleans up the data associated with a scaled progress function
+ * as returned by GADLCreateScaledProgress(). 
+ *
+ * @param pData scaled progress handle returned by GDALCreateScaledProgress().
+ */
+
 void GDALDestroyScaledProgress( void * pData )
 
 {
@@ -810,7 +818,31 @@ void GDALDestroyScaledProgress( void * pData )
 /*                          GDALTermProgress()                          */
 /************************************************************************/
 
-int GDALTermProgress( double dfComplete, const char *pszMessage, void * )
+/**
+ * Simple progress report to terminal.
+ *
+ * This progress reporter prints simple progress report to the
+ * terminal window.  The progress report generally looks something like
+ * this:
+
+\verbatim
+0...10...20...30...40...50...60...70...80...90...100 - done.
+\endverbatim
+
+ * Every 2.5% of progress another number or period is emitted.  Note that
+ * GDALTermProgress() uses internal static data to keep track of the last
+ * percentage reported and will get confused if two terminal based progress
+ * reportings are active at the same time.
+ *
+ * @param dfComplete completion ratio from 0.0 to 1.0.
+ * @param pszMessage optional message.
+ * @param pProgressArg ignored callback data argument. 
+ *
+ * @return Always returns TRUE indicating the process should continue.
+ */
+
+int GDALTermProgress( double dfComplete, const char *pszMessage, 
+                      void * pProgressArg )
 
 {
     static double dfLastComplete = -1.0;
