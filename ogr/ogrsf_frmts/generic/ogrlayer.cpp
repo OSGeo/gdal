@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/07/19 18:26:42  warmerda
+ * expand tabs
+ *
  * Revision 1.7  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -154,7 +157,7 @@ OGRErr OGRLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 OGRErr OGRLayer::SetAttributeFilter( const char *pszQuery )
 
 {
-    OGRErr	eErr;
+    OGRErr      eErr;
 
     ResetReading();
     if( !m_poAttrQuery )
