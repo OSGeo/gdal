@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/02/22 22:18:10  warmerda
+ * ensure that multi-part attributes supported for fill info
+ *
  * Revision 1.2  2002/01/15 06:42:30  warmerda
  * remove stub statement
  *
@@ -370,18 +373,22 @@ int DGNLookupColor( DGNHandle hDGN, int color_index,
 int DGNGetShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElem, int *pnColor )
 
 {
-    /* I think we should be scanning through the whole attribute block
-       looking for any matching attribute linkage ... may need to add */
+    int	nAttrOffset = 0;
 
-    if( psElem->attr_bytes >= 16 
-        && psElem->attr_data[2] == 0x41
-        && psElem->attr_data[3] == 0x00 )
+    while( nAttrOffset <= psElem->attr_bytes - 16 )
     {
-        *pnColor = psElem->attr_data[8];
-        return TRUE;
+        if( psElem->attr_data[nAttrOffset] >= 7 
+            && psElem->attr_data[nAttrOffset+2] == 0x41
+            && psElem->attr_data[nAttrOffset+3] == 0x00 )
+        {
+            *pnColor = psElem->attr_data[nAttrOffset+8];
+            return TRUE;
+        }
+
+        nAttrOffset += psElem->attr_data[nAttrOffset] * 2 + 2;
     }
-    else
-        return FALSE;
+
+    return FALSE;
 }
 
 /************************************************************************/
