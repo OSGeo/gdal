@@ -1,34 +1,42 @@
 /**********************************************************************
- * $Id: mitab_ogr_driver.cpp,v 1.5 1999/12/15 17:05:24 warmerda Exp $
+ * $Id: mitab_ogr_driver.cpp,v 1.7 2000/01/26 18:17:00 warmerda Exp $
  *
  * Name:     mitab_ogr_driver.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
  * Language: C++
  * Purpose:  Implementation of the MIDDATAFile class used to handle
  *           reading/writing of the MID/MIF files
- * Author:   Stephane Villeneuve, s.villeneuve@videotron.ca
+ * Author:   Stephane Villeneuve, stephane.v@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, Stephane Villeneuve
+ * Copyright (c) 1999, 2000, Stephane Villeneuve
  *
- * All rights reserved.  This software may be copied or reproduced, in
- * all or in part, without the prior written consent of its author,
- * Daniel Morissette (danmo@videotron.ca).  However, any material copied
- * or reproduced must bear the original copyright notice (above), this 
- * original paragraph, and the original disclaimer (below).
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  * 
- * The entire risk as to the results and performance of the software,
- * supporting text and other information contained in this file
- * (collectively called the "Software") is with the user.  Although 
- * considerable efforts have been used in preparing the Software, the 
- * author does not warrant the accuracy or completeness of the Software.
- * In no event will the author be liable for damages, including loss of
- * profits or consequential damages, arising out of the use of the 
- * Software.
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
  * $Log: mitab_ogr_driver.cpp,v $
+ * Revision 1.7  2000/01/26 18:17:00  warmerda
+ * reimplement OGR driver
+ *
+ * Revision 1.6  2000/01/15 22:30:44  daniel
+ * Switch to MIT/X-Consortium OpenSource license
+ *
  * Revision 1.5  1999/12/15 17:05:24  warmerda
  * Only create OGRTABDataSource if SmartOpen() result is non-NULL.
  *
@@ -47,46 +55,15 @@
  * Revision 1.1  1999/11/08 04:16:07  stephane
  * First Revision
  *
- *
  **********************************************************************/
 
 #include "mitab_ogr_driver.h"
 
 
-
-/*=======================================================================
- *                 OGRTABDataSource/OGRTABDriver Classes
- *
- * We need one single OGRDataSource/Driver set of classes to handle all
- * the MapInfo file types.  They all deal with the IMapInfoFile abstract
- * class.
- *=====================================================================*/
-
 /************************************************************************/
-/*                         OGRTABDataSource()                           */
+/*                           ~OGRTABDriver()                            */
 /************************************************************************/
-OGRTABDataSource::OGRTABDataSource( const char * pszNameIn,
-                                    IMapInfoFile *poLayerIn )
 
-{
-    m_pszName = CPLStrdup( pszNameIn );
-    m_poLayer = poLayerIn;
-}
-
-/************************************************************************/
-/*                         ~OGRTABDataSource()                          */
-/************************************************************************/
-OGRTABDataSource::~OGRTABDataSource()
-
-{
-    CPLFree( m_pszName ); 
-    delete m_poLayer;
-}
-
-
-/************************************************************************/
-/*                          ~OGRTABDriver()                           */
-/************************************************************************/
 OGRTABDriver::~OGRTABDriver()
 
 {
@@ -107,26 +84,76 @@ const char *OGRTABDriver::GetName()
 /************************************************************************/
 
 OGRDataSource *OGRTABDriver::Open( const char * pszFilename,
-                                     int bUpdate )
+                                   int bUpdate )
 
 {
-
+    OGRTABDataSource	*poDS;
+    
     if( bUpdate )
     {
 	return NULL;
     }
-       
-/* -------------------------------------------------------------------- */
-/*      Create the layer object.                                        */
-/* -------------------------------------------------------------------- */
-    IMapInfoFile *poLayer;
 
-    if( (poLayer = IMapInfoFile::SmartOpen( pszFilename, TRUE )) != NULL )
-         return new OGRTABDataSource( pszFilename, poLayer );
- 
-    return NULL;
+    poDS = new OGRTABDataSource();
+    if( poDS->Open( pszFilename, TRUE ) )
+        return poDS;
+    else
+    {
+        delete poDS;
+        return NULL;
+    }
 }
 
+
+/************************************************************************/
+/*                          CreateDataSource()                          */
+/************************************************************************/
+
+OGRDataSource *OGRTABDriver::CreateDataSource( const char * pszName,
+                                               char ** papszOptions )
+
+{
+    VSIStatBuf	stat;
+    OGRTABDataSource *poDS;
+
+/* -------------------------------------------------------------------- */
+/*      Verify that the target is a valid directory.                    */
+/* -------------------------------------------------------------------- */
+    if( VSIStat( pszName, &stat ) == 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "File already exists: %s\n"
+                  "Can't create new Mapinfo file.\n",
+                  pszName );
+        
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to create the data source.                                  */
+/* -------------------------------------------------------------------- */
+    poDS = new OGRTABDataSource();
+    if( !poDS->Create( pszName, papszOptions ) )
+    {
+        delete poDS;
+        return NULL;
+    }
+    else
+        return poDS;
+}
+
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int OGRTABDriver::TestCapability( const char * pszCap )
+
+{
+    if( EQUAL(pszCap,ODrCCreateDataSource) )
+        return TRUE;
+    else
+        return FALSE;
+}
 
 /************************************************************************/
 /*              RegisterOGRTAB()                                        */
@@ -140,6 +167,5 @@ void RegisterOGRTAB()
 {
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRTABDriver );
 }
-
 
 }

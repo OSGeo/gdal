@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_idfile.cpp,v 1.4 1999/09/26 14:59:36 daniel Exp $
+ * $Id: mitab_idfile.cpp,v 1.6 2000/01/18 22:08:56 daniel Exp $
  *
  * Name:     mitab_idfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -9,26 +9,34 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, Daniel Morissette
+ * Copyright (c) 1999, 2000, Daniel Morissette
  *
- * All rights reserved.  This software may be copied or reproduced, in
- * all or in part, without the prior written consent of its author,
- * Daniel Morissette (danmo@videotron.ca).  However, any material copied
- * or reproduced must bear the original copyright notice (above), this 
- * original paragraph, and the original disclaimer (below).
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  * 
- * The entire risk as to the results and performance of the software,
- * supporting text and other information contained in this file
- * (collectively called the "Software") is with the user.  Although 
- * considerable efforts have been used in preparing the Software, the 
- * author does not warrant the accuracy or completeness of the Software.
- * In no event will the author be liable for damages, including loss of
- * profits or consequential damages, arising out of the use of the 
- * Software.
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
  * $Log: mitab_idfile.cpp,v $
+ * Revision 1.6  2000/01/18 22:08:56  daniel
+ * Allow opening of 0-size .ID file (dataset with 0 features)
+ *
+ * Revision 1.5  2000/01/15 22:30:44  daniel
+ * Switch to MIT/X-Consortium OpenSource license
+ *
  * Revision 1.4  1999/09/26 14:59:36  daniel
  * Implemented write support
  *
@@ -170,7 +178,15 @@ int TABIDFile::Open(const char *pszFname, const char *pszAccess)
          * Read the first block from the file
          *------------------------------------------------------------*/
         m_poIDBlock = new TABRawBinBlock(m_eAccessMode, FALSE);
-        if (m_poIDBlock->ReadFromFile(m_fp, 0, m_nBlockSize) != 0)
+
+        if (m_nMaxId == 0)
+        {
+            // .ID file size = 0 ... just allocate a blank block but
+            // it won't get really used anyways.
+            m_nBlockSize = 512;
+            m_poIDBlock->InitNewBlock(m_fp, m_nBlockSize, 0);
+        }
+        else if (m_poIDBlock->ReadFromFile(m_fp, 0, m_nBlockSize) != 0)
         {
             // CPLError() has already been called.
             Close();

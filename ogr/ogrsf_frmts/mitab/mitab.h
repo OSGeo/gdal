@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.25 1999/12/19 01:10:36 stephane Exp $
+ * $Id: mitab.h,v 1.29 2000/01/26 18:17:35 warmerda Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo MIF Read/Write library
@@ -8,26 +8,40 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, Daniel Morissette
+ * Copyright (c) 1999, 2000, Daniel Morissette
  *
- * All rights reserved.  This software may be copied or reproduced, in
- * all or in part, without the prior written consent of its author,
- * Daniel Morissette (danmo@videotron.ca).  However, any material copied
- * or reproduced must bear the original copyright notice (above), this 
- * original paragraph, and the original disclaimer (below).
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  * 
- * The entire risk as to the results and performance of the software,
- * supporting text and other information contained in this file
- * (collectively called the "Software") is with the user.  Although 
- * considerable efforts have been used in preparing the Software, the 
- * author does not warrant the accuracy or completeness of the Software.
- * In no event will the author be liable for damages, including loss of
- * profits or consequential damages, arising out of the use of the 
- * Software.
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.29  2000/01/26 18:17:35  warmerda
+ * added CreateField method
+ *
+ * Revision 1.28  2000/01/18 23:12:18  daniel
+ * Made AddFieldNative()'s width parameter optional
+ *
+ * Revision 1.27  2000/01/16 19:08:48  daniel
+ * Added support for reading 'Table Type DBF' tables
+ *
+ * Revision 1.26  2000/01/15 22:30:43  daniel
+ * Switch to MIT/X-Consortium OpenSource license
+ *
  * Revision 1.25  1999/12/19 01:10:36  stephane
  * Remove the automatic pre parsing for the GetBounds and GetFeatureCount
  *
@@ -209,7 +223,9 @@ class IMapInfoFile : public OGRLayer
     virtual int SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
                             TABFieldType *paeMapInfoNativeFieldTypes = NULL)=0;
     virtual int AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
-                               int nWidth, int nPrecision=0) = 0;
+                               int nWidth=0, int nPrecision=0) = 0;
+    virtual OGRErr CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
+    
     virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef) = 0;
 
     virtual int SetFeature(TABFeature *poFeature, int nFeatureId = -1) = 0;
@@ -236,7 +252,7 @@ class TABFile: public IMapInfoFile
     char        *m_pszCharset;
     int         *m_panIndexNo;
     GBool       m_bBoundsSet;
-    
+    TABTableType m_eTableType;  // NATIVE (.DAT) or DBF
 
     TABDATFile  *m_poDATFile;   // Attributes file
     TABMAPFile  *m_poMAPFile;   // Object Geometry file
@@ -252,8 +268,8 @@ class TABFile: public IMapInfoFile
     ///////////////
     // Private Read access specific stuff
     //
-    int         ReadFeatureDefn();
-    int         ParseTABFile();
+    int         ParseTABFileFirstPass(GBool bTestOpenNoError);
+    int         ParseTABFileFields();
 
      ///////////////
     // Private Write access specific stuff
@@ -305,7 +321,7 @@ class TABFile: public IMapInfoFile
     virtual int SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
                             TABFieldType *paeMapInfoNativeFieldTypes = NULL);
     virtual int AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
-                               int nWidth, int nPrecision=0);
+                               int nWidth=0, int nPrecision=0);
     virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef);
 
     virtual int SetFeature(TABFeature *poFeature, int nFeatureId = -1);
@@ -413,7 +429,7 @@ class TABView: public IMapInfoFile
                                                        {return -1;};
     virtual int AddFieldNative(const char * /*pszName*/,
                                TABFieldType /*eMapInfoType*/,
-                               int /*nWidth*/, int /*nPrecision*/=0)
+                               int /*nWidth*/=0, int /*nPrecision*/=0)
     							{return -1;};
     virtual int SetSpatialRef(OGRSpatialReference * /*poSpatialRef*/)
                                                        {return -1;};
@@ -543,7 +559,7 @@ class MIFFile: public IMapInfoFile
     virtual int SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
                             TABFieldType *paeMapInfoNativeFieldTypes = NULL);
     virtual int AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
-                               int nWidth, int nPrecision=0);
+                               int nWidth=0, int nPrecision=0);
     /* TODO */
     virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef);
 
@@ -560,6 +576,11 @@ class MIFFile: public IMapInfoFile
     virtual void Dump(FILE * /*fpOut*/ = NULL) {};
 #endif
 };
+
+/*---------------------------------------------------------------------
+ * Define some error codes specific to this lib.
+ *--------------------------------------------------------------------*/
+#define TAB_WarningFeatureTypeNotSupported     501
 
 /*---------------------------------------------------------------------
  * Codes for the known MapInfo Geometry types

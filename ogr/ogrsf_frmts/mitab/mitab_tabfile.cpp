@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.25 1999/12/19 17:38:55 daniel Exp $
+ * $Id: mitab_tabfile.cpp,v 1.30 2000/01/26 18:18:01 warmerda Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -10,26 +10,44 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, Daniel Morissette
+ * Copyright (c) 1999, 2000, Daniel Morissette
  *
- * All rights reserved.  This software may be copied or reproduced, in
- * all or in part, without the prior written consent of its author,
- * Daniel Morissette (danmo@videotron.ca).  However, any material copied
- * or reproduced must bear the original copyright notice (above), this 
- * original paragraph, and the original disclaimer (below).
- *  
- * The entire risk as to the results and performance of the software,
- * supporting text and other information contained in this file
- * (collectively called the "Software") is with the user.  Although 
- * considerable efforts have been used in preparing the Software, the 
- * author does not warrant the accuracy or completeness of the Software.
- * In no event will the author be liable for damages, including loss of
- * profits or consequential damages, arising out of the use of the 
- * Software.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  * 
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.30  2000/01/26 18:18:01  warmerda
+ * fixed capabilities test
+ *
+ * Revision 1.29  2000/01/18 23:13:05  daniel
+ * Added missing m_poDefn->Reference()
+ *
+ * Revision 1.28  2000/01/18 22:14:36  daniel
+ * Fixed compile warnings
+ *
+ * Revision 1.27  2000/01/16 19:08:49  daniel
+ * Added support for reading 'Table Type DBF' tables
+ *
+ * Revision 1.26  2000/01/15 21:40:03  daniel
+ * Switched to MIT license +  When unsupported feature types encountered,
+ * return a feature with NONE geometry and produce only a warning.
+ *
  * Revision 1.25  1999/12/19 17:38:55  daniel
  * Fixed memory leaks
  *
@@ -130,6 +148,7 @@ TABFile::TABFile()
     m_papszTABFile = NULL;
     m_pszVersion = NULL;
     m_pszCharset = NULL;
+    m_eTableType = TABTableNative;
 
     m_poMAPFile = NULL;
     m_poDATFile = NULL;
@@ -289,35 +308,22 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
                          "Failed opening %s.", m_pszFname);
             }
             CPLFree(m_pszFname);
+            CSLDestroy(m_papszTABFile);
             return -1;
         }
 
         /*-------------------------------------------------------------
-         * Look for a line with the "Fields" keyword.
-         * If there is no "Fields", then we may have a valid .TAB file,
-         * but we do not support it.
+         * Do a first pass on the TAB header to establish the type of 
+         * dataset we have (NATIVE, DBF, etc.)... and also to know if
+         * it is a supported type.
          *------------------------------------------------------------*/
-        GBool bFieldsFound = FALSE;
-        for (int i=0; !bFieldsFound && m_papszTABFile && m_papszTABFile[i];i++)
+        if ( ParseTABFileFirstPass(bTestOpenNoError) != 0 )
         {
-            const char *pszStr = m_papszTABFile[i];
-            while(*pszStr != '\0' && isspace(*pszStr))
-                pszStr++;
-            if (EQUALN(pszStr, "Fields", 6))
-                bFieldsFound = TRUE;
-        }
-
-        if ( !bFieldsFound )
-        {
-            if (!bTestOpenNoError)
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "%s contains no table field definition.  "
-                      "This type of .TAB file cannot be read by this library.",
-                         m_pszFname);
-            else
-                CPLErrorReset();
+            // No need to produce an error... it's already been done if 
+            // necessary... just cleanup and exit.
 
             CPLFree(m_pszFname);
+            CSLDestroy(m_papszTABFile);
 
             return -1;
         }
@@ -330,16 +336,27 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
          *------------------------------------------------------------*/
         m_pszVersion = CPLStrdup("300");
         m_pszCharset = CPLStrdup("Neutral");
+        m_eTableType = TABTableNative;
     }
 
 
     /*-----------------------------------------------------------------
-     * Open .DAT file
+     * Open .DAT file (or .DBF)
      *----------------------------------------------------------------*/
     if (nFnameLen > 4 && strcmp(pszTmpFname+nFnameLen-4, ".TAB")==0)
-        strcpy(pszTmpFname+nFnameLen-4, ".DAT");
+    {
+        if (m_eTableType == TABTableDBF)
+            strcpy(pszTmpFname+nFnameLen-4, ".DBF");
+        else  // Default is NATIVE
+            strcpy(pszTmpFname+nFnameLen-4, ".DAT");
+    }
     else 
-        strcpy(pszTmpFname+nFnameLen-4, ".dat");
+    {
+        if (m_eTableType == TABTableDBF)
+            strcpy(pszTmpFname+nFnameLen-4, ".dbf");
+        else  // Default is NATIVE
+            strcpy(pszTmpFname+nFnameLen-4, ".dat");
+    }
 
 #ifndef _WIN32
     TABAdjustFilenameExtension(pszTmpFname);
@@ -347,7 +364,7 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
 
     m_poDATFile = new TABDATFile;
    
-    if ( m_poDATFile->Open(pszTmpFname, pszAccess) != 0)
+    if ( m_poDATFile->Open(pszTmpFname, pszAccess, m_eTableType) != 0)
     {
         // Open Failed... an error has already been reported, just return.
         CPLFree(pszTmpFname);
@@ -362,9 +379,9 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
 
 
     /*-----------------------------------------------------------------
-     * Parse .TAB file and build FeatureDefn (only in read access)
+     * Parse .TAB file field defs and build FeatureDefn (only in read access)
      *----------------------------------------------------------------*/
-    if (m_eAccessMode == TABRead && ParseTABFile() != 0)
+    if (m_eAccessMode == TABRead && ParseTABFileFields() != 0)
     {
         // Failed... an error has already been reported, just return.
         CPLFree(pszTmpFname);
@@ -440,22 +457,20 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
 
 
 /**********************************************************************
- *                   TABFile::ParseTABFile()
+ *                   TABFile::ParseTABFileFirstPass()
  *
- * Scan the lines of the TAB file, and store any useful information into
- * class members.  The main piece of information being the fields 
- * definition that we use to build the OGRFeatureDefn for this file.
+ * Do a first pass in the TAB header file to establish the table type, etc.
+ * and store any useful information into class members.
  *
  * This private method should be used only during the Open() call.
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABFile::ParseTABFile()
+int TABFile::ParseTABFileFirstPass(GBool bTestOpenNoError)
 {
-    int         iLine, numLines, numTok, nStatus;
+    int         iLine, numLines, numFields = 0;
     char        **papszTok=NULL;
-    GBool       bInsideTableDef = FALSE;
-    OGRFieldDefn *poFieldDefn;
+    GBool       bInsideTableDef = FALSE, bFoundTableFields=FALSE;
 
     if (m_eAccessMode != TABRead)
     {
@@ -463,12 +478,6 @@ int TABFile::ParseTABFile()
                  "ParseTABFile() can be used only with Read access.");
         return -1;
     }
-
-    char *pszFeatureClassName = TABGetBasename(m_pszFname);
-    m_poDefn = new OGRFeatureDefn(pszFeatureClassName);
-    CPLFree(pszFeatureClassName);
-    // Ref count defaults to 0... set it to 1
-    m_poDefn->Reference();
 
     numLines = CSLCount(m_papszTABFile);
 
@@ -493,6 +502,7 @@ int TABFile::ParseTABFile()
                  */
                 bInsideTableDef = TRUE;
                 m_pszCharset = CPLStrdup("Neutral");
+                m_eTableType = TABTableNative;
             }
 
         }
@@ -505,19 +515,130 @@ int TABFile::ParseTABFile()
         {
             bInsideTableDef = TRUE;
         }
-        else if (bInsideTableDef &&
+        else if (bInsideTableDef && !bFoundTableFields &&
+                 EQUAL(papszTok[0], "Type") )
+        {
+            if (EQUAL(papszTok[1], "NATIVE"))
+                m_eTableType = TABTableNative;
+            else if (EQUAL(papszTok[1], "DBF"))
+                m_eTableType = TABTableDBF;
+            else
+            {
+                // Type=ACCESS, or other unsupported type... cannot open!
+                if (!bTestOpenNoError)
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Unsupported table type '%s' in file %s.  "
+                      "This type of .TAB file cannot be read by this library.",
+                             papszTok[1], m_pszFname);
+                CSLDestroy(papszTok);
+                return -1;
+            }
+        }
+        else if (bInsideTableDef && !bFoundTableFields &&
                  (EQUAL(papszTok[0],"Fields") || EQUAL(papszTok[0],"FIELDS:")))
+        {
+            /*---------------------------------------------------------
+             * We found the list of table fields
+             * Just remember number of fields... the field types will be
+             * parsed inside ParseTABFileFields() later...
+             *--------------------------------------------------------*/
+            bFoundTableFields = TRUE;
+            numFields = atoi(papszTok[1]);
+
+            if (numFields < 1 || numFields>2048 || iLine+numFields >= numLines)
+            {
+                if (!bTestOpenNoError)
+                    CPLError(CE_Failure, CPLE_FileIO,
+                         "Invalid number of fields (%s) at line %d in file %s",
+                             papszTok[1], iLine+1, m_pszFname);
+
+                CSLDestroy(papszTok);
+                return -1;
+            }
+
+            bInsideTableDef = FALSE;
+        }/* end of fields section*/
+        else
+        {
+            // Simply Ignore unrecognized lines
+        }
+    }
+
+    CSLDestroy(papszTok);
+
+    if (m_pszCharset == NULL)
+        m_pszCharset = CPLStrdup("Neutral");
+    if (m_pszVersion == NULL)
+        m_pszVersion = CPLStrdup("300");
+
+    if (numFields == 0)
+    {
+        if (!bTestOpenNoError)
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "%s contains no table field definition.  "
+                     "This type of .TAB file cannot be read by this library.",
+                     m_pszFname);
+        return -1;
+    }
+
+    return 0;
+}
+
+/**********************************************************************
+ *                   TABFile::ParseTABFileFields()
+ *
+ * Extract the field definition from the TAB header file, validate
+ * with what we have in the previously opened .DAT or .DBF file, and 
+ * finally build the m_poDefn OGRFeatureDefn for this dataset.
+ *
+ * This private method should be used only during the Open() call and after
+ * ParseTABFileFirstPass() has been called.
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABFile::ParseTABFileFields()
+{
+    int         iLine, numLines, numTok, nStatus;
+    char        **papszTok=NULL;
+    OGRFieldDefn *poFieldDefn;
+
+    if (m_eAccessMode != TABRead)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "ParseTABFile() can be used only with Read access.");
+        return -1;
+    }
+
+    char *pszFeatureClassName = TABGetBasename(m_pszFname);
+    m_poDefn = new OGRFeatureDefn(pszFeatureClassName);
+    CPLFree(pszFeatureClassName);
+    // Ref count defaults to 0... set it to 1
+    m_poDefn->Reference();
+
+    numLines = CSLCount(m_papszTABFile);
+
+    for(iLine=0; iLine<numLines; iLine++)
+    {
+        /*-------------------------------------------------------------
+         * Tokenize the next .TAB line, and check first keyword
+         *------------------------------------------------------------*/
+        const char *pszStr = m_papszTABFile[iLine];
+        while(*pszStr != '\0' && isspace(*pszStr))
+            pszStr++;
+
+        if (EQUALN(pszStr, "Fields", 6))
         {
             /*---------------------------------------------------------
              * We found the list of table fields
              *--------------------------------------------------------*/
             int iField, numFields;
-            numFields = atoi(papszTok[1]);
-            if (numFields < 1 || iLine+numFields >= numLines)
+            numFields = atoi(pszStr+7);
+            if (numFields < 1 || numFields > 2048 || 
+                iLine+numFields >= numLines)
             {
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Invalid number of fields (%s) at line %d in file %s",
-                         papszTok[1], iLine+1, m_pszFname);
+                         pszStr+7, iLine+1, m_pszFname);
                 CSLDestroy(papszTok);
                 return -1;
             }
@@ -666,20 +787,19 @@ int TABFile::ParseTABFile()
                 poFieldDefn = NULL;
             }
 
-            bInsideTableDef = FALSE;
+            /*---------------------------------------------------------
+             * OK, we're done... end the loop now.
+             *--------------------------------------------------------*/
+            break;
         }/* end of fields section*/
         else
         {
             // Simply Ignore unrecognized lines
         }
+
     }
 
     CSLDestroy(papszTok);
-
-    if (m_pszCharset == NULL)
-        m_pszCharset = CPLStrdup("Neutral");
-    if (m_pszVersion == NULL)
-        m_pszVersion = CPLStrdup("300");
 
     if (m_poDefn->GetFieldCount() == 0)
     {
@@ -935,10 +1055,16 @@ int TABFile::GetNextFeatureId(int nPrevId)
  * Returns NULL if the specified feature id does not exist of if an
  * error happened.  In any case, CPLError() will have been called to
  * report the reason of the failure.
+ *
+ * If an unsupported object type is encountered (likely from a newer version
+ * of MapInfo) then a valid feature will be returned with a NONE geometry,
+ * and a warning will be produced with code TAB_WarningFeatureTypeNotSupported
+ * CPLGetLastErrorNo() should be used to detect that case.
  **********************************************************************/
 TABFeature *TABFile::GetFeatureRef(int nFeatureId)
 {
-    
+    CPLErrorReset();
+
     if (m_eAccessMode != TABRead)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1030,12 +1156,19 @@ TABFeature *TABFile::GetFeatureRef(int nFeatureId)
         m_poCurFeature = new TABText(m_poDefn);
         break;
       default:
+        /*-------------------------------------------------------------
+         * Unsupported feature type... we still return a valid feature
+         * with NONE geometry after producing a Warning.
+         * Callers can trap that case by checking CPLGetLastErrorNo() 
+         * against TAB_WarningFeatureTypeNotSupported
+         *------------------------------------------------------------*/
 //        m_poCurFeature = new TABDebugFeature(m_poDefn);
+        m_poCurFeature = new TABFeature(m_poDefn);
 
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Unsupported object type %d (0x%2.2x)", 
+        CPLError(CE_Warning, TAB_WarningFeatureTypeNotSupported,
+                 "Unsupported object type %d (0x%2.2x).  Feature will be "
+                 "returned with NONE geometry.", 
                  m_poMAPFile->GetCurObjType(), m_poMAPFile->GetCurObjType() );
-        return NULL;
     }
 
     /*-----------------------------------------------------------------
@@ -1287,7 +1420,7 @@ int TABFile::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
-                            int nWidth, int nPrecision /*=0*/)
+                            int nWidth /*=0*/, int nPrecision /*=0*/)
 {
     OGRFieldDefn *poFieldDefn;
     int nStatus = 0;
@@ -1319,6 +1452,8 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         char *pszFeatureClassName = TABGetBasename(m_pszFname);
         m_poDefn = new OGRFeatureDefn(pszFeatureClassName);
         CPLFree(pszFeatureClassName);
+        // Ref count defaults to 0... set it to 1
+        m_poDefn->Reference();
     }
 
     /*-----------------------------------------------------------------
@@ -1694,15 +1829,20 @@ int TABFile::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCRandomRead) )
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCSequentialWrite) 
-             || EQUAL(pszCap,OLCRandomWrite) )
+    else if( EQUAL(pszCap,OLCSequentialWrite) )
+        return m_eAccessMode == TABWrite;
+
+    else if( EQUAL(pszCap,OLCRandomWrite) )
         return FALSE;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return m_poFilterGeom == NULL;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
-        return FALSE;
+        return m_eAccessMode == TABWrite;
+
+    else if( EQUAL(pszCap,OLCCreateField) )
+        return TRUE;
 
     else 
         return FALSE;
@@ -1734,9 +1874,9 @@ void TABFile::Dump(FILE *fpOut /*=NULL*/)
     else
     {
         fprintf(fpOut, "File is opened: %s\n", m_pszFname);
-        fprintf(fpOut, "Associated .DAT file ...\n\n");
+        fprintf(fpOut, "Associated TABLE file ...\n\n");
         m_poDATFile->Dump(fpOut);
-        fprintf(fpOut, "... end of .DAT file dump.\n\n");
+        fprintf(fpOut, "... end of TABLE file dump.\n\n");
         if( GetSpatialRef() != NULL )
         {
             char	*pszWKT;

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.18 1999/12/19 17:36:30 daniel Exp $
+ * $Id: mitab_feature.cpp,v 1.22 2000/01/16 19:08:48 daniel Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -8,26 +8,42 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, Daniel Morissette
+ * Copyright (c) 1999, 2000, Daniel Morissette
  *
- * All rights reserved.  This software may be copied or reproduced, in
- * all or in part, without the prior written consent of its author,
- * Daniel Morissette (danmo@videotron.ca).  However, any material copied
- * or reproduced must bear the original copyright notice (above), this 
- * original paragraph, and the original disclaimer (below).
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  * 
- * The entire risk as to the results and performance of the software,
- * supporting text and other information contained in this file
- * (collectively called the "Software") is with the user.  Although 
- * considerable efforts have been used in preparing the Software, the 
- * author does not warrant the accuracy or completeness of the Software.
- * In no event will the author be liable for damages, including loss of
- * profits or consequential damages, arising out of the use of the 
- * Software.
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.22  2000/01/16 19:08:48  daniel
+ * Added support for reading 'Table Type DBF' tables
+ *
+ * Revision 1.21  2000/01/15 22:30:43  daniel
+ * Switch to MIT/X-Consortium OpenSource license
+ *
+ * Revision 1.20  2000/01/15 05:36:33  daniel
+ * One more try to establish the way the quadrant setting affects the way to
+ * read arc angles... hopefully it's right this time!
+ *
+ * Revision 1.19  2000/01/14 23:51:06  daniel
+ * Fixed handling of "\n" in TABText strings... now the external interface
+ * of the lib returns and expects escaped "\"+"n" as described in MIF specs
+ *
  * Revision 1.18  1999/12/19 17:36:30  daniel
  * Fixed a problem with TABRegion::GetRingRef()
  *
@@ -254,23 +270,28 @@ int TABFeature::ReadRecordFromDATFile(TABDATFile *poDATFile)
             SetField(iField, dValue);
             break;
           case TABFInteger:
-            nValue = poDATFile->ReadIntegerField();
+            nValue = poDATFile->ReadIntegerField(poDATFile->
+                                                 GetFieldWidth(iField));
             SetField(iField, nValue);
             break;
           case TABFSmallInt:
-            nValue = poDATFile->ReadSmallIntField();
+            nValue = poDATFile->ReadSmallIntField(poDATFile->
+                                                 GetFieldWidth(iField));
             SetField(iField, nValue);
             break;
           case TABFFloat:
-            dValue = poDATFile->ReadFloatField();
+            dValue = poDATFile->ReadFloatField(poDATFile->
+                                                 GetFieldWidth(iField));
             SetField(iField, dValue);
             break;
           case TABFLogical:
-            pszValue = poDATFile->ReadLogicalField();
+            pszValue = poDATFile->ReadLogicalField(poDATFile->
+                                                 GetFieldWidth(iField));
             SetField(iField, pszValue);
             break;
           case TABFDate:
-            pszValue = poDATFile->ReadDateField();
+            pszValue = poDATFile->ReadDateField(poDATFile->
+                                                 GetFieldWidth(iField));
             SetField(iField, pszValue);
             break;
           default:
@@ -3385,29 +3406,51 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
 
         /*-------------------------------------------------------------
          * OK, Arc angles again!!!!!!!!!!!!
-         * After further tests, it appears that the angle values ALWAYS
-         * have to be flipped, no matter which quadrant the file is in.
+         * After some tests in 1999-11, it appeared that the angle values
+         * ALWAYS had to be flipped (read order= end angle followed by 
+         * start angle), no matter which quadrant the file is in.
          * This does not make any sense, so I suspect that there is something
          * that we are missing here!
+         *
+         * 2000-01-14.... Again!!!  Based on some sample data files:
+         *  File         Ver Quadr  ReflXAxis  Read_Order   Adjust_Angle
+         * test_symb.tab 300    2        1      end,start    X=yes Y=no
+         * alltypes.tab: 300    1        0      start,end    X=no  Y=no
+         * arcs.tab:     300    2        0      end,start    X=yes Y=no
+         *
+         * Until we prove it wrong, the rule would be:
+         *  -> Quadrant 1 and 3, angles order = start, end
+         *  -> Quadrant 2 and 4, angles order = end, start
+         * + Always adjust angles for x and y axis based on quadrant.
+         *
+         * This was confirmed using some more files in which the quadrant was 
+         * manually changed, but whether these are valid results is 
+         * discutable.
+         *
+         * The ReflectXAxis flag seems to have no effect here...
          *------------------------------------------------------------*/
-
-        if (TRUE
-            /* poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==2 ||
-               poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==3 */ )
+        if ( poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==1 ||
+             poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==3  )
         {
-            // X axis direction is flipped... adjust angle
+            // Quadrants 1 and 3 ... read order = start, end
+            m_dStartAngle = poObjBlock->ReadInt16()/10.0;
+            m_dEndAngle = poObjBlock->ReadInt16()/10.0;
+        }
+        else
+        {
+            // Quadrants 2 and 4 ... read order = end, start
             m_dEndAngle = poObjBlock->ReadInt16()/10.0;
             m_dStartAngle = poObjBlock->ReadInt16()/10.0;
+        }
 
+        if ( poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==2 ||
+             poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==3  )
+        {
+            // X axis direction is flipped... adjust angle
             m_dStartAngle = (m_dStartAngle<=180.0) ? (180.0-m_dStartAngle):
                                                  (540.0-m_dStartAngle);
             m_dEndAngle   = (m_dEndAngle<=180.0) ? (180.0-m_dEndAngle):
                                                (540.0-m_dEndAngle);
-        }
-        else
-        {
-            m_dStartAngle = poObjBlock->ReadInt16()/10.0;
-            m_dEndAngle = poObjBlock->ReadInt16()/10.0;
         }
 
         if (poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==3 ||
@@ -3416,6 +3459,9 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
             // Y axis direction is flipped... this reverses angle direction
             // Unfortunately we never found any file that contains this case,
             // but this should be the behavior to expect!!!
+            //
+            // 2000-01-14: some files in which quadrant was set to 3 and 4
+            // manually seemed to confirm that this is the right thing to do.
             m_dStartAngle = 360.0 - m_dStartAngle;
             m_dEndAngle = 360.0 - m_dEndAngle;
         }
@@ -3877,14 +3923,15 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
 
         /*-------------------------------------------------------------
          * Read text string from the coord. block
+         * Note that the string may contain binary '\n' and '\\' chars
+         * that we have to convert to an escaped form internally.
          *------------------------------------------------------------*/
-        CPLFree(m_pszString);
-        m_pszString = (char*)CPLMalloc((nStringLen+1)*sizeof(char));
+        char *pszTmpString = (char*)CPLMalloc((nStringLen+1)*sizeof(char));
         poCoordBlock = poMapFile->GetCoordBlock(nCoordBlockPtr);
 
         if (nStringLen > 0 && 
             (poCoordBlock == NULL ||
-             poCoordBlock->ReadBytes(nStringLen, (GByte*)m_pszString) != 0))
+             poCoordBlock->ReadBytes(nStringLen, (GByte*)pszTmpString) != 0))
         {
             CPLError(CE_Failure, CPLE_FileIO,
                      "Failed reading text string at offset %d", 
@@ -3892,8 +3939,12 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
             return -1;
         }
 
-        m_pszString[nStringLen] = '\0';
+        pszTmpString[nStringLen] = '\0';
 
+        CPLFree(m_pszString);
+        m_pszString = TABEscapeString(pszTmpString);
+        if (pszTmpString != m_pszString)
+            CPLFree(pszTmpString);
     }
     else
     {
@@ -4019,21 +4070,30 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
 
     /*-----------------------------------------------------------------
      * Write string to a coord block first...
+     * Note that the string may contain escaped "\"+"n" and "\"+"\"
+     * sequences that we have to convert to binary chars '\n' and '\\'
+     * for the MAP file.
      *----------------------------------------------------------------*/
     poCoordBlock = poMapFile->GetCurCoordBlock();
     poCoordBlock->StartNewFeature();
     nCoordBlockPtr = poCoordBlock->GetCurAddress();
 
-    nStringLen = strlen(m_pszString);
+    char *pszTmpString = TABUnEscapeString(m_pszString, TRUE);
+
+    nStringLen = strlen(pszTmpString);
 
     if (nStringLen > 0)
     {
-        poCoordBlock->WriteBytes(nStringLen, (GByte *)m_pszString);
+        poCoordBlock->WriteBytes(nStringLen, (GByte *)pszTmpString);
     }
     else
     {
         nCoordBlockPtr = 0;
     }
+
+    if (pszTmpString != m_pszString)
+        CPLFree(pszTmpString);
+    pszTmpString = NULL;
 
     /*-----------------------------------------------------------------
      * Write object information
@@ -4121,6 +4181,10 @@ const char *TABText::GetTextString()
  *                   TABText::SetTextString()
  *
  * Set new text string value.
+ *
+ * Note: The text string may contain "\n" chars or "\\" chars
+ * and we expect to receive them in a 2 chars escaped form as 
+ * described in the MIF format specs.
  **********************************************************************/
 void TABText::SetTextString(const char *pszNewStr)
 {

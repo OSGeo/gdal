@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapheaderblock.cpp,v 1.9 1999/10/19 16:27:10 warmerda Exp $
+ * $Id: mitab_mapheaderblock.cpp,v 1.11 2000/01/15 22:30:44 daniel Exp $
  *
  * Name:     mitab_mapheaderblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -9,26 +9,34 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, Daniel Morissette
+ * Copyright (c) 1999, 2000, Daniel Morissette
  *
- * All rights reserved.  This software may be copied or reproduced, in
- * all or in part, without the prior written consent of its author,
- * Daniel Morissette (danmo@videotron.ca).  However, any material copied
- * or reproduced must bear the original copyright notice (above), this 
- * original paragraph, and the original disclaimer (below).
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  * 
- * The entire risk as to the results and performance of the software,
- * supporting text and other information contained in this file
- * (collectively called the "Software") is with the user.  Although 
- * considerable efforts have been used in preparing the Software, the 
- * author does not warrant the accuracy or completeness of the Software.
- * In no event will the author be liable for damages, including loss of
- * profits or consequential damages, arising out of the use of the 
- * Software.
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
  * $Log: mitab_mapheaderblock.cpp,v $
+ * Revision 1.11  2000/01/15 22:30:44  daniel
+ * Switch to MIT/X-Consortium OpenSource license
+ *
+ * Revision 1.10  2000/01/15 05:37:47  daniel
+ * Use a #define for default quadrant value in new files
+ *
  * Revision 1.9  1999/10/19 16:27:10  warmerda
  * Default unitsid to 7 (meters) instead of 0 (miles).
  *
@@ -66,6 +74,9 @@
 #define HDR_MAGIC_COOKIE        42424242
 #define HDR_VERSION_NUMBER      400
 #define HDR_BLOCK_SIZE          512
+
+#define HDR_DEF_ORG_QUADRANT    1       // N-E Quadrant
+#define HDR_DEF_REFLECTXAXIS    0
 
 /*---------------------------------------------------------------------
  * The header block starts with an array of map object lenght constants.
@@ -121,8 +132,8 @@ TABMAPHeaderBlock::TABMAPHeaderBlock(TABAccess eAccessMode /*= TABRead*/):
     m_nDistUnitsCode = 7;       // Meters
     m_nMaxSpIndexDepth = 0;
     m_nCoordPrecision = 3;      // ??? 3 Digits of precision
-    m_nCoordOriginQuadrant = 1; // ???
-    m_nReflectXAxisCoord = 0;
+    m_nCoordOriginQuadrant = HDR_DEF_ORG_QUADRANT; // ???
+    m_nReflectXAxisCoord = HDR_DEF_REFLECTXAXIS;
     m_nMaxObjLenArrayId = HDR_OBJ_LEN_ARRAY_SIZE-1;  // See gabyObjLenArray[]
     m_numPenDefs = 0;
     m_numBrushDefs = 0;
@@ -717,8 +728,8 @@ int     TABMAPHeaderBlock::InitNewBlock(FILE *fpSrc, int nBlockSize,
     m_nDistUnitsCode = 7;       // Meters
     m_nMaxSpIndexDepth = 0;
     m_nCoordPrecision = 3;      // ??? 3 digits of precision
-    m_nCoordOriginQuadrant = 1; // ??? N-E quadrant
-    m_nReflectXAxisCoord = 0;
+    m_nCoordOriginQuadrant = HDR_DEF_ORG_QUADRANT; // ??? N-E quadrant
+    m_nReflectXAxisCoord = HDR_DEF_REFLECTXAXIS;
     m_nMaxObjLenArrayId = HDR_OBJ_LEN_ARRAY_SIZE-1;  // See gabyObjLenArray[]
     m_numPenDefs = 0;
     m_numBrushDefs = 0;

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_utils.cpp,v 1.7 1999/12/16 06:10:24 daniel Exp $
+ * $Id: mitab_utils.cpp,v 1.9 2000/01/15 22:30:45 daniel Exp $
  *
  * Name:     mitab_utils.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -8,26 +8,34 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, Daniel Morissette
+ * Copyright (c) 1999, 2000, Daniel Morissette
  *
- * All rights reserved.  This software may be copied or reproduced, in
- * all or in part, without the prior written consent of its author,
- * Daniel Morissette (danmo@videotron.ca).  However, any material copied
- * or reproduced must bear the original copyright notice (above), this 
- * original paragraph, and the original disclaimer (below).
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  * 
- * The entire risk as to the results and performance of the software,
- * supporting text and other information contained in this file
- * (collectively called the "Software") is with the user.  Although 
- * considerable efforts have been used in preparing the Software, the 
- * author does not warrant the accuracy or completeness of the Software.
- * In no event will the author be liable for damages, including loss of
- * profits or consequential damages, arising out of the use of the 
- * Software.
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
  * $Log: mitab_utils.cpp,v $
+ * Revision 1.9  2000/01/15 22:30:45  daniel
+ * Switch to MIT/X-Consortium OpenSource license
+ *
+ * Revision 1.8  2000/01/14 23:46:59  daniel
+ * Added TABEscapeString()/TABUnEscapeString()
+ *
  * Revision 1.7  1999/12/16 06:10:24  daniel
  * TABGetBasename(): make sure last '/' of path is removed
  *
@@ -268,3 +276,138 @@ char **TAB_CSLLoad(const char *pszFname)
 
     return papszStrList;
 }
+
+
+
+/**********************************************************************
+ *                       TABUnEscapeString()
+ *
+ * Convert a string that can possibly contain escaped "\n" chars in
+ * into into a new one with binary newlines in it.
+ *
+ * Tries to work on hte original buffer unless bSrcIsConst=TRUE, in
+ * which case the original is always untouched and a copy is allocated
+ * ONLY IF NECESSARY.  This means that the caller should compare the
+ * return value and the source (pszString) to see if a copy was returned,
+ * in which case the caller becomes responsible of freeing both the
+ * source and the copy.
+ **********************************************************************/
+char *TABUnEscapeString(char *pszString, GBool bSrcIsConst)
+{
+
+    /*-----------------------------------------------------------------
+     * First check if we need to do any replacement
+     *----------------------------------------------------------------*/
+    if (pszString == NULL || strstr(pszString, "\\n") == NULL)
+    {
+        return pszString;
+    }
+
+    /*-----------------------------------------------------------------
+     * Yes, we need to replace at least one "\n"
+     * We try to work on the original buffer unless we have bSrcIsConst=TRUE
+     *
+     * Note that we do not worry about freeing the source buffer when we
+     * return a copy... it is up to the caller to decide if he needs to 
+     * free the source based on context and by comparing pszString with 
+     * the returned pointer (pszWorkString) to see if they are identical.
+     *----------------------------------------------------------------*/
+    char *pszWorkString = NULL;
+    int i =0;
+    int j =0;
+
+    if (bSrcIsConst)
+    {
+        // We have to create a copy to work on.
+        pszWorkString = (char *)CPLMalloc(sizeof(char) * 
+                                          (strlen(pszString) +1));
+    }
+    else
+    {
+        // We'll work on the original.
+        pszWorkString = pszString;
+    }
+
+
+    while (pszString[i])
+    {
+        if (pszString[i] =='\\' && 
+            pszString[i+1] == 'n')
+        {
+            pszWorkString[j++] = '\n';
+            i+= 2;
+        }
+        else if (pszString[i] =='\\' && 
+                 pszString[i+1] == '\\')
+        {
+            pszWorkString[j++] = '\\';
+            i+= 2;
+        }
+        else
+        {
+            pszWorkString[j++] = pszString[i++];
+        }
+    }
+    pszWorkString[j++] = '\0';
+   
+    return pszWorkString;
+}
+
+/**********************************************************************
+ *                       TABEscapeString()
+ *
+ * Convert a string that can possibly contain binary "\n" chars in
+ * into into a new one with escaped newlines ("\\" + "n") in it.
+ *
+ * The function returns the original string pointer if it did not need to
+ * be modified, or a copy that has to be freed by the caller if the
+ * string had to be modified.
+ *
+ * It is up to the caller to decide if he needs to free the returned 
+ * string by comparing the source (pszString) pointer with the returned
+ * pointer (pszWorkString) to see if they are identical.
+ **********************************************************************/
+char *TABEscapeString(char *pszString)
+{
+    /*-----------------------------------------------------------------
+     * First check if we need to do any replacement
+     *----------------------------------------------------------------*/
+    if (pszString == NULL || strchr(pszString, '\n') == NULL)
+    {
+        return pszString;
+    }
+
+    /*-----------------------------------------------------------------
+     * OK, we need to do some replacements... alloc a copy big enough
+     * to hold the worst possible case
+     *----------------------------------------------------------------*/
+    char *pszWorkString = (char *)CPLMalloc(2*sizeof(char) * 
+                                            (strlen(pszString) +1));
+
+    int i =0;
+    int j =0;
+
+    while (pszString[i])
+    {
+        if (pszString[i] =='\n')
+        {
+            pszWorkString[j++] = '\\';
+            pszWorkString[j++] = 'n';
+            i++;
+        }
+        else if (pszString[i] =='\\')
+        {
+            pszWorkString[j++] = '\\';
+            pszWorkString[j++] = '\\';
+            i++;
+        }
+        else
+        {
+            pszWorkString[j++] = pszString[i++];
+        }
+    }
+    pszWorkString[j++] = '\0';
+
+    return pszWorkString;
+}
+

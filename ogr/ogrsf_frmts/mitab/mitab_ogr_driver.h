@@ -1,33 +1,41 @@
 /**********************************************************************
- * $Id: mitab_ogr_driver.h,v 1.5 1999/12/15 16:28:17 warmerda Exp $
+ * $Id: mitab_ogr_driver.h,v 1.7 2000/01/26 18:17:00 warmerda Exp $
  *
  * Name:     mitab_ogr_drive.h
  * Project:  Mid/mif tab ogr support
  * Language: C++
  * Purpose:  Header file containing public definitions for the library.
- * Author:   Stephane Villeneuve, s.villeneuve@videotron.ca
+ * Author:   Stephane Villeneuve, stephane.v@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, Stephane Villeneuve
+ * Copyright (c) 1999, 2000, Stephane Villeneuve
  *
- * All rights reserved.  This software may be copied or reproduced, in
- * all or in part, without the prior written consent of its author,
- * Daniel Morissette (danmo@videotron.ca).  However, any material copied
- * or reproduced must bear the original copyright notice (above), this 
- * original paragraph, and the original disclaimer (below).
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  * 
- * The entire risk as to the results and performance of the software,
- * supporting text and other information contained in this file
- * (collectively called the "Software") is with the user.  Although 
- * considerable efforts have been used in preparing the Software, the 
- * author does not warrant the accuracy or completeness of the Software.
- * In no event will the author be liable for damages, including loss of
- * profits or consequential damages, arising out of the use of the 
- * Software.
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
  * $Log: mitab_ogr_driver.h,v $
+ * Revision 1.7  2000/01/26 18:17:00  warmerda
+ * reimplement OGR driver
+ *
+ * Revision 1.6  2000/01/15 22:30:44  daniel
+ * Switch to MIT/X-Consortium OpenSource license
+ *
  * Revision 1.5  1999/12/15 16:28:17  warmerda
  * fixed a few type problems
  *
@@ -44,6 +52,7 @@
  * first revision
  *
  **********************************************************************/
+
 #include "mitab.h"
 #include "ogrsf_frmts.h"
 
@@ -59,40 +68,43 @@
 class OGRTABDataSource : public OGRDataSource
 {
   private:
-    IMapInfoFile        *m_poLayer;
     char                *m_pszName;
-    
+    char		*m_pszDirectory;
+
+    int			m_nLayerCount;
+    IMapInfoFile	**m_papoLayers;
+
   public:
-    OGRTABDataSource( const char * pszName,
-                      IMapInfoFile * poLayerIn );
-    ~OGRTABDataSource();
+		OGRTABDataSource();
+    virtual	~OGRTABDataSource();
+
+    int		Open( const char *pszName, int bTestOpen );
+    int		Create( const char *pszName, char ** papszOptions );
 
     const char	*GetName() { return m_pszName; }
-    int          GetLayerCount() { return 1; }
-    OGRLayer    *GetLayer( int ) { return m_poLayer; }
-    int          TestCapability( const char * ){return 0;}
+    int          GetLayerCount() { return m_nLayerCount; }
+    OGRLayer    *GetLayer( int );
+    int          TestCapability( const char * );
+    
     OGRLayer    *CreateLayer(const char *, 
                              OGRSpatialReference * = NULL,
                              OGRwkbGeometryType = wkbUnknown,
-                             char ** = NULL )   {return NULL;}
+                             char ** = NULL );
 };
  
+/************************************************************************/
+/*                             OGRTABDriver                             */
+/************************************************************************/
 
 class OGRTABDriver : public OGRSFDriver
 {
-  public:
-    ~OGRTABDriver();
+public:
+    virtual	~OGRTABDriver();
 
     const char  *GetName();
     OGRDataSource *Open ( const char *,int );
-    int         TestCapability( const char * ){return 0;}
-    virtual OGRDataSource *CreateDataSource( const char * /*pszName*/,
-                                             char ** = NULL ){return NULL;}
-    
-    
-
+    int         TestCapability( const char * );
+    virtual OGRDataSource *CreateDataSource( const char *, char ** = NULL );
 };
-
-
 
 #endif /* _MITAB_OGR_DRIVER_H_INCLUDED_ */

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.13 1999/12/14 02:07:12 daniel Exp $
+ * $Id: mitab_priv.h,v 1.15 2000/01/16 19:08:49 daniel Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -8,26 +8,34 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, Daniel Morissette
+ * Copyright (c) 1999, 2000, Daniel Morissette
  *
- * All rights reserved.  This software may be copied or reproduced, in
- * all or in part, without the prior written consent of its author,
- * Daniel Morissette (danmo@videotron.ca).  However, any material copied
- * or reproduced must bear the original copyright notice (above), this 
- * original paragraph, and the original disclaimer (below).
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  * 
- * The entire risk as to the results and performance of the software,
- * supporting text and other information contained in this file
- * (collectively called the "Software") is with the user.  Although 
- * considerable efforts have been used in preparing the Software, the 
- * author does not warrant the accuracy or completeness of the Software.
- * In no event will the author be liable for damages, including loss of
- * profits or consequential damages, arising out of the use of the 
- * Software.
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.15  2000/01/16 19:08:49  daniel
+ * Added support for reading 'Table Type DBF' tables
+ *
+ * Revision 1.14  2000/01/15 22:30:44  daniel
+ * Switch to MIT/X-Consortium OpenSource license
+ *
  * Revision 1.13  1999/12/14 02:07:12  daniel
  * Added TABRelation class
  *
@@ -132,6 +140,16 @@ typedef struct TABVertex_t
     double x;
     double y;
 } TABVertex;
+
+/*---------------------------------------------------------------------
+ * TABTableType - Attribute table format
+ *--------------------------------------------------------------------*/
+typedef enum
+{
+    TABTableNative,     // The default
+    TABTableDBF,
+    TABTableAccess
+} TABTableType;
 
 /*---------------------------------------------------------------------
  * TABFieldType - Native MapInfo attribute field types
@@ -959,6 +977,7 @@ class TABDATFile
     char        *m_pszFname;
     FILE        *m_fp;
     TABAccess   m_eAccessMode;
+    TABTableType m_eTableType;
 
     TABRawBinBlock *m_poHeaderBlock;
     int         m_numFields;
@@ -981,7 +1000,8 @@ class TABDATFile
     TABDATFile();
     ~TABDATFile();
 
-    int         Open(const char *pszFname, const char *pszAccess);
+    int         Open(const char *pszFname, const char *pszAccess,
+                     TABTableType eTableType =TABTableNative);
     int         Close();
 
     int         GetNumFields();
@@ -1001,12 +1021,12 @@ class TABDATFile
     int         CommitRecordToFile();
 
     const char  *ReadCharField(int nWidth);
-    GInt32      ReadIntegerField();
-    GInt16      ReadSmallIntField();
-    double      ReadFloatField();
+    GInt32      ReadIntegerField(int nWidth);
+    GInt16      ReadSmallIntField(int nWidth);
+    double      ReadFloatField(int nWidth);
     double      ReadDecimalField(int nWidth);
-    const char  *ReadLogicalField();
-    const char  *ReadDateField();
+    const char  *ReadLogicalField(int nWidth);
+    const char  *ReadDateField(int nWidth);
 
     int         WriteCharField(const char *pszValue, int nWidth);
     int         WriteIntegerField(GInt32 nValue);

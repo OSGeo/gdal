@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_imapinfofile.cpp,v 1.4 2000/01/11 19:06:25 daniel Exp $
+ * $Id: mitab_imapinfofile.cpp,v 1.6 2000/01/26 18:17:35 warmerda Exp $
  *
  * Name:     mitab_imapinfo
  * Project:  MapInfo mid/mif Tab Read/Write library
@@ -11,24 +11,32 @@
  **********************************************************************
  * Copyright (c) 1999, 2000, Daniel Morissette
  *
- * All rights reserved.  This software may be copied or reproduced, in
- * all or in part, without the prior written consent of its author,
- * Daniel Morissette (danmo@videotron.ca).  However, any material copied
- * or reproduced must bear the original copyright notice (above), this 
- * original paragraph, and the original disclaimer (below).
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  * 
- * The entire risk as to the results and performance of the software,
- * supporting text and other information contained in this file
- * (collectively called the "Software") is with the user.  Although 
- * considerable efforts have been used in preparing the Software, the 
- * author does not warrant the accuracy or completeness of the Software.
- * In no event will the author be liable for damages, including loss of
- * profits or consequential damages, arising out of the use of the 
- * Software.
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
  * $Log: mitab_imapinfofile.cpp,v $
+ * Revision 1.6  2000/01/26 18:17:35  warmerda
+ * added CreateField method
+ *
+ * Revision 1.5  2000/01/15 22:30:44  daniel
+ * Switch to MIT/X-Consortium OpenSource license
+ *
  * Revision 1.4  2000/01/11 19:06:25  daniel
  * Added support for conversion of collections in CreateFeature()
  *
@@ -40,7 +48,6 @@
  *
  * Revision 1.1  1999/11/08 04:17:27  stephane
  * First Revision
- *
  *
  **********************************************************************/
 
@@ -181,6 +188,7 @@ OGRErr     IMapInfoFile::CreateFeature(OGRFeature *poFeature)
 {
     TABFeature *poTABFeature;
     OGRGeometry   *poGeom;
+    OGRwkbGeometryType eGType;
 
     /*-----------------------------------------------------------------
      * MITAB won't accept new features unless they are in a type derived
@@ -188,8 +196,12 @@ OGRErr     IMapInfoFile::CreateFeature(OGRFeature *poFeature)
      * feature type based on the geometry type.
      *----------------------------------------------------------------*/
     poGeom = poFeature->GetGeometryRef();
+    if( poGeom != NULL )
+        eGType = poGeom->getGeometryType();
+    else
+        eGType = wkbNone;
 
-    switch (poGeom->getGeometryType())
+    switch (eGType)
     {
       /*-------------------------------------------------------------
        * POINT
@@ -241,7 +253,8 @@ OGRErr     IMapInfoFile::CreateFeature(OGRFeature *poFeature)
         break;
     }
 
-    poTABFeature->SetGeometryDirectly(poGeom->clone());
+    if( poGeom != NULL )
+        poTABFeature->SetGeometryDirectly(poGeom->clone());
     
     for (int i=0; i< poFeature->GetDefnRef()->GetFieldCount();i++)
     {
@@ -249,7 +262,7 @@ OGRErr     IMapInfoFile::CreateFeature(OGRFeature *poFeature)
     }
     
 
-    if (SetFeature(poTABFeature) == 0)
+    if (SetFeature(poTABFeature) > -1)
       return OGRERR_NONE;
     else
       return OGRERR_FAILURE;
@@ -310,5 +323,37 @@ void IMapInfoFile::SetSpatialFilter (OGRGeometry * poGeomIn )
         m_poFilterGeom = poGeomIn->clone();
 }
 
+/************************************************************************/
+/*                            CreateField()                             */
+/*                                                                      */
+/*      Create a native field based on a generic OGR definition.        */
+/************************************************************************/
 
+OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
+{
+    TABFieldType	eTABType;
+
+    if( poField->GetType() == OFTInteger )
+        eTABType = TABFInteger;
+    else if( poField->GetType() == OFTReal )
+        eTABType = TABFFloat;
+    else if( poField->GetType() == OFTString )
+        eTABType = TABFChar;
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "IMapInfoFile::CreateField() called with unsupported field"
+                  " type %d.\n"
+                  "Note that Mapinfo files don't support list field types.\n",
+                  poField->GetType() );
+
+        return OGRERR_FAILURE;
+    }
+
+    if( AddFieldNative( poField->GetNameRef(), eTABType,
+                        poField->GetWidth(), poField->GetPrecision() ) > -1 )
+        return OGRERR_NONE;
+    else
+        return OGRERR_FAILURE;
+}
