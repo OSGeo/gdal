@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/03/05 12:52:19  dron
+ * Added flag for large file creation.
+ *
  * Revision 1.11  2003/02/27 21:17:09  dron
  * Writing map info implemented.
  *
@@ -904,7 +907,8 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand( i + 1,
             new RawRasterBand(poDS, i + 1, poDS->fpImage,
                               nHeaderSize + nBandOffset * i,
-                              nPixelOffset, nLineOffset, eType, bNativeOrder) );
+                              nPixelOffset, nLineOffset, eType,
+			      bNativeOrder, TRUE) );
     }
 
 /* -------------------------------------------------------------------- */
