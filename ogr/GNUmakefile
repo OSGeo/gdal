@@ -15,7 +15,7 @@ OBJ	=	ogrgeometryfactory.o ogrpoint.o ogrcurve.o ogrlinestring.o \
 
 INST_H_FILES	=	ogr_core.h ogr_feature.h ogr_geometry.h ogr_p.h \
 		ogr_spatialref.h ogr_srs_api.h ogrsf_frmts/ogrsf_frmts.h \
-		ogr_featurestyle.h
+		ogr_featurestyle.h ogr_api.h
 
 OGR_LIB  =	ogr.a
 
