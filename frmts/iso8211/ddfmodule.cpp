@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/06 15:39:45  warmerda
+ * avoid redeclaring variable i
+ *
  * Revision 1.2  1999/05/06 14:23:10  warmerda
  * added Close(), and minor optimizations
  *
@@ -288,11 +291,13 @@ void DDFModule::Dump( FILE * fp )
 DDFFieldDefn *DDFModule::FindFieldDefn( const char *pszFieldName )
 
 {
+    int		i;
+    
 /* -------------------------------------------------------------------- */
 /*      This pass tries to reduce the cost of comparing strings by      */
 /*      first checking the first character, and by using strcmp()       */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < nFieldDefnCount; i++ )
+    for( i = 0; i < nFieldDefnCount; i++ )
     {
         const char *pszThisName = paoFieldDefns[i].GetName();
         
@@ -305,7 +310,7 @@ DDFFieldDefn *DDFModule::FindFieldDefn( const char *pszFieldName )
 /*      Now do a more general check.  Application code may not          */
 /*      always use the correct name case.                               */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < nFieldDefnCount; i++ )
+    for( i = 0; i < nFieldDefnCount; i++ )
     {
         if( EQUAL( pszFieldName, paoFieldDefns[i].GetName()) == 0 )
             return paoFieldDefns + i;
