@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2001/05/24 18:06:06  warmerda
+ * fixed comment
+ *
  * Revision 1.17  2001/01/19 21:10:47  warmerda
  * replaced tabs
  *
@@ -764,7 +767,7 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
         return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
-/*      Read the point list which should consist of exactly one point.  */
+/*      Read the point list.						*/
 /* -------------------------------------------------------------------- */
     int                 nMaxPoint = 0;
 
@@ -977,3 +980,4 @@ OGRBoolean OGRLineString::Equal( OGRGeometry * poOther )
 
     return TRUE;
 }
+
