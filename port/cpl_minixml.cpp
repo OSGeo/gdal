@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.25  2003/11/07 19:40:19  warmerda
+ * ensure CPLGetXMLValue() works for nodes with attributes
+ *
  * Revision 1.24  2003/11/05 20:14:21  warmerda
  * added lots of documentation
  *
@@ -1176,14 +1179,22 @@ const char *CPLGetXMLValue( CPLXMLNode *poRoot, const char *pszPath,
         return psTarget->psChild->pszValue;
     }
 
-    if( psTarget->eType == CXT_Element 
-        && psTarget->psChild != NULL 
-        && psTarget->psChild->eType == CXT_Text
-        && psTarget->psChild->psNext == NULL )
+    if( psTarget->eType == CXT_Element )
     {
-        return psTarget->psChild->pszValue;
+        // Find first non-attribute child, and verify it is a single text 
+        // with no siblings
+
+        psTarget = psTarget->psChild;
+
+        while( psTarget != NULL && psTarget->eType == CXT_Attribute )
+            psTarget = psTarget->psNext;
+
+        if( psTarget != NULL 
+            && psTarget->eType == CXT_Text
+            && psTarget->psNext == NULL )
+            return psTarget->pszValue;
     }
-        
+
     return pszDefault;
 }
 
