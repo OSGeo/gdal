@@ -1127,6 +1127,30 @@ dnl This is used by the GNUmakefile in frmts/dods (via GDALmake.opt)
 AC_SUBST(DODS_INC)
 
 dnl ---------------------------------------------------------------------------
+dnl PROJ.4 related tweaks.
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([how to link PROJ.4 library])
+
+AC_ARG_WITH(static_proj4,[  --with-static-proj4=ARG Compile with PROJ.4 statically (ARG=yes or no)],,)
+
+if test "x$with_static_proj4" = "xyes"; then
+
+  PROJ_STATIC=yes
+
+  AC_MSG_RESULT([link statically.])
+
+else
+
+  PROJ_STATIC=no
+
+  AC_MSG_RESULT([link dynamically.])
+
+fi
+
+AC_SUBST(PROJ_STATIC)
+
+dnl ---------------------------------------------------------------------------
 
 AC_COMPILER_WFLAGS
 
@@ -1191,6 +1215,8 @@ LOC_MSG([  POSTGRESQL support:        ${HAVE_PG}])
 LOC_MSG([  XERCES support:            ${HAVE_XERCES}])
 LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
 LOC_MSG([  OCI support:               ${HAVE_OCI}])
+LOC_MSG()
+LOC_MSG([  Statically link PROJ.4:    ${PROJ_STATIC}])
 LOC_MSG()
 LOC_MSG([  enable OGR building:       ${OGR_ENABLED}])
 LOC_MSG()
