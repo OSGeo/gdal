@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/11/24 04:27:52  warmerda
+ * CopyCreate() nows saves source image directly if it is a VRTDataset
+ *
  * Revision 1.8  2002/11/23 18:54:17  warmerda
  * added CREATIONDATATYPES metadata for drivers
  *
@@ -85,6 +88,9 @@ VRTDataset::VRTDataset( int nXSize, int nYSize )
     nGCPCount = 0;
     pasGCPList = NULL;
     pszGCPProjection = CPLStrdup("");
+    
+    GDALRegister_VRT();
+    poDriver = (GDALDriver *) GDALGetDriverByName( "VRT" );
 }
 
 /************************************************************************/
@@ -621,6 +627,39 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
 {
     VRTDataset *poVRTDS;
+
+/* -------------------------------------------------------------------- */
+/*      If the source dataset is a virtual dataset then just write      */
+/*      it to disk as a special case to avoid extra layers of           */
+/*      indirection.                                                    */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(poSrcDS->GetDriver()->GetDescription(),"VRT") )
+    {
+        FILE *fpVRT;
+
+        fpVRT = VSIFOpen( pszFilename, "w" );
+
+
+    /* -------------------------------------------------------------------- */
+    /*      Convert tree to a single block of XML text.                     */
+    /* -------------------------------------------------------------------- */
+        CPLXMLNode *psDSTree = ((VRTDataset *) poSrcDS)->SerializeToXML();
+        char *pszXML;
+        
+        pszXML = CPLSerializeXMLTree( psDSTree );
+        
+        CPLDestroyXMLNode( psDSTree );
+        
+    /* -------------------------------------------------------------------- */
+    /*      Write to disk.                                                  */
+    /* -------------------------------------------------------------------- */
+        VSIFWrite( pszXML, 1, strlen(pszXML), fpVRT );
+        VSIFClose( fpVRT );
+
+        CPLFree( pszXML );
+        
+        return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create the virtual dataset.                                     */
