@@ -267,7 +267,7 @@ o NTF:
 
 o DGN:
 - Don't include elements with the complex bit set in extents
-computations.
+  computations.
 
 o OGRGeometry:
 - Fixed WKT format (import and export) for various container types.
