@@ -5,14 +5,12 @@ MITAB Library - Revision History
 CHANGES - Current Version:
 --------------------------
 
-- In mitab_mapheaderblock.cpp, the Coordsys2Int() function used integer value 
-  to check for overflow. However, in some case, integer was to small and bug
-  applications. So, this function now use double for comparison, but still 
-  return and receive integer.
+Version 1.2.2 - (2002-07-06)
+----------------------------
 
-- Add SetSpatialFilter function in the TABSeamless class, to use seamless layer
-  in the right way. Now, the filter is apply on each data file and on the index
-  file. (Bug 164 (MapServer))
+- Added a validation in TABMAPFile::GetFeatureId(). When there's no .map file 
+  or no spatial indexes or no geometry, the function return -1 like an Eof.
+  This prevent the reading of a file set to NULL. (bug 169 (MapServer))
 
 - Treat Region as MultiPolygon in mitab_c_set_point() to support Regions
   with multiple islands and holes. Passing a part number <= 0 (second 
@@ -21,10 +19,20 @@ CHANGES - Current Version:
   last island (polygon) that was created.
 
 - Added IsInteriorRing() function in the TABRegion class to validate if a ring 
-  in a polygon is an external or an internal ring. The function return true if 
-  the specified ring is an interior ring. The function 
-  mitab_c_is_interior_ring() in mitab_capi.c have been created too to  call 
+  in a polygon is an external or an internal ring. The function returns 
+  true if the specified ring is an interior ring. The function 
+  mitab_c_is_interior_ring() in mitab_capi.c has been created too to call 
   IsInteriorRing() if the feature is a region.
+
+- In mitab_mapheaderblock.cpp, the Coordsys2Int() function used integer values 
+  to check for overflow. However, in some case, integer was to small and caused
+  problems with applications that called SetSpatialFilter() with a filter 
+  much larger than the file's bounds.  So, this function now uses doubles 
+  internally for comparison, but still returns and receives integers.
+
+- Add SetSpatialFilter function in the TABSeamless class, to use seamless 
+  layer in the right way. Now, the filter is applied on each data file and
+  on the index file. (Bug 164 (MapServer))
 
 
 Version 1.2.1 - (2002-05-08)
@@ -448,5 +456,5 @@ Version 0.1 - (1999-12-04)
 
 
 ------------
-$Id: HISTORY.TXT,v 1.92 2002/06/28 18:32:37 julien Exp $
+$Id: HISTORY.TXT,v 1.94 2002/07/30 13:54:11 julien Exp $
 ------------
