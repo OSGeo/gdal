@@ -130,4 +130,5 @@ install: $(GDAL_DLL) apps_dir pymod_dir
 !IFDEF INCLUDE_OGR_FRMTS
 	cd ..\ogr
 	$(MAKE) install
-!
+!ENDIF
+	cd ..
