@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.13  1999/12/29 20:42:45  warmerda
+ * Added DOQ1
+ *
  * Revision 1.12  1999/10/21 13:24:52  warmerda
  * Added documentation.
  *
@@ -77,6 +80,8 @@ void GDALRegister_SDTS(void);
 void GDALRegister_ELAS(void);
 void GDALRegister_EHdr(void);
 void GDALRegister_PAux(void);
+void GDALRegister_DOQ1(void);
+void GDALRegister_DTED(void);
 CPL_C_END
 
 #ifdef notdef
@@ -151,7 +156,12 @@ void GDALAllRegister()
     GDALRegister_OGDI();
 #endif
 
+#ifdef FRMT_dted
+    GDALRegister_DTED();
+#endif
+
 #ifdef FRMT_raw
+    GDALRegister_DOQ1();
     GDALRegister_EHdr();
     GDALRegister_PAux();
 #endif
