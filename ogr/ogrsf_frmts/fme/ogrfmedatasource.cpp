@@ -23,6 +23,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/07/24 19:25:53  warmerda
+ * Initialize pszReaderName.
+ *
  * Revision 1.3  2002/07/11 16:09:04  warmerda
  * added creation time, improved temp path handling
  *
@@ -285,6 +288,7 @@ OGRFMEDataSource::OGRFMEDataSource()
 {
     pszName = NULL;
     pszDataset = NULL;
+    pszReaderName = NULL;
     poSession = NULL;
     poReader = NULL;
     poFMEFeature = NULL;
