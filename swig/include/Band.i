@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.5  2005/02/16 18:41:14  kruland
+ * Implemented more methods.  Commented the ones still missing.
+ *
  * Revision 1.4  2005/02/15 19:50:39  kruland
  * Fixed ReadRaster/WriteRasters.  They need to use buffers of char * with
  * explicit length because they can contain '\0'.
@@ -75,9 +78,33 @@ public:
   GDALDataType DataType;
 %mutable;
 
+  GDALColorInterp GetRasterColorInterpretation() {
+    return GDALGetRasterColorInterpretation( self );
+  }
+
   double GetNoDataValue() {
-    int rcode;
-    return GDALGetRasterNoDataValue( self, &rcode );
+    int noval;
+    return GDALGetRasterNoDataValue( self, &noval );
+  }
+
+  double GetMinimum() {
+    int noval;
+    return GDALGetRasterMinimum( self, &noval );
+  }
+
+  double GetMaximum() {
+    int noval;
+    return GDALGetRasterMaximum( self, &noval );
+  }
+
+  double GetOffset() {
+    int noval;
+    return GDALGetRasterOffset( self, &noval );
+  }
+
+  double GetScale() {
+    int noval;
+    return GDALGetRasterScale( self, &noval );
   }
 
   CPLErr SetNoDataValue( double d) {
@@ -87,6 +114,7 @@ public:
   int GetOverviewCount() {
     return GDALGetOverviewCount( self );
   }
+
   GDALRasterBand *GetOverview(int i) {
     return (GDALRasterBand*) GDALGetOverview( self, i );
   }
@@ -103,6 +131,10 @@ public:
 
   void ComputeRasterMinMax( double_2 *c_minmax, int approx_ok = 0) {
     GDALComputeRasterMinMax( self, approx_ok, &(*c_minmax)[0] );
+  }
+
+  CPLErr Fill( double real_fill, double imag_fill =0.0 ) {
+    return GDALFillRaster( self, real_fill, imag_fill );
   }
 
 %apply ( int *nLen, char **pBuf ) { (int *buf_len, char **buf ) };
@@ -147,6 +179,21 @@ public:
   }
 %clear (int buf_len, char *buf_string);
 }
+
+  void FlushCache() {
+    GDALFlushRasterCache( self );
+  }
+
+/* NEEDED */
+/* ReadAsArray */
+/* WriteArray */
+/* GetRasterColorInterpretation */
+/* GetRasterColorTable */
+/* SetRasterColorTable */
+/* GetHistogram */
+/* ComputeBandStats */
+/* AdviseRead */
+
 };
 
 %{
