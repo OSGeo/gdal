@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/05/31 19:03:46  warmerda
+ * removed old CollectLines code
+ *
  * Revision 1.20  2002/05/31 16:57:21  warmerda
  * made Text, MSLink and EntityNum attributes available
  *
@@ -661,51 +664,4 @@ int OGRDGNLayer::TestCapability( const char * pszCap )
         return FALSE;
 }
 
-/************************************************************************/
-/*                            CollectLines()                            */
-/************************************************************************/
-
-OGRGeometry *OGRDGNLayer::CollectLines( OGRGeometryCollection *poLines,
-                                        int bMakePolygon )
-
-{
-    return NULL;
-#ifdef notdef
-    int	nVertices=0, iLine;
-    OGRLineString *poLine;
-
-    // Collect the number of vertices.
-    for( iLine = 0; iLine < poLines->getNumGeometries(); iLine++ )
-    {
-        poLine = (OGRLineString *) poLines->getGeometryRef(iLine);
-
-        if( wkbFlatten(poLine->getGeometryType()) != wkbLineString )
-            continue;
-
-        nVertices += poLine->getNumPoints();
-    }
-
-    // Prepare ring / linestring.
-    OGRLineString *poOutLine;
-
-    if( bMakePolygon )
-        poOutLine = new OGRLinearRing();
-    else
-        poOutLine = new OGRLineString();
-
-    poOutLine->setNumPoints( nVertices );
-
-    // Collect lines together. 
-    nVertices = 0;
-    for( iLine = 0; iLine < poLines->getNumGeometries(); iLine++ )
-    {
-        poLine = (OGRLineString *) poLines->getGeometryRef(iLine);
-
-        if( wkbFlatten(poLine->getGeometryType()) != wkbLineString )
-            continue;
-
-        if( 
-    }
-#endif
-}
                                         
