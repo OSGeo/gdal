@@ -110,7 +110,7 @@ if test "$with_png" = "no" ; then
 
 elif test "$with_png" = "yes" -o "$with_png" = "" ; then
 
-  AC_CHECK_LIB(png,png_create_read_struct,PNG_SETTING=external,PNG_SETTING=internal,$LIBS)
+  AC_CHECK_LIB(png,png_set_IHDR,PNG_SETTING=external,PNG_SETTING=internal,$LIBS)
 
   if test "$PNG_SETTING" = "external" ; then   
     LIBS="-lpng $LIBS"

@@ -1,5 +1,7 @@
 2000-12-05  Frank Warmerdam  <warmerdam@pobox.com>
 
+	* Check for png_set_IHDR in configure so avoid using old png libraries.
+
 	* Added support for all readable projections in write code for
 	GeoTIFF (gdal/frmts/gtiff/gt_wkt_srs.cpp).
 
