@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.30  2003/06/21 23:27:13  warmerda
+# added TOWGS84 and PROJ.4 import
+#
 # Revision 1.29  2003/06/20 18:28:15  warmerda
 # added all the projection specific Set methods
 #
@@ -146,6 +149,9 @@ SRS_PP_PERSPECTIVE_POINT_HEIGHT = "perspective_point_height"
 SRS_PP_FIPSZONE                 = "fipszone"
 SRS_PP_ZONE                     = "zone"
 
+SRS_WGS84_SEMIMAJOR             = 6378137.0
+SRS_WGS84_INVFLATTENING         = 298.257223563
+
 
 def GetProjectionMethods():
     return _gdal.OPTGetProjectionMethods()
@@ -176,6 +182,9 @@ class SpatialReference:
 
     def ImportFromWkt( self, wkt ):
         return _gdal.OSRImportFromWkt( self._o, wkt )
+
+    def ImportFromProj4( self, proj4 ):
+        return _gdal.OSRImportFromProj4( self._o, proj4 )
 
     def ImportFromESRI( self, prj_lines ):
         return _gdal.OSRImportFromESRI( self._o, prj_lines )
@@ -251,6 +260,26 @@ class SpatialReference:
     def CopyGeogCSFrom( self, src_srs ):
         return _gdal.OSRCopyGeogCSFrom( self._o, src_srs._o )
 
+    def SetTOWGS84( self, p1, p2, p3, p4=0.0, p5=0.0, p6=0.0, p7=0.0 ):
+        return _gdal.OSRSetTOWGS84( self._o, p1, p2, p3, p4, p5, p6, p7 )
+
+    def GetTOWGS84( self ):
+        pd = ptrcreate( 'double', 0.0, 7 )
+        err = _gdal.OSRGetTOWGS84( self._o, pd, 7 )
+        if err != 0:
+            print err
+            raise ValueError, ('GetTOWGS84() failed, err = %d.' % err)
+
+        result = ( ptrvalue(pd,0),
+                   ptrvalue(pd,1), 
+                   ptrvalue(pd,2), 
+                   ptrvalue(pd,3), 
+                   ptrvalue(pd,4), 
+                   ptrvalue(pd,5), 
+                   ptrvalue(pd,6) )
+        ptrfree( pd )
+        return result
+    
     def SetGeogCS( self, geog_name, datum_name, ellipsoid_name,
                    semi_major, inv_flattening,
                    pm_name = 'Greenwich', pm_offset = 0.0,
