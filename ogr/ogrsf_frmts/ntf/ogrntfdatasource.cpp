@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/09/29 16:43:43  warmerda
+ * added spatial ref, improved test open for non-os files
+ *
  * Revision 1.3  1999/09/08 00:58:40  warmerda
  * Added limiting list of files for FME.
  *
@@ -65,6 +68,8 @@ OGRNTFDataSource::OGRNTFDataSource()
     papszFCName = NULL;
 
     poFCLayer = NULL;
+
+    poSpatialRef = new OGRSpatialReference( "PROJCS[\"OSGB 1936 / British National Grid\",GEOGCS[\"OSGB 1936\",DATUM[\"OSGB_1936\",SPHEROID[\"Airy 1830\",6377563.396,299.3249646]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",49],PARAMETER[\"central_meridian\",-2],PARAMETER[\"scale_factor\",0.999601272],PARAMETER[\"false_easting\",400000],PARAMETER[\"false_northing\",-100000],UNIT[\"metre\",1]]" );
 }
 
 /************************************************************************/
@@ -90,6 +95,8 @@ OGRNTFDataSource::~OGRNTFDataSource()
     CPLFree( papoLayers );
 
     CPLFree( pszName );
+
+    delete poSpatialRef;
 }
 
 /************************************************************************/
@@ -248,18 +255,32 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
         {
             char	szHeader[80];
             FILE	*fp;
+            int		j;
 
             fp = VSIFOpen( papszFileList[i], "rb" );
             if( fp == NULL )
                 continue;
             
             if( VSIFRead( szHeader, 80, 1, fp ) < 1 )
+            {
+                VSIFClose( fp );
                 continue;
-
-            if( !EQUALN(szHeader,"01ORDNANCE SURVEY",17) )
-                continue;
+            }
 
             VSIFClose( fp );
+            
+            if( !EQUALN(szHeader,"01",2) )
+                continue;
+
+            for( j = 0; j < 80; j++ )
+            {
+                if( szHeader[j] == 10 || szHeader[j] == 13 )
+                    break;
+            }
+
+            if( j == 80 || szHeader[j-1] != '%' )
+                continue;
+
         }
 
         NTFFileReader	*poFR;
@@ -281,6 +302,9 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
     }
 
     CSLDestroy( papszFileList );
+
+    if( nNTFFileCount == 0 )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Loop over all the files, collecting a unique feature class      */
