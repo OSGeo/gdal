@@ -1,5 +1,5 @@
 
-LL_OBJ	=	dgnopen.obj dgnread.obj dgnfloat.obj dgnstroke.obj
+LL_OBJ	=	dgnopen.obj dgnread.obj dgnfloat.obj dgnstroke.obj dgnhelp.obj
 OGR_OBJ	=	ogrdgndriver.obj ogrdgndatasource.obj ogrdgnlayer.obj 
 OBJ	=	$(LL_OBJ) $(OGR_OBJ)
 
