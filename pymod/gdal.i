@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.65  2003/04/22 17:28:41  warmerda
+ * avoid use of assert()
+ *
  * Revision 1.64  2003/04/08 22:13:00  warmerda
  * added new entry poins, and listtostringlist support
  *
@@ -1933,7 +1936,7 @@ void PyErrorHandlerProxy( CPLErr eErrType, int nErrorCode, const char *pszMsg )
     PyObject *psArgs;
     PyObject *psResult;
 
-    assert( psPyHandlerStack != NULL );
+    CPLAssert( psPyHandlerStack != NULL );
     if( psPyHandlerStack == NULL )
         return;
 
@@ -2504,6 +2507,7 @@ OGRErr  OGR_L_RollbackTransaction( OGRLayerH );
 int     OGR_L_Reference( OGRLayerH );
 int     OGR_L_Dereference( OGRLayerH );
 int     OGR_L_GetRefCount( OGRLayerH );
+OGRErr  OGR_L_SyncToDisk( OGRLayerH );
 
 /* OGRDataSource */
 
