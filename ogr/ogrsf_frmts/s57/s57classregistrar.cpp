@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2004/08/30 20:11:14  warmerda
+ * various optimizations made
+ *
  * Revision 1.8  2003/09/12 21:18:54  warmerda
  * open csv files in binary mode, not text mode
  *
@@ -82,6 +85,7 @@ S57ClassRegistrar::S57ClassRegistrar()
     papszCurrentFields = NULL;
     papszTempResult = NULL;
     papszNextLine = NULL;
+    papapszClassesFields = NULL;
 }
 
 /************************************************************************/
@@ -92,8 +96,14 @@ S57ClassRegistrar::~S57ClassRegistrar()
 
 {
     CSLDestroy( papszClassesInfo );
-    CSLDestroy( papszCurrentFields );
     CSLDestroy( papszTempResult );
+    
+    if( papapszClassesFields != NULL )
+    {
+        for( int i = 0; i < nClasses; i++ )
+            CSLDestroy( papapszClassesFields[i] );
+        CPLFree( papapszClassesFields );
+    }
 }
 
 /************************************************************************/
@@ -346,9 +356,23 @@ int S57ClassRegistrar::SelectClassByIndex( int nNewIndex )
     if( nNewIndex < 0 || nNewIndex >= nClasses )
         return FALSE;
 
-    CSLDestroy( papszCurrentFields );
-    papszCurrentFields = CSLTokenizeStringComplex( papszClassesInfo[nNewIndex],
-                                                   ",", TRUE, TRUE );
+/* -------------------------------------------------------------------- */
+/*      Do we have our cache of class information field lists?          */
+/* -------------------------------------------------------------------- */
+    if( papapszClassesFields == NULL )
+    {
+        papapszClassesFields = (char ***) CPLCalloc(sizeof(void*),nClasses);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Has this info been parsed yet?                                  */
+/* -------------------------------------------------------------------- */
+    if( papapszClassesFields[nNewIndex] == NULL )
+        papapszClassesFields[nNewIndex] = 
+            CSLTokenizeStringComplex( papszClassesInfo[nNewIndex],
+                                      ",", TRUE, TRUE );
+
+    papszCurrentFields = papapszClassesFields[nNewIndex];
 
     iCurrentClass = nNewIndex;
 
@@ -410,8 +434,7 @@ int S57ClassRegistrar::GetOBJL()
 const char * S57ClassRegistrar::GetDescription()
 
 {
-    if( iCurrentClass >= 0
-        && CSLCount(papszCurrentFields) > 1 )
+    if( iCurrentClass >= 0 && papszCurrentFields[0] != NULL )
         return papszCurrentFields[1];
     else
         return NULL;
@@ -424,8 +447,9 @@ const char * S57ClassRegistrar::GetDescription()
 const char * S57ClassRegistrar::GetAcronym()
 
 {
-    if( iCurrentClass >= 0
-        && CSLCount(papszCurrentFields) > 2 )
+    if( iCurrentClass >= 0 
+        && papszCurrentFields[0] != NULL 
+        && papszCurrentFields[1] != NULL )
         return papszCurrentFields[2];
     else
         return NULL;
@@ -481,7 +505,13 @@ char S57ClassRegistrar::GetClassCode()
 
 {
     if( iCurrentClass >= 0
-        && CSLCount(papszCurrentFields) > 6 )
+        && papszCurrentFields[0] != NULL
+        && papszCurrentFields[1] != NULL
+        && papszCurrentFields[2] != NULL
+        && papszCurrentFields[3] != NULL
+        && papszCurrentFields[4] != NULL
+        && papszCurrentFields[5] != NULL 
+        && papszCurrentFields[6] != NULL )
         return papszCurrentFields[6][0];
     else
         return '\0';
