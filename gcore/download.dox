@@ -23,8 +23,10 @@ Intel Linux system.<p>
 
 <li> RPMs suitable for Fedora Core are maintained by Schuyler Erle on
 the <a href="http://mappinghacks.com">Mapping Hacks</a> site at
-<a href="http://mappinghacks.com/rpm/">http://mappinghacks.com/rpm/"</a>.
-<p>
+<a href="http://mappinghacks.com/rpm/">http://mappinghacks.com/rpm/</a>.<p>
+
+<li> RPMs suitable for SuSe are maintained by GDF Hannover Germany site at
+<a href="http://www.gdf-hannover.de/software/suse/">http://www.gdf-hannover.de/software/suse/</a>.<p>
 
 <li> GDAL is also a component of the FreeGIS CDs available 
 from <a href="http://www.freegis.org/">www.freegis.org</a> in RPM format.<p>
