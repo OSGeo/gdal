@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/09/04 06:50:36  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.15  2002/07/09 21:06:54  warmerda
  * fixed free of SrcDS pszProjection in CreateCopy
  *
@@ -138,8 +141,6 @@ class AAIGRasterBand : public GDALRasterBand
     virtual CPLErr SetNoDataValue( double );
     virtual CPLErr IReadBlock( int, int, void * );
 };
-
-static GDALDriver       *poAAIGDriver = NULL;
 
 /************************************************************************/
 /*                           AAIGRasterBand()                            */
@@ -331,8 +332,6 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     AAIGDataset         *poDS;
 
     poDS = new AAIGDataset();
-
-    poDS->poDriver = poAAIGDriver;
 
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
@@ -617,9 +616,9 @@ void GDALRegister_AAIGrid()
 {
     GDALDriver  *poDriver;
 
-    if( poAAIGDriver == NULL )
+    if( GDALGetDriverByName( "AAIGrid" ) == NULL )
     {
-        poAAIGDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "AAIGrid" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

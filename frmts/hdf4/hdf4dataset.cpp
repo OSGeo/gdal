@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.6  2002/07/23 12:27:58  dron
  * General Raster Interface support added.
  *
@@ -59,8 +62,6 @@
 #include "hdf4dataset.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poHDF4Driver = NULL;
 
 CPL_C_START
 void	GDALRegister_HDF4(void);
@@ -655,7 +656,6 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new HDF4Dataset( );
 
-    poDS->poDriver = poHDF4Driver;
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
     
@@ -824,9 +824,9 @@ void GDALRegister_HDF4()
 {
     GDALDriver	*poDriver;
 
-    if( poHDF4Driver == NULL )
+    if( GDALGetDriverByName( "HDF4" ) == NULL )
     {
-        poHDF4Driver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "HDF4" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

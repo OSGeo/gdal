@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/09/04 06:50:36  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.17  2002/06/12 21:12:24  warmerda
  * update to metadata based driver info
  *
@@ -227,8 +230,6 @@ class GIORasterBand : public GDALRasterBand
      virtual double GetNoDataValue( int *pbSuccess ); 
 
 };
-
-static GDALDriver	*poGIODriver = NULL;
 
 /************************************************************************/
 /*                           GIORasterBand()                            */
@@ -503,7 +504,6 @@ GDALDataset *GIODataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->pszPath = pszCoverName;
     poDS->nGridChannel = nChannel;
-    poDS->poDriver = poGIODriver;
 
 /* -------------------------------------------------------------------- */
 /*      Establish raster info.                                          */
@@ -650,7 +650,6 @@ GDALDataset *GIODataset::Create( const char * pszFilename,
 
     poDS->pszPath = CPLStrdup( pszFilename );
     poDS->nGridChannel = nChannel;
-    poDS->poDriver = poGIODriver;
     poDS->bCreated = TRUE;
 
 /* -------------------------------------------------------------------- */
@@ -719,10 +718,10 @@ void GDALRegister_AIGrid2()
 {
     GDALDriver	*poDriver;
 
-    if( poGIODriver == NULL && LoadGridIOFunctions() )
+    if( GDALGetDriverByName( "GIO" ) == NULL && LoadGridIOFunctions() )
     {
         
-        poGIODriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "GIO" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

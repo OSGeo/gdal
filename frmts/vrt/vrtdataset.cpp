@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.6  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -54,8 +57,6 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poVRTDriver = NULL;
 
 /************************************************************************/
 /*                            VRTDataset()                             */
@@ -446,7 +447,6 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new VRTDataset(atoi(CPLGetXMLValue(psTree,"rasterXSize","0")),
                           atoi(CPLGetXMLValue(psTree,"rasterYSize","0")));
-    poDS->poDriver = poVRTDriver;
 
     poDS->eAccess = GA_ReadOnly;
 
@@ -775,9 +775,9 @@ void GDALRegister_VRT()
 {
     GDALDriver	*poDriver;
 
-    if( poVRTDriver == NULL )
+    if( GDALGetDriverByName( "VRT" ) == NULL )
     {
-        poVRTDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "VRT" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

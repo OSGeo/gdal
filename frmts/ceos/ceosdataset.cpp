@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/09/04 06:50:36  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.8  2002/06/12 21:12:24  warmerda
  * update to metadata based driver info
  *
@@ -58,8 +61,6 @@
 #include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poCEOSDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_CEOS(void);
@@ -171,7 +172,6 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new CEOSDataset();
 
     poDS->psCEOS = psCEOS;
-    poDS->poDriver = poCEOSDriver;
     
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
@@ -204,9 +204,9 @@ void GDALRegister_CEOS()
 {
     GDALDriver	*poDriver;
 
-    if( poCEOSDriver == NULL )
+    if( GDALGetDriverByName( "CEOS" ) == NULL )
     {
-        poCEOSDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "CEOS" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

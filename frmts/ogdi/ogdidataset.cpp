@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.16  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -85,7 +88,6 @@
 
 CPL_CVSID("$Id$");
 
-static GDALDriver	*poOGDIDriver = NULL;
 
 /************************************************************************/
 /*                           OGDIRasterBand()                            */
@@ -599,7 +601,6 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new OGDIDataset();
 
     poDS->nClientID = nClientID;
-    poDS->poDriver = poOGDIDriver;
     poDS->SetDescription( poOpenInfo->pszFilename );
 
 /* -------------------------------------------------------------------- */
@@ -862,9 +863,9 @@ void GDALRegister_OGDI()
 {
     GDALDriver	*poDriver;
 
-    if( poOGDIDriver == NULL )
+    if( GDALGetDriverByName( "OGDI" ) == NULL )
     {
-        poOGDIDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "OGDI" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

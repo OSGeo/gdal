@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.6  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -51,8 +54,6 @@
 #include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poJDEMDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_JDEM(void);
@@ -284,7 +285,6 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new JDEMDataset();
 
-    poDS->poDriver = poJDEMDriver;
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
     
@@ -314,9 +314,9 @@ void GDALRegister_JDEM()
 {
     GDALDriver	*poDriver;
 
-    if( poJDEMDriver == NULL )
+    if( GDALGetDriverByName( "JDEM" ) == NULL )
     {
-        poJDEMDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "JDEM" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

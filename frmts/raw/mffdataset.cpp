@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.19  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -93,8 +96,6 @@
 #include <ctype.h>
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poMFFDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_MFF(void);
@@ -498,7 +499,6 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new MFFDataset();
 
-    poDS->poDriver = poMFFDriver;
     poDS->papszHdrLines = papszHdrLines;
     
 /* -------------------------------------------------------------------- */
@@ -872,9 +872,9 @@ void GDALRegister_MFF()
 {
     GDALDriver	*poDriver;
 
-    if( poMFFDriver == NULL )
+    if( GDALGetDriverByName( "MFF" ) == NULL )
     {
-        poMFFDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "MFF" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

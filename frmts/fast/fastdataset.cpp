@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.2  2002/08/15 09:35:50  dron
  * Fixes in georeferencing
  *
@@ -43,8 +46,6 @@
 #include "../raw/rawdataset.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poFASTDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_FAST(void);
@@ -235,7 +236,6 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new FASTDataset();
 
-    poDS->poDriver = poFASTDriver;
     poDS->fpHeader = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
     poDS->pszDirname = CPLStrdup( CPLGetDirname( poOpenInfo->pszFilename ) );
@@ -386,9 +386,9 @@ void GDALRegister_FAST()
 {
     GDALDriver	*poDriver;
 
-    if( poFASTDriver == NULL )
+    if( GDALGetDriverByName( "FAST" ) == NULL )
     {
-        poFASTDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "FAST" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

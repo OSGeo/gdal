@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.8  2002/07/23 14:40:41  warmerda
  * disable compress support on Unix
  *
@@ -62,8 +65,6 @@
 #include <NCSErrors.h>
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poECWDriver = NULL;
 
 #ifdef FRMT_ecw
 
@@ -312,7 +313,6 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new ECWDataset();
 
-    poDS->poDriver = poECWDriver;
     poDS->hFileView = hFileView;
     
 /* -------------------------------------------------------------------- */
@@ -614,9 +614,9 @@ void GDALRegister_ECW()
 #ifdef FRMT_ecw 
     GDALDriver	*poDriver;
 
-    if( poECWDriver == NULL )
+    if( GDALGetDriverByName( "ECW" ) == NULL )
     {
-        poECWDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "ECW" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

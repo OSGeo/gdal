@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.18  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -89,8 +92,6 @@
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poPAuxDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_PAux(void);
@@ -763,8 +764,6 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new PAuxDataset();
 
-    poDS->poDriver = poPAuxDriver;
-
 /* -------------------------------------------------------------------- */
 /*      Load the .aux file into a string list suitable to be            */
 /*      searched with CSLFetchNameValue().                              */
@@ -1089,9 +1088,9 @@ void GDALRegister_PAux()
 {
     GDALDriver	*poDriver;
 
-    if( poPAuxDriver == NULL )
+    if( GDALGetDriverByName( "PAux" ) == NULL )
     {
-        poPAuxDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "PAux" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.10  2002/06/25 14:57:43  warmerda
  * Added overview support.
  *
@@ -63,8 +66,6 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poDOQ1Driver = NULL;
 
 static double DOQGetField( unsigned char *, int );
 static char * DOQGetDescription( unsigned char * );
@@ -228,8 +229,6 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new DOQ1Dataset();
 
-    poDS->poDriver = poDOQ1Driver;
-
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
@@ -369,9 +368,9 @@ void GDALRegister_DOQ1()
 {
     GDALDriver	*poDriver;
 
-    if( poDOQ1Driver == NULL )
+    if( GDALGetDriverByName( "DOQ1" ) == NULL )
     {
-        poDOQ1Driver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "DOQ1" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

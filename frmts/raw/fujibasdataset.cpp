@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.3  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -43,8 +46,6 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poFujiBASDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_FujiBAS(void);
@@ -187,8 +188,6 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new FujiBASDataset();
 
-    poDS->poDriver = poFujiBASDriver;
-
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
@@ -221,9 +220,9 @@ void GDALRegister_FujiBAS()
 {
     GDALDriver	*poDriver;
 
-    if( poFujiBASDriver == NULL )
+    if( GDALGetDriverByName( "FujiBAS" ) == NULL )
     {
-        poFujiBASDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "FujiBAS" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

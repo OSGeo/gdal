@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.5  2002/08/26 06:45:54  warmerda
  * removed use of bool
  *
@@ -52,8 +55,6 @@
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poUSGSDEMDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_USGSDEM(void);
@@ -555,7 +556,6 @@ GDALDataset *USGSDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new USGSDEMDataset();
 
-    poDS->poDriver = poUSGSDEMDriver;
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
     
@@ -585,9 +585,9 @@ void GDALRegister_USGSDEM()
 {
     GDALDriver	*poDriver;
 
-    if( poUSGSDEMDriver == NULL )
+    if( GDALGetDriverByName( "USGSDEM" ) == NULL )
     {
-        poUSGSDEMDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "USGSDEM" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.5  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -49,8 +52,6 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poEFFDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_EFF(void);
@@ -119,8 +120,6 @@ GDALDataset *EFFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new EFFDataset();
 
-    poDS->poDriver = poEFFDriver;
-    
 /* -------------------------------------------------------------------- */
 /*      Read the entire header.dat file.                                */
 /* -------------------------------------------------------------------- */
@@ -230,9 +229,9 @@ void GDALRegister_EFF()
 {
     GDALDriver	*poDriver;
 
-    if( poEFFDriver == NULL )
+    if( GDALGetDriverByName( "EFF" ) == NULL )
     {
-        poEFFDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "EFF" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.13  2002/07/02 22:40:46  sperkins
  * Backpedalling... Special creation options for b-scaled FITS files
  * eliminated to reduce weirdness.
@@ -78,8 +81,6 @@
 #include <string.h>
 
 CPL_CVSID("$Id$");
-
-static GDALDriver* poFITSDriver = NULL;
 
 CPL_C_START
 #include <fitsio.h>
@@ -556,7 +557,6 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
   // Create a FITSDataset object and initialize it from the FITS handle
   FITSDataset* dataset = new FITSDataset();
   dataset->eAccess = poOpenInfo->eAccess;
-  dataset->poDriver = poFITSDriver;
 
   // Set up the description and initialize the dataset
   dataset->SetDescription(poOpenInfo->pszFilename);
@@ -635,7 +635,6 @@ GDALDataset *FITSDataset::Create(const char* pszFilename,
   }
 
   dataset = new FITSDataset();
-  dataset->poDriver = poFITSDriver;;
   dataset->nRasterXSize = nXSize;
   dataset->nRasterYSize = nYSize;
   dataset->eAccess = GA_Update;
@@ -660,8 +659,8 @@ void GDALRegister_FITS() {
 
     GDALDriver* poDriver;
 
-    if(poFITSDriver == NULL) {
-        poFITSDriver = poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "FITS" ) == NULL) {
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "FITS" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

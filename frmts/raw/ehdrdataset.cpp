@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.14  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -80,8 +83,6 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poEHdrDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_EHdr(void);
@@ -349,8 +350,6 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new EHdrDataset();
 
-    poDS->poDriver = poEHdrDriver;
-
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
@@ -450,9 +449,9 @@ void GDALRegister_EHdr()
 {
     GDALDriver	*poDriver;
 
-    if( poEHdrDriver == NULL )
+    if( GDALGetDriverByName( "EHdr" ) == NULL )
     {
-        poEHdrDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "EHdr" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

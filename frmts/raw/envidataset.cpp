@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.3  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -45,8 +48,6 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poENVIDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_ENVI(void);
@@ -576,8 +577,6 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new ENVIDataset();
 
-    poDS->poDriver = poENVIDriver;
-
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
@@ -786,9 +785,9 @@ void GDALRegister_ENVI()
 {
     GDALDriver	*poDriver;
 
-    if( poENVIDriver == NULL )
+    if( GDALGetDriverByName( "ENVI" ) == NULL )
     {
-        poENVIDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "ENVI" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

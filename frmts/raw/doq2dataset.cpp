@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
  * Revision 1.12  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -70,8 +73,6 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poDOQ2Driver = NULL;
 
 CPL_C_START
 void	GDALRegister_DOQ2(void);
@@ -371,8 +372,6 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new DOQ2Dataset();
 
-    poDS->poDriver = poDOQ2Driver;
-
     poDS->nRasterXSize = nWidth;
     poDS->nRasterYSize = nHeight;
 
@@ -447,9 +446,9 @@ void GDALRegister_DOQ2()
 {
     GDALDriver	*poDriver;
 
-    if( poDOQ2Driver == NULL )
+    if( GDALGetDriverByName( "DOQ2" ) == NULL )
     {
-        poDOQ2Driver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "DOQ2" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
