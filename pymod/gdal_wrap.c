@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.14  2000/07/11 01:02:06  warmerda
- * added ExportToProj4()
+ * Revision 1.15  2000/07/13 17:37:32  warmerda
+ * added CloneGeogCS
  *
  ************************************************************************/
 
@@ -2498,6 +2498,28 @@ static PyObject *_wrap_OSRImportFromEPSG(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OSRCloneGeogCS(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRSpatialReferenceH  _result;
+    OGRSpatialReferenceH  _arg0;
+    char * _argc0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OSRCloneGeogCS",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRCloneGeogCS. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRSpatialReferenceH )OSRCloneGeogCS(_arg0);
+    SWIG_MakePtr(_ptemp, (char *) _result,"_OGRSpatialReferenceH");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OSRSetAttrValue(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRErr * _result;
@@ -3249,6 +3271,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRSetLinearUnits", _wrap_OSRSetLinearUnits, 1 },
 	 { "OSRGetAttrValue", _wrap_OSRGetAttrValue, 1 },
 	 { "OSRSetAttrValue", _wrap_OSRSetAttrValue, 1 },
+	 { "OSRCloneGeogCS", _wrap_OSRCloneGeogCS, 1 },
 	 { "OSRImportFromEPSG", _wrap_OSRImportFromEPSG, 1 },
 	 { "OSRDereference", _wrap_OSRDereference, 1 },
 	 { "OSRReference", _wrap_OSRReference, 1 },

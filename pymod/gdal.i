@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2000/07/13 17:37:32  warmerda
+ * added CloneGeogCS
+ *
  * Revision 1.14  2000/07/11 01:02:06  warmerda
  * added ExportToProj4()
  *
@@ -770,6 +773,7 @@ int     OSRReference( OGRSpatialReferenceH );
 int     OSRDereference( OGRSpatialReferenceH );
 
 OGRErr  OSRImportFromEPSG( OGRSpatialReferenceH, int );
+OGRSpatialReferenceH OSRCloneGeogCS( OGRSpatialReferenceH );
 
 OGRErr  OSRSetAttrValue( OGRSpatialReferenceH hSRS, const char * pszNodePath,
                          const char * pszNewNodeValue );

@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.4  2000/07/13 17:37:32  warmerda
+# added CloneGeogCS
+#
 # Revision 1.3  2000/07/11 01:02:06  warmerda
 # added ExportToProj4()
 #
@@ -66,6 +69,9 @@ class SpatialReference:
     def ExportToProj4(self):
         return _gdal.OSRExportToProj4( self._o )
 
+    def CloneGeogCS(self):
+        return SpatialReference(obj=_gdal.OSRCloneGeogCS( self._o ))
+    
     def ImportFromEPSG(self,code):
         return _gdal.OSRImportFromEPSG( self._o, code )
 
@@ -104,7 +110,6 @@ class CoordinateTransformation:
     
     def __init__(self,source,target):
         self._o = _gdal.OCTNewCoordinateTransformation( source._o, target._o )
-
 
     def __del__(self):
         if self._o: 
