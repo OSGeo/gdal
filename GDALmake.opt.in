@@ -36,12 +36,14 @@ CXXFLAGS	=	@CXX_WFLAGS@ @CXX_PIC@ $(CXX_ODFLAGS)
 
 LD_SHARED	=	@LD_SHARED@
 
-GDAL_INCLUDE	=	-I$(GDAL_ROOT) -I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/core
+GDAL_INCLUDE	=	-I$(GDAL_ROOT) -I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/core\
+			-I$(GDAL_ROOT)/ogr
 
 GDAL_VER	=	1.0
 GDAL_LIB	= 	$(GDAL_ROOT)/gdal.a
 GDAL_SLIB	=	$(GDAL_ROOT)/gdal.$(GDAL_VER).so
 
+OGR_LIB		=	$(GDAL_ROOT)/ogr/ogr.a
 CPL_LIB		=	$(GDAL_ROOT)/port/cpl.a
 
 ifneq ($(TOPDIR),)
@@ -51,8 +53,8 @@ OGDI_FRMT	=	ogdi
 endif
 
 
-GDAL_LIBS	=	$(GDAL_LIB) $(GDAL_ROOT)/frmts/o/*.a $(CPL_LIB) \
-			$(OGDI_LIBS)
+GDAL_LIBS	=	$(GDAL_LIB) $(OGR_LIB) $(GDAL_ROOT)/frmts/o/*.a \
+			$(CPL_LIB) $(OGDI_LIBS)
 GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/core/*.o
 

@@ -8,7 +8,7 @@ default:	lib GDALmake.opt
 
 lib:	$(GDAL_LIB)
 
-$(GDAL_LIB):	port-target core-target frmts-target force-lib
+$(GDAL_LIB):	port-target ogr-target core-target frmts-target force-lib
 
 force-lib:
 	ar r $(GDAL_LIB) $(GDAL_OBJ)
@@ -23,6 +23,9 @@ force-lib:
 port-target:
 	(cd port; $(MAKE))
 
+ogr-target:
+	(cd ogr; $(MAKE))
+
 core-target:
 	(cd core; $(MAKE))
 
@@ -31,6 +34,7 @@ frmts-target:
 
 clean:	lclean
 	(cd port; $(MAKE) clean)
+	(cd ogr; $(MAKE) clean)
 	(cd core; $(MAKE) clean)
 	(cd frmts; $(MAKE) clean)
 	(cd apps; $(MAKE) clean)
