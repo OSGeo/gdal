@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/11/21 14:35:44  warmerda
+ * dont managed updates directly anymore
+ *
  * Revision 1.11  2001/08/30 21:05:32  warmerda
  * added support for generic object if not recognised
  *
@@ -178,15 +181,28 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Instantiate an S57Reader and try opening.                       */
+/*      Setup reader options.                                           */
+/* -------------------------------------------------------------------- */
+    char **papszReaderOptions = NULL;
+    S57Reader   *poModule;
+
+    poModule = new S57Reader( pszFilename );
+
+    papszReaderOptions = CSLSetNameValue(papszReaderOptions, 
+                                         "LNAME_REFS", "ON" );
+    if( GetOption("UPDATES") != NULL )
+        papszReaderOptions = CSLSetNameValue( papszReaderOptions, 
+                                              "UPDATES", GetOption("UPDATES"));
+                                              
+    poModule->SetOptions( papszReaderOptions );
+    CSLDestroy( papszReaderOptions );
+
+/* -------------------------------------------------------------------- */
+/*      Try opening.                       				*/
 /*                                                                      */
 /*      Eventually this should check for catalogs, and if found         */
 /*      instantiate a whole series of modules.                          */
 /* -------------------------------------------------------------------- */
-    S57Reader   *poModule;
-    char        *papszReaderOptions[] = { "LNAM_REFS=ON", NULL };
-
-    poModule = new S57Reader( pszFilename );
     if( !poModule->Open( bTestOpen ) )
     {
         delete poModule;
@@ -197,14 +213,6 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
     nModules = 1;
     papoModules = (S57Reader **) CPLMalloc(sizeof(void*));
     papoModules[0] = poModule;
-    
-    poModule->SetOptions( papszReaderOptions );
-
-/* -------------------------------------------------------------------- */
-/*      Apply updates, if available.                                    */
-/* -------------------------------------------------------------------- */
-    if( GetOption("UPDATE") == NULL || EQUAL(GetOption("UPDATE"),"YES") )
-        papoModules[0]->FindAndApplyUpdates( pszFilename );
     
 /* -------------------------------------------------------------------- */
 /*      Instantiate the class registrar if possible.                    */
