@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/05/15 14:18:27  warmerda
+ * added COMPLEX_INTERPRETATION metadata
+ *
  * Revision 1.5  2000/04/21 21:59:04  warmerda
  * added overview support, updated metadata handling
  *
@@ -731,6 +734,9 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 
             if( bComplex )
             {
+                poDS->GetRasterBand(poDS->nBands)->
+                    SetMetadataItem( "COMPLEX_INTERPRETATION", "REAL" );
+
                 nStartData += psImageDesc->BytesPerPixel/2;
 
                 poDS->SetBand( poDS->nBands+1, 
@@ -738,6 +744,9 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                                    poDS, poDS->nBands+1, poOpenInfo->fp, 
                                    nStartData, nPixelOffset, nLineOffset, 
                                    eType, bNative ) );
+
+                poDS->GetRasterBand(poDS->nBands)->
+                    SetMetadataItem( "COMPLEX_INTERPRETATION", "IMAGINARY" );
             }
         }
     }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/05/15 14:18:27  warmerda
+ * added COMPLEX_INTERPRETATION metadata
+ *
  * Revision 1.5  2000/04/21 21:59:26  warmerda
  * added overview support
  *
@@ -303,11 +306,19 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
                                eDataType, bNative ) );
 
         if( bComplex )
+        {
+            poDS->GetRasterBand(poDS->nBands)->
+                SetMetadataItem( "COMPLEX_INTERPRETATION", "REAL" );
+
             poDS->SetBand( nBand+1, 
                new RawRasterBand( poDS, nBand+1, fpRaw,
                                   nPixelOffset/2, nPixelOffset, 
                                   nPixelOffset * poDS->GetRasterXSize(),
                                   eDataType, bNative ) );
+
+            poDS->GetRasterBand(poDS->nBands)->
+                SetMetadataItem( "COMPLEX_INTERPRETATION", "IMAGINARY" );
+        }
     }
     
 /* -------------------------------------------------------------------- */

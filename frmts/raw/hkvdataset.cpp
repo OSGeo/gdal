@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/05/15 14:18:27  warmerda
+ * added COMPLEX_INTERPRETATION metadata
+ *
  * Revision 1.3  2000/04/05 19:28:48  warmerda
  * Fixed MSB case.
  *
@@ -51,6 +54,28 @@ CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
+/*                            HKVRasterBand                             */
+/* ==================================================================== */
+/************************************************************************/
+
+class HKVDataset;
+
+class HKVRasterBand : public RawRasterBand
+{
+    friend	HKVDataset;
+
+    int         nOverviews;
+    RawRasterBand *papoOverviewBands;
+    
+  public:
+    		HKVRasterBand( HKVDataset *poDS, int nBand, FILE * fpRaw, 
+                               unsigned int nImgOffset, int nPixelOffset,
+                               int nLineOffset,
+                               GDALDataType eDataType, int bNativeOrder );
+};
+
+/************************************************************************/
+/* ==================================================================== */
 /*				HKVDataset				*/
 /* ==================================================================== */
 /************************************************************************/
@@ -58,7 +83,14 @@ CPL_C_END
 class HKVDataset : public RawDataset
 {
     FILE	*fpBlob;
-    
+
+    int         nOverviews;
+    int         *panOverviewLevel;
+    FILE        **pafpOverviewBlob;
+
+  protected:    
+    virtual CPLErr IBuildOverviews( const char *, int, int *,
+                                    int, int *, GDALProgressFunc, void * );
   public:
     		HKVDataset();
     	        ~HKVDataset();
@@ -70,6 +102,40 @@ class HKVDataset : public RawDataset
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
 };
+
+/************************************************************************/
+/* ==================================================================== */
+/*                            HKVRasterBand                             */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                           HKVRasterBand()                            */
+/************************************************************************/
+
+HKVRasterBand::HKVRasterBand( HKVDataset *poDS, int nBand, FILE * fpRaw, 
+                              unsigned int nImgOffset, int nPixelOffset,
+                              int nLineOffset,
+                              GDALDataType eDataType, int bNativeOrder )
+        : RawRasterBand( (GDALDataset *) poDS, nBand, 
+                         fpRaw, nImgOffset, nPixelOffset, 
+                         nLineOffset, eDataType, bNativeOrder )
+
+{
+    this->poDS = poDS;
+    this->nBand = nBand;
+    
+    eDataType = GDT_Byte;
+
+    nBlockXSize = poDS->GetRasterXSize();
+    nBlockYSize = 1;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*				HKVDataset				*/
+/* ==================================================================== */
+/************************************************************************/
 
 /************************************************************************/
 /*                            HKVDataset()                             */
@@ -91,6 +157,20 @@ HKVDataset::~HKVDataset()
     CSLDestroy( papszAttrib );
     if( fpBlob != NULL )
         VSIFClose( fpBlob );
+}
+
+/************************************************************************/
+/*                          IBuildOverviews()                           */
+/************************************************************************/
+
+CPLErr HKVDataset::IBuildOverviews( const char * pszResample, 
+                                    int nOverviews, int * panOverviewList, 
+                                    int nBands, int * panBandList, 
+                                    GDALProgressFunc pfnProgress, 
+                                    void * pProgressData )
+
+{
+    return CE_None;
 }
 
 /************************************************************************/
@@ -287,11 +367,18 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
         
         if( bComplex )
         {
+            poDS->GetRasterBand(poDS->nBands)->
+                SetMetadataItem( "COMPLEX_INTERPRETATION", "REAL" );
+
             poDS->SetBand( poDS->GetRasterCount()+1, 
                new RawRasterBand( poDS, poDS->GetRasterCount()+1, poDS->fpBlob,
                                   nOffset, nPixelOffset, nLineOffset, 
                                   eType, bNative ) );
             nOffset += GDALGetDataTypeSize( eType ) / 8;
+
+            poDS->GetRasterBand(poDS->nBands)->
+                SetMetadataItem( "COMPLEX_INTERPRETATION", "IMAGINARY" );
+
         }
     }
 
