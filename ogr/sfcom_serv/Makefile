@@ -17,7 +17,8 @@ LOC_OBJ	=	ogrcomgeometryfactory.obj ogrcomutils.obj ogrcomwks.obj \
 SHR_OBJ	=	..\ogrgeometryfactory.obj ..\ogrpoint.obj ..\ogrcurve.obj \
 		..\ogrlinestring.obj ..\ogrpolygon.obj ..\ogrlinearring.obj \
 		..\oledb_sup.obj ..\ogrgeometry.obj ..\ogrutils.obj \
-		..\ogrgeometrycollection.obj ..\ogrmultipolygon.obj
+		..\ogrgeometrycollection.obj ..\ogrmultipolygon.obj \
+		..\ogrmultipoint.obj ..\ogrmultilinestring.obj
 
 default:	ogrcomgeometry.dll $(LOC_OBJ) testclient.exe ogrcomgeometry.tlb
 
