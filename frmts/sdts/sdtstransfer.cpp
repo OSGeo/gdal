@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/08/16 19:25:05  warmerda
+ * added GetLayerPolygonReader() method
+ *
  * Revision 1.5  1999/06/03 21:13:39  warmerda
  * pass IREF to SDTSRasterReader
  *
@@ -251,6 +254,37 @@ SDTSPointReader *SDTSTransfer::GetLayerPointReader( int iEntry )
     else
     {
         return poPointReader;
+    }
+}
+
+/************************************************************************/
+/*                       GetLayerPolygonReader()                        */
+/************************************************************************/
+
+SDTSPolygonReader *SDTSTransfer::GetLayerPolygonReader( int iEntry )
+
+{
+    SDTSPolygonReader	*poPolyReader;
+    
+    if( iEntry < 0
+        || iEntry >= nLayers
+        || oCATD.GetEntryType( panLayerCATDEntry[iEntry] ) != SLTPoly )
+    {
+        return NULL;
+    }
+
+    
+    poPolyReader = new SDTSPolygonReader();
+    
+    if( !poPolyReader->Open(
+        		oCATD.GetEntryFilePath( panLayerCATDEntry[iEntry] ) ) )
+    {
+        delete poPolyReader;
+        return NULL;
+    }
+    else
+    {
+        return poPolyReader;
     }
 }
 
