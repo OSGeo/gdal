@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/11/19 20:47:04  warmerda
+ * fixed to call pj_free, not pj_dalloc for projPJ
+ *
  * Revision 1.15  2002/06/11 18:02:03  warmerda
  * add PROJ.4 normalization and EPSG support
  *
@@ -244,7 +247,7 @@ char *OCTProj4Normalize( const char *pszProj4Src )
 
     pszNewProj4Def = pfn_pj_get_def( psPJSource, 0 );
 
-    pfn_pj_dalloc( psPJSource );
+    pfn_pj_free( psPJSource );
 
     if( pszNewProj4Def == NULL )
         return CPLStrdup( pszProj4Src );
