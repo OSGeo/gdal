@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/03/13 14:40:00  warmerda
+ * added missing xs:sequence
+ *
  * Revision 1.10  2003/03/11 01:26:35  warmerda
  * Fixed redeclared variable.
  *
@@ -531,7 +534,8 @@ void OGRGMLDataSource::InsertHeader()
             fpOutput, 
             "<xs:complexType name=\"%s_Type\">\n"
             "  <xs:complexContent>\n"
-            "    <xs:extension base=\"gml:AbstractFeatureType\">\n",
+            "    <xs:extension base=\"gml:AbstractFeatureType\">\n"
+            "      <xs:sequence>\n",
             poFDefn->GetName() );
 
 /* -------------------------------------------------------------------- */
