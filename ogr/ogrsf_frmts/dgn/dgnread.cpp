@@ -28,8 +28,9 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.8  2001/02/19 15:14:58  warmerda
- * altered extraction of sweepang
+ * Revision 1.9  2001/03/07 13:52:15  warmerda
+ * Don't include deleted elements in the total extents.
+ * Capture attribute data.
  *
  * Revision 1.7  2001/02/02 22:20:29  warmerda
  * compute text height/width properly
@@ -299,6 +300,15 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
 
           psEllipse->startang = DGN_INT32( psDGN->abyElem + 36 );
           psEllipse->startang = psEllipse->startang / 360000.0;
+#ifdef notdef
+          nSweepVal = DGN_INT32( psDGN->abyElem + 40 );
+          if( nSweepVal & 0x80000000 ) 
+              psEllipse->sweepang = - (nSweepVal & 0x7fffffff)/360000.0;
+          else if( nSweepVal  == 0 )
+              psEllipse->sweepang = 360.0;
+          else
+              psEllipse->sweepang = nSweepVal / 360000.0;
+#else
           if( psDGN->abyElem[41] & 0x80 )
           {
               psDGN->abyElem[41] &= 0x7f;
@@ -311,6 +321,7 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
               psEllipse->sweepang = 360.0;
           else
               psEllipse->sweepang = nSweepVal / 360000.0;
+#endif
           
           memcpy( &(psEllipse->primary_axis), psDGN->abyElem + 44, 8 );
           DGN2IEEEDouble( &(psEllipse->primary_axis) );
@@ -412,6 +423,19 @@ int DGNParseCore( DGNInfo *psDGN, DGNElemCore *psElement )
         psElement->style = psData[34] & 0x7;
         psElement->weight = (psData[34] & 0xf8) >> 3;
         psElement->color = psData[35];
+    }
+
+    if( psElement->properties & DGNPF_ATTRIBUTES )
+    {
+        int   nAttIndex;
+        
+        nAttIndex = psData[30] + psData[31] * 256;
+
+        psElement->attr_bytes = psDGN->nElemBytes - nAttIndex*2 - 32;
+        psElement->attr_data = (unsigned char *) 
+            CPLMalloc(psElement->attr_bytes);
+        memcpy( psElement->attr_data, psData + nAttIndex * 2 + 32,
+                psElement->attr_bytes );
     }
     
     return TRUE;
@@ -714,6 +738,20 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
       default:
         break;
     }
+
+    if( psElement->attr_bytes > 0 )
+    {
+        int       i;
+
+        fprintf( fp, "Attributes (%d bytes):\n", psElement->attr_bytes );
+        for( i = 0; i < psElement->attr_bytes; i++ )
+        {
+            if( (i%32) == 0 && i != 0 )
+                fprintf( fp, "\n" );
+            fprintf( fp, "%02x", psElement->attr_data[i] );
+        }
+        fprintf( fp, "\n" );
+    }
 }
 
 /************************************************************************/
@@ -945,6 +983,9 @@ void DGNBuildIndex( DGNInfo *psDGN )
         psEI->flags = 0;
         psEI->offset = nLastOffset;
 
+        if( psDGN->abyElem[1] & 0x80 )
+            psEI->flags |= DGNEIF_DELETED;
+
         if( nType == DGNT_LINE || nType == DGNT_LINE_STRING
             || nType == DGNT_SHAPE || nType == DGNT_CURVE
             || nType == DGNT_BSPLINE )
@@ -972,9 +1013,10 @@ void DGNBuildIndex( DGNInfo *psDGN )
         else
             psEI->stype = DGNST_CORE;
 
-        if( psEI->stype == DGNST_MULTIPOINT 
-            || psEI->stype == DGNST_ARC
-            || psEI->stype == DGNST_TEXT )
+        if( (psEI->stype == DGNST_MULTIPOINT 
+             || psEI->stype == DGNST_ARC
+             || psEI->stype == DGNST_TEXT)
+            && !(psEI->flags & DGNEIF_DELETED) )
         {
             GUInt32	anRegion[6];
 
