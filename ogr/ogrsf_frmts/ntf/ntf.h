@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2004/11/17 19:30:15  fwarmerdam
+ * further fixes to stroking 3pt arcs
+ *
  * Revision 1.24  2003/02/27 21:08:02  warmerda
  * added GetZMult() method
  *
@@ -666,9 +669,8 @@ int NTFArcCenterFromEdgePoints( double x_c0, double y_c0,
                                 double x_c2, double y_c2, 
                                 double *x_center, double *y_center );
 OGRGeometry *
-NTFStrokeArcToOGRGeometry_Points( double dfCenterX, double dfCenterY, 
-                                  double dfRadius, 
-                                  double dfStartX, double dfStartY,
+NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
+                                  double dfAlongX, double dfAlongY,
                                   double dfEndX, double dfEndY,
                                   int nVertexCount );
 OGRGeometry *
