@@ -69,7 +69,7 @@ PNG_SETTING	=	@PNG_SETTING@
 JPEG_SETTING	=	@JPEG_SETTING@
 
 GDAL_LIBS	=	$(GDAL_LIB) $(OGR_LIB) $(GDAL_ROOT)/frmts/o/*.a \
-			$(CPL_LIB) $(OGDI_LIBS)
+			$(GDAL_LIB) $(CPL_LIB) $(OGDI_LIBS)
 GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/core/*.o \
 			$(GDAL_ROOT)/ogr/ogrct.o \
