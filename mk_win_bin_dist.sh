@@ -8,7 +8,7 @@ if [ $# -lt 1 ] ; then
 fi
 
 TARGETDIR=remotesensing.org:/ftp/remotesensing/pub/gdal
-PROJ_DLL=//d/bin/proj.dll
+PROJ_DLL=/d/bin/proj.dll
 
 SHORT_VERSION=11
 VERSION=$1
