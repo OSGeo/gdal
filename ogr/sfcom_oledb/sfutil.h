@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/06/22 16:17:11  warmerda
+ * added ogrcomdebug
+ *
  * Revision 1.1  1999/06/22 15:53:54  kshih
  * Utility functions.
  *
@@ -41,3 +44,5 @@
 void			SFGetFilenames(const char *,char **,char **);
 SHPHandle		SFGetSHPHandle(const char *);
 DBFHandle		SFGetDBFHandle(const char *);
+
+void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... );

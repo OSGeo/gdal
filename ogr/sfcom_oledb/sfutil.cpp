@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/06/22 16:17:11  warmerda
+ * added ogrcomdebug
+ *
  * Revision 1.1  1999/06/22 15:53:54  kshih
  * Utility functions.
  *
@@ -39,101 +42,146 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "shapefil.h"
-
-
+#include "cpl_conv.h"
 
 /************************************************************************/
-/*                          SFGetFilenames()                            */
+/*                           SFGetFilenames()                           */
 /*                                                                      */
-/*      Get the two shape and dbf filenames.							*/
+/*      Get the two shape and dbf filenames.                            */
 /************************************************************************/
 void	SFGetFilenames(const char *pszFileIn, char **ppszSHPFile, 
 					   char **ppszDBFFile)
 {
-	static char szSFile[MAX_PATH];
-	static char szDFile[MAX_PATH];
+    static char szSFile[MAX_PATH];
+    static char szDFile[MAX_PATH];
 
-	char szDrive[_MAX_DRIVE];   
-	char szDir[_MAX_DIR];
-  	char szFname[_MAX_FNAME];   
-	char szExt[_MAX_EXT];
+    char szDrive[_MAX_DRIVE];   
+    char szDir[_MAX_DIR];
+    char szFname[_MAX_FNAME];   
+    char szExt[_MAX_EXT];
 
-	_splitpath(pszFileIn,szDrive,szDir,szFname,szExt);
+    _splitpath(pszFileIn,szDrive,szDir,szFname,szExt);
 	
 
-	// Shape file
+    // Shape file
 
-	strcpy(szExt,".SHP");
-	if (strlen(szExt))
-	{
-		if (islower(szExt[0]))
-		{
-			strcpy(szExt,".shp");
-		}
+    strcpy(szExt,".SHP");
+    if (strlen(szExt))
+    {
+        if (islower(szExt[0]))
+        {
+            strcpy(szExt,".shp");
+        }
 
-	}
-	else if (strlen(szFname))
-	{
-		if (islower(szFname[strlen(szFname)-1]))
-		{
-			strcpy(szExt,".shp");
-		}
-	}
+    }
+    else if (strlen(szFname))
+    {
+        if (islower(szFname[strlen(szFname)-1]))
+        {
+            strcpy(szExt,".shp");
+        }
+    }
 
-	_makepath(szSFile,szDrive,szDir,szFname,szExt);
-	if (ppszSHPFile)
-		*ppszSHPFile = szSFile;
+    _makepath(szSFile,szDrive,szDir,szFname,szExt);
+    if (ppszSHPFile)
+        *ppszSHPFile = szSFile;
 	
 
 
 
-	// DBFFile
-	strcpy(szExt,".DBF");
-	if (strlen(szExt))
-	{
-		if (islower(szExt[1]))
-		{
-			strcpy(szExt,".dbf");
-		}
+    // DBFFile
+    strcpy(szExt,".DBF");
+    if (strlen(szExt))
+    {
+        if (islower(szExt[1]))
+        {
+            strcpy(szExt,".dbf");
+        }
 
-	}
-	else if (strlen(szFname))
-	{
-		if (islower(szFname[strlen(szFname)-1]))
-		{
-			strcpy(szExt,".dbf");
-		}
-	}
+    }
+    else if (strlen(szFname))
+    {
+        if (islower(szFname[strlen(szFname)-1]))
+        {
+            strcpy(szExt,".dbf");
+        }
+    }
 
-	_makepath(szDFile,szDrive,szDir,szFname,szExt);
+    _makepath(szDFile,szDrive,szDir,szFname,szExt);
 
-	if (ppszDBFFile)
-		*ppszDBFFile = szDFile;
+    if (ppszDBFFile)
+        *ppszDBFFile = szDFile;
 }
 
 /************************************************************************/
 /*                          SFGetSHPHandle()                            */
 /*                                                                      */
-/*      Get a shape file handle from any related name.					*/
+/*      Get a shape file handle from any related name.			*/
 /************************************************************************/
 SHPHandle	SFGetSHPHandle(const char *pszName)
 {
-	char *pszSHPFile;
+    char *pszSHPFile;
 
-	SFGetFilenames(pszName,&pszSHPFile, NULL);
+    SFGetFilenames(pszName,&pszSHPFile, NULL);
 
-	return SHPOpen(pszSHPFile,"r");
+    return SHPOpen(pszSHPFile,"r");
 }
+
 /************************************************************************/
 /*                          SFGetDBFHandle()                            */
 /*                                                                      */
-/*      Get a DBFFile handle from any related name.						*/
+/*      Get a DBFFile handle from any related name.			*/
 /************************************************************************/
 DBFHandle	SFGetDBFHandle(const char *pszName)
 {
-	char *pszDBFFile;
+    char *pszDBFFile;
 
-	SFGetFilenames(pszName,&pszDBFFile, NULL);
+    SFGetFilenames(pszName,&pszDBFFile, NULL);
 
-	return DBFOpen(pszDBFFile,"r");
+    return DBFOpen(pszDBFFile,"r");
 }
+
+/************************************************************************/
+/*                            OGRComDebug()                             */
+/************************************************************************/
+
+void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... )
+
+{
+    va_list args;
+    static FILE      *fpDebug = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a debug file?                                        */
+/* -------------------------------------------------------------------- */
+    if( fpDebug == NULL )
+    {
+        fpDebug = fopen( "f:\\gdal\\ogr\\sfcom_oledb\\Debug", "w" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write message to stdout.                                        */
+/* -------------------------------------------------------------------- */
+    fprintf( stdout, "%s:", pszDebugClass );
+
+    va_start(args, pszFormat);
+    vfprintf( stdout, pszFormat, args );
+    va_end(args);
+
+    fflush( stdout );
+
+/* -------------------------------------------------------------------- */
+/*      Write message to debug file.                                    */
+/* -------------------------------------------------------------------- */
+    if( fpDebug != NULL )
+    {
+        fprintf( fpDebug, "%s:", pszDebugClass );
+
+        va_start(args, pszFormat);
+        vfprintf( fpDebug, pszFormat, args );
+        va_end(args);
+
+        fflush( fpDebug );
+    }
+}
+
