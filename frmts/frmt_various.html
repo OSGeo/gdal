@@ -312,6 +312,32 @@ with no georeferencing information.  For read, and creation all data types
 
 NOTE: Implemented as <tt>gdal/frmts/raw/hkvdataset.cpp</tt>.<p>
 
+<h2><a name="netCDF">netCDF -- Network Common Data Format</a></h2>
+
+GDAL has limited support for reading and writing netCDF <i>grid</i> files.
+NetCDF files that are not recognised as grids (they lack variables called
+dimension, and z) will be silently ignored by this driver.  This driver is
+primarily intended to provide a mechanism for grid interchange with the 
+<a href="http://gmt.soest.hawaii.edu/">GMT</a> package; however, I am 
+interested in correcting deficiencies in interchange with other netCDF 
+using packages as well. <p>
+
+The units information in the netCDF file will be ignored, but x_range, and
+y_range information will be read to get georeferenced extents of the raster.
+All netCDF data types should be supported for reading.
+
+Newly created files (with a type of <tt>netCDF</tt>) will always have
+units of "meters" for x, y and z but the x_range, y_range and z_range should 
+be correct.  Note that netCDF does not have an unsigned byte data type, so 
+8bit rasters will generally need to be converted to Int16 for export to 
+GMT.<p>
+
+NetCDF support in GDAL is optional, and not compiled in by default.  <p>
+
+NOTE: Implemented as <tt>gdal/frmts/netcdf/netcdfdataset.cpp</tt>.<p>
+
+See Also: <a href="http://www.unidata.ucar.edu/packages/netcdf/">Unidata NetCDF Page</a><p>
+
 <h2><a name="PAux">PAux -- PCI .aux Labelled Raw Format</a></h2>
 
 GDAL includes a partial implementation of the PCI .aux labelled raw raster 
