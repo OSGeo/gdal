@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2004/10/14 14:51:31  fwarmerdam
+ * Fixed last fix.
+ *
  * Revision 1.3  2004/10/14 13:59:13  fwarmerdam
  * Added error for non-GMT netCDF files.
  *
@@ -237,7 +240,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( nc_inq_varid( cdfid, "dimension", &nm_id ) != NC_NOERR 
         || nc_inq_varid( cdfid, "z", &z_id ) != NC_NOERR )
     {
-        CPLError( CE_Warning, CE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined, 
                   "%s is a netCDF file, but not in GMT configuration.",
                   poOpenInfo->pszFilename );
         nc_close( cdfid );
