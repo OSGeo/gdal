@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/11/30 16:56:31  warmerda
+ * fixed up to support quoted newlines properly
+ *
  * Revision 1.5  2002/11/27 19:09:40  warmerda
  * implement in-memory caching of whole CSV file
  *
@@ -208,6 +211,85 @@ void CSVDeaccess( const char * pszFilename )
 }
 
 /************************************************************************/
+/*                            CSVSplitLine()                            */
+/*                                                                      */
+/*      Tokenize a CSV line into fields in the form of a string         */
+/*      list.  This is used instead of the CPLTokenizeString()          */
+/*      because it provides correct CSV escaping and quoting            */
+/*      semantics.                                                      */
+/************************************************************************/
+
+static char **CSVSplitLine( const char *pszString )
+
+{
+    char        **papszRetList = NULL;
+    char        *pszToken;
+    int         nTokenMax, nTokenLen;
+
+    pszToken = (char *) CPLCalloc(10,1);
+    nTokenMax = 10;
+    
+    while( pszString != NULL && *pszString != '\0' )
+    {
+        int     bInString = FALSE;
+
+        nTokenLen = 0;
+        
+        /* Try to find the next delimeter, marking end of token */
+        for( ; *pszString != '\0'; pszString++ )
+        {
+
+            /* End if this is a delimeter skip it and break. */
+            if( !bInString && *pszString == ',' )
+            {
+                pszString++;
+                break;
+            }
+            
+            if( *pszString == '"' )
+            {
+                if( !bInString || pszString[1] != '"' )
+                {
+                    bInString = !bInString;
+                    continue;
+                }
+                else  /* doubled quotes in string resolve to one quote */
+                {
+                    pszString++;
+                }
+            }
+
+            if( nTokenLen >= nTokenMax-2 )
+            {
+                nTokenMax = nTokenMax * 2 + 10;
+                pszToken = (char *) CPLRealloc( pszToken, nTokenMax );
+            }
+
+            pszToken[nTokenLen] = *pszString;
+            nTokenLen++;
+        }
+
+        pszToken[nTokenLen] = '\0';
+        papszRetList = CSLAddString( papszRetList, pszToken );
+
+        /* If the last token is an empty token, then we have to catch
+         * it now, otherwise we won't reenter the loop and it will be lost. 
+         */
+        if ( *pszString == '\0' && *(pszString-1) == ',' )
+        {
+            papszRetList = CSLAddString( papszRetList, "" );
+        }
+    }
+
+    if( papszRetList == NULL )
+        papszRetList = (char **) CPLCalloc(sizeof(char *),1);
+
+    CPLFree( pszToken );
+
+    return papszRetList;
+}
+
+/************************************************************************/
 /*                          CSVFindNextLine()                           */
 /*                                                                      */
 /*      Find the start of the next line, while at the same time zero    */
@@ -360,7 +442,7 @@ char **CSVReadParseLine( FILE * fp )
 /*      Parse, and return tokens.                                       */
 /* -------------------------------------------------------------------- */
     if( strchr(pszLine,'\"') == NULL )
-        return CSLTokenizeStringComplex( pszLine, ",", TRUE, TRUE );
+        return CSVSplitLine( pszLine );
 
 /* -------------------------------------------------------------------- */
 /*      We must now count the quotes in our working string, and as      */
@@ -392,7 +474,7 @@ char **CSVReadParseLine( FILE * fp )
         strcat( pszWorkLine, pszLine );
     }
     
-    papszReturn = CSLTokenizeStringComplex( pszWorkLine, ",", TRUE, TRUE );
+    papszReturn = CSVSplitLine( pszWorkLine );
 
     CPLFree( pszWorkLine );
 
@@ -521,9 +603,7 @@ CSVScanLinesIndexed( CSVTable *psTable, int nKeyValue )
 /* -------------------------------------------------------------------- */
     psTable->iLastLine = iResult;
     
-    return 
-        CSLTokenizeStringComplex( psTable->papszLines[iResult], ",", 
-                                  TRUE, TRUE );
+    return CSVSplitLine( psTable->papszLines[iResult] );
 }
 
 /************************************************************************/
@@ -559,9 +639,7 @@ CSVScanLinesIngested( CSVTable *psTable, int iKeyField, const char * pszValue,
 /* -------------------------------------------------------------------- */
     while( !bSelected && psTable->iLastLine+1 < psTable->nLineCount ) {
         psTable->iLastLine++;
-        papszFields = 
-            CSLTokenizeStringComplex( psTable->papszLines[psTable->iLastLine],
-                                      ",", TRUE, TRUE );
+        papszFields = CSVSplitLine( psTable->papszLines[psTable->iLastLine] );
 
         if( CSLCount( papszFields ) < iKeyField+1 )
         {
