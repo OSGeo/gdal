@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2002/09/23 15:47:00  dron
+ * CreateCopy() enabled.
+ *
  * Revision 1.2  2002/09/19 14:50:02  warmerda
  * added debug statement
  *
@@ -94,7 +97,7 @@ class JPEG2000RasterBand : public GDALRasterBand
 
     		JPEG2000RasterBand( JPEG2000Dataset *, int, int, int );
     		~JPEG2000RasterBand();
-    
+		
     virtual CPLErr IReadBlock( int, int, void * );
 };
 
@@ -309,7 +312,6 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     return( poDS );
 }
 
-#if 0
 /************************************************************************/
 /*                      JPEG2000CreateCopy()                            */
 /************************************************************************/
@@ -333,31 +335,18 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int			iBand;
     jas_stream_t	*sStream;
     jas_image_t		*sImage;
-    jas_image_cmptparm_t *sComps; // Array of pointers to image components
 
+    jas_init();
     if( !(sStream = jas_stream_fopen( pszFilename, "w+b" )) )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
-                  "Unable to create file %s.\n", 
+        CPLError( CE_Failure, CPLE_FileIO, "Unable to create file %s.\n", 
                   pszFilename );
         return NULL;
     }
     
-    sComps = (jas_image_cmptparm_t*)
-	CPLMalloc( nBands * sizeof(jas_image_cmptparm_t) );
-    for ( iBand = 0; iBand < nBands; iBand++ )
+    if ( !(sImage = jas_image_create0()) )
     {
-        sComps[iBand].tlx = sComps[iBand].tly = 0;
-	sComps[iBand].hstep = sComps[iBand].vstep = 1;
-	sComps[iBand].width = nXSize;
-	sComps[iBand].height = nYSize;
-	sComps[iBand].prec = 8; // FIXME
-	sComps[iBand].sgnd = 0; // FIXME
-    }
-    if ( !(sImage = /*jas_image_create0()*/jas_image_create( nBands, sComps, 0 )) )
-    {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Unable to create image %s.\n", 
+        CPLError( CE_Failure, CPLE_OutOfMemory, "Unable to create image %s.\n", 
                   pszFilename );
         return NULL;
     }
@@ -367,39 +356,72 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     GDALRasterBand	*poBand;
     GUInt32		*paiScanline;
-    int         	iLine, iPixel/*, bSuccess */;
+    int         	iLine, iPixel;
     CPLErr      	eErr = CE_None;
     jas_matrix_t	*sMatrix;
-    
-    if ( !(sMatrix = jas_matrix_create( nYSize, nXSize )) )
+    jas_image_cmptparm_t *sComps; // Array of pointers to image components
+
+    sComps = (jas_image_cmptparm_t*)
+	CPLMalloc( nBands * sizeof(jas_image_cmptparm_t) );
+  
+    if ( !(sMatrix = jas_matrix_create( 1, nXSize )) )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Unable to create matrix with size %dx%d.\n", 
-                   nXSize, nYSize );
+                  "Unable to create matrix with size %dx%d.\n", 1, nYSize );
+	CPLFree( sComps );
+	jas_image_destroy( sImage );
         return NULL;
     }
     paiScanline = (GUInt32 *) CPLMalloc( nXSize *
                             GDALGetDataTypeSize(GDT_UInt32) / 8 );
-    /*if ( !(jas_image_encode( sImage, sStream, jas_image_strtofmt("jp2"), 0 )) )
-    -of JPEG2000 test.tif test.jp2{
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Unable to encode image %s.\n", 
-                  pszFilename );
-        return NULL;
-    }*/
-    for ( iBand = 1; iBand <= nBands; iBand++ )
+    
+    for ( iBand = 0; iBand < nBands; iBand++ )
     {
-        poBand = poSrcDS->GetRasterBand( iBand );
-        for( iLine = 0; eErr == CE_None && iLine < nYSize; iLine++ )
+        poBand = poSrcDS->GetRasterBand( iBand + 1);
+        
+	sComps[iBand].tlx = sComps[iBand].tly = 0;
+	sComps[iBand].hstep = sComps[iBand].vstep = 1;
+	sComps[iBand].width = nXSize;
+	sComps[iBand].height = nYSize;
+	sComps[iBand].prec = GDALGetDataTypeSize( poBand->GetRasterDataType() );
+	switch ( poBand->GetRasterDataType() )
+	{
+	    case GDT_Int16:
+	    case GDT_Int32:
+	    case GDT_Float32:
+	    case GDT_Float64:
+            sComps[iBand].sgnd = 1;
+	    break;
+	    case GDT_Byte:
+	    case GDT_UInt16:
+	    case GDT_UInt32:
+	    default:
+	    sComps[iBand].sgnd = 0;
+	    break;
+	}
+	jas_image_addcmpt(sImage, iBand, sComps);
+
+	for( iLine = 0; eErr == CE_None && iLine < nYSize; iLine++ )
         {
             eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                               paiScanline, nXSize, 1, GDT_UInt32,
                               sizeof(GUInt32), sizeof(GUInt32) * nXSize );
             for ( iPixel = 0; iPixel < nXSize; iPixel++ )
-                jas_matrix_set( sMatrix, iPixel, iLine,
-		                (jas_seqent_t)paiScanline[iPixel] );
-            /*jas_image_writecmpt(sImage, iBand - 1, 0, iLine,
-			    nXSize, 1, sMatrix);*/
+	        jas_matrix_setv( sMatrix, iPixel, paiScanline[iPixel] );
+	    
+            if( (jas_image_writecmpt(sImage, iBand, 0, iLine,
+			      nXSize, 1, sMatrix)) < 0 )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                    "Unable to write scanline %d of the component %d.\n", 
+                    iLine, iBand );
+		jas_matrix_destroy( sMatrix );
+		CPLFree( paiScanline );
+		CPLFree( sComps );
+		jas_image_destroy( sImage );
+                return NULL;
+            }
+	    
             if( eErr == CE_None &&
             !pfnProgress((iLine + 1) / ((double) nYSize), NULL, pProgressData))
             {
@@ -408,47 +430,37 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                       "User terminated CreateCopy()" );
             }
         }
-        if( !(jas_image_addcmpt(sImage, iBand - 1, &sComps[iBand - 1])) );
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                "Unable to add component %d to image %s.\n", 
-                iBand - 1, pszFilename );
-            return NULL;
-        }
-        if( !(jas_image_writecmpt(sImage, iBand - 1, 0, 0,
-    		    nXSize, nYSize, sMatrix)) );
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                "Unable to write component %d of image %s.\n", 
-                iBand - 1, pszFilename );
-            return NULL;
-        }
     }
-    if ( !(jas_image_encode( sImage, sStream, jas_image_strtofmt("jp2"), 0 )) )
+
+     // FIXME: 1. determine colormodel; 2. won't works
+    // jas_image_setcolormodel( sImage, 0 );
+    if ( (jas_image_encode( sImage, sStream, jas_image_strtofmt("jp2"), 0 )) < 0 )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
-                  "Unable to encode image %s.\n", 
+        CPLError( CE_Failure, CPLE_FileIO, "Unable to encode image %s.\n", 
                   pszFilename );
-        return NULL;
+        jas_matrix_destroy( sMatrix );
+	CPLFree( paiScanline );
+	CPLFree( sComps );
+	jas_image_destroy( sImage );
+	return NULL;
     }
+
     jas_stream_flush( sStream );
     
     jas_matrix_destroy( sMatrix );
     CPLFree( paiScanline );
-    jas_image_destroy( sImage );
     CPLFree( sComps );
+    jas_image_destroy( sImage );
     jas_image_clearfmts();
     if ( jas_stream_close( sStream ) )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
-                  "Unable to close file %s.\n", 
-                  pszFilename );
+        CPLError( CE_Failure, CPLE_FileIO, "Unable to close file %s.\n",
+		  pszFilename );
         return NULL;
     }
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
 }
-#endif
 
 /************************************************************************/
 /*                        GDALRegister_JPEG2000()				*/
@@ -470,7 +482,7 @@ void GDALRegister_JPEG2000()
                                    "frmt_jpeg2000.html" );
 
         poDriver->pfnOpen = JPEG2000Dataset::Open;
-//        poDriver->pfnCreateCopy = JPEG2000CreateCopy;
+        poDriver->pfnCreateCopy = JPEG2000CreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
