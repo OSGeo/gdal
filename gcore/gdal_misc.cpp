@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2004/11/23 19:54:07  fwarmerdam
+ * Fixed initialization bug in szDerivedExtension in GDALReadWorldFile().
+ *
  * Revision 1.61  2004/10/26 15:59:06  fwarmerdam
  * Added rw+ for formats with Create().
  *
@@ -1438,13 +1441,14 @@ int GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
         char szDerivedExtension[100];
         const char *pszBaseExt = CPLGetExtension( pszBaseFilename );
 
-        if( strlen(pszBaseExt) == 0 )
+        if( strlen(pszBaseExt) < 2 )
             return FALSE;
 
         // windows version - first + last + 'w'
         szDerivedExtension[0] = pszBaseExt[0];
         szDerivedExtension[1] = pszBaseExt[strlen(pszBaseExt)-1];
         szDerivedExtension[2] = 'w';
+        szDerivedExtension[3] = '\0';
         
         if( GDALReadWorldFile( pszBaseFilename, szDerivedExtension, 
                                padfGeoTransform ) )
