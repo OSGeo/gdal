@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_utils.cpp,v 1.17 2001/06/27 19:52:54 warmerda Exp $
+ * $Id: mitab_utils.cpp,v 1.18 2002/08/28 14:19:22 warmerda Exp $
  *
  * Name:     mitab_utils.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_utils.cpp,v $
+ * Revision 1.18  2002/08/28 14:19:22  warmerda
+ * fix TABGetBasename() for mixture of path divider types like 'mi/abc\def.tab'
+ *
  * Revision 1.17  2001/06/27 19:52:54  warmerda
  * avoid multi byte support if _WIN32 and unix defined for cygwin support
  *
@@ -377,17 +380,16 @@ char *TABGetBasename(const char *pszFname)
     const char *pszTmp = NULL;
 
     /*-----------------------------------------------------------------
-     * Skip leading path
+     * Skip leading path or use whole name if no path dividers are
+     * encountered.
      *----------------------------------------------------------------*/
-    if ((pszTmp = strrchr(pszFname, '/')) != NULL ||
-        (pszTmp = strrchr(pszFname, '\\')) != NULL)
-    {
-        pszTmp++; // Skip the last '/' of the path as well.
-    }
-    else
-    {
-        pszTmp = pszFname;  // No path to skip
-    }
+    pszTmp = pszFname + strlen(pszFname) - 1;
+    while ( pszTmp != pszFname 
+            && *pszTmp != '/' && *pszTmp != '\\' ) 
+        pszTmp--;
+
+    if( pszTmp != pszFname )
+        pszTmp++;
 
     /*-----------------------------------------------------------------
      * Now allocate our own copy and remove extension
