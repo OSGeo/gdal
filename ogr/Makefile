@@ -1,7 +1,9 @@
 
+VSTUDIO =       F:\VisualStudio
 MSDASDK =       C:\MSDASDK
 
-EXTRAFLAGS =	-I$(MSDASDK)\include\oledb
+EXTRAFLAGS =	-I$(VSTUDIO)\VC98\ATL\Include \
+		-I$(MSDASDK)\include\oledb
 
 GDAL_ROOT = 	..
 
@@ -17,9 +19,10 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
 		ogrmultipolygon.obj ogrmultilinestring.obj \
                 ogrmultipoint.obj
 
-OBJ_OLEDB =	oledb_sup.obj oledbsuprowset.obj oledb_sf.obj
+OBJ_OLEDB =	oledb_sup.obj oledbsuprowset.obj oledb_sf.obj \
+		sfcenumerator.obj sfcdatasource.obj sfctable.obj
 
-default:        test1.exe sfdump.exe shape2ogr.obj
+default:        test1.exe sfdump.exe shape2ogr.obj sfcdump.exe
 
 geometryidl.h: geometryidl.idl spatialreferenceidl.h
 	midl geometryidl.idl
@@ -29,6 +32,9 @@ spatialreferenceidl.h: spatialreferenceidl.idl
 
 sfdump.exe:	geometryidl.h sfdump.obj $(OBJ_OLEDB) $(OBJ_OGR) 
 	cl /Zi sfdump.obj $(OBJ_OLEDB) $(OBJ_OGR) $(ALL_LIBS)
+
+sfcdump.exe:	geometryidl.h sfcdump.obj $(OBJ_OLEDB) $(OBJ_OGR) 
+	cl /Zi sfcdump.obj $(OBJ_OLEDB) $(OBJ_OGR) $(ALL_LIBS)
 
 test1.exe:	test1.obj $(OBJ_OGR) 
 	cl test1.obj $(OBJ_OGR) $(ALL_LIBS)
