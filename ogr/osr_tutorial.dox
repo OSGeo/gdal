@@ -231,7 +231,7 @@ points between coordinate systems.
         x = atof( papszArgv[i+3] );
         y = atof( papszArgv[i+4] );
             
-        if( poCT == NULL || poCT->Transform( 1, &x, &y ) != OGRERR_NONE )
+        if( poCT == NULL || !poCT->Transform( 1, &x, &y ) )
             printf( "Transformation failed.\n" );
         else
             printf( "(%f,%f) -> (%f,%f)\n", 
@@ -254,9 +254,9 @@ The OGRCoordinateTransformation::Transform() method itself can
 also fail.  This may be as a delayed result of one of the above
 problems, or as a result of an operation being numerically 
 undefined for one or more of the passed in points.  The 
-Transform() function will return OGRERR_NONE on success, or some
-other value if any of the points fail to transform, and the point array is 
-left in an indeterminate state.  
+Transform() function will return TRUE on success, or FALSE 
+if any of the points fail to transform.  The point array is 
+left in an indeterminate state on error.
 
 Though not shown above, the coordinate transformation service can
 take 3D points, and will adjust elevations for elevation differents
@@ -287,7 +287,7 @@ lat/long.
     
     ...
 
-    if( poTransform->Transform( nPoints, x, y, z ) != OGRERR_NONE )
+    if( !poTransform->Transform( nPoints, x, y, z ) )
     ...
 \endcode
 
