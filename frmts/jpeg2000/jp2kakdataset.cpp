@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.9  2002/11/30 16:54:46  warmerda
+ * ensure we don't initialize from missing resolution levels
+ *
  * Revision 1.8  2002/11/23 18:54:17  warmerda
  * added CREATIONDATATYPES metadata for drivers
  *
@@ -145,7 +148,7 @@ class JP2KAKRasterBand : public GDALRasterBand
 
   public:
 
-    		JP2KAKRasterBand( int, int, kdu_codestream );
+    		JP2KAKRasterBand( int, int, kdu_codestream, int );
     		~JP2KAKRasterBand();
     
     virtual CPLErr IReadBlock( int, int, void * );
@@ -225,7 +228,8 @@ private:
 /************************************************************************/
 
 JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
-                                    kdu_codestream oCodeStream )
+                                    kdu_codestream oCodeStream,
+                                    int nResCount )
 
 {
     this->nBand = nBand;
@@ -274,12 +278,15 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
     {
         int  nXSize = nRasterXSize, nYSize = nRasterYSize;
 
-        for( int nDiscard = 1; nDiscard < 5; nDiscard++ )
+        for( int nDiscard = 1; nDiscard < nResCount; nDiscard++ )
         {
             kdu_dims  dims;
 
             nXSize = (nXSize+1) / 2;
             nYSize = (nYSize+1) / 2;
+
+            if( (nXSize+nYSize) < 128 || nXSize < 4 || nYSize < 4 )
+                continue; /* skip super reduced resolution layers */
 
             oCodeStream.apply_input_restrictions( 0, 0, nDiscard, 0, NULL );
             oCodeStream.get_dims( 0, dims );
@@ -292,7 +299,7 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
                     CPLRealloc( papoOverviewBand, 
                                 sizeof(void*) * nOverviewCount );
                 papoOverviewBand[nOverviewCount-1] = 
-                    new JP2KAKRasterBand( nBand, nDiscard, oCodeStream );
+                    new JP2KAKRasterBand( nBand, nDiscard, oCodeStream, 0 );
             }
             else
             {
@@ -734,6 +741,18 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
 /* -------------------------------------------------------------------- */
+/*      find out how many resolutions levels are available.             */
+/* -------------------------------------------------------------------- */
+        kdu_dims tile_indices; 
+        poDS->oCodeStream.get_valid_tiles(tile_indices);
+
+        kdu_tile tile = poDS->oCodeStream.open_tile(tile_indices.pos);
+        int nResCount = tile.access_component(0).get_num_resolutions();
+        tile.close();
+
+        CPLDebug( "JP2KAK", "nResCount=%d", nResCount );
+
+/* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
         int iBand;
@@ -741,7 +760,8 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         for( iBand = 1; iBand <= poDS->nBands; iBand++ )
         {
             poDS->SetBand( iBand, 
-                           new JP2KAKRasterBand(iBand,0,poDS->oCodeStream) );
+                           new JP2KAKRasterBand(iBand,0,poDS->oCodeStream,
+                                                nResCount) );
         }
 
 /* -------------------------------------------------------------------- */
@@ -1052,14 +1072,25 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
+/*      How many layers?                                                */
+/* -------------------------------------------------------------------- */
+    int      layer_count;
+
+    if( CSLFetchNameValue(papszOptions,"LAYERS") == NULL )
+        layer_count = 12;
+    else
+        layer_count = atoi(CSLFetchNameValue(papszOptions,"LAYERS"));
+    
+/* -------------------------------------------------------------------- */
 /*	Establish how many bytes of data we want for each layer.  	*/
 /*	We take the quality as a percentage, so if QUALITY of 50 is	*/
 /*	selected, we will set the base layer to 50% the default size.   */
 /*	We let the other layers be computed internally.                 */
 /* -------------------------------------------------------------------- */
-    kdu_long layer_bytes[12] = {0,0,0,0,0,0,0,0,0,0,0,0};
+    kdu_long *layer_bytes;
     double   dfQuality = 20.0;
-    kdu_long  layer_byte_base;
+
+    layer_bytes = (kdu_long *) CPLCalloc(sizeof(kdu_long),layer_count);
 
     if( CSLFetchNameValue(papszOptions,"QUALITY") != NULL )
     {
@@ -1076,14 +1107,13 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
 
     if( dfQuality < 99.5 || eType != GDT_Byte )
     {
-        layer_bytes[11] = (kdu_long) (nXSize * nYSize * dfQuality / 100.0);
-        layer_bytes[11] *= (GDALGetDataTypeSize(eType) / 8);
-        layer_bytes[11] *= GDALGetRasterCount(poSrcDS);
+        layer_bytes[layer_count-1] = 
+            (kdu_long) (nXSize * nYSize * dfQuality / 100.0);
+        layer_bytes[layer_count-1] *= (GDALGetDataTypeSize(eType) / 8);
+        layer_bytes[layer_count-1] *= GDALGetRasterCount(poSrcDS);
     }
     else
         bReversible = true;
-
-    layer_byte_base = layer_bytes[11];
 
 /* -------------------------------------------------------------------- */
 /*      Establish the general image parameters.                         */
@@ -1136,9 +1166,8 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Set some additional parameters.                                 */
 /* -------------------------------------------------------------------- */
-//    char szParamString[120];
-
-    oCodeStream.access_siz()->parse_string("Clayers=12");
+    oCodeStream.access_siz()->parse_string(
+        CPLSPrintf("Clayers=%d",layer_count));
     oCodeStream.access_siz()->parse_string("Cycc=no");
     if( eType == GDT_Int16 || eType == GDT_UInt16 )
         oCodeStream.access_siz()->parse_string("Qstep=0.0000152588");
@@ -1303,9 +1332,7 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
                       "Calling oCodeStream.flush() at line %d",
                       MIN(nYSize,iLine+CHUNK_SIZE) );
             
-            oCodeStream.flush( layer_bytes, 12 );
-            CPLDebug( "JP2KAK", "layer_bytes[11] = %d after", 
-                      layer_bytes[11] );
+            oCodeStream.flush( layer_bytes, layer_count );
         }
         else
             CPLDebug( "JP2KAK", 
@@ -1329,8 +1356,10 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     oTile.close();
     
-    oCodeStream.flush(layer_bytes, 12);
+    oCodeStream.flush(layer_bytes, layer_count);
     oCodeStream.destroy();
+
+    CPLFree( layer_bytes );
 
     poOutputFile->close();
 
@@ -1339,77 +1368,6 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );;
 }
-
-#ifdef nodef
-    for (c=0; c < num_components; c++)
-    {
-        kdu_dims dims;
-        kdu_tile_comp comp;
-        kdu_line_buf line;
-        kdu_push_ifc engine;
-        int          iLine;
-
-        comp = oTile.access_component(c);
-
-        kdu_resolution res = comp.access_resolution(); // Get top resolution
-        res.get_dims(dims);
-
-        CPLAssert( dims.size.y == nYSize );
-        CPLAssert( dims.size.x == nXSize );
-
-        line.pre_create(&allocator,dims.size.x,bReversible,bReversible);
-
-        //engine = kdu_encoder(res.access_subband(LL_BAND),&allocator,true);
-        engine = kdu_analysis(res,&allocator,bReversible);
-
-        allocator.finalize(); // Actually creates buffering resources
-
-        line.create(); // Grabs resources from the allocator.
-
-        // Now walk through the lines of the buffer, pushing them into the
-        // relevant tile-component processing engines.
-        for( iLine = 0; iLine < nYSize; iLine++ )
-        {
-            if( (iLine % 512) == 0 || iLine == nYSize-1 )
-            {
-                if( oCodeStream.ready_for_flush() )			
-                {
-                    int   nSavedLayerBytes = layer_bytes[11];
-
-                    CPLDebug( "JP2KAK", 
-                              "Calling oCodeStream.flush() for band %d at line %d",
-                              c+1, iLine );
-                          
-                    CPLDebug( "JP2KAK", "layer_bytes[11] = %d before", 
-                              layer_bytes[11] );
-                    oCodeStream.flush( layer_bytes, 12 );
-                    CPLDebug( "JP2KAK", "layer_bytes[11] = %d after", 
-                              layer_bytes[11] );
-                    CPLDebug( "JP2KAK", "layer_bytes[10] = %d after", 
-                              layer_bytes[10] );
-                    layer_bytes[11] = layer_byte_base * (c+1);
-                }
-                else
-                    CPLDebug( "JP2KAK", 
-                              "read_for_flush() is false at band %d, line %d.",
-                              c+1, iLine );
-            }
-
-            if( !pfnProgress( (c*nYSize+iLine)
-                              / ((double)num_components*nYSize),
-                              NULL, pProgressData ) )
-            {
-                oCodeStream.destroy();
-                poOutputFile->close();
-                VSIUnlink( pszFilename );
-                return NULL;
-            }
-        }
-
-        engine.destroy();
-    }
-#endif
-
 
 /************************************************************************/
 /*                        GDALRegister_JP2KAK()				*/
