@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/06/01 18:04:17  warmerda
+ * added mnBufferSize to CVirtualArray
+ *
  * Revision 1.5  2001/05/28 19:41:58  warmerda
  * lots of changes
  *
@@ -75,6 +78,7 @@ public:
 private:
 	int	m_nPackedRecordLength;
 	BYTE	*mBuffer;
+        int     m_nBufferSize;
 	OGRLayer *m_pOGRLayer;
 	int	m_nArraySize;
 	int	m_nLastRecordAccessed;
