@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/07/26 17:32:16  warmerda
+ * Added info on new warp options.
+ *
  * Revision 1.7  2003/05/06 18:31:35  warmerda
  * added WRITE_FLUSH comment
  *
@@ -506,6 +509,31 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
  * of extra seeking around the disk, and reduced IO throughput.  The default
  * at this time is NO.
  *
+ * Normally when computing the source raster data to 
+ * load to generate a particular output area, the warper samples transforms
+ * 21 points along each edge of the destination region back onto the source
+ * file, and uses this to compute a bounding window on the source image that
+ * is sufficient.  Depending on the transformation in effect, the source 
+ * window may be a bit too small, or even missing large areas.  Problem 
+ * situations are those where the transformation is very non-linear or 
+ * "inside out".  Examples are transforming from WGS84 to Polar Steregraphic
+ * for areas around the pole, or transformations where some of the image is
+ * untransformable.  The following options provide some additional control
+ * to deal with errors in computing the source window:
+ * 
+ * - SAMPLE_GRID=YES/NO: Setting this option to YES will force the sampling to 
+ * include internal points as well as edge points which can be important if
+ * the transformation is esoteric inside out, or if large sections of the
+ * destination image are not transformable into the source coordinate system.
+ *
+ * - SAMPLE_STEPS: Modifies the density of the sampling grid.  The default
+ * number of steps is 21.   Increasing this can increase the computational
+ * cost, but improves the accuracy with which the source region is computed.
+ *
+ * - SOURCE_EXTRA: This is a number of extra pixels added around the source
+ * window for a given request, and by default it is 1 to take care of rounding
+ * error.  Setting this larger will incease the amount of data that needs to
+ * be read, but can avoid missing source data.  
  */
 
 /************************************************************************/
