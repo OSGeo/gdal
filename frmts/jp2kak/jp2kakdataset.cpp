@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.27  2004/10/07 20:18:27  fwarmerdam
+ * added support for greyscale+alpha
+ *
  * Revision 1.26  2004/10/07 16:48:32  fwarmerdam
  * added simple CopyCreate RGBA output support
  *
@@ -437,7 +440,8 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
 #else
             oJP2Channels.get_colour_mapping( 0, nRedIndex, nLutIndex );
 #endif
-            eInterp = GCI_GrayIndex;
+            if( nBand == 1 )
+                eInterp = GCI_GrayIndex;
         }
 
         if( eInterp != GCI_Undefined )
@@ -1893,7 +1897,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         if( bHaveCT || poSrcDS->GetRasterCount() == 3 )
             colour.init( JP2_sRGB_SPACE );
-        else if( poSrcDS->GetRasterCount() == 4 
+        else if( poSrcDS->GetRasterCount() >= 4 
                  && poSrcDS->GetRasterBand(4)->GetColorInterpretation() 
                  == GCI_AlphaBand )
         {
@@ -1906,11 +1910,17 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             jp2_out.access_channels().set_opacity_mapping(1,3);
             jp2_out.access_channels().set_opacity_mapping(2,3);
         }
+        else if( poSrcDS->GetRasterCount() >= 2
+                 && poSrcDS->GetRasterBand(2)->GetColorInterpretation() 
+                 == GCI_AlphaBand )
+        {
+            colour.init( JP2_sLUM_SPACE );
+            jp2_out.access_channels().init( 1 );
+            jp2_out.access_channels().set_colour_mapping(0,0);
+            jp2_out.access_channels().set_opacity_mapping(0,1);
+        }
         else
             colour.init( JP2_sLUM_SPACE );
-
-        // Are we producing RGBA? 
-        
     }
 
 /* -------------------------------------------------------------------- */
