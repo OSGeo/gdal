@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/01/03 18:54:25  warmerda
+ * improved seek error message
+ *
  * Revision 1.6  2000/08/16 15:51:17  warmerda
  * allow floating (datasetless) raw bands
  *
@@ -264,8 +267,8 @@ CPLErr RawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                   SEEK_SET ) == -1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to scanline %d to file.\n",
-                  nBlockYOff );
+                  "Failed to seek to scanline %d @ %d to write to file.\n",
+                  nBlockYOff, nImgOffset + nBlockYOff * nLineOffset );
         
         eErr = CE_Failure;
     }
