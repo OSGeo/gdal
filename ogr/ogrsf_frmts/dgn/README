@@ -1,0 +1,29 @@
+
+		DGNLIB Source Distribution
+		==========================
+
+Current information on DGNLIB, including detailed API documentation
+can be found at:
+
+  http://gdal.velocet.ca/projects/dgn
+
+
+Building
+--------
+
+This is a preliminary source distribution, and I have not gone to any
+pains to make it easy to configure and build.  To build please do the 
+following:
+
+1. Update cpl_config.h to represent your platform accurately.  Generally all
+that matters is to #define WORDS_BIGENDIAN on big endian platforms.  The
+rest can likely be ignored.<p>
+
+2. Compile the sample program.  On unix this can be accomplished something
+like:
+
+  % gcc dgndump.c *.cpp -lm -o dgndump
+
+It is left as an excercise to the reader to figure out how to handle it on
+Windows.
+
