@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  1999/11/04 21:09:40  warmerda
+ * Made a bunch of changes related to supporting creation of new
+ * layers and data sources.
+ *
  * Revision 1.10  1999/10/06 19:02:43  warmerda
  * Added tiger registration.
  *
@@ -76,6 +80,11 @@
 #define OLCRandomWrite         "RandomWrite"
 #define OLCFastSpatialFilter   "FastSpatialFilter"
 #define OLCFastFeatureCount    "FastFeatureCount"
+#define OLCCreateField         "CreateField"
+
+#define ODsCCreateLayer	       "CreateLayer"
+
+#define ODrCCreateDataSource   "CreateDataSource"
 
 /************************************************************************/
 /*                               OGRLayer                               */
@@ -109,6 +118,9 @@ class OGRLayer
     virtual int         TestCapability( const char * ) = 0;
 
     virtual const char *GetInfo( const char * );
+
+    virtual OGRErr      CreateField( OGRFieldDefn *poField,
+                                     int bApproxOK = TRUE );
 };
 
 /************************************************************************/
@@ -129,12 +141,19 @@ class OGRDataSource
 {
   public:
     
-    virtual 	~OGRDataSource() {}
+    virtual 	~OGRDataSource();
 
     virtual const char  *GetName() = 0;
 
     virtual int		GetLayerCount() = 0;
     virtual OGRLayer    *GetLayer(int) = 0;
+
+    virtual int         TestCapability( const char * ) = 0;
+
+    virtual OGRLayer    *CreateLayer( const char *, 
+                                      OGRSpatialReference * = NULL,
+                                      OGRwkbGeometryType = wkbUnknown,
+                                      char ** = NULL );
 };
 
 /************************************************************************/
@@ -153,11 +172,16 @@ class OGRDataSource
 class OGRSFDriver
 {
   public:
-    virtual 	~OGRSFDriver() {}
+    virtual 	~OGRSFDriver();
 
     virtual const char	*GetName() = 0;
 
     virtual OGRDataSource *Open( const char *pszName, int bUpdate=FALSE ) = 0;
+
+    virtual int         TestCapability( const char * ) = 0;
+
+    virtual OGRDataSource *CreateDataSource( const char *pszName,
+                                             char ** = NULL );
 };
 
 
@@ -184,7 +208,7 @@ class OGRSFDriverRegistrar
     static OGRSFDriverRegistrar *GetRegistrar();
     static OGRDataSource *Open( const char *pszName, int bUpdate=FALSE,
                                 OGRSFDriver ** ppoDriver = NULL );
-    
+
     void	RegisterDriver( OGRSFDriver * );
 
     int		GetDriverCount( void );
@@ -196,11 +220,14 @@ class OGRSFDriverRegistrar
 /*      Various available registration methods.                         */
 /* -------------------------------------------------------------------- */
 CPL_C_START
+void    OGRRegisterAll();
+
 void	RegisterOGRShape();
 void	RegisterOGRNTF();
 void	RegisterOGRFME();
 void    RegisterOGRSDTS();
 void    RegisterOGRTiger();
+void	RegisterOGRS57();
 CPL_C_END
 
 
