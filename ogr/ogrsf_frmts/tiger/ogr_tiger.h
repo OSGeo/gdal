@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/01/13 17:23:49  warmerda
+ * recover more gracefully from RT2 open errors
+ *
  * Revision 1.15  2003/09/11 22:47:53  aamici
  * add class constructors and destructors where needed in order to
  * let the mingw/cygwin binutils produce sensible partially linked objet files
@@ -258,7 +261,7 @@ class TigerCompleteChain : public TigerFileBase
   int                 bUsingRT3;
 
   int                 GetShapeRecordId( int, int );
-  void                AddShapePoints( int, int, OGRLineString *, int );
+  int                 AddShapePoints( int, int, OGRLineString *, int );
 
   void                AddFieldDefnsPre2002();
   OGRFeature         *GetFeaturePre2002( int );
