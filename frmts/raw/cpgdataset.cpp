@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/12/17 22:45:55  gwalter
+ * Added support for sirc-style convair flat
+ * binary datasets.
+ *
  * Revision 1.5  2004/11/11 00:16:01  gwalter
  * Polarmetric->Polarimetric.
  *
@@ -65,13 +69,20 @@ CPL_C_END
 /* ==================================================================== */
 /************************************************************************/
 
+class SIRC_QSLCRasterBand;
+
 class CPGDataset : public RawDataset
 {
+    friend class SIRC_QSLCRasterBand;
+
     FILE	*afpImage[4];
 
     int nGCPCount;
     GDAL_GCP *pasGCPList;
     char *pszGCPProjection;
+
+    double adfGeoTransform[6];
+    char *pszProjection;
 
     static int  AdjustFilename( char *, const char *, const char * );
 
@@ -82,6 +93,9 @@ class CPGDataset : public RawDataset
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
+
+    virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * );
     
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -96,7 +110,14 @@ CPGDataset::CPGDataset()
 
     nGCPCount = 0;
     pasGCPList = NULL;
+    pszProjection = CPLStrdup("");
     pszGCPProjection = CPLStrdup("");
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
 
     for( iBand = 0; iBand < 4; iBand++ )
         afpImage[iBand] = NULL;
@@ -127,9 +148,26 @@ CPGDataset::~CPGDataset()
         CPLFree( pasGCPList );
     }
 
+    CPLFree( pszProjection );
     CPLFree( pszGCPProjection );
 
 }
+
+/************************************************************************/
+/* ==================================================================== */
+/*                          SIRC_QSLCPRasterBand                        */
+/* ==================================================================== */
+/************************************************************************/
+
+class SIRC_QSLCRasterBand : public GDALRasterBand
+{
+    friend class CPGDataset;
+
+  public:
+                   SIRC_QSLCRasterBand( CPGDataset *, int, GDALDataType );
+
+    virtual CPLErr IReadBlock( int, int, void * );
+};
 
 /************************************************************************/
 /*                           AdjustFilename()                           */
@@ -154,7 +192,8 @@ int CPGDataset::AdjustFilename( char *pszFilename,
     if ( EQUAL(pszFilename+nNameLen-7,"sso.hdr") || 
          EQUAL(pszFilename+nNameLen-7,"sso.img"))
         strncpy( pszFilename + nNameLen - 9, pszPolarization, 2 );
-    else
+    else if( EQUAL(pszFilename+nNameLen-7,"asp.hdr") || 
+         EQUAL(pszFilename+nNameLen-7,"asp.img"))
         strncpy( pszFilename + nNameLen - 13, pszPolarization, 2 );
 
     return VSIStat( pszFilename, &sStatBuf ) == 0;
@@ -169,7 +208,10 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
 {
 /* -------------------------------------------------------------------- */
 /*      Is this a PolGASP .img/.hdr file?  We expect it to end with     */
-/*      sso.img or sso.hdr.                                             */
+/*      one of:                                                         */
+/*               1) sso.img or sso.hdr.                                 */
+/*               2) polgasp.img or polgasp.hdr                          */
+/*               3) SIRC.hdr or SIRC.img                                */
 /* -------------------------------------------------------------------- */
     int nNameLen = strlen(poOpenInfo->pszFilename);
 
@@ -178,7 +220,10 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
             && !EQUAL(poOpenInfo->pszFilename+nNameLen-7,"sso.img")) ) &&
        ( nNameLen < 13 
         || (!EQUAL(poOpenInfo->pszFilename+nNameLen-11,"polgasp.hdr")
-            && !EQUAL(poOpenInfo->pszFilename+nNameLen-11,"polgasp.img")) ))
+            && !EQUAL(poOpenInfo->pszFilename+nNameLen-11,"polgasp.img")) ) &&
+       ( nNameLen < 8
+        || (!EQUAL(poOpenInfo->pszFilename+nNameLen-8,"SIRC.hdr")
+            && !EQUAL(poOpenInfo->pszFilename+nNameLen-8,"SIRC.img")) ))
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -191,14 +236,18 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Verify we have our various files.                               */
 /* -------------------------------------------------------------------- */
     
-    if( !AdjustFilename( pszWorkName, "hh", "img" ) 
+    if( ( EQUAL(pszWorkName+nNameLen-7,"sso.hdr") || 
+          EQUAL(pszWorkName+nNameLen-7,"sso.img")  || 
+          EQUAL(pszWorkName+nNameLen-7,"asp.img") ||
+          EQUAL(pszWorkName+nNameLen-7,"asp.hdr") ) &&
+        (!AdjustFilename( pszWorkName, "hh", "img" ) 
         || !AdjustFilename( pszWorkName, "hh", "hdr" ) 
         || !AdjustFilename( pszWorkName, "hv", "img" ) 
         || !AdjustFilename( pszWorkName, "hv", "hdr" ) 
         || !AdjustFilename( pszWorkName, "vh", "img" ) 
         || !AdjustFilename( pszWorkName, "vh", "hdr" ) 
         || !AdjustFilename( pszWorkName, "vv", "img" ) 
-        || !AdjustFilename( pszWorkName, "vv", "hdr" ) )
+         || !AdjustFilename( pszWorkName, "vv", "hdr" )) )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Apparent attempt to open Convair PolGASP data failed as\n"
@@ -206,9 +255,30 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLFree( pszWorkName );
         return NULL;
     }
+    else if( ( EQUAL(pszWorkName+nNameLen-7,"SIRC.hdr") || 
+               EQUAL(pszWorkName+nNameLen-7,"SIRC.img") ) &&
+             !AdjustFilename( pszWorkName, "", "img" ) )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Apparent attempt to open SIRC Convair PolGASP data\n"
+                  "failed as the image file is missing." );
+        CPLFree( pszWorkName );
+        return NULL;
+    } 
+    else if( ( EQUAL(pszWorkName+nNameLen-7,"SIRC.hdr") || 
+               EQUAL(pszWorkName+nNameLen-7,"SIRC.img") ) &&
+             !AdjustFilename( pszWorkName, "", "hdr" ))
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Apparent attempt to open SIRC Convair PolGASP data\n"
+                  "failed as the header file is missing." );
+        CPLFree( pszWorkName );
+        return NULL;
+    } 
 
 /* -------------------------------------------------------------------- */
-/*      Read the hh .hdr file and parse it.                             */
+/*      Read the .hdr file (the hh one for the .sso and polgasp cases)  */
+/*      and parse it.                                                   */
 /* -------------------------------------------------------------------- */
     char **papszHdrLines;
     int iLine;
@@ -221,6 +291,10 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
     double dfaltitude = 0.0, dfnear_srd = 0.0;
     double dfsample_size = 0.0, dfsample_size_az = 0.0;
 
+    /* Parameters in geogratis geocoded images */
+    int iUTMParamsFound = 0, iUTMZone=0, iCorner=0;
+    double dfnorth = 0.0, dfeast = 0.0;
+
     AdjustFilename( pszWorkName, "hh", "hdr" );
     papszHdrLines = CSLLoad( pszWorkName );
 
@@ -228,9 +302,45 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         char **papszTokens = CSLTokenizeString( papszHdrLines[iLine] );
 
-        if( CSLCount( papszTokens ) != 2 )
-            /* ignore */;
+        /* Note: some cv580 file seem to have comments with #, hence the >=
+         *       instead of = for token checking, and the equalN for the corner.
+         */
 
+        if( CSLCount( papszTokens ) < 2 )
+        {
+          /* ignore */;
+        }
+        else if ( ( CSLCount( papszTokens ) >= 3 ) &&
+                 EQUAL(papszTokens[0],"reference") &&
+                 EQUAL(papszTokens[1],"north") )
+        {
+            dfnorth = atof(papszTokens[2]);
+            iUTMParamsFound++;
+        }
+        else if ( ( CSLCount( papszTokens ) >= 3 ) &&
+               EQUAL(papszTokens[0],"reference") &&
+               EQUAL(papszTokens[1],"east") )
+        {
+            dfeast = atof(papszTokens[2]);
+            iUTMParamsFound++;
+        }  
+        else if ( ( CSLCount( papszTokens ) >= 5 ) &&
+               EQUAL(papszTokens[0],"reference") &&
+               EQUAL(papszTokens[1],"projection") &&
+               EQUAL(papszTokens[2],"UTM") &&
+               EQUAL(papszTokens[3],"zone") )
+        {
+            iUTMZone = atoi(papszTokens[4]);
+            iUTMParamsFound++;
+        } 
+        else if ( ( CSLCount( papszTokens ) >= 3 ) &&
+               EQUAL(papszTokens[0],"reference") &&
+               EQUAL(papszTokens[1],"corner") &&
+               EQUALN(papszTokens[2],"Upper_Left",10) )
+        {
+            iCorner = 0;
+            iUTMParamsFound++;
+        }  
         else if( EQUAL(papszTokens[0],"number_lines") )
             nLines = atoi(papszTokens[1]);
         
@@ -239,14 +349,14 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
 
         else if( (EQUAL(papszTokens[0],"header_offset") 
                   && atoi(papszTokens[1]) != 0) 
-                 || (EQUAL(papszTokens[0],"number_of_channels") 
-                     && atoi(papszTokens[1]) != 1) 
+                 || (EQUAL(papszTokens[0],"number_channels") 
+                     && (atoi(papszTokens[1]) != 1)
+                     && (atoi(papszTokens[1]) != 10)) 
                  || (EQUAL(papszTokens[0],"datatype") 
                      && atoi(papszTokens[1]) != 1) 
                  || (EQUAL(papszTokens[0],"number_format") 
-                     && !EQUAL(papszTokens[1],"float32"))
-                 || (EQUAL(papszTokens[0],"complex_flag") 
-                     && atoi(papszTokens[1]) != 1))
+                     && !EQUAL(papszTokens[1],"float32")
+                     && !EQUAL(papszTokens[1],"int8")))
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Keyword %s has value %s which does not match CPG driver expectation.",
@@ -268,16 +378,19 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             dfsample_size = atof(papszTokens[1]);
             iGeoParamsFound++;
+            iUTMParamsFound++;
         }
         else if( EQUAL(papszTokens[0],"sample_size_az") )
         {
             dfsample_size_az = atof(papszTokens[1]);
             iGeoParamsFound++;
+            iUTMParamsFound++;
         }
         else if( EQUAL(papszTokens[0],"transposed") )
         {
             itransposed = atoi(papszTokens[1]);
             iGeoParamsFound++;
+            iUTMParamsFound++;
         }
 
 
@@ -304,7 +417,7 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Initialize dataset.                                             */
 /* -------------------------------------------------------------------- */
-    int iBand;
+    int iBand=0;
     CPGDataset     *poDS;
 
     poDS = new CPGDataset();
@@ -317,35 +430,100 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     char *apszPolarizations[4] = { "hh", "hv", "vv", "vh" };
 
-    for( iBand = 0; iBand < 4; iBand++ )
+    if ( EQUAL(pszWorkName+nNameLen-7,"IRC.hdr") ||
+         EQUAL(pszWorkName+nNameLen-7,"IRC.img") )
     {
-        RawRasterBand	*poBand;
-        
-        AdjustFilename( pszWorkName, apszPolarizations[iBand], "img" );
-        
-        poDS->afpImage[iBand] = VSIFOpen( pszWorkName, "rb" );
-        if( poDS->afpImage[iBand] == NULL )
+
+        AdjustFilename( pszWorkName, "" , "img" );
+        poDS->afpImage[0] = VSIFOpen( pszWorkName, "rb" );
+        if( poDS->afpImage[0] == NULL )
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
                       "Failed to open .img file: %s", 
                       pszWorkName );
             return NULL;
         }
+        for( iBand = 0; iBand < 4; iBand++ )
+        {
+            SIRC_QSLCRasterBand	*poBand;
 
-        poBand = 
-            new RawRasterBand( poDS, iBand+1, poDS->afpImage[iBand], 
-                               0, 8, 8*nSamples, 
-                               GDT_CFloat32, !CPL_IS_LSB, FALSE );
-        poDS->SetBand( iBand+1, poBand );
-
-        poBand->SetMetadataItem( "POLARIMETRIC_INTERP", 
+            poBand = new SIRC_QSLCRasterBand( poDS, iBand+1, GDT_CFloat32 );
+            poDS->SetBand( iBand+1, poBand );
+            poBand->SetMetadataItem( "POLARIMETRIC_INTERP", 
                                  apszPolarizations[iBand] );
+        }
     }
+    else
+    {
+        for( iBand = 0; iBand < 4; iBand++ )
+        {
+            RawRasterBand	*poBand;
+        
+            AdjustFilename( pszWorkName, apszPolarizations[iBand], "img" );
+          
+            poDS->afpImage[iBand] = VSIFOpen( pszWorkName, "rb" );
+            if( poDS->afpImage[iBand] == NULL )
+            {
+                CPLError( CE_Failure, CPLE_OpenFailed, 
+                          "Failed to open .img file: %s", 
+                          pszWorkName );
+                return NULL;
+            }
+  
+            poBand = 
+                new RawRasterBand( poDS, iBand+1, poDS->afpImage[iBand], 
+                                   0, 8, 8*nSamples, 
+                                   GDT_CFloat32, !CPL_IS_LSB, FALSE );
+            poDS->SetBand( iBand+1, poBand );
 
-/* -------------------------------------------------------------------- */
-/*      Add pseudo-geocoding, if enough information found.              */
-/* -------------------------------------------------------------------- */
-    if (iGeoParamsFound == 5)
+            poBand->SetMetadataItem( "POLARIMETRIC_INTERP", 
+                                 apszPolarizations[iBand] );
+        }
+    }
+/* -------------------------------------------------------------------------------------- */
+/*      Add georeferencing or pseudo-geocoding, if enough information found.              */
+/* -------------------------------------------------------------------------------------- */
+    if (iUTMParamsFound == 7)
+    {
+        OGRSpatialReference oUTM;
+        double dfnorth_center;
+
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[4] = 0.0;
+ 
+        if (itransposed == 1)
+        {
+            printf("Warning- did not have a convair SIRC-style test dataset\n"
+                 "with transposed=1 for testing.  Georefencing may be wrong.\n");
+            dfnorth_center = dfnorth + nLines*dfsample_size/2.0;
+            poDS->adfGeoTransform[0] = dfnorth;
+            poDS->adfGeoTransform[1] = -1*dfsample_size;
+            poDS->adfGeoTransform[3] = dfeast;
+            poDS->adfGeoTransform[5] = dfsample_size_az;
+        }
+        else
+        {
+            dfnorth_center = dfnorth + nLines*dfsample_size_az/2.0;
+            poDS->adfGeoTransform[0] = dfeast;
+            poDS->adfGeoTransform[1] = dfsample_size_az;
+            poDS->adfGeoTransform[3] = dfnorth;
+            poDS->adfGeoTransform[5] = -1*dfsample_size;
+        }
+        if (dfnorth_center < 0)
+            oUTM.SetUTM(iUTMZone, 0);
+        else
+            oUTM.SetUTM(iUTMZone, 1);
+
+        /* Assuming WGS84 */
+        oUTM.SetWellKnownGeogCS( "WGS84" );
+        CPLFree( poDS->pszProjection );
+        poDS->pszProjection = NULL;
+        oUTM.exportToWkt( &(poDS->pszProjection) );
+
+
+
+    }
+    else if (iGeoParamsFound == 5)
     {
         int ngcp;
         double dfgcpLine, dfgcpPixel, dfgcpX, dfgcpY, dftemp;
@@ -448,6 +626,180 @@ const GDAL_GCP *CPGDataset::GetGCPs()
 {
     return pasGCPList;
 }
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *CPGDataset::GetProjectionRef()
+
+{
+    return( pszProjection );
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr CPGDataset::GetGeoTransform( double * padfTransform )
+
+{
+    memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 ); 
+    return( CE_None );
+}
+
+/************************************************************************/
+/*                           SIRC_QSLCRasterBand()                      */
+/************************************************************************/
+
+SIRC_QSLCRasterBand::SIRC_QSLCRasterBand( CPGDataset *poGDS, int nBand,
+                                          GDALDataType eType )
+
+{
+    this->poDS = poGDS;
+    this->nBand = nBand;
+
+    eDataType = eType;
+
+    nBlockXSize = poGDS->nRasterXSize;
+    nBlockYSize = 1;
+
+    if( nBand == 1 )
+        SetMetadataItem( "POLARIMETRIC_INTERP", "HH" );
+    else if( nBand == 2 )
+        SetMetadataItem( "POLARIMETRIC_INTERP", "HV" );
+    else if( nBand == 3 )
+        SetMetadataItem( "POLARIMETRIC_INTERP", "VH" );
+    else if( nBand == 4 )
+        SetMetadataItem( "POLARIMETRIC_INTERP", "VV" );
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+/* From: http://southport.jpl.nasa.gov/software/dcomp/dcomp.html
+
+ysca = sqrt{ [ (Byte(2) / 254 ) + 1.5] 2Byte(1) }
+
+Re(SHH) = byte(3) ysca/127
+
+Im(SHH) = byte(4) ysca/127
+
+Re(SHV) = byte(5) ysca/127
+
+Im(SHV) = byte(6) ysca/127
+
+Re(SVH) = byte(7) ysca/127
+
+Im(SVH) = byte(8) ysca/127
+
+Re(SVV) = byte(9) ysca/127
+
+Im(SVV) = byte(10) ysca/127
+
+*/
+
+CPLErr SIRC_QSLCRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                  void * pImage )
+
+{
+    int	   offset, nBytesPerSample=10;
+    GByte  *pabyRecord;
+    CPGDataset *poGDS = (CPGDataset *) poDS;
+    static float afPowTable[256];
+    static int bPowTableInitialized = FALSE;
+
+    offset = nBlockXSize* nBlockYOff*nBytesPerSample;
+
+/* -------------------------------------------------------------------- */
+/*      Load all the pixel data associated with this scanline.          */
+/* -------------------------------------------------------------------- */
+    int	        nBytesToRead = nBytesPerSample * nBlockXSize;
+
+    pabyRecord = (GByte *) CPLMalloc( nBytesToRead );
+
+    if( VSIFSeek( poGDS->afpImage[0], offset, SEEK_SET ) != 0 
+        || (int) VSIFRead( pabyRecord, 1, nBytesToRead, 
+                           poGDS->afpImage[0] ) != nBytesToRead )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Error reading %d bytes of SIRC Convair at offset %d.\n"
+                  "Reading file %s failed.", 
+                  nBytesToRead, offset, poGDS->GetDescription() );
+        CPLFree( pabyRecord );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize our power table if this is our first time through.   */
+/* -------------------------------------------------------------------- */
+    if( !bPowTableInitialized )
+    {
+        int i;
+
+        bPowTableInitialized = TRUE;
+
+        for( i = 0; i < 256; i++ )
+        {
+            afPowTable[i] = pow( 2.0, i-128 );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Copy the desired band out based on the size of the type, and    */
+/*      the interleaving mode.                                          */
+/* -------------------------------------------------------------------- */
+    int iX;
+
+    for( iX = 0; iX < nBlockXSize; iX++ )
+    {
+        unsigned char *pabyGroup = pabyRecord + iX * nBytesPerSample;
+        signed char *Byte = (signed char*)pabyGroup-1; /* A ones based alias */
+        double dfReSHH, dfImSHH, dfReSHV, dfImSHV, 
+            dfReSVH, dfImSVH, dfReSVV, dfImSVV, dfScale;
+
+        dfScale = sqrt( (Byte[2] / 254 + 1.5) * afPowTable[Byte[1] + 128] );
+        
+        if( nBand == 1 )
+        {
+            dfReSHH = Byte[3] * dfScale / 127.0;
+            dfImSHH = Byte[4] * dfScale / 127.0;
+
+            ((float *) pImage)[iX*2  ] = dfReSHH;
+            ((float *) pImage)[iX*2+1] = dfImSHH;
+        }        
+        else if( nBand == 2 )
+        {
+            dfReSHV = Byte[5] * dfScale / 127.0;
+            dfImSHV = Byte[6] * dfScale / 127.0;
+
+            ((float *) pImage)[iX*2  ] = dfReSHV;
+            ((float *) pImage)[iX*2+1] = dfImSHV;
+        }
+        else if( nBand == 3 )
+        {
+            dfReSVH = Byte[7] * dfScale / 127.0;
+            dfImSVH = Byte[8] * dfScale / 127.0;
+
+            ((float *) pImage)[iX*2  ] = dfReSVH;
+            ((float *) pImage)[iX*2+1] = dfImSVH;
+        }
+        else if( nBand == 4 )
+        {
+            dfReSVV = Byte[9] * dfScale / 127.0;
+            dfImSVV = Byte[10]* dfScale / 127.0;
+
+            ((float *) pImage)[iX*2  ] = dfReSVV;
+            ((float *) pImage)[iX*2+1] = dfImSVV;
+        }
+    }
+
+    CPLFree( pabyRecord );
+
+    return CE_None;
+}
+
 /************************************************************************/
 /*                         GDALRegister_CPG()                          */
 /************************************************************************/
