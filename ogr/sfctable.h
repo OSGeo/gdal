@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/11/01 17:05:01  warmerda
+ * various old additions
+ *
  * Revision 1.8  1999/12/30 16:53:48  warmerda
  * provide app access to poSRS
  *
@@ -110,10 +113,15 @@ class SFCTable : public CTable<CDynamicAccessor>
                 SFCTable();
     virtual     ~SFCTable();
 
+    HRESULT     OpenFromRowset( IRowset * pIRowset );
+    
+    HRESULT     Open( const CSession& session, DBID& dbid,
+                      DBPROPSET* pPropSet = NULL );
+
     void        SetTableName( const char * );
     const char *GetTableName();
     
-    int         ReadSchemaInfo( CDataSource * );
+    int         ReadSchemaInfo( CDataSource *, CSession * = NULL );
 
     void        ReleaseIUnknowns();
     
