@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/05/28 19:39:29  warmerda
+ * added SFWkbGeomTypeToDBGEOM
+ *
  * Revision 1.5  1999/07/23 19:20:27  kshih
  * Modifications for errors etc...
  *
@@ -58,5 +61,6 @@ void			SFGetFilenames(const char *,char **,char **);
 char			*SFGetInitDataSource(IUnknown *pIUnknownIn);
 HRESULT	     	SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,char *pszText);
 void			SFRegisterOGRFormats();
+int             SFWkbGeomTypeToDBGEOM( OGRwkbGeometryType );
 
 void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... );

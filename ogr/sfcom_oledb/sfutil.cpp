@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/05/28 19:39:29  warmerda
+ * added SFWkbGeomTypeToDBGEOM
+ *
  * Revision 1.11  2001/04/30 18:57:22  warmerda
  * use CPLDebug
  *
@@ -67,6 +70,7 @@
 #include "sfutil.h"
 #include "SF.h"
 #include "cpl_error.h"
+#include "oledbgis.h"
 
 typedef struct _IUnknownOGRInfo
 {
@@ -323,3 +327,48 @@ HRESULT	SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,
     }
     return passed_hr;
 }
+
+/************************************************************************/
+/*                       SFWkbGeomTypeToDBGEOM()                        */
+/************************************************************************/
+
+int             SFWkbGeomTypeToDBGEOM( OGRwkbGeometryType in )
+
+{
+    switch( in )
+    {
+        case wkbPoint:
+        case wkbPoint25D:
+            return  DBGEOM_POINT;
+                        
+        case wkbLineString:
+        case wkbLineString25D:
+            return DBGEOM_LINESTRING;
+            break;
+                        
+        case wkbPolygon:
+        case wkbPolygon25D:
+            return DBGEOM_POLYGON;
+                        
+        case wkbMultiPoint:
+            return DBGEOM_MULTIPOINT;
+                        
+        case wkbMultiLineString:
+            return DBGEOM_MULTILINESTRING;
+                        
+        case wkbMultiPolygon:
+            return DBGEOM_MULTIPOLYGON;
+                        
+        case wkbGeometryCollection:
+            return DBGEOM_COLLECTION;
+            break;
+                        
+        case wkbUnknown:
+        case wkbNone:
+        default:
+            return DBGEOM_GEOMETRY;
+    }
+
+    return DBGEOM_GEOMETRY;
+}
+
