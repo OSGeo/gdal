@@ -28,9 +28,13 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/01/12 19:25:57  warmerda
+ * Dale Lutz provided fixes to avoid calling DTEDGetField() more than
+ * onces within an expression, and to ensure values evaluated with
+ * atoi() don't have leading zeros to avoid treatment as octal.
+ *
  * Revision 1.1  1999/12/07 18:01:28  warmerda
  * New
- *
  */
 
 #include "dted_api.h"
@@ -47,13 +51,35 @@ static
 const char *DTEDGetField( const char *pachRecord, int nStart, int nSize )
 
 {
-    static char	szResult[81];
+    static char szResult[81];
 
     CPLAssert( nSize < sizeof(szResult) );
     memcpy( szResult, pachRecord + nStart - 1, nSize );
     szResult[nSize] = '\0';
 
     return szResult;
+}
+
+/************************************************************************/
+/*                         StripLeadingZeros()                          */
+/*                                                                      */
+/*      Return a pointer to the first non-zero character in BUF.        */
+/*      BUF must be null terminated.                                    */
+/*      If buff is all zeros, then it will point to the last non-zero   */
+/************************************************************************/
+
+static const char* stripLeadingZeros(const char* buf)
+{
+    const char* ptr = buf;
+
+    /* Go until we run out of characters  or hit something non-zero */
+
+    while( *ptr == '0' && *(ptr+1) != '\0' )
+    {
+        ptr++;
+    }
+
+    return ptr;
 }
 
 /************************************************************************/
@@ -65,10 +91,13 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
                      int bTestOpen )
 
 {
-    FILE	*fp;
-    char	achRecord[DTED_UHL_SIZE];
-    DTEDInfo	*psDInfo = NULL;
-    double	dfLLOriginX, dfLLOriginY;
+    FILE        *fp;
+    char        achRecord[DTED_UHL_SIZE];
+    DTEDInfo    *psDInfo = NULL;
+    double      dfLLOriginX, dfLLOriginY;
+    int deg = 0;
+    int min = 0;
+    int sec = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Open the physical file.                                         */
@@ -164,21 +193,26 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
     psDInfo->dfPixelSizeY =
         atoi(DTEDGetField(achRecord,25,4)) / 36000.0;
 
-    dfLLOriginX = atoi(DTEDGetField(achRecord,5,3))
-                + atoi(DTEDGetField(achRecord,8,2)) / 60.0
-                + atoi(DTEDGetField(achRecord,10,2)) / 3600.0;
+    /* create a scope so I don't need to declare these up top */
+    deg = atoi(stripLeadingZeros(DTEDGetField(achRecord,5,3)));
+    min = atoi(stripLeadingZeros(DTEDGetField(achRecord,8,2)));
+    sec = atoi(stripLeadingZeros(DTEDGetField(achRecord,10,2)));
+
+    dfLLOriginX = deg + min / 60.0 + sec / 3600.0;
     if( achRecord[11] == 'W' )
         dfLLOriginX *= -1;
 
-    dfLLOriginY = atoi(DTEDGetField(achRecord,13,3))
-                + atoi(DTEDGetField(achRecord,16,2)) / 60.0
-                + atoi(DTEDGetField(achRecord,18,2)) / 3600.0;
+    deg = atoi(stripLeadingZeros(DTEDGetField(achRecord,13,3)));
+    min = atoi(stripLeadingZeros(DTEDGetField(achRecord,16,2)));
+    sec = atoi(stripLeadingZeros(DTEDGetField(achRecord,18,2)));
+
+    dfLLOriginY = deg + min / 60.0 + sec / 3600.0;
     if( achRecord[19] == 'S' )
         dfLLOriginY *= -1;
 
     psDInfo->dfULCornerX = dfLLOriginX - 0.5 * psDInfo->dfPixelSizeX;
     psDInfo->dfULCornerY = dfLLOriginY - 0.5 * psDInfo->dfPixelSizeY
-                           + psDInfo->nYSize * psDInfo->dfPixelSizeY;
+        + psDInfo->nYSize * psDInfo->dfPixelSizeY;
 
     return psDInfo;
 }
@@ -194,9 +228,9 @@ int DTEDReadProfile( DTEDInfo * psDInfo, int nColumnOffset,
                      GInt16 * panData )
 
 {
-    int		nOffset;
-    int		i;
-    GByte	*pabyRecord;
+    int         nOffset;
+    int         i;
+    GByte       *pabyRecord;
 
 /* -------------------------------------------------------------------- */
 /*      Read data record from disk.                                     */
