@@ -1,16 +1,32 @@
 
+
 OBJ	=	ogrodbcdriver.obj ogrodbcdatasource.obj ogrodbclayer.obj \
+
 		ogrodbctablelayer.obj
+
+
 
 GDAL_ROOT	=	..\..\..
 
+
+
 !INCLUDE $(GDAL_ROOT)\nmake.opt
+
+
 
 EXTRAFLAGS = -I.. -I..\..
 
+
+
 default:	$(OBJ)
 
+
+
 clean:
+
 	-del *.lib
+
 	-del *.obj *.pdb
+
 	-del *.exe
+
