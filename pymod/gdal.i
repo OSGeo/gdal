@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.105  2004/11/11 18:32:03  fwarmerdam
+ * Added SetBonne support
+ *
  * Revision 1.104  2004/11/01 17:25:28  fwarmerdam
  * added CPL Escape functions
  *
@@ -1635,6 +1638,10 @@ int OSRSetACEA( OGRSpatialReferenceH hSRS, double dfStdP1, double dfStdP2,
     
 /** Azimuthal Equidistant */
 int  OSRSetAE( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
+                       double dfFalseEasting, double dfFalseNorthing );
+
+/** Bonne */
+int  OSRSetBonne( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
 
 /** Cylindrical Equal Area */
