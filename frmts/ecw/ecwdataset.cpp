@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.27  2004/12/20 05:44:46  fwarmerdam
+ * stripped out old full res mode - use TryWin and AdviseRead
+ *
  * Revision 1.26  2004/12/20 05:02:43  fwarmerdam
  * moved list reader into ECWGetCSList()
  *
@@ -150,10 +153,6 @@ class CPL_DLL ECWDataset : public GDALDataset
     NCSFileViewFileInfo *psFileInfo;
 
     GDALDataType eRasterDataType;
-
-    int         nFullResWindowBand;
-    int         nLastScanlineRead;
-    CPLErr      ResetFullResViewWindow(int nBand, int nStartLine );
 
     // Current view window. 
     int         bWinActive;
@@ -340,8 +339,9 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     CNCSError oErr;
 
+    poGDS->CleanupWindow();
+
     iBand = nBand-1;
-    poGDS->nFullResWindowBand = -1;
     oErr = poGDS->poFileView->SetView( 1, (unsigned int *) (&iBand),
                                        nXOff, nYOff, 
                                        nXOff + nXSize - 1, 
@@ -434,39 +434,27 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 CPLErr ECWRasterBand::IReadBlock( int, int nBlockYOff, void * pImage )
 
 {
-/* -------------------------------------------------------------------- */
-/*      Do we need to reset the view window?                            */
-/* -------------------------------------------------------------------- */
-    if( nBand != poGDS->nFullResWindowBand
-        || poGDS->nLastScanlineRead >= nBlockYOff )
-    {
-        CPLErr eErr;
+    CPLErr eErr = CE_None;
 
-        eErr = poGDS->ResetFullResViewWindow( nBand, nBlockYOff );
-        if( eErr != CE_None )
-            return eErr;
-    }
+    if( poGDS->TryWinRasterIO( GF_Read, 0, nBlockYOff, nBlockXSize, 1, 
+                               (GByte *) pImage, nBlockXSize, 1, 
+                               eDataType, 1, &nBand, 0, 0, 0 ) )
+        return CE_None;
 
-/* -------------------------------------------------------------------- */
-/*      Load lines till we get to the desired scanline.                 */
-/* -------------------------------------------------------------------- */
-    while( poGDS->nLastScanlineRead < nBlockYOff )
-    {
-        NCSEcwReadStatus  eRStatus;
+    eErr = AdviseRead( 0, nBlockYOff, nRasterXSize, nRasterYSize - nBlockYOff,
+                       nRasterXSize, nRasterYSize - nBlockYOff, 
+                       eDataType, NULL );
+    if( eErr != CE_None )
+        return eErr;
 
-        eRStatus = poGDS->poFileView->ReadLineBIL( (unsigned char **) &pImage );
-        
-        if( eRStatus != NCSECW_READ_OK )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "NCScbmReadViewLineBIL failed." );
-            return CE_Failure;
-        }
+    if( poGDS->TryWinRasterIO( GF_Read, 0, nBlockYOff, nBlockXSize, 1, 
+                               (GByte *) pImage, nBlockXSize, 1, 
+                               eDataType, 1, &nBand, 0, 0, 0 ) )
+        return CE_None;
 
-        poGDS->nLastScanlineRead++;
-    }
-
-    return CE_None;
+    CPLError( CE_Failure, CPLE_AppDefined, 
+              "TryWinRasterIO() failed for blocked scanline." );
+    return CE_Failure;
 }
 
 /************************************************************************/
@@ -483,7 +471,6 @@ CPLErr ECWRasterBand::IReadBlock( int, int nBlockYOff, void * pImage )
 ECWDataset::ECWDataset()
 
 {
-    nFullResWindowBand = -1;
     pszProjection = NULL;
     poFileView = NULL;
     fpVSIL = NULL;
@@ -617,6 +604,16 @@ int ECWDataset::TryWinRasterIO( GDALRWFlag eFlag,
     int iBand, i;
 
 /* -------------------------------------------------------------------- */
+/*      Provide default buffer organization.                            */
+/* -------------------------------------------------------------------- */
+    if( nPixelSpace == 0 )
+        nPixelSpace = GDALGetDataTypeSize( eDT ) / 8;
+    if( nLineSpace != NULL )
+        nLineSpace = nPixelSpace * nBufXSize;
+    if( nBandSpace == 0 )
+        nBandSpace = nLineSpace * nBufYSize;
+
+/* -------------------------------------------------------------------- */
 /*      Do some simple tests to see if the current window can           */
 /*      satisfy our requirement.                                        */
 /* -------------------------------------------------------------------- */
@@ -740,19 +737,6 @@ void ECWDataset::CleanupWindow()
 }
 
 /************************************************************************/
-/*                       ResetFullResViewWindow()                       */
-/************************************************************************/
-
-CPLErr ECWDataset::ResetFullResViewWindow( int nBand,
-                                           int nStartLine )
-
-{
-    return AdviseRead( 0, nStartLine, nRasterXSize, nRasterYSize - nStartLine,
-                       nRasterXSize, nRasterYSize - nStartLine, 
-                       eRasterDataType, 1, &nBand, NULL );
-}
-
-/************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
 
@@ -809,6 +793,8 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
     
     for( i = 0; i < nBandCount; i++ )
         anBandIndices[i] = panBandMap[i] - 1;
+
+    CleanupWindow();
 
     oErr = poFileView->SetView( nBandCount, anBandIndices,
                                 nXOff, nYOff, 
