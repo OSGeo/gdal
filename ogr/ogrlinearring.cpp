@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/10/24 20:38:45  warmerda
+ * fixed bug byte swapping point count in exporttowkb
+ *
  * Revision 1.10  2002/05/02 19:44:53  warmerda
  * fixed 3D binary support for polygon/linearring
  *
@@ -257,7 +260,7 @@ OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder,
         int     nCount;
 
         nCount = CPL_SWAP32( nPointCount );
-        memcpy( pabyData+4, &nCount, 4 );
+        memcpy( pabyData, &nCount, 4 );
 
         for( i = 0; i < nWords; i++ )
         {
