@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2003/06/21 23:25:03  warmerda
+ * added +towgs84 support in importFromProj4()
+ *
  * Revision 1.41  2003/05/28 18:17:38  warmerda
  * treat meter or m as meter
  *
@@ -775,6 +778,35 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                    pszPM, dfFromGreenwich );
         
         bFullyDefined = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle TOWGS84 conversion.                                      */
+/* -------------------------------------------------------------------- */
+    pszValue = CSLFetchNameValue(papszNV, "towgs84");
+    if(pszValue!=NULL)
+    {
+        char **papszToWGS84 = CSLTokenizeStringComplex( pszValue, ",", 
+                                                        FALSE, TRUE );
+
+        if( CSLCount(papszToWGS84) >= 7 )
+            SetTOWGS84( atof(papszToWGS84[0]), 
+                        atof(papszToWGS84[1]), 
+                        atof(papszToWGS84[2]), 
+                        atof(papszToWGS84[3]), 
+                        atof(papszToWGS84[4]), 
+                        atof(papszToWGS84[5]), 
+                        atof(papszToWGS84[6]) );
+        else if( CSLCount(papszToWGS84) >= 3 )
+            SetTOWGS84( atof(papszToWGS84[0]), 
+                        atof(papszToWGS84[1]), 
+                        atof(papszToWGS84[2]) );
+        else
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Seemingly corrupt +towgs84 option (%s), ignoring.", 
+                      pszValue );
+                        
+        CSLDestroy(papszToWGS84);
     }
 
 /* -------------------------------------------------------------------- */
