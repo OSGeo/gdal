@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.3  1999/03/02 21:12:01  warmerda
+ * add DMS reporting of lat/long
+ *
  * Revision 1.2  1999/01/11 15:27:59  warmerda
  * Add projection support
  *
@@ -85,8 +88,11 @@ int main( int argc, char ** argv )
                                     adfGeoTransform + 0,
                                     adfGeoTransform + 3 ) == CE_None )
         {
-            printf( "Origin (long/lat) = (%g,%g)\n",
+            printf( "Origin (long/lat) = (%g,%g)",
                     adfGeoTransform[0], adfGeoTransform[3] );
+
+            printf( " (%s,",  GDALDecToDMS( adfGeoTransform[0], "Long", 2 ) );
+            printf( " %s)\n",  GDALDecToDMS( adfGeoTransform[3], "Lat", 2 ) );
         }
         else
         {
