@@ -128,8 +128,14 @@ NOTE: Implemented as <tt>gdal/frmts/raw/ehdrdataset.cpp</tt>.<p>
 <h2><a name="Envisat">Envisat -- Envisat Image Product</h2>
 
 GDAL supports the Envisat product format for read access.  All sample
-types are supported.  At this time geocoding information is ignored but
-it is anticipated that it will be added in the future. <p>
+types are supported.  Files with two matching measurement datasets (MDS)
+are represented as having two bands.<p>
+
+The control points of the GEOLOCATION GRID ADS dataset are read if available,
+generally giving a good coverage of the dataset.  The GCPs are in WGS84.<p>
+
+Virtually all key/value pairs from the MPH and SPH (primary and secondary
+headers) are copied through as dataset level metadata. <p>
 
 NOTE: Implemented as <tt>gdal/frmts/envisat/envisatdataset.cpp</tt>.<p>
 
