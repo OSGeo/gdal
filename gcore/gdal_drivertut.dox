@@ -455,7 +455,7 @@ Generally this is called <short_name>dataset.cpp, with all the GDAL specifc
 code in one file, though that is not required.
 
 <li> Add the registration entry point declaration (ie. GDALRegister_JDEM()) to
-gdal/core/gdal_frmts.h.
+gdal/gcore/gdal_frmts.h.
 
 <li> Add a call to the registration function to frmts/gdalallregister.c,
 protected by an appropriate #ifdef.  

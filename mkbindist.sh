@@ -39,7 +39,7 @@ mkdir $DIST_DIR
 
 # ensure gdal_misc (with GDALVersionInfo()) is recompiled.
 
-rm -f core/gdal_misc.o apps/gdal-config apps/gdal-config-inst
+rm -f gcore/gdal_misc.o apps/gdal-config apps/gdal-config-inst
 make 'prefix='$FULL_DIST_DIR 'INST_PYMOD='$FULL_DIST_DIR/pymod 'USER_DEFS='"$USER_DEFS" install
 if test \! make ; then
   exit

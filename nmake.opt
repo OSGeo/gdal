@@ -96,7 +96,7 @@ OCI_LIB =	$(ORACLE_HOME)\oci\lib\msvc\ociw32.lib \
 
 GDAL_DLL =	gdal$(VERSION).dll
 
-INC	=	-I$(GDAL_ROOT)\port -I$(GDAL_ROOT)\ogr -I$(GDAL_ROOT)\core
+INC	=	-I$(GDAL_ROOT)\port -I$(GDAL_ROOT)\ogr -I$(GDAL_ROOT)\gcore
 
 #LINKER_FLAGS =	/NODEFAULTLIB:LIBC 
 
