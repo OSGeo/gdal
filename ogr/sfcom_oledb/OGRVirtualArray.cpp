@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/09/06 14:28:48  warmerda
+ * update debug output a bit
+ *
  * Revision 1.7  2002/08/09 21:31:54  warmerda
  * short circuit a case where the cache is already loaded in CheckRows
  *
@@ -232,6 +235,9 @@ BYTE *OGRVirtualArray::GetRow( int iIndex, HRESULT &hr )
     OGRFeature      *poFeature;
 #ifdef ROWGET_DEBUG
     CPLDebug( "OGR_OLEDB", "OGRVirtualArray::operator[%d]", iIndex );
+#else
+    if( iIndex == 0 )
+        CPLDebug( "OGR_OLEDB", "OGRVirtualArray::operator[%d] ... getting first row.  Rest will not be reported.", iIndex );
 #endif
 
     hr = S_OK;
@@ -246,6 +252,7 @@ BYTE *OGRVirtualArray::GetRow( int iIndex, HRESULT &hr )
     poFeature = GetFeature( iIndex );
     if( poFeature == NULL )
     {
+        CPLDebug( "OGR_OLEDB", "OGRVirtualArray::operator[%d] ... got NULL from GetFeature(), returning DB_S_ENDOFROWSET.", iIndex );
         hr = DB_S_ENDOFROWSET;
         return NULL;
     }
@@ -464,8 +471,9 @@ void OGRVirtualArray::ResetCache( int nStart, int nSize )
 int OGRVirtualArray::CheckRows( int nStart, int nRequestCount )
 
 {
-    CPLDebug( "OGR_OLEDB", "OGRVirtualArray::CheckRows( %d, %d )", 
-              nStart, nRequestCount );
+    if( nRequestCount > 1 )
+        CPLDebug( "OGR_OLEDB", "OGRVirtualArray::CheckRows( %d, %d )", 
+                  nStart, nRequestCount );
 
     if( nStart >= m_nFeatureCacheBase
         && nStart+nRequestCount <= m_nFeatureCacheBase + m_nFeatureCacheSize )
