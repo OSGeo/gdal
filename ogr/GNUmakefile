@@ -11,6 +11,9 @@ OBJ	=	ogrgeometryfactory.o ogrpoint.o ogrcurve.o ogrlinestring.o \
 		ogrspatialreference.o ogr_srsnode.o ogr_srs_proj4.o \
 		ogr_fromepsg.o ogrct.o
 
+INST_H_FILES	=	ogr_core.h ogr_feature.h ogr_geometry.h ogr_p.h \
+		ogr_spatialref.h ogr_srs_api.h ogrsf_frmts/ogrsf_frmts.h
+
 OGR_LIB  =	ogr.a
 
 LIBS	:=	$(OGR_LIB) $(CPL_LIB) $(LIBS) 
@@ -99,3 +102,10 @@ reg-test2:
 	    echo "******* Results Don't Match Expected *********"; \
 	    diff s2.out reg_test2.log; \
 	fi
+
+install:	$(OGR_LIB) ogrinfo ogr2ogr
+	cp $(INST_H_FILES) $(INST_INCLUDE)
+	cp $(OGR_LIB) $(INST_LIB)
+	cp ogrinfo ogr2ogr $(INST_BIN)
+
+

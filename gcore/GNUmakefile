@@ -20,3 +20,6 @@ docs:
 
 %.o:	%.cpp
 	$(CXX) -c $(CXXFLAGS) $(GDAL_INCLUDE) $*.cpp -o $*.o
+
+install:
+	cp *.h $(INST_INCLUDE)

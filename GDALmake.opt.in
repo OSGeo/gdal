@@ -13,6 +13,11 @@ PYTHON = @PYTHON@
 
 HAVE_OGDI = @HAVE_OGDI@
 
+INST_PREFIX	=	@INST_PREFIX@
+INST_INCLUDE	=	@INST_INCLUDE@
+INST_LIB	=	@INST_LIB@
+INST_BIN	=	@INST_BIN@
+
 #
 #	Whether we use debug flags, or optimization is determined by
 #	the CFG environment variable.  Set to debug for debug builds.

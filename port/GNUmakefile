@@ -27,3 +27,7 @@ clean:
 $(LIB): $(OBJ)
 	rm -f $(LIB)
 	$(AR) rc $(LIB) $(OBJ)
+
+install:	$(LIB)
+	cp *.h $(INST_INCLUDE)
+	cp cpl.a $(INST_LIB)

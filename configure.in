@@ -117,6 +117,16 @@ dnl ---------------------------------------------------------------------------
 AC_SUBST(OPT_GDAL_FORMATS,$OPT_GDAL_FORMATS)
 AC_SUBST(EXTRA_INCLUDES,$EXTRA_INCLUDES)
 
+INST_PREFIX=/usr/local
+INST_INCLUDE=$INST_PREFIX/include
+INST_LIB=$INST_PREFIX/lib
+INST_BIN=$INST_PREFIX/bin
+
+AC_SUBST(INST_PREFIX,$INST_PREFIX)
+AC_SUBST(INST_INCLUDE,$INST_INCLUDE)
+AC_SUBST(INST_LIB,$INST_LIB)
+AC_SUBST(INST_BIN,$INST_BIN)
+
 dnl ---------------------------------------------------------------------------
 
 AC_COMPILER_WFLAGS

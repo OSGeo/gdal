@@ -34,7 +34,5 @@ o/gdalallregister.o:	gdalallregister.cpp
 		gdalallregister.cpp -o o/gdalallregister.o
 
 
-
-
-
-
+# We might want to add dynamically generated drivers here eventually.
+install:

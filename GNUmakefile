@@ -79,3 +79,12 @@ web-update:	docs
 	rm -rf /u/www/gdal/html
 	mkdir /u/www/gdal/html
 	cp html/*.* /u/www/gdal/html
+
+install:	$(GDAL_LIB)
+	(cd port; $(MAKE) install)
+	(cd core; $(MAKE) install)
+	(cd frmts; $(MAKE) install)
+	(cd ogr; $(MAKE) install)
+	(cd apps; $(MAKE) install)
+	cp $(GDAL_LIB) $(INST_LIB)
+	cp $(GDAL_SLIB) $(INST_LIB)
