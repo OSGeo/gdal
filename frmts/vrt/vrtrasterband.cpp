@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/12/06 19:53:58  warmerda
+ * added write check to rasterio
+ *
  * Revision 1.2  2001/11/16 21:38:07  warmerda
  * try to work even if bModified
  *
@@ -248,6 +251,13 @@ CPLErr VRTRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     int		iSource;
     CPLErr      eErr = CE_Failure;
 
+    if( eRWFlag == GF_Write )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Writing through VRTRasterBand is not supported." );
+        return CE_Failure;
+    }
+
     /* We should initialize the buffer to some background value here */
 
     /* Apply each source in turn. */
@@ -257,7 +267,7 @@ CPLErr VRTRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         eErr = 
             papoSources[iSource]->RasterIO( nXOff, nYOff, nXSize, nYSize, 
                                             pData, nBufXSize, nBufYSize, 
-                                            eBufType, nPixelSpace, nLineSpace );
+                                            eBufType, nPixelSpace, nLineSpace);
     }
     
     return eErr;
