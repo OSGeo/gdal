@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_driver.cpp,v 1.8 2001/01/22 16:03:58 warmerda Exp $
+ * $Id: mitab_ogr_driver.cpp,v 1.9 2003/03/20 15:57:46 warmerda Exp $
  *
  * Name:     mitab_ogr_driver.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_ogr_driver.cpp,v $
+ * Revision 1.9  2003/03/20 15:57:46  warmerda
+ * Added delete datasource support
+ *
  * Revision 1.8  2001/01/22 16:03:58  warmerda
  * expanded tabs
  *
@@ -154,8 +157,70 @@ int OGRTABDriver::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODrCCreateDataSource) )
         return TRUE;
+    else if( EQUAL(pszCap,ODrCDeleteDataSource) )
+        return TRUE;
     else
         return FALSE;
+}
+
+/************************************************************************/
+/*                          DeleteDataSource()                          */
+/************************************************************************/
+
+OGRErr OGRTABDriver::DeleteDataSource( const char *pszDataSource )
+
+{
+    int iExt;
+    VSIStatBuf sStatBuf;
+    static const char *apszExtensions[] = 
+        { "mif", "mid", "tab", "map", "ind", "dat", "id", NULL };
+
+    if( VSIStat( pszDataSource, &sStatBuf ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s does not appear to be a file or directory.",
+                  pszDataSource );
+
+        return OGRERR_FAILURE;
+    }
+
+    if( VSI_ISREG(sStatBuf.st_mode) 
+        && (EQUAL(CPLGetExtension(pszDataSource),"mif")
+            || EQUAL(CPLGetExtension(pszDataSource),"mid")
+            || EQUAL(CPLGetExtension(pszDataSource),"tab")) )
+    {
+        for( iExt=0; apszExtensions[iExt] != NULL; iExt++ )
+        {
+            const char *pszFile = CPLResetExtension(pszDataSource,
+                                                    apszExtensions[iExt] );
+            if( VSIStat( pszFile, &sStatBuf ) == 0 )
+                VSIUnlink( pszFile );
+        }
+    }
+    else if( VSI_ISDIR(sStatBuf.st_mode) )
+    {
+        char **papszDirEntries = CPLReadDir( pszDataSource );
+        int  iFile;
+
+        for( iFile = 0; 
+             papszDirEntries != NULL && papszDirEntries[iFile] != NULL;
+             iFile++ )
+        {
+            if( CSLFindString( (char **) apszExtensions, 
+                               CPLGetExtension(papszDirEntries[iFile])) != -1)
+            {
+                VSIUnlink( CPLFormFilename( pszDataSource, 
+                                            papszDirEntries[iFile], 
+                                            NULL ) );
+            }
+        }
+
+        CSLDestroy( papszDirEntries );
+
+        VSIRmdir( pszDataSource );
+    }
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

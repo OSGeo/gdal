@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.52 2002/09/23 13:15:35 warmerda Exp $
+ * $Id: mitab_tabfile.cpp,v 1.53 2003/01/18 20:22:39 daniel Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -10,7 +10,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999-2001, Daniel Morissette
+ * Copyright (c) 1999-2003, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.53  2003/01/18 20:22:39  daniel
+ * Fixed leak of TABMAPObjHdr when writing NONE geometries in SetFeature()
+ *
  * Revision 1.52  2002/09/23 13:15:35  warmerda
  * fixed memory leak in SetMIFCoordSys
  *
@@ -1442,12 +1445,24 @@ int TABFile::SetFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
 
     if ( poObjHdr == NULL || m_poMAPFile == NULL ||
         m_poMAPFile->PrepareNewObj(nFeatureId, poObjHdr->m_nType) != 0 ||
-        poFeature->WriteGeometryToMAPFile(m_poMAPFile, poObjHdr) != 0 ||
-         ( (poObjBlock = m_poMAPFile->GetCurObjBlock()) != NULL &&
-           poObjBlock->AddObject(poObjHdr) != 0 )  )
+         poFeature->WriteGeometryToMAPFile(m_poMAPFile, poObjHdr) != 0 )
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Failed writing geometry for feature id %d in %s",
+                 nFeatureId, m_pszFname);
+        return -1;
+    }
+
+    if (poObjHdr->m_nType == TAB_GEOM_NONE)
+    {
+        // NONE objects have no reference in the ObjectBlocks.  Just flush it.
+        delete poObjHdr;
+    }
+    else if ( (poObjBlock = m_poMAPFile->GetCurObjBlock()) == NULL ||
+              poObjBlock->AddObject(poObjHdr) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Failed writing object header for feature id %d in %s",
                  nFeatureId, m_pszFname);
         return -1;
     }

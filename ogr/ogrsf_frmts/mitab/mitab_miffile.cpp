@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.34 2002/09/23 12:53:29 warmerda Exp $
+ * $Id: mitab_miffile.cpp,v 1.35 2003/01/30 22:42:39 daniel Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.35  2003/01/30 22:42:39  daniel
+ * Fixed crash in ParseMIFHeader() when .mif doesn't contain a DATA line
+ *
  * Revision 1.34  2002/09/23 12:53:29  warmerda
  * fix memory leak of m_pszIndex
  *
@@ -551,7 +554,8 @@ int MIFFile::ParseMIFHeader()
 
     }
     
-    if (EQUALN(m_poMIFFile->GetLastLine(),"DATA",4) == FALSE)
+    if ((pszLine = m_poMIFFile->GetLastLine()) == NULL || 
+        EQUALN(m_poMIFFile->GetLastLine(),"DATA",4) == FALSE)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "DATA keyword not found in %s.  File may be corrupt.",
