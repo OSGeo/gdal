@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/12/17 22:34:16  warmerda
+ * added GetFeature() method on OGRS57Layer
+ *
  * Revision 1.4  2001/12/14 19:40:18  warmerda
  * added optimized feature counting, and extents collection
  *
@@ -80,6 +83,7 @@ class OGRS57Layer : public OGRLayer
     void                ResetReading();
     OGRFeature *        GetNextFeature();
     OGRFeature *        GetNextUnfilteredFeature();
+    virtual OGRFeature *GetFeature( long nFeatureId );
     
     virtual int         GetFeatureCount( int bForce = TRUE );
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
