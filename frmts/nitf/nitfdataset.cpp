@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/02/18 19:29:16  fwarmerdam
+ * added SetColorIntepretation support: bug 752
+ *
  * Revision 1.32  2005/02/10 04:49:31  fwarmerdam
  * added color interpretation setting on J2K bands
  *
@@ -211,6 +214,7 @@ class NITFRasterBand : public GDALRasterBand
     virtual CPLErr IWriteBlock( int, int, void * );
 
     virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr SetColorInterpretation( GDALColorInterp );
     virtual GDALColorTable *GetColorTable();
     virtual CPLErr SetColorTable( GDALColorTable * ); 
     virtual double GetNoDataValue( int *pbSuccess = NULL );
@@ -412,6 +416,7 @@ GDALColorInterp NITFRasterBand::GetColorInterpretation()
 
     if( poColorTable != NULL )
         return GCI_PaletteIndex;
+    
     if( EQUAL(psBandInfo->szIREPBAND,"R") )
         return GCI_RedBand;
     if( EQUAL(psBandInfo->szIREPBAND,"G") )
@@ -428,6 +433,70 @@ GDALColorInterp NITFRasterBand::GetColorInterpretation()
         return GCI_YCbCr_CrBand;
 
     return GCI_Undefined;
+}
+
+/************************************************************************/
+/*                       SetColorInterpretation()                       */
+/************************************************************************/
+
+CPLErr NITFRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
+
+{
+    NITFBandInfo *psBandInfo = psImage->pasBandInfo + nBand - 1;
+    const char *pszREP = NULL;
+    GUInt32 nOffset;
+
+    if( eInterp == GCI_RedBand )
+        pszREP = "R";
+    else if( eInterp == GCI_GreenBand )
+        pszREP = "G";
+    else if( eInterp == GCI_BlueBand )
+        pszREP = "B";
+    else if( eInterp == GCI_GrayIndex )
+        pszREP = "M";
+    else if( eInterp == GCI_YCbCr_YBand )
+        pszREP = "Y";
+    else if( eInterp == GCI_YCbCr_CbBand )
+        pszREP = "Cb";
+    else if( eInterp == GCI_YCbCr_CrBand )
+        pszREP = "Cr";
+
+    if( pszREP == NULL )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "Requested color interpretation (%s) not supported in NITF.",
+                  GDALGetColorInterpretationName( eInterp ) );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Where does this go in the file?                                 */
+/* -------------------------------------------------------------------- */
+    strcpy( psBandInfo->szIREPBAND, pszREP );
+    nOffset = NITFIHFieldOffset( psImage, "IREPBAND" );
+
+    if( nOffset != 0 )
+        nOffset += (nBand - 1) * 13;
+    
+/* -------------------------------------------------------------------- */
+/*      write it (space padded).                                        */
+/* -------------------------------------------------------------------- */
+    char szPadded[4];
+    strcpy( szPadded, pszREP );
+    strcat( szPadded, " " );
+    
+    if( nOffset != 0 )
+    {
+        if( VSIFSeek( psImage->psFile->fp, nOffset, SEEK_SET ) != 0 
+            || VSIFWrite( (void *) szPadded, 1, 2, psImage->psFile->fp ) != 2 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "IO failure writing new IREPBAND value to NITF file." );
+            return CE_Failure;
+        }
+    }
+    
+    return CE_None;
 }
 
 /************************************************************************/
@@ -1326,7 +1395,7 @@ NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
 /* -------------------------------------------------------------------- */
 /*      Various special hacks related to JPEG2000 encoded files.        */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszIC,"C8") )
+    if( pszIC != NULL && EQUAL(pszIC,"C8") )
     {
         NITFFile *psFile = NITFOpen( pszFilename, TRUE );
         int nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
