@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2004/02/07 14:03:30  dron
+ * CPLDecToPackedDMS() added.
+ *
  * Revision 1.33  2004/02/01 08:37:55  dron
  * Added CPLPackedDMSToDec().
  *
@@ -1212,6 +1215,7 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
 /************************************************************************/
 /*                         CPLPackedDMSToDec()                          */
 /************************************************************************/
+
 /**
  * Convert a packed DMS value (DDDMMMSSS.SS) into decimal degrees.
  * 
@@ -1246,7 +1250,7 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
  * Packed DMS values used by the USGS GCTP package and probably by other
  * software.
  *
- * NOTE: This code does not validate input value. If you will give the wrong
+ * NOTE: This code does not validate input value. If you give the wrong
  * value, you will get the wrong result.
  *
  * @param dfPacked Angle in packed DMS format.
@@ -1261,7 +1265,7 @@ double CPLPackedDMSToDec( double dfPacked )
 
     dfSign = ( dfPacked < 0.0 )? -1 : 1;
         
-    dfSeconds = fabs( dfPacked );
+    dfSeconds = ABS( dfPacked );
     dfDegrees = dfSeconds / 1000000.0;
     dfSeconds = dfSeconds - dfDegrees * 1000000.0;
     dfMinutes = dfSeconds / 1000.0;
@@ -1270,6 +1274,39 @@ double CPLPackedDMSToDec( double dfPacked )
     dfDegrees = dfSeconds / 3600.0;
 
     return dfDegrees;
+}
+
+/************************************************************************/
+/*                         CPLDecToPackedDMS()                          */
+/************************************************************************/
+/**
+ * Convert decimal degrees into packed DMS value (DDDMMMSSS.SS).
+ * 
+ * This function converts a value, specified in decimal degrees into
+ * packed DMS angle. The standard packed DMS format is:
+ *
+ *  degrees * 1000000 + minutes * 1000 + seconds
+ *
+ * See also CPLPackedDMSToDec().
+ *
+ * @param dfDec Angle in decimal degrees.
+ *
+ * @return Angle in packed DMS format.
+ * 
+ */
+
+double CPLDecToPackedDMS( double dfDec )
+{
+    double  dfDegrees, dfMinutes, dfSeconds, dfSign;
+
+    dfSign = ( dfDec < 0.0 )? -1 : 1;
+
+    dfDec = ABS( dfDec );
+    dfDegrees = floor( dfDec );
+    dfMinutes = floor( ( dfDec - dfDegrees ) * 60.0 );
+    dfSeconds = ( dfDec - dfDegrees ) * 3600.0 - dfMinutes * 60.0;
+
+    return dfSign * (dfDegrees * 1000000.0 + dfMinutes * 1000.0 + dfSeconds);
 }
 
 /************************************************************************/
