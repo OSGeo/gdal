@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.21  2004/08/20 17:33:06  warmerda
+ * Support overviews.
+ *
  * Revision 1.20  2003/12/09 16:47:17  warmerda
  * Make sure GetGeoTransform() still initializes the geotransform array.
  *
@@ -470,6 +473,11 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
                            poDS->adfGeoTransform )
         || GDALReadWorldFile( poOpenInfo->pszFilename, ".gfw", 
                               poDS->adfGeoTransform );
+
+/* -------------------------------------------------------------------- */
+/*      Support overviews.                                              */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
     return poDS;
 }
