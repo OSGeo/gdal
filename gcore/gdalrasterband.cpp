@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.38  2003/04/25 19:49:18  warmerda
+ * added bJustInitialize flag for fetching blocks
+ *
  * Revision 1.37  2003/03/20 22:10:53  warmerda
  * added support for reporting cache thrashing
  *
@@ -835,12 +838,17 @@ CPLErr GDALRasterBand::FlushBlock( int nBlockXOff, int nBlockYOff )
  *
  * @param nYBlockOff the vertical block offset, with zero indicating
  * the left most block, 1 the next block and so forth.
+ * 
+ * @param bJustInitialize If TRUE the block will be allocated and initialized,
+ * but not actually read from the source.  This is useful when it will just
+ * be completely set and written back. 
  *
  * @return pointer to the block object, or NULL on failure.
  */
 
 GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
-                                               int nYBlockOff )
+                                               int nYBlockOff,
+                                               int bJustInitialize )
 
 {
     int         nBlockIndex;
@@ -892,7 +900,8 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
             return( NULL );
         }
 
-        if( IReadBlock(nXBlockOff,nYBlockOff,poBlock->GetDataRef()) != CE_None)
+        if( !bJustInitialize
+         && IReadBlock(nXBlockOff,nYBlockOff,poBlock->GetDataRef()) != CE_None)
         {
             delete poBlock;
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -903,12 +912,15 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
 
         AdoptBlock( nXBlockOff, nYBlockOff, poBlock );
 
-        nBlockReads++;
-        if( nBlockReads == nBlocksPerRow * nBlocksPerColumn + 1 
-            && nBand == 1 && poDS != NULL )
+        if( !bJustInitialize )
         {
-            CPLDebug( "GDAL", "Potential thrashing on band %d of %s.",
-                      nBand, poDS->GetDescription() );
+            nBlockReads++;
+            if( nBlockReads == nBlocksPerRow * nBlocksPerColumn + 1 
+                && nBand == 1 && poDS != NULL )
+            {
+                CPLDebug( "GDAL", "Potential thrashing on band %d of %s.",
+                          nBand, poDS->GetDescription() );
+            }
         }
     }
 
