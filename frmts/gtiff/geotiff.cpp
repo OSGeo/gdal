@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.114  2004/09/08 15:33:18  warmerda
+ * allow writing of projection without geotrasnform
+ *
  * Revision 1.113  2004/08/25 19:10:28  warmerda
  * Try and write out ExtraSamples values if we have extra samples.
  * Apparently this is required by the TIFF spec!
@@ -3157,6 +3160,9 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         
         pszProjection = poSrcDS->GetGCPProjection();
     }
+
+    else
+        pszProjection = poSrcDS->GetProjectionRef();
 
 /* -------------------------------------------------------------------- */
 /*      Write the projection information, if possible.                  */
