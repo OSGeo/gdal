@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/07/06 21:36:47  warmerda
+ * tenatively added getEnvelope() and Intersect()
+ *
  * Revision 1.4  1999/06/25 20:44:43  warmerda
  * implemented assignSpatialReference, carry properly
  *
@@ -547,3 +550,31 @@ OGRErr OGRGeometryCollection::exportToWkt( char ** ppszReturn )
     return OGRERR_NONE;
 }
 
+/************************************************************************/
+/*                            getEnvelope()                             */
+/************************************************************************/
+
+void OGRGeometryCollection::getEnvelope( OGREnvelope * poEnvelope )
+
+{
+    OGREnvelope		oGeomEnv;
+    
+    if( nGeomCount == 0 )
+        return;
+
+    papoGeoms[0]->getEnvelope( poEnvelope );
+
+    for( int iGeom = 1; iGeom < nGeomCount; iGeom++ )
+    {
+        papoGeoms[iGeom]->getEnvelope( &oGeomEnv );
+
+        if( poEnvelope->MinX > oGeomEnv.MinX )
+            poEnvelope->MinX = oGeomEnv.MinX;
+        if( poEnvelope->MinY > oGeomEnv.MinY )
+            poEnvelope->MinY = oGeomEnv.MinY;
+        if( poEnvelope->MaxX < oGeomEnv.MaxX )
+            poEnvelope->MaxX = oGeomEnv.MaxX;
+        if( poEnvelope->MaxY < oGeomEnv.MaxY )
+            poEnvelope->MaxY = oGeomEnv.MaxY;
+    }
+}

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/07/06 21:36:47  warmerda
+ * tenatively added getEnvelope() and Intersect()
+ *
  * Revision 1.7  1999/06/25 20:44:43  warmerda
  * implemented assignSpatialReference, carry properly
  *
@@ -674,4 +677,33 @@ void OGRLineString::Value( double dfDistance, OGRPoint * poPoint )
     EndPoint( poPoint );
 }
 
+/************************************************************************/
+/*                            getEnvelope()                             */
+/************************************************************************/
+
+void OGRLineString::getEnvelope( OGREnvelope * poEnvelope )
+
+{
+    double	dfMinX, dfMinY, dfMaxX, dfMaxY;
+    
+    dfMinX = dfMaxX = paoPoints[0].x;
+    dfMinY = dfMaxY = paoPoints[0].y;
+
+    for( int iPoint = 1; iPoint < nPointCount; iPoint++ )
+    {
+        if( dfMaxX < paoPoints[iPoint].x )
+            dfMaxX = paoPoints[iPoint].x;
+        if( dfMaxY < paoPoints[iPoint].y )
+            dfMaxY = paoPoints[iPoint].y;
+        if( dfMinX > paoPoints[iPoint].x )
+            dfMinX = paoPoints[iPoint].x;
+        if( dfMinY > paoPoints[iPoint].y )
+            dfMinY = paoPoints[iPoint].y;
+    }
+
+    poEnvelope->MinX = dfMinX;
+    poEnvelope->MaxX = dfMaxX;
+    poEnvelope->MinY = dfMinY;
+    poEnvelope->MaxY = dfMaxY;
+}
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/07/06 21:36:47  warmerda
+ * tenatively added getEnvelope() and Intersect()
+ *
  * Revision 1.4  1999/06/25 20:44:43  warmerda
  * implemented assignSpatialReference, carry properly
  *
@@ -121,6 +124,40 @@ void OGRGeometry::assignSpatialReference( OGRSpatialReference * poSR )
     if( poSRS != NULL )
         poSRS->Reference();
 }
+
+/************************************************************************/
+/*                             Intersect()                              */
+/************************************************************************/
+
+/**
+ * Do these features intersect?
+ *
+ * Currently this is not implemented in a rigerous fashion, and generally
+ * just tests whether the envelopes of the two features intersect.  Eventually
+ * this will be made rigerous.
+ *
+ * @param poOtherGeom the other geometry to test against.
+ *
+ * @return TRUE if the geometries intersect, otherwise FALSE.
+ */
+
+OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom )
+
+{
+    OGREnvelope		oEnv1, oEnv2;
+
+    this->getEnvelope( &oEnv1 );
+    poOtherGeom->getEnvelope( &oEnv2 );
+
+    if( oEnv1.MaxX < oEnv2.MinX
+        || oEnv1.MaxY < oEnv2.MinY
+        || oEnv2.MaxX < oEnv1.MinX
+        || oEnv2.MaxY < oEnv1.MinY )
+        return FALSE;
+    else
+        return TRUE;
+}
+
 
 /**
  * \fn int OGRGeometry::getDimension();

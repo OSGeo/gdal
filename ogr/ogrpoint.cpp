@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/07/06 21:36:47  warmerda
+ * tenatively added getEnvelope() and Intersect()
+ *
  * Revision 1.8  1999/06/25 20:44:43  warmerda
  * implemented assignSpatialReference, carry properly
  *
@@ -333,6 +336,19 @@ OGRErr OGRPoint::exportToWkt( char ** ppszReturn )
     
     return OGRERR_NONE;
 }
+
+/************************************************************************/
+/*                            getEnvelope()                             */
+/************************************************************************/
+
+void OGRPoint::getEnvelope( OGREnvelope * poEnvelope )
+
+{
+    poEnvelope->MinX = poEnvelope->MaxX = getX();
+    poEnvelope->MinY = poEnvelope->MaxY = getY();
+}
+
+
 
 /**
  * \fn double OGRPoint::getX();

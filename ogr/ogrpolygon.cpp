@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/07/06 21:36:47  warmerda
+ * tenatively added getEnvelope() and Intersect()
+ *
  * Revision 1.7  1999/06/25 20:44:43  warmerda
  * implemented assignSpatialReference, carry properly
  *
@@ -639,3 +642,35 @@ int OGRPolygon::PointOnSurface( OGRPoint * )
     
     return OGRERR_FAILURE;
 }
+
+/************************************************************************/
+/*                            getEnvelope()                             */
+/************************************************************************/
+
+void OGRPolygon::getEnvelope( OGREnvelope * poEnvelope )
+
+{
+    OGREnvelope		oRingEnv;
+    
+    if( nRingCount == 0 )
+        return;
+
+    papoRings[0]->getEnvelope( poEnvelope );
+
+    for( int iRing = 1; iRing < nRingCount; iRing++ )
+    {
+        papoRings[iRing]->getEnvelope( &oRingEnv );
+
+        if( poEnvelope->MinX > oRingEnv.MinX )
+            poEnvelope->MinX = oRingEnv.MinX;
+        if( poEnvelope->MinY > oRingEnv.MinY )
+            poEnvelope->MinY = oRingEnv.MinY;
+        if( poEnvelope->MaxX < oRingEnv.MaxX )
+            poEnvelope->MaxX = oRingEnv.MaxX;
+        if( poEnvelope->MaxY < oRingEnv.MaxY )
+            poEnvelope->MaxY = oRingEnv.MaxY;
+    }
+}
+
+
+

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  1999/07/06 21:36:46  warmerda
+ * tenatively added getEnvelope() and Intersect()
+ *
  * Revision 1.10  1999/06/25 20:44:42  warmerda
  * implemented assignSpatialReference, carry properly
  *
@@ -109,6 +112,19 @@ class OGRRawPoint
     double	y;
 };
 
+/**
+ * Simple container for a bounding region.
+ */
+
+class OGREnvelope
+{
+  public:
+    double	MinX;
+    double	MaxX;
+    double	MinY;
+    double	MaxY;
+};
+
 /************************************************************************/
 /*                             OGRGeometry                              */
 /************************************************************************/
@@ -138,6 +154,7 @@ class OGRGeometry
     virtual OGRBoolean	IsSimple() { return 1; }
     virtual void	empty() = 0;
     virtual OGRGeometry *clone() = 0;
+    virtual void getEnvelope( OGREnvelope * psEnvelope ) = 0;
 
     // IWks Interface
     virtual int	WkbSize() = 0;
@@ -153,18 +170,18 @@ class OGRGeometry
 
     void    assignSpatialReference( OGRSpatialReference * poSR );
     OGRSpatialReference *getSpatialReference( void ) { return poSRS; }
-   
+
+    // ISpatialRelation
+    OGRBoolean	Intersect( OGRGeometry * );
+    
 #ifdef notdef
     
     // I presume all these should be virtual?  How many
     // should be pure?
-    OGREnvelope	*getEnvelope();
-
     OGRGeometry *getBoundary();
 
     OGRBoolean	Equal( OGRGeometry * );
     OGRBoolean	Disjoint( OGRGeometry * );
-    OGRBoolean	Intersect( OGRGeometry * );
     OGRBoolean	Touch( OGRGeometry * );
     OGRBoolean	Cross( OGRGeometry * );
     OGRBoolean	Within( OGRGeometry * );
@@ -173,9 +190,9 @@ class OGRGeometry
     OGRBoolean	Relate( OGRGeometry *, const char * );
 
     double	Distance( OGRGeometry * );
+    OGRGeometry *Intersection(OGRGeometry *);
     OGRGeometry *Buffer( double );
     OGRGeometry *ConvexHull();
-    OGRGeometry *Intersection(OGRGeometry *);
     OGRGeometry *Union( OGRGeometry * );
     OGRGeometry *Difference( OGRGeometry * );
     OGRGeometry *SymmetricDifference( OGRGeometry * );
@@ -214,6 +231,7 @@ class OGRPoint : public OGRGeometry
     virtual int	getCoordinateDimension();
     virtual OGRGeometry *clone();
     virtual void empty();
+    virtual void getEnvelope( OGREnvelope * psEnvelope );
 
     // IPoint
     double	getX() { return x; }
@@ -279,6 +297,7 @@ class OGRLineString : public OGRCurve
     virtual int	getCoordinateDimension();
     virtual OGRGeometry *clone();
     virtual void empty();
+    virtual void getEnvelope( OGREnvelope * psEnvelope );
 
     // ICurve methods
     virtual double get_Length();
@@ -407,6 +426,7 @@ class OGRPolygon : public OGRSurface
     // IGeometry
     virtual int	getDimension();
     virtual int	getCoordinateDimension();
+    virtual void getEnvelope( OGREnvelope * psEnvelope );
 
     // Non standard
     void    	addRing( OGRLinearRing * );
@@ -454,6 +474,7 @@ class OGRGeometryCollection : public OGRGeometry
     // IGeometry methods
     virtual int	getDimension();
     virtual int	getCoordinateDimension();
+    virtual void getEnvelope( OGREnvelope * psEnvelope );
 
     // IGeometryCollection
     int		getNumGeometries();
