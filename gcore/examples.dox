@@ -1,0 +1,20 @@
+/*!
+\page gdalinfo.c
+<center>
+<title>Simple C Example: gdalinfo.c</title>
+</center>
+
+\include gdalinfo.c
+*/
+
+/*!
+\page gdal_translate.c
+<center>
+<title>C Read/Write Example: gdal_translate.c</title>
+</center>
+
+This example demonstrates read one file, and writing the data to another.
+
+\include gdal_translate.c
+*/
+
