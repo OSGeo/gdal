@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/01/07 18:16:01  warmerda
+ * implement spatial filtering in Oracle, re-enable index build
+ *
  * Revision 1.7  2003/01/06 18:00:34  warmerda
  * Restructure geometry translation ... collections now supported.
  * Dimension is now a layer wide attribute.
@@ -60,6 +63,9 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
+
+static int nDiscarded = 0;
+static int nHits = 0;
 
 /************************************************************************/
 /*                          OGROCITableLayer()                          */
@@ -221,36 +227,39 @@ void OGROCITableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 void OGROCITableLayer::BuildWhere()
 
 {
-    char	szWHERE[4096];
+    OGROCIStringBuf oWHERE;
 
     CPLFree( pszWHERE );
     pszWHERE = NULL;
 
-    szWHERE[0] = '\0';
-#ifdef notdef
-    if( poFilterGeom != NULL && bHasPostGISGeometry )
+    if( poFilterGeom != NULL )
     {
         OGREnvelope  sEnvelope;
 
         poFilterGeom->getEnvelope( &sEnvelope );
-        sprintf( szWHERE, 
-                 "WHERE %s && GeometryFromText('BOX3D(%.12f %.12f, %.12f %.12f)'::box3d,%d) ",
-                 pszGeomColumn, 
-                 sEnvelope.MinX, sEnvelope.MinY, 
-                 sEnvelope.MaxX, sEnvelope.MaxY,
-                 nSRSId );
+
+        oWHERE.Append( "WHERE sdo_filter(" );
+        oWHERE.Append( pszGeomName );
+        oWHERE.Append( ", MDSYS.SDO_GEOMETRY(2003,NULL,NULL," );
+        oWHERE.Append( "MDSYS.SDO_ELEM_INFO_ARRAY(1,1003,3)," );
+        oWHERE.Append( "MDSYS.SDO_ORDINATE_ARRAY(" );
+        oWHERE.Appendf( 200, "%.16g,%.16g,%.16g,%.16g", 
+                        sEnvelope.MinX, sEnvelope.MinY,
+                        sEnvelope.MaxX, sEnvelope.MaxY );
+        oWHERE.Append( ")), 'querytype=window') = 'TRUE' " );
     }
-#endif
 
     if( pszQuery != NULL )
     {
-        if( strlen(szWHERE) == 0 )
-            sprintf( szWHERE, "WHERE %s ", pszQuery  );
+        if( oWHERE.GetLast() == '\0' )
+            oWHERE.Append( "WHERE " );
         else
-            sprintf( szWHERE+strlen(szWHERE), "AND %s ", pszQuery );
+            oWHERE.Append( "AND " );
+
+        oWHERE.Append( pszQuery );
     }
 
-    pszWHERE = CPLStrdup(szWHERE);
+    pszWHERE = oWHERE.StealString();
 }
 
 /************************************************************************/
@@ -298,11 +307,23 @@ OGRFeature *OGROCITableLayer::GetNextFeature()
 
         poFeature = GetNextRawFeature();
         if( poFeature == NULL )
+        {
+            CPLDebug( "OCI", "Query complete, got %d hits, and %d discards.",
+                      nHits, nDiscarded );
+            nHits = 0;
+            nDiscarded = 0;
             return NULL;
+        }
 
         if( poFilterGeom == NULL
             || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+        {
+            nHits++;
             return poFeature;
+        }
+
+        if( poFilterGeom != NULL )
+            nDiscarded++;
 
         delete poFeature;
     }
@@ -315,6 +336,9 @@ OGRFeature *OGROCITableLayer::GetNextFeature()
 void OGROCITableLayer::ResetReading()
 
 {
+    nHits = 0;
+    nDiscarded = 0;
+
     BuildFullQueryStatement();
 
     OGROCILayer::ResetReading();
@@ -426,7 +450,7 @@ OGROCITableLayer::TranslateElementGroup( OGRGeometry *poGeometry,
           if( nDimension == 3 )
               poOrdinates->Appendf( 32, ",%.16g", poPoint->getZ() );
 
-          nLastOrdinate++;
+          nLastOrdinate += nDimension;
 
           return OGRERR_NONE;
       }
@@ -455,7 +479,7 @@ OGROCITableLayer::TranslateElementGroup( OGRGeometry *poGeometry,
               if( nDimension == 3 )
                   poOrdinates->Appendf( 32, ",%.16g", poLine->getZ(iVert) );
 
-              nLastOrdinate++;
+              nLastOrdinate += nDimension;
           }
           return OGRERR_NONE;
       }
@@ -721,6 +745,7 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
             strcat( pszCommand, ", " );
         
         strcat( pszCommand, pszFIDName );
+        bNeedComma = TRUE;
     }
     
 
@@ -1095,7 +1120,6 @@ void OGROCITableLayer::FinalizeNewLayer()
 
 // Disable for now, spatial index creation always seems to cause me to 
 // lose my connection to the database!
-#ifdef notdef
     OGROCIStringBuf  sIndexCmd;
 
     sIndexCmd.Appendf( 10000, "CREATE INDEX %s_idx ON %s(%s) "
@@ -1111,5 +1135,4 @@ void OGROCITableLayer::FinalizeNewLayer()
         sprintf( szDropCommand, "DROP INDEX %s_idx", poFeatureDefn->GetName());
         oExecStatement.Execute( szDropCommand );
     }
-#endif
 }
