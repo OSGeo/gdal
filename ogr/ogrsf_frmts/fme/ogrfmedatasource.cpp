@@ -23,6 +23,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/05/29 20:37:07  warmerda
+ * add indirect load of fme.dll
+ *
  * Revision 1.1  2002/05/24 06:23:57  warmerda
  * New
  *
@@ -348,9 +351,21 @@ OGRFMEDataSource::~OGRFMEDataSource()
         if( --nSharedSessionRefCount == 0 )
         {
 #ifdef SUPPORT_CLEANUP_SESSION
-            FME_destroySession( poSession );
-            poSharedSession = NULL;
+#ifdef SUPPORT_INDIRECT_FMEDLL
+            int (*pfnFME_destroySession)(void *);
+
+            pfnFME_destroySession = (int (*)(void*)) 
+                CPLGetSymbol("fme.dll", "FME_DestroySession" );
+            if( pfnFME_destroySession == NULL )
+                CPLError( CE_Warning, CPLE_AppDefined, 
+                          "Failed to fetch FME_DestroySession entry point." );
+            else
+                pfnFME_destroySession( (void *) (&poSession) );
 #else
+            FME_destroySession( poSession );
+#endif // def SUPPORT_INDIRECT_FMEDLL
+            poSharedSession = NULL;
+#else // ndef SUPPORT_CLEANUP_SESSION
             CPLDebug( kPROVIDERNAME, "no active datasources left, but preserving session." );
 #endif
         }
@@ -532,6 +547,9 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
 /*      Create an FME Session.                                          */
 /* -------------------------------------------------------------------- */
     poSession = AcquireSession();
+    if( poSession == NULL )
+        return FALSE;
+
     nSharedSessionRefCount++;
 
     CPLDebug( kPROVIDERNAME, "%p:acquired session", this );
@@ -1557,12 +1575,27 @@ IFMESession *OGRFMEDataSource::AcquireSession()
 /* -------------------------------------------------------------------- */
     if( poSharedSession == NULL )
     {
+#ifdef SUPPORT_INDIRECT_FMEDLL
+        FME_MsgNum (*pfnFME_CreateSession)( void * );
+        pfnFME_CreateSession = (FME_MsgNum (*)(void*)) 
+            CPLGetSymbol( "fme.dll", "FME_CreateSession" );
+        if( pfnFME_CreateSession == NULL )
+        {
+            CPLReleaseMutex( hSessionMutex );
+            CPLDebug( kPROVIDERNAME, "Unable to load FME_CreateSession from fme.dll, skipping FME Driver." );
+            return NULL;
+        }
+
+        err = pfnFME_CreateSession( (void *) (&poSharedSession) );
+#else
         err = FME_createSession(poSharedSession);
+#endif
         if( err )
         {
+            CPLReleaseMutex( hSessionMutex );
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed to create FMESession." );
-            return FALSE;
+            return NULL;
         }
 
         // Dale Nov 26 '01 -- Set up to log "badnews" from FME
@@ -1580,10 +1613,11 @@ IFMESession *OGRFMEDataSource::AcquireSession()
 
         if( err )
         {
+            CPLReleaseMutex( hSessionMutex );
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed to initialize FMESession.\n%s",
                       poSharedSession->getLastErrorMsg());
-            return FALSE;
+            return NULL;
         }
     }
 
