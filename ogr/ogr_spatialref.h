@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/09/29 16:36:17  warmerda
+ * added several new projections
+ *
  * Revision 1.7  1999/09/15 20:34:21  warmerda
  * South_Oriented to SouthOrientated, prototype changes
  *
@@ -182,6 +185,10 @@ class OGRSpatialReference
     OGRErr      SetAE( double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
 
+    // Cylindrical Equal Area
+    OGRErr      SetCEA( double dfStdP1, double dfCentralMeridian,
+                        double dfFalseEasting, double dfFalseNorthing );
+
     // Cassini-Soldner
     OGRErr      SetCS( double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
@@ -191,10 +198,22 @@ class OGRSpatialReference
                        double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
 
+    // Eckert IV
+    OGRErr      SetEckertIV( double dfCentralMeridian,
+                             double dfFalseEasting, double dfFalseNorthing );
+
+    // Eckert VI
+    OGRErr      SetEckertVI( double dfCentralMeridian,
+                             double dfFalseEasting, double dfFalseNorthing );
+
     // Equirectangular
     OGRErr      SetEquirectangular(double dfCenterLat, double dfCenterLong,
                         double dfFalseEasting, double dfFalseNorthing );
 
+    // Gall Stereograpic
+    OGRErr      SetGS( double dfCentralMeridian,
+                       double dfFalseEasting, double dfFalseNorthing );
+    
     // Gnomonic
     OGRErr      SetGnomonic(double dfCenterLat, double dfCenterLong,
                             double dfFalseEasting, double dfFalseNorthing );
@@ -232,6 +251,10 @@ class OGRSpatialReference
     OGRErr      SetMercator( double dfCenterLat, double dfCenterLong,
                              double dfScale, 
                              double dfFalseEasting, double dfFalseNorthing );
+
+    // Mollweide
+    OGRErr      SetMollweide( double dfCentralMeridian,
+                              double dfFalseEasting, double dfFalseNorthing );
 
     // New Zealand Map Grid
     OGRErr      SetNZMG( double dfCenterLat, double dfCenterLong,
@@ -287,14 +310,21 @@ class OGRSpatialReference
 /*      Some "standard" strings.                                        */
 /* ==================================================================== */
 
-#define SRS_PT_CASSINI_SOLDNER	"Cassini_Soldner"
-#define SRS_PT_EQUIDISTANT_CONIC "Equidistant_Conic"
-#define SRS_PT_EQUIRECTANGULAR  "Equirectangular"
-#define SRS_PT_MERCATOR_1SP     "Mercator_1SP"
-#define SRS_PT_MERCATOR_2SP     "Mercator_2SP"
-#define SRS_PT_ROBINSON         "Robinson"
 #define SRS_PT_ALBERS_CONIC_EQUAL_AREA					\
 				"Albers_Conic_Equal_Area"
+#define SRS_PT_AZIMUTHAL_EQUIDISTANT "Azimuthal_Equidistant"
+#define SRS_PT_CASSINI_SOLDNER	"Cassini_Soldner"
+#define SRS_PT_CYLINDRICAL_EQUAL_AREA "Cylindrical_Equal_Area"
+#define SRS_PT_ECKERT_IV        "Eckert_IV"
+#define SRS_PT_ECKERT_VI        "Eckert_VI"
+#define SRS_PT_EQUIDISTANT_CONIC "Equidistant_Conic"
+#define SRS_PT_EQUIRECTANGULAR  "Equirectangular"
+#define SRS_PT_GALL_STEREOGRAPHIC "Gall_Stereographic"
+#define SRS_PT_GNOMONIC		"Gnomonic"
+#define SRS_PT_HOTINE_OBLIQUE_MERCATOR 					\
+                                "Hotine_Oblique_Mercator"
+#define SRS_PT_LABORDE_OBLIQUE_MERCATOR 				\
+                                "Laborde_Oblique_Mercator"
 #define SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP				\
                                 "Lambert_Conformal_Conic_1SP"
 #define SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP			        \
@@ -303,32 +333,32 @@ class OGRSpatialReference
                                 "Lambert_Conformal_Conic_2SP_Belgium)"
 #define SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA		        \
                                 "Lambert_Azimuthal_Equal_Area"
+#define SRS_PT_MERCATOR_1SP     "Mercator_1SP"
+#define SRS_PT_MERCATOR_2SP     "Mercator_2SP"
+#define SRS_PT_MILLER_CYLINDRICAL "Miller_Cylindrical"
+#define SRS_PT_MOLLWEIDE        "Mollweide"
+#define SRS_PT_NEW_ZEALAND_MAP_GRID					\
+                                "New_Zealand_Map_Grid"
+#define SRS_PT_OBLIQUE_STEREOGRAPHIC					\
+                                "Oblique_Stereographic"
+#define SRS_PT_ORTHOGRAPHIC	"Orthographic"
+#define SRS_PT_POLAR_STEREOGRAPHIC					\
+                                "Polar_Stereographic"
+#define SRS_PT_POLYCONIC	"Polyconic"
+#define SRS_PT_ROBINSON         "Robinson"
+#define SRS_PT_SINUSOIDAL	"Sinusoidal"
+#define SRS_PT_STEREOGRAPHIC	"Stereographic"
+#define SRS_PT_SWISS_OBLIQUE_CYLINDRICAL 				\
+                                "Swiss_Oblique_Cylindrical"
 #define SRS_PT_TRANSVERSE_MERCATOR					\
                                 "Transverse_Mercator"
 #define SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED			\
                                 "Transverse_Mercator_South_Orientated"
-#define SRS_PT_OBLIQUE_STEREOGRAPHIC					\
-                                "Oblique_Stereographic"
-#define SRS_PT_POLAR_STEREOGRAPHIC					\
-                                "Polar_Stereographic"
-#define SRS_PT_NEW_ZEALAND_MAP_GRID					\
-                                "New_Zealand_Map_Grid"
-#define SRS_PT_HOTINE_OBLIQUE_MERCATOR 					\
-                                "Hotine_Oblique_Mercator"
-#define SRS_PT_LABORDE_OBLIQUE_MERCATOR 				\
-                                "Laborde_Oblique_Mercator"
-#define SRS_PT_SWISS_OBLIQUE_CYLINDRICAL 				\
-                                "Swiss_Oblique_Cylindrical"
 #define SRS_PT_TUNISIA_MINING_GRID					\
                                 "Tunisia_Mining_Grid"
-#define SRS_PT_AZIMUTHAL_EQUIDISTANT "Azimuthal_Equidistant"
-#define SRS_PT_MILLER_CYLINDRICAL "Miller_Cylindrical"
-#define SRS_PT_SINUSOIDAL	"Sinusoidal"
-#define SRS_PT_STEREOGRAPHIC	"Stereographic"
-#define SRS_PT_GNOMONIC		"Gnomonic"
-#define SRS_PT_ORTHOGRAPHIC	"Orthographic"
-#define SRS_PT_POLYCONIC	"Polyconic"
 #define SRS_PT_VANDERGRINTEN	"VanDerGrinten"
+
+                                
 
 #define SRS_PP_CENTRAL_MERIDIAN		"central_meridian"
 #define SRS_PP_SCALE_FACTOR     	"scale_factor"
