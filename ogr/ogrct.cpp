@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRSCoordinateTransformation class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2004/01/24 09:35:00  warmerda
+ * added TransformEx support to capture per point reprojection failure
+ *
  * Revision 1.22  2003/11/10 17:08:31  warmerda
  * dont delete OGRSpatialReferences if they are still referenced
  *
@@ -170,6 +173,9 @@ public:
     virtual OGRSpatialReference *GetTargetCS();
     virtual int Transform( int nCount, 
                            double *x, double *y, double *z = NULL );
+    virtual int TransformEx( int nCount, 
+                             double *x, double *y, double *z = NULL,
+                             int *panSuccess = NULL );
 
 };
 
@@ -527,9 +533,50 @@ OGRSpatialReference *OGRProj4CT::GetTargetCS()
 
 /************************************************************************/
 /*                             Transform()                              */
+/*                                                                      */
+/*      This is a small wrapper for the extended transform version.     */
 /************************************************************************/
 
 int OGRProj4CT::Transform( int nCount, double *x, double *y, double *z )
+
+{
+    int *pabSuccess = (int *) CPLMalloc(sizeof(int) * nCount );
+    int bOverallSuccess, i;
+
+    bOverallSuccess = TransformEx( nCount, x, y, z, pabSuccess );
+
+    for( i = 0; i < nCount; i++ )
+    {
+        if( !pabSuccess[i] )
+        {
+            bOverallSuccess = FALSE;
+            break;
+        }
+    }
+
+    CPLFree( pabSuccess );
+
+    return bOverallSuccess;
+}
+
+/************************************************************************/
+/*                            OCTTransform()                            */
+/************************************************************************/
+
+int OCTTransform( OGRCoordinateTransformationH hTransform,
+                  int nCount, double *x, double *y, double *z )
+
+{
+    return ((OGRCoordinateTransformation*) hTransform)->
+        Transform( nCount, x, y,z );
+}
+
+/************************************************************************/
+/*                            TransformEx()                             */
+/************************************************************************/
+
+int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
+                             int *pabSuccess )
 
 {
     int   err, i;
@@ -559,6 +606,9 @@ int OGRProj4CT::Transform( int nCount, double *x, double *y, double *z )
 /* -------------------------------------------------------------------- */
     if( err != 0 )
     {
+        if( pabSuccess )
+            memset( pabSuccess, 0, sizeof(int) * nCount );
+
         if( ++nErrorCount < 20 )
         {
             const char *pszError = NULL;
@@ -589,8 +639,25 @@ int OGRProj4CT::Transform( int nCount, double *x, double *y, double *z )
     {
         for( i = 0; i < nCount; i++ )
         {
-            x[i] *= dfTargetFromRadians;
-            y[i] *= dfTargetFromRadians;
+            if( x[i] != HUGE_VAL && y[i] != HUGE_VAL )
+            {
+                x[i] *= dfTargetFromRadians;
+                y[i] *= dfTargetFromRadians;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Establish error information if pabSuccess provided.             */
+/* -------------------------------------------------------------------- */
+    if( pabSuccess )
+    {
+        for( i = 0; i < nCount; i++ )
+        {
+            if( x[i] == HUGE_VAL || y[i] == HUGE_VAL )
+                pabSuccess[i] = FALSE;
+            else
+                pabSuccess[i] = TRUE;
         }
     }
 
@@ -598,13 +665,15 @@ int OGRProj4CT::Transform( int nCount, double *x, double *y, double *z )
 }
 
 /************************************************************************/
-/*                            OCTTransform()                            */
+/*                           OCTTransformEx()                           */
 /************************************************************************/
 
-int OCTTransform( OGRCoordinateTransformationH hTransform,
-                  int nCount, double *x, double *y, double *z )
+int OCTTransformEx( OGRCoordinateTransformationH hTransform,
+                    int nCount, double *x, double *y, double *z,
+                    int *pabSuccess )
 
 {
     return ((OGRCoordinateTransformation*) hTransform)->
-        Transform( nCount, x, y,z );
+        TransformEx( nCount, x, y, z, pabSuccess );
 }
+

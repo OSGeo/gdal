@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2004/01/24 09:34:59  warmerda
+ * added TransformEx support to capture per point reprojection failure
+ *
  * Revision 1.55  2003/10/07 04:20:50  warmerda
  * added WMS AUTO: support
  *
@@ -58,141 +61,6 @@
  *
  * Revision 1.46  2003/01/08 18:14:28  warmerda
  * added FixupOrdering()
- *
- * Revision 1.45  2002/12/16 17:06:51  warmerda
- * added GetPrimeMeridian() method
- *
- * Revision 1.44  2002/12/15 23:42:59  warmerda
- * added initial support for normalizing proj params
- *
- * Revision 1.43  2002/12/14 22:59:14  warmerda
- * added Krovak in ESRI compatible way
- *
- * Revision 1.42  2002/12/10 04:04:38  warmerda
- * added parent pointer to OGR_SRSNode
- *
- * Revision 1.41  2002/12/09 16:11:02  warmerda
- * fixed constness of get authority calls
- *
- * Revision 1.40  2002/12/01 21:16:10  warmerda
- * added Get/set angular units methods
- *
- * Revision 1.39  2002/11/25 16:12:54  warmerda
- * added GetAuthorityCode/Name
- *
- * Revision 1.38  2002/04/18 14:22:45  warmerda
- * made OGRSpatialReference and co 'const correct'
- *
- * Revision 1.37  2002/03/05 14:25:14  warmerda
- * expand tabs
- *
- * Revision 1.36  2002/01/24 16:21:45  warmerda
- * added StripNodes method, removed simplify flag from pretty wkt
- *
- * Revision 1.35  2001/12/06 18:18:47  warmerda
- * added preliminary xml srs support
- *
- * Revision 1.34  2001/10/11 19:27:12  warmerda
- * upgraded validation infrastructure
- *
- * Revision 1.33  2001/10/10 20:42:43  warmerda
- * added ESRI WKT morphing support
- *
- * Revision 1.32  2001/09/21 16:21:02  warmerda
- * added Clear(), and SetFromUserInput() methods
- *
- * Revision 1.31  2001/07/19 18:25:07  warmerda
- * expanded tabs
- *
- * Revision 1.30  2001/07/16 03:34:55  warmerda
- * various fixes, and improvements suggested by Ben Driscoe on gdal list
- *
- * Revision 1.29  2001/05/24 21:02:42  warmerda
- * moved OGRCoordinateTransform destructor defn
- *
- * Revision 1.28  2001/02/06 17:10:28  warmerda
- * export entry points from DLL
- *
- * Revision 1.27  2001/01/22 13:59:55  warmerda
- * added SetSOC
- *
- * Revision 1.26  2001/01/19 21:10:47  warmerda
- * replaced tabs
- *
- * Revision 1.25  2000/11/09 06:21:32  warmerda
- * added limited ESRI prj support
- *
- * Revision 1.24  2000/10/20 04:19:38  warmerda
- * added setstateplane
- *
- * Revision 1.23  2000/10/16 21:26:07  warmerda
- * added some level of LOCAL_CS support
- *
- * Revision 1.22  2000/08/28 20:13:23  warmerda
- * added importFromProj4
- *
- * Revision 1.21  2000/07/09 20:48:02  warmerda
- * added exportToPrettyWkt
- *
- * Revision 1.20  2000/03/24 14:49:56  warmerda
- * added WGS84 related methods
- *
- * Revision 1.19  2000/03/22 01:09:43  warmerda
- * added SetProjCS and SetWellKnownTextCS
- *
- * Revision 1.18  2000/03/20 23:33:51  warmerda
- * updated docs a bit
- *
- * Revision 1.17  2000/03/20 23:08:05  warmerda
- * Added docs.
- *
- * Revision 1.16  2000/03/20 22:59:36  warmerda
- * Added some documentation.
- *
- * Revision 1.15  2000/03/20 22:39:49  warmerda
- * Added IsSame( method.
- *
- * Revision 1.14  2000/03/20 14:59:35  warmerda
- * added OGRCoordinateTransformation
- *
- * Revision 1.13  2000/03/16 19:04:01  warmerda
- * added SetTMG, moved constants to ogr_srs_api.h
- *
- * Revision 1.12  2000/01/26 21:22:18  warmerda
- * added tentative MakeValueSafe implementation
- *
- * Revision 1.11  2000/01/11 22:12:13  warmerda
- * added InsertChild
- *
- * Revision 1.10  2000/01/06 19:46:10  warmerda
- * added special logic for setting, and recognising UTM
- *
- * Revision 1.9  1999/11/18 19:02:20  warmerda
- * expanded tabs
- *
- * Revision 1.8  1999/09/29 16:36:17  warmerda
- * added several new projections
- *
- * Revision 1.7  1999/09/15 20:34:21  warmerda
- * South_Oriented to SouthOrientated, prototype changes
- *
- * Revision 1.6  1999/09/09 13:53:47  warmerda
- * use lower case for degree and radian
- *
- * Revision 1.5  1999/07/29 17:29:45  warmerda
- * added various help methods for projections
- *
- * Revision 1.4  1999/07/14 05:23:38  warmerda
- * Added projection set methods, and #defined tokens
- *
- * Revision 1.3  1999/06/25 20:21:18  warmerda
- * fleshed out classes
- *
- * Revision 1.2  1999/05/31 17:14:34  warmerda
- * Fixed define.
- *
- * Revision 1.1  1999/05/20 14:35:00  warmerda
- * New
  */
 
 #ifndef _OGR_SPATIALREF_H_INCLUDED
@@ -606,6 +474,9 @@ public:
      *
      * This method is the same as the C function OCTTransform().
      *
+     * The method TransformEx() allows extended success information to 
+     * be captured indicating which points failed to transform. 
+     *
      * @param nCount number of points to transform.
      * @param x array of nCount X vertices, modified in place.
      * @param y array of nCount Y vertices, modified in place.
@@ -615,6 +486,25 @@ public:
      */
     virtual int Transform( int nCount, 
                            double *x, double *y, double *z = NULL ) = 0;
+
+    /**
+     * Transform points from source to destination space.
+     *
+     * This method is the same as the C function OCTTransformEx().
+     *
+     * @param nCount number of points to transform.
+     * @param x array of nCount X vertices, modified in place.
+     * @param y array of nCount Y vertices, modified in place.
+     * @param z array of nCount Z vertices, modified in place.
+     * @param pabSuccess array of per-point flags set to TRUE if that point 
+     * transforms, or FALSE if it does not.
+     *
+     * @return TRUE if some or all points transform successfully, or FALSE if 
+     * if none transform.
+     */
+    virtual int TransformEx( int nCount, 
+                             double *x, double *y, double *z = NULL,
+                             int *pabSuccess = NULL ) = 0;
 
 };
 
