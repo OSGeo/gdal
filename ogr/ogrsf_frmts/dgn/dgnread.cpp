@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/02/06 20:32:33  warmerda
+ * handle improbably large elements
+ *
  * Revision 1.19  2002/01/21 20:53:33  warmerda
  * a bunch of reorganization to support spatial filtering
  *
@@ -158,6 +161,9 @@ static int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
 /* -------------------------------------------------------------------- */
 /*      Read the rest of the element data into the working buffer.      */
 /* -------------------------------------------------------------------- */
+    fflush( stdout );
+    CPLAssert( nWords * 2 + 4 <= sizeof(psDGN->abyElem) );
+
     if( (int) VSIFRead( psDGN->abyElem + 4, 2, nWords, psDGN->fp ) != nWords )
         return FALSE;
 
