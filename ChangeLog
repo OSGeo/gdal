@@ -1,5 +1,10 @@
 2001-04-17  Frank Warmerdam  <warmerdam@pobox.com>
 
+	* frmts/ogdi/*, ogr/ogrsf_frmts/ogdi/*: Modified to utilize layer
+	capabilities to get list of available layers.  Restructured OGDI
+	discovery mechanisms in configure script (more like other libraries).
+	Added complete Image support.  Capture text from text features.
+
 	* frmts/gtiff/geotiff.cpp: fixed acces to rw mode separate planes
 	RGB images.
 

@@ -67,16 +67,6 @@ CPL_LIB		=	$(GDAL_ROOT)/port/cpl.a
 OGRFRMTS_LIB	=	$(GDAL_ROOT)/ogr/ogrsf_frmts/ogrsf_frmts.a
 
 #
-# OGDI Parameters
-#
-ifeq ($(HAVE_OGDI),yes)
-OGDI_LIBS	=	@OGDI_LIBS@
-OGDI_INCLUDE	=	@OGDI_INCLUDE@
-OGDI_FLAG	=	ENABLED
-OGDI_FRMT	=	ogdi
-endif
-
-#
 # OGR/PostgreSQL support.
 #
 HAVE_OGR_PG     = no
@@ -87,6 +77,8 @@ PG_LIB	=	-L$(PG_HOME)/lib -lpq
 PG_INC	=	-I$(PG_HOME)/include
 endif
 
+OGDI_INCLUDE	=	@OGDI_INCLUDE@
+
 
 PNG_SETTING	=	@PNG_SETTING@
 JPEG_SETTING	=	@JPEG_SETTING@
@@ -94,9 +86,10 @@ TIFF_SETTING	=	@TIFF_SETTING@
 GEOTIFF_SETTING	=	@GEOTIFF_SETTING@
 GIF_SETTING	=	@GIF_SETTING@
 FITS_SETTING    =       @FITS_SETTING@
+OGDI_SETTING	=	@HAVE_OGDI@
 
 GDAL_LIBS	=	$(GDAL_LIB) $(OGR_LIB) \
-			$(GDAL_LIB) $(CPL_LIB) $(OGDI_LIBS)
+			$(GDAL_LIB) $(CPL_LIB)
 GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/core/*.o \
 			$(GDAL_ROOT)/port/*.o \
@@ -119,7 +112,7 @@ endif
 #	and their uppercase form should be the format portion of the
 #	format registration entry point.  eg. gdb -> GDALRegister_GDB().
 #
-GDAL_FORMATS = 	gxf gtiff hfa $(OGDI_FRMT) aigrid aaigrid ceos ceos2 iso8211 \
+GDAL_FORMATS = 	gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 \
 		sdts raw dted mem jdem envisat elas \
 		@OPT_GDAL_FORMATS@
 

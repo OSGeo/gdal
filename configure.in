@@ -349,6 +349,42 @@ fi
 AC_SUBST(GEOTIFF_SETTING,$GEOTIFF_SETTING)
 
 dnl ---------------------------------------------------------------------------
+dnl Select an OGDI Library to use, or disable driver.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(ogdi,[  --with-ogdi[=ARG]       Include OGDI support (ARG=path)],,)
+
+if test "$with_ogdi" = "no" ; then
+
+  HAVE_OGDI=no
+
+  echo "ogdi support disabled."
+
+elif test "$with_ogdi" = "yes" -o "$with_ogdi" = "" ; then
+
+  AC_CHECK_LIB(ogdi,cln_GetLayerCapabilities,HAVE_OGDI=yes,HAVE_OGDI=no,)
+
+  if test "$HAVE_OGDI" = "yes" ; then   
+    LIBS="-logdi $LIBS"
+  fi
+
+else
+
+  HAVE_OGDI=yes
+  LIBS="-L$with_ogdi -L$with_ogdi/lib -logdi $LIBS"
+  EXTRA_INCLUDES="-I$with_ogdi -I$with_ogdi/include $EXTRA_INCLUDES"
+
+  echo "using libogdi from $with_ogdi."
+
+fi
+
+AC_SUBST(HAVE_OGDI,$HAVE_OGDI)
+
+if test "$HAVE_OGDI" != "no" ; then
+  OPT_GDAL_FORMATS="ogdi $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
 
 AC_SUBST(OPT_GDAL_FORMATS,$OPT_GDAL_FORMATS)
 AC_SUBST(EXTRA_INCLUDES,$EXTRA_INCLUDES)
@@ -381,7 +417,5 @@ AC_ARG_WITH(python,[  --without-python        Disable Python],,)
 AM_PATH_PYTHON
 AM_INIT_PYEXEC_MOD
 AM_CHECK_NUMPY
-
-AC_TRY_OGDI
 
 AC_OUTPUT(GDALmake.opt)
