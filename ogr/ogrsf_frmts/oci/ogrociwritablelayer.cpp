@@ -30,6 +30,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/08/05 01:59:09  warmerda
+ * Default unsized string fields to 2047 instead of 4000 to avoid problem reading
+ * fields of width 2048 or more as reported by Ned.
+ *
  * Revision 1.2  2003/05/21 03:54:01  warmerda
  * expand tabs
  *
@@ -292,7 +296,7 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
     else if( oField.GetType() == OFTString )
     {
         if( oField.GetWidth() == 0 || !bPreservePrecision )
-            strcpy( szFieldType, "VARCHAR(4000)" );
+            strcpy( szFieldType, "VARCHAR(2047)" );
         else
             sprintf( szFieldType, "CHAR(%d)", oField.GetWidth() );
     }
@@ -302,7 +306,7 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
                   "Can't create field %s with type %s on Oracle layers.  Creating as VARCHAR.",
                   oField.GetNameRef(),
                   OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
-        strcpy( szFieldType, "VARCHAR(4000)" );
+        strcpy( szFieldType, "VARCHAR(2047)" );
     }
     else
     {
