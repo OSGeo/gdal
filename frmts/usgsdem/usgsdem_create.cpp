@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.9  2004/04/27 14:54:56  warmerda
+ * fixed filename checking, and DATAPOINTER support
+ *
  * Revision 1.8  2004/04/23 20:27:24  warmerda
  * completed mapsheet support for CDED50K
  *
@@ -910,8 +913,9 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
     }
     else
     {
-        if( !EQUALN(psWInfo->pszFilename+6,"DEM",3) 
-            || strlen(psWInfo->pszFilename) != 10 )
+        const char *pszBasename = CPLGetFilename( psWInfo->pszFilename);
+        if( !EQUALN(pszBasename+6,"DEM",3) 
+            || strlen(pszBasename) != 10 )
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Internal filename required to be of 'nnnannDEMz', the output\n"
                       "filename is not of the required format, and the tile could not be\n"
@@ -994,7 +998,7 @@ static int USGSDEMLoadRaster( USGSDEMWriteInfo *psWInfo,
     char szDataPointer[100];
     char *apszOptions[] = { szDataPointer, NULL };
 
-    sprintf( szDataPointer, "DATAPOINTER=%p", psWInfo->panData );
+    sprintf( szDataPointer, "DATAPOINTER=%ul", (unsigned long) psWInfo->panData );
 
     if( poMemDS->AddBand( GDT_Int16, apszOptions ) != CE_None )
         return FALSE;
