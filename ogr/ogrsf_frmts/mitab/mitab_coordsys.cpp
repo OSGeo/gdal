@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.28 2003/03/21 14:20:42 warmerda Exp $
+ * $Id: mitab_coordsys.cpp,v 1.29 2004/06/03 19:36:53 fwarmerdam Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.29  2004/06/03 19:36:53  fwarmerdam
+ * fixed memory leak processing non-earth coordsys
+ *
  * Revision 1.28  2003/03/21 14:20:42  warmerda
  * fixed up regional mercator handling, was screwing up transverse mercator
  *
@@ -604,7 +607,10 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
 /*      For Non-Earth projection, we're done at this point.             */
 /* -------------------------------------------------------------------- */
     if (nProjection == 0)
+    {
+        CSLDestroy(papszFields);
         return poSR;
+    }
 
 /* ==================================================================== */
 /*      Establish the GeogCS                                            */

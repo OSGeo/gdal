@@ -1,12 +1,12 @@
 /**********************************************************************
- * $Id: mitab_imapinfofile.cpp,v 1.18 2003/12/19 07:55:55 fwarmerdam Exp $
+ * $Id: mitab_imapinfofile.cpp,v 1.19 2004/06/30 20:29:04 dmorissette Exp $
  *
  * Name:     mitab_imapinfo
  * Project:  MapInfo mid/mif Tab Read/Write library
  * Language: C++
  * Purpose:  Implementation of the IMapInfoFile class, super class of
  *           of MIFFile and TABFile
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
  * Copyright (c) 1999-2001, Daniel Morissette
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_imapinfofile.cpp,v $
+ * Revision 1.19  2004/06/30 20:29:04  dmorissette
+ * Fixed refs to old address danmo@videotron.ca
+ *
  * Revision 1.18  2003/12/19 07:55:55  fwarmerdam
  * treat 3D features as 2D on write
  *

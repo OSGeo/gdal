@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_driver.h,v 1.12 2004/02/27 21:06:03 fwarmerdam Exp $
+ * $Id: mitab_ogr_driver.h,v 1.13 2004/07/07 16:11:39 fwarmerdam Exp $
  *
  * Name:     mitab_ogr_drive.h
  * Project:  Mid/mif tab ogr support
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_ogr_driver.h,v $
+ * Revision 1.13  2004/07/07 16:11:39  fwarmerdam
+ * fixed up some single layer creation issues
+ *
  * Revision 1.12  2004/02/27 21:06:03  fwarmerdam
  * Better support for "single file" creation ... don't allow other layers to
  * be created.  But *do* single file to satisfy the first layer creation request
@@ -104,7 +107,7 @@ class OGRTABDataSource : public OGRDataSource
     int         Create( const char *pszName, char ** papszOptions );
 
     const char  *GetName() { return m_pszName; }
-    int          GetLayerCount() { return m_nLayerCount; }
+    int          GetLayerCount();
     OGRLayer    *GetLayer( int );
     int          TestCapability( const char * );
     

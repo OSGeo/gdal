@@ -1,14 +1,14 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.71 2003/08/07 03:20:46 dmorissette Exp $
+ * $Id: mitab.h,v 1.72 2004/06/30 20:22:31 dmorissette Exp $
  *
  * Name:     mitab.h
- * Project:  MapInfo MIF Read/Write library
+ * Project:  MapInfo TAB Read/Write library
  * Language: C++
  * Purpose:  Header file containing public definitions for the library.
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
- * Copyright (c) 1999-2002, Daniel Morissette
+ * Copyright (c) 1999-2004, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.72  2004/06/30 20:22:31  dmorissette
+ * Ready for V1.3.0
+ *
  * Revision 1.71  2003/08/07 03:20:46  dmorissette
  * Added mitab_c_getlibversion() to C API. (Uffe K. - bug 21)
  *
@@ -171,8 +174,8 @@
 /*---------------------------------------------------------------------
  * Current version of the MITAB library... always useful!
  *--------------------------------------------------------------------*/
-#define MITAB_VERSION      "1.2.4 (2003-07-23)"
-#define MITAB_VERSION_INT  1002004  /* version x.y.z -> xxxyyyzzz */
+#define MITAB_VERSION      "1.3.0 (2004-06-30)"
+#define MITAB_VERSION_INT  1003000  /* version x.y.z -> xxxyyyzzz */
 
 #ifndef PI
 #  define PI 3.14159265358979323846

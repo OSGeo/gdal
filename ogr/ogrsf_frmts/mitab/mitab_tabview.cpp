@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabview.cpp,v 1.12 2002/02/22 20:44:51 julien Exp $
+ * $Id: mitab_tabview.cpp,v 1.13 2004/06/30 20:29:04 dmorissette Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -7,7 +7,7 @@
  * Purpose:  Implementation of the TABView class, used to handle .TAB
  *           datasets composed of a number of .TAB files linked through 
  *           indexed fields.
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
  * Copyright (c) 1999-2002, Daniel Morissette
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_tabview.cpp,v $
+ * Revision 1.13  2004/06/30 20:29:04  dmorissette
+ * Fixed refs to old address danmo@videotron.ca
+ *
  * Revision 1.12  2002/02/22 20:44:51  julien
  * Prevent infinite loop with TABRelation by suppress the m_poCurFeature object
  * from the class and setting it in the calling function and add GetFeature in

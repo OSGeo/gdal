@@ -1,11 +1,11 @@
 /**********************************************************************
- * $Id: mitab_utils.cpp,v 1.18 2002/08/28 14:19:22 warmerda Exp $
+ * $Id: mitab_utils.cpp,v 1.19 2004/06/30 20:29:04 dmorissette Exp $
  *
  * Name:     mitab_utils.cpp
  * Project:  MapInfo TAB Read/Write library
  * Language: C++
  * Purpose:  Misc. util. functions for the library
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
  * Copyright (c) 1999-2001, Daniel Morissette
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_utils.cpp,v $
+ * Revision 1.19  2004/06/30 20:29:04  dmorissette
+ * Fixed refs to old address danmo@videotron.ca
+ *
  * Revision 1.18  2002/08/28 14:19:22  warmerda
  * fix TABGetBasename() for mixture of path divider types like 'mi/abc\def.tab'
  *

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_datasource.cpp,v 1.7 2004/02/27 21:06:03 fwarmerdam Exp $
+ * $Id: mitab_ogr_datasource.cpp,v 1.8 2004/07/07 15:42:46 fwarmerdam Exp $
  *
  * Name:     mitab_ogr_datasource.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_ogr_datasource.cpp,v $
+ * Revision 1.8  2004/07/07 15:42:46  fwarmerdam
+ * fixed up some single layer creation issues
+ *
  * Revision 1.7  2004/02/27 21:06:03  fwarmerdam
  * Better support for "single file" creation ... don't allow other layers to
  * be created.  But *do* single file to satisfy the first layer creation request
@@ -286,13 +289,26 @@ int OGRTABDataSource::Open( const char * pszName, int bTestOpen )
 }
 
 /************************************************************************/
+/*                           GetLayerCount()                            */
+/************************************************************************/
+
+int OGRTABDataSource::GetLayerCount()
+
+{
+    if( m_bSingleFile && !m_bSingleLayerAlreadyCreated )
+        return 0;
+    else
+        return m_nLayerCount;
+}
+
+/************************************************************************/
 /*                              GetLayer()                              */
 /************************************************************************/
 
 OGRLayer *OGRTABDataSource::GetLayer( int iLayer )
 
 {
-    if( iLayer < 0 || iLayer >= m_nLayerCount )
+    if( iLayer < 0 || iLayer >= GetLayerCount() )
         return NULL;
     else
         return m_papoLayers[iLayer];
@@ -394,7 +410,7 @@ int OGRTABDataSource::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
-        return !m_bSingleFile;
+        return !m_bSingleFile || !m_bSingleLayerAlreadyCreated;
     else
         return FALSE;
 }

@@ -1,12 +1,12 @@
 /**********************************************************************
- * $Id: mitab_maptoolblock.cpp,v 1.5 2000/11/15 04:13:50 daniel Exp $
+ * $Id: mitab_maptoolblock.cpp,v 1.6 2004/06/30 20:29:04 dmorissette Exp $
  *
  * Name:     mitab_maptoollock.cpp
  * Project:  MapInfo TAB Read/Write library
  * Language: C++
  * Purpose:  Implementation of the TABMAPToolBlock class used to handle
  *           reading/writing of the .MAP files' drawing tool blocks
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
  * Copyright (c) 1999, 2000, Daniel Morissette
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_maptoolblock.cpp,v $
+ * Revision 1.6  2004/06/30 20:29:04  dmorissette
+ * Fixed refs to old address danmo@videotron.ca
+ *
  * Revision 1.5  2000/11/15 04:13:50  daniel
  * Fixed writing of TABMAPToolBlock to allocate a new block when full
  *

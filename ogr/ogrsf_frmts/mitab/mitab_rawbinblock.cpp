@@ -1,12 +1,12 @@
 /**********************************************************************
- * $Id: mitab_rawbinblock.cpp,v 1.5 2000/02/28 17:06:06 daniel Exp $
+ * $Id: mitab_rawbinblock.cpp,v 1.6 2004/06/30 20:29:04 dmorissette Exp $
  *
  * Name:     mitab_rawbinblock.cpp
  * Project:  MapInfo TAB Read/Write library
  * Language: C++
  * Purpose:  Implementation of the TABRawBinBlock class used to handle
  *           reading/writing blocks in the .MAP files
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
  * Copyright (c) 1999, 2000, Daniel Morissette
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_rawbinblock.cpp,v $
+ * Revision 1.6  2004/06/30 20:29:04  dmorissette
+ * Fixed refs to old address danmo@videotron.ca
+ *
  * Revision 1.5  2000/02/28 17:06:06  daniel
  * Added m_bModified flag
  *

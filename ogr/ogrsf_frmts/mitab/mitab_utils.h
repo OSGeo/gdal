@@ -1,11 +1,11 @@
 /**********************************************************************
- * $Id: mitab_utils.h,v 1.9 2001/01/23 21:23:42 daniel Exp $
+ * $Id: mitab_utils.h,v 1.10 2004/06/30 20:29:04 dmorissette Exp $
  *
  * Name:     mitab_utils.h
  * Project:  MapInfo TAB Read/Write library
  * Language: C++
  * Purpose:  Header file containing definitions of misc. util functions.
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
  * Copyright (c) 1999-2001, Daniel Morissette
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_utils.h,v $
+ * Revision 1.10  2004/06/30 20:29:04  dmorissette
+ * Fixed refs to old address danmo@videotron.ca
+ *
  * Revision 1.9  2001/01/23 21:23:42  daniel
  * Added projection bounds lookup table, called from TABFile::SetProjInfo()
  *

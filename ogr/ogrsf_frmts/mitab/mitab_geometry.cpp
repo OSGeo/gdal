@@ -1,11 +1,11 @@
 /**********************************************************************
- * $Id: mitab_geometry.cpp,v 1.4 2001/12/18 23:42:28 daniel Exp $
+ * $Id: mitab_geometry.cpp,v 1.5 2004/06/30 20:29:04 dmorissette Exp $
  *
  * Name:     mitab_geometry.cpp
  * Project:  MapInfo TAB Read/Write library
  * Language: C++
  * Purpose:  Geometry manipulation functions.
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *           Based on functions from mapprimitive.c/mapsearch.c in the source
  *           of UMN MapServer by Stephen Lime (http://mapserver.gis.umn.edu/)
  **********************************************************************
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_geometry.cpp,v $
+ * Revision 1.5  2004/06/30 20:29:04  dmorissette
+ * Fixed refs to old address danmo@videotron.ca
+ *
  * Revision 1.4  2001/12/18 23:42:28  daniel
  * Added a test in OGRPolygonLabelPoint() to prevent returning a point
  * outside of the polygon MBR (bug 673).

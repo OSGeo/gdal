@@ -1,12 +1,12 @@
 /**********************************************************************
- * $Id: mitab_mapindexblock.cpp,v 1.8 2001/09/14 03:23:55 warmerda Exp $
+ * $Id: mitab_mapindexblock.cpp,v 1.9 2004/06/30 20:29:04 dmorissette Exp $
  *
  * Name:     mitab_mapindexblock.cpp
  * Project:  MapInfo TAB Read/Write library
  * Language: C++
  * Purpose:  Implementation of the TABMAPIndexBlock class used to handle
  *           reading/writing of the .MAP files' index blocks
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
  * Copyright (c) 1999, 2000, Daniel Morissette
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapindexblock.cpp,v $
+ * Revision 1.9  2004/06/30 20:29:04  dmorissette
+ * Fixed refs to old address danmo@videotron.ca
+ *
  * Revision 1.8  2001/09/14 03:23:55  warmerda
  * Substantial upgrade to support spatial queries using spatial indexes
  *

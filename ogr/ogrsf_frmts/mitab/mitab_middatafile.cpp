@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_middatafile.cpp,v 1.10 2002/04/26 14:16:49 julien Exp $
+ * $Id: mitab_middatafile.cpp,v 1.11 2004/05/20 13:50:06 fwarmerdam Exp $
  *
  * Name:     mitab_datfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_middatafile.cpp,v $
+ * Revision 1.11  2004/05/20 13:50:06  fwarmerdam
+ * Call CPLReadLine(NULL) in Close() method to clean up working buffer.
+ *
  * Revision 1.10  2002/04/26 14:16:49  julien
  * Finishing the implementation of Multipoint (support for MIF)
  *
@@ -170,6 +173,9 @@ int MIDDATAFile::Close()
     // Close file
     VSIFClose(m_fp);
     m_fp = NULL;
+
+    // clear readline buffer.
+    CPLReadLine( NULL );
 
     CPLFree(m_pszFname);
     m_pszFname = NULL;
