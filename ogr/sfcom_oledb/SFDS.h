@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/08/30 15:24:29  warmerda
+ * moved FinalConstruct into SFDS.cpp
+ *
  * Revision 1.21  2002/08/29 18:55:35  warmerda
  * restructured to put SRS and OGRDataSource in CSFSource
  *
@@ -198,11 +201,9 @@ public:
 
     void        InitSRSList();
     
-    HRESULT FinalConstruct()
-	{
-            // verify the 
-            return FInit();
-	}
+    HRESULT     FinalConstruct();
+
+    void        DumpProperties();
 
 DECLARE_REGISTRY_RESOURCEID(IDR_SF)
 BEGIN_PROPSET_MAP(CSFSource)
@@ -212,7 +213,7 @@ BEGIN_PROPSET_MAP(CSFSource)
 		PROPERTY_INFO_ENTRY(BYREFACCESSORS)
 		PROPERTY_INFO_ENTRY(OUTPUTPARAMETERAVAILABILITY)
 		PROPERTY_INFO_ENTRY(PROVIDEROLEDBVER)
-		PROPERTY_INFO_ENTRY(DSOTHREADMODEL) // Default is APT, but provider is SINGLE
+		PROPERTY_INFO_ENTRY(DSOTHREADMODEL)
 		PROPERTY_INFO_ENTRY(SUPPORTEDTXNISOLEVELS)
 		PROPERTY_INFO_ENTRY(USERNAME)
 		PROPERTY_INFO_ENTRY(ROWSETCONVERSIONSONCOMMAND)
