@@ -5,6 +5,7 @@ AC_CONFIG_HEADER(port/cpl_config.h)
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
+AC_PROG_RANLIB
 
 dnl We always want to check /usr/local for stuff.
 LIBS="$LIBS -L/usr/local/lib"

@@ -15,6 +15,7 @@ endif
 ifeq ($(HAVE_OGR_PG),yes)
 	(cd pg; $(MAKE) $*)
 endif
+	$(RANLIB) ogrsf_frmts.a
 
 clean:
 	rm -f ogrsf_frmts.a

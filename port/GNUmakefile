@@ -29,6 +29,7 @@ clean:
 $(LIB): $(OBJ)
 	rm -f $(LIB)
 	$(AR) rc $(LIB) $(OBJ)
+	$(RANLIB) $(LIB)
 
 install:	$(LIB)
 	for f in *.h ; do $(INSTALL) $$f $(INST_INCLUDE) ; done

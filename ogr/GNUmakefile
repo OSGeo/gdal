@@ -74,7 +74,8 @@ docs:
 
 
 $(OGR_LIB):	$(OBJ)
-	ar r $(OGR_LIB) $?
+	$(AR) r $(OGR_LIB) $?
+	$(RANLIB) $(OGR_LIB)
 
 %.o:	%.c
 	$(CC) -c $(LINCLUDE) $(CFLAGS) $*.c -o $*.o

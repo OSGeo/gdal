@@ -29,7 +29,8 @@ dist-clean:	clean
 	$(CC) -c $(CFLAGS) $(INCLUDE) $*.c -o $*.o
 
 $(ISOLIB):	$(OBJ)
-	ar r $(ISOLIB) $?
+	$(AR) r $(ISOLIB) $?
+	$(RANLIB) $(ISOLIB)
 
 8211dump:	8211dump.o $(ISOLIB)
 	$(CXX) $(CXX_ODFLAGS) 8211dump.o \
