@@ -1,3 +1,7 @@
+2001-03-11  Simon Perkins  <simes@genie.lanl.gov>
+
+	* Added FITS support for "byte scaled" files.
+
 2001-03-08  Simon Perkins  <simes@genie.lanl.gov>
 
 	* Added support for reading and	writing metadata to FITS files.
