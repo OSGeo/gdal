@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/12/10 04:06:57  warmerda
+ * Added support for a parent pointer in OGR_SRSNode.
+ * Ensure that authority codes are quoted (bugzilla 201)
+ *
  * Revision 1.22  2002/07/25 13:13:36  warmerda
  * fixed const correctness of some docs
  *
@@ -121,6 +125,8 @@ OGR_SRSNode::OGR_SRSNode( const char * pszValueIn )
 
     nChildren = 0;
     papoChildNodes = NULL;
+
+    poParent = NULL;
 }
 
 /************************************************************************/
@@ -312,6 +318,7 @@ void OGR_SRSNode::InsertChild( OGR_SRSNode * poNew, int iChild )
              sizeof(void*) * (nChildren - iChild - 1) );
     
     papoChildNodes[iChild] = poNew;
+    poNew->poParent = this;
 }
 
 /************************************************************************/
@@ -483,6 +490,11 @@ OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult ) const
                 && pszValue[i] != 'e' && pszValue[i] != 'E' )
                 bNeedQuoting = TRUE;
         }
+
+        // As per bugzilla bug 201, the OGC spec says the authority code
+        // needs to be quoted even though it appears well behaved.
+        if( poParent != NULL && EQUAL(poParent->GetValue(),"AUTHORITY") )
+            bNeedQuoting = TRUE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -564,6 +576,11 @@ OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int nDepth ) const
                 && pszValue[i] != 'e' && pszValue[i] != 'E' )
                 bNeedQuoting = TRUE;
         }
+
+        // As per bugzilla bug 201, the OGC spec says the authority code
+        // needs to be quoted even though it appears well behaved.
+        if( poParent != NULL && EQUAL(poParent->GetValue(),"AUTHORITY") )
+            bNeedQuoting = TRUE;
     }
 
 /* -------------------------------------------------------------------- */
