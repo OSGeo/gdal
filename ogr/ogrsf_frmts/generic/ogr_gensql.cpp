@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/03/20 19:13:21  warmerda
+ * Added ClearFilters() method to cleanup spatial or attribute filters on the
+ * target layer, and any joined layers.  Used in destructor and after all
+ * features have been read from source layer.
+ *
  * Revision 1.12  2003/03/20 17:43:43  warmerda
  * fixed bug when secondary schema larger than primary schema
  *
@@ -207,6 +212,11 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
 OGRGenSQLResultsLayer::~OGRGenSQLResultsLayer()
 
 {
+    ClearFilters();
+
+/* -------------------------------------------------------------------- */
+/*      Free various datastructures.                                    */
+/* -------------------------------------------------------------------- */
     CPLFree( papoTableLayers );
     papoTableLayers = NULL;
              
@@ -231,6 +241,45 @@ OGRGenSQLResultsLayer::~OGRGenSQLResultsLayer()
         poReg->ReleaseDataSource( papoExtraDS[iEDS] );
 
     CPLFree( papoExtraDS );
+}
+
+/************************************************************************/
+/*                            ClearFilters()                            */
+/*                                                                      */
+/*      Clear up all filters currently in place on the target layer,    */
+/*      and joined layers.  We try not to leave them installed          */
+/*      except when actively fetching features.                         */
+/************************************************************************/
+
+void OGRGenSQLResultsLayer::ClearFilters()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Clear any filters installed on the target layer.                */
+/* -------------------------------------------------------------------- */
+    if( poSrcLayer != NULL )
+    {
+        poSrcLayer->SetAttributeFilter( "" );
+        poSrcLayer->SetSpatialFilter( NULL );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Clear any attribute filter installed on the joined layers.      */
+/* -------------------------------------------------------------------- */
+    swq_select *psSelectInfo = (swq_select *) pSelectInfo;
+    int iJoin;
+
+    if( psSelectInfo != NULL )
+    {
+        for( iJoin = 0; iJoin < psSelectInfo->join_count; iJoin++ )
+        {
+            swq_join_def *psJoinInfo = psSelectInfo->join_defs + iJoin;
+            OGRLayer *poJoinLayer = 
+                papoTableLayers[psJoinInfo->secondary_table];
+            
+            poJoinLayer->SetAttributeFilter( "" );
+        }
+    }
 }
 
 /************************************************************************/
@@ -412,6 +461,14 @@ int OGRGenSQLResultsLayer::PrepareSummary()
         CPLError( CE_Failure, CPLE_AppDefined, "%s", pszError );
         return FALSE;
     }
+
+/* -------------------------------------------------------------------- */
+/*      If we have run out of features on the source layer, clear       */
+/*      away the filters we have installed till a next run through      */
+/*      the features.                                                   */
+/* -------------------------------------------------------------------- */
+    if( poSrcFeature == NULL )
+        ClearFilters();
 
 /* -------------------------------------------------------------------- */
 /*      Now apply the values to the summary feature.  If we are in      */

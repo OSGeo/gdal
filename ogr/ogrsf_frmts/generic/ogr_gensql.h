@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/03/20 19:13:21  warmerda
+ * Added ClearFilters() method to cleanup spatial or attribute filters on the
+ * target layer, and any joined layers.  Used in destructor and after all
+ * features have been read from source layer.
+ *
  * Revision 1.5  2003/03/19 20:34:23  warmerda
  * add support for tables from external datasources
  *
@@ -87,6 +92,8 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     void        SortIndexSection( OGRField *pasIndexFields, 
                                   int nStart, int nEntries );
     int         Compare( OGRField *pasFirst, OGRField *pasSecond );
+
+    void        ClearFilters();
     
   public:
                 OGRGenSQLResultsLayer( OGRDataSource *poSrcDS, 
