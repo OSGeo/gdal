@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/04/30 17:52:42  warmerda
+ * added layer name laundering
+ *
  * Revision 1.16  2004/04/30 00:47:31  warmerda
  * launder field name oid to oid_
  *
@@ -753,15 +756,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 /* -------------------------------------------------------------------- */
     if( bLaunderColumnNames )
     {
-        char    *pszSafeName = CPLStrdup( oField.GetNameRef() );
-        int     i;
-
-        for( i = 0; pszSafeName[i] != '\0'; i++ )
-        {
-            pszSafeName[i] = (char) tolower( pszSafeName[i] );
-            if( pszSafeName[i] == '-' || pszSafeName[i] == '#' )
-                pszSafeName[i] = '_';
-        }
+        char    *pszSafeName = poDS->LaunderName( oField.GetNameRef() );
 
         oField.SetName( pszSafeName );
         CPLFree( pszSafeName );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2004/04/30 17:52:42  warmerda
+ * added layer name laundering
+ *
  * Revision 1.25  2004/04/30 15:17:38  warmerda
  * Added DELLAYER:layername ExecuteSQL() pseudo-directive.
  * Clean stale entries in geometry_columns table when creating a layer.
@@ -451,7 +454,7 @@ void OGRPGDataSource::DeleteLayer( const char *pszLayerName )
 /************************************************************************/
 
 OGRLayer *
-OGRPGDataSource::CreateLayer( const char * pszLayerName,
+OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                               OGRSpatialReference *poSRS,
                               OGRwkbGeometryType eType,
                               char ** papszOptions )
@@ -460,6 +463,12 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
     PGresult            *hResult;
     char                szCommand[1024];
     const char          *pszGeomType;
+    char                *pszLayerName;
+
+    if( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) )
+        pszLayerName = LaunderName( pszLayerNameIn );
+    else
+        pszLayerName = CPLStrdup( pszLayerName );
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
@@ -478,6 +487,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
             }
             else
             {
+                CPLFree( pszLayerName );
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Layer %s already exists, CreateLayer failed.\n"
                           "Use the layer creation option OVERWRITE=YES to "
@@ -506,6 +516,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
                   "Can't override GEOM_TYPE in PostGIS enabled databases.\n"
                   "Creation of layer %s with GEOM_TYPE %s has failed.",
                   pszLayerName, pszGeomType );
+        CPLFree( pszLayerName );
         return NULL;
     }
 
@@ -542,6 +553,8 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s\n%s", szCommand, PQerrorMessage(hPGConn) );
+
+        CPLFree( pszLayerName );
 
         PQclear( hResult );
         hResult = PQexec( hPGConn, "ROLLBACK" );
@@ -623,6 +636,8 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
                       "AddGeometryColumn failed for layer %s, layer creation has failed.",
                       pszLayerName );
             
+            CPLFree( pszLayerName );
+
             PQclear( hResult );
 
             hResult = PQexec(hPGConn, "ROLLBACK");
@@ -655,6 +670,8 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
         CPLRealloc( papoLayers,  sizeof(OGRPGLayer *) * (nLayers+1) );
     
     papoLayers[nLayers++] = poLayer;
+
+    CPLFree( pszLayerName );
 
     return poLayer;
 }
@@ -1079,4 +1096,24 @@ void OGRPGDataSource::ReleaseResultSet( OGRLayer * poLayer )
 
 {
     delete poLayer;
+}
+
+/************************************************************************/
+/*                            LaunderName()                             */
+/************************************************************************/
+
+char *OGRPGDataSource::LaunderName( const char *pszSrcName )
+
+{
+    char    *pszSafeName = CPLStrdup( pszSrcName );
+    int     i;
+
+    for( i = 0; pszSafeName[i] != '\0'; i++ )
+    {
+        pszSafeName[i] = (char) tolower( pszSafeName[i] );
+        if( pszSafeName[i] == '-' || pszSafeName[i] == '#' )
+            pszSafeName[i] = '_';
+    }
+
+    return pszSafeName;
 }

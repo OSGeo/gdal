@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/04/30 17:52:42  warmerda
+ * added layer name laundering
+ *
  * Revision 1.12  2003/05/21 03:59:42  warmerda
  * expand tabs
  *
@@ -277,6 +280,8 @@ class OGRPGDataSource : public OGRDataSource
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect );
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
+
+    char               *LaunderName( const char * );
 };
 
 /************************************************************************/
