@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/10/15 19:04:44  warmerda
+ * fix a couple memory leaks
+ *
  * Revision 1.24  2003/08/27 02:26:56  warmerda
  * fixed overlap in 2002/2003 version classification
  *
@@ -267,6 +270,8 @@ OGRTigerDataSource::~OGRTigerDataSource()
 
     CSLDestroy( papszOptions );
 
+    CSLDestroy( papszModules );
+
     delete poSpatialRef;
 }
 
@@ -397,6 +402,8 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
                 papszFileList = CSLAddString(papszFileList, szModule);
             }
         }
+
+        CSLDestroy( candidateFileList );
 
         if( CSLCount(papszFileList) == 0 )
         {
