@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/07/05 18:56:52  warmerda
+ * now includes cpl_port.h
+ *
  * Revision 1.3  1999/07/05 17:19:03  warmerda
  * added OGRERR_UNSUPPORTED_SRS
  *
@@ -42,7 +45,7 @@
 #ifndef _OGR_CORE_H_INCLUDED
 #define _OGR_CORE_H_INLLUDED
 
-#include <stdio.h>
+#include "cpl_port.h"
 
 void  *OGRMalloc( size_t );
 void  *OGRCalloc( size_t, size_t );
