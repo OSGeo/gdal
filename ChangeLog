@@ -1,3 +1,12 @@
+2000-10-30  Frank Warmerdam  <warmerda@cs46980-c>
+
+	* Fixed bug with GetRasterColorTable in gdal.py.
+
+2000-10-25  Frank Warmerdam  <warmerda@cs46980-c>
+
+	* Issued an interim 1.1.2 release for folks interested in 
+	testing Imagine write support.
+
 2000-10-17  Frank Warmerdam  <warmerda@cs46980-c>
 
 	* Added PostgreSQL vector driver under ogr/ogrsf_frmts/pg.
