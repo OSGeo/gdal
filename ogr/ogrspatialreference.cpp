@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2001/08/13 11:23:58  warmerda
+ * improved IsSame() test
+ *
  * Revision 1.32  2001/07/19 18:25:07  warmerda
  * expanded tabs
  *
@@ -2887,10 +2890,20 @@ int OSRIsSameGeogCS( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
 int OGRSpatialReference::IsSame( OGRSpatialReference * poOtherSRS )
 
 {
+    if( GetRoot() == NULL && poOtherSRS->GetRoot() == NULL )
+        return TRUE;
+
 /* -------------------------------------------------------------------- */
 /*      Compare geographic coordinate system.                           */
 /* -------------------------------------------------------------------- */
     if( !IsSameGeogCS( poOtherSRS ) )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Do the have the same root types?  Ie. is one PROJCS and one     */
+/*      GEOGCS or perhaps LOCALCS?                                      */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(GetRoot()->GetValue(),poOtherSRS->GetRoot()->GetValue()) )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -2919,6 +2932,21 @@ int OGRSpatialReference::IsSame( OGRSpatialReference * poOtherSRS )
             /* this this eventually test within some epsilon? */
             if( this->GetProjParm( poNode->GetChild(0)->GetValue() )
                 != poOtherSRS->GetProjParm( poNode->GetChild(0)->GetValue() ) )
+                return FALSE;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If they are LOCALCS/PROJCS, do they have the same units?        */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(GetRoot()->GetValue(),"LOCALCS") || IsProjected() )
+    {
+        if( GetLinearUnits() != 0.0 )
+        {
+            double	dfRatio;
+
+            dfRatio = poOtherSRS->GetLinearUnits() / GetLinearUnits();
+            if( dfRatio < 0.9999999999 || dfRatio > 1.000000001 )
                 return FALSE;
         }
     }
