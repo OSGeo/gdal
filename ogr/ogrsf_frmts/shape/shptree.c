@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shptree.c,v 1.8 2002/05/07 13:07:45 warmerda Exp $
+ * $Id: shptree.c,v 1.9 2003/01/28 15:53:41 warmerda Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of quadtree building and searching functions.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: shptree.c,v $
+ * Revision 1.9  2003/01/28 15:53:41  warmerda
+ * Avoid build warnings.
+ *
  * Revision 1.8  2002/05/07 13:07:45  warmerda
  * use qsort() - patch from Bernhard Herzog
  *
@@ -61,7 +64,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: shptree.c,v 1.8 2002/05/07 13:07:45 warmerda Exp $";
+  "$Id: shptree.c,v 1.9 2003/01/28 15:53:41 warmerda Exp $";
 
 #include "shapefil.h"
 
