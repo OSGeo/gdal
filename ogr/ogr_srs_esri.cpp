@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2004/07/29 19:12:05  warmerda
+ * support multiline ESRI .prj files in WKT format
+ *
  * Revision 1.32  2004/05/04 13:11:49  warmerda
  * Added support for KRASOVSKY spheroid
  *
@@ -635,21 +638,30 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
         return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
-/*      Some newer ESRI products, like ArcPad, produce .prj files       */
-/*      with WKT in them.  Check if that appears to be the case.        */
-/*                                                                      */
-/*      ESRI uses an odd datum naming scheme, so some further           */
-/*      massaging may be required.                                      */
+/*      ArcGIS and related products now use a varient of Well Known     */
+/*      Text.  Try to recognise this and ingest it.  WKT is usually     */
+/*      all on one line, but we will accept multi-line formats and      */
+/*      concatenate.                                                    */
 /* -------------------------------------------------------------------- */
     if( EQUALN(papszPrj[0],"GEOGCS",6)
         || EQUALN(papszPrj[0],"PROJCS",6)
         || EQUALN(papszPrj[0],"LOCAL_CS",8) )
     {
-        char    *pszWKT;
+        char    *pszWKT, *pszWKT2;
         OGRErr  eErr;
+        int     i;
 
-        pszWKT = papszPrj[0];
-        eErr = importFromWkt( &pszWKT );
+        pszWKT = CPLStrdup(papszPrj[0]);
+        for( i = 1; papszPrj[i] != NULL; i++ )
+        {
+            pszWKT = (char *) 
+                CPLRealloc(pszWKT,strlen(pszWKT)+strlen(papszPrj[i])+1);
+            strcat( pszWKT, papszPrj[i] );
+        }
+        pszWKT2 = pszWKT;
+        eErr = importFromWkt( &pszWKT2 );
+        CPLFree( pszWKT );
+
         if( eErr == OGRERR_NONE )
             eErr = morphFromESRI();
         return eErr;
