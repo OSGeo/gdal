@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2000/07/17 17:40:41  warmerda
+ * Implemented reading of non-eight bit interleaved files.
+ *
  * Revision 1.35  2000/07/17 17:09:11  warmerda
  * added support for complex data
  *
@@ -415,9 +418,21 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Non eight bit samples not supported yet.\n" );
-        eErr = CE_Failure;
+        int	i, nBlockPixels, nWordBytes;
+        GByte	*pabyImage;
+
+        nWordBytes = poGDS->nBitsPerSample / 8;
+        pabyImage = poGDS->pabyBlockBuf + (nBand - 1) * nWordBytes;
+
+        nBlockPixels = nBlockXSize * nBlockYSize;
+        for( i = 0; i < nBlockPixels; i++ )
+        {
+            for( int j = 0; j < nWordBytes; j++ )
+            {
+                ((GByte *) pImage)[i*nWordBytes + j] = pabyImage[j];
+            }
+            pabyImage += poGDS->nBands * nWordBytes;
+        }
     }
 
     return eErr;
