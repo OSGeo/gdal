@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/08/30 16:48:25  warmerda
+ * Added several product types
+ *
  * Revision 1.1  1999/08/28 03:13:35  warmerda
  * New
  *
@@ -40,6 +43,403 @@
 #include "cpl_string.h"
 
 #define MAX_LINK	200
+
+/************************************************************************/
+/*                       TranslateGenericPoint()                        */
+/************************************************************************/
+
+static OGRFeature *TranslateGenericPoint( NTFFileReader *poReader,
+                                          OGRNTFLayer *poLayer,
+                                          NTFRecord **papoGroup )
+
+{
+    if( CSLCount((char **) papoGroup) < 2
+        || papoGroup[0]->GetType() != NRT_POINTREC
+        || papoGroup[1]->GetType() != NRT_GEOMETRY )
+        return NULL;
+        
+    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+
+    // POINT_ID
+    poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
+
+    // Geometry
+    poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1]));
+
+    // Attributes
+    poReader->ApplyAttributeValues( poFeature, papoGroup,
+                                    "FC", 1, 
+                                    NULL );
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                        TranslateGenericLine()                        */
+/************************************************************************/
+
+static OGRFeature *TranslateGenericLine( NTFFileReader *poReader,
+                                          OGRNTFLayer *poLayer,
+                                          NTFRecord **papoGroup )
+
+{
+    if( CSLCount((char **) papoGroup) < 2
+        || papoGroup[0]->GetType() != NRT_LINEREC
+        || papoGroup[1]->GetType() != NRT_GEOMETRY )
+        return NULL;
+        
+    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+
+    // LINE_ID
+    poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
+
+    // Geometry
+    poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1]));
+
+    // Attributes
+    poReader->ApplyAttributeValues( poFeature, papoGroup,
+                                    "FC", 1, 
+                                    NULL );
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                         TranslateCodePoint()                         */
+/*                                                                      */
+/*      Used for code point, and code point plus.                       */
+/************************************************************************/
+
+static OGRFeature *TranslateCodePoint( NTFFileReader *poReader,
+                                       OGRNTFLayer *poLayer,
+                                       NTFRecord **papoGroup )
+
+{
+    if( CSLCount((char **) papoGroup) < 2
+        || papoGroup[0]->GetType() != NRT_POINTREC
+        || papoGroup[1]->GetType() != NRT_GEOMETRY )
+        return NULL;
+        
+    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+
+    // POINT_ID
+    poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
+
+    // Geometry
+    poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1]));
+
+    // Attributes
+    if( EQUAL(poLayer->GetLayerDefn()->GetName(),"CODE_POINT") )
+        poReader->ApplyAttributeValues( poFeature, papoGroup,
+                                        "PC", 1, "PQ", 2, "PR", 3, "TP", 4,
+                                        "DQ", 5, "RP", 6, "BP", 7, "PD", 8,
+                                        "MP", 9, "UM", 10, "RV", 11, 
+                                        NULL );
+    else
+        poReader->ApplyAttributeValues( poFeature, papoGroup,
+                                        "PC", 1, "PQ", 2, "PR", 3, "TP", 4,
+                                        "DQ", 5, "RP", 6, "BP", 7, "PD", 8,
+                                        "MP", 9, "UM", 10, "RV", 11,
+                                        "RH", 12, "LH", 13, "CC", 14,
+                                        "DC", 15, "WC", 16, 
+                                        NULL );
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                       TranslateAddressPoint()                        */
+/************************************************************************/
+
+static OGRFeature *TranslateAddressPoint( NTFFileReader *poReader,
+                                          OGRNTFLayer *poLayer,
+                                          NTFRecord **papoGroup )
+
+{
+    if( CSLCount((char **) papoGroup) < 2
+        || papoGroup[0]->GetType() != NRT_POINTREC
+        || papoGroup[1]->GetType() != NRT_GEOMETRY )
+        return NULL;
+        
+    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+
+    // POINT_ID
+    poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
+
+    // Geometry
+    poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1]));
+
+    // Attributes
+    poReader->ApplyAttributeValues( poFeature, papoGroup,
+                                    "OA", 1, "DP", 2, "PB", 3, "ON", 4,
+                                    "BN", 5, "SB", 6, "BD", 7, "TN", 8,
+                                    "DR", 9, "PT", 10, "DL", 11, "DD", 12,
+                                    "CN", 13, "PC", 14, "SF", 15, "RV", 16,
+                                    NULL );
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                        TranslateOscarPoint()                         */
+/*                                                                      */
+/*      Used for OSCAR Traffic and Asset datasets.                      */
+/************************************************************************/
+
+static OGRFeature *TranslateOscarPoint( NTFFileReader *poReader,
+                                        OGRNTFLayer *poLayer,
+                                        NTFRecord **papoGroup )
+
+{
+    if( CSLCount((char **) papoGroup) < 2
+        || papoGroup[0]->GetType() != NRT_POINTREC
+        || papoGroup[1]->GetType() != NRT_GEOMETRY )
+        return NULL;
+        
+    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+
+    // POINT_ID
+    poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
+
+    // Geometry
+    int		nGeomId;
+    
+    poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
+                                                             &nGeomId));
+
+    poFeature->SetField( 1, nGeomId );
+
+    // Attributes
+    poReader->ApplyAttributeValues( poFeature, papoGroup,
+                                    "FC", 2, "OD", 3, "JN", 4, "SN", 5,
+                                    NULL );
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                         TranslateOscarLine()                         */
+/************************************************************************/
+
+static OGRFeature *TranslateOscarLine( NTFFileReader *poReader,
+                                       OGRNTFLayer *poLayer,
+                                       NTFRecord **papoGroup )
+
+{
+    if( CSLCount((char **) papoGroup) < 2
+        || papoGroup[0]->GetType() != NRT_LINEREC
+        || papoGroup[1]->GetType() != NRT_GEOMETRY )
+        return NULL;
+        
+    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+
+    // LINE_ID
+    poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
+
+    // Geometry
+    int		nGeomId;
+    
+    poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
+                                                             &nGeomId));
+
+    poFeature->SetField( 1, nGeomId );
+
+    // Attributes
+    poReader->ApplyAttributeValues( poFeature, papoGroup,
+                                    "FC", 2, "OD", 3, "PN", 4, "LL", 5,
+                                    "SC", 6, "FW", 7, "RN", 8, "TR", 9,
+                                    NULL );
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                      TranslateOscarRoutePoint()                      */
+/************************************************************************/
+
+static OGRFeature *TranslateOscarRoutePoint( NTFFileReader *poReader,
+                                             OGRNTFLayer *poLayer,
+                                             NTFRecord **papoGroup )
+
+{
+    if( CSLCount((char **) papoGroup) < 2
+        || papoGroup[0]->GetType() != NRT_POINTREC
+        || papoGroup[1]->GetType() != NRT_GEOMETRY )
+        return NULL;
+        
+    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+
+    // POINT_ID
+    poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
+
+    // Geometry
+    int		nGeomId;
+    
+    poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
+                                                             &nGeomId));
+
+    poFeature->SetField( 1, nGeomId );
+
+    // Attributes
+    poReader->ApplyAttributeValues( poFeature, papoGroup,
+                                    "FC", 2, "OD", 3, "JN", 4, "SN", 5,
+                                    "NP", 6, "RT", 8,
+                                    NULL );
+
+    // PARENT_OSODR
+    char	**papszTypes, **papszValues;
+
+    if( poReader->ProcessAttRecGroup( papoGroup, &papszTypes, &papszValues ) )
+    {
+        char	**papszOSODRList = NULL;
+
+        for( int i = 0; papszTypes != NULL && papszTypes[i] != NULL; i++ )
+        {
+            if( EQUAL(papszTypes[i],"PO") )
+                papszOSODRList = CSLAddString(papszOSODRList,papszValues[i]);
+        }
+
+        poFeature->SetField( 7, papszOSODRList );
+        CPLAssert( CSLCount(papszOSODRList) ==
+                   poFeature->GetFieldAsInteger( 6 ) );
+
+        CSLDestroy( papszOSODRList );
+        CSLDestroy( papszTypes );
+        CSLDestroy( papszValues );
+    }
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                      TranslateOscarRouteLine()                       */
+/************************************************************************/
+
+static OGRFeature *TranslateOscarRouteLine( NTFFileReader *poReader,
+                                            OGRNTFLayer *poLayer,
+                                            NTFRecord **papoGroup )
+
+{
+    if( CSLCount((char **) papoGroup) < 2
+        || papoGroup[0]->GetType() != NRT_LINEREC
+        || papoGroup[1]->GetType() != NRT_GEOMETRY )
+        return NULL;
+        
+    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+
+    // LINE_ID
+    poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
+
+    // Geometry
+    int		nGeomId;
+    
+    poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
+                                                             &nGeomId));
+
+    poFeature->SetField( 1, nGeomId );
+
+    // Attributes
+    poReader->ApplyAttributeValues( poFeature, papoGroup,
+                                    "FC", 2, "OD", 3, "PN", 4, "LL", 5,
+                                    "RN", 6, "TR", 7, "NP", 8, 
+                                    NULL );
+
+    // PARENT_OSODR
+    char	**papszTypes, **papszValues;
+
+    if( poReader->ProcessAttRecGroup( papoGroup, &papszTypes, &papszValues ) )
+    {
+        char	**papszOSODRList = NULL;
+
+        for( int i = 0; papszTypes != NULL && papszTypes[i] != NULL; i++ )
+        {
+            if( EQUAL(papszTypes[i],"PO") )
+                papszOSODRList = CSLAddString(papszOSODRList,papszValues[i]);
+        }
+
+        poFeature->SetField( 9, papszOSODRList );
+        CPLAssert( CSLCount(papszOSODRList) ==
+                   poFeature->GetFieldAsInteger( 8 ) );
+
+        CSLDestroy( papszOSODRList );
+        CSLDestroy( papszTypes );
+        CSLDestroy( papszValues );
+    }
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                     TranslateOscarNetworkPoint()                     */
+/************************************************************************/
+
+static OGRFeature *TranslateOscarNetworkPoint( NTFFileReader *poReader,
+                                               OGRNTFLayer *poLayer,
+                                               NTFRecord **papoGroup )
+
+{
+    if( CSLCount((char **) papoGroup) < 2
+        || papoGroup[0]->GetType() != NRT_POINTREC
+        || papoGroup[1]->GetType() != NRT_GEOMETRY )
+        return NULL;
+        
+    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+
+    // POINT_ID
+    poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
+
+    // Geometry
+    int		nGeomId;
+    
+    poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
+                                                             &nGeomId));
+
+    poFeature->SetField( 1, nGeomId );
+
+    // Attributes
+    poReader->ApplyAttributeValues( poFeature, papoGroup,
+                                    "FC", 2, "OD", 3, "JN", 4, "SN", 5,
+                                    "RT", 6,
+                                    NULL );
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                      TranslateOscarNetworkLine()                     */
+/************************************************************************/
+
+static OGRFeature *TranslateOscarNetworkLine( NTFFileReader *poReader,
+                                              OGRNTFLayer *poLayer,
+                                              NTFRecord **papoGroup )
+
+{
+    if( CSLCount((char **) papoGroup) < 2
+        || papoGroup[0]->GetType() != NRT_LINEREC
+        || papoGroup[1]->GetType() != NRT_GEOMETRY )
+        return NULL;
+        
+    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+
+    // LINE_ID
+    poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
+
+    // Geometry
+    int		nGeomId;
+    
+    poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
+                                                             &nGeomId));
+
+    poFeature->SetField( 1, nGeomId );
+
+    // Attributes
+    poReader->ApplyAttributeValues( poFeature, papoGroup,
+                                    "FC", 2, "OD", 3, "PN", 4, "LL", 5,
+                                    "RN", 6, 
+                                    NULL );
+
+    return poFeature;
+}
 
 /************************************************************************/
 /*                       TranslateBasedataPoint()                       */
@@ -414,8 +814,8 @@ static OGRFeature *TranslateMeridianLine( NTFFileReader *poReader,
     // Attributes
     poReader->ApplyAttributeValues( poFeature, papoGroup,
                                     "FC", 1, "OM", 3, "RN", 4, "TR", 5,
-                                    "RI", 6, "LC", 7, "RC", 8, "LC", 9,
-                                    "RC", 10, 
+                                    "RI", 6, "LC", 7, "RC", 8, "LD", 9,
+                                    "RD", 10, 
                                     NULL );
 
     return poFeature;
@@ -424,7 +824,7 @@ static OGRFeature *TranslateMeridianLine( NTFFileReader *poReader,
 /************************************************************************/
 /*                       TranslateStrategiNode()                        */
 /*                                                                      */
-/*      Also used for Meridian and BaseData.GB nodes.                   */
+/*      Also used for Meridian, Oscar and BaseData.GB nodes.            */
 /************************************************************************/
 
 static OGRFeature *TranslateStrategiNode( NTFFileReader *poReader,
@@ -466,28 +866,32 @@ static OGRFeature *TranslateStrategiNode( NTFFileReader *poReader,
 
     poFeature->SetField( 4, nNumLinks, anList );
 
-    // ORIENT
-    double	adfList[MAX_LINK];
-
-    for( i = 0; i < nNumLinks; i++ )
-        adfList[i] =
-            atoi(papoGroup[0]->GetField( 19+i*12+7, 19+i*12+10 )) * 0.1;
-
-    poFeature->SetField( 5, nNumLinks, adfList );
-
     // LEVEL
     for( i = 0; i < nNumLinks; i++ )
         anList[i] = atoi(papoGroup[0]->GetField( 19+i*12+11, 19+i*12+11 ));
 
-    poFeature->SetField( 6, nNumLinks, anList );
+    poFeature->SetField( 5, nNumLinks, anList );
     
+    // ORIENT (optional)
+    if( EQUAL(poFeature->GetDefnRef()->GetFieldDefn(6)->GetNameRef(),
+              "ORIENT") )
+    {
+        double	adfList[MAX_LINK];
+
+        for( i = 0; i < nNumLinks; i++ )
+            adfList[i] =
+                atoi(papoGroup[0]->GetField( 19+i*12+7, 19+i*12+10 )) * 0.1;
+
+        poFeature->SetField( 6, nNumLinks, adfList );
+    }
+
     return poFeature;
 }
 
 /************************************************************************/
 /*                       TranslateStrategiText()                        */
 /*                                                                      */
-/*      Also used for Meridian and BaseData text.                       */
+/*      Also used for Meridian, BaseData and Generic text.              */
 /************************************************************************/
 
 static OGRFeature *TranslateStrategiText( NTFFileReader *poReader,
@@ -936,14 +1340,14 @@ void NTFFileReader::EstablishLayers()
                         TranslateStrategiPoint, NRT_POINTREC,
                         "POINT_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTInteger, 4, 0,
-                        "PN_ProperName", OFTString, 0, 0, 
-                        "NU_FeatureNumber", OFTString, 0, 0, 
+                        "PROPER_NAME", OFTString, 0, 0, 
+                        "FEATURE_NUMBER", OFTString, 0, 0, 
                         "RB", OFTString, 1, 0, 
                         "RU", OFTString, 1, 0, 
                         "AN", OFTString, 0, 0, 
                         "AO", OFTString, 0, 0, 
-                        "CM_CountyName", OFTString, 0, 0, 
-                        "UN_UnitaryName", OFTString, 0, 0, 
+                        "COUNTY_NAME", OFTString, 0, 0, 
+                        "UNITARY_NAME", OFTString, 0, 0, 
                         "GEOM_ID", OFTInteger, 6, 0,
                         NULL );
         
@@ -951,7 +1355,7 @@ void NTFFileReader::EstablishLayers()
                         TranslateStrategiLine, NRT_LINEREC,
                         "LINE_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTInteger, 4, 0,
-                        "PN_ProperName", OFTString, 0, 0,
+                        "PROPER_NAME", OFTString, 0, 0,
                         "GEOM_ID", OFTInteger, 6, 0,
                         NULL );
 
@@ -966,15 +1370,15 @@ void NTFFileReader::EstablishLayers()
                         "TEXT", OFTString, 0, 0, 
                         NULL );
 
-        EstablishLayer( "STRATEGI_NODE", wkbUnknown,
+        EstablishLayer( "STRATEGI_NODE", wkbNone,
                         TranslateStrategiNode, NRT_NODEREC,
                         "NODE_ID", OFTInteger, 6, 0,
                         "GEOM_ID_OF_POINT", OFTInteger, 6, 0,
                         "NUM_LINKS", OFTInteger, 4, 0,
                         "DIR", OFTIntegerList, 1, 0,
                         "GEOM_ID_OF_LINK", OFTIntegerList, 6, 0,
-                        "ORIENT", OFTRealList, 5, 1,
                         "LEVEL", OFTIntegerList, 1, 0,
+                        "ORIENT", OFTRealList, 5, 1,
                         NULL );
     }
     else if( GetProductId() == NPC_MERIDIAN )
@@ -984,13 +1388,13 @@ void NTFFileReader::EstablishLayers()
                         "POINT_ID", OFTInteger, 6, 0,
                         "GEOM_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTInteger, 4, 0,
-                        "PN_ProperName", OFTString, 0, 0, 
+                        "PROPER_NAME", OFTString, 0, 0, 
                         "OSMDR", OFTString, 13, 0,
-                        "JN_JunctionName", OFTString, 0, 0,
-                        "RT_Roundabout", OFTString, 1, 0,
-                        "SI_StationId", OFTString, 13, 0,
-                        "PI_GlobalId", OFTInteger, 6, 0, 
-                        "NM_AdminName", OFTString, 0, 0, 
+                        "JUNCTION_NAME", OFTString, 0, 0,
+                        "ROUNDABOUT", OFTString, 1, 0,
+                        "STATION_ID", OFTString, 13, 0,
+                        "GLOBAL_ID", OFTInteger, 6, 0, 
+                        "ADMIN_NAME", OFTString, 0, 0, 
                         "DA_DLUA_ID", OFTString, 13, 0, 
                         NULL );
         
@@ -1000,13 +1404,13 @@ void NTFFileReader::EstablishLayers()
                         "FEAT_CODE", OFTInteger, 4, 0,
                         "GEOM_ID", OFTInteger, 6, 0,
                         "OSMDR", OFTString, 13, 0, 
-                        "RN_RoadNumber", OFTString, 0, 0, 
-                        "TR_TrunkRoad", OFTString, 1, 0, 
-                        "RI_RailId", OFTString, 13, 0, 
-                        "LC_LeftCounty", OFTInteger, 6, 0, 
-                        "RC_RightCounty", OFTInteger, 6, 0, 
-                        "LC_LeftDistrict", OFTInteger, 6, 0, 
-                        "RC_RightDistrict", OFTInteger, 6, 0, 
+                        "ROAD_NUM", OFTString, 0, 0, 
+                        "TRUNK_ROAD", OFTString, 1, 0, 
+                        "RAIL_ID", OFTString, 13, 0, 
+                        "LEFT_COUNTY", OFTInteger, 6, 0, 
+                        "RIGHT_COUNTY", OFTInteger, 6, 0, 
+                        "LEFT_DISTRICT", OFTInteger, 6, 0, 
+                        "RIGHT_DISTRICT", OFTInteger, 6, 0, 
                         NULL );
 
         EstablishLayer( "MERIDIAN_TEXT", wkbPoint,
@@ -1020,15 +1424,15 @@ void NTFFileReader::EstablishLayers()
                         "TEXT", OFTString, 0, 0, 
                         NULL );
 
-        EstablishLayer( "MERIDIAN_NODE", wkbUnknown,
+        EstablishLayer( "MERIDIAN_NODE", wkbNone,
                         TranslateStrategiNode, NRT_NODEREC,
                         "NODE_ID", OFTInteger, 6, 0,
                         "GEOM_ID_OF_POINT", OFTInteger, 6, 0,
                         "NUM_LINKS", OFTInteger, 4, 0,
                         "DIR", OFTIntegerList, 1, 0,
                         "GEOM_ID_OF_LINK", OFTIntegerList, 6, 0,
-                        "ORIENT", OFTRealList, 5, 1,
                         "LEVEL", OFTIntegerList, 1, 0,
+                        "ORIENT", OFTRealList, 5, 1,
                         NULL );
     }
     else if( GetProductId() == NPC_BOUNDARYLINE )
@@ -1053,14 +1457,14 @@ void NTFFileReader::EstablishLayers()
                         "RingStart", OFTIntegerList, 6, 0,
                         NULL );
 
-        EstablishLayer( "BOUNDARYLINE_COLLECTIONS", wkbUnknown,
+        EstablishLayer( "BOUNDARYLINE_COLLECTIONS", wkbNone,
                         TranslateBoundarylineCollection, NRT_COLLECT,
                         "COLL_ID", OFTInteger, 6, 0,
                         "NUM_PARTS", OFTInteger, 4, 0,
                         "POLY_ID", OFTIntegerList, 6, 0,
                         "ADMIN_AREA_ID", OFTInteger, 6, 0, 
                         "OPCS_CODE", OFTString, 6, 0,
-                        "NM_AdminName", OFTString, 0, 0,
+                        "ADMIN_NAME", OFTString, 0, 0,
                         NULL );
     }
     else if( GetProductId() == NPC_BASEDATA )
@@ -1070,10 +1474,10 @@ void NTFFileReader::EstablishLayers()
                         "POINT_ID", OFTInteger, 6, 0,
                         "GEOM_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTInteger, 4, 0,
-                        "PN_ProperName", OFTString, 0, 0, 
-                        "NU_FeatureNumber", OFTString, 0, 0, 
-                        "CM_CountyName", OFTString, 0, 0, 
-                        "UN_UnitaryName", OFTString, 0, 0, 
+                        "PROPER_NAME", OFTString, 0, 0, 
+                        "FEATURE_NUMBER", OFTString, 0, 0, 
+                        "COUNTY_NAME", OFTString, 0, 0, 
+                        "UNITARY_NAME", OFTString, 0, 0, 
                         "ORIENT", OFTRealList, 5, 1,
                         NULL );
         
@@ -1082,8 +1486,8 @@ void NTFFileReader::EstablishLayers()
                         "LINE_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTInteger, 4, 0,
                         "GEOM_ID", OFTInteger, 6, 0,
-                        "PN_ProperName", OFTString, 0, 0, 
-                        "NU_FeatureNumber", OFTString, 0, 0, 
+                        "PROPER_NAME", OFTString, 0, 0, 
+                        "FEATURE_NUMBER", OFTString, 0, 0, 
                         "RB", OFTString, 1, 0, 
                         NULL );
 
@@ -1098,15 +1502,214 @@ void NTFFileReader::EstablishLayers()
                         "TEXT", OFTString, 0, 0, 
                         NULL );
 
-        EstablishLayer( "BASEDATA_NODE", wkbUnknown,
+        EstablishLayer( "BASEDATA_NODE", wkbNone,
                         TranslateStrategiNode, NRT_NODEREC,
                         "NODE_ID", OFTInteger, 6, 0,
                         "GEOM_ID_OF_POINT", OFTInteger, 6, 0,
                         "NUM_LINKS", OFTInteger, 4, 0,
                         "DIR", OFTIntegerList, 1, 0,
                         "GEOM_ID_OF_LINK", OFTIntegerList, 6, 0,
-                        "ORIENT", OFTRealList, 5, 1,
                         "LEVEL", OFTIntegerList, 1, 0,
+                        "ORIENT", OFTRealList, 5, 1,
+                        NULL );
+    }
+    else if( GetProductId() == NPC_OSCAR_ASSET
+             || GetProductId() == NPC_OSCAR_TRAFFIC )
+    {
+        EstablishLayer( "OSCAR_POINT", wkbPoint,
+                        TranslateOscarPoint, NRT_POINTREC,
+                        "POINT_ID", OFTInteger, 6, 0,
+                        "GEOM_ID", OFTInteger, 6, 0,
+                        "FEAT_CODE", OFTInteger, 4, 0,
+                        "OSODR", OFTString, 13, 0,
+                        "JUNCTION_NAME", OFTString, 0, 0,
+                        "SETTLE_NAME", OFTString, 0, 0,
+                        NULL );
+        
+        EstablishLayer( "OSCAR_LINE", wkbLineString,
+                        TranslateOscarLine, NRT_LINEREC,
+                        "LINE_ID", OFTInteger, 6, 0,
+                        "GEOM_ID", OFTInteger, 6, 0,
+                        "FEAT_CODE", OFTInteger, 4, 0,
+                        "OSODR", OFTString, 13, 0,
+                        "PROPER_NAME", OFTString, 0, 0,
+                        "LINE_LENGTH", OFTInteger, 5, 0,
+                        "SOURCE", OFTString, 1, 0,
+                        "FORM_OF_WAY", OFTString, 1, 0,
+                        "ROAD_NUM", OFTString, 0, 0,
+                        "TRUNK_ROAD", OFTString, 1, 0, 
+                        NULL );
+
+        EstablishLayer( "OSCAR_NODE", wkbNone,
+                        TranslateStrategiNode, NRT_NODEREC,
+                        "NODE_ID", OFTInteger, 6, 0,
+                        "GEOM_ID_OF_POINT", OFTInteger, 6, 0,
+                        "NUM_LINKS", OFTInteger, 4, 0,
+                        "DIR", OFTIntegerList, 1, 0,
+                        "GEOM_ID_OF_LINK", OFTIntegerList, 6, 0,
+                        "LEVEL", OFTIntegerList, 1, 0,
+                        NULL );
+    }
+    else if( GetProductId() == NPC_OSCAR_ROUTE )
+    {
+        EstablishLayer( "OSCAR_ROUTE_POINT", wkbPoint,
+                        TranslateOscarRoutePoint, NRT_POINTREC,
+                        "POINT_ID", OFTInteger, 6, 0,
+                        "GEOM_ID", OFTInteger, 6, 0,
+                        "FEAT_CODE", OFTInteger, 4, 0,
+                        "OSODR", OFTString, 13, 0,
+                        "JUNCTION_NAME", OFTString, 0, 0,
+                        "SETTLE_NAME", OFTString, 0, 0,
+                        "NUM_PARENTS", OFTInteger, 2, 0,
+                        "PARENT_OSODR", OFTStringList, 13, 0,
+                        "ROUNDABOUT", OFTString, 1, 0,
+                        NULL );
+        
+        EstablishLayer( "OSCAR_ROUTE_LINE", wkbLineString,
+                        TranslateOscarRouteLine, NRT_LINEREC,
+                        "LINE_ID", OFTInteger, 6, 0,
+                        "GEOM_ID", OFTInteger, 6, 0,
+                        "FEAT_CODE", OFTInteger, 4, 0,
+                        "OSODR", OFTString, 13, 0,
+                        "PROPER_NAME", OFTString, 0, 0,
+                        "LINE_LENGTH", OFTInteger, 5, 0,
+                        "ROAD_NUM", OFTString, 0, 0,
+                        "TRUNK_ROAD", OFTString, 1, 0, 
+                        "NUM_PARENTS", OFTInteger, 2, 0,
+                        "PARENT_OSODR", OFTStringList, 13, 0,
+                        NULL );
+
+        EstablishLayer( "OSCAR_ROUTE_NODE", wkbNone,
+                        TranslateStrategiNode, NRT_NODEREC,
+                        "NODE_ID", OFTInteger, 6, 0,
+                        "GEOM_ID_OF_POINT", OFTInteger, 6, 0,
+                        "NUM_LINKS", OFTInteger, 4, 0,
+                        "DIR", OFTIntegerList, 1, 0,
+                        "GEOM_ID_OF_LINK", OFTIntegerList, 6, 0,
+                        "LEVEL", OFTIntegerList, 1, 0,
+                        NULL );
+    }
+    else if( GetProductId() == NPC_OSCAR_NETWORK )
+    {
+        EstablishLayer( "OSCAR_NETWORK_POINT", wkbPoint,
+                        TranslateOscarNetworkPoint, NRT_POINTREC,
+                        "POINT_ID", OFTInteger, 6, 0,
+                        "GEOM_ID", OFTInteger, 6, 0,
+                        "FEAT_CODE", OFTInteger, 4, 0,
+                        "OSODR", OFTString, 13, 0,
+                        "JUNCTION_NAME", OFTString, 0, 0,
+                        "SETTLE_NAME", OFTString, 0, 0,
+                        "ROUNDABOUT", OFTString, 1, 0,
+                        NULL );
+        
+        EstablishLayer( "OSCAR_NETWORK_LINE", wkbLineString,
+                        TranslateOscarNetworkLine, NRT_LINEREC,
+                        "LINE_ID", OFTInteger, 6, 0,
+                        "GEOM_ID", OFTInteger, 6, 0,
+                        "FEAT_CODE", OFTInteger, 4, 0,
+                        "OSODR", OFTString, 13, 0,
+                        "PROPER_NAME", OFTString, 0, 0,
+                        "LINE_LENGTH", OFTInteger, 5, 0,
+                        "ROAD_NUM", OFTString, 0, 0,
+                        NULL );
+
+        EstablishLayer( "OSCAR_NETWORK_NODE", wkbNone,
+                        TranslateStrategiNode, NRT_NODEREC,
+                        "NODE_ID", OFTInteger, 6, 0,
+                        "GEOM_ID_OF_POINT", OFTInteger, 6, 0,
+                        "NUM_LINKS", OFTInteger, 4, 0,
+                        "DIR", OFTIntegerList, 1, 0,
+                        "GEOM_ID_OF_LINK", OFTIntegerList, 6, 0,
+                        "LEVEL", OFTIntegerList, 1, 0,
+                        NULL );
+    }
+    else if( GetProductId() == NPC_ADDRESS_POINT )
+    {
+        EstablishLayer( "ADDRESS_POINT", wkbPoint,
+                        TranslateAddressPoint, NRT_POINTREC,
+                        "POINT_ID", OFTInteger, 6, 0,
+                        "OSAPR", OFTString, 18, 0,
+                        "DEPARTMENT_NAME", OFTString, 0, 0,
+                        "PO_BOX", OFTString, 6, 0,
+                        "ORGANIZATION_NAME", OFTString, 0, 0,
+                        "BUILDING_NUMBER", OFTInteger, 4, 0,
+                        "SUBBUILDING_NAME", OFTString, 0, 0,
+                        "BUILDING_NAME", OFTString, 0, 0,
+                        "THOROUGHFARE_NAME", OFTString, 0, 0,
+                        "DEPENDENT_THOROUGHFARE_NAME", OFTString, 0, 0,
+                        "POST_TOWN_NAME", OFTString, 0, 0,
+                        "DEPENDENT_LOCALITY_NAME", OFTString, 0, 0,
+                        "DOUBLE_DEPENDENT_LOCALITY_NAME", OFTString, 0, 0,
+                        "COUNTY_NAME", OFTString, 0, 0,
+                        "POSTCODE", OFTString, 7, 0,
+                        "STATUS_FLAG", OFTString, 4, 0,
+                        "RM_VERSION_DATE", OFTString, 8, 0, 
+                        NULL );
+    }
+    else if( GetProductId() == NPC_CODE_POINT )
+    {
+        EstablishLayer( "CODE_POINT", wkbPoint,
+                        TranslateCodePoint, NRT_POINTREC,
+                        "POINT_ID", OFTInteger, 6, 0,
+                        "UNIT_POSTCODE", OFTString, 7, 0,
+                        "POSITIONAL_QUALITY", OFTInteger, 1, 0,
+                        "PO_BOX_INDICATOR", OFTString, 1, 0,
+                        "TOTAL_DELIVERY_POINTS", OFTInteger, 3, 0, 
+                        "DELIVERY_POINTS", OFTInteger, 3, 0, 
+                        "DOMESTIC_DELIVERY_POINTS", OFTInteger, 3, 0, 
+                        "NONDOMESTIC_DELIVERY_POINTS", OFTInteger, 3, 0, 
+                        "POBOX_DELIVERY_POINTS", OFTInteger, 3, 0, 
+                        "MATCHED_ADDRESS_PREMISES", OFTInteger, 3, 0, 
+                        "UNMATCHED_DELIVERY_POINTS", OFTInteger, 3, 0, 
+                        "RM_VERSION_DATA", OFTString, 8, 0,
+                        NULL );
+    }
+    else if( GetProductId() == NPC_CODE_POINT_PLUS )
+    {
+        EstablishLayer( "CODE_POINT_PLUS", wkbPoint,
+                        TranslateCodePoint, NRT_POINTREC,
+                        "POINT_ID", OFTInteger, 6, 0,
+                        "UNIT_POSTCODE", OFTString, 7, 0,
+                        "POSITIONAL_QUALITY", OFTInteger, 1, 0,
+                        "PO_BOX_INDICATOR", OFTString, 1, 0,
+                        "TOTAL_DELIVERY_POINTS", OFTInteger, 3, 0, 
+                        "DELIVERY_POINTS", OFTInteger, 3, 0, 
+                        "DOMESTIC_DELIVERY_POINTS", OFTInteger, 3, 0, 
+                        "NONDOMESTIC_DELIVERY_POINTS", OFTInteger, 3, 0, 
+                        "POBOX_DELIVERY_POINTS", OFTInteger, 3, 0, 
+                        "MATCHED_ADDRESS_PREMISES", OFTInteger, 3, 0, 
+                        "UNMATCHED_DELIVERY_POINTS", OFTInteger, 3, 0, 
+                        "RM_VERSION_DATA", OFTString, 8, 0,
+                        "NHS_REGIONAL_HEALTH_AUTHORITY", OFTString, 3, 0,
+                        "NHS_HEALTH_AUTHORITY", OFTString, 3, 0,
+                        "ADMIN_COUNTY", OFTString, 2, 0,
+                        "ADMIN_DISTRICT", OFTString, 2, 0,
+                        "ADMIN_WARD", OFTString, 2, 0,
+                        NULL );
+    }
+    else // generic case
+    {
+        EstablishLayer( "GENERIC_POINT", wkbPoint,
+                        TranslateGenericPoint, NRT_POINTREC,
+                        "POINT_ID", OFTInteger, 6, 0,
+                        "FEAT_CODE", OFTInteger, 4, 0,
+                        NULL );
+        
+        EstablishLayer( "GENERIC_LINE", wkbLineString,
+                        TranslateGenericLine, NRT_LINEREC,
+                        "LINE_ID", OFTInteger, 6, 0,
+                        "FEAT_CODE", OFTInteger, 4, 0,
+                        NULL );
+
+        EstablishLayer( "GENERIC_TEXT", wkbPoint,
+                        TranslateStrategiText, NRT_TEXTREC,
+                        "TEXT_ID", OFTInteger, 6, 0,
+                        "FEAT_CODE", OFTInteger, 4, 0,
+                        "FONT", OFTInteger, 4, 0,
+                        "TEXT_HT", OFTReal, 5, 1,
+                        "DIG_POSTN", OFTInteger, 1, 0, 
+                        "ORIENT", OFTReal, 5, 1,
+                        "TEXT", OFTString, 0, 0,
                         NULL );
     }
 }
