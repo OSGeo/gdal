@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2004/07/06 15:43:01  gwalter
+ * Updated to extract more metadata and
+ * recognize more sar ceos files.
+ *
  * Revision 1.33  2003/12/11 22:11:35  warmerda
  * clean up recipes when dataset destroyed to avoid memory noise
  *
@@ -148,6 +152,10 @@ char *CeosExtension[][6] = {
 
 { "vdf", "ldr", "img", "tra", "nul", "ext2" },
 
+/* Jers from Japan- not sure if this is generalized as much as it could be */
+{ "VOLD", "Sarl_01", "Imop_%02d", "Sart_01", "NULL", "base" },
+
+
 /* Radarsat: basename, not extension */
 { "vdf_dat", "lea_%02d", "dat_%02d", "tra_%02d", "nul_vdf", "base" },
 
@@ -189,8 +197,16 @@ static CeosTypeCode_t QuadToTC( int a, int b, int c, int d )
 #define LEADER_RADIOMETRIC_DATA_RECORD_TC  QuadToTC( 18, 50, 18, 20 )
 #define LEADER_MAP_PROJ_RECORD_TC          QuadToTC( 10, 20, 31, 20 )
 
-#define PROC_PARAM_RECORD_TYPECODE { 18, 120, 18, 20 }
-#define RAD_MET_RECORD_TYPECODE    { 18, 50, 18, 20 }
+/* JERS from Japan has MAP_PROJ recond with different identifiers */
+/* see CEOS-SAR-CCT Iss/Rev: 2/0 February 10, 1989 */
+#define LEADER_MAP_PROJ_RECORD_JERS_TC         QuadToTC( 18, 20, 18, 20 )
+
+/* For ERS calibration and incidence angle information */
+#define ERS_GENERAL_FACILITY_DATA_TC  QuadToTC( 10, 200, 31, 50 )
+#define ERS_GENERAL_FACILITY_DATA_ALT_TC QuadToTC( 10, 216, 31, 50 )
+
+
+#define RSAT_PROC_PARAM_TC QuadToTC( 18, 120, 18, 20 )
 
 /************************************************************************/
 /* ==================================================================== */
@@ -644,15 +660,6 @@ void SAR_CEOSDataset::ScanForMetadata()
         SetMetadataItem( "CEOS_ACQUISITION_TIME", szField );
 
 /* -------------------------------------------------------------------- */
-/*      Look Angle.                                                     */
-/* -------------------------------------------------------------------- */
-        GetCeosField( record, 477, "A8", szField );
-        szField[8] = '\0';
-
-        if( !EQUALN(szField,"        ",8 ) )
-            SetMetadataItem( "CEOS_SENSOR_CLOCK_ANGLE", szField );
-
-/* -------------------------------------------------------------------- */
 /*      Ascending/Descending                                            */
 /* -------------------------------------------------------------------- */
         GetCeosField( record, 101, "A16", szField );
@@ -661,6 +668,15 @@ void SAR_CEOSDataset::ScanForMetadata()
         if( strstr(szVolId,"RSAT") != NULL 
             && !EQUALN(szField,"                ",16 ) )
             SetMetadataItem( "CEOS_ASC_DES", szField );
+
+/* -------------------------------------------------------------------- */
+/*      True heading - at least for ERS2.                               */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 149, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_TRUE_HEADING", szField );
 
 /* -------------------------------------------------------------------- */
 /*      Ellipsoid                                                       */
@@ -687,13 +703,22 @@ void SAR_CEOSDataset::ScanForMetadata()
             SetMetadataItem( "CEOS_SEMI_MINOR", szField );
 
 /* -------------------------------------------------------------------- */
-/*      True heading - at least for ERS2.                               */
+/*      Platform latitude                                               */
 /* -------------------------------------------------------------------- */
-        GetCeosField( record, 149, "A16", szField );
-        szField[16] = '\0';
+        GetCeosField( record, 453, "A8", szField );
+        szField[8] = '\0';
 
-        if( !EQUALN(szField,"                ",16 ) )
-            SetMetadataItem( "CEOS_TRUE_HEADING", szField );
+        if( !EQUALN(szField,"        ",8 ) )
+            SetMetadataItem( "CEOS_PLATFORM_LATITUDE", szField );
+
+/* -------------------------------------------------------------------- */
+/*      Platform longitude                                               */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 461, "A8", szField );
+        szField[8] = '\0';
+
+        if( !EQUALN(szField,"        ",8 ) )
+            SetMetadataItem( "CEOS_PLATFORM_LONGITUDE", szField );
 
 /* -------------------------------------------------------------------- */
 /*      Platform heading - at least for ERS2.                           */
@@ -703,6 +728,50 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         if( !EQUALN(szField,"                ",8 ) )
             SetMetadataItem( "CEOS_PLATFORM_HEADING", szField );
+
+/* -------------------------------------------------------------------- */
+/*      Look Angle.                                                     */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 477, "A8", szField );
+        szField[8] = '\0';
+
+        if( !EQUALN(szField,"        ",8 ) )
+            SetMetadataItem( "CEOS_SENSOR_CLOCK_ANGLE", szField );
+
+/* -------------------------------------------------------------------- */
+/*      Incidence angle                                                 */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 485, "A8", szField );
+        szField[8] = '\0';
+
+        if( !EQUALN(szField,"        ",8 ) )
+            SetMetadataItem( "CEOS_INC_ANGLE", szField );
+
+/* -------------------------------------------------------------------- */
+/*      Pixel time direction indicator                                  */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 1527, "A8", szField );
+        szField[8] = '\0';
+
+        if( !EQUALN(szField,"                ",8 ) )
+            SetMetadataItem( "CEOS_PIXEL_TIME_DIR", szField );
+
+/* -------------------------------------------------------------------- */
+/*      Line spacing                                                    */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 1687, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_LINE_SPACING_METERS", szField );
+/* -------------------------------------------------------------------- */
+/*      Pixel spacing                                                    */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 1703, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_PIXEL_SPACING_METERS", szField );
 
     }
 
@@ -724,6 +793,181 @@ void SAR_CEOSDataset::ScanForMetadata()
                              szField );
     }
 
+/* ==================================================================== */
+/*      ERS calibration and incidence angle info                        */
+/* ==================================================================== */
+    record = FindCeosRecord( sVolume.RecordList, ERS_GENERAL_FACILITY_DATA_TC,
+                             __CEOS_LEADER_FILE, -1, -1 );
+
+    if( record == NULL )
+        record = FindCeosRecord( sVolume.RecordList, 
+                                 ERS_GENERAL_FACILITY_DATA_ALT_TC,
+                                 __CEOS_LEADER_FILE, -1, -1 );
+
+    if( record != NULL )
+    {   
+        GetCeosField( record, 13 , "A64", szField );
+        szField[64] = '\0';
+
+        /* Avoid PCS records, which don't contain necessary info */
+        if( strstr( szField, "GENERAL") == NULL )
+            record = NULL;
+    }
+
+    if( record != NULL )
+    {
+        GetCeosField( record, 583 , "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ", 16 ) )
+            SetMetadataItem( "CEOS_INC_ANGLE_FIRST_RANGE", szField );
+
+        GetCeosField( record, 599 , "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ", 16 ) )
+            SetMetadataItem( "CEOS_INC_ANGLE_CENTRE_RANGE", szField );
+
+        GetCeosField( record, 615, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ", 16 ) )
+            SetMetadataItem( "CEOS_INC_ANGLE_LAST_RANGE", szField );
+
+        GetCeosField( record, 663, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ", 16 ) )
+            SetMetadataItem( "CEOS_CALIBRATION_CONSTANT_K", szField );
+
+        GetCeosField( record, 1855, "A20", szField );
+        szField[20] = '\0';
+
+        if( !EQUALN(szField,"                    ", 20 ) )
+            SetMetadataItem( "CEOS_GROUND_TO_SLANT_C0", szField );
+
+        GetCeosField( record, 1875, "A20", szField );
+        szField[20] = '\0';
+
+        if( !EQUALN(szField,"                    ", 20 ) )
+            SetMetadataItem( "CEOS_GROUND_TO_SLANT_C1", szField );
+
+        GetCeosField( record, 1895, "A20", szField );
+        szField[20] = '\0';
+
+        if( !EQUALN(szField,"                    ", 20 ) )
+            SetMetadataItem( "CEOS_GROUND_TO_SLANT_C2", szField );
+
+        GetCeosField( record, 1915, "A20", szField );
+        szField[20] = '\0';
+
+        if( !EQUALN(szField,"                    ", 20 ) )
+            SetMetadataItem( "CEOS_GROUND_TO_SLANT_C3", szField );
+
+    }
+/* -------------------------------------------------------------------- */
+/*	Detailed Processing Parameters (Radarsat)                       */
+/* -------------------------------------------------------------------- */
+    record = FindCeosRecord( sVolume.RecordList, RSAT_PROC_PARAM_TC,
+                             __CEOS_LEADER_FILE, -1, -1 );
+
+    if( record == NULL )
+        record = FindCeosRecord( sVolume.RecordList, RSAT_PROC_PARAM_TC,
+                             __CEOS_TRAILER_FILE, -1, -1 );
+
+    if( record != NULL )
+    {
+        GetCeosField( record, 4649, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_EPH_ORB_DATA_0", szField );
+
+        GetCeosField( record, 4665, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_EPH_ORB_DATA_1", szField );
+
+        GetCeosField( record, 4681, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_EPH_ORB_DATA_2", szField );
+
+        GetCeosField( record, 4697, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_EPH_ORB_DATA_3", szField );
+
+        GetCeosField( record, 4713, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_EPH_ORB_DATA_4", szField );
+
+        GetCeosField( record, 4729, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_EPH_ORB_DATA_5", szField );
+
+        GetCeosField( record, 4745, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_EPH_ORB_DATA_6", szField );
+
+        GetCeosField( record, 4908, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_GROUND_TO_SLANT_C0", szField );
+
+        GetCeosField( record, 4924, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_GROUND_TO_SLANT_C1", szField );
+
+        GetCeosField( record, 4940, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_GROUND_TO_SLANT_C2", szField );
+
+        GetCeosField( record, 4956, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_GROUND_TO_SLANT_C3", szField );
+
+        GetCeosField( record, 4972, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_GROUND_TO_SLANT_C4", szField );
+
+        GetCeosField( record, 4988, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_GROUND_TO_SLANT_C5", szField );
+
+        GetCeosField( record, 7334, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_INC_ANGLE_FIRST_RANGE", szField );
+
+        GetCeosField( record, 7350, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_INC_ANGLE_LAST_RANGE", szField );
+
+    }
 /* -------------------------------------------------------------------- */
 /*	Get process-to-raw data coordinate translation values.  These	*/
 /*	are likely specific to Atlantis APP products.			*/
@@ -806,9 +1050,18 @@ void SAR_CEOSDataset::ScanForMetadata()
                              LEADER_RADIOMETRIC_DATA_RECORD_TC,
                              __CEOS_LEADER_FILE, -1, -1 );
 
+    if( record == NULL )
+        record = FindCeosRecord( sVolume.RecordList, 
+                             LEADER_RADIOMETRIC_DATA_RECORD_TC,
+                             __CEOS_TRAILER_FILE, -1, -1 );
+
     if( record != NULL )
     {
-        /* perhaps add something here eventually */
+        GetCeosField( record, 8317, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ", 16 ) )
+            SetMetadataItem( "CEOS_CALIBRATION_OFFSET", szField );
     }
 
 /* -------------------------------------------------------------------- */
@@ -873,18 +1126,26 @@ int SAR_CEOSDataset::ScanForMapProjection()
                              LEADER_MAP_PROJ_RECORD_TC,
                              __CEOS_LEADER_FILE, -1, -1 );
 
+    /* JERS from Japan */
+    if( record == NULL )
+        record = FindCeosRecord( sVolume.RecordList, 
+                             LEADER_MAP_PROJ_RECORD_JERS_TC,
+                             __CEOS_LEADER_FILE, -1, -1 );
+
     if( record == NULL )
         return FALSE;
 
     memset( szField, 0, 17 );
     GetCeosField( record, 29, "A16", szField );
-    if( !EQUALN(szField,"Slant Range",11) && !EQUALN(szField,"Ground Range",12) )
+
+    if( !EQUALN(szField,"Slant Range",11) && !EQUALN(szField,"Ground Range",12) 
+        && !EQUALN(szField,"GEOCODED",8) )
         return FALSE;
 
     GetCeosField( record, 1073, "A16", szField );
     if( EQUALN(szField,"        ",8) )
         return FALSE;
-
+    
 /* -------------------------------------------------------------------- */
 /*      Read corner points.                                             */
 /* -------------------------------------------------------------------- */
@@ -1006,6 +1267,12 @@ void SAR_CEOSDataset::ScanForGCPs()
             }
         }
     }
+    /* If general GCP's weren't found, look for Map Projection (eg. JERS) */
+    if( nGCPCount == 0 )
+    {
+        ScanForMapProjection();
+        return;
+    }
 }
 
 /************************************************************************/
@@ -1121,7 +1388,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLAssert( pszFilename != NULL );
             if( pszFilename == NULL ) 
                 return NULL;
-
+ 
             /* try to open */
             process_fp = VSIFOpen( pszFilename, "rb" );
 
@@ -1181,7 +1448,6 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check that we have an image description.                        */
 /* -------------------------------------------------------------------- */
     struct CeosSARImageDesc   *psImageDesc;
-
     GetCeosSARImageDesc( psVolume );
     psImageDesc = &(psVolume->ImageDesc);
     if( !psImageDesc->ImageDescValid )
