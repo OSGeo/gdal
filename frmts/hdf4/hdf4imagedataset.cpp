@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.33  2003/10/31 19:12:47  dron
+ * Read properly GR datasets with multiple samples per pixel.
+ *
  * Revision 1.32  2003/10/25 10:34:39  dron
  * Disable GCP collecting for MODIS_L1B datasets.
  *
@@ -186,6 +189,10 @@ class HDF4ImageDataset : public HDF4Dataset
     void                ReadCoordinates( const char*, double*, double* );
     void                ToUTM( OGRSpatialReference *, double *, double * );
 
+  protected:
+
+    GDALDataType        GetDataType( int32 );
+
   public:
                 HDF4ImageDataset();
                 ~HDF4ImageDataset();
@@ -202,7 +209,6 @@ class HDF4ImageDataset : public HDF4Dataset
     virtual int         GetGCPCount();
     virtual const char  *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
-    GDALDataType        GetDataType( int32 );
 };
 
 /************************************************************************/
@@ -322,88 +328,38 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             iEdges[poGDS->iXDim] = nBlockXSize;
             break;
         }
-        // Read HDF SDS arrays
-        switch ( poGDS->iNumType )
-        {
-            case DFNT_FLOAT32:
-            SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (float32 *)pImage );
-            break;
-            case DFNT_FLOAT64:
-            SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (float64 *)pImage );
-            break;
-            case DFNT_INT8:
-            SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (int8 *)pImage );
-            break;
-            case DFNT_UINT8:
-            SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (uint8 *)pImage );
-            break;
-            case DFNT_INT16:
-            SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (int16 *)pImage );
-            break;
-            case DFNT_UINT16:
-            SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (uint16 *)pImage );
-            break;
-            case DFNT_INT32:
-            SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (int32 *)pImage );
-            break;
-            case DFNT_UINT32:
-            SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (uint32 *)pImage );
-            break;
-            case DFNT_CHAR8:
-            SDreaddata(poGDS->iSDS, iStart, NULL, iEdges, (char8 *)pImage);
-            break;
-            case DFNT_UCHAR8:
-            SDreaddata(poGDS->iSDS, iStart, NULL, iEdges, (uchar8 *)pImage);
-            break;
-            default:
-            eErr = CE_Failure;
-            break;
-        }
+        
+        // Read HDF SDS array
+        SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, pImage );
+        
         poGDS->iSDS = SDendaccess( poGDS->iSDS );
         break;
+
         case HDF4_GR:
-        iStart[poGDS->iYDim] = nBlockYOff;
-        iEdges[poGDS->iYDim] = nBlockYSize;
-        
-        iStart[poGDS->iXDim] = nBlockXOff;
-        iEdges[poGDS->iXDim] = nBlockXSize;
-        switch ( poGDS->iNumType )
         {
-            case DFNT_FLOAT32:
-            GRreadimage( poGDS->iGR, iStart, NULL, iEdges, (float32 *)pImage );
-            break;
-            case DFNT_FLOAT64:
-            GRreadimage( poGDS->iGR, iStart, NULL, iEdges, (float64 *)pImage );
-            break;
-            case DFNT_INT8:
-            GRreadimage( poGDS->iGR, iStart, NULL, iEdges, (int8 *)pImage );
-            break;
-            case DFNT_UINT8:
-            GRreadimage( poGDS->iGR, iStart, NULL, iEdges, (uint8 *)pImage );
-            break;
-            case DFNT_INT16:
-            GRreadimage( poGDS->iGR, iStart, NULL, iEdges, (int16 *)pImage );
-            break;
-            case DFNT_UINT16:
-            GRreadimage( poGDS->iGR, iStart, NULL, iEdges, (uint16 *)pImage );
-            break;
-            case DFNT_INT32:
-            GRreadimage( poGDS->iGR, iStart, NULL, iEdges, (int32 *)pImage );
-            break;
-            case DFNT_UINT32:
-            GRreadimage( poGDS->iGR, iStart, NULL, iEdges, (uint32 *)pImage );
-            break;
-            case DFNT_CHAR8:
-            GRreadimage(poGDS->iGR, iStart, NULL, iEdges, (char8 *)pImage);
-            break;
-            case DFNT_UCHAR8:
-            GRreadimage(poGDS->iGR, iStart, NULL, iEdges, (uchar8 *)pImage);
-            break;
-            default:
-            eErr = CE_Failure;
-            break;
+            int     nDataTypeSize =
+                GDALGetDataTypeSize(poGDS->GetDataType(poGDS->iNumType)) / 8;
+            GByte    *pbBuffer = (GByte *)
+                CPLMalloc(nBlockXSize*nBlockYSize*poGDS->iRank*nBlockYSize);
+            int     i, j;
+            
+            iStart[poGDS->iYDim] = nBlockYOff;
+            iEdges[poGDS->iYDim] = nBlockYSize;
+            
+            iStart[poGDS->iXDim] = nBlockXOff;
+            iEdges[poGDS->iXDim] = nBlockXSize;
+
+            GRreadimage( poGDS->iGR, iStart, NULL, iEdges, pbBuffer );
+
+            for ( i = 0, j = (nBand - 1) * nDataTypeSize;
+                  i < nBlockXSize * nDataTypeSize;
+                  i += nDataTypeSize, j += poGDS->nBands * nDataTypeSize )
+                memcpy( (GByte *)pImage + i, pbBuffer + j, nDataTypeSize );
+
+            CPLFree( pbBuffer );
         }
         break;
+
         default:
         eErr = CE_Failure;
         break;
