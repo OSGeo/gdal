@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/02/22 12:38:01  fwarmerdam
+ * rename Equal/Intersect to Equals/Intersects
+ *
  * Revision 1.29  2004/10/04 21:06:46  fwarmerdam
  * added centroid support
  *
@@ -898,7 +901,7 @@ void OGRPolygon::getEnvelope( OGREnvelope * psEnvelope ) const
 /*                               Equal()                                */
 /************************************************************************/
 
-OGRBoolean OGRPolygon::Equal( OGRGeometry * poOther ) const
+OGRBoolean OGRPolygon::Equals( OGRGeometry * poOther ) const
 
 {
     OGRPolygon *poOPoly = (OGRPolygon *) poOther;
@@ -912,14 +915,14 @@ OGRBoolean OGRPolygon::Equal( OGRGeometry * poOther ) const
     if( getNumInteriorRings() != poOPoly->getNumInteriorRings() )
         return FALSE;
 
-    if( !getExteriorRing()->Equal( poOPoly->getExteriorRing() ) )
+    if( !getExteriorRing()->Equals( poOPoly->getExteriorRing() ) )
         return FALSE;
     
     // we should eventually test the SRS.
 
     for( int iRing = 0; iRing < getNumInteriorRings(); iRing++ )
     {
-        if( !getInteriorRing(iRing)->Equal(poOPoly->getInteriorRing(iRing)) )
+        if( !getInteriorRing(iRing)->Equals(poOPoly->getInteriorRing(iRing)) )
             return FALSE;
     }
 

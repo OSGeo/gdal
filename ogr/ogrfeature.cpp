@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/02/22 12:38:19  fwarmerdam
+ * rename Equal/Intersect to Equals/Intersects
+ *
  * Revision 1.30  2004/10/12 19:26:33  fwarmerdam
  * fixed up documentation on passing NULL to DumpReadable()
  *
@@ -2074,7 +2077,7 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
     //notdef: add testing of attributes at a later date.
 
     if( GetGeometryRef() != NULL
-        && (!GetGeometryRef()->Equal( poFeature->GetGeometryRef() ) ) )
+        && (!GetGeometryRef()->Equals( poFeature->GetGeometryRef() ) ) )
         return FALSE;
 
     return TRUE;

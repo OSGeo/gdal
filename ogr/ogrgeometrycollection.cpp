@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2005/02/22 12:38:01  fwarmerdam
+ * rename Equal/Intersect to Equals/Intersects
+ *
  * Revision 1.28  2004/07/10 04:51:22  warmerda
  * added closeRings
  *
@@ -808,10 +811,10 @@ void OGRGeometryCollection::getEnvelope( OGREnvelope * psEnvelope ) const
 }
 
 /************************************************************************/
-/*                               Equal()                                */
+/*                               Equals()                               */
 /************************************************************************/
 
-OGRBoolean OGRGeometryCollection::Equal( OGRGeometry * poOther ) const
+OGRBoolean OGRGeometryCollection::Equals( OGRGeometry * poOther ) const
 
 {
     OGRGeometryCollection *poOGC = (OGRGeometryCollection *) poOther;
@@ -829,7 +832,7 @@ OGRBoolean OGRGeometryCollection::Equal( OGRGeometry * poOther ) const
 
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
-        if( !getGeometryRef(iGeom)->Equal(poOGC->getGeometryRef(iGeom)) )
+        if( !getGeometryRef(iGeom)->Equals(poOGC->getGeometryRef(iGeom)) )
             return FALSE;
     }
 

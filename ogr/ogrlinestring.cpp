@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2005/02/22 12:38:01  fwarmerdam
+ * rename Equal/Intersect to Equals/Intersects
+ *
  * Revision 1.44  2004/02/22 10:09:16  dron
  * Fix compirison casting problems in Equal() method.
  *
@@ -1084,10 +1087,10 @@ void OGRLineString::getEnvelope( OGREnvelope * psEnvelope ) const
 }
 
 /************************************************************************/
-/*                               Equal()                                */
+/*                               Equals()                                */
 /************************************************************************/
 
-OGRBoolean OGRLineString::Equal( OGRGeometry * poOther ) const
+OGRBoolean OGRLineString::Equals( OGRGeometry * poOther ) const
 
 {
     OGRLineString       *poOLine = (OGRLineString *) poOther;
