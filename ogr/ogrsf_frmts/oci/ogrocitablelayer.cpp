@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/04/11 16:27:42  warmerda
+ * add support for bound feature writing in OGROCITableLayer
+ *
  * Revision 1.21  2003/04/04 06:18:08  warmerda
  * first pass implementation of loader support
  *
@@ -150,8 +153,21 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
         poSRS->Reference();
 
     hOrdVARRAY = NULL;
-
     hElemInfoVARRAY = NULL;
+
+    poBoundStatement = NULL;
+
+    nWriteCacheMax = 0;
+    nWriteCacheUsed = 0;
+    pasWriteGeoms = NULL;
+    papsWriteGeomMap = NULL;
+    pasWriteGeomInd = NULL;
+    papsWriteGeomIndMap = NULL;
+
+    papWriteFields = NULL;
+    papaeWriteFieldInd = NULL;
+
+    panWriteFIDs = NULL;
 
     ResetReading();
 }
@@ -163,8 +179,33 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
 OGROCITableLayer::~OGROCITableLayer()
 
 {
+    int   i;
+
     if( bNewLayer )
         FinalizeNewLayer();
+
+    CPLFree( panWriteFIDs );
+    if( papWriteFields != NULL )
+    {
+        for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+        {
+            CPLFree( papWriteFields[i] );
+            CPLFree( papaeWriteFieldInd[i] );
+        }
+    }
+
+    CPLFree( papWriteFields );
+    CPLFree( papaeWriteFieldInd );
+
+    if( poBoundStatement != NULL )
+        delete poBoundStatement;
+
+    CPLFree( pasWriteGeomInd );
+    CPLFree( papsWriteGeomIndMap );
+    
+    CPLFree( papsWriteGeomMap );
+    CPLFree( pasWriteGeoms );
+
 
     CPLFree( pszQuery );
     CPLFree( pszWHERE );
@@ -502,6 +543,8 @@ void OGROCITableLayer::ResetReading()
     nHits = 0;
     nDiscarded = 0;
 
+    FlushPendingFeatures();
+
     BuildFullQueryStatement();
 
     OGROCILayer::ResetReading();
@@ -638,11 +681,6 @@ OGRErr OGROCITableLayer::SetFeature( OGRFeature *poFeature )
 OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
 
 {
-    OGROCISession      *poSession = poDS->GetSession();
-    char		*pszCommand;
-    int                 i, bNeedComma = FALSE;
-    unsigned int        nCommandBufSize;;
-
 /* -------------------------------------------------------------------- */
 /*      Add extents of this geometry to the existing layer extents.     */
 /* -------------------------------------------------------------------- */
@@ -653,6 +691,27 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
         poFeature->GetGeometryRef()->getEnvelope( &sThisExtent );
         sExtent.Merge( sThisExtent );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Do the actual creation.                                         */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchBoolean( papszOptions, "MULTI_LOAD", bNewLayer ) )
+        return BoundCreateFeature( poFeature );
+    else
+        return UnboundCreateFeature( poFeature );
+}
+
+/************************************************************************/
+/*                        UnboundCreateFeature()                        */
+/************************************************************************/
+
+OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
+
+{
+    OGROCISession      *poSession = poDS->GetSession();
+    char		*pszCommand;
+    int                 i, bNeedComma = FALSE;
+    unsigned int        nCommandBufSize;;
 
 /* -------------------------------------------------------------------- */
 /*      Prepare SQL statement buffer.                                   */
@@ -1088,6 +1147,8 @@ void OGROCITableLayer::FinalizeNewLayer()
 {
     OGROCIStringBuf  sDimUpdate;
 
+    FlushPendingFeatures();
+
 /* -------------------------------------------------------------------- */
 /*      If the dimensions are degenerate (all zeros) then we assume     */
 /*      there were no geometries, and we don't bother setting the       */
@@ -1224,5 +1285,410 @@ void OGROCITableLayer::FinalizeNewLayer()
         sprintf( szDropCommand, "DROP INDEX \"%s\"", szIndexName );
         oExecStatement.Execute( szDropCommand );
     }
+}
+
+/************************************************************************/
+/*                        AllocAndBindForWrite()                        */
+/************************************************************************/
+
+int OGROCITableLayer::AllocAndBindForWrite()
+
+{
+    OGROCISession      *poSession = poDS->GetSession();
+    int	i;
+
+    CPLAssert( nWriteCacheMax == 0 );
+
+/* -------------------------------------------------------------------- */
+/*      Decide on the number of rows we want to be able to cache at     */
+/*      a time.                                                         */
+/* -------------------------------------------------------------------- */
+    nWriteCacheMax = 100;
+
+/* -------------------------------------------------------------------- */
+/*      Collect the INSERT statement.                                   */
+/* -------------------------------------------------------------------- */
+    OGROCIStringBuf oCmdBuf;
+    
+    oCmdBuf.Append( "INSERT INTO " );
+    oCmdBuf.Append( poFeatureDefn->GetName() );
+
+    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    {
+        if( i == 0 )
+            oCmdBuf.Append( " VALUES ( :fid, :geometry, " );
+        else
+            oCmdBuf.Append( ", " );
+
+        oCmdBuf.Appendf( 20, " :field_%d", i );
+    }
+    
+    oCmdBuf.Append( ") " );
+
+/* -------------------------------------------------------------------- */
+/*      Bind and Prepare it.                                            */
+/* -------------------------------------------------------------------- */
+    poBoundStatement = new OGROCIStatement( poSession );
+    poBoundStatement->Prepare( oCmdBuf.GetString() );
+
+/* -------------------------------------------------------------------- */
+/*      Setup geometry indicator information.                           */
+/* -------------------------------------------------------------------- */
+    pasWriteGeomInd = (SDO_GEOMETRY_ind *) 
+        CPLCalloc(sizeof(SDO_GEOMETRY_ind),nWriteCacheMax);
+    
+    papsWriteGeomIndMap = (SDO_GEOMETRY_ind **)
+        CPLCalloc(sizeof(SDO_GEOMETRY_ind *),nWriteCacheMax);
+
+    for( i = 0; i < nWriteCacheMax; i++ )
+        papsWriteGeomIndMap[i] = pasWriteGeomInd + i;
+
+/* -------------------------------------------------------------------- */
+/*      Setup all the required geometry objects, and the                */
+/*      corresponding indicator map.                                    */
+/* -------------------------------------------------------------------- */
+    pasWriteGeoms = (SDO_GEOMETRY_TYPE *) 
+        CPLCalloc( sizeof(SDO_GEOMETRY_TYPE), nWriteCacheMax);
+    papsWriteGeomMap = (SDO_GEOMETRY_TYPE **)
+        CPLCalloc( sizeof(SDO_GEOMETRY_TYPE *), nWriteCacheMax );
+
+    for( i = 0; i < nWriteCacheMax; i++ )
+        papsWriteGeomMap[i] = pasWriteGeoms + i;
+
+/* -------------------------------------------------------------------- */
+/*      Allocate VARRAYs for the elem_info and ordinates.               */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nWriteCacheMax; i++ )
+    {
+        if( poSession->Failed(
+                OCIObjectNew( poSession->hEnv, poSession->hError, 
+                              poSession->hSvcCtx, OCI_TYPECODE_VARRAY,
+                              poSession->hElemInfoTDO, (dvoid *)NULL, 
+                              OCI_DURATION_SESSION,
+                              FALSE, 
+                              (dvoid **) &(pasWriteGeoms[i].sdo_elem_info)),
+                "OCIObjectNew(elem_info)") )
+            return FALSE;
+
+        if( poSession->Failed(
+                OCIObjectNew( poSession->hEnv, poSession->hError, 
+                              poSession->hSvcCtx, OCI_TYPECODE_VARRAY,
+                              poSession->hOrdinatesTDO, (dvoid *)NULL, 
+                              OCI_DURATION_SESSION,
+                              FALSE, 
+                              (dvoid **) &(pasWriteGeoms[i].sdo_ordinates)),
+                "OCIObjectNew(ordinates)") )
+            return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Bind the geometry column.                                       */
+/* -------------------------------------------------------------------- */
+    if( poBoundStatement->BindObject( 
+            ":geometry", papsWriteGeomMap, poSession->hGeometryTDO, 
+            (void**) papsWriteGeomIndMap) != CE_None )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Bind the FID column.                                            */
+/* -------------------------------------------------------------------- */
+    panWriteFIDs = (int *) CPLMalloc(sizeof(int) * nWriteCacheMax );
+        
+    if( poBoundStatement->BindScalar( ":fid", panWriteFIDs,
+                                      sizeof(int), SQLT_INT ) != CE_None )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Allocate each of the column data bind arrays.                   */
+/* -------------------------------------------------------------------- */
+    
+    papWriteFields = (void **) 
+        CPLMalloc(sizeof(void*) * poFeatureDefn->GetFieldCount() );
+    papaeWriteFieldInd = (OCIInd **) 
+        CPLCalloc(sizeof(OCIInd*),poFeatureDefn->GetFieldCount() );
+
+    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    {
+        OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(i);
+        char szFieldPlaceholderName[80];
+
+        sprintf( szFieldPlaceholderName, ":field_%d", i );
+
+        if( poFldDefn->GetType() == OFTInteger )
+        {
+            papWriteFields[i] = 
+                (void *) CPLCalloc( sizeof(int), nWriteCacheMax );
+
+            if( poBoundStatement->BindScalar( 
+                    szFieldPlaceholderName, papWriteFields[i],
+                    sizeof(int), SQLT_INT ) != CE_None )
+                return FALSE;
+        }
+        else if( poFldDefn->GetType() == OFTReal )
+        {
+            papWriteFields[i] = (void *) CPLCalloc( sizeof(double), 
+                                                    nWriteCacheMax );
+
+            if( poBoundStatement->BindScalar( 
+                    szFieldPlaceholderName, papWriteFields[i],
+                    sizeof(double), SQLT_FLT ) != CE_None )
+                return FALSE;
+        }
+        else 
+        {
+            int nEachBufSize = 4001;
+
+            if( poFldDefn->GetType() == OFTString
+                && poFldDefn->GetWidth() != 0 )
+                nEachBufSize = poFldDefn->GetWidth() + 1;
+
+            papWriteFields[i] = 
+                (void *) CPLCalloc( nEachBufSize, nWriteCacheMax );
+
+            if( poBoundStatement->BindScalar( 
+                    szFieldPlaceholderName, papWriteFields[i],
+                    nEachBufSize, SQLT_STR ) != CE_None )
+                return FALSE;
+        }
+        
+        papaeWriteFieldInd[i] = (OCIInd *) 
+            CPLCalloc(sizeof(OCIInd), nWriteCacheMax );
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                         BoundCreateFeature()                         */
+/************************************************************************/
+
+OGRErr OGROCITableLayer::BoundCreateFeature( OGRFeature *poFeature )
+
+{
+    OGROCISession      *poSession = poDS->GetSession();
+    int                iCache, i;
+    OGRErr             eErr;
+    OCINumber          oci_number; 
+
+    iCache = nWriteCacheUsed;
+
+    if( nWriteCacheMax == 0 )
+    {
+        if( !AllocAndBindForWrite() )
+            return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set the geometry                                                */
+/* -------------------------------------------------------------------- */
+    if( poFeature->GetGeometryRef() == NULL )
+    {
+        pasWriteGeomInd[iCache]._atomic = OCI_IND_NULL;
+    }
+    else
+    {
+        SDO_GEOMETRY_TYPE *psGeom = pasWriteGeoms + iCache;
+        SDO_GEOMETRY_ind  *psInd  = pasWriteGeomInd + iCache;
+        OGRGeometry *poGeometry = poFeature->GetGeometryRef();
+        int nGType;
+
+        psInd->_atomic = OCI_IND_NOTNULL;
+
+        if( nSRID == -1 )
+            psInd->sdo_srid = OCI_IND_NULL;
+        else
+        {
+            psInd->sdo_srid = OCI_IND_NOTNULL;
+            OCINumberFromInt( poSession->hError, &nSRID, 
+                              (uword)sizeof(int), OCI_NUMBER_SIGNED,
+                              &(psGeom->sdo_srid) );
+        }
+
+        /* special more efficient case for simple points */
+        if( wkbFlatten(poGeometry->getGeometryType()) == wkbPoint )
+        {
+            OGRPoint *poPoint = (OGRPoint *) poGeometry;
+            double dfValue;
+
+            psInd->sdo_point._atomic = OCI_IND_NOTNULL;
+            psInd->sdo_elem_info = OCI_IND_NULL;
+            psInd->sdo_ordinates = OCI_IND_NULL;
+            
+            dfValue = poPoint->getX();
+            OCINumberFromReal( poSession->hError, &dfValue, 
+                               (uword)sizeof(double),
+                               &(psGeom->sdo_point.x) );
+
+            dfValue = poPoint->getY();
+            OCINumberFromReal( poSession->hError, &dfValue, 
+                               (uword)sizeof(double),
+                               &(psGeom->sdo_point.y) );
+
+            if( poGeometry->getDimension() == 2 )
+            {
+                nGType = 2001;
+                psInd->sdo_point.z = OCI_IND_NULL;
+            }
+            else
+            {
+                nGType = 3001;
+                psInd->sdo_point.z = OCI_IND_NOTNULL;
+
+                dfValue = poPoint->getZ();
+                OCINumberFromReal( poSession->hError, &dfValue, 
+                                   (uword)sizeof(double),
+                                   &(psGeom->sdo_point.z) );
+            }
+        }
+        else
+        {
+            psInd->sdo_point._atomic = OCI_IND_NULL;
+            psInd->sdo_elem_info = OCI_IND_NOTNULL;
+            psInd->sdo_ordinates = OCI_IND_NOTNULL;
+
+            eErr = TranslateToSDOGeometry( poFeature->GetGeometryRef(), 
+                                           &nGType );
+            
+            if( eErr != OGRERR_NONE )
+                return eErr;
+
+            /* Clear the existing eleminfo and ordinates arrays */
+            sb4  nOldCount;
+
+            OCICollSize( poSession->hEnv, poSession->hError, 
+                         psGeom->sdo_elem_info, &nOldCount );
+            OCICollTrim( poSession->hEnv, poSession->hError, 
+                         nOldCount, psGeom->sdo_elem_info );
+
+            OCICollSize( poSession->hEnv, poSession->hError, 
+                         psGeom->sdo_ordinates, &nOldCount );
+            OCICollTrim( poSession->hEnv, poSession->hError, 
+                         nOldCount, psGeom->sdo_ordinates );
+
+            // Prepare the VARRAY of element values. 
+            for (i = 0; i < nElemInfoCount; i++)
+            {
+                OCINumberFromInt( poSession->hError, 
+                                  (dvoid *) (panElemInfo + i),
+                                  (uword)sizeof(int), OCI_NUMBER_SIGNED,
+                                  &oci_number );
+
+                OCICollAppend( poSession->hEnv, poSession->hError,
+                               (dvoid *) &oci_number,
+                               (dvoid *)0, psGeom->sdo_elem_info );
+            }
+
+            // Prepare the VARRAY of ordinate values. 
+            for (i = 0; i < nOrdinalCount; i++)
+            {
+                OCINumberFromReal( poSession->hError, 
+                                   (dvoid *) (padfOrdinals + i),
+                                   (uword)sizeof(double), &oci_number );
+                OCICollAppend( poSession->hEnv, poSession->hError,
+                               (dvoid *) &oci_number,
+                               (dvoid *)0, psGeom->sdo_ordinates );
+            }
+        }
+
+        OCINumberFromInt( poSession->hError, &nGType,
+                          (uword)sizeof(int), OCI_NUMBER_SIGNED,
+                          &(psGeom->sdo_gtype) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set the FID.                                                    */
+/* -------------------------------------------------------------------- */
+    if( poFeature->GetFID() == OGRNullFID )
+        poFeature->SetFID( iNextFIDToWrite++ );
+
+    panWriteFIDs[iCache] = poFeature->GetFID();
+
+/* -------------------------------------------------------------------- */
+/*      Set the other fields.                                           */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    {
+        if( !poFeature->IsFieldSet( i ) )
+        {
+            papaeWriteFieldInd[i][iCache] = OCI_IND_NULL;
+            continue;
+        }
+
+        papaeWriteFieldInd[i][iCache] = OCI_IND_NOTNULL;
+
+        OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(i);
+
+        if( poFldDefn->GetType() == OFTInteger )
+            ((int *) (papWriteFields[i]))[iCache] = 
+                poFeature->GetFieldAsInteger( i );
+
+        else if( poFldDefn->GetType() == OFTReal )
+            ((double *) (papWriteFields[i]))[iCache] = 
+                poFeature->GetFieldAsDouble( i );
+
+        else
+        {
+            int nEachBufSize = 4001, nLen;
+            const char *pszStrValue = poFeature->GetFieldAsString(i);
+
+            if( poFldDefn->GetType() == OFTString
+                && poFldDefn->GetWidth() != 0 )
+                nEachBufSize = poFldDefn->GetWidth() + 1;
+
+            nLen = strlen(pszStrValue);
+            if( nLen > nEachBufSize-1 )
+                nLen = nEachBufSize-1;
+
+            char *pszTarget = ((char*)papWriteFields[i]) + iCache*nEachBufSize;
+            strncpy( pszTarget, pszStrValue, nLen );
+            pszTarget[nLen] = '\0';
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we need to flush out a full set of rows?                     */
+/* -------------------------------------------------------------------- */
+    nWriteCacheUsed++;
+
+    if( nWriteCacheUsed == nWriteCacheMax )
+        return FlushPendingFeatures();
+    else
+        return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                        FlushPendingFeatures()                        */
+/************************************************************************/
+
+OGRErr OGROCITableLayer::FlushPendingFeatures()
+
+{
+    OGROCISession      *poSession = poDS->GetSession();
+
+    if( nWriteCacheUsed > 0 )
+    {
+        CPLDebug( "OCI", "Flushing %d features on layer %s", 
+                  nWriteCacheUsed, poFeatureDefn->GetName() );
+
+        if( poSession->Failed( 
+                OCIStmtExecute( poSession->hSvcCtx, 
+                                poBoundStatement->GetStatement(), 
+                                poSession->hError, (ub4) nWriteCacheUsed, 
+                                (ub4) 0, 
+                                (OCISnapshot *)NULL, (OCISnapshot *)NULL, 
+                                (ub4) OCI_COMMIT_ON_SUCCESS ),
+                "OCIStmtExecute" ) )
+        {
+            nWriteCacheUsed = 0;
+            return OGRERR_FAILURE;
+        }
+        else
+        {
+            nWriteCacheUsed = 0;
+            return OGRERR_NONE;
+        }
+    }
+    else
+        return OGRERR_NONE;
 }
 

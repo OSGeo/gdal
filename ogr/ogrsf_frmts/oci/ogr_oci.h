@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/04/11 16:27:42  warmerda
+ * add support for bound feature writing in OGROCITableLayer
+ *
  * Revision 1.14  2003/04/10 17:53:17  warmerda
  * added bindscalar and bindobject
  *
@@ -187,7 +190,7 @@ class CPL_DLL OGROCIStatement {
     CPLErr       BindScalar( const char *pszPlaceName, 
                              void *pData, int nDataLen, int nSQLType );
     CPLErr       BindObject( const char *pszPlaceName, void *pahObject,
-                             OCIType *hTDO );
+                             OCIType *hTDO, void **papIndicators );
 
     char        *pszCommandText;
 
@@ -432,8 +435,8 @@ class OGROCITableLayer : public OGROCIWritableLayer
     char 	       *BuildFields(void);
     void                BuildFullQueryStatement(void);
 
-    char	        *pszQuery;
-    char		*pszWHERE;
+    char	       *pszQuery;
+    char	       *pszWHERE;
 
     int                 bValidTable;
 
@@ -444,18 +447,26 @@ class OGROCITableLayer : public OGROCIWritableLayer
 
     void                TestForSpatialIndex( const char * );
 
-    int                nWriteCacheMax;
-    int                nWriteCacheUsed;
+    OGROCIStatement   *poBoundStatement; 
 
-    SDO_GEOMETRY_TYPE *pasWriteGeoms;
+    int                 nWriteCacheMax;
+    int                 nWriteCacheUsed;
+
+    SDO_GEOMETRY_TYPE  *pasWriteGeoms;
     SDO_GEOMETRY_TYPE **papsWriteGeomMap;
-    SDO_GEOMETRY_ind  *pasWriteGeomInd;
+    SDO_GEOMETRY_ind   *pasWriteGeomInd;
+    SDO_GEOMETRY_ind  **papsWriteGeomIndMap;
+    
+    void              **papWriteFields;
+    OCIInd            **papaeWriteFieldInd;
+    int                *panWriteFIDs;
 
-    
-    void              *papWriteFields;
+    int                 AllocAndBindForWrite();
+    OGRErr              FlushPendingFeatures();
 
-    
-    
+    OGRErr              UnboundCreateFeature( OGRFeature *poFeature );
+    OGRErr              BoundCreateFeature( OGRFeature *poFeature );
+
   public:
     			OGROCITableLayer( OGROCIDataSource *,
                                           const char * pszName,
