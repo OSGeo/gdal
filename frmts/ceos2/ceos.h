@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/04/05 21:40:33  warmerda
+ * fixed CCL_MSB to CPL_MSB
+ *
  * Revision 1.3  2000/04/04 15:09:03  warmerda
  * Added calibration info.
  *
@@ -321,7 +324,7 @@ CeosRadarCalibration_t *GetCeosRadarCalibration( CeosSARVolume_t *volume );
 
 /* CEOS byte swapping stuff */
 
-#if defined(CCL_MSB)
+#if defined(CPL_MSB)
 #define NativeToCeos(a,b,c,d) memcpy(a,b,c)
 #define CeosToNative(a,b,c,d) memcpy(a,b,c)
 #else
