@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/08/30 16:47:29  warmerda
+ * added feature class layer, and new product codes
+ *
  * Revision 1.2  1999/08/28 18:24:42  warmerda
  * added TestForLayer() optimization
  *
@@ -90,6 +93,16 @@
 
 #define NPC_BASEDATA		6
 #define NTF_BASEDATA		"BaseData.GB_01.96"
+
+#define NPC_OSCAR_ASSET		7
+#define NPC_OSCAR_TRAFFIC       8
+#define NPC_OSCAR_ROUTE         9
+#define NPC_OSCAR_NETWORK       10
+
+#define NPC_ADDRESS_POINT       11
+
+#define NPC_CODE_POINT		12
+#define NPC_CODE_POINT_PLUS     13
 
 /************************************************************************/
 /*                              NTFRecord                               */
@@ -239,8 +252,6 @@ class NTFFileReader
 
     int		      GetFCCount() { return nFCCount; }
     int               GetFeatureClass( int, int *, char ** );
-
-    
 };
 
 /************************************************************************/
@@ -291,6 +302,38 @@ class OGRNTFLayer : public OGRLayer
 };
 
 /************************************************************************/
+/*                       OGRNTFFeatureClassLayer                        */
+/************************************************************************/
+
+class OGRNTFFeatureClassLayer : public OGRLayer
+{
+    OGRFeatureDefn     *poFeatureDefn;
+    OGRGeometry	       *poFilterGeom;
+
+    OGRNTFDataSource   *poDS;
+
+    int			iCurrentFC;
+  
+  public:
+    			OGRNTFFeatureClassLayer( OGRNTFDataSource * poDS );
+    			~OGRNTFFeatureClassLayer();
+
+    OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
+    void		SetSpatialFilter( OGRGeometry * );
+
+    void		ResetReading();
+    OGRFeature *	GetNextFeature();
+
+    OGRFeature         *GetFeature( long nFeatureId );
+    
+    OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
+
+    int                 GetFeatureCount( int = TRUE );
+    
+    int                 TestCapability( const char * );
+};
+
+/************************************************************************/
 /*                           OGRNTFDataSource                           */
 /************************************************************************/
 
@@ -301,6 +344,9 @@ class OGRNTFDataSource : public OGRDataSource
     int			nLayers;
     OGRNTFLayer		**papoLayers;
 
+    OGRNTFFeatureClassLayer *poFCLayer;
+
+    int                 iCurrentFC;
     int			iCurrentReader;
     long		nCurrentPos;
     long		nCurrentFID;
@@ -308,6 +354,9 @@ class OGRNTFDataSource : public OGRDataSource
     int			nNTFFileCount;
     NTFFileReader	**papoNTFFileReader;
 
+    int			nFCCount;
+    int                *panFCNum;
+    char              **papszFCName;
     
   public:
     			OGRNTFDataSource();
@@ -332,6 +381,9 @@ class OGRNTFDataSource : public OGRDataSource
     // Mainly for OGRNTFLayer class
     int			 GetFileCount() { return nNTFFileCount; }
     NTFFileReader       *GetFileReader(int i) { return papoNTFFileReader[i]; }
+
+    int		         GetFCCount() { return nFCCount; }
+    int                  GetFeatureClass( int, int *, char ** );
 };
 
 /************************************************************************/
