@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/09/17 21:11:34  warmerda
+ * fixed handling of the field terminator on write
+ *
  * Revision 1.16  2003/09/15 20:45:47  warmerda
  * initialize nFixedWidth
  *
@@ -872,7 +875,6 @@ char *DDFFieldDefn::GetDefaultValue( int *pnSize )
 /* -------------------------------------------------------------------- */
 /*      Allocate buffer.                                                */
 /* -------------------------------------------------------------------- */
-    nTotalSize++;
     char *pachData = (char *) CPLMalloc( nTotalSize );
 
     if( pnSize != NULL )
@@ -896,8 +898,7 @@ char *DDFFieldDefn::GetDefaultValue( int *pnSize )
         nOffset += nSubfieldSize;
     }
 
-    CPLAssert( nOffset == nTotalSize-1 );
-    pachData[nOffset] = DDF_FIELD_TERMINATOR;
+    CPLAssert( nOffset == nTotalSize );
 
     return pachData;
 }
