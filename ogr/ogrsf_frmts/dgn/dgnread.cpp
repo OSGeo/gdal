@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2003/11/07 13:59:45  warmerda
+ * added DGNLoadTCB()
+ *
  * Revision 1.40  2003/09/22 05:59:24  warmerda
  * Fixed setting of offset for element index.
  * Don't try to extract attribute data on TCB elements.
@@ -1487,6 +1490,43 @@ void DGNInverseTransformPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
         pabyTarget[i*4+0] = pabyCTI[2];
 #endif        
     }
+}
+
+/************************************************************************/
+/*                             DGNLoadTCB()                             */
+/************************************************************************/
+
+/**
+ * Load TCB if not already loaded. 
+ *
+ * This function will load the TCB element if it is not already loaded.
+ * It is used primarily to ensure the TCB is loaded before doing any operations
+ * that require TCB values (like creating new elements). 
+ *
+ * @return FALSE on failure or TRUE on success.
+ */
+
+int DGNLoadTCB( DGNHandle hDGN )
+
+{
+    DGNInfo     *psDGN = (DGNInfo *) hDGN;
+
+    if( psDGN->got_tcb )
+        return TRUE;
+
+    while( !psDGN->got_tcb )
+    {
+        DGNElemCore *psElem = DGNReadElement( hDGN );
+        if( psElem == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "DGNLoadTCB() - unable to find TCB in file." );
+            return FALSE;
+        }
+        DGNFreeElement( hDGN, psElem );
+    }
+
+    return TRUE;
 }
 
 /************************************************************************/

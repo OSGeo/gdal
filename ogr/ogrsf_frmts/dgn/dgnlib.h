@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2003/11/07 13:59:45  warmerda
+ * added DGNLoadTCB()
+ *
  * Revision 1.33  2003/08/19 20:15:53  warmerda
  * Added support for Cone (23), 3D surface (18) and 3D solid (19) elements.
  * Added functions DGNQuaternionToMatrix() and DGNCreateConeElem().
@@ -685,6 +688,7 @@ void CPL_DLL         DGNFreeElement( DGNHandle, DGNElemCore * );
 void CPL_DLL         DGNRewind( DGNHandle );
 int  CPL_DLL         DGNGotoElement( DGNHandle, int );
 void CPL_DLL         DGNClose( DGNHandle );
+int  CPL_DLL         DGNLoadTCB( DGNHandle );
 int  CPL_DLL         DGNLookupColor( DGNHandle, int, int *, int *, int * );
 int  CPL_DLL         DGNGetShapeFillInfo( DGNHandle, DGNElemCore *, int * );
 int  CPL_DLL         DGNGetAssocID( DGNHandle, DGNElemCore * );
