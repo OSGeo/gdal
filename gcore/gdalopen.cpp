@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/06/12 21:13:27  warmerda
+ * use metadata based driver info
+ *
  * Revision 1.13  2002/05/28 18:56:22  warmerda
  * added shared dataset concept
  *
@@ -176,8 +179,9 @@ GDALDatasetH GDALOpen( const char * pszFilename, GDALAccess eAccess )
             if( poDS->poDriver == NULL )
                 poDS->poDriver = poDriver;
 
+            
             CPLDebug( "GDAL", "GDALOpen(%s) succeeds as %s.\n",
-                      pszFilename, poDriver->pszLongName );
+                      pszFilename, poDriver->GetDescription() );
 
             return (GDALDatasetH) poDS;
         }
@@ -316,7 +320,7 @@ int GDALDumpOpenDatasets( FILE *fp )
         if( poDS->GetDriver() == NULL )
             pszDriverName = "DriverIsNULL";
         else
-            pszDriverName = poDS->GetDriver()->pszShortName;
+            pszDriverName = poDS->GetDriver()->GetDescription();
 
         poDS->Reference();
         VSIFPrintf( fp, "  %d %c %-6s %dx%dx%d %s\n", 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2002/06/12 21:13:27  warmerda
+ * use metadata based driver info
+ *
  * Revision 1.32  2002/05/29 15:58:26  warmerda
  * removed GetDescription(), added SetColorInterpretation()
  *
@@ -509,27 +512,12 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     			GDALDriver();
                         ~GDALDriver();
 
-    /** Short (symbolic) format name. */
-    char		*pszShortName;
-
-    /** Long format name */
-    char		*pszLongName;
-
-    /** Help mechanism yet to be defined. */
-    char		*pszHelpTopic;
-    
-    GDALDataset 	*(*pfnOpen)( GDALOpenInfo * );
-
-    GDALDataset		*(*pfnCreate)( const char * pszName,
-                                       int nXSize, int nYSize, int nBands,
-                                       GDALDataType eType,
-                                       char ** papszOptions );
-
+/* -------------------------------------------------------------------- */
+/*      Public C++ methods.                                             */
+/* -------------------------------------------------------------------- */
     GDALDataset		*Create( const char * pszName,
                                  int nXSize, int nYSize, int nBands,
                                  GDALDataType eType, char ** papszOptions );
-
-    CPLErr		(*pfnDelete)( const char * pszName );
 
     CPLErr		Delete( const char * pszName );
 
@@ -538,6 +526,20 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                                      GDALProgressFunc pfnProgress, 
                                      void * pProgressData );
     
+/* -------------------------------------------------------------------- */
+/*      The following are semiprivate, not intended to be accessed      */
+/*      by anyone but the formats instantiating and populating the      */
+/*      drivers.                                                        */
+/* -------------------------------------------------------------------- */
+    GDALDataset 	*(*pfnOpen)( GDALOpenInfo * );
+
+    GDALDataset		*(*pfnCreate)( const char * pszName,
+                                       int nXSize, int nYSize, int nBands,
+                                       GDALDataType eType,
+                                       char ** papszOptions );
+
+    CPLErr		(*pfnDelete)( const char * pszName );
+
     GDALDataset         *(*pfnCreateCopy)( const char *, GDALDataset *, 
                                            int, char **,
                                            GDALProgressFunc pfnProgress, 
