@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.88  2004/04/02 17:40:44  warmerda
- * added GDALGeneralCmdLineProcessor() support
+ * Revision 1.89  2004/04/24 21:28:20  warmerda
+ * Added GetLastErrorType
  *
  ************************************************************************/
 
@@ -3357,6 +3357,18 @@ static PyObject *_wrap_CPLGetLastErrorNo(PyObject *self, PyObject *args) {
     if(!PyArg_ParseTuple(args,":CPLGetLastErrorNo")) 
         return NULL;
     _result = (int )CPLGetLastErrorNo();
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_CPLGetLastErrorType(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,":CPLGetLastErrorType")) 
+        return NULL;
+    _result = (int )CPLGetLastErrorType();
     _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
@@ -10366,6 +10378,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "CPLGetConfigOption", _wrap_CPLGetConfigOption, 1 },
 	 { "CSLDestroy", _wrap_CSLDestroy, 1 },
 	 { "CPLGetLastErrorMsg", _wrap_CPLGetLastErrorMsg, 1 },
+	 { "CPLGetLastErrorType", _wrap_CPLGetLastErrorType, 1 },
 	 { "CPLGetLastErrorNo", _wrap_CPLGetLastErrorNo, 1 },
 	 { "CPLErrorReset", _wrap_CPLErrorReset, 1 },
 	 { "ptrptrcreate", ptrptrcreate, 1 },

@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.62  2004/04/24 21:28:20  warmerda
+# Added GetLastErrorType
+#
 # Revision 1.61  2004/04/02 17:40:44  warmerda
 # added GDALGeneralCmdLineProcessor() support
 #
@@ -164,6 +167,9 @@ def ErrorReset():
 
 def GetLastErrorNo():
     return _gdal.CPLGetLastErrorNo()
+    
+def GetLastErrorType():
+    return _gdal.CPLGetLastErrorType()
     
 def GetLastErrorMsg():
     return _gdal.CPLGetLastErrorMsg()
