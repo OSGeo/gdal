@@ -962,28 +962,30 @@ if test "$with_xerces" = "" -o "$with_xerces" = "no" ; then
 
 else
 
+  if test "$with_xerces" = "yes" ; then
+    if test -d /usr/local/include/xercesc ; then 
+      with_xerces=/usr/local
+    else 
+      with_xerces=/usr
+    fi
+  fi
+
   if test "$with_xerces_lib" != "" ; then
     LIBS="$with_xerces_lib $LIBS"
   else
-    if test -f /usr/local/lib/libxerces-c.so ; then
-      LIBS="-L/usr/local/lib -lxerces-c $LIBS"
-    elif test -f /usr/lib/libxerces-c.so ; then
-      LIBS="-lxerces-c $LIBS"
-    elif test -f /usr/local/lib/libxerces-c1_6_0.so ; then
+    if test -f $with_xerces/lib/libxerces-c.so ; then
+      LIBS="-L$with_xerces/lib -lxerces-c $LIBS"
+    elif test -f $with_xerces/lib/libxerces-c1_6_0.so ; then
       LIBS="-lxerces-c1_6_0 -lpthread $LIBS"
-      LIBS="-L/usr/local/lib $LIBS"
+      LIBS="-L$with_xerces/lib $LIBS"
+    else
+      LIBS="-L$with_xerces/lib -lxerces-c $LIBS"
     fi
   fi
   if test "$with_xerces_inc" != "" ; then
     XERCES_INCLUDE="-I$with_xerces_inc"
   else
-    if test -d /usr/local/include/xercesc ; then 
-      XERCES_INCLUDE="-I/usr/local/include/xercesc"
-    elif test -d /usr/include/xercesc ; then 
-      XERCES_INCLUDE="-I/usr/include/xercesc"
-    else
-      XERCES_INCLUDE=""
-    fi
+    XERCES_INCLUDE="-I$with_xerces/include/xercesc"
   fi
 
   echo '#include <util/PlatformUtils.hpp>' > conftest.cpp
