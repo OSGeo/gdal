@@ -10,7 +10,7 @@ GDAL_ROOT = 	..\..
 
 OLE_LIBS =	$(MSDASDK)\lib\oledb\oledb.lib ole32.lib oleaut32.lib 
 
-LOC_OBJ	=	ogrcomgeometryfactory.obj ogrcomutils.obj \
+LOC_OBJ	=	ogrcomgeometryfactory.obj ogrcomutils.obj ogrcomwks.obj \
 		ogrcomclassfactory.obj ogrcomgeom_server.obj \
 		ogrcompoint.obj ogrcomlinestring.obj ogrcompolygon.obj
 
