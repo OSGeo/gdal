@@ -9,9 +9,13 @@ AC_CONFIG_HEADER(port/cpl_config.h)
 dnl We require autoconf 2.52+ for libtool support on cygwin/mingw hosts
 AC_PREREQ(2.52)
 
+dnl Compute the canonical target-system type variable $target
+AC_CANONICAL_TARGET
+
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
+AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
 
 dnl switch between libtool and native build system
@@ -29,7 +33,15 @@ AC_SUBST(HAVE_LIBTOOL,$with_libtool)
 dnl Checks for libraries.
 AC_CHECK_LIB(dl,dlopen,,,)
 AC_CHECK_LIB(dbmalloc,malloc_chain_check,,,)
-AC_CHECK_LIB(m,main,,,)
+
+dnl We don't need to add math library at all targets
+case "$target_os" in
+    cygwin* | mingw32* | beos* | darwin*)
+        ;;
+    *)
+	AC_CHECK_LIB(m,main,,,)
+        ;;
+esac
 
 dnl Checks for header files.
 AC_HEADER_STDC
