@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.75  2005/01/15 07:46:53  fwarmerdam
+ * added GDALRegister_JP2ECW
+ *
  * Revision 1.74  2005/01/06 20:27:35  fwarmerdam
  * added NDF driver
  *
@@ -451,6 +454,7 @@ void GDALAllRegister()
 
 #ifdef FRMT_ecw
     GDALRegister_ECW();
+    GDALRegister_JP2ECW();
 #endif
 
 #ifdef FRMT_l1b
