@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/05/16 19:43:28  warmerda
+ * ensure that chunks dont get negative sizes
+ *
  * Revision 1.10  2003/05/07 19:57:32  warmerda
  * INIT_DEST now supports a list of band values
  *
@@ -1445,6 +1448,8 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
                        ((int) ceil( dfMaxXOut )) - *pnSrcXOff + nResWinSize );
     *pnSrcYSize = MIN( GDALGetRasterYSize(psOptions->hSrcDS) - *pnSrcYOff,
                        ((int) ceil( dfMaxYOut )) - *pnSrcYOff + nResWinSize );
+    *pnSrcXSize = MAX(0,*pnSrcXSize);
+    *pnSrcYSize = MAX(0,*pnSrcYSize);
 
     return CE_None;
 }
