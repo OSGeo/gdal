@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/04/25 17:37:04  warmerda
+ * use IUnknown for ADSK_GEOM_EXTENT column
+ *
  * Revision 1.19  2002/04/10 20:07:59  warmerda
  * Added ADSK_GEOM_EXTENT support
  *
@@ -496,8 +499,8 @@ public:
 	WCHAR	m_szColumnName[129];
 	unsigned int m_nGeomType;
 	int		m_nSpatialRefId;
-#ifdef SUPPORT_ADSK_GEOM_EXTENT    
-	BYTE    m_abyADSK_GEOM_EXTENT[93];
+#ifdef SUPPORT_ADSK_GEOM_EXTENT
+        IUnknown* m_pADSK_GEOM_EXTENT;
 #endif        
 	
 	OGISGeometry_Row()
@@ -509,8 +512,7 @@ public:
 		m_nGeomType = 0;
 		m_nSpatialRefId = 0;
 #ifdef SUPPORT_ADSK_GEOM_EXTENT    
-                memset( m_abyADSK_GEOM_EXTENT, 0,
-                        sizeof(m_abyADSK_GEOM_EXTENT) );
+                m_pADSK_GEOM_EXTENT = NULL;
 #endif                
 	}
 
@@ -522,7 +524,7 @@ BEGIN_PROVIDER_COLUMN_MAP(OGISGeometry_Row)
 	PROVIDER_COLUMN_ENTRY("GEOM_TYPE",5,m_nGeomType)
 	PROVIDER_COLUMN_ENTRY("SPATIAL_REF_SYSTEM_ID",6,m_nSpatialRefId)
 #ifdef SUPPORT_ADSK_GEOM_EXTENT    
-	PROVIDER_COLUMN_ENTRY("ADSK_GEOM_EXTENT",7,m_abyADSK_GEOM_EXTENT)
+	PROVIDER_COLUMN_ENTRY("ADSK_GEOM_EXTENT",7,m_pADSK_GEOM_EXTENT)
 #endif
 END_PROVIDER_COLUMN_MAP()
 };
@@ -540,7 +542,7 @@ public CCRRowsetImpl<CSFSessionSchemaOGISGeoColumns,OGISGeometry_Row,CSFSession>
 
             if( lstrcmpW(poColInfo->pwszName,L"ADSK_GEOM_EXTENT") == 0 )
             {
-                if( poRow->m_abyADSK_GEOM_EXTENT[0] == 0 )
+                if( poRow->m_pADSK_GEOM_EXTENT == NULL )
                     return DBSTATUS_S_ISNULL;
             }
 #endif            
@@ -613,8 +615,23 @@ public CCRRowsetImpl<CSFSessionSchemaOGISGeoColumns,OGISGeometry_Row,CSFSession>
                               sExtent.MinY, sExtent.MaxY,
                               oExtentPoly.WkbSize() );
                     
-                    oExtentPoly.exportToWkb( wkbNDR,
-                                             trData.m_abyADSK_GEOM_EXTENT+0 );
+                    BYTE abyGeometry[93];
+                    memset( abyGeometry, 0, sizeof(abyGeometry) );
+                    
+                    oExtentPoly.exportToWkb( wkbNDR, abyGeometry + 0 );
+
+                    //20020412 - map to istream - ryan
+                    IStream    *pIStream;
+                    HGLOBAL     hMem;
+                    hMem=GlobalAlloc(GMEM_MOVEABLE, sizeof(abyGeometry));
+                    CreateStreamOnHGlobal(hMem, TRUE, &pIStream);
+                    pIStream->Write(abyGeometry, sizeof(abyGeometry), NULL );
+
+                    LARGE_INTEGER nLargeZero = { 0,0 };
+                    pIStream->Seek( nLargeZero, STREAM_SEEK_SET, NULL);
+
+                    //20020412 - ryan
+                    trData.m_pADSK_GEOM_EXTENT = pIStream;
                 }
 #endif
 
