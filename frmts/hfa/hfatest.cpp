@@ -1,4 +1,11 @@
 /******************************************************************************
+ * $Id$
+ *
+ * Project:  Erdas Imagine (.img) Translator
+ * Purpose:  Testing mainline for HFA services - transitory.
+ * Author:   Frank Warmerdam, warmerda@home.com
+ *
+ ******************************************************************************
  * Copyright (c) 1999, Intergraph Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,11 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * hfatest.cpp
- *
- * Working test program for HFA support.
- *
  * $Log$
+ * Revision 1.3  1999/01/22 17:40:05  warmerda
+ * Added projections, moved debugging stuff out
+ *
  * Revision 1.2  1999/01/04 22:52:47  warmerda
  * field access working
  *
@@ -34,38 +40,6 @@
  */
 
 #include "hfa_p.h"
-
-/************************************************************************/
-/*                            HFADumpNode()                             */
-/************************************************************************/
-
-void	HFADumpNode( HFAEntry *poEntry, int nIndent, int bVerbose )
-
-{
-    static char	szSpaces[256];
-    int		i;
-
-    for( i = 0; i < nIndent*2; i++ )
-        szSpaces[i] = ' ';
-    szSpaces[nIndent*2] = '\0';
-
-    printf( "%s%s(%s) %d @ %d\n", szSpaces,
-            poEntry->GetName(), poEntry->GetType(),
-            poEntry->GetDataSize(), poEntry->GetDataPos() );
-
-    if( bVerbose )
-    {
-        strcat( szSpaces, "+ " );
-        poEntry->DumpFieldValues( stdout, szSpaces );
-        printf( "\n" );
-    }
-
-    if( poEntry->GetChild() != NULL )
-        HFADumpNode( poEntry->GetChild(), nIndent+1, bVerbose );
-    
-    if( poEntry->GetNext() != NULL )
-        HFADumpNode( poEntry->GetNext(), nIndent, bVerbose );
-}
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -87,8 +61,12 @@ int main( int argc, char ** argv )
     const char	*pszFilename = NULL;
     int		nDumpTree = FALSE;
     int		nDumpDict = FALSE;
-    int		i;
+    int		nRastReport = FALSE;
+    int		i, nXSize, nYSize, nBands;
     HFAHandle	hHFA;
+    const Eprj_MapInfo *psMapInfo;
+    const Eprj_ProParameters *psProParameters;
+    const Eprj_Datum *psDatum;
 
 /* -------------------------------------------------------------------- */
 /*      Handle arguments.                                               */
@@ -99,6 +77,8 @@ int main( int argc, char ** argv )
             nDumpDict = TRUE;
         else if( EQUAL(argv[i],"-dt") )
             nDumpTree = TRUE;
+        else if( EQUAL(argv[i],"-dr") )
+            nRastReport = TRUE;
         else if( pszFilename == NULL )
             pszFilename = argv[i];
         else
@@ -130,9 +110,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     if( nDumpDict )
     {
-        printf( "%s\n", hHFA->pszDictionary );
-        
-        hHFA->poDictionary->Dump( stdout );
+        HFADumpDictionary( hHFA, stdout );
     }
 
 /* -------------------------------------------------------------------- */
@@ -140,9 +118,63 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     if( nDumpTree )
     {
-        HFADumpNode( hHFA->poRoot, 0, TRUE );
+        HFADumpTree( hHFA, stdout );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Dump indirectly collected data about bands.                     */
+/* -------------------------------------------------------------------- */
+    HFAGetRasterInfo( hHFA, &nXSize, &nYSize, &nBands );
+
+    if( nRastReport )
+    {
+        printf( "Raster Size = %d x %d\n", nXSize, nYSize );
+
+        for( i = 1; i <= nBands; i++ )
+        {
+            int	nDataType, nColors;
+            double	*padfRed, *padfGreen, *padfBlue;
+        
+            HFAGetBandInfo( hHFA, i, &nDataType, &nXSize, &nYSize );
+            printf( "Band %d: %dx%d tiles, type = %d\n",
+                    i, nXSize, nYSize, nDataType );
+
+            if( HFAGetPCT( hHFA, i, &nColors, &padfRed, &padfGreen, &padfBlue )
+                == CE_None )
+            {
+                int	j;
+
+                for( j = 0; j < nColors; j++ )
+                {
+                    printf( "PCT[%d] = %f,%f,%f\n",
+                            j, padfRed[j], padfGreen[j], padfBlue[j] );
+                }
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Dump the map info structure.                                    */
+/* -------------------------------------------------------------------- */
+        psMapInfo = HFAGetMapInfo( hHFA );
+
+        if( psMapInfo != NULL )
+        {
+            printf( "MapInfo.proName = %s\n", psMapInfo->proName );
+            printf( "MapInfo.upperLeftCenter.x = %.2f\n",
+                    psMapInfo->upperLeftCenter.x );
+            printf( "MapInfo.upperLeftCenter.y = %.2f\n",
+                    psMapInfo->upperLeftCenter.y );
+        }
+        else
+        {
+            printf( "No Map Info found\n" );
+        }
+    }
+    
+    psProParameters = HFAGetProParameters( hHFA );
+
+    psDatum = HFAGetDatum( hHFA );
+    
     HFAClose( hHFA );
 
 #ifdef DBMALLOC
