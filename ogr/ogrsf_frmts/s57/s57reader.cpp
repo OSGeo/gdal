@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2003/09/09 16:44:51  warmerda
+ * fix sounding support in ReadVector()
+ *
  * Revision 1.38  2003/09/05 19:12:05  warmerda
  * added RETURN_PRIMITIVES support to get low level prims
  *
@@ -1053,15 +1056,39 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
         {
             dfX = poRecord->GetIntSubfield("SG2D",0,"XCOO",0) / (double)nCOMF;
             dfY = poRecord->GetIntSubfield("SG2D",0,"YCOO",0) / (double)nCOMF;
-        }
-        else if( poRecord->FindField( "SG3D" ) != NULL )
-        {
-            dfX = poRecord->GetIntSubfield("SG3D",0,"XCOO",0) / (double)nCOMF;
-            dfY = poRecord->GetIntSubfield("SG3D",0,"YCOO",0) / (double)nCOMF;
-            dfZ = poRecord->GetIntSubfield("SG3D",0,"VE3D",0) / (double)nSOMF;
+            poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );
         }
 
-        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
+        else if( poRecord->FindField( "SG3D" ) != NULL ) /* presume sounding*/
+        {
+            int i, nVCount = poRecord->FindField("SG3D")->GetRepeatCount();
+            if( nVCount == 1 )
+            {
+                dfX =poRecord->GetIntSubfield("SG3D",0,"XCOO",0)/(double)nCOMF;
+                dfY =poRecord->GetIntSubfield("SG3D",0,"YCOO",0)/(double)nCOMF;
+                dfZ =poRecord->GetIntSubfield("SG3D",0,"VE3D",0)/(double)nSOMF;
+                poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ));
+            }
+            else
+            {
+                OGRMultiPoint *poMP = new OGRMultiPoint();
+
+                for( i = 0; i < nVCount; i++ )
+                {
+                    dfX = poRecord->GetIntSubfield("SG3D",0,"XCOO",i)
+                        / (double)nCOMF;
+                    dfY = poRecord->GetIntSubfield("SG3D",0,"YCOO",i)
+                        / (double)nCOMF;
+                    dfZ = poRecord->GetIntSubfield("SG3D",0,"VE3D",i)
+                        / (double)nSOMF;
+                    
+                    poMP->addGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
+                }
+
+                poFeature->SetGeometryDirectly( poMP );
+            }
+        }
+
     }
 
 /* -------------------------------------------------------------------- */
