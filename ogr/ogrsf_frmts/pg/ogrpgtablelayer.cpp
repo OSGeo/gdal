@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2005/02/11 22:17:10  fwarmerdam
+ * Applied fix for bug 681.  The truncation logic was kicking
+ * inappropriately for integerlist and stringlist values.
+ *
  * Revision 1.23  2004/11/17 17:49:27  fwarmerdam
  * implemented SetFeature and DeleteFeature methods
  *
@@ -806,7 +810,9 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
             
             for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
             {
-                if( poFeatureDefn->GetFieldDefn(i)->GetWidth() > 0
+                if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTIntegerList
+                    && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTRealList
+                    && poFeatureDefn->GetFieldDefn(i)->GetWidth() > 0 
                     && iChar == poFeatureDefn->GetFieldDefn(i)->GetWidth() )
                 {
                     CPLDebug( "PG", 
