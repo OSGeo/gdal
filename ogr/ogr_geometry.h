@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2002/10/25 15:20:50  warmerda
+ * fixed MULTIPOINT WKT format
+ *
  * Revision 1.36  2002/10/24 20:53:02  warmerda
  * expand tabs
  *
@@ -599,6 +602,9 @@ class CPL_DLL OGRMultiPolygon : public OGRGeometryCollection
 
 class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
 {
+  private:
+    OGRErr  importFromWkt_Bracketed( char ** );
+
   public:
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName();
