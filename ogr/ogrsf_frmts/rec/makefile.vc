@@ -1,5 +1,6 @@
 
-OBJ	=	ogrrecdriver.obj ogrrecdatasource.obj ogrreclayer.obj 
+OBJ	=	ogrrecdriver.obj ogrrecdatasource.obj ogrreclayer.obj \
+		ll_recio.obj
 
 EXTRAFLAGS =	-I.. -I..\..
 

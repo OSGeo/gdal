@@ -1,7 +1,7 @@
 
 GDAL_ROOT	=	../../..
 
-OBJ	=	ogrrecdriver.o ogrrecdatasource.o ogrreclayer.o
+OBJ	=	ogrrecdriver.o ogrrecdatasource.o ogrreclayer.o ll_recio.o
 
 FRMTSLIB = 	../ogrsf_frmts.a
 
