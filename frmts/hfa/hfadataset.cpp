@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/06/19 20:48:11  warmerda
+ * ensure metadata dirty flag set by SetMetadataItem calls
+ *
  * Revision 1.20  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -312,6 +315,7 @@ class CPL_DLL HFADataset : public GDALDataset
     virtual CPLErr SetGeoTransform( double * );
 
     virtual CPLErr SetMetadata( char **, const char * = "" );
+    virtual CPLErr SetMetadataItem( const char *, const char *, const char * = "" );
 
     virtual void   FlushCache( void );
 };
@@ -353,6 +357,7 @@ class HFARasterBand : public GDALRasterBand
     virtual GDALRasterBand *GetOverview( int );
 
     virtual CPLErr SetMetadata( char **, const char * = "" );
+    virtual CPLErr SetMetadataItem( const char *, const char *, const char * = "" );
 };
 
 static GDALDriver	*poHFADriver = NULL;
@@ -613,6 +618,19 @@ CPLErr HFARasterBand::SetMetadata( char **papszMDIn, const char *pszDomain )
     bMetadataDirty = TRUE;
 
     return GDALRasterBand::SetMetadata( papszMDIn, pszDomain );
+}
+
+/************************************************************************/
+/*                            SetMetadata()                             */
+/************************************************************************/
+
+CPLErr HFARasterBand::SetMetadataItem( const char *pszTag, const char *pszValue, 
+                                       const char *pszDomain )
+
+{
+    bMetadataDirty = TRUE;
+
+    return GDALRasterBand::SetMetadataItem( pszTag, pszValue, pszDomain );
 }
 
 
@@ -1494,6 +1512,19 @@ CPLErr HFADataset::SetMetadata( char **papszMDIn, const char *pszDomain )
     bMetadataDirty = TRUE;
 
     return GDALDataset::SetMetadata( papszMDIn, pszDomain );
+}
+
+/************************************************************************/
+/*                            SetMetadata()                             */
+/************************************************************************/
+
+CPLErr HFADataset::SetMetadataItem( const char *pszTag, const char *pszValue, 
+                                    const char *pszDomain )
+
+{
+    bMetadataDirty = TRUE;
+
+    return GDALDataset::SetMetadataItem( pszTag, pszValue, pszDomain );
 }
 
 /************************************************************************/
