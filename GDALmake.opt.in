@@ -10,6 +10,7 @@ LIBTOOL_COMPILE	=	$(LIBTOOL) --mode=compile
 LIBTOOL_LINK	=	$(LIBTOOL) --mode=link
 LIBTOOL_INSTALL	=	$(LIBTOOL) --mode=install
 LIBTOOL_FINISH	=	$(LIBTOOL) --mode=finish --silent
+LIBTOOL_CLEAN	=	$(LIBTOOL) --mode=clean
 else
 LIBTOOL_FINISH	=	/bin/true
 endif
@@ -17,6 +18,7 @@ endif
 CC	=	$(LIBTOOL_COMPILE) @CC@
 CXX	=	$(LIBTOOL_COMPILE) @CXX@
 LD	=	$(LIBTOOL_LINK)	@CXX@
+RM	=	$(LIBTOOL_CLEAN) /bin/rm -f *.lo
 INSTALL = 	$(LIBTOOL_INSTALL) $(GDAL_ROOT)/install-sh -c
 INSTALL_LIB 	=	$(LIBTOOL_INSTALL) $(GDAL_ROOT)/install-sh -c
 INSTALL_DATA	= 	$(GDAL_ROOT)/install-sh -c -m 0644
