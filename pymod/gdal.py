@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.39  2003/01/20 22:19:28  warmerda
+# added buffer size option in ReadAsArray
+#
 # Revision 1.38  2003/01/18 22:22:12  gwalter
 # Lengthened strings in GCP serialize function to avoid truncation.
 #
@@ -519,10 +522,13 @@ class Band:
             return _gdal.GDALWriteRaster(self._o, xoff, yoff, xsize, ysize,
                                    buf_string, buf_xsize, buf_ysize,buf_type)
 
-    def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None):
+    def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
+                    buf_xsize=None,buf_ysize=None ):
         import gdalnumeric
 
-        return gdalnumeric.BandReadAsArray( self, xoff, yoff, xsize, ysize )
+        return gdalnumeric.BandReadAsArray( self, xoff, yoff,
+                                            win_xsize, win_ysize,
+                                            buf_xsize, buf_ysize )
     
     def WriteArray(self, array, xoff=0, yoff=0):
         import gdalnumeric
