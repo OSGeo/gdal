@@ -19,4 +19,4 @@ CPPFLAGS	+=	-I.. -I../.. -DOGR
 default:	$(O_OBJ)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(O_OBJ)
