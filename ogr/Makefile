@@ -7,7 +7,7 @@ OLE_LIBS =	$(MSDASDK)\lib\oledb\oledb.lib ole32.lib oleaut32.lib
 
 OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
 		ogrlinestring.obj ogrpolygon.obj ogrlinearring.obj
-OBJ_OLEDB =	oledb_sup.obj oledbsuprowset.obj
+OBJ_OLEDB =	oledb_sup.obj oledbsuprowset.obj oledb_sf.obj
 
 default:	test1.exe sfdump.exe
 
@@ -37,6 +37,9 @@ ogrgeometryfactory.obj:	ogrgeometryfactory.cpp
 
 oledb_sup.obj:	oledb_sup.cpp
 	$(CC) /c $(CFLAGS) oledb_sup.cpp
+
+oledb_sf.obj:	oledb_sf.cpp
+	$(CC) /c $(CFLAGS) oledb_sf.cpp
 
 oledbsuprowset.obj:	oledbsuprowset.cpp
 	$(CC) /c $(CFLAGS) oledbsuprowset.cpp
