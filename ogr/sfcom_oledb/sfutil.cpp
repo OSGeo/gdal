@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/07/23 19:20:27  kshih
+ * Modifications for errors etc...
+ *
  * Revision 1.5  1999/07/20 17:09:57  kshih
  * Use OGR code.
  *
@@ -58,6 +61,7 @@ typedef struct _IUnknownOGRInfo
 {
 	IDBProperties *pIDB;
 	OGRDataSource *pOGR;
+	void		  *pKey;
 	struct _IUnknownOGRInfo	*next;
 }  IUnknownOGRInfo;
 
@@ -101,7 +105,7 @@ OGRDataSource *SFGetOGRDataSource(IUnknown *pUnk)
 /*                                                                      */
 /*     Set the OGRData Source from an IUnknown pointer.					*/
 /************************************************************************/
-void SFSetOGRDataSource(IUnknown *pUnk, OGRDataSource *pOGR)
+void SFSetOGRDataSource(IUnknown *pUnk, OGRDataSource *pOGR, void *pKey)
 {
 	IUnknownOGRInfo	*pNew;
 	IDBProperties	*pIDB;
@@ -116,6 +120,7 @@ void SFSetOGRDataSource(IUnknown *pUnk, OGRDataSource *pOGR)
 		
 		pNew->pIDB = pIDB;
 		pNew->pOGR = pOGR;
+		pNew->pKey = pKey;
 		pNew->next = pIUnkOGRInfo;
 		pIUnkOGRInfo = pNew;
 		
@@ -128,18 +133,15 @@ void SFSetOGRDataSource(IUnknown *pUnk, OGRDataSource *pOGR)
 /*                                                                      */
 /*     Set the OGRData Source from an IUnknown pointer.					*/
 /************************************************************************/
-void SFClearOGRDataSource(IUnknown *pUnk)
+void SFClearOGRDataSource(void *pKey)
 {
-	IDBProperties   *pIDB;
+
 	IUnknownOGRInfo *pInfo  =  pIUnkOGRInfo;
 	IUnknownOGRInfo **pPrev = &pIUnkOGRInfo;
 
-	if (NULL == (pIDB = SFGetDataSourceProperties(pUnk)))
-		return;
-
-	while (pInfo && pIDB)
+	while (pInfo && pKey)
 	{
-		if (pInfo->pIDB == pIDB)
+		if (pInfo->pKey == pKey)
 		{
 			*pPrev = pInfo->next;		
 			delete pInfo;
@@ -149,8 +151,6 @@ void SFClearOGRDataSource(IUnknown *pUnk)
 		pInfo = pInfo->next;
 	}
 }
-
-
 
 /************************************************************************/
 /*							SFGetInitDataSource()						*/

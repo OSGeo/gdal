@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  1999/07/23 19:20:27  kshih
+ * Modifications for errors etc...
+ *
  * Revision 1.13  1999/07/20 17:09:57  kshih
  * Use OGR code.
  *
@@ -270,10 +273,16 @@ void	CVirtualArray::Initialize(int nArraySize, OGRLayer *pLayer,int nBufferSize)
 
 BYTE &CVirtualArray::operator[](int iIndex) 
 {
+	// Make sure we are at the correct position to read the next record.
 	if (iIndex -1 != m_nLastRecordAccessed)
 	{
-		// Error condition!!  // We could also synthesize but would be very slow!!!!
-		return *mBuffer;
+		m_pOGRLayer->ResetReading();
+		m_nLastRecordAccessed = -1;
+
+		while (m_nLastRecordAccessed != iIndex -1)
+		{
+			delete m_pOGRLayer->GetNextFeature();
+		}
 	}
 
 	m_nLastRecordAccessed = iIndex;
@@ -362,30 +371,26 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
 	poDS = SFGetOGRDataSource(pIUnknown);
 	assert(poDS);
 	
-	
 	// Get the appropriate layer, spatial filters and name filtering here!
 	OGRLayer	*pLayer;
 	OGRGeometry *pGeomFilter = NULL;
 	
 	pszCommand = OLE2A(m_strCommandText);
 	
-	// command text has filter starting it
-	if (!_strnicmp("filter",pszCommand,6))
+	// If there is a parameter then use it as a spatial filter.
+	if (pParams != NULL && pParams->pData != NULL)
 	{
-		if (pParams == NULL || pParams->pData == NULL)
+		return SFReportError(DB_E_ERRORSINCOMMAND,IID_ICommand,0,"Improper Parameter cannot convert from WKB");
+
+		if (OGRGeometryFactory::createFromWkb(	(unsigned char *) pParams->pData,
+												NULL,
+												&pGeomFilter))
 		{
-		//	return DB_E_ERRORSINCOMMAND;
-		}
-		
-//		pGeomFilter = (OGRGeometry *) pParams->pData;
-		
-		// Get rid of the filter text so that the next section can determine layer
-		if (strlen(pszCommand+6))
-		{
-			memmove(pszCommand,pszCommand+7,strlen(pszCommand+7));
+			return SFReportError(DB_E_ERRORSINCOMMAND,IID_ICommand,0,"Improper Parameter cannot convert from WKB");
 		}
 	}
-
+	
+	
 	// Now check to see which layer is specified.
 	int i;
 	
@@ -415,8 +420,8 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
 	}
 	
 	// Get count
-	*pcRowsAffected = pLayer->GetFeatureCount(TRUE);
-	
+	if (pcRowsAffected)
+		*pcRowsAffected = pLayer->GetFeatureCount(TRUE);
 	
 	// Now set the column info!
 	
@@ -487,7 +492,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     m_paColInfo.Add(colInfo);
 
 	nOffset += 4;
-    m_rgRowData.Initialize(*pcRowsAffected,pLayer,nOffset);
+    m_rgRowData.Initialize(0,pLayer,nOffset);
 
     return S_OK;
 }

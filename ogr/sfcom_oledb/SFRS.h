@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/07/23 19:20:27  kshih
+ * Modifications for errors etc...
+ *
  * Revision 1.3  1999/07/20 17:11:11  kshih
  * Use OGR code
  *
@@ -100,6 +103,28 @@ public:
 	}
 };
 
+
+
+
+
+
+
+
+
+
+class ATL_NO_VTABLE CSFCommandSupportsErrorInfoImpl : public ISupportErrorInfo
+{
+public:
+	STDMETHOD(InterfaceSupportsErrorInfo)(REFIID riid)
+	{
+		if (IID_ICommand == riid)
+			return S_OK;
+
+		return S_FALSE;
+	}
+};
+
+
 // CSFCommand
 class ATL_NO_VTABLE CSFCommand : 
 	public CComObjectRootEx<CComSingleThreadModel>,
@@ -108,7 +133,8 @@ class ATL_NO_VTABLE CSFCommand :
 	public ICommandPropertiesImpl<CSFCommand>,
 	public IObjectWithSiteImpl<CSFCommand>,
 	public IConvertTypeImpl<CSFCommand>,
-	public IColumnsInfoImpl<CSFCommand>
+	public IColumnsInfoImpl<CSFCommand>,
+	public CSFCommandSupportsErrorInfoImpl
 {
 public:
 BEGIN_COM_MAP(CSFCommand)
@@ -119,6 +145,7 @@ BEGIN_COM_MAP(CSFCommand)
 	COM_INTERFACE_ENTRY2(ICommandText, ICommand)
 	COM_INTERFACE_ENTRY(IColumnsInfo)
 	COM_INTERFACE_ENTRY(IConvertType)
+	COM_INTERFACE_ENTRY(ISupportErrorInfo)
 END_COM_MAP()
 // ICommand
 public:
@@ -154,9 +181,9 @@ BEGIN_PROPSET_MAP(CSFCommand)
 		PROPERTY_INFO_ENTRY(BOOKMARKS)
 		PROPERTY_INFO_ENTRY(BOOKMARKSKIPPED)
 		PROPERTY_INFO_ENTRY(BOOKMARKTYPE)
-		PROPERTY_INFO_ENTRY(CANFETCHBACKWARDS)
+		PROPERTY_INFO_ENTRY_VALUE(CANFETCHBACKWARDS,VARIANT_FALSE) 
 		PROPERTY_INFO_ENTRY(CANHOLDROWS)
-		PROPERTY_INFO_ENTRY(CANSCROLLBACKWARDS)
+		PROPERTY_INFO_ENTRY_VALUE(CANSCROLLBACKWARDS,VARIANT_FALSE)
 		PROPERTY_INFO_ENTRY(LITERALBOOKMARKS)
 		PROPERTY_INFO_ENTRY(ORDEREDBOOKMARKS)
 	END_PROPERTY_SET(DBPROPSET_ROWSET)

@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  Utility functions.
+ * Purpose:  Format registration functions..
  * Author:   Ken Shih, kshih@home.com
  *
  ******************************************************************************
@@ -28,35 +28,29 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.5  1999/07/23 19:20:27  kshih
+ * Revision 1.1  1999/07/23 19:20:27  kshih
  * Modifications for errors etc...
- *
- * Revision 1.4  1999/07/20 17:11:11  kshih
- * Use OGR code
- *
- * Revision 1.3  1999/06/25 18:17:25  kshih
- * Changes to get datasource from session/rowset/command
- *
- * Revision 1.2  1999/06/22 16:17:11  warmerda
- * added ogrcomdebug
- *
- * Revision 1.1  1999/06/22 15:53:54  kshih
- * Utility functions.
- *
  *
  */
 
-#include <stdio.h>
 #include "ogrsf_frmts.h"
-#include <oledb.h>
 
 
-OGRDataSource	*SFGetOGRDataSource(IUnknown *pUnk);
-void			SFSetOGRDataSource(IUnknown *pUnk, OGRDataSource *pOGR, void *);
-void			SFClearOGRDataSource(void *);
-void			SFGetFilenames(const char *,char **,char **);
-char			*SFGetInitDataSource(IUnknown *pIUnknownIn);
-HRESULT	     	SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,char *pszText);
-void			SFRegisterOGRFormats();
+/************************************************************************/
+/*                      SFRegisterOGRFormats()                          */
+/*                                                                      */
+/*      Register all the OGR formats we wish to expose through the SFCOM*/
+/*      provider.														*/
+/************************************************************************/
+void	SFRegisterOGRFormats()
+{
+		static bool	bRegistered = false;
+		if (bRegistered)
+			return;
+		bRegistered = true;
 
-void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... );
+
+
+		// Add formats to be registered here.
+		RegisterOGRShape();
+}
