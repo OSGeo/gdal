@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/09/11 23:00:04  aamici
+ * add class constructors and destructors where needed in order to
+ * let the mingw/cygwin binutils produce sensible partially linked objet files
+ * with 'ld -r'.
+ *
  * Revision 1.10  2003/08/07 17:11:21  warmerda
  * added normalized flag for kernel based filters
  *
@@ -302,6 +307,7 @@ public:
 class VRTAveragedSource : public VRTSimpleSource
 {
 public:
+                    VRTAveragedSource();
     virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType, 
@@ -317,6 +323,7 @@ class VRTComplexSource : public VRTSimpleSource
 {
 public:
                    VRTComplexSource();
+    virtual        ~VRTComplexSource();
 
     virtual CPLErr RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
                              void *pData, int nBufXSize, int nBufYSize, 

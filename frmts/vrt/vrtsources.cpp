@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/09/11 23:00:04  aamici
+ * add class constructors and destructors where needed in order to
+ * let the mingw/cygwin binutils produce sensible partially linked objet files
+ * with 'ld -r'.
+ *
  * Revision 1.1  2003/07/17 20:27:18  warmerda
  * New
  *
@@ -448,6 +453,14 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /************************************************************************/
 
 /************************************************************************/
+/*                         VRTAveragedSource()                          */
+/************************************************************************/
+
+VRTAveragedSource::VRTAveragedSource()
+{
+}
+
+/************************************************************************/
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
@@ -622,6 +635,10 @@ VRTComplexSource::VRTComplexSource()
     
     bNoDataSet = FALSE;
     dfNoDataValue = 0.0;
+}
+
+VRTComplexSource::~VRTComplexSource()
+{
 }
 
 /************************************************************************/
