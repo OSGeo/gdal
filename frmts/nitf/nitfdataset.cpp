@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/09/12 22:52:25  gwalter
+ * Added recognition of header file in absence of other useable georeferencing
+ * information.
+ *
  * Revision 1.12  2003/09/11 19:51:55  warmerda
  * avoid type casting warnings
  *
@@ -546,6 +550,66 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->bGotGeoTransform = 
             GDALReadWorldFile( poOpenInfo->pszFilename, "nfw", poDS->adfGeoTransform );
+
+        /* If nfw found, try looking for a header with projection info */
+        /* in space imaging style format                               */
+        if (poDS->bGotGeoTransform)
+        {
+            const char *pszHDR;
+            FILE *fpHDR;
+            char **papszLines;
+            int isNorth;
+            int zone;
+
+            pszHDR = CPLResetExtension( poOpenInfo->pszFilename, "hdr" );
+
+            fpHDR = VSIFOpen( pszHDR, "rt" );
+
+#ifndef WIN32
+            if( fpHDR == NULL )
+            {
+                pszHDR = CPLResetExtension( poOpenInfo->pszFilename, "HDR" );
+                fpHDR = VSIFOpen( pszHDR, "rt" );
+            }
+#endif
+    
+            if( fpHDR != NULL )
+            {
+                VSIFClose( fpHDR );
+                papszLines=CSLLoad(pszHDR);
+                if (CSLCount(papszLines) == 16)
+                {
+
+                    if (psImage->chICORDS == 'N')
+                        isNorth=1;
+                    else if (psImage->chICORDS =='S')
+                        isNorth=0;
+                    else
+                    {
+                        if (psImage->dfLLY+psImage->dfLRY+psImage->dfULY+psImage->dfURY < 0)
+                            isNorth=0;
+                        else
+                            isNorth=1;
+                    }
+                    if( (EQUALN(papszLines[7],
+                        "Selected Projection: Universal Transverse Mercator",50)) &&
+                        (EQUALN(papszLines[8],"Zone: ",6)) &&
+                        (strlen(papszLines[8]) >= 7))
+                    {
+                        CPLFree( poDS->pszProjection );
+                        poDS->pszProjection = NULL;
+                        zone=atoi(&(papszLines[8][6]));
+                        oSRSWork.SetUTM( zone, isNorth );
+                        oSRSWork.SetWellKnownGeogCS( "WGS84" );
+                        oSRSWork.exportToWkt( &(poDS->pszProjection) );
+                    }
+                }
+                CSLDestroy(papszLines);
+            }
+
+        }
+
+        
     }
 /* -------------------------------------------------------------------- */
 /*      Do we have RPC info.                                            */
