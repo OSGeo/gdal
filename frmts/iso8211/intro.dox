@@ -148,16 +148,16 @@ The precise license text is:<p>
 
 <li> First, fetch the source.  The most recent source should be accessable at
 an url such as 
-<a href="http://gdal.velocet.ca/projects/iso8211/iso8211lib-1.1.tar.gz">
-http://gdal.velocet.ca/projects/iso8211/iso8211lib-1.1.tar.gz</a>, or
+<a href="http://gdal.velocet.ca/projects/iso8211/iso8211lib-1.2.tar.gz">
+http://gdal.velocet.ca/projects/iso8211/iso8211lib-1.2.tar.gz</a>, or
 by ftp from 
-<a href="ftp://gdal.velocet.ca/pub/outgoing/iso8211lib-1.1.tar.gz">
-ftp://gdal.velocet.ca/pub/outgoing/iso8211lib-1.1.tar.gz</a>.<p>
+<a href="ftp://gdal.velocet.ca/pub/outgoing/iso8211lib-1.2.tar.gz">
+ftp://gdal.velocet.ca/pub/outgoing/iso8211lib-1.2.tar.gz</a>.<p>
 
 <li> Untar the source.<p>
 <code>
-% gzip -d iso8211lib-1.0.tar.gz
-% tar xzvf iso8211lib-1.0.tar.gz
+% gzip -d iso8211lib-1.2.tar.gz
+% tar xzvf iso8211lib-1.2.tar.gz
 </code>
 
 If for some reason you don't have gzip, or tar (perhaps you work on Windows)
