@@ -51,7 +51,7 @@ GDAL_SLIB	=	$(GDAL_ROOT)/gdal.$(GDAL_VER).so
 OGR_LIB		=	$(GDAL_ROOT)/ogr/ogr.a
 CPL_LIB		=	$(GDAL_ROOT)/port/cpl.a
 
-ifneq ($(HAVE_OGDI),yes)
+ifeq ($(HAVE_OGDI),yes)
 OGDI_LIBS	=	@OGDI_LIBS@
 OGDI_INCLUDE	=	@OGDI_INCLUDE@
 OGDI_FLAG	=	ENABLED
