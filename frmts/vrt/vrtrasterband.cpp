@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/12/10 15:44:42  warmerda
+ * Fix problem with NULL pszDomain values.
+ *
  * Revision 1.15  2003/07/17 20:29:15  warmerda
  * Moved all the sources implementations out.
  * Improved error checking and returning when initializing from XML.
@@ -496,7 +499,7 @@ CPLXMLNode *VRTRasterBand::SerializeToXML()
 char **VRTRasterBand::GetMetadata( const char *pszDomain )
 
 {
-    if( EQUAL(pszDomain,"vrt_sources") )
+    if( pszDomain != NULL && EQUAL(pszDomain,"vrt_sources") )
     {
         char **papszSourceList = NULL;
 
@@ -534,8 +537,9 @@ char **VRTRasterBand::GetMetadata( const char *pszDomain )
 CPLErr VRTRasterBand::SetMetadata( char **papszNewMD, const char *pszDomain )
 
 {
-    if( EQUAL(pszDomain,"new_vrt_sources") 
-        || EQUAL(pszDomain,"vrt_sources") )
+    if( pszDomain != NULL
+        && (EQUAL(pszDomain,"new_vrt_sources") 
+            || EQUAL(pszDomain,"vrt_sources")) )
     {
         VRTDriver *poDriver = (VRTDriver *) GDALGetDriverByName( "VRT" );
         CPLErr eErr;
