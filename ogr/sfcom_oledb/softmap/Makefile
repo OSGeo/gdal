@@ -6,9 +6,8 @@ SFOLEDB   =     ..
 PROJ	=	smsf
 DLLNAME	=	SoftmapSF.dll
 
-# Add -DATL_CPL_TRACE to get detailed ATL traces.
-# Remove SUPPORT_ATL_NET and change atl_net to atl_vc6 to work
-# with VC++ 6.x instead of VC++ .NET
+# To switch between VStudio .NET, and VC++ 6 just switch which of the
+# \ATL_{vc6,net} lines is uncommented.
 
 EXTRAFLAGS =	-I$(SFOLEDB) \
 #		-I$(SFOLEDB)\atl_net -DSUPPORT_ATL_NET \
@@ -78,9 +77,6 @@ SFDSCache.cpp:	$(SFOLEDB)\SFDSCache.cpp
 
 ogrvirtualarray.cpp:	$(SFOLEDB)\ogrvirtualarray.cpp
 	copy $(SFOLEDB)\ogrvirtualarray.cpp
-
-SFDSCache.cpp:	$(SFOLEDB)\SFDSCache.cpp
-	copy $(SFOLEDB)\SFDSCache.cpp
 
 swq.c:	..\..\swq.c
 	copy ..\..\swq.c
