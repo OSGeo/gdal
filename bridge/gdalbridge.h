@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/07/17 03:33:15  sperkins
+ * added GDALFILLRaster()
+ *
  * Revision 1.12  2001/11/18 00:48:24  warmerda
  * substantial upgrade
  *
@@ -398,6 +401,10 @@ GDAL_ENTRY double (*pGDALGetRasterNoDataValue)( GDALRasterBandH, int * )
 GDAL_ENTRY CPLErr (*pGDALSetRasterNoDataValue)( GDALRasterBandH, double ) 
     GDAL_NULL;
 #define GDALSetRasterNoDataValue pGDALSetRasterNoDataValue
+
+GDAL_ENTRY CPLErr (*pGDALFillRaster)( GDALRasterBandH, double, double )
+    GDAL_NULL;
+#define GDALFillRaster pGDALFillRaster
 
 GDAL_ENTRY double (*pGDALGetRasterMinimum)( GDALRasterBandH, int * ) GDAL_NULL;
 #define GDALGetRasterMinimum pGDALGetRasterMinimum

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/07/17 03:33:15  sperkins
+ * added GDALFILLRaster()
+ *
  * Revision 1.14  2001/11/18 00:48:24  warmerda
  * substantial upgrade
  *
@@ -327,6 +330,9 @@ int GDALBridgeInitialize( const char * pszTargetDir, FILE *fpReportFailure )
 
     GDALSetRasterNoDataValue = (CPLErr (*)(GDALRasterBandH, double))
         GBGetSymbolCheck( szPath, "GDALSetRasterNoDataValue", apszFailed );
+
+    GDALFillRaster = (CPLErr (*)(GDALRasterBandH, double, double))
+        GBGetSymbolCheck( szPath, "GDALFillRaster", apszFailed );
 
     GDALGetRasterMinimum = (double (*)(GDALRasterBandH, int *))
         GBGetSymbolCheck( szPath, "GDALGetRasterMinimum", apszFailed );
