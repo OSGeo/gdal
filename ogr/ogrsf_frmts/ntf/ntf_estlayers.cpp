@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/11/17 05:16:49  warmerda
+ * added meridian 2 support
+ *
  * Revision 1.15  2002/02/06 15:19:36  warmerda
  * TEXT_CODE is 4 long, not 3
  *
@@ -1102,6 +1105,84 @@ static OGRFeature *TranslateMeridianLine( NTFFileReader *poReader,
 }
 
 /************************************************************************/
+/*                      TranslateMeridian2Point()                       */
+/************************************************************************/
+
+static OGRFeature *TranslateMeridian2Point( NTFFileReader *poReader,
+                                            OGRNTFLayer *poLayer,
+                                            NTFRecord **papoGroup )
+
+{
+    if( CSLCount((char **) papoGroup) < 2
+        || papoGroup[0]->GetType() != NRT_POINTREC
+        || papoGroup[1]->GetType() != NRT_GEOMETRY )
+        return NULL;
+        
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+
+    // POINT_ID
+    poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
+
+    // Geometry
+    int         nGeomId;
+    
+    poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
+                                                             &nGeomId));
+
+    // GEOM_ID
+    poFeature->SetField( 1, nGeomId );
+
+    // Attributes
+    poReader->ApplyAttributeValues( poFeature, papoGroup,
+                                    "FC", 2, "PN", 3, "OD", 4, "PO", 5, 
+                                    "JN", 6, "RT", 7, "SN", 7, "SI", 8, 
+                                    "PN", 9, "PI", 10, "NM", 11, "DA", 12, 
+                                    "WA", 13, "HT", 14,
+                                    NULL );
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                       TranslateMeridian2Line()                       */
+/************************************************************************/
+
+static OGRFeature *TranslateMeridian2Line( NTFFileReader *poReader,
+                                           OGRNTFLayer *poLayer,
+                                           NTFRecord **papoGroup )
+
+{
+    if( CSLCount((char **) papoGroup) < 2
+        || papoGroup[0]->GetType() != NRT_LINEREC
+        || papoGroup[1]->GetType() != NRT_GEOMETRY )
+        return NULL;
+        
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+
+    // LINE_ID
+    poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
+
+    // Geometry
+    int         nGeomId;
+    
+    poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
+                                                             &nGeomId));
+
+    // GEOM_ID
+    poFeature->SetField( 2, nGeomId );
+
+    // Attributes
+    poReader->ApplyAttributeValues( poFeature, papoGroup,
+                                    "FC", 1, "OD", 3, "PO", 4, "RN", 5, 
+                                    "TR", 6, "PN", 7, "RI", 8, "LC", 9,
+                                    "RC", 10, "LD", 11, "RD", 12, "WI", 14,
+                                    NULL );
+
+
+    return poFeature;
+}
+
+/************************************************************************/
 /*                       TranslateStrategiNode()                        */
 /*                                                                      */
 /*      Also used for Meridian, Oscar and BaseData.GB nodes.            */
@@ -1940,6 +2021,69 @@ void NTFFileReader::EstablishLayers()
                         NULL );
 
         EstablishLayer( "MERIDIAN_NODE", wkbNone,
+                        TranslateStrategiNode, NRT_NODEREC, NULL,
+                        "NODE_ID", OFTInteger, 6, 0,
+                        "GEOM_ID_OF_POINT", OFTInteger, 6, 0,
+                        "NUM_LINKS", OFTInteger, 4, 0,
+                        "DIR", OFTIntegerList, 1, 0,
+                        "GEOM_ID_OF_LINK", OFTIntegerList, 6, 0,
+                        "LEVEL", OFTIntegerList, 1, 0,
+                        "ORIENT", OFTRealList, 5, 1,
+                        NULL );
+    }
+    else if( GetProductId() == NPC_MERIDIAN2 )
+    {
+        EstablishLayer( "MERIDIAN2_POINT", wkbPoint,
+                        TranslateMeridian2Point, NRT_POINTREC, NULL,
+                        "POINT_ID", OFTInteger, 6, 0,
+                        "GEOM_ID", OFTInteger, 6, 0,
+                        "FEAT_CODE", OFTString, 4, 0,
+                        "PROPER_NAME", OFTString, 0, 0, 
+                        "OSODR", OFTString, 13, 0,
+                        "PARENT_OSODR", OFTString, 13, 0,
+                        "JUNCTION_NAME", OFTString, 0, 0,
+                        "ROUNDABOUT", OFTString, 1, 0,
+                        "SETTLEMENT_NAME", OFTString, 0, 0,
+                        "STATION_ID", OFTString, 13, 0,
+                        "PROPER_NAME", OFTString, 0, 0, 
+                        "GLOBAL_ID", OFTInteger, 6, 0, 
+                        "ADMIN_NAME", OFTString, 0, 0, 
+                        "DA_DLUA_ID", OFTString, 13, 0, 
+                        "WATER_AREA", OFTString, 13, 0, 
+                        "HEIGHT", OFTInteger, 8, 0,
+                        NULL );
+        
+        EstablishLayer( "MERIDIAN2_LINE", wkbLineString,
+                        TranslateMeridian2Line, NRT_LINEREC, NULL,
+                        "LINE_ID", OFTInteger, 6, 0,
+                        "FEAT_CODE", OFTString, 4, 0,
+                        "GEOM_ID", OFTInteger, 6, 0,
+                        "OSODR", OFTString, 13, 0, 
+                        "PARENT_OSODR", OFTString, 13, 0,
+                        "ROAD_NUM", OFTString, 0, 0, 
+                        "TRUNK_ROAD", OFTString, 1, 0, 
+                        "PROPER_NAME", OFTString, 0, 0, 
+                        "RAIL_ID", OFTString, 13, 0, 
+                        "LEFT_COUNTY", OFTInteger, 6, 0, 
+                        "RIGHT_COUNTY", OFTInteger, 6, 0, 
+                        "LEFT_DISTRICT", OFTInteger, 6, 0, 
+                        "RIGHT_DISTRICT", OFTInteger, 6, 0, 
+                        "WATER_LINK_ID", OFTString, 13, 0, 
+                        NULL );
+
+        EstablishLayer( "MERIDIAN2_TEXT", wkbPoint,
+                        TranslateStrategiText, NRT_TEXTREC, NULL,
+                        "TEXT_ID", OFTInteger, 6, 0,
+                        "FEAT_CODE", OFTString, 4, 0,
+                        "FONT", OFTInteger, 4, 0,
+                        "TEXT_HT", OFTReal, 5, 1,
+                        "DIG_POSTN", OFTInteger, 1, 0, 
+                        "ORIENT", OFTReal, 5, 1,
+                        "TEXT", OFTString, 0, 0, 
+                        "TEXT_HT_GROUND", OFTReal, 10, 3,
+                        NULL );
+
+        EstablishLayer( "MERIDIAN2_NODE", wkbNone,
                         TranslateStrategiNode, NRT_NODEREC, NULL,
                         "NODE_ID", OFTInteger, 6, 0,
                         "GEOM_ID_OF_POINT", OFTInteger, 6, 0,
