@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.2  1998/12/02 19:32:48  warmerda
+ * Added some new definitions.
+ *
  * Revision 1.1  1998/10/18 06:15:11  warmerda
  * Initial implementation.
  *
@@ -68,6 +71,7 @@ typedef int		GBool;
 #include <stdlib.h>
 #include <math.h>
 #include <stdarg.h>
+#include <string.h>
 
 /* ==================================================================== */
 /*      Other standard services.                                        */
@@ -88,6 +92,28 @@ typedef int		GBool;
 #  define NULL	0
 #endif
 
+#ifndef FALSE
+#  define FALSE	0
+#endif
+
+#ifndef TRUE
+#  define TRUE	1
+#endif
+
+#ifndef MAX
+#  define MIN(a,b)      ((a<b) ? a : b)
+#  define MAX(a,b)      ((a>b) ? a : b)
+#endif
+
+#ifndef ABS
+#  define ABS(x)        ((x<0) ? (-1*(x)) : x)
+#endif
+
+#ifndef EQUAL
+#  define EQUALN(a,b,n)           (strncasecmp(a,b,n)==0)
+#  define EQUAL(a,b)              (strcasecmp(a,b)==0)
+#endif
+
 /* ==================================================================== */
 /*      Error handling.                                                 */
 /* ==================================================================== */
@@ -105,6 +131,14 @@ typedef enum
 void GDAL_DLL GBSError( GBSErr, const char *, ... );
 void GDAL_DLL GBSClearError( void );
 GBSErr GDAL_DLL GBSGetError( char ** );
+
+void GDAL_DLL _GBSAssert( const char *, const char *, int );
+
+#ifdef DEBUG
+#  define GBSAssert(expr)  ((expr) ? (0) : _GBSAssert(#expr,__FILE__,__LINE__))
+#else
+#  define GBSAssert(expr)
+#endif
 
 GDAL_C_END
 
