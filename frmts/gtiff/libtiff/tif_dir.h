@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.h,v 1.11 2003/11/18 15:45:43 dron Exp $ */
+/* $Id: tif_dir.h,v 1.13 2004/06/05 08:09:28 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -75,41 +75,33 @@ typedef	struct {
 	tstrip_t td_nstrips;		/* size of offset & bytecount arrays */
 	uint32*	td_stripoffset;
 	uint32*	td_stripbytecount;
-#if SUBIFD_SUPPORT
-	uint16	td_nsubifd;
+	uint16	td_nsubifd;		
 	uint32*	td_subifd;
-#endif
-#ifdef YCBCR_SUPPORT
+	/* YCbCr parameters */
 	float*	td_ycbcrcoeffs;
 	uint16	td_ycbcrsubsampling[2];
 	uint16	td_ycbcrpositioning;
-#endif
-#ifdef COLORIMETRY_SUPPORT
+	/* Colorimetry parameters */
 	float*	td_whitepoint;
 	float*	td_primarychromas;
 	float*	td_refblackwhite;
 	uint16*	td_transferfunction[3];
-#endif
-#ifdef CMYK_SUPPORT
+	/* CMYK parameters */
 	uint16	td_inkset;
 	uint16	td_ninks;
 	uint16	td_dotrange[2];
 	int	td_inknameslen;
 	char*	td_inknames;
 	char*	td_targetprinter;
-#endif
-#ifdef ICC_SUPPORT
+	/* ICC parameters */
 	uint32	td_profileLength;
 	void	*td_profileData;
-#endif
-#ifdef PHOTOSHOP_SUPPORT
+	/* Adobe Photoshop tag handling */
 	uint32	td_photoshopLength;
 	void	*td_photoshopData;
-#endif
-#ifdef IPTC_SUPPORT
+	/* IPTC parameters */
 	uint32	td_richtiffiptcLength;
 	void	*td_richtiffiptcData;
-#endif
         /* Begin Pixar Tag values. */
         uint32	td_imagefullwidth, td_imagefulllength;
  	char*	td_textureformat;
@@ -257,10 +249,12 @@ extern  const TIFFFieldInfo* _TIFFFindOrRegisterFieldInfo( TIFF *tif,
 extern  TIFFFieldInfo* _TIFFCreateAnonFieldInfo( TIFF *tif, ttag_t tag,
                                                  TIFFDataType dt );
 
-#define _TIFFMergeFieldInfo TIFFMergeFieldInfo
-#define _TIFFFindFieldInfo  TIFFFindFieldInfo
-#define _TIFFFieldWithTag   TIFFFieldWithTag
-    
+#define _TIFFMergeFieldInfo	    TIFFMergeFieldInfo
+#define _TIFFFindFieldInfo	    TIFFFindFieldInfo
+#define _TIFFFindFieldInfoByName    TIFFFindFieldInfoByName
+#define _TIFFFieldWithTag	    TIFFFieldWithTag
+#define _TIFFFieldWithName	    TIFFFieldWithName
+
 #if defined(__cplusplus)
 }
 #endif

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_packbits.c,v 1.7 2003/07/08 16:40:46 warmerda Exp $ */
+/* $Id: tif_packbits.c,v 1.8 2004/06/06 10:20:12 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -188,27 +188,16 @@ PackBitsEncode(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 static int
 PackBitsEncodeChunk(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 {
-#if defined(__hpux) && defined(__LP64__)
-	tsize_t rowsize = (tsize_t)(unsigned long) tif->tif_data;
-#else
-	tsize_t rowsize = (tsize_t) tif->tif_data;
-#endif
+	tsize_t rowsize = (tsize_t)(uint32) tif->tif_data;
 
-	assert(rowsize > 0);
-    
-#ifdef YCBCR_SUPPORT
 	/* 
 	 * YCBCR data isn't really separable into rows, so we
 	 * might as well encode the whole tile/strip as one chunk.
+         *
+         * XXX: This code does nothing: why those lines here?
 	 */
-	if( tif->tif_dir.td_photometric == PHOTOMETRIC_YCBCR ) {
-#if defined(__hpux) && defined(__LP64__)
-		rowsize = (tsize_t)(unsigned long) tif->tif_data;
-#else
-		rowsize = (tsize_t) tif->tif_data;
-#endif
-	}
-#endif
+	/*if( tif->tif_dir.td_photometric == PHOTOMETRIC_YCBCR )
+		rowsize = (tsize_t)(uint32) tif->tif_data;*/
 
 	while ((long)cc > 0) {
 		int	chunk = rowsize;

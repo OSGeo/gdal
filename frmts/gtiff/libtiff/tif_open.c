@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_open.c,v 1.15 2004/01/30 20:22:18 dron Exp $ */
+/* $Id: /cvsroot/osrs/libtiff/libtiff/tif_open.c,v 1.18 2004/05/20 19:15:54 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -76,6 +76,20 @@ static const int litTypeshift[13] = {
 	0,		/* TIFF_FLOAT */
 	0,		/* TIFF_DOUBLE */
 };
+
+/*
+ * Dummy functions to fill the omitted client procedures.
+ */
+static int
+_tiffDummyMapProc(thandle_t fd, tdata_t* pbase, toff_t* psize)
+{
+	return (0);
+}
+
+static void
+_tiffDummyUnmapProc(thandle_t fd, tdata_t base, toff_t size)
+{
+}
 
 /*
  * Initialize the shift & mask tables, and the
@@ -156,9 +170,9 @@ TIFFClientOpen(
 	tif->tif_curstrip = (tstrip_t) -1;	/* invalid strip */
 	tif->tif_row = (uint32) -1;		/* read/write pre-increment */
 	tif->tif_clientdata = clientdata;
-	if (!readproc || !writeproc || !seekproc || !closeproc
-			|| !sizeproc || !mapproc || !unmapproc) {
-		TIFFError(module, "One of the client procedures are NULL pointer");
+	if (!readproc || !writeproc || !seekproc || !closeproc || !sizeproc) {
+		TIFFError(module,
+			  "One of the client procedures is NULL pointer.");
 		goto bad2;
 	}
 	tif->tif_readproc = readproc;
@@ -166,8 +180,14 @@ TIFFClientOpen(
 	tif->tif_seekproc = seekproc;
 	tif->tif_closeproc = closeproc;
 	tif->tif_sizeproc = sizeproc;
-	tif->tif_mapproc = mapproc;
-	tif->tif_unmapproc = unmapproc;
+        if (mapproc)
+		tif->tif_mapproc = mapproc;
+	else
+		tif->tif_mapproc = _tiffDummyMapProc;
+	if (unmapproc)
+		tif->tif_unmapproc = unmapproc;
+	else
+		tif->tif_unmapproc = _tiffDummyUnmapProc;
 	_TIFFSetDefaultCompressionState(tif);	/* setup default state */
 	/*
 	 * Default is to return data MSB2LSB and enable the
@@ -219,7 +239,7 @@ TIFFClientOpen(
 	 * bit order for compatibiltiy with older versions of this
 	 * library.  Returning data in the bit order of the native cpu
 	 * makes the most sense but also requires applications to check
-	 * the value of the FillOrder tag; something they probabyl do
+	 * the value of the FillOrder tag; something they probably do
 	 * not do right now.
 	 *
 	 * The 'M' and 'm' flags are provided because some virtual memory
@@ -384,8 +404,8 @@ bad:
 	tif->tif_mode = O_RDONLY;	/* XXX avoid flush */
         TIFFCleanup(tif);
 bad2:
-	return ((TIFF*)0);
 	(void) (*closeproc)(clientdata);
+	return ((TIFF*)0);
 }
 
 /*
@@ -491,3 +511,13 @@ TIFFIsMSB2LSB(TIFF* tif)
 {
 	return (isFillOrder(tif, FILLORDER_MSB2LSB));
 }
+
+/*
+ * Return nonzero if given file was written in big-endian order.
+ */
+int
+TIFFIsBigEndian(TIFF* tif)
+{
+	return (tif->tif_header.tiff_magic == TIFF_BIGENDIAN);
+}
+

@@ -38,7 +38,7 @@ OBJ	= \
 
 GDAL_ROOT	=	..\..\..
 
-EXTRAFLAGS = 	-I..\..\zlib -DZIP_SUPPORT $(JPEG_FLAGS)
+EXTRAFLAGS = 	-I..\..\zlib -DZIP_SUPPORT -DPIXARLOG_SUPPORT $(JPEG_FLAGS)
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 

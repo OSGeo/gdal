@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_read.c,v 1.8 2002/07/31 20:52:36 warmerda Exp $ */
+/* $Id: tif_read.c,v 1.9 2004/07/10 20:04:47 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler

@@ -176,7 +176,7 @@ horizontalAccumulate12(uint16 *wp, int n, int stride, int16 *op,
     register unsigned int  cr, cg, cb, ca, mask;
     register float  t0, t1, t2, t3;
 
-#define SCALE12 2048.0
+#define SCALE12 2048.0F
 #define CLAMP12(t) (((t) < 3071) ? (uint16) (t) : 3071)
 
     if (n >= stride) {
@@ -498,13 +498,13 @@ PixarLogMakeTables(PixarLogState *sp)
     uint16  *From8;
 
     c = log(RATIO);	
-    nlin = (int)1./c;	/* nlin must be an integer */
+    nlin = (int)(1./c);	/* nlin must be an integer */
     c = 1./nlin;
     b = exp(-c*ONE);	/* multiplicative scale factor [b*exp(c*ONE) = 1] */
     linstep = b*c*exp(1.);
 
-    LogK1 = 1./c;	/* if (v >= 2)  token = k1*log(v*k2) */
-    LogK2 = 1./b;
+    LogK1 = (float)(1./c);	/* if (v >= 2)  token = k1*log(v*k2) */
+    LogK2 = (float)(1./b);
     lt2size = (int)(2./linstep) + 1;
     FromLT2 = (uint16 *)_TIFFmalloc(lt2size*sizeof(uint16));
     From14 = (uint16 *)_TIFFmalloc(16384*sizeof(uint16));
@@ -533,11 +533,11 @@ PixarLogMakeTables(PixarLogState *sp)
 
     for (i = 0; i < nlin; i++)  {
 	v = i * linstep;
-	ToLinearF[j++] = v;
+	ToLinearF[j++] = (float)v;
     }
 
     for (i = nlin; i < TSIZE; i++)
-	ToLinearF[j++] = b*exp(c*i);
+	ToLinearF[j++] = (float)(b*exp(c*i));
 
     ToLinearF[2048] = ToLinearF[2047];
 
@@ -574,7 +574,7 @@ PixarLogMakeTables(PixarLogState *sp)
 	From8[i] = j;
     }
 
-    Fltsize = lt2size/2;
+    Fltsize = (float)(lt2size/2);
 
     sp->ToLinearF = ToLinearF;
     sp->ToLinear16 = ToLinear16;
