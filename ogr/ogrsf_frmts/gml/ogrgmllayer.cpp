@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2004/01/29 15:30:40  warmerda
+ * cleanup layer and field names
+ *
  * Revision 1.11  2004/01/27 21:22:04  warmerda
  * Escape strings written to GML file.
  *
@@ -349,7 +352,36 @@ OGRErr OGRGMLLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
     if( !bWriter || iNextGMLId != 0 )
         return OGRERR_FAILURE;
 
-    poFeatureDefn->AddFieldDefn( poField );
+/* -------------------------------------------------------------------- */
+/*      Enforce XML naming semantics on element name.                   */
+/* -------------------------------------------------------------------- */
+    OGRFieldDefn oCleanCopy( poField );
+    char *pszName = CPLStrdup( poField->GetNameRef() );
+    CPLCleanXMLElementName( pszName );
+    
+    if( strcmp(pszName,poField->GetNameRef()) != 0 )
+    {
+        if( !bApproxOK )
+        {
+            CPLFree( pszName );
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Unable to create field with name '%s', it would not\n"
+                      "be valid as an XML element name.",
+                      poField->GetNameRef() );
+            return OGRERR_FAILURE;
+        }
+
+        oCleanCopy.SetName( pszName );
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Field name '%s' adjusted to '%s' to be a valid\n"
+                  "XML element name.",
+                  poField->GetNameRef(), pszName );
+    }
+
+    CPLFree( pszName );
+
+    
+    poFeatureDefn->AddFieldDefn( &oCleanCopy );
 
     return OGRERR_NONE;
 }

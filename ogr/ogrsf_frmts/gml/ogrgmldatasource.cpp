@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/01/29 15:30:40  warmerda
+ * cleanup layer and field names
+ *
  * Revision 1.14  2004/01/15 20:53:16  warmerda
  * Ensure that ogr namespace is defined.
  *
@@ -435,11 +438,26 @@ OGRGMLDataSource::CreateLayer( const char * pszLayerName,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Ensure name is safe as an element name.                         */
+/* -------------------------------------------------------------------- */
+    char *pszCleanLayerName = CPLStrdup( pszLayerName );
+
+    CPLCleanXMLElementName( pszCleanLayerName );
+    if( strcmp(pszCleanLayerName,pszLayerName) != 0 )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Layer name '%s' adjusted to '%s' for XML validity.",
+                  pszLayerName, pszCleanLayerName );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
     OGRGMLLayer *poLayer;
 
-    poLayer = new OGRGMLLayer( pszLayerName, poSRS, TRUE, eType, this );
+    poLayer = new OGRGMLLayer( pszCleanLayerName, poSRS, TRUE, eType, this );
+
+    CPLFree( pszCleanLayerName );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
