@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/13 15:32:30  warmerda
+ * added SLTPoly as an interesting layer
+ *
  * Revision 1.2  1999/05/11 14:06:20  warmerda
  * added GetLayerModuleReader()
  *
@@ -112,6 +115,7 @@ int SDTSTransfer::Open( const char * pszFilename )
           case SLTPoint:
           case SLTLine:
           case SLTAttr:
+	  case SLTPoly:
             panLayerCATDEntry[nLayers++] = iCATDLayer;
             break;
 
