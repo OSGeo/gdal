@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/09/26 18:12:38  warmerda
+ * added C support
+ *
  * Revision 1.11  2002/09/11 13:47:17  warmerda
  * preliminary set of fixes for 3D WKB enum
  *
@@ -67,6 +70,7 @@
  */
 
 #include "ogr_geometry.h"
+#include "ogr_api.h"
 #include "ogr_p.h"
 #include <assert.h>
 
@@ -89,6 +93,8 @@ CPL_CVSID("$Id$");
  *
  * Also note that this is a static method, and that there
  * is no need to instantiate an OGRGeometryFactory object.  
+ *
+ * The C function OGR_G_CreateFromWkb() is the same as this method.
  *
  * @param pabyData pointer to the input BLOB data.
  * @param poSR pointer to the spatial reference to be assigned to the
@@ -183,12 +189,28 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 }
 
 /************************************************************************/
+/*                        OGR_G_CreateFromWkb()                         */
+/************************************************************************/
+
+OGRErr CPL_DLL OGR_G_CreateFromWkb( unsigned char *pabyData, 
+                                    OGRSpatialReferenceH hSRS,
+                                    OGRGeometryH *phGeometry )
+
+{
+    return OGRGeometryFactory::createFromWkb( pabyData, 
+                                              (OGRSpatialReference *) hSRS,
+                                              (OGRGeometry **) phGeometry );
+}
+
+/************************************************************************/
 /*                           createFromWkt()                            */
 /************************************************************************/
 
 /**
  * Create a geometry object of the appropriate type from it's well known
  * text representation.
+ *
+ * The C function OGR_G_CreateFromWkt() is the same as this method.
  *
  * @param ppszData input zero terminated string containing well known text
  *                representation of the geometry to be created.  The pointer
@@ -288,6 +310,20 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
 }
 
 /************************************************************************/
+/*                        OGR_G_CreateFromWkt()                         */
+/************************************************************************/
+
+OGRErr CPL_DLL OGR_G_CreateFromWkt( char **ppszData, 
+                                    OGRSpatialReferenceH hSRS,
+                                    OGRGeometryH *phGeometry )
+
+{
+    return OGRGeometryFactory::createFromWkt( ppszData,
+                                              (OGRSpatialReference *) hSRS,
+                                              (OGRGeometry **) phGeometry );
+}
+
+/************************************************************************/
 /*                           createGeometry()                           */
 /************************************************************************/
 
@@ -297,6 +333,8 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
  * This is equivelent to allocating the desired geometry with new, but
  * the allocation is guaranteed to take place in the context of the 
  * GDAL/OGR heap. 
+ *
+ * This method is the same as the C function OGR_G_CreateGeometry().
  *
  * @param eGeometryType the type code of the geometry class to be instantiated.
  *
@@ -338,6 +376,17 @@ OGRGeometryFactory::createGeometry( OGRwkbGeometryType eGeometryType )
 }
 
 /************************************************************************/
+/*                        OGR_G_CreateGeometry()                        */
+/************************************************************************/
+
+OGRGeometryH OGR_G_CreateGeometry( OGRwkbGeometryType eGeometryType )
+
+{
+    return (OGRGeometryH) OGRGeometryFactory::createGeometry( eGeometryType );
+}
+
+
+/************************************************************************/
 /*                          destroyGeometry()                           */
 /************************************************************************/
 
@@ -347,6 +396,8 @@ OGRGeometryFactory::createGeometry( OGRwkbGeometryType eGeometryType )
  * Equivelent to invoking delete on a geometry, but it guaranteed to take 
  * place within the context of the GDAL/OGR heap.
  *
+ * This method is the same as the C function OGR_G_DestroyGeometry().
+ *
  * @param poGeom the geometry to deallocate.
  */
 
@@ -355,3 +406,15 @@ void OGRGeometryFactory::destroyGeometry( OGRGeometry *poGeom )
 {
     delete poGeom;
 }
+
+
+/************************************************************************/
+/*                        OGR_G_DestroyGeometry()                       */
+/************************************************************************/
+
+void OGR_G_DestroyGeometry( OGRGeometryH hGeom )
+
+{
+    OGRGeometryFactory::destroyGeometry( (OGRGeometry *) hGeom );
+}
+
