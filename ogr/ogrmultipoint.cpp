@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/01/16 21:20:00  warmerda
+ * Added EMPTY support
+ *
  * Revision 1.15  2003/09/11 22:47:54  aamici
  * add class constructors and destructors where needed in order to
  * let the mingw/cygwin binutils produce sensible partially linked objet files
@@ -165,6 +168,12 @@ OGRErr OGRMultiPoint::exportToWkt( char ** ppszDstText )
     int         nMaxString = getNumGeometries() * 20 + 128;
     int         nRetLen = 0;
 
+    if( getNumGeometries() == 0 )
+    {
+        *ppszDstText = CPLStrdup("MULTIPOINT(EMPTY)");
+        return OGRERR_NONE;
+    }
+
     *ppszDstText = (char *) VSIMalloc( nMaxString );
     if( *ppszDstText == NULL )
         return OGRERR_NOT_ENOUGH_MEMORY;
@@ -231,7 +240,8 @@ OGRErr OGRMultiPoint::importFromWkt( char ** ppszInput )
         return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
-/*      Do we have the format where each point is bracketed?            */
+/*      Skip past first bracket for checking purposes, but don't        */
+/*      alter pszInput.                                                 */
 /* -------------------------------------------------------------------- */
     const char *pszPreScan = pszInput;
 
@@ -245,6 +255,26 @@ OGRErr OGRMultiPoint::importFromWkt( char ** ppszInput )
 
     pszPreScan++;
 
+/* -------------------------------------------------------------------- */
+/*      If the next token is EMPTY, then verify that we have proper     */
+/*      EMPTY format will a trailing closing bracket.                   */
+/* -------------------------------------------------------------------- */
+    OGRWktReadToken( pszPreScan, szToken );
+    if( EQUAL(szToken,"EMPTY") )
+    {
+        pszInput = OGRWktReadToken( pszPreScan, szToken );
+        pszInput = OGRWktReadToken( pszInput, szToken );
+        
+        if( !EQUAL(szToken,")") )
+            return OGRERR_CORRUPT_DATA;
+        else
+            return OGRERR_NONE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for inner bracket indicating the improper bracketed       */
+/*      format which we still want to support.                          */
+/* -------------------------------------------------------------------- */
     // skip white space.
     while( *pszPreScan == ' ' || *pszPreScan == '\t' )
         pszPreScan++;

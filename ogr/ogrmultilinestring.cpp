@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2004/01/16 21:20:00  warmerda
+ * Added EMPTY support
+ *
  * Revision 1.10  2003/09/11 22:47:54  aamici
  * add class constructors and destructors where needed in order to
  * let the mingw/cygwin binutils produce sensible partially linked objet files
@@ -175,6 +178,22 @@ OGRErr OGRMultiLineString::importFromWkt( char ** ppszInput )
     if( szToken[0] != '(' )
         return OGRERR_CORRUPT_DATA;
 
+/* -------------------------------------------------------------------- */
+/*      If the next token is EMPTY, then verify that we have proper     */
+/*      EMPTY format will a trailing closing bracket.                   */
+/* -------------------------------------------------------------------- */
+    OGRWktReadToken( pszInput, szToken );
+    if( EQUAL(szToken,"EMPTY") )
+    {
+        pszInput = OGRWktReadToken( pszInput, szToken );
+        pszInput = OGRWktReadToken( pszInput, szToken );
+        
+        if( !EQUAL(szToken,")") )
+            return OGRERR_CORRUPT_DATA;
+        else
+            return OGRERR_NONE;
+    }
+
 /* ==================================================================== */
 /*      Read each line in turn.  Note that we try to reuse the same     */
 /*      point list buffer from ring to ring to cut down on              */
@@ -246,6 +265,12 @@ OGRErr OGRMultiLineString::exportToWkt( char ** ppszDstText )
     char        **papszLines;
     int         iLine, nCumulativeLength = 0;
     OGRErr      eErr;
+
+    if( getNumGeometries() == 0 )
+    {
+        *ppszDstText = CPLStrdup("MULTILINESTRING(EMPTY)");
+        return OGRERR_NONE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Build a list of strings containing the stuff for each ring.     */
