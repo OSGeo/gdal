@@ -13,9 +13,9 @@ supports the erdas band types
 u8, s8, u16, s16, u32, s32, f32, f64, c64 and c128.<p>
 
 Compressed and missing tiles in Erdas files should be handled properly on read.
-Files between 2GB and 4GB in size should work on Windows NT, and may work
+Files between 2GiB and 4GiB in size should work on Windows NT, and may work
 on some Unix platforms. Files with external spill files (needed for datasets
-larger than 4GB) are also support for reading and writing.<p>
+larger than 2GiB) are also support for reading and writing.<p>
 
 Metadata reading and writing is supported at the dataset level, and for
 bands, but this is GDAL specific metadata - not metadata in an Imagine
@@ -37,8 +37,8 @@ recognised only by GDAL, not in the .rrd format produced by Imagine.<p>
 Creation Options:<p>
 
 <ul>
-
-<li> There are no creation options for Erdas Imagine files at this time.
+	<li> <b>SPILL_FILE=YES</b>: Force the generation of a spill file
+	(by default spill file created for images larger 2GiB only).<p>
 
 </ul>
 

@@ -35,6 +35,10 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.32  2004/06/09 17:54:01  dron
+ * Create spill files when the image becomes larger 2GB (instead of former 4GB).
+ * New option SPILL_FILE=YES to force spill file generation.
+ *
  * Revision 1.31  2004/02/25 18:54:03  warmerda
  * Improve the check to see if we are over 4GB to avoid ULONG_MAX
  * which may be more than 4GB on machines with large longs and to
@@ -1355,7 +1359,7 @@ HFAHandle HFACreateLL( const char * pszFilename )
 GUInt32 HFAAllocateSpace( HFAInfo_t *psInfo, GUInt32 nBytes )
 
 {
-    /* should check if this will wrap over 4GB limit */
+    /* should check if this will wrap over 2GB limit */
 
     psInfo->nEndOfFile += nBytes;
     return psInfo->nEndOfFile - nBytes;
@@ -1449,16 +1453,23 @@ HFAHandle HFACreate( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Check whether we should create external large file with         */
 /*      image.  We create a spill file if the amount of imagery is      */
-/*      close to 4GB.  We don't check the amount of auxilary            */
+/*      close to 2GB.  We don't check the amount of auxilary            */
 /*      information, so in theory if there were an awful lot of         */
 /*      non-imagery data our approximate size could be smaller than     */
 /*      the file will actually we be.  We leave room for 10MB of        */
 /*      auxilary data.                                                  */
+/*      We can also force spill file creation using option              */
+/*      SPILL_FILE=YES.                                                 */
 /* -------------------------------------------------------------------- */
     double dfApproxSize = (double)nBytesPerBlock * (double)nBlocks *
         (double)nBands + 10000000.0;
 
-    if( dfApproxSize > 429496729.0 )
+    const char *pszValue = CSLFetchNameValue( papszOptions, "SPILL_FILE" );
+
+    if( dfApproxSize > 2147483648.0 ||
+        ( pszValue && (EQUAL(pszValue, "ON") ||
+                       EQUAL(pszValue, "YES") ||
+                       EQUAL(pszValue, "TRUE")) ))
     {
 	HFAEntry *poImgFormat;
 
