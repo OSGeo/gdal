@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/09/03 14:13:48  warmerda
+ * ensure DDFRecords are duplicated when needed
+ *
  * Revision 1.8  1999/09/03 13:34:45  warmerda
  * added duplicate flag on GetNextRecord
  *
@@ -128,6 +131,7 @@ SDTSAttrReader::~SDTSAttrReader()
 void SDTSAttrReader::Close()
 
 {
+    ClearIndex();
     oDDFModule.Close();
 }
 
