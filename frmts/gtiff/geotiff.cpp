@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2000/03/06 02:23:08  warmerda
+ * added overviews, and colour tables
+ *
  * Revision 1.16  2000/02/28 16:32:20  warmerda
  * use SetBand method
  *
@@ -109,10 +112,14 @@ class GTiffDataset : public GDALDataset
     
     TIFF	*hTIFF;
 
+    uint32      nDirOffset;
+    int		bBase;
+
     uint16	nPlanarConfig;
     uint16	nSamplesPerPixel;
     uint16	nBitsPerSample;
     uint32	nRowsPerStrip;
+    uint16	nPhotometric;
     
     int		nBlocksPerBand;
 
@@ -128,7 +135,13 @@ class GTiffDataset : public GDALDataset
 
     int		bNewDataset;            /* product of Create() */
 
+    GDALColorTable *poColorTable;
+
     void	WriteGeoTIFFInfo();
+    int		SetDirectory( uint32 nDirOffset = 0 );
+
+    int		nOverviewCount;
+    GTiffDataset **papoOverviewDS;
 
   public:
                  GTiffDataset();
@@ -138,6 +151,8 @@ class GTiffDataset : public GDALDataset
     virtual CPLErr SetProjection( const char * );
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
+
+    CPLErr	   Open( TIFF *, uint32 nDirOffset, int );
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -165,6 +180,12 @@ class GTiffRasterBand : public GDALRasterBand
     
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * ); 
+
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorTable *GetColorTable();
+
+    virtual int    GetOverviewCount();
+    virtual GDALRasterBand *GetOverview( int );
 };
 
 
@@ -225,6 +246,8 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     GTiffDataset	*poGDS = (GTiffDataset *) poDS;
     int			nBlockBufSize, nBlockId;
     CPLErr		eErr = CE_None;
+
+    poGDS->SetDirectory();
 
     if( TIFFIsTiled(poGDS->hTIFF) )
         nBlockBufSize = TIFFTileSize( poGDS->hTIFF );
@@ -386,6 +409,8 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     GTiffDataset	*poGDS = (GTiffDataset *) poDS;
     int		nBlockId, nBlockBufSize;
 
+    poGDS->SetDirectory();
+
     CPLAssert( poGDS != NULL
                && nBlockXOff == 0
                && nBlockYOff >= 0
@@ -400,6 +425,81 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     
     return CE_Failure;
 }
+
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp GTiffRasterBand::GetColorInterpretation()
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+
+    if( poGDS->nPhotometric == PHOTOMETRIC_RGB )
+    {
+        if( nBand == 1 )
+            return GCI_RedBand;
+        else if( nBand == 2 )
+            return GCI_GreenBand;
+        else if( nBand == 3 )
+            return GCI_BlueBand;
+        else if( nBand == 4 )
+            return GCI_AlphaBand;
+        else
+            return GCI_Undefined;
+    }
+    else if( poGDS->nPhotometric == PHOTOMETRIC_PALETTE )
+    {
+        return GCI_PaletteIndex;
+    }
+    else
+        return GCI_GrayIndex;
+}
+
+/************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable *GTiffRasterBand::GetColorTable()
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+
+    if( nBand == 1 )
+        return poGDS->poColorTable;
+    else
+        return NULL;
+}
+
+/************************************************************************/
+/*                          GetOverviewCount()                          */
+/************************************************************************/
+
+int GTiffRasterBand::GetOverviewCount()
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+
+    return poGDS->nOverviewCount;
+}
+
+/************************************************************************/
+/*                            GetOverview()                             */
+/************************************************************************/
+
+GDALRasterBand *GTiffRasterBand::GetOverview( int i )
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+
+    if( i < 0 || i >= poGDS->nOverviewCount )
+        return NULL;
+    else
+        return poGDS->papoOverviewDS[i]->GetRasterBand(nBand);
+}
+
+
+
 
 /************************************************************************/
 /* ==================================================================== */
@@ -420,6 +520,12 @@ GTiffDataset::GTiffDataset()
     pabyBlockBuf = NULL;
     hTIFF = NULL;
     bNewDataset = FALSE;
+    poColorTable = NULL;
+    pszProjection = NULL;
+    bBase = TRUE;
+    nOverviewCount = 0;
+    papoOverviewDS = NULL;
+    nDirOffset = 0;
 }
 
 /************************************************************************/
@@ -429,12 +535,28 @@ GTiffDataset::GTiffDataset()
 GTiffDataset::~GTiffDataset()
 
 {
+    if( bBase )
+    {
+        for( int i = 0; i < nOverviewCount; i++ )
+        {
+            delete papoOverviewDS[i];
+        }
+        CPLFree( papoOverviewDS );
+    }
+
+    SetDirectory();
+
+    if( poColorTable != NULL )
+        delete poColorTable;
+
     FlushCache();
 
     WriteGeoTIFFInfo();
 
-    XTIFFClose( hTIFF );
-    hTIFF = NULL;
+    if( bBase )
+    {
+        XTIFFClose( hTIFF );
+    }
 }
 
 /************************************************************************/
@@ -511,6 +633,24 @@ void GTiffDataset::WriteGeoTIFFInfo()
     }
 }
 
+/************************************************************************/
+/*                            SetDirectory()                            */
+/************************************************************************/
+
+int GTiffDataset::SetDirectory( uint32 nNewOffset )
+
+{
+    if( nNewOffset == 0 )
+        nNewOffset = nDirOffset;
+
+    if( nNewOffset == 0)
+        return TRUE;
+
+    if( TIFFCurrentDirOffset(hTIFF) == nNewOffset )
+        return TRUE;
+
+    return TIFFSetSubDirectory( hTIFF, nNewOffset );
+}
 
 /************************************************************************/
 /*                                Open()                                */
@@ -520,8 +660,6 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     TIFF	*hTIFF;
-    uint32	nXSize, nYSize;
-    uint16	nSamplesPerPixel;
 
 /* -------------------------------------------------------------------- */
 /*	First we check to see if the file has the expected header	*/
@@ -547,8 +685,6 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     if( hTIFF == NULL )
         return( NULL );
 
-    TIFFReadDirectory( hTIFF );
-
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
@@ -556,57 +692,88 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new GTiffDataset();
 
-    poDS->hTIFF = hTIFF;
-    poDS->poDriver = poGTiffDriver;
-    poDS->pszProjection = NULL;
+    if( poDS->Open( hTIFF, TIFFCurrentDirOffset(hTIFF), TRUE ) != CE_None )
+    {
+        delete poDS;
+        return NULL;
+    }
+    else
+        return poDS;
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/*                                                                      */
+/*      Initialize the GTiffDataset based on a passed in file           */
+/*      handle, and directory offset to utilize.  This is called for    */
+/*      full res, and overview pages.                                   */
+/************************************************************************/
+
+CPLErr GTiffDataset::Open( TIFF *hTIFFIn, uint32 nDirOffsetIn, int bBaseIn )
+
+{
+    uint32	nXSize, nYSize;
+    uint16	nSamplesPerPixel;
+
+    hTIFF = hTIFFIn;
+
+    poDriver = poGTiffDriver;
+    nDirOffset = nDirOffsetIn;
+
+    SetDirectory( nDirOffsetIn );
+
+    bBase = bBaseIn;
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
     TIFFGetField( hTIFF, TIFFTAG_IMAGEWIDTH, &nXSize );
     TIFFGetField( hTIFF, TIFFTAG_IMAGELENGTH, &nYSize );
-    poDS->nRasterXSize = nXSize;
-    poDS->nRasterYSize = nYSize;
+    nRasterXSize = nXSize;
+    nRasterYSize = nYSize;
 
     if( !TIFFGetField(hTIFF, TIFFTAG_SAMPLESPERPIXEL, &nSamplesPerPixel ) )
-        poDS->nBands = 1;
+        nBands = 1;
     else
-        poDS->nBands = nSamplesPerPixel;
+        nBands = nSamplesPerPixel;
     
-    if( !TIFFGetField(hTIFF, TIFFTAG_BITSPERSAMPLE, &(poDS->nBitsPerSample)) )
-        poDS->nBitsPerSample = 1;
+    if( !TIFFGetField(hTIFF, TIFFTAG_BITSPERSAMPLE, &(nBitsPerSample)) )
+        nBitsPerSample = 1;
     
-    if( !TIFFGetField( hTIFF, TIFFTAG_PLANARCONFIG, &(poDS->nPlanarConfig) ) )
-        poDS->nPlanarConfig = PLANARCONFIG_CONTIG;
+    if( !TIFFGetField( hTIFF, TIFFTAG_PLANARCONFIG, &(nPlanarConfig) ) )
+        nPlanarConfig = PLANARCONFIG_CONTIG;
+    
+    if( !TIFFGetField( hTIFF, TIFFTAG_PHOTOMETRIC, &(nPhotometric) ) )
+        nPhotometric = PHOTOMETRIC_MINISBLACK;
     
 /* -------------------------------------------------------------------- */
 /*      Get strip layout (won't work for tiled images!)                 */
 /* -------------------------------------------------------------------- */
-    if( TIFFIsTiled(poDS->hTIFF) )
+    if( TIFFIsTiled(hTIFF) )
     {
-        TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &(poDS->nBlockXSize) );
-        TIFFGetField( hTIFF, TIFFTAG_TILELENGTH, &(poDS->nBlockYSize) );
+        TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &(nBlockXSize) );
+        TIFFGetField( hTIFF, TIFFTAG_TILELENGTH, &(nBlockYSize) );
     }
     else
     {
         if( !TIFFGetField( hTIFF, TIFFTAG_ROWSPERSTRIP,
-                           &(poDS->nRowsPerStrip) ) )
-            poDS->nRowsPerStrip = 1; /* dummy value */
+                           &(nRowsPerStrip) ) )
+            nRowsPerStrip = 1; /* dummy value */
 
-        poDS->nBlockXSize = poDS->nRasterXSize;
-        poDS->nBlockYSize = poDS->nRowsPerStrip;
+        nBlockXSize = nRasterXSize;
+        nBlockYSize = nRowsPerStrip;
     }
         
-    poDS->nBlocksPerBand =
-        ((nYSize + poDS->nBlockYSize - 1) / poDS->nBlockYSize)
-      * ((nXSize + poDS->nBlockXSize  - 1) / poDS->nBlockXSize);
+    nBlocksPerBand =
+        ((nYSize + nBlockYSize - 1) / nBlockYSize)
+      * ((nXSize + nBlockXSize  - 1) / nBlockXSize);
         
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    for( int iBand = 0; iBand < poDS->nBands; iBand++ )
+    for( int iBand = 0; iBand < nBands; iBand++ )
     {
-        poDS->SetBand( iBand+1, new GTiffRasterBand( poDS, iBand+1 ) );
+        SetBand( iBand+1, new GTiffRasterBand( this, iBand+1 ) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -615,31 +782,62 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     double	*padfTiePoints, *padfScale;
     int16	nCount;
 
-    poDS->adfGeoTransform[0] = 0.0;
-    poDS->adfGeoTransform[1] = 1.0;
-    poDS->adfGeoTransform[2] = 0.0;
-    poDS->adfGeoTransform[3] = 0.0;
-    poDS->adfGeoTransform[4] = 0.0;
-    poDS->adfGeoTransform[5] = 1.0;
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
     
     if( TIFFGetField(hTIFF,TIFFTAG_GEOPIXELSCALE,&nCount,&padfScale )
         && nCount >= 2 )
     {
-        poDS->adfGeoTransform[1] = padfScale[0];
-        poDS->adfGeoTransform[5] = - ABS(padfScale[1]);
+        adfGeoTransform[1] = padfScale[0];
+        adfGeoTransform[5] = - ABS(padfScale[1]);
     }
         
     if( TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
         && nCount >= 6 )
     {
-        poDS->adfGeoTransform[0] =
-            padfTiePoints[3] - padfTiePoints[0] * poDS->adfGeoTransform[1];
-        poDS->adfGeoTransform[3] =
-            padfTiePoints[4] - padfTiePoints[1] * poDS->adfGeoTransform[5];
+        adfGeoTransform[0] =
+            padfTiePoints[3] - padfTiePoints[0] * adfGeoTransform[1];
+        adfGeoTransform[3] =
+            padfTiePoints[4] - padfTiePoints[1] * adfGeoTransform[5];
     }
         
 /* -------------------------------------------------------------------- */
-/*	Try and print out some useful names from the GeoTIFF file.	*/
+/*      Capture the color table if there is one.                        */
+/* -------------------------------------------------------------------- */
+    unsigned short	*panRed, *panGreen, *panBlue;
+
+    if( nPhotometric != PHOTOMETRIC_PALETTE 
+        || TIFFGetField( hTIFF, TIFFTAG_COLORMAP, 
+                         &panRed, &panGreen, &panBlue) == 0 )
+    {
+        poColorTable = NULL;
+    }
+    else
+    {
+        int	nColorCount;
+        GDALColorEntry oEntry;
+
+        poColorTable = new GDALColorTable();
+
+        nColorCount = 1 << nBitsPerSample;
+
+        for( int iColor = nColorCount - 1; iColor >= 0; iColor-- )
+        {
+            oEntry.c1 = panRed[iColor] / 256;
+            oEntry.c2 = panGreen[iColor] / 256;
+            oEntry.c3 = panBlue[iColor] / 256;
+            oEntry.c4 = 255;
+
+            poColorTable->SetColorEntry( iColor, &oEntry );
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Capture the projection.                                         */
 /* -------------------------------------------------------------------- */
     GTIF 	*hGTIF;
     GTIFDefn	sGTIFDefn;
@@ -648,17 +846,55 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( GTIFGetDefn( hGTIF, &sGTIFDefn ) )
     {
-//        poDS->pszProjection = GTIFGetProj4Defn( &sGTIFDefn );
-        poDS->pszProjection = GTIFGetOGISDefn( &sGTIFDefn );
+//        pszProjection = GTIFGetProj4Defn( &sGTIFDefn );
+        pszProjection = GTIFGetOGISDefn( &sGTIFDefn );
     }
     else
     {
-        poDS->pszProjection = CPLStrdup( "" );
+        pszProjection = CPLStrdup( "" );
     }
     
     GTIFFree( hGTIF );
 
-    return( poDS );
+/* -------------------------------------------------------------------- */
+/*      If this is a "base" raster, we should scan for any              */
+/*      associated overviews.                                           */
+/* -------------------------------------------------------------------- */
+    if( bBase )
+    {
+        while( TIFFReadDirectory( hTIFF ) != 0 )
+        {
+            uint32	nThisDir = TIFFCurrentDirOffset(hTIFF);
+            uint32	nSubType;
+
+            if( TIFFGetField(hTIFF, TIFFTAG_SUBFILETYPE, &nSubType)
+                && (nSubType & FILETYPE_REDUCEDIMAGE) )
+            {
+                GTiffDataset	*poODS;
+
+                poODS = new GTiffDataset();
+                if( poODS->Open( hTIFF, nThisDir, FALSE ) != CE_None 
+                    || poODS->GetRasterCount() != GetRasterCount() )
+                {
+                    delete poODS;
+                }
+                else
+                {
+                    printf( "Opened %dx%d overview.\n", 
+                            poODS->GetRasterXSize(), poODS->GetRasterYSize());
+                    nOverviewCount++;
+                    papoOverviewDS = (GTiffDataset **)
+                        CPLRealloc(papoOverviewDS, 
+                                   nOverviewCount * (sizeof(void*)));
+                    papoOverviewDS[nOverviewCount-1] = poODS;
+                }
+            }
+
+            SetDirectory( nThisDir );
+        }
+    }
+
+    return( CE_None );
 }
 
 /************************************************************************/
@@ -730,9 +966,11 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->nPlanarConfig = PLANARCONFIG_CONTIG;
 
     if( nBands == 3 )
-        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
+        poDS->nPhotometric = PHOTOMETRIC_RGB;
     else
-        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
+        poDS->nPhotometric = PHOTOMETRIC_MINISBLACK;
+    
+    TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, poDS->nPhotometric);
 
     poDS->nRowsPerStrip = TIFFDefaultStripSize(hTIFF,0);
     TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP, poDS->nRowsPerStrip );
@@ -749,12 +987,9 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     int		iBand;
 
     poDS->nBands = nBands;
-    poDS->papoBands = (GDALRasterBand **) VSICalloc(sizeof(GDALRasterBand *),
-                                                    nBands);
-
     for( iBand = 0; iBand < nBands; iBand++ )
     {
-        poDS->papoBands[iBand] = new GTiffRasterBand( poDS, iBand+1 );
+        poDS->SetBand( iBand+1, new GTiffRasterBand( poDS, iBand+1 ) );
     }
 
     return( poDS );
@@ -850,3 +1085,4 @@ void GDALRegister_GTiff()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
+
