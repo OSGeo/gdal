@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/02/25 17:33:40  warmerda
+ * Fixed support for uncompressed 1, 2 and 4 bit runs in compressed blocks.
+ *
  * Revision 1.24  2003/02/21 15:40:58  dron
  * Added support for writing large (>4 GB) Erdas Imagine files.
  *
@@ -539,7 +542,8 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 /* -------------------------------------------------------------------- */
 /*      Now apply to the output buffer in a type specific way.          */
 /* -------------------------------------------------------------------- */
-            if( nDataType == EPT_u8 )
+            if( nDataType == EPT_u8 || nDataType == EPT_u4 
+                || nDataType == EPT_u2 || nDataType == EPT_u1 )
             {
                 CPLAssert( nDataValue < 256 );
                 ((GByte *) pabyDest)[nPixelsOutput] = nDataValue;
