@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/08/17 21:03:03  warmerda
+ * Avoid leak of papoLayers array.
+ *
  * Revision 1.5  2004/08/17 15:40:40  warmerda
  * track capabilities and update mode better
  *
@@ -76,6 +79,7 @@ OGRCSVDataSource::~OGRCSVDataSource()
 {
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
+    CPLFree( papoLayers );
 
     CPLFree( pszName );
 }
