@@ -1,3 +1,8 @@
+2001-02-15  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* port/cpl_error.cpp: Fixed initialization of fpLog.  Log was
+	being reset to stderr on second call to CPLDefaultErrorHandler.
+
 2001-02-08  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* frmts/gif/{e,d}gif_lib.c: Fixed to use binary mode if O_BINARY
