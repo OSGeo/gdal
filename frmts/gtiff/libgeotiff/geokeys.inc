@@ -63,7 +63,8 @@ ValuePair(  ProjScaleAtNatOriginGeoKey,	3092)     /* ratio   */
 ValuePair(  ProjScaleAtOriginGeoKey,ProjScaleAtNatOriginGeoKey)  /* ** alias **   */
 ValuePair(  ProjScaleAtCenterGeoKey,	3093)     /* ratio   */
 ValuePair(  ProjAzimuthAngleGeoKey,	3094)     /* GeogAzimuthUnit */
-ValuePair(  ProjStraightVertPoleLongGeoKey,	3095)     /* GeogAngularUnit */
+ValuePair(  ProjStraightVertPoleLongGeoKey, 3095) /* GeogAngularUnit */
+ValuePair(  ProjRectifiedGridAngleGeoKey, 3096)   /* GeogAngularUnit */
 
 /* 6.2.4 Vertical CS Keys */
    

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c,v 1.12 1999/09/15 18:51:31 warmerda Exp $
+ * $Id: geo_normalize.c,v 1.14 1999/09/17 14:58:37 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -28,6 +28,13 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.c,v $
+ * Revision 1.14  1999/09/17 14:58:37  warmerda
+ * Added ProjRectifiedGridAngleGeoKey(3096) and support for it's
+ * use with Oblique Mercator in geo_normalize.c.
+ *
+ * Revision 1.13  1999/09/17 00:55:26  warmerda
+ * added GTIFGetUOMAngleInfo(), and UOMAngle in GTIFDefn
+ *
  * Revision 1.12  1999/09/15 18:51:31  warmerda
  * Map 9808 to TM South Oriented, not TM Modified Alaska.
  *
@@ -743,7 +750,7 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG )
         return( CT_NewZealandMapGrid );
 
       case 9812:
-        return( CT_ObliqueMercator_Hotine );
+        return( CT_ObliqueMercator ); /* is hotine actually different? */
 
       case 9813:
         return( CT_ObliqueMercator_Laborde );
@@ -752,7 +759,7 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG )
         return( CT_ObliqueMercator_Rosenmund ); /* swiss  */
 
       case 9815:
-        return( CT_ObliqueMercator_Hotine ); /* what's the difference? */
+        return( CT_ObliqueMercator );
 
       case 9816: /* tunesia mining grid has no counterpart */
         return( KvUserDefined );
@@ -888,7 +895,7 @@ static int SetGTParmIds( GTIFDefn * psDefn )
         psDefn->ProjParmId[0] = ProjCenterLatGeoKey;
         psDefn->ProjParmId[1] = ProjCenterLongGeoKey;
         psDefn->ProjParmId[2] = ProjAzimuthAngleGeoKey;
-        /*psDefn->ProjParmId[3] = angled from rectified to skew grid not sup.*/
+        psDefn->ProjParmId[3] = ProjRectifiedGridAngleGeoKey;
         psDefn->ProjParmId[4] = ProjScaleAtCenterGeoKey;
         psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
         psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
@@ -948,7 +955,7 @@ static int SetGTParmIds( GTIFDefn * psDefn )
 static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
 
 {
-    double	dfNatOriginLong, dfNatOriginLat;
+    double	dfNatOriginLong, dfNatOriginLat, dfRectGridAngle;
     double	dfFalseEasting, dfFalseNorthing, dfNatOriginScale;
     double	dfStdParallel1, dfStdParallel2, dfAzimuth;
 
@@ -1034,6 +1041,10 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
                        &dfAzimuth, 0, 1 ) == 0 )
             dfAzimuth = 0.0;
 
+        if( GTIFKeyGet(psGTIF, ProjRectifiedGridAngleGeoKey,
+                       &dfRectGridAngle, 0, 1 ) == 0 )
+            dfRectGridAngle = 90.0;
+
         if( GTIFKeyGet(psGTIF, ProjScaleAtNatOriginGeoKey,
                        &dfNatOriginScale, 0, 1 ) == 0
             && GTIFKeyGet(psGTIF, ProjScaleAtCenterGeoKey,
@@ -1048,6 +1059,8 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
         psDefn->ProjParmId[1] = ProjCenterLongGeoKey;
         psDefn->ProjParm[2] = dfAzimuth;
         psDefn->ProjParmId[2] = ProjAzimuthAngleGeoKey;
+        psDefn->ProjParm[3] = dfRectGridAngle;
+        psDefn->ProjParmId[3] = ProjRectifiedGridAngleGeoKey;
         psDefn->ProjParm[4] = dfNatOriginScale;
         psDefn->ProjParmId[4] = ProjScaleAtCenterGeoKey;
         psDefn->ProjParm[5] = dfFalseEasting;
