@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/04/17 15:41:05  warmerda
+ * Tread multipolygons as shape type polygon.
+ *
  * Revision 1.13  2002/04/17 15:40:27  warmerda
  * Added support for 2.5D polygons.
  *
@@ -379,6 +382,10 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
     else if( eType == wkbLineString25D )
         nShapeType = SHPT_ARCZ;
     else if( eType == wkbPolygon25D )
+        nShapeType = SHPT_POLYGONZ;
+    else if( eType == wkbMultiPolygon )
+        nShapeType = SHPT_POLYGONZ;
+    else if( eType == wkbMultiPolygon25D )
         nShapeType = SHPT_POLYGONZ;
     else if( eType == wkbNone )
         nShapeType = SHPT_NULL;
