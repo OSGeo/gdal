@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/03/05 05:10:17  warmerda
+ * implement join support
+ *
  * Revision 1.9  2002/10/25 15:00:41  warmerda
  * Fixed int/long type mismatch.
  *
@@ -93,30 +96,32 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
         this->poSpatialFilter = NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Find the source layer on the source dataset.  Eventually        */
-/*      selects might be able to operate on more than one table at a    */
-/*      time.                                                           */
+/*      Identify all the layers involved in the SELECT.                 */
 /* -------------------------------------------------------------------- */
-    poSrcLayer = NULL;
-    for( int iLayer = 0; iLayer < poSrcDS->GetLayerCount(); iLayer++ )
-    {
-        if( EQUAL(poSrcDS->GetLayer(iLayer)->GetLayerDefn()->GetName(),
-                  psSelectInfo->from_table) )
-        {
-            poSrcLayer = poSrcDS->GetLayer(iLayer);
-            break;
-        }
-    }
+    int iTable;
 
-    if( poSrcLayer == NULL )
-        return;
+    papoTableLayers = (OGRLayer **) 
+        CPLCalloc( sizeof(OGRLayer *), psSelectInfo->table_count );
+
+    for( iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
+    {
+        papoTableLayers[iTable] = poSrcDS->GetLayerByName( 
+            psSelectInfo->table_defs[iTable].table_name );
+        
+        CPLAssert( papoTableLayers[iTable] != NULL );
+
+        if( papoTableLayers[iTable] == NULL )
+            return;
+    }
+    
+    poSrcLayer = papoTableLayers[0];
 
 /* -------------------------------------------------------------------- */
 /*      Prepare a feature definition based on the query.                */
 /* -------------------------------------------------------------------- */
     OGRFeatureDefn *poSrcDefn = poSrcLayer->GetLayerDefn();
 
-    poDefn = new OGRFeatureDefn( psSelectInfo->from_table );
+    poDefn = new OGRFeatureDefn( psSelectInfo->table_defs[0].table_alias );
 
     for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
     {
@@ -126,7 +131,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
 
         if( psColDef->field_index > -1 
             && psColDef->field_index < poSrcDefn->GetFieldCount() )
-            poSrcFDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn(psColDef->field_index);
+            poSrcFDefn = papoTableLayers[psColDef->table_index]->GetLayerDefn()->GetFieldDefn(psColDef->field_index);
 
         if( psColDef->col_func_name != NULL )
         {
@@ -167,6 +172,9 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
 OGRGenSQLResultsLayer::~OGRGenSQLResultsLayer()
 
 {
+    CPLFree( papoTableLayers );
+    papoTableLayers = NULL;
+             
     if( panFIDIndex != NULL )
         CPLFree( panFIDIndex );
 
@@ -401,21 +409,95 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
     if( poSrcFeat == NULL )
         return NULL;
 
+/* -------------------------------------------------------------------- */
+/*      Create destination feature.                                     */
+/* -------------------------------------------------------------------- */
     poDstFeat = new OGRFeature( poDefn );
 
     poDstFeat->SetFID( poSrcFeat->GetFID() );
 
     poDstFeat->SetGeometry( poSrcFeat->GetGeometryRef() );
     
+/* -------------------------------------------------------------------- */
+/*      Copy fields from primary record to the destination feature.     */
+/* -------------------------------------------------------------------- */
     for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
     {
         swq_col_def *psColDef = psSelectInfo->column_defs + iField;
 
         if( psColDef->field_index == iFIDFieldIndex )
             poDstFeat->SetField( iField, (int) poSrcFeat->GetFID() );
-        else
+        else if( psColDef->table_index == 0 )
             poDstFeat->SetField( iField,
                          poSrcFeat->GetRawFieldRef( psColDef->field_index ) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Copy values from any joined tables.                             */
+/* -------------------------------------------------------------------- */
+    int iJoin;
+
+    for( iJoin = 0; iJoin < psSelectInfo->join_count; iJoin++ )
+    {
+        char szFilter[512];
+
+        swq_join_def *psJoinInfo = psSelectInfo->join_defs + iJoin;
+        OGRLayer *poJoinLayer = papoTableLayers[psJoinInfo->secondary_table];
+
+        // Prepare attribute query to express fetching on the joined variable
+        sprintf( szFilter, "%s = ", 
+                 poJoinLayer->GetLayerDefn()->GetFieldDefn( 
+                     psJoinInfo->secondary_field )->GetNameRef() );
+
+        OGRField *psSrcField = 
+            poSrcFeat->GetRawFieldRef(psJoinInfo->primary_field);
+
+        switch( poSrcLayer->GetLayerDefn()->GetFieldDefn( 
+                    psJoinInfo->primary_field )->GetType() )
+        {
+          case OFTInteger:
+            sprintf( szFilter+strlen(szFilter), "%d", psSrcField->Integer );
+            break;
+
+          case OFTReal:
+            sprintf( szFilter+strlen(szFilter), "%.16g", psSrcField->Real );
+            break;
+
+          case OFTString:
+            // the string really ought to be escaped. 
+            sprintf( szFilter+strlen(szFilter), "\"%s\"", 
+                     psSrcField->String );
+            break;
+
+          default:
+            CPLAssert( FALSE );
+            continue;
+        }
+
+        poJoinLayer->ResetReading();
+        if( poJoinLayer->SetAttributeFilter( szFilter ) != OGRERR_NONE )
+            continue;
+
+        // Fetch first joined feature.
+        OGRFeature *poJoinFeature;
+
+        poJoinFeature = poJoinLayer->GetNextFeature();
+
+        if( poJoinFeature == NULL )
+            continue;
+
+        // Copy over selected field values. 
+        for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
+        {
+            swq_col_def *psColDef = psSelectInfo->column_defs + iField;
+            
+            if( psColDef->table_index == psJoinInfo->secondary_table )
+                poDstFeat->SetField( iField,
+                                     poJoinFeature->GetRawFieldRef( 
+                                         psColDef->field_index ) );
+        }
+
+        delete poJoinFeature;
     }
 
     return poDstFeat;

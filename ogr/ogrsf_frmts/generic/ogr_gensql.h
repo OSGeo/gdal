@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/03/05 05:10:17  warmerda
+ * implement join support
+ *
  * Revision 1.3  2002/04/29 19:35:50  warmerda
  * fixes for selecting FID
  *
@@ -54,6 +57,8 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     OGRDataSource *poSrcDS;
     OGRLayer    *poSrcLayer;
     void        *pSelectInfo;
+
+    OGRLayer   **papoTableLayers;
 
     OGRGeometry *poSpatialFilter;
 
