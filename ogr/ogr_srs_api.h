@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2003/05/30 15:39:53  warmerda
+ * Added override units capability for SetStatePlane()
+ *
  * Revision 1.29  2003/03/21 22:15:11  warmerda
  * added C XML import/export entry points
  *
@@ -378,6 +381,11 @@ OGRErr CPL_DLL OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth );
 int    CPL_DLL OSRGetUTMZone( OGRSpatialReferenceH hSRS, int *pbNorth );
 OGRErr CPL_DLL OSRSetStatePlane( OGRSpatialReferenceH hSRS, 
                                  int nZone, int bNAD83 );
+OGRErr CPL_DLL OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS, 
+                                          int nZone, int bNAD83,
+                                          const char *pszOverrideUnitName,
+                                          double dfOverrideUnit );
+
 
 /* -------------------------------------------------------------------- */
 /*      OGRCoordinateTransform C API.                                   */

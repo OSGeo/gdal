@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2003/05/30 15:39:53  warmerda
+ * Added override units capability for SetStatePlane()
+ *
  * Revision 1.50  2003/05/28 19:16:42  warmerda
  * fixed up argument names and stuff for docs
  *
@@ -541,7 +544,9 @@ class CPL_DLL OGRSpatialReference
     int         GetUTMZone( int *pbNorth = NULL ) const;
 
     /** State Plane */
-    OGRErr      SetStatePlane( int nZone, int bNAD83 = TRUE );
+    OGRErr      SetStatePlane( int nZone, int bNAD83 = TRUE,
+                               const char *pszOverrideUnitName = NULL,
+                               double dfOverrideUnit = 0.0 );
 };
 
 /************************************************************************/
