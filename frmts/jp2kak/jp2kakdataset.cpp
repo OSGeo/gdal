@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.9  2003/05/28 18:18:14  warmerda
+ * debugging report for YCbCr processing added
+ *
  * Revision 1.8  2003/05/13 14:00:13  warmerda
  * added mimetype and extension
  *
@@ -181,6 +184,8 @@ class JP2KAKRasterBand : public GDALRasterBand
 
     GDALColorTable oCT;
 
+    int         bYCbCrReported;
+
   public:
 
     		JP2KAKRasterBand( int, int, kdu_codestream, int );
@@ -272,6 +277,7 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
 
 {
     this->nBand = nBand;
+    bYCbCrReported = FALSE;
 
     if( oCodeStream.get_bit_depth(nBand-1) == 16
         && oCodeStream.get_signed(nBand-1) )
@@ -534,6 +540,12 @@ void JP2KAKRasterBand::ProcessYCbCrTile( kdu_tile tile, GByte *pabyDest,
     kdu_resolution res = comp[0].access_resolution();
     int  nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
     int  iComp;
+
+    if( !bYCbCrReported && nBand == 1 )
+    {
+        bYCbCrReported = TRUE;
+        CPLDebug( "JP2KAK", "Using ProcessYCbCrTile() for this dataset." );
+    }
 
     res.get_dims(dims);
     
