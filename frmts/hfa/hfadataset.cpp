@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.43  2004/10/26 22:47:23  fwarmerdam
+ * Fixed at least one botch in SetColorTable().
+ *
  * Revision 1.42  2004/10/26 17:42:02  fwarmerdam
  * support writing color tables with other than 256 entries
  *
@@ -906,23 +909,16 @@ CPLErr HFARasterBand::SetColorTable( GDALColorTable * poCTable )
     double adfRed[nColors], adfGreen[nColors], adfBlue[nColors], 
         adfAlpha[nColors];
 
-    for( int iColor = 0; iColor < 256; iColor++ )
+    for( int iColor = 0; iColor < nColors; iColor++ )
     {
-	if( iColor < poCTable->GetColorEntryCount() )
-	{
-	    GDALColorEntry  sRGB;
+        GDALColorEntry  sRGB;
 	    
-	    poCTable->GetColorEntryAsRGB( iColor, &sRGB );
-	    
-	    adfRed[iColor] = sRGB.c1 / 255.0;
-	    adfGreen[iColor] = sRGB.c2 / 255.0;
-	    adfBlue[iColor] = sRGB.c3 / 255.0;
-	    adfAlpha[iColor] = sRGB.c4 / 255.0;
-	}
-	else
-	{
-	    adfRed[iColor] = adfGreen[iColor] = adfBlue[iColor] = adfAlpha[iColor] = 0.;
-	}
+        poCTable->GetColorEntryAsRGB( iColor, &sRGB );
+        
+        adfRed[iColor] = sRGB.c1 / 255.0;
+        adfGreen[iColor] = sRGB.c2 / 255.0;
+        adfBlue[iColor] = sRGB.c3 / 255.0;
+        adfAlpha[iColor] = sRGB.c4 / 255.0;
     }
 
     HFASetPCT( hHFA, nBand, nColors,
