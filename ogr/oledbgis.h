@@ -42,8 +42,8 @@ DBPROP_OGIS_ENVELOPE_INTERSECTS=0x8L,
 DBPROP_OGIS_INDEX_INTERSECTS=0x9L
 };
 
-/* I think ESRI have numbers for those and for the geometry objects
-interface ids
+/* I think ESRI have numbers for those and for the geometry objects */
+enum DBPROPOGISGEOMENUM {
 DBGEOM_GEOMETRY = 0x1L,
 DBGEOM_POINT = 0x2L, 
 DBGEOM_CURVE = 0x3L,
@@ -55,8 +55,8 @@ DBGEOM_MULTISURFACE = 0xB,
 DBGEOM_MULTIPOLYGON = 0xC, 
 DBGEOM_MULTICURVE = 0x9L, 
 DBGEOM_MULTILINESTRING = 0xA, 
-DBGEOM_MULTIPOINT = 0x8L
-*/
+DBGEOM_MULTIPOINT = 0x8L };
+
 
 #endif
 
