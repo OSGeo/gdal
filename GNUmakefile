@@ -116,7 +116,7 @@ web-update:	docs
 	mkdir /u/www/gdal/html
 	cp html/*.* /u/www/gdal/html
 
-install:	lib install-actions
+install:	all install-actions
 
 install-actions:
 	$(INSTALL_DIR) $(INST_BIN)
