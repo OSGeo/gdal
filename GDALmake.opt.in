@@ -156,6 +156,7 @@ ifneq ($(ORACLE_HOME),)
 HAVE_OCI = yes
 OCI_INCLUDE =   -I$(ORACLE_HOME)/rdbms/demo -I$(ORACLE_HOME)/rdbms/public
 OCI_LIB =	-L$(ORACLE_HOME)/lib -lclntsh
+LIBS	:=	$(OCI_LIB) $(LIBS)
 else
 HAVE_OCI = no
 endif
