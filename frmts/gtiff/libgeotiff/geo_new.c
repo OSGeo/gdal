@@ -52,97 +52,100 @@ for new TIFF files that will have GeoTIFF tags written to them.<p>
  
 GTIF* GTIFNew(void *tif)
 {
-	GTIF* gt=(GTIF*)0;
-	int count,bufcount,index;
-	GeoKey *keyptr;
-	pinfo_t *data;
-	KeyEntry *entptr;
-	KeyHeader *header;
+    GTIF* gt=(GTIF*)0;
+    int count,bufcount,index;
+    GeoKey *keyptr;
+    pinfo_t *data;
+    KeyEntry *entptr;
+    KeyHeader *header;
     TempKeyData tempData;
 	
-	gt = (GTIF*)_GTIFcalloc( sizeof(GTIF));
-	if (!gt) goto failure;	
+    gt = (GTIF*)_GTIFcalloc( sizeof(GTIF));
+    if (!gt) goto failure;	
 	
-	/* install TIFF file and I/O methods */
-	gt->gt_tif = (tiff_t *)tif;
-	_GTIFSetDefaultTIFF(&gt->gt_methods);
+    /* install TIFF file and I/O methods */
+    gt->gt_tif = (tiff_t *)tif;
+    _GTIFSetDefaultTIFF(&gt->gt_methods);
 
     tempData.tk_asciiParams = 0;
     tempData.tk_asciiParamsLength = 0;
     tempData.tk_asciiParamsOffset = 0;
 	
-	/* since this is an array, GTIF will allocate the memory */
-	if (!(gt->gt_methods.get)(tif, GTIFF_GEOKEYDIRECTORY, &gt->gt_nshorts, &data ))
-	{
-		/* No ProjectionInfo, create a blank one */
-		data=(pinfo_t*)_GTIFcalloc((4+MAX_VALUES)*sizeof(pinfo_t));
-		if (!data) goto failure;	
-		header = (KeyHeader *)data;
-		header->hdr_version = GvCurrentVersion;
-		header->hdr_rev_major = GvCurrentRevision;
-		header->hdr_rev_minor = GvCurrentMinorRev;
-		gt->gt_nshorts=sizeof(KeyHeader)/sizeof(pinfo_t);
-	}
-	gt->gt_short = data;
-	header = (KeyHeader *)data;
+    /* since this is an array, GTIF will allocate the memory */
+    if (!(gt->gt_methods.get)(tif, GTIFF_GEOKEYDIRECTORY, &gt->gt_nshorts, &data ))
+    {
+        /* No ProjectionInfo, create a blank one */
+        data=(pinfo_t*)_GTIFcalloc((4+MAX_VALUES)*sizeof(pinfo_t));
+        if (!data) goto failure;	
+        header = (KeyHeader *)data;
+        header->hdr_version = GvCurrentVersion;
+        header->hdr_rev_major = GvCurrentRevision;
+        header->hdr_rev_minor = GvCurrentMinorRev;
+        gt->gt_nshorts=sizeof(KeyHeader)/sizeof(pinfo_t);
+    }
+    gt->gt_short = data;
+    header = (KeyHeader *)data;
 	
-	if (header->hdr_version > GvCurrentVersion) goto failure;
-	if (header->hdr_rev_major > GvCurrentRevision)
-	{
-		/* issue warning */
-	}
+    if (header->hdr_version > GvCurrentVersion) goto failure;
+    if (header->hdr_rev_major > GvCurrentRevision)
+    {
+        /* issue warning */
+    }
 	
-	/* If we got here, then the geokey can be parsed */
-	count = header->hdr_num_keys;
-	gt->gt_num_keys = count;
-	gt->gt_version  = header->hdr_version;
-	gt->gt_rev_major  = header->hdr_rev_major;
-	gt->gt_rev_minor  = header->hdr_rev_minor;
+    /* If we got here, then the geokey can be parsed */
+    count = header->hdr_num_keys;
+    gt->gt_num_keys = count;
+    gt->gt_version  = header->hdr_version;
+    gt->gt_rev_major  = header->hdr_rev_major;
+    gt->gt_rev_minor  = header->hdr_rev_minor;
 
-	bufcount = count+MAX_KEYS; /* allow for expansion */
+    bufcount = count+MAX_KEYS; /* allow for expansion */
 
-	/* Get the PARAMS Tags, if any */
-	if (!(gt->gt_methods.get)(tif, GTIFF_DOUBLEPARAMS, &gt->gt_ndoubles, &gt->gt_double ))
-	{
-		gt->gt_double=(double*)_GTIFcalloc(MAX_VALUES*sizeof(double));
-		if (!gt->gt_double) goto failure;	
-	}
+    /* Get the PARAMS Tags, if any */
+    if (!(gt->gt_methods.get)(tif, GTIFF_DOUBLEPARAMS, &gt->gt_ndoubles, &gt->gt_double ))
+    {
+        gt->gt_double=(double*)_GTIFcalloc(MAX_VALUES*sizeof(double));
+        if (!gt->gt_double) goto failure;	
+    }
     if (!(gt->gt_methods.get)(tif, GTIFF_ASCIIPARAMS,
-        &tempData.tk_asciiParamsLength, &tempData.tk_asciiParams ))
-	{
+                              &tempData.tk_asciiParamsLength, &tempData.tk_asciiParams ))
+    {
         tempData.tk_asciiParams         = 0;
         tempData.tk_asciiParamsLength   = 0;
-	}
-	else
+    }
+    else
     {
         /* last NULL doesn't count; "|" used for delimiter */
         --tempData.tk_asciiParamsLength;
     }
 
-	/* allocate space for GeoKey array and its index */
-	gt->gt_keys = (GeoKey *)_GTIFcalloc( sizeof(GeoKey)*bufcount);
-	if (!gt->gt_keys) goto failure;
-	gt->gt_keyindex = (int *)_GTIFcalloc( sizeof(int)*(MAX_KEYINDEX+1));
-	if (!gt->gt_keyindex) goto failure;
+    /* allocate space for GeoKey array and its index */
+    gt->gt_keys = (GeoKey *)_GTIFcalloc( sizeof(GeoKey)*bufcount);
+    if (!gt->gt_keys) goto failure;
+    gt->gt_keyindex = (int *)_GTIFcalloc( sizeof(int)*(MAX_KEYINDEX+1));
+    if (!gt->gt_keyindex) goto failure;
 	
-	/*  Loop to get all GeoKeys */
-	entptr = ((KeyEntry *)data) + 1;
-	keyptr = gt->gt_keys;
-	gt->gt_keymin = MAX_KEYINDEX;
-	gt->gt_keymax = 0;
-	for (index=1; index<=count; index++,entptr++)
-	{
-		if (!ReadKey(gt, &tempData, entptr, ++keyptr))
-			goto failure;
+    /*  Loop to get all GeoKeys */
+    entptr = ((KeyEntry *)data) + 1;
+    keyptr = gt->gt_keys;
+    gt->gt_keymin = MAX_KEYINDEX;
+    gt->gt_keymax = 0;
+    for (index=1; index<=count; index++,entptr++)
+    {
+        if (!ReadKey(gt, &tempData, entptr, ++keyptr))
+            goto failure;
 			
-		/* Set up the index (start at 1, since 0=unset) */
-		gt->gt_keyindex[entptr->ent_key] = index;		
-	}
+        /* Set up the index (start at 1, since 0=unset) */
+        gt->gt_keyindex[entptr->ent_key] = index;		
+    }
+
+    if( tempData.tk_asciiParams != NULL )
+        _GTIFFree( tempData.tk_asciiParams );
 	
-	return gt;
+    return gt;
 	
-failure:
-	/* Notify of error */
+  failure:
+    /* Notify of error */
     GTIFFree (gt);
     return (GTIF *)0;
 }
