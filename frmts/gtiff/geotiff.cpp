@@ -3,10 +3,10 @@
  *
  * Project:  GeoTIFF Driver
  * Purpose:  GDAL GeoTIFF support.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 1998, Frank Warmerdam
+ * Copyright (c) 1998, 2002, Frank Warmerdam <warmerdam@pobox.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.75  2002/12/03 13:55:44  warmerda
+ * Warn if we cannot export a pseudocolor table in CreateCopy().
+ *
  * Revision 1.74  2002/11/30 20:51:17  warmerda
  * add support for generic metadata, and updating proj/metdata in place
  *
@@ -81,133 +84,6 @@
  * Restructure warning/error handlers to "escape" contents of module argument
  * when putting it into the format string.  I was experiencing a crash when
  * a filename included a % and it was being reported in a warning.
- *
- * Revision 1.57  2001/11/11 23:50:59  warmerda
- * added required class keyword to friend declarations
- *
- * Revision 1.56  2001/10/12 15:06:05  warmerda
- * various build improvements to avoid internal/external conflicts
- *
- * Revision 1.55  2001/10/10 14:19:25  warmerda
- * substantial restructuring to added INTERLEAVE output option
- *
- * Revision 1.54  2001/10/04 17:29:47  warmerda
- * hopefully fixed #if tests
- *
- * Revision 1.53  2001/09/26 17:54:17  warmerda
- * added use of TIFFRewriteDirectory() where available
- *
- * Revision 1.52  2001/09/25 19:24:19  warmerda
- * Added support for reading MapInfo .tab files.  Code supplied by Petri
- * J. Riipinen <petri.riipinen@nic.fi>.
- *
- * Revision 1.51  2001/09/24 15:57:08  warmerda
- * improved error handling
- *
- * Revision 1.50  2001/07/18 04:51:56  warmerda
- * added CPL_CVSID
- *
- * Revision 1.49  2001/06/29 03:11:30  warmerda
- * Fixed handling of RGBA band ordering on big endian systems.
- *
- * Revision 1.48  2001/05/31 13:51:56  warmerda
- * Improved magic number testing.
- *
- * Revision 1.47  2001/05/01 19:00:14  warmerda
- * added special support for 1bit bitmaps
- *
- * Revision 1.46  2001/05/01 18:09:53  warmerda
- * upgraded world file reading support
- *
- * Revision 1.45  2001/04/17 14:58:16  warmerda
- * fixed access to rw mode separate RGB tiff images
- *
- * Revision 1.44  2001/03/13 19:16:46  warmerda
- * don't try to handle MINISWHITE through RGBA interface, test before using RGBA
- *
- * Revision 1.43  2001/02/12 22:16:22  warmerda
- * added TFW write support
- *
- * Revision 1.42  2001/01/23 15:26:27  warmerda
- * Removed debugging printf.
- *
- * Revision 1.41  2001/01/22 22:33:09  warmerda
- * implement SetColorTable(), Crystalize() ... may be buggy
- *
- * Revision 1.40  2000/12/15 14:46:27  warmerda
- * Added read support for .tfw files.
- * Added read/write support for GEOTRANSMATRIX in GeoTIFF.
- *
- * Revision 1.39  2000/10/14 04:09:26  warmerda
- * Set photometric to RGB for RGBA images in CreateCopy().
- *
- * Revision 1.38  2000/09/25 15:43:21  warmerda
- * Added support for odd TIFF files (such as 1bit, and YCbCr) via the
- * RGBA interface.
- *
- * Revision 1.37  2000/08/14 18:33:49  warmerda
- * added support for writing palettes to overviews
- *
- * Revision 1.36  2000/07/17 17:40:41  warmerda
- * Implemented reading of non-eight bit interleaved files.
- *
- * Revision 1.35  2000/07/17 17:09:11  warmerda
- * added support for complex data
- *
- * Revision 1.34  2000/07/17 14:52:51  warmerda
- * added preliminary complex support
- *
- * Revision 1.33  2000/07/13 21:39:48  warmerda
- * implemented CreateCopy() method which supports GCPs and color tables
- *
- * Revision 1.32  2000/06/26 22:18:33  warmerda
- * added scaled progress support
- *
- * Revision 1.31  2000/06/26 21:09:55  warmerda
- * improved flushing before building overviews
- *
- * Revision 1.30  2000/06/26 19:40:28  warmerda
- * Various fixes for ::Create(), including flushing the directory to disk at
- * end of create so that overviews can be safely added.
- *
- * Revision 1.29  2000/06/19 18:48:29  warmerda
- * added IBuildOverviews() implementation on GTiffDataset
- *
- * Revision 1.28  2000/06/19 14:18:01  warmerda
- * added help link
- *
- * Revision 1.27  2000/06/09 14:21:53  warmerda
- * Don't try to write geotiff info to read-only files.
- *
- * Revision 1.26  2000/05/04 13:56:28  warmerda
- * Avoid having a block ysize larger than the whole file for stripped files.
- *
- * Revision 1.25  2000/05/01 01:53:33  warmerda
- * added various compress options
- *
- * Revision 1.24  2000/04/21 21:53:42  warmerda
- * rewrote metadata support, do flush before changing directories
- *
- * Revision 1.23  2000/03/31 14:12:38  warmerda
- * added CPL based handling of libtiff warnings and errors
- *
- * Revision 1.22  2000/03/31 13:36:07  warmerda
- * added gcp's and metadata
- *
- * Revision 1.21  2000/03/23 18:47:52  warmerda
- * added support for writing tiled TIFF
- *
- * Revision 1.20  2000/03/23 16:54:35  warmerda
- * fixed up geotransform initialization
- *
- * Revision 1.19  2000/03/14 15:16:21  warmerda
- * initialize adfGeoTransform[]
- *
- * Revision 1.18  2000/03/13 14:33:01  warmerda
- * avoid ambiguity with Open
- *
- * Revision 1.17  2000/03/06 02:23:08  warmerda
- * added overviews, and colour tables
  */
 
 #include "gdal_priv.h"
@@ -2704,6 +2580,10 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE );
         TIFFSetField( hTIFF, TIFFTAG_COLORMAP, anTRed, anTGreen, anTBlue );
     }
+    else if( poSrcDS->GetRasterBand(1)->GetColorTable() != NULL )
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Unable to export color table to GeoTIFF file.  Color\n"
+                  "tables can only be written to 1 bit 8bit GeoTIFF files." );
 
 /* -------------------------------------------------------------------- */
 /* 	Transfer some TIFF specific metadata, if available.             */
