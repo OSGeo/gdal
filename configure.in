@@ -804,7 +804,6 @@ fi
 dnl ---------------------------------------------------------------------------
 
 AC_SUBST(OPT_GDAL_FORMATS,$OPT_GDAL_FORMATS)
-AC_SUBST(EXTRA_INCLUDES,$EXTRA_INCLUDES)
 
 dnl ---------------------------------------------------------------------------
 
@@ -934,8 +933,41 @@ AC_SUBST(HAVE_XERCES,$HAVE_XERCES)
 AC_SUBST(XERCES_INCLUDE,$XERCES_INCLUDE)
 
 dnl ---------------------------------------------------------------------------
+dnl Check for ODBC support.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(odbc,[  --with-odbc[=ARG]    Include ODBC support (ARG=no or path)],,)
+
+if test "$with_odbc" = "no" ; then
+
+  ODBC_SETTING=no
+
+  echo "ODBC support disabled."
+
+elif test "$with_odbc" = "yes" -o "$with_odbc" = "" ; then
+
+  AC_CHECK_LIB(odbc,SQLConnect,ODBC_SETTING=yes,ODBC_SETTING=no,)
+
+  if test "$ODBC_SETTING" = "yes" ; then   
+    LIBS="-lodbc $LIBS"
+  fi
+
+else
+
+  ODBC_SETTING=external
+  LIBS="-L$with_odbc -L$with_odbc/lib -lodbc $LIBS"
+  EXTRA_INCLUDES="-I$with_odbc -I$with_odbc/include $EXTRA_INCLUDES"
+
+  echo "using odbc library from $with_odbc."
+fi
+
+AC_SUBST(ODBC_SETTING,$ODBC_SETTING)
+
+dnl ---------------------------------------------------------------------------
 
 AC_COMPILER_WFLAGS
+
+AC_SUBST(EXTRA_INCLUDES,$EXTRA_INCLUDES)
 
 dnl ---------------------------------------------------------------------------
 dnl Check for cygwin .exe extension
