@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/08/11 03:28:04  warmerda
+ * Export OGREnvelope C++ class with CPL_DLL as per bug 378.
+ *
  * Revision 1.20  2003/06/09 13:48:54  warmerda
  * added DB2 V7.2 byte order hack
  *
@@ -100,7 +103,7 @@
  */
 
 #ifdef __cplusplus
-class OGREnvelope
+class CPL_DLL OGREnvelope
 {
   public:
         OGREnvelope()
