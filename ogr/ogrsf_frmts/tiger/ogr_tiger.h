@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/02/15 02:24:45  fwarmerdam
+ * fixed GetFeatureCount() when filters in place
+ *
  * Revision 1.17  2004/02/12 06:39:16  warmerda
  * added preliminary support for some GDT quirks
  *
@@ -715,7 +718,7 @@ class OGRTigerLayer : public OGRLayer
 
     OGRFeatureDefn *    GetLayerDefn();
 
-    int                 GetFeatureCount( int ) { return nFeatureCount; }
+    int                 GetFeatureCount( int );
 
     int                 TestCapability( const char * );
 
