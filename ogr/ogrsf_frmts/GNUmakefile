@@ -23,12 +23,10 @@ endif
 ifeq ($(HAVE_FME),yes)
 	(cd fme; $(MAKE) $*)
 endif
-	$(MAKE) ogrsf_frmts.a
+	$(MAKE) last-ranlib
 
-ogrsf_frmts.a:	last-ranlib 
+last-ranlib:	ogrsf_frmts.a
 	$(RANLIB) ogrsf_frmts.a
-
-last-ranlib:
 	touch last-ranlib
 
 clean:
