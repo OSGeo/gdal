@@ -1,4 +1,4 @@
-VERSION =	1_1
+VERSION =	1_2
 DISTDIR =	sdts_$(VERSION)
 WEB_DIR =	/u/www/projects/sdts
 
@@ -70,7 +70,7 @@ dist:	docs
 	rm configure
 	cp $(GDAL_ROOT)/port/{cpl_error*,cpl_port*,cpl_string*} $(DISTDIR)
 	cp $(GDAL_ROOT)/port/{cpl_vsisimple.cpp,cpl_config.h.in} $(DISTDIR)
-	cp $(GDAL_ROOT)/port/{cpl_vsi.h,cpl_conv.*} $(DISTDIR)
+	cp $(GDAL_ROOT)/port/{cpl_vsi.h,cpl_conv.*,cpl_path.cpp} $(DISTDIR)
 	cp $(GDAL_ROOT)/port/cpl_config.h.in $(DISTDIR)/cpl_config.h
 	cp $(SHPDIR)/{shpopen.c,dbfopen.c,shapefil.h} $(DISTDIR)
 	rm $(DISTDIR)/*.o
