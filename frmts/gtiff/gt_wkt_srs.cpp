@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/01/31 16:25:17  warmerda
+ * handle zero semimajor gracefully
+ *
  * Revision 1.8  2000/01/06 19:45:22  warmerda
  * added special case for writing UTM projections
  *
@@ -184,8 +187,10 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
     if( pszDatumName != NULL )
         WKTMassageDatum( &pszDatumName );
 
-    if( (psDefn->SemiMinor / psDefn->SemiMajor) < 0.99999999999999999
-        || (psDefn->SemiMinor / psDefn->SemiMajor) > 1.00000000000000001 )
+    if( psDefn->SemiMajor == 0.0 )
+        dfInvFlattening = 0.0;
+    else if( (psDefn->SemiMinor / psDefn->SemiMajor) < 0.99999999999999999
+             || (psDefn->SemiMinor / psDefn->SemiMajor) > 1.00000000000000001 )
         dfInvFlattening = -1.0 / (psDefn->SemiMinor/psDefn->SemiMajor - 1.0);
     else
         dfInvFlattening = 0.0; /* special flag for infinity */
