@@ -32,7 +32,7 @@ $(GDALMODULE).$(SO_EXT):	$(OBJ) $(EXE_DEP_LIBS)
 %.lo:	%.o ;
 
 $(GDALMODULE).la:	$(OBJ:.o=.lo) $(EXE_DEP_LIBS)
-	$(LD) $^ $(PYTHON_LIBS) $(LIBS) -o $@ \
+	$(LD) $(OBJ:.o=.lo) $(PYTHON_LIBS) $(LIBS) -o $@ \
 		-rpath $(INST_PYMOD) \
 		-no-undefined \
 		-avoid-version \
