@@ -11,11 +11,9 @@ default:
 	$(MAKE) $*
 	cd ..\s57
 	$(MAKE) $*
-	cd ..\fme
-	$(MAKE) $*
 	cd ..
 	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj \
-				 sdts\*.obj fme\*.obj s57\*.obj tiger\*.obj \
+				 sdts\*.obj s57\*.obj tiger\*.obj \
 				 ..\..\frmts\iso8211\*.obj \
 				 ..\..\frmts\sdts\sdtsattrreader.obj \
 				 ..\..\frmts\sdts\sdtscatd.obj \
@@ -42,6 +40,4 @@ clean:
 	cd ..\tiger
 	$(MAKE) clean
 	cd ..\s57
-	$(MAKE) clean
-	cd ..\fme
 	$(MAKE) clean
