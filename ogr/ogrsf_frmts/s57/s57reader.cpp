@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2001/08/30 21:05:32  warmerda
+ * added support for generic object if not recognised
+ *
  * Revision 1.24  2001/08/30 14:55:23  warmerda
  * Treat SAT_LIST attributes as strings.
  *
@@ -1170,7 +1173,14 @@ OGRFeatureDefn * S57Reader::FindFDefn( DDFRecord * poRecord )
         int     nOBJL = poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 );
 
         if( !poRegistrar->SelectClass( nOBJL ) )
+        {
+            for( int i = 0; i < nFDefnCount; i++ )
+            {
+                if( EQUAL(papoFDefnList[i]->GetName(),"Generic") )
+                    return papoFDefnList[i];
+            }
             return NULL;
+        }
 
         for( int i = 0; i < nFDefnCount; i++ )
         {
@@ -1178,7 +1188,7 @@ OGRFeatureDefn * S57Reader::FindFDefn( DDFRecord * poRecord )
                       poRegistrar->GetAcronym()) )
                 return papoFDefnList[i];
         }
-        
+
         return NULL;
     }
     else
@@ -1332,6 +1342,11 @@ OGRFeatureDefn *S57Reader::GenerateGeomFeatureDefn( OGRwkbGeometryType eGType )
     else if( eGType == wkbNone )
     {
         poFDefn = new OGRFeatureDefn( "Meta" );
+        poFDefn->SetGeomType( eGType );
+    }
+    else if( eGType == wkbUnknown )
+    {
+        poFDefn = new OGRFeatureDefn( "Generic" );
         poFDefn->SetGeomType( eGType );
     }
     else

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/08/30 21:05:32  warmerda
+ * added support for generic object if not recognised
+ *
  * Revision 1.10  2001/08/30 03:48:43  warmerda
  * preliminary implementation of S57 Update Support
  *
@@ -246,7 +249,7 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
     {
         OGRFeatureDefn  *poDefn;
         int             *panClassCount;
-        int             iClass;
+        int             iClass, bGeneric = FALSE;
 
         for( iModule = 0; iModule < nModules; iModule++ )
         {
@@ -267,12 +270,21 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
                 if( poDefn != NULL )
                     AddLayer( new OGRS57Layer( this, poDefn ) );
                 else
+                {
+                    bGeneric = TRUE;
                     CPLDebug( "S57", 
                               "Unable to find definition for OBJL=%d\n", 
                               iClass );
+                }
             }
         }
 
+        if( bGeneric )
+        {
+            poDefn = poModule->GenerateGeomFeatureDefn( wkbUnknown );
+            AddLayer( new OGRS57Layer( this, poDefn ) );
+        }
+            
         CPLFree( panClassCount );
     }
 

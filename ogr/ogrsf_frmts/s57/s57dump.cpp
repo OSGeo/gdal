@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/08/30 21:05:32  warmerda
+ * added support for generic object if not recognised
+ *
  * Revision 1.10  2001/08/30 03:48:43  warmerda
  * preliminary implementation of S57 Update Support
  *
@@ -132,7 +135,7 @@ int main( int nArgc, char ** papszArgv )
 
         if( bRegistrarLoaded )
         {
-            int i, anClassList[MAX_CLASSES];
+            int i, anClassList[MAX_CLASSES], bGeneric = FALSE;
             
             for( i = 0; i < MAX_CLASSES; i++ )
                 anClassList[i] = 0;
@@ -147,14 +150,27 @@ int main( int nArgc, char ** papszArgv )
                 if( anClassList[i] == 0 )
                     continue;
                 
-                oRegistrar.SelectClass( i );
-                printf( "%d: %s/%s\n",
-                        i,
-                        oRegistrar.GetAcronym(),
-                        oRegistrar.GetDescription() );
-            
+                if( oRegistrar.SelectClass( i ) )
+                {
+                    printf( "%d: %s/%s\n",
+                            i,
+                            oRegistrar.GetAcronym(),
+                            oRegistrar.GetDescription() );
+                    
+                    oReader.AddFeatureDefn(
+                        oReader.GenerateObjectClassDefn( &oRegistrar, i ) );
+                }
+                else
+                {
+                    printf( "%d: unrecognised ... treat as generic.\n", i );
+                    bGeneric = TRUE;
+                }
+            }
+
+            if( bGeneric )
+            {
                 oReader.AddFeatureDefn(
-                    oReader.GenerateObjectClassDefn( &oRegistrar, i ) );
+                    oReader.GenerateGeomFeatureDefn( wkbUnknown ) );
             }
         }
         else
