@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/12/13 15:55:27  warmerda
+ * fix suggested output to preserve orig size exact on null transform
+ *
  * Revision 1.7  2002/12/13 04:57:49  warmerda
  * remove approx transformer debug output
  *
@@ -224,8 +227,8 @@ CPLErr GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
     dfPixelSize = dfDiagonalDist 
         / sqrt(((double)nInXSize)*nInXSize + ((double)nInYSize)*nInYSize);
 
-    *pnPixels = (int) ((dfMaxXOut - dfMinXOut) / dfPixelSize) + 1;
-    *pnLines = (int) ((dfMaxYOut - dfMinYOut) / dfPixelSize) + 1;
+    *pnPixels = (int) ((dfMaxXOut - dfMinXOut) / dfPixelSize + 0.5);
+    *pnLines = (int) ((dfMaxYOut - dfMinYOut) / dfPixelSize + 0.5);
 
 /* -------------------------------------------------------------------- */
 /*      Set the output geotransform.                                    */
