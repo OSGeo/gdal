@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/03/23 03:25:57  warmerda
+ * added support for GRID generated files, with nodata and projections
+ *
  * Revision 1.8  2000/10/30 20:49:40  warmerda
  * Added error test to ensure the user isn't selecting the .hdr file
  * directly instead of the image data file.
@@ -57,6 +60,7 @@
  */
 
 #include "rawdataset.h"
+#include "ogr_spatialref.h"
 #include "cpl_string.h"
 
 static GDALDriver	*poEHdrDriver = NULL;
@@ -80,11 +84,14 @@ class EHdrDataset : public RawDataset
     double	dfXDim;
     double	dfYDim;
 
+    char	*pszProjection;
+
   public:
     		EHdrDataset();
     	        ~EHdrDataset();
     
-    CPLErr 	GetGeoTransform( double * padfTransform );
+    virtual CPLErr GetGeoTransform( double * padfTransform );
+    virtual const char *GetProjectionRef(void);
     
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -96,6 +103,7 @@ class EHdrDataset : public RawDataset
 EHdrDataset::EHdrDataset()
 {
     fpImage = NULL;
+    pszProjection = CPLStrdup("");
 }
 
 /************************************************************************/
@@ -107,6 +115,17 @@ EHdrDataset::~EHdrDataset()
 {
     if( fpImage != NULL )
         VSIFClose( fpImage );
+    CPLFree( pszProjection );
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *EHdrDataset::GetProjectionRef()
+
+{
+    return pszProjection;
 }
 
 /************************************************************************/
@@ -186,9 +205,9 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     const char *	pszLine;
     int			nRows = -1, nCols = -1, nBands = 1;
     int			nSkipBytes = 0;
-    double		dfULXMap=0.5, dfULYMap = 0.5;
-    double		dfXDim = 1.0, dfYDim = 1.0;
-    int			nLineCount = 0;
+    double		dfULXMap=0.5, dfULYMap = 0.5, dfYLLCorner = -123.456;
+    double		dfXDim = 1.0, dfYDim = 1.0, dfNoData = 0.0;
+    int			nLineCount = 0, bNoDataSet = FALSE;
     GDALDataType	eDataType = GDT_Byte;
     char		chByteOrder = 'M';
 
@@ -220,13 +239,18 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             nSkipBytes = atoi(papszTokens[1]);
         }
-        else if( EQUAL(papszTokens[0],"ulxmap") )
+        else if( EQUAL(papszTokens[0],"ulxmap") 
+                 || EQUAL(papszTokens[0],"xllcorner") )
         {
             dfULXMap = atof(papszTokens[1]);
         }
         else if( EQUAL(papszTokens[0],"ulymap") )
         {
             dfULYMap = atof(papszTokens[1]);
+        }
+        else if( EQUAL(papszTokens[0],"yllcorner") )
+        {
+            dfYLLCorner = atof(papszTokens[1]);
         }
         else if( EQUAL(papszTokens[0],"xdim") )
         {
@@ -235,6 +259,15 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         else if( EQUAL(papszTokens[0],"ydim") )
         {
             dfYDim = atof(papszTokens[1]);
+        }
+        else if( EQUAL(papszTokens[0],"cellsize") )
+        {
+            dfXDim = dfYDim = atof(papszTokens[1]);
+        }
+        else if( EQUAL(papszTokens[0],"NODATA_value") )
+        {
+            dfNoData = atof(papszTokens[1]);
+            bNoDataSet = TRUE;
         }
         else if( EQUAL(papszTokens[0],"NBITS") )
         {
@@ -246,6 +279,16 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         else if( EQUAL(papszTokens[0],"byteorder") )
         {
             chByteOrder = papszTokens[1][0];
+
+            /*
+             * Use of LSBFIRST or MSBFIRST is considered an indication that
+             * this is actually a floating point grid.  Treat accordingly.
+             */
+            if( EQUAL(papszTokens[1],"LSBFIRST")
+                || EQUAL(papszTokens[1],"MSBFIRST") )
+            {
+                eDataType = GDT_Float32;
+            }
         }
 
         CSLDestroy( papszTokens );
@@ -284,17 +327,21 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new EHdrDataset();
 
     poDS->poDriver = poEHdrDriver;
+
+/* -------------------------------------------------------------------- */
+/*      Capture some information from the file that is of interest.     */
+/* -------------------------------------------------------------------- */
     poDS->dfULXMap = dfULXMap;
     poDS->dfULYMap = dfULYMap;
     poDS->dfXDim = dfXDim;
     poDS->dfYDim = dfYDim;
-    
-/* -------------------------------------------------------------------- */
-/*      Capture some information from the file that is of interest.     */
-/* -------------------------------------------------------------------- */
+
+    if( dfYLLCorner != -123.456 )
+        poDS->dfULYMap = dfYLLCorner + (nRows-1) * dfYDim;
+
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Assume ownership of the file handled from the GDALOpenInfo.     */
 /* -------------------------------------------------------------------- */
@@ -318,18 +365,51 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nBands = nBands;;
     for( i = 0; i < poDS->nBands; i++ )
     {
-        poDS->SetBand( i+1, 
+        RawRasterBand	*poBand;
+
+        poBand = 
             new RawRasterBand( poDS, i+1, poDS->fpImage,
                                nSkipBytes, GDALGetDataTypeSize(eDataType)/8,
                                nLineOffset, eDataType,
 #ifdef CPL_LSB                               
-                               chByteOrder == 'I'
+                               chByteOrder == 'I' || chByteOrder == 'L'
 #else
                                chByteOrder == 'M'
 #endif        
-                               ));
+                               );
+
+
+        if( bNoDataSet )
+            poBand->StoreNoDataValue( dfNoData );
+
+        poDS->SetBand( i+1, poBand );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Check for a .prj file.                                          */
+/* -------------------------------------------------------------------- */
+    const char  *pszPrjFile = CPLResetExtension( poOpenInfo->pszFilename, 
+                                                 "prj" );
+
+    fp = VSIFOpen( pszPrjFile, "r" );
+    if( fp != NULL )
+    {
+        char	**papszLines;
+        OGRSpatialReference oSRS;
+
+        VSIFClose( fp );
+        
+        papszLines = CSLLoad( pszPrjFile );
+
+        if( oSRS.importFromESRI( papszLines ) == OGRERR_NONE )
+        {
+            CPLFree( poDS->pszProjection );
+            oSRS.exportToWkt( &(poDS->pszProjection) );
+        }
+
+        CSLDestroy( papszLines );
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
