@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/02/22 10:22:26  dron
+ * Few fixes.
+ *
  * Revision 1.2  2004/02/07 17:31:21  dron
  * Added OSRExportToUSGS() method.
  *
@@ -102,7 +105,7 @@ static long aoEllips[] =
     7025,   // FIXME: WGS, 1966
     7019,   // GRS, 1980 (NAD1983)
     7001,   // Airy, 1830
-    7018,   // Modified Everest --- skipped
+    7018,   // Modified Everest
     7002,   // Modified Airy
     7030,   // WGS, 1984 (GPS)
     0,// FIXME: Southeast Asia --- skipped
@@ -320,46 +323,46 @@ OGRErr OSRImportFromUSGS( OGRSpatialReferenceH hSRS, long iProjsys,
  *
  *        <h4>Projection Transformation Package Projection Parameters</h4>
  * <pre>
- * -----------------------------------------------------------------------------
- *                         |                    Array Element                  |
- *  Code & Projection Id   |----------------------------------------------------
- *                         |   0  |   1  |  2   |  3   |   4   |    5    |6 | 7|
- * -----------------------------------------------------------------------------
- *  0 Geographic           |      |      |      |      |       |         |  |  |
- *  1 U T M                |Lon/Z |Lat/Z |      |      |       |         |  |  |
- *  2 State Plane          |      |      |      |      |       |         |  |  |
- *  3 Albers Equal Area    |SMajor|SMinor|STDPR1|STDPR2|CentMer|OriginLat|FE|FN|
- *  4 Lambert Conformal C  |SMajor|SMinor|STDPR1|STDPR2|CentMer|OriginLat|FE|FN|
- *  5 Mercator             |SMajor|SMinor|      |      |CentMer|TrueScale|FE|FN|
- *  6 Polar Stereographic  |SMajor|SMinor|      |      |LongPol|TrueScale|FE|FN|
- *  7 Polyconic            |SMajor|SMinor|      |      |CentMer|OriginLat|FE|FN|
- *  8 Equid. Conic A       |SMajor|SMinor|STDPAR|      |CentMer|OriginLat|FE|FN|
- *    Equid. Conic B       |SMajor|SMinor|STDPR1|STDPR2|CentMer|OriginLat|FE|FN|
- *  9 Transverse Mercator  |SMajor|SMinor|Factor|      |CentMer|OriginLat|FE|FN|
- * 10 Stereographic        |Sphere|      |      |      |CentLon|CenterLat|FE|FN|
- * 11 Lambert Azimuthal    |Sphere|      |      |      |CentLon|CenterLat|FE|FN|
- * 12 Azimuthal            |Sphere|      |      |      |CentLon|CenterLat|FE|FN|
- * 13 Gnomonic             |Sphere|      |      |      |CentLon|CenterLat|FE|FN|
- * 14 Orthographic         |Sphere|      |      |      |CentLon|CenterLat|FE|FN|
- * 15 Gen. Vert. Near Per  |Sphere|      |Height|      |CentLon|CenterLat|FE|FN|
- * 16 Sinusoidal           |Sphere|      |      |      |CentMer|         |FE|FN|
- * 17 Equirectangular      |Sphere|      |      |      |CentMer|TrueScale|FE|FN|
- * 18 Miller Cylindrical   |Sphere|      |      |      |CentMer|         |FE|FN|
- * 19 Van der Grinten      |Sphere|      |      |      |CentMer|OriginLat|FE|FN|
- * 20 Hotin Oblique Merc A |SMajor|SMinor|Factor|      |       |OriginLat|FE|FN|
- *    Hotin Oblique Merc B |SMajor|SMinor|Factor|AziAng|AzmthPt|OriginLat|FE|FN|
- * 21 Robinson             |Sphere|      |      |      |CentMer|         |FE|FN|
- * 22 Space Oblique Merc A |SMajor|SMinor|      |IncAng|AscLong|         |FE|FN|
- *    Space Oblique Merc B |SMajor|SMinor|Satnum|Path  |       |         |FE|FN|
- * 23 Alaska Conformal     |SMajor|SMinor|      |      |       |         |FE|FN|
- * 24 Interrupted Goode    |Sphere|      |      |      |       |         |  |  |
- * 25 Mollweide            |Sphere|      |      |      |CentMer|         |FE|FN|
- * 26 Interrupt Mollweide  |Sphere|      |      |      |       |         |  |  |
- * 27 Hammer               |Sphere|      |      |      |CentMer|         |FE|FN|
- * 28 Wagner IV            |Sphere|      |      |      |CentMer|         |FE|FN|
- * 29 Wagner VII           |Sphere|      |      |      |CentMer|         |FE|FN|
- * 30 Oblated Equal Area   |Sphere|      |Shapem|Shapen|CentLon|CenterLat|FE|FN|
- * -----------------------------------------------------------------------------
+ * ----------------------------------------------------------------------------
+ *                         |                    Array Element                  
+ *  Code & Projection Id   |---------------------------------------------------
+ *                         |   0  |   1  |  2   |  3   |   4   |    5    |6 | 7
+ * ----------------------------------------------------------------------------
+ *  0 Geographic           |      |      |      |      |       |         |  |  
+ *  1 U T M                |Lon/Z |Lat/Z |      |      |       |         |  |  
+ *  2 State Plane          |      |      |      |      |       |         |  |  
+ *  3 Albers Equal Area    |SMajor|SMinor|STDPR1|STDPR2|CentMer|OriginLat|FE|FN
+ *  4 Lambert Conformal C  |SMajor|SMinor|STDPR1|STDPR2|CentMer|OriginLat|FE|FN
+ *  5 Mercator             |SMajor|SMinor|      |      |CentMer|TrueScale|FE|FN
+ *  6 Polar Stereographic  |SMajor|SMinor|      |      |LongPol|TrueScale|FE|FN
+ *  7 Polyconic            |SMajor|SMinor|      |      |CentMer|OriginLat|FE|FN
+ *  8 Equid. Conic A       |SMajor|SMinor|STDPAR|      |CentMer|OriginLat|FE|FN
+ *    Equid. Conic B       |SMajor|SMinor|STDPR1|STDPR2|CentMer|OriginLat|FE|FN
+ *  9 Transverse Mercator  |SMajor|SMinor|Factor|      |CentMer|OriginLat|FE|FN
+ * 10 Stereographic        |Sphere|      |      |      |CentLon|CenterLat|FE|FN
+ * 11 Lambert Azimuthal    |Sphere|      |      |      |CentLon|CenterLat|FE|FN
+ * 12 Azimuthal            |Sphere|      |      |      |CentLon|CenterLat|FE|FN
+ * 13 Gnomonic             |Sphere|      |      |      |CentLon|CenterLat|FE|FN
+ * 14 Orthographic         |Sphere|      |      |      |CentLon|CenterLat|FE|FN
+ * 15 Gen. Vert. Near Per  |Sphere|      |Height|      |CentLon|CenterLat|FE|FN
+ * 16 Sinusoidal           |Sphere|      |      |      |CentMer|         |FE|FN
+ * 17 Equirectangular      |Sphere|      |      |      |CentMer|TrueScale|FE|FN
+ * 18 Miller Cylindrical   |Sphere|      |      |      |CentMer|         |FE|FN
+ * 19 Van der Grinten      |Sphere|      |      |      |CentMer|OriginLat|FE|FN
+ * 20 Hotin Oblique Merc A |SMajor|SMinor|Factor|      |       |OriginLat|FE|FN
+ *    Hotin Oblique Merc B |SMajor|SMinor|Factor|AziAng|AzmthPt|OriginLat|FE|FN
+ * 21 Robinson             |Sphere|      |      |      |CentMer|         |FE|FN
+ * 22 Space Oblique Merc A |SMajor|SMinor|      |IncAng|AscLong|         |FE|FN
+ *    Space Oblique Merc B |SMajor|SMinor|Satnum|Path  |       |         |FE|FN
+ * 23 Alaska Conformal     |SMajor|SMinor|      |      |       |         |FE|FN
+ * 24 Interrupted Goode    |Sphere|      |      |      |       |         |  |  
+ * 25 Mollweide            |Sphere|      |      |      |CentMer|         |FE|FN
+ * 26 Interrupt Mollweide  |Sphere|      |      |      |       |         |  |  
+ * 27 Hammer               |Sphere|      |      |      |CentMer|         |FE|FN
+ * 28 Wagner IV            |Sphere|      |      |      |CentMer|         |FE|FN
+ * 29 Wagner VII           |Sphere|      |      |      |CentMer|         |FE|FN
+ * 30 Oblated Equal Area   |Sphere|      |Shapem|Shapen|CentLon|CenterLat|FE|FN
+ * ----------------------------------------------------------------------------
  * 
  *       ----------------------------------------------------
  *                               |      Array Element       |
@@ -455,7 +458,7 @@ OGRErr OSRImportFromUSGS( OGRSpatialReferenceH hSRS, long iProjsys,
  *    Shapen    Oblated Equal Area oval shape parameter n
  *    Angle     Oblated Equal Area oval rotation angle
  *
- * Array elements 14 and 15 are set to zero. All array elements with blank
+ * Array elements 13 and 14 are set to zero. All array elements with blank
  * fields are set to zero too.
  * </pre>
  *
