@@ -9,6 +9,7 @@ default:
 	(cd s57; $(MAKE) $*)
 	(cd mitab; $(MAKE) $*)
 	(cd dgn; $(MAKE) $*)
+	(cd gml; $(MAKE) $*)
 ifeq ($(HAVE_OGDI),yes)
 	(cd ogdi; $(MAKE) $*)
 endif
@@ -27,6 +28,7 @@ clean:
 	(cd s57; $(MAKE) clean)
 	(cd mitab; $(MAKE) clean)
 	(cd dgn; $(MAKE) clean)
+	(cd gml; $(MAKE) clean)
 ifeq ($(HAVE_OGDI),yes)
 	(cd ogdi; $(MAKE) clean)
 endif
