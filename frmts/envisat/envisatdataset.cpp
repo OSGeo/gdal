@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/03/24 14:16:38  warmerda
+ * added fallback case for unrecognised products
+ *
  * Revision 1.17  2002/12/04 21:15:19  warmerda
  * Hacked to support AATSR TOA Level 1 data.
  *
@@ -702,6 +705,14 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
         eDataType = GDT_Int16;
         poDS->nRasterXSize = (dsr_size - 20) / 2;
     }
+    else if( poDS->nRasterXSize == 0 )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Envisat product format not recognised.  Assuming 8bit\n"
+                  "with no per-record prefix data.  Results may be useless!" );
+        eDataType = GDT_Byte;
+        poDS->nRasterXSize = dsr_size;
+    }
     else
     {
         if( dsr_size >= 2 * poDS->nRasterXSize )
@@ -718,6 +729,19 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 
     nPrefixBytes = dsr_size - 
         ((GDALGetDataTypeSize(eDataType) / 8) * poDS->nRasterXSize);
+
+/* -------------------------------------------------------------------- */
+/*      Fail out if we didn't get non-zero sizes.                       */
+/* -------------------------------------------------------------------- */
+    if( poDS->nRasterXSize < 1 || poDS->nRasterYSize < 1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to determine organization of dataset.  It would\n"
+                  "appear this is an Envisat dataset, but an unsupported\n"
+                  "data product.  Unable to utilize." );
+        delete poDS;
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Assume ownership of the file handled from the GDALOpenInfo.     */
