@@ -793,9 +793,7 @@ if test "$with_kakadu" = "no" -o "$with_kakadu" = "" ; then
 elif test "$with_kakadu" = "yes" ; then
   AC_MSG_ERROR([
 For JPEG2000 support using Kakadu you need provide the path to the Kakadu 
-build directory.  Also, Kakadu requires specific patches available from 
-Frank Warmerdam (against Kakadu 3.4).  Note that Kakadu is *not* free 
-software.])
+build directory.  Note that Kakadu is *not* free software.])
 else
   KAKDIR=$with_kakadu
   OPT_GDAL_FORMATS="jp2kak $OPT_GDAL_FORMATS"
@@ -1004,7 +1002,7 @@ elif test "$with_odbc" = "yes" -o "$with_odbc" = "" ; then
 
 else
 
-  ODBC_SETTING=external
+  ODBC_SETTING=yes
   LIBS="-L$with_odbc -L$with_odbc/lib -lodbc $LIBS"
   EXTRA_INCLUDES="-I$with_odbc -I$with_odbc/include $EXTRA_INCLUDES"
 
