@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/08/11 18:45:56  warmerda
+ * Use CopyCommonInfoFrom method
+ *
  * Revision 1.6  2004/07/28 16:56:36  warmerda
  * updated to use VRTSourcedRasterBand
  *
@@ -171,16 +174,18 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         fpVRT = VSIFOpen( pszFilename, "w" );
 
-
     /* -------------------------------------------------------------------- */
     /*      Convert tree to a single block of XML text.                     */
     /* -------------------------------------------------------------------- */
-        CPLXMLNode *psDSTree = ((VRTDataset *) poSrcDS)->SerializeToXML();
+        char *pszVRTPath = CPLStrdup(CPLGetPath(pszFilename));
+        CPLXMLNode *psDSTree = ((VRTDataset *) poSrcDS)->SerializeToXML( pszVRTPath );
         char *pszXML;
         
         pszXML = CPLSerializeXMLTree( psDSTree );
         
         CPLDestroyXMLNode( psDSTree );
+
+        CPLFree( pszVRTPath );
         
     /* -------------------------------------------------------------------- */
     /*      Write to disk.                                                  */
@@ -255,23 +260,7 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Emit various band level metadata.                               */
 /* -------------------------------------------------------------------- */
-        poVRTBand->SetMetadata( poSrcBand->GetMetadata() );
-
-        poVRTBand->SetColorTable( poSrcBand->GetColorTable() );
-        poVRTBand->SetColorInterpretation(poSrcBand->GetColorInterpretation());
-
-        if( !EQUAL(poSrcBand->GetUnitType(),"") )
-            poVRTBand->SetUnitType( poSrcBand->GetUnitType() );
-
-        poVRTBand->SetOffset( poSrcBand->GetOffset() );
-        poVRTBand->SetScale( poSrcBand->GetScale() );
-        poVRTBand->SetCategoryNames( poSrcBand->GetCategoryNames() );
-
-        int bSuccess;
-
-        poSrcBand->GetNoDataValue( &bSuccess );
-        if( bSuccess )
-            poVRTBand->SetNoDataValue( poSrcBand->GetNoDataValue(NULL) );
+        poVRTBand->CopyCommonInfoFrom( poSrcBand );
     }
 
     poVRTDS->FlushCache();
