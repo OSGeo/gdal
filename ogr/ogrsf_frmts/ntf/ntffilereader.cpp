@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/08/30 16:49:59  warmerda
+ * added new products, fixed to use ProcessAttValue()
+ *
  * Revision 1.2  1999/08/28 18:24:42  warmerda
  * added TestForLayer() optimization
  *
@@ -296,6 +299,23 @@ int NTFFileReader::Open( const char * pszFilenameIn )
         nProduct = NPC_BOUNDARYLINE;
     else if( EQUALN(pszProduct,"BaseData.GB",11) )
         nProduct = NPC_BASEDATA;
+    else if( EQUALN(pszProduct,"OSCAR_ASSET",11) )
+        nProduct = NPC_OSCAR_ASSET;
+    else if( EQUALN(pszProduct,"OSCAR_TRAFF",11) )
+        nProduct = NPC_OSCAR_TRAFFIC;
+    else if( EQUALN(pszProduct,"OSCAR_ROUTE",11) )
+        nProduct = NPC_OSCAR_ROUTE;
+    else if( EQUALN(pszProduct,"OSCAR_NETWO",11) )
+        nProduct = NPC_OSCAR_NETWORK;
+    else if( EQUALN(pszProduct,"ADDRESS_POI",11) )
+        nProduct = NPC_ADDRESS_POINT;
+    else if( EQUALN(pszProduct,"CODE_POINT",10) )
+    {
+        if( GetAttDesc( "RH" ) == NULL )
+            nProduct = NPC_CODE_POINT;
+        else
+            nProduct = NPC_CODE_POINT_PLUS;
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Handle the section header record.                               */
@@ -719,17 +739,26 @@ int NTFFileReader::ApplyAttributeValue( OGRFeature * poFeature, int iField,
 /*      notification.                                                   */
 /* -------------------------------------------------------------------- */
     int		iValue;
-
+    
     iValue = CSLFindString( papszTypes, pszAttName );
     if( iValue < 0 )
         return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Process the attribute value ... this really only has a          */
+/*      useful effect for real numbers.                                 */
+/* -------------------------------------------------------------------- */
+    char	*pszAttLongName, *pszAttValue;
+
+    ProcessAttValue( pszAttName, papszValues[iValue],
+                     &pszAttLongName, &pszAttValue );
 
 /* -------------------------------------------------------------------- */
 /*      Apply the value to the field using the simple set string        */
 /*      method.  Leave it to the OGRFeature::SetField() method to       */
 /*      take care of translation to other types.                        */
 /* -------------------------------------------------------------------- */
-    poFeature->SetField( iField, papszValues[iValue] );
+    poFeature->SetField( iField, pszAttValue );
 
     return TRUE;
 }
