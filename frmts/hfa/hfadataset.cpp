@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.42  2004/10/26 17:42:02  fwarmerdam
+ * support writing color tables with other than 256 entries
+ *
  * Revision 1.41  2004/08/27 03:22:28  warmerda
  * hack to support IGNOREUTM option: bug 597
  *
@@ -895,11 +898,13 @@ GDALColorTable *HFARasterBand::GetColorTable()
 CPLErr HFARasterBand::SetColorTable( GDALColorTable * poCTable )
 
 {
+    int nColors = poCTable->GetColorEntryCount();
 
 /* -------------------------------------------------------------------- */
 /*      Write out the colortable, and update the configuration.         */
 /* -------------------------------------------------------------------- */
-    double	anTRed[256], anTGreen[256], anTBlue[256], anTAlpha[256]; 
+    double adfRed[nColors], adfGreen[nColors], adfBlue[nColors], 
+        adfAlpha[nColors];
 
     for( int iColor = 0; iColor < 256; iColor++ )
     {
@@ -909,19 +914,19 @@ CPLErr HFARasterBand::SetColorTable( GDALColorTable * poCTable )
 	    
 	    poCTable->GetColorEntryAsRGB( iColor, &sRGB );
 	    
-	    anTRed[iColor] = sRGB.c1 / 255.0;
-	    anTGreen[iColor] = sRGB.c2 / 255.0;
-	    anTBlue[iColor] = sRGB.c3 / 255.0;
-	    anTAlpha[iColor] = sRGB.c4 / 255.0;
+	    adfRed[iColor] = sRGB.c1 / 255.0;
+	    adfGreen[iColor] = sRGB.c2 / 255.0;
+	    adfBlue[iColor] = sRGB.c3 / 255.0;
+	    adfAlpha[iColor] = sRGB.c4 / 255.0;
 	}
 	else
 	{
-	    anTRed[iColor] = anTGreen[iColor] = anTBlue[iColor] = anTAlpha[iColor] = 0.;
+	    adfRed[iColor] = adfGreen[iColor] = adfBlue[iColor] = adfAlpha[iColor] = 0.;
 	}
     }
 
-    HFASetPCT( hHFA, nBand, 256,
-	       anTRed, anTGreen, anTBlue, anTAlpha);
+    HFASetPCT( hHFA, nBand, nColors,
+	       adfRed, adfGreen, adfBlue, adfAlpha);
 
 
     if( poCT )
