@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/04/04 06:18:08  warmerda
+ * first pass implementation of loader support
+ *
  * Revision 1.17  2003/03/18 18:34:17  warmerda
  * added reason code 13349
  *
@@ -399,9 +402,9 @@ void OGROCIDataSource::DeleteLayer( const char *pszLayerName )
 
 OGRLayer *
 OGROCIDataSource::CreateLayer( const char * pszLayerName,
-                              OGRSpatialReference *poSRS,
-                              OGRwkbGeometryType eType,
-                              char ** papszOptions )
+                               OGRSpatialReference *poSRS,
+                               OGRwkbGeometryType eType,
+                               char ** papszOptions )
 
 {
     char		szCommand[1024];
@@ -485,12 +488,21 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGROCITableLayer	*poLayer;
+    const char *pszLoaderFile = CSLFetchNameValue(papszOptions,"LOADER_FILE");
+    OGROCIWritableLayer	*poLayer;
 
-    poLayer = new OGROCITableLayer( this, pszSafeLayerName, "ORA_GEOMETRY",
-                                    EQUAL(szSRSId,"NULL") ? -1 : atoi(szSRSId),
-				    TRUE, TRUE );
+    if( pszLoaderFile == NULL )
+        poLayer = new OGROCITableLayer( this, pszSafeLayerName, "ORA_GEOMETRY",
+                                        EQUAL(szSRSId,"NULL") ? -1 : atoi(szSRSId),
+                                        TRUE, TRUE );
+    else
+        poLayer = new OGROCILoaderLayer( this, pszSafeLayerName, "ORA_GEOMETRY",
+                                        EQUAL(szSRSId,"NULL") ? -1 : atoi(szSRSId),
+                                         pszLoaderFile );
 
+/* -------------------------------------------------------------------- */
+/*      Set various options on the layer.                               */
+/* -------------------------------------------------------------------- */
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",FALSE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
 
