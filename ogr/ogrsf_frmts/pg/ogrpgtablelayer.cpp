@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2004/07/10 04:47:40  warmerda
+ * Ensure that setting a NULL (or empty) query reset pszQuery to NULL.
+ * Use soft transactions more carefully.
+ * Ensure that rings are closed on polygons.
+ *
  * Revision 1.20  2004/07/09 18:36:14  warmerda
  * Fixed last fix ... put the varchar stuff in side quotes and didn't
  * address the case with no length set.
@@ -475,7 +480,11 @@ OGRErr OGRPGTableLayer::SetAttributeFilter( const char *pszQuery )
 
 {
     CPLFree( this->pszQuery );
-    this->pszQuery = CPLStrdup( pszQuery );
+
+    if( pszQuery == NULL || strlen(pszQuery) == 0 )
+        this->pszQuery = NULL;
+    else
+        this->pszQuery = CPLStrdup( pszQuery );
 
     BuildWhere();
 
@@ -558,7 +567,12 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
             GetSpatialRef();
 
         if( poFeature->GetGeometryRef() != NULL )
-            poFeature->GetGeometryRef()->exportToWkt( &pszWKT );
+        {
+            OGRGeometry *poGeom = (OGRGeometry *) poFeature->GetGeometryRef();
+
+            poGeom->closeRings();
+            poGeom->exportToWkt( &pszWKT );
+        }
         
         if( pszWKT != NULL 
             && strlen(pszCommand) + strlen(pszWKT) > nCommandBufSize - 10000 )
@@ -889,11 +903,7 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
 
 {
     if( pszFIDColumn == NULL )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "OGRPGTableLayer::GetFeature() - Not supported without FID column." );
-        return NULL;
-    }
+        return OGRLayer::GetFeature( nFeatureId );
 
 /* -------------------------------------------------------------------- */
 /*      Discard any existing resultset.                                 */
@@ -910,11 +920,10 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
     char        *pszCommand = (char *) CPLMalloc(strlen(pszFieldList)+2000);
 
     poDS->FlushSoftTransaction();
-    hResult = PQexec(hPGConn, "BEGIN");
-    PQclear( hResult );
+    poDS->SoftStartTransaction();
 
     sprintf( pszCommand, 
-             "DECLARE mycursor CURSOR for "
+             "DECLARE getfeaturecursor CURSOR for "
              "SELECT %s FROM \"%s\" WHERE %s = %ld", 
              pszFieldList, poFeatureDefn->GetName(), pszFIDColumn, 
              nFeatureId );
@@ -926,7 +935,7 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
     {
         PQclear( hResult );
-        hResult = PQexec(hPGConn, "FETCH ALL in mycursor" );
+        hResult = PQexec(hPGConn, "FETCH ALL in getfeaturecursor" );
 
         if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK )
         {
@@ -941,11 +950,10 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
 /* -------------------------------------------------------------------- */
     PQclear( hResult );
 
-    hResult = PQexec(hPGConn, "CLOSE mycursor");
+    hResult = PQexec(hPGConn, "CLOSE getfeaturecursor");
     PQclear( hResult );
 
-    hResult = PQexec(hPGConn, "COMMIT");
-    PQclear( hResult );
+    poDS->FlushSoftTransaction();
 
 
     return poFeature;
