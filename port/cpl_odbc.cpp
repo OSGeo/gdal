@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/08/17 20:15:56  warmerda
+ * Allow column values up to 64K instead of limited to 8K.
+ *
  * Revision 1.15  2004/06/17 17:11:51  warmerda
  * fixed case where vsnprintf does not exist
  *
@@ -556,7 +559,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
     
     for( iCol = 0; iCol < m_nColCount; iCol++ )
     {
-        char szWrkData[8193];
+        char szWrkData[65536];
         SQLINTEGER cbDataLen;
 
         szWrkData[0] = '\0';
