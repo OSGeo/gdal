@@ -11,7 +11,7 @@ The related <a href="ogr">OGR</a>
 library (which lives within the GDAL source tree) provides
 a similar capability for simple features vector data.
 The <a href="NEWS.html">NEWS</a> page describes the September 2004
-GDAL 1.2.2 release.<p>
+GDAL 1.2.3 release.<p>
 
 Master Page: <a href="http://www.gdal.org/index.html">http://www.gdal.org</a><br>
 Mirror Page: <a href="http://www.remotesensing.org/gdal/index.html">
