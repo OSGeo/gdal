@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.26  2001/01/03 18:53:23  warmerda
+ * Added PNM
+ *
  * Revision 1.25  2000/11/27 19:03:44  warmerda
  * added JDEM format
  *
@@ -128,6 +131,7 @@ void GDALRegister_JPEG(void);
 void GDALRegister_MEM(void);
 void GDALRegister_JDEM(void);
 void GDALRegister_GRASS(void);
+void GDALRegister_PNM(void);
 CPL_C_END
 
 #ifdef notdef
@@ -226,6 +230,7 @@ void GDALAllRegister()
 #endif
 
 #ifdef FRMT_raw
+    GDALRegister_PNM();
     GDALRegister_DOQ1();
     GDALRegister_EHdr();
     GDALRegister_PAux();
