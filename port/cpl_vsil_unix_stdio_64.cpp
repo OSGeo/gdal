@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/06/21 21:39:32  warmerda
+ * Fixed typo with rewind.
+ *
  * Revision 1.1  2001/06/21 21:17:15  warmerda
  * New
  *
@@ -85,7 +88,7 @@ vsi_l_offset VSIFTellL( FILE * fp )
 void VSIRewindL( FILE * fp )
 
 {
-    VSIFRewind( fp );
+    VSIRewind( fp );
 }
 
 /************************************************************************/
