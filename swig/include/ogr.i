@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.7  2005/02/18 18:42:07  kruland
+ * Added %feature("autodoc");
+ *
  * Revision 1.6  2005/02/18 18:28:16  kruland
  * Rename OGRSpatialReferenceH type to SpatialReference to make the ogr and
  * osr modules compatible.
@@ -37,6 +40,7 @@
 
 %module ogr
 %import gdal_typemaps.i
+%feature("autodoc");
 
 %init %{
   if ( OGRGetDriverCount() == 0 ) {
