@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/10/27 15:04:36  warmerda
+ * fix small new memory leak
+ *
  * Revision 1.15  2003/10/27 15:02:44  warmerda
  * Added ECWDataset::IRasterIO special case
  *
@@ -515,6 +518,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         }
     }
 
+    CPLFree( papabyBIL );
     CPLFree( pabyBILScanline );
 
     return CE_None;
