@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2004/06/08 13:38:16  dron
+ * Few minor fixes.
+ *
  * Revision 1.28  2004/01/06 10:56:54  dron
  * Few optimizations in IReadBlock().
  *
@@ -133,17 +136,17 @@ enum BMPType
     BMPT_OS22       // BMP used in OS/2 PM 2.x
 };
 
-// Bitmap file consists of a BitmapFileHeader structure followed by
-// a BitmapInfoHeader structure. An array of BMPColorEntry structures (also
-// called a colour table) follows the bitmap information header structure. The
-// colour table is followed by a second array of indexes into the colour table
-// (the actual bitmap data). Data may be comressed, for 4-bpp and 8-bpp used
-// RLE compression.
+// Bitmap file consists of a BMPFileHeader structure followed by a
+// BMPInfoHeader structure. An array of BMPColorEntry structures (also called
+// a colour table) follows the bitmap information header structure. The colour
+// table is followed by a second array of indexes into the colour table (the
+// actual bitmap data). Data may be comressed, for 4-bpp and 8-bpp used RLE
+// compression.
 //
 // +---------------------+
-// | BitmapFileHeader    |
+// | BMPFileHeader       |
 // +---------------------+
-// | BitmapInfoHeader    |
+// | BMPInfoHeader       |
 // +---------------------+
 // | BMPColorEntry array |
 // +---------------------+
@@ -196,14 +199,14 @@ typedef struct
     GUInt16     iReserved1;     // Reserved, set as 0
     GUInt16     iReserved2;     // Reserved, set as 0
     GUInt32     iOffBits;       // Offset of the image from file start in bytes
-} BitmapFileHeader;
+} BMPFileHeader;
 
 // File header size in bytes:
 const int       BFH_SIZE = 14;
 
 typedef struct
 {
-    GUInt32     iSize;          // Size of BitmapInfoHeader structure in bytes.
+    GUInt32     iSize;          // Size of BMPInfoHeader structure in bytes.
                                 // Should be used to determine start of the
                                 // colour table
     GInt32      iWidth;         // Image width
@@ -244,7 +247,7 @@ typedef struct
                                 // BMPLT_CALIBRATED_RGB. Specified in 16^16 format.
     GUInt32     iGammaGreen;    // Toned response curve for green.
     GUInt32     iGammaBlue;     // Toned response curve for blue.
-} BitmapInfoHeader;
+} BMPInfoHeader;
 
 // Info header size in bytes:
 const unsigned int  BIH_WIN4SIZE = 40; // for BMPT_WIN4
@@ -273,8 +276,8 @@ class BMPDataset : public GDALDataset
     friend class BMPRasterBand;
     friend class BMPComprRasterBand;
 
-    BitmapFileHeader    sFileHeader;
-    BitmapInfoHeader    sInfoHeader;
+    BMPFileHeader       sFileHeader;
+    BMPInfoHeader       sInfoHeader;
     int                 nColorTableSize, nColorElems;
     GByte               *pabyColorTable;
     GDALColorTable      *poColorTable;
@@ -528,7 +531,8 @@ CPLErr BMPRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                && nBlockYOff >= 0
                && pImage != NULL );
 
-    iScanOffset = poGDS->sFileHeader.iSize - (nBlockYOff + 1) * nScanSize;
+    iScanOffset = poGDS->sFileHeader.iOffBits +
+            ( poGDS->GetRasterYSize() - nBlockYOff - 1 ) * nScanSize;
     if ( VSIFSeekL( poGDS->fp, iScanOffset, SEEK_SET ) < 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -690,7 +694,7 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
     pabyComprBuf = (GByte *) CPLMalloc( iComprSize );
     pabyUncomprBuf = (GByte *) CPLMalloc( iUncomprSize );
 
-    CPLDebug( "BMP", "RLE8 compression detected." );
+    CPLDebug( "BMP", "RLE compression detected." );
     CPLDebug ( "BMP", "Size of compressed buffer %ld bytes,"
                " size of uncompressed buffer %ld bytes.",
                iComprSize, iUncomprSize );
@@ -987,7 +991,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLStat(poOpenInfo->pszFilename, &sStat);
 
 /* -------------------------------------------------------------------- */
-/*      Read the BitmapFileHeader. We need iOffBits value only          */
+/*      Read the BMPFileHeader. We need iOffBits value only             */
 /* -------------------------------------------------------------------- */
     VSIFSeekL( poDS->fp, 10, SEEK_SET );
     VSIFReadL( &poDS->sFileHeader.iOffBits, 1, 4, poDS->fp );
@@ -1000,7 +1004,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
               poDS->sFileHeader.iOffBits );
 
 /* -------------------------------------------------------------------- */
-/*      Read the BitmapInfoHeader.                                      */
+/*      Read the BMPInfoHeader.                                         */
 /* -------------------------------------------------------------------- */
     BMPType         eBMPType;
 
@@ -1046,11 +1050,13 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
         poDS->nColorElems = 4;
     }
-    if ( eBMPType == BMPT_OS22 )
+    
+    else if ( eBMPType == BMPT_OS22 )
     {
         poDS->nColorElems = 3; // FIXME: different info in different documents regarding this!
     }
-    if ( eBMPType == BMPT_OS21 )
+    
+    else if ( eBMPType == BMPT_OS21 )
     {
         GInt16  iShort;
 
@@ -1144,7 +1150,8 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
         for( iBand = 1; iBand <= poDS->nBands; iBand++ )
             poDS->SetBand( iBand, new BMPRasterBand( poDS, iBand ) );
     }
-    else if ( poDS->sInfoHeader.iCompression == BMPC_RLE8 )
+    else if ( poDS->sInfoHeader.iCompression == BMPC_RLE8
+              || poDS->sInfoHeader.iCompression == BMPC_RLE4 )
     {
         for( iBand = 1; iBand <= poDS->nBands; iBand++ )
             poDS->SetBand( iBand, new BMPComprRasterBand( poDS, iBand ) );
@@ -1222,7 +1229,7 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
     poDS->pszFilename = pszFilename;
 
 /* -------------------------------------------------------------------- */
-/*      Fill the BitmapInfoHeader                                       */
+/*      Fill the BMPInfoHeader                                          */
 /* -------------------------------------------------------------------- */
     GUInt32         nScanSize;
 
@@ -1264,7 +1271,7 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
     poDS->sInfoHeader.iClrImportant = 0;
 
 /* -------------------------------------------------------------------- */
-/*      Fill the BitmapFileHeader                                       */
+/*      Fill the BMPFileHeader                                          */
 /* -------------------------------------------------------------------- */
     poDS->sFileHeader.bType[0] = 'B';
     poDS->sFileHeader.bType[1] = 'M';
