@@ -264,7 +264,7 @@ gdal_translate
        [-srcwin xoff yoff xsize ysize] [-a_srs srs_def]
        [-projwin xoff yoff xsize ysize] [-co "NAME=VALUE"]*
        [-gcp pixel line easting northing]*
-       [-mo "META-TAG=VALUE"]* [-quiet]
+       [-mo "META-TAG=VALUE"]* [-quiet] [-sds]
        src_dataset dst_dataset
 \endverbatim
 
@@ -315,6 +315,8 @@ may be provided multiple times to provide a set of GCPs.
 </dd>
 <dt> <b>-quiet</b>:</dt><dd> Supress progress monitor and other non-error
 output.</dd>
+<dt> <b>-sds</b>:</dt><dd> Copy all subdatsets of this file to individual 
+output files.  Use with formats like HDF or OGDI that have subdatasets.</dd>
 <dt> <i>src_dataset</i>:</dt><dd> The source file name.</dd>
 <dt> <i>dst_dataset</i>:</dt><dd> The destination file name.</dd>
 </dl>
