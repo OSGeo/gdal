@@ -7,10 +7,11 @@ LIBS	=	$(GDAL_ROOT)\gdal_i.lib
 
 XTRAFLAGS =	-I..\frmts -I..\alg
 
+!INCLUDE ..\nmake.opt
+									-
 !IFDEF INCLUDE_OGR_FRMTS
 OGR_PROGRAMS =	gdal_contour.exe
 !ENDIF
-!INCLUDE ..\nmake.opt
 
 default:	gdal_translate.exe gdalinfo.exe gdaladdo.exe gdalwarp.exe \
 		gdaltindex.exe $(OGR_PROGRAMS)
