@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/03/25 06:31:27  fwarmerdam
+ * use addSubLineString() to speed up adding edge to ring.
+ *
  * Revision 1.10  2003/05/28 19:16:42  warmerda
  * fixed up argument names and stuff for docs
  *
@@ -159,18 +162,7 @@ static void AddEdgeToRing( OGRLinearRing * poRing, OGRLineString * poLine,
         iStart += iStep;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Append points to ring.                                          */
-/* -------------------------------------------------------------------- */
-    int         iOutVertex = poRing->getNumPoints();
-
-    poRing->setNumPoints( iOutVertex + ABS(iEnd-iStart) + 1 );
-    
-    for( int i = iStart; i != (iEnd+iStep); i += iStep )
-    {
-        poRing->setPoint( iOutVertex++,
-                          poLine->getX(i), poLine->getY(i), poLine->getZ(i) );
-    }
+    poRing->addSubLineString( poLine, iStart, iEnd );
 }
 
 /************************************************************************/
