@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/08/13 14:50:06  warmerda
+ * use SetFromUserInput() for SourceSRS and TargetSRS
+ *
  * Revision 1.17  2004/08/11 20:42:05  warmerda
  * dont declare static funcs in CPL_C area
  *
@@ -91,6 +94,7 @@
 #include "gdal_priv.h"
 #include "gdal_alg.h"
 #include "ogr_spatialref.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 CPL_C_START
@@ -1153,20 +1157,43 @@ static void *
 GDALDeserializeReprojectionTransformer( CPLXMLNode *psTree )
 
 {
-    const char *pszSrcWKT = CPLGetXMLValue( psTree, "SourceSRS", NULL );
-    const char *pszDstWKT = CPLGetXMLValue( psTree, "TargetSRS", NULL );
+    const char *pszSourceSRS = CPLGetXMLValue( psTree, "SourceSRS", NULL );
+    const char *pszTargetSRS= CPLGetXMLValue( psTree, "TargetSRS", NULL );
+    char *pszSourceWKT = NULL, *pszTargetWKT = NULL;
+    void *pResult = NULL;
 
-    if( pszSrcWKT != NULL && pszDstWKT != NULL )
-        return GDALCreateReprojectionTransformer( pszSrcWKT, 
-                                                  pszDstWKT );
+    if( pszSourceSRS != NULL )
+    {
+        OGRSpatialReference oSRS;
+
+        if( oSRS.SetFromUserInput( pszSourceSRS ) == OGRERR_NONE )
+            oSRS.exportToWkt( &pszSourceWKT );
+    }
+
+    if( pszTargetSRS != NULL )
+    {
+        OGRSpatialReference oSRS;
+
+        if( oSRS.SetFromUserInput( pszTargetSRS ) == OGRERR_NONE )
+            oSRS.exportToWkt( &pszTargetWKT );
+    }
+
+    if( pszSourceWKT != NULL && pszTargetWKT != NULL )
+    {
+        pResult = GDALCreateReprojectionTransformer( pszSourceWKT,
+                                                     pszTargetWKT );
+    }
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "ReprojectionTransformer definition missing either\n"
                   "SourceSRS or TargetSRS definition." );
-
-        return NULL;
     }
+
+    CPLFree( pszSourceWKT );
+    CPLFree( pszTargetWKT );
+
+    return pResult;
 }
 
 /************************************************************************/
@@ -1369,6 +1396,72 @@ int GDALApproxTransform( void *pCBData, int bDstToSrc, int nPoints,
 }
 
 /************************************************************************/
+/*                   GDALSerializeApproxTransformer()                   */
+/************************************************************************/
+
+static CPLXMLNode *
+GDALSerializeApproxTransformer( void *pTransformArg )
+
+{
+    CPLXMLNode *psTree;
+    ApproxTransformInfo *psInfo = (ApproxTransformInfo *) pTransformArg;
+
+    psTree = CPLCreateXMLNode( NULL, CXT_Element, "ApproxTransformer" );
+
+/* -------------------------------------------------------------------- */
+/*      Attach max error.                                               */
+/* -------------------------------------------------------------------- */
+    CPLCreateXMLElementAndValue( psTree, "MaxError", 
+                                 CPLSPrintf( "%g", psInfo->dfMaxError ) );
+
+/* -------------------------------------------------------------------- */
+/*      Capture underlying transformer.                                 */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psTransformerContainer;
+    CPLXMLNode *psTransformer;
+
+    psTransformerContainer = 
+        CPLCreateXMLNode( psTree, CXT_Element, "BaseTransformer" );
+    
+    psTransformer = GDALSerializeTransformer( psInfo->pfnBaseTransformer,
+                                              psInfo->pBaseCBData );
+    if( psTransformer != NULL )
+        CPLAddXMLChild( psTransformerContainer, psTransformer );
+
+    return psTree;
+}
+
+/************************************************************************/
+/*                  GDALDeserializeApproxTransformer()                  */
+/************************************************************************/
+
+static void *
+GDALDeserializeApproxTransformer( CPLXMLNode *psTree )
+
+{
+    double dfMaxError = atof(CPLGetXMLValue( psTree, "MaxError",  "0.25" ));
+    CPLXMLNode *psContainer;
+    GDALTransformerFunc pfnBaseTransform = NULL;
+    void *pBaseCBData = NULL;
+
+    psContainer = CPLGetXMLNode( psTree, "BaseTransformer" );
+
+    if( psContainer != NULL && psContainer->psChild != NULL )
+    {
+        GDALDeserializeTransformer( psContainer->psChild, 
+                                    &pfnBaseTransform, 
+                                    &pBaseCBData );
+    }
+    
+    if( pfnBaseTransform == NULL )
+        return NULL;
+    else
+        return GDALCreateApproxTransformer( pfnBaseTransform,
+                                            pBaseCBData, 
+                                            dfMaxError );
+}
+
+/************************************************************************/
 /*                       GDALApplyGeoTransform()                        */
 /************************************************************************/
 
@@ -1460,6 +1553,8 @@ CPLXMLNode *GDALSerializeTransformer( GDALTransformerFunc pfnFunc,
         return GDALSerializeReprojectionTransformer( pTransformArg );
     else if( pfnFunc == GDALGCPTransform )
         return GDALSerializeGCPTransformer( pTransformArg );
+    else if( pfnFunc == GDALApproxTransform )
+        return GDALSerializeApproxTransformer( pTransformArg );
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -1499,6 +1594,11 @@ CPLErr GDALDeserializeTransformer( CPLXMLNode *psTree,
     {
         *ppfnFunc = GDALGCPTransform;
         *ppTransformArg = GDALDeserializeGCPTransformer( psTree );
+    }
+    else if( EQUAL(psTree->pszValue,"ApproxTransformer") )
+    {
+        *ppfnFunc = GDALApproxTransform;
+        *ppTransformArg = GDALDeserializeApproxTransformer( psTree );
     }
     else
         CPLError( CE_Failure, CPLE_AppDefined, 
