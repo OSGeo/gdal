@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/01/16 21:17:28  warmerda
+ * added justification enum
+ *
  * Revision 1.5  2001/01/16 18:12:02  warmerda
  * added arc support, color lookup
  *
@@ -320,6 +323,19 @@ typedef struct {
 #define DGNPF_NEW          0x0200
 #define DGNPF_LOCKED       0x0100
 #define DGNPF_CLASS        0x000f
+
+/* -------------------------------------------------------------------- */
+/*      Justifications                                                  */
+/* -------------------------------------------------------------------- */
+#define DGNJ_LEFT_TOP		0
+#define DGNJ_LEFT_CENTER	1
+#define DGNJ_LEFT_BOTTOM	2
+#define DGNJ_CENTER_TOP		3
+#define DGNJ_CENTER_CENTER	4
+#define DGNJ_CENTER_BOTTOM	5
+#define DGNJ_RIGHT_TOP		6
+#define DGNJ_RIGHT_CENTER	7
+#define DGNJ_RIGHT_BOTTOM	8
 
 /* -------------------------------------------------------------------- */
 /*      API                                                             */
