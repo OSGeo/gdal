@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/10/27 15:02:44  warmerda
+ * Added ECWDataset::IRasterIO special case
+ *
  * Revision 1.14  2003/09/23 13:47:47  warmerda
  * never return a NULL projection
  *
@@ -128,6 +131,10 @@ class CPL_DLL ECWDataset : public GDALDataset
                 
     static GDALDataset *Open( GDALOpenInfo * );
 
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              int, int *, int, int, int );
+
     virtual CPLErr GetGeoTransform( double * );
     virtual const char *GetProjectionRef();
 };
@@ -204,7 +211,7 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      This is based on the assumption that doing lots of single       */
 /*      scanline windows is expensive.                                  */
 /* -------------------------------------------------------------------- */
-    if( nXSize < nBufXSize || nYSize < nBufYSize || nYSize == 1 )	
+    if( nXSize < nBufXSize || nYSize < nBufYSize || nYSize == 1 )
     {
 #ifdef notdef
         CPLDebug( "ECWRasterBand", 
@@ -379,6 +386,7 @@ CPLErr ECWDataset::ResetFullResViewWindow( int nBand,
 {
     NCSError     eNCSErr;
     unsigned int iBand = nBand-1;
+
 #ifdef nodef
     CPLDebug( "ECWDataset", 
               "NCScbmSetFileView( %d, %d, %d, %d, %d, %d, %d )", 
@@ -403,6 +411,111 @@ CPLErr ECWDataset::ResetFullResViewWindow( int nBand,
 
     nFullResWindowBand = nBand;
     nLastScanlineRead = nStartLine-1;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
+                              int nXOff, int nYOff, int nXSize, int nYSize,
+                              void * pData, int nBufXSize, int nBufYSize,
+                              GDALDataType eBufType, 
+                              int nBandCount, int *panBandMap,
+                              int nPixelSpace, int nLineSpace, int nBandSpace)
+    
+{
+/* -------------------------------------------------------------------- */
+/*      If we are supersampling we need to fall into the general        */
+/*      purpose logic.  We also use the general logic if we are in      */
+/*      some cases unlikely to benefit from interleaved access.         */
+/*                                                                      */
+/*      The one case we would like to handle better here is the         */
+/*      nBufYSize == 1 case (requesting a scanline at a time).  We      */
+/*      should eventually have some logic similiar to the band by       */
+/*      band case where we post a big window for the view, and allow    */
+/*      sequential reads.                                               */
+/* -------------------------------------------------------------------- */
+    if( nXSize < nBufXSize || nYSize < nBufYSize || nYSize == 1 
+        || nBandCount > 100 || nBandCount == 1 || nBufYSize == 1 )
+    {
+        return 
+            GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                    pData, nBufXSize, nBufYSize,
+                                    eBufType, 
+                                    nBandCount, panBandMap,
+                                    nPixelSpace, nLineSpace, nBandSpace);
+    }
+
+    CPLDebug( "ECWDataset", 
+              "RasterIO(%d,%d,%d,%d -> %dx%d) - doing interleaved read.", 
+              nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
+
+/* -------------------------------------------------------------------- */
+/*      Setup view.                                                     */
+/* -------------------------------------------------------------------- */
+    UINT32 anBandIndices[100];
+    int    i;
+    NCSError     eNCSErr;
+    
+    for( i = 0; i < nBandCount; i++ )
+        anBandIndices[i] = panBandMap[i] - 1;
+
+    eNCSErr = NCScbmSetFileView( hFileView, 
+                                 nBandCount, anBandIndices,
+                                 nXOff, nYOff, 
+                                 nXOff + nXSize - 1, 
+                                 nYOff + nYSize - 1,
+                                 nBufXSize, nBufYSize );
+    
+    if( eNCSErr != NCS_SUCCESS )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "%s", NCSGetErrorText(eNCSErr) );
+        
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Setup working scanline, and the pointers into it.               */
+/* -------------------------------------------------------------------- */
+    GByte *pabyBILScanline = (GByte *) CPLMalloc(nBufXSize * nBandCount);
+    GByte **papabyBIL = (GByte **) CPLMalloc(nBandCount * sizeof(void*));
+
+    for( i = 0; i < nBandCount; i++ )
+        papabyBIL[i] = pabyBILScanline + i * nBufXSize;
+
+/* -------------------------------------------------------------------- */
+/*      Read back all the data for the requested view.                  */
+/* -------------------------------------------------------------------- */
+    for( int iScanline = 0; iScanline < nBufYSize; iScanline++ )
+    {
+        NCSEcwReadStatus  eRStatus;
+        int  iX;
+
+        eRStatus = NCScbmReadViewLineBIL( hFileView, papabyBIL );
+        if( eRStatus != NCSECW_READ_OK )
+        {
+            CPLFree( pabyBILScanline );
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "NCScbmReadViewLineBIL failed." );
+            return CE_Failure;
+        }
+
+
+        for( i = 0; i < nBandCount; i++ )
+        {
+            GByte *pabyThisLine = ((GByte *)pData) + nLineSpace * iScanline + nBandSpace * i;
+            
+            for( iX = 0; iX < nBufXSize; iX++ )
+                pabyThisLine[iX * nPixelSpace] = 
+                    pabyBILScanline[i * nBufXSize + iX];
+        }
+    }
+
+    CPLFree( pabyBILScanline );
 
     return CE_None;
 }
