@@ -30,6 +30,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/11/03 19:27:21  warmerda
+ * Pass column in SetFPPos() as the feature id to ensure that the seek
+ * isn't arbitrarily ignored.
+ *
  * Revision 1.7  1999/11/03 19:07:58  warmerda
  * open raster file if not open when trying to read
  *
@@ -193,7 +197,7 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
 /* -------------------------------------------------------------------- */
     NTFRecord	*poRecord;
     
-    SetFPPos( panColumnOffset[iColumn], 0 );
+    SetFPPos( panColumnOffset[iColumn], iColumn );
     poRecord = ReadRecord();
 
     if( iColumn < nRasterXSize-1 )
