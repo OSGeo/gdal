@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/01/03 22:15:48  fwarmerdam
+ * added SetSpatialFilterRect
+ *
  * Revision 1.22  2004/11/22 22:24:56  fwarmerdam
  * Give explicit void for functions taking no arguments.
  *
@@ -317,6 +320,8 @@ typedef void *OGRSFDriverH;
 
 OGRGeometryH CPL_DLL OGR_L_GetSpatialFilter( OGRLayerH );
 void   CPL_DLL OGR_L_SetSpatialFilter( OGRLayerH, OGRGeometryH );
+void   CPL_DLL OGR_L_SetSpatialFilterRect( OGRLayerH, 
+                                           double, double, double, double );
 OGRErr CPL_DLL OGR_L_SetAttributeFilter( OGRLayerH, const char * );
 void   CPL_DLL OGR_L_ResetReading( OGRLayerH );
 OGRFeatureH CPL_DLL OGR_L_GetNextFeature( OGRLayerH );
