@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2003/04/10 10:24:16  dron
+ * More leaks fixed.
+ *
  * Revision 1.7  2003/04/09 21:32:02  dron
  * Memory leak fixed.
  *
@@ -557,6 +560,7 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
                       "Ill formed color definition (%s) in XPM header.", 
                       papszXPMList[iColor+1] );
             CSLDestroy( papszXPMList );
+            CSLDestroy( papszTokens );
             return NULL;
         }
 
@@ -576,6 +580,7 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
                       "Ill formed color definition (%s) in XPM header.", 
                       papszXPMList[iColor+1] );
             CSLDestroy( papszXPMList );
+            CSLDestroy( papszTokens );
             return NULL;
         }
         else
@@ -587,6 +592,8 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
         }
 
         oCTable.SetColorEntry( iColor, &sColor );
+
+        CSLDestroy( papszTokens );
     }
 
 /* -------------------------------------------------------------------- */
@@ -600,6 +607,7 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
         CPLError( CE_Failure, CPLE_OutOfMemory, 
                   "Insufficient memory for %dx%d XPM image buffer.", 
                   *pnXSize, *pnYSize );
+        CSLDestroy( papszXPMList );
         return NULL;
     }
 
