@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.81  2003/12/05 16:22:49  warmerda
+ * optimized IsProjected
+ *
  * Revision 1.80  2003/10/07 04:20:50  warmerda
  * added WMS AUTO: support
  *
@@ -3803,7 +3806,13 @@ OGRErr OSRStripCTParms( OGRSpatialReferenceH hSRS )
 int OGRSpatialReference::IsProjected() const
 
 {
-    return GetAttrNode("PROJCS") != NULL;
+    if( poRoot == NULL )
+        return FALSE;
+
+    // If we eventually support composite coordinate systems this will
+    // need to improve. 
+
+    return EQUAL(poRoot->GetValue(),"PROJCS");
 }
 
 /************************************************************************/
