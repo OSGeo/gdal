@@ -51,7 +51,7 @@ import:
 	mv cpl_serv.h geo_config.h safe
 
 	copymatch.sh ~/osrs/geotiff/libgeotiff *.cpp *.c *.h *.inc
-	copymatch.sh ~/osrs/geotiff/libgeotiff/libxtiff xtiff.c xtiffio.h
+	copymatch.sh ~/osrs/geotiff/libgeotiff/libxtiff xtiff*.c xtiffio.h
 
 	mv safe/* .
 	rm -rf safe
