@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/12/09 18:55:07  warmerda
+ * moved DMS stuff to gdal/port
+ *
  * Revision 1.21  2002/12/09 16:11:53  warmerda
  * added DMS translation
  *
@@ -365,13 +368,6 @@ int CPL_DLL OPTGetParameterInfo( const char * pszProjectionMethod,
                                  char ** ppszUserName,
                                  char ** ppszType,
                                  double *pdfDefaultValue );
-
-/* -------------------------------------------------------------------- */
-/*      DMS translation.                                                */
-/* -------------------------------------------------------------------- */
-double CPL_DLL OSRDMSToDec( const char * );
-const char CPL_DLL *OSRDecToDMS( double dfAngle, const char *pszAxis,
-                                 int nSecondDecimals );
 
 CPL_C_END
 
