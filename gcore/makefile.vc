@@ -4,7 +4,8 @@
 
 OBJ	=	gdalopen.obj gdaldrivermanager.obj gdaldriver.obj \
 		gdaldataset.obj gdalrasterband.obj gdal_misc.obj \
-		rasterio.obj gdalrasterblock.obj gdalprojdef.obj
+		rasterio.obj gdalrasterblock.obj gdalprojdef.obj \
+		gdalcolortable.obj
 
 GDAL_ROOT	=	..
 
