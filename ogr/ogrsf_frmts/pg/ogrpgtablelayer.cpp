@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/02/01 07:55:48  warmerda
+ * avoid dependence on libpq-fs.h
+ *
  * Revision 1.11  2003/01/08 22:07:14  warmerda
  * Added support for integer and real list field types
  *
@@ -65,7 +68,6 @@
 
 #include "cpl_conv.h"
 #include "ogr_pg.h"
-#include <libpq/libpq-fs.h>
 
 CPL_CVSID("$Id$");
 
