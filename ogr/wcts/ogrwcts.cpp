@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/03/27 17:18:07  warmerda
+ * added inline CRS defs, and -debug
+ *
  * Revision 1.8  2003/03/24 21:49:49  warmerda
  * Added support for FileURL in Transform
  *
@@ -474,44 +477,79 @@ WCTSImportCoordinateReferenceSystem( CPLXMLNode *psXMLCRS )
 {
     int nEPSGCode;
 
+    CPLStripXMLNamespace( psXMLCRS->psChild, NULL, TRUE );
+
+/* ==================================================================== */
+/*      Try to find a direct crsID as per old specification.            */
+/* ==================================================================== */
+    if( CPLGetXMLValue( psXMLCRS, "crsID.codeSpace", NULL ) != NULL )
+    {
 /* -------------------------------------------------------------------- */
 /*      Get the EPSG code, and verify that it is in the EPSG            */
 /*      codeSpace.                                                      */
 /* -------------------------------------------------------------------- */
-    if( !EQUAL(CPLGetXMLValue( psXMLCRS, "crsID.gml:codeSpace", "" ), "EPSG"))
-    {
-        WCTSEmitServiceException( "Failed to decode CoordinateReferenceSystem with missing,\n"
-                                  "or non-EPSG crsID.gml:codeSpace" );
-    }	
-
-    nEPSGCode = atoi(CPLGetXMLValue( psXMLCRS, "crsID.gml:code", "0" ));
-
-    if( nEPSGCode == 0 )
-    {
-        WCTSEmitServiceException( "Failed to decode CoordinateReferenceSystem with missing,\n"
-                                  "or zero crsID.gml:code" );
-    }								
+        if( !EQUAL(CPLGetXMLValue( psXMLCRS, "crsID.codeSpace", "" ), "EPSG"))
+        {
+            WCTSEmitServiceException( "Failed to decode CoordinateReferenceSystem with missing,\n"
+                                      "or non-EPSG crsID.codeSpace" );
+        }	
+        
+        nEPSGCode = atoi(CPLGetXMLValue( psXMLCRS, "crsID.code", "0" ));
+        
+        if( nEPSGCode == 0 )
+        {
+            WCTSEmitServiceException( "Failed to decode CoordinateReferenceSystem with missing,\n"
+                                      "or zero crsID.code" );
+        }								
 
 /* -------------------------------------------------------------------- */
 /*      Translate into an OGRSpatialReference from EPSG code.           */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReference oSRS;
+        OGRSpatialReference oSRS;
 
-    CPLErrorReset();
-    if( oSRS.importFromEPSG( nEPSGCode ) != OGRERR_NONE )
-    {
-        if( strlen(CPLGetLastErrorMsg()) > 0 )
-            WCTSEmitServiceException( CPLGetLastErrorMsg() );
-        else
-            WCTSEmitServiceException( 
-                CPLSPrintf( "OGRSpatialReference::importFromEPSG(%d) failed.  Is this a defined EPSG code?", 
-                            nEPSGCode ) );
+        CPLErrorReset();
+        if( oSRS.importFromEPSG( nEPSGCode ) != OGRERR_NONE )
+        {
+            if( strlen(CPLGetLastErrorMsg()) > 0 )
+                WCTSEmitServiceException( CPLGetLastErrorMsg() );
+            else
+                WCTSEmitServiceException( 
+                    CPLSPrintf( "OGRSpatialReference::importFromEPSG(%d) failed.  Is this a defined EPSG code?", 
+                                nEPSGCode ) );
+        }
+
+        return oSRS.Clone();
     }
 
+/* ==================================================================== */
+/*      Try to import a projectedCRS or geographicCRS.                  */
+/* ==================================================================== */
+    if( CPLGetXMLNode( psXMLCRS, "ProjectedCRS" ) != NULL 
+        || CPLGetXMLNode( psXMLCRS, "GeographicCRS" ) != NULL )
+    {
+        char *pszSerializedForm;
+        OGRSpatialReference oSRS;
+
+        pszSerializedForm = CPLSerializeXMLTree( psXMLCRS->psChild );
+        if( oSRS.importFromXML( pszSerializedForm ) != OGRERR_NONE )
+        {
+            CPLFree( pszSerializedForm );
+            if( strlen(CPLGetLastErrorMsg()) > 0 )
+                WCTSEmitServiceException( CPLGetLastErrorMsg() );
+            else
+                WCTSEmitServiceException( "Failed to import CRS" );
+        }
+
+        CPLFree( pszSerializedForm );
+        return oSRS.Clone();
+    }
+    
 /* -------------------------------------------------------------------- */
-/*      Return SRS.                                                     */
+/*      We don't seem to recognise a CRS here.                          */
 /* -------------------------------------------------------------------- */
-    return oSRS.Clone();
+    WCTSEmitServiceException( "Unable to identify CRS in one of SourceCRS or TargetCRS elements" );
+
+    return NULL;
 }
 
 /************************************************************************/
@@ -852,6 +890,11 @@ int main( int nArgc, char ** papszArgv )
 
             iArg++;
         }
+        else if( EQUAL(papszArgv[iArg],"-debug") )
+        {
+            putenv( "CPL_DEBUG=ON" );
+            putenv( "PROJ_DEBUG=ON" );
+        }
         else if( EQUAL(papszArgv[iArg],"-data")  && iArg < nArgc-1 )
         {
             CPLPushFinderLocation( papszArgv[++iArg] );
@@ -873,10 +916,10 @@ int main( int nArgc, char ** papszArgv )
         else
         {
             WCTSEmitServiceException( 
-                "Server misconfigured, unknown commandline options received.\n"
-                "\n"
-                "Usage: ogrwcts [-log logfilename] [-data directory]\n"
-                "               [-get url] [-put]\n" );
+               "Server misconfigured, unknown commandline options received.\n"
+               "\n"
+               "Usage: ogrwcts [-log logfilename] [-debug] [-data directory]\n"
+               "               [-get url] [-put]\n" );
         }
     }
 
