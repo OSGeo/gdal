@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
-<WCTS_Capabilities xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.deegree.org/xml/schemas/wcts/capabilities.xsd" version="0.1.0" updateSequence="1">
+<WCTS_Capabilities xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml" xsi:noNamespaceSchemaLocation="http://www.deegree.org/xml/schemas/wcts/capabilities.xsd" version="0.1.0" updateSequence="1">
   <Service>
     <Name>WCTS</Name>
     <Title>Web Coordinate Transformation Service</Title>
