@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/09/27 14:28:44  warmerda
+ * first hack at 3D support
+ *
  * Revision 1.14  2001/08/28 21:27:07  warmerda
  * added prototype multi-byte character support
  *
@@ -218,11 +221,23 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
           DGNParseCore( psDGN, psElement );
 
           psLine->num_vertices = 2;
-          psLine->vertices[0].x = DGN_INT32( psDGN->abyElem + 36 );
-          psLine->vertices[0].y = DGN_INT32( psDGN->abyElem + 40 );
+          if( psDGN->dimension == 2 )
+          {
+              psLine->vertices[0].x = DGN_INT32( psDGN->abyElem + 36 );
+              psLine->vertices[0].y = DGN_INT32( psDGN->abyElem + 40 );
+              psLine->vertices[1].x = DGN_INT32( psDGN->abyElem + 44 );
+              psLine->vertices[1].y = DGN_INT32( psDGN->abyElem + 48 );
+          }
+          else
+          {
+              psLine->vertices[0].x = DGN_INT32( psDGN->abyElem + 36 );
+              psLine->vertices[0].y = DGN_INT32( psDGN->abyElem + 40 );
+              psLine->vertices[0].z = DGN_INT32( psDGN->abyElem + 44 );
+              psLine->vertices[1].x = DGN_INT32( psDGN->abyElem + 48 );
+              psLine->vertices[1].y = DGN_INT32( psDGN->abyElem + 52 );
+              psLine->vertices[1].z = DGN_INT32( psDGN->abyElem + 56 );
+          }
           DGNTransformPoint( psDGN, psLine->vertices + 0 );
-          psLine->vertices[1].x = DGN_INT32( psDGN->abyElem + 44 );
-          psLine->vertices[1].y = DGN_INT32( psDGN->abyElem + 48 );
           DGNTransformPoint( psDGN, psLine->vertices + 1 );
       }
       break;
@@ -234,6 +249,7 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
       {
           DGNElemMultiPoint *psLine;
           int                i, count;
+          int		     pntsize = psDGN->dimension * 4;
 
           count = psDGN->abyElem[36] + psDGN->abyElem[37]*256;
           psLine = (DGNElemMultiPoint *) 
@@ -242,20 +258,26 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
           psElement->stype = DGNST_MULTIPOINT;
           DGNParseCore( psDGN, psElement );
 
-          if( psDGN->nElemBytes < 38 + count * 8 )
+          if( psDGN->nElemBytes < 38 + count * pntsize )
           {
               CPLError( CE_Warning, CPLE_AppDefined, 
                         "Trimming multipoint vertices to %d from %d because\n"
                         "element is short.\n", 
-                        (psDGN->nElemBytes - 38) / 8,
+                        (psDGN->nElemBytes - 38) / pntsize,
                         count );
-              count = (psDGN->nElemBytes - 38) / 8;
+              count = (psDGN->nElemBytes - 38) / pntsize;
           }
           psLine->num_vertices = count;
           for( i = 0; i < psLine->num_vertices; i++ )
           {
-              psLine->vertices[i].x = DGN_INT32( psDGN->abyElem + 38 + i*8 );
-              psLine->vertices[i].y = DGN_INT32( psDGN->abyElem + 42 + i*8 );
+              psLine->vertices[i].x = 
+                  DGN_INT32( psDGN->abyElem + 38 + i*pntsize );
+              psLine->vertices[i].y = 
+                  DGN_INT32( psDGN->abyElem + 42 + i*pntsize );
+              if( psDGN->dimension == 3 )
+                  psLine->vertices[i].z = 
+                      DGN_INT32( psDGN->abyElem + 46 + i*pntsize );
+
               DGNTransformPoint( psDGN, psLine->vertices + i );
           }
       }
@@ -290,15 +312,31 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
           memcpy( &(psEllipse->secondary_axis), psDGN->abyElem + 44, 8 );
           DGN2IEEEDouble( &(psEllipse->secondary_axis) );
           psEllipse->secondary_axis *= psDGN->scale;
-          
-          psEllipse->rotation = DGN_INT32( psDGN->abyElem + 52 );
-          psEllipse->rotation = psEllipse->rotation / 360000.0;
-          
-          memcpy( &(psEllipse->origin.x), psDGN->abyElem + 56, 8 );
-          DGN2IEEEDouble( &(psEllipse->origin.x) );
 
-          memcpy( &(psEllipse->origin.y), psDGN->abyElem + 64, 8 );
-          DGN2IEEEDouble( &(psEllipse->origin.y) );
+          if( psDGN->dimension == 2 )
+          {
+              psEllipse->rotation = DGN_INT32( psDGN->abyElem + 52 );
+              psEllipse->rotation = psEllipse->rotation / 360000.0;
+              
+              memcpy( &(psEllipse->origin.x), psDGN->abyElem + 56, 8 );
+              DGN2IEEEDouble( &(psEllipse->origin.x) );
+              
+              memcpy( &(psEllipse->origin.y), psDGN->abyElem + 64, 8 );
+              DGN2IEEEDouble( &(psEllipse->origin.y) );
+          }
+          else
+          {
+              /* leave quaternion for later */
+
+              memcpy( &(psEllipse->origin.x), psDGN->abyElem + 68, 8 );
+              DGN2IEEEDouble( &(psEllipse->origin.x) );
+              
+              memcpy( &(psEllipse->origin.y), psDGN->abyElem + 76, 8 );
+              DGN2IEEEDouble( &(psEllipse->origin.y) );
+              
+              memcpy( &(psEllipse->origin.z), psDGN->abyElem + 84, 8 );
+              DGN2IEEEDouble( &(psEllipse->origin.z) );
+          }
 
           DGNTransformPoint( psDGN, &(psEllipse->origin) );
 
@@ -367,9 +405,12 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
       case DGNT_TEXT:
       {
           DGNElemText *psText;
-          int	      num_chars;
+          int	      num_chars, text_off;
 
-          num_chars = psDGN->abyElem[58];
+          if( psDGN->dimension == 2 )
+              num_chars = psDGN->abyElem[58];
+          else
+              num_chars = psDGN->abyElem[74];
 
           psText = (DGNElemText *) CPLCalloc(sizeof(DGNElemText)+num_chars,1);
           psElement = (DGNElemCore *) psText;
@@ -383,21 +424,35 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
           psText->height_mult = (DGN_INT32( psDGN->abyElem + 42 ))
               * psDGN->scale * 6.0 / 1000.0;
 
-          psText->rotation = DGN_INT32( psDGN->abyElem + 46 );
-          psText->rotation = psText->rotation / 360000.0;
+          if( psDGN->dimension == 2 )
+          {
+              psText->rotation = DGN_INT32( psDGN->abyElem + 46 );
+              psText->rotation = psText->rotation / 360000.0;
 
-          psText->origin.x = DGN_INT32( psDGN->abyElem + 50 );
-          psText->origin.y = DGN_INT32( psDGN->abyElem + 54 );
+              psText->origin.x = DGN_INT32( psDGN->abyElem + 50 );
+              psText->origin.y = DGN_INT32( psDGN->abyElem + 54 );
+              text_off = 60;
+          }
+          else
+          {
+              /* leave quaternion for later */
+
+              psText->origin.x = DGN_INT32( psDGN->abyElem + 62 );
+              psText->origin.y = DGN_INT32( psDGN->abyElem + 66 );
+              psText->origin.z = DGN_INT32( psDGN->abyElem + 70 );
+              text_off = 76;
+          }
+
           DGNTransformPoint( psDGN, &(psText->origin) );
 
           /* experimental multibyte support from Ason Kang (hiska@netian.com)*/
-          if (*(psDGN->abyElem + 60) == 0xFF 
-              && *(psDGN->abyElem + 61) == 0xFD) 
+          if (*(psDGN->abyElem + text_off) == 0xFF 
+              && *(psDGN->abyElem + text_off + 1) == 0xFD) 
           {
               int n=0;
               for (int i=0;i<num_chars/2-1;i++) {
                   unsigned short w;
-                  memcpy(&w,psDGN->abyElem + 62 + i*2 ,2);
+                  memcpy(&w,psDGN->abyElem + text_off + 2 + i*2 ,2);
                   w = CPL_LSBWORD16(w);
                   if (w<256) { // if alpa-numeric code area : Normal character 
                       *(psText->string + n)     = w & 0xFF; 
@@ -413,7 +468,7 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
           }
           else
           {
-              memcpy( psText->string, psDGN->abyElem + 60, num_chars );
+              memcpy( psText->string, psDGN->abyElem + text_off, num_chars );
               psText->string[num_chars] = '\0';
           }
       }
