@@ -1,11 +1,14 @@
 
 # Location to install .exe, .dll and python stuff
+# Edit as required. GDAL_HOME is used for convenience here,
+# but this particular relative organization is not mandatory.
 
-BINDIR = D:\bin
-PY_INST_DIR = D:\bin\pymod
-LIBDIR = D:\bin\lib
-INCDIR = D:\bin\include
-DATADIR = D:\bin\data
+GDAL_HOME = "D:\Program Files\GDAL"
+BINDIR = $(GDAL_HOME)\bin
+PY_INST_DIR = $(GDAL_HOME)\pymod
+LIBDIR = $(GDAL_HOME)\lib
+INCDIR = $(GDAL_HOME)\include
+DATADIR = $(GDAL_HOME)\data
 
 # Set this to the installed directory containing python.  If you don't
 # have python just let it point to a directory that does not exist (as now). 
@@ -82,6 +85,10 @@ JPEG_SUPPORTED = 1
 
 # Uncomment the following and update to enable FME support.
 #FME_DIR =	d:\Software\fme
+
+# Uncomment the following to enable FITS format support
+#FITS_DIR =	"D:\Users\154712\My Documents\Visual Studio Projects\cfitsio"
+#FITS_LIB =	$(FITS_DIR)\cfitsio.lib
 
 !IFDEF ORACLE_HOME
 OCI_LIB =	$(ORACLE_HOME)\oci\lib\msvc\ociw32.lib \
