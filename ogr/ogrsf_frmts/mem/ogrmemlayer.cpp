@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/02/02 20:12:41  fwarmerdam
+ * added SetNextByIndex support
+ *
  * Revision 1.3  2003/10/09 15:30:23  warmerda
  * added OGRLayer::DeleteFeature() support
  *
@@ -76,6 +79,13 @@ OGRMemLayer::OGRMemLayer( const char * pszName, OGRSpatialReference *poSRSIn,
 OGRMemLayer::~OGRMemLayer()
 
 {
+    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    {
+        CPLDebug( "Mem", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  poFeatureDefn->GetName() );
+    }
+
     for( int i = 0; i < nMaxFeatureCount; i++ )
     {
         if( papoFeatures[i] != NULL )
@@ -137,10 +147,31 @@ OGRFeature *OGRMemLayer::GetNextFeature()
             || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
+        {
+            m_nFeaturesRead++;
             return poFeature->Clone();
+        }
     }
 
     return NULL;
+}
+
+/************************************************************************/
+/*                           SetNextByIndex()                           */
+/*                                                                      */
+/*      If we already have an FID list, we can easily resposition       */
+/*      ourselves in it.                                                */
+/************************************************************************/
+
+OGRErr OGRMemLayer::SetNextByIndex( long nIndex )
+
+{
+    if( poFilterGeom != NULL || m_poAttrQuery != NULL )
+        return OGRLayer::SetNextByIndex( nIndex );
+
+    iNextReadFID = nIndex;
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -304,6 +335,9 @@ int OGRMemLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCCreateField) )
         return TRUE;
+
+    else if( EQUAL(pszCap,OLCFastSetNextByIndex) )
+        return poFilterGeom != NULL && m_poAttrQuery == NULL;
 
     else 
         return FALSE;
