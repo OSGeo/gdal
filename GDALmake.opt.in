@@ -90,6 +90,13 @@ PG_INC	=	@PG_INC@
 HAVE_XERCES    = @HAVE_XERCES@
 XERCES_INCLUDE	=	@XERCES_INCLUDE@
 
+#
+# FMEObjects
+#
+HAVE_FME        =       no
+FME_INCLUDE	=	
+
+
 OGDI_INCLUDE	=	@OGDI_INCLUDE@
 
 
@@ -116,7 +123,7 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/ogr/ogr_srs_proj4.o
 
 ifeq ($(OGR_ENABLED),yes)
-GDAL_LIBS := $(OGRFRMTS_LIB) $(PG_LIB) $(GDAL_LIBS) 
+GDAL_LIBS := $(OGRFRMTS_LIB) $(PG_LIB) $(GDAL_LIBS)
 GDALA_DEP := $(GDALA_DEP) $(OGRFRMTS_LIB)
 
 GDAL_OBJ := $(GDAL_OBJ) $(GDAL_ROOT)/ogr/ogrsf_frmts/generic/ogrregisterall.o \
