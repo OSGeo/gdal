@@ -3,10 +3,10 @@
  *
  * Project:  GDAL Core
  * Purpose:  Base class for raster file formats.  
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 1998, 2000, Frank Warmerdam
+ * Copyright (c) 1998, 2003, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2003/04/25 19:49:51  warmerda
+ * first crack at RasterIO implementation
+ *
  * Revision 1.35  2003/03/18 05:58:52  warmerda
  * Added GDALFlushCache().
  *
@@ -106,25 +109,6 @@
  *
  * Revision 1.10  2000/02/28 16:34:49  warmerda
  * set the nRasterX/YSize in bands
- *
- * Revision 1.9  1999/11/11 21:59:07  warmerda
- * added GetDriver() for datasets
- *
- * Revision 1.8  1999/10/01 14:44:02  warmerda
- * added documentation
- *
- * Revision 1.7  1999/05/17 01:43:10  warmerda
- * fixed GDALSetGeoTransform()
- *
- * Revision 1.6  1999/05/16 20:04:58  warmerda
- * Don't emit an error message when SetProjection() is called for datasets
- * that don't implement the call.
- *
- * Revision 1.5  1999/04/21 04:16:51  warmerda
- * experimental docs
- *
- * Revision 1.4  1999/01/11 15:37:55  warmerda
- * fixed log keyword
  */
 
 #include "gdal_priv.h"
@@ -1086,6 +1070,247 @@ CPLErr GDALDataset::IBuildOverviews( const char *pszResampling,
     }
 }
 
+/************************************************************************/
+/*                             IRasterIO()                              */
+/*                                                                      */
+/*      The default implementation of IRasterIO() is to pass the        */
+/*      request off to each band objects rasterio methods with          */
+/*      appropriate arguments.                                          */
+/************************************************************************/
+
+CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType, 
+                               int nBandCount, int *panBandMap,
+                               int nPixelSpace, int nLineSpace, int nBandSpace)
+    
+{
+    int iBandIndex; 
+    CPLErr eErr = CE_None;
+
+    for( iBandIndex = 0; 
+         iBandIndex < nBandCount && eErr == CE_None; 
+         iBandIndex++ )
+    {
+        GDALRasterBand *poBand = GetRasterBand(panBandMap[iBandIndex]);
+        GByte *pabyBandData;
+
+        pabyBandData = ((GByte *) pData) + iBandIndex * nBandSpace;
+        
+        eErr = poBand->IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                                  (void *) pabyBandData, nBufXSize, nBufYSize,
+                                  eBufType, nPixelSpace, nLineSpace );
+    }
+
+    return eErr;
+}
+
+
+/************************************************************************/
+/*                              RasterIO()                              */
+/************************************************************************/
+
+/**
+ * Read/write a region of image data from multiple bands.
+ *
+ * This method allows reading a region of one or more GDALRasterBands from
+ * this dataset into a buffer,  or writing data from a buffer into a region 
+ * of the GDALRasterBands.  It
+ * automatically takes care of data type translation if the data type
+ * (eBufType) of the buffer is different than that of the GDALRasterBand.
+ * The method also takes care of image decimation / replication if the
+ * buffer size (nBufXSize x nBufYSize) is different than the size of the
+ * region being accessed (nXSize x nYSize).
+ *
+ * The nPixelSpace, nLineSpace and nBandSpace parameters allow reading into or
+ * writing from various organization of buffers. 
+ *
+ * For highest performance full resolution data access, read and write
+ * on "block boundaries" as returned by GetBlockSize(), or use the
+ * ReadBlock() and WriteBlock() methods.
+ *
+ * This method is the same as the C GDALDatasetRasterIO() function.
+ *
+ * @param eRWFlag Either GF_Read to read a region of data, or GT_Write to
+ * write a region of data.
+ *
+ * @param nXOff The pixel offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the left side.
+ *
+ * @param nYOff The line offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the top.
+ *
+ * @param nXSize The width of the region of the band to be accessed in pixels.
+ *
+ * @param nYSize The height of the region of the band to be accessed in lines.
+ *
+ * @param pData The buffer into which the data should be read, or from which
+ * it should be written.  This buffer must contain at least nBufXSize *
+ * nBufYSize words of type eBufType.  It is organized in left to right,
+ * top to bottom pixel order.  Spacing is controlled by the nPixelSpace,
+ * and nLineSpace parameters.
+ *
+ * @param nBufXSize the width of the buffer image into which the desired region is
+ * to be read, or from which it is to be written.
+ *
+ * @param nBufYSize the height of the buffer image into which the desired region is
+ * to be read, or from which it is to be written.
+ *
+ * @param eBufType the type of the pixel values in the pData data buffer.  The
+ * pixel values will automatically be translated to/from the GDALRasterBand
+ * data type as needed.
+ *
+ * @param nBandCount the number of bands being read or written. 
+ *
+ * @param panBandMap the list of nBandCount band numbers being read/written.
+ * Note band numbers are 1 based.   This may be NULL to select the first 
+ * nBandCount bands.
+ *
+ * @param nPixelSpace The byte offset from the start of one pixel value in
+ * pData to the start of the next pixel value within a scanline.  If defaulted
+ * (0) the size of the datatype eBufType is used.
+ *
+ * @param nLineSpace The byte offset from the start of one scanline in
+ * pData to the start of the next.  If defaulted the size of the datatype
+ * eBufType * nBufXSize is used.
+ *
+ * @param nBandSpace the byte offset from the start of one bands data to the
+ * start of the next.  If defaulted (zero) the value will be 
+ * nLineSpace * nBufYSize implying band sequential organization
+ * of the data buffer. 
+ *
+ * @return CE_Failure if the access fails, otherwise CE_None.
+ */
+
+CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
+                              int nXOff, int nYOff, int nXSize, int nYSize,
+                              void * pData, int nBufXSize, int nBufYSize,
+                              GDALDataType eBufType, 
+                              int nBandCount, int *panBandMap,
+                              int nPixelSpace, int nLineSpace, int nBandSpace )
+
+{
+    int i;
+    int bNeedToFreeBandMap = FALSE;
+    CPLErr eErr = CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      If pixel and line spaceing are defaulted assign reasonable      */
+/*      value assuming a packed buffer.                                 */
+/* -------------------------------------------------------------------- */
+    if( nPixelSpace == 0 )
+        nPixelSpace = GDALGetDataTypeSize( eBufType ) / 8;
+    
+    if( nLineSpace == 0 )
+        nLineSpace = nPixelSpace * nBufXSize;
+    
+    if( nBandSpace == 0 )
+        nBandSpace = nLineSpace * nBufYSize;
+
+    if( panBandMap == NULL )
+    {
+        panBandMap = (int *) CPLMalloc(sizeof(int) * nBandCount);
+        for( i = 0; i < nBandCount; i++ )
+            panBandMap[i] = i+1;
+
+        bNeedToFreeBandMap = TRUE;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Do some validation of parameters.                               */
+/* -------------------------------------------------------------------- */
+    if( nXOff < 0 || nXOff + nXSize > nRasterXSize
+        || nYOff < 0 || nYOff + nYSize > nRasterYSize )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg,
+                  "Access window out of range in RasterIO().  Requested\n"
+                  "(%d,%d) of size %dx%d on raster of %dx%d.",
+                  nXOff, nYOff, nXSize, nYSize, nRasterXSize, nRasterYSize );
+        eErr = CE_Failure;
+    }
+
+    if( eRWFlag != GF_Read && eRWFlag != GF_Write )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg,
+                  "eRWFlag = %d, only GF_Read (0) and GF_Write (1) are legal.",
+                  eRWFlag );
+        eErr = CE_Failure;
+    }
+
+    for( i = 0; i < nBandCount && eErr == CE_None; i++ )
+    {
+        if( panBandMap[i] < 1 || panBandMap[i] > GetRasterCount() )
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg, 
+                      "panBandMap[%d] = %d, this band does not exist on dataset.",
+                      i, panBandMap[i] );
+            eErr = CE_Failure;
+        }
+
+        if( eErr == CE_None && GetRasterBand( panBandMap[i] ) == NULL )
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg, 
+                      "panBandMap[%d]=%d, this band should exist but is NULL!",
+                      i, panBandMap[i] );
+            eErr = CE_Failure;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Some size values are "noop".  Lets just return to avoid         */
+/*      stressing lower level functions.                                */
+/* -------------------------------------------------------------------- */
+    if( nXSize < 1 || nYSize < 1 || nBufXSize < 1 || nBufYSize < 1 )
+    {
+        CPLDebug( "GDAL", 
+                  "RasterIO() skipped for odd window or buffer size.\n"
+                  "  Window = (%d,%d)x%dx%d\n"
+                  "  Buffer = %dx%d\n",
+                  nXOff, nYOff, nXSize, nYSize, 
+                  nBufXSize, nBufYSize );
+    }
+/* -------------------------------------------------------------------- */
+/*      Call the format specific function.                              */
+/* -------------------------------------------------------------------- */
+    else if( eErr == CE_None )
+    {
+        eErr = 
+            IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                       pData, nBufXSize, nBufYSize, eBufType,
+                       nBandCount, panBandMap,
+                       nPixelSpace, nLineSpace, nBandSpace );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    if( bNeedToFreeBandMap )
+        CPLFree( panBandMap );
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                        GDALDatasetRasterIO()                         */
+/************************************************************************/
+
+CPLErr GDALDatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
+                            int nXOff, int nYOff, int nXSize, int nYSize,
+                            void * pData, int nBufXSize, int nBufYSize,
+                            GDALDataType eBufType,
+                            int nBandCount, int *panBandMap,
+                            int nPixelSpace, int nLineSpace, int nBandSpace )
+
+{
+    GDALDataset    *poDS = (GDALDataset *) hDS;
+    
+    return( poDS->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                            pData, nBufXSize, nBufYSize, eBufType,
+                            nBandCount, panBandMap, 
+                            nPixelSpace, nLineSpace, nBandSpace ) );
+}
+                     
 /************************************************************************/
 /*                          GetOpenDatasets()                           */
 /************************************************************************/
