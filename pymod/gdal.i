@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2000/10/30 14:15:15  warmerda
+ * Fixed nodata function name.
+ *
  * Revision 1.21  2000/10/20 04:20:59  warmerda
  * added SetStatePlane
  *
@@ -877,10 +880,10 @@ py_GDALGetDescription(PyObject *self, PyObject *args) {
 
 %{
 /************************************************************************/
-/*                         GDALGetNoDataValue()                         */
+/*                         GDALGetRasterNoDataValue()                   */
 /************************************************************************/
 static PyObject *
-py_GDALGetNoDataValue(PyObject *self, PyObject *args) {
+py_GDALGetRasterNoDataValue(PyObject *self, PyObject *args) {
 
     GDALRasterBandH  hObject;
     char *_argc0 = NULL;
@@ -902,7 +905,7 @@ py_GDALGetNoDataValue(PyObject *self, PyObject *args) {
 }
 %}
 
-%native(GDALGetNoDataValue) py_GDALGetNoDataValue;
+%native(GDALGetRasterNoDataValue) py_GDALGetRasterNoDataValue;
 
 /* -------------------------------------------------------------------- */
 /*      OGRSpatialReference stuff.                                      */
