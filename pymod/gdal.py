@@ -29,6 +29,10 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.45  2003/03/25 19:48:04  warmerda
+# Don't throw an exception from GetGeoTransform() on failure, just return
+# the default transform.
+#
 # Revision 1.44  2003/03/25 05:58:37  warmerda
 # add better pointer and stringlist support
 #
@@ -328,7 +332,7 @@ class Dataset(MajorObject):
 
     def GetGeoTransform(self):
         c_transform = _gdal.ptrcreate('double',0,6)
-        err = _gdal.GDALGetGeoTransform(self._o, c_transform)
+        _gdal.GDALGetGeoTransform(self._o, c_transform)
         transform = ( _gdal.ptrvalue(c_transform,0),
                       _gdal.ptrvalue(c_transform,1),
                       _gdal.ptrvalue(c_transform,2),
@@ -337,9 +341,6 @@ class Dataset(MajorObject):
                       _gdal.ptrvalue(c_transform,5) )
         _gdal.ptrfree( c_transform )
 
-        if err != 0:
-            raise ValueError, 'GetGeoTransform() failed:' + GetLastErrorMsg()
-        
         return transform
 
     def SetGeoTransform(self,transform):
