@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2002/09/04 14:25:06  warmerda
+ * fixed typo
+ *
  * Revision 1.28  2002/09/04 14:13:07  warmerda
  * added SetRestriction() method on SFSess to fix restriction support
  *
@@ -219,6 +222,7 @@ public:
                 rgRestrictions[0] = 0x00000008;
             }
             else if( InlineIsEqualGUID(*rguidSchema,
+                                       DBSCHEMA_OGIS_GEOMETRY_COLUMNS) )
             {
                 CPLDebug( "OGR_OLEDB",
                           "SetRestrictions() called on DBSCHEMA_OGIS_GEOMETRY_COLUMNS" );
