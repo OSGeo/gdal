@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_jpeg.c,v 1.12 2002/10/07 00:17:52 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_jpeg.c,v 1.13 2003/02/03 06:35:06 warmerda Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -98,6 +98,8 @@ typedef	struct {
 		struct jpeg_decompress_struct d;
 		struct jpeg_common_struct comm;
 	} cinfo;			/* NB: must be first */
+        int             cinfo_initialized;
+
 	jpeg_error_mgr	err;		/* libjpeg error manager */
 	JMP_BUF		exit_jmpbuf;	/* for catching libjpeg failures */
 	/*
@@ -137,6 +139,7 @@ static	int JPEGDecode(TIFF*, tidata_t, tsize_t, tsample_t);
 static	int JPEGDecodeRaw(TIFF*, tidata_t, tsize_t, tsample_t);
 static	int JPEGEncode(TIFF*, tidata_t, tsize_t, tsample_t);
 static	int JPEGEncodeRaw(TIFF*, tidata_t, tsize_t, tsample_t);
+static  int JPEGInitializeLibJPEG( TIFF * tif );
 
 #define	FIELD_JPEGTABLES	(FIELD_CODEC+0)
 
@@ -588,6 +591,8 @@ JPEGSetupDecode(TIFF* tif)
 	JPEGState* sp = JState(tif);
 	TIFFDirectory *td = &tif->tif_dir;
 
+        JPEGInitializeLibJPEG( tif );
+
 	assert(sp != NULL);
 	assert(sp->cinfo.comm.is_decompressor);
 
@@ -907,6 +912,8 @@ prepare_JPEGTables(TIFF* tif)
 {
 	JPEGState* sp = JState(tif);
 
+        JPEGInitializeLibJPEG( tif );
+
 	/* Initialize quant tables for current quality setting */
 	if (!TIFFjpeg_set_quality(sp, sp->jpegquality, FALSE))
 		return (0);
@@ -940,6 +947,8 @@ JPEGSetupEncode(TIFF* tif)
 	JPEGState* sp = JState(tif);
 	TIFFDirectory *td = &tif->tif_dir;
 	static const char module[] = "JPEGSetupEncode";
+
+        JPEGInitializeLibJPEG( tif );
 
 	assert(sp != NULL);
 	assert(!sp->cinfo.comm.is_decompressor);
@@ -1317,7 +1326,8 @@ JPEGCleanup(TIFF* tif)
 {
 	if (tif->tif_data) {
 		JPEGState *sp = JState(tif);
-		TIFFjpeg_destroy(sp);		/* release libjpeg resources */
+                if( sp->cinfo_initialized )
+                    TIFFjpeg_destroy(sp);	/* release libjpeg resources */
 		if (sp->jpegtables)		/* tag value */
 			_TIFFfree(sp->jpegtables);
 		_TIFFfree(tif->tif_data);	/* release local state */
@@ -1422,6 +1432,8 @@ JPEGFixupTestSubsampling( TIFF * tif )
     JPEGState *sp = JState(tif);
     TIFFDirectory *td = &tif->tif_dir;
 
+    JPEGInitializeLibJPEG( tif );
+
     /*
      * Some JPEG-in-TIFF files don't provide the ycbcrsampling tags, 
      * and use a sampling schema other than the default 2,2.  To handle
@@ -1515,6 +1527,72 @@ JPEGDefaultTileSize(TIFF* tif, uint32* tw, uint32* th)
 	*th = TIFFroundup(*th, td->td_ycbcrsubsampling[1] * DCTSIZE);
 }
 
+/*
+ * The JPEG library initialized used to be done in TIFFInitJPEG(), but
+ * now that we allow a TIFF file to be opened in update mode it is necessary
+ * to have some way of deciding whether compression or decompression is
+ * desired other than looking at tif->tif_mode.  We accomplish this by 
+ * examining {TILE/STRIP}BYTECOUNTS to see if there is a non-zero entry.
+ * If so, we assume decompression is desired. 
+ *
+ * This is tricky, because TIFFInitJPEG() is called while the directory is
+ * being read, and generally speaking the BYTECOUNTS tag won't have been read
+ * at that point.  So we try to defer jpeg library initialization till we
+ * do have that tag ... basically any access that might require the compressor
+ * or decompressor that occurs after the reading of the directory. 
+ *
+ * In an ideal world compressors or decompressors would be setup
+ * at the point where a single tile or strip was accessed (for read or write)
+ * so that stuff like update of missing tiles, or replacement of tiles could
+ * be done. However, we aren't trying to crack that nut just yet ...
+ *
+ * NFW, Feb 3rd, 2003.
+ */
+
+static int JPEGInitializeLibJPEG( TIFF * tif )
+{
+    JPEGState* sp = JState(tif);
+    uint32 *byte_counts = NULL;
+    int     data_is_empty = TRUE;
+
+    if( sp->cinfo_initialized )
+        return 1;
+
+    /*
+     * Do we have tile data already?  Make sure we initialize the
+     * the state in decompressor mode if we have tile data, even if we
+     * are not in read-only file access mode. 
+     */
+    if( TIFFIsTiled( tif ) 
+        && TIFFGetField( tif, TIFFTAG_TILEBYTECOUNTS, &byte_counts ) 
+        && byte_counts != NULL )
+    {
+        data_is_empty = byte_counts[0] == 0;
+    }
+    if( !TIFFIsTiled( tif ) 
+        && TIFFGetField( tif, TIFFTAG_STRIPBYTECOUNTS, &byte_counts) 
+        && byte_counts != NULL )
+    {
+        data_is_empty = byte_counts[0] == 0;
+    }
+
+    /*
+     * Initialize libjpeg.
+     */
+    if (tif->tif_mode == O_RDONLY || !data_is_empty ) {
+        if (!TIFFjpeg_create_decompress(sp))
+            return (0);
+
+    } else {
+        if (!TIFFjpeg_create_compress(sp))
+            return (0);
+    }
+
+    sp->cinfo_initialized = TRUE;
+
+    return 1;
+}
+
 int
 TIFFInitJPEG(TIFF* tif, int scheme)
 {
@@ -1526,10 +1604,13 @@ TIFFInitJPEG(TIFF* tif, int scheme)
 	 * Allocate state block so tag methods have storage to record values.
 	 */
 	tif->tif_data = (tidata_t) _TIFFmalloc(sizeof (JPEGState));
+
 	if (tif->tif_data == NULL) {
 		TIFFError("TIFFInitJPEG", "No space for JPEG state block");
 		return (0);
 	}
+        memset( tif->tif_data, 0, sizeof(JPEGState));
+
 	sp = JState(tif);
 	sp->tif = tif;				/* back link */
 
@@ -1574,22 +1655,13 @@ TIFFInitJPEG(TIFF* tif, int scheme)
 	tif->tif_deftilesize = JPEGDefaultTileSize;
 	tif->tif_flags |= TIFF_NOBITREV;	/* no bit reversal, please */
 
-	/*
-	 * Initialize libjpeg.
-	 */
-	if (tif->tif_mode == O_RDONLY) {
-		if (!TIFFjpeg_create_decompress(sp))
-			return (0);
+        sp->cinfo_initialized = FALSE;
 
-                /*
-                 * Mark the TIFFTAG_YCBCRSAMPLES as present even if it is not
-                 * see: JPEGFixupTestSubsampling().
-                 */
-                TIFFSetFieldBit( tif, FIELD_YCBCRSUBSAMPLING );
-	} else {
-		if (!TIFFjpeg_create_compress(sp))
-			return (0);
-	}
+        /*
+         * Mark the TIFFTAG_YCBCRSAMPLES as present even if it is not
+         * see: JPEGFixupTestSubsampling().
+         */
+        TIFFSetFieldBit( tif, FIELD_YCBCRSUBSAMPLING );
 
 	return (1);
 }

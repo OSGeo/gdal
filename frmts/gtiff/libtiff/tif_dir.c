@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.c,v 1.26 2002/12/03 04:33:02 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.c,v 1.27 2003/02/26 20:38:49 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -342,6 +342,21 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		if (v < SAMPLEFORMAT_UINT || SAMPLEFORMAT_COMPLEXIEEEFP < v)
 			goto badvalue;
 		td->td_sampleformat = (uint16) v;
+
+                /*  Try to fix up the SWAB function for complex data. */
+                if( td->td_sampleformat == SAMPLEFORMAT_COMPLEXINT 
+                    && td->td_bitspersample == 32
+                    && tif->tif_postdecode == _TIFFSwab32BitData )
+                    tif->tif_postdecode = _TIFFSwab16BitData;
+                else if( (td->td_sampleformat == SAMPLEFORMAT_COMPLEXINT 
+                          || td->td_sampleformat == SAMPLEFORMAT_COMPLEXIEEEFP)
+                         && td->td_bitspersample == 64
+                         && tif->tif_postdecode == _TIFFSwab64BitData )
+                    tif->tif_postdecode = _TIFFSwab32BitData;
+                else if( td->td_sampleformat == SAMPLEFORMAT_COMPLEXIEEEFP
+                         && td->td_bitspersample == 128
+                         && tif->tif_postdecode == NULL )
+                    tif->tif_postdecode = _TIFFSwab64BitData;
 		break;
 	case TIFFTAG_IMAGEDEPTH:
 		td->td_imagedepth = va_arg(ap, uint32);
