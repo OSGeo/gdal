@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/02/14 18:44:29  warmerda
+ * proper tokens may include a dash
+ *
  * Revision 1.16  2002/11/16 20:42:40  warmerda
  * improved inline comments
  *
@@ -402,6 +405,7 @@ static TokenType ReadToken( ParseContext *psContext )
         for( chNext = ReadChar(psContext); 
              (chNext >= 'A' && chNext <= 'Z')
                  || (chNext >= 'a' && chNext <= 'z')
+                 || chNext == '-'
                  || chNext == '_'
                  || chNext == '.'
                  || chNext == ':'
