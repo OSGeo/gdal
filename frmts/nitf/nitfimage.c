@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2004/04/30 17:38:28  warmerda
+ * clean up metadata
+ *
  * Revision 1.25  2004/04/16 15:26:04  warmerda
  * completed metadata support
  *
@@ -113,6 +116,7 @@
 #include "mgrs.h"
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -766,6 +770,7 @@ void NITFImageDeaccess( NITFImage *psImage )
     CPLFree( psImage->panBlockStart );
     CPLFree( psImage->pszComments );
     CPLFree( psImage->pachHeader );
+    CSLDestroy( psImage->papszMetadata );
 
     CPLFree( psImage );
 }

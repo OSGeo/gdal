@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/04/30 17:38:28  warmerda
+ * clean up metadata
+ *
  * Revision 1.17  2004/04/28 16:43:23  warmerda
  * added simplified geocentric to geodetic cvonersion
  *
@@ -350,6 +353,7 @@ void NITFClose( NITFFile *psFile )
     if( psFile->fp != NULL )
         VSIFClose( psFile->fp );
     CPLFree( psFile->pachHeader );
+    CSLDestroy( psFile->papszMetadata );
     CPLFree( psFile );
 }
 
