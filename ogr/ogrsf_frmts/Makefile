@@ -1,13 +1,18 @@
 GDAL_ROOT	=	..\..
 
 DIRLIST		=	generic shape ntf sdts tiger s57 dgn mitab gml avc \
-			$(OGDIDIR) $(FMEDIR)
+			$(OGDIDIR) $(FMEDIR) $(OCIDIR)
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 !IFDEF OGDIDIR
 OGDIDIR	=	ogdi
 OGDIOBJ =	ogdi\*.obj
+!ENDIF
+
+!IFDEF OCI_LIB
+OCIDIR	=	oci
+OCIOBJ =	oci\*.obj
 !ENDIF
 
 !IFDEF FME_DIR
@@ -21,7 +26,7 @@ default:
 	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj \
 				 sdts\*.obj s57\*.obj tiger\*.obj gml\*.obj \
 				 mitab\*.obj dgn\*.obj avc\*.obj $(OGDIOBJ) \
-				$(FMEOBJ)
+				$(FMEOBJ) $(OCIOBJ)
 	lib /out:ogrsf_frmts_sup.lib \
 				 ..\..\frmts\iso8211\*.obj \
 				 ..\..\frmts\sdts\sdtsattrreader.obj \
