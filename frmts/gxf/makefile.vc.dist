@@ -1,0 +1,14 @@
+
+OBJ =	gxfopen.obj gxf_proj4.obj gxf_ogcwkt.obj \
+	\
+	cpl_error.obj cpl_vsisimple.obj cpl_string.obj cpl_conv.obj
+
+default:	gxftest.exe
+
+gxf3.lib:	$(OBJ)
+	lib /out:gxf3.lib $(OBJ)
+
+gxftest.exe:	gxftest.c gxf3.lib
+	$(CC) $(CFLAGS) gxftest.c gxf3.lib
+
+
