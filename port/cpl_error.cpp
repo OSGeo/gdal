@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/03/31 14:37:48  warmerda
+ * only use vsnprintf where available
+ *
  * Revision 1.12  2000/03/31 14:11:55  warmerda
  * added CPLErrorV
  *
@@ -142,7 +145,11 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
 {
     /* Expand the error message 
      */
+#if defined(HAVE_VSNPRINTF)
     vsnprintf(gszCPLLastErrMsg, sizeof(gszCPLLastErrMsg), fmt, args);
+#else
+    vsprintf(gszCPLLastErrMsg, fmt, args);
+#endif
 
     /* If the user provided his own error handling function, then call
      * it, otherwise print the error to stderr and return.
