@@ -1,0 +1,2483 @@
+---------------------------------------------------------------------
+-- 1183CEL0.DDF
+---------------------------------------------------------------------
+DDFModule:
+    _recLength = 187
+    _interchangeLevel = 2
+    _leaderIden = L
+    _inlineCodeExtensionIndicator =  
+    _versionNumber =  
+    _appIndicator =  
+    _fieldControlLength = 6
+    _fieldAreaStart = 61
+    _sizeFieldLength = 2
+    _sizeFieldPos = 3
+    _sizeFieldTag = 4
+  DDFFieldDefn:
+      Tag = `0000'
+      _fieldName = `1183CEL0.DDF'
+      _arrayDescr = `'
+      _formatControls = `'
+      _data_struct_code = elementary
+      _data_type_code = char_string
+  DDFFieldDefn:
+      Tag = `0001'
+      _fieldName = `DDF RECORD IDENTIFIER'
+      _arrayDescr = `'
+      _formatControls = `'
+      _data_struct_code = elementary
+      _data_type_code = implicit_point
+  DDFFieldDefn:
+      Tag = `CELL'
+      _fieldName = `Cell'
+      _arrayDescr = `MODN!RCID!ROWI!COLI'
+      _formatControls = `(A,3I)'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `MODN'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `RCID'
+        FormatString = `I'
+    DDFSubfieldDefn:
+        Label = `ROWI'
+        FormatString = `I'
+    DDFSubfieldDefn:
+        Label = `COLI'
+        FormatString = `I'
+  DDFFieldDefn:
+      Tag = `CVLS'
+      _fieldName = `Cell Values'
+      _arrayDescr = `*ELEVATION'
+      _formatControls = `(B(16))'
+      _data_struct_code = array
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `ELEVATION'
+        FormatString = `B(16)'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 803
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `0^'
+  DDFField:
+      Tag = `CELL'
+      DataSize = 11
+      Data = `CEL0^1^1^1^'
+      Subfield `MODN' = `CEL0'
+      Subfield `RCID' = 1
+      Subfield `ROWI' = 1
+      Subfield `COLI' = 1
+  DDFField:
+      Tag = `CVLS'
+      DataSize = 759
+      Data = `^^^^^^^^^^^=^<^<^>^F^B^?^?^E^H^V^]^e^s^~...'
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = 1341
+      Subfield `ELEVATION' = 1340
+      Subfield `ELEVATION' = 1340
+      Subfield `ELEVATION' = 1342
+      ...
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 803
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `1^'
+  DDFField:
+      Tag = `CELL'
+      DataSize = 11
+      Data = `CEL0^2^2^1^'
+      Subfield `MODN' = `CEL0'
+      Subfield `RCID' = 2
+      Subfield `ROWI' = 2
+      Subfield `COLI' = 1
+  DDFField:
+      Tag = `CVLS'
+      DataSize = 759
+      Data = `^^^^^^^^^^^K^M^N^T^V^U^S^M^X^U^U^e^q^z^^...'
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = 1355
+      Subfield `ELEVATION' = 1357
+      Subfield `ELEVATION' = 1358
+      Subfield `ELEVATION' = 1364
+      ...
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 803
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `2^'
+  DDFField:
+      Tag = `CELL'
+      DataSize = 11
+      Data = `CEL0^3^3^1^'
+      Subfield `MODN' = `CEL0'
+      Subfield `RCID' = 3
+      Subfield `ROWI' = 3
+      Subfield `COLI' = 1
+  DDFField:
+      Tag = `CVLS'
+      DataSize = 759
+      Data = `^^^^^^^^^^^[^^^_^`^g^f^c^^^e^i^o^o^w^^^^...'
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = 1371
+      Subfield `ELEVATION' = 1374
+      Subfield `ELEVATION' = 1375
+      Subfield `ELEVATION' = 1376
+      ...
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 803
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `3^'
+  DDFField:
+      Tag = `CELL'
+      DataSize = 11
+      Data = `CEL0^4^4^1^'
+      Subfield `MODN' = `CEL0'
+      Subfield `RCID' = 4
+      Subfield `ROWI' = 4
+      Subfield `COLI' = 1
+  DDFField:
+      Tag = `CVLS'
+      DataSize = 759
+      Data = `^^^^^^^^^^^k^m^n^t^{^w^t^s^r^|^}^^^^^^^^...'
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = 1387
+      Subfield `ELEVATION' = 1389
+      Subfield `ELEVATION' = 1390
+      Subfield `ELEVATION' = 1396
+      ...
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 803
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `4^'
+  DDFField:
+      Tag = `CELL'
+      DataSize = 11
+      Data = `CEL0^5^5^1^'
+      Subfield `MODN' = `CEL0'
+      Subfield `RCID' = 5
+      Subfield `ROWI' = 5
+      Subfield `COLI' = 1
+  DDFField:
+      Tag = `CVLS'
+      DataSize = 759
+      Data = `^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...'
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = 1407
+      Subfield `ELEVATION' = 1409
+      Subfield `ELEVATION' = 1411
+      Subfield `ELEVATION' = 1415
+      Subfield `ELEVATION' = 1420
+      ...
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 803
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `5^'
+  DDFField:
+      Tag = `CELL'
+      DataSize = 11
+      Data = `CEL0^6^6^1^'
+      Subfield `MODN' = `CEL0'
+      Subfield `RCID' = 6
+      Subfield `ROWI' = 6
+      Subfield `COLI' = 1
+  DDFField:
+      Tag = `CVLS'
+      DataSize = 759
+      Data = `^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...'
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = 1425
+      Subfield `ELEVATION' = 1429
+      Subfield `ELEVATION' = 1433
+      Subfield `ELEVATION' = 1436
+      Subfield `ELEVATION' = 1439
+      ...
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 803
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `6^'
+  DDFField:
+      Tag = `CELL'
+      DataSize = 11
+      Data = `CEL0^7^7^1^'
+      Subfield `MODN' = `CEL0'
+      Subfield `RCID' = 7
+      Subfield `ROWI' = 7
+      Subfield `COLI' = 1
+  DDFField:
+      Tag = `CVLS'
+      DataSize = 759
+      Data = `^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...'
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = 1450
+      Subfield `ELEVATION' = 1453
+      Subfield `ELEVATION' = 1454
+      Subfield `ELEVATION' = 1457
+      Subfield `ELEVATION' = 1458
+      ...
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 803
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `7^'
+  DDFField:
+      Tag = `CELL'
+      DataSize = 11
+      Data = `CEL0^8^8^1^'
+      Subfield `MODN' = `CEL0'
+      Subfield `RCID' = 8
+      Subfield `ROWI' = 8
+      Subfield `COLI' = 1
+  DDFField:
+      Tag = `CVLS'
+      DataSize = 759
+      Data = `^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...'
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = 1470
+      Subfield `ELEVATION' = 1476
+      Subfield `ELEVATION' = 1480
+      Subfield `ELEVATION' = 1483
+      Subfield `ELEVATION' = 1486
+      ...
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 803
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `8^'
+  DDFField:
+      Tag = `CELL'
+      DataSize = 11
+      Data = `CEL0^9^9^1^'
+      Subfield `MODN' = `CEL0'
+      Subfield `RCID' = 9
+      Subfield `ROWI' = 9
+      Subfield `COLI' = 1
+  DDFField:
+      Tag = `CVLS'
+      DataSize = 759
+      Data = `^^^^^^^^^^^^^^^^^&^%^$^^^^^^^^^^^^^^^^^_...'
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = 1492
+      Subfield `ELEVATION' = 1496
+      Subfield `ELEVATION' = 1501
+      Subfield `ELEVATION' = 1546
+      Subfield `ELEVATION' = 1574
+      ...
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 805
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `9^'
+  DDFField:
+      Tag = `CELL'
+      DataSize = 13
+      Data = `CEL0^10^10^1^'
+      Subfield `MODN' = `CEL0'
+      Subfield `RCID' = 10
+      Subfield `ROWI' = 10
+      Subfield `COLI' = 1
+  DDFField:
+      Tag = `CVLS'
+      DataSize = 759
+      Data = `^^^^^^^^^^^^^&^^^^^^^^^^^^^^^^^^W^^^^^^...'
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = 1544
+      Subfield `ELEVATION' = 1555
+      Subfield `ELEVATION' = 1574
+      Subfield `ELEVATION' = 1672
+      Subfield `ELEVATION' = 1671
+      ...
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 806
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `10^'
+  DDFField:
+      Tag = `CELL'
+      DataSize = 13
+      Data = `CEL0^11^11^1^'
+      Subfield `MODN' = `CEL0'
+      Subfield `RCID' = 11
+      Subfield `ROWI' = 11
+      Subfield `COLI' = 1
+  DDFField:
+      Tag = `CVLS'
+      DataSize = 759
+      Data = `^^^^^^^^^(^^^^^^^^^^^^^^W^^^^^^^^^^^^^^...'
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = 1576
+      Subfield `ELEVATION' = 1663
+      Subfield `ELEVATION' = 1683
+      Subfield `ELEVATION' = 1691
+      Subfield `ELEVATION' = 1695
+      ...
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 806
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `11^'
+  DDFField:
+      Tag = `CELL'
+      DataSize = 13
+      Data = `CEL0^12^12^1^'
+      Subfield `MODN' = `CEL0'
+      Subfield `RCID' = 12
+      Subfield `ROWI' = 12
+      Subfield `COLI' = 1
+  DDFField:
+      Tag = `CVLS'
+      DataSize = 759
+      Data = `^^^^^^^^^{^^^^^^^^^^^^^^^_^^^^^^^^^^^^^^...'
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = 1659
+      Subfield `ELEVATION' = 1685
+      Subfield `ELEVATION' = 1690
+      Subfield `ELEVATION' = 1695
+      Subfield `ELEVATION' = 1697
+      ...
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 806
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `12^'
+  DDFField:
+      Tag = `CELL'
+      DataSize = 13
+      Data = `CEL0^13^13^1^'
+      Subfield `MODN' = `CEL0'
+      Subfield `RCID' = 13
+      Subfield `ROWI' = 13
+      Subfield `COLI' = 1
+  DDFField:
+      Tag = `CVLS'
+      DataSize = 759
+      Data = `^^^^^^^^^%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...'
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = 1573
+      Subfield `ELEVATION' = 1676
+      Subfield `ELEVATION' = 1686
+      Subfield `ELEVATION' = 1690
+      Subfield `ELEVATION' = 1693
+      ...
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 806
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `13^'
+  DDFField:
+      Tag = `CELL'
+      DataSize = 13
+      Data = `CEL0^14^14^1^'
+      Subfield `MODN' = `CEL0'
+      Subfield `RCID' = 14
+      Subfield `ROWI' = 14
+      Subfield `COLI' = 1
+  DDFField:
+      Tag = `CVLS'
+      DataSize = 759
+      Data = `^^^^^^^^^$^0^^^^^^^^^^^^^^^^^^^^^^^^^^^^...'
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = 1572
+      Subfield `ELEVATION' = 1584
+      Subfield `ELEVATION' = 1683
+      Subfield `ELEVATION' = 1687
+      Subfield `ELEVATION' = 1692
+      ...
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 806
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `14^'
+  DDFField:
+      Tag = `CELL'
+      DataSize = 13
+      Data = `CEL0^15^15^1^'
+      Subfield `MODN' = `CEL0'
+      Subfield `RCID' = 15
+      Subfield `ROWI' = 15
+      Subfield `COLI' = 1
+  DDFField:
+      Tag = `CVLS'
+      DataSize = 759
+      Data = `^^^^^^^^^$^%^^^^^^^^^^^^^^^^^^^^^^^^^^^^...'
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = -32766
+      Subfield `ELEVATION' = 1572
+      Subfield `ELEVATION' = 1573
+      Subfield `ELEVATION' = 1671
+      Subfield `ELEVATION' = 1684
+      Subfield `ELEVATION' = 1687
+      ...
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 806
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `15^'
+  DDFField:
+      Tag = `CELL'
+      DataSize = 13
+---------------------------------------------------------------------
+-- CA49995B.000
+---------------------------------------------------------------------
+DDFModule:
+    _recLength = 2048
+    _interchangeLevel = 3
+    _leaderIden = L
+    _inlineCodeExtensionIndicator = E
+    _versionNumber = 1
+    _appIndicator =  
+    _fieldControlLength = 9
+    _fieldAreaStart = 345
+    _sizeFieldLength = 6
+    _sizeFieldPos = 6
+    _sizeFieldTag = 4
+  DDFFieldDefn:
+      Tag = `0000'
+      _fieldName = `'
+      _arrayDescr = `0001DSIDDSIDDSSI0001DSPM0001FRIDFRIDFOIDFRIDATTFFRIDNATFFRIDFFPCFRIDFFPTFRIDFSPCFRIDFSPT0001VRIDVRIDATTVVRIDVRPCVRIDVRPTVRIDSGCCVRIDSG2DVRIDSG3D'
+      _formatControls = `'
+      _data_struct_code = elementary
+      _data_type_code = char_string
+  DDFFieldDefn:
+      Tag = `0001'
+      _fieldName = `ISO 8211 Record Identifier'
+      _arrayDescr = `'
+      _formatControls = `(b12)'
+      _data_struct_code = elementary
+      _data_type_code = bit_string
+  DDFFieldDefn:
+      Tag = `DSID'
+      _fieldName = `Data set identification field'
+      _arrayDescr = `RCNM!RCID!EXPP!INTU!DSNM!EDTN!UPDN!UADT!ISDT!STED!PRSP!PSDN!PRED!PROF!AGEN!COMT'
+      _formatControls = `(b11,b14,2b11,3A,2A(8),R(4),b11,2A,b11,b12,A)'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `RCNM'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `RCID'
+        FormatString = `b14'
+    DDFSubfieldDefn:
+        Label = `EXPP'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `INTU'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `DSNM'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `EDTN'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `UPDN'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `UADT'
+        FormatString = `A(8)'
+    DDFSubfieldDefn:
+        Label = `ISDT'
+        FormatString = `A(8)'
+    DDFSubfieldDefn:
+        Label = `STED'
+        FormatString = `R(4)'
+    DDFSubfieldDefn:
+        Label = `PRSP'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `PSDN'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `PRED'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `PROF'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `AGEN'
+        FormatString = `b12'
+    DDFSubfieldDefn:
+        Label = `COMT'
+        FormatString = `A'
+  DDFFieldDefn:
+      Tag = `DSSI'
+      _fieldName = `Data set structure information field'
+      _arrayDescr = `DSTR!AALL!NALL!NOMR!NOCR!NOGR!NOLR!NOIN!NOCN!NOED!NOFA'
+      _formatControls = `(3b11,8b14)'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `DSTR'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `AALL'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `NALL'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `NOMR'
+        FormatString = `b14'
+    DDFSubfieldDefn:
+        Label = `NOCR'
+        FormatString = `b14'
+    DDFSubfieldDefn:
+        Label = `NOGR'
+        FormatString = `b14'
+    DDFSubfieldDefn:
+        Label = `NOLR'
+        FormatString = `b14'
+    DDFSubfieldDefn:
+        Label = `NOIN'
+        FormatString = `b14'
+    DDFSubfieldDefn:
+        Label = `NOCN'
+        FormatString = `b14'
+    DDFSubfieldDefn:
+        Label = `NOED'
+        FormatString = `b14'
+    DDFSubfieldDefn:
+        Label = `NOFA'
+        FormatString = `b14'
+  DDFFieldDefn:
+      Tag = `DSPM'
+      _fieldName = `Data set parameter field'
+      _arrayDescr = `RCNM!RCID!HDAT!VDAT!SDAT!CSCL!DUNI!HUNI!PUNI!COUN!COMF!SOMF!COMT'
+      _formatControls = `(b11,b14,3b11,b14,4b11,2b14,A)'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `RCNM'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `RCID'
+        FormatString = `b14'
+    DDFSubfieldDefn:
+        Label = `HDAT'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `VDAT'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `SDAT'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `CSCL'
+        FormatString = `b14'
+    DDFSubfieldDefn:
+        Label = `DUNI'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `HUNI'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `PUNI'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `COUN'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `COMF'
+        FormatString = `b14'
+    DDFSubfieldDefn:
+        Label = `SOMF'
+        FormatString = `b14'
+    DDFSubfieldDefn:
+        Label = `COMT'
+        FormatString = `A'
+  DDFFieldDefn:
+      Tag = `FRID'
+      _fieldName = `Feature record identifier field'
+      _arrayDescr = `RCNM!RCID!PRIM!GRUP!OBJL!RVER!RUIN'
+      _formatControls = `(b11,b14,2b11,2b12,b11)'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `RCNM'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `RCID'
+        FormatString = `b14'
+    DDFSubfieldDefn:
+        Label = `PRIM'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `GRUP'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `OBJL'
+        FormatString = `b12'
+    DDFSubfieldDefn:
+        Label = `RVER'
+        FormatString = `b12'
+    DDFSubfieldDefn:
+        Label = `RUIN'
+        FormatString = `b11'
+  DDFFieldDefn:
+      Tag = `FOID'
+      _fieldName = `Feature object identifier field'
+      _arrayDescr = `AGEN!FIDN!FIDS'
+      _formatControls = `(b12,b14,b12)'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `AGEN'
+        FormatString = `b12'
+    DDFSubfieldDefn:
+        Label = `FIDN'
+        FormatString = `b14'
+    DDFSubfieldDefn:
+        Label = `FIDS'
+        FormatString = `b12'
+  DDFFieldDefn:
+      Tag = `ATTF'
+      _fieldName = `Feature record attribute field'
+      _arrayDescr = `*ATTL!ATVL'
+      _formatControls = `(b12,A)'
+      _data_struct_code = array
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `ATTL'
+        FormatString = `b12'
+    DDFSubfieldDefn:
+        Label = `ATVL'
+        FormatString = `A'
+  DDFFieldDefn:
+      Tag = `NATF'
+      _fieldName = `Feature record national attribute field'
+      _arrayDescr = `*ATTL!ATVL'
+      _formatControls = `(b12,A)'
+      _data_struct_code = array
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `ATTL'
+        FormatString = `b12'
+    DDFSubfieldDefn:
+        Label = `ATVL'
+        FormatString = `A'
+  DDFFieldDefn:
+      Tag = `FFPC'
+      _fieldName = `Feature record to feature object pointer control field'
+      _arrayDescr = `FFUI!FFIX!NFPT'
+      _formatControls = `(b11,2b12)'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `FFUI'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `FFIX'
+        FormatString = `b12'
+    DDFSubfieldDefn:
+        Label = `NFPT'
+        FormatString = `b12'
+  DDFFieldDefn:
+      Tag = `FFPT'
+      _fieldName = `Feature record to feature object pointer field'
+      _arrayDescr = `*LNAM!RIND!COMT'
+      _formatControls = `(B(64),b11,A)'
+      _data_struct_code = array
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `LNAM'
+        FormatString = `B(64)'
+    DDFSubfieldDefn:
+        Label = `RIND'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `COMT'
+        FormatString = `A'
+  DDFFieldDefn:
+      Tag = `FSPC'
+      _fieldName = `Feature record to spatial record pointer control field'
+      _arrayDescr = `FSUI!FSIX!NSPT'
+      _formatControls = `(b11,2b12)'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `FSUI'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `FSIX'
+        FormatString = `b12'
+    DDFSubfieldDefn:
+        Label = `NSPT'
+        FormatString = `b12'
+  DDFFieldDefn:
+      Tag = `FSPT'
+      _fieldName = `Feature record to spatial record pointer field'
+      _arrayDescr = `*NAME!ORNT!USAG!MASK'
+      _formatControls = `(B(40),3b11)'
+      _data_struct_code = array
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `NAME'
+        FormatString = `B(40)'
+    DDFSubfieldDefn:
+        Label = `ORNT'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `USAG'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `MASK'
+        FormatString = `b11'
+  DDFFieldDefn:
+      Tag = `VRID'
+      _fieldName = `Vector record identifier field'
+      _arrayDescr = `RCNM!RCID!RVER!RUIN'
+      _formatControls = `(b11,b14,b12,b11)'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `RCNM'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `RCID'
+        FormatString = `b14'
+    DDFSubfieldDefn:
+        Label = `RVER'
+        FormatString = `b12'
+    DDFSubfieldDefn:
+        Label = `RUIN'
+        FormatString = `b11'
+  DDFFieldDefn:
+      Tag = `ATTV'
+      _fieldName = `Vector record attribute field'
+      _arrayDescr = `*ATTL!ATVL'
+      _formatControls = `(b12,A)'
+      _data_struct_code = array
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `ATTL'
+        FormatString = `b12'
+    DDFSubfieldDefn:
+        Label = `ATVL'
+        FormatString = `A'
+  DDFFieldDefn:
+      Tag = `VRPC'
+      _fieldName = `Vector record pointer control field'
+      _arrayDescr = `VPUI!VPIX!NVPT'
+      _formatControls = `(b11,2b12)'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `VPUI'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `VPIX'
+        FormatString = `b12'
+    DDFSubfieldDefn:
+        Label = `NVPT'
+        FormatString = `b12'
+  DDFFieldDefn:
+      Tag = `VRPT'
+      _fieldName = `Vector record pointer field'
+      _arrayDescr = `*NAME!ORNT!USAG!TOPI!MASK'
+      _formatControls = `(B(40),4b11)'
+      _data_struct_code = array
+      _data_type_code = char_string
+    DDFSubfieldDefn:
+        Label = `NAME'
+        FormatString = `B(40)'
+    DDFSubfieldDefn:
+        Label = `ORNT'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `USAG'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `TOPI'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `MASK'
+        FormatString = `b11'
+  DDFFieldDefn:
+      Tag = `SGCC'
+      _fieldName = `Coordinate control field'
+      _arrayDescr = `CCUI!CCIX!CCNC'
+      _formatControls = `(b11,2b12)'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `CCUI'
+        FormatString = `b11'
+    DDFSubfieldDefn:
+        Label = `CCIX'
+        FormatString = `b12'
+    DDFSubfieldDefn:
+        Label = `CCNC'
+        FormatString = `b12'
+  DDFFieldDefn:
+      Tag = `SG2D'
+      _fieldName = `2-D Coordinate field'
+      _arrayDescr = `*YCOO!XCOO'
+      _formatControls = `(2b24)'
+      _data_struct_code = array
+      _data_type_code = bit_string
+    DDFSubfieldDefn:
+        Label = `YCOO'
+        FormatString = `b24'
+    DDFSubfieldDefn:
+        Label = `XCOO'
+        FormatString = `b24'
+  DDFFieldDefn:
+      Tag = `SG3D'
+      _fieldName = `3-D Coordinate field'
+      _arrayDescr = `*YCOO!XCOO!VE3D'
+      _formatControls = `(3b24)'
+      _data_struct_code = array
+      _data_type_code = bit_string
+    DDFSubfieldDefn:
+        Label = `YCOO'
+        FormatString = `b24'
+    DDFSubfieldDefn:
+        Label = `XCOO'
+        FormatString = `b24'
+    DDFSubfieldDefn:
+        Label = `VE3D'
+        FormatString = `b24'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 189
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `^^^'
+  DDFField:
+      Tag = `DSID'
+      DataSize = 107
+      Data = `^^^^^^^CA49995B.000^1^0^1997091019970910...'
+      Subfield `RCNM' = 10
+      Subfield `RCID' = 1
+      Subfield `EXPP' = 1
+      Subfield `INTU' = 4
+      Subfield `DSNM' = `CA49995B.000'
+      Subfield `EDTN' = `1'
+      Subfield `UPDN' = `0'
+      Subfield `UADT' = `19970910'
+      Subfield `ISDT' = `19970910'
+      Subfield `STED' = 3.000000
+      Subfield `PRSP' = 1
+      Subfield `PSDN' = `'
+      Subfield `PRED' = `1.0'
+      Subfield `PROF' = 1
+      Subfield `AGEN' = 50
+      Subfield `COMT' = `DATASET CREATED BY NAUTICAL DATA INTERNATIONAL, INC.'
+  DDFField:
+      Tag = `DSSI'
+      DataSize = 36
+      Data = `^^^^^^^^^^^^^^^^^^^9^^^^^^^^^^^^^^^^'
+      Subfield `DSTR' = 2
+      Subfield `AALL' = 0
+      Subfield `NALL' = 0
+      Subfield `NOMR' = 4
+      Subfield `NOCR' = 0
+      Subfield `NOGR' = 202
+      Subfield `NOLR' = 1
+      Subfield `NOIN' = 57
+      Subfield `NOCN' = 144
+      Subfield `NOED' = 170
+      Subfield `NOFA' = 0
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 58
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `^^^'
+  DDFField:
+      Tag = `DSPM'
+      DataSize = 26
+      Data = `^^^^^^^^^a^^^^^^@B^^^^^^^^'
+      Subfield `RCNM' = 20
+      Subfield `RCID' = 2
+      Subfield `HDAT' = 2
+      Subfield `VDAT' = 28
+      Subfield `SDAT' = 4
+      Subfield `CSCL' = 25000
+      Subfield `DUNI' = 1
+      Subfield `HUNI' = 1
+      Subfield `PUNI' = 1
+      Subfield `COUN' = 1
+      Subfield `COMF' = 1000000
+      Subfield `SOMF' = 10
+      Subfield `COMT' = `'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 788
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `^^^'
+  DDFField:
+      Tag = `VRID'
+      DataSize = 9
+      Data = `n9^^^^^^^'
+      Subfield `RCNM' = 110
+      Subfield `RCID' = 57
+      Subfield `RVER' = 1
+      Subfield `RUIN' = 1
+---------------------------------------------------------------------
+-- TWFLA009.DDF
+---------------------------------------------------------------------
+DDFModule:
+    _recLength = 224
+    _interchangeLevel = 2
+    _leaderIden = L
+    _inlineCodeExtensionIndicator =  
+    _versionNumber =  
+    _appIndicator =  
+    _fieldControlLength = 6
+    _fieldAreaStart = 61
+    _sizeFieldLength = 2
+    _sizeFieldPos = 3
+    _sizeFieldTag = 4
+  DDFFieldDefn:
+      Tag = `0000'
+      _fieldName = `TWFLA009.DDF'
+      _arrayDescr = `'
+      _formatControls = `'
+      _data_struct_code = elementary
+      _data_type_code = char_string
+  DDFFieldDefn:
+      Tag = `0001'
+      _fieldName = `DDF RECORD IDENTIFIER'
+      _arrayDescr = `'
+      _formatControls = `'
+      _data_struct_code = elementary
+      _data_type_code = implicit_point
+  DDFFieldDefn:
+      Tag = `ATPR'
+      _fieldName = `Attribute Primary'
+      _arrayDescr = `MODN!RCID'
+      _formatControls = `(A,I)'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `MODN'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `RCID'
+        FormatString = `I'
+  DDFFieldDefn:
+      Tag = `ATTP'
+      _fieldName = `Primary Attributes'
+      _arrayDescr = `ENTITY_LABEL!FEATURE_ID!DIMENSION!PHC'
+      _formatControls = `(A,I,2A)'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `ENTITY_LABEL'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `FEATURE_ID'
+        FormatString = `I'
+    DDFSubfieldDefn:
+        Label = `DIMENSION'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `PHC'
+        FormatString = `A'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `0^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 7
+      Data = `A009^1^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 1
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 53
+      Data = `POPULATED PLACE^401^Two-Dimensional^Not ...'
+      Subfield `ENTITY_LABEL' = `POPULATED PLACE'
+      Subfield `FEATURE_ID' = 401
+      Subfield `DIMENSION' = `Two-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 81
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `1^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 7
+      Data = `A009^2^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 2
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 47
+      Data = `BUILDING^1309^Two-Dimensional^Not Photor...'
+      Subfield `ENTITY_LABEL' = `BUILDING'
+      Subfield `FEATURE_ID' = 1309
+      Subfield `DIMENSION' = `Two-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 81
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `2^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 7
+      Data = `A009^3^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 3
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 47
+      Data = `BUILDING^1307^Two-Dimensional^Not Photor...'
+      Subfield `ENTITY_LABEL' = `BUILDING'
+      Subfield `FEATURE_ID' = 1307
+      Subfield `DIMENSION' = `Two-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 81
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `3^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 7
+      Data = `A009^4^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 4
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 47
+      Data = `BUILDING^1308^Two-Dimensional^Not Photor...'
+      Subfield `ENTITY_LABEL' = `BUILDING'
+      Subfield `FEATURE_ID' = 1308
+      Subfield `DIMENSION' = `Two-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 81
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `4^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 7
+      Data = `A009^5^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 5
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 47
+      Data = `BUILDING^1306^Two-Dimensional^Not Photor...'
+      Subfield `ENTITY_LABEL' = `BUILDING'
+      Subfield `FEATURE_ID' = 1306
+      Subfield `DIMENSION' = `Two-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 81
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `5^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 7
+      Data = `A009^6^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 6
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 47
+      Data = `BUILDING^1305^Two-Dimensional^Not Photor...'
+      Subfield `ENTITY_LABEL' = `BUILDING'
+      Subfield `FEATURE_ID' = 1305
+      Subfield `DIMENSION' = `Two-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 81
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `6^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 7
+      Data = `A009^7^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 7
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 47
+      Data = `BUILDING^1304^Two-Dimensional^Not Photor...'
+      Subfield `ENTITY_LABEL' = `BUILDING'
+      Subfield `FEATURE_ID' = 1304
+      Subfield `DIMENSION' = `Two-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 80
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `7^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 7
+      Data = `A009^8^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 8
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 46
+      Data = `CEMETERY^101^Two-Dimensional^Not Photore...'
+      Subfield `ENTITY_LABEL' = `CEMETERY'
+      Subfield `FEATURE_ID' = 101
+      Subfield `DIMENSION' = `Two-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 81
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `8^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 7
+      Data = `A009^9^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 9
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 47
+      Data = `BUILDING^1303^Two-Dimensional^Not Photor...'
+      Subfield `ENTITY_LABEL' = `BUILDING'
+      Subfield `FEATURE_ID' = 1303
+      Subfield `DIMENSION' = `Two-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 82
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `9^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 8
+      Data = `A009^10^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 10
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 47
+      Data = `BUILDING^1301^Two-Dimensional^Not Photor...'
+      Subfield `ENTITY_LABEL' = `BUILDING'
+      Subfield `FEATURE_ID' = 1301
+      Subfield `DIMENSION' = `Two-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 83
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `10^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 8
+      Data = `A009^11^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 11
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 47
+      Data = `BUILDING^1302^Two-Dimensional^Not Photor...'
+      Subfield `ENTITY_LABEL' = `BUILDING'
+      Subfield `FEATURE_ID' = 1302
+      Subfield `DIMENSION' = `Two-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 83
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `11^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 8
+      Data = `A009^12^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 12
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 47
+      Data = `FENCE LINE^14^One-Dimensional^Not Photor...'
+      Subfield `ENTITY_LABEL' = `FENCE LINE'
+      Subfield `FEATURE_ID' = 14
+      Subfield `DIMENSION' = `One-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 83
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `12^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 8
+      Data = `A009^13^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 13
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 47
+      Data = `FENCE LINE^15^One-Dimensional^Not Photor...'
+      Subfield `ENTITY_LABEL' = `FENCE LINE'
+      Subfield `FEATURE_ID' = 15
+      Subfield `DIMENSION' = `One-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 83
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `13^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 8
+      Data = `A009^14^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 14
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 47
+      Data = `FENCE LINE^16^One-Dimensional^Not Photor...'
+      Subfield `ENTITY_LABEL' = `FENCE LINE'
+      Subfield `FEATURE_ID' = 16
+      Subfield `DIMENSION' = `One-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 83
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `14^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 8
+      Data = `A009^15^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 15
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 47
+      Data = `FENCE LINE^13^One-Dimensional^Not Photor...'
+      Subfield `ENTITY_LABEL' = `FENCE LINE'
+      Subfield `FEATURE_ID' = 13
+      Subfield `DIMENSION' = `One-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 82
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `15^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 8
+      Data = `A009^16^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 16
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 46
+      Data = `FENCE LINE^7^One-Dimensional^Not Photore...'
+      Subfield `ENTITY_LABEL' = `FENCE LINE'
+      Subfield `FEATURE_ID' = 7
+      Subfield `DIMENSION' = `One-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 82
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `16^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 8
+      Data = `A009^17^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 17
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 46
+      Data = `FENCE LINE^6^One-Dimensional^Not Photore...'
+      Subfield `ENTITY_LABEL' = `FENCE LINE'
+      Subfield `FEATURE_ID' = 6
+      Subfield `DIMENSION' = `One-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 82
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `17^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 8
+      Data = `A009^18^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 18
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 46
+      Data = `FENCE LINE^9^One-Dimensional^Not Photore...'
+      Subfield `ENTITY_LABEL' = `FENCE LINE'
+      Subfield `FEATURE_ID' = 9
+      Subfield `DIMENSION' = `One-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 83
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `18^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 8
+      Data = `A009^19^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 19
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 47
+      Data = `FENCE LINE^10^One-Dimensional^Not Photor...'
+      Subfield `ENTITY_LABEL' = `FENCE LINE'
+      Subfield `FEATURE_ID' = 10
+      Subfield `DIMENSION' = `One-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 83
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `19^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 8
+      Data = `A009^20^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 20
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 47
+      Data = `FENCE LINE^12^One-Dimensional^Not Photor...'
+      Subfield `ENTITY_LABEL' = `FENCE LINE'
+      Subfield `FEATURE_ID' = 12
+      Subfield `DIMENSION' = `One-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 82
+  DDFField:
+      Tag = `0001'
+      DataSize = 3
+      Data = `20^'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 8
+      Data = `A009^21^'
+      Subfield `MODN' = `A009'
+      Subfield `RCID' = 21
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 46
+      Data = `FENCE LINE^8^One-Dimensional^Not Photore...'
+      Subfield `ENTITY_LABEL' = `FENCE LINE'
+      Subfield `FEATURE_ID' = 8
+      Subfield `DIMENSION' = `One-Dimensional'
+      Subfield `PHC' = `Not Photorevised'
+DDFRecord:
+---------------------------------------------------------------------
+-- SC01CATD.DDF
+---------------------------------------------------------------------
+DDFModule:
+    _recLength = 160
+    _interchangeLevel = 2
+    _leaderIden = L
+    _inlineCodeExtensionIndicator =  
+    _versionNumber =  
+    _appIndicator =  
+    _fieldControlLength = 6
+    _fieldAreaStart = 49
+    _sizeFieldLength = 2
+    _sizeFieldPos = 2
+    _sizeFieldTag = 4
+  DDFFieldDefn:
+      Tag = `0000'
+      _fieldName = `SC01CATD'
+      _arrayDescr = `'
+      _formatControls = `'
+      _data_struct_code = elementary
+      _data_type_code = char_string
+  DDFFieldDefn:
+      Tag = `0001'
+      _fieldName = `DDF RECORD IDENTIFIER'
+      _arrayDescr = `'
+      _formatControls = `'
+      _data_struct_code = elementary
+      _data_type_code = implicit_point
+  DDFFieldDefn:
+      Tag = `CATD'
+      _fieldName = `CATALOG/DIRECTORY'
+      _arrayDescr = `MODN!RCID!NAME!TYPE!FILE!EXTR!MVER'
+      _formatControls = `(A,I,5A)'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `MODN'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `RCID'
+        FormatString = `I'
+    DDFSubfieldDefn:
+        Label = `NAME'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `TYPE'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `FILE'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `EXTR'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `MVER'
+        FormatString = `A'
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `     1^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^     1^IDEN^Identification         ...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 1
+      Subfield `NAME' = `IDEN'
+      Subfield `TYPE' = `Identification            '
+      Subfield `FILE' = `SC01IDEN.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `     2^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^     2^CATD^Catalog/Directory      ...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 2
+      Subfield `NAME' = `CATD'
+      Subfield `TYPE' = `Catalog/Directory         '
+      Subfield `FILE' = `SC01CATD.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `     3^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^     3^CATX^Catalog/Cross-Reference...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 3
+      Subfield `NAME' = `CATX'
+      Subfield `TYPE' = `Catalog/Cross-Reference   '
+      Subfield `FILE' = `SC01CATX.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `     4^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^     4^CATS^Catalog/Spatial Domain ...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 4
+      Subfield `NAME' = `CATS'
+      Subfield `TYPE' = `Catalog/Spatial Domain    '
+      Subfield `FILE' = `SC01CATS.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `     5^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^     5^IREF^Internal Spatial Refere...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 5
+      Subfield `NAME' = `IREF'
+      Subfield `TYPE' = `Internal Spatial Reference'
+      Subfield `FILE' = `SC01IREF.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `     6^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^     6^XREF^External Spatial Refere...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 6
+      Subfield `NAME' = `XREF'
+      Subfield `TYPE' = `External Spatial Reference'
+      Subfield `FILE' = `SC01XREF.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `     7^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^     7^MDEF^Data Dictionary/Definit...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 7
+      Subfield `NAME' = `MDEF'
+      Subfield `TYPE' = `Data Dictionary/Definition'
+      Subfield `FILE' = `DLG3MDEF.DDF'
+      Subfield `EXTR' = `Y'
+      Subfield `MVER' = ` 3.00'
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `     8^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^     8^MDOM^Data Dictionary/Domain ...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 8
+      Subfield `NAME' = `MDOM'
+      Subfield `TYPE' = `Data Dictionary/Domain    '
+      Subfield `FILE' = `DLG3MDOM.DDF'
+      Subfield `EXTR' = `Y'
+      Subfield `MVER' = ` 3.00'
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `     9^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^     9^DDSH^Data Dictionary/Schema ...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 9
+      Subfield `NAME' = `DDSH'
+      Subfield `TYPE' = `Data Dictionary/Schema    '
+      Subfield `FILE' = `SC01DDSH.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `    10^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^    10^STAT^Transfer Statistics    ...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 10
+      Subfield `NAME' = `STAT'
+      Subfield `TYPE' = `Transfer Statistics       '
+      Subfield `FILE' = `SC01STAT.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `    11^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^    11^DQHL^Lineage                ...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 11
+      Subfield `NAME' = `DQHL'
+      Subfield `TYPE' = `Lineage                   '
+      Subfield `FILE' = `SC01DQHL.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `    12^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^    12^DQPA^Positional Accuracy    ...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 12
+      Subfield `NAME' = `DQPA'
+      Subfield `TYPE' = `Positional Accuracy       '
+      Subfield `FILE' = `SC01DQPA.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `    13^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^    13^DQAA^Attribute Accuracy     ...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 13
+      Subfield `NAME' = `DQAA'
+      Subfield `TYPE' = `Attribute Accuracy        '
+      Subfield `FILE' = `SC01DQAA.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `    14^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^    14^DQLC^Logical Consistency    ...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 14
+      Subfield `NAME' = `DQLC'
+      Subfield `TYPE' = `Logical Consistency       '
+      Subfield `FILE' = `SC01DQLC.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `    15^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^    15^DQCG^Completeness           ...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 15
+      Subfield `NAME' = `DQCG'
+      Subfield `TYPE' = `Completeness              '
+      Subfield `FILE' = `SC01DQCG.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `    16^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^    16^ASCF^Attribute Primary      ...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 16
+      Subfield `NAME' = `ASCF'
+      Subfield `TYPE' = `Attribute Primary         '
+      Subfield `FILE' = `SC01ASCF.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `    17^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^    17^AHDR^Attribute Primary      ...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 17
+      Subfield `NAME' = `AHDR'
+      Subfield `TYPE' = `Attribute Primary         '
+      Subfield `FILE' = `SC01AHDR.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `    18^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^    18^FF01^Composite              ...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 18
+      Subfield `NAME' = `FF01'
+      Subfield `TYPE' = `Composite                 '
+      Subfield `FILE' = `SC01FF01.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `    19^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^    19^NP01^Point-Node             ...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 19
+      Subfield `NAME' = `NP01'
+      Subfield `TYPE' = `Point-Node                '
+      Subfield `FILE' = `SC01NP01.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `    20^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^    20^NA01^Point-Node             ...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 20
+      Subfield `NAME' = `NA01'
+      Subfield `TYPE' = `Point-Node                '
+      Subfield `FILE' = `SC01NA01.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `    21^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^    21^NO01^Point-Node             ...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 21
+      Subfield `NAME' = `NO01'
+      Subfield `TYPE' = `Point-Node                '
+      Subfield `FILE' = `SC01NO01.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `    22^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^    22^LE01^Line                   ...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 22
+      Subfield `NAME' = `LE01'
+      Subfield `TYPE' = `Line                      '
+      Subfield `FILE' = `SC01LE01.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+DDFRecord:
+    nReuseHeader = 1
+    nDataSize = 87
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `    23^'
+  DDFField:
+      Tag = `CATD'
+      DataSize = 65
+      Data = `CATD^    23^PC01^Polygon                ...'
+      Subfield `MODN' = `CATD'
+      Subfield `RCID' = 23
+      Subfield `NAME' = `PC01'
+      Subfield `TYPE' = `Polygon                   '
+      Subfield `FILE' = `SC01PC01.DDF'
+      Subfield `EXTR' = `N'
+      Subfield `MVER' = `     '
+---------------------------------------------------------------------
+-- SC01LE01.DDF
+---------------------------------------------------------------------
+DDFModule:
+    _recLength = 441
+    _interchangeLevel = 2
+    _leaderIden = L
+    _inlineCodeExtensionIndicator =  
+    _versionNumber =  
+    _appIndicator =  
+    _fieldControlLength = 6
+    _fieldAreaStart = 106
+    _sizeFieldLength = 2
+    _sizeFieldPos = 3
+    _sizeFieldTag = 4
+  DDFFieldDefn:
+      Tag = `0000'
+      _fieldName = `SC01LE01'
+      _arrayDescr = `'
+      _formatControls = `'
+      _data_struct_code = elementary
+      _data_type_code = char_string
+  DDFFieldDefn:
+      Tag = `0001'
+      _fieldName = `DDF RECORD IDENTIFIER'
+      _arrayDescr = `'
+      _formatControls = `'
+      _data_struct_code = elementary
+      _data_type_code = implicit_point
+  DDFFieldDefn:
+      Tag = `LINE'
+      _fieldName = `LINE'
+      _arrayDescr = `MODN!RCID!OBRP'
+      _formatControls = `(A(4),I(6),A(2))'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `MODN'
+        FormatString = `A(4)'
+    DDFSubfieldDefn:
+        Label = `RCID'
+        FormatString = `I(6)'
+    DDFSubfieldDefn:
+        Label = `OBRP'
+        FormatString = `A(2)'
+  DDFFieldDefn:
+      Tag = `ATID'
+      _fieldName = `ATTRIBUTE ID'
+      _arrayDescr = `*MODN!RCID'
+      _formatControls = `(A(4),I(6))'
+      _data_struct_code = array
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `MODN'
+        FormatString = `A(4)'
+    DDFSubfieldDefn:
+        Label = `RCID'
+        FormatString = `I(6)'
+  DDFFieldDefn:
+      Tag = `PIDL'
+      _fieldName = `POLYGON ID LEFT'
+      _arrayDescr = `MODN!RCID'
+      _formatControls = `(A(4),I(6))'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `MODN'
+        FormatString = `A(4)'
+    DDFSubfieldDefn:
+        Label = `RCID'
+        FormatString = `I(6)'
+  DDFFieldDefn:
+      Tag = `PIDR'
+      _fieldName = `POLYGON ID RIGHT'
+      _arrayDescr = `MODN!RCID'
+      _formatControls = `(A(4),I(6))'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `MODN'
+        FormatString = `A(4)'
+    DDFSubfieldDefn:
+        Label = `RCID'
+        FormatString = `I(6)'
+  DDFFieldDefn:
+      Tag = `SNID'
+      _fieldName = `STARTNODE ID'
+      _arrayDescr = `MODN!RCID'
+      _formatControls = `(A(4),I(6))'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `MODN'
+        FormatString = `A(4)'
+    DDFSubfieldDefn:
+        Label = `RCID'
+        FormatString = `I(6)'
+  DDFFieldDefn:
+      Tag = `ENID'
+      _fieldName = `ENDNODE ID'
+      _arrayDescr = `MODN!RCID'
+      _formatControls = `(A(4),I(6))'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `MODN'
+        FormatString = `A(4)'
+    DDFSubfieldDefn:
+        Label = `RCID'
+        FormatString = `I(6)'
+  DDFFieldDefn:
+      Tag = `SADR'
+      _fieldName = `SPATIAL ADDRESS'
+      _arrayDescr = `*X!Y'
+      _formatControls = `((2B(32)))'
+      _data_struct_code = array
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `X'
+        FormatString = `B(32)'
+    DDFSubfieldDefn:
+        Label = `Y'
+        FormatString = `B(32)'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 321
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `     1^'
+  DDFField:
+      Tag = `LINE'
+      DataSize = 13
+      Data = `LE01     1LE^'
+      Subfield `MODN' = `LE01'
+      Subfield `RCID' = 1
+      Subfield `OBRP' = `LE'
+  DDFField:
+      Tag = `PIDL'
+      DataSize = 11
+      Data = `PC01     1^'
+      Subfield `MODN' = `PC01'
+      Subfield `RCID' = 1
+  DDFField:
+      Tag = `PIDR'
+      DataSize = 11
+      Data = `PC01     3^'
+      Subfield `MODN' = `PC01'
+      Subfield `RCID' = 3
+  DDFField:
+      Tag = `SNID'
+      DataSize = 11
+      Data = `NO01     2^'
+      Subfield `MODN' = `NO01'
+      Subfield `RCID' = 2
+  DDFField:
+      Tag = `ENID'
+      DataSize = 11
+      Data = `NO01     1^'
+      Subfield `MODN' = `NO01'
+      Subfield `RCID' = 1
+  DDFField:
+      Tag = `SADR'
+      DataSize = 193
+      Data = `^`^^^^^~^`^^^^^^^a^0^^^|^bK^^^^^^c^v^^^z...'
+      Subfield `X' = 56629482
+      Subfield `Y' = 415040126
+      Subfield `X' = 56677517
+      Subfield `Y' = 415040479
+      Subfield `X' = 56725552
+      Subfield `Y' = 415040892
+      Subfield `X' = 56773588
+      Subfield `Y' = 415041245
+      Subfield `X' = 56821622
+      Subfield `Y' = 415041658
+      Subfield `X' = 56869657
+      Subfield `Y' = 415042072
+      Subfield `X' = 56917692
+      Subfield `Y' = 415042424
+      Subfield `X' = 56965727
+      Subfield `Y' = 415042838
+      Subfield `X' = 57013823
+      Subfield `Y' = 415043252
+      ...
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 273
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `     2^'
+  DDFField:
+      Tag = `LINE'
+      DataSize = 13
+      Data = `LE01     2LE^'
+      Subfield `MODN' = `LE01'
+      Subfield `RCID' = 2
+      Subfield `OBRP' = `LE'
+  DDFField:
+      Tag = `PIDL'
+      DataSize = 11
+      Data = `PC01     2^'
+      Subfield `MODN' = `PC01'
+      Subfield `RCID' = 2
+  DDFField:
+      Tag = `PIDR'
+      DataSize = 11
+      Data = `PC01     3^'
+      Subfield `MODN' = `PC01'
+      Subfield `RCID' = 3
+  DDFField:
+      Tag = `SNID'
+      DataSize = 11
+      Data = `NO01     3^'
+      Subfield `MODN' = `NO01'
+      Subfield `RCID' = 3
+  DDFField:
+      Tag = `ENID'
+      DataSize = 11
+      Data = `NO01     3^'
+      Subfield `MODN' = `NO01'
+      Subfield `RCID' = 3
+  DDFField:
+      Tag = `SADR'
+      DataSize = 145
+      Data = `^a^^^^p&^a^-^^k^^a^^^^fH^a^^^^b5^a^v^^Z^...'
+      Subfield `X' = 56696330
+      Subfield `Y' = 414937126
+      Subfield `X' = 56694573
+      Subfield `Y' = 414935831
+      Subfield `X' = 56693182
+      Subfield `Y' = 414934600
+      Subfield `X' = 56692459
+      Subfield `Y' = 414933557
+      Subfield `X' = 56692598
+      Subfield `Y' = 414931608
+      Subfield `X' = 56692974
+      Subfield `Y' = 414930453
+      Subfield `X' = 56693957
+      Subfield `Y' = 414929547
+      Subfield `X' = 56695241
+      Subfield `Y' = 414929131
+      Subfield `X' = 56696765
+      Subfield `Y' = 414929083
+      ...
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 521
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `     3^'
+  DDFField:
+      Tag = `LINE'
+      DataSize = 13
+      Data = `LE01     3LE^'
+      Subfield `MODN' = `LE01'
+      Subfield `RCID' = 3
+      Subfield `OBRP' = `LE'
+  DDFField:
+      Tag = `PIDL'
+      DataSize = 11
+      Data = `PC01     4^'
+      Subfield `MODN' = `PC01'
+      Subfield `RCID' = 4
+  DDFField:
+      Tag = `PIDR'
+      DataSize = 11
+      Data = `PC01     3^'
+      Subfield `MODN' = `PC01'
+      Subfield `RCID' = 3
+  DDFField:
+      Tag = `SNID'
+      DataSize = 11
+      Data = `NO01     4^'
+      Subfield `MODN' = `NO01'
+      Subfield `RCID' = 4
+  DDFField:
+      Tag = `ENID'
+      DataSize = 11
+      Data = `NO01     4^'
+      Subfield `MODN' = `NO01'
+      Subfield `RCID' = 4
+  DDFField:
+      Tag = `SADR'
+      DataSize = 393
+      Data = `^k^^^^^^^k^^^^^{^k^^^^^^^k^7^^^^^k!f^^^^...'
+      Subfield `X' = 57347857
+      Subfield `Y' = 414750460
+      Subfield `X' = 57349760
+      Subfield `Y' = 414755963
+      Subfield `X' = 57350589
+      Subfield `Y' = 414758896
+      Subfield `X' = 57351479
+      Subfield `Y' = 414761708
+      Subfield `X' = 57352550
+      Subfield `Y' = 414764705
+      Subfield `X' = 57352418
+      Subfield `Y' = 414765984
+      Subfield `X' = 57351435
+      Subfield `Y' = 414766829
+      Subfield `X' = 57348441
+      Subfield `Y' = 414767656
+      Subfield `X' = 57343968
+      Subfield `Y' = 414770239
+      ...
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 146
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `     4^'
+  DDFField:
+      Tag = `LINE'
+      DataSize = 13
+      Data = `LE01     4LE^'
+      Subfield `MODN' = `LE01'
+      Subfield `RCID' = 4
+      Subfield `OBRP' = `LE'
+  DDFField:
+      Tag = `PIDL'
+      DataSize = 11
+      Data = `PC01     3^'
+      Subfield `MODN' = `PC01'
+      Subfield `RCID' = 3
+  DDFField:
+      Tag = `PIDR'
+      DataSize = 11
+      Data = `PC01     1^'
+      Subfield `MODN' = `PC01'
+      Subfield `RCID' = 1
+  DDFField:
+      Tag = `SNID'
+      DataSize = 11
+      Data = `NO01     2^'
+      Subfield `MODN' = `NO01'
+      Subfield `RCID' = 2
+  DDFField:
+      Tag = `ENID'
+      DataSize = 11
+      Data = `NO01     5^'
+      Subfield `MODN' = `NO01'
+      Subfield `RCID' = 5
+  DDFField:
+      Tag = `SADR'
+      DataSize = 25
+      Data = `^`^^^^^~^`^N^^^^^`#^^^^^^'
+      Subfield `X' = 56629482
+      Subfield `Y' = 415040126
+      Subfield `X' = 56630094
+      Subfield `Y' = 414961917
+      Subfield `X' = 56632299
+      Subfield `Y' = 414684557
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 138
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `     5^'
+  DDFField:
+      Tag = `LINE'
+      DataSize = 13
+      Data = `LE01     5LE^'
+      Subfield `MODN' = `LE01'
+      Subfield `RCID' = 5
+      Subfield `OBRP' = `LE'
+  DDFField:
+      Tag = `PIDL'
+      DataSize = 11
+      Data = `PC01     5^'
+      Subfield `MODN' = `PC01'
+      Subfield `RCID' = 5
+  DDFField:
+      Tag = `PIDR'
+      DataSize = 11
+      Data = `PC01     1^'
+      Subfield `MODN' = `PC01'
+      Subfield `RCID' = 1
+  DDFField:
+      Tag = `SNID'
+      DataSize = 11
+      Data = `NO01     5^'
+      Subfield `MODN' = `NO01'
+      Subfield `RCID' = 5
+  DDFField:
+      Tag = `ENID'
+      DataSize = 11
+      Data = `NO01     7^'
+      Subfield `MODN' = `NO01'
+      Subfield `RCID' = 7
+  DDFField:
+      Tag = `SADR'
+      DataSize = 17
+      Data = `^`#^^^^^^`%c^^^L^'
+      Subfield `X' = 56632299
+      Subfield `Y' = 414684557
+      Subfield `X' = 56632675
+      Subfield `Y' = 414640972
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 377
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `     6^'
+  DDFField:
+      Tag = `LINE'
+      DataSize = 13
+      Data = `LE01     6LE^'
+      Subfield `MODN' = `LE01'
+      Subfield `RCID' = 6
+      Subfield `OBRP' = `LE'
+  DDFField:
+      Tag = `PIDL'
+      DataSize = 11
+      Data = `PC01     6^'
+      Subfield `MODN' = `PC01'
+      Subfield `RCID' = 6
+  DDFField:
+      Tag = `PIDR'
+      DataSize = 11
+      Data = `PC01     3^'
+      Subfield `MODN' = `PC01'
+      Subfield `RCID' = 3
+  DDFField:
+      Tag = `SNID'
+      DataSize = 11
+      Data = `NO01     6^'
+      Subfield `MODN' = `NO01'
+      Subfield `RCID' = 6
+  DDFField:
+      Tag = `ENID'
+      DataSize = 11
+      Data = `NO01     6^'
+      Subfield `MODN' = `NO01'
+      Subfield `RCID' = 6
+  DDFField:
+      Tag = `SADR'
+      DataSize = 249
+      Data = `^h^M^^^#^h^^^^^^^h^\^^^^^h^/^^^^^h+^^^^^...'
+      Subfield `X' = 57150541
+      Subfield `Y' = 414641955
+      Subfield `X' = 57150668
+      Subfield `Y' = 414641408
+      Subfield `X' = 57151836
+      Subfield `Y' = 414640320
+      Subfield `X' = 57152815
+      Subfield `Y' = 414639841
+      Subfield `X' = 57158625
+      Subfield `Y' = 414637696
+      Subfield `X' = 57159664
+      Subfield `Y' = 414637462
+      Subfield `X' = 57160944
+      Subfield `Y' = 414637473
+      Subfield `X' = 57162828
+      Subfield `Y' = 414638098
+      Subfield `X' = 57165074
+      Subfield `Y' = 414639215
+      ...
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 138
+  DDFField:
+      Tag = `0001'
+      DataSize = 7
+      Data = `     7^'
+  DDFField:
+      Tag = `LINE'
+      DataSize = 13
+      Data = `LE01     7LE^'
+      Subfield `MODN' = `LE01'
+      Subfield `RCID' = 7
+      Subfield `OBRP' = `LE'
+  DDFField:
+      Tag = `PIDL'
+      DataSize = 11
+      Data = `PC01     7^'
+      Subfield `MODN' = `PC01'
+      Subfield `RCID' = 7
+  DDFField:
+      Tag = `PIDR'
+      DataSize = 11
+      Data = `PC01     1^'
+      Subfield `MODN' = `PC01'
+      Subfield `RCID' = 1
+  DDFField:
+      Tag = `SNID'
+      DataSize = 11
+      Data = `NO01     7^'
+      Subfield `MODN' = `NO01'
+      Subfield `RCID' = 7
+  DDFField:
+      Tag = `ENID'
+      DataSize = 11
+      Data = `NO01     8^'
+      Subfield `MODN' = `NO01'
+      Subfield `RCID' = 8
+  DDFField:
+      Tag = `SADR'
+      DataSize = 17
+      Data = `^`%c^^^L^`%^^^^p^'
