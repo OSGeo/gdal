@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2003/09/12 20:49:24  warmerda
+ * reimplement CPLFGets() to avoid textmode problems
+ *
  * Revision 1.28  2003/09/08 12:54:42  dron
  * Fixed warnings.
  *
@@ -296,7 +299,10 @@ char *CPLStrdup( const char * pszString )
 }
 
 /************************************************************************/
-/*                            CPLFGets()                                */
+/*                              CPLFGets()                              */
+/*                                                                      */
+/*      Note: CR = \r = ASCII 13                                        */
+/*            LF = \n = ASCII 10                                        */
 /************************************************************************/
 
 /**
@@ -319,28 +325,78 @@ char *CPLStrdup( const char * pszString )
 char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
 
 {
-    size_t nActuallyRead, i;
+    int nActuallyRead, nOriginalOffset;
 
     if ( nBufferSize == 0 || pszBuffer == NULL || fp == NULL )
 	return NULL;
 
-    nActuallyRead =
-	    VSIFRead( pszBuffer, 1, nBufferSize - 1, fp );
+/* -------------------------------------------------------------------- */
+/*      Let the OS level call read what it things is one line.  This    */
+/*      will include the newline.  On windows, if the file happens      */
+/*      to be in text mode, the CRLF will have been converted to        */
+/*      just the newline (LF).  If it is in binary mode it may well     */
+/*      have both.                                                      */
+/* -------------------------------------------------------------------- */
+    nOriginalOffset = VSIFTell( fp );
+    if( VSIFGets( pszBuffer, nBufferSize, fp ) == NULL )
+        return NULL;
+    
+    nActuallyRead = strlen(pszBuffer);
     if ( nActuallyRead == 0 )
 	return NULL;
 
-    pszBuffer[nActuallyRead] = '\0';
-
-    for ( i = 0; i < nActuallyRead; i++ )
+/* -------------------------------------------------------------------- */
+/*      Trim off \n, \r or \r\n if it appears at the end.  We don't     */
+/*      need to do any "seeking" since we want the newline eaten.       */
+/* -------------------------------------------------------------------- */
+    if( nActuallyRead > 1 
+        && pszBuffer[nActuallyRead-1] == 10 
+        && pszBuffer[nActuallyRead-2] == 13 )
     {
-        if ( pszBuffer[i] == 10 || pszBuffer[i] == 13 )
-	{
-	    pszBuffer[i] = '\0';
-	    if ( pszBuffer[i + 1] == 10 || pszBuffer[i + 1] == 13 )
-		i++;
-	    VSIFSeek( fp, i + 1 - nActuallyRead, SEEK_CUR );
-	    break;
-	}
+        pszBuffer[nActuallyRead-2] = '\0';
+    }
+    else if( pszBuffer[nActuallyRead-1] == 10 
+             || pszBuffer[nActuallyRead-1] == 13 )
+    {
+        pszBuffer[nActuallyRead-1] = '\0';
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Search within the string for a \r (MacOS convention             */
+/*      apparently), and if we find it we need to trim the string,      */
+/*      and seek back.                                                  */
+/* -------------------------------------------------------------------- */
+    char *pszExtraNewline = strchr( pszBuffer, 13 );
+    
+    if( pszExtraNewline != NULL )
+    {
+        int chCheck;
+
+        nActuallyRead = pszExtraNewline - pszBuffer + 1;
+        
+        *pszExtraNewline = '\0';
+        VSIFSeek( fp, nOriginalOffset + nActuallyRead - 1, SEEK_SET );
+
+        /* 
+         * This hackery is necessary to try and find our correct
+         * spot on win32 systems with text mode line translation going 
+         * on.  Sometimes the fseek back overshoots, but it doesn't
+         * "realize it" till a character has been read. Try to read till
+         * we get to the right spot and get our CR. 
+         */ 
+        chCheck = fgetc( fp );
+        while( (chCheck != 13 && chCheck != EOF)
+               || VSIFTell(fp) < nOriginalOffset + nActuallyRead )
+        {
+            static int bWarned = FALSE;
+
+            if( !bWarned )
+            {
+                bWarned = TRUE;
+                CPLDebug( "CPL", "CPLFGets() correcting for DOS text mode translation seek problem." );
+            }
+            chCheck = fgetc( fp );
+        }
     }
 
     return pszBuffer;
