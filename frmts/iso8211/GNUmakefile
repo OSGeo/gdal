@@ -44,6 +44,10 @@ timetest:	timetest.o $(ISOLIB)
 	$(CXX) $(CXX_ODFLAGS) timetest.o \
 		$(ISOLIB) $(CPL_LIB) $(LIBS) -o timetest
 
+upd_test:	upd_test.o $(ISOLIB)
+	$(CXX) $(CXX_ODFLAGS) upd_test.o \
+		$(ISOLIB) $(CPL_LIB) $(LIBS) -o upd_test
+
 docs:
 	rm -rf html
 	mkdir html

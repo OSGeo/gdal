@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/08/30 21:08:19  warmerda
+ * expand tabs
+ *
  * Revision 1.14  2001/08/30 02:14:50  warmerda
  * Provide for control of max number of field instances dumped via environment.
  *
@@ -113,7 +116,7 @@ void DDFField::Initialize( DDFFieldDefn *poDefnIn, const char * pachDataIn,
 void DDFField::Dump( FILE * fp )
 
 {
-    int		nMaxRepeat = 8;
+    int         nMaxRepeat = 8;
 
     if( getenv("DDF_MAXDUMP") != NULL )
         nMaxRepeat = atoi(getenv("DDF_MAXDUMP"));
@@ -323,7 +326,7 @@ const char *DDFField::GetInstanceData( int nInstance,
                                        int *pnInstanceSize )
 
 {
-    int	nRepeatCount = GetRepeatCount();
+    int nRepeatCount = GetRepeatCount();
 
     if( nInstance < 0 || nInstance >= nRepeatCount )
         return NULL;
@@ -332,7 +335,7 @@ const char *DDFField::GetInstanceData( int nInstance,
 /*      Get a pointer to the start of the existing data for this        */
 /*      iteration of the field.                                         */
 /* -------------------------------------------------------------------- */
-    int		nBytesRemaining1, nBytesRemaining2;
+    int         nBytesRemaining1, nBytesRemaining2;
     const char *pachData;
     DDFSubfieldDefn *poFirstSubfield;
 
@@ -349,7 +352,7 @@ const char *DDFField::GetInstanceData( int nInstance,
     {
         DDFSubfieldDefn *poLastSubfield;
         int              nLastSubfieldWidth;
-        const char	    *pachLastData;
+        const char          *pachLastData;
         
         poLastSubfield = poDefn->GetSubfield(poDefn->GetSubfieldCount()-1);
         

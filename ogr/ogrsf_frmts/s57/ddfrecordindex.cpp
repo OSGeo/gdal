@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/08/30 21:06:55  warmerda
+ * expand tabs
+ *
  * Revision 1.4  2001/08/30 03:49:13  warmerda
  * reimplement to use qsort(), added delete
  *
@@ -170,7 +173,7 @@ int DDFRecordIndex::RemoveRecord( int nKey )
 /*      Do a binary search based on the key to find the desired record. */
 /* -------------------------------------------------------------------- */
     int         nMinIndex = 0, nMaxIndex = nRecordCount-1;
-    int		nTestIndex;
+    int         nTestIndex;
 
     while( nMinIndex <= nMaxIndex )
     {

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/08/30 21:08:19  warmerda
+ * expand tabs
+ *
  * Revision 1.13  2001/08/27 19:09:00  warmerda
  * added GetInstanceData() method on DDFField
  *
@@ -702,11 +705,11 @@ DDFRecord *DDFRecord::CloneOn( DDFModule *poTargetModule )
 /*      Verify that all fields have a corresponding field definition    */
 /*      on the target module.                                           */
 /* -------------------------------------------------------------------- */
-    int		i;
+    int         i;
 
     for( i = 0; i < nFieldCount; i++ )
     {
-        DDFFieldDefn	*poDefn = paoFields[i].GetFieldDefn();
+        DDFFieldDefn    *poDefn = paoFields[i].GetFieldDefn();
 
         if( poTargetModule->FindFieldDefn( poDefn->GetName() ) == NULL )
             return NULL;
@@ -715,7 +718,7 @@ DDFRecord *DDFRecord::CloneOn( DDFModule *poTargetModule )
 /* -------------------------------------------------------------------- */
 /*      Create a clone.                                                 */
 /* -------------------------------------------------------------------- */
-    DDFRecord	*poClone;
+    DDFRecord   *poClone;
 
     poClone = Clone();
 
@@ -724,8 +727,8 @@ DDFRecord *DDFRecord::CloneOn( DDFModule *poTargetModule )
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nFieldCount; i++ )
     {
-        DDFField	*poField = poClone->paoFields+i;
-        DDFFieldDefn	*poDefn;
+        DDFField        *poField = poClone->paoFields+i;
+        DDFFieldDefn    *poDefn;
 
         poDefn = poTargetModule->FindFieldDefn( 
             poField->GetFieldDefn()->GetName() );
@@ -767,7 +770,7 @@ DDFRecord *DDFRecord::CloneOn( DDFModule *poTargetModule )
 int DDFRecord::DeleteField( DDFField *poTarget )
 
 {
-    int		iTarget, i;
+    int         iTarget, i;
 
 /* -------------------------------------------------------------------- */
 /*      Find which field we are to delete.                              */
@@ -824,7 +827,7 @@ int DDFRecord::DeleteField( DDFField *poTarget )
 int DDFRecord::ResizeField( DDFField *poField, int nNewDataSize )
 
 {
-    int		iTarget, i;
+    int         iTarget, i;
 
 /* -------------------------------------------------------------------- */
 /*      Find which field we are to resize.                              */
@@ -841,10 +844,24 @@ int DDFRecord::ResizeField( DDFField *poField, int nNewDataSize )
 /* -------------------------------------------------------------------- */
 /*      Reallocate the data buffer accordingly.                         */
 /* -------------------------------------------------------------------- */
-    int	nBytesToAdd = nNewDataSize - poField->GetDataSize();
+    int nBytesToAdd = nNewDataSize - poField->GetDataSize();
+    const char *pachOldData = pachData;
 
     pachData = (char *) CPLRealloc(pachData, nDataSize + nBytesToAdd );
     nDataSize += nBytesToAdd;
+
+/* -------------------------------------------------------------------- */
+/*      Update fields to point into newly allocated buffer.             */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nFieldCount; i++ )
+    {
+        int     nOffset;
+
+        nOffset = paoFields[i].GetData() - pachOldData;
+        paoFields[i].Initialize( paoFields[i].GetFieldDefn(), 
+                                 pachData + nOffset, 
+                                 paoFields[i].GetDataSize() );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Update the target fields info.                                  */
@@ -922,7 +939,7 @@ DDFField *DDFRecord::AddField( DDFFieldDefn *poDefn )
 /*      Reallocate the fields array larger by one, and initialize       */
 /*      the new field.                                                  */
 /* -------------------------------------------------------------------- */
-    DDFField	*paoNewFields;
+    DDFField    *paoNewFields;
 
     paoNewFields = new DDFField[nFieldCount+1];
     memcpy( paoNewFields, paoFields, sizeof(DDFField) * nFieldCount );
@@ -964,7 +981,7 @@ DDFRecord::SetFieldRaw( DDFField *poField, int iIndexWithinField,
                         const char *pachRawData, int nRawDataSize )
 
 {
-    int		iTarget, nRepeatCount;
+    int         iTarget, nRepeatCount;
 
 /* -------------------------------------------------------------------- */
 /*      Find which field we are to update.                              */
@@ -989,8 +1006,8 @@ DDFRecord::SetFieldRaw( DDFField *poField, int iIndexWithinField,
 /* -------------------------------------------------------------------- */
     if( iIndexWithinField == nRepeatCount )
     {
-        char	*pachFieldData;
-        int	nOldSize;
+        char    *pachFieldData;
+        int     nOldSize;
 
         if( !poField->GetFieldDefn()->IsRepeating() )
             return FALSE;
@@ -1015,15 +1032,15 @@ DDFRecord::SetFieldRaw( DDFField *poField, int iIndexWithinField,
 /*      iteration of the field.                                         */
 /* -------------------------------------------------------------------- */
     const char *pachData;
-    int	        nInstanceSize;
+    int         nInstanceSize;
 
     pachData = poField->GetInstanceData( iIndexWithinField, &nInstanceSize );
 
 /* -------------------------------------------------------------------- */
 /*      Create new image of this whole field.                           */
 /* -------------------------------------------------------------------- */
-    char	*pachNewImage;
-    int		nPreBytes, nPostBytes, nNewFieldSize;
+    char        *pachNewImage;
+    int         nPreBytes, nPostBytes, nNewFieldSize;
 
     nNewFieldSize = poField->GetDataSize() - nInstanceSize + nRawDataSize;
 

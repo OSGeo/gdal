@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2001/08/30 21:06:55  warmerda
+ * expand tabs
+ *
  * Revision 1.25  2001/08/30 21:05:32  warmerda
  * added support for generic object if not recognised
  *
@@ -1530,8 +1533,8 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 /* -------------------------------------------------------------------- */
 /*      Update the target version.                                      */
 /* -------------------------------------------------------------------- */
-    unsigned char	*pnRVER;
-    DDFField	*poKey = poTarget->FindField( pszKey );
+    unsigned char       *pnRVER;
+    DDFField    *poKey = poTarget->FindField( pszKey );
     DDFSubfieldDefn *poRVER_SFD;
 
     if( poKey == NULL )
@@ -1554,12 +1557,12 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 /* -------------------------------------------------------------------- */
     if( poUpdate->FindField( "FSPC" ) != NULL )
     {
-        int	nFSUI = poUpdate->GetIntSubfield( "FSPC", 0, "FSUI", 0 );
-        int	nFSIX = poUpdate->GetIntSubfield( "FSPC", 0, "FSIX", 0 );
-        int	nNSPT = poUpdate->GetIntSubfield( "FSPC", 0, "NSPT", 0 );
+        int     nFSUI = poUpdate->GetIntSubfield( "FSPC", 0, "FSUI", 0 );
+        int     nFSIX = poUpdate->GetIntSubfield( "FSPC", 0, "FSIX", 0 );
+        int     nNSPT = poUpdate->GetIntSubfield( "FSPC", 0, "NSPT", 0 );
         DDFField *poSrcFSPT = poUpdate->FindField( "FSPT" );
         DDFField *poDstFSPT = poTarget->FindField( "FSPT" );
-        int	nPtrSize;
+        int     nPtrSize;
 
         if( (poSrcFSPT == NULL && nFSUI != 2) || poDstFSPT == NULL )
         {
@@ -1571,8 +1574,8 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 
         if( nFSUI == 1 ) /* INSERT */
         {
-            char	*pachInsertion;
-            int		nInsertionBytes = nPtrSize * nNSPT;
+            char        *pachInsertion;
+            int         nInsertionBytes = nPtrSize * nNSPT;
 
             pachInsertion = (char *) CPLMalloc(nInsertionBytes + nPtrSize);
             memcpy( pachInsertion, poSrcFSPT->GetData(), nInsertionBytes );
@@ -1618,17 +1621,17 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Check for, and apply vector record to vector record pointer	*/
-/*	updates.							*/
+/*      Check for, and apply vector record to vector record pointer     */
+/*      updates.                                                        */
 /* -------------------------------------------------------------------- */
     if( poUpdate->FindField( "VRPC" ) != NULL )
     {
-        int	nVPUI = poUpdate->GetIntSubfield( "VRPC", 0, "VPUI", 0 );
-        int	nVPIX = poUpdate->GetIntSubfield( "VRPC", 0, "VPIX", 0 );
-        int	nNVPT = poUpdate->GetIntSubfield( "VRPC", 0, "NVPT", 0 );
+        int     nVPUI = poUpdate->GetIntSubfield( "VRPC", 0, "VPUI", 0 );
+        int     nVPIX = poUpdate->GetIntSubfield( "VRPC", 0, "VPIX", 0 );
+        int     nNVPT = poUpdate->GetIntSubfield( "VRPC", 0, "NVPT", 0 );
         DDFField *poSrcVRPT = poUpdate->FindField( "VRPT" );
         DDFField *poDstVRPT = poTarget->FindField( "VRPT" );
-        int	nPtrSize;
+        int     nPtrSize;
 
         if( (poSrcVRPT == NULL && nVPUI != 2) || poDstVRPT == NULL )
         {
@@ -1640,8 +1643,8 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 
         if( nVPUI == 1 ) /* INSERT */
         {
-            char	*pachInsertion;
-            int		nInsertionBytes = nPtrSize * nNVPT;
+            char        *pachInsertion;
+            int         nInsertionBytes = nPtrSize * nNVPT;
 
             pachInsertion = (char *) CPLMalloc(nInsertionBytes + nPtrSize);
             memcpy( pachInsertion, poSrcVRPT->GetData(), nInsertionBytes );
@@ -1687,16 +1690,16 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Check for, and apply record update to coordinates.		*/
+/*      Check for, and apply record update to coordinates.              */
 /* -------------------------------------------------------------------- */
     if( poUpdate->FindField( "SGCC" ) != NULL )
     {
-        int	nCCUI = poUpdate->GetIntSubfield( "SGCC", 0, "CCUI", 0 );
-        int	nCCIX = poUpdate->GetIntSubfield( "SGCC", 0, "CCIX", 0 );
-        int	nCCNC = poUpdate->GetIntSubfield( "SGCC", 0, "CCNC", 0 );
+        int     nCCUI = poUpdate->GetIntSubfield( "SGCC", 0, "CCUI", 0 );
+        int     nCCIX = poUpdate->GetIntSubfield( "SGCC", 0, "CCIX", 0 );
+        int     nCCNC = poUpdate->GetIntSubfield( "SGCC", 0, "CCNC", 0 );
         DDFField *poSrcSG2D = poUpdate->FindField( "SG2D" );
         DDFField *poDstSG2D = poTarget->FindField( "SG2D" );
-        int	nCoordSize;
+        int     nCoordSize;
 
         /* If we don't have SG2D, check for SG3D */
         if( poDstSG2D == NULL )
@@ -1715,8 +1718,8 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 
         if( nCCUI == 1 ) /* INSERT */
         {
-            char	*pachInsertion;
-            int		nInsertionBytes = nCoordSize * nCCNC;
+            char        *pachInsertion;
+            int         nInsertionBytes = nCoordSize * nCCNC;
 
             pachInsertion = (char *) CPLMalloc(nInsertionBytes + nCoordSize);
             memcpy( pachInsertion, poSrcSG2D->GetData(), nInsertionBytes );
@@ -1779,13 +1782,13 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
         DDFSubfieldDefn *poSrcATVLDefn;
         DDFField *poSrcATTF = poUpdate->FindField( "ATTF" );
         DDFField *poDstATTF = poTarget->FindField( "ATTF" );
-        int	nRepeatCount = poSrcATTF->GetRepeatCount();
+        int     nRepeatCount = poSrcATTF->GetRepeatCount();
 
         poSrcATVLDefn = poSrcATTF->GetFieldDefn()->FindSubfieldDefn( "ATVL" );
 
         for( int iAtt = 0; iAtt < nRepeatCount; iAtt++ )
         {
-            int	nATTL = poUpdate->GetIntSubfield( "ATTF", 0, "ATTL", iAtt );
+            int nATTL = poUpdate->GetIntSubfield( "ATTF", 0, "ATTL", iAtt );
             int iTAtt, nDataBytes;
             const char *pszRawData;
 
@@ -1820,7 +1823,7 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 int S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
 
 {
-    DDFRecord	*poRecord;
+    DDFRecord   *poRecord;
 
 /* -------------------------------------------------------------------- */
 /*      Ensure base file is loaded.                                     */
@@ -1839,8 +1842,8 @@ int S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
         {
             int         nRCNM = poRecord->GetIntSubfield( pszKey,0, "RCNM",0 );
             int         nRCID = poRecord->GetIntSubfield( pszKey,0, "RCID",0 );
-            int		nRVER = poRecord->GetIntSubfield( pszKey,0, "RVER",0 );
-            int		nRUIN = poRecord->GetIntSubfield( pszKey,0, "RUIN",0 );
+            int         nRVER = poRecord->GetIntSubfield( pszKey,0, "RVER",0 );
+            int         nRUIN = poRecord->GetIntSubfield( pszKey,0, "RUIN",0 );
             DDFRecordIndex *poIndex = NULL;
 
             if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"VRID") )
@@ -1881,7 +1884,7 @@ int S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
                 }
                 else if( nRUIN == 2 ) /* delete */
                 {
-                    DDFRecord	*poTarget;
+                    DDFRecord   *poTarget;
 
                     poTarget = poIndex->FindRecord( nRCID );
                     if( poTarget == NULL )
@@ -1905,7 +1908,7 @@ int S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
 
                 else if( nRUIN == 3 ) /* modify in place */
                 {
-                    DDFRecord	*poTarget;
+                    DDFRecord   *poTarget;
 
                     poTarget = poIndex->FindRecord( nRCID );
                     if( poTarget == NULL )
@@ -1953,8 +1956,8 @@ int S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
 int S57Reader::FindAndApplyUpdates( const char * pszPath )
 
 {
-    int		iUpdate;
-    int 	bSuccess = TRUE;
+    int         iUpdate;
+    int         bSuccess = TRUE;
 
     if( !EQUAL(CPLGetExtension(pszPath),"000") )
     {
@@ -1966,8 +1969,8 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
 
     for( iUpdate = 1; bSuccess; iUpdate++ )
     {
-        char	szExtension[4];
-        char	*pszUpdateFilename;
+        char    szExtension[4];
+        char    *pszUpdateFilename;
         DDFModule oUpdateModule;
 
         sprintf( szExtension, "%03d", iUpdate );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/08/30 21:06:55  warmerda
+ * expand tabs
+ *
  * Revision 1.11  2001/08/30 21:05:32  warmerda
  * added support for generic object if not recognised
  *
@@ -77,7 +80,7 @@ int main( int nArgc, char ** papszArgv )
 
 {
     char        **papszOptions = NULL;
-    int		bUpdate = TRUE;
+    int         bUpdate = TRUE;
     
     if( nArgc < 2 )
     {
@@ -187,7 +190,7 @@ int main( int nArgc, char ** papszArgv )
     
         OGRFeature      *poFeature;
         int             nFeatures = 0;
-        DDFModule	oUpdate;
+        DDFModule       oUpdate;
 
         if( bUpdate )
             oReader.FindAndApplyUpdates(papszFiles[iFile]);
