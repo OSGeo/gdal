@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/11/01 17:06:31  warmerda
+ * convert use of CRestrictions to deriving from CSchemaRowset
+ *
  * Revision 1.2  1999/11/18 19:02:20  warmerda
  * expanded tabs
  *
@@ -82,8 +85,18 @@ BEGIN_COLUMN_MAP(COGISFeatureTableInfo)
 END_COLUMN_MAP()
 };
 
-typedef CRestrictions<CAccessor<COGISFeatureTableInfo>, 1, 
-                      &DBSCHEMA_OGIS_FEATURE_TABLES> COGISFeatureTables;
+class COGISFeatureTables:
+      public CSchemaRowset<CAccessor<COGISFeatureTableInfo>,0>
+
+{
+  public:
+    HRESULT Open(const CSession& session, bool bBind = true )
+    {
+        USES_CONVERSION;
+        return CSchemaRowset<CAccessor<COGISFeatureTableInfo>,0>::
+            Open(session, DBSCHEMA_OGIS_FEATURE_TABLES /*, bBind */);
+    }
+};
 
 /************************************************************************/
 /*                       COGISGeometryColumnInfo                        */
@@ -121,8 +134,18 @@ BEGIN_COLUMN_MAP(COGISGeometryColumnInfo)
 END_COLUMN_MAP()
 };
 
-typedef CRestrictions<CAccessor<COGISGeometryColumnInfo>, 1, 
-                   &DBSCHEMA_OGIS_GEOMETRY_COLUMNS> COGISGeometryColumnTable;
+class COGISGeometryColumnTable:
+      public CSchemaRowset<CAccessor<COGISGeometryColumnInfo>,0>
+
+{
+  public:
+    HRESULT Open(const CSession& session, bool bBind = true )
+    {
+        USES_CONVERSION;
+        return CSchemaRowset<CAccessor<COGISGeometryColumnInfo>,0>::
+            Open(session, DBSCHEMA_OGIS_GEOMETRY_COLUMNS/*, bBind*/);
+    }
+};
 
 /************************************************************************/
 /*                      COGISSpatialRefSystemsInfo                      */
@@ -156,7 +179,17 @@ BEGIN_COLUMN_MAP(COGISSpatialRefSystemsInfo)
 END_COLUMN_MAP()
 };
 
-typedef CRestrictions<CAccessor<COGISSpatialRefSystemsInfo>, 1, 
-              &DBSCHEMA_OGIS_SPATIAL_REF_SYSTEMS> COGISSpatialRefSystemsTable;
+class COGISSpatialRefSystemsTable:
+      public CSchemaRowset<CAccessor<COGISSpatialRefSystemsInfo>,0>
+
+{
+  public:
+    HRESULT Open(const CSession& session, bool bBind = true )
+    {
+        USES_CONVERSION;
+        return CSchemaRowset<CAccessor<COGISSpatialRefSystemsInfo>,0>::
+            Open(session, DBSCHEMA_OGIS_SPATIAL_REF_SYSTEMS /*, bBind */);
+    }
+};
 
 #endif /* ndef SFCSCHEMAROWSETS_H_INCLUDED */
