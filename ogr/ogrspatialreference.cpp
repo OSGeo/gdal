@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.92  2005/03/03 04:55:42  fwarmerdam
+ * make exportToWkt() const
+ *
  * Revision 1.91  2005/02/11 14:21:28  fwarmerdam
  * added GEOS projection support
  *
@@ -645,7 +648,7 @@ OGRErr OSRExportToPrettyWkt( OGRSpatialReferenceH hSRS, char ** ppszReturn,
  * is possible error conditions will develop. 
  */
  
-OGRErr  OGRSpatialReference::exportToWkt( char ** ppszResult )
+OGRErr  OGRSpatialReference::exportToWkt( char ** ppszResult ) const
 
 {
     if( poRoot == NULL )
