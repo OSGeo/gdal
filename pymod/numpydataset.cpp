@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/03/08 18:42:06  warmerda
+ * implement projection, and geotransform holding support
+ *
  * Revision 1.2  2001/02/06 16:16:28  warmerda
  * fixed numpydataset.cpp to use sscanf to parse pointer
  *
@@ -43,16 +46,24 @@
 static GDALDriver	*poNUMPYDriver = NULL;
 
 /************************************************************************/
-/*				MEMDataset				*/
+/*				NUMPYDataset				*/
 /************************************************************************/
 
 class NUMPYDataset : public GDALDataset
 {
     PyArrayObject *psArray;
 
+    double	  adfGeoTransform[6];
+    char	  *pszProjection;
+
   public:
                  NUMPYDataset();
                  ~NUMPYDataset();
+
+    virtual const char *GetProjectionRef(void);
+    virtual CPLErr SetProjection( const char * );
+    virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr SetGeoTransform( double * );
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -64,6 +75,13 @@ class NUMPYDataset : public GDALDataset
 NUMPYDataset::NUMPYDataset()
 
 {
+    pszProjection = CPLStrdup("");
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -73,8 +91,55 @@ NUMPYDataset::NUMPYDataset()
 NUMPYDataset::~NUMPYDataset()
 
 {
+    CPLFree( pszProjection );
+
     FlushCache();
     Py_DECREF( psArray );
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *NUMPYDataset::GetProjectionRef()
+
+{
+    return( pszProjection );
+}
+
+/************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
+CPLErr NUMPYDataset::SetProjection( const char * pszNewProjection )
+
+{
+    CPLFree( pszProjection );
+    pszProjection = CPLStrdup( pszNewProjection );
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr NUMPYDataset::GetGeoTransform( double * padfTransform )
+
+{
+    memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
+    return CE_None;
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr NUMPYDataset::SetGeoTransform( double * padfTransform )
+
+{
+    memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
+    return( CE_None );
 }
 
 /************************************************************************/
