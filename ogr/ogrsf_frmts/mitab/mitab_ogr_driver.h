@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_driver.h,v 1.9 2001/09/14 03:22:58 warmerda Exp $
+ * $Id: mitab_ogr_driver.h,v 1.10 2002/02/08 16:52:16 warmerda Exp $
  *
  * Name:     mitab_ogr_drive.h
  * Project:  Mid/mif tab ogr support
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_ogr_driver.h,v $
+ * Revision 1.10  2002/02/08 16:52:16  warmerda
+ * added support for FORMAT=MIF option for creating layers
+ *
  * Revision 1.9  2001/09/14 03:22:58  warmerda
  * added RegisterOGRTAB() prototype
  *
@@ -79,6 +82,9 @@ class OGRTABDataSource : public OGRDataSource
 
     int                 m_nLayerCount;
     IMapInfoFile        **m_papoLayers;
+
+    char                **m_papszOptions;
+    int                 m_bCreateMIF;
 
   public:
                 OGRTABDataSource();

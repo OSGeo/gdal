@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_datasource.cpp,v 1.4 2001/02/06 22:13:54 warmerda Exp $
+ * $Id: mitab_ogr_datasource.cpp,v 1.5 2002/02/08 16:52:16 warmerda Exp $
  *
  * Name:     mitab_ogr_datasource.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
@@ -30,6 +30,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log: mitab_ogr_datasource.cpp,v $
+ * Revision 1.5  2002/02/08 16:52:16  warmerda
+ * added support for FORMAT=MIF option for creating layers
+ *
  * Revision 1.4  2001/02/06 22:13:54  warmerda
  * fixed memory leak in OGRTABDataSource::CreateLayer()
  *
@@ -66,6 +69,8 @@ OGRTABDataSource::OGRTABDataSource()
     m_pszDirectory = NULL;
     m_nLayerCount = 0;
     m_papoLayers = NULL;
+    m_papszOptions = NULL;
+    m_bCreateMIF = FALSE;
 }
 
 /************************************************************************/
@@ -82,6 +87,7 @@ OGRTABDataSource::~OGRTABDataSource()
         delete m_papoLayers[i];
 
     CPLFree( m_papoLayers );
+    CSLDestroy( m_papszOptions );
 }
 
 /************************************************************************/
@@ -90,7 +96,7 @@ OGRTABDataSource::~OGRTABDataSource()
 /*      Create a new dataset (directory or file).                       */
 /************************************************************************/
 
-int OGRTABDataSource::Create( const char * pszName, char ** )
+int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
 
 {
     VSIStatBuf  sStat;
@@ -98,6 +104,14 @@ int OGRTABDataSource::Create( const char * pszName, char ** )
     CPLAssert( m_pszName == NULL );
     
     m_pszName = CPLStrdup( pszName );
+    m_papszOptions = CSLDuplicate( papszOptions );
+
+    if( CSLFetchNameValue(papszOptions,"FORMAT") != NULL 
+        && EQUAL(CSLFetchNameValue(papszOptions,"FORMAT"),"MIF") )
+        m_bCreateMIF = TRUE;
+    else if( EQUAL(CPLGetExtension(pszName),"mif")
+             || EQUAL(CPLGetExtension(pszName),"mid") )
+        m_bCreateMIF = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Create a new empty directory.                                   */
@@ -136,7 +150,11 @@ int OGRTABDataSource::Create( const char * pszName, char ** )
     {
         IMapInfoFile    *poFile;
 
-        poFile = new TABFile;
+        if( m_bCreateMIF )
+            poFile = new MIFFile;
+        else
+            poFile = new TABFile;
+
         if( poFile->Open( pszName, "wb", FALSE ) != 0 )
         {
             delete poFile;
@@ -282,10 +300,21 @@ OGRTABDataSource::CreateLayer( const char * pszLayerName,
     IMapInfoFile        *poFile;
     char                *pszFullFilename;
 
-    pszFullFilename = CPLStrdup( CPLFormFilename( m_pszDirectory,
-                                                  pszLayerName, "tab" ) );
-    
-    poFile = new TABFile;
+    if( m_bCreateMIF )
+    {
+        pszFullFilename = CPLStrdup( CPLFormFilename( m_pszDirectory,
+                                                      pszLayerName, "mif" ) );
+
+        poFile = new MIFFile;
+    }
+    else
+    {
+        pszFullFilename = CPLStrdup( CPLFormFilename( m_pszDirectory,
+                                                      pszLayerName, "tab" ) );
+
+        poFile = new TABFile;
+    }
+
     if( poFile->Open( pszFullFilename, "wb", FALSE ) != 0 )
     {
         CPLFree( pszFullFilename );

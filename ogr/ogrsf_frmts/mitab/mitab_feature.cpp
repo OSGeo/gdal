@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.40 2001/09/17 21:33:44 daniel Exp $
+ * $Id: mitab_feature.cpp,v 1.44 2002/01/23 20:29:56 daniel Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999-2001, Daniel Morissette
+ * Copyright (c) 1999-2002, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,20 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.44  2002/01/23 20:29:56  daniel
+ * Fixed warning produced by CPLAssert() in non-DEBUG mode.
+ *
+ * Revision 1.43  2001/12/05 22:38:59  daniel
+ * Fixed problems writing TAB_GEOM_LINE (bug 610, 633).
+ *
+ * Revision 1.42  2001/11/23 22:50:17  daniel
+ * Fixed geometry type assertion in TABPolyline::WriteGeomToMAPFile (bug605)
+ *
+ * Revision 1.41  2001/11/17 21:54:06  daniel
+ * Made several changes in order to support writing objects in 16 bits 
+ * coordinate format.  New TABMAPObjHdr-derived classes are used to hold 
+ * object info in mem until block is full.
+ *
  * Revision 1.40  2001/09/17 21:33:44  daniel
  * TABText: do not produce an error when reading 0-length text strings.
  *
@@ -378,13 +392,63 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABFeature::ReadGeometryFromMAPFile(TABMAPFile * /*poMapFile*/)
+int TABFeature::ReadGeometryFromMAPFile(TABMAPFile * /*poMapFile*/,
+                                        TABMAPObjHdr * /*poObjHdr*/)
 {
     /*-----------------------------------------------------------------
      * Nothing to do... instances of TABFeature objects contain no geometry.
      *----------------------------------------------------------------*/
 
     return 0;
+}
+
+
+/**********************************************************************
+ *                   TABFeature::ValidateCoordType()
+ *
+ * Checks the feature envelope to establish if the feature should be
+ * written using Compressed coordinates or not and adjust m_nMapInfoType
+ * accordingly.
+ *
+ * This function should be used only by the ValidateMapInfoType() 
+ * implementations.
+ *
+ * Returns TRUE if coord. should be compressed, FALSE otherwise
+ **********************************************************************/
+GBool TABFeature::ValidateCoordType(TABMAPFile * poMapFile)
+{
+    GBool bCompr = FALSE;
+    OGRGeometry *poGeom;
+
+    poGeom = GetGeometryRef();
+
+    /*-------------------------------------------------------------
+     * Decide if coordinates should be compressed or not.
+     *------------------------------------------------------------*/
+    if (poGeom && poMapFile)
+    {
+        OGREnvelope oEnv;
+        poGeom->getEnvelope(&oEnv);
+        poMapFile->Coordsys2Int(oEnv.MinX, oEnv.MinY, m_nXMin, m_nYMin);
+        poMapFile->Coordsys2Int(oEnv.MaxX, oEnv.MaxY, m_nXMax, m_nYMax);
+        if ((m_nXMax - m_nXMin) < 65536 && (m_nYMax-m_nYMin) < 65536)
+        {
+            bCompr = TRUE;
+        }
+        m_nComprOrgX = (m_nXMin + m_nXMax) / 2;
+        m_nComprOrgY = (m_nYMin + m_nYMax) / 2;
+    }
+
+
+    /*-------------------------------------------------------------
+     * Adjust native type
+     *------------------------------------------------------------*/
+    if (bCompr && ((m_nMapInfoType%3) == 2))
+        m_nMapInfoType--;  // compr = 1, 4, 7, ...
+    else if (!bCompr && ((m_nMapInfoType%3) == 1))
+        m_nMapInfoType++;  // non-compr = 2, 5, 8, ...
+
+    return bCompr;
 }
 
 /**********************************************************************
@@ -404,7 +468,8 @@ int TABFeature::ReadGeometryFromMAPFile(TABMAPFile * /*poMapFile*/)
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABFeature::WriteGeometryToMAPFile(TABMAPFile * /* poMapFile*/)
+int TABFeature::WriteGeometryToMAPFile(TABMAPFile * /* poMapFile*/,
+                                       TABMAPObjHdr * /*poObjHdr*/)
 {
     /*-----------------------------------------------------------------
      * Nothing to do... instances of TABFeature objects contain no geometry.
@@ -518,12 +583,17 @@ TABFeature *TABPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
  * Returns TAB_GEOM_NONE if the geometry is not compatible with what
  * is expected for this object class.
  **********************************************************************/
-int  TABPoint::ValidateMapInfoType()
+int  TABPoint::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
     OGRGeometry *poGeom;
 
     /*-----------------------------------------------------------------
-     * Fetch and validate geometry
+     * Fetch and validate geometry 
+     * __TODO__ For now we always write in uncompressed format (until we 
+     * find that this is not correct... note that at this point the
+     * decision to use compressed/uncompressed will likely be based on
+     * the distance between the point and the object block center in
+     * integer coordinates being > 32767 or not... remains to be verified)
      *----------------------------------------------------------------*/
     poGeom = GetGeometryRef();
     if (poGeom && poGeom->getGeometryType() == wkbPoint)
@@ -564,7 +634,8 @@ int  TABPoint::ValidateMapInfoType()
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
+int TABPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
+                                      TABMAPObjHdr *poObjHdr)
 {
     GInt32              nX, nY;
     double              dX, dY;
@@ -623,17 +694,18 @@ int TABPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
+int TABPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
+                                       TABMAPObjHdr *poObjHdr)
 {
     GInt32              nX, nY;
     OGRGeometry         *poGeom;
     OGRPoint            *poPoint;
-    TABMAPObjectBlock   *poObjBlock;
 
-    if (ValidateMapInfoType() == TAB_GEOM_NONE)
-        return -1;      // Invalid Geometry... an error has already been sent
-
-    poObjBlock = poMapFile->GetCurObjBlock();
+    /*-----------------------------------------------------------------
+     * We assume that ValidateMapInfoType() was called already and that
+     * the type in poObjHdr->m_nType is valid.
+     *----------------------------------------------------------------*/
+    CPLAssert(m_nMapInfoType == poObjHdr->m_nType);
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
@@ -651,12 +723,16 @@ int TABPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
     poMapFile->Coordsys2Int(poPoint->getX(), poPoint->getY(), nX, nY);
 
     /*-----------------------------------------------------------------
-     * Write object information
+     * Copy object information
      *----------------------------------------------------------------*/
-    poObjBlock->WriteIntCoord(nX, nY);
+    TABMAPObjPoint *poPointHdr = (TABMAPObjPoint *)poObjHdr;
+
+    poPointHdr->m_nX = nX;
+    poPointHdr->m_nY = nY;
+    poPointHdr->SetMBR(nX, nY, nX, nY);
 
     m_nSymbolDefIndex = poMapFile->WriteSymbolDef(&m_sSymbolDef);
-    poObjBlock->WriteByte(m_nSymbolDefIndex);      // Symbol index
+    poPointHdr->m_nSymbolId = m_nSymbolDefIndex;      // Symbol index
 
     if (CPLGetLastErrorNo() != 0)
         return -1;
@@ -868,7 +944,8 @@ TABFeature *TABFontPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABFontPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
+int TABFontPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
+                                          TABMAPObjHdr *poObjHdr)
 {
     GInt32              nX, nY;
     double              dX, dY;
@@ -955,17 +1032,18 @@ int TABFontPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABFontPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
+int TABFontPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
+                                       TABMAPObjHdr *poObjHdr)
 {
     GInt32              nX, nY;
-    TABMAPObjectBlock   *poObjBlock;
     OGRGeometry         *poGeom;
     OGRPoint            *poPoint;
 
-    if (ValidateMapInfoType() == TAB_GEOM_NONE)
-        return -1;      // Invalid Geometry... an error has already been sent
-
-    poObjBlock = poMapFile->GetCurObjBlock();
+    /*-----------------------------------------------------------------
+     * We assume that ValidateMapInfoType() was called already and that
+     * the type in poObjHdr->m_nType is valid.
+     *----------------------------------------------------------------*/
+    CPLAssert(m_nMapInfoType == poObjHdr->m_nType);
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
@@ -983,37 +1061,36 @@ int TABFontPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
     poMapFile->Coordsys2Int(poPoint->getX(), poPoint->getY(), nX, nY);
 
     /*-----------------------------------------------------------------
-     * Write object information
+     * Copy object information
      * NOTE: This symbol type does not contain a reference to a
      * SymbolDef block in the file, but we still use the m_sSymbolDef
      * structure to store the information inside the class so that the
      * ITABFeatureSymbol methods work properly for the class user.
      *----------------------------------------------------------------*/
-    poObjBlock->WriteByte((GByte)m_sSymbolDef.nSymbolNo);   // shape
-    poObjBlock->WriteByte((GByte)m_sSymbolDef.nPointSize);  // point size
+    TABMAPObjFontPoint *poPointHdr = (TABMAPObjFontPoint *)poObjHdr;
 
-    poObjBlock->WriteInt16(m_nFontStyle);            // font style
+    poPointHdr->m_nX = nX;
+    poPointHdr->m_nY = nY;
+    poPointHdr->SetMBR(nX, nY, nX, nY);
 
-    poObjBlock->WriteByte( COLOR_R(m_sSymbolDef.rgbColor) );
-    poObjBlock->WriteByte( COLOR_G(m_sSymbolDef.rgbColor) );
-    poObjBlock->WriteByte( COLOR_B(m_sSymbolDef.rgbColor) );
+    poPointHdr->m_nSymbolId = (GByte)m_sSymbolDef.nSymbolNo;    // shape
+    poPointHdr->m_nPointSize = (GByte)m_sSymbolDef.nPointSize;  // point size
+    poPointHdr->m_nFontStyle = m_nFontStyle;                    // font style
 
-    poObjBlock->WriteByte( 0 );
-    poObjBlock->WriteByte( 0 );
-    poObjBlock->WriteByte( 0 );
-    
+    poPointHdr->m_nR = COLOR_R(m_sSymbolDef.rgbColor);
+    poPointHdr->m_nG = COLOR_G(m_sSymbolDef.rgbColor);
+    poPointHdr->m_nB = COLOR_B(m_sSymbolDef.rgbColor);
+
     /*-------------------------------------------------------------
      * Symbol Angle, in thenths of degree.
      * Contrary to arc start/end angles, no conversion based on 
      * origin quadrant is required here
      *------------------------------------------------------------*/
-   poObjBlock->WriteInt16(ROUND_INT(m_dAngle * 10.0));
-
-    poObjBlock->WriteIntCoord(nX, nY);
+    poPointHdr->m_nAngle = ROUND_INT(m_dAngle * 10.0);
 
     // Write Font Def
     m_nFontDefIndex = poMapFile->WriteFontDef(&m_sFontDef);
-    poObjBlock->WriteByte(m_nFontDefIndex);      // Font name index
+    poPointHdr->m_nFontId = m_nFontDefIndex;      // Font name index
 
     if (CPLGetLastErrorNo() != 0)
         return -1;
@@ -1172,7 +1249,8 @@ TABFeature *TABCustomPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABCustomPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
+int TABCustomPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
+                                            TABMAPObjHdr *poObjHdr)
 {
     GInt32              nX, nY;
     double              dX, dY;
@@ -1239,17 +1317,18 @@ int TABCustomPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABCustomPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
+int TABCustomPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
+                                       TABMAPObjHdr *poObjHdr)
 {
     GInt32              nX, nY;
-    TABMAPObjectBlock   *poObjBlock;
     OGRGeometry         *poGeom;
     OGRPoint            *poPoint;
 
-    if (ValidateMapInfoType() == TAB_GEOM_NONE)
-        return -1;      // Invalid Geometry... an error has already been sent
-
-    poObjBlock = poMapFile->GetCurObjBlock();
+    /*-----------------------------------------------------------------
+     * We assume that ValidateMapInfoType() was called already and that
+     * the type in poObjHdr->m_nType is valid.
+     *----------------------------------------------------------------*/
+    CPLAssert(m_nMapInfoType == poObjHdr->m_nType);
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
@@ -1267,18 +1346,22 @@ int TABCustomPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
     poMapFile->Coordsys2Int(poPoint->getX(), poPoint->getY(), nX, nY);
 
     /*-----------------------------------------------------------------
-     * Write object information
+     * Copy object information
      *----------------------------------------------------------------*/
-    poObjBlock->WriteByte(m_nUnknown_);  // ??? 
-    poObjBlock->WriteByte(m_nCustomStyle);   // 0x01=Show BG,
-                                         // 0x02=Apply Color
-    poObjBlock->WriteIntCoord(nX, nY);
+    TABMAPObjCustomPoint *poPointHdr = (TABMAPObjCustomPoint *)poObjHdr;
+
+    poPointHdr->m_nX = nX;
+    poPointHdr->m_nY = nY;
+    poPointHdr->SetMBR(nX, nY, nX, nY);
+    poPointHdr->m_nUnknown_ = m_nUnknown_;
+    poPointHdr->m_nCustomStyle = m_nCustomStyle;// 0x01=Show BG,
+                                               // 0x02=Apply Color
 
     m_nSymbolDefIndex = poMapFile->WriteSymbolDef(&m_sSymbolDef);
-    poObjBlock->WriteByte(m_nSymbolDefIndex);      // Symbol index
+    poPointHdr->m_nSymbolId = m_nSymbolDefIndex;      // Symbol index
 
     m_nFontDefIndex = poMapFile->WriteFontDef(&m_sFontDef);
-    poObjBlock->WriteByte(m_nFontDefIndex);      // Font index
+    poPointHdr->m_nFontId = m_nFontDefIndex;      // Font index
 
     if (CPLGetLastErrorNo() != 0)
         return -1;
@@ -1442,7 +1525,7 @@ OGRLineString *TABPolyline::GetPartRef(int nPartIndex)
  * Returns TAB_GEOM_NONE if the geometry is not compatible with what
  * is expected for this object class.
  **********************************************************************/
-int  TABPolyline::ValidateMapInfoType()
+int  TABPolyline::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
     OGRGeometry   *poGeom;
     OGRMultiLineString *poMultiLine = NULL;
@@ -1513,6 +1596,21 @@ int  TABPolyline::ValidateMapInfoType()
         m_nMapInfoType = TAB_GEOM_NONE;
     }
 
+    /*-----------------------------------------------------------------
+     * Decide if coordinates should be compressed or not.
+     *
+     * __TODO__ We never write type LINE (2 points line) as compressed
+     * for the moment.  If we ever do it, then the decision to write
+     * a 2 point line in compressed coordinates or not should take into
+     * account the location of the object block MBR, so this would be
+     * better handled directly by TABMAPObjLine::WriteObject() since the
+     * object block center is not known until it is written to disk.
+     *----------------------------------------------------------------*/
+    if (m_nMapInfoType != TAB_GEOM_LINE)
+    {
+        ValidateCoordType(poMapFile);
+    }
+
     return m_nMapInfoType;
 }
 
@@ -1529,28 +1627,19 @@ int  TABPolyline::ValidateMapInfoType()
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
+int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
+                                         TABMAPObjHdr *poObjHdr)
 {
     GInt32              nX, nY;
     double              dX, dY, dXMin, dYMin, dXMax, dYMax;
     OGRGeometry         *poGeometry;
     OGRLineString       *poLine;
-    TABMAPObjectBlock   *poObjBlock;
-    GBool               bComprCoord;
-
+    GBool               bComprCoord = poObjHdr->IsCompressedType();
+    
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
      *----------------------------------------------------------------*/
-    m_nMapInfoType = poMapFile->GetCurObjType();
-
-    poObjBlock = poMapFile->GetCurObjBlock();
-
-    bComprCoord = (m_nMapInfoType == TAB_GEOM_LINE_C ||
-                   m_nMapInfoType == TAB_GEOM_PLINE_C ||
-                   m_nMapInfoType == TAB_GEOM_MULTIPLINE_C ||
-                   m_nMapInfoType == TAB_GEOM_V450_MULTIPLINE_C);
-
-    m_bSmooth = FALSE;
+    m_nMapInfoType = poObjHdr->m_nType;
 
     if (m_nMapInfoType == TAB_GEOM_LINE ||
         m_nMapInfoType == TAB_GEOM_LINE_C )
@@ -1558,18 +1647,22 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
         /*=============================================================
          * LINE (2 vertices)
          *============================================================*/
+        TABMAPObjLine *poLineHdr = (TABMAPObjLine *)poObjHdr;
+
+        m_bSmooth = FALSE;
+
         poGeometry = poLine = new OGRLineString();
         poLine->setNumPoints(2);
 
-        poObjBlock->ReadIntCoord(bComprCoord, nX, nY);
-        poMapFile->Int2Coordsys(nX, nY, dXMin, dYMin);
+        poMapFile->Int2Coordsys(poLineHdr->m_nX1, poLineHdr->m_nY1, 
+                                dXMin, dYMin);
         poLine->setPoint(0, dXMin, dYMin);
 
-        poObjBlock->ReadIntCoord(bComprCoord, nX, nY);
-        poMapFile->Int2Coordsys(nX, nY, dXMax, dYMax);
+        poMapFile->Int2Coordsys(poLineHdr->m_nX2, poLineHdr->m_nY2,
+                                dXMax, dYMax);
         poLine->setPoint(1, dXMax, dYMax);
 
-        m_nPenDefIndex = poObjBlock->ReadByte();      // Pen index
+        m_nPenDefIndex = poLineHdr->m_nPenId;      // Pen index
         poMapFile->ReadPenDef(m_nPenDefIndex, &m_sPenDef);
     }
     else if (m_nMapInfoType == TAB_GEOM_PLINE ||
@@ -1584,36 +1677,36 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
         TABMAPCoordBlock *poCoordBlock;
 
         /*-------------------------------------------------------------
-         * Read data from poObjBlock
+         * Copy data from poObjHdr
          *------------------------------------------------------------*/
-        nCoordBlockPtr = poObjBlock->ReadInt32();
-        nCoordDataSize = poObjBlock->ReadInt32();
-        if (bComprCoord)
-        {
-            poObjBlock->ReadInt16();    // ??? Polyline centroid ???
-            poObjBlock->ReadInt16();    // Present only in compressed PLINE
-        }
-        nCenterX = poObjBlock->ReadInt32();
-        nCenterY = poObjBlock->ReadInt32();
-        poMapFile->Int2Coordsys(nCenterX, nCenterY, dX, dY);
+        TABMAPObjPLine *poPLineHdr = (TABMAPObjPLine *)poObjHdr;
+
+        nCoordBlockPtr  = poPLineHdr->m_nCoordBlockPtr;
+        nCoordDataSize  = poPLineHdr->m_nCoordDataSize;
+        //numLineSections = poPLineHdr->m_numLineSections; // Always 1
+        m_bSmooth       = poPLineHdr->m_bSmooth;
+
+        // Centroid/label point
+        poMapFile->Int2Coordsys(poPLineHdr->m_nLabelX, poPLineHdr->m_nLabelY, 
+                                dX, dY);
         SetCenter(dX, dY);
 
-        poObjBlock->ReadIntCoord(bComprCoord, nX, nY);    // Read MBR
-        poMapFile->Int2Coordsys(nX, nY, dXMin, dYMin);
-        poObjBlock->ReadIntCoord(bComprCoord, nX, nY);
-        poMapFile->Int2Coordsys(nX, nY, dXMax, dYMax);
+        // Compressed coordinate origin (useful only in compressed case!)
+        nCenterX = poPLineHdr->m_nComprOrgX;
+        nCenterY = poPLineHdr->m_nComprOrgY;
 
-        m_nPenDefIndex = poObjBlock->ReadByte();      // Pen index
+        // MBR
+        poMapFile->Int2Coordsys(poPLineHdr->m_nMinX, poPLineHdr->m_nMinY, 
+                                dXMin, dYMin);
+        poMapFile->Int2Coordsys(poPLineHdr->m_nMaxX, poPLineHdr->m_nMaxY, 
+                                dXMax, dYMax);
+
+        m_nPenDefIndex = poPLineHdr->m_nPenId;        // Pen index
         poMapFile->ReadPenDef(m_nPenDefIndex, &m_sPenDef);
 
         /*-------------------------------------------------------------
          * Create Geometry and read coordinates
          *------------------------------------------------------------*/
-        if (nCoordDataSize & 0x80000000)
-        {
-            m_bSmooth = TRUE;
-            nCoordDataSize &= 0x7FFFFFFF; //Take smooth flag out of the value
-        }
         numPoints = nCoordDataSize/(bComprCoord?4:8);
 
         poCoordBlock = poMapFile->GetCoordBlock(nCoordBlockPtr);
@@ -1666,34 +1759,31 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
                        m_nMapInfoType == TAB_GEOM_V450_MULTIPLINE_C);
 
         /*-------------------------------------------------------------
-         * Read data from poObjBlock
+         * Copy data from poObjHdr
          *------------------------------------------------------------*/
-        nCoordBlockPtr = poObjBlock->ReadInt32();
-        nCoordDataSize = poObjBlock->ReadInt32();
-        numLineSections = poObjBlock->ReadInt16();
+        TABMAPObjPLine *poPLineHdr = (TABMAPObjPLine *)poObjHdr;
 
-        if (nCoordDataSize & 0x80000000)
-        {
-            m_bSmooth = TRUE;
-            nCoordDataSize &= 0x7FFFFFFF; //Take smooth flag out of the value
-        }
+        nCoordBlockPtr  = poPLineHdr->m_nCoordBlockPtr;
+        nCoordDataSize  = poPLineHdr->m_nCoordDataSize;
+        numLineSections = poPLineHdr->m_numLineSections;
+        m_bSmooth       = poPLineHdr->m_bSmooth;
 
-        if (bComprCoord)
-        {
-            poObjBlock->ReadInt16();    // ??? Polyline centroid ???
-            poObjBlock->ReadInt16();    // Present only in compressed case
-        }
-        nCenterX = poObjBlock->ReadInt32();
-        nCenterY = poObjBlock->ReadInt32();
-        poMapFile->Int2Coordsys(nCenterX, nCenterY, dX, dY);
+        // Centroid/label point
+        poMapFile->Int2Coordsys(poPLineHdr->m_nLabelX, poPLineHdr->m_nLabelY, 
+                                dX, dY);
         SetCenter(dX, dY);
 
-        poObjBlock->ReadIntCoord(bComprCoord, nX, nY);    // Read MBR
-        poMapFile->Int2Coordsys(nX, nY, dXMin, dYMin);
-        poObjBlock->ReadIntCoord(bComprCoord, nX, nY);
-        poMapFile->Int2Coordsys(nX, nY, dXMax, dYMax);
+        // Compressed coordinate origin (useful only in compressed case!)
+        nCenterX = poPLineHdr->m_nComprOrgX;
+        nCenterY = poPLineHdr->m_nComprOrgY;
 
-        m_nPenDefIndex = poObjBlock->ReadByte();      // Pen index
+        // MBR
+        poMapFile->Int2Coordsys(poPLineHdr->m_nMinX, poPLineHdr->m_nMinY, 
+                                dXMin, dYMin);
+        poMapFile->Int2Coordsys(poPLineHdr->m_nMaxX, poPLineHdr->m_nMaxY, 
+                                dXMax, dYMax);
+
+        m_nPenDefIndex = poPLineHdr->m_nPenId;        // Pen index
         poMapFile->ReadPenDef(m_nPenDefIndex, &m_sPenDef);
 
         /*-------------------------------------------------------------
@@ -1756,7 +1846,9 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
             if (poGeometry==NULL)
                 poGeometry = poLine;
             else if (poMultiLine->addGeometryDirectly(poLine) != OGRERR_NONE)
+            {
                 CPLAssert(FALSE); // Just in case lower-level lib is modified
+            }
             poLine = NULL;
         }
 
@@ -1789,15 +1881,19 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
+int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
+                                       TABMAPObjHdr *poObjHdr)
 {
     GInt32              nX, nY;
     TABMAPObjectBlock   *poObjBlock;
     OGRGeometry         *poGeom;
     OGRLineString       *poLine=NULL;
 
-    if (ValidateMapInfoType() == TAB_GEOM_NONE)
-        return -1;      // Invalid Geometry... an error has already been sent
+    /*-----------------------------------------------------------------
+     * We assume that ValidateMapInfoType() was called already and that
+     * the type in poObjHdr->m_nType is valid.
+     *----------------------------------------------------------------*/
+    CPLAssert(m_nMapInfoType == poObjHdr->m_nType);
 
     poObjBlock = poMapFile->GetCurObjBlock();
 
@@ -1806,24 +1902,29 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
      *----------------------------------------------------------------*/
     poGeom = GetGeometryRef();
 
-    if (m_nMapInfoType == TAB_GEOM_LINE &&
+    if ((m_nMapInfoType == TAB_GEOM_LINE || 
+         m_nMapInfoType == TAB_GEOM_LINE_C ) &&
         poGeom && poGeom->getGeometryType() == wkbLineString &&
         (poLine = (OGRLineString*)poGeom)->getNumPoints() == 2)
     {
         /*=============================================================
          * LINE (2 vertices)
          *============================================================*/
-        poMapFile->Coordsys2Int(poLine->getX(0), poLine->getY(0), nX, nY);
-        poObjBlock->WriteIntCoord(nX, nY);
+        TABMAPObjLine *poLineHdr = (TABMAPObjLine *)poObjHdr;
 
-        poMapFile->Coordsys2Int(poLine->getX(1), poLine->getY(1), nX, nY);
-        poObjBlock->WriteIntCoord(nX, nY);
+        poMapFile->Coordsys2Int(poLine->getX(0), poLine->getY(0), 
+                                poLineHdr->m_nX1, poLineHdr->m_nY1);
+        poMapFile->Coordsys2Int(poLine->getX(1), poLine->getY(1), 
+                                poLineHdr->m_nX2, poLineHdr->m_nY2);
+        poLineHdr->SetMBR(poLineHdr->m_nX1, poLineHdr->m_nY1,
+                          poLineHdr->m_nX2, poLineHdr->m_nY2 );
 
         m_nPenDefIndex = poMapFile->WritePenDef(&m_sPenDef);
-        poObjBlock->WriteByte(m_nPenDefIndex);      // Pen index
+        poLineHdr->m_nPenId = m_nPenDefIndex;      // Pen index
 
     }
-    else if (m_nMapInfoType == TAB_GEOM_PLINE &&
+    else if ((m_nMapInfoType == TAB_GEOM_PLINE ||
+              m_nMapInfoType == TAB_GEOM_PLINE_C ) &&
              poGeom && poGeom->getGeometryType() == wkbLineString )
     {
         /*=============================================================
@@ -1831,8 +1932,9 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
          *============================================================*/
         int     i, numPoints, nStatus;
         GUInt32 nCoordDataSize;
-        GInt32  nCoordBlockPtr, nXMin, nYMin, nXMax, nYMax;
+        GInt32  nCoordBlockPtr;
         TABMAPCoordBlock *poCoordBlock;
+        GBool   bCompressed = poObjHdr->IsCompressedType();
 
         /*-------------------------------------------------------------
          * Process geometry first...
@@ -1844,12 +1946,14 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
         poCoordBlock = poMapFile->GetCurCoordBlock();
         poCoordBlock->StartNewFeature();
         nCoordBlockPtr = poCoordBlock->GetCurAddress();
+        poCoordBlock->SetComprCoordOrigin(m_nComprOrgX, m_nComprOrgY);
 
         nStatus = 0;
         for(i=0; nStatus == 0 && i<numPoints; i++)
         {
             poMapFile->Coordsys2Int(poLine->getX(i), poLine->getY(i), nX, nY);
-            if ((nStatus = poCoordBlock->WriteIntCoord(nX, nY)) != 0)
+            if ((nStatus = poCoordBlock->WriteIntCoord(nX, nY, 
+                                                       bCompressed)) != 0)
             {
                 // Failed ... error message has already been produced
                 return nStatus;
@@ -1858,33 +1962,39 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
 
         nCoordDataSize = poCoordBlock->GetFeatureDataSize();
 
-        // Combine smooth flag in the coord data size.
-        if (m_bSmooth)
-            nCoordDataSize |= 0x80000000;
-
-        poCoordBlock->GetFeatureMBR(nXMin, nYMin, nXMax, nYMax);
-
         /*-------------------------------------------------------------
-         * Write info to poObjBlock
+         * Copy info to poObjHdr
          *------------------------------------------------------------*/
-        poObjBlock->WriteInt32(nCoordBlockPtr);
-        poObjBlock->WriteInt32(nCoordDataSize);
+        TABMAPObjPLine *poPLineHdr = (TABMAPObjPLine *)poObjHdr;
 
-        // Polyline center point
+        poPLineHdr->m_nCoordBlockPtr = nCoordBlockPtr;
+        poPLineHdr->m_nCoordDataSize = nCoordDataSize;
+        poPLineHdr->m_numLineSections = 1;
+
+        poPLineHdr->m_bSmooth = m_bSmooth;
+
+        // MBR
+        poPLineHdr->SetMBR(m_nXMin, m_nYMin, m_nXMax, m_nYMax);
+
+        // Polyline center/label point
         double dX, dY;
         if (GetCenter(dX, dY) != -1)
         {
-            poMapFile->Coordsys2Int(dX, dY, nX, nY);
-            poObjBlock->WriteIntCoord(nX, nY);
+            poMapFile->Coordsys2Int(dX, dY, poPLineHdr->m_nLabelX, 
+                                    poPLineHdr->m_nLabelY);
         }
         else
-            poObjBlock->WriteIntCoord((nXMin+nXMax)/2, (nYMin+nYMax)/2);
-
-        // MBR
-        poObjBlock->WriteIntMBRCoord(nXMin, nYMin, nXMax, nYMax);
+        {
+            poPLineHdr->m_nLabelX = m_nComprOrgX;
+            poPLineHdr->m_nLabelY = m_nComprOrgY;
+        }
+        
+        // Compressed coordinate origin (useful only in compressed case!)
+        poPLineHdr->m_nComprOrgX = m_nComprOrgX;
+        poPLineHdr->m_nComprOrgY = m_nComprOrgY;
 
         m_nPenDefIndex = poMapFile->WritePenDef(&m_sPenDef);
-        poObjBlock->WriteByte(m_nPenDefIndex);      // Pen index
+        poPLineHdr->m_nPenId = m_nPenDefIndex;      // Pen index
 
     }
     else if (poGeom && (poGeom->getGeometryType() == wkbMultiLineString ||
@@ -1897,20 +2007,23 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
         GInt32  numPointsTotal, numPoints;
         GUInt32 nCoordDataSize;
         GInt32  nCoordBlockPtr, numLines;
-        GInt32  nXMin, nYMin, nXMax, nYMax;
         TABMAPCoordBlock        *poCoordBlock;
         OGRMultiLineString      *poMultiLine=NULL;
         TABMAPCoordSecHdr       *pasSecHdrs;
         OGREnvelope             sEnvelope;
+        GBool   bCompressed = poObjHdr->IsCompressedType();
 
         CPLAssert(m_nMapInfoType == TAB_GEOM_MULTIPLINE ||
-                  m_nMapInfoType == TAB_GEOM_V450_MULTIPLINE);
+                  m_nMapInfoType == TAB_GEOM_MULTIPLINE_C ||
+                  m_nMapInfoType == TAB_GEOM_V450_MULTIPLINE ||
+                  m_nMapInfoType == TAB_GEOM_V450_MULTIPLINE_C);
         /*-------------------------------------------------------------
          * Process geometry first...
          *------------------------------------------------------------*/
         poCoordBlock = poMapFile->GetCurCoordBlock();
         poCoordBlock->StartNewFeature();
         nCoordBlockPtr = poCoordBlock->GetCurAddress();
+        poCoordBlock->SetComprCoordOrigin(m_nComprOrgX, m_nComprOrgY);
 
         if (poGeom->getGeometryType() == wkbMultiLineString)
         {
@@ -1934,7 +2047,8 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
          * V450 header section uses int32 instead of int16 for numVertices
          * and we add another 2 bytes to align with a 4 bytes boundary.
          *------------------------------------------------------------*/
-        GBool bV450 = (m_nMapInfoType == TAB_GEOM_V450_MULTIPLINE);
+        GBool bV450 = (m_nMapInfoType == TAB_GEOM_V450_MULTIPLINE ||
+                       m_nMapInfoType == TAB_GEOM_V450_MULTIPLINE_C );
         int nTotalHdrSizeUncompressed;
         if (bV450)
             nTotalHdrSizeUncompressed = 28 * numLines;
@@ -1979,7 +2093,7 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
          
         if (nStatus == 0)
             nStatus = poCoordBlock->WriteCoordSecHdrs(bV450, numLines, 
-                                                      pasSecHdrs);
+                                                      pasSecHdrs, bCompressed);
 
         CPLFree(pasSecHdrs);
         pasSecHdrs = NULL;
@@ -2004,7 +2118,8 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
                 {
                     poMapFile->Coordsys2Int(poLine->getX(i), poLine->getY(i),
                                             nX, nY);
-                    if ((nStatus=poCoordBlock->WriteIntCoord(nX, nY)) != 0)
+                    if ((nStatus=poCoordBlock->WriteIntCoord(nX, nY,
+                                                           bCompressed)) != 0)
                     {
                         // Failed ... error message has already been produced
                         return nStatus;
@@ -2022,34 +2137,40 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
 
         nCoordDataSize = poCoordBlock->GetFeatureDataSize();
 
-        // Combine smooth flag in the coord data size.
-        if (m_bSmooth)
-            nCoordDataSize |= 0x80000000;
-
-        poCoordBlock->GetFeatureMBR(nXMin, nYMin, nXMax, nYMax);
-
         /*-------------------------------------------------------------
-         * ... and finally write info to poObjBlock
+         * ... and finally copy info to poObjHdr
          *------------------------------------------------------------*/
-        poObjBlock->WriteInt32(nCoordBlockPtr);
-        poObjBlock->WriteInt32(nCoordDataSize);
-        poObjBlock->WriteInt16(numLines);
+        TABMAPObjPLine *poPLineHdr = (TABMAPObjPLine *)poObjHdr;
 
-        // Polyline center point
+        poPLineHdr->m_nCoordBlockPtr = nCoordBlockPtr;
+        poPLineHdr->m_nCoordDataSize = nCoordDataSize;
+        poPLineHdr->m_numLineSections = numLines;
+
+        poPLineHdr->m_bSmooth = m_bSmooth;
+
+        // MBR
+        poPLineHdr->SetMBR(m_nXMin, m_nYMin, m_nXMax, m_nYMax);
+
+        // Polyline center/label point
         double dX, dY;
         if (GetCenter(dX, dY) != -1)
         {
-            poMapFile->Coordsys2Int(dX, dY, nX, nY);
-            poObjBlock->WriteIntCoord(nX, nY);
+            poMapFile->Coordsys2Int(dX, dY, poPLineHdr->m_nLabelX, 
+                                    poPLineHdr->m_nLabelY);
         }
         else
-            poObjBlock->WriteIntCoord((nXMin+nXMax)/2, (nYMin+nYMax)/2);
-
-        // MBR
-        poObjBlock->WriteIntMBRCoord(nXMin, nYMin, nXMax, nYMax);
+        {
+            poPLineHdr->m_nLabelX = m_nComprOrgX;
+            poPLineHdr->m_nLabelY = m_nComprOrgY;
+        }
+        
+        // Compressed coordinate origin (useful only in compressed case!)
+        poPLineHdr->m_nComprOrgX = m_nComprOrgX;
+        poPLineHdr->m_nComprOrgY = m_nComprOrgY;
 
         m_nPenDefIndex = poMapFile->WritePenDef(&m_sPenDef);
-        poObjBlock->WriteByte(m_nPenDefIndex);      // Pen index
+        poPLineHdr->m_nPenId = m_nPenDefIndex;      // Pen index
+
     }
     else
     {
@@ -2299,7 +2420,7 @@ TABFeature *TABRegion::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
  * Returns TAB_GEOM_NONE if the geometry is not compatible with what
  * is expected for this object class.
  **********************************************************************/
-int  TABRegion::ValidateMapInfoType()
+int  TABRegion::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
     OGRGeometry *poGeom;
 
@@ -2321,6 +2442,7 @@ int  TABRegion::ValidateMapInfoType()
             m_nMapInfoType = TAB_GEOM_V450_REGION;
         else
             m_nMapInfoType = TAB_GEOM_REGION;
+
     }
     else
     {
@@ -2328,6 +2450,11 @@ int  TABRegion::ValidateMapInfoType()
                  "TABRegion: Missing or Invalid Geometry!");
         m_nMapInfoType = TAB_GEOM_NONE;
     }
+
+    /*-----------------------------------------------------------------
+     * Decide if coordinates should be compressed or not.
+     *----------------------------------------------------------------*/
+    ValidateCoordType(poMapFile);
 
     return m_nMapInfoType;
 }
@@ -2344,25 +2471,17 @@ int  TABRegion::ValidateMapInfoType()
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
+int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
+                                       TABMAPObjHdr *poObjHdr)
 {
     double              dX, dY, dXMin, dYMin, dXMax, dYMax;
     OGRGeometry         *poGeometry;
     OGRLinearRing       *poRing;
-    TABMAPObjectBlock   *poObjBlock;
-    GBool               bComprCoord;
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
      *----------------------------------------------------------------*/
-    m_nMapInfoType = poMapFile->GetCurObjType();
-
-    poObjBlock = poMapFile->GetCurObjBlock();
-
-    bComprCoord = (m_nMapInfoType == TAB_GEOM_REGION_C ||
-                   m_nMapInfoType == TAB_GEOM_V450_REGION_C);
-
-    m_bSmooth = FALSE;
+    m_nMapInfoType = poObjHdr->m_nType;
 
     if (m_nMapInfoType == TAB_GEOM_REGION ||
         m_nMapInfoType == TAB_GEOM_REGION_C ||
@@ -2374,45 +2493,43 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
          *============================================================*/
         int     i, iSection;
         GInt32  nCoordBlockPtr, numLineSections, nCenterX, nCenterY;
-        GInt32  nCoordDataSize, numPointsTotal, *panXY, nX, nY;
+        GInt32  nCoordDataSize, numPointsTotal, *panXY;
         TABMAPCoordBlock        *poCoordBlock;
         OGRMultiPolygon         *poMultiPolygon = NULL;
         OGRPolygon              *poPolygon = NULL;
         TABMAPCoordSecHdr       *pasSecHdrs;
+        GBool                   bComprCoord = poObjHdr->IsCompressedType();
         GBool bV450 = (m_nMapInfoType == TAB_GEOM_V450_REGION ||
                        m_nMapInfoType == TAB_GEOM_V450_REGION_C);
 
         /*-------------------------------------------------------------
-         * Read data from poObjBlock
+         * Copy data from poObjHdr
          *------------------------------------------------------------*/
-        nCoordBlockPtr = poObjBlock->ReadInt32();
-        nCoordDataSize = poObjBlock->ReadInt32();
-        numLineSections = poObjBlock->ReadInt16();
+        TABMAPObjPLine *poPLineHdr = (TABMAPObjPLine *)poObjHdr;
 
-        if (nCoordDataSize & 0x80000000)
-        {
-            m_bSmooth = TRUE;
-            nCoordDataSize &= 0x7FFFFFFF; //Take smooth flag out of the value
-        }
+        nCoordBlockPtr  = poPLineHdr->m_nCoordBlockPtr;
+        nCoordDataSize  = poPLineHdr->m_nCoordDataSize;
+        numLineSections = poPLineHdr->m_numLineSections;
+        m_bSmooth       = poPLineHdr->m_bSmooth;
 
-        if (bComprCoord)
-        {
-            poObjBlock->ReadInt16();    // ??? Polyline centroid ???
-            poObjBlock->ReadInt16();    // Present only in compressed case
-        }
-        nCenterX = poObjBlock->ReadInt32();
-        nCenterY = poObjBlock->ReadInt32();
-        poMapFile->Int2Coordsys(nCenterX, nCenterY, dX, dY);
+        // Centroid/label point
+        poMapFile->Int2Coordsys(poPLineHdr->m_nLabelX, poPLineHdr->m_nLabelY, 
+                                dX, dY);
         SetCenter(dX, dY);
 
-        poObjBlock->ReadIntCoord(bComprCoord, nX, nY);    // Read MBR
-        poMapFile->Int2Coordsys(nX, nY, dXMin, dYMin);
-        poObjBlock->ReadIntCoord(bComprCoord, nX, nY);
-        poMapFile->Int2Coordsys(nX, nY, dXMax, dYMax);
+        // Compressed coordinate origin (useful only in compressed case!)
+        nCenterX = poPLineHdr->m_nComprOrgX;
+        nCenterY = poPLineHdr->m_nComprOrgY;
 
-        m_nPenDefIndex = poObjBlock->ReadByte();      // Pen index
+        // MBR
+        poMapFile->Int2Coordsys(poPLineHdr->m_nMinX, poPLineHdr->m_nMinY, 
+                                dXMin, dYMin);
+        poMapFile->Int2Coordsys(poPLineHdr->m_nMaxX, poPLineHdr->m_nMaxY, 
+                                dXMax, dYMax);
+
+        m_nPenDefIndex = poPLineHdr->m_nPenId;        // Pen index
         poMapFile->ReadPenDef(m_nPenDefIndex, &m_sPenDef);
-        m_nBrushDefIndex = poObjBlock->ReadByte();    // Brush index
+        m_nBrushDefIndex = poPLineHdr->m_nBrushId;    // Brush index
         poMapFile->ReadBrushDef(m_nBrushDefIndex, &m_sBrushDef);
 
         /*-------------------------------------------------------------
@@ -2422,6 +2539,9 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
                                                    sizeof(TABMAPCoordSecHdr));
 
         poCoordBlock = poMapFile->GetCoordBlock(nCoordBlockPtr);
+        if (poCoordBlock)
+            poCoordBlock->SetComprCoordOrigin(nCenterX, nCenterY);
+
         if (poCoordBlock == NULL ||
             poCoordBlock->ReadCoordSecHdrs(bComprCoord, bV450, numLineSections,
                                            pasSecHdrs, numPointsTotal) != 0)
@@ -2431,8 +2551,6 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
                      nCoordBlockPtr);
             return -1;
         }
-
-        poCoordBlock->SetComprCoordOrigin(nCenterX, nCenterY);
 
         panXY = (GInt32*)CPLMalloc(numPointsTotal*2*sizeof(GInt32));
 
@@ -2552,16 +2670,17 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
+int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
+                                      TABMAPObjHdr *poObjHdr)
 {
     GInt32              nX, nY;
-    TABMAPObjectBlock   *poObjBlock;
     OGRGeometry         *poGeom;
 
-    if (ValidateMapInfoType() == TAB_GEOM_NONE)
-        return -1;      // Invalid Geometry... an error has already been sent
-
-    poObjBlock = poMapFile->GetCurObjBlock();
+    /*-----------------------------------------------------------------
+     * We assume that ValidateMapInfoType() was called already and that
+     * the type in poObjHdr->m_nType is valid.
+     *----------------------------------------------------------------*/
+    CPLAssert(m_nMapInfoType == poObjHdr->m_nType);
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
@@ -2581,9 +2700,9 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
         int     numRingsTotal;
         GUInt32 nCoordDataSize;
         GInt32  nCoordBlockPtr;
-        GInt32  nXMin, nYMin, nXMax, nYMax;
         TABMAPCoordBlock        *poCoordBlock;
         TABMAPCoordSecHdr       *pasSecHdrs = NULL;
+        GBool   bCompressed = poObjHdr->IsCompressedType();
 
         /*-------------------------------------------------------------
          * Process geometry first...
@@ -2591,6 +2710,7 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
         poCoordBlock = poMapFile->GetCurCoordBlock();
         poCoordBlock->StartNewFeature();
         nCoordBlockPtr = poCoordBlock->GetCurAddress();
+        poCoordBlock->SetComprCoordOrigin(m_nComprOrgX, m_nComprOrgY);
 
         /*-------------------------------------------------------------
          * Fetch total number of rings and build array of coord 
@@ -2603,10 +2723,11 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
         /*-------------------------------------------------------------
          * Write the Coord. Section Header
          *------------------------------------------------------------*/
-        GBool bV450 = (m_nMapInfoType == TAB_GEOM_V450_REGION);
+        GBool bV450 = (m_nMapInfoType == TAB_GEOM_V450_REGION ||
+                       m_nMapInfoType == TAB_GEOM_V450_REGION_C);
         if (nStatus == 0)
             nStatus = poCoordBlock->WriteCoordSecHdrs(bV450, numRingsTotal, 
-                                                      pasSecHdrs);
+                                                      pasSecHdrs, bCompressed);
 
         CPLFree(pasSecHdrs);
         pasSecHdrs = NULL;
@@ -2637,7 +2758,8 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
             {
                 poMapFile->Coordsys2Int(poRing->getX(i), poRing->getY(i),
                                         nX, nY);
-                if ((nStatus=poCoordBlock->WriteIntCoord(nX, nY)) != 0)
+                if ((nStatus=poCoordBlock->WriteIntCoord(nX, nY,
+                                                         bCompressed)) != 0)
                 {
                     // Failed ... error message has already been produced
                     return nStatus;
@@ -2647,37 +2769,42 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
 
         nCoordDataSize = poCoordBlock->GetFeatureDataSize();
 
-        // Combine smooth flag in the coord data size.
-        if (m_bSmooth)
-            nCoordDataSize |= 0x80000000;
-
-        poCoordBlock->GetFeatureMBR(nXMin, nYMin, nXMax, nYMax);
-
         /*-------------------------------------------------------------
-         * ... and finally write info to poObjBlock
+         * ... and finally copy info to poObjHdr
          *------------------------------------------------------------*/
-        poObjBlock->WriteInt32(nCoordBlockPtr);
-        poObjBlock->WriteInt32(nCoordDataSize);
-        poObjBlock->WriteInt16(numRingsTotal);
+        TABMAPObjPLine *poPLineHdr = (TABMAPObjPLine *)poObjHdr;
+
+        poPLineHdr->m_nCoordBlockPtr = nCoordBlockPtr;
+        poPLineHdr->m_nCoordDataSize = nCoordDataSize;
+        poPLineHdr->m_numLineSections = numRingsTotal;
+
+        poPLineHdr->m_bSmooth = m_bSmooth;
+
+        // MBR
+        poPLineHdr->SetMBR(m_nXMin, m_nYMin, m_nXMax, m_nYMax);
 
         // Region center/label point
         double dX, dY;
         if (GetCenter(dX, dY) != -1)
         {
-            poMapFile->Coordsys2Int(dX, dY, nX, nY);
-            poObjBlock->WriteIntCoord(nX, nY);
+            poMapFile->Coordsys2Int(dX, dY, poPLineHdr->m_nLabelX, 
+                                    poPLineHdr->m_nLabelY);
         }
         else
-            poObjBlock->WriteIntCoord((nXMin+nXMax)/2, (nYMin+nYMax)/2);
-
-        // MBR
-        poObjBlock->WriteIntMBRCoord(nXMin, nYMin, nXMax, nYMax);
+        {
+            poPLineHdr->m_nLabelX = m_nComprOrgX;
+            poPLineHdr->m_nLabelY = m_nComprOrgY;
+        }
+        
+        // Compressed coordinate origin (useful only in compressed case!)
+        poPLineHdr->m_nComprOrgX = m_nComprOrgX;
+        poPLineHdr->m_nComprOrgY = m_nComprOrgY;
 
         m_nPenDefIndex = poMapFile->WritePenDef(&m_sPenDef);
-        poObjBlock->WriteByte(m_nPenDefIndex);      // Pen index
+        poPLineHdr->m_nPenId = m_nPenDefIndex;      // Pen index
 
         m_nBrushDefIndex = poMapFile->WriteBrushDef(&m_sBrushDef);
-        poObjBlock->WriteByte(m_nBrushDefIndex);      // Brush index
+        poPLineHdr->m_nBrushId = m_nBrushDefIndex;  // Brush index
     }
     else
     {
@@ -2771,7 +2898,8 @@ int TABRegion::ComputeNumRings(TABMAPCoordSecHdr **ppasSecHdrs,
      * and we add another 2 bytes to align with a 4 bytes boundary.
      *------------------------------------------------------------*/
     int nTotalHdrSizeUncompressed;
-    if (m_nMapInfoType == TAB_GEOM_V450_REGION)
+    if (m_nMapInfoType == TAB_GEOM_V450_REGION ||
+        m_nMapInfoType == TAB_GEOM_V450_REGION_C)
         nTotalHdrSizeUncompressed = 28 * numRingsTotal;
     else
         nTotalHdrSizeUncompressed = 24 * numRingsTotal;
@@ -3162,7 +3290,7 @@ TABFeature *TABRectangle::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
  * Returns TAB_GEOM_NONE if the geometry is not compatible with what
  * is expected for this object class.
  **********************************************************************/
-int  TABRectangle::ValidateMapInfoType()
+int  TABRectangle::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
     OGRGeometry *poGeom;
 
@@ -3184,6 +3312,12 @@ int  TABRectangle::ValidateMapInfoType()
         m_nMapInfoType = TAB_GEOM_NONE;
     }
 
+    /*-----------------------------------------------------------------
+     * Decide if coordinates should be compressed or not.
+     *----------------------------------------------------------------*/
+    // __TODO__ For now we always write uncompressed for this class...
+    // ValidateCoordType(poMapFile);
+
     return m_nMapInfoType;
 }
 
@@ -3200,7 +3334,8 @@ int  TABRectangle::ValidateMapInfoType()
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABRectangle::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
+int TABRectangle::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
+                                          TABMAPObjHdr *poObjHdr)
 {
     GInt32              nX, nY;
     double              dXMin, dYMin, dXMax, dYMax;
@@ -3337,17 +3472,18 @@ int TABRectangle::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABRectangle::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
+int TABRectangle::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
+                                       TABMAPObjHdr *poObjHdr)
 {
-    TABMAPObjectBlock   *poObjBlock;
     OGRGeometry         *poGeom;
     OGRPolygon          *poPolygon;
     OGREnvelope         sEnvelope;
 
-    if (ValidateMapInfoType() == TAB_GEOM_NONE)
-        return -1;      // Invalid Geometry... an error has already been sent
-
-    poObjBlock = poMapFile->GetCurObjBlock();
+    /*-----------------------------------------------------------------
+     * We assume that ValidateMapInfoType() was called already and that
+     * the type in poObjHdr->m_nType is valid.
+     *----------------------------------------------------------------*/
+    CPLAssert(m_nMapInfoType == poObjHdr->m_nType);
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
@@ -3370,28 +3506,33 @@ int TABRectangle::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
     poPolygon->getEnvelope(&sEnvelope);
 
     /*-----------------------------------------------------------------
-     * Write object information
+     * Copy object information
      *----------------------------------------------------------------*/
-    if (m_nMapInfoType == TAB_GEOM_ROUNDRECT)
+    TABMAPObjRectEllipse *poRectHdr = (TABMAPObjRectEllipse *)poObjHdr;
+
+    if (m_nMapInfoType == TAB_GEOM_ROUNDRECT || 
+        m_nMapInfoType == TAB_GEOM_ROUNDRECT_C)
     {
-        GInt32  nX, nY;
         poMapFile->Coordsys2IntDist(m_dRoundXRadius*2.0, m_dRoundYRadius*2.0,
-                                    nX, nY);
-        poObjBlock->WriteInt32(nX);     // Oval width
-        poObjBlock->WriteInt32(nY);     // Oval height
+                                    poRectHdr->m_nCornerWidth,
+                                    poRectHdr->m_nCornerHeight);
+    }
+    else
+    {
+        poRectHdr->m_nCornerWidth = poRectHdr->m_nCornerHeight = 0;
     }
 
     // A rectangle is defined by its MBR
-    GInt32  nXMin, nYMin, nXMax, nYMax;
-    poMapFile->Coordsys2Int(sEnvelope.MinX, sEnvelope.MinY, nXMin, nYMin);
-    poMapFile->Coordsys2Int(sEnvelope.MaxX, sEnvelope.MaxY, nXMax, nYMax);
-    poObjBlock->WriteIntMBRCoord(nXMin, nYMin, nXMax, nYMax);
+    poMapFile->Coordsys2Int(sEnvelope.MinX, sEnvelope.MinY, 
+                            poRectHdr->m_nMinX, poRectHdr->m_nMinY);
+    poMapFile->Coordsys2Int(sEnvelope.MaxX, sEnvelope.MaxY, 
+                            poRectHdr->m_nMaxX, poRectHdr->m_nMaxY);
 
     m_nPenDefIndex = poMapFile->WritePenDef(&m_sPenDef);
-    poObjBlock->WriteByte(m_nPenDefIndex);      // Pen index
+    poRectHdr->m_nPenId = m_nPenDefIndex;      // Pen index
 
     m_nBrushDefIndex = poMapFile->WriteBrushDef(&m_sBrushDef);
-    poObjBlock->WriteByte(m_nBrushDefIndex);      // Brush index
+    poRectHdr->m_nBrushId = m_nBrushDefIndex;      // Brush index
 
     if (CPLGetLastErrorNo() != 0)
         return -1;
@@ -3570,7 +3711,7 @@ TABFeature *TABEllipse::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
  * Returns TAB_GEOM_NONE if the geometry is not compatible with what
  * is expected for this object class.
  **********************************************************************/
-int  TABEllipse::ValidateMapInfoType()
+int  TABEllipse::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
     OGRGeometry *poGeom;
 
@@ -3590,6 +3731,12 @@ int  TABEllipse::ValidateMapInfoType()
         m_nMapInfoType = TAB_GEOM_NONE;
     }
 
+    /*-----------------------------------------------------------------
+     * Decide if coordinates should be compressed or not.
+     *----------------------------------------------------------------*/
+    // __TODO__ For now we always write uncompressed for this class...
+    // ValidateCoordType(poMapFile);
+
     return m_nMapInfoType;
 }
 
@@ -3605,7 +3752,8 @@ int  TABEllipse::ValidateMapInfoType()
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABEllipse::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
+int TABEllipse::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
+                                        TABMAPObjHdr *poObjHdr)
 {
     GInt32              nX, nY;
     double              dXMin, dYMin, dXMax, dYMax;
@@ -3694,14 +3842,18 @@ int TABEllipse::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABEllipse::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
+int TABEllipse::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
+                                       TABMAPObjHdr *poObjHdr)
 {
     TABMAPObjectBlock   *poObjBlock;
     OGRGeometry         *poGeom;
     OGREnvelope         sEnvelope;
 
-    if (ValidateMapInfoType() == TAB_GEOM_NONE)
-        return -1;      // Invalid Geometry... an error has already been sent
+    /*-----------------------------------------------------------------
+     * We assume that ValidateMapInfoType() was called already and that
+     * the type in poObjHdr->m_nType is valid.
+     *----------------------------------------------------------------*/
+    CPLAssert(m_nMapInfoType == poObjHdr->m_nType);
 
     poObjBlock = poMapFile->GetCurObjBlock();
 
@@ -3723,14 +3875,18 @@ int TABEllipse::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
     }
 
     /*-----------------------------------------------------------------
-     * Write object information
+     * Copy object information
      *
      * We use the center of the MBR as the ellipse center, and the 
      * X/Y radius to define the MBR size.  If X/Y radius are null then
      * we'll try to use the MBR to recompute them.
      *----------------------------------------------------------------*/
+    TABMAPObjRectEllipse *poRectHdr = (TABMAPObjRectEllipse *)poObjHdr;
+
+    // Reset RoundRect Corner members... just in case (unused for ellipse)
+    poRectHdr->m_nCornerWidth = poRectHdr->m_nCornerHeight = 0;
+
     // An ellipse is defined by its MBR
-    GInt32      nXMin, nYMin, nXMax, nYMax;
     double      dXCenter, dYCenter;
     dXCenter = (sEnvelope.MaxX + sEnvelope.MinX)/2.0;
     dYCenter = (sEnvelope.MaxY + sEnvelope.MinY)/2.0;
@@ -3741,16 +3897,15 @@ int TABEllipse::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
     }
 
     poMapFile->Coordsys2Int(dXCenter - m_dXRadius, dYCenter - m_dYRadius,
-                            nXMin, nYMin);
+                            poRectHdr->m_nMinX, poRectHdr->m_nMinY);
     poMapFile->Coordsys2Int(dXCenter + m_dXRadius, dYCenter + m_dYRadius,
-                            nXMax, nYMax);
-    poObjBlock->WriteIntMBRCoord(nXMin, nYMin, nXMax, nYMax);
+                            poRectHdr->m_nMaxX, poRectHdr->m_nMaxY);
 
     m_nPenDefIndex = poMapFile->WritePenDef(&m_sPenDef);
-    poObjBlock->WriteByte(m_nPenDefIndex);      // Pen index
+    poRectHdr->m_nPenId = m_nPenDefIndex;      // Pen index
 
     m_nBrushDefIndex = poMapFile->WriteBrushDef(&m_sBrushDef);
-    poObjBlock->WriteByte(m_nBrushDefIndex);      // Brush index
+    poRectHdr->m_nBrushId = m_nBrushDefIndex;      // Brush index
 
     if (CPLGetLastErrorNo() != 0)
         return -1;
@@ -3927,7 +4082,7 @@ TABFeature *TABArc::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
  * Returns TAB_GEOM_NONE if the geometry is not compatible with what
  * is expected for this object class.
  **********************************************************************/
-int  TABArc::ValidateMapInfoType()
+int  TABArc::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
     OGRGeometry *poGeom;
 
@@ -3947,6 +4102,12 @@ int  TABArc::ValidateMapInfoType()
         m_nMapInfoType = TAB_GEOM_NONE;
     }
 
+    /*-----------------------------------------------------------------
+     * Decide if coordinates should be compressed or not.
+     *----------------------------------------------------------------*/
+    // __TODO__ For now we always write uncompressed for this class...
+    // ValidateCoordType(poMapFile);
+
     return m_nMapInfoType;
 }
 
@@ -3962,7 +4123,8 @@ int  TABArc::ValidateMapInfoType()
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
+int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
+                                    TABMAPObjHdr *poObjHdr)
 {
     GInt32              nX, nY;
     double              dXMin, dYMin, dXMax, dYMax;
@@ -4136,17 +4298,17 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABArc::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
+int TABArc::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
+                                       TABMAPObjHdr *poObjHdr)
 {
-    GInt32              nXMin, nYMin, nXMax, nYMax;
-    TABMAPObjectBlock   *poObjBlock;
     OGRGeometry         *poGeom;
     OGREnvelope         sEnvelope;
 
-    if (ValidateMapInfoType() == TAB_GEOM_NONE)
-        return -1;      // Invalid Geometry... an error has already been sent
-
-    poObjBlock = poMapFile->GetCurObjBlock();
+    /*-----------------------------------------------------------------
+     * We assume that ValidateMapInfoType() was called already and that
+     * the type in poObjHdr->m_nType is valid.
+     *----------------------------------------------------------------*/
+    CPLAssert(m_nMapInfoType == poObjHdr->m_nType);
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
@@ -4200,8 +4362,9 @@ int TABArc::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
     }
 
     /*-----------------------------------------------------------------
-     * Write object information
+     * Copy object information
      *----------------------------------------------------------------*/
+    TABMAPObjArc *poArcHdr = (TABMAPObjArc *)poObjHdr;
 
     /*-------------------------------------------------------------
      * Start/End angles
@@ -4212,23 +4375,25 @@ int TABArc::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
      *------------------------------------------------------------*/
     CPLAssert(poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant == 1);
 
-    poObjBlock->WriteInt16(ROUND_INT(m_dStartAngle*10.0));
-    poObjBlock->WriteInt16(ROUND_INT(m_dEndAngle*10.0));
+    poArcHdr->m_nStartAngle = ROUND_INT(m_dStartAngle*10.0);
+    poArcHdr->m_nEndAngle = ROUND_INT(m_dEndAngle*10.0);
     
     // An arc is defined by its defining ellipse's MBR:
     poMapFile->Coordsys2Int(m_dCenterX-m_dXRadius, m_dCenterY-m_dYRadius,
-                            nXMin, nYMin);
+                            poArcHdr->m_nArcEllipseMinX, 
+                            poArcHdr->m_nArcEllipseMinY);
     poMapFile->Coordsys2Int(m_dCenterX+m_dXRadius, m_dCenterY+m_dYRadius,
-                            nXMax, nYMax);
-    poObjBlock->WriteIntMBRCoord(nXMin, nYMin, nXMax, nYMax);
+                            poArcHdr->m_nArcEllipseMaxX, 
+                            poArcHdr->m_nArcEllipseMaxY);
 
     // Write the Arc's actual MBR
-    poMapFile->Coordsys2Int(sEnvelope.MinX, sEnvelope.MinY, nXMin, nYMin);
-    poMapFile->Coordsys2Int(sEnvelope.MaxX, sEnvelope.MaxY, nXMax, nYMax);
-    poObjBlock->WriteIntMBRCoord(nXMin, nYMin, nXMax, nYMax);
+    poMapFile->Coordsys2Int(sEnvelope.MinX, sEnvelope.MinY, 
+                            poArcHdr->m_nMinX, poArcHdr->m_nMinY);
+    poMapFile->Coordsys2Int(sEnvelope.MaxX, sEnvelope.MaxY, 
+                            poArcHdr->m_nMaxX, poArcHdr->m_nMaxY);
 
     m_nPenDefIndex = poMapFile->WritePenDef(&m_sPenDef);
-    poObjBlock->WriteByte(m_nPenDefIndex);      // Pen index
+    poArcHdr->m_nPenId = m_nPenDefIndex;      // Pen index
 
     if (CPLGetLastErrorNo() != 0)
         return -1;
@@ -4419,7 +4584,7 @@ TABFeature *TABText::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
  * Returns TAB_GEOM_NONE if the geometry is not compatible with what
  * is expected for this object class.
  **********************************************************************/
-int  TABText::ValidateMapInfoType()
+int  TABText::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
     OGRGeometry *poGeom;
 
@@ -4438,6 +4603,12 @@ int  TABText::ValidateMapInfoType()
         m_nMapInfoType = TAB_GEOM_NONE;
     }
 
+    /*-----------------------------------------------------------------
+     * Decide if coordinates should be compressed or not.
+     *----------------------------------------------------------------*/
+    // __TODO__ For now we always write uncompressed for this class...
+    // ValidateCoordType(poMapFile);
+
     return m_nMapInfoType;
 }
 
@@ -4453,7 +4624,8 @@ int  TABText::ValidateMapInfoType()
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
+int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
+                                     TABMAPObjHdr *poObjHdr)
 {
     double              dXMin, dYMin, dXMax, dYMax;
     OGRGeometry         *poGeometry;
@@ -4643,20 +4815,21 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
+int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
+                                       TABMAPObjHdr *poObjHdr)
 {
     GInt32              nX, nY, nXMin, nYMin, nXMax, nYMax;
-    TABMAPObjectBlock   *poObjBlock;
     OGRGeometry         *poGeom;
     OGRPoint            *poPoint;
     GInt32              nCoordBlockPtr;
     TABMAPCoordBlock    *poCoordBlock;
     int                 nStringLen;
   
-    if (ValidateMapInfoType() == TAB_GEOM_NONE)
-        return -1;      // Invalid Geometry... an error has already been sent
-
-    poObjBlock = poMapFile->GetCurObjBlock();
+    /*-----------------------------------------------------------------
+     * We assume that ValidateMapInfoType() was called already and that
+     * the type in poObjHdr->m_nType is valid.
+     *----------------------------------------------------------------*/
+    CPLAssert(m_nMapInfoType == poObjHdr->m_nType);
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
@@ -4701,29 +4874,30 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
     pszTmpString = NULL;
 
     /*-----------------------------------------------------------------
-     * Write object information
+     * Copy object information
      *----------------------------------------------------------------*/
-    poObjBlock->WriteInt32(nCoordBlockPtr);     // String position
-    poObjBlock->WriteInt16(nStringLen);         // String length
-    poObjBlock->WriteInt16(m_nTextAlignment);   // just./spacing/arrow
+    TABMAPObjText *poTextHdr = (TABMAPObjText *)poObjHdr;
 
+    poTextHdr->m_nCoordBlockPtr = nCoordBlockPtr;     // String position
+    poTextHdr->m_nCoordDataSize = nStringLen;         // String length
+    poTextHdr->m_nTextAlignment = m_nTextAlignment;   // just./spacing/arrow
 
     /*-----------------------------------------------------------------
      * Text Angle, (written in thenths of degrees)
      * Contrary to arc start/end angles, no conversion based on 
      * origin quadrant is required here
      *----------------------------------------------------------------*/
-    poObjBlock->WriteInt16(ROUND_INT(m_dAngle*10.0));
+    poTextHdr->m_nAngle = ROUND_INT(m_dAngle*10.0);
 
-    poObjBlock->WriteInt16(m_nFontStyle);          // Font style/effect
+    poTextHdr->m_nFontStyle = m_nFontStyle;          // Font style/effect
 
-    poObjBlock->WriteByte( COLOR_R(m_rgbForeground) );
-    poObjBlock->WriteByte( COLOR_G(m_rgbForeground) );
-    poObjBlock->WriteByte( COLOR_B(m_rgbForeground) );
+    poTextHdr->m_nFGColorR = COLOR_R(m_rgbForeground);
+    poTextHdr->m_nFGColorG = COLOR_G(m_rgbForeground);
+    poTextHdr->m_nFGColorB = COLOR_B(m_rgbForeground);
 
-    poObjBlock->WriteByte( COLOR_R(m_rgbBackground) );
-    poObjBlock->WriteByte( COLOR_G(m_rgbBackground) );
-    poObjBlock->WriteByte( COLOR_B(m_rgbBackground) );
+    poTextHdr->m_nBGColorR = COLOR_R(m_rgbBackground);
+    poTextHdr->m_nBGColorG = COLOR_G(m_rgbBackground);
+    poTextHdr->m_nBGColorB = COLOR_B(m_rgbBackground);
 
     /*-----------------------------------------------------------------
      * The OGRPoint's X,Y values were the coords of the lower-left corner
@@ -4742,26 +4916,24 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
     poMapFile->Coordsys2Int(dXMax, dYMax, nXMax, nYMax);
 
     // Label line end point
-    GInt32 nLineEndX, nLineEndY;
     double dX, dY;
     GetTextLineEndPoint(dX, dY); // Make sure a default line end point is set
     poMapFile->Coordsys2Int(m_dfLineEndX, m_dfLineEndY, 
-                            nLineEndX, nLineEndY);
-    poObjBlock->WriteIntCoord(nLineEndX, nLineEndY);
+                           poTextHdr->m_nLineEndX, poTextHdr->m_nLineEndY);
 
     // Text Height
     poMapFile->Coordsys2IntDist(0.0, m_dHeight, nX, nY);
-    poObjBlock->WriteInt32(nY);
+    poTextHdr->m_nHeight = nY;
 
     // Font name
     m_nFontDefIndex = poMapFile->WriteFontDef(&m_sFontDef);
-    poObjBlock->WriteByte(m_nFontDefIndex);      // Font name index
+    poTextHdr->m_nFontId = m_nFontDefIndex;      // Font name index
 
     // MBR after rotation
-    poObjBlock->WriteIntMBRCoord(nXMin, nYMin, nXMax, nYMax);
+    poTextHdr->SetMBR(nXMin, nYMin, nXMax, nYMax);
 
     m_nPenDefIndex = poMapFile->WritePenDef(&m_sPenDef);
-    poObjBlock->WriteByte(m_nPenDefIndex);      // Pen index for line/arrow
+    poTextHdr->m_nPenId = m_nPenDefIndex;      // Pen index for line/arrow
 
 
     if (CPLGetLastErrorNo() != 0)
@@ -5292,7 +5464,8 @@ TABDebugFeature::~TABDebugFeature()
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABDebugFeature::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
+int TABDebugFeature::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
+                                             TABMAPObjHdr *poObjHdr)
 {
     TABMAPObjectBlock   *poObjBlock;
     TABMAPHeaderBlock   *poHeader;
@@ -5341,7 +5514,8 @@ int TABDebugFeature::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
-int TABDebugFeature::WriteGeometryToMAPFile(TABMAPFile * /*poMapFile*/)
+int TABDebugFeature::WriteGeometryToMAPFile(TABMAPFile * /*poMapFile*/,
+                                            TABMAPObjHdr * /*poObjHdr*/)
 {
     // Nothing to do here!
 
