@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/06/22 21:00:38  warmerda
+ * fixed several problems with regenerating existing overviews
+ *
  * Revision 1.5  2001/06/22 13:52:03  warmerda
  * fixed bug when refreshing overviews during build
  *
@@ -157,6 +160,29 @@ GDALDefaultOverviews::GetOverview( int nBand, int iOverview )
     else
         return poBand->GetOverview( iOverview-1 );
 }
+
+/************************************************************************/
+/*                         GDALOvLevelAdjust()                          */
+/*                                                                      */
+/*      Some overview levels cannot be achieved closely enough to be    */
+/*      recognised as the desired overview level.  This function        */
+/*      will adjust an overview level to one that is achievable on      */
+/*      the given raster size.                                          */
+/*                                                                      */
+/*      For instance a 1200x1200 image on which a 256 level overview    */
+/*      is request will end up generating a 5x5 overview.  However,     */
+/*      this will appear to the system be a level 240 overview.         */
+/*      This function will adjust 256 to 240 based on knowledge of      */
+/*      the image size.                                                 */
+/************************************************************************/
+
+static int GDALOvLevelAdjust( int nOvLevel, int nXSize )
+
+{
+    int	nOXSize = (nXSize + nOvLevel - 1) / nOvLevel;
+    
+    return (int) (0.5 + nXSize / (double) nOXSize);
+}
     
 /************************************************************************/
 /*                     GDALDefaultBuildOverviews()                      */
@@ -220,11 +246,13 @@ GDALDefaultOverviews::BuildOverviews(
         {
             int    nOvFactor;
             GDALRasterBand * poOverview = poBand->GetOverview( j );
-
+ 
             nOvFactor = (int) 
                 (0.5 + poBand->GetXSize() / (double) poOverview->GetXSize());
 
-            if( nOvFactor == panOverviewList[i] )
+            if( nOvFactor == panOverviewList[i] 
+                || nOvFactor == GDALOvLevelAdjust( panOverviewList[i], 
+                                                   poBand->GetXSize() ) )
                 panOverviewList[i] *= -1;
         }
 
@@ -288,10 +316,12 @@ GDALDefaultOverviews::BuildOverviews(
                 nOvFactor = (int) 
                     (0.5 + poBand->GetXSize() / (double) poOverview->GetXSize());
 
-                if( nOvFactor == -1 * panOverviewList[i] )
+                if( nOvFactor == - panOverviewList[i] 
+                    || nOvFactor == GDALOvLevelAdjust( -panOverviewList[i], 
+                                                       poBand->GetXSize() ) )
                 {
                     panOverviewList[i] *= -1;
-                    papoOverviewBands[nNewOverviews++] = poBand;
+                    papoOverviewBands[nNewOverviews++] = poOverview;
                 }
             }
         }
