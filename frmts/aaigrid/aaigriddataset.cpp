@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/12/02 17:06:11  warmerda
+ * Write out integers as integers.
+ *
  * Revision 1.24  2003/07/08 21:12:07  warmerda
  * avoid warnings
  *
@@ -613,9 +616,22 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                               padfScanline, nXSize, 1, GDT_CFloat64,
                               sizeof(double), sizeof(double) * nXSize );
-        for ( iPixel = 0; iPixel < nXSize; iPixel++ )
-           VSIFPrintf( fpImage, " %6.20g", padfScanline[iPixel] );
+
+        if( poBand->GetRasterDataType() == GDT_Byte 
+            || poBand->GetRasterDataType() == GDT_Int16
+            || poBand->GetRasterDataType() == GDT_UInt16
+            || poBand->GetRasterDataType() == GDT_Int32 )
+        {
+            for ( iPixel = 0; iPixel < nXSize; iPixel++ )
+                VSIFPrintf( fpImage, " %d", (int) padfScanline[iPixel] );
+        }
+        else
+        {
+            for ( iPixel = 0; iPixel < nXSize; iPixel++ )
+                VSIFPrintf( fpImage, " %6.20g", padfScanline[iPixel] );
+        }
         VSIFPrintf( fpImage, "\n" );
+
         if( eErr == CE_None &&
             !pfnProgress((iLine + 1) / ((double) nYSize), NULL, pProgressData) )
         {
