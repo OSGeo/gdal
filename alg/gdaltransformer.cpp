@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/12/09 16:08:32  warmerda
+ * added approximating transformer
+ *
  * Revision 1.5  2002/12/07 17:09:38  warmerda
  * added order flag to GenImgProjTransformer
  *
@@ -596,5 +599,143 @@ int GDALReprojectionTransform( void *pTransformArg, int bDstToSrc,
         memset( panSuccess, 0, sizeof(int) * nPointCount );
 
     return bSuccess;
+}
+
+
+/************************************************************************/
+/* ==================================================================== */
+/*      Approximate transformer.                                        */
+/* ==================================================================== */
+/************************************************************************/
+
+typedef struct 
+{
+    GDALTransformerFunc pfnBaseTransformer;
+    void             *pBaseCBData;
+    double	      dfMaxError;
+} ApproxTransformInfo;
+
+/************************************************************************/
+/*                    GDALCreateApproxTransformer()                     */
+/************************************************************************/
+
+void *GDALCreateApproxTransformer( GDALTransformerFunc pfnBaseTransformer,
+                                   void *pBaseTransformArg, double dfMaxError)
+
+{
+    ApproxTransformInfo	*psATInfo;
+
+    psATInfo = (ApproxTransformInfo*) CPLMalloc(sizeof(ApproxTransformInfo));
+    psATInfo->pfnBaseTransformer = pfnBaseTransformer;
+    psATInfo->pBaseCBData = pBaseTransformArg;
+    psATInfo->dfMaxError = dfMaxError;
+
+    return psATInfo;
+}
+
+/************************************************************************/
+/*                    GDALDestroyApproxTransformer()                    */
+/************************************************************************/
+
+void GDALDestroyApproxTransformer( void * pCBData )
+
+{
+    CPLFree( pCBData );
+}
+
+/************************************************************************/
+/*                        GDALApproxTransform()                         */
+/************************************************************************/
+
+int GDALApproxTransform( void *pCBData, int bDstToSrc, int nPoints, 
+                         double *x, double *y, double *z, int *panSuccess )
+
+{
+    ApproxTransformInfo *psATInfo = (ApproxTransformInfo *) pCBData;
+    double x2[3], y2[3], z2[3], dfDeltaX, dfDeltaY, dfError, dfDist, dfDeltaZ;
+    int nMiddle, anSuccess2[3], i, bSuccess;
+
+    nMiddle = (nPoints-1)/2;
+
+/* -------------------------------------------------------------------- */
+/*      Bail if our preconditions are not met, or if error is not       */
+/*      acceptable.                                                     */
+/* -------------------------------------------------------------------- */
+    if( y[0] != y[nPoints-1] || y[0] != y[nMiddle]
+        || x[0] == x[nPoints-1] || x[0] == x[nMiddle]
+        || psATInfo->dfMaxError == 0.0 || nPoints <= 5 )
+    {
+        return psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc,
+                                             nPoints, x, y, z, panSuccess );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Transform first, last and middle point.                         */
+/* -------------------------------------------------------------------- */
+    x2[0] = x[0];
+    y2[0] = y[0];
+    z2[0] = z[0];
+    x2[1] = x[nMiddle];
+    y2[1] = y[nMiddle];
+    z2[1] = z[nMiddle];
+    x2[2] = x[nPoints-1];
+    y2[2] = y[nPoints-1];
+    z2[2] = z[nPoints-1];
+
+    bSuccess = 
+        psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc, 3, 
+                                      x2, y2, z2, anSuccess2 );
+    if( !bSuccess )
+        return psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc,
+                                             nPoints, x, y, z, panSuccess );
+    
+/* -------------------------------------------------------------------- */
+/*      Is the error at the middle acceptable relative to an            */
+/*      interpolation of the middle position?                           */
+/* -------------------------------------------------------------------- */
+    dfDeltaX = (x2[2] - x2[0]) / (x[nPoints-1] - x[0]);
+    dfDeltaY = (y2[2] - y2[0]) / (x[nPoints-1] - x[0]);
+    dfDeltaZ = (z2[2] - z2[0]) / (x[nPoints-1] - x[0]);
+
+    dfError = fabs((x2[0] + dfDeltaX * (x[nMiddle] - x[0])) - x2[1])
+        + fabs((y2[0] + dfDeltaY * (x[nMiddle] - x[0])) - y2[1]);
+
+    if( dfError > psATInfo->dfMaxError )
+    {
+        CPLDebug( "GDAL", "ApproxTransformer - "
+                  "error %g over threshold %g, subdivide %d points.",
+                  dfError, psATInfo->dfMaxError, nPoints );
+
+        bSuccess = 
+            GDALApproxTransform( psATInfo, bDstToSrc, nMiddle, 
+                                 x, y, z, panSuccess );
+            
+        if( !bSuccess )
+            return FALSE;
+
+        bSuccess = 
+            GDALApproxTransform( psATInfo, bDstToSrc, nPoints - nMiddle,
+                                 x+nMiddle, y+nMiddle, z+nMiddle,
+                                 panSuccess+nMiddle );
+
+        if( !bSuccess )
+            return FALSE;
+
+        return TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Error is OK, linearly interpolate all points along line.        */
+/* -------------------------------------------------------------------- */
+    for( i = nPoints-1; i >= 0; i-- )
+    {
+        dfDist = (x[i] - x[0]);
+        y[i] = y2[0] + dfDeltaY * dfDist;
+        x[i] = x2[0] + dfDeltaX * dfDist;
+        z[i] = z2[0] + dfDeltaZ * dfDist;
+        panSuccess[i] = TRUE;
+    }
+    
+    return TRUE;
 }
 

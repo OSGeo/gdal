@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/12/09 16:08:57  warmerda
+ * added approximating transformer
+ *
  * Revision 1.3  2002/12/07 22:58:09  warmerda
  * pass initialization warp option
  *
@@ -61,7 +64,7 @@ static void Usage()
 {
     printf( 
         "Usage: gdalwarp [--version] [--formats]\n"
-        "    [-s_srs srs_def] [-t_srs srs_def] [-order n]\n"
+        "    [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]\n"
         "    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
         "    [-of format] [-co \"NAME=VALUE\"]* srcfile dstfile\n" );
     exit( 1 );
@@ -99,8 +102,10 @@ int main( int argc, char ** argv )
     char               *pszSourceSRS = NULL;
     const char         *pszSrcFilename = NULL, *pszDstFilename = NULL;
     int                 bCreateOutput = FALSE, i, nOrder = 0;
-    void               *hTransformArg;
+    void               *hTransformArg, *hGenImgProjArg=NULL, *hApproxArg=NULL;
     char               **papszWarpOptions = NULL;
+    double             dfErrorThreshold = 0.125;
+    GDALTransformerFunc pfnTransformer = NULL;
 
     GDALAllRegister();
 
@@ -146,6 +151,10 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-order") && i < argc-1 )
         {
             nOrder = atoi(argv[++i]);
+        }
+        else if( EQUAL(argv[i],"-et") && i < argc-1 )
+        {
+            dfErrorThreshold = atof(argv[++i]);
         }
         else if( argv[i][0] == '-' )
             Usage();
@@ -208,7 +217,7 @@ int main( int argc, char ** argv )
 /*      Create a transformation object from the source to               */
 /*      destination coordinate system.                                  */
 /* -------------------------------------------------------------------- */
-    hTransformArg = 
+    hTransformArg = hGenImgProjArg = 
         GDALCreateGenImgProjTransformer( hSrcDS, pszSourceSRS, 
                                          hDstDS, pszTargetSRS, 
                                          TRUE, 1000.0, nOrder );
@@ -216,14 +225,34 @@ int main( int argc, char ** argv )
     if( hTransformArg == NULL )
         exit( 1 );
 
+    pfnTransformer = GDALGenImgProjTransform;
+
+/* -------------------------------------------------------------------- */
+/*      Warp the transformer with a linear approximator unless the      */
+/*      acceptable error is zero.                                       */
+/* -------------------------------------------------------------------- */
+    if( dfErrorThreshold != 0.0 )
+    {
+        hTransformArg = hApproxArg = 
+            GDALCreateApproxTransformer( GDALGenImgProjTransform, 
+                                         hGenImgProjArg, dfErrorThreshold );
+        pfnTransformer = GDALApproxTransform;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Now actually invoke the warper to do the work.                  */
 /* -------------------------------------------------------------------- */
     GDALSimpleImageWarp( hSrcDS, hDstDS, 0, NULL, 
-                         GDALGenImgProjTransform, hTransformArg,
+                         pfnTransformer, hTransformArg,
                          GDALTermProgress, NULL, papszWarpOptions );
 
     CSLDestroy( papszWarpOptions );
+
+    if( hApproxArg != NULL )
+        GDALDestroyApproxTransformer( hApproxArg );
+
+    if( hGenImgProjArg != NULL )
+        GDALDestroyGenImgProjTransformer( hGenImgProjArg );
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
