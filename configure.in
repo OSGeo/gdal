@@ -19,6 +19,106 @@ AC_C_BIGENDIAN
 AC_FUNC_VPRINTF
 AC_CHECK_FUNC(vsnprintf, AC_DEFINE(HAVE_VSNPRINTF))
 
+OPT_GDAL_FORMATS=
+EXTRA_INCLUDES=
+
+dnl ---------------------------------------------------------------------------
+dnl Select a PNG Library to use, or disable driver.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(png,[  --with-png[=ARG]        Include PNG support],,)
+
+if test "$with_png" = "no" ; then
+
+  PNG_SETTING=no
+
+  echo "png support disabled."
+
+elif test "$with_png" = "yes" -o "$with_png" = "" ; then
+
+  AC_CHECK_LIB(png,png_create_read_struct,PNG_SETTING=external,PNG_SETTING=internal,-lz)
+
+  if test "$PNG_SETTING" = "external" ; then   
+    LIBS="-lpng $LIBS"
+    echo "using pre-installed libpng."
+  else
+    echo "using internal png code."
+  fi
+
+elif test "$with_png" = "internal" ; then
+
+  PNG_SETTING=internal
+
+  echo "using internal png code."
+
+else
+
+  PNG_SETTING=external
+  LIBS="-L$with_png -L$with_png/lib -lpng $LIBS"
+  EXTRA_INCLUDES="-I$with_png -I$with_png/include $EXTRA_INCLUDES"
+
+  echo "using libpng from $with_png."
+
+fi
+
+AC_SUBST(PNG_SETTING,$PNG_SETTING)
+
+if test "$PNG_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="png $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
+dnl Select a JPEG Library to use, or disable driver.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(jpeg,[  --with-jpeg[=ARG]       Include JPEG support],,)
+
+if test "$with_jpeg" = "no" ; then
+
+  JPEG_SETTING=no
+
+  echo "jpeg support disabled."
+
+elif test "$with_jpeg" = "yes" -o "$with_jpeg" = "" ; then
+
+  AC_CHECK_LIB(jpeg,jpeg_read_scanlines,JPEG_SETTING=external,JPEG_SETTING=internal,)
+
+  if test "$JPEG_SETTING" = "external" ; then   
+    LIBS="-ljpeg $LIBS"
+    echo "using pre-installed libjpeg."
+  else
+    echo "using internal jpeg code."
+  fi
+
+elif test "$with_jpeg" = "internal" ; then
+
+  JPEG_SETTING=internal
+
+  echo "using internal jpeg code."
+
+else
+
+  JPEG_SETTING=external
+  LIBS="-L$with_jpeg -L$with_jpeg/lib -ljpeg $LIBS"
+  EXTRA_INCLUDES="-I$with_jpeg -I$with_jpeg/include $EXTRA_INCLUDES"
+
+  echo "using libjpeg from $with_jpeg."
+
+fi
+
+AC_SUBST(JPEG_SETTING,$JPEG_SETTING)
+
+if test "$JPEG_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="jpeg $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
+
+AC_SUBST(OPT_GDAL_FORMATS,$OPT_GDAL_FORMATS)
+AC_SUBST(EXTRA_INCLUDES,$EXTRA_INCLUDES)
+
+dnl ---------------------------------------------------------------------------
+
 AC_COMPILER_WFLAGS
 AC_COMPILER_PIC
 AC_LD_SHARED
