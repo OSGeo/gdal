@@ -13,7 +13,8 @@ The gdal/ogr tree holds source for a vector IO library inspired by
 OpenGIS Simple Features.  In theory it is separate from GDAL, but currently
 they reside in the same source tree and are somewhat entangled.  More
 information can be found at
-<a href="http://gdal.velocet.ca/projects/opengis/">http://gdal.velocet.ca/projects/opengis</a>.  It is my plan to fold OGR into GDAL properly at some point
+<a href="http://ogr.maptools.org/">http://ogr.maptools.org</a>.  It is 
+my plan to properly fold OGR into GDAL properly at some point
 in the future.  Then GDAL will be a raster and vector library. <p>
 
 <!--------------------------------------------------------------------------->
