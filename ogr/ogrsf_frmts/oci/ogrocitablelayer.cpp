@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2004/09/28 17:19:25  fwarmerdam
+ * Added untested support for OCI_FID config variable for FID column name.
+ *
  * Revision 1.27  2003/09/18 15:32:59  warmerda
  * Added view support as per bug 394
  *
@@ -278,6 +281,16 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
         return poDefn;
 
 /* -------------------------------------------------------------------- */
+/*      What is the name of the column to use as FID?  This defaults    */
+/*      to OGR_FID but we allow it to be overridden by a config         */
+/*      variable.  Ideally we would identify a column that is a         */
+/*      primary key and use that, but I'm not yet sure how to           */
+/*      accomplish that.                                                */
+/* -------------------------------------------------------------------- */
+    const char *pszExpectedFIDName = 
+        CPLGetConfigOption( "OCI_FID", "OGR_FID" );
+
+/* -------------------------------------------------------------------- */
 /*      Parse the returned table information.                           */
 /* -------------------------------------------------------------------- */
     for( int iRawFld = 0; TRUE; iRawFld++ )
@@ -301,7 +314,7 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
         if( oField.GetType() == OFTBinary )
             continue;                   
 
-        if( EQUAL(oField.GetNameRef(),"OGR_FID") 
+        if( EQUAL(oField.GetNameRef(),pszExpectedFIDName) 
             && oField.GetType() == OFTInteger )
         {
             pszFIDName = CPLStrdup(oField.GetNameRef());
