@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2002/09/19 14:50:02  warmerda
+ * added debug statement
+ *
  * Revision 1.1  2002/09/18 16:49:01  dron
  * Initial release
  *
@@ -266,6 +269,8 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 	 !EQUALN( pszFormatName, "jpc", 3 ) &&
 	 !EQUALN( pszFormatName, "pgx", 3 )) )
     {
+        CPLDebug( "GDAL", "JasPer reports file is format type `%s'.", 
+                  pszFormatName );
         jas_stream_close( sS );
         return NULL;
     }
