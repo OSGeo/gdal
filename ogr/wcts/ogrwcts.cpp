@@ -45,6 +45,9 @@
  *   defined in the GNUmakefile (the default).
  *
  * $Log$
+ * Revision 1.13  2003/03/31 20:00:55  dron
+ * Added string fieldt width for CPLSPrintf() in WCTSGetCapabilities().
+ *
  * Revision 1.12  2003/03/28 17:51:13  warmerda
  * Only allow http, https and ftp in FileURL urls.
  * Added support for DISABLE_USER_DEFINED_CRS.
@@ -455,7 +458,7 @@ void WCTSGetCapabilities( CPLXMLNode *psOperation )
     if( !EQUAL(CPLGetXMLValue(psOperation,"service","WCTS"),"WCTS") )
     {
         WCTSEmitServiceException( 
-            CPLSPrintf( "Attempt to GetCapabilities for unsupported '%s'\n"
+            CPLSPrintf( "Attempt to GetCapabilities for unsupported '%.500s'\n"
                         "service.  Only WCTS supported.",
                         CPLGetXMLValue(psOperation,"service","WCTS") ) );
     }
@@ -471,7 +474,8 @@ void WCTSGetCapabilities( CPLXMLNode *psOperation )
     if( pszCapFilename == NULL 
         || (fp = VSIFOpen( pszCapFilename, "rt")) == NULL )
     {
-        WCTSEmitServiceException( "WCTS server misconfigured, unable to find capabilities document." );
+        WCTSEmitServiceException( "WCTS server misconfigured, "
+                                  "unable to find capabilities document." );
     }
 
 /* -------------------------------------------------------------------- */
@@ -547,7 +551,8 @@ WCTSImportCoordinateReferenceSystem( CPLXMLNode *psXMLCRS )
                 WCTSEmitServiceException( CPLGetLastErrorMsg() );
             else
                 WCTSEmitServiceException( 
-                    CPLSPrintf( "OGRSpatialReference::importFromEPSG(%d) failed.  Is this a defined EPSG code?", 
+                    CPLSPrintf( "OGRSpatialReference::importFromEPSG(%d) "
+                                "failed.  Is this a defined EPSG code?", 
                                 nEPSGCode ) );
         }
 
