@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.20  2001/11/27 17:01:06  warmerda
+ * added timestamp to debug messages
+ *
  * Revision 1.19  2001/11/15 16:11:08  warmerda
  * use vsnprintf() for debug calls if it is available
  *
@@ -90,6 +93,11 @@
 
 #include "cpl_error.h"
 #include "cpl_vsi.h"
+
+#define TIMESTAMP_DEBUG
+#ifdef TIMESTAMP_DEBUG
+#include <time.h>
+#endif
 
 CPL_CVSID("$Id$");
 
@@ -240,15 +248,47 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Format the error message                                        */
+/*    Allocate a block for the error.                                   */
 /* -------------------------------------------------------------------- */
     pszMessage = (char *) VSIMalloc(ERROR_MAX);
     if( pszMessage == NULL )
         return;
         
-    strcpy( pszMessage, pszCategory );
+/* -------------------------------------------------------------------- */
+/*      Dal -- always log a timestamp as the first part of the line     */
+/*      to ensure one is looking at what one should be looking at!      */
+/* -------------------------------------------------------------------- */
+
+#ifdef TIMESTAMP_DEBUG
+    {
+        time_t ltime;
+    
+        time( &ltime );
+        strcpy( pszMessage, ctime( &ltime ) );
+        
+        // On windows anyway, ctime puts a \n at the end, but I'm not 
+        // convinced this is standard behaviour, so we'll get rid of it
+        // carefully
+
+        if (pszMessage[strlen(pszMessage) -1 ] == '\n')
+        {
+            pszMessage[strlen(pszMessage) - 1] = 0; // blow it out
+        }
+        strcat( pszMessage, ": " );
+    }
+#else
+    pszMessage[0] = '\0';
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Add the category.                                               */
+/* -------------------------------------------------------------------- */
+    strcat( pszMessage, pszCategory );
     strcat( pszMessage, ": " );
     
+/* -------------------------------------------------------------------- */
+/*      Format the application provided portion of the debug message.   */
+/* -------------------------------------------------------------------- */
     va_start(args, pszFormat);
 #if defined(HAVE_VSNPRINTF)
     vsnprintf(pszMessage+strlen(pszMessage), ERROR_MAX - strlen(pszMessage), 
