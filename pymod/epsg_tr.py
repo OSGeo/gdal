@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.10  2004/05/03 19:58:56  warmerda
+# Fixed up PROJ.4 error handling.
+#
 # Revision 1.9  2004/04/29 13:47:33  warmerda
 # improve handling of untranslatable codes
 #
@@ -67,7 +70,7 @@ import string
 def Usage():
 
     print 'Usage: epsg_tr.py [-wkt] [-pretty_wkt] [-proj4] [-xml] [-postgis]'
-    print '                  [-list filename] [start_code [end_code]]'
+    print '                  [-skip] [-list filename] [start_code [end_code]]'
     sys.exit(1)
 
 # =============================================================================
@@ -111,8 +114,9 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
             
             if err == 0 and string.find(out_string,'+proj=') > -1:
                 print '<%s> %s no_defs <>' % (str(code), out_string)
-            elif report_error:
+            else:
                 print '# Unable to translate coordinate system into PROJ.4 format.'
+                print '#'
 
         if output_format == '-postgis':
             name = prj_srs.GetAttrValue('PROJCS')
