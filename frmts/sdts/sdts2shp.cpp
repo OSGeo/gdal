@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/09/02 12:00:28  warmerda
+ * write related attributes for points, and lines
+ *
  * Revision 1.2  1999/09/02 03:40:03  warmerda
  * added indexed readers
  *
@@ -41,9 +44,9 @@
 
 static int  bVerbose = FALSE;
 
-static void WriteLineShapefile( const char *, SDTS_IREF *, SDTS_CATD *,
+static void WriteLineShapefile( const char *, SDTSTransfer *,
                                 const char * );
-static void WritePointShapefile( const char *, SDTS_IREF *, SDTS_CATD *,
+static void WritePointShapefile( const char *, SDTSTransfer *,
                                  const char * );
 static void WriteAttributeDBF( const char *, SDTS_IREF *, SDTS_CATD *,
                                const char * );
@@ -159,8 +162,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     if( pszMODN[0] == 'L' )
     {
-        WriteLineShapefile( pszShapefile, oTransfer.GetIREF(),
-                            oTransfer.GetCATD(), pszMODN );
+        WriteLineShapefile( pszShapefile, &oTransfer, pszMODN );
     }
 
 /* -------------------------------------------------------------------- */
@@ -177,8 +179,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     else if( pszMODN[0] == 'N' )
     {
-        WritePointShapefile( pszShapefile, oTransfer.GetIREF(),
-                             oTransfer.GetCATD(), pszMODN );
+        WritePointShapefile( pszShapefile, &oTransfer, pszMODN );
     }
 
 /* -------------------------------------------------------------------- */
@@ -195,22 +196,26 @@ int main( int nArgc, char ** papszArgv )
 /************************************************************************/
 
 static void WriteLineShapefile( const char * pszShapefile,
-                                SDTS_IREF * poIREF, SDTS_CATD * poCATD,
+                                SDTSTransfer * poTransfer,
                                 const char * pszMODN )
 
 {
-    SDTSLineReader	oLineReader( poIREF );
-    int			i;
+    SDTSLineReader	*poLineReader;
     
 /* -------------------------------------------------------------------- */
-/*      Open the line module file.                                      */
+/*      Fetch a reference to the indexed Pointgon reader.                */
 /* -------------------------------------------------------------------- */
-    if( !oLineReader.Open( poCATD->GetModuleFilePath( pszMODN ) ) )
+    poLineReader = (SDTSLineReader *) 
+        poTransfer->GetLayerIndexedReader( poTransfer->FindLayer( pszMODN ) );
+    
+    if( poLineReader == NULL )
     {
         fprintf( stderr, "Failed to open %s.\n",
-                 poCATD->GetModuleFilePath( pszMODN ) );
+                 poTransfer->GetCATD()->GetModuleFilePath( pszMODN ) );
         return;
     }
+
+    poLineReader->Rewind();
 
 /* -------------------------------------------------------------------- */
 /*      Create the Shapefile.                                           */
@@ -230,7 +235,6 @@ static void WriteLineShapefile( const char * pszShapefile,
 /* -------------------------------------------------------------------- */
     DBFHandle	hDBF;
     int		nLeftPolyField, nRightPolyField;
-    int		anAttribField[MAX_ATID];
     int		nStartNodeField, nEndNodeField, nSDTSRecordField;
     char	szDBFFilename[1024];
 
@@ -250,20 +254,15 @@ static void WriteLineShapefile( const char * pszShapefile,
     nStartNodeField = DBFAddField( hDBF, "StartNode", FTString, 12, 0 );
     nEndNodeField = DBFAddField( hDBF, "EndNode", FTString, 12, 0 );
     
-    for( i = 0; i < MAX_ATID; i++ )
-    {
-        char	szID[20];
-        
-        sprintf( szID, "ARef_%d", i );
-        anAttribField[i] = DBFAddField( hDBF, szID, FTString, 12, 0 );
-    }
+    AddPrimaryAttrToDBFSchema( hDBF, poTransfer,
+                               poLineReader->ScanModuleReferences() );
 
 /* ==================================================================== */
 /*      Process all the line features in the module.                    */
 /* ==================================================================== */
     SDTSRawLine	*poRawLine;
         
-    while( (poRawLine = oLineReader.GetNextLine()) != NULL )
+    while( (poRawLine = poLineReader->GetNextLine()) != NULL )
     {
         int		iShape;
         
@@ -308,15 +307,7 @@ static void WriteLineShapefile( const char * pszShapefile,
                  poRawLine->oEndNode.nRecord );
         DBFWriteStringAttribute( hDBF, iShape, nEndNodeField, szID );
 
-        for( i = 0; i < MAX_ATID; i++ )
-        {
-            char	szID[12];
-
-            sprintf( szID, "%s:%ld",
-                     poRawLine->aoATID[i].szModule,
-                     poRawLine->aoATID[i].nRecord );
-            DBFWriteStringAttribute( hDBF, iShape, anAttribField[i], szID );
-        }
+        WritePrimaryAttrToDBF( hDBF, iShape, poTransfer, poRawLine );
 
         delete poRawLine;
     }
@@ -326,8 +317,6 @@ static void WriteLineShapefile( const char * pszShapefile,
 /* -------------------------------------------------------------------- */
     DBFClose( hDBF );
     SHPClose( hSHP );
-    
-    oLineReader.Close();
 }    
 
 /************************************************************************/
@@ -335,22 +324,26 @@ static void WriteLineShapefile( const char * pszShapefile,
 /************************************************************************/
 
 static void WritePointShapefile( const char * pszShapefile,
-                                 SDTS_IREF * poIREF, SDTS_CATD * poCATD,
+                                 SDTSTransfer * poTransfer,
                                  const char * pszMODN )
 
 {
-    SDTSPointReader	oPointReader( poIREF );
-    int			i;
+    SDTSPointReader	*poPointReader;
+
+/* -------------------------------------------------------------------- */
+/*      Fetch a reference to the indexed Pointgon reader.                */
+/* -------------------------------------------------------------------- */
+    poPointReader = (SDTSPointReader *) 
+        poTransfer->GetLayerIndexedReader( poTransfer->FindLayer( pszMODN ) );
     
-/* -------------------------------------------------------------------- */
-/*      Open the line module file.                                      */
-/* -------------------------------------------------------------------- */
-    if( !oPointReader.Open( poCATD->GetModuleFilePath( pszMODN ) ) )
+    if( poPointReader == NULL )
     {
         fprintf( stderr, "Failed to open %s.\n",
-                 poCATD->GetModuleFilePath( pszMODN ) );
+                 poTransfer->GetCATD()->GetModuleFilePath( pszMODN ) );
         return;
     }
+
+    poPointReader->Rewind();
 
 /* -------------------------------------------------------------------- */
 /*      Create the Shapefile.                                           */
@@ -369,7 +362,6 @@ static void WritePointShapefile( const char * pszShapefile,
 /*      Create the database file, and our basic set of attributes.      */
 /* -------------------------------------------------------------------- */
     DBFHandle	hDBF;
-    int		anAttribField[MAX_ATID];
     int		nAreaField, nSDTSRecordField;
     char	szDBFFilename[1024];
 
@@ -384,22 +376,17 @@ static void WritePointShapefile( const char * pszShapefile,
     }
 
     nSDTSRecordField = DBFAddField( hDBF, "SDTSRecId", FTInteger, 8, 0 );
-    nAreaField = DBFAddField( hDBF, "Area", FTString, 12, 0 );
+    nAreaField = DBFAddField( hDBF, "AreaId", FTString, 12, 0 );
     
-    for( i = 0; i < MAX_ATID; i++ )
-    {
-        char	szID[20];
-        
-        sprintf( szID, "ARef_%d", i );
-        anAttribField[i] = DBFAddField( hDBF, szID, FTString, 12, 0 );
-    }
+    AddPrimaryAttrToDBFSchema( hDBF, poTransfer,
+                               poPointReader->ScanModuleReferences() );
 
 /* ==================================================================== */
 /*      Process all the line features in the module.                    */
 /* ==================================================================== */
     SDTSRawPoint	*poRawPoint;
         
-    while( (poRawPoint = oPointReader.GetNextPoint()) != NULL )
+    while( (poRawPoint = poPointReader->GetNextPoint()) != NULL )
     {
         int		iShape;
         
@@ -430,15 +417,7 @@ static void WritePointShapefile( const char * pszShapefile,
                  poRawPoint->oAreaId.nRecord );
         DBFWriteStringAttribute( hDBF, iShape, nAreaField, szID );
 
-        for( i = 0; i < MAX_ATID; i++ )
-        {
-            char	szID[12];
-
-            sprintf( szID, "%s:%ld",
-                     poRawPoint->aoATID[i].szModule,
-                     poRawPoint->aoATID[i].nRecord );
-            DBFWriteStringAttribute( hDBF, iShape, anAttribField[i], szID );
-        }
+        WritePrimaryAttrToDBF( hDBF, iShape, poTransfer, poRawPoint );
 
         delete poRawPoint;
     }
@@ -448,8 +427,6 @@ static void WritePointShapefile( const char * pszShapefile,
 /* -------------------------------------------------------------------- */
     DBFClose( hDBF );
     SHPClose( hSHP );
-    
-    oPointReader.Close();
 }    
 
 /************************************************************************/
