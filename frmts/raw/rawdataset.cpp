@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/02/07 15:14:59  warmerda
+ * ensure that no more bytes are read or written than necessary
+ *
  * Revision 1.13  2001/12/14 19:18:38  ldjohn
  * Typecast offset parameter to Seek for large file support.
  *
@@ -184,9 +187,10 @@ CPLErr RawRasterBand::AccessLine( int iLine )
     if( nLoadedScanline == iLine )
         return CE_None;
 
-    if( Seek( nImgOffset + (vsi_l_offset) iLine * nLineOffset, SEEK_SET ) == -1
-        || Read( pLineBuffer, nPixelOffset, nBlockXSize ) 
-                                       < (size_t) nBlockXSize )
+/* -------------------------------------------------------------------- */
+/*      Seek to the right line.                                         */
+/* -------------------------------------------------------------------- */
+    if( Seek(nImgOffset + (vsi_l_offset)iLine * nLineOffset, SEEK_SET) == -1 )
     {
         // for now I just set to zero under the assumption we might
         // be trying to read from a file past the data that has
@@ -194,6 +198,30 @@ CPLErr RawRasterBand::AccessLine( int iLine )
         // between newly created datasets, and existing datasets. Existing
         // datasets should generate an error in this case.
         memset( pLineBuffer, 0, nPixelOffset * nBlockXSize );
+        nLoadedScanline = iLine;
+        return CE_None;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read the line.  Take care not to request any more bytes than    */
+/*      are needed, and not to lose a partially successful scanline     */
+/*      read.                                                           */
+/* -------------------------------------------------------------------- */
+    int	nBytesToRead, nBytesActuallyRead;
+
+    nBytesToRead = nPixelOffset * (nBlockXSize - 1) 
+        + GDALGetDataTypeSize(GetRasterDataType()) / 8;
+
+    nBytesActuallyRead = Read( pLineBuffer, 1, nBytesToRead );
+    if( nBytesActuallyRead < nBlockXSize )
+    {
+        // for now I just set to zero under the assumption we might
+        // be trying to read from a file past the data that has
+        // actually been written out.  Eventually we should differentiate
+        // between newly created datasets, and existing datasets. Existing
+        // datasets should generate an error in this case.
+        memset( ((GByte *) pLineBuffer) + nBytesActuallyRead, 
+                0, nBytesToRead - nBytesActuallyRead );
     }
 
 /* -------------------------------------------------------------------- */
@@ -290,7 +318,7 @@ CPLErr RawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Write to disk.                                                  */
+/*      Seek to correct location.                                       */
 /* -------------------------------------------------------------------- */
     if( Seek( nImgOffset + (vsi_l_offset) nBlockYOff * nLineOffset,
               SEEK_SET ) == -1 ) 
@@ -301,7 +329,17 @@ CPLErr RawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         
         eErr = CE_Failure;
     }
-    else if( Write( pLineBuffer, nPixelOffset, nBlockXSize ) < 1 )
+
+/* -------------------------------------------------------------------- */
+/*      Write data buffer.                                              */
+/* -------------------------------------------------------------------- */
+    int	nBytesToWrite;
+
+    nBytesToWrite = nPixelOffset * (nBlockXSize - 1) 
+        + GDALGetDataTypeSize(GetRasterDataType()) / 8;
+
+    if( eErr == CE_None 
+        && Write( pLineBuffer, 1, nBytesToWrite ) < (size_t) nBytesToWrite )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to write scanline %d to file.\n",
