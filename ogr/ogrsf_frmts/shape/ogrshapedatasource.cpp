@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/03/27 22:12:14  warmerda
+ * Yow ... fix to second last fix.
+ *
  * Revision 1.19  2003/03/27 22:11:39  warmerda
  * Fixed similar bug to the last.
  *
@@ -522,11 +525,11 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
     if( bSingleNewFile && nLayers == 0 )
     {
         char *pszPath = CPLStrdup(CPLGetPath(pszName));
-        char *pszBasename = CPLStrdup(CPLGetBasename(pszName));
+        char *pszFBasename = CPLStrdup(CPLGetBasename(pszName));
 
-        pszBasename = CPLStrdup(CPLFormFilename(pszPath, pszBasename, NULL));
+        pszBasename = CPLStrdup(CPLFormFilename(pszPath, pszFBasename, NULL));
 
-        CPLFree( pszBasename );
+        CPLFree( pszFBasename );
         CPLFree( pszPath );
     }
     else if( bSingleNewFile )
