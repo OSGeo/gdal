@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/04/23 22:18:07  warmerda
+ * Avoid argument, and creation option memory leak.
+ *
  * Revision 1.19  2004/04/02 17:33:22  warmerda
  * added GDALGeneralCmdLineProcessor()
  *
@@ -543,6 +546,8 @@ int main( int argc, char ** argv )
         GDALClose( hDataset );
         CPLFree( panBandList );
         GDALDestroyDriverManager();
+        CSLDestroy( argv );
+        CSLDestroy( papszCreateOptions );
         exit( 1 );
     }
 
@@ -775,6 +780,9 @@ int main( int argc, char ** argv )
     CPLFree( panBandList );
     GDALDumpOpenDatasets( stderr );
     GDALDestroyDriverManager();
+
+    CSLDestroy( argv );
+    CSLDestroy( papszCreateOptions );
     
     exit( hOutDS == NULL );
 }
