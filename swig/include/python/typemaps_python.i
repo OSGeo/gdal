@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.23  2005/02/23 21:01:10  hobu
+ * swap the decref with the asstring in the
+ * tostring argin typemap
+ *
  * Revision 1.22  2005/02/23 17:45:35  kruland
  * Change the optional_int macro to perform a cast to support the integer
  * typedefs such as GDALDataType.
@@ -639,8 +643,9 @@ OPTIONAL_POD(int,i);
     PyErr_SetString( PyExc_RuntimeError, "Unable to format argument as string");
     SWIG_fail;
   }
-  Py_DECREF(str);
+
   $1 = PyString_AsString(str); 
+  Py_DECREF(str);
 }
 %typemap(python,typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin)
 {
