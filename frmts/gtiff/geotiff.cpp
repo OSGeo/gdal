@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2001/10/12 15:06:05  warmerda
+ * various build improvements to avoid internal/external conflicts
+ *
  * Revision 1.55  2001/10/10 14:19:25  warmerda
  * substantial restructuring to added INTERLEAVE output option
  *
@@ -150,10 +153,12 @@
  * added overviews, and colour tables
  */
 
+#include "gdal_priv.h"
+#define CPL_SERV_H_INCLUDED
+
 #include "tiffiop.h"
 #include "xtiffio.h"
 #include "geotiff.h"
-#include "gdal_priv.h"
 #include "geo_normalize.h"
 #include "tif_ovrcache.h"
 #include "cpl_string.h"

@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2001/10/12 15:06:05  warmerda
+ * various build improvements to avoid internal/external conflicts
+ *
  * Revision 1.20  2001/10/09 17:32:25  warmerda
  * Recognise "WGS 84" as a datum name.
  *
@@ -96,10 +99,11 @@
 
 #include "cpl_port.h"
 #include "cpl_csv.h"
+#define CPL_SERV_H_INCLUDED
+
 #include "geo_normalize.h"
 #include "geovalues.h"
 #include "ogr_spatialref.h"
-#include "cpl_serv.h"
 
 CPL_CVSID("$Id$");
 

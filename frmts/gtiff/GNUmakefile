@@ -5,15 +5,17 @@ include $(GDAL_ROOT)/GDALmake.opt
 OBJ	=	geotiff.o gt_wkt_srs.o gt_overview.o \
 		tif_ovrcache.o tif_overview.o 
 
-TIFF_OPTS	=	-Ilibgeotiff -Ilibtiff
+TIFF_OPTS	=	
 SUBLIBS 	=
 
 ifeq ($(TIFF_SETTING),internal)
 SUBLIBS	:= lib-tiff $(SUBLIBS) 
+TIFF_OPTS	:=	-Ilibtiff $(TIFF_OPTS)
 endif
 
 ifeq ($(GEOTIFF_SETTING),internal)
 SUBLIBS	:= lib-geotiff $(SUBLIBS) 
+TIFF_OPTS	:=	-Ilibgeotiff $(TIFF_OPTS)
 endif
 
 default:	$(OBJ) $(SUBLIBS)
