@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/02/20 21:53:06  warmerda
+ * partial implementation
+ *
  * Revision 1.1  2003/02/18 17:25:50  warmerda
  * New
  *
@@ -116,20 +119,23 @@ typedef struct {
     /*! Callback argument to be passed to pfnProgress. */
     void               *pProgressArg;
 
-    GDALMaskFunc       *pafnSrcPerBandValidityMaskFunc;
+    GDALTransformerFunc pfnTransformer;
+    void                *pTransformerArg;
+
+    GDALMaskFunc       *papfnSrcPerBandValidityMaskFunc;
     void              **papSrcPerBandValidityMaskFuncArg;
     
     GDALMaskFunc        pfnSrcValidityMaskFunc;
-    void              **papSrcValidityMaskFuncArg;
+    void               *pSrcValidityMaskFuncArg;
     
     GDALMaskFunc        pfnSrcDensityMaskFunc;
-    void              **papSrcDensityMaskFuncArg;
+    void               *pSrcDensityMaskFuncArg;
 
     GDALMaskFunc        pfnDstDensityMaskFunc;
-    void              **papDstDensityMaskFuncArg;
+    void               *pDstDensityMaskFuncArg;
 
     GDALMaskFunc        pfnDstValidityMaskFunc;
-    void              **papDstValidityMaskFuncArg;
+    void               *pDstValidityMaskFuncArg;
 
 } GDALWarpOptions;
 
@@ -139,14 +145,19 @@ GDALWarpOptions CPL_DLL *GDALCloneWarpOptions( const GDALWarpOptions * );
 
 /************************************************************************/
 /*                         GDALReprojectImage()                         */
-/*                                                                      */
-/*      Convenience function to reproject a source image to a select    */
-/*      output file.                                                    */
 /************************************************************************/
 
 CPLErr CPL_DLL 
 GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT, 
                     GDALDatasetH hDstDS, const char *pszDstWKT,
+                    GDALResampleAlg eResampleAlg, double dfWarpMemoryLimit,
+                    GDALProgressFunc pfnProgress, void *pProgressArg, 
+                    GDALWarpOptions *psOptions );
+
+CPLErr CPL_DLL 
+GDALCreateAndReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT, 
+                    const char *pszDstFilename, GDALDriverH hDstDriver, 
+                    const char *pszDstWKT,
                     GDALResampleAlg eResampleAlg, double dfWarpMemoryLimit,
                     GDALProgressFunc pfnProgress, void *pProgressArg, 
                     GDALWarpOptions *psOptions );
@@ -201,6 +212,9 @@ public:
     GDALProgressFunc    pfnProgress;
     void                *pProgress;
 
+    double              dfProgressBase;
+    double              dfProgressScale;
+
     CPLErr              Validate();
     CPLErr              PerformWarp();
 };
@@ -231,7 +245,7 @@ public:
                     GDALWarpOperation();
     virtual        ~GDALWarpOperation();
 
-    CPLErr          Initialize( GDALWarpOptions *psOptions );
+    CPLErr          Initialize( const GDALWarpOptions *psNewOptions );
 
     const GDALWarpOptions         *GetOptions();
 
