@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/03/11 01:26:35  warmerda
+ * Fixed redeclared variable.
+ *
  * Revision 1.9  2003/03/07 14:53:21  warmerda
  * implement preliminary BXFS write support
  *
@@ -652,7 +655,7 @@ void OGRGMLDataSource::InsertHeader()
     char *pszChunk = (char *) CPLMalloc(nChunkSize);
     int nEndOfUnmovedData = nSchemaStart;
 
-    for( int nEndOfUnmovedData = nSchemaStart;
+    for( nEndOfUnmovedData = nSchemaStart;
          nEndOfUnmovedData > nSchemaInsertLocation; )
     {
         int nBytesToMove = 
