@@ -2481,3 +2481,506 @@ DDFRecord:
   DDFField:
       Tag = `SADR'
       DataSize = 17
+---------------------------------------------------------------------
+-- TSTPAGEO.DDF
+---------------------------------------------------------------------
+DDFModule:
+    _recLength = 682
+    _interchangeLevel = 2
+    _leaderIden = L
+    _inlineCodeExtensionIndicator =  
+    _versionNumber =  
+    _appIndicator =  
+    _fieldControlLength = 6
+    _fieldAreaStart = 75
+    _sizeFieldLength = 3
+    _sizeFieldPos = 3
+    _sizeFieldTag = 4
+  DDFFieldDefn:
+      Tag = `0000'
+      _fieldName = `TSTPAGEO'
+      _arrayDescr = `'
+      _formatControls = `'
+      _data_struct_code = elementary
+      _data_type_code = char_string
+  DDFFieldDefn:
+      Tag = `0001'
+      _fieldName = `DDF RECORD IDENTIFIER'
+      _arrayDescr = `'
+      _formatControls = `'
+      _data_struct_code = elementary
+      _data_type_code = implicit_point
+  DDFFieldDefn:
+      Tag = `ATPR'
+      _fieldName = `ATTRIBUTE PRIMARY'
+      _arrayDescr = `MODN!RCID'
+      _formatControls = `(A,I)'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `MODN'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `RCID'
+        FormatString = `I'
+  DDFFieldDefn:
+      Tag = `OBID'
+      _fieldName = `SPATIAL OBJECT ID'
+      _arrayDescr = `MODN!RCID'
+      _formatControls = `(A,I)'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `MODN'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `RCID'
+        FormatString = `I'
+  DDFFieldDefn:
+      Tag = `ATTP'
+      _fieldName = `PRIMARY ATTRIBUTES'
+      _arrayDescr = `PUB_DATE!DESIG!PID!STATE!COUNTY!QUAD!HORZ_DATUM!LATITUDE!LONGITUDE!HORZ_CTRL!HORZ_ORDER!VERT_DATUM!HEIGHT_M!HEIGHT_FT!VERT_CTRL!VERT_ORDER!VERT_CLASS!EPOCH_DATE!X_GEO_COOR!Y_GEO_COOR!Z_GEO_COOR!LAPLAC_COR!LAPLAC_COR_DET!ELP_HT!ELP_HT_DET!ELP_ORDER!ELP_CLASS!GEOID_HT!GEOID_HT_DET!DYN_HT_M!DYN_HT_FT!DYN_HT_DET!MOD_GRAV!MOD_GR_DET!MON_MARK!MON_SETNG!MON_PROJ!MON_STAMP!MON_STABIL!SATT_OBS!SATT_DATE!ROD_PIPE_D!SLEEVE_DEP'
+      _formatControls = `(12A,2R,3A,4R,2(R,A),2A,R,A,2R,10A,2R)'
+      _data_struct_code = vector
+      _data_type_code = mixed_data_type
+    DDFSubfieldDefn:
+        Label = `PUB_DATE'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `DESIG'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `PID'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `STATE'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `COUNTY'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `QUAD'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `HORZ_DATUM'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `LATITUDE'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `LONGITUDE'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `HORZ_CTRL'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `HORZ_ORDER'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `VERT_DATUM'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `HEIGHT_M'
+        FormatString = `R'
+    DDFSubfieldDefn:
+        Label = `HEIGHT_FT'
+        FormatString = `R'
+    DDFSubfieldDefn:
+        Label = `VERT_CTRL'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `VERT_ORDER'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `VERT_CLASS'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `EPOCH_DATE'
+        FormatString = `R'
+    DDFSubfieldDefn:
+        Label = `X_GEO_COOR'
+        FormatString = `R'
+    DDFSubfieldDefn:
+        Label = `Y_GEO_COOR'
+        FormatString = `R'
+    DDFSubfieldDefn:
+        Label = `Z_GEO_COOR'
+        FormatString = `R'
+    DDFSubfieldDefn:
+        Label = `LAPLAC_COR'
+        FormatString = `R'
+    DDFSubfieldDefn:
+        Label = `LAPLAC_COR_DET'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `ELP_HT'
+        FormatString = `R'
+    DDFSubfieldDefn:
+        Label = `ELP_HT_DET'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `ELP_ORDER'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `ELP_CLASS'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `GEOID_HT'
+        FormatString = `R'
+    DDFSubfieldDefn:
+        Label = `GEOID_HT_DET'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `DYN_HT_M'
+        FormatString = `R'
+    DDFSubfieldDefn:
+        Label = `DYN_HT_FT'
+        FormatString = `R'
+    DDFSubfieldDefn:
+        Label = `DYN_HT_DET'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `MOD_GRAV'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `MOD_GR_DET'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `MON_MARK'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `MON_SETNG'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `MON_PROJ'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `MON_STAMP'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `MON_STABIL'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `SATT_OBS'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `SATT_DATE'
+        FormatString = `A'
+    DDFSubfieldDefn:
+        Label = `ROD_PIPE_D'
+        FormatString = `R'
+    DDFSubfieldDefn:
+        Label = `SLEEVE_DEP'
+        FormatString = `R'
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 367
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `1'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 7
+      Data = `AGEO1'
+      Subfield `MODN' = `AGEO'
+      Subfield `RCID' = 1
+  DDFField:
+      Tag = `OBID'
+      DataSize = 7
+      Data = `NE011'
+      Subfield `MODN' = `NE01'
+      Subfield `RCID' = 1
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 314
+      Data = `JANUARY 31, 2000G 687EV0052CASAN BER...'
+      Subfield `PUB_DATE' = `JANUARY 31, 2000'
+      Subfield `DESIG' = `G 687'
+      Subfield `PID' = `EV0052'
+      Subfield `STATE' = `CA'
+      Subfield `COUNTY' = `SAN BERNARDINO'
+      Subfield `QUAD' = `BARSTOW (1974)'
+      Subfield `HORZ_DATUM' = `NAD 83(1986)'
+      Subfield `LATITUDE' = `34 58 52.      N'
+      Subfield `LONGITUDE' = `117 00 03.      W'
+      Subfield `HORZ_CTRL' = `SCALED'
+      Subfield `HORZ_ORDER' = `'
+      Subfield `VERT_DATUM' = `NAVD 88'
+      Subfield `HEIGHT_M' = 815.146000
+      Subfield `HEIGHT_FT' = 2674.360000
+      Subfield `VERT_CTRL' = `ADJUSTED'
+      Subfield `VERT_ORDER' = `FIRST    '
+      Subfield `VERT_CLASS' = `I'
+      Subfield `EPOCH_DATE' = 0.000000
+      Subfield `X_GEO_COOR' = 0.000000
+      Subfield `Y_GEO_COOR' = 0.000000
+      Subfield `Z_GEO_COOR' = 0.000000
+      Subfield `LAPLAC_COR' = 0.000000
+      Subfield `LAPLAC_COR_DET' = `'
+      Subfield `ELP_HT' = 0.000000
+      Subfield `ELP_HT_DET' = `'
+      Subfield `ELP_ORDER' = `'
+      Subfield `ELP_CLASS' = `'
+      Subfield `GEOID_HT' = -31.200000
+      Subfield `GEOID_HT_DET' = `GEOID99'
+      Subfield `DYN_HT_M' = 814.215000
+      Subfield `DYN_HT_FT' = 2671.300000
+      Subfield `DYN_HT_DET' = `COMP'
+      Subfield `MOD_GRAV' = `979466.3'
+      Subfield `MOD_GR_DET' = `NAVD 88'
+      Subfield `MON_MARK' = `DB = BENCH MARK DISK'
+      Subfield `MON_SETNG' = `7 = SET IN TOP OF CONCRETE MONUMENT'
+      Subfield `MON_PROJ' = `'
+      Subfield `MON_STAMP' = `G 687 1943'
+      Subfield `MON_STABIL' = `C'
+      Subfield `SATT_OBS' = `'
+      Subfield `SATT_DATE' = `'
+      Subfield `ROD_PIPE_D' = 0.000000
+      Subfield `SLEEVE_DEP' = 0.000000
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 407
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `2'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 7
+      Data = `AGEO2'
+      Subfield `MODN' = `AGEO'
+      Subfield `RCID' = 2
+  DDFField:
+      Tag = `OBID'
+      DataSize = 7
+      Data = `NE012'
+      Subfield `MODN' = `NE01'
+      Subfield `RCID' = 2
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 354
+      Data = `JANUARY 31, 2000C 1297EV3524CASAN BE...'
+      Subfield `PUB_DATE' = `JANUARY 31, 2000'
+      Subfield `DESIG' = `C 1297'
+      Subfield `PID' = `EV3524'
+      Subfield `STATE' = `CA'
+      Subfield `COUNTY' = `SAN BERNARDINO'
+      Subfield `QUAD' = `NEBO (1971)'
+      Subfield `HORZ_DATUM' = `NAD 83(1986)'
+      Subfield `LATITUDE' = `34 59 23.      N'
+      Subfield `LONGITUDE' = `116 59 07.      W'
+      Subfield `HORZ_CTRL' = `SCALED'
+      Subfield `HORZ_ORDER' = `'
+      Subfield `VERT_DATUM' = `NAVD 88'
+      Subfield `HEIGHT_M' = 810.587000
+      Subfield `HEIGHT_FT' = 2659.400000
+      Subfield `VERT_CTRL' = `ADJUSTED'
+      Subfield `VERT_ORDER' = `FIRST    '
+      Subfield `VERT_CLASS' = `I'
+      Subfield `EPOCH_DATE' = 0.000000
+      Subfield `X_GEO_COOR' = 0.000000
+      Subfield `Y_GEO_COOR' = 0.000000
+      Subfield `Z_GEO_COOR' = 0.000000
+      Subfield `LAPLAC_COR' = 0.000000
+      Subfield `LAPLAC_COR_DET' = `'
+      Subfield `ELP_HT' = 0.000000
+      Subfield `ELP_HT_DET' = `'
+      Subfield `ELP_ORDER' = `'
+      Subfield `ELP_CLASS' = `'
+      Subfield `GEOID_HT' = -31.190000
+      Subfield `GEOID_HT_DET' = `GEOID99'
+      Subfield `DYN_HT_M' = 809.663000
+      Subfield `DYN_HT_FT' = 2656.370000
+      Subfield `DYN_HT_DET' = `COMP'
+      Subfield `MOD_GRAV' = `979467.8'
+      Subfield `MOD_GR_DET' = `NAVD 88'
+      Subfield `MON_MARK' = `DB = BENCH MARK DISK'
+      Subfield `MON_SETNG' = `16 = (FASTENED TO) A METAL ROD WITH BASE PLATE BURIED/SCREWED G: INTO GROUND'
+      Subfield `MON_PROJ' = `'
+      Subfield `MON_STAMP' = `C 1297 1977'
+      Subfield `MON_STABIL' = `C'
+      Subfield `SATT_OBS' = `'
+      Subfield `SATT_DATE' = `'
+      Subfield `ROD_PIPE_D' = 0.000000
+      Subfield `SLEEVE_DEP' = 0.000000
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 373
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `3'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 7
+      Data = `AGEO3'
+      Subfield `MODN' = `AGEO'
+      Subfield `RCID' = 3
+  DDFField:
+      Tag = `OBID'
+      DataSize = 7
+      Data = `NE013'
+      Subfield `MODN' = `NE01'
+      Subfield `RCID' = 3
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 320
+      Data = `JANUARY 31, 2000J 687FT0044CASAN BER...'
+      Subfield `PUB_DATE' = `JANUARY 31, 2000'
+      Subfield `DESIG' = `J 687'
+      Subfield `PID' = `FT0044'
+      Subfield `STATE' = `CA'
+      Subfield `COUNTY' = `SAN BERNARDINO'
+      Subfield `QUAD' = `LANE MOUNTAIN (1986)'
+      Subfield `HORZ_DATUM' = `NAD 83(1986)'
+      Subfield `LATITUDE' = `35 00 07.      N'
+      Subfield `LONGITUDE' = `116 58 39.      W'
+      Subfield `HORZ_CTRL' = `SCALED'
+      Subfield `HORZ_ORDER' = `'
+      Subfield `VERT_DATUM' = `NAVD 88'
+      Subfield `HEIGHT_M' = 838.565000
+      Subfield `HEIGHT_FT' = 2751.190000
+      Subfield `VERT_CTRL' = `ADJUSTED'
+      Subfield `VERT_ORDER' = `FIRST    '
+      Subfield `VERT_CLASS' = `I'
+      Subfield `EPOCH_DATE' = 0.000000
+      Subfield `X_GEO_COOR' = 0.000000
+      Subfield `Y_GEO_COOR' = 0.000000
+      Subfield `Z_GEO_COOR' = 0.000000
+      Subfield `LAPLAC_COR' = 0.000000
+      Subfield `LAPLAC_COR_DET' = `'
+      Subfield `ELP_HT' = 0.000000
+      Subfield `ELP_HT_DET' = `'
+      Subfield `ELP_ORDER' = `'
+      Subfield `ELP_CLASS' = `'
+      Subfield `GEOID_HT' = -31.160000
+      Subfield `GEOID_HT_DET' = `GEOID99'
+      Subfield `DYN_HT_M' = 837.601000
+      Subfield `DYN_HT_FT' = 2748.030000
+      Subfield `DYN_HT_DET' = `COMP'
+      Subfield `MOD_GRAV' = `979457.7'
+      Subfield `MOD_GR_DET' = `NAVD 88'
+      Subfield `MON_MARK' = `DB = BENCH MARK DISK'
+      Subfield `MON_SETNG' = `7 = SET IN TOP OF CONCRETE MONUMENT'
+      Subfield `MON_PROJ' = `'
+      Subfield `MON_STAMP' = `J 687 1943'
+      Subfield `MON_STABIL' = `C'
+      Subfield `SATT_OBS' = `'
+      Subfield `SATT_DATE' = `'
+      Subfield `ROD_PIPE_D' = 0.000000
+      Subfield `SLEEVE_DEP' = 0.000000
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 387
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `4'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 7
+      Data = `AGEO4'
+      Subfield `MODN' = `AGEO'
+      Subfield `RCID' = 4
+  DDFField:
+      Tag = `OBID'
+      DataSize = 7
+      Data = `NE014'
+      Subfield `MODN' = `NE01'
+      Subfield `RCID' = 4
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 334
+      Data = `JANUARY 31, 20002892FT0043CASAN BERN...'
+      Subfield `PUB_DATE' = `JANUARY 31, 2000'
+      Subfield `DESIG' = `2892'
+      Subfield `PID' = `FT0043'
+      Subfield `STATE' = `CA'
+      Subfield `COUNTY' = `SAN BERNARDINO'
+      Subfield `QUAD' = `LANE MOUNTAIN (1986)'
+      Subfield `HORZ_DATUM' = `NAD 83(1986)'
+      Subfield `LATITUDE' = `35 00 44.      N'
+      Subfield `LONGITUDE' = `116 58 07.      W'
+      Subfield `HORZ_CTRL' = `SCALED'
+      Subfield `HORZ_ORDER' = `'
+      Subfield `VERT_DATUM' = `NAVD 88'
+      Subfield `HEIGHT_M' = 882.390000
+      Subfield `HEIGHT_FT' = 2894.970000
+      Subfield `VERT_CTRL' = `ADJUSTED'
+      Subfield `VERT_ORDER' = `FIRST    '
+      Subfield `VERT_CLASS' = `I'
+      Subfield `EPOCH_DATE' = 0.000000
+      Subfield `X_GEO_COOR' = 0.000000
+      Subfield `Y_GEO_COOR' = 0.000000
+      Subfield `Z_GEO_COOR' = 0.000000
+      Subfield `LAPLAC_COR' = 0.000000
+      Subfield `LAPLAC_COR_DET' = `'
+      Subfield `ELP_HT' = 0.000000
+      Subfield `ELP_HT_DET' = `'
+      Subfield `ELP_ORDER' = `'
+      Subfield `ELP_CLASS' = `'
+      Subfield `GEOID_HT' = -31.140000
+      Subfield `GEOID_HT_DET' = `GEOID99'
+      Subfield `DYN_HT_M' = 881.369000
+      Subfield `DYN_HT_FT' = 2891.620000
+      Subfield `DYN_HT_DET' = `COMP'
+      Subfield `MOD_GRAV' = `979447.3'
+      Subfield `MOD_GR_DET' = `NAVD 88'
+      Subfield `MON_MARK' = `DD = SURVEY DISK'
+      Subfield `MON_SETNG' = `17 = SET INTO TOP OF METAL PIPE DRIVEN INTO GROUND'
+      Subfield `MON_PROJ' = `'
+      Subfield `MON_STAMP' = `2892 B 26 1906'
+      Subfield `MON_STABIL' = `D'
+      Subfield `SATT_OBS' = `'
+      Subfield `SATT_DATE' = `'
+      Subfield `ROD_PIPE_D' = 0.000000
+      Subfield `SLEEVE_DEP' = 0.000000
+DDFRecord:
+    nReuseHeader = 0
+    nDataSize = 373
+  DDFField:
+      Tag = `0001'
+      DataSize = 2
+      Data = `5'
+  DDFField:
+      Tag = `ATPR'
+      DataSize = 7
+      Data = `AGEO5'
+      Subfield `MODN' = `AGEO'
+      Subfield `RCID' = 5
+  DDFField:
+      Tag = `OBID'
+      DataSize = 7
+      Data = `NE015'
+      Subfield `MODN' = `NE01'
+      Subfield `RCID' = 5
+  DDFField:
+      Tag = `ATTP'
+      DataSize = 320
+      Data = `JANUARY 31, 2000K 687FT0042CASAN BER...'
+      Subfield `PUB_DATE' = `JANUARY 31, 2000'
+      Subfield `DESIG' = `K 687'
+      Subfield `PID' = `FT0042'
+      Subfield `STATE' = `CA'
+      Subfield `COUNTY' = `SAN BERNARDINO'
+      Subfield `QUAD' = `LANE MOUNTAIN (1986)'
+      Subfield `HORZ_DATUM' = `NAD 83(1986)'
+      Subfield `LATITUDE' = `35 00 51.      N'
+      Subfield `LONGITUDE' = `116 58 07.      W'
+      Subfield `HORZ_CTRL' = `SCALED'
+      Subfield `HORZ_ORDER' = `'
+      Subfield `VERT_DATUM' = `NAVD 88'
+      Subfield `HEIGHT_M' = 889.871000
+      Subfield `HEIGHT_FT' = 2919.520000
+      Subfield `VERT_CTRL' = `ADJUSTED'
+      Subfield `VERT_ORDER' = `FIRST    '
+      Subfield `VERT_CLASS' = `I'
+      Subfield `EPOCH_DATE' = 0.000000
+      Subfield `X_GEO_COOR' = 0.000000
+      Subfield `Y_GEO_COOR' = 0.000000
+      Subfield `Z_GEO_COOR' = 0.000000
+      Subfield `LAPLAC_COR' = 0.000000
+      Subfield `LAPLAC_COR_DET' = `'
+      Subfield `ELP_HT' = 0.000000
+      Subfield `ELP_HT_DET' = `'
