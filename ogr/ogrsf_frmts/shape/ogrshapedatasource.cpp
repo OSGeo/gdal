@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/12/12 17:24:08  warmerda
+ * use CPLStat, not VSIStat
+ *
  * Revision 1.9  2001/12/12 02:51:07  warmerda
  * avoid memory leaks
  *
@@ -109,7 +112,7 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Is the given path a directory or a regular file?                */
 /* -------------------------------------------------------------------- */
-    if( VSIStat( pszNewName, &stat ) != 0 
+    if( CPLStat( pszNewName, &stat ) != 0 
         || (!VSI_ISDIR(stat.st_mode) && !VSI_ISREG(stat.st_mode)) )
     {
         if( !bTestOpen )

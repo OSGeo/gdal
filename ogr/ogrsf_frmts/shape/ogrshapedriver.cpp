@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/12/12 17:24:08  warmerda
+ * use CPLStat, not VSIStat
+ *
  * Revision 1.3  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -98,7 +101,7 @@ OGRDataSource *OGRShapeDriver::CreateDataSource( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      Verify that the target is a valid directory.                    */
 /* -------------------------------------------------------------------- */
-    if( VSIStat( pszName, &stat ) == 0 )
+    if( CPLStat( pszName, &stat ) == 0 )
     {
         if( !VSI_ISDIR(stat.st_mode) )
         {
