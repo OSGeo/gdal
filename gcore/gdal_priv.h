@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/01/31 15:00:25  warmerda
+ * added some documentation
+ *
  * Revision 1.11  2000/01/31 14:24:36  warmerda
  * implemented dataset delete
  *
@@ -300,10 +303,16 @@ class CPL_DLL GDALOpenInfo
 /* ******************************************************************** */
 /*                              GDALDriver                              */
 /*                                                                      */
-/*      This roughly corresponds to a file format, though some          */
-/*      drivers may be gateways to many formats through a secondary     */
-/*      multi-library.                                                  */
 /* ******************************************************************** */
+
+/**
+ * An instance of this class is created for each supported format, and
+ * manages information about the format.
+ * 
+ * This roughly corresponds to a file format, though some          
+ * drivers may be gateways to many formats through a secondary     
+ * multi-library.                                                  
+ */
 
 class CPL_DLL GDALDriver
 {

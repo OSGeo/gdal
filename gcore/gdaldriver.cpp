@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/01/31 15:00:25  warmerda
+ * added some documentation
+ *
  * Revision 1.8  2000/01/31 14:24:36  warmerda
  * implemented dataset delete
  *
@@ -84,6 +87,24 @@ GDALDriver::~GDALDriver()
 /*                               Create()                               */
 /************************************************************************/
 
+/**
+ * Create a new dataset with this driver.
+ *
+ * What argument values are legal for particular drivers is driver specific,
+ * and there is no way to query in advance to establish legal values.
+ *
+ * Equivelent of the C function GDALCreate().
+ * 
+ * @param pszFilename the name of the dataset to create.
+ * @param nXSize width of created raster in pixels.
+ * @param nYSize height of created raster in pixels.
+ * @param nBands number of bands.
+ * @param eType type of raster.
+ * @param papszParmList list of driver specific control parameters.
+ *
+ * @return NULL on failure, or a new GDALDataset.
+ */
+
 GDALDataset * GDALDriver::Create( const char * pszFilename,
                                   int nXSize, int nYSize, int nBands,
                                   GDALDataType eType, char ** papszParmList )
@@ -125,6 +146,25 @@ GDALDatasetH CPL_DLL GDALCreate( GDALDriverH hDriver,
 /************************************************************************/
 /*                               Delete()                               */
 /************************************************************************/
+
+/**
+ * Delete named dataset.
+ *
+ * The driver will attempt to delete the named dataset in a driver specific
+ * fashion.  Full featured drivers will delete all associated files,
+ * database objects, or whatever is appropriate.  The default behaviour when
+ * no driver specific behaviour is provided is to attempt to delete the
+ * passed name as a single file.
+ *
+ * It is unwise to have open dataset handles on this dataset when it is
+ * deleted.
+ *
+ * Equivelent of the C function GDALDeleteDataset().
+ *
+ * @param pszFilename name of dataset to delete.
+ *
+ * @return CE_None on success, or CE_Failure if the operation fails.
+ */
 
 CPLErr GDALDriver::Delete( const char * pszFilename )
 
