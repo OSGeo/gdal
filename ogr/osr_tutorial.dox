@@ -124,7 +124,7 @@ geographic coordinate system (datum) of WGS84.
 
 	oSRS.SetProjCS( "UTM 17 (WGS84) in northern hemisphere." );
 	oSRS.SetWellKnownGeogCS( "WGS84" );
-	oSRS.SetUTM( 17, FALSE );
+	oSRS.SetUTM( 17, TRUE );
 </pre>
 
 Calling SetProjCS() sets a user
