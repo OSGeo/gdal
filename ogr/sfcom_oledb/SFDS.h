@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/10/24 16:02:02  warmerda
+ * added debug call
+ *
  * Revision 1.12  2001/10/02 14:25:45  warmerda
  * Added MAXTABLESINSELECT and SQLSUPPORT properties for MapGuide
  *
@@ -77,7 +80,7 @@ class ATL_NO_VTABLE MyIDBInitializeImpl : public IDBInitializeImpl<T>
   public:
     virtual ~MyIDBInitializeImpl()
 	{
-            
+            CPLDebug( "OGR_OLEDB", "~MyIDBInitializeImpl()" );
             SFClearOGRDataSource((void *) this);
 	}
 
