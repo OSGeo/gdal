@@ -120,7 +120,6 @@ LIBS	+=	$(PG_LIB)
 #
 # HDF4 Support.
 #
-HAVE_HDF4     = @HAVE_HDF4@
 HDF4_INCLUDE  = @HDF4_INCLUDE@
 
 #
@@ -147,12 +146,8 @@ JASPER_INCLUDE  = -I../libjasper/include
 #
 # MrSID support via LizardTech's DSDK
 #
-MRSID_HOME =	@MRSID_HOME@
-ifneq ($(MRSID_HOME),)
-MRSID_INCLUDE =	-I$(MRSID_HOME)/include
-MRSID_LIB =	-L$(MRSID_HOME)/bin/lib -lMrSIDDecode -llt_xTrans
-LIBS	:=	$(MRSID_LIB) $(LIBS) 
-endif
+MRSID_FLAGS =	@MRSID_FLAGS@
+MRSID_INCLUDE =	@MRSID_INCLUDE@
 
 #
 # Xerces C++ XML Parser for GML.

@@ -734,7 +734,7 @@ if test "$HAVE_JASPER" != "no" ; then
   AC_CHECK_LIB(jasper,jp2_encode_uuid,HAVE_JASPER_UUID=yes,HAVE_JASPER_UUID=no,)
 
   if test "$HAVE_JASPER_UUID" = "yes" ; then
-    echo "hacked JasPer version found (JasPer UUID)."
+    echo "hacked JasPer version found (JasPer UUID), GeoJP2 enabled."
     CFLAGS="$CFLAGS -DHAVE_JASPER_UUID"
     CPPFLAGS="$CPPFLAGS -DHAVE_JASPER_UUID"
   else
@@ -819,27 +819,53 @@ dnl ---------------------------------------------------------------------------
 dnl Select MrSID library or disable driver.
 dnl ---------------------------------------------------------------------------
 
-AC_MSG_CHECKING([for MrSID support])
-
 AC_ARG_WITH(mrsid,[  --with-mrsid[=ARG]      Include MrSID support (ARG=path to MrSID DSDK or no)],,)
 
-if test "$with_mrsid" = "no" -o "$with_mrsid" = "" ; then
-  MRSID_HOME=
-  AC_MSG_RESULT([not requested.])
-elif test "$with_mrsid" = "yes" ; then
-  AC_MSG_ERROR([
-For MrSID support you need provide the path to the LizardTech's MrSID DSDK
-directory. Note that MrSID DSDK is *not* free software.])
+if test "x$with_mrsid" = "xno" ; then
+
+  HAVE_MRSID=no
+
+  AC_MSG_RESULT([MrSID support disabled.])
+
 else
-  MRSID_HOME=$with_mrsid
-  OPT_GDAL_FORMATS="mrsid $OPT_GDAL_FORMATS"
-  CFLAGS="-D_REENTRANT $CFLAGS"
-  CPPFLAGS="-D_REENTRANT $CPPFLAGS"
-  LIBS="$LIBS -lpthread"
-  AC_MSG_RESULT([requested.])
+
+  AC_MSG_CHECKING([for MrSIDImage.h in $with_mrsid/include])
+  if test -r "$with_mrsid/include/MrSIDImage.h" ; then
+    AC_MSG_RESULT([found.])
+
+    HAVE_MRSID=yes
+    CPPFLAGS="-D_REENTRANT $CPPFLAGS"
+    MRSID_INCLUDE="-I$with_mrsid/include"
+    LIBS="-lMrSIDDecode -llt_xTrans -lpthread $LIBS"
+
+    if test -r "$with_mrsid/bin/lib/libMrSIDDecode.a" ; then
+      LIBS="-L$with_mrsid/bin/lib $LIBS"
+    else
+      LIBS="-L$with_mrsid/lib $LIBS"
+    fi
+
+    AC_MSG_CHECKING([for lt_colorSpace.h in $with_mrsid/include])
+    if test -r "$with_mrsid/include/lt_colorSpace.h" ; then  
+      AC_MSG_RESULT([found MrSID DSDK version 3.1.x.])
+      MRSID_FLAGS=-DMRSID_DSDK_VERSION_31
+    else
+      AC_MSG_RESULT([not found.])
+    fi
+
+  else
+    AC_MSG_ERROR([not found.])
+  fi
+
 fi
 
-AC_SUBST(MRSID_HOME,$MRSID_HOME)
+AC_SUBST(HAVE_MRSID,$HAVE_MRSID)
+AC_SUBST(MRSID_INCLUDE,$MRSID_INCLUDE)
+AC_SUBST(MRSID_FLAGS,$MRSID_FLAGS)
+
+if test "x$HAVE_MRSID" != "xno" ; then
+  OPT_GDAL_FORMATS="mrsid $OPT_GDAL_FORMATS"
+  
+fi
 
 dnl ---------------------------------------------------------------------------
 
@@ -1160,6 +1186,7 @@ LOC_MSG([  OGDI support:              ${HAVE_OGDI}])
 LOC_MSG([  HDF4 support:              ${HAVE_HDF4}])
 LOC_MSG([  JASPER support:            ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})])
 LOC_MSG([  ECW support:               ${ECW_SETTING}])
+LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
 LOC_MSG([  POSTGRESQL support:        ${HAVE_PG}])
 LOC_MSG([  XERCES support:            ${HAVE_XERCES}])
 LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
