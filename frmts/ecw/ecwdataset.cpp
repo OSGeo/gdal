@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/03/30 17:00:07  warmerda
+ * Allow "ecwp:" urls to be opened.
+ *
  * Revision 1.17  2003/12/16 20:24:01  dron
  * Implemented support for supersampling in IRasterIO().
  *
@@ -578,8 +581,13 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
     NCSError         eErr;
     int              i;
 
-    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"ecw")
-        || poOpenInfo->fp == NULL )
+/* -------------------------------------------------------------------- */
+/*      This has to either be a file on disk ending in .ecw or a        */
+/*      ecwp: protocol url.                                             */
+/* -------------------------------------------------------------------- */
+    if( (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"ecw")
+         || poOpenInfo->fp == NULL)
+        && !EQUALN(poOpenInfo->pszFilename,"ecwp",5) )
         return( NULL );
 
 /* -------------------------------------------------------------------- */
