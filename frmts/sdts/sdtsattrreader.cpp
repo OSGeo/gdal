@@ -28,8 +28,8 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.1  1999/03/23 13:56:13  warmerda
- * New
+ * Revision 1.2  1999/03/23 15:59:40  warmerda
+ * implemented and working
  *
  */
 
@@ -43,142 +43,45 @@
 /************************************************************************/
 /* ==================================================================== */
 /*			      SDTSAttrRecord				*/
-/* ==================================================================== */
-/************************************************************************/
-
-/************************************************************************/
-/*                            SDTSRawLine()                             */
-/************************************************************************/
-
-SDTSRawLine::SDTSRawLine()
-
-{
-    nVertices = 0;
-    padfX = padfY = padfZ = NULL;
-}
-
-/************************************************************************/
-/*                            ~STDSRawLine()                            */
-/************************************************************************/
-
-SDTSRawLine::~SDTSRawLine()
-
-{
-    CPLFree( padfX );
-    CPLFree( padfY );
-    CPLFree( padfZ );
-}
-
-/************************************************************************/
-/*                                Read()                                */
-/*                                                                      */
-/*      Read a record from the passed SDTSLineReader, and assign the    */
-/*      values from that record to this line.  This is the bulk of      */
-/*      the work in this whole file.                                    */
-/************************************************************************/
-
-int SDTSRawLine::Read( SDTS_IREF * poIREF, scal_Record * poRecord )
-
-{
-
-/* ==================================================================== */
-/*      Loop over fields in this record, looking for those we           */
-/*      recognise, and need.  I don't use the getSubfield()             */
-/*      interface on the record in order to retain some slight bit      */
-/*      of efficiency.                                                  */
-/* ==================================================================== */
-    sc_Record::const_iterator	oFieldIter;
-
-    for( oFieldIter = poRecord->begin();
-         oFieldIter != poRecord->end();
-         ++oFieldIter )
-    {
-        const sc_Field	&oField = *oFieldIter;
-        string		osTemp;
-
-        if( oField.getMnemonic() == "LINE" )
-            oLine.Set( &oField );
-
-        else if( oField.getMnemonic() == "ATID" )
-            oAttribute.Set( &oField );
-        
-        else if( oField.getMnemonic() == "PIDL" )
-            oLeftPoly.Set( &oField );
-        
-        else if( oField.getMnemonic() == "PIDR" )
-            oRightPoly.Set( &oField );
-        
-        else if( oField.getMnemonic() == "SNID" )
-            oStartNode.Set( &oField );
-        
-        else if( oField.getMnemonic() == "ENID" )
-            oEndNode.Set( &oField );
-
-        else if( oField.getMnemonic() == "SADR" )
-        {
-            /* notdef: this is _really inefficient_! */
-            nVertices++;
-            padfX = (double *) CPLRealloc(padfX, sizeof(double)*nVertices);
-            padfY = (double *) CPLRealloc(padfY, sizeof(double)*nVertices);
-            padfZ = (double *) CPLRealloc(padfZ, sizeof(double)*nVertices);
-
-            SDTSGetSADR( poIREF, &oField,
-                         padfX + nVertices - 1,
-                         padfY + nVertices - 1,
-                         padfZ + nVertices - 1 );
-        }
-    }
-
-    return TRUE;
-}
-
-/************************************************************************/
-/*                                Dump()                                */
-/*                                                                      */
-/*      Write info about this object to a text file.                    */
-/************************************************************************/
-
-void SDTSRawLine::Dump( FILE * fp )
-
-{
-    fprintf( fp, "SDTSRawLine\n" );
-    fprintf( fp, "  Module=%s, Record#=%ld\n",
-             oLine.szModule, oLine.nRecord );
-    fprintf( fp, "  Attribute (Module=%s, Record=%ld)\n", 
-             oAttribute.szModule, oAttribute.nRecord );
-    if( oLeftPoly.nRecord != -1 )
-        fprintf( fp, "  LeftPoly (Module=%s, Record=%ld)\n", 
-                 oLeftPoly.szModule, oLeftPoly.nRecord );
-    if( oRightPoly.nRecord != -1 )
-        fprintf( fp, "  RightPoly (Module=%s, Record=%ld)\n", 
-                 oRightPoly.szModule, oRightPoly.nRecord );
-    if( oStartNode.nRecord != -1 )
-        fprintf( fp, "  StartNode (Module=%s, Record=%ld)\n", 
-                 oStartNode.szModule, oStartNode.nRecord );
-    if( oEndNode.nRecord != -1 )
-        fprintf( fp, "  EndNode (Module=%s, Record=%ld)\n", 
-                 oEndNode.szModule, oEndNode.nRecord );
-
-    for( int i = 0; i < nVertices; i++ )
-    {
-        fprintf( fp, "  Vertex[%3d] = (%.2f,%.2f,%.2f)\n",
-                 i, padfX[i], padfY[i], padfZ[i] );
-    }
-}
-
-/************************************************************************/
-/* ==================================================================== */
-/*			       SDTSLineReader				*/
 /*									*/
-/*	This is the class used to read a line module.			*/
+/*	Note that virtually all the work on objects of this class	*/
+/*	is done by the SDTSAttrReader.					*/
 /* ==================================================================== */
 /************************************************************************/
 
 /************************************************************************/
-/*                           SDTSLineReader()                           */
+/*                           SDTSAttrRecord()                           */
 /************************************************************************/
 
-SDTSLineReader::SDTSLineReader( SDTS_IREF * poIREFIn )
+SDTSAttrRecord::SDTSAttrRecord()
+
+{
+    poATTP = NULL;
+}
+
+/************************************************************************/
+/*                          ~STDSAttrRecord()                           */
+/************************************************************************/
+
+SDTSAttrRecord::~SDTSAttrRecord()
+
+{
+}
+
+
+/************************************************************************/
+/* ==================================================================== */
+/*			       SDTSAttrReader				*/
+/*									*/
+/*	This is the class used to read a primary attribute module.      */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                           SDTSAttrReader()                           */
+/************************************************************************/
+
+SDTSAttrReader::SDTSAttrReader( SDTS_IREF * poIREFIn )
 
 {
     po8211Reader = NULL;
@@ -187,10 +90,10 @@ SDTSLineReader::SDTSLineReader( SDTS_IREF * poIREFIn )
 }
 
 /************************************************************************/
-/*                             ~SDTSLineReader()                        */
+/*                          ~SDTSAttrReader()                           */
 /************************************************************************/
 
-SDTSLineReader::~SDTSLineReader()
+SDTSAttrReader::~SDTSAttrReader()
 {
     Close();
 }
@@ -199,7 +102,7 @@ SDTSLineReader::~SDTSLineReader()
 /*                               Close()                                */
 /************************************************************************/
 
-void SDTSLineReader::Close()
+void SDTSAttrReader::Close()
 
 {
     if( poIter != NULL )
@@ -218,23 +121,16 @@ void SDTSLineReader::Close()
         ifs.close();
 }
 
-
 /************************************************************************/
 /*                                Open()                                */
 /*                                                                      */
-/*      Open the requested line file, and prepare to start reading      */
+/*      Open the requested attr file, and prepare to start reading      */
 /*      data records.                                                   */
 /************************************************************************/
 
-int SDTSLineReader::Open( string osFilename )
+int SDTSAttrReader::Open( string osFilename )
 
 {
-    converter_dictionary converters; // hints for reader for binary data
-    
-    converters["X"] = &converter_bi32; // set up default converter hints
-    converters["Y"] = &converter_bi32; // for these mnemonics
-    converters["ELEVATION"] = &converter_bi16;
-
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
@@ -246,10 +142,9 @@ int SDTSLineReader::Open( string osFilename )
     }
     
 /* -------------------------------------------------------------------- */
-/*      Establish reader access to the file, and read the first         */
-/*      (only) record in the IREF file.                                 */
+/*      Establish reader access to the file				*/
 /* -------------------------------------------------------------------- */
-    po8211Reader = new sio_8211Reader( ifs, &converters );
+    po8211Reader = new sio_8211Reader( ifs, NULL );
     poIter = new sio_8211ForwardIterator( *po8211Reader );
     
     if( !(*poIter) )
@@ -259,14 +154,16 @@ int SDTSLineReader::Open( string osFilename )
 }
 
 /************************************************************************/
-/*                            GetNextLine()                             */
+/*                           GetNextRecord()                            */
 /*                                                                      */
-/*      Fetch the next line feature as an STDSRawLine.                  */
+/*      Fetch the record as an STDSAttrRecord.                          */
 /************************************************************************/
 
-SDTSRawLine * SDTSLineReader::GetNextLine()
+SDTSAttrRecord * SDTSAttrReader::GetNextRecord()
 
 {
+    SDTSAttrRecord	*poSR;
+    
 /* -------------------------------------------------------------------- */
 /*      Are we initialized?                                             */
 /* -------------------------------------------------------------------- */
@@ -280,26 +177,43 @@ SDTSRawLine * SDTSLineReader::GetNextLine()
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Read the record.                                                */
+/*      Read records till we find one with an ATTP section.             */
+/*      Normally every record will have one.                            */
 /* -------------------------------------------------------------------- */
-    scal_Record		oRecord;
-    
-    poIter->get( oRecord );
-    ++(*poIter);
+    poSR = new SDTSAttrRecord;
 
-/* -------------------------------------------------------------------- */
-/*      Transform into a line feature.                                  */
-/* -------------------------------------------------------------------- */
-    SDTSRawLine		*poRawLine = new SDTSRawLine();
-
-    if( poRawLine->Read( poIREF, &oRecord ) )
+    while( poSR->poATTP == NULL && *poIter )
     {
-        return( poRawLine );
+        sc_Record::const_iterator	oFieldIter;
+
+        poIter->get( poSR->oRecord );
+        ++(*poIter);
+
+        for( oFieldIter = poSR->oRecord.begin();
+             oFieldIter != poSR->oRecord.end();
+             ++oFieldIter )
+        {
+            const sc_Field	&oField = *oFieldIter;
+
+            if( oField.getMnemonic() == "ATTP" )
+            {
+                poSR->poATTP = &oField;
+            }
+            else if( oField.getMnemonic() == "ATPR" )
+            {
+                poSR->oRecordId.Set( &oField );
+            }
+        }
     }
-    else
+
+/* -------------------------------------------------------------------- */
+/*      Return the result, or NULL if we never found a valid record.    */
+/* -------------------------------------------------------------------- */
+    if( poSR->poATTP == NULL )
     {
-        delete poRawLine;
+        delete poSR;
         return NULL;
     }
+    else
+        return poSR;
 }
-
