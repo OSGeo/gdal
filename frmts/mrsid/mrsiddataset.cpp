@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2005/04/02 19:04:00  kmelero
+ * Added setting WKT in MrSID file.  (kmelero@sanz.com)
+ *
  * Revision 1.25  2005/03/26 19:29:21  kmelero
  * Added flag to set 64-bit fwrite in support of large MrSID files.  (kmelero@sanz.com)
  *
@@ -1258,7 +1261,8 @@ LT_STATUS MrSIDDummyImageReader::initialize()
         LTIGeoCoord oGeo( adfGeoTransform[0] + adfGeoTransform[1] / 2,
                           adfGeoTransform[3] + adfGeoTransform[5] / 2,
                           adfGeoTransform[1], adfGeoTransform[5],
-                          adfGeoTransform[2], adfGeoTransform[4] );
+                          adfGeoTransform[2], adfGeoTransform[4], NULL,
+                          poDS->GetProjectionRef() );
         if ( !LT_SUCCESS(setGeoCoord( oGeo )) )
             return LT_STS_Failure;
     }
