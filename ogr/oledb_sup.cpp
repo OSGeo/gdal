@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/06/01 14:33:41  warmerda
+ * improve error reporting
+ *
  * Revision 1.7  1999/11/18 19:02:19  warmerda
  * expanded tabs
  *
@@ -243,6 +246,7 @@ char* GetNoteString( Note * rgNote, int cNote, DWORD dwValue )
 
 {
         int j;
+        static char unknown[128];
 
         assert(rgNote != NULL);
 
@@ -253,7 +257,9 @@ char* GetNoteString( Note * rgNote, int cNote, DWORD dwValue )
                 if (rgNote[j].dwFlag == dwValue)
                         return rgNote[j].szText;
         }
-        return "<unknown>";
+        sprintf( unknown, "<unknown:hr=%X>", dwValue );
+
+        return unknown;
 }
 
 /************************************************************************/
