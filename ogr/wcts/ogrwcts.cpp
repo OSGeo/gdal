@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/03/11 17:28:49  warmerda
+ * Changed where we look for capabilities.
+ *
  * Revision 1.3  2003/03/11 15:40:44  warmerda
  * initial minimally working implementation
  *
@@ -186,7 +189,7 @@ void WCTSGetCapabilities( CPLXMLNode *psOperation )
     const char *pszCapFilename;
     FILE *fp;
 
-    pszCapFilename = CPLFindFile( "etc", "wcts_capabilities.xml.0.1.0" );
+    pszCapFilename = CPLFindFile( "gdal", "wcts_capabilities.xml.0.1.0" );
 
     if( pszCapFilename == NULL 
         || (fp = VSIFOpen( pszCapFilename, "rt")) == NULL )
