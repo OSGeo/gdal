@@ -6,7 +6,14 @@
 2) Update the release date, and number information at the top of gcore/gdal.h.
    Three macros: GDAL_VERSION_NUM, GDAL_RELEASE_DATE and GDAL_RELEASE_NAME.
 
-3) Update the VERSION file. 
+3) Update the VERSION file.
+
+3.1) Update GDAL_VER macro in GDALmake.opt.in. 
+
+3.2) Update LIBGDAL_CURRENT/REVISION/AGE macros in GDALmake.opt.in.
+   - For a release with no interface changes just bump REVISION. 
+   - Adding interfaces, bump CURRENT/AGE, set REVISION to 0. 
+   - Deleting interfaces / compatibility issues - bump CURRENT, others to zero.
 
 4) Prepare release overview in the NEWS file.  The cvs2cl.pl script can be 
    useful for collecting a full listing of all CVS log entries.  It can be
