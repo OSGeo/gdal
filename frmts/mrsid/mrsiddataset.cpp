@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/02/03 20:56:45  dron
+ * Fixes in coordinate handling.
+ *
  * Revision 1.5  2003/07/24 09:33:07  dron
  * Added MrSIDRasterBand::IRasterIO().
  *
@@ -265,7 +268,8 @@ CPLErr MrSIDRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             for ( iPixel = 0; iPixel < nBufXSize; iPixel++ )
             {
                 GDALCopyWords( (GByte *)poImageBuf->getData() + iSrcLineOff
-                               + (int)(iPixel * dfSrcXInc) * poImageBufInfo->pixelIncrement() ,
+                               + (int)(iPixel * dfSrcXInc)
+                                      * poImageBufInfo->pixelIncrement(),
                                eDataType, poImageBufInfo->pixelIncrement(),
                                (GByte *)pData + iDstLineOff +
                                iPixel * nBufDataSize,
@@ -1568,8 +1572,7 @@ CPLErr MrSIDDataset::OpenZoomLevel( int iZoom )
          && poMrSidFile->xrot(adfGeoTransform[2])
          && poMrSidFile->yrot(adfGeoTransform[4]) )
     {
-        if ( adfGeoTransform[3] > 0 ) // Nothern hemisphere
-            adfGeoTransform[5] = - adfGeoTransform[5];
+        adfGeoTransform[5] = - adfGeoTransform[5];
         adfGeoTransform[0] = adfGeoTransform[0] - adfGeoTransform[1] / 2;
         adfGeoTransform[3] = adfGeoTransform[3] - adfGeoTransform[5] / 2;
         bHasGeoTransfom = TRUE;
