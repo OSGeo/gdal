@@ -119,6 +119,7 @@ ifeq ($(OGR_ENABLED),yes)
 install-full:	ogrinfo ogr2ogr
 	$(INSTALL) ogr2ogr $(INST_BIN)
 	$(INSTALL) ogrinfo $(INST_BIN)
+	$(INSTALL) $(OGRFRMTS_LIB) $(INST_LIB)
 else
 install-full:
 endif
