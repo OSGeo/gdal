@@ -1,3 +1,154 @@
+GDAL 1.2.0 - Overview of Changes
+--------------------------------
+
+Configuration:
+    - Libtool used by default with Unix style builds.  Use --without-libtool
+      to avoid this. 
+    - PROJ.4 can now be linked statically using --with-static-proj4.
+    - Added --without-bsb option for those averse to legal risk.
+
+DODS/OPeNDAP Driver:
+    - Preliminary DODS (OPeNDAP) driver implemented (James Gallagher @ URI).
+
+PCIDSK Driver:
+    - PCIDSK read/write raster driver implemented (Andrey).
+
+Erdas Imagine / HFA Driver: 
+    - Support recent Imagine versions (data dictionary changes).
+    - Better logic to search for .rrd file locally.
+    - Support creating files in the 2GB to 4GB size range.
+
+GIF Driver: 
+    - Updated to libungif 4.1.0. 
+    - Various hacks to try and identify transparent colors better.
+
+BMP Driver: 
+    - Handle 32bit BMPs properly.
+
+HDF4 Driver:
+    - Added proper support for multi-sample GR datasets. 
+    - Various fixes and improvements for specific product types.
+
+GeoTIFF Driver: 
+    - Added PHOTOMETRIC option to control photometric interp of new files.
+
+JPEG2000/Kakadu Driver: 
+    - Support reading/creating lossless 16bit files. 
+    - Updated to support Kakadu 4.1 library.
+
+NITF Driver: 
+    - Implement support for IGEOLO="U" (MGRS/UTM) coordinates. 
+    - Added overview (as external GeoTIFF file) support.
+
+MrSID Driver: 
+    - Support DSDK 4.2.x. 
+
+PNG Driver:
+    - Support required byte swapping of 16bit PNG data. 
+
+FAST Driver:
+    - lots of fixes, supports more datums and ellipsoids. 
+
+NetCDF Driver: 
+    - New driver implemented for netCDF support. 
+    - Pretty much tied to form of netCDF used in GMT for now. 
+
+VTerrain .bt Driver: 
+    - New driver ... still kind of broken, please avoid use. 
+
+ECW Driver:
+    - support supersampled reads efficiently. 
+    - special case for dataset level RasterIO() implemented for much better
+      performance in some applications. 
+
+ESRI BIL (EHdr) Driver:
+    - Support world files.
+
+VRT Driver: 
+    - Implement filtering support. 
+
+GIO (Arc/Info Binary Grid via avgridio.dll): 
+   - Driver disabled ... to undependable. 
+
+
+Python:
+    - Preliminary support for numarray in addition to numpy (Numeric). 
+
+Contouring:
+    - New gdal_contour utility program implementing contour generation.  
+    - Underlying algorithm in gdal/alg.  
+
+Warping:
+    - Improved support in GDALSuggestedWarpOutput() for "world" sized
+      files that are only partially transformable. 
+    - Bicubic resampler improved. 
+    - What was gdalwarptest is now gdalwarp, and the old gdalwarp is now
+      gdalwarpsimple.  The sophisticated warper is now the default.
+
+Man Pages: 
+    - Man pages for GDAL utilities now being maintained and installed (Silke).
+
+ 
+
+OGR 1.2.0 - Overview of Changes
+-------------------------------
+
+OGRSpatialReference:
+   - Added methods for converting to/from GCTP representation.
+   - Added HOM 2 points on centerline variant. 
+
+DODS (OPeNDAP) Driver:
+   - Preliminary implementation.
+
+TIGER/Line Driver: 
+   - Added support for GDT ASCII TIGER-like format. 
+   - Support TIGER/Line 2003 format. 
+
+S-57 Driver:
+   - Preliminary export support implemented. 
+   - Support capture of FFPT (feature to feature) linkages.
+   - Support capture of TOPI from VRPT.
+   - Support capture of primitives as additional layers. 
+
+Shapefile Driver:
+   - gdal/frmts/shapelib removed from GDAL source tree, now just a 
+     copy of required shapelib files are kept in gdal/ogr/ogrsf_frmts/shape. 
+   - Attempt identify polygons that are really multi-polygons and convert them 
+     into multi-polygons properly (Radim Blazek).
+   - Create FID attribute in .dbf file if no attribute added by application.
+
+GML Driver:
+   - Lots of fixes and improvements for reading and writing. 
+   - Now writes a schema file by default. 
+   - Field types are set now when reading based on data found on first pass.
+   - Added support for the various kinds of geometry collections.
+
+DGN Driver:
+   - Now using dgnlib 1.9 - this carries with it various new element types
+     and some important bug fixes.
+
+ODBC Driver:
+   - New ODBC driver implemented.  Build by default on Windows, and buildable
+     on Unix (with unixodbc). 
+
+VRT Driver: 
+   - New "virtual" OGR Datasource format implemented.  
+   - Configuration stored in XML control file. 
+
+Oracle (OCI) Driver:
+   - support reading views. 
+
+OGR Core:
+   - Added support for WKT EMPTY geometry objects (like "MULTIPOINT(EMPTY)").
+   - Added DeleteFeature() method on OGRLayer class.  
+
+NTF Driver: 
+   - Support CHG_TYPE attribute for landline plus product. 
+
+
+
+ ==============================================================================
+
 GDAL 1.1.9 - Overview of Changes
 --------------------------------
 
