@@ -30,17 +30,8 @@ endif
 port-target:
 	(cd port; $(MAKE))
 
-ifeq ($(OGR_ENABLED),yes)
-
 ogr-target:
 	(cd ogr; $(MAKE) sublibs lib )
-
-else
-
-ogr-target:
-	(cd ogr; $(MAKE) lib )
-
-endif
 
 core-target:
 	(cd gcore; $(MAKE))
@@ -56,16 +47,8 @@ apps-target:	ogr-apps
 	(cd apps; $(MAKE))
 
 
-ifeq ($(OGR_ENABLED),yes)
-
 ogr-apps:
 	(cd ogr; $(MAKE) apps)
-
-else
-
-ogr-apps:
-
-endif
 
 #
 #	We only make python a default target if we think python is installed.
