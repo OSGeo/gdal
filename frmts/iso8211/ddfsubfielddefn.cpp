@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/06/13 13:39:27  warmerda
+ * added warnings, and better handlng of short data for subfields
+ *
  * Revision 1.5  1999/11/18 19:03:04  warmerda
  * expanded tabs
  *
@@ -254,12 +257,25 @@ int DDFSubfieldDefn::GetDataLength( const char * pachSourceData,
 {
     if( !bIsVariable )
     {
-        CPLAssert( nFormatWidth <= nMaxBytes );
+        if( nFormatWidth > nMaxBytes )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Only %d bytes available for subfield %s with\n"
+                      "format string %s ... returning shortened data.",
+                      nMaxBytes, pszName, pszFormatString );
 
-        if( pnConsumedBytes != NULL )
-            *pnConsumedBytes = nFormatWidth;
-        
-        return nFormatWidth;
+            if( pnConsumedBytes != NULL )
+                *pnConsumedBytes = nMaxBytes;
+
+            return nMaxBytes;
+        }
+        else
+        {
+            if( pnConsumedBytes != NULL )
+                *pnConsumedBytes = nFormatWidth;
+
+            return nFormatWidth;
+        }
     }
     else
     {
@@ -519,7 +535,15 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
       case 'b':
         unsigned char   abyData[8];
 
-        CPLAssert( nFormatWidth <= nMaxBytes );
+        if( nFormatWidth > nMaxBytes )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Attempt to extract int subfield %s with format %s\n"
+                      "failed as only %d bytes available.  Using zero.",
+                      pszName, pszFormatString, nMaxBytes );
+            return 0;
+        }
+
         if( pnConsumedBytes != NULL )
             *pnConsumedBytes = nFormatWidth;
 
