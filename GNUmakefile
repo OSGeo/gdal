@@ -54,7 +54,7 @@ py-module:
 	(cd pymod; $(MAKE))
 
 lclean:
-	rm -f *.a *.so
+	rm -f *.a *.so config.log config.cache
 
 distclean:	dist-clean
 
