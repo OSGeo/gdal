@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/04/05 20:28:35  warmerda
+ * ensure that eType is set properly if SHPT= options given
+ *
  * Revision 1.11  2002/03/27 21:04:38  warmerda
  * Added support for reading, and creating lone .dbf files for wkbNone geometry
  * layers.  Added support for creating a single .shp file instead of a directory
@@ -386,21 +389,45 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
     if( pszOverride == NULL )
         /* ignore */;
     else if( EQUAL(pszOverride,"POINT") )
+    {
         nShapeType = SHPT_POINT;
+        eType = wkbPoint;
+    }
     else if( EQUAL(pszOverride,"ARC") )
+    {
         nShapeType = SHPT_ARC;
+        eType = wkbLineString;
+    }
     else if( EQUAL(pszOverride,"POLYGON") )
+    {
         nShapeType = SHPT_POLYGON;
+        eType = wkbPolygon;
+    }
     else if( EQUAL(pszOverride,"MULTIPOINT") )
+    {
         nShapeType = SHPT_MULTIPOINT;
+        eType = wkbMultiPoint;
+    }
     else if( EQUAL(pszOverride,"POINTZ") )
+    {
         nShapeType = SHPT_POINTZ;
+        eType = wkbPoint25D;
+    }
     else if( EQUAL(pszOverride,"ARCZ") )
+    {
         nShapeType = SHPT_ARCZ;
+        eType = wkbLineString25D;
+    }
     else if( EQUAL(pszOverride,"POLYGONZ") )
+    {
         nShapeType = SHPT_POLYGONZ;
+        eType = wkbPolygon25D;
+    }
     else if( EQUAL(pszOverride,"MULTIPOINTZ") )
+    {
         nShapeType = SHPT_MULTIPOINTZ;
+        eType = wkbMultiPoint25D;
+    }
     else if( EQUAL(pszOverride,"NONE") )
     {
         nShapeType = SHPT_NULL;
