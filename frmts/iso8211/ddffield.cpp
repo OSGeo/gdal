@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/06/01 19:10:38  warmerda
+ * don't assert on variable length repeating fields
+ *
  * Revision 1.4  1999/05/07 14:10:49  warmerda
  * added maxbytes to getsubfielddata()
  *
@@ -210,10 +213,16 @@ int DDFField::GetRepeatCount()
         return 1;
 
 /* -------------------------------------------------------------------- */
-/*      Not that it may be legal to have repeating variable width       */
-/*      subfields, but I don't have any samples, so I ignore it for now.*/
+/*      Note that it may be legal to have repeating variable width      */
+/*      subfields, but I don't have any samples, so I ignore it for     */
+/*      now.                                                            */
+/*                                                                      */
+/*      The file data/cape_royal_AZ_DEM/1183XREF.DDF has a repeating    */
+/*      variable length field, but the count is one, so it isn't        */
+/*      much value for testing.                                         */
 /* -------------------------------------------------------------------- */
-    CPLAssert( poDefn->GetFixedWidth() > 0 );
+    
+//    CPLAssert( poDefn->GetFixedWidth() > 0 );
     if( poDefn->GetFixedWidth() ==  0 )
         return 1;
 
