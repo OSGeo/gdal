@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/02/10 04:49:31  fwarmerdam
+ * added color interpretation setting on J2K bands
+ *
  * Revision 1.31  2005/02/08 05:46:33  fwarmerdam
  * Fixed up ~NITFDataset() image length/COMRAT patching.
  *
@@ -417,6 +420,12 @@ GDALColorInterp NITFRasterBand::GetColorInterpretation()
         return GCI_BlueBand;
     if( EQUAL(psBandInfo->szIREPBAND,"M") )
         return GCI_GrayIndex;
+    if( EQUAL(psBandInfo->szIREPBAND,"Y") )
+        return GCI_YCbCr_YBand;
+    if( EQUAL(psBandInfo->szIREPBAND,"Cb") )
+        return GCI_YCbCr_CbBand;
+    if( EQUAL(psBandInfo->szIREPBAND,"Cr") )
+        return GCI_YCbCr_CrBand;
 
     return GCI_Undefined;
 }
@@ -635,6 +644,8 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      open the image data as a JPEG2000 dataset.                      */
 /* -------------------------------------------------------------------- */
     int nUsableBands = psImage->nBands;
+    int		iBand;
+
 
     if( EQUAL(psImage->szIC,"C8") )
     {
@@ -673,13 +684,33 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
             
             nUsableBands = poDS->poJ2KDataset->GetRasterCount();
         }
+
+        // Force NITF derived color space info 
+        for( iBand = 0; iBand < nUsableBands; iBand++ )
+        {
+            NITFBandInfo *psBandInfo = psImage->pasBandInfo + iBand;
+            GDALRasterBand *poBand=poDS->poJ2KDataset->GetRasterBand(iBand+1);
+            
+            if( EQUAL(psBandInfo->szIREPBAND,"R") )
+                poBand->SetColorInterpretation( GCI_RedBand );
+            if( EQUAL(psBandInfo->szIREPBAND,"G") )
+                poBand->SetColorInterpretation( GCI_GreenBand );
+            if( EQUAL(psBandInfo->szIREPBAND,"B") )
+                poBand->SetColorInterpretation( GCI_BlueBand );
+            if( EQUAL(psBandInfo->szIREPBAND,"M") )
+                poBand->SetColorInterpretation( GCI_GrayIndex );
+            if( EQUAL(psBandInfo->szIREPBAND,"Y") )
+                poBand->SetColorInterpretation( GCI_YCbCr_YBand );
+            if( EQUAL(psBandInfo->szIREPBAND,"Cb") )
+                poBand->SetColorInterpretation( GCI_YCbCr_CbBand );
+            if( EQUAL(psBandInfo->szIREPBAND,"Cr") )
+                poBand->SetColorInterpretation( GCI_YCbCr_CrBand );
+        }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    int		iBand;
-
     for( iBand = 0; iBand < nUsableBands; iBand++ )
     {
         if( poDS->poJ2KDataset == NULL )
