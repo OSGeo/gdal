@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/11/08 18:25:45  warmerda
+ * remove extranious comma in enum, confuses HPUX compiler
+ *
  * Revision 1.11  2002/11/08 15:42:41  warmerda
  * ensure type correctness of wkbFlatten
  *
@@ -142,7 +145,7 @@ typedef enum
     wkbMultiPoint25D = 0x80000004,
     wkbMultiLineString25D = 0x80000005,
     wkbMultiPolygon25D = 0x80000006,
-    wkbGeometryCollection25D = 0x80000007,
+    wkbGeometryCollection25D = 0x80000007
 } OGRwkbGeometryType;
 
 #define wkb25DBit 0x80000000
