@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.3  2000/03/08 20:01:04  warmerda
- * added geotransforms
+ * Revision 1.4  2000/03/10 13:56:13  warmerda
+ * updated
  *
  ************************************************************************/
 
@@ -557,7 +557,11 @@ char *SWIG_GetPtr(char *_c, void **ptr, char *_t)
 #define SWIG_name    "_gdal"
 
 #include "gdal.h"
+#include "cpl_conv.h"
 
+/************************************************************************/
+/*                         GDALReadRaster()                             */
+/************************************************************************/
 static PyObject *
 py_GDALReadRaster(PyObject *self, PyObject *args) {
 
@@ -609,13 +613,63 @@ py_GDALReadRaster(PyObject *self, PyObject *args) {
 }
 
 
+/************************************************************************/
+/*                          GDALWriteRaster()                           */
+/************************************************************************/
+static PyObject *
+py_GDALWriteRaster(PyObject *self, PyObject *args) {
+
+    GDALRasterBandH  _arg0;
+    char *_argc0 = NULL;
+    int  _arg1;
+    int  _arg2;
+    int  _arg3;
+    int  _arg4;
+    char *strbuffer_arg = NULL;
+    int  strbuffer_size;
+    int  _arg5;
+    int  _arg6;
+    GDALDataType  _arg7;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"siiiis#iii:GDALWriteRaster",
+                         &_argc0,&_arg1,&_arg2,&_arg3,&_arg4,
+                         &strbuffer_arg,&strbuffer_size,&_arg5,&_arg6,&_arg7)) 
+        return NULL;
+
+
+
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALRasterBandH" )) {
+            PyErr_SetString(PyExc_TypeError,
+			    "Type error in argument 1 of GDALReadRaster."
+			    " Expected _GDALRasterBandH.");
+            return NULL;
+        }
+    }
+	
+    if( GDALRasterIO(_arg0, GF_Write, _arg1, _arg2, _arg3, _arg4, 
+		     (void *) strbuffer_arg,
+		     _arg5, _arg6, _arg7, 0, 0 ) != CE_None )
+    {
+	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
+	return NULL;
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+
+/************************************************************************/
+/*                        GDALGetGeoTransform()                         */
+/************************************************************************/
 static PyObject *
 py_GDALGetGeoTransform(PyObject *self, PyObject *args) {
 
     GDALDatasetH  _arg0;
     char *_argc0 = NULL;
     double geotransform[6];
-    CPLErr err;
 
     self = self;
     if(!PyArg_ParseTuple(args,"s:GDALGetGeoTransform",&_argc0))
@@ -630,13 +684,7 @@ py_GDALGetGeoTransform(PyObject *self, PyObject *args) {
         }
     }
 	
-    err = GDALGetGeoTransform(_arg0,geotransform);
-
-    if( err != CE_None )
-    {
-	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
-	return NULL;
-    }
+    GDALGetGeoTransform(_arg0,geotransform);
 
     return Py_BuildValue("dddddd",
 	                 geotransform[0],
@@ -647,6 +695,9 @@ py_GDALGetGeoTransform(PyObject *self, PyObject *args) {
 	                 geotransform[5] );
 }
 
+/************************************************************************/
+/*                        GDALSetGeoTransform()                         */
+/************************************************************************/
 static PyObject *
 py_GDALSetGeoTransform(PyObject *self, PyObject *args) {
 
@@ -677,18 +728,51 @@ py_GDALSetGeoTransform(PyObject *self, PyObject *args) {
 	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
 	return NULL;
     }
-
     
-    return Py_BuildValue("dddddd",
-	                 geotransform[0],
-	                 geotransform[1],
-	                 geotransform[2],
-	                 geotransform[3],
-	                 geotransform[4],
-	                 geotransform[5] );
-
     Py_INCREF(Py_None);
     return Py_None;
+}
+
+/************************************************************************/
+/*                       GDALGetRasterHistogram()                       */
+/************************************************************************/
+static PyObject *
+py_GDALGetRasterHistogram(PyObject *self, PyObject *args) {
+
+    GDALRasterBandH  hBand;
+    char *_argc0 = NULL;
+    double dfMin = -0.5, dfMax = 255.5;
+    int nBuckets = 256, bIncludeOutOfRange = FALSE, bApproxOK = FALSE;
+    int *panHistogram, i;
+    PyObject *psList;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s|ddiii:GDALGetRasterHistogram",&_argc0,
+			 &dfMin, &dfMax, &nBuckets, &bIncludeOutOfRange, 
+	 	         &bApproxOK))
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &hBand,"_GDALRasterBandH" )) {
+            PyErr_SetString(PyExc_TypeError,
+                          "Type error in argument 1 of GDALGetRasterHistogram."
+                          "  Expected _GDALRasterBandH.");
+            return NULL;
+        }
+    }
+	
+    panHistogram = (int *) CPLCalloc(sizeof(int),nBuckets);
+    GDALGetRasterHistogram(hBand, dfMin, dfMax, nBuckets, panHistogram, 
+			   bIncludeOutOfRange, bApproxOK, 
+		           GDALDummyProgress, NULL);
+
+    psList = PyList_New(nBuckets);
+    for( i = 0; i < nBuckets; i++ )
+	PyList_SetItem(psList, i, Py_BuildValue("i", panHistogram[i] ));
+
+    CPLFree( panHistogram );
+
+    return psList;
 }
 static PyObject *_wrap_GDALGetDataTypeSize(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -1361,6 +1445,29 @@ static PyObject *_wrap_GDALGetOverview(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_GDALFlushRasterCache(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    CPLErr * _result;
+    GDALRasterBandH  _arg0;
+    char * _argc0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:GDALFlushRasterCache",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALFlushRasterCache. Expected _GDALRasterBandH.");
+        return NULL;
+        }
+    }
+    _result = (CPLErr *) malloc(sizeof(CPLErr ));
+    *(_result) = GDALFlushRasterCache(_arg0);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_CPLErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
 static PyObject *_wrap_GDALSwapWords(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     void * _arg0;
@@ -1904,8 +2011,10 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALColorEntry_c2_set", _wrap_GDALColorEntry_c2_set, 1 },
 	 { "GDALColorEntry_c1_get", _wrap_GDALColorEntry_c1_get, 1 },
 	 { "GDALColorEntry_c1_set", _wrap_GDALColorEntry_c1_set, 1 },
+	 { "GDALGetRasterHistogram", py_GDALGetRasterHistogram, 1 },
 	 { "GDALSetGeoTransform", py_GDALSetGeoTransform, 1 },
 	 { "GDALGetGeoTransform", py_GDALGetGeoTransform, 1 },
+	 { "GDALWriteRaster", py_GDALWriteRaster, 1 },
 	 { "GDALReadRaster", py_GDALReadRaster, 1 },
 	 { "GDALDecToDMS", _wrap_GDALDecToDMS, 1 },
 	 { "GDALDestroyProjDef", _wrap_GDALDestroyProjDef, 1 },
@@ -1922,6 +2031,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALCreateColorTable", _wrap_GDALCreateColorTable, 1 },
 	 { "GDALCopyWords", _wrap_GDALCopyWords, 1 },
 	 { "GDALSwapWords", _wrap_GDALSwapWords, 1 },
+	 { "GDALFlushRasterCache", _wrap_GDALFlushRasterCache, 1 },
 	 { "GDALGetOverview", _wrap_GDALGetOverview, 1 },
 	 { "GDALGetOverviewCount", _wrap_GDALGetOverviewCount, 1 },
 	 { "GDALGetRasterColorTable", _wrap_GDALGetRasterColorTable, 1 },
@@ -1967,37 +2077,6 @@ SWIGEXPORT(void,init_gdal)() {
 	 SWIG_globals = SWIG_newvarlink();
 	 m = Py_InitModule("_gdal", _gdalMethods);
 	 d = PyModule_GetDict(m);
-	 PyDict_SetItemString(d,"GDT_Unknown", PyInt_FromLong((long) GDT_Unknown));
-	 PyDict_SetItemString(d,"GDT_Byte", PyInt_FromLong((long) GDT_Byte));
-	 PyDict_SetItemString(d,"GDT_UInt16", PyInt_FromLong((long) GDT_UInt16));
-	 PyDict_SetItemString(d,"GDT_Int16", PyInt_FromLong((long) GDT_Int16));
-	 PyDict_SetItemString(d,"GDT_UInt32", PyInt_FromLong((long) GDT_UInt32));
-	 PyDict_SetItemString(d,"GDT_Int32", PyInt_FromLong((long) GDT_Int32));
-	 PyDict_SetItemString(d,"GDT_Float32", PyInt_FromLong((long) GDT_Float32));
-	 PyDict_SetItemString(d,"GDT_Float64", PyInt_FromLong((long) GDT_Float64));
-	 PyDict_SetItemString(d,"GDT_TypeCount", PyInt_FromLong((long) GDT_TypeCount));
-	 PyDict_SetItemString(d,"GA_ReadOnly", PyInt_FromLong((long) GA_ReadOnly));
-	 PyDict_SetItemString(d,"GA_Update", PyInt_FromLong((long) GA_Update));
-	 PyDict_SetItemString(d,"GF_Read", PyInt_FromLong((long) GF_Read));
-	 PyDict_SetItemString(d,"GF_Write", PyInt_FromLong((long) GF_Write));
-	 PyDict_SetItemString(d,"GCI_Undefined", PyInt_FromLong((long) GCI_Undefined));
-	 PyDict_SetItemString(d,"GCI_GrayIndex", PyInt_FromLong((long) GCI_GrayIndex));
-	 PyDict_SetItemString(d,"GCI_PaletteIndex", PyInt_FromLong((long) GCI_PaletteIndex));
-	 PyDict_SetItemString(d,"GCI_RedBand", PyInt_FromLong((long) GCI_RedBand));
-	 PyDict_SetItemString(d,"GCI_GreenBand", PyInt_FromLong((long) GCI_GreenBand));
-	 PyDict_SetItemString(d,"GCI_BlueBand", PyInt_FromLong((long) GCI_BlueBand));
-	 PyDict_SetItemString(d,"GCI_AlphaBand", PyInt_FromLong((long) GCI_AlphaBand));
-	 PyDict_SetItemString(d,"GCI_HueBand", PyInt_FromLong((long) GCI_HueBand));
-	 PyDict_SetItemString(d,"GCI_SaturationBand", PyInt_FromLong((long) GCI_SaturationBand));
-	 PyDict_SetItemString(d,"GCI_LightnessBand", PyInt_FromLong((long) GCI_LightnessBand));
-	 PyDict_SetItemString(d,"GCI_CyanBand", PyInt_FromLong((long) GCI_CyanBand));
-	 PyDict_SetItemString(d,"GCI_MagentaBand", PyInt_FromLong((long) GCI_MagentaBand));
-	 PyDict_SetItemString(d,"GCI_YellowBand", PyInt_FromLong((long) GCI_YellowBand));
-	 PyDict_SetItemString(d,"GCI_BlackBand", PyInt_FromLong((long) GCI_BlackBand));
-	 PyDict_SetItemString(d,"GPI_Gray", PyInt_FromLong((long) GPI_Gray));
-	 PyDict_SetItemString(d,"GPI_RGB", PyInt_FromLong((long) GPI_RGB));
-	 PyDict_SetItemString(d,"GPI_CMYK", PyInt_FromLong((long) GPI_CMYK));
-	 PyDict_SetItemString(d,"GPI_HLS", PyInt_FromLong((long) GPI_HLS));
 /*
  * These are the pointer type-equivalency mappings. 
  * (Used by the SWIG pointer type-checker).
@@ -2005,13 +2084,63 @@ SWIGEXPORT(void,init_gdal)() {
 	 SWIG_RegisterMapping("_signed_long","_long",0);
 	 SWIG_RegisterMapping("_long","_unsigned_long",0);
 	 SWIG_RegisterMapping("_long","_signed_long",0);
+	 SWIG_RegisterMapping("_GDALRWFlag","_GDALPaletteInterp",0);
+	 SWIG_RegisterMapping("_GDALRWFlag","_GDALColorInterp",0);
+	 SWIG_RegisterMapping("_GDALRWFlag","_int",0);
+	 SWIG_RegisterMapping("_GDALRWFlag","_signed_int",0);
+	 SWIG_RegisterMapping("_GDALRWFlag","_unsigned_int",0);
+	 SWIG_RegisterMapping("_GDALRWFlag","_GDALDataType",0);
+	 SWIG_RegisterMapping("_GDALRWFlag","_GDALAccess",0);
+	 SWIG_RegisterMapping("_GDALPaletteInterp","_int",0);
+	 SWIG_RegisterMapping("_GDALPaletteInterp","_signed_int",0);
+	 SWIG_RegisterMapping("_GDALPaletteInterp","_unsigned_int",0);
+	 SWIG_RegisterMapping("_GDALPaletteInterp","_GDALDataType",0);
+	 SWIG_RegisterMapping("_GDALPaletteInterp","_GDALAccess",0);
+	 SWIG_RegisterMapping("_GDALPaletteInterp","_GDALRWFlag",0);
+	 SWIG_RegisterMapping("_GDALPaletteInterp","_GDALColorInterp",0);
+	 SWIG_RegisterMapping("_GDALDataType","_GDALPaletteInterp",0);
+	 SWIG_RegisterMapping("_GDALDataType","_GDALColorInterp",0);
+	 SWIG_RegisterMapping("_GDALDataType","_GDALRWFlag",0);
+	 SWIG_RegisterMapping("_GDALDataType","_GDALAccess",0);
+	 SWIG_RegisterMapping("_GDALDataType","_int",0);
+	 SWIG_RegisterMapping("_GDALDataType","_signed_int",0);
+	 SWIG_RegisterMapping("_GDALDataType","_unsigned_int",0);
 	 SWIG_RegisterMapping("_unsigned_long","_long",0);
+	 SWIG_RegisterMapping("_signed_int","_GDALPaletteInterp",0);
+	 SWIG_RegisterMapping("_signed_int","_GDALColorInterp",0);
+	 SWIG_RegisterMapping("_signed_int","_GDALRWFlag",0);
+	 SWIG_RegisterMapping("_signed_int","_GDALAccess",0);
+	 SWIG_RegisterMapping("_signed_int","_GDALDataType",0);
 	 SWIG_RegisterMapping("_signed_int","_int",0);
+	 SWIG_RegisterMapping("_GDALAccess","_GDALPaletteInterp",0);
+	 SWIG_RegisterMapping("_GDALAccess","_GDALColorInterp",0);
+	 SWIG_RegisterMapping("_GDALAccess","_GDALRWFlag",0);
+	 SWIG_RegisterMapping("_GDALAccess","_int",0);
+	 SWIG_RegisterMapping("_GDALAccess","_signed_int",0);
+	 SWIG_RegisterMapping("_GDALAccess","_unsigned_int",0);
+	 SWIG_RegisterMapping("_GDALAccess","_GDALDataType",0);
 	 SWIG_RegisterMapping("_unsigned_short","_short",0);
 	 SWIG_RegisterMapping("_signed_short","_short",0);
+	 SWIG_RegisterMapping("_unsigned_int","_GDALPaletteInterp",0);
+	 SWIG_RegisterMapping("_unsigned_int","_GDALColorInterp",0);
+	 SWIG_RegisterMapping("_unsigned_int","_GDALRWFlag",0);
+	 SWIG_RegisterMapping("_unsigned_int","_GDALAccess",0);
+	 SWIG_RegisterMapping("_unsigned_int","_GDALDataType",0);
 	 SWIG_RegisterMapping("_unsigned_int","_int",0);
 	 SWIG_RegisterMapping("_short","_unsigned_short",0);
 	 SWIG_RegisterMapping("_short","_signed_short",0);
+	 SWIG_RegisterMapping("_int","_GDALPaletteInterp",0);
+	 SWIG_RegisterMapping("_int","_GDALColorInterp",0);
+	 SWIG_RegisterMapping("_int","_GDALRWFlag",0);
+	 SWIG_RegisterMapping("_int","_GDALAccess",0);
+	 SWIG_RegisterMapping("_int","_GDALDataType",0);
 	 SWIG_RegisterMapping("_int","_unsigned_int",0);
 	 SWIG_RegisterMapping("_int","_signed_int",0);
+	 SWIG_RegisterMapping("_GDALColorInterp","_GDALPaletteInterp",0);
+	 SWIG_RegisterMapping("_GDALColorInterp","_int",0);
+	 SWIG_RegisterMapping("_GDALColorInterp","_signed_int",0);
+	 SWIG_RegisterMapping("_GDALColorInterp","_unsigned_int",0);
+	 SWIG_RegisterMapping("_GDALColorInterp","_GDALDataType",0);
+	 SWIG_RegisterMapping("_GDALColorInterp","_GDALAccess",0);
+	 SWIG_RegisterMapping("_GDALColorInterp","_GDALRWFlag",0);
 }
