@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/03/14 21:39:27  warmerda
+ * added bUpdate to DGNOpen()
+ *
  * Revision 1.12  2002/02/22 22:17:42  warmerda
  * Ensure that components of complex chain/shapes are spatially selected
  * based on the decision made for their owner (header).
@@ -119,12 +122,13 @@ int DGNTestOpen( GByte *pabyHeader, int nByteCount )
  * large files.  
  *
  * @param pszFilename name of file to try opening.
+ * @param bUpdate should the file be opened with read+update (r+) mode?
  *
  * @return handle to use for further access to file using DGN API, or NULL
  * if open fails.
  */
 
-DGNHandle DGNOpen( const char * pszFilename )
+DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 
 {
     DGNInfo	*psDGN;
@@ -133,7 +137,10 @@ DGNHandle DGNOpen( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( pszFilename, "rb" );
+    if( bUpdate )
+        fp = VSIFOpen( pszFilename, "rb+" );
+    else
+        fp = VSIFOpen( pszFilename, "rb" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
