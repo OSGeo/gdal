@@ -63,9 +63,6 @@
  *
  */
 
-static char rcsid[] = 
-  "$Id: shptree.c,v 1.9 2003/01/28 15:53:41 warmerda Exp $";
-
 #include "shapefil.h"
 
 #include <math.h>
@@ -73,10 +70,14 @@ static char rcsid[] =
 #include <stdlib.h>
 #include <string.h>
 
+SHP_CVSID("$Id$")
+
 #ifndef TRUE
 #  define TRUE 1
 #  define FALSE 0
 #endif
+
+static int bBigEndian = 0;
 
 
 /* -------------------------------------------------------------------- */
@@ -157,6 +158,7 @@ SHPCreateTree( SHPHandle hSHP, int nDimension, int nMaxDepth,
     psTree->hSHP = hSHP;
     psTree->nMaxDepth = nMaxDepth;
     psTree->nDimension = nDimension;
+    psTree->nTotalCount = 0;
 
 /* -------------------------------------------------------------------- */
 /*      If no max depth was defined, try to select a reasonable one     */
@@ -494,14 +496,14 @@ SHPTreeNodeAddShapeId( SHPTreeNode * psTreeNode, SHPObject * psObject,
 /* -------------------------------------------------------------------- */
     psTreeNode->nShapeCount++;
 
-    psTreeNode->panShapeIds =
+    psTreeNode->panShapeIds = (int *) 
         SfRealloc( psTreeNode->panShapeIds,
                    sizeof(int) * psTreeNode->nShapeCount );
     psTreeNode->panShapeIds[psTreeNode->nShapeCount-1] = psObject->nShapeId;
 
     if( psTreeNode->papsShapeObj != NULL )
     {
-        psTreeNode->papsShapeObj =
+        psTreeNode->papsShapeObj = (SHPObject **)
             SfRealloc( psTreeNode->papsShapeObj,
                        sizeof(void *) * psTreeNode->nShapeCount );
         psTreeNode->papsShapeObj[psTreeNode->nShapeCount-1] = NULL;
@@ -521,6 +523,8 @@ int SHPAPI_CALL
 SHPTreeAddShapeId( SHPTree * psTree, SHPObject * psObject )
 
 {
+    psTree->nTotalCount++;
+
     return( SHPTreeNodeAddShapeId( psTree->psRoot, psObject,
                                    psTree->nMaxDepth, psTree->nDimension ) );
 }
@@ -677,3 +681,297 @@ SHPTreeTrimExtraNodes( SHPTree * hTree )
     SHPTreeNodeTrim( hTree->psRoot );
 }
 
+/************************************************************************/
+/*                              SwapWord()                              */
+/*                                                                      */
+/*      Swap a 2, 4 or 8 byte word.                                     */
+/************************************************************************/
+
+static void SwapWord( int length, void * wordP )
+
+{
+    int		i;
+    unsigned char	temp;
+
+    for( i=0; i < length/2; i++ )
+    {
+	temp = ((unsigned char *) wordP)[i];
+	((unsigned char *)wordP)[i] = ((unsigned char *) wordP)[length-i-1];
+	((unsigned char *) wordP)[length-i-1] = temp;
+    }
+}
+
+/************************************************************************/
+/*                       SHPSearchDiskTreeNode()                        */
+/************************************************************************/
+
+static int
+SHPSearchDiskTreeNode( FILE *fp, double *padfBoundsMin, double *padfBoundsMax,
+                       int **ppanResultBuffer, int *pnBufferMax, 
+                       int *pnResultCount, int bNeedSwap )
+
+{
+    int i;
+    int offset;
+    int numshapes, numsubnodes;
+    double adfNodeBoundsMin[2], adfNodeBoundsMax[2];
+
+/* -------------------------------------------------------------------- */
+/*      Read and unswap first part of node info.                        */
+/* -------------------------------------------------------------------- */
+    fread( &offset, 4, 1, fp );
+    if ( bNeedSwap ) SwapWord ( 4, &offset );
+
+    fread( adfNodeBoundsMin, sizeof(double), 2, fp );
+    fread( adfNodeBoundsMax, sizeof(double), 2, fp );
+    if ( bNeedSwap )
+    {
+        SwapWord( 8, adfNodeBoundsMin + 0 );
+        SwapWord( 8, adfNodeBoundsMin + 1 );
+        SwapWord( 8, adfNodeBoundsMax + 0 );
+        SwapWord( 8, adfNodeBoundsMax + 1 );
+    }
+      
+    fread( &numshapes, 4, 1, fp );
+    if ( bNeedSwap ) SwapWord ( 4, &numshapes );
+
+/* -------------------------------------------------------------------- */
+/*      If we don't overlap this node at all, we can just fseek()       */
+/*      pass this node info and all subnodes.                           */
+/* -------------------------------------------------------------------- */
+    if( !SHPCheckBoundsOverlap( adfNodeBoundsMin, adfNodeBoundsMax, 
+                                padfBoundsMin, padfBoundsMax, 2 ) )
+    {
+        offset += numshapes*sizeof(int) + sizeof(int);
+        fseek(fp, offset, SEEK_CUR);
+        return TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add all the shapeids at this node to our list.                  */
+/* -------------------------------------------------------------------- */
+    if(numshapes > 0) 
+    {
+        if( *pnResultCount + numshapes > *pnBufferMax )
+        {
+            *pnBufferMax = (int) ((*pnResultCount + numshapes + 100) * 1.25);
+            *ppanResultBuffer = (int *) 
+                SfRealloc( *ppanResultBuffer, *pnBufferMax * sizeof(int) );
+        }
+
+        fread( *ppanResultBuffer + *pnResultCount, 
+               sizeof(int), numshapes, fp );
+
+        if (bNeedSwap )
+        {
+            for( i=0; i<numshapes; i++ )
+                SwapWord( 4, *ppanResultBuffer + *pnResultCount + i );
+        }
+
+        *pnResultCount += numshapes; 
+    } 
+
+/* -------------------------------------------------------------------- */
+/*      Process the subnodes.                                           */
+/* -------------------------------------------------------------------- */
+    fread( &numsubnodes, 4, 1, fp );
+    if ( bNeedSwap  ) SwapWord ( 4, &numsubnodes );
+
+    for(i=0; i<numsubnodes; i++)
+    {
+        if( !SHPSearchDiskTreeNode( fp, padfBoundsMin, padfBoundsMax, 
+                                    ppanResultBuffer, pnBufferMax, 
+                                    pnResultCount, bNeedSwap ) )
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                         SHPSearchDiskTree()                          */
+/************************************************************************/
+
+int SHPAPI_CALL1(*) 
+SHPSearchDiskTree( FILE *fp, 
+                   double *padfBoundsMin, double *padfBoundsMax,
+                   int *pnShapeCount )
+
+{
+    int i, bNeedSwap, nBufferMax = 0;
+    unsigned char abyBuf[16];
+    int *panResultBuffer = NULL;
+
+    *pnShapeCount = 0;
+
+/* -------------------------------------------------------------------- */
+/*	Establish the byte order on this machine.	  	        */
+/* -------------------------------------------------------------------- */
+    i = 1;
+    if( *((unsigned char *) &i) == 1 )
+        bBigEndian = FALSE;
+    else
+        bBigEndian = TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Read the header.                                                */
+/* -------------------------------------------------------------------- */
+    fseek( fp, 0, SEEK_SET );
+    fread( abyBuf, 16, 1, fp );
+
+    if( memcmp( abyBuf, "SQT", 3 ) != 0 )
+        return NULL;
+
+    if( (abyBuf[3] == 2 && bBigEndian)
+        || (abyBuf[3] == 1 && !bBigEndian) )
+        bNeedSwap = FALSE;
+    else
+        bNeedSwap = TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Search through root node and it's decendents.                   */
+/* -------------------------------------------------------------------- */
+    if( !SHPSearchDiskTreeNode( fp, padfBoundsMin, padfBoundsMax, 
+                                &panResultBuffer, &nBufferMax, 
+                                pnShapeCount, bNeedSwap ) )
+    {
+        if( panResultBuffer != NULL )
+            free( panResultBuffer );
+        *pnShapeCount = 0;
+        return NULL;
+    }
+/* -------------------------------------------------------------------- */
+/*      Sort the id array                                               */
+/* -------------------------------------------------------------------- */
+    qsort(panResultBuffer, *pnShapeCount, sizeof(int), compare_ints);
+    
+    return panResultBuffer;
+}
+
+/************************************************************************/
+/*                        SHPGetSubNodeOffset()                         */
+/*                                                                      */
+/*      Determine how big all the subnodes of this node (and their      */
+/*      children) will be.  This will allow disk based searchers to     */
+/*      seek past them all efficiently.                                 */
+/************************************************************************/
+
+static int SHPGetSubNodeOffset( SHPTreeNode *node) 
+{
+    int i;
+    long offset=0;
+
+    for(i=0; i<node->nSubNodes; i++ ) 
+    {
+        if(node->apsSubNode[i]) 
+        {
+            offset += 4*sizeof(double) 
+                + (node->apsSubNode[i]->nShapeCount+3)*sizeof(int);
+            offset += SHPGetSubNodeOffset(node->apsSubNode[i]);
+        }
+    }
+
+    return(offset);
+}
+
+/************************************************************************/
+/*                          SHPWriteTreeNode()                          */
+/************************************************************************/
+
+static void SHPWriteTreeNode( FILE *fp, SHPTreeNode *node) 
+{
+    int i,j;
+    int offset;
+    unsigned char *pabyRec = NULL;
+
+    offset = SHPGetSubNodeOffset(node);
+  
+    pabyRec = (unsigned char *) 
+        malloc(sizeof(double) * 4
+               + (3 * sizeof(int)) + (node->nShapeCount * sizeof(int)) );
+
+    memcpy( pabyRec, &offset, 4);
+
+    /* minx, miny, maxx, maxy */
+    memcpy( pabyRec+ 4, node->adfBoundsMin+0, sizeof(double) );
+    memcpy( pabyRec+12, node->adfBoundsMin+1, sizeof(double) );
+    memcpy( pabyRec+20, node->adfBoundsMax+0, sizeof(double) );
+    memcpy( pabyRec+28, node->adfBoundsMax+1, sizeof(double) );
+
+    memcpy( pabyRec+36, &node->nShapeCount, 4);
+    j = node->nShapeCount * sizeof(int);
+    memcpy( pabyRec+40, node->panShapeIds, j);
+    memcpy( pabyRec+j+40, &node->nSubNodes, 4);
+
+    fwrite( pabyRec, 44+j, 1, fp );
+    free (pabyRec);
+  
+    for(i=0; i<node->nSubNodes; i++ ) 
+    {
+        if(node->apsSubNode[i])
+            SHPWriteTreeNode( fp, node->apsSubNode[i]);
+    }
+}
+
+/************************************************************************/
+/*                            SHPWriteTree()                            */
+/************************************************************************/
+
+int SHPWriteTree(SHPTree *tree, const char *filename )
+{
+    char		signature[4] = "SQT";
+    int		        i;
+    char		abyBuf[32];
+    FILE                *fp;
+  
+/* -------------------------------------------------------------------- */
+/*      Open the output file.                                           */
+/* -------------------------------------------------------------------- */
+    fp = fopen(filename, "wb");
+    if( fp == NULL ) 
+    {
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*	Establish the byte order on this machine.	  	        */
+/* -------------------------------------------------------------------- */
+    i = 1;
+    if( *((unsigned char *) &i) == 1 )
+        bBigEndian = FALSE;
+    else
+        bBigEndian = TRUE;
+  
+/* -------------------------------------------------------------------- */
+/*      Write the header.                                               */
+/* -------------------------------------------------------------------- */
+    memcpy( abyBuf+0, signature, 3 );
+    
+    if( bBigEndian )
+        abyBuf[3] = 2; /* New MSB */
+    else
+        abyBuf[3] = 1; /* New LSB */
+
+    abyBuf[4] = 1; /* version */
+    abyBuf[5] = 0; /* next 3 reserved */
+    abyBuf[6] = 0;
+    abyBuf[7] = 0;
+
+    fwrite( abyBuf, 8, 1, fp );
+
+    fwrite( &(tree->nTotalCount), 4, 1, fp );
+
+    /* write maxdepth */
+
+    fwrite( &(tree->nMaxDepth), 4, 1, fp );
+
+/* -------------------------------------------------------------------- */
+/*      Write all the nodes "in order".                                 */
+/* -------------------------------------------------------------------- */
+
+    SHPWriteTreeNode( fp, tree->psRoot );  
+    
+    fclose( fp );
+
+    return TRUE;
+}

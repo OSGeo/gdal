@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.44 2003/12/29 00:18:39 fwarmerdam Exp $
+ * $Id: shpopen.c,v 1.45 2004/09/26 20:09:48 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.45  2004/09/26 20:09:48  fwarmerdam
+ * const correctness changes
+ *
  * Revision 1.44  2003/12/29 00:18:39  fwarmerdam
  * added error checking for failed IO and optional CPL error reporting
  *
@@ -173,9 +176,6 @@
  *
  */
 
-static char rcsid[] = 
-  "$Id: shpopen.c,v 1.44 2003/12/29 00:18:39 fwarmerdam Exp $";
-
 #include "shapefil.h"
 
 #include <math.h>
@@ -183,6 +183,8 @@ static char rcsid[] =
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+
+SHP_CVSID("$Id: shpopen.c,v 1.45 2004/09/26 20:09:48 fwarmerdam Exp $")
 
 typedef unsigned char uchar;
 
@@ -354,7 +356,7 @@ void SHPWriteHeader( SHPHandle psSHP )
 	if( !bBigEndian ) SwapWord( 4, panSHX+i*2+1 );
     }
 
-    if( fwrite( panSHX, sizeof(int32) * 2, psSHP->nRecords, psSHP->fpSHX ) 
+    if( (int)fwrite( panSHX, sizeof(int32)*2, psSHP->nRecords, psSHP->fpSHX ) 
         != psSHP->nRecords )
     {
 #ifdef USE_CPL
@@ -583,7 +585,8 @@ SHPOpen( const char * pszLayer, const char * pszAccess )
         (int *) malloc(sizeof(int) * MAX(1,psSHP->nMaxRecords) );
 
     pabyBuf = (uchar *) malloc(8 * MAX(1,psSHP->nRecords) );
-    if( fread( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX ) != psSHP->nRecords )
+    if( (int) fread( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX ) 
+			!= psSHP->nRecords )
     {
 #ifdef USE_CPL
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -892,9 +895,9 @@ SHPComputeExtents( SHPObject * psObject )
 
 SHPObject SHPAPI_CALL1(*)
 SHPCreateObject( int nSHPType, int nShapeId, int nParts,
-                 int * panPartStart, int * panPartType,
-                 int nVertices, double * padfX, double * padfY,
-                 double * padfZ, double * padfM )
+                 const int * panPartStart, const int * panPartType,
+                 int nVertices, const double *padfX, const double *padfY,
+                 const double * padfZ, const double * padfM )
 
 {
     SHPObject	*psObject;
@@ -1002,8 +1005,8 @@ SHPCreateObject( int nSHPType, int nShapeId, int nParts,
 
 SHPObject SHPAPI_CALL1(*)
 SHPCreateSimpleObject( int nSHPType, int nVertices,
-                       double * padfX, double * padfY,
-                       double * padfZ )
+                       const double * padfX, const double * padfY,
+                       const double * padfZ )
 
 {
     return( SHPCreateObject( nSHPType, -1, 0, NULL, NULL,

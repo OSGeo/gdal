@@ -37,8 +37,11 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.12  2004/09/22 00:19:14  fwarmerdam
- * updated
+ * Revision 1.13  2005/01/03 22:26:21  fwarmerdam
+ * updated to use spatial indexing
+ *
+ * Revision 1.29  2004/09/26 20:09:35  fwarmerdam
+ * avoid rcsid warnings
  *
  * Revision 1.28  2003/12/29 06:02:18  fwarmerdam
  * added cpl_error.h option
@@ -196,6 +199,17 @@ extern "C" {
 #  define SHPAPI_CALL1(x)      x SHPAPI_CALL
 #endif
     
+/* -------------------------------------------------------------------- */
+/*      Macros for controlling CVSID and ensuring they don't appear     */
+/*      as unreferenced variables resulting in lots of warnings.        */
+/* -------------------------------------------------------------------- */
+#ifndef DISABLE_CVSID
+#  define SHP_CVSID(string)     static char cpl_cvsid[] = string; \
+static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
+#else
+#  define SHP_CVSID(string)
+#endif
+
 /************************************************************************/
 /*                             SHP Support.                             */
 /************************************************************************/
@@ -307,13 +321,16 @@ void SHPAPI_CALL
 void SHPAPI_CALL
       SHPComputeExtents( SHPObject * psObject );
 SHPObject SHPAPI_CALL1(*)
-      SHPCreateObject( int nSHPType, int nShapeId,
-                       int nParts, int * panPartStart, int * panPartType,
-                       int nVertices, double * padfX, double * padfY,
-                       double * padfZ, double * padfM );
+      SHPCreateObject( int nSHPType, int nShapeId, int nParts, 
+                       const int * panPartStart, const int * panPartType,
+                       int nVertices, 
+                       const double * padfX, const double * padfY,
+                       const double * padfZ, const double * padfM );
 SHPObject SHPAPI_CALL1(*)
       SHPCreateSimpleObject( int nSHPType, int nVertices,
-                             double * padfX, double * padfY, double * padfZ );
+                             const double * padfX, 
+                             const double * padfY, 
+                             const double * padfZ );
 
 int SHPAPI_CALL
       SHPRewindObject( SHPHandle hSHP, SHPObject * psObject );
@@ -356,6 +373,7 @@ typedef struct
     
     int		nMaxDepth;
     int		nDimension;
+    int         nTotalCount;
     
     SHPTreeNode	*psRoot;
 } SHPTree;
@@ -388,6 +406,11 @@ int    SHPAPI_CALL1(*)
                                int * );
 int     SHPAPI_CALL
       SHPCheckBoundsOverlap( double *, double *, double *, double *, int );
+
+int SHPAPI_CALL1(*) 
+SHPSearchDiskTree( FILE *fp, 
+                   double *padfBoundsMin, double *padfBoundsMax,
+                   int *pnShapeCount );
 
 /************************************************************************/
 /*                             DBF Support.                             */

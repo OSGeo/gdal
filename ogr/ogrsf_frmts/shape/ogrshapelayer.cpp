@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/01/03 22:26:21  fwarmerdam
+ * updated to use spatial indexing
+ *
  * Revision 1.15  2003/05/21 04:03:54  warmerda
  * expand tabs
  *
@@ -94,6 +97,8 @@ OGRShapeLayer::OGRShapeLayer( const char * pszName,
 {
     poFilterGeom = NULL;
     poSRS = poSRSIn;
+
+    pszFullName = CPLStrdup(pszName);
     
     hSHP = hSHPIn;
     hDBF = hDBFIn;
@@ -102,6 +107,9 @@ OGRShapeLayer::OGRShapeLayer( const char * pszName,
     iNextShapeId = 0;
     panMatchingFIDs = NULL;
 
+    bCheckedForQIX = FALSE;
+    fpQIX = NULL;
+
     bHeaderDirty = FALSE;
 
     if( hSHP != NULL )
@@ -109,7 +117,8 @@ OGRShapeLayer::OGRShapeLayer( const char * pszName,
     else 
         nTotalShapeCount = hDBF->nRecords;
     
-    poFeatureDefn = SHPReadOGRFeatureDefn( pszName, hSHP, hDBF );
+    poFeatureDefn = SHPReadOGRFeatureDefn( CPLGetBasename(pszName), 
+                                           hSHP, hDBF );
 
     eRequestedGeomType = eReqType;
 }
@@ -124,6 +133,8 @@ OGRShapeLayer::~OGRShapeLayer()
     CPLFree( panMatchingFIDs );
     panMatchingFIDs = NULL;
 
+    CPLFree( pszFullName );
+
     delete poFeatureDefn;
 
     if( poSRS != NULL )
@@ -137,6 +148,30 @@ OGRShapeLayer::~OGRShapeLayer()
 
     if( poFilterGeom != NULL )
         delete poFilterGeom;
+
+    if( fpQIX != NULL )
+        VSIFClose( fpQIX );
+}
+
+/************************************************************************/
+/*                            CheckForQIX()                             */
+/************************************************************************/
+
+int OGRShapeLayer::CheckForQIX()
+
+{
+    const char *pszQIXFilename;
+
+    if( bCheckedForQIX )
+        return fpQIX != NULL;
+
+    pszQIXFilename = CPLResetExtension( pszFullName, "qix" );
+
+    fpQIX = VSIFOpen( pszQIXFilename, "rb" );
+
+    bCheckedForQIX = TRUE;
+
+    return fpQIX != NULL;
 }
 
 /************************************************************************/
@@ -154,6 +189,103 @@ void OGRShapeLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
     if( poGeomIn != NULL )
         poFilterGeom = poGeomIn->clone();
+
+    ResetReading();
+}
+
+/************************************************************************/
+/*                            ScanIndices()                             */
+/*                                                                      */
+/*      Utilize optional spatial and attribute indices if they are      */
+/*      available.                                                      */
+/************************************************************************/
+
+int OGRShapeLayer::ScanIndices()
+
+{
+    iMatchingFID = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Utilize attribute index if appropriate.                         */
+/* -------------------------------------------------------------------- */
+    if( m_poAttrQuery != NULL )
+    {
+        CPLAssert( panMatchingFIDs == NULL );
+        panMatchingFIDs = m_poAttrQuery->EvaluateAgainstIndices( this,
+                                                                 NULL );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for spatial index if we have a spatial query.             */
+/* -------------------------------------------------------------------- */
+    if( poFilterGeom != NULL && !bCheckedForQIX )
+        CheckForQIX();
+
+/* -------------------------------------------------------------------- */
+/*      Utilize spatial index if appropriate.                           */
+/* -------------------------------------------------------------------- */
+    if( poFilterGeom && fpQIX )
+    {
+        int nSpatialFIDCount, *panSpatialFIDs;
+        double adfBoundsMin[4], adfBoundsMax[4];
+        OGREnvelope oEnvelope;
+
+        poFilterGeom->getEnvelope( &oEnvelope );
+
+        adfBoundsMin[0] = oEnvelope.MinX;
+        adfBoundsMin[1] = oEnvelope.MinY;
+        adfBoundsMin[2] = 0.0;
+        adfBoundsMin[3] = 0.0;
+        adfBoundsMax[0] = oEnvelope.MaxX;
+        adfBoundsMax[1] = oEnvelope.MaxY;
+        adfBoundsMax[2] = 0.0;
+        adfBoundsMax[3] = 0.0;
+
+        panSpatialFIDs = SHPSearchDiskTree( fpQIX, 
+                                            adfBoundsMin, adfBoundsMax, 
+                                            &nSpatialFIDCount );
+        CPLDebug( "SHAPE", "Used spatial index, got %d matches.", 
+                  nSpatialFIDCount );
+
+        // Use resulting list as matching FID list (but reallocate and
+        // terminate with OGRNullFID).
+
+        if( panMatchingFIDs == NULL )
+        {
+            int i;
+
+            panMatchingFIDs = (long *) 
+                CPLMalloc(sizeof(long) * (nSpatialFIDCount+1) );
+            for( i = 0; i < nSpatialFIDCount; i++ )
+                panMatchingFIDs[i] = (long) panSpatialFIDs[i];
+            panMatchingFIDs[nSpatialFIDCount] = OGRNullFID;
+            free( panSpatialFIDs );
+        }
+
+        // Cull attribute index matches based on those in the spatial index
+        // result set.  We assume that the attribute results are in sorted
+        // order.
+        else
+        {
+            int iRead, iWrite=0, iSpatial=0;
+
+            for( iRead = 0; panMatchingFIDs[iRead] != OGRNullFID; iRead++ )
+            {
+                while( iSpatial < nSpatialFIDCount
+                       && panSpatialFIDs[iSpatial] < panMatchingFIDs[iRead] )
+                    iSpatial++;
+
+                if( iSpatial == nSpatialFIDCount )
+                    continue;
+
+                if( panSpatialFIDs[iSpatial] == panMatchingFIDs[iRead] )
+                    panMatchingFIDs[iWrite++] = panMatchingFIDs[iRead];
+            }
+            panMatchingFIDs[iWrite] = OGRNullFID;
+        }
+    }
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -163,17 +295,14 @@ void OGRShapeLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 void OGRShapeLayer::ResetReading()
 
 {
+/* -------------------------------------------------------------------- */
+/*      Clear previous index search result, if any.                     */
+/* -------------------------------------------------------------------- */
     CPLFree( panMatchingFIDs );
     panMatchingFIDs = NULL;
-    
-    iNextShapeId = 0;
+    iMatchingFID = 0;
 
-    if( m_poAttrQuery != NULL )
-    {
-        panMatchingFIDs = m_poAttrQuery->EvaluateAgainstIndices( this,
-                                                                 NULL );
-        iMatchingFID = 0;
-    }
+    iNextShapeId = 0;
 
     if( bHeaderDirty )
         SyncToDisk();
@@ -188,6 +317,20 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
 {
     OGRFeature  *poFeature;
 
+/* -------------------------------------------------------------------- */
+/*      Collect a matching list if we have attribute or spatial         */
+/*      indices.  Only do this on the first request for a given pass    */
+/*      of course.                                                      */
+/* -------------------------------------------------------------------- */
+    if( (m_poAttrQuery != NULL || poFilterGeom != NULL)
+        && iNextShapeId == 0 && panMatchingFIDs == NULL )
+    {
+        ScanIndices();
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Loop till we find a feature matching our criteria.              */
+/* -------------------------------------------------------------------- */
     while( TRUE )
     {
         if( panMatchingFIDs != NULL )

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/01/03 22:26:21  fwarmerdam
+ * updated to use spatial indexing
+ *
  * Revision 1.14  2003/05/21 04:03:54  warmerda
  * expand tabs
  *
@@ -105,6 +108,8 @@ class OGRShapeLayer : public OGRLayer
     int                 iNextShapeId;
     int                 nTotalShapeCount;
 
+    char                *pszFullName;
+
     SHPHandle           hSHP;
     DBFHandle           hDBF;
 
@@ -113,10 +118,17 @@ class OGRShapeLayer : public OGRLayer
     OGRwkbGeometryType  eRequestedGeomType;
     int                 ResetGeomType( int nNewType );
 
+    int                 ScanIndices();
+
     long               *panMatchingFIDs;
     int                 iMatchingFID;
 
     int                 bHeaderDirty;
+
+    int                 bCheckedForQIX;
+    FILE                *fpQIX;
+
+    int                 CheckForQIX();
 
   public:
                         OGRShapeLayer( const char * pszName,

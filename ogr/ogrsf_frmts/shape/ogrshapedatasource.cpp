@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/01/03 22:26:21  fwarmerdam
+ * updated to use spatial indexing
+ *
  * Revision 1.24  2004/03/01 18:41:00  warmerda
  * added fix for bug 493: ignore pc arcinfo coverages
  *
@@ -386,22 +389,13 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Extract the basename of the file.                               */
-/* -------------------------------------------------------------------- */
-    char        *pszBasename;
-
-    pszBasename = CPLStrdup(CPLGetBasename(pszNewName));
-
-/* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
     OGRShapeLayer       *poLayer;
 
-    poLayer = new OGRShapeLayer( pszBasename, hSHP, hDBF, poSRS, bUpdate,
+    poLayer = new OGRShapeLayer( pszNewName, hSHP, hDBF, poSRS, bUpdate,
                                  wkbUnknown );
 
-
-    CPLFree( pszBasename );
 
     poLayer->InitializeIndexSupport( pszNewName );
 
