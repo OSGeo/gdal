@@ -1,7 +1,6 @@
 /******************************************************************************
  * $Id$
  *
- * Name:     hfaentry.cpp
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Implementation of the HFAEntry class for reading and relating
  *           one node in the HFA object tree structure. 
@@ -34,6 +33,9 @@
  * Implementation of the HFAEntry class.
  *
  * $Log$
+ * Revision 1.3  1999/01/22 17:37:30  warmerda
+ * fixed types in GetFieldValue() calls
+ *
  * Revision 1.2  1999/01/04 22:52:47  warmerda
  * field access working
  *
@@ -341,7 +343,7 @@ double HFAEntry::GetDoubleField( const char * pszFieldPath, CPLErr *peErr )
 {
     void	*pRetData;
 
-    pRetData = GetFieldValue( pszFieldPath, 'i' );
+    pRetData = GetFieldValue( pszFieldPath, 'd' );
     if( pRetData == NULL )
     {
         if( peErr != NULL )
@@ -367,7 +369,7 @@ const char *HFAEntry::GetStringField( const char * pszFieldPath, CPLErr *peErr)
 {
     void	*pRetData;
 
-    pRetData = GetFieldValue( pszFieldPath, 'i' );
+    pRetData = GetFieldValue( pszFieldPath, 's' );
     if( pRetData == NULL )
     {
         if( peErr != NULL )
