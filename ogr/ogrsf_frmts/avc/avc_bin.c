@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_bin.c,v 1.22 2002/03/18 19:03:37 daniel Exp $
+ * $Id: avc_bin.c,v 1.24 2002/08/27 15:26:06 daniel Exp $
  *
  * Name:     avc_bin.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log: avc_bin.c,v $
+ * Revision 1.24  2002/08/27 15:26:06  daniel
+ * Removed C++ style comments for IRIX compiler (GDAL bug 192)
+ *
+ * Revision 1.23  2002/04/16 20:04:24  daniel
+ * Use record size while reading ARC, PAL, CNT to skip junk bytes. (bug940)
+ *
  * Revision 1.22  2002/03/18 19:03:37  daniel
  * Fixed AVCBinReadObject() for PAL objects (bug 848)
  *
@@ -734,13 +740,15 @@ AVCField *AVCBinReadNextTableRec(AVCBinFile *psFile)
 int _AVCBinReadNextArc(AVCRawBinFile *psFile, AVCArc *psArc,
                               int nPrecision)
 {
-    int         i, numVertices;
+    int i, numVertices;
+    int nRecordSize, nStartPos, nBytesRead;
 
     psArc->nArcId  = AVCRawBinReadInt32(psFile);
     if (AVCRawBinEOF(psFile))
         return -1;
 
-                     AVCRawBinReadInt32(psFile);  /* Skip Record size field */
+    nRecordSize    = AVCRawBinReadInt32(psFile) * 2;
+    nStartPos      = psFile->nCurPos+psFile->nOffset;
     psArc->nUserId = AVCRawBinReadInt32(psFile);
     psArc->nFNode  = AVCRawBinReadInt32(psFile);
     psArc->nTNode  = AVCRawBinReadInt32(psFile);
@@ -776,6 +784,14 @@ int _AVCBinReadNextArc(AVCRawBinFile *psFile, AVCArc *psArc,
         }
 
     }
+
+    /*-----------------------------------------------------------------
+     * Record size may be larger than number of vertices.  Skip up to
+     * start of next object.
+     *----------------------------------------------------------------*/
+    nBytesRead = (psFile->nCurPos + psFile->nOffset) - nStartPos;
+    if ( nBytesRead < nRecordSize)
+        AVCRawBinFSeek(psFile, nRecordSize - nBytesRead, SEEK_CUR);
 
     return 0;
 }
@@ -825,9 +841,11 @@ int _AVCBinReadNextPal(AVCRawBinFile *psFile, AVCPal *psPal,
                               int nPrecision)
 {
     int i, numArcs;
+    int nRecordSize, nStartPos, nBytesRead;
 
     psPal->nPolyId = AVCRawBinReadInt32(psFile);
-                     AVCRawBinReadInt32(psFile);  /* Skip Record size field */
+    nRecordSize    = AVCRawBinReadInt32(psFile) * 2;
+    nStartPos      = psFile->nCurPos+psFile->nOffset;
 
     if (AVCRawBinEOF(psFile))
         return -1;
@@ -864,6 +882,14 @@ int _AVCBinReadNextPal(AVCRawBinFile *psFile, AVCPal *psPal,
         psPal->pasArcs[i].nFNode = AVCRawBinReadInt32(psFile);
         psPal->pasArcs[i].nAdjPoly = AVCRawBinReadInt32(psFile);
     }
+
+    /*-----------------------------------------------------------------
+     * Record size may be larger than number of vertices.  Skip up to
+     * start of next object.
+     *----------------------------------------------------------------*/
+    nBytesRead = (psFile->nCurPos + psFile->nOffset) - nStartPos;
+    if ( nBytesRead < nRecordSize)
+        AVCRawBinFSeek(psFile, nRecordSize - nBytesRead, SEEK_CUR);
 
     return 0;
 }
@@ -909,9 +935,11 @@ int _AVCBinReadNextCnt(AVCRawBinFile *psFile, AVCCnt *psCnt,
                               int nPrecision)
 {
     int i, numLabels;
+    int nRecordSize, nStartPos, nBytesRead;
 
     psCnt->nPolyId = AVCRawBinReadInt32(psFile);
-                     AVCRawBinReadInt32(psFile); /* Skip Record size field */
+    nRecordSize    = AVCRawBinReadInt32(psFile) * 2;
+    nStartPos      = psFile->nCurPos+psFile->nOffset;
 
     if (AVCRawBinEOF(psFile))
         return -1;
@@ -942,6 +970,14 @@ int _AVCBinReadNextCnt(AVCRawBinFile *psFile, AVCCnt *psCnt,
     {
         psCnt->panLabelIds[i] = AVCRawBinReadInt32(psFile);
     }
+
+    /*-----------------------------------------------------------------
+     * Record size may be larger than number of vertices.  Skip up to
+     * start of next object.
+     *----------------------------------------------------------------*/
+    nBytesRead = (psFile->nCurPos + psFile->nOffset) - nStartPos;
+    if ( nBytesRead < nRecordSize)
+        AVCRawBinFSeek(psFile, nRecordSize - nBytesRead, SEEK_CUR);
 
     return 0;
 }

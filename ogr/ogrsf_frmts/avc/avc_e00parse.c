@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_e00parse.c,v 1.11 2001/11/25 21:15:23 daniel Exp $
+ * $Id: avc_e00parse.c,v 1.13 2002/08/27 15:43:02 daniel Exp $
  *
  * Name:     avc_e00parse.c
  * Project:  Arc/Info vector coverage (AVC)  E00->BIN conversion library
@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log: avc_e00parse.c,v $
+ * Revision 1.13  2002/08/27 15:43:02  daniel
+ * Small typo in type 40 fix (forgot to commit to CVS on 2002-08-05)
+ *
+ * Revision 1.12  2002/08/05 20:20:17  daniel
+ * Fixed parsing type 40 fields to properly detect negative exp. (bug 1272)
+ *
  * Revision 1.11  2001/11/25 21:15:23  daniel
  * Added hack (AVC_MAP_TYPE40_TO_DOUBLE) to map type 40 fields bigger than 8
  * digits to double precision as we generate E00 output (bug599)
@@ -1951,7 +1957,7 @@ static AVCField   *_AVCE00ParseTableRecord(AVCE00ParseInfo *psInfo)
              * we should shift the decimal point to the left before we 
              * interpret it.  (bug 599)
              */
-            if (!strstr(szTmp, "E+") && !strstr(szTmp, "e+"))
+            if (!strchr(szTmp, 'E') && !strchr(szTmp, 'e'))
             {
                 char *pszTmp;
                 if ( (pszTmp=strchr(szTmp, '.')) != NULL && pszTmp != szTmp )
