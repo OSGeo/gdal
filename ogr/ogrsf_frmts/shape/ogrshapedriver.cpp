@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.2  2000/01/26 22:06:32  warmerda
  * add directory creation, fix open of empty dir
  *
@@ -38,6 +41,8 @@
 
 #include "ogrshape.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          ~OGRShapeDriver()                           */

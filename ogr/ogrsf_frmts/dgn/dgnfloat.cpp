@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.2  2001/03/07 13:56:44  warmerda
  * updated copyright to be held by Avenza Systems
  *
@@ -37,6 +40,8 @@
  */
 
 #include "dgnlibp.h"
+
+CPL_CVSID("$Id$");
 
 typedef struct dbl {
     GUInt32 hi;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.21  2001/01/22 18:00:03  warmerda
  * Don't completely flip out if there is other than one spatial linkage for
  * in AssemblePointGeometry().  Record 577 of CA49995B.000 (newfiles) has this.
@@ -97,6 +100,8 @@
 #include "s57.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                             S57Reader()                              */

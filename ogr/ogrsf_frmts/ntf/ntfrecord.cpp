@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.1  1999/08/28 03:13:35  warmerda
  * New
  *
@@ -35,6 +38,8 @@
 
 #include "ntf.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 static int nFieldBufSize = 0;
 static char *pszFieldBuf = NULL;

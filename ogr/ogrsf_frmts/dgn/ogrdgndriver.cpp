@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.2  2000/12/28 21:27:11  warmerda
  * updated email address
  *
@@ -38,6 +41,8 @@
 
 #include "ogr_dgn.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          ~OGRDGNDriver()                             */

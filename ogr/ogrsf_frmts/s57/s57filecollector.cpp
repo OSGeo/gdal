@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.3  1999/12/01 20:00:08  warmerda
  * Don't depend on S-57 data files not having a definition of the CATD field.
  *
@@ -44,6 +47,8 @@
 #include "s57.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          S57FileCollector()                          */

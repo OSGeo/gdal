@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.5  2001/01/22 22:36:05  warmerda
  * expanded tabs
  *
@@ -47,6 +50,8 @@
 
 #include "ogrsf_frmts.h"
 #include "ogr_p.h"
+
+CPL_CVSID("$Id$");
 
 static OGRSFDriverRegistrar *poRegistrar = NULL;
 

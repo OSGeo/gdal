@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.7  2001/06/27 16:14:21  warmerda
  * Free the element index on close (patch c/o Tom Parker, avs.com).
  *
@@ -52,6 +55,8 @@
  */
 
 #include "dgnlibp.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                            DGNTestOpen()                             */

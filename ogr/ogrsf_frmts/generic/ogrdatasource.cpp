@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.2  2000/08/21 16:37:43  warmerda
  * added constructor, and initialization of styletable
  *
@@ -38,6 +41,8 @@
 
 #include "ogrsf_frmts.h"
 #include "ogr_p.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           ~OGRDataSource()                           */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.11  2001/06/25 15:07:51  warmerda
  * Added support for DGNElemComplexHeader
  * Don't include elements with the complex bit (such as shared cell definition
@@ -64,6 +67,8 @@
  */
 
 #include "dgnlibp.h"
+
+CPL_CVSID("$Id$");
 
 static DGNElemCore *DGNParseTCB( DGNInfo * );
 static DGNElemCore *DGNParseColorTable( DGNInfo * );

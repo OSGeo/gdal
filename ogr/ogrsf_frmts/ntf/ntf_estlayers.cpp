@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.12  2001/01/19 20:31:12  warmerda
  * expand tabs
  *
@@ -73,6 +76,8 @@
 #include <stdarg.h>
 #include "ntf.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 #define MAX_LINK        5000
 

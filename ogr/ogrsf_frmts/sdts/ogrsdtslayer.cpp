@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.7  2001/07/16 03:47:49  warmerda
  * added ENID and SNID to line features
  *
@@ -54,6 +57,8 @@
 #include "ogr_sdts.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                            OGRSDTSLayer()                            */

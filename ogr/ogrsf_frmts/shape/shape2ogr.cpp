@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.10  2001/02/06 14:30:15  warmerda
  * don't crash on attempt to write geometryless features
  *
@@ -71,6 +74,8 @@
 
 #include "ogrshape.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          SHPReadOGRObject()                          */

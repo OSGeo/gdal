@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.2  2001/01/19 21:15:20  warmerda
  * expanded tabs
  *
@@ -51,6 +54,8 @@
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 int     bReadOnly = FALSE;
 int     bVerbose = TRUE;

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.3  2001/04/17 21:41:02  warmerda
  * Added use of cln_GetLayerCapabilities() to query list of available layers.
  * Restructured OGROGDIDataSource and OGROGDILayer classes somewhat to
@@ -46,6 +49,8 @@
 #include "ogrogdi.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         OGROGDIDataSource()                          */

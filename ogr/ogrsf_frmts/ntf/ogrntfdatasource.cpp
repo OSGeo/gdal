@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.8  2001/01/19 20:31:12  warmerda
  * expand tabs
  *
@@ -56,6 +59,8 @@
 #include "ntf.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          OGRNTFDataSource()                          */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.3  2001/03/18 16:54:39  warmerda
  * added use of DGNTestOpen, remove extention test
  *
@@ -42,6 +45,8 @@
 #include "ogr_dgn.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         OGRDGNDataSource()                           */

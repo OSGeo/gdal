@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.2  2000/08/30 01:36:57  danmo
  * Added GetSpatialRef() support
  *
@@ -39,6 +42,8 @@
 
 #include "ogrogdi.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           ~OGROGDIDriver()                           */

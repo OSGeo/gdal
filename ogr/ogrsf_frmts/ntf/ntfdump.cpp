@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.6  2001/01/19 20:31:12  warmerda
  * expand tabs
  *
@@ -51,6 +54,8 @@
 #include "ntf.h"
 #include "cpl_vsi.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 static void NTFDump( const char * pszFile, char **papszOptions );
 static void NTFCount( const char * pszFile );

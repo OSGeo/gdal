@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.4  2001/03/08 18:07:01  warmerda
  * Corrected computation of padfM*[k] in case where denominator of the
  * general equations goes to zero.
@@ -45,6 +48,8 @@
 
 #include "dgnlibp.h"
 #include <math.h>
+
+CPL_CVSID("$Id$");
 
 #ifndef PI
 #define PI  3.14159265358979323846

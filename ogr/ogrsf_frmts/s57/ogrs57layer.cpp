@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.4  2001/06/19 15:50:23  warmerda
  * added feature attribute query support
  *
@@ -45,6 +48,8 @@
 #include "ogr_s57.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                            OGRS57Layer()                             */

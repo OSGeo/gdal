@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.6  2001/07/04 23:25:32  warmerda
  * first round implementation of writer
  *
@@ -52,6 +55,8 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           TigerFileBase()                            */

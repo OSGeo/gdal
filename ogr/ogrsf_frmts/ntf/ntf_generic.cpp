@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.11  2001/05/01 15:09:33  warmerda
  * raised MAX_LINK from 200 to 5000, added error reporting
  *
@@ -66,6 +69,8 @@
 #include <stdarg.h>
 #include "ntf.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 #define MAX_LINK        5000
 

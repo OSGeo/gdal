@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.5  2000/12/21 21:58:10  warmerda
  * Append class numbers to list rather than inserting at beginning, to
  * preserve original order.
@@ -50,6 +53,8 @@
 #include "s57.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         S57ClassRegistrar()                          */

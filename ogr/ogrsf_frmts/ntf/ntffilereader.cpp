@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.17  2001/04/30 15:14:19  warmerda
  * Allow GEOMETRY3D in place of GEOMETRY in GetIndexedRecord().  This fixes
  * problem reported by Jakob for OS of Ireland files.  Also removed broken
@@ -89,6 +92,8 @@
 #include "ntf.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 static int DefaultNTFRecordGrouper( NTFFileReader *, NTFRecord **,
                                     NTFRecord * );

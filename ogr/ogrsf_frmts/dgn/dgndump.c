@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.5  2001/03/07 13:56:44  warmerda
  * updated copyright to be held by Avenza Systems
  *
@@ -46,6 +49,8 @@
  */
 
 #include "dgnlibp.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                                main()                                */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.9  2001/07/04 23:25:32  warmerda
  * first round implementation of writer
  *
@@ -78,6 +81,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include <ctype.h>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                        TigerClassifyVersion()                        */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.5  2001/06/26 20:59:13  warmerda
  * implement efficient spatial and attribute query support
  *
@@ -48,6 +51,8 @@
 #include "cpl_conv.h"
 #include "ogr_pg.h"
 #include <libpq/libpq-fs.h>
+
+CPL_CVSID("$Id$");
 
 #define CURSOR_PAGE	1
 

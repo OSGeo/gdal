@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.8  2000/06/16 18:10:05  warmerda
  * expanded tabs
  *
@@ -57,6 +60,8 @@
 #include "ogr_s57.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 S57ClassRegistrar *OGRS57DataSource::poRegistrar = NULL;
 
@@ -252,6 +257,10 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
                                                             iClass );
                 if( poDefn != NULL )
                     AddLayer( new OGRS57Layer( this, poDefn ) );
+                else
+                    CPLDebug( "S57", 
+                              "Unable to find definition for OBJL=%d\n", 
+                              iClass );
             }
         }
 

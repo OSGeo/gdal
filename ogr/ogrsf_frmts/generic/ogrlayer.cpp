@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/07/18 04:55:16  warmerda
+ * added CPL_CSVID
+ *
  * Revision 1.6  2001/06/19 15:53:49  warmerda
  * Added attribute query support
  *
@@ -50,6 +53,8 @@
 
 #include "ogrsf_frmts.h"
 #include "ogr_p.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                              OGRLayer()                              */
