@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2004/09/22 19:35:06  fwarmerdam
+ * Fixed bug with ysize being taken from xsize of input in CopyCreate().
+ *
  * Revision 1.22  2004/07/23 20:45:50  warmerda
  * Added JPEG2000 support
  *
@@ -1135,7 +1138,7 @@ NITFCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
 /*      Create the output dataset.                                      */
 /* -------------------------------------------------------------------- */
     int nXSize = poSrcDS->GetRasterXSize();
-    int nYSize = poSrcDS->GetRasterXSize();
+    int nYSize = poSrcDS->GetRasterYSize();
 
     GDALDataset *poDstDS = NITFDatasetCreate( pszFilename, nXSize, nYSize,
                                               poSrcDS->GetRasterCount(),
