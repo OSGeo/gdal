@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/12/23 02:11:50  warmerda
+ * moved Python.h include outside CPL_C_START brackets
+ *
  * Revision 1.1  2000/07/19 19:42:54  warmerda
  * New
  *
@@ -38,9 +41,9 @@
 #ifndef _GDAL_PY_INCLUDED
 #define _GDAL_PY_INCLUDED
 
-CPL_C_START
-
 #include "Python.h"
+
+CPL_C_START
 
 void	GDALRegister_NUMPY(void);
 PyObject *py_NumPyArrayToGDALFilename( PyObject *, PyObject * );
