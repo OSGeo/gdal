@@ -1,3 +1,8 @@
+2001-07-12  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* frmts/raw/pauxdataset.cpp: Added limited support for reading gcps
+	and projections.
+
 2001-07-09  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* frmts/sdts/sdtsdataset.cpp: upgraded to use WKT for projections.
