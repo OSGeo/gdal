@@ -39,6 +39,10 @@ test_ogrsf:	test_ogrsf.o $(OGR_LIB) $(FRMTS_LIB)
 	$(CXX) $(LNK_FLAGS) test_ogrsf.o $(FRMTS_LIB) $(OGR_LIB) \
 						$(LIBS) -o test_ogrsf
 
+ogrinfo:	ogrinfo.o $(OGR_LIB) $(FRMTS_LIB)
+	$(CXX) $(LNK_FLAGS) ogrinfo.o $(FRMTS_LIB) $(OGR_LIB) \
+						$(LIBS) -o ogrinfo
+
 $(FRMTS_LIB):
 	(cd ogrsf_frmts; $(MAKE))
 
