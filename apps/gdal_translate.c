@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.27  2002/06/24 19:36:25  warmerda
+ * carry over colortable
+ *
  * Revision 1.26  2002/06/12 21:07:55  warmerda
  * test create and createcopy capability
  *
@@ -410,6 +413,15 @@ int main( int argc, char ** argv )
     }
     
 /* -------------------------------------------------------------------- */
+/*      Set the band type if not previously set.                        */
+/* -------------------------------------------------------------------- */
+    if( eOutputType == GDT_Unknown )
+    {
+        eOutputType = GDALGetRasterDataType( 
+            GDALGetRasterBand( hDataset, panBandList[0] ) );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create the output database.                                     */
 /* -------------------------------------------------------------------- */
     GDALTermProgress( 0.0, NULL, NULL );
@@ -452,12 +464,20 @@ int main( int argc, char ** argv )
         int     iBlockY;
         GDALRasterBandH hDstBand;
         double  dfScale = 1.0, dfOffset = 0.0;
+        GDALColorTableH hCT;
 
         hBand = GDALGetRasterBand( hDataset, panBandList[i] );
         hDstBand = GDALGetRasterBand( hOutDS, i+1 );
         
         printf( "Band %d Type = %d\n",
                 panBandList[i], GDALGetRasterDataType( hBand ) );
+
+/* -------------------------------------------------------------------- */
+/*      Do we need to copy a colortable?                                */
+/* -------------------------------------------------------------------- */
+        hCT = GDALGetRasterColorTable( hBand );
+        if( hCT != NULL )
+            GDALSetRasterColorTable( hBand, hCT );
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to collect scaling information?                      */
