@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/09/04 14:34:01  warmerda
+ * dos to unix, fix warning
+ *
  * Revision 1.2  2002/08/30 15:27:05  warmerda
  * fixed include file order to resolve properties bug - stdafx.h first\!
  *
@@ -232,7 +235,8 @@ void CSFSource::DumpProperties()
               pUtlProps->m_cUPropSet,
               sizeof(UPROPVAL), sizeof(ATL::UPROPVAL) );
 
-    for( int ulPropSet = 0; ulPropSet < pUtlProps->m_cUPropSet; ulPropSet++ )
+    for( unsigned int ulPropSet = 0; 
+         ulPropSet < pUtlProps->m_cUPropSet; ulPropSet++ )
     {
         CPLDebug( "OGR_OLEDB", "Property Set %d", ulPropSet );
             
@@ -246,9 +250,5 @@ void CSFSource::DumpProperties()
             CPLDebug( "OGR_OLEDB", "[%d]pUPropVal[%d].pCColumnIds = %p", 
                       ulPropSet, ulPropId, pThisProp->pCColumnIds );
         }
-/*
-  delete[] m_pUProp[ulPropSet].rgpUPropInfo;
-  delete[] m_pUProp[ulPropSet].pUPropVal;
-*/
     }
 }
