@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/02/15 22:32:03  warmerda
+ * Added FLT32 support.
+ *
  * Revision 1.1  2001/02/13 18:29:04  warmerda
  * New
  *
@@ -156,7 +159,11 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
                                                    "DATA_TYPE", "" );
     pszSampleType = EnvisatFile_GetKeyValueAsString( hEnvisatFile, SPH, 
                                                      "SAMPLE_TYPE", "" );
-    if( EQUAL(pszDataType,"UWORD") )
+    if( EQUAL(pszDataType,"FLT32") && EQUALN(pszSampleType,"COMPLEX",7))
+        eDataType = GDT_CFloat32;
+    else if( EQUAL(pszDataType,"FLT32") )
+        eDataType = GDT_Float32;
+    else if( EQUAL(pszDataType,"UWORD") )
         eDataType = GDT_UInt16;
     else if( EQUAL(pszDataType,"SWORD") && EQUALN(pszSampleType,"COMPLEX",7) )
         eDataType = GDT_CInt16;
@@ -174,7 +181,6 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Assume ownership of the file handled from the GDALOpenInfo.     */
 /* -------------------------------------------------------------------- */
-
     poDS->fpImage = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
 
