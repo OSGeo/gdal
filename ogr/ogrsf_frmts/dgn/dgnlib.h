@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/05/31 03:40:22  warmerda
+ * added improved support for parsing attribute linkages
+ *
  * Revision 1.20  2002/04/22 20:44:40  warmerda
  * added (partial) cell library support
  *
@@ -527,6 +530,18 @@ typedef struct {
 #define DGNO_CAPTURE_RAW_DATA	0x01
 
 /* -------------------------------------------------------------------- */
+/*      Known attribute linkage types, including my synthetic ones.     */
+/* -------------------------------------------------------------------- */
+#define DGNLT_DMRS              0x0000
+#define DGNLT_INFORMIX          0x3848
+#define DGNLT_ODBC              0x5e62
+#define DGNLT_ORACLE            0x6091
+#define DGNLT_RIS               0x71FB
+#define DGNLT_SYBASE            0x4f58
+#define DGNLT_XBASE             0x1971
+#define DGNLT_SHAPE_FILL        0x0041
+
+/* -------------------------------------------------------------------- */
 /*      API                                                             */
 /* -------------------------------------------------------------------- */
 /** Opaque handle representing DGN file, used with DGN API. */
@@ -555,6 +570,12 @@ int CPL_DLL   DGNStrokeCurve( DGNHandle, DGNElemMultiPoint*, int, DGNPoint * );
 void CPL_DLL  DGNSetSpatialFilter( DGNHandle hDGN, 
                                    double dfXMin, double dfYMin, 
                                    double dfXMax, double dfYMax );
+int  CPL_DLL  DGNGetAttrLinkSize( DGNHandle, DGNElemCore *, int );
+unsigned char CPL_DLL *
+	      DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement, 
+                             int iIndex, int *pnLinkageType,
+                             int *pnEntityNum, int *pnMSLink, int *pnLinkSize);
+    
 
 
 CPL_C_END
