@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/08 20:15:19  warmerda
+ * Added malloc_dump to watch for memory leaks
+ *
  * Revision 1.1  1999/04/27 18:45:54  warmerda
  * New
  *
@@ -61,6 +64,13 @@ int main( int nArgc, char ** papszArgv )
             poRecord->Dump( stdout );
         }
     }
+
+    oModule.Close();
+    
+#ifdef DBMALLOC
+    malloc_dump(1);
+#endif
+
 }
 
 
