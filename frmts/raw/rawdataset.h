@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/07/20 13:38:56  warmerda
+ * make classes public with CPL_DLL
+ *
  * Revision 1.3  2000/03/31 13:36:41  warmerda
  * RawRasterBand no longer depends on RawDataset
  *
@@ -50,7 +53,7 @@
 
 class RawRasterBand;
 
-class RawDataset : public GDALDataset
+class CPL_DLL RawDataset : public GDALDataset
 {
     friend	RawRasterBand;
     
@@ -65,7 +68,7 @@ class RawDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class RawRasterBand : public GDALRasterBand
+class CPL_DLL RawRasterBand : public GDALRasterBand
 {
     friend	RawDataset;
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/07/20 13:38:48  warmerda
+ * make classes public with CPL_DLL
+ *
  * Revision 1.2  2000/07/19 19:07:04  warmerda
  * break linkage between MEMDataset and MEMRasterBand
  *
@@ -51,7 +54,7 @@ CPL_C_END
 
 class MEMRasterBand;
 
-class MEMDataset : public GDALDataset
+class CPL_DLL MEMDataset : public GDALDataset
 {
   public:
                  MEMDataset();
@@ -67,7 +70,7 @@ class MEMDataset : public GDALDataset
 /*                            MEMRasterBand                             */
 /************************************************************************/
 
-class MEMRasterBand : public GDALRasterBand
+class CPL_DLL MEMRasterBand : public GDALRasterBand
 {
     GByte      *pabyData;
     int         nPixelOffset;
