@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/01/25 21:00:00  warmerda
+ * fix build without Xerces
+ *
  * Revision 1.3  2002/01/25 20:39:19  warmerda
  * added prescan, and resetreading.  Provide stub if Xerces missing
  *
@@ -44,6 +47,9 @@
 /* ==================================================================== */
 /************************************************************************/
 #if HAVE_XERCES == 0
+
+#include "gmlreader.h"
+#include "cpl_error.h"
 
 /************************************************************************/
 /*                          CreateGMLReader()                           */
@@ -65,7 +71,6 @@ IGMLReader *CreateGMLReader()
 /************************************************************************/
 #else /* HAVE_XERCES == 1 */
 
-#include "gmlreaderp.h"
 #include "gmlreaderp.h"
 #include "cpl_conv.h"
 
