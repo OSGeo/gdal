@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/02/21 03:04:18  fwarmerdam
+ * fixed for files in arcseconds (bug 775)
+ *
  * Revision 1.22  2004/02/02 15:34:05  warmerda
  * Use CPLFormCIFilename() to get PRJ.ADF as well as prj.adf.
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=480
@@ -107,6 +110,9 @@ CPL_CVSID("$Id$");
 CPL_C_START
 void	GDALRegister_AIGrid(void);
 CPL_C_END
+
+static const char*OSR_GDS( char **papszNV, const char * pszField, 
+                           const char *pszDefaultValue );
 
 
 /************************************************************************/
@@ -450,9 +456,21 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if( oSRS.importFromESRI( poDS->papszPrj ) == OGRERR_NONE )
         {
+            // If geographic values are in seconds, we must transform. 
+            // Is there a code for minutes too? 
+            if( oSRS.IsGeographic() 
+                && EQUAL(OSR_GDS( poDS->papszPrj, "Units", ""), "DS") )
+            {
+                psInfo->dfLLX /= 3600.0;
+                psInfo->dfURY /= 3600.0;
+                psInfo->dfCellSizeX /= 3600.0;
+                psInfo->dfCellSizeY /= 3600.0;
+            }
+
             CPLFree( poDS->pszProjection );
             oSRS.exportToWkt( &(poDS->pszProjection) );
         }
+
     }
 
     return( poDS );
@@ -539,6 +557,43 @@ void AIGDataset::TranslateColorTable( const char *pszClrFilename )
 }
 
 /************************************************************************/
+/*                              OSR_GDS()                               */
+/************************************************************************/
+
+static const char*OSR_GDS( char **papszNV, const char * pszField, 
+                           const char *pszDefaultValue )
+
+{
+    int         iLine;
+
+    if( papszNV == NULL || papszNV[0] == NULL )
+        return pszDefaultValue;
+
+    for( iLine = 0; 
+         papszNV[iLine] != NULL && 
+             !EQUALN(papszNV[iLine],pszField,strlen(pszField));
+         iLine++ ) {}
+
+    if( papszNV[iLine] == NULL )
+        return pszDefaultValue;
+    else
+    {
+        static char     szResult[80];
+        char    **papszTokens;
+        
+        papszTokens = CSLTokenizeString(papszNV[iLine]);
+
+        if( CSLCount(papszTokens) > 1 )
+            strncpy( szResult, papszTokens[1], sizeof(szResult));
+        else
+            strncpy( szResult, pszDefaultValue, sizeof(szResult));
+        
+        CSLDestroy( papszTokens );
+        return szResult;
+    }
+}
+
+/************************************************************************/
 /*                          GDALRegister_AIG()                        */
 /************************************************************************/
 
@@ -562,4 +617,3 @@ void GDALRegister_AIGrid()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
