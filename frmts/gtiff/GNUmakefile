@@ -44,13 +44,28 @@ addtiffo:	addtiffo.o tif_overview.o rawblockedimage.o
 
 
 lib-tiff:
-	cd libtiff; $(MAKE)
+	(cd libtiff; $(MAKE))
 
 lib-geotiff:
-	cd libgeotiff; $(MAKE)
+	(cd libgeotiff; $(MAKE))
 
-install-obj:	$(OBJ) lib-tiff lib-geotiff
-	cp $(OBJ) libgeotiff/libgeotiff.a libtiff/libtiff.a ../o
+all:	lib-tiff lib-geotiff
+
+install-obj:	../o/libtiff.a ../o/libgeotiff.a ../o/geotiff.o
+
+
+../o/%.o:	%.o
+	cp $*.o ../o
+
+../o/libtiff.a:	libtiff/libtiff.a
+	cp libtiff/libtiff.a ../o
+
+libtiff/libtiff.a:	lib-tiff
+
+../o/libgeotiff.a:	libgeotiff/libgeotiff.a
+	cp libgeotiff/libgeotiff.a ../o
+
+libgeotiff/libgeotiff.a:	lib-geotiff
 
 
 addtiffo-dist:
