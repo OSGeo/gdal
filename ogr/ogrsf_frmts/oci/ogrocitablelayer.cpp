@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/01/15 05:47:06  warmerda
+ * fleshed out SRID writing support in newly created geometries
+ *
  * Revision 1.18  2003/01/15 05:36:14  warmerda
  * start work on creating feature geometry with SRID
  *
@@ -140,7 +143,6 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
     pszGeomName = CPLStrdup( pszGeomColIn );
 
     nSRID = nSRIDIn;
-    CPLDebug( "OCI", "OGROCITableLayer() - SRID = %d", nSRID );
     poSRS = poDSIn->FetchSRS( nSRID );
     if( poSRS != NULL )
         poSRS->Reference();
@@ -769,10 +771,17 @@ OGROCITableLayer::TranslateElementGroup( OGRGeometry *poGeometry,
 char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
 
 {
+    char szSRID[30];
+
     nOrdinalCount = 0;
 
     if( poGeometry == NULL )
         return CPLStrdup("NULL");
+
+    if( nSRID == -1 )
+        strcpy( szSRID, "NULL" );
+    else
+        sprintf( szSRID, "%d", nSRID );
 
 /* ==================================================================== */
 /*      Handle a point geometry.                                        */
@@ -784,12 +793,13 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
 
         if( poGeometry->getDimension() == 2 )
             sprintf( szResult, 
-                     "%s(%d,NULL,MDSYS.SDO_POINT_TYPE(%.16g,%.16g),NULL,NULL)",
-                     SDO_GEOMETRY, 2001, poPoint->getX(), poPoint->getY() );
+                     "%s(%d,%s,MDSYS.SDO_POINT_TYPE(%.16g,%.16g),NULL,NULL)",
+                     SDO_GEOMETRY, 2001, szSRID, 
+                     poPoint->getX(), poPoint->getY() );
         else
             sprintf( szResult, 
-                     "%s(%d,NULL,MDSYS.SDO_POINT_TYPE(%.16g,%.16g,%.16g),NULL,NULL)",
-                     SDO_GEOMETRY, 2001, 
+                     "%s(%d,%s,MDSYS.SDO_POINT_TYPE(%.16g,%.16g,%.16g),NULL,NULL)",
+                     SDO_GEOMETRY, 2001, szSRID, 
                      poPoint->getX(), poPoint->getY(), poPoint->getZ() );
 
         return CPLStrdup(szResult );
@@ -802,8 +812,8 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
     {
         OGROCIStringBuf oElemInfo;
 
-        oElemInfo.Appendf( 100, "%s(%d,NULL,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(",
-                           SDO_GEOMETRY, nDimension * 1000 + 2 );
+        oElemInfo.Appendf( 100, "%s(%d,%s,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(",
+                           SDO_GEOMETRY, nDimension * 1000 + 2, szSRID );
 
         TranslateElementGroup( poGeometry, &oElemInfo );
 
@@ -823,10 +833,7 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
 /* -------------------------------------------------------------------- */
 	oElemInfo.Append( SDO_GEOMETRY );
 	oElemInfo.Appendf( 20, "(%d,", nDimension == 2 ? 2003 : 3003 );
-	if( nSRID == -1 )
-	    oElemInfo.Append( "NULL" );
-	else
-	    oElemInfo.Appendf( 20, "%d", nSRID );
+	oElemInfo.Append( szSRID );
 	oElemInfo.Append( ",NULL,MDSYS.SDO_ELEM_INFO_ARRAY(" );
 
 /* -------------------------------------------------------------------- */
@@ -851,9 +858,10 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
         pszResult = (char *) CPLMalloc(500);
 
         sprintf( pszResult, 
-                 "%s(%d,NULL,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,1,%d),"
+                 "%s(%d,%s,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,1,%d),"
                  ":ordinates)", 
-                 SDO_GEOMETRY, nDimension*1000 + 5, poMP->getNumGeometries() );
+                 SDO_GEOMETRY, nDimension*1000 + 5, 
+                 szSRID, poMP->getNumGeometries() );
         
         for( iVert = 0; iVert < poMP->getNumGeometries(); iVert++ )
         {
@@ -897,8 +905,8 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
 /* -------------------------------------------------------------------- */
 /*      Prepare eleminfo section.                                       */
 /* -------------------------------------------------------------------- */
-        oElemInfo.Appendf( 90, "%s(%d,NULL,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(",
-                           SDO_GEOMETRY, nGType );
+        oElemInfo.Appendf( 90, "%s(%d,%s,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(",
+                           SDO_GEOMETRY, nGType, szSRID );
         oOrdinates.Append( "),MDSYS.SDO_ORDINATE_ARRAY(" );
 
 /* -------------------------------------------------------------------- */
