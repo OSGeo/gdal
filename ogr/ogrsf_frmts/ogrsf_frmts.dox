@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/09/26 18:16:02  warmerda
+ * added missing methods, and C API mentions
+ *
  * Revision 1.9  2002/04/24 02:49:23  warmerda
  * Update notes on GetExtent() when no spatial features.
  *
@@ -72,6 +75,8 @@
 
   If this method fails, CPLGetLastErrorMsg() can be used to check if there
   is an error message explaining why.
+
+  This method is the same as the C function OGROpen().
 
   @param pszName the name of the file, or data source to open.
   @param bUpdate FALSE for read-only access (the default) or TRUE for 
@@ -119,6 +124,8 @@
   then the driver isn't registered.  New drivers are added at the end of
   the list of registered drivers.
 
+  This method is the same as the C function OGRRegisterDriver().
+
   @param poDriver the driver to add.
 
 */
@@ -129,6 +136,8 @@
 
   Fetch the number of registered drivers.
 
+  This method is the same as the C function OGRGetDriverCount().
+
   @return the driver count.
 
 */
@@ -138,6 +147,8 @@
   \fn OGRSFDriver * OGRSFDriverRegistrar::GetDriver( int iDriver );
 
   Fetch the indicated driver.
+
+  This method is the same as the C function OGRGetDriver().
 
   @param iDriver the driver index, from 0 to GetDriverCount()-1.
 
@@ -159,6 +170,8 @@
   (10-40 characters), and should reflect the underlying file format.  For
   instance "ESRI Shapefile".
 
+  This method is the same as the C function OGR_Dr_GetName().
+
   @return driver name.  This is an internal string and should not be modified
   or freed. 
 */
@@ -172,6 +185,8 @@
   This method is what OGRSFDriverRegistrar uses to implement its Open() method.
   See it for more details.
 
+  This method is the same as the C function OGR_Dr_Open().
+
   @param pszName the name of the file, or data source to try and open.
   @param bUpdate TRUE if update access is required, otherwise FALSE (the
   default).
@@ -181,6 +196,31 @@
   closed by deleting the object when it is no longer needed.
 
 */
+
+/**
+ \fn int OGRSFDriver::TestCapability( const char *pszCapability );
+
+ Test if capability is available.
+
+ One of the following data source capability names can be passed into this
+ method, and a TRUE or FALSE value will be returned indicating whether or not
+ the capability is available for this object.
+
+ <ul>
+
+  <li> <b>ODrCCreateDataSource</b>: True if this driver can support creating data sources.<p>
+ </ul>
+
+ The #define macro forms of the capability names should be used in preference
+ to the strings themselves to avoid mispelling.
+
+ This method is the same as the C function OGR_Dr_TestCapability().
+
+ @param pszCapability the capability to test.
+
+ @return TRUE if capability available otherwise FALSE.
+
+*/ 
 
 /************************************************************************/
 /*                            OGRDataSource                             */
@@ -194,6 +234,8 @@
  source was opened with, but it need not be exactly the same string that
  was used to open the data source.  Normally this a filename. 
 
+ This method is the same as the C function OGR_DS_GetName().
+
  @return pointer to an internal name string which should not be modified
  or freed by the caller.
 
@@ -203,6 +245,8 @@
  \fn int OGRDataSource::GetLayerCount();
 
  Get the number of layers in this data source.
+
+ This method is the same as the C function OGR_DS_GetLayerCount().
 
  @return layer count.
 
@@ -214,11 +258,106 @@
  Fetch a layer by index.  The returned layer remains owned by the OGRDataSource
  and should not be deleted by the application.
 
+ This method is the same as the C function OGR_DS_GetLayer().
+
  @param iLayer a layer number between 0 and GetLayerCount()-1.
 
  @return the layer, or NULL if iLayer is out of range or an error occurs.
 
 */
+
+/**
+ \fn OGRLayer *OGRDatasource::ExecuteSQL(const char *pszStatement,
+				         OGRGeometry *poSpatialFilter, 
+				         const char *pszDialect );
+
+ Execute an SQL statement against the data store. 
+
+ The dialects supported will vary by driver, but all datasources should
+ support a minimal SELECT statement like the following.  The WHERE clause
+ can be any where clause supported by OGRLayer::SetAttributeFilter().
+
+   SELECT <field-list> FROM table-name [WHERE <where-expr>] 
+       [ORDER BY <sort specification list>]
+
+   <field-list> ::= DISTINCT fieldname | <field-spec> 
+                 | <field-spec> , <field-list>
+
+   <field-spec> ::= fieldname 
+                 | <field_func> ( [DISTINCT] <field-func> )
+                 | Count(*)
+
+   <field-func> ::= AVG | MAX | MIN | SUM | COUNT
+
+
+   <sort specification list> ::=
+              <sort specification> [ { <comma> <sort specification> }... ]
+
+   <sort specification> ::= <sort key> [ <ordering specification> ]
+
+   <sort key> ::=  <column name>
+
+   <ordering specification> ::= ASC | DESC
+
+ The result of an SQL query is either NULL for statements that are in error,
+ or that have no results set, or an OGRLayer pointer representing a results
+ set from the query.  Note that this OGRLayer is in addition to the layers
+ in the data store and must be destroyed with 
+ OGRDataSource::ReleaseResultsSet() before the data source is closed 
+ (destroyed).  
+
+ This method is the same as the C function OGR_DS_ExecuteSQL().
+
+ @param pszStatement the SQL statement to execute. 
+
+ @param poSpatialFilter
+
+ @param pszDialect allows control of the statement dialect.  By default it 
+ is assumed to be "generic" SQL, whatever that is. 
+
+ @return an OGRLayer containing the results of the query.  Deallocate with
+ ReleaseResultsSet().
+
+*/
+
+/**
+ \fn void OGRDataSource::ReleaseResultsSet(OGRLayer *poResultsSet);
+
+ Release results of ExecuteSQL().
+
+ This method should only be used to deallocate OGRLayers resulting from
+ an ExecuteSQL() call on the same OGRDataSource.  Failure to deallocate a
+ results set before destroying the OGRDataSource may cause errors. 
+
+ This method is the same as the C function OGR_L_ReleaseResultsSet().
+
+ @param poResultsSet the result of a previous ExecuteSQL() call.
+
+*/ 
+
+/**
+ \fn int OGRDataSource::TestCapability( const char *pszCapability );
+
+ Test if capability is available.
+
+ One of the following data source capability names can be passed into this
+ method, and a TRUE or FALSE value will be returned indicating whether or not
+ the capability is available for this object.
+
+ <ul>
+  <li> <b>ODsCreateLayer</b>: True if this datasource can create new layers.<p>
+ </ul>
+
+ The #define macro forms of the capability names should be used in preference
+ to the strings themselves to avoid mispelling.
+
+ This method is the same as the C function OGR_DS_TestCapability().
+
+ @param pszCapability the capability to test.
+
+ @return TRUE if capability available otherwise FALSE.
+
+*/ 
 
 /************************************************************************/
 /*                               OGRLayer                               */
@@ -229,6 +368,8 @@
 
  Reset feature reading to start on the first feature.  This affects 
  GetNextFeature().
+
+ This method is the same as the C function OGR_L_ResetReading().
 
 */
 
@@ -248,6 +389,8 @@
  reading, writing and spatial filtering will be added to the OGRLayer in 
  the future.
 
+ This method is the same as the C function OGR_L_GetNextFeature().
+
  @return a feature, or NULL if no more features are available. 
 
 */
@@ -265,6 +408,8 @@
  actually scan the entire layer once to count objects. 
 
  The returned count takes the spatial filter into account. 
+
+ This method is the same as the C function OGR_L_GetFeatureCount().
 
  @param bForce Flag indicating whether the count should be computed even
  if it is expensive.
@@ -292,6 +437,8 @@
 
  Layers without any geometry may return OGRERR_FAILURE just indicating that
  no meaningful extents could be collected.
+
+ This method is the same as the C function OGR_L_GetExtent().
 
  @param psExtent the structure in which the extent value will be returned.
 
@@ -325,6 +472,8 @@
  SRS as the layer (as returned by OGRLayer::GetSpatialRef()).  In the
  future this may be generalized. 
 
+ This method is the same as the C function OGR_L_SetSpatialFilter().
+
  @param poFilter the geometry to use as a filtering region.  NULL may
  be passed indicating that the current spatial filter should be cleared,
  but no new one instituted.
@@ -338,6 +487,8 @@
 
  The returned pointer is to an internally owned object, and should not
  be altered or deleted by the caller.  
+
+ This method is the same as the C function OGR_L_GetSpatialFilter().
 
  @return spatial filter geometry.
  
@@ -363,6 +514,8 @@
  Note that installing a query string will generally result in resetting
  the current reading position (ala ResetReading()).  
 
+ This method is the same as the C function OGR_L_SetAttributeFilter().
+
  @param pszQuery query in restricted SQL WHERE format, or NULL to clear the
  current query.
 
@@ -380,6 +533,8 @@
  modified or freed by the application.  It encapsulates the attribute schema
  of the features of the layer. 
 
+ This method is the same as the C function OGR_L_GetLayerDefn().
+
  @return feature definition.
 
 */
@@ -392,6 +547,8 @@
 
  The returned object is owned by the OGRLayer and should not be modified
  or freed by the application.  
+
+ This method is the same as the C function OGR_L_GetSpatialRef().
 
  @return spatial reference, or NULL if there isn't one.
 
@@ -417,6 +574,8 @@
  
  Sequential reads are generally considered interrupted bya GetFeature() call.
 
+ This method is the same as the C function OGR_L_GetFeature().
+
  @param nFID the feature id of the feature to read. 
 
  @return a feature now owned by the caller, or NULL on failure. 
@@ -434,6 +593,8 @@
 
  Use OGRLayer::TestCapability(OLCRandomWrite) to establish if this layer
  supports random access writing via SetFeature().
+
+ This method is the same as the C function OGR_L_SetFeature().
 
  @param poFeature the feature to write.
 
@@ -453,6 +614,8 @@
  OGRNullFID, then the native implementation may use that as the feature id
  of the new feature, but not necessarily.  Upon successful return the 
  passed feature will have been updated with the new feature id. 
+
+ This method is the same as the C function OGR_L_CreateFeature().
 
  @param poFeature the feature to write to disk. 
 
@@ -502,6 +665,8 @@ installed after which it will return FALSE.<p>
 TRUE if this layer can return its data extent (via OGRLayer::GetExtent()) efficiently ... ie. without scanning all the features.  In some cases this will return TRUE until a spatial filter is installed after which it will return FALSE.<p>
 
 </ul>
+ 
+ This method is the same as the C function OGR_L_TestCapability().
 
  @param pszCap the name of the capability to test.
 
@@ -520,10 +685,16 @@ OGRLayers will return FALSE for any unrecognised capabilities.<p>
  tag values will be defined with well known semantics, while other tags will
  be used for driver/application specific purposes.  
 
+ This method is deprecated and will be replaced with a more general 
+ metadata model in the future. At this time no drivers return information
+ via the GetInfo() call. 
+
  @param pszTag the tag for which information is being requested.
 
  @return the value of the requested tag, or NULL if that tag does not
  have a value, or is unknown.
 
 */
+
+
 
