@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/07/15 18:51:46  warmerda
+ * ensure even unshared datasets are dereferenced properly
+ *
  * Revision 1.5  2002/05/29 18:13:44  warmerda
  * added nodata handling for averager
  *
@@ -53,14 +56,14 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
-/*			    VRTSimpleSource                             */
+/*                          VRTSimpleSource                             */
 /* ==================================================================== */
 /************************************************************************/
 
 class VRTSimpleSource 
 {
 public:
-	    VRTSimpleSource();
+            VRTSimpleSource();
     virtual ~VRTSimpleSource();
 
     virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
@@ -81,7 +84,7 @@ public:
                                   int &nOutXOff, int &nOutYOff, 
                                   int &nOutXSize, int &nOutYSize );
 #endif
-    GDALRasterBand	*poRasterBand;
+    GDALRasterBand      *poRasterBand;
 
     int                 nSrcXOff;
     int                 nSrcYOff;
@@ -113,9 +116,13 @@ VRTSimpleSource::VRTSimpleSource()
 VRTSimpleSource::~VRTSimpleSource()
 
 {
-    if( poRasterBand != NULL && poRasterBand->GetDataset() != NULL 
-        && poRasterBand->GetDataset()->GetShared() )
-        GDALClose( (GDALDatasetH) poRasterBand->GetDataset() );
+    if( poRasterBand != NULL && poRasterBand->GetDataset() != NULL )
+    {
+        if( poRasterBand->GetDataset()->GetShared() )
+            GDALClose( (GDALDatasetH) poRasterBand->GetDataset() );
+        else
+            poRasterBand->GetDataset()->Dereference();
+    }
 }
 
 /************************************************************************/
@@ -164,8 +171,8 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /*      Translate requested region in virtual file into the source      */
 /*      band coordinates.                                               */
 /* -------------------------------------------------------------------- */
-    double	dfScaleX = nSrcXSize / (double) nDstXSize;
-    double	dfScaleY = nSrcYSize / (double) nDstYSize;
+    double      dfScaleX = nSrcXSize / (double) nDstXSize;
+    double      dfScaleY = nSrcYSize / (double) nDstYSize;
 
     nReqXOff = (int) floor((nXOff - nDstXOff) * dfScaleX + nSrcXOff);
     nReqYOff = (int) floor((nYOff - nDstYOff) * dfScaleY + nSrcYOff);
@@ -176,7 +183,7 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Clamp within the bounds of the available source data.           */
 /* -------------------------------------------------------------------- */
-    int	bModified = FALSE;
+    int bModified = FALSE;
 
     if( nReqXOff < 0 )
     {
@@ -248,7 +255,7 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 
 /************************************************************************/
 /* ==================================================================== */
-/*			   VRTAveragedSource                            */
+/*                         VRTAveragedSource                            */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -282,8 +289,8 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /*      Translate requested region in virtual file into the source      */
 /*      band coordinates.                                               */
 /* -------------------------------------------------------------------- */
-    double	dfScaleX = nSrcXSize / (double) nDstXSize;
-    double	dfScaleY = nSrcYSize / (double) nDstYSize;
+    double      dfScaleX = nSrcXSize / (double) nDstXSize;
+    double      dfScaleY = nSrcYSize / (double) nDstYSize;
 
     nReqXOff = (int) floor((nXOff - nDstXOff) * dfScaleX + nSrcXOff);
     nReqYOff = (int) floor((nYOff - nDstYOff) * dfScaleY + nSrcYOff);
@@ -294,7 +301,7 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Clamp within the bounds of the available source data.           */
 /* -------------------------------------------------------------------- */
-    int	bModified = FALSE;
+    int bModified = FALSE;
 
     if( nReqXOff < 0 )
     {
@@ -386,7 +393,7 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     for( int iBufLine = nOutYOff; iBufLine < nOutYOff + nOutYSize; iBufLine++ )
     {
-        double	dfYDst;
+        double  dfYDst;
 
         dfYDst = (iBufLine / (double) nBufYSize) * nYSize + nYOff;
         
@@ -468,7 +475,7 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 
 /************************************************************************/
 /* ==================================================================== */
-/*			    VRTRasterBand                               */
+/*                          VRTRasterBand                               */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -571,7 +578,7 @@ CPLErr VRTRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  int nPixelSpace, int nLineSpace )
 
 {
-    int		iSource;
+    int         iSource;
     CPLErr      eErr = CE_Failure;
 
     if( eRWFlag == GF_Write )
@@ -807,7 +814,7 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree )
 /* -------------------------------------------------------------------- */
 /*      Process SimpleSources.                                          */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode	*psChild;
+    CPLXMLNode  *psChild;
 
     for( psChild = psTree->psChild; psChild != NULL; psChild = psChild->psNext)
     {
@@ -932,7 +939,7 @@ CPLXMLNode *VRTRasterBand::SerializeToXML()
 /* -------------------------------------------------------------------- */
     for( int iSource = 0; iSource < nSources; iSource++ )
     {
-        CPLXMLNode	*psSrc;
+        CPLXMLNode      *psSrc;
         VRTSimpleSource *poSource = papoSources[iSource];
         GDALDataset     *poDS = poSource->poRasterBand->GetDataset();
 
