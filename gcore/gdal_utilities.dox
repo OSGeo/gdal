@@ -190,8 +190,6 @@ coordinate systems that can be passed are anything supported by the
 OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS
 and GCSes (ie. EPSG:4296), PROJ.4 declarations (as above), or the name
 of a .prf file containing well known text.
-<li> <b>-s_srs</b> <em>srs_def</em>: Overrides input projection, mostly useful
-for input files with incorrect or incomplete coordinate system information.
 <li> <b>-order</b> <em>n</em>: order of polynom used for warping (1 to 3) 
 <li> <b>-et</b> <em>err_threshold</em>: error threshold for transformation
 approximation (in pixel units - defaults to 0.125).
