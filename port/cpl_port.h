@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.14  1999/09/21 13:39:54  warmerda
+ * Added some more swapping macros.
+ *
  * Revision 1.13  1999/05/20 02:54:38  warmerda
  * Added API documentation
  *
@@ -283,6 +286,8 @@ m * this version of the CPL_SWAP64() macro with a less efficient one.
 #  define CPL_LSBWORD32(x)	CPL_SWAP32(x)
 #  define CPL_MSBPTR32(x)	
 #  define CPL_LSBPTR32(x)	CPL_SWAP32PTR(x)
+#  define CPL_MSBPTR64(x)       
+#  define CPL_LSBPTR64(x)       CPL_SWAP64PTR(x)
 #else
 #  define CPL_LSBWORD16(x)	(x)
 #  define CPL_MSBWORD16(x)	CPL_SWAP16(x)
@@ -290,6 +295,8 @@ m * this version of the CPL_SWAP64() macro with a less efficient one.
 #  define CPL_MSBWORD32(x)	CPL_SWAP32(x)
 #  define CPL_LSBPTR32(x)	
 #  define CPL_MSBPTR32(x)	CPL_SWAP32PTR(x)
+#  define CPL_LSBPTR64(x)       
+#  define CPL_MSBPTR64(x)       CPL_SWAP64PTR(x)
 #endif
 
 #endif /* ndef CPL_BASE_H_INCLUDED */
