@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/06/16 18:01:26  warmerda
+ * added debug output in case of assembly failure
+ *
  * Revision 1.4  1999/11/18 19:01:25  warmerda
  * expanded tabs
  *
@@ -209,7 +212,17 @@ OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
 /*      Did we fail to complete the ring?                               */
 /* -------------------------------------------------------------------- */
         if( !PointsEqual(poRing,0,poRing,poRing->getNumPoints()-1) )
+        {
+            CPLDebug( "S57", 
+                     "Failed to close ring %d.\n"
+                     "End Points are: (%.8f,%.7f) and (%.7f,%.7f)\n",
+                     poPolygon->getNumInteriorRings()+1,
+                     poRing->getX(0), poRing->getY(0), 
+                     poRing->getX(poRing->getNumPoints()-1), 
+                     poRing->getY(poRing->getNumPoints()-1) );
+
             bSuccess = FALSE;
+        }
 
         poPolygon->addRingDirectly( poRing );
     } /* next ring */
