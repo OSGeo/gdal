@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/12/12 17:17:57  warmerda
+ * Use CPLStat() for directories.
+ *
  * Revision 1.15  2001/11/11 23:50:59  warmerda
  * added required class keyword to friend declarations
  *
@@ -443,7 +446,7 @@ GDALDataset *GIODataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     VSIStatBuf      sStat;
 
-    if( VSIStat( pszCoverName, &sStat ) != 0 || !VSI_ISDIR(sStat.st_mode) )
+    if( CPLStat( pszCoverName, &sStat ) != 0 || !VSI_ISDIR(sStat.st_mode) )
     {
         CPLFree( pszCoverName );
         return NULL;
@@ -688,7 +691,7 @@ CPLErr GIODataset::Delete( const char * pszGridName )
         nGridIOSetupCalled = TRUE;
     }
     
-    if( VSIStat( pszGridName, &sStat ) != 0 || !VSI_ISDIR( sStat.st_mode ) )
+    if( CPLStat( pszGridName, &sStat ) != 0 || !VSI_ISDIR( sStat.st_mode ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s is not a grid directory.\n", 
