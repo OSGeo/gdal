@@ -6,7 +6,9 @@
 2) Update the release date, and number information at the top of gcore/gdal.h.
    Three macros: GDAL_VERSION_NUM, GDAL_RELEASE_DATE and GDAL_RELEASE_NAME.
 
-3) Prepare release overview in the NEWS file.  The cvs2cl.pl script can be 
+3) Update the VERSION file. 
+
+4) Prepare release overview in the NEWS file.  The cvs2cl.pl script can be 
    useful for collecting a full listing of all CVS log entries.  It can be
    useful to perform this and some of the other cvs intensive steps on 
    remotesensing.org if possible, to minimize CVS latency. 
@@ -15,14 +17,8 @@
 
    % cvs2cl.pl > AutoChangeLog
 
-4) Update the GDAL gcore/index.dox to refer to the newly to be created
+5) Update the GDAL gcore/index.dox to refer to the newly to be created
    source files, and commit. 
-
-5) Update the web site.  
-
-   % make docs
-   % cd html
-   % cvs commit -m update
 
 6) Tag the release set in CVS. 
 
@@ -42,10 +38,11 @@
    % scp gdal-1.1.5.tar.gz gdal115.zip remotesensing.org:/ftp/remotesensing/pub/gdal
    
 
-9) Announce release to the gdal-dev@yahoogroups.com and 
+9) Announce release to the gdal-dev@remotesensing.org and 
    sfcom-dev@yahoogroups.com mailing lists.
 
 10) Update the freshmeat.net entry for GDAL. 
+
 
 
 
