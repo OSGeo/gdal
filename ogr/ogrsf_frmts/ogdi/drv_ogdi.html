@@ -49,10 +49,34 @@ There is no update or creation support in the OGDI driver.<p>
 Raster layers cannot be accessed with this driver but can be accessed
 using the GDAL OGDI Raster driver.<p>
 
+<H3>Examples</H3>
+
+Usage example 'ogrinfo':<BR>
+ 
+<PRE>
+   ogrinfo gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia 'watrcrsl@hydro(*)_line'
+</PRE>
+<P>
+In the dataset name 'gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia' the gltp:/vrf
+part is not really in the filesystem, but has to be added.  The VPF data was at
+/usr4/mpp1/v0eur/. The 'eurnasia' directory should be at the same level as
+the dht. and lat. files. The 'hydro' reference is a subdirectory of 'eurnasia/'
+where watrcrsl.* is found.
+<P>
+
+Usage examples VMAP0 to SHAPE conversion with 'ogr2ogr':<BR>
+
+<PRE>
+   ogr2ogr watrcrsl.shp gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia 'watrcrsl@hydro(*)_line'
+   ogr2ogr polbnda.shp  gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia 'polbnda@bnd(*)_area'
+</PRE>
+
+
 <h3>See Also</h3>
 
 <ul>
 <li> <a href="http://ogdi.sourceforge.net/">OGDI.SourceForge.Net</a><p>
+<li> <a href="http://www.terragear.org/docs/vmap0/coverage.html">VMap0 Coverages</a>
 </ul>
 
 </body>
