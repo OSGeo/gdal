@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/10/29 17:48:34  warmerda
+ * Change sequence number check to a warning since the sequence numbers are
+ * apparently screwy in some otherwise interesting ESA/CEOS Landsat 7 files.
+ *
  * Revision 1.2  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -228,13 +232,11 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
     nSeqNum = CEOSScanInt( psRecord->pachData + 44, 4 );
     if( nSeqNum != 2 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "Got a %d file sequence number, instead of the expected\n"
-                  "2 indicating imagery on file %s.\n",
+                  "2 indicating imagery on file %s.\n"
+                  "Continuing to access anyways.\n", 
                   nSeqNum, pszFilename );
-
-        CEOSDestroyRecord( psRecord );
-        return NULL;
     }
     
 /* -------------------------------------------------------------------- */
