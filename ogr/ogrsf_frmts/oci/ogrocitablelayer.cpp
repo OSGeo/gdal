@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/02/10 15:46:02  fwarmerdam
+ * added GEOMETRY_NAME layer creation option
+ *
  * Revision 1.30  2004/11/22 19:24:15  fwarmerdam
  * added support for a list of tables in the datasource name
  *
@@ -1247,8 +1250,9 @@ void OGROCITableLayer::FinalizeNewLayer()
 /* -------------------------------------------------------------------- */
     sDimUpdate.Append( "INSERT INTO USER_SDO_GEOM_METADATA VALUES " );
     sDimUpdate.Appendf( strlen(poFeatureDefn->GetName()) + 100,
-                        "('%s', 'ORA_GEOMETRY', ",
-                        poFeatureDefn->GetName() );
+                        "('%s', '%s', ",
+                        poFeatureDefn->GetName(),
+                        pszGeomName );
 
     sDimUpdate.Append( "MDSYS.SDO_DIM_ARRAY(" );
     sDimUpdate.Appendf(200,

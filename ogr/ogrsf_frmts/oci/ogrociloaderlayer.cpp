@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/02/10 15:46:02  fwarmerdam
+ * added GEOMETRY_NAME layer creation option
+ *
  * Revision 1.3  2003/04/11 18:20:57  warmerda
  * added external dat file in VARIABLE mode
  *
@@ -127,6 +130,14 @@ void OGROCILoaderLayer::WriteLoaderHeader()
         return;
 
 /* -------------------------------------------------------------------- */
+/*      Determine name of geometry column to use.                       */
+/* -------------------------------------------------------------------- */
+    const char *pszGeometryName = 
+        CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
+    if( pszGeometryName == NULL )
+        pszGeometryName = "ORA_GEOMETRY";
+
+/* -------------------------------------------------------------------- */
 /*      Dermine our operation mode.                                     */
 /* -------------------------------------------------------------------- */
     const char *pszLDRMode = CSLFetchNameValue( papszOptions, "LOADER_MODE" );
@@ -168,7 +179,8 @@ void OGROCILoaderLayer::WriteLoaderHeader()
     VSIFPrintf( fpLoader, "FIELDS TERMINATED BY '|'\n" );
     VSIFPrintf( fpLoader, "TRAILING NULLCOLS (\n" );
     VSIFPrintf( fpLoader, "    ogr_fid INTEGER EXTERNAL,\n" );
-    VSIFPrintf( fpLoader, "    ora_geometry COLUMN OBJECT (\n" );
+    VSIFPrintf( fpLoader, "    %s COLUMN OBJECT (\n",
+                pszGeometryName );
     VSIFPrintf( fpLoader, "      SDO_GTYPE INTEGER EXTERNAL,\n" );
     VSIFPrintf( fpLoader, "      SDO_ELEM_INFO VARRAY TERMINATED BY '|/'\n" );
     VSIFPrintf( fpLoader, "        (elements INTEGER EXTERNAL),\n" );

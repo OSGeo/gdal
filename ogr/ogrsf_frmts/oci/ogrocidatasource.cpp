@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2005/02/10 15:46:02  fwarmerdam
+ * added GEOMETRY_NAME layer creation option
+ *
  * Revision 1.25  2004/11/22 19:24:15  fwarmerdam
  * added support for a list of tables in the datasource name
  *
@@ -520,16 +523,25 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
         strcpy( szSRSId, "NULL" );
 
 /* -------------------------------------------------------------------- */
+/*      Determine name of geometry column to use.                       */
+/* -------------------------------------------------------------------- */
+    const char *pszGeometryName = 
+        CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
+    if( pszGeometryName == NULL )
+        pszGeometryName = "ORA_GEOMETRY";
+
+/* -------------------------------------------------------------------- */
 /*      Create a basic table with the FID.  Also include the            */
 /*      geometry if this is not a PostGIS enabled table.                */
 /* -------------------------------------------------------------------- */
+   
     OGROCIStatement oStatement( poSession );
     
     sprintf( szCommand, 
              "CREATE TABLE \"%s\" ( "
              "OGR_FID INTEGER, "
-             "ORA_GEOMETRY %s )",
-             pszSafeLayerName, SDO_GEOMETRY );
+             "%s %s )",
+             pszSafeLayerName, pszGeometryName, SDO_GEOMETRY );
 
     if( oStatement.Execute( szCommand ) != CE_None )
     {
@@ -548,9 +560,11 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
                                         EQUAL(szSRSId,"NULL") ? -1 : atoi(szSRSId),
                                         TRUE, TRUE );
     else
-        poLayer = new OGROCILoaderLayer( this, pszSafeLayerName, "ORA_GEOMETRY",
-                                        EQUAL(szSRSId,"NULL") ? -1 : atoi(szSRSId),
-                                         pszLoaderFile );
+        poLayer = 
+            new OGROCILoaderLayer( this, pszSafeLayerName, 
+                                   pszGeometryName,
+                                   EQUAL(szSRSId,"NULL") ? -1 : atoi(szSRSId),
+                                   pszLoaderFile );
 
 /* -------------------------------------------------------------------- */
 /*      Set various options on the layer.                               */
