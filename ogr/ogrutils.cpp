@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/11/01 17:01:28  warmerda
+ * pass output buffer into OGRMakeWktCoordinate
+ *
  * Revision 1.6  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -63,31 +66,27 @@ CPL_CVSID("$Id$");
 /*      will have to tighten up in the future.                          */
 /************************************************************************/
 
-const char *OGRMakeWktCoordinate( double x, double y, double z )
+void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z )
 
 {
-    static char szCoordinate[80];
-
     if( z == 0 )
     {
         if( x == (int) x && y == (int) y )
-            sprintf( szCoordinate, "%d %d", (int) x, (int) y );
+            sprintf( pszTarget, "%d %d", (int) x, (int) y );
         else if( fabs(x) < 370 && fabs(y) < 370 )
-            sprintf( szCoordinate, "%.8f %.8f", x, y );
+            sprintf( pszTarget, "%.8f %.8f", x, y );
         else
-            sprintf( szCoordinate, "%.3f %.3f", x, y );
+            sprintf( pszTarget, "%.3f %.3f", x, y );
     }
     else
     {
         if( x == (int) x && y == (int) y && z == (int) z )
-            sprintf( szCoordinate, "%d %d %d", (int) x, (int) y, (int) z );
+            sprintf( pszTarget, "%d %d %d", (int) x, (int) y, (int) z );
         else if( fabs(x) < 370 && fabs(y) < 370 )
-            sprintf( szCoordinate, "%.8f %.8f %.3f", x, y, z );
+            sprintf( pszTarget, "%.8f %.8f %.3f", x, y, z );
         else
-            sprintf( szCoordinate, "%.3f %.3f %.3f", x, y, z );
+            sprintf( pszTarget, "%.3f %.3f %.3f", x, y, z );
     }
-
-    return szCoordinate;
 }
 
 /************************************************************************/
