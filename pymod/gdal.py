@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.63  2004/05/21 18:38:02  warmerda
+# added GetMinimum, GetMaximum, GetOffset and GetScale methods
+#
 # Revision 1.62  2004/04/24 21:28:20  warmerda
 # Added GetLastErrorType
 #
@@ -670,6 +673,46 @@ class Band(MajorObject):
 
     def SetNoDataValue(self,value):
         return _gdal.GDALSetRasterNoDataValue(self._o,value)
+
+    def GetMinimum(self):
+        c_success_flag = ptrcreate('int',0,1)
+        result = _gdal.GDALGetRasterMinimum(self._o,c_success_flag)
+        success_flag = ptrvalue(c_success_flag,0)
+        ptrfree(c_success_flag)
+        if success_flag:
+            return result
+        else:
+            return None
+
+    def GetMaximum(self):
+        c_success_flag = ptrcreate('int',0,1)
+        result = _gdal.GDALGetRasterMaximum(self._o,c_success_flag)
+        success_flag = ptrvalue(c_success_flag,0)
+        ptrfree(c_success_flag)
+        if success_flag:
+            return result
+        else:
+            return None
+
+    def GetOffset(self):
+        c_success_flag = ptrcreate('int',0,1)
+        result = _gdal.GDALGetRasterOffset(self._o,c_success_flag)
+        success_flag = ptrvalue(c_success_flag,0)
+        ptrfree(c_success_flag)
+        if success_flag:
+            return result
+        else:
+            return None
+
+    def GetScale(self):
+        c_success_flag = ptrcreate('int',0,1)
+        result = _gdal.GDALGetRasterScale(self._o,c_success_flag)
+        success_flag = ptrvalue(c_success_flag,0)
+        ptrfree(c_success_flag)
+        if success_flag:
+            return result
+        else:
+            return None
 
     def GetOverviewCount(self):
         return _gdal.GDALGetOverviewCount(self._o)
