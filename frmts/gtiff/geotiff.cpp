@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.73  2002/11/23 18:08:55  warmerda
+ * added CREATIONDATATYPES support on driver
+ *
  * Revision 1.72  2002/11/03 10:50:28  dron
  * Added GeoTIFF instance creation check.
  *
@@ -3171,6 +3174,8 @@ void GDALRegister_GTiff()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_gtiff.html" );
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/tiff" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "tif" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte UInt16 Int16 UInt32 Int32 Float32 CInt16 CInt32 CFloat32 CFloat64" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>"
 "   <Option name='COMPRESS' type='string-select'>"
