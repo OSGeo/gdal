@@ -19,6 +19,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/03/19 05:12:08  warmerda
+ * support table.* wildcard expansion
+ *
  * Revision 1.17  2003/03/05 05:08:29  warmerda
  * added preliminary support for joins
  *
@@ -157,7 +160,7 @@ static int swq_isalphanum( char c )
 
     if( (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
         || (c >= '0' && c <= '9') || c == '.' || c == '+' || c == '-'
-        || c == '_' )
+        || c == '_' || c == '*' )
         return TRUE;
     else
         return FALSE;
@@ -476,8 +479,10 @@ static int swq_identify_field( const char *token, swq_field_list *field_list,
                               field_list->table_defs[t_id].table_alias) != 0 )
                 continue;
 
+#ifdef notdef 
             if( t_id != 0 && table_name[0] == '\0' )
                 continue;
+#endif
         }
 
         /* We have a match, return various information */
@@ -1628,6 +1633,7 @@ const char *swq_select_expand_wildcard( swq_select *select_info,
                                         swq_field_list *field_list )
 
 {
+#ifdef notdef
 /* -------------------------------------------------------------------- */
 /*      Expand "*" field for selects.                                   */
 /* -------------------------------------------------------------------- */
@@ -1649,10 +1655,203 @@ const char *swq_select_expand_wildcard( swq_select *select_info,
         for( i = 0; i < select_info->result_columns; i++ )
         {
             swq_col_def *def = select_info->column_defs + i;
+            int compose = 0;
+            
+            if( field_list->table_ids != NULL 
+                && field_list->table_ids[i] != 0 )
+            {
+                /* does this field duplicate an earlier one? */
 
-            def->field_name = swq_strdup( field_list->names[i] );
+                int other;
+
+                for( other = 0; other < i; other++ )
+                {
+                    if( strcasecmp(field_list->names[other],
+                                   field_list->names[i]) == 0 )
+                    {
+                        compose = 1;
+                        break;
+                    }
+                }
+            }
+
+            if( !compose )
+                def->field_name = swq_strdup( field_list->names[i] );
+            else
+            {
+                int itable = field_list->table_ids[i];
+                char *composed_name;
+                const char *field_name = field_list->names[i];
+                const char *table_alias = 
+                    field_list->table_defs[itable].table_alias;
+
+                composed_name = (char *) 
+                    swq_malloc(strlen(field_name)+strlen(table_alias)+2);
+
+                sprintf( composed_name, "%s.%s", table_alias, field_name );
+
+                def->field_name = composed_name;
+            }
         }
+
+        return NULL;
     }
+#endif
+
+    int isrc;
+
+/* ==================================================================== */
+/*      Check each pre-expansion field.                                 */
+/* ==================================================================== */
+    for( isrc = 0; isrc < select_info->result_columns; isrc++ )
+    {
+        const char *src_fieldname = select_info->column_defs[isrc].field_name;
+        int itable, new_fields, i, iout;
+
+        if( src_fieldname[strlen(src_fieldname)-1] != '*' )
+            continue;
+
+        /* We don't want to expand COUNT(*) */
+        if( select_info->column_defs[isrc].col_func_name != NULL )
+            continue;
+
+/* -------------------------------------------------------------------- */
+/*      Parse out the table name, verify it, and establish the          */
+/*      number of fields to insert from it.                             */
+/* -------------------------------------------------------------------- */
+        if( strcmp(src_fieldname,"*") == 0 )
+        {
+            itable = -1;
+            new_fields = field_list->count;
+        }
+        else if( strlen(src_fieldname) < 3 
+                 || src_fieldname[strlen(src_fieldname)-2] != '.' )
+        {
+            sprintf( swq_error, "Ill formatted field definition '%s'.",
+                     src_fieldname );
+            return swq_error;
+        }
+        else
+        {
+            char *table_name = swq_strdup( src_fieldname );
+            table_name[strlen(src_fieldname)-2] = '\0';
+
+            for( itable = 0; itable < field_list->table_count; itable++ )
+            {
+                if( strcasecmp(table_name,
+                        field_list->table_defs[itable].table_alias ) == 0 )
+                    break;
+            }
+            
+            if( itable == field_list->table_count )
+            {
+                sprintf( swq_error, 
+                         "Table %s not recognised from %s definition.", 
+                         table_name, src_fieldname );
+                swq_free( table_name );
+                return swq_error;
+            }
+            swq_free( table_name );
+            
+            /* count the number of fields in this table. */
+            new_fields = 0;
+            for( i = 0; i < field_list->count; i++ )
+            {
+                if( field_list->table_ids[i] == itable )
+                    new_fields++;
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Reallocate the column list larger.                              */
+/* -------------------------------------------------------------------- */
+        SWQ_FREE( select_info->column_defs[isrc].field_name );
+        select_info->column_defs = (swq_col_def *) 
+            swq_realloc( select_info->column_defs, 
+                         sizeof(swq_col_def) * select_info->result_columns, 
+                         sizeof(swq_col_def) * 
+                         (select_info->result_columns + new_fields - 1 ) );
+
+/* -------------------------------------------------------------------- */
+/*      Push the old definitions that came after the one to be          */
+/*      replaced further up in the array.                               */
+/* -------------------------------------------------------------------- */
+        for( i = select_info->result_columns-1; i > isrc; i-- )
+        {
+            memcpy( select_info->column_defs + i + new_fields - 1,
+                    select_info->column_defs + i,
+                    sizeof( swq_col_def ) );
+        }
+
+        select_info->result_columns += (new_fields - 1 );
+
+/* -------------------------------------------------------------------- */
+/*      Zero out all the stuff in the target column definitions.        */
+/* -------------------------------------------------------------------- */
+        memset( select_info->column_defs + i, 0, 
+                new_fields * sizeof(swq_col_def) );
+
+/* -------------------------------------------------------------------- */
+/*      Assign the selected fields.                                     */
+/* -------------------------------------------------------------------- */
+        iout = isrc;
+        
+        for( i = 0; i < field_list->count; i++ )
+        {
+            swq_col_def *def = select_info->column_defs + iout;
+            int compose = itable != -1;
+
+            /* skip this field if it isn't in the target table.  */
+            if( itable != -1 && field_list->table_ids != NULL 
+                && itable != field_list->table_ids[i] )
+                continue;
+
+            /* does this field duplicate an earlier one? */
+            if( field_list->table_ids != NULL 
+                && field_list->table_ids[i] != 0 
+                && !compose )
+            {
+                int other;
+
+                for( other = 0; other < i; other++ )
+                {
+                    if( strcasecmp(field_list->names[i],
+                                   field_list->names[other]) == 0 )
+                    {
+                        compose = 1;
+                        break;
+                    }
+                }
+            }
+
+            if( !compose )
+                def->field_name = swq_strdup( field_list->names[i] );
+            else
+            {
+                int itable = field_list->table_ids[i];
+                char *composed_name;
+                const char *field_name = field_list->names[i];
+                const char *table_alias = 
+                    field_list->table_defs[itable].table_alias;
+
+                composed_name = (char *) 
+                    swq_malloc(strlen(field_name)+strlen(table_alias)+2);
+
+                sprintf( composed_name, "%s.%s", table_alias, field_name );
+
+                def->field_name = composed_name;
+            }							
+
+            iout++;
+
+            /* All the other table info will be provided by the later
+               parse operation. */
+        }
+
+        return NULL;
+    }
+
+    
 
     return NULL;
 }
