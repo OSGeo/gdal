@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2002/04/17 21:43:09  warmerda
+ * Free z array in descructor.
+ *
  * Revision 1.27  2002/04/08 17:50:09  warmerda
  * Ensure Equal operator tests first vertex too.
  *
@@ -144,6 +147,8 @@ OGRLineString::~OGRLineString()
 {
     if( paoPoints != NULL )
         OGRFree( paoPoints );
+    if( padfZ != NULL )
+        OGRFree( padfZ );
 }
 
 /************************************************************************/
