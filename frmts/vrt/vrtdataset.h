@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/11/24 04:29:02  warmerda
+ * Substantially rewrote VRTSimpleSource.  Now VRTSource is base class, and
+ * sources do their own SerializeToXML(), and XMLInit().  New VRTComplexSource
+ * supports scaling and nodata values.
+ *
  * Revision 1.4  2002/05/29 18:13:44  warmerda
  * added nodata handling for averager
  *
@@ -56,10 +61,26 @@ int VRTApplyMetadata( CPLXMLNode *, GDALMajorObject * );
 CPLXMLNode *VRTSerializeMetadata( GDALMajorObject * );
 
 /************************************************************************/
-/*                              VRTDataset                              */
+/*                              VRTSource                               */
 /************************************************************************/
 
-class VRTRasterBand;
+class VRTSource 
+{
+public:
+    virtual ~VRTSource();
+
+    virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
+                              void *pData, int nBufXSize, int nBufYSize, 
+                              GDALDataType eBufType, 
+                              int nPixelSpace, int nLineSpace ) = 0;
+
+    virtual CPLErr  XMLInit( CPLXMLNode *psTree ) = 0;
+    virtual CPLXMLNode *SerializeToXML() = 0;
+};
+
+/************************************************************************/
+/*                              VRTDataset                              */
+/************************************************************************/
 
 class CPL_DLL VRTDataset : public GDALDataset
 {
@@ -107,12 +128,10 @@ class CPL_DLL VRTDataset : public GDALDataset
 /*                            VRTRasterBand                             */
 /************************************************************************/
 
-class VRTSimpleSource;
-
 class CPL_DLL VRTRasterBand : public GDALRasterBand
 {
     int		   nSources;
-    VRTSimpleSource **papoSources;
+    VRTSource    **papoSources;
 
     int            bNoDataValueSet;
     double         dfNoDataValue;
@@ -141,6 +160,7 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
 
 #define VRT_NODATA_UNSET -1234.56
 
+    CPLErr         AddSource( VRTSource * );
     CPLErr         AddSimpleSource( GDALRasterBand *poSrcBand, 
                                     int nSrcXOff=-1, int nSrcYOff=-1, 
                                     int nSrcXSize=-1, int nSrcYSize=-1, 
@@ -148,6 +168,14 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
                                     int nDstXSize=-1, int nDstYSize=-1,
                                     const char *pszResampling = "near",
                                     double dfNoDataValue = VRT_NODATA_UNSET);
+    CPLErr         AddComplexSource( GDALRasterBand *poSrcBand, 
+                                     int nSrcXOff=-1, int nSrcYOff=-1, 
+                                     int nSrcXSize=-1, int nSrcYSize=-1, 
+                                     int nDstXOff=-1, int nDstYOff=-1, 
+                                     int nDstXSize=-1, int nDstYSize=-1,
+                                     double dfScaleOff=0.0, 
+                                     double dfScaleRatio=1.0,
+                                     double dfNoDataValue = VRT_NODATA_UNSET);
 
     virtual CPLErr IReadBlock( int, int, void * );
 
