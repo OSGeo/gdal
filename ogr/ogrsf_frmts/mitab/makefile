@@ -11,7 +11,7 @@
 
 OBJ	= 	mitab_rawbinblock.obj mitab_mapheaderblock.obj \
 		mitab_mapindexblock.obj mitab_indfile.obj \
-		mitab_tabview.obj \
+		mitab_tabview.obj mitab_bounds.obj \
 	  	mitab_mapobjectblock.obj mitab_mapcoordblock.obj \
 		mitab_feature.obj mitab_feature_mif.obj \
 	  	mitab_mapfile.obj mitab_idfile.obj mitab_datfile.obj \
