@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.31  2003/09/28 05:45:02  dron
+ * More logic to distinguish dimesions.
+ *
  * Revision 1.30  2003/09/05 18:15:43  dron
  * Fixes in ASTER DEM zone detection.
  *
@@ -986,30 +989,41 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         switch( poDS->iRank )
         {
             case 2:
-            poDS->nBands = 1;
-            poDS->iXDim = 1;
-            poDS->iYDim = 0;
-            break;
-            case 3:
-            if( poDS->aiDimSizes[0] < poDS->aiDimSizes[2] )
-            {
-                poDS->iBandDim = 0;
-                poDS->iXDim = 2;
-                poDS->iYDim = 1;
-            }
-            else
-            {
-                poDS->iBandDim = 2;
+                poDS->nBands = 1;
                 poDS->iXDim = 1;
                 poDS->iYDim = 0;
-            }
-            poDS->nBands = poDS->aiDimSizes[poDS->iBandDim];
-            break;
+                break;
+            case 3:
+                if( poDS->aiDimSizes[0] < poDS->aiDimSizes[2] )
+                {
+                    poDS->iBandDim = 0;
+                    poDS->iXDim = 2;
+                    poDS->iYDim = 1;
+                }
+                else
+                {
+                    if( poDS->aiDimSizes[1] <= poDS->aiDimSizes[0] &&
+                        poDS->aiDimSizes[1] <= poDS->aiDimSizes[2] )
+                    {
+                        poDS->iBandDim = 1;
+                        poDS->iXDim = 2;
+                        poDS->iYDim = 0;
+                    }
+                    else
+                    {
+                        poDS->iBandDim = 2;
+                        poDS->iXDim = 1;
+                        poDS->iYDim = 0;
+
+                    }
+                }
+                poDS->nBands = poDS->aiDimSizes[poDS->iBandDim];
+                break;
             case 4: // FIXME
-            poDS->nBands = poDS->aiDimSizes[2] * poDS->aiDimSizes[3];
-            break;
+                poDS->nBands = poDS->aiDimSizes[2] * poDS->aiDimSizes[3];
+                break;
             default:
-            break;
+                break;
         }
         break;
         case HDF4_GR:
