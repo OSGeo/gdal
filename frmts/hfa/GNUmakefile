@@ -16,7 +16,7 @@ IMG_DATA_DIR	=	/usr2/data/imagine
 default:	$(OBJ)
 
 clean:
-	rm -f *.o hfatest
+	rm -f *.o hfatest img2tif
 
 %.o:	%.cpp
 	$(CC) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port \
