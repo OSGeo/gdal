@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/03/07 18:24:12  warmerda
+ * expand tabs
+ *
  * Revision 1.1  2003/03/04 14:16:10  warmerda
  * New
  *
@@ -71,7 +74,7 @@ public:
 class CPL_DLL OGRLayerAttrIndex
 {
 protected:
-    OGRLayer	*poLayer;
+    OGRLayer    *poLayer;
     char        *pszIndexPath;
 
                 OGRLayerAttrIndex();
