@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.113  2004/08/25 19:10:28  warmerda
+ * Try and write out ExtraSamples values if we have extra samples.
+ * Apparently this is required by the TIFF spec!
+ *
  * Revision 1.112  2004/08/14 00:05:33  warmerda
  * finished changes to support external overviews if file readonly
  *
@@ -2667,7 +2671,7 @@ TIFF *GTiffCreate( const char * pszFilename,
         else
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                     "INTERLEAVE=%s unsupported, value must be PIXEL or BAND.",
+                      "INTERLEAVE=%s unsupported, value must be PIXEL or BAND.",
                       pszValue );
             return NULL;
         }
@@ -2738,6 +2742,8 @@ TIFF *GTiffCreate( const char * pszFilename,
 /*      Setup Photometric Interpretation. Take this value from the user */
 /*      passed option or guess correct value otherwise.                 */
 /* -------------------------------------------------------------------- */
+    int nSamplesAccountedFor = 1;
+
     pszValue = CSLFetchNameValue(papszParmList,"PHOTOMETRIC");
     if( pszValue != NULL )
     {
@@ -2746,17 +2752,35 @@ TIFF *GTiffCreate( const char * pszFilename,
         else if( EQUAL( pszValue, "MINISWHITE" ) )
             TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISWHITE );
         else if( EQUAL( pszValue, "RGB" ))
+        {
             TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
+            nSamplesAccountedFor = 3;
+        }
         else if( EQUAL( pszValue, "CMYK" ))
+        {
             TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_SEPARATED );
+            nSamplesAccountedFor = 4;
+        }
         else if( EQUAL( pszValue, "YCBCR" ))
+        {
             TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_YCBCR );
+            nSamplesAccountedFor = 3;
+        }
         else if( EQUAL( pszValue, "CIELAB" ))
+        {
             TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_CIELAB );
+            nSamplesAccountedFor = 3;
+        }
         else if( EQUAL( pszValue, "ICCLAB" ))
+        {
             TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_ICCLAB );
+            nSamplesAccountedFor = 3;
+        }
         else if( EQUAL( pszValue, "ITULAB" ))
+        {
             TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_ITULAB );
+            nSamplesAccountedFor = 3;
+        }
         else
         {
             CPLError( CE_Warning, CPLE_IllegalArg, 
@@ -2773,7 +2797,10 @@ TIFF *GTiffCreate( const char * pszFilename,
          * assume it is RGB. In all other cases assume it is MINISBLACK.
          */
         if( nBands == 3 && eType == GDT_Byte )
+        {
             TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
+            nSamplesAccountedFor = 3;
+        }
         else if( nBands == 4 && eType == GDT_Byte )
         {
             uint16 v[1];
@@ -2781,9 +2808,31 @@ TIFF *GTiffCreate( const char * pszFilename,
             v[0] = EXTRASAMPLE_ASSOCALPHA;
             TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, 1, v);
             TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
+            nSamplesAccountedFor = 4;
         }
         else
+        {
             TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
+            nSamplesAccountedFor = 1;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If there are extra samples, we need to mark them with an        */
+/*      appropriate extrasamples definition here.                       */
+/* -------------------------------------------------------------------- */
+    if( nBands > nSamplesAccountedFor )
+    {
+        uint16 *v;
+        int i;
+        int nExtraSamples = nBands - nSamplesAccountedFor;
+
+        v = (uint16 *) CPLMalloc( sizeof(uint16) * nExtraSamples );
+        
+        for( i = 0; i < nExtraSamples; i++ )
+            v[i] = EXTRASAMPLE_UNSPECIFIED;
+
+        TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, nExtraSamples, v );
     }
     
 /* -------------------------------------------------------------------- */
