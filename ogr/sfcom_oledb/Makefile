@@ -1,10 +1,7 @@
 
-MSDASDK =	F:\MSDASDK
-VSTUDIO =       F:\VisualStudio
-
-EXTRAFLAGS =	-I$(VSTUDIO)\VC98\ATL\Include \
+EXTRAFLAGS =	-I$(VCDIR)\ATL\Include \
 		-I$(MSDASDK)\include\oledb -I.. /W2 \
-		-I..\..\frmts\shapelib
+		-I..\ogrsf_frmts\shape
 
 GDAL_ROOT = 	..\..
 
@@ -34,4 +31,5 @@ clean:
 SF.h:      SF.idl
 	midl /tlb SF.tlb /h SF.h /Oicf /iid SF_i.c SF.idl
 
-
+install:      SF.dll
+	regsvr32 SF.dll
