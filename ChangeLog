@@ -1,3 +1,9 @@
+2002-07-16  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* /gdal/frmts/fast/{fastdataset.cpp, GNUmakefile, makefile.vc}:
+	New read only driver for EOSAT FAST format. Currently works for
+	Landsat TM only.
+
 2002-08-10  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* configure.in: fixed bug with libjpeg test reported by 
