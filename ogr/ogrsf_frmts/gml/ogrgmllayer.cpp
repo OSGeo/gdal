@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/03/06 20:08:24  warmerda
+ * add accelerated GetFeatureCount and GetExtent
+ *
  * Revision 1.2  2002/01/25 21:00:31  warmerda
  * fix some small bugs found by MS VC++
  *
@@ -71,6 +74,8 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
 /* -------------------------------------------------------------------- */
     if( !bWriter )
         poFClass = poDS->GetReader()->GetClass( pszName );
+    else
+        poFClass = NULL;
 }
 
 /************************************************************************/
@@ -172,6 +177,45 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 }
 
 /************************************************************************/
+/*                          GetFeatureCount()                           */
+/************************************************************************/
+
+int OGRGMLLayer::GetFeatureCount( int bForce )
+
+{
+    if( poFClass == NULL )
+        return 0;
+
+    if( poFilterGeom != NULL || m_poAttrQuery != NULL )
+        return OGRLayer::GetFeatureCount( bForce );
+    else
+        return poFClass->GetFeatureCount();
+}
+
+/************************************************************************/
+/*                             GetExtent()                              */
+/************************************************************************/
+
+OGRErr OGRGMLLayer::GetExtent(OGREnvelope *psExtent, int bForce )
+
+{
+    double dfXMin, dfXMax, dfYMin, dfYMax;
+
+    if( poFClass != NULL && 
+        poFClass->GetExtents( &dfXMin, &dfXMax, &dfYMin, &dfYMax ) )
+    {
+        psExtent->MinX = dfXMin;
+        psExtent->MaxX = dfXMax;
+        psExtent->MinY = dfYMin;
+        psExtent->MaxY = dfYMax;
+
+        return OGRERR_NONE;
+    }
+    else 
+        return OGRLayer::GetExtent( psExtent, bForce );
+}
+
+/************************************************************************/
 /*                           CreateFeature()                            */
 /************************************************************************/
 
@@ -234,6 +278,24 @@ int OGRGMLLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCCreateField) )
         return bWriter && iNextGMLId == 0;
+
+    else if( EQUAL(pszCap,OLCFastGetExtent) )
+    {
+        double	dfXMin, dfXMax, dfYMin, dfYMax;
+
+        if( poFClass == NULL )
+            return FALSE;
+
+        return poFClass->GetExtents( &dfXMin, &dfXMax, &dfYMin, &dfYMax );
+    }
+
+    else if( EQUAL(pszCap,OLCFastFeatureCount) )
+    {
+        if( poFClass == NULL || poFilterGeom != NULL || m_poAttrQuery != NULL )
+            return FALSE;
+
+        return poFClass->GetFeatureCount() != -1;
+    }
 
     else 
         return FALSE;
