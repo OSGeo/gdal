@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/11/12 19:45:54  warmerda
+ * added support to update TCB in DGNCreate
+ *
  * Revision 1.3  2002/11/11 20:38:43  warmerda
  * implemented write api
  *
@@ -309,7 +312,7 @@ int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
  * @param dfOriginX the X origin for the file.  
  * @param dfOriginY the Y origin for the file. 
  * @param dfOriginZ the Z origin for the file. 
- * @param nMasterUnitPerSubUnit the number of subunits in one master unit.
+ * @param nSubUnitPerMasterUnit the number of subunits in one master unit.
  * @param nUORPerSubUnit the number of UOR (units of resolution) per subunit.
  * @param pszMasterUnits the name of the master units (2 characters). 
  * @param pszSubUnits the name of the subunits (2 characters). 
@@ -319,7 +322,7 @@ DGNHandle
       DGNCreate( const char *pszNewFilename, const char *pszSeedFile, 
                  int nCreationFlags, 
                  double dfOriginX, double dfOriginY, double dfOriginZ,
-                 int nMasterUnitPerSubUnit, int nUORPerSubUnit, 
+                 int nSubUnitsPerMasterUnit, int nUORPerSubUnit, 
                  const char *pszMasterUnits, const char *pszSubUnits )
 
 {
@@ -358,7 +361,34 @@ DGNHandle
     
     memcpy( pabyRawTCB, psSrcTCB->raw_data, psSrcTCB->raw_bytes );
 
-    /* add changes later */
+    if( !(nCreationFlags & DGNCF_USE_SEED_UNITS) )
+    {
+        memcpy( pabyRawTCB+1120, pszMasterUnits, 2 );
+        memcpy( pabyRawTCB+1122, pszSubUnits, 2 );
+
+        DGN_WRITE_INT32( nUORPerSubUnit, pabyRawTCB+1116 );
+        DGN_WRITE_INT32( nSubUnitsPerMasterUnit, pabyRawTCB+1112 );
+    }
+    else
+    {
+        nUORPerSubUnit = DGN_INT32( pabyRawTCB+1120 );
+        nSubUnitsPerMasterUnit = DGN_INT32( pabyRawTCB+1112 );
+    }
+
+    if( !(nCreationFlags & DGNCF_USE_SEED_ORIGIN) )
+    {
+        dfOriginX *= (nUORPerSubUnit * nSubUnitsPerMasterUnit);
+        dfOriginY *= (nUORPerSubUnit * nSubUnitsPerMasterUnit);
+        dfOriginZ *= (nUORPerSubUnit * nSubUnitsPerMasterUnit);
+
+        memcpy( pabyRawTCB+1240, &dfOriginX, 8 );
+        memcpy( pabyRawTCB+1248, &dfOriginY, 8 );
+        memcpy( pabyRawTCB+1256, &dfOriginZ, 8 );
+
+        IEEE2DGNDouble( pabyRawTCB+1240 );
+        IEEE2DGNDouble( pabyRawTCB+1248 );
+        IEEE2DGNDouble( pabyRawTCB+1246 );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write TCB and EOF to new file.                                  */
