@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/08/30 02:14:50  warmerda
+ * Provide for control of max number of field instances dumped via environment.
+ *
  * Revision 1.13  2001/08/27 19:09:00  warmerda
  * added GetInstanceData() method on DDFField
  *
@@ -110,6 +113,11 @@ void DDFField::Initialize( DDFFieldDefn *poDefnIn, const char * pachDataIn,
 void DDFField::Dump( FILE * fp )
 
 {
+    int		nMaxRepeat = 8;
+
+    if( getenv("DDF_MAXDUMP") != NULL )
+        nMaxRepeat = atoi(getenv("DDF_MAXDUMP"));
+
     fprintf( fp, "  DDFField:\n" );
     fprintf( fp, "      Tag = `%s'\n", poDefn->GetName() );
     fprintf( fp, "      DataSize = %d\n", nDataSize );
@@ -134,7 +142,7 @@ void DDFField::Dump( FILE * fp )
 
     for( nLoopCount = 0; nLoopCount < GetRepeatCount(); nLoopCount++ )
     {
-        if( nLoopCount > 8 )
+        if( nLoopCount > nMaxRepeat )
         {
             fprintf( fp, "      ...\n" );
             break;
