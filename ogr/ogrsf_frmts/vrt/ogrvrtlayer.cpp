@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/11/10 20:11:55  warmerda
+ * Allow any UserInput in LayerSYS
+ *
  * Revision 1.2  2003/11/07 21:55:12  warmerda
  * complete fid support, relative dsname, fixes
  *
@@ -251,7 +254,7 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory )
 /*      Apply a spatial reference system if provided, otherwise copy    */
 /*      from source.                                                    */
 /* -------------------------------------------------------------------- */
-     char *pszLayerSRS = (char *) CPLGetXMLValue( psLTree, "LayerSRS", NULL );
+     const char *pszLayerSRS = CPLGetXMLValue( psLTree, "LayerSRS", NULL );
 
      if( pszLayerSRS != NULL )
      {
@@ -261,7 +264,7 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory )
          {
              OGRSpatialReference oSRS;
 
-             if( oSRS.importFromWkt( &pszLayerSRS ) != OGRERR_NONE )
+             if( oSRS.SetFromUserInput( pszLayerSRS ) != OGRERR_NONE )
              {
                  CPLError( CE_Failure, CPLE_AppDefined, 
                            "Failed to import LayerSRS `%s'.", pszLayerSRS );
