@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2002/07/15 13:31:07  warmerda
+ * patch from Graeme for exportToWkb() with swapping code
+ *
  * Revision 1.29  2002/05/02 19:45:36  warmerda
  * added flattenTo2D() method
  *
@@ -772,9 +775,9 @@ OGRErr  OGRLineString::exportToWkb( OGRwkbByteOrder eByteOrder,
         nCount = CPL_SWAP32( nPointCount );
         memcpy( pabyData+5, &nCount, 4 );
 
-        for( i = getCoordinateDimension() * 3 - 1; i >= 0; i-- )
+        for( i = getCoordinateDimension() * nPointCount - 1; i >= 0; i-- )
         {
-            CPL_SWAPDOUBLE( pabyData + 9 + 8 * i );
+            CPL_SWAP64PTR( pabyData + 9 + 8 * i );
         }
     }
     
