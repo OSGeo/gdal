@@ -6,8 +6,10 @@
 Most forms of TIFF and GeoTIFF files are supported by GDAL for reading, and
 somewhat less varieties can be written.
 
-Currently band types of Byte, UInt16, Int16, and Float32 are supported for
-reading.  Paletted images will return palette information associated with
+Currently band types of Byte, UInt16, Int16, UInt32, Int32, Float32, Float64, 
+CInt16, CInt32, CFloat32 and CFloat64 are supported for
+reading and writing.  
+Paletted images will return palette information associated with
 the band.  The compression formats listed below should be supported for
 reading as well. 
 
@@ -19,12 +21,14 @@ be found at the location pointed to by the GEOTIFF_CSV environment variable.
 
 <h2>Creation Issues</h2>
 
-GeoTIFF files can be created with image band types of Byte, UInt16, Int16, 
-and Float32.  Other types are not currently supported for creation.  Created
-files may have any number of bands.  Files with exactly 3 bands will be
-given a photometric interpretation of RGB, while all other combinations will
-have a photometric interpretation of Min Is White.  It is not currently 
-possible to create TIFF files with pseudo-color tables with GDAL.<p>
+GeoTIFF files can be created with any GDAL defined band type, including
+the complex types.  Created files may have any number of bands.  Files 
+with exactly 3 bands will be
+given a photometric interpretation of RGB, files with exactly four bands
+will have a photometric interpretation of RGBA, while all other combinations 
+will have a photometric interpretation of MIN_IS_WHITE.  Files with
+pseudo-color tables, or GCPs can currently only be created when creating from 
+an existing GDAL dataset with those objects (GDALDriver::CreateCopy()).<p>
 
 Creation Options:<p>
 
@@ -45,7 +49,6 @@ unavailable.  None is the default.<p>
 </ul>
 
 GeoTIFF supports internal creation of overviews (with gdaladdo for instance).
-
 
 See Also:<p>
 
