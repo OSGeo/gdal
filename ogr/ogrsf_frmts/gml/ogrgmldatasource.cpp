@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/01/15 20:53:16  warmerda
+ * Ensure that ogr namespace is defined.
+ *
  * Revision 1.13  2003/05/21 03:48:35  warmerda
  * Expand tabs
  *
@@ -385,6 +388,8 @@ int OGRGMLDataSource::Create( const char *pszFilename,
         CPLFree( pszBasename );
     }
 
+    VSIFPrintf( fpOutput, "%s", 
+                "     xmlns:ogr=\"http://ogr.maptools.org/\"\n" );
     VSIFPrintf( fpOutput, "%s", 
                 "     xmlns:gml=\"http://www.opengis.net/gml\">\n" );
 
