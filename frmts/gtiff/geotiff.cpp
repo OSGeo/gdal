@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.77  2002/12/04 16:30:06  warmerda
+ * moved GDALReadTabFile() to core
+ *
  * Revision 1.76  2002/12/04 03:25:57  warmerda
  * Fixed small memory leak.
  *
@@ -98,7 +101,6 @@
 #include "geo_normalize.h"
 #include "tif_ovrcache.h"
 #include "cpl_string.h"
-#include "ogr_spatialref.h"
 #include "cpl_csv.h"
 #include "cpl_minixml.h"
 
@@ -109,11 +111,6 @@ void	GDALRegister_GTiff(void);
 char *  GTIFGetOGISDefn( GTIFDefn * );
 int     GTIFSetFromOGISDefn( GTIF *, const char * );
 CPL_C_END
-
-#ifdef HAVE_MITAB
-// from mitab component.
-OGRSpatialReference * MITABCoordSys2SpatialRef( const char * pszCoordSys );
-#endif
 
 static void GTiffOneTimeInit();
 #define TIFFTAG_GDAL_METADATA  42112
@@ -976,141 +973,6 @@ GDALColorTable *GTiffBitmapBand::GetColorTable()
 
 {
     return poColorTable;
-}
-
-/************************************************************************/
-/*                         GDALReadTabFile()                            */
-/*                                                                      */
-/*      Helper function for translator implementators wanting           */
-/*      support for MapInfo .tab-files.                                 */
-/************************************************************************/
-
-#define MAX_GCP 256
- 
-static int GDALReadTabFile( const char * pszBaseFilename, 
-                            double *padfGeoTransform,
-                            OGRSpatialReference **ppoSRS,
-                            int *pnGCPCount, GDAL_GCP **ppasGCPs )
-
-
-{
-    const char	*pszTAB;
-    FILE	*fpTAB;
-    char	**papszLines;
-    char    **papszTok=NULL;
-    int 	bTypeRasterFound = FALSE;
-    int		bInsideTableDef = FALSE;
-    int		iLine, numLines=0;
-    int 	nCoordinateCount = 0;
-    GDAL_GCP    asGCPs[MAX_GCP];
-    
-
-/* -------------------------------------------------------------------- */
-/*      Try lower case, then upper case.                                */
-/* -------------------------------------------------------------------- */
-    pszTAB = CPLResetExtension( pszBaseFilename, "tab" );
-
-    fpTAB = VSIFOpen( pszTAB, "rt" );
-
-#ifndef WIN32
-    if( fpTAB == NULL )
-    {
-        pszTAB = CPLResetExtension( pszBaseFilename, "TAB" );
-        fpTAB = VSIFOpen( pszTAB, "rt" );
-    }
-#endif
-    
-    if( fpTAB == NULL )
-        return FALSE;
-
-    VSIFClose( fpTAB );
-
-/* -------------------------------------------------------------------- */
-/*      We found the file, now load and parse it.                       */
-/* -------------------------------------------------------------------- */
-    papszLines = CSLLoad( pszTAB );
-
-    numLines = CSLCount(papszLines);
-
-    // Iterate all lines in the TAB-file
-    for(iLine=0; iLine<numLines; iLine++)
-    {
-        CSLDestroy(papszTok);
-        papszTok = CSLTokenizeStringComplex(papszLines[iLine], " \t(),;", 
-                                            TRUE, FALSE);
-
-        if (CSLCount(papszTok) < 2)
-            continue;
-
-        // Did we find table definition
-        if (EQUAL(papszTok[0], "Definition") && EQUAL(papszTok[1], "Table") )
-        {
-            bInsideTableDef = TRUE;
-        }
-        else if (bInsideTableDef && (EQUAL(papszTok[0], "Type")) )
-        {
-            // Only RASTER-type will be handled
-            if (EQUAL(papszTok[1], "RASTER"))
-            {
-            	bTypeRasterFound = TRUE;
-            }
-            else
-            {
-                CSLDestroy(papszTok);
-                CSLDestroy(papszLines);
-                return FALSE;
-            }
-        }
-        else if (bTypeRasterFound && bInsideTableDef
-                 && CSLCount(papszTok) > 5
-                 && EQUAL(papszTok[4], "Label") 
-                 && nCoordinateCount < MAX_GCP )
-        {
-            GDALInitGCPs( 1, asGCPs + nCoordinateCount );
-            
-            asGCPs[nCoordinateCount].dfGCPPixel = atof(papszTok[2]);
-            asGCPs[nCoordinateCount].dfGCPLine = atof(papszTok[3]);
-            asGCPs[nCoordinateCount].dfGCPX = atof(papszTok[0]);
-            asGCPs[nCoordinateCount].dfGCPY = atof(papszTok[1]);
-            CPLFree( asGCPs[nCoordinateCount].pszId );
-            asGCPs[nCoordinateCount].pszId = CPLStrdup(papszTok[5]);
-
-            nCoordinateCount++;
-        }
-        else if( bTypeRasterFound && bInsideTableDef 
-                 && EQUAL(papszTok[0],"CoordSys") )
-        {
-#ifdef HAVE_MITAB
-            *ppoSRS = MITABCoordSys2SpatialRef( papszLines[iLine] );
-#endif
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Try to convert the GCPs into a geotransform definition, if      */
-/*      possible.  Otherwise we will need to use them as GCPs.          */
-/* -------------------------------------------------------------------- */
-    if( !GDALGCPsToGeoTransform( nCoordinateCount, asGCPs, padfGeoTransform, 
-                                 FALSE ) )
-    {
-        CPLDebug( "GDAL", 
-                  "GDALReadTabFile(%s) found file, wasn't able to derive a\n"
-                  "first order geotransform.  Using points as GCPs.",
-                  pszTAB );
-
-        *ppasGCPs = (GDAL_GCP *) 
-            CPLCalloc(sizeof(GDAL_GCP),nCoordinateCount);
-        memcpy( *ppasGCPs, asGCPs, sizeof(GDAL_GCP) * nCoordinateCount );
-        *pnGCPCount = nCoordinateCount;
-    }
-    else
-    {
-        GDALDeinitGCPs( nCoordinateCount, asGCPs );
-    }
-     
-    CSLDestroy(papszTok);
-    CSLDestroy(papszLines);
-    return FALSE;
 }
 
 /************************************************************************/
@@ -2043,7 +1905,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 /* -------------------------------------------------------------------- */
     if( bBaseIn )
     {
-        OGRSpatialReference *poTabSRS = NULL;
+        char *pszTabWKT = NULL;
         double	*padfTiePoints, *padfScale, *padfMatrix;
         int16	nCount;
 
@@ -2128,7 +1990,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
             {
                 bGeoTransformValid = 
                     GDALReadTabFile( GetDescription(), adfGeoTransform, 
-                                     &poTabSRS, &nGCPCount, &pasGCPList );
+                                     &pszTabWKT, &nGCPCount, &pasGCPList );
             }
         }
 
@@ -2154,12 +2016,12 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
             pszProjection = GTIFGetOGISDefn( &sGTIFDefn );
         }
 
-        if( poTabSRS != NULL 
+        if( pszTabWKT != NULL 
             && (pszProjection == NULL || pszProjection[0] == '\0') )
         {
             CPLFree( pszProjection );
-            pszProjection = NULL;
-            poTabSRS->exportToWkt( &pszProjection );
+            pszProjection = pszTabWKT;
+            pszTabWKT = NULL;
         }
         else
         {
@@ -2168,8 +2030,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
     
         GTIFFree( hGTIF );
 
-        if( poTabSRS != NULL )
-            delete poTabSRS;
+        if( pszTabWKT != NULL )
+            CPLFree( pszTabWKT );
 
         bGeoTIFFInfoChanged = FALSE;
 
