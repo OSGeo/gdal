@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.78  2002/12/05 19:05:29  warmerda
+ * Fixed recent bug with geotiff projection.
+ *
  * Revision 1.77  2002/12/04 16:30:06  warmerda
  * moved GDALReadTabFile() to core
  *
@@ -2023,7 +2026,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
             pszProjection = pszTabWKT;
             pszTabWKT = NULL;
         }
-        else
+
+        if( pszProjection == NULL )
         {
             pszProjection = CPLStrdup( "" );
         }
