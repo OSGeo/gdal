@@ -53,6 +53,9 @@ GDAL primary ftp site, and http mirror site:<p>
 <a href="ftp://ftp.remotesensing.org/gdal">ftp://ftp.remotesensing.org/gdal</a><p>
 <a href="http://gdal.maptools.org/dl/">http://gdal.maptools.org/dl</a><p>
 
+The <a href="NEWS.html">NEWS</a> file describes features added up to the
+most recent public release.<p>
+
 Late each night a development snapshot is captured from CVS and made available.
 These snapshots are not stable releases, and might (on a bad night) not even
 build.  However, they do contain essentially the latest code.  They can be
