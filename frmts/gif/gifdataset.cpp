@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.19  2003/11/07 18:33:10  warmerda
+ * additional transparent hack for AUG
+ *
  * Revision 1.18  2003/10/15 14:02:07  warmerda
  * treat background color as NODATA
  *
@@ -250,7 +253,12 @@ GIFRasterBand::GIFRasterBand( GIFDataset *poDS, int nBand,
 /*      transparent in some apps (like MapServer).                      */
 /* -------------------------------------------------------------------- */
     if( nTransparentColor == -1 )
-        nTransparentColor = nBackground;
+    {
+	if( nBackground == 255 )
+	    nTransparentColor = 0;
+	else
+	    nTransparentColor = nBackground;
+    }
 }
 
 /************************************************************************/
