@@ -185,7 +185,7 @@ C++ the following could be used:
   poSrcDS = (GDALDataset *) GDALOpenShared( "utm.tif", GA_ReadOnly );
 
   poVRTDS = 
-    poDriver->CreateCopy( "wrk.vrt", poSourceDS, FALSE, NULL, NULL, NULL );
+    poDriver->CreateCopy( "wrk.vrt", poSrcDS, FALSE, NULL, NULL, NULL );
   delete poVRTDS;
   delete poSrcDS;
 \endcode
@@ -198,7 +198,7 @@ then used as a modified source to pass to a CreateCopy() written out in TIFF
 format. 
 
 \code
-  poVRTDS = poDriver->CreateCopy( "", poSourceDS, FALSE, NULL, NULL, NULL );
+  poVRTDS = poDriver->CreateCopy( "", poSrcDS, FALSE, NULL, NULL, NULL );
 
   poVRTDS->SetMetadataItem( "SourceAgency", "United States Geological Survey");
   poVRTDS->SetMetadataItem( "SourceDate", "July 21, 2003" );
@@ -254,7 +254,7 @@ changing is the data source for each band.
 
   poSrcDS = (GDALDataset *) GDALOpenShared( pszSourceFilename, GA_ReadOnly );
 
-  poVRTDS = poDriver->CreateCopy( "", poSourceDS, FALSE, NULL, NULL, NULL );
+  poVRTDS = poDriver->CreateCopy( "", poSrcDS, FALSE, NULL, NULL, NULL );
 
   for( nBand = 1; nBand <= poVRTDS->GetRasterCount(); nBand++ )
   {
