@@ -3,7 +3,7 @@
  *
  * Project:  ASI CEOS Translator
  * Purpose:  GDALDataset driver for CEOS translator.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Atlantis Scientific Inc.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2001/10/23 14:27:15  warmerda
+ * D-PAF ERS-1: add naming convention
+ *
  * Revision 1.19  2001/10/18 17:04:09  warmerda
  * added hacks to determine record length and pd pixels/line for Telaviv ERS data
  *
@@ -116,6 +119,9 @@ char *CeosExtension[][6] = {
 
 /* Ers-2 from Telaviv */
 { "volume", "leader", "image", "trailer", "nul_dat", "whole" },
+
+/* Ers-1 from D-PAF */
+{ "VDF", "LF", "SLC", "", "", "ext" },
 
 /* end marker */
 { NULL, NULL, NULL, NULL, NULL, NULL } 
