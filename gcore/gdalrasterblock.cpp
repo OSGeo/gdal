@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/04/25 19:48:16  warmerda
+ * added block locking to ensure in-use blocks arent flushed
+ *
  * Revision 1.10  2003/02/21 20:07:55  warmerda
  * update header
  *
@@ -149,16 +152,33 @@ int GDALGetCacheUsed()
 int GDALFlushCacheBlock()
 
 {
-    if( poOldest == NULL )
-        return FALSE;
-    poOldest->GetBand()->FlushBlock( poOldest->GetXOff(), 
-                                     poOldest->GetYOff() );
-
-    return TRUE;
+    return GDALRasterBlock::FlushCacheBlock();
 }
 
 /************************************************************************/
-/*                           GDALRasterBand()                           */
+/*                          FlushCacheBlock()                           */
+/************************************************************************/
+
+int GDALRasterBlock::FlushCacheBlock()
+
+{
+    GDALRasterBlock *poTarget = poOldest;
+
+    while( poTarget != NULL && poTarget->GetLockCount() > 0 ) 
+        poTarget = poTarget->poPrevious;
+
+    if( poTarget != NULL )
+    {
+        poTarget->GetBand()->FlushBlock( poTarget->GetXOff(), 
+                                         poTarget->GetYOff() );
+        return TRUE;
+    }
+    else
+        return FALSE;
+}
+
+/************************************************************************/
+/*                          GDALRasterBlock()                           */
 /************************************************************************/
 
 GDALRasterBlock::GDALRasterBlock( GDALRasterBand *poBandIn, 
@@ -171,6 +191,7 @@ GDALRasterBlock::GDALRasterBlock( GDALRasterBand *poBandIn,
     eType = poBand->GetRasterDataType();
     pData = NULL;
     bDirty = FALSE;
+    nLockCount = 0;
 
     poNext = poPrevious = NULL;
 
@@ -208,6 +229,8 @@ GDALRasterBlock::~GDALRasterBlock()
 
     if( poNext != NULL )
         poNext->poPrevious = poPrevious;
+
+    CPLAssert( nLockCount == 0 );
 
 #ifdef ENABLE_DEBUG
     Verify();
@@ -333,6 +356,8 @@ CPLErr GDALRasterBlock::Internalize()
 /* -------------------------------------------------------------------- */
 /*      Flush old blocks if we are nearing our memory limit.            */
 /* -------------------------------------------------------------------- */
+    AddLock(); /* don't flush this block! */
+
     nCacheUsed += nSizeInBytes;
     while( nCacheUsed > nCurCacheMax )
     {
@@ -341,21 +366,16 @@ CPLErr GDALRasterBlock::Internalize()
         GDALFlushCacheBlock();
 
         if( nCacheUsed == nOldCacheUsed )
-        {
-            static int bReported = FALSE;
-
-            if( !bReported )
-            {
-                bReported = TRUE;
-            }
             break;
-        }
     }
+
+    DropLock();
 
 /* -------------------------------------------------------------------- */
 /*      Add this block to the list.                                     */
 /* -------------------------------------------------------------------- */
     Touch();
+
     return( CE_None );
 }
 
