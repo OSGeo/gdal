@@ -3,7 +3,10 @@
 
 1) Place Release notice in ChangeLog file. 
 
-2) Prepare release overview in the NEWS file.  The cvs2cl.pl script can be 
+2) Update the release date, and number information at the top of core/gdal.h.
+   Three macros: GDAL_VERSION_NUM, GDAL_RELEASE_DATE and GDAL_RELEASE_NAME.
+
+3) Prepare release overview in the NEWS file.  The cvs2cl.pl script can be 
    useful for collecting a full listing of all CVS log entries.  It can be
    useful to perform this and some of the other cvs intensive steps on 
    remotesensing.org if possible, to minimize CVS latency. 
@@ -12,37 +15,37 @@
 
    % cvs2cl.pl > AutoChangeLog
 
-3) Update the GDAL html/gdal_index.html to refer to the newly to be created
+4) Update the GDAL html/gdal_index.html to refer to the newly to be created
    source files, and commit. 
 
-4) Update the web site.  
+5) Update the web site.  
 
    % make docs
    % cd html
    % cvs commit -m update
 
-5) Tag the release set in CVS. 
+6) Tag the release set in CVS. 
 
    eg. 
    % cvs tag gdal_1_1_6 
 
-6) Create the source distributions using the mkgdaldist.sh script.  The
+7) Create the source distributions using the mkgdaldist.sh script.  The
    argument should be the version number (ie. 1.1.6).  Hit enter when 
    prompted for a CVS password.
 
    eg.
    % mkgdaldist.sh 1.1.6
 
-7) Publish the resulting files.  
+8) Publish the resulting files.  
 
    eg.
    % scp gdal-1.1.5.tar.gz gdal115.zip remotesensing.org:/ftp/remotesensing/pub/gdal
    
 
-8) Announce release to the gdal-dev@yahoogroups.com and 
+9) Announce release to the gdal-dev@yahoogroups.com and 
    sfcom-dev@yahoogroups.com mailing lists.
 
-9) Update the freshmeat.net entry for GDAL. 
+10) Update the freshmeat.net entry for GDAL. 
 
 
 

@@ -1,3 +1,8 @@
+2002-01-12  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* core/gdal.h: added GDAL_VERSION_NUM, GDAL_RELEASE_DATE and
+	GDAL_RELEASE_NAME macros.
+
 2001-12-15  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* core/gdaldriver.cpp: try to ensure that poDriver gets set on 
