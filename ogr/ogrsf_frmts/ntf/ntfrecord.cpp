@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/02/08 20:43:06  warmerda
+ * improved error checking and propagation
+ *
  * Revision 1.3  2001/12/12 02:48:43  warmerda
  * ensure cplreadline buffer freed
  *
@@ -78,6 +81,8 @@ NTFRecord::NTFRecord( FILE * fp )
         nNewLength = strlen(pszLine);
         if( pszLine[nNewLength-1] != '%' )
         {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Corrupt NTF record, missing end '%%'." );
             CPLFree( pszData );
             pszData = NULL;
             break;

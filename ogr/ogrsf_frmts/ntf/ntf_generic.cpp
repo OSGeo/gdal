@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/02/08 20:43:06  warmerda
+ * improved error checking and propagation
+ *
  * Revision 1.15  2001/12/11 20:37:49  warmerda
  * add option to avoid caching indexed records on multiple readers
  *
@@ -209,7 +212,11 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
     NTFRecord   **papoGroup = NULL;
 
     if( poReader->GetNTFLevel() > 2 )
+    {
         poReader->IndexFile();
+        if( CPLGetLastErrorType() == CE_Failure )
+            return;
+    }
     else
         poReader->Reset();
 

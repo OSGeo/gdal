@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2002/02/08 20:43:06  warmerda
+ * improved error checking and propagation
+ *
  * Revision 1.23  2001/12/12 02:47:10  warmerda
  * avoid leaking records, check odd conditions
  *
@@ -575,12 +578,14 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 /* -------------------------------------------------------------------- */
 /*      Ensure we have appropriate layers defined.                      */
 /* -------------------------------------------------------------------- */
+    CPLErrorReset();
+
     if( !IsRasterProduct() )
         EstablishLayers();
     else
         EstablishRasterAccess();
     
-    return TRUE;
+    return CPLGetLastErrorType() != CE_Failure;
 }
 
 /************************************************************************/
@@ -1239,11 +1244,19 @@ NTFRecord *NTFFileReader::ReadRecord()
     {
         NTFRecord       *poRecord;
 
+        CPLErrorReset();
         if( fp != NULL )
             nPreSavedPos = VSIFTell( fp );
         poRecord = new NTFRecord( fp );
         if( fp != NULL )
             nPostSavedPos = VSIFTell( fp );
+
+        /* ensure termination if we fail to read a record */
+        if( CPLGetLastErrorType() == CE_Failure )
+        {
+            delete poRecord;
+            poRecord = NULL;
+        }
 
         return poRecord;
     }
@@ -1445,7 +1458,8 @@ NTFRecord **NTFFileReader::ReadRecordGroup()
 /* -------------------------------------------------------------------- */
 /*      Push the last record back on the input queue.                   */
 /* -------------------------------------------------------------------- */
-   SaveRecord( poRecord );
+   if( poRecord != NULL )
+       SaveRecord( poRecord );
 
 /* -------------------------------------------------------------------- */
 /*      Return the list, or NULL if we didn't get any records.          */
@@ -1629,7 +1643,8 @@ void NTFFileReader::IndexFile()
 
         if( iType < 0 || iType >= 100 )
         {
-            CPLDebug( "OGR_NTF", "Illegal type %d record, skipping.", 
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Illegal type %d record, skipping.", 
                       iType );
             delete poRecord;
             continue;
