@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2002/08/28 20:08:47  warmerda
+ * added some poRow == NULL testing in GetRCDBStatus
+ *
  * Revision 1.25  2002/08/28 16:30:46  warmerda
  * fixed bug 1 related to CAtlArray.Add() method
  *
@@ -670,6 +673,12 @@ public CCRRowsetImpl<CSFSessionSchemaOGISGeoColumns,OGISGeometry_Row,CSFSession>
 
             if( lstrcmpW(poColInfo->pwszName,L"ADSK_GEOM_EXTENT") == 0 )
             {
+                if( poRow == NULL )
+                {
+                    CPLDebug( "OGR_OLEDB", "CSFSessionSchemaOGISGeoColumns::GetRCDBStatus() - poRow == NULL" );
+                    return DBSTATUS_S_OK;
+                }
+                
                 if( poRow->m_pADSK_GEOM_EXTENT == NULL )
                     return DBSTATUS_S_ISNULL;
             }
@@ -997,6 +1006,12 @@ public CCRRowsetImpl<CSFSessionSchemaSpatRef,OGISSpat_Row,CSFSession>
             }
             if( lstrcmpW(poColInfo->pwszName,L"SPATIAL_REF_SYSTEM_WKT") == 0 )
             {
+                if( poRow == NULL )
+                {
+                    CPLDebug( "OGR_OLEDB", "CSFSessionSchemaSpatRef::GetRCDBStatus() - poRow == NULL" );
+                    return DBSTATUS_S_OK;
+                }
+                
                 if( lstrcmpW(poRow->m_pszSpatialRefSystem,L"") == 0 )
                     return DBSTATUS_S_ISNULL;
             }
