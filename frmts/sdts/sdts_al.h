@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/05/11 14:05:59  warmerda
+ * added SDTSTransfer and SDTSPolygonreader
+ *
  * Revision 1.4  1999/05/07 13:45:01  warmerda
  * major upgrade to use iso8211lib
  *
@@ -48,12 +51,6 @@
 #include "cpl_conv.h"
 #include "iso8211.h"
 
-/* -------------------------------------------------------------------- */
-/*      scal_Record                                                     */
-/*                                                                      */
-/*      This is a slighly extended record with some more convenient     */
-/*      subfield fetching methods.                                      */
-/* -------------------------------------------------------------------- */
 class SDTS_IREF;
 
 #define SDTS_SIZEOF_SADR	8
@@ -90,6 +87,14 @@ class SDTS_IREF
 /************************************************************************/
 class SDTS_CATDEntry;
 
+typedef enum {
+  SLTUnknown,
+  SLTPoint,
+  SLTLine,
+  SLTAttr,
+  SLTPoly
+} SDTSLayerType;
+
 class SDTS_CATD
 {
     char	*pszPrefixPath;
@@ -103,11 +108,13 @@ class SDTS_CATD
 
     int         Read( const char * pszFilename );
 
-    const char  *getModuleFilePath( const char * pszModule );
+    const char  *GetModuleFilePath( const char * pszModule );
 
-    int		getEntryCount() { return nEntries; }
-    const char * getEntryModule(int);
-    const char * getEntryType(int);
+    int		GetEntryCount() { return nEntries; }
+    const char * GetEntryModule(int);
+    const char * GetEntryTypeDesc(int);
+    const char * GetEntryFilePath(int);
+    SDTSLayerType GetEntryType(int);
 };
 
 /************************************************************************/
@@ -146,6 +153,7 @@ class SDTSModId
     		SDTSModId() { szModule[0] = '\0'; nRecord = -1; }
 
     int		Set( DDFField * );
+    const char *GetName();
     
     char	szModule[8];
     long	nRecord;
@@ -255,6 +263,82 @@ class SDTSRawPoint
     int		nAttributes;
     SDTSModId	aoATID[MAX_RAWPOINT_ATID];  /* ATID (attribute) references */
     SDTSModId   oAreaId;		/* ARID */
+};
+
+/************************************************************************/
+/*                          SDTSPolygonReader                           */
+/*                                                                      */
+/*      Class for reading any of the polygon files.                     */
+/************************************************************************/
+
+class SDTSRawPolygon;
+
+class SDTSPolygonReader
+{
+    DDFModule	oDDFModule;
+    
+  public:
+    		SDTSPolygonReader();
+                ~SDTSPolygonReader();
+
+    int         Open( const char * );
+    SDTSRawPolygon *GetNextPolygon( void );
+    void	Close();
+};
+
+/************************************************************************/
+/*                             SDTSRawPolygon                           */
+/*                                                                      */
+/*      Simple container for the information from a polygon             */
+/************************************************************************/
+
+class SDTSRawPolygon
+{
+  public:
+    		SDTSRawPolygon();
+
+    int         Read( DDFRecord * );
+
+    SDTSModId	oPolyId;
+     
+#define MAX_RAWPOLYGON_ATID	3    
+    int		nAttributes;
+    SDTSModId	aoATID[MAX_RAWPOLYGON_ATID];  /* ATID (attribute) references */
+    SDTSModId   oAreaId;		      /* ARID */
+};
+
+/************************************************************************/
+/*                             SDTSTransfer                             */
+/************************************************************************/
+
+class SDTSTransfer
+{
+  public:
+    		SDTSTransfer();
+                ~SDTSTransfer();
+
+    int		Open( const char * );
+    void	Close();
+
+    int		GetLayerCount() { return nLayers; }
+    SDTSLayerType GetLayerType( int );
+    int		GetLayerCATDEntry( int );
+
+    SDTSLineReader *GetLayerLineReader( int );
+    SDTSPointReader *GetLayerPointReader( int );
+    SDTSAttrReader *GetLayerAttrReader( int );
+    DDFModule	*GetLayerModuleReader( int );
+
+    SDTS_CATD	*GetCATD() { return &oCATD ; }
+    SDTS_IREF	*GetIREF() { return &oIREF; }
+                
+  private:
+
+    SDTS_CATD	oCATD;
+    SDTS_IREF	oIREF;
+
+    int		nLayers;
+    int		*panLayerCATDEntry;
 };
 
 #endif /* ndef SDTS_AL_H_INCLUDED */
