@@ -18,4 +18,16 @@ base:	    $(BOBJ)
 
 clean:
 	-del *.obj
+	-del *.exe
+
+sdts2shp.exe:	sdts2shp.cpp $(BOBJ)
+	$(CC) $(CFLAGS) /I..\shapelib sdts2shp.cpp $(BOBJ) \
+		..\iso8211\ddfmodule.cpp \
+		..\iso8211\ddfutils.cpp \
+		..\iso8211\ddffielddefn.cpp \
+		..\iso8211\ddfrecord.cpp \
+		..\iso8211\ddffield.cpp \
+		..\iso8211\ddfsubfielddefn.cpp \
+		..\shapelib\shpopen.c ..\shapelib\dbfopen.c \
+			$(GDAL_ROOT)\port\cpl.lib $(LIBS) 
 
