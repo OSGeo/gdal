@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.18  2003/10/15 14:02:07  warmerda
+ * treat background color as NODATA
+ *
  * Revision 1.17  2003/07/08 21:14:16  warmerda
  * avoid warnings
  *
@@ -144,7 +147,7 @@ class GIFRasterBand : public GDALRasterBand
 
   public:
 
-                   GIFRasterBand( GIFDataset *, int, SavedImage * );
+                   GIFRasterBand( GIFDataset *, int, SavedImage *, int );
     virtual       ~GIFRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
@@ -159,7 +162,7 @@ class GIFRasterBand : public GDALRasterBand
 /************************************************************************/
 
 GIFRasterBand::GIFRasterBand( GIFDataset *poDS, int nBand, 
-                              SavedImage *psSavedImage )
+                              SavedImage *psSavedImage, int nBackground )
 
 {
     this->poDS = poDS;
@@ -237,6 +240,17 @@ GIFRasterBand::GIFRasterBand( GIFDataset *poDS, int nBand,
 
         poColorTable->SetColorEntry( iColor, &oEntry );
     }
+
+/* -------------------------------------------------------------------- */
+/*      If we have a known background color, but no identified          */
+/*      transparent color, then we use the background color as the      */
+/*      NODATA value, but we don't mark it in the colormap as           */
+/*      transparent.  "background" is a slightly different concept      */
+/*      than transparent, but we still want to be able to do it         */
+/*      transparent in some apps (like MapServer).                      */
+/* -------------------------------------------------------------------- */
+    if( nTransparentColor == -1 )
+        nTransparentColor = nBackground;
 }
 
 /************************************************************************/
@@ -435,7 +449,8 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
             continue;
 
         poDS->SetBand( poDS->nBands+1, 
-                       new GIFRasterBand( poDS, poDS->nBands+1, psImage ));
+                       new GIFRasterBand( poDS, poDS->nBands+1, psImage,
+                                          hGifFile->SBackGroundColor ));
     }
 
 /* -------------------------------------------------------------------- */
