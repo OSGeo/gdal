@@ -18,19 +18,14 @@ SUBLIBS	:= lib-geotiff $(SUBLIBS)
 TIFF_OPTS	:=	-Ilibgeotiff $(TIFF_OPTS)
 endif
 
+CPPFLAGS	=	$(GDAL_INCLUDE) $(TIFF_OPTS)
+
 default:	$(OBJ) $(SUBLIBS)
 
 clean:
 	rm -f *.o
 	(cd libtiff; $(MAKE) clean)
 	(cd libgeotiff; $(MAKE) clean)
-
-%.o:	%.c
-	$(CC) -c $(GDAL_INCLUDE) $(TIFF_OPTS) $(CFLAGS) $*.c -o $*.o
-
-%.o:	%.cpp
-	$(CXX) -c $(GDAL_INCLUDE) $(TIFF_OPTS) $(CXXFLAGS) $*.cpp -o $*.o
-
 
 gt_test:	gt_test.o gt_gs.o cpl_csv.o
 	$(CC) gt_test.o gt_gs.o cpl_csv.o $(GDAL_ROOT)/port/*.o \
