@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.18  2001/03/21 15:00:49  warmerda
+ * Escape % signs in printf() format.
+ *
  * Revision 1.17  2001/03/20 20:20:14  warmerda
  * Added % handling, fixed completion, fixed adGeoTransform (Mark Salazar)
  *
@@ -99,7 +102,7 @@ static void Usage()
     printf( "Usage: gdal_translate \n"
             "       [-ot {Byte/UInt16/UInt32/Int32/Float32/Float64/CInt16/\n"
             "             CInt32/CFloat32/CFloat64}]\n"
-            "       [-of format] [-b band] [-outsize xsize[%] ysize[%]]\n"
+            "       [-of format] [-b band] [-outsize xsize[%%] ysize[%%]]\n"
             "       [-srcwin xoff yoff xsize ysize] [-co \"NAME=VALUE\"]*\n"
             "       src_dataset dst_dataset\n\n" );
 
