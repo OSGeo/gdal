@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/04/11 18:20:57  warmerda
+ * added external dat file in VARIABLE mode
+ *
  * Revision 1.15  2003/04/11 16:27:42  warmerda
  * add support for bound feature writing in OGROCITableLayer
  *
@@ -378,8 +381,12 @@ class OGROCILoaderLayer : public OGROCIWritableLayer
     OGREnvelope         sExtent;
     int                 iNextFIDToWrite;
 
+    char                *pszLoaderFilename;
+    
     FILE		*fpLoader;
     int                 bHeaderWritten;
+
+    FILE                *fpData;
 
     int                 nLDRMode;
 
