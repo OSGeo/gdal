@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/06/23 18:31:39  warmerda
+ * fixed field alignment for a few fields on write
+ *
  * Revision 1.12  2003/06/06 17:10:14  warmerda
  * Improved header size test to support large headers, even those as large as
  * the whole file.
@@ -376,7 +379,7 @@ NITFFile *NITFCreate( const char *pszFilename,
     OVR(18,achHeader+324, OPHONE       ,""                              );
     PLACE (achHeader+342, FL           ,"????????????"                  );
     PLACE (achHeader+354, HL           ,"000404"                        );
-    PLACE (achHeader+360, NUMI         ,"1"                             );
+    PLACE (achHeader+360, NUMI         ,"001"                           );
     PLACE (achHeader+363, LISH1        ,"??????"                        );
     PLACE (achHeader+369, LI1          ,CPLSPrintf("%010d",nImageSize)  );
     PLACE (achHeader+379, NUMS         ,"000"                           );
@@ -496,12 +499,12 @@ NITFFile *NITFCreate( const char *pszFilename,
     PLACE(pachIMHDR+nOffset+ 10, NPPBH , CPLSPrintf("%04d",nNPPBH)      );
     PLACE(pachIMHDR+nOffset+ 14, NPPBV , CPLSPrintf("%04d",nNPPBV)      );
     PLACE(pachIMHDR+nOffset+ 18, NBPP  , CPLSPrintf("%02d",nBitsPerSample) );
-    PLACE(pachIMHDR+nOffset+ 22, IDLVL , "001"                          );
-    PLACE(pachIMHDR+nOffset+ 25, IALVL , "000"                          );
-    PLACE(pachIMHDR+nOffset+ 28, ILOC  , "0000000000"                   );
-    PLACE(pachIMHDR+nOffset+ 38, IMAG  , "1.0 "                         );
-    PLACE(pachIMHDR+nOffset+ 42, UDIDL , "00000"                        );
-    PLACE(pachIMHDR+nOffset+ 47, IXSHDL, "00000"                        );
+    PLACE(pachIMHDR+nOffset+ 20, IDLVL , "001"                          );
+    PLACE(pachIMHDR+nOffset+ 23, IALVL , "000"                          );
+    PLACE(pachIMHDR+nOffset+ 26, ILOC  , "0000000000"                   );
+    PLACE(pachIMHDR+nOffset+ 36, IMAG  , "1.0 "                         );
+    PLACE(pachIMHDR+nOffset+ 40, UDIDL , "00000"                        );
+    PLACE(pachIMHDR+nOffset+ 45, IXSHDL, "00000"                        );
 
     nOffset += 53;
 
