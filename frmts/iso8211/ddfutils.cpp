@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/06 14:23:49  warmerda
+ * optimised DDFScanInt()
+ *
  * Revision 1.1  1999/04/27 18:45:05  warmerda
  * New
  *
@@ -52,10 +55,8 @@ long DDFScanInt( const char * pszString, int nMaxChars )
     if( nMaxChars > 32 || nMaxChars == 0 )
         nMaxChars = 32;
 
-    for( i = 0; i < nMaxChars && pszString[i] != '\0'; i++ )
-        szWorking[i] = pszString[i];
-
-    szWorking[i] = '\0';
+    memcpy( szWorking, pszString, nMaxChars );
+    szWorking[nMaxChars] = '\0';
 
     return( atoi(szWorking) );
 }
