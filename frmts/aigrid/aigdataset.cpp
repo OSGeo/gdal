@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/03/03 15:27:54  warmerda
+ * The ULX and ULY values are edges, not pixel centers.  Fixed geotransform.
+ *
  * Revision 1.18  2003/02/13 17:22:37  warmerda
  * updated email
  *
@@ -392,11 +395,11 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 CPLErr AIGDataset::GetGeoTransform( double * padfTransform )
 
 {
-    padfTransform[0] = psInfo->dfLLX - psInfo->dfCellSizeX*0.5;
+    padfTransform[0] = psInfo->dfLLX;
     padfTransform[1] = psInfo->dfCellSizeX;
     padfTransform[2] = 0;
 
-    padfTransform[3] = psInfo->dfURY + psInfo->dfCellSizeY*0.5;
+    padfTransform[3] = psInfo->dfURY;
     padfTransform[4] = 0;
     padfTransform[5] = -psInfo->dfCellSizeY;
     
