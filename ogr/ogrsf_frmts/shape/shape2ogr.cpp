@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/04/17 21:49:02  warmerda
+ * Fixed a bug writing arcs with Z coordinates.
+ *
  * Revision 1.18  2002/04/17 20:03:27  warmerda
  * Try to preserve Z values on read.
  *
@@ -311,7 +314,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
             
             padfX[iPoint] = poPoint->getX();
             padfY[iPoint] = poPoint->getY();
-            padfZ[iPoint] = poPoint->getY();
+            padfZ[iPoint] = poPoint->getZ();
         }
 
         psShape = SHPCreateSimpleObject( hSHP->nShapeType,
