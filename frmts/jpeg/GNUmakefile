@@ -2,6 +2,7 @@ GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
+ifeq ($(JPEG_SETTING),internal)
 OBJ	=	\
 	jcapimin.o jcapistd.o jccoefct.o jccolor.o jcdctmgr.o jchuff.o \
         jcinit.o jcmainct.o jcmarker.o jcmaster.o jcomapi.o jcparam.o \
@@ -13,6 +14,9 @@ OBJ	=	\
         jquant2.o jutils.o jmemmgr.o jmemansi.o \
 	\
 	jpgdataset.o
+else
+OBJ	=	jpgdataset.o
+endif
 
 XTRA_OPT	=	
 
