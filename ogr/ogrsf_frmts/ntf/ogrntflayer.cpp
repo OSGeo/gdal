@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/02/02 20:54:27  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.10  2003/01/07 16:46:28  warmerda
  * Added support for forming polygons by caching line geometries
  *
@@ -95,6 +98,13 @@ OGRNTFLayer::OGRNTFLayer( OGRNTFDataSource *poDSIn,
 OGRNTFLayer::~OGRNTFLayer()
 
 {
+    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    {
+        CPLDebug( "Mem", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  poFeatureDefn->GetName() );
+    }
+
     delete poFeatureDefn;
 
     if( poFilterGeom != NULL )
@@ -179,6 +189,8 @@ OGRFeature *OGRNTFLayer::GetNextFeature()
         poFeature = poCurrentReader->ReadOGRFeature( this );
         if( poFeature == NULL )
             break;
+
+        m_nFeaturesRead++;
 
         if( (poFilterGeom == NULL
              || poFeature->GetGeometryRef() == NULL 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/02/02 20:54:27  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.8  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -119,6 +122,13 @@ OGRTigerLayer::OGRTigerLayer( OGRTigerDataSource *poDSIn,
 OGRTigerLayer::~OGRTigerLayer()
 
 {
+    if( m_nFeaturesRead > 0 && poReader->GetFeatureDefn() != NULL )
+    {
+        CPLDebug( "TIGER", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  poReader->GetFeatureDefn()->GetName() );
+    }
+
     delete poReader;
 
     if( poFilterGeom != NULL )
@@ -202,6 +212,8 @@ OGRFeature *OGRTigerLayer::GetFeature( long nFeatureId )
                 poDS->GetSpatialRef() );
 
         poFeature->SetField( 0, poReader->GetShortModule() );
+
+        m_nFeaturesRead++;
     }
 
     return poFeature;

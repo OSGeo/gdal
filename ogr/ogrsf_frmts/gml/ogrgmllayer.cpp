@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/02/02 20:54:27  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.14  2004/10/05 19:56:51  fwarmerdam
  * If a reader has been instantiated, delete it in ~OGRGMLLayer().
  *
@@ -197,6 +200,12 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 /* -------------------------------------------------------------------- */
 /*      Is it of the proper feature class?                              */
 /* -------------------------------------------------------------------- */
+
+        // We count reading low level GML features as a feature read for
+        // work checking purposes, though at least we didn't necessary
+        // have to turn it into an OGRFeature.
+        m_nFeaturesRead++;
+
         if( poGMLFeature->GetClass() != poFClass )
             continue;
 

@@ -25,6 +25,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/02/02 20:54:27  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.2  2002/10/29 03:28:34  warmerda
  * fixed 2.5D flag value
  *
@@ -113,6 +116,13 @@ OGRFMELayer::OGRFMELayer( OGRFMEDataSource *poDSIn )
 OGRFMELayer::~OGRFMELayer()
 
 {
+    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    {
+        CPLDebug( "FME", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  poFeatureDefn->GetName() );
+    }
+
     CPLFree( pszAttributeFilter );
 
     if( poFMEFeature != NULL )

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/02/02 20:54:26  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.4  2004/03/23 18:08:17  warmerda
  * Fixed row/column major orientedness of data for multi-dimensional arrays.
  *
@@ -464,6 +467,7 @@ OGRFeature *OGRDODSGridLayer::GetFeature( long nFeatureId )
 
     poFeature = new OGRFeature( poFeatureDefn );
     poFeature->SetFID( nFeatureId );
+    m_nFeaturesRead++;
 
 /* -------------------------------------------------------------------- */
 /*      Establish the values for the various dimension indices.         */

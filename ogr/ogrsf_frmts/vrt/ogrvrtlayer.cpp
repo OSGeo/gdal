@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/02/02 20:54:27  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.8  2004/10/30 04:54:54  fwarmerdam
  * Improved geometry check error message.
  *
@@ -111,6 +114,13 @@ OGRVRTLayer::OGRVRTLayer()
 OGRVRTLayer::~OGRVRTLayer()
 
 {
+    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    {
+        CPLDebug( "VRT", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  poFeatureDefn->GetName() );
+    }
+
     if( poFilterGeom != NULL )
         delete poFilterGeom;
 
@@ -460,6 +470,8 @@ OGRFeature *OGRVRTLayer::TranslateFeature( OGRFeature *poSrcFeat )
 
 {
     OGRFeature *poDstFeat = new OGRFeature( poFeatureDefn );
+
+    m_nFeaturesRead++;
 
 /* -------------------------------------------------------------------- */
 /*      Handle FID.  We should offer an option to derive it from a      */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/02/02 20:54:27  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.5  2003/07/11 13:28:20  warmerda
  * use external RECGetField
  *
@@ -153,6 +156,13 @@ OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn,
 OGRRECLayer::~OGRRECLayer()
 
 {
+    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    {
+        CPLDebug( "REC", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  poFeatureDefn->GetName() );
+    }
+
     delete poFeatureDefn;
     CPLFree( panFieldOffset );
     CPLFree( panFieldWidth );
@@ -261,6 +271,7 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
 /*      Translate the record id.                                        */
 /* -------------------------------------------------------------------- */
     poFeature->SetFID( nNextFID++ );
+    m_nFeaturesRead++;
 
     return poFeature;
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/02/02 20:54:27  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.12  2003/11/15 21:50:52  warmerda
  * Added limited creation support
  *
@@ -117,6 +120,13 @@ OGRS57Layer::OGRS57Layer( OGRS57DataSource *poDSIn,
 OGRS57Layer::~OGRS57Layer()
 
 {
+    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    {
+        CPLDebug( "S57", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  poFeatureDefn->GetName() );
+    }
+
     delete poFeatureDefn;
 
     if( poFilterGeom != NULL )
@@ -200,6 +210,7 @@ OGRFeature *OGRS57Layer::GetNextUnfilteredFeature()
     }
     else
     {
+        m_nFeaturesRead++;
         if( poFeature->GetGeometryRef() != NULL )
             poFeature->GetGeometryRef()->assignSpatialReference(
                 GetSpatialRef() );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/02/02 20:54:27  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.10  2003/12/11 21:11:00  warmerda
  * fixed leak of ATIDRefs list
  *
@@ -225,6 +228,13 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
 OGRSDTSLayer::~OGRSDTSLayer()
 
 {
+    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    {
+        CPLDebug( "SDTS", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  poFeatureDefn->GetName() );
+    }
+
     delete poFeatureDefn;
 
     if( poFilterGeom != NULL )
@@ -353,6 +363,8 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
 /*      Create the OGR feature.                                         */
 /* -------------------------------------------------------------------- */
     poFeature = new OGRFeature( poFeatureDefn );
+
+    m_nFeaturesRead++;
 
     switch( poTransfer->GetLayerType(iLayer) )
     {

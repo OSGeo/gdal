@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/02/02 20:54:26  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.5  2004/03/12 22:13:07  warmerda
  * major upgrade with normalized sequen nested sequence support
  *
@@ -132,6 +135,13 @@ OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
 OGRDODSLayer::~OGRDODSLayer()
 
 {
+    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    {
+        CPLDebug( "DODS", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  poFeatureDefn->GetName() );
+    }
+
     if( papoFields != NULL )
     {
         int iField;

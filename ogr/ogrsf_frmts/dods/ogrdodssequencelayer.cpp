@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/02/02 20:54:26  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.5  2004/03/17 18:16:30  warmerda
  * added support for linestring from nested seq, and floating point validity tests
  *
@@ -508,6 +511,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( long nFeatureId )
 
     poFeature = new OGRFeature( poFeatureDefn );
     poFeature->SetFID( nFeatureId );
+    m_nFeaturesRead++;
 
 /* -------------------------------------------------------------------- */
 /*      Process all the regular data fields.                            */
