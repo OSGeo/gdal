@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2004/05/06 19:26:04  dron
+ * Added OSRSetProjection() function.
+ *
  * Revision 1.42  2004/03/04 18:04:45  warmerda
  * added importFromDict() support
  *
@@ -432,6 +435,7 @@ const char CPL_DLL *OSRGetAuthorityCode( OGRSpatialReferenceH hSRS,
                                          const char * pszTargetKey );
 const char CPL_DLL *OSRGetAuthorityName( OGRSpatialReferenceH hSRS,
                                          const char * pszTargetKey );
+OGRErr CPL_DLL OSRSetProjection( OGRSpatialReferenceH, const char * );
 OGRErr CPL_DLL OSRSetProjParm( OGRSpatialReferenceH, const char *, double );
 double CPL_DLL OSRGetProjParm( OGRSpatialReferenceH hSRS,
                         const char * pszParmName, 
