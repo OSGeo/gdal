@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/02/06 04:55:35  warmerda
+ * use default georef info if bounds missing
+ *
  * Revision 1.18  2002/11/23 18:54:17  warmerda
  * added CREATIONDATATYPES metadata for drivers
  *
@@ -391,9 +394,14 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        CSLDestroy( papszTokens );
-        return NULL;
+        poDS->adfGeoTransform[0] = 0.0;
+        poDS->adfGeoTransform[1] = dfCellSize;
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] = 0.0;
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = - dfCellSize;
     }
+
     if( (i = CSLFindString( papszTokens, "NODATA_value" )) >= 0 )
     {
         poDS->bNoDataSet = TRUE;
