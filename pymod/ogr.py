@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.24  2004/03/31 15:34:06  warmerda
+# Added "name" parameter for FeatureDefn constructor.
+#
 # Revision 1.23  2004/03/18 18:55:53  warmerda
 # Avoid using hex constants for large 25D geometry type values as it causes
 # warnings on Python 2.3 and may have compatibility issues.   See:
@@ -598,7 +601,7 @@ class Feature:
     
 class FeatureDefn:
 
-    def __init__(self,obj=None):
+    def __init__(self,obj=None,name='unnamed'):
         if obj is None:
             self._o = _gdal.OGR_FD_Create( name )
         else:
