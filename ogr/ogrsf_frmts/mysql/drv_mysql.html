@@ -1,0 +1,32 @@
+<html>
+<head>
+<title>MySQL</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>MySQL</h1>
+
+This driver implements read-only access for non-spatial data in 
+<a href="http://www.mysql.org/">MySQL</a> tables.  <p>
+
+When opening a database, it's name should be specified in the form
+"MYGIS:<dbname>[,options]" where the options can include comma seperated
+items like "user=*userid*", "password=*password*", "host=*host*" and 
+"port=*port*".<p>
+
+As well, a "tablename=*table*;*table*..." option can be
+added to restrict access to a specific list of tables in the database.  This
+option is primarily useful when a database has alot of tables, and scanning
+all their schemas would take a significant amount of time. <p>
+
+Currently all regular user tables are assumed to be layers from an OGR
+point of view, with the table names as the layer names.  Named views are
+not currently support.<p>
+
+If a single integer field is a primary key, it will be used as the FID 
+otherwise the FID will be assigned sequentially, and fetches by FID will
+be extremely slow. <p>
+
+</body>
+</html>
