@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/02/18 05:05:16  warmerda
+ * Do one time warning for unsupported tile types - don't blow assert
+ *
  * Revision 1.8  2000/02/18 04:54:40  warmerda
  * Added support for 0xf0 (16bit run length encoded).
  * Fixed up handling of min value and no data values to be more generic.
@@ -347,7 +350,7 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
 
         else
         {
-            CPLAssert( FALSE );
+            return CE_Failure;
         }
 
         CPLAssert( nDataSize >= 0 );
@@ -478,6 +481,25 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
     {
         eErr = AIGProcessBlock( pabyCur, nDataSize, nMin, nMagic,
                                 nBlockXSize, nBlockYSize, panData );
+        
+        if( eErr == CE_Failure )
+        {
+            static int	bHasWarned = FALSE;
+            
+            for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+                panData[i] = ESRI_GRID_NO_DATA;
+
+            if( !bHasWarned )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "Unsupported Arc/Info Binary Grid tile of type 0x%X"
+                          " encountered.\n"
+                          "This and subsequent unsupported tile types set to"
+                          " no data value.\n",
+                          nMagic );
+                bHasWarned = TRUE;
+            }
+        }
     }
 
     CPLFree( pabyRaw );
