@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2003/09/29 14:25:30  warmerda
+ * Fixed memory leak as reported by Steve Brooks.
+ *
  * Revision 1.27  2003/05/21 03:42:01  warmerda
  * Expanded tabs
  *
@@ -584,7 +587,10 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
               // should verify complex bit set, not another header.
 
               if( psChildElement != NULL )
+              {
                   poChildFeature = ElementToFeature( psChildElement );
+                  DGNFreeElement( hDGN, psChildElement );
+              }
 
               if( poChildFeature != NULL
                   && poChildFeature->GetGeometryRef() != NULL )
