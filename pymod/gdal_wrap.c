@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.95  2004/08/11 19:04:34  warmerda
- * added warping related support
+ * Revision 1.96  2004/09/17 15:07:57  fwarmerdam
+ * added getArea
  *
  ************************************************************************/
 
@@ -7951,6 +7951,26 @@ static PyObject *_wrap_OGR_G_Distance(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OGR_G_GetArea(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    double  _result;
+    OGRGeometryH  _arg0;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGR_G_GetArea",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_GetArea. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (double )OGR_G_GetArea(_arg0);
+    _resultobj = Py_BuildValue("d",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OGR_G_Empty(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRGeometryH  _arg0;
@@ -10969,6 +10989,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_G_GetX", _wrap_OGR_G_GetX, 1 },
 	 { "OGR_G_GetPointCount", _wrap_OGR_G_GetPointCount, 1 },
 	 { "OGR_G_Empty", _wrap_OGR_G_Empty, 1 },
+	 { "OGR_G_GetArea", _wrap_OGR_G_GetArea, 1 },
 	 { "OGR_G_Distance", _wrap_OGR_G_Distance, 1 },
 	 { "OGR_G_SymmetricDifference", _wrap_OGR_G_SymmetricDifference, 1 },
 	 { "OGR_G_Difference", _wrap_OGR_G_Difference, 1 },
