@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.13  2002/07/13 04:16:39  warmerda
+ * added WORLDFILE support
+ *
  * Revision 1.12  2002/06/20 19:57:04  warmerda
  * ensure GetGeoTransform always sets geotransform.
  *
@@ -504,10 +507,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
     }
 
-    if( CSLFetchNameValue(papszOptions,"PROGRESSIVE") != NULL )
-    {
-        bProgressive = TRUE;
-    }
+    bProgressive = CSLFetchBoolean( papszOptions, "PROGRESSIVE", FALSE );
 
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
@@ -587,6 +587,17 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     VSIFClose( fpImage );
 
+/* -------------------------------------------------------------------- */
+/*      Do we need a world file?                                          */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
+    {
+    	double      adfGeoTransform[6];
+	
+	poSrcDS->GetGeoTransform( adfGeoTransform );
+	GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform );
+    }
+
     return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 }
 
@@ -615,6 +626,7 @@ void GDALRegister_JPEG()
 "<CreationOptionList>\n"
 "   <Option name='PROGRESSIVE' type='boolean'/>\n"
 "   <Option name='QUALITY' type='int' description='good=100, bad=0, default=75'/>\n"
+"   <Option name='WORLDFILE' type='boolean'/>\n"
 "</CreationOptionList>\n" );
 
         poDriver->pfnOpen = JPGDataset::Open;
