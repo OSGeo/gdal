@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/07/27 01:52:04  warmerda
+ * added support for writing polygon/multipoint/arc files
+ *
  * Revision 1.4  1999/07/27 00:52:40  warmerda
  * added write methods
  *
@@ -227,20 +230,150 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
     }
+/* ==================================================================== */
+/*      MultiPoint.                                                     */
+/* ==================================================================== */
     else if( hSHP->nShapeType == SHPT_MULTIPOINT
              || hSHP->nShapeType == SHPT_MULTIPOINTM
              || hSHP->nShapeType == SHPT_MULTIPOINTZ )
     {
+        OGRMultiPoint	*poMP = (OGRMultiPoint *) poGeom;
+        double		*padfX, *padfY, *padfZ;
+        int		iPoint;
+        SHPObject	*psShape;
+
+        if( poGeom->getGeometryType() != wkbPoint )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Attempt to write non-multipoint geometry to "
+                      "multipoint shapefile.");
+
+            return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+        }
+
+        padfX = (double *) CPLMalloc(sizeof(double)*poMP->getNumGeometries());
+        padfY = (double *) CPLMalloc(sizeof(double)*poMP->getNumGeometries());
+        padfZ = (double *) CPLCalloc(sizeof(double),poMP->getNumGeometries());
+
+        for( iPoint = 0; iPoint < poMP->getNumGeometries(); iPoint++ )
+        {
+            OGRPoint	*poPoint = (OGRPoint *) poMP->getGeometryRef(iPoint);
+            
+            padfX[iPoint] = poPoint->getX();
+            padfY[iPoint] = poPoint->getY();
+        }
+
+        psShape = SHPCreateSimpleObject( hSHP->nShapeType,
+                                         poMP->getNumGeometries(),
+                                         padfX, padfY, padfZ );
+        SHPWriteObject( hSHP, iShape, psShape );
+        SHPDestroyObject( psShape );
+        
+        CPLFree( padfX );
+        CPLFree( padfY );
+        CPLFree( padfZ );
     }
+
+/* ==================================================================== */
+/*      Arcs (we don't properly support multi part arcs).               */
+/* ==================================================================== */
     else if( hSHP->nShapeType == SHPT_ARC
              || hSHP->nShapeType == SHPT_ARCM
              || hSHP->nShapeType == SHPT_ARCZ )
     {
+        OGRLineString	*poArc = (OGRLineString *) poGeom;
+        double		*padfX, *padfY, *padfZ;
+        int		iPoint;
+        SHPObject	*psShape;
+
+        if( poGeom->getGeometryType() != wkbLineString )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Attempt to write non-linestring geometry to "
+                      "ARC type shapefile.");
+
+            return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+        }
+
+        padfX = (double *) CPLMalloc(sizeof(double)*poArc->getNumPoints());
+        padfY = (double *) CPLMalloc(sizeof(double)*poArc->getNumPoints());
+        padfZ = (double *) CPLCalloc(sizeof(double),poArc->getNumPoints());
+
+        for( iPoint = 0; iPoint < poArc->getNumPoints(); iPoint++ )
+        {
+            padfX[iPoint] = poArc->getX( iPoint );
+            padfY[iPoint] = poArc->getY( iPoint );
+        }
+
+        psShape = SHPCreateSimpleObject( hSHP->nShapeType,
+                                         poArc->getNumPoints(),
+                                         padfX, padfY, padfZ );
+        SHPWriteObject( hSHP, iShape, psShape );
+        SHPDestroyObject( psShape );
+        
+        CPLFree( padfX );
+        CPLFree( padfY );
+        CPLFree( padfZ );
     }
+/* ==================================================================== */
+/*      Polygons.                                                       */
+/* ==================================================================== */
     else if( hSHP->nShapeType == SHPT_POLYGON
              || hSHP->nShapeType == SHPT_POLYGONM
              || hSHP->nShapeType == SHPT_POLYGONZ )
     {
+        OGRPolygon	*poPoly = (OGRPolygon *) poGeom;
+        double		*padfX=NULL, *padfY=NULL, *padfZ=NULL;
+        int		iPoint, iRing, nRings, nVertex=0, *panRingStart;
+        SHPObject	*psShape;
+
+        if( poGeom->getGeometryType() != wkbPolygon )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Attempt to write non-polygon geometry to "
+                      " type shapefile.");
+
+            return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+        }
+
+        nRings = poPoly->getNumInteriorRings()+1;
+        panRingStart = (int *) CPLMalloc(sizeof(int) * nRings);
+
+        for( iRing = 0; iRing < nRings; iRing++ )
+        {
+            OGRLinearRing *poRing;
+
+            if( iRing == 0 )
+                poRing = poPoly->getExteriorRing();
+            else
+                poRing = poPoly->getInteriorRing( iRing-1 );
+
+            panRingStart[iRing] = nVertex;
+
+            padfX = (double *)
+             CPLRealloc(padfX,sizeof(double)*(nVertex+poRing->getNumPoints()));
+            padfY = (double *) 
+             CPLRealloc(padfY,sizeof(double)*(nVertex+poRing->getNumPoints()));
+            padfZ = (double *) 
+             CPLRealloc(padfZ,sizeof(double)*(nVertex+poRing->getNumPoints()));
+            
+            for( iPoint = 0; iPoint < poRing->getNumPoints(); iPoint++ )
+            {
+                padfX[nVertex] = poRing->getX( iPoint );
+                padfY[nVertex] = poRing->getY( iPoint );
+                nVertex++;
+            }
+        }
+
+        psShape = SHPCreateObject( hSHP->nShapeType, iShape, nRings,
+                                   panRingStart, NULL,
+                                   nVertex, padfX, padfY, padfZ, NULL );
+        SHPWriteObject( hSHP, iShape, psShape );
+        SHPDestroyObject( psShape );
+        
+        CPLFree( padfX );
+        CPLFree( padfY );
+        CPLFree( padfZ );
     }
     else
     {
