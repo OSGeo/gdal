@@ -1,11 +1,5 @@
 #include "gxfopen.h"
 
-char ** CPLTokenizeDelim( const char * pszString,
-                          const char * pszDelimiters,
-                          int bHonourStrings, int bAllowEmptyTokens );
-
-const char *CPLReadLine( FILE * fp );
-
 int main( int argc, char ** argv )
 
 {
@@ -32,6 +26,32 @@ int main( int argc, char ** argv )
     printf( "nXSize = %d, nYSize = %d, nSense = %d\n",
             nXSize, nYSize, nSense );
 
+    pszProjection = GXFGetMapProjectionAsPROJ4( hGXF );
+    
+    printf( "Projection (PROJ.4): %s\n", pszProjection );
+
+    CPLFree( pszProjection );
+
+    pszProjection = GXFGetMapProjectionAsOGCWKT( hGXF );
+    
+    printf( "Projection (OGC WKT): %s\n", pszProjection );
+
+    CPLFree( pszProjection );
+
+    GXFGetRawPosition( hGXF, &dfXOrigin, &dfYOrigin, &dfXSize, &dfYSize,
+                       &dfRotation );
+
+    printf( "Raw Position: Origin=(%g,%g) PixelSize=(%g,%g) Rot=%g\n",
+            dfXOrigin, dfYOrigin, dfXSize, dfYSize, dfRotation );
+    
+    
+    GXFGetPROJ4Position( hGXF, &dfXOrigin, &dfYOrigin, &dfXSize, &dfYSize,
+                       &dfRotation );
+
+    printf( "PROJ4 Position: Origin=(%g,%g) PixelSize=(%g,%g) Rot=%g\n",
+            dfXOrigin, dfYOrigin, dfXSize, dfYSize, dfRotation );
+    
+    
     padfLineBuf = (double *) CPLMalloc(sizeof(double)*nXSize);
     
     for( iScanline = 0; iScanline < nYSize && eErr == CE_None; iScanline++ )
@@ -52,26 +72,6 @@ int main( int argc, char ** argv )
 
     CPLFree( padfLineBuf );
 
-    pszProjection = GXFGetMapProjectionAsPROJ4( hGXF );
-    
-    printf( "Projection: %s\n", pszProjection );
-
-    CPLFree( pszProjection );
-
-    GXFGetRawPosition( hGXF, &dfXOrigin, &dfYOrigin, &dfXSize, &dfYSize,
-                       &dfRotation );
-
-    printf( "Raw Position: Origin=(%g,%g) PixelSize=(%g,%g) Rot=%g\n",
-            dfXOrigin, dfYOrigin, dfXSize, dfYSize, dfRotation );
-    
-    
-    GXFGetPROJ4Position( hGXF, &dfXOrigin, &dfYOrigin, &dfXSize, &dfYSize,
-                       &dfRotation );
-
-    printf( "PROJ4 Position: Origin=(%g,%g) PixelSize=(%g,%g) Rot=%g\n",
-            dfXOrigin, dfYOrigin, dfXSize, dfYSize, dfRotation );
-    
-    
     GXFClose( hGXF );
 
 #ifdef DBMALLOC
