@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2004/08/16 20:24:07  warmerda
+ * added CPLUnlinkTree
+ *
  * Revision 1.40  2004/07/31 04:51:36  warmerda
  * added shared file open support
  *
@@ -153,6 +156,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
 
 CPL_CVSID("$Id$");
 
@@ -1634,5 +1638,96 @@ void CPLDumpSharedList( FILE *fp )
                      pasSharedFileList[i].bLarge,
                      pasSharedFileList[i].pszAccess,
                      pasSharedFileList[i].pszFilename );
+    }
+}
+
+/************************************************************************/
+/*                           CPLUnlinkTree()                            */
+/************************************************************************/
+
+int CPLUnlinkTree( const char *pszPath )
+
+{
+/* -------------------------------------------------------------------- */
+/*      First, ensure there isn't any such file yet.                    */
+/* -------------------------------------------------------------------- */
+    VSIStatBuf sStatBuf;
+
+    if( VSIStat( pszPath, &sStatBuf ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "It seems no file system object called '%s' exists.",
+                  pszPath );
+
+        return errno;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If it's a simple file, just delete it.                          */
+/* -------------------------------------------------------------------- */
+    if( VSI_ISREG( sStatBuf.st_mode ) )
+    {
+        if( VSIUnlink( pszPath ) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Failed to unlink %s.\n%s", 
+                      pszPath, VSIStrerror( errno ) );
+            return errno;
+        }
+        else
+            return 0;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If it is a directory recurse then unlink the directory.         */
+/* -------------------------------------------------------------------- */
+    else if( VSI_ISDIR( sStatBuf.st_mode ) )
+    {
+        char **papszItems = CPLReadDir( pszPath );
+        int  i;
+
+        for( i = 0; papszItems != NULL && papszItems[i] != NULL; i++ )
+        {
+            char *pszSubPath;
+            int nErr;
+
+            if( EQUAL(papszItems[i],".") || EQUAL(papszItems[i],"..") )
+                continue;
+
+            pszSubPath = CPLStrdup(
+                CPLFormFilename( pszPath, papszItems[i], NULL ) );
+
+            nErr = CPLUnlinkTree( pszSubPath );
+            CPLFree( pszSubPath );
+
+            if( nErr != 0 )
+            {
+                CSLDestroy( papszItems );
+                return nErr;
+            }
+        }
+        
+        CSLDestroy( papszItems );
+
+        if( VSIRmdir( pszPath ) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Failed to unlink %s.\n%s", 
+                      pszPath, VSIStrerror( errno ) );
+            return errno;
+        }
+        else
+            return 0;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      otherwise report an error.                                      */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Failed to unlink %s.\nUnrecognised filesystem object.",
+                  pszPath );
+        return 1000;
     }
 }

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2004/08/16 20:24:07  warmerda
+ * added CPLUnlinkTree
+ *
  * Revision 1.33  2004/08/11 18:41:46  warmerda
  * added CPLExtractRelativePath
  *
@@ -241,6 +244,10 @@ double CPL_DLL CPLDecToPackedDMS( double dfDec );
 void CPL_DLL CPLStringToComplex( const char *pszString, 
                                  double *pdfReal, double *pdfImag );
 
+/* -------------------------------------------------------------------- */
+/*      Misc other functions.                                           */
+/* -------------------------------------------------------------------- */
+int CPL_DLL CPLUnlinkTree( const char * );
 CPL_C_END
 
 #endif /* ndef CPL_CONV_H_INCLUDED */
