@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/04/22 19:33:26  warmerda
+ * Added synctodisk
+ *
  * Revision 1.13  2003/04/08 21:21:13  warmerda
  * added OGRGetDriverByName
  *
@@ -75,7 +78,7 @@
 /**
  * \file ogr_api.h
  * 
- * C API and defines for OGRFeature, OGRGeometry, and OGRSFDataSource
+ * C API and defines for OGRFeature, OGRGeometry, and OGRDataSource
  * related classes. 
  * 
  * See also: ogr_geometry.h, ogr_feature.h, ogrsf_frmts.h
@@ -283,6 +286,7 @@ OGRErr CPL_DLL OGR_L_RollbackTransaction( OGRLayerH );
 int    CPL_DLL OGR_L_Reference( OGRLayerH );
 int    CPL_DLL OGR_L_Dereference( OGRLayerH );
 int    CPL_DLL OGR_L_GetRefCount( OGRLayerH );
+OGRErr CPL_DLL OGR_L_SyncToDisk( OGRLayerH );
 
 /* OGRDataSource */
 
@@ -305,6 +309,7 @@ int    CPL_DLL OGR_DS_Reference( OGRDataSourceH );
 int    CPL_DLL OGR_DS_Dereference( OGRDataSourceH );
 int    CPL_DLL OGR_DS_GetRefCount( OGRDataSourceH );
 int    CPL_DLL OGR_DS_GetSummaryRefCount( OGRDataSourceH );
+OGRErr CPL_DLL OGR_DS_SyncToDisk( OGRDataSourceH );
 
 /* OGRSFDriver */
 
