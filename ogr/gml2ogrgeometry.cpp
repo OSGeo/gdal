@@ -37,6 +37,9 @@
  *   compromising the system.
  *
  * $Log$
+ * Revision 1.8  2004/01/06 18:40:06  warmerda
+ * do not crash if polygon fails to parse during multipolygon assembly
+ *
  * Revision 1.7  2003/09/22 05:34:46  warmerda
  * implemented support for various kinds of geometry collections
  *
@@ -78,6 +81,7 @@
 #include "ogr_geometry.h"
 #include "ogr_api.h"
 #include "cpl_error.h"
+#include <ctype.h>
 
 /************************************************************************/
 /*                           BareGMLElement()                           */
@@ -222,12 +226,12 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
 
             // parse out 2 or 3 tuple. 
             dfX = atof( pszCoordString );
-            while( *pszCoordString != '\0' 
+            while( *pszCoordString != '\0'
                    && *pszCoordString != ','
-                   && *pszCoordString != ' ' ) 
+                   && !isspace(*pszCoordString) )
                 pszCoordString++;
 
-            if( *pszCoordString == '\0' || *pszCoordString == ' ' )
+            if( *pszCoordString == '\0' || isspace(*pszCoordString) )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Corrupt <coordinates> value." );
@@ -238,7 +242,7 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
             dfY = atof( pszCoordString );
             while( *pszCoordString != '\0' 
                    && *pszCoordString != ','
-                   && *pszCoordString != ' ' )
+                   && !isspace(*pszCoordString) )
                 pszCoordString++;
 
             if( *pszCoordString == ',' )
@@ -247,11 +251,11 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
                 dfZ = atof( pszCoordString );
                 while( *pszCoordString != '\0' 
                        && *pszCoordString != ','
-                       && *pszCoordString != ' ' )
+                       && !isspace(*pszCoordString) )
                 pszCoordString++;
             }
 
-            while( *pszCoordString == ' ' )
+            while( isspace(*pszCoordString) )
                 pszCoordString++;
 
             if( !AddPoint( poGeometry, dfX, dfY, dfZ ) )
@@ -491,6 +495,13 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( CPLXMLNode *psNode )
 
                 poPolygon = (OGRPolygon *) 
                     GML2OGRGeometry_XMLNode( psChild->psChild );
+
+                if( poPolygon == NULL )
+                {
+                    delete poMPoly;
+                    return NULL;
+                }
+
                 if( !EQUAL(poPolygon->getGeometryName(),"POLYGON") )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined, 
