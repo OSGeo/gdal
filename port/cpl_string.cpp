@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/05/28 18:53:43  warmerda
+ * added XML escaping support
+ *
  * Revision 1.21  2002/04/26 14:55:26  warmerda
  * Added CPLEscapeString() and CPLUnescapeString() (unescape untested)
  *
@@ -1036,11 +1039,20 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
  * reconstitued to it's original form.  The escaping will even preserve
  * zero bytes allowing preservation of raw binary data.
  *
+ * CPLES_BackslashQuotable(0): This scheme turns a binary string into 
+ * a form suitable to be placed within double quotes as a string constant.
+ * The backslash, quote, '\0' and newline characters are all escaped in 
+ * the usual C style. 
+ *
+ * CPLES_XML(1): This scheme converts the '<', '<' and '&' characters into
+ * their XML/HTML equivelent (&gt;, &lt; and &amp;) making a string safe
+ * to embed as CDATA within an XML element.  The '\0' is not escaped and 
+ * should not be included in the input.
+ *
  * @param pszString the string to escape.  
  * @param nLength The number of bytes of data to preserve.  If this is -1
  * the strlen(pszString) function will be used to compute the length.
- * @param nScheme the encoding scheme to use.  Currently the default 
- * (CPLES_BackslashQuoteable=0) is the only scheme supported.
+ * @param nScheme the encoding scheme to use.  
  *
  * @return an escaped, zero terminated string that should be freed with 
  * CPLFree() when no longer needed.
@@ -1084,6 +1096,48 @@ char *CPLEscapeString( const char *pszInput, int nLength,
         }
         pszOutput[iOut] = '\0';
     }
+    else if( nScheme == CPLES_XML )
+    {
+        int iOut = 0, iIn;
+
+        for( iIn = 0; iIn < nLength; iIn++ )
+        {
+            if( pszInput[iIn] == '<' )
+            {
+                pszOutput[iOut++] = '&';
+                pszOutput[iOut++] = 'l';
+                pszOutput[iOut++] = 't';
+                pszOutput[iOut++] = ';';
+            }
+            else if( pszInput[iIn] == '>' )
+            {
+                pszOutput[iOut++] = '&';
+                pszOutput[iOut++] = 'g';
+                pszOutput[iOut++] = 't';
+                pszOutput[iOut++] = ';';
+            }
+            else if( pszInput[iIn] == '&' )
+            {
+                pszOutput[iOut++] = '&';
+                pszOutput[iOut++] = 'a';
+                pszOutput[iOut++] = 'm';
+                pszOutput[iOut++] = 'p';
+                pszOutput[iOut++] = ';';
+            }
+            else if( pszInput[iIn] == '"' )
+            {
+                pszOutput[iOut++] = '&';
+                pszOutput[iOut++] = 'q';
+                pszOutput[iOut++] = 'u';
+                pszOutput[iOut++] = 'o';
+                pszOutput[iOut++] = 't';
+                pszOutput[iOut++] = ';';
+            }
+            else
+                pszOutput[iOut++] = pszInput[iIn];
+        }
+        pszOutput[iOut] = '\0';
+    }
     else
     {
         strcpy( pszOutput, "Unrecognised Escaping Scheme" );
@@ -1099,6 +1153,23 @@ char *CPLEscapeString( const char *pszInput, int nLength,
 /*                         CPLUnescapeString()                          */
 /************************************************************************/
 
+/**
+ * Unescape a string.
+ *
+ * This function does the opposite of CPLEscapeString().  Given a string
+ * with special values escaped according to some scheme, it will return a
+ * new copy of the string returned to it's original form. 
+ *
+ * @param pszInput the input string.  This is a zero terminated string.
+ * @param pnLength location to return the length of the unescaped string, 
+ * which may in some cases include embedded '\0' characters.
+ * @param nScheme the escaped scheme to undo (see CPLEscapeString() for a
+ * list). 
+ * 
+ * @return a copy of the unescaped string that should be freed by the 
+ * application using CPLFree() when no longer needed.
+ */
+
 char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
 
 {
@@ -1108,7 +1179,37 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
     pszOutput = (char *) CPLMalloc(strlen(pszInput)+1);
     pszOutput[0] = '\0';
 
-    /* if( nScheme == CPLES_BackslashQuoteable ) */
+    if( nScheme == CPLES_XML )
+    {
+        for( iIn = 0; pszInput[iIn] != '\0'; iIn++ )
+        {
+            if( EQUALN(pszInput+iIn,"&lt;",4) )
+            {
+                pszOutput[iOut++] = '<';
+                iIn += 3;
+            }
+            else if( EQUALN(pszInput+iIn,"&gt;",4) )
+            {
+                pszOutput[iOut++] = '>';
+                iIn += 3;
+            }
+            else if( EQUALN(pszInput+iIn,"&amp;",5) )
+            {
+                pszOutput[iOut++] = '&';
+                iIn += 4;
+            }
+            else if( EQUALN(pszInput+iIn,"&quot;",6) )
+            {
+                pszOutput[iOut++] = '"';
+                iIn += 5;
+            }
+            else
+            {
+                pszOutput[iOut++] = pszInput[iIn];
+            }
+        }
+    }
+    else /* if( nScheme == CPLES_BackslashQuoteable ) */
     {
         for( iIn = 0; pszInput[iIn] != '\0'; iIn++ )
         {
