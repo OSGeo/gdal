@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/04/01 20:49:41  warmerda
+ * make class internals protected so OledbSFTable can have access
+ *
  * Revision 1.3  1999/04/01 17:53:46  warmerda
  * added getnumcolumns, and oledbsupWritecolumninfo
  *
@@ -85,6 +88,7 @@ void OledbSupWriteColumnInfo( FILE *, DBCOLUMNINFO * );
                           
 class OledbSupRowset
 {
+  protected:    
     IRowset    *pIRowset;
     IAccessor  *pIAccessor;
     HACCESSOR  hAccessor;
@@ -99,10 +103,11 @@ class OledbSupRowset
     
     int        nMaxRecordSize;
     BYTE       *pabyRecord;
-
+    
     HRESULT    EstablishAccessor();
     HRESULT    EstablishColumnInfo();
     HRESULT    EstablishDefaultBindings();
+
     static HRESULT EstablishOneDefaultBinding( DBCOLUMNINFO*, DBBINDING*,
                                                DWORD * );
 
