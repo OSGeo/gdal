@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.72  2003/06/21 23:27:05  warmerda
- * added TOWGS84 and PROJ.4 calls, OGRERR to int
+ * Revision 1.73  2003/06/23 14:07:30  warmerda
+ * fixed typedef int int problem
  *
  ************************************************************************/
 
@@ -6207,23 +6207,36 @@ static PyObject *_wrap_OCTDestroyCoordinateTransformation(PyObject *self, PyObje
     return _resultobj;
 }
 
-static PyObject *_wrap_OGR_G_CreateGeometry(PyObject *self, PyObject *args) {
+static PyObject *_wrap_OGR_G_DestroyGeometry(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
-    OGRGeometryH  _result;
-    OGRwkbGeometryType * _arg0;
+    OGRGeometryH  _arg0;
     char * _argc0 = 0;
-    char _ptemp[128];
 
     self = self;
-    if(!PyArg_ParseTuple(args,"s:OGR_G_CreateGeometry",&_argc0)) 
+    if(!PyArg_ParseTuple(args,"s:OGR_G_DestroyGeometry",&_argc0)) 
         return NULL;
     if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_OGRwkbGeometryType_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_CreateGeometry. Expected _OGRwkbGeometryType_p.");
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_DestroyGeometry. Expected _OGRGeometryH.");
         return NULL;
         }
     }
-    _result = (OGRGeometryH )OGR_G_CreateGeometry(*_arg0);
+    OGR_G_DestroyGeometry(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_CreateGeometry(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _result;
+    OGRwkbGeometryType  _arg0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"i:OGR_G_CreateGeometry",&_arg0)) 
+        return NULL;
+    _result = (OGRGeometryH )OGR_G_CreateGeometry(_arg0);
     SWIG_MakePtr(_ptemp, (char *) _result,"_OGRGeometryH");
     _resultobj = Py_BuildValue("s",_ptemp);
     return _resultobj;
@@ -6341,10 +6354,9 @@ static PyObject *_wrap_OGR_G_WkbSize(PyObject *self, PyObject *args) {
 
 static PyObject *_wrap_OGR_G_GetGeometryType(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
-    OGRwkbGeometryType * _result;
+    OGRwkbGeometryType  _result;
     OGRGeometryH  _arg0;
     char * _argc0 = 0;
-    char _ptemp[128];
 
     self = self;
     if(!PyArg_ParseTuple(args,"s:OGR_G_GetGeometryType",&_argc0)) 
@@ -6355,10 +6367,8 @@ static PyObject *_wrap_OGR_G_GetGeometryType(PyObject *self, PyObject *args) {
         return NULL;
         }
     }
-    _result = (OGRwkbGeometryType *) malloc(sizeof(OGRwkbGeometryType ));
-    *(_result) = OGR_G_GetGeometryType(_arg0);
-    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRwkbGeometryType_p");
-    _resultobj = Py_BuildValue("s",_ptemp);
+    _result = (OGRwkbGeometryType )OGR_G_GetGeometryType(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
@@ -6817,20 +6827,13 @@ static PyObject *_wrap_OGR_Fld_Create(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRFieldDefnH  _result;
     char * _arg0;
-    OGRFieldType * _arg1;
-    char * _argc1 = 0;
+    OGRFieldType  _arg1;
     char _ptemp[128];
 
     self = self;
-    if(!PyArg_ParseTuple(args,"ss:OGR_Fld_Create",&_arg0,&_argc1)) 
+    if(!PyArg_ParseTuple(args,"si:OGR_Fld_Create",&_arg0,&_arg1)) 
         return NULL;
-    if (_argc1) {
-        if (SWIG_GetPtr(_argc1,(void **) &_arg1,"_OGRFieldType_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_Fld_Create. Expected _OGRFieldType_p.");
-        return NULL;
-        }
-    }
-    _result = (OGRFieldDefnH )OGR_Fld_Create(_arg0,*_arg1);
+    _result = (OGRFieldDefnH )OGR_Fld_Create(_arg0,_arg1);
     SWIG_MakePtr(_ptemp, (char *) _result,"_OGRFieldDefnH");
     _resultobj = Py_BuildValue("s",_ptemp);
     return _resultobj;
@@ -6899,10 +6902,9 @@ static PyObject *_wrap_OGR_Fld_GetNameRef(PyObject *self, PyObject *args) {
 
 static PyObject *_wrap_OGR_Fld_GetType(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
-    OGRFieldType * _result;
+    OGRFieldType  _result;
     OGRFieldDefnH  _arg0;
     char * _argc0 = 0;
-    char _ptemp[128];
 
     self = self;
     if(!PyArg_ParseTuple(args,"s:OGR_Fld_GetType",&_argc0)) 
@@ -6913,22 +6915,19 @@ static PyObject *_wrap_OGR_Fld_GetType(PyObject *self, PyObject *args) {
         return NULL;
         }
     }
-    _result = (OGRFieldType *) malloc(sizeof(OGRFieldType ));
-    *(_result) = OGR_Fld_GetType(_arg0);
-    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRFieldType_p");
-    _resultobj = Py_BuildValue("s",_ptemp);
+    _result = (OGRFieldType )OGR_Fld_GetType(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
 static PyObject *_wrap_OGR_Fld_SetType(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRFieldDefnH  _arg0;
-    OGRFieldType * _arg1;
+    OGRFieldType  _arg1;
     char * _argc0 = 0;
-    char * _argc1 = 0;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"ss:OGR_Fld_SetType",&_argc0,&_argc1)) 
+    if(!PyArg_ParseTuple(args,"si:OGR_Fld_SetType",&_argc0,&_arg1)) 
         return NULL;
     if (_argc0) {
         if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
@@ -6936,13 +6935,7 @@ static PyObject *_wrap_OGR_Fld_SetType(PyObject *self, PyObject *args) {
         return NULL;
         }
     }
-    if (_argc1) {
-        if (SWIG_GetPtr(_argc1,(void **) &_arg1,"_OGRFieldType_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_Fld_SetType. Expected _OGRFieldType_p.");
-        return NULL;
-        }
-    }
-    OGR_Fld_SetType(_arg0,*_arg1);
+    OGR_Fld_SetType(_arg0,_arg1);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
     return _resultobj;
@@ -6950,10 +6943,9 @@ static PyObject *_wrap_OGR_Fld_SetType(PyObject *self, PyObject *args) {
 
 static PyObject *_wrap_OGR_Fld_GetJustify(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
-    OGRJustification * _result;
+    OGRJustification  _result;
     OGRFieldDefnH  _arg0;
     char * _argc0 = 0;
-    char _ptemp[128];
 
     self = self;
     if(!PyArg_ParseTuple(args,"s:OGR_Fld_GetJustify",&_argc0)) 
@@ -6964,22 +6956,19 @@ static PyObject *_wrap_OGR_Fld_GetJustify(PyObject *self, PyObject *args) {
         return NULL;
         }
     }
-    _result = (OGRJustification *) malloc(sizeof(OGRJustification ));
-    *(_result) = OGR_Fld_GetJustify(_arg0);
-    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRJustification_p");
-    _resultobj = Py_BuildValue("s",_ptemp);
+    _result = (OGRJustification )OGR_Fld_GetJustify(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
 static PyObject *_wrap_OGR_Fld_SetJustify(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRFieldDefnH  _arg0;
-    OGRJustification * _arg1;
+    OGRJustification  _arg1;
     char * _argc0 = 0;
-    char * _argc1 = 0;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"ss:OGR_Fld_SetJustify",&_argc0,&_argc1)) 
+    if(!PyArg_ParseTuple(args,"si:OGR_Fld_SetJustify",&_argc0,&_arg1)) 
         return NULL;
     if (_argc0) {
         if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
@@ -6987,13 +6976,7 @@ static PyObject *_wrap_OGR_Fld_SetJustify(PyObject *self, PyObject *args) {
         return NULL;
         }
     }
-    if (_argc1) {
-        if (SWIG_GetPtr(_argc1,(void **) &_arg1,"_OGRJustification_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_Fld_SetJustify. Expected _OGRJustification_p.");
-        return NULL;
-        }
-    }
-    OGR_Fld_SetJustify(_arg0,*_arg1);
+    OGR_Fld_SetJustify(_arg0,_arg1);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
     return _resultobj;
@@ -7085,16 +7068,14 @@ static PyObject *_wrap_OGR_Fld_Set(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRFieldDefnH  _arg0;
     char * _arg1;
-    OGRFieldType * _arg2;
+    OGRFieldType  _arg2;
     int  _arg3;
     int  _arg4;
-    OGRJustification * _arg5;
+    OGRJustification  _arg5;
     char * _argc0 = 0;
-    char * _argc2 = 0;
-    char * _argc5 = 0;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"sssiis:OGR_Fld_Set",&_argc0,&_arg1,&_argc2,&_arg3,&_arg4,&_argc5)) 
+    if(!PyArg_ParseTuple(args,"ssiiii:OGR_Fld_Set",&_argc0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5)) 
         return NULL;
     if (_argc0) {
         if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
@@ -7102,19 +7083,7 @@ static PyObject *_wrap_OGR_Fld_Set(PyObject *self, PyObject *args) {
         return NULL;
         }
     }
-    if (_argc2) {
-        if (SWIG_GetPtr(_argc2,(void **) &_arg2,"_OGRFieldType_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of OGR_Fld_Set. Expected _OGRFieldType_p.");
-        return NULL;
-        }
-    }
-    if (_argc5) {
-        if (SWIG_GetPtr(_argc5,(void **) &_arg5,"_OGRJustification_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of OGR_Fld_Set. Expected _OGRJustification_p.");
-        return NULL;
-        }
-    }
-    OGR_Fld_Set(_arg0,_arg1,*_arg2,_arg3,_arg4,*_arg5);
+    OGR_Fld_Set(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
     return _resultobj;
@@ -7123,19 +7092,12 @@ static PyObject *_wrap_OGR_Fld_Set(PyObject *self, PyObject *args) {
 static PyObject *_wrap_OGR_GetFieldTypeName(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     char * _result;
-    OGRFieldType * _arg0;
-    char * _argc0 = 0;
+    OGRFieldType  _arg0;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"s:OGR_GetFieldTypeName",&_argc0)) 
+    if(!PyArg_ParseTuple(args,"i:OGR_GetFieldTypeName",&_arg0)) 
         return NULL;
-    if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_OGRFieldType_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_GetFieldTypeName. Expected _OGRFieldType_p.");
-        return NULL;
-        }
-    }
-    _result = (char *)OGR_GetFieldTypeName(*_arg0);
+    _result = (char *)OGR_GetFieldTypeName(_arg0);
     _resultobj = Py_BuildValue("s", _result);
     return _resultobj;
 }
@@ -7289,10 +7251,9 @@ static PyObject *_wrap_OGR_FD_AddFieldDefn(PyObject *self, PyObject *args) {
 
 static PyObject *_wrap_OGR_FD_GetGeomType(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
-    OGRwkbGeometryType * _result;
+    OGRwkbGeometryType  _result;
     OGRFeatureDefnH  _arg0;
     char * _argc0 = 0;
-    char _ptemp[128];
 
     self = self;
     if(!PyArg_ParseTuple(args,"s:OGR_FD_GetGeomType",&_argc0)) 
@@ -7303,22 +7264,19 @@ static PyObject *_wrap_OGR_FD_GetGeomType(PyObject *self, PyObject *args) {
         return NULL;
         }
     }
-    _result = (OGRwkbGeometryType *) malloc(sizeof(OGRwkbGeometryType ));
-    *(_result) = OGR_FD_GetGeomType(_arg0);
-    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRwkbGeometryType_p");
-    _resultobj = Py_BuildValue("s",_ptemp);
+    _result = (OGRwkbGeometryType )OGR_FD_GetGeomType(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
 static PyObject *_wrap_OGR_FD_SetGeomType(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRFeatureDefnH  _arg0;
-    OGRwkbGeometryType * _arg1;
+    OGRwkbGeometryType  _arg1;
     char * _argc0 = 0;
-    char * _argc1 = 0;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"ss:OGR_FD_SetGeomType",&_argc0,&_argc1)) 
+    if(!PyArg_ParseTuple(args,"si:OGR_FD_SetGeomType",&_argc0,&_arg1)) 
         return NULL;
     if (_argc0) {
         if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
@@ -7326,13 +7284,7 @@ static PyObject *_wrap_OGR_FD_SetGeomType(PyObject *self, PyObject *args) {
         return NULL;
         }
     }
-    if (_argc1) {
-        if (SWIG_GetPtr(_argc1,(void **) &_arg1,"_OGRwkbGeometryType_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_FD_SetGeomType. Expected _OGRwkbGeometryType_p.");
-        return NULL;
-        }
-    }
-    OGR_FD_SetGeomType(_arg0,*_arg1);
+    OGR_FD_SetGeomType(_arg0,_arg1);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
     return _resultobj;
@@ -8954,16 +8906,15 @@ static PyObject *_wrap_OGR_DS_CreateLayer(PyObject *self, PyObject *args) {
     OGRDataSourceH  _arg0;
     char * _arg1;
     OGRSpatialReferenceH  _arg2;
-    OGRwkbGeometryType * _arg3;
+    OGRwkbGeometryType  _arg3;
     stringList  _arg4;
     char * _argc0 = 0;
     char * _argc2 = 0;
-    char * _argc3 = 0;
     char * _argc4 = 0;
     char _ptemp[128];
 
     self = self;
-    if(!PyArg_ParseTuple(args,"sssss:OGR_DS_CreateLayer",&_argc0,&_arg1,&_argc2,&_argc3,&_argc4)) 
+    if(!PyArg_ParseTuple(args,"sssis:OGR_DS_CreateLayer",&_argc0,&_arg1,&_argc2,&_arg3,&_argc4)) 
         return NULL;
     if (_argc0) {
         if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
@@ -8977,19 +8928,13 @@ static PyObject *_wrap_OGR_DS_CreateLayer(PyObject *self, PyObject *args) {
         return NULL;
         }
     }
-    if (_argc3) {
-        if (SWIG_GetPtr(_argc3,(void **) &_arg3,"_OGRwkbGeometryType_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of OGR_DS_CreateLayer. Expected _OGRwkbGeometryType_p.");
-        return NULL;
-        }
-    }
     if (_argc4) {
         if (SWIG_GetPtr(_argc4,(void **) &_arg4,"_stringList")) {
             PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of OGR_DS_CreateLayer. Expected _stringList.");
         return NULL;
         }
     }
-    _result = (OGRLayerH )OGR_DS_CreateLayer(_arg0,_arg1,_arg2,*_arg3,_arg4);
+    _result = (OGRLayerH )OGR_DS_CreateLayer(_arg0,_arg1,_arg2,_arg3,_arg4);
     SWIG_MakePtr(_ptemp, (char *) _result,"_OGRLayerH");
     _resultobj = Py_BuildValue("s",_ptemp);
     return _resultobj;
@@ -9806,6 +9751,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_G_GetCoordinateDimension", _wrap_OGR_G_GetCoordinateDimension, 1 },
 	 { "OGR_G_GetDimension", _wrap_OGR_G_GetDimension, 1 },
 	 { "OGR_G_CreateGeometry", _wrap_OGR_G_CreateGeometry, 1 },
+	 { "OGR_G_DestroyGeometry", _wrap_OGR_G_DestroyGeometry, 1 },
 	 { "CPLPopErrorHandler", py_CPLPopErrorHandler, 1 },
 	 { "CPLPushErrorHandler", py_CPLPushErrorHandler, 1 },
 	 { "CPLError", py_CPLError, 1 },
@@ -10008,6 +9954,9 @@ SWIGEXPORT(void,init_gdal)() {
 	 SWIG_RegisterMapping("_char_pp","_stringList",0);
 	 SWIG_RegisterMapping("_long","_unsigned_long",0);
 	 SWIG_RegisterMapping("_long","_signed_long",0);
+	 SWIG_RegisterMapping("_GDALRWFlag","_OGRJustification",0);
+	 SWIG_RegisterMapping("_GDALRWFlag","_OGRFieldType",0);
+	 SWIG_RegisterMapping("_GDALRWFlag","_OGRwkbGeometryType",0);
 	 SWIG_RegisterMapping("_GDALRWFlag","_GDALPaletteInterp",0);
 	 SWIG_RegisterMapping("_GDALRWFlag","_GDALColorInterp",0);
 	 SWIG_RegisterMapping("_GDALRWFlag","_int",0);
@@ -10016,6 +9965,9 @@ SWIGEXPORT(void,init_gdal)() {
 	 SWIG_RegisterMapping("_GDALRWFlag","_GDALDataType",0);
 	 SWIG_RegisterMapping("_GDALRWFlag","_GDALAccess",0);
 	 SWIG_RegisterMapping("_stringList","_char_pp",0);
+	 SWIG_RegisterMapping("_GDALPaletteInterp","_OGRJustification",0);
+	 SWIG_RegisterMapping("_GDALPaletteInterp","_OGRFieldType",0);
+	 SWIG_RegisterMapping("_GDALPaletteInterp","_OGRwkbGeometryType",0);
 	 SWIG_RegisterMapping("_GDALPaletteInterp","_int",0);
 	 SWIG_RegisterMapping("_GDALPaletteInterp","_signed_int",0);
 	 SWIG_RegisterMapping("_GDALPaletteInterp","_unsigned_int",0);
@@ -10023,6 +9975,9 @@ SWIGEXPORT(void,init_gdal)() {
 	 SWIG_RegisterMapping("_GDALPaletteInterp","_GDALAccess",0);
 	 SWIG_RegisterMapping("_GDALPaletteInterp","_GDALRWFlag",0);
 	 SWIG_RegisterMapping("_GDALPaletteInterp","_GDALColorInterp",0);
+	 SWIG_RegisterMapping("_GDALDataType","_OGRJustification",0);
+	 SWIG_RegisterMapping("_GDALDataType","_OGRFieldType",0);
+	 SWIG_RegisterMapping("_GDALDataType","_OGRwkbGeometryType",0);
 	 SWIG_RegisterMapping("_GDALDataType","_GDALPaletteInterp",0);
 	 SWIG_RegisterMapping("_GDALDataType","_GDALColorInterp",0);
 	 SWIG_RegisterMapping("_GDALDataType","_GDALRWFlag",0);
@@ -10030,13 +9985,39 @@ SWIGEXPORT(void,init_gdal)() {
 	 SWIG_RegisterMapping("_GDALDataType","_int",0);
 	 SWIG_RegisterMapping("_GDALDataType","_signed_int",0);
 	 SWIG_RegisterMapping("_GDALDataType","_unsigned_int",0);
+	 SWIG_RegisterMapping("_OGRFieldType","_OGRJustification",0);
+	 SWIG_RegisterMapping("_OGRFieldType","_int",0);
+	 SWIG_RegisterMapping("_OGRFieldType","_signed_int",0);
+	 SWIG_RegisterMapping("_OGRFieldType","_unsigned_int",0);
+	 SWIG_RegisterMapping("_OGRFieldType","_GDALDataType",0);
+	 SWIG_RegisterMapping("_OGRFieldType","_GDALAccess",0);
+	 SWIG_RegisterMapping("_OGRFieldType","_GDALRWFlag",0);
+	 SWIG_RegisterMapping("_OGRFieldType","_GDALColorInterp",0);
+	 SWIG_RegisterMapping("_OGRFieldType","_GDALPaletteInterp",0);
+	 SWIG_RegisterMapping("_OGRFieldType","_OGRwkbGeometryType",0);
 	 SWIG_RegisterMapping("_unsigned_long","_long",0);
+	 SWIG_RegisterMapping("_signed_int","_OGRJustification",0);
+	 SWIG_RegisterMapping("_signed_int","_OGRFieldType",0);
+	 SWIG_RegisterMapping("_signed_int","_OGRwkbGeometryType",0);
 	 SWIG_RegisterMapping("_signed_int","_GDALPaletteInterp",0);
 	 SWIG_RegisterMapping("_signed_int","_GDALColorInterp",0);
 	 SWIG_RegisterMapping("_signed_int","_GDALRWFlag",0);
 	 SWIG_RegisterMapping("_signed_int","_GDALAccess",0);
 	 SWIG_RegisterMapping("_signed_int","_GDALDataType",0);
 	 SWIG_RegisterMapping("_signed_int","_int",0);
+	 SWIG_RegisterMapping("_OGRwkbGeometryType","_OGRJustification",0);
+	 SWIG_RegisterMapping("_OGRwkbGeometryType","_OGRFieldType",0);
+	 SWIG_RegisterMapping("_OGRwkbGeometryType","_int",0);
+	 SWIG_RegisterMapping("_OGRwkbGeometryType","_signed_int",0);
+	 SWIG_RegisterMapping("_OGRwkbGeometryType","_unsigned_int",0);
+	 SWIG_RegisterMapping("_OGRwkbGeometryType","_GDALDataType",0);
+	 SWIG_RegisterMapping("_OGRwkbGeometryType","_GDALAccess",0);
+	 SWIG_RegisterMapping("_OGRwkbGeometryType","_GDALRWFlag",0);
+	 SWIG_RegisterMapping("_OGRwkbGeometryType","_GDALColorInterp",0);
+	 SWIG_RegisterMapping("_OGRwkbGeometryType","_GDALPaletteInterp",0);
+	 SWIG_RegisterMapping("_GDALAccess","_OGRJustification",0);
+	 SWIG_RegisterMapping("_GDALAccess","_OGRFieldType",0);
+	 SWIG_RegisterMapping("_GDALAccess","_OGRwkbGeometryType",0);
 	 SWIG_RegisterMapping("_GDALAccess","_GDALPaletteInterp",0);
 	 SWIG_RegisterMapping("_GDALAccess","_GDALColorInterp",0);
 	 SWIG_RegisterMapping("_GDALAccess","_GDALRWFlag",0);
@@ -10046,6 +10027,9 @@ SWIGEXPORT(void,init_gdal)() {
 	 SWIG_RegisterMapping("_GDALAccess","_GDALDataType",0);
 	 SWIG_RegisterMapping("_unsigned_short","_short",0);
 	 SWIG_RegisterMapping("_signed_short","_short",0);
+	 SWIG_RegisterMapping("_unsigned_int","_OGRJustification",0);
+	 SWIG_RegisterMapping("_unsigned_int","_OGRFieldType",0);
+	 SWIG_RegisterMapping("_unsigned_int","_OGRwkbGeometryType",0);
 	 SWIG_RegisterMapping("_unsigned_int","_GDALPaletteInterp",0);
 	 SWIG_RegisterMapping("_unsigned_int","_GDALColorInterp",0);
 	 SWIG_RegisterMapping("_unsigned_int","_GDALRWFlag",0);
@@ -10054,6 +10038,9 @@ SWIGEXPORT(void,init_gdal)() {
 	 SWIG_RegisterMapping("_unsigned_int","_int",0);
 	 SWIG_RegisterMapping("_short","_unsigned_short",0);
 	 SWIG_RegisterMapping("_short","_signed_short",0);
+	 SWIG_RegisterMapping("_int","_OGRJustification",0);
+	 SWIG_RegisterMapping("_int","_OGRFieldType",0);
+	 SWIG_RegisterMapping("_int","_OGRwkbGeometryType",0);
 	 SWIG_RegisterMapping("_int","_GDALPaletteInterp",0);
 	 SWIG_RegisterMapping("_int","_GDALColorInterp",0);
 	 SWIG_RegisterMapping("_int","_GDALRWFlag",0);
@@ -10061,6 +10048,9 @@ SWIGEXPORT(void,init_gdal)() {
 	 SWIG_RegisterMapping("_int","_GDALDataType",0);
 	 SWIG_RegisterMapping("_int","_unsigned_int",0);
 	 SWIG_RegisterMapping("_int","_signed_int",0);
+	 SWIG_RegisterMapping("_GDALColorInterp","_OGRJustification",0);
+	 SWIG_RegisterMapping("_GDALColorInterp","_OGRFieldType",0);
+	 SWIG_RegisterMapping("_GDALColorInterp","_OGRwkbGeometryType",0);
 	 SWIG_RegisterMapping("_GDALColorInterp","_GDALPaletteInterp",0);
 	 SWIG_RegisterMapping("_GDALColorInterp","_int",0);
 	 SWIG_RegisterMapping("_GDALColorInterp","_signed_int",0);
@@ -10068,4 +10058,14 @@ SWIGEXPORT(void,init_gdal)() {
 	 SWIG_RegisterMapping("_GDALColorInterp","_GDALDataType",0);
 	 SWIG_RegisterMapping("_GDALColorInterp","_GDALAccess",0);
 	 SWIG_RegisterMapping("_GDALColorInterp","_GDALRWFlag",0);
+	 SWIG_RegisterMapping("_OGRJustification","_int",0);
+	 SWIG_RegisterMapping("_OGRJustification","_signed_int",0);
+	 SWIG_RegisterMapping("_OGRJustification","_unsigned_int",0);
+	 SWIG_RegisterMapping("_OGRJustification","_GDALDataType",0);
+	 SWIG_RegisterMapping("_OGRJustification","_GDALAccess",0);
+	 SWIG_RegisterMapping("_OGRJustification","_GDALRWFlag",0);
+	 SWIG_RegisterMapping("_OGRJustification","_GDALColorInterp",0);
+	 SWIG_RegisterMapping("_OGRJustification","_GDALPaletteInterp",0);
+	 SWIG_RegisterMapping("_OGRJustification","_OGRwkbGeometryType",0);
+	 SWIG_RegisterMapping("_OGRJustification","_OGRFieldType",0);
 }
