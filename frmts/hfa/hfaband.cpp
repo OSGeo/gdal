@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2003/03/03 16:53:07  dron
+ * GetRasterBlock() don't report error in case of incomplete input file.
+ *
  * Revision 1.25  2003/02/25 17:33:40  warmerda
  * Fixed support for uncompressed 1, 2 and 4 bit runs in compressed blocks.
  *
@@ -788,7 +791,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
     
 /* -------------------------------------------------------------------- */
 /*      If the block isn't valid, we just return all zeros, and an	*/
-/*	indication of failure.                        			*/
+/*	indication of success.                        			*/
 /* -------------------------------------------------------------------- */
     if( !panBlockFlag[iBlock] & BFLG_VALID )
     {
@@ -803,9 +806,14 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
     if( VSIFSeekL( fpData, panBlockStart[iBlock], SEEK_SET ) != 0 )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
-                  "Seek to %d failed.\n", panBlockStart[iBlock] );
-        return CE_Failure;
+        // XXX: We will not report error here, because file just may be
+	// in update state and data for this block will be available later
+	CPLDebug( "HFABand", "Seek to %d failed.\n",
+		  panBlockStart[iBlock] );
+        memset( pData, 0, 
+                HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
+
+        return CE_None;
     }
 
 /* -------------------------------------------------------------------- */
@@ -821,12 +829,14 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 
         if( VSIFReadL( pabyCData, panBlockSize[iBlock], 1, fpData ) != 1 )
         {
-            CPLError( CE_Failure, CPLE_FileIO, 
-                      "Read of %d bytes at %d failed.\n", 
+	    // XXX: Suppose that file in update state
+	    memset( pData, 0, 
+                HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
+	    CPLDebug( "HFABand", "Read of %d bytes at %d failed.\n", 
                       panBlockSize[iBlock],
                       panBlockStart[iBlock] );
 
-            return CE_Failure;
+            return CE_None;
         }
 
         eErr = UncompressBlock( pabyCData, panBlockSize[iBlock],
@@ -842,7 +852,16 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /*      Read uncompressed data directly into the return buffer.         */
 /* -------------------------------------------------------------------- */
     if( VSIFReadL( pData, panBlockSize[iBlock], 1, fpData ) != 1 )
-        return CE_Failure;
+    {
+	// XXX: Suppose that file in update state
+	memset( pData, 0, 
+	    HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
+	CPLDebug( "HFABand", "Read of %d bytes at %d failed.\n", 
+		  panBlockSize[iBlock],
+		  panBlockStart[iBlock] );
+
+	return CE_None;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Byte swap to local byte order if required.  It appears that     */
