@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/03/06 23:06:01  sperkins
+ * Fixed bug in situation where we attempt to read from a newly created band.
+ *
  * Revision 1.1  2001/03/06 03:53:44  sperkins
  * Added FITS format support.
  *
@@ -60,11 +63,12 @@ class FITSDataset : public GDALDataset {
   fitsfile* hFITS;
   GDALDataType gdalDataType;   // GDAL code for the image type
   int fitsDataType;   // FITS code for the image type
-  bool fileExists;
+  bool isExistingFile;
+  long highestOffsetWritten;  // How much of image has been written
 
   FITSDataset();     // Others shouldn't call this constructor explicitly
 
-  CPLErr Init(fitsfile* hFITS_, bool fileExists_);
+  CPLErr Init(fitsfile* hFITS_, bool isExistingFile_);
 
 public:
   ~FITSDataset();
@@ -137,19 +141,21 @@ CPLErr FITSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
   CPLAssert(nBlockXOff == 0);
   CPLAssert(nBlockYOff < nRasterYSize);
 
-  // If we haven't written anything to the file yet, then attempting
-  // to read causes an error, so in this case, just return zeros.
-  if (!dataset->fileExists) {
-    memset(pImage, 0, nBlockXSize * nBlockYSize
-	   * GDALGetDataTypeSize(eDataType) / 8);
-    return CE_None;
-  }
-
   // Calculate offsets and read in the data. Note that FITS array offsets
   // start at 1...
   long offset = (nBand - 1) * nRasterXSize * nRasterYSize +
     nBlockYOff * nRasterXSize + 1;
   long nElements = nRasterXSize;
+
+  // If we haven't written this block to the file yet, then attempting
+  // to read causes an error, so in this case, just return zeros.
+  if (!dataset->isExistingFile && offset > dataset->highestOffsetWritten) {
+    memset(pImage, 0, nBlockXSize * nBlockYSize
+	   * GDALGetDataTypeSize(eDataType) / 8);
+    return CE_None;
+  }
+
+  // Otherwise read in the image data
   fits_read_img(hFITS, dataset->fitsDataType, offset, nElements,
 		0, pImage, 0, &status);
   if (status) {
@@ -190,8 +196,9 @@ CPLErr FITSRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
     return CE_Failure;
   }
 
-  // When we write a block, assume that the file now exists
-  dataset->fileExists = true;
+  // When we write a block, update the offset counter that we've written
+  if (offset > dataset->highestOffsetWritten)
+    dataset->highestOffsetWritten = offset;
 
   return CE_None;
 }
@@ -227,10 +234,11 @@ FITSDataset::~FITSDataset() {
 /*                           FITSDataset::Init()                        */
 /************************************************************************/
 
-CPLErr FITSDataset::Init(fitsfile* hFITS_, bool fileExists_) {
+CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
 
   hFITS = hFITS_;
-  fileExists = fileExists_;
+  isExistingFile = isExistingFile_;
+  highestOffsetWritten = 0;
   int status = 0;
 
   // Move to the primary HDU
@@ -301,6 +309,8 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool fileExists_) {
     return CE_Failure;
   }
 
+  // Read header information from file and use it to set metadata
+  
   // Create the bands
   for (int i = 0; i < nBands; ++i)
     SetBand(i+1, new FITSRasterBand(this, i+1));

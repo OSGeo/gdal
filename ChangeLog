@@ -1,3 +1,8 @@
+2001-03-06  Simon Perkins  <simes@genie.lanl.gov>
+
+	* frmts/fits/fitsdataset.cpp: Fixed bug in situation where we
+	attempt to read from a newly created band.
+
 2001-03-05  Simon Perkins  <simes@genie.lanl.gov>
 
 	* Added FITS format support and documentation.
