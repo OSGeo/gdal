@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/08/08 22:03:25  warmerda
+ * add support for some restrictions
+ *
  * Revision 1.20  2002/04/25 17:37:04  warmerda
  * use IUnknown for ADSK_GEOM_EXTENT column
  *
@@ -91,6 +94,29 @@
 #include "ICRRowsetImpl.h"
 #include "CCRRowsetImpl.h"
 
+// ***************************************************************************
+// * D E F I N E S
+// ***************************************************************************
+#define RESTRICTION_OGISGC_TABLE_CATALOG			1
+#define RESTRICTION_OGISGC_TABLE_SCHEMA				2
+#define RESTRICTION_OGISGC_TABLE_NAME				3
+#define RESTRICTION_OGISGC_COLUMN_NAME				4
+#define RESTRICTION_OGISGC_GEOM_TYPE				5
+#define RESTRICTION_OGISGC_SPATIAL_REF_SYSTEM_ID	        6
+#define RESTRICTION_OGISGC_SPATIAL_EXTENT			7
+
+#define RESTRICTION_OGISFT_FEATURE_TABLE_ALIAS		        1
+#define RESTRICTION_OGISFT_TABLE_CATALOG			2
+#define RESTRICTION_OGISFT_TABLE_SCHEMA				3
+#define RESTRICTION_OGISFT_TABLE_NAME				4
+#define RESTRICTION_OGISFT_ID_COLUMN_NAME			5
+#define RESTRICTION_OGISFT_DG_COLUMN_NAME			6
+
+#define RESTRICTION_OGISSR_SRS_ID				1
+#define RESTRICTION_OGISSR_AUTHORITY_NAME			2
+#define RESTRICTION_OGISSR_AUTHORITY_ID				3
+#define RESTRICTION_OGISSR_SRS_WKT				4
+
 class CSFSessionTRSchemaRowset;
 class CSFSessionColSchemaRowset;
 class CSFSessionPTSchemaRowset;
@@ -114,7 +140,7 @@ public:
 /////////////////////////////////////////////////////////////////////////////
 // CSFSession
 class ATL_NO_VTABLE CSFSession : 
-	public CComObjectRootEx<CComSingleThreadModel>,
+	public CComObjectRootEx<CComMultiThreadModel>,
 	public IGetDataSourceImpl<CSFSession>,
 	public IOpenRowsetImpl<CSFSession>,
 	public ISessionPropertiesImpl<CSFSession>,
@@ -227,7 +253,7 @@ class CSFSessionTRSchemaRowset :
                 return E_OUTOFMEMORY;
         }
         
-        *pcRowsAffected = poDS->GetLayerCount();
+        *pcRowsAffected = m_rgRowData.GetSize();
         
         return S_OK;
     }
@@ -364,10 +390,10 @@ class CSFSessionColSchemaRowset :
             trData.m_nDataType = DBTYPE_IUNKNOWN;
             if (!m_rgRowData.Add(trData))
                 return E_OUTOFMEMORY;
-
-            *pcRowsAffected += poDefn->GetFieldCount() + 2;
         }
 
+        *pcRowsAffected = m_rgRowData.GetSize();
+        
         return S_OK;
     }
 };
@@ -405,7 +431,7 @@ public:
 		trDataS.m_nType = DBTYPE_IUNKNOWN;
 		m_rgRowData.Add(trDataBlob);
 
-		*pcRowsAffected = 4;
+		*pcRowsAffected = m_rgRowData.GetSize();
 		return S_OK;
 	}
 };
@@ -446,7 +472,8 @@ class CSFSessionSchemaOGISTables:
 public CRowsetImpl <CSFSessionSchemaOGISTables,OGISTables_Row, CSFSession>
 {
   public:
-    HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
+    HRESULT Execute(LONG* pcRowsAffected, ULONG cRestrictions,
+                    const VARIANT* rgRestrictions )
     {
         USES_CONVERSION;
 
@@ -468,21 +495,113 @@ public CRowsetImpl <CSFSessionSchemaOGISTables,OGISTables_Row, CSFSession>
             return S_FALSE;
         }
 
-        for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
+        // Get restriction information if supplied
+        if(cRestrictions > 0)
         {
-            OGISTables_Row trData;
+            CComBSTR bstrTableName;
+            
+            // There are restrictions
+            if (cRestrictions >= RESTRICTION_OGISFT_FEATURE_TABLE_ALIAS)
+            {
+				// Extract FEATURE_TABLE_ALIAS restriction
+            }
+            
+            if (cRestrictions >= RESTRICTION_OGISFT_TABLE_CATALOG)
+            {
+				// Extract TABLE_CATALOG restriction
+            }
+            
+            if (cRestrictions >= RESTRICTION_OGISFT_TABLE_SCHEMA)
+            {
+				// Extract TABLE_SCHEMA restriction
+            }
+            
+            if (cRestrictions >= RESTRICTION_OGISFT_TABLE_NAME)
+            {
+				// Extract TABLE_NAME restriction
+                if(rgRestrictions[3].vt != VT_EMPTY)
+                {
+                    BOOL bCheck = FALSE;
+                    VARIANT vt;
+                    VariantInit(&vt);
+                    vt = rgRestrictions[3];
+                    
+                    if (vt.vt == VT_BSTR)
+                    {
+                        bCheck = TRUE;
+                    }
+                    else
+                    {
+                        // Try and convert it
+                        HRESULT hResult = VariantChangeType(&vt,&vt,0,VT_BSTR);
+                        if(SUCCEEDED(hResult))
+                        {
+                            bCheck = TRUE;
+                        }
+                    }
+                    
+                    if(bCheck)
+                    {
+                        bstrTableName = vt.bstrVal;
+                    }
+                }
+            }
+            
+            if (cRestrictions >= RESTRICTION_OGISFT_ID_COLUMN_NAME)
+            {
+				// Extract ID_COLUMN_NAME restriction
+            }
+            
+            if (cRestrictions == RESTRICTION_OGISFT_DG_COLUMN_NAME)
+            {
+				// Extract DG_COLUMN_NAME restriction
+            }
 
-            pLayer = poDS->GetLayer(iLayer);
-            poDefn = pLayer->GetLayerDefn();
+            BOOL bHaveMatch = FALSE;
+            for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
+            {
+                pLayer = poDS->GetLayer(iLayer);
+                poDefn = pLayer->GetLayerDefn();
+                
+                if(wcsicmp(bstrTableName, A2OLE(poDefn->GetName())) == 0)
+                {
+                    // We found the layer we are interested in
+                    bHaveMatch = TRUE;
+                    break;
+                }
+            }
 
-            lstrcpyW(trData.m_szTableName,A2OLE(poDefn->GetName()));
-            lstrcpyW(trData.m_szDGName,A2OLE("OGIS_GEOMETRY"));
-            lstrcpyW(trData.m_szColumnName,A2OLE("FID"));
-
-            m_rgRowData.Add(trData);
+            // We have the layer we want so extract the information
+            if(bHaveMatch)
+            {
+                OGISTables_Row trData;
+                
+                lstrcpyW(trData.m_szTableName,A2OLE(poDefn->GetName()));
+                lstrcpyW(trData.m_szDGName,A2OLE("OGIS_GEOMETRY"));
+                lstrcpyW(trData.m_szColumnName,A2OLE("FID"));
+                
+                m_rgRowData.Add(trData);
+            }
+        }
+        else
+        {
+            for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
+            {
+                OGISTables_Row trData;
+                
+                pLayer = poDS->GetLayer(iLayer);
+                poDefn = pLayer->GetLayerDefn();
+                
+                lstrcpyW(trData.m_szTableName,A2OLE(poDefn->GetName()));
+                lstrcpyW(trData.m_szDGName,A2OLE("OGIS_GEOMETRY"));
+                lstrcpyW(trData.m_szColumnName,A2OLE("FID"));
+                
+                m_rgRowData.Add(trData);
+            }
         }
 
-        *pcRowsAffected = poDS->GetLayerCount();
+        *pcRowsAffected = m_rgRowData.GetSize();
+        
         return S_OK;
     }
 };
@@ -549,15 +668,15 @@ public CCRRowsetImpl<CSFSessionSchemaOGISGeoColumns,OGISGeometry_Row,CSFSession>
             return DBSTATUS_S_OK;
         }
 
-    HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
-	{
+    HRESULT Execute(LONG* pcRowsAffected, ULONG cRestrictions, const VARIANT* rgRestrictions)
+        {
             USES_CONVERSION;
 
-            int				iLayer;
-            IUnknown		*pIU;
-            OGRDataSource	*poDS;
-            OGRLayer		*pLayer;
-            OGRFeatureDefn	*poDefn;
+            int                iLayer;
+            IUnknown        *pIU;
+            OGRDataSource    *poDS;
+            OGRLayer        *pLayer;
+            OGRFeatureDefn    *poDefn;
 
             CPLDebug( "OGR_OLEDB",
                       "CSFSessionSchemaOGISGeoColumns::Execute()." );
@@ -571,77 +690,254 @@ public CCRRowsetImpl<CSFSessionSchemaOGISGeoColumns,OGISGeometry_Row,CSFSession>
                 return S_FALSE;
             }
 
-            for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
+            // Get restriction information if supplied
+            if(cRestrictions > 0)
             {
-                OGISGeometry_Row trData;
-                char             *pszWKT = NULL;
+                CComBSTR bstrTableName;
+                CComBSTR bstrColumnName = L"OGIS_GEOMETRY";		// Default geometry column name
 
-                pLayer = poDS->GetLayer(iLayer);
-                poDefn = pLayer->GetLayerDefn();
-
-                lstrcpyW(trData.m_szTableName,A2OLE(poDefn->GetName()));
-                lstrcpyW(trData.m_szColumnName,A2OLE("OGIS_GEOMETRY"));
-                trData.m_nGeomType = SFWkbGeomTypeToDBGEOM(poDefn->GetGeomType());
-                QueryInterface(IID_IUnknown,(void **) &pIU);
-                pszWKT = SFGetLayerWKT( pLayer, pIU );
-                
-                if( pszWKT != NULL && strlen(pszWKT) > 0 )
+				// There are restrictions
+                if (cRestrictions >= RESTRICTION_OGISGC_TABLE_CATALOG)
                 {
-                    OGRFree( pszWKT );
-                    trData.m_nSpatialRefId = iLayer+1;
+                    // Extract TABLE_CATALOG restriction
                 }
-                else
-                    trData.m_nSpatialRefId = poDS->GetLayerCount() + 1;
+
+                if (cRestrictions >= RESTRICTION_OGISGC_TABLE_SCHEMA)
+                {
+                    // Extract TABLE_SCHEMA restriction
+                }
+
+                if (cRestrictions >= RESTRICTION_OGISGC_TABLE_NAME)
+                {
+                    // Extract TABLE_NAME restriction
+                    if(rgRestrictions[RESTRICTION_OGISGC_TABLE_NAME-1].vt != VT_EMPTY)
+                    {
+                        BOOL bCheck = FALSE;
+                        VARIANT vt;
+                        VariantInit(&vt);
+                        vt = rgRestrictions[RESTRICTION_OGISGC_TABLE_NAME-1];
+
+                        if (vt.vt == VT_BSTR)
+                        {
+                            bCheck = TRUE;
+                        }
+                        else
+                        {
+                            // Try and convert it
+                            HRESULT hResult = VariantChangeType(&vt,&vt,0,VT_BSTR);
+                            if(SUCCEEDED(hResult))
+                            {
+                                bCheck = TRUE;
+                            }
+                        }
+
+                        if(bCheck)
+                        {
+                            bstrTableName = vt.bstrVal;
+                        }
+                    }
+                }
+
+                if (cRestrictions >= RESTRICTION_OGISGC_COLUMN_NAME)
+                {
+                    // Extract COLUMN_NAME restriction
+                    if(rgRestrictions[RESTRICTION_OGISGC_COLUMN_NAME-1].vt != VT_EMPTY)
+                    {
+                        BOOL bCheck = FALSE;
+                        VARIANT vt;
+                        VariantInit(&vt);
+                        vt = rgRestrictions[RESTRICTION_OGISGC_COLUMN_NAME-1];
+
+                        if (vt.vt == VT_BSTR)
+                        {
+                            bCheck = TRUE;
+                        }
+                        else
+                        {
+                            // Try and convert it
+                            HRESULT hResult = VariantChangeType(&vt,&vt,0,VT_BSTR);
+                            if(SUCCEEDED(hResult))
+                            {
+                                bCheck = TRUE;
+                            }
+                        }
+
+                        if(bCheck)
+                        {
+                            bstrColumnName = vt.bstrVal;
+                        }
+                    }
+                }
+
+                if (cRestrictions >= RESTRICTION_OGISGC_GEOM_TYPE)
+                {
+                    // Extract GEOM_TYPE restriction
+                }
+
+                if (cRestrictions == RESTRICTION_OGISGC_SPATIAL_REF_SYSTEM_ID)
+                {
+                    // Extract SPATIAL_REF_SYSTEM_ID restriction
+                }
+
+                if (cRestrictions == RESTRICTION_OGISGC_SPATIAL_EXTENT)
+                {
+                    // Extract SPATIAL_EXTENT restriction
+                }
+
+                BOOL bHaveMatch = FALSE;
+                for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
+                {
+                    pLayer = poDS->GetLayer(iLayer);
+                    poDefn = pLayer->GetLayerDefn();
+
+                    if((wcsicmp(bstrTableName, A2OLE(poDefn->GetName())) == 0) && (wcsicmp(bstrColumnName,A2OLE("OGIS_GEOMETRY")) == 0))
+                    {
+                        // We found the layer we are interested in
+                        bHaveMatch = TRUE;
+                        break;
+                    }
+                }
+
+				// We have the layer we want so extract the information
+                if(bHaveMatch)
+                {
+                    OGISGeometry_Row trData;
+                    char             *pszWKT = NULL;
+
+                    lstrcpyW(trData.m_szTableName,A2OLE(poDefn->GetName()));
+                    lstrcpyW(trData.m_szColumnName,A2OLE("OGIS_GEOMETRY"));
+                    trData.m_nGeomType = SFWkbGeomTypeToDBGEOM(poDefn->GetGeomType());
+                    QueryInterface(IID_IUnknown,(void **) &pIU);
+                    pszWKT = SFGetLayerWKT( pLayer, pIU );
+                
+                    if( pszWKT != NULL && strlen(pszWKT) > 0 )
+                    {
+                        OGRFree( pszWKT );
+                        trData.m_nSpatialRefId = iLayer+1;
+                    }
+                    else
+                        trData.m_nSpatialRefId = poDS->GetLayerCount() + 1;
 
 #ifdef SUPPORT_ADSK_GEOM_EXTENT    
-                OGREnvelope sExtent;
+                    OGREnvelope sExtent;
                 
-                if( pLayer->GetExtent( &sExtent, FALSE ) == OGRERR_NONE )
-                {
-                    OGRPolygon oExtentPoly;
-                    OGRLinearRing oExtentRing;
+                    if( pLayer->GetExtent( &sExtent, FALSE ) == OGRERR_NONE )
+                    {
+                        OGRPolygon oExtentPoly;
+                        OGRLinearRing oExtentRing;
 
-                    oExtentRing.addPoint( sExtent.MinX, sExtent.MinY );
-                    oExtentRing.addPoint( sExtent.MinX, sExtent.MaxY );
-                    oExtentRing.addPoint( sExtent.MaxX, sExtent.MaxY );
-                    oExtentRing.addPoint( sExtent.MaxX, sExtent.MinY );
-                    oExtentRing.addPoint( sExtent.MinX, sExtent.MinY );
+                        oExtentRing.addPoint( sExtent.MinX, sExtent.MinY );
+                        oExtentRing.addPoint( sExtent.MinX, sExtent.MaxY );
+                        oExtentRing.addPoint( sExtent.MaxX, sExtent.MaxY );
+                        oExtentRing.addPoint( sExtent.MaxX, sExtent.MinY );
+                        oExtentRing.addPoint( sExtent.MinX, sExtent.MinY );
 
-                    oExtentPoly.addRing( &oExtentRing );
+                        oExtentPoly.addRing( &oExtentRing );
 
-                    CPLDebug( "FME_OLEDB",
-                              "ADSK_GEOM_EXTENT(%f,%f,%f,%f) -> %d bytes",
-                              sExtent.MinX, sExtent.MaxX,
-                              sExtent.MinY, sExtent.MaxY,
-                              oExtentPoly.WkbSize() );
+                        CPLDebug( "FME_OLEDB",
+                                  "ADSK_GEOM_EXTENT(%f,%f,%f,%f) -> %d bytes",
+                                  sExtent.MinX, sExtent.MaxX,
+                                  sExtent.MinY, sExtent.MaxY,
+                                  oExtentPoly.WkbSize() );
                     
-                    BYTE abyGeometry[93];
-                    memset( abyGeometry, 0, sizeof(abyGeometry) );
+                        BYTE abyGeometry[93];
+                        memset( abyGeometry, 0, sizeof(abyGeometry) );
                     
-                    oExtentPoly.exportToWkb( wkbNDR, abyGeometry + 0 );
+                        oExtentPoly.exportToWkb( wkbNDR, abyGeometry + 0 );
 
-                    //20020412 - map to istream - ryan
-                    IStream    *pIStream;
-                    HGLOBAL     hMem;
-                    hMem=GlobalAlloc(GMEM_MOVEABLE, sizeof(abyGeometry));
-                    CreateStreamOnHGlobal(hMem, TRUE, &pIStream);
-                    pIStream->Write(abyGeometry, sizeof(abyGeometry), NULL );
+                        //20020412 - map to istream - ryan
+                        IStream    *pIStream;
+                        HGLOBAL     hMem;
+                        hMem=GlobalAlloc(GMEM_MOVEABLE, sizeof(abyGeometry));
+                        CreateStreamOnHGlobal(hMem, TRUE, &pIStream);
+                        pIStream->Write(abyGeometry, sizeof(abyGeometry), NULL );
 
-                    LARGE_INTEGER nLargeZero = { 0,0 };
-                    pIStream->Seek( nLargeZero, STREAM_SEEK_SET, NULL);
+                        LARGE_INTEGER nLargeZero = { 0,0 };
+                        pIStream->Seek( nLargeZero, STREAM_SEEK_SET, NULL);
 
-                    //20020412 - ryan
-                    trData.m_pADSK_GEOM_EXTENT = pIStream;
-                }
+                        //20020412 - ryan
+                        trData.m_pADSK_GEOM_EXTENT = pIStream;
+                    }
 #endif
 
-                m_rgRowData.Add(trData);
+                    m_rgRowData.Add(trData);
+                }
+            }
+            else
+            {
+				// No restrictions, so build entire rowset
+                for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
+                {
+                    OGISGeometry_Row trData;
+                    char             *pszWKT = NULL;
+
+                    pLayer = poDS->GetLayer(iLayer);
+                    poDefn = pLayer->GetLayerDefn();
+
+                    lstrcpyW(trData.m_szTableName,A2OLE(poDefn->GetName()));
+                    lstrcpyW(trData.m_szColumnName,A2OLE("OGIS_GEOMETRY"));
+                    trData.m_nGeomType = SFWkbGeomTypeToDBGEOM(poDefn->GetGeomType());
+                    QueryInterface(IID_IUnknown,(void **) &pIU);
+                    pszWKT = SFGetLayerWKT( pLayer, pIU );
+                
+                    if( pszWKT != NULL && strlen(pszWKT) > 0 )
+                    {
+                        OGRFree( pszWKT );
+                        trData.m_nSpatialRefId = iLayer+1;
+                    }
+                    else
+                        trData.m_nSpatialRefId = poDS->GetLayerCount() + 1;
+
+#ifdef SUPPORT_ADSK_GEOM_EXTENT    
+                    OGREnvelope sExtent;
+                
+                    if( pLayer->GetExtent( &sExtent, FALSE ) == OGRERR_NONE )
+                    {
+                        OGRPolygon oExtentPoly;
+                        OGRLinearRing oExtentRing;
+
+                        oExtentRing.addPoint( sExtent.MinX, sExtent.MinY );
+                        oExtentRing.addPoint( sExtent.MinX, sExtent.MaxY );
+                        oExtentRing.addPoint( sExtent.MaxX, sExtent.MaxY );
+                        oExtentRing.addPoint( sExtent.MaxX, sExtent.MinY );
+                        oExtentRing.addPoint( sExtent.MinX, sExtent.MinY );
+
+                        oExtentPoly.addRing( &oExtentRing );
+
+                        CPLDebug( "FME_OLEDB",
+                                  "ADSK_GEOM_EXTENT(%f,%f,%f,%f) -> %d bytes",
+                                  sExtent.MinX, sExtent.MaxX,
+                                  sExtent.MinY, sExtent.MaxY,
+                                  oExtentPoly.WkbSize() );
+                    
+                        BYTE abyGeometry[93];
+                        memset( abyGeometry, 0, sizeof(abyGeometry) );
+                    
+                        oExtentPoly.exportToWkb( wkbNDR, abyGeometry + 0 );
+
+                        //20020412 - map to istream - ryan
+                        IStream    *pIStream;
+                        HGLOBAL     hMem;
+                        hMem=GlobalAlloc(GMEM_MOVEABLE, sizeof(abyGeometry));
+                        CreateStreamOnHGlobal(hMem, TRUE, &pIStream);
+                        pIStream->Write(abyGeometry, sizeof(abyGeometry), NULL );
+
+                        LARGE_INTEGER nLargeZero = { 0,0 };
+                        pIStream->Seek( nLargeZero, STREAM_SEEK_SET, NULL);
+
+                        //20020412 - ryan
+                        trData.m_pADSK_GEOM_EXTENT = pIStream;
+                    }
+#endif
+
+                    m_rgRowData.Add(trData);
+                }
             }
 
-            *pcRowsAffected = poDS->GetLayerCount();
+            *pcRowsAffected = m_rgRowData.GetSize();
 
             return S_OK;
-	}
+        }
 };
 
 
@@ -699,18 +995,18 @@ public CCRRowsetImpl<CSFSessionSchemaSpatRef,OGISSpat_Row,CSFSession>
             return DBSTATUS_S_OK;
         }
 
-    HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
-	{
+    HRESULT Execute(LONG* pcRowsAffected, ULONG cRestrictions, const VARIANT* rgRestrictions)
+        {
             USES_CONVERSION;
-            bool	bAddDefault = false;
+            bool    bAddDefault = false;
 
             // See if we can get the Spatial reference system for each layer.
             // It is unclear at the current time what the valid authority id and spatial
             // ref ids are.  
-            int				iLayer;
-            IUnknown		*pIU;
-            OGRDataSource	*poDS;
-            OGRLayer		*pLayer;
+            int                iLayer;
+            IUnknown        *pIU;
+            OGRDataSource    *poDS;
+            OGRLayer        *pLayer;
 
             CPLDebug( "OGR_OLEDB",
                       "CSFSessionSchemaSpatRef::Execute()." );
@@ -724,47 +1020,137 @@ public CCRRowsetImpl<CSFSessionSchemaSpatRef,OGISSpat_Row,CSFSession>
                 return S_FALSE;
             }
 
-            for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
+            // Get restriction information if supplied
+            if(cRestrictions > 0)
             {
-                OGISSpat_Row trData;
-                char *pszWKT = NULL;
-				
-                pLayer = poDS->GetLayer(iLayer);
+                LONG* plSRSIDRestriction = NULL;
 
-                QueryInterface(IID_IUnknown,(void **) &pIU);
-                pszWKT = SFGetLayerWKT( pLayer, pIU );
-
-                if( pszWKT != NULL && strlen(pszWKT) > 0 )
+				// There are restrictions
+                if (cRestrictions >= RESTRICTION_OGISSR_SRS_ID)
                 {
-                    lstrcpyW(trData.m_szAuthorityName,A2OLE(""));
-                    trData.m_nAuthorityId = 0;
-                    trData.m_nSpatialRefId = iLayer+1;
-                    lstrcpyW(trData.m_pszSpatialRefSystem,A2OLE(pszWKT));
-                    
-                    m_rgRowData.Add(trData);
+                    // Extract SPATIAL_REF_SYSTEM_ID restriction
+                    if(rgRestrictions[0].vt != VT_EMPTY)
+                    {
+                        if (rgRestrictions[0].vt == VT_I4)
+                        {
+                            plSRSIDRestriction = new LONG;
+                            *plSRSIDRestriction = rgRestrictions[0].ulVal;
+                        }
+                    }
                 }
-                else
-                    bAddDefault = TRUE;
 
-                OGRFree( pszWKT );
+                if (cRestrictions >= RESTRICTION_OGISSR_AUTHORITY_NAME)
+                {
+                    // Extract AUTHORITY_NAME restriction
+                }
+
+                if (cRestrictions >= RESTRICTION_OGISSR_AUTHORITY_ID)
+                {
+                    // Extract AUTHORITY_ID restriction
+                }
+
+                if (cRestrictions >= RESTRICTION_OGISSR_SRS_WKT)
+                {
+                    // Extract SPATIAL_REF_SYSTEM_WKT restriction
+                }
+
+                BOOL bMatch = FALSE;
+
+                if(plSRSIDRestriction)
+                {
+                    for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
+                    {
+                        if(*plSRSIDRestriction == iLayer+1)
+                        {
+                            // Found a match
+                            bMatch = TRUE;
+                            break;
+                        }
+                    }
+
+                    if(bMatch)
+                    {
+                        OGISSpat_Row trData;
+                        char *pszWKT = NULL;
+                
+                        pLayer = poDS->GetLayer(iLayer);
+
+                        QueryInterface(IID_IUnknown,(void **) &pIU);
+                        pszWKT = SFGetLayerWKT( pLayer, pIU );
+
+                        if( pszWKT != NULL && strlen(pszWKT) > 0 )
+                        {
+                            lstrcpyW(trData.m_szAuthorityName,A2OLE(""));
+                            trData.m_nAuthorityId = 0;
+                            trData.m_nSpatialRefId = iLayer+1;
+                            lstrcpyW(trData.m_pszSpatialRefSystem,A2OLE(pszWKT));
+                    
+                            m_rgRowData.Add(trData);
+                        }
+
+                        OGRFree( pszWKT );
+                    }
+                    else
+                    {
+                        // Add default
+                        OGISSpat_Row trData;
+
+                        trData.m_nAuthorityId = 0;
+                        trData.m_nSpatialRefId = poDS->GetLayerCount() + 1;
+                        lstrcpyW(trData.m_szAuthorityName,A2OLE(""));
+                        lstrcpyW(trData.m_pszSpatialRefSystem,L"" );
+            
+                        m_rgRowData.Add(trData);    
+                    }
+
+                    delete plSRSIDRestriction;
+                    plSRSIDRestriction = NULL;
+                }
             }
-
-            if (bAddDefault)
+            else
             {
-                OGISSpat_Row trData;
+                for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
+                {
+                    OGISSpat_Row trData;
+                    char *pszWKT = NULL;
+                
+                    pLayer = poDS->GetLayer(iLayer);
 
-                trData.m_nAuthorityId = 0;
-                trData.m_nSpatialRefId = poDS->GetLayerCount() + 1;
-                lstrcpyW(trData.m_szAuthorityName,A2OLE(""));
-		lstrcpyW(trData.m_pszSpatialRefSystem,L"" );
-			
-                m_rgRowData.Add(trData);	
+                    QueryInterface(IID_IUnknown,(void **) &pIU);
+                    pszWKT = SFGetLayerWKT( pLayer, pIU );
+
+                    if( pszWKT != NULL && strlen(pszWKT) > 0 )
+                    {
+                        lstrcpyW(trData.m_szAuthorityName,A2OLE(""));
+                        trData.m_nAuthorityId = 0;
+                        trData.m_nSpatialRefId = iLayer+1;
+                        lstrcpyW(trData.m_pszSpatialRefSystem,A2OLE(pszWKT));
+                    
+                        m_rgRowData.Add(trData);
+                    }
+                    else
+                        bAddDefault = TRUE;
+
+                    OGRFree( pszWKT );
+                }
+
+                if (bAddDefault)
+                {
+                    OGISSpat_Row trData;
+
+                    trData.m_nAuthorityId = 0;
+                    trData.m_nSpatialRefId = poDS->GetLayerCount() + 1;
+                    lstrcpyW(trData.m_szAuthorityName,A2OLE(""));
+                    lstrcpyW(trData.m_pszSpatialRefSystem,L"" );
+            
+                    m_rgRowData.Add(trData);    
+                }
             }
 
-            *pcRowsAffected = poDS->GetLayerCount();
+            *pcRowsAffected = m_rgRowData.GetSize();
 
             return S_OK;
-	}
+        }
 };
 
 #endif //__CSFSession_H_
