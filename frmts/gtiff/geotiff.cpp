@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.98  2003/07/18 19:32:54  warmerda
+ * fixed pszProjection initialize change from last commit
+ *
  * Revision 1.97  2003/07/18 15:17:28  warmerda
  * Added GTIFF_DIR: option
  *
@@ -1175,7 +1178,7 @@ GTiffDataset::GTiffDataset()
     bNoDataSet = FALSE;
     bNoDataChanged = FALSE;
     dfNoDataValue = -9999.0;
-    pszProjection = CPLStrdup(pszProjection);
+    pszProjection = CPLStrdup("");
     bBase = TRUE;
     bTreatAsRGBA = FALSE;
     nOverviewCount = 0;
