@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/07/27 01:52:31  warmerda
+ * added fid to readable dump of feature
+ *
  * Revision 1.3  1999/07/27 00:48:34  warmerda
  * added fid, and Equal() support
  *
@@ -586,7 +589,7 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
 void OGRFeature::DumpReadable( FILE * fpOut )
 
 {
-    fprintf( fpOut, "OGRFeature(%s)\n", poDefn->GetName() );
+    fprintf( fpOut, "OGRFeature(%s):%ld\n", poDefn->GetName(), GetFID() );
     for( int iField = 0; iField < GetFieldCount(); iField++ )
     {
         OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn(iField);
