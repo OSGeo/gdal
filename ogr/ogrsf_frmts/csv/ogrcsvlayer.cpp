@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/02/02 20:30:10  fwarmerdam
+ * added m_nFeaturesRead support
+ *
  * Revision 1.3  2004/08/17 15:40:40  warmerda
  * track capabilities and update mode better
  *
@@ -168,6 +171,13 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 OGRCSVLayer::~OGRCSVLayer()
 
 {
+    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    {
+        CPLDebug( "CSV", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  poFeatureDefn->GetName() );
+    }
+
     delete poFeatureDefn;
     
     VSIFClose( fpCSV );
@@ -230,6 +240,8 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
 /*      Translate the record id.                                        */
 /* -------------------------------------------------------------------- */
     poFeature->SetFID( nNextFID++ );
+
+    m_nFeaturesRead++;
 
     return poFeature;
 }
