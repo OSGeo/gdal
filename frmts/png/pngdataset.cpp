@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.27  2004/05/28 16:05:54  warmerda
+ * fix bug in bGeoTransformValid setting reading worldfiles
+ *
  * Revision 1.26  2004/01/29 18:48:01  warmerda
  * Changed to do the swapping ourseleves.  The png_set_swap() function didn't
  * seem to be having the desired effect
@@ -781,20 +784,23 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for world file.                                           */
 /* -------------------------------------------------------------------- */
     poDS->bGeoTransformValid = 
-        GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+        GDALReadWorldFile( poOpenInfo->pszFilename, NULL, 
                            poDS->adfGeoTransform );
+
     if( !poDS->bGeoTransformValid )
-	GDALReadWorldFile( poOpenInfo->pszFilename, ".tfw", 
-                           poDS->adfGeoTransform );
+        poDS->bGeoTransformValid = 
+            GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+                               poDS->adfGeoTransform );
+
     if( !poDS->bGeoTransformValid )
-	GDALReadWorldFile( poOpenInfo->pszFilename, ".tifw", 
-                           poDS->adfGeoTransform );
+        poDS->bGeoTransformValid = 
+            GDALReadWorldFile( poOpenInfo->pszFilename, ".tfw", 
+                               poDS->adfGeoTransform );
     if( !poDS->bGeoTransformValid )
-	GDALReadWorldFile( poOpenInfo->pszFilename, ".pngw", 
-                           poDS->adfGeoTransform );
-    if( !poDS->bGeoTransformValid )
-	GDALReadWorldFile( poOpenInfo->pszFilename, ".pgw", 
-                           poDS->adfGeoTransform );
+        poDS->bGeoTransformValid = 
+            GDALReadWorldFile( poOpenInfo->pszFilename, ".tifw", 
+                               poDS->adfGeoTransform );
+
     return poDS;
 }
 
