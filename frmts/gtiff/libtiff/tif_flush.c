@@ -56,7 +56,7 @@ int
 TIFFFlushData(TIFF* tif)
 {
 	if ((tif->tif_flags & TIFF_BEENWRITING) == 0)
-		return (1);
+		return (0);
 	if (tif->tif_flags & TIFF_POSTENCODE) {
 		tif->tif_flags &= ~TIFF_POSTENCODE;
 		if (!(*tif->tif_postencode)(tif))
