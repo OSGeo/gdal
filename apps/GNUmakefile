@@ -31,6 +31,10 @@ gdal2raw:	gdal2raw.o $(DEP_LIBS)
 gdal_chksum:	gdal_chksum.o $(DEP_LIBS)
 	$(CXX) $(LNK_FLAGS) gdal_chksum.o $(GDAL_LIBS) $(LIBS) -o gdal_chksum
 
+gdaltindex:	gdaltindex.o $(DEP_LIBS)
+	$(CXX) $(LNK_FLAGS) gdaltindex.o $(XTRAOBJ) \
+		$(GDAL_SLIB_LINK) $(LIBS) -o gdaltindex
+
 clean:
 	rm -f *.o gdalinfo core
 
