@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2003/05/23 20:42:24  sperkins
+ * default CreateCopy() now copies metadata
+ *
  * Revision 1.29  2003/04/30 17:13:48  warmerda
  * added docs for many C functions
  *
@@ -275,7 +278,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Try setting the projection and geotransform if it seems         */
 /*      suitable.  For now we don't try and copy GCPs, though I         */
-/*      suppose we should.                                              */
+/*      suppose we should. Also copy metadata.                          */
 /* -------------------------------------------------------------------- */
     double      adfGeoTransform[6];
 
@@ -295,6 +298,8 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
     {
         poDstDS->SetProjection( poSrcDS->GetProjectionRef() );
     }
+
+    poDstDS->SetMetadata( poSrcDS->GetMetadata() );
 
 /* -------------------------------------------------------------------- */
 /*      Loop copying bands.                                             */
