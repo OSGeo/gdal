@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/12/12 17:23:26  warmerda
+ * Use CPLStat() instead of VSIStat().
+ *
  * Revision 1.4  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -63,7 +66,7 @@ char **S57FileCollector( const char *pszDataset )
 /* -------------------------------------------------------------------- */
 /*      Stat the dataset, and fail if it isn't a file or directory.     */
 /* -------------------------------------------------------------------- */
-    if( VSIStat( pszDataset, &sStatBuf ) )
+    if( CPLStat( pszDataset, &sStatBuf ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "No S-57 files found, %s\nisn't a directory or a file.\n",

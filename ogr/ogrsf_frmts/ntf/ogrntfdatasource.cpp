@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/12/12 17:22:15  warmerda
+ * Use CPLStat() instead of VSIStat().
+ *
  * Revision 1.11  2001/12/12 02:50:00  warmerda
  * avoid leaks, and UMC
  *
@@ -223,7 +226,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 /* -------------------------------------------------------------------- */
 /*      Is the given path a directory or a regular file?                */
 /* -------------------------------------------------------------------- */
-    if( VSIStat( pszFilename, &stat ) != 0 
+    if( CPLStat( pszFilename, &stat ) != 0 
         || (!VSI_ISDIR(stat.st_mode) && !VSI_ISREG(stat.st_mode)) )
     {
         if( !bTestOpen )
