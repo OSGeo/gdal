@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/02/21 15:41:37  warmerda
+ * added progressbase/scale for operation
+ *
  * Revision 1.2  2003/02/20 21:53:06  warmerda
  * partial implementation
  *
@@ -232,6 +235,9 @@ public:
 class CPL_DLL GDALWarpOperation {
 private:
     GDALWarpOptions *psOptions;
+
+    double          dfProgressBase;
+    double          dfProgressScale;
 
     void            WipeOptions();
     int             ValidateOptions();
