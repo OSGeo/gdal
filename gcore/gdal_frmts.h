@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/12/08 04:44:23  warmerda
+ * added BSB
+ *
  * Revision 1.9  2001/11/27 14:39:02  warmerda
  * added usgsdem
  *
@@ -97,6 +100,8 @@ void CPL_DLL GDALRegister_FujiBAS(void);
 void CPL_DLL GDALRegister_FIT(void);
 void CPL_DLL GDALRegister_VRT(void);
 void CPL_DLL GDALRegister_USGSDEM(void);
+void CPL_DLL GDALRegister_LDF(void);
+void CPL_DLL GDALRegister_BSB(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */

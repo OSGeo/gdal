@@ -119,7 +119,7 @@ endif
 #	and their uppercase form should be the format portion of the
 #	format registration entry point.  eg. gdb -> GDALRegister_GDB().
 #
-GDAL_FORMATS = 	gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 \
+GDAL_FORMATS = 	gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 bsb \
 		sdts raw dted mem jdem envisat elas fit vrt usgsdem \
 		@OPT_GDAL_FORMATS@
 
