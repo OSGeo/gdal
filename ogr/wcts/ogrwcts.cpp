@@ -52,6 +52,9 @@
  *   defined in the GNUmakefile (the default).
  *
  * $Log$
+ * Revision 1.16  2003/10/07 04:32:36  warmerda
+ * added AUTO code space support
+ *
  * Revision 1.15  2003/04/17 08:29:26  dron
  * Security audit completed.
  *
@@ -527,49 +530,75 @@ OGRSpatialReference *
 WCTSImportCoordinateReferenceSystem( CPLXMLNode *psXMLCRS )
 
 {
-    int nEPSGCode;
-
     CPLStripXMLNamespace( psXMLCRS->psChild, NULL, TRUE );
 
 /* ==================================================================== */
 /*      Try to find a direct crsID as per old specification.            */
 /* ==================================================================== */
-    if( CPLGetXMLValue( psXMLCRS, "crsID.codeSpace", NULL ) != NULL )
+    const char *pszCode = CPLGetXMLValue( psXMLCRS, "crsID.code", NULL );
+    const char *pszCodeSpace = CPLGetXMLValue( psXMLCRS, "crsID.codeSpace", 
+                                               NULL );
+
+    if( pszCode != NULL && pszCodeSpace != NULL )
     {
 /* -------------------------------------------------------------------- */
 /*      Get the EPSG code, and verify that it is in the EPSG            */
 /*      codeSpace.                                                      */
 /* -------------------------------------------------------------------- */
-        if( !EQUAL(CPLGetXMLValue( psXMLCRS, "crsID.codeSpace", "" ), "EPSG"))
+        OGRSpatialReference oSRS;
+
+        if( EQUAL(pszCodeSpace,"EPSG") )
+        {
+            int nEPSGCode = atoi(pszCode);
+            
+            if( nEPSGCode == 0 )
+            {
+                WCTSEmitServiceException( "Failed to decode CoordinateReferenceSystem with missing,\n"
+                                          "or zero crsID.code" );
+            }								
+
+            CPLErrorReset();
+            if( oSRS.importFromEPSG( nEPSGCode ) != OGRERR_NONE )
+            {
+                if( strlen(CPLGetLastErrorMsg()) > 0 )
+                    WCTSEmitServiceException( CPLGetLastErrorMsg() );
+                else
+                    WCTSEmitServiceException( 
+                        CPLSPrintf( "OGRSpatialReference::importFromEPSG(%d) "
+                                    "failed.  Is this a defined EPSG code?", 
+                                    nEPSGCode ) );
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Handle AUTO case.                                               */
+/* -------------------------------------------------------------------- */
+        else if( EQUAL(pszCodeSpace,"AUTO") )
+        {
+            if( oSRS.importFromWMSAUTO( pszCode ) != OGRERR_NONE )
+            {
+                if( strlen(CPLGetLastErrorMsg()) > 0 )
+                    WCTSEmitServiceException( CPLGetLastErrorMsg() );
+                else
+                    WCTSEmitServiceException( 
+                        CPLSPrintf( "OGRSpatialReference::importFromWMSAUTO(%s) "
+                                    "failed.  Is this a defined EPSG code?", 
+                                    pszCode  ) );
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise blow a gasket.                                        */
+/* -------------------------------------------------------------------- */
+        else
         {
             WCTSEmitServiceException( "Failed to decode CoordinateReferenceSystem with missing,\n"
                                       "or non-EPSG crsID.codeSpace" );
         }	
         
-        nEPSGCode = atoi(CPLGetXMLValue( psXMLCRS, "crsID.code", "0" ));
-        
-        if( nEPSGCode == 0 )
-        {
-            WCTSEmitServiceException( "Failed to decode CoordinateReferenceSystem with missing,\n"
-                                      "or zero crsID.code" );
-        }								
-
 /* -------------------------------------------------------------------- */
 /*      Translate into an OGRSpatialReference from EPSG code.           */
 /* -------------------------------------------------------------------- */
-        OGRSpatialReference oSRS;
-
-        CPLErrorReset();
-        if( oSRS.importFromEPSG( nEPSGCode ) != OGRERR_NONE )
-        {
-            if( strlen(CPLGetLastErrorMsg()) > 0 )
-                WCTSEmitServiceException( CPLGetLastErrorMsg() );
-            else
-                WCTSEmitServiceException( 
-                    CPLSPrintf( "OGRSpatialReference::importFromEPSG(%d) "
-                                "failed.  Is this a defined EPSG code?", 
-                                nEPSGCode ) );
-        }
 
         return oSRS.Clone();
     }
