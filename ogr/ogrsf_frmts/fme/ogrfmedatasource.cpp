@@ -23,6 +23,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/01/14 18:25:37  fwarmerdam
+ * Added http as another exception.
+ *
  * Revision 1.16  2004/12/17 18:01:49  fwarmerdam
  * Fixed last change.  Might as well use legal C++ syntax!
  *
@@ -615,6 +618,7 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
     if( (i < 2 || pszCompositeName[i] != ':' 
          || EQUALN(pszCompositeName,"OCI:",4)
          || EQUALN(pszCompositeName,"gltp:",5)
+         || EQUALN(pszCompositeName,"http",4)
          || EQUALN(pszCompositeName,"DODS:",5)
          || EQUALN(pszCompositeName,"ODBC:",5)
          || EQUALN(pszCompositeName,"MYSQL:",5))
