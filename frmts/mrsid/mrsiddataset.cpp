@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/08/20 19:03:58  dron
+ * Fixed problem with wrong sign in georeference calculation.
+ *
  * Revision 1.13  2004/08/07 10:25:12  dron
  * Added support for overviews in new version; fixed problem with the last
  * strip decoding; support for DSDK 4.0.9.713.
@@ -1744,7 +1747,6 @@ CPLErr MrSIDDataset::OpenZoomLevel( int iZoom )
 	          adfGeoTransform[1], adfGeoTransform[5],
 	          adfGeoTransform[2], adfGeoTransform[4] );
         
-	adfGeoTransform[5] = - adfGeoTransform[5];
         adfGeoTransform[0] = adfGeoTransform[0] - adfGeoTransform[1] / 2;
         adfGeoTransform[3] = adfGeoTransform[3] - adfGeoTransform[5] / 2;
 	bHasGeoTransfom = TRUE;
