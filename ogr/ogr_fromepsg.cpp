@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/08/23 13:20:07  warmerda
+ * fixed serious bug in translating LCC projections from EPSG to WKT
+ *
  * Revision 1.10  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -916,14 +919,14 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
         break;
 
       case 9802:
-        poSRS->SetLCC( adfProjParms[0], adfProjParms[1], 
-                       adfProjParms[2], adfProjParms[3],
+        poSRS->SetLCC( adfProjParms[2], adfProjParms[3],
+                       adfProjParms[0], adfProjParms[1], 
                        adfProjParms[5], adfProjParms[6] );
         break;
 
       case 9803:
-        poSRS->SetLCCB( adfProjParms[0], adfProjParms[1], 
-                        adfProjParms[2], adfProjParms[3],
+        poSRS->SetLCCB( adfProjParms[2], adfProjParms[3],
+                        adfProjParms[0], adfProjParms[1], 
                         adfProjParms[5], adfProjParms[6] );
         break;
 
