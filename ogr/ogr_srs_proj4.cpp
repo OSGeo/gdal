@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2002/12/09 23:03:45  warmerda
+ * Fixed translation of paris prime meridian.
+ *
  * Revision 1.34  2002/12/09 18:55:07  warmerda
  * moved DMS stuff to gdal/port
  *
@@ -1340,7 +1343,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         switch( nCode )
         {
           case 8902:
-            strcpy( szPMValue, "lisbon" );
+            strcpy( szPMValue, "paris" );
             break;
 
           case 8903:
