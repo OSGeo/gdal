@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/08/16 15:50:52  warmerda
+ * fixed some bugs with floating (datasetless) bands
+ *
  * Revision 1.12  2000/07/13 13:08:53  warmerda
  * fixed GDALSwapWords with skip value different from word size
  *
@@ -96,7 +99,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     if( eBufType == eDataType
         && nPixelSpace == GDALGetDataTypeSize(eBufType)/8
         && nLineSpace == nPixelSpace * nXSize
-        && nBlockXSize == poDS->GetRasterXSize()
+        && nBlockXSize == GetXSize()
         && nBufXSize == nXSize 
         && nBufYSize == nYSize )
     {

@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.19  2000/08/16 15:50:52  warmerda
+ * fixed some bugs with floating (datasetless) bands
+ *
  * Revision 1.18  2000/07/12 00:19:29  warmerda
  * Removed extra line feed.
  *
@@ -364,7 +367,7 @@ CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
     CPLAssert( pImage != NULL );
     
     if( nXBlockOff < 0
-        || nXBlockOff*nBlockXSize >= poDS->GetRasterXSize() )
+        || nXBlockOff*nBlockXSize >= nRasterXSize )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nXBlockOff value (%d) in "
@@ -375,7 +378,7 @@ CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
     }
 
     if( nYBlockOff < 0
-        || nYBlockOff*nBlockYSize >= poDS->GetRasterYSize() )
+        || nYBlockOff*nBlockYSize >= nRasterYSize )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nYBlockOff value (%d) in "
@@ -464,7 +467,7 @@ CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
     CPLAssert( pImage != NULL );
     
     if( nXBlockOff < 0
-        || nXBlockOff*nBlockXSize >= poDS->GetRasterXSize() )
+        || nXBlockOff*nBlockXSize >= GetXSize() )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nXBlockOff value (%d) in "
@@ -475,7 +478,7 @@ CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
     }
 
     if( nYBlockOff < 0
-        || nYBlockOff*nBlockYSize >= poDS->GetRasterYSize() )
+        || nYBlockOff*nBlockYSize >= GetYSize() )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nYBlockOff value (%d) in "
@@ -600,8 +603,8 @@ void GDALRasterBand::InitBlockInfo()
 
     CPLAssert( nBlockXSize > 0 && nBlockYSize > 0 );
     
-    nBlocksPerRow = (poDS->GetRasterXSize()+nBlockXSize-1) / nBlockXSize;
-    nBlocksPerColumn = (poDS->GetRasterYSize()+nBlockYSize-1) / nBlockYSize;
+    nBlocksPerRow = (nRasterXSize+nBlockXSize-1) / nBlockXSize;
+    nBlocksPerColumn = (nRasterYSize+nBlockYSize-1) / nBlockYSize;
     
     papoBlocks = (GDALRasterBlock **)
         CPLCalloc( sizeof(void*), nBlocksPerRow * nBlocksPerColumn );
