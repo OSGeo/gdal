@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2003/02/19 07:00:50  warmerda
+ * expand tabs
+ *
  * Revision 1.30  2003/01/07 16:46:28  warmerda
  * Added support for forming polygons by caching line geometries
  *
@@ -2080,7 +2083,7 @@ void NTFFileReader::CacheAddByGeomId( int nGeomId, OGRGeometry *poGeometry )
 /* -------------------------------------------------------------------- */
     if( nGeomId >= nLineCacheSize )
     {
-        int	nNewSize = nGeomId + 100;
+        int     nNewSize = nGeomId + 100;
 
         papoLineCache = (OGRGeometry **) 
             CPLRealloc( papoLineCache, sizeof(void*) * nNewSize );
