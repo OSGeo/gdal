@@ -21,7 +21,7 @@ OGR_INCLUDE =	/INCLUDE:_OCTNewCoordinateTransformation /INCLUDE:_OGRFree \
 		/INCLUDE:_OPTGetParameterList \
 		/INCLUDE:_OGRFeatureStylePuller \
 		/INCLUDE:_OSRValidate \
-		/INCLUDE:_OPTGetProjectionMethods
+		/INCLUDE:_OPTGetProjectionMethods 
 !ENDIF
 
 BASE_INCLUDE =	/INCLUDE:_GDALSimpleImageWarp \
@@ -133,8 +133,8 @@ $(GDAL_DLL):	lib
 		 /out:$(GDAL_DLL) /implib:gdal_i.lib $(LINKER_FLAGS)
 
 install: $(GDAL_DLL) apps_dir pymod_dir
-  -mkdir $(BINDIR)
-  -mkdir $(DATADIR)
+	-mkdir $(BINDIR)
+	-mkdir $(DATADIR)
 	xcopy /y /r /d /f $(GDAL_DLL) $(BINDIR)
 	cd apps
 	$(MAKE) /f makefile.vc install
@@ -145,12 +145,12 @@ install: $(GDAL_DLL) apps_dir pymod_dir
 !IFDEF INCLUDE_OGR_FRMTS
 	cd ogr
 	$(MAKE) install
-!ENDIF
 	cd ..
+!ENDIF
 
 devinstall: install
-  -mkdir $(INCDIR)
-  -mkdir $(LIBDIR)
+	-mkdir $(INCDIR)
+	-mkdir $(LIBDIR)
 	copy port\*.h $(INCDIR)
 	copy gcore\*.h $(INCDIR)
 	copy alg\*.h $(INCDIR)
