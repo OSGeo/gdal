@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/06/03 19:44:26  warmerda
+ * added RPC coefficient support
+ *
  * Revision 1.7  2003/03/24 15:10:54  warmerda
  * Don't crash out if no image segments found.
  *
@@ -523,6 +526,85 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = 
             (psImage->dfLRY - psImage->dfULY) / poDS->nRasterYSize;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have RPC info.                                            */
+/* -------------------------------------------------------------------- */
+    NITFRPC00BInfo sRPCInfo;
+
+    if( NITFReadRPC00B( psImage, &sRPCInfo ) && sRPCInfo.SUCCESS )
+    {
+        char szValue[1280];
+        int  i;
+
+        sprintf( szValue, "%.16g", sRPCInfo.LINE_OFF );
+        poDS->SetMetadataItem( "RPC_LINE_OFF", szValue );
+
+        sprintf( szValue, "%.16g", sRPCInfo.LINE_SCALE );
+        poDS->SetMetadataItem( "RPC_LINE_SCALE", szValue );
+
+        sprintf( szValue, "%.16g", sRPCInfo.SAMP_OFF );
+        poDS->SetMetadataItem( "RPC_SAMP_OFF", szValue );
+
+        sprintf( szValue, "%.16g", sRPCInfo.SAMP_SCALE );
+        poDS->SetMetadataItem( "RPC_SAMP_SCALE", szValue );
+
+        sprintf( szValue, "%.16g", sRPCInfo.LONG_OFF );
+        poDS->SetMetadataItem( "RPC_LONG_OFF", szValue );
+
+        sprintf( szValue, "%.16g", sRPCInfo.LONG_SCALE );
+        poDS->SetMetadataItem( "RPC_LONG_SCALE", szValue );
+
+        sprintf( szValue, "%.16g", sRPCInfo.LAT_OFF );
+        poDS->SetMetadataItem( "RPC_LAT_OFF", szValue );
+
+        sprintf( szValue, "%.16g", sRPCInfo.LAT_SCALE );
+        poDS->SetMetadataItem( "RPC_LAT_SCALE", szValue );
+
+        sprintf( szValue, "%.16g", sRPCInfo.HEIGHT_OFF );
+        poDS->SetMetadataItem( "RPC_HEIGHT_OFF", szValue );
+
+        sprintf( szValue, "%.16g", sRPCInfo.HEIGHT_SCALE );
+        poDS->SetMetadataItem( "RPC_HEIGHT_SCALE", szValue );
+
+        szValue[0] = '\0'; 
+        for( i = 0; i < 20; i++ )
+            sprintf( szValue+strlen(szValue), "%.16g ",  
+                     sRPCInfo.LINE_NUM_COEFF[i] );
+        poDS->SetMetadataItem( "RPC_LINE_NUM_COEFF", szValue );
+
+        szValue[0] = '\0'; 
+        for( i = 0; i < 20; i++ )
+            sprintf( szValue+strlen(szValue), "%.16g ",  
+                     sRPCInfo.LINE_DEN_COEFF[i] );
+        poDS->SetMetadataItem( "RPC_LINE_DEN_COEFF", szValue );
+        
+        szValue[0] = '\0'; 
+        for( i = 0; i < 20; i++ )
+            sprintf( szValue+strlen(szValue), "%.16g ",  
+                     sRPCInfo.SAMP_NUM_COEFF[i] );
+        poDS->SetMetadataItem( "RPC_SAMP_NUM_COEFF", szValue );
+        
+        szValue[0] = '\0'; 
+        for( i = 0; i < 20; i++ )
+            sprintf( szValue+strlen(szValue), "%.16g ",  
+                     sRPCInfo.SAMP_DEN_COEFF[i] );
+        poDS->SetMetadataItem( "RPC_SAMP_DEN_COEFF", szValue );
+
+        sprintf( szValue, "%.16g", sRPCInfo.LONG_OFF );
+        poDS->SetMetadataItem( "RPC_MIN_LONG", szValue );
+
+        sprintf( szValue, "%.16g", 
+                 sRPCInfo.LONG_OFF + 2 * sRPCInfo.LONG_SCALE );
+        poDS->SetMetadataItem( "RPC_MAX_LONG", szValue );
+
+        sprintf( szValue, "%.16g", sRPCInfo.LAT_OFF );
+        poDS->SetMetadataItem( "RPC_MIN_LAT", szValue );
+
+        sprintf( szValue, "%.16g", 
+                 sRPCInfo.LAT_OFF + 2 * sRPCInfo.LAT_SCALE );
+        poDS->SetMetadataItem( "RPC_MAX_LAT", szValue );
     }
 
     return( poDS );
