@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/01/15 21:30:48  warmerda
+ * some rounding tweaks when adjusting output size in GetSrcDstWindow
+ *
  * Revision 1.10  2002/12/13 15:07:07  warmerda
  * fixed bug in IReadBlock
  *
@@ -344,7 +347,9 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     if( *pnReqXOff >= poRasterBand->GetXSize()
         || *pnReqYOff >= poRasterBand->GetYSize()
         || *pnReqXSize <= 0 || *pnReqYSize <= 0 )
+    {
         return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If we haven't had to modify the source rectangle, then the      */
@@ -368,10 +373,12 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     dfScaleWinToBufX = nBufXSize / (double) nXSize;
     dfScaleWinToBufY = nBufYSize / (double) nYSize;
 
-    *pnOutXOff = (int) ((dfDstULX - nXOff) * dfScaleWinToBufX);
-    *pnOutYOff = (int) ((dfDstULY - nYOff) * dfScaleWinToBufY);
-    *pnOutXSize = (int) ((dfDstLRX - nXOff) * dfScaleWinToBufX) - *pnOutXOff;
-    *pnOutYSize = (int) ((dfDstLRY - nYOff) * dfScaleWinToBufY) - *pnOutYOff;
+    *pnOutXOff = (int) ((dfDstULX - nXOff) * dfScaleWinToBufX+0.001);
+    *pnOutYOff = (int) ((dfDstULY - nYOff) * dfScaleWinToBufY+0.001);
+    *pnOutXSize = (int) ((dfDstLRX - nXOff) * dfScaleWinToBufX+0.001) 
+        - *pnOutXOff;
+    *pnOutYSize = (int) ((dfDstLRY - nYOff) * dfScaleWinToBufY+0.001) 
+        - *pnOutYOff;
 
     *pnOutXOff = MAX(0,*pnOutXOff);
     *pnOutYOff = MAX(0,*pnOutYOff);
@@ -381,7 +388,21 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
         *pnOutYSize = nBufYSize - *pnOutYOff;
 
     if( *pnOutXSize < 1 || *pnOutYSize < 1 )
+    {
+        if( nYOff == 26 )						
+        {
+            printf( "adjusted outsize == 0!\n" );
+            printf( "Dst = (%.16g,%.16g,%.16g,%.16g)\n", 
+                    dfDstULX, dfDstULY, dfDstLRX, dfDstLRY );
+            printf( "Out = (%d,%d,%d,%d)\n",
+                    *pnOutXOff, 
+                    *pnOutYOff, 
+                    *pnOutXSize, 
+                    *pnOutYSize );
+        }
+
         return FALSE;
+    }
     else
         return TRUE;
 }
@@ -407,12 +428,16 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                           nBufXSize, nBufYSize, 
                           &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
+    {
         return CE_None;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Actually perform the IO request.                                */
 /* -------------------------------------------------------------------- */
-    return 
+    CPLErr eErr;
+
+    eErr = 
         poRasterBand->RasterIO( GF_Read, 
                                 nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                                 ((unsigned char *) pData) 
@@ -420,6 +445,8 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                                 + nOutYOff * nLineSpace, 
                                 nOutXSize, nOutYSize, 
                                 eBufType, nPixelSpace, nLineSpace );
+
+    return eErr;
 }
 
 /************************************************************************/
