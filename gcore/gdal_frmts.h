@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/10/03 05:41:27  warmerda
+ * added GSC Geogrid format
+ *
  * Revision 1.17  2002/09/26 18:10:59  warmerda
  * added JP2KAK
  *
@@ -131,6 +134,7 @@ void CPL_DLL GDALRegister_L1B(void);
 void CPL_DLL GDALRegister_LDF(void);
 void CPL_DLL GDALRegister_BSB(void);
 void CPL_DLL GDALRegister_XPM(void);
+void CPL_DLL GDALRegister_GSC(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
