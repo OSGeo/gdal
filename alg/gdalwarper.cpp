@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/12/31 02:11:20  fwarmerdam
+ * Avoid warning.
+ *
  * Revision 1.16  2004/10/07 15:50:18  fwarmerdam
  * added preliminary alpha band support
  *
@@ -870,7 +873,7 @@ CPLXMLNode *GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
 /* -------------------------------------------------------------------- */
 /*      Band count and lists.                                           */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psBandList;
+    CPLXMLNode *psBandList = NULL;
     int i;
 
     if( psWO->nBandCount != 0 )
