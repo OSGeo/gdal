@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2004/08/30 20:12:21  warmerda
+ * various optimizations
+ *
  * Revision 1.29  2004/06/01 14:51:19  warmerda
  * expand tabs
  *
@@ -186,6 +189,7 @@ class CPL_DLL S57ClassRegistrar
     // Class information:
     int         nClasses;
     char      **papszClassesInfo;
+    char     ***papapszClassesFields;
 
     int         iCurrentClass;
 
@@ -262,6 +266,7 @@ typedef struct
 {
     int         nKey;
     DDFRecord   *poRecord;
+    void        *pClientData;
 } DDFIndexedRecord;
 
 class CPL_DLL DDFRecordIndex
@@ -292,7 +297,10 @@ public:
     void        Clear();
 
     int         GetCount() { return nRecordCount; }
+
     DDFRecord  *GetByIndex( int i );
+    void        *GetClientInfoByIndex( int i );
+    void        SetClientInfoByIndex( int i, void *pClientInfo );
 };
 
 /************************************************************************/
@@ -305,6 +313,8 @@ class CPL_DLL S57Reader
 
     int                 nFDefnCount;
     OGRFeatureDefn      **papoFDefnList;
+
+    OGRFeatureDefn      *apoFDefnByOBJL[MAX_CLASSES];
 
     char                *pszModuleName;
     char                *pszDSNM;
@@ -351,6 +361,7 @@ class CPL_DLL S57Reader
 
     int                 FetchPoint( int, int,
                                     double *, double *, double * = NULL );
+    int                 FetchLine( DDFRecord *, int, int, OGRLineString * );
 
     OGRFeatureDefn     *FindFDefn( DDFRecord * );
     int                 ParseName( DDFField *, int = 0, int * = NULL );
