@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.11  2000/10/31 18:02:32  warmerda
+ * Added external and unnamed overview support
+ *
  * Revision 1.10  2000/10/20 04:18:15  warmerda
  * added overviews, stateplane, and u4
  *
@@ -163,6 +166,8 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
 /* -------------------------------------------------------------------- */
     psInfo = (HFAInfo_t *) CPLCalloc(sizeof(HFAInfo_t),1);
 
+    psInfo->pszFilename = CPLStrdup(CPLGetFilename(pszFilename));
+    psInfo->pszPath = CPLStrdup(CPLGetPath(pszFilename));
     psInfo->fp = fp;
     psInfo->bTreeDirty = FALSE;
 
@@ -209,12 +214,52 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
     psInfo->poDictionary = new HFADictionary( psInfo->pszDictionary );
 
 /* -------------------------------------------------------------------- */
-/*      Initialize the band information.                                */
+/*      Collect band definitions.                                       */
 /* -------------------------------------------------------------------- */
     HFAParseBandInfo( psInfo );
 
     return psInfo;
 }
+
+/************************************************************************/
+/*                          HFAGetDependent()                           */
+/************************************************************************/
+
+HFAInfo_t *HFAGetDependent( HFAInfo_t *psBase, const char *pszFilename )
+
+{
+    if( EQUAL(pszFilename,psBase->pszFilename) )
+        return psBase;
+
+    if( psBase->psDependent != NULL )
+    {
+        if( EQUAL(pszFilename,psBase->psDependent->pszFilename) )
+            return psBase->psDependent;
+        else
+            return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to open the dependent file.                                 */
+/* -------------------------------------------------------------------- */
+    char	*pszDependent;
+    FILE	*fp;
+
+    pszDependent = CPLStrdup( 
+        CPLFormFilename( psBase->pszPath, pszFilename, NULL ) );
+    
+    fp = VSIFOpen( pszDependent, "rb" );
+    if( fp != NULL )
+    {
+        VSIFClose( fp );
+        psBase->psDependent = HFAOpen( pszDependent, "rb" );
+    }
+
+    CPLFree( pszDependent );
+
+    return psBase->psDependent;
+}
+
 
 /************************************************************************/
 /*                          HFAParseBandInfo()                          */
@@ -235,7 +280,9 @@ CPLErr HFAParseBandInfo( HFAInfo_t *psInfo )
     poNode = psInfo->poRoot->GetChild();
     while( poNode != NULL )
     {
-        if( EQUAL(poNode->GetType(),"Eimg_Layer") )
+        if( EQUAL(poNode->GetType(),"Eimg_Layer") 
+            && poNode->GetIntField("width") > 0 
+            && poNode->GetIntField("height") > 0 )
         {
             if( psInfo->nBands == 0 )
             {
@@ -274,6 +321,9 @@ void HFAClose( HFAHandle hHFA )
     if( hHFA->bTreeDirty )
         HFAFlush( hHFA );
     
+    if( hHFA->psDependent != NULL )
+        HFAClose( hHFA->psDependent );
+
     delete hHFA->poRoot;
 
     VSIFClose( hHFA->fp );
@@ -282,6 +332,8 @@ void HFAClose( HFAHandle hHFA )
         delete hHFA->poDictionary;
     
     CPLFree( hHFA->pszDictionary );
+    CPLFree( hHFA->pszFilename );
+    CPLFree( hHFA->pszPath );
 
     for( i = 0; i < hHFA->nBands; i++ )
     {
@@ -1085,6 +1137,8 @@ HFAHandle HFACreateLL( const char * pszFilename )
     psInfo->pDatum = NULL;
     psInfo->pProParameters = NULL;
     psInfo->bTreeDirty = FALSE;
+    psInfo->pszFilename = CPLStrdup(CPLGetFilename(pszFilename));
+    psInfo->pszPath = CPLStrdup(CPLGetPath(pszFilename));
 
 /* -------------------------------------------------------------------- */
 /*      Write out the Ehfa_HeaderTag                                    */

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/10/31 18:02:32  warmerda
+ * Added external and unnamed overview support
+ *
  * Revision 1.7  2000/10/20 04:18:15  warmerda
  * added overviews, stateplane, and u4
  *
@@ -76,8 +79,11 @@ class HFABand;
 /*      This is just a structure, and used hold info about the whole    */
 /*      dataset within hfaopen.cpp                                      */
 /************************************************************************/
-typedef struct {
+typedef struct hfainfo {
     FILE	*fp;
+
+    char	*pszPath;
+    char        *pszFilename; /* sans path */
 
     GUInt32     nEndOfFile;
     GUInt32	nRootPos;
@@ -102,10 +108,13 @@ typedef struct {
     void        *pDatum;
     void        *pProParameters;
 
+    struct hfainfo *psDependent;
+
 } HFAInfo_t;
 
 GUInt32 HFAAllocateSpace( HFAInfo_t *, GUInt32 );
 CPLErr  HFAParseBandInfo( HFAInfo_t * );
+HFAInfo_t *HFAGetDependent( HFAInfo_t *, const char * );
 
 #define HFA_PRIVATE
 

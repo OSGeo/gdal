@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/10/31 18:02:32  warmerda
+ * Added external and unnamed overview support
+ *
  * Revision 1.10  2000/10/31 14:41:30  warmerda
  * avoid memory leaks and warnings
  *
@@ -105,11 +108,12 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
     {
         for( int iName = 0; TRUE; iName++ )
         {
-            char	szField[128], *pszPath;
+            char	szField[128], *pszPath, *pszFilename, *pszEnd;
             const char *pszName;
             CPLErr      eErr;
             HFAEntry   *poOvEntry;
             int         i;
+            HFAInfo_t	*psHFA;
 
             sprintf( szField, "nameList[%d].string", iName );
 
@@ -117,11 +121,29 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
             if( pszName == NULL || eErr != CE_None )
                 break;
 
-            pszName = strstr(pszName,"(:");
-            if( pszName == NULL )
+            pszFilename = CPLStrdup(pszName);
+            pszEnd = strstr(pszFilename,"(:");
+            if( pszEnd == NULL )
+            {
+                CPLFree( pszFilename );
                 continue;
-            
-            pszPath = CPLStrdup( pszName + 2 );
+            }
+
+            pszName = pszEnd + 2;
+            pszEnd[0] = '\0';
+
+            char	*pszJustFilename;
+
+            pszJustFilename = CPLStrdup(CPLGetFilename(pszFilename));
+            psHFA = HFAGetDependent( psInfo, pszJustFilename );
+            CPLFree( pszJustFilename );
+            if( psHFA == NULL )
+            {
+                CPLFree( pszFilename );
+                continue;
+            }
+
+            pszPath = pszEnd + 2;
             if( pszPath[strlen(pszPath)-1] == ')' )
                 pszPath[strlen(pszPath)-1] = '\0';
 
@@ -131,8 +153,8 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
                     pszPath[i] = '.';
             }
 
-            poOvEntry = psInfo->poRoot->GetNamedChild( pszPath );
-            CPLFree( pszPath );
+            poOvEntry = psHFA->poRoot->GetNamedChild( pszPath );
+            CPLFree( pszFilename );
 
             if( poOvEntry == NULL )
                 continue;
@@ -143,7 +165,29 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
              */
             papoOverviews = (HFABand **) 
                 CPLRealloc(papoOverviews, sizeof(void*) * ++nOverviews );
-            papoOverviews[nOverviews-1] = new HFABand( psInfo, poOvEntry );
+            papoOverviews[nOverviews-1] = new HFABand( psHFA, poOvEntry );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If there are no named overviews, try looking for unnamed        */
+/*      overviews within the same layer, as occurs in floodplain.img    */
+/*      for instance.                                                   */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        HFAEntry	*poChild;
+
+        for( poChild = poNode->GetChild(); 
+             poChild != NULL;
+             poChild = poChild->GetNext() ) 
+        {
+            if( EQUAL(poChild->GetType(),"Eimg_Layer_SubSample") )
+            {
+                papoOverviews = (HFABand **) 
+                    CPLRealloc(papoOverviews, sizeof(void*) * ++nOverviews );
+                papoOverviews[nOverviews-1] = new HFABand( psInfo, poChild );
+            }
         }
     }
 }
