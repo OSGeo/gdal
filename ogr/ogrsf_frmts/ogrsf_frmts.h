@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/07/27 00:50:39  warmerda
+ * added a number of OGRLayer methods
+ *
  * Revision 1.5  1999/07/26 13:59:05  warmerda
  * added feature writing api
  *
@@ -56,8 +59,6 @@
  * Classes related to registration of format support, and opening datasets.
  */
 
-#define OGRNullFID            -1
-
 #define OLCRandomRead          "RandomRead"
 #define OLCSequentialWrite     "SequentialWrite"
 #define OLCRandomWrite         "RandomWrite"
@@ -82,11 +83,10 @@ class OGRLayer
     virtual void	SetSpatialFilter( OGRGeometry * ) = 0;
 
     virtual void	ResetReading() = 0;
-    virtual OGRFeature *GetNextFeature( long * pnFeatureId = NULL ) = 0;
-    virtual OGRFeature *GetFeature( long nFeatureId );
-    virtual OGRErr      SetFeature( OGRFeature *poFeature, long nFeatureId );
-    virtual OGRErr      CreateFeature( OGRFeature *poFeature,
-                                       long * pnFeatureId );
+    virtual OGRFeature *GetNextFeature() = 0;
+    virtual OGRFeature *GetFeature( long nFID );
+    virtual OGRErr      SetFeature( OGRFeature *poFeature );
+    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 
     virtual OGRFeatureDefn *GetLayerDefn() = 0;
 
@@ -95,6 +95,8 @@ class OGRLayer
     virtual int         GetFeatureCount( int bForce = TRUE );
 
     virtual int         TestCapability( const char * ) = 0;
+
+    virtual const char *GetInfo( const char * );
 };
 
 /************************************************************************/
@@ -142,6 +144,7 @@ class OGRSFDriver
     virtual 	~OGRSFDriver() {}
 
     virtual const char	*GetName() = 0;
+
     virtual OGRDataSource *Open( const char *pszName, int bUpdate=FALSE ) = 0;
 };
 
@@ -167,7 +170,8 @@ class OGRSFDriverRegistrar
                 ~OGRSFDriverRegistrar();
 
     static OGRSFDriverRegistrar *GetRegistrar();
-    static OGRDataSource *Open( const char *pszName, int bUpdate=FALSE );
+    static OGRDataSource *Open( const char *pszName, int bUpdate=FALSE,
+                                OGRSFDriver ** ppoDriver = NULL );
     
     void	RegisterDriver( OGRSFDriver * );
 

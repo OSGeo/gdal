@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/07/27 00:50:34  warmerda
+ * added a number of OGRLayer methods
+ *
  * Revision 1.3  1999/07/08 20:23:07  warmerda
  * Added help for GetFeatureCount(), and spatial filtering.
  *
@@ -42,7 +45,7 @@
 
 /**
  
-  \fn OGRDataSource *OGRSFDriverRegistrar::Open( const char *pszName, int bUpdate = FALSE );
+  \fn OGRDataSource *OGRSFDriverRegistrar::Open( const char *pszName, int bUpdate = FALSE, OGRSFDriver **ppoDriver=NULL);
 
   Open a file / data source with one of the registered drivers.
 
@@ -58,6 +61,8 @@
   @param pszName the name of the file, or data source to open.
   @param bUpdate FALSE for read-only access (the default) or TRUE for 
          read-write access.
+  @param ppoDriver if non-NULL, this argument will be updated with a 
+         pointer to the driver which was used to open the data source.
 
   @return NULL on error or if the pass name is not supported by this driver,
   otherwise a pointer to an OGRDataSource.  This OGRDataSource should be
@@ -213,7 +218,7 @@
 */
 
 /**
- \fn OGRFeature *OGRLayer::GetNextFeature( long * pnFeatureId = NULL );
+ \fn OGRFeature *OGRLayer::GetNextFeature();
 
  Fetch the next available feature from this layer.  The returned feature
  becomes the responsiblity of the caller to delete.  It is critical that
@@ -227,9 +232,6 @@
  ResetReading() method can be used to start at the beginning again.  Random
  reading, writing and spatial filtering will be added to the OGRLayer in 
  the future.
-
- @param pnFeatureId if not NULL the feature id of the returned feature will
- be returned.
 
  @return a feature, or NULL if no more features are available. 
 
@@ -322,3 +324,127 @@
  @return spatial reference, or NULL if there isn't one.
 
 */
+
+/**
+
+ \fn OGRFeature *OGRLayer::GetFeature( long nFID );
+
+ Fetch a feature by it's identifier.
+
+ This function will attempt to read the identified feature.  The nFID
+ value cannot be OGRNullFID.  Success or failure of this operation is
+ unaffected by the spatial filter. 
+
+ If this method returns a non-NULL feature, it is guaranteed that it's 
+ feature id (OGRFeature::GetFID()) will be the same as nFID.
+
+ Use OGRLayer::TestCapability(OLCRandomRead) to establish if this layer
+ supports random access reading via GetFeature().
+
+ @param nFID the feature id of the feature to read. 
+
+ @return a feature now owned by the caller, or NULL on failure. 
+
+*/
+
+/**
+ 
+ \fn OGRErr OGRLayer::SetFeature( OGRFeature * poFeature );
+
+ Rewrite an existing feature.
+
+ This method will write a feature to the layer, based on the feature id
+ within the OGRFeature.   
+
+ Use OGRLayer::TestCapability(OLCRandomWrite) to establish if this layer
+ supports random access writing via SetFeature().
+
+ @param poFeature the feature to write.
+
+ @return OGRERR_NONE if the operation works, otherwise an appropriate error
+ code.
+
+*/
+
+/**
+
+ \fn OGRErr OGRLayer::OGRCreateFeature( OGRFeature * poFeature );
+
+ Create and write a new feature within a layer.
+
+ The passed feature is written to the layer as a new feature, rather than
+ overwriting an existing one.  If the feature has a feature id other than
+ OGRNullFID, then the native implementation may use that as the feature id
+ of the new feature, but not necessarily.  Upon successful return the 
+ passed feature will have been updated with the new feature id. 
+
+ @param poFeature the feature to write to disk. 
+
+ @return OGRERR_NONE on success.
+
+*/
+
+/**
+
+ \fn int OGRLayer::TestCapability( const char * pszCap );
+
+ Test if this layer supported the named capability.
+
+ The capability codes that can be tested are represented as strings, but
+ #defined constants exists to ensure correct spelling.  Specific layer 
+ types may implement class specific capabilities, but this can't generally
+ be discovered by the caller. <p>
+
+ <ul>
+
+ <li> <b>OLCRandomRead</b> / "RandomRead": TRUE if the GetFeature() method 
+works for this layer.<p>
+
+ <li> <b>OLCSequentialWrite</b> / "SequentialWrite": TRUE if the 
+CreateFeature() method works for this layer.  Note this means that this 
+particular layer is writable.  The same OGRLayer class  may returned FALSE 
+for other layer instances that are effectively read-only.<p>
+
+ <li> <b>OLCRandomWrite</b> / "RandomWrite": TRUE if the SetFeature() method
+is operational on this layer.   Note this means that this 
+particular layer is writable.  The same OGRLayer class  may returned FALSE 
+for other layer instances that are effectively read-only.<p>
+
+ <li> <b>OLCFastSpatialFilter</b> / "FastSpatialFilter": TRUE if this layer
+implements spatial filtering efficiently.  Layers that effectively read all
+features, and test them with the OGRFeature intersection methods should
+return FALSE.  This can be used as a clue by the application whether it 
+should build and maintain it's own spatial index for features in this layer.<p>
+
+ <li> <b>OLCFastFeatureCount</b> / "FastFeatureCount": 
+TRUE if this layer can return a feature
+count (via OGRLayer::GetFeatureCount()) efficiently ... ie. without counting
+the features.  In some cases this will return TRUE until a spatial filter is
+installed after which it will return FALSE.<p>
+
+</ul>
+
+ @param pszCap the name of the capability to test.
+
+ @return TRUE if the layer has the requested capability, or FALSE otherwise.
+OGRLayers will return FALSE for any unrecognised capabilities.<p>
+
+*/
+
+/**
+ \fn const char *OGRLayer::GetInfo( const char *pszTag );
+
+ Fetch metadata from layer.
+
+ This method can be used to fetch various kinds of metadata or layer 
+ specific information encoded as a string.  It is anticipated that various
+ tag values will be defined with well known semantics, while other tags will
+ be used for driver/application specific purposes.  
+
+ @param pszTag the tag for which information is being requested.
+
+ @return the value of the requested tag, or NULL if that tag does not
+ have a value, or is unknown.
+
+*/
+
