@@ -33,6 +33,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/07/19 20:33:55  warmerda
+ * Fixed for BSB 1.1 and 3.0 issues:
+ *  o Allow for longer lines.
+ *  o In BSB 1.1 the scanline marker is zero based.
+ *
  * Revision 1.4  2002/03/19 20:58:24  warmerda
  * Changes from Olle Soderholm that should allow for NOS files as well.
  *
@@ -255,6 +260,10 @@ BSBInfo *BSBOpen( const char *pszFilename )
             psInfo->pabyPCT[iPCT*3+1] = atoi(papszTokens[2]);
             psInfo->pabyPCT[iPCT*3+2] = atoi(papszTokens[3]);
         }
+        else if( EQUALN(pszLine,"VER/",4) && nCount >= 1 )
+        {
+            psInfo->nVersion = (int) (100 * atof(papszTokens[0]) + 0.5);
+        }
 
         CSLDestroy( papszTokens );
     }
@@ -269,6 +278,13 @@ BSBInfo *BSBOpen( const char *pszFilename )
                   "Failed to find required RGB/ or BSB/ keyword in header." );
         
         return NULL;
+    }
+
+    if( psInfo->nVersion == 0 )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "VER (version) keyword not found, assuming 2.0." );
+        psInfo->nVersion = 200;
     }
 
 /* -------------------------------------------------------------------- */
@@ -316,7 +332,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
 const char *BSBReadHeaderLine( FILE * fp )
 
 {
-    static char	szLine[241];
+    static char	szLine[1000];
     char        chNext;
     int	        nLineLen = 0;
 
@@ -381,7 +397,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
                      unsigned char *pabyScanlineBuf )
 
 {
-    int		nLineMarker = 0, nValueShift, iPixel = 0;
+    int		nLineMarker = 0, nValueShift, iPixel = 0, nExpectedLine;
     unsigned char byValueMask, byCountMask;
     FILE	*fp = psInfo->fp;
     int         byNext, i;
@@ -422,17 +438,28 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
     }
 
 /* -------------------------------------------------------------------- */
-/*      read the line number.                                           */
+/*      Read the line number.  Pre 2.0 BSB seemed to expect the line    */
+/*      numbers to be zero based, while 2.0 and later seemed to         */
+/*      expect it to be one based, and for a 0 to be some sort of       */
+/*      missing line marker.                                            */
 /* -------------------------------------------------------------------- */
     do {
         byNext = VSIFGetc( fp );
         nLineMarker = nLineMarker * 128 + (byNext & 0x7f);
     } while( (byNext & 0x80) != 0 );
 
-    if( nLineMarker == 0 )
-        return FALSE;
+    if( psInfo->nVersion < 200 )
+        nExpectedLine = nScanline;
+    else
+        nExpectedLine = nScanline + 1;
 
-    CPLAssert( nLineMarker == nScanline + 1 );
+    if( nLineMarker != nExpectedLine )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Got scanline id %d when looking for %d.", 
+                  nLineMarker, nExpectedLine );
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Setup masking values.                                           */
@@ -465,6 +492,15 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
         for( i = 0; i < nRunCount+1; i++ )
             pabyScanlineBuf[iPixel++] = nPixValue;
     }
+
+/* -------------------------------------------------------------------- */
+/*      For reasons that are unclear, some scanlines are exactly one    */
+/*      pixel short (such as in the BSB 3.0 354704.KAP product from     */
+/*      NDI/CHS) but are otherwise OK.  Just add a zero if this         */
+/*      appear to have occured.                                         */
+/* -------------------------------------------------------------------- */
+    if( iPixel == psInfo->nXSize - 1 )
+        pabyScanlineBuf[iPixel++] = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Remember the start of the next line.                            */
