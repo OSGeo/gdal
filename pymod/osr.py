@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.8  2000/10/20 04:20:59  warmerda
+# added SetStatePlane
+#
 # Revision 1.7  2000/09/14 21:06:49  warmerda
 # added GetWellKnownGeogCSAsWKT
 #
@@ -121,6 +124,9 @@ class SpatialReference:
 
     def SetUTM(self, zone, is_north = 1):
         return _gdal.OSRSetUTM(self._o, zone, is_north )
+
+    def SetStatePlane(self, zone, is_nad83 = 1 ):
+        return _gdal.OSRSetStatePlane(self._o, zone, is_nad83 )
 
     def SetAttrValue( self, node_path, value ):
         return _gdal.OSRSetAttrValue( self._o, node_path, value )

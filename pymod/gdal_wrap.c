@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.20  2000/10/06 15:31:34  warmerda
- * added nodata support
+ * Revision 1.21  2000/10/20 04:20:59  warmerda
+ * added SetStatePlane
  *
  ************************************************************************/
 
@@ -3174,6 +3174,31 @@ static PyObject *_wrap_OSRGetUTMZone(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OSRSetStatePlane(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    int  _arg1;
+    int  _arg2;
+    char * _argc0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sii:OSRSetStatePlane",&_argc0,&_arg1,&_arg2)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetStatePlane. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetStatePlane(_arg0,_arg1,_arg2);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OCTNewCoordinateTransformation(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRCoordinateTransformationH  _result;
@@ -3413,6 +3438,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRExportToWkt", py_OSRExportToWkt, 1 },
 	 { "OSRExportToProj4", py_OSRExportToProj4, 1 },
 	 { "OSRImportFromWkt", py_OSRImportFromWkt, 1 },
+	 { "OSRSetStatePlane", _wrap_OSRSetStatePlane, 1 },
 	 { "OSRGetUTMZone", _wrap_OSRGetUTMZone, 1 },
 	 { "OSRSetUTM", _wrap_OSRSetUTM, 1 },
 	 { "OSRGetProjParm", _wrap_OSRGetProjParm, 1 },

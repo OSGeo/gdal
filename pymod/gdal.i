@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2000/10/20 04:20:59  warmerda
+ * added SetStatePlane
+ *
  * Revision 1.20  2000/10/06 15:31:34  warmerda
  * added nodata support
  *
@@ -958,6 +961,7 @@ double  OSRGetProjParm( OGRSpatialReferenceH hSRS,
 
 OGRErr  OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth );
 int     OSRGetUTMZone( OGRSpatialReferenceH hSRS, int *pbNorth );
+OGRErr  OSRSetStatePlane( OGRSpatialReferenceH hSRS, int nZone, int bNAD83 );
 
 %{
 /************************************************************************/
