@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/04/05 19:59:37  warmerda
+ * Output file was getting different geometries in some cases.
+ *
  * Revision 1.8  2002/03/27 21:04:38  warmerda
  * Added support for reading, and creating lone .dbf files for wkbNone geometry
  * layers.  Added support for creating a single .shp file instead of a directory
@@ -207,37 +210,45 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
         switch( poGeom->getGeometryType() )
         {
           case wkbPoint:
-            nShapeType = SHPT_POINTZ;
+            nShapeType = SHPT_POINT;
+            eRequestedGeomType = wkbPoint;
             break;
 
           case wkbPoint25D:
-            nShapeType = SHPT_POINT;
+            nShapeType = SHPT_POINTZ;
+            eRequestedGeomType = wkbPoint25D;
             break;
 
           case wkbMultiPoint:
             nShapeType = SHPT_MULTIPOINT;
+            eRequestedGeomType = wkbMultiPoint;
             break;
 
           case wkbMultiPoint25D:
             nShapeType = SHPT_MULTIPOINTZ;
+            eRequestedGeomType = wkbMultiPoint25D;
             break;
 
           case wkbLineString:
             nShapeType = SHPT_ARC;
+            eRequestedGeomType = wkbLineString;
             break;
 
           case wkbLineString25D:
             nShapeType = SHPT_ARCZ;
+            eRequestedGeomType = wkbLineString25D;
             break;
 
           case wkbPolygon:
           case wkbMultiPolygon:
             nShapeType = SHPT_POLYGON;
+            eRequestedGeomType = wkbPolygon;
             break;
 
           case wkbPolygon25D:
           case wkbMultiPolygon25D:
             nShapeType = SHPT_POLYGONZ;
+            eRequestedGeomType = wkbPolygon25D;
             break;
 
           default:
@@ -246,7 +257,9 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
         }
 
         if( nShapeType != -1 )
+        {
             ResetGeomType( nShapeType );
+        }
     }
     
     return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature );
