@@ -64,7 +64,7 @@ GifFileType *DGifOpenFileName(const char *FileName)
     int FileHandle;
 
     if ((FileHandle = open(FileName, O_RDONLY
-#ifdef __MSDOS__
+#ifdef O_BINARY
 			           | O_BINARY
 #endif /* __MSDOS__ */
 			                     )) == -1) {
