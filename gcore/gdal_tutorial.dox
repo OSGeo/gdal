@@ -189,7 +189,7 @@ In C++:
 
 In C:
 \code
-	GDALRasterBand  hBand;
+	GDALRasterBandH hBand;
         int             nBlockXSize, nBlockYSize;
         int             bGotMin, bGotMax;
         double          adfMinMax[2];
