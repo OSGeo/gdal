@@ -230,15 +230,19 @@ NOTE: Implemented as <tt>gdal/frmts/gxf/gxfdataset.cpp</tt>.<p>
 <h2><a name="JDEM">JDEM -- Japanese DEM (.mem)</a></h2>
 
 GDAL includes read support for Japanese DEM files, normally having the
-extension .mem. 
+extension .mem.  These files are a product of the Japanese Geographic Survey 
+Institute.<p>
 
 These files are represented as having one 32bit floating band with elevation
 data.  The georeferencing of the files is returned as well as the coordinate
-system (always lat/long on the Tokyo datum). 
+system (always lat/long on the Tokyo datum). <p>
 
-There is no update or creation support for this format. 
+There is no update or creation support for this format. <p>
 
 NOTE: Implemented as <tt>gdal/frmts/jdem/jdemdataset.cpp</tt>.<p>
+
+See Also: <a href="http://www.gsi.go.jp/ENGLISH/">Geographic Survey 
+Institute (GSI) Web Site.</a><p>
 
 <h2><a name="MFF">MFF -- Atlantis MFF Raster</a></h2>
 
