@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.44 2002/01/23 20:29:56 daniel Exp $
+ * $Id: mitab_feature.cpp,v 1.46 2002/03/26 03:17:13 daniel Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.46  2002/03/26 03:17:13  daniel
+ * Added Get/SetCenter() to MultiPoint
+ *
+ * Revision 1.45  2002/03/26 01:48:40  daniel
+ * Added Multipoint object type (V650)
+ *
  * Revision 1.44  2002/01/23 20:29:56  daniel
  * Fixed warning produced by CPLAssert() in non-DEBUG mode.
  *
@@ -5424,6 +5430,493 @@ void TABText::DumpMIF(FILE *fpOut /*=NULL*/)
     // Finish with PEN/BRUSH/etc. clauses
     DumpPenDef();
     DumpFontDef();
+
+    fflush(fpOut);
+}
+
+/*=====================================================================
+ *                      class TABMultiPoint
+ *====================================================================*/
+
+/**********************************************************************
+ *                   TABMultiPoint::TABMultiPoint()
+ *
+ * Constructor.
+ **********************************************************************/
+TABMultiPoint::TABMultiPoint(OGRFeatureDefn *poDefnIn):
+              TABFeature(poDefnIn)
+{
+    m_bCenterIsSet = FALSE;
+}
+
+/**********************************************************************
+ *                   TABMultiPoint::~TABMultiPoint()
+ *
+ * Destructor.
+ **********************************************************************/
+TABMultiPoint::~TABMultiPoint()
+{
+}
+
+/**********************************************************************
+ *                     TABMultiPoint::CloneTABFeature()
+ *
+ * Duplicate feature, including stuff specific to each TABFeature type.
+ *
+ * This method calls the generic TABFeature::CloneTABFeature() and 
+ * then copies any members specific to its own type.
+ **********************************************************************/
+TABFeature *TABMultiPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
+{
+    /*-----------------------------------------------------------------
+     * Alloc new feature and copy the base stuff
+     *----------------------------------------------------------------*/
+    TABMultiPoint *poNew = new TABMultiPoint(poNewDefn?poNewDefn:GetDefnRef());
+
+    CopyTABFeatureBase(poNew);
+
+    /*-----------------------------------------------------------------
+     * And members specific to this class
+     *----------------------------------------------------------------*/
+    // ITABFeatureSymbol
+    *(poNew->GetSymbolDefRef()) = *GetSymbolDefRef();
+
+    poNew->m_bCenterIsSet = m_bCenterIsSet;
+    poNew->m_dCenterX = m_dCenterX;
+    poNew->m_dCenterY = m_dCenterY;
+
+    return poNew;
+}
+
+
+/**********************************************************************
+ *                   TABMultiPoint::ValidateMapInfoType()
+ *
+ * Check the feature's geometry part and return the corresponding
+ * mapinfo object type code.  The m_nMapInfoType member will also
+ * be updated for further calls to GetMapInfoType();
+ *
+ * Returns TAB_GEOM_NONE if the geometry is not compatible with what
+ * is expected for this object class.
+ **********************************************************************/
+int  TABMultiPoint::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
+{
+    OGRGeometry *poGeom;
+
+    /*-----------------------------------------------------------------
+     * Fetch and validate geometry 
+     *----------------------------------------------------------------*/
+    poGeom = GetGeometryRef();
+    if (poGeom && poGeom->getGeometryType() == wkbMultiPoint)
+    {
+        m_nMapInfoType = TAB_GEOM_MULTIPOINT;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "TABMultiPoint: Missing or Invalid Geometry!");
+        m_nMapInfoType = TAB_GEOM_NONE;
+    }
+
+    /*-----------------------------------------------------------------
+     * Decide if coordinates should be compressed or not.
+     *----------------------------------------------------------------*/
+    ValidateCoordType(poMapFile);
+
+    return m_nMapInfoType;
+}
+
+/**********************************************************************
+ *                   TABMultiPoint::ReadGeometryFromMAPFile()
+ *
+ * Fill the geometry and representation (color, etc...) part of the
+ * feature from the contents of the .MAP object pointed to by poMAPFile.
+ *
+ * It is assumed that poMAPFile currently points to the beginning of
+ * a map object.
+ *
+ * Returns 0 on success, -1 on error, in which case CPLError() will have
+ * been called.
+ **********************************************************************/
+int TABMultiPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
+                                           TABMAPObjHdr *poObjHdr)
+{
+    GInt32              nX, nY;
+    double              dX, dY, dXMin, dYMin, dXMax, dYMax;
+    OGRGeometry         *poGeometry=NULL;
+    GBool               bComprCoord = poObjHdr->IsCompressedType();
+
+    /*-----------------------------------------------------------------
+     * Fetch and validate geometry type
+     *----------------------------------------------------------------*/
+    m_nMapInfoType = poObjHdr->m_nType;
+
+    /*-----------------------------------------------------------------
+     * Read object information
+     *----------------------------------------------------------------*/
+    if (m_nMapInfoType == TAB_GEOM_MULTIPOINT ||
+        m_nMapInfoType == TAB_GEOM_MULTIPOINT_C )
+    {
+        TABMAPCoordBlock *poCoordBlock;
+
+        /*-------------------------------------------------------------
+         * Copy data from poObjHdr
+         *------------------------------------------------------------*/
+        TABMAPObjMultiPoint *poMPointHdr = (TABMAPObjMultiPoint *)poObjHdr;
+
+        // MBR
+        poMapFile->Int2Coordsys(poMPointHdr->m_nMinX, poMPointHdr->m_nMinY, 
+                                dXMin, dYMin);
+        poMapFile->Int2Coordsys(poMPointHdr->m_nMaxX, poMPointHdr->m_nMaxY, 
+                                dXMax, dYMax);
+
+        m_nSymbolDefIndex = poMPointHdr->m_nSymbolId;   // Symbol index
+        poMapFile->ReadSymbolDef(m_nSymbolDefIndex, &m_sSymbolDef);
+
+        // Centroid/label point
+        poMapFile->Int2Coordsys(poMPointHdr->m_nLabelX, poMPointHdr->m_nLabelY,
+                                dX, dY);
+        SetCenter(dX, dY);
+
+        /*-------------------------------------------------------------
+         * Read Point Coordinates
+         *------------------------------------------------------------*/
+        OGRMultiPoint   *poMultiPoint;
+        poGeometry = poMultiPoint = new OGRMultiPoint();
+
+        poCoordBlock = poMapFile->GetCoordBlock(poMPointHdr->m_nCoordBlockPtr);
+        poCoordBlock->SetComprCoordOrigin(poMPointHdr->m_nComprOrgX, 
+                                          poMPointHdr->m_nComprOrgY);
+
+        for(int iPoint=0; iPoint<poMPointHdr->m_nNumPoints; iPoint++)
+        {
+            if (poCoordBlock->ReadIntCoord(bComprCoord, nX, nY) != 0)
+            {
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Failed reading coordinate data at offset %d", 
+                         poMPointHdr->m_nCoordBlockPtr);
+                return -1;
+            }
+
+            poMapFile->Int2Coordsys(nX, nY, dX, dY);
+            OGRPoint *poPoint = new OGRPoint(dX, dY);
+    
+            if (poMultiPoint->addGeometryDirectly(poPoint) != OGRERR_NONE)
+            {
+                CPLAssert(FALSE); // Just in case lower-level lib is modified
+            }
+        }
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+           "ReadGeometryFromMAPFile(): unsupported geometry type %d (0x%2.2x)",
+                 m_nMapInfoType, m_nMapInfoType);
+        return -1;
+    }
+
+    SetGeometryDirectly(poGeometry);
+
+    SetMBR(dXMin, dYMin, dXMax, dYMax);
+
+    return 0;
+}
+
+/**********************************************************************
+ *                   TABMultiPoint::WriteGeometryToMAPFile()
+ *
+ * Write the geometry and representation (color, etc...) part of the
+ * feature to the .MAP object pointed to by poMAPFile.
+ *
+ * It is assumed that poMAPFile currently points to a valid map object.
+ *
+ * Returns 0 on success, -1 on error, in which case CPLError() will have
+ * been called.
+ **********************************************************************/
+int TABMultiPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
+                                          TABMAPObjHdr *poObjHdr)
+{
+    GInt32              nX, nY;
+    OGRGeometry         *poGeom;
+    OGRMultiPoint       *poMPoint;
+
+    /*-----------------------------------------------------------------
+     * We assume that ValidateMapInfoType() was called already and that
+     * the type in poObjHdr->m_nType is valid.
+     *----------------------------------------------------------------*/
+    CPLAssert(m_nMapInfoType == poObjHdr->m_nType);
+
+    TABMAPObjMultiPoint *poMPointHdr = (TABMAPObjMultiPoint *)poObjHdr;
+
+    /*-----------------------------------------------------------------
+     * Fetch and validate geometry
+     *----------------------------------------------------------------*/
+    poGeom = GetGeometryRef();
+    if (poGeom && poGeom->getGeometryType() == wkbMultiPoint)
+        poMPoint = (OGRMultiPoint*)poGeom;
+    else
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "TABMultiPoint: Missing or Invalid Geometry!");
+        return -1;
+    }
+
+    poMPointHdr->m_nNumPoints = poMPoint->getNumGeometries();
+
+    /*-----------------------------------------------------------------
+     * Write data to coordinate block
+     *----------------------------------------------------------------*/
+    int iPoint, nStatus;
+    TABMAPCoordBlock *poCoordBlock;
+    GBool   bCompressed = poObjHdr->IsCompressedType();
+
+    poCoordBlock = poMapFile->GetCurCoordBlock();
+    poCoordBlock->StartNewFeature();
+    poMPointHdr->m_nCoordBlockPtr = poCoordBlock->GetCurAddress();
+    poCoordBlock->SetComprCoordOrigin(m_nComprOrgX, m_nComprOrgY);
+
+
+    for(iPoint=0, nStatus=0; 
+        nStatus == 0 && iPoint < poMPointHdr->m_nNumPoints; iPoint++)
+    {
+        poGeom = poMPoint->getGeometryRef(iPoint);
+
+        if (poGeom && poGeom->getGeometryType() == wkbPoint)
+        {
+            OGRPoint *poPoint = (OGRPoint*)poGeom;
+
+            poMapFile->Coordsys2Int(poPoint->getX(), poPoint->getY(), nX, nY);
+            if (iPoint == 0)
+            {
+                // Default to the first point, we may use explicit value below
+                poMPointHdr->m_nLabelX = nX;
+                poMPointHdr->m_nLabelY = nY;
+            }
+
+            if ((nStatus = poCoordBlock->WriteIntCoord(nX, nY, 
+                                                       bCompressed)) != 0)
+            {
+                // Failed ... error message has already been produced
+                return nStatus;
+            }   
+
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AssertionFailed,
+                     "TABMultiPoint: Invalid Geometry, expecting OGRPoint!");
+            return -1;
+        }
+    }
+
+    /*-----------------------------------------------------------------
+     * Copy object information
+     *----------------------------------------------------------------*/
+
+    // Compressed coordinate origin (useful only in compressed case!)
+    poMPointHdr->m_nComprOrgX = m_nComprOrgX;
+    poMPointHdr->m_nComprOrgY = m_nComprOrgY;
+
+    poMPointHdr->m_nCoordDataSize = poCoordBlock->GetFeatureDataSize();
+    poMPointHdr->SetMBR(m_nXMin, m_nYMin, m_nXMax, m_nYMax);
+
+    // Center/label point (default value already set above)
+    double dX, dY;
+    if (GetCenter(dX, dY) != -1)
+    {
+        poMapFile->Coordsys2Int(dX, dY, poMPointHdr->m_nLabelX, 
+                                poMPointHdr->m_nLabelY);
+    }
+
+    m_nSymbolDefIndex = poMapFile->WriteSymbolDef(&m_sSymbolDef);
+    poMPointHdr->m_nSymbolId = m_nSymbolDefIndex;      // Symbol index
+
+    if (CPLGetLastErrorNo() != 0)
+        return -1;
+
+    return 0;
+}
+
+
+/**********************************************************************
+ *                   TABMultiPoint::GetXY()
+ *
+ * Return this point's X,Y coordinates.
+ **********************************************************************/
+int TABMultiPoint::GetXY(int i, double &dX, double &dY)
+{
+    OGRGeometry *poGeom;
+
+    /*-----------------------------------------------------------------
+     * Fetch and validate geometry
+     *----------------------------------------------------------------*/
+    poGeom = GetGeometryRef();
+    if (poGeom && poGeom->getGeometryType() == wkbMultiPoint)
+    {
+        OGRMultiPoint *poMPoint = (OGRMultiPoint*)poGeom;
+
+        if (i >= 0 && i < poMPoint->getNumGeometries() &&
+            (poGeom = poMPoint->getGeometryRef(i)) != NULL &&
+            poGeom->getGeometryType() == wkbPoint )
+        {
+            OGRPoint *poPoint = (OGRPoint*)poGeom;
+
+            dX = poPoint->getX();
+            dY = poPoint->getY();
+        }
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "TABMultiPoint: Missing or Invalid Geometry!");
+        dX = dY = 0.0;
+        return -1;
+    }
+
+    return 0;
+}
+
+/**********************************************************************
+ *                   TABMultiPoint::GetNumPoints()
+ *
+ * Return the number of points in this multipoint object
+ **********************************************************************/
+int TABMultiPoint::GetNumPoints()
+{
+    OGRGeometry *poGeom;
+
+    /*-----------------------------------------------------------------
+     * Fetch and validate geometry
+     *----------------------------------------------------------------*/
+    poGeom = GetGeometryRef();
+    if (poGeom && poGeom->getGeometryType() == wkbMultiPoint)
+    {
+        OGRMultiPoint *poMPoint = (OGRMultiPoint*)poGeom;
+
+        return poMPoint->getNumGeometries();
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "TABMultiPoint: Missing or Invalid Geometry!");
+        return 0;
+    }
+
+    return 0;
+}
+
+
+/**********************************************************************
+ *                   TABMultiPoint::GetStyleString()
+ *
+ * Return style string for this feature.
+ *
+ * Style String is built only once during the first call to GetStyleString().
+ **********************************************************************/
+const char *TABMultiPoint::GetStyleString()
+{
+    if (m_pszStyleString == NULL)
+    {
+        m_pszStyleString = CPLStrdup(GetSymbolStyleString());
+    }
+
+    return m_pszStyleString;
+}
+
+/**********************************************************************
+ *                   TABMultiPoint::GetCenter()
+ *
+ * Returns the center point (or label point?) of the object.  Compute one 
+ * if it was not explicitly set:
+ *
+ * The default seems to be to use the first point in the collection as
+ * the center.. so we'll use that.
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABMultiPoint::GetCenter(double &dX, double &dY)
+{
+    if (!m_bCenterIsSet && GetNumPoints() > 0)
+    {
+        // The default seems to be to use the first point in the collection
+        // as the center... so we'll use that.
+        if (GetXY(0, m_dCenterX, m_dCenterY) == 0)
+            m_bCenterIsSet = TRUE;
+    }
+
+    if (!m_bCenterIsSet)
+        return -1;
+
+    dX = m_dCenterX;
+    dY = m_dCenterY;
+    return 0;
+}
+
+/**********************************************************************
+ *                   TABMultiPoint::SetCenter()
+ *
+ * Set the X,Y coordinates to use as center point (or label point?)
+ **********************************************************************/
+void TABMultiPoint::SetCenter(double dX, double dY)
+{
+    m_dCenterX = dX;
+    m_dCenterY = dY;
+    m_bCenterIsSet = TRUE;
+}
+
+
+/**********************************************************************
+ *                   TABMultiPoint::DumpMIF()
+ *
+ * Dump feature geometry in a format similar to .MIF POINTs.
+ **********************************************************************/
+void TABMultiPoint::DumpMIF(FILE *fpOut /*=NULL*/)
+{
+    OGRGeometry *poGeom;
+    OGRMultiPoint *poMPoint;
+
+    if (fpOut == NULL)
+        fpOut = stdout;
+
+    /*-----------------------------------------------------------------
+     * Fetch and validate geometry
+     *----------------------------------------------------------------*/
+    poGeom = GetGeometryRef();
+    if (poGeom && poGeom->getGeometryType() == wkbMultiPoint)
+        poMPoint = (OGRMultiPoint*)poGeom;
+    else
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "TABMultiPoint: Missing or Invalid Geometry!");
+        return;
+    }
+
+    /*-----------------------------------------------------------------
+     * Generate output
+     *----------------------------------------------------------------*/
+    fprintf(fpOut, "MULTIPOINT %d\n", poMPoint->getNumGeometries());
+
+    for (int iPoint=0; iPoint < poMPoint->getNumGeometries(); iPoint++)
+    {
+        poGeom = poMPoint->getGeometryRef(iPoint);
+
+        if (poGeom && poGeom->getGeometryType() == wkbPoint)
+        {
+            OGRPoint *poPoint = (OGRPoint*)poGeom;
+            fprintf(fpOut, "  %g %g\n", poPoint->getX(), poPoint->getY() );
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AssertionFailed,
+                     "TABMultiPoint: Invalid Geometry, expecting OGRPoint!");
+            return;
+        }
+    }
+
+    DumpSymbolDef(fpOut);
+
+    if (m_bCenterIsSet)
+        fprintf(fpOut, "Center %g %g\n", m_dCenterX, m_dCenterY);
 
     fflush(fpOut);
 }

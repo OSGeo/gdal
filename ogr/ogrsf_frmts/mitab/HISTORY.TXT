@@ -5,6 +5,118 @@ MITAB Library - Revision History
 CHANGES - Current Version:
 --------------------------
 
+- Made changes in TABRelation to avoid an infinite loop. The m_poCurFeature
+  object have been deleted and the function GetFeatureRef() have been replace
+  by GetFeature(). This new function return a TABFeature object that must be 
+  control by the calling method. (bug 706)
+
+- Made important changes in order to support writing objects in 16 bits 
+  coordinate format. New TABMAPObjHdr-derived classes are used to hold 
+  object info in memory until block is full. 
+  This was required in order to fix a problem when very small regions 
+  were written in 32 bits coordinates when 16 bits should have been used
+  because MBR < 65536.  In this case MapInfo would attempt to rewrite the
+  modified object info in 16 bits format while the coordinates blocks are
+  still in 32 bits format... resulting in a corrupted the file.
+  Note that at this point only feature types that use separate coordinate
+  blocks can be saved in 16 bits format (PLINE, MULTIPLINE and REGION).
+
+- Prevent writing of coordinates outside of the +/-1e9 integer bounds.
+  If coordinates outside of that range are written then the values are
+  written as +/-1e9 instead and a warning (ERROR 503) is produced when 
+  the file is closed.  Coordinates outside of the +/-1e9 bounds limits
+  seemed to confuse MapInfo.
+
+- Disabled the warning (ERROR 503) when coordinates outside of the +/-1e9
+  integer bounds in SetCoordFilter().
+
+- Modified the conversion of double to integer coordinates to fix an old
+  problem where coordinates written by MITAB would be a little bit off 
+  sometimes compared with the same values written by MapInfo.
+
+- Modified mitab_capi.cpp to correctly produce "point" style arcs from
+  mitab_c_set_arc().  It now sets a point geometry ensuring that the
+  TABArc::ValidateMapInfoType() method will succeed.  As per DMSG Bug 644. NFW
+
+- Fixed some TABView issues (bug 703): 
+  - Support "select * ..." syntax
+  - Accept source table names with or without the .tab extension
+  - Avoid crash if .IND file for related table is missing (i.e. deleted)
+
+- The OGRDriver Create method will now accept the FORMAT=MIF option to
+  create a dataset of mif files instead of tab files. NFW
+
+- Prevent an infinite loop of calls to LoadNextMatchingObjectBlock() in
+  GetNextFeatureId() if no objects found in spatial index when using a 
+  spatial filter.
+
+- False Easting/Northing should be in the linear units of measure in MapInfo,
+  but in OGRSpatialReference/WKT they are always in meters.  Convert 
+  accordingly in mitab_coordsys.cpp and mitab_spatialref.cpp.  NFW
+
+- Added support for reading and writing new V650 Multipoint for both TAB and 
+  MIF.
+
+- Added support for Cassini Soldner projection (projection 30). NFW
+
+- Add EOF validation in MIDDATAFile::GetLastLine() to fix EOF problems
+  while reading some MIF/MID files (Bug 819, JSL)
+
+
+Version 1.1.3 - (2001-11-02)
+----------------------------
+
+- mitab_tabview.cpp: Use VSIUnlink() instead of unlink(). NFW.
+
+- mitab_utils.cpp: Don't use multi-byte support if _WIN32 and unix are
+  defined to try and preserve cygwin support. NFW
+
+- C API: Added mitab_c_get_text().
+         Added mitab_c_get_mif_coordsys()
+         Added mitab_c_get_projinfo() and mitab_c_set_projinfo()
+         Changed mitab_c_create() to make bounds optional and allow using
+         default projection bounds if available
+
+- GetLabelStyleString(): take line spacing and num. of lines into account
+  when calculating text height.
+
+- Test for NULL geometries if spatial filter enabled in GetNextFeature()
+  (objects with NONE geometry would have caused a crash when a spatial 
+   filter was set).
+
+- Fixed a few memory leaks in mitab_miffile.cpp.  NFW.
+
+- Fixed mitab_capi.c to not delete the spatial ref unless dereferencing it
+  drops the count to 0.  NFW.
+
+- Modified TABFile::SetSpatialRef() to clone the passed in OGRSpatialReference
+  instead of taking a reference to it, so it will work with stack allocated
+  OGRSpatialReferences or in cases where the caller doesn't check ref counts.
+  NFW.
+
+- TABPolyline::ValidateMapInfoType(): return TAB_GEOM_NONE if numpoints < 2
+
+- Substantial additions to lots of files adding support for efficient
+  spatial queries by utilizing the spatial indexes when reading.  NFW.
+
+- TABText should not produce an error if reading a 0-length text.
+
+- Seamless files: when reading on Unix, replace '\\' with '/' in file path
+  read from the index table.
+
+- Modified mitab_miffile.cpp to keep track of the feature id of the 
+  preloaded text line in m_nPreloadedId instead of m_nCurFeatureId to fix
+  serious problems with access through IMapInfo::GetNextFeature() - this
+  affects applications using the pure OGRLayer API to access mif files. NFW
+
+- mitab_middatafile.cpp: Use VSIRewind() instead of rewind() to ensure that
+  IO remains virtualized.  NFW
+
+- mitab_miffile.cpp: modified to return extents collected by PreParse.  Made
+  distinction between extents and projection bounds explicit.  NFW
+
+- mitab_spatialref.cpp: added OGC name for datum 12. 
+
 
 Version 1.1.2 - (2001-06-24)
 ----------------------------
@@ -290,5 +402,5 @@ Version 0.1 - (1999-12-04)
 
 
 ------------
-$Id: HISTORY.TXT,v 1.54 2001/06/25 01:49:05 daniel Exp $
+$Id: HISTORY.TXT,v 1.83 2002/04/26 14:16:49 julien Exp $
 ------------

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapheaderblock.cpp,v 1.21 2001/12/05 22:23:06 daniel Exp $
+ * $Id: mitab_mapheaderblock.cpp,v 1.23 2002/04/25 16:05:24 julien Exp $
  *
  * Name:     mitab_mapheaderblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -9,7 +9,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999-2001, Daniel Morissette
+ * Copyright (c) 1999-2002, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,13 @@
  **********************************************************************
  *
  * $Log: mitab_mapheaderblock.cpp,v $
+ * Revision 1.23  2002/04/25 16:05:24  julien
+ * Disabled the overflow warning in SetCoordFilter() by adding bIgnoreOverflow
+ * variable in Coordsys2Int of the TABMAPFile class and TABMAPHeaderBlock class
+ *
+ * Revision 1.22  2002/03/26 01:48:40  daniel
+ * Added Multipoint object type (V650)
+ *
  * Revision 1.21  2001/12/05 22:23:06  daniel
  * Can't use rint() on Windows... replace rint() with (int)(val+0.5)
  *
@@ -111,7 +118,7 @@
 /*---------------------------------------------------------------------
  * The header block starts with an array of map object lenght constants.
  *--------------------------------------------------------------------*/
-#define HDR_OBJ_LEN_ARRAY_SIZE   52
+#define HDR_OBJ_LEN_ARRAY_SIZE   58
 static GByte  gabyObjLenArray[ HDR_OBJ_LEN_ARRAY_SIZE  ] = {
             0x00,0x0a,0x0e,0x15,0x0e,0x16,0x1b,0xa2,
             0xa6,0xab,0x1a,0x2a,0x2f,0xa5,0xa9,0xb5,
@@ -119,7 +126,8 @@ static GByte  gabyObjLenArray[ HDR_OBJ_LEN_ARRAY_SIZE  ] = {
             0x2b,0x0f,0x17,0x23,0x4f,0x57,0x63,0x9c,
             0xa4,0xa9,0xa0,0xa8,0xad,0xa4,0xa8,0xad,
             0x16,0x1a,0x39,0x0d,0x11,0x37,0xa5,0xa9,
-            0xb5,0xa4,0xa8,0xad };
+            0xb5,0xa4,0xa8,0xad,0xb2,0xb6,0xdc,0xbd,
+            0xbd,0xf4 };
 
 
 
@@ -379,7 +387,8 @@ int TABMAPHeaderBlock::Int2Coordsys(GInt32 nX, GInt32 nY,
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY, 
-                                    GInt32 &nX, GInt32 &nY)
+                                    GInt32 &nX, GInt32 &nY,
+                                    GBool bIgnoreOverflow /*=FALSE*/)
 {
     if (m_pabyBuf == NULL)
         return -1;
@@ -430,7 +439,7 @@ int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY,
         nY = 1000000000;
         bIntBoundsOverflow = TRUE;
     }
-    if (bIntBoundsOverflow)
+    if (bIntBoundsOverflow && !bIgnoreOverflow)
     {
         m_bIntBoundsOverflow = TRUE;
 #ifdef DEBUG

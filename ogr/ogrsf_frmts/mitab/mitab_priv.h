@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.30 2002/02/22 20:44:51 julien Exp $
+ * $Id: mitab_priv.h,v 1.34 2002/04/25 16:05:24 julien Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999-2001, Daniel Morissette
+ * Copyright (c) 1999-2002, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,19 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.34  2002/04/25 16:05:24  julien
+ * Disabled the overflow warning in SetCoordFilter() by adding bIgnoreOverflow
+ * variable in Coordsys2Int of the TABMAPFile class and TABMAPHeaderBlock class
+ *
+ * Revision 1.33  2002/04/22 13:49:09  julien
+ * Add EOF validation in MIDDATAFile::GetLastLine() (Bug 819)
+ *
+ * Revision 1.32  2002/03/26 19:27:43  daniel
+ * Got rid of tabs in source
+ *
+ * Revision 1.31  2002/03/26 01:48:40  daniel
+ * Added Multipoint object type (V650)
+ *
  * Revision 1.30  2002/02/22 20:44:51  julien
  * Prevent infinite loop with TABRelation by suppress the m_poCurFeature object
  * from the class and setting it in the calling function and add GetFeature in
@@ -578,6 +591,28 @@ class TABMAPObjText: public TABMAPObjHdrWithCoord
     virtual int ReadObj(TABMAPObjectBlock *);
 };
 
+
+class TABMAPObjMultiPoint: public TABMAPObjHdrWithCoord
+{
+  public:
+    GInt32      m_nNumPoints;
+    GInt32      m_nComprOrgX;   /* Present only in compressed coord. case */
+    GInt32      m_nComprOrgY;
+    GByte       m_nSymbolId;
+    GInt32      m_nLabelX;      /* Not sure if it's a label point, but */
+    GInt32      m_nLabelY;      /* it's similar to what we find in PLINE */
+
+    TABMAPObjMultiPoint() {};
+    virtual ~TABMAPObjMultiPoint() {};
+
+    virtual int WriteObj(TABMAPObjectBlock *);
+
+//  protected:
+    virtual int ReadObj(TABMAPObjectBlock *);
+};
+
+
+
 /*=====================================================================
           Classes to handle .MAP files low-level blocks
  =====================================================================*/
@@ -713,7 +748,8 @@ class TABMAPHeaderBlock: public TABRawBinBlock
     virtual int GetBlockClass() { return TABMAP_HEADER_BLOCK; };
 
     int         Int2Coordsys(GInt32 nX, GInt32 nY, double &dX, double &dY);
-    int         Coordsys2Int(double dX, double dY, GInt32 &nX, GInt32 &nY);
+    int         Coordsys2Int(double dX, double dY, GInt32 &nX, GInt32 &nY, 
+                             GBool bIgnoreOverflow=FALSE);
     int         ComprInt2Coordsys(GInt32 nCenterX, GInt32 nCenterY, 
                                   int nDeltaX, int nDeltaY, 
                                   double &dX, double &dY);
@@ -910,9 +946,9 @@ class TABMAPObjectBlock: public TABRawBinBlock
                        GInt32 &nXMax, GInt32 &nYMax);
 
     int         AdvanceToNextObject( TABMAPHeaderBlock * );
-    int		GetCurObjectOffset() { return m_nCurObjectOffset; }
-    int		GetCurObjectId() { return m_nCurObjectId; }
-    int		GetCurObjectType() { return m_nCurObjectType; }
+    int         GetCurObjectOffset() { return m_nCurObjectOffset; }
+    int         GetCurObjectId() { return m_nCurObjectId; }
+    int         GetCurObjectType() { return m_nCurObjectType; }
 
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL) { Dump(fpOut, FALSE); };
@@ -1152,7 +1188,8 @@ class TABMAPFile
     int         Close();
 
     int         Int2Coordsys(GInt32 nX, GInt32 nY, double &dX, double &dY);
-    int         Coordsys2Int(double dX, double dY, GInt32 &nX, GInt32 &nY);
+    int         Coordsys2Int(double dX, double dY, GInt32 &nX, GInt32 &nY, 
+                             GBool bIgnoreOveflow=FALSE);
     int         Int2CoordsysDist(GInt32 nX, GInt32 nY, double &dX, double &dY);
     int         Coordsys2IntDist(double dX, double dY, GInt32 &nX, GInt32 &nY);
     void        SetCoordFilter(TABVertex sMin, TABVertex sMax);
@@ -1166,7 +1203,7 @@ class TABMAPFile
     int         PrepareNewObj(int nObjId, GByte nObjType);
 
     void        ResetReading();
-    int		GetNextFeatureId( int nPrevId );
+    int         GetNextFeatureId( int nPrevId );
 
     int         GetCurObjType();
     int         GetCurObjId();
@@ -1536,6 +1573,9 @@ class MIDDATAFile
      const char *GetDelimiter(){return m_pszDelimiter;}
      void SetDelimiter(const char *pszDelimiter){m_pszDelimiter=pszDelimiter;}
 
+     void SetEof(GBool bEof);
+     GBool GetEof();
+
      private:
        FILE *m_fp;
        const char *m_pszDelimiter;
@@ -1551,6 +1591,7 @@ class MIDDATAFile
        double      m_dfYMultiplier;
        double      m_dfXDisplacement;
        double      m_dfYDisplacement;
+       GBool       m_bEof;
 };
 
 
