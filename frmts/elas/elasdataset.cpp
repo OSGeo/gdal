@@ -3,7 +3,7 @@
  *
  * Project:  ELAS Translator
  * Purpose:  Complete implementation of ELAS translator module for GDAL.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/07/08 15:37:05  warmerda
+ * avoid warnings
+ *
  * Revision 1.9  2002/11/23 18:54:17  warmerda
  * added CREATIONDATATYPES metadata for drivers
  *
@@ -530,7 +533,7 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
 
     sHeader.IH19[0] = 0x04;
     sHeader.IH19[1] = 0xd2;
-    sHeader.IH19[3] = GDALGetDataTypeSize(eType) / 8;
+    sHeader.IH19[3] = (GByte) (GDALGetDataTypeSize(eType) / 8);
 
     if( eType == GDT_Byte )
         sHeader.IH19[2] = 1 << 2;
@@ -622,8 +625,8 @@ CPLErr ELASDataset::SetGeoTransform( double * padfTransform )
     sHeader.XOffset = CPL_MSBWORD32(nXOff);
     sHeader.YOffset = CPL_MSBWORD32(nYOff);
 
-    sHeader.XPixSize = ABS(adfGeoTransform[1]);
-    sHeader.YPixSize = ABS(adfGeoTransform[5]);
+    sHeader.XPixSize = (float) ABS(adfGeoTransform[1]);
+    sHeader.YPixSize = (float) ABS(adfGeoTransform[5]);
 
     CPL_MSBPTR32(&(sHeader.XPixSize));
     CPL_MSBPTR32(&(sHeader.YPixSize));

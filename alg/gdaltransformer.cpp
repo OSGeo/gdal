@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/07/08 15:29:14  warmerda
+ * avoid warnings
+ *
  * Revision 1.10  2003/06/03 19:42:54  warmerda
  * added partial support for RPC in GenImgProjTransformer
  *
@@ -260,7 +263,7 @@ CPLErr GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Collect the bounds, ignoring any failed points.                 */
 /* -------------------------------------------------------------------- */
-    double dfMinXOut, dfMinYOut, dfMaxXOut, dfMaxYOut;
+    double dfMinXOut=0, dfMinYOut=0, dfMaxXOut=0, dfMaxYOut=0;
     int    bGotInitialPoint = FALSE;
     int    nFailedCount = 0, i;
 

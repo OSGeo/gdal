@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/07/08 15:36:10  warmerda
+ * avoid warnings
+ *
  * Revision 1.15  2002/11/11 18:29:03  warmerda
  * added AIGLLOpen() to support upper case names too
  *
@@ -257,7 +260,7 @@ CPLErr AIGReadFloatTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
                          psInfo->panBlockOffset[nBlockID],
                          psInfo->panBlockSize[nBlockID],
                          psInfo->nBlockXSize, psInfo->nBlockYSize,
-                         (GUInt32 *) pafData, psInfo->nCellType );
+                         (GInt32 *) pafData, psInfo->nCellType );
 
     if( eErr == CE_None && psInfo->nCellType == AIG_CELLTYPE_INT )
     {
@@ -310,7 +313,7 @@ FILE *AIGLLOpen( const char *pszFilename, const char *pszAccess )
              pszUCFilename[i] != '/' && pszUCFilename[i] != '\\';
              i-- )
         {
-            pszUCFilename[i] = toupper(pszUCFilename[i]);
+            pszUCFilename[i] = (char) toupper(pszUCFilename[i]);
         }
         
         fp = VSIFOpen( pszUCFilename, pszAccess );

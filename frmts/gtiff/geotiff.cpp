@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.95  2003/07/08 15:39:03  warmerda
+ * avoid warnings
+ *
  * Revision 1.94  2003/06/05 14:30:14  warmerda
  * If GTIFNew() fails just issue a warning and continue.  This ensures that
  * files like bruce.tif with corrupt tags can still be read as if the had
@@ -2100,7 +2103,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 
 	    for ( iColor = 0; iColor < nColorCount; iColor++ )
 	    {
-		oEntry.c1 = oEntry.c2 = oEntry.c3 = nColorCount - 1 - iColor;
+		oEntry.c1 = oEntry.c2 = oEntry.c3 = 
+                    (short) (nColorCount - 1 - iColor);
 		oEntry.c4 = 255;
 		poColorTable->SetColorEntry( iColor, &oEntry );
 	    }
@@ -2583,7 +2587,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->bNewDataset = TRUE;
     poDS->bCrystalized = FALSE;
     poDS->pszProjection = CPLStrdup("");
-    poDS->nSamplesPerPixel = nBands;
+    poDS->nSamplesPerPixel = (uint16) nBands;
 
     TIFFGetField( hTIFF, TIFFTAG_SAMPLEFORMAT, &(poDS->nSampleFormat) );
     TIFFGetField( hTIFF, TIFFTAG_PLANARCONFIG, &(poDS->nPlanarConfig) );
@@ -2937,7 +2941,8 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                          pabyLine, nXSize, 1, eType, 
                                          0, 0 );
                 if( eErr == CE_None 
-                  && TIFFWriteScanline( hTIFF, pabyLine, iLine, iBand ) == -1 )
+                  && TIFFWriteScanline( hTIFF, pabyLine, iLine, 
+                                        (tsample_t) iBand ) == -1 )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
                               "TIFFWriteScanline failed." );

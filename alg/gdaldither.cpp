@@ -46,6 +46,9 @@
  *					    Lou Steinberg
  *
  * $Log$
+ * Revision 1.5  2003/07/08 15:27:47  warmerda
+ * avoid warnings
+ *
  * Revision 1.4  2003/03/02 05:24:53  warmerda
  * fixed comment
  *
@@ -221,9 +224,12 @@ int GDALDitherRGB2PCT( GDALRasterBandH hRed,
 /* -------------------------------------------------------------------- */
         for( i = 0; i < nXSize; i++ )
         {
-            pabyRed[i] =   MAX(0,MIN(255,(pabyRed[i]   + panError[i*3+0+3])));
-            pabyGreen[i] = MAX(0,MIN(255,(pabyGreen[i] + panError[i*3+1+3])));
-            pabyBlue[i] =  MAX(0,MIN(255,(pabyBlue[i]  + panError[i*3+2+3])));
+            pabyRed[i] = (GByte)
+                MAX(0,MIN(255,(pabyRed[i]   + panError[i*3+0+3])));
+            pabyGreen[i] = (GByte)
+                MAX(0,MIN(255,(pabyGreen[i] + panError[i*3+1+3])));
+            pabyBlue[i] =  (GByte)
+                MAX(0,MIN(255,(pabyBlue[i]  + panError[i*3+2+3])));
         }
 
         memset( panError, 0, sizeof(int) * (nXSize+2) * 3 );
@@ -251,7 +257,7 @@ int GDALDitherRGB2PCT( GDALRasterBandH hRed,
             iIndex = pabyColorMap[iRed + iGreen * C_LEVELS 
                                  + iBlue * C_LEVELS * C_LEVELS];
 	
-            pabyIndex[i] = iIndex;
+            pabyIndex[i] = (GByte) iIndex;
 
 /* -------------------------------------------------------------------- */
 /*      Compute Red error, and carry it on to the next error line.      */
@@ -357,7 +363,7 @@ static void FindNearestColor( int nColors, int *panPCT, GByte *pabyColorMap )
 		}
 		
 		pabyColorMap[iRed + iGreen*C_LEVELS 
-                            + iBlue*C_LEVELS*C_LEVELS] = nBestIndex;
+                            + iBlue*C_LEVELS*C_LEVELS] = (GByte)nBestIndex;
 	    }
 	}
     }

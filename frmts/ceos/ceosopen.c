@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/07/08 15:34:04  warmerda
+ * avoid warnings
+ *
  * Revision 1.3  2001/10/29 17:48:34  warmerda
  * Change sequence number check to a warning since the sequence numbers are
  * apparently screwy in some otherwise interesting ESA/CEOS Landsat 7 files.
@@ -145,7 +148,7 @@ CEOSRecord * CEOSReadRecord( FILE * fp )
 
     memcpy( psRecord->pachData, abyHeader, 12 );
 
-    if( VSIFRead( psRecord->pachData + 12, 1, psRecord->nLength-12, fp )
+    if( (int)VSIFRead( psRecord->pachData + 12, 1, psRecord->nLength-12, fp )
         != psRecord->nLength - 12 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -319,7 +322,7 @@ CPLErr CEOSReadScanline( CEOSImage * psCEOS, int nBand, int nScanline,
 /*      Read the data.                                                  */
 /* -------------------------------------------------------------------- */
     nBytes = psCEOS->nPixels * psCEOS->nBitsPerPixel / 8;
-    if( VSIFRead( pData, 1, nBytes, psCEOS->fpImage ) != nBytes )
+    if( (int) VSIFRead( pData, 1, nBytes, psCEOS->fpImage ) != nBytes )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Read of %d bytes for scanline %d failed.\n",
