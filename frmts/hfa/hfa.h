@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/10/20 04:18:15  warmerda
+ * added overviews, stateplane, and u4
+ *
  * Revision 1.6  2000/10/13 21:14:08  warmerda
  * added more projection codes
  *
@@ -165,9 +168,15 @@ CPLErr HFASetProParameters( HFAHandle, const Eprj_ProParameters * );
 CPLErr	HFAGetRasterInfo( HFAHandle hHFA, int *pnXSize, int *pnYSize,
                           int *pnBands );
 CPLErr  HFAGetBandInfo( HFAHandle hHFA, int nBand, int * pnDataType,
-                        int * pnBlockXSize, int * pnBlockYSize );
+                        int * pnBlockXSize, int * pnBlockYSize, 
+                        int * pnOverviews );
+CPLErr  HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int nOverview, 
+                            int * pnXSize, int * pnYSize,
+                            int * pnBlockXSize, int * pnBlockYSize );
 CPLErr  HFAGetRasterBlock( HFAHandle hHFA, int nBand, int nXBlock, int nYBlock,
                            void * pData );
+CPLErr  HFAGetOverviewRasterBlock( HFAHandle hHFA, int nBand, int iOverview,
+                                   int nXBlock, int nYBlock, void * pData );
 CPLErr  HFASetRasterBlock( HFAHandle hHFA, int nBand, int nXBlock, int nYBlock,
                            void * pData );
 int     HFAGetDataTypeBits( int );

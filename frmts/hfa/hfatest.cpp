@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/10/20 04:18:15  warmerda
+ * added overviews, stateplane, and u4
+ *
  * Revision 1.4  2000/10/12 19:31:01  warmerda
  * fixed usage
  *
@@ -135,12 +138,23 @@ int main( int argc, char ** argv )
 
         for( i = 1; i <= nBands; i++ )
         {
-            int	nDataType, nColors;
+            int	nDataType, nColors, nOverviews, iOverview;
             double	*padfRed, *padfGreen, *padfBlue;
+            int nBlockXSize, nBlockYSize;
         
-            HFAGetBandInfo( hHFA, i, &nDataType, &nXSize, &nYSize );
+            HFAGetBandInfo( hHFA, i, &nDataType, &nBlockXSize, &nBlockYSize, 
+                            &nOverviews );
             printf( "Band %d: %dx%d tiles, type = %d\n",
-                    i, nXSize, nYSize, nDataType );
+                    i, nBlockXSize, nBlockYSize, nDataType );
+
+            for( iOverview=0; iOverview < nOverviews; iOverview++ )
+            {
+                HFAGetOverviewInfo( hHFA, i, iOverview, 
+                                    &nXSize, &nYSize, 
+                                    &nBlockXSize, &nBlockYSize );
+                printf( "  Overview: %dx%d (blocksize %dx%d)\n", 
+                        nXSize, nYSize, nBlockXSize, nBlockYSize );
+            }
 
             if( HFAGetPCT( hHFA, i, &nColors, &padfRed, &padfGreen, &padfBlue )
                 == CE_None )

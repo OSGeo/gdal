@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/10/20 04:18:15  warmerda
+ * added overviews, stateplane, and u4
+ *
  * Revision 1.8  2000/10/12 19:30:32  warmerda
  * substantially improved write support
  *
@@ -86,6 +89,58 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
 
     nPCTColors = -1;
     apadfPCT[0] = apadfPCT[1] = apadfPCT[2] = NULL;
+
+    nOverviews = 0;
+    papoOverviews = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Does this band have overviews?  Try to find them.               */
+/* -------------------------------------------------------------------- */
+    HFAEntry	*poRRDNames = poNode->GetNamedChild( "RRDNamesList" );
+
+    if( poRRDNames != NULL )
+    {
+        for( int iName = 0; TRUE; iName++ )
+        {
+            char	szField[128], *pszPath;
+            const char *pszName;
+            CPLErr      eErr;
+            HFAEntry   *poOvEntry;
+            int         i;
+
+            sprintf( szField, "nameList[%d].string", iName );
+
+            pszName = poRRDNames->GetStringField( szField, &eErr );
+            if( pszName == NULL || eErr != CE_None )
+                break;
+
+            pszName = strstr(pszName,"(:");
+            if( pszName == NULL )
+                continue;
+            
+            pszPath = CPLStrdup( pszName + 2 );
+            if( pszPath[strlen(pszPath)-1] == ')' )
+                pszPath[strlen(pszPath)-1] = '\0';
+
+            for( i=0; pszPath[i] != '\0'; i++ )
+            {
+                if( pszPath[i] == ':' )
+                    pszPath[i] = '.';
+            }
+
+            poOvEntry = psInfo->poRoot->GetNamedChild( pszPath );
+            if( poOvEntry == NULL )
+                continue;
+
+            /* 
+             * We have an overview node.  Instanatiate a HFABand from it, 
+             * and add to the list.
+             */
+            papoOverviews = (HFABand **) 
+                CPLRealloc(papoOverviews, sizeof(void*) * ++nOverviews );
+            papoOverviews[nOverviews-1] = new HFABand( psInfo, poOvEntry );
+        }
+    }
 }
 
 /************************************************************************/
@@ -95,6 +150,12 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
 HFABand::~HFABand()
 
 {
+    for( int iOverview = 0; iOverview < nOverviews; iOverview++ )
+        delete papoOverviews[iOverview];
+
+    if( nOverviews > 0 )
+        CPLFree( papoOverviews );
+
     CPLFree( panBlockStart );
     CPLFree( panBlockSize );
     CPLFree( panBlockFlag );
@@ -426,17 +487,28 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 #ifdef CPL_MSB             
     if( HFAGetDataTypeBits(nDataType) == 16 )
     {
-        int		ii;
-
-        for( ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
-        {
-            unsigned char *pabyData = (unsigned char *) pData;
-            int		nTemp;
-
-            nTemp = pabyData[ii*2];
-            pabyData[ii*2] = pabyData[ii*2+1];
-            pabyData[ii*2+1] = nTemp;
-        }
+        for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
+            CPL_SWAP16PTR( ((unsigned char *) pData) + ii*2 );
+    }
+    else if( HFAGetDataTypeBits(nDataType) == 32 )
+    {
+        for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
+            CPL_SWAP32PTR( ((unsigned char *) pData) + ii*4 );
+    }
+    else if( nDataType == EPT_f64 )
+    {
+        for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
+            CPL_SWAP64PTR( ((unsigned char *) pData) + ii*8 );
+    }
+    else if( nDataType == EPT_c64 )
+    {
+        for( int ii = 0; ii < nBlockXSize*nBlockYSize*2; ii++ )
+            CPL_SWAP32PTR( ((unsigned char *) pData) + ii*4 );
+    }
+    else if( nDataType == EPT_c128 )
+    {
+        for( int ii = 0; ii < nBlockXSize*nBlockYSize*2; ii++ )
+            CPL_SWAP64PTR( ((unsigned char *) pData) + ii*8 );
     }
 #endif /* def CPL_MSB */
 
@@ -457,6 +529,15 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 
     iBlock = nXBlock + nYBlock * nBlocksPerRow;
     
+    if( !panBlockFlag[iBlock] & (BFLG_VALID|BFLG_COMPRESSED) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+          "Attempt to write to invalid, or compressed tile.  This\n"
+          "operation currently unsupported by HFABand::SetRasterBlock().\n" );
+
+        return CE_Failure;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Move to the location that the data sits.                        */
 /* -------------------------------------------------------------------- */
@@ -476,17 +557,28 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 #ifdef CPL_MSB             
     if( HFAGetDataTypeBits(nDataType) == 16 )
     {
-        int		ii;
-
-        for( ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
-        {
-            unsigned char *pabyData = (unsigned char *) pData;
-            int		nTemp;
-
-            nTemp = pabyData[ii*2];
-            pabyData[ii*2] = pabyData[ii*2+1];
-            pabyData[ii*2+1] = nTemp;
-        }
+        for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
+            CPL_SWAP16PTR( ((unsigned char *) pData) + ii*2 );
+    }
+    else if( HFAGetDataTypeBits(nDataType) == 32 )
+    {
+        for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
+            CPL_SWAP32PTR( ((unsigned char *) pData) + ii*4 );
+    }
+    else if( nDataType == EPT_f64 )
+    {
+        for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
+            CPL_SWAP64PTR( ((unsigned char *) pData) + ii*8 );
+    }
+    else if( nDataType == EPT_c64 )
+    {
+        for( int ii = 0; ii < nBlockXSize*nBlockYSize*2; ii++ )
+            CPL_SWAP32PTR( ((unsigned char *) pData) + ii*4 );
+    }
+    else if( nDataType == EPT_c128 )
+    {
+        for( int ii = 0; ii < nBlockXSize*nBlockYSize*2; ii++ )
+            CPL_SWAP64PTR( ((unsigned char *) pData) + ii*8 );
     }
 #endif /* def CPL_MSB */
 
@@ -504,17 +596,28 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 #ifdef CPL_MSB             
     if( HFAGetDataTypeBits(nDataType) == 16 )
     {
-        int		ii;
-
-        for( ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
-        {
-            unsigned char *pabyData = (unsigned char *) pData;
-            int		nTemp;
-
-            nTemp = pabyData[ii*2];
-            pabyData[ii*2] = pabyData[ii*2+1];
-            pabyData[ii*2+1] = nTemp;
-        }
+        for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
+            CPL_SWAP16PTR( ((unsigned char *) pData) + ii*2 );
+    }
+    else if( HFAGetDataTypeBits(nDataType) == 32 )
+    {
+        for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
+            CPL_SWAP32PTR( ((unsigned char *) pData) + ii*4 );
+    }
+    else if( nDataType == EPT_f64 )
+    {
+        for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
+            CPL_SWAP64PTR( ((unsigned char *) pData) + ii*8 );
+    }
+    else if( nDataType == EPT_c64 )
+    {
+        for( int ii = 0; ii < nBlockXSize*nBlockYSize*2; ii++ )
+            CPL_SWAP32PTR( ((unsigned char *) pData) + ii*4 );
+    }
+    else if( nDataType == EPT_c128 )
+    {
+        for( int ii = 0; ii < nBlockXSize*nBlockYSize*2; ii++ )
+            CPL_SWAP64PTR( ((unsigned char *) pData) + ii*8 );
     }
 #endif /* def CPL_MSB */
 

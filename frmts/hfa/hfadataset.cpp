@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/10/20 04:18:15  warmerda
+ * added overviews, stateplane, and u4
+ *
  * Revision 1.13  2000/10/19 18:35:43  warmerda
  * changed help topic location
  *
@@ -97,6 +100,152 @@ static const char *apszDatumMap[] = {
     NULL, NULL 
 };
 
+/* ==================================================================== */
+/*      Table relating USGS and ESRI state plane zones.                 */
+/* ==================================================================== */
+int anUsgsEsriZones[] =
+{
+  101, 3101,
+  102, 3126,
+  201, 3151,
+  202, 3176,
+  203, 3201,
+  301, 3226,
+  302, 3251,
+  401, 3276,
+  402, 3301,
+  403, 3326,
+  404, 3351,
+  405, 3376,
+  406, 3401,
+  407, 3426,
+  501, 3451,
+  502, 3476,
+  503, 3501,
+  600, 3526,
+  700, 3551,
+  901, 3601,
+  902, 3626,
+  903, 3576,
+ 1001, 3651,
+ 1002, 3676,
+ 1101, 3701,
+ 1102, 3726,
+ 1103, 3751,
+ 1201, 3776,
+ 1202, 3801,
+ 1301, 3826,
+ 1302, 3851,
+ 1401, 3876,
+ 1402, 3901,
+ 1501, 3926,
+ 1502, 3951,
+ 1601, 3976,
+ 1602, 4001,
+ 1701, 4026,
+ 1702, 4051,
+ 1703, 6426,
+ 1801, 4076,
+ 1802, 4101,
+ 1900, 4126,
+ 2001, 4151,
+ 2002, 4176,
+ 2101, 4201,
+ 2102, 4226,
+ 2103, 4251,
+ 2111, 6351,
+ 2112, 6376,
+ 2113, 6401,
+ 2201, 4276,
+ 2202, 4301,
+ 2203, 4326,
+ 2301, 4351,
+ 2302, 4376,
+ 2401, 4401,
+ 2402, 4426,
+ 2403, 4451,
+ 2500,    0,
+ 2501, 4476,
+ 2502, 4501,
+ 2503, 4526,
+ 2600,    0,
+ 2601, 4551,
+ 2602, 4576,
+ 2701, 4601,
+ 2702, 4626,
+ 2703, 4651,
+ 2800, 4676,
+ 2900, 4701,
+ 3001, 4726,
+ 3002, 4751,
+ 3003, 4776,
+ 3101, 4801,
+ 3102, 4826,
+ 3103, 4851,
+ 3104, 4876,
+ 3200, 4901,
+ 3301, 4926,
+ 3302, 4951,
+ 3401, 4976,
+ 3402, 5001,
+ 3501, 5026,
+ 3502, 5051,
+ 3601, 5076,
+ 3602, 5101,
+ 3701, 5126,
+ 3702, 5151,
+ 3800, 5176,
+ 3900,    0,
+ 3901, 5201,
+ 3902, 5226,
+ 4001, 5251,
+ 4002, 5276,
+ 4100, 5301,
+ 4201, 5326,
+ 4202, 5351,
+ 4203, 5376,
+ 4204, 5401,
+ 4205, 5426,
+ 4301, 5451,
+ 4302, 5476,
+ 4303, 5501,
+ 4400, 5526,
+ 4501, 5551,
+ 4502, 5576,
+ 4601, 5601,
+ 4602, 5626,
+ 4701, 5651,
+ 4702, 5676,
+ 4801, 5701,
+ 4802, 5726,
+ 4803, 5751,
+ 4901, 5776,
+ 4902, 5801,
+ 4903, 5826,
+ 4904, 5851,
+ 5001, 6101,
+ 5002, 6126,
+ 5003, 6151,
+ 5004, 6176,
+ 5005, 6201,
+ 5006, 6226,
+ 5007, 6251,
+ 5008, 6276,
+ 5009, 6301,
+ 5010, 6326,
+ 5101, 5876,
+ 5102, 5901,
+ 5103, 5926,
+ 5104, 5951,
+ 5105, 5976,
+ 5201, 6001,
+ 5200, 6026,
+ 5200, 6076,
+ 5201, 6051,
+ 5202, 6051,
+ 5300,    0, 
+ 5400,    0
+};
 
 /************************************************************************/
 /* ==================================================================== */
@@ -155,9 +304,17 @@ class HFARasterBand : public GDALRasterBand
 
     GDALColorTable *poCT;
 
+    int		nHFADataType;
+
+    int         nOverviews;
+    int		nThisOverview;
+    HFARasterBand **papoOverviewBands;
+
+    HFAHandle	hHFA;
+
   public:
 
-                   HFARasterBand( HFADataset *, int );
+                   HFARasterBand( HFADataset *, int, int );
     virtual        ~HFARasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
@@ -165,6 +322,9 @@ class HFARasterBand : public GDALRasterBand
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
+
+    virtual int    GetOverviewCount();
+    virtual GDALRasterBand *GetOverview( int );
 };
 
 static GDALDriver	*poHFADriver = NULL;
@@ -173,20 +333,26 @@ static GDALDriver	*poHFADriver = NULL;
 /*                           HFARasterBand()                            */
 /************************************************************************/
 
-HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand )
+HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
 
 {
-    int		nHFADataType;
-    
-    this->poDS = poDS;
+    if( iOverview == -1 )
+        this->poDS = poDS;
+    else
+        this->poDS = NULL;
+
+    this->hHFA = poDS->hHFA;
     this->nBand = nBand;
     this->poCT = NULL;
+    this->nThisOverview = iOverview;
+    this->papoOverviewBands = NULL;
 
-    HFAGetBandInfo( poDS->hHFA, nBand, &nHFADataType,
-                    &nBlockXSize, &nBlockYSize );
+    HFAGetBandInfo( hHFA, nBand, &nHFADataType,
+                    &nBlockXSize, &nBlockYSize, &nOverviews );
 
     switch( nHFADataType )
     {
+      case EPT_u4:
       case EPT_u8:
       case EPT_s8:
         eDataType = GDT_Byte;
@@ -200,12 +366,28 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand )
         eDataType = GDT_Int16;
         break;
 
+      case EPT_u32:
+        eDataType = GDT_UInt32;
+        break;
+
+      case EPT_s32:
+        eDataType = GDT_Int32;
+        break;
+
       case EPT_f32:
         eDataType = GDT_Float32;
         break;
 
       case EPT_f64:
         eDataType = GDT_Float64;
+        break;
+
+      case EPT_c64:
+        eDataType = GDT_CFloat32;
+        break;
+
+      case EPT_c128:
+        eDataType = GDT_CFloat64;
         break;
 
       default:
@@ -216,13 +398,26 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand )
     }
 
 /* -------------------------------------------------------------------- */
+/*      If this is an overview, we need to fetch the actual size,       */
+/*      and block size.                                                 */
+/* -------------------------------------------------------------------- */
+    if( iOverview > -1 )
+    {
+        nOverviews = 0;
+        HFAGetOverviewInfo( hHFA, nBand, iOverview, 
+                            &nRasterXSize, &nRasterYSize, 
+                            &nBlockXSize, &nBlockYSize );
+    }
+                            
+/* -------------------------------------------------------------------- */
 /*      Collect color table if present.                                 */
 /* -------------------------------------------------------------------- */
     double    *padfRed, *padfGreen, *padfBlue;
     int       nColors;
 
-    if( HFAGetPCT( poDS->hHFA, nBand, &nColors, 
-                   &padfRed, &padfGreen, &padfBlue ) == CE_None
+    if( iOverview == -1
+        && HFAGetPCT( hHFA, nBand, &nColors, 
+                      &padfRed, &padfGreen, &padfBlue ) == CE_None
         && nColors > 0 )
     {
         poCT = new GDALColorTable();
@@ -237,6 +432,21 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand )
             poCT->SetColorEntry( iColor, &sEntry );
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Setup overviews if present                                      */
+/* -------------------------------------------------------------------- */
+    if( nThisOverview == -1 && nOverviews > 0 )
+    {
+        papoOverviewBands = (HFARasterBand **) 
+            CPLMalloc(sizeof(void*)*nOverviews);
+        
+        for( int iOvIndex = 0; iOvIndex < nOverviews; iOvIndex++ )
+        {
+            papoOverviewBands[iOvIndex] =
+                new HFARasterBand( poDS, nBand, iOvIndex );
+        }
+    }
 }
 
 /************************************************************************/
@@ -247,10 +457,39 @@ HFARasterBand::~HFARasterBand()
 
 {
     FlushCache();
+
+    for( int iOvIndex = 0; iOvIndex < nOverviews; iOvIndex++ )
+    {
+        delete papoOverviewBands[iOvIndex];
+    }
+    CPLFree( papoOverviewBands );
+
     if( poCT != NULL )
         delete poCT;
 }
 
+/************************************************************************/
+/*                          GetOverviewCount()                          */
+/************************************************************************/
+
+int HFARasterBand::GetOverviewCount()
+
+{
+    return nOverviews;
+}
+
+/************************************************************************/
+/*                            GetOverview()                             */
+/************************************************************************/
+
+GDALRasterBand *HFARasterBand::GetOverview( int i )
+
+{
+    if( i < 0 || i >= nOverviews )
+        return NULL;
+    else
+        return papoOverviewBands[i];
+}
 
 /************************************************************************/
 /*                             IReadBlock()                             */
@@ -260,10 +499,28 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    HFADataset	*poODS = (HFADataset *) poDS;
+    CPLErr	eErr;
 
-    return( HFAGetRasterBlock( poODS->hHFA, nBand, nBlockXOff, nBlockYOff,
-                               pImage ) );
+    if( nThisOverview == -1 )
+        eErr = HFAGetRasterBlock( hHFA, nBand, nBlockXOff, nBlockYOff,
+                                  pImage );
+    else
+        eErr =  HFAGetOverviewRasterBlock( hHFA, nBand, nThisOverview,
+                                           nBlockXOff, nBlockYOff,
+                                           pImage );
+    
+    if( eErr == CE_None && nHFADataType == EPT_u4 )
+    {
+        GByte	*pabyData = (GByte *) pImage;
+
+        for( int ii = nBlockXSize * nBlockYSize - 2; ii >= 0; ii -= 2 )
+        {
+            pabyData[ii] = pabyData[ii>>1] & 0x0f;
+            pabyData[ii+1] = (pabyData[ii>>1] & 0xf0) >> 4;
+        }
+    }
+
+    return eErr;
 }
 
 /************************************************************************/
@@ -274,9 +531,10 @@ CPLErr HFARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                    void * pImage )
 
 {
-    HFADataset	*poODS = (HFADataset *) poDS;
+    if( nThisOverview != -1 )
+        return CE_Failure;
 
-    return( HFASetRasterBlock( poODS->hHFA, nBand, nBlockXOff, nBlockYOff,
+    return( HFASetRasterBlock( hHFA, nBand, nBlockXOff, nBlockYOff,
                                pImage ) );
 }
 
@@ -319,7 +577,7 @@ HFADataset::HFADataset()
 {
     hHFA = NULL;
     bGeoDirty = FALSE;
-    pszProjection = NULL;
+    pszProjection = CPLStrdup("");
 }
 
 /************************************************************************/
@@ -744,6 +1002,28 @@ CPLErr HFADataset::WriteProjection()
 }
 
 /************************************************************************/
+/*                           ESRIToUSGSZone()                           */
+/*                                                                      */
+/*      Convert ESRI style state plane zones to USGS style state        */
+/*      plane zones.                                                    */
+/************************************************************************/
+
+static int ESRIToUSGSZone( int nESRIZone )
+
+{
+    int		nPairs = sizeof(anUsgsEsriZones) / (2*sizeof(int));
+    int		i;
+    
+    for( i = 0; i < nPairs; i++ )
+    {
+        if( anUsgsEsriZones[i*2+1] == nESRIZone )
+            return anUsgsEsriZones[i*2];
+    }
+
+    return 0;
+}
+
+/************************************************************************/
 /*                           ReadProjection()                           */
 /************************************************************************/
 
@@ -775,7 +1055,10 @@ CPLErr HFADataset::ReadProjection()
         break;
 
       case EPRJ_STATE_PLANE:
-        /* We don't currently handle state plane */
+        if( psPro->proParams[0] == 1 )
+            oSRS.SetStatePlane( ESRIToUSGSZone(psPro->proZone), TRUE );
+        else
+            oSRS.SetStatePlane( ESRIToUSGSZone(psPro->proZone), FALSE );
         break;
 
       case EPRJ_ALBERS_CONIC_EQUAL_AREA:
@@ -922,7 +1205,7 @@ CPLErr HFADataset::ReadProjection()
         break;
     }
 
-    if( oSRS.IsProjected() )
+    if( oSRS.IsProjected() && psPro->proNumber != EPRJ_STATE_PLANE )
     {
         oSRS.SetProjCS( psPro->proName );
 
@@ -963,18 +1246,22 @@ CPLErr HFADataset::ReadProjection()
 
     dfInvFlattening = 1.0/(1.0 - psPro->proSpheroid.b/psPro->proSpheroid.a);
 
-    oSRS.SetGeogCS( pszDatumName, pszDatumName, pszEllipsoidName, 
-                    psPro->proSpheroid.a, dfInvFlattening );
-
-    if( psDatum != NULL && psDatum->type == EPRJ_DATUM_PARAMETRIC )
+    if( oSRS.GetAttrNode("GEOGCS") == NULL 
+        && oSRS.GetAttrNode("LOCAL_CS") == NULL )
     {
-        oSRS.SetTOWGS84( psDatum->params[0], 
-                         psDatum->params[1], 
-                         psDatum->params[2], 
-                         psDatum->params[3], 
-                         psDatum->params[4], 
-                         psDatum->params[5], 
-                         psDatum->params[6] );
+        oSRS.SetGeogCS( pszDatumName, pszDatumName, pszEllipsoidName, 
+                        psPro->proSpheroid.a, dfInvFlattening );
+
+        if( psDatum != NULL && psDatum->type == EPRJ_DATUM_PARAMETRIC )
+        {
+            oSRS.SetTOWGS84( psDatum->params[0], 
+                             psDatum->params[1], 
+                             psDatum->params[2], 
+                             psDatum->params[3], 
+                             psDatum->params[4], 
+                             psDatum->params[5], 
+                             psDatum->params[6] );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1075,7 +1362,7 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     for( i = 0; i < poDS->nBands; i++ )
-        poDS->SetBand( i+1, new HFARasterBand( poDS, i+1 ) );
+        poDS->SetBand( i+1, new HFARasterBand( poDS, i+1, -1 ) );
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */

@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.10  2000/10/20 04:18:15  warmerda
+ * added overviews, stateplane, and u4
+ *
  * Revision 1.9  2000/10/13 20:59:05  warmerda
  * fixed writing of RasterDMS dictionary types
  *
@@ -339,7 +342,8 @@ CPLErr HFAGetRasterInfo( HFAHandle hHFA, int * pnXSize, int * pnYSize,
 /************************************************************************/
 
 CPLErr HFAGetBandInfo( HFAHandle hHFA, int nBand, int * pnDataType,
-                       int * pnBlockXSize, int * pnBlockYSize )
+                       int * pnBlockXSize, int * pnBlockYSize, 
+                       int * pnOverviews )
 
 {
     if( nBand < 0 || nBand > hHFA->nBands )
@@ -357,6 +361,50 @@ CPLErr HFAGetBandInfo( HFAHandle hHFA, int nBand, int * pnDataType,
     if( pnBlockYSize != NULL )
         *pnBlockYSize = hHFA->papoBand[nBand-1]->nBlockYSize;
 
+    if( pnOverviews != NULL )
+        *pnOverviews = hHFA->papoBand[nBand-1]->nOverviews;
+
+    return( CE_None );
+}
+
+/************************************************************************/
+/*                         HFAGetOverviewInfo()                         */
+/************************************************************************/
+
+CPLErr HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int iOverview,
+                           int * pnXSize, int * pnYSize, 
+                           int * pnBlockXSize, int * pnBlockYSize )
+
+{
+    HFABand	*poBand;
+
+    if( nBand < 0 || nBand > hHFA->nBands )
+    {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
+
+    poBand = hHFA->papoBand[nBand-1];
+
+    if( iOverview < 0 || iOverview >= poBand->nOverviews )
+    {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
+    poBand = poBand->papoOverviews[iOverview];
+
+    if( pnXSize != NULL )
+        *pnXSize = poBand->nWidth;
+
+    if( pnYSize != NULL )
+        *pnYSize = poBand->nHeight;
+
+    if( pnBlockXSize != NULL )
+        *pnBlockXSize = poBand->nBlockXSize;
+
+    if( pnBlockYSize != NULL )
+        *pnBlockYSize = poBand->nBlockYSize;
+
     return( CE_None );
 }
 
@@ -372,6 +420,24 @@ CPLErr HFAGetRasterBlock( HFAHandle hHFA, int nBand,
         return CE_Failure;
 
     return( hHFA->papoBand[nBand-1]->GetRasterBlock(nXBlock,nYBlock,pData) );
+}
+
+/************************************************************************/
+/*                     HFAGetOverviewRasterBlock()                      */
+/************************************************************************/
+
+CPLErr HFAGetOverviewRasterBlock( HFAHandle hHFA, int nBand, int iOverview,
+                                  int nXBlock, int nYBlock, void * pData )
+
+{
+    if( nBand < 1 || nBand > hHFA->nBands )
+        return CE_Failure;
+
+    if( iOverview < 0 || iOverview >= hHFA->papoBand[nBand-1]->nOverviews )
+        return CE_Failure;
+
+    return( hHFA->papoBand[nBand-1]->papoOverviews[iOverview]->
+            GetRasterBlock(nXBlock,nYBlock,pData) );
 }
 
 /************************************************************************/

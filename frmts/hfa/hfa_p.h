@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/10/20 04:18:15  warmerda
+ * added overviews, stateplane, and u4
+ *
  * Revision 1.6  2000/10/12 19:30:32  warmerda
  * substantially improved write support
  *
@@ -135,7 +138,7 @@ class HFABand
                          
     int		nDataType;
     HFAEntry	*poNode;
-    
+
     int		nBlockXSize;
     int		nBlockYSize;
 
@@ -145,6 +148,9 @@ class HFABand
     int		nBlocksPerRow;
     int		nBlocksPerColumn;
 
+    int		nOverviews;
+    HFABand     **papoOverviews;
+    
     CPLErr	GetRasterBlock( int nXBlock, int nYBlock, void * pData );
     CPLErr	SetRasterBlock( int nXBlock, int nYBlock, void * pData );
 
