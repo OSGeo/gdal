@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/02/17 21:30:02  dron
+ * Write support via Create() method added.
+ *
  * Revision 1.8  2003/02/13 14:57:08  warmerda
  * Corrected bug in north/south handling for UTM.
  * Fix submitted by Vladimir Slepnev.
@@ -241,6 +244,8 @@ static int ESRIToUSGSZone( int nESRIZone )
 class ENVIDataset : public RawDataset
 {
     FILE	*fpImage;	// image data file.
+    FILE	*fp;		// header file
+    const char	*pszHDRFilename;
 
     int		bFoundMapinfo;
 
@@ -259,10 +264,16 @@ class ENVIDataset : public RawDataset
     		ENVIDataset();
     	        ~ENVIDataset();
 
-    virtual CPLErr GetGeoTransform( double * padfTransform );
+    virtual void    FlushCache( void );
+    virtual CPLErr  GetGeoTransform( double * padfTransform );
+    virtual CPLErr  SetGeoTransform( double * );
     virtual const char *GetProjectionRef(void);
+    virtual CPLErr  SetProjection( const char * );
 
     static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Create( const char * pszFilename,
+                                int nXSize, int nYSize, int nBands,
+                                GDALDataType eType, char ** papszOptions );
 };
 
 /************************************************************************/
@@ -272,6 +283,8 @@ class ENVIDataset : public RawDataset
 ENVIDataset::ENVIDataset()
 {
     fpImage = NULL;
+    fp = NULL;
+    pszHDRFilename = NULL;
     pszProjection = CPLStrdup("");
 
     papszHeader = NULL;
@@ -293,10 +306,51 @@ ENVIDataset::ENVIDataset()
 ENVIDataset::~ENVIDataset()
 
 {
-    if( fpImage != NULL )
-        VSIFClose( fpImage );
-    CPLFree( pszProjection );
-    CSLDestroy( papszHeader );
+    FlushCache();
+    if( fpImage )
+        VSIFCloseL( fpImage );
+    if( fp )
+        VSIFClose( fp );
+    if ( pszProjection )
+	CPLFree( pszProjection );
+    if ( papszHeader )
+	CSLDestroy( papszHeader );
+}
+
+/************************************************************************/
+/*                             FlushCache()                             */
+/************************************************************************/
+
+void ENVIDataset::FlushCache()
+
+{
+    GDALDataset::FlushCache();
+
+    VSIFSeek( fp, 0, SEEK_END );
+
+/* -------------------------------------------------------------------- */
+/*      Write the rest of header.                                       */
+/* -------------------------------------------------------------------- */
+/* FIXME: write out Mapinfo projection */
+    /*
+    if ( pszProjection && !EQUAL(pszProjection, "") )
+    {
+	OGRSpatialReference oSRS;
+	oSRS.importFromWkt( &pszProjection );
+
+	VSIFPrintf( fp, "map info = {%s, 1, 1, %f, %f, %f, %f, %f, %s}\n",
+		    oSRS.GetAttrValue("PROJECTION"), adfGeoTransform[0],
+		    adfGeoTransform[3], adfGeoTransform[1], adfGeoTransform[5], oSRS.GetUTMZone(), "North");
+    }*/
+
+    VSIFPrintf( fp, "band names = {\n" );
+    for ( int i = 1; i <= nBands; i++ )
+    {
+	VSIFPrintf( fp, "%s", GetRasterBand( i )->GetDescription() );
+	if ( i != nBands )
+	    VSIFPrintf( fp, ",\n" );
+    }
+    VSIFPrintf( fp, "}\n" );
 }
 
 /************************************************************************/
@@ -307,6 +361,20 @@ const char *ENVIDataset::GetProjectionRef()
 
 {
     return pszProjection;
+}
+
+/************************************************************************/
+/*                          SetProjection()                             */
+/************************************************************************/
+
+CPLErr ENVIDataset::SetProjection( const char *pszNewProjection )
+
+{
+    if ( pszProjection )
+	CPLFree( pszProjection );
+    pszProjection = CPLStrdup( pszNewProjection );
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -324,6 +392,16 @@ CPLErr ENVIDataset::GetGeoTransform( double * padfTransform )
         return CE_Failure;
 }
 
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr ENVIDataset::SetGeoTransform( double * padfTransform )
+{
+    memcpy( adfGeoTransform, padfTransform, sizeof(double) * 6 );
+    
+    return CE_None;
+}
 
 /************************************************************************/
 /*                             SplitList()                              */
@@ -552,35 +630,41 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      replacing the extension as well as appending the extension      */
 /*      to whatever we currently have.                                  */
 /* -------------------------------------------------------------------- */
-    FILE	*fp;
-    const char	*pszHDRFilename;
+    const char	*pszMode;
+    const char	*pszHdrFilename;
+    FILE	*fpHeader;
 
-    pszHDRFilename = CPLResetExtension( poOpenInfo->pszFilename, "hdr" );
-    fp = VSIFOpen( pszHDRFilename, "r" );
+    if( poOpenInfo->eAccess == GA_Update )
+	pszMode = "r+";
+    else
+	pszMode = "r";
+
+    pszHdrFilename = CPLResetExtension( poOpenInfo->pszFilename, "hdr" );
+    fpHeader = VSIFOpen( pszHdrFilename, pszMode );
 
 #ifndef WIN32
-    if( fp == NULL )
+    if( fpHeader == NULL )
     {
-        pszHDRFilename = CPLResetExtension( poOpenInfo->pszFilename, "HDR" );
-        fp = VSIFOpen( pszHDRFilename, "r" );
+        pszHdrFilename = CPLResetExtension( poOpenInfo->pszFilename, "HDR" );
+        fpHeader = VSIFOpen( pszHdrFilename, pszMode );
     }
 #endif
-    if( fp == NULL )
+    if( fpHeader == NULL )
     {
-        pszHDRFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
+        pszHdrFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
                                           "hdr" );
-        fp = VSIFOpen( pszHDRFilename, "r" );
+        fpHeader = VSIFOpen( pszHdrFilename, pszMode );
     }
 #ifndef WIN32
-    if( fp == NULL )
+    if( fpHeader == NULL )
     {
-        pszHDRFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
+        pszHdrFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
                                           "HDR" );
-        fp = VSIFOpen( pszHDRFilename, "r" );
+        fpHeader = VSIFOpen( pszHdrFilename, pszMode );
     }
 #endif
 
-    if( fp == NULL )
+    if( fpHeader == NULL )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -589,23 +673,22 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     ENVIDataset 	*poDS;
 
     poDS = new ENVIDataset();
+    poDS->pszHDRFilename = pszHdrFilename;
+    poDS->fp = fpHeader;
 
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
-    if( !poDS->ReadHeader( fp ) )
+    if( !poDS->ReadHeader( fpHeader ) )
     {
         delete poDS;
-        VSIFClose( fp );
-        return FALSE;
+        return NULL;
     }
-
-    VSIFClose( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Has the user selected the .hdr file to open?                    */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"hdr") )
+    if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "hdr") )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "The selected file is an ENVI header file, but to\n"
@@ -723,12 +806,27 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->nRasterXSize = nSamples;
     poDS->nRasterYSize = nLines;
+    poDS->eAccess = poOpenInfo->eAccess;
 
 /* -------------------------------------------------------------------- */
-/*      Assume ownership of the file handled from the GDALOpenInfo.     */
+/*      Reopen file in update mode if necessary.                        */
 /* -------------------------------------------------------------------- */
-    poDS->fpImage = poOpenInfo->fp;
+    VSIFClose( poOpenInfo->fp );
     poOpenInfo->fp = NULL;
+
+    if( poOpenInfo->eAccess == GA_Update )
+        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
+    else
+        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+
+    if( poDS->fpImage == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Failed to re-open %s within ENVI driver.\n", 
+                  poOpenInfo->pszFilename );
+	delete poDS;
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Compute the line offset.                                        */
@@ -769,14 +867,10 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nBands = nBands;
     for( i = 0; i < poDS->nBands; i++ )
     {
-        RawRasterBand	*poBand;
-
-        poBand = 
-            new RawRasterBand( poDS, i+1, poDS->fpImage,
-                               nHeaderSize + nBandOffset * i,
-                               nPixelOffset, nLineOffset, eType, bNativeOrder);
-
-        poDS->SetBand( i+1, poBand );
+        poDS->SetBand( i + 1,
+            new RawRasterBand(poDS, i + 1, poDS->fpImage,
+                              nHeaderSize + nBandOffset * i,
+                              nPixelOffset, nLineOffset, eType, bNativeOrder) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -789,7 +883,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
                                                 "band_names" ) );
 
         for( i = 0; i < MIN(CSLCount(papszBandNames),nBands); i++ )
-            poDS->GetRasterBand(i+1)->SetDescription( papszBandNames[i] );
+            poDS->GetRasterBand(i + 1)->SetDescription( papszBandNames[i] );
     }
     
     
@@ -812,6 +906,125 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
+
+GDALDataset *ENVIDataset::Create( const char * pszFilename,
+                                  int nXSize, int nYSize, int nBands,
+                                  GDALDataType eType,
+                                  char ** /* papszOptions */ )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Verify input options.                                           */
+/* -------------------------------------------------------------------- */
+    int		iENVIType;
+
+    switch( eType )
+    {
+      case GDT_Byte:
+	iENVIType = 1;
+	break;
+      case GDT_Int16:
+	iENVIType = 2;
+	break;
+      case GDT_Int32:
+	iENVIType = 3;
+	break;
+      case GDT_Float32:
+	iENVIType = 4;
+	break;
+      case GDT_Float64:
+	iENVIType = 5;
+	break;
+      case GDT_CFloat32:
+	iENVIType = 6;
+	break;
+      case GDT_CFloat64:
+	iENVIType = 9;
+	break;
+      case GDT_UInt16:
+	iENVIType = 12;
+	break;
+      case GDT_UInt32:
+	iENVIType = 13;
+	break;
+
+	/* 14=Int64, 15=UInt64 */
+
+      default:
+        CPLError( CE_Failure, CPLE_AppDefined,
+              "Attempt to create ENVI .hdr labelled dataset with an illegal\n"
+              "data type (%s).\n",
+              GDALGetDataTypeName(eType) );
+	return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to create the file.                                         */
+/* -------------------------------------------------------------------- */
+    FILE	*fp;
+
+    fp = VSIFOpen( pszFilename, "wb" );
+
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Attempt to create file `%s' failed.\n",
+                  pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Just write out a couple of bytes to establish the binary        */
+/*      file, and then close it.                                        */
+/* -------------------------------------------------------------------- */
+    VSIFWrite( (void *) "\0\0", 2, 1, fp );
+    VSIFClose( fp );
+
+/* -------------------------------------------------------------------- */
+/*      Create the .hdr filename.                                       */
+/* -------------------------------------------------------------------- */
+    const char	*pszHDRFilename;
+
+    pszHDRFilename = CPLResetExtension(pszFilename, "hdr" );
+
+/* -------------------------------------------------------------------- */
+/*      Open the file.                                                  */
+/* -------------------------------------------------------------------- */
+    fp = VSIFOpen( pszHDRFilename, "wt" );
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Attempt to create file `%s' failed.\n",
+                  pszHDRFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write out the header.                                           */
+/* -------------------------------------------------------------------- */
+    int		iBigEndian;
+#ifdef CPL_LSB
+    iBigEndian = 0;
+#else
+    iBigEndian = 1;
+#endif
+
+    VSIFPrintf( fp, "ENVI\n" );
+    VSIFPrintf( fp, "samples = %d\nlines   = %d\nbands   = %d\n",
+		nXSize, nYSize, nBands );
+    VSIFPrintf( fp, "header offset = 0\nfile type = ENVI Standard\n" );
+    VSIFPrintf( fp, "data type = %d\n", iENVIType );
+    VSIFPrintf( fp, "interleave = bsq\n" );
+    VSIFPrintf( fp, "byte order = %d\n", iBigEndian );
+
+    VSIFClose( fp );
+
+    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+}
+
+/************************************************************************/
 /*                         GDALRegister_ENVI()                          */
 /************************************************************************/
 
@@ -830,8 +1043,12 @@ void GDALRegister_ENVI()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#ENVI" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte Int16 UInt16 Int32 UInt32 Float32"
+				   "Float64 CInt16 CInt32 CFloat32 CFloat64" );
 
         poDriver->pfnOpen = ENVIDataset::Open;
+        poDriver->pfnCreate = ENVIDataset::Create;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
