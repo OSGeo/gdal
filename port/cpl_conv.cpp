@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2004/07/31 04:51:36  warmerda
+ * added shared file open support
+ *
  * Revision 1.39  2004/06/01 20:40:02  warmerda
  * expanded tabs
  *
@@ -154,6 +157,10 @@
 CPL_CVSID("$Id$");
 
 static char **papszConfigOptions = NULL;
+
+static int nSharedFileCount = 0;
+static CPLSharedFileInfo *pasSharedFileList = NULL;
+
 
 /************************************************************************/
 /*                             CPLCalloc()                              */
@@ -1421,4 +1428,211 @@ void CPL_DLL CPLStringToComplex( const char *pszString,
     }
 
     return;
+}
+
+/************************************************************************/
+/*                           CPLOpenShared()                            */
+/************************************************************************/
+
+/**
+ * Open a shared file handle. 
+ *
+ * Some operating systems have limits on the number of file handles that can
+ * be open at one time.  This function attempts to maintain a registry of
+ * already open file handles, and reuse existing ones if the same file
+ * is requested by another part of the application. 
+ *
+ * Note that access is only shared for access types "r", "rb", "r+" and 
+ * "rb+".  All others will just result in direct VSIOpen() calls.  Keep in
+ * mind that a file is only reused if the file name is exactly the same. 
+ * Different names referring to the same file will result in different 
+ * handles.  
+ *
+ * The VSIFOpen() or VSIFOpenL() function is used to actually open the file, 
+ * when an existing file handle can't be shared. 
+ *
+ * @param pszFilename the name of the file to open.
+ * @param pszAccess the normal fopen()/VSIFOpen() style access string.
+ * @param bLarge If TRUE VSIFOpenL() (for large files) will be used instead of
+ * VSIFOpen(). 
+ *
+ * @return a file handle or NULL if opening fails. 
+ */
+
+FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
+                     int bLarge )
+
+{
+    int i;
+    int bReuse;
+
+/* -------------------------------------------------------------------- */
+/*      Is there an existing file we can use?                           */
+/* -------------------------------------------------------------------- */
+    bReuse = EQUAL(pszAccess,"rb") || EQUAL(pszAccess, "rb+");
+
+    for( i = 0; bReuse && i < nSharedFileCount; i++ )
+    {
+        if( strcmp(pasSharedFileList[i].pszFilename,pszFilename) == 0 
+            && !bLarge == !pasSharedFileList[i].bLarge
+            && EQUAL(pasSharedFileList[i].pszAccess,pszAccess) )
+        {
+            pasSharedFileList[i].nRefCount++;
+            return pasSharedFileList[i].fp;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Open the file.                                                  */
+/* -------------------------------------------------------------------- */
+    FILE *fp;
+
+    if( bLarge )
+        fp = VSIFOpenL( pszFilename, pszAccess );
+    else
+        fp = VSIFOpen( pszFilename, pszAccess );
+
+    if( fp == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Add an entry to the list.                                       */
+/* -------------------------------------------------------------------- */
+    nSharedFileCount++;
+
+    pasSharedFileList = (CPLSharedFileInfo *)
+        CPLRealloc( pasSharedFileList, 
+                    sizeof(CPLSharedFileInfo) * nSharedFileCount );
+
+    pasSharedFileList[nSharedFileCount-1].fp = fp;
+    pasSharedFileList[nSharedFileCount-1].nRefCount = 1;
+    pasSharedFileList[nSharedFileCount-1].bLarge = bLarge;
+    pasSharedFileList[nSharedFileCount-1].pszFilename =CPLStrdup(pszFilename);
+    pasSharedFileList[nSharedFileCount-1].pszAccess = CPLStrdup(pszAccess);
+
+    return fp;
+}
+
+/************************************************************************/
+/*                           CPLCloseShared()                           */
+/************************************************************************/
+
+/**
+ * Close shared file.
+ *
+ * Dereferences the indicated file handle, and closes it if the reference
+ * count has dropped to zero.  A CPLError() is issued if the file is not
+ * in the shared file list.
+ *
+ * @param fp file handle from CPLOpenShared() to deaccess.
+ */
+
+void CPLCloseShared( FILE * fp )
+
+{
+    int i;
+
+/* -------------------------------------------------------------------- */
+/*      Search for matching information.                                */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nSharedFileCount && fp != pasSharedFileList[i].fp; i++ ){}
+
+    if( i == nSharedFileCount )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to find file handle %p in CPLCloseShared().",
+                  fp );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Dereference and return if there are still some references.      */
+/* -------------------------------------------------------------------- */
+    if( --pasSharedFileList[i].nRefCount > 0 )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Close the file, and remove the information.                     */
+/* -------------------------------------------------------------------- */
+    if( pasSharedFileList[i].bLarge )
+        VSIFCloseL( pasSharedFileList[i].fp );
+    else
+        VSIFClose( pasSharedFileList[i].fp );
+
+    CPLFree( pasSharedFileList[i].pszFilename );
+    CPLFree( pasSharedFileList[i].pszAccess );
+
+    pasSharedFileList[i] = pasSharedFileList[--nSharedFileCount];
+
+    if( nSharedFileCount == 0 )
+    {
+        CPLFree( pasSharedFileList );
+        pasSharedFileList = NULL;
+    }
+}
+
+/************************************************************************/
+/*                          CPLGetSharedList()                          */
+/************************************************************************/
+
+/**
+ * Fetch list of open shared files.
+ *
+ * @param pnCount place to put the count of entries. 
+ *
+ * @return the pointer to the first in the array of shared file info 
+ * structures.
+ */
+
+CPLSharedFileInfo *CPLGetSharedList( int *pnCount )
+
+{
+    if( pnCount != NULL )
+        *pnCount = nSharedFileCount;
+        
+    return pasSharedFileList;
+}
+
+/************************************************************************/
+/*                         CPLDumpSharedList()                          */
+/************************************************************************/
+
+/**
+ * Report open shared files.
+ *
+ * Dumps all open shared files to the indicated file handle.  If the
+ * file handle is NULL information is sent via the CPLDebug() call. 
+ *
+ * @param fp File handle to write to.
+ */
+
+void CPLDumpSharedList( FILE *fp )
+
+{
+    int i;
+
+    if( nSharedFileCount > 0 )
+    {
+        if( fp == NULL )
+            CPLDebug( "CPL", "%d Shared files open.", nSharedFileCount );
+        else
+            fprintf( fp, "%d Shared files open.", nSharedFileCount );
+    }
+
+    for( i = 0; i < nSharedFileCount; i++ )
+    {
+        if( fp == NULL )
+            CPLDebug( "CPL", 
+                      "%2d %d %4s %s", 
+                      pasSharedFileList[i].nRefCount, 
+                      pasSharedFileList[i].bLarge,
+                      pasSharedFileList[i].pszAccess,
+                      pasSharedFileList[i].pszFilename );
+        else
+            fprintf( fp, "%2d %d %4s %s", 
+                     pasSharedFileList[i].nRefCount, 
+                     pasSharedFileList[i].bLarge,
+                     pasSharedFileList[i].pszAccess,
+                     pasSharedFileList[i].pszFilename );
+    }
 }
