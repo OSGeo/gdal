@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/04/25 16:06:57  warmerda
+ * added more general distinct support
+ *
  * Revision 1.4  2002/04/23 20:05:23  warmerda
  * added SELECT statement parsing
  *
@@ -107,6 +110,10 @@ int swq_test_like( const char *input, const char *pattern );
 
 #define SWQP_ALLOW_UNDEFINED_COL_FUNCS 0x01
 
+#define SWQM_SUMMARY_RECORD  1
+#define SWQM_RECORDSET       2
+#define SWQM_DISTINCT_LIST   3
+
 typedef enum {
     SWQCF_NONE,
     SWQCF_AVG,
@@ -122,6 +129,7 @@ typedef struct {
     char         *col_func_name;
     char         *field_name;
     int          field_index;
+    swq_field_type field_type;
     int          distinct_flag;
 } swq_col_def;
 
@@ -141,7 +149,7 @@ typedef struct {
 } swq_order_def;
 
 typedef struct {
-    int   summary_record_only;
+    int         query_mode;
 
     char        *raw_select;
 
@@ -167,6 +175,7 @@ const char *swq_select_parse( swq_select *select_info,
                               int parse_flags );
 void swq_select_free( swq_select *select_info );
 
+const char *swq_select_finish_summarize( swq_select *select_info );
 const char *swq_select_summarize( swq_select *select_info, 
                                   int dest_column, 
                                   const char *value );

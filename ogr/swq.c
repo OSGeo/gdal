@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/04/25 16:06:57  warmerda
+ * added more general distinct support
+ *
  * Revision 1.7  2002/04/25 02:23:43  warmerda
  * fixed support for ORDER BY <field> ASC
  *
@@ -920,7 +923,8 @@ SELECT <field-list> FROM table-name [WHERE <where-expr>]
      [ORDER BY <sort specification list>]
 
 
-<field-list> ::= <field-spec> | <field-spec> , <field-list>
+<field-list> ::= DISTINCT fieldname | <field-spec> 
+                 | <field-spec> , <field-list>
 
 <field-spec> ::= fieldname 
                  | <field_func> ( [DISTINCT] <field-func> )
@@ -1071,11 +1075,22 @@ const char *swq_select_preparse( const char *select_statement,
         */
         else
         {
+            if( token != NULL && !is_literal 
+                && strcasecmp(token,"DISTINCT") == 0 )
+            {
+                swq_cols[select_info->result_columns-1].distinct_flag = 1;
+
+                SWQ_FREE( token );
+                token = next_token;
+                is_literal = next_is_literal;
+
+                next_token = swq_token( input, &input, &next_is_literal );
+            }
+            
             swq_cols[select_info->result_columns-1].field_name = token;
             token = next_token;
             is_literal = next_is_literal;
         }
-
     }
 
     /* make a columns_def list that is just the right size. */
@@ -1278,6 +1293,10 @@ const char *swq_select_parse( swq_select *select_info,
         def->field_index = swq_identify_field( def->field_name, field_count,
                                                field_list, field_types, 
                                                &this_type );
+
+        /* record field type */
+        def->field_type = field_types[def->field_index];
+
         /* identify column function if present */
         if( def->col_func_name != NULL )
         {
@@ -1330,7 +1349,7 @@ const char *swq_select_parse( swq_select *select_info,
 /*      of records.  Generate an error if we get conflicting            */
 /*      indications.                                                    */
 /* -------------------------------------------------------------------- */
-    select_info->summary_record_only = -1; /* unknown */
+    select_info->query_mode = -1;
     for( i = 0; i < select_info->result_columns; i++ )
     {
         swq_col_def *def = select_info->column_defs + i;
@@ -1341,18 +1360,30 @@ const char *swq_select_parse( swq_select *select_info,
             || def->col_func == SWQCF_AVG
             || def->col_func == SWQCF_SUM
             || def->col_func == SWQCF_COUNT )
-            this_indicator = 1;
+            this_indicator = SWQM_SUMMARY_RECORD;
         else if( def->col_func == SWQCF_NONE )
-            this_indicator = 0;
-
-        if( (this_indicator == 0 && select_info->summary_record_only == 1)
-            || (this_indicator == 1 && select_info->summary_record_only == 0) )
         {
-            return "Conflicting use of field summary functions, and raw field names in field list.";
+            if( def->distinct_flag )
+                this_indicator = SWQM_DISTINCT_LIST;
+            else
+                this_indicator = SWQM_RECORDSET;
+        }
+
+        if( this_indicator != select_info->query_mode
+             && this_indicator != -1
+            && select_info->query_mode != -1 )
+        {
+            return "Field list implies mixture of regular recordset mode, summary mode or distinct field list mode.";
         }
 
         if( this_indicator != -1 )
-            select_info->summary_record_only = this_indicator;
+            select_info->query_mode = this_indicator;
+    }
+
+    if( select_info->result_columns > 1 
+        && select_info->query_mode == SWQM_DISTINCT_LIST )
+    {
+        return "SELECTing more than one DISTINCT field is a query not supported.";
     }
 
 /* -------------------------------------------------------------------- */
@@ -1406,17 +1437,14 @@ swq_select_summarize( swq_select *select_info,
 /* -------------------------------------------------------------------- */
 /*      Do various checking.                                            */
 /* -------------------------------------------------------------------- */
-    if( !select_info->summary_record_only )
+    if( !select_info->query_mode == SWQM_RECORDSET )
         return "swq_select_summarize() called on non-summary query.";
 
     if( dest_column < 0 || dest_column >= select_info->result_columns )
         return "dest_column out of range in swq_select_summarize().";
 
-    if( def->col_func == SWQCF_NONE )
+    if( def->col_func == SWQCF_NONE && !def->distinct_flag )
         return NULL;
-
-    if( def->col_func == SWQCF_CUSTOM )
-        return "swq_select_summarize() called on custom field function.";
 
 /* -------------------------------------------------------------------- */
 /*      Create the summary information if this is the first row         */
@@ -1439,9 +1467,38 @@ swq_select_summarize( swq_select *select_info,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Process various options.                                        */
+/*      If distinct processing is on, process that now.                 */
 /* -------------------------------------------------------------------- */
     summary = select_info->column_summary + dest_column;
+    
+    if( def->distinct_flag )
+    {
+        int  i;
+
+        /* This should be implemented with a much more complicated
+           data structure to achieve any sort of efficiency. */
+        for( i = 0; i < summary->count; i++ )
+        {
+            if( strcmp(value,summary->distinct_list[i]) == 0 )
+                break;
+        }
+        
+        if( i == summary->count )
+        {
+            char  **old_list = summary->distinct_list;
+            
+            summary->distinct_list = (char **) 
+                SWQ_MALLOC(sizeof(char *) * (summary->count+1));
+            memcpy( summary->distinct_list, old_list, 
+                    sizeof(char *) * summary->count );
+            summary->distinct_list[(summary->count)++] = 
+                swq_strdup( value );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Process various options.                                        */
+/* -------------------------------------------------------------------- */
 
     switch( def->col_func )
     {
@@ -1473,34 +1530,105 @@ swq_select_summarize( swq_select *select_info,
       case SWQCF_COUNT:
         if( value != NULL && !def->distinct_flag )
             summary->count++;
-        else if( value != NULL )
-        {
-            int  i;
-
-            /* This should be implemented with a much more complicated
-               data structure to achieve any sort of efficiency. */
-            for( i = 0; i < summary->count; i++ )
-            {
-                if( strcmp(value,summary->distinct_list[i]) == 0 )
-                    break;
-            }
-
-            if( i == summary->count )
-            {
-                char  **old_list = summary->distinct_list;
-
-                summary->distinct_list = (char **) 
-                    SWQ_MALLOC(sizeof(char *) * (summary->count+1));
-                memcpy( summary->distinct_list, old_list, 
-                        sizeof(char *) * summary->count );
-                summary->distinct_list[(summary->count)++] = 
-                    swq_strdup( value );
-            }
-        }
         break;
+
+      case SWQCF_NONE:
+        break;
+
+      case SWQCF_CUSTOM:
+        return "swq_select_summarize() called on custom field function.";
 
       default:
         return "swq_select_summarize() - unexpected col_func";
+    }
+
+    return NULL;
+}
+/************************************************************************/
+/*                      sort comparison functions.                      */
+/************************************************************************/
+
+static int swq_compare_int( const void *item1, const void *item2 )
+{
+    int  v1, v2;
+
+    v1 = atoi(*((const char **) item1));
+    v2 = atoi(*((const char **) item2));
+
+    return v2 - v1;
+}
+
+static int swq_compare_real( const void *item1, const void *item2 )
+{
+    double  v1, v2;
+
+    v1 = atof(*((const char **) item1));
+    v2 = atof(*((const char **) item2));
+
+    if( v1 < v2 )
+        return -1;
+    else if( v1 == v2 )
+        return 0;
+    else
+        return 1;
+}
+
+static int swq_compare_string( const void *item1, const void *item2 )
+{
+    return strcmp( *((const char **) item1), *((const char **) item2) );
+}
+
+/************************************************************************/
+/*                    swq_select_finish_summarize()                     */
+/*                                                                      */
+/*      Call to complete summarize work.  Does stuff like ordering      */
+/*      the distinct list for instance.                                 */
+/************************************************************************/
+
+const char *swq_select_finish_summarize( swq_select *select_info )
+
+{
+    int (*compare_func)(const void *, const void*);
+    int count;
+    char **distinct_list;
+
+    if( select_info->query_mode != SWQM_DISTINCT_LIST 
+        || select_info->order_specs == 0 )
+        return NULL;
+
+    if( select_info->order_specs > 1 )
+        return "Can't ORDER BY a DISTINCT list by more than one key.";
+
+    if( select_info->order_defs[0].field_index != 
+        select_info->column_defs[0].field_index )
+        return "Only selected DISTINCT field can be used for ORDER BY.";
+
+    if( select_info->column_defs[0].field_type == SWQ_INTEGER )
+        compare_func = swq_compare_int;
+    else if( select_info->column_defs[0].field_type == SWQ_FLOAT )
+        compare_func = swq_compare_real;
+    else
+        compare_func = swq_compare_string;
+
+    distinct_list = select_info->column_summary[0].distinct_list;
+    count = select_info->column_summary[0].count;
+
+    qsort( distinct_list, count, sizeof(char *), compare_func );
+
+/* -------------------------------------------------------------------- */
+/*      Do we want the list ascending in stead of descending?           */
+/* -------------------------------------------------------------------- */
+    if( select_info->order_defs[0].ascending_flag )
+    {
+        char *saved;
+        int i;
+
+        for( i = 0; i < count/2; i++ )
+        {
+            saved = distinct_list[i];
+            distinct_list[i] = distinct_list[count-i-1];
+            distinct_list[count-i-1] = saved;
+        }
     }
 
     return NULL;
@@ -1533,10 +1661,24 @@ void swq_select_free( swq_select *select_info )
             SWQ_FREE( select_info->column_defs[i].field_name );
         if( select_info->column_defs[i].col_func_name != NULL )
             SWQ_FREE( select_info->column_defs[i].col_func_name );
+
+        if( select_info->column_summary != NULL 
+            && select_info->column_summary[i].distinct_list != NULL )
+        {
+            int j;
+            
+            for( j = 0; j < select_info->column_summary[i].count; j++ )
+                SWQ_FREE( select_info->column_summary[i].distinct_list[j] );
+
+            SWQ_FREE( select_info->column_summary[i].distinct_list );
+        }
     }
 
     if( select_info->column_defs != NULL )
         SWQ_FREE( select_info->column_defs );
+
+    if( select_info->column_summary != NULL )
+        SWQ_FREE( select_info->column_summary );
 
     for( i = 0; i < select_info->order_specs; i++ )
     {
