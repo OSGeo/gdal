@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2002/09/26 18:13:17  warmerda
+ * moved some defs to ogr_core.h for sharing with ogr_api.h
+ *
  * Revision 1.34  2002/09/11 13:47:17  warmerda
  * preliminary set of fixes for 3D WKB enum
  *
@@ -148,45 +151,6 @@
  */
 
 /**
- * List of well known binary geometry types.  These are used within the BLOBs
- * but are also returned from OGRGeometry::getGeometryType() to identify the
- * type of a geometry object.
- */
-
-enum OGRwkbGeometryType
-{
-    wkbUnknown = 0,             // non-standard
-    wkbPoint = 1,               // rest are standard WKB type codes
-    wkbLineString = 2,
-    wkbPolygon = 3,
-    wkbMultiPoint = 4,
-    wkbMultiLineString = 5,
-    wkbMultiPolygon = 6,
-    wkbGeometryCollection = 7,
-    wkbNone = 100,              // non-standard, for pure attribute records
-    wkbPoint25D = 0x80000001,       // 2.5D extensions as per 99-402
-    wkbLineString25D = 0x80000002,
-    wkbPolygon25D = 0x80000003,
-    wkbMultiPoint25D = 0x80000004,
-    wkbMultiLineString25D = 0x80000005,
-    wkbMultiPolygon25D = 0x80000006,
-    wkbGeometryCollection25D = 0x80000007,
-};
-
-#define wkb25DBit 0x80000000
-#define wkbFlatten(x)  ((x) & (~wkb25DBit))
-
-#define ogrZMarker 0x21125711
-
-const char CPL_DLL * OGRGeometryTypeToName( OGRwkbGeometryType );
-
-enum OGRwkbByteOrder
-{
-    wkbXDR = 0,         /* MSB/Sun/Motoroloa: Most Significant Byte First   */
-    wkbNDR = 1          /* LSB/Intel/Vax: Least Significant Byte First      */
-};
-
-/**
  * Simple container for a position.
  */
 class OGRRawPoint
@@ -200,22 +164,6 @@ class OGRRawPoint
     double      y;
 };
 
-/**
- * Simple container for a bounding region.
- */
-
-class OGREnvelope
-{
-  public:
-	OGREnvelope()
-	{
-		MinX = MaxX = MinY = MaxY = 0;
-	}
-    double      MinX;
-    double      MaxX;
-    double      MinY;
-    double      MaxY;
-};
 
 /************************************************************************/
 /*                             OGRGeometry                              */

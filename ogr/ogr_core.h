@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/09/26 18:13:17  warmerda
+ * moved some defs to ogr_core.h for sharing with ogr_api.h
+ *
  * Revision 1.8  2000/07/11 20:15:12  warmerda
  * apply CPL_DLL to OGR functions
  *
@@ -59,6 +62,33 @@
 
 #include "cpl_port.h"
 
+/**
+ * Simple container for a bounding region.
+ */
+
+#ifdef __cplusplus
+class OGREnvelope
+{
+  public:
+	OGREnvelope()
+	{
+		MinX = MaxX = MinY = MaxY = 0;
+	}
+    double      MinX;
+    double      MaxX;
+    double      MinY;
+    double      MaxY;
+};
+#else
+typedef struct
+{
+    double      MinX;
+    double      MaxX;
+    double      MinY;
+    double      MaxY;
+} OGREnvelope;
+#endif
+
 CPL_C_START
 
 void CPL_DLL *OGRMalloc( size_t );
@@ -79,6 +109,141 @@ typedef int OGRErr;
 #define OGRERR_UNSUPPORTED_SRS     7
 
 typedef int     OGRBoolean;
+
+/* -------------------------------------------------------------------- */
+/*      ogr_geometry.h related definitions.                             */
+/* -------------------------------------------------------------------- */
+/**
+ * List of well known binary geometry types.  These are used within the BLOBs
+ * but are also returned from OGRGeometry::getGeometryType() to identify the
+ * type of a geometry object.
+ */
+
+typedef enum 
+{
+    wkbUnknown = 0,             // non-standard
+    wkbPoint = 1,               // rest are standard WKB type codes
+    wkbLineString = 2,
+    wkbPolygon = 3,
+    wkbMultiPoint = 4,
+    wkbMultiLineString = 5,
+    wkbMultiPolygon = 6,
+    wkbGeometryCollection = 7,
+    wkbNone = 100,              // non-standard, for pure attribute records
+    wkbPoint25D = 0x80000001,       // 2.5D extensions as per 99-402
+    wkbLineString25D = 0x80000002,
+    wkbPolygon25D = 0x80000003,
+    wkbMultiPoint25D = 0x80000004,
+    wkbMultiLineString25D = 0x80000005,
+    wkbMultiPolygon25D = 0x80000006,
+    wkbGeometryCollection25D = 0x80000007,
+} OGRwkbGeometryType;
+
+#define wkb25DBit 0x80000000
+#define wkbFlatten(x)  ((x) & (~wkb25DBit))
+
+#define ogrZMarker 0x21125711
+
+const char CPL_DLL * OGRGeometryTypeToName( OGRwkbGeometryType eType );
+
+typedef enum 
+{
+    wkbXDR = 0,         /* MSB/Sun/Motoroloa: Most Significant Byte First   */
+    wkbNDR = 1          /* LSB/Intel/Vax: Least Significant Byte First      */
+} OGRwkbByteOrder;
+
+/************************************************************************/
+/*                  ogr_feature.h related definitions.                  */
+/************************************************************************/
+
+/**
+ * List of feature field types.  This list is likely to be extended in the
+ * future ... avoid coding applications based on the assumption that all
+ * field types can be known.
+ */
+
+typedef enum 
+{
+  /** Simple 32bit integer */                   OFTInteger = 0,
+  /** List of 32bit integers */                 OFTIntegerList = 1,
+  /** Double Precision floating point */        OFTReal = 2,
+  /** List of doubles */                        OFTRealList = 3,
+  /** String of ASCII chars */                  OFTString = 4,
+  /** Array of strings */                       OFTStringList = 5,
+  /** Double byte string (unsupported) */       OFTWideString = 6,
+  /** List of wide strings (unsupported) */     OFTWideStringList = 7,
+  /** Raw Binary data (unsupported) */          OFTBinary = 8
+} OGRFieldType;
+
+/**
+ * Display justification for field values.
+ */
+
+typedef enum 
+{
+    OJUndefined = 0,
+    OJLeft = 1,
+    OJRight = 2
+} OGRJustification;
+
+#define OGRNullFID            -1
+#define OGRUnsetMarker        -21121
+
+/************************************************************************/
+/*                               OGRField                               */
+/************************************************************************/
+
+/**
+ * OGRFeature field attribute value union.
+ */
+
+typedef union {
+    int         Integer;
+    double      Real;
+    char       *String;
+    // wchar    *WideString;
+    
+    struct {
+        int     nCount;
+        int     *paList;
+    } IntegerList;
+    
+    struct {
+        int     nCount;
+        double  *paList;
+    } RealList;
+    
+    struct {
+        int     nCount;
+        char    **paList;
+    } StringList;
+
+//    union {
+//        int   nCount;
+//        wchar *paList;
+//    } WideStringList;
+
+    struct {
+        int     nMarker1;
+        int     nMarker2;
+    } Set;
+} OGRField;
+
+/* -------------------------------------------------------------------- */
+/*      Constants from ogrsf_frmts.h for capabilities.                  */
+/* -------------------------------------------------------------------- */
+#define OLCRandomRead          "RandomRead"
+#define OLCSequentialWrite     "SequentialWrite"
+#define OLCRandomWrite         "RandomWrite"
+#define OLCFastSpatialFilter   "FastSpatialFilter"
+#define OLCFastFeatureCount    "FastFeatureCount"
+#define OLCFastGetExtent       "FastGetExtent"
+#define OLCCreateField         "CreateField"
+#define OLCTransactions        "Transactions"
+
+#define ODsCCreateLayer        "CreateLayer"
+
+#define ODrCCreateDataSource   "CreateDataSource"
 
 CPL_C_END
 
