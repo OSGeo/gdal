@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/02/11 18:36:47  warmerda
+ * Added Overview Generation support.
+ *
  * Revision 1.3  1999/01/28 16:25:46  warmerda
  * Added compression, usage message, error checking and other cleanup.
  *
@@ -49,6 +52,8 @@ static void ImagineToGeoTIFF( HFAHandle, HFABand *, HFABand *, HFABand *,
 CPLErr ImagineToGeoTIFFProjection( HFAHandle hHFA, TIFF * hTIFF );
 CPLErr CopyPyramidsToTiff( HFAHandle, HFABand *, TIFF *, int );
 static CPLErr RGBComboValidate( HFAHandle, int, int, int );
+static int    ValidateDataType( HFAHandle, int );
+void 	      TIFF_BuildOverviews( const char *, int, int * );
 CPL_C_END
 
 int	gnReportOn = TRUE;
@@ -91,6 +96,7 @@ int main( int nArgc, char ** papszArgv )
     const char	*pszDstBasename = NULL;
     HFAHandle   hHFA;
     int		nCompressFlag = COMPRESSION_NONE;
+    int		nOverviewCount=0, anOverviews[100];
         
 /* -------------------------------------------------------------------- */
 /*      Parse commandline options.                                      */
@@ -110,6 +116,14 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[i],"-c") )
         {
             nCompressFlag = COMPRESSION_PACKBITS;
+        }
+        else if( EQUAL(papszArgv[i],"-v") )
+        {
+            while( atoi(papszArgv[i+1]) > 0 )
+            {
+                anOverviews[nOverviewCount++] = atoi(papszArgv[i+1]);
+                i++;
+            }
         }
         else if( EQUAL(papszArgv[i],"-quiet") )
         {
@@ -185,6 +199,9 @@ int main( int nArgc, char ** papszArgv )
         {
             char	szFilename[512];
 
+            if( !ValidateDataType( hHFA, nBand ) )
+                continue;
+
             if( nBandCount == 1 && strstr(pszDstBasename,".tif") != NULL )
                 sprintf( szFilename, "%s", pszDstBasename );
             else if( nBandCount == 1 )
@@ -194,6 +211,11 @@ int main( int nArgc, char ** papszArgv )
         
             ImagineToGeoTIFF( hHFA, hHFA->papoBand[nBand-1], NULL, NULL,
                               szFilename, nCompressFlag );
+
+            if( nOverviewCount > 0 )
+            {
+                TIFF_BuildOverviews( szFilename, nOverviewCount, anOverviews );
+            }
         }
     }
 
@@ -201,6 +223,47 @@ int main( int nArgc, char ** papszArgv )
 
     return 0;
 }
+
+/************************************************************************/
+/*                          ValidateDataType()                          */
+/*                                                                      */
+/*      Will we write this dataset to TIFF?  Some that are              */
+/*      considered illegal could be done, but are outside the scope     */
+/*      of what Intergraph wants.                                       */
+/************************************************************************/
+
+static int ValidateDataType( HFAHandle hHFA, int nBand )
+
+{
+    HFABand	*poBand;
+    
+    poBand = hHFA->papoBand[nBand-1];
+
+    if( poBand->nDataType == EPT_f32 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+      "Band %d is of type `float', and is not supported for translation.\n",
+                  nBand );
+        return FALSE;
+    }
+    else if( poBand->nDataType == EPT_f64 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+      "Band %d is of type `double', and is not supported for translation.\n",
+                  nBand );
+        return FALSE;
+    }
+    else if( poBand->nDataType == EPT_c128 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+    "Band %d is of type `complex', and is not supported for translation.\n",
+                  nBand );
+        return FALSE;
+    }
+    
+    return TRUE;
+}
+
 
 /************************************************************************/
 /*                      ImagineToGeoTIFFPalette()                       */
@@ -624,5 +687,13 @@ static CPLErr RGBComboValidate( HFAHandle hHFA,
         return CE_Failure;
     }
     
+/* -------------------------------------------------------------------- */
+/*	Verify that each of the bands is legal.				*/
+/* -------------------------------------------------------------------- */
+    if( !ValidateDataType( hHFA, nRed )
+        || !ValidateDataType( hHFA, nGreen )
+        || !ValidateDataType( hHFA, nBlue ) )
+        return CE_Failure;
+
     return CE_None;
 }

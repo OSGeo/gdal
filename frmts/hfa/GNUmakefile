@@ -34,6 +34,7 @@ img2tif:	img2tif.cpp imggeotiff.c geoextra.c $(HFAOBJ)
 	$(CC) $(ALL_C_FLAGS) -I../gtiff/libtiff -I../gtiff/libgeotiff \
 		img2tif.cpp imggeotiff.c geoextra.c \
 		$(HFAOBJ) $(GDAL_ROOT)/port/*.o $(LIBS) \
+		../gtiff/tif_overview.o ../gtiff/rawblockedimage.o \
 		../gtiff/libgeotiff/libgeotiff.a \
 		../gtiff/libtiff/libtiff.a \
 		-o img2tif
@@ -62,7 +63,8 @@ img2tif-dist:
 	cp img2tif_build.sh img2tif_dist/build.sh
 	cp hfaopen.cpp hfaentry.cpp hfadictionary.cpp hfafield.cpp \
 	   hfatype.cpp hfaband.cpp img2tif.cpp imggeotiff.c geoextra.c \
-	   hfa.h hfa_p.h img2tif_dist
+	   hfa.h hfa_p.h ../gtiff/tif_overview.cpp ../gtiff/rawblocked* \
+	   img2tif_dist
 	mkdir img2tif_dist/port
 	cp $(GDAL_ROOT)/port/cpl_{conv.cpp,conv.h,error.cpp,error.h,port.h,string.cpp,string.h,vsi.h,vsisimple.cpp} img2tif_dist/port
 	mkdir img2tif_dist/libtiff
