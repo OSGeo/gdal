@@ -33,6 +33,9 @@
  * Implementation of the HFAEntry class.
  *
  * $Log$
+ * Revision 1.11  2005/02/22 21:34:47  fwarmerdam
+ * added GetBigIntField method
+ *
  * Revision 1.10  2004/10/26 17:49:31  fwarmerdam
  * Changed GetNamedChild() so that if there are multiple children with a
  * search for a given child node will be applied to each till a match is found.
@@ -460,6 +463,34 @@ GInt32 HFAEntry::GetIntField( const char * pszFieldPath, CPLErr *peErr )
 
         return *((GInt32 *) pRetData);
     }
+}
+
+/************************************************************************/
+/*                           GetBigIntField()                           */
+/*                                                                      */
+/*      This is just a helper method that reads two ULONG array         */
+/*      entries as a GBigInt.  The passed name should be the name of    */
+/*      the array with no array index.  Array indexes 0 and 1 will      */
+/*      be concatenated.                                                */
+/************************************************************************/
+
+GIntBig HFAEntry::GetBigIntField( const char *pszFieldPath, CPLErr *peErr )
+
+{
+    GUInt32 nLower, nUpper;
+    char szFullFieldPath[1024];
+
+    sprintf( szFullFieldPath, "%s[0]", pszFieldPath );
+    nLower = GetIntField( szFullFieldPath, peErr );
+    if( peErr != NULL && *peErr != CE_None )
+        return 0;
+
+    sprintf( szFullFieldPath, "%s[1]", pszFieldPath );
+    nUpper = GetIntField( szFullFieldPath, peErr );
+    if( peErr != NULL && *peErr != CE_None )
+        return 0;
+
+    return nLower + (((GIntBig) nUpper) << 32);
 }
 
 /************************************************************************/

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/02/22 21:33:21  fwarmerdam
+ * added GetBigIntField method
+ *
  * Revision 1.17  2005/01/10 17:41:27  fwarmerdam
  * added HFA compression support: bug 664
  *
@@ -286,6 +289,7 @@ public:
     GInt32	GetIntField( const char *, CPLErr * = NULL );
     double	GetDoubleField( const char *, CPLErr * = NULL );
     const char	*GetStringField( const char *, CPLErr * = NULL );
+    GIntBig     GetBigIntField( const char *, CPLErr * = NULL );
 
     CPLErr      SetIntField( const char *, int );
     CPLErr      SetDoubleField( const char *, double );
