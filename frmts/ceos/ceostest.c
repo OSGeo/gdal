@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/11/07 14:11:25  warmerda
+ * changed to just dump records
+ *
  * Revision 1.2  2001/10/19 15:36:55  warmerda
  * added support for filename on commandline
  *
@@ -45,23 +48,34 @@
 int main( int nArgc, char ** papszArgv )
 
 {
-    CEOSImage	*psCEOS;
-    char	data[20000];
-    int		i;
+    const char  *pszFilename;
+    FILE	*fp;
+    CEOSRecord *psRecord;
+    int nPosition = 0;
 
     if( nArgc > 1 )
-        psCEOS = CEOSOpen( papszArgv[1], "rb" );
+        pszFilename = papszArgv[1];
     else
-        psCEOS = CEOSOpen( "imag_01.dat", "rb" );
+        pszFilename = "imag_01.dat";
 
-    printf( "%d x %d x %d with %d bits/pixel.\n",
-            psCEOS->nPixels, psCEOS->nLines, psCEOS->nBands,
-            psCEOS->nBitsPerPixel );
-
-    for( i = 0; i < psCEOS->nLines; i++ )
+    fp = VSIFOpen( pszFilename, "rb" );
+    if( fp == NULL )
     {
-        CEOSReadScanline( psCEOS, 1, i+1, data );
+        fprintf( stderr, "Can't open %s at all.\n", pszFilename );
+        exit( 1 );
     }
 
-    CEOSClose( psCEOS );
+    while( !VSIFEof(fp) 
+           && (psRecord = CEOSReadRecord( fp )) != NULL )
+    {
+        printf( "%9d:%4d:%8x:%d\n", 
+                nPosition, psRecord->nRecordNum, 
+                psRecord->nRecordType, psRecord->nLength );
+        CEOSDestroyRecord( psRecord );
+
+        nPosition = (int) VSIFTell( fp );
+    }
+    VSIFClose( fp );
+
+    exit( 0 );
 }
