@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.6  2000/08/15 19:28:26  warmerda
+ * added help topic
+ *
  * Revision 1.5  2000/06/05 13:04:15  warmerda
  * Fixed case where png_get_text fails due to no text blocks existing.
  *
@@ -740,6 +743,7 @@ void GDALRegister_PNG()
         
         poDriver->pszShortName = "PNG";
         poDriver->pszLongName = "Portable Network Graphics";
+        poDriver->pszHelpTopic = "frmt_various.html#PNG";
         
         poDriver->pfnOpen = PNGDataset::Open;
         poDriver->pfnCreateCopy = PNGCreateCopy;

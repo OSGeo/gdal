@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/08/15 19:28:26  warmerda
+ * added help topic
+ *
  * Revision 1.6  2000/07/17 17:10:24  warmerda
  * fixed default geotransform to match expected values for raw images
  *
@@ -299,10 +302,11 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                                nSkipBytes, GDALGetDataTypeSize(eDataType)/8,
                                nLineOffset, eDataType,
 #ifdef CPL_LSB                               
-                               chByteOrder == 'I' ));
+                               chByteOrder == 'I'
 #else
-                               chByteOrder == 'M' ));
+                               chByteOrder == 'M'
 #endif        
+                               ));
     }
 
 /* -------------------------------------------------------------------- */
@@ -328,6 +332,7 @@ void GDALRegister_EHdr()
         
         poDriver->pszShortName = "EHdr";
         poDriver->pszLongName = "ESRI .hdr Labelled";
+        poDriver->pszHelpTopic = "frmt_various.html#EHdr";
         
         poDriver->pfnOpen = EHdrDataset::Open;
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/08/15 19:28:26  warmerda
+ * added help topic
+ *
  * Revision 1.10  2000/07/26 21:05:21  warmerda
  * added support for reading tiled MFF files
  *
@@ -785,6 +788,7 @@ void GDALRegister_MFF()
         
         poDriver->pszShortName = "MFF";
         poDriver->pszLongName = "Atlantis MFF Raster";
+        poDriver->pszHelpTopic = "frmt_various.html#MFF";
         
         poDriver->pfnOpen = MFFDataset::Open;
         poDriver->pfnCreate = MFFDataset::Create;

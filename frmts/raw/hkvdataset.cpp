@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/08/15 19:28:26  warmerda
+ * added help topic
+ *
  * Revision 1.6  2000/07/12 19:21:59  warmerda
  * added support for _reading_ georef file
  *
@@ -796,6 +799,7 @@ void GDALRegister_HKV()
         
         poDriver->pszShortName = "HKV";
         poDriver->pszLongName = "Atlantis HKV Raster";
+        poDriver->pszHelpTopic = "frmt_various.html#HKV";
         
         poDriver->pfnOpen = HKVDataset::Open;
          poDriver->pfnCreate = HKVDataset::Create;

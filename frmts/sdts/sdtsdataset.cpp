@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/08/15 19:28:26  warmerda
+ * added help topic
+ *
  * Revision 1.3  1999/09/03 13:01:39  warmerda
  * added docs
  *
@@ -317,6 +320,7 @@ void GDALRegister_SDTS()
         
         poDriver->pszShortName = "SDTS";
         poDriver->pszLongName = "SDTS Raster";
+        poDriver->pszHelpTopic = "frmt_various.html#SDTS";
         
         poDriver->pfnOpen = SDTSDataset::Open;
 

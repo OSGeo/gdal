@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/08/15 19:28:26  warmerda
+ * added help topic
+ *
  * Revision 1.6  2000/02/28 16:32:20  warmerda
  * use SetBand method
  *
@@ -423,6 +426,7 @@ void GDALRegister_DOQ2()
         
         poDriver->pszShortName = "DOQ2";
         poDriver->pszLongName = "USGS DOQ (New Style)";
+        poDriver->pszHelpTopic = "frmt_various.html#DOQ2";
         
         poDriver->pfnOpen = DOQ2Dataset::Open;
 

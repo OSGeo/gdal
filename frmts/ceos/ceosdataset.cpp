@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/08/15 19:28:26  warmerda
+ * added help topic
+ *
  * Revision 1.4  2000/06/20 17:35:58  warmerda
  * added overview support
  *
@@ -196,6 +199,7 @@ void GDALRegister_CEOS()
         
         poDriver->pszShortName = "CEOS";
         poDriver->pszLongName = "CEOS Image";
+        poDriver->pszHelpTopic = "frmt_various.html#CEOS";
         
         poDriver->pfnOpen = CEOSDataset::Open;
 

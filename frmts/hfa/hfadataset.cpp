@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/08/15 19:28:26  warmerda
+ * added help topic
+ *
  * Revision 1.4  2000/02/28 16:32:20  warmerda
  * use SetBand method
  *
@@ -267,6 +270,7 @@ void GDALRegister_HFA()
         
         poDriver->pszShortName = "HFA";
         poDriver->pszLongName = "Erdas Imagine Images (.img)";
+        poDriver->pszHelpTopic = "frmt_various.html#HFA";
         
         poDriver->pfnOpen = HFADataset::Open;
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/08/15 19:28:26  warmerda
+ * added help topic
+ *
  * Revision 1.1  2000/06/20 17:35:28  warmerda
  * New
  *
@@ -225,6 +228,7 @@ void GDALRegister_EFF()
         
         poDriver->pszShortName = "EFF";
         poDriver->pszLongName = "Eosat Fast Format";
+        poDriver->pszHelpTopic = "frmt_various.html#EFF";
         
         poDriver->pfnOpen = EFFDataset::Open;
 

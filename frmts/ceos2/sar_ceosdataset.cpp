@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/08/15 19:28:26  warmerda
+ * added help topic
+ *
  * Revision 1.9  2000/07/13 14:41:36  warmerda
  * fixed byte order
  *
@@ -855,6 +858,7 @@ void GDALRegister_SAR_CEOS()
         
         poDriver->pszShortName = "SAR_CEOS";
         poDriver->pszLongName = "CEOS SAR Image";
+        poDriver->pszHelpTopic = "frmt_various.html#SAR_CEOS";
         
         poDriver->pfnOpen = SAR_CEOSDataset::Open;
 
