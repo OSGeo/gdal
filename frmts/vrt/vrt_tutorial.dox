@@ -125,7 +125,7 @@ to start from color table entry 0.
 <li> <b><Description></b>: This element contains the optional description
 of a raster band as it's text value.
 
-\code									-
+\code
   <Description>Crop Classification Layer</Description>
 \endcode
 
@@ -146,9 +146,134 @@ rectangle of source data should be mapped into the VRTRasterBands space.
     </SimpleSource>
 \endcode
 
-<li> 
+<li> <b><KernelFilteredSource></b>: This is a pixel source derived from the
+Simple Source (so it shares the SourceFilename, SourceBand, SrcRect and 
+DestRect elements, but it also passes the data through a simple filtering 
+kernel specified with the Kernel element.  The Kernel element should have
+two child elements, Size and Coefs.  The size must always be an odd number,
+and the Coefs must have Size * Size entries separated by spaces.
+
+\code
+    <KernelFilteredSource>
+      <SourceFilename>/debian/home/warmerda/openev/utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <Kernel>
+        <Size>3</Size>
+        <Coefs>0.11111111 0.11111111 0.11111111 0.11111111 0.11111111 0.11111111 0.11111111 0.11111111 0.11111111</Coefs>
+      </Kernel>
+    </KernelFilteredSource>
+\endcode
 
 </ul>
 
-*/
+<h2>Programatic Creation of VRT Datasets</h2>
 
+The VRT driver supports several methods of creating VRT datasets.  As of
+GDAL 1.2.0 the vrtdataset.h include file should be installed with the core
+GDAL include files, allowing direct access to the VRT classes.  However, 
+even without that most capabilities remain available through standard GDAL
+interfaces.<p>
+
+To create a VRT dataset that is a clone of an existing dataset use the
+CreateCopy() method.  For example to clone utm.tif into a wrk.vrt file in
+C++ the following could be used:
+
+\code
+  GDALDriver *poDriver = (GDALDriver *) GDALGetDriverByName( "VRT" );
+  GDALDataset *poSrcDS, *poVRTDS;
+
+  poSrcDS = (GDALDataset *) GDALOpenShared( "utm.tif", GA_ReadOnly );
+
+  poVRTDS = 
+    poDriver->CreateCopy( "wrk.vrt", poSourceDS, FALSE, NULL, NULL, NULL );
+  delete poVRTDS;
+  delete poSrcDS;
+\endcode
+
+To create a virtual copy of a dataset with some attributes added or changed
+such as metadata or coordinate system that are often hard to change on other
+formats, you might do the following.  In this case, the virtual dataset is
+created "in memory" only by virtual of creating it with an empty filename, and
+then used as a modified source to pass to a CreateCopy() written out in TIFF
+format. 
+
+\code
+  poVRTDS = poDriver->CreateCopy( "", poSourceDS, FALSE, NULL, NULL, NULL );
+
+  poVRTDS->SetMetadataItem( "SourceAgency", "United States Geological Survey");
+  poVRTDS->SetMetadataItem( "SourceDate", "July 21, 2003" );
+
+  poVRTDS->GetRasterBand( 1 )->SetNoDataValue( -999.0 );
+
+  GDALDriver *poTIFFDriver = (GDALDriver *) GDALGetDriverByName( "GTiff" );
+  GDALDataset *poTiffDS;
+
+  poTiffDS = 
+    poTIFFDriver->CreateCopy( "wrk.tif", poVRTDS, FALSE, NULL, NULL, NULL );
+  delete poTiffDS;
+\endcode
+
+In this example a virtual dataset is created with the Create() method, and 
+adding bands and sources programmatically, but still via the "generic" API. 
+A special attribute of VRT datasets is that sources can be added to the bands
+by passing the XML describing the source into SetMetadata() on the special
+domain target "new_vrt_sources".  The domain target "vrt_sources" may also be
+used, in which case any existing sources will be discarded before adding the
+new ones.  In this example we construct a simple averaging filter source
+instead of using the simple source. 
+
+\code
+  // construct XML for simple 3x3 average filter kernel source.
+  const char *pszFilterSourceXML  =
+"<KernelFilteredSource>"
+"  <SourceFilename>utm.tif</SourceFilename>1<SourceBand>1</SourceBand>"
+"  <Kernel>"
+"    <Size>3</Size>"
+"    <Coefs>0.111 0.111 0.111 0.111 0.111 0.111 0.111 0.111 0.111</Coefs>"
+"  </Kernel>"
+"</KernelFilteredSource>";
+
+  // Create the virtual dataset. 
+  poVRTDS = poDriver->Create( "", 512, 512, 1, GDT_Byte, NULL );
+  poVRTDS->GetRasterBand(1)->SetMetadataItem("source_0",pszFilterSourceXML",
+                                             "new_vrt_sources");
+\endcode
+
+A more general form of this that will produce a 3x3 average filtered clone
+of any input datasource might look like the following.  In this case we
+deliberately set the filtered datasource as in the "vrt_sources" domain 
+to override the SimpleSource created by the CreateCopy() method.  The fact
+that we used CreateCopy() ensures that all the other metadata, georeferencing
+and so forth is preserved from the source dataset ... the only thing we are
+changing is the data source for each band.
+
+\code
+  int   nBand;
+  GDALDriver *poDriver = (GDALDriver *) GDALGetDriverByName( "VRT" );
+  GDALDataset *poSrcDS, *poVRTDS;
+
+  poSrcDS = (GDALDataset *) GDALOpenShared( pszSourceFilename, GA_ReadOnly );
+
+  poVRTDS = poDriver->CreateCopy( "", poSourceDS, FALSE, NULL, NULL, NULL );
+
+  for( nBand = 1; nBand <= poVRTDS->GetRasterCount(); nBand++ )
+  {
+      char szFilterSourceXML[10000];
+
+      GDALRasterBand *poBand = poVRTDS->GetRasterBand( nBand );
+
+      sprintf( szFilterSourceXML, 
+	"<KernelFilteredSource>"
+	"  <SourceFilename>%s</SourceFilename>1<SourceBand>%d</SourceBand>"
+	"  <Kernel>"
+	"    <Size>3</Size>"
+	"    <Coefs>0.111 0.111 0.111 0.111 0.111 0.111 0.111 0.111 0.111</Coefs>"
+	"  </Kernel>"
+	"</KernelFilteredSource>", 
+	pszSourceFilename, nBand );
+	
+      poBand->SetMetadataItem( "source_0", szFilterSourceXML, "vrt_sources" );
+  }
+\endcode
+
+*/
