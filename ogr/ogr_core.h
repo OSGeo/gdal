@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/06/09 13:48:54  warmerda
+ * added DB2 V7.2 byte order hack
+ *
  * Revision 1.19  2003/05/08 13:27:22  warmerda
  * dont use C++ comments in this c includable file
  *
@@ -200,6 +203,14 @@ typedef enum
     wkbXDR = 0,         /* MSB/Sun/Motoroloa: Most Significant Byte First   */
     wkbNDR = 1          /* LSB/Intel/Vax: Least Significant Byte First      */
 } OGRwkbByteOrder;
+
+#define HACK_FOR_IBM_DB2_V72
+
+#ifdef HACK_FOR_IBM_DB2_V72
+#  define DB2_V72_FIX_BYTE_ORDER(x) ((((x) & 0x31) == (x)) ? (OGRwkbByteOrder) ((x) & 0x1) : (x))
+#else
+#  define DB2_V72_FIX_BYTE_ORDER(x) (x)
+#endif
 
 /************************************************************************/
 /*                  ogr_feature.h related definitions.                  */

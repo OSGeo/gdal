@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2003/06/09 13:48:54  warmerda
+ * added DB2 V7.2 byte order hack
+ *
  * Revision 1.37  2003/05/28 19:16:43  warmerda
  * fixed up argument names and stuff for docs
  *
@@ -641,7 +644,7 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
 /* -------------------------------------------------------------------- */
 /*      Get the byte order byte.                                        */
 /* -------------------------------------------------------------------- */
-    eByteOrder = (OGRwkbByteOrder) *pabyData;
+    eByteOrder = DB2_V72_FIX_BYTE_ORDER((OGRwkbByteOrder) *pabyData);
     assert( eByteOrder == wkbXDR || eByteOrder == wkbNDR );
 
 /* -------------------------------------------------------------------- */
