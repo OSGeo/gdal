@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.11  1999/08/13 03:25:58  warmerda
+ * add paux
+ *
  * Revision 1.10  1999/07/23 19:36:41  warmerda
  * added raw/ehdr support
  *
@@ -70,6 +73,7 @@ void GDALRegister_CEOS(void);
 void GDALRegister_SDTS(void);
 void GDALRegister_ELAS(void);
 void GDALRegister_EHdr(void);
+void GDALRegister_PAux(void);
 CPL_C_END
 
 #ifdef notdef
@@ -124,5 +128,6 @@ void GDALAllRegister()
 
 #ifdef FRMT_raw
     GDALRegister_EHdr();
+    GDALRegister_PAux();
 #endif
 }
