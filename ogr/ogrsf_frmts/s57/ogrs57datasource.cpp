@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/08/30 03:48:43  warmerda
+ * preliminary implementation of S57 Update Support
+ *
  * Revision 1.9  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -193,6 +196,12 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
     papoModules[0] = poModule;
     
     poModule->SetOptions( papszReaderOptions );
+
+/* -------------------------------------------------------------------- */
+/*      Apply updates, if available.                                    */
+/* -------------------------------------------------------------------- */
+    if( GetOption("UPDATE") == NULL || EQUAL(GetOption("UPDATE"),"YES") )
+        papoModules[0]->FindAndApplyUpdates( pszFilename );
     
 /* -------------------------------------------------------------------- */
 /*      Instantiate the class registrar if possible.                    */

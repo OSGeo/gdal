@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/08/30 03:48:43  warmerda
+ * preliminary implementation of S57 Update Support
+ *
  * Revision 1.9  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -71,10 +74,11 @@ int main( int nArgc, char ** papszArgv )
 
 {
     char        **papszOptions = NULL;
+    int		bUpdate = TRUE;
     
     if( nArgc < 2 )
     {
-        printf( "Usage: s57dump [-split] [-lnam] filename\n" );
+        printf( "Usage: s57dump [-split] [-lnam] [-no-update] filename\n" );
         exit( 1 );
     }
 
@@ -86,6 +90,8 @@ int main( int nArgc, char ** papszArgv )
         if( EQUAL(papszArgv[iArg],"-split") )
             papszOptions =
                 CSLSetNameValue( papszOptions, "SPLIT_MULTIPOINT", "ON" );
+        else if( EQUAL(papszArgv[iArg],"-no-update") )
+            bUpdate = FALSE;
         else if( EQUALN(papszArgv[iArg],"-lnam",4) )
             papszOptions =
                 CSLSetNameValue( papszOptions, "LNAM_REFS", "ON" );
@@ -165,6 +171,10 @@ int main( int nArgc, char ** papszArgv )
     
         OGRFeature      *poFeature;
         int             nFeatures = 0;
+        DDFModule	oUpdate;
+
+        if( bUpdate )
+            oReader.FindAndApplyUpdates(papszFiles[iFile]);
     
         while( (poFeature = oReader.ReadNextFeature()) != NULL )
         {

@@ -3,10 +3,10 @@
  *
  * Project:  S-57 Translator
  * Purpose:  Implements S57Reader class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 1999, Frank Warmerdam
+ * Copyright (c) 1999, 2001, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2001/08/30 03:48:43  warmerda
+ * preliminary implementation of S57 Update Support
+ *
  * Revision 1.22  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -1130,6 +1133,11 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
     poPolygon = OGRBuildPolygonFromEdges( poLines, TRUE, &eErr );
     if( eErr != OGRERR_NONE )
     {
+        printf( "Error record information:\n" );
+        poFRecord->Dump( stdout );
+        poPolygon->dumpReadable( stdout );
+        poLines->dumpReadable( stdout );
+
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Polygon assembly has failed for feature FIDN=%d,FIDS=%d.\n"
                   "Geometry may be missing or incomplete.", 
@@ -1468,3 +1476,500 @@ int S57Reader::CollectClassList(int *panClassCount, int nMaxClass )
 
     return bSuccess;
 }
+
+/************************************************************************/
+/*                         ApplyRecordUpdate()                          */
+/*                                                                      */
+/*      Update one target record based on an S-57 update record         */
+/*      (RUIN=3).                                                       */
+/************************************************************************/
+
+int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
+
+{
+    const char *pszKey = poUpdate->GetField(1)->GetFieldDefn()->GetName();
+
+    printf( "Target:\n" );
+    poTarget->Dump( stdout );
+    printf( "\nUpdate:\n" );
+    poUpdate->Dump( stdout );
+
+/* -------------------------------------------------------------------- */
+/*      Validate versioning.                                            */
+/* -------------------------------------------------------------------- */
+    if( poTarget->GetIntSubfield( pszKey, 0, "RVER", 0 ) + 1
+        != poUpdate->GetIntSubfield( pszKey, 0, "RVER", 0 )  )
+    {
+        CPLDebug( "S57", 
+                  "Mismatched RVER value on RCNM=%d,RCID=%d.\n",
+                  poTarget->GetIntSubfield( pszKey, 0, "RCNM", 0 ),
+                  poTarget->GetIntSubfield( pszKey, 0, "RCID", 0 ) );
+
+        CPLAssert( FALSE );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Update the target version.                                      */
+/* -------------------------------------------------------------------- */
+    unsigned char	*pnRVER;
+    DDFField	*poKey = poTarget->FindField( pszKey );
+    DDFSubfieldDefn *poRVER_SFD;
+
+    if( poKey == NULL )
+    {
+        CPLAssert( FALSE );
+        return FALSE;
+    }
+
+    poRVER_SFD = poKey->GetFieldDefn()->FindSubfieldDefn( "RVER" );
+    if( poRVER_SFD == NULL )
+        return FALSE;
+
+    pnRVER = (unsigned char *) poKey->GetSubfieldData( poRVER_SFD, NULL, 0 );
+ 
+    *pnRVER += 1;
+
+/* -------------------------------------------------------------------- */
+/*      Check for, and apply record record to spatial record pointer    */
+/*      updates.                                                        */
+/* -------------------------------------------------------------------- */
+    if( poUpdate->FindField( "FSPC" ) != NULL )
+    {
+        int	nFSUI = poUpdate->GetIntSubfield( "FSPC", 0, "FSUI", 0 );
+        int	nFSIX = poUpdate->GetIntSubfield( "FSPC", 0, "FSIX", 0 );
+        int	nNSPT = poUpdate->GetIntSubfield( "FSPC", 0, "NSPT", 0 );
+        DDFField *poSrcFSPT = poUpdate->FindField( "FSPT" );
+        DDFField *poDstFSPT = poTarget->FindField( "FSPT" );
+        int	nPtrSize;
+
+        if( (poSrcFSPT == NULL && nFSUI != 2) || poDstFSPT == NULL )
+        {
+            CPLAssert( FALSE );
+            return FALSE;
+        }
+
+        nPtrSize = poDstFSPT->GetFieldDefn()->GetFixedWidth();
+
+        if( nFSUI == 1 ) /* INSERT */
+        {
+            char	*pachInsertion;
+            int		nInsertionBytes = nPtrSize * nNSPT;
+
+            pachInsertion = (char *) CPLMalloc(nInsertionBytes + nPtrSize);
+            memcpy( pachInsertion, poSrcFSPT->GetData(), nInsertionBytes );
+
+            /* 
+            ** If we are inserting before an instance that already
+            ** exists, we must add it to the end of the data being
+            ** inserted.
+            */
+            if( nFSIX <= poDstFSPT->GetRepeatCount() )
+            {
+                memcpy( pachInsertion + nInsertionBytes, 
+                        poDstFSPT->GetData() + nPtrSize * (nFSIX-1), 
+                        nPtrSize );
+                nInsertionBytes += nPtrSize;
+            }
+
+            poTarget->SetFieldRaw( poDstFSPT, nFSIX - 1, 
+                                   pachInsertion, nInsertionBytes );
+            CPLFree( pachInsertion );
+        }
+        else if( nFSUI == 2 ) /* DELETE */
+        {
+            /* Wipe each deleted coordinate */
+            for( int i = nNSPT-1; i >= 0; i-- )
+            {
+                poTarget->SetFieldRaw( poDstFSPT, i + nFSIX - 1, NULL, 0 );
+            }
+        }
+        else if( nFSUI == 3 ) /* MODIFY */
+        {
+            /* copy over each ptr */
+            for( int i = 0; i < nNSPT; i++ )
+            {
+                const char *pachRawData;
+
+                pachRawData = poSrcFSPT->GetData() + nPtrSize * i;
+
+                poTarget->SetFieldRaw( poDstFSPT, i + nFSIX - 1, 
+                                       pachRawData, nPtrSize );
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for, and apply vector record to vector record pointer	*/
+/*	updates.							*/
+/* -------------------------------------------------------------------- */
+    if( poUpdate->FindField( "VRPC" ) != NULL )
+    {
+        int	nVPUI = poUpdate->GetIntSubfield( "VRPC", 0, "VPUI", 0 );
+        int	nVPIX = poUpdate->GetIntSubfield( "VRPC", 0, "VPIX", 0 );
+        int	nNVPT = poUpdate->GetIntSubfield( "VRPC", 0, "NVPT", 0 );
+        DDFField *poSrcVRPT = poUpdate->FindField( "VRPT" );
+        DDFField *poDstVRPT = poTarget->FindField( "VRPT" );
+        int	nPtrSize;
+
+        if( (poSrcVRPT == NULL && nVPUI != 2) || poDstVRPT == NULL )
+        {
+            CPLAssert( FALSE );
+            return FALSE;
+        }
+
+        nPtrSize = poDstVRPT->GetFieldDefn()->GetFixedWidth();
+
+        if( nVPUI == 1 ) /* INSERT */
+        {
+            char	*pachInsertion;
+            int		nInsertionBytes = nPtrSize * nNVPT;
+
+            pachInsertion = (char *) CPLMalloc(nInsertionBytes + nPtrSize);
+            memcpy( pachInsertion, poSrcVRPT->GetData(), nInsertionBytes );
+
+            /* 
+            ** If we are inserting before an instance that already
+            ** exists, we must add it to the end of the data being
+            ** inserted.
+            */
+            if( nVPIX <= poDstVRPT->GetRepeatCount() )
+            {
+                memcpy( pachInsertion + nInsertionBytes, 
+                        poDstVRPT->GetData() + nPtrSize * (nVPIX-1), 
+                        nPtrSize );
+                nInsertionBytes += nPtrSize;
+            }
+
+            poTarget->SetFieldRaw( poDstVRPT, nVPIX - 1, 
+                                   pachInsertion, nInsertionBytes );
+            CPLFree( pachInsertion );
+        }
+        else if( nVPUI == 2 ) /* DELETE */
+        {
+            /* Wipe each deleted coordinate */
+            for( int i = nNVPT-1; i >= 0; i-- )
+            {
+                poTarget->SetFieldRaw( poDstVRPT, i + nVPIX - 1, NULL, 0 );
+            }
+        }
+        else if( nVPUI == 3 ) /* MODIFY */
+        {
+            /* copy over each ptr */
+            for( int i = 0; i < nNVPT; i++ )
+            {
+                const char *pachRawData;
+
+                pachRawData = poSrcVRPT->GetData() + nPtrSize * i;
+
+                poTarget->SetFieldRaw( poDstVRPT, i + nVPIX - 1, 
+                                       pachRawData, nPtrSize );
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for, and apply record update to coordinates.		*/
+/* -------------------------------------------------------------------- */
+    if( poUpdate->FindField( "SGCC" ) != NULL )
+    {
+        int	nCCUI = poUpdate->GetIntSubfield( "SGCC", 0, "CCUI", 0 );
+        int	nCCIX = poUpdate->GetIntSubfield( "SGCC", 0, "CCIX", 0 );
+        int	nCCNC = poUpdate->GetIntSubfield( "SGCC", 0, "CCNC", 0 );
+        DDFField *poSrcSG2D = poUpdate->FindField( "SG2D" );
+        DDFField *poDstSG2D = poTarget->FindField( "SG2D" );
+        int	nCoordSize;
+
+        /* If we don't have SG2D, check for SG3D */
+        if( poDstSG2D == NULL )
+        {
+            poSrcSG2D = poUpdate->FindField( "SG3D" );
+            poDstSG2D = poTarget->FindField( "SG3D" );
+        }
+
+        if( (poSrcSG2D == NULL && nCCUI != 2) || poDstSG2D == NULL )
+        {
+            CPLAssert( FALSE );
+            return FALSE;
+        }
+
+        nCoordSize = poDstSG2D->GetFieldDefn()->GetFixedWidth();
+
+        if( nCCUI == 1 ) /* INSERT */
+        {
+            char	*pachInsertion;
+            int		nInsertionBytes = nCoordSize * nCCNC;
+
+            pachInsertion = (char *) CPLMalloc(nInsertionBytes + nCoordSize);
+            memcpy( pachInsertion, poSrcSG2D->GetData(), nInsertionBytes );
+
+            /* 
+            ** If we are inserting before an instance that already
+            ** exists, we must add it to the end of the data being
+            ** inserted.
+            */
+            if( nCCIX <= poDstSG2D->GetRepeatCount() )
+            {
+                memcpy( pachInsertion + nInsertionBytes, 
+                        poDstSG2D->GetData() + nCoordSize * (nCCIX-1), 
+                        nCoordSize );
+                nInsertionBytes += nCoordSize;
+            }
+
+            poTarget->SetFieldRaw( poDstSG2D, nCCIX - 1, 
+                                   pachInsertion, nInsertionBytes );
+            CPLFree( pachInsertion );
+
+        }
+        else if( nCCUI == 2 ) /* DELETE */
+        {
+            /* Wipe each deleted coordinate */
+            for( int i = nCCNC-1; i >= 0; i-- )
+            {
+                poTarget->SetFieldRaw( poDstSG2D, i + nCCIX - 1, NULL, 0 );
+            }
+        }
+        else if( nCCUI == 3 ) /* MODIFY */
+        {
+            /* copy over each ptr */
+            for( int i = 0; i < nCCNC; i++ )
+            {
+                const char *pachRawData;
+
+                pachRawData = poSrcSG2D->GetData() + nCoordSize * i;
+
+                poTarget->SetFieldRaw( poDstSG2D, i + nCCIX - 1, 
+                                       pachRawData, nCoordSize );
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We don't currently handle FFPC (feature to feature linkage)     */
+/*      issues, but we will at least report them when debugging.        */
+/* -------------------------------------------------------------------- */
+    if( poUpdate->FindField( "FFPC" ) != NULL )
+    {
+        CPLDebug( "S57", "Found FFPC, but not applying it." );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for and apply changes to attribute lists.                 */
+/* -------------------------------------------------------------------- */
+    if( poUpdate->FindField( "ATTF" ) != NULL )
+    {
+        DDFSubfieldDefn *poSrcATVLDefn;
+        DDFField *poSrcATTF = poUpdate->FindField( "ATTF" );
+        DDFField *poDstATTF = poTarget->FindField( "ATTF" );
+        int	nRepeatCount = poSrcATTF->GetRepeatCount();
+
+        poSrcATVLDefn = poSrcATTF->GetFieldDefn()->FindSubfieldDefn( "ATVL" );
+
+        for( int iAtt = 0; iAtt < nRepeatCount; iAtt++ )
+        {
+            int	nATTL = poUpdate->GetIntSubfield( "ATTF", 0, "ATTL", iAtt );
+            int iTAtt, nDataBytes;
+            const char *pszRawData;
+
+            for( iTAtt = poDstATTF->GetRepeatCount()-1; iTAtt >= 0; iTAtt-- )
+            {
+                if( poTarget->GetIntSubfield( "ATTF", 0, "ATTL", iTAtt )
+                    == nATTL )
+                    break;
+            }
+            if( iTAtt == -1 )
+                iTAtt = poDstATTF->GetRepeatCount();
+
+            pszRawData = poSrcATTF->GetInstanceData( iAtt, &nDataBytes );
+            poTarget->SetFieldRaw( poDstATTF, iTAtt, pszRawData, nDataBytes );
+        }
+    }
+
+    printf( "\nResult:\n" );
+    poTarget->Dump( stdout );
+    
+    return TRUE;
+}
+
+
+/************************************************************************/
+/*                            ApplyUpdates()                            */
+/*                                                                      */
+/*      Read records from an update file, and apply them to the         */
+/*      currently loaded index of features.                             */
+/************************************************************************/
+
+int S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
+
+{
+    DDFRecord	*poRecord;
+
+/* -------------------------------------------------------------------- */
+/*      Ensure base file is loaded.                                     */
+/* -------------------------------------------------------------------- */
+    Ingest();
+
+/* -------------------------------------------------------------------- */
+/*      Read records, and apply as updates.                             */
+/* -------------------------------------------------------------------- */
+    while( (poRecord = poUpdateModule->ReadRecord()) != NULL )
+    {
+        DDFField        *poKeyField = poRecord->GetField(1);
+        const char      *pszKey = poKeyField->GetFieldDefn()->GetName();
+        
+        if( EQUAL(pszKey,"VRID") || EQUAL(pszKey,"FRID"))
+        {
+            int         nRCNM = poRecord->GetIntSubfield( pszKey,0, "RCNM",0 );
+            int         nRCID = poRecord->GetIntSubfield( pszKey,0, "RCID",0 );
+            int		nRVER = poRecord->GetIntSubfield( pszKey,0, "RVER",0 );
+            int		nRUIN = poRecord->GetIntSubfield( pszKey,0, "RUIN",0 );
+            DDFRecordIndex *poIndex = NULL;
+
+            if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"VRID") )
+            {
+                switch( nRCNM )
+                {
+                  case RCNM_VI:
+                    poIndex = &oVI_Index;
+                    break;
+
+                  case RCNM_VC:
+                    poIndex = &oVC_Index;
+                    break;
+
+                  case RCNM_VE:
+                    poIndex = &oVE_Index;
+                    break;
+
+                  case RCNM_VF:
+                    poIndex = &oVF_Index;
+                    break;
+
+                  default:
+                    CPLAssert( FALSE );
+                    break;
+                }
+            }
+            else
+            {
+                poIndex = &oFE_Index;
+            }
+
+            if( poIndex != NULL )
+            {
+                if( nRUIN == 1 )  /* insert */
+                {
+                    poIndex->AddRecord( nRCID, poRecord->CloneOn(poModule) );
+                }
+                else if( nRUIN == 2 ) /* delete */
+                {
+                    DDFRecord	*poTarget;
+
+                    poTarget = poIndex->FindRecord( nRCID );
+                    if( poTarget == NULL )
+                    {
+                        CPLError( CE_Warning, CPLE_AppDefined,
+                                  "Can't find RCNM=%d,RCID=%d for delete.\n",
+                                  nRCNM, nRCID );
+                    }
+                    else if( poTarget->GetIntSubfield( pszKey, 0, "RVER", 0 )
+                             != nRVER - 1 )
+                    {
+                        CPLError( CE_Warning, CPLE_AppDefined,
+                                  "Mismatched RVER value on RCNM=%d,RCID=%d.\n",
+                                  nRCNM, nRCID );
+                    }
+                    else
+                    {
+                        poIndex->RemoveRecord( nRCID );
+                    }
+                }
+
+                else if( nRUIN == 3 ) /* modify in place */
+                {
+                    DDFRecord	*poTarget;
+
+                    poTarget = poIndex->FindRecord( nRCID );
+                    if( poTarget == NULL )
+                    {
+                        CPLError( CE_Warning, CPLE_AppDefined, 
+                                  "Can't find RCNM=%d,RCID=%d for update.\n",
+                                  nRCNM, nRCID );
+                    }
+                    else
+                    {
+                        if( !ApplyRecordUpdate( poTarget, poRecord ) )
+                        {
+                            CPLError( CE_Warning, CPLE_AppDefined, 
+                                      "An update to RCNM=%d,RCID=%d failed.\n",
+                                      nRCNM, nRCID );
+                        }
+                    }
+                }
+            }
+        }
+
+        else if( EQUAL(pszKey,"DSID") )
+        {
+            /* ignore */;
+        }
+
+        else
+        {
+            CPLDebug( "S57",
+                      "Skipping %s record in S57Reader::ApplyUpdates().\n",
+                      pszKey );
+        }
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                        FindAndApplyUpdates()                         */
+/*                                                                      */
+/*      Find all update files that would appear to apply to this        */
+/*      base file.                                                      */
+/************************************************************************/
+
+int S57Reader::FindAndApplyUpdates( const char * pszPath )
+
+{
+    int		iUpdate;
+    int 	bSuccess = TRUE;
+
+    if( !EQUAL(CPLGetExtension(pszPath),"000") )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Can't apply updates to a base file with a different\n"
+                  "extension than .000.\n" );
+        return FALSE;
+    }
+
+    for( iUpdate = 1; bSuccess; iUpdate++ )
+    {
+        char	szExtension[4];
+        char	*pszUpdateFilename;
+        DDFModule oUpdateModule;
+
+        sprintf( szExtension, "%03d", iUpdate );
+        
+        pszUpdateFilename = CPLStrdup(CPLResetExtension(pszPath,szExtension));
+
+        bSuccess = oUpdateModule.Open( pszUpdateFilename, TRUE );
+
+        if( bSuccess )
+            CPLDebug( "S57", "Applying feature updates from %s.", 
+                      pszUpdateFilename );
+        CPLFree( pszUpdateFilename );
+
+        if( bSuccess )
+        {
+            if( !ApplyUpdates( &oUpdateModule ) )
+                return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+

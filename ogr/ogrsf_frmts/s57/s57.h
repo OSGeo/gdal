@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/08/30 03:48:43  warmerda
+ * preliminary implementation of S57 Update Support
+ *
  * Revision 1.10  2000/06/16 18:10:05  warmerda
  * expanded tabs
  *
@@ -172,14 +175,20 @@ public:
 /*      Maintain an index of DDF records based on an integer key.       */
 /************************************************************************/
 
+typedef struct DDFIndexedRecord
+{
+    int		nKey;
+    DDFRecord	*poRecord;
+};
+
 class DDFRecordIndex
 {
     int         bSorted;
     
     int         nRecordCount;
     int         nRecordMax;
-    int         *panRecordKey;
-    DDFRecord   **papoRecordList;
+
+    DDFIndexedRecord *pasRecords;
 
     void        Sort();
 
@@ -188,6 +197,7 @@ public:
                ~DDFRecordIndex();
 
     void        AddRecord( int nKey, DDFRecord * );
+    int		RemoveRecord( int nKey );
 
     DDFRecord  *FindRecord( int nKey );
 
@@ -253,6 +263,8 @@ class S57Reader
 
     void                GenerateStandardAttributes( OGRFeatureDefn * );
 
+    int		        ApplyRecordUpdate( DDFRecord *, DDFRecord * );
+
   public:
                         S57Reader( const char * );
                        ~S57Reader();
@@ -266,6 +278,8 @@ class S57Reader
     const char          *GetDSNM() { return pszDSNM; }
 
     void                Ingest();
+    int			ApplyUpdates( DDFModule * );
+    int			FindAndApplyUpdates( const char *pszPath );
 
     void                Rewind();
     OGRFeature          *ReadNextFeature( OGRFeatureDefn * = NULL );
