@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2001/11/15 21:19:21  warmerda
+ * added transaction semantics
+ *
  * Revision 1.20  2001/06/19 15:50:23  warmerda
  * added feature attribute query support
  *
@@ -109,6 +112,7 @@
 #define OLCFastFeatureCount    "FastFeatureCount"
 #define OLCFastGetExtent       "FastGetExtent"
 #define OLCCreateField         "CreateField"
+#define OLCTransactions        "Transactions"
 
 #define ODsCCreateLayer        "CreateLayer"
 
@@ -156,6 +160,10 @@ class CPL_DLL OGRLayer
 
     OGRStyleTable       *GetStyleTable(){return m_poStyleTable;}
     void                 SetStyleTable(OGRStyleTable *poStyleTable){m_poStyleTable = poStyleTable;}
+
+    virtual OGRErr       StartTransaction();
+    virtual OGRErr       CommitTransaction();
+    virtual OGRErr       RollbackTransaction();
 
  protected:
     OGRStyleTable *m_poStyleTable;
