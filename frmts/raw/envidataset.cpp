@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/08/18 15:31:46  warmerda
+ * I've fixed a bug in ENVI driver that happened when creating a band with a
+ * start offset greater that 2 Gbytes.  I've also added support for geotransform
+ * parameters on creation even if there are no projection information.
+ * Sebastien Grignard (sebastien dot grignard at archivideo dot com).
+ *
  * Revision 1.18  2004/07/28 14:33:27  warmerda
  * Added Geograpic lat/lon.
  *
@@ -389,7 +395,15 @@ void ENVIDataset::FlushCache()
 		adfGeoTransform[0], adfGeoTransform[3], adfGeoTransform[1],
 		dfPixelY, iUTMZone, pszHemisphere);
 	}
+    } else {
+      // Suppose we are in North hemisphere.
+      double dfPixelY = -adfGeoTransform[5];
+      const char* pszHemisphere = "North";
+      VSIFPrintf( fp, "map info = {Unknown, 1, 1, %f, %f, %f, %f, %d, %s}\n",
+                  adfGeoTransform[0], adfGeoTransform[3], adfGeoTransform[1],
+                  dfPixelY, 0, pszHemisphere);
     }
+    
 
     VSIFPrintf( fp, "band names = {\n" );
     for ( int i = 1; i <= nBands; i++ )
@@ -920,13 +934,13 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         nLineOffset = nDataSize * nSamples;
         nPixelOffset = nDataSize;
-        nBandOffset = nLineOffset * nLines;
+        nBandOffset = (vsi_l_offset)nLineOffset * nLines;
     }
     else if( EQUALN(pszInterleave, "bil", 3) )
     {
         nLineOffset = nDataSize * nSamples * nBands;
         nPixelOffset = nDataSize;
-        nBandOffset = nDataSize * nSamples;
+        nBandOffset = (vsi_l_offset)nDataSize * nSamples;
     }
     else if( EQUALN(pszInterleave, "bip", 3) )
     {
