@@ -5,11 +5,11 @@ OBJ	=	gdalopen.obj gdaldrivermanager.obj gdaldriver.obj \
 
 GDAL_ROOT	=	..
 
-LIBS	=	$(GDALLIB)
+LIBS	=	$(GDAL_ROOT)\gdal_i.lib
 
 !INCLUDE ..\nmake.opt
 
-default:	gdal_translate.exe gdalinfo.exe
+default:	gdal_translate.exe gdalinfo.exe gdaladdo.exe
 
 gdalinfo.exe:	gdalinfo.c $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) gdalinfo.c $(XTRAOBJ) $(LIBS) 
@@ -17,9 +17,14 @@ gdalinfo.exe:	gdalinfo.c $(GDALLIB) $(XTRAOBJ)
 gdal_translate.exe:	gdal_translate.c $(GDALLIB) $(XTRAOBJ)
 	$(CC) $(CFLAGS) gdal_translate.c $(XTRAOBJ) $(LIBS) 
 	
+gdaladdo.exe:	gdaladdo.cpp $(GDALLIB) $(XTRAOBJ)
+	$(CC) $(CFLAGS) gdaladdo.cpp $(XTRAOBJ) $(LIBS) 
+	
 gdal2raw.exe:	gdal2raw.c $(GDALLIB) $(XTRAOBJ)
 	$(CC) $(CFLAGS) gdal2raw.c $(XTRAOBJ) $(LIBS) 
 	
 clean:
 	del *.obj *.exe
 
+install:	default
+	copy *.exe $(BINDIR)
