@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/12/05 21:44:35  warmerda
+ * fixed prototype
+ *
  * Revision 1.3  2002/12/05 05:43:28  warmerda
  * added warp/transformer definition
  *
@@ -80,9 +83,10 @@ typedef int
 /* High level transformer for going from image coordinates on one file
    to image coordiantes on another, potentially doing reprojection, 
    utilizing GCPs or using the geotransform. */
+
 void CPL_DLL *
-GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, 
-                                 GDALDatasetH hDstDS, 
+GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
+                                 GDALDatasetH hDstDS, const char *pszDstWKT,
                                  int bGCPUseOK, double dfGCPErrorThreshold );
 void CPL_DLL GDALDestroyGenImgProjTransformer( void * );
 int CPL_DLL GDALGenImgProjTransform( 
@@ -117,7 +121,7 @@ int CPL_DLL GDALSimpleImageWarp( GDALDatasetH hSrcDS,
                                  GByte *pabyBlueLUT,
                                  GDALTransformerFunc pfnTransform,
                                  void *pTransformArg,
-                                 GDALProgressFunc *pfnProgress, 
+                                 GDALProgressFunc pfnProgress, 
                                  void *pProgressArg, 
                                  const char **papszWarpOptions );
 
