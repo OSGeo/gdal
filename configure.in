@@ -117,6 +117,8 @@ dnl ---------------------------------------------------------------------------
 AC_SUBST(OPT_GDAL_FORMATS,$OPT_GDAL_FORMATS)
 AC_SUBST(EXTRA_INCLUDES,$EXTRA_INCLUDES)
 
+dnl ---------------------------------------------------------------------------
+
 INST_PREFIX=/usr/local
 INST_INCLUDE=$INST_PREFIX/include
 INST_LIB=$INST_PREFIX/lib
@@ -132,6 +134,12 @@ dnl ---------------------------------------------------------------------------
 AC_COMPILER_WFLAGS
 AC_COMPILER_PIC
 AC_LD_SHARED
+
+dnl ---------------------------------------------------------------------------
+dnl Python Checks
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(python,[  --without-python        Disable Python],,)
 
 AM_PATH_PYTHON
 AM_INIT_PYEXEC_MOD

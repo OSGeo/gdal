@@ -143,7 +143,11 @@ dnl
 
 AC_DEFUN(AM_PATH_PYTHON,
   [AC_CHECK_PROGS(PYTHON, python python1.5 python1.4 python1.3,no)
-  if test "$PYTHON" != no; then
+  if test "$with_python" = no ; then
+     echo "python support disabled"
+     PYTHON=no
+  fi
+  if test "$PYTHON" != no ; then
     AC_MSG_CHECKING([where .py files should go])
 changequote(, )dnl
     pythondir=`$PYTHON -c '
@@ -166,12 +170,8 @@ changequote([, ])dnl
     AC_MSG_RESULT($pyexecdir)
   else
     # these defaults are version independent ...
-    AC_MSG_CHECKING([where .py files should go])
     pythondir='$(prefix)/lib/site-python'
-    AC_MSG_RESULT($pythondir)
-    AC_MSG_CHECKING([where python extensions should go])
     pyexecdir='$(exec_prefix)/lib/site-python'
-    AC_MSG_RESULT($pyexecdir)
   fi
   AC_SUBST(pythondir)
   AC_SUBST(pyexecdir)])
@@ -183,6 +183,7 @@ dnl NFW: Modified from original to avoid overridding CC, SO and OPT
 
 AC_DEFUN(AM_INIT_PYEXEC_MOD,
   [AC_REQUIRE([AM_PATH_PYTHON])
+if test "$PYTHON" != no ; then
   AC_MSG_CHECKING([for python headers])
   AC_CACHE_VAL(am_cv_python_includes,
     [changequote(,)dnl
@@ -224,9 +225,16 @@ print \"%s/lib/python%s/config/Makefile\"%(sys.exec_prefix, sys.version[:3])'`"
   PYTHON_SO="$am_cv_python_SO"
   PYTHON_CFLAGS="$am_cv_python_CCSHARED \$(OPT)"
   PYTHON_LINK="$am_cv_python_LDSHARED -o \[$]@"
+else
+  PYTHON_CC=""
+  PYTHON_OPT=""
+  PYTHON_SO=""
+  PYTHON_CFLAGS=""
+  PYTHON_LINK=""
+fi
+AC_SUBST(PYTHON_CC)dnl
+AC_SUBST(PYTHON_OPT)dnl
+AC_SUBST(PYTHON_SO)dnl
+AC_SUBST(PYTHON_CFLAGS)dnl
+AC_SUBST(PYTHON_LINK)])
 
-  AC_SUBST(PYTHON_CC)dnl
-  AC_SUBST(PYTHON_OPT)dnl
-  AC_SUBST(PYTHON_SO)dnl
-  AC_SUBST(PYTHON_CFLAGS)dnl
-  AC_SUBST(PYTHON_LINK)])
