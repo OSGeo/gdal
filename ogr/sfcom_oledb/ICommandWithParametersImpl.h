@@ -32,6 +32,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/08/17 19:58:21  warmerda
+ * remove LFs
+ *
  * Revision 1.1  2001/08/17 14:23:43  warmerda
  * New
  *
@@ -142,7 +145,7 @@ public:
 
     if (cParams == 0)
     {
-      for( int i=0; i < m_nSetParams; i++ )
+      for( int i=0; i < (int) m_nSetParams; i++ )
           delete m_apParamInfo[i];
       m_nSetParams = 0;
       return S_OK;
@@ -308,4 +311,4 @@ protected:
 };
 
 
-#endif // __I_COMMAND_WITH_PARAMETERS_IMPL__INCLUDED__
+#endif // __I_COMMAND_WITH_PARAMETERS_IMPL__INCLUDED__ 
