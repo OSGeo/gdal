@@ -4,10 +4,10 @@
  * Project:  Hierarchical Data Format Release 4 (HDF4)
  * Purpose:  Read subdatasets of HDF4 file.
  *           This driver initially based on code supplied by Markus Neteler
- * Author:   Andrey Kiselev, dron@at1895.spb.edu
+ * Author:   Andrey Kiselev, dron@remotesensing.org
  *
  ******************************************************************************
- * Copyright (c) 2002, Andrey Kiselev <dron@at1895.spb.edu>
+ * Copyright (c) 2002, Andrey Kiselev <dron@remotesensing.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.20  2003/01/27 16:45:16  dron
+ * Fixed problems with wrong count in SDsetattr() calls.
+ *
  * Revision 1.19  2002/12/30 15:07:45  dron
  * SetProjCS() call removed.
  *
@@ -522,20 +525,24 @@ CPLErr HDF4ImageDataset::GetGeoTransform( double * padfTransform )
 
 CPLErr HDF4ImageDataset::SetGeoTransform( double * padfTransform )
 {
-    const char		*pszValue;
     CPLErr		eErr = CE_None;
-    
+    const char		*pszValue;
+
     memcpy( adfGeoTransform, padfTransform, sizeof(double) * 6 );
     pszValue = CPLSPrintf( "%f, %f, %f, %f, %f, %f",
 			  adfGeoTransform[0], adfGeoTransform[1],
 			  adfGeoTransform[2], adfGeoTransform[3],
 			  adfGeoTransform[4], adfGeoTransform[5] );
     if ( (SDsetattr( hSD, "TransformationMatrix", DFNT_CHAR8,
-		     strlen(pszValue), pszValue )) < 0 )
+		     strlen(pszValue) + 1, pszValue )) < 0 )
     {
-	CPLDebug( "HDF4Image", "Can't wrote transformation matrix to output file" );
+	CPLDebug( "HDF4Image",
+		  "Can't write transformation matrix to output file" );
 	eErr = CE_Failure;
     }
+
+    CPLDebug( "HDF4Image",
+	      "SetGeoTransform() succeeds with return code %d", eErr );
     
     return eErr;
 }
@@ -563,12 +570,15 @@ CPLErr HDF4ImageDataset::SetProjection( const char *pszNewProjection )
 	CPLFree( pszProjection );
     pszProjection = CPLStrdup( pszNewProjection );
     if ( (SDsetattr( hSD, "Projection", DFNT_CHAR8,
-		     strlen(pszProjection), pszProjection )) < 0 )
+		     strlen(pszProjection) + 1, pszProjection )) < 0 )
     {
 	CPLDebug( "HDF4Image",
-		  "Can't wrote projection information to output file");
+		  "Can't write projection information to output file");
 	eErr = CE_Failure;
     }
+
+    CPLDebug( "HDF4Image",
+	      "SetProjection() succeeds with return code %d", eErr );
 
     return eErr;
 }
@@ -589,7 +599,7 @@ CPLErr HDF4ImageDataset::SetMetadata( char ** papszMetadata,
 	while ( *papszMetadata )
 	{
 	    pszValue = CPLParseNameValue( *papszMetadata++, &pszName );
-	    SDsetattr( hSD, pszName, DFNT_CHAR8, strlen(pszValue), pszValue );
+	    SDsetattr( hSD, pszName, DFNT_CHAR8, strlen(pszValue) + 1, pszValue );
 	}
     }
 
@@ -606,7 +616,7 @@ CPLErr HDF4ImageDataset::SetMetadataItem( const char *pszName,
 
 {
     if ( pszName && pszValue )
-	SDsetattr( hSD, pszName, DFNT_CHAR8, strlen(pszValue), pszValue );
+	SDsetattr( hSD, pszName, DFNT_CHAR8, strlen(pszValue) + 1, pszValue );
     
     return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
 }
@@ -1067,6 +1077,12 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
 	poDS->iRank = 2;
     
     poDS->hSD = SDstart( pszFilename, DFACC_CREATE );
+    if ( poDS->hSD == -1 )
+    {
+	CPLError( CE_Failure, CPLE_OpenFailed,
+		  "Can't create HDF4 file %s", pszFilename );
+	return NULL;
+    }
     poDS->iXDim = 1;
     poDS->iYDim = 0;
     poDS->iBandDim = 2;
@@ -1156,7 +1172,7 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     if ( poDS->iSDS < 0 )
     {
 	CPLError( CE_Failure, CPLE_AppDefined,
-		  "Can't create SDS with rank %d for file",
+		  "Can't create SDS with rank %d for file %s",
 		  poDS->iRank, pszFilename );
 	return NULL;
     }
@@ -1174,7 +1190,7 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     for( iBand = 1; iBand <= nBands; iBand++ )
         poDS->SetBand( iBand, new HDF4ImageRasterBand( poDS, iBand, eType ) );
 
-    SDsetattr( poDS->hSD, "Signature", DFNT_CHAR8, strlen(pszGDALSignature),
+    SDsetattr( poDS->hSD, "Signature", DFNT_CHAR8, strlen(pszGDALSignature) + 1,
 	       pszGDALSignature );
     
     return (GDALDataset *) poDS;
@@ -1440,23 +1456,23 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     char	**papszMetadata;
     double	adfGeoTransform[6];
     
-    SDsetattr( hSD, "Signature", DFNT_CHAR8, strlen(pszGDALSignature),
+    SDsetattr( hSD, "Signature", DFNT_CHAR8, strlen(pszGDALSignature) + 1,
 	       pszGDALSignature );
 
     pszValue = poSrcDS->GetProjectionRef();
     if ( pszValue != NULL && !EQUAL( pszValue, "" ) )
-	SDsetattr( hSD, "Projection", DFNT_CHAR8, strlen(pszValue), pszValue );
+	SDsetattr( hSD, "Projection", DFNT_CHAR8, strlen(pszValue) + 1, pszValue );
 
     pszValue = poSrcDS->GetGCPProjection();
     if ( pszValue != NULL && !EQUAL( pszValue, "" ) )
-	SDsetattr( hSD, "GCPProjection", DFNT_CHAR8, strlen(pszValue), pszValue );
+	SDsetattr( hSD, "GCPProjection", DFNT_CHAR8, strlen(pszValue) + 1, pszValue );
 
     poSrcDS->GetGeoTransform( adfGeoTransform );
     pszValue = CPLSPrintf( "%f, %f, %f, %f, %f, %f",
 			  adfGeoTransform[0], adfGeoTransform[1],
 			  adfGeoTransform[2], adfGeoTransform[3],
 			  adfGeoTransform[4], adfGeoTransform[5] );
-    SDsetattr( hSD, "TransformationMatrix", DFNT_CHAR8, strlen(pszValue), pszValue );
+    SDsetattr( hSD, "TransformationMatrix", DFNT_CHAR8, strlen(pszValue) + 1, pszValue );
     
     for( iBand = 1; iBand <= nBands; iBand++ )
     {
@@ -1464,7 +1480,7 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	pszValue = poBand->GetDescription();
 	pszKey = (char *)CPLSPrintf( "BandDesc%d", iBand );
 	if ( pszValue != NULL && !EQUAL( pszValue, "" ) )
-	    SDsetattr( hSD, pszKey, DFNT_CHAR8, strlen(pszValue), pszValue );
+	    SDsetattr( hSD, pszKey, DFNT_CHAR8, strlen(pszValue) + 1, pszValue );
     }
 
     // Store all metadata from source dataset as HDF attributes
@@ -1474,7 +1490,7 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	while ( *papszMetadata )
 	{
 	    pszValue = CPLParseNameValue( *papszMetadata++, &pszKey );
-	    SDsetattr( hSD, pszKey, DFNT_CHAR8, strlen(pszValue), pszValue );
+	    SDsetattr( hSD, pszKey, DFNT_CHAR8, strlen(pszValue) + 1, pszValue );
 	}
     }
     
