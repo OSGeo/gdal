@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2002/12/21 17:26:43  warmerda
+ * updated version to 1.1.7.5
+ *
  * Revision 1.57  2002/12/05 15:46:38  warmerda
  * added GDALReadTabFile()
  *
@@ -218,13 +221,13 @@
 /*      GDAL Version Information.                                       */
 /* -------------------------------------------------------------------- */
 #ifndef GDAL_VERSION_NUM
-#  define GDAL_VERSION_NUM      1174
+#  define GDAL_VERSION_NUM      1175
 #endif
 #ifndef GDAL_RELEASE_DATE
-#  define GDAL_RELEASE_DATE     20021024
+#  define GDAL_RELEASE_DATE     20021221
 #endif
 #ifndef GDAL_RELEASE_NAME
-#  define GDAL_RELEASE_NAME     "1.1.7.4"
+#  define GDAL_RELEASE_NAME     "1.1.7.5"
 #endif
 
 /* -------------------------------------------------------------------- */
