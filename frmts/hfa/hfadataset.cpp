@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.37  2004/05/10 16:59:54  warmerda
+ * improve EPSG info in coordinate system
+ *
  * Revision 1.36  2003/06/10 16:58:57  warmerda
  * Added check on failiure of Create in CreateCopy()
  *
@@ -1571,8 +1574,16 @@ CPLErr HFADataset::ReadProjection()
     if( oSRS.GetAttrNode("GEOGCS") == NULL
         && oSRS.GetAttrNode("LOCAL_CS") == NULL )
     {
-        oSRS.SetGeogCS( pszDatumName, pszDatumName, pszEllipsoidName,
-                        psPro->proSpheroid.a, dfInvFlattening );
+        if( EQUAL(pszDatumName,"WGS 84") )
+            oSRS.SetWellKnownGeogCS( "WGS84" );
+        else if( strstr(pszDatumName,"NAD27") != NULL )
+            oSRS.SetWellKnownGeogCS( "NAD27" );
+        else if( EQUAL(pszDatumName,"North_American_Datum_1983") 
+                 || strstr(pszDatumName,"NAD83") != NULL )
+            oSRS.SetWellKnownGeogCS( "NAD83" );
+        else
+            oSRS.SetGeogCS( pszDatumName, pszDatumName, pszEllipsoidName,
+                            psPro->proSpheroid.a, dfInvFlattening );
 
         if( psDatum != NULL && psDatum->type == EPRJ_DATUM_PARAMETRIC )
         {
@@ -1585,6 +1596,13 @@ CPLErr HFADataset::ReadProjection()
                              psDatum->params[6] );
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Try to insert authority information if possible.  Fixup any     */
+/*      ordering oddities.                                              */
+/* -------------------------------------------------------------------- */
+    oSRS.AutoIdentifyEPSG();
+    oSRS.Fixup();
 
 /* -------------------------------------------------------------------- */
 /*      Get the WKT representation of the coordinate system.            */
