@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/02/21 15:41:55  warmerda
+ * rename data member
+ *
  * Revision 1.2  2003/02/20 21:53:06  warmerda
  * partial implementation
  *
@@ -102,7 +105,7 @@ CPLErr GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
     void *hTransformArg;
 
     hTransformArg = 
-        GDALCreateGenImgProjTransformer( hSrcDS, pszSrcWKT, NULL, pszDstWKT, 
+        GDALCreateGenImgProjTransformer( hSrcDS, pszSrcWKT, hDstDS, pszDstWKT, 
                                          TRUE, 1000.0, 2 );
 
     if( hTransformArg == NULL )
@@ -356,7 +359,7 @@ void GDALDestroyWarpOptions( GDALWarpOptions *psOptions )
     CPLFree( psOptions->padfSrcNoDataImag );
     CPLFree( psOptions->padfDstNoDataReal );
     CPLFree( psOptions->padfDstNoDataImag );
-    CPLFree( psOptions->pafnSrcPerBandValidityMaskFunc );
+    CPLFree( psOptions->papfnSrcPerBandValidityMaskFunc );
     CPLFree( psOptions->papSrcPerBandValidityMaskFuncArg );
 
     CPLFree( psOptions );
@@ -390,7 +393,7 @@ GDALWarpOptions *GDALCloneWarpOptions( const GDALWarpOptions *psSrcOptions )
     COPY_MEM( panDstBands, int, psSrcOptions->nBandCount );
     COPY_MEM( padfSrcNoDataReal, double, psSrcOptions->nBandCount );
     COPY_MEM( padfSrcNoDataImag, double, psSrcOptions->nBandCount );
-    COPY_MEM( pafnSrcPerBandValidityMaskFunc, GDALMaskFunc, 
+    COPY_MEM( papfnSrcPerBandValidityMaskFunc, GDALMaskFunc, 
               psSrcOptions->nBandCount );
 
     return psDstOptions;
