@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/11/16 20:42:40  warmerda
+ * improved inline comments
+ *
  * Revision 1.15  2002/11/16 20:38:34  warmerda
  * added support for literals like DOCTYPE
  *
@@ -217,7 +220,7 @@ static TokenType ReadToken( ParseContext *psContext )
         ReadChar(psContext);
     }
 /* -------------------------------------------------------------------- */
-/*      Handle comments.                                                */
+/*      Handle DOCTYPE or other literals.                               */
 /* -------------------------------------------------------------------- */
     else if( chNext == '<' 
           && EQUALN(psContext->pszInput+psContext->nInputOffset,"!DOCTYPE",8) )
@@ -654,9 +657,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
         }
 
 /* -------------------------------------------------------------------- */
-/*      Handle comments.  They are returned as a whole token with the     */
-/*      prefix and postfix omitted.  No processing of white space       */
-/*      will be done.                                                   */
+/*      Handle literals.  They are returned without processing.         */
 /* -------------------------------------------------------------------- */
         else if( sContext.eTokenType == TLiteral )
         {
