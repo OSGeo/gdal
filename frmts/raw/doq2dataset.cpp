@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/10/07 19:31:47  warmerda
+ * Flush CPLReadLine() internal buffer.
+ *
  * Revision 1.16  2002/09/17 13:09:28  warmerda
  * fix zone in WKT description - bugzilla 199
  *
@@ -207,7 +210,10 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     pszLine = CPLReadLine( poOpenInfo->fp );
     if(! EQUALN(pszLine,"BEGIN_USGS_DOQ_HEADER", 21) )
+    {
+        CPLReadLine( NULL );
         return NULL;
+    }
 
     while( (pszLine = CPLReadLine( poOpenInfo->fp )) )
     {
@@ -347,6 +353,8 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 	
         CSLDestroy( papszTokens );
     }
+
+    CPLReadLine( NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Do these values look coherent for a DOQ file?  It would be      */
