@@ -769,7 +769,7 @@ Usage:
 gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*
                      [-ps pixelsize_x pixelsize_y] [-separate] [-v] [-pct]
                      [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init value]
-                     [-seperate] input_files
+                     [-separate] input_files
 \endverbatim
 \if man
 \section mdescription DESCRIPTION
