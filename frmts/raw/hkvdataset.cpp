@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2003/04/10 22:13:40  gwalter
+ * Updated spheroids: some applications use _ instead of - in spheroid names.
+ *
  * Revision 1.30  2003/04/02 18:46:45  gwalter
  * Fixed one-off error in number of spheroids.
  *
@@ -169,7 +172,7 @@ public:
 
 HKVSpheroidList :: HKVSpheroidList()
 {
-  num_spheroids = 30;
+  num_spheroids = 58;
   epsilonR = 0.1;
   epsilonI = 0.000001;
 
@@ -203,6 +206,35 @@ HKVSpheroidList :: HKVSpheroidList()
   spheroids[27].SetValuesByEqRadiusAndInvFlattening("wgs-84",6378137,298.257223563);
   spheroids[28].SetValuesByEqRadiusAndInvFlattening("ev-wgs-84",6378137.0,298.252841); 
   spheroids[29].SetValuesByEqRadiusAndInvFlattening("ev-bessel",6377397.0,299.1976073);
+
+  spheroids[30].SetValuesByEqRadiusAndInvFlattening("airy_1830",6377563.396,299.3249646);
+  spheroids[31].SetValuesByEqRadiusAndInvFlattening("modified_airy",6377340.189,299.3249646);
+  spheroids[32].SetValuesByEqRadiusAndInvFlattening("australian_national",6378160,298.25);
+  spheroids[33].SetValuesByEqRadiusAndInvFlattening("bessel_1841_namibia",6377483.865,299.1528128);
+  spheroids[34].SetValuesByEqRadiusAndInvFlattening("bessel_1841",6377397.155,299.1528128);
+  spheroids[35].SetValuesByEqRadiusAndInvFlattening("clarke_1858",6378294.0,294.297);
+  spheroids[36].SetValuesByEqRadiusAndInvFlattening("clarke_1866",6378206.4,294.9786982);
+  spheroids[37].SetValuesByEqRadiusAndInvFlattening("clarke_1880",6378249.145,293.465);
+  spheroids[38].SetValuesByEqRadiusAndInvFlattening("everest_india_1830",6377276.345,300.8017);
+  spheroids[39].SetValuesByEqRadiusAndInvFlattening("everest_sabah_sarawak",6377298.556,300.8017);
+  spheroids[40].SetValuesByEqRadiusAndInvFlattening("everest_india_1956",6377301.243,300.8017);
+  spheroids[41].SetValuesByEqRadiusAndInvFlattening("everest_malaysia_1969",6377295.664,300.8017);
+  spheroids[42].SetValuesByEqRadiusAndInvFlattening("everest_malay_sing",6377304.063,300.8017);
+  spheroids[43].SetValuesByEqRadiusAndInvFlattening("everest_pakistan",6377309.613,300.8017);
+  spheroids[44].SetValuesByEqRadiusAndInvFlattening("modified_fisher_1960",6378155,298.3);
+  spheroids[45].SetValuesByEqRadiusAndInvFlattening("helmert_1906",6378200,298.3);
+  spheroids[46].SetValuesByEqRadiusAndInvFlattening("hough_1960",6378270,297);
+  spheroids[47].SetValuesByEqRadiusAndInvFlattening("indonesian_1974",6378160,298.247);
+  spheroids[48].SetValuesByEqRadiusAndInvFlattening("international_1924",6378388,297);
+  spheroids[49].SetValuesByEqRadiusAndInvFlattening("iugc_67",6378160.0,298.254);
+  spheroids[50].SetValuesByEqRadiusAndInvFlattening("iugc_75",6378140.0,298.25298);
+  spheroids[51].SetValuesByEqRadiusAndInvFlattening("krassovsky_1940",6378245,298.3);
+  spheroids[52].SetValuesByEqRadiusAndInvFlattening("grs_80",6378137,298.257222101);
+  spheroids[53].SetValuesByEqRadiusAndInvFlattening("south_american_1969",6378160,298.25);
+  spheroids[54].SetValuesByEqRadiusAndInvFlattening("wgs_72",6378135,298.26);
+  spheroids[55].SetValuesByEqRadiusAndInvFlattening("wgs_84",6378137,298.257223563);
+  spheroids[56].SetValuesByEqRadiusAndInvFlattening("ev_wgs_84",6378137.0,298.252841); 
+  spheroids[57].SetValuesByEqRadiusAndInvFlattening("ev_bessel",6377397.0,299.1976073);
 
 }
 
