@@ -26,6 +26,10 @@ CFLAGS	=	-Wall $(OD_FLAGS)
 
 GDAL_INCLUDE	=	-I$(GDAL_ROOT) -I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/core
 
+GDAL_VER	=	1.0
+GDAL_LIB	= 	$(GDAL_ROOT)/gdal.a
+GDAL_SLIB	=	$(GDAL_ROOT)/gdal.$(GDAL_VER).so
+
 LIBS		=	@LIBS@ -lm
 
 ifneq ($(TOPDIR),)
@@ -34,9 +38,8 @@ OGDI_FLAG	=	ENABLED
 OGDI_FRMT	=	ogdi
 endif
 
-GDAL_LIBS	=	$(GDAL_ROOT)/frmts/o/*.o \
-			$(GDAL_ROOT)/frmts/o/*.a \
-			$(OGDI_LIBS) \
+GDAL_LIBS	=	$(GDAL_LIB) $(GDAL_ROOT)/frmts/o/*.a $(OGDI_LIBS)
+GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/core/*.o $(GDAL_ROOT)/port/*.o
 
 
