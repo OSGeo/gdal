@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2002/12/09 18:55:07  warmerda
+ * moved DMS stuff to gdal/port
+ *
  * Revision 1.33  2002/12/09 16:12:14  warmerda
  * added +pm= support
  *
@@ -126,6 +129,7 @@
 
 #include "ogr_spatialref.h"
 #include "ogr_p.h"
+#include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
 
@@ -207,7 +211,7 @@ static double OSR_GDV( char **papszNV, const char * pszField,
     if( pszValue == NULL )
         return dfDefaultValue;
     else
-        return OSRDMSToDec(pszValue);
+        return CPLDMSToDec(pszValue);
 }
 
 /************************************************************************/
@@ -575,67 +579,67 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     {
         if( EQUAL(pszPM,"lisbon") )
         {
-            dfFromGreenwich = OSRDMSToDec( "9d07'54.862\"W" );
+            dfFromGreenwich = CPLDMSToDec( "9d07'54.862\"W" );
             nPMCode = 8902;
         }
         else if( EQUAL(pszPM,"paris") )
         {
-            dfFromGreenwich = OSRDMSToDec( "2d20'14.025\"E" );
+            dfFromGreenwich = CPLDMSToDec( "2d20'14.025\"E" );
             nPMCode = 8903;
         }
         else if( EQUAL(pszPM,"bogota") )
         {
-            dfFromGreenwich = OSRDMSToDec( "74d04'51.3\"E" );
+            dfFromGreenwich = CPLDMSToDec( "74d04'51.3\"E" );
             nPMCode = 8904;
         }
         else if( EQUAL(pszPM,"madrid") )
         {
-            dfFromGreenwich = OSRDMSToDec( "3d41'16.48\"W" );
+            dfFromGreenwich = CPLDMSToDec( "3d41'16.48\"W" );
             nPMCode = 8905;
         }
         else if( EQUAL(pszPM,"rome") )
         {
-            dfFromGreenwich = OSRDMSToDec( "12d27'8.4\"E" );
+            dfFromGreenwich = CPLDMSToDec( "12d27'8.4\"E" );
             nPMCode = 8906;
         }
         else if( EQUAL(pszPM,"bern") )
         {
-            dfFromGreenwich = OSRDMSToDec( "7d26'22.5\"E" );
+            dfFromGreenwich = CPLDMSToDec( "7d26'22.5\"E" );
             nPMCode = 8907;
         }
         else if( EQUAL(pszPM,"jakarta") )
         {
-            dfFromGreenwich = OSRDMSToDec( "106d48'27.79\"E" );
+            dfFromGreenwich = CPLDMSToDec( "106d48'27.79\"E" );
             nPMCode = 8908;
         }
         else if( EQUAL(pszPM,"ferro") )
         {
-            dfFromGreenwich = OSRDMSToDec( "17d40'W" );
+            dfFromGreenwich = CPLDMSToDec( "17d40'W" );
             nPMCode = 8909;
         }
         else if( EQUAL(pszPM,"brussels") )
         {
-            dfFromGreenwich = OSRDMSToDec( "4d22'4.71\"E" );
+            dfFromGreenwich = CPLDMSToDec( "4d22'4.71\"E" );
             nPMCode = 8910;
         }
         else if( EQUAL(pszPM,"stockholm") )
         {
-            dfFromGreenwich = OSRDMSToDec( "18d3'29.8\"E" );
+            dfFromGreenwich = CPLDMSToDec( "18d3'29.8\"E" );
             nPMCode = 8911;
         }
         else if( EQUAL(pszPM,"athens") )
         {
-            dfFromGreenwich = OSRDMSToDec( "23d42'58.815\"E" );
+            dfFromGreenwich = CPLDMSToDec( "23d42'58.815\"E" );
             nPMCode = 8912;
         }
         else if( EQUAL(pszPM,"oslo") )
         {
-            dfFromGreenwich = OSRDMSToDec( "10d43'22.5\"E" );
+            dfFromGreenwich = CPLDMSToDec( "10d43'22.5\"E" );
             nPMCode = 8913;
         }
         else
         {
-            dfFromGreenwich = OSRDMSToDec( pszPM );
+            dfFromGreenwich = CPLDMSToDec( pszPM );
             pszPM = "unnamed";
         }
     }
