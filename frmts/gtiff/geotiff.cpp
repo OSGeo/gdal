@@ -25,6 +25,9 @@
  * The GeoTIFF driver implemenation.
  * 
  * $Log$
+ * Revision 1.4  1999/01/11 15:30:44  warmerda
+ * pixel interleaved case
+ *
  * Revision 1.3  1999/01/05 16:53:38  warmerda
  * Added working creation support.
  *
@@ -146,7 +149,10 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     nStripBufSize = TIFFStripSize( poGDS->hTIFF );
 
-    nStripId = nBlockYOff + (nBand-1) * poGDS->nStripsPerBand;
+    if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
+        nStripId = nBlockYOff + (nBand-1) * poGDS->nStripsPerBand;
+    else
+        nStripId = nBlockYOff;
     
 /* -------------------------------------------------------------------- */
 /*	Handle the case of a strip in a writable file that doesn't	*/
