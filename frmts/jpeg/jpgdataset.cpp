@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.11  2002/06/18 02:50:20  warmerda
+ * fixed multiline string constants
+ *
  * Revision 1.10  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -607,11 +610,11 @@ void GDALRegister_JPEG()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jpg" );
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jpeg" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "
-<CreationOptionList>
-   <Option name='PROGRESSIVE' type='boolean'/>
-   <Option name='QUALITY' type='int' description='good=100, bad=0, default=75'/>
-</CreationOptionList>" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+"<CreationOptionList>\n"
+"   <Option name='PROGRESSIVE' type='boolean'/>\n"
+"   <Option name='QUALITY' type='int' description='good=100, bad=0, default=75'/>\n"
+"</CreationOptionList>\n" );
 
         poDriver->pfnOpen = JPGDataset::Open;
         poDriver->pfnCreateCopy = JPEGCreateCopy;
