@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/12/01 20:00:08  warmerda
+ * Don't depend on S-57 data files not having a definition of the CATD field.
+ *
  * Revision 1.2  1999/11/18 19:01:25  warmerda
  * expanded tabs
  *
@@ -103,9 +106,22 @@ char **S57FileCollector( const char *pszDataset )
 /*      Note that the caller may still open it and fail.                */
 /* -------------------------------------------------------------------- */
     DDFModule   oModule;
+    DDFRecord   *poRecord;
 
-    if( !oModule.Open( pszDataset, TRUE )
-        || oModule.FindFieldDefn( "CATD" ) == NULL
+    if( !oModule.Open(pszDataset) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "The file %s isn't an S-57 data file, or catalog.\n",
+                  pszDataset );
+
+        return NULL;
+    }
+
+    poRecord = oModule.ReadRecord();
+    if( poRecord == NULL )
+        return NULL;
+    
+    if( poRecord->FindField( "CATD" ) == NULL
         || oModule.FindFieldDefn("CATD")->FindSubfieldDefn( "IMPL" ) == NULL )
     {
         papszRetList = CSLAddString( papszRetList, pszDataset );
@@ -117,12 +133,9 @@ char **S57FileCollector( const char *pszDataset )
 /*      IMPL of BIN.  Shouldn't there be a better way of testing        */
 /*      whether a file is a data file or another catalog file?          */
 /* -------------------------------------------------------------------- */
-    DDFRecord   *poRecord;
     char        *pszDir = CPLStrdup( CPLGetPath( pszDataset ) );
     
-    for( poRecord = oModule.ReadRecord();
-         poRecord != NULL;
-         poRecord = oModule.ReadRecord() )
+    for( ; poRecord != NULL; poRecord = oModule.ReadRecord() )
     {
         if( poRecord->FindField( "CATD" ) != NULL
             && EQUAL(poRecord->GetStringSubfield("CATD",0,"IMPL",0),"BIN") )
