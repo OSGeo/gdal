@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/10/22 21:29:24  warmerda
+ * added some debugging statements
+ *
  * Revision 1.14  2001/10/15 15:36:30  warmerda
  * don't default to EPSG authority
  *
@@ -163,6 +166,9 @@ public:
 		OGRLayer		*pLayer;
 		OGRFeatureDefn	*poDefn;
 
+                CPLDebug( "OGR_OLEDB",
+                          "CSFSessionTRSchemaRowset::Execute()." );
+                
 		QueryInterface(IID_IUnknown,(void **) &pIU);
 		poDS = SFGetOGRDataSource(pIU);
 
@@ -305,6 +311,9 @@ public:
 
 		CPROVIDER_TYPERow trDataI,trDataR,trDataS,trDataBlob;
 		
+                CPLDebug( "OGR_OLEDB",
+                          "CSFSessionPTSchemaRowset::Execute()." );
+                
 		lstrcpyW(trDataI.m_szName,A2OLE("Integer"));
 		trDataI.m_nType  = DBTYPE_I4;
 		m_rgRowData.Add(trDataI);
@@ -374,6 +383,9 @@ public CRowsetImpl <CSFSessionSchemaOGISTables,OGISTables_Row, CSFSession>
         OGRLayer		*pLayer;
         OGRFeatureDefn	*poDefn;
 
+        CPLDebug( "OGR_OLEDB",
+                  "CSFSessionSchemaOGISTables::Execute()." );
+                
         QueryInterface(IID_IUnknown,(void **) &pIU);
         poDS = SFGetOGRDataSource(pIU);
 
@@ -449,6 +461,9 @@ public CRowsetImpl<CSFSessionSchemaOGISGeoColumns,OGISGeometry_Row,CSFSession>
             OGRLayer		*pLayer;
             OGRFeatureDefn	*poDefn;
 
+            CPLDebug( "OGR_OLEDB",
+                      "CSFSessionSchemaOGISGeoColumns::Execute()." );
+                
             QueryInterface(IID_IUnknown,(void **) &pIU);
             poDS = SFGetOGRDataSource(pIU);
 
@@ -557,6 +572,9 @@ public CCRRowsetImpl<CSFSessionSchemaSpatRef,OGISSpat_Row,CSFSession>
             OGRDataSource	*poDS;
             OGRLayer		*pLayer;
 
+            CPLDebug( "OGR_OLEDB",
+                      "CSFSessionSchemaSpatRef::Execute()." );
+                
             QueryInterface(IID_IUnknown,(void **) &pIU);
             poDS = SFGetOGRDataSource(pIU);
 
