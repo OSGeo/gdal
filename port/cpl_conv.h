@@ -89,6 +89,20 @@ const char CPL_DLL *CPLFormFilename( const char *pszPath,
                                      const char *pszBasename,
                                      const char *pszExtension );
 
+/* -------------------------------------------------------------------- */
+/*      Find File Function                                              */
+/* -------------------------------------------------------------------- */
+typedef const char *(*CPLFileFinder)(const char *, const char *);
+
+const char    CPL_DLL *CPLFindFile(const char *pszClass, 
+                                   const char *pszBasename);
+const char    CPL_DLL *CPLDefaultFindFile(const char *pszClass, 
+                                          const char *pszBasename);
+void          CPL_DLL CPLPushFileFinder( CPLFileFinder pfnFinder );
+CPLFileFinder CPL_DLL CPLPopFileFinder();
+void          CPL_DLL CPLPushFinderLocation( const char * );
+
+
 CPL_C_END
 
 #endif /* ndef CPL_CONV_H_INCLUDED */
