@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/06/26 00:59:39  warmerda
+ * fixed strcasecmp on WIN32
+ *
  * Revision 1.1  2001/06/19 15:46:30  warmerda
  * New
  *
@@ -40,6 +43,10 @@
 
 #ifndef FALSE
 #  define FALSE 0
+#endif
+
+#ifdef WIN32
+#  define strcasecmp stricmp
 #endif
 
 char	swq_error[1024];
