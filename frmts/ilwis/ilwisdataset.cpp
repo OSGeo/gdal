@@ -197,6 +197,8 @@ void IniFile::Load()
 						value = s.substr(iEqu + 1);
 						state = StoreKey;
 					}
+					else
+						state = ReadFindKey;
 				}
 				break;
 			case StoreKey:
@@ -559,6 +561,14 @@ CPLErr ILWISDataset::SetGeoTransform( double * padfTransform )
     return CE_None;
 }
 
+bool CheckASCII(unsigned char * buf, int size)
+{
+	for (int i = 0; i < size; ++i)
+		if (!isascii(buf[i]))
+			return false;
+
+	return true;
+}
 /************************************************************************/
 /*                       Open()                                         */
 /************************************************************************/
@@ -571,7 +581,14 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 		if( poOpenInfo->fp == NULL)
 			return NULL;
-		
+
+		string sExt = CPLGetExtension( poOpenInfo->pszFilename );
+		if (!EQUAL(sExt.c_str(),"mpr") && !EQUAL(sExt.c_str(),"mpl"))
+			return NULL;
+
+		if (!CheckASCII(poOpenInfo->pabyHeader, poOpenInfo->nHeaderBytes))
+			return NULL;
+
 		string ilwistype = ReadElement("Ilwis", "Type", poOpenInfo->pszFilename);
 		if( ilwistype.length() == 0)
 			return NULL;
