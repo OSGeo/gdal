@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.27 2002/07/30 13:54:12 julien Exp $
+ * $Id: mitab_mapfile.cpp,v 1.28 2002/08/27 17:18:43 warmerda Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.28  2002/08/27 17:18:43  warmerda
+ * improved CPL error testing
+ *
  * Revision 1.27  2002/07/30 13:54:12  julien
  * TABMAPFile::GetFeatureId() now return -1 when there's no geometry. (bug 169)
  *
@@ -1111,7 +1114,7 @@ int   TABMAPFile::PrepareNewObj(int nObjId, GByte nObjType)
         }
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorNo() != 0 && CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;

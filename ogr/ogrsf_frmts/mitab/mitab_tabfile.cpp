@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.49 2002/03/26 01:48:40 daniel Exp $
+ * $Id: mitab_tabfile.cpp,v 1.50 2002/08/27 17:19:22 warmerda Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.50  2002/08/27 17:19:22  warmerda
+ * auto-add FID column if there aren't any columns
+ *
  * Revision 1.49  2002/03/26 01:48:40  daniel
  * Added Multipoint object type (V650)
  *
@@ -366,6 +369,13 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
         m_nVersion = 300;
         m_pszCharset = CPLStrdup("Neutral");
         m_eTableType = TABTableNative;
+
+        /*-------------------------------------------------------------
+         * Do initial setup of feature definition.
+         *------------------------------------------------------------*/
+        char *pszFeatureClassName = TABGetBasename(m_pszFname);
+        m_poDefn = new OGRFeatureDefn(pszFeatureClassName);
+        CPLFree(pszFeatureClassName);
     }
 
 
@@ -955,6 +965,13 @@ int TABFile::WriteTABFile()
                 
             }
         }
+        else
+        {
+            fprintf(fp, "Definition Table\n");
+            fprintf(fp, "  Type NATIVE Charset \"%s\"\n", m_pszCharset);
+            fprintf(fp, "  Fields 1\n");
+            fprintf(fp, "    FID Integer ;\n" );
+        }
 
         VSIFClose(fp);
     }
@@ -1368,14 +1385,14 @@ int TABFile::SetFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
             SetFeatureDefn(poFeature->GetDefnRef(), NULL);
 
         /*-------------------------------------------------------------
-         * Make sure table contains at least one field... this is a
-         * MAPInfo requirement.
+         * Special hack to write out at least one field if none are in 
+         * OGRFeatureDefn.
          *------------------------------------------------------------*/
-        if (m_poDefn == NULL || m_poDefn->GetFieldCount() == 0)
+        if( m_poDATFile->GetNumFields() == 0 )
         {
-            CPLError(CE_Failure, CPLE_IllegalArg,
-                     "MapInfo tables must contain at least 1 column.");
-            return -1;
+            CPLError(CE_Warning, CPLE_IllegalArg,
+                     "MapInfo tables must contain at least 1 column, adding dummy FID column.");
+            m_poDATFile->AddField("FID", TABFInteger, 10, 0 );
         }
 
         nFeatureId = m_nLastFeatureId = 1;
@@ -2217,11 +2234,6 @@ int TABFile::TestCapability( const char * pszCap )
     else 
         return FALSE;
 }
-
-
-
-
-
 
 /**********************************************************************
  *                   TABFile::Dump()
