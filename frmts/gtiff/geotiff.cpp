@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2000/06/26 19:40:28  warmerda
+ * Various fixes for ::Create(), including flushing the directory to disk at
+ * end of create so that overviews can be safely added.
+ *
  * Revision 1.29  2000/06/19 18:48:29  warmerda
  * added IBuildOverviews() implementation on GTiffDataset
  *
@@ -1231,6 +1235,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->eAccess = GA_Update;
     poDS->bNewDataset = TRUE;
     poDS->pszProjection = CPLStrdup("");
+    poDS->nSamplesPerPixel = nBands;
         
 /* -------------------------------------------------------------------- */
 /*      Setup some standard flags.                                      */
@@ -1243,15 +1248,14 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->nBitsPerSample = GDALGetDataTypeSize( eType );
 
     if( eType == GDT_Int16 || eType == GDT_Int32 )
-    {
-        TIFFSetField( hTIFF, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_INT );
-    }
+        poDS->nSampleFormat = SAMPLEFORMAT_INT;
     else if( eType == GDT_Float32 || eType == GDT_Float64 )
-    {
-        TIFFSetField( hTIFF, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP );
-    }
+        poDS->nSampleFormat = SAMPLEFORMAT_IEEEFP;
+    else
+        poDS->nSampleFormat = SAMPLEFORMAT_UINT;
 
-    TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, nBands );
+    TIFFSetField( hTIFF, TIFFTAG_SAMPLEFORMAT, poDS->nSampleFormat );
+    TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, poDS->nSamplesPerPixel );
 
     if( nBands > 1 )
     {
@@ -1312,6 +1316,12 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     {
         poDS->SetBand( iBand+1, new GTiffRasterBand( poDS, iBand+1 ) );
     }
+
+    TIFFWriteCheck( hTIFF, bTiled, "GTiffDataset::Create" );
+    TIFFWriteDirectory( hTIFF );
+
+    TIFFSetDirectory( hTIFF, 0 );
+    poDS->nDirOffset = TIFFCurrentDirOffset( hTIFF );
 
     return( poDS );
 }
