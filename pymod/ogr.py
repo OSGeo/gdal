@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.36  2005/01/22 06:14:57  fwarmerdam
+# added thisown support for geometry and feature
+#
 # Revision 1.35  2005/01/03 22:19:09  fwarmerdam
 # added OGRLayer::SetSpatialFilterRect()
 #
@@ -437,7 +440,7 @@ class Layer:
         if geom_o is None or geom_o == 'NULL':
             return None
         else:
-            return Geometry( _obj = geom_o )
+            return Geometry( _obj = geom_o, thisown = 0 )
 
     def SetAttributeFilter( self, where_clause = None ):
         filter = gdal.ToNULLableString( where_clause )
@@ -456,14 +459,18 @@ class Layer:
         if f_o is None or f_o == 'NULL':
             return None
         else:
-            return Feature( obj = f_o )
+            newfeat = Feature( obj = f_o )
+            newfeat.thisown = 1
+            return newfeat
 
     def GetNextFeature( self ):
         f_o = _gdal.OGR_L_GetNextFeature( self._o )
         if f_o is None or f_o == 'NULL':
             return None
         else:
-            return Feature( obj = f_o )
+            newfeat = Feature( obj = f_o )
+            newfeat.thisown = 1
+            return newfeat
 
     def SetFeature( self, feat ):
         return _gdal.OGR_L_SetFeature( self._o, feat._o )
@@ -534,13 +541,20 @@ class Feature:
             raise ValueError, 'ogr.Feature() cannot receive obj and feature_def.'
         if obj is not None:
             self._o = obj
+            self.thisown = 0
         else:
             self._o = _gdal.OGR_F_Create( feature_def._o )
+            self.thisown = 1
 
+    def __del__(self):
+        if self.thisown:
+            self.Destroy()
+            
     def Destroy( self ):
-        if self._o is not None:
+        if self._o is not None and self.thisown:
             _gdal.OGR_F_Destroy( self._o )
         self._o = None
+        self.thisown = 0
 
     def GetDefnRef( self ):
         return FeatureDefn( obj = _gdal.OGR_F_GetDefnRef( self._o ) )
@@ -555,6 +569,9 @@ class Feature:
         if geom is None:
             return _gdal.OGR_F_SetGeometryDirectly( self._o, None )
         else:
+            if not geom.thisown:
+                print 'SetGeometryDirectly() with unowned geometry!'
+            geom.thisown = 0
             return _gdal.OGR_F_SetGeometryDirectly( self._o, geom._o )
 
     def GetGeometryRef( self ):
@@ -563,10 +580,12 @@ class Feature:
         if geom_o is None or geom_o == 'NULL':
             return None
         else:
-            return Geometry( obj = geom_o )
+            return Geometry( obj = geom_o, thisown = 0 )
 
     def Clone( self ):
-        return Feature( obj = _gdal.OGR_F_Clone( self._o ) )
+        newfeat = Feature( obj = _gdal.OGR_F_Clone( self._o ) )
+        newfeat.thisown = 1
+        return newfeat
 
     def Equal( self, other_geom ):
         return _gdal.OGR_F_Equal( self._o, other_geom._o )
@@ -738,7 +757,9 @@ def CreateGeometryFromWkb( bin_string, srs = None ):
         srs_o = ''
     _obj = _gdal.OGR_G_CreateFromWkb( bin_string, srs_o )
     if _obj is not None and _obj != 'NULL':
-        return Geometry( obj = _obj )
+        result = Geometry( obj = _obj )
+        result.thisown = 1
+        return result
     elif len(_gdal.CPLGetLastErrorMsg()) == 0:
         raise ValueError, 'Failed to parse WKB in ogr.CreateGeometryFromWkb()'
     else:
@@ -751,7 +772,9 @@ def CreateGeometryFromWkt( string, srs = None ):
         srs_o = ''
     _obj = _gdal.OGR_G_CreateFromWkt( string, srs_o )
     if _obj is not None and _obj != 'NULL':
-        return Geometry( obj = _obj )
+        result = Geometry( obj = _obj )
+        result.thisown = 1
+        return result
     elif len(_gdal.CPLGetLastErrorMsg()) == 0:
         raise ValueError, 'Failed to parse WKT in ogr.CreateGeometryFromWkt()'
     else:
@@ -760,24 +783,39 @@ def CreateGeometryFromWkt( string, srs = None ):
 def CreateGeometryFromGML( string ):
     _obj = _gdal.OGR_G_CreateFromGML( string )
     if _obj is not None and _obj != 'NULL':
-        return Geometry( obj = _obj )
+        result = Geometry( obj = _obj )
+        result.thisown = 1
+        return result
     elif len(_gdal.CPLGetLastErrorMsg()) == 0:
         raise ValueError, 'Failed to parse GML in ogr.CreateGeometryFromGML()'
     else:
         raise ValueError, _gdal.CPLGetLastErrorMsg()
 
 class Geometry:
-    def __init__(self, type=None, obj=None, wkt=None):
+    def __init__(self, type=None, obj=None, wkt=None, thisown = None):
         if obj is not None:
             self._o = obj
+            if thisown is not None:
+                self.thisown = thisown
+            else:
+                self.thisown = 0
         elif type is not None:
             self._o = _gdal.OGR_G_CreateGeometry( type )
+            self.thisown = 1
         else:
             raise ValueError, 'OGRGeometry may not be directly instantiated.'
 
+    def __del__(self):
+        if self.thisown:
+            self.Destroy()
+            
     def Destroy( self ):
+        if not self.thisown:
+            print 'Destroy invoked on unowned geometry.' 
+            
         _gdal.OGR_G_DestroyGeometry( self._o )
         self._o = None
+        self.thisown = 0
 
     def ExportToWkb( self, byte_order = None ):
         if byte_order is None:
@@ -802,7 +840,7 @@ class Geometry:
     def Clone( self ):
         _obj = _gdal.OGR_G_Clone( self._o )
         if _obj is not None:
-            return Geometry( obj = _obj )
+            return Geometry( obj = _obj, thisown = 1 )
         else:
             return None
 
@@ -820,7 +858,6 @@ class Geometry:
                         _gdal.ptrvalue( extents, 2 ),
                         _gdal.ptrvalue( extents, 3 ) )
         _gdal.ptrfree( extents )
-        
         return ret_extents
 
     def FlattenTo2D( self ):
@@ -918,54 +955,57 @@ class Geometry:
         return _gdal.OGR_G_AddGeometry( self._o, subgeom._o )
 
     def AddGeometryDirectly( self, subgeom ):
+        if not subgeom.thisown:
+            print 'AddGeometryDirectly() with unowned geometry!'
+        subgeom.thisown = 0
         return _gdal.OGR_G_AddGeometryDirectly( self._o, subgeom._o )
 
     def GetBoundary( self ):
         geom = _gdal.OGR_G_GetBoundary( self._o )
         if geom is not None and geom != 'NULL':
-            return Geometry( obj = geom )
+            return Geometry( obj = geom, thisown = 1 )
         else:
             return None
         
     def ConvexHull( self ):
         geom = _gdal.OGR_G_ConvexHull( self._o )
         if geom is not None and geom != 'NULL':
-            return Geometry( obj = geom )
+            return Geometry( obj = geom, thisown = 1 )
         else:
             return None
         
     def Buffer( self, distance, quadsects = 30 ):
         geom = _gdal.OGR_G_Buffer( self._o, distance, quadsects )
         if geom is not None and geom != 'NULL':
-            return Geometry( obj = geom )
+            return Geometry( obj = geom, thisown = 1 )
         else:
             return None
         
     def Intersection( self, other ):
         geom = _gdal.OGR_G_Intersection( self._o, other._o )
         if geom is not None and geom != 'NULL':
-            return Geometry( obj = geom )
+            return Geometry( obj = geom, thisown = 1 )
         else:
             return None
         
     def Union( self, other ):
         geom = _gdal.OGR_G_Union( self._o, other._o )
         if geom is not None and geom != 'NULL':
-            return Geometry( obj = geom )
+            return Geometry( obj = geom, thisown = 1 )
         else:
             return None
         
     def Difference( self, other ):
         geom = _gdal.OGR_G_Difference( self._o, other._o )
         if geom is not None and geom != 'NULL':
-            return Geometry( obj = geom )
+            return Geometry( obj = geom, thisown = 1 )
         else:
             return None
         
     def SymmetricDifference( self, other ):
         geom = _gdal.OGR_G_SymmetricDifference( self._o, other._o )
         if geom is not None and geom != 'NULL':
-            return Geometry( obj = geom )
+            return Geometry( obj = geom, thisown = 1 )
         else:
             return None
         
@@ -974,6 +1014,6 @@ def BuildPolygonFromEdges( edges, bBestEffort=0, bAutoClose=0, Tolerance=0 ):
     _o = _gdal.OGRBuildPolygonFromEdges( edges._o, bBestEffort, bAutoClose,
                                          Tolerance )
     if _o is not None and _o != 'NULL':
-        return Geometry( obj = _o )
+        return Geometry( obj = _o, thisown = 1 )
     else:
         return None;
