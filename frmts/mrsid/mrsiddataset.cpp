@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/09/09 18:13:27  dron
+ * Fixed bug when getting NoData value in MrSIDRasterBand().
+ *
  * Revision 1.15  2004/08/29 10:11:43  dron
  * Implement caching for the case of sequental block reading.
  *
@@ -1341,7 +1344,7 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDS, int nBand )
      const LTIPixel *poNDPixel = poDS->poImageReader->getNoDataPixel();
      if ( poNDPixel )
      {
-	 dfNoDataValue = poNDPixel->getSampleValueFloat32( nBand );
+	 dfNoDataValue = poNDPixel->getSampleValueFloat32( nBand - 1 );
 	 bNoDataSet = TRUE;
      }
      else
