@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/05/22 19:14:51  warmerda
+ * Fixed possible problem with writing one byte past end of
+ * pszDest in ExpandFormat() as reported by Ben Discoe.
+ *
  * Revision 1.9  2003/02/06 03:21:04  warmerda
  * Modified ExpandFormat() to dynamically allocate the target buffer. It was
  * overrunning the 400 character szDest buffer on some files, such as
@@ -421,7 +425,7 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
             char       *pszContents = ExtractSubstring( pszSrc+iSrc );
             char       *pszExpandedContents = ExpandFormat( pszContents );
 
-            if( (int) (strlen(pszExpandedContents) + strlen(pszDest))
+            if( (int) (strlen(pszExpandedContents) + strlen(pszDest) + 1)
                 > nDestMax )
             {
                 nDestMax = 2 * (strlen(pszExpandedContents) + strlen(pszDest));
