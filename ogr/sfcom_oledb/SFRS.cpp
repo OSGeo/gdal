@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2001/08/17 14:25:22  warmerda
+ * added spatial and attribute query support
+ *
  * Revision 1.21  2001/06/01 18:05:06  warmerda
  * added more debugging, add resetreading on Initialize
  *
@@ -105,7 +108,16 @@
 
 void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... );
 
+// Define the following to get detailed debugging information from the stream
+// class.
+
 #undef SFISTREAM_DEBUG
+
+// These global variables are a hack to transmit spatial query info from
+// the CSFCommand::Execute() method to the CSFRowset::Execute() method.
+
+static OGRGeometry      *poGeometry = NULL;
+static DBPROPOGISENUM   eFilterOp = DBPROP_OGIS_ENVELOPE_INTERSECTS;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -510,9 +522,6 @@ BYTE &CVirtualArray::operator[](int iIndex)
         return *mBuffer;
     }
 
-    CPLDebug( "OGR_OLEDB", "Operate on feature %d\n", 
-              poFeature->GetFID() );
-
     // Fill in the FID
     int nOffset = 0;
 
@@ -636,8 +645,222 @@ HRESULT CSFCommand::Execute(IUnknown * pUnkOuter, REFIID riid,
                             IUnknown ** ppRowset)
 {
     CSFRowset* pRowset;
-    return CreateRowset(pUnkOuter, riid, pParams, pcRowsAffected, ppRowset, 
-                        pRowset);
+    HRESULT      hr;
+
+    if (pParams != NULL && pParams->pData != NULL)
+    {
+        hr = ExtractSpatialQuery( pParams );
+        if( hr != S_OK )
+            return hr;
+    }
+    hr = CreateRowset(pUnkOuter, riid, pParams, pcRowsAffected, ppRowset, 
+                      pRowset);
+
+    // clean up spatial filter geometry if still hanging around.
+    if( poGeometry != NULL )
+    {
+        delete poGeometry;
+        poGeometry = NULL;
+    }
+    
+    return hr;
+}
+
+/************************************************************************/
+/*                        ExtractSpatialQuery()                         */
+/************************************************************************/
+
+HRESULT CSFCommand::ExtractSpatialQuery( DBPARAMS *pParams )
+
+{
+    HRESULT  hr;
+    VARIANT   *pVariant = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      First we dump all parameter values as best we can to assist     */
+/*      in debugging if they are inappropriate.                         */
+/* -------------------------------------------------------------------- */
+    if( pParams->cParamSets != 1 )
+    {
+        CPLDebug( "OGR_OLEDB", "DBPARAMS->cParamSets=%d, this is a problem!\n",
+                  pParams->cParamSets );
+        return SFReportError(DB_E_ERRORSINCOMMAND,IID_ICommand,0,
+                             "Improper Parameters.");
+    }
+
+    ULONG   cBindings;
+    DBACCESSORFLAGS dwAccessorFlags;
+    DBBINDING *rgBindings;
+    int       iBinding;
+
+    hr = GetBindings( pParams->hAccessor, &dwAccessorFlags, &cBindings, 
+                      &rgBindings );
+    
+    CPLDebug( "OGR_OLEDB", "%d parameter bindings found.", cBindings );
+
+    for( iBinding = 0; iBinding < cBindings; iBinding++ )
+    {
+        CPLDebug( "OGR_OLEDB", 
+                  "iOrdinal=%d,obValue=%d,obLength=%d,cbMaxLen=%d,wType=%d",
+                  rgBindings[iBinding].iOrdinal,
+                  rgBindings[iBinding].obValue,
+                  rgBindings[iBinding].obLength,
+                  rgBindings[iBinding].cbMaxLen,
+                  rgBindings[iBinding].wType );
+
+        if( rgBindings[iBinding].dwPart & DBPART_LENGTH )
+            CPLDebug( "OGR_OLEDB", "Length=%d", 
+                      *((int *) (((unsigned char *) pParams->pData) 
+                                 + rgBindings[iBinding].obLength)) );
+            
+        if( rgBindings[iBinding].wType == DBTYPE_WSTR )
+        {
+            CPLDebug( "OGR_OLEDB", "WSTR=%S", 
+                      ((unsigned char *) pParams->pData) 
+                      + rgBindings[iBinding].obValue );
+        }
+        else if( rgBindings[iBinding].wType == DBTYPE_UI4 )
+        {
+            CPLDebug( "OGR_OLEDB", "UI4=%d", 
+                      *((int *) (((unsigned char *) pParams->pData) 
+                                 + rgBindings[iBinding].obValue)) );
+        }
+        else if( rgBindings[iBinding].wType == DBTYPE_VARIANT )
+        {
+            pVariant = (VARIANT *) (((unsigned char *) pParams->pData) 
+                                    + rgBindings[iBinding].obValue);
+
+            CPLDebug( "OGR_OLEDB", "VARIANT.vt=%d", pVariant->vt );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Does the passed parameters match with our expectations for      */
+/*      spatial query parameters?                                       */
+/* -------------------------------------------------------------------- */
+    if( cBindings != 3 
+        || rgBindings[0].wType != DBTYPE_VARIANT
+        || rgBindings[1].wType != DBTYPE_UI4
+        || rgBindings[2].wType != DBTYPE_WSTR )
+    {
+        CPLDebug( "OGR_OLEDB", 
+                  "Parameter types inappropriate in ExtractSpatialQuery()\n" );
+        return S_OK;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Extract the geometry.                                           */
+/* -------------------------------------------------------------------- */
+    pVariant = (VARIANT *) (((unsigned char *) pParams->pData) 
+                            + rgBindings[0].obValue);
+
+    if( rgBindings[0].wType == DBTYPE_BYTES )
+    {
+        int      nLength;
+        OGRErr   eErr;
+
+        if( rgBindings[0].dwPart & DBPART_LENGTH )
+            nLength = *((int *) (((unsigned char *) pParams->pData) 
+                                 + rgBindings[0].obLength));
+        else
+            nLength = rgBindings[0].cbMaxLen;
+
+        eErr = OGRGeometryFactory::createFromWkb(                       
+            ((unsigned char *) pParams->pData) + rgBindings[0].obValue,
+            NULL, &poGeometry, nLength );
+        if( eErr != OGRERR_NONE )
+            CPLDebug( "OGR_OLEDB", 
+                      "Corrupt DBTYPE_BYTES WKB in ExtractSpatialQuery()." );
+    }
+
+    else if( rgBindings[0].wType == DBTYPE_VARIANT 
+             && pVariant->vt == (VT_UI1|VT_ARRAY) )
+    {
+        int      nLength;
+        SAFEARRAY *pArray;
+        unsigned char *pRawData;
+        long  UBound, LBound;
+
+        pArray = pVariant->parray;
+
+        if( SafeArrayGetDim(pArray) != 1 )
+            return S_OK;
+        
+        SafeArrayAccessData( pArray, (void **) &pRawData );
+        SafeArrayGetUBound( pArray, 1, &UBound );
+        SafeArrayGetLBound( pArray, 1, &LBound );
+        nLength = UBound - LBound + 1;
+
+        OGRGeometryFactory::createFromWkb( pRawData, NULL, &poGeometry, 
+                                           nLength );
+        SafeArrayUnaccessData( pArray );
+    }
+
+    else if( rgBindings[0].wType == DBTYPE_VARIANT 
+             && pVariant->vt == VT_UNKNOWN )
+    {
+        OGRErr   eErr;
+        ISequentialStream *  pIStream = NULL;
+        IUnknown *pIUnknown;
+        unsigned char *pRawData = NULL;
+        int       nSize = 0;
+
+        pIUnknown = pVariant->punkVal;
+        if( pIUnknown != NULL )
+        {
+            hr = pIUnknown->QueryInterface( IID_ISequentialStream,
+                                            (void**)&pIStream );
+            if( FAILED(hr) )
+                pIStream = NULL;
+        }
+         
+        if( pIStream != NULL )
+        {
+            BYTE      abyChunk[32];
+            ULONG     nBytesRead;
+    
+            do 
+            {
+                pIStream->Read( abyChunk, sizeof(abyChunk), &nBytesRead );
+                if( nBytesRead > 0 )
+                {
+                    nSize += nBytesRead;
+                    pRawData = (BYTE *) 
+                        CoTaskMemRealloc(pRawData, nSize);
+
+                    memcpy( pRawData + nSize - nBytesRead, 
+                            abyChunk, nBytesRead );
+                }
+            }
+            while( nBytesRead == sizeof(abyChunk) );
+    
+            pIStream->Release();
+        }
+
+        if( nSize > 0 )
+            eErr = 
+                OGRGeometryFactory::createFromWkb( pRawData, NULL, &poGeometry,
+                                                   nSize );
+        if( nSize == 0 || eErr != OGRERR_NONE )
+            CPLDebug("OGR_OLEDB", 
+                     "Corrupt IUNKNOWN VARIANT WKB in ExtractSpatialQuery().");
+    }
+
+    else
+    {
+        CPLDebug( "OGR_OLEDB", 
+                  "Unsupported geometry column type %d in ExtractSpatialQuery()." );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Extract the operation.                                          */
+/* -------------------------------------------------------------------- */
+
+    eFilterOp = (DBPROPOGISENUM) 
+        *((int *) (((unsigned char *) pParams->pData) 
+                   + rgBindings[1].obValue));
+
+    return S_OK;
 }
 
 /************************************************************************/
@@ -652,6 +875,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     OGRDataSource *poDS;
     char	*pszCommand;
     char        *pszLayerName;
+    char        *pszWHERE = NULL;
     IUnknown    *pIUnknown;
     QueryInterface(IID_IUnknown,(void **) &pIUnknown);
     poDS = SFGetOGRDataSource(pIUnknown);
@@ -685,9 +909,29 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
                     iCmdOffset++;
                 
                 pszLayerName = CPLStrdup(pszCommand+iCmdOffset);
+                for( int iLN = 0; pszLayerName[iLN] != '\0'; iLN++ )
+                {
+                    if( pszLayerName[iLN] == ' ' )
+                    {
+                        pszLayerName[iLN] = '\0';
+                        break;
+                    }
+                }
                 CPLDebug( "OGR_OLEDB", 
                           "Parsed layer name %s out of SQL statement.",
                           pszLayerName );
+            }
+
+            else if( EQUALN(pszCommand+iCmdOffset,"WHERE ",6) )
+            {
+                iCmdOffset += 6;
+                while( pszCommand[iCmdOffset] == ' ' )
+                    iCmdOffset++;
+
+                pszWHERE = CPLStrdup( pszCommand + iCmdOffset );
+                CPLDebug( "OGR_OLEDB", 
+                          "Parsed WHERE clause `%s' out of SQL Statement.", 
+                          pszWHERE );
                 break;
             }
         }
@@ -703,20 +947,6 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
                          "Unable to extract layer name from SQL statement.");
     }
 
-    // If there is a parameter then use it as a spatial filter.
-    if (pParams != NULL && pParams->pData != NULL)
-    {
-        return SFReportError(DB_E_ERRORSINCOMMAND,IID_ICommand,0,
-                             "Improper Parameter cannot convert from WKB");
-
-        if (OGRGeometryFactory::createFromWkb((unsigned char *) pParams->pData,
-                                              NULL, &pGeomFilter))
-        {
-            return SFReportError(DB_E_ERRORSINCOMMAND,IID_ICommand,0,
-                                 "Improper Parameter cannot convert from WKB");
-        }
-    }
-	
     // Now check to see which layer is specified.
     int i;
 	
@@ -746,9 +976,18 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     m_iLayer = i;
     
     // Now that we have a layer set a filter if necessary.
-    if (pGeomFilter)
+    if (poGeometry)
     {
-        pLayer->SetSpatialFilter(pGeomFilter);
+        pLayer->SetSpatialFilter(poGeometry);
+    }
+    else
+    { 
+        pLayer->SetSpatialFilter(NULL);
+    }
+
+    if( pszWHERE != NULL )
+    {
+        pLayer->SetAttributeFilter( pszWHERE );
     }
 	
     // Get count
