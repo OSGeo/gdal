@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.30  2002/05/10 02:58:58  warmerda
+# added GDALGCPsToGeoTransform
+#
 # Revision 1.29  2002/01/18 05:46:52  warmerda
 # added support for writing arrays to a GDAL band
 #
@@ -227,6 +230,14 @@ class GCP:
               % (self.Id, self.GCPPixel, self.GCPLine,
                  self.GCPX, self.GCPY, self.GCPZ, self.Info)
         return str
+
+def GCPsToGeoTransform( gcp_list, approx_ok = 1 ):
+        tuple_list = []
+        for gcp in gcp_list:
+            tuple_list.append( (gcp.Id, gcp.Info, gcp.GCPPixel, gcp.GCPLine,
+                                gcp.GCPX, gcp.GCPY, gcp.GCPZ) )
+
+        return _gdal.GDALGCPsToGeoTransform( tuple_list, approx_ok )
         
 class Driver:
     
