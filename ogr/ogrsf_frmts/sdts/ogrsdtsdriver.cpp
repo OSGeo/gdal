@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/01/19 21:14:22  warmerda
+ * expanded tabs
+ *
  * Revision 1.2  1999/11/04 21:12:31  warmerda
  * added TestCapability() support
  *
@@ -75,7 +78,7 @@ const char *OGRSDTSDriver::GetName()
 OGRDataSource *OGRSDTSDriver::Open( const char * pszFilename, int bUpdate )
 
 {
-    OGRSDTSDataSource	*poDS = new OGRSDTSDataSource();
+    OGRSDTSDataSource   *poDS = new OGRSDTSDataSource();
 
     if( !poDS->Open( pszFilename, TRUE ) )
     {

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/01/19 21:15:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.2  2000/01/13 05:18:11  warmerda
  * added support for multiple versions
  *
@@ -47,7 +50,7 @@ TigerPolygon::TigerPolygon( OGRTigerDataSource * poDSIn,
                                   const char * pszPrototypeModule )
 
 {
-    OGRFieldDefn	oField("",OFTInteger);
+    OGRFieldDefn        oField("",OFTInteger);
 
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "Polygon" );
@@ -222,7 +225,7 @@ int TigerPolygon::SetModule( const char * pszModule )
 
         if( pszModule )
         {
-            char	*pszFilename;
+            char        *pszFilename;
         
             pszFilename = poDS->BuildFilename( pszModule, "S" );
 
@@ -242,7 +245,7 @@ int TigerPolygon::SetModule( const char * pszModule )
 OGRFeature *TigerPolygon::GetFeature( int nRecordId )
 
 {
-    char	achRecord[98];
+    char        achRecord[98];
 
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
@@ -277,7 +280,7 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
 /*      Set fields.                                                     */
 /* -------------------------------------------------------------------- */
-    OGRFeature	*poFeature = new OGRFeature( poFeatureDefn );
+    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
     SetField( poFeature, "STATE", achRecord, 6, 7 );
     SetField( poFeature, "COUNTY", achRecord, 8, 10 );
@@ -302,12 +305,12 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
     SetField( poFeature, "AIR90", achRecord, 95, 98 );
 
 /* -------------------------------------------------------------------- */
-/*      Read RTS record, and apply fields.				*/
+/*      Read RTS record, and apply fields.                              */
 /* -------------------------------------------------------------------- */
     if( fpRTS != NULL )
     {
-        char	achRTSRec[120];
-        int	nRTSRecLen = 120 + nRecordLength - 98;
+        char    achRTSRec[120];
+        int     nRTSRecLen = 120 + nRecordLength - 98;
 
         if( VSIFSeek( fpRTS, nRecordId * nRTSRecLen, SEEK_SET ) != 0 )
         {

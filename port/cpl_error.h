@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/01/19 21:16:41  warmerda
+ * expanded tabs
+ *
  * Revision 1.14  2000/11/30 17:30:10  warmerda
  * added CPLGetLastErrorType
  *
@@ -129,15 +132,15 @@ CPL_C_END
 /*      Well known error codes.                                         */
 /* ==================================================================== */
 
-#define CPLE_None			0
-#define CPLE_AppDefined			1
-#define CPLE_OutOfMemory		2
-#define CPLE_FileIO			3
-#define CPLE_OpenFailed			4
-#define CPLE_IllegalArg			5
-#define CPLE_NotSupported		6
-#define CPLE_AssertionFailed		7
-#define CPLE_NoWriteAccess		8
+#define CPLE_None                       0
+#define CPLE_AppDefined                 1
+#define CPLE_OutOfMemory                2
+#define CPLE_FileIO                     3
+#define CPLE_OpenFailed                 4
+#define CPLE_IllegalArg                 5
+#define CPLE_NotSupported               6
+#define CPLE_AssertionFailed            7
+#define CPLE_NoWriteAccess              8
 #define CPLE_UserInterrupt              9
 
 /* 100 - 299 reserved for GDAL */

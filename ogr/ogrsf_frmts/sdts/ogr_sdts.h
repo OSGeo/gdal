@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/01/19 21:14:22  warmerda
+ * expanded tabs
+ *
  * Revision 1.3  2000/02/20 21:17:56  warmerda
  * added projection support
  *
@@ -58,32 +61,32 @@ class OGRSDTSDataSource;
 class OGRSDTSLayer : public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
-    OGRGeometry	       *poFilterGeom;
+    OGRGeometry        *poFilterGeom;
 
     SDTSTransfer       *poTransfer;
-    int			iLayer;
+    int                 iLayer;
     SDTSIndexedReader  *poReader;
 
     OGRSDTSDataSource  *poDS;
 
-    OGRFeature	       *GetNextUnfilteredFeature();
+    OGRFeature         *GetNextUnfilteredFeature();
 
-    void		BuildPolygons();
-    int			bPolygonsBuilt;
+    void                BuildPolygons();
+    int                 bPolygonsBuilt;
     
   public:
-    			OGRSDTSLayer( SDTSTransfer *, int, OGRSDTSDataSource*);
-    			~OGRSDTSLayer();
+                        OGRSDTSLayer( SDTSTransfer *, int, OGRSDTSDataSource*);
+                        ~OGRSDTSLayer();
 
-    OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
-    void		SetSpatialFilter( OGRGeometry * );
+    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
+    void                SetSpatialFilter( OGRGeometry * );
 
-    void		ResetReading();
-    OGRFeature *	GetNextFeature();
+    void                ResetReading();
+    OGRFeature *        GetNextFeature();
 
 //    OGRFeature         *GetFeature( long nFeatureId );
     
-    OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
 //    int                 GetFeatureCount( int );
 
@@ -98,23 +101,23 @@ class OGRSDTSLayer : public OGRLayer
 
 class OGRSDTSDataSource : public OGRDataSource
 {
-    SDTSTransfer	*poTransfer;
-    char		*pszName;
+    SDTSTransfer        *poTransfer;
+    char                *pszName;
 
-    int			nLayers;
-    OGRSDTSLayer	**papoLayers;
+    int                 nLayers;
+    OGRSDTSLayer        **papoLayers;
 
     OGRSpatialReference *poSRS;
     
   public:
-    			OGRSDTSDataSource();
-    			~OGRSDTSDataSource();
+                        OGRSDTSDataSource();
+                        ~OGRSDTSDataSource();
 
-    int			Open( const char * pszFilename, int bTestOpen );
+    int                 Open( const char * pszFilename, int bTestOpen );
     
-    const char	        *GetName() { return pszName; }
-    int			GetLayerCount() { return nLayers; }
-    OGRLayer		*GetLayer( int );
+    const char          *GetName() { return pszName; }
+    int                 GetLayerCount() { return nLayers; }
+    OGRLayer            *GetLayer( int );
     int                 TestCapability( const char * );
 
     OGRSpatialReference *GetSpatialRef() { return poSRS; }
@@ -127,7 +130,7 @@ class OGRSDTSDataSource : public OGRDataSource
 class OGRSDTSDriver : public OGRSFDriver
 {
   public:
-    		~OGRSDTSDriver();
+                ~OGRSDTSDriver();
                 
     const char *GetName();
     OGRDataSource *Open( const char *, int );

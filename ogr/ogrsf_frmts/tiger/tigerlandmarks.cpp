@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/01/19 21:15:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.3  2000/01/13 05:18:11  warmerda
  * added support for multiple versions
  *
@@ -50,7 +53,7 @@ TigerLandmarks::TigerLandmarks( OGRTigerDataSource * poDSIn,
                                   const char * pszPrototypeModule )
 
 {
-    OGRFieldDefn	oField("",OFTInteger);
+    OGRFieldDefn        oField("",OFTInteger);
 
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "Landmarks" );
@@ -112,7 +115,7 @@ int TigerLandmarks::SetModule( const char * pszModule )
 OGRFeature *TigerLandmarks::GetFeature( int nRecordId )
 
 {
-    char	achRecord[74];
+    char        achRecord[74];
 
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
@@ -147,7 +150,7 @@ OGRFeature *TigerLandmarks::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
 /*      Set fields.                                                     */
 /* -------------------------------------------------------------------- */
-    OGRFeature	*poFeature = new OGRFeature( poFeatureDefn );
+    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
     SetField( poFeature, "STATE", achRecord, 6, 7 );
     SetField( poFeature, "COUNTY", achRecord, 8, 10 );
@@ -159,7 +162,7 @@ OGRFeature *TigerLandmarks::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
 /*      Set geometry                                                    */
 /* -------------------------------------------------------------------- */
-    double	dfX, dfY;
+    double      dfX, dfY;
 
     dfX = atoi(GetField(achRecord, 55, 64)) / 1000000.0;
     dfY = atoi(GetField(achRecord, 65, 73)) / 1000000.0;

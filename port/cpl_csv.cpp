@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/01/19 21:16:41  warmerda
+ * expanded tabs
+ *
  * Revision 1.1  2000/10/06 15:20:45  warmerda
  * New
  *
@@ -49,15 +52,15 @@
 /*      in the future.                                                  */
 /* ==================================================================== */
 typedef struct ctb {
-    FILE	*fp;
+    FILE        *fp;
 
     struct ctb *psNext;
 
-    char	*pszFilename;
+    char        *pszFilename;
 
-    char	**papszFieldNames;
+    char        **papszFieldNames;
 
-    char	**papszRecFields;
+    char        **papszRecFields;
 } CSVTable;
 
 static CSVTable *psCSVTableList = NULL;
@@ -76,8 +79,8 @@ static CSVTable *psCSVTableList = NULL;
 static CSVTable *CSVAccess( const char * pszFilename )
 
 {
-    CSVTable	*psTable;
-    FILE	*fp;
+    CSVTable    *psTable;
+    FILE        *fp;
 
 /* -------------------------------------------------------------------- */
 /*      Is the table already in the list.                               */
@@ -129,7 +132,7 @@ static CSVTable *CSVAccess( const char * pszFilename )
 void CSVDeaccess( const char * pszFilename )
 
 {
-    CSVTable	*psLast, *psTable;
+    CSVTable    *psLast, *psTable;
     
 /* -------------------------------------------------------------------- */
 /*      A NULL means deaccess all tables.                               */
@@ -186,9 +189,9 @@ void CSVDeaccess( const char * pszFilename )
 char **CSVReadParseLine( FILE * fp )
 
 {
-    const char	*pszLine;
-    char	*pszWorkLine;
-    char	**papszReturn;
+    const char  *pszLine;
+    char        *pszWorkLine;
+    char        **papszReturn;
 
     CPLAssert( fp != NULL );
     if( fp == NULL )
@@ -213,7 +216,7 @@ char **CSVReadParseLine( FILE * fp )
 
     while( TRUE )
     {
-        int		i, nCount = 0;
+        int             i, nCount = 0;
 
         for( i = 0; pszWorkLine[i] != '\0'; i++ )
         {
@@ -281,8 +284,8 @@ char **CSVScanLines( FILE *fp, int iKeyField, const char * pszValue,
                      CSVCompareCriteria eCriteria )
 
 {
-    char	**papszFields = NULL;
-    int		bSelected = FALSE, nTestValue;
+    char        **papszFields = NULL;
+    int         bSelected = FALSE, nTestValue;
 
     CPLAssert( pszValue != NULL );
     CPLAssert( iKeyField >= 0 );
@@ -331,7 +334,7 @@ char **CSVScanFile( const char * pszFilename, int iKeyField,
                     const char * pszValue, CSVCompareCriteria eCriteria )
 
 {
-    CSVTable	*psTable;
+    CSVTable    *psTable;
 
 /* -------------------------------------------------------------------- */
 /*      Get access to the table.                                        */
@@ -346,8 +349,8 @@ char **CSVScanFile( const char * pszFilename, int iKeyField,
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*	Does the current record match the criteria?  If so, just	*/
-/*	return it again. 						*/
+/*      Does the current record match the criteria?  If so, just        */
+/*      return it again.                                                */
 /* -------------------------------------------------------------------- */
     if( iKeyField >= 0
         && iKeyField < CSLCount(psTable->papszRecFields)
@@ -361,7 +364,7 @@ char **CSVScanFile( const char * pszFilename, int iKeyField,
 /*      record'' in our structure with the one that is found.           */
 /* -------------------------------------------------------------------- */
     VSIRewind( psTable->fp );
-    CPLReadLine( psTable->fp );		/* throw away the header line */
+    CPLReadLine( psTable->fp );         /* throw away the header line */
     
     CSLDestroy( psTable->papszRecFields );
     psTable->papszRecFields =
@@ -384,8 +387,8 @@ char **CSVScanFile( const char * pszFilename, int iKeyField,
 int CSVGetFieldId( FILE * fp, const char * pszFieldName )
 
 {
-    char	**papszFields;
-    int		i;
+    char        **papszFields;
+    int         i;
     
     CPLAssert( fp != NULL && pszFieldName != NULL );
 
@@ -416,8 +419,8 @@ int CSVGetFieldId( FILE * fp, const char * pszFieldName )
 int CSVGetFileFieldId( const char * pszFilename, const char * pszFieldName )
 
 {
-    CSVTable	*psTable;
-    int		i;
+    CSVTable    *psTable;
+    int         i;
     
 /* -------------------------------------------------------------------- */
 /*      Get access to the table.                                        */
@@ -458,7 +461,7 @@ char **CSVScanFileByName( const char * pszFilename,
                           const char * pszValue, CSVCompareCriteria eCriteria )
 
 {
-    int		iKeyField;
+    int         iKeyField;
 
     iKeyField = CSVGetFileFieldId( pszFilename, pszKeyFieldName );
     if( iKeyField == -1 )
@@ -484,9 +487,9 @@ const char *CSVGetField( const char * pszFilename,
                          const char * pszTargetField )
 
 {
-    CSVTable	*psTable;
-    char	**papszRecord;
-    int		iTargetField;
+    CSVTable    *psTable;
+    char        **papszRecord;
+    int         iTargetField;
     
 /* -------------------------------------------------------------------- */
 /*      Find the table.                                                 */
@@ -529,11 +532,11 @@ static const char *(*pfnCSVFilenameHook)(const char *) = NULL;
 const char * CSVFilename( const char *pszBasename )
 
 {
-    static char		szPath[512];
+    static char         szPath[512];
 
     if( pfnCSVFilenameHook == NULL )
     {
-        FILE	*fp = NULL;
+        FILE    *fp = NULL;
         const char *pszResult = CPLFindFile( "epsg_csv", pszBasename );
 
         if( pszResult != NULL )

@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/01/19 21:18:25  warmerda
+ * expanded tabs
+ *
  * Revision 1.3  2000/01/26 17:53:36  warmerda
  * Fixed CPLGetExtension() for filenames with no extension.
  *
@@ -43,7 +46,7 @@
 #include "cpl_string.h"
 
 
-static char	szStaticResult[1024]; /* should be size of larged possible
+static char     szStaticResult[1024]; /* should be size of larged possible
                                          filename */
 
 /************************************************************************/
@@ -53,7 +56,7 @@ static char	szStaticResult[1024]; /* should be size of larged possible
 static int CPLFindFilenameStart( const char * pszFilename )
 
 {
-    int		iFileStart;
+    int         iFileStart;
 
     for( iFileStart = strlen(pszFilename);
          iFileStart > 0
@@ -92,7 +95,7 @@ static int CPLFindFilenameStart( const char * pszFilename )
 const char *CPLGetPath( const char *pszFilename )
 
 {
-    int		iFileStart = CPLFindFilenameStart(pszFilename);
+    int         iFileStart = CPLFindFilenameStart(pszFilename);
 
     if( iFileStart == 0 )
     {
@@ -138,7 +141,7 @@ const char *CPLGetPath( const char *pszFilename )
 const char *CPLGetFilename( const char *pszFullFilename )
 
 {
-    int	iFileStart = CPLFindFilenameStart( pszFullFilename );
+    int iFileStart = CPLFindFilenameStart( pszFullFilename );
 
     strcpy( szStaticResult, pszFullFilename + iFileStart );
 
@@ -172,8 +175,8 @@ const char *CPLGetFilename( const char *pszFullFilename )
 const char *CPLGetBasename( const char *pszFullFilename )
 
 {
-    int	iFileStart = CPLFindFilenameStart( pszFullFilename );
-    int	iExtStart, nLength;
+    int iFileStart = CPLFindFilenameStart( pszFullFilename );
+    int iExtStart, nLength;
 
     for( iExtStart = strlen(pszFullFilename);
          iExtStart > iFileStart && pszFullFilename[iExtStart] != '.';
@@ -217,8 +220,8 @@ const char *CPLGetBasename( const char *pszFullFilename )
 const char *CPLGetExtension( const char *pszFullFilename )
 
 {
-    int	iFileStart = CPLFindFilenameStart( pszFullFilename );
-    int	iExtStart;
+    int iFileStart = CPLFindFilenameStart( pszFullFilename );
+    int iExtStart;
 
     for( iExtStart = strlen(pszFullFilename);
          iExtStart > iFileStart && pszFullFilename[iExtStart] != '.';
@@ -269,7 +272,7 @@ const char *CPLFormFilename( const char * pszPath,
                              const char * pszExtension )
 
 {
-    const char	*pszAddedPathSep = "";
+    const char  *pszAddedPathSep = "";
     const char  *pszAddedExtSep = "";
 
     if( pszPath == NULL )

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/01/19 21:15:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.2  2000/01/13 05:18:11  warmerda
  * added support for multiple versions
  *
@@ -47,7 +50,7 @@ TigerIDHistory::TigerIDHistory( OGRTigerDataSource * poDSIn,
                             const char * pszPrototypeModule )
 
 {
-    OGRFieldDefn	oField("",OFTInteger);
+    OGRFieldDefn        oField("",OFTInteger);
 
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "IDHistory" );
@@ -118,7 +121,7 @@ int TigerIDHistory::SetModule( const char * pszModule )
 OGRFeature *TigerIDHistory::GetFeature( int nRecordId )
 
 {
-    char	achRecord[62];
+    char        achRecord[62];
 
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
@@ -153,7 +156,7 @@ OGRFeature *TigerIDHistory::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
 /*      Set fields.                                                     */
 /* -------------------------------------------------------------------- */
-    OGRFeature	*poFeature = new OGRFeature( poFeatureDefn );
+    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
     SetField( poFeature, "STATE", achRecord, 6, 7 );
     SetField( poFeature, "COUNTY", achRecord, 8, 10 );

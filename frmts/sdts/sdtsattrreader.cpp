@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/01/19 21:20:29  warmerda
+ * expanded tabs
+ *
  * Revision 1.9  1999/09/03 14:13:48  warmerda
  * ensure DDFRecords are duplicated when needed
  *
@@ -59,7 +62,7 @@
 
 /************************************************************************/
 /* ==================================================================== */
-/*			       SDTSAttrRecord				*/
+/*                             SDTSAttrRecord                           */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -99,9 +102,9 @@ void SDTSAttrRecord::Dump( FILE * fp )
 
 /************************************************************************/
 /* ==================================================================== */
-/*			       SDTSAttrReader				*/
-/*									*/
-/*	This is the class used to read a primary attribute module.      */
+/*                             SDTSAttrReader                           */
+/*                                                                      */
+/*      This is the class used to read a primary attribute module.      */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -145,7 +148,7 @@ void SDTSAttrReader::Close()
 int SDTSAttrReader::Open( const char *pszFilename )
 
 {
-    int		bSuccess;
+    int         bSuccess;
 
     bSuccess = oDDFModule.Open( pszFilename );
 
@@ -164,8 +167,8 @@ DDFField *SDTSAttrReader::GetNextRecord( SDTSModId * poModId,
                                          int bDuplicate )
 
 {
-    DDFRecord	*poRecord;
-    DDFField	*poATTP;
+    DDFRecord   *poRecord;
+    DDFField    *poATTP;
     
 /* -------------------------------------------------------------------- */
 /*      Fetch a record.                                                 */
@@ -205,7 +208,7 @@ DDFField *SDTSAttrReader::GetNextRecord( SDTSModId * poModId,
 /* -------------------------------------------------------------------- */
     if( poModId != NULL )
     {
-        DDFField	*poATPR = poRecord->FindField( "ATPR" );
+        DDFField        *poATPR = poRecord->FindField( "ATPR" );
 
         if( poATPR == NULL )
             poATPR = poRecord->FindField( "ATSC" );
@@ -230,8 +233,8 @@ DDFField *SDTSAttrReader::GetNextRecord( SDTSModId * poModId,
 SDTSAttrRecord *SDTSAttrReader::GetNextAttrRecord()
 
 {
-    DDFRecord	*poRawRecord;
-    DDFField	*poATTRField;
+    DDFRecord   *poRawRecord;
+    DDFField    *poATTRField;
     SDTSModId   oModId;
     SDTSAttrRecord *poAttrRecord;
 

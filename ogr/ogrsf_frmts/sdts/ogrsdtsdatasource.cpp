@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/01/19 21:14:22  warmerda
+ * expanded tabs
+ *
  * Revision 1.3  2000/02/20 21:17:56  warmerda
  * added projection support
  *
@@ -64,7 +67,7 @@ OGRSDTSDataSource::OGRSDTSDataSource()
 OGRSDTSDataSource::~OGRSDTSDataSource()
 
 {
-    int		i;
+    int         i;
 
     for( i = 0; i < nLayers; i++ )
         delete papoLayers[i];
@@ -118,8 +121,8 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
 /* -------------------------------------------------------------------- */
     if( bTestOpen )
     {
-        FILE	*fp;
-        char	pachLeader[10];
+        FILE    *fp;
+        char    pachLeader[10];
 
         fp = VSIFOpen( pszFilename, "rb" );
         if( fp == NULL )
@@ -152,9 +155,9 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
     }
 
 /* -------------------------------------------------------------------- */
-/*	Initialize the projection.					*/
+/*      Initialize the projection.                                      */
 /* -------------------------------------------------------------------- */
-    SDTS_XREF	*poXREF = poTransfer->GetXREF();
+    SDTS_XREF   *poXREF = poTransfer->GetXREF();
 
     poSRS = new OGRSpatialReference();
 
@@ -187,7 +190,7 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
 /* -------------------------------------------------------------------- */
     for( int iLayer = 0; iLayer < poTransfer->GetLayerCount(); iLayer++ )
     {
-        SDTSIndexedReader	*poReader;
+        SDTSIndexedReader       *poReader;
         
         if( poTransfer->GetLayerType( iLayer ) == SLTRaster )
             continue;

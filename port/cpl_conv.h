@@ -60,7 +60,7 @@ void CPL_DLL *CPLCalloc( size_t, size_t );
 void CPL_DLL *CPLRealloc( void *, size_t );
 char CPL_DLL *CPLStrdup( const char * );
 
-#define CPLFree	VSIFree
+#define CPLFree VSIFree
 
 /* -------------------------------------------------------------------- */
 /*      Read a line from a text file, and strip of CR/LF.               */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/01/19 21:15:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.3  2000/01/13 05:18:11  warmerda
  * added support for multiple versions
  *
@@ -163,7 +166,7 @@ OGRFeature *OGRTigerLayer::GetFeature( long nFeatureId )
 /* -------------------------------------------------------------------- */
 /*      Fetch the feature associated with the record.                   */
 /* -------------------------------------------------------------------- */
-    OGRFeature	*poFeature;
+    OGRFeature  *poFeature;
 
     poFeature =
         poReader->GetFeature( nFeatureId-panModuleOffset[iLastModule]-1 );
@@ -196,7 +199,7 @@ OGRFeature *OGRTigerLayer::GetNextFeature()
 /* -------------------------------------------------------------------- */
     while( iLastFeatureId < nFeatureCount )
     {
-        OGRFeature	*poFeature = GetFeature( ++iLastFeatureId );
+        OGRFeature      *poFeature = GetFeature( ++iLastFeatureId );
 
         if( poFeature == NULL
             || poFilterGeom == NULL

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/01/19 21:15:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.3  2000/01/13 05:18:11  warmerda
  * added support for multiple versions
  *
@@ -76,7 +79,7 @@ int TigerFileBase::OpenFile( const char * pszModuleToOpen,
                              const char *pszExtension )
 
 {
-    char	*pszFilename;
+    char        *pszFilename;
 
     CPLFree( pszModule );
     pszModule = NULL;
@@ -121,7 +124,7 @@ int TigerFileBase::OpenFile( const char * pszModuleToOpen,
 void TigerFileBase::EstablishFeatureCount()
 
 {
-    char	chCurrent;
+    char        chCurrent;
     
     nRecordLength = 0;
     
@@ -156,8 +159,8 @@ void TigerFileBase::EstablishFeatureCount()
     nRecordLength++; /* for the 10 or 13 we encountered */
 
 /* -------------------------------------------------------------------- */
-/*      Read through line terminator characters.  We are trying to	*/
-/*	handle cases of CR, CR/LF and LF/CR gracefully.			*/
+/*      Read through line terminator characters.  We are trying to      */
+/*      handle cases of CR, CR/LF and LF/CR gracefully.                 */
 /* -------------------------------------------------------------------- */
     while( VSIFRead( &chCurrent, 1, 1, fpPrimary ) == 1
            && (chCurrent == 10 || chCurrent == 13 ) )
@@ -170,7 +173,7 @@ void TigerFileBase::EstablishFeatureCount()
 /*      (including line terminators).  Get the total file size, and     */
 /*      divide by this length to get the presumed number of records.    */
 /* -------------------------------------------------------------------- */
-    long	nFileSize;
+    long        nFileSize;
     
     VSIFSeek( fpPrimary, 0, SEEK_END );
     nFileSize = VSIFTell( fpPrimary );
@@ -194,8 +197,8 @@ const char *TigerFileBase::GetField( const char * pachRawDataRecord,
                                      int nStartChar, int nEndChar )
 
 {
-    static char 	aszField[128];
-    int			nLength = nEndChar - nStartChar + 1;
+    static char         aszField[128];
+    int                 nLength = nEndChar - nStartChar + 1;
     
     CPLAssert( nEndChar - nStartChar + 2 < (int) sizeof(aszField) );
 

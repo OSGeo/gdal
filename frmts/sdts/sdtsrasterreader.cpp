@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/01/19 21:20:29  warmerda
+ * expanded tabs
+ *
  * Revision 1.6  1999/10/12 19:08:33  warmerda
  * Undo last change.
  *
@@ -102,8 +105,8 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 /* ==================================================================== */
 /*      Search the LDEF module for the requested cell module.           */
 /* ==================================================================== */
-    DDFModule	oLDEF;
-    DDFRecord	*poRecord;
+    DDFModule   oLDEF;
+    DDFRecord   *poRecord;
 
 /* -------------------------------------------------------------------- */
 /*      Open the LDEF module, and report failure if it is missing.      */
@@ -166,7 +169,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 /*      Record the LDEF record number we used so we can find the        */
 /*      corresponding RSDF record.                                      */
 /* -------------------------------------------------------------------- */
-    int		nLDEF_RCID;
+    int         nLDEF_RCID;
 
     nLDEF_RCID = poRecord->GetIntSubfield( "LDEF", 0, "RCID", 0 );
     
@@ -175,7 +178,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 /* ==================================================================== */
 /*      Search the RSDF module for the requested cell module.           */
 /* ==================================================================== */
-    DDFModule	oRSDF;
+    DDFModule   oRSDF;
 
 /* -------------------------------------------------------------------- */
 /*      Open the RSDF module, and report failure if it is missing.      */
@@ -211,7 +214,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 /* -------------------------------------------------------------------- */
 /*      Establish the raster pixel/line to georef transformation.       */
 /* -------------------------------------------------------------------- */
-    double	dfZ;
+    double      dfZ;
         
     if( poRecord->FindField( "SADR" ) == NULL )
     {
@@ -241,7 +244,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 /* -------------------------------------------------------------------- */
 /*      Verify some other assumptions.                                  */
 /* -------------------------------------------------------------------- */
-    const char	*pszString;
+    const char  *pszString;
     
     pszString = poRecord->GetStringSubfield( "RSDF", 0, "OBRP", 0); 
     if( !EQUAL(pszString,"G2") )
@@ -277,7 +280,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 /*      Fetch the data type used for the raster, and the units from     */
 /*      the data dictionary/schema record (DDSH).                       */
 /* ==================================================================== */
-    DDFModule	oDDSH;
+    DDFModule   oDDSH;
 
 /* -------------------------------------------------------------------- */
 /*      Open the DDSH module, and report failure if it is missing.      */
@@ -354,7 +357,7 @@ int SDTSRasterReader::GetBlock( int nXOffset, int nYOffset, void * pData )
 
 {
     DDFRecord   *poRecord;
-    int		nBytesPerValue;
+    int         nBytesPerValue;
     
     CPLAssert( nXOffset == 0 );
 
@@ -381,7 +384,7 @@ int SDTSRasterReader::GetBlock( int nXOffset, int nYOffset, void * pData )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we didn't get what we needed just start over.		*/
+/*      If we didn't get what we needed just start over.                */
 /* -------------------------------------------------------------------- */
     if( poRecord == NULL )
     {
@@ -393,7 +396,7 @@ int SDTSRasterReader::GetBlock( int nXOffset, int nYOffset, void * pData )
 /*      Validate the records size.  Does it represent exactly one       */
 /*      scanline?                                                       */
 /* -------------------------------------------------------------------- */
-    DDFField	*poCVLS;
+    DDFField    *poCVLS;
 
     poCVLS = poRecord->FindField( "CVLS" );
     if( poCVLS == NULL )

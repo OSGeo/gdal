@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/01/19 21:16:41  warmerda
+ * expanded tabs
+ *
  * Revision 1.9  2000/04/17 15:56:11  warmerda
  * make configuration tests always happen
  *
@@ -83,7 +86,7 @@
 void *CPLCalloc( size_t nCount, size_t nSize )
 
 {
-    void	*pReturn;
+    void        *pReturn;
 
     if( nSize * nCount == 0 )
         return NULL;
@@ -121,7 +124,7 @@ void *CPLCalloc( size_t nCount, size_t nSize )
 void *CPLMalloc( size_t nSize )
 
 {
-    void	*pReturn;
+    void        *pReturn;
 
     CPLVerifyConfiguration();
 
@@ -166,7 +169,7 @@ void *CPLMalloc( size_t nSize )
 void * CPLRealloc( void * pData, size_t nNewSize )
 
 {
-    void	*pReturn;
+    void        *pReturn;
 
     if ( nNewSize == 0 )
     {
@@ -214,7 +217,7 @@ void * CPLRealloc( void * pData, size_t nNewSize )
 char *CPLStrdup( const char * pszString )
 
 {
-    char	*pszReturn;
+    char        *pszReturn;
 
     if( pszString == NULL )
         pszString = "";
@@ -256,9 +259,9 @@ char *CPLStrdup( const char * pszString )
 const char *CPLReadLine( FILE * fp )
 
 {
-    static char	*pszRLBuffer = NULL;
-    static int	nRLBufferSize = 0;
-    int		nLength, nReadSoFar = 0;
+    static char *pszRLBuffer = NULL;
+    static int  nRLBufferSize = 0;
+    int         nLength, nReadSoFar = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Loop reading chunks of the line till we get to the end of       */

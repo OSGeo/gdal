@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/01/19 21:20:29  warmerda
+ * expanded tabs
+ *
  * Revision 1.1  1999/06/03 14:02:36  warmerda
  * New
  *
@@ -66,8 +69,8 @@ SDTS_XREF::~SDTS_XREF()
 int SDTS_XREF::Read( const char * pszFilename )
 
 {
-    DDFModule	oXREFFile;
-    DDFRecord	*poRecord;
+    DDFModule   oXREFFile;
+    DDFRecord   *poRecord;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file, and read the header.                             */

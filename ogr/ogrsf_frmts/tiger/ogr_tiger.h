@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/01/19 21:15:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.5  2000/01/13 05:18:11  warmerda
  * added support for multiple versions
  *
@@ -61,17 +64,17 @@ class TigerFileBase
 protected:
   OGRTigerDataSource  *poDS;
 
-  char		      *pszModule;
+  char                *pszModule;
   char                *pszShortModule;
-  FILE		      *fpPrimary;
+  FILE                *fpPrimary;
     
   OGRFeatureDefn      *poFeatureDefn;
 
-  int 		      nFeatures;
-  int		      nRecordLength;
+  int                 nFeatures;
+  int                 nRecordLength;
     
   int                 OpenFile( const char *, const char * );
-  void		      EstablishFeatureCount();
+  void                EstablishFeatureCount();
 
 public:
                       TigerFileBase();
@@ -98,17 +101,17 @@ public:
 
 class TigerCompleteChain : public TigerFileBase
 {
-  FILE		     *fpShape;
-  int		     *panShapeRecordId;
+  FILE               *fpShape;
+  int                *panShapeRecordId;
 
-  FILE		     *fpRT3;
-  int		      bUsingRT3;
+  FILE               *fpRT3;
+  int                 bUsingRT3;
 
   int                 GetShapeRecordId( int, int );
   void                AddShapePoints( int, int, OGRLineString *, int );
     
 public:
-    		      TigerCompleteChain( OGRTigerDataSource *,
+                      TigerCompleteChain( OGRTigerDataSource *,
                                           const char * );
   virtual            ~TigerCompleteChain();
 
@@ -124,7 +127,7 @@ public:
 class TigerAltName : public TigerFileBase
 {
 public:
-    		      TigerAltName( OGRTigerDataSource *,
+                      TigerAltName( OGRTigerDataSource *,
                                           const char * );
   virtual            ~TigerAltName();
 
@@ -140,7 +143,7 @@ public:
 class TigerFeatureIds : public TigerFileBase
 {
 public:
-    		      TigerFeatureIds( OGRTigerDataSource *,
+                      TigerFeatureIds( OGRTigerDataSource *,
                                        const char * );
   virtual            ~TigerFeatureIds();
 
@@ -156,7 +159,7 @@ public:
 class TigerZipCodes : public TigerFileBase
 {
 public:
-    		      TigerZipCodes( OGRTigerDataSource *, const char * );
+                      TigerZipCodes( OGRTigerDataSource *, const char * );
   virtual            ~TigerZipCodes();
 
   virtual int         SetModule( const char * );
@@ -171,7 +174,7 @@ public:
 class TigerLandmarks : public TigerFileBase
 {
 public:
-    		      TigerLandmarks( OGRTigerDataSource *, const char * );
+                      TigerLandmarks( OGRTigerDataSource *, const char * );
   virtual            ~TigerLandmarks();
 
   virtual int         SetModule( const char * );
@@ -186,7 +189,7 @@ public:
 class TigerAreaLandmarks : public TigerFileBase
 {
 public:
-    		      TigerAreaLandmarks( OGRTigerDataSource *, const char * );
+                      TigerAreaLandmarks( OGRTigerDataSource *, const char * );
   virtual            ~TigerAreaLandmarks();
 
   virtual int         SetModule( const char * );
@@ -201,7 +204,7 @@ public:
 class TigerKeyFeatures : public TigerFileBase
 {
 public:
-    		      TigerKeyFeatures( OGRTigerDataSource *, const char * );
+                      TigerKeyFeatures( OGRTigerDataSource *, const char * );
   virtual            ~TigerKeyFeatures();
 
   virtual int         SetModule( const char * );
@@ -215,11 +218,11 @@ public:
 
 class TigerPolygon : public TigerFileBase
 {
-  FILE		     *fpRTS;
-  int		      bUsingRTS;
+  FILE               *fpRTS;
+  int                 bUsingRTS;
 
 public:
-    		      TigerPolygon( OGRTigerDataSource *, const char * );
+                      TigerPolygon( OGRTigerDataSource *, const char * );
   virtual            ~TigerPolygon();
 
   virtual int         SetModule( const char * );
@@ -234,7 +237,7 @@ public:
 class TigerEntityNames : public TigerFileBase
 {
 public:
-    		      TigerEntityNames( OGRTigerDataSource *, const char * );
+                      TigerEntityNames( OGRTigerDataSource *, const char * );
   virtual            ~TigerEntityNames();
 
   virtual int         SetModule( const char * );
@@ -249,7 +252,7 @@ public:
 class TigerIDHistory : public TigerFileBase
 {
 public:
-    		      TigerIDHistory( OGRTigerDataSource *, const char * );
+                      TigerIDHistory( OGRTigerDataSource *, const char * );
   virtual            ~TigerIDHistory();
 
   virtual int         SetModule( const char * );
@@ -264,7 +267,7 @@ public:
 class TigerPolyChainLink : public TigerFileBase
 {
 public:
-    		      TigerPolyChainLink( OGRTigerDataSource *, const char * );
+                      TigerPolyChainLink( OGRTigerDataSource *, const char * );
   virtual            ~TigerPolyChainLink();
 
   virtual int         SetModule( const char * );
@@ -279,7 +282,7 @@ public:
 class TigerPIP : public TigerFileBase
 {
 public:
-    		      TigerPIP( OGRTigerDataSource *, const char * );
+                      TigerPIP( OGRTigerDataSource *, const char * );
   virtual            ~TigerPIP();
 
   virtual int         SetModule( const char * );
@@ -294,7 +297,7 @@ public:
 class TigerTLIDRange : public TigerFileBase
 {
 public:
-    		      TigerTLIDRange( OGRTigerDataSource *, const char * );
+                      TigerTLIDRange( OGRTigerDataSource *, const char * );
   virtual            ~TigerTLIDRange();
 
   virtual int         SetModule( const char * );
@@ -309,7 +312,7 @@ public:
 class TigerZipPlus4 : public TigerFileBase
 {
 public:
-    		      TigerZipPlus4( OGRTigerDataSource *, const char * );
+                      TigerZipPlus4( OGRTigerDataSource *, const char * );
   virtual            ~TigerZipPlus4();
 
   virtual int         SetModule( const char * );
@@ -325,34 +328,34 @@ class OGRTigerLayer : public OGRLayer
 {
     TigerFileBase      *poReader;
     
-    OGRGeometry	       *poFilterGeom;
+    OGRGeometry        *poFilterGeom;
 
     OGRTigerDataSource   *poDS;
 
-    int			nFeatureCount;
-    int			*panModuleFCount;
-    int			*panModuleOffset;
+    int                 nFeatureCount;
+    int                 *panModuleFCount;
+    int                 *panModuleOffset;
 
-    int			iLastFeatureId;
-    int			iLastModule;
+    int                 iLastFeatureId;
+    int                 iLastModule;
 
   public:
-    			OGRTigerLayer( OGRTigerDataSource * poDS,
+                        OGRTigerLayer( OGRTigerDataSource * poDS,
                                        TigerFileBase * );
-    virtual		~OGRTigerLayer();
+    virtual             ~OGRTigerLayer();
 
-    OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
-    void		SetSpatialFilter( OGRGeometry * );
+    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
+    void                SetSpatialFilter( OGRGeometry * );
 
-    void		ResetReading();
-    OGRFeature *	GetNextFeature();
+    void                ResetReading();
+    OGRFeature *        GetNextFeature();
     OGRFeature         *GetFeature( long nFeatureId );
 #ifdef notdef    
     OGRErr              SetFeature( OGRFeature *poFeature );
     OGRErr              CreateFeature( OGRFeature *poFeature );
 #endif
     
-    OGRFeatureDefn *	GetLayerDefn();
+    OGRFeatureDefn *    GetLayerDefn();
 
     int                 GetFeatureCount( int ) { return nFeatureCount; }
     
@@ -367,44 +370,44 @@ class OGRTigerLayer : public OGRLayer
 
 class OGRTigerDataSource : public OGRDataSource
 {
-    char		*pszName;
+    char                *pszName;
 
-    int			nLayers;
-    OGRTigerLayer	**papoLayers;
+    int                 nLayers;
+    OGRTigerLayer       **papoLayers;
 
     OGRSpatialReference *poSpatialRef;
 
-    char		**papszOptions;
+    char                **papszOptions;
     
     char                *pszPath;
 
-    int			nModules;
-    char		**papszModules;
+    int                 nModules;
+    char                **papszModules;
     
   public:
-    			OGRTigerDataSource();
-    			~OGRTigerDataSource();
+                        OGRTigerDataSource();
+                        ~OGRTigerDataSource();
 
-    void		SetOptionList( char ** );
-    const char	       *GetOption( const char * );
+    void                SetOptionList( char ** );
+    const char         *GetOption( const char * );
     
     int                 Open( const char * pszName, int bTestOpen = FALSE,
                               char ** papszFileList = NULL );
     
-    const char	        *GetName() { return pszName; }
-    int			GetLayerCount();
-    OGRLayer		*GetLayer( int );
+    const char          *GetName() { return pszName; }
+    int                 GetLayerCount();
+    OGRLayer            *GetLayer( int );
     void                AddLayer( OGRTigerLayer * );
     int                 TestCapability( const char * );
 
     OGRSpatialReference *GetSpatialRef() { return poSpatialRef; }
 
     const char          *GetDirPath() { return pszPath; }
-    char	     	*BuildFilename( const char * pszModule,
+    char                *BuildFilename( const char * pszModule,
                                         const char * pszExtension );
     
 
-    int			GetModuleCount() { return nModules; }
+    int                 GetModuleCount() { return nModules; }
     const char         *GetModule( int );
 };
 
@@ -415,7 +418,7 @@ class OGRTigerDataSource : public OGRDataSource
 class OGRTigerDriver : public OGRSFDriver
 {
   public:
-    		~OGRTigerDriver();
+                ~OGRTigerDriver();
                 
     const char *GetName();
     OGRDataSource *Open( const char *, int );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/01/19 21:15:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.3  2000/01/13 05:18:11  warmerda
  * added support for multiple versions
  *
@@ -50,7 +53,7 @@ TigerAreaLandmarks::TigerAreaLandmarks( OGRTigerDataSource * poDSIn,
                                   const char * pszPrototypeModule )
 
 {
-    OGRFieldDefn	oField("",OFTInteger);
+    OGRFieldDefn        oField("",OFTInteger);
 
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "AreaLandmarks" );
@@ -109,7 +112,7 @@ int TigerAreaLandmarks::SetModule( const char * pszModule )
 OGRFeature *TigerAreaLandmarks::GetFeature( int nRecordId )
 
 {
-    char	achRecord[36];
+    char        achRecord[36];
 
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
@@ -144,7 +147,7 @@ OGRFeature *TigerAreaLandmarks::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
 /*      Set fields.                                                     */
 /* -------------------------------------------------------------------- */
-    OGRFeature	*poFeature = new OGRFeature( poFeatureDefn );
+    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
     poFeature->SetField( "STATE", GetField( achRecord, 6, 7 ));
     poFeature->SetField( "COUNTY", GetField( achRecord, 8, 10 ));

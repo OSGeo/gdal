@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/01/19 21:15:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.3  2000/01/13 05:18:11  warmerda
  * added support for multiple versions
  *
@@ -50,7 +53,7 @@ TigerAltName::TigerAltName( OGRTigerDataSource * poDSIn,
                             const char * pszPrototypeModule )
 
 {
-    OGRFieldDefn	oField("",OFTInteger);
+    OGRFieldDefn        oField("",OFTInteger);
 
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "AltName" );
@@ -103,7 +106,7 @@ int TigerAltName::SetModule( const char * pszModule )
 OGRFeature *TigerAltName::GetFeature( int nRecordId )
 
 {
-    char	achRecord[58];
+    char        achRecord[58];
 
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
@@ -138,9 +141,9 @@ OGRFeature *TigerAltName::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
 /*      Set fields.                                                     */
 /* -------------------------------------------------------------------- */
-    OGRFeature	*poFeature = new OGRFeature( poFeatureDefn );
-    int		anFeatList[5];
-    int		nFeatCount=0;
+    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
+    int         anFeatList[5];
+    int         nFeatCount=0;
 
     poFeature->SetField( "TLID", GetField( achRecord, 6, 15 ));
     poFeature->SetField( "RTSQ", GetField( achRecord, 16, 18 ));
@@ -148,7 +151,7 @@ OGRFeature *TigerAltName::GetFeature( int nRecordId )
 
     for( int iFeat = 0; iFeat < 5; iFeat++ )
     {
-        const char *	pszFieldText;
+        const char *    pszFieldText;
 
         pszFieldText = GetField( achRecord, 19 + iFeat*8, 26 + iFeat*8 );
 

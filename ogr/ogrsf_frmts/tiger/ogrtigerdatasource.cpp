@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/01/19 21:15:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.6  2000/01/13 16:39:17  warmerda
  * Use CPLGetBasename() to compare to limitedFileList.
  *
@@ -97,7 +100,7 @@ OGRTigerDataSource::OGRTigerDataSource()
 OGRTigerDataSource::~OGRTigerDataSource()
 
 {
-    int		i;
+    int         i;
 
     for( i = 0; i < nLayers; i++ )
         delete papoLayers[i];
@@ -156,8 +159,8 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 
 {
     VSIStatBuf      stat;
-    char	    **papszFileList = NULL;
-    int		    i;
+    char            **papszFileList = NULL;
+    int             i;
 
     pszName = CPLStrdup( pszFilename );
 
@@ -240,10 +243,10 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
     {
         if( bTestOpen )
         {
-            char	szHeader[80];
-            FILE	*fp;
-            int		nVersion;
-            char	*pszFilename;
+            char        szHeader[80];
+            FILE        *fp;
+            int         nVersion;
+            char        *pszFilename;
 
             pszFilename = BuildFilename( papszFileList[i], "1" );
 
@@ -392,8 +395,8 @@ char *OGRTigerDataSource::BuildFilename( const char *pszModuleName,
                                     const char *pszExtension )
 
 {
-    char	*pszFilename;
-    char	szLCExtension[3];
+    char        *pszFilename;
+    char        szLCExtension[3];
 
 /* -------------------------------------------------------------------- */
 /*      Force the record type to lower case if the filename appears     */

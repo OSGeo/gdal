@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/01/19 21:20:29  warmerda
+ * expanded tabs
+ *
  * Revision 1.5  2000/08/22 17:58:04  warmerda
  * added floating point, and nodata support
  *
@@ -54,15 +57,15 @@
  exclude
 */
 
-static GDALDriver	*poSDTSDriver = NULL;
+static GDALDriver       *poSDTSDriver = NULL;
 
 CPL_C_START
-void	GDALRegister_SDTS(void);
+void    GDALRegister_SDTS(void);
 CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
-/*				SDTSDataset				*/
+/*                              SDTSDataset                             */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -70,15 +73,15 @@ class SDTSRasterBand;
 
 class SDTSDataset : public GDALDataset
 {
-    friend	SDTSRasterBand;
+    friend      SDTSRasterBand;
     
     SDTSTransfer *poTransfer;
     SDTSRasterReader *poRL;
 
-    char	*pszProjection;
+    char        *pszProjection;
 
   public:
-    virtual	~SDTSDataset();
+    virtual     ~SDTSDataset();
     
     static GDALDataset *Open( GDALOpenInfo * );
 
@@ -88,13 +91,13 @@ class SDTSDataset : public GDALDataset
 
 class SDTSRasterBand : public GDALRasterBand
 {
-    friend	SDTSDataset;
+    friend      SDTSDataset;
 
     SDTSRasterReader *poRL;
     
   public:
 
-    		SDTSRasterBand( SDTSDataset *, int, SDTSRasterReader * );
+                SDTSRasterBand( SDTSDataset *, int, SDTSRasterReader * );
     
     virtual CPLErr IReadBlock( int, int, void * );
 
@@ -127,13 +130,13 @@ SDTSDataset::~SDTSDataset()
 GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int		i;
+    int         i;
     
 /* -------------------------------------------------------------------- */
 /*      Before trying SDTSOpen() we first verify that the first         */
 /*      record is in fact a SDTS file descriptor record.                */
 /* -------------------------------------------------------------------- */
-    char	*pachLeader = (char *) poOpenInfo->pabyHeader;
+    char        *pachLeader = (char *) poOpenInfo->pabyHeader;
     
     if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 24 )
         return NULL;
@@ -150,7 +153,7 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
-    SDTSTransfer	*poTransfer = new SDTSTransfer;
+    SDTSTransfer        *poTransfer = new SDTSTransfer;
     
     if( !poTransfer->Open( poOpenInfo->pszFilename ) )
     {
@@ -162,7 +165,7 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Find the first raster layer.  If there are none, abort          */
 /*      returning an error.                                             */
 /* -------------------------------------------------------------------- */
-    SDTSRasterReader	*poRL = NULL;
+    SDTSRasterReader    *poRL = NULL;
 
     for( i = 0; i < poTransfer->GetLayerCount(); i++ )
     {
@@ -187,7 +190,7 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Initialize a corresponding GDALDataset.                         */
 /* -------------------------------------------------------------------- */
-    SDTSDataset	*poDS = new SDTSDataset();
+    SDTSDataset *poDS = new SDTSDataset();
 
     poDS->poTransfer = poTransfer;
     poDS->poRL = poRL;
@@ -213,8 +216,8 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try to establish the projection string.  For now we only        */
 /*      support UTM and GEO.                                            */
 /* -------------------------------------------------------------------- */
-    SDTS_XREF	*poXREF = poTransfer->GetXREF();
-    char	szPROJ4[256], szP4Datum[64];
+    SDTS_XREF   *poXREF = poTransfer->GetXREF();
+    char        szPROJ4[256], szP4Datum[64];
 
     if( EQUAL(poXREF->pszDatum,"NAS") )
         strcpy(szP4Datum, "+ellps=clrk66 ");
@@ -332,7 +335,7 @@ double SDTSRasterBand::GetNoDataValue( int *pbSuccess )
 void GDALRegister_SDTS()
 
 {
-    GDALDriver	*poDriver;
+    GDALDriver  *poDriver;
 
     if( poSDTSDriver == NULL )
     {

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/01/19 21:16:41  warmerda
+ * expanded tabs
+ *
  * Revision 1.9  2000/09/25 19:59:03  warmerda
  * look for WIN32 not _WIN32
  *
@@ -108,8 +111,8 @@
 void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
 {
-    void	*pLibrary;
-    void	*pSymbol;
+    void        *pLibrary;
+    void        *pSymbol;
 
     pLibrary = dlopen(pszLibrary, RTLD_LAZY);
     if( pLibrary == NULL )
@@ -149,8 +152,8 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
 {
-    void	*pLibrary;
-    void	*pSymbol;
+    void        *pLibrary;
+    void        *pSymbol;
 
     pLibrary = LoadLibrary(pszLibrary);
     if( pLibrary == NULL )

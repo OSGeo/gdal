@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/01/19 21:15:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.1  1999/11/04 21:13:50  warmerda
  * New
  *
@@ -49,8 +52,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-int	bReadOnly = FALSE;
-int	bVerbose = TRUE;
+int     bReadOnly = FALSE;
+int     bVerbose = TRUE;
 
 static void Usage();
 
@@ -63,7 +66,7 @@ static void ReportOnLayer( OGRLayer * );
 int main( int nArgc, char ** papszArgv )
 
 {
-    const char	*pszDataSource = NULL;
+    const char  *pszDataSource = NULL;
     char        **papszLayers = NULL;
     
 /* -------------------------------------------------------------------- */
@@ -96,8 +99,8 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Open data source.                                               */
 /* -------------------------------------------------------------------- */
-    OGRDataSource	*poDS;
-    OGRSFDriver		*poDriver;
+    OGRDataSource       *poDS;
+    OGRSFDriver         *poDriver;
 
     poDS = OGRSFDriverRegistrar::Open( pszDataSource, !bReadOnly, &poDriver );
     if( poDS == NULL && !bReadOnly )
@@ -115,7 +118,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     if( poDS == NULL )
     {
-        OGRSFDriverRegistrar	*poR = OGRSFDriverRegistrar::GetRegistrar();
+        OGRSFDriverRegistrar    *poR = OGRSFDriverRegistrar::GetRegistrar();
         
         printf( "FAILURE:\n"
                 "Unable to open datasource `%s' with the following drivers.\n",
@@ -149,7 +152,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     for( int iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
     {
-        OGRLayer	*poLayer = poDS->GetLayer(iLayer);
+        OGRLayer        *poLayer = poDS->GetLayer(iLayer);
 
         if( poLayer == NULL )
         {
@@ -201,7 +204,7 @@ static void Usage()
 static void ReportOnLayer( OGRLayer * poLayer )
 
 {
-    OGRFeatureDefn	*poDefn = poLayer->GetLayerDefn();
+    OGRFeatureDefn      *poDefn = poLayer->GetLayerDefn();
 
     printf( "\n" );
     
@@ -211,7 +214,7 @@ static void ReportOnLayer( OGRLayer * poLayer )
 
     if( bVerbose )
     {
-        char	*pszWKT;
+        char    *pszWKT;
         
         if( poLayer->GetSpatialRef() == NULL )
             pszWKT = CPLStrdup( "(NULL)" );
@@ -224,7 +227,7 @@ static void ReportOnLayer( OGRLayer * poLayer )
     
     for( int iAttr = 0; iAttr < poDefn->GetFieldCount(); iAttr++ )
     {
-        OGRFieldDefn	*poField = poDefn->GetFieldDefn( iAttr );
+        OGRFieldDefn    *poField = poDefn->GetFieldDefn( iAttr );
 
         printf( "%s: %s (%d.%d)\n",
                 poField->GetNameRef(),
@@ -236,7 +239,7 @@ static void ReportOnLayer( OGRLayer * poLayer )
 /* -------------------------------------------------------------------- */
 /*      Read, and dump features.                                        */
 /* -------------------------------------------------------------------- */
-    OGRFeature	*poFeature;
+    OGRFeature  *poFeature;
     while( (poFeature = poLayer->GetNextFeature()) != NULL )
     {
         poFeature->DumpReadable( stdout );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/01/19 21:20:29  warmerda
+ * expanded tabs
+ *
  * Revision 1.8  1999/11/04 22:52:53  warmerda
  * added dynamic ATID support
  *
@@ -58,10 +61,10 @@
 
 /************************************************************************/
 /* ==================================================================== */
-/*			      SDTSRawPoint				*/
-/*									*/
-/*	This is a simple class for holding the data related with a 	*/
-/*	point feature.							*/
+/*                            SDTSRawPoint                              */
+/*                                                                      */
+/*      This is a simple class for holding the data related with a      */
+/*      point feature.                                                  */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -97,12 +100,12 @@ int SDTSRawPoint::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
 {
 /* ==================================================================== */
 /*      Loop over fields in this record, looking for those we           */
-/*      recognise, and need.						*/
+/*      recognise, and need.                                            */
 /* ==================================================================== */
     for( int iField = 0; iField < poRecord->GetFieldCount(); iField++ )
     {
-        DDFField	*poField = poRecord->GetField( iField );
-        const char	*pszFieldName;
+        DDFField        *poField = poRecord->GetField( iField );
+        const char      *pszFieldName;
 
         CPLAssert( poField != NULL );
         pszFieldName = poField->GetFieldDefn()->GetName();
@@ -133,7 +136,7 @@ int SDTSRawPoint::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
 void SDTSRawPoint::Dump( FILE * fp )
 
 {
-    int		i;
+    int         i;
     
     fprintf( fp, "SDTSRawPoint %s: ", oModId.GetName() );
 
@@ -149,9 +152,9 @@ void SDTSRawPoint::Dump( FILE * fp )
 
 /************************************************************************/
 /* ==================================================================== */
-/*			       SDTSPointReader				*/
-/*									*/
-/*	This is the class used to read a point module.			*/
+/*                             SDTSPointReader                          */
+/*                                                                      */
+/*      This is the class used to read a point module.                  */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -205,7 +208,7 @@ int SDTSPointReader::Open( const char * pszFilename )
 SDTSRawPoint * SDTSPointReader::GetNextPoint()
 
 {
-    DDFRecord	*poRecord;
+    DDFRecord   *poRecord;
     
 /* -------------------------------------------------------------------- */
 /*      Read a record.                                                  */
@@ -221,7 +224,7 @@ SDTSRawPoint * SDTSPointReader::GetNextPoint()
 /* -------------------------------------------------------------------- */
 /*      Transform into a point feature.                                 */
 /* -------------------------------------------------------------------- */
-    SDTSRawPoint	*poRawPoint = new SDTSRawPoint();
+    SDTSRawPoint        *poRawPoint = new SDTSRawPoint();
 
     if( poRawPoint->Read( poIREF, poRecord ) )
     {

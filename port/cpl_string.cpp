@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/01/19 21:16:41  warmerda
+ * expanded tabs
+ *
  * Revision 1.14  2000/10/06 15:19:03  warmerda
  * added CPLSetNameValueSeparator
  *
@@ -518,7 +521,7 @@ char **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
 int CSLFindString( char ** papszList, const char * pszTarget )
 
 {
-    int		i;
+    int         i;
 
     if( papszList == NULL )
         return -1;
@@ -554,16 +557,16 @@ char ** CSLTokenizeStringComplex( const char * pszString,
                                   int bHonourStrings, int bAllowEmptyTokens )
 
 {
-    char	**papszRetList = NULL;
-    char 	*pszToken;
-    int		nTokenMax, nTokenLen;
+    char        **papszRetList = NULL;
+    char        *pszToken;
+    int         nTokenMax, nTokenLen;
 
     pszToken = (char *) CPLCalloc(10,1);
     nTokenMax = 10;
     
     while( pszString != NULL && *pszString != '\0' )
     {
-        int	bInString = FALSE;
+        int     bInString = FALSE;
 
         nTokenLen = 0;
         
@@ -938,13 +941,13 @@ char **CSLSetNameValue(char **papszList,
 void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
 
 {
-    int		nLines = CSLCount(papszList), iLine;
+    int         nLines = CSLCount(papszList), iLine;
 
     for( iLine = 0; iLine < nLines; iLine++ )
     {
-        char	*pszKey = NULL;
+        char    *pszKey = NULL;
         const char *pszValue;
-        char	*pszNewLine;
+        char    *pszNewLine;
 
         pszValue = CPLParseNameValue( papszList[iLine], &pszKey );
         

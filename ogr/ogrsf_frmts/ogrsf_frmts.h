@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/01/19 21:13:50  warmerda
+ * expanded tabs
+ *
  * Revision 1.16  2000/11/28 19:00:32  warmerda
  * added RegisterOGRDGN
  *
@@ -97,7 +100,7 @@
 #define OLCFastFeatureCount    "FastFeatureCount"
 #define OLCCreateField         "CreateField"
 
-#define ODsCCreateLayer	       "CreateLayer"
+#define ODsCCreateLayer        "CreateLayer"
 
 #define ODrCCreateDataSource   "CreateDataSource"
 
@@ -113,12 +116,12 @@
 class OGRLayer
 {
   public:
-    virtual 	~OGRLayer(){}
+    virtual     ~OGRLayer(){}
                  OGRLayer(){m_poStyleTable = NULL;}
     virtual OGRGeometry *GetSpatialFilter() = 0;
-    virtual void	SetSpatialFilter( OGRGeometry * ) = 0;
+    virtual void        SetSpatialFilter( OGRGeometry * ) = 0;
 
-    virtual void	ResetReading() = 0;
+    virtual void        ResetReading() = 0;
     virtual OGRFeature *GetNextFeature() = 0;
     virtual OGRFeature *GetFeature( long nFID );
     virtual OGRErr      SetFeature( OGRFeature *poFeature );
@@ -164,11 +167,11 @@ class OGRDataSource
   public:
 
     OGRDataSource();
-    virtual 	~OGRDataSource();
+    virtual     ~OGRDataSource();
 
     virtual const char  *GetName() = 0;
 
-    virtual int		GetLayerCount() = 0;
+    virtual int         GetLayerCount() = 0;
     virtual OGRLayer    *GetLayer(int) = 0;
 
     virtual int         TestCapability( const char * ) = 0;
@@ -199,9 +202,9 @@ class OGRDataSource
 class OGRSFDriver
 {
   public:
-    virtual 	~OGRSFDriver();
+    virtual     ~OGRSFDriver();
 
-    virtual const char	*GetName() = 0;
+    virtual const char  *GetName() = 0;
 
     virtual OGRDataSource *Open( const char *pszName, int bUpdate=FALSE ) = 0;
 
@@ -223,7 +226,7 @@ class OGRSFDriver
 
 class OGRSFDriverRegistrar
 {
-    int		nDrivers;
+    int         nDrivers;
     OGRSFDriver **papoDrivers;
 
                 OGRSFDriverRegistrar();
@@ -236,9 +239,9 @@ class OGRSFDriverRegistrar
     static OGRDataSource *Open( const char *pszName, int bUpdate=FALSE,
                                 OGRSFDriver ** ppoDriver = NULL );
 
-    void	RegisterDriver( OGRSFDriver * );
+    void        RegisterDriver( OGRSFDriver * );
 
-    int		GetDriverCount( void );
+    int         GetDriverCount( void );
     OGRSFDriver *GetDriver( int );
 
 };
@@ -249,12 +252,12 @@ class OGRSFDriverRegistrar
 CPL_C_START
 void    OGRRegisterAll();
 
-void	RegisterOGRShape();
-void	RegisterOGRNTF();
-void	RegisterOGRFME();
+void    RegisterOGRShape();
+void    RegisterOGRNTF();
+void    RegisterOGRFME();
 void    RegisterOGRSDTS();
 void    RegisterOGRTiger();
-void	RegisterOGRS57();
+void    RegisterOGRS57();
 void    RegisterOGRTAB();
 void    RegisterOGRMIF();
 void    RegisterOGROGDI();

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/01/19 21:20:29  warmerda
+ * expanded tabs
+ *
  * Revision 1.4  1999/09/21 17:26:31  warmerda
  * generalized SADR reading
  *
@@ -83,8 +86,8 @@ SDTS_IREF::~SDTS_IREF()
 int SDTS_IREF::Read( const char * pszFilename )
 
 {
-    DDFModule	oIREFFile;
-    DDFRecord	*poRecord;
+    DDFModule   oIREFFile;
+    DDFRecord   *poRecord;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file, and read the header.                             */
@@ -113,7 +116,7 @@ int SDTS_IREF::Read( const char * pszFilename )
                                                            "YLBL", 0 ) );
     
 /* -------------------------------------------------------------------- */
-/*	Get the coordinate encoding.					*/
+/*      Get the coordinate encoding.                                    */
 /* -------------------------------------------------------------------- */
     CPLFree( pszCoordinateFormat );
     pszCoordinateFormat =
@@ -167,8 +170,8 @@ int SDTS_IREF::GetSADR( DDFField * poField, int nVertices,
     if( nDefaultSADRFormat
         && poField->GetFieldDefn()->GetSubfieldCount() == 2 )
     {
-        GInt32		anXY[2];
-        const char	*pachRawData = poField->GetData();
+        GInt32          anXY[2];
+        const char      *pachRawData = poField->GetData();
         
         CPLAssert( poField->GetDataSize() >= nVertices * SDTS_SIZEOF_SADR );
 
@@ -195,18 +198,18 @@ int SDTS_IREF::GetSADR( DDFField * poField, int nVertices,
 /* -------------------------------------------------------------------- */
     else
     {
-        DDFFieldDefn	*poFieldDefn = poField->GetFieldDefn();
-        int		nBytesRemaining = poField->GetDataSize();
+        DDFFieldDefn    *poFieldDefn = poField->GetFieldDefn();
+        int             nBytesRemaining = poField->GetDataSize();
         const char     *pachFieldData = poField->GetData();
-        int		iVertex;
+        int             iVertex;
             
         CPLAssert( poFieldDefn->GetSubfieldCount() == 2
                    || poFieldDefn->GetSubfieldCount() == 3 );
         
         for( iVertex = 0; iVertex < nVertices; iVertex++ )
         {
-            double	adfXYZ[3];
-            GByte	*pabyBString;
+            double      adfXYZ[3];
+            GByte       *pabyBString;
 
             adfXYZ[2] = 0.0;
 
@@ -214,7 +217,7 @@ int SDTS_IREF::GetSADR( DDFField * poField, int nVertices,
                  iEntry < poFieldDefn->GetSubfieldCount();
                  iEntry++ )
             {
-                int	nBytesConsumed;
+                int     nBytesConsumed;
                 DDFSubfieldDefn *poSF = poFieldDefn->GetSubfield(iEntry);
 
                 switch( poSF->GetType() )
@@ -241,31 +244,31 @@ int SDTS_IREF::GetSADR( DDFField * poField, int nVertices,
 
                     if( EQUAL(pszCoordinateFormat,"BI32") )
                     {
-                        GInt32	nValue;
+                        GInt32  nValue;
                         memcpy( &nValue, pabyBString, 4 );
                         adfXYZ[iEntry] = ((int) CPL_MSBWORD32( nValue ));
                     }
                     else if( EQUAL(pszCoordinateFormat,"BI16") )
                     {
-                        GInt16	nValue;
+                        GInt16  nValue;
                         memcpy( &nValue, pabyBString, 2 );
                         adfXYZ[iEntry] = ((int) CPL_MSBWORD16( nValue ));
                     }
                     else if( EQUAL(pszCoordinateFormat,"BU32") )
                     {
-                        GUInt32	nValue;
+                        GUInt32 nValue;
                         memcpy( &nValue, pabyBString, 4 );
                         adfXYZ[iEntry] = ((GUInt32) CPL_MSBWORD32( nValue ));
                     }
                     else if( EQUAL(pszCoordinateFormat,"BU16") )
                     {
-                        GUInt16	nValue;
+                        GUInt16 nValue;
                         memcpy( &nValue, pabyBString, 2 );
                         adfXYZ[iEntry] = ((GUInt16) CPL_MSBWORD16( nValue ));
                     }
                     else if( EQUAL(pszCoordinateFormat,"BFP32") )
                     {
-                        float	fValue;
+                        float   fValue;
                         
                         memcpy( &fValue, pabyBString, 4 );
                         CPL_MSBPTR32( &fValue );
@@ -273,7 +276,7 @@ int SDTS_IREF::GetSADR( DDFField * poField, int nVertices,
                     }
                     else if( EQUAL(pszCoordinateFormat,"BFP64") )
                     {
-                        double	dfValue;
+                        double  dfValue;
                         
                         memcpy( &dfValue, pabyBString, 8 );
                         CPL_MSBPTR64( &dfValue );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/01/19 21:20:29  warmerda
+ * expanded tabs
+ *
  * Revision 1.9  1999/11/04 22:52:53  warmerda
  * added dynamic ATID support
  *
@@ -61,10 +64,10 @@
 
 /************************************************************************/
 /* ==================================================================== */
-/*			      SDTSRawPolygon				*/
-/*									*/
-/*	This is a simple class for holding the data related with a 	*/
-/*	polygon feature.						*/
+/*                            SDTSRawPolygon                            */
+/*                                                                      */
+/*      This is a simple class for holding the data related with a      */
+/*      polygon feature.                                                */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -110,12 +113,12 @@ int SDTSRawPolygon::Read( DDFRecord * poRecord )
 {
 /* ==================================================================== */
 /*      Loop over fields in this record, looking for those we           */
-/*      recognise, and need.						*/
+/*      recognise, and need.                                            */
 /* ==================================================================== */
     for( int iField = 0; iField < poRecord->GetFieldCount(); iField++ )
     {
-        DDFField	*poField = poRecord->GetField( iField );
-        const char	*pszFieldName;
+        DDFField        *poField = poRecord->GetField( iField );
+        const char      *pszFieldName;
 
         CPLAssert( poField != NULL );
         pszFieldName = poField->GetFieldDefn()->GetName();
@@ -158,7 +161,7 @@ void SDTSRawPolygon::AddEdgeToRing( int nVertToAdd,
                                     int bReverse, int bDropVertex )
 
 {
-    int		iStart, iEnd, iStep;
+    int         iStart, iEnd, iStep;
 
     if( bDropVertex && bReverse )
     {
@@ -245,8 +248,8 @@ void SDTSRawPolygon::AddEdgeToRing( int nVertToAdd,
 int SDTSRawPolygon::AssembleRings()
 
 {
-    int		iEdge;
-    int		bSuccess = TRUE;
+    int         iEdge;
+    int         bSuccess = TRUE;
     
     if( nRings > 0 )
         return TRUE;
@@ -272,7 +275,7 @@ int SDTSRawPolygon::AssembleRings()
 /*      Setup array of line markers indicating if they have been        */
 /*      added to a ring yet.                                            */
 /* -------------------------------------------------------------------- */
-    int	*panEdgeConsumed, nRemainingEdges = nEdges;
+    int *panEdgeConsumed, nRemainingEdges = nEdges;
 
     panEdgeConsumed = (int *) CPLCalloc(sizeof(int),nEdges);
 
@@ -281,12 +284,12 @@ int SDTSRawPolygon::AssembleRings()
 /* ==================================================================== */
     while( nRemainingEdges > 0 )
     {
-        int		nStartNode, nLinkNode;
+        int             nStartNode, nLinkNode;
         
 /* -------------------------------------------------------------------- */
 /*      Find the first unconsumed edge.                                 */
 /* -------------------------------------------------------------------- */
-        SDTSRawLine	*poEdge;
+        SDTSRawLine     *poEdge;
         
         for( iEdge = 0; panEdgeConsumed[iEdge]; iEdge++ ) {}
 
@@ -311,7 +314,7 @@ int SDTSRawPolygon::AssembleRings()
 /*      Loop adding edges to this ring until we make a whole pass       */
 /*      within finding anything to add.                                 */
 /* ==================================================================== */
-        int		bWorkDone = TRUE;
+        int             bWorkDone = TRUE;
 
         while( nLinkNode != nStartNode
                && nRemainingEdges > 0
@@ -367,34 +370,34 @@ int SDTSRawPolygon::AssembleRings()
 /*      Compute the area of each ring.  The sign will be positive       */
 /*      for counter clockwise rings, otherwise negative.                */
 /*                                                                      */
-/*	The algorithm used in this function was taken from _Graphics	*/
-/*	Gems II_, James Arvo, 1991, Academic Press, Inc., section 1.1,	*/
-/*	"The Area of a Simple Polygon", Jon Rokne, pp. 5-6.		*/
+/*      The algorithm used in this function was taken from _Graphics    */
+/*      Gems II_, James Arvo, 1991, Academic Press, Inc., section 1.1,  */
+/*      "The Area of a Simple Polygon", Jon Rokne, pp. 5-6.             */
 /* ==================================================================== */
-    double	*padfRingArea, dfMaxArea = 0.0;
-    int		iRing, iBiggestRing = -1;
+    double      *padfRingArea, dfMaxArea = 0.0;
+    int         iRing, iBiggestRing = -1;
 
     padfRingArea = (double *) CPLCalloc(sizeof(double),nRings);
 
     for( iRing = 0; iRing < nRings; iRing++ )
     {
-        double	dfSum1 = 0.0, dfSum2 = 0.0;
-        int	i, nRingVertices;
+        double  dfSum1 = 0.0, dfSum2 = 0.0;
+        int     i, nRingVertices;
 
         if( iRing == nRings - 1 )
             nRingVertices = nVertices - panRingStart[iRing];
         else
             nRingVertices = panRingStart[iRing+1] - panRingStart[iRing];
         
-	for( i = panRingStart[iRing];
+        for( i = panRingStart[iRing];
              i < panRingStart[iRing] + nRingVertices - 1;
              i++)
-	{
-	    dfSum1 += padfX[i] * padfY[i+1];
-	    dfSum2 += padfY[i] * padfX[i+1];
-	}
+        {
+            dfSum1 += padfX[i] * padfY[i+1];
+            dfSum2 += padfY[i] * padfX[i+1];
+        }
 
-	padfRingArea[iRing] = (dfSum1 - dfSum2) / 2;
+        padfRingArea[iRing] = (dfSum1 - dfSum2) / 2;
 
         if( ABS(padfRingArea[iRing]) > dfMaxArea )
         {
@@ -408,13 +411,13 @@ int SDTSRawPolygon::AssembleRings()
 /*      it, adjusting the direction if necessary to ensure that this    */
 /*      outer ring is counter clockwise.                                */
 /* ==================================================================== */
-    double	*padfXRaw = padfX;
-    double	*padfYRaw = padfY;
-    double	*padfZRaw = padfZ;
-    int		*panRawRingStart = panRingStart;
-    int		nRawVertices = nVertices;
-    int		nRawRings = nRings;
-    int		nRingVertices;
+    double      *padfXRaw = padfX;
+    double      *padfYRaw = padfY;
+    double      *padfZRaw = padfZ;
+    int         *panRawRingStart = panRingStart;
+    int         nRawVertices = nVertices;
+    int         nRawRings = nRings;
+    int         nRingVertices;
 
     padfX = (double *) CPLMalloc(sizeof(double) * nVertices);
     padfY = (double *) CPLMalloc(sizeof(double) * nVertices);
@@ -481,7 +484,7 @@ int SDTSRawPolygon::AssembleRings()
 void SDTSRawPolygon::Dump( FILE * fp )
 
 {
-    int		i;
+    int         i;
     
     fprintf( fp, "SDTSRawPolygon %s: ", oModId.GetName() );
 
@@ -493,9 +496,9 @@ void SDTSRawPolygon::Dump( FILE * fp )
 
 /************************************************************************/
 /* ==================================================================== */
-/*			       SDTSPolygonReader			*/
-/*									*/
-/*	This is the class used to read a Polygon module.		*/
+/*                             SDTSPolygonReader                        */
+/*                                                                      */
+/*      This is the class used to read a Polygon module.                */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -549,7 +552,7 @@ int SDTSPolygonReader::Open( const char * pszFilename )
 SDTSRawPolygon * SDTSPolygonReader::GetNextPolygon()
 
 {
-    DDFRecord	*poRecord;
+    DDFRecord   *poRecord;
     
 /* -------------------------------------------------------------------- */
 /*      Read a record.                                                  */
@@ -565,7 +568,7 @@ SDTSRawPolygon * SDTSPolygonReader::GetNextPolygon()
 /* -------------------------------------------------------------------- */
 /*      Transform into a Polygon feature.                                 */
 /* -------------------------------------------------------------------- */
-    SDTSRawPolygon	*poRawPolygon = new SDTSRawPolygon();
+    SDTSRawPolygon      *poRawPolygon = new SDTSRawPolygon();
 
     if( poRawPolygon->Read( poRecord ) )
     {
@@ -622,7 +625,7 @@ void SDTSPolygonReader::AssembleRings( SDTSTransfer * poTransfer )
          iLineLayer < poTransfer->GetLayerCount();
          iLineLayer++ )
     {
-        SDTSLineReader	*poLineReader;
+        SDTSLineReader  *poLineReader;
         
         if( poTransfer->GetLayerType(iLineLayer) != SLTLine )
             continue;
@@ -640,12 +643,12 @@ void SDTSPolygonReader::AssembleRings( SDTSTransfer * poTransfer )
 /*      Scan all polygons indexed on this reader, and assemble their    */
 /*      rings.                                                          */
 /* -------------------------------------------------------------------- */
-    SDTSFeature	*poFeature;
+    SDTSFeature *poFeature;
     
     Rewind();
     while( (poFeature = GetNextFeature()) != NULL )
     {
-        SDTSRawPolygon	*poPoly = (SDTSRawPolygon *) poFeature;
+        SDTSRawPolygon  *poPoly = (SDTSRawPolygon *) poFeature;
 
         poPoly->AssembleRings();
     }

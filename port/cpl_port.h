@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.24  2001/01/19 21:16:41  warmerda
+ * expanded tabs
+ *
  * Revision 1.23  2001/01/13 04:06:39  warmerda
  * added strings.h on AIX as per patch from Dale.
  *
@@ -142,7 +145,7 @@
 #endif
 
 /* ==================================================================== */
-/*	Standard include files.						*/
+/*      Standard include files.                                         */
 /* ==================================================================== */
 
 #include <stdio.h>
@@ -208,8 +211,8 @@ typedef unsigned long    GUIntBig;
 /*      Other standard services.                                        */
 /* ==================================================================== */
 #ifdef __cplusplus
-#  define CPL_C_START		extern "C" {
-#  define CPL_C_END		}
+#  define CPL_C_START           extern "C" {
+#  define CPL_C_END             }
 #else
 #  define CPL_C_START
 #  define CPL_C_END
@@ -225,15 +228,15 @@ typedef unsigned long    GUIntBig;
 
 
 #ifndef NULL
-#  define NULL	0
+#  define NULL  0
 #endif
 
 #ifndef FALSE
-#  define FALSE	0
+#  define FALSE 0
 #endif
 
 #ifndef TRUE
-#  define TRUE	1
+#  define TRUE  1
 #endif
 
 #ifndef MAX
@@ -280,12 +283,12 @@ typedef unsigned long    GUIntBig;
             (((GUInt16)(x) & 0xff00U) >> 8) ))
 
 #define CPL_SWAP16PTR(x) \
-{								\
-    GByte	byTemp, *pabyData = (GByte *) (x);		\
-								\
-    byTemp = pabyData[0];					\
-    pabyData[0] = pabyData[1];					\
-    pabyData[1] = byTemp;					\
+{                                                               \
+    GByte       byTemp, *pabyData = (GByte *) (x);              \
+                                                                \
+    byTemp = pabyData[0];                                       \
+    pabyData[0] = pabyData[1];                                  \
+    pabyData[1] = byTemp;                                       \
 }                                                                    
                                                             
 #define CPL_SWAP32(x) \
@@ -296,33 +299,33 @@ typedef unsigned long    GUIntBig;
             (((GUInt32)(x) & (GUInt32)0xff000000UL) >> 24) ))
 
 #define CPL_SWAP32PTR(x) \
-{								\
-    GByte	byTemp, *pabyData = (GByte *) (x);		\
-								\
-    byTemp = pabyData[0];					\
-    pabyData[0] = pabyData[3];					\
-    pabyData[3] = byTemp;					\
-    byTemp = pabyData[1];					\
-    pabyData[1] = pabyData[2];					\
-    pabyData[2] = byTemp;					\
+{                                                               \
+    GByte       byTemp, *pabyData = (GByte *) (x);              \
+                                                                \
+    byTemp = pabyData[0];                                       \
+    pabyData[0] = pabyData[3];                                  \
+    pabyData[3] = byTemp;                                       \
+    byTemp = pabyData[1];                                       \
+    pabyData[1] = pabyData[2];                                  \
+    pabyData[2] = byTemp;                                       \
 }                                                                    
                                                             
 #define CPL_SWAP64PTR(x) \
-{								\
-    GByte	byTemp, *pabyData = (GByte *) (x);		\
-								\
-    byTemp = pabyData[0];					\
-    pabyData[0] = pabyData[7];					\
-    pabyData[7] = byTemp;					\
-    byTemp = pabyData[1];					\
-    pabyData[1] = pabyData[6];					\
-    pabyData[6] = byTemp;					\
-    byTemp = pabyData[2];					\
-    pabyData[2] = pabyData[5];					\
-    pabyData[5] = byTemp;					\
-    byTemp = pabyData[3];					\
-    pabyData[3] = pabyData[4];					\
-    pabyData[4] = byTemp;					\
+{                                                               \
+    GByte       byTemp, *pabyData = (GByte *) (x);              \
+                                                                \
+    byTemp = pabyData[0];                                       \
+    pabyData[0] = pabyData[7];                                  \
+    pabyData[7] = byTemp;                                       \
+    byTemp = pabyData[1];                                       \
+    pabyData[1] = pabyData[6];                                  \
+    pabyData[6] = byTemp;                                       \
+    byTemp = pabyData[2];                                       \
+    pabyData[2] = pabyData[5];                                  \
+    pabyData[5] = byTemp;                                       \
+    byTemp = pabyData[3];                                       \
+    pabyData[3] = pabyData[4];                                  \
+    pabyData[4] = byTemp;                                       \
 }                                                                    
                                                             
 
@@ -342,38 +345,38 @@ m * this version of the CPL_SWAP64() macro with a less efficient one.
             (uint64)(((uint64)(x) & (uint64)0xff00000000000000ULL) >> 56) ))
 */
 
-#define	CPL_SWAPDOUBLE(p) {                             \
+#define CPL_SWAPDOUBLE(p) {                             \
         double _tmp = *(double *)(p);                     \
-	((GByte *)(p))[0] = ((GByte *)&_tmp)[7];          \
-	((GByte *)(p))[1] = ((GByte *)&_tmp)[6];          \
-	((GByte *)(p))[2] = ((GByte *)&_tmp)[5];          \
-	((GByte *)(p))[3] = ((GByte *)&_tmp)[4];          \
-	((GByte *)(p))[4] = ((GByte *)&_tmp)[3];          \
-	((GByte *)(p))[5] = ((GByte *)&_tmp)[2];          \
-	((GByte *)(p))[6] = ((GByte *)&_tmp)[1];          \
-	((GByte *)(p))[7] = ((GByte *)&_tmp)[0];          \
+        ((GByte *)(p))[0] = ((GByte *)&_tmp)[7];          \
+        ((GByte *)(p))[1] = ((GByte *)&_tmp)[6];          \
+        ((GByte *)(p))[2] = ((GByte *)&_tmp)[5];          \
+        ((GByte *)(p))[3] = ((GByte *)&_tmp)[4];          \
+        ((GByte *)(p))[4] = ((GByte *)&_tmp)[3];          \
+        ((GByte *)(p))[5] = ((GByte *)&_tmp)[2];          \
+        ((GByte *)(p))[6] = ((GByte *)&_tmp)[1];          \
+        ((GByte *)(p))[7] = ((GByte *)&_tmp)[0];          \
 }
 
 #ifdef CPL_MSB
-#  define CPL_MSBWORD16(x)	(x)
-#  define CPL_LSBWORD16(x)	CPL_SWAP16(x)
-#  define CPL_MSBWORD32(x)	(x)
-#  define CPL_LSBWORD32(x)	CPL_SWAP32(x)
-#  define CPL_MSBPTR16(x)	
-#  define CPL_LSBPTR16(x)	CPL_SWAP16PTR(x)
-#  define CPL_MSBPTR32(x)	
-#  define CPL_LSBPTR32(x)	CPL_SWAP32PTR(x)
+#  define CPL_MSBWORD16(x)      (x)
+#  define CPL_LSBWORD16(x)      CPL_SWAP16(x)
+#  define CPL_MSBWORD32(x)      (x)
+#  define CPL_LSBWORD32(x)      CPL_SWAP32(x)
+#  define CPL_MSBPTR16(x)       
+#  define CPL_LSBPTR16(x)       CPL_SWAP16PTR(x)
+#  define CPL_MSBPTR32(x)       
+#  define CPL_LSBPTR32(x)       CPL_SWAP32PTR(x)
 #  define CPL_MSBPTR64(x)       
 #  define CPL_LSBPTR64(x)       CPL_SWAP64PTR(x)
 #else
-#  define CPL_LSBWORD16(x)	(x)
-#  define CPL_MSBWORD16(x)	CPL_SWAP16(x)
-#  define CPL_LSBWORD32(x)	(x)
-#  define CPL_MSBWORD32(x)	CPL_SWAP32(x)
-#  define CPL_LSBPTR16(x)	
-#  define CPL_MSBPTR16(x)	CPL_SWAP16PTR(x)
-#  define CPL_LSBPTR32(x)	
-#  define CPL_MSBPTR32(x)	CPL_SWAP32PTR(x)
+#  define CPL_LSBWORD16(x)      (x)
+#  define CPL_MSBWORD16(x)      CPL_SWAP16(x)
+#  define CPL_LSBWORD32(x)      (x)
+#  define CPL_MSBWORD32(x)      CPL_SWAP32(x)
+#  define CPL_LSBPTR16(x)       
+#  define CPL_MSBPTR16(x)       CPL_SWAP16PTR(x)
+#  define CPL_LSBPTR32(x)       
+#  define CPL_MSBPTR32(x)       CPL_SWAP32PTR(x)
 #  define CPL_LSBPTR64(x)       
 #  define CPL_MSBPTR64(x)       CPL_SWAP64PTR(x)
 #endif

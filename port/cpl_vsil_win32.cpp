@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/01/19 21:16:41  warmerda
+ * expanded tabs
+ *
  * Revision 1.1  2001/01/03 16:16:59  warmerda
  * New
  *
@@ -102,14 +105,14 @@ int VSIFSeekL( FILE * fp, vsi_l_offset nOffset, int nWhence )
 
     switch(nWhence)
     {
-	case SEEK_CUR:
+        case SEEK_CUR:
             dwMoveMethod = FILE_CURRENT;
             break;
-	case SEEK_END:
+        case SEEK_END:
             dwMoveMethod = FILE_END;
             break;
-	case SEEK_SET:
-	default:
+        case SEEK_SET:
+        default:
             dwMoveMethod = FILE_BEGIN;
             break;
     }

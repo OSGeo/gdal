@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/01/19 21:20:29  warmerda
+ * expanded tabs
+ *
  * Revision 1.11  2000/04/14 15:00:53  warmerda
  * Ensure that SDTSModId extraction works for variable sized MODN
  *
@@ -85,7 +88,7 @@ SDTSFeature::SDTSFeature()
 void SDTSFeature::ApplyATID( DDFField * poField )
 
 {
-    int		nRepeatCount = poField->GetRepeatCount();
+    int         nRepeatCount = poField->GetRepeatCount();
     int         bUsualFormat;
     DDFSubfieldDefn *poMODN;
 
@@ -144,7 +147,7 @@ SDTSFeature::~SDTSFeature()
 int SDTSModId::Set( DDFField *poField )
 
 {
-    const char	*pachData = poField->GetData();
+    const char  *pachData = poField->GetData();
     DDFFieldDefn *poDefn = poField->GetFieldDefn();
 
     if( poDefn->GetSubfieldCount() >= 2 
@@ -158,7 +161,7 @@ int SDTSModId::Set( DDFField *poField )
     else
     {
         DDFSubfieldDefn *poSF;
-        int		nBytesRemaining;
+        int             nBytesRemaining;
         const char  *pachData;
 
         szModule[4] = '\0';
@@ -175,12 +178,12 @@ int SDTSModId::Set( DDFField *poField )
 
     if( poDefn->GetSubfieldCount() == 3 )
     {
-        DDFSubfieldDefn 	*poSF;
+        DDFSubfieldDefn         *poSF;
 
         poSF = poField->GetFieldDefn()->FindSubfieldDefn( "OBRP" );
         if( poSF != NULL )
         {
-            int		nBytesRemaining;
+            int         nBytesRemaining;
             const char  *pachData;
 
             pachData = poField->GetSubfieldData(poSF, &nBytesRemaining);
@@ -202,7 +205,7 @@ int SDTSModId::Set( DDFField *poField )
 const char * SDTSModId::GetName()
 
 {
-    static char		szName[20];
+    static char         szName[20];
 
     sprintf( szName, "%s:%ld", szModule, nRecord );
 
@@ -223,7 +226,7 @@ char **SDTSScanModuleReferences( DDFModule * poModule, const char * pszFName )
 /* -------------------------------------------------------------------- */
 /*      Identify the field, and subfield we are interested in.          */
 /* -------------------------------------------------------------------- */
-    DDFFieldDefn	*poIDField;
+    DDFFieldDefn        *poIDField;
     DDFSubfieldDefn     *poMODN;
 
     poIDField = poModule->FindFieldDefn( pszFName );
@@ -238,26 +241,26 @@ char **SDTSScanModuleReferences( DDFModule * poModule, const char * pszFName )
 /* -------------------------------------------------------------------- */
 /*      Scan the file.                                                  */
 /* -------------------------------------------------------------------- */
-    DDFRecord	*poRecord;
-    char	**papszModnList = NULL;
+    DDFRecord   *poRecord;
+    char        **papszModnList = NULL;
     
     poModule->Rewind();
     while( (poRecord = poModule->ReadRecord()) != NULL )
     {
-        int	iField;
+        int     iField;
         
         for( iField = 0; iField < poRecord->GetFieldCount(); iField++ )
         {
-            DDFField	*poField = poRecord->GetField( iField );
+            DDFField    *poField = poRecord->GetField( iField );
 
             if( poField->GetFieldDefn() == poIDField )
             {
-                const char	*pszModName;
-                int		i;
+                const char      *pszModName;
+                int             i;
 
                 for( i = 0; i < poField->GetRepeatCount(); i++ )
                 {
-                    char	szName[5];
+                    char        szName[5];
                     
                     pszModName = poField->GetSubfieldData(poMODN,NULL,i);
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/01/19 21:15:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.3  1999/12/22 15:38:15  warmerda
  * major update
  *
@@ -67,7 +70,7 @@ const char *OGRTigerDriver::GetName()
 OGRDataSource *OGRTigerDriver::Open( const char * pszFilename, int bUpdate )
 
 {
-    OGRTigerDataSource	*poDS = new OGRTigerDataSource;
+    OGRTigerDataSource  *poDS = new OGRTigerDataSource;
 
     if( !poDS->Open( pszFilename, TRUE ) )
     {

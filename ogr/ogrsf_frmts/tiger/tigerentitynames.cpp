@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/01/19 21:15:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.2  2000/01/13 05:18:11  warmerda
  * added support for multiple versions
  *
@@ -47,7 +50,7 @@ TigerEntityNames::TigerEntityNames( OGRTigerDataSource * poDSIn,
                             const char * pszPrototypeModule )
 
 {
-    OGRFieldDefn	oField("",OFTInteger);
+    OGRFieldDefn        oField("",OFTInteger);
 
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "EntityNames" );
@@ -133,7 +136,7 @@ int TigerEntityNames::SetModule( const char * pszModule )
 OGRFeature *TigerEntityNames::GetFeature( int nRecordId )
 
 {
-    char	achRecord[112];
+    char        achRecord[112];
 
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
@@ -168,7 +171,7 @@ OGRFeature *TigerEntityNames::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
 /*      Set fields.                                                     */
 /* -------------------------------------------------------------------- */
-    OGRFeature	*poFeature = new OGRFeature( poFeatureDefn );
+    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
     SetField( poFeature, "STATE", achRecord, 6, 7 );
     SetField( poFeature, "COUNTY", achRecord, 8, 10 );

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/01/19 21:15:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.4  2000/01/13 05:18:11  warmerda
  * added support for multiple versions
  *
@@ -54,7 +57,7 @@ TigerCompleteChain::TigerCompleteChain( OGRTigerDataSource * poDSIn,
                                         const char * pszPrototypeModule )
 
 {
-    OGRFieldDefn	oField("",OFTInteger);
+    OGRFieldDefn        oField("",OFTInteger);
 
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "CompleteChain" );
@@ -293,7 +296,7 @@ int TigerCompleteChain::SetModule( const char * pszModule )
 
         if( pszModule )
         {
-            char	*pszFilename;
+            char        *pszFilename;
         
             pszFilename = poDS->BuildFilename( pszModule, "3" );
 
@@ -326,7 +329,7 @@ int TigerCompleteChain::SetModule( const char * pszModule )
 OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
 
 {
-    char	achRecord[228];
+    char        achRecord[228];
 
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
@@ -361,7 +364,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
 /*      Set fields.                                                     */
 /* -------------------------------------------------------------------- */
-    OGRFeature	*poFeature = new OGRFeature( poFeatureDefn );
+    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
     SetField( poFeature, "TLID", achRecord, 6, 15 );
     SetField( poFeature, "SIDE1", achRecord, 16, 16 );
@@ -403,12 +406,12 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
     SetField( poFeature, "BLKR", achRecord, 187, 190 );
 
 /* -------------------------------------------------------------------- */
-/*      Read RT3 record, and apply fields.				*/
+/*      Read RT3 record, and apply fields.                              */
 /* -------------------------------------------------------------------- */
     if( fpRT3 != NULL )
     {
-        char	achRT3Rec[111];
-        int	nRT3RecLen = 111 + nRecordLength - 228;
+        char    achRT3Rec[111];
+        int     nRT3RecLen = 111 + nRecordLength - 228;
 
         if( VSIFSeek( fpRT3, nRecordId * nRT3RecLen, SEEK_SET ) != 0 )
         {
@@ -451,7 +454,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
 /*      Set geometry                                                    */
 /* -------------------------------------------------------------------- */
-    OGRLineString	*poLine = new OGRLineString();
+    OGRLineString       *poLine = new OGRLineString();
 
     poLine->setPoint(0,
                      atoi(GetField(achRecord, 191, 200)) / 1000000.0,
@@ -479,7 +482,7 @@ void TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
                                          OGRLineString * poLine, int nSeqNum ) 
 
 {
-    int		nShapeRecId;
+    int         nShapeRecId;
 
     nShapeRecId = GetShapeRecordId( nRecordId, nTLID );
     if( nShapeRecId == -1 )
@@ -488,8 +491,8 @@ void TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
 /* -------------------------------------------------------------------- */
 /*      Read all the sequential records with the same TLID.             */
 /* -------------------------------------------------------------------- */
-    char	achShapeRec[208];
-    int		nShapeRecLen = 208 + nRecordLength - 228;
+    char        achShapeRec[208];
+    int         nShapeRecLen = 208 + nRecordLength - 228;
 
     for( ; TRUE; nShapeRecId++ )
     {
@@ -516,18 +519,18 @@ void TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
 /* -------------------------------------------------------------------- */
 /*      Translate the locations into OGRLineString vertices.            */
 /* -------------------------------------------------------------------- */
-        int	iVertex;
+        int     iVertex;
 
         for( iVertex = 0; iVertex < 10; iVertex++ )
         {
-            int		iStart = 19 + 19*iVertex;
+            int         iStart = 19 + 19*iVertex;
             if( EQUALN(achShapeRec+iStart-1,"+000000000+00000000",19) )
                 break;
 
             poLine->addPoint(atoi(GetField(achShapeRec,iStart,iStart+9))
-                             					/ 1000000.0,
+                                                                / 1000000.0,
                              atoi(GetField(achShapeRec,iStart+10,iStart+18))
-                             					/ 1000000.0 );
+                                                                / 1000000.0 );
         }
 
 /* -------------------------------------------------------------------- */
@@ -555,7 +558,7 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
 /* -------------------------------------------------------------------- */
     if( fpShape == NULL )
     {
-        char	*pszFilename;
+        char    *pszFilename;
 
         pszFilename = poDS->BuildFilename( pszModule, "2" );
 
@@ -588,7 +591,7 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
 /*      If we don't already have this value, then search from the       */
 /*      previous known record.                                          */
 /* -------------------------------------------------------------------- */
-    int	iTestChain, nWorkingRecId;
+    int iTestChain, nWorkingRecId;
         
     for( iTestChain = nChainId-1;
          iTestChain >= 0 && panShapeRecordId[iTestChain] <= 0;
@@ -617,10 +620,10 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
 /*      Read records up to the maximum distance that is possibly        */
 /*      required, looking for our target TLID.                          */
 /* -------------------------------------------------------------------- */
-    int		nMaxChainToRead = nChainId - iTestChain;
-    int		nChainsRead = 0;
-    char	achShapeRec[208];
-    int		nShapeRecLen = 208 + nRecordLength - 228;
+    int         nMaxChainToRead = nChainId - iTestChain;
+    int         nChainsRead = 0;
+    char        achShapeRec[208];
+    int         nShapeRecLen = 208 + nRecordLength - 228;
 
     while( nChainsRead < nMaxChainToRead )
     {

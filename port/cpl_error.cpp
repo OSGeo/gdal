@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/01/19 21:16:41  warmerda
+ * expanded tabs
+ *
  * Revision 1.14  2000/11/30 17:30:10  warmerda
  * added CPLGetLastErrorType
  *
@@ -88,8 +91,8 @@ static CPLErrorHandler gpfnCPLErrorHandler = CPLDefaultErrorHandler;
 
 typedef struct errHandler
 {
-    struct errHandler	*psNext;
-    CPLErrorHandler	pfnHandler;
+    struct errHandler   *psNext;
+    CPLErrorHandler     pfnHandler;
 } CPLErrorHandlerNode;
 
 static CPLErrorHandlerNode * psHandlerStack = NULL;
@@ -196,7 +199,7 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
 void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 
 {
-    char	*pszMessage;
+    char        *pszMessage;
     va_list args;
     const char      *pszDebug = getenv("CPL_DEBUG");
 
@@ -400,7 +403,7 @@ void CPLQuietErrorHandler( CPLErr eErrClass , int nError,
 
 CPLErrorHandler CPLSetErrorHandler( CPLErrorHandler pfnErrorHandler )
 {
-    CPLErrorHandler	pfnOldHandler = gpfnCPLErrorHandler;
+    CPLErrorHandler     pfnOldHandler = gpfnCPLErrorHandler;
     
     gpfnCPLErrorHandler = pfnErrorHandler;
 
@@ -427,7 +430,7 @@ CPLErrorHandler CPLSetErrorHandler( CPLErrorHandler pfnErrorHandler )
 void CPLPushErrorHandler( CPLErrorHandler pfnErrorHandler )
 
 {
-    CPLErrorHandlerNode		*psNode;
+    CPLErrorHandlerNode         *psNode;
 
     psNode = (CPLErrorHandlerNode *) VSIMalloc(sizeof(CPLErrorHandlerNode));
     psNode->psNext = psHandlerStack;
@@ -454,7 +457,7 @@ void CPLPopErrorHandler()
 {
     if( psHandlerStack != NULL )
     {
-        CPLErrorHandlerNode	*psNode = psHandlerStack;
+        CPLErrorHandlerNode     *psNode = psHandlerStack;
 
         psHandlerStack = psNode->psNext;
         CPLSetErrorHandler( psNode->pfnHandler );

@@ -30,6 +30,9 @@
  *    instance validation of access strings to fopen().
  * 
  * $Log$
+ * Revision 1.8  2001/01/19 21:16:41  warmerda
+ * expanded tabs
+ *
  * Revision 1.7  2001/01/03 05:33:17  warmerda
  * added VSIFlush
  *
@@ -184,11 +187,11 @@ int VSIUngetc( int c, FILE * fp )
 /*      have to use vfprintf().                                         */
 /************************************************************************/
 
-int	VSIFPrintf( FILE * fp, const char * pszFormat, ... )
+int     VSIFPrintf( FILE * fp, const char * pszFormat, ... )
 
 {
-    va_list 	args;
-    int		nReturn;
+    va_list     args;
+    int         nReturn;
 
     va_start( args, pszFormat );
     nReturn = vfprintf( fp, pszFormat, args );

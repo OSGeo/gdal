@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/01/19 21:20:29  warmerda
+ * expanded tabs
+ *
  * Revision 1.11  1999/11/04 22:52:53  warmerda
  * added dynamic ATID support
  *
@@ -67,10 +70,10 @@
 
 /************************************************************************/
 /* ==================================================================== */
-/*			      SDTSRawLine				*/
-/*									*/
-/*	This is a simple class for holding the data related with a 	*/
-/*	line feature.							*/
+/*                            SDTSRawLine                               */
+/*                                                                      */
+/*      This is a simple class for holding the data related with a      */
+/*      line feature.                                                   */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -117,8 +120,8 @@ int SDTSRawLine::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
 /* ==================================================================== */
     for( int iField = 0; iField < poRecord->GetFieldCount(); iField++ )
     {
-        DDFField	*poField = poRecord->GetField( iField );
-        const char	*pszFieldName;
+        DDFField        *poField = poRecord->GetField( iField );
+        const char      *pszFieldName;
 
         CPLAssert( poField != NULL );
         pszFieldName = poField->GetFieldDefn()->GetName();
@@ -195,9 +198,9 @@ void SDTSRawLine::Dump( FILE * fp )
 
 /************************************************************************/
 /* ==================================================================== */
-/*			       SDTSLineReader				*/
-/*									*/
-/*	This is the class used to read a line module.			*/
+/*                             SDTSLineReader                           */
+/*                                                                      */
+/*      This is the class used to read a line module.                   */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -261,7 +264,7 @@ SDTSRawLine * SDTSLineReader::GetNextLine()
 /* -------------------------------------------------------------------- */
 /*      Read the record.                                                */
 /* -------------------------------------------------------------------- */
-    DDFRecord	*poRecord = oDDFModule.ReadRecord();
+    DDFRecord   *poRecord = oDDFModule.ReadRecord();
     
     if( poRecord == NULL )
         return NULL;
@@ -269,7 +272,7 @@ SDTSRawLine * SDTSLineReader::GetNextLine()
 /* -------------------------------------------------------------------- */
 /*      Transform into a line feature.                                  */
 /* -------------------------------------------------------------------- */
-    SDTSRawLine		*poRawLine = new SDTSRawLine();
+    SDTSRawLine         *poRawLine = new SDTSRawLine();
 
     if( poRawLine->Read( poIREF, poRecord ) )
     {
@@ -315,7 +318,7 @@ void SDTSLineReader::AttachToPolygons( SDTSTransfer * poTransfer )
 /*      Loop over all lines, attaching them to the polygons they        */
 /*      have as right and left faces.                                   */
 /* ==================================================================== */
-    SDTSRawLine	*poLine;
+    SDTSRawLine *poLine;
     SDTSPolygonReader *poPolyReader = NULL;
     
     Rewind();
@@ -335,7 +338,7 @@ void SDTSLineReader::AttachToPolygons( SDTSTransfer * poTransfer )
 /* -------------------------------------------------------------------- */
         if( poPolyReader == NULL )
         {
-            int		iPolyLayer = -1;
+            int         iPolyLayer = -1;
             
             if( poLine->oLeftPoly.nRecord != -1 )
             {
@@ -361,7 +364,7 @@ void SDTSLineReader::AttachToPolygons( SDTSTransfer * poTransfer )
 /* -------------------------------------------------------------------- */
         if( poLine->oLeftPoly.nRecord != -1 )
         {
-            SDTSRawPolygon	*poPoly;
+            SDTSRawPolygon      *poPoly;
 
             poPoly = (SDTSRawPolygon *) poPolyReader->GetIndexedFeatureRef(
                 poLine->oLeftPoly.nRecord );
@@ -371,7 +374,7 @@ void SDTSLineReader::AttachToPolygons( SDTSTransfer * poTransfer )
             
         if( poLine->oRightPoly.nRecord != -1 )
         {
-            SDTSRawPolygon	*poPoly;
+            SDTSRawPolygon      *poPoly;
 
             poPoly = (SDTSRawPolygon *) poPolyReader->GetIndexedFeatureRef(
                 poLine->oRightPoly.nRecord );

@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/01/19 21:20:29  warmerda
+ * expanded tabs
+ *
  * Revision 1.3  1999/09/07 00:42:42  warmerda
  * Grow index based on iRecordId rather than previous index max in
  * FillIndex().
@@ -194,7 +197,7 @@ SDTSFeature *SDTSIndexedReader::GetIndexedFeatureRef( int iRecordId )
 void SDTSIndexedReader::FillIndex()
 
 {
-    SDTSFeature		*poFeature;
+    SDTSFeature         *poFeature;
 
     if( nIndexSize != 0 )
         return;
@@ -203,7 +206,7 @@ void SDTSIndexedReader::FillIndex()
     
     while( (poFeature = GetNextRawFeature()) != NULL )
     {
-        int	iRecordId = poFeature->oModId.nRecord;
+        int     iRecordId = poFeature->oModId.nRecord;
 
         CPLAssert( iRecordId < 1000000 );
         if( iRecordId >= 1000000 )
@@ -214,7 +217,7 @@ void SDTSIndexedReader::FillIndex()
 
         if( iRecordId >= nIndexSize )
         {
-            int		nNewSize = (int) (iRecordId * 1.25 + 100);
+            int         nNewSize = (int) (iRecordId * 1.25 + 100);
 
             papoFeatures = (SDTSFeature **)
                 CPLRealloc( papoFeatures, sizeof(void*) * nNewSize);

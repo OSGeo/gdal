@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.10  2001/01/19 21:16:41  warmerda
+ * expanded tabs
+ *
  * Revision 1.9  2001/01/03 17:41:44  warmerda
  * added #define for VSIFFlushL
  *
@@ -98,14 +101,14 @@ CPL_C_START
 /*      stdio file access functions.                                    */
 /* ==================================================================== */
 
-FILE CPL_DLL *	VSIFOpen( const char *, const char * );
-int CPL_DLL 	VSIFClose( FILE * );
+FILE CPL_DLL *  VSIFOpen( const char *, const char * );
+int CPL_DLL     VSIFClose( FILE * );
 int CPL_DLL     VSIFSeek( FILE *, long, int );
-long CPL_DLL	VSIFTell( FILE * );
+long CPL_DLL    VSIFTell( FILE * );
 void CPL_DLL    VSIRewind( FILE * );
 void CPL_DLL    VSIFFlush( FILE * );
 
-size_t CPL_DLL	VSIFRead( void *, size_t, size_t, FILE * );
+size_t CPL_DLL  VSIFRead( void *, size_t, size_t, FILE * );
 size_t CPL_DLL  VSIFWrite( void *, size_t, size_t, FILE * );
 char CPL_DLL   *VSIFGets( char *, int, FILE * );
 int CPL_DLL     VSIFPuts( const char *, FILE * );
@@ -114,7 +117,7 @@ int CPL_DLL     VSIFPrintf( FILE *, const char *, ... );
 int CPL_DLL     VSIFGetc( FILE * );
 int CPL_DLL     VSIFPutc( int, FILE * );
 int CPL_DLL     VSIUngetc( int, FILE * );
-int CPL_DLL	VSIFEof( FILE * );
+int CPL_DLL     VSIFEof( FILE * );
 
 /* ==================================================================== */
 /*      64bit stdio file access functions.  If we have a big size       */
@@ -125,14 +128,14 @@ int CPL_DLL	VSIFEof( FILE * );
 
 typedef GUIntBig vsi_l_offset;
 
-FILE CPL_DLL *	VSIFOpenL( const char *, const char * );
-int CPL_DLL 	VSIFCloseL( FILE * );
+FILE CPL_DLL *  VSIFOpenL( const char *, const char * );
+int CPL_DLL     VSIFCloseL( FILE * );
 int CPL_DLL     VSIFSeekL( FILE *, vsi_l_offset, int );
 vsi_l_offset CPL_DLL VSIFTellL( FILE * );
 void CPL_DLL    VSIRewindL( FILE * );
-size_t CPL_DLL	VSIFReadL( void *, size_t, size_t, FILE * );
+size_t CPL_DLL  VSIFReadL( void *, size_t, size_t, FILE * );
 size_t CPL_DLL  VSIFWriteL( void *, size_t, size_t, FILE * );
-int CPL_DLL	VSIFEofL( FILE * );
+int CPL_DLL     VSIFEofL( FILE * );
 void CPL_DLL    VSIFFlushL( FILE * );
 
 #else
@@ -158,20 +161,20 @@ typedef long vsi_l_offset;
 /* ==================================================================== */
 
 typedef struct stat VSIStatBuf;
-int CPL_DLL	VSIStat( const char *, VSIStatBuf * );
+int CPL_DLL     VSIStat( const char *, VSIStatBuf * );
 
 #ifdef _WIN32
-#  define VSI_ISLNK(x)	( 0 )            /* N/A on Windows */
-#  define VSI_ISREG(x)	((x) & S_IFREG)
-#  define VSI_ISDIR(x)	((x) & S_IFDIR)
-#  define VSI_ISCHR(x)	((x) & S_IFCHR)
-#  define VSI_ISBLK(x)	( 0 )            /* N/A on Windows */
+#  define VSI_ISLNK(x)  ( 0 )            /* N/A on Windows */
+#  define VSI_ISREG(x)  ((x) & S_IFREG)
+#  define VSI_ISDIR(x)  ((x) & S_IFDIR)
+#  define VSI_ISCHR(x)  ((x) & S_IFCHR)
+#  define VSI_ISBLK(x)  ( 0 )            /* N/A on Windows */
 #else
-#  define VSI_ISLNK(x)	S_ISLNK(x)
-#  define VSI_ISREG(x)	S_ISREG(x)
-#  define VSI_ISDIR(x)	S_ISDIR(x)
-#  define VSI_ISCHR(x)	S_ISCHR(x)
-#  define VSI_ISBLK(x)	S_ISBLK(x)
+#  define VSI_ISLNK(x)  S_ISLNK(x)
+#  define VSI_ISREG(x)  S_ISREG(x)
+#  define VSI_ISDIR(x)  S_ISDIR(x)
+#  define VSI_ISCHR(x)  S_ISCHR(x)
+#  define VSI_ISBLK(x)  S_ISBLK(x)
 #endif
 
 /* ==================================================================== */
@@ -180,7 +183,7 @@ int CPL_DLL	VSIStat( const char *, VSIStatBuf * );
 
 void CPL_DLL   *VSICalloc( size_t, size_t );
 void CPL_DLL   *VSIMalloc( size_t );
-void CPL_DLL	VSIFree( void * );
+void CPL_DLL    VSIFree( void * );
 void CPL_DLL   *VSIRealloc( void *, size_t );
 char CPL_DLL   *VSIStrdup( const char * );
 

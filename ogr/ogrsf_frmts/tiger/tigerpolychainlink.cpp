@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/01/19 21:15:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.2  2000/01/13 05:18:11  warmerda
  * added support for multiple versions
  *
@@ -47,7 +50,7 @@ TigerPolyChainLink::TigerPolyChainLink( OGRTigerDataSource * poDSIn,
                                   const char * pszPrototypeModule )
 
 {
-    OGRFieldDefn	oField("",OFTInteger);
+    OGRFieldDefn        oField("",OFTInteger);
 
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "PolyChainLink" );
@@ -115,7 +118,7 @@ int TigerPolyChainLink::SetModule( const char * pszModule )
 OGRFeature *TigerPolyChainLink::GetFeature( int nRecordId )
 
 {
-    char	achRecord[52];
+    char        achRecord[52];
 
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
@@ -150,7 +153,7 @@ OGRFeature *TigerPolyChainLink::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
 /*      Set fields.                                                     */
 /* -------------------------------------------------------------------- */
-    OGRFeature	*poFeature = new OGRFeature( poFeatureDefn );
+    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
 
     SetField( poFeature, "TLID", achRecord, 6, 15 );
     SetField( poFeature, "STATE", achRecord, 16, 17 );

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/01/19 21:20:29  warmerda
+ * expanded tabs
+ *
  * Revision 1.10  1999/12/23 14:17:58  warmerda
  * Don't treat Lineage modules as being the same as Line modules.
  *
@@ -67,11 +70,11 @@
 
 /************************************************************************/
 /* ==================================================================== */
-/*			      SDTS_CATDEntry				*/
-/*									*/
-/*	This class is for internal use of the SDTS_CATD class only,	*/
-/*	and represents one entry in the directory ... a reference	*/
-/*	to another module file. 					*/
+/*                            SDTS_CATDEntry                            */
+/*                                                                      */
+/*      This class is for internal use of the SDTS_CATD class only,     */
+/*      and represents one entry in the directory ... a reference       */
+/*      to another module file.                                         */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -79,17 +82,17 @@ class SDTS_CATDEntry
 
 {
   public:
-    char *	pszModule;
-    char *	pszType;
-    char *	pszFile;
-    char *	pszExternalFlag;
+    char *      pszModule;
+    char *      pszType;
+    char *      pszFile;
+    char *      pszExternalFlag;
 
-    char *	pszFullPath;
+    char *      pszFullPath;
 };
 
 /************************************************************************/
 /* ==================================================================== */
-/*			       SDTS_CATD				*/
+/*                             SDTS_CATD                                */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -111,7 +114,7 @@ SDTS_CATD::SDTS_CATD()
 
 SDTS_CATD::~SDTS_CATD()
 {
-    int		i;
+    int         i;
 
     for( i = 0; i < nEntries; i++ )
     { 
@@ -136,8 +139,8 @@ SDTS_CATD::~SDTS_CATD()
 int SDTS_CATD::Read( const char * pszFilename )
 
 {
-    DDFModule	oCATDFile;
-    DDFRecord	*poRecord;
+    DDFModule   oCATDFile;
+    DDFRecord   *poRecord;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -146,9 +149,9 @@ int SDTS_CATD::Read( const char * pszFilename )
         return FALSE;
     
 /* -------------------------------------------------------------------- */
-/*	Strip off the filename, and keep the path prefix.		*/
+/*      Strip off the filename, and keep the path prefix.               */
 /* -------------------------------------------------------------------- */
-    int		i;
+    int         i;
 
     pszPrefixPath = CPLStrdup( pszFilename );
     for( i = strlen(pszPrefixPath)-1; i > 0; i-- )
@@ -180,7 +183,7 @@ int SDTS_CATD::Read( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Create a new entry, and get the module and file name.           */
 /* -------------------------------------------------------------------- */
-        SDTS_CATDEntry	*poEntry = new SDTS_CATDEntry;
+        SDTS_CATDEntry  *poEntry = new SDTS_CATDEntry;
 
         poEntry->pszModule =
             CPLStrdup(poRecord->GetStringSubfield( "CATD", 0, "NAME", 0 ));
@@ -226,7 +229,7 @@ int SDTS_CATD::Read( const char * pszFilename )
 const char * SDTS_CATD::GetModuleFilePath( const char * pszModule )
 
 {
-    int		i;
+    int         i;
 
     for( i = 0; i < nEntries; i++ )
     {
@@ -325,7 +328,7 @@ SDTSLayerType SDTS_CATD::GetEntryType( int iEntry )
         return SLTRaster;
 
     else
-	return SLTUnknown;
+        return SLTUnknown;
 }
 
 /************************************************************************/

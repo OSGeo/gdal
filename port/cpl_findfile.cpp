@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/01/19 21:16:41  warmerda
+ * expanded tabs
+ *
  * Revision 1.1  2000/08/29 21:06:25  warmerda
  * New
  *
@@ -91,7 +94,7 @@ const char *CPLDefaultFindFile( const char *pszClass,
 const char *CPLFindFile( const char *pszClass, const char *pszBasename )
 
 {
-    int 	i;
+    int         i;
 
     CPLFinderInit();
 
