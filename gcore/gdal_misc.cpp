@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2004/05/28 16:05:25  warmerda
+ * add default ext handling and docs for  GDALReadWorldFile
+ *
  * Revision 1.58  2004/05/25 16:58:59  warmerda
  * Try to return an error if we don't find GCPs in TAB file.
  *
@@ -1376,10 +1379,36 @@ int GDALReadTabFile( const char * pszBaseFilename,
 
 /************************************************************************/
 /*                         GDALReadWorldFile()                          */
-/*                                                                      */
-/*      Helper function for translator implementators wanting           */
-/*      support for ESRI world files.                                   */
 /************************************************************************/
+
+/**
+ * Read ESRI world file. 
+ *
+ * This function reads an ESRI style world file, and formats a geotransform
+ * from it's contents.  It will form the filename for the worldfile from the
+ * filename of the raster file referred and the suggested extension.  If no
+ * extension is provided, the code will internally try the unix style and
+ * windows style world file extensions (eg. for .tif these would be .tfw and 
+ * .tifw). 
+ *
+ * The world file contains an affine transformation with the parameters
+ * in a different order than in a geotransform array. 
+ *
+ *  geotransform[1] - width of pixel
+ *  geotransform[4] - rotational coefficient, zero for north up images.
+ *  geotransform[2] - rotational coefficient, zero for north up images.
+ *  geotransform[5] - height of pixel (but negative)
+ *  geotransform[0] - x offset to center of top left pixel.
+ *  geotrasnform[3] - y offset to center of top left pixel.
+ *
+ * @param pszBaseFilename the target raster file.
+ * @param pszExtension the extension to use (ie. ".wld") or NULL to derive it
+ * from the pszBaseFilename
+ * @param padfGeoTransform the six double array into which the 
+ * geotransformation should be placed. 
+ *
+ * @return TRUE on success or FALSE on failure.
+ */
 
 int GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
                        double *padfGeoTransform )
@@ -1391,6 +1420,40 @@ int GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
     FILE        *fpTFW;
     char        **papszLines;
 
+/* -------------------------------------------------------------------- */
+/*      If we aren't given an extension, try both the unix and          */
+/*      windows style extensions.                                       */
+/* -------------------------------------------------------------------- */
+    if( pszExtension == NULL )
+    {
+        char szDerivedExtension[100];
+        const char *pszBaseExt = CPLGetExtension( pszBaseFilename );
+
+        if( strlen(pszBaseExt) == 0 )
+            return FALSE;
+
+        // windows version - first + last + 'w'
+        szDerivedExtension[0] = pszBaseExt[0];
+        szDerivedExtension[1] = pszBaseExt[strlen(pszBaseExt)-1];
+        szDerivedExtension[2] = 'w';
+        
+        if( GDALReadWorldFile( pszBaseFilename, szDerivedExtension, 
+                               padfGeoTransform ) )
+            return TRUE;
+
+        // unix version - extension + 'w'
+        if( strlen(pszBaseExt) > sizeof(szDerivedExtension)-2 )
+            return FALSE;
+
+        strcpy( szDerivedExtension, pszBaseExt );
+        strcat( szDerivedExtension, "w" );
+        return GDALReadWorldFile( pszBaseFilename, szDerivedExtension, 
+                                  padfGeoTransform );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Skip the leading period in the extension if there is one.       */
+/* -------------------------------------------------------------------- */
     if( *pszExtension == '.' )
         pszExtension++;
 
