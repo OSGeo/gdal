@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2004/03/28 19:30:05  warmerda
+ * implement CDED50K product specs, use warper
+ *
  * Revision 1.1  2004/03/27 17:02:00  warmerda
  * New
  *
@@ -39,11 +42,13 @@
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "gdalwarper.h"
 
 CPL_CVSID("$Id$");
 
 typedef struct 
 {
+    GDALDataset *poSrcDS;
     const char *pszFilename;
     int         nXSize, nYSize;
 
@@ -63,6 +68,8 @@ typedef struct
     GInt16     *panData;
     
 } USGSDEMWriteInfo;
+
+#define DEM_NODATA -32767
 
 /************************************************************************/
 /*                        USGSDEMWriteCleanup()                         */
@@ -147,6 +154,7 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 {
     char achARec[1024];
     int  i;
+    const char *pszOption;
 
 /* -------------------------------------------------------------------- */
 /*      Init to blanks.                                                 */
@@ -231,7 +239,12 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /* -------------------------------------------------------------------- */
 /*      DEM level code (right justify)                                  */
 /* -------------------------------------------------------------------- */
-    if( pszTemplate == NULL )
+    pszOption = CSLFetchNameValue( psWInfo->papszOptions, "DEMLevelCode" );
+
+    if( pszOption != NULL )
+        TextFillR( achARec + 144, 6, pszOption );  // 1, 2 or 3.
+        
+    else if( pszTemplate == NULL )
         TextFillR( achARec + 144, 6, "" );  // 1, 2 or 3.
     
 /* -------------------------------------------------------------------- */
@@ -285,43 +298,35 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /*      Corners are in 24.15 format in arc seconds.                     */
 /* -------------------------------------------------------------------- */
     // SW - longitude
-    TextFillR( achARec + 546, 24, 
-               CPLSPrintf( "%24.15e", psWInfo->dfLLX * 3600.0 ) );
+    CPLPrintDouble( achARec + 546, "%24.15e", psWInfo->dfLLX * 3600.0, NULL );
     // SW - latitude
-    TextFillR( achARec + 570, 24, 
-               CPLSPrintf( "%24.15e", psWInfo->dfLLY * 3600.0 ) );  
+    CPLPrintDouble( achARec + 570, "%24.15e", psWInfo->dfLLY * 3600.0, NULL );
 
     // NW - longitude
-    TextFillR( achARec + 594, 24, 
-               CPLSPrintf( "%24.15e", psWInfo->dfULX * 3600.0 ) );  
+    CPLPrintDouble( achARec + 594, "%24.15e", psWInfo->dfULX * 3600.0, NULL );
     // NW - latitude
-    TextFillR( achARec + 618, 24, 
-               CPLSPrintf( "%24.15e", psWInfo->dfULY * 3600.0 ) );
+    CPLPrintDouble( achARec + 618, "%24.15e", psWInfo->dfULY * 3600.0, NULL );
 
     // NE - longitude
-    TextFillR( achARec + 642, 24, 
-               CPLSPrintf( "%24.15e", psWInfo->dfURX * 3600.0 ) );  
+    CPLPrintDouble( achARec + 642, "%24.15e", psWInfo->dfURX * 3600.0, NULL );
     // NE - latitude
-    TextFillR( achARec + 666, 24, 
-               CPLSPrintf( "%24.15e", psWInfo->dfURY * 3600.0 ) );
+    CPLPrintDouble( achARec + 666, "%24.15e", psWInfo->dfURY * 3600.0, NULL );
 
     // SE - longitude
-    TextFillR( achARec + 690, 24, 
-               CPLSPrintf( "%24.15e", psWInfo->dfLRX * 3600.0 ) );
+    CPLPrintDouble( achARec + 690, "%24.15e", psWInfo->dfLRX * 3600.0, NULL );
     // SE - latitude
-    TextFillR( achARec + 714, 24, 
-               CPLSPrintf( "%24.15e", psWInfo->dfLRY * 3600.0 ) );
+    CPLPrintDouble( achARec + 714, "%24.15e", psWInfo->dfLRY * 3600.0, NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Minimum and Maximum elevations for this cell.                   */
 /*      24.15 format.                                                   */
 /* -------------------------------------------------------------------- */
-    GInt16  nMin = -32767, nMax = -32767;
+    GInt16  nMin = DEM_NODATA, nMax = DEM_NODATA;
     int     nVoid = 0;
 
     for( i = psWInfo->nXSize*psWInfo->nYSize-1; i >= 0; i-- )
     {
-        if( psWInfo->panData[i] != -32767 )
+        if( psWInfo->panData[i] != DEM_NODATA )
         {
             if( nMin == -32767 )
             {
@@ -337,8 +342,8 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
             nVoid++;
     }
 
-    TextFillR( achARec + 738, 24, CPLSPrintf( "%24.15e", (double) nMin) );
-    TextFillR( achARec + 762, 24, CPLSPrintf( "%24.15e", (double) nMax) );
+    CPLPrintDouble( achARec + 738, "%24.15e", (double) nMin, NULL );
+    CPLPrintDouble( achARec + 762, "%24.15e", (double) nMax, NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Counter Clockwise angle (in radians).  Normally 0               */
@@ -354,12 +359,11 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /* -------------------------------------------------------------------- */
 /*      Spatial Resolution (x, y and z).   12.6 format.                 */
 /* -------------------------------------------------------------------- */
-    TextFillR( achARec + 816, 12, 
-               CPLSPrintf( "%12.6e", psWInfo->dfHorizStepSize*3600.0 ) );
-    TextFillR( achARec + 828, 12, 
-               CPLSPrintf( "%12.6e", psWInfo->dfVertStepSize*3600.0 ) );
-    TextFillR( achARec + 840, 12, 
-               CPLSPrintf( "%12.6e", 1.0 ) );
+    CPLPrintDouble( achARec + 816, "%12.6e", 
+                    psWInfo->dfHorizStepSize*3600.0, NULL );
+    CPLPrintDouble( achARec + 828, "%12.6e", 
+                    psWInfo->dfVertStepSize*3600.0, NULL );
+    CPLPrintDouble( achARec + 840, "%12.6e", 1.0, NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Rows and Columns of profiles.                                   */
@@ -445,7 +449,12 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /* -------------------------------------------------------------------- */
 /*      Data edition/version, specification edition/version.            */
 /* -------------------------------------------------------------------- */
-    if( pszTemplate == NULL )
+    pszOption = CSLFetchNameValue( psWInfo->papszOptions, "DataSpecVersion" );
+
+    if( pszOption != NULL )
+        TextFill( achARec + 892, 4, pszOption );
+        
+    else if( pszTemplate == NULL )
         TextFill( achARec + 892, 4, "" );
 
 /* -------------------------------------------------------------------- */
@@ -537,15 +546,15 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
 /*      Min/Max elevation values for this profile.                      */
 /* -------------------------------------------------------------------- */
     int iY; 
-    GInt16  nMin = -32767, nMax = -32767;
+    GInt16  nMin = DEM_NODATA, nMax = DEM_NODATA;
 
     for( iY = 0; iY < psWInfo->nYSize; iY++ )
     {
         int iData = (psWInfo->nYSize-iY-1) * psWInfo->nXSize + iProfile; 
 
-        if( psWInfo->panData[iData] != -32767 )
+        if( psWInfo->panData[iData] != DEM_NODATA )
         {
-            if( nMin == -32767 )
+            if( nMin == DEM_NODATA )
             {
                 nMin = nMax = psWInfo->panData[iData];
             }
@@ -607,6 +616,102 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
 }
 
 /************************************************************************/
+/*                    USGSDEMProductSetup_CDED50K()                     */
+/************************************************************************/
+
+static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Fetch TOPLEFT location so we know what cell we are dealing      */
+/*      with.                                                           */
+/* -------------------------------------------------------------------- */
+    const char *pszTOPLEFT = CSLFetchNameValue( psWInfo->papszOptions, 
+                                                "TOPLEFT" );
+    double dfULX = (psWInfo->dfULX+psWInfo->dfURX)*0.5;
+    double dfULY = (psWInfo->dfULY+psWInfo->dfURY)*0.5;
+
+    if( pszTOPLEFT != NULL )
+    {
+        char **papszTokens = CSLTokenizeString2( pszTOPLEFT, ",", 0 );
+
+        if( CSLCount( papszTokens ) != 2 )
+        {
+            CSLDestroy( papszTokens );
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Failed to parse TOPLEFT, should have form like '138d15W,59d0N'." );
+            return FALSE;
+        }
+
+        dfULX = CPLDMSToDec( papszTokens[0] );
+        dfULY = CPLDMSToDec( papszTokens[1] );
+        CSLDestroy( papszTokens );
+
+        if( ABS(dfULX*4-floor(dfULX*4)) > 0.0001 
+            || ABS(dfULY*4-floor(dfULY*4)) > 0.0001 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "TOPLEFT must be on a 15\" boundary for CDED50K, but is not." );
+            return FALSE;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set resolution and size information.                            */
+/* -------------------------------------------------------------------- */
+
+    dfULX = floor( dfULX * 4 + 0.001 ) / 4.0;
+    dfULY = floor( dfULY * 4 + 0.001 ) / 4.0;
+
+    psWInfo->nXSize = 1201;
+    psWInfo->nYSize = 1201;
+    psWInfo->dfVertStepSize = 0.75 / 3600.0;
+
+    /* Region A */
+    if( psWInfo->dfULY < 68.1 )
+    {
+        psWInfo->dfHorizStepSize = 0.75 / 3600.0;
+    }
+
+    /* Region B */
+    else if( psWInfo->dfULY < 80.1 )
+    {
+        psWInfo->dfHorizStepSize = 1.5 / 3600.0;
+        dfULX = floor( dfULX * 2 + 0.001 ) / 2.0;
+    }
+
+    /* Region C */
+    else
+    {
+        psWInfo->dfHorizStepSize = 3.0 / 3600.0;
+        dfULX = floor( dfULX + 0.001 );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set bounds based on this top left anchor.                       */
+/* -------------------------------------------------------------------- */
+
+    psWInfo->dfULX = dfULX;
+    psWInfo->dfULY = dfULY;
+    psWInfo->dfLLX = dfULX;
+    psWInfo->dfLLY = dfULY - 0.25;
+    psWInfo->dfURX = dfULX + psWInfo->dfHorizStepSize * 1200.0;
+    psWInfo->dfURY = dfULY;
+    psWInfo->dfLRX = dfULX + psWInfo->dfHorizStepSize * 1200.0;
+    psWInfo->dfLRY = dfULY - 0.25;
+
+/* -------------------------------------------------------------------- */
+/*      Set some specific options for CDED 50K.                         */
+/* -------------------------------------------------------------------- */
+    psWInfo->papszOptions = 
+        CSLSetNameValue( psWInfo->papszOptions, "DEMLevelCode", "1" );
+    psWInfo->papszOptions = 
+        CSLSetNameValue( psWInfo->papszOptions, "DataSpecVersion", "1020" );
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                         USGSDEMLoadRaster()                          */
 /*                                                                      */
 /*      Loads the raster from the source dataset (not normally USGS     */
@@ -619,7 +724,11 @@ static int USGSDEMLoadRaster( USGSDEMWriteInfo *psWInfo,
 
 {
     CPLErr eErr;
+    int i;
 
+/* -------------------------------------------------------------------- */
+/*      Allocate output array, and pre-initialize to NODATA value.      */
+/* -------------------------------------------------------------------- */
     psWInfo->panData = 
         (GInt16 *) VSIMalloc( 2 * psWInfo->nXSize * psWInfo->nYSize );
     if( psWInfo->panData == NULL )
@@ -630,11 +739,67 @@ static int USGSDEMLoadRaster( USGSDEMWriteInfo *psWInfo,
         return FALSE;
     }
 
+    for( i = 0; i < psWInfo->nXSize * psWInfo->nYSize; i++ )
+        psWInfo->panData[i] = DEM_NODATA;
 
-    eErr = 
-        poSrcBand->RasterIO( GF_Read, 0, 0, psWInfo->nXSize, psWInfo->nYSize, 
-                             psWInfo->panData, psWInfo->nXSize,psWInfo->nYSize,
-                             GDT_Int16, 0, 0 );
+/* -------------------------------------------------------------------- */
+/*      Make a "memory dataset" wrapper for this data array.            */
+/* -------------------------------------------------------------------- */
+    GDALDriver  *poMemDriver = (GDALDriver *) GDALGetDriverByName( "MEM" );
+    GDALDataset *poMemDS;
+
+    if( poMemDriver == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failed to find MEM driver." );
+        return FALSE;
+    }
+   
+    poMemDS = 
+        poMemDriver->Create( "USGSDEM_temp", psWInfo->nXSize, psWInfo->nYSize, 
+                         0, GDT_Int16, NULL );
+    if( poMemDS == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Now add the array itself as a band.                             */
+/* -------------------------------------------------------------------- */
+    char szDataPointer[100];
+    char *apszOptions[] = { szDataPointer, NULL };
+
+    sprintf( szDataPointer, "DATAPOINTER=%p", psWInfo->panData );
+
+    if( poMemDS->AddBand( GDT_Int16, apszOptions ) != CE_None )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Assign geotransform and nodata indicators.                      */
+/* -------------------------------------------------------------------- */
+    double adfGeoTransform[6];
+
+    adfGeoTransform[0] = psWInfo->dfULX - psWInfo->dfHorizStepSize * 0.5;
+    adfGeoTransform[1] = psWInfo->dfHorizStepSize;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = psWInfo->dfULY + psWInfo->dfVertStepSize * 0.5;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = -psWInfo->dfVertStepSize;
+
+    poMemDS->SetGeoTransform( adfGeoTransform );
+
+/* -------------------------------------------------------------------- */
+/*      Perform a warp from source dataset to destination buffer        */
+/*      (memory dataset).                                               */
+/* -------------------------------------------------------------------- */
+    eErr = GDALReprojectImage( (GDALDatasetH) psWInfo->poSrcDS, NULL,
+                               (GDALDatasetH) poMemDS, NULL, 
+                               GRA_NearestNeighbour, 0.0, 0.0, NULL, NULL, 
+                               NULL );
+
+/* -------------------------------------------------------------------- */
+/*      Deallocate memory wrapper for the buffer.                       */
+/* -------------------------------------------------------------------- */
+    delete poMemDS;
+
     return eErr == CE_None;
 }
 
@@ -663,6 +828,7 @@ USGSDEMCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     memset( &sWInfo, 0, sizeof(sWInfo) );
 
+    sWInfo.poSrcDS = poSrcDS;
     sWInfo.pszFilename = pszFilename;
     sWInfo.nXSize = poSrcDS->GetRasterXSize();
     sWInfo.nYSize = poSrcDS->GetRasterYSize();
@@ -694,6 +860,29 @@ USGSDEMCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
 
     sWInfo.dfHorizStepSize = (sWInfo.dfURX - sWInfo.dfULX) / (sWInfo.nXSize-1);
     sWInfo.dfVertStepSize = (sWInfo.dfURY - sWInfo.dfLRY) / (sWInfo.nYSize-1);
+
+/* -------------------------------------------------------------------- */
+/*      Initialize for special product configurations.                  */
+/* -------------------------------------------------------------------- */
+    const char *pszProduct = CSLFetchNameValue( sWInfo.papszOptions, 
+                                                "PRODUCT" );
+
+    if( pszProduct == NULL )
+        /* default */;
+    else if( EQUAL(pszProduct,"CDED50K") )
+    {
+        if( !USGSDEMProductSetup_CDED50K( &sWInfo ) )
+            return NULL;
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "DEM PRODUCT='%s' not recognised.", 
+                  pszProduct );
+        USGSDEMWriteCleanup( &sWInfo );
+        return NULL;
+    }
+    
 
 /* -------------------------------------------------------------------- */
 /*      Read the whole area of interest into memory.                    */
