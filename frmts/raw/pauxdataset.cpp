@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2004/04/23 22:23:59  warmerda
+ * Fixed memory leak of pszAuxFilename.
+ *
  * Revision 1.28  2004/03/24 09:02:07  dron
  * Use CPL* functions for large integers parsing/printing.
  *
@@ -1044,6 +1047,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
                   pszAuxFilename );
         return NULL;
     }
+    CPLFree( pszAuxFilename );
     
 /* -------------------------------------------------------------------- */
 /*      We need to write out the original filename but without any      */
