@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2003/02/13 16:18:58  warmerda
+ * Fixed typo.
+ *
  * Revision 1.33  2003/02/13 16:10:23  warmerda
  * Cleaned up GetProjectionRef() info.
  *
@@ -499,7 +502,7 @@ int GDALGetRasterCount( GDALDatasetH hDS )
  * Same as the C function GDALGetProjectionRef().
  *
  * The returned string defines the projection coordinate system of the
- * image in OpenGIS WKT format.  It should be suitable with the 
+ * image in OpenGIS WKT format.  It should be suitable for use with the 
  * OGRSpatialReference class.
  *
  * When a projection definition is not available an empty (but not NULL)
