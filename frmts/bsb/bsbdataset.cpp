@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2001/12/08 21:58:27  warmerda
+ * added gcps
+ *
  * Revision 1.1  2001/12/08 04:35:16  warmerda
  * New
  *
@@ -35,6 +38,7 @@
 
 #include "gdal_priv.h"
 #include "bsb_read.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -54,6 +58,11 @@ class BSBRasterBand;
 
 class BSBDataset : public GDALDataset
 {
+    int         nGCPCount;
+    GDAL_GCP    *pasGCPList;
+    char        *pszGCPProjection;
+
+    void        ScanForGCPs();
   public:
                 BSBDataset();
 		~BSBDataset();
@@ -61,6 +70,10 @@ class BSBDataset : public GDALDataset
     BSBInfo     *psInfo;
 
     static GDALDataset *Open( GDALOpenInfo * );
+
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
 
 #ifdef notdef
     CPLErr 	GetGeoTransform( double * padfTransform );
@@ -165,6 +178,10 @@ BSBDataset::BSBDataset()
 
 {
     psInfo = NULL;
+
+    nGCPCount = 0;
+    pasGCPList = NULL;
+    pszGCPProjection = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",7030]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",6326]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",4326]]";
 }
 
 /************************************************************************/
@@ -174,6 +191,9 @@ BSBDataset::BSBDataset()
 BSBDataset::~BSBDataset()
 
 {
+    GDALDeinitGCPs( nGCPCount, pasGCPList );
+    CPLFree( pasGCPList );
+
     if( psInfo != NULL )
         BSBClose( psInfo );
 }
@@ -201,6 +221,63 @@ const char *BSBDataset::GetProjectionRef()
     return pszProjection;
 }
 #endif
+
+/************************************************************************/
+/*                            ScanForGCPs()                             */
+/************************************************************************/
+
+void BSBDataset::ScanForGCPs()
+
+{
+#define MAX_GCP		256
+
+    nGCPCount = 0;
+    pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),MAX_GCP);
+
+/* -------------------------------------------------------------------- */
+/*      Collect standalone GCPs.  They look like:                       */
+/*                                                                      */
+/*      REF/1,115,2727,32.346666666667,-60.881666666667			*/
+/*      REF/n,pixel,line,lat,long                                       */
+/* -------------------------------------------------------------------- */
+    int i;
+
+    for( i = 0; psInfo->papszHeader[i] != NULL; i++ )
+    {
+        char	**papszTokens;
+        char	szName[50];
+
+        if( !EQUALN(psInfo->papszHeader[i],"REF/",4) )
+            continue;
+
+        papszTokens = 
+            CSLTokenizeStringComplex( psInfo->papszHeader[i]+4, ",", 
+                                      FALSE, FALSE );
+
+        if( CSLCount(papszTokens) >= 4 )
+        {
+            GDALInitGCPs( 1, pasGCPList + nGCPCount );
+
+            pasGCPList[nGCPCount].dfGCPX = atof(papszTokens[4]);
+            pasGCPList[nGCPCount].dfGCPY = atof(papszTokens[3]);
+            pasGCPList[nGCPCount].dfGCPPixel = atof(papszTokens[1]);
+            pasGCPList[nGCPCount].dfGCPLine = atof(papszTokens[2]);
+
+            CPLFree( pasGCPList[nGCPCount].pszId );
+            if( CSLCount(papszTokens) > 5 )
+            {
+                pasGCPList[nGCPCount].pszId = papszTokens[5];
+            }
+            else
+            {
+                sprintf( szName, "GCP_%d", nGCPCount+1 );
+                pasGCPList[nGCPCount].pszId = CPLStrdup( szName );
+            }
+
+            nGCPCount++;
+        }
+    }
+}
 
 /************************************************************************/
 /*                                Open()                                */
@@ -257,9 +334,43 @@ GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->SetBand( 1, new BSBRasterBand( poDS ));
 
+    poDS->ScanForGCPs();
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
     return( poDS );
+}
+
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int BSBDataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *BSBDataset::GetGCPProjection()
+
+{
+    if( nGCPCount > 0 && pszGCPProjection != NULL )
+        return pszGCPProjection;
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                               GetGCP()                               */
+/************************************************************************/
+
+const GDAL_GCP *BSBDataset::GetGCPs()
+
+{
+    return pasGCPList;
 }
 
 /************************************************************************/
