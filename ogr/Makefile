@@ -61,9 +61,20 @@ test3.exe:      test3.obj $(OBJ_OGR)
         cl /Zi test3.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
 			$(ALL_LIBS)
 
+test_ogrsf.exe:      test_ogrsf.obj $(OBJ_OGR)
+        cl /Zi test_ogrsf.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
+			$(ALL_LIBS)
+
 clean:
 	del *.obj
         del *.exe
 	del *.lib
 	del *.pdb
+
+allclean:	clean
+	cd ogrsf_frmts
+	$(MAKE) clean
+	cd ..\sfcom_oledb
+	$(MAKE) clean
+	cd ..
 
