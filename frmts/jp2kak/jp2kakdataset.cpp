@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.12  2003/07/04 18:00:42  warmerda
+ * first crack at JPIP client side support.
+ *
  * Revision 1.11  2003/06/26 15:54:30  warmerda
  * upgraded to work with Kakadu 4.0.2
  *
@@ -94,6 +97,7 @@
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "jp2_local.h"
 
 // Kakadu core includes
@@ -118,6 +122,16 @@
 
 #ifdef J2_INPUT_MAX_BUFFER_BYTES
 #  define KAKADU4
+#endif									
+
+#if defined(KAKADU4) && defined(WIN32)
+#  define USE_JPIP
+#endif
+
+#ifdef USE_JPIP
+#  include "kdu_client.h" 
+#else
+#  define kdu_client void
 #endif
 
 CPL_CVSID("$Id$");
@@ -164,6 +178,7 @@ class JP2KAKDataset : public GDALDataset
 #ifdef KAKADU4
     jp2_family_src  *family;
 #endif
+    kdu_client      *jpip_client;
     kdu_dims dims; 
 
     char	   *pszProjection;
@@ -202,6 +217,8 @@ class JP2KAKRasterBand : public GDALRasterBand
     int		nOverviewCount;
     JP2KAKRasterBand **papoOverviewBand;
 
+    kdu_client      *jpip_client;
+
     kdu_codestream oCodeStream;
 
     GDALColorTable oCT;
@@ -210,7 +227,7 @@ class JP2KAKRasterBand : public GDALRasterBand
 
   public:
 
-    		JP2KAKRasterBand( int, int, kdu_codestream, int );
+    		JP2KAKRasterBand( int, int, kdu_codestream, int, kdu_client *);
     		~JP2KAKRasterBand();
     
     virtual CPLErr IReadBlock( int, int, void * );
@@ -295,7 +312,7 @@ private:
 
 JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
                                     kdu_codestream oCodeStream,
-                                    int nResCount )
+                                    int nResCount, kdu_client *jpip_client )
 
 {
     this->nBand = nBand;
@@ -314,6 +331,8 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
 
     this->nDiscardLevels = nDiscardLevels;
     this->oCodeStream = oCodeStream;
+
+    this->jpip_client = jpip_client;
 
     oCodeStream.apply_input_restrictions( 0, 0, nDiscardLevels, 0, NULL );
     oCodeStream.get_dims( 0, band_dims );
@@ -366,7 +385,8 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
                     CPLRealloc( papoOverviewBand, 
                                 sizeof(void*) * nOverviewCount );
                 papoOverviewBand[nOverviewCount-1] = 
-                    new JP2KAKRasterBand( nBand, nDiscard, oCodeStream, 0 );
+                    new JP2KAKRasterBand( nBand, nDiscard, oCodeStream, 0,
+                                          jpip_client );
             }
             else
             {
@@ -439,6 +459,33 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         oCodeStream.map_region( 0, dims, dims_roi );
         oCodeStream.apply_input_restrictions( 0, 0, nDiscardLevels, 0, 
                                               &dims_roi );
+
+/* -------------------------------------------------------------------- */
+/*      Handle JPIP Protocol request if we are using it.                */
+/* -------------------------------------------------------------------- */
+#ifdef USE_JPIP
+        if( jpip_client != NULL )
+        {
+            kdu_window  window;
+
+            window.region = dims_roi;
+            window.resolution.x = nRasterXSize;
+            window.resolution.y = nRasterYSize;
+            window.add_component( nBand - 1 );
+
+            jpip_client->post_window( &window );
+
+            while( !jpip_client->is_idle() )
+                CPLSleep( 0.25 );
+            
+            if( !jpip_client->is_alive() )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "JPIP failure some time after post_window()." );
+                return CE_Failure;
+            }
+        }
+#endif
     
 /* -------------------------------------------------------------------- */
 /*      Now we are ready to walk through the tiles processing them      */
@@ -754,6 +801,13 @@ JP2KAKDataset::~JP2KAKDataset()
             delete family;
         }
 #endif
+#ifdef USE_JPIP
+        if( jpip_client != NULL )
+        {
+            jpip_client->close();
+            delete jpip_client;
+        }
+#endif
     }
 }
 
@@ -821,12 +875,26 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     const char  *pszExtension;
+    int         bIsJPIP = FALSE;
 
     if( poOpenInfo->fp == NULL )
-        return NULL;
-
-    if( poOpenInfo->nHeaderBytes < 16 )
-        return NULL;
+    {
+        pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
+        if( (EQUALN(poOpenInfo->pszFilename,"http://",7)
+             || EQUALN(poOpenInfo->pszFilename,"https://",8)
+             || EQUALN(poOpenInfo->pszFilename,"jpip://",7))
+            && EQUAL(pszExtension,"jp2") )
+        {
+            bIsJPIP = TRUE;
+        }
+        else
+            return NULL;
+    }
+    else
+    {
+        if( poOpenInfo->nHeaderBytes < 16 )
+            return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Any extension is supported for JP2 files.  Only selected        */
@@ -863,6 +931,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try to open the file in a manner depending on the extension.    */
 /* -------------------------------------------------------------------- */
+    kdu_client      *jpip_client = NULL;
     kdu_compressed_source *poInput;
     jp2_palette oJP2Palette;
 
@@ -872,7 +941,48 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     try
     {
-        if( EQUAL(pszExtension,"jp2") || EQUAL(pszExtension,"jpx") )
+        if( bIsJPIP )
+        {
+#ifdef USE_JPIP
+            jp2_source *jp2_src;
+            char *pszWrk = CPLStrdup(strstr(poOpenInfo->pszFilename,"://")+3);
+            char *pszRequest = strstr(pszWrk,"/");
+     
+            if( pszRequest == NULL )
+            {
+                CPLFree( pszWrk );
+                return NULL;
+            }
+
+            *(pszRequest++) = '\0';
+            
+            jpip_client = new kdu_client;
+            jpip_client->connect( pszWrk, NULL, pszRequest, "http-tcp", NULL );
+
+            family = new jp2_family_src;
+            family->open( jpip_client );
+
+            jp2_src = new jp2_source;
+            jp2_src->open( family );
+            jp2_src->read_header();
+
+            while( !jpip_client->is_idle() )
+                CPLSleep( 0.25 );
+
+            if( jpip_client->is_alive() )
+                CPLDebug( "JP2KAK", "connect() seems to be complete." );
+            else
+            {
+                CPLDebug( "JP2KAK", "connect() seems to have failed." );
+                return NULL;
+            }
+
+#else
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "JPIP Protocol not supported by GDAL with Kakadu 3.4 or on Unix." );
+#endif
+        }
+        else if( EQUAL(pszExtension,"jp2") || EQUAL(pszExtension,"jpx") )
         {
             jp2_source *jp2_src;
 
@@ -915,6 +1025,8 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->oCodeStream.create( poInput );
         poDS->oCodeStream.set_fussy();
         poDS->oCodeStream.set_persistent();
+
+        poDS->jpip_client = jpip_client;
 
 #ifdef KAKADU4
         poDS->family = family;
@@ -974,7 +1086,8 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         for( iBand = 1; iBand <= poDS->nBands; iBand++ )
         {
             JP2KAKRasterBand *poBand = 
-                new JP2KAKRasterBand(iBand,0,poDS->oCodeStream, nResCount );
+                new JP2KAKRasterBand(iBand,0,poDS->oCodeStream, nResCount,
+                                     jpip_client );
 
             if( iBand == 1 && oJP2Palette.exists() )
                 poBand->ApplyPalette( oJP2Palette );
