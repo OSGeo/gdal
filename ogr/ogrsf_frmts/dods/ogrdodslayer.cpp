@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/02/19 13:56:53  warmerda
+ * implement spatial and attribute filtering in GetNextFeature
+ *
  * Revision 1.3  2004/01/29 21:01:03  warmerda
  * added sequences within sequences support
  *
@@ -163,7 +166,22 @@ void OGRDODSLayer::ResetReading()
 OGRFeature *OGRDODSLayer::GetNextFeature()
 
 {
-    return GetFeature( iNextShapeId++ );
+    OGRFeature *poFeature;
+
+    for( poFeature = GetFeature( iNextShapeId++ ); 
+         poFeature != NULL;
+         poFeature = GetFeature( iNextShapeId++ ) )
+    {
+        if( (poFilterGeom == NULL
+             || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+            && (m_poAttrQuery == NULL
+                || m_poAttrQuery->Evaluate( poFeature )) )
+            return poFeature;
+
+        delete poFeature;
+    }
+
+    return NULL;
 }
 
 /************************************************************************/
