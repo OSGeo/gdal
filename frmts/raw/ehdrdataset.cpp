@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/09/26 13:49:42  warmerda
+ * fixed multi band support, implement rudimentary write support
+ *
  * Revision 1.16  2003/08/25 13:33:19  dron
  * Use CPLFormCIFilename() to case insensitive search for .HDR and .PRJ files.
  *
@@ -116,6 +119,9 @@ class EHdrDataset : public RawDataset
     virtual const char *GetProjectionRef(void);
     
     static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Create( const char * pszFilename,
+                                int nXSize, int nYSize, int nBands,
+                                GDALDataType eType, char ** papszParmList );
 };
 
 /************************************************************************/
@@ -135,8 +141,9 @@ EHdrDataset::EHdrDataset()
 EHdrDataset::~EHdrDataset()
 
 {
+    FlushCache();
     if( fpImage != NULL )
-        VSIFClose( fpImage );
+        VSIFCloseL( fpImage );
     CPLFree( pszProjection );
 }
 
@@ -215,6 +222,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     int			nLineCount = 0, bNoDataSet = FALSE;
     GDALDataType	eDataType = GDT_Byte;
     char		chByteOrder = 'M';
+    char                szLayout[10] = "BIL";
 
     while( (pszLine = CPLReadLine( fp )) )
     {
@@ -272,6 +280,10 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         else if( EQUAL(papszTokens[0],"nbands") )
         {
             nBands = atoi(papszTokens[1]);
+        }
+        else if( EQUAL(papszTokens[0],"layout") )
+        {
+            strncpy( szLayout, papszTokens[1], sizeof(szLayout)-1 );
         }
         else if( EQUAL(papszTokens[0],"NODATA_value") 
                  || EQUAL(papszTokens[0],"NODATA") )
@@ -351,20 +363,47 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = nRows;
 
 /* -------------------------------------------------------------------- */
-/*      Assume ownership of the file handled from the GDALOpenInfo.     */
+/*      Open target binary file.                                        */
 /* -------------------------------------------------------------------- */
-    poDS->fpImage = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
+    if( poOpenInfo->eAccess == GA_ReadOnly )
+        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+    else
+        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
+
+    if( poDS->fpImage == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Failed to open %s with write permission.\n%s", 
+                  VSIStrerror( errno ) );
+        delete poDS;
+        return NULL;
+    }
+
+    poDS->eAccess = poOpenInfo->eAccess;
 
 /* -------------------------------------------------------------------- */
 /*      Compute the line offset.                                        */
 /* -------------------------------------------------------------------- */
-    int		nLineOffset;
-    
-    nLineOffset = 0;
-    for( i = 0; i < nBands; i++ )
+    int         nItemSize = GDALGetDataTypeSize(eDataType)/8;
+    int		nLineOffset, nPixelOffset, nBandOffset;
+
+    if( EQUAL(szLayout,"BIP") )
     {
-        nLineOffset += (GDALGetDataTypeSize(eDataType)/8) * nCols;
+        nPixelOffset = nItemSize * nBands;
+        nLineOffset = nPixelOffset * nCols;
+        nBandOffset = nItemSize;
+    }
+    else if( EQUAL(szLayout,"BSQ") )
+    {
+        nPixelOffset = nItemSize;
+        nLineOffset = nPixelOffset * nCols;
+        nBandOffset = nLineOffset * nCols;
+    }
+    else /* assume BIL */
+    {
+        nPixelOffset = nItemSize;
+        nLineOffset = nItemSize * nBands * nCols;
+        nBandOffset = nItemSize * nCols;
     }
     
 /* -------------------------------------------------------------------- */
@@ -377,15 +416,14 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
         poBand = 
             new RawRasterBand( poDS, i+1, poDS->fpImage,
-                               nSkipBytes, GDALGetDataTypeSize(eDataType)/8,
-                               nLineOffset, eDataType,
+                               nSkipBytes + nBandOffset * i, 
+                               nPixelOffset, nLineOffset, eDataType,
 #ifdef CPL_LSB                               
-                               chByteOrder == 'I' || chByteOrder == 'L'
+                               chByteOrder == 'I' || chByteOrder == 'L',
 #else
-                               chByteOrder == 'M'
+                               chByteOrder == 'M',
 #endif        
-                               );
-
+                               TRUE );
 
         if( bNoDataSet )
             poBand->StoreNoDataValue( dfNoData );
@@ -429,6 +467,96 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
+
+GDALDataset *EHdrDataset::Create( const char * pszFilename,
+                                  int nXSize, int nYSize, int nBands,
+                                  GDALDataType eType,
+                                  char ** /* papszParmList */ )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Verify input options.                                           */
+/* -------------------------------------------------------------------- */
+    if( eType != GDT_Byte && eType != GDT_Float32 && eType != GDT_UInt16
+        && eType != GDT_Int16 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+              "Attempt to create ESRI .hdr labelled dataset with an illegal\n"
+              "data type (%s).\n",
+              GDALGetDataTypeName(eType) );
+
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to create the file.                                         */
+/* -------------------------------------------------------------------- */
+    FILE	*fp;
+
+    fp = VSIFOpen( pszFilename, "wb" );
+
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Attempt to create file `%s' failed.\n",
+                  pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Just write out a couple of bytes to establish the binary        */
+/*      file, and then close it.                                        */
+/* -------------------------------------------------------------------- */
+    VSIFWrite( (void *) "\0\0", 2, 1, fp );
+    VSIFClose( fp );
+
+/* -------------------------------------------------------------------- */
+/*      Create the hdr filename.                                        */
+/* -------------------------------------------------------------------- */
+    char *pszHdrFilename;
+
+    pszHdrFilename = 
+        CPLStrdup( CPLResetExtension( pszFilename, "hdr" ) );
+
+/* -------------------------------------------------------------------- */
+/*      Open the file.                                                  */
+/* -------------------------------------------------------------------- */
+    fp = VSIFOpen( pszHdrFilename, "wt" );
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Attempt to create file `%s' failed.\n",
+                  pszHdrFilename );
+        return NULL;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Write out the raw definition for the dataset as a whole.        */
+/* -------------------------------------------------------------------- */
+    int nItemSize = GDALGetDataTypeSize(eType) / 8;
+
+    VSIFPrintf( fp, "BYTEORDER      I\n" );
+    VSIFPrintf( fp, "LAYOUT         BIL\n" );
+    VSIFPrintf( fp, "NROWS          %d\n", nYSize );
+    VSIFPrintf( fp, "NCOLS          %d\n", nXSize );
+    VSIFPrintf( fp, "NBANDS         %d\n", nBands );
+    VSIFPrintf( fp, "NBITS          %d\n", GDALGetDataTypeSize(eType) );
+    VSIFPrintf( fp, "BANDROWBYTES   %d\n", nItemSize * nXSize );
+    VSIFPrintf( fp, "TOTALROWBYTES  %d\n", nItemSize * nXSize * nBands );
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    VSIFClose( fp );
+
+    CPLFree( pszHdrFilename );
+
+    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+}
+
+/************************************************************************/
 /*                         GDALRegister_EHdr()                          */
 /************************************************************************/
 
@@ -446,8 +574,11 @@ void GDALRegister_EHdr()
                                    "ESRI .hdr Labelled" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#EHdr" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte Int16 UInt16 Float32" );
 
         poDriver->pfnOpen = EHdrDataset::Open;
+        poDriver->pfnCreate = EHdrDataset::Create;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
