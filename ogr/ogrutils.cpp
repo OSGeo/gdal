@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/05/29 02:24:00  warmerda
+ * fixed negative support for Z coordinate
+ *
  * Revision 1.4  2001/05/24 18:05:36  warmerda
  * fixed support for negative coordinte parsing
  *
@@ -229,7 +232,7 @@ const char * OGRWktReadPoints( const char * pszInput,
 /* -------------------------------------------------------------------- */
         pszInput = OGRWktReadToken( pszInput, szDelim );
 
-        if( isdigit(szDelim[0]) )
+        if( isdigit(szDelim[0]) || szDelim[0] == '-' )
         {
             if( *ppadfZ == NULL )
             {
