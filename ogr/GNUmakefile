@@ -54,6 +54,8 @@ ogrtindex$(EXE):	ogrtindex.o  $(EXE_DEP_LIBS)
 
 lib:	sublibs $(OBJ)
 
+obj:	$(OBJ)
+
 ifeq ($(OGR_ENABLED),yes)
 
 sublibs:
