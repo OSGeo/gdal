@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2004/09/03 14:36:28  warmerda
+ * fix warning about exit value
+ *
  * Revision 1.8  2004/04/02 17:33:22  warmerda
  * added GDALGeneralCmdLineProcessor()
  *
@@ -249,4 +252,6 @@ int main( int argc, char ** argv )
 
     OGR_DS_Destroy( hDS );
     GDALClose( hSrcDS );
+
+    return 0;
 }
