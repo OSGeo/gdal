@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/04/17 21:46:22  warmerda
+ * Ensure padfZ copied in copy constructor.
+ *
  * Revision 1.8  2002/02/22 22:24:31  warmerda
  * fixed 3d support in clone
  *
@@ -79,6 +82,12 @@ OGRLinearRing::OGRLinearRing( OGRLinearRing * poSrcRing )
 
     memcpy( paoPoints, poSrcRing->paoPoints,
             sizeof(OGRRawPoint) * getNumPoints() );
+
+    if( poSrcRing->padfZ )
+    {
+        Make3D();
+        memcpy( padfZ, poSrcRing->padfZ, sizeof(double) * getNumPoints() );
+    }
 }
 
 /************************************************************************/
