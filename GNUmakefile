@@ -3,14 +3,11 @@ GDAL_ROOT	=	.
 
 include GDALmake.opt
 
-default:	lib GDALmake.opt
-	(cd apps; $(MAKE))
+default:	GDALmake.opt lib py-target apps-target
 
-lib:	$(GDAL_LIB)
+lib:	port-target core-target frmts-target ogr-target force-lib
 
-$(GDAL_LIB):	port-target core-target frmts-target ogr-target force-lib py-target
-
-force-lib:
+force-lib:	lib
 	ar r $(GDAL_LIB) $(GDAL_OBJ)
 	$(LD_SHARED) $(GDAL_OBJ) $(GDAL_LIBS) $(LIBS) -o $(GDAL_SLIB)
 
@@ -35,12 +32,17 @@ ogr-target:
 
 endif
 
-
 core-target:
 	(cd core; $(MAKE))
 
 frmts-target:
 	(cd frmts; $(MAKE))
+
+ogr-all:
+	(cd ogr; $(MAKE))
+
+apps-target:
+	(cd apps; $(MAKE))
 
 #
 #	We only make python a default target if we think python is installed.
@@ -87,14 +89,14 @@ docs:
 	cp frmts/*/frmt_*.html html
 	cp html/gdal_index.html html/index.html
 
-all:	default
+all:	default ogr-all
 
 web-update:	docs
 	rm -rf /u/www/gdal/html
 	mkdir /u/www/gdal/html
 	cp html/*.* /u/www/gdal/html
 
-install:	$(GDAL_LIB) install-actions
+install:	lib install-actions
 
 install-actions:
 	$(INSTALL) -d $(INST_BIN)
