@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/11/18 19:02:38  warmerda
+ * added failquietly to open
+ *
  * Revision 1.6  1999/09/20 19:29:30  warmerda
  * make forgiving of UNIT/FIELD terminator mixup in Tiger SDTS files
  *
@@ -103,7 +106,7 @@ class DDFModule
     		DDFModule();
                 ~DDFModule();
                 
-    int		Open( const char * pszFilename );
+    int		Open( const char * pszFilename, int bFailQuietly = FALSE );
     void	Close();
 
     void	Dump( FILE * fp );

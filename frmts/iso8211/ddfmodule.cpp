@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/11/18 19:02:38  warmerda
+ * added failquietly to open
+ *
  * Revision 1.9  1999/09/03 14:14:39  warmerda
  * fix cloning
  *
@@ -169,7 +172,7 @@ void DDFModule::Close()
  * are issued internally with CPLError().
  */
 
-int DDFModule::Open( const char * pszFilename )
+int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 
 {
     static const size_t nLeaderSize = 24;
@@ -187,9 +190,10 @@ int DDFModule::Open( const char * pszFilename )
 
     if( fpDDF == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Unable to open DDF file `%s'.",
-                  pszFilename );
+        if( !bFailQuietly )
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Unable to open DDF file `%s'.",
+                      pszFilename );
         return FALSE;
     }
 
@@ -202,10 +206,11 @@ int DDFModule::Open( const char * pszFilename )
     {
         VSIFClose( fpDDF );
         fpDDF = NULL;
-        
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Leader is short on DDF file `%s'.",
-                  pszFilename );
+
+        if( !bFailQuietly )
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Leader is short on DDF file `%s'.",
+                      pszFilename );
         
         return FALSE;
     }
@@ -264,10 +269,11 @@ int DDFModule::Open( const char * pszFilename )
         VSIFClose( fpDDF );
         fpDDF = NULL;
 
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "File `%s' does not appear to have\n"
-                  "a valid ISO 8211 header.\n",
-                  pszFilename );
+        if( !bFailQuietly )
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "File `%s' does not appear to have\n"
+                      "a valid ISO 8211 header.\n",
+                      pszFilename );
         return FALSE;
     }
 
@@ -282,9 +288,10 @@ int DDFModule::Open( const char * pszFilename )
     if( VSIFRead( pachRecord+nLeaderSize, 1, _recLength-nLeaderSize, fpDDF )
         != _recLength - nLeaderSize )
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Header record is short on DDF file `%s'.",
-                  pszFilename );
+        if( !bFailQuietly )
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Header record is short on DDF file `%s'.",
+                      pszFilename );
         
         return FALSE;
     }
