@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.83  2003/01/09 17:24:42  dron
+ * Added NoData value handling via 42113 TIFF tag.
+ *
  * Revision 1.82  2002/12/24 15:19:14  dron
  * Handling PHOTOMETRIC_MINISBLACK images now correct.
  *
@@ -129,6 +132,7 @@ CPL_C_END
 
 static void GTiffOneTimeInit();
 #define TIFFTAG_GDAL_METADATA  42112
+#define TIFFTAG_GDAL_NODATA    42113
 
 /************************************************************************/
 /* ==================================================================== */
@@ -198,6 +202,8 @@ class GTiffDataset : public GDALDataset
 
     int 	bMetadataChanged;
     int         bGeoTIFFInfoChanged;
+    int         bNoDataSet;
+    double      dfNoDataValue;
 
   public:
                  GTiffDataset();
@@ -222,14 +228,15 @@ class GTiffDataset : public GDALDataset
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
-    virtual void FlushCache( void );
+    virtual void    FlushCache( void );
 
     virtual CPLErr  SetMetadata( char **, const char * = "" );
     virtual CPLErr  SetMetadataItem( const char*, const char*, 
                                      const char* = "" );
 
     // only needed by createcopy and close code.
-    static void WriteMetadata( GDALDataset *, TIFF * );
+    static void	    WriteMetadata( GDALDataset *, TIFF * );
+    static void	    WriteNoDataValue( TIFF *, double );
 };
 
 /************************************************************************/
@@ -254,6 +261,8 @@ class GTiffRasterBand : public GDALRasterBand
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
     virtual CPLErr          SetColorTable( GDALColorTable * );
+    virtual double	    GetNoDataValue( int * );
+    virtual CPLErr	    SetNoDataValue( double );
 
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
@@ -614,6 +623,36 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
 }
 
 /************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double GTiffRasterBand::GetNoDataValue( int * pbSuccess )
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+
+    if( pbSuccess )
+        *pbSuccess = poGDS->bNoDataSet;
+
+    return poGDS->dfNoDataValue;
+}
+
+/************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+CPLErr GTiffRasterBand::SetNoDataValue( double dfNoData )
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+
+    poGDS->bNoDataSet = TRUE;
+    poGDS->dfNoDataValue = dfNoData;
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                          GetOverviewCount()                          */
 /************************************************************************/
 
@@ -657,6 +696,8 @@ class GTiffRGBABand : public GDALRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
 
     virtual GDALColorInterp GetColorInterpretation();
+    virtual double	    GetNoDataValue( int * );
+    virtual CPLErr	    SetNoDataValue( double );
 
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
@@ -803,6 +844,36 @@ GDALColorInterp GTiffRGBABand::GetColorInterpretation()
 }
 
 /************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double GTiffRGBABand::GetNoDataValue( int * pbSuccess )
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+
+    if( pbSuccess )
+        *pbSuccess = poGDS->bNoDataSet;
+
+    return poGDS->dfNoDataValue;
+}
+
+/************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+CPLErr GTiffRGBABand::SetNoDataValue( double dfNoData )
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+
+    poGDS->bNoDataSet = TRUE;
+    poGDS->dfNoDataValue = dfNoData;
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                          GetOverviewCount()                          */
 /************************************************************************/
 
@@ -850,6 +921,8 @@ class GTiffBitmapBand : public GDALRasterBand
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
+    virtual double	    GetNoDataValue( int * );
+    virtual CPLErr	    SetNoDataValue( double );
 };
 
 
@@ -992,6 +1065,36 @@ GDALColorTable *GTiffBitmapBand::GetColorTable()
 }
 
 /************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double GTiffBitmapBand::GetNoDataValue( int * pbSuccess )
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+
+    if( pbSuccess )
+        *pbSuccess = poGDS->bNoDataSet;
+
+    return poGDS->dfNoDataValue;
+}
+
+/************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+CPLErr GTiffBitmapBand::SetNoDataValue( double dfNoData )
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+
+    poGDS->bNoDataSet = TRUE;
+    poGDS->dfNoDataValue = dfNoData;
+
+    return CE_None;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                            GTiffDataset                              */
 /* ==================================================================== */
@@ -1012,6 +1115,8 @@ GTiffDataset::GTiffDataset()
     bNewDataset = FALSE;
     bCrystalized = TRUE;
     poColorTable = NULL;
+    bNoDataSet = FALSE;
+    dfNoDataValue = -9999.0;
     pszProjection = NULL;
     bBase = TRUE;
     bTreatAsRGBA = FALSE;
@@ -1065,8 +1170,11 @@ GTiffDataset::~GTiffDataset()
         
         if( bNewDataset || bGeoTIFFInfoChanged )
             WriteGeoTIFFInfo();
+
+	if( bNoDataSet )
+            WriteNoDataValue( hTIFF, dfNoDataValue );
         
-        if( bNewDataset || bMetadataChanged || bGeoTIFFInfoChanged )
+        if( bNewDataset || bMetadataChanged || bGeoTIFFInfoChanged || bNoDataSet )
         {
 #if defined(TIFFLIB_VERSION)
 #if  TIFFLIB_VERSION > 20010925 && TIFFLIB_VERSION != 20011807
@@ -1335,6 +1443,7 @@ static int TIFF_OvLevelAdjust( int nOvLevel, int nXSize )
     
     return (int) (0.5 + nXSize / (double) nOXSize);
 }
+
 /************************************************************************/
 /*                          IBuildOverviews()                           */
 /************************************************************************/
@@ -1708,6 +1817,19 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF )
         CPLFree( pszXML_MD );
         CPLDestroyXMLNode( psRoot );
     }
+}
+
+/************************************************************************/
+/*                         WriteNoDataValue()                           */
+/************************************************************************/
+
+void GTiffDataset::WriteNoDataValue( TIFF *hTIFF, double dfNoData )
+
+{
+    const char *pszText;
+    
+    pszText = CPLSPrintf( "%f", dfNoData );
+    TIFFSetField( hTIFF, TIFFTAG_GDAL_NODATA, pszText );
 }
 
 /************************************************************************/
@@ -2143,6 +2265,12 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
         }
 
         bMetadataChanged = FALSE;
+	
+        if( TIFFGetField( hTIFF, TIFFTAG_GDAL_NODATA, &pszText ) )
+        {
+	    bNoDataSet = TRUE;
+	    dfNoDataValue = atof( pszText );
+	}
     }
 
 /* -------------------------------------------------------------------- */
@@ -2444,13 +2572,13 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                  GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
-    TIFF *hTIFF;
-    int  nBands = poSrcDS->GetRasterCount();
-    int  nXSize = poSrcDS->GetRasterXSize();
-    int  nYSize = poSrcDS->GetRasterYSize();
+    TIFF	*hTIFF;
+    int		nBands = poSrcDS->GetRasterCount();
+    int		nXSize = poSrcDS->GetRasterXSize();
+    int		nYSize = poSrcDS->GetRasterYSize();
     GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     CPLErr      eErr = CE_None;
-    uint16 nPlanarConfig;
+    uint16	nPlanarConfig;
         
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
@@ -2522,6 +2650,16 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* 	Transfer some TIFF specific metadata, if available.             */
 /* -------------------------------------------------------------------- */
     GTiffDataset::WriteMetadata( poSrcDS, hTIFF );
+
+/* -------------------------------------------------------------------- */
+/* 	Write NoData value, if exist.                                   */
+/* -------------------------------------------------------------------- */
+    int		bSuccess;
+    double	dfNoData;
+    
+    dfNoData = poSrcDS->GetRasterBand(1)->GetNoDataValue( &bSuccess );
+    if ( bSuccess )
+	GTiffDataset::WriteNoDataValue( hTIFF, dfNoData );
 
 /* -------------------------------------------------------------------- */
 /*      Write affine transform if it is meaningful.                     */
@@ -3143,14 +3281,17 @@ static void GTiffTagExtender(TIFF *tif)
 
 {
     static const TIFFFieldInfo xtiffFieldInfo[] = {
-        { TIFFTAG_GDAL_METADATA,	-1,-1, TIFF_ASCII,	FIELD_CUSTOM,
-          TRUE,	FALSE,	"GDALMetadata" }
+        { TIFFTAG_GDAL_METADATA,    -1,-1, TIFF_ASCII,	FIELD_CUSTOM,
+          TRUE,	FALSE,	"GDALMetadata" },
+        { TIFFTAG_GDAL_NODATA,	    -1,-1, TIFF_ASCII,	FIELD_CUSTOM,
+          TRUE,	FALSE,	"GDALNoDataValue" }
     };
 
     if (_ParentExtender) 
         (*_ParentExtender)(tif);
 
-    TIFFMergeFieldInfo(tif, xtiffFieldInfo, 1);
+    TIFFMergeFieldInfo( tif, xtiffFieldInfo,
+		        sizeof(xtiffFieldInfo) / sizeof(xtiffFieldInfo[0]) );
 }
 
 /************************************************************************/
