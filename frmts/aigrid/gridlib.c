@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/03/26 20:38:58  warmerda
+ * Added support for 0x20 blocks as per bug 533
+ *
  * Revision 1.21  2002/11/11 18:29:03  warmerda
  * added AIGLLOpen() to support upper case names too
  *
@@ -166,6 +169,39 @@ CPLErr AIGProcessIntConstBlock( GByte *pabyCur, int nDataSize, int nMin,
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
         panData[i] = nMin;
+
+    return( CE_None );
+}
+
+/************************************************************************/
+/*                         AIGProcess32bitRawBlock()                    */
+/*                                                                      */
+/*      Process a block using ``20'' (thirtytwo bit) raw format.        */
+/************************************************************************/
+
+static 
+CPLErr AIGProcessRaw32BitBlock( GByte *pabyCur, int nDataSize, int nMin,
+                                int nBlockXSize, int nBlockYSize,
+                                GInt32 * panData )
+
+{
+    int		i;
+
+    (void) nDataSize;
+    
+    CPLAssert( nDataSize >= nBlockXSize*nBlockYSize*2 );
+    
+/* -------------------------------------------------------------------- */
+/*      Collect raw data.                                               */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+    {
+        panData[i] = pabyCur[0] * 256 * 256 * 256
+            + pabyCur[1] * 256 * 256
+            + pabyCur[2] * 256 
+            + pabyCur[3] + nMin;
+        pabyCur += 4;
+    }
 
     return( CE_None );
 }
@@ -683,6 +719,12 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
     else if( nMagic == 0x10 )
     {
         AIGProcessRaw16BitBlock( pabyCur, nDataSize, nMin,
+                                 nBlockXSize, nBlockYSize,
+                                 panData );
+    }
+    else if( nMagic == 0x20 )
+    {
+        AIGProcessRaw32BitBlock( pabyCur, nDataSize, nMin,
                                  nBlockXSize, nBlockYSize,
                                  panData );
     }
