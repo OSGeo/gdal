@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/10/29 03:28:59  warmerda
+ * fixed 2.5D flag
+ *
  * Revision 1.18  2002/10/02 20:48:39  warmerda
  * Added support for GENERIC_CPOLY layer
  *
@@ -936,7 +939,7 @@ void OGRNTFDataSource::EstablishGenericLayers()
             NTFGenericClass     *poClass = aoGenericClass + iType;
         
             if( poClass->nFeatureCount > 0 && poClass->b3D )
-                n3DFlag = 0x8000;
+                n3DFlag = wkb25DBit;
         }
         
 /* -------------------------------------------------------------------- */
