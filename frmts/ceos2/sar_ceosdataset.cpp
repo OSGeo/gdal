@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2002/04/16 17:51:08  warmerda
+ * Avoid unitialized variable warnings.
+ *
  * Revision 1.23  2002/04/03 22:12:49  warmerda
  * Added special metadata access to raw record data
  *
@@ -1040,7 +1043,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
         while( CeosExtension[e][iFile] != NULL )
         {
             FILE	*process_fp;
-            char *pszFilename;
+            char *pszFilename = NULL;
             
             /* build filename */
             if( EQUAL(CeosExtension[e][5],"base") )
@@ -1074,6 +1077,10 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                 pszFilename = CPLStrdup(
                     CPLFormFilename(pszPath,pszBasename,szThisExtension));
             }
+
+            CPLAssert( pszFilename != NULL );
+            if( pszFilename == NULL ) 
+                return NULL;
 
             /* try to open */
             process_fp = VSIFOpen( pszFilename, "rb" );
