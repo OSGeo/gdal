@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2004/04/06 04:24:51  warmerda
+ * Always make any new color table encountered the default color
+ * table when it is read.
+ *
  * Revision 1.44  2004/01/23 16:15:22  warmerda
  * DGN_LEVEL_SYMBOLOGY has no disphdr, DGNParseCore() wont read negative attr
  *
@@ -1201,11 +1205,14 @@ static DGNElemCore *DGNParseColorTable( DGNInfo * psDGN )
 
     memcpy( psColorTable->color_info[255], psDGN->abyElem+38, 3 );
     memcpy( psColorTable->color_info, psDGN->abyElem+41, 765 ); 
-    if( !psDGN->got_color_table )
-    {
-        memcpy( psDGN->color_table, psColorTable->color_info, 768 );
-        psDGN->got_color_table = 1;
-    }
+
+    // We used to only install a color table as the default color
+    // table if it was the first in the file.  But apparently we should
+    // really be using the last one.  This doesn't necessarily accomplish
+    // that either if the elements are being read out of order but it will
+    // usually do better at least. 
+    memcpy( psDGN->color_table, psColorTable->color_info, 768 );
+    psDGN->got_color_table = 1;
     
     return psElement;
 }
