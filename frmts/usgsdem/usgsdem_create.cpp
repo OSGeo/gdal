@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.12  2004/05/03 14:13:42  warmerda
+ * fine tuned MSVC hack
+ *
  * Revision 1.11  2004/05/03 13:45:33  warmerda
  * correct old double formatting of MSVC++ (3 digit exponent)
  *
@@ -187,6 +190,10 @@ static void TextFillR( char *pszTarget, unsigned int nMaxChars,
 /*      to correct it here.                                             */
 /************************************************************************/
 
+#ifdef _MSC_VER
+#  define MSVC_HACK
+#endif
+
 static void USGSDEMPrintDouble( char *pszBuffer, double dfValue )
 
 {
@@ -194,7 +201,7 @@ static void USGSDEMPrintDouble( char *pszBuffer, double dfValue )
 
     char    szTemp[DOUBLE_BUFFER_SIZE];
     int     i;
-#ifdef _MSC_VER
+#ifdef MSVC_HACK
     const char *pszFormat = "%25.15e";
 #else
     const char *pszFormat = "%24.15e";
@@ -213,16 +220,17 @@ static void USGSDEMPrintDouble( char *pszBuffer, double dfValue )
     for( i = 0; szTemp[i] != '\0'; i++ )
     {
         if( szTemp[i] == 'E' || szTemp[i] == 'e' )
-        {
             szTemp[i] = 'D';
-            if( szTemp[i+1] == '0' && isdigit(szTemp[i+2]) 
-                && isdigit(szTemp[i+3]) && szTemp[i+4] == '\0' )
-            {
-                memmove( szTemp+i+1, szTemp+i+2, 2 );
-                szTemp[i+3] = '\0';
-                break;
-            }
+#ifdef MSVC_HACK
+        if( szTemp[i] == '+' 
+            && szTemp[i+1] == '0' && isdigit(szTemp[i+2]) 
+            && isdigit(szTemp[i+3]) && szTemp[i+4] == '\0' )
+        {
+            memmove( szTemp+i+1, szTemp+i+2, 2 );
+            szTemp[i+3] = '\0';
+            break;
         }
+#endif
     }
 
     TextFillR( pszBuffer, 24, szTemp );
