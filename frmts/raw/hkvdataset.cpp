@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2001/12/12 18:15:46  warmerda
+ * preliminary update for large raw file support
+ *
  * Revision 1.18  2001/12/12 17:19:06  warmerda
  * Use CPLStat for directories.
  *
@@ -182,7 +185,7 @@ HKVRasterBand::HKVRasterBand( HKVDataset *poDS, int nBand, FILE * fpRaw,
                               GDALDataType eDataType, int bNativeOrder )
         : RawRasterBand( (GDALDataset *) poDS, nBand, 
                          fpRaw, nImgOffset, nPixelOffset, 
-                         nLineOffset, eDataType, bNativeOrder )
+                         nLineOffset, eDataType, bNativeOrder, TRUE )
 
 {
     this->poDS = poDS;
@@ -248,7 +251,7 @@ HKVDataset::~HKVDataset()
     }
 
     if( fpBlob != NULL )
-        VSIFClose( fpBlob );
+        VSIFCloseL( fpBlob );
 
     if( nGCPCount > 0 )
     {
@@ -762,7 +765,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
         pszFilename = CPLFormFilename(poDS->pszPath, "blob", NULL );
     if( poOpenInfo->eAccess == GA_ReadOnly )
     {
-        poDS->fpBlob = VSIFOpen( pszFilename, "rb" );
+        poDS->fpBlob = VSIFOpenL( pszFilename, "rb" );
         if( poDS->fpBlob == NULL )
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -774,7 +777,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        poDS->fpBlob = VSIFOpen( pszFilename, "rb+" );
+        poDS->fpBlob = VSIFOpenL( pszFilename, "rb+" );
         if( poDS->fpBlob == NULL )
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 

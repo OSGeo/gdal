@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/12/12 18:15:46  warmerda
+ * preliminary update for large raw file support
+ *
  * Revision 1.10  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -69,14 +72,16 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
-                              FILE * fpRaw, unsigned int nImgOffset,
+                              FILE * fpRaw, vsi_l_offset nImgOffset,
                               int nPixelOffset, int nLineOffset,
-                              GDALDataType eDataType, int bNativeOrder )
+                              GDALDataType eDataType, int bNativeOrder,
+                              int bIsVSIL )
 
 {
     this->poDS = poDS;
     this->nBand = nBand;
     this->eDataType = eDataType;
+    this->bIsVSIL = bIsVSIL;
 
     this->fpRaw = fpRaw;
     this->nImgOffset = nImgOffset;
@@ -110,15 +115,16 @@ RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
 /*                           RawRasterBand()                            */
 /************************************************************************/
 
-RawRasterBand::RawRasterBand( FILE * fpRaw, unsigned int nImgOffset,
+RawRasterBand::RawRasterBand( FILE * fpRaw, vsi_l_offset nImgOffset,
                               int nPixelOffset, int nLineOffset,
                               GDALDataType eDataType, int bNativeOrder,
-                              int nXSize, int nYSize )
+                              int nXSize, int nYSize, int bIsVSIL )
 
 {
     this->poDS = NULL;
     this->nBand = 1;
     this->eDataType = eDataType;
+    this->bIsVSIL = bIsVSIL;
 
     this->fpRaw = fpRaw;
     this->nImgOffset = nImgOffset;
@@ -171,10 +177,9 @@ CPLErr RawRasterBand::AccessLine( int iLine )
     if( nLoadedScanline == iLine )
         return CE_None;
 
-    if( VSIFSeek( fpRaw, nImgOffset + iLine * nLineOffset,
-                  SEEK_SET ) == -1
-        || VSIFRead( pLineBuffer, nPixelOffset, 
-                     nBlockXSize, fpRaw ) < (size_t) nBlockXSize )
+    if( Seek( nImgOffset + iLine * nLineOffset, SEEK_SET ) == -1
+        || Read( pLineBuffer, nPixelOffset, nBlockXSize ) 
+                                       < (size_t) nBlockXSize )
     {
         // for now I just set to zero under the assumption we might
         // be trying to read from a file past the data that has
@@ -280,8 +285,7 @@ CPLErr RawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Write to disk.                                                  */
 /* -------------------------------------------------------------------- */
-    if( VSIFSeek( fpRaw, nImgOffset + nBlockYOff * nLineOffset,
-                  SEEK_SET ) == -1 )
+    if( Seek( nImgOffset + nBlockYOff * nLineOffset, SEEK_SET ) == -1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to scanline %d @ %d to write to file.\n",
@@ -289,7 +293,7 @@ CPLErr RawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         
         eErr = CE_Failure;
     }
-    else if( VSIFWrite( pLineBuffer, nPixelOffset, nBlockXSize, fpRaw ) < 1 )
+    else if( Write( pLineBuffer, nPixelOffset, nBlockXSize ) < 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to write scanline %d to file.\n",
@@ -309,6 +313,45 @@ CPLErr RawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     }
 
     return eErr;
+}
+
+/************************************************************************/
+/*                                Seek()                                */
+/************************************************************************/
+
+int RawRasterBand::Seek( vsi_l_offset nOffset, int nSeekMode )
+
+{
+    if( bIsVSIL )
+        return VSIFSeekL( fpRaw, nOffset, nSeekMode );
+    else
+        return VSIFSeek( fpRaw, nOffset, nSeekMode );
+}
+
+/************************************************************************/
+/*                                Read()                                */
+/************************************************************************/
+
+size_t RawRasterBand::Read( void *pBuffer, size_t nSize, size_t nCount )
+
+{
+    if( bIsVSIL )
+        return VSIFReadL( pBuffer, nSize, nCount, fpRaw );
+    else
+        return VSIFRead( pBuffer, nSize, nCount, fpRaw );
+}
+
+/************************************************************************/
+/*                               Write()                                */
+/************************************************************************/
+
+size_t RawRasterBand::Write( void *pBuffer, size_t nSize, size_t nCount )
+
+{
+    if( bIsVSIL )
+        return VSIFWriteL( pBuffer, nSize, nCount, fpRaw );
+    else
+        return VSIFWrite( pBuffer, nSize, nCount, fpRaw );
 }
 
 /************************************************************************/
