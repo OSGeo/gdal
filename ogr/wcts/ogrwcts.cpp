@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/03/11 21:32:09  warmerda
+ * Added preliminary KVP support
+ *
  * Revision 1.4  2003/03/11 17:28:49  warmerda
  * Changed where we look for capabilities.
  *
@@ -76,6 +79,41 @@ static void WCTSEmitServiceException( const char *pszMessage )
 }
 
 /************************************************************************/
+/*                          WCTSAuthId2crsId()                          */
+/*                                                                      */
+/*      Convert a KVP format CRS keyword into XML format.  Returns      */
+/*      the crsID node and done.                                        */
+/************************************************************************/
+
+CPLXMLNode *WCTSAuthId2crsId( char **papszParms, const char *pszName )
+
+{
+    const char *pszAuthId = CSLFetchNameValue( papszParms, pszName );
+    CPLXMLNode *psCRSId;
+    char **papszTokens;
+
+    if( pszAuthId == NULL )
+        WCTSEmitServiceException( 
+            CPLSPrintf( "%s keyword missing", pszName ) );
+    
+    papszTokens = CSLTokenizeString2( pszAuthId, ":", 0 );
+    if( CSLCount(papszTokens) != 2 )
+        WCTSEmitServiceException( 
+            CPLSPrintf( "%s value corrupt, use 'authority:code'.",
+                        pszName ));
+    
+    psCRSId = CPLCreateXMLNode( NULL, CXT_Element, "crsID" );
+    
+    CPLCreateXMLElementAndValue( psCRSId, "gml:codeSpace", papszTokens[0]);
+    CPLCreateXMLElementAndValue( psCRSId, "gml:code", papszTokens[1] );
+    
+    CSLDestroy( papszTokens );
+
+    return psCRSId;
+}
+
+
+/************************************************************************/
 /*                       WCTSCollectKVPRequest()                        */
 /*                                                                      */
 /*      Build an XML tree representation of a request received in       */
@@ -85,7 +123,117 @@ static void WCTSEmitServiceException( const char *pszMessage )
 CPLXMLNode *WCTSCollectKVPRequest()
 
 {
-    WCTSEmitServiceException( "KVP not supported yet." );
+    char **papszParmList;
+
+/* -------------------------------------------------------------------- */
+/*      Parse the query string.                                         */
+/* -------------------------------------------------------------------- */
+    if( getenv("QUERY_STRING") == NULL )
+        WCTSEmitServiceException( "QUERY_STRING not set." );
+
+    papszParmList = CSLTokenizeString2( getenv("QUERY_STRING"), "&",
+                                        CSLT_PRESERVEESCAPES );
+    
+/* -------------------------------------------------------------------- */
+/*      Un-url-encode the items.                                        */
+/* -------------------------------------------------------------------- */
+    int i;
+
+    for( i = 0; papszParmList != NULL && papszParmList[i] != NULL; i++ )
+    {
+        char *pszNewValue = CPLUnescapeString( papszParmList[i], 
+                                               NULL, CPLES_URL );
+        
+        CPLFree( papszParmList[i] );
+        papszParmList[i] = pszNewValue;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for REQUEST                                               */
+/* -------------------------------------------------------------------- */
+    const char *pszVersion = CSLFetchNameValue(papszParmList,"VERSION");
+    const char *pszRequest = CSLFetchNameValue(papszParmList,"REQUEST");
+
+    if( pszRequest == NULL )
+        WCTSEmitServiceException( "REQUEST not provided in KVP URL." );
+
+/* -------------------------------------------------------------------- */
+/*      Handle GetCapabilities                                          */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(pszRequest,"GetCapabilities") )
+    {
+        CPLXMLNode *psRequest = CPLCreateXMLNode( NULL, CXT_Element, 
+                                                  "GetCapabilities" );
+
+        if( pszVersion != NULL )
+        {
+            CPLCreateXMLNode( 
+                CPLCreateXMLNode( psRequest, CXT_Attribute, "version" ),
+                CXT_Text, pszVersion );
+        }
+
+        if( CSLFetchNameValue(papszParmList,"SERVICE") != NULL )
+        {
+            CPLCreateXMLNode( 
+                CPLCreateXMLNode( psRequest, CXT_Attribute, "service" ),
+                CXT_Text, CSLFetchNameValue(papszParmList,"SERVICE") );
+        }
+
+        return psRequest;
+    }
+
+/* ==================================================================== */
+/*      Handle IsTransformable                                          */
+/* ==================================================================== */
+    else if( EQUAL(pszRequest,"IsTransformable") )
+    {
+        CPLXMLNode *psRequest = CPLCreateXMLNode( NULL, CXT_Element, 
+                                                  "IsTransformable" );
+
+/* -------------------------------------------------------------------- */
+/*      Translate the source crs.                                       */
+/* -------------------------------------------------------------------- */
+        CPLAddXMLChild( 
+            CPLCreateXMLNode( psRequest, CXT_Element, "SourceCRS" ),
+            WCTSAuthId2crsId( papszParmList, "SOURCECRS" ) );
+
+/* -------------------------------------------------------------------- */
+/*      Translate the destination crs.                                  */
+/* -------------------------------------------------------------------- */
+        CPLAddXMLChild( 
+            CPLCreateXMLNode( psRequest, CXT_Element, "TargetCRS" ),
+            WCTSAuthId2crsId( papszParmList, "TARGETCRS" ) );
+
+/* -------------------------------------------------------------------- */
+/*      Handle version.                                                 */
+/* -------------------------------------------------------------------- */
+        if( pszVersion != NULL )
+        {
+            CPLCreateXMLNode( 
+                CPLCreateXMLNode( psRequest, CXT_Attribute, "version" ),
+                CXT_Text, pszVersion );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      geometric primitive.                                            */
+/* -------------------------------------------------------------------- */
+        if( CSLFetchNameValue(papszParmList,"GEOMETRICPRIMITIVE") != NULL )
+        {
+            CPLCreateXMLElementAndValue( 
+                psRequest, "GeometricPrimitive", 
+                CSLFetchNameValue(papszParmList,"GEOMETRICPRIMITIVE") );
+        }
+
+        /* Add COVERAGETYPE and COVERAGEINTERPOLATIONMETHOD layer? */
+
+        return psRequest;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Unrecognised.                                                   */
+/* -------------------------------------------------------------------- */
+    else
+        WCTSEmitServiceException( "Unrecognised REQUEST value." );
 
     return NULL;
 }
@@ -522,7 +670,50 @@ int main( int nArgc, char ** papszArgv )
 
 {
     RegisterOGRGML();
-    CPLPushFinderLocation(".");
+
+/* -------------------------------------------------------------------- */
+/*      Process any configuration switches.                             */
+/* -------------------------------------------------------------------- */
+    int iArg;
+
+    for( iArg = 1; iArg < nArgc; iArg++ )
+    {
+        if( EQUAL(papszArgv[iArg],"-log") && iArg < nArgc-1 )
+        {
+            char *pszLogEnv = (char *) CPLMalloc(strlen(papszArgv[iArg+1])+20);
+
+            sprintf( pszLogEnv, "CPL_LOG=%s", papszArgv[iArg+1] );
+            putenv( pszLogEnv );
+
+            iArg++;
+        }
+        else if( EQUAL(papszArgv[iArg],"-data")  && iArg < nArgc-1 )
+        {
+            CPLPushFinderLocation( papszArgv[++iArg] );
+        }
+        else if( EQUAL(papszArgv[iArg],"-put") )
+        {
+            putenv( "REQUEST_METHOD=PUT" );
+        }
+        else if( EQUAL(papszArgv[iArg],"-get")  && iArg < nArgc-1 )
+        {
+            char *pszLogEnv = (char *) CPLMalloc(strlen(papszArgv[iArg+1])+20);
+
+            sprintf( pszLogEnv, "QUERY_STRING=%s", papszArgv[iArg+1] );
+            putenv( pszLogEnv );
+            putenv( "REQUEST_METHOD=GET" );
+
+            iArg++;
+        }
+        else
+        {
+            WCTSEmitServiceException( 
+                "Server misconfigured, unknown commandline options received.\n"
+                "\n"
+                "Usage: ogrwcts [-log logfilename] [-data directory]\n"
+                "               [-get url] [-put]\n" );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Collect the request as a parsed XML document.                   */
