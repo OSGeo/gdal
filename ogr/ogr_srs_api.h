@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2004/09/23 16:20:13  fwarmerdam
+ * added OSRCleanup
+ *
  * Revision 1.45  2004/05/12 19:25:54  dron
  * SRS_DN_WGS72 constant added.
  *
@@ -625,6 +628,8 @@ OGRErr CPL_DLL OSRSetTMSO( OGRSpatialReferenceH hSRS,
 OGRErr CPL_DLL OSRSetVDG( OGRSpatialReferenceH hSRS,
                           double dfCenterLong,
                           double dfFalseEasting, double dfFalseNorthing );
+
+void CPL_DLL OSRCleanup( void );
 
 /* -------------------------------------------------------------------- */
 /*      OGRCoordinateTransform C API.                                   */
