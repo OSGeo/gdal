@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/11/11 20:34:22  warmerda
+ * added create support
+ *
  * Revision 1.22  2002/10/29 19:45:29  warmerda
  * OGR driver now always builds an index if any features are to be read.  This
  * is primarily done to ensure that color tables appearing late in the file
@@ -110,12 +113,14 @@ CPL_CVSID("$Id$");
 /*                           OGRDGNLayer()                              */
 /************************************************************************/
 
-OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN )
+OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN,
+                          int bUpdate )
     
 {
     poFilterGeom = NULL;
     
     this->hDGN = hDGN;
+    this->bUpdate = bUpdate;
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
     
@@ -553,7 +558,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
       {
           DGNElemComplexHeader *psHdr = (DGNElemComplexHeader *) psElement;
           int           iChild;
-          OGRGeometryCollection oChildren;
+          OGRMultiLineString  oChildren;
 
           /* collect subsequent child geometries. */
           // we should disable the spatial filter ... add later.
@@ -585,8 +590,12 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
           // Try to assemble into polygon geometry.
           OGRGeometry *poGeom;
 
-          poGeom = 
-              OGRBuildPolygonFromEdges( &oChildren, TRUE, TRUE, 100000, NULL );
+          if( psElement->type == DGNT_COMPLEX_SHAPE_HEADER )
+              poGeom = 
+                  OGRBuildPolygonFromEdges( &oChildren, TRUE, TRUE, 100000, 
+                                            NULL );
+          else
+              poGeom = oChildren.clone();
 
           if( poGeom != NULL )
               poFeature->SetGeometryDirectly( poGeom );
@@ -601,7 +610,6 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
     return poFeature;
 }
-
 
 /************************************************************************/
 /*                           GetNextFeature()                           */
@@ -654,20 +662,24 @@ int OGRDGNLayer::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,OLCRandomRead) )
-        return FALSE;
+        return TRUE;
 
-    else if( EQUAL(pszCap,OLCSequentialWrite) 
-             || EQUAL(pszCap,OLCRandomWrite) )
-        return FALSE;
+    else if( EQUAL(pszCap,OLCSequentialWrite) )
+        return bUpdate;
+    else if( EQUAL(pszCap,OLCRandomWrite) )
+        return FALSE; /* maybe later? */
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return FALSE;
+        return poFilterGeom == NULL || m_poAttrQuery == NULL;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
 
+    else if( EQUAL(pszCap,OLCFastGetExtent) )
+        return TRUE;
+
     else if( EQUAL(pszCap,OLCCreateField) )
-        return FALSE;
+        return TRUE;
 
     else 
         return FALSE;
@@ -736,5 +748,256 @@ OGRErr OGRDGNLayer::GetExtent( OGREnvelope *psExtent, int bForce )
     psExtent->MaxX = adfExtents[3];
     psExtent->MaxY = adfExtents[4];
     
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                      LineStringToElementGroup()                      */
+/*                                                                      */
+/*      Convert an OGR line string to one or more DGN elements.  If     */
+/*      the input is too long for a single element (more than 38        */
+/*      points) we split it into multiple LINE_STRING elements, and     */
+/*      prefix with a complex group header element.                     */
+/*                                                                      */
+/*      This method can create handle creating shapes, or line          */
+/*      strings for the aggregate object, but the components of a       */
+/*      complex shape group are always line strings.                    */
+/************************************************************************/
+
+#define MAX_ELEM_POINTS 38
+
+DGNElemCore **OGRDGNLayer::LineStringToElementGroup( OGRLineString *poLS,
+                                                     int nGroupType )
+
+{
+    int nTotalPoints = poLS->getNumPoints();
+    int iNextPoint = 0, iGeom = 0;
+    DGNElemCore **papsGroup;
+
+    papsGroup = (DGNElemCore **) 
+        CPLCalloc( sizeof(void*), (nTotalPoints/(MAX_ELEM_POINTS-1))+3 );
+
+    for( iNextPoint = 0; iNextPoint < nTotalPoints;  )
+    {
+        DGNPoint asPoints[38];
+        int nThisCount = 0;
+
+        // we need to repeat end points of elements.
+        if( iNextPoint != 0 )
+            iNextPoint--;
+
+        for( ; iNextPoint < nTotalPoints && nThisCount < MAX_ELEM_POINTS; 
+             iNextPoint++, nThisCount++ )
+        {
+            asPoints[nThisCount].x = poLS->getX( iNextPoint );
+            asPoints[nThisCount].y = poLS->getY( iNextPoint );
+            asPoints[nThisCount].z = poLS->getZ( iNextPoint );
+        }
+        
+        if( nTotalPoints <= MAX_ELEM_POINTS )
+            papsGroup[0] = DGNCreateMultiPointElem( hDGN, nGroupType,
+                                                 nThisCount, asPoints);
+        else
+            papsGroup[++iGeom] = 
+                DGNCreateMultiPointElem( hDGN, DGNT_LINE_STRING,
+                                         nThisCount, asPoints);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We needed to make into a group.  Create the complex header      */
+/*      from the rest of the group.                                     */
+/* -------------------------------------------------------------------- */
+    if( papsGroup[0] == NULL )
+    {
+        if( nGroupType == DGNT_SHAPE )
+            nGroupType = DGNT_COMPLEX_SHAPE_HEADER;
+        else
+            nGroupType = DGNT_COMPLEX_CHAIN_HEADER;
+        
+        papsGroup[0] = 
+            DGNCreateComplexHeaderFromGroup( hDGN, nGroupType, 
+                                             iGeom, papsGroup + 1 );
+    }
+
+    return papsGroup;
+}
+
+/************************************************************************/
+/*                           TranslateLabel()                           */
+/*                                                                      */
+/*      Translate LABEL feature.                                        */
+/************************************************************************/
+
+DGNElemCore **OGRDGNLayer::TranslateLabel( OGRFeature *poFeature )
+
+{
+    DGNElemCore **papsGroup;
+    OGRPoint *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
+    OGRStyleMgr oMgr;
+    OGRStyleLabel *poLabel;
+    const char *pszText = poFeature->GetFieldAsString( "Text" );
+    double dfRotation = 0.0;
+    double dfCharHeight = 100.0;
+
+    oMgr.InitFromFeature( poFeature );
+    poLabel = (OGRStyleLabel *) oMgr.GetPart( 0 );
+    if( poLabel != NULL && poLabel->GetType() != OGRSTCLabel )
+    {
+        delete poLabel;
+        poLabel = NULL;
+    }
+
+    if( poLabel != NULL )
+    {
+        GBool bDefault;
+
+        if( poLabel->TextString(bDefault) != NULL && !bDefault )
+            pszText = poLabel->TextString(bDefault);
+        dfRotation = poLabel->Angle(bDefault);
+
+        poLabel->Size( bDefault );
+        if( !bDefault && poLabel->GetUnit() == OGRSTUGround )
+            dfCharHeight = poLabel->Size(bDefault);
+        // this part is really kind of bogus.
+        if( !bDefault && poLabel->GetUnit() == OGRSTUMM )
+            dfCharHeight = poLabel->Size(bDefault)/1000.0;
+
+        /* poLabel->ForeColor(); */
+
+        /* get font id */
+    }
+
+    papsGroup = (DGNElemCore **) CPLCalloc(sizeof(void*),2);
+    papsGroup[0] = 
+        DGNCreateTextElem( hDGN, pszText, 0, DGNJ_LEFT_BOTTOM, 
+                           dfCharHeight, dfCharHeight, dfRotation, 
+                           poPoint->getX(), 
+                           poPoint->getY(), 
+                           poPoint->getZ() );
+
+    return papsGroup;
+}
+
+/************************************************************************/
+/*                           CreateFeature()                            */
+/*                                                                      */
+/*      Create a new feature and write to file.                         */
+/************************************************************************/
+
+OGRErr OGRDGNLayer::CreateFeature( OGRFeature *poFeature )
+
+{
+    if( !bUpdate )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Attempt to create feature on read-only DGN file." );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Translate the geometry.                                         */
+/* -------------------------------------------------------------------- */
+    DGNElemCore **papsGroup = NULL;
+    OGRGeometry *poGeom = poFeature->GetGeometryRef();
+    int i;
+    const char *pszStyle = poFeature->GetStyleString();
+
+    if( poGeom == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Features with empty, geometry collection geometries not\n"
+                  "supported in DGN format." );
+        return OGRERR_FAILURE;
+    }
+
+    if( wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
+    {
+        OGRPoint *poPoint = (OGRPoint *) poGeom;
+        const char *pszText = poFeature->GetFieldAsString("Text");
+
+        if( (pszText == NULL || strlen(pszText) == 0)
+            && (pszStyle == NULL || strstr(pszStyle,"LABEL") == NULL) )
+        {
+            DGNPoint asPoints[2];
+
+            papsGroup = (DGNElemCore **) CPLCalloc(sizeof(void*),2);
+
+            // Treat a non text point as a degenerate line.
+            asPoints[0].x = poPoint->getX();
+            asPoints[0].y = poPoint->getY();
+            asPoints[0].z = poPoint->getZ();
+            asPoints[1] = asPoints[0];
+            
+            papsGroup[0] = DGNCreateMultiPointElem( hDGN, DGNT_LINE, 
+                                                    2, asPoints );
+        }
+        else
+        {
+            papsGroup = TranslateLabel( poFeature );
+        }
+    }
+    else if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
+    {
+        papsGroup = LineStringToElementGroup( (OGRLineString *) poGeom, 
+                                              DGNT_LINE_STRING );
+    }
+    else if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
+    {
+        OGRPolygon *poPoly = ((OGRPolygon *) poGeom);
+
+        // Ignore all but the exterior ring. 
+        papsGroup = LineStringToElementGroup( poPoly->getExteriorRing(),
+                                              DGNT_SHAPE );
+    }
+    else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon )
+    {
+        OGRMultiPolygon *poMP = ((OGRMultiPolygon *) poGeom);
+        OGRPolygon *poPoly = (OGRPolygon *) poMP->getGeometryRef(0);
+
+        // Ignore everything but the outer ring of the first polygon.
+        if( poPoly != NULL )
+            papsGroup = LineStringToElementGroup( poPoly->getExteriorRing(),
+                                                  DGNT_SHAPE );
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unsupported geometry type (%s) for DGN.",
+                  OGRGeometryTypeToName( poGeom->getGeometryType() ) );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add other attributes.                                           */
+/* -------------------------------------------------------------------- */
+    int nLevel = poFeature->GetFieldAsInteger( "Level" );
+    int nGraphicGroup = poFeature->GetFieldAsInteger( "GraphicGroup" );
+    int nColor = poFeature->GetFieldAsInteger( "ColorIndex" );
+    int nWeight = poFeature->GetFieldAsInteger( "Weight" );
+    int nStyle = poFeature->GetFieldAsInteger( "Style" );
+
+    nLevel = MAX(0,MIN(63,nLevel));
+    nColor = MAX(0,MIN(255,nGraphicGroup));
+    nWeight = MAX(0,MIN(31,nWeight));
+    nStyle = MAX(0,MIN(7,nStyle));
+
+    DGNUpdateElemCore( hDGN, papsGroup[0], nLevel, nGraphicGroup, nColor, 
+                       nWeight, nStyle );
+    
+/* -------------------------------------------------------------------- */
+/*      Write to file.                                                  */
+/* -------------------------------------------------------------------- */
+    for( i = 0; papsGroup[i] != NULL; i++ )
+    {
+        DGNWriteElement( hDGN, papsGroup[i] );
+
+        if( i == 0 )
+            poFeature->SetFID( papsGroup[i]->element_id );
+
+        DGNFreeElement( hDGN, papsGroup[i] );
+    }
+
+    CPLFree( papsGroup );
+
     return OGRERR_NONE;
 }
