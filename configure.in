@@ -57,6 +57,41 @@ else
   AC_MSG_RESULT([none])
 fi
 
+dnl ---------------------------------------------------------------------
+dnl ENABLE THREADS ONLY IF REQUESTED.
+dnl ---------------------------------------------------------------------
+
+THREAD_LIB=""
+THREAD_FLAG=""
+
+AC_ARG_WITH(threads,
+[  --with-threads[=linkopt]Include thread safe support],,)
+
+if test "$with_threads" = "yes" ; then
+
+  AC_CHECK_LIB(pthread,pthread_create,THREAD_FLAG=-DCPL_MULTIPROC_PTHREAD,,,)
+
+  if test -n "$THREAD_FLAG" ; then
+      THREAD_LIB="-lpthread"
+  fi
+
+elif test -n "$with_threads" -a "$with_threads" != "no" ; then
+
+  THREAD_FLAG=-DCPL_MULTIPROC_PTHREAD
+  THREAD_LIB="$with_threads"  
+
+  AC_CHECKING(whether we should include thread/mutex support...)
+  AC_MSG_RESULT([        using threads with link options "$THREAD_LIB".])
+
+else
+  AC_CHECKING(whether we should include thread/mutex support...)
+  AC_MSG_RESULT([        thread safe support disabled.])
+fi
+
+CFLAGS="$CFLAGS $THREAD_FLAG"
+CPPFLAGS="$CPPFLAGS $THREAD_FLAG"
+LIBS="$THREAD_LIB $LIBS" 
+
 dnl ---------------------------------------------------------------------------
 dnl Check if libz is available.
 dnl ---------------------------------------------------------------------------
@@ -884,6 +919,7 @@ AC_ARG_WITH(python,[  --without-python      Disable Python],,)
 AM_PATH_PYTHON
 AM_INIT_PYEXEC_MOD
 AM_CHECK_NUMPY
+AC_COMPILER_LOCALHACK
 
 rm -f conftest*
 

@@ -118,6 +118,25 @@ AC_DEFUN(AC_UNIX_STDIO_64,
 
 ])
 
+AC_DEFUN(AC_COMPILER_LOCALHACK,
+[
+  AC_MSG_CHECKING([if local/include already standard])
+
+  rm -f comp.out
+  echo 'int main() { int i = 1; if( *((unsigned char *) &i) == 0 ) printf( "BIGENDIAN"); return 0; }' >> conftest.c
+  ${CC} $CPPFLAGS $EXTRA_INCLUDES -o conftest conftest.c 2> comp.out
+  COMP_CHECK=`grep "system directory" comp.out | grep /usr/local/include`
+  if test -z "$COMP_CHECK" ; then 
+     AC_MSG_RESULT([no, everything is ok])
+  else
+     AC_MSG_RESULT([yes, stripping extras])
+     CXXFLAGS=`echo "$CXXFLAGS " | sed "s/-I\/usr\/local\/include //"`
+     CFLAGS=`echo "$CFLAGS " | sed "s/-I\/usr\/local\/include //"`
+     EXTRA_INCLUDES=`echo "$EXTRA_INCLUDES " | sed "s/-I\/usr\/local\/include //"`
+  fi 
+  rm -f comp.out
+])
+
 AC_DEFUN(AC_COMPILER_WFLAGS,
 [
 	# Remove -g from compile flags, we will add via CFG variable if
