@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2000/04/21 21:53:42  warmerda
+ * rewrote metadata support, do flush before changing directories
+ *
  * Revision 1.23  2000/03/31 14:12:38  warmerda
  * added CPL based handling of libtiff warnings and errors
  *
@@ -179,7 +182,7 @@ class GTiffDataset : public GDALDataset
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
 
-    CPLErr	   OpenOffset( TIFF *, uint32 nDirOffset, int );
+    CPLErr	   OpenOffset( TIFF *, uint32 nDirOffset, int, GDALAccess );
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -213,6 +216,10 @@ class GTiffRasterBand : public GDALRasterBand
 
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
+
+    virtual CPLErr BuildOverviews( const char *, int, int *,
+                                   GDALProgressFunc, void * );
+
 };
 
 
@@ -458,7 +465,7 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         nBlockBufSize = TIFFStripSize( poGDS->hTIFF );
         TIFFWriteEncodedStrip( poGDS->hTIFF, nBlockId, pImage, nBlockBufSize );
     }
-    
+
     return CE_None;
 }
 
@@ -534,8 +541,19 @@ GDALRasterBand *GTiffRasterBand::GetOverview( int i )
         return poGDS->papoOverviewDS[i]->GetRasterBand(nBand);
 }
 
+/************************************************************************/
+/*                           BuildOverviews()                           */
+/************************************************************************/
 
+CPLErr GTiffRasterBand::BuildOverviews( const char * pszResampling, 
+                                        int nOverviews, 
+                                        int *panOverviewList, 
+                                        GDALProgressFunc pfnProgress, 
+                                        void * pProgressData )
 
+{
+    return CE_Failure;
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -704,6 +722,9 @@ int GTiffDataset::SetDirectory( uint32 nNewOffset )
     if( TIFFCurrentDirOffset(hTIFF) == nNewOffset )
         return TRUE;
 
+    if( GetAccess() == GA_Update )
+        TIFFFlush( hTIFF );
+    
     return TIFFSetSubDirectory( hTIFF, nNewOffset );
 }
 
@@ -747,7 +768,8 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new GTiffDataset();
 
-    if( poDS->OpenOffset(hTIFF,TIFFCurrentDirOffset(hTIFF), TRUE ) != CE_None )
+    if( poDS->OpenOffset(hTIFF,TIFFCurrentDirOffset(hTIFF), TRUE,
+                         poOpenInfo->eAccess ) != CE_None )
     {
         delete poDS;
         return NULL;
@@ -765,7 +787,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn, 
-				 int bBaseIn )
+				 int bBaseIn, GDALAccess eAccess )
 
 {
     uint32	nXSize, nYSize;
@@ -779,6 +801,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
     SetDirectory( nDirOffsetIn );
 
     bBase = bBaseIn;
+
+    this->eAccess = eAccess;
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
@@ -942,32 +966,16 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
     char	*pszText;
 
     if( TIFFGetField( hTIFF, TIFFTAG_DOCUMENTNAME, &pszText ) )
-    {
-        papszMetadata = 
-            CSLSetNameValue( papszMetadata, "TIFFTAG_DOCUMENTNAME", 
-                             pszText );
-    }
+        SetMetadataItem( "TIFFTAG_DOCUMENTNAME",  pszText );
 
     if( TIFFGetField( hTIFF, TIFFTAG_IMAGEDESCRIPTION, &pszText ) )
-    {
-        papszMetadata = 
-            CSLSetNameValue( papszMetadata, "TIFFTAG_IMAGEDESCRIPTION", 
-                             pszText );
-    }
+        SetMetadataItem( "TIFFTAG_IMAGEDESCRIPTION", pszText );
 
     if( TIFFGetField( hTIFF, TIFFTAG_SOFTWARE, &pszText ) )
-    {
-        papszMetadata = 
-            CSLSetNameValue( papszMetadata, "TIFFTAG_SOFTWARE", 
-                             pszText );
-    }
+        SetMetadataItem( "TIFFTAG_SOFTWARE", pszText );
 
     if( TIFFGetField( hTIFF, TIFFTAG_DATETIME, &pszText ) )
-    {
-        papszMetadata = 
-            CSLSetNameValue( papszMetadata, "TIFFTAG_DATETIME", 
-                             pszText );
-    }
+        SetMetadataItem(  "TIFFTAG_DATETIME", pszText );
 
 /* -------------------------------------------------------------------- */
 /*      If this is a "base" raster, we should scan for any              */
@@ -986,7 +994,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
                 GTiffDataset	*poODS;
 
                 poODS = new GTiffDataset();
-                if( poODS->OpenOffset( hTIFF, nThisDir, FALSE ) != CE_None 
+                if( poODS->OpenOffset( hTIFF, nThisDir, FALSE, 
+                                       eAccess ) != CE_None 
                     || poODS->GetRasterCount() != GetRasterCount() )
                 {
                     delete poODS;
