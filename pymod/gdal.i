@@ -2,7 +2,7 @@
  * $Id$
  *
  * Name:     gdal.i
- * Project:  GDAL Core
+ * Project:  GDAL Python Interface
  * Purpose:  GDAL Core SWIG Interface declarations.
  * Author:   Frank Warmerdam, warmerda@home.com
  *
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/03/10 13:55:33  warmerda
+ * removed constants, added gethistogram
+ *
  * Revision 1.3  2000/03/08 20:01:04  warmerda
  * added geotransforms
  *
@@ -44,65 +47,20 @@
 
 %{
 #include "gdal.h"
+#include "cpl_conv.h"
 %}
 
-/*! Pixel data types */
-typedef enum {
-    GDT_Unknown = 0,
-    /*! Eight bit unsigned integer */ 		GDT_Byte = 1,
-    /*! Sixteen bit unsigned integer */         GDT_UInt16 = 2,
-    /*! Sixteen bit signed integer */           GDT_Int16 = 3,
-    /*! Thirty two bit unsigned integer */      GDT_UInt32 = 4,
-    /*! Thirty two bit signed integer */        GDT_Int32 = 5,
-    /*! Thirty two bit floating point */        GDT_Float32 = 6,
-    /*! Sixty four bit floating point */        GDT_Float64 = 7,
-    GDT_TypeCount = 8		/* maximum type # + 1 */
-} GDALDataType;
+typedef int GDALDataType;
+typedef int GDALAccess;
+typedef int GDALRWFlag;
+typedef int GDALColorInterp;
+typedef int GDALPaletteInterp;
 
 int  GDALGetDataTypeSize( GDALDataType );
 const char * GDALGetDataTypeName( GDALDataType );
 
-/*! Flag indicating read/write, or read-only access to data. */
-typedef enum {
-    /*! Read only (no update) access */ GA_ReadOnly = 0,
-    /*! Read/write access. */           GA_Update = 1
-} GDALAccess;
-
-typedef enum {
-    GF_Read = 0,
-    GF_Write = 1
-} GDALRWFlag;
-
-/*! Types of color interpretation for raster bands. */
-typedef enum
-{
-    GCI_Undefined=0,
-    GCI_GrayIndex=1,
-    GCI_PaletteIndex=2,
-    GCI_RedBand=3,
-    GCI_GreenBand=4,
-    GCI_BlueBand=5,
-    GCI_AlphaBand=6,
-    GCI_HueBand=7,
-    GCI_SaturationBand=8,
-    GCI_LightnessBand=9,
-    GCI_CyanBand=10,
-    GCI_MagentaBand=11,
-    GCI_YellowBand=12,
-    GCI_BlackBand=13
-} GDALColorInterp;
-
 /*! Translate a GDALColorInterp into a user displayable string. */
 const char *GDALGetColorInterpretationName( GDALColorInterp );
-
-/*! Types of color interpretations for a GDALColorTable. */
-typedef enum 
-{
-    GPI_Gray=0,
-    GPI_RGB=1,
-    GPI_CMYK=2,
-    GPI_HLS=3
-} GDALPaletteInterp;
 
 /*! Translate a GDALPaletteInterp into a user displayable string. */
 const char *GDALGetPaletteInterpretationName( GDALPaletteInterp );
@@ -170,6 +128,7 @@ GDALColorInterp  GDALGetRasterColorInterpretation( GDALRasterBandH );
 GDALColorTableH  GDALGetRasterColorTable( GDALRasterBandH );
 int              GDALGetOverviewCount( GDALRasterBandH );
 GDALRasterBandH  GDALGetOverview( GDALRasterBandH, int );
+CPLErr           GDALFlushRasterCache( GDALRasterBandH );
 
 /* need to add functions related to block cache */
 
@@ -216,7 +175,11 @@ const char *GDALDecToDMS( double, const char *, int );
 /*      Special custom functions.                                       */
 /* ==================================================================== */
 
+
 %{
+/************************************************************************/
+/*                         GDALReadRaster()                             */
+/************************************************************************/
 static PyObject *
 py_GDALReadRaster(PyObject *self, PyObject *args) {
 
@@ -271,15 +234,69 @@ py_GDALReadRaster(PyObject *self, PyObject *args) {
 
 %native(GDALReadRaster) py_GDALReadRaster;
 
+%{
+/************************************************************************/
+/*                          GDALWriteRaster()                           */
+/************************************************************************/
+static PyObject *
+py_GDALWriteRaster(PyObject *self, PyObject *args) {
+
+    GDALRasterBandH  _arg0;
+    char *_argc0 = NULL;
+    int  _arg1;
+    int  _arg2;
+    int  _arg3;
+    int  _arg4;
+    char *strbuffer_arg = NULL;
+    int  strbuffer_size;
+    int  _arg5;
+    int  _arg6;
+    GDALDataType  _arg7;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"siiiis#iii:GDALWriteRaster",
+                         &_argc0,&_arg1,&_arg2,&_arg3,&_arg4,
+                         &strbuffer_arg,&strbuffer_size,&_arg5,&_arg6,&_arg7)) 
+        return NULL;
+
+
+
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALRasterBandH" )) {
+            PyErr_SetString(PyExc_TypeError,
+			    "Type error in argument 1 of GDALReadRaster."
+			    " Expected _GDALRasterBandH.");
+            return NULL;
+        }
+    }
+	
+    if( GDALRasterIO(_arg0, GF_Write, _arg1, _arg2, _arg3, _arg4, 
+		     (void *) strbuffer_arg,
+		     _arg5, _arg6, _arg7, 0, 0 ) != CE_None )
+    {
+	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
+	return NULL;
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+%}
+
+%native(GDALWriteRaster) py_GDALWriteRaster;
+
 
 %{
+/************************************************************************/
+/*                        GDALGetGeoTransform()                         */
+/************************************************************************/
 static PyObject *
 py_GDALGetGeoTransform(PyObject *self, PyObject *args) {
 
     GDALDatasetH  _arg0;
     char *_argc0 = NULL;
     double geotransform[6];
-    CPLErr err;
 
     self = self;
     if(!PyArg_ParseTuple(args,"s:GDALGetGeoTransform",&_argc0))
@@ -294,13 +311,7 @@ py_GDALGetGeoTransform(PyObject *self, PyObject *args) {
         }
     }
 	
-    err = GDALGetGeoTransform(_arg0,geotransform);
-
-    if( err != CE_None )
-    {
-	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
-	return NULL;
-    }
+    GDALGetGeoTransform(_arg0,geotransform);
 
     return Py_BuildValue("dddddd",
 	                 geotransform[0],
@@ -315,6 +326,9 @@ py_GDALGetGeoTransform(PyObject *self, PyObject *args) {
 %native(GDALGetGeoTransform) py_GDALGetGeoTransform;
 
 %{
+/************************************************************************/
+/*                        GDALSetGeoTransform()                         */
+/************************************************************************/
 static PyObject *
 py_GDALSetGeoTransform(PyObject *self, PyObject *args) {
 
@@ -345,16 +359,7 @@ py_GDALSetGeoTransform(PyObject *self, PyObject *args) {
 	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
 	return NULL;
     }
-
     
-    return Py_BuildValue("dddddd",
-	                 geotransform[0],
-	                 geotransform[1],
-	                 geotransform[2],
-	                 geotransform[3],
-	                 geotransform[4],
-	                 geotransform[5] );
-
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -362,6 +367,48 @@ py_GDALSetGeoTransform(PyObject *self, PyObject *args) {
 
 %native(GDALSetGeoTransform) py_GDALSetGeoTransform;
 
+%{
+/************************************************************************/
+/*                       GDALGetRasterHistogram()                       */
+/************************************************************************/
+static PyObject *
+py_GDALGetRasterHistogram(PyObject *self, PyObject *args) {
 
+    GDALRasterBandH  hBand;
+    char *_argc0 = NULL;
+    double dfMin = -0.5, dfMax = 255.5;
+    int nBuckets = 256, bIncludeOutOfRange = FALSE, bApproxOK = FALSE;
+    int *panHistogram, i;
+    PyObject *psList;
 
+    self = self;
+    if(!PyArg_ParseTuple(args,"s|ddiii:GDALGetRasterHistogram",&_argc0,
+			 &dfMin, &dfMax, &nBuckets, &bIncludeOutOfRange, 
+	 	         &bApproxOK))
+        return NULL;
 
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &hBand,"_GDALRasterBandH" )) {
+            PyErr_SetString(PyExc_TypeError,
+                          "Type error in argument 1 of GDALGetRasterHistogram."
+                          "  Expected _GDALRasterBandH.");
+            return NULL;
+        }
+    }
+	
+    panHistogram = (int *) CPLCalloc(sizeof(int),nBuckets);
+    GDALGetRasterHistogram(hBand, dfMin, dfMax, nBuckets, panHistogram, 
+			   bIncludeOutOfRange, bApproxOK, 
+		           GDALDummyProgress, NULL);
+
+    psList = PyList_New(nBuckets);
+    for( i = 0; i < nBuckets; i++ )
+	PyList_SetItem(psList, i, Py_BuildValue("i", panHistogram[i] ));
+
+    CPLFree( panHistogram );
+
+    return psList;
+}
+%}
+
+%native(GDALGetRasterHistogram) py_GDALGetRasterHistogram;
