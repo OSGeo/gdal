@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.78  2004/01/18 16:52:39  dron
+ * Added wrapper for GDALGetDataTypeByName().
+ *
  * Revision 1.77  2003/12/05 18:01:08  warmerda
  * Added ptrptr functions
  *
@@ -509,6 +512,7 @@ typedef int GDALPaletteInterp;
 
 int  GDALGetDataTypeSize( GDALDataType );
 const char * GDALGetDataTypeName( GDALDataType );
+GDALDataType GDALGetDataTypeByName( const char * );
 
 /*! Translate a GDALColorInterp into a user displayable string. */
 const char *GDALGetColorInterpretationName( GDALColorInterp );
