@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2001/07/12 16:41:41  warmerda
+ * use CPL types for portability (ie. to Solaris)
+ *
  * Revision 1.2  2001/07/06 18:46:25  nemec
  * Cleanup files - improve Windows build, make proper copyright notice
  *
@@ -38,48 +41,16 @@
 #define _gstTypes_h_
 
 #include <stdarg.h>
-
-#if     !defined(TRUE) || ((TRUE) != 1)
-#ifdef TRUE
-#undef TRUE
-#endif
-#define TRUE    (1)
-#endif
-#if     !defined(FALSE) || ((FALSE) != 0)
-#ifdef FALSE
-#undef FALSE
-#endif
-#define FALSE   (0)
-#endif
+#include "cpl_conv.h"
 
 typedef int (*gstItemGetFunc)(void *data, int tag, ...);
 
-#if defined(__sgi)
-#include <sys/types.h>
-typedef uint16_t                        uint16;
-typedef int16_t                         int16;
-typedef uint32_t                        uint32;
-typedef int32_t                         int32;
-typedef uint64_t                        uint64;
-typedef int64_t                         int64;
-#elif defined(__linux__)
-#include <sys/types.h>
-typedef u_int16_t                       uint16;
-typedef int16_t                         int16;
-typedef u_int32_t                       uint32;
-typedef int32_t                         int32;
-typedef u_int64_t                       uint64;
-typedef int64_t                         int64;
-#define TRUE -1
-#define FALSE 0
-#elif defined(_WIN32)
-typedef unsigned short                  uint16;
-typedef short                           int16;
-typedef unsigned long                   uint32;
-typedef long                            int32;
-typedef unsigned __int64                uint64;
-typedef __int64                         int64;
-#endif
+typedef GUInt16				uint16;
+typedef GInt16				int16;
+typedef GUInt32				uint32;
+typedef GInt32				int32;
+typedef GUIntBig			uint64;
+typedef GIntBig				int64;
 
 typedef unsigned char                   uchar;
 
