@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/11/11 18:29:03  warmerda
+ * added AIGLLOpen() to support upper case names too
+ *
  * Revision 1.11  2002/11/05 03:19:08  warmerda
  * avoid nodata remapping in gridlib, use GInt32 not GUInt for image data
  *
@@ -148,6 +151,8 @@ CPLErr 		AIGReadTile( AIGInfo_t *, int, int, GInt32 * );
 CPLErr 		AIGReadFloatTile( AIGInfo_t *, int, int, float * );
 
 void		AIGClose( AIGInfo_t * );
+
+FILE           *AIGLLOpen( const char *, const char * );
 
 CPL_C_END
 
