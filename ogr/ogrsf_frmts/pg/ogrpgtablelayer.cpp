@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/12/12 14:29:28  warmerda
+ * fixed bug with creating features with no geometry in PostGIS
+ *
  * Revision 1.9  2002/10/20 03:45:53  warmerda
  * quote table name in feature insert, and feature count commands
  *
@@ -495,7 +498,7 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
 
     /* Set the geometry */
     bNeedComma = poFeature->GetGeometryRef() != NULL;
-    if( bHasPostGISGeometry )
+    if( bHasPostGISGeometry && poFeature->GetGeometryRef() != NULL)
     {
         char	*pszWKT = NULL;
 
