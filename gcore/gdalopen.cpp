@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/02/03 05:09:31  warmerda
+ * populate GDALOpenInfo header data using large file API if needed
+ *
  * Revision 1.17  2002/07/09 20:33:12  warmerda
  * expand tabs
  *
@@ -148,6 +151,16 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn )
                 nHeaderBytes = VSIFRead( pabyHeader, 1, 1024, fp );
 
                 VSIRewind( fp );
+            } 
+            else if( errno == 27 /* "File to large" */ )
+            {
+                fp = VSIFOpenL( pszFilename, "rb" );
+                if( fp != NULL )
+                {
+                    nHeaderBytes = VSIFRead( pabyHeader, 1, 1024, fp );
+                    VSIFCloseL( fp );
+                    fp = NULL;
+                }
             }
         }
         else if( VSI_ISDIR( sStat.st_mode ) )
