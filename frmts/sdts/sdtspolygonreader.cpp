@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/04/16 17:51:57  warmerda
+ * Avoid warnings.
+ *
  * Revision 1.11  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -166,7 +169,7 @@ void SDTSRawPolygon::AddEdgeToRing( int nVertToAdd,
                                     int bReverse, int bDropVertex )
 
 {
-    int         iStart, iEnd, iStep;
+    int         iStart=0, iEnd=nVertToAdd-1, iStep=1;
 
     if( bDropVertex && bReverse )
     {
