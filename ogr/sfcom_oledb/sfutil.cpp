@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/11/09 19:07:11  warmerda
+ * added VARIANTToString... doesnot appear to work
+ *
  * Revision 1.13  2001/11/02 19:24:42  warmerda
  * avoid warnings
  *
@@ -262,6 +265,27 @@ void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... )
     va_end(args);
 
     CPLDebug( pszDebugClass, "%s", szMessage );
+}
+
+/************************************************************************/
+/*                           CPL_ATLTrace2()                            */
+/************************************************************************/
+
+void CPL_ATLTrace2( DWORD category, UINT level, const char * format, ... )
+
+{
+    va_list args;
+
+/* -------------------------------------------------------------------- */
+/*      Also route through CPL                                          */
+/* -------------------------------------------------------------------- */
+    char      szMessage[10000];
+
+    va_start(args, format);
+    vsprintf( szMessage, format, args );
+    va_end(args);
+
+    CPLDebug( "ATLTrace2", "%s", szMessage );
 }
 
 /************************************************************************/
