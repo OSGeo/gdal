@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2001/05/01 18:09:53  warmerda
+ * upgraded world file reading support
+ *
  * Revision 1.45  2001/04/17 14:58:16  warmerda
  * fixed access to rw mode separate RGB tiff images
  *
@@ -1447,65 +1450,23 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Otherwise try looking for a .tfw file.                          */
+/*      Otherwise try looking for a .tfw, .tifw or .wld file.           */
 /* -------------------------------------------------------------------- */
     else
     {
-        char	*pszTFW;
-        int	i;
-        FILE	*fpTFW;
+        bGeoTransformValid = 
+            GDALReadWorldFile( GetDescription(), "tfw", adfGeoTransform );
 
-        pszTFW = (char *) CPLMalloc(strlen(GetDescription())+5);
-        strcpy( pszTFW, GetDescription());
-        for( i = strlen(pszTFW)-1; i > 0; i-- )
+        if( !bGeoTransformValid )
         {
-            if( pszTFW[i] == '.' )
-            {
-                pszTFW[i] = '\0';
-                break;
-            }
+            bGeoTransformValid = 
+                GDALReadWorldFile( GetDescription(), "tifw", adfGeoTransform );
         }
-
-        strcat( pszTFW, ".tfw" );
-        
-        fpTFW = VSIFOpen( pszTFW, "rt" );
-        if( fpTFW == NULL )
+        if( !bGeoTransformValid )
         {
-            strcpy( pszTFW + strlen(pszTFW)-4, ".TFW" );
-            fpTFW = VSIFOpen( pszTFW, "rt" );
+            bGeoTransformValid = 
+                GDALReadWorldFile( GetDescription(), "wld", adfGeoTransform );
         }
-
-        if( fpTFW != NULL )
-        {
-            char	**papszLines;
-
-            VSIFClose( fpTFW );
-
-            papszLines = CSLLoad( pszTFW );
-            if( CSLCount(papszLines) >= 6 
-                && atof(papszLines[0]) != 0.0
-                && atof(papszLines[3]) != 0.0 )
-            {
-                adfGeoTransform[0] = atof(papszLines[4]);
-                adfGeoTransform[1] = atof(papszLines[0]);
-                adfGeoTransform[2] = atof(papszLines[2]);
-                adfGeoTransform[3] = atof(papszLines[5]);
-                adfGeoTransform[4] = atof(papszLines[1]);
-                adfGeoTransform[5] = atof(papszLines[3]);
-
-                // correct for center of pixel vs. top left of pixel
-                adfGeoTransform[0] -= 0.5 * adfGeoTransform[1];
-                adfGeoTransform[0] -= 0.5 * adfGeoTransform[2];
-                adfGeoTransform[3] -= 0.5 * adfGeoTransform[4];
-                adfGeoTransform[3] -= 0.5 * adfGeoTransform[5];
-                                        
-                bGeoTransformValid = TRUE;
-            }
-            CSLDestroy(papszLines);
-            pszTFWFilename = CPLStrdup(pszTFW);
-        }
-
-        CPLFree( pszTFW );
     }
 
 /* -------------------------------------------------------------------- */
