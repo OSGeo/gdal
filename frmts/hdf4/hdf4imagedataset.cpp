@@ -29,14 +29,17 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2002/07/16 17:51:10  warmerda
+ * removed hdf/ from include statements
+ *
  * Revision 1.1  2002/07/16 11:04:11  dron
  * New driver: HDF4 datasets. Initial version.
  *
  *
  */
 
-#include <hdf/hdf.h>
-#include <hdf/mfhdf.h>
+#include <hdf.h>
+#include <mfhdf.h>
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
