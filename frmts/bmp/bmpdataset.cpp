@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2002/12/10 22:12:59  dron
+ * RLE8 decoding added.
+ *
  * Revision 1.7  2002/12/09 19:31:44  dron
  * Switched to CPL_LSBWORD32 macro.
  *
@@ -532,7 +535,7 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
     VSIFRead( pabyComprBuf, 1, iComprSize, poDS->fp );
     i = 0;
     j = 0;
-    while( j < iUncomprSize && i <= iComprSize )
+    while( j < iUncomprSize && i < iComprSize )
     {
 	if ( pabyComprBuf[i] )
 	{
@@ -546,28 +549,32 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
 	}
 	else
 	{
-	    if ( pabyComprBuf[i + 1] == 0 )
+	    i++;
+	    if ( pabyComprBuf[i] == 0 )		    // Next scanline
 	    {
-		i += 2;
+		i++;
 	    }
-	    else if ( pabyComprBuf[i + 1] == 1 )
+	    else if ( pabyComprBuf[i] == 1 )	    // End of image
 	    {
 		break;
 	    }
-	    else if ( pabyComprBuf[i + 1] == 2 )
+	    else if ( pabyComprBuf[i] == 2 )	    // Move to...
 	    {
-		i += 2;
-		j += pabyComprBuf[i++] +
-		     pabyComprBuf[i++] * poDS->GetRasterXSize();
+		i++;
+		if ( i < iComprSize - 1 )
+		{
+		    j += pabyComprBuf[i++] +
+			 pabyComprBuf[i++] * poDS->GetRasterXSize();
+		}
+		else
+		    break;
 	    }
 	    else
 	    {
-		iLength = pabyComprBuf[++i];
-		for ( k = 1; k <= iLength && j < iUncomprSize && i <= iComprSize; k++ )
-		    pabyUncomprBuf[j++] = pabyComprBuf[++i];
+		iLength = pabyComprBuf[i++];
+		for ( k = 0; k < iLength && j < iUncomprSize && i < iComprSize; k++ )
+		    pabyUncomprBuf[j++] = pabyComprBuf[i++];
 		if ( k & 0x01 )
-		    i += 2;
-		else
 		    i++;
 	    }
 	}
