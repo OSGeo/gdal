@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/09/03 13:07:26  warmerda
+ * Cleaned up CPLScanLong() a bit to avoid warnings, and
+ * unnecessary conversion to/from double.
+ *
  * Revision 1.24  2003/08/31 14:48:05  dron
  * Added CPLScanLong() and CPLScanDouble().
  *
@@ -441,8 +445,6 @@ const char *CPLReadLine( FILE * fp )
 long CPLScanLong( char *pszString, int nMaxLength )
 {
     char    szTemp[32];
-    int     i;
-    double  dfValue;
 
 /* -------------------------------------------------------------------- */
 /*	Compute string into local buffer, and terminate it.		*/
@@ -453,9 +455,7 @@ long CPLScanLong( char *pszString, int nMaxLength )
 /* -------------------------------------------------------------------- */
 /*	Use atol() to fetch out the result                              */
 /* -------------------------------------------------------------------- */
-    dfValue = atol( szTemp );
-
-    return dfValue;
+    return atol( szTemp );
 }
 
 /************************************************************************/
