@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.40 2003/04/21 18:30:37 warmerda Exp $
+ * $Id: shpopen.c,v 1.43 2003/12/01 16:20:08 warmerda Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,6 +34,15 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.43  2003/12/01 16:20:08  warmerda
+ * be careful of zero vertex shapes
+ *
+ * Revision 1.42  2003/12/01 14:58:27  warmerda
+ * added degenerate object check in SHPRewindObject()
+ *
+ * Revision 1.41  2003/07/08 15:22:43  warmerda
+ * avoid warning
+ *
  * Revision 1.40  2003/04/21 18:30:37  warmerda
  * added header write/update public methods
  *
@@ -162,7 +171,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: shpopen.c,v 1.40 2003/04/21 18:30:37 warmerda Exp $";
+  "$Id: shpopen.c,v 1.43 2003/12/01 16:20:08 warmerda Exp $";
 
 #include "shapefil.h"
 
@@ -921,7 +930,7 @@ int SHPAPI_CALL
 SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 		      
 {
-    int	       	nRecordOffset, i, nRecordSize;
+    int	       	nRecordOffset, i, nRecordSize=0;
     uchar	*pabyRec;
     int32	i32;
 
@@ -1248,13 +1257,22 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     if( psSHP->adBoundsMin[0] == 0.0
         && psSHP->adBoundsMax[0] == 0.0
         && psSHP->adBoundsMin[1] == 0.0
-        && psSHP->adBoundsMax[1] == 0.0 
-        && psObject->nSHPType != SHPT_NULL )
+        && psSHP->adBoundsMax[1] == 0.0 )
     {
-        psSHP->adBoundsMin[0] = psSHP->adBoundsMax[0] = psObject->padfX[0];
-        psSHP->adBoundsMin[1] = psSHP->adBoundsMax[1] = psObject->padfY[0];
-        psSHP->adBoundsMin[2] = psSHP->adBoundsMax[2] = psObject->padfZ[0];
-        psSHP->adBoundsMin[3] = psSHP->adBoundsMax[3] = psObject->padfM[0];
+        if( psObject->nSHPType == SHPT_NULL || psObject->nVertices == 0 )
+        {
+            psSHP->adBoundsMin[0] = psSHP->adBoundsMax[0] = 0.0;
+            psSHP->adBoundsMin[1] = psSHP->adBoundsMax[1] = 0.0;
+            psSHP->adBoundsMin[2] = psSHP->adBoundsMax[2] = 0.0;
+            psSHP->adBoundsMin[3] = psSHP->adBoundsMax[3] = 0.0;
+        }
+        else
+        {
+            psSHP->adBoundsMin[0] = psSHP->adBoundsMax[0] = psObject->padfX[0];
+            psSHP->adBoundsMin[1] = psSHP->adBoundsMax[1] = psObject->padfY[0];
+            psSHP->adBoundsMin[2] = psSHP->adBoundsMax[2] = psObject->padfZ[0];
+            psSHP->adBoundsMin[3] = psSHP->adBoundsMax[3] = psObject->padfM[0];
+        }
     }
 
     for( i = 0; i < psObject->nVertices; i++ )
@@ -1740,6 +1758,9 @@ SHPRewindObject( SHPHandle hSHP, SHPObject * psObject )
     if( psObject->nSHPType != SHPT_POLYGON
         && psObject->nSHPType != SHPT_POLYGONZ
         && psObject->nSHPType != SHPT_POLYGONM )
+        return 0;
+
+    if( psObject->nVertices == 0 || psObject->nParts == 0 )
         return 0;
 
 /* -------------------------------------------------------------------- */
