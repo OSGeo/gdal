@@ -22,6 +22,7 @@
 //
 // Authors:
 //          James Gallagher <jgallagher@opendap.org>
+//          Frank Warmerdam <warmerdam@pobox.com>
 //
 // You can contact OPeNDAP, Inc. at PO Box 112, Saunderstown, RI. 02874-0112.
 
@@ -464,8 +465,10 @@ DODSDataset::get_geo_info(DAS &das, DDS &dds) throw(Error)
     value = at->get_attr("FlipX");
     if( value == "" || value == "no" || value == "NO" )
         d_bFlipX = FALSE;
-    else
+    else if( value == "yes" || value == "YES" )
         d_bFlipX = TRUE;
+    else
+        d_bFlipX = FALSE;
 	
     value = at->get_attr("FlipY");
     if( value == "" || value == "no" || value == "NO" )
@@ -1073,6 +1076,9 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
             poDS->d_dfURLat = 0.0;
             poDS->d_dfLLLon = 0.0;
             poDS->d_dfLLLat = poDS->nRasterYSize;
+            poDS->d_bFlipX = FALSE;
+            poDS->d_bFlipY = FALSE;
+            poDS->d_bNeedTranspose = FALSE;
         }
     }
 
@@ -1341,6 +1347,9 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 // $Log$
+// Revision 1.14  2004/10/13 18:12:16  fwarmerdam
+// initialize d_bFlipX to false
+//
 // Revision 1.13  2004/09/16 16:02:24  fwarmerdam
 // Another fix to spatial_ref code.
 //
