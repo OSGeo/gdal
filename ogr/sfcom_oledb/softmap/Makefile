@@ -16,6 +16,7 @@ EXTRAFLAGS =	-I$(SFOLEDB) \
 
 OLE_LIBS =	ole32.lib oleaut32.lib 
 OGR_LIBS =	$(OGR)\ogrsf_frmts\ogrsf_frmts.lib \
+		$(OGR)\ogrsf_frmts\ogrsf_frmts_sup.lib \
 		$(OGR)\ogroledb.lib $(OGR)\ogr.lib \
 		$(GDAL_ROOT)\port\cpl.lib
 
