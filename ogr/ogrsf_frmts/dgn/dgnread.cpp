@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/08/28 21:27:07  warmerda
+ * added prototype multi-byte character support
+ *
  * Revision 1.13  2001/08/21 03:01:39  warmerda
  * added raw_data support
  *
@@ -234,7 +237,7 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
 
           count = psDGN->abyElem[36] + psDGN->abyElem[37]*256;
           psLine = (DGNElemMultiPoint *) 
-             CPLCalloc(sizeof(DGNElemMultiPoint)+(count-2)*sizeof(DGNPoint),1);
+              CPLCalloc(sizeof(DGNElemMultiPoint)+(count-2)*sizeof(DGNPoint),1);
           psElement = (DGNElemCore *) psLine;
           psElement->stype = DGNST_MULTIPOINT;
           DGNParseCore( psDGN, psElement );
@@ -387,8 +390,32 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
           psText->origin.y = DGN_INT32( psDGN->abyElem + 54 );
           DGNTransformPoint( psDGN, &(psText->origin) );
 
-          memcpy( psText->string, psDGN->abyElem + 60, num_chars );
-          psText->string[num_chars] = '\0';
+          /* experimental multibyte support from Ason Kang (hiska@netian.com)*/
+          if (*(psDGN->abyElem + 60) == 0xFF 
+              && *(psDGN->abyElem + 61) == 0xFD) 
+          {
+              int n=0;
+              for (int i=0;i<num_chars/2-1;i++) {
+                  unsigned short w;
+                  memcpy(&w,psDGN->abyElem + 62 + i*2 ,2);
+                  w = CPL_LSBWORD16(w);
+                  if (w<256) { // if alpa-numeric code area : Normal character 
+                      *(psText->string + n)     = w & 0xFF; 
+                      n++; // skip 1 byte;
+                  }
+                  else { // if extend code area : 2 byte Korean character 
+                      *(psText->string + n)     = w >> 8;   // hi
+                      *(psText->string + n + 1) = w & 0xFF; // lo
+                      n+=2; // 2 byte
+                  }
+              }
+              psText->string[n] = '\0'; // terminate C string
+          }
+          else
+          {
+              memcpy( psText->string, psDGN->abyElem + 60, num_chars );
+              psText->string[num_chars] = '\0';
+          }
       }
       break;
 

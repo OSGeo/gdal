@@ -31,6 +31,12 @@ Windows.
 Release Notes
 =============
 
+Release 1.4
+-----------
+
+ o Added experimental multi byte text support from Ason Kang
+   (hiska@netian.com). 
+
 Release 1.3
 -----------
 
