@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/11/12 19:46:12  warmerda
+ * use default seed file if none given
+ *
  * Revision 1.6  2002/11/11 20:34:22  warmerda
  * added create support
  *
@@ -246,6 +249,15 @@ OGRLayer *OGRDGNDataSource::CreateLayer( const char *pszLayerName,
     pszSeed = CSLFetchNameValue( papszOptions, "SEED" );
     if( pszSeed )
         nCreationFlags |= DGNCF_USE_SEED_ORIGIN | DGNCF_USE_SEED_UNITS;
+    else
+        pszSeed = CPLFindFile( "gdal", "seed_2d.dgn" );
+
+    if( pszSeed == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "No seed file provided, and unable to find seed_2d.dgn." );
+        return NULL;
+    }
     
     if( CSLFetchBoolean( papszOptions, "COPY_WHOLE_SEED_FILE", TRUE ) )
         nCreationFlags |= DGNCF_COPY_WHOLE_SEED_FILE;
@@ -308,8 +320,6 @@ OGRLayer *OGRDGNDataSource::CreateLayer( const char *pszLayerName,
             return FALSE;
         }
     }
-    else
-        nUORPerSU = 10;
 
 /* -------------------------------------------------------------------- */
 /*      Try creating the base file.                                     */
