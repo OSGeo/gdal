@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/31 20:43:04  warmerda
+ * added empty method, implement createFromWkt(), added mline/mpoint
+ *
  * Revision 1.2  1999/05/31 14:59:06  warmerda
  * added documentation
  *
@@ -61,6 +64,16 @@ OGRGeometryCollection::OGRGeometryCollection()
 OGRGeometryCollection::~OGRGeometryCollection()
 
 {
+    empty();
+}
+
+/************************************************************************/
+/*                               empty()                                */
+/************************************************************************/
+
+void OGRGeometryCollection::empty()
+
+{
     if( papoGeoms != NULL )
     {
         for( int i = 0; i < nGeomCount; i++ )
@@ -69,7 +82,11 @@ OGRGeometryCollection::~OGRGeometryCollection()
         }
         OGRFree( papoGeoms );
     }
+
+    nGeomCount = 0;
+    papoGeoms = NULL;
 }
+
 
 /************************************************************************/
 /*                               clone()                                */
@@ -400,7 +417,7 @@ OGRErr	OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
 OGRErr OGRGeometryCollection::importFromWkt( char ** ppszInput )
 
 {
-#ifdef notdef    
+
     char	szToken[OGR_WKT_TOKEN_MAX];
     const char	*pszInput = *ppszInput;
     int		iGeom;
@@ -418,80 +435,52 @@ OGRErr OGRGeometryCollection::importFromWkt( char ** ppszInput )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Read and verify the ``POLYGON'' keyword token.                  */
+/*      Read and verify the type keyword, and ensure it matches the     */
+/*      actual type of this container.                                  */
 /* -------------------------------------------------------------------- */
     pszInput = OGRWktReadToken( pszInput, szToken );
 
-    if( !EQUAL(szToken,"POLYGON") )
+    if( !EQUAL(szToken,getGeometryName()) )
         return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
 /*      The next character should be a ( indicating the start of the    */
-/*      list of rings.                                                  */
+/*      list of objects.						*/
 /* -------------------------------------------------------------------- */
     pszInput = OGRWktReadToken( pszInput, szToken );
     if( szToken[0] != '(' )
         return OGRERR_CORRUPT_DATA;
 
 /* ==================================================================== */
-/*      Read each ring in turn.  Note that we try to reuse the same     */
-/*      point list buffer from ring to ring to cut down on              */
-/*      allocate/deallocate overhead.                                   */
+/*      Read each subgeometry in turn.                                  */
 /* ==================================================================== */
-    OGRRawPoint	*paoPoints = NULL;
-    int		nMaxPoints = 0, nMaxRings = 0;
-    
     do
     {
-        int	nPoints = 0;
+        OGRGeometry *poGeom = NULL;
+        OGRErr	    eErr;
+    
+        eErr = OGRGeometryFactory::createFromWkt( (char **) &pszInput,
+                                                  NULL, &poGeom );
+        if( eErr != OGRERR_NONE )
+            return eErr;
 
-/* -------------------------------------------------------------------- */
-/*      Read points for one ring from input.                            */
-/* -------------------------------------------------------------------- */
-        pszInput = OGRWktReadPoints( pszInput, &paoPoints, &nMaxPoints,
-                                     &nPoints );
-
-        if( pszInput == NULL )
-        {
-            CPLFree( paoPoints );
-            return OGRERR_CORRUPT_DATA;
-        }
-        
-/* -------------------------------------------------------------------- */
-/*      Do we need to grow the ring array?                              */
-/* -------------------------------------------------------------------- */
-        if( nRingCount == nMaxRings )
-        {
-            nMaxRings = nMaxRings * 2 + 1;
-            papoRings = (OGRLinearRing **)
-                CPLRealloc(papoRings, nMaxRings * sizeof(OGRLinearRing*));
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Create the new ring, and assign to ring list.                   */
-/* -------------------------------------------------------------------- */
-        papoRings[nRingCount] = new OGRLinearRing();
-        papoRings[nRingCount]->setPoints( nPoints, paoPoints );
-
-        nRingCount++;
+        addGeometry( poGeom );
 
 /* -------------------------------------------------------------------- */
 /*      Read the delimeter following the ring.                          */
 /* -------------------------------------------------------------------- */
         
         pszInput = OGRWktReadToken( pszInput, szToken );
+        
     } while( szToken[0] == ',' );
 
 /* -------------------------------------------------------------------- */
 /*      freak if we don't get a closing bracket.                        */
 /* -------------------------------------------------------------------- */
-    CPLFree( paoPoints );
-   
     if( szToken[0] != ')' )
         return OGRERR_CORRUPT_DATA;
     
     *ppszInput = (char *) pszInput;
-#endif
     
     return OGRERR_NONE;
 }
