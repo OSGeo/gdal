@@ -21,6 +21,7 @@ geotiff:
 	cd ..
 
 clean:
-	del *.obj libtiff\*.obj libgeotiff\*.obj
+	-del *.obj libtiff\*.obj libgeotiff\*.obj
 	
+
 
