@@ -1,5 +1,8 @@
 2001-08-22  Frank Warmerdam  <warmerdam@pobox.com>
 
+	* frmts/gif/gifdataset.cpp: added support for reading transparency
+	values.
+
 	* frmts/jpeg, frmts/png, frmts/gif: added support for .wld files. 
 
 	* frmts/ceos2/sar_ceosdataset.cpp: don't try to extract gcps
