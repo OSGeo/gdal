@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/03/18 17:37:44  warmerda
+ * add color table copying
+ *
  * Revision 1.2  2003/03/02 05:24:02  warmerda
  * added -srcnodata option
  *
@@ -360,6 +363,8 @@ int main( int argc, char ** argv )
     psWO->pfnTransformer = pfnTransformer;
     psWO->pTransformerArg = hTransformArg;
 
+    psWO->pfnProgress = GDALTermProgress;
+
 /* -------------------------------------------------------------------- */
 /*      Setup band mapping.                                             */
 /* -------------------------------------------------------------------- */
@@ -588,6 +593,15 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
 /* -------------------------------------------------------------------- */
     GDALSetProjection( hDstDS, pszTargetSRS );
     GDALSetGeoTransform( hDstDS, adfDstGeoTransform );
+
+/* -------------------------------------------------------------------- */
+/*      Copy the color table, if required.                              */
+/* -------------------------------------------------------------------- */
+    GDALColorTableH hCT;
+
+    hCT = GDALGetRasterColorTable( GDALGetRasterBand(hSrcDS,1) );
+    if( hCT != NULL )
+        GDALSetRasterColorTable( GDALGetRasterBand(hDstDS,1), hCT );
 
     return hDstDS;
 }
