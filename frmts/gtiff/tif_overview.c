@@ -3,7 +3,7 @@
  *
  * Project:  TIFF Overview Builder
  * Purpose:  Library function for building overviews in a TIFF file.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  * Notes:
  *  o Currently only images with bits_per_sample of a multiple of eight
@@ -69,7 +69,7 @@
 
 #include "cpl_port.h"
 
-CPL_CVSID("$Id: cpl_path.cpp,v 1.8 2001/07/18 04:00:49 warmerda Exp $");
+CPL_CVSID("tif_overview.c,v 1.2 2001/07/18 04:51:56 warmerda Exp");
 
 #ifndef FALSE
 #  define FALSE 0
@@ -395,14 +395,15 @@ void TIFF_ProcessFullResBlock( TIFF *hTIFF, int nPlanarConfig,
             {
                 TIFFReadEncodedTile( hTIFF,
                                      TIFFComputeTile(hTIFF, nSXOff, nSYOff,
-                                                     0, iSample ),
+                                                     0, (tsample_t)iSample ),
                                      pabySrcTile,
                                      TIFFTileSize(hTIFF));
             }
             else
             {
                 TIFFReadEncodedStrip( hTIFF,
-                                      TIFFComputeStrip(hTIFF, nSYOff, iSample),
+                                      TIFFComputeStrip(hTIFF, nSYOff,
+                                                       (tsample_t) iSample),
                                       pabySrcTile,
                                       TIFFStripSize(hTIFF) );
             }

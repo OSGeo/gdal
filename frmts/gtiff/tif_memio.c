@@ -36,6 +36,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/07/08 15:49:24  warmerda
+ * avoid warnings
+ *
  * Revision 1.2  2003/05/12 13:26:43  warmerda
  * Added string.h.
  *
@@ -104,16 +107,16 @@ toff_t MemIO_SeekProc( thandle_t fd, toff_t off, int whence )
     else if( whence == SEEK_END )
         new_off = miobuf->size + off;
     else
-        return -1;
+        return (toff_t) -1;
 
     if( new_off < 0 )
-        return -1;
+        return (toff_t) -1;
 
-    if( new_off > miobuf->size )
+    if( new_off > (toff_t) miobuf->size )
     {
         MemIO_ExtendFile( miobuf, new_off );
-        if( new_off > miobuf->size )
-            return -1;
+        if( new_off > (toff_t) miobuf->size )
+            return (toff_t) -1;
     }
     
     miobuf->offset = new_off;
@@ -131,7 +134,7 @@ tsize_t MemIO_ReadProc( thandle_t fd, tdata_t buf, tsize_t size )
     MemIOBuf *miobuf = (MemIOBuf *) fd;
     int      result = 0;
 
-    if( miobuf->offset + size > miobuf->size )
+    if( miobuf->offset + size > (toff_t) miobuf->size )
         result = miobuf->size - miobuf->offset;
     else
         result = size;
@@ -152,10 +155,10 @@ tsize_t MemIO_WriteProc( thandle_t fd, tdata_t buf, tsize_t size )
     MemIOBuf *miobuf = (MemIOBuf *) fd;
     int      result = 0;
 
-    if( miobuf->offset + size > miobuf->size )
+    if( miobuf->offset + size > (toff_t) miobuf->size )
         MemIO_ExtendFile( miobuf, miobuf->offset + size );
 
-    if( miobuf->offset + size > miobuf->size )
+    if( miobuf->offset + size > (toff_t) miobuf->size )
         result = miobuf->size - miobuf->offset;
     else
         result = size;
