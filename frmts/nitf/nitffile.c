@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/05/05 17:57:54  warmerda
+ * added blocked writing support
+ *
  * Revision 1.7  2002/12/18 20:16:20  warmerda
  * allow lots of fields to be overridden with passed in options
  *
@@ -240,7 +243,8 @@ NITFFile *NITFCreate( const char *pszFilename,
     FILE	*fp;
     char        *pachIMHDR;
     char        achHeader[5000];
-    int         nOffset = 0, iBand, nImageSize, nIHSize;
+    int         nOffset = 0, iBand, nImageSize, nIHSize, nNPPBH, nNPPBV;
+    int         nNBPR, nNBPC;
     const char *pszIREP;
 
 /* -------------------------------------------------------------------- */
@@ -264,9 +268,34 @@ NITFFile *NITFCreate( const char *pszFilename,
         pszIREP = "MONO";
 
 /* -------------------------------------------------------------------- */
-/*      Compute raw image size.                                         */
+/*      Compute raw image size, blocking factors and so forth.          */
 /* -------------------------------------------------------------------- */
-    nImageSize = ((nBitsPerSample)/8) * nPixels * nLines * nBands;
+    nNPPBH = nPixels;
+    nNPPBV = nLines;
+
+    if( CSLFetchNameValue( papszOptions, "BLOCKSIZE" ) != NULL )
+        nNPPBH = nNPPBV = atoi(CSLFetchNameValue( papszOptions, "BLOCKSIZE" ));
+
+    if( CSLFetchNameValue( papszOptions, "BLOCKXSIZE" ) != NULL )
+        nNPPBH = atoi(CSLFetchNameValue( papszOptions, "BLOCKXSIZE" ));
+
+    if( CSLFetchNameValue( papszOptions, "BLOCKYSIZE" ) != NULL )
+        nNPPBV = atoi(CSLFetchNameValue( papszOptions, "BLOCKYSIZE" ));
+    
+    if( CSLFetchNameValue( papszOptions, "NPPBH" ) != NULL )
+        nNPPBH = atoi(CSLFetchNameValue( papszOptions, "NPPBH" ));
+    
+    if( CSLFetchNameValue( papszOptions, "NPPBV" ) != NULL )
+        nNPPBV = atoi(CSLFetchNameValue( papszOptions, "NPPBV" ));
+    
+    if( nNPPBH > 9999 || nNPPBV > 9999  )
+        nNPPBH = nNPPBV = 256;
+
+    nNBPR = (nPixels + nNPPBH - 1) / nNPPBH;
+    nNBPC = (nLines + nNPPBV - 1) / nNPPBV;
+
+    nImageSize = 
+        ((nBitsPerSample)/8) * nNBPR * nNBPC * nNPPBH * nNPPBV * nBands;
 
 /* -------------------------------------------------------------------- */
 /*      Prepare the file header.                                        */
@@ -426,10 +455,10 @@ NITFFile *NITFCreate( const char *pszFilename,
 /* -------------------------------------------------------------------- */
     PLACE(pachIMHDR+nOffset+  0, ISYNC , "0"                            );
     PLACE(pachIMHDR+nOffset+  1, IMODE , "B"                            );
-    PLACE(pachIMHDR+nOffset+  2, NBPR  , "0001"                         );
-    PLACE(pachIMHDR+nOffset+  6, NBPC  , "0001"                         );
-    PLACE(pachIMHDR+nOffset+ 10, NPPBH , CPLSPrintf("%04d",nPixels)     );
-    PLACE(pachIMHDR+nOffset+ 14, NPPBV , CPLSPrintf("%04d",nLines)      );
+    PLACE(pachIMHDR+nOffset+  2, NBPR  , CPLSPrintf("%04d",nNBPR)       );
+    PLACE(pachIMHDR+nOffset+  6, NBPC  , CPLSPrintf("%04d",nNBPC)       );
+    PLACE(pachIMHDR+nOffset+ 10, NPPBH , CPLSPrintf("%04d",nNPPBH)      );
+    PLACE(pachIMHDR+nOffset+ 14, NPPBV , CPLSPrintf("%04d",nNPPBV)      );
     PLACE(pachIMHDR+nOffset+ 18, NBPP  , CPLSPrintf("%02d",nBitsPerSample) );
     PLACE(pachIMHDR+nOffset+ 22, IDLVL , "001"                          );
     PLACE(pachIMHDR+nOffset+ 25, IALVL , "000"                          );

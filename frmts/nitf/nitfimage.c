@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/05/05 17:57:54  warmerda
+ * added blocked writing support
+ *
  * Revision 1.12  2003/04/09 07:10:47  warmerda
  * Added byte swapping for non-eight bit data on little endian platforms.
  * Multi-byte NITF image data is always bigendian.
@@ -738,8 +741,61 @@ int NITFWriteImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
                          int nBand, void *pData )
 
 {
-    CPLError( CE_Failure, CPLE_AppDefined,
-              "NITFWriteImageBlock() not implemented at this time." );
+    int   nWrkBufSize;
+    int   iBaseBlock = nBlockX + nBlockY * psImage->nBlocksPerRow;
+    int   iFullBlock = iBaseBlock 
+        + (nBand-1) * psImage->nBlocksPerRow * psImage->nBlocksPerColumn;
+
+    if( nBand == 0 )
+        return BLKREAD_FAIL;
+
+    nWrkBufSize = psImage->nLineOffset * (psImage->nBlockHeight-1)
+        + psImage->nPixelOffset * (psImage->nBlockWidth-1)
+        + psImage->nWordSize;
+
+/* -------------------------------------------------------------------- */
+/*      Can we do a direct read into our buffer?                        */
+/* -------------------------------------------------------------------- */
+    if( psImage->nWordSize == psImage->nPixelOffset
+        && psImage->nWordSize * psImage->nBlockWidth == psImage->nLineOffset 
+        && psImage->szIC[0] != 'C' && psImage->szIC[0] != 'M' )
+    {
+#ifdef CPL_LSB
+        NITFSwapWords( pData, psImage->nWordSize, 
+                       psImage->nBlockWidth * psImage->nBlockHeight, 
+                       psImage->nWordSize );
+#endif
+
+        if( VSIFSeek( psImage->psFile->fp, psImage->panBlockStart[iFullBlock], 
+                      SEEK_SET ) != 0 
+            || VSIFWrite( pData, 1, nWrkBufSize,
+                          psImage->psFile->fp ) != nWrkBufSize )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                      "Unable to write %d byte block from %d.", 
+                      nWrkBufSize, psImage->panBlockStart[iFullBlock] );
+            return BLKREAD_FAIL;
+        }
+        else
+        {
+#ifdef CPL_LSB
+            /* restore byte order to original */
+            NITFSwapWords( pData, psImage->nWordSize, 
+                           psImage->nBlockWidth * psImage->nBlockHeight, 
+                           psImage->nWordSize );
+#endif
+
+            return BLKREAD_OK;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Other forms not supported at this time.                         */
+/* -------------------------------------------------------------------- */
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "Mapped, interleaved and compressed NITF forms not supported\n"
+              "for writing at this time." );
+
     return BLKREAD_FAIL;
 }
 
