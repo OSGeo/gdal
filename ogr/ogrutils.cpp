@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/01/06 17:57:18  warmerda
+ * Added some extra validation in OGRMakeWktCoordinate()
+ *
  * Revision 1.10  2002/12/09 18:55:07  warmerda
  * moved DMS stuff to gdal/port
  *
@@ -99,6 +102,15 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z )
         else
             sprintf( pszTarget, "%.3f %.3f %.3f", x, y, z );
     }
+
+#ifdef DEBUG
+    if( strlen(pszTarget) > 48 )
+    {
+        CPLDebug( "OGR", 
+                  "Yow!  Got this big result in OGRMakeWktCoordinate()\n%s", 
+                  pszTarget );
+    }
+#endif
 }
 
 /************************************************************************/
