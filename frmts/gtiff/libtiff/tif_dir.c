@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.41 2004/10/09 18:33:56 dron Exp $ */
+/* $Id: tif_dir.c,v 1.43 2004/12/03 13:16:55 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -997,37 +997,35 @@ _TIFFVGetField(TIFF* tif, ttag_t tag, va_list ap)
             ** Do we have a custom value?
             */
             ret_val = 0;
-            for( i = 0; i < td->td_customValueCount; i++ )
+            for (i = 0; i < td->td_customValueCount; i++)
             {
-                TIFFTagValue *tv = td->td_customValues + i;
+		TIFFTagValue *tv = td->td_customValues + i;
 
-                if( tv->info->field_tag != tag )
-                    continue;
+		if (tv->info->field_tag != tag)
+			continue;
                 
-                if( fip->field_passcount )
-                {
-                    *va_arg(ap, unsigned short *) = (unsigned short) tv->count;
-                    *va_arg(ap, void **) = tv->value;
-                    ret_val = 1;
-                    break;
-                }
-                else if( fip->field_type == TIFF_ASCII )
-                {
-                    *va_arg(ap, void **) = tv->value;
-                    ret_val = 1;
-                    break;
-                }
-                else
-                {
-                    TIFFError("_TIFFVGetField",
-			      "%s: Pass by value is not implemented.",
-			      tif->tif_name);
-                    break;
+		if (fip->field_passcount) {
+			if (fip->field_readcount == TIFF_VARIABLE2) 
+				*va_arg(ap, uint32*) = (uint32)tv->count;
+			else	/* Assume TIFF_VARIABLE */
+				*va_arg(ap, uint16*) = (uint16)tv->count;
+			*va_arg(ap, void **) = tv->value;
+			ret_val = 1;
+			break;
+                } else if (fip->field_type == TIFF_ASCII) {
+			*va_arg(ap, void **) = tv->value;
+			ret_val = 1;
+			break;
+                } else {
+			TIFFError("_TIFFVGetField",
+				  "%s: Pass by value is not implemented.",
+				  tif->tif_name);
+			break;
                 }
             }
         }
     }
-    return( ret_val );
+    return(ret_val);
 }
 
 /*
@@ -1433,6 +1431,8 @@ TIFFUnlinkDirectory(TIFF* tif, tdir_t dirn)
  * Set a table of tags that are to be replaced during directory process by the
  * 'IGNORE' state - or return TRUE/FALSE for the requested tag such that
  * 'ReadDirectory' can use the stored information.
+ *
+ * FIXME: this is never used properly. Should be removed in the future.
  */
 int
 TIFFReassignTagToIgnore (enum TIFFIgnoreSense task, int TIFFtagID)

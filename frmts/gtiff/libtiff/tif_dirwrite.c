@@ -1,4 +1,4 @@
-/* $Id: tif_dirwrite.c,v 1.26 2004/10/30 17:07:01 dron Exp $ */
+/* $Id: tif_dirwrite.c,v 1.27 2004/12/10 14:33:01 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -306,7 +306,14 @@ _TIFFWriteDirectory(TIFF* tif, int done)
 				goto bad;
 			break;
 		case FIELD_SUBIFD:
-			if (!TIFFWriteNormalTag(tif, dir, fip))
+			/*
+			 * XXX: Always write this field using LONG type
+			 * for backward compatibility.
+			 */
+			dir->tdir_tag = (uint16) fip->field_tag;
+			dir->tdir_type = (uint16) TIFF_LONG;
+			dir->tdir_count = (uint32) td->td_nsubifd;
+			if (!TIFFWriteLongArray(tif, dir, td->td_subifd))
 				goto bad;
 			/*
 			 * Total hack: if this directory includes a SubIFD

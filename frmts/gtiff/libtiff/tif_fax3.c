@@ -1,4 +1,4 @@
-/* $Id: tif_fax3.c,v 1.28 2004/10/29 11:46:06 dron Exp $ */
+/* $Id: tif_fax3.c,v 1.29 2004/12/19 18:15:51 dron Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -442,7 +442,7 @@ CheckMalloc(TIFF* tif, size_t nmemb, size_t elem_size, const char* what)
 	char	*cp = NULL;
 	tsize_t	bytes = nmemb * elem_size;
 
-	if (elem_size && bytes / elem_size == nmemb)
+	if (nmemb && elem_size && bytes / elem_size == nmemb)
 		cp = (char*) _TIFFmalloc(bytes);
 
 	if (cp == NULL)
