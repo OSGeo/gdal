@@ -8,6 +8,28 @@
 <h1>Various Support GDAL Raster Formats</h1>
 
 
+<h2><a name="AAIGrid">AAIGrid -- Arc/Info ASCII Grid</a></h2>
+
+Supported for read access, including reading of an affine georeferencing 
+transform and some projections.  
+This format is the ASCII interchange format for Arc/Info Grid, 
+and takes the form of an ASCII file, plus sometimes an associated .prj file.
+It is normally produced with the Arc/Info ASCIIGRID command.<p>
+
+The projections support (read if a *.prj file is available) is quite
+limited.  Additional sample .prj files may be sent to the maintainer,
+<a href="mailto:warmerda@home.com">warmerdam@pobox.com</a>.<p>
+
+The NODATA value for the grid read is also preserved when available.
+Grids are treated as signed 16bit integer unless the first scanline contains
+decimal values in which case the image is treated as 32bit floating point.
+<p>
+
+The <a href="#AIG">AIG</a> <a href="#GIO">GIO</a> drivers are also available
+for Arc/Info Binary Grid format.<p>
+
+NOTE: Implemented as <tt>gdal/frmts/aaigrid/aaigriddataset.cpp</tt>.<p>
+
 <h2><a name="AIG">AIG -- Arc/Info Binary Grid</a></h2>
 
 Supported for read access, including reading of an affine georeferencing 
