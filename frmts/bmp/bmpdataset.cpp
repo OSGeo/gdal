@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2004/01/06 10:56:54  dron
+ * Few optimizations in IReadBlock().
+ *
  * Revision 1.27  2003/11/07 13:12:38  dron
  * Handle 32-bit BMPs properly.
  *
@@ -373,7 +376,7 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     BMPDataset  *poGDS = (BMPDataset *) poDS;
     GUInt32     iScanOffset;
-    int         i, j;
+    int         i;
 
     if ( poGDS->sInfoHeader.iHeight > 0 )
         iScanOffset = poGDS->sFileHeader.iOffBits +
@@ -417,15 +420,17 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if ( poGDS->sInfoHeader.iBitCount == 24 ||
          poGDS->sInfoHeader.iBitCount == 32 )
     {
-        for ( i = 0, j = 0; i < nBlockXSize; i++ )
+        GByte *pabyTemp = pabyScan + 3 - nBand;
+
+        for ( i = 0; i < nBlockXSize; i++ )
         {
             // Colour triplets in BMP file organized in reverse order:
             // blue, green, red. When we have 32-bit BMP the forth byte
             // in quadriplet should be discarded as it has no meaning.
             // That is why we always use 3 byte count in the following
-            // pabyScan index.
-            ((GByte *) pImage)[i] = pabyScan[j + 3 - nBand];
-            j += iBytesPerPixel;
+            // pabyTemp index.
+            ((GByte *) pImage)[i] = *pabyTemp;
+            pabyTemp += iBytesPerPixel;
         }
     }
     else if ( poGDS->sInfoHeader.iBitCount == 8 )
@@ -434,7 +439,7 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     else if ( poGDS->sInfoHeader.iBitCount == 16 )
     {
-        for ( i = 0, j = 0; i < nBlockXSize; i++ )
+        for ( i = 0; i < nBlockXSize; i++ )
         {
             switch ( nBand )
             {
@@ -455,44 +460,48 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     else if ( poGDS->sInfoHeader.iBitCount == 4 )
     {
-        for ( i = 0, j = 0; i < nBlockXSize; i++ )
+        GByte *pabyTemp = pabyScan;
+
+        for ( i = 0; i < nBlockXSize; i++ )
         {
             // Most significant part of the byte represents leftmost pixel
             if ( i & 0x01 )
-                ((GByte *) pImage)[i] = pabyScan[j++] & 0x0F;
+                ((GByte *) pImage)[i] = *pabyTemp++ & 0x0F;
             else
-                ((GByte *) pImage)[i] = (pabyScan[j] & 0xF0) >> 4;
+                ((GByte *) pImage)[i] = (*pabyTemp & 0xF0) >> 4;
         }
     }
     else if ( poGDS->sInfoHeader.iBitCount == 1 )
     {
-        for ( i = 0, j = 0; i < nBlockXSize; i++ )
+        GByte *pabyTemp = pabyScan;
+
+        for ( i = 0; i < nBlockXSize; i++ )
         {
             switch ( i & 0x7 )
             {
                 case 0:
-                ((GByte *) pImage)[i] = (pabyScan[j] & 0x80) >> 7;
+                ((GByte *) pImage)[i] = (*pabyTemp & 0x80) >> 7;
                 break;
                 case 1:
-                ((GByte *) pImage)[i] = (pabyScan[j] & 0x40) >> 6;
+                ((GByte *) pImage)[i] = (*pabyTemp & 0x40) >> 6;
                 break;
                 case 2:
-                ((GByte *) pImage)[i] = (pabyScan[j] & 0x20) >> 5;
+                ((GByte *) pImage)[i] = (*pabyTemp & 0x20) >> 5;
                 break;
                 case 3:
-                ((GByte *) pImage)[i] = (pabyScan[j] & 0x10) >> 4;
+                ((GByte *) pImage)[i] = (*pabyTemp & 0x10) >> 4;
                 break;
                 case 4:
-                ((GByte *) pImage)[i] = (pabyScan[j] & 0x08) >> 3;
+                ((GByte *) pImage)[i] = (*pabyTemp & 0x08) >> 3;
                 break;
                 case 5:
-                ((GByte *) pImage)[i] = (pabyScan[j] & 0x04) >> 2;
+                ((GByte *) pImage)[i] = (*pabyTemp & 0x04) >> 2;
                 break;
                 case 6:
-                ((GByte *) pImage)[i] = (pabyScan[j] & 0x02) >> 1;
+                ((GByte *) pImage)[i] = (*pabyTemp & 0x02) >> 1;
                 break;
                 case 7:
-                ((GByte *) pImage)[i] = pabyScan[j++] & 0x01;
+                ((GByte *) pImage)[i] = *pabyTemp++ & 0x01;
                 break;
                 default:
                 break;
