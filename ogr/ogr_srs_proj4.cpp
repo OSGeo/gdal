@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2005/04/06 00:02:05  fwarmerdam
+ * various osr and oct functions now stdcall
+ *
  * Revision 1.53  2005/02/28 15:01:56  fwarmerdam
  * Applied patch to add +towgs84 parameter if one is well known for a given
  * EPSG GEOGCS, and no datum shifting info is available in the source defn.
@@ -1018,7 +1021,8 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /*                          OSRExportToProj4()                          */
 /************************************************************************/
 
-OGRErr OSRExportToProj4( OGRSpatialReferenceH hSRS, char ** ppszReturn )
+OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS, 
+                                     char ** ppszReturn )
 
 {
     *ppszReturn = NULL;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.93  2005/04/06 00:02:05  fwarmerdam
+ * various osr and oct functions now stdcall
+ *
  * Revision 1.92  2005/03/03 04:55:42  fwarmerdam
  * make exportToWkt() const
  *
@@ -249,7 +252,7 @@ OGRSpatialReference::OGRSpatialReference( const char * pszWKT )
 /*                       OSRNewSpatialReference()                       */
 /************************************************************************/
 
-OGRSpatialReferenceH OSRNewSpatialReference( const char *pszWKT )
+OGRSpatialReferenceH CPL_STDCALL OSRNewSpatialReference( const char *pszWKT )
 
 {
     OGRSpatialReference * poSRS;
@@ -307,7 +310,7 @@ OGRSpatialReference::~OGRSpatialReference()
 /*                     OSRDestroySpatialReference()                     */
 /************************************************************************/
 
-void OSRDestroySpatialReference( OGRSpatialReferenceH hSRS )
+void CPL_STDCALL OSRDestroySpatialReference( OGRSpatialReferenceH hSRS )
 
 {
     delete ((OGRSpatialReference *) hSRS);
@@ -542,7 +545,7 @@ const char *OGRSpatialReference::GetAttrValue( const char * pszNodeName,
 /*                          OSRGetAttrValue()                           */
 /************************************************************************/
 
-const char *OSRGetAttrValue( OGRSpatialReferenceH hSRS,
+const char * CPL_STDCALL OSRGetAttrValue( OGRSpatialReferenceH hSRS,
                              const char * pszKey, int iChild )
 
 {
@@ -578,7 +581,7 @@ OGRSpatialReference *OGRSpatialReference::Clone() const
 /*                              OSRClone()                              */
 /************************************************************************/
 
-OGRSpatialReferenceH OSRClone( OGRSpatialReferenceH hSRS )
+OGRSpatialReferenceH CPL_STDCALL OSRClone( OGRSpatialReferenceH hSRS )
 
 {
     return (OGRSpatialReferenceH) ((OGRSpatialReference *) hSRS)->Clone();
@@ -620,7 +623,7 @@ OGRErr OGRSpatialReference::exportToPrettyWkt( char ** ppszResult,
 /*                        OSRExportToPrettyWkt()                        */
 /************************************************************************/
 
-OGRErr OSRExportToPrettyWkt( OGRSpatialReferenceH hSRS, char ** ppszReturn,
+OGRErr CPL_STDCALL OSRExportToPrettyWkt( OGRSpatialReferenceH hSRS, char ** ppszReturn,
                              int bSimplify)
 
 {
@@ -666,7 +669,7 @@ OGRErr  OGRSpatialReference::exportToWkt( char ** ppszResult ) const
 /*                           OSRExportToWkt()                           */
 /************************************************************************/
 
-OGRErr OSRExportToWkt( OGRSpatialReferenceH hSRS, char ** ppszReturn )
+OGRErr CPL_STDCALL OSRExportToWkt( OGRSpatialReferenceH hSRS, char ** ppszReturn )
 
 {
     *ppszReturn = NULL;
@@ -800,7 +803,7 @@ OGRErr OGRSpatialReference::SetNode( const char * pszNodePath,
 /*                          OSRSetAttrValue()                           */
 /************************************************************************/
 
-OGRErr OSRSetAttrValue( OGRSpatialReferenceH hSRS, 
+OGRErr CPL_STDCALL OSRSetAttrValue( OGRSpatialReferenceH hSRS, 
                         const char * pszPath, const char * pszValue )
 
 {
@@ -1708,7 +1711,8 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 /*                        OSRSetFromUserInput()                         */
 /************************************************************************/
 
-OGRErr OSRSetFromUserInput( OGRSpatialReferenceH hSRS, const char *pszDef )
+OGRErr CPL_STDCALL OSRSetFromUserInput( OGRSpatialReferenceH hSRS, 
+                                        const char *pszDef )
 
 {
     return ((OGRSpatialReference *) hSRS)->SetFromUserInput( pszDef );
@@ -4237,7 +4241,7 @@ OGRSpatialReference *OGRSpatialReference::CloneGeogCS() const
 /*                           OSRCloneGeogCS()                           */
 /************************************************************************/
 
-OGRSpatialReferenceH OSRCloneGeogCS( OGRSpatialReferenceH hSource )
+OGRSpatialReferenceH CPL_STDCALL OSRCloneGeogCS( OGRSpatialReferenceH hSource )
 
 {
     return (OGRSpatialReferenceH) 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2005/04/06 00:02:05  fwarmerdam
+ * various osr and oct functions now stdcall
+ *
  * Revision 1.38  2004/09/10 21:02:41  fwarmerdam
  * added note about 9814
  *
@@ -1524,7 +1527,7 @@ OGRErr OGRSpatialReference::importFromEPSG( int nCode )
 /*                         OSRImportFromEPSG()                          */
 /************************************************************************/
 
-OGRErr OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nCode )
+OGRErr CPL_STDCALL OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nCode )
 
 {
     return ((OGRSpatialReference *) hSRS)->importFromEPSG( nCode );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2005/04/06 00:02:05  fwarmerdam
+ * various osr and oct functions now stdcall
+ *
  * Revision 1.50  2005/02/17 16:34:17  fwarmerdam
  * OSRCloneCS() should be OSRClone().
  *
@@ -369,11 +372,11 @@ typedef void *OGRCoordinateTransformationH;
 #endif
 
 
-OGRSpatialReferenceH CPL_DLL
+OGRSpatialReferenceH CPL_DLL CPL_STDCALL
       OSRNewSpatialReference( const char * /* = NULL */);
-OGRSpatialReferenceH CPL_DLL OSRCloneGeogCS( OGRSpatialReferenceH );
-OGRSpatialReferenceH CPL_DLL OSRClone( OGRSpatialReferenceH );
-void CPL_DLL OSRDestroySpatialReference( OGRSpatialReferenceH );
+OGRSpatialReferenceH CPL_DLL CPL_STDCALL OSRCloneGeogCS( OGRSpatialReferenceH );
+OGRSpatialReferenceH CPL_DLL CPL_STDCALL OSRClone( OGRSpatialReferenceH );
+void CPL_DLL CPL_STDCALL OSRDestroySpatialReference( OGRSpatialReferenceH );
 
 int CPL_DLL OSRReference( OGRSpatialReferenceH );
 int CPL_DLL OSRDereference( OGRSpatialReferenceH );
@@ -383,7 +386,7 @@ OGRErr CPL_DLL OSRFixupOrdering( OGRSpatialReferenceH );
 OGRErr CPL_DLL OSRFixup( OGRSpatialReferenceH );
 OGRErr CPL_DLL OSRStripCTParms( OGRSpatialReferenceH );
 
-OGRErr CPL_DLL OSRImportFromEPSG( OGRSpatialReferenceH, int );
+OGRErr CPL_DLL CPL_STDCALL OSRImportFromEPSG( OGRSpatialReferenceH, int );
 OGRErr CPL_DLL OSRImportFromWkt( OGRSpatialReferenceH, char ** );
 OGRErr CPL_DLL OSRImportFromProj4( OGRSpatialReferenceH, const char *);
 OGRErr CPL_DLL OSRImportFromESRI( OGRSpatialReferenceH, char **);
@@ -394,9 +397,9 @@ OGRErr CPL_DLL OSRImportFromUSGS( OGRSpatialReferenceH,
 OGRErr CPL_DLL OSRImportFromXML( OGRSpatialReferenceH, const char * );
 OGRErr CPL_DLL OSRImportFromDict( OGRSpatialReferenceH, const char *, 
                                   const char * );
-OGRErr CPL_DLL OSRExportToWkt( OGRSpatialReferenceH, char ** );
-OGRErr CPL_DLL OSRExportToPrettyWkt( OGRSpatialReferenceH, char **, int);
-OGRErr CPL_DLL OSRExportToProj4( OGRSpatialReferenceH, char **);
+OGRErr CPL_DLL CPL_STDCALL OSRExportToWkt( OGRSpatialReferenceH, char ** );
+OGRErr CPL_DLL CPL_STDCALL OSRExportToPrettyWkt( OGRSpatialReferenceH, char **, int);
+OGRErr CPL_DLL CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH, char **);
 OGRErr CPL_DLL OSRExportToPCI( OGRSpatialReferenceH, char **, char **,
                                double ** );
 OGRErr CPL_DLL OSRExportToUSGS( OGRSpatialReferenceH, long *, long *,
@@ -406,10 +409,10 @@ OGRErr CPL_DLL OSRExportToXML( OGRSpatialReferenceH, char **, const char * );
 OGRErr CPL_DLL OSRMorphToESRI( OGRSpatialReferenceH );
 OGRErr CPL_DLL OSRMorphFromESRI( OGRSpatialReferenceH );
 
-OGRErr CPL_DLL OSRSetAttrValue( OGRSpatialReferenceH hSRS,
+OGRErr CPL_DLL CPL_STDCALL OSRSetAttrValue( OGRSpatialReferenceH hSRS,
                                 const char * pszNodePath,
                                 const char * pszNewNodeValue );
-const char CPL_DLL * OSRGetAttrValue( OGRSpatialReferenceH hSRS,
+const char CPL_DLL * CPL_STDCALL OSRGetAttrValue( OGRSpatialReferenceH hSRS,
                            const char * pszName, int iChild /* = 0 */ );
 
 OGRErr CPL_DLL OSRSetAngularUnits( OGRSpatialReferenceH, const char *, double );
@@ -429,7 +432,7 @@ OGRErr CPL_DLL OSRSetLocalCS( OGRSpatialReferenceH hSRS, const char *pszName );
 OGRErr CPL_DLL OSRSetProjCS( OGRSpatialReferenceH hSRS, const char * pszName );
 OGRErr CPL_DLL OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS,
                                       const char * pszName );
-OGRErr CPL_DLL OSRSetFromUserInput( OGRSpatialReferenceH hSRS, 
+OGRErr CPL_DLL CPL_STDCALL OSRSetFromUserInput( OGRSpatialReferenceH hSRS, 
                                     const char * );
 OGRErr CPL_DLL OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS, 
                                   OGRSpatialReferenceH hSrcSRS );
@@ -663,17 +666,20 @@ void CPL_DLL OSRCleanup( void );
 /* -------------------------------------------------------------------- */
 /*      OGRCoordinateTransform C API.                                   */
 /* -------------------------------------------------------------------- */
-OGRCoordinateTransformationH CPL_DLL
+OGRCoordinateTransformationH CPL_DLL CPL_STDCALL
 OCTNewCoordinateTransformation( OGRSpatialReferenceH hSourceSRS,
                                 OGRSpatialReferenceH hTargetSRS );
-void CPL_DLL
+void CPL_DLL CPL_STDCALL 
       OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH );
 
-int CPL_DLL OCTTransform( OGRCoordinateTransformationH hCT,
-                  int nCount, double *x, double *y, double *z );
-int CPL_DLL OCTTransformEx( OGRCoordinateTransformationH hCT,
-                            int nCount, double *x, double *y, double *z,
-                            int *pabSuccess );
+int CPL_DLL CPL_STDCALL
+OCTTransform( OGRCoordinateTransformationH hCT,
+              int nCount, double *x, double *y, double *z );
+
+int CPL_DLL CPL_STDCALL
+OCTTransformEx( OGRCoordinateTransformationH hCT,
+                int nCount, double *x, double *y, double *z,
+                int *pabSuccess );
 
 /* this is really private to OGR. */
 char *OCTProj4Normalize( const char *pszProj4Src );
