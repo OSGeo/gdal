@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/04/16 17:55:33  warmerda
+ * Initialize variables.
+ *
  * Revision 1.5  2001/08/30 21:06:55  warmerda
  * expand tabs
  *
@@ -173,7 +176,7 @@ int DDFRecordIndex::RemoveRecord( int nKey )
 /*      Do a binary search based on the key to find the desired record. */
 /* -------------------------------------------------------------------- */
     int         nMinIndex = 0, nMaxIndex = nRecordCount-1;
-    int         nTestIndex;
+    int         nTestIndex = 0;
 
     while( nMinIndex <= nMaxIndex )
     {
