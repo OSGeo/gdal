@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/11/18 18:58:16  warmerda
+ * make permissive of missing geometry so that update files work
+ *
  * Revision 1.4  1999/11/16 21:47:32  warmerda
  * updated class occurance collection
  *
@@ -103,7 +106,7 @@ int S57Reader::Open( int bTestOpen )
         return FALSE;
     }
 
-    // not that the following won't work for catalogs.
+    // note that the following won't work for catalogs.
     if( poModule->FindFieldDefn("DSID") == NULL )
     {
         if( !bTestOpen )
@@ -225,6 +228,11 @@ void S57Reader::Ingest()
             oFE_Index.AddRecord( nRCID, poRecord->Clone() );
         }
 
+        else if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"DSID") )
+        {
+            // currently not used, but we don't want to generate a message.
+        }
+
         else
         {
             CPLDebug( "S57",
@@ -336,7 +344,6 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
     if( nPRIM == PRIM_P )
     {
         AssemblePointGeometry( poRecord, poFeature );
-        CPLAssert( poFeature->GetGeometryRef() != NULL );
     }
     else if( nPRIM == PRIM_L )
     {
@@ -435,7 +442,9 @@ void S57Reader::AssemblePointGeometry( DDFRecord * poFRecord,
 /*      Feature the spatial record containing the point.                */
 /* -------------------------------------------------------------------- */
     poFSPT = poFRecord->FindField( "FSPT" );
-    CPLAssert( poFSPT != NULL );
+    if( poFSPT == NULL )
+        return;
+
     CPLAssert( poFSPT->GetRepeatCount() == 1 );
         
     nRCID = ParseName( poFSPT, 0, &nRCNM );
@@ -467,7 +476,8 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
 /*      Find the FSPT field.                                            */
 /* -------------------------------------------------------------------- */
     poFSPT = poFRecord->FindField( "FSPT" );
-    CPLAssert( poFSPT != NULL );
+    if( poFSPT == NULL )
+        return;
 
     nEdgeCount = poFSPT->GetRepeatCount();
 
@@ -603,7 +613,8 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 /*      Find the FSPT field.                                            */
 /* -------------------------------------------------------------------- */
     poFSPT = poFRecord->FindField( "FSPT" );
-    CPLAssert( poFSPT != NULL );
+    if( poFSPT == NULL )
+        return;
 
     nEdgeCount = poFSPT->GetRepeatCount();
 
@@ -706,8 +717,11 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 /*      Build lines into a polygon.                                     */
 /* -------------------------------------------------------------------- */
     OGRPolygon	*poPolygon;
+    OGRErr	eErr;
 
-    poPolygon = OGRBuildPolygonFromEdges( poLines, TRUE );
+    poPolygon = OGRBuildPolygonFromEdges( poLines, TRUE, &eErr );
+    if( eErr != OGRERR_NONE )
+        CPLDebug( "S57", "Polygon assembly failed" );
 
     delete poLines;
 
