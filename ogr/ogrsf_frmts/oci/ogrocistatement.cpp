@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/04/07 19:26:51  warmerda
+ * use the OCI_ATTR_STMT_TYPE attribute to determine if statement is SELECT
+ *
  * Revision 1.7  2003/02/06 21:16:04  warmerda
  * fixed panFieldMap memory leak
  *
@@ -197,11 +200,21 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Determine if this is a SELECT statement.                        */
+/* -------------------------------------------------------------------- */
+    ub2  nStmtType;
+
+    if( poSession->Failed( 
+        OCIAttrGet( hStatement, OCI_HTYPE_STMT,
+                    &nStmtType, 0, OCI_ATTR_STMT_TYPE, poSession->hError ),
+        "OCIAttrGet(ATTR_STMT_TYPE)") )
+        return CE_Failure;
+    
+    int bSelect = (nStmtType == OCI_STMT_SELECT);
+
+/* -------------------------------------------------------------------- */
 /*      Work out some details about execution mode.                     */
 /* -------------------------------------------------------------------- */
-    int  bSelect = pszCommandText != NULL 
-        && EQUALN(pszCommandText,"SELECT",5);
-
     if( nMode == -1 )
     {
         if( bSelect )
