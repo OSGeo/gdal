@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2004/01/29 23:35:22  gwalter
+ * Add a few more metadata fields, make sure that
+ * nodata value is recognized.
+ *
  * Revision 1.8  2003/05/30 16:17:21  warmerda
  * fix warnings with casting and unused parameters
  *
@@ -222,6 +226,9 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
     DTEDFormat( achRecord + 90, "%04d", 0 );
     DTEDFormat( achRecord + 94, "%04d", 0 );
     DTEDFormat( achRecord + 98, "%04d", 0 );
+    DTEDFormat( achRecord + 126, "PRF89020B");
+    DTEDFormat( achRecord + 135, "00");
+    DTEDFormat( achRecord + 137, "0005");
     DTEDFormat( achRecord + 141, "MSL" );
     DTEDFormat( achRecord + 144, "WGS84" );
 

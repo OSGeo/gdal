@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2004/01/29 23:35:22  gwalter
+ * Add a few more metadata fields, make sure that
+ * nodata value is recognized.
+ *
  * Revision 1.8  2002/03/05 14:26:01  warmerda
  * expanded tabs
  *
@@ -159,11 +163,25 @@ const char *DTEDCreate( const char *pszFilename,
 /*      Metadata support.                                               */
 /* -------------------------------------------------------------------- */
 typedef enum {
-    DTEDMD_VERTACCURACY = 1,            /* UHL 29+4 */
-    DTEDMD_SECURITYCODE = 2,            /* UHL 33+3, DSI 4+1 */
-    DTEDMD_PRODUCER = 3,                /* DSI 103+8 */
-    DTEDMD_COMPILATION_DATE = 4,        /* DSI 160+4 */
-    DTEDMD_MAX = 4
+    DTEDMD_VERTACCURACY_UHL = 1,            /* UHL 29+4, ACC 8+4 */
+    DTEDMD_VERTACCURACY_ACC = 2,           
+    DTEDMD_SECURITYCODE_UHL = 3,            /* UHL 33+3, DSI 4+1 */
+    DTEDMD_SECURITYCODE_DSI = 4,           
+    DTEDMD_UNIQUEREF_UHL = 5,               /* UHL 36+12, DSI 65+15*/
+    DTEDMD_UNIQUEREF_DSI = 6,              
+    DTEDMD_DATA_EDITION = 7,            /* DSI 88+2 */
+    DTEDMD_MATCHMERGE_VERSION = 8,      /* DSI 90+1 */
+    DTEDMD_MAINT_DATE = 9,              /* DSI 91+4 */
+    DTEDMD_MATCHMERGE_DATE = 10,         /* DSI 95+4 */
+    DTEDMD_MAINT_DESCRIPTION = 11,       /* DSI 99+4 */
+    DTEDMD_PRODUCER = 12,               /* DSI 103+8 */
+    DTEDMD_VERTDATUM = 13,              /* DSI 142+3 */
+    DTEDMD_DIGITIZING_SYS = 14,         /* DSI 150+10 */
+    DTEDMD_COMPILATION_DATE = 15,       /* DSI 160+4 */
+    DTEDMD_HORIZACCURACY = 16,          /* ACC 4+4 */
+    DTEDMD_REL_HORIZACCURACY = 17,      /* ACC 12+4 */
+    DTEDMD_REL_VERTACCURACY = 18,       /* ACC 16+4 */
+    DTEDMD_MAX = 18
 } DTEDMetaDataCode;
 
     
