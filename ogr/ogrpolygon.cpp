@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/05/31 20:43:55  warmerda
+ * added empty() method
+ *
  * Revision 1.5  1999/05/31 14:59:06  warmerda
  * added documentation
  *
@@ -70,14 +73,7 @@ OGRPolygon::OGRPolygon()
 OGRPolygon::~OGRPolygon()
 
 {
-    if( papoRings != NULL )
-    {
-        for( int i = 0; i < nRingCount; i++ )
-        {
-            delete papoRings[i];
-        }
-        OGRFree( papoRings );
-    }
+    empty();
 }
 
 /************************************************************************/
@@ -97,6 +93,26 @@ OGRGeometry *OGRPolygon::clone()
     }
 
     return poNewPolygon;
+}
+
+/************************************************************************/
+/*                               empty()                                */
+/************************************************************************/
+
+void OGRPolygon::empty()
+
+{
+    if( papoRings != NULL )
+    {
+        for( int i = 0; i < nRingCount; i++ )
+        {
+            delete papoRings[i];
+        }
+        OGRFree( papoRings );
+    }
+
+    papoRings = NULL;
+    nRingCount = 0;
 }
 
 /************************************************************************/
