@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/10/20 23:27:45  gwalter
+ * Added geocoding.
+ *
  * Revision 1.2  2004/09/07 15:36:58  gwalter
  * Updated to recognize more convair
  * file naming conventions; change
@@ -59,11 +62,19 @@ class CPGDataset : public RawDataset
 {
     FILE	*afpImage[4];
 
+    int nGCPCount;
+    GDAL_GCP *pasGCPList;
+    char *pszGCPProjection;
+
     static int  AdjustFilename( char *, const char *, const char * );
 
   public:
     		CPGDataset();
     	        ~CPGDataset();
+    
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
     
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -75,6 +86,10 @@ class CPGDataset : public RawDataset
 CPGDataset::CPGDataset()
 {
     int iBand;
+
+    nGCPCount = 0;
+    pasGCPList = NULL;
+    pszGCPProjection = CPLStrdup("");
 
     for( iBand = 0; iBand < 4; iBand++ )
         afpImage[iBand] = NULL;
@@ -181,6 +196,12 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
     int iLine;
     int nLines = 0, nSamples = 0;
     int nError = 0;
+    
+    /* Parameters required for pseudo-geocoding.  GCPs map */
+    /* slant range to ground range at 16 points.           */
+    int iGeoParamsFound = 0, itransposed = 0;
+    double dfaltitude = 0.0, dfnear_srd = 0.0;
+    double dfsample_size = 0.0, dfsample_size_az = 0.0;
 
     AdjustFilename( pszWorkName, "hh", "hdr" );
     papszHdrLines = CSLLoad( pszWorkName );
@@ -214,6 +235,34 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
                       papszTokens[0], papszTokens[1] );
             nError = 1;
         }
+        else if( EQUAL(papszTokens[0],"altitude") )
+        {
+            dfaltitude = atof(papszTokens[1]);
+            iGeoParamsFound++;
+        }
+        else if( EQUAL(papszTokens[0],"near_srd") )
+        {
+            dfnear_srd = atof(papszTokens[1]);
+            iGeoParamsFound++;
+        }
+
+        else if( EQUAL(papszTokens[0],"sample_size") )
+        {
+            dfsample_size = atof(papszTokens[1]);
+            iGeoParamsFound++;
+        }
+        else if( EQUAL(papszTokens[0],"sample_size_az") )
+        {
+            dfsample_size_az = atof(papszTokens[1]);
+            iGeoParamsFound++;
+        }
+        else if( EQUAL(papszTokens[0],"transposed") )
+        {
+            itransposed = atoi(papszTokens[1]);
+            iGeoParamsFound++;
+        }
+
+
 
         CSLDestroy( papszTokens );
     }
@@ -276,6 +325,67 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Add pseudo-geocoding, if enough information found.              */
+/* -------------------------------------------------------------------- */
+    if (iGeoParamsFound == 5)
+    {
+        int ngcp;
+        double dfgcpLine, dfgcpPixel, dfgcpX, dfgcpY, dftemp;
+
+        poDS->nGCPCount = 16;
+        poDS->pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),16);
+
+        for( ngcp = 0; ngcp < 16; ngcp ++ )
+        {
+            if (itransposed == 1)
+            {
+                if (ngcp < 4)
+                    dfgcpPixel = 0.0;
+                else if (ngcp < 8)
+                    dfgcpPixel = nSamples/3.0;
+                else if (ngcp < 12)
+                    dfgcpPixel = 2.0*nSamples/3.0;
+                else
+                    dfgcpPixel = nSamples;
+
+                dfgcpLine = nLines*( ngcp % 4 )/3.0;
+
+                dftemp = dfnear_srd + (dfsample_size*dfgcpLine);
+                /* -1 so that 0,0 maps to largest Y */
+                dfgcpY = -1*sqrt( dftemp*dftemp - dfaltitude*dfaltitude );
+                dfgcpX = dfgcpPixel*dfsample_size_az;
+
+            }
+            else
+            {
+                if (ngcp < 4)
+                    dfgcpLine = 0.0;
+                else if (ngcp < 8)
+                    dfgcpLine = nLines/3.0;
+                else if (ngcp < 12)
+                    dfgcpLine = 2.0*nLines/3.0;
+                else
+                    dfgcpLine = nLines;
+
+                dfgcpPixel = nSamples*( ngcp % 4 )/3.0;
+
+                dftemp = dfnear_srd + (dfsample_size*dfgcpPixel);
+                dfgcpX = sqrt( dftemp*dftemp - dfaltitude*dfaltitude );
+                dfgcpY = (nLines - dfgcpLine)*dfsample_size_az;
+
+            }
+            poDS->pasGCPList[ngcp].dfGCPX = dfgcpX;
+            poDS->pasGCPList[ngcp].dfGCPY = dfgcpY;
+            poDS->pasGCPList[ngcp].dfGCPZ = 0.0;
+
+            poDS->pasGCPList[ngcp].dfGCPPixel = dfgcpPixel;
+            poDS->pasGCPList[ngcp].dfGCPLine = dfgcpLine;
+        }
+        poDS->pszGCPProjection = (char *) CPLStrdup("LOCAL_CS[\"Ground range view / unreferenced meters\",UNIT[\"Meter\",1.0]]"); 
+
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     // Need to think about this. 
@@ -284,6 +394,35 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
     return( poDS );
 }
 
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int CPGDataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *CPGDataset::GetGCPProjection()
+
+{
+  return pszGCPProjection;
+}
+
+/************************************************************************/
+/*                               GetGCPs()                               */
+/************************************************************************/
+
+const GDAL_GCP *CPGDataset::GetGCPs()
+
+{
+    return pasGCPList;
+}
 /************************************************************************/
 /*                         GDALRegister_CPG()                          */
 /************************************************************************/
