@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Geometry.h"
+#include "com_util.h"
 
 // All routines relying on CadcorpSF.dll are in this file.
 #import "CadcorpSF.dll" rename_namespace("SF")
@@ -83,3 +84,39 @@ ISpatialReferencePtr CreateEpsgSRS(long code)
 
     return 0;
 }
+
+/************************************************************************/
+/*                           CreateWKT_SRS()                            */
+/************************************************************************/
+
+ISpatialReferencePtr CreateWKT_SRS(const char *pszWKT)
+{
+/* -------------------------------------------------------------------- */
+/*      Convert string to a BSTR.                                       */
+/* -------------------------------------------------------------------- */
+    BSTR          pszBSTR;
+
+    AnsiToBSTR( pszWKT, &pszBSTR );
+    
+/* -------------------------------------------------------------------- */
+/*      Instantiate a Cadcorp spatial reference factory, and use it     */
+/*      to build a spatial reference from the WKT.                      */
+/* -------------------------------------------------------------------- */
+    try 
+    {
+        SF::ISpatialReferenceFactoryPtr      
+                  pSRSFactory( "CadcorpSF.SpatialReferenceFactory" );
+
+        SF::ISpatialReferencePtr pSR = 
+                  pSRSFactory->CreateFromWKT( pszBSTR );
+
+        CoTaskMemFree( pszBSTR );
+        return CComQIPtr<ISpatialReference>(pSR);
+    }
+    catch (...)
+    {
+        CoTaskMemFree( pszBSTR );
+        return 0;
+    }
+}
+

@@ -25,3 +25,5 @@ IPointPtr ComposePoint(ISpatialReference* pSR,Pos2D pt);
 IGeometryPtr ComposePolygon(ISpatialReference* pSR,int np,Pos2D arPt[]);
 Pos2D DecomposePoint(IPoint* point,ISpatialReference* sr);
 ISpatialReferencePtr CreateEpsgSRS(long code);
+ISpatialReferencePtr CreateWKT_SRS( const char * );
+
