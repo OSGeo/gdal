@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/04/09 13:45:12  warmerda
+ * added limited colortable support
+ *
  * Revision 1.19  2003/03/03 15:27:54  warmerda
  * The ULX and ULY values are edges, not pixel centers.  Fixed geotransform.
  *
@@ -116,6 +119,10 @@ class CPL_DLL AIGDataset : public GDALDataset
     char	**papszPrj;
     char	*pszProjection;
 
+    GDALColorTable *poCT;
+
+    void        TranslateColorTable( const char * );
+
   public:
                 AIGDataset();
                 ~AIGDataset();
@@ -144,6 +151,9 @@ class AIGRasterBand : public GDALRasterBand
     virtual double GetMinimum( int *pbSuccess );
     virtual double GetMaximum( int *pbSuccess );
     virtual double GetNoDataValue( int *pbSuccess );
+
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorTable *GetColorTable();
 };
 
 /************************************************************************/
@@ -289,6 +299,33 @@ double AIGRasterBand::GetNoDataValue( int *pbSuccess )
 }
 
 /************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp AIGRasterBand::GetColorInterpretation()
+
+{
+    AIGDataset	*poODS = (AIGDataset *) poDS;
+
+    if( poODS->poCT != NULL )
+        return GCI_PaletteIndex;
+    else
+        return GCI_Undefined;
+}
+
+/************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable *AIGRasterBand::GetColorTable()
+
+{
+    AIGDataset	*poODS = (AIGDataset *) poDS;
+
+    return poODS->poCT;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                            AIGDataset                               */
 /* ==================================================================== */
@@ -305,6 +342,7 @@ AIGDataset::AIGDataset()
     psInfo = NULL;
     papszPrj = NULL;
     pszProjection = CPLStrdup("");
+    poCT = NULL;
 }
 
 /************************************************************************/
@@ -318,6 +356,9 @@ AIGDataset::~AIGDataset()
     CSLDestroy( papszPrj );
     if( psInfo != NULL )
         AIGClose( psInfo );
+
+    if( poCT != NULL )
+        delete poCT;
 }
 
 
@@ -351,6 +392,29 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new AIGDataset();
 
     poDS->psInfo = psInfo;
+
+/* -------------------------------------------------------------------- */
+/*      Try to read a color table (.clr).  It seems it is legal to      */
+/*      have more than one so we just use the first one found.          */
+/* -------------------------------------------------------------------- */
+    int  iFile;
+    char **papszFiles = CPLReadDir( psInfo->pszCoverName );
+
+    for( iFile = 0; papszFiles != NULL && papszFiles[iFile] != NULL; iFile++ )
+    {
+        const char *pszClrFilename;
+
+        if( !EQUAL(CPLGetExtension(papszFiles[iFile]),"clr") )
+            continue;
+
+        pszClrFilename = CPLFormFilename( psInfo->pszCoverName, 
+                                          papszFiles[iFile], NULL );
+
+        poDS->TranslateColorTable( pszClrFilename );
+        break;
+    }
+
+    CSLDestroy( papszFiles );
 
 /* -------------------------------------------------------------------- */
 /*      Establish raster info.                                          */
@@ -416,6 +480,56 @@ const char *AIGDataset::GetProjectionRef()
     return pszProjection;
 }
 
+/************************************************************************/
+/*                        TranslateColorTable()                         */
+/************************************************************************/
+
+void AIGDataset::TranslateColorTable( const char *pszClrFilename )
+
+{
+    int  iLine;
+    char **papszClrLines;
+
+    papszClrLines = CSLLoad( pszClrFilename );
+    if( papszClrLines == NULL )
+        return;
+
+    poCT = new GDALColorTable();
+
+    for( iLine = 0; papszClrLines[iLine] != NULL; iLine++ )
+    {
+        char **papszTokens = CSLTokenizeString( papszClrLines[iLine] );
+
+        if( CSLCount(papszTokens) >= 4 && papszTokens[0][0] != '#' )
+        {
+            int nIndex;
+            GDALColorEntry sEntry;
+
+            nIndex = atoi(papszTokens[0]);
+            sEntry.c1 = atoi(papszTokens[1]);
+            sEntry.c2 = atoi(papszTokens[2]);
+            sEntry.c3 = atoi(papszTokens[3]);
+            sEntry.c4 = 255;
+
+            if( (nIndex < 0 || nIndex > 33000) 
+                || (sEntry.c1 < 0 || sEntry.c1 > 255)
+                || (sEntry.c2 < 0 || sEntry.c2 > 255)
+                || (sEntry.c3 < 0 || sEntry.c3 > 255) )
+            {
+                CSLDestroy( papszTokens );
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Color table entry appears to be corrupt, skipping the rest. " );
+                break;
+            }
+
+            poCT->SetColorEntry( nIndex, &sEntry );
+        }
+
+        CSLDestroy( papszTokens );
+    }
+
+    CSLDestroy( papszClrLines );
+}
 
 /************************************************************************/
 /*                          GDALRegister_AIG()                        */
