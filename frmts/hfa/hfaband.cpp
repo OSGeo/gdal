@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2003/06/10 17:14:22  warmerda
+ * fixed setting of maxLimit and numBins in SetPCT when nColors!=256
+ *
  * Revision 1.32  2003/05/21 15:35:05  warmerda
  * cleanup type conversion warnings
  *
@@ -1181,10 +1184,10 @@ CPLErr HFABand::SetPCT( int nColors,
             new HFAEntry( psInfo, "#Bin_Function#", "Edsc_BinFunction",
                           poEdsc_Table );
 
-        poEdsc_BinFunction->SetIntField( "numBins", 256 );
+        poEdsc_BinFunction->SetIntField( "numBins", nColors );
         poEdsc_BinFunction->SetStringField( "binFunction", "direct" );
         poEdsc_BinFunction->SetDoubleField( "minLimit", 0.0 );
-        poEdsc_BinFunction->SetDoubleField( "maxLimit", 255.0 );
+        poEdsc_BinFunction->SetDoubleField( "maxLimit", nColors - 1.0 );
 
 /* -------------------------------------------------------------------- */
 /*      Process each color component                                    */
