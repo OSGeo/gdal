@@ -28,8 +28,8 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.23  2003/03/11 21:00:30  gwalter
- * More georeferencing-related updates.
+ * Revision 1.24  2003/03/12 16:02:28  gwalter
+ * Fix spheroid support.
  *
  * Revision 1.22  2003/03/03 20:10:06  gwalter
  * Updated MFF and HKV (MFF2) georeferencing support.
@@ -287,8 +287,8 @@ MFFSpheroidList :: MFFSpheroidList()
 {
   num_spheroids = 18;
 
-  epsilonR = 0.4;
-  epsilonI = 0.01;   
+  epsilonR = 0.1;
+  epsilonI = 0.000001;   
 
   spheroids[0].SetValuesByRadii("SPHERE",6371007.0,6371007.0);
   spheroids[1].SetValuesByRadii("EVEREST",6377304.0,6356103.0);
@@ -549,6 +549,8 @@ void MFFDataset::ScanForGCPs()
 void MFFDataset::ScanForProjectionInfo()
 {
     const char *pszProjName, *pszOriginLong, *pszSpheroidName;
+    const char *pszSpheroidEqRadius, *pszSpheroidPolarRadius;
+    double eq_radius, polar_radius;
     OGRSpatialReference oProj;
     OGRSpatialReference oLL;
     MFFSpheroidList *mffEllipsoids;
@@ -629,6 +631,29 @@ void MFFDataset::ScanForProjectionInfo()
                          mffEllipsoids->GetSpheroidInverseFlattening(pszSpheroidName)
                       );
       }
+      else if (EQUAL(pszSpheroidName,"USER_DEFINED"))
+      {
+          pszSpheroidEqRadius = CSLFetchNameValue(papszHdrLines,
+                                                  "SPHEROID_EQUATORIAL_RADIUS");
+          pszSpheroidPolarRadius = CSLFetchNameValue(papszHdrLines,
+                                                  "SPHEROID_POLAR_RADIUS");
+          if ((pszSpheroidEqRadius != NULL) && (pszSpheroidPolarRadius != NULL))
+          {
+            eq_radius = atof( pszSpheroidEqRadius );
+            polar_radius = atof( pszSpheroidPolarRadius );
+            oProj.SetGeogCS( "unknown","unknown","unknown",
+                         eq_radius, eq_radius/(eq_radius - polar_radius));
+            oLL.SetGeogCS( "unknown","unknown","unknown",
+                         eq_radius, eq_radius/(eq_radius - polar_radius));          
+          }
+          else
+          {
+              CPLError(CE_Warning,CPLE_AppDefined,
+                "Warning- radii not specified for user-defined ellipsoid. Using wgs-84 parameters. \n");
+              oProj.SetWellKnownGeogCS( "WGS84" );
+              oLL.SetWellKnownGeogCS( "WGS84" );
+          }
+      }
       else
       {
          CPLError(CE_Warning,CPLE_AppDefined,
@@ -695,7 +720,7 @@ void MFFDataset::ScanForProjectionInfo()
     pszProjection = NULL;
     pszGCPProjection = NULL;
     oProj.exportToWkt( &pszProjection );
-    oLL.exportToWkt( &pszGCPProjection );
+    oProj.exportToWkt( &pszGCPProjection );
 
     if (transform_ok == FALSE)
     {
@@ -1529,6 +1554,13 @@ MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                      sprintf(ol_txt,"SPHEROID_NAME = %s\n",spheroid_name );
                      fprintf(fp,ol_txt);
                  } 
+                 else
+                 {
+                     sprintf(ol_txt,
+       "SPHEROID_NAME = USER_DEFINED\nSPHEROID_EQUATORIAL_RADIUS = %.10f\nSPHEROID_POLAR_RADIUS = %.10f\n",
+                     eq_radius,eq_radius*(1-1.0/inv_flattening) );
+                     fprintf(fp,ol_txt);
+                 }
                  delete mffEllipsoids;
                  CPLFree(ol_txt);
                  CPLFree(spheroid_name);
