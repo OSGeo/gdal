@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/04/01 17:51:33  warmerda
+ * allow geometry tags without gml: qualifier
+ *
  * Revision 1.3  2002/01/25 20:38:49  warmerda
  * report fatal errors, add to geometry type list
  *
@@ -295,11 +298,14 @@ void GMLHandler::fatalError( const SAXParseException &exception)
 int GMLHandler::IsGeometryElement( const char *pszElement )
 
 {
-    return EQUAL(pszElement,"gml:Polygon") 
-        || EQUAL(pszElement,"gml:MultiPolygon") 
-        || EQUAL(pszElement,"gml:MultiPoint") 
-        || EQUAL(pszElement,"gml:MultiLineString") 
-        || EQUAL(pszElement,"gml:GeometryCollection") 
-        || EQUAL(pszElement,"gml:Point") 
-        || EQUAL(pszElement,"gml:LineString");
+    if( EQUALN(pszElement,"gml:",4) )
+        pszElement += 4;
+
+    return EQUAL(pszElement,"Polygon") 
+        || EQUAL(pszElement,"MultiPolygon") 
+        || EQUAL(pszElement,"MultiPoint") 
+        || EQUAL(pszElement,"MultiLineString") 
+        || EQUAL(pszElement,"GeometryCollection") 
+        || EQUAL(pszElement,"Point") 
+        || EQUAL(pszElement,"LineString");
 }
