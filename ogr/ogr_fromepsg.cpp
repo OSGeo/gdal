@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/02/05 17:14:11  warmerda
+ * work around a bug in EPSG 6.2.2 with scale factor units for PCS 2935/2936
+ *
  * Revision 1.19  2003/01/08 18:23:45  warmerda
  * ensure order is fixed up
  *
@@ -746,6 +749,31 @@ EPSGGetEllipsoidInfo( int nCode, char ** ppszName,
     return( TRUE );
 }
 
+#define NatOriginLat         8801
+#define NatOriginLong        8802
+#define NatOriginScaleFactor 8805
+#define FalseEasting         8806
+#define FalseNorthing        8807
+#define ProjCenterLat        8811
+#define ProjCenterLong       8812
+#define Azimuth              8813
+#define AngleRectifiedToSkewedGrid 8814
+#define InitialLineScaleFactor 8815
+#define ProjCenterEasting    8816
+#define ProjCenterNorthing   8817
+#define PseudoStdParallelLat 8818
+#define PseudoStdParallelScaleFactor 8819
+#define FalseOriginLat       8821
+#define FalseOriginLong      8822
+#define StdParallel1Lat      8823
+#define StdParallel2Lat      8824
+#define FalseOriginEasting   8826
+#define FalseOriginNorthing  8827
+#define SphericalOriginLat   8828
+#define SphericalOriginLong  8829
+#define InitialLongitude     8830
+#define ZoneWidth            8831
+
 /************************************************************************/
 /*                         EPSGGetProjTRFInfo()                         */
 /*                                                                      */
@@ -787,7 +815,7 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
     for( i = 0; i < 7; i++ )
     {
         char    szParamUOMID[32], szParamValueID[32], szParamCodeID[32];
-        const char *pszValue;
+        char    *pszValue;
         int     nUOM;
         
         sprintf( szParamCodeID, "PARAMETER_CODE_%d", i+1 );
@@ -801,8 +829,17 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
 
         nUOM = atoi(CSVGetField( pszFilename, "COORD_REF_SYS_CODE", szTRFCode,
                                  CC_Integer, szParamUOMID ));
-        pszValue = CSVGetField( pszFilename, "COORD_REF_SYS_CODE", szTRFCode,
-                                CC_Integer, szParamValueID );
+        pszValue = CPLStrdup(
+            CSVGetField( pszFilename, "COORD_REF_SYS_CODE", szTRFCode,
+                         CC_Integer, szParamValueID ));
+
+        // there is a bug in the EPSG 6.2.2 database for PCS 2935 and 2936
+        // such that they have foot units for the scale factor.  Avoid this.
+        if( (panParmIds[i] == NatOriginScaleFactor 
+             || panParmIds[i] == InitialLineScaleFactor
+             || panParmIds[i] == PseudoStdParallelScaleFactor) 
+            && nUOM < 9200 )
+            nUOM = 9201;
 
         if( nUOM >= 9100 && nUOM < 9200 )
             adfProjParms[i] = EPSGAngleStringToDD( pszValue, nUOM );
@@ -814,8 +851,14 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
                 dfInMeters = 1.0;
             adfProjParms[i] = atof(pszValue) * dfInMeters;
         }
-        else
+        else /* really we should consider looking up other scaling factors */
+        {
+            if( nUOM != 9201 )
+                CPLDebug( "OGR", "Non-unity scale factor units!" );
             adfProjParms[i] = atof(pszValue);
+        }
+
+        CPLFree( pszValue );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1018,31 +1061,6 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
 
     return OGRERR_NONE;
 }
-
-#define NatOriginLat         8801
-#define NatOriginLong        8802
-#define NatOriginScaleFactor 8805
-#define FalseEasting         8806
-#define FalseNorthing        8807
-#define ProjCenterLat        8811
-#define ProjCenterLong       8812
-#define Azimuth              8813
-#define AngleRectifiedToSkewedGrid 8814
-#define InitialLineScaleFactor 8815
-#define ProjCenterEasting    8816
-#define ProjCenterNorthing   8817
-#define PseudoStdParallelLat 8818
-#define PseudoStdParallelScaleFactor 8819
-#define FalseOriginLat       8821
-#define FalseOriginLong      8822
-#define StdParallel1Lat      8823
-#define StdParallel2Lat      8824
-#define FalseOriginEasting   8826
-#define FalseOriginNorthing  8827
-#define SphericalOriginLat   8828
-#define SphericalOriginLong  8829
-#define InitialLongitude     8830
-#define ZoneWidth            8831
 
 /************************************************************************/
 /*                           OGR_FetchParm()                            */
