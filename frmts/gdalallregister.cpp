@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.20  2000/04/28 20:59:03  warmerda
+ * added jpeg
+ *
  * Revision 1.19  2000/04/27 20:02:17  warmerda
  * added png
  *
@@ -105,6 +108,7 @@ void GDALRegister_DTED(void);
 void GDALRegister_MFF(void);
 void GDALRegister_HKV(void);
 void GDALRegister_PNG(void);
+void GDALRegister_JPEG(void);
 CPL_C_END
 
 #ifdef notdef
@@ -192,6 +196,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_png
     GDALRegister_PNG();
+#endif
+
+#ifdef FRMT_jpeg
+    GDALRegister_JPEG();
 #endif
 
 #ifdef FRMT_raw
