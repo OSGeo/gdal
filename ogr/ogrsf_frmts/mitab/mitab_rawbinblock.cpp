@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_rawbinblock.cpp,v 1.4 2000/01/15 22:30:45 daniel Exp $
+ * $Id: mitab_rawbinblock.cpp,v 1.5 2000/02/28 17:06:06 daniel Exp $
  *
  * Name:     mitab_rawbinblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_rawbinblock.cpp,v $
+ * Revision 1.5  2000/02/28 17:06:06  daniel
+ * Added m_bModified flag
+ *
  * Revision 1.4  2000/01/15 22:30:45  daniel
  * Switch to MIT/X-Consortium OpenSource license
  *
@@ -65,6 +68,8 @@ TABRawBinBlock::TABRawBinBlock(TABAccess eAccessMode /*= TABRead*/,
     m_nFirstBlockPtr = 0;
     m_nBlockSize = m_nSizeUsed = m_nFileOffset = m_nCurPos = 0;
     m_bHardBlockSize = bHardBlockSize;
+
+    m_bModified = FALSE;
 
     m_eAccess = eAccessMode; 
 
@@ -105,6 +110,7 @@ int     TABRawBinBlock::ReadFromFile(FILE *fpSrc, int nOffset,
     m_fp = fpSrc;
     m_nFileOffset = nOffset;
     m_nCurPos = 0;
+    m_bModified = FALSE;
     
     /*----------------------------------------------------------------
      * Alloc a buffer to contain the data
@@ -159,6 +165,12 @@ int     TABRawBinBlock::CommitToFile()
         "TABRawBinBlock::CommitToFile(): Block has not been initialized yet!");
         return -1;
     }
+
+    /*----------------------------------------------------------------
+     * If block has not been modified, then just return... nothing to do.
+     *---------------------------------------------------------------*/
+    if (!m_bModified)
+        return 0;
 
     /*----------------------------------------------------------------
      * Move the output file pointer to the right position... 
@@ -216,6 +228,8 @@ int     TABRawBinBlock::CommitToFile()
 
     fflush(m_fp);
 
+    m_bModified = FALSE;
+
     return 0;
 }
 
@@ -247,6 +261,7 @@ int     TABRawBinBlock::InitBlockFromData(GByte *pabyBuf, int nSize,
     m_fp = fpSrc;
     m_nFileOffset = nOffset;
     m_nCurPos = 0;
+    m_bModified = FALSE;
     
     /*----------------------------------------------------------------
      * Alloc or realloc the buffer to contain the data if necessary
@@ -300,6 +315,7 @@ int     TABRawBinBlock::InitNewBlock(FILE *fpSrc, int nBlockSize,
     m_nBlockSize = nBlockSize;
     m_nSizeUsed = 0;
     m_nCurPos = 0;
+    m_bModified = FALSE;
 
     if (nFileOffset > 0)
         m_nFileOffset = nFileOffset;
@@ -677,6 +693,8 @@ int  TABRawBinBlock::WriteBytes(int nBytesToWrite, GByte *pabySrcBuf)
     m_nCurPos += nBytesToWrite;
 
     m_nSizeUsed = MAX(m_nSizeUsed, m_nCurPos);
+
+    m_bModified = TRUE;
 
     return 0;
 }

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_datfile.cpp,v 1.7 2000/04/21 16:11:52 warmerda Exp $
+ * $Id: mitab_datfile.cpp,v 1.15 2000/04/27 15:42:03 daniel Exp $
  *
  * Name:     mitab_datfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,11 +31,15 @@
  **********************************************************************
  *
  * $Log: mitab_datfile.cpp,v $
- * Revision 1.7  2000/04/21 16:11:52  warmerda
- * treat zero width fields as 255
+ * Revision 1.15  2000/04/27 15:42:03  daniel
+ * Map variable field length (width=0) coming from OGR to acceptable default
  *
- * Revision 1.6  2000/01/26 21:58:12  warmerda
- * reimport
+ * Revision 1.14  2000/02/28 16:52:52  daniel
+ * Added support for writing indexes, removed validation on field name in
+ * NATIVE tables, and remove trailing spaces in DBF char field values
+ *
+ * Revision 1.13  2000/01/28 07:31:49  daniel
+ * Validate char field width (must be <= 254 chars)
  *
  * Revision 1.12  2000/01/16 19:08:48  daniel
  * Added support for reading 'Table Type DBF' tables
@@ -553,6 +557,8 @@ TABRawBinBlock *TABDATFile::GetRecordBlock(int nRecordId)
 
     }
 
+    m_nCurRecordId = nRecordId;
+
     return m_poRecordBlock;
 }
 
@@ -601,22 +607,27 @@ int  TABDATFile::ValidateFieldInfoFromTAB(int iField, const char *pszName,
     int i = iField;  // Just to make things shorter
 
     CPLAssert(m_pasFieldDef);
-    CPLAssert(iField >= 0 && iField < m_numFields);
 
+    if (m_pasFieldDef == NULL || iField < 0 || iField >= m_numFields)
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+          "Invalid field %d (%s) in .TAB header. %s contains only %d fields.",
+                 iField+1, pszName, m_pszFname, m_pasFieldDef? m_numFields:0);
+        return -1;
+    }
 
     /*-----------------------------------------------------------------
-     * With all table types, we validate the field name
+     * We used to check that the .TAB field name matched the .DAT
+     * name stored internally, but apparently some tools that rename table
+     * field names only update the .TAB file and not the .DAT, so we won't
+     * do that name validation any more... we'll just check the type.
      *
      * With TABTableNative, we have to validate the field sizes as well
      * because .DAT files use char fields to store binary values.
      * With TABTableDBF, no need to validate field type since all
      * fields are stored as strings internally.
      *----------------------------------------------------------------*/
-    if (m_pasFieldDef == NULL ||
-        !EQUALN(pszName, 
-                 m_pasFieldDef[i].szName, strlen(m_pasFieldDef[i].szName)) ||
-
-        (m_eTableType == TABTableNative && 
+    if ((m_eTableType == TABTableNative && 
          ((eType == TABFChar && (m_pasFieldDef[i].cType != 'C' ||
                                 m_pasFieldDef[i].byLength != nWidth )) ||
           (eType == TABFDecimal && (m_pasFieldDef[i].cType != 'N' ||
@@ -668,12 +679,27 @@ int  TABDATFile::AddField(const char *pszName, TABFieldType eType,
         return -1;
     }
 
+    /*-----------------------------------------------------------------
+     * Validate field width... must be <= 254
+     *----------------------------------------------------------------*/
+    if (nWidth > 254)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Invalid size (%d) for field '%s'.  "
+                 "Size must be 254 or less.", nWidth, pszName);
+        return -1;
+    }
+
+    /*-----------------------------------------------------------------
+     * Map fields with width=0 (variable length in OGR) to a valid default
+     *----------------------------------------------------------------*/
+    if (eType == TABFDecimal && nWidth == 0)
+        nWidth=20;
+    else if (nWidth == 0)
+        nWidth=254; /* char fields */
+
     if (m_numFields < 0)
         m_numFields = 0;
-
-    /* remap variable length fields to be 254 long fields. */
-    if( nWidth == 0 )
-        nWidth = 254;
 
     m_numFields++;
     m_pasFieldDef = (TABDATFieldDef*)CPLRealloc(m_pasFieldDef, 
@@ -813,6 +839,15 @@ const char *TABDATFile::ReadCharField(int nWidth)
         return "";
 
     szBuf[nWidth] = '\0';
+
+    // NATIVE tables are padded with '\0' chars, but DBF tables are padded
+    // with spaces... get rid of the trailing spaces.
+    if (m_eTableType == TABTableDBF)
+    {
+        int nLen = strlen(szBuf)-1;
+        while(nLen>=0 && szBuf[nLen] == ' ')
+            szBuf[nLen--] = '\0';
+    }
 
     return szBuf;
 }
@@ -1046,7 +1081,8 @@ double TABDATFile::ReadDecimalField(int nWidth)
  * Returns 0 on success, or -1 if the operation failed, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int TABDATFile::WriteCharField(const char *pszStr, int nWidth)
+int TABDATFile::WriteCharField(const char *pszStr, int nWidth,
+                               TABINDFile *poINDFile, int nIndexNo)
 {
     if (m_poRecordBlock == NULL)
     {
@@ -1075,6 +1111,14 @@ int TABDATFile::WriteCharField(const char *pszStr, int nWidth)
         (nWidth-nLen > 0 && m_poRecordBlock->WriteZeros(nWidth-nLen)!=0) )
         return -1;
 
+    // Update Index
+    if (poINDFile && nIndexNo > 0)
+    {
+        GByte *pKey = poINDFile->BuildKey(nIndexNo, pszStr);
+        if (poINDFile->AddEntry(nIndexNo, pKey, m_nCurRecordId) != 0)
+            return -1;
+    }
+
     return 0;
 }
 
@@ -1086,13 +1130,22 @@ int TABDATFile::WriteCharField(const char *pszStr, int nWidth)
  * 
  * CPLError() will have been called if something fails.
  **********************************************************************/
-int TABDATFile::WriteIntegerField(GInt32 nValue)
+int TABDATFile::WriteIntegerField(GInt32 nValue,
+                                  TABINDFile *poINDFile, int nIndexNo)
 {
     if (m_poRecordBlock == NULL)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
             "Can't write field value: GetRecordBlock() has not been called.");
         return -1;
+    }
+
+    // Update Index
+    if (poINDFile && nIndexNo > 0)
+    {
+        GByte *pKey = poINDFile->BuildKey(nIndexNo, nValue);
+        if (poINDFile->AddEntry(nIndexNo, pKey, m_nCurRecordId) != 0)
+            return -1;
     }
 
     return m_poRecordBlock->WriteInt32(nValue);
@@ -1106,13 +1159,22 @@ int TABDATFile::WriteIntegerField(GInt32 nValue)
  * 
  * CPLError() will have been called if something fails.
  **********************************************************************/
-int TABDATFile::WriteSmallIntField(GInt16 nValue)
+int TABDATFile::WriteSmallIntField(GInt16 nValue,
+                                   TABINDFile *poINDFile, int nIndexNo)
 {
     if (m_poRecordBlock == NULL)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
             "Can't write field value: GetRecordBlock() has not been called.");
         return -1;
+    }
+
+    // Update Index
+    if (poINDFile && nIndexNo > 0)
+    {
+        GByte *pKey = poINDFile->BuildKey(nIndexNo, nValue);
+        if (poINDFile->AddEntry(nIndexNo, pKey, m_nCurRecordId) != 0)
+            return -1;
     }
 
     return m_poRecordBlock->WriteInt16(nValue);
@@ -1126,13 +1188,22 @@ int TABDATFile::WriteSmallIntField(GInt16 nValue)
  * 
  * CPLError() will have been called if something fails.
  **********************************************************************/
-int TABDATFile::WriteFloatField(double dValue)
+int TABDATFile::WriteFloatField(double dValue,
+                                TABINDFile *poINDFile, int nIndexNo)
 {
     if (m_poRecordBlock == NULL)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
             "Can't write field value: GetRecordBlock() has not been called.");
         return -1;
+    }
+
+    // Update Index
+    if (poINDFile && nIndexNo > 0)
+    {
+        GByte *pKey = poINDFile->BuildKey(nIndexNo, dValue);
+        if (poINDFile->AddEntry(nIndexNo, pKey, m_nCurRecordId) != 0)
+            return -1;
     }
 
     return m_poRecordBlock->WriteDouble(dValue);
@@ -1149,7 +1220,8 @@ int TABDATFile::WriteFloatField(double dValue)
  * 
  * CPLError() will have been called if something fails.
  **********************************************************************/
-int TABDATFile::WriteLogicalField(const char *pszValue)
+int TABDATFile::WriteLogicalField(const char *pszValue,
+                                  TABINDFile *poINDFile, int nIndexNo)
 {
     GByte bValue;
 
@@ -1164,6 +1236,14 @@ int TABDATFile::WriteLogicalField(const char *pszValue)
         bValue = 1;
     else
         bValue = 0;
+
+    // Update Index
+    if (poINDFile && nIndexNo > 0)
+    {
+        GByte *pKey = poINDFile->BuildKey(nIndexNo, (int)bValue);
+        if (poINDFile->AddEntry(nIndexNo, pKey, m_nCurRecordId) != 0)
+            return -1;
+    }
 
     return m_poRecordBlock->WriteByte(bValue);
 }
@@ -1183,7 +1263,8 @@ int TABDATFile::WriteLogicalField(const char *pszValue)
  * Returns 0 on success, or -1 if the operation failed, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int TABDATFile::WriteDateField(const char *pszValue)
+int TABDATFile::WriteDateField(const char *pszValue,
+                               TABINDFile *poINDFile, int nIndexNo)
 {
     int nDay, nMonth, nYear;
     char **papszTok = NULL;
@@ -1243,7 +1324,8 @@ int TABDATFile::WriteDateField(const char *pszValue)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Invalid date field value `%s'.  Date field values must "
-                 "be in the format `YYYY/MM/DD', `MM/DD/YYYY' or `YYYYMMDD'");
+                 "be in the format `YYYY/MM/DD', `MM/DD/YYYY' or `YYYYMMDD'",
+                 pszValue);
         CSLDestroy(papszTok);
         return -1;
     }
@@ -1255,6 +1337,15 @@ int TABDATFile::WriteDateField(const char *pszValue)
 
     if (CPLGetLastErrorNo() != 0)
         return -1;
+
+    // Update Index
+    if (poINDFile && nIndexNo > 0)
+    {
+        GByte *pKey = poINDFile->BuildKey(nIndexNo, (nYear*0x10000 +
+                                                     nMonth * 0x100 + nDay));
+        if (poINDFile->AddEntry(nIndexNo, pKey, m_nCurRecordId) != 0)
+            return -1;
+    }
 
     return 0;
 }
@@ -1272,13 +1363,22 @@ int TABDATFile::WriteDateField(const char *pszValue)
  *
  * CPLError() will have been called if something fails.
  **********************************************************************/
-int TABDATFile::WriteDecimalField(double dValue, int nWidth, int nPrec)
+int TABDATFile::WriteDecimalField(double dValue, int nWidth, int nPrec,
+                                  TABINDFile *poINDFile, int nIndexNo)
 {
     const char *pszVal;
 
     pszVal = CPLSPrintf("%*.*f", nWidth, nPrec, dValue);
     if ((int)strlen(pszVal) > nWidth)
         pszVal += strlen(pszVal) - nWidth;
+
+    // Update Index
+    if (poINDFile && nIndexNo > 0)
+    {
+        GByte *pKey = poINDFile->BuildKey(nIndexNo, dValue);
+        if (poINDFile->AddEntry(nIndexNo, pKey, m_nCurRecordId) != 0)
+            return -1;
+    }
 
     return m_poRecordBlock->WriteBytes(nWidth, (GByte*)pszVal);
 }

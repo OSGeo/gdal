@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.10 2000/01/15 22:30:44 daniel Exp $
+ * $Id: mitab_mapfile.cpp,v 1.13 2000/05/19 06:44:55 daniel Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,16 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.13  2000/05/19 06:44:55  daniel
+ * Modified generation of spatial index to split index nodes and produce a
+ * more balanced tree.
+ *
+ * Revision 1.12  2000/03/13 05:58:01  daniel
+ * Create 1024 bytes V500 .MAP header + limit m_nMaxCoordBufSize for V450 obj.
+ *
+ * Revision 1.11  2000/02/28 17:00:00  daniel
+ * Added V450 object types
+ *
  * Revision 1.10  2000/01/15 22:30:44  daniel
  * Switch to MIT/X-Consortium OpenSource license
  *
@@ -78,6 +88,7 @@
  **********************************************************************/
 TABMAPFile::TABMAPFile()
 {
+    m_nMinTABVersion = 300;
     m_fp = NULL;
     m_pszFname = NULL;
     m_poHeader = NULL;
@@ -130,6 +141,7 @@ int TABMAPFile::Open(const char *pszFname, const char *pszAccess,
         return -1;
     }
 
+    m_nMinTABVersion = 300;
     m_fp = NULL;
     m_poHeader = NULL;
     m_poIdIndex = NULL;
@@ -147,7 +159,7 @@ int TABMAPFile::Open(const char *pszFname, const char *pszAccess,
     else if (EQUALN(pszAccess, "w", 1))
     {
         m_eAccessMode = TABWrite;
-        pszAccess = "wb";
+        pszAccess = "wb+";
     }
     else
     {
@@ -186,9 +198,15 @@ int TABMAPFile::Open(const char *pszFname, const char *pszAccess,
     {
         /*-----------------------------------------------------------------
          * Write access: create a new header block
+         * .MAP files of Version 500 and up appear to have a 1024 bytes
+         * header.  The last 512 bytes are usually all zeros.
          *----------------------------------------------------------------*/
         poBlock = new TABMAPHeaderBlock(m_eAccessMode);
-        poBlock->InitNewBlock(fp, 512, m_oBlockManager.AllocNewBlock() );
+        poBlock->InitNewBlock(fp, 1024, m_oBlockManager.AllocNewBlock() );
+
+        // Alloc a second 512 bytes of space since oBlockManager deals 
+        // with 512 bytes blocks.
+        m_oBlockManager.AllocNewBlock(); 
     }
     else if (bNoErrorMsg)
     {
@@ -328,7 +346,20 @@ int TABMAPFile::Close()
 
         // __TODO__ We probably need to update some header fields first.
         if (m_poHeader)
+        {
+            // OK, with V450 files, objects are not limited to 32k nodes
+            // any more, and this means that m_nMaxCoordBufSize can become
+            // huge, and actually more huge than can be held in memory.
+            // MapInfo counts m_nMaxCoordBufSize=0 for V450 objects, but 
+            // until this is cleanly implented, we will just prevent 
+            // m_nMaxCoordBufSizefrom going beyond 512k in V450 files.
+            if (m_nMinTABVersion >= 450)
+            {
+                m_poHeader->m_nMaxCoordBufSize = 
+                                 MIN(m_poHeader->m_nMaxCoordBufSize, 512*1024);
+            }
             m_poHeader->CommitToFile();
+        }
     }
     
     // Delete all structures 
@@ -686,6 +717,10 @@ int   TABMAPFile::PrepareNewObj(int nObjId, GByte nObjType)
         nObjType = TAB_GEOM_FONTSYMBOL_C;
     else if (nObjType == TAB_GEOM_CUSTOMSYMBOL_C)
         nObjType = TAB_GEOM_CUSTOMSYMBOL;
+    else if (nObjType == TAB_GEOM_V450_REGION_C)
+        nObjType = TAB_GEOM_V450_REGION;
+    else if (nObjType == TAB_GEOM_V450_MULTIPLINE_C)
+        nObjType = TAB_GEOM_V450_MULTIPLINE;
 
     /*-----------------------------------------------------------------
      * Update count of objects by type in the header block
@@ -699,11 +734,13 @@ int   TABMAPFile::PrepareNewObj(int nObjId, GByte nObjType)
     else if (nObjType == TAB_GEOM_LINE ||
              nObjType == TAB_GEOM_PLINE ||
              nObjType == TAB_GEOM_MULTIPLINE ||
+             nObjType == TAB_GEOM_V450_MULTIPLINE ||
              nObjType == TAB_GEOM_ARC)
     {
         m_poHeader->m_numLineObjects++;
     }
     else if (nObjType == TAB_GEOM_REGION ||
+             nObjType == TAB_GEOM_V450_REGION ||
              nObjType == TAB_GEOM_RECT ||
              nObjType == TAB_GEOM_ROUNDRECT ||
              nObjType == TAB_GEOM_ELLIPSE)
@@ -713,6 +750,16 @@ int   TABMAPFile::PrepareNewObj(int nObjId, GByte nObjType)
     else if (nObjType == TAB_GEOM_TEXT)
     {
         m_poHeader->m_numTextObjects++;
+    }
+
+    /*-----------------------------------------------------------------
+     * Check for V450-specific object types and minimum TAB file version number
+     *----------------------------------------------------------------*/
+    if (m_nMinTABVersion < 450 &&
+        (nObjType == TAB_GEOM_V450_REGION ||
+         nObjType == TAB_GEOM_V450_MULTIPLINE ) )
+    {
+        m_nMinTABVersion = 450;
     }
 
     /*-----------------------------------------------------------------
@@ -857,49 +904,39 @@ int TABMAPFile::CommitObjBlock(GBool bInitNewBlock /*=TRUE*/)
     }
 
     /*-----------------------------------------------------------------
+     * Commit the obj block.
+     *----------------------------------------------------------------*/
+    if (nStatus == 0)
+        nStatus = m_poCurObjBlock->CommitToFile();
+
+    /*-----------------------------------------------------------------
      * Update the spatial index
      *
      * Spatial index will be created here if it was not done yet.
-     *
-     * __TODO__ The current procedure creates more a linked list of
-     *          index blocks than a quad tree... this should be sufficient
-     *          for now, but we should look at producing a balanced
-     *          tree at some point.
      *----------------------------------------------------------------*/
     if (nStatus == 0)
     {
         GInt32 nXMin, nYMin, nXMax, nYMax;
 
-        if (m_poSpIndex == NULL || m_poSpIndex->GetNumFreeEntries() == 0)
+        if (m_poSpIndex == NULL)
         {
-            int nBlockOffset = m_oBlockManager.AllocNewBlock();
-            TABMAPIndexBlock *poNewIndex = new TABMAPIndexBlock(m_eAccessMode);
+            // Spatial Index not created yet...
+            m_poSpIndex = new TABMAPIndexBlock(m_eAccessMode);
 
-            poNewIndex->InitNewBlock(m_fp, 512, nBlockOffset);
+            m_poSpIndex->InitNewBlock(m_fp, 512, 
+                                      m_oBlockManager.AllocNewBlock());
+            m_poSpIndex->SetMAPBlockManagerRef(&m_oBlockManager);
 
-            if (m_poSpIndex)
-            {
-                m_poSpIndex->GetMBR(nXMin, nYMin, nXMax, nYMax);
-                poNewIndex->AddEntry(nXMin, nYMin, nXMax, nYMax,
-                                     m_poSpIndex->GetStartAddress(),
-                                     m_poSpIndex);
-            }
-
-            m_poSpIndex = poNewIndex;
-            m_poHeader->m_nFirstIndexBlock = nBlockOffset;
+            m_poHeader->m_nFirstIndexBlock = m_poSpIndex->GetNodeBlockPtr();
         }
 
         m_poCurObjBlock->GetMBR(nXMin, nYMin, nXMax, nYMax);
-        m_poSpIndex->AddEntry(nXMin, nYMin, nXMax, nYMax,
-                                     m_poCurObjBlock->GetStartAddress(),
-                                     NULL);
-    }
+        nStatus = m_poSpIndex->AddEntry(nXMin, nYMin, nXMax, nYMax,
+                                        m_poCurObjBlock->GetStartAddress());
 
-    /*-----------------------------------------------------------------
-     * Commit the obj block.
-     *----------------------------------------------------------------*/
-    if (nStatus == 0)
-        nStatus = m_poCurObjBlock->CommitToFile();
+        m_poHeader->m_nMaxSpIndexDepth = MAX(m_poHeader->m_nMaxSpIndexDepth,
+                                             m_poSpIndex->GetCurMaxDepth()+1);
+    }
 
     /*-----------------------------------------------------------------
      * Reinitialize the obj block only if requested
@@ -1434,7 +1471,8 @@ int TABMAPFile::CommitSpatialIndex()
      * (it's children will be recursively committed as well)
      *------------------------------------------------------------*/
     // Add 1 to Spatial Index Depth to account to the MapObjectBlocks
-    m_poHeader->m_nMaxSpIndexDepth = m_poSpIndex->GetMaxDepth()+1;
+    m_poHeader->m_nMaxSpIndexDepth = MAX(m_poHeader->m_nMaxSpIndexDepth,
+                                         m_poSpIndex->GetCurMaxDepth()+1);
 
     m_poSpIndex->GetMBR(m_poHeader->m_nXMin, m_poHeader->m_nYMin,
                         m_poHeader->m_nXMax, m_poHeader->m_nYMax);
@@ -1442,6 +1480,22 @@ int TABMAPFile::CommitSpatialIndex()
     return m_poSpIndex->CommitToFile();
 }
 
+
+/**********************************************************************
+ *                   TABMAPFile::GetMinTABFileVersion()
+ *
+ * Returns the minimum TAB file version number that can contain all the
+ * objects stored in this file.
+ **********************************************************************/
+int   TABMAPFile::GetMinTABFileVersion()
+{
+    int nToolVersion = 0;
+
+    if (m_poToolDefTable)
+        nToolVersion = m_poToolDefTable->GetMinVersionNumber();
+
+    return MAX(nToolVersion, m_nMinTABVersion);
+}
 
 
 /**********************************************************************

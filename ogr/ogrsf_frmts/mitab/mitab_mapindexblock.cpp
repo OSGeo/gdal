@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapindexblock.cpp,v 1.5 2000/01/15 22:30:44 daniel Exp $
+ * $Id: mitab_mapindexblock.cpp,v 1.7 2000/05/23 17:02:54 daniel Exp $
  *
  * Name:     mitab_mapindexblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,13 @@
  **********************************************************************
  *
  * $Log: mitab_mapindexblock.cpp,v $
+ * Revision 1.7  2000/05/23 17:02:54  daniel
+ * Removed unused variables
+ *
+ * Revision 1.6  2000/05/19 06:45:10  daniel
+ * Modified generation of spatial index to split index nodes and produce a
+ * more balanced tree.
+ *
  * Revision 1.5  2000/01/15 22:30:44  daniel
  * Switch to MIT/X-Consortium OpenSource license
  *
@@ -63,13 +70,17 @@
 TABMAPIndexBlock::TABMAPIndexBlock(TABAccess eAccessMode /*= TABRead*/):
     TABRawBinBlock(eAccessMode, TRUE)
 {
-    m_papsEntries = NULL;
     m_numEntries = 0;
 
     m_nMinX = 1000000000;
     m_nMinY = 1000000000;
     m_nMaxX = -1000000000;
     m_nMaxY = -1000000000;
+
+    m_poCurChild = NULL;
+    m_nCurChildIndex = -1;
+    m_poParentRef = NULL;
+    m_poBlockManagerRef = NULL;
 }
 
 /**********************************************************************
@@ -79,18 +90,14 @@ TABMAPIndexBlock::TABMAPIndexBlock(TABAccess eAccessMode /*= TABRead*/):
  **********************************************************************/
 TABMAPIndexBlock::~TABMAPIndexBlock()
 {
-    int i;
+    if (m_poCurChild)
+    {
+        m_poCurChild->CommitToFile();
+        delete m_poCurChild;
+    }
 
     // Note that in read mode, m_numEntries is set but m_papsEntries is not
     // used... be careful about that!
-
-    for(i=0; m_papsEntries && i<m_numEntries; i++)
-    {
-        if (m_papsEntries[i]->poBlock)
-            delete m_papsEntries[i]->poBlock;
-        CPLFree(m_papsEntries[i]);
-    }
-    CPLFree(m_papsEntries);
 
 }
 
@@ -105,9 +112,9 @@ TABMAPIndexBlock::~TABMAPIndexBlock()
  * CPLError() will have been called.
  **********************************************************************/
 int     TABMAPIndexBlock::InitBlockFromData(GByte *pabyBuf, int nSize, 
-                                         GBool bMakeCopy /* = TRUE */,
-                                         FILE *fpSrc /* = NULL */, 
-                                         int nOffset /* = 0 */)
+                                            GBool bMakeCopy /* = TRUE */,
+                                            FILE *fpSrc /* = NULL */, 
+                                            int nOffset /* = 0 */)
 {
     int nStatus;
 
@@ -138,6 +145,9 @@ int     TABMAPIndexBlock::InitBlockFromData(GByte *pabyBuf, int nSize,
     GotoByteInBlock(0x002);
     m_numEntries = ReadInt16();
 
+    if (m_numEntries > 0)
+        ReadAllEntries();
+
     return 0;
 }
 
@@ -166,6 +176,15 @@ int     TABMAPIndexBlock::CommitToFile()
     }
 
     /*-----------------------------------------------------------------
+     * Commit child first
+     *----------------------------------------------------------------*/
+    if (m_poCurChild)
+    {
+        if (m_poCurChild->CommitToFile() != 0)
+            return -1;
+    }
+
+    /*-----------------------------------------------------------------
      * Make sure 4 bytes block header is up to date.
      *----------------------------------------------------------------*/
     GotoByteInBlock(0x000);
@@ -182,13 +201,8 @@ int     TABMAPIndexBlock::CommitToFile()
      *----------------------------------------------------------------*/
     for(int i=0; nStatus == 0 && i<m_numEntries; i++)
     {
-        if (m_papsEntries[i]->poBlock)
-        {
-            nStatus = m_papsEntries[i]->poBlock->CommitToFile();
-        }
-
         if (nStatus == 0)
-            nStatus = WriteNextEntry(m_papsEntries[i]);
+            nStatus = WriteNextEntry(&(m_pasEntries[i]));
     }
 
 
@@ -200,6 +214,7 @@ int     TABMAPIndexBlock::CommitToFile()
 
     return nStatus;
 }
+
 
 /**********************************************************************
  *                   TABMAPIndexBlock::InitNewBlock()
@@ -250,6 +265,7 @@ int     TABMAPIndexBlock::InitNewBlock(FILE *fpSrc, int nBlockSize,
 }
 
 
+
 /**********************************************************************
  *                   TABMAPIndexBlock::ReadNextEntry()
  *
@@ -290,30 +306,17 @@ int     TABMAPIndexBlock::ReadNextEntry(TABMAPIndexEntry *psEntry)
  **********************************************************************/
 int     TABMAPIndexBlock::ReadAllEntries()
 {
-    if (m_papsEntries)
-        return -1;
-
+    CPLAssert(m_numEntries <= TAB_MAX_ENTRIES_INDEX_BLOCK);
     if (m_numEntries == 0)
         return 0;
     
     if (GotoByteInBlock( 0x004 ) != 0)
         return -1;
 
-    /*-----------------------------------------------------------------
-     * Alloc array of index entries... and read all entries
-     *----------------------------------------------------------------*/
-    m_papsEntries = (TABMAPIndexEntry**)CPLCalloc(m_numEntries,
-                                                  sizeof(TABMAPIndexEntry*));
-
     for(int i=0; i<m_numEntries; i++)
     {
-        m_papsEntries[i]=
-                   (TABMAPIndexEntry*)CPLCalloc(1,sizeof(TABMAPIndexEntry));
-
-        if ( ReadNextEntry(m_papsEntries[i]) != 0)
+        if ( ReadNextEntry(&(m_pasEntries[i])) != 0)
             return -1;
-
-        m_papsEntries[i]->poBlock = NULL;
     }
 
     return 0;
@@ -353,30 +356,22 @@ int     TABMAPIndexBlock::WriteNextEntry(TABMAPIndexEntry *psEntry)
  **********************************************************************/
 int     TABMAPIndexBlock::GetNumFreeEntries()
 {
-    int nMaxEntries = (m_nBlockSize-4)/20;
+    /* nMaxEntries = (m_nBlockSize-4)/20;*/
 
-    return (nMaxEntries - m_numEntries);
+    return (TAB_MAX_ENTRIES_INDEX_BLOCK - m_numEntries);
 }
 
 /**********************************************************************
- *                   TABMAPIndexBlock::GetMaxDepth()
+ *                   TABMAPIndexBlock::GetCurMaxDepth()
  *
- * Return maximum depth in the current index tree
+ * Return maximum depth in the currently loaded part of the index tree
  **********************************************************************/
-int     TABMAPIndexBlock::GetMaxDepth()
+int     TABMAPIndexBlock::GetCurMaxDepth()
 {
-    int nMaxDepth = 0, nDepth, i;
+    if (m_poCurChild)
+        return m_poCurChild->GetCurMaxDepth() + 1;
 
-    for(i=0; i<m_numEntries; i++)
-    {
-        if (m_papsEntries[i]->poBlock)
-        {
-            nDepth = m_papsEntries[i]->poBlock->GetMaxDepth();
-            nMaxDepth = MAX(nDepth, nMaxDepth);
-        }
-    }
-
-    return nMaxDepth+1;
+    return 1;  /* No current child... this node counts for one. */
 }
 
 /**********************************************************************
@@ -394,29 +389,19 @@ void TABMAPIndexBlock::GetMBR(GInt32 &nXMin, GInt32 &nYMin,
 }
 
 /**********************************************************************
- *                   TABMAPIndexBlock::AddEntry()
+ *                   TABMAPIndexBlock::InsertEntry()
  *
- * Add an entry to this index block.  
- *
- * For TABMAPObjectBlock entries, pass poBlock=NULL.
- *
- * For TABMAPIndexBlock entries, pass a non-NULL value for poBlock and this
- * index block will become a child of this object.  This means that it will
- * be maintained and later committed to disk, etc.
- *
- * __TODO__ This function could eventually be improved to add entries to
- *          children leaves as well.
+ * Add a new entry to this index block.  It is assumed that there is at
+ * least one free slot available, so if the block has to be split then it
+ * should have been done prior to calling this function.
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int     TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin,
-                                   GInt32 nXMax, GInt32 nYMax,
-                                   GInt32 nBlockPtr, 
-                                   TABMAPIndexBlock *poBlock /*=NULL*/)
+int     TABMAPIndexBlock::InsertEntry(GInt32 nXMin, GInt32 nYMin,
+                                      GInt32 nXMax, GInt32 nYMax,
+                                      GInt32 nBlockPtr)
 {
-    int i;
-
-    if (m_eAccess != TABWrite)
+    if (m_eAccess != TABWrite && m_eAccess != TABReadWrite)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                "Failed adding index entry: File not opened for write access.");
@@ -425,33 +410,58 @@ int     TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin,
 
     if (GetNumFreeEntries() < 1)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
+        CPLError(CE_Failure, CPLE_AssertionFailed,
                  "Current Block Index is full, cannot add new entry.");
         return -1;
     }
 
     /*-----------------------------------------------------------------
-     * Realloc array of index entries...
+     * Update count of entries and store new entry.
      *----------------------------------------------------------------*/
     m_numEntries++;
-    i = m_numEntries-1;
+    CPLAssert(m_numEntries <= TAB_MAX_ENTRIES_INDEX_BLOCK);
 
-    m_papsEntries = (TABMAPIndexEntry**)CPLRealloc(m_papsEntries,
-                                       m_numEntries*sizeof(TABMAPIndexEntry*));
-    m_papsEntries[i]=(TABMAPIndexEntry*)CPLCalloc(1,sizeof(TABMAPIndexEntry));
+    m_pasEntries[m_numEntries-1].XMin = nXMin;
+    m_pasEntries[m_numEntries-1].YMin = nYMin;
+    m_pasEntries[m_numEntries-1].XMax = nXMax;
+    m_pasEntries[m_numEntries-1].YMax = nYMax;
+    m_pasEntries[m_numEntries-1].nBlockPtr = nBlockPtr;
+
+    return 0;
+}
+
+/**********************************************************************
+ *                   TABMAPIndexBlock::AddEntry()
+ *
+ * Recursively search the tree until we encounter the best leaf to
+ * contain the specified object MBR and add the new entry to it.
+ *
+ * In the even that the selected leaf node would be full, then it will be
+ * split and this split can propagate up to its parent, etc.
+ *
+ * If bAddInThisNodeOnly=TRUE, then the entry is added only locally and
+ * we do not try to update the child node.  This is used when the parent 
+ * of a node that is being splitted has to be updated.
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int     TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin,
+                                   GInt32 nXMax, GInt32 nYMax,
+                                   GInt32 nBlockPtr,
+                                   GBool bAddInThisNodeOnly /*=FALSE*/)
+{
+    int i;
+    GBool bFound = FALSE;
+
+    if (m_eAccess != TABWrite && m_eAccess != TABReadWrite)
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+               "Failed adding index entry: File not opened for write access.");
+        return -1;
+    }
 
     /*-----------------------------------------------------------------
-     * ... and store new entry.
-     *----------------------------------------------------------------*/
-    m_papsEntries[i]->XMin = nXMin;
-    m_papsEntries[i]->YMin = nYMin;
-    m_papsEntries[i]->XMax = nXMax;
-    m_papsEntries[i]->YMax = nYMax;
-    m_papsEntries[i]->nBlockPtr = nBlockPtr;
-    m_papsEntries[i]->poBlock = poBlock;
-
-    /*-----------------------------------------------------------------
-     * Update MBR
+     * Update MBR now... even if we're going to split current node later.
      *----------------------------------------------------------------*/
     if (nXMin < m_nMinX)
         m_nMinX = nXMin;
@@ -463,9 +473,515 @@ int     TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin,
     if (nYMax > m_nMaxY)
         m_nMaxY = nYMax;
 
+    /*-----------------------------------------------------------------
+     * Look for the best candidate to contain the new entry
+     * __TODO__ For now we'll just look for the first entry that can 
+     *          contain the MBR, but we could probably have a better
+     *          search criteria to optimize the resulting tree
+     *----------------------------------------------------------------*/
+
+    /*-----------------------------------------------------------------
+     * If bAddInThisNodeOnly=TRUE then we add the entry only locally
+     * and do not need to look for the proper leaf to insert it.
+     *----------------------------------------------------------------*/
+    if (bAddInThisNodeOnly)
+        bFound = TRUE;
+
+    /*-----------------------------------------------------------------
+     * First check if current child could be a valid candidate.
+     *----------------------------------------------------------------*/
+    if (!bFound &&
+        m_poCurChild && (m_pasEntries[m_nCurChildIndex].XMin <= nXMin &&
+                         m_pasEntries[m_nCurChildIndex].XMax >= nXMax &&
+                         m_pasEntries[m_nCurChildIndex].YMin <= nYMin &&
+                         m_pasEntries[m_nCurChildIndex].YMax >= nYMax ) )
+    {
+
+        bFound = TRUE;
+    }
+
+    /*-----------------------------------------------------------------
+     * Scan all entries to find a valid candidate
+     * We look for the entry whose center is the closest to the center
+     * of the object to add.
+     *----------------------------------------------------------------*/
+    if (!bFound)
+    {
+        int nObjCenterX = (nXMin + nXMax)/2;
+        int nObjCenterY = (nYMin + nYMax)/2;
+
+        // Make sure blocks currently in memory are written to disk.
+        if (m_poCurChild)
+        {
+            m_poCurChild->CommitToFile();
+            delete m_poCurChild;
+            m_poCurChild = NULL;
+            m_nCurChildIndex = -1;
+        }
+
+        // Look for entry whose center is closest to center of new object
+        int nBestCandidate = -1;
+        int nMinDist = 2000000000;
+
+        for(i=0; i<m_numEntries; i++)
+        {
+            int nX = (m_pasEntries[i].XMin + m_pasEntries[i].XMax)/2;
+            int nY = (m_pasEntries[i].YMin + m_pasEntries[i].YMax)/2;
+
+            int nDist = (nX-nObjCenterX)*(nX-nObjCenterX) +
+                             (nY-nObjCenterY)*(nY-nObjCenterY);
+
+            if (nBestCandidate==-1 || nDist < nMinDist)
+            {
+                nBestCandidate = i;
+                nMinDist = nDist;
+            }
+        }
+        
+        if (nBestCandidate != -1)
+        {
+            // Try to load corresponding child... if it fails then we are
+            // likely in a leaf node, so we'll add the new entry in the current
+            // node.
+            TABRawBinBlock *poBlock = NULL;
+
+            // Prevent error message if referred block not committed yet.
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+
+            if ((poBlock = TABCreateMAPBlockFromFile(m_fp, 
+                                       m_pasEntries[nBestCandidate].nBlockPtr,
+                                       512, TRUE, TABReadWrite)) &&
+                poBlock->GetBlockClass() == TABMAP_INDEX_BLOCK)
+            {
+                m_poCurChild = (TABMAPIndexBlock*)poBlock;
+                poBlock = NULL;
+                m_nCurChildIndex = nBestCandidate;
+                m_poCurChild->SetParentRef(this);
+                m_poCurChild->SetMAPBlockManagerRef(m_poBlockManagerRef);
+                bFound = TRUE;
+            }
+                
+            if (poBlock)
+                delete poBlock;
+            
+            CPLPopErrorHandler();
+            CPLErrorReset();
+        }
+    }
+
+    if (bFound && !bAddInThisNodeOnly)
+    {
+        /*-------------------------------------------------------------
+         * Found a child leaf... pass the call to it.
+         *------------------------------------------------------------*/
+        if (m_poCurChild->AddEntry(nXMin, nYMin, nXMax, nYMax, nBlockPtr) != 0)
+            return -1;
+    }
+    else
+    {
+        /*-------------------------------------------------------------
+         * Found no child to store new object... we're likely at the leaf
+         * level so we'll store new object in current node
+         *------------------------------------------------------------*/
+
+        /*-------------------------------------------------------------
+         * First thing to do is make sure that there is room for a new
+         * entry in this node, and to split it if necessary.
+         *------------------------------------------------------------*/
+        if (GetNumFreeEntries() < 1)
+        {
+            if (m_poParentRef == NULL)
+            {
+                /*-----------------------------------------------------
+                 * Splitting the root node adds one level to the tree, so
+                 * after splitting we just redirect the call to the new
+                 * child that's just been created.
+                 *----------------------------------------------------*/
+                if (SplitRootNode((nXMin+nXMax)/2, (nYMin+nYMax)/2) != 0)
+                    return -1;  // Error happened and has already been reported
+
+                CPLAssert(m_poCurChild);
+                return m_poCurChild->AddEntry(nXMin, nYMin, nXMax, nYMax,
+                                              nBlockPtr, TRUE);
+            }
+            else
+            {
+                /*-----------------------------------------------------
+                 * Splitting a regular node
+                 *----------------------------------------------------*/
+                if (SplitNode((nXMin+nXMax)/2, (nYMin+nYMax)/2) != 0)
+                    return -1; 
+            }
+        }
+
+        if (InsertEntry(nXMin, nYMin, nXMax, nYMax, nBlockPtr) != 0)
+            return -1;
+    }
+
+    /*-----------------------------------------------------------------
+     * Update current node MBR and the reference to it in our parent.
+     *----------------------------------------------------------------*/
+    RecomputeMBR();
+
     return 0;
 }
 
+/**********************************************************************
+ *                   TABMAPIndexBlock::SplitNode()
+ *
+ * Split current Node, update the references in the parent node, etc.
+ * Note that Root Nodes cannot be split using this method... SplitRootNode()
+ * should be used instead.
+ *
+ * nNewEntryX, nNewEntryY are the coord. of the center of the new entry that 
+ * will be added after the split.  The split is done so that the current
+ * node will be the one in which the new object should be stored.
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int     TABMAPIndexBlock::SplitNode(int nNewEntryX, int nNewEntryY)
+{
+    int nSrcEntries = m_numEntries;
+    int nWidth, nHeight, nCenterX1, nCenterY1, nCenterX2, nCenterY2;
+
+    CPLAssert(m_poBlockManagerRef);
+
+    /*-----------------------------------------------------------------
+     * Create a 2nd node, and assign both nodes a MBR that is half
+     * of the biggest dimension (width or height) of the current node's MBR
+     *
+     * We also want to keep this node's current child in here.
+     * Since splitting happens only during an addentry() operation and 
+     * then both the current child and nNewEntryX/Y should fit in the same
+     * area.
+     *----------------------------------------------------------------*/
+    TABMAPIndexBlock *poNewNode = new TABMAPIndexBlock(m_eAccess);
+    if (poNewNode->InitNewBlock(m_fp, 512, 
+                                m_poBlockManagerRef->AllocNewBlock()) != 0)
+    {
+        return -1;
+    }
+    poNewNode->SetMAPBlockManagerRef(m_poBlockManagerRef);
+
+
+    nWidth = ABS(m_nMaxX - m_nMinX);
+    nHeight = ABS(m_nMaxY - m_nMinY);
+
+    if (nWidth > nHeight)
+    {
+        // Split node horizontally
+        nCenterY1 = nCenterY2 = m_nMinY + nHeight/2;
+
+        if (nNewEntryX < (m_nMinX + m_nMaxX)/2)
+        {
+            nCenterX1 = m_nMinX + nWidth/4;
+            nCenterX2 = m_nMaxX - nWidth/4;
+        }
+        else
+        {
+            nCenterX2 = m_nMinX + nWidth/4;
+            nCenterX1 = m_nMaxX - nWidth/4;
+        }
+    }
+    else
+    {
+        // Split node vertically
+        nCenterX1 = nCenterX2 = m_nMinX + nWidth/2;
+
+        if (nNewEntryY < (m_nMinY + m_nMaxY)/2)
+        {
+            nCenterY1 = m_nMinY + nHeight/4;
+            nCenterY2 = m_nMaxY - nHeight/4;
+        }
+        else
+        {
+            nCenterY2 = m_nMinY + nHeight/4;
+            nCenterY1 = m_nMaxY - nHeight/4;
+        }
+    }
+
+    /*-----------------------------------------------------------------
+     * Go through all entries and assign them to one of the 2 nodes.
+     *
+     * Criteria is that entries are assigned to the node in which their
+     * center falls.
+     *
+     * Hummm... this does not prevent the possibility that one of the
+     * 2 nodes might end up empty at the end.
+     *----------------------------------------------------------------*/
+    m_numEntries = 0;
+    for(int iEntry=0; iEntry<nSrcEntries; iEntry++)
+    {
+        int nEntryCenterX = (m_pasEntries[iEntry].XMax +
+                             m_pasEntries[iEntry].XMin) / 2;
+        int nEntryCenterY = (m_pasEntries[iEntry].YMax +
+                             m_pasEntries[iEntry].YMin) / 2;
+
+        if (iEntry == m_nCurChildIndex ||
+            (nWidth > nHeight && 
+             ABS(nEntryCenterX-nCenterX1) < ABS(nEntryCenterX-nCenterX2)) ||
+            (nWidth <= nHeight &&
+             ABS(nEntryCenterY-nCenterY1) < ABS(nEntryCenterY-nCenterY2) ) )
+        {
+            // This entry stays in current node.
+            InsertEntry(m_pasEntries[iEntry].XMin, m_pasEntries[iEntry].YMin,
+                        m_pasEntries[iEntry].XMax, m_pasEntries[iEntry].YMax,
+                        m_pasEntries[iEntry].nBlockPtr);
+
+            // We have to keep track of new m_nCurChildIndex value
+            if (iEntry == m_nCurChildIndex) 
+            {
+                m_nCurChildIndex = m_numEntries-1;
+            }
+        }
+        else
+        {
+            // This entry goes in the new node.
+            poNewNode->InsertEntry(m_pasEntries[iEntry].XMin, 
+                                   m_pasEntries[iEntry].YMin,
+                                   m_pasEntries[iEntry].XMax, 
+                                   m_pasEntries[iEntry].YMax,
+                                   m_pasEntries[iEntry].nBlockPtr);
+        }
+    }
+
+    /*-----------------------------------------------------------------
+     * If no entry was moved to second node, then move ALL entries except
+     * the current child to the second node... this way current node will
+     * have room for a new entry when this function exits.
+     *----------------------------------------------------------------*/
+    if (poNewNode->GetNumEntries() == 0)
+    {
+        nSrcEntries = m_numEntries;
+        m_numEntries = 0;
+        for(int iEntry=0; iEntry<nSrcEntries; iEntry++)
+        {
+            if (iEntry == m_nCurChildIndex)
+            {
+                // Keep current child in current node
+                InsertEntry(m_pasEntries[iEntry].XMin, 
+                            m_pasEntries[iEntry].YMin,
+                            m_pasEntries[iEntry].XMax,
+                            m_pasEntries[iEntry].YMax,
+                            m_pasEntries[iEntry].nBlockPtr);
+                m_nCurChildIndex = m_numEntries-1;
+            }
+            else
+            {
+                // All other entries go to second node
+                poNewNode->InsertEntry(m_pasEntries[iEntry].XMin, 
+                                       m_pasEntries[iEntry].YMin,
+                                       m_pasEntries[iEntry].XMax, 
+                                       m_pasEntries[iEntry].YMax,
+                                       m_pasEntries[iEntry].nBlockPtr);
+            }
+        }
+    }
+
+    /*-----------------------------------------------------------------
+     * Recompute MBR and update current node info in parent
+     *----------------------------------------------------------------*/
+    RecomputeMBR();
+    poNewNode->RecomputeMBR();
+
+    /*-----------------------------------------------------------------
+     * Add second node info to parent and then flush it to disk.
+     * This may trigger splitting of parent
+     *----------------------------------------------------------------*/
+    CPLAssert(m_poParentRef);
+    int nMinX, nMinY, nMaxX, nMaxY;
+    poNewNode->GetMBR(nMinX, nMinY, nMaxX, nMaxY);
+    m_poParentRef->AddEntry(nMinX, nMinY, nMaxX, nMaxY,
+                            poNewNode->GetNodeBlockPtr(), TRUE);
+    poNewNode->CommitToFile();
+    delete poNewNode;
+
+    return 0;
+}
+
+/**********************************************************************
+ *                   TABMAPIndexBlock::SplitRootNode()
+ *
+ * (private method)
+ *
+ * Split a Root Node.
+ * First, a level of nodes must be added to the tree, then the contents
+ * of what used to be the root node is moved 1 level down and then that
+ * node is split like a regular node.
+ *
+ * Returns 0 on success, -1 on error
+ **********************************************************************/
+int TABMAPIndexBlock::SplitRootNode(int nNewEntryX, int nNewEntryY)
+{
+    CPLAssert(m_poBlockManagerRef);
+    CPLAssert(m_poParentRef == NULL);
+
+    /*-----------------------------------------------------------------
+     * Since a root note cannot be split, we add a level of nodes
+     * under it and we'll do the split at that level.
+     *----------------------------------------------------------------*/
+    TABMAPIndexBlock *poNewNode = new TABMAPIndexBlock(m_eAccess);
+
+    if (poNewNode->InitNewBlock(m_fp, 512, 
+                                m_poBlockManagerRef->AllocNewBlock()) != 0)
+    {
+        return -1;
+    }
+    poNewNode->SetMAPBlockManagerRef(m_poBlockManagerRef);
+
+    // Move all entries to the new child
+    int nSrcEntries = m_numEntries;
+    m_numEntries = 0;
+    for(int iEntry=0; iEntry<nSrcEntries; iEntry++)
+    {
+        poNewNode->InsertEntry(m_pasEntries[iEntry].XMin, 
+                               m_pasEntries[iEntry].YMin,
+                               m_pasEntries[iEntry].XMax, 
+                               m_pasEntries[iEntry].YMax,
+                               m_pasEntries[iEntry].nBlockPtr);
+    }
+    
+    /*-----------------------------------------------------------------
+     * Transfer current child object to new node.
+     *----------------------------------------------------------------*/
+    if (m_poCurChild)
+    {
+        poNewNode->SetCurChildRef(m_poCurChild, m_nCurChildIndex);
+        m_poCurChild->SetParentRef(poNewNode);
+        m_poCurChild = NULL;
+        m_nCurChildIndex = -1;
+    }
+
+    /*-----------------------------------------------------------------
+     * Place info about new child in current node.
+     *----------------------------------------------------------------*/
+    poNewNode->RecomputeMBR();
+    int nMinX, nMinY, nMaxX, nMaxY;
+    poNewNode->GetMBR(nMinX, nMinY, nMaxX, nMaxY);
+    InsertEntry(nMinX, nMinY, nMaxX, nMaxY, poNewNode->GetNodeBlockPtr());
+
+    /*-----------------------------------------------------------------
+     * Keep a reference to the new child
+     *----------------------------------------------------------------*/
+    poNewNode->SetParentRef(this);
+    m_poCurChild = poNewNode;
+    m_nCurChildIndex = m_numEntries -1;
+
+    /*-----------------------------------------------------------------
+     * And finally force the child to split itself
+     *----------------------------------------------------------------*/
+    return m_poCurChild->SplitNode(nNewEntryX, nNewEntryY);
+}
+
+
+/**********************************************************************
+ *                   TABMAPIndexBlock::RecomputeMBR()
+ *
+ * Recompute current block MBR, and update info in parent.
+ **********************************************************************/
+void TABMAPIndexBlock::RecomputeMBR()
+{
+    m_nMinX = 1000000000;
+    m_nMinY = 1000000000;
+    m_nMaxX = -1000000000;
+    m_nMaxY = -1000000000;
+
+    for(int i=0; i<m_numEntries; i++)
+    {
+        if (m_pasEntries[i].XMin < m_nMinX)
+            m_nMinX = m_pasEntries[i].XMin;
+        if (m_pasEntries[i].XMax > m_nMaxX)
+            m_nMaxX = m_pasEntries[i].XMax;
+    
+        if (m_pasEntries[i].YMin < m_nMinY)
+            m_nMinY = m_pasEntries[i].YMin;
+        if (m_pasEntries[i].YMax > m_nMaxY)
+            m_nMaxY = m_pasEntries[i].YMax;
+    }
+
+    if (m_poParentRef)
+        m_poParentRef->UpdateCurChildMBR(m_nMinX, m_nMinY, m_nMaxX, m_nMaxY,
+                                         GetNodeBlockPtr());
+
+}
+
+/**********************************************************************
+ *                   TABMAPIndexBlock::UpateCurChildMBR()
+ *
+ * Update current child MBR info, and propagate info in parent.
+ *
+ * nBlockPtr is passed only to validate the consistency of the tree.
+ **********************************************************************/
+void TABMAPIndexBlock::UpdateCurChildMBR(GInt32 nXMin, GInt32 nYMin,
+                                         GInt32 nXMax, GInt32 nYMax,
+                                         GInt32 nBlockPtr)
+{
+    CPLAssert(m_poCurChild);
+    CPLAssert(m_pasEntries[m_nCurChildIndex].nBlockPtr == nBlockPtr);
+
+    m_pasEntries[m_nCurChildIndex].XMin = nXMin;
+    m_pasEntries[m_nCurChildIndex].YMin = nYMin;
+    m_pasEntries[m_nCurChildIndex].XMax = nXMax;
+    m_pasEntries[m_nCurChildIndex].YMax = nYMax;
+
+    m_nMinX = 1000000000;
+    m_nMinY = 1000000000;
+    m_nMaxX = -1000000000;
+    m_nMaxY = -1000000000;
+
+    for(int i=0; i<m_numEntries; i++)
+    {
+        if (m_pasEntries[i].XMin < m_nMinX)
+            m_nMinX = m_pasEntries[i].XMin;
+        if (m_pasEntries[i].XMax > m_nMaxX)
+            m_nMaxX = m_pasEntries[i].XMax;
+    
+        if (m_pasEntries[i].YMin < m_nMinY)
+            m_nMinY = m_pasEntries[i].YMin;
+        if (m_pasEntries[i].YMax > m_nMaxY)
+            m_nMaxY = m_pasEntries[i].YMax;
+    }
+
+    if (m_poParentRef)
+        m_poParentRef->UpdateCurChildMBR(m_nMinX, m_nMinY, m_nMaxX, m_nMaxY,
+                                         GetNodeBlockPtr());
+
+}
+
+
+/**********************************************************************
+ *                   TABMAPIndexBlock::SetMAPBlockManagerRef()
+ *
+ * Pass a reference to the block manager object for the file this 
+ * block belongs to.  The block manager will be used by this object
+ * when it needs to automatically allocate a new block.
+ **********************************************************************/
+void TABMAPIndexBlock::SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr)
+{
+    m_poBlockManagerRef = poBlockMgr;
+};
+
+/**********************************************************************
+ *                   TABMAPIndexBlock::SetParentRef()
+ *
+ * Used to pass a reference to this node's parent.
+ **********************************************************************/
+void    TABMAPIndexBlock::SetParentRef(TABMAPIndexBlock *poParent)
+{
+    m_poParentRef = poParent;
+}
+
+/**********************************************************************
+ *                   TABMAPIndexBlock::SetCurChildRef()
+ *
+ * Used to transfer a child object from one node to another
+ **********************************************************************/
+void    TABMAPIndexBlock::SetCurChildRef(TABMAPIndexBlock *poChild,
+                                         int nChildIndex)
+{
+    m_poCurChild = poChild;
+    m_nCurChildIndex = nChildIndex;
+}
 
 /**********************************************************************
  *                   TABMAPIndexBlock::Dump()
@@ -493,18 +1009,15 @@ void TABMAPIndexBlock::Dump(FILE *fpOut /*=NULL*/)
         /*-------------------------------------------------------------
          * Loop through all entries, dumping each of them
          *------------------------------------------------------------*/
-        if (m_numEntries > 0 && m_papsEntries == NULL)
+        if (m_numEntries > 0)
             ReadAllEntries();
 
-        for(int i=0; m_papsEntries && i<m_numEntries; i++)
+        for(int i=0; i<m_numEntries; i++)
         {
-            if (m_papsEntries[i])
-            {
-                fprintf(fpOut, "    %6d -> (%d, %d) - (%d, %d)\n",
-                        m_papsEntries[i]->nBlockPtr,
-                        m_papsEntries[i]->XMin, m_papsEntries[i]->YMin,
-                        m_papsEntries[i]->XMax, m_papsEntries[i]->YMax );
-            }
+            fprintf(fpOut, "    %6d -> (%d, %d) - (%d, %d)\n",
+                    m_pasEntries[i].nBlockPtr,
+                    m_pasEntries[i].XMin, m_pasEntries[i].YMin,
+                    m_pasEntries[i].XMax, m_pasEntries[i].YMax );
         }
 
     }

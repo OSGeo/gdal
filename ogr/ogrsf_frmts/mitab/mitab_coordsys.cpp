@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.9 2000/01/15 22:30:43 daniel Exp $
+ * $Id: mitab_coordsys.cpp,v 1.12 2000/03/27 03:31:15 daniel Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,16 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.12  2000/03/27 03:31:15  daniel
+ * Fixed parsing of CoordSys NonEarth broken by previous change
+ *
+ * Revision 1.11  2000/03/19 23:26:27  daniel
+ * Made MITABCoordSys2SpatialRef() remove leading spaces in coordsys string
+ * and produce a CPLError() if it fails parsing string.
+ *
+ * Revision 1.10  2000/02/07 17:43:37  daniel
+ * Fixed offset in parsing of custom datum string in SetSpatialRef()
+ *
  * Revision 1.9  2000/01/15 22:30:43  daniel
  * Switch to MIT/X-Consortium OpenSource license
  *
@@ -97,6 +107,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
 /* -------------------------------------------------------------------- */
 /*      Parse the passed string into words.                             */
 /* -------------------------------------------------------------------- */
+    while(*pszCoordSys == ' ') pszCoordSys++;  // Eat leading spaces
     if( EQUALN(pszCoordSys,"CoordSys",8) )
         pszCoordSys += 9;
     
@@ -132,10 +143,22 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
         nProjection = atoi(papszFields[2]);
         papszNextField = papszFields + 3;
     }
+    else if (CSLCount( papszFields ) >= 3
+             && EQUAL(papszFields[0],"NonEarth")
+             && EQUAL(papszFields[1],"Units") )
+    {
+        // NonEarth Units "..." Bounds (x, y) (x, y)
+        nProjection = 0;
+        papszNextField = papszFields + 2;
+    }
     else
     {
+        // Invalid projection string ???
+        if (CSLCount(papszFields) > 0)
+            CPLError(CE_Warning, CPLE_IllegalArg,
+                     "Failed parsing CoordSys: '%s'", pszCoordSys);
         CSLDestroy(papszFields);
-        return NULL; // should we handle the units?
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -162,7 +185,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
     }
 
     if( nDatum == 9999
-        && CSLCount(papszNextField) >= 3 )
+        && CSLCount(papszNextField) >= 5 )
     {
         adfDatumParm[3] = atof(papszNextField[0]);
         adfDatumParm[4] = atof(papszNextField[1]);
@@ -818,11 +841,11 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
 
         if( CSLCount(papszFields) >= 10 )
         {
-            adfDatumParm[3] = atof(papszFields[4]);
-            adfDatumParm[4] = atof(papszFields[5]);
-            adfDatumParm[5] = atof(papszFields[6]);
-            adfDatumParm[6] = atof(papszFields[7]);
-            adfDatumParm[7] = atof(papszFields[8]);
+            adfDatumParm[3] = atof(papszFields[5]);
+            adfDatumParm[4] = atof(papszFields[6]);
+            adfDatumParm[5] = atof(papszFields[7]);
+            adfDatumParm[6] = atof(papszFields[8]);
+            adfDatumParm[7] = atof(papszFields[9]);
         }
 
         if( CSLCount(papszFields) < 5 )

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapcoordblock.cpp,v 1.7 2000/01/15 22:30:44 daniel Exp $
+ * $Id: mitab_mapcoordblock.cpp,v 1.8 2000/02/28 16:58:55 daniel Exp $
  *
  * Name:     mitab_mapcoordblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapcoordblock.cpp,v $
+ * Revision 1.8  2000/02/28 16:58:55  daniel
+ * Added V450 object types with num_points > 32767 and pen width in points
+ *
  * Revision 1.7  2000/01/15 22:30:44  daniel
  * Switch to MIT/X-Consortium OpenSource license
  *
@@ -367,6 +370,8 @@ int     TABMAPCoordBlock::ReadIntCoords(GBool bCompressed, int numCoordPairs,
  * At the end of the call, this TABMAPCoordBlock object will be located
  * at the beginning of the coordinate data.
  *
+ * In V450 the numVertices is stored on an int32 instead of an int16
+ *
  * IMPORTANT: This function makes the assumption that coordinates for all
  *            the sections are grouped together immediately after the
  *            last section header block (i.e. that the coord. data is not
@@ -377,9 +382,11 @@ int     TABMAPCoordBlock::ReadIntCoords(GBool bCompressed, int numCoordPairs,
  * Returns 0 if succesful or -1 if an error happened, in which case 
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed, int numSections,
+int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed, 
+                                           GBool bV450Hdr,
+                                           int numSections,
                                            TABMAPCoordSecHdr *pasHdrs,
-                                           int    &numVerticesTotal)
+                                           GInt32    &numVerticesTotal)
 {
     int i, nTotalHdrSizeUncompressed;
 
@@ -390,8 +397,13 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed, int numSections,
      * offset calculations are based on prior decompression of the 
      * coordinates.  Our coordinate offset calculations have
      * to take this fact into account.
+     * Also, V450 header section uses int32 instead of int16 for numVertices
+     * and we add another 2 bytes to align with a 4 bytes boundary.
      *------------------------------------------------------------*/
-    nTotalHdrSizeUncompressed = 24 * numSections;
+    if (bV450Hdr)
+        nTotalHdrSizeUncompressed = 28 * numSections;
+    else
+        nTotalHdrSizeUncompressed = 24 * numSections;
 
     numVerticesTotal = 0;
 
@@ -400,7 +412,10 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed, int numSections,
         /*-------------------------------------------------------------
          * Read the coord. section header blocks
          *------------------------------------------------------------*/
-        pasHdrs[i].numVertices = ReadInt16();
+        if (bV450Hdr)
+            pasHdrs[i].numVertices = ReadInt32();
+        else
+            pasHdrs[i].numVertices = ReadInt16();
         pasHdrs[i].numHoles = ReadInt16();
         ReadIntCoord(bCompressed, pasHdrs[i].nXMin, pasHdrs[i].nYMin);
         ReadIntCoord(bCompressed, pasHdrs[i].nXMax, pasHdrs[i].nYMax);
@@ -445,13 +460,16 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed, int numSections,
  * pasHdrs should point to an array of numSections TABMAPCoordSecHdr 
  * structures that have been properly initialized.
  *
+ * In V450 the numVertices is stored on an int32 instead of an int16
+ *
  * At the end of the call, this TABMAPCoordBlock object will be ready to
  * receive the coordinate data.
  *
  * Returns 0 if succesful or -1 if an error happened, in which case 
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPCoordBlock::WriteCoordSecHdrs(int numSections,
+int     TABMAPCoordBlock::WriteCoordSecHdrs(GBool bV450Hdr,
+                                            int numSections,
                                             TABMAPCoordSecHdr *pasHdrs)
 {
     int i;
@@ -461,7 +479,10 @@ int     TABMAPCoordBlock::WriteCoordSecHdrs(int numSections,
         /*-------------------------------------------------------------
          * Write the coord. section header blocks
          *------------------------------------------------------------*/
-        WriteInt16(pasHdrs[i].numVertices);
+        if (bV450Hdr)
+            WriteInt32(pasHdrs[i].numVertices);
+        else
+            WriteInt16(pasHdrs[i].numVertices);
         WriteInt16(pasHdrs[i].numHoles);
         WriteIntCoord(pasHdrs[i].nXMin, pasHdrs[i].nYMin);
         WriteIntCoord(pasHdrs[i].nXMax, pasHdrs[i].nYMax);
@@ -537,7 +558,7 @@ int     TABMAPCoordBlock::WriteIntCoord(GInt32 nX, GInt32 nY,
  * block belongs to.  The block manager will be used by this object
  * when it needs to automatically allocate a new block.
  **********************************************************************/
-void TABMAPCoordBlock::SetMAPBlockManagerRef(TABMAPBlockManager *poBlockMgr)
+void TABMAPCoordBlock::SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr)
 {
     m_poBlockManagerRef = poBlockMgr;
 };

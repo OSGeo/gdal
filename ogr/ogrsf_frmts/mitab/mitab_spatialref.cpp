@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_spatialref.cpp,v 1.17 2000/01/15 22:30:45 daniel Exp $
+ * $Id: mitab_spatialref.cpp,v 1.19 2000/02/07 17:43:17 daniel Exp $
  *
  * Name:     mitab_spatialref.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,13 @@
  **********************************************************************
  *
  * $Log: mitab_spatialref.cpp,v $
+ * Revision 1.19  2000/02/07 17:43:17  daniel
+ * Fixed offset in parsing of custom datum string in SetSpatialRef()
+ *
+ * Revision 1.18  2000/02/04 05:30:50  daniel
+ * Fixed problem in GetSpatialRef() with szDatumName[] buffer size and added
+ * use of an epsilon in comparing of datum parameters.
+ *
  * Revision 1.17  2000/01/15 22:30:45  daniel
  * Switch to MIT/X-Consortium OpenSource license
  *
@@ -622,8 +629,13 @@ OGRSpatialReference *TABFile::GetSpatialRef()
      * Set the datum.  We are only given the X, Y and Z shift for
      * the datum, so for now we just synthesize a name from this.
      * It would be better if we could lookup a name based on the shift.
+     *
+     * Since we have already encountered files in which adDatumParams[] values
+     * were in the order of 1e-150 when they should have actually been zeros,
+     * we will use an epsilon in our scan instead of looking for equality.
      *----------------------------------------------------------------*/
-    char	szDatumName[128];
+#define TAB_EQUAL(a, b) (((a)<(b) ? ((b)-(a)) : ((a)-(b))) < 1e-10)
+    char	szDatumName[160];
     int		iDatumInfo;
     MapInfoDatumInfo *psDatumInfo;
 
@@ -633,15 +645,15 @@ OGRSpatialReference *TABFile::GetSpatialRef()
     {
         psDatumInfo = asDatumInfoList + iDatumInfo;
         
-        if( psDatumInfo->nEllipsoid == sTABProj.nEllipsoidId
-            && psDatumInfo->dfShiftX == sTABProj.dDatumShiftX
-            && psDatumInfo->dfShiftY == sTABProj.dDatumShiftY
-            && psDatumInfo->dfShiftZ == sTABProj.dDatumShiftZ
-            && psDatumInfo->dfDatumParm0 == sTABProj.adDatumParams[0]
-            && psDatumInfo->dfDatumParm1 == sTABProj.adDatumParams[1]
-            && psDatumInfo->dfDatumParm2 == sTABProj.adDatumParams[2]
-            && psDatumInfo->dfDatumParm3 == sTABProj.adDatumParams[3]
-            && psDatumInfo->dfDatumParm4 == sTABProj.adDatumParams[4] )
+        if( TAB_EQUAL(psDatumInfo->nEllipsoid, sTABProj.nEllipsoidId)
+            && TAB_EQUAL(psDatumInfo->dfShiftX, sTABProj.dDatumShiftX)
+            && TAB_EQUAL(psDatumInfo->dfShiftY, sTABProj.dDatumShiftY)
+            && TAB_EQUAL(psDatumInfo->dfShiftZ, sTABProj.dDatumShiftZ)
+            && TAB_EQUAL(psDatumInfo->dfDatumParm0,sTABProj.adDatumParams[0])
+            && TAB_EQUAL(psDatumInfo->dfDatumParm1,sTABProj.adDatumParams[1])
+            && TAB_EQUAL(psDatumInfo->dfDatumParm2,sTABProj.adDatumParams[2])
+            && TAB_EQUAL(psDatumInfo->dfDatumParm3,sTABProj.adDatumParams[3])
+            && TAB_EQUAL(psDatumInfo->dfDatumParm4,sTABProj.adDatumParams[4]))
             break;
 
         psDatumInfo = NULL;
@@ -1015,11 +1027,11 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
 
         if( CSLCount(papszFields) >= 10 )
         {
-            sTABProj.adDatumParams[0] = atof(papszFields[4]);
-            sTABProj.adDatumParams[1] = atof(papszFields[5]);
-            sTABProj.adDatumParams[2] = atof(papszFields[6]);
-            sTABProj.adDatumParams[3] = atof(papszFields[7]);
-            sTABProj.adDatumParams[4] = atof(papszFields[8]);
+            sTABProj.adDatumParams[0] = atof(papszFields[5]);
+            sTABProj.adDatumParams[1] = atof(papszFields[6]);
+            sTABProj.adDatumParams[2] = atof(papszFields[7]);
+            sTABProj.adDatumParams[3] = atof(papszFields[8]);
+            sTABProj.adDatumParams[4] = atof(papszFields[9]);
         }
 
         CSLDestroy( papszFields );

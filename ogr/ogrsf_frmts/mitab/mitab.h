@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.29 2000/01/26 18:17:35 warmerda Exp $
+ * $Id: mitab.h,v 1.34 2000/06/28 00:30:25 warmerda Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo MIF Read/Write library
@@ -30,6 +30,21 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.34  2000/06/28 00:30:25  warmerda
+ * added count of points, lines, egions and text for MIFFile
+ *
+ * Revision 1.33  2000/04/21 12:40:01  daniel
+ * Added TABPolyline::GetNumParts()/GetPartRef()
+ *
+ * Revision 1.32  2000/02/28 16:41:48  daniel
+ * Added support for indexed, unique, and for new V450 object types
+ *
+ * Revision 1.31  2000/02/18 20:39:46  daniel
+ * Added TAB_WarningInvalidFieldName definition
+ *
+ * Revision 1.30  2000/02/05 19:27:31  daniel
+ * Added private methods to TABRegion for better handling of rings
+ *
  * Revision 1.29  2000/01/26 18:17:35  warmerda
  * added CreateField method
  *
@@ -215,6 +230,9 @@ class IMapInfoFile : public OGRLayer
                                       int &numRegions, int &numTexts,
                                       GBool bForce = TRUE ) = 0;
 
+    virtual GBool IsFieldIndexed(int nFieldId) = 0;
+    virtual GBool IsFieldUnique(int nFieldId) = 0;
+
     ///////////////
     // Write access specific stuff
     //
@@ -223,12 +241,21 @@ class IMapInfoFile : public OGRLayer
     virtual int SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
                             TABFieldType *paeMapInfoNativeFieldTypes = NULL)=0;
     virtual int AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
-                               int nWidth=0, int nPrecision=0) = 0;
+                               int nWidth=0, int nPrecision=0,
+                               GBool bIndexed=FALSE, GBool bUnique=FALSE) = 0;
     virtual OGRErr CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
     
     virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef) = 0;
 
     virtual int SetFeature(TABFeature *poFeature, int nFeatureId = -1) = 0;
+
+    virtual int SetFieldIndexed(int nFieldId) = 0;
+
+    ///////////////
+    // semi-private.
+    virtual int  GetProjInfo(TABProjInfo *poPI) = 0;
+    virtual int  SetProjInfo(TABProjInfo *poPI) = 0;
+    virtual int  SetMIFCoordSys(const char *pszMIFCoordSys) = 0;
 
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL) = 0;
@@ -248,7 +275,7 @@ class TABFile: public IMapInfoFile
     char        *m_pszFname;
     TABAccess   m_eAccessMode;
     char        **m_papszTABFile;
-    char        *m_pszVersion;
+    int         m_nVersion;
     char        *m_pszCharset;
     int         *m_panIndexNo;
     GBool       m_bBoundsSet;
@@ -313,6 +340,9 @@ class TABFile: public IMapInfoFile
                                       int &numRegions, int &numTexts,
                                       GBool bForce = TRUE);
 
+    virtual GBool IsFieldIndexed(int nFieldId);
+    virtual GBool IsFieldUnique(int nFieldId)   {return FALSE;};
+
     ///////////////
     // Write access specific stuff
     //
@@ -321,19 +351,21 @@ class TABFile: public IMapInfoFile
     virtual int SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
                             TABFieldType *paeMapInfoNativeFieldTypes = NULL);
     virtual int AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
-                               int nWidth=0, int nPrecision=0);
+                               int nWidth=0, int nPrecision=0,
+                               GBool bIndexed=FALSE, GBool bUnique=FALSE);
     virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef);
 
     virtual int SetFeature(TABFeature *poFeature, int nFeatureId = -1);
 
+    virtual int SetFieldIndexed(int nFieldId);
 
     ///////////////
     // semi-private.
-    int          GetProjInfo(TABProjInfo *poPI)
+    virtual int  GetProjInfo(TABProjInfo *poPI)
 	    { return m_poMAPFile->GetHeaderBlock()->GetProjInfo( poPI ); }
-    int          SetProjInfo(TABProjInfo *poPI)
+    virtual int  SetProjInfo(TABProjInfo *poPI)
 	    { return m_poMAPFile->GetHeaderBlock()->SetProjInfo( poPI ); }
-    int          SetMIFCoordSys(const char *pszMIFCoordSys);
+    virtual int  SetMIFCoordSys(const char *pszMIFCoordSys);
 
     int         GetFieldIndexNumber(int nFieldId);
     TABINDFile  *GetINDFileRef();
@@ -375,12 +407,23 @@ class TABView: public IMapInfoFile
     char        **m_papszWhereClause;
 
     TABRelation *m_poRelation;
+    GBool       m_bRelFieldsCreated;
 
     ///////////////
     // Private Read access specific stuff
     //
     int         ParseTABFile(const char *pszDatasetPath, 
                              GBool bTestOpenNoError = FALSE);
+
+    int         OpenForRead(const char *pszFname, 
+                            GBool bTestOpenNoError = FALSE );
+
+    ///////////////
+    // Private Write access specific stuff
+    //
+    int         OpenForWrite(const char *pszFname );
+    int         WriteTABFile();
+
 
   public:
     TABView();
@@ -419,33 +462,35 @@ class TABView: public IMapInfoFile
                                       int &numRegions, int &numTexts,
                                       GBool bForce = TRUE);
 
-    ///////////////
-    // Write access specific stuff ... not supported
-    //
-    virtual int SetBounds(double /*dXMin*/, double /*dYMin*/, 
-                          double /*dXMax*/, double /*dYMax*/)  {return -1;};
-    virtual int SetFeatureDefn(OGRFeatureDefn * /*poFeatureDefn*/,
-                           TABFieldType * /*paeMapInfoNativeFieldTypes*/ =NULL)
-                                                       {return -1;};
-    virtual int AddFieldNative(const char * /*pszName*/,
-                               TABFieldType /*eMapInfoType*/,
-                               int /*nWidth*/=0, int /*nPrecision*/=0)
-    							{return -1;};
-    virtual int SetSpatialRef(OGRSpatialReference * /*poSpatialRef*/)
-                                                       {return -1;};
+    virtual GBool IsFieldIndexed(int nFieldId);
+    virtual GBool IsFieldUnique(int nFieldId);
 
-    virtual int SetFeature(TABFeature * /*poFeature*/, int /*nFeatureId*/ = -1)
-                                                       {return -1;};
+    ///////////////
+    // Write access specific stuff
+    //
+    virtual int SetBounds(double dXMin, double dYMin, 
+                          double dXMax, double dYMax);
+    virtual int SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
+                           TABFieldType *paeMapInfoNativeFieldTypes=NULL);
+    virtual int AddFieldNative(const char *pszName,
+                               TABFieldType eMapInfoType,
+                               int nWidth=0, int nPrecision=0,
+                               GBool bIndexed=FALSE, GBool bUnique=FALSE);
+    virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef);
+
+    virtual int SetFeature(TABFeature *poFeature, int nFeatureId = -1);
+
+    virtual int SetFieldIndexed(int nFieldId);
 
     ///////////////
     // semi-private.
-    int          GetProjInfo(TABProjInfo *poPI)
+    virtual int  GetProjInfo(TABProjInfo *poPI)
 	    { return m_nMainTableIndex!=-1?
                      m_papoTABFiles[m_nMainTableIndex]->GetProjInfo(poPI):-1; }
-    int          SetProjInfo(TABProjInfo *poPI)
+    virtual int  SetProjInfo(TABProjInfo *poPI)
 	    { return m_nMainTableIndex!=-1?
                      m_papoTABFiles[m_nMainTableIndex]->SetProjInfo(poPI):-1; }
-    int          SetMIFCoordSys(const char * /*pszMIFCoordSys*/) {return -1;};
+    virtual int  SetMIFCoordSys(const char * /*pszMIFCoordSys*/) {return -1;};
 
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL);
@@ -472,6 +517,10 @@ class MIFFile: public IMapInfoFile
     char        *m_pszUnique;
     char        *m_pszIndex;
     char        *m_pszCoordSys;
+
+    TABFieldType *m_paeFieldType;
+    GBool       *m_pabFieldIndexed;
+    GBool       *m_pabFieldUnique;
     
     double       m_dfXMultiplier;
     double       m_dfYMultiplier;
@@ -482,6 +531,11 @@ class MIFFile: public IMapInfoFile
     double      m_dYMin;
     double      m_dXMax;
     double      m_dYMax;
+
+    int         m_nPoints;
+    int         m_nLines;
+    int         m_nRegions;
+    int         m_nTexts;
  
     MIDDATAFile  *m_poMIDFile;   // Mid file
     MIDDATAFile  *m_poMIFFile;   // Mif File
@@ -551,6 +605,9 @@ class MIFFile: public IMapInfoFile
                                       int &numRegions, int &numTexts,
                                       GBool bForce = TRUE);
 
+    virtual GBool IsFieldIndexed(int nFieldId);
+    virtual GBool IsFieldUnique(int nFieldId);
+
     ///////////////
     // Write access specific stuff
     //
@@ -559,18 +616,22 @@ class MIFFile: public IMapInfoFile
     virtual int SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
                             TABFieldType *paeMapInfoNativeFieldTypes = NULL);
     virtual int AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
-                               int nWidth=0, int nPrecision=0);
+                               int nWidth=0, int nPrecision=0,
+                               GBool bIndexed=FALSE, GBool bUnique=FALSE);
     /* TODO */
     virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef);
 
     virtual int SetFeature(TABFeature *poFeature, int nFeatureId = -1);
 
+    virtual int SetFieldIndexed(int nFieldId);
+
     ///////////////
     // semi-private.
-    int          GetProjInfo(TABProjInfo * /*poPI*/){return 0;}
+    virtual int  GetProjInfo(TABProjInfo * /*poPI*/){return -1;}
     /*  { return m_poMAPFile->GetHeaderBlock()->GetProjInfo( poPI ); }*/
-    int          SetProjInfo(TABProjInfo * /*poPI*/){return 0;}
+    virtual int  SetProjInfo(TABProjInfo * /*poPI*/){return -1;}
     /*  { return m_poMAPFile->GetHeaderBlock()->SetProjInfo( poPI ); }*/
+    virtual int  SetMIFCoordSys(const char * /*pszMIFCoordSys*/) {return -1;};
 
 #ifdef DEBUG
     virtual void Dump(FILE * /*fpOut*/ = NULL) {};
@@ -581,6 +642,7 @@ class MIFFile: public IMapInfoFile
  * Define some error codes specific to this lib.
  *--------------------------------------------------------------------*/
 #define TAB_WarningFeatureTypeNotSupported     501
+#define TAB_WarningInvalidFieldName            502
 
 /*---------------------------------------------------------------------
  * Codes for the known MapInfo Geometry types
@@ -610,6 +672,11 @@ class MIFFile: public IMapInfoFile
 #define TAB_GEOM_FONTSYMBOL     0x29
 #define TAB_GEOM_CUSTOMSYMBOL_C 0x2b
 #define TAB_GEOM_CUSTOMSYMBOL   0x2c
+/* Version 450 object types: */
+#define TAB_GEOM_V450_REGION_C  0x2e
+#define TAB_GEOM_V450_REGION    0x2f
+#define TAB_GEOM_V450_MULTIPLINE_C 0x31
+#define TAB_GEOM_V450_MULTIPLINE   0x32
 
 
 /*---------------------------------------------------------------------
@@ -618,15 +685,15 @@ class MIFFile: public IMapInfoFile
 typedef enum
 {
     TABFCNoGeomFeature = 0,
-    TABFCPoint,
-    TABFCFontPoint,
-    TABFCCustomPoint,
-    TABFCText,
-    TABFCPolyline,
-    TABFCArc,
-    TABFCRegion,
-    TABFCRectangle,
-    TABFCEllipse,
+    TABFCPoint = 1,
+    TABFCFontPoint = 2,
+    TABFCCustomPoint = 3,
+    TABFCText = 4,
+    TABFCPolyline = 5,
+    TABFCArc = 6,
+    TABFCRegion = 7,
+    TABFCRectangle = 8,
+    TABFCEllipse = 9,
     TABFCDebugFeature
 } TABFeatureClass;
 
@@ -635,21 +702,21 @@ typedef enum
  *--------------------------------------------------------------------*/
 typedef enum TABTextJust_t
 {
-    TABTJLeft,          // Default: Left Justification
+    TABTJLeft = 0,      // Default: Left Justification
     TABTJCenter,
     TABTJRight
 } TABTextJust;
 
 typedef enum TABTextSpacing_t
 {
-    TABTSSingle,        // Default: Single spacing
+    TABTSSingle = 0,    // Default: Single spacing
     TABTS1_5,           // 1.5
     TABTSDouble
 } TABTextSpacing;
 
 typedef enum TABTextLineType_t
 {
-    TABTLNoLine,        // Default: No line
+    TABTLNoLine = 0,    // Default: No line
     TABTLSimple,
     TABTLArrow
 } TABTextLineType;
@@ -709,14 +776,17 @@ class ITABFeaturePen
     int         GetPenDefIndex() {return m_nPenDefIndex;};
     TABPenDef  *GetPenDefRef() {return &m_sPenDef;};
 
-    GByte       GetPenWidth()   {return m_sPenDef.nLineWidth;};
+    GByte       GetPenWidthPixel();
+    double      GetPenWidthPoint();
+    int         GetPenWidthMIF();
     GByte       GetPenPattern() {return m_sPenDef.nLinePattern;};
-    GByte       GetPenStyle()   {return m_sPenDef.nLineStyle;};
     GInt32      GetPenColor()   {return m_sPenDef.rgbColor;};
 
-    void        SetPenWidth(GByte val)   {m_sPenDef.nLineWidth = val;};
+    void        SetPenWidthPixel(GByte val);
+    void        SetPenWidthPoint(double val);
+    void        SetPenWidthMIF(int val);
+
     void        SetPenPattern(GByte val) {m_sPenDef.nLinePattern=val;};
-    void        SetPenStyle(GByte val)   {m_sPenDef.nLineStyle = val;};
     void        SetPenColor(GInt32 clr)  {m_sPenDef.rgbColor = clr;};
 
     void        DumpPenDef(FILE *fpOut = NULL);
@@ -840,7 +910,8 @@ class TABFeature: public OGRFeature
     virtual int ReadRecordFromDATFile(TABDATFile *poDATFile);
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile);
 
-    virtual int WriteRecordToDATFile(TABDATFile *poDATFile);
+    virtual int WriteRecordToDATFile(TABDATFile *poDATFile,
+                                     TABINDFile *poINDFile, int *panIndexNo);
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile);
 
     /*-----------------------------------------------------------------
@@ -1015,6 +1086,8 @@ class TABCustomPoint: public TABPoint,
  *     TAB_GEOM_PLINE          0x08
  *     TAB_GEOM_MULTIPLINE_C   0x25
  *     TAB_GEOM_MULTIPLINE     0x26
+ *     TAB_GEOM_V450_MULTIPLINE_C 0x31
+ *     TAB_GEOM_V450_MULTIPLINE   0x32
  *
  * Feature geometry can be either a OGRLineString or a OGRMultiLineString
  *--------------------------------------------------------------------*/
@@ -1029,6 +1102,11 @@ class TABPolyline: public TABFeature,
     virtual int             ValidateMapInfoType();
 
     virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL );
+
+    /* 2 methods to simplify access to rings in a multiple polyline
+     */
+    int                 GetNumParts();
+    OGRLineString      *GetPartRef(int nPartIndex);
 
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile);
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile);
@@ -1051,6 +1129,8 @@ class TABPolyline: public TABFeature,
  *
  *     TAB_GEOM_REGION_C         0x0d
  *     TAB_GEOM_REGION           0x0e
+ *     TAB_GEOM_V450_REGION_C    0x2e
+ *     TAB_GEOM_V450_REGION      0x2f
  *
  * Feature geometry will be returned as OGRPolygon (with a single ring)
  * or OGRMultiPolygon (for multiple rings).
@@ -1068,6 +1148,14 @@ class TABRegion: public TABFeature,
     GBool       m_bSmooth;
     GBool       m_bCentroid;
     double      m_dfCentroidX, m_dfCentroidY;
+  private:
+    int     ComputeNumRings(TABMAPCoordSecHdr **ppasSecHdrs, 
+                            TABMAPFile *poMAPFile);
+    int     AppendSecHdrs(OGRPolygon *poPolygon,
+                          TABMAPCoordSecHdr * &pasSecHdrs,
+                          TABMAPFile *poMAPFile,
+                          int &iLastRing);
+
   public:
              TABRegion(OGRFeatureDefn *poDefnIn);
     virtual ~TABRegion();
@@ -1077,7 +1165,7 @@ class TABRegion: public TABFeature,
 
     virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL );
 
-    /* 2 methods to make the REGION's gomeetry look like a single collection
+    /* 2 methods to make the REGION's geometry look like a single collection
      * of OGRLinearRings 
      */
     int                 GetNumRings();

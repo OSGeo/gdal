@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.15 2000/01/16 19:08:49 daniel Exp $
+ * $Id: mitab_priv.h,v 1.18 2000/05/19 06:45:25 daniel Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,16 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.18  2000/05/19 06:45:25  daniel
+ * Modified generation of spatial index to split index nodes and produce a
+ * more balanced tree.
+ *
+ * Revision 1.17  2000/03/01 00:30:03  daniel
+ * Completed support for joined tables
+ *
+ * Revision 1.16  2000/02/28 16:53:23  daniel
+ * Added support for indexed, unique, and for new V450 object types
+ *
  * Revision 1.15  2000/01/16 19:08:49  daniel
  * Added support for reading 'Table Type DBF' tables
  *
@@ -46,7 +56,8 @@
  * Support dataset with no .MAP/.ID files
  *
  * Revision 1.10  1999/11/11 01:22:05  stephane
- * Remove DebugFeature call, Point Reading error, add IsValidFeature() to test correctly if we are on a feature
+ * Remove DebugFeature call, Point Reading error, add IsValidFeature() 
+ * to test correctly if we are on a feature
  *
  * Revision 1.9  1999/11/09 07:37:22  daniel
  * Support for deleted records when reading TABDATFiles
@@ -111,13 +122,17 @@ typedef enum
 #define TABMAP_TOOL_BLOCK       5
 #define TABMAP_LAST_VALID_BLOCK_TYPE  5
 
+/*---------------------------------------------------------------------
+ * Limits related to .TAB version number.  If we pass any of those limits
+ * then we have to switch dataset version up from 300 to 450
+ *--------------------------------------------------------------------*/
+#define TAB_300_MAX_VERTICES    32767
 
 /*---------------------------------------------------------------------
  * struct TABMAPIndexEntry - Entries found in type 1 blocks of .MAP files
  *
  * We will use this struct to rebuild the geographic index in memory
  *--------------------------------------------------------------------*/
-
 typedef struct TABMAPIndexEntry_t
 {
     // These members refer to the info we find in the file
@@ -126,10 +141,9 @@ typedef struct TABMAPIndexEntry_t
     GInt32      XMax;
     GInt32      YMax;
     GInt32      nBlockPtr;
-
-    // Ptr to the actual index block or NULL if not loaded
-    TABMAPIndexBlock *poBlock;  
 }TABMAPIndexEntry;
+
+#define TAB_MAX_ENTRIES_INDEX_BLOCK     ((512-4)/20)
 
 
 /*---------------------------------------------------------------------
@@ -196,7 +210,7 @@ typedef struct TABDATFieldDef_t
  *--------------------------------------------------------------------*/
 typedef struct TABMAPCoordSecHdr_t
 {
-    GInt16      numVertices;
+    GInt32      numVertices;
     GInt16      numHoles;
     GInt32      nXMin;
     GInt32      nYMin;
@@ -232,9 +246,9 @@ typedef struct TABProjInfo_t
 typedef struct TABPenDef_t
 {
     GInt32      nRefCount;
-    GByte       nLineWidth;
+    GByte       nPixelWidth;
     GByte       nLinePattern;
-    GByte       nLineStyle;
+    int         nPointWidth;
     GInt32      rgbColor;
 } TABPenDef;
 
@@ -320,6 +334,7 @@ class TABToolDefTable
     int         AddSymbolDefRef(TABSymbolDef *poSymbolDef);
     int         GetNumSymbols();
 
+    int         GetMinVersionNumber();
 };
 
 
@@ -329,20 +344,20 @@ class TABToolDefTable
  =====================================================================*/
 
 /*---------------------------------------------------------------------
- *                      class TABMAPBlockManager
+ *                      class TABBinBlockManager
  *
  * This class is used to keep track of allocated blocks and is used
  * by various classes that need to allocate a new block in a .MAP file.
  *--------------------------------------------------------------------*/
-class TABMAPBlockManager
+class TABBinBlockManager
 {
   protected:
     int         m_nBlockSize;
     GInt32      m_nLastAllocatedBlock;
   public:
-    TABMAPBlockManager(int nBlockSize=512) {m_nBlockSize=nBlockSize;
+    TABBinBlockManager(int nBlockSize=512) {m_nBlockSize=nBlockSize;
                                             m_nLastAllocatedBlock = -1; };
-    ~TABMAPBlockManager()  {};
+    ~TABBinBlockManager()  {};
 
     GInt32      AllocNewBlock()   {if (m_nLastAllocatedBlock==-1)
                                         m_nLastAllocatedBlock = 0;
@@ -376,6 +391,8 @@ class TABRawBinBlock
     int         m_nCurPos;      /* Next byte to read from m_pabyBuf[]    */
     int         m_nFirstBlockPtr;/* Size of file header when different from */
                                  /* block size (used by GotoByteInFile())   */
+
+    int         m_bModified;     /* Used only to detect changes        */
 
   public:
     TABRawBinBlock(TABAccess eAccessMode = TABRead,
@@ -422,6 +439,8 @@ class TABRawBinBlock
     int         WriteDouble(double dValue);
     int         WriteZeros(int nBytesToWrite);
     int         WritePaddedString(int nFieldSize, const char *pszString);
+
+    void        SetModifiedFlag(GBool bModified) {m_bModified=bModified;};
 
     // This semi-private method gives a direct access to the internal 
     // buffer... to be used with extreme care!!!!!!!!!
@@ -477,7 +496,7 @@ class TABMAPHeaderBlock: public TABRawBinBlock
     // members public and we will initialize them in the overloaded
     // LoadFromFile().  For this reason, this class should be used with care.
 
-    GInt16      m_nVersionNumber;
+    GInt16      m_nMAPVersionNumber;
     GInt16      m_nBlockSize;
     
     double      m_dCoordsys2DistUnits;
@@ -524,7 +543,7 @@ class TABMAPIndexBlock: public TABRawBinBlock
 {
   protected:
     int         m_numEntries;
-    TABMAPIndexEntry **m_papsEntries;
+    TABMAPIndexEntry m_pasEntries[TAB_MAX_ENTRIES_INDEX_BLOCK];
 
     int         ReadNextEntry(TABMAPIndexEntry *psEntry);
     int         WriteNextEntry(TABMAPIndexEntry *psEntry);
@@ -534,6 +553,14 @@ class TABMAPIndexBlock: public TABRawBinBlock
     GInt32      m_nMinY;
     GInt32      m_nMaxX;
     GInt32      m_nMaxY;
+
+    TABBinBlockManager *m_poBlockManagerRef;
+
+    // Info about child currently loaded
+    TABMAPIndexBlock *m_poCurChild;
+    int         m_nCurChildIndex;
+    // Also need to know about its parent
+    TABMAPIndexBlock *m_poParentRef;
 
     int         ReadAllEntries();
 
@@ -550,13 +577,28 @@ class TABMAPIndexBlock: public TABRawBinBlock
     virtual int GetBlockClass() { return TABMAP_INDEX_BLOCK; };
 
     int         GetNumFreeEntries();
+    int         GetNumEntries()         {return m_numEntries;};
     int         AddEntry(GInt32 XMin, GInt32 YMin,
                          GInt32 XMax, GInt32 YMax,
-                         GInt32 nBlockPtr, TABMAPIndexBlock *poBlock=NULL);
-    int         GetMaxDepth();
+                         GInt32 nBlockPtr,
+                         GBool bAddInThisNodeOnly=FALSE);
+    int         GetCurMaxDepth();
     void        GetMBR(GInt32 &nXMin, GInt32 &nYMin, 
                        GInt32 &nXMax, GInt32 &nYMax);
+    GInt32      GetNodeBlockPtr() { return GetStartAddress();};
 
+    void        SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr);
+    void        SetParentRef(TABMAPIndexBlock *poParent);
+    void        SetCurChildRef(TABMAPIndexBlock *poChild, int nChildIndex);
+
+    int         SplitNode(int nNewEntryX, int nNewEntryY);
+    int         SplitRootNode(int nNewEntryX, int nNewEntryY);
+    void        UpdateCurChildMBR(GInt32 nXMin, GInt32 nYMin,
+                                  GInt32 nXMax, GInt32 nYMax,
+                                  GInt32 nBlockPtr);
+    void        RecomputeMBR();
+    int         InsertEntry(GInt32 XMin, GInt32 YMin,
+                            GInt32 XMax, GInt32 YMax, GInt32 nBlockPtr);
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL);
 #endif
@@ -635,7 +677,7 @@ class TABMAPCoordBlock: public TABRawBinBlock
     GInt32      m_nMaxX;
     GInt32      m_nMaxY;
 
-    TABMAPBlockManager *m_poBlockManagerRef;
+    TABBinBlockManager *m_poBlockManagerRef;
 
     int         m_nTotalDataSize;       // Num bytes in whole chain of blocks
     int         m_nFeatureDataSize;     // Num bytes for current feature coords
@@ -657,16 +699,17 @@ class TABMAPCoordBlock: public TABRawBinBlock
 
     virtual int GetBlockClass() { return TABMAP_COORD_BLOCK; };
 
-    void        SetMAPBlockManagerRef(TABMAPBlockManager *poBlockManager);
+    void        SetMAPBlockManagerRef(TABBinBlockManager *poBlockManager);
     virtual int ReadBytes(int numBytes, GByte *pabyDstBuf);
     virtual int WriteBytes(int nBytesToWrite, GByte *pBuf);
     void        SetComprCoordOrigin(GInt32 nX, GInt32 nY);
     int         ReadIntCoord(GBool bCompressed, GInt32 &nX, GInt32 &nY);
     int         ReadIntCoords(GBool bCompressed, int numCoords, GInt32 *panXY);
-    int         ReadCoordSecHdrs(GBool bCompressed, int numSections,
-                                 TABMAPCoordSecHdr *pasHdrs,
-                                 int    &numVerticesTotal);
-    int         WriteCoordSecHdrs(int numSections, TABMAPCoordSecHdr *pasHdrs);
+    int         ReadCoordSecHdrs(GBool bCompressed, GBool bV450Hdr,
+                                 int numSections, TABMAPCoordSecHdr *pasHdrs,
+                                 GInt32    &numVerticesTotal);
+    int         WriteCoordSecHdrs(GBool bV450Hdr, int numSections,
+                                  TABMAPCoordSecHdr *pasHdrs );
 
     void        SetNextCoordBlock(GInt32 nNextCoordBlockAddress);
     int         WriteIntCoord(GInt32 nX, GInt32 nY, GBool bUpdateMBR=TRUE);
@@ -703,7 +746,7 @@ class TABMAPToolBlock: public TABRawBinBlock
     GInt32      m_nNextToolBlock;
     int         m_numBlocksInChain;
 
-    TABMAPBlockManager *m_poBlockManagerRef;
+    TABBinBlockManager *m_poBlockManagerRef;
 
   public:
     TABMAPToolBlock(TABAccess eAccessMode = TABRead);
@@ -717,7 +760,7 @@ class TABMAPToolBlock: public TABRawBinBlock
 
     virtual int GetBlockClass() { return TABMAP_TOOL_BLOCK; };
 
-    void        SetMAPBlockManagerRef(TABMAPBlockManager *poBlockManager);
+    void        SetMAPBlockManagerRef(TABBinBlockManager *poBlockManager);
     virtual int ReadBytes(int numBytes, GByte *pabyDstBuf);
     virtual int WriteBytes(int nBytesToWrite, GByte *pBuf);
 
@@ -783,11 +826,12 @@ class TABIDFile
 class TABMAPFile
 {
   private:
+    int         m_nMinTABVersion;
     char        *m_pszFname;
     FILE        *m_fp;
     TABAccess   m_eAccessMode;
 
-    TABMAPBlockManager m_oBlockManager;
+    TABBinBlockManager m_oBlockManager;
 
     TABMAPHeaderBlock   *m_poHeader;
 
@@ -859,6 +903,8 @@ class TABMAPFile
     int         WriteFontDef(TABFontDef *psDef);
     int         WriteSymbolDef(TABSymbolDef *psDef);
 
+    int         GetMinTABFileVersion();
+
 #ifdef DEBUG
     void Dump(FILE *fpOut = NULL);
 #endif
@@ -882,10 +928,14 @@ class TABINDNode
     FILE        *m_fp;
     TABAccess   m_eAccessMode;
     TABINDNode *m_poCurChildNode;
+    TABINDNode *m_poParentNodeRef;
+
+    TABBinBlockManager *m_poBlockManagerRef;
 
     int         m_nSubTreeDepth;
     int         m_nKeyLength;
     TABFieldType m_eFieldType;
+    GBool       m_bUnique;
 
     GInt32      m_nCurDataBlockPtr;
     int         m_nCurIndexEntry;
@@ -898,20 +948,54 @@ class TABINDNode
     GInt32      ReadIndexEntry(int nEntryNo, GByte *pKeyValue);
     int         IndexKeyCmp(GByte *pKeyValue, int nEntryNo);
 
+    int         InsertEntry(GByte *pKeyValue, GInt32 nRecordNo,
+                            GBool bInsertAfterCurChild=FALSE,
+                            GBool bMakeNewEntryCurChild=FALSE);
+    int         SetNodeBufferDirectly(int numEntries, GByte *pBuf,
+                                      int nCurIndexEntry=0, 
+                                      TABINDNode *poCurChild=NULL);
+
    public:
-    TABINDNode();
+    TABINDNode(TABAccess eAccessMode = TABRead);
     ~TABINDNode();
 
     int         InitNode(FILE *fp, int nBlockPtr, 
-                         int nKeyLength, int nSubTreeDepth);
+                         int nKeyLength, int nSubTreeDepth, GBool bUnique,
+                         TABBinBlockManager *poBlockMgr=NULL,
+                         TABINDNode *poParentNode=NULL,
+                         int nPrevNodePtr=0, int nNextNodePtr=0);
 
     int         SetFieldType(TABFieldType eType);
     TABFieldType GetFieldType()         {return m_eFieldType;};
 
+    void        SetUnique(GBool bUnique){m_bUnique = bUnique;};
+    GBool       IsUnique()              {return m_bUnique;};
+
     int         GetKeyLength()          {return m_nKeyLength;};
+    int         GetSubTreeDepth()       {return m_nSubTreeDepth;};
+    GInt32      GetNodeBlockPtr()       {return m_nCurDataBlockPtr;};
+    int         GetNumEntries()         {return m_numEntriesInNode;};
+    int         GetMaxNumEntries()      {return (512-12)/(m_nKeyLength+4);};
 
     GInt32      FindFirst(GByte *pKeyValue);
     GInt32      FindNext(GByte *pKeyValue);
+
+    int         CommitToFile();
+
+    int         AddEntry(GByte *pKeyValue, GInt32 nRecordNo,
+                         GBool bAddInThisNodeOnly=FALSE,
+                         GBool bInsertAfterCurChild=FALSE,
+                         GBool bMakeNewEntryCurChild=FALSE);
+    int         SplitNode();
+    int         SplitRootNode();
+    GByte*      GetNodeKey();
+    int         UpdateSplitChild(GByte *pKeyValue1, GInt32 nRecordNo1,
+                                 GByte *pKeyValue2, GInt32 nRecordNo2,
+                                 int nNewCurChildNo /* 1 or 2 */);
+
+    int         SetNodeBlockPtr(GInt32 nThisNodePtr);
+    int         SetPrevNodePtr(GInt32 nPrevNodePtr);
+    int         SetNextNodePtr(GInt32 nNextNodePtr);
 
 #ifdef DEBUG
     void Dump(FILE *fpOut = NULL);
@@ -935,11 +1019,15 @@ class TABINDFile
     FILE        *m_fp;
     TABAccess   m_eAccessMode;
 
+    TABBinBlockManager m_oBlockManager;
+
     int         m_numIndexes;
     TABINDNode  **m_papoIndexRootNodes;
     GByte       **m_papbyKeyBuffers;
 
     int         ValidateIndexNo(int nIndexNumber);
+    int         ReadHeader();
+    int         WriteHeader();
 
    public:
     TABINDFile();
@@ -951,11 +1039,15 @@ class TABINDFile
 
     int         GetNumIndexes() {return m_numIndexes;};
     int         SetIndexFieldType(int nIndexNumber, TABFieldType eType);
+    int         SetIndexUnique(int nIndexNumber, GBool bUnique=TRUE);
     GByte      *BuildKey(int nIndexNumber, GInt32 nValue);
     GByte      *BuildKey(int nIndexNumber, const char *pszStr);
     GByte      *BuildKey(int nIndexNumber, double dValue);
     GInt32      FindFirst(int nIndexNumber, GByte *pKeyValue);
     GInt32      FindNext(int nIndexNumber, GByte *pKeyValue);
+
+    int         CreateIndex(TABFieldType eType, int nFieldSize);
+    int         AddEntry(int nIndexNumber, GByte *pKeyValue, GInt32 nRecordNo);
 
 #ifdef DEBUG
     void Dump(FILE *fpOut = NULL);
@@ -1028,13 +1120,20 @@ class TABDATFile
     const char  *ReadLogicalField(int nWidth);
     const char  *ReadDateField(int nWidth);
 
-    int         WriteCharField(const char *pszValue, int nWidth);
-    int         WriteIntegerField(GInt32 nValue);
-    int         WriteSmallIntField(GInt16 nValue);
-    int         WriteFloatField(double dValue);
-    int         WriteDecimalField(double dValue, int nWidth, int nPrecision);
-    int         WriteLogicalField(const char *pszValue);
-    int         WriteDateField(const char *pszValue);
+    int         WriteCharField(const char *pszValue, int nWidth,
+                               TABINDFile *poINDFile, int nIndexNo);
+    int         WriteIntegerField(GInt32 nValue,
+                                  TABINDFile *poINDFile, int nIndexNo);
+    int         WriteSmallIntField(GInt16 nValue,
+                                   TABINDFile *poINDFile, int nIndexNo);
+    int         WriteFloatField(double dValue,
+                                TABINDFile *poINDFile, int nIndexNo);
+    int         WriteDecimalField(double dValue, int nWidth, int nPrecision,
+                                  TABINDFile *poINDFile, int nIndexNo);
+    int         WriteLogicalField(const char *pszValue,
+                                  TABINDFile *poINDFile, int nIndexNo);
+    int         WriteDateField(const char *pszValue,
+                               TABINDFile *poINDFile, int nIndexNo);
 
 #ifdef DEBUG
     void Dump(FILE *fpOut = NULL);
@@ -1073,6 +1172,8 @@ class TABRelation
     TABINDFile  *m_poRelINDFileRef;
     int         m_nRelFieldIndexNo;
 
+    int         m_nUniqueRecordNo;
+
     /* Main and Rel table field map:
      * For each field in the source tables, -1 means that the field is not
      * selected, and a value >=0 is the index of this field in the combined
@@ -1085,7 +1186,8 @@ class TABRelation
     TABFeature *m_poCurFeature;
 
     void        ResetAllMembers();
-    GByte       *BuildMainKey(TABFeature *poFeature);
+    GByte       *BuildFieldKey(TABFeature *poFeature, int nFieldNo,
+                                  TABFieldType eType, int nIndexNo);
 
    public:
     TABRelation();
@@ -1096,11 +1198,26 @@ class TABRelation
                      const char *pszMainFieldName,
                      const char *pszRelFieldName,
                      char **papszSelectedFields);
+    int         CreateRelFields();
 
     OGRFeatureDefn *GetFeatureDefn()  {return m_poDefn;};
     TABFieldType    GetNativeFieldType(int nFieldId);
     TABFeature     *GetFeatureRef(int nFeatureId);
 
+    int         SetFeature(TABFeature *poFeature, int nFeatureId=-1);
+
+    int         SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
+                           TABFieldType *paeMapInfoNativeFieldTypes=NULL);
+    int         AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
+                               int nWidth=0, int nPrecision=0,
+                               GBool bIndexed=FALSE, GBool bUnique=FALSE);
+
+    int         SetFieldIndexed(int nFieldId);
+    GBool       IsFieldIndexed(int nFieldId);
+    GBool       IsFieldUnique(int nFieldId);
+
+    const char *GetMainFieldName()      {return m_pszMainFieldName;};
+    const char *GetRelFieldName()       {return m_pszRelFieldName;};
 };
 
 

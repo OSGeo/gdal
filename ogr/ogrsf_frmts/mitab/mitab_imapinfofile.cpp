@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_imapinfofile.cpp,v 1.6 2000/01/26 18:17:35 warmerda Exp $
+ * $Id: mitab_imapinfofile.cpp,v 1.8 2000/02/28 03:11:35 warmerda Exp $
  *
  * Name:     mitab_imapinfo
  * Project:  MapInfo mid/mif Tab Read/Write library
@@ -31,6 +31,12 @@
  **********************************************************************
  *
  * $Log: mitab_imapinfofile.cpp,v $
+ * Revision 1.8  2000/02/28 03:11:35  warmerda
+ * fix support for zero width fields
+ *
+ * Revision 1.7  2000/02/02 20:14:03  warmerda
+ * made safer when encountering geometryless features
+ *
  * Revision 1.6  2000/01/26 18:17:35  warmerda
  * added CreateField method
  *
@@ -333,13 +339,28 @@ OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
 {
     TABFieldType	eTABType;
+    int                 nWidth = poField->GetWidth();
 
     if( poField->GetType() == OFTInteger )
+    {
         eTABType = TABFInteger;
+        if( nWidth == 0 )
+            nWidth = 12;
+    }
     else if( poField->GetType() == OFTReal )
+    {
         eTABType = TABFFloat;
+        if( nWidth == 0 )
+            nWidth = 32;
+    }
     else if( poField->GetType() == OFTString )
+    {
         eTABType = TABFChar;
+        if( nWidth == 0 )
+            nWidth = 255;
+        else
+            nWidth = MIN(255,nWidth);
+    }
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -352,7 +373,7 @@ OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
     }
 
     if( AddFieldNative( poField->GetNameRef(), eTABType,
-                        poField->GetWidth(), poField->GetPrecision() ) > -1 )
+                        nWidth, poField->GetPrecision() ) > -1 )
         return OGRERR_NONE;
     else
         return OGRERR_FAILURE;

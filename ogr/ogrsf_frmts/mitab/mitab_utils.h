@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_utils.h,v 1.7 2000/01/15 22:30:45 daniel Exp $
+ * $Id: mitab_utils.h,v 1.8 2000/02/18 20:46:58 daniel Exp $
  *
  * Name:     mitab_utils.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_utils.h,v $
+ * Revision 1.8  2000/02/18 20:46:58  daniel
+ * Added TABCleanFieldName()
+ *
  * Revision 1.7  2000/01/15 22:30:45  daniel
  * Switch to MIT/X-Consortium OpenSource license
  *
@@ -80,6 +83,7 @@ char **TAB_CSLLoad(const char *pszFname);
 char *TABEscapeString(char *pszString);
 char *TABUnEscapeString(char *pszString, GBool bSrcIsConst);
 
+char *TABCleanFieldName(const char *pszSrcName);
 
 #endif /* _MITAB_UTILS_H_INCLUDED_ */
 

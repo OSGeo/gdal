@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_maptoolblock.cpp,v 1.3 2000/01/15 22:30:44 daniel Exp $
+ * $Id: mitab_maptoolblock.cpp,v 1.4 2000/02/28 17:03:30 daniel Exp $
  *
  * Name:     mitab_maptoollock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_maptoolblock.cpp,v $
+ * Revision 1.4  2000/02/28 17:03:30  daniel
+ * Changed TABMAPBlockManager to TABBinBlockManager
+ *
  * Revision 1.3  2000/01/15 22:30:44  daniel
  * Switch to MIT/X-Consortium OpenSource license
  *
@@ -256,7 +259,7 @@ void     TABMAPToolBlock::SetNextToolBlock(GInt32 nNextToolBlockAddress)
  * block belongs to.  The block manager will be used by this object
  * when it needs to automatically allocate a new block.
  **********************************************************************/
-void TABMAPToolBlock::SetMAPBlockManagerRef(TABMAPBlockManager *poBlockMgr)
+void TABMAPToolBlock::SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr)
 {
     m_poBlockManagerRef = poBlockMgr;
 };

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tooldef.cpp,v 1.3 2000/01/15 22:30:45 daniel Exp $
+ * $Id: mitab_tooldef.cpp,v 1.4 2000/02/28 17:06:54 daniel Exp $
  *
  * Name:     mitab_tooldef.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_tooldef.cpp,v $
+ * Revision 1.4  2000/02/28 17:06:54  daniel
+ * Support pen width in points and V450 check
+ *
  * Revision 1.3  2000/01/15 22:30:45  daniel
  * Switch to MIT/X-Consortium OpenSource license
  *
@@ -133,12 +136,22 @@ int     TABToolDefTable::ReadAllToolDefs(TABMAPToolBlock *poBlock)
             m_papsPen[m_numPen] = (TABPenDef*)CPLCalloc(1, sizeof(TABPenDef));
 
             m_papsPen[m_numPen]->nRefCount  = poBlock->ReadInt32();
-            m_papsPen[m_numPen]->nLineWidth = poBlock->ReadByte();
+            m_papsPen[m_numPen]->nPixelWidth = poBlock->ReadByte();
             m_papsPen[m_numPen]->nLinePattern = poBlock->ReadByte();
-            m_papsPen[m_numPen]->nLineStyle = poBlock->ReadByte();
+            m_papsPen[m_numPen]->nPointWidth = poBlock->ReadByte();
             m_papsPen[m_numPen]->rgbColor   = poBlock->ReadByte()*256*256+
                                               poBlock->ReadByte()*256 + 
                                               poBlock->ReadByte();
+
+            // Adjust width value... 
+            // High bits for point width values > 255 are stored in the
+            // pixel width byte
+            if (m_papsPen[m_numPen]->nPixelWidth > 7)
+            {
+                m_papsPen[m_numPen]->nPointWidth += 
+                         (m_papsPen[m_numPen]->nPixelWidth-8)*0x100;
+                m_papsPen[m_numPen]->nPixelWidth = 1;
+            }
 
             m_numPen++;
 
@@ -244,12 +257,23 @@ int     TABToolDefTable::WriteAllToolDefs(TABMAPToolBlock *poBlock)
      *----------------------------------------------------------------*/
     for(i=0; nStatus == 0 && i< m_numPen; i++)
     {
+        // The pen width is encoded over 2 bytes
+        GByte byPixelWidth=1, byPointWidth=0;
+        if (m_papsPen[i]->nPointWidth > 0)
+        {
+            byPointWidth = (GByte)(m_papsPen[i]->nPointWidth & 0xff);
+            if (m_papsPen[i]->nPointWidth > 255)
+                byPixelWidth = 8 + (GByte)(m_papsPen[i]->nPointWidth/0x100);
+        }
+        else
+            byPixelWidth = MIN(MAX(m_papsPen[i]->nPixelWidth, 1), 7);
+
         poBlock->WriteByte(1);  // Def Type = Pen
         poBlock->WriteInt32(m_papsPen[i]->nRefCount);
 
-        poBlock->WriteByte(m_papsPen[i]->nLineWidth);
+        poBlock->WriteByte(byPixelWidth);
         poBlock->WriteByte(m_papsPen[i]->nLinePattern);
-        poBlock->WriteByte(m_papsPen[i]->nLineStyle);
+        poBlock->WriteByte(byPointWidth);
         poBlock->WriteByte(COLOR_R(m_papsPen[i]->rgbColor));
         poBlock->WriteByte(COLOR_G(m_papsPen[i]->rgbColor));
         poBlock->WriteByte(COLOR_B(m_papsPen[i]->rgbColor));
@@ -390,9 +414,9 @@ int TABToolDefTable::AddPenDefRef(TABPenDef *poNewPenDef)
     for (i=0; nNewPenIndex == 0 && i<m_numPen; i++)
     {
         poDef = m_papsPen[i];
-        if (poDef->nLineWidth == poNewPenDef->nLineWidth &&
+        if (poDef->nPixelWidth == poNewPenDef->nPixelWidth &&
             poDef->nLinePattern == poNewPenDef->nLinePattern &&
-            poDef->nLineStyle == poNewPenDef->nLineStyle &&
+            poDef->nPointWidth == poNewPenDef->nPointWidth &&
             poDef->rgbColor == poNewPenDef->rgbColor)
         {
             nNewPenIndex = i+1; // Fount it!
@@ -680,3 +704,32 @@ int TABToolDefTable::AddSymbolDefRef(TABSymbolDef *poNewSymbolDef)
 
     return nNewSymbolIndex;
 }
+
+
+/**********************************************************************
+ *                   TABToolDefTable::GetMinVersionNumber()
+ *
+ * Returns the minimum file version number that can accept all the
+ * tool objects currently defined.
+ *
+ * Default is 300, and currently 450 can be returned if file contains
+ * pen widths defined in points.
+ **********************************************************************/
+int     TABToolDefTable::GetMinVersionNumber()
+{
+    int i, nVersion = 300;
+
+    /*-----------------------------------------------------------------
+     * Scan Pen Defs
+     *----------------------------------------------------------------*/
+    for(i=0; i< m_numPen; i++)
+    {
+        if (m_papsPen[i]->nPointWidth > 0 )
+        {
+            nVersion = MAX(nVersion, 450);  // Raise version to 450
+        }
+    }
+
+    return nVersion;
+}
+

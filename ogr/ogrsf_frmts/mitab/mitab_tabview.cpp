@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabview.cpp,v 1.5 2000/01/15 22:30:45 daniel Exp $
+ * $Id: mitab_tabview.cpp,v 1.6 2000/02/28 17:12:22 daniel Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_tabview.cpp,v $
+ * Revision 1.6  2000/02/28 17:12:22  daniel
+ * Write support for joined tables and indexed fields
+ *
  * Revision 1.5  2000/01/15 22:30:45  daniel
  * Switch to MIT/X-Consortium OpenSource license
  *
@@ -81,6 +84,7 @@ TABView::TABView()
     m_papszWhereClause = NULL;
 
     m_poRelation = NULL;
+    m_bRelFieldsCreated = FALSE;
 }
 
 /**********************************************************************
@@ -120,8 +124,6 @@ void TABView::ResetReading()
  * two other .TAB files.  Regular .TAB datasets should be opened using
  * the TABFile class instead.
  *
- * The only supported access mode for this class is "r" (read-only).
- *
  * Set bTestOpenNoError=TRUE to silently return -1 with no error message
  * if the file cannot be opened.  This is intended to be used in the
  * context of a TestOpen() function.  The default value is FALSE which
@@ -132,8 +134,7 @@ void TABView::ResetReading()
 int TABView::Open(const char *pszFname, const char *pszAccess,
                   GBool bTestOpenNoError /*= FALSE*/ )
 {
-    char *pszPath = NULL;
-    int nFnameLen = 0;
+    char nStatus = 0;
    
     if (m_numTABFiles > 0)
     {
@@ -143,12 +144,17 @@ int TABView::Open(const char *pszFname, const char *pszAccess,
     }
 
     /*-----------------------------------------------------------------
-     * Validate access mode... only READ access is supported
+     * Validate access mode and call the right open method
      *----------------------------------------------------------------*/
     if (EQUALN(pszAccess, "r", 1))
     {
         m_eAccessMode = TABRead;
-        pszAccess = "rb";
+        nStatus = OpenForRead(pszFname, bTestOpenNoError);
+    }
+    else if (EQUALN(pszAccess, "w", 1))
+    {
+        m_eAccessMode = TABWrite;
+        nStatus = OpenForWrite(pszFname);
     }
     else
     {
@@ -156,6 +162,25 @@ int TABView::Open(const char *pszFname, const char *pszAccess,
                  "Open() failed: access mode \"%s\" not supported", pszAccess);
         return -1;
     }
+
+    return nStatus;
+}
+
+
+/**********************************************************************
+ *                   TABView::OpenForRead()
+ *
+ * Open for reading
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABView::OpenForRead(const char *pszFname, 
+                         GBool bTestOpenNoError /*= FALSE*/ )
+{
+    char *pszPath = NULL;
+    int nFnameLen = 0;
+   
+    m_eAccessMode = TABRead;
 
     /*-----------------------------------------------------------------
      * Read main .TAB (text) file
@@ -280,7 +305,7 @@ int TABView::Open(const char *pszFname, const char *pszAccess,
         m_papoTABFiles[iFile] = new TABFile;
    
         if ( m_papoTABFiles[iFile]->Open(m_papszTABFnames[iFile],
-                                         pszAccess, bTestOpenNoError) != 0)
+                                         "rb", bTestOpenNoError) != 0)
         {
             // Open Failed... an error has already been reported, just return.
             if (bTestOpenNoError)
@@ -313,6 +338,108 @@ int TABView::Open(const char *pszFname, const char *pszAccess,
 
     return 0;
 }
+
+
+/**********************************************************************
+ *                   TABView::OpenForWrite()
+ *
+ * Create a new TABView dataset
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABView::OpenForWrite(const char *pszFname)
+{
+    int nFnameLen = 0;
+   
+    m_eAccessMode = TABWrite;
+
+    /*-----------------------------------------------------------------
+     * Read main .TAB (text) file
+     *----------------------------------------------------------------*/
+    m_pszFname = CPLStrdup(pszFname);
+
+#ifndef _WIN32
+    /*-----------------------------------------------------------------
+     * On Unix, make sure extension uses the right cases
+     * We do it even for write access because if a file with the same
+     * extension already exists we want to overwrite it.
+     *----------------------------------------------------------------*/
+    TABAdjustFilenameExtension(m_pszFname);
+#endif
+
+    /*-----------------------------------------------------------------
+     * Extract the path component from the main .TAB filename
+     *----------------------------------------------------------------*/
+    char *pszPath = CPLStrdup(m_pszFname);
+    nFnameLen = strlen(pszPath);
+    for( ; nFnameLen > 0; nFnameLen--)
+    {
+        if (pszPath[nFnameLen-1] == '/' || 
+            pszPath[nFnameLen-1] == '\\' )
+        {
+            break;
+        }
+        pszPath[nFnameLen-1] = '\0';
+    }
+
+    char *pszBasename = TABGetBasename(m_pszFname);
+
+    /*-----------------------------------------------------------------
+     * Create the 2 TAB files for the view.
+     *
+     * __TODO__ For now, we support only 2 files linked through a single
+     *          field... not sure if anything else than that can be useful
+     *          anyways.
+     *----------------------------------------------------------------*/
+    m_numTABFiles = 2;
+    m_papszTABFnames = NULL;
+    m_nMainTableIndex = 0;
+    m_bRelFieldsCreated = FALSE;
+
+    m_papoTABFiles = (TABFile**)CPLCalloc(m_numTABFiles, sizeof(TABFile*));
+
+    for (int iFile=0; iFile < m_numTABFiles; iFile++)
+    {
+        m_papszTABFnames = CSLAppendPrintf(m_papszTABFnames, "%s%s%d.tab", 
+                                               pszPath, pszBasename, iFile+1);
+#ifndef _WIN32
+        TABAdjustFilenameExtension(m_papszTABFnames[iFile]);
+#endif
+        
+        m_papoTABFiles[iFile] = new TABFile;
+   
+        if ( m_papoTABFiles[iFile]->Open(m_papszTABFnames[iFile], "wb") != 0)
+        {
+            // Open Failed... an error has already been reported, just return.
+            CPLFree(pszPath);
+            CPLFree(pszBasename);
+            Close();
+            return -1;
+        }
+    }
+
+    /*-----------------------------------------------------------------
+     * Create TABRelation... 
+     *----------------------------------------------------------------*/
+    m_poRelation = new TABRelation;
+    
+    if ( m_poRelation->Init(pszBasename,
+                            m_papoTABFiles[0], m_papoTABFiles[1],
+                            NULL, NULL, NULL)  != 0 )
+    {
+        // An error should already have been reported
+        CPLFree(pszPath);
+        CPLFree(pszBasename);
+        Close();
+        return -1;
+    }
+
+    CPLFree(pszPath);
+    CPLFree(pszBasename);
+
+    return 0;
+}
+
 
 
 /**********************************************************************
@@ -442,7 +569,7 @@ int TABView::ParseTABFile(const char *pszDatasetPath,
     if (m_pszCharset == NULL)
         m_pszCharset = CPLStrdup("Neutral");
     if (m_pszVersion == NULL)
-        m_pszVersion = CPLStrdup("300");
+        m_pszVersion = CPLStrdup("100");
 
     if (CSLCount(m_papszFieldNames) == 0 )
     {
@@ -468,6 +595,73 @@ int TABView::ParseTABFile(const char *pszDatasetPath,
 
 
 /**********************************************************************
+ *                   TABView::WriteTABFile()
+ *
+ * Generate the TAB header file.  This is usually done during the 
+ * Close() call.
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABView::WriteTABFile()
+{
+    FILE *fp;
+
+    CPLAssert(m_eAccessMode == TABWrite);
+    CPLAssert(m_numTABFiles == 2);
+    CPLAssert(GetLayerDefn());
+
+    char *pszTable  = TABGetBasename(m_pszFname);
+    char *pszTable1 = TABGetBasename(m_papszTABFnames[0]);
+    char *pszTable2 = TABGetBasename(m_papszTABFnames[1]);
+
+    if ( (fp = VSIFOpen(m_pszFname, "wt")) != NULL)
+    {
+        // Version is always 100, no matter what the sub-table's version is
+        fprintf(fp, "!Table\n");
+        fprintf(fp, "!Version 100\n");
+
+        fprintf(fp, "Open Table \"%s\" Hide\n", pszTable1);
+        fprintf(fp, "Open Table \"%s\" Hide\n", pszTable2);
+        fprintf(fp, "\n");
+        fprintf(fp, "Create View %s As\n", pszTable);
+        fprintf(fp, "Select ");
+
+        OGRFeatureDefn *poDefn = GetLayerDefn();
+        for(int iField=0; iField<poDefn->GetFieldCount(); iField++)
+        {
+            OGRFieldDefn *poFieldDefn = poDefn->GetFieldDefn(iField);
+            if (iField == 0)
+                fprintf(fp, "%s", poFieldDefn->GetNameRef());
+            else
+                fprintf(fp, ",%s", poFieldDefn->GetNameRef());
+        }
+        fprintf(fp, "\n");
+
+        fprintf(fp, "From %s, %s\n", pszTable2, pszTable1);
+        fprintf(fp, "Where %s.%s=%s.%s\n", pszTable2, 
+                                           m_poRelation->GetRelFieldName(),
+                                           pszTable1, 
+                                           m_poRelation->GetMainFieldName());
+
+
+        VSIFClose(fp);
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Failed to create file `%s'", m_pszFname);
+        return -1;
+    }
+
+    CPLFree(pszTable);
+    CPLFree(pszTable1);
+    CPLFree(pszTable2);
+
+    return 0;
+}
+
+
+/**********************************************************************
  *                   TABView::Close()
  *
  * Close current file, and release all memory used.
@@ -476,6 +670,41 @@ int TABView::ParseTABFile(const char *pszDatasetPath,
  **********************************************************************/
 int TABView::Close()
 {
+    // In write access, the main .TAB file has not been written yet.
+    if (m_eAccessMode == TABWrite && m_poRelation)
+        WriteTABFile();
+
+    for(int i=0; m_papoTABFiles && i<m_numTABFiles; i++)
+    {
+        if (m_papoTABFiles[i])
+            delete m_papoTABFiles[i];  // Automatically closes.
+    }
+    CPLFree(m_papoTABFiles);
+    m_papoTABFiles = NULL;
+    m_numTABFiles = 0;
+
+    
+    /*-----------------------------------------------------------------
+     * __TODO__ OK, MapInfo does not like to see a .map and .id file
+     * attached to the second table, even if they're empty.
+     * We'll use a little hack to delete them now, but eventually we
+     * should avoid creating them at all.
+     *----------------------------------------------------------------*/
+    if (m_eAccessMode == TABWrite && m_pszFname)
+    {
+        m_pszFname[strlen(m_pszFname)-4] = '\0';
+        char *pszFile = CPLStrdup(CPLSPrintf("%s2.map", m_pszFname));
+        TABAdjustFilenameExtension(pszFile);
+        unlink(pszFile);
+
+        sprintf(pszFile, "%s2.id", m_pszFname);
+        TABAdjustFilenameExtension(pszFile);
+        unlink(pszFile);
+
+        CPLFree(pszFile);
+    }
+    // End of hack!
+
 
     CPLFree(m_pszFname);
     m_pszFname = NULL;
@@ -491,15 +720,6 @@ int TABView::Close()
     CSLDestroy(m_papszTABFnames);
     m_papszTABFnames = NULL;
 
-    for(int i=0; m_papoTABFiles && i<m_numTABFiles; i++)
-    {
-        if (m_papoTABFiles[i])
-            delete m_papoTABFiles[i];
-    }
-    CPLFree(m_papoTABFiles);
-    m_papoTABFiles = NULL;
-    m_numTABFiles = 0;
-
     CSLDestroy(m_papszFieldNames);
     m_papszFieldNames = NULL;
     CSLDestroy(m_papszWhereClause);
@@ -510,6 +730,8 @@ int TABView::Close()
     if (m_poRelation)
         delete m_poRelation;
     m_poRelation = NULL;
+
+    m_bRelFieldsCreated = FALSE;
 
     return 0;
 }
@@ -558,6 +780,59 @@ TABFeature *TABView::GetFeatureRef(int nFeatureId)
     return m_poRelation->GetFeatureRef(nFeatureId);
 }
 
+
+/**********************************************************************
+ *                   TABView::SetFeature()
+ *
+ * Write a feature to this dataset.  
+ *
+ * For now only sequential writes are supported (i.e. with nFeatureId=-1)
+ * but eventually we should be able to do random access by specifying
+ * a value through nFeatureId.
+ *
+ * Returns the new featureId (> 0) on success, or -1 if an
+ * error happened in which case, CPLError() will have been called to
+ * report the reason of the failure.
+ **********************************************************************/
+int TABView::SetFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
+{
+    if (m_eAccessMode != TABWrite)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "SetFeature() can be used only with Write access.");
+        return -1;
+    }
+
+    if (nFeatureId != -1)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "SetFeature(): random access not implemented yet.");
+        return -1;
+    }
+
+    if (m_poRelation == NULL)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "SetFeature() failed: file is not opened!");
+        return -1;
+    }
+
+    /*-----------------------------------------------------------------
+     * If we're about to write the first feature, then we must finish
+     * the initialization of the view first by creating the MI_refnum fields
+     *----------------------------------------------------------------*/
+    if (!m_bRelFieldsCreated)
+    {
+        if (m_poRelation->CreateRelFields() != 0)
+            return -1;
+        m_bRelFieldsCreated = TRUE;
+    }
+
+    return m_poRelation->SetFeature(poFeature, nFeatureId);
+}
+
+
+
 /**********************************************************************
  *                   TABView::GetLayerDefn()
  *
@@ -577,6 +852,23 @@ OGRFeatureDefn *TABView::GetLayerDefn()
     return NULL;
 }
 
+/**********************************************************************
+ *                   TABView::SetFeatureDefn()
+ *
+ * Set the FeatureDefn for this dataset.
+ *
+ * For now, fields passed through SetFeatureDefn will not be mapped
+ * properly, so this function can be used only with an empty feature defn.
+ **********************************************************************/
+int TABView::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
+                         TABFieldType *paeMapInfoNativeFieldTypes /* =NULL */)
+{
+    if (m_poRelation)
+        return m_poRelation->SetFeatureDefn(poFeatureDefn);
+
+    return -1;
+}
+
 
 /**********************************************************************
  *                   TABView::GetNativeFieldType()
@@ -594,6 +886,78 @@ TABFieldType TABView::GetNativeFieldType(int nFieldId)
         return m_poRelation->GetNativeFieldType(nFieldId);
 
     return TABFUnknown;
+}
+
+
+/**********************************************************************
+ *                   TABView::AddFieldNative()
+ *
+ * Create a new field using a native mapinfo data type... this is an 
+ * alternative to defining fields through the OGR interface.
+ * This function should be called after creating a new dataset, but before 
+ * writing the first feature.
+ *
+ * This function will build/update the OGRFeatureDefn that will have to be
+ * used when writing features to this dataset.
+ *
+ * A reference to the OGRFeatureDefn can be obtained using GetLayerDefn().
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABView::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
+                            int nWidth /*=0*/, int nPrecision /*=0*/,
+                            GBool bIndexed /*=FALSE*/, GBool bUnique/*=FALSE*/)
+{
+    if (m_poRelation)
+        return m_poRelation->AddFieldNative(pszName, eMapInfoType,
+                                            nWidth, nPrecision,
+                                            bIndexed, bUnique);
+
+    return -1;
+}
+
+/**********************************************************************
+ *                   TABView::SetFieldIndexed()
+ *
+ * Request that a field be indexed.  This will create the .IND file if
+ * necessary, etc.
+ *
+ * Note that field ids are positive and start at 0.
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABView::SetFieldIndexed(int nFieldId)
+{
+    if (m_poRelation)
+        return m_poRelation->SetFieldIndexed(nFieldId);
+
+    return -1;
+}
+
+/**********************************************************************
+ *                   TABView::IsFieldIndexed()
+ *
+ * Returns TRUE if field is indexed, or FALSE otherwise.
+ **********************************************************************/
+GBool TABView::IsFieldIndexed(int nFieldId)
+{
+    if (m_poRelation)
+        return m_poRelation->IsFieldIndexed(nFieldId);
+
+    return FALSE;
+}
+
+/**********************************************************************
+ *                   TABView::IsFieldUnique()
+ *
+ * Returns TRUE if field is in the Unique table, or FALSE otherwise.
+ **********************************************************************/
+GBool TABView::IsFieldUnique(int nFieldId)
+{
+    if (m_poRelation)
+        return m_poRelation->IsFieldUnique(nFieldId);
+
+    return FALSE;
 }
 
 
@@ -675,6 +1039,40 @@ OGRSpatialReference *TABView::GetSpatialRef()
     }
 
     return m_papoTABFiles[m_nMainTableIndex]->GetSpatialRef();
+}
+
+/**********************************************************************
+ *                   TABView::SetSpatialRef()
+ **********************************************************************/
+int TABView::SetSpatialRef(OGRSpatialReference *poSpatialRef)
+{
+    if (m_nMainTableIndex == -1)
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "SetSpatialRef() failed: file has not been opened yet.");
+        return -1;
+    }
+
+    return m_papoTABFiles[m_nMainTableIndex]->SetSpatialRef(poSpatialRef);
+}
+
+
+
+/**********************************************************************
+ *                   TABView::SetBounds()
+ **********************************************************************/
+int TABView::SetBounds(double dXMin, double dYMin, 
+                       double dXMax, double dYMax)
+{
+    if (m_nMainTableIndex == -1)
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "SetBounds() failed: file has not been opened yet.");
+        return -1;
+    }
+
+    return m_papoTABFiles[m_nMainTableIndex]->SetBounds(dXMin, dYMin,
+                                                        dXMax, dYMax);
 }
 
 /************************************************************************/
@@ -760,6 +1158,8 @@ TABRelation::TABRelation()
     m_nRelFieldIndexNo = -1;
     m_poRelINDFileRef = NULL;
 
+    m_nUniqueRecordNo = 0;
+
     m_panMainTableFieldMap = NULL;
     m_panRelTableFieldMap = NULL;
 
@@ -795,6 +1195,8 @@ void TABRelation::ResetAllMembers()
     m_nRelFieldNo = -1;
     m_nRelFieldIndexNo = -1;
 
+    m_nUniqueRecordNo = 0;
+
     // No need to close m_poRelINDFileRef since we only got a ref. to it
     m_poRelINDFileRef = NULL;
 
@@ -824,6 +1226,10 @@ void TABRelation::ResetAllMembers()
  * through which they will be connected, and the list of fields to select.
  * After this call, we are ready to read data records.
  *
+ * For write access, Init() is called with pszMain/RelFieldName and
+ * **papszSelectedFields passed as NULL.  They will have to be set through
+ * other methods before a first feature can be written.
+ *
  * A new OGRFeatureDefn is also built for the combined tables.
  *
  * Returns 0 on success, or -1 or error.
@@ -849,14 +1255,20 @@ int  TABRelation::Init(const char *pszViewName,
     ResetAllMembers();
 
     m_poMainTable = poMainTable;
-    m_pszMainFieldName = CPLStrdup(pszMainFieldName);
-    m_nMainFieldNo = poMainDefn->GetFieldIndex(pszMainFieldName);
+    if (pszMainFieldName)
+    {
+        m_pszMainFieldName = CPLStrdup(pszMainFieldName);
+        m_nMainFieldNo = poMainDefn->GetFieldIndex(pszMainFieldName);
+    }
 
     m_poRelTable = poRelTable;
-    m_pszRelFieldName = CPLStrdup(pszRelFieldName);
-    m_nRelFieldNo = poRelDefn->GetFieldIndex(pszRelFieldName);
-    m_nRelFieldIndexNo = poRelTable->GetFieldIndexNumber(m_nRelFieldNo);
-    m_poRelINDFileRef = poRelTable->GetINDFileRef();
+    if (pszRelFieldName)
+    {
+        m_pszRelFieldName = CPLStrdup(pszRelFieldName);
+        m_nRelFieldNo = poRelDefn->GetFieldIndex(pszRelFieldName);
+        m_nRelFieldIndexNo = poRelTable->GetFieldIndexNumber(m_nRelFieldNo);
+        m_poRelINDFileRef = poRelTable->GetINDFileRef();
+    }
 
     /*-----------------------------------------------------------------
      * Init field maps.  For each field in each table, a -1 means that
@@ -864,14 +1276,14 @@ int  TABRelation::Init(const char *pszViewName,
      * field in the view's FeatureDefn
      *----------------------------------------------------------------*/
     int i;
+    int numFields1 = (poMainDefn?poMainDefn->GetFieldCount():0);
+    int numFields2 = (poRelDefn?poRelDefn->GetFieldCount():0);
 
-    m_panMainTableFieldMap = (int*)CPLMalloc(poMainDefn->GetFieldCount()*
-                                             sizeof(int));
-    for(i=0; i<poMainDefn->GetFieldCount(); i++)
+    m_panMainTableFieldMap = (int*)CPLMalloc((numFields1+1)*sizeof(int));
+    for(i=0; i<numFields1; i++)
         m_panMainTableFieldMap[i] = -1;
-    m_panRelTableFieldMap = (int*)CPLMalloc(poRelDefn->GetFieldCount()*
-                                             sizeof(int));
-    for(i=0; i<poRelDefn->GetFieldCount(); i++)
+    m_panRelTableFieldMap = (int*)CPLMalloc((numFields2+1)*sizeof(int));
+    for(i=0; i<numFields2; i++)
         m_panRelTableFieldMap[i] = -1;
 
     /*-----------------------------------------------------------------
@@ -887,7 +1299,8 @@ int  TABRelation::Init(const char *pszViewName,
 
     for(i=0; i<numSelFields ; i++)
     {
-        if ((nIndex=poMainDefn->GetFieldIndex(papszSelectedFields[i])) >=0)
+        if (poMainDefn &&
+            (nIndex=poMainDefn->GetFieldIndex(papszSelectedFields[i])) >=0)
         {
             /* Field from the main table
              */
@@ -895,7 +1308,8 @@ int  TABRelation::Init(const char *pszViewName,
             m_poDefn->AddFieldDefn(poFieldDefn);
             m_panMainTableFieldMap[nIndex] = m_poDefn->GetFieldCount()-1;
         }
-        else if ((nIndex=poRelDefn->GetFieldIndex(papszSelectedFields[i]))>=0)
+        else if (poRelDefn &&
+                 (nIndex=poRelDefn->GetFieldIndex(papszSelectedFields[i]))>=0)
         {
             /* Field from the related table
              */
@@ -917,6 +1331,80 @@ int  TABRelation::Init(const char *pszViewName,
     return 0;
 }
 
+
+/**********************************************************************
+ *                   TABRelation::CreateRelFields()
+ *
+ * For write access, create the integer fields in each table that will
+ * link them, and setup everything to be ready to write the first feature.
+ *
+ * This function should be called just before writing the first feature.
+ *
+ * Returns 0 on success, or -1 or error.
+ **********************************************************************/
+int  TABRelation::CreateRelFields()
+{
+    int i;
+
+    /*-----------------------------------------------------------------
+     * Create the field in each table.  
+     * The default name is "MI_refnum" but if a field with the same name
+     * already exists then we'll try to generate a unique name.
+     *----------------------------------------------------------------*/
+    m_pszMainFieldName = CPLStrdup("MI_Refnum      ");
+    strcpy(m_pszMainFieldName, "MI_Refnum");
+    i = 1;
+    while(m_poDefn->GetFieldIndex(m_pszMainFieldName) >= 0)
+    {
+        sprintf(m_pszMainFieldName, "MI_Refnum_%d", i++);
+    }
+    m_pszRelFieldName = CPLStrdup(m_pszMainFieldName);
+
+    m_nMainFieldNo = m_nRelFieldNo = -1;
+    if (m_poMainTable->AddFieldNative(m_pszMainFieldName,
+                                      TABFInteger, 0, 0) == 0)
+        m_nMainFieldNo = m_poMainTable->GetLayerDefn()->GetFieldCount()-1;
+
+    if (m_poRelTable->AddFieldNative(m_pszRelFieldName,
+                                     TABFInteger, 0, 0) == 0)
+        m_nRelFieldNo = m_poRelTable->GetLayerDefn()->GetFieldCount()-1;
+
+    if (m_nMainFieldNo == -1 || m_nRelFieldNo == -1)
+        return -1;
+
+    if (m_poMainTable->SetFieldIndexed(m_nMainFieldNo) == -1)
+        return -1;
+
+    if ((m_nRelFieldIndexNo=m_poRelTable->SetFieldIndexed(m_nRelFieldNo)) ==-1)
+        return -1;
+
+    m_poRelINDFileRef = m_poRelTable->GetINDFileRef();
+
+    /*-----------------------------------------------------------------
+     * Update field maps
+     *----------------------------------------------------------------*/
+    OGRFeatureDefn *poMainDefn, *poRelDefn;
+
+    poMainDefn = m_poMainTable->GetLayerDefn();
+    poRelDefn = m_poRelTable->GetLayerDefn();
+
+    m_panMainTableFieldMap = (int*)CPLRealloc(m_panMainTableFieldMap,
+                                      poMainDefn->GetFieldCount()*sizeof(int));
+    m_panMainTableFieldMap[poMainDefn->GetFieldCount()-1] = -1;
+
+    m_panRelTableFieldMap = (int*)CPLRealloc(m_panRelTableFieldMap,
+                                      poRelDefn->GetFieldCount()*sizeof(int));
+    m_panRelTableFieldMap[poRelDefn->GetFieldCount()-1] = -1;
+
+    /*-----------------------------------------------------------------
+     * Make sure the first unique field (in poRelTable) is indexed since
+     * it is the one against which we will try to match records.
+     *----------------------------------------------------------------*/
+    if ( m_poRelTable->SetFieldIndexed(0) == -1)
+        return -1;
+
+    return 0;
+}
 
 /**********************************************************************
  *                   TABRelation::GetFeatureRef()
@@ -973,47 +1461,6 @@ TABFeature *TABRelation::GetFeatureRef(int nFeatureId)
 
     m_poCurFeature = poMainFeature->CloneTABFeature(m_poDefn);
 
-#ifdef __TODO__DELETE__
-    switch(poMainFeature->GetFeatureClass())
-    {
-      case TABFCPoint:
-        m_poCurFeature = new TABPoint(m_poDefn);
-        break;
-      case TABFCFontPoint:
-        m_poCurFeature = new TABFontPoint(m_poDefn);
-        break;
-      case TABFCCustomPoint:
-        m_poCurFeature = new TABCustomPoint(m_poDefn);
-        break;
-      case TABFCPolyline:
-        m_poCurFeature = new TABPolyline(m_poDefn);
-        break;
-      case TABFCArc:
-        m_poCurFeature = new TABArc(m_poDefn);
-        break;
-      case TABFCRegion:
-        m_poCurFeature = new TABRegion(m_poDefn);
-        break;
-      case TABFCRectangle:
-        m_poCurFeature = new TABRectangle(m_poDefn);
-        break;
-      case TABFCEllipse:
-        m_poCurFeature = new TABEllipse(m_poDefn);
-        break;
-      case TABFCText:
-        m_poCurFeature = new TABText(m_poDefn);
-        break;
-      default:
-        // New feature type was added but has not been included here...
-        // Assert in debug mode, but handle as NONE geometry otherwise.
-        CPLAssert(FALSE);
-        // no-break here
-      case TABFCNoGeomFeature:
-        m_poCurFeature = new TABFeature(m_poDefn);
-    }
-    CPLAssert(m_poCurFeature);
-#endif
-
     /*-----------------------------------------------------------------
      * Keep track of FID and copy the geometry 
      *----------------------------------------------------------------*/
@@ -1035,7 +1482,9 @@ TABFeature *TABRelation::GetFeatureRef(int nFeatureId)
      *          one new feature for each of them.
      *----------------------------------------------------------------*/
     TABFeature *poRelFeature=NULL;
-    GByte *pKey = BuildMainKey(poMainFeature);
+    GByte *pKey = BuildFieldKey(poMainFeature, m_nMainFieldNo,
+                            m_poMainTable->GetNativeFieldType(m_nMainFieldNo),
+                                m_nRelFieldIndexNo);
     int i;
     int nRelFeatureId = m_poRelINDFileRef->FindFirst(m_nRelFieldIndexNo, pKey);
     
@@ -1075,30 +1524,30 @@ TABFeature *TABRelation::GetFeatureRef(int nFeatureId)
 
 
 /**********************************************************************
- *                   TABRelation::BuildMainKey()
+ *                   TABRelation::BuildFieldKey()
  *
- * Return the encoded field key for field m_nMainFieldNo in the 
- * feature in argument.  Simply maps the call to the proper method
- * in the TABINDFile class.
+ * Return the index key for the specified field in poFeature.
+ * Simply maps the call to the proper method in the TABINDFile class.
  *
  * Returns a reference to a TABINDFile internal buffer that should not
  * be freed by the caller.
  **********************************************************************/
-GByte *TABRelation::BuildMainKey(TABFeature *poFeature)
+GByte *TABRelation::BuildFieldKey(TABFeature *poFeature, int nFieldNo,
+                                  TABFieldType eType, int nIndexNo)
 {
     GByte *pKey = NULL;
 
-    switch(m_poMainTable->GetNativeFieldType(m_nMainFieldNo))
+    switch(eType)
     {
       case TABFChar:
-        pKey = m_poRelINDFileRef->BuildKey(m_nRelFieldIndexNo,
-                             poFeature->GetFieldAsString(m_nMainFieldNo));
+        pKey = m_poRelINDFileRef->BuildKey(nIndexNo,
+                             poFeature->GetFieldAsString(nFieldNo));
         break;
 
       case TABFDecimal:
       case TABFFloat:
-        pKey = m_poRelINDFileRef->BuildKey(m_nRelFieldIndexNo,
-                             poFeature->GetFieldAsDouble(m_nMainFieldNo));
+        pKey = m_poRelINDFileRef->BuildKey(nIndexNo,
+                             poFeature->GetFieldAsDouble(nFieldNo));
         break;
 
       case TABFInteger:
@@ -1106,14 +1555,13 @@ GByte *TABRelation::BuildMainKey(TABFeature *poFeature)
       case TABFDate:
       case TABFLogical:
       default:
-        pKey = m_poRelINDFileRef->BuildKey(m_nRelFieldIndexNo,
-                             poFeature->GetFieldAsInteger(m_nMainFieldNo));
+        pKey = m_poRelINDFileRef->BuildKey(nIndexNo,
+                             poFeature->GetFieldAsInteger(nFieldNo));
         break;
     }
 
     return pKey;
 }
-
 
 
 /**********************************************************************
@@ -1159,3 +1607,332 @@ TABFieldType TABRelation::GetNativeFieldType(int nFieldId)
     return TABFUnknown;
 }
 
+
+/**********************************************************************
+ *                   TABRelation::AddFieldNative()
+ *
+ * Create a new field using a native mapinfo data type... this is an 
+ * alternative to defining fields through the OGR interface.
+ * This function should be called after creating a new dataset, but before 
+ * writing the first feature.
+ *
+ * This function will build/update the OGRFeatureDefn that will have to be
+ * used when writing features to this dataset.
+ *
+ * A reference to the OGRFeatureDefn can be obtained using GetLayerDefn().
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABRelation::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
+                                int nWidth /*=0*/, int nPrecision /*=0*/,
+                            GBool bIndexed /*=FALSE*/, GBool bUnique/*=FALSE*/)
+{
+    if (m_poMainTable==NULL || m_poRelTable==NULL ||
+        m_panMainTableFieldMap==NULL || m_panRelTableFieldMap==NULL)
+        return -1;
+
+    OGRFieldDefn *poFieldDefn = NULL;
+
+    if (!bUnique)
+    {
+        /*-------------------------------------------------------------
+         * Add field to poMainTable and to m_poDefn
+         *------------------------------------------------------------*/
+        if (m_poMainTable->AddFieldNative(pszName, eMapInfoType,
+                                          nWidth, nPrecision,
+                                          bIndexed) != 0)
+            return -1;
+
+        OGRFeatureDefn *poMainDefn = m_poMainTable->GetLayerDefn();
+
+        m_panMainTableFieldMap = (int*)CPLRealloc(m_panMainTableFieldMap,
+                                      poMainDefn->GetFieldCount()*sizeof(int));
+
+        m_poDefn->AddFieldDefn(poMainDefn->GetFieldDefn(poMainDefn->
+                                                          GetFieldCount()-1));
+
+        m_panMainTableFieldMap[poMainDefn->GetFieldCount()-1] = 
+                                            m_poDefn->GetFieldCount()-1;
+    }
+    else
+    {
+        /*-------------------------------------------------------------
+         * Add field to poRelTable and to m_poDefn
+         *------------------------------------------------------------*/
+        if (m_poRelTable->AddFieldNative(pszName, eMapInfoType,
+                                         nWidth, nPrecision,
+                                         bIndexed) != 0)
+            return -1;
+
+        OGRFeatureDefn *poRelDefn = m_poRelTable->GetLayerDefn();
+
+        m_panRelTableFieldMap = (int*)CPLRealloc(m_panRelTableFieldMap,
+                                      poRelDefn->GetFieldCount()*sizeof(int));
+
+        m_poDefn->AddFieldDefn(poRelDefn->GetFieldDefn(poRelDefn->
+                                                         GetFieldCount()-1));
+
+        m_panRelTableFieldMap[poRelDefn->GetFieldCount()-1] =  
+                                            m_poDefn->GetFieldCount()-1;
+
+        // The first field in this table must be indexed.
+        if (poRelDefn->GetFieldCount() == 1)
+            m_poRelTable->SetFieldIndexed(0);
+    }
+
+    return 0;
+}
+
+
+/**********************************************************************
+ *                   TABRelation::IsFieldIndexed()
+ *
+ * Returns TRUE is specified field is indexed.
+ *
+ * Note that field ids are positive and start at 0.
+ **********************************************************************/
+GBool TABRelation::IsFieldIndexed(int nFieldId)
+{
+    int i, numFields;
+
+    if (m_poMainTable==NULL || m_poRelTable==NULL ||
+        m_panMainTableFieldMap==NULL || m_panRelTableFieldMap==NULL)
+        return FALSE;
+
+    /*-----------------------------------------------------------------
+     * Look for nFieldId in the field maps and call the corresponding
+     * TAB file's GetNativeFieldType()
+     *----------------------------------------------------------------*/
+    numFields = m_poMainTable->GetLayerDefn()->GetFieldCount();
+    for(i=0; i<numFields; i++)
+    {
+        if (m_panMainTableFieldMap[i] == nFieldId)
+        {
+            return m_poMainTable->IsFieldIndexed(i);
+        }
+    }
+
+    numFields = m_poRelTable->GetLayerDefn()->GetFieldCount();
+    for(i=0; i<numFields; i++)
+    {
+        if (m_panRelTableFieldMap[i] == nFieldId)
+        {
+            return m_poRelTable->IsFieldIndexed(i);
+        }
+    }
+
+    return FALSE;
+}
+
+/**********************************************************************
+ *                   TABRelation::SetFieldIndexed()
+ *
+ * Request that the specified field be indexed.  This will create the .IND
+ * file, etc.
+ *
+ * Note that field ids are positive and start at 0.
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABRelation::SetFieldIndexed(int nFieldId)
+{
+    int i, numFields;
+
+    if (m_poMainTable==NULL || m_poRelTable==NULL ||
+        m_panMainTableFieldMap==NULL || m_panRelTableFieldMap==NULL)
+        return -1;
+
+    /*-----------------------------------------------------------------
+     * Look for nFieldId in the field maps and call the corresponding
+     * TAB file's GetNativeFieldType()
+     *----------------------------------------------------------------*/
+    numFields = m_poMainTable->GetLayerDefn()->GetFieldCount();
+    for(i=0; i<numFields; i++)
+    {
+        if (m_panMainTableFieldMap[i] == nFieldId)
+        {
+            return m_poMainTable->SetFieldIndexed(i);
+        }
+    }
+
+    numFields = m_poRelTable->GetLayerDefn()->GetFieldCount();
+    for(i=0; i<numFields; i++)
+    {
+        if (m_panRelTableFieldMap[i] == nFieldId)
+        {
+            return m_poRelTable->SetFieldIndexed(i);
+        }
+    }
+
+    return -1;
+}
+
+/**********************************************************************
+ *                   TABRelation::IsFieldUnique()
+ *
+ * Returns TRUE is specified field is part of the unique table (poRelTable).
+ *
+ * Note that field ids are positive and start at 0.
+ **********************************************************************/
+GBool TABRelation::IsFieldUnique(int nFieldId)
+{
+    int i, numFields;
+
+    if (m_poMainTable==NULL || m_poRelTable==NULL ||
+        m_panMainTableFieldMap==NULL || m_panRelTableFieldMap==NULL)
+        return FALSE;
+
+    /*-----------------------------------------------------------------
+     * Look for nFieldId in the poRelTable field map
+     *----------------------------------------------------------------*/
+    numFields = m_poRelTable->GetLayerDefn()->GetFieldCount();
+    for(i=0; i<numFields; i++)
+    {
+        if (m_panRelTableFieldMap[i] == nFieldId)
+        {
+            return TRUE;  // If it's here then it is unique!
+        }
+    }
+
+    return FALSE;
+}
+
+/**********************************************************************
+ *                   TABRelation::SetFeature()
+ *
+ * Write a feature to this dataset.  
+ *
+ * For now only sequential writes are supported (i.e. with nFeatureId=-1)
+ * but eventually we should be able to do random access by specifying
+ * a value through nFeatureId.
+ *
+ * Returns the new featureId (> 0) on success, or -1 if an
+ * error happened in which case, CPLError() will have been called to
+ * report the reason of the failure.
+ **********************************************************************/
+int TABRelation::SetFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
+{
+    TABFeature *poMainFeature=NULL;
+
+    CPLAssert(m_poMainTable && m_poRelTable);
+
+    // We'll need the feature Defn later...
+    OGRFeatureDefn *poMainDefn, *poRelDefn;
+
+    poMainDefn = m_poMainTable->GetLayerDefn();
+    poRelDefn = m_poRelTable->GetLayerDefn();
+
+    /*-----------------------------------------------------------------
+     * Create one feature for each table
+     * Copy the geometry only to the feature from the main table
+     *----------------------------------------------------------------*/
+    poMainFeature = poFeature->CloneTABFeature(poMainDefn);
+
+    if (poFeature->GetFeatureClass() != TABFCNoGeomFeature)
+    {
+        OGRGeometry *poGeom;
+        poGeom = poFeature->GetGeometryRef();
+        poMainFeature->SetGeometry(poGeom);
+    }
+
+    /*-----------------------------------------------------------------
+     * Copy fields to poMainFeature
+     *----------------------------------------------------------------*/
+    for(int i=0; i<poMainDefn->GetFieldCount(); i++)
+    {
+        if (m_panMainTableFieldMap[i] != -1)
+        {
+            poMainFeature->SetField(i, 
+                      poFeature->GetRawFieldRef(m_panMainTableFieldMap[i]));
+        }
+    }
+
+    /*-----------------------------------------------------------------
+     * Look for a record id for the unique fields, and write a new 
+     * record if necessary
+     *----------------------------------------------------------------*/
+    int nRecordNo = 0;
+    int nUniqueIndexNo=-1;
+    if (m_panMainTableFieldMap[0] != -1)
+        nUniqueIndexNo =m_poRelTable->GetFieldIndexNumber( 0 );
+
+    if (nUniqueIndexNo > 0)
+    {
+        GByte *pKey = BuildFieldKey(poFeature, 0,
+                                    m_poRelTable->GetNativeFieldType(0),
+                                    nUniqueIndexNo);
+
+        if ((nRecordNo=m_poRelINDFileRef->FindFirst(nUniqueIndexNo, pKey))==-1)
+            return -1;
+
+        if (nRecordNo == 0)
+        {
+            /*---------------------------------------------------------
+             * No record in poRelTable yet for this unique value...
+             * add one now...
+             *--------------------------------------------------------*/
+            TABFeature *poRelFeature = new TABFeature(poRelDefn);
+
+            for(int i=0;  i<poRelDefn->GetFieldCount(); i++)
+            {
+                if (m_panRelTableFieldMap[i] != -1)
+                {
+                    poRelFeature->SetField(i, 
+                          poFeature->GetRawFieldRef(m_panRelTableFieldMap[i]));
+                }
+            }
+
+            nRecordNo = ++m_nUniqueRecordNo;
+
+            poRelFeature->SetField(m_nRelFieldNo, nRecordNo);
+
+            if (m_poRelTable->SetFeature(poRelFeature, -1) < 0)
+                return -1;
+
+            delete poRelFeature;
+        }
+    }
+
+
+    /*-----------------------------------------------------------------
+     * Write poMainFeature to the main table
+     *----------------------------------------------------------------*/
+
+    poMainFeature->SetField(m_nMainFieldNo, nRecordNo);
+
+    nFeatureId = m_poMainTable->SetFeature(poMainFeature, nFeatureId);
+
+    delete poMainFeature;
+
+    return nFeatureId;
+}
+
+
+/**********************************************************************
+ *                   TABFile::SetFeatureDefn()
+ *
+ * NOT FULLY IMPLEMENTED YET... 
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABRelation::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
+                         TABFieldType *paeMapInfoNativeFieldTypes /* =NULL */)
+{
+    if (m_poDefn && m_poDefn->GetFieldCount() > 0)
+    {
+        CPLAssert(m_poDefn==NULL);
+        return -1;
+    }
+
+    /*-----------------------------------------------------------------
+     * Keep a reference to the OGRFeatureDefn... we'll have to take the
+     * reference count into account when we are done with it.
+     *----------------------------------------------------------------*/
+    if (m_poDefn && m_poDefn->Dereference() == 0)
+        delete m_poDefn;
+
+    m_poDefn = poFeatureDefn;
+    m_poDefn->Reference();
+
+    return 0;
+}
