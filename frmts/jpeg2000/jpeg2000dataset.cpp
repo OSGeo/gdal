@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.15  2003/02/24 11:06:11  dron
+ * Updated to JasPer 1.700.2.
+ *
  * Revision 1.14  2003/02/14 11:26:04  dron
  * Colour interpretation improved.
  *
@@ -426,9 +429,11 @@ GDALColorInterp JPEG2000RasterBand::GetColorInterpretation()
 	}
     }
     
-    if ( jas_image_colorspace( poGDS->psImage ) == JAS_IMAGE_CS_GRAY )
+    if ( jas_clrspc_fam( jas_image_clrspc( poGDS->psImage ) ) ==
+	 JAS_CLRSPC_FAM_GRAY )
 	return GCI_GrayIndex;
-    else if ( jas_image_colorspace( poGDS->psImage ) == JAS_IMAGE_CS_RGB )
+    else if ( jas_clrspc_fam( jas_image_clrspc( poGDS->psImage ) ) == 
+	      JAS_CLRSPC_FAM_RGB )
     {
 	switch ( jas_image_cmpttype( poGDS->psImage, nBand - 1 ) )
 	{
@@ -949,12 +954,12 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if ( nBands == 1 )			    // Grayscale
     {
-	jas_image_setcolorspace( psImage, JAS_IMAGE_CS_GRAY );
+	jas_image_setclrspc( psImage, JAS_CLRSPC_SGRAY );
 	jas_image_setcmpttype( psImage, 0, JAS_IMAGE_CT_GRAY_Y );
     }
     else if ( nBands == 3 || nBands == 4 )  // Assume as RGB(A)
     {
-	jas_image_setcolorspace( psImage, JAS_IMAGE_CS_RGB );
+	jas_image_setclrspc( psImage, JAS_CLRSPC_SRGB );
 	for ( iBand = 0; iBand < nBands; iBand++ )
 	{
 	    poBand = poSrcDS->GetRasterBand( iBand + 1);
@@ -980,7 +985,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
     else				    // Unknown
     {
-	jas_image_setcolorspace( psImage, JAS_IMAGE_CS_UNKNOWN );
+	jas_image_setclrspc( psImage, JAS_CLRSPC_UNKNOWN );
 	for ( iBand = 0; iBand < nBands; iBand++ )
 	    jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_UNKNOWN );
     }
