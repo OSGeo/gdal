@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/02/25 04:53:16  warmerda
+ * Added support for the LAMBERT projection.  Added support for defining a
+ * GEOGCS from the SPHEROID if there is no known DATUM.   Fixed bug with
+ * GREATBRITIAN_GRID.
+ *
  * Revision 1.20  2003/02/14 22:15:04  warmerda
  * expand tabs
  *
@@ -519,7 +524,8 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
         }
     }
 
-    else if( EQUAL(pszProj,"GREATBRITIAN_GRID") )
+    else if( EQUAL(pszProj,"GREATBRITIAN_GRID") 
+             || EQUAL(pszProj,"GREATBRITAIN_GRID") )
     {
         const char *pszWkt = 
             "PROJCS[\"OSGB 1936 / British National Grid\",GEOGCS[\"OSGB 1936\",DATUM[\"OSGB_1936\",SPHEROID[\"Airy 1830\",6377563.396,299.3249646]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",49],PARAMETER[\"central_meridian\",-2],PARAMETER[\"scale_factor\",0.999601272],PARAMETER[\"false_easting\",400000],PARAMETER[\"false_northing\",-100000],UNIT[\"metre\",1]]";
@@ -535,6 +541,16 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
                  OSR_GDV( papszPrj, "PARAM_3", 0.0 ), 
                  OSR_GDV( papszPrj, "PARAM_5", 0.0 ), 
                  OSR_GDV( papszPrj, "PARAM_6", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"LAMBERT") )
+    {
+        SetLCC( OSR_GDV( papszPrj, "PARAM_1", 0.0 ),
+                OSR_GDV( papszPrj, "PARAM_2", 0.0 ),
+                OSR_GDV( papszPrj, "PARAM_4", 0.0 ),
+                OSR_GDV( papszPrj, "PARAM_3", 0.0 ),
+                OSR_GDV( papszPrj, "PARAM_5", 0.0 ),
+                OSR_GDV( papszPrj, "PARAM_6", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"EQUIDISTANT_CONIC") )
@@ -586,19 +602,48 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Try to translate the datum.                                     */
+/*      Try to translate the datum/spheroid.                            */
 /* -------------------------------------------------------------------- */
-    const char *pszValue;
-    int        bFullDefined = FALSE;
-
-    if( !IsLocal() )
+    if( !IsLocal() && GetAttrNode( "GEOGCS" ) == NULL )
     {
-        pszValue = OSR_GDS( papszPrj, "Datum", "WGS84");
-        if( EQUAL(pszValue,"NAD27") || EQUAL(pszValue,"NAD83")
-            || EQUAL(pszValue,"WGS84") || EQUAL(pszValue,"WGS72") )
+        const char *pszDatum;
+
+        pszDatum = OSR_GDS( papszPrj, "Datum", "");
+
+        if( EQUAL(pszDatum,"NAD27") || EQUAL(pszDatum,"NAD83")
+            || EQUAL(pszDatum,"WGS84") || EQUAL(pszDatum,"WGS72") )
         {
-            SetWellKnownGeogCS( pszValue );
-            bFullDefined = TRUE;
+            SetWellKnownGeogCS( pszDatum );
+        }
+        else
+        {
+            const char *pszSpheroid;
+
+            pszSpheroid = OSR_GDS( papszPrj, "Spheroid", "");
+            
+            if( EQUAL(pszSpheroid,"INT1909") )
+            {
+                OGRSpatialReference oGCS;
+                oGCS.importFromEPSG( 4022 );
+                CopyGeogCSFrom( &oGCS );
+            }
+            else if( EQUAL(pszSpheroid,"AIRY") )
+            {
+                OGRSpatialReference oGCS;
+                oGCS.importFromEPSG( 4001 );
+                CopyGeogCSFrom( &oGCS );
+            }
+            else if( EQUAL(pszSpheroid,"CLARKE1866") )
+            {
+                OGRSpatialReference oGCS;
+                oGCS.importFromEPSG( 4008 );
+                CopyGeogCSFrom( &oGCS );
+            }
+            else
+            {
+                // If we don't know, default to WGS84 so there is something there.
+                SetWellKnownGeogCS( "WGS84" );
+            }
         }
     }
 
@@ -607,6 +652,8 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
 /* -------------------------------------------------------------------- */
     if( IsLocal() || IsProjected() )
     {
+        const char *pszValue;
+
         pszValue = OSR_GDS( papszPrj, "Units", NULL );
         if( pszValue == NULL )
             SetLinearUnits( SRS_UL_METER, 1.0 );
