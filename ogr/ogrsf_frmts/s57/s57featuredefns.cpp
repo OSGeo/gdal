@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/11/17 20:10:46  warmerda
+ * added support for writing FFPT linkages
+ *
  * Revision 1.1  2003/11/12 21:24:41  warmerda
  * New
  *
@@ -369,10 +372,15 @@ void S57GenerateStandardAttributes( OGRFeatureDefn *poFDefn, int nOptionFlags )
         
         oField.Set( "LNAM_REFS", OFTStringList, 16, 0 );
         poFDefn->AddFieldDefn( &oField );
+        
+        oField.Set( "FFPT_RIND", OFTIntegerList, 1, 0 );
+        poFDefn->AddFieldDefn( &oField );
+
+        // We should likely include FFPT_COMT here. 
     }
 
 /* -------------------------------------------------------------------- */
-/*      LNAM - only generated when LNAM strings are being used.         */
+/*      Values from FSPT field.                                         */
 /* -------------------------------------------------------------------- */
     if( nOptionFlags & S57M_RETURN_LINKAGES )
     {

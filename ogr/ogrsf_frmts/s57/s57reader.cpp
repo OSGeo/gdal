@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2003/11/17 20:10:46  warmerda
+ * added support for writing FFPT linkages
+ *
  * Revision 1.43  2003/11/12 21:23:40  warmerda
  * updates to new featuredefn generators
  *
@@ -766,7 +769,7 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
 /* -------------------------------------------------------------------- */
 /*      Generate long name, if requested.                               */
 /* -------------------------------------------------------------------- */
-    if( bGenerateLNAM )
+    if( nOptionFlags & S57M_LNAM_REFS )
     {
         GenerateLNAMAndRefs( poRecord, poFeature );
     }
@@ -928,7 +931,7 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
 }
 
 /************************************************************************/
-/*                        GenerateLNAMAndRefs()                         */
+/*                        generatelnamandrefs()                         */
 /************************************************************************/
 
 void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
@@ -962,6 +965,7 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
     int         nRefCount = poFFPT->GetRepeatCount();
     DDFSubfieldDefn *poLNAM;
     char        **papszRefs = NULL;
+    int         *panRIND = (int *) CPLMalloc(sizeof(int) * nRefCount);
 
     poLNAM = poFFPT->GetFieldDefn()->FindSubfieldDefn( "LNAM" );
     if( poLNAM == NULL )
@@ -980,10 +984,15 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
                  pabyData[7], pabyData[6] );
 
         papszRefs = CSLAddString( papszRefs, szLNAM );
+
+        panRIND[iRef] = pabyData[8];
     }
 
     poFeature->SetField( "LNAM_REFS", papszRefs );
     CSLDestroy( papszRefs );
+
+    poFeature->SetField( "FFPT_RIND", nRefCount, panRIND );
+    CPLFree( panRIND );
 }
 
 /************************************************************************/
