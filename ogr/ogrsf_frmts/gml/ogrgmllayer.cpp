@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/03/06 20:30:28  warmerda
+ * use GML/OGR geometry translations from ogr_geometry.h now
+ *
  * Revision 1.6  2003/01/17 20:39:40  warmerda
  * added bounding rectangle support
  *
@@ -171,7 +174,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 
     if( poGMLFeature->GetGeometry() != NULL )
         poOGRFeature->SetGeometryDirectly( 
-            GML2OGRGeometry( poGMLFeature->GetGeometry() ) );
+            OGRGeometryFactory::createFromGML( poGMLFeature->GetGeometry() ) );
 
     for( iField = 0; iField < poFClass->GetPropertyCount(); iField++ )
     {
@@ -268,7 +271,7 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
         char	*pszGeometry;
         OGREnvelope sGeomBounds;
 
-        pszGeometry = OGR2GMLGeometry( poFeature->GetGeometryRef() );
+        pszGeometry = poFeature->GetGeometryRef()->exportToGML();
         VSIFPrintf( fp, "      <gml:geometryProperty>%s</gml:geometryProperty>\n",
                     pszGeometry );
         CPLFree( pszGeometry );

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/03/06 20:30:28  warmerda
+ * use GML/OGR geometry translations from ogr_geometry.h now
+ *
  * Revision 1.5  2003/01/17 20:39:29  warmerda
  * added bounding rectangle support
  *
@@ -52,8 +55,6 @@
 
 #include "ogrsf_frmts.h"
 #include "gmlreader.h"
-
-#include "ogr_gml_geom.h"
 
 class OGRGMLDataSource;
 
