@@ -1,0 +1,178 @@
+	SDTS - Random Working Notes
+	---------------------------
+
+References:
+
+ Full SDTS Specification (is this current?):
+  http://mcmcweb.er.usgs.gov/sdts/SDTS_standard_oct91/part1.html
+
+Assorted Complexities:
+
+ o geometric features may have links to none, one or more attribute records.
+   This can vary from feature to feature within a module (ie. LE01), and 
+   it can't be established at the point where the module is opened what
+   attribute modules are actually used.  In theory a list of all potentially
+   applicable attribute modules could be collected from the catalog.  This
+   is actually an issue in the basic DLG files. 
+
+ o It is easy to associate features through the module/record id's, but 
+   in order to quickly find an associated feature some sort of indexing
+   pass would be needed on randomly searched modules (like attributes or
+   lines).  For instance, this would be needed to compose whole polygons
+   from lines efficiently, or to associate attribute records. 
+
+ o Arcs (as opposed to lines) use different field name for the spatial 
+   address.  (ie CADR for Arc). 
+
+ o Rings, and Polygons just contain references to the lines composing them. 
+
+
+Not doing:
+
+ o Not reading offsets or vertical information from IREF module. No support
+   for Z yet. 
+
+ o Not really using the IREF HFMT value ... still just hardcoded to use
+   BI32 for X and Y even though I carry the IREF object to the require
+   code (ie. SDTSLineReader). 
+
+ o SDTSLineReader only keeps that last attribute record link encountered.
+   In practice there are often two, and in theory perhaps many more. 
+
+ o sdts2shp assumes that the first two letters of a module name is 
+   the object representation code (OBRP) which may be true for DLG or
+   even TVP, but doesn't seem to be generally required. 
+
+ o The code needs to be case insensitive about filenames. 
+
+
+
+Report on Module Relationships
+==============================
+
+Lines
+-----
+
+Topological lines will have pointers to their start and end node, and
+their left and right polygons.  Lines can also have pointers to one
+or more attribute records.
+
+eg. 
+
+warmerda@gdal[300]% ~/shapelib-1.2.3/dbfdump -m dlg_shp/tr01le01.dbf | more
+
+Record: 0
+SDTSRecId:        1
+LeftPoly: PC01:2      
+RightPoly: PC01:4      
+StartNode: NO01:13     
+EndNode: NO01:14     
+ARef_0: ARDF:1      
+ARef_1: ARDM:1      
+ARef_2: :-1         
+
+
+SDTSRecId is the record id of this line feature in the LE01 module.  The
+full name of this line is "LE01:1".
+
+LeftPoly indicates that the left polygon is record 2 in module PC01 
+(file TR01PC01.DDF).  RighPoly, StartNode, and EndNode work similarly. 
+
+Lines can have a list of attribute records.  For now I translate them 
+in no particular order, so this line is linked to attribute record 1 in 
+module ARDF (TR01ARDF.DDR), and to attribute record 1 in module ARDM. 
+The third entry is my representation of missing. 
+
+I haven't seen any transfers with more than one line module, but in theory
+there could be many (LE01, LE02, ...). 
+
+
+Points
+------
+
+There are various kinds of points (notes, area markers, etc).  They can 
+be related to an area, or an attribute record.  It does not appear that
+end point nodes on lines have a reference back to the lines they start/end.
+
+eg.
+
+warmerda@gdal[306]% ~/shapelib-1.2.3/dbfdump -m dlg_shp/tr01na01.dbf | more
+
+Record: 0
+SDTSRecId:        2
+Area: PC01:2      
+ARef_0: :-1         
+ARef_1: :-1         
+ARef_2: :-1         
+
+This particular point has a link to an area for which it is a label point.
+This point has no attribute references of it's own (though the area may
+very well have on the PC01:2 record). 
+
+
+Areas
+-----
+
+Areas can have references to zero or more attribute records, but don't
+normally have a reference to the lines or points that they relate to.  This
+means that to build up a polygon like PC01:7, it is necessary to find all 
+lines with that as a left or right polygon and reassemble ... a potentially 
+expensive process. 
+
+The sdts2shp program doesn't support areas yet, but using 8211dump we
+can see it looks like this (it only has it's own identification information,
+no references to other objects).  Note that some do have ATID (attribute
+record references). 
+
+
+--- record boundary ---
+
+POLY : POLYGON
+        MODN :  = PC01 (A)
+        RCID :  = 7 (I)
+        OBRP :  = PC (A)
+
+...
+
+
+Attributes
+----------
+
+Attribute records don't have any references to the objects they relate
+to.  They consist of their own identity (record number) and a series of
+user attributes.
+
+warmerda@gdal[310]% ~/shapelib-1.2.3/dbfdump -m dlg_shp/tr01ardf.dbf | more
+
+Record: 0
+SDTSRecId:        1
+ENTITY_LAB: 1700201
+ARBITRARY_:  
+RELATION_T:  
+VERTICAL_R:  
+OPERATIONA:  
+ACCESS_RES:  
+OLD_RAILRO:  
+WITH_RAILR:  
+COVERED   :  
+HISTORICAL:  
+LIMITED_AC:  
+PHOTOREVIS:  
+LANES     :        -9
+ROAD_WIDTH:       -99
+BEST_ESTIM:  
+FUNCTIONAL:   
+
+
+Relationship Overview
+---------------------
+
+In order to read attributes related to a line or point quickly it will 
+be necessary to pre-read and index all the attribute records.  
+
+In order to assemble polygons efficiently it would be necessary to 
+pre-read all the polygons, and all the lines.  For each polygon a list
+of lines bordering it would have to be established, and an index to the
+line records kept.  
+
+
