@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/04/24 02:49:23  warmerda
+ * Update notes on GetExtent() when no spatial features.
+ *
  * Revision 1.8  2002/03/27 21:24:55  warmerda
  * updates notes on GetFeature()
  *
@@ -286,6 +289,9 @@
  a spatial filter was previously set then it should be ignored but some
  implementations may be unable to do that, so it is safer to call 
  GetExtent() without setting a spatial filter.
+
+ Layers without any geometry may return OGRERR_FAILURE just indicating that
+ no meaningful extents could be collected.
 
  @param psExtent the structure in which the extent value will be returned.
 
