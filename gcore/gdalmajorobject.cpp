@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/09/25 15:56:37  warmerda
+ * implemented rest of C entry points for metadata, document C++ methods
+ *
  * Revision 1.3  2001/07/18 04:04:30  warmerda
  * added CPL_CVSID
  *
@@ -158,6 +161,8 @@ char **GDALGetMetadata( GDALMajorObjectH hObject, const char * pszDomain )
 /** 
  * Set metadata. 
  *
+ * The C function GDALSetMetadata() does the same thing as this method.
+ *
  * @param papszMetadata the metadata in name=value string list format to 
  * apply.  
  * @param pszDomain the domain of interest.  Use "" or NULL for the default
@@ -185,8 +190,32 @@ CPLErr GDALMajorObject::SetMetadata( char ** papszMetadataIn,
 }
 
 /************************************************************************/
+/*                          GDALSetMetadata()                           */
+/************************************************************************/
+
+CPLErr GDALSetMetadata( GDALMajorObjectH hObject, char **papszMD, 
+                        const char *pszDomain )
+
+{
+    return ((GDALMajorObject *) hObject)->SetMetadata( papszMD, pszDomain );
+}
+
+
+/************************************************************************/
 /*                          GetMetadataItem()                           */
 /************************************************************************/
+
+/**
+ * Fetch single metadata item.
+ *
+ * The C function GDALGetMetadataItem() does the same thing as this method.
+ *
+ * @param pszName the key for the metadata item to fetch.
+ * @param pszDomain the domain to fetch for, use NULL for the default domain.
+ *
+ * @return NULL on failure to find the key, or a pointer to an internal
+ * copy of the value string on success.
+ */
 
 const char *GDALMajorObject::GetMetadataItem( const char * pszName, 
                                               const char * pszDomain )
@@ -198,8 +227,32 @@ const char *GDALMajorObject::GetMetadataItem( const char * pszName,
 }
 
 /************************************************************************/
+/*                        GDALGetMetadataItem()                         */
+/************************************************************************/
+
+const char *GDALGetMetadataItem( GDALMajorObjectH hObject, 
+                                 const char *pszName, 
+                                 const char *pszDomain )
+
+{
+    return ((GDALMajorObject *) hObject)->GetMetadataItem( pszName, pszDomain);
+}
+
+/************************************************************************/
 /*                          SetMetadataItem()                           */
 /************************************************************************/
+
+/**
+ * Set single metadata item.
+ *
+ * The C function GDALSetMetadataItem() does the same thing as this method.
+ *
+ * @param pszName the key for the metadata item to fetch.
+ * @param pszValue the value to assign to the key.
+ * @param pszDomain the domain to set within, use NULL for the default domain.
+ *
+ * @return CE_None on success, or an error code on failure.
+ */
 
 CPLErr GDALMajorObject::SetMetadataItem( const char * pszName, 
                                          const char * pszValue, 
@@ -218,3 +271,15 @@ CPLErr GDALMajorObject::SetMetadataItem( const char * pszName,
     return CE_None;
 }
 
+/************************************************************************/
+/*                        GDALSetMetadataItem()                         */
+/************************************************************************/
+
+CPLErr GDALSetMetadataItem( GDALMajorObjectH hObject, 
+                            const char *pszName, const char *pszValue, 
+                            const char *pszDomain )
+
+{
+    return ((GDALMajorObject *) hObject)->SetMetadataItem( pszName, pszValue,
+                                                           pszDomain );
+}
