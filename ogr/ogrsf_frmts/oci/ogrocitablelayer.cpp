@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/01/07 22:24:35  warmerda
+ * added SRS support
+ *
  * Revision 1.9  2003/01/07 21:14:20  warmerda
  * implement GetFeature() and SetFeature()
  *
@@ -76,7 +79,8 @@ static int nHits = 0;
 
 OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn, 
                                     const char * pszTableName,
-                                    int bUpdate, int bNewLayerIn )
+                                    const char * pszGeomColIn,
+                                    int nSRID, int bUpdate, int bNewLayerIn )
 
 {
     poDS = poDSIn;
@@ -95,8 +99,14 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
 
     poFeatureDefn = ReadTableDefinition( pszTableName );
     
-    ResetReading();
+    CPLFree( pszGeomName );
+    pszGeomName = CPLStrdup( pszGeomColIn );
 
+    poSRS = poDSIn->FetchSRS( nSRID );
+    if( poSRS != NULL )
+        poSRS->Reference();
+
+    ResetReading();
 }
 
 /************************************************************************/
@@ -111,6 +121,9 @@ OGROCITableLayer::~OGROCITableLayer()
 
     CPLFree( pszQuery );
     CPLFree( pszWHERE );
+
+    if( poSRS != NULL && poSRS->Dereference() == 0 )
+        delete poSRS;
 }
 
 /************************************************************************/
@@ -174,14 +187,6 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
         if( poSession->GetParmInfo( hParmDesc, &oField, &nOCIType, &nOCILen )
             != CE_None )
             return poDefn;
-
-        if( oField.GetType() == OFTBinary 
-            && nOCIType == 108 )
-        {
-            CPLFree( pszGeomName );
-            pszGeomName = CPLStrdup( oField.GetNameRef() );
-            continue;
-        }
 
         if( oField.GetType() == OFTBinary )
             continue;			
@@ -337,6 +342,9 @@ OGRFeature *OGROCITableLayer::GetFeature( long nFeatureId )
     OGRFeature *poFeature;
 
     poFeature = GetNextRawFeature();
+    
+    if( poFeature != NULL && poFeature->GetGeometryRef() != NULL )
+        poFeature->GetGeometryRef()->assignSpatialReference( poSRS );
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup the statement.                                          */
@@ -389,6 +397,8 @@ OGRFeature *OGROCITableLayer::GetNextFeature()
             || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
         {
             nHits++;
+            if( poFeature->GetGeometryRef() != NULL )
+                poFeature->GetGeometryRef()->assignSpatialReference( poSRS );
             return poFeature;
         }
 

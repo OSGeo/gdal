@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/01/07 22:24:35  warmerda
+ * added SRS support
+ *
  * Revision 1.4  2003/01/07 21:12:59  warmerda
  * Move GetFeature() to OGROCITableLayer
  *
@@ -195,6 +198,8 @@ public:
     char GetLast();
     char *GetEnd() { UpdateEnd(); return pszString + nLen; }
     char *GetString() { return pszString; }
+
+    void Clear();
 };
 
 /************************************************************************/
@@ -281,6 +286,8 @@ class OGROCITableLayer : public OGROCILayer
     int			bLaunderColumnNames;
     int			bPreservePrecision;
 
+    OGRSpatialReference *poSRS;
+
     char               *TranslateToSDOGeometry( OGRGeometry * );
     OGRErr              TranslateElementGroup( OGRGeometry *poGeometry,
                                                OGROCIStringBuf *poElemInfo,
@@ -291,8 +298,9 @@ class OGROCITableLayer : public OGROCILayer
     
   public:
     			OGROCITableLayer( OGROCIDataSource *,
-                                         const char * pszName,
-                                         int bUpdate, int bNew );
+                                          const char * pszName,
+                                          const char *pszGeomCol, 
+                                          int nSRID, int bUpdate, int bNew );
     			~OGROCITableLayer();
 
     virtual void	ResetReading();
@@ -311,6 +319,8 @@ class OGROCITableLayer : public OGROCILayer
     
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
+
+    virtual OGRSpatialReference *GetSpatialRef() { return poSRS; }
 
     virtual int         TestCapability( const char * );
 
@@ -353,6 +363,12 @@ class OGROCIDataSource : public OGRDataSource
 
     OGROCISession      *poSession;
 
+    // We maintain a list of known SRID to reduce the number of trips to
+    // the database to get SRSes. 
+    int                 nKnownSRID;
+    int                *panSRID;
+    OGRSpatialReference **papoSRS;
+    
   public:
     			OGROCIDataSource();
     			~OGROCIDataSource();
@@ -360,7 +376,9 @@ class OGROCIDataSource : public OGRDataSource
     OGROCISession      *GetSession() { return poSession; }
 
     int			Open( const char *, int bUpdate, int bTestOpen );
-    int                 OpenTable( const char *, int bUpdate, int bTestOpen );
+    int                 OpenTable( const char *pszTableName, 
+                                   const char *pszGeomCol,
+                                   int nSRID, int bUpdate, int bTestOpen );
 
     const char	        *GetName() { return pszName; }
     int			GetLayerCount() { return nLayers; }
@@ -379,6 +397,9 @@ class OGROCIDataSource : public OGRDataSource
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect );
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
+
+    int                 FetchSRSId( OGRSpatialReference * poSRS );
+    OGRSpatialReference *FetchSRS( int nSRID );
 };
 
 /************************************************************************/
