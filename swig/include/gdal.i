@@ -1,3 +1,19 @@
+/******************************************************************************
+ * $Id$
+ *
+ * Name:     gdal.i
+ * Project:  GDAL Python Interface
+ * Purpose:  GDAL Core SWIG Interface declarations.
+ * Author:   Kevin Ruland, kruland@ku.edu
+ *
+
+ *
+ * $Log$
+ * Revision 1.4  2005/02/14 23:50:16  hobu
+ * Added log info
+ *
+*/
+
 %module gdal
 
 //
