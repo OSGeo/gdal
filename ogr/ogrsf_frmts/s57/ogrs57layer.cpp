@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/12/17 22:36:35  warmerda
+ * implement GetFeature() method
+ *
  * Revision 1.6  2001/12/14 19:40:18  warmerda
  * added optimized feature counting, and extents collection
  *
@@ -266,5 +269,28 @@ int OGRS57Layer::GetFeatureCount (int bForce)
         return OGRLayer::GetFeatureCount( bForce );
     else
         return nFeatureCount;
+}
+
+/************************************************************************/
+/*                             GetFeature()                             */
+/************************************************************************/
+
+OGRFeature *OGRS57Layer::GetFeature( long nFeatureId )
+
+{
+    S57Reader   *poReader = poDS->GetModule(0); // not multi-reader aware
+
+    if( poReader != NULL )
+    {
+        OGRFeature	*poFeature;
+
+        poFeature = poReader->ReadFeature( nFeatureId, poFeatureDefn );
+        if( poFeature != NULL &&  poFeature->GetGeometryRef() != NULL )
+            poFeature->GetGeometryRef()->assignSpatialReference(
+                GetSpatialRef() );
+        return poFeature;
+    }
+    else
+        return NULL;
 }
 
