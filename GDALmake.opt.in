@@ -202,9 +202,5 @@ O_OBJ =	$(foreach file,$(OBJ),../o/$(file))
 %-target:
 	$(MAKE) -C $*
 
-# temporary work-around for frmts/*/GNUmakefile
-%-target-install-obj:
-	$(MAKE) -C $* install-obj
-
 %-clean:
 	$(MAKE) -C $* clean
