@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.29  2002/05/29 15:58:26  warmerda
+ * removed GetDescription(), added SetColorInterpretation()
+ *
  * Revision 1.28  2002/05/28 18:55:08  warmerda
  * added GetDataset()
  *
@@ -1181,6 +1184,24 @@ GDALColorInterp GDALGetRasterColorInterpretation( GDALRasterBandH hBand )
 }
 
 /************************************************************************/
+/*                       SetColorInterpretation()                       */
+/************************************************************************/
+
+/**
+ * Set color interpretation of a band.
+ *
+ * @param eColorInterp the new color interpretation to apply to this band.
+ * 
+ * @return CE_None on success or CE_Failure if method is unsupported by format.
+ */
+
+CPLErr GDALRasterBand::SetColorInterpretation( GDALColorInterp eColorInterp )
+
+{
+    return CE_Failure;
+}
+
+/************************************************************************/
 /*                           GetColorTable()                            */
 /************************************************************************/
 
@@ -1442,23 +1463,6 @@ double GDALRasterBand::GetScale( int *pbSuccess )
 
     return 1.0;
 }
-
-/************************************************************************/
-/*                           GetDescription()                           */
-/************************************************************************/
-
-/**
- * Return a description of this band.
- *
- * @return internal description string, or "" if none is available.
- */
-
-const char *GDALRasterBand::GetDescription()
-
-{
-    return "";
-}
-
 
 /************************************************************************/
 /*                            GetUnitType()                             */

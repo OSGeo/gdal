@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2002/05/29 15:58:26  warmerda
+ * removed GetDescription(), added SetColorInterpretation()
+ *
  * Revision 1.31  2002/05/28 18:56:22  warmerda
  * added shared dataset concept
  *
@@ -433,7 +436,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     // New OpengIS CV_SampleDimension stuff.
 
-    virtual const char  *GetDescription();
     virtual char **GetCategoryNames();
     virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual double GetMinimum( int *pbSuccess = NULL );
@@ -447,6 +449,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLErr SetCategoryNames( char ** );
     virtual CPLErr SetNoDataValue( double );
     virtual CPLErr SetColorTable( GDALColorTable * ); 
+    virtual CPLErr SetColorInterpretation( GDALColorInterp );
 
     virtual int HasArbitraryOverviews();
     virtual int GetOverviewCount();
