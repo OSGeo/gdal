@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/03/11 15:40:44  warmerda
+ * initial minimally working implementation
+ *
  * Revision 1.2  2003/03/05 22:11:10  warmerda
  * implement istransformable
  *
@@ -37,10 +40,11 @@
  */
 
 #include <assert.h>
+#include "cpl_minixml.h"
+#include "ogr_api.h"
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
-#include "cpl_minixml.h"
 
 CPL_CVSID("$Id$");
 
@@ -182,7 +186,7 @@ void WCTSGetCapabilities( CPLXMLNode *psOperation )
     const char *pszCapFilename;
     FILE *fp;
 
-    pszCapFilename = CPLFindFile( "etc", "wcts_capabilities.xml.0.0.3" );
+    pszCapFilename = CPLFindFile( "etc", "wcts_capabilities.xml.0.1.0" );
 
     if( pszCapFilename == NULL 
         || (fp = VSIFOpen( pszCapFilename, "rt")) == NULL )
@@ -230,22 +234,22 @@ WCTSImportCoordinateReferenceSystem( CPLXMLNode *psXMLCRS )
 /*      Get the EPSG code, and verify that it is in the EPSG            */
 /*      codeSpace.                                                      */
 /* -------------------------------------------------------------------- */
-    if( !EQUAL(CPLGetXMLValue( psXMLCRS, "Identifier.codeSpace", "" ), "EPSG"))
+    if( !EQUAL(CPLGetXMLValue( psXMLCRS, "crsID.gml:codeSpace", "" ), "EPSG"))
     {
         WCTSEmitServiceException( "Failed to decode CoordinateReferenceSystem with missing,\n"
-                                  "or non-EPSG Identifier.codeSpace" );
+                                  "or non-EPSG crsID.gml:codeSpace" );
     }	
 
-    nEPSGCode = atoi(CPLGetXMLValue( psXMLCRS, "Identifier.code", "0" ));
+    nEPSGCode = atoi(CPLGetXMLValue( psXMLCRS, "crsID.gml:code", "0" ));
 
     if( nEPSGCode == 0 )
     {
         WCTSEmitServiceException( "Failed to decode CoordinateReferenceSystem with missing,\n"
-                                  "or zero Identifier.code" );
+                                  "or zero crsID.gml:code" );
     }								
 
 /* -------------------------------------------------------------------- */
-/*      Translate into EPSG format.                                     */
+/*      Translate into an OGRSpatialReference from EPSG code.           */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
 
@@ -279,8 +283,7 @@ void WCTSIsTransformable( CPLXMLNode *psOperation )
 /* -------------------------------------------------------------------- */
 /*      Translate the source CRS.                                       */
 /* -------------------------------------------------------------------- */
-    psSrcXMLCRS = CPLGetXMLNode( psOperation, 
-                                 "SourceCRS.CoordinateReferenceSystem" );
+    psSrcXMLCRS = CPLGetXMLNode( psOperation, "SourceCRS" );
 
     if( psSrcXMLCRS == NULL )
         WCTSEmitServiceException( "Unable to identify SourceCRS.CoordinateReferenceSystem" );
@@ -290,8 +293,7 @@ void WCTSIsTransformable( CPLXMLNode *psOperation )
 /* -------------------------------------------------------------------- */
 /*      Translate the destination CRS.                                  */
 /* -------------------------------------------------------------------- */
-    psDstXMLCRS = CPLGetXMLNode( psOperation, 
-                                 "DestinationCRS.CoordinateReferenceSystem" );
+    psDstXMLCRS = CPLGetXMLNode( psOperation, "TargetCRS" );
 
     if( psDstXMLCRS == NULL )
         WCTSEmitServiceException( "Unable to identify DestinationCRS.CoordinateReferenceSystem" );
@@ -331,13 +333,182 @@ void WCTSIsTransformable( CPLXMLNode *psOperation )
 }
 
 /************************************************************************/
+/*                       WCTSIsGeometryElement()                        */
+/************************************************************************/
+
+int WCTSIsGeometryElement( CPLXMLNode *psNode )
+
+{
+    if( psNode->eType != CXT_Element )
+        return FALSE;
+    
+    const char *pszElement = psNode->pszValue;
+    
+    if( EQUALN(pszElement,"gml:",4) )
+        pszElement += 4;
+
+    return EQUAL(pszElement,"Polygon") 
+        || EQUAL(pszElement,"MultiPolygon") 
+        || EQUAL(pszElement,"MultiPoint") 
+        || EQUAL(pszElement,"MultiLineString") 
+        || EQUAL(pszElement,"GeometryCollection") 
+        || EQUAL(pszElement,"Point") 
+        || EQUAL(pszElement,"LineString");
+}
+    
+/************************************************************************/
+/*                      WCTSRecurseAndTransform()                       */
+/*                                                                      */
+/*      Recurse down a XML document tree that contains some GML         */
+/*      geometries.  Identify them, convert them into OGRGeometries,    */
+/*      transform these, convert back to GML, insert in place of old    */
+/*      geometry fragments, and continue on.                            */
+/************************************************************************/
+
+void WCTSRecurseAndTransform( CPLXMLNode *psTree, 
+                              OGRCoordinateTransformation *poCT )
+
+{
+    if( psTree == NULL )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      If this isn't a geometry mode just recurse.                     */
+/* -------------------------------------------------------------------- */
+    if( !WCTSIsGeometryElement( psTree ) )
+    {
+        WCTSRecurseAndTransform( psTree->psChild, poCT );
+        WCTSRecurseAndTransform( psTree->psNext, poCT );
+        return;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Convert this node, and it's children (but not it's sibling)     */
+/*      into serialized XML form for feeding to the GML geometry        */
+/*      parser.                                                         */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psNext = psTree->psNext;
+    OGRGeometry *poGeometry;
+
+    psTree->psNext = NULL;
+    poGeometry = (OGRGeometry *) OGR_G_CreateFromGMLTree( psTree );
+    psTree->psNext = psNext;
+
+    if( poGeometry == NULL )
+    {
+        /* should we raise an exception?  For now, no.*/
+        WCTSRecurseAndTransform( psTree->psNext, poCT );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Attempt to transform the geometry (inplace).                    */
+/* -------------------------------------------------------------------- */
+    if( poGeometry->transform( poCT ) != OGRERR_NONE )
+        WCTSEmitServiceException( "Unable to transform some geometries." );
+
+/* -------------------------------------------------------------------- */
+/*      Convert back to XML Tree format.                                */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psAltered, sTempCopy;
+
+    psAltered = OGR_G_ExportToGMLTree( (OGRGeometryH) poGeometry );
+    OGRGeometryFactory::destroyGeometry( poGeometry );
+    
+/* -------------------------------------------------------------------- */
+/*      do fancy swap to copy contents of altered tree in over the      */
+/*      node being changed.  We do this in such a funky way because     */
+/*      we can't change the nodes that point to psTree to point to      */
+/*      psAltered.                                                      */
+/* -------------------------------------------------------------------- */
+    CPLAssert( psAltered->psNext == NULL );
+
+    memcpy( &sTempCopy, psTree, sizeof(CPLXMLNode));
+    memcpy( psTree, psAltered, sizeof(CPLXMLNode));
+    memcpy( psAltered, &sTempCopy, sizeof(CPLXMLNode));
+
+    psTree->psNext = psAltered->psNext;
+    psAltered->psNext = NULL;
+
+    CPLDestroyXMLNode( psAltered );
+    
+/* -------------------------------------------------------------------- */
+/*      Continue on to sibling nodes, but do no further travelling      */
+/*      to this nodes children.                                         */
+/* -------------------------------------------------------------------- */
+    WCTSRecurseAndTransform( psTree->psNext, poCT );
+}
+
+/************************************************************************/
 /*                           WCTSTransform()                            */
 /************************************************************************/
 
 void WCTSTransform( CPLXMLNode *psOperation )
 
 {
-    
+    OGRSpatialReference *poSrcCRS, *poDstCRS;
+    CPLXMLNode *psSrcXMLCRS, *psDstXMLCRS;
+
+/* -------------------------------------------------------------------- */
+/*      Translate the source CRS.                                       */
+/* -------------------------------------------------------------------- */
+    psSrcXMLCRS = CPLGetXMLNode( psOperation, "SourceCRS" );
+
+    if( psSrcXMLCRS == NULL )
+        WCTSEmitServiceException( "Unable to identify SourceCRS.CoordinateReferenceSystem" );
+
+    poSrcCRS = WCTSImportCoordinateReferenceSystem( psSrcXMLCRS );
+
+/* -------------------------------------------------------------------- */
+/*      Translate the destination CRS.                                  */
+/* -------------------------------------------------------------------- */
+    psDstXMLCRS = CPLGetXMLNode( psOperation, "TargetCRS" );
+
+    if( psDstXMLCRS == NULL )
+        WCTSEmitServiceException( "Unable to identify DestinationCRS.CoordinateReferenceSystem" );
+
+    poDstCRS = WCTSImportCoordinateReferenceSystem( psDstXMLCRS );
+
+/* -------------------------------------------------------------------- */
+/*      Create the coordinate transformation object.                    */
+/* -------------------------------------------------------------------- */
+    OGRCoordinateTransformation *poCT;
+
+    poCT = OGRCreateCoordinateTransformation( poSrcCRS, poDstCRS );
+    if( poCT == NULL )
+        WCTSEmitServiceException( "Unable to transform between source and destination CRSs." );
+
+    delete poSrcCRS;
+    delete poDstCRS;
+
+/* -------------------------------------------------------------------- */
+/*      We will recurse over the GML data tree looking for segments     */
+/*      that are recognizably geometries to be transformed in place.    */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psData = CPLGetXMLNode(psOperation,"Data");
+
+    if( psData == NULL )
+        WCTSEmitServiceException( "Unable to find GML Data contents." );
+
+    WCTSRecurseAndTransform( psData, poCT );
+
+/* -------------------------------------------------------------------- */
+/*      Now translate the data back into a serialized form suitable     */
+/*      for including in the reply.                                     */
+/* -------------------------------------------------------------------- */
+    char *pszDataText = CPLSerializeXMLTree( psData );
+
+/* -------------------------------------------------------------------- */
+/*      Return result.                                                  */
+/* -------------------------------------------------------------------- */
+    printf( "Content-type: text/xml%c%c", 10, 10 );
+
+    printf( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" );
+    printf( "<TransformResponse xmlns:gml=\"http://www.opengis.net/gml\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" >\n" );
+    fwrite( pszDataText, 1, strlen(pszDataText), stdout );
+    printf( "</TransformResponse>\n" );
+
+    exit( 0 );
 }
 
 /************************************************************************/
@@ -373,7 +544,7 @@ int main( int nArgc, char ** papszArgv )
             assert( FALSE );
         }
         else if( psOperation->eType == CXT_Element
-            && EQUAL(psOperation->pszValue,"Transformable") )
+            && EQUAL(psOperation->pszValue,"IsTransformable") )
         {
             WCTSIsTransformable( psOperation );
             assert( FALSE );
