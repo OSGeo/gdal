@@ -436,6 +436,9 @@ fi
 
 dnl ---------------------------------------------------------------------------
 dnl Select an HDF4 Library to use, or disable driver.
+dnl
+dnl We assume the use will have libjpeg and libz from other sources when
+dnl linking against static HDF4 libraries. 
 dnl ---------------------------------------------------------------------------
 
 HDF4_INCLUDE=
@@ -453,18 +456,58 @@ elif test "$with_hdf4" = "yes" -o "$with_hdf4" = "" ; then
 
   AC_CHECK_LIB(mfhdf,SDreaddata,HAVE_HDF4=yes,HAVE_HDF4=no,)
 
+
   if test "$HAVE_HDF4" = "yes" ; then   
     LIBS="-lmfhdf $LIBS"
   fi
 
+  # Some Linux dists install hdf include files here. 
+  if test "$HAVE_HDF4" = "yes" -a -r /usr/include/hdf/hdf.h ; then
+    HDF4_INCLUDE="-I/usr/include/hdf"
+  fi
+
 else
 
+  if test -d $with_hdf4/lib ; then
+    HDF_LIB_DIR=$with_hdf4/lib
+  else
+    HDF_LIB_DIR=$with_hdf4
+  fi
+
+  ORIG_LIBS="$LIBS"
+  LIBS="-L$HDF_LIB_DIR $LIBS"
+
+  AC_CHECK_LIB(mfhdf,SDreaddata,HDF_LIB_NAME=-lmfhdf,HDF_LIB_NAME=missing,)
+  if test "$HDF_LIB_NAME" = "missing" ; then
+    AC_CHECK_LIB(hdf4,SDreaddata,HDF_LIB_NAME=-lhdf4,HDF_LIB_NAME=missing,)
+  fi
+
+  # Check again, with -ldf, -ljpeg and -lz this time.
+  if test "$HDF_LIB_NAME" = "missing" ; then
+    unset ac_cv_lib_mfhdf_SDreaddata
+    AC_CHECK_LIB(mfhdf,SDreaddata,HDF_LIB_NAME="-lmfhdf -ldf",HDF_LIB_NAME=missing,-ldf -ljpeg -lz)
+  fi
+
+  if test "$HDF_LIB_NAME" = "missing" ; then
+    AC_MSG_ERROR([HDF4 support requested with arg $with_hdf4, but neither hdf4 nor mfhdf lib found])
+  fi
+
+  LIBS="-L$HDF_LIB_DIR $HDF_LIB_NAME $ORIG_LIBS"
+
+  if test -r $with_hdf4/hdf/hdf.h ; then
+    HDF4_INCLUDE="-I$with_hdf4/hdf"
+  fi
+  if test -r $with_hdf4/include/hdf/hdf.h ; then
+    HDF4_INCLUDE="-I$with_hdf4/include/hdf"
+  fi
+  if test -r $with_hdf4/include/hdf.h ; then
+    HDF4_INCLUDE="-I$with_hdf4/include"
+  fi
+  if test -r $with_hdf4/hdf.h ; then
+    HDF4_INCLUDE="-I$with_hdf4"
+  fi
+
   HAVE_HDF4=yes
-  LIBS="-L$with_hdf4 -L$with_hdf4/lib -lhdf4 $LIBS"
-  HDF4_INCLUDE="-I$with_hdf4 -I$with_hdf4/include"
-
-  echo "using libmfhdf from $with_hdf4."
-
 fi
 
 AC_SUBST(HAVE_HDF4,$HAVE_HDF4)
