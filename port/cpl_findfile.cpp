@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/10/24 16:30:10  warmerda
+ * fixed serious bug in default finder ... only last location used
+ *
  * Revision 1.4  2002/12/03 04:42:02  warmerda
  * improved finder cleanup support
  *
@@ -94,7 +97,7 @@ const char *CPLDefaultFindFile( const char *pszClass,
 
     (void) pszClass;
 
-    for( i = nLocations-1; nLocations >= 0; nLocations-- )
+    for( i = nLocations-1; i >= 0; i-- )
     {
         const char  *pszResult;
         VSIStatBuf  sStat;
