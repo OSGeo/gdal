@@ -37,8 +37,5 @@
 /* Enable SubIFD tag (330) support */
 #define SUBIFD_SUPPORT 1
 
-#define HAVE_ASSERT_H 1
-
-
 
 
