@@ -19,6 +19,10 @@ PYDIR   =	"C:\Software\Python24"
 #OPTFLAGS=	/nologo /MD /GX /Ox
 OPTFLAGS=	/nologo /MD /GX /Zi /Fd$(GDAL_ROOT)\gdal.pdb
 
+# If you don't want some entry points to have STDCALL conventions, 
+# comment out the following and add -DCPL_DISABLE_STDCALL in OPTFLAGS
+STDCALL=YES
+
 # Version number embedded in DLL name. 
 VERSION =	12
 
