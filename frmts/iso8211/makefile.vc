@@ -7,11 +7,13 @@ GDAL_ROOT	=	..\..
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 default:	$(OBJ)
+	lib /out:libiso8211.lib $(OBJ)
 	copy *.obj ..\o
 
 clean:
 	-del *.obj
 	-del *.exe
+	-del libiso8211.lib
 
 all:	default 8211view.exe 8211dump.exe
 
