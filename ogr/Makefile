@@ -3,7 +3,8 @@ VSTUDIO =       F:\VisualStudio
 MSDASDK =       C:\MSDASDK
 
 EXTRAFLAGS =	-I$(VSTUDIO)\VC98\ATL\Include \
-		-I$(MSDASDK)\include\oledb
+		-I$(MSDASDK)\include\oledb \
+		-I. -Iogrsf_frmts
 
 GDAL_ROOT = 	..
 
@@ -40,10 +41,8 @@ sfcdump.exe:	geometryidl.h sfcdump.obj $(OBJ_OLEDB) $(OBJ_OGR)
 test1.exe:	test1.obj $(OBJ_OGR) 
 	cl test1.obj $(OBJ_OGR) $(ALL_LIBS)
 
-test2.exe:	test2.obj $(OBJ_OGR) shape2ogr.obj
-	cl /Zi test2.obj $(OBJ_OGR) shape2ogr.obj \
-		..\frmts\shapelib\shpopen.obj \
-		..\frmts\shapelib\dbfopen.obj \
+test2.exe:	test2.obj $(OBJ_OGR) 
+	cl /Zi test2.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
 			$(ALL_LIBS)
 
 clean:
