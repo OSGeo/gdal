@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/03/02 05:26:21  warmerda
+ * fixed bugs in source validity mask handling
+ *
  * Revision 1.4  2003/02/24 17:31:27  warmerda
  * added general bilinear resampling logic
  *
@@ -683,8 +686,8 @@ static int GWKGetPixelValue( GDALWarpKernel *poWK, int iBand,
     GByte *pabySrc = poWK->papabySrcImage[iBand];
 
     if( poWK->panUnifiedSrcValid != NULL
-        && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
-             && (0x01 << (iSrcOffset & 0x1f)) ) )
+        && !((poWK->panUnifiedSrcValid[iSrcOffset>>5]
+              & (0x01 << (iSrcOffset & 0x1f))) ) )
     {
         *pdfDensity = 0.0;
         return FALSE;
@@ -692,8 +695,8 @@ static int GWKGetPixelValue( GDALWarpKernel *poWK, int iBand,
 
     if( poWK->papanBandSrcValid != NULL
         && poWK->papanBandSrcValid[iBand] != NULL
-        && !(poWK->papanBandSrcValid[iBand][iSrcOffset>>5]
-             && (0x01 << (iSrcOffset & 0x1f)) ) )
+        && !((poWK->papanBandSrcValid[iBand][iSrcOffset>>5]
+              & (0x01 << (iSrcOffset & 0x1f)))) )
     {
         *pdfDensity = 0.0;
         return FALSE;
