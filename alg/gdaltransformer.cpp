@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/12/13 04:57:49  warmerda
+ * remove approx transformer debug output
+ *
  * Revision 1.6  2002/12/09 16:08:32  warmerda
  * added approximating transformer
  *
@@ -702,9 +705,11 @@ int GDALApproxTransform( void *pCBData, int bDstToSrc, int nPoints,
 
     if( dfError > psATInfo->dfMaxError )
     {
+#ifdef notdef
         CPLDebug( "GDAL", "ApproxTransformer - "
                   "error %g over threshold %g, subdivide %d points.",
                   dfError, psATInfo->dfMaxError, nPoints );
+#endif
 
         bSuccess = 
             GDALApproxTransform( psATInfo, bDstToSrc, nMiddle, 
