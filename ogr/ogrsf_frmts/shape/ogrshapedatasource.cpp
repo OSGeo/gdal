@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/08/12 14:16:10  warmerda
+ * Only recognise .dbf files if the file is directly named with the right
+ * extension, or if it is in a directory, and there is no like-named .tab file.
+ * http://www2.dmsolutions.on.ca:8003/bugzilla/show_bug.cgi?id=1271
+ *
  * Revision 1.14  2002/04/17 15:41:05  warmerda
  * Tread multipolygons as shape type polygon.
  *
@@ -171,9 +176,9 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
     else
     {
         char      **papszCandidates = CPLReadDir( pszNewName );
-        int       iCan;
+        int       iCan, nCandidateCount = CSLCount( papszCandidates );
 
-        for( iCan = 0; iCan < CSLCount(papszCandidates); iCan++ )
+        for( iCan = 0; iCan < nCandidateCount; iCan++ )
         {
             char	*pszFilename;
             const char  *pszCandidate = papszCandidates[iCan];
@@ -200,7 +205,7 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
         }
 
         // Try and .dbf files without apparent associated shapefiles. 
-        for( iCan = 0; iCan < CSLCount(papszCandidates); iCan++ )
+        for( iCan = 0; iCan < nCandidateCount; iCan++ )
         {
             char	*pszFilename;
             const char  *pszCandidate = papszCandidates[iCan];
@@ -220,6 +225,21 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
             }
             
             if( bGotAlready )
+                continue;
+
+            // We don't want to access .dbf files with an associated .tab
+            // file, or it will never get recognised as a mapinfo dataset.
+            int  iCan2, bFoundTAB = FALSE;
+            for( iCan2 = 0; iCan2 < nCandidateCount; iCan2++ )
+            {
+                const char *pszCandidate2 = papszCandidates[iCan2];
+
+                if( EQUALN(pszCandidate2,pszLayerName,strlen(pszLayerName))
+                    && EQUAL(pszCandidate2 + strlen(pszLayerName), ".tab") )
+                    bFoundTAB = TRUE;
+            }
+
+            if( bFoundTAB )
                 continue;
             
             pszFilename =
@@ -262,6 +282,11 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
 {
     SHPHandle	hSHP;
     DBFHandle	hDBF;
+    const char *pszExtension = CPLGetExtension( pszNewName );
+
+    if( !EQUAL(pszExtension,"shp") && !EQUAL(pszExtension,"shx")
+        && !EQUAL(pszExtension,"dbf") )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      SHPOpen() should include better (CPL based) error reporting,    */
@@ -274,17 +299,24 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
     else
         hSHP = SHPOpen( pszNewName, "r" );
 
-    if( hSHP == NULL && EQUAL(CPLGetExtension(pszNewName),"shp") )
+    if( hSHP == NULL && !EQUAL(CPLGetExtension(pszNewName),"dbf") )
         return FALSE;
     
 /* -------------------------------------------------------------------- */
-/*      Open the .dbf file, if it exists.                               */
+/*      Open the .dbf file, if it exists.  To open a dbf file, the      */
+/*      filename has to either refer to a successfully opened shp       */
+/*      file or has to refer to the actual .dbf file.                   */
 /* -------------------------------------------------------------------- */
-    if( bUpdate )
-        hDBF = DBFOpen( pszNewName, "r+" );
+    if( hSHP != NULL || EQUAL(CPLGetExtension(pszNewName),"dbf") )
+    {
+        if( bUpdate )
+            hDBF = DBFOpen( pszNewName, "r+" );
+        else
+            hDBF = DBFOpen( pszNewName, "r" );
+    }
     else
-        hDBF = DBFOpen( pszNewName, "r" );
-
+        hDBF = NULL;
+        
     if( hDBF == NULL && hSHP == NULL )
         return FALSE;
 
