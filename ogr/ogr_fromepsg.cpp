@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2003/05/30 15:39:53  warmerda
+ * Added override units capability for SetStatePlane()
+ *
  * Revision 1.25  2003/05/20 19:03:24  warmerda
  * suggest GDAL_DATA in error message
  *
@@ -1423,19 +1426,27 @@ OGRErr OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nCode )
  * EPSG tables are unavailable, it will produce a stubbed LOCAL_CS definition
  * and return OGRERR_FAILURE.
  *
- * This method is the same as the C function OSRSetStatePlane().
+ * This method is the same as the C function OSRSetStatePlaneWithUnits().
  *
  * @param nZone State plane zone number, in the USGS numbering scheme (as
  * dinstinct from the Arc/Info and Erdas numbering scheme. 
  *
  * @param bNAD83 TRUE if the NAD83 zone definition should be used or FALSE
  * if the NAD27 zone definition should be used.  
+ *
+ * @param pszOverrideUnitName Linear unit name to apply overriding the 
+ * legal definition for this zone.
+ *
+ * @param dfOverrideUnit Linear unit conversion factor to apply overriding
+ * the legal definition for this zone. 
  * 
  * @return OGRERR_NONE on success, or OGRERR_FAILURE on failure, mostly likely
  * due to the EPSG tables not being accessable. 
  */
 
-OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83 )
+OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83,
+                                           const char *pszOverrideUnitName,
+                                           double dfOverrideUnit )
 
 {
     int         nAdjustedId;
@@ -1493,8 +1504,37 @@ OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83 )
 /* -------------------------------------------------------------------- */
 /*      Define based on a full EPSG definition of the zone.             */
 /* -------------------------------------------------------------------- */
+    OGRErr eErr = importFromEPSG( nPCSCode );
 
-    return importFromEPSG( nPCSCode );
+    if( eErr != OGRERR_NONE )
+        return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Apply units override if required.                               */
+/*                                                                      */
+/*      We will need to adjust the linear projection parameter to       */
+/*      match the provided units, and clear the authority code.         */
+/* -------------------------------------------------------------------- */
+    if( dfOverrideUnit != 0.0 
+        && fabs(dfOverrideUnit - GetLinearUnits()) > 0.0000000001 )
+    {
+        double dfFalseEasting = GetNormProjParm( SRS_PP_FALSE_EASTING );
+        double dfFalseNorthing= GetNormProjParm( SRS_PP_FALSE_NORTHING);
+        OGR_SRSNode *poPROJCS;
+
+        SetLinearUnits( pszOverrideUnitName, dfOverrideUnit );
+        
+        SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+        SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+        poPROJCS = GetAttrNode( "PROJCS" );
+        if( poPROJCS != NULL && poPROJCS->FindChild( "AUTHORITY" ) != -1 )
+        {
+            poPROJCS->DestroyChild( poPROJCS->FindChild( "AUTHORITY" ) );
+        }
+    }
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -1505,6 +1545,21 @@ OGRErr OSRSetStatePlane( OGRSpatialReferenceH hSRS, int nZone, int bNAD83 )
 
 {
     return ((OGRSpatialReference *) hSRS)->SetStatePlane( nZone, bNAD83 );
+}
+
+/************************************************************************/
+/*                     OSRSetStatePlaneWithUnits()                      */
+/************************************************************************/
+
+OGRErr OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS, 
+                                  int nZone, int bNAD83,
+                                  const char *pszOverrideUnitName,
+                                  double dfOverrideUnit )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetStatePlane( nZone, bNAD83,
+                                                          pszOverrideUnitName,
+                                                          dfOverrideUnit );
 }
 
 
