@@ -352,6 +352,9 @@ dnl ---------------------------------------------------------------------------
 dnl Select an OGDI Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
+OGDI_INCLUDE=
+export OGDI_INCLUDE
+
 AC_ARG_WITH(ogdi,[  --with-ogdi[=ARG]       Include OGDI support (ARG=path)],,)
 
 if test "$with_ogdi" = "no" ; then
@@ -372,13 +375,14 @@ else
 
   HAVE_OGDI=yes
   LIBS="-L$with_ogdi -L$with_ogdi/lib -logdi $LIBS"
-  EXTRA_INCLUDES="-I$with_ogdi -I$with_ogdi/include $EXTRA_INCLUDES"
+  OGDI_INCLUDE="-I$with_ogdi -I$with_ogdi/include"
 
   echo "using libogdi from $with_ogdi."
 
 fi
 
 AC_SUBST(HAVE_OGDI,$HAVE_OGDI)
+AC_SUBST(OGDI_INCLUDE,$OGDI_INCLUDE)
 
 if test "$HAVE_OGDI" != "no" ; then
   OPT_GDAL_FORMATS="ogdi $OPT_GDAL_FORMATS"
