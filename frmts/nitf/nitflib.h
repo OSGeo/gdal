@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/12/21 04:57:36  fwarmerdam
+ * added support for writing UTM ICORDS/IGEOLO values
+ *
  * Revision 1.15  2004/12/10 21:35:00  fwarmerdam
  * preliminary support for writing JPEG2000 compressed data
  *
@@ -222,7 +225,8 @@ int       CPL_DLL  NITFWriteImageLine( NITFImage *, int nLine, int nBand,
                                        void *pData );
 int       CPL_DLL  NITFWriteLUT( NITFImage *psImage, int nBand, int nColors, 
                                  unsigned char *pabyLUT );
-int       CPL_DLL  NITFWriteIGEOLO( NITFImage *psImage, char chICORDS, 
+int       CPL_DLL  NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
+                                    int nZone,
                                     double dfULX, double dfULY,
                                     double dfURX, double dfURY,
                                     double dfLRX, double dfLRY,
