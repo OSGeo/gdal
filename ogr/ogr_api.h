@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/03/19 20:28:20  warmerda
+ * added shared access, and reference counting apis
+ *
  * Revision 1.10  2003/03/12 20:52:07  warmerda
  * implemented support for gml:Box
  *
@@ -271,6 +274,9 @@ OGRErr CPL_DLL OGR_L_CreateField( OGRLayerH, OGRFieldDefnH, int );
 OGRErr CPL_DLL OGR_L_StartTransaction( OGRLayerH );
 OGRErr CPL_DLL OGR_L_CommitTransaction( OGRLayerH );
 OGRErr CPL_DLL OGR_L_RollbackTransaction( OGRLayerH );
+int    CPL_DLL OGR_L_Reference( OGRLayerH );
+int    CPL_DLL OGR_L_Dereference( OGRLayerH );
+int    CPL_DLL OGR_L_GetRefCount( OGRLayerH );
 
 /* OGRDataSource */
 
@@ -287,6 +293,10 @@ int    CPL_DLL OGR_DS_TestCapability( OGRDataSourceH, const char * );
 OGRLayerH CPL_DLL OGR_DS_ExecuteSQL( OGRDataSourceH, const char *,
                                      OGRGeometryH, const char * );
 void   CPL_DLL OGR_DS_ReleaseResultSet( OGRDataSourceH, OGRLayerH );
+int    CPL_DLL OGR_DS_Reference( OGRDataSourceH );
+int    CPL_DLL OGR_DS_Dereference( OGRDataSourceH );
+int    CPL_DLL OGR_DS_GetRefCount( OGRDataSourceH );
+int    CPL_DLL OGR_DS_GetSummaryRefCount( OGRDataSourceH );
 
 /* OGRSFDriver */
 
@@ -300,9 +310,14 @@ OGRErr CPL_DLL OGR_Dr_DeleteDataSource( OGRSFDriverH, const char * );
 /* OGRSFDriverRegistrar */
 
 OGRDataSourceH CPL_DLL OGROpen( const char *, int, OGRSFDriverH * );
+OGRDataSourceH CPL_DLL OGROpenShared( const char *, int, OGRSFDriverH * );
+OGRErr  CPL_DLL OGRReleaseDataSource( OGRDataSourceH );
 void    CPL_DLL OGRRegisterDriver( OGRSFDriverH );
 int     CPL_DLL OGRGetDriverCount();
 OGRSFDriverH CPL_DLL OGRGetDriver( int );
+int     CPL_DLL OGRGetOpenDSCount();
+OGRDataSourceH CPL_DLL OGRGetOpenDS( int iDS );
+
 
 /* note: this is also declared in ogrsf_frmts.h */
 void CPL_DLL OGRRegisterAll();
