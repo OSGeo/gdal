@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.85  2003/01/15 14:43:24  warmerda
+ * call GTIFDeaccessCSV
+ *
  * Revision 1.84  2003/01/10 16:05:18  dron
  * Improved support for NoData.
  *
@@ -3339,6 +3342,10 @@ void GDALDeregister_GTiff( GDALDriver * )
 {
     CPLDebug( "GDAL", "GDALDeregister_GTiff() called." );
     CSVDeaccess( NULL );
+
+#if defined(LIBGEOTIFF_VERSION) && LIBGEOTIFF_VERSION > 1150
+    GTIFDeaccessCSV();
+#endif
 }
 
 /************************************************************************/
