@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/01/24 13:58:25  warmerda
+ * support rb access
+ *
  * Revision 1.2  2000/01/12 19:25:57  warmerda
  * Dale Lutz provided fixes to avoid calling DTEDGetField() more than
  * onces within an expression, and to ensure values evaluated with
@@ -102,7 +105,7 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Open the physical file.                                         */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszAccess,"r") )
+    if( EQUAL(pszAccess,"r") || EQUAL(pszAccess,"rb") )
         pszAccess = "rb";
     else
         pszAccess = "r+b";
