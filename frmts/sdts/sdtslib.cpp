@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/09/12 23:42:23  warmerda
+ * treat coords as signed
+ *
  * Revision 1.7  1999/09/02 03:40:03  warmerda
  * added indexed readers
  *
@@ -171,8 +174,8 @@ int SDTSGetSADR( SDTS_IREF *poIREF, DDFField * poField, int nVertices,
         pachRawData += 8;
 
         // possibly byte swap, and always apply scale factor
-        pdfX[iVertex] = dfXScale * CPL_MSBWORD32( anXY[0] );
-        pdfY[iVertex] = dfYScale * CPL_MSBWORD32( anXY[1] );
+        pdfX[iVertex] = dfXScale * ((int) CPL_MSBWORD32( anXY[0] ));
+        pdfY[iVertex] = dfYScale * ((int) CPL_MSBWORD32( anXY[1] ));
         pdfZ[iVertex] = 0.0;
     }
     
