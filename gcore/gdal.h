@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2003/02/20 18:34:12  warmerda
+ * added GDALGetRasterAccess()
+ *
  * Revision 1.60  2003/01/27 21:55:52  warmerda
  * various documentation improvements
  *
@@ -489,6 +492,7 @@ CPLErr CPL_DLL GDALWriteBlock( GDALRasterBandH, int, int, void * );
 int CPL_DLL GDALGetRasterBandXSize( GDALRasterBandH );
 int CPL_DLL GDALGetRasterBandYSize( GDALRasterBandH );
 char CPL_DLL  **GDALGetRasterMetadata( GDALRasterBandH );
+GDALAccess CPL_DLL GDALGetRasterAccess( GDALRasterBandH );
 
 GDALColorInterp CPL_DLL GDALGetRasterColorInterpretation( GDALRasterBandH );
 CPLErr CPL_DLL GDALSetRasterColorInterpretation( GDALRasterBandH,
