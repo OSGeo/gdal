@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2004/02/11 18:03:15  warmerda
+ * added RegisterOGRDODS()
+ *
  * Revision 1.41  2003/11/06 18:27:35  warmerda
  * Added VRT registration point
  *
@@ -397,6 +400,8 @@ void CPL_DLL RegisterOGRFME();
 void CPL_DLL RegisterOGRREC();
 void CPL_DLL RegisterOGRMEM();
 void CPL_DLL RegisterOGRVRT();
+void CPL_DLL RegisterOGRDODS();
+
 CPL_C_END
 
 
