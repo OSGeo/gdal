@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  1999/12/23 14:47:16  warmerda
+ * improved 2D/3D handling to avoid 3D unless padfZ != 0.0
+ *
  * Revision 1.14  1999/11/18 19:02:19  warmerda
  * expanded tabs
  *
@@ -447,7 +450,24 @@ void OGRLineString::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
     setNumPoints( nPointsIn );
     memcpy( paoPoints, paoPointsIn, sizeof(OGRRawPoint) * nPointsIn);
 
-    if( padfZ == NULL )
+/* -------------------------------------------------------------------- */
+/*      Check 2D/3D.                                                    */
+/* -------------------------------------------------------------------- */
+    if( padfZ != NULL )
+    {
+        int	i, bIs3D = FALSE;
+
+        for( i = 0; i < nPointsIn && !bIs3D; i++ )
+        {
+            if( padfZ[i] != 0.0 )
+                bIs3D = TRUE;
+        }
+
+        if( !bIs3D )
+            padfZ = NULL;
+    }
+
+    if( padfZ == NULL && this->padfZ != NULL )
         Make2D();
     else
     {
@@ -481,11 +501,31 @@ void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY,
 {
     int         i;
 
+/* -------------------------------------------------------------------- */
+/*      Check 2D/3D.                                                    */
+/* -------------------------------------------------------------------- */
+    if( padfZ != NULL )
+    {
+        int	bIs3D = FALSE;
+
+        for( i = 0; i < nPointsIn && !bIs3D; i++ )
+        {
+            if( padfZ[i] != 0.0 )
+                bIs3D = TRUE;
+        }
+
+        if( !bIs3D )
+            padfZ = NULL;
+    }
+
     if( padfZ == NULL )
         Make2D();
     else
         Make3D();
     
+/* -------------------------------------------------------------------- */
+/*      Assign values.                                                  */
+/* -------------------------------------------------------------------- */
     setNumPoints( nPointsIn );
 
     for( i = 0; i < nPointsIn; i++ )
