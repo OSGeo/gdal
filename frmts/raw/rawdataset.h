@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/07/31 04:53:21  warmerda
+ * added various query methods
+ *
  * Revision 1.14  2004/06/02 20:57:55  warmerda
  * centralize initialization
  *
@@ -173,5 +176,13 @@ class CPL_DLL RawRasterBand : public GDALRasterBand
     CPLErr          AccessLine( int iLine );
     // this is deprecated.
     void	 StoreNoDataValue( double );
+
+    // Query methods for internal data. 
+    vsi_l_offset GetImgOffset() { return nImgOffset; }
+    int          GetPixelOffset() { return nPixelOffset; }
+    int          GetLineOffset() { return nLineOffset; }
+    int          GetNativeOrder() { return bNativeOrder; }
+    int          GetIsVSIL() { return bIsVSIL; }
+    FILE        *GetFP() { return fpRaw; }
 };
 
