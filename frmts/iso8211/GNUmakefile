@@ -8,12 +8,13 @@ WEB_DIR =	/usr/local/WebDocuments/projects/iso8211
 
 INCLUDE	=	-I. -I$(GDAL_ROOT)/port
 
+ISOLIB = libiso8211.a
 OBJ =	ddfmodule.o ddfutils.o ddffielddefn.o ddfrecord.o ddffield.o \
 	ddfsubfielddefn.o
 
-default:	$(OBJ) 8211view
+default:	$(ISOLIB) 8211view
 
-all:	8211dump 8211view testsuite docs
+all:	8211dump 8211view docs
 
 clean:
 	rm -rf *.o 8211dump 8211view $(DISTDIR) $(DISTDIR).tar.gz html/*
@@ -27,18 +28,20 @@ dist-clean:	clean
 %.o:	%.c
 	$(CC) -c $(CFLAGS) $(INCLUDE) $*.c -o $*.o
 
+$(ISOLIB):	$(OBJ)
+	ar r $(ISOLIB) $?
 
-8211dump:	8211dump.o $(OBJ)
-	$(CXX) $(CXX_ODFLAGS) 8211dump.o $(GDAL_ROOT)/port/*.o $(OBJ) $(LIBS) \
-		-o 8211dump
+8211dump:	8211dump.o $(ISOLIB)
+	$(CXX) $(CXX_ODFLAGS) 8211dump.o \
+		$(ISOLIB) $(CPL_LIB) $(LIBS) -o 8211dump
 
-8211view:	8211view.o $(OBJ)
-	$(CXX) $(CXX_ODFLAGS) 8211view.o $(GDAL_ROOT)/port/*.o $(OBJ) $(LIBS) \
-		-o 8211view
+8211view:	8211view.o $(ISOLIB)
+	$(CXX) $(CXX_ODFLAGS) 8211view.o \
+		$(ISOLIB) $(CPL_LIB) $(LIBS) -o 8211view
 
-timetest:	timetest.o $(OBJ)
-	$(CXX) $(CXX_ODFLAGS) timetest.o $(GDAL_ROOT)/port/*.o $(OBJ) $(LIBS) \
-		-o timetest
+timetest:	timetest.o $(ISOLIB)
+	$(CXX) $(CXX_ODFLAGS) timetest.o \
+		$(ISOLIB) $(CPL_LIB) $(LIBS) -o timetest
 
 docs:
 	rm -rf html
