@@ -16,7 +16,7 @@ INST_H_FILES	=	ogr_core.h ogr_feature.h ogr_geometry.h ogr_p.h \
 
 OGR_LIB  =	ogr.a
 
-LIBS	:=	$(OGR_LIB) $(CPL_LIB) $(LIBS) $(OGDI_LIBS)
+LIBS	:=	$(OGR_LIB) $(CPL_LIB) $(LIBS) $(PG_LIB) $(OGDI_LIBS)
 
 FRMTS_LIB = 	ogrsf_frmts/ogrsf_frmts.a
 
