@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.2  2004/10/15 20:31:24  fwarmerdam
+ * Added most of the DAS information parsing support.
+ *
  * Revision 1.1  2004/10/14 20:54:23  fwarmerdam
  * New
  *
@@ -89,6 +92,10 @@ const char *norm_proj_param = "Norm_Proj_Param"; ///<
 const char *spatial_ref = "spatial_ref";    ///<
 //@}
 
+/************************************************************************/
+/*                            get_variable()                            */
+/************************************************************************/
+
 /** Find the variable in the DDS or DataDDS, given its name. This function
     first looks for the name as given. If that can't be found, it determines
     the leaf name of a fully qualified name and looks for that (the DAP
@@ -123,6 +130,33 @@ get_variable(DDS &dds, const string &n)
 }
 
 /************************************************************************/
+/*                            StripQuotes()                             */
+/*                                                                      */
+/*      Strip the quotes off a string value and remove internal         */
+/*      quote escaping.                                                 */
+/************************************************************************/
+
+static string StripQuotes( string oInput )
+
+{
+    char *pszResult;
+
+    if( oInput.length() < 2 )
+        return oInput;
+
+    oInput = oInput.substr(1,oInput.length()-2);
+
+    pszResult = CPLUnescapeString( oInput.c_str(), NULL, 
+                                   CPLES_BackslashQuotable );
+
+    oInput = pszResult;
+    
+    CPLFree( pszResult );
+
+    return oInput;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                              DODSDataset                             */
 /* ==================================================================== */
@@ -135,6 +169,7 @@ private:
 
     string oURL;		//< data source URL
     double adfGeoTransform[6];
+    int    bGotGeoTransform;
     string oWKT;		//< Constructed WKT string
 
     DAS    oDAS;
@@ -149,10 +184,16 @@ private:
     char            **CollectBandsFromDDS();
     char            **CollectBandsFromDDSVar( string, char ** );
     char            **ParseBandsFromURL( string );
+
+    void            HarvestDAS();
+    static void     HarvestMetadata( GDALMajorObject *, AttrTable * );
     
     friend class DODSRasterBand;
 
 public:
+                    DODSDataset();
+    virtual        ~DODSDataset();
+
     // Overridden GDALDataset methods
     CPLErr GetGeoTransform(double *padfTransform);
     const char *GetProjectionRef();
@@ -183,6 +224,9 @@ private:
 
     friend class DODSDataset;
 
+    GDALColorInterp eColorInterp;
+    GDALColorTable  *poCT;
+
     int		   nOverviewCount;
     DODSRasterBand **papoOverviewBand;
 
@@ -191,13 +235,18 @@ private:
     int    bFlipX;
     int    bFlipY;
 
+    void            HarvestDAS();
+
 public:
     DODSRasterBand( DODSDataset *poDS, string oVarName, string oCE, 
                     int nOverviewFactor );
+    virtual ~DODSRasterBand();
 
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
     virtual CPLErr IReadBlock(int, int, void *);
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorTable *GetColorTable();
 };
 
 /************************************************************************/
@@ -205,6 +254,35 @@ public:
 /*                              DODSDataset                             */
 /* ==================================================================== */
 /************************************************************************/
+
+/************************************************************************/
+/*                            DODSDataset()                             */
+/************************************************************************/
+
+DODSDataset::DODSDataset()
+
+{
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
+    bGotGeoTransform = FALSE;
+
+    poConnect = NULL;
+}
+
+/************************************************************************/
+/*                            ~DODSDataset()                            */
+/************************************************************************/
+
+DODSDataset::~DODSDataset()
+
+{
+    if( poConnect )
+        delete poConnect;
+}
 
 /************************************************************************/
 /*                         connect_to_server()                          */
@@ -507,6 +585,151 @@ char **DODSDataset::ParseBandsFromURL( string oVarList )
 }
 
 /************************************************************************/
+/*                          HarvestMetadata()                           */
+/*                                                                      */
+/*      Capture metadata items from an AttrTable, and assign as         */
+/*      metadata to the target object.                                  */
+/************************************************************************/
+
+void DODSDataset::HarvestMetadata( GDALMajorObject *poTarget, 
+                                   AttrTable *poSrcTable )
+
+{
+    if( poSrcTable == NULL )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Find Metadata container.                                        */
+/* -------------------------------------------------------------------- */
+    AttrTable *poMDTable = poSrcTable->find_container("Metadata");
+    
+    if( poMDTable == NULL )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Collect each data item from it.                                 */
+/* -------------------------------------------------------------------- */
+    AttrTable::Attr_iter dv_i;
+
+    for( dv_i=poMDTable->attr_begin(); dv_i != poMDTable->attr_end(); dv_i++ )
+    {
+        if( poMDTable->get_attr_type( dv_i ) != Attr_string )
+            continue;
+
+        poTarget->SetMetadataItem( 
+            poMDTable->get_name( dv_i ).c_str(), 
+            StripQuotes( poMDTable->get_attr(dv_i) ).c_str() );
+    }
+}
+
+/************************************************************************/
+/*                             HarvestDAS()                             */
+/************************************************************************/
+
+void DODSDataset::HarvestDAS()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Try and fetch the corresponding DAS subtree if it exists.       */
+/* -------------------------------------------------------------------- */
+    AttrTable *poFileInfo = oDAS.find_container( "GLOBAL" );
+
+    if( poFileInfo == NULL )
+    {
+        CPLDebug( "DODS", "No GLOBAL DAS info." );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try and fetch the bounds                                        */
+/* -------------------------------------------------------------------- */
+    string oNorth, oSouth, oEast, oWest;
+
+    oNorth = poFileInfo->get_attr( "Northernmost_Northing" );
+    oSouth = poFileInfo->get_attr( "Southernmost_Northing" );
+    oEast = poFileInfo->get_attr( "Easternmost_Easting" );
+    oWest = poFileInfo->get_attr( "Westernmost_Easting" );
+
+    if( oNorth != "" && oSouth != "" && oEast != "" && oWest != "" )
+    {
+        adfGeoTransform[0] = atof(oEast.c_str());
+        adfGeoTransform[1] = 
+            (atof(oWest.c_str()) - atof(oEast.c_str())) / nRasterXSize;
+        adfGeoTransform[2] = 0.0;
+        adfGeoTransform[3] = atof(oNorth.c_str());
+        adfGeoTransform[4] = 0.0;
+        adfGeoTransform[5] = 
+            (atof(oSouth.c_str()) - atof(oNorth.c_str())) / nRasterYSize;
+
+        bGotGeoTransform = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try and fetch a GeoTransform.  The result will override the     */
+/*      geotransform derived from the bounds if it is present.  This    */
+/*      allows us to represent rotated and sheared images.              */
+/* -------------------------------------------------------------------- */
+    string oValue;
+
+    oValue = StripQuotes(poFileInfo->get_attr( "GeoTransform" ));
+    if( oValue != "" )
+    {
+        char **papszItems = CSLTokenizeString( oValue.c_str() );
+        if( CSLCount(papszItems) == 6 )
+        {
+            adfGeoTransform[0] = atof(papszItems[0]);
+            adfGeoTransform[1] = atof(papszItems[1]);
+            adfGeoTransform[2] = atof(papszItems[2]);
+            adfGeoTransform[3] = atof(papszItems[3]);
+            adfGeoTransform[4] = atof(papszItems[4]);
+            adfGeoTransform[5] = atof(papszItems[5]);
+            bGotGeoTransform = TRUE;
+        }
+        else
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Failed to parse GeoTransform DAS value: %s",
+                      oValue.c_str() );
+        }
+        CSLDestroy( papszItems );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get the Projection.  If it doesn't look like "pure" WKT then    */
+/*      try to process it through SetFromUserInput().  This expands     */
+/*      stuff like "WGS84".                                             */
+/* -------------------------------------------------------------------- */
+    oWKT = StripQuotes(poFileInfo->get_attr( "spatial_ref" ));
+    if( oWKT.length() > 0 
+        && !EQUALN(oWKT.c_str(),"GEOGCS",6)
+        && !EQUALN(oWKT.c_str(),"PROJCS",6)
+        && !EQUALN(oWKT.c_str(),"LOCAL_CS",8) )
+    {
+        OGRSpatialReference oSRS;
+
+        if( oSRS.SetFromUserInput( oWKT.c_str() ) != OGRERR_NONE )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Failed to recognise 'spatial_ref' value of: %s", 
+                      oWKT.c_str() );
+            oWKT = "";
+        }
+        else
+        {
+            char *pszProcessedWKT = NULL;
+            oSRS.exportToWkt( &pszProcessedWKT );
+            oWKT = pszProcessedWKT;
+            CPLFree( pszProcessedWKT );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Collect Metadata.                                               */
+/* -------------------------------------------------------------------- */
+    HarvestMetadata( this, poFileInfo );
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -593,15 +816,10 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
         }
 
 /* -------------------------------------------------------------------- */
-/*      Set the georeferencing.                                         */
+/*      Harvest DAS dataset level information including                 */
+/*      georeferencing, and metadata.                                   */
 /* -------------------------------------------------------------------- */
-        poDS->oWKT = "";
-        poDS->adfGeoTransform[0] = 0.0;
-        poDS->adfGeoTransform[1] = 1.0;
-        poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = 0.0;
-        poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = 1.0;
+        poDS->HarvestDAS();
     }
 
     catch (Error &e) {
@@ -624,9 +842,8 @@ DODSDataset::GetGeoTransform( double * padfTransform )
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
 
-    return CE_None;
+    return bGotGeoTransform ? CE_None : CE_Failure;
 }
-
 
 /************************************************************************/
 /*                          GetProjectionRef()                          */
@@ -660,6 +877,8 @@ DODSRasterBand::DODSRasterBand(DODSDataset *poDSIn, string oVarNameIn,
     oVarName = oVarNameIn;
     oCE = oCEIn;
     nOverviewFactor = nOverviewFactorIn;
+    eColorInterp = GCI_Undefined;
+    poCT = NULL;
 
     nOverviewCount = 0;
     papoOverviewBand = NULL;
@@ -786,6 +1005,109 @@ DODSRasterBand::DODSRasterBand(DODSDataset *poDSIn, string oVarNameIn,
             papoOverviewBand[nOverviewCount++] = 
                 new DODSRasterBand( poDSIn, oVarNameIn, oCEIn, 
                                     nThisFactor );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get other information from the DAS for this band.               */
+/* -------------------------------------------------------------------- */
+    if( nOverviewFactorIn == 1 )
+        HarvestDAS();
+}
+
+/************************************************************************/
+/*                          ~DODSRasterBand()                           */
+/************************************************************************/
+
+DODSRasterBand::~DODSRasterBand()
+
+{
+    for( int iOverview = 0; iOverview < nOverviewCount; iOverview++ )
+        delete papoOverviewBand[iOverview];
+    CPLFree( papoOverviewBand );
+
+    if( poCT )
+        delete poCT;
+}
+
+/************************************************************************/
+/*                             HarvestDAS()                             */
+/************************************************************************/
+
+void DODSRasterBand::HarvestDAS()
+
+{
+    DODSDataset *poDODS = dynamic_cast<DODSDataset *>(poDS);
+    
+/* -------------------------------------------------------------------- */
+/*      Try and fetch the corresponding DAS subtree if it exists.       */
+/* -------------------------------------------------------------------- */
+    AttrTable *poBandInfo = poDODS->GetDAS().find_container( oVarName );
+
+    if( poBandInfo == NULL )
+    {
+        CPLDebug( "DODS", "No band DAS info for %s.", oVarName.c_str() );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      collect metadata.                                               */
+/* -------------------------------------------------------------------- */
+    poDODS->HarvestMetadata( this, poBandInfo );
+
+/* -------------------------------------------------------------------- */
+/*      Get photometric interpretation.                                 */
+/* -------------------------------------------------------------------- */
+    string oValue;
+    int  iInterp;
+
+    oValue = StripQuotes(poBandInfo->get_attr( "PhotometricInterpretation" ));
+    for( iInterp = 0; iInterp < (int) GCI_Max; iInterp++ )
+    {
+        if( oValue == GDALGetColorInterpretationName( 
+                (GDALColorInterp) iInterp ) )
+            eColorInterp = (GDALColorInterp) iInterp;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Get band description.                                           */
+/* -------------------------------------------------------------------- */
+    oValue = StripQuotes(poBandInfo->get_attr( "PhotometricInterpretation" ));
+    if( oValue != "" )
+        SetDescription( oValue.c_str() );
+
+/* -------------------------------------------------------------------- */
+/*      Collect color table                                             */
+/* -------------------------------------------------------------------- */
+    AttrTable *poCTable = poBandInfo->find_container("Colormap");
+    if( poCTable != NULL )
+    {
+        AttrTable::Attr_iter dv_i;
+
+        poCT = new GDALColorTable();
+
+        for( dv_i = poCTable->attr_begin(); 
+             dv_i != poCTable->attr_end(); 
+             dv_i++ )
+        {
+            if( !poCTable->is_container( dv_i ) )
+                continue;
+
+            AttrTable *poColor = poCTable->get_attr_table( dv_i );
+            GDALColorEntry sEntry;
+
+            if( poColor == NULL )
+                continue;
+
+            sEntry.c1 = atoi(poColor->get_attr( "red" ).c_str());
+            sEntry.c2 = atoi(poColor->get_attr( "green" ).c_str());
+            sEntry.c3 = atoi(poColor->get_attr( "blue" ).c_str());
+            if( poColor->get_attr( "alpha" ) == "" )
+                sEntry.c4 = 255;
+            else
+                sEntry.c4 = atoi(poColor->get_attr( "alpha" ).c_str());
+            
+            poCT->SetColorEntry( poCT->GetColorEntryCount(), &sEntry );
         }
     }
 }
@@ -944,6 +1266,26 @@ GDALRasterBand *DODSRasterBand::GetOverview( int iOverview )
         return NULL;
     else
         return papoOverviewBand[iOverview];
+}
+
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp DODSRasterBand::GetColorInterpretation()
+
+{
+    return eColorInterp;
+}
+
+/************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable *DODSRasterBand::GetColorTable()
+
+{
+    return poCT;
 }
 
 /************************************************************************/
