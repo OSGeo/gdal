@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/03/18 17:33:00  warmerda
+ * Copy colortable if there is one on the source file.
+ *
  * Revision 1.6  2002/12/17 18:23:19  warmerda
  * copy GCP projection if the main projection isn't set meaningfully
  *
@@ -337,6 +340,7 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
     void *hTransformArg;
     double adfDstGeoTransform[6];
     int nPixels=0, nLines=0;
+    GDALColorTableH hCT;
 
 /* -------------------------------------------------------------------- */
 /*      Find the output driver.                                         */
@@ -464,6 +468,13 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
 /* -------------------------------------------------------------------- */
     GDALSetProjection( hDstDS, pszTargetSRS );
     GDALSetGeoTransform( hDstDS, adfDstGeoTransform );
+
+/* -------------------------------------------------------------------- */
+/*      Copy the color table, if required.                              */
+/* -------------------------------------------------------------------- */
+    hCT = GDALGetRasterColorTable( GDALGetRasterBand(hSrcDS,1) );
+    if( hCT != NULL )
+        GDALSetRasterColorTable( GDALGetRasterBand(hDstDS,1), hCT );
 
     return hDstDS;
 }
