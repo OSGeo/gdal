@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/04/07 02:08:11  warmerda
+ * SPHEROID belongs inside DATUM
+ *
  * Revision 1.2  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -266,8 +269,8 @@ static void OGCWKTSetProj( char * pszProjection, char ** papszMethods,
  * <pre>
    PROJCS["NAD83 / UTM zone 19N",
           GEOGCS["GRS 1980",
-                 DATUM["GRS_1980"],
-                 SPHEROID["GRS 1980",6378137,298.257222413684],
+                 DATUM["GRS_1980",
+                     SPHEROID["GRS 1980",6378137,298.257222413684]],
                  PRIMEM["unnamed",0],
                  UNIT["degree",0.0174532925199433]],
           PROJECTION["Transverse_Mercator"],
@@ -582,8 +585,8 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
             
             sprintf( szGCS,
                      "GEOGCS[\"%s\","
-                       "DATUM[\"%s\"],"
-                       "SPHEROID[\"%s\",%s,%.15g],",
+                       "DATUM[\"%s\","
+                       "SPHEROID[\"%s\",%s,%.15g]],",
                      papszTokens[0],
                      pszOGCDatum,
                      papszTokens[0], /* this is datum, but should be ellipse*/
