@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/11/13 15:43:41  warmerda
+ * preliminary dted creation working
+ *
  * Revision 1.5  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -290,6 +293,80 @@ int DTEDReadProfile( DTEDInfo * psDInfo, int nColumnOffset,
 
     return TRUE;
 }
+
+/************************************************************************/
+/*                          DTEDWriteProfile()                          */
+/************************************************************************/
+
+int DTEDWriteProfile( DTEDInfo * psDInfo, int nColumnOffset,
+                     GInt16 * panData )
+
+{
+    int         nOffset;
+    int         i, nCheckSum = 0;
+    GByte       *pabyRecord;
+
+/* -------------------------------------------------------------------- */
+/*	Format the data record.						*/
+/* -------------------------------------------------------------------- */
+    pabyRecord = (GByte *) CPLMalloc(12 + psDInfo->nYSize*2);
+    
+    for( i = 0; i < psDInfo->nYSize; i++ )
+    {
+        int	nABSVal = ABS(panData[psDInfo->nYSize-i-1]);
+        pabyRecord[8+i*2] = (nABSVal >> 8) & 0x7f;
+        pabyRecord[8+i*2+1] = nABSVal & 0xff;
+
+        if( panData[psDInfo->nYSize-i-1] < 0 )
+            pabyRecord[8+i*2] |= 0x80;
+    }
+
+    pabyRecord[0] = 0xaa;
+    pabyRecord[1] = 0;
+    pabyRecord[2] = nColumnOffset / 256;
+    pabyRecord[3] = nColumnOffset % 256;
+    pabyRecord[4] = nColumnOffset / 256;
+    pabyRecord[5] = nColumnOffset % 256;
+    pabyRecord[6] = 0;
+    pabyRecord[7] = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Compute the checksum.                                           */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < psDInfo->nYSize*2 + 8; i++ )
+        nCheckSum += pabyRecord[i];
+
+    pabyRecord[8+psDInfo->nYSize*2+0] = (nCheckSum >> 24) & 0xff;
+    pabyRecord[8+psDInfo->nYSize*2+1] = (nCheckSum >> 16) & 0xff;
+    pabyRecord[8+psDInfo->nYSize*2+2] = (nCheckSum >> 8) & 0xff;
+    pabyRecord[8+psDInfo->nYSize*2+3] = nCheckSum & 0xff;
+
+/* -------------------------------------------------------------------- */
+/*      Write the record.                                               */
+/* -------------------------------------------------------------------- */
+    nOffset = psDInfo->nDataOffset + nColumnOffset * (12+psDInfo->nYSize*2);
+
+    if( VSIFSeek( psDInfo->fp, nOffset, SEEK_SET ) != 0
+        || VSIFWrite( pabyRecord,(12+psDInfo->nYSize*2),1,psDInfo->fp ) != 1)
+    {
+        CPLFree( pabyRecord );
+#ifndef AVOID_CPL
+        CPLError( CE_Failure, CPLE_FileIO,
+#else
+        fprintf( stderr, 
+#endif
+                  "Failed to seek to, or write profile %d at offset %d\n"
+                  "in DTED file.\n",
+                  nColumnOffset, nOffset );
+        return FALSE;
+    }
+
+    CPLFree( pabyRecord );
+
+    return TRUE;
+    
+}
+
 
 /************************************************************************/
 /*                             DTEDClose()                              */

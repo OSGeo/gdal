@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/11/13 15:43:41  warmerda
+ * preliminary dted creation working
+ *
  * Revision 1.1  2001/11/13 03:34:59  warmerda
  * New
  *
@@ -143,6 +146,15 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
                  nLevel );
         return szError;
     }
+
+    if( ABS(nLLOriginLat) >= 80 )
+        nYSize = (nYSize - 1) / 6 + 1;
+    else if( ABS(nLLOriginLat) >= 75 )
+        nYSize = (nYSize - 1) / 4 + 1;
+    else if( ABS(nLLOriginLat) >= 70 )
+        nYSize = (nYSize - 1) / 3 + 1;
+    else if( ABS(nLLOriginLat) >= 50 )
+        nYSize = (nYSize - 1) / 2 + 1;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/11/13 15:43:41  warmerda
+ * preliminary dted creation working
+ *
  * Revision 1.5  2001/11/11 23:50:59  warmerda
  * added required class keyword to friend declarations
  *
@@ -233,6 +236,110 @@ const char *DTEDDataset::GetProjectionRef()
 }
 
 /************************************************************************/
+/*                           DTEDCreateCopy()                           */
+/*                                                                      */
+/*      For now we will assume the input is exactly one proper          */
+/*      cell.                                                           */
+/************************************************************************/
+
+static GDALDataset *
+DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
+                int bStrict, char ** papszOptions, 
+                GDALProgressFunc pfnProgress, void * pProgressData )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Work out the level.                                             */
+/* -------------------------------------------------------------------- */
+    int	nLevel;
+
+    if( poSrcDS->GetRasterXSize() == 121 )
+        nLevel = 0;
+    else if( poSrcDS->GetRasterXSize() == 1201 )
+        nLevel = 1;
+    else if( poSrcDS->GetRasterXSize() == 3601 )
+        nLevel = 2;
+    else
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+               "The source does not appear to be a properly formatted cell." );
+        nLevel = 1;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Work out the LL origin.                                         */
+/* -------------------------------------------------------------------- */
+    int  nLLOriginLat, nLLOriginLong;
+    double adfGeoTransform[6];
+
+    poSrcDS->GetGeoTransform( adfGeoTransform );
+
+    nLLOriginLat = (int) 
+        floor(adfGeoTransform[3] 
+              + poSrcDS->GetRasterYSize() * adfGeoTransform[5] + 0.5);
+    
+    nLLOriginLong = (int) floor(adfGeoTransform[0] + 0.5);
+
+/* -------------------------------------------------------------------- */
+/*      Create the output dted file.                                    */
+/* -------------------------------------------------------------------- */
+    const char *pszError;
+
+    pszError = DTEDCreate( pszFilename, nLevel, nLLOriginLat, nLLOriginLong );
+
+    if( pszError != NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "%s", pszError );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Open the DTED file so we can output the data to it.             */
+/* -------------------------------------------------------------------- */
+    DTEDInfo *psDTED;
+
+    psDTED = DTEDOpen( pszFilename, "rb+", FALSE );
+    if( psDTED == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Read all the data in one dollup.                                */
+/* -------------------------------------------------------------------- */
+    GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( 1 );
+    GInt16	*panData;
+    
+    panData = (GInt16 *) 
+        CPLMalloc(sizeof(GInt16) * psDTED->nXSize * psDTED->nYSize);
+    
+    poSrcBand->RasterIO( GF_Read, 0, 0, psDTED->nXSize, psDTED->nYSize, 
+                         (void *) panData, psDTED->nXSize, psDTED->nYSize, 
+                         GDT_Int16, 0, 0 );
+
+/* -------------------------------------------------------------------- */
+/*      Write all the profiles.                                         */
+/* -------------------------------------------------------------------- */
+    GInt16	anProfData[3601];
+
+    for( int iProfile = 0; iProfile < psDTED->nXSize; iProfile++ )
+    {
+        for( int iY = 0; iY < psDTED->nYSize; iY++ )
+            anProfData[iY] = panData[iProfile + iY * psDTED->nXSize];
+
+        DTEDWriteProfile( psDTED, iProfile, anProfData );
+    }
+
+    CPLFree( panData );
+
+/* -------------------------------------------------------------------- */
+/*      Try to open the resulting DTED file.                            */
+/* -------------------------------------------------------------------- */
+    DTEDClose( psDTED );
+
+    return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+}
+
+/************************************************************************/
 /*                         GDALRegister_DTED()                          */
 /************************************************************************/
 
@@ -249,6 +356,7 @@ void GDALRegister_DTED()
         poDriver->pszLongName = "DTED Elevation Raster";
         
         poDriver->pfnOpen = DTEDDataset::Open;
+        poDriver->pfnCreateCopy = DTEDCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
