@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/11/19 21:59:33  warmerda
+ * added repeat count for memory leak testing
+ *
  * Revision 1.11  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -87,6 +90,7 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszDataSource = NULL;
     char        **papszLayers = NULL;
     OGRGeometry *poSpatialFilter = NULL;
+    int         nRepeatCount = 1;
     
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
@@ -123,6 +127,10 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-where") && papszArgv[iArg+1] != NULL )
         {
             pszWHERE = papszArgv[++iArg];
+        }
+        else if( EQUAL(papszArgv[iArg],"-rc") && papszArgv[iArg+1] != NULL )
+        {
+            nRepeatCount = atoi(papszArgv[++iArg]);
         }
         else if( papszArgv[iArg][0] == '-' )
         {
@@ -191,34 +199,40 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Process each data source layer.                                 */
 /* -------------------------------------------------------------------- */
-    for( int iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
+    for( int iRepeat = 0; iRepeat < nRepeatCount; iRepeat++ )
     {
-        OGRLayer        *poLayer = poDS->GetLayer(iLayer);
-
-        if( poLayer == NULL )
+        for( int iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
         {
-            printf( "FAILURE: Couldn't fetch advertised layer %d!\n",
-                    iLayer );
-            exit( 1 );
-        }
+            OGRLayer        *poLayer = poDS->GetLayer(iLayer);
 
-        if( CSLCount(papszLayers) == 0 )
-        {
-            printf( "%d: %s",
-                    iLayer+1,
-                    poLayer->GetLayerDefn()->GetName() );
+            if( poLayer == NULL )
+            {
+                printf( "FAILURE: Couldn't fetch advertised layer %d!\n",
+                        iLayer );
+                exit( 1 );
+            }
 
-            if( poLayer->GetLayerDefn()->GetGeomType() != wkbUnknown )
-                printf( " (%s)", 
-                        OGRGeometryTypeToName( 
-                            poLayer->GetLayerDefn()->GetGeomType() ) );
+            if( CSLCount(papszLayers) == 0 )
+            {
+                printf( "%d: %s",
+                        iLayer+1,
+                        poLayer->GetLayerDefn()->GetName() );
 
-            printf( "\n" );
-        }
-        else if( CSLFindString( papszLayers,
-                                poLayer->GetLayerDefn()->GetName() ) != -1 )
-        {
-            ReportOnLayer( poLayer, pszWHERE, poSpatialFilter );
+                if( poLayer->GetLayerDefn()->GetGeomType() != wkbUnknown )
+                    printf( " (%s)", 
+                            OGRGeometryTypeToName( 
+                                poLayer->GetLayerDefn()->GetGeomType() ) );
+
+                printf( "\n" );
+            }
+            else if( CSLFindString( papszLayers,
+                                    poLayer->GetLayerDefn()->GetName() ) != -1 )
+            {
+                if( iRepeat != 0 )
+                    poLayer->ResetReading();
+
+                ReportOnLayer( poLayer, pszWHERE, poSpatialFilter );
+            }
         }
     }
 
