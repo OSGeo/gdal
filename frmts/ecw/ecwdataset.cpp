@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.23  2004/06/24 04:53:40  warmerda
+ * remove assert in IRasterIO(), seems to be unneeded
+ *
  * Revision 1.22  2004/04/15 13:45:03  warmerda
  * Don't require the file to be open in ::Open() for .ecw files.  Large
  * files (>2GB) will generally not be open.
@@ -247,11 +250,11 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                          pData, nBufXSize, nBufYSize, 
                                          eBufType, nPixelSpace, nLineSpace );
     }
-#ifdef notdef
+
     CPLDebug( "ECWRasterBand", 
               "RasterIO(nXOff=%d,nYOff=%d,nXSize=%d,nYSize=%d -> %dx%d)", 
               nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
-#endif
+
 
     if ( nXSize < nBufXSize )
             nNewXSize = nXSize;
@@ -357,7 +360,6 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 	}
 	else
 	{
-	    CPLAssert( iDstLine == 0 );
 	    // Just copy the previous line in this case
 	    memcpy( (GByte *)pData + iDstLineOff,
 		    (GByte *)pData + (iDstLineOff - nLineSpace), nLineSpace );
