@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/01/15 06:42:30  warmerda
+ * remove stub statement
+ *
  * Revision 1.1  2002/01/15 06:38:02  warmerda
  * New
  *
@@ -680,12 +683,6 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             fprintf( fp, "%02x", psElement->attr_data[i] );
         }
         fprintf( fp, "\n" );
-    }
-
-    if( psElement->type == DGNT_APPLICATION_ELEM
-        && psElement->level == 23 )
-    {
-        
     }
 }
 
