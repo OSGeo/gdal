@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2003/06/19 17:10:26  warmerda
+ * a couple fixes in last commit
+ *
  * Revision 1.32  2003/06/18 18:24:17  warmerda
  * added projection specific set methods to C API
  *
@@ -395,7 +398,7 @@ OGRErr CPL_DLL OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS,
                                           double dfOverrideUnit );
 
 /** Albers Conic Equal Area */
-OGRErr CPL_DLL OGRSetACEA( OGRSpatialReferenceH hSRS, double dfStdP1, double dfStdP2,
+OGRErr CPL_DLL OSRSetACEA( OGRSpatialReferenceH hSRS, double dfStdP1, double dfStdP2,
                          double dfCenterLat, double dfCenterLong,
                          double dfFalseEasting, double dfFalseNorthing );
     
@@ -425,15 +428,17 @@ OGRErr CPL_DLL OSRSetEckertVI( OGRSpatialReferenceH hSRS, double dfCentralMeridi
                              double dfFalseEasting, double dfFalseNorthing );
 
 /** Equirectangular */
-OGRErr CPL_DLL OSRSetEquirectangular(double dfCenterLat, double dfCenterLong,
-                        double dfFalseEasting, double dfFalseNorthing );
+OGRErr CPL_DLL OSRSetEquirectangular(OGRSpatialReferenceH hSRS,
+                              double dfCenterLat, double dfCenterLong,
+                              double dfFalseEasting, double dfFalseNorthing );
 
 /** Gall Stereograpic */
 OGRErr CPL_DLL OSRSetGS( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
                        double dfFalseEasting, double dfFalseNorthing );
     
 /** Gnomonic */
-OGRErr CPL_DLL OSRSetGnomonic(double dfCenterLat, double dfCenterLong,
+OGRErr CPL_DLL OSRSetGnomonic(OGRSpatialReferenceH hSRS,
+                              double dfCenterLat, double dfCenterLong,
                             double dfFalseEasting, double dfFalseNorthing );
 
 /** Hotine Oblique Mercator */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.77  2003/06/19 17:10:26  warmerda
+ * a couple fixes in last commit
+ *
  * Revision 1.76  2003/06/18 18:24:17  warmerda
  * added projection specific set methods to C API
  *
@@ -2569,9 +2572,9 @@ OGRErr OGRSpatialReference::SetGnomonic(
 /************************************************************************/
 
 OGRErr OSRSetGnomonic( OGRSpatialReferenceH hSRS, 
-                              double dfCenterLat, double dfCenterLong,
-                              double dfFalseEasting,
-                              double dfFalseNorthing )
+                       double dfCenterLat, double dfCenterLong,
+                       double dfFalseEasting,
+                       double dfFalseNorthing )
     
 {
     return ((OGRSpatialReference *) hSRS)->SetGnomonic( 
@@ -3097,7 +3100,7 @@ OGRErr OGRSpatialReference::SetRobinson( double dfCenterLong,
 /*                           OSRSetRobinson()                           */
 /************************************************************************/
 
-OGRErr OSRSetRobinsion( OGRSpatialReferenceH hSRS, 
+OGRErr OSRSetRobinson( OGRSpatialReferenceH hSRS, 
                         double dfCenterLong,
                         double dfFalseEasting, double dfFalseNorthing )
     
