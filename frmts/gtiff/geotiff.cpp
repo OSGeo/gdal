@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.87  2003/01/28 14:55:55  warmerda
+ * fixed serious bug in writing geotransform to geotiff tags!
+ *
  * Revision 1.86  2003/01/15 15:35:13  warmerda
  * Fixed minor typo.
  *
@@ -1659,9 +1662,9 @@ void GTiffDataset::WriteGeoTIFFInfo()
 /* -------------------------------------------------------------------- */
 /*      If the geotransform is the default, don't bother writing it.    */
 /* -------------------------------------------------------------------- */
-    if( adfGeoTransform[0] != 0.0 && adfGeoTransform[1] != 1.0
-        && adfGeoTransform[2] != 0.0 && adfGeoTransform[3] != 0.0
-        && adfGeoTransform[4] != 0.0 && ABS(adfGeoTransform[5]) != 1.0 )
+    if( adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
+        || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
+        || adfGeoTransform[4] != 0.0 || ABS(adfGeoTransform[5]) != 1.0 )
     {
 
 /* -------------------------------------------------------------------- */
