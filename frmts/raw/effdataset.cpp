@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/08/30 18:53:24  warmerda
+ * Removed unused variables.
+ *
  * Revision 1.2  2000/08/15 19:28:26  warmerda
  * added help topic
  *
@@ -89,9 +92,6 @@ EFFDataset::~EFFDataset()
 GDALDataset *EFFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int		i;
-    char	*pszHDRFilename;
-    
 /* -------------------------------------------------------------------- */
 /*	We assume the user is pointing to the binary (ie. .bil) file.	*/
 /* -------------------------------------------------------------------- */
@@ -131,7 +131,7 @@ GDALDataset *EFFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Extract field values of interest.                               */
 /* -------------------------------------------------------------------- */
     const char * pszValue;
-    int          nPixels=0, nLines=0, nBands=0, nRecordLength=0;
+    int          nPixels=0, nLines=0, nRecordLength=0;
 
     pszValue = strstr(poDS->szHeader,"PIXELS PER LINE");
     if( pszValue != NULL )
