@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2003/05/21 03:54:01  warmerda
+ * expand tabs
+ *
  * Revision 1.23  2003/04/22 19:37:51  warmerda
  * Added sync to disk
  *
@@ -280,7 +283,7 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
             return poDefn;
 
         if( oField.GetType() == OFTBinary )
-            continue;			
+            continue;                   
 
         if( EQUAL(oField.GetNameRef(),"OGR_FID") 
             && oField.GetType() == OFTInteger )
@@ -508,7 +511,7 @@ OGRFeature *OGROCITableLayer::GetNextFeature()
 
     for( ; TRUE; )
     {
-        OGRFeature	*poFeature;
+        OGRFeature      *poFeature;
 
         poFeature = GetNextRawFeature();
         if( poFeature == NULL )
@@ -563,10 +566,10 @@ void OGROCITableLayer::ResetReading()
 char *OGROCITableLayer::BuildFields()
 
 {
-    int		i;
+    int         i;
     OGROCIStringBuf oFldList;
 
-    if( pszGeomName )							
+    if( pszGeomName )                                                   
     {
         oFldList.Append( "\"" );
         oFldList.Append( pszGeomName );
@@ -712,7 +715,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
 
 {
     OGROCISession      *poSession = poDS->GetSession();
-    char		*pszCommand;
+    char                *pszCommand;
     int                 i, bNeedComma = FALSE;
     unsigned int        nCommandBufSize;;
 
@@ -723,7 +726,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
     pszCommand = (char *) CPLMalloc(nCommandBufSize);
 
 /* -------------------------------------------------------------------- */
-/*      Form the INSERT command.  					*/
+/*      Form the INSERT command.                                        */
 /* -------------------------------------------------------------------- */
     sprintf( pszCommand, "INSERT INTO %s (", poFeatureDefn->GetName() );
 
@@ -874,7 +877,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
         }
         else 
         {
-            int		iChar;
+            int         iChar;
 
             /* We need to quote and escape string fields. */
             strcat( pszCommand+nOffset, "'" );
@@ -954,8 +957,8 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
         }
 
         // Prepare the VARRAY of ordinate values. 
-	for (i = 0; i < nElemInfoCount; i++)
-	{
+        for (i = 0; i < nElemInfoCount; i++)
+        {
             if( poSession->Failed( 
                 OCINumberFromInt( poSession->hError, 
                                   (dvoid *) (panElemInfo + i),
@@ -971,7 +974,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
                                (dvoid *)0, hElemInfoVARRAY),
                 "OCICollAppend") )
                 return OGRERR_FAILURE;
-	}
+        }
 
         // Do the binding.
         if( poSession->Failed( 
@@ -1025,8 +1028,8 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
         }
 
         // Prepare the VARRAY of ordinate values. 
-	for (i = 0; i < nOrdinalCount; i++)
-	{
+        for (i = 0; i < nOrdinalCount; i++)
+        {
             if( poSession->Failed( 
                 OCINumberFromReal( poSession->hError, 
                                    (dvoid *) (padfOrdinals + i),
@@ -1041,7 +1044,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
                                (dvoid *)0, hOrdVARRAY),
                 "OCICollAppend") )
                 return OGRERR_FAILURE;
-	}
+        }
 
         // Do the binding.
         if( poSession->Failed( 
@@ -1298,7 +1301,7 @@ int OGROCITableLayer::AllocAndBindForWrite()
 
 {
     OGROCISession      *poSession = poDS->GetSession();
-    int	i;
+    int i;
 
     CPLAssert( nWriteCacheMax == 0 );
 

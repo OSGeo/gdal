@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/05/21 03:54:01  warmerda
+ * expand tabs
+ *
  * Revision 1.8  2003/04/10 17:54:08  warmerda
  * added PinTDO method
  *
@@ -294,7 +297,7 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
         "OCIAttrGet(Name)") )
         return CE_Failure;
     
-    if( nColLen >= sizeof(szTermColName) )				
+    if( nColLen >= sizeof(szTermColName) )                              
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Column length (%d) longer than column name buffer (%d) in\n"

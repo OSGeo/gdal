@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/05/21 03:59:42  warmerda
+ * expand tabs
+ *
  * Revision 1.17  2002/12/12 14:28:35  warmerda
  * fixed bug in DeleteLayer
  *
@@ -191,13 +194,13 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     if( strstr(pszNewName, "dbname=") != NULL )
     {
-        int	i;
+        int     i;
 
         pszDBName = CPLStrdup( strstr(pszNewName, "dbname=") + 7 );
 
         for( i = 0; pszDBName[i] != '\0'; i++ )
         {
-            if( pszDBName[i] == ' ' )					
+            if( pszDBName[i] == ' ' )                                   
             {
                 pszDBName[i] = '\0';
                 break;
@@ -277,8 +280,8 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Parse the returned table list                                   */
 /* -------------------------------------------------------------------- */
-    char	**papszTableNames=NULL;
-    int	          iRecord;
+    char        **papszTableNames=NULL;
+    int           iRecord;
 
     for( iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
     {
@@ -329,7 +332,7 @@ int OGRPGDataSource::OpenTable( const char *pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGRPGLayer	*poLayer;
+    OGRPGLayer  *poLayer;
 
     poLayer = new OGRPGTableLayer( this, pszNewName, bUpdate );
 
@@ -350,7 +353,7 @@ int OGRPGDataSource::OpenTable( const char *pszNewName, int bUpdate,
 void OGRPGDataSource::DeleteLayer( const char *pszLayerName )
 
 {
-    int	iLayer;
+    int iLayer;
 
 /* -------------------------------------------------------------------- */
 /*      Try to find layer.                                              */
@@ -379,7 +382,7 @@ void OGRPGDataSource::DeleteLayer( const char *pszLayerName )
 /*      Remove from the database.                                       */
 /* -------------------------------------------------------------------- */
     PGresult            *hResult;
-    char		szCommand[1024];
+    char                szCommand[1024];
 
     hResult = PQexec(hPGConn, "BEGIN");
     PQclear( hResult );
@@ -418,14 +421,14 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
 
 {
     PGresult            *hResult;
-    char		szCommand[1024];
-    const char		*pszGeomType;
+    char                szCommand[1024];
+    const char          *pszGeomType;
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
 /*      away?                                                           */
 /* -------------------------------------------------------------------- */
-    int	iLayer;
+    int iLayer;
 
     for( iLayer = 0; iLayer < nLayers; iLayer++ )
     {
@@ -589,7 +592,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGRPGTableLayer	*poLayer;
+    OGRPGTableLayer     *poLayer;
 
     poLayer = new OGRPGTableLayer( this, pszLayerName, TRUE, nSRSId );
 
@@ -686,7 +689,7 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
 /*      Try looking up in spatial_ref_sys table.                        */
 /* -------------------------------------------------------------------- */
     PGresult        *hResult;
-    char	    szCommand[1024];
+    char            szCommand[1024];
     OGRSpatialReference *poSRS;
         
     SoftStartTransaction();
@@ -738,9 +741,9 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
 {
     PGresult            *hResult;
-    char		szCommand[10000];
-    char		*pszWKT = NULL;
-    int			nSRSId;
+    char                szCommand[10000];
+    char                *pszWKT = NULL;
+    int                 nSRSId;
 
     if( poSRS == NULL )
         return -1;
@@ -783,7 +786,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /*      If the command actually failed, then the metadata table is      */
 /*      likely missing. Try defining it.                                */
 /* -------------------------------------------------------------------- */
-    int		bTableMissing;
+    int         bTableMissing;
 
     bTableMissing = 
         hResult == NULL || PQresultStatus(hResult) == PGRES_NONFATAL_ERROR;
@@ -845,7 +848,7 @@ OGRErr OGRPGDataSource::SoftStartTransaction()
     if( nSoftTransactionLevel == 1 )
     {
         PGresult            *hResult;
-        PGconn		*hPGConn = GetPGConn();
+        PGconn          *hPGConn = GetPGConn();
 
         hResult = PQexec(hPGConn, "BEGIN");
 
@@ -879,7 +882,7 @@ OGRErr OGRPGDataSource::SoftCommit()
     if( nSoftTransactionLevel == 0 )
     {
         PGresult            *hResult;
-        PGconn		*hPGConn = GetPGConn();
+        PGconn          *hPGConn = GetPGConn();
 
         hResult = PQexec(hPGConn, "COMMIT");
 
@@ -911,7 +914,7 @@ OGRErr OGRPGDataSource::SoftRollback()
     nSoftTransactionLevel = 0;
 
     PGresult            *hResult;
-    PGconn		*hPGConn = GetPGConn();
+    PGconn              *hPGConn = GetPGConn();
     
     hResult = PQexec(hPGConn, "ROLLBACK");
     

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/05/21 03:54:01  warmerda
+ * expand tabs
+ *
  * Revision 1.6  2003/01/07 21:13:35  warmerda
  * executequery() now takes query as input, getfeature moved
  *
@@ -135,7 +138,7 @@ OGRFeature *OGROCILayer::GetNextFeature()
 
     for( ; TRUE; )
     {
-        OGRFeature	*poFeature;
+        OGRFeature      *poFeature;
 
         poFeature = GetNextRawFeature();
         if( poFeature == NULL )
@@ -185,7 +188,7 @@ OGRFeature *OGROCILayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
 /*      Create a feature from the current result.                       */
 /* -------------------------------------------------------------------- */
-    int		iField;
+    int         iField;
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
     poFeature->SetFID( iNextShapeId );
@@ -646,13 +649,13 @@ int OGROCILayer::GetOrdinalPoint( int iOrdinal, int nDimension,
     boolean bExists;
     OCINumber *hNumber;
 
-    OCICollGetElem( poSession->hEnv, poSession->hError,		
+    OCICollGetElem( poSession->hEnv, poSession->hError,         
                     (OCIColl *)(hLastGeom->sdo_ordinates), 
                     (sb4)iOrdinal+0, (boolean *)&bExists, 
                     (dvoid **)&hNumber, NULL );
     OCINumberToReal(poSession->hError, hNumber, 
                     (uword)sizeof(double), (dvoid *)pdfX);
-    OCICollGetElem( poSession->hEnv, poSession->hError,		
+    OCICollGetElem( poSession->hEnv, poSession->hError,         
                     (OCIColl *)(hLastGeom->sdo_ordinates), 
                     (sb4)iOrdinal + 1, (boolean *)&bExists, 
                     (dvoid **)&hNumber, NULL );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/05/21 04:00:36  warmerda
+ * expand tabs
+ *
  * Revision 1.2  2003/02/04 20:42:45  warmerda
  * skip zero length fields, improve type handling
  *
@@ -74,8 +77,8 @@ class OGRRECLayer : public OGRLayer
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
-    OGRGeometry *	GetSpatialFilter() { return NULL; }
-    void		SetSpatialFilter( OGRGeometry * ) {}
+    OGRGeometry *       GetSpatialFilter() { return NULL; }
+    void                SetSpatialFilter( OGRGeometry * ) {}
 
     int                 TestCapability( const char * );
 

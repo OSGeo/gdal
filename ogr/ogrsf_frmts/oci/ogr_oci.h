@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/05/21 03:54:01  warmerda
+ * expand tabs
+ *
  * Revision 1.17  2003/04/22 19:37:51  warmerda
  * Added sync to disk
  *
@@ -262,9 +265,9 @@ class OGROCILayer : public OGRLayer
   protected:
     OGRFeatureDefn     *poFeatureDefn;
 
-    OGRGeometry		*poFilterGeom;
+    OGRGeometry         *poFilterGeom;
 
-    int			iNextShapeId;
+    int                 iNextShapeId;
 
     OGROCIDataSource    *poDS;
 
@@ -296,17 +299,17 @@ class OGROCILayer : public OGRLayer
                                          double *pdfZ );
 
   public:
-    			OGROCILayer();
+                        OGROCILayer();
     virtual             ~OGROCILayer();
 
-    virtual void	ResetReading();
+    virtual void        ResetReading();
     virtual OGRFeature *GetNextRawFeature();
     virtual OGRFeature *GetNextFeature();
 
     virtual OGRGeometry *GetSpatialFilter() { return poFilterGeom; }
-    virtual void	SetSpatialFilter( OGRGeometry * );
+    virtual void        SetSpatialFilter( OGRGeometry * );
 
-    OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     virtual int         TestCapability( const char * );
 
@@ -339,8 +342,8 @@ protected:
                                                 int *pnGType );
     OGRErr              TranslateElementGroup( OGRGeometry *poGeometry );
 
-    int			bLaunderColumnNames;
-    int			bPreservePrecision;
+    int                 bLaunderColumnNames;
+    int                 bPreservePrecision;
 
     OGRSpatialReference *poSRS;
 
@@ -364,10 +367,10 @@ public:
     void                SetOptions( char ** );
 
     void                SetDimension( int );
-    void		SetLaunderFlag( int bFlag ) 
-				{ bLaunderColumnNames = bFlag; }
-    void		SetPrecisionFlag( int bFlag ) 
-				{ bPreservePrecision = bFlag; }
+    void                SetLaunderFlag( int bFlag ) 
+                                { bLaunderColumnNames = bFlag; }
+    void                SetPrecisionFlag( int bFlag ) 
+                                { bPreservePrecision = bFlag; }
 };
 
 /************************************************************************/
@@ -386,36 +389,36 @@ class OGROCILoaderLayer : public OGROCIWritableLayer
 
     char                *pszLoaderFilename;
     
-    FILE		*fpLoader;
+    FILE                *fpLoader;
     int                 bHeaderWritten;
 
     FILE                *fpData;
 
     int                 nLDRMode;
 
-    void 		WriteLoaderHeader();
+    void                WriteLoaderHeader();
     void                FinalizeNewLayer();
 
-    OGRErr		WriteFeatureStreamMode( OGRFeature * );
-    OGRErr		WriteFeatureVariableMode( OGRFeature * );
-    OGRErr		WriteFeatureBinaryMode( OGRFeature * );
+    OGRErr              WriteFeatureStreamMode( OGRFeature * );
+    OGRErr              WriteFeatureVariableMode( OGRFeature * );
+    OGRErr              WriteFeatureBinaryMode( OGRFeature * );
 
   public:
-    			OGROCILoaderLayer( OGROCIDataSource *,
+                        OGROCILoaderLayer( OGROCIDataSource *,
                                            const char * pszName,
                                            const char *pszGeomCol, 
                                            int nSRID, 
                                            const char *pszLoaderFile );
-    			~OGROCILoaderLayer();
+                        ~OGROCILoaderLayer();
 
-    virtual void	ResetReading();
+    virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
 
     virtual OGRGeometry *GetSpatialFilter() { return NULL; }
-    virtual void	SetSpatialFilter( OGRGeometry * ) {}
+    virtual void        SetSpatialFilter( OGRGeometry * ) {}
 
     virtual OGRErr      SetAttributeFilter( const char * ) 
-				{ return OGRERR_UNSUPPORTED_OPERATION; }
+                                { return OGRERR_UNSUPPORTED_OPERATION; }
 
     virtual OGRFeature *GetNextFeature();
 
@@ -433,7 +436,7 @@ class OGROCILoaderLayer : public OGROCIWritableLayer
 
 class OGROCITableLayer : public OGROCIWritableLayer
 {
-    int			bUpdateAccess;
+    int                 bUpdateAccess;
     int                 bNewLayer;
     OGREnvelope         sExtent;
     int                 iNextFIDToWrite;
@@ -441,12 +444,12 @@ class OGROCITableLayer : public OGROCIWritableLayer
 
     OGRFeatureDefn     *ReadTableDefinition(const char *);
 
-    void		BuildWhere(void);
-    char 	       *BuildFields(void);
+    void                BuildWhere(void);
+    char               *BuildFields(void);
     void                BuildFullQueryStatement(void);
 
-    char	       *pszQuery;
-    char	       *pszWHERE;
+    char               *pszQuery;
+    char               *pszWHERE;
 
     int                 bValidTable;
 
@@ -478,17 +481,17 @@ class OGROCITableLayer : public OGROCIWritableLayer
     OGRErr              BoundCreateFeature( OGRFeature *poFeature );
 
   public:
-    			OGROCITableLayer( OGROCIDataSource *,
+                        OGROCITableLayer( OGROCIDataSource *,
                                           const char * pszName,
                                           const char *pszGeomCol, 
                                           int nSRID, int bUpdate, int bNew );
-    			~OGROCITableLayer();
+                        ~OGROCITableLayer();
 
-    virtual void	ResetReading();
+    virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
 
     virtual OGRGeometry *GetSpatialFilter() { return poFilterGeom; }
-    virtual void	SetSpatialFilter( OGRGeometry * );
+    virtual void        SetSpatialFilter( OGRGeometry * );
 
     virtual OGRErr      SetAttributeFilter( const char * );
 
@@ -515,10 +518,10 @@ class OGROCISelectLayer : public OGROCILayer
     OGRFeatureDefn     *ReadTableDefinition( OGROCIStatement * poStatement );
 
   public:
-    			OGROCISelectLayer( OGROCIDataSource *,
+                        OGROCISelectLayer( OGROCIDataSource *,
                                            const char * pszName,
                                            OGROCIStatement *poStatement );
-    			~OGROCISelectLayer();
+                        ~OGROCISelectLayer();
 };
 
 /************************************************************************/
@@ -528,12 +531,12 @@ class OGROCISelectLayer : public OGROCILayer
 class OGROCIDataSource : public OGRDataSource
 {
     OGROCILayer       **papoLayers;
-    int			nLayers;
+    int                 nLayers;
     
-    char	       *pszName;
+    char               *pszName;
     char               *pszDBName;
 
-    int			bDSUpdate;
+    int                 bDSUpdate;
 
     OGROCISession      *poSession;
 
@@ -544,19 +547,19 @@ class OGROCIDataSource : public OGRDataSource
     OGRSpatialReference **papoSRS;
     
   public:
-    			OGROCIDataSource();
-    			~OGROCIDataSource();
+                        OGROCIDataSource();
+                        ~OGROCIDataSource();
 
     OGROCISession      *GetSession() { return poSession; }
 
-    int			Open( const char *, int bUpdate, int bTestOpen );
+    int                 Open( const char *, int bUpdate, int bTestOpen );
     int                 OpenTable( const char *pszTableName, 
                                    const char *pszGeomCol,
                                    int nSRID, int bUpdate, int bTestOpen );
 
-    const char	        *GetName() { return pszName; }
-    int			GetLayerCount() { return nLayers; }
-    OGRLayer		*GetLayer( int );
+    const char          *GetName() { return pszName; }
+    int                 GetLayerCount() { return nLayers; }
+    OGRLayer            *GetLayer( int );
 
     virtual OGRLayer    *CreateLayer( const char *, 
                                       OGRSpatialReference * = NULL,
@@ -584,7 +587,7 @@ class OGROCIDataSource : public OGRDataSource
 class OGROCIDriver : public OGRSFDriver
 {
   public:
-    		~OGROCIDriver();
+                ~OGROCIDriver();
                 
     const char *GetName();
     OGRDataSource *Open( const char *, int );

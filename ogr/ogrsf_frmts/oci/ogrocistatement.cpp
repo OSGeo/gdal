@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/05/21 03:54:01  warmerda
+ * expand tabs
+ *
  * Revision 1.10  2003/04/11 16:28:23  warmerda
  * fixed nMode handling, add indicators for binders
  *
@@ -133,7 +136,7 @@ void OGROCIStatement::Clean()
 
     if( hStatement != NULL )
     {
-	OCIHandleFree((dvoid *)hStatement, (ub4)OCI_HTYPE_STMT);
+        OCIHandleFree((dvoid *)hStatement, (ub4)OCI_HTYPE_STMT);
         hStatement = NULL;
     }
 }
@@ -300,7 +303,7 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
 /*      Count the columns.                                              */
 /* -------------------------------------------------------------------- */
     for( nRawColumnCount = 0; TRUE; nRawColumnCount++ )
-    {								
+    {                                                           
         OCIParam     *hParmDesc;
 
         if( OCIParamGet( hStatement, OCI_HTYPE_STMT, poSession->hError, 
@@ -322,7 +325,7 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
     poDefn->Reference();
 
     for( int iParm = 0; iParm < nRawColumnCount; iParm++ )
-    {								
+    {                                                           
         OGRFieldDefn oField( "", OFTString );
         OCIParam     *hParmDesc;
         ub2          nOCIType;
@@ -344,7 +347,7 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
         if( oField.GetType() == OFTBinary )
         {
             panFieldMap[iParm] = -1;
-            continue;			
+            continue;                   
         }
 
         poDefn->AddFieldDefn( &oField );

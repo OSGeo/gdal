@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/05/21 03:58:49  warmerda
+ * expand tabs
+ *
  * Revision 1.3  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -72,7 +75,7 @@ OGRDataSource *OGROGDIDriver::Open( const char * pszFilename,
                                      int bUpdate )
 
 {
-    OGROGDIDataSource	*poDS;
+    OGROGDIDataSource   *poDS;
 
     poDS = new OGROGDIDataSource();
 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/05/21 04:03:54  warmerda
+ * expand tabs
+ *
  * Revision 1.24  2003/02/25 14:35:11  warmerda
  * Incorporated more correct support for reading multi-part arcs as
  * MultiLineStrings.
@@ -130,7 +133,7 @@ CPL_CVSID("$Id$");
 OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
 
 {
-    SHPObject	*psShape;
+    SHPObject   *psShape;
     OGRGeometry *poOGR = NULL;
 
     psShape = SHPReadObject( hSHP, iShape );
@@ -157,11 +160,11 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
              || psShape->nSHPType == SHPT_MULTIPOINTZ )
     {
         OGRMultiPoint *poOGRMPoint = new OGRMultiPoint();
-        int		i;
+        int             i;
 
         for( i = 0; i < psShape->nVertices; i++ )
         {
-            OGRPoint	*poPoint;
+            OGRPoint    *poPoint;
 
             poPoint = new OGRPoint( psShape->padfX[i], psShape->padfY[i],
                                     psShape->padfZ[i] );
@@ -194,16 +197,16 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
         }
         else
         {
-            int	iRing;
+            int iRing;
             OGRMultiLineString *poOGRMulti;
         
             poOGR = poOGRMulti = new OGRMultiLineString();
             
             for( iRing = 0; iRing < psShape->nParts; iRing++ )
             {
-                OGRLineString	*poLine;
-                int	nRingPoints;
-                int	nRingStart;
+                OGRLineString   *poLine;
+                int     nRingPoints;
+                int     nRingStart;
 
                 poLine = new OGRLineString();
 
@@ -245,16 +248,16 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
              || psShape->nSHPType == SHPT_POLYGONM
              || psShape->nSHPType == SHPT_POLYGONZ )
     {
-        int	iRing;
+        int     iRing;
         OGRPolygon *poOGRPoly;
         
         poOGR = poOGRPoly = new OGRPolygon();
 
         for( iRing = 0; iRing < psShape->nParts; iRing++ )
         {
-            OGRLinearRing	*poRing;
-            int	nRingPoints;
-            int	nRingStart;
+            OGRLinearRing       *poRing;
+            int nRingPoints;
+            int nRingStart;
 
             poRing = new OGRLinearRing();
 
@@ -317,9 +320,9 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         || hSHP->nShapeType == SHPT_POINTM
         || hSHP->nShapeType == SHPT_POINTZ )
     {
-        SHPObject	*psShape;
-        OGRPoint	*poPoint = (OGRPoint *) poGeom;
-        double		dfX, dfY, dfZ = 0;
+        SHPObject       *psShape;
+        OGRPoint        *poPoint = (OGRPoint *) poGeom;
+        double          dfX, dfY, dfZ = 0;
 
         if( poGeom->getGeometryType() != wkbPoint
             && poGeom->getGeometryType() != wkbPoint25D )        
@@ -348,10 +351,10 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
              || hSHP->nShapeType == SHPT_MULTIPOINTM
              || hSHP->nShapeType == SHPT_MULTIPOINTZ )
     {
-        OGRMultiPoint	*poMP = (OGRMultiPoint *) poGeom;
-        double		*padfX, *padfY, *padfZ;
-        int		iPoint;
-        SHPObject	*psShape;
+        OGRMultiPoint   *poMP = (OGRMultiPoint *) poGeom;
+        double          *padfX, *padfY, *padfZ;
+        int             iPoint;
+        SHPObject       *psShape;
 
         if( wkbFlatten(poGeom->getGeometryType()) != wkbMultiPoint )
         {
@@ -369,7 +372,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
 
         for( iPoint = 0; iPoint < poMP->getNumGeometries(); iPoint++ )
         {
-            OGRPoint	*poPoint = (OGRPoint *) poMP->getGeometryRef(iPoint);
+            OGRPoint    *poPoint = (OGRPoint *) poMP->getGeometryRef(iPoint);
             
             padfX[iPoint] = poPoint->getX();
             padfY[iPoint] = poPoint->getY();
@@ -394,10 +397,10 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
              || hSHP->nShapeType == SHPT_ARCM
              || hSHP->nShapeType == SHPT_ARCZ )
     {
-        OGRLineString	*poArc = (OGRLineString *) poGeom;
-        double		*padfX, *padfY, *padfZ;
-        int		iPoint;
-        SHPObject	*psShape;
+        OGRLineString   *poArc = (OGRLineString *) poGeom;
+        double          *padfX, *padfY, *padfZ;
+        int             iPoint;
+        SHPObject       *psShape;
 
         if( poGeom->getGeometryType() != wkbLineString
             && poGeom->getGeometryType() != wkbLineString25D )
@@ -438,11 +441,11 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
              || hSHP->nShapeType == SHPT_POLYGONM
              || hSHP->nShapeType == SHPT_POLYGONZ )
     {
-        OGRPolygon	*poPoly;
+        OGRPolygon      *poPoly;
         OGRLinearRing   *poRing, **papoRings=NULL;
-        double		*padfX=NULL, *padfY=NULL, *padfZ=NULL;
-        int		iPoint, iRing, nRings, nVertex=0, *panRingStart;
-        SHPObject	*psShape;
+        double          *padfX=NULL, *padfY=NULL, *padfZ=NULL;
+        int             iPoint, iRing, nRings, nVertex=0, *panRingStart;
+        SHPObject       *psShape;
 
         /* Collect list of rings */
 
@@ -462,10 +465,10 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         }
         else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon
                  || wkbFlatten(poGeom->getGeometryType()) 
-                 				== wkbGeometryCollection )
+                                                == wkbGeometryCollection )
         {
             OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
-            int		iGeom;
+            int         iGeom;
 
             nRings = 0;
             for( iGeom=0; iGeom < poGC->getNumGeometries(); iGeom++ )
@@ -564,17 +567,17 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
                                        SHPHandle hSHP, DBFHandle hDBF )
 
 {
-    OGRFeatureDefn	*poDefn = new OGRFeatureDefn( pszName );
-    int			iField;
+    OGRFeatureDefn      *poDefn = new OGRFeatureDefn( pszName );
+    int                 iField;
 
     for( iField = 0; 
          hDBF != NULL && iField < DBFGetFieldCount( hDBF ); 
          iField++ )
     {
-        char		szFieldName[20];
-        int		nWidth, nPrecision;
-        DBFFieldType	eDBFType;
-        OGRFieldDefn	oField("", OFTInteger);
+        char            szFieldName[20];
+        int             nWidth, nPrecision;
+        DBFFieldType    eDBFType;
+        OGRFieldDefn    oField("", OFTInteger);
 
         eDBFType = DBFGetFieldInfo( hDBF, iField, szFieldName,
                                     &nWidth, &nPrecision );
@@ -659,7 +662,7 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
         return NULL;
     }
 
-    OGRFeature	*poFeature = new OGRFeature( poDefn );
+    OGRFeature  *poFeature = new OGRFeature( poDefn );
 
     if( hSHP != NULL )
         poFeature->SetGeometryDirectly( SHPReadOGRObject( hSHP, iShape ) );
@@ -728,7 +731,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 /* -------------------------------------------------------------------- */
 /*      Write the geometry.                                             */
 /* -------------------------------------------------------------------- */
-    OGRErr	eErr;
+    OGRErr      eErr;
 
     if( hSHP != NULL )
     {

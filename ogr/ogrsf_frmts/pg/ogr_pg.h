@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/05/21 03:59:42  warmerda
+ * expand tabs
+ *
  * Revision 1.11  2002/10/09 18:30:10  warmerda
  * substantial upgrade to type handling, and preservations of width/precision
  *
@@ -84,9 +87,9 @@ class OGRPGLayer : public OGRLayer
     OGRSpatialReference *poSRS;
     int                 nSRSId;
 
-    OGRGeometry		*poFilterGeom;
+    OGRGeometry         *poFilterGeom;
 
-    int			iNextShapeId;
+    int                 iNextShapeId;
 
     char               *GeometryToBYTEA( OGRGeometry * );
     OGRGeometry        *BYTEAToGeometry( const char * );
@@ -97,29 +100,29 @@ class OGRPGLayer : public OGRLayer
 
     char               *pszQueryStatement;
 
-    char	       *pszCursorName;
-    PGresult	       *hCursorResult;
+    char               *pszCursorName;
+    PGresult           *hCursorResult;
     int                 bCursorActive;
 
     int                 nResultOffset;
 
-    int			bHasWkb;
+    int                 bHasWkb;
     int                 bWkbAsOid;
     int                 bHasFid;
-    int			bHasPostGISGeometry;
-    char		*pszGeomColumn;
+    int                 bHasPostGISGeometry;
+    char                *pszGeomColumn;
 
   public:
-    			OGRPGLayer();
+                        OGRPGLayer();
     virtual             ~OGRPGLayer();
 
-    virtual void	ResetReading();
+    virtual void        ResetReading();
     virtual OGRFeature *GetNextRawFeature();
     virtual OGRFeature *GetNextFeature();
 
     virtual OGRFeature *GetFeature( long nFeatureId );
     
-    OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     virtual OGRErr      StartTransaction();
     virtual OGRErr      CommitTransaction();
@@ -136,31 +139,31 @@ class OGRPGLayer : public OGRLayer
 
 class OGRPGTableLayer : public OGRPGLayer
 {
-    int			bUpdateAccess;
+    int                 bUpdateAccess;
 
     OGRFeatureDefn     *ReadTableDefinition(const char *);
 
-    void		BuildWhere(void);
-    char 	       *BuildFields(void);
+    void                BuildWhere(void);
+    char               *BuildFields(void);
     void                BuildFullQueryStatement(void);
 
-    char	        *pszQuery;
-    char		*pszWHERE;
+    char                *pszQuery;
+    char                *pszWHERE;
 
-    int			bLaunderColumnNames;
-    int			bPreservePrecision;
+    int                 bLaunderColumnNames;
+    int                 bPreservePrecision;
     
   public:
-    			OGRPGTableLayer( OGRPGDataSource *,
+                        OGRPGTableLayer( OGRPGDataSource *,
                                          const char * pszName,
                                          int bUpdate, int nSRSId = -2 );
-    			~OGRPGTableLayer();
+                        ~OGRPGTableLayer();
 
-    virtual void	ResetReading();
+    virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
 
     virtual OGRGeometry *GetSpatialFilter() { return poFilterGeom; }
-    virtual void	SetSpatialFilter( OGRGeometry * );
+    virtual void        SetSpatialFilter( OGRGeometry * );
 
     virtual OGRErr      SetAttributeFilter( const char * );
 
@@ -175,10 +178,10 @@ class OGRPGTableLayer : public OGRPGLayer
     virtual int         TestCapability( const char * );
 
     // follow methods are not base class overrides
-    void		SetLaunderFlag( int bFlag ) 
-				{ bLaunderColumnNames = bFlag; }
-    void		SetPrecisionFlag( int bFlag ) 
-				{ bPreservePrecision = bFlag; }
+    void                SetLaunderFlag( int bFlag ) 
+                                { bLaunderColumnNames = bFlag; }
+    void                SetPrecisionFlag( int bFlag ) 
+                                { bPreservePrecision = bFlag; }
 };
 
 /************************************************************************/
@@ -189,24 +192,24 @@ class OGRPGResultLayer : public OGRPGLayer
 {
     void                BuildFullQueryStatement(void);
 
-    char		*pszRawStatement;
+    char                *pszRawStatement;
 
     PGresult            *hInitialResult;
 
     int                 nFeatureCount;
 
   public:
-    			OGRPGResultLayer( OGRPGDataSource *,
+                        OGRPGResultLayer( OGRPGDataSource *,
                                           const char * pszRawStatement,
                                           PGresult *hInitialResult );
     virtual             ~OGRPGResultLayer();
 
-    OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
-    void		SetSpatialFilter( OGRGeometry * ) {}
+    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
+    void                SetSpatialFilter( OGRGeometry * ) {}
 
     OGRFeatureDefn     *ReadResultDefinition();
 
-    virtual void	ResetReading();
+    virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
 };
 
@@ -217,18 +220,18 @@ class OGRPGResultLayer : public OGRPGLayer
 class OGRPGDataSource : public OGRDataSource
 {
     OGRPGLayer        **papoLayers;
-    int			nLayers;
+    int                 nLayers;
     
-    char	       *pszName;
+    char               *pszName;
     char               *pszDBName;
 
-    int			bDSUpdate;
-    int			bHavePostGIS;
-    int			nSoftTransactionLevel;
+    int                 bDSUpdate;
+    int                 bHavePostGIS;
+    int                 nSoftTransactionLevel;
 
-    PGconn		*hPGConn;
+    PGconn              *hPGConn;
 
-    void		DeleteLayer( const char *pszLayerName );
+    void                DeleteLayer( const char *pszLayerName );
 
     Oid                 nGeometryOID;
 
@@ -239,8 +242,8 @@ class OGRPGDataSource : public OGRDataSource
     OGRSpatialReference **papoSRS;
     
   public:
-    			OGRPGDataSource();
-    			~OGRPGDataSource();
+                        OGRPGDataSource();
+                        ~OGRPGDataSource();
 
     PGconn             *GetPGConn() { return hPGConn; }
 
@@ -248,12 +251,12 @@ class OGRPGDataSource : public OGRDataSource
     OGRSpatialReference *FetchSRS( int nSRSId );
     OGRErr              InitializeMetadataTables();
 
-    int			Open( const char *, int bUpdate, int bTestOpen );
+    int                 Open( const char *, int bUpdate, int bTestOpen );
     int                 OpenTable( const char *, int bUpdate, int bTestOpen );
 
-    const char	        *GetName() { return pszName; }
-    int			GetLayerCount() { return nLayers; }
-    OGRLayer		*GetLayer( int );
+    const char          *GetName() { return pszName; }
+    int                 GetLayerCount() { return nLayers; }
+    OGRLayer            *GetLayer( int );
 
     virtual OGRLayer    *CreateLayer( const char *, 
                                       OGRSpatialReference * = NULL,
@@ -283,7 +286,7 @@ class OGRPGDataSource : public OGRDataSource
 class OGRPGDriver : public OGRSFDriver
 {
   public:
-    		~OGRPGDriver();
+                ~OGRPGDriver();
                 
     const char *GetName();
     OGRDataSource *Open( const char *, int );

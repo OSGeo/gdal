@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/05/21 03:58:49  warmerda
+ * expand tabs
+ *
  * Revision 1.4  2001/06/01 14:40:35  warmerda
  * fixup windows builds
  *
@@ -116,11 +119,11 @@ class OGROGDIDataSource : public OGRDataSource
     ecs_Region          m_sGlobalBounds;
     OGRSpatialReference *m_poSpatialRef;
 
-    OGROGDILayer	*m_poCurrentLayer;
+    OGROGDILayer        *m_poCurrentLayer;
 
-    char		*m_pszFullName;
+    char                *m_pszFullName;
 
-    void		IAddLayer( const char *pszLayerName, 
+    void                IAddLayer( const char *pszLayerName, 
                                    ecs_Family eFamily );
 
   public:
@@ -135,9 +138,9 @@ class OGROGDIDataSource : public OGRDataSource
 
     int                 TestCapability( const char * );
 
-    ecs_Region	       *GetGlobalBounds() { return &m_sGlobalBounds; }
+    ecs_Region         *GetGlobalBounds() { return &m_sGlobalBounds; }
     OGRSpatialReference*GetSpatialRef() { return m_poSpatialRef; }
-    int			GetClientID() { return m_nClientID; }
+    int                 GetClientID() { return m_nClientID; }
 };
 
 /************************************************************************/

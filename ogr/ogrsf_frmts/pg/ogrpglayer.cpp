@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/05/21 03:59:42  warmerda
+ * expand tabs
+ *
  * Revision 1.12  2003/02/01 07:55:48  warmerda
  * avoid dependence on libpq-fs.h
  *
@@ -74,13 +77,13 @@
 
 CPL_CVSID("$Id$");
 
-#define CURSOR_PAGE	1
+#define CURSOR_PAGE     1
 
 // These originally are defined in libpq-fs.h.
 
 #ifndef INV_WRITE
-#define INV_WRITE		0x00020000
-#define INV_READ		0x00040000
+#define INV_WRITE               0x00020000
+#define INV_READ                0x00040000
 #endif
 
 /************************************************************************/
@@ -137,8 +140,8 @@ OGRPGLayer::~OGRPGLayer()
 void OGRPGLayer::ResetReading()
 
 {
-    PGconn	*hPGConn = poDS->GetPGConn();
-    char	szCommand[1024];
+    PGconn      *hPGConn = poDS->GetPGConn();
+    char        szCommand[1024];
 
     iNextShapeId = 0;
 
@@ -171,7 +174,7 @@ OGRFeature *OGRPGLayer::GetNextFeature()
 
     for( ; TRUE; )
     {
-        OGRFeature	*poFeature;
+        OGRFeature      *poFeature;
 
         poFeature = GetNextRawFeature();
         if( poFeature == NULL )
@@ -195,8 +198,8 @@ OGRFeature *OGRPGLayer::GetNextFeature()
 OGRFeature *OGRPGLayer::GetNextRawFeature()
 
 {
-    PGconn	*hPGConn = poDS->GetPGConn();
-    char	szCommand[4096];
+    PGconn      *hPGConn = poDS->GetPGConn();
+    char        szCommand[4096];
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to establish an initial query?                       */
@@ -279,7 +282,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
 /*      Create a feature from the current result.                       */
 /* -------------------------------------------------------------------- */
-    int		iField;
+    int         iField;
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
     if( EQUAL(PQfname(hCursorResult,0),"OGC_FID") )
@@ -295,13 +298,13 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
          iField < PQnfields(hCursorResult);
          iField++ )
     {
-        int	iOGRField;
+        int     iOGRField;
 
         if( bHasPostGISGeometry
             && (EQUAL(PQfname(hCursorResult,iField),pszGeomColumn)
                 || EQUAL(PQfname(hCursorResult,iField),"astext") ) )
         {
-            char	*pszWKT;
+            char        *pszWKT;
             char        *pszPostSRID;
             OGRGeometry *poGeometry = NULL;
             
@@ -468,9 +471,9 @@ OGRGeometry *OGRPGLayer::BYTEAToGeometry( const char *pszBytea )
 char *OGRPGLayer::GeometryToBYTEA( OGRGeometry * poGeometry )
 
 {
-    int		nWkbSize = poGeometry->WkbSize();
-    GByte	*pabyWKB;
-    char	*pszTextBuf, *pszRetBuf;
+    int         nWkbSize = poGeometry->WkbSize();
+    GByte       *pabyWKB;
+    char        *pszTextBuf, *pszRetBuf;
 
     pabyWKB = (GByte *) CPLMalloc(nWkbSize);
     if( poGeometry->exportToWkb( wkbNDR, pabyWKB ) != OGRERR_NONE )
@@ -506,12 +509,12 @@ char *OGRPGLayer::GeometryToBYTEA( OGRGeometry * poGeometry )
 OGRGeometry *OGRPGLayer::OIDToGeometry( Oid oid )
 
 {
-    PGconn	*hPGConn = poDS->GetPGConn();
+    PGconn      *hPGConn = poDS->GetPGConn();
     GByte       *pabyWKB;
-    int		fd, nBytes;
+    int         fd, nBytes;
     OGRGeometry *poGeometry;
 
-#define MAX_WKB	500000
+#define MAX_WKB 500000
 
     if( oid == 0 )
         return NULL;
@@ -539,11 +542,11 @@ OGRGeometry *OGRPGLayer::OIDToGeometry( Oid oid )
 Oid OGRPGLayer::GeometryToOID( OGRGeometry * poGeometry )
 
 {
-    PGconn	*hPGConn = poDS->GetPGConn();
-    int		nWkbSize = poGeometry->WkbSize();
-    GByte	*pabyWKB;
-    Oid		oid;
-    int		fd, nBytesWritten;
+    PGconn      *hPGConn = poDS->GetPGConn();
+    int         nWkbSize = poGeometry->WkbSize();
+    GByte       *pabyWKB;
+    Oid         oid;
+    int         fd, nBytesWritten;
 
     pabyWKB = (GByte *) CPLMalloc(nWkbSize);
     if( poGeometry->exportToWkb( wkbNDR, pabyWKB ) != OGRERR_NONE )
