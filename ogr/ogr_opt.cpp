@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/01/19 21:10:46  warmerda
+ * replaced tabs
+ *
  * Revision 1.1  2000/08/30 20:05:00  warmerda
  * New
  *
@@ -37,8 +40,8 @@
 #include "cpl_string.h"
 
 static char *papszParameterDefinitions[] = {
-    SRS_PP_CENTRAL_MERIDIAN,	"Central Meridian",	"Long",  "0.0",
-    SRS_PP_SCALE_FACTOR,	"Scale Factor", 	"Ratio", "1.0",
+    SRS_PP_CENTRAL_MERIDIAN,    "Central Meridian",     "Long",  "0.0",
+    SRS_PP_SCALE_FACTOR,        "Scale Factor",         "Ratio", "1.0",
     SRS_PP_STANDARD_PARALLEL_1, "Standard Parallel 1",  "Lat",   "0.0",
     SRS_PP_STANDARD_PARALLEL_2, "Standard Parallel 2",  "Lat",   "0.0",
     SRS_PP_LONGITUDE_OF_CENTER, "Longitude of Center",  "Long",  "0.0",
@@ -325,8 +328,8 @@ static char *papszProjectionDefinitions[] = {
 char **OPTGetProjectionMethods()
 
 {
-    int		i;
-    char	**papszList = NULL;
+    int         i;
+    char        **papszList = NULL;
 
     for( i = 1; papszProjectionDefinitions[i] != NULL; i++ )
     {
@@ -425,7 +428,7 @@ int OPTGetParameterInfo( const char * /* pszProjectionMethod */,
                          double *pdfDefaultValue )
 
 {
-    int		i;
+    int         i;
 
     for( i = 0; papszParameterDefinitions[i] != NULL; i += 4 )
     {

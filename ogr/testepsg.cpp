@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/01/19 21:10:47  warmerda
+ * replaced tabs
+ *
  * Revision 1.2  2000/03/20 14:57:27  warmerda
  * added -t for transform
  *
@@ -50,7 +53,7 @@ void Usage()
 int main( int nArgc, char ** papszArgv )
 
 {
-    OGRSpatialReference	oSRS;
+    OGRSpatialReference oSRS;
     int i;
 
     for( i = 1; i < nArgc; i++ )
@@ -59,7 +62,7 @@ int main( int nArgc, char ** papszArgv )
         {
             OGRSpatialReference oSourceSRS, oTargetSRS;
             OGRCoordinateTransformation *poCT;
-            double			x, y;
+            double                      x, y;
             
             oSourceSRS.importFromEPSG( atoi(papszArgv[i+1]) );
             oTargetSRS.importFromEPSG( atoi(papszArgv[i+2]) );

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/01/19 21:10:46  warmerda
+ * replaced tabs
+ *
  * Revision 1.6  2000/12/07 03:46:04  danmo
  * Made papszDatumEquiv[] const
  *
@@ -81,8 +84,8 @@ static const char *papszDatumEquiv[] =
 static void WKTMassageDatum( char ** ppszDatum )
 
 {
-    int		i, j;
-    char	*pszDatum = *ppszDatum;
+    int         i, j;
+    char        *pszDatum = *ppszDatum;
 
 /* -------------------------------------------------------------------- */
 /*      Translate non-alphanumeric values to underscores.               */
@@ -137,18 +140,18 @@ static double
 EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
 
 {
-    double	dfAngle;
+    double      dfAngle;
     
-    if( nUOMAngle == 9110 )		/* DDD.MMSSsss */
+    if( nUOMAngle == 9110 )             /* DDD.MMSSsss */
     {
-        char	*pszDecimal;
+        char    *pszDecimal;
         
         dfAngle = ABS(atoi(pszAngle));
         pszDecimal = (char *) strchr(pszAngle,'.');
         if( pszDecimal != NULL && strlen(pszDecimal) > 1 )
         {
-            char	szMinutes[3];
-            char	szSeconds[64];
+            char        szMinutes[3];
+            char        szSeconds[64];
 
             szMinutes[0] = pszDecimal[1];
             if( pszDecimal[2] >= '0' && pszDecimal[2] <= '9' )
@@ -180,19 +183,19 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
         if( pszAngle[0] == '-' )
             dfAngle *= -1;
     }
-    else if( nUOMAngle == 9105 || nUOMAngle == 9106 )	/* grad */
+    else if( nUOMAngle == 9105 || nUOMAngle == 9106 )   /* grad */
     {
         dfAngle = 180 * (atof(pszAngle ) / 200);
     }
-    else if( nUOMAngle == 9101 )			/* radians */
+    else if( nUOMAngle == 9101 )                        /* radians */
     {
         dfAngle = 180 * (atof(pszAngle ) / PI);
     }
-    else if( nUOMAngle == 9103 )			/* arc-minute */
+    else if( nUOMAngle == 9103 )                        /* arc-minute */
     {
         dfAngle = atof(pszAngle) / 60;
     }
-    else if( nUOMAngle == 9104 )			/* arc-second */
+    else if( nUOMAngle == 9104 )                        /* arc-second */
     {
         dfAngle = atof(pszAngle) / 3600;
     }
@@ -219,9 +222,9 @@ EPSGGetUOMLengthInfo( int nUOMLengthCode,
                       double * pdfInMeters )
 
 {
-    char	**papszUnitsRecord;
-    char	szSearchKey[24];
-    int		iNameField;
+    char        **papszUnitsRecord;
+    char        szSearchKey[24];
+    int         iNameField;
 
 /* -------------------------------------------------------------------- */
 /*      We short cut meter to save work in the most common case.        */
@@ -264,7 +267,7 @@ EPSGGetUOMLengthInfo( int nUOMLengthCode,
 /* -------------------------------------------------------------------- */
     if( pdfInMeters != NULL )
     {
-        int	iBFactorField, iCFactorField;
+        int     iBFactorField, iCFactorField;
         
         iBFactorField = CSVGetFileFieldId( CSVFilename( "uom_length.csv" ),
                                            "FACTOR_B" );
@@ -297,8 +300,8 @@ EPSGGetUOMLengthInfo( int nUOMLengthCode,
 int EPSGGetWGS84Transform( int nGeogCS, double *padfTransform )
 
 {
-    int		nTRFCode;
-    char	szCode[32];
+    int         nTRFCode;
+    char        szCode[32];
 
 /* -------------------------------------------------------------------- */
 /*      Search the trf_path table for a transformation mapping this     */
@@ -352,8 +355,8 @@ static int
 EPSGGetPMInfo( int nPMCode, char ** ppszName, double *pdfOffset )
 
 {
-    char	szSearchKey[24];
-    int		nUOMAngle;
+    char        szSearchKey[24];
+    int         nUOMAngle;
 
 /* -------------------------------------------------------------------- */
 /*      Use a special short cut for Greenwich, since it is so common.   */
@@ -417,8 +420,8 @@ EPSGGetGCSInfo( int nGCSCode, char ** ppszName,
                 int * pnDatum, int * pnPM, int *pnUOMAngle )
 
 {
-    char	szSearchKey[24];
-    int		nDatum, nPM, nUOMAngle;
+    char        szSearchKey[24];
+    int         nDatum, nPM, nUOMAngle;
 
 /* -------------------------------------------------------------------- */
 /*      Search the database for the corresponding datum code.           */
@@ -483,8 +486,8 @@ static int
 EPSGGetDatumInfo( int nDatumCode, char ** ppszName, int * pnEllipsoid )
 
 {
-    char	szSearchKey[24];
-    int		nEllipsoid;
+    char        szSearchKey[24];
+    int         nEllipsoid;
 
 /* -------------------------------------------------------------------- */
 /*      Search the database for the corresponding datum code.           */
@@ -526,9 +529,9 @@ EPSGGetEllipsoidInfo( int nCode, char ** ppszName,
                       double * pdfSemiMajor, double * pdfInvFlattening )
 
 {
-    char	szSearchKey[24];
-    double	dfSemiMajor, dfToMeters = 1.0;
-    int		nUOMLength;
+    char        szSearchKey[24];
+    double      dfSemiMajor, dfToMeters = 1.0;
+    int         nUOMLength;
     
 /* -------------------------------------------------------------------- */
 /*      Get the semi major axis.                                        */
@@ -543,7 +546,7 @@ EPSGGetEllipsoidInfo( int nCode, char ** ppszName,
         return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*	Get the translation factor into meters.				*/
+/*      Get the translation factor into meters.                         */
 /* -------------------------------------------------------------------- */
     nUOMLength = atoi(CSVGetField( CSVFilename("ellipsoid.csv" ),
                                    "ELLIPSOID_CODE", szSearchKey, CC_Integer,
@@ -611,9 +614,9 @@ EPSGGetProjTRFInfo( int nProjTRFCode,
                     double * padfProjParms )
 
 {
-    int		nProjMethod, nUOMLinear, nUOMAngle, i;
-    double	adfProjParms[7], dfInMeters;
-    char	szTRFCode[16];
+    int         nProjMethod, nUOMLinear, nUOMAngle, i;
+    double      adfProjParms[7], dfInMeters;
+    char        szTRFCode[16];
 
 /* -------------------------------------------------------------------- */
 /*      Get the proj method.  If this fails to return a meaningful      */
@@ -628,8 +631,8 @@ EPSGGetProjTRFInfo( int nProjTRFCode,
         return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*	Get the linear, and angular (geog) units for the projection	*/
-/*	parameters.							*/    
+/*      Get the linear, and angular (geog) units for the projection     */
+/*      parameters.                                                     */    
 /* -------------------------------------------------------------------- */
     nUOMLinear = 
         atoi( CSVGetField( CSVFilename( "trf_nonpolynomial.csv" ),
@@ -654,7 +657,7 @@ EPSGGetProjTRFInfo( int nProjTRFCode,
 
     for( i = 0; i < 7; i++ )
     {
-        char	szID[16];
+        char    szID[16];
         const char *pszValue;
         
         sprintf( szID, "PARAMETER_%d", i+1 );
@@ -706,9 +709,9 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
                 int *pnGeogCS, int *pnTRFCode )
 
 {
-    char	**papszRecord;
-    char	szSearchKey[24];
-    const char	*pszFilename = CSVFilename( "horiz_cs.csv" );
+    char        **papszRecord;
+    char        szSearchKey[24];
+    const char  *pszFilename = CSVFilename( "horiz_cs.csv" );
     
 /* -------------------------------------------------------------------- */
 /*      Search the units database for this unit.  If we don't find      */
@@ -737,7 +740,7 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
 /* -------------------------------------------------------------------- */
     if( pnUOMLengthCode != NULL )
     {
-        const char	*pszValue;
+        const char      *pszValue;
 
         pszValue =
             CSLGetField( papszRecord,
@@ -753,7 +756,7 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
 /* -------------------------------------------------------------------- */
     if( pnUOMAngleCode != NULL )
     {
-        const char	*pszValue;
+        const char      *pszValue;
         
         pszValue =
             CSLGetField( papszRecord,
@@ -766,11 +769,11 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Get the GeogCS (Datum with PM) code, if requested.		*/
+/*      Get the GeogCS (Datum with PM) code, if requested.              */
 /* -------------------------------------------------------------------- */
     if( pnGeogCS != NULL )
     {
-        const char	*pszValue;
+        const char      *pszValue;
 
         pszValue =
             CSLGetField( papszRecord,
@@ -782,11 +785,11 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Get the GeogCS (Datum with PM) code, if requested.		*/
+/*      Get the GeogCS (Datum with PM) code, if requested.              */
 /* -------------------------------------------------------------------- */
     if( pnTRFCode != NULL )
     {
-        const char	*pszValue;
+        const char      *pszValue;
 
         pszValue =
             CSLGetField( papszRecord,
@@ -840,7 +843,7 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
 
     if( EPSGGetWGS84Transform( nGeogCS, adfBursaTransform ) )
     {
-        OGR_SRSNode	*poWGS84;
+        OGR_SRSNode     *poWGS84;
         char            szValue[48];
 
         poWGS84 = new OGR_SRSNode( "TOWGS84" );
@@ -874,7 +877,7 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
 static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
 
 {
-    int		nGCSCode, nUOMAngleCode, nUOMLength, nTRFCode, nProjMethod;
+    int         nGCSCode, nUOMAngleCode, nUOMLength, nTRFCode, nProjMethod;
     char        *pszPCSName = NULL, *pszUOMLengthName = NULL;
     double      adfProjParms[7], dfInMeters;
     OGRErr      nErr;
@@ -1065,8 +1068,8 @@ OGRErr OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nCode )
 OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83 )
 
 {
-    int		nProjCode, nPCSCode;
-    char	szTRFCode[32];
+    int         nProjCode, nPCSCode;
+    char        szTRFCode[32];
 
 /* -------------------------------------------------------------------- */
 /*      Fugure out the TRF_CODE (like Proj_Alabama_CS83_East.           */
@@ -1088,7 +1091,7 @@ OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83 )
                            "HORIZCS_CODE" ) );
     if( nPCSCode < 1 )
     {
-        char	szName[128];
+        char    szName[128];
         static int bFailureReported = FALSE;
 
         if( !bFailureReported )

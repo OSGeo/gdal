@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/01/19 21:10:47  warmerda
+ * replaced tabs
+ *
  * Revision 1.15  2000/12/07 03:40:13  danmo
  * Removed stray comma in OGRFieldType enum defn
  *
@@ -121,7 +124,7 @@ enum OGRJustification
 };
 
 #define OGRNullFID            -1
-#define OGRUnsetMarker	      -21121
+#define OGRUnsetMarker        -21121
 
 /************************************************************************/
 /*                               OGRField                               */
@@ -158,8 +161,8 @@ typedef union {
 //    } WideStringList;
 
     struct {
-        int	nMarker1;
-        int	nMarker2;
+        int     nMarker1;
+        int     nMarker2;
     } Set;
 } OGRField;
 
@@ -308,7 +311,7 @@ class OGRFeature
     int                 GetFieldIndex( const char * pszName)
                                       { return poDefn->GetFieldIndex(pszName);}
 
-    int			IsFieldSet( int iField )
+    int                 IsFieldSet( int iField )
                         { return
                               pauFields[iField].Set.nMarker1 != OGRUnsetMarker
                            || pauFields[iField].Set.nMarker2 != OGRUnsetMarker;

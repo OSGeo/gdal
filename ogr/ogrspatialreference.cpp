@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2001/01/19 21:10:47  warmerda
+ * replaced tabs
+ *
  * Revision 1.24  2000/11/17 17:26:02  warmerda
  * set a name in SetUTM()
  *
@@ -386,7 +389,7 @@ void OGRSpatialReference::SetRoot( OGR_SRSNode * poNewRoot )
 OGR_SRSNode *OGRSpatialReference::GetAttrNode( const char * pszNodePath )
 
 {
-    char	**papszPathTokens;
+    char        **papszPathTokens;
     OGR_SRSNode *poNode;
 
     papszPathTokens = CSLTokenizeStringComplex(pszNodePath, "|", TRUE, FALSE);
@@ -1505,7 +1508,7 @@ double OSRGetSemiMinor( OGRSpatialReferenceH hSRS, OGRErr *pnErr )
 OGRErr OGRSpatialReference::SetLocalCS( const char * pszName )
 
 {
-    OGR_SRSNode	*poCS = GetAttrNode( "LOCAL_CS" );
+    OGR_SRSNode *poCS = GetAttrNode( "LOCAL_CS" );
 
     if( poCS == NULL && GetRoot() != NULL )
     {
@@ -1554,7 +1557,7 @@ OGRErr OSRSetLocalCS( OGRSpatialReferenceH hSRS, const char * pszName )
 OGRErr OGRSpatialReference::SetProjCS( const char * pszName )
 
 {
-    OGR_SRSNode	*poProjCS = GetAttrNode( "PROJCS" );
+    OGR_SRSNode *poProjCS = GetAttrNode( "PROJCS" );
 
     if( poProjCS == NULL && GetRoot() != NULL )
     {
@@ -2361,7 +2364,7 @@ OGRErr OGRSpatialReference::SetUTM( int nZone, int bNorth )
 
     if( EQUAL(GetAttrValue("PROJCS"),"unnamed") )
     {
-        char	szUTMName[128];
+        char    szUTMName[128];
 
         if( bNorth )
             sprintf( szUTMName, "UTM Zone %d, Northern Hemisphere", nZone );
@@ -2404,7 +2407,7 @@ OGRErr OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth )
 int OGRSpatialReference::GetUTMZone( int * pbNorth )
 
 {
-    const char	*pszProjection = GetAttrValue( "PROJECTION" );
+    const char  *pszProjection = GetAttrValue( "PROJECTION" );
 
     if( !EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )
         return 0;
@@ -2418,7 +2421,7 @@ int OGRSpatialReference::GetUTMZone( int * pbNorth )
     if( GetProjParm( SRS_PP_FALSE_EASTING, 0.0 ) != 500000 )
         return 0;
 
-    double	dfFalseNorthing = GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+    double      dfFalseNorthing = GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
 
     if( dfFalseNorthing != 0.0 && dfFalseNorthing != 10000000 )
         return 0;
@@ -2426,8 +2429,8 @@ int OGRSpatialReference::GetUTMZone( int * pbNorth )
     if( pbNorth != NULL )
         *pbNorth = (dfFalseNorthing == 0);
 
-    double	dfCentralMeridian = GetProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0);
-    double	dfZone = (dfCentralMeridian+183) / 6.0 + 0.000000001;
+    double      dfCentralMeridian = GetProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0);
+    double      dfZone = (dfCentralMeridian+183) / 6.0 + 0.000000001;
 
     if( ABS(dfZone - (int) dfZone) > 0.00001
         || dfCentralMeridian < -177.00001
@@ -2471,7 +2474,7 @@ OGRErr OGRSpatialReference::SetAuthority( const char *pszTargetKey,
                                           int nCode )
 
 {
-    OGR_SRSNode	 *poNode;
+    OGR_SRSNode  *poNode;
     char         **papszNodePath;
     int          iPath;
 
@@ -2653,7 +2656,7 @@ int OSRIsLocal( OGRSpatialReferenceH hSRS )
 OGRSpatialReference *OGRSpatialReference::CloneGeogCS()
 
 {
-    OGR_SRSNode	*poGeogCS;
+    OGR_SRSNode *poGeogCS;
     OGRSpatialReference * poNewSRS;
 
     poGeogCS = GetAttrNode( "GEOGCS" );

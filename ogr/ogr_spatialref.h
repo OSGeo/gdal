@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2001/01/19 21:10:47  warmerda
+ * replaced tabs
+ *
  * Revision 1.25  2000/11/09 06:21:32  warmerda
  * added limited ESRI prj support
  *
@@ -161,7 +164,7 @@ class OGR_SRSNode
     const char  *GetValue() { return pszValue; }
     void        SetValue( const char * );
 
-    void	MakeValueSafe();
+    void        MakeValueSafe();
 
     OGR_SRSNode *Clone();
 
@@ -401,7 +404,7 @@ class OGRSpatialReference
 
     /** Universal Transverse Mercator */
     OGRErr      SetUTM( int nZone, int bNorth = TRUE );
-    int		GetUTMZone( int *pbNorth = NULL );
+    int         GetUTMZone( int *pbNorth = NULL );
 
     /** State Plane */
     OGRErr      SetStatePlane( int nZone, int bNAD83 = TRUE );

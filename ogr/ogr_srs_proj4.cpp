@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/01/19 21:10:46  warmerda
+ * replaced tabs
+ *
  * Revision 1.14  2000/12/05 23:10:34  warmerda
  * Added cassini support
  *
@@ -74,24 +77,24 @@
 /*      ... please update from time to time.                            */
 /* -------------------------------------------------------------------- */
 static const char *ogr_pj_ellps[] = {
-"MERIT",	"a=6378137.0", "rf=298.257", "MERIT 1983",
-"SGS85",	"a=6378136.0", "rf=298.257",  "Soviet Geodetic System 85",
-"GRS80",	"a=6378137.0", "rf=298.257222101", "GRS 1980(IUGG, 1980)",
-"IAU76",	"a=6378140.0", "rf=298.257", "IAU 1976",
-"airy",		"a=6377563.396", "b=6356256.910", "Airy 1830",
-"APL4.9",	"a=6378137.0.",  "rf=298.25", "Appl. Physics. 1965",
-"NWL9D",	"a=6378145.0.",  "rf=298.25", "Naval Weapons Lab., 1965",
-"mod_airy",	"a=6377340.189", "b=6356034.446", "Modified Airy",
-"andrae",	"a=6377104.43",  "rf=300.0", 	"Andrae 1876 (Den., Iclnd.)",
-"aust_SA",	"a=6378160.0", "rf=298.25", "Australian Natl & S. Amer. 1969",
-"GRS67",	"a=6378160.0", "rf=298.2471674270", "GRS 67(IUGG 1967)",
-"bessel",	"a=6377397.155", "rf=299.1528128", "Bessel 1841",
-"bess_nam",	"a=6377483.865", "rf=299.1528128", "Bessel 1841 (Namibia)",
-"clrk66",	"a=6378206.4", "b=6356583.8", "Clarke 1866",
-"clrk80",	"a=6378249.145", "rf=293.4663", "Clarke 1880 mod.",
-"CPM",  	"a=6375738.7", "rf=334.29", "Comm. des Poids et Mesures 1799",
-"delmbr",	"a=6376428.",  "rf=311.5", "Delambre 1810 (Belgium)",
-"engelis",	"a=6378136.05", "rf=298.2566", "Engelis 1985",
+"MERIT",        "a=6378137.0", "rf=298.257", "MERIT 1983",
+"SGS85",        "a=6378136.0", "rf=298.257",  "Soviet Geodetic System 85",
+"GRS80",        "a=6378137.0", "rf=298.257222101", "GRS 1980(IUGG, 1980)",
+"IAU76",        "a=6378140.0", "rf=298.257", "IAU 1976",
+"airy",         "a=6377563.396", "b=6356256.910", "Airy 1830",
+"APL4.9",       "a=6378137.0.",  "rf=298.25", "Appl. Physics. 1965",
+"NWL9D",        "a=6378145.0.",  "rf=298.25", "Naval Weapons Lab., 1965",
+"mod_airy",     "a=6377340.189", "b=6356034.446", "Modified Airy",
+"andrae",       "a=6377104.43",  "rf=300.0",    "Andrae 1876 (Den., Iclnd.)",
+"aust_SA",      "a=6378160.0", "rf=298.25", "Australian Natl & S. Amer. 1969",
+"GRS67",        "a=6378160.0", "rf=298.2471674270", "GRS 67(IUGG 1967)",
+"bessel",       "a=6377397.155", "rf=299.1528128", "Bessel 1841",
+"bess_nam",     "a=6377483.865", "rf=299.1528128", "Bessel 1841 (Namibia)",
+"clrk66",       "a=6378206.4", "b=6356583.8", "Clarke 1866",
+"clrk80",       "a=6378249.145", "rf=293.4663", "Clarke 1880 mod.",
+"CPM",          "a=6375738.7", "rf=334.29", "Comm. des Poids et Mesures 1799",
+"delmbr",       "a=6376428.",  "rf=311.5", "Delambre 1810 (Belgium)",
+"engelis",      "a=6378136.05", "rf=298.2566", "Engelis 1985",
 "evrst30",  "a=6377276.345", "rf=300.8017",  "Everest 1830",
 "evrst48",  "a=6377304.063", "rf=300.8017",  "Everest 1948",
 "evrst56",  "a=6377301.243", "rf=300.8017",  "Everest 1956",
@@ -101,19 +104,19 @@ static const char *ogr_pj_ellps[] = {
 "fschr60m", "a=6378155.",   "rf=298.3", "Modified Fischer 1960",
 "fschr68",  "a=6378150.",   "rf=298.3", "Fischer 1968",
 "helmert",  "a=6378200.",   "rf=298.3", "Helmert 1906",
-"hough",	"a=6378270.0", "rf=297.", "Hough",
-"intl",		"a=6378388.0", "rf=297.", "International 1909 (Hayford)",
-"krass",	"a=6378245.0", "rf=298.3", "Krassovsky, 1942",
-"kaula",	"a=6378163.",  "rf=298.24", "Kaula 1961",
-"lerch",	"a=6378139.",  "rf=298.257", "Lerch 1979",
-"mprts",	"a=6397300.",  "rf=191.", "Maupertius 1738",
-"new_intl",	"a=6378157.5", "b=6356772.2", "New International 1967",
-"plessis",	"a=6376523.",  "b=6355863.", "Plessis 1817 (France)",
-"SEasia",	"a=6378155.0", "b=6356773.3205", "Southeast Asia",
-"walbeck",	"a=6376896.0", "b=6355834.8467", "Walbeck",
+"hough",        "a=6378270.0", "rf=297.", "Hough",
+"intl",         "a=6378388.0", "rf=297.", "International 1909 (Hayford)",
+"krass",        "a=6378245.0", "rf=298.3", "Krassovsky, 1942",
+"kaula",        "a=6378163.",  "rf=298.24", "Kaula 1961",
+"lerch",        "a=6378139.",  "rf=298.257", "Lerch 1979",
+"mprts",        "a=6397300.",  "rf=191.", "Maupertius 1738",
+"new_intl",     "a=6378157.5", "b=6356772.2", "New International 1967",
+"plessis",      "a=6376523.",  "b=6355863.", "Plessis 1817 (France)",
+"SEasia",       "a=6378155.0", "b=6356773.3205", "Southeast Asia",
+"walbeck",      "a=6376896.0", "b=6355834.8467", "Walbeck",
 "WGS60",    "a=6378165.0",  "rf=298.3", "WGS 60",
-"WGS66",	"a=6378145.0", "rf=298.25", "WGS 66",
-"WGS72",	"a=6378135.0", "rf=298.26", "WGS 72",
+"WGS66",        "a=6378145.0", "rf=298.25", "WGS 66",
+"WGS72",        "a=6378135.0", "rf=298.26", "WGS 72",
 "WGS84",    "a=6378137.0",  "rf=298.257223563", "WGS 84",
 "sphere",   "a=6370997.0",  "b=6370997.0", "Normal Sphere (r=6370997)",
 0, 0, 0, 0,
@@ -432,7 +435,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Set the ellipsoid information.				         */
+/*      Set the ellipsoid information.                                   */
 /* -------------------------------------------------------------------- */
     double dfSemiMajor, dfInvFlattening, dfSemiMinor;
 
@@ -827,95 +830,95 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
 /*      Handle earth model.  For now we just always emit the user       */
 /*      defined ellipsoid parameters.                                   */
 /* -------------------------------------------------------------------- */
-    double	dfSemiMajor = GetSemiMajor();
-    double	dfInvFlattening = GetInvFlattening();
-    const char 	*pszPROJ4Ellipse = NULL;
+    double      dfSemiMajor = GetSemiMajor();
+    double      dfInvFlattening = GetInvFlattening();
+    const char  *pszPROJ4Ellipse = NULL;
     const char  *pszDatum = GetAttrValue("DATUM");
 
     if( ABS(dfSemiMajor-6378249.145) < 0.01
         && ABS(dfInvFlattening-293.465) < 0.0001 )
     {
-        pszPROJ4Ellipse = "clrk80";	/* Clark 1880 */
+        pszPROJ4Ellipse = "clrk80";     /* Clark 1880 */
     }
     else if( ABS(dfSemiMajor-6378245.0) < 0.01
              && ABS(dfInvFlattening-298.3) < 0.0001 )
     {
-        pszPROJ4Ellipse = "krass";	/* Krassovsky */
+        pszPROJ4Ellipse = "krass";      /* Krassovsky */
     }
     else if( ABS(dfSemiMajor-6378388.0) < 0.01
              && ABS(dfInvFlattening-297.0) < 0.0001 )
     {
-        pszPROJ4Ellipse = "intl"; 	/* International 1924 */
+        pszPROJ4Ellipse = "intl";       /* International 1924 */
     }
     else if( ABS(dfSemiMajor-6378160.0) < 0.01
              && ABS(dfInvFlattening-298.25) < 0.0001 )
     {
-        pszPROJ4Ellipse = "aust_SA"; 	/* Australian */
+        pszPROJ4Ellipse = "aust_SA";    /* Australian */
     }
     else if( ABS(dfSemiMajor-6377397.155) < 0.01
              && ABS(dfInvFlattening-299.1528128) < 0.0001 )
     {
-        pszPROJ4Ellipse = "bessel";	/* Bessel 1841 */
+        pszPROJ4Ellipse = "bessel";     /* Bessel 1841 */
     }
     else if( ABS(dfSemiMajor-6377483.865) < 0.01
              && ABS(dfInvFlattening-299.1528128) < 0.0001 )
     {
-        pszPROJ4Ellipse = "bess_nam";	/* Bessel 1841 (Namibia / Schwarzeck)*/
+        pszPROJ4Ellipse = "bess_nam";   /* Bessel 1841 (Namibia / Schwarzeck)*/
     }
     else if( ABS(dfSemiMajor-6378160.0) < 0.01
              && ABS(dfInvFlattening-298.247167427) < 0.0001 )
     {
-        pszPROJ4Ellipse = "GRS67";	/* GRS 1967 */
+        pszPROJ4Ellipse = "GRS67";      /* GRS 1967 */
     }
     else if( ABS(dfSemiMajor-6378137) < 0.01
              && ABS(dfInvFlattening-298.257222101) < 0.000001 )
     {
-        pszPROJ4Ellipse = "GRS80";	/* GRS 1980 */
+        pszPROJ4Ellipse = "GRS80";      /* GRS 1980 */
     }
     else if( ABS(dfSemiMajor-6378206.4) < 0.01
              && ABS(dfInvFlattening-294.9786982) < 0.0001 )
     {
-        pszPROJ4Ellipse = "clrk66";	/* Clarke 1866 */
+        pszPROJ4Ellipse = "clrk66";     /* Clarke 1866 */
     }
     else if( ABS(dfSemiMajor-6378206.4) < 0.01
              && ABS(dfInvFlattening-294.9786982) < 0.0001 )
     {
-        pszPROJ4Ellipse = "mod_airy";	/* Modified Airy */
+        pszPROJ4Ellipse = "mod_airy";   /* Modified Airy */
     }
     else if( ABS(dfSemiMajor-6377563.396) < 0.01
              && ABS(dfInvFlattening-299.3249646) < 0.0001 )
     {
-        pszPROJ4Ellipse = "airy";	/* Modified Airy */
+        pszPROJ4Ellipse = "airy";       /* Modified Airy */
     }
     else if( ABS(dfSemiMajor-6378200) < 0.01
              && ABS(dfInvFlattening-298.3) < 0.0001 )
     {
-        pszPROJ4Ellipse = "helmert";	/* Helmert 1906 */
+        pszPROJ4Ellipse = "helmert";    /* Helmert 1906 */
     }
     else if( ABS(dfSemiMajor-6378155) < 0.01
              && ABS(dfInvFlattening-298.3) < 0.0001 )
     {
-        pszPROJ4Ellipse = "fschr60m";	/* Modified Fischer 1960 */
+        pszPROJ4Ellipse = "fschr60m";   /* Modified Fischer 1960 */
     }
     else if( ABS(dfSemiMajor-6377298.556) < 0.01
              && ABS(dfInvFlattening-300.8017) < 0.0001 )
     {
-        pszPROJ4Ellipse = "evrstSS";	/* Everest (Sabah & Sarawak) */
+        pszPROJ4Ellipse = "evrstSS";    /* Everest (Sabah & Sarawak) */
     }
     else if( ABS(dfSemiMajor-6378165.0) < 0.01
              && ABS(dfInvFlattening-298.3) < 0.0001 )
     {
-        pszPROJ4Ellipse = "WGS60";	
+        pszPROJ4Ellipse = "WGS60";      
     }
     else if( ABS(dfSemiMajor-6378145.0) < 0.01
              && ABS(dfInvFlattening-298.25) < 0.0001 )
     {
-        pszPROJ4Ellipse = "WGS66";	
+        pszPROJ4Ellipse = "WGS66";      
     }
     else if( ABS(dfSemiMajor-6378135.0) < 0.01
              && ABS(dfInvFlattening-298.26) < 0.0001 )
     {
-        pszPROJ4Ellipse = "WGS72";	
+        pszPROJ4Ellipse = "WGS72";      
     }
     else if( ABS(dfSemiMajor-6378137.0) < 0.01
              && ABS(dfInvFlattening-298.257223563) < 0.000001 )
@@ -929,7 +932,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
     }
     else if( EQUAL(pszDatum,"North_American_Datum_1983") )
     {
-//        pszPROJ4Ellipse = "GRS80:+datum=nad83";	/* NAD 83 */
+//        pszPROJ4Ellipse = "GRS80:+datum=nad83";       /* NAD 83 */
         pszPROJ4Ellipse = "GRS80";
     }
     
@@ -997,9 +1000,9 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
 /* -------------------------------------------------------------------- */
 /*      Handle linear units.                                            */
 /* -------------------------------------------------------------------- */
-    const char	*pszPROJ4Units=NULL;
-    char  	*pszLinearUnits = NULL;
-    double	dfLinearConv;
+    const char  *pszPROJ4Units=NULL;
+    char        *pszLinearUnits = NULL;
+    double      dfLinearConv;
 
     dfLinearConv = GetLinearUnits( &pszLinearUnits );
         

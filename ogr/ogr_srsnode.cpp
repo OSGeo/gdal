@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/01/19 21:10:46  warmerda
+ * replaced tabs
+ *
  * Revision 1.11  2000/07/09 20:48:02  warmerda
  * added exportToPrettyWkt
  *
@@ -686,7 +689,7 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput )
 void OGR_SRSNode::MakeValueSafe()
 
 {
-    int		i, j;
+    int         i, j;
 
 /* -------------------------------------------------------------------- */
 /*      First process subnodes.                                         */

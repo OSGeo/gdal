@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/01/19 21:10:46  warmerda
+ * replaced tabs
+ *
  * Revision 1.2  2000/11/17 17:25:37  warmerda
  * added improved utm support
  *
@@ -61,14 +64,14 @@ static double OSR_GDV( char **papszNV, const char * pszField,
                        double dfDefaultValue )
 
 {
-    int		iLine;
+    int         iLine;
 
     if( papszNV == NULL || papszNV[0] == NULL )
         return dfDefaultValue;
 
     if( EQUALN(pszField,"PARAM_",6) )
     {
-        int	nOffset;
+        int     nOffset;
 
         for( iLine = 0; 
              papszNV[iLine] != NULL && !EQUALN(papszNV[iLine],"Paramet",7);
@@ -80,8 +83,8 @@ static double OSR_GDV( char **papszNV, const char * pszField,
 
         if( papszNV[iLine] != NULL )
         {
-            char	**papszTokens, *pszLine = papszNV[iLine];
-            double	dfValue;
+            char        **papszTokens, *pszLine = papszNV[iLine];
+            double      dfValue;
             
             int         i;
             
@@ -134,7 +137,7 @@ static const char*OSR_GDS( char **papszNV, const char * pszField,
                            const char *pszDefaultValue )
 
 {
-    int		iLine;
+    int         iLine;
 
     if( papszNV == NULL || papszNV[0] == NULL )
         return pszDefaultValue;
@@ -148,8 +151,8 @@ static const char*OSR_GDS( char **papszNV, const char * pszField,
         return pszDefaultValue;
     else
     {
-        static char	szResult[80];
-        char	**papszTokens;
+        static char     szResult[80];
+        char    **papszTokens;
         
         papszTokens = CSLTokenizeString(papszNV[iLine]);
 
@@ -189,15 +192,15 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
     {
         if( (int) OSR_GDV( papszPrj, "zone", 0.0 ) != 0 )
         {
-            double	dfYShift = OSR_GDV( papszPrj, "Yshift", 0.0 );
+            double      dfYShift = OSR_GDV( papszPrj, "Yshift", 0.0 );
 
             SetUTM( (int) OSR_GDV( papszPrj, "zone", 0.0 ),
                     dfYShift >= 0.0 );
         }
         else
         {
-            double	dfCentralMeridian, dfRefLat;
-            int		nZone;
+            double      dfCentralMeridian, dfRefLat;
+            int         nZone;
 
             dfCentralMeridian = OSR_GDV( papszPrj, "PARAM_1", 0.0 );
             dfRefLat = OSR_GDV( papszPrj, "PARAM_2", 0.0 );
@@ -219,7 +222,7 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
 
     else if( EQUAL(pszProj,"EQUIDISTANT_CONIC") )
     {
-        int	nStdPCount = (int) OSR_GDV( papszPrj, "PARAM_1", 0.0 );
+        int     nStdPCount = (int) OSR_GDV( papszPrj, "PARAM_1", 0.0 );
 
         if( nStdPCount == 1 )
         {
@@ -251,7 +254,7 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
 /*      Try to translate the datum.                                     */
 /* -------------------------------------------------------------------- */
     const char *pszValue;
-    int	       bFullDefined = FALSE;
+    int        bFullDefined = FALSE;
 
     if( !IsLocal() )
     {

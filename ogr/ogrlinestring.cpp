@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/01/19 21:10:47  warmerda
+ * replaced tabs
+ *
  * Revision 1.16  2000/01/26 21:20:47  warmerda
  * fixed crash assigning 2D points when already 3D
  *
@@ -458,7 +461,7 @@ void OGRLineString::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
 /* -------------------------------------------------------------------- */
     if( padfZ != NULL )
     {
-        int	i, bIs3D = FALSE;
+        int     i, bIs3D = FALSE;
 
         for( i = 0; i < nPointsIn && !bIs3D; i++ )
         {
@@ -512,7 +515,7 @@ void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY,
 /* -------------------------------------------------------------------- */
     if( padfZ != NULL )
     {
-        int	bIs3D = FALSE;
+        int     bIs3D = FALSE;
 
         for( i = 0; i < nPointsIn && !bIs3D; i++ )
         {

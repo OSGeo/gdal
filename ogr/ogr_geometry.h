@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2001/01/19 21:10:47  warmerda
+ * replaced tabs
+ *
  * Revision 1.23  2000/10/17 17:55:26  warmerda
  * added comments for byte orders
  *
@@ -142,7 +145,7 @@ const char CPL_DLL * OGRGeometryTypeToName( OGRwkbGeometryType );
 
 enum OGRwkbByteOrder
 {
-    wkbXDR = 0,		/* MSB/Sun/Motoroloa: Most Significant Byte First   */
+    wkbXDR = 0,         /* MSB/Sun/Motoroloa: Most Significant Byte First   */
     wkbNDR = 1          /* LSB/Intel/Vax: Least Significant Byte First      */
 };
 

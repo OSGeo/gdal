@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/01/19 21:10:47  warmerda
+ * replaced tabs
+ *
  * Revision 1.1  2000/01/26 22:13:48  warmerda
  * New
  *
@@ -54,7 +57,7 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszDataSource = NULL;
     const char  *pszDestDataSource = NULL;
     char        **papszLayers = NULL;
-    int		bList = FALSE;
+    int         bList = FALSE;
     
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */

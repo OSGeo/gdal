@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/01/19 21:10:47  warmerda
+ * replaced tabs
+ *
  * Revision 1.6  2000/07/12 18:19:09  warmerda
  * Removed debug statements.
  *
@@ -56,19 +59,19 @@
 /* ==================================================================== */
 /*      PROJ.4 interface stuff.                                         */
 /* ==================================================================== */
-typedef struct { double u, v; }	UV;
+typedef struct { double u, v; } UV;
 
 #define PJ void
 
-static PJ	*(*pfn_pj_init)(int, char**) = NULL;
-static UV	(*pfn_pj_fwd)(UV, PJ *) = NULL;
-static UV	(*pfn_pj_inv)(UV, PJ *) = NULL;
-static void	(*pfn_pj_free)(PJ *) = NULL;
+static PJ       *(*pfn_pj_init)(int, char**) = NULL;
+static UV       (*pfn_pj_fwd)(UV, PJ *) = NULL;
+static UV       (*pfn_pj_inv)(UV, PJ *) = NULL;
+static void     (*pfn_pj_free)(PJ *) = NULL;
 static int      (*pfn_pj_transform)(PJ *, PJ*, long, int, 
                                     double *, double *, double * );
 
-#define RAD_TO_DEG	57.29577951308232
-#define DEG_TO_RAD	.0174532925199432958
+#define RAD_TO_DEG      57.29577951308232
+#define DEG_TO_RAD      .0174532925199432958
 
 #ifdef WIN32
 #  define LIBNAME      "proj.dll"
@@ -83,7 +86,7 @@ static int      (*pfn_pj_transform)(PJ *, PJ*, long, int,
 class OGRProj4CT : public OGRCoordinateTransformation
 {
     OGRSpatialReference *poSRSSource;
-    void	*psPJSource;
+    void        *psPJSource;
     int         bSourceLatLong;
 
     OGRSpatialReference *poSRSTarget;
@@ -91,7 +94,7 @@ class OGRProj4CT : public OGRCoordinateTransformation
     int         bTargetLatLong;
 
 public:
-		OGRProj4CT();
+                OGRProj4CT();
     virtual     ~OGRProj4CT();
 
     int         Initialize( OGRSpatialReference *poSource, 
@@ -111,7 +114,7 @@ public:
 static int LoadProjLibrary()
 
 {
-    static int	bTriedToLoad = FALSE;
+    static int  bTriedToLoad = FALSE;
     
     if( bTriedToLoad )
         return( pfn_pj_init != NULL );
@@ -186,7 +189,7 @@ OGRCreateCoordinateTransformation( OGRSpatialReference *poSource,
                                    OGRSpatialReference *poTarget )
 
 {
-    OGRProj4CT	*poCT;
+    OGRProj4CT  *poCT;
 
     if( !LoadProjLibrary() )
     {
@@ -272,7 +275,7 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
 /* -------------------------------------------------------------------- */
 /*      Establish PROJ.4 handle for source if projection.               */
 /* -------------------------------------------------------------------- */
-    char	*pszProj4Defn, **papszArgs;
+    char        *pszProj4Defn, **papszArgs;
 
     if( poSRSSource->exportToProj4( &pszProj4Defn ) != OGRERR_NONE )
         return FALSE;
