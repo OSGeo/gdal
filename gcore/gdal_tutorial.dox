@@ -434,18 +434,22 @@ predefined progress monitor like this:
 
 In C++:
 \code
+#include "cpl_string.h"
+...
     const char **papszOptions = NULL;
     
     papszOptions = CSLSetNameValue( papszOptions, "TILED", "YES" );
     papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", "PACKBITS" );
     poDstDS = poDriver->CreateCopy( pszDstFilename, poSrcDS, FALSE, 
-                                    papzOptions, GDALTermProgres, NULL );
+                                    papzOptions, GDALTermProgress, NULL );
     if( poDstDS != NULL )
         delete poDstDS;
 \endcode
 
 In C:
 \code
+#include "cpl_string.h"
+...
     const char **papszOptions = NULL;
     
     papszOptions = CSLSetNameValue( papszOptions, "TILED", "YES" );
