@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/08/31 17:49:56  warmerda
+ * Drop duplicate vertices in ProcessGeometry()
+ *
  * Revision 1.3  1999/08/30 16:49:59  warmerda
  * added new products, fixed to use ProcessAttValue()
  *
@@ -365,6 +368,9 @@ void NTFFileReader::DumpReadable( FILE *fpLog )
 
 /************************************************************************/
 /*                          ProcessGeometry()                           */
+/*                                                                      */
+/*      Drop duplicate vertices from line strings ... they mess up      */
+/*      FME's polygon handling sometimes.                               */
 /************************************************************************/
 
 OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
@@ -397,8 +403,8 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
     else if( nGType == 2 )
     {
         OGRLineString      *poLine = new OGRLineString;
-        double             dfX, dfY;
-        int                iCoord;
+        double             dfX, dfY, dfXLast, dfYLast;
+        int                iCoord, nOutCount = 0;
 
         poGeometry = poLine;
         poLine->setNumPoints( nNumCoord );
@@ -413,8 +419,20 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
                                           iStart+GetXYLen()*2-1)) 
                 * GetXYMult() + GetYOrigin();
 
-            poLine->setPoint( iCoord, dfX, dfY );
+            if( iCoord == 0 )
+            {
+                dfXLast = dfX;
+                dfYLast = dfY;
+                poLine->setPoint( nOutCount++, dfX, dfY );
+            }
+            else if( dfXLast != dfX || dfYLast != dfY )
+            {
+                dfXLast = dfX;
+                dfYLast = dfY;
+                poLine->setPoint( nOutCount++, dfX, dfY );
+            }
         }
+        poLine->setNumPoints( nOutCount );
     }
 
     return poGeometry;
