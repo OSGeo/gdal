@@ -27,7 +27,6 @@ ifeq ($(HAVE_FME),yes)
 endif
 
 clean:
-	rm -f ogrsf_frmts.a
 	rm o/*.o
 	(cd generic; $(MAKE) clean)
 	(cd shape; $(MAKE) clean)

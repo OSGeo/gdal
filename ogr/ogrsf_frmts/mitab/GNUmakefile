@@ -16,9 +16,6 @@ OBJ	=	mitab_rawbinblock.o mitab_mapheaderblock.o \
 
 ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port $(CFLAGS) -DOGR
 
-LIBS	:=	../ogrsf_frmts.a ../../ogr.a $(CPL_LIB) $(LIBS) 
-
-
 default:	$(O_OBJ)
 
 clean:
