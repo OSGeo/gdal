@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.10  2005/02/16 17:18:03  hobu
+ * put "python" name on the typemaps that are specific
+ * to python
+ *
  * Revision 1.9  2005/02/16 16:53:45  kruland
  * Minor comment change.
  *
@@ -65,12 +69,12 @@
  */
 
 %define ARRAY_TYPEMAP(var_name, size)
-%typemap(in,numinputs=0) ( double_ ## size *var_name) (double_ ## size var_name)
+%typemap(python,in,numinputs=0) ( double_ ## size *var_name) (double_ ## size var_name)
 {
   /* %typemap(in,numinputs=0) (double_size *var_name) */
   $1 = &var_name;
 }
-%typemap(argout) ( double_ ## size *var_name)
+%typemap(python,argout) ( double_ ## size *var_name)
 {
   /* %typemap(argout) (double_size *var_name) */
   Py_DECREF( $result );
@@ -80,9 +84,9 @@
     PyTuple_SetItem( $result, i, val );
   }
 }
-%typemap(in) (double_ ## size var_name)
+%typemap(python,in) (double_ ## size var_name)
 {
-  /* %typemap(in) (double_size var_name) */
+  /* %typemap(python,in) (double_size var_name) */
   if (! PySequence_Check($input) ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
     SWIG_fail;
@@ -116,7 +120,7 @@ ARRAY_TYPEMAP(c_transform, 6);
 /*
  *  Typemap for counted arrays of ints <- PySequence
  */
-%typemap(in,numargs=1) (int nList, int* pList)
+%typemap(python,in,numargs=1) (int nList, int* pList)
 {
   /* %typemap(in,numargs=1) (int nList, int* pList)*/
   /* check if is List */
@@ -148,13 +152,13 @@ ARRAY_TYPEMAP(c_transform, 6);
  * This typemap has a typecheck also since the WriteRaster()
  * methods are overloaded.
  */
-%typemap(in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen, char *pBuf )
+%typemap(python,in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen, char *pBuf )
 {
   /* %typemap(in,numinputs=0) (int *nLen, char **pBuf ) */
   $1 = &nLen;
   $2 = &pBuf;
 }
-%typemap(argout) (int *nLen, char **pBuf )
+%typemap(python,argout) (int *nLen, char **pBuf )
 {
   /* %typemap(argout) (int *nLen, char **pBuf ) */
   Py_DECREF($result);
@@ -167,7 +171,7 @@ ARRAY_TYPEMAP(c_transform, 6);
     free( *$2 );
   }
 }
-%typemap(in,numinputs=1) (int nLen, char *pBuf )
+%typemap(python,in,numinputs=1) (int nLen, char *pBuf )
 {
   /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
   PyString_AsStringAndSize($input, &$2, &$1 );
@@ -181,13 +185,13 @@ ARRAY_TYPEMAP(c_transform, 6);
 /*
  * Typemap argout of GDAL_GCP* used in Dataset::GetGCPs( )
  */
-%typemap(in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) (int nGCPs, GDAL_GCP *pGCPs )
+%typemap(python,in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) (int nGCPs, GDAL_GCP *pGCPs )
 {
   /* %typemap(in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) */
   $1 = &nGCPs;
   $2 = &pGCPs;
 }
-%typemap(argout) (int *nGCPs, GDAL_GCP const **pGCPs )
+%typemap(python,argout) (int *nGCPs, GDAL_GCP const **pGCPs )
 {
   /* %typemap(argout) (int *nGCPs, GDAL_GCP const **pGCPs ) */
   PyObject *dict = PyTuple_New( *$1 );
@@ -209,13 +213,13 @@ ARRAY_TYPEMAP(c_transform, 6);
 /*
  * Typemap for GDALColorEntry* <-> tuple
  */
-%typemap(out) GDALColorEntry*
+%typemap(python,out) GDALColorEntry*
 {
   /*  %typemap(out) GDALColorEntry* */
    $result = Py_BuildValue( "(hhhh)", (*$1).c1,(*$1).c2,(*$1).c3,(*$1).c4);
 }
 
-%typemap(in) GDALColorEntry*
+%typemap(python,in) GDALColorEntry*
 {
   /* %typemap(in) GDALColorEntry* */
    
@@ -232,7 +236,7 @@ ARRAY_TYPEMAP(c_transform, 6);
 /*
  * Typemap char ** -> dict
  */
-%typemap(out) char **dict
+%typemap(python,out) char **dict
 {
   /* %typemap(out) char ** -> to hash */
   char **stringarray = $1;
@@ -256,7 +260,7 @@ ARRAY_TYPEMAP(c_transform, 6);
 /*
  * Typemap char **<- dict
  */
-%typemap(in) char **dict
+%typemap(python,in) char **dict
 {
   /* %typemap(in) char **dict */
   if ( ! PyMapping_Check( $input ) ) {
@@ -285,7 +289,7 @@ ARRAY_TYPEMAP(c_transform, 6);
 /*
  * Typemap maps char** arguments from Python Sequence Object
  */
-%typemap(in) char **options
+%typemap(python,in) char **options
 {
   /* %typemap(in) char **options */
   /* Check if is a list */
@@ -314,7 +318,7 @@ ARRAY_TYPEMAP(c_transform, 6);
  * Typemaps map mutable char ** arguments from PyStrings.  Does not
  * return the modified argument
  */
-%typemap(in) (char **ignorechange) ( char *val )
+%typemap(python,in) (char **ignorechange) ( char *val )
 {
   /* %typemap(in) (char **ignorechange) */
   PyArg_Parse( $input, "s", &val );
