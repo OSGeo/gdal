@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/08/21 21:22:46  warmerda
+ * Special reporting facilities for the S-57 LNAM and NAME bitfields (provided
+ * by Rodney Jensen).
+ * Report DDFInt fields as unsigned if they come from an unsigned binary
+ * field.
+ *
  * Revision 1.6  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -97,7 +103,7 @@ int main( int nArgc, char ** papszArgv )
         DDFFieldDefn *poFSPT = oModule.FindFieldDefn( "FSPT" );
 
         if( poFSPT == NULL )
-            fprintf( stderr, 
+            fprintf( stderr,
                      "unable to find FSPT field to set repeating flag.\n" );
         else
             poFSPT->SetRepeatingFlag( TRUE );
@@ -108,12 +114,12 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     DDFRecord   *poRecord;
     int         iRecord = 0;
-    
+
     while( (poRecord = oModule.ReadRecord()) != NULL )
     {
         printf( "Record %d (%d bytes)\n",
                 ++iRecord, poRecord->GetDataSize() );
-                
+
         /* ------------------------------------------------------------ */
         /*      Loop over each field in this particular record.         */
         /* ------------------------------------------------------------ */
@@ -138,24 +144,24 @@ static void ViewRecordField( DDFField * poField )
     int         nBytesRemaining;
     const char  *pachFieldData;
     DDFFieldDefn *poFieldDefn = poField->GetFieldDefn();
-    
+
     // Report general information about the field.
     printf( "    Field %s: %s\n",
             poFieldDefn->GetName(), poFieldDefn->GetDescription() );
 
     // Get pointer to this fields raw data.  We will move through
     // it consuming data as we report subfield values.
-            
+
     pachFieldData = poField->GetData();
     nBytesRemaining = poField->GetDataSize();
-                
+
     /* -------------------------------------------------------- */
     /*      Loop over the repeat count for this fields          */
     /*      subfields.  The repeat count will almost            */
     /*      always be one.                                      */
     /* -------------------------------------------------------- */
     int         iRepeat;
-            
+
     for( iRepeat = 0; iRepeat < poField->GetRepeatCount(); iRepeat++ )
     {
 
@@ -164,7 +170,7 @@ static void ViewRecordField( DDFField * poField )
         /*   the data pointer as we consume data.                   */
         /* -------------------------------------------------------- */
         int     iSF;
-        
+
         for( iSF = 0; iSF < poFieldDefn->GetSubfieldCount(); iSF++ )
         {
             DDFSubfieldDefn *poSFDefn = poFieldDefn->GetSubfield( iSF );
@@ -189,14 +195,20 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
 
 {
     int         nBytesConsumed = 0;
-    
+
     switch( poSFDefn->GetType() )
     {
       case DDFInt:
-        printf( "        %s = %d\n",
-                poSFDefn->GetName(),
-                poSFDefn->ExtractIntData( pachFieldData, nBytesRemaining,
-                                          &nBytesConsumed ) );
+        if( poSFDefn->GetBinaryFormat() == DDFSubfieldDefn::UInt )
+            printf( "        %s = %u\n",
+                    poSFDefn->GetName(),
+                    poSFDefn->ExtractIntData( pachFieldData, nBytesRemaining,
+                                              &nBytesConsumed ) );
+        else
+            printf( "        %s = %d\n",
+                    poSFDefn->GetName(),
+                    poSFDefn->ExtractIntData( pachFieldData, nBytesRemaining,
+                                              &nBytesConsumed ) );
         break;
 
       case DDFFloat:
@@ -212,10 +224,17 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
                 poSFDefn->ExtractStringData( pachFieldData, nBytesRemaining,
                                              &nBytesConsumed ) );
         break;
-        
+
       case DDFBinaryString:
       {
           int   i;
+          //rjensen 19-Feb-2002 5 integer variables to decode NAME and LNAM
+          int vrid_rcnm=0;
+          int vrid_rcid=0;
+          int foid_agen=0;
+          int foid_find=0;
+          int foid_fids=0;
+
           GByte *pabyBString = (GByte *)
               poSFDefn->ExtractStringData( pachFieldData, nBytesRemaining,
                                            &nBytesConsumed );
@@ -227,10 +246,28 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
           if( nBytesConsumed > 24 )
               printf( "%s", "..." );
 
+          // rjensen 19-Feb-2002 S57 quick hack. decode NAME and LNAM bitfields
+          if ( EQUAL(poSFDefn->GetName(),"NAME") )
+          {
+              vrid_rcnm=pabyBString[0];
+              vrid_rcid=pabyBString[1] + (pabyBString[2]*256)+
+                  (pabyBString[3]*65536)+ (pabyBString[4]*16777216);
+              printf("\tVRID RCNM = %d,RCID = %u",vrid_rcnm,vrid_rcid);
+          }
+          else if ( EQUAL(poSFDefn->GetName(),"LNAM") )
+          {
+              foid_agen=pabyBString[0] + (pabyBString[1]*256);
+              foid_find=pabyBString[2] + (pabyBString[3]*256)+
+                  (pabyBString[4]*65536)+ (pabyBString[5]*16777216);
+              foid_fids=pabyBString[6] + (pabyBString[7]*256);
+              printf("\tFOID AGEN = %u,FIDN = %u,FIDS = %u",
+                     foid_agen,foid_find,foid_fids);
+          }
+
           printf( "\n" );
       }
       break;
-      
+
     }
 
     return nBytesConsumed;
