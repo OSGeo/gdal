@@ -32,7 +32,7 @@ LIBS	:=    -ldl $(LIBS)
 endif
 
 ifeq ($(CFG),debug)
-ifneq ($(wildcard /usr/local/bin/dbmallo?.h),)
+ifneq ($(wildcard /usr/local/include/dbmallo?.h),)
 CFLAGS  :=      $(CFLAGS)  -DDBMALLOC
 LIBS    :=      $(LIBS) -ldbmalloc
 endif
