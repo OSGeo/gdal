@@ -7,7 +7,7 @@ default:	GDALmake.opt lib py-target apps-target
 
 lib:	port-target core-target frmts-target ogr-target force-lib
 
-force-lib:	lib
+force-lib:	
 	ar r $(GDAL_LIB) $(GDAL_OBJ)
 	$(LD_SHARED) $(GDAL_OBJ) $(GDAL_LIBS) $(LIBS) -o $(GDAL_SLIB)
 
