@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.16  2005/02/21 21:27:31  kruland
+ * Added AddPoint, AddGeometryDirectly, Destroy to Geometry.
+ * Mucked with some more newobject directives.
+ *
  * Revision 1.15  2005/02/21 20:48:11  kruland
  * Intermediate commit.  Changed internal typenames so they no longer use
  * those defined in gdal/ogr library.  Removed newobject from Dataset function
@@ -432,12 +436,10 @@ public:
     return OGR_FD_GetName(OGR_L_GetLayerDefn(self));
   }
   
-  %newobject GetFeature;
   OGRFeatureShadow *GetFeature(long fid) {
     return (OGRFeatureShadow*) OGR_L_GetFeature(self, fid);
   }
   
-  %newobject GetNextFeature;
   OGRFeatureShadow *GetNextFeature() {
     return (OGRFeatureShadow*) OGR_L_GetNextFeature(self);
   }
@@ -482,7 +484,6 @@ public:
     return 0;
   }
   
-  %newobject GetLayerDefn;
   OGRFeatureDefnShadow *GetLayerDefn() {
     return (OGRFeatureDefnShadow*) OGR_L_GetLayerDefn(self);
   }
@@ -535,7 +536,6 @@ public:
     return 0;
   }
   
-  %newobject GetSpatialRef;
   OSRSpatialReferenceShadow *GetSpatialRef() {
     return (OSRSpatialReferenceShadow*) OGR_L_GetSpatialRef(self);
   }
@@ -597,7 +597,6 @@ public:
     OGR_F_Destroy(self);
   }
   
-  %newobject GetDefnRef;
   OGRFeatureDefnShadow *GetDefnRef() {
     return (OGRFeatureDefnShadow*) OGR_F_GetDefnRef(self);
   }
@@ -616,7 +615,6 @@ public:
     return 0;
   }
   
-  %newobject GetGeometryRef;
   OGRGeometryShadow *GetGeometryRef() {
     return (OGRGeometryShadow*) OGR_F_GetGeometryRef(self);
   }
@@ -960,7 +958,17 @@ public:
     return OGR_G_ExportToWkb(self, byte_order, (unsigned char*) *pBuf );
   }
 
+  void AddPoint(double x, double y, double z = 0) {
+    OGR_G_AddPoint( self, x, y, z );
+  }
 
+  OGRErr AddGeometryDirectly( OGRGeometryShadow* other ) {
+    return OGR_G_AddGeometryDirectly( self, other );
+  }
+
+  void Destroy() {
+    OGR_G_DestroyGeometry( self );
+  }
 
 } /* %extend */
 
