@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2004/04/19 19:32:25  warmerda
+ * added INTERNATIONAL1909
+ *
  * Revision 1.29  2004/02/25 21:14:35  warmerda
  * added morph of spheroid names to ESRI
  *
@@ -798,7 +801,8 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
 
             pszSpheroid = OSR_GDS( papszPrj, "Spheroid", "");
             
-            if( EQUAL(pszSpheroid,"INT1909") )
+            if( EQUAL(pszSpheroid,"INT1909") 
+                || EQUAL(pszSpheroid,"INTERNATIONAL1909") )
             {
                 OGRSpatialReference oGCS;
                 oGCS.importFromEPSG( 4022 );
