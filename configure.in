@@ -379,7 +379,8 @@ if test "$with_geotiff" = "yes" -o "$with_geotiff" = "" ; then
   if test "$TIFF_SETTING" = "internal" ; then
     GEOTIFF_SETTING=internal
   else
-    AC_CHECK_LIB(geotiff,GTIFGetDefn,GEOTIFF_SETTING=external,GEOTIFF_SETTING=internal,)
+    dnl We now require libgeotiff 1.2.1 (for XTIFFClientOpen). 
+    AC_CHECK_LIB(geotiff,XTIFFClientOpen,GEOTIFF_SETTING=external,GEOTIFF_SETTING=internal,)
 
   fi
 
