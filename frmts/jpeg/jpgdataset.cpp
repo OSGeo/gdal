@@ -3,7 +3,7 @@
  *
  * Project:  JPEG JFIF Driver
  * Purpose:  Implement GDAL JPEG Support based on IJG libjpeg.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.9  2001/12/11 16:50:16  warmerda
+ * try to push green and blue values into cache when reading red
+ *
  * Revision 1.8  2001/11/11 23:51:00  warmerda
  * added required class keyword to friend declarations
  *
@@ -167,6 +170,15 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         for( i = 0; i < nXSize; i++ )
             ((GByte *) pImage)[i] = poGDS->pabyScanline[i*3+nBand-1];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Forceably load the other bands associated with this scanline.   */
+/* -------------------------------------------------------------------- */
+    if( poGDS->GetRasterCount() == 3 && nBand == 1 )
+    {
+        poGDS->GetRasterBand(2)->GetBlockRef( nBlockXOff, nBlockYOff );
+        poGDS->GetRasterBand(3)->GetBlockRef( nBlockXOff, nBlockYOff );
     }
 
     return CE_None;
