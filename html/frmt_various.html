@@ -248,18 +248,24 @@ Description</a><p>
 <h2><a name="PNG">PNG -- Portable Network Graphics</a></h2>
 
 GDAL includes support for reading, and creating .png files.  Greyscale, 
-pseudo-colored, RGB and RGBA PNG files are supported as well as precisions of
-eight and sixteen bits per sample.<p>
+pseudo-colored, Paletted, RGB and RGBA PNG files are supported as well as 
+precisions of eight and sixteen bits per sample.<p>
 
 PNG files are linearly compressed, so random reading of large PNG files can
 be very inefficient (resulting in many restarts of decompression from the
 start of the file).<p>
 
 Text chunks are translated into metadata, typically with multiple lines per
-item. <p>
+item.  World files with the extension of .wld will be read.  Single 
+transparency values in greyscale files will be recognised as a nodata
+value in GDAL.  Transparent index in paletted images are preserved when the
+color table is read. <p>
 
 PNG files can be created with a type of PNG, using the CreateCopy() method, 
-requiring a prototype to read from.<p>
+requiring a prototype to read from.  Writing includes support for the
+various image types, and will preserve transparency/nodata values.  However,
+georeferencing .wld files are not current written.  All pixel types other
+than 16bit unsigned will be written as eight bit.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/png/pngdataset.cpp</tt>. 
 
