@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/11/18 18:57:28  warmerda
+ * Added error reporting
+ *
  * Revision 1.2  1999/11/10 14:17:26  warmerda
  * Fixed defaulting of peErr parameter.
  *
@@ -124,7 +127,7 @@ OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
 {
     int		bSuccess = TRUE;
     OGRPolygon  *poPolygon = new OGRPolygon();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Setup array of line markers indicating if they have been        */
 /*      added to a ring yet.                                            */
@@ -217,6 +220,14 @@ OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
 // perhaps even ordering the direction of rings, though this isn't
 // required by the OGC geometry model.
 
+    if( peErr != NULL )
+    {
+        if( bSuccess )
+            *peErr = OGRERR_NONE;
+        else
+            *peErr = OGRERR_FAILURE;
+    }
+    
     return poPolygon;
 }
 
