@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/06/06 16:52:32  warmerda
+ * changes based on better understanding of conditional FSDEVT field
+ *
  * Revision 1.10  2003/06/06 15:07:53  warmerda
  * fixed security area sizing for NITF 2.0 images, its like NITF 1.1.
  *
@@ -86,7 +89,7 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
     char        *pachHeader;
     NITFFile    *psFile;
     int         nHeaderLen, nOffset, nNextData, nHeaderLenOffset;
-    char        szTemp[128];
+    char        szTemp[128], achFSDWNG[6];
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -118,9 +121,21 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Read the FSDWNG field.                                          */
+/* -------------------------------------------------------------------- */
+    if( VSIFSeek( fp, 280, SEEK_SET ) != 0 
+        || VSIFRead( achFSDWNG, 1, 6, fp ) != 6 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "Unable to read FSDWNG field from NITF file.  File is either corrupt\n"
+                  "or empty." );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Get header length.                                              */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(szTemp,"NITF01.",7) || EQUALN(szTemp,"NITF02.0",8) )
+    if( EQUALN(szTemp,"NITF01.",7) || EQUALN(achFSDWNG,"999998",6) )
         nHeaderLenOffset = 394;
     else
         nHeaderLenOffset = 354;
