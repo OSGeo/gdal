@@ -15,6 +15,9 @@ all:	test1 docs
 clean:
 	rm -f *.o test1
 
+very-clean: clean
+	rm -rf html
+
 %.o:	%.c
 	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
 
