@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2003/10/17 07:06:06  dron
+ * Added locale selection option to CPLScanDouble() and CPLPrintDOuble().
+ *
  * Revision 1.30  2003/09/28 14:14:16  dron
  * Added CPLScanString().
  *
@@ -603,10 +606,18 @@ long CPLScanLong( char *pszString, int nMaxLength )
  * of the number. Less characters will be considered if a null character
  * is encountered.
  * 
+ * @param pszLocale Pointer to a character string containing locale name
+ * ("C", "POSIX", "us_US", "ru_RU.KOI8-R" etc.). If NULL, we will not
+ * manipulate with locale settings and current process locale will be used for
+ * printing. Wee need this setting because in different locales decimal
+ * delimiter represented with the different characters. With the pszLocale
+ * option we can control what exact locale will be used for scanning a numeric
+ * value from the string (in most cases it should be C/POSIX).
+ *
  * @return Double value, converted from its ASCII form.
  */
 
-double CPLScanDouble( char *pszString, int nMaxLength )
+double CPLScanDouble( char *pszString, int nMaxLength, char *pszLocale )
 {
     char    szTemp[64];
     int     i;
@@ -628,7 +639,25 @@ double CPLScanDouble( char *pszString, int nMaxLength )
 /* -------------------------------------------------------------------- */
 /*	Use atof() to fetch out the result                              */
 /* -------------------------------------------------------------------- */
+#if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
+    char        *pszCurLocale = NULL;
+
+    if ( pszLocale || EQUAL( pszLocale, "" ) )
+    {
+        // Save the current locale
+        pszCurLocale = setlocale(LC_ALL, NULL );
+        // Set locale to the specified value
+        setlocale(LC_ALL, pszLocale );
+    }
+#endif
+
     dfValue = atof( szTemp );
+
+#if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
+    // Restore stored locale back
+    if ( pszCurLocale )
+        setlocale(LC_ALL, pszCurLocale );
+#endif
 
     return dfValue;
 }
@@ -791,7 +820,7 @@ char *CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
 
 #if defined(WIN32) && defined(_MSC_VER)
     sprintf( szTemp, "%*I64d", nMaxLen, iValue );
-#elif HAVE_LONG_LONG
+# elif HAVE_LONG_LONG
     sprintf( szTemp, "%*Ld", nMaxLen, iValue );
 #else
     sprintf( szTemp, "%*ld", nMaxLen, iValue );
@@ -817,17 +846,36 @@ char *CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
  *
  * @param dfValue Numerical value to print.
  * 
+ * @param pszLocale Pointer to a character string containing locale name
+ * ("C", "POSIX", "us_US", "ru_RU.KOI8-R" etc.). If NULL we will not
+ * manipulate with locale settings and current process locale will be used for
+ * printing. With the pszLocale option we can control what exact locale
+ * will be used for printing a numeric value to the string (in most cases
+ * it should be C/POSIX).
+ *
  * @return Pointer to the destination string buffer.
  */
 
 char *CPLPrintDouble( char *pszBuffer, const char *pszFormat,
-                      double dfValue )
+                      double dfValue, char *pszLocale )
 {
     char        szTemp[64];
     int         i;
 
     if ( !pszBuffer )
         return NULL;
+
+#if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
+    char        *pszCurLocale = NULL;
+
+    if ( pszLocale || EQUAL( pszLocale, "" ) )
+    {
+        // Save the current locale
+        pszCurLocale = setlocale(LC_ALL, NULL );
+        // Set locale to the specified value
+        setlocale(LC_ALL, pszLocale );
+    }
+#endif
 
     sprintf( szTemp, pszFormat, dfValue );
 
@@ -836,6 +884,12 @@ char *CPLPrintDouble( char *pszBuffer, const char *pszFormat,
         if( szTemp[i] == 'E' || szTemp[i] == 'e' )
             szTemp[i] = 'D';
     }
+
+#if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
+    // Restore stored locale back
+    if ( pszCurLocale )
+        setlocale(LC_ALL, pszCurLocale );
+#endif
 
     return CPLPrintString( pszBuffer, szTemp, 64 );
 }
@@ -867,7 +921,12 @@ char *CPLPrintDouble( char *pszBuffer, const char *pszFormat,
  * requested with the VSIGMTime() and VSILocalTime() functions.
  *
  * @param pszLocale Pointer to a character string containing locale name
- * ("C", "POSIX", "us_US", "ru_RU.KOI8-R" etc.).
+ * ("C", "POSIX", "us_US", "ru_RU.KOI8-R" etc.). If NULL we will not
+ * manipulate with locale settings and current process locale will be used for
+ * printing. Be aware that it may be unsuitable to use current locale for
+ * printing time, because all names will be printed in your native language,
+ * as well as time format settings also may be ajusted differently from the
+ * C/POSIX defaults. To solve these problems this option was introdiced.
  *
  * @return Pointer to the destination not NULL terminated buffer.
  */
