@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/06/14 20:57:48  warmerda
+ * Don't return a WKT coordinate system if Model wasn't defined.
+ *
  * Revision 1.12  2000/06/09 21:19:05  warmerda
  * Set GTRasterTypeGeoKey.
  *
@@ -161,6 +164,9 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
 
 {
     OGRSpatialReference	oSRS;
+
+    if( psDefn->Model == KvUserDefined )
+        return CPLStrdup("");
     
 /* -------------------------------------------------------------------- */
 /*      If this is a projected SRS we set the PROJCS keyword first      */
