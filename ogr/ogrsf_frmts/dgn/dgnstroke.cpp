@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/01/15 06:40:21  warmerda
+ * default PI
+ *
  * Revision 1.5  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -50,10 +53,6 @@
 #include <math.h>
 
 CPL_CVSID("$Id$");
-
-#ifndef PI
-#define PI  3.14159265358979323846
-#endif
 
 #define DEG_TO_RAD (PI/180.0)
 
