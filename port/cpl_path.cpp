@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/08/11 18:41:46  warmerda
+ * added CPLExtractRelativePath
+ *
  * Revision 1.15  2004/07/10 12:22:37  dron
  * Use locale aware character classification functions in CPLFormCIFilename().
  *
@@ -628,4 +631,88 @@ int CPLIsFilenameRelative( const char *pszFilename )
         return FALSE;
     else
         return TRUE;
+}
+
+/************************************************************************/
+/*                       CPLExtractRelativePath()                       */
+/************************************************************************/
+
+/**
+ * Get relative path from directory to target file.
+ *
+ * Computes a relative path for pszTarget relative to pszBaseDir. 
+ * Currently this only works if they share a common base path.  The returned
+ * path is normally into the pszTarget string.  It should only be considered
+ * valid as long as pszTarget is valid or till the next call to 
+ * this function, whichever comes first. 
+ *
+ * @param pszBaseDir the name of the directory relative to which the path 
+ * should be computed.  pszBaseDir may be NULL in which case the original
+ * target is returned without relitivizing.
+ * 
+ * @param pszTarget the filename to be changed to be relative to pszBaseDir.
+ *
+ * @param pbGotRelative Pointer to location in which a flag is placed 
+ * indicating that the returned path is relative to the basename (TRUE) or
+ * not (FALSE).  This pointer may be NULL if flag is not desired.
+ *
+ * @return an adjusted path or the original if it could not be made relative
+ * to the pszBaseFile's path. 
+ **/
+
+const char *CPLExtractRelativePath( const char *pszBaseDir, 
+                                    const char *pszTarget,
+                                    int *pbGotRelative )
+
+{
+    int nBasePathLen = strlen(pszBaseDir);
+
+/* -------------------------------------------------------------------- */
+/*      If we don't have a basedir, then we can't relativize the path.  */
+/* -------------------------------------------------------------------- */
+    if( pszBaseDir == NULL )
+    {
+        if( pbGotRelative != NULL )
+            *pbGotRelative = FALSE;
+
+        return pszTarget;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      One simple case is where neither file has a path.  We return    */
+/*      the original target filename and it is relative.                */
+/* -------------------------------------------------------------------- */
+    const char *pszTargetPath = CPLGetPath(pszTarget);
+
+    if( (nBasePathLen == 0 || EQUAL(pszBaseDir,"."))
+        && (strlen(pszTargetPath) == 0 || EQUAL(pszTargetPath,".")) )
+    {
+        if( pbGotRelative != NULL )
+            *pbGotRelative = TRUE;
+
+        return pszTarget;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we don't have a common path prefix, then we can't get a      */
+/*      relative path.                                                  */
+/* -------------------------------------------------------------------- */
+    if( !EQUALN(pszBaseDir,pszTarget,nBasePathLen) 
+        || (pszTarget[nBasePathLen] != '\\' 
+            && pszTarget[nBasePathLen] != '/') )
+    {
+        if( pbGotRelative != NULL )
+            *pbGotRelative = FALSE;
+
+        return pszTarget;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We have a relative path.  Strip it off to get a string to       */
+/*      return.                                                         */
+/* -------------------------------------------------------------------- */
+    if( pbGotRelative != NULL )
+        *pbGotRelative = TRUE;
+
+    return pszTarget + nBasePathLen + 1;
 }
