@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.10  2004/03/10 18:17:47  warmerda
+ * Hopefully corrected type casting warnings without breaking anything.
+ *
  * Revision 1.9  2003/05/27 20:45:33  warmerda
  * added VSI IO debugging stuff
  *
@@ -258,7 +261,7 @@ size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
     DWORD       dwSizeRead;
     size_t      nResult;
 
-    if( !ReadFile( hFile, pBuffer, nSize * nCount, &dwSizeRead, NULL ) )
+    if( !ReadFile( hFile, pBuffer, (DWORD)(nSize*nCount), &dwSizeRead, NULL ) )
         nResult = 0;
     else
         nResult = dwSizeRead / nSize;
@@ -280,7 +283,7 @@ size_t VSIFWriteL( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
     DWORD       dwSizeWritten;
     size_t      nResult;
 
-    if( !WriteFile( hFile, pBuffer, nSize * nCount, &dwSizeWritten, NULL ) )
+    if( !WriteFile(hFile,pBuffer,(DWORD)(nSize*nCount),&dwSizeWritten,NULL) )
         nResult = 0;
     else
         nResult = dwSizeWritten / nSize;
