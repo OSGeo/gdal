@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/01/10 17:35:45  warmerda
+ * added push down stack of error handlers
+ *
  * Revision 1.9  1999/07/23 14:27:47  warmerda
  * CPLSetErrorHandler returns old handler
  *
@@ -92,6 +95,10 @@ const char CPL_DLL * CPLGetLastErrorMsg();
 
 typedef void (*CPLErrorHandler)(CPLErr, int, const char*);
 CPLErrorHandler CPL_DLL CPLSetErrorHandler(CPLErrorHandler);
+void CPL_DLL CPLPushErrorHandler( CPLErrorHandler );
+void CPL_DLL CPLPopErrorHandler();
+void CPLDefaultErrorHandler( CPLErr, int, const char * );
+void CPLQuietErrorHandler( CPLErr, int, const char * );
 
 void CPL_DLL CPLDebug( const char *, const char *, ... );
 void CPL_DLL _CPLAssert( const char *, const char *, int );

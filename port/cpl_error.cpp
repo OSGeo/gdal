@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/01/10 17:35:45  warmerda
+ * added push down stack of error handlers
+ *
  * Revision 1.10  1999/11/23 04:16:56  danmo
  * Fixed var. initialization that failed to compile as C
  *
@@ -71,8 +74,15 @@
 static char gszCPLLastErrMsg[2000] = "";
 static int  gnCPLLastErrNo = 0;
 
-static void CPLDefaultErrorHandler( CPLErr, int, const char *);
 static CPLErrorHandler gpfnCPLErrorHandler = CPLDefaultErrorHandler;
+
+typedef struct errHandler
+{
+    struct errHandler	*psNext;
+    CPLErrorHandler	pfnHandler;
+} CPLErrorHandlerNode;
+
+static CPLErrorHandlerNode * psHandlerStack = NULL;
 
 /**********************************************************************
  *                          CPLError()
@@ -268,8 +278,8 @@ const char* CPLGetLastErrorMsg()
 /*                       CPLDefaultErrorHandler()                       */
 /************************************************************************/
 
-static void CPLDefaultErrorHandler( CPLErr eErrClass, int nError, 
-                                    const char * pszErrorMsg )
+void CPLDefaultErrorHandler( CPLErr eErrClass, int nError, 
+                             const char * pszErrorMsg )
 
 {
     static int       bLogInit = FALSE;
@@ -282,7 +292,7 @@ static void CPLDefaultErrorHandler( CPLErr eErrClass, int nError,
 
         if( getenv( "CPL_LOG" ) != NULL )
         {
-            fpLog = fopen( getenv("CPL_LOg"), "wt" );
+            fpLog = fopen( getenv("CPL_LOG"), "wt" );
             if( fpLog == NULL )
                 fpLog = stderr;
         }
@@ -298,6 +308,17 @@ static void CPLDefaultErrorHandler( CPLErr eErrClass, int nError,
     fflush( fpLog );
 }
 
+/************************************************************************/
+/*                        CPLQuietErrorHandler()                        */
+/************************************************************************/
+
+void CPLQuietErrorHandler( CPLErr eErrClass , int nError, 
+                           const char * pszErrorMsg )
+
+{
+    if( eErrClass == CE_Debug )
+        CPLDefaultErrorHandler( eErrClass, nError, pszErrorMsg );
+}
 
 /**********************************************************************
  *                          CPLSetErrorHandler()
@@ -314,7 +335,7 @@ static void CPLDefaultErrorHandler( CPLErr eErrClass, int nError,
  * </pre>
  *
  * Pass NULL to come back to the default behavior.  The default behaviour
- * is to write the message to stderr. 
+ * (CPLDefaultErrorHandler()) is to write the message to stderr. 
  *
  * The msg will be a partially formatted error message not containing the
  * "ERROR %d:" portion emitted by the default handler.  Message formatting
@@ -323,6 +344,10 @@ static void CPLDefaultErrorHandler( CPLErr eErrClass, int nError,
  * CPLError() will call abort(). Applications wanting to interrupt this
  * fatal behaviour will have to use longjmp(), or a C++ exception to
  * indirectly exit the function.
+ *
+ * Another standard error handler is CPLQuietErrorHandler() which doesn't
+ * make any attempt to report the passed error or warning messages but
+ * will process debug messages via CPLDefaultErrorHandler.
  *
  * @param pfnErrorHandler new error handler function.
  * @return returns the previously installed error handler.
@@ -335,6 +360,61 @@ CPLErrorHandler CPLSetErrorHandler( CPLErrorHandler pfnErrorHandler )
     gpfnCPLErrorHandler = pfnErrorHandler;
 
     return pfnOldHandler;
+}
+
+
+
+/************************************************************************/
+/*                        CPLPushErrorHandler()                         */
+/************************************************************************/
+
+/**
+ * Assign new CPLError handler.
+ *
+ * The old handler is "pushed down" onto a stack and can be easily
+ * restored with CPLPopErrorHandler().  Otherwise this works similarly
+ * to CPLSetErrorHandler() which contains more details on how error
+ * handlers work.
+ *
+ * @param pfnErrorHandler new error handler function.
+ */
+
+void CPLPushErrorHandler( CPLErrorHandler pfnErrorHandler )
+
+{
+    CPLErrorHandlerNode		*psNode;
+
+    psNode = (CPLErrorHandlerNode *) VSIMalloc(sizeof(CPLErrorHandlerNode));
+    psNode->psNext = psHandlerStack;
+    psNode->pfnHandler = gpfnCPLErrorHandler;
+
+    psHandlerStack = psNode;
+
+    CPLSetErrorHandler( pfnErrorHandler );
+}
+
+/************************************************************************/
+/*                         CPLPopErrorHandler()                         */
+/************************************************************************/
+
+/**
+ * Restore old CPLError handler.
+ *
+ * Discards the current error handler, and restore the one in use before
+ * the last CPLPushErrorHandler() call.
+ */ 
+
+void CPLPopErrorHandler()
+
+{
+    if( psHandlerStack != NULL )
+    {
+        CPLErrorHandlerNode	*psNode = psHandlerStack;
+
+        psHandlerStack = psNode->psNext;
+        CPLSetErrorHandler( psNode->pfnHandler );
+        VSIFree( psNode );
+    }
 }
 
 /************************************************************************/
