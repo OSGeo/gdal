@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/06/26 05:34:17  warmerda
+ * Added support for poSRS, and use creating geometry
+ *
  * Revision 1.6  1999/06/10 19:21:20  warmerda
  * Fixed doc typo.
  *
@@ -52,7 +55,9 @@
 
 #include "sfctable.h"
 #include "sfcschemarowsets.h"
+#include "sfcdatasource.h"
 #include "ogr_geometry.h"
+#include "ogr_spatialref.h"
 #include "assert.h"
 #include "oledb_sup.h"
 #include "cpl_string.h"
@@ -71,6 +76,7 @@ SFCTable::SFCTable()
     
     nSRS_ID = -1;
     nGeomType = wkbUnknown;
+    poSRS = NULL;
 
     pszTableName = NULL;
     pszDefGeomColumn = NULL;
@@ -88,6 +94,9 @@ SFCTable::~SFCTable()
 
     if( pabyLastGeometry != NULL )
         CoTaskMemFree( pabyLastGeometry );
+
+    if( poSRS != NULL )
+        delete poSRS;
 }
 
 /************************************************************************/
@@ -200,6 +209,12 @@ int SFCTable::FetchDefGeomColumn( CSession * poSession )
             pszDefGeomColumn = CPLStrdup( oTables.m_szDGColumnName );
         }
     }
+
+    if( pszDefGeomColumn == NULL )
+    {
+        CPLDebug( "SFC", "Failed to find table `%s' in COGISFeatureTables.\n", 
+                  pszTableName );
+    }
     
     return pszDefGeomColumn != NULL;
 }
@@ -249,11 +264,37 @@ int SFCTable::ReadOGISColumnInfo( CSession * poSession,
         if( EQUAL(oColumns.m_szName, pszTableName)
             && EQUAL(oColumns.m_szColumnName,pszColumnName) )
         {
+            char      *pszSRS_WKT, *pszWKTCopy;
+
             nSRS_ID = oColumns.m_nSRS_ID;
             nGeomType = oColumns.m_nGeomType;
+
+            if( poSRS != NULL )
+            {
+                if( poSRS->Dereference() == 0 )
+                    delete poSRS;
+            }
+
+            pszSRS_WKT = SFCDataSource::GetWKTFromSRSId( poSession, nSRS_ID );
+            poSRS = new OGRSpatialReference();
+            pszWKTCopy = pszSRS_WKT;
+            if( poSRS->importFromWkt( &pszWKTCopy ) != OGRERR_NONE )
+            {
+                delete poSRS;
+                poSRS = NULL;
+            }
+
+            CoTaskMemFree( pszSRS_WKT );
         }
     }
-    
+
+    if( nSRS_ID == -1 )
+    {
+        CPLDebug( "SFC", 
+                 "Failed to find %s/%s in COGISGeometryColumnTable, no SRS.\n",
+                  pszTableName, pszColumnName );
+    }
+
     return nSRS_ID != -1;
 }
 
@@ -567,7 +608,7 @@ OGRGeometry * SFCTable::GetOGRGeometry()
     if( pabyData == NULL )
         return NULL;
 
-    if( OGRGeometryFactory::createFromWkb( pabyData, NULL, &poGeom, 
+    if( OGRGeometryFactory::createFromWkb( pabyData, poSRS, &poGeom, 
                                            nBytesRead ) == OGRERR_NONE )
         return poGeom;
     else

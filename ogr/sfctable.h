@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/06/26 05:34:17  warmerda
+ * Added support for poSRS, and use creating geometry
+ *
  * Revision 1.4  1999/06/10 19:18:22  warmerda
  * added support for the spatial ref schema rowset
  *
@@ -50,6 +53,7 @@
 
 class OGRFeature;
 class OGRGeometry;
+class OGRSpatialReference;
 
 /************************************************************************/
 /*                               SFCTable                               */
@@ -86,6 +90,8 @@ class SFCTable : public CTable<CDynamicAccessor>
 
     char        *pszTableName;
     char        *pszDefGeomColumn;
+
+    OGRSpatialReference * poSRS;
 
   public:
     		SFCTable();
