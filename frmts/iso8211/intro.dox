@@ -81,6 +81,9 @@ cleanup all records, definitions and related objects.<p>
 <li> DDFField class.
 </ul>
 
+A complete <a href="example.html">Example Reader</a> should clarify 
+simple use of ISO8211Lib.<p>
+
 <h2>Related Information</h2>
 
 <ul>
@@ -158,4 +161,9 @@ a number of questions, and collected a variety of very useful information.
 </ul>
 
 
+*/
+
+/*!
+\page Example
+\include 8211view.cpp
 */

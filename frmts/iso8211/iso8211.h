@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/04/27 22:09:50  warmerda
+ * updated docs
+ *
  * Revision 1.1  1999/04/27 18:45:09  warmerda
  * New
  *
@@ -154,6 +157,11 @@ class DDFFieldDefn
      * @return this is an internal copy and shouldn't be freed.
      */
     const char	*GetName() { return pszTag; }
+
+    /** Fetch a longer descriptio of this field.
+     * @return this is an internal copy and shouldn't be freed.
+     */
+    const char	*GetDescription() { return _fieldName; }
 
     /** Get the number of subfields. */
     int		GetSubfieldCount() { return nSubfieldCount; }

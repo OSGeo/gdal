@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/04/27 22:09:50  warmerda
+ * updated docs
+ *
  * Revision 1.1  1999/04/27 18:45:05  warmerda
  * New
  *
@@ -182,6 +185,9 @@ const char *DDFField::GetSubfieldData( DDFSubfieldDefn *poSFDefn )
  *
  * @return The number of times that the subfields of this record occur
  * in this record.  This will be one for non-repeating fields.
+ *
+ * @see <a href="example.html">8211view example program</a>
+ * for demonstation of handling repeated fields properly.
  */
 
 int DDFField::GetRepeatCount()
