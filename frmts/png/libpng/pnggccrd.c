@@ -6,7 +6,7 @@
  *     and http://www.intel.com/drg/pentiumII/appnotes/923/923.htm
  *     for Intel's performance analysis of the MMX vs. non-MMX code.
  *
- * libpng version 1.2.6 - August 15, 2004
+ * libpng version 1.2.8 - December 3, 2004
  * For conditions of distribution and use, see copyright notice in png.h
  * Copyright (c) 1998-2004 Glenn Randers-Pehrson
  * Copyright (c) 1998, Intel Corporation
@@ -4998,7 +4998,7 @@ png_read_filter_row_mmx_up(png_row_infop row_info, png_bytep row,
       "jz up_end                    \n\t"
 
       "cmpl $8, %%edx               \n\t" // test for less than 8 bytes
-      "jb up_lt8                    \n\t" //  [added by lcreeve@netins.net]
+      "jb up_lt8                    \n\t" //  [added by lcreeve at netins.net]
 
       "addl %%edx, %%ecx            \n\t"
       "andl $0x00000007, %%edx      \n\t" // calc bytes over mult of 8

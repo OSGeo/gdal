@@ -1,7 +1,7 @@
 
 /* pngconf.h - machine configurable file for libpng
  *
- * libpng version 1.2.6 - August 15, 2004
+ * libpng version 1.2.8 - December 3, 2004
  * For conditions of distribution and use, see copyright notice in png.h
  * Copyright (c) 1998-2004 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
@@ -17,9 +17,53 @@
 #ifndef PNGCONF_H
 #define PNGCONF_H
 
+#define PNG_1_2_X
+
+/* 
+ * PNG_USER_CONFIG has to be defined on the compiler command line. This
+ * includes the resource compiler for Windows DLL configurations.
+ */
 #ifdef PNG_USER_CONFIG
 #include "pngusr.h"
 #endif
+
+/*
+ * Added at libpng-1.2.8
+ *  
+ * If you create a private DLL you need to define in "pngusr.h" the followings:
+ * #define PNG_USER_PRIVATEBUILD <Describes by whom and why this version of
+ *        the DLL was built>
+ *  e.g. #define PNG_USER_PRIVATEBUILD "Build by MyCompany for xyz reasons."
+ * #define PNG_USER_DLLFNAME_POSTFIX <two-letter postfix that serve to
+ *        distinguish your DLL from those of the official release. These
+ *        correspond to the trailing letters that come after the version
+ *        number and must match your private DLL name>
+ *  e.g. // private DLL "libpng13gx.dll"
+ *       #define PNG_USER_DLLFNAME_POSTFIX "gx"
+ * 
+ * The following macros are also at your disposal if you want to complete the 
+ * DLL VERSIONINFO structure.
+ * - PNG_USER_VERSIONINFO_COMMENTS
+ * - PNG_USER_VERSIONINFO_COMPANYNAME
+ * - PNG_USER_VERSIONINFO_LEGALTRADEMARKS
+ */
+
+#ifdef __STDC__
+#ifdef SPECIALBUILD
+#  pragma message("PNG_LIBPNG_SPECIALBUILD (and deprecated SPECIALBUILD)\
+ are now LIBPNG reserved macros. Use PNG_USER_PRIVATEBUILD instead.")
+#endif
+
+#ifdef PRIVATEBUILD
+# pragma message("PRIVATEBUILD is deprecated. Use\
+ PNG_USER_PRIVATEBUILD instead.")
+# define PNG_USER_PRIVATEBUILD PRIVATEBUILD
+#endif
+#endif /* __STDC__ */
+
+#ifndef PNG_VERSION_INFO_ONLY
+
+/* End of material added to libpng-1.2.8 */
 
 /* This is the size of the compression buffer, and thus the size of
  * an IDAT chunk.  Make this whatever size you feel is best for your
@@ -589,13 +633,6 @@
 #  endif
 #endif /* PNG_WRITE_TRANSFORMS_SUPPORTED */
 
-#if defined(PNG_READ_USER_TRANSFORM_SUPPORTED) || \
-    defined(PNG_WRITE_USER_TRANSFORM_SUPPORTED)
-#  ifndef PNG_NO_USER_TRANSFORM_PTR
-#    define PNG_USER_TRANSFORM_PTR_SUPPORTED
-#  endif
-#endif
-
 #define PNG_WRITE_INTERLACING_SUPPORTED  /* not required for PNG-compliant
                                             encoders, but can cause trouble
                                             if left undefined */
@@ -604,12 +641,6 @@
      defined(PNG_FLOATING_POINT_SUPPORTED)
 #  define PNG_WRITE_WEIGHTED_FILTER_SUPPORTED
 #endif
-
-#ifndef PNG_1_0_X
-#ifndef PNG_NO_ERROR_NUMBERS
-#define PNG_ERROR_NUMBERS_SUPPORTED
-#endif
-#endif /* PNG_1_0_X */
 
 #ifndef PNG_NO_WRITE_FLUSH
 #  define PNG_WRITE_FLUSH_SUPPORTED
@@ -621,6 +652,19 @@
 #endif
 
 #endif /* PNG_WRITE_SUPPORTED */
+
+#ifndef PNG_1_0_X
+#  ifndef PNG_NO_ERROR_NUMBERS
+#    define PNG_ERROR_NUMBERS_SUPPORTED
+#  endif
+#endif /* PNG_1_0_X */
+
+#if defined(PNG_READ_USER_TRANSFORM_SUPPORTED) || \
+    defined(PNG_WRITE_USER_TRANSFORM_SUPPORTED)
+#  ifndef PNG_NO_USER_TRANSFORM_PTR
+#    define PNG_USER_TRANSFORM_PTR_SUPPORTED
+#  endif
+#endif
 
 #ifndef PNG_NO_STDIO
 #  define PNG_TIME_RFC1123_SUPPORTED
@@ -1121,6 +1165,9 @@ typedef double          FAR * FAR * png_doublepp;
 /* Pointers to pointers to pointers; i.e., pointer to array */
 typedef char            FAR * FAR * FAR * png_charppp;
 
+#if defined(PNG_1_0_X) || defined(PNG_1_2_X)
+/* SPC -  Is this stuff deprecated? */
+/* It'll be removed as of libpng-1.3.0 - GR-P */
 /* libpng typedefs for types in zlib. If zlib changes
  * or another compression library is used, then change these.
  * Eliminates need to change all the source files.
@@ -1128,6 +1175,7 @@ typedef char            FAR * FAR * FAR * png_charppp;
 typedef charf *         png_zcharp;
 typedef charf * FAR *   png_zcharpp;
 typedef z_stream FAR *  png_zstreamp;
+#endif /* (PNG_1_0_X) || defined(PNG_1_2_X) */
 
 /*
  * Define PNG_BUILD_DLL if the module being built is a Windows
@@ -1274,6 +1322,17 @@ typedef z_stream FAR *  png_zstreamp;
 #  define PNG_IMPEXP
 #endif
 
+#ifdef PNG_BUILDSYMS
+#  ifndef PNG_EXPORT
+#    define PNG_EXPORT(type,symbol) PNG_FUNCTION_EXPORT symbol END
+#  endif
+#  ifdef PNG_USE_GLOBAL_ARRAYS
+#    ifndef PNG_EXPORT_VAR
+#      define PNG_EXPORT_VAR(type) PNG_DATA_EXPORT
+#    endif
+#  endif
+#endif
+
 #ifndef PNG_EXPORT
 #  define PNG_EXPORT(type,symbol) PNG_IMPEXP type PNGAPI symbol
 #endif
@@ -1372,5 +1431,7 @@ typedef z_stream FAR *  png_zstreamp;
 #endif /* PNG_INTERNAL */
 #endif /* PNG_READ_SUPPORTED */
 
-#endif /* PNGCONF_H */
+/* Added at libpng-1.2.8 */
+#endif /* PNG_VERSION_INFO_ONLY */
 
+#endif /* PNGCONF_H */
