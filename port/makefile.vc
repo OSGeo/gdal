@@ -11,6 +11,8 @@ OBJ	=	cpl_conv.obj \
 
 LIB	=	cpl.lib
 
+GDAL_ROOT = ..
+
 !INCLUDE ..\nmake.opt
 
 default:	cpl_config.h $(LIB)
