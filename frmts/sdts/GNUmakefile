@@ -7,7 +7,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	sdtsiref.o sdtscatd.o sdtslinereader.o sdtslib.o \
 		sdtspointreader.o sdtsattrreader.o sdtstransfer.o \
-		sdtspolygonreader.o
+		sdtspolygonreader.o sdtsxref.o sdtsrasterreader.o 
 
 ALL_C_FLAGS =	-I$(ISO8211DIR) $(GDAL_INCLUDE) $(CFLAGS)
 ALL_CXX_FLAGS =	-I$(ISO8211DIR) $(GDAL_INCLUDE) $(CXXFLAGS)
@@ -16,7 +16,7 @@ LIBS	:=	$(SDTSLIB) $(ISO8211DIR)/libiso8211.a $(CPL_LIB) $(LIBS)
 
 
 
-default:	$(SDTSLIB)
+default:	$(SDTSLIB) sdtsdataset.o
 
 all:	sdts2ascii sdts2shp
 
@@ -34,7 +34,6 @@ clean:
 $(SDTSLIB):	$(OBJ)
 	ar r $(SDTSLIB) $?
 
-
 sdts2ascii:	sdts2ascii.o $(SDTSLIB)
 	$(CXX) sdts2ascii.o $(LIBS) -o sdts2ascii
 
@@ -46,6 +45,9 @@ sdts2shp:	sdts2shp.cpp $(SDTSLIB)
 		$(SHPDIR)/shpopen.o $(SHPDIR)/dbfopen.o \
 		$(LIBS) -o sdts2shp
 
-install-obj:	$(OBJ)
-	cp $(OBJ) ../o
+install-obj:	$(foreach file,$(OBJ),../o/$(file)) ../o/sdtsdataset.o
+
+../o/%.o:	%.o
+	cp $*.o ../o
+
 
