@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  1999/12/22 15:37:05  warmerda
+ * removed abort
+ *
  * Revision 1.14  1999/11/26 19:09:29  warmerda
  * Swapped XY for soundings.
  *
@@ -1041,7 +1044,10 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 
     poPolygon = OGRBuildPolygonFromEdges( poLines, TRUE, &eErr );
     if( eErr != OGRERR_NONE )
+    {
+        abort();
         CPLDebug( "S57", "Polygon assembly failed" );
+    }
 
     delete poLines;
 
