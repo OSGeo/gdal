@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/03/04 05:49:05  warmerda
+ * added attribute indexing support
+ *
  * Revision 1.11  2003/03/03 05:06:46  warmerda
  * implemented DeleteDataSource
  *
@@ -104,12 +107,15 @@ class OGRShapeLayer : public OGRLayer
     OGRwkbGeometryType  eRequestedGeomType;
     int			ResetGeomType( int nNewType );
 
+    long               *panMatchingFIDs;
+    int                 iMatchingFID;
+
   public:
     			OGRShapeLayer( const char * pszName,
                                        SHPHandle hSHP, DBFHandle hDBF,
                                        OGRSpatialReference *poSRS,
                                        int bUpdate, 
-                                       OGRwkbGeometryType eReqType=wkbUnknown);
+                                       OGRwkbGeometryType eReqType );
     			~OGRShapeLayer();
 
     OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }

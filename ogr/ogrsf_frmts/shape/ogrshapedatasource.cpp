@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/03/04 05:49:05  warmerda
+ * added attribute indexing support
+ *
  * Revision 1.15  2002/08/12 14:16:10  warmerda
  * Only recognise .dbf files if the file is directly named with the right
  * extension, or if it is in a directory, and there is no like-named .tab file.
@@ -357,8 +360,13 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     OGRShapeLayer	*poLayer;
 
-    poLayer = new OGRShapeLayer( pszBasename, hSHP, hDBF, poSRS, bUpdate );
+    poLayer = new OGRShapeLayer( pszBasename, hSHP, hDBF, poSRS, bUpdate,
+                                 wkbUnknown );
+
+
     CPLFree( pszBasename );
+
+    poLayer->InitializeIndexSupport( pszNewName );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -590,6 +598,8 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
 
     poLayer = new OGRShapeLayer( pszLayerName, hSHP, hDBF, poSRS, TRUE,
                                  eType );
+    
+    poLayer->InitializeIndexSupport( pszBasename );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -627,3 +637,4 @@ OGRLayer *OGRShapeDataSource::GetLayer( int iLayer )
     else
         return papoLayers[iLayer];
 }
+

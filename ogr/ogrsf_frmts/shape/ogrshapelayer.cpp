@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/03/04 05:49:05  warmerda
+ * added attribute indexing support
+ *
  * Revision 1.10  2002/10/09 14:13:40  warmerda
  * ensure width is at least 1
  *
@@ -103,6 +106,9 @@ OGRShapeLayer::OGRShapeLayer( const char * pszName,
 OGRShapeLayer::~OGRShapeLayer()
 
 {
+    CPLFree( panMatchingFIDs );
+    panMatchingFIDs = NULL;
+
     delete poFeatureDefn;
 
     if( poSRS != NULL )
@@ -142,7 +148,17 @@ void OGRShapeLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 void OGRShapeLayer::ResetReading()
 
 {
+    CPLFree( panMatchingFIDs );
+    panMatchingFIDs = NULL;
+    
     iNextShapeId = 0;
+
+    if( m_poAttrQuery != NULL )
+    {
+        panMatchingFIDs = m_poAttrQuery->EvaluateAgainstIndices( this,
+                                                                 NULL );
+        iMatchingFID = 0;
+    }
 }
 
 /************************************************************************/
@@ -156,13 +172,22 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
 
     while( TRUE )
     {
-        if( iNextShapeId >= nTotalShapeCount )
+        if( panMatchingFIDs != NULL )
         {
-            return NULL;
+            if( panMatchingFIDs[iMatchingFID] == OGRNullFID )
+                return NULL;
+
+            poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, 
+                                           panMatchingFIDs[iMatchingFID++] );
         }
+        else
+        {
+            if( iNextShapeId >= nTotalShapeCount )
+                return NULL;
     
-        poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
-                                       iNextShapeId++ );
+            poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
+                                           iNextShapeId++ );
+        }
 
         if( (poFilterGeom == NULL
             || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
