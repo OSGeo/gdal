@@ -16,14 +16,14 @@ docs:
 	(cd ..; $(MAKE) docs)
 
 gdaldrivermanager.o:	gdaldrivermanager.cpp ../GDALmake.opt
-	$(CXX) -c $(CXXFLAGS) -DINST_DATA=\"$(INST_DATA)\" \
-		$(GDAL_INCLUDE) $*.cpp -o $*.o
+	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) -DINST_DATA=\"$(INST_DATA)\" \
+		$*.cpp -o $*.o
 
 %.o:	%.c
-	$(CC) -c $(CFLAGS) $(GDAL_INCLUDE) $*.c -o $*.o
+	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
 
 %.o:	%.cpp
-	$(CXX) -c $(CXXFLAGS) $(GDAL_INCLUDE) $*.cpp -o $*.o
+	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 
 install:
 	$(INSTALL) *.h $(INST_INCLUDE)
