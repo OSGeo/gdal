@@ -26,6 +26,9 @@
  * Supporting routines for reading Geosoft GXF files.
  *
  * $Log$
+ * Revision 1.5  1999/01/11 15:32:54  warmerda
+ * Added support for PROJ4 adjusted positions, and better proj support
+ *
  * Revision 1.4  1998/12/15 19:07:40  warmerda
  * Add Close, move Readline, add zmin/max, add readscanline
  *
@@ -71,6 +74,7 @@ typedef struct {
 
     char	*pszUnitName;
     double	dfUnitToMeter;
+    
 
     double	dfZMaximum;
     double	dfZMinimum;
@@ -78,6 +82,9 @@ typedef struct {
     long	*panRawLineOffset;
     
 } GXFInfo_t;
+
+/* this is also defined in gdal.h which we avoid in this separable component */
+#define CPLE_WrongFormat	200
 
 /************************************************************************/
 /*                         GXFReadHeaderValue()                         */
@@ -206,11 +213,12 @@ GXFHandle GXFOpen( const char * pszFilename )
     psGXF = (GXFInfo_t *) VSICalloc( sizeof(GXFInfo_t), 1 );
     psGXF->fp = fp;
     psGXF->dfTransformScale = 1.0;
-    psGXF->dfUnitToMeter = 1.0;
     psGXF->nSense = GXFS_LL_RIGHT;
     psGXF->dfXPixelSize = 1.0;
     psGXF->dfYPixelSize = 1.0;
     psGXF->dfSetDummyTo = -1e12;
+
+    psGXF->dfUnitToMeter = 1.0;
     
 /* -------------------------------------------------------------------- */
 /*      Read the header, one line at a time.                            */
@@ -267,6 +275,23 @@ GXFHandle GXFOpen( const char * pszFilename )
             psGXF->papszMapProjection = papszList;
             papszList = NULL;
         }
+        else if( EQUALN(szTitle,"#UNIT",5) )
+        {
+            char	**papszFields;
+
+            papszFields = CSLTokenizeStringComplex( papszList[0], ", ",
+                                                    TRUE, TRUE );
+
+            if( CSLCount(papszFields) > 1 )
+            {
+                psGXF->pszUnitName = VSIStrdup( papszFields[0] );
+                psGXF->dfUnitToMeter = atof( papszFields[1] );
+                if( psGXF->dfUnitToMeter == 0.0 )
+                    psGXF->dfUnitToMeter = 1.0;
+            }
+
+            CSLDestroy( papszFields );
+        }
         else if( EQUALN(szTitle,"#TRAN",5) )
         {
             char	**papszFields;
@@ -298,7 +323,7 @@ GXFHandle GXFOpen( const char * pszFilename )
 /* -------------------------------------------------------------------- */
     if( !EQUALN(szTitle,"#GRID",5) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
+        CPLError( CE_Failure, CPLE_WrongFormat,
                   "Didn't parse through to #GRID successfully in.\n"
                   "file `%s'.\n",
                   pszFilename );
@@ -725,11 +750,11 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
     if( CSLCount(psGXF->papszMapProjection) < 2 )
         return( CPLStrdup( "unknown" ) );
 
+    szPROJ4[0] = '\0';
+
 /* -------------------------------------------------------------------- */
 /*      Parse the third line, looking for known projection methods.     */
 /* -------------------------------------------------------------------- */
-    szPROJ4[0] = '\0';
-
     if( psGXF->papszMapProjection[2] != NULL )
         papszMethods = CSLTokenizeStringComplex(psGXF->papszMapProjection[2],
                                                 ",", TRUE, TRUE );
@@ -745,11 +770,13 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
         strcat( szPROJ4, "+proj=longlat" );
     }
 
+#ifdef notdef    
     else if( EQUAL(papszMethods[0],"Lambert Conic Conformal (1SP)")
              && CSLCount(papszMethods) > 5 )
     {
         /* notdef: It isn't clear that this 1SP + scale method is even
-           supported by PROJ.4 */
+           supported by PROJ.4
+           Later note: It is not. */
         
         strcat( szPROJ4, "+proj=lcc" );
 
@@ -768,7 +795,7 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
         strcat( szPROJ4, " +y_0=" );
         strcat( szPROJ4, papszMethods[5] );
     }
-    
+#endif    
     else if( EQUAL(papszMethods[0],"Lambert Conic Conformal (2SP)")
              || EQUAL(papszMethods[0],"Lambert Conformal (2SP Belgium)") )
     {
@@ -882,10 +909,12 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
         }
         else
         {
+#ifdef notdef            
             if( atof(papszMethods[4]) + atof(papszMethods[3]) < 0.00001 )
                 /* ok */;
             else
                 /* notdef: no way to specify arbitrary angles! */;
+#endif            
         }
 
         strcat( szPROJ4, " +k=" );
@@ -1054,7 +1083,7 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
         strcat( szPROJ4, papszMethods[5] );
     }
 
-    else if( EQUAL(papszMethods[0],"Equidistant Conic")
+    else if( EQUAL(papszMethods[0],"*Equidistant Conic")
              && CSLCount(papszMethods) > 6 )
     {
         strcat( szPROJ4, "+proj=eqdc" );
@@ -1078,7 +1107,7 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
         strcat( szPROJ4, papszMethods[6] );
     }
 
-    else if( EQUAL(papszMethods[0],"Polyconic") 
+    else if( EQUAL(papszMethods[0],"*Polyconic") 
              && CSLCount(papszMethods) > 5 )
     {
         strcat( szPROJ4, "+proj=poly" );
@@ -1106,12 +1135,77 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
         strcat( szPROJ4, "unknown" );
     }
 
-/* -------------------------------------------------------------------- */
-/*          Now we should try to get the ellipsoid parameters.          */
-/* -------------------------------------------------------------------- */
-    strcat( szPROJ4, " +ellps=clrk66" );
-
     CSLDestroy( papszMethods );
+
+/* -------------------------------------------------------------------- */
+/*      Now get the ellipsoid parameters.  For a bunch of common        */
+/*      ones we preserve the name.  For the rest we just carry over     */
+/*      the parameters.                                                 */
+/* -------------------------------------------------------------------- */
+    if( CSLCount(psGXF->papszMapProjection) > 1 )
+    {
+        char	**papszTokens;
+        
+        papszTokens = CSLTokenizeStringComplex(psGXF->papszMapProjection[1],
+                                               ",", TRUE, TRUE );
+
+
+        if( EQUAL(papszTokens[0],"WGS 84") )
+            strcat( szPROJ4, " +ellps=WGS84" );
+        else if( EQUAL(papszTokens[0],"*WGS 72") )
+            strcat( szPROJ4, " +ellps=WGS72" );
+        else if( EQUAL(papszTokens[0],"*WGS 66") )
+            strcat( szPROJ4, " +ellps=WGS66" );
+        else if( EQUAL(papszTokens[0],"*WGS 60") )
+            strcat( szPROJ4, " +ellps=WGS60" );
+        else if( EQUAL(papszTokens[0],"Clarke 1866") )
+            strcat( szPROJ4, " +ellps=clrk66" );
+        else if( EQUAL(papszTokens[0],"Clarke 1880") )
+            strcat( szPROJ4, " +ellps=clrk80" );
+        else if( EQUAL(papszTokens[0],"GRS 1980") )
+            strcat( szPROJ4, " +ellps=GRS80" );
+        else if( CSLCount( papszTokens ) > 2 )
+        {
+            sprintf( szPROJ4+strlen(szPROJ4),
+                     " +a=%s +e=%s",
+                     papszTokens[1], papszTokens[2] );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Extract the units specification.                                */
+/* -------------------------------------------------------------------- */
+    if( psGXF->pszUnitName != NULL )
+    {
+        if( EQUAL(psGXF->pszUnitName,"ft") )
+        {
+            strcat( szPROJ4, " +units=ft" );
+        }
+        else if( EQUAL(psGXF->pszUnitName,"ftUS") )
+        {
+            strcat( szPROJ4, " +units=us-ft" );
+        }
+        else if( EQUAL(psGXF->pszUnitName,"km") )
+        {
+            strcat( szPROJ4, " +units=km" );
+        }
+        else if( EQUAL(psGXF->pszUnitName,"mm") )
+        {
+            strcat( szPROJ4, " +units=mm" );
+        }
+        else if( EQUAL(psGXF->pszUnitName,"in") )
+        {
+            strcat( szPROJ4, " +units=in" );
+        }
+        else if( EQUAL(psGXF->pszUnitName,"ftInd") )
+        {
+            strcat( szPROJ4, " +units=ind-ft" );
+        }
+        else if( EQUAL(psGXF->pszUnitName,"lk") )
+        {
+            strcat( szPROJ4, " +units=link" );
+        }
+    }
     
     return( CPLStrdup( szPROJ4 ) );
 }
@@ -1149,3 +1243,51 @@ CPLErr GXFGetRawPosition( GXFHandle hGXF,
     else
         return( CE_None );
 }
+
+/************************************************************************/
+/*                        GXFGetPROJ4Position()                         */
+/*                                                                      */
+/*      Get the same information as GXFGetRawPosition(), but adjust     */
+/*      to units to meters if we don't ``know'' the indicated           */
+/*      units.                                                          */
+/************************************************************************/
+
+CPLErr GXFGetPROJ4Position( GXFHandle hGXF,
+                            double * pdfXOrigin, double * pdfYOrigin,
+                            double * pdfXPixelSize, double * pdfYPixelSize,
+                            double * pdfRotation )
+
+{
+    GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
+    char	*pszProj;
+
+/* -------------------------------------------------------------------- */
+/*      Get the raw position.                                           */
+/* -------------------------------------------------------------------- */
+    if( GXFGetRawPosition( hGXF,
+                           pdfXOrigin, pdfYOrigin,
+                           pdfXPixelSize, pdfYPixelSize,
+                           pdfRotation ) == CE_Failure )
+        return( CE_Failure );
+
+/* -------------------------------------------------------------------- */
+/*      Do we know the units in PROJ.4?  Get the PROJ.4 string, and     */
+/*      check for a +units definition.                                  */
+/* -------------------------------------------------------------------- */
+    pszProj = GXFGetMapProjectionAsPROJ4( hGXF );
+    if( strstr(pszProj,"+unit") == NULL && psGXF->pszUnitName != NULL )
+    {
+        if( pdfXOrigin != NULL )
+            *pdfXOrigin *= psGXF->dfUnitToMeter;
+        if( pdfYOrigin != NULL )
+            *pdfYOrigin *= psGXF->dfUnitToMeter;
+        if( pdfXPixelSize != NULL )
+            *pdfXPixelSize *= psGXF->dfUnitToMeter;
+        if( pdfYPixelSize != NULL )
+            *pdfYPixelSize *= psGXF->dfUnitToMeter;
+    }
+    CPLFree( pszProj );
+
+    return( CE_None );
+}
+
