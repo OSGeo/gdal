@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.5  2000/03/31 14:25:43  warmerda
+# added metadata and gcp support
+#
 # Revision 1.4  2000/03/10 13:55:56  warmerda
 # added lots of methods
 #
@@ -56,6 +59,17 @@ def Open(file,access=GA_ReadOnly):
     else:
         _gdal.GDALDereferenceDataset( _obj )
         return Dataset(_obj)
+
+class GCP:
+    def __init__(self):
+        GCPX = 0.0
+        GCPY = 0.0
+        GCPZ = 0.0
+        GCPPixel = 0.0
+        GCPLine = 0.0
+        Info = ''
+        Id = ''
+
 
 class Dataset:
 
@@ -95,6 +109,32 @@ class Dataset:
 
     def GetProjectionRef(self):
         return _gdal.GDALGetProjectionRef(self._o)
+
+    def GetMetadata(self):
+        return _gdal.GDALGetDatasetMetadata(self._o)
+
+    def GetGCPCount(self):
+        return _gdal.GDALGetGCPCount(self._o)
+
+    def GetGCPProjection(self):
+        return _gdal.GDALGetGCPProjection(self._o)
+
+    def GetGCPs(self):
+        gcp_tuple_list = _gdal.GDALGetGCPs(self._o)
+
+        gcp_list = []
+        for gcp_tuple in gcp_tuple_list:
+            gcp = GCP()
+            gcp.Id = gcp_tuple[0]
+            gcp.Info = gcp_tuple[1]
+            gcp.GCPPixel = gcp_tuple[2]
+            gcp.GCPLine = gcp_tuple[3]
+            gcp.GCPX = gcp_tuple[4]
+            gcp.GCPY = gcp_tuple[5]
+            gcp.GCPZ = gcp_tuple[6]
+            gcp_list.append(gcp)
+
+        return gcp_list
 
 class Band:            
     def __init__(self, _obj):
@@ -151,3 +191,8 @@ class Band:
                      include_out_of_range=0, approx_ok = 0 ):
         return _gdal.GDALGetRasterHistogram(self._o, min, max, buckets,
                                             include_out_of_range, approx_ok)
+
+    def GetMetadata(self):
+        return _gdal.GDALGetRasterMetadata(self._o)
+
+

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/03/31 14:25:28  warmerda
+ * added metadata and gcp support
+ *
  * Revision 1.5  2000/03/22 01:10:42  warmerda
  * added OSR and OCT wrappers for coordinate systems
  *
@@ -51,6 +54,7 @@
 %{
 #include "gdal.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 #include "ogr_srs_api.h"
 %}
 
@@ -116,6 +120,8 @@ const char  *GDALGetProjectionRef( GDALDatasetH );
 CPLErr   GDALSetProjection( GDALDatasetH, const char * );
 int      GDALReferenceDataset( GDALDatasetH );
 int      GDALDereferenceDataset( GDALDatasetH );
+int      GDALGetGCPCount( GDALDatasetH );
+const char *GDALGetGCPProjection( GDALDatasetH );
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
@@ -293,6 +299,54 @@ py_GDALWriteRaster(PyObject *self, PyObject *args) {
 
 %{
 /************************************************************************/
+/*                            GDALGetGCPs()                             */
+/************************************************************************/
+static PyObject *
+py_GDALGetGCPs(PyObject *self, PyObject *args) {
+
+    GDALDatasetH  _arg0;
+    char *_argc0 = NULL;
+    const GDAL_GCP * pasGCPList;
+    PyObject *psList;
+    int iGCP;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:GDALGetGCPs",&_argc0))
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALDatasetH" )) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of GDALGetGCPs."
+                            "  Expected _GDALDatasetH.");
+            return NULL;
+        }
+    }
+
+    pasGCPList = GDALGetGCPs( _arg0 );	
+
+    psList = PyList_New(GDALGetGCPCount(_arg0));
+    for( iGCP = 0; pasGCPList != NULL && iGCP < GDALGetGCPCount(_arg0); iGCP++)
+    {
+	PyList_SetItem(psList, iGCP, 
+                       Py_BuildValue("(ssfffff)", 
+                                     pasGCPList[iGCP].pszId,
+                                     pasGCPList[iGCP].pszInfo,
+                                     pasGCPList[iGCP].dfGCPPixel,
+                                     pasGCPList[iGCP].dfGCPLine,
+                                     pasGCPList[iGCP].dfGCPX,
+                                     pasGCPList[iGCP].dfGCPY,
+                                     pasGCPList[iGCP].dfGCPZ ) );
+    }
+
+    return psList;
+}
+%}
+
+%native(GDALGetGCPs) py_GDALGetGCPs;
+
+%{
+/************************************************************************/
 /*                        GDALGetGeoTransform()                         */
 /************************************************************************/
 static PyObject *
@@ -416,6 +470,104 @@ py_GDALGetRasterHistogram(PyObject *self, PyObject *args) {
 %}
 
 %native(GDALGetRasterHistogram) py_GDALGetRasterHistogram;
+
+%{
+/************************************************************************/
+/*                       GDALGetRasterMetadata()                        */
+/************************************************************************/
+static PyObject *
+py_GDALGetRasterMetadata(PyObject *self, PyObject *args) {
+
+    GDALRasterBandH  hBand;
+    char *_argc0 = NULL;
+    PyObject *psDict;
+    int i;
+    char **papszMetadata;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:GDALGetRasterMetadata",&_argc0))
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &hBand,"_GDALRasterBandH" )) {
+            PyErr_SetString(PyExc_TypeError,
+                          "Type error in argument 1 of GDALGetRasterMetadata."
+                          "  Expected _GDALRasterBandH.");
+            return NULL;
+        }
+    }
+
+    psDict = PyDict_New();
+    
+    papszMetadata = GDALGetRasterMetadata( hBand );
+
+    for( i = 0; i < CSLCount(papszMetadata); i++ )
+    {
+	char	*pszKey;
+	const char *pszValue;
+
+	pszValue = CPLParseNameValue( papszMetadata[i], &pszKey );
+	if( pszValue != NULL )
+	    PyDict_SetItem( psDict, 
+                            Py_BuildValue("s", pszKey ), 
+                            Py_BuildValue("s", pszValue ) );
+	CPLFree( pszKey );
+    }
+
+    return psDict;
+}
+%}
+
+%native(GDALGetRasterMetadata) py_GDALGetRasterMetadata;
+
+%{
+/************************************************************************/
+/*                       GDALGetDatasetMetadata()                       */
+/************************************************************************/
+static PyObject *
+py_GDALGetDatasetMetadata(PyObject *self, PyObject *args) {
+
+    GDALDatasetH  hDS;
+    char *_argc0 = NULL;
+    PyObject *psDict;
+    int i;
+    char **papszMetadata;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:GDALGetDatasetMetadata",&_argc0))
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &hDS,"_GDALDatasetH" )) {
+            PyErr_SetString(PyExc_TypeError,
+                          "Type error in argument 1 of GDALGetDatasetMetadata."
+                          "  Expected _GDALDatasetH.");
+            return NULL;
+        }
+    }
+
+    psDict = PyDict_New();
+    
+    papszMetadata = GDALGetDatasetMetadata( hDS );
+
+    for( i = 0; i < CSLCount(papszMetadata); i++ )
+    {
+	char	*pszKey;
+	const char *pszValue;
+
+	pszValue = CPLParseNameValue( papszMetadata[i], &pszKey );
+	if( pszValue != NULL )
+	    PyDict_SetItem( psDict, 
+                            Py_BuildValue("s", pszKey ), 
+                            Py_BuildValue("s", pszValue ) );
+	CPLFree( pszKey );
+    }
+
+    return psDict;
+}
+%}
+
+%native(GDALGetDatasetMetadata) py_GDALGetDatasetMetadata;
 
 /* -------------------------------------------------------------------- */
 /*      OGRSpatialReference stuff.                                      */
