@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/04/21 04:39:17  warmerda
+ * converter related fixes.
+ *
  * Revision 1.2  1999/03/23 16:00:05  warmerda
  * doc typo fixed
  *
@@ -45,16 +48,7 @@
 
 #include "container/sc_Record.h"
 
-sio_8211Converter_BI8   converter_bi8;
-sio_8211Converter_BI16	converter_bi16;
-sio_8211Converter_BI24  converter_bi24;
-sio_8211Converter_BI32	converter_bi32;
-sio_8211Converter_BUI8	converter_bui8;
-sio_8211Converter_BUI16	converter_bui16;
-sio_8211Converter_BUI24	converter_bui24;
-sio_8211Converter_BUI32	converter_bui32;
-sio_8211Converter_BFP32	converter_bfp32;
-sio_8211Converter_BFP64 converter_bfp64;
+static sio_8211Converter_BI32	converter_bi32;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -74,6 +68,7 @@ SDTSRawLine::SDTSRawLine()
 {
     nVertices = 0;
     padfX = padfY = padfZ = NULL;
+    nAttributes = 0;
 }
 
 /************************************************************************/
@@ -119,8 +114,13 @@ int SDTSRawLine::Read( SDTS_IREF * poIREF, scal_Record * poRecord )
             oLine.Set( &oField );
 
         else if( oField.getMnemonic() == "ATID" )
-            oAttribute.Set( &oField );
-        
+        {
+            if( nAttributes < MAX_RAWLINE_ATID )
+            {
+                aoATID[nAttributes].Set( &oField );
+                nAttributes++;
+            }
+        }
         else if( oField.getMnemonic() == "PIDL" )
             oLeftPoly.Set( &oField );
         
@@ -163,8 +163,6 @@ void SDTSRawLine::Dump( FILE * fp )
     fprintf( fp, "SDTSRawLine\n" );
     fprintf( fp, "  Module=%s, Record#=%ld\n",
              oLine.szModule, oLine.nRecord );
-    fprintf( fp, "  Attribute (Module=%s, Record=%ld)\n", 
-             oAttribute.szModule, oAttribute.nRecord );
     if( oLeftPoly.nRecord != -1 )
         fprintf( fp, "  LeftPoly (Module=%s, Record=%ld)\n", 
                  oLeftPoly.szModule, oLeftPoly.nRecord );
@@ -177,6 +175,9 @@ void SDTSRawLine::Dump( FILE * fp )
     if( oEndNode.nRecord != -1 )
         fprintf( fp, "  EndNode (Module=%s, Record=%ld)\n", 
                  oEndNode.szModule, oEndNode.nRecord );
+    for( int i = 0; i < nAttributes; i++ )
+        fprintf( fp, "  Attribute (Module=%s, Record=%ld)\n", 
+                 aoATID[i].szModule, aoATID[i].nRecord );
 
     for( int i = 0; i < nVertices; i++ )
     {
@@ -252,7 +253,6 @@ int SDTSLineReader::Open( string osFilename )
     
     converters["X"] = &converter_bi32; // set up default converter hints
     converters["Y"] = &converter_bi32; // for these mnemonics
-    converters["ELEVATION"] = &converter_bi16;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
