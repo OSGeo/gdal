@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/06 14:25:43  warmerda
+ * added DDFBinaryString, and a bit of optimization
+ *
  * Revision 1.1  1999/04/27 18:45:05  warmerda
  * New
  *
@@ -139,7 +142,10 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
             nFormatWidth = atoi(pszFormatString+2) / 8;
             eBinaryFormat = SInt; // good default, works for SDTS.
 
-            eType = DDFInt;
+            if( nFormatWidth < 5 )
+                eType = DDFInt;
+            else
+                eType = DDFBinaryString;
         }
         
         // or do we have a binary type indicator? (is it binary)
@@ -277,6 +283,10 @@ int DDFSubfieldDefn::GetDataLength( const char * pachSourceData,
  * consumed as part of this field can also be fetched.  This number may
  * be one longer than the string length if there is a terminator character
  * used.<p>
+ *
+ * This function will return the raw binary data of a subfield for
+ * types other than DDFString, including data past zero chars.  This is
+ * the standard way of extracting DDFBinaryString subfields for instance.<p>
  *
  * @param pachSourceData The pointer to the raw data for this field.  This
  * may have come from DDFRecord::GetData(), taking into account skip factors
@@ -521,12 +531,12 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
         switch( eBinaryFormat )
         {
           case UInt:
-            if( nFormatWidth == 1 )
+            if( nFormatWidth == 4 )
+                return( (int) *((GUInt32 *) abyData) );
+            else if( nFormatWidth == 1 )
                 return( abyData[0] );
             else if( nFormatWidth == 2 )
                 return( *((GUInt16 *) abyData) );
-            else if( nFormatWidth == 4 )
-                return( (int) *((GUInt32 *) abyData) );
             else
             {
                 CPLAssert( FALSE );
@@ -534,12 +544,12 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
             }
             
           case SInt:
-            if( nFormatWidth == 1 )
+            if( nFormatWidth == 4 )
+                return( *((GInt32 *) abyData) );
+            else if( nFormatWidth == 1 )
                 return( *((signed char *) abyData) );
             else if( nFormatWidth == 2 )
                 return( *((GInt16 *) abyData) );
-            else if( nFormatWidth == 4 )
-                return( *((GInt32 *) abyData) );
             else
             {
                 CPLAssert( FALSE );
@@ -602,6 +612,20 @@ void DDFSubfieldDefn::DumpData( const char * pachData, int nMaxBytes,
         fprintf( fp, "      Subfield `%s' = %d\n",
                  pszName,
                  ExtractIntData( pachData, nMaxBytes, NULL ) );
+    else if( eType == DDFBinaryString )
+    {
+        int	nBytes, i;
+        GByte	*pabyBString = (GByte *) ExtractStringData( pachData, nMaxBytes, &nBytes );
+
+        fprintf( fp, "      Subfield `%s' = 0x", pszName );
+        for( i = 0; i < MIN(nBytes,24); i++ )
+            fprintf( fp, "%02X", pabyBString[i] );
+
+        if( nBytes > 24 )
+            fprintf( fp, "%s", "..." );
+
+        fprintf( fp, "\n" );
+    }
     else
         fprintf( fp, "      Subfield `%s' = `%s'\n",
                  pszName,
