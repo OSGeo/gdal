@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_lzw.c,v 1.7 2000/12/19 20:12:53 mwelles Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_lzw.c,v 1.9 2001/09/25 01:59:13 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -204,12 +204,13 @@ LZWSetupDecode(TIFF* tif)
 		/*
 		 * Pre-load the table.
 		 */
-		for (code = 255; code >= 0; code--) {
-			sp->dec_codetab[code].value = code;
-			sp->dec_codetab[code].firstchar = code;
-			sp->dec_codetab[code].length = 1;
-			sp->dec_codetab[code].next = NULL;
-		}
+                code = 255;
+                do {
+                    sp->dec_codetab[code].value = code;
+                    sp->dec_codetab[code].firstchar = code;
+                    sp->dec_codetab[code].length = 1;
+                    sp->dec_codetab[code].next = NULL;
+                } while (code--);
 	}
 	return (1);
 }
@@ -651,6 +652,14 @@ LZWCleanup(TIFF* tif)
 	}
 }
 
+static int
+LZWSetupEncode(TIFF* tif)
+{
+    TIFFError(tif->tif_name,
+              "LZW compression is not available to due to Unisys patent enforcement");
+    return (0);
+}
+
 int
 TIFFInitLZW(TIFF* tif, int scheme)
 {
@@ -658,28 +667,34 @@ TIFFInitLZW(TIFF* tif, int scheme)
 	/*
 	 * Allocate state block so tag methods have storage to record values.
 	 */
-	if (tif->tif_mode == O_RDONLY) {
-		tif->tif_data = (tidata_t) _TIFFmalloc(sizeof (LZWDecodeState));
-		if (tif->tif_data == NULL)
-			goto bad;
-		DecoderState(tif)->dec_codetab = NULL;
-		DecoderState(tif)->dec_decode = NULL;
+	if (tif->tif_mode == O_RDONLY) 
+        {
+            tif->tif_data = (tidata_t) _TIFFmalloc(sizeof (LZWDecodeState));
+            if (tif->tif_data == NULL)
+                goto bad;
+            DecoderState(tif)->dec_codetab = NULL;
+            DecoderState(tif)->dec_decode = NULL;
 	} 
 
 	/*
 	 * Install codec methods.
 	 */
+	tif->tif_setupencode = LZWSetupEncode;
 	tif->tif_setupdecode = LZWSetupDecode;
 	tif->tif_predecode = LZWPreDecode;
 	tif->tif_decoderow = LZWDecode;
 	tif->tif_decodestrip = LZWDecode;
 	tif->tif_decodetile = LZWDecode;
 	tif->tif_cleanup = LZWCleanup;
+
 	/*
 	 * Setup predictor setup.
 	 */
-	(void) TIFFPredictorInit(tif);
-	return (1);
+        if( tif->tif_mode == O_RDONLY )
+            (void) TIFFPredictorInit(tif);
+
+        return (1);
+
 bad:
 	TIFFError("TIFFInitLZW", "No space for LZW state block");
 	return (0);

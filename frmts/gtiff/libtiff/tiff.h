@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiff.h,v 1.7 2001/04/03 04:00:23 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiff.h,v 1.8 2001/08/10 02:37:52 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -79,7 +79,7 @@ typedef	char int8;
 typedef	unsigned char uint8;
 typedef	short int16;
 typedef	unsigned short uint16;	/* sizeof (uint16) must == 2 */
-#if defined(__alpha) || (defined(_MIPS_SZLONG) && _MIPS_SZLONG == 64)
+#if defined(__alpha) || (defined(_MIPS_SZLONG) && _MIPS_SZLONG == 64) || defined(__LP64__)
 typedef	int int32;
 typedef	unsigned int uint32;	/* sizeof (uint32) must == 4 */
 #else
