@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.26  2003/05/30 15:38:59  warmerda
+# updated to use SetStatePlaneWithUnits
+#
 # Revision 1.25  2003/03/28 17:47:41  warmerda
 # added lots of stuff for accessing projection parameters
 #
@@ -272,8 +275,11 @@ class SpatialReference:
     def SetUTM(self, zone, is_north = 1):
         return _gdal.OSRSetUTM(self._o, zone, is_north )
 
-    def SetStatePlane(self, zone, is_nad83 = 1 ):
-        return _gdal.OSRSetStatePlane(self._o, zone, is_nad83 )
+    def SetStatePlane(self, zone, is_nad83 = 1, overrideunitsname='', 
+                      overrideunits = 0.0 ):
+        return _gdal.OSRSetStatePlaneWithUnits(self._o, zone, is_nad83,
+                                               overrideunitsname, 
+                                               overrideunits )
 
     def SetAttrValue( self, node_path, value ):
         return _gdal.OSRSetAttrValue( self._o, node_path, value )
