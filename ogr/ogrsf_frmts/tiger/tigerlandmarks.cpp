@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/01/11 15:29:55  warmerda
+ * expanded tabs
+ *
  * Revision 1.10  2003/01/04 23:21:56  mbp
  * Minor bug fixes and field definition changes.  Cleaned
  * up and commented code written for TIGER 2002 support.
@@ -111,7 +114,7 @@ static TigerRecordInfo rt7_info =
 /************************************************************************/
 
 TigerLandmarks::TigerLandmarks( OGRTigerDataSource * poDSIn,
-				const char * pszPrototypeModule )
+                                const char * pszPrototypeModule )
   : TigerPoint(FALSE)
 {
   poDS = poDSIn;
@@ -139,15 +142,15 @@ int TigerLandmarks::SetModule( const char * pszModule )
 OGRFeature *TigerLandmarks::GetFeature( int nRecordId )
 {
   return TigerPoint::GetFeature( nRecordId,
-				 psRT7Info,
-				 55, 64,
-				 65, 73 );
+                                 psRT7Info,
+                                 55, 64,
+                                 65, 73 );
 }
 
 OGRErr TigerLandmarks::CreateFeature( OGRFeature *poFeature )
 {
   return TigerPoint::CreateFeature( poFeature, 
-				    psRT7Info,
-				    55,
-				    FILE_CODE );
+                                    psRT7Info,
+                                    55,
+                                    FILE_CODE );
 }

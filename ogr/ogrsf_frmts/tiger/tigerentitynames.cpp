@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/01/11 15:29:55  warmerda
+ * expanded tabs
+ *
  * Revision 1.9  2003/01/04 23:21:56  mbp
  * Minor bug fixes and field definition changes.  Cleaned
  * up and commented code written for TIGER 2002 support.
@@ -83,8 +86,8 @@ static TigerFieldInfo rtC_2002_fields[] = {
   { "VTDTRACT",   'R', 'A', OFTString,    39,  44,   6,       1,   1,     1 },
   { "UAUGA",      'L', 'N', OFTInteger,   45,  49,   5,       1,   1,     1 },
   { "AITSCE",     'L', 'N', OFTInteger,   50,  52,   3,       1,   1,     1 },
-  { "RS-C1",      'L', 'N', OFTInteger,   53,  54,   2,       1,   1,     1 },
-  { "RS-C2",      'L', 'N', OFTInteger,   55,  62,   8,       1,   1,     1 },
+  { "RS_C1",      'L', 'N', OFTInteger,   53,  54,   2,       1,   1,     1 },
+  { "RS_C2",      'L', 'N', OFTInteger,   55,  62,   8,       1,   1,     1 },
   { "NAME",       'L', 'A', OFTString,    63, 122,  60,       1,   1,     1 },
 };
 static TigerRecordInfo rtC_2002_info =

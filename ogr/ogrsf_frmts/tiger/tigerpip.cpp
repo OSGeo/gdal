@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/01/11 15:29:55  warmerda
+ * expanded tabs
+ *
  * Revision 1.9  2003/01/04 23:21:56  mbp
  * Minor bug fixes and field definition changes.  Cleaned
  * up and commented code written for TIGER 2002 support.
@@ -131,16 +134,16 @@ int TigerPIP::SetModule( const char * pszModule )
 OGRFeature *TigerPIP::GetFeature( int nRecordId )
 {
   return TigerPoint::GetFeature( nRecordId,
-				 psRTPInfo,
-				 26, 35,
-				 36, 44 );
+                                 psRTPInfo,
+                                 26, 35,
+                                 36, 44 );
 }
 
 OGRErr TigerPIP::CreateFeature( OGRFeature *poFeature )
 {
   return TigerPoint::CreateFeature( poFeature, 
-				    psRTPInfo,
-				    26,
-				    FILE_CODE );
+                                    psRTPInfo,
+                                    26,
+                                    FILE_CODE );
 }
 

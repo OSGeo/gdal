@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/01/11 15:29:55  warmerda
+ * expanded tabs
+ *
  * Revision 1.9  2003/01/04 23:21:56  mbp
  * Minor bug fixes and field definition changes.  Cleaned
  * up and commented code written for TIGER 2002 support.
@@ -79,9 +82,9 @@ static TigerFieldInfo rtI_2002_fields[] = {
   { "POLYIDR",    'R', 'N', OFTInteger,   61,  70,  10,       1,   1,     1 },
   { "SOURCE",     'L', 'A', OFTString,    71,  80,  10,       1,   1,     1 },
   { "FTSEG",      'L', 'A', OFTString,    81,  97,  17,       1,   1,     1 },
-  { "RS-I1",      'L', 'A', OFTString,    98, 107,  10,       1,   1,     1 },
-  { "RS-I2",      'L', 'A', OFTString,   108, 117,  10,       1,   1,     1 },
-  { "RS-I3",      'L', 'A', OFTString,   118, 127,  10,       1,   1,     1 },
+  { "RS_I1",      'L', 'A', OFTString,    98, 107,  10,       1,   1,     1 },
+  { "RS_I2",      'L', 'A', OFTString,   108, 117,  10,       1,   1,     1 },
+  { "RS_I3",      'L', 'A', OFTString,   118, 127,  10,       1,   1,     1 },
 };
 static TigerRecordInfo rtI_2002_info =
   {

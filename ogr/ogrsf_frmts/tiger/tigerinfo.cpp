@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/01/11 15:29:55  warmerda
+ * expanded tabs
+ *
  * Revision 1.4  2002/12/26 00:20:19  mbp
  * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
  * first round implementation of TIGER_2002 support
@@ -151,8 +154,8 @@ int main( int nArgc, char ** papszArgv )
         printf( "INFO: Open of `%s'\n"
                 "using driver `%s' successful.\n",
                 pszDataSource, poDriver->GetName() );
-	printf("Tiger Version: %s\n", 
-	       TigerVersionString(((OGRTigerDataSource*)poDS)->GetVersion()));
+        printf("Tiger Version: %s\n", 
+               TigerVersionString(((OGRTigerDataSource*)poDS)->GetVersion()));
     }
 
 
