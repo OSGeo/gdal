@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.3  2005/04/04 15:24:48  fwarmerdam
+ * Most C entry points now CPL_STDCALL
+ *
  * Revision 1.2  2001/07/18 04:04:30  warmerda
  * added CPL_CVSID
  *
@@ -65,7 +68,7 @@ GDALColorTable::GDALColorTable( GDALPaletteInterp eInterpIn )
 /*                        GDALCreateColorTable()                        */
 /************************************************************************/
 
-GDALColorTableH GDALCreateColorTable( GDALPaletteInterp eInterp )
+GDALColorTableH CPL_STDCALL GDALCreateColorTable( GDALPaletteInterp eInterp )
 
 {
     return (GDALColorTableH) (new GDALColorTable( eInterp ));
@@ -93,7 +96,7 @@ GDALColorTable::~GDALColorTable()
 /*                       GDALDestroyColorTable()                        */
 /************************************************************************/
 
-void GDALDestroyColorTable( GDALColorTableH hTable )
+void CPL_STDCALL GDALDestroyColorTable( GDALColorTableH hTable )
 
 {
     delete (GDALColorTable *) hTable;
@@ -126,7 +129,8 @@ const GDALColorEntry *GDALColorTable::GetColorEntry( int i ) const
 /*                         GDALGetColorEntry()                          */
 /************************************************************************/
 
-const GDALColorEntry *GDALGetColorEntry( GDALColorTableH hTable, int i )
+const GDALColorEntry * CPL_STDCALL 
+GDALGetColorEntry( GDALColorTableH hTable, int i )
 
 {
     return ((GDALColorTable *) hTable)->GetColorEntry( i );
@@ -168,7 +172,7 @@ int GDALColorTable::GetColorEntryAsRGB( int i, GDALColorEntry *poEntry ) const
 /*                       GDALGetColorEntryAsRGB()                       */
 /************************************************************************/
 
-int GDALGetColorEntryAsRGB( GDALColorTableH hTable, int i, 
+int CPL_STDCALL GDALGetColorEntryAsRGB( GDALColorTableH hTable, int i, 
                             GDALColorEntry *poEntry )
 
 {
@@ -217,7 +221,7 @@ void GDALColorTable::SetColorEntry( int i, const GDALColorEntry * poEntry )
 /*                         GDALSetColorEntry()                          */
 /************************************************************************/
 
-void GDALSetColorEntry( GDALColorTableH hTable, int i, 
+void CPL_STDCALL GDALSetColorEntry( GDALColorTableH hTable, int i, 
                         const GDALColorEntry * poEntry )
 
 {
@@ -253,7 +257,7 @@ GDALColorTable *GDALColorTable::Clone() const
 /*                        GDALCloneColorTable()                         */
 /************************************************************************/
 
-GDALColorTableH GDALCloneColorTable( GDALColorTableH hTable )
+GDALColorTableH CPL_STDCALL GDALCloneColorTable( GDALColorTableH hTable )
 
 {
     return (GDALColorTableH) ((GDALColorTable *) hTable)->Clone();
@@ -281,7 +285,7 @@ int GDALColorTable::GetColorEntryCount() const
 /*                       GDALGetColorEntryCount()                       */
 /************************************************************************/
 
-int GDALGetColorEntryCount( GDALColorTableH hTable )
+int CPL_STDCALL GDALGetColorEntryCount( GDALColorTableH hTable )
 
 {
     return ((GDALColorTable *) hTable)->GetColorEntryCount();
@@ -311,7 +315,8 @@ GDALPaletteInterp GDALColorTable::GetPaletteInterpretation() const
 /*                    GDALGetPaltteInterpretation()                     */
 /************************************************************************/
 
-GDALPaletteInterp GDALGetPaletteInterpretation( GDALColorTableH hTable )
+GDALPaletteInterp CPL_STDCALL 
+GDALGetPaletteInterpretation( GDALColorTableH hTable )
 
 {
     return ((GDALColorTable *) hTable)->GetPaletteInterpretation();

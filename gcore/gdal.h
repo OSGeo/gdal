@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.92  2005/04/04 15:24:48  fwarmerdam
+ * Most C entry points now CPL_STDCALL
+ *
  * Revision 1.91  2005/03/16 19:21:35  fwarmerdam
  * added methods for setting offset/scale
  *
@@ -213,11 +216,11 @@ typedef enum {
     GDT_TypeCount = 12          /* maximum type # + 1 */
 } GDALDataType;
 
-int CPL_DLL GDALGetDataTypeSize( GDALDataType );
-int CPL_DLL GDALDataTypeIsComplex( GDALDataType );
-const char CPL_DLL *GDALGetDataTypeName( GDALDataType );
-GDALDataType CPL_DLL GDALGetDataTypeByName( const char * );
-GDALDataType CPL_DLL GDALDataTypeUnion( GDALDataType, GDALDataType );
+int CPL_DLL CPL_STDCALL GDALGetDataTypeSize( GDALDataType );
+int CPL_DLL CPL_STDCALL GDALDataTypeIsComplex( GDALDataType );
+const char CPL_DLL * CPL_STDCALL GDALGetDataTypeName( GDALDataType );
+GDALDataType CPL_DLL CPL_STDCALL GDALGetDataTypeByName( const char * );
+GDALDataType CPL_DLL CPL_STDCALL GDALDataTypeUnion( GDALDataType, GDALDataType );
 
 /*! Flag indicating read/write, or read-only access to data. */
 typedef enum {
@@ -290,13 +293,13 @@ typedef void *GDALColorTableH;
 /*      Callback "progress" function.                                   */
 /* -------------------------------------------------------------------- */
 
-typedef int (*GDALProgressFunc)(double,const char *, void *);
-int CPL_DLL GDALDummyProgress( double, const char *, void *);
-int CPL_DLL GDALTermProgress( double, const char *, void *);
-int CPL_DLL GDALScaledProgress( double, const char *, void *);
-void CPL_DLL *GDALCreateScaledProgress( double, double,
+typedef int (CPL_STDCALL *GDALProgressFunc)(double,const char *, void *);
+int CPL_DLL CPL_STDCALL GDALDummyProgress( double, const char *, void *);
+int CPL_DLL CPL_STDCALL GDALTermProgress( double, const char *, void *);
+int CPL_DLL CPL_STDCALL GDALScaledProgress( double, const char *, void *);
+void CPL_DLL * CPL_STDCALL GDALCreateScaledProgress( double, double,
                                         GDALProgressFunc, void * );
-void CPL_DLL GDALDestroyScaledProgress( void * );
+void CPL_DLL CPL_STDCALL GDALDestroyScaledProgress( void * );
 
 /* ==================================================================== */
 /*      Registration/driver related.                                    */
@@ -320,30 +323,32 @@ typedef struct {
 #define GDAL_DCAP_CREATE     "DCAP_CREATE"
 #define GDAL_DCAP_CREATECOPY "DCAP_CREATECOPY"
 
-void CPL_DLL GDALAllRegister( void );
+void CPL_DLL CPL_STDCALL GDALAllRegister( void );
 
-GDALDatasetH CPL_DLL GDALCreate( GDALDriverH hDriver,
+GDALDatasetH CPL_DLL CPL_STDCALL GDALCreate( GDALDriverH hDriver,
                                  const char *, int, int, int, GDALDataType,
                                  char ** );
-GDALDatasetH CPL_DLL GDALCreateCopy( GDALDriverH, const char *, GDALDatasetH,
-                                     int, char **, GDALProgressFunc, void * );
+GDALDatasetH CPL_DLL CPL_STDCALL
+GDALCreateCopy( GDALDriverH, const char *, GDALDatasetH,
+                int, char **, GDALProgressFunc, void * );
 
-GDALDatasetH CPL_DLL GDALOpen( const char *pszFilename, GDALAccess eAccess );
-GDALDatasetH CPL_DLL GDALOpenShared( const char *, GDALAccess );
-int          CPL_DLL GDALDumpOpenDatasets( FILE * );
+GDALDatasetH CPL_DLL CPL_STDCALL
+GDALOpen( const char *pszFilename, GDALAccess eAccess );
+GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess );
+int          CPL_DLL CPL_STDCALL GDALDumpOpenDatasets( FILE * );
 
-GDALDriverH CPL_DLL GDALGetDriverByName( const char * );
-int CPL_DLL         GDALGetDriverCount();
-GDALDriverH CPL_DLL GDALGetDriver( int );
-int         CPL_DLL GDALRegisterDriver( GDALDriverH );
-void        CPL_DLL GDALDeregisterDriver( GDALDriverH );
-void        CPL_DLL GDALDestroyDriverManager( void );
-CPLErr      CPL_DLL GDALDeleteDataset( GDALDriverH, const char * );
+GDALDriverH CPL_DLL CPL_STDCALL GDALGetDriverByName( const char * );
+int CPL_DLL         CPL_STDCALL GDALGetDriverCount();
+GDALDriverH CPL_DLL CPL_STDCALL GDALGetDriver( int );
+int         CPL_DLL CPL_STDCALL GDALRegisterDriver( GDALDriverH );
+void        CPL_DLL CPL_STDCALL GDALDeregisterDriver( GDALDriverH );
+void        CPL_DLL CPL_STDCALL GDALDestroyDriverManager( void );
+CPLErr      CPL_DLL CPL_STDCALL GDALDeleteDataset( GDALDriverH, const char * );
 
 /* The following are deprecated */
-const char CPL_DLL *GDALGetDriverShortName( GDALDriverH );
-const char CPL_DLL *GDALGetDriverLongName( GDALDriverH );
-const char CPL_DLL *GDALGetDriverHelpTopic( GDALDriverH );
+const char CPL_DLL * CPL_STDCALL GDALGetDriverShortName( GDALDriverH );
+const char CPL_DLL * CPL_STDCALL GDALGetDriverLongName( GDALDriverH );
+const char CPL_DLL * CPL_STDCALL GDALGetDriverHelpTopic( GDALDriverH );
 
 /* ==================================================================== */
 /*      GDAL_GCP                                                        */
@@ -373,139 +378,146 @@ typedef struct
     double      dfGCPZ;
 } GDAL_GCP;
 
-void CPL_DLL GDALInitGCPs( int, GDAL_GCP * );
-void CPL_DLL GDALDeinitGCPs( int, GDAL_GCP * );
-GDAL_GCP CPL_DLL *GDALDuplicateGCPs( int, const GDAL_GCP * );
+void CPL_DLL CPL_STDCALL GDALInitGCPs( int, GDAL_GCP * );
+void CPL_DLL CPL_STDCALL GDALDeinitGCPs( int, GDAL_GCP * );
+GDAL_GCP CPL_DLL * CPL_STDCALL GDALDuplicateGCPs( int, const GDAL_GCP * );
 
-int CPL_DLL GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs, 
-                                    double *padfGeoTransform, int bApproxOK ); 
-int CPL_DLL GDALInvGeoTransform( double *padfGeoTransformIn, 
-                                 double *padfInvGeoTransformOut );
-void CPL_DLL GDALApplyGeoTransform( double *, double, double, 
-                                    double *, double * );
+int CPL_DLL CPL_STDCALL
+GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs, 
+                        double *padfGeoTransform, int bApproxOK ); 
+int CPL_DLL CPL_STDCALL
+GDALInvGeoTransform( double *padfGeoTransformIn, 
+                     double *padfInvGeoTransformOut );
+void CPL_DLL CPL_STDCALL GDALApplyGeoTransform( double *, double, double, 
+                                                double *, double * );
 
 /* ==================================================================== */
 /*      major objects (dataset, and, driver, drivermanager).            */
 /* ==================================================================== */
 
-char CPL_DLL  **GDALGetMetadata( GDALMajorObjectH, const char * );
-CPLErr CPL_DLL  GDALSetMetadata( GDALMajorObjectH, char **,
-                                 const char * );
-const char CPL_DLL *GDALGetMetadataItem( GDALMajorObjectH, const char *, 
-                                         const char * );
-CPLErr CPL_DLL  GDALSetMetadataItem( GDALMajorObjectH,
-                                     const char *, const char *,
-                                     const char * );
-const char CPL_DLL *GDALGetDescription( GDALMajorObjectH );
-void       CPL_DLL  GDALSetDescription( GDALMajorObjectH, const char * );
+char CPL_DLL  ** CPL_STDCALL GDALGetMetadata( GDALMajorObjectH, const char * );
+CPLErr CPL_DLL CPL_STDCALL GDALSetMetadata( GDALMajorObjectH, char **,
+                                            const char * );
+const char CPL_DLL * CPL_STDCALL 
+GDALGetMetadataItem( GDALMajorObjectH, const char *, const char * );
+CPLErr CPL_DLL CPL_STDCALL
+GDALSetMetadataItem( GDALMajorObjectH, const char *, const char *,
+                     const char * );
+const char CPL_DLL * CPL_STDCALL GDALGetDescription( GDALMajorObjectH );
+void CPL_DLL CPL_STDCALL GDALSetDescription( GDALMajorObjectH, const char * );
 
 /* ==================================================================== */
 /*      GDALDataset class ... normally this represents one file.        */
 /* ==================================================================== */
 
-GDALDriverH CPL_DLL GDALGetDatasetDriver( GDALDatasetH );
-void CPL_DLL   GDALClose( GDALDatasetH );
-int CPL_DLL     GDALGetRasterXSize( GDALDatasetH );
-int CPL_DLL     GDALGetRasterYSize( GDALDatasetH );
-int CPL_DLL     GDALGetRasterCount( GDALDatasetH );
-GDALRasterBandH CPL_DLL GDALGetRasterBand( GDALDatasetH, int );
+GDALDriverH CPL_DLL CPL_STDCALL GDALGetDatasetDriver( GDALDatasetH );
+void CPL_DLL CPL_STDCALL   GDALClose( GDALDatasetH );
+int CPL_DLL CPL_STDCALL     GDALGetRasterXSize( GDALDatasetH );
+int CPL_DLL CPL_STDCALL     GDALGetRasterYSize( GDALDatasetH );
+int CPL_DLL CPL_STDCALL     GDALGetRasterCount( GDALDatasetH );
+GDALRasterBandH CPL_DLL CPL_STDCALL GDALGetRasterBand( GDALDatasetH, int );
 
-CPLErr CPL_DLL  GDALAddBand( GDALDatasetH hDS, GDALDataType eType, 
+CPLErr CPL_DLL  CPL_STDCALL GDALAddBand( GDALDatasetH hDS, GDALDataType eType, 
                              char **papszOptions );
 
-CPLErr CPL_DLL GDALDatasetRasterIO( 
+CPLErr CPL_DLL CPL_STDCALL GDALDatasetRasterIO( 
     GDALDatasetH hDS, GDALRWFlag eRWFlag,
     int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
     void * pBuffer, int nBXSize, int nBYSize, GDALDataType eBDataType,
     int nBandCount, int *panBandCount, 
     int nPixelSpace, int nLineSpace, int nBandSpace);
 
-CPLErr CPL_DLL GDALDatasetAdviseRead( GDALDatasetH hDS, 
+CPLErr CPL_DLL CPL_STDCALL GDALDatasetAdviseRead( GDALDatasetH hDS, 
     int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
     int nBXSize, int nBYSize, GDALDataType eBDataType,
     int nBandCount, int *panBandCount, char **papszOptions );
 
-const char CPL_DLL *GDALGetProjectionRef( GDALDatasetH );
-CPLErr CPL_DLL  GDALSetProjection( GDALDatasetH, const char * );
-CPLErr CPL_DLL  GDALGetGeoTransform( GDALDatasetH, double * );
-CPLErr CPL_DLL  GDALSetGeoTransform( GDALDatasetH, double * );
+const char CPL_DLL * CPL_STDCALL GDALGetProjectionRef( GDALDatasetH );
+CPLErr CPL_DLL CPL_STDCALL GDALSetProjection( GDALDatasetH, const char * );
+CPLErr CPL_DLL CPL_STDCALL GDALGetGeoTransform( GDALDatasetH, double * );
+CPLErr CPL_DLL CPL_STDCALL GDALSetGeoTransform( GDALDatasetH, double * );
 
-int CPL_DLL     GDALGetGCPCount( GDALDatasetH );
-const char CPL_DLL *GDALGetGCPProjection( GDALDatasetH );
-const GDAL_GCP CPL_DLL *GDALGetGCPs( GDALDatasetH );
-CPLErr CPL_DLL  GDALSetGCPs( GDALDatasetH, int, const GDAL_GCP *,
-                             const char * );
+int CPL_DLL CPL_STDCALL  GDALGetGCPCount( GDALDatasetH );
+const char CPL_DLL * CPL_STDCALL GDALGetGCPProjection( GDALDatasetH );
+const GDAL_GCP CPL_DLL * CPL_STDCALL GDALGetGCPs( GDALDatasetH );
+CPLErr CPL_DLL CPL_STDCALL GDALSetGCPs( GDALDatasetH, int, const GDAL_GCP *,
+                                        const char * );
 
-void CPL_DLL   *GDALGetInternalHandle( GDALDatasetH, const char * );
-int CPL_DLL     GDALReferenceDataset( GDALDatasetH );
-int CPL_DLL     GDALDereferenceDataset( GDALDatasetH );
+void CPL_DLL * CPL_STDCALL GDALGetInternalHandle( GDALDatasetH, const char * );
+int CPL_DLL CPL_STDCALL GDALReferenceDataset( GDALDatasetH );
+int CPL_DLL CPL_STDCALL GDALDereferenceDataset( GDALDatasetH );
 
-CPLErr CPL_DLL  GDALBuildOverviews( GDALDatasetH, const char *, int, int *,
-                                    int, int *, GDALProgressFunc, void * );
-void CPL_DLL    GDALGetOpenDatasets( GDALDatasetH ***hDS, int *pnCount );
-int CPL_DLL     GDALGetAccess( GDALDatasetH hDS );
-void CPL_DLL    GDALFlushCache( GDALDatasetH hDS );
+CPLErr CPL_DLL CPL_STDCALL
+GDALBuildOverviews( GDALDatasetH, const char *, int, int *,
+                    int, int *, GDALProgressFunc, void * );
+void CPL_DLL CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH ***hDS, int *pnCount );
+int CPL_DLL CPL_STDCALL GDALGetAccess( GDALDatasetH hDS );
+void CPL_DLL CPL_STDCALL GDALFlushCache( GDALDatasetH hDS );
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
 /* ==================================================================== */
 
-GDALDataType CPL_DLL GDALGetRasterDataType( GDALRasterBandH );
-void CPL_DLL    GDALGetBlockSize( GDALRasterBandH,
-                                  int * pnXSize, int * pnYSize );
+GDALDataType CPL_DLL CPL_STDCALL GDALGetRasterDataType( GDALRasterBandH );
+void CPL_DLL CPL_STDCALL 
+GDALGetBlockSize( GDALRasterBandH, int * pnXSize, int * pnYSize );
 
-CPLErr CPL_DLL GDALRasterAdviseRead( GDALRasterBandH hRB, 
+CPLErr CPL_DLL CPL_STDCALL GDALRasterAdviseRead( GDALRasterBandH hRB, 
     int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
     int nBXSize, int nBYSize, GDALDataType eBDataType, char **papszOptions );
 
-CPLErr CPL_DLL GDALRasterIO( GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
-                              int nDSXOff, int nDSYOff,
-                              int nDSXSize, int nDSYSize,
-                              void * pBuffer, int nBXSize, int nBYSize,
-                              GDALDataType eBDataType,
-                              int nPixelSpace, int nLineSpace );
-CPLErr CPL_DLL GDALReadBlock( GDALRasterBandH, int, int, void * );
-CPLErr CPL_DLL GDALWriteBlock( GDALRasterBandH, int, int, void * );
-int CPL_DLL GDALGetRasterBandXSize( GDALRasterBandH );
-int CPL_DLL GDALGetRasterBandYSize( GDALRasterBandH );
-char CPL_DLL  **GDALGetRasterMetadata( GDALRasterBandH );
-GDALAccess CPL_DLL GDALGetRasterAccess( GDALRasterBandH );
-int CPL_DLL GDALGetBandNumber( GDALRasterBandH );
-GDALDatasetH CPL_DLL GDALGetBandDataset( GDALRasterBandH );
+CPLErr CPL_DLL CPL_STDCALL 
+GDALRasterIO( GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
+              int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
+              void * pBuffer, int nBXSize, int nBYSize,GDALDataType eBDataType,
+              int nPixelSpace, int nLineSpace );
+CPLErr CPL_DLL CPL_STDCALL GDALReadBlock( GDALRasterBandH, int, int, void * );
+CPLErr CPL_DLL CPL_STDCALL GDALWriteBlock( GDALRasterBandH, int, int, void * );
+int CPL_DLL CPL_STDCALL GDALGetRasterBandXSize( GDALRasterBandH );
+int CPL_DLL CPL_STDCALL GDALGetRasterBandYSize( GDALRasterBandH );
+char CPL_DLL ** CPL_STDCALL GDALGetRasterMetadata( GDALRasterBandH );
+GDALAccess CPL_DLL CPL_STDCALL GDALGetRasterAccess( GDALRasterBandH );
+int CPL_DLL CPL_STDCALL GDALGetBandNumber( GDALRasterBandH );
+GDALDatasetH CPL_DLL CPL_STDCALL GDALGetBandDataset( GDALRasterBandH );
 
-GDALColorInterp CPL_DLL GDALGetRasterColorInterpretation( GDALRasterBandH );
-CPLErr CPL_DLL GDALSetRasterColorInterpretation( GDALRasterBandH,
-                                                 GDALColorInterp );
-GDALColorTableH CPL_DLL GDALGetRasterColorTable( GDALRasterBandH );
-CPLErr CPL_DLL GDALSetRasterColorTable( GDALRasterBandH, GDALColorTableH );
-int CPL_DLL     GDALHasArbitraryOverviews( GDALRasterBandH );
-int CPL_DLL             GDALGetOverviewCount( GDALRasterBandH );
-GDALRasterBandH CPL_DLL GDALGetOverview( GDALRasterBandH, int );
-double CPL_DLL GDALGetRasterNoDataValue( GDALRasterBandH, int * );
-CPLErr CPL_DLL GDALSetRasterNoDataValue( GDALRasterBandH, double );
-char CPL_DLL ** GDALGetRasterCategoryNames( GDALRasterBandH );
-CPLErr CPL_DLL GDALSetRasterCategoryNames( GDALRasterBandH, char ** );
-double CPL_DLL GDALGetRasterMinimum( GDALRasterBandH, int *pbSuccess );
-double CPL_DLL GDALGetRasterMaximum( GDALRasterBandH, int *pbSuccess );
-const char CPL_DLL *GDALGetRasterUnitType( GDALRasterBandH );
-double CPL_DLL GDALGetRasterOffset( GDALRasterBandH, int *pbSuccess );
-CPLErr CPL_DLL GDALSetRasterOffset( GDALRasterBandH hBand, double dfNewOffset);
-double CPL_DLL GDALGetRasterScale( GDALRasterBandH, int *pbSuccess );
-CPLErr CPL_DLL GDALSetRasterScale( GDALRasterBandH hBand, double dfNewOffset );
-void CPL_DLL GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
-                                      double adfMinMax[2] );
-CPLErr CPL_DLL GDALFlushRasterCache( GDALRasterBandH hBand );
-CPLErr CPL_DLL GDALGetRasterHistogram( GDALRasterBandH hBand,
+GDALColorInterp CPL_DLL CPL_STDCALL
+GDALGetRasterColorInterpretation( GDALRasterBandH );
+CPLErr CPL_DLL CPL_STDCALL 
+GDALSetRasterColorInterpretation( GDALRasterBandH, GDALColorInterp );
+GDALColorTableH CPL_DLL CPL_STDCALL GDALGetRasterColorTable( GDALRasterBandH );
+CPLErr CPL_DLL CPL_STDCALL GDALSetRasterColorTable( GDALRasterBandH, GDALColorTableH );
+int CPL_DLL CPL_STDCALL GDALHasArbitraryOverviews( GDALRasterBandH );
+int CPL_DLL CPL_STDCALL GDALGetOverviewCount( GDALRasterBandH );
+GDALRasterBandH CPL_DLL CPL_STDCALL GDALGetOverview( GDALRasterBandH, int );
+double CPL_DLL CPL_STDCALL GDALGetRasterNoDataValue( GDALRasterBandH, int * );
+CPLErr CPL_DLL CPL_STDCALL GDALSetRasterNoDataValue( GDALRasterBandH, double );
+char CPL_DLL ** CPL_STDCALL GDALGetRasterCategoryNames( GDALRasterBandH );
+CPLErr CPL_DLL CPL_STDCALL GDALSetRasterCategoryNames( GDALRasterBandH, char ** );
+double CPL_DLL CPL_STDCALL GDALGetRasterMinimum( GDALRasterBandH, int *pbSuccess );
+double CPL_DLL CPL_STDCALL GDALGetRasterMaximum( GDALRasterBandH, int *pbSuccess );
+const char CPL_DLL * CPL_STDCALL GDALGetRasterUnitType( GDALRasterBandH );
+double CPL_DLL CPL_STDCALL GDALGetRasterOffset( GDALRasterBandH, int *pbSuccess );
+CPLErr CPL_DLL CPL_STDCALL GDALSetRasterOffset( GDALRasterBandH hBand, double dfNewOffset);
+double CPL_DLL CPL_STDCALL GDALGetRasterScale( GDALRasterBandH, int *pbSuccess );
+CPLErr CPL_DLL CPL_STDCALL GDALSetRasterScale( GDALRasterBandH hBand, double dfNewOffset );
+void CPL_DLL CPL_STDCALL 
+GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
+                         double adfMinMax[2] );
+CPLErr CPL_DLL CPL_STDCALL GDALFlushRasterCache( GDALRasterBandH hBand );
+CPLErr CPL_DLL CPL_STDCALL GDALGetRasterHistogram( GDALRasterBandH hBand,
                                        double dfMin, double dfMax,
                                        int nBuckets, int *panHistogram,
                                        int bIncludeOutOfRange, int bApproxOK,
                                        GDALProgressFunc pfnProgress,
                                        void * pProgressData );
-int CPL_DLL GDALGetRandomRasterSample( GDALRasterBandH, int, float * );
-GDALRasterBandH CPL_DLL GDALGetRasterSampleOverview( GDALRasterBandH, int );
-CPLErr CPL_DLL GDALFillRaster( GDALRasterBandH hBand, double dfRealValue,
-		       double dfImaginaryValue );
-CPLErr CPL_DLL GDALComputeBandStats( GDALRasterBandH hBand, int nSampleStep, 
+int CPL_DLL CPL_STDCALL
+GDALGetRandomRasterSample( GDALRasterBandH, int, float * );
+GDALRasterBandH CPL_DLL CPL_STDCALL
+GDALGetRasterSampleOverview( GDALRasterBandH, int );
+CPLErr CPL_DLL CPL_STDCALL GDALFillRaster( GDALRasterBandH hBand,
+                          double dfRealValue, double dfImaginaryValue );
+CPLErr CPL_DLL CPL_STDCALL
+GDALComputeBandStats( GDALRasterBandH hBand, int nSampleStep, 
                              double *pdfMean, double *pdfStdDev, 
                              GDALProgressFunc pfnProgress,
                              void *pProgressData );
@@ -518,30 +530,30 @@ CPLErr CPL_DLL  GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
 /* -------------------------------------------------------------------- */
 /*      Helper functions.                                               */
 /* -------------------------------------------------------------------- */
-int CPL_DLL GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, 
+int CPL_DLL CPL_STDCALL GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, 
                                          int nOptions );
-void CPL_DLL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
+void CPL_DLL CPL_STDCALL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
                             int nWordSkip );
-void CPL_DLL
+void CPL_DLL CPL_STDCALL 
     GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
                    void * pDstData, GDALDataType eDstType, int nDstPixelOffset,
                    int nWordCount );
 
-int CPL_DLL GDALReadWorldFile( const char *pszBaseFilename, 
+int CPL_DLL CPL_STDCALL GDALReadWorldFile( const char *pszBaseFilename, 
                        const char *pszExtension, 
                        double * padfGeoTransform );
-int CPL_DLL GDALWriteWorldFile( const char *pszBaseFilename, 
+int CPL_DLL CPL_STDCALL GDALWriteWorldFile( const char *pszBaseFilename, 
                        const char *pszExtension, 
                        double * padfGeoTransform );
-int CPL_DLL GDALReadTabFile( const char *pszBaseFilename, 
+int CPL_DLL CPL_STDCALL GDALReadTabFile( const char *pszBaseFilename, 
                              double *padfGeoTransform, char **ppszWKT,
                              int *pnGCPCount, GDAL_GCP **ppasGCPs );
 
-const char CPL_DLL *GDALDecToDMS( double, const char *, int );
-double CPL_DLL GDALPackedDMSToDec( double );
-double CPL_DLL GDALDecToPackedDMS( double );
+const char CPL_DLL * CPL_STDCALL GDALDecToDMS( double, const char *, int );
+double CPL_DLL CPL_STDCALL GDALPackedDMSToDec( double );
+double CPL_DLL CPL_STDCALL GDALDecToPackedDMS( double );
 
-const char CPL_DLL *GDALVersionInfo( const char * );
+const char CPL_DLL * CPL_STDCALL GDALVersionInfo( const char * );
 
 typedef struct { 
     double      dfLINE_OFF;
@@ -568,7 +580,7 @@ typedef struct {
 
 } GDALRPCInfo;
 
-int CPL_DLL GDALExtractRPCInfo( char **, GDALRPCInfo * );
+int CPL_DLL CPL_STDCALL GDALExtractRPCInfo( char **, GDALRPCInfo * );
 
 /* ==================================================================== */
 /*      Color tables.                                                   */
@@ -589,23 +601,23 @@ typedef struct
     short      c4;      
 } GDALColorEntry;
 
-GDALColorTableH CPL_DLL GDALCreateColorTable( GDALPaletteInterp );
-void CPL_DLL            GDALDestroyColorTable( GDALColorTableH );
-GDALColorTableH CPL_DLL GDALCloneColorTable( GDALColorTableH );
-GDALPaletteInterp CPL_DLL GDALGetPaletteInterpretation( GDALColorTableH );
-int CPL_DLL             GDALGetColorEntryCount( GDALColorTableH );
-const GDALColorEntry CPL_DLL *GDALGetColorEntry( GDALColorTableH, int );
-int CPL_DLL GDALGetColorEntryAsRGB( GDALColorTableH, int, GDALColorEntry *);
-void CPL_DLL GDALSetColorEntry( GDALColorTableH, int, const GDALColorEntry * );
+GDALColorTableH CPL_DLL CPL_STDCALL GDALCreateColorTable( GDALPaletteInterp );
+void CPL_DLL CPL_STDCALL GDALDestroyColorTable( GDALColorTableH );
+GDALColorTableH CPL_DLL CPL_STDCALL GDALCloneColorTable( GDALColorTableH );
+GDALPaletteInterp CPL_DLL CPL_STDCALL GDALGetPaletteInterpretation( GDALColorTableH );
+int CPL_DLL CPL_STDCALL GDALGetColorEntryCount( GDALColorTableH );
+const GDALColorEntry CPL_DLL * CPL_STDCALL GDALGetColorEntry( GDALColorTableH, int );
+int CPL_DLL CPL_STDCALL GDALGetColorEntryAsRGB( GDALColorTableH, int, GDALColorEntry *);
+void CPL_DLL CPL_STDCALL GDALSetColorEntry( GDALColorTableH, int, const GDALColorEntry * );
 
 /* ==================================================================== */
 /*      GDAL Cache Management                                           */
 /* ==================================================================== */
 
-void CPL_DLL GDALSetCacheMax( int nBytes );
-int CPL_DLL GDALGetCacheMax();
-int CPL_DLL GDALGetCacheUsed();
-int CPL_DLL GDALFlushCacheBlock();
+void CPL_DLL CPL_STDCALL GDALSetCacheMax( int nBytes );
+int CPL_DLL CPL_STDCALL GDALGetCacheMax();
+int CPL_DLL CPL_STDCALL GDALGetCacheUsed();
+int CPL_DLL CPL_STDCALL GDALFlushCacheBlock();
 
 CPL_C_END
 

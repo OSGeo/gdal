@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/04/04 15:24:48  fwarmerdam
+ * Most C entry points now CPL_STDCALL
+ *
  * Revision 1.7  2003/07/26 01:36:28  warmerda
  * Implement support for forwarding non-default domains to the SetMetadata()
  * method in SetMetadataItem().
@@ -112,7 +115,7 @@ const char *GDALMajorObject::GetDescription() const
  * @see GDALMajorObject::GetDescription()
  */ 
 
-const char *GDALGetDescription( GDALMajorObjectH hObject )
+const char * CPL_STDCALL GDALGetDescription( GDALMajorObjectH hObject )
 
 {
     return ((GDALMajorObject *) hObject)->GetDescription();
@@ -150,7 +153,7 @@ void GDALMajorObject::SetDescription( const char * pszNewDesc )
  * @see GDALMajorObject::SetDescription()
  */ 
 
-void GDALSetDescription( GDALMajorObjectH hObject, const char *pszNewDesc )
+void CPL_STDCALL GDALSetDescription( GDALMajorObjectH hObject, const char *pszNewDesc )
 
 {
     ((GDALMajorObject *) hObject)->SetDescription( pszNewDesc );
@@ -195,7 +198,8 @@ char **GDALMajorObject::GetMetadata( const char * pszDomain )
  * @see GDALMajorObject::GetMetadata()
  */ 
 
-char **GDALGetMetadata( GDALMajorObjectH hObject, const char * pszDomain )
+char ** CPL_STDCALL 
+GDALGetMetadata( GDALMajorObjectH hObject, const char * pszDomain )
 
 {
     return ((GDALMajorObject *) hObject)->GetMetadata(pszDomain);
@@ -244,8 +248,9 @@ CPLErr GDALMajorObject::SetMetadata( char ** papszMetadataIn,
  * @see GDALMajorObject::SetMetadata()
  */ 
 
-CPLErr GDALSetMetadata( GDALMajorObjectH hObject, char **papszMD, 
-                        const char *pszDomain )
+CPLErr CPL_STDCALL 
+GDALSetMetadata( GDALMajorObjectH hObject, char **papszMD, 
+                 const char *pszDomain )
 
 {
     return ((GDALMajorObject *) hObject)->SetMetadata( papszMD, pszDomain );
@@ -285,7 +290,7 @@ const char *GDALMajorObject::GetMetadataItem( const char * pszName,
  * @see GDALMajorObject::GetMetadataItem()
  */ 
 
-const char *GDALGetMetadataItem( GDALMajorObjectH hObject, 
+const char * CPL_STDCALL GDALGetMetadataItem( GDALMajorObjectH hObject, 
                                  const char *pszName, 
                                  const char *pszDomain )
 
@@ -351,9 +356,10 @@ CPLErr GDALMajorObject::SetMetadataItem( const char * pszName,
  * @see GDALMajorObject::SetMetadataItem()
  */ 
 
-CPLErr GDALSetMetadataItem( GDALMajorObjectH hObject, 
-                            const char *pszName, const char *pszValue, 
-                            const char *pszDomain )
+CPLErr CPL_STDCALL 
+GDALSetMetadataItem( GDALMajorObjectH hObject, 
+                     const char *pszName, const char *pszValue, 
+                     const char *pszDomain )
 
 {
     return ((GDALMajorObject *) hObject)->SetMetadataItem( pszName, pszValue,

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2005/04/04 15:24:48  fwarmerdam
+ * Most C entry points now CPL_STDCALL
+ *
  * Revision 1.46  2005/03/09 17:06:48  fwarmerdam
  * Added use of BlockBasedRasterIO() if bForceCachedIO turned on.  untested.
  *
@@ -75,70 +78,6 @@
  *
  * Revision 1.31  2003/01/28 16:07:31  warmerda
  * improved documentation
- *
- * Revision 1.30  2002/12/18 15:17:05  warmerda
- * added errors in some unimplemented methods
- *
- * Revision 1.29  2002/09/06 01:29:55  warmerda
- * added C entry points for GetAccess() and GetOpenDatasets()
- *
- * Revision 1.28  2002/07/09 20:33:12  warmerda
- * expand tabs
- *
- * Revision 1.27  2002/05/28 18:56:22  warmerda
- * added shared dataset concept
- *
- * Revision 1.26  2001/11/16 21:36:01  warmerda
- * added the AddBand() method on GDALDataset
- *
- * Revision 1.25  2001/10/18 14:35:22  warmerda
- * avoid conflicts between parameters and member data
- *
- * Revision 1.24  2001/10/17 21:47:02  warmerda
- * added SetGCPs() on GDALDataset
- *
- * Revision 1.23  2001/07/18 04:04:30  warmerda
- * added CPL_CVSID
- *
- * Revision 1.22  2001/01/10 22:24:37  warmerda
- * Patched GDALDataset::FlushCache() to recover gracefully if papoBands
- * doesn't exist yet matching nBands.
- *
- * Revision 1.21  2000/10/06 15:27:13  warmerda
- * default bands to same access as dataset in SetBand()
- *
- * Revision 1.20  2000/08/09 16:26:00  warmerda
- * debug message on dataset cleanup
- *
- * Revision 1.19  2000/07/11 14:35:43  warmerda
- * added documentation
- *
- * Revision 1.18  2000/06/27 16:46:56  warmerda
- * default to using dummy progress func
- *
- * Revision 1.17  2000/06/26 21:44:50  warmerda
- * make progress func save for overviews
- *
- * Revision 1.16  2000/06/26 18:47:31  warmerda
- * added GDALBuildOverviews
- *
- * Revision 1.15  2000/04/21 21:56:23  warmerda
- * move metadata to GDALMajorObject, added BuildOverviews
- *
- * Revision 1.14  2000/03/31 13:42:06  warmerda
- * added gcp support methods
- *
- * Revision 1.13  2000/03/23 16:53:55  warmerda
- * default geotransform is 0,1,0,0,0,1
- *
- * Revision 1.12  2000/03/06 21:50:10  warmerda
- * fixed bug with setting nBands
- *
- * Revision 1.11  2000/03/06 02:20:56  warmerda
- * added reference counting
- *
- * Revision 1.10  2000/02/28 16:34:49  warmerda
- * set the nRasterX/YSize in bands
  */
 
 #include "gdal_priv.h"
@@ -289,7 +228,7 @@ void GDALDataset::FlushCache()
  * @see GDALDataset::FlushCache().
  */
 
-void GDALFlushCache( GDALDatasetH hDS )
+void CPL_STDCALL GDALFlushCache( GDALDatasetH hDS )
 
 {
     ((GDALDataset *) hDS)->FlushCache();
@@ -420,7 +359,7 @@ CPLErr GDALDataset::AddBand( GDALDataType eType, char ** papszOptions )
  * @see GDALDataset::AddBand().
  */
 
-CPLErr GDALAddBand( GDALDatasetH hDataset, 
+CPLErr CPL_STDCALL GDALAddBand( GDALDatasetH hDataset, 
                     GDALDataType eType, char **papszOptions )
 
 {
@@ -504,7 +443,7 @@ int GDALDataset::GetRasterXSize()
  * @see GDALDataset::GetRasterXSize().
  */
 
-int GDALGetRasterXSize( GDALDatasetH hDataset )
+int CPL_STDCALL GDALGetRasterXSize( GDALDatasetH hDataset )
 
 {
     return ((GDALDataset *) hDataset)->GetRasterXSize();
@@ -539,7 +478,7 @@ int GDALDataset::GetRasterYSize()
  * @see GDALDataset::GetRasterYSize().
  */
 
-int GDALGetRasterYSize( GDALDatasetH hDataset )
+int CPL_STDCALL GDALGetRasterYSize( GDALDatasetH hDataset )
 
 {
     return ((GDALDataset *) hDataset)->GetRasterYSize();
@@ -583,7 +522,7 @@ GDALRasterBand * GDALDataset::GetRasterBand( int nBandId )
  * @see GDALDataset::GetRasterBand().
  */
 
-GDALRasterBandH GDALGetRasterBand( GDALDatasetH hDS, int nBandId )
+GDALRasterBandH CPL_STDCALL GDALGetRasterBand( GDALDatasetH hDS, int nBandId )
 
 {
     return( (GDALRasterBandH) ((GDALDataset *) hDS)->GetRasterBand(nBandId) );
@@ -615,7 +554,7 @@ int GDALDataset::GetRasterCount()
  * @see GDALDataset::GetRasterCount().
  */
 
-int GDALGetRasterCount( GDALDatasetH hDS )
+int CPL_STDCALL GDALGetRasterCount( GDALDatasetH hDS )
 
 {
     return( ((GDALDataset *) hDS)->GetRasterCount() );
@@ -657,7 +596,7 @@ const char *GDALDataset::GetProjectionRef()
  * @see GDALDataset::GetProjectionRef()
  */
 
-const char *GDALGetProjectionRef( GDALDatasetH hDS )
+const char * CPL_STDCALL GDALGetProjectionRef( GDALDatasetH hDS )
 
 {
     return( ((GDALDataset *) hDS)->GetProjectionRef() );
@@ -698,7 +637,7 @@ CPLErr GDALDataset::SetProjection( const char * )
  * @see GDALDataset::SetProjection()
  */
 
-CPLErr GDALSetProjection( GDALDatasetH hDS, const char * pszProjection )
+CPLErr CPL_STDCALL GDALSetProjection( GDALDatasetH hDS, const char * pszProjection )
 
 {
     return( ((GDALDataset *) hDS)->SetProjection(pszProjection) );
@@ -764,7 +703,7 @@ CPLErr GDALDataset::GetGeoTransform( double * padfTransform )
  * @see GDALDataset::GetGeoTransform()
  */
 
-CPLErr GDALGetGeoTransform( GDALDatasetH hDS, double * padfTransform )
+CPLErr CPL_STDCALL GDALGetGeoTransform( GDALDatasetH hDS, double * padfTransform )
 
 {
     return( ((GDALDataset *) hDS)->GetGeoTransform(padfTransform) );
@@ -806,7 +745,8 @@ CPLErr GDALDataset::SetGeoTransform( double * )
  * @see GDALDataset::SetGeoTransform()
  */
 
-CPLErr GDALSetGeoTransform( GDALDatasetH hDS, double * padfTransform )
+CPLErr CPL_STDCALL 
+GDALSetGeoTransform( GDALDatasetH hDS, double * padfTransform )
 
 {
     return( ((GDALDataset *) hDS)->SetGeoTransform(padfTransform) );
@@ -841,7 +781,8 @@ void *GDALDataset::GetInternalHandle( const char * )
  * @see GDALDataset::GetInternalHandle()
  */
 
-void *GDALGetInternalHandle( GDALDatasetH hDS, const char * pszRequest )
+void * CPL_STDCALL 
+GDALGetInternalHandle( GDALDatasetH hDS, const char * pszRequest )
 
 {
     return( ((GDALDataset *) hDS)->GetInternalHandle(pszRequest) );
@@ -874,7 +815,7 @@ GDALDriver * GDALDataset::GetDriver()
  * @see GDALDataset::GetDriver()
  */
 
-GDALDriverH GDALGetDatasetDriver( GDALDatasetH hDataset )
+GDALDriverH CPL_STDCALL GDALGetDatasetDriver( GDALDatasetH hDataset )
 
 {
     return (GDALDriverH) ((GDALDataset *) hDataset)->GetDriver();
@@ -908,7 +849,7 @@ int GDALDataset::Reference()
  * @see GDALDataset::Reference()
  */
 
-int GDALReferenceDataset( GDALDatasetH hDataset )
+int CPL_STDCALL GDALReferenceDataset( GDALDatasetH hDataset )
 
 {
     return ((GDALDataset *) hDataset)->Reference();
@@ -943,7 +884,7 @@ int GDALDataset::Dereference()
  * @see GDALDataset::Dereference()
  */
 
-int GDALDereferenceDataset( GDALDatasetH hDataset )
+int CPL_STDCALL GDALDereferenceDataset( GDALDatasetH hDataset )
 
 {
     return ((GDALDataset *) hDataset)->Dereference();
@@ -1007,7 +948,7 @@ int GDALDataset::GetGCPCount()
  * @see GDALDataset::GetGCPCount()
  */
 
-int GDALGetGCPCount( GDALDatasetH hDS )
+int CPL_STDCALL GDALGetGCPCount( GDALDatasetH hDS )
 
 {
     return ((GDALDataset *) hDS)->GetGCPCount();
@@ -1041,7 +982,7 @@ const char *GDALDataset::GetGCPProjection()
  * @see GDALDataset::GetGCPProjection()
  */
 
-const char *GDALGetGCPProjection( GDALDatasetH hDS )
+const char * CPL_STDCALL GDALGetGCPProjection( GDALDatasetH hDS )
 
 {
     return ((GDALDataset *) hDS)->GetGCPProjection();
@@ -1074,7 +1015,7 @@ const GDAL_GCP *GDALDataset::GetGCPs()
  * @see GDALDataset::GetGCPs()
  */
 
-const GDAL_GCP *GDALGetGCPs( GDALDatasetH hDS )
+const GDAL_GCP * CPL_STDCALL GDALGetGCPs( GDALDatasetH hDS )
 
 {
     return ((GDALDataset *) hDS)->GetGCPs();
@@ -1133,7 +1074,7 @@ CPLErr GDALDataset::SetGCPs( int nGCPCount,
  * @see GDALDataset::SetGCPs()
  */
 
-CPLErr GDALSetGCPs( GDALDatasetH hDS, int nGCPCount, 
+CPLErr CPL_STDCALL GDALSetGCPs( GDALDatasetH hDS, int nGCPCount, 
                     const GDAL_GCP *pasGCPList, 
                     const char *pszGCPProjection )
 
@@ -1216,7 +1157,7 @@ CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
  * @see GDALDataset::BuildOverviews()
  */
 
-CPLErr GDALBuildOverviews( GDALDatasetH hDataset,
+CPLErr CPL_STDCALL GDALBuildOverviews( GDALDatasetH hDataset,
                            const char *pszResampling, 
                            int nOverviews, int *panOverviewList, 
                            int nListBands, int *panBandList,
@@ -1502,13 +1443,14 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
  * @see GDALDataset::RasterIO()
  */
 
-CPLErr GDALDatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
-                            int nXOff, int nYOff, int nXSize, int nYSize,
-                            void * pData, int nBufXSize, int nBufYSize,
-                            GDALDataType eBufType,
-                            int nBandCount, int *panBandMap,
-                            int nPixelSpace, int nLineSpace, int nBandSpace )
-
+CPLErr CPL_STDCALL 							
+GDALDatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
+                     int nXOff, int nYOff, int nXSize, int nYSize,
+                     void * pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType,
+                     int nBandCount, int *panBandMap,
+                     int nPixelSpace, int nLineSpace, int nBandSpace )
+    
 {
     GDALDataset    *poDS = (GDALDataset *) hDS;
     
@@ -1548,7 +1490,7 @@ GDALDataset **GDALDataset::GetOpenDatasets( int *pnCount )
  * @see GDALDataset::GetOpenDatasets()
  */
 
-void GDALGetOpenDatasets( GDALDatasetH ***hDS, int *pnCount )
+void CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH ***hDS, int *pnCount )
 
 {
     *hDS = (GDALDatasetH **) GDALDataset::GetOpenDatasets( pnCount);
@@ -1562,7 +1504,7 @@ void GDALGetOpenDatasets( GDALDatasetH ***hDS, int *pnCount )
  * @see GDALDataset::GetAccess()
  */
 
-int GDALGetAccess( GDALDatasetH hDS )
+int CPL_STDCALL GDALGetAccess( GDALDatasetH hDS )
 {
     return ((GDALDataset *) hDS)->GetAccess();
 }
@@ -1648,13 +1590,12 @@ CPLErr GDALDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
 /*                       GDALDatasetAdviseRead()                        */
 /************************************************************************/
 
-CPLErr GDALDatasetAdviseRead( GDALDatasetH hDS, 
-                              int nXOff, int nYOff, int nXSize, int nYSize,
-                              int nBufXSize, int nBufYSize, 
-                              GDALDataType eDT, 
-                              int nBandCount, int *panBandMap,
-                              char **papszOptions )
-
+CPLErr CPL_STDCALL 
+GDALDatasetAdviseRead( GDALDatasetH hDS, 
+                       int nXOff, int nYOff, int nXSize, int nYSize,
+                       int nBufXSize, int nBufYSize, GDALDataType eDT, 
+                       int nBandCount, int *panBandMap,char **papszOptions )
+    
 {
     return ((GDALDataset *) hDS)->AdviseRead( nXOff, nYOff, nXSize, nYSize, 
                                               nBufXSize, nBufYSize, eDT, 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/04/04 15:24:48  fwarmerdam
+ * Most C entry points now CPL_STDCALL
+ *
  * Revision 1.32  2005/03/16 11:01:10  lichun
  * in CreateCopy() the category names are copied as well
  *
@@ -175,11 +178,10 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
  * @see GDALDriver::Create()
  */
 
-GDALDatasetH CPL_DLL GDALCreate( GDALDriverH hDriver,
-                                 const char * pszFilename,
-                                 int nXSize, int nYSize, int nBands,
-                                 GDALDataType eBandType,
-                                 char ** papszOptions )
+GDALDatasetH CPL_DLL CPL_STDCALL 
+GDALCreate( GDALDriverH hDriver, const char * pszFilename,
+            int nXSize, int nYSize, int nBands, GDALDataType eBandType,
+            char ** papszOptions )
 
 {
     return( ((GDALDriver *) hDriver)->Create( pszFilename,
@@ -403,7 +405,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
  * @see GDALDriver::CreateCopy()
  */
 
-GDALDatasetH GDALCreateCopy( GDALDriverH hDriver, 
+GDALDatasetH CPL_STDCALL GDALCreateCopy( GDALDriverH hDriver, 
                              const char * pszFilename, 
                              GDALDatasetH hSrcDS, 
                              int bStrict, char ** papszOptions,
@@ -478,7 +480,7 @@ CPLErr GDALDriver::Delete( const char * pszFilename )
  * @see GDALDriver::Delete()
  */
 
-CPLErr GDALDeleteDataset( GDALDriverH hDriver, const char * pszFilename )
+CPLErr CPL_STDCALL GDALDeleteDataset( GDALDriverH hDriver, const char * pszFilename )
 
 {
     return ((GDALDriver *) hDriver)->Delete( pszFilename );
@@ -488,7 +490,7 @@ CPLErr GDALDeleteDataset( GDALDriverH hDriver, const char * pszFilename )
 /*                       GDALGetDriverShortName()                       */
 /************************************************************************/
 
-const char * GDALGetDriverShortName( GDALDriverH hDriver )
+const char * CPL_STDCALL GDALGetDriverShortName( GDALDriverH hDriver )
 
 {
     if( hDriver == NULL )
@@ -501,7 +503,7 @@ const char * GDALGetDriverShortName( GDALDriverH hDriver )
 /*                       GDALGetDriverLongName()                        */
 /************************************************************************/
 
-const char * GDALGetDriverLongName( GDALDriverH hDriver )
+const char * CPL_STDCALL GDALGetDriverLongName( GDALDriverH hDriver )
 
 {
     if( hDriver == NULL )
@@ -520,7 +522,7 @@ const char * GDALGetDriverLongName( GDALDriverH hDriver )
 /*                       GDALGetDriverHelpTopic()                       */
 /************************************************************************/
 
-const char * GDALGetDriverHelpTopic( GDALDriverH hDriver )
+const char * CPL_STDCALL GDALGetDriverHelpTopic( GDALDriverH hDriver )
 
 {
     if( hDriver == NULL )
