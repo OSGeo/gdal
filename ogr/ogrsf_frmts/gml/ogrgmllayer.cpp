@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2004/01/27 21:22:04  warmerda
+ * Escape strings written to GML file.
+ *
  * Revision 1.10  2003/12/02 18:43:03  warmerda
  * Removed unused variable.
  *
@@ -268,10 +271,16 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
         OGRFieldDefn *poField = poFeatureDefn->GetFieldDefn( iField );
 
         if( poFeature->IsFieldSet( iField ) )
+        {
+            char *pszEscaped = 
+                CPLEscapeString( poFeature->GetFieldAsString( iField ), 
+                                 -1, CPLES_XML );
+
             VSIFPrintf( fp, "      <%s>%s</%s>\n", 
-                        poField->GetNameRef(), 
-                        poFeature->GetFieldAsString( iField ), 
+                        poField->GetNameRef(), pszEscaped, 
                         poField->GetNameRef() );
+            CPLFree( pszEscaped );
+        }
     }
 
     // Write out Geometry - for now it isn't indented properly.
