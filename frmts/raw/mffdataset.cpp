@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/07/26 21:05:21  warmerda
+ * added support for reading tiled MFF files
+ *
  * Revision 1.9  2000/07/12 19:21:34  warmerda
  * fixed cleanup of GCPs
  *
@@ -99,6 +102,112 @@ class MFFDataset : public RawDataset
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
 };
+
+/************************************************************************/
+/* ==================================================================== */
+/*                            MFFTiledBand                              */
+/* ==================================================================== */
+/************************************************************************/
+
+class MFFTiledBand : public GDALRasterBand
+{
+    friend	MFFDataset;
+
+    FILE        *fpRaw;
+    int         bNative;
+
+  public:
+
+                   MFFTiledBand( MFFDataset *, int, FILE *, int, int, 
+                                 GDALDataType, int );
+                   ~MFFTiledBand();
+
+    virtual CPLErr IReadBlock( int, int, void * );
+};
+
+
+/************************************************************************/
+/*                            MFFTiledBand()                            */
+/************************************************************************/
+
+MFFTiledBand::MFFTiledBand( MFFDataset *poDS, int nBand, FILE *fp, 
+                            int nTileXSize, int nTileYSize, 
+                            GDALDataType eDataType, int bNative )
+
+{
+    this->poDS = poDS;
+    this->nBand = nBand;
+
+    this->eDataType = eDataType; 
+
+    this->bNative = bNative;
+
+    this->nBlockXSize = nTileXSize;
+    this->nBlockYSize = nTileYSize;
+
+    this->fpRaw = fp;
+}
+
+/************************************************************************/
+/*                           ~MFFTiledBand()                            */
+/************************************************************************/
+
+MFFTiledBand::~MFFTiledBand()
+
+{
+    VSIFClose( fpRaw );
+}
+
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr MFFTiledBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                 void * pImage )
+
+{
+    long    nOffset;
+    int     nTilesPerRow;
+    int     nWordSize, nBlockSize;
+
+    nTilesPerRow = (nRasterXSize + nBlockXSize - 1) / nBlockXSize;
+    nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
+    nBlockSize = nWordSize * nBlockXSize * nBlockYSize;
+
+    nOffset = nBlockSize * (nBlockXOff + nBlockYOff*nTilesPerRow);
+
+    if( VSIFSeek( fpRaw, nOffset, SEEK_SET ) == -1 
+        || VSIFRead( pImage, 1, nBlockSize, fpRaw ) < 1 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Read of tile %d/%d failed with fseek or fread error.", 
+                  nBlockXOff, nBlockYOff );
+        return CE_Failure;
+    }
+    
+    if( !bNative && nWordSize > 1 )
+    {
+        if( GDALDataTypeIsComplex( eDataType ) )
+        {
+            GDALSwapWords( pImage, nWordSize/2, nBlockXSize*nBlockYSize, 
+                           nWordSize );
+            GDALSwapWords( ((GByte *) pImage)+nWordSize/2, 
+                           nWordSize/2, nBlockXSize*nBlockYSize, nWordSize );
+        }
+        else
+            GDALSwapWords( pImage, nWordSize,
+                           nBlockXSize * nBlockYSize, nWordSize );
+    }
+    
+    return CE_None;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*				MFFDataset				*/
+/* ==================================================================== */
+/************************************************************************/
 
 /************************************************************************/
 /*                            MFFDataset()                             */
@@ -302,8 +411,10 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if( CSLFetchNameValue( papszHdrLines, "IMAGE_LINES" ) == NULL 
-        || CSLFetchNameValue(papszHdrLines,"LINE_SAMPLES") == NULL )
+    if( (CSLFetchNameValue( papszHdrLines, "IMAGE_LINES" ) == NULL 
+         || CSLFetchNameValue(papszHdrLines,"LINE_SAMPLES") == NULL)
+        && (CSLFetchNameValue( papszHdrLines, "no_rows" ) == NULL 
+            || CSLFetchNameValue(papszHdrLines,"no_columns") == NULL) )
     {
         CSLDestroy( papszHdrLines );
         return NULL;
@@ -322,21 +433,46 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Set some dataset wide information.                              */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue( papszHdrLines, "IMAGE_LINES" ) == NULL 
-        || CSLFetchNameValue( papszHdrLines, "LINE_SAMPLES" ) == NULL )
-        return NULL;
+    if( CSLFetchNameValue(papszHdrLines,"no_rows") != NULL
+        && CSLFetchNameValue(papszHdrLines,"no_columns") != NULL )
+    {
+        poDS->RasterInitialize( 
+            atoi(CSLFetchNameValue(papszHdrLines,"no_columns")),
+            atoi(CSLFetchNameValue(papszHdrLines,"no_rows")) );
+    }
+    else
+    {
+        poDS->RasterInitialize( 
+            atoi(CSLFetchNameValue(papszHdrLines,"LINE_SAMPLES")),
+            atoi(CSLFetchNameValue(papszHdrLines,"IMAGE_LINES")) );
+    }
 
-    poDS->RasterInitialize( 
-        atoi(CSLFetchNameValue(papszHdrLines,"LINE_SAMPLES")),
-        atoi(CSLFetchNameValue(papszHdrLines,"IMAGE_LINES")) );
-
-    if( CSLFetchNameValue( papszHdrLines, "BYTEORDER" ) != NULL )
+    if( CSLFetchNameValue( papszHdrLines, "BYTE_ORDER" ) != NULL )
     {
 #ifdef CPL_MSB
         bNative = EQUAL(CSLFetchNameValue(papszHdrLines,"BYTE_ORDER"),"MSB");
 #else
         bNative = EQUAL(CSLFetchNameValue(papszHdrLines,"BYTE_ORDER"),"LSB");
 #endif
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get some information specific to APP tiled files.               */
+/* -------------------------------------------------------------------- */
+    int bTiled, nTileXSize=0, nTileYSize=0;
+    const char *pszRefinedType = NULL;
+
+    pszRefinedType = CSLFetchNameValue(papszHdrLines, "type" );
+
+    bTiled = CSLFetchNameValue(papszHdrLines,"no_rows") != NULL;
+    if( bTiled )
+    {
+        if( CSLFetchNameValue(papszHdrLines,"tile_size_rows") )
+            nTileYSize = 
+                atoi(CSLFetchNameValue(papszHdrLines,"tile_size_rows"));
+        if( CSLFetchNameValue(papszHdrLines,"tile_size_columns") )
+            nTileXSize = 
+                atoi(CSLFetchNameValue(papszHdrLines,"tile_size_columns"));
     }
 
 /* -------------------------------------------------------------------- */
@@ -367,7 +503,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
             pszExtension = CPLGetExtension(papszDirFiles[i]);
             if( isdigit(pszExtension[1])
                 && atoi(pszExtension+1) == nRawBand 
-                && strchr("bBcCiIjJrRxX",pszExtension[0]) != NULL )
+                && strchr("bBcCiIjJrRxXzZ",pszExtension[0]) != NULL )
                 break;
         }
 
@@ -393,7 +529,36 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         pszExtension = CPLGetExtension(papszDirFiles[i]);
-        if( EQUALN(pszExtension,"b",1) )
+        if( pszRefinedType != NULL )
+        {
+            if( EQUAL(pszRefinedType,"C*4") )
+                eDataType = GDT_CFloat32;
+            else if( EQUAL(pszRefinedType,"C*8") )
+                eDataType = GDT_CFloat64;
+            else if( EQUAL(pszRefinedType,"R*4") )
+                eDataType = GDT_Float32;
+            else if( EQUAL(pszRefinedType,"R*8") )
+                eDataType = GDT_Float64;
+            else if( EQUAL(pszRefinedType,"I*1") )
+                eDataType = GDT_Byte;
+            else if( EQUAL(pszRefinedType,"I*2") )
+                eDataType = GDT_Int16;
+            else if( EQUAL(pszRefinedType,"I*4") )
+                eDataType = GDT_Int32;
+            else if( EQUAL(pszRefinedType,"U*2") )
+                eDataType = GDT_UInt16;
+            else if( EQUAL(pszRefinedType,"U*4") )
+                eDataType = GDT_UInt32;
+            else if( EQUAL(pszRefinedType,"J*1") )
+                continue; /* we don't support 1 byte complex */
+            else if( EQUAL(pszRefinedType,"J*2") )
+                eDataType = GDT_CInt16;
+            else if( EQUAL(pszRefinedType,"K*4") )
+                eDataType = GDT_CInt32;
+            else
+                continue;
+        }
+        else if( EQUALN(pszExtension,"b",1) )
         {
             eDataType = GDT_Byte;
         }
@@ -419,11 +584,23 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
         nBand = poDS->GetRasterCount() + 1;
 
         int nPixelOffset = GDALGetDataTypeSize(eDataType)/8;
+        GDALRasterBand *poBand = NULL;
+        
+        if( bTiled )
+        {
+            poBand = 
+                new MFFTiledBand( poDS, nBand, fpRaw, nTileXSize, nTileYSize,
+                                  eDataType, bNative );
+        }
+        else
+        {
+            poBand = 
+                new RawRasterBand( poDS, nBand, fpRaw, 0, nPixelOffset,
+                                   nPixelOffset * poDS->GetRasterXSize(),
+                                   eDataType, bNative );
+        }
 
-        poDS->SetBand( nBand, 
-            new RawRasterBand( poDS, nBand, fpRaw, 0, nPixelOffset,
-                               nPixelOffset * poDS->GetRasterXSize(),
-                               eDataType, bNative ) );
+        poDS->SetBand( nBand, poBand );
     }
     
 /* -------------------------------------------------------------------- */
@@ -446,6 +623,12 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if( !EQUAL(pszName,"END") 
             && !EQUAL(pszName,"FILE_TYPE") 
+            && !EQUAL(pszName,"BYTE_ORDER") 
+            && !EQUAL(pszName,"no_columns") 
+            && !EQUAL(pszName,"no_rows") 
+            && !EQUAL(pszName,"type") 
+            && !EQUAL(pszName,"tile_size_rows") 
+            && !EQUAL(pszName,"tile_size_columns") 
             && !EQUAL(pszName,"IMAGE_FILE_FORMAT") 
             && !EQUAL(pszName,"IMAGE_LINES") 
             && !EQUAL(pszName,"LINE_SAMPLES") )
