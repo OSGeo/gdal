@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/12/19 15:29:56  warmerda
+ * added preliminary cell header support
+ *
  * Revision 1.7  2001/08/21 03:01:39  warmerda
  * added raw_data support
  *
@@ -98,5 +101,6 @@ int DGNParseCore( DGNInfo *, DGNElemCore * );
 void DGNTransformPoint( DGNInfo *, DGNPoint * );
 void DGN2IEEEDouble( void * );
 void DGNBuildIndex( DGNInfo * );
+void DGNRad50ToAscii( unsigned short rad50, char *str );
 
 #endif /* ndef _DGNLIBP_H_INCLUDED */
