@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/07/05 17:19:03  warmerda
+ * added OGRERR_UNSUPPORTED_SRS
+ *
  * Revision 1.2  1999/05/31 15:00:37  warmerda
  * added generic OGRERR_FAILURE error code.
  *
@@ -56,6 +59,7 @@ typedef int OGRErr;
 #define OGRERR_UNSUPPORTED_OPERATION 4
 #define OGRERR_CORRUPT_DATA	   5
 #define OGRERR_FAILURE		   6
+#define OGRERR_UNSUPPORTED_SRS	   7
 
 typedef int	OGRBoolean;
 
