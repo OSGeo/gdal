@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/02/18 19:28:15  fwarmerdam
+ * added NITFIHFieldOffset
+ *
  * Revision 1.16  2004/12/21 04:57:36  fwarmerdam
  * added support for writing UTM ICORDS/IGEOLO values
  *
@@ -178,6 +181,8 @@ typedef struct {
     int        nABPP; /* signficant bits per pixel */
 
     char       chICORDS;
+    int        bHaveIGEOLO;
+
     int        nZone;
     double     dfULX;
     double     dfULY;
@@ -234,6 +239,8 @@ int       CPL_DLL  NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
 char      CPL_DLL **NITFReadUSE00A( NITFImage *psImage );
 char      CPL_DLL **NITFReadSTDIDC( NITFImage *psImage );
 
+GUInt32   CPL_DLL NITFIHFieldOffset( NITFImage *psImage, 
+                                     const char *pszFieldName );
 
 #define BLKREAD_OK    0
 #define BLKREAD_NULL  1

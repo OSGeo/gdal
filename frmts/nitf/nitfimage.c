@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/02/18 19:28:15  fwarmerdam
+ * added NITFIHFieldOffset
+ *
  * Revision 1.30  2005/02/02 21:52:41  fwarmerdam
  * Avoid ununused variable warning.
  *
@@ -229,7 +232,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         GetMD( psImage, pachHeader, 352,   8, IREP   );
         GetMD( psImage, pachHeader, 360,   8, ICAT   );
         GetMD( psImage, pachHeader, 368,   2, ABPP   );
-        GetMD( psImage, pachHeader, 371,   1, PJUST  );
+        GetMD( psImage, pachHeader, 370,   1, PJUST  );
     }
     else if( EQUAL(psFile->szVersion,"NITF02.00") )
     {
@@ -259,7 +262,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         GetMD( psImage, pachHeader, 352+nOffset,   8, IREP   );
         GetMD( psImage, pachHeader, 360+nOffset,   8, ICAT   );
         GetMD( psImage, pachHeader, 368+nOffset,   2, ABPP   );
-        GetMD( psImage, pachHeader, 371+nOffset,   1, PJUST  );
+        GetMD( psImage, pachHeader, 370+nOffset,   1, PJUST  );
     }
 
 /* -------------------------------------------------------------------- */
@@ -299,6 +302,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /*      accepting that it must be there.                                */
 /* -------------------------------------------------------------------- */
     psImage->chICORDS = pachHeader[nOffset++];
+    psImage->bHaveIGEOLO = FALSE;
 
     if( psImage->chICORDS != ' ' 
         && (psImage->chICORDS != 'N' 
@@ -306,6 +310,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     {
         int iCoord;
 
+        psImage->bHaveIGEOLO = TRUE;
         for( iCoord = 0; iCoord < 4; iCoord++ )
         {
             const char *pszCoordPair = pachHeader + nOffset + iCoord*15;
@@ -1405,6 +1410,8 @@ int NITFWriteLUT( NITFImage *psImage, int nBand, int nColors,
     return bSuccess;
 }
 
+
+
 /************************************************************************/
 /*                           NITFTrimWhite()                            */
 /*                                                                      */
@@ -1880,4 +1887,109 @@ int NITFRPCGeoToImage( NITFRPC00BInfo *psRPC,
     *pdfLine  = *pdfLine  * psRPC->LINE_SCALE + psRPC->LINE_OFF;
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                         NITFIHFieldOffset()                          */
+/*                                                                      */
+/*      Find the file offset for the beginning of a particular field    */
+/*      in this image header.  Only implemented for selected fields.    */
+/************************************************************************/
+
+GUInt32 NITFIHFieldOffset( NITFImage *psImage, const char *pszFieldName )
+
+{
+    GUInt32 nIMOffset = 
+        psImage->psFile->pasSegmentInfo[psImage->iSegment].nSegmentHeaderStart;
+
+    // We only support files we created.
+    CPLAssert( EQUALN(psImage->psFile->szVersion,"NITF02.1",8) );
+
+    if( EQUAL(pszFieldName,"IM") )
+        return nIMOffset;
+
+    if( EQUAL(pszFieldName,"PJUST") )
+        return nIMOffset + 370;
+
+    if( EQUAL(pszFieldName,"ICORDS") )
+        return nIMOffset + 371;
+
+    if( EQUAL(pszFieldName,"IGEOLO") )
+    {
+        if( !psImage->bHaveIGEOLO )
+            return 0;
+        else
+            return nIMOffset + 372;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Keep working offset from here on in since everything else is    */
+/*      variable.                                                       */
+/* -------------------------------------------------------------------- */
+    GUInt32 nWrkOffset = 372 + nIMOffset;
+
+    if( psImage->bHaveIGEOLO )
+        nWrkOffset += 60;
+
+/* -------------------------------------------------------------------- */
+/*      Comments.                                                       */
+/* -------------------------------------------------------------------- */
+    char       szTemp[128];
+    int nNICOM = atoi(NITFGetField(szTemp,psImage->pachHeader,nWrkOffset,1));
+        
+    if( EQUAL(pszFieldName,"NICOM") )
+        return nWrkOffset;
+    
+    nWrkOffset++;
+
+    if( EQUAL(pszFieldName,"ICOM") )
+        return nWrkOffset;
+
+    nWrkOffset += 80 * nNICOM;
+
+/* -------------------------------------------------------------------- */
+/*      IC                                                              */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszFieldName,"IC") )
+        return nWrkOffset;
+
+    nWrkOffset += 2;
+
+/* -------------------------------------------------------------------- */
+/*      COMRAT                                                          */
+/* -------------------------------------------------------------------- */
+
+    if( psImage->szIC[0] != 'N' )
+    {
+        if( EQUAL(pszFieldName,"COMRAT") )
+            return nWrkOffset;
+        nWrkOffset += 4;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      NBANDS                                                          */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszFieldName,"NBANDS") )
+        return nWrkOffset;
+
+    nWrkOffset += 1;
+
+/* -------------------------------------------------------------------- */
+/*      XBANDS                                                          */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszFieldName,"XBANDS") )
+        return nWrkOffset;
+
+    if( psImage->nBands > 9 )
+        nWrkOffset += 5;
+
+/* -------------------------------------------------------------------- */
+/*      IREPBAND                                                        */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszFieldName,"IREPBAND") )
+        return nWrkOffset;
+
+//    nWrkOffset += 2 * psImage->nBands;
+
+    return 0;
 }
