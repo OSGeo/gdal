@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2004/08/26 18:55:27  warmerda
+ * Optimized SIRC decoding to avoid redoing pow() alot.
+ *
  * Revision 1.35  2004/08/26 18:30:47  warmerda
  * added preliminary SIR-C support
  *
@@ -446,6 +449,8 @@ CPLErr CCPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int	   offset;
     GByte  *pabyRecord;
     SAR_CEOSDataset *poGDS = (SAR_CEOSDataset *) poDS;
+    static float afPowTable[256];
+    static int bPowTableInitialized = FALSE;
 
     ImageDesc = &(poGDS->sVolume.ImageDesc);
 
@@ -473,6 +478,21 @@ CPLErr CCPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Initialize our power table if this is our first time through.   */
+/* -------------------------------------------------------------------- */
+    if( !bPowTableInitialized )
+    {
+        int i;
+
+        bPowTableInitialized = TRUE;
+
+        for( i = 0; i < 256; i++ )
+        {
+            afPowTable[i] = pow( 2.0, i-128 );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Copy the desired band out based on the size of the type, and    */
 /*      the interleaving mode.                                          */
 /* -------------------------------------------------------------------- */
@@ -485,34 +505,37 @@ CPLErr CCPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         double dfReSHH, dfImSHH, dfReSHV, dfImSHV, 
             dfReSVH, dfImSVH, dfReSVV, dfImSVV, dfScale;
 
-        dfScale = sqrt( (Byte[2] / 254 + 1.5) * pow(2,Byte[1]) );
+        dfScale = sqrt( (Byte[2] / 254 + 1.5) * afPowTable[Byte[1] + 128] );
         
-        dfReSHH = Byte[3] * dfScale / 127.0;
-        dfImSHH = Byte[4] * dfScale / 127.0;
-        dfReSHV = Byte[5] * dfScale / 127.0;
-        dfImSHV = Byte[6] * dfScale / 127.0;
-        dfReSVH = Byte[7] * dfScale / 127.0;
-        dfImSVH = Byte[8] * dfScale / 127.0;
-        dfReSVV = Byte[9] * dfScale / 127.0;
-        dfImSVV = Byte[10]* dfScale / 127.0;
-
         if( nBand == 1 )
         {
+            dfReSHH = Byte[3] * dfScale / 127.0;
+            dfImSHH = Byte[4] * dfScale / 127.0;
+
             ((float *) pImage)[iX*2  ] = dfReSHH;
             ((float *) pImage)[iX*2+1] = dfImSHH;
         }        
         else if( nBand == 2 )
         {
+            dfReSHV = Byte[5] * dfScale / 127.0;
+            dfImSHV = Byte[6] * dfScale / 127.0;
+
             ((float *) pImage)[iX*2  ] = dfReSHV;
             ((float *) pImage)[iX*2+1] = dfImSHV;
         }
         else if( nBand == 3 )
         {
+            dfReSVH = Byte[7] * dfScale / 127.0;
+            dfImSVH = Byte[8] * dfScale / 127.0;
+
             ((float *) pImage)[iX*2  ] = dfReSVH;
             ((float *) pImage)[iX*2+1] = dfImSVH;
         }
         else if( nBand == 4 )
         {
+            dfReSVV = Byte[9] * dfScale / 127.0;
+            dfImSVV = Byte[10]* dfScale / 127.0;
+
             ((float *) pImage)[iX*2  ] = dfReSVV;
             ((float *) pImage)[iX*2+1] = dfImSVV;
         }
