@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.16  2005/02/18 18:41:37  kruland
+ * Added %feature("autodoc");
+ *
  * Revision 1.15  2005/02/18 16:09:53  kruland
  * Added %feature("compactdefaultargs") which in python (and perhaps others)
  * allows SWIG to code default arguments for C functions (like GDALDecToDMS).
@@ -72,7 +75,6 @@
   from gdalconst import *
 %}
 
-
 %{
 #include <iostream>
 using namespace std;
@@ -90,6 +92,8 @@ typedef double *double_6;
 %}
 
 %feature("compactdefaultargs");
+%feature("autodoc");
+
 %import gdal_typemaps.i
 
 typedef int GDALColorInterp;

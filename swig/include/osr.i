@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.6  2005/02/18 18:42:07  kruland
+ * Added %feature("autodoc");
+ *
  * Revision 1.5  2005/02/18 18:13:05  kruland
  * Now using the THROW_OGR_ERROR tyepmap for all methods.  Changed those
  * which should return OGRErr to return OGRErr since the typemap is friendly
@@ -144,6 +147,7 @@ typedef double * double_17;
 %}
 
 %feature("compactdefaultargs");
+%feature("autodoc");
 
 %import gdal_typemaps.i
 
