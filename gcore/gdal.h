@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.83  2004/09/16 18:30:13  fwarmerdam
+ * Updated to 1.2.2.
+ *
  * Revision 1.82  2004/06/24 03:10:49  warmerda
  * update to GDAL 1.2.1
  *
@@ -166,13 +169,13 @@
 /*      GDAL Version Information.                                       */
 /* -------------------------------------------------------------------- */
 #ifndef GDAL_VERSION_NUM
-#  define GDAL_VERSION_NUM      1210
+#  define GDAL_VERSION_NUM      1220
 #endif
 #ifndef GDAL_RELEASE_DATE
-#  define GDAL_RELEASE_DATE     20040623
+#  define GDAL_RELEASE_DATE     20040816
 #endif
 #ifndef GDAL_RELEASE_NAME
-#  define GDAL_RELEASE_NAME     "1.2.1.0"
+#  define GDAL_RELEASE_NAME     "1.2.2.0"
 #endif
 
 /* -------------------------------------------------------------------- */
