@@ -13,6 +13,10 @@ unpacked or checked out of CVS as <b>gdal</b>):
 % cd gdal
 % ./configure
 % make
+% su
+Password: ********
+# make install
+# exit
 </pre>
 
 Some caveats are:<p>
