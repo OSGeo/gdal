@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/03/16 18:36:02  warmerda
+ * Don't use pszVRTPath if it is NULL.
+ *
  * Revision 1.3  2004/03/16 18:34:35  warmerda
  * added support for relativeToVRT attribute on SourceFilename
  *
@@ -221,7 +224,8 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         return CE_Failure;
     }
     
-    if( atoi(CPLGetXMLValue( psSrc, "SourceFilename.relativetoVRT", "0")) )
+    if( pszVRTPath != NULL
+        && atoi(CPLGetXMLValue( psSrc, "SourceFilename.relativetoVRT", "0")) )
     {
         pszSrcDSName = CPLStrdup(
             CPLProjectRelativeFilename( pszVRTPath, pszFilename ) );
