@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.127  2004/11/25 14:28:55  fwarmerdam
+ * Use a more accurate format for the nodata value.
+ *
  * Revision 1.126  2004/11/12 17:02:08  gwalter
  * Use GDALDuplicateGCPs instead of malloc/memcpy
  * so that GCP Id and Info are duplicated
@@ -2110,7 +2113,7 @@ void GTiffDataset::WriteNoDataValue( TIFF *hTIFF, double dfNoData )
 {
     const char *pszText;
     
-    pszText = CPLSPrintf( "%f", dfNoData );
+    pszText = CPLSPrintf( "%.16g", dfNoData );
     TIFFSetField( hTIFF, TIFFTAG_GDAL_NODATA, pszText );
 }
 
