@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/01/10 22:29:56  warmerda
+ * Added separate Prepare step
+ *
  * Revision 1.5  2003/01/06 17:59:26  warmerda
  * fiddle with maximum buffer widths
  *
@@ -67,6 +70,8 @@ OGROCIStatement::OGROCIStatement( OGROCISession *poSessionIn )
     papszCurImage = NULL;
     panCurColumnInd = NULL;
     panFieldMap = NULL;
+
+    pszCommandText = NULL;
 }
 
 /************************************************************************/
@@ -87,6 +92,9 @@ void OGROCIStatement::Clean()
 
 {
     int  i;
+
+    CPLFree( pszCommandText );
+    pszCommandText = NULL;
 
     if( papszCurColumn != NULL )
     {
@@ -116,16 +124,17 @@ void OGROCIStatement::Clean()
 }
 
 /************************************************************************/
-/*                              Execute()                               */
+/*                              Prepare()                               */
 /************************************************************************/
 
-CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
-                                 int nMode )
+CPLErr OGROCIStatement::Prepare( const char *pszSQLStatement )
 
 {
     Clean();
 
-    CPLDebug( "OCI", "Execute(%s)", pszSQLStatement );
+    CPLDebug( "OCI", "Prepare(%s)", pszSQLStatement );
+
+    pszCommandText = CPLStrdup(pszSQLStatement);
 
     if( hStatement != NULL )
     {
@@ -153,10 +162,40 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
         "OCIStmtPrepare" ) )
         return CE_Failure;
 
+    return CE_None;
+}
+
+/************************************************************************/
+/*                              Execute()                               */
+/************************************************************************/
+
+CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
+                                 int nMode )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Prepare the statement if it is being passed in.                 */
+/* -------------------------------------------------------------------- */
+    if( pszSQLStatement != NULL )
+    {
+        CPLErr eErr = Prepare( pszSQLStatement );
+        if( eErr != CE_None )
+            return eErr;
+    }
+
+    if( hStatement == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "No prepared statement in call to OGROCIStatement::Execute(NULL)" );
+        return CE_Failure;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Work out some details about execution mode.                     */
 /* -------------------------------------------------------------------- */
-    int  bSelect = EQUALN(pszSQLStatement,"SELECT",5);
+    int  bSelect = pszCommandText != NULL 
+        && EQUALN(pszCommandText,"SELECT",5);
+
     if( nMode == -1 )
     {
         if( bSelect )
@@ -173,7 +212,7 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
                         poSession->hError, (ub4)bSelect ? 0 : 1, (ub4)0, 
                         (OCISnapshot *)NULL, (OCISnapshot *)NULL, 
                         (ub4) (bSelect ? OCI_DEFAULT : OCI_COMMIT_ON_SUCCESS)),
-        pszSQLStatement ) )
+        pszCommandText ) )
         return CE_Failure;
 
     if( !bSelect )
@@ -201,7 +240,7 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
 /*      Establish result column definitions, and setup parameter        */
 /*      defines.                                                        */
 /* ==================================================================== */
-    poDefn = new OGRFeatureDefn( pszSQLStatement );
+    poDefn = new OGRFeatureDefn( pszCommandText );
     poDefn->Reference();
 
     for( int iParm = 0; iParm < nRawColumnCount; iParm++ )
