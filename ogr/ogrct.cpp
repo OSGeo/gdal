@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2004/09/23 15:05:27  fwarmerdam
+ * cast pj_get_errno_ref in hopes of fixing Bug 614
+ *
  * Revision 1.24  2004/09/21 00:15:29  fwarmerdam
  * Fixed PJ_VERSION checking syntax (secondary issue in bug 614).
  *
@@ -207,7 +210,7 @@ static int LoadProjLibrary()
     pfn_pj_inv = pj_inv;
     pfn_pj_free = pj_free;
     pfn_pj_transform = pj_transform;
-    pfn_pj_get_errno_ref = pj_get_errno_ref;
+    pfn_pj_get_errno_ref = (int *(*)(void)) pj_get_errno_ref;
     pfn_pj_strerrno = pj_strerrno;
     pfn_pj_dalloc = pj_dalloc;
 #if PJ_VERSION >= 446
