@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/09/26 15:20:32  warmerda
+ * added GDALGetRasterBand{X,Y}Size
+ *
  * Revision 1.6  2000/08/28 20:16:14  warmerda
  * added lots of OGRSpatialReference stuff
  *
@@ -293,6 +296,12 @@ GDAL_ENTRY const char *(*pGDALGetColorInterpretationName)( GDALColorInterp ) GDA
 
 GDAL_ENTRY GDALColorTableH (*pGDALGetRasterColorTable)( GDALRasterBandH ) GDAL_NULL;
 #define GDALGetRasterColorTable pGDALGetRasterColorTable
+
+GDAL_ENTRY int (*pfnGDALGetRasterBandXSize)( GDALRasterBandH ) GDAL_NULL;
+#define GDALGetRasterBandXSize pfnGDALGetRasterBandXSize
+
+GDAL_ENTRY int (*pfnGDALGetRasterBandYSize)( GDALRasterBandH ) GDAL_NULL;
+#define GDALGetRasterBandYSize pfnGDALGetRasterBandYSize
 
 /* ==================================================================== */
 /*      Color tables.                                                   */
