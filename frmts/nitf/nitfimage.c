@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/12/17 20:03:08  warmerda
+ * added rudimentary NITF 1.1 support
+ *
  * Revision 1.3  2002/12/17 05:26:26  warmerda
  * implement basic write support
  *
@@ -105,14 +108,31 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     psSegInfo->hAccess = psImage;
 
 /* -------------------------------------------------------------------- */
+/*      Is this an old NITF 1.1 image?  If so, there seems to be an     */
+/*      extra 40 bytes of info in the security area.                    */
+/* -------------------------------------------------------------------- */
+    nOffset = 333;
+
+    if( EQUALN(psFile->szVersion,"NITF01.",7) )
+        nOffset += 40;
+
+/* -------------------------------------------------------------------- */
 /*      Read lots of header fields.                                     */
 /* -------------------------------------------------------------------- */
-    psImage->nRows = atoi(NITFGetField(szTemp,pachHeader,333,8));
-    psImage->nCols = atoi(NITFGetField(szTemp,pachHeader,341,8));
-    
-    NITFTrimWhite( NITFGetField( psImage->szPVType, pachHeader, 349, 3 ) );
-    NITFTrimWhite( NITFGetField( psImage->szIREP, pachHeader, 352, 8 ) );
-    NITFTrimWhite( NITFGetField( psImage->szICAT, pachHeader, 360, 8 ) );
+    if( !EQUALN(psFile->szVersion,"NITF01.",7) )
+    {
+        psImage->nRows = atoi(NITFGetField(szTemp,pachHeader,nOffset,8));
+        psImage->nCols = atoi(NITFGetField(szTemp,pachHeader,nOffset+8,8));
+        
+        NITFTrimWhite( NITFGetField( psImage->szPVType, pachHeader, 
+                                     nOffset+16, 3) );
+        NITFTrimWhite( NITFGetField( psImage->szIREP, pachHeader, 
+                                     nOffset+19, 8) );
+        NITFTrimWhite( NITFGetField( psImage->szICAT, pachHeader, 
+                                     nOffset+27, 8) );
+    }
+
+    nOffset += 38;
 
 /* -------------------------------------------------------------------- */
 /*      Read the image bounds.  According to the specification the      */
@@ -122,7 +142,6 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /*      we verify that the IGEOGLO value seems valid before             */
 /*      accepting that it must be there.                                */
 /* -------------------------------------------------------------------- */
-    nOffset = 371;
     psImage->chICORDS = pachHeader[nOffset++];
 
     if( psImage->chICORDS != ' ' 
@@ -279,6 +298,12 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         atoi(NITFGetField(szTemp, pachHeader, nOffset+18, 2));
 
     nOffset += 20;
+
+    if( EQUALN(psFile->szVersion,"NITF01.",7) )
+    {
+        psImage->nCols = psImage->nBlocksPerRow * psImage->nBlockWidth;
+        psImage->nRows = psImage->nBlocksPerColumn * psImage->nBlockHeight;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Setup some image access values.  Some of these may not apply    */
