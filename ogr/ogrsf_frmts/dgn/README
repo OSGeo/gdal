@@ -5,7 +5,7 @@
 Current information on DGNLIB, including detailed API documentation
 can be found at:
 
-  http://gdal.velocet.ca/projects/dgn
+  http://dgnlib.maptools.org/
 
 
 Building
@@ -45,6 +45,14 @@ Windows.
 
 Release Notes
 =============
+
+Release 1.8
+-----------
+
+ o Added support for reading 3D cone (23), 3D surface (18) and 3D solid (19) 
+   elements based on contributions from Marius Kintel. 
+
+ o Main site moved to http://dgnlib.maptools.org/
 
 Release 1.7
 -----------
