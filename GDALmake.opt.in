@@ -1,5 +1,6 @@
 CC	=	@CC@
 CXX	=	@CXX@
+INSTALL = 	install
 
 CXX_OPTFLAGS =	@CXXFLAGS@
 C_OPTFLAGS =	@CFLAGS@
@@ -19,7 +20,8 @@ INST_PREFIX	=	@INST_PREFIX@
 INST_INCLUDE	=	@INST_INCLUDE@
 INST_LIB	=	@INST_LIB@
 INST_BIN	=	@INST_BIN@
-INST_PYMOD      =       @INST_PYMOD@
+INST_PYMOD      =       @pyexecdir@
+INST_DATA 	=	@INST_DATA@
 
 #
 #	Whether we use debug flags, or optimization is determined by
