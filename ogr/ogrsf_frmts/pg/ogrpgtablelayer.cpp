@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/05/09 17:21:54  warmerda
+ * Don't add trailing command if no fields to be inserted.
+ *
  * Revision 1.3  2002/05/09 17:09:08  warmerda
  * Ensure nSRSId is set before creating any features.
  *
@@ -400,15 +403,15 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
     sprintf( pszCommand, "INSERT INTO %s (", poFeatureDefn->GetName() );
 
     if( bHasWkb && poFeature->GetGeometryRef() != NULL )
-        strcat( pszCommand, "WKB_GEOMETRY, " );
+        strcat( pszCommand, "WKB_GEOMETRY " );
     
     if( bHasPostGISGeometry && poFeature->GetGeometryRef() != NULL )
     {
         strcat( pszCommand, pszGeomColumn );
-        strcat( pszCommand, ", " );
+        strcat( pszCommand, " " );
     }
     
-    bNeedComma = FALSE;
+    bNeedComma = poFeature->GetGeometryRef() != NULL;
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         if( !poFeature->IsFieldSet( i ) )
@@ -426,6 +429,7 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
     strcat( pszCommand, ") VALUES (" );
 
     /* Set the geometry */
+    bNeedComma = poFeature->GetGeometryRef() != NULL;
     if( bHasPostGISGeometry )
     {
         char	*pszWKT = NULL;
@@ -446,11 +450,11 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
         if( pszWKT != NULL )
         {
             sprintf( pszCommand + strlen(pszCommand), 
-                     "GeometryFromText('%s'::TEXT,%d), ", pszWKT, nSRSId );
+                     "GeometryFromText('%s'::TEXT,%d) ", pszWKT, nSRSId );
             OGRFree( pszWKT );
         }
         else
-            strcat( pszCommand, "''," );
+            strcat( pszCommand, "''" );
     }
     else if( bHasWkb && !bWkbAsOid && poFeature->GetGeometryRef() != NULL )
     {
@@ -465,11 +469,11 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
         if( pszBytea != NULL )
         {
             sprintf( pszCommand + strlen(pszCommand), 
-                     "'%s', ", pszBytea );
+                     "'%s'", pszBytea );
             CPLFree( pszBytea );
         }
         else
-            strcat( pszCommand, "''," );
+            strcat( pszCommand, "''" );
     }
     else if( bHasWkb && bWkbAsOid && poFeature->GetGeometryRef() != NULL )
     {
@@ -478,16 +482,15 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
         if( oid != 0 )
         {
             sprintf( pszCommand + strlen(pszCommand), 
-                     "'%d', ", oid );
+                     "'%d' ", oid );
         }
         else
-            strcat( pszCommand, "''," );
+            strcat( pszCommand, "''" );
     }
 
     /* Set the other fields */
     int nOffset = strlen(pszCommand);
 
-    bNeedComma = FALSE;
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         const char *pszStrValue = poFeature->GetFieldAsString(i);
