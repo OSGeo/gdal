@@ -8,7 +8,7 @@ BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
 			gdalwarp$(EXE)
 
 ifeq ($(OGR_ENABLED),yes)
-BIN_LIST	= 	$(BIN_LIST) gdal_contour$(EXE)
+BIN_LIST	+= 	gdal_contour$(EXE)
 endif
 
 default:	gdal-config-inst gdal-config $(BIN_LIST)
