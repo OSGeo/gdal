@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/01/04 22:14:33  fwarmerdam
+ * Nailed down open checking fairly closely.
+ *
  * Revision 1.3  2004/12/26 21:25:36  fwarmerdam
  * avoid spurious opens
  *
@@ -160,12 +163,37 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Is this an IDA file?                                            */
 /* -------------------------------------------------------------------- */
+    int      nXSize, nYSize;
+    GIntBig  nExpectedFileSize, nActualFileSize;
+
     if( poOpenInfo->nHeaderBytes < 512 )
         return NULL;
 
-    // For now only allow GA file till we get more specific 
-    // criteria to limit the format.
-    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"GA") )
+    // projection legal? 
+    if( poOpenInfo->pabyHeader[23] > 10 )
+        return NULL;
+
+    // imagetype legal? 
+    if( (poOpenInfo->pabyHeader[22] > 14 
+         && poOpenInfo->pabyHeader[22] < 100)
+        || (poOpenInfo->pabyHeader[22] > 114 
+            && poOpenInfo->pabyHeader[22] != 200 ) )
+        return NULL;
+
+    nXSize = poOpenInfo->pabyHeader[30] + poOpenInfo->pabyHeader[31] * 256;
+    nYSize = poOpenInfo->pabyHeader[32] + poOpenInfo->pabyHeader[33] * 256;
+
+    if( nXSize == 0 || nYSize == 0 )
+        return NULL;
+
+    // The file just be exactly the image size + header size in length.
+    nExpectedFileSize = nXSize * nYSize + 512;
+    
+    VSIFSeek( poOpenInfo->fp, 0, SEEK_END );
+    nActualFileSize = VSIFTell( poOpenInfo->fp );
+    VSIRewind( poOpenInfo->fp );
+
+    if( nActualFileSize != nExpectedFileSize )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -238,7 +266,7 @@ static double tp2c(GByte *r)
     mant = (r[i] + mant) / 256;
   mant = (mant + (r[5] & 0x7F)) / 128 + 1;
 
-  // extract exponent
+   // extract exponent
   exp = r[0] - 129;
 
   // compute the damned number
