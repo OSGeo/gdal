@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.104  2004/01/14 23:09:08  warmerda
+ * Removed duplicate line.
+ *
  * Revision 1.103  2004/01/14 23:06:09  warmerda
  * Improve calculation of 16bit color table values.
  *
@@ -2673,7 +2676,6 @@ TIFF *GTiffCreate( const char * pszFilename,
 
         v[0] = EXTRASAMPLE_ASSOCALPHA;
 	TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, 1, v);
-        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
         TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
     }
     else
