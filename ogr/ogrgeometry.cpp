@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/03/14 21:38:17  warmerda
+ * added method to translate geometrytype to name
+ *
  * Revision 1.6  1999/11/18 19:02:19  warmerda
  * expanded tabs
  *
@@ -351,3 +354,65 @@ OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom )
  *
  * This method relates to the SFCOM IGeometry::Empty() method.
  */
+
+
+/************************************************************************/
+/*                       OGRGeometryTypeToName()                        */
+/************************************************************************/
+
+/**
+ * \fn void OGRGeometryTypeToName()
+ *
+ * Fetch a human readable name corresponding to an OGRwkBGeometryType value.
+ * The returned value should not be modified, or freed by the application.
+ *
+ * @param eType the geometry type.
+ *
+ * @return internal human readable string, or NULL on failure.
+ */
+
+const char *OGRGeometryTypeToName( OGRwkbGeometryType eType )
+
+{
+    switch( eType )
+    {
+      case wkbUnknown:
+        return "Unknown (any)";
+        
+      case wkbPoint:
+        return "Point";
+
+      case wkbPoint25D:
+        return "3D Point";
+
+      case wkbLineString:
+        return "Line String";
+
+      case wkbLineString25D:
+        return "3D Line String";
+
+      case wkbPolygon:
+        return "Polygon";
+
+      case wkbPolygon25D:
+        return "3D Polygon";
+
+      case wkbMultiPoint:
+        return "Multi Point";
+
+      case wkbMultiLineString:
+        return "Multi Line String";
+
+      case wkbMultiPolygon:
+        return "Multi Polygon";
+
+      case wkbGeometryCollection:
+        return "Geometry Collection";
+
+      case wkbNone:
+        return "None";
+
+      default:
+        return NULL;
+    }
+}

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2000/03/14 21:38:17  warmerda
+ * added method to translate geometrytype to name
+ *
  * Revision 1.20  1999/11/18 19:02:20  warmerda
  * expanded tabs
  *
@@ -123,10 +126,13 @@ enum OGRwkbGeometryType
     wkbGeometryCollection = 7,
     wkbNone = 100,              // non-standard, for pure attribute records
     wkbPoint25D = 0x8001,
-    wkbLineString25D = 0x8002
+    wkbLineString25D = 0x8002,
+    wkbPolygon25D = 0x8003
 };
 
 #define ogrZMarker 0x21125711
+
+const char * CPL_DLL OGRGeometryTypeToName( OGRwkbGeometryType );
 
 enum OGRwkbByteOrder
 {
