@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2003/09/22 05:27:55  warmerda
+ * yikes - fixed debugging hack that completely broke driver
+ *
  * Revision 1.35  2003/09/10 19:37:12  warmerda
  * improved error reporting for IO errors
  *
@@ -834,8 +837,6 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
         nBlockOffset = panBlockStart[iBlock];
         nBlockSize = panBlockSize[iBlock];
     }
-
-    nBlockOffset += 100000;
 
     if( VSIFSeekL( fpData, nBlockOffset, SEEK_SET ) != 0 )
     {
