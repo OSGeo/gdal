@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/12/21 21:58:10  warmerda
+ * Append class numbers to list rather than inserting at beginning, to
+ * preserve original order.
+ *
  * Revision 1.4  2000/08/30 09:14:08  warmerda
  * added use of CPLFindFile
  *
@@ -410,7 +414,7 @@ char **S57ClassRegistrar::GetAttributeList( const char * pszType )
             CSLTokenizeStringComplex( papszCurrentFields[iColumn], ";",
                                       TRUE, FALSE );
 
-        papszTempResult = CSLInsertStrings( papszTempResult, 0,
+        papszTempResult = CSLInsertStrings( papszTempResult, -1,
                                             papszTokens );
 
         CSLDestroy( papszTokens );
