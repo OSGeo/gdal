@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/07/09 07:06:43  warmerda
+ * Added OGRSQL support in ExecuteSQL().
+ *
  * Revision 1.5  2004/01/05 22:38:17  warmerda
  * stripped out some junk
  *
@@ -294,6 +297,17 @@ OGRLayer * OGRODBCDataSource::ExecuteSQL( const char *pszSQLCommand,
                                           const char *pszDialect )
 
 {
+/* -------------------------------------------------------------------- */
+/*      Use generic imlplementation for OGRSQL dialect.                 */
+/* -------------------------------------------------------------------- */
+    if( pszDialect != NULL && EQUAL(pszDialect,"OGRSQL") )
+        return OGRDataSource::ExecuteSQL( pszSQLCommand, 
+                                          poSpatialFilter, 
+                                          pszDialect );
+
+/* -------------------------------------------------------------------- */
+/*      Execute statement.                                              */
+/* -------------------------------------------------------------------- */
     CPLODBCStatement *poStmt = new CPLODBCStatement( &oSession );
 
     poStmt->Append( pszSQLCommand );
