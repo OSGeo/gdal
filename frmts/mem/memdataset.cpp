@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/12/21 21:13:04  warmerda
+ * fixed memory leak of colortable
+ *
  * Revision 1.12  2002/11/23 18:54:17  warmerda
  * added CREATIONDATATYPES metadata for drivers
  *
@@ -140,6 +143,9 @@ MEMRasterBand::~MEMRasterBand()
         CPLDebug( "MEM", "~MEMRasterBand() - free raw data." );
         VSIFree( pabyData );
     }
+
+    if( poColorTable != NULL )
+        delete poColorTable;
 }
 
 
