@@ -19,7 +19,7 @@ OBJ	= 	mitab_rawbinblock.obj mitab_mapheaderblock.obj \
 		mitab_maptoolblock.obj mitab_coordsys.obj \
 		mitab_tooldef.obj mitab_spatialref.obj mitab_ogr_driver.obj
 
-EXTRAFLAGS = -I.. -I..\..
+EXTRAFLAGS = -I.. -I..\.. -DOGR
 GDAL_ROOT  =  ..\..\..
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 

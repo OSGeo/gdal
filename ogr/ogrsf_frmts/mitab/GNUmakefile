@@ -12,7 +12,7 @@ OBJ	=	mitab_rawbinblock.o mitab_mapheaderblock.o \
 		mitab_maptoolblock.o mitab_tooldef.o mitab_coordsys.o \
 		mitab_spatialref.o mitab_ogr_driver.o 
 
-ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port $(CFLAGS)
+ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port $(CFLAGS) -DOGR
 
 LIBS	:=	../ogrsf_frmts.a ../../ogr.a $(CPL_LIB) $(LIBS) 
 
