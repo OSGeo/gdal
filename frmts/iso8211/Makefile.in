@@ -62,7 +62,7 @@ cpl_vsisimple.o:	cpl_vsisimple.cpp
 
 
 test:	8211dump
-	@./teststream.sh >& t1.out
+	@./teststream.sh > t1.out
 	@if test "`diff t1.out teststream.out`" = '' ; then \
 	    echo "******* Stream 1 Succeeded *********"; \
 	    rm t1.out; \
