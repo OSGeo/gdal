@@ -5860,6 +5860,7 @@ SWrdfld(int32 swathID, char *fieldname, int32 fortstart[],
 |                         is single cross track in the box (for LANDSAT)      |
 |  Jun 03   Abe Taaheri   Added a few lines to report error and return -1 if  |
 |                         regionID exceeded NSWATHREGN                        |
+|  Mar 04   Abe Taaheri   Added recognition for GeodeticLatitude              |
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
@@ -5876,6 +5877,8 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
     intn            statLat;	/* Status from SWfieldinfo for latitude */
     intn            statCoLat = -1;	/* Status from SWfieldinfo for
 					 * Colatitude */
+    intn            statGeodeticLat = -1; /* Status from SWfieldinfo for
+					 * GeodeticLatitude */
 
     uint8           found = 0;	/* Found flag */
     uint8          *flag;	/* Pointer to track flag array */
@@ -5950,12 +5953,26 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 				    dimlist);
 	    if (statCoLat != 0)
 	    {
-		/* Neither "Latitude" nor "Colatitude" field found */
-		/* ----------------------------------------------- */
-		status = -1;
-		HEpush(DFE_GENAPP, "SWdefboxregion", __FILE__, __LINE__);
-		HEreport(
-		 "Neither \"Latitude\" nor \"Colatitude\" fields found.\n");
+	      /* Check again for Geodeticlatitude */            
+	      statGeodeticLat = SWfieldinfo(swathID, 
+					    "GeodeticLatitude", &rank, 
+					    dims, &nt, dimlist);
+	      if (statGeodeticLat != 0)
+		{
+		  /* Neither "Latitude" nor "Colatitude" nor
+		     "GeodeticLatitude" field found */
+		  /* ----------------------------------------------- */
+		  status = -1;
+		  HEpush(DFE_GENAPP, "SWdefboxregion", __FILE__, __LINE__);
+		  HEreport(
+			   "Neither \"Latitude\" nor \"Colatitude\" nor \"GeodeticLatitude\" fields found.\n");
+		}
+	      else
+		{
+		  /* Latitude field is "GeodeticLatitude" */
+		  /* ------------------------------ */
+		  strcpy(latName, "GeodeticLatitude");
+		}
 	    }
 	    else
 	    {
@@ -6425,6 +6442,7 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 
 
 
+
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -6460,7 +6478,6 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 |  Oct 96   Joel Gales    Add ability to handle regions crossing date line    |
 |  Dec 96   Joel Gales    Add multiple vertical subsetting capability         |
 |  Nov 97   Daw           Add multiple vertical subsetting capability         |
-|                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
@@ -6470,15 +6487,18 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
     intn            i;		/* Loop index */
     intn            j;		/* Loop index */
     intn            k;		/* Loop index */
+
     intn            l=0;	/* Loop index */
     intn            tmpVal;     /* temp value for start region Delyth Jones*/
-    
+  /*intn            j1;  */     /* Loop index */
     intn            status;	/* routine return status variable */
     intn	    mapstatus;	/* status for type of mapping */
     intn            statLon;	/* Status from SWfieldinfo for longitude */
     intn            statLat;	/* Status from SWfieldinfo for latitude */
     intn            statCoLat = -1;	/* Status from SWfieldinfo for
 					 * Colatitude */
+    intn            statGeodeticLat = -1; /* Status from SWfieldinfo for
+					 * GeodeticLatitude */
 
     uint8           found = 0;	/* Found flag */
     uint8          *flag;	/* Pointer to track flag array */
@@ -6553,12 +6573,25 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 				    dimlist);
 	    if (statCoLat != 0)
 	    {
-		/* Neither "Latitude" nor "Colatitude" field found */
-		/* ----------------------------------------------- */
-		status = -1;
-		HEpush(DFE_GENAPP, "SWregionindex", __FILE__, __LINE__);
-		HEreport(
-		 "Neither \"Latitude\" nor \"Colatitude\" fields found.\n");
+	      /* Check again for Geodeticlatitude */            
+	      statGeodeticLat = SWfieldinfo(swathID, 
+					    "GeodeticLatitude", &rank, 
+					    dims, &nt, dimlist);
+	      if (statGeodeticLat != 0)
+	        {
+		  /* Neither "Latitude" nor "Colatitude" field found */
+		  /* ----------------------------------------------- */
+		  status = -1;
+		  HEpush(DFE_GENAPP, "SWregionindex", __FILE__, __LINE__);
+		  HEreport(
+			   "Neither \"Latitude\" nor \"Colatitude\" fields found.\n");
+		}
+	      else
+		{
+		     /* Latitude field is "Colatitude" */
+		     /* ------------------------------ */
+		     strcpy(latName, "GeodeticLatitude");
+		}
 	    }
 	    else
 	    {
@@ -6908,9 +6941,12 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 		    }
 		}
 	    }
-
-
-
+	    /*
+	    for (j1 = 0; j1 < edge[0]; j1++)
+	      {
+		idxrange[j1] = (int32) flag[j1];
+	      }
+	    */
 	    /* If within region setup Region Structure */
 	    /* --------------------------------------- */
 	    if (found == 1)
@@ -6956,7 +6992,13 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 			break;
 		    }
 		}
-
+		if (k >= NSWATHREGN)
+		  {
+		    HEpush(DFE_GENAPP, "SWregionindex", __FILE__, __LINE__);
+		    HEreport(
+			     "regionID exceeded NSWATHREGN.\n");
+                    return (-1);
+		  }
 
 		/* Find start and stop of regions */
 		/* ------------------------------ */
@@ -7037,6 +7079,7 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
     }
     
 }
+
 
 
 /*----------------------------------------------------------------------------|
@@ -12119,7 +12162,7 @@ SWgeomapinfo(int32 swathID, char *geodim)
 
 /* HDF types used in FORTRAN bindings */
  
-#if defined(DEC_ALPHA) || defined(IRIX) || defined(UNICOS)
+#if defined(DEC_ALPHA) || defined(IRIX) || defined(UNICOS) || defined(LINUX64) || defined(IA64) || defined(MACINTOSH) || defined(IBM6000)
  
 #define INT32  INT
 #define INT32V INTV

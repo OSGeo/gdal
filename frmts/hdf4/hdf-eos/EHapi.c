@@ -35,15 +35,15 @@ int32 EHXsdTable[NEOSHDF];
 
 #define EHIDOFFSET 524288
 
-#define HDFEOSVERSION 2.10
-#define HDFEOSVERSION1 "2.10"
+#define HDFEOSVERSION 2.12
+#define HDFEOSVERSION1 "2.12"
 #include <HDFEOSVersion.h>
 
 #define MAX_RETRIES 10
 
 /* HDF types used in FORTRAN bindings */
 
-#if defined(DEC_ALPHA) || defined(IRIX) || defined(UNICOS)
+#if defined(DEC_ALPHA) || defined(IRIX) || defined(UNICOS) || defined(LINUX64) || defined(IA64) || defined(MACINTOSH) || defined(IBM6000)
 
 #define INT32  INT
 #define INT32V INTV
