@@ -3,10 +3,10 @@
  *
  * Project:  JPEG-2000
  * Purpose:  Partial implementation of the ISO/IEC 15444-1 standard
- * Author:   Andrey Kiselev, dron@at1895.spb.edu
+ * Author:   Andrey Kiselev, dron@remotesensing.org
  *
  ******************************************************************************
- * Copyright (c) 2002, Andrey Kiselev <dron@at1895.spb.edu>
+ * Copyright (c) 2002, Andrey Kiselev <dron@remotesensing.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2003/01/28 14:44:11  dron
+ * Temporary hack for reading JP2 boxes (due to lack of appropriate JasPer API).
+ *
  * Revision 1.7  2002/11/23 18:54:17  warmerda
  * added CREATIONDATATYPES metadata for drivers
  *
@@ -67,6 +70,101 @@ CPL_C_START
 void	GDALRegister_JPEG2000(void);
 CPL_C_END
 
+// XXX: Part of code below extracted from the JasPer internal headers and
+// must be in sync with JasPer version (this one works with JasPer 1.600.0)
+#define	JP2_FTYP_MAXCOMPATCODES	32
+#define	JP2_BOX_IHDR	0x69686472	/* Image Header */
+#define	JP2_BOX_BPCC	0x62706363	/* Bits Per Component */
+extern "C" {
+typedef struct {
+	uint_fast32_t magic;
+} jp2_jp_t;
+typedef struct {
+	uint_fast32_t majver;
+	uint_fast32_t minver;
+	uint_fast32_t numcompatcodes;
+	uint_fast32_t compatcodes[JP2_FTYP_MAXCOMPATCODES];
+} jp2_ftyp_t;
+typedef struct {
+	uint_fast32_t width;
+	uint_fast32_t height;
+	uint_fast16_t numcmpts;
+	uint_fast8_t bpc;
+	uint_fast8_t comptype;
+	uint_fast8_t csunk;
+	uint_fast8_t ipr;
+} jp2_ihdr_t;
+typedef struct {
+	uint_fast16_t numcmpts;
+	uint_fast8_t *bpcs;
+} jp2_bpcc_t;
+typedef struct {
+	uint_fast8_t method;
+	uint_fast8_t pri;
+	uint_fast8_t approx;
+	uint_fast32_t csid;
+	uint_fast8_t *iccp;
+	int iccplen;
+} jp2_colr_t;
+typedef struct {
+	uint_fast16_t numlutents;
+	uint_fast8_t numchans;
+	int_fast32_t *lutdata;
+	uint_fast8_t *bpc;
+} jp2_pclr_t;
+typedef struct {
+	uint_fast16_t channo;
+	uint_fast16_t type;
+	uint_fast16_t assoc;
+} jp2_cdefchan_t;
+typedef struct {
+	uint_fast16_t numchans;
+	jp2_cdefchan_t *ents;
+} jp2_cdef_t;
+typedef struct {
+	uint_fast16_t cmptno;
+	uint_fast8_t map;
+	uint_fast8_t pcol;
+} jp2_cmapent_t;
+
+typedef struct {
+	uint_fast16_t numchans;
+	jp2_cmapent_t *ents;
+} jp2_cmap_t;
+
+struct jp2_boxops_s;
+typedef struct {
+
+	struct jp2_boxops_s *ops;
+	struct jp2_boxinfo_s *info;
+
+	uint_fast32_t type;
+	uint_fast32_t len;
+
+	union {
+		jp2_jp_t jp;
+		jp2_ftyp_t ftyp;
+		jp2_ihdr_t ihdr;
+		jp2_bpcc_t bpcc;
+		jp2_colr_t colr;
+		jp2_pclr_t pclr;
+		jp2_cdef_t cdef;
+		jp2_cmap_t cmap;
+	} data;
+
+} jp2_box_t;
+typedef struct jp2_boxops_s {
+	void (*init)(jp2_box_t *box);
+	void (*destroy)(jp2_box_t *box);
+	int (*getdata)(jp2_box_t *box, jas_stream_t *in);
+	int (*putdata)(jp2_box_t *box, jas_stream_t *out);
+	void (*dumpdata)(jp2_box_t *box, FILE *out);
+} jp2_boxops_t;
+extern void jp2_box_destroy(jp2_box_t *box);
+extern jp2_box_t *jp2_box_get(jas_stream_t *in);
+}
+// XXX: End of JasPer header.
+
 /************************************************************************/
 /* ==================================================================== */
 /*				JPEG2000Dataset				*/
@@ -83,6 +181,7 @@ class JPEG2000Dataset : public GDALDataset
     FILE	*fp;
     jas_stream_t *sStream;
     jas_image_t	*sImage;
+    int		iFormat;
 
   public:
                 JPEG2000Dataset();
@@ -131,7 +230,9 @@ JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDS, int nBand,
     {
 	case 1:				// Signed component
 	if (iDepth <= 8)
-	    this->eDataType = GDT_Byte; // FIXME: should be signed
+	    this->eDataType = GDT_Byte; // FIXME: should be signed,
+					// but we haven't unsigned byte
+					// data type in GDAL
 	else if (iDepth <= 16)
             this->eDataType = GDT_Int16;
 	else if (iDepth <= 32)
@@ -163,6 +264,17 @@ CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     int i, j;
     JPEG2000Dataset *poGDS = (JPEG2000Dataset *) poDS;
+
+    // Decode image from the stream, if not yet
+    if ( !poGDS->sImage )
+    {
+	if ( !( poGDS->sImage =
+	        jas_image_decode(poGDS->sStream, poGDS->iFormat, 0) ) )
+	{
+	    CPLDebug( "JPEG2000", "Unable to decode image.\n" );
+	    return CE_Failure;
+	}
+    }
     
     jas_image_readcmpt( poGDS->sImage, nBand - 1, nBlockXOff, nBlockYOff,
 	nBlockXSize, nBlockYSize, sMatrix );
@@ -181,10 +293,6 @@ CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 		    ptr++;
 		    pImage = ptr;
 		}
-		// The following would not compile in visual C++ 6.0
-		// I think there is a precidence resolution problem
-		// the error is: error C2105: '++' needs l-value
-                //*((GInt16*)pImage)++ = (GInt16)jas_matrix_get(sMatrix, i, j);
 		break;
 	        case GDT_Int32:
 		{
@@ -193,7 +301,6 @@ CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 		    ptr++;
 		    pImage = ptr;
 		}
-                //*((GInt32*)pImage)++ = (GInt32)jas_matrix_get(sMatrix, i, j);
 		break;
 	        case GDT_UInt16:
 		{
@@ -202,7 +309,6 @@ CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 		    ptr++;
 		    pImage = ptr;
 		}
-                //*((GUInt16*)pImage)++ = (GUInt16)jas_matrix_get(sMatrix, i, j);
 		break;
 	        case GDT_UInt32:
 		{
@@ -211,7 +317,6 @@ CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 		    ptr++;
 		    pImage = ptr;
 		}
-                //*((GUInt32*)pImage)++ = (GUInt32)jas_matrix_get(sMatrix, i, j);
 		break;
 	        case GDT_Byte:
 	        default:
@@ -221,7 +326,6 @@ CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 		    ptr++;
 		    pImage = ptr;
 		}
-                //*((GByte*)pImage)++ = (GByte)jas_matrix_get(sMatrix, i, j);
 		break;
 	    }
 
@@ -253,6 +357,8 @@ JPEG2000Dataset::JPEG2000Dataset()
 
 {
     fp = NULL;
+    sStream = 0;
+    sImage = 0;
     nBands = 0;
     bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
@@ -270,8 +376,10 @@ JPEG2000Dataset::JPEG2000Dataset()
 JPEG2000Dataset::~JPEG2000Dataset()
 
 {
-    jas_stream_close( sStream );
-    jas_image_destroy(sImage);
+    if ( sStream )
+	jas_stream_close( sStream );
+    if ( sImage )
+	jas_image_destroy( sImage );
     jas_image_clearfmts();
     if( fp != NULL )
         VSIFClose( fp );
@@ -282,7 +390,6 @@ JPEG2000Dataset::~JPEG2000Dataset()
 /************************************************************************/
 
 CPLErr JPEG2000Dataset::GetGeoTransform( double * padfTransform )
-
 {
     if( bGeoTransformValid )
     {
@@ -321,7 +428,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 	 !EQUALN( pszFormatName, "jpc", 3 ) &&
 	 !EQUALN( pszFormatName, "pgx", 3 )) )
     {
-        CPLDebug( "GDAL", "JasPer reports file is format type `%s'.", 
+        CPLDebug( "JPEG2000", "JasPer reports file is format type `%s'.", 
                   pszFormatName );
         jas_stream_close( sS );
         return NULL;
@@ -331,38 +438,109 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     JPEG2000Dataset 	*poDS;
+    int			*iDepth = NULL, *bSignedness = NULL;
+    int			iBand;
 
     poDS = new JPEG2000Dataset();
 
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
     poDS->sStream = sS;
+    poDS->iFormat = iFormat;
 
-    if ( !(poDS->sImage = jas_image_decode(poDS->sStream, iFormat, 0)) )
+    if (EQUALN( pszFormatName, "jp2", 3 ))
     {
-        jas_stream_close( sS );
-	delete poDS;
-	CPLDebug( "GDAL", "Unable to decode image %s.\n", 
-                  poOpenInfo->pszFilename );
-        return NULL;
+// XXX: Hack to read JP2 boxes from input file. JasPer hasn't public API
+// call for such things, so we use internal JasPer functions.
+	jp2_box_t *box;
+	box = 0;
+	while ( ( box = jp2_box_get(poDS->sStream) ) )
+	{
+	    switch (box->type)
+	    {
+		case JP2_BOX_IHDR:
+		poDS->nBands = box->data.ihdr.numcmpts;
+		poDS->nRasterXSize = box->data.ihdr.width;
+		poDS->nRasterYSize = box->data.ihdr.height;
+		if ( box->data.ihdr.bpc )
+		{
+		    iDepth = (int *)
+			CPLMalloc(box->data.bpcc.numcmpts * sizeof(int));
+		    bSignedness = (int *)
+			CPLMalloc(box->data.bpcc.numcmpts * sizeof(int));
+		    for ( iBand = 0; iBand < poDS->nBands; iBand++ )
+		    {
+			iDepth[iBand] = box->data.ihdr.bpc && 0x7F;
+			bSignedness[iBand] = box->data.ihdr.bpc >> 7;
+			CPLDebug( "JPEG2000",
+				  "Component %d: bpp=%d, signedness=%d",
+				  iBand, iDepth[iBand], bSignedness[iBand] );
+		    }
+		}
+		CPLDebug( "JPEG2000",
+			  "IHDR Box dump: width=%d, height=%d, numcmpts=%d\n"
+			  "bpp=%d",
+			  box->data.ihdr.width, box->data.ihdr.height,
+			  box->data.ihdr.numcmpts, box->data.ihdr.bpc );
+		break;
+		case JP2_BOX_BPCC:
+		CPLDebug( "JPEG2000", "BPCC box found. Dump:" );
+		iDepth = (int *)
+		    CPLMalloc( box->data.bpcc.numcmpts * sizeof(int) );
+		bSignedness = (int *)
+		    CPLMalloc( box->data.bpcc.numcmpts * sizeof(int) );
+		for ( iBand = 0; iBand < box->data.bpcc.numcmpts; iBand++ )
+		{
+		    iDepth[iBand] = box->data.bpcc.bpcs[iBand] && 0x7F;
+		    bSignedness[iBand] = box->data.bpcc.bpcs[iBand] >> 7;
+		    CPLDebug( "JPEG2000",
+			      "Component %d: bpp=%d, signedness=%d",
+			      iBand, iDepth[iBand], bSignedness[iBand] );
+		}
+		break;
+	    }
+	    jp2_box_destroy(box);
+	    box = 0;
+	}
+	jas_stream_rewind(poDS->sStream);
     }
+    else
+    {
+	if ( !(poDS->sImage = jas_image_decode(poDS->sStream, poDS->iFormat, 0)) )
+	{
+	    jas_stream_close( sS );
+	    delete poDS;
+	    CPLDebug( "JPEG2000", "Unable to decode image %s.\n", 
+		      poOpenInfo->pszFilename );
+	    return NULL;
+	}
 
-    poDS->nBands = jas_image_numcmpts( poDS->sImage );
-    poDS->nRasterXSize = jas_image_cmptwidth( poDS->sImage, 0 );
-    poDS->nRasterYSize = jas_image_cmptheight( poDS->sImage, 0 );
+	poDS->nBands = jas_image_numcmpts( poDS->sImage );
+	poDS->nRasterXSize = jas_image_cmptwidth( poDS->sImage, 0 );
+	poDS->nRasterYSize = jas_image_cmptheight( poDS->sImage, 0 );
+	iDepth = (int *)CPLMalloc( poDS->nBands * sizeof(int) );
+	bSignedness = (int *)CPLMalloc( poDS->nBands * sizeof(int) );
+	for ( iBand = 0; iBand < poDS->nBands; iBand++ )
+	{
+	    iDepth[iBand] = jas_image_cmptprec( poDS->sImage, iBand );
+	    bSignedness[iBand] = jas_image_cmptsgnd( poDS->sImage, iBand );
+	}
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    int iBand;
-    
     for( iBand = 1; iBand <= poDS->nBands; iBand++ )
     {
         poDS->SetBand( iBand, new JPEG2000RasterBand( poDS, iBand,
-	    jas_image_cmptprec(poDS->sImage, iBand - 1),
-	    jas_image_cmptsgnd(poDS->sImage, iBand - 1) ) );
+	    iDepth[iBand - 1], bSignedness[iBand - 1] ) );
         
     }
+    
+    if ( iDepth )
+	CPLFree( iDepth );
+    if ( bSignedness )
+	CPLFree( bSignedness );
 
 /* -------------------------------------------------------------------- */
 /*      Check for world file.                                           */
@@ -542,10 +720,10 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     pszOptionBuf[0] = '\0';
     if ( papszOptions )
     {
-	CPLDebug( "GDAL", "User supplied parameters:" );
+	CPLDebug( "JPEG2000", "User supplied parameters:" );
 	for ( i = 0; papszOptions[i] != NULL; i++ )
 	{
-	    CPLDebug( "GDAL", "%s\n", papszOptions[i] );
+	    CPLDebug( "JPEG2000", "%s\n", papszOptions[i] );
 	    for ( j = 0; apszComprOptions[j] != NULL; j++ )
 		if( EQUALN( apszComprOptions[j], papszOptions[i],
 			    strlen(apszComprOptions[j]) ) )
@@ -564,8 +742,8 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 		}
 	}
     }
-    CPLDebug( "GDAL", "Parameters, delivered to the JasPer library:" );
-    CPLDebug( "GDAL", "%s", pszOptionBuf );
+    CPLDebug( "JPEG2000", "Parameters, delivered to the JasPer library:" );
+    CPLDebug( "JPEG2000", "%s", pszOptionBuf );
 
     // FIXME: 1. determine colormodel; 2. won't works
     // jas_image_setcolormodel( sImage, 0 );
@@ -629,7 +807,7 @@ void GDALRegister_JPEG2000()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_jpeg2000.html" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16 UInt16" );
+                                   "Byte Int16 UInt16 Int32 UInt32" );
 
         poDriver->pfnOpen = JPEG2000Dataset::Open;
         poDriver->pfnCreateCopy = JPEG2000CreateCopy;
