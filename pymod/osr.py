@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.15  2002/11/30 20:53:51  warmerda
+# added SetFromUserInput
+#
 # Revision 1.14  2002/11/25 16:11:39  warmerda
 # added GetAuthorityCode/Name
 #
@@ -142,6 +145,9 @@ class SpatialReference:
 
     def SetWellKnownGeogCS(self, name):
         return _gdal.OSRSetWellKnownGeogCS(self._o, name)
+
+    def SetFromUserInput(self, name):
+        return _gdal.OSRSetFromUserInput(self._o, name)
 
     def SetGeogCS( self, geog_name, datum_name, ellipsoid_name,
                    semi_major, inv_flattening,

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2002/11/30 20:53:50  warmerda
+ * added SetFromUserInput
+ *
  * Revision 1.47  2002/11/30 17:52:18  warmerda
  * removed debugging statement
  *
@@ -1380,6 +1383,7 @@ int     OSRIsSame( OGRSpatialReferenceH, OGRSpatialReferenceH );
 
 int     OSRSetProjCS( OGRSpatialReferenceH, const char * );
 int     OSRSetWellKnownGeogCS( OGRSpatialReferenceH, const char * );
+int     OSRSetFromUserInput( OGRSpatialReferenceH, const char * );
 
 int     OSRSetGeogCS( OGRSpatialReferenceH hSRS,
                       const char * pszGeogName,
