@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/01/06 19:45:22  warmerda
+ * added special case for writing UTM projections
+ *
  * Revision 1.7  1999/12/07 17:50:17  warmerda
  * Fixed bug in datum handling.
  *
@@ -429,6 +432,7 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 
 {
     OGRSpatialReference *poSRS;
+    int		nPCS = KvUserDefined;
 
 /* -------------------------------------------------------------------- */
 /*      Create an OGRSpatialReference object corresponding to the       */
@@ -438,6 +442,16 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 
     if( poSRS->importFromWkt((char **) &pszOGCWKT) != OGRERR_NONE )
         return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Get the Datum so we can special case a few PCS codes.           */
+/* -------------------------------------------------------------------- */
+    int		nDatum;
+
+    if( poSRS->GetAttrValue("DATUM") != NULL )
+        nDatum = OGCDatumName2EPSGDatumCode( poSRS->GetAttrValue("DATUM") );
+    else
+        nDatum = KvUserDefined;
 
 /* -------------------------------------------------------------------- */
 /*      Handle the projection transformation.                           */
@@ -480,7 +494,54 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
         GTIFKeySet(psGTIF, ProjFalseNorthingGeoKey, TYPE_DOUBLE, 1,
                    poSRS->GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) );
     }
-    
+
+    else if( poSRS->GetUTMZone() != 0 )
+    {
+        int		bNorth, nZone, nProjection;
+
+	GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
+                   ModelTypeProjected);
+
+        nZone = poSRS->GetUTMZone( &bNorth );
+
+        if( nDatum == Datum_North_American_Datum_1983 && nZone >= 3
+            && nZone <= 22 && bNorth )
+        {
+            nPCS = 26900 + nZone;
+
+            GTIFKeySet(psGTIF, ProjectedCSTypeGeoKey, TYPE_SHORT, 1, nPCS );
+        }
+        else if( nDatum == Datum_North_American_Datum_1927 && nZone >= 3
+            && nZone <= 22 && bNorth )
+        {
+            nPCS = 26700 + nZone;
+
+            GTIFKeySet(psGTIF, ProjectedCSTypeGeoKey, TYPE_SHORT, 1, nPCS );
+        }
+        else if( nDatum == Datum_WGS84 )
+        {
+            if( bNorth )
+                nPCS = 32600 + nZone;
+            else
+                nPCS = 32700 + nZone;
+
+            GTIFKeySet(psGTIF, ProjectedCSTypeGeoKey, TYPE_SHORT, 1, nPCS );
+        }
+        else
+        {
+            if( bNorth )
+                nProjection = 16000 + nZone;
+            else
+                nProjection = 16100 + nZone;
+
+        
+            GTIFKeySet(psGTIF, ProjectedCSTypeGeoKey, TYPE_SHORT, 1,
+                       KvUserDefined );
+            
+            GTIFKeySet(psGTIF, ProjectionGeoKey, TYPE_SHORT, 1, nProjection );
+        }
+    }
+
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )
     {
 	GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
@@ -524,20 +585,19 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 /*	Try to identify the datum, scanning the EPSG datum file for	*/
 /*	a match.							*/    
 /* -------------------------------------------------------------------- */
-    int		nDatum;
-
-    if( poSRS->GetAttrValue("DATUM") != NULL )
-        nDatum = OGCDatumName2EPSGDatumCode( poSRS->GetAttrValue("DATUM") );
-    else
-        nDatum = KvUserDefined;
-
-    if( nDatum != KvUserDefined )
+    if( nPCS == KvUserDefined )
     {
-        GTIFKeySet( psGTIF, GeogGeodeticDatumGeoKey, TYPE_SHORT, 1, nDatum );
-    }
-    else
-    {
-        printf( "Couldn't translate `%s'.\n", poSRS->GetAttrValue("DATUM") );
+        if( nDatum != KvUserDefined )
+        {
+            GTIFKeySet( psGTIF, GeogGeodeticDatumGeoKey, TYPE_SHORT,
+                        1, nDatum );
+        }
+        else
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Couldn't translate `%s' to a GeoTIFF datum.\n",
+                      poSRS->GetAttrValue("DATUM") );
+        }
     }
 
 /* -------------------------------------------------------------------- */
