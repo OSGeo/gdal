@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/11/04 21:11:37  warmerda
+ * Added TestCapability().
+ *
  * Revision 1.6  1999/10/04 03:08:52  warmerda
  * added raster support
  *
@@ -107,6 +110,16 @@ OGRNTFDataSource::~OGRNTFDataSource()
     CSLDestroy( papszOptions );
 
     delete poSpatialRef;
+}
+
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int OGRNTFDataSource::TestCapability( const char * )
+
+{
+    return FALSE;
 }
 
 /************************************************************************/
@@ -490,3 +503,4 @@ const char *OGRNTFDataSource::GetOption( const char * pszOption )
 {
     return CSLFetchNameValue( papszOptions, pszOption );
 }
+
