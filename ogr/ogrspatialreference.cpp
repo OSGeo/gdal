@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.87  2004/09/23 16:20:13  fwarmerdam
+ * added OSRCleanup
+ *
  * Revision 1.86  2004/09/10 20:59:06  fwarmerdam
  * Added note on SetSOC() being deprecated.
  *
@@ -165,6 +168,7 @@
 
 #include "ogr_spatialref.h"
 #include "ogr_p.h"
+#include "cpl_csv.h"
 
 CPL_CVSID("$Id$");
 
@@ -4562,3 +4566,26 @@ OGRErr OSRFixup( OGRSpatialReferenceH hSRS )
     return ((OGRSpatialReference *) hSRS)->Fixup();
 }
 
+
+/************************************************************************/
+/*                             OSRCleanup()                             */
+/************************************************************************/
+
+/**
+ * Cleanup cached SRS related memory.
+ *
+ * This function will attempt to cleanup any cache spatial reference
+ * related information, such as cached tables of coordinate systems. 
+ */
+
+CPL_C_START 
+void CleanupESRIDatumMappingTable();
+CPL_C_END
+
+
+void OSRCleanup( void )
+
+{
+    CleanupESRIDatumMappingTable();
+    CSVDeaccess( NULL );
+}
