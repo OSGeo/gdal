@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.27  2002/03/01 14:29:09  warmerda
+ * added GetBand() method on GDALRasterBand
+ *
  * Revision 1.26  2001/12/07 15:29:45  warmerda
  * added InitBlockInfo() in GetHistogram()
  *
@@ -1541,6 +1544,16 @@ int GDALGetRasterBandYSize( GDALRasterBandH hBand )
 
 {
     return ((GDALRasterBand *) hBand)->GetYSize();
+}
+
+/************************************************************************/
+/*                              GetBand()                               */
+/************************************************************************/
+
+int GDALRasterBand::GetBand()
+
+{
+    return nBand;
 }
 
 /************************************************************************/

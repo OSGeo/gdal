@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2002/03/01 14:29:09  warmerda
+ * added GetBand() method on GDALRasterBand
+ *
  * Revision 1.29  2001/12/15 15:42:27  warmerda
  * *** empty log message ***
  *
@@ -401,6 +404,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     int		GetXSize();
     int		GetYSize();
+    int         GetBand();
 
     GDALDataType GetRasterDataType( void );
     void	GetBlockSize( int *, int * );
