@@ -1,0 +1,188 @@
+MITAB Library - Revision History
+================================
+
+ToDo - Open Questions:
+----------------------
+
+ - API Documentation
+
+ - MIF output: bounds are missing in Coordsys NonEarth
+
+ - ??? Produce a Warning when bounds not set on first SetFeature()
+
+ - Support MetaData in .TAB header
+
+ - Can we do anything for optimized spatial searches in TAB files?
+   (i.e. See SetSpatialFilter())
+
+ - TABView support:
+     - Complete and tested only for cases in which 2 tables
+       are linked with a many-to-1 relation through an integer field.  
+     - The merge operation involves 3 features in memory and cloning the
+       geometry... this could perhaps be optimized but would require changes
+       at the lower-level in the lib.
+     - What is the proper behavior when no record in RelTable for a feature
+       from MainTable?  For now we leave fields unset
+
+ - TABMAPObjBlocks could be split during write when they're full in order to
+   optimize spatial index.  Files are still usable even without this kind 
+   of optimization.
+
+ - "Table Type DBF" are supported for reading, but no charset conversion
+   is done... however, when the same datasets are exported to MIF by MapInfo
+   it apparently converts the DBF file's charset (e.g. CodePage863) to 
+   the dataset charset (e.g. WindowsLatin1)
+
+ - Will we ever want to support Table Type ACCESS?
+
+ - When regions with multiple rings are read from MIF, the inside/outside
+   ring relationship is not reconstructed.  This may cause display problems
+   when MIF files containing regions are converted to TAB: it has been 
+   reported that some regions may not be filled properly when viewed in
+   MapInfo Versions 5.0 and up when the inside/outside ring relationship
+   is not properly written.
+
+
+CHANGES - Current Version:
+--------------------------
+
+- Avoid warnings building with gcc -Wall -O2 (NFW).
+
+- Modified generation of .MAP spatial index to generate a balanced tree
+  instead of the old 'chained list of nodes' that exceeded the 255 levels
+  limit on the tree depth with files with > 100,000 objects.
+  There would still be room for improvement by implementing splitting of
+  object data blocks.
+
+- Handle m_nOriginQuadrant value of 0 the same way as quadrant 3
+
+- Added bDeletedFlag to TABFeature with get/set methods
+
+- Maintain and/or compute values of regions and polyline center/label point
+  (Used to always use the center of the MBR and this was not correct)
+
+- Fixes for old Version 100 files:
+   - Set valid Scale/displacement when reading V100 .map header.
+     Use m_nCoordPrecision to define scale since scale in header is 0.
+   - Accept "FORMAT: DBF" in .tab header file.
+
+- Made all open() methods completely case-insensitive on filenames on Unix
+  (added TABAdjustCaseSensitiveFilename())
+
+
+Version 1.0.1 - (2000-04-21)
+----------------------------
+
+- Added C API documentation (mitab_capi.cpp) + functions to read vertices
+  and field information and included C API in public release.
+
+- Modified fltering of new table field name to accept extended chars with
+  accents. 
+
+
+Version 1.0 - (2000-03-26)
+--------------------------
+
+- Changed to use same MIT/X-Consortium license as other CPL + OGR libs.
+
+- Fixed problem opening datasets with 0 features in them.
+
+- Added support for reading TAB datasets with "Table Type DBF"... only 
+  type "NATIVE" was supported until now.
+
+- Produce only a warning when unsupported feature types encountered in the 
+  .MAP file, and return a valid feature with a NONE geometry.
+
+- Done more tests (and required changes) to fix the way the quadrant
+  setting affects the way to read arc angles... hopefully it's right
+  this time!
+
+- TABText objects now return their text string with any "\n" escaped on
+  2 chars  (i.e. "\"+"n").  TABText::SetText() also expects newlines to
+  be escaped in the string it receives.
+
+- Fixed some projection problems, including possible crashes with some
+  9999 datums with big parameter values or with some unrecognized projections.
+
+- Outside/inside ring relationship from a TABRegion's OGRPolygon is now
+  properly written to the .MAP file's coord block section header.  
+  Prior to MapInfo 5.0, this info was ignored, but now it has to be valid 
+  otherwise some parts of a region won't be displayed properly in MI5.0
+
+- Added support to write indexed fields and create joined tables (TABView).
+
+- Added validation on field names (no special chars) on write and 
+  produce a warning if name had to be fixed.
+
+- Added support for V450 object types with num_points > 32767 and for
+  pen width in points.  
+  This also resulted in changes to the ITABFeaturePen methods, mainly the 
+  Get/SetPenStyle() method has been removed since this style value was 
+  actually a part of the point width value.  
+  Finally, the 'style' parameter was also removed in the 
+  mitab_c_set_pen() C API method.
+
+- Support for Version 450 objects forced creation of version 500 .MAP files
+  with 1024 bytes header (.MAP version 400 were produced before).
+
+- MIF format now reads and writes bounds in coordsys (used to ignore them)
+
+
+Version 0.2 - (1999-12-20)
+--------------------------
+
+ - Added TABView class to support views on pairs of .TAB files (read-only)
+    - Currently supports only 2 tables with a many-to-1 relation through
+      an integer field.
+
+ - Added GetFeatureCountByType() method.  Current implementation does
+   not work (returns all zeros) for MIF files
+
+ - Added static ImapInfoFile::SmartOpen() to automatically detect file type,
+   open a new file for read and return a new object of the appropriate
+   type (TABFile/TABView/MIFFile) to handle it.
+
+ - Changed TABFile::Open(), MIFFile::Open() to use a bTestOpenNoError flag
+
+ - OGRMIDDataSource/OGRMIDDriver were removed.  Now all file types
+   handled by MITAB go through the OGRTABDataSource/OGRTABDriver interface
+
+ - Fixed problem reading/writing dates (bytes were reversed)
+        Also, Dates are now returned as "YYYYMMDD", and accepted as one
+        of "YYYY/MM/DD", "DD/MM/YYYY", or "YYYYMMDD"
+
+ - Fixed TABFile::GetBounds() that could sometimes return Min values > Max
+
+ - Rounded rectangles with radius bigger than MBR: we used to return a
+   corrected radius value, but it's now changed to return the real radius
+   value (even if it's too big) since this is what MapInfo appears to do
+   when exporting from TAB to MIF
+
+ - Fixed some problems that had appeared following a change in OGR's
+   addGeometry()... use the new addGeometryDirectly() + more error checking.
+
+ - TABRegions geometry now returned as OGRMultiPolygon instead of OGRPolygon
+   with multiple rings.  This change had to be done because OGRPolygons
+   MUST have only one outer ring with a set of inner rings, and this
+   cannot be guaranteed to be the case with a MapInfo file.
+   Also added TABRegion::GetNumRings() and TABRegion::GetRing() to 
+   make it simpler to manipulate the complex geometry as if it was a 
+   simple collection of rings which is actually what we have in the 
+   MapInfo model.
+
+ - Fixed some problems with MIF generation of Float fields and PLINE MULTIPLE
+
+ - Run a bunch of read/write tests for both .TAB and .MIF through Purify...
+   fixed all memory leaks found.
+
+Version 0.1 - (1999-12-04)
+--------------------------
+
+ - First official pre-release version
+
+ - Still lacks good API docs.
+
+
+------------
+$Id: HISTORY.TXT,v 1.24 2000/09/28 16:40:16 warmerda Exp $
+------------
