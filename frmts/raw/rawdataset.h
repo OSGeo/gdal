@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/07/27 11:04:40  dron
+ * Added RawRasterBand::IsLineLoaded() method.
+ *
  * Revision 1.11  2003/05/02 16:00:17  dron
  * Implemented RawRasterBand::IRasterIO() method. Introduced `dirty' flag.
  *
@@ -78,6 +81,10 @@ class CPL_DLL RawDataset : public GDALDataset
 {
     friend class RawRasterBand;
 
+  protected:
+    virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
+                                   void *, int, int, GDALDataType,
+                                   int, int *, int, int, int );
   public:
                  RawDataset();
                  ~RawDataset();
@@ -100,6 +107,7 @@ class CPL_DLL RawRasterBand : public GDALRasterBand
     vsi_l_offset nImgOffset;
     int		nPixelOffset;
     int		nLineOffset;
+    int         nLineSize;
     int		bNativeOrder;
 
     int		bNoDataSet;
@@ -113,8 +121,9 @@ class CPL_DLL RawRasterBand : public GDALRasterBand
     size_t      Read( void *, size_t, size_t );
     size_t      Write( void *, size_t, size_t );
 
-    CPLErr          AccessBlock( vsi_l_offset nBlockOff, int nBlockSize,
-                                   void * pData );
+    CPLErr      AccessBlock( vsi_l_offset nBlockOff, int nBlockSize,
+                             void * pData );
+    int         IsLineLoaded( int nLineOff, int nLines );
     virtual CPLErr  IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               int, int );
