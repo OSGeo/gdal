@@ -15,6 +15,7 @@
 #include "SFDS.h"
 
 
+
 CComModule _Module;
 
 BEGIN_OBJECT_MAP(ObjectMap)
@@ -69,5 +70,4 @@ STDAPI DllUnregisterServer(void)
 {
     return _Module.UnregisterServer(TRUE);
 }
-
 
