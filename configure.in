@@ -821,7 +821,7 @@ dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH(mrsid,[  --with-mrsid[=ARG]      Include MrSID support (ARG=path to MrSID DSDK or no)],,)
 
-if test "x$with_mrsid" = "xno" ; then
+if test "x$with_mrsid" = "xno"  -o "x$with_mrsid" = "x" ; then
 
   HAVE_MRSID=no
 
@@ -853,6 +853,7 @@ else
     fi
 
   else
+    HAVE_MRSID=no
     AC_MSG_ERROR([not found.])
   fi
 
@@ -864,7 +865,6 @@ AC_SUBST(MRSID_FLAGS,$MRSID_FLAGS)
 
 if test "x$HAVE_MRSID" != "xno" ; then
   OPT_GDAL_FORMATS="mrsid $OPT_GDAL_FORMATS"
-  
 fi
 
 dnl ---------------------------------------------------------------------------
