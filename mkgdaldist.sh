@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ $# -lt 1 ] ; then
-  echo "Usage: mkgdaldist version [-install]"
+  echo "Usage: mkgdaldist version [-install] [-nologin]"
   echo
   echo "Example: mkgdaldist 1.1.4"
   exit
@@ -23,10 +23,14 @@ cd dist_wrk
 
 export CVSROOT=:pserver:anonymous@cvs.remotesensing.org:/cvsroot
 
-echo "Please type anonymous if prompted for a password."
-cvs login
+if test "$2" = "-nologin" -o "$3" = "-nologin" ; then
+  echo "Skipping login"
+else
+  echo "Please type anonymous if prompted for a password."
+  cvs login
+fi
 
-cvs checkout gdal
+cvs -Q checkout gdal
 
 if [ \! -d gdal ] ; then
   echo "cvs checkout reported an error ... abandoning mkgdaldist"
