@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.51  2004/11/23 04:07:29  fwarmerdam
+ * Added warning on the BuildOverviews() method.
+ *
  * Revision 1.50  2004/09/28 12:53:33  fwarmerdam
  * Fixed example.
  *
@@ -1673,6 +1676,13 @@ GDALRasterBandH GDALGetOverview( GDALRasterBandH hBand, int i )
  *
  * If the operation is unsupported for the indicated dataset, then 
  * CE_Failure is returned, and CPLGetLastError() will return CPLE_NonSupported.
+ *
+ * WARNING:  It is not possible to build overviews for a single band in
+ * TIFF format, and thus this method does not work for TIFF format, or any
+ * formats that use the default overview building in TIFF format.  Instead
+ * it is necessary to build overviews on the dataset as a whole using
+ * GDALDataset::BuildOverviews().  That makes this method pretty useless
+ * from a practical point of view. 
  *
  * @param pszResampling one of "NEAREST", "AVERAGE" or "MODE" controlling
  * the downsampling method applied.
