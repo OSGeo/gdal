@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2002/03/08 16:38:11  warmerda
+ * ensure SetProjParm() will replace an existing node if available
+ *
  * Revision 1.47  2002/03/05 14:25:14  warmerda
  * expand tabs
  *
@@ -1596,20 +1599,32 @@ OGRErr OGRSpatialReference::SetProjParm( const char * pszParmName,
     OGR_SRSNode *poParm;
     char        szValue[64];
 
-    if( poPROJCS == NULL || GetAttrNode( pszParmName ) != NULL )
+    if( poPROJCS == NULL )
         return OGRERR_FAILURE;
 
-    poParm = new OGR_SRSNode( "PARAMETER" );
-    poParm->AddChild( new OGR_SRSNode( pszParmName ) );
-
-#ifdef notdef    
-    if( ABS(dfValue - (int) dfValue) == 0.0 )
-        sprintf( szValue, "%d", (int) dfValue );
-    else
-        sprintf( szValue, "%.12f", dfValue );
-#endif        
     OGRPrintDouble( szValue, dfValue );
 
+/* -------------------------------------------------------------------- */
+/*      Try to find existing parameter with this name.                  */
+/* -------------------------------------------------------------------- */
+    for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
+    {
+        poParm = poPROJCS->GetChild( iChild );
+
+        if( EQUAL(poParm->GetValue(),"PARAMETER")
+            && poParm->GetChildCount() == 2 
+            && EQUAL(poParm->GetChild(0)->GetValue(),pszParmName) )
+        {
+            poParm->GetChild(1)->SetValue( szValue );
+            return OGRERR_NONE;
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Otherwise create a new parameter and append.                    */
+/* -------------------------------------------------------------------- */
+    poParm = new OGR_SRSNode( "PARAMETER" );
+    poParm->AddChild( new OGR_SRSNode( pszParmName ) );
     poParm->AddChild( new OGR_SRSNode( szValue ) );
 
     poPROJCS->AddChild( poParm );
