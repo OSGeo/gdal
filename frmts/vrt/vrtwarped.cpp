@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/08/12 08:24:26  warmerda
+ * added overview support
+ *
  * Revision 1.2  2004/08/11 20:10:54  warmerda
  * fixed issue with intializing blocksizes
  *
@@ -41,8 +44,8 @@
 #include "cpl_string.h"
 #include "../../alg/gdalwarper.h"
 
-
 CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                      GDALAutoCreateWarpedVRT()                       */
 /************************************************************************/
@@ -251,6 +254,9 @@ VRTWarpedDataset::VRTWarpedDataset( int nXSize, int nYSize )
     nBlockXSize = 512;
     nBlockYSize = 128;
     eAccess = GA_Update;
+
+    nOverviewCount = 0;
+    papoOverviews = NULL;
 }
 
 /************************************************************************/
@@ -308,6 +314,195 @@ CPLErr VRTWarpedDataset::Initialize( void *psWO )
         GDALReferenceDataset( ((GDALWarpOptions *) psWO)->hSrcDS );
 
     return poWarper->Initialize( (GDALWarpOptions *) psWO );
+}
+
+/************************************************************************/
+/*                     VRTWarpedOverviewTransform()                     */
+/************************************************************************/
+
+typedef struct {
+    GDALTransformerFunc pfnBaseTransformer;
+    void              *pBaseTransformerArg;
+
+    double            dfXOverviewFactor;
+    double            dfYOverviewFactor;
+} VWOTInfo;
+
+int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc, 
+                                int nPointCount, 
+                                double *padfX, double *padfY, double *padfZ,
+                                int *panSuccess )
+
+{
+    VWOTInfo *psInfo = (VWOTInfo *) pTransformArg;
+    int i, bSuccess;
+
+    if( bDstToSrc )
+    {
+        for( i = 0; i < nPointCount; i++ )
+        {
+            padfX[i] *= psInfo->dfXOverviewFactor;
+            padfY[i] *= psInfo->dfYOverviewFactor;
+        }
+    }
+
+    bSuccess = psInfo->pfnBaseTransformer( psInfo->pBaseTransformerArg, 
+                                           bDstToSrc,
+                                           nPointCount, padfX, padfY, padfZ, 
+                                           panSuccess );
+
+    if( !bDstToSrc )
+    {
+        for( i = 0; i < nPointCount; i++ )
+        {
+            padfX[i] /= psInfo->dfXOverviewFactor;
+            padfY[i] /= psInfo->dfYOverviewFactor;
+        }
+    }
+
+    return bSuccess;
+}
+
+static int GDALOvLevelAdjust( int nOvLevel, int nXSize )
+
+{
+    int nOXSize = (nXSize + nOvLevel - 1) / nOvLevel;
+    
+    return (int) (0.5 + nXSize / (double) nOXSize);
+}
+
+/************************************************************************/
+/*                           BuildOverviews()                           */
+/*                                                                      */
+/*      For overviews, we actually just build a whole new dataset       */
+/*      with an extra layer of transformation on the warper used to     */
+/*      accomplish downsampling by the desired factor.                  */
+/************************************************************************/
+
+CPLErr 
+VRTWarpedDataset::IBuildOverviews( const char *pszResampling, 
+                                   int nOverviews, int *panOverviewList, 
+                                   int nListBands, int *panBandList,
+                                   GDALProgressFunc pfnProgress, 
+                                   void * pProgressData )
+    
+{
+/* -------------------------------------------------------------------- */
+/*      Initial progress result.                                        */
+/* -------------------------------------------------------------------- */
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Establish which of the overview levels we already have, and     */
+/*      which are new.                                                  */
+/* -------------------------------------------------------------------- */
+    int   i, nNewOverviews, *panNewOverviewList = NULL;
+
+    nNewOverviews = 0;
+    panNewOverviewList = (int *) CPLCalloc(sizeof(int),nOverviews);
+    for( i = 0; i < nOverviews; i++ )
+    {
+        int   j;
+
+        for( j = 0; j < nOverviewCount; j++ )
+        {
+            int    nOvFactor;
+            VRTWarpedDataset *poOverview = papoOverviews[j];
+            
+            nOvFactor = (int) 
+                (0.5+GetRasterXSize() / (double) poOverview->GetRasterXSize());
+
+            if( nOvFactor == panOverviewList[i] 
+                || nOvFactor == GDALOvLevelAdjust( panOverviewList[i], 
+                                                   GetRasterXSize() ) )
+                panOverviewList[i] *= -1;
+        }
+
+        if( panOverviewList[i] > 0 )
+            panNewOverviewList[nNewOverviews++] = panOverviewList[i];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create each missing overview (we don't need to do anything      */
+/*      to update existing overviews).                                  */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nNewOverviews; i++ )
+    {
+        int    nOXSize, nOYSize, iBand;
+        VWOTInfo *psInfo;
+        VRTWarpedDataset *poOverviewDS;
+        
+/* -------------------------------------------------------------------- */
+/*      What size should this overview be.                              */
+/* -------------------------------------------------------------------- */
+        nOXSize = (GetRasterXSize() + panNewOverviewList[i] - 1) 
+            / panNewOverviewList[i];
+                                 
+        nOYSize = (GetRasterYSize() + panNewOverviewList[i] - 1) 
+            / panNewOverviewList[i];
+
+/* -------------------------------------------------------------------- */
+/*      Create the overview dataset.                                    */
+/* -------------------------------------------------------------------- */
+        poOverviewDS = new VRTWarpedDataset( nOXSize, nOYSize );
+        
+        for( iBand = 0; iBand < GetRasterCount(); iBand++ )
+        {
+            GDALRasterBand *poOldBand = GetRasterBand(iBand+1);
+            VRTWarpedRasterBand *poNewBand = 
+                new VRTWarpedRasterBand( poOverviewDS, iBand+1, 
+                                         poOldBand->GetRasterDataType() );
+            
+            poNewBand->CopyCommonInfoFrom( poOldBand );
+            poOverviewDS->SetBand( iBand+1, poNewBand );
+        }
+
+        nOverviewCount++;
+        papoOverviews = (VRTWarpedDataset **)
+            CPLRealloc( papoOverviews, sizeof(void*) * nOverviewCount );
+
+        papoOverviews[nOverviewCount-1] = poOverviewDS;
+        
+/* -------------------------------------------------------------------- */
+/*      Prepare update transformation information that will apply       */
+/*      the overview decimation.                                        */
+/* -------------------------------------------------------------------- */
+        GDALWarpOptions *psWO = (GDALWarpOptions *) poWarper->GetOptions();
+        psInfo = (VWOTInfo *) CPLCalloc(sizeof(VWOTInfo),1);
+
+        psInfo->pfnBaseTransformer = psWO->pfnTransformer;
+        psInfo->pBaseTransformerArg = psWO->pTransformerArg;
+
+        psInfo->dfXOverviewFactor = GetRasterXSize() / (double) nOXSize;
+        psInfo->dfYOverviewFactor = GetRasterYSize() / (double) nOYSize;
+
+/* -------------------------------------------------------------------- */
+/*      Initialize the new dataset with adjusted warp options, and      */
+/*      then restore to original condition.                             */
+/* -------------------------------------------------------------------- */
+        psWO->pfnTransformer = VRTWarpedOverviewTransform;
+        psWO->pTransformerArg = psInfo;
+
+        poOverviewDS->Initialize( psWO );
+
+        psWO->pfnTransformer = psInfo->pfnBaseTransformer;
+        psWO->pTransformerArg = psInfo->pBaseTransformerArg;
+    }
+
+    CPLFree( panNewOverviewList );
+
+/* -------------------------------------------------------------------- */
+/*      Progress finished.                                              */
+/* -------------------------------------------------------------------- */
+    pfnProgress( 1.0, NULL, pProgressData );
+
+    SetNeedsFlush();
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -424,6 +619,24 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
         poWarper = NULL;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Generate overviews, if appropriate.                             */
+/* -------------------------------------------------------------------- */
+    char **papszTokens = CSLTokenizeString( 
+        CPLGetXMLValue( psTree, "OverviewList", "" ));
+    int iOverview;
+
+    for( iOverview = 0; 
+         papszTokens != NULL && papszTokens[iOverview] != NULL;
+         iOverview++ )
+    {
+        int nOvFactor = atoi(papszTokens[iOverview]);
+
+        BuildOverviews( "NEAREST", 1, &nOvFactor, 0, NULL, NULL, NULL );
+    }
+
+    CSLDestroy( papszTokens );
+
     return eErr;
 }
 
@@ -455,6 +668,33 @@ CPLXMLNode *VRTWarpedDataset::SerializeToXML( const char *pszVRTPath )
                                  CPLSPrintf( "%d", nBlockXSize ) );
     CPLCreateXMLElementAndValue( psTree, "BlockYSize",
                                  CPLSPrintf( "%d", nBlockYSize ) );
+
+/* -------------------------------------------------------------------- */
+/*      Serialize the overview list.                                    */
+/* -------------------------------------------------------------------- */
+    if( nOverviewCount > 0 )
+    {
+        char *pszOverviewList;
+        int iOverview;
+        
+        pszOverviewList = (char *) CPLMalloc(nOverviewCount*8 + 10);
+        pszOverviewList[0] = '\0';
+        for( iOverview = 0; iOverview < nOverviewCount; iOverview++ )
+        {
+            int nOvFactor;
+
+            nOvFactor = (int) 
+                (0.5+GetRasterXSize() 
+                 / (double) papoOverviews[iOverview]->GetRasterXSize());
+
+            sprintf( pszOverviewList + strlen(pszOverviewList), 
+                     "%d ", nOvFactor );
+        }
+
+        CPLCreateXMLElementAndValue( psTree, "OverviewList", pszOverviewList );
+
+        CPLFree( pszOverviewList );
+    }
 
 /* ==================================================================== */
 /*      Serialize the warp options.                                     */
@@ -697,3 +937,31 @@ CPLXMLNode *VRTWarpedRasterBand::SerializeToXML( const char *pszVRTPath )
 
     return psTree;
 }
+
+/************************************************************************/
+/*                          GetOverviewCount()                          */
+/************************************************************************/
+
+int VRTWarpedRasterBand::GetOverviewCount()
+
+{
+    VRTWarpedDataset *poWDS = (VRTWarpedDataset *) poDS;
+
+    return poWDS->nOverviewCount;
+}
+
+/************************************************************************/
+/*                            GetOverview()                             */
+/************************************************************************/
+
+GDALRasterBand *VRTWarpedRasterBand::GetOverview( int iOverview )
+
+{
+    VRTWarpedDataset *poWDS = (VRTWarpedDataset *) poDS;
+
+    if( iOverview < 0 || iOverview >= poWDS->nOverviewCount )
+        return NULL;
+    else
+        return poWDS->papoOverviews[iOverview]->GetRasterBand( nBand );
+}
+
