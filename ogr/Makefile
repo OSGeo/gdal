@@ -14,7 +14,7 @@ ALL_LIBS =	$(OLE_LIBS) $(GDAL_ROOT)/port/cpl.lib $(OGDILIB) \
 		$(XERCES_LIB) $(LIBS)
 
 OGR_FRMTS =	ogrsf_frmts\ogrsf_frmts.lib ogrsf_frmts\ogrsf_frmts_sup.lib
-OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
+OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj ogr_api.obj \
 		ogrlinestring.obj ogrpolygon.obj ogrlinearring.obj \
 		ogrutils.obj ogrgeometry.obj ogrgeometrycollection.obj \
 		ogrmultipolygon.obj ogrmultilinestring.obj ogr_opt.obj \
