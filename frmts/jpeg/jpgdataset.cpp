@@ -28,6 +28,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.18  2005/02/25 15:17:35  fwarmerdam
+ * Use dataset io to fetch to provide (potentially) faster interleaved
+ * reads.
+ *
  * Revision 1.17  2003/10/31 00:58:55  warmerda
  * Added support for .jpgw as per request from Markus.
  *
@@ -478,6 +482,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nBands = poSrcDS->GetRasterCount();
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
+    int  anBandList[3] = {1,2,3};
     int  nQuality = 75;
     int  bProgressive = FALSE;
 
@@ -572,24 +577,23 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Loop over image, copying image data.                            */
 /* -------------------------------------------------------------------- */
     GByte 	*pabyScanline;
-    CPLErr      eErr;
+    CPLErr      eErr = CE_None;
 
     pabyScanline = (GByte *) CPLMalloc( nBands * nXSize );
 
-    for( int iLine = 0; iLine < nYSize; iLine++ )
+    for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
     {
         JSAMPLE      *ppSamples;
 
-        for( int iBand = 0; iBand < nBands; iBand++ )
-        {
-            GDALRasterBand * poBand = poSrcDS->GetRasterBand( iBand+1 );
-            eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                     pabyScanline + iBand, nXSize, 1, GDT_Byte,
-                                     nBands, nBands * nXSize );
-        }
+        eErr = poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
+                                  pabyScanline, nXSize, 1, GDT_Byte,
+                                  nBands, anBandList, 
+                                  nBands, nBands * nXSize, 1 );
 
         ppSamples = (JSAMPLE *) pabyScanline;
-        jpeg_write_scanlines( &sCInfo, &ppSamples, 1 );
+
+        if( eErr == CE_None )
+            jpeg_write_scanlines( &sCInfo, &ppSamples, 1 );
     }
 
     CPLFree( pabyScanline );
