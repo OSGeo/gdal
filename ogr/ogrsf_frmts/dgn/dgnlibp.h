@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/11/12 19:44:51  warmerda
+ * fixed up DGN_WRITE_INT32 macro
+ *
  * Revision 1.14  2002/11/11 20:37:07  warmerda
  * added write related stuff
  *
@@ -136,11 +139,11 @@ typedef struct {
 			+ (p)[3]*256 \
                         + (p)[1]*65536*256 \
                         + (p)[0]*65536)
-#define DGN_WRITE_INT32( n, p )	{ GInt32 nMacroWork = (n); \
-                                  (p)[0] = (nMacroWork & 0x00ff0000) >> 16; \
-                                  (p)[1] = (nMacroWork & 0xff000000) >> 24; \
-                                  (p)[2] = (nMacroWork & 0x000000ff) >> 0; \
-                                  (p)[3] = (nMacroWork & 0x0000ff00) >> 8; }
+#define DGN_WRITE_INT32( n, p )	{ GInt32 nMacroWork = (n);                    \
+                   ((unsigned char *)p)[0] = (nMacroWork & 0x00ff0000) >> 16; \
+                   ((unsigned char *)p)[1] = (nMacroWork & 0xff000000) >> 24; \
+                   ((unsigned char *)p)[2] = (nMacroWork & 0x000000ff) >> 0;  \
+                   ((unsigned char *)p)[3] = (nMacroWork & 0x0000ff00) >> 8; }
 
 int DGNParseCore( DGNInfo *, DGNElemCore * );
 void DGNTransformPoint( DGNInfo *, DGNPoint * );
