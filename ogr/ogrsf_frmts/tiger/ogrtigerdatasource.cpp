@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/12/28 05:18:59  warmerda
+ * Loosen candidate file constraints in Open() to include TST* files.
+ *
  * Revision 1.16  2002/12/26 00:20:19  mbp
  * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
  * first round implementation of TIGER_2002 support
@@ -341,7 +344,8 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
                 continue;
             }
             
-            if( EQUALN(candidateFileList[i],"TGR",3)
+            if( (EQUALN(candidateFileList[i],"TGR",3)
+                 || EQUALN(candidateFileList[i],"TST",3))
                 && candidateFileList[i][strlen(candidateFileList[i])-4] == '.'
                 && candidateFileList[i][strlen(candidateFileList[i])-1] == '1')
             {
