@@ -12,7 +12,7 @@ default:	$(OBJ) sub-libs
 sub-libs:
 	@for dir in $(GDAL_FORMATS) ; do \
 	  if test -d $$dir ; then \
-	    if (cd $$dir; $(MAKE) install-obj) ; then \
+	    if (cd $$dir; $(MAKE) install-obj) || exit 1 ; then \
 	      echo; \
 	    else \
 	      break; \
@@ -26,7 +26,7 @@ clean:
 	rm -f *.o o/*.o o/*.a
 	@for dir in $(GDAL_FORMATS) ; do \
 	  if test -d $$dir ; then \
-	    if (cd $$dir; $(MAKE) clean) ; then \
+	    if (cd $$dir; $(MAKE) clean) || exit 1 ; then \
 	      echo; \
 	    else \
 	      break; \
