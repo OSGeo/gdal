@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/08/07 21:37:47  warmerda
+ * added indirect OGRFeaturedefn constructor/destructor
+ *
  * Revision 1.5  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -269,3 +272,22 @@ int OGRFeatureDefn::GetFieldIndex( const char * pszFieldName )
     return -1;
 }
 
+/************************************************************************/
+/*                         CreateFeatureDefn()                          */
+/************************************************************************/
+
+OGRFeatureDefn *OGRFeatureDefn::CreateFeatureDefn( const char *pszName )
+
+{
+    return new OGRFeatureDefn( pszName );
+}
+
+/************************************************************************/
+/*                         DestroyFeatureDefn()                         */
+/************************************************************************/
+
+void OGRFeatureDefn::DestroyFeatureDefn( OGRFeatureDefn *poDefn )
+
+{
+    delete poDefn;
+}
