@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.11  2003/04/08 22:13:00  warmerda
+# added new entry poins, and listtostringlist support
+#
 # Revision 1.10  2003/04/03 19:27:55  warmerda
 # added nullable string support, fixed ogr.Layer.SetAttributeFilter()
 #
@@ -181,8 +184,21 @@ class Driver:
         else:
             return DataSource( ds_o )
 
-    def CreateDataSource( self, filename, options = None ):
-        ds_o = _gdal.OGR_Dr_CreateDataSource( self._o, filename, "NULL" )
+    def CreateDataSource( self, filename, options = [] ):
+        md_c = _gdal.ListToStringList( options )
+        ds_o = _gdal.OGR_Dr_CreateDataSource( self._o, filename, md_c )
+        _gdal.CSLDestroy(md_c)
+        
+        if ds_o is None or ds_o == 'NULL':
+            raise ValueError, _gdal.CPLGetLastErrorMsg()
+        else:
+            return DataSource( ds_o )
+
+    def CopyDataSource( self, src_ds, filename, options = [] ):
+        md_c = _gdal.ListToStringList( options )
+        ds_o = _gdal.OGR_Dr_CopyDataSource( self._o, src_ds._o, filename, md_c)
+        _gdal.CSLDestroy(md_c)
+        
         if ds_o is None or ds_o == 'NULL':
             raise ValueError, _gdal.CPLGetLastErrorMsg()
         else:
@@ -250,7 +266,20 @@ class DataSource:
 
     def CreateLayer(self, name, srs = None, geom_type = wkbUnknown,
                     options = [] ):
-        obj = _gdal.OGR_DS_CreateLayer( self._o, name, srs, geom_type, options)
+        if srs is None:
+            srs = 'NULL'
+        md_c = _gdal.ListToStringList( options )
+        obj = _gdal.OGR_DS_CreateLayer( self._o, name, srs, geom_type, md_c)
+        _gdal.CSLDestroy(md_c)
+        if obj is None and obj != 'NULL':
+            raise ValueError, gdal.GetLastErrorMsg()
+        else:
+            return Layer( obj = obj )
+
+    def CopyLayer(self, src_layer, new_name, options = [] ):
+        md_c = _gdal.ListToStringList( options )
+        obj = _gdal.OGR_DS_CopyLayer( self._o, src_layer._o, new_name, md_c)
+        _gdal.CSLDestroy(md_c)
         if obj is None and obj != 'NULL':
             raise ValueError, gdal.GetLastErrorMsg()
         else:
