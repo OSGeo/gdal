@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/03/09 03:19:24  danmo
+ * Set pszRLBuffer=NULL after freeing it to avoid reallocating an invalid ptr
+ *
  * Revision 1.11  2001/03/05 03:37:19  warmerda
  * Improve support for recovering CPLReadLine() working buffer.
  *
@@ -276,6 +279,7 @@ const char *CPLReadLine( FILE * fp )
     if( fp == NULL )
     {
         CPLFree( pszRLBuffer );
+        pszRLBuffer = NULL;
         nRLBufferSize = 0;
         return NULL;
     }
@@ -308,6 +312,7 @@ const char *CPLReadLine( FILE * fp )
             == NULL )
         {
             CPLFree( pszRLBuffer );
+            pszRLBuffer = NULL;
             nRLBufferSize = 0;
 
             return NULL;
