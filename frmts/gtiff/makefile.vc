@@ -2,13 +2,27 @@
 OBJ	=	geotiff.obj gt_wkt_srs.obj gt_overview.obj \
 		tif_overview.obj tif_ovrcache.obj tif_memio.obj
 
-EXTRAFLAGS = 	-Ilibtiff -Ilibgeotiff
+!IFDEF TIFF_INC
+SUB_TIFF_TARGET =	tiff
+!ELSE
+SUB_TIFF_TARGET =
+TIFF_INC   =	-Ilibtiff
+!ENDIF
+
+!IFDEF GEOTIFF_INC
+SUB_GEOTIFF_TARGET =	geotiff
+!ELSE
+SUB_GEOTIFF_TARGET =	
+GEOTIFF_INC   =	-Ilibgeotiff
+!ENDIF
+
+EXTRAFLAGS = 	$(TIFF_INC) $(GEOTIFF_INC)
 
 GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-default:	$(OBJ) tiff geotiff
+default:	$(OBJ) $(SUB_TIFF_TARGET) $(SUB_GEOTIFF_TARGET)
 	copy *.obj ..\o
 
 tiff:
