@@ -3,7 +3,7 @@
  *
  * Project:  NTF Translator
  * Purpose:  Main declarations for NTF translator.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/02/11 16:52:43  warmerda
+ * added ReadPhysicalLine() method on NTFRecord
+ *
  * Revision 1.19  2002/02/08 20:41:48  warmerda
  * removed tabs
  *
@@ -177,6 +180,8 @@ class NTFRecord
     int      nType;
     int      nLength;
     char    *pszData;
+
+    int      ReadPhysicalLine( FILE *fp, char *pszLine );
     
   public:
              NTFRecord( FILE * );
