@@ -83,6 +83,8 @@ $(OGR_LIB):	$(OBJ)
 
 web-update:	docs
 	cp html/* /u/www/projects/opengis/ogrhtml
+	cp ogrsf_frmts/*/drv_*.html /u/www/projects/opengis/ogrhtml
+	cp ogrsf_frmts/ogr_formats.html /u/www/projects/opengis/ogrhtml
 
 test:	reg-test reg-test2
 
