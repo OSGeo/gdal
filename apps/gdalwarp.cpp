@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/11/14 04:57:04  fwarmerdam
+ * added -srcalpha switch, and automatic alpha detection
+ *
  * Revision 1.12  2004/11/05 06:15:08  fwarmerdam
  * Don't double free the warpoptions array.
  *
@@ -119,7 +122,7 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
 static double	       dfMinX=0.0, dfMinY=0.0, dfMaxX=0.0, dfMaxY=0.0;
 static double	       dfXRes=0.0, dfYRes=0.0;
 static int             nForcePixels=0, nForceLines=0, bQuiet = FALSE;
-static int             bEnableDstAlpha = FALSE;
+static int             bEnableDstAlpha = FALSE, bEnableSrcAlpha = FALSE;
 
 static int             bVRT = FALSE;
 
@@ -224,6 +227,10 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-dstalpha") )
         {
             bEnableDstAlpha = TRUE;
+        }
+        else if( EQUAL(argv[i],"-srcalpha") )
+        {
+            bEnableSrcAlpha = TRUE;
         }
         else if( EQUAL(argv[i],"-of") && i < argc-1 )
         {
@@ -385,6 +392,17 @@ int main( int argc, char ** argv )
     if( pszTargetSRS == NULL )
         pszTargetSRS = CPLStrdup(pszSourceSRS);
 
+    if( GDALGetRasterColorInterpretation( 
+            GDALGetRasterBand(hSrcDS,GDALGetRasterCount(hSrcDS)) ) 
+        == GCI_AlphaBand 
+        && !bEnableSrcAlpha )
+    {
+        bEnableSrcAlpha = TRUE;
+        printf( "Using band %d of source image as alpha.\n", 
+                GDALGetRasterCount(hSrcDS) );
+    }
+        
+
 /* -------------------------------------------------------------------- */
 /*      Does the output dataset already exist?                          */
 /* -------------------------------------------------------------------- */
@@ -484,13 +502,14 @@ int main( int argc, char ** argv )
     if( dfWarpMemoryLimit != 0.0 )
         psWO->dfWarpMemoryLimit = dfWarpMemoryLimit;
 
-    if( bEnableDstAlpha )
-        psWO->nDstAlphaBand = GDALGetRasterCount(hDstDS);
-
 /* -------------------------------------------------------------------- */
 /*      Setup band mapping.                                             */
 /* -------------------------------------------------------------------- */
-    psWO->nBandCount = GDALGetRasterCount(hSrcDS);
+    if( bEnableSrcAlpha )
+        psWO->nBandCount = GDALGetRasterCount(hSrcDS) - 1;
+    else
+        psWO->nBandCount = GDALGetRasterCount(hSrcDS);
+
     psWO->panSrcBands = (int *) CPLMalloc(psWO->nBandCount*sizeof(int));
     psWO->panDstBands = (int *) CPLMalloc(psWO->nBandCount*sizeof(int));
 
@@ -499,6 +518,27 @@ int main( int argc, char ** argv )
         psWO->panSrcBands[i] = i+1;
         psWO->panDstBands[i] = i+1;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Setup alpha bands used if any.                                  */
+/* -------------------------------------------------------------------- */
+    if( bEnableSrcAlpha )
+        psWO->nSrcAlphaBand = GDALGetRasterCount(hSrcDS);
+
+    if( !bEnableDstAlpha 
+        && GDALGetRasterCount(hDstDS) == psWO->nBandCount+1 
+        && GDALGetRasterColorInterpretation( 
+            GDALGetRasterBand(hDstDS,GDALGetRasterCount(hDstDS))) 
+        == GCI_AlphaBand )
+    {
+        printf( "Using band %d of destination image as alpha.\n", 
+                GDALGetRasterCount(hDstDS) );
+                
+        bEnableDstAlpha = TRUE;
+    }
+
+    if( bEnableDstAlpha )
+        psWO->nDstAlphaBand = GDALGetRasterCount(hDstDS);
 
 /* -------------------------------------------------------------------- */
 /*      Setup NODATA options.                                           */
@@ -780,6 +820,9 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
 /*      Do we want to generate an alpha band in the output file?        */
 /* -------------------------------------------------------------------- */
     int nDstBandCount = GDALGetRasterCount(hSrcDS);
+
+    if( bEnableSrcAlpha )
+        nDstBandCount--;
 
     if( bEnableDstAlpha )
         nDstBandCount++;
