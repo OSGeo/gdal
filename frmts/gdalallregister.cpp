@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.27  2001/01/10 04:41:09  warmerda
+ * added gif support
+ *
  * Revision 1.26  2001/01/03 18:53:23  warmerda
  * Added PNM
  *
@@ -132,6 +135,7 @@ void GDALRegister_MEM(void);
 void GDALRegister_JDEM(void);
 void GDALRegister_GRASS(void);
 void GDALRegister_PNM(void);
+void GDALRegister_GIF(void);
 CPL_C_END
 
 #ifdef notdef
@@ -227,6 +231,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_jdem
     GDALRegister_JDEM();
+#endif
+
+#ifdef FRMT_gif
+    GDALRegister_GIF();
 #endif
 
 #ifdef FRMT_raw
