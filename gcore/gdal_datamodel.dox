@@ -1,11 +1,7 @@
 /*!
 \page gdal_datamodel
 
-<center>
 <title>GDAL Data Model</title>
-</center>
-
-<h1>GDAL Data Model</h1>
 
 This document attempts to describe the GDAL data model.  That is the
 types of information that a GDAL data store can contain, and their 
