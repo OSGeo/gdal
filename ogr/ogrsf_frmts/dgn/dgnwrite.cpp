@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/11/21 14:43:59  warmerda
+ * removed extra bounds transformation in DGNCreateCellHeaderFromGroup()
+ *
  * Revision 1.15  2003/11/19 17:37:00  warmerda
  * Fixes from Marius: use ElemTypeHasDispHdr, and cosmetic
  *
@@ -2028,7 +2031,11 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
 /* -------------------------------------------------------------------- */
 /*      It seems that the range needs to be adjusted according to       */
 /*      the rotation and scaling.                                       */
+/*                                                                      */
+/*      NOTE: Omitting code ... this is already done in                 */
+/*      DGNInverseTransformPoint() called from DGNWriteBounds().        */
 /* -------------------------------------------------------------------- */
+#ifdef notdef
     sMin.x -= psOrigin->x;
     sMin.y -= psOrigin->y;
     sMin.z -= psOrigin->z;
@@ -2042,6 +2049,7 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
     sMax.x /= ((DGNInfo *) hDGN)->scale;
     sMax.y /= ((DGNInfo *) hDGN)->scale;
     sMax.z /= ((DGNInfo *) hDGN)->scale;
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Create the corresponding cell header.                           */
