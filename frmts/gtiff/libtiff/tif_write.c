@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_write.c,v 1.8 2003/01/31 16:43:18 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_write.c,v 1.9 2003/08/05 02:45:58 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -152,6 +152,10 @@ TIFFWriteScanline(TIFF* tif, tdata_t buf, uint32 row, tsample_t sample)
 			return (-1);
 		tif->tif_row = row;
 	}
+
+        /* swab if needed - note that source buffer will be altered */
+        tif->tif_postdecode( tif, (tidata_t) buf, tif->tif_scanlinesize );
+
 	status = (*tif->tif_encoderow)(tif, (tidata_t) buf,
 	    tif->tif_scanlinesize, sample);
 
@@ -229,6 +233,10 @@ TIFFWriteEncodedStrip(TIFF* tif, tstrip_t strip, tdata_t data, tsize_t cc)
 	sample = (tsample_t)(strip / td->td_stripsperimage);
 	if (!(*tif->tif_preencode)(tif, sample))
 		return ((tsize_t) -1);
+
+        /* swab if needed - note that source buffer will be altered */
+        tif->tif_postdecode( tif, (tidata_t) data, cc );
+
 	if (!(*tif->tif_encodestrip)(tif, (tidata_t) data, cc, sample))
 		return ((tsize_t) 0);
 	if (!(*tif->tif_postencode)(tif))
@@ -386,6 +394,10 @@ TIFFWriteEncodedTile(TIFF* tif, ttile_t tile, tdata_t data, tsize_t cc)
 	 */
 	if ( cc < 1 || cc > tif->tif_tilesize)
 		cc = tif->tif_tilesize;
+
+        /* swab if needed - note that source buffer will be altered */
+        tif->tif_postdecode( tif, (tidata_t) data, cc );
+
 	if (!(*tif->tif_encodetile)(tif, (tidata_t) data, cc, sample))
 		return ((tsize_t) 0);
 	if (!(*tif->tif_postencode)(tif))

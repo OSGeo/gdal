@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_zip.c,v 1.3 2002/03/06 14:07:27 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_zip.c,v 1.4 2003/07/08 20:37:31 warmerda Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler
@@ -228,7 +228,8 @@ ZIPPostEncode(TIFF* tif)
 		switch (state) {
 		case Z_STREAM_END:
 		case Z_OK:
-		    if (sp->stream.avail_out != tif->tif_rawdatasize) {
+		    if ((int)sp->stream.avail_out != (int)tif->tif_rawdatasize)
+                    {
 			    tif->tif_rawcc =
 				tif->tif_rawdatasize - sp->stream.avail_out;
 			    TIFFFlushData1(tif);
