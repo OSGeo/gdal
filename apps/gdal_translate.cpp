@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.23  2004/07/28 17:56:00  warmerda
+ * use return instead of exit() to avoid lame warnings on windows
+ *
  * Revision 1.22  2004/07/28 17:51:09  warmerda
  * updated to use VRTSourcedRasterBand
  *
@@ -793,7 +796,7 @@ int main( int argc, char ** argv )
     CSLDestroy( argv );
     CSLDestroy( papszCreateOptions );
     
-    exit( hOutDS == NULL );
+    return hOutDS == NULL;
 }
 
 
