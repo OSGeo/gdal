@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/04/21 17:21:04  warmerda
+ * Fixed -wm switch.
+ *
  * Revision 1.4  2003/03/28 17:43:04  warmerda
  * added -wm option to control warp memory
  *
@@ -183,6 +186,7 @@ int main( int argc, char ** argv )
                 dfWarpMemoryLimit = atof(argv[i+1]) * 1024 * 1024;
             else
                 dfWarpMemoryLimit = atof(argv[i+1]);
+            i++;
         }
         else if( EQUAL(argv[i],"-srcnodata") && i < argc-1 )
         {
