@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/05/20 14:59:05  warmerda
+ * added CPLDebug()
+ *
  * Revision 1.7  1999/05/20 02:54:38  warmerda
  * Added API documentation
  *
@@ -72,7 +75,7 @@ CPL_C_START
 typedef enum
 {
     CE_None = 0,
-    CE_Log = 1,
+    CE_Debug = 1,
     CE_Warning = 2,
     CE_Failure = 3,
     CE_Fatal = 4
@@ -85,6 +88,7 @@ int CPL_DLL CPLGetLastErrorNo();
 const char CPL_DLL * CPLGetLastErrorMsg();
 void CPL_DLL CPLSetErrorHandler(void(*pfnErrorHandler)(CPLErr,int,
                                                        const char *));
+void CPL_DLL CPLDebug( const char *, const char *, ... );
 void CPL_DLL _CPLAssert( const char *, const char *, int );
 
 #ifdef DEBUG

@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/05/20 14:59:05  warmerda
+ * added CPLDebug()
+ *
  * Revision 1.4  1999/05/20 02:54:38  warmerda
  * Added API documentation
  *
@@ -44,6 +47,7 @@
  **********************************************************************/
 
 #include "cpl_error.h"
+#include "cpl_vsi.h"
 
 /* static buffer to store the last error message.  We'll assume that error
  * messages cannot be longer than 2000 chars... which is quite reasonable
@@ -71,7 +75,7 @@ static void (*gpfnCPLErrorHandler)(CPLErr, int, const char *) = NULL;
  * message is an informational warning, CE_Failure indicating that the
  * action failed, but that normal recover mechanisms will be used or
  * CE_Fatal meaning that a fatal error has occured, and that CPLError()
- * should not return.
+ * should not return.  
  *
  * The default behaviour of CPLError() is to report errors to stderr,
  * and to abort() after reporting a CE_Fatal error.  It is expected that
@@ -116,6 +120,68 @@ void    CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...)
 
     if( eErrClass == CE_Fatal )
         abort();
+}
+
+/************************************************************************/
+/*                              CPLDebug()                              */
+/************************************************************************/
+
+/**
+ * Display a debugging message.
+ *
+ * The category argument is used in conjunction with the CPL_DEBUG
+ * environment variable to establish if the message should be displayed.
+ * If the CPL_DEBUG environment variable is not set, no debug messages
+ * are emitted (use CPLError(CE_Warning,...) to ensure messages are displayed).
+ * If CPL_DEBUG is set, but is an empty string or the word "ON" then all
+ * debug messages are shown.  Otherwise only messages whose category appears
+ * somewhere within the CPL_DEBUG value are displayed (as determinted by
+ * strstr()).
+ *
+ * Categories are usually an identifier for the subsystem producing the
+ * error.  For instance "GDAL" might be used for the GDAL core, and "TIFF"
+ * for messages from the TIFF translator.  
+ *
+ * @param pszCategory name of the debugging message category.
+ * @param pszFormat printf() style format string for message to display.
+ *        Remaining arguments are assumed to be for format.
+ */ 
+
+void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
+
+{
+    char	*pszMessage;
+    va_list args;
+
+/* -------------------------------------------------------------------- */
+/*      Format the error message                                        */
+/* -------------------------------------------------------------------- */
+    pszMessage = (char *) VSIMalloc(25000);
+    if( pszMessage == NULL )
+        return;
+        
+    strcat( pszMessage, pszCategory );
+    strcat( pszMessage, ": " );
+    
+    va_start(args, pszFormat);
+    vsprintf(pszMessage+strlen(pszMessage), pszFormat, args);
+    va_end(args);
+
+/* -------------------------------------------------------------------- */
+/*      If the user provided his own error handling function, then call */
+/*      it, otherwise print the error to stderr and return.             */
+/* -------------------------------------------------------------------- */
+
+    if (gpfnCPLErrorHandler != NULL)
+    {
+        gpfnCPLErrorHandler(CE_Debug, CPLE_None, gszCPLLastErrMsg);
+    }
+    else
+    {
+        fprintf(stderr, "%s\n", pszMessage);
+    }
+
+    VSIFree( pszMessage );
 }
 
 /**********************************************************************
