@@ -25,6 +25,6 @@ clean:
 	ar r ../ogrsf_frmts.a $*.o
 
 install-libs:
-	install-libs.sh $(ISOLIB) $(FRMTSLIB)
-	install-libs.sh $(SDTSLIB) $(FRMTSLIB)
+	./install-libs.sh $(ISOLIB) $(FRMTSLIB)
+	./install-libs.sh $(SDTSLIB) $(FRMTSLIB)
 
