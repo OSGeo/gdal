@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/09/22 03:20:06  warmerda
+ * added projection support, and error handling
+ *
  * Revision 1.3  2000/09/20 17:03:21  warmerda
  * Added colortable support.
  *
@@ -43,12 +46,28 @@
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
+#include "ogr_spatialref.h"
 
 static GDALDriver	*poGRASSDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_GRASS(void);
 CPL_C_END
+
+/************************************************************************/
+/*                         Grass2CPLErrorHook()                         */
+/************************************************************************/
+
+int Grass2CPLErrorHook( char * pszMessage, int bFatal )
+
+{
+    if( !bFatal )
+        CPLDebug( "libgrass", "%s", pszMessage );
+    else
+        CPLError( CE_Fatal, CPLE_AppDefined, "libgrass: %s", pszMessage );
+
+    return 0;
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -62,9 +81,13 @@ class GRASSDataset : public GDALDataset
 {
     friend	GRASSRasterBand;
 
+    char	*pszProjection;
+
   public:
                  GRASSDataset();
                  ~GRASSDataset();
+
+    virtual const char *GetProjectionRef(void);
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -246,6 +269,7 @@ GDALColorTable *GRASSRasterBand::GetColorTable()
 GRASSDataset::GRASSDataset()
 
 {
+    pszProjection = NULL;
 }
 
 /************************************************************************/
@@ -255,11 +279,26 @@ GRASSDataset::GRASSDataset()
 GRASSDataset::~GRASSDataset()
 
 {
+    CPLFree( pszProjection );
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *GRASSDataset::GetProjectionRef() 
+{
+    if( pszProjection == NULL )
+        return "";
+    else
+        return pszProjection;
 }
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
+
+typedef int (*GrassErrorHandler)();
 
 GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 
@@ -268,7 +307,10 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
     char	*pszMapset = NULL, *pszCell = NULL;
 
     if( !bDoneGISInit )
+    {
+        G_set_error_routine( (GrassErrorHandler) Grass2CPLErrorHook );
         G_gisinit_2( "GDAL", NULL, NULL, NULL );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Check if this is a valid grass cell.                            */
@@ -301,6 +343,24 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = sCellInfo.rows;
 
     G_set_window( &sCellInfo );
+
+/* -------------------------------------------------------------------- */
+/*      Try to get a projection definition.                             */
+/* -------------------------------------------------------------------- */
+    char	*pszProj4;
+
+    pszProj4 = G_get_cell_as_proj4( pszCell, pszMapset );
+    if( pszProj4 != NULL )
+    {
+        OGRSpatialReference   oSRS;
+
+        if( oSRS.importFromProj4( pszProj4 ) == OGRERR_NONE )
+        {
+            oSRS.exportToWkt( &(poDS->pszProjection) );
+        }
+
+        G_free( pszProj4 );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
