@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/04/12 20:20:29  warmerda
+ * make vector sdts transfers just a warning
+ *
  * Revision 1.11  2001/11/11 23:51:00  warmerda
  * added required class keyword to friend declarations
  *
@@ -199,7 +202,7 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         delete poTransfer;
         
-        CPLError( CE_Failure, CPLE_AppDefined,
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "%s is an SDTS transfer, but has no raster cell layers.\n"
                   "Perhaps it is a vector transfer?\n",
                   poOpenInfo->pszFilename );
