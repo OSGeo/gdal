@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/12/18 20:22:53  warmerda
+ * fiddle with roundoff issues in DecToDMS
+ *
  * Revision 1.17  2002/12/10 19:46:04  warmerda
  * modified CPLReadLine() to seek back if it overreads past a CR or LF
  *
@@ -548,15 +551,21 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
 
 {
     int         nDegrees, nMinutes;
-    double      dfSeconds;
+    double      dfSeconds, dfABSAngle, dfEpsilon;
     char        szFormat[30];
     static char szBuffer[50];
     const char  *pszHemisphere;
     
+    dfEpsilon = (0.5/3600.0) * pow(0.1,nPrecision);
 
-    nDegrees = (int) ABS(dfAngle);
-    nMinutes = (int) ((ABS(dfAngle) - nDegrees) * 60);
-    dfSeconds = (ABS(dfAngle) * 3600 - nDegrees*3600 - nMinutes*60);
+    dfABSAngle = ABS(dfAngle) + dfEpsilon;
+
+    nDegrees = (int) dfABSAngle;
+    nMinutes = (int) ((dfABSAngle - nDegrees) * 60);
+    dfSeconds = dfABSAngle * 3600 - nDegrees*3600 - nMinutes*60;
+
+    if( dfSeconds > dfEpsilon * 3600.0 )
+        dfSeconds -= dfEpsilon * 3600.0;
 
     if( EQUAL(pszAxis,"Long") && dfAngle < 0.0 )
         pszHemisphere = "W";
