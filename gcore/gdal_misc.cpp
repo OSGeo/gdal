@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/04/21 21:55:32  warmerda
+ * made more robust if block read fails
+ *
  * Revision 1.12  2000/04/17 20:59:40  warmerda
  * Removed printf.
  *
@@ -335,6 +338,8 @@ void GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
         iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
         
         poBlock = poBand->GetBlockRef( iXBlock, iYBlock );
+        if( poBlock == NULL )
+            continue;
         
         if( (iXBlock+1) * nBlockXSize > poBand->GetXSize() )
             nXCheck = poBand->GetXSize() - iXBlock * nBlockXSize;
