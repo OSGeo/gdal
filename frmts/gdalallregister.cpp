@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.72  2004/12/09 16:37:18  fwarmerdam
+ * re-enable ILWIS
+ *
  * Revision 1.71  2004/12/02 15:58:58  fwarmerdam
  * temporarily disable ilwis driver
  *
@@ -396,7 +399,7 @@ void GDALAllRegister()
 #endif
 
 #ifdef FRMT_ilwis
-//    GDALRegister_ILWIS();
+    GDALRegister_ILWIS();
 #endif
 
 #ifdef FRMT_netcdf
