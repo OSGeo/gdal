@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2004/01/24 09:35:00  warmerda
+ * added TransformEx support to capture per point reprojection failure
+ *
  * Revision 1.37  2003/09/09 07:49:52  dron
  * Added OSRExportToPCI().
  *
@@ -594,6 +597,9 @@ void CPL_DLL
 
 int CPL_DLL OCTTransform( OGRCoordinateTransformationH hCT,
                   int nCount, double *x, double *y, double *z );
+int CPL_DLL OCTTransformEx( OGRCoordinateTransformationH hCT,
+                            int nCount, double *x, double *y, double *z,
+                            int *pabSuccess );
 
 /* this is really private to OGR. */
 char *OCTProj4Normalize( const char *pszProj4Src );
