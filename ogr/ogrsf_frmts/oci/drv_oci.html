@@ -25,10 +25,18 @@ If the table has an integer column called OGR_FID it will be used as the
 feature id by OGR (and it will not appear as a regular attribute).  When loading
 data into Oracle Spatial OGR will always create the OGR_FID field. <p>
 
+<h2>SQL Issues</h2>
+
 The Oracle driver passes SQL statements directly to Oracle rather
 than evaluating them internally when using the ExecuteSQL() call on the
 OGRDataSource, or the -sql command option to ogr2ogr.  Attribute query
 expressions are also passed through to Oracle.<p>
+
+As well two special commands are supported via the ExecuteSQL() interface.
+These are "<b>DELLAYER:&lt;table_name&gt;</b>" to delete a layer, 
+and "<b>VALLAYER:&lt;table_name&gt;</b>" to apply the 
+SDO_GEOM.VALIDATE_GEOMETRY() check to a layer.  Internally these 
+pseudo-commands are translated into more complex SQL commands for Oracle.<p>
 
 <h2>Caveats</h2>
 
@@ -40,10 +48,6 @@ fields. <p>
 
 <li> Various types such as objects, and BLOBs in Oracle will be completely
 ignored by OGR.<p>
-
-<li> If the application provides a spatial filter for reading it will be
-passed on to Oracle.  If the table does not have a spatial index the
-read will fail completely with a spatial filter in place.<p>
 
 <li> Currently the OGR translaction semantics are not properly mapped onto
 transaction semantics in Oracle.<p>
@@ -112,6 +116,20 @@ exactly matching the one for this dataset.  If one is not found, a new
 row will be added to this table.  The SRID creation option allows the user
 to force use of an existing Oracle SRID item even it if does not exactly
 match the WKT the driver expects.<p>
+
+<li> <b>MULTI_LOAD</b>: If enabled new features will be created in 
+groups of 100 per SQL INSERT command, instead of each feature being a separate
+INSERT command.  Having this enabled is the fastest way to load data quickly.
+Multi-load mode is enabled by default for newly created layers, and may be
+forced on for existing layers by setting this option to YES, or disabled
+even for new layers by setting to NO.<p>
+
+<li> <b>LOADER_FILE</b>: If this option is set, all feature information will
+be written to a file suitable for use with SQL*Loader instead of inserted
+directly in the database.  The layer itself is still created in the database
+immediately.  The SQL*Loader support is experimental, and generally 
+MULTI_LOAD enabled mode should be used instead when trying for optimal 
+load performance.<p>
 
 </ul>
 
