@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/10/29 17:30:40  warmerda
+ * added prototype
+ *
  * Revision 1.6  1999/10/27 20:22:33  warmerda
  * Added Doxygen style documentation.
  * Added GXFGetPosition() function.
@@ -82,6 +85,7 @@ CPLErr   GXFGetScanline( GXFHandle, int iScanline, double * padfLineBuf );
 char	**GXFGetMapProjection( GXFHandle );
 char	**GXFGetMapDatumTransform( GXFHandle );
 char	*GXFGetMapProjectionAsPROJ4( GXFHandle );
+char	*GXFGetMapProjectionAsOGCWKT( GXFHandle );
 
 CPLErr  GXFGetRawPosition( GXFHandle, double *, double *, double *, double *,
                            double * );
