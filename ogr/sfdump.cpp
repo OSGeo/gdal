@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  1999/05/21 02:37:35  warmerda
+ * use IWks::exportToWKT() to report geometry info
+ *
  * Revision 1.10  1999/05/20 14:52:48  warmerda
  * create OGRCom class factory instead of cadcorp
  *
@@ -60,6 +63,8 @@ static HRESULT SFDumpGeomColumn( IOpenRowset*, const char *, const char * );
 static HRESULT SFDumpSchema( IOpenRowset*, const char * );
 static HRESULT SFDumpRowset( OledbSupRowset * );
 
+static int      bVerbose = TRUE;
+
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
@@ -69,7 +74,7 @@ static void Usage()
 {
     printf( "Usage: sfdump [-provider provider_clsid_alias] [-ds datasource]\n"
             "              [-table tablename] [-column geom_column_name]\n"
-            "              [-action {dumpgeom,dumpschema}]\n" );
+            "              [-action {dumpgeom,dumpschema}] -quiet\n" );
     exit( 1 );
 }
 
@@ -128,6 +133,10 @@ void main( int nArgc, char ** papszArgv )
         {
             pszAction = papszArgv[++iArg];
         }
+        else if( stricmp( papszArgv[iArg],"-quiet") == 0 )
+        {
+            bVerbose = FALSE;
+        }
         else
         {
             printf( "Unrecognised option: %s\n\n", papszArgv[iArg] );
@@ -180,6 +189,39 @@ void main( int nArgc, char ** papszArgv )
 
     OleSupUninitialize();
 }    
+/************************************************************************/
+/*                        SFDumpGeometryAsWKT()                         */
+/************************************************************************/
+
+void SFDumpGeometryAsWKT( IGeometry * pIGeometry )
+
+{
+    IWks      *pIWks;
+    HRESULT   hr;
+
+    hr = pIGeometry->QueryInterface( IID_IWks, (void **) &pIWks );
+    if( FAILED(hr) )
+    {
+        DumpErrorHResult( hr, 
+                          "Can't get IID_IWks on IGeometry.\n" );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Now get geometry as well known text representation.             */
+/* -------------------------------------------------------------------- */
+    BSTR      wkt;
+
+    hr = pIWks->ExportToWKT( &wkt );
+    if( FAILED(hr) )
+        DumpErrorHResult( hr, "exportToWkt()" );
+    else
+    {
+        printf( "WKT = `%S'\n", wkt );
+        SysFreeString( wkt );
+    }
+    pIWks->Release();
+}
 
 /************************************************************************/
 /*                          SFDumpGeomColumn()                          */
@@ -300,7 +342,8 @@ static HRESULT SFDumpGeomColumn( IOpenRowset* pIOpenRowset,
 /* -------------------------------------------------------------------- */
         if( pIGeometryFactory == NULL )
         {
-            if( OGRGeometryFactory::createFromWkb( pabyData, &poGeom, nSize )
+            if( OGRGeometryFactory::createFromWkb( pabyData, NULL, 
+                                                   &poGeom, nSize )
                 == OGRERR_NONE )
             {
                 printf( "(0x%02x%02x%02x%02x%02x)\n", 
@@ -309,7 +352,9 @@ static HRESULT SFDumpGeomColumn( IOpenRowset* pIOpenRowset,
                         pabyData[2], 
                         pabyData[3], 
                         pabyData[4] );
-                poGeom->dumpReadable( stdout );
+                if( bVerbose )
+                    poGeom->dumpReadable( stdout );
+
                 delete poGeom;
             }
             else 
@@ -356,12 +401,14 @@ static HRESULT SFDumpGeomColumn( IOpenRowset* pIOpenRowset,
             hr = pIGeometryFactory->CreateFromWKB( oVarData, pISR,
                                                    &pIGeometry );
 
-            printf( "pIGeometry = %p\n", pIGeometry );
-
             if( FAILED(hr) )
                 DumpErrorHResult( hr, "CreateFromWKB()" );
             else if( pIGeometry != NULL )
+            {
+                if( bVerbose )
+                    SFDumpGeometryAsWKT( pIGeometry );
                 pIGeometry->Release();
+            }
         }
 
         nRecordCount++;
