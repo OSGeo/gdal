@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/10/03 19:19:56  danmo
+ * Made m_pszStyleString protected (was private)
+ *
  * Revision 1.13  2000/10/03 18:14:29  danmo
  * Made OGRFeature::Get/SetStyleString() virtual
  *
@@ -277,9 +280,9 @@ class OGRFeature
     OGRFeatureDefn      *poDefn;
     OGRGeometry         *poGeometry;
     OGRField            *pauFields;
-    char *              m_pszStyleString;
 
   protected: 
+    char *              m_pszStyleString;
     OGRStyleTable       *m_poStyleTable;
     
     
