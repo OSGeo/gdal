@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/10/15 20:40:58  warmerda
+ * reworked to avoid quadratic behavior in the number of contours
+ *
  * Revision 1.1  2003/10/10 19:44:46  warmerda
  * New
  *
@@ -49,6 +52,145 @@ CPL_CVSID("$Id$");
 // match for joining purposes. 
 
 #define JOIN_DIST 0.0001
+
+class GDALContourItem
+{
+public:
+    int    bRecentlyAccessed;
+    double dfLevel;
+
+    int  nPoints;
+    int  nMaxPoints;
+    double *padfX;
+    double *padfY;
+
+    double dfTailX;
+
+    GDALContourItem( double dfLevel );
+    ~GDALContourItem();
+
+    int    AddSegment( double dfXStart, double dfYStart,
+                       double dfXEnd, double dfYEnd );
+    void   MakeRoomFor( int );
+    int    Merge( GDALContourItem * );
+};
+
+class GDALContourLevel 
+{
+    double dfLevel;
+
+    int nEntryMax;
+    int nEntryCount;
+    GDALContourItem **papoEntries;
+    
+public:
+    GDALContourLevel( double );
+    ~GDALContourLevel();
+
+    double GetLevel() { return dfLevel; }
+    int    GetContourCount() { return nEntryCount; }
+    GDALContourItem *GetContour( int i) { return papoEntries[i]; }
+    void   AdjustContour( int );
+    void   RemoveContour( int );
+    int    FindContour( double dfX, double dfY );
+    int    InsertContour( GDALContourItem * );
+};
+
+class GDALContourGenerator
+{
+    int    nWidth;
+    int    nHeight;
+    int    iLine;
+
+    double *padfLastLine;
+    double *padfThisLine;
+
+    int    nLevelMax;
+    int    nLevelCount;
+    GDALContourLevel **papoLevels;
+
+    int    iLastLevel;
+    
+    int     bNoDataActive;
+    double  dfNoDataValue;
+
+    double  dfContourInterval;
+    double  dfContourOffset;
+
+    CPLErr AddSegment( double dfLevel, 
+                       double dfXStart, double dfYStart,
+                       double dfXEnd, double dfYEnd );
+
+    CPLErr ProcessPixel( int iPixel );
+    CPLErr ProcessRect( double, double, double, 
+                        double, double, double, 
+                        double, double, double,
+                        double, double, double );
+
+    void   Intersect( double, double, double, 
+                      double, double, double, 
+                      double, double, int *, double *, double * );
+
+    GDALContourLevel *FindLevel( double dfLevel );
+
+public:
+    GDALContourWriter pfnWriter;
+    void   *pWriterCBData;
+
+    GDALContourGenerator( int nWidth, int nHeight,
+                          GDALContourWriter pfnWriter, void *pWriterCBData );
+    ~GDALContourGenerator();
+
+    void                SetNoData( double dfNoDataValue );
+    void                SetContourLevels( double dfContourInterval, 
+                                          double dfContourOffset = 0.0 )
+        { this->dfContourInterval = dfContourInterval;
+          this->dfContourOffset = dfContourOffset; }
+
+    CPLErr 		FeedLine( double *padfScanline );
+    CPLErr              EjectContours( int bOnlyUnused = FALSE );
+    
+};
+
+/************************************************************************/
+/*                           GDAL_CG_Create()                           */
+/************************************************************************/
+
+GDALContourGeneratorH 
+GDAL_CT_Create( int nWidth, int nHeight, int bNoDataSet, double dfNoDataValue, 
+                double dfContourInterval, double dfContourBase, 
+                GDALContourWriter pfnWriter, void *pCBData )
+
+{
+    GDALContourGenerator *poCG = new GDALContourGenerator( nWidth, nHeight, 
+                                                           pfnWriter, pCBData );
+
+    if( bNoDataSet )
+        poCG->SetNoData( dfNoDataValue );
+
+    poCG->SetContourLevels( dfContourInterval, dfContourBase );
+    return (GDALContourGeneratorH) poCG;
+}
+
+/************************************************************************/
+/*                          GDAL_CG_FeedLine()                          */
+/************************************************************************/
+
+CPLErr GDAL_CG_FeedLine( GDALContourGeneratorH hCG, double *padfScanline )
+
+{
+    return ((GDALContourGenerator *) hCG)->FeedLine( padfScanline );
+}
+
+/************************************************************************/
+/*                          GDAL_CG_Destroy()                           */
+/************************************************************************/
+
+void GDAL_CG_Destroy( GDALContourGeneratorH hCG )
+
+{
+    delete ((GDALContourGenerator *) hCG);
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -74,14 +216,15 @@ GDALContourGenerator::GDALContourGenerator( int nWidthIn, int nHeightIn,
     pWriterCBData = pWriterCBDataIn;
 
     iLine = -1;
-    nActiveContours = 0;
-    nMaxContours = 0;
-    papoContours = NULL;
 
     bNoDataActive = FALSE;
     dfNoDataValue = -1000000.0;
     dfContourInterval = 10.0;
     dfContourOffset = 0.0;
+
+    nLevelMax = 0;
+    nLevelCount = 0;
+    papoLevels = NULL;
 }
 
 /************************************************************************/
@@ -378,33 +521,40 @@ CPLErr GDALContourGenerator::AddSegment( double dfLevel,
                                          double dfX2, double dfY2 )
 
 {
+    GDALContourLevel *poLevel = FindLevel( dfLevel );
+    GDALContourItem *poTarget;
+    int iTarget;
+
 /* -------------------------------------------------------------------- */
 /*      Check all active contours for any that this might attach        */
 /*      to. Eventually this should be recoded to find the contours      */
 /*      of the correct level more efficiently.                          */
 /* -------------------------------------------------------------------- */
-    int  iContour;
 
-    for( iContour = 0; iContour < nActiveContours; iContour++ )
+    if( dfY1 < dfY2 )
+        iTarget = poLevel->FindContour( dfX1, dfY1 );
+    else
+        iTarget = poLevel->FindContour( dfX2, dfY2 );
+
+    if( iTarget != -1 )
     {
-        if( papoContours[iContour]->dfLevel == dfLevel 
-            && papoContours[iContour]->AddSegment( dfX1, dfY1, dfX2, dfY2 ) )
-            return CE_None;
+        poTarget = poLevel->GetContour( iTarget );
+
+        poTarget->AddSegment( dfX1, dfY1, dfX2, dfY2 );
+
+        poLevel->AdjustContour( iTarget );
+        
+        return CE_None;
     }
 
 /* -------------------------------------------------------------------- */
 /*      No existing contour found, lets create a new one.               */
 /* -------------------------------------------------------------------- */
-    if( nActiveContours == nMaxContours )
-    {
-        nMaxContours = nMaxContours * 2 + 100;
-        papoContours = (GDALContourItem **) 
-            CPLRealloc(papoContours,sizeof(void*) * nMaxContours);
-    }
+    poTarget = new GDALContourItem( dfLevel );
 
-    papoContours[nActiveContours++] = new GDALContourItem( dfLevel );
+    poTarget->AddSegment( dfX1, dfY1, dfX2, dfY2 );
 
-    papoContours[nActiveContours-1]->AddSegment( dfX1, dfY1, dfX2, dfY2 );
+    poLevel->InsertContour( poTarget );
 
     return CE_None;
 }
@@ -442,7 +592,7 @@ CPLErr GDALContourGenerator::FeedLine( double *padfScanline )
 /* -------------------------------------------------------------------- */
     int iPixel;
 
-    for( int iPixel = 0; iPixel < nWidth; iPixel++ )
+    for( iPixel = 0; iPixel < nWidth; iPixel++ )
     {
         double dfLevel = (padfThisLine[iPixel] - dfContourOffset) 
             / dfContourInterval;
@@ -467,10 +617,15 @@ CPLErr GDALContourGenerator::FeedLine( double *padfScanline )
 /*      Clear the recently used flags on the contours so we can         */
 /*      check later which ones were touched for this scanline.          */
 /* -------------------------------------------------------------------- */
-    int iContour;
+    int iLevel, iContour;
 
-    for( iContour = 0; iContour < nActiveContours; iContour++ )
-        papoContours[iContour]->bRecentlyAccessed = FALSE;
+    for( iLevel = 0; iLevel < nLevelCount; iLevel++ )
+    {
+        GDALContourLevel *poLevel = papoLevels[iLevel];
+
+        for( iContour = 0; iContour < poLevel->GetContourCount(); iContour++ )
+            poLevel->GetContour( iContour )->bRecentlyAccessed = FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Process each pixel.                                             */
@@ -502,68 +657,280 @@ CPLErr GDALContourGenerator::FeedLine( double *padfScanline )
 CPLErr GDALContourGenerator::EjectContours( int bOnlyUnused )
 
 {
-    int nContoursKept = 0, iContour;
+    int iLevel;
     CPLErr eErr = CE_None;
 
 /* -------------------------------------------------------------------- */
-/*      Try to merge contours that are about to be ejected.  For now    */
-/*      we don't worry about updating the total count or reshuffling    */
-/*      things.  The later "write out" pass will fix things up.         */
+/*      Process all contours of all levels that match our criteria      */
 /* -------------------------------------------------------------------- */
-    for( iContour = 0; 
-         iContour < nActiveContours && eErr == CE_None; 
-         iContour++ )
+    for( iLevel = 0; iLevel < nLevelCount && eErr == CE_None; iLevel++ )
     {
-        int  iC2;
+        GDALContourLevel *poLevel = papoLevels[iLevel];
+        int iContour;
 
-        if( bOnlyUnused && papoContours[iContour]->bRecentlyAccessed )
-            continue;
-
-        for( iC2 = 0; iC2 < nActiveContours; iC2++ )
+        for( iContour = 0; 
+             iContour < poLevel->GetContourCount() && eErr == CE_None; 
+             /* increment in loop if we don't consume it. */ )
         {
-            if( iC2 == iContour || papoContours[iC2] == NULL )
-                continue;
-
-            if( papoContours[iC2]->Merge( papoContours[iContour] ) )
+            int  iC2;
+            GDALContourItem *poTarget = poLevel->GetContour( iContour );
+            
+            if( bOnlyUnused && poTarget->bRecentlyAccessed )
             {
-                delete papoContours[iContour];
-                papoContours[iContour] = NULL;
-                break;
+                iContour++;
+                continue;
             }
+
+            poLevel->RemoveContour( iContour );
+
+            // Try to find another contour we can merge with in this level.
+            
+            for( iC2 = 0; iC2 < poLevel->GetContourCount(); iC2++ )
+            {
+                GDALContourItem *poOther = poLevel->GetContour( iC2 );
+
+                if( poOther->Merge( poTarget ) )
+                    break;
+            }
+
+            // If we didn't merge it, then eject (write) it out. 
+            if( iC2 == poLevel->GetContourCount() )
+            {
+                if( pfnWriter != NULL )
+                {
+                    eErr = pfnWriter( poTarget->dfLevel, poTarget->nPoints, 
+                                      poTarget->padfX, poTarget->padfY, 
+                                      pWriterCBData );
+                }
+            }
+
+            delete poTarget;
         }
     }
-
-/* -------------------------------------------------------------------- */
-/*      Write candidate contours.                                       */
-/* -------------------------------------------------------------------- */
-    for( iContour = 0; 
-         iContour < nActiveContours && eErr == CE_None; 
-         iContour++ )
-    {
-        if( papoContours[iContour] == NULL )
-            continue;
-
-        if( bOnlyUnused && papoContours[iContour]->bRecentlyAccessed )
-        {
-            papoContours[nContoursKept++] = papoContours[iContour];
-            continue;
-        }
-
-        if( pfnWriter != NULL )
-        {
-            eErr = pfnWriter( papoContours[iContour], pWriterCBData );
-            if( eErr != CE_None )
-                break;
-        }
-
-        delete papoContours[iContour];
-        papoContours[iContour] = NULL;
-    }
-
-    nActiveContours = nContoursKept;
 
     return eErr;
 }
+
+/************************************************************************/
+/*                             FindLevel()                              */
+/************************************************************************/
+
+GDALContourLevel *GDALContourGenerator::FindLevel( double dfLevel )
+
+{
+    int nStart=0, nEnd=nLevelCount-1, nMiddle;
+
+/* -------------------------------------------------------------------- */
+/*      Binary search to find the requested level.                      */
+/* -------------------------------------------------------------------- */
+    while( nStart <= nEnd )
+    {
+        nMiddle = (nEnd + nStart) / 2;
+
+        double dfMiddleLevel = papoLevels[nMiddle]->GetLevel();
+
+        if( dfMiddleLevel < dfLevel )
+            nStart = nMiddle + 1;
+        else if( dfMiddleLevel > dfLevel )
+            nEnd = nMiddle - 1;
+        else
+            return papoLevels[nMiddle];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Didn't find the level, create a new one and insert it in        */
+/*      order.                                                          */
+/* -------------------------------------------------------------------- */
+    GDALContourLevel *poLevel = new GDALContourLevel( dfLevel );
+
+    if( nLevelMax == nLevelCount )
+    {
+        nLevelMax = nLevelMax * 2 + 10;
+        papoLevels = (GDALContourLevel **) 
+            CPLRealloc( papoLevels, sizeof(void*) * nLevelMax );
+    }
+
+    if( nLevelCount - nEnd - 1 > 0 )
+        memmove( papoLevels + nEnd + 2, papoLevels + nEnd + 1, 
+                 (nLevelCount - nEnd - 1) * sizeof(void*) );
+    papoLevels[nEnd+1] = poLevel;
+    nLevelCount++;
+
+    return poLevel;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*                           GDALContourLevel                           */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                          GDALContourLevel()                          */
+/************************************************************************/
+
+GDALContourLevel::GDALContourLevel( double dfLevelIn )
+
+{
+    dfLevel = dfLevelIn;
+    nEntryMax = 0;
+    nEntryCount = 0;
+    papoEntries = NULL;
+}
+
+/************************************************************************/
+/*                         ~GDALContourLevel()                          */
+/************************************************************************/
+
+GDALContourLevel::~GDALContourLevel()
+
+{
+    CPLAssert( nEntryCount == 0 );
+    CPLFree( papoEntries );
+}
+
+/************************************************************************/
+/*                           AdjustContour()                            */
+/*                                                                      */
+/*      Assume the indicated contour's tail may have changed, and       */
+/*      adjust it up or down in the list of contours to re-establish    */
+/*      proper ordering.                                                */
+/************************************************************************/
+
+void GDALContourLevel::AdjustContour( int iChanged )
+
+{
+    while( iChanged > 0 
+         && papoEntries[iChanged]->dfTailX < papoEntries[iChanged-1]->dfTailX )
+    {
+        GDALContourItem *poTemp = papoEntries[iChanged];
+        papoEntries[iChanged] = papoEntries[iChanged-1];
+        papoEntries[iChanged-1] = poTemp;
+        iChanged--;
+    }
+
+    while( iChanged < nEntryCount-1
+         && papoEntries[iChanged]->dfTailX > papoEntries[iChanged+1]->dfTailX )
+    {
+        GDALContourItem *poTemp = papoEntries[iChanged];
+        papoEntries[iChanged] = papoEntries[iChanged+1];
+        papoEntries[iChanged+1] = poTemp;
+        iChanged++;
+    }
+}
+
+/************************************************************************/
+/*                           RemoveContour()                            */
+/************************************************************************/
+
+void GDALContourLevel::RemoveContour( int iTarget )
+
+{
+    if( iTarget < nEntryCount )
+        memmove( papoEntries + iTarget, papoEntries + iTarget + 1, 
+                 (nEntryCount - iTarget - 1) * sizeof(void*) );
+    nEntryCount--;
+}
+
+/************************************************************************/
+/*                            FindContour()                             */
+/*                                                                      */
+/*      Perform a binary search to find the requested "tail"            */
+/*      location.  If not available return -1.  In theory there can     */
+/*      be more than one contour with the same tail X and different     */
+/*      Y tails ... ensure we check against them all.                   */
+/************************************************************************/
+
+int GDALContourLevel::FindContour( double dfX, double dfY )
+
+{
+    int nStart = 0, nEnd = nEntryCount-1, nMiddle;
+
+    while( nEnd >= nStart )
+    {
+        nMiddle = (nEnd + nStart) / 2;
+
+        double dfMiddleX = papoEntries[nMiddle]->dfTailX;
+
+        if( dfMiddleX < dfX )
+            nStart = nMiddle + 1;
+        else if( dfMiddleX > dfX )
+            nEnd = nMiddle - 1;
+        else
+        {
+            while( nMiddle > 0 
+                   && fabs(papoEntries[nMiddle]->dfTailX-dfX) < JOIN_DIST )
+                nMiddle--;
+
+            while( nMiddle < nEntryCount
+                   && fabs(papoEntries[nMiddle]->dfTailX-dfX) < JOIN_DIST )
+            {
+                if( fabs(papoEntries[nMiddle]->padfY[papoEntries[nMiddle]->nPoints-1] - dfY) < JOIN_DIST )
+                    return nMiddle;
+                nMiddle++;
+            }
+
+            return -1;
+        }
+    }
+
+    return -1;
+}
+
+/************************************************************************/
+/*                           InsertContour()                            */
+/*                                                                      */
+/*      Ensure the newly added contour is placed in order according     */
+/*      to the X value relative to the other contours.                  */
+/************************************************************************/
+
+int GDALContourLevel::InsertContour( GDALContourItem *poNewContour )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Find where to insert by binary search.                          */
+/* -------------------------------------------------------------------- */
+    int nStart = 0, nEnd = nEntryCount-1, nMiddle;
+
+    while( nEnd >= nStart )
+    {
+        nMiddle = (nEnd + nStart) / 2;
+
+        double dfMiddleX = papoEntries[nMiddle]->dfTailX;
+
+        if( dfMiddleX < poNewContour->dfLevel )
+            nStart = nMiddle + 1;
+        else if( dfMiddleX > poNewContour->dfLevel )
+            nEnd = nMiddle - 1;
+        else
+        {
+            nEnd = nMiddle - 1;
+            break;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we need to grow the array?                                   */
+/* -------------------------------------------------------------------- */
+    if( nEntryMax == nEntryCount )
+    {
+        nEntryMax = nEntryMax * 2 + 10;
+        papoEntries = (GDALContourItem **) 
+            CPLRealloc( papoEntries, sizeof(void*) * nEntryMax );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Insert the new contour at the appropriate location.             */
+/* -------------------------------------------------------------------- */
+    if( nEntryCount - nEnd - 1 > 0 )
+        memmove( papoEntries + nEnd + 2, papoEntries + nEnd + 1, 
+                 (nEntryCount - nEnd - 1) * sizeof(void*) );
+    papoEntries[nEnd+1] = poNewContour;
+    nEntryCount++;
+
+    return nEnd+1;
+}
+
 
 /************************************************************************/
 /* ==================================================================== */
@@ -584,6 +951,8 @@ GDALContourItem::GDALContourItem( double dfLevelIn )
     nMaxPoints = 0;
     padfX = NULL;
     padfY = NULL;
+    
+    dfTailX = 0.0;
 }
 
 /************************************************************************/
@@ -613,11 +982,14 @@ int GDALContourItem::AddSegment( double dfXStart, double dfYStart,
     if( nPoints == 0 )
     {
         nPoints = 2;
+
         padfX[0] = dfXStart;
         padfY[0] = dfYStart;
         padfX[1] = dfXEnd;
         padfY[1] = dfYEnd;
         bRecentlyAccessed = TRUE;
+
+        dfTailX = padfX[1];
 
         return TRUE;
     }
@@ -634,6 +1006,8 @@ int GDALContourItem::AddSegment( double dfXStart, double dfYStart,
 
         bRecentlyAccessed = TRUE;
 
+        dfTailX = dfXEnd;
+
         return TRUE;
     }
     else if( fabs(padfX[nPoints-1]-dfXEnd) < JOIN_DIST 
@@ -645,34 +1019,10 @@ int GDALContourItem::AddSegment( double dfXStart, double dfYStart,
 
         bRecentlyAccessed = TRUE;
 
-        return TRUE;
-    }
-#ifdef notdef
-    else if( fabs(padfX[0]-dfXStart) < JOIN_DIST && fabs(padfY[0]-dfYStart) < JOIN_DIST )
-    {
-        memmove( padfX + 1, padfX, sizeof(double) * nPoints );
-        memmove( padfY + 1, padfY, sizeof(double) * nPoints );
-        padfX[0] = dfXEnd;
-        padfY[0] = dfYEnd;
-        nPoints++;
-
-        bRecentlyAccessed = TRUE;
+        dfTailX = dfXStart;
 
         return TRUE;
     }
-    else if( fabs(padfX[0]-dfXEnd) < JOIN_DIST && fabs(padfY[0]-dfYEnd) < JOIN_DIST )
-    {
-        memmove( padfX + 1, padfX, sizeof(double) * nPoints );
-        memmove( padfY + 1, padfY, sizeof(double) * nPoints );
-        padfX[0] = dfXStart;
-        padfY[0] = dfYStart;
-        nPoints++;
-
-        bRecentlyAccessed = TRUE;
-
-        return TRUE;
-    }
-#endif
     else
         return FALSE;
 }
@@ -703,6 +1053,8 @@ int GDALContourItem::Merge( GDALContourItem *poOther )
 
         bRecentlyAccessed = TRUE;
 
+        dfTailX = padfX[nPoints-1];
+
         return TRUE;
     }
     else if( fabs(padfX[0]-poOther->padfX[poOther->nPoints-1]) < JOIN_DIST 
@@ -722,6 +1074,8 @@ int GDALContourItem::Merge( GDALContourItem *poOther )
 
         bRecentlyAccessed = TRUE;
 
+        dfTailX = padfX[nPoints-1];
+
         return TRUE;
     }
     else if( fabs(padfX[nPoints-1]-poOther->padfX[poOther->nPoints-1]) < JOIN_DIST 
@@ -740,6 +1094,8 @@ int GDALContourItem::Merge( GDALContourItem *poOther )
         nPoints += poOther->nPoints - 1;
 
         bRecentlyAccessed = TRUE;
+
+        dfTailX = padfX[nPoints-1];
 
         return TRUE;
     }
@@ -764,6 +1120,8 @@ int GDALContourItem::Merge( GDALContourItem *poOther )
         nPoints += poOther->nPoints - 1;
 
         bRecentlyAccessed = TRUE;
+
+        dfTailX = padfX[nPoints-1];
 
         return TRUE;
     }
@@ -796,7 +1154,9 @@ void GDALContourItem::MakeRoomFor( int nNewPoints )
 /*                          OGRContourWriter()                          */
 /************************************************************************/
 
-CPLErr OGRContourWriter( GDALContourItem *poContour, void *pInfo )
+CPLErr OGRContourWriter( double dfLevel, 
+                         int nPoints, double *padfX, double *padfY, 
+                         void *pInfo )
 
 {
     OGRContourWriterInfo *poInfo = (OGRContourWriterInfo *) pInfo;
@@ -810,20 +1170,20 @@ CPLErr OGRContourWriter( GDALContourItem *poContour, void *pInfo )
         OGR_F_SetFieldInteger( hFeat, poInfo->nIDField, poInfo->nNextID++ );
 
     if( poInfo->nElevField != -1 )
-        OGR_F_SetFieldDouble( hFeat, poInfo->nElevField, poContour->dfLevel );
+        OGR_F_SetFieldDouble( hFeat, poInfo->nElevField, dfLevel );
     
     hGeom = OGR_G_CreateGeometry( wkbLineString );
     
-    for( iPoint = poContour->nPoints-1; iPoint >= 0; iPoint-- )
+    for( iPoint = nPoints-1; iPoint >= 0; iPoint-- )
     {
         OGR_G_SetPoint( hGeom, iPoint,
                         poInfo->adfGeoTransform[0] 
-                        + poInfo->adfGeoTransform[1]*poContour->padfX[iPoint]
-                        + poInfo->adfGeoTransform[2]*poContour->padfY[iPoint],
+                        + poInfo->adfGeoTransform[1] * padfX[iPoint]
+                        + poInfo->adfGeoTransform[2] * padfY[iPoint],
                         poInfo->adfGeoTransform[3] 
-                        + poInfo->adfGeoTransform[4]*poContour->padfX[iPoint]
-                        + poInfo->adfGeoTransform[5]*poContour->padfY[iPoint],
-                        poContour->dfLevel );
+                        + poInfo->adfGeoTransform[4] * padfX[iPoint]
+                        + poInfo->adfGeoTransform[5] * padfY[iPoint],
+                        dfLevel );
     }
 
     OGR_F_SetGeometryDirectly( hFeat, hGeom );
