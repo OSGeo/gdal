@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/01/14 15:09:44  warmerda
+ * set layer creation options on OGROCITableLayer
+ *
  * Revision 1.11  2003/01/13 13:49:43  warmerda
  * add multi-user table support (ALL_SDO_GEOM_METADATA)
  *
@@ -377,8 +380,9 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
 
     if( CSLFetchNameValue(papszOptions,"DIM") != NULL )
-        ((OGROCITableLayer *) poLayer)->SetDimension(
-            atoi(CSLFetchNameValue(papszOptions,"DIM")) );
+        poLayer->SetDimension( atoi(CSLFetchNameValue(papszOptions,"DIM")) );
+
+    poLayer->SetOptions( papszOptions );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
