@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/05/11 14:08:26  warmerda
+ * added SLTPoly
+ *
  * Revision 1.4  1999/05/11 12:55:17  warmerda
  * added concept of entry types for vector layer identification
  *
@@ -272,6 +275,8 @@ const char * SDTS_CATD::GetEntryTypeDesc( int iEntry )
  * <tt>Line</tt>.
  * <li> SLTAttr: Read with SDTSAttrReader, underlying type of
  * <tt>Attribute Primary</tt>.
+ * <li> SLTPolygon: Read with SDTSPolygonReader, underlying type of
+ * <tt>Polygon</tt>.
  * </ul> 
  */
 
@@ -290,8 +295,11 @@ SDTSLayerType SDTS_CATD::GetEntryType( int iEntry )
     else if( EQUALN(papoEntries[iEntry]->pszType,"Point-Node",10) )
         return SLTPoint;
 
+    else if( EQUALN(papoEntries[iEntry]->pszType,"Polygon",7) )
+        return SLTPoly;
+
     else
-        return SLTUnknown;
+	return SLTUnknown;
 }
 
 /************************************************************************/
