@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/02/08 17:06:27  fwarmerdam
+ * Fixed up Delete() method to avoid error if there is no .prj.
+ *
  * Revision 1.26  2003/12/02 18:01:09  warmerda
  * Rewrote line reading function to avoid calls to CPLReadLine() since
  * some files have all the data for the whole file in one long line.
@@ -148,7 +151,7 @@ class CPL_DLL AAIGDataset : public GDALDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
     static CPLErr       Delete( const char *pszFilename );
-    static CPLErr       Remove( const char *pszFilename );
+    static CPLErr       Remove( const char *pszFilename, int bRepError );
 
     virtual CPLErr GetGeoTransform( double * );
     virtual const char *GetProjectionRef(void);
@@ -695,7 +698,7 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*    Called from the Delete()                                          */
 /************************************************************************/
 
-CPLErr AAIGDataset::Remove( const char * pszFilename )
+CPLErr AAIGDataset::Remove( const char * pszFilename, int bRepError )
 
 {
     VSIStatBuf      sStat;
@@ -711,12 +714,15 @@ CPLErr AAIGDataset::Remove( const char * pszFilename )
             return CE_Failure;
         }
     }
-    else
+    else if( bRepError )
     {
+        
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to delete %s, not a file.\n", pszFilename );
         return CE_Failure;
     }
+    
+    return CE_None;
 }
 
 /************************************************************************/
@@ -726,18 +732,8 @@ CPLErr AAIGDataset::Remove( const char * pszFilename )
 CPLErr AAIGDataset::Delete( const char *pszFilename )
 
 {
-    char                    *pszDirname, *pszBasename;
-    const char              *pszPrjFilename;
-
-    pszDirname = CPLStrdup( CPLGetPath(pszFilename) );
-    pszBasename = CPLStrdup( CPLGetBasename(pszFilename) );
-    pszPrjFilename = CPLFormFilename( pszDirname, pszBasename, "prj" );
-    Remove( pszPrjFilename );
-
-    CPLFree( pszDirname );
-    CPLFree( pszBasename );
-
-    return Remove( pszFilename );
+    Remove( CPLResetExtension( pszFilename, "prj" ), FALSE );
+    return Remove( pszFilename, TRUE );
 }
 
 /************************************************************************/
