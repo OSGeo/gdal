@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/03/07 15:20:13  warmerda
+ * Only apply the _gv_color property if the color lookup is successful.
+ *
  * Revision 1.4  2001/01/16 21:19:29  warmerda
  * Added preliminary text support
  *
@@ -202,11 +205,13 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
     char	gv_color[128];
     int		gv_red, gv_green, gv_blue;
 
-    DGNLookupColor( hDGN, psElement->color, &gv_red, &gv_green, &gv_blue );
-    sprintf( gv_color, "%f %f %f 1.0", 
-             gv_red / 255.0, gv_green / 255.0, gv_blue / 255.0 );
-    poFeature->SetField( "_gv_color", gv_color );
-    
+    if( DGNLookupColor( hDGN, psElement->color, 
+                        &gv_red, &gv_green, &gv_blue ) )
+    {
+        sprintf( gv_color, "%f %f %f 1.0", 
+                 gv_red / 255.0, gv_green / 255.0, gv_blue / 255.0 );
+        poFeature->SetField( "_gv_color", gv_color );
+    }
 
     switch( psElement->stype )
     {
