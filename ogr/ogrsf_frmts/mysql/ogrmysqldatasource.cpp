@@ -28,11 +28,20 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/10/08 20:50:05  fwarmerdam
+ * Implemented ExecuteSQL().
+ * Added support for getting host, password, port, and user from the
+ * datasource name or from the mysql init files (ie. ~/.my.cnf).
+ *
  * Revision 1.1  2004/10/07 20:56:15  fwarmerdam
  * New
  *
  */
 
+#include <my_global.h>
+#include <my_sys.h>
+
+#include <string>
 #include "ogr_mysql.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
@@ -123,20 +132,78 @@ int OGRMySQLDataSource::Open( const char * pszNewName, int bUpdate,
         if( !bTestOpen )
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "%s does not conform to MySQL naming convention,"
-                      " MYSQL:dbname[,user=..][,password=..][,host=..][,port=..]",
+                      " MYSQL:dbname[, user=..][,password=..][,host=..][,port=..][tables=table;table;...]",
                       pszNewName );
         return FALSE;
     }
     
 /* -------------------------------------------------------------------- */
-/*      Parse out connection information                                */
+/*      Use options process to get .my.cnf file contents.               */
 /* -------------------------------------------------------------------- */
-    int nPort = 0;
-    const char *pszHost = NULL;
-    const char *pszPassword = NULL;
-    const char *pszUser = NULL;
-    const char *pszDB = pszNewName + 6;
-    
+    int nPort = 0, i;
+    char **papszTableNames=NULL;
+    std::string oHost, oPassword, oUser, oDB;
+    char *apszArgv[2] = { "org", NULL };
+    char **papszArgv = apszArgv;
+    int  nArgc = 1;
+    const char *client_groups[] = {"client", "ogr", NULL };
+
+    my_init(); // I hope there is no problem with calling this multiple times!
+    load_defaults( "my", client_groups, &nArgc, &papszArgv );
+
+    for( i = 0; i < nArgc; i++ )
+    {
+        if( EQUALN(papszArgv[i],"--user=",7) )
+            oUser = papszArgv[i] + 7;
+        else if( EQUALN(papszArgv[i],"--host=",7) )
+            oHost = papszArgv[i] + 7;
+        else if( EQUALN(papszArgv[i],"--password=",11) )
+            oPassword = papszArgv[i] + 11;
+        else if( EQUALN(papszArgv[i],"--port=",7) )
+            nPort = atoi(papszArgv[i] + 7);
+    }
+
+    // cleanup
+    free_defaults( papszArgv );
+
+/* -------------------------------------------------------------------- */
+/*      Parse out connection information.                               */
+/* -------------------------------------------------------------------- */
+    char **papszItems = CSLTokenizeString2( pszNewName+6, ",", 
+                                            CSLT_HONOURSTRINGS );
+
+    if( CSLCount(papszItems) < 1 )
+    {
+        CSLDestroy( papszItems );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "MYSQL: request missing databasename." );
+        return FALSE;
+    }
+
+    oDB = papszItems[0];
+
+    for( i = 1; papszItems[i] != NULL; i++ )
+    {
+        if( EQUALN(papszItems[i],"user=",5) )
+            oUser = papszItems[i] + 5;
+        else if( EQUALN(papszItems[i],"password=",9) )
+            oPassword = papszItems[i] + 9;
+        else if( EQUALN(papszItems[i],"host=",5) )
+            oHost = papszItems[i] + 5;
+        else if( EQUALN(papszItems[i],"port=",5) )
+            nPort = atoi(papszItems[i] + 5);
+        else if( EQUALN(papszItems[i],"tables=",7) )
+        {
+            papszTableNames = CSLTokenizeStringComplex( 
+                papszItems[i] + 7, ";", FALSE, FALSE );
+        }
+        else
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "'%s' in MYSQL datasource definition not recognised and ignored.", papszItems[i] );
+    }
+
+    CSLDestroy( papszItems );
+
 /* -------------------------------------------------------------------- */
 /*      Try to establish connection.                                    */
 /* -------------------------------------------------------------------- */
@@ -145,15 +212,26 @@ int OGRMySQLDataSource::Open( const char * pszNewName, int bUpdate,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "mysql_init() failed." );
-        return FALSE;
     }
 
-    if( mysql_real_connect( hConn, pszHost, pszUser, pszPassword, 
-                            pszDB, nPort, NULL, 0 ) == NULL )
+    if( hConn
+        && mysql_real_connect( hConn, 
+                               oHost.length() ? oHost.c_str() : NULL,
+                               oUser.length() ? oUser.c_str() : NULL,
+                               oPassword.length() ? oPassword.c_str() : NULL,
+                               oDB.length() ? oDB.c_str() : NULL,
+                               nPort, NULL, 0 ) == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "MySQL connect failed for: %s\n%s", 
                   pszNewName + 6, mysql_error( hConn ) );
+        mysql_close( hConn );
+        hConn = NULL;
+    }
+
+    if( hConn == NULL )
+    {
+        CSLDestroy( papszTableNames );
         return FALSE;
     }
     
@@ -164,36 +242,38 @@ int OGRMySQLDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Get a list of available tables.                                 */
 /* -------------------------------------------------------------------- */
-    char        **papszTableNames=NULL;
-    MYSQL_RES *hResultSet;
-    MYSQL_ROW papszRow;
-
-    if( mysql_query( hConn, "SHOW TABLES" ) )
+    if( papszTableNames == NULL )
     {
-        ReportError( "SHOW TABLES Failed" );
-        return FALSE;
-    }
+        MYSQL_RES *hResultSet;
+        MYSQL_ROW papszRow;
 
-    hResultSet = mysql_store_result( hConn );
-    if( hResultSet == NULL )
-    {
-        ReportError( "mysql_store_result() failed on SHOW TABLES result." );
-        return FALSE;
-    }
+        if( mysql_query( hConn, "SHOW TABLES" ) )
+        {
+            ReportError( "SHOW TABLES Failed" );
+            return FALSE;
+        }
+
+        hResultSet = mysql_store_result( hConn );
+        if( hResultSet == NULL )
+        {
+            ReportError( "mysql_store_result() failed on SHOW TABLES result.");
+            return FALSE;
+        }
     
-    while( (papszRow = mysql_fetch_row( hResultSet )) != NULL )
-    {
-        if( papszRow[0] == NULL )
-            continue;
+        while( (papszRow = mysql_fetch_row( hResultSet )) != NULL )
+        {
+            if( papszRow[0] == NULL )
+                continue;
 
-        if( EQUAL(papszRow[0],"spatial_ref_sys")
-            || EQUAL(papszRow[0],"geometry_columns") )
-            continue;
+            if( EQUAL(papszRow[0],"spatial_ref_sys")
+                || EQUAL(papszRow[0],"geometry_columns") )
+                continue;
 
-        papszTableNames = CSLAddString(papszTableNames, papszRow[0] );
+            papszTableNames = CSLAddString(papszTableNames, papszRow[0] );
+        }
+
+        mysql_free_result( hResultSet );
     }
-
-    mysql_free_result( hResultSet );
 
 /* -------------------------------------------------------------------- */
 /*      Get the schema of the available tables.                         */
@@ -879,6 +959,7 @@ OGRErr OGRMySQLDataSource::FlushSoftTransaction()
 
     return SoftCommit();
 }
+#endif
 
 /************************************************************************/
 /*                             ExecuteSQL()                             */
@@ -906,6 +987,7 @@ OGRLayer * OGRMySQLDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case DELLAYER: command.                                 */
 /* -------------------------------------------------------------------- */
+#ifdef notdef
     if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
     {
         const char *pszLayerName = pszSQLCommand + 9;
@@ -916,19 +998,39 @@ OGRLayer * OGRMySQLDataSource::ExecuteSQL( const char *pszSQLCommand,
         DeleteLayer( pszLayerName );
         return NULL;
     }
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Make sure there isn't an active transaction already.            */
+/* -------------------------------------------------------------------- */
+    InterruptLongResult();
 
 /* -------------------------------------------------------------------- */
 /*      Execute the statement.                                          */
 /* -------------------------------------------------------------------- */
-    PGresult            *hResult = NULL;
-    
-    FlushSoftTransaction();
+    MYSQL_RES *hResultSet;
 
-    if( SoftStartTransaction() == OGRERR_NONE  )
+    if( mysql_query( hConn, pszSQLCommand ) )
     {
-        CPLDebug( "OGR_MYSQL", "PQexec(%s)", pszSQLCommand );
-        hResult = PQexec(hPGConn, pszSQLCommand );
-        CPLDebug( "OGR_MYSQL", "Command Results Tuples = %d", PQntuples(hResult) );
+        ReportError( pszSQLCommand );
+        return NULL;
+    }
+
+    hResultSet = mysql_use_result( hConn );
+    if( hResultSet == NULL )
+    {
+        if( mysql_field_count( hConn ) == 0 )
+        {
+            CPLDebug( "MYSQL", "Command '%s' succeeded, %d rows affected.", 
+                      pszSQLCommand, 
+                      (int) mysql_affected_rows(hConn) );
+            return NULL;
+        }
+        else
+        {
+            ReportError( pszSQLCommand );
+            return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -936,33 +1038,11 @@ OGRLayer * OGRMySQLDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      layer for it.                                                   */
 /* -------------------------------------------------------------------- */
 
-    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK 
-        && PQntuples(hResult) > 0 )
-    {
-        OGRMySQLResultLayer *poLayer = NULL;
+    OGRMySQLResultLayer *poLayer = NULL;
 
-        poLayer = new OGRMySQLResultLayer( this, pszSQLCommand, hResult );
+    poLayer = new OGRMySQLResultLayer( this, pszSQLCommand, hResultSet );
         
-        return poLayer;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Generate an error report if an error occured.                   */
-/* -------------------------------------------------------------------- */
-    if( hResult && 
-        (PQresultStatus(hResult) == PGRES_NONFATAL_ERROR
-         || PQresultStatus(hResult) == PGRES_FATAL_ERROR ) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s", PQresultErrorMessage( hResult ) );
-    }
-
-    if( hResult )
-        PQclear( hResult );
-
-    FlushSoftTransaction();
-
-    return NULL;
+    return poLayer;
 }
 
 /************************************************************************/
@@ -974,7 +1054,6 @@ void OGRMySQLDataSource::ReleaseResultSet( OGRLayer * poLayer )
 {
     delete poLayer;
 }
-#endif
 
 /************************************************************************/
 /*                            LaunderName()                             */
