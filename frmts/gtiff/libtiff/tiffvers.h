@@ -6,4 +6,4 @@
  * version checking should be done based on the
  * string returned by TIFFGetVersion.
  */
-#define TIFFLIB_VERSION 20011807
+#define TIFFLIB_VERSION 20010926
