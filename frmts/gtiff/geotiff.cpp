@@ -25,6 +25,9 @@
  * The GeoTIFF driver implemenation.
  * 
  * $Log$
+ * Revision 1.10  1999/08/12 18:23:15  warmerda
+ * Fixed the ability to write non GDT_Byte data.
+ *
  * Revision 1.9  1999/07/29 18:03:05  warmerda
  * return OGIS WKT format, instead of Proj.4 format
  *
@@ -349,7 +352,6 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                && pImage != NULL );
 
     CPLAssert( nBlockXOff == 0 );
-    CPLAssert( eDataType == GDT_Byte );
 
     nBlockBufSize = TIFFStripSize( poGDS->hTIFF );
     nBlockId = nBlockYOff + (nBand-1) * poGDS->nBlocksPerBand;
