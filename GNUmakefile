@@ -5,7 +5,6 @@ include GDALmake.opt
 
 default:	lib GDALmake.opt
 	(cd apps; $(MAKE))
-	(cd viewer; $(MAKE))
 
 lib:	$(GDAL_LIB)
 
