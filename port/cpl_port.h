@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2002/04/18 18:55:06  dron
+ * added <ctype.h> at the list of standard include files
+ *
  * Revision 1.29  2002/01/17 01:40:27  warmerda
  * added _LARGEFILE64_SOURCE support
  *
@@ -132,6 +135,7 @@
 #include <math.h>
 #include <stdarg.h>
 #include <string.h>
+#include <ctype.h>
 #include <errno.h>
 
 #ifdef _AIX
