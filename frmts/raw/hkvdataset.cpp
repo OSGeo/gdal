@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/12/14 17:34:13  warmerda
+ * Added dataset delete method.
+ *
  * Revision 1.10  2000/12/05 22:40:09  warmerda
  * Added very limited SetProjection support, includes Bessel
  *
@@ -148,6 +151,7 @@ class HKVDataset : public RawDataset
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
+    static CPLErr Delete( const char * pszName );
 };
 
 /************************************************************************/
@@ -1041,6 +1045,66 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
 }
 
 /************************************************************************/
+/*                               Delete()                               */
+/*                                                                      */
+/*      An HKV Blob dataset consists of a bunch of files in a           */
+/*      directory.  Try to delete all the files, then the               */
+/*      directory.                                                      */
+/************************************************************************/
+
+CPLErr HKVDataset::Delete( const char * pszName )
+
+{
+    VSIStatBuf	sStat;
+    char        **papszFiles;
+    int         i;
+
+    if( VSIStat( pszName, &sStat ) != 0 
+        || !VSI_ISDIR(sStat.st_mode) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "%s does not appear to be an HKV Dataset, as it is not\n"
+                  "a path to a directory.", 
+                  pszName );
+        return CE_Failure;
+    }
+
+    papszFiles = CPLReadDir( pszName );
+    for( i = 0; i < CSLCount(papszFiles); i++ )
+    {
+        const char *pszTarget;
+
+        if( EQUAL(papszFiles[i],".") || EQUAL(papszFiles[i],"..") )
+            continue;
+
+        pszTarget = CPLFormFilename(pszName, papszFiles[i], NULL );
+        if( VSIUnlink(pszTarget) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Unable to delete file %s,\n"
+                      "HKVDataset Delete(%s) failed.\n", 
+                      pszTarget, 
+                      pszName );
+            CSLDestroy( papszFiles );
+            return CE_Failure;
+        }
+    }
+
+    CSLDestroy( papszFiles );
+
+    if( VSIRmdir( pszName ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to delete directory %s,\n"
+                  "HKVDataset Delete() failed.\n", 
+                  pszName );
+        return CE_Failure;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                         GDALRegister_HKV()                          */
 /************************************************************************/
 
@@ -1058,7 +1122,8 @@ void GDALRegister_HKV()
         poDriver->pszHelpTopic = "frmt_various.html#HKV";
         
         poDriver->pfnOpen = HKVDataset::Open;
-         poDriver->pfnCreate = HKVDataset::Create;
+        poDriver->pfnCreate = HKVDataset::Create;
+        poDriver->pfnDelete = HKVDataset::Delete;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
