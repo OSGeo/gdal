@@ -5,7 +5,7 @@ default:
 	(cd sdts; $(MAKE) $* default install-libs)
 	(cd tiger; $(MAKE) $*)
 	(cd s57; $(MAKE) $*)
-        (cd mitab; $(MAKE) $*)
+	(cd mitab; $(MAKE) $*)
 
 clean:
 	rm -f ogrsf_frmts.a
