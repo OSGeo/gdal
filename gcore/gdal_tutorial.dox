@@ -81,7 +81,18 @@ As described in the <a href="gdal_datamodel.html">GDAL Data Model</a>, a
 GDALDataset contains a list of raster bands, all pertaining to the same
 area, and having the same resolution.  It also has metadata, a coordinate
 system, a georeferencing transform, size of raster and various other 
-information.  If we wanted to print some general information about the 
+information.  
+
+\code
+    adfGeoTransform[0] /* top left x */
+    adfGeoTransform[1] /* w-e pixel resolution */
+    adfGeoTransform[2] /* rotation, 0 if image is "north up" */
+    adfGeoTransform[3] /* top left y */
+    adfGeoTransform[4] /* rotation, 0 if image is "north up" */
+    adfGeoTransform[5] /* n-s pixel resolution */
+\endcode
+
+If we wanted to print some general information about the 
 dataset we might do the following:
 
 In C++:
