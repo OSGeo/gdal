@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/08/12 19:11:17  warmerda
+ * corrected negative min handling, and no data values
+ *
  * Revision 1.5  1999/08/09 16:30:44  warmerda
  * Modified 0x00 integer blocks to be treated as a constant min valued block.
  *
@@ -361,7 +364,8 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
 {
     GByte	*pabyRaw, *pabyCur;
     CPLErr	eErr;
-    int		i, nMagic, nMin=0, nMinSize=0, nDataSize;
+    int		i, nMagic, nMinSize=0, nDataSize;
+    GInt32 	nMin = 0;
 
 /* -------------------------------------------------------------------- */
 /*      If the block has zero size it is all dummies.                   */
@@ -402,10 +406,6 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
         for( i = 0; i < nMinSize; i++ )
         {
             nMin = nMin * 256 + *pabyCur;
-            
-            if( i == 0 )
-                nMin &= 0x7f;
-            
             pabyCur++;
         }
 
@@ -463,8 +463,20 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
                                 nBlockXSize, nBlockYSize, panData );
     }
 
-    
     CPLFree( pabyRaw );
+
+/* -------------------------------------------------------------------- */
+/*      Translate any no data values.  We assume any negative values    */
+/*      in an integer block are no data.                                */
+/* -------------------------------------------------------------------- */
+    if( nCellType == AIG_CELLTYPE_INT )
+    {
+        for( i = nBlockXSize * nBlockYSize - 1; i >= 0; i-- )
+        {
+            if( panData[i] == ESRI_GRID_NO_DATA )
+                panData[i] = GRID_NO_DATA;
+        }
+    }
     
     return CE_None;
 }
