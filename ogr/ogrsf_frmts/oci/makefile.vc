@@ -27,4 +27,9 @@ ocitest.exe:	$(LL_OBJ) ocitest.obj
 		../../ogr.lib ../ogrsf_frmts.lib ../ogrsf_frmts_sup.lib \
 		$(GDAL_ROOT)/port/cpl.lib $(OCI_LIB) $(LIBS)
 
+fastload.exe:	$(LL_OBJ) fastload.obj
+	cl /Zi fastload.obj $(LL_OBJ) \
+		../../ogr.lib ../ogrsf_frmts.lib ../ogrsf_frmts_sup.lib \
+		$(GDAL_ROOT)/port/cpl.lib $(OCI_LIB) $(LIBS)
+
 
