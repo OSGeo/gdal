@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.74  2005/01/06 20:27:35  fwarmerdam
+ * added NDF driver
+ *
  * Revision 1.73  2004/12/26 16:17:31  fwarmerdam
  * added ida format
  *
@@ -431,6 +434,7 @@ void GDALAllRegister()
     GDALRegister_LAN();
     GDALRegister_CPG();
     GDALRegister_IDA();
+    GDALRegister_NDF();
 #endif
 
 #ifdef FRMT_jp2kak

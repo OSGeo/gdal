@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2005/01/06 20:27:51  fwarmerdam
+ * added NDF driver
+ *
  * Revision 1.34  2004/12/26 16:16:33  fwarmerdam
  * added ida format
  *
@@ -198,6 +201,7 @@ void CPL_DLL GDALRegister_RS2(void);
 void CPL_DLL GDALRegister_ILWIS(void);
 void CPL_DLL GDALRegister_PCRaster(void);
 void CPL_DLL GDALRegister_IDA(void);
+void CPL_DLL GDALRegister_NDF(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
