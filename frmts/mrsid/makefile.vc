@@ -1,7 +1,7 @@
 
 OBJ	=	mrsiddataset.obj
 
-EXTRAFLAGS = 	-I..\iso8211
+EXTRAFLAGS = 	-I$(MRSID_DIR)\include
 
 GDAL_ROOT	=	..\..
 
@@ -12,4 +12,5 @@ default:	$(OBJ)
 
 clean:
 	-del *.obj
+
 
