@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.76  2003/06/18 18:24:17  warmerda
+ * added projection specific set methods to C API
+ *
  * Revision 1.75  2003/05/30 18:34:41  warmerda
  * clear existing authority node in SetLinearUnits if one exists
  *
@@ -2152,6 +2155,23 @@ OGRErr OGRSpatialReference::SetTM( double dfCenterLat, double dfCenterLong,
 }
 
 /************************************************************************/
+/*                              OSRSetTM()                              */
+/************************************************************************/
+
+OGRErr OSRSetTM( OGRSpatialReferenceH hSRS, 
+                 double dfCenterLat, double dfCenterLong,
+                 double dfScale,
+                 double dfFalseEasting,
+                 double dfFalseNorthing )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetTM( 
+        dfCenterLat, dfCenterLong, 
+        dfScale, 
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                              SetTMSO()                               */
 /************************************************************************/
 
@@ -2172,6 +2192,23 @@ OGRErr OGRSpatialReference::SetTMSO( double dfCenterLat, double dfCenterLong,
 }
 
 /************************************************************************/
+/*                             OSRSetTMSO()                             */
+/************************************************************************/
+
+OGRErr OSRSetTMSO( OGRSpatialReferenceH hSRS, 
+                 double dfCenterLat, double dfCenterLong,
+                 double dfScale,
+                 double dfFalseEasting,
+                 double dfFalseNorthing )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetTMSO( 
+        dfCenterLat, dfCenterLong, 
+        dfScale, 
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                               SetTMG()                               */
 /************************************************************************/
 
@@ -2187,6 +2224,21 @@ OGRSpatialReference::SetTMG( double dfCenterLat, double dfCenterLong,
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                             OSRSetTMG()                              */
+/************************************************************************/
+
+OGRErr OSRSetTMG( OGRSpatialReferenceH hSRS, 
+                 double dfCenterLat, double dfCenterLong,
+                 double dfFalseEasting,
+                 double dfFalseNorthing )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetTMG( 
+        dfCenterLat, dfCenterLong, 
+        dfFalseEasting, dfFalseNorthing );
 }
 
 /************************************************************************/
@@ -2211,6 +2263,23 @@ OGRErr OGRSpatialReference::SetACEA( double dfStdP1, double dfStdP2,
 }
 
 /************************************************************************/
+/*                             OSRSetACEA()                             */
+/************************************************************************/
+
+OGRErr OSRSetACEA( OGRSpatialReferenceH hSRS, 
+                   double dfStdP1, double dfStdP2,
+                   double dfCenterLat, double dfCenterLong,
+                   double dfFalseEasting,
+                   double dfFalseNorthing )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetACEA( 
+        dfStdP1, dfStdP2, 
+        dfCenterLat, dfCenterLong, 
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                               SetAE()                                */
 /************************************************************************/
 
@@ -2226,6 +2295,21 @@ OGRErr OGRSpatialReference::SetAE( double dfCenterLat, double dfCenterLong,
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                              OSRSetAE()                              */
+/************************************************************************/
+
+OGRErr OSRSetAE( OGRSpatialReferenceH hSRS, 
+                 double dfCenterLat, double dfCenterLong,
+                 double dfFalseEasting,
+                 double dfFalseNorthing )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetAE( 
+        dfCenterLat, dfCenterLong, 
+        dfFalseEasting, dfFalseNorthing );
 }
 
 /************************************************************************/
@@ -2247,6 +2331,20 @@ OGRErr OGRSpatialReference::SetCEA( double dfStdP1, double dfCentralMeridian,
 }
 
 /************************************************************************/
+/*                             OSRSetCEA()                              */
+/************************************************************************/
+
+OGRErr OSRSetCEA( OGRSpatialReferenceH hSRS, 
+                  double dfStdP1, double dfCentralMeridian,
+                  double dfFalseEasting, double dfFalseNorthing )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetCEA( 
+        dfStdP1, dfCentralMeridian,
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                               SetCS()                                */
 /************************************************************************/
 
@@ -2262,6 +2360,21 @@ OGRErr OGRSpatialReference::SetCS( double dfCenterLat, double dfCenterLong,
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                              OSRSetCS()                              */
+/************************************************************************/
+
+OGRErr OSRSetCS( OGRSpatialReferenceH hSRS, 
+                 double dfCenterLat, double dfCenterLong,
+                 double dfFalseEasting,
+                 double dfFalseNorthing )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetCS( 
+        dfCenterLat, dfCenterLong, 
+        dfFalseEasting, dfFalseNorthing );
 }
 
 /************************************************************************/
@@ -2286,6 +2399,23 @@ OGRErr OGRSpatialReference::SetEC( double dfStdP1, double dfStdP2,
 }
 
 /************************************************************************/
+/*                              OSRSetEC()                              */
+/************************************************************************/
+
+OGRErr OSRSetEC( OGRSpatialReferenceH hSRS, 
+                 double dfStdP1, double dfStdP2,
+                 double dfCenterLat, double dfCenterLong,
+                 double dfFalseEasting,
+                 double dfFalseNorthing )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetEC( 
+        dfStdP1, dfStdP2, 
+        dfCenterLat, dfCenterLong, 
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                            SetEckertIV()                             */
 /************************************************************************/
 
@@ -2303,6 +2433,21 @@ OGRErr OGRSpatialReference::SetEckertIV( double dfCentralMeridian,
 }
 
 /************************************************************************/
+/*                           OSRSetEckertIV()                           */
+/************************************************************************/
+
+OGRErr OSRSetEckertIV( OGRSpatialReferenceH hSRS, 
+                       double dfCentralMeridian,
+                       double dfFalseEasting,
+                       double dfFalseNorthing )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetEckertIV( 
+        dfCentralMeridian,
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                            SetEckertVI()                             */
 /************************************************************************/
 
@@ -2317,6 +2462,21 @@ OGRErr OGRSpatialReference::SetEckertVI( double dfCentralMeridian,
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           OSRSetEckertVI()                           */
+/************************************************************************/
+
+OGRErr OSRSetEckertVI( OGRSpatialReferenceH hSRS, 
+                       double dfCentralMeridian,
+                       double dfFalseEasting,
+                       double dfFalseNorthing )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetEckertVI( 
+        dfCentralMeridian,
+        dfFalseEasting, dfFalseNorthing );
 }
 
 /************************************************************************/
@@ -2339,6 +2499,21 @@ OGRErr OGRSpatialReference::SetEquirectangular(
 }
 
 /************************************************************************/
+/*                       OSRSetEquirectangular()                        */
+/************************************************************************/
+
+OGRErr OSRSetEquirectangular( OGRSpatialReferenceH hSRS, 
+                              double dfCenterLat, double dfCenterLong,
+                              double dfFalseEasting,
+                              double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetEquirectangular( 
+        dfCenterLat, dfCenterLong, 
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                               SetGS()                                */
 /************************************************************************/
 
@@ -2353,6 +2528,21 @@ OGRErr OGRSpatialReference::SetGS( double dfCentralMeridian,
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                              OSRSetGS()                              */
+/************************************************************************/
+
+OGRErr OSRSetGS( OGRSpatialReferenceH hSRS, 
+                 double dfCentralMeridian,
+                 double dfFalseEasting,
+                 double dfFalseNorthing )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetGS( 
+        dfCentralMeridian,
+        dfFalseEasting, dfFalseNorthing );
 }
 
 /************************************************************************/
@@ -2372,6 +2562,21 @@ OGRErr OGRSpatialReference::SetGnomonic(
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           OSRSetGnomonic()                           */
+/************************************************************************/
+
+OGRErr OSRSetGnomonic( OGRSpatialReferenceH hSRS, 
+                              double dfCenterLat, double dfCenterLong,
+                              double dfFalseEasting,
+                              double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetGnomonic( 
+        dfCenterLat, dfCenterLong, 
+        dfFalseEasting, dfFalseNorthing );
 }
 
 /************************************************************************/
@@ -2395,6 +2600,25 @@ OGRErr OGRSpatialReference::SetHOM( double dfCenterLat, double dfCenterLong,
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                             OSRSetHOM()                              */
+/************************************************************************/
+
+OGRErr OSRSetHOM( OGRSpatialReferenceH hSRS, 
+                  double dfCenterLat, double dfCenterLong,
+                  double dfAzimuth, double dfRectToSkew, 
+                  double dfScale,
+                  double dfFalseEasting,
+                  double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetHOM( 
+        dfCenterLat, dfCenterLong, 
+        dfAzimuth, dfRectToSkew, 
+        dfScale,
+        dfFalseEasting, dfFalseNorthing );
 }
 
 /************************************************************************/
@@ -2422,6 +2646,25 @@ OGRErr OGRSpatialReference::SetKrovak( double dfCenterLat, double dfCenterLong,
 }
 
 /************************************************************************/
+/*                            OSRSetKrovak()                            */
+/************************************************************************/
+
+OGRErr OSRSetKrovak( OGRSpatialReferenceH hSRS, 
+                     double dfCenterLat, double dfCenterLong,
+                     double dfAzimuth, double dfPseudoStdParallel1,
+                     double dfScale,
+                     double dfFalseEasting,
+                     double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetKrovak( 
+        dfCenterLat, dfCenterLong, 
+        dfAzimuth, dfPseudoStdParallel1,
+        dfScale,
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                              SetLAEA()                               */
 /************************************************************************/
 
@@ -2437,6 +2680,20 @@ OGRErr OGRSpatialReference::SetLAEA( double dfCenterLat, double dfCenterLong,
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                             OSRSetLAEA()                             */
+/************************************************************************/
+
+OGRErr OSRSetLAEA( OGRSpatialReferenceH hSRS, 
+                   double dfCenterLat, double dfCenterLong,
+                   double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetLAEA( 
+        dfCenterLat, dfCenterLong, 
+        dfFalseEasting, dfFalseNorthing );
 }
 
 /************************************************************************/
@@ -2461,6 +2718,22 @@ OGRErr OGRSpatialReference::SetLCC( double dfStdP1, double dfStdP2,
 }
 
 /************************************************************************/
+/*                             OSRSetLCC()                              */
+/************************************************************************/
+
+OGRErr OSRSetLCC( OGRSpatialReferenceH hSRS, 
+                  double dfStdP1, double dfStdP2, 
+                  double dfCenterLat, double dfCenterLong,
+                  double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetLCC( 
+        dfStdP1, dfStdP2, 
+        dfCenterLat, dfCenterLong, 
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                             SetLCC1SP()                              */
 /************************************************************************/
 
@@ -2478,6 +2751,22 @@ OGRErr OGRSpatialReference::SetLCC1SP( double dfCenterLat, double dfCenterLong,
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            OSRSetLCC1SP()                            */
+/************************************************************************/
+
+OGRErr OSRSetLCC1SP( OGRSpatialReferenceH hSRS, 
+                     double dfCenterLat, double dfCenterLong,
+                     double dfScale,
+                     double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetLCC1SP( 
+        dfCenterLat, dfCenterLong, 
+        dfScale,
+        dfFalseEasting, dfFalseNorthing );
 }
 
 /************************************************************************/
@@ -2502,6 +2791,22 @@ OGRErr OGRSpatialReference::SetLCCB( double dfStdP1, double dfStdP2,
 }
 
 /************************************************************************/
+/*                             OSRSetLCCB()                             */
+/************************************************************************/
+
+OGRErr OSRSetLCCB( OGRSpatialReferenceH hSRS, 
+                   double dfStdP1, double dfStdP2, 
+                   double dfCenterLat, double dfCenterLong,
+                   double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetLCCB( 
+        dfStdP1, dfStdP2, 
+        dfCenterLat, dfCenterLong, 
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                               SetMC()                                */
 /************************************************************************/
 
@@ -2517,6 +2822,20 @@ OGRErr OGRSpatialReference::SetMC( double dfCenterLat, double dfCenterLong,
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                              OSRSetMC()                              */
+/************************************************************************/
+
+OGRErr OSRSetMC( OGRSpatialReferenceH hSRS, 
+                 double dfCenterLat, double dfCenterLong,
+                 double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetMC( 
+        dfCenterLat, dfCenterLong, 
+        dfFalseEasting, dfFalseNorthing );
 }
 
 /************************************************************************/
@@ -2540,6 +2859,22 @@ OGRErr OGRSpatialReference::SetMercator( double dfCenterLat, double dfCenterLong
 }
 
 /************************************************************************/
+/*                           OSRSetMercator()                           */
+/************************************************************************/
+
+OGRErr OSRSetMercator( OGRSpatialReferenceH hSRS, 
+                       double dfCenterLat, double dfCenterLong,
+                       double dfScale,
+                       double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetMercator( 
+        dfCenterLat, dfCenterLong, 
+        dfScale,
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                            SetMollweide()                            */
 /************************************************************************/
 
@@ -2554,6 +2889,20 @@ OGRErr OGRSpatialReference::SetMollweide( double dfCentralMeridian,
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          OSRSetMollweide()                           */
+/************************************************************************/
+
+OGRErr OSRSetMollweide( OGRSpatialReferenceH hSRS, 
+                        double dfCentralMeridian,
+                        double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetMollweide( 
+        dfCentralMeridian,
+        dfFalseEasting, dfFalseNorthing );
 }
 
 /************************************************************************/
@@ -2572,6 +2921,20 @@ OGRErr OGRSpatialReference::SetNZMG( double dfCenterLat, double dfCenterLong,
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                             OSRSetNZMG()                             */
+/************************************************************************/
+
+OGRErr OSRSetNZMG( OGRSpatialReferenceH hSRS, 
+                   double dfCenterLat, double dfCenterLong,
+                   double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetNZMG( 
+        dfCenterLat, dfCenterLong, 
+        dfFalseEasting, dfFalseNorthing );
 }
 
 /************************************************************************/
@@ -2595,6 +2958,22 @@ OGRErr OGRSpatialReference::SetOS( double dfOriginLat, double dfCMeridian,
 }
 
 /************************************************************************/
+/*                              OSRSetOS()                              */
+/************************************************************************/
+
+OGRErr OSRSetOS( OGRSpatialReferenceH hSRS, 
+                 double dfOriginLat, double dfCMeridian,
+                 double dfScale,
+                 double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetOS( 
+        dfOriginLat, dfCMeridian,
+        dfScale,
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                          SetOrthographic()                           */
 /************************************************************************/
 
@@ -2610,6 +2989,20 @@ OGRErr OGRSpatialReference::SetOrthographic(
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         OSRSetOrthographic()                         */
+/************************************************************************/
+
+OGRErr OSRSetOrthographic( OGRSpatialReferenceH hSRS, 
+                           double dfCenterLat, double dfCenterLong,
+                           double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetOrthographic( 
+        dfCenterLat, dfCenterLong, 
+        dfFalseEasting, dfFalseNorthing );
 }
 
 /************************************************************************/
@@ -2634,6 +3027,20 @@ OGRErr OGRSpatialReference::SetPolyconic(
 }
 
 /************************************************************************/
+/*                          OSRSetPolyconic()                           */
+/************************************************************************/
+
+OGRErr OSRSetPolyconic( OGRSpatialReferenceH hSRS, 
+                        double dfCenterLat, double dfCenterLong,
+                        double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetPolyconic( 
+        dfCenterLat, dfCenterLong, 
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                               SetPS()                                */
 /************************************************************************/
 
@@ -2654,6 +3061,22 @@ OGRErr OGRSpatialReference::SetPS(
 }
 
 /************************************************************************/
+/*                              OSRSetPS()                              */
+/************************************************************************/
+
+OGRErr OSRSetPS( OGRSpatialReferenceH hSRS, 
+                 double dfCenterLat, double dfCenterLong,
+                 double dfScale,
+                 double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetPS( 
+        dfCenterLat, dfCenterLong, 
+        dfScale,
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                            SetRobinson()                             */
 /************************************************************************/
 
@@ -2671,6 +3094,20 @@ OGRErr OGRSpatialReference::SetRobinson( double dfCenterLong,
 }
 
 /************************************************************************/
+/*                           OSRSetRobinson()                           */
+/************************************************************************/
+
+OGRErr OSRSetRobinsion( OGRSpatialReferenceH hSRS, 
+                        double dfCenterLong,
+                        double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetRobinson( 
+        dfCenterLong, 
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                           SetSinusoidal()                            */
 /************************************************************************/
 
@@ -2685,6 +3122,20 @@ OGRErr OGRSpatialReference::SetSinusoidal( double dfCenterLong,
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          OSRSetSinusoidal()                          */
+/************************************************************************/
+
+OGRErr OSRSetSinusoidal( OGRSpatialReferenceH hSRS, 
+                         double dfCenterLong,
+                         double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetSinusoidal( 
+        dfCenterLong, 
+        dfFalseEasting, dfFalseNorthing );
 }
 
 /************************************************************************/
@@ -2709,6 +3160,22 @@ OGRErr OGRSpatialReference::SetStereographic(
 }
 
 /************************************************************************/
+/*                        OSRSetStereographic()                         */
+/************************************************************************/
+
+OGRErr OSRSetStereographic( OGRSpatialReferenceH hSRS, 
+                            double dfOriginLat, double dfCMeridian,
+                            double dfScale,
+                            double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetStereographic( 
+        dfOriginLat, dfCMeridian,
+        dfScale,
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                               SetSOC()                               */
 /************************************************************************/
 
@@ -2728,6 +3195,20 @@ OGRErr OGRSpatialReference::SetSOC( double dfLatitudeOfOrigin,
 }
 
 /************************************************************************/
+/*                             OSRSetSOC()                              */
+/************************************************************************/
+
+OGRErr OSRSetSOC( OGRSpatialReferenceH hSRS, 
+                  double dfLatitudeOfOrigin, double dfCentralMeridian,
+                  double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetSOC( 
+        dfLatitudeOfOrigin, dfCentralMeridian,
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                               SetVDG()                               */
 /************************************************************************/
 
@@ -2742,6 +3223,20 @@ OGRErr OGRSpatialReference::SetVDG( double dfCMeridian,
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                             OSRSetVDG()                              */
+/************************************************************************/
+
+OGRErr OSRSetVDG( OGRSpatialReferenceH hSRS, 
+                  double dfCentralMeridian,
+                  double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetVDG( 
+        dfCentralMeridian,
+        dfFalseEasting, dfFalseNorthing );
 }
 
 /************************************************************************/
