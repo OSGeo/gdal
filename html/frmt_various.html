@@ -144,6 +144,24 @@ point.  There is limited support for recognising map_info keywords with the
 coordinate system and georeferencing.  In particular, UTM and State Plane 
 should work.<p>
 
+Creation Options:<p>
+
+<ul>
+
+	<li> <b>INTERLEAVE=BSQ/BIP/BIL</b>: Force the generation specified
+	type of interleaving. <b>BSQ</b> --- band sequental (default),
+	<b>BIP</b> --- data interleaved by pixel,
+	<b>BIL</b> --- data interleaved by line.<p>
+	
+	<li> <b>SUFFIX=REPALCE/ADD</b>: Force adding ".hdr" suffix to supplied
+	filename, e.g. if user selects "file.bin" name for output dataset,
+	"file.bin.hdr" header file will be created. By default header file
+	suffix replaces the binary file suffix, e.g. for "file.bin" name
+	"file.hdr" header file will be created.
+
+</ul>
+
+
 NOTE: Implemented as <tt>gdal/frmts/raw/envidataset.cpp</tt>.<p>
 
 <h2><a name="Envisat">Envisat -- Envisat Image Product</h2>
