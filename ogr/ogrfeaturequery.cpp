@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/04/19 20:46:06  warmerda
+ * added [NOT] IN, [NOT] LIKE and IS [NOT] NULL support
+ *
  * Revision 1.4  2001/10/25 16:41:01  danmo
  * Fixed OGRFeatureQueryEvaluator() crash with string fields with unset value
  *
@@ -177,8 +180,28 @@ static int OGRFeatureQueryEvaluator( swq_field_op *op, OGRFeature *poFeature )
             return psField->Integer <= op->int_value;
           case SWQ_GE:
             return psField->Integer >= op->int_value;
+          case SWQ_ISNULL:
+            return !poFeature->IsFieldSet( op->field_index );
+
+          case SWQ_IN:
+          {
+              const char *pszSrc;
+              
+              pszSrc = op->string_value;
+              while( *pszSrc != '\0' )
+              {
+                  if( atoi(pszSrc) == psField->Integer )
+                      return TRUE;
+                  pszSrc += strlen(pszSrc) + 1;
+              }
+
+              return FALSE;
+          }
+
           default:
-            assert( FALSE );
+            CPLDebug( "OGRFeatureQuery", 
+                      "Illegal operation (%d) on integer field.",
+                      op->operation );
             return FALSE;
         }
 
@@ -197,8 +220,27 @@ static int OGRFeatureQueryEvaluator( swq_field_op *op, OGRFeature *poFeature )
             return psField->Real <= op->float_value;
           case SWQ_GE:
             return psField->Real >= op->float_value;
+          case SWQ_ISNULL:
+            return !poFeature->IsFieldSet( op->field_index );
+          case SWQ_IN:
+          {
+              const char *pszSrc;
+              
+              pszSrc = op->string_value;
+              while( *pszSrc != '\0' )
+              {
+                  if( atof(pszSrc) == psField->Integer )
+                      return TRUE;
+                  pszSrc += strlen(pszSrc) + 1;
+              }
+
+              return FALSE;
+          }
+
           default:
-            assert( FALSE );
+            CPLDebug( "OGRFeatureQuery", 
+                      "Illegal operation (%d) on float field.",
+                      op->operation );
             return FALSE;
         }
 
@@ -225,8 +267,39 @@ static int OGRFeatureQueryEvaluator( swq_field_op *op, OGRFeature *poFeature )
             {
                 return !EQUAL(psField->String,op->string_value);
             }
+
+          case SWQ_ISNULL:
+            return !poFeature->IsFieldSet( op->field_index );
+
+          case SWQ_LIKE:
+            if (psField->Set.nMarker1 != OGRUnsetMarker
+                || psField->Set.nMarker2 != OGRUnsetMarker )
+                return swq_test_like(psField->String, op->string_value);
+            else
+                return FALSE;
+
+          case SWQ_IN:
+          {
+              const char *pszSrc;
+
+              if( !poFeature->IsFieldSet(op->field_index) )
+                  return FALSE;
+              
+              pszSrc = op->string_value;
+              while( *pszSrc != '\0' )
+              {
+                  if( EQUAL(pszSrc,psField->String) )
+                      return TRUE;
+                  pszSrc += strlen(pszSrc) + 1;
+              }
+
+              return FALSE;
+          }
+
           default:
-            assert( FALSE );
+            CPLDebug( "OGRFeatureQuery", 
+                      "Illegal operation (%d) on string field.",
+                      op->operation );
             return FALSE;
         }
 

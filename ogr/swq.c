@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/04/19 20:46:06  warmerda
+ * added [NOT] IN, [NOT] LIKE and IS [NOT] NULL support
+ *
  * Revision 1.4  2002/03/01 04:13:40  warmerda
  * Made swq_error static.
  *
@@ -35,6 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "swq.h"
 
@@ -57,6 +61,9 @@
 
 static char	swq_error[1024];
 
+#define SWQ_OP_IS_LOGICAL(op) ((op) == SWQ_OR || (op) == SWQ_AND || (op) == SWQ_NOT)
+#define SWQ_OP_IS_POSTUNARY(op) ((op) == SWQ_ISNULL || (op) == SWQ_ISNOTNULL)
+
 /************************************************************************/
 /*                           swq_isalphanum()                           */
 /*                                                                      */
@@ -74,6 +81,62 @@ static int swq_isalphanum( char c )
         return TRUE;
     else
         return FALSE;
+}
+
+/************************************************************************/
+/*                           swq_test_like()                            */
+/*                                                                      */
+/*      Does input match pattern?                                       */
+/************************************************************************/
+
+int swq_test_like( const char *input, const char *pattern )
+
+{
+    if( input == NULL || pattern == NULL )
+        return 0;
+
+    while( *input != '\0' )
+    {
+        if( *pattern == '\0' )
+            return 0;
+
+        else if( *pattern == '_' )
+        {
+            input++;
+            pattern++;
+        }
+        else if( *pattern == '%' )
+        {
+            int   eat;
+
+            if( pattern[1] == '\0' )
+                return 1;
+
+            /* try eating varying amounts of the input till we get a positive*/
+            for( eat = 0; input[eat] != '\0'; eat++ )
+            {
+                if( swq_test_like(input+eat,pattern+1) )
+                    return 1;
+            }
+
+            return 0;
+        }
+        else
+        {
+            if( tolower(*pattern) != tolower(*input) )
+                return 0;
+            else
+            {
+                input++;
+                pattern++;
+            }
+        }
+    }
+
+    if( *pattern != '\0' && strcmp(pattern,"%") != 0 )
+        return 0;
+    else
+        return 1;
 }
 
 /************************************************************************/
@@ -163,12 +226,14 @@ static char *swq_token( const char *expression, char **next )
 }
 
 /************************************************************************/
-/*                         swq_identify_field()                         */
+/*                          swq_identify_op()                           */
 /************************************************************************/
 
-static swq_op swq_identify_op( const char *token )
+static swq_op swq_identify_op( char **tokens, int *tokens_consumed )
 
 {
+    const char *token = tokens[*tokens_consumed];
+
     if( strcasecmp(token,"OR") == 0 )
         return SWQ_OR;
     
@@ -176,7 +241,22 @@ static swq_op swq_identify_op( const char *token )
         return SWQ_AND;
     
     if( strcasecmp(token,"NOT") == 0 )
-        return SWQ_NOT;
+    {
+        if( tokens[*tokens_consumed+1] != NULL
+            && strcasecmp(tokens[*tokens_consumed+1],"LIKE") == 0 )
+        {
+            *tokens_consumed += 1;
+            return SWQ_NOTLIKE;
+        }
+        else if( tokens[*tokens_consumed+1] != NULL
+            && strcasecmp(tokens[*tokens_consumed+1],"IN") == 0 )
+        {
+            *tokens_consumed += 1;
+            return SWQ_NOTIN;
+        }
+        else
+            return SWQ_NOT;
+    }
     
     if( strcasecmp(token,"<=") == 0 )
         return SWQ_LE;
@@ -199,19 +279,34 @@ static swq_op swq_identify_op( const char *token )
     if( strcasecmp(token,">") == 0 )
         return SWQ_GT;
 
+    if( strcasecmp(token,"LIKE") == 0 )
+        return SWQ_LIKE;
+
+    if( strcasecmp(token,"IN") == 0 )
+        return SWQ_IN;
+
+    if( strcasecmp(token,"IS") == 0 )
+    {
+        if( tokens[*tokens_consumed+1] == NULL )
+            return SWQ_UNKNOWN;
+        else if( strcasecmp(tokens[*tokens_consumed+1],"NULL") == 0 )
+        {
+            *tokens_consumed += 1;
+            return SWQ_ISNULL;
+        }
+        else if( strcasecmp(tokens[*tokens_consumed+1],"NOT") == 0
+                 && tokens[*tokens_consumed+2] != NULL
+                 && strcasecmp(tokens[*tokens_consumed+2],"NULL") == 0 )
+        {
+            *tokens_consumed += 2;
+            return SWQ_ISNOTNULL;
+        }
+        else 
+            return SWQ_UNKNOWN;
+    }
+
     return SWQ_UNKNOWN;
 }
-
-/************************************************************************/
-/*                         swq_op_is_logical()                          */
-/************************************************************************/
-
-static int swq_op_is_logical( swq_op op )
-
-{
-    return op == SWQ_OR || op == SWQ_AND || op == SWQ_NOT;
-}
-
 
 /************************************************************************/
 /*                         swq_identify_field()                         */
@@ -244,6 +339,80 @@ static int swq_identify_field( const char *token,
 }
 
 /************************************************************************/
+/*                         swq_parse_in_list()                          */
+/*                                                                      */
+/*      Parse the argument list to the IN predicate. Might be used      */
+/*      something like:                                                 */
+/*                                                                      */
+/*        WHERE color IN ('Red', 'Green', 'Blue')                       */
+/************************************************************************/
+
+static char *swq_parse_in_list( char **tokens, int *tokens_consumed )
+
+{
+    int   i, text_off = 2;
+    char *result;
+    
+    if( tokens[*tokens_consumed] == NULL
+        || strcasecmp(tokens[*tokens_consumed],"(") != 0 )
+    {
+        sprintf( swq_error, "IN argument doesn't start with '('." );
+        return NULL;
+    }
+
+    *tokens_consumed += 1;
+
+    /* Establish length of all tokens plus separators. */
+
+    for( i = *tokens_consumed; 
+         tokens[i] != NULL && strcasecmp(tokens[i],")") != 0; 
+         i++ )
+    {
+        text_off += strlen(tokens[i]) + 1;
+    }
+    
+    result = (char *) SWQ_MALLOC(text_off);
+
+    /* Actually capture all the arguments. */
+
+    text_off = 0;
+    while( tokens[*tokens_consumed] != NULL 
+           && strcasecmp(tokens[*tokens_consumed],")") != 0 )
+    {
+        strcpy( result + text_off, tokens[*tokens_consumed] );
+        text_off += strlen(tokens[*tokens_consumed]) + 1;
+
+        *tokens_consumed += 1;
+
+        if( strcasecmp(tokens[*tokens_consumed],",") != 0
+            && strcasecmp(tokens[*tokens_consumed],")") != 0 )
+        {
+            sprintf( swq_error, 
+               "Contents of IN predicate missing comma or closing bracket." );
+            SWQ_FREE( result );
+            return NULL;
+        }
+        else if( strcasecmp(tokens[*tokens_consumed],",") == 0 )
+            *tokens_consumed += 1;
+    }
+
+    /* add final extra terminating zero char */
+    result[text_off] = '\0';
+
+    if( tokens[*tokens_consumed] == NULL )
+    {
+        sprintf( swq_error, 
+                 "Contents of IN predicate missing closing bracket." );
+        SWQ_FREE( result );
+        return NULL;
+    }
+
+    *tokens_consumed += 1;
+
+    return result;
+}
+
+/************************************************************************/
 /*                        swq_subexpr_compile()                         */
 /************************************************************************/
 
@@ -258,6 +427,7 @@ swq_subexpr_compile( char **tokens,
 {
     swq_expr	*op;
     const char  *error;
+    int         op_code;
 
     *tokens_consumed = 0;
     *expr_out = NULL;
@@ -305,6 +475,10 @@ swq_subexpr_compile( char **tokens,
             return NULL;
         }
     }
+    else if( strcasecmp(tokens[0],"NOT") == 0 )
+    {
+        /* do nothing, the NOT will be collected as the operation */
+    }
     else
     {
         op->field_index = 
@@ -333,7 +507,7 @@ swq_subexpr_compile( char **tokens,
         return swq_error;
     }
     
-    op->operation = swq_identify_op( tokens[*tokens_consumed] );
+    op->operation = swq_identify_op( tokens, tokens_consumed );
     if( op->operation == SWQ_UNKNOWN )
     {
         swq_expr_free( op );
@@ -343,7 +517,9 @@ swq_subexpr_compile( char **tokens,
         return swq_error;
     }
 
-    if( swq_op_is_logical( op->operation ) && op->first_sub_expr == NULL )
+    if( SWQ_OP_IS_LOGICAL( op->operation ) 
+        && op->first_sub_expr == NULL 
+        && op->operation != SWQ_NOT )
     {
         swq_expr_free( op );
         strcpy( swq_error, "Used logical operation with non-logical operand.");
@@ -351,7 +527,10 @@ swq_subexpr_compile( char **tokens,
     }
 
     if( op->field_index != -1 && op->field_type == SWQ_STRING
-        && (op->operation != SWQ_EQ && op->operation != SWQ_NE) )
+        && (op->operation != SWQ_EQ && op->operation != SWQ_NE
+            && op->operation != SWQ_LIKE && op->operation != SWQ_NOTLIKE
+            && op->operation != SWQ_IN && op->operation != SWQ_NOTIN
+            && op->operation != SWQ_ISNULL && op->operation != SWQ_ISNOTNULL ))
     {
         sprintf( swq_error, 
             "Attempt to use STRING field `%s' with numeric comparison `%s'.",
@@ -366,13 +545,18 @@ swq_subexpr_compile( char **tokens,
     ** Collect the second operand as a subexpression.
     */
     
-    if( tokens[*tokens_consumed] == NULL )
+    if( SWQ_OP_IS_POSTUNARY(op->operation) )
+    {
+        /* we don't need another argument. */
+    }
+
+    else if( tokens[*tokens_consumed] == NULL )
     {
         sprintf( swq_error, "Not enough tokens to complete expression." );
         return swq_error;
     }
     
-    if( swq_op_is_logical( op->operation ) )
+    else if( SWQ_OP_IS_LOGICAL( op->operation ) )
     {
         int	sub_consumed = 0;
 
@@ -387,6 +571,17 @@ swq_subexpr_compile( char **tokens,
         }
 
         *tokens_consumed += sub_consumed;
+    }
+
+    /* The IN predicate has a complex argument syntax. */
+    else if( op->operation == SWQ_IN || op->operation == SWQ_NOTIN )
+    {
+        op->string_value = swq_parse_in_list( tokens, tokens_consumed );
+        if( op->string_value == NULL )
+        {
+            swq_expr_free( op );
+            return swq_error;
+        }
     }
 
     /*
@@ -419,15 +614,38 @@ swq_subexpr_compile( char **tokens,
     }
 
     *expr_out = op;
-    op = NULL;
 
+    /* Transform stuff like A NOT LIKE X into NOT (A LIKE X) */
+    if( op->operation == SWQ_NOTLIKE
+        || op->operation == SWQ_ISNOTNULL 
+        || op->operation == SWQ_NOTIN )
+    {
+        if( op->operation == SWQ_NOTLIKE )
+            op->operation = SWQ_LIKE;
+        else if( op->operation == SWQ_NOTIN )
+            op->operation = SWQ_IN;
+        else if( op->operation == SWQ_ISNOTNULL )
+            op->operation = SWQ_ISNULL;
+
+        op = (swq_field_op *) SWQ_MALLOC(sizeof(swq_field_op));
+        memset( op, 0, sizeof(swq_field_op) );
+        op->field_index = -1;
+        op->second_sub_expr = (struct swq_node_s *) *expr_out;
+        op->operation = SWQ_NOT;
+
+        *expr_out = op;
+    }
+
+    op = NULL;
+    
     /*
     ** Are we part of an unparantized logical expression chain?  If so, 
     ** grab the remainder of the expression at "this level" and add to the
     ** local tree. 
     */
     if( tokens[*tokens_consumed] != NULL
-        && swq_op_is_logical(swq_identify_op( tokens[*tokens_consumed] )) )
+        && (op_code == swq_identify_op( tokens, tokens_consumed ))
+        && SWQ_OP_IS_LOGICAL(op_code) )
     {
         swq_expr *remainder = NULL;
         swq_expr *parent;
@@ -449,17 +667,15 @@ swq_subexpr_compile( char **tokens,
 
         parent->first_sub_expr = (struct swq_node_s *) *expr_out;
         parent->second_sub_expr = (struct swq_node_s *) remainder;
-        parent->operation = swq_identify_op( tokens[*tokens_consumed] );
+        parent->operation = op_code;
 
         *expr_out = parent;
 
         *tokens_consumed += sub_consumed + 1;
     }
-    
+
     return NULL;
 }
-
-
 
 /************************************************************************/
 /*                          swq_expr_compile()                          */
@@ -565,6 +781,12 @@ int swq_expr_evaluate( swq_expr *expr, swq_op_evaluator fn_evaluator,
                                   fn_evaluator, 
                                   record_handle);
     }
+    else if( expr->operation == SWQ_NOT )
+    {
+        return !swq_expr_evaluate( (swq_expr *) expr->second_sub_expr, 
+                                  fn_evaluator, 
+                                   record_handle);
+    }
     else
     {
         return fn_evaluator( expr, record_handle );
@@ -617,6 +839,12 @@ void swq_expr_dump( swq_expr *expr, FILE * fp, int depth )
         op_name = ">=";
     if( expr->operation == SWQ_LE )
         op_name = "<=";
+    if( expr->operation == SWQ_LIKE )
+        op_name = "LIKE";
+    if( expr->operation == SWQ_ISNULL )
+        op_name = "IS NULL";
+    if( expr->operation == SWQ_IN )
+        op_name = "IN";
 
     fprintf( fp, "%s%s\n", spaces, op_name );
 
@@ -625,7 +853,21 @@ void swq_expr_dump( swq_expr *expr, FILE * fp, int depth )
     */
     if( expr->second_sub_expr != NULL )
         swq_expr_dump( (swq_expr *) expr->second_sub_expr, fp, depth + 1 );
-    else
+    else if( expr->operation == SWQ_IN || expr->operation == SWQ_NOTIN )
+    {
+        const char *src;
+
+        fprintf( fp, "%s  (\"%s\"", spaces, expr->string_value );
+        src = expr->string_value + strlen(expr->string_value) + 1;
+        while( *src != '\0' )
+        {
+            fprintf( fp, ",\"%s\"", src );
+            src += strlen(src) + 1;
+        }
+
+        fprintf( fp, ")\n" );
+    }
+    else if( expr->string_value != NULL )
         fprintf( fp, "%s  %s\n", spaces, expr->string_value );
 }
 
