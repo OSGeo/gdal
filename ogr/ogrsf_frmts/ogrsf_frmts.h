@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/02/18 20:56:24  warmerda
+ * added AVC registration
+ *
  * Revision 1.22  2002/01/25 20:47:58  warmerda
  * added GML registration
  *
@@ -290,6 +293,8 @@ void CPL_DLL RegisterOGROGDI();
 void CPL_DLL RegisterOGRPG();
 void CPL_DLL RegisterOGRDGN();
 void CPL_DLL RegisterOGRGML();
+void CPL_DLL RegisterOGRAVCBin();
+void CPL_DLL RegisterOGRAVCE00();
 CPL_C_END
 
 
