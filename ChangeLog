@@ -1,3 +1,11 @@
+2001-09-27  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* ogr/ogrsf_frmts/shape: fixed 3d support when writing shapefiles.
+
+	* ogr/ogrsf_frmts/dgn: added partial 3D support.
+
+	* ogr/ogr2ogr.cpp: added untested -where and -spat support.
+
 2001-09-25  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* frmts/gtiff/geotiff.cpp: added GDALReadTabFile() provided by
