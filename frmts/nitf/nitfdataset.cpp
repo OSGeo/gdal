@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/01/15 07:47:20  fwarmerdam
+ * enable NPJE profile
+ *
  * Revision 1.27  2004/12/21 04:57:36  fwarmerdam
  * added support for writing UTM ICORDS/IGEOLO values
  *
@@ -1390,7 +1393,7 @@ NITFDataset::NITFCreateCopy(
         GDALDataset *poJ2KDataset = NULL;
         int nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
         char *apszOptions[] = { 
-//            "PROFILE=NPJE", 
+            "PROFILE=NPJE", 
             "CODESTREAM_ONLY=TRUE", 
             NULL };
 
