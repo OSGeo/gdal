@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/03/13 19:39:03  warmerda
+ * Added help link
+ *
  * Revision 1.2  2001/03/12 15:35:05  warmerda
  * Fixed prj file naming.
  *
@@ -429,6 +432,7 @@ void GDALRegister_AAIGrid()
         
         poDriver->pszShortName = "AAIGrid";
         poDriver->pszLongName = "Arc/Info ASCII Grid";
+        poDriver->pszHelpTopic = "frmt_various.html#AAIGrid";
         
         poDriver->pfnOpen = AAIGDataset::Open;
 
