@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2003/06/27 14:38:26  warmerda
+ * avoid warnings
+ *
  * Revision 1.37  2003/05/21 03:42:01  warmerda
  * Expanded tabs
  *
@@ -756,12 +759,12 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
                   memcpy(&w,psDGN->abyElem + text_off + 2 + i*2 ,2);
                   w = CPL_LSBWORD16(w);
                   if (w<256) { // if alpa-numeric code area : Normal character 
-                      *(psText->string + n)     = w & 0xFF; 
+                      *(psText->string + n) = (char) (w & 0xFF); 
                       n++; // skip 1 byte;
                   }
                   else { // if extend code area : 2 byte Korean character 
-                      *(psText->string + n)     = w >> 8;   // hi
-                      *(psText->string + n + 1) = w & 0xFF; // lo
+                      *(psText->string + n)     = (char) (w >> 8);   // hi
+                      *(psText->string + n + 1) = (char) (w & 0xFF); // lo
                       n+=2; // 2 byte
                   }
               }
@@ -1517,10 +1520,10 @@ void DGNBuildIndex( DGNInfo *psDGN )
         }
 
         psEI = psDGN->element_index + psDGN->element_count;
-        psEI->level = nLevel;
-        psEI->type = nType;
+        psEI->level = (unsigned char) nLevel;
+        psEI->type = (unsigned char) nType;
         psEI->flags = 0;
-        psEI->offset = nLastOffset;
+        psEI->offset = (unsigned char) nLastOffset;
 
         if( psDGN->abyElem[0] & 0x80 )
             psEI->flags |= DGNEIF_COMPLEX;
