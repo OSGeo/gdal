@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/05/20 14:52:48  warmerda
+ * create OGRCom class factory instead of cadcorp
+ *
  * Revision 1.9  1999/05/17 14:40:14  warmerda
  * Get IIDs from sfiiddef.h.
  *
@@ -211,8 +214,8 @@ static HRESULT SFDumpGeomColumn( IOpenRowset* pIOpenRowset,
 /* -------------------------------------------------------------------- */
 /*      Try and instantiate a Cadcorp geometry factory.                 */
 /* -------------------------------------------------------------------- */ 
-#ifdef notdef
-    hr = CoCreateInstance( CLSID_CadcorpSFGeometryFactory, NULL, 
+//    hr = CoCreateInstance( CLSID_CadcorpSFGeometryFactory, NULL, 
+    hr = CoCreateInstance( CLSID_OGRComClassFactory, NULL, 
                            CLSCTX_INPROC_SERVER, 
                            IID_IGeometryFactory, (void **)&pIGeometryFactory); 
     if( FAILED(hr) ) 
@@ -225,6 +228,7 @@ static HRESULT SFDumpGeomColumn( IOpenRowset* pIOpenRowset,
 /*      If we got a geometry factory, try to make a spatial             */
 /*      reference factory.                                              */
 /* -------------------------------------------------------------------- */
+#ifdef notdef
     if( pIGeometryFactory != NULL )
     {
         ISpatialReferenceFactory *pISRFactory = NULL;
