@@ -1,5 +1,9 @@
 2001-08-22  Frank Warmerdam  <warmerdam@pobox.com>
 
+	* frmts/png/pngdataset.cpp: added support for reading and
+	writing tRNS (transparency) information.  Added support for writing
+	paletted images.
+
 	* frmts/gif/gifdataset.cpp: added support for reading transparency
 	values.
 
