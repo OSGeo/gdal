@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/12/07 22:58:42  warmerda
+ * added initialization support for simple warper
+ *
  * Revision 1.6  2002/12/07 17:09:38  warmerda
  * added order flag to GenImgProjTransformer
  *
@@ -127,7 +130,7 @@ int CPL_DLL GDALSimpleImageWarp( GDALDatasetH hSrcDS,
                                  void *pTransformArg,
                                  GDALProgressFunc pfnProgress, 
                                  void *pProgressArg, 
-                                 const char **papszWarpOptions );
+                                 char **papszWarpOptions );
 
 CPLErr CPL_DLL
 GDALSuggestedWarpOutput( GDALDatasetH hSrcDS, 
