@@ -29,6 +29,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.2  2003/08/07 17:27:15  warmerda
+#  added -n (normalize) flag
+#
 #  Revision 1.1  2003/07/17 20:23:17  warmerda
 #  New
 #
@@ -39,7 +42,7 @@ import sys
 import string
 
 def Usage():
-    print 'Usage: gdalfilter.py [-size n] [-coefs ...] [-f format] [-co NAME=VALUE]\n' \
+    print 'Usage: gdalfilter.py [-n] [-size n] [-coefs ...] [-f format] [-co NAME=VALUE]\n' \
           '                     in_file out_file'
     sys.exit(1)
 
@@ -54,6 +57,7 @@ srcfile = None
 dstfile = None
 size = 3
 coefs = None
+normalized = 0
 
 out_format = None
 create_options = []
@@ -66,6 +70,9 @@ while i < len(sys.argv):
     if arg == '-size':
         size = int(sys.argv[i+1])
         i = i + 1
+
+    elif arg == '-n':
+        normalized = 1
 
     elif arg == '-f':
         out_format = int(sys.argv[i+1])
@@ -141,11 +148,11 @@ filt_template = \
 '''<KernelFilteredSource>
   <SourceFilename>%s</SourceFilename>
   <SourceBand>%%d</SourceBand>
-  <Kernel>
+  <Kernel normalized="%d">
     <Size>%d</Size>
     <Coefs>%s</Coefs>
   </Kernel>
-</KernelFilteredSource>''' % (srcfile, size, coefs_string)
+</KernelFilteredSource>''' % (srcfile, normalized, size, coefs_string)
 
 # =============================================================================
 #	Go through all the bands replacing the SimpleSource with a filtered
