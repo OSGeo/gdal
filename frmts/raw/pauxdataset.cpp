@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2004/01/18 14:10:56  dron
+ * Don't crash on broken auxilary files.
+ *
  * Revision 1.25  2003/07/08 21:10:19  warmerda
  * avoid warnings
  *
@@ -898,7 +901,11 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
         pszLine = CSLFetchNameValue(poDS->papszAuxLines, szDefnName);
         papszTokens = CSLTokenizeString(pszLine);
         if( CSLCount(papszTokens) < 4 )
+        {
+            // Skip the band with broken description
+            poDS->nBands--;
             continue;
+        }
 
         if( EQUAL(papszTokens[0],"16U") )
             eType = GDT_UInt16;
