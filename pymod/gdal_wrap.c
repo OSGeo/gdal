@@ -1837,6 +1837,26 @@ py_CPLSerializeXMLTree(PyObject *self, PyObject *args) {
 
     return pyResult;
 }
+
+
+/************************************************************************/
+/*                             CPLDebug()                               */
+/************************************************************************/
+static PyObject *
+py_CPLDebug(PyObject *self, PyObject *args) {
+
+    char *pszText = NULL;
+    char *pszMsgClass = NULL;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:CPLDebug", &pszMsgClass, &pszText ))
+        return NULL;
+
+    CPLDebug( pszMsgClass, "%s", pszText );
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -3944,6 +3964,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALColorEntry_c2_set", _wrap_GDALColorEntry_c2_set, METH_VARARGS },
 	 { "GDALColorEntry_c1_get", _wrap_GDALColorEntry_c1_get, METH_VARARGS },
 	 { "GDALColorEntry_c1_set", _wrap_GDALColorEntry_c1_set, METH_VARARGS },
+	 { "CPLDebug", py_CPLDebug, METH_VARARGS },
 	 { "CPLSerializeXMLTree", py_CPLSerializeXMLTree, METH_VARARGS },
 	 { "CPLParseXMLString", py_CPLParseXMLString, METH_VARARGS },
 	 { "OPTGetProjectionMethods", py_OPTGetProjectionMethods, METH_VARARGS },

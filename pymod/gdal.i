@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2002/07/18 15:33:51  warmerda
+ * fixed last fix
+ *
  * Revision 1.38  2002/07/18 15:27:15  warmerda
  * made CPLDebug() safe
  *
@@ -1811,6 +1814,8 @@ py_CPLSerializeXMLTree(PyObject *self, PyObject *args) {
 
 %native(CPLSerializeXMLTree) py_CPLSerializeXMLTree;
 
+%{
+
 /************************************************************************/
 /*                             CPLDebug()                               */
 /************************************************************************/
@@ -1821,7 +1826,7 @@ py_CPLDebug(PyObject *self, PyObject *args) {
     char *pszMsgClass = NULL;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"ss:CPLDebug", &pszMsgClass, &psgText ))
+    if(!PyArg_ParseTuple(args,"ss:CPLDebug", &pszMsgClass, &pszText ))
         return NULL;
 
     CPLDebug( pszMsgClass, "%s", pszText );
@@ -1832,5 +1837,4 @@ py_CPLDebug(PyObject *self, PyObject *args) {
 %}
 
 %native(CPLDebug) py_CPLDebug;
-
 
