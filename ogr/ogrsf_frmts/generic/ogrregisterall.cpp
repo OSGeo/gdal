@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/12/28 04:10:11  warmerda
+ * added Oracle(OCI) support
+ *
  * Revision 1.10  2002/05/29 20:33:11  warmerda
  * added FME support
  *
@@ -86,6 +89,9 @@ void OGRRegisterAll()
 #endif
 #ifdef PG_ENABLED
     RegisterOGRPG();
+#endif
+#ifdef OCI_ENABLED
+    RegisterOGROCI();
 #endif
 #ifdef FME_ENABLED
     RegisterOGRFME();
