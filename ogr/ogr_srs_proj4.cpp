@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2002/07/09 14:49:07  warmerda
+ * Improved translation from/to polar stereographic as per
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=172
+ *
  * Revision 1.26  2002/06/11 18:02:03  warmerda
  * add PROJ.4 normalization and EPSG support
  *
@@ -318,6 +322,26 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     }
 
     else if( EQUAL(pszProj,"stere") 
+             && ABS(OSR_GDV( papszNV, "lat_0", 0.0 ) - 90) < 0.001 )
+    {
+        SetPS( OSR_GDV( papszNV, "lat_ts", 90.0 ), 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
+               OSR_GDV( papszNV, "k", 1.0 ), 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"stere") 
+             && ABS(OSR_GDV( papszNV, "lat_0", 0.0 ) + 90) < 0.001 )
+    {
+        SetPS( OSR_GDV( papszNV, "lat_ts", -90.0 ), 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
+               OSR_GDV( papszNV, "k", 1.0 ), 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"stere") 
              && CSLFetchNameValue(papszNV,"k") != NULL )
     {
         SetOS( OSR_GDV( papszNV, "lat_0", 0.0 ), 
@@ -329,7 +353,6 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
     else if( EQUAL(pszProj,"stere") )
     {
-        /* Should we be able to distinguish polar stereographic? */
         SetStereographic( OSR_GDV( papszNV, "lat_0", 0.0 ), 
                           OSR_GDV( papszNV, "lon_0", 0.0 ), 
                           1.0, 
@@ -738,14 +761,24 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_POLAR_STEREOGRAPHIC) )
     {
-        /* note we are ignore the scale factory handled by SetPS() */
-        
-        sprintf( szProj4+strlen(szProj4),
-                 "+proj=stere +lat_0=%.9f +lon_0=%.9f +x_0=%.3f +y_0=%.3f ",
-                 GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
-                 GetProjParm(SRS_PP_FALSE_EASTING,0.0),
-                 GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+        if( GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0) >= 0.0 )
+            sprintf( szProj4+strlen(szProj4),
+                     "+proj=stere +lat_0=90 +lat_ts=%.9f +lon_0=%.9f "
+                     "+k=%.9f +x_0=%.3f +y_0=%.3f ",
+                     GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,90.0),
+                     GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                     GetProjParm(SRS_PP_SCALE_FACTOR,1.0),
+                     GetProjParm(SRS_PP_FALSE_EASTING,0.0),
+                     GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+        else
+            sprintf( szProj4+strlen(szProj4),
+                     "+proj=stere +lat_0=-90 +lat_ts=%.9f +lon_0=%.9f "
+                     "+k=%.9f +x_0=%.3f +y_0=%.3f ",
+                     GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,-90.0),
+                     GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                     GetProjParm(SRS_PP_SCALE_FACTOR,1.0),
+                     GetProjParm(SRS_PP_FALSE_EASTING,0.0),
+                     GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
 
     else if( EQUAL(pszProjection,SRS_PT_EQUIRECTANGULAR) )
