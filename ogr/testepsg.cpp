@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/12/13 06:36:01  warmerda
+ * report PROJ.4 form
+ *
  * Revision 1.7  2002/11/29 22:11:05  warmerda
  * added ESRIified reporting, and ifdef out xml for now
  *
@@ -153,6 +156,11 @@ int main( int nArgc, char ** papszArgv )
                         papszArgv[i], pszWKT );
                 CPLFree( pszWKT );
                 delete poSRS2;
+
+                oSRS.exportToProj4( &pszWKT );
+                printf( "PROJ.4 rendering of [%s] = %s\n", 
+                        papszArgv[i], pszWKT );
+                CPLFree( pszWKT );
 
 
 #ifdef notdef
