@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.2  2000/11/29 20:36:18  warmerda
+#  allow output file to be preexisting
+#
 #  Revision 1.1  2000/11/29 20:23:13  warmerda
 #  New
 #
@@ -264,15 +267,19 @@ if __name__ == '__main__':
         psize_x = file_infos[0].geotransform[1]
         psize_y = file_infos[0].geotransform[5]
 
-    geotransform = [ulx, psize_x, 0, uly, 0, psize_y]
+    # Try opening as an existing file.
+    t_fh = gdal.Open( out_file, gdal.GA_ReadOnly )
+    
+    # Create output file if it does not already exist.
+    if t_fh is None:
+        geotransform = [ulx, psize_x, 0, uly, 0, psize_y]
 
-    xsize = int((lrx - ulx) / geotransform[1])
-    ysize = int((lry - uly) / geotransform[5])
+        xsize = int((lrx - ulx) / geotransform[1])
+        ysize = int((lry - uly) / geotransform[5])
 
-    # Create output file.
-    t_fh = Driver.Create( out_file, xsize, ysize, 1,
-                          file_infos[0].band_type, '' )
-    t_fh.SetGeoTransform( geotransform )
+        t_fh = Driver.Create( out_file, xsize, ysize, 1,
+                              file_infos[0].band_type, '' )
+        t_fh.SetGeoTransform( geotransform )
 
     # Copy data from source files into output file.
     for fi in file_infos:
