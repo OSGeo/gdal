@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<WCTS_Capabilities 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xsi:noNamespaceSchemaLocation="http://www.deegree.org/xml/schemas/wcts/capabilities.xsd" 
+  version="0.0.3" updateSequence="1">
+  <Service>
+    <Name>WCTS</Name>
+    <Title>Web Coordinate Transformation Service</Title>
+    <Abstract>Service for transforming coordinates from one CRS to another
+through a network</Abstract>
+    <KeywordList>
+      <Keyword>Coordinate Reference System</Keyword>
+      <Keyword>transformation</Keyword>
+    </KeywordList>
+    <OnlineResource xmlns:xlink="http://www.w3c.org/1999/xlink" xlink:type="simple" xlink:href="http://www.lat-lon.de"/>
+    <ContactInformation>
+      <ContactPersonPrimary>
+        <ContactPerson>Frank Warmerdam</ContactPerson>
+        <ContactOrganization>DM Solutions Group</ContactOrganization>
+      </ContactPersonPrimary>
+      <ContactPosition>Software Developer</ContactPosition>
+      <ContactAddress>
+        <AddressType>postal</AddressType>
+        <Address>15 - 85 Baif Blvd.</Address>
+        <City>Richmond Hill</City>
+        <StateOrProvince>Ontario</StateOrProvince>
+        <PostCode>L4C 5E2</PostCode>
+        <Country>Canada</Country>
+      </ContactAddress>
+      <ContactVoiceTelephone>++011 905 7800450</ContactVoiceTelephone>
+      <ContactFacsimileTelephone>++011 905 7800450</ContactFacsimileTelephone>
+      <ContactElectronicMailAddress>warmerdam@pobox.com</ContactElectronicMailAddress>
+    </ContactInformation>
+    <Fees>none</Fees>
+    <AccessConstraints>none</AccessConstraints>
+  </Service>
+  <Capability userDefinedCoordinateSystems="false" userDefinedTransformations="false">
+    <Request>
+      <GetCapabilities>
+        <Format>String</Format>
+        <DCPType>
+          <HTTP>
+            <Get>
+              <OnlineResource xmlns:xlink="http://www.w3c.org/1999/xlink" xlink:type="simple" xlink:href="http://gdal.velocet.ca/cgi-bin/ogrwcts?"/>
+            </Get>
+            <Post>
+              <OnlineResource xmlns:xlink="http://www.w3c.org/1999/xlink" xlink:type="simple" xlink:href="http://gdal.velocet.ca/cgi-bin/ogrwcts?"/>
+            </Post>
+          </HTTP>
+        </DCPType>
+      </GetCapabilities>
+      <Transform>
+        <Format>String</Format>
+        <DCPType>
+          <HTTP>
+            <Post>
+              <OnlineResource xmlns:xlink="http://www.w3c.org/1999/xlink" xlink:type="simple" xlink:href="http://gdal.velocet.ca/cgi-bin/ogrwcts?"/>
+            </Post>
+          </HTTP>
+        </DCPType>
+      </Transform>
+      <IsTransformable>
+        <Format>String</Format>
+        <DCPType>
+          <HTTP>
+            <Post>
+              <OnlineResource xmlns:xlink="http://www.w3c.org/1999/xlink" xlink:type="simple" xlink:href="http://gdal.velocet.ca/cgi-bin/ogrwcts?"/>
+            </Post>
+          </HTTP>
+        </DCPType>
+      </IsTransformable>
+      <!-- I think I should just omit this, since I don't support it, 
+           is that right? -->
+      <DescribeTransformation>
+        <Format>String</Format>
+        <DCPType>
+          <HTTP>
+            <Post>
+              <OnlineResource xmlns:xlink="http://www.w3c.org/1999/xlink" xlink:type="simple" xlink:href="http://gdal.velocet.ca/cgi-bin/ogrwcts?"/>
+            </Post>
+          </HTTP>
+        </DCPType>
+      </DescribeTransformation>
+    </Request>
+
+    <!-- ================================================ -->
+    <!-- list of transformation types known by the WCTS   -->
+    <!-- ================================================ -->
+    <KnownTransformation>
+      <Authority>EPSG</Authority>
+      <Code>9601</Code>
+    </KnownTransformation>
+    <KnownTransformation>
+      <Authority>EPSG</Authority>
+      <Code>9602</Code>
+    </KnownTransformation>
+    <KnownTransformation>
+      <Authority>EPSG</Authority>
+      <Code>9603</Code>
+    </KnownTransformation>
+    <KnownTransformation>
+      <Authority>EPSG</Authority>
+      <Code>9604</Code>
+    </KnownTransformation>
+    <KnownTransformation>
+      <Authority>EPSG</Authority>
+      <Code>9807</Code>
+    </KnownTransformation>
+
+    <!-- ====================================================== -->
+    <!--- list of coordinate reference systems known by the WCTS -->
+    <!-- ====================================================== -->
+    <KnownCoordinateReferenceSystem>
+      <Authority>EPSG</Authority>
+      <Code>4326</Code>
+    </KnownCoordinateReferenceSystem>
+    <KnownCoordinateReferenceSystem>
+      <Authority>EPSG</Authority>
+      <Code>23031</Code>
+    </KnownCoordinateReferenceSystem>
+    <KnownCoordinateReferenceSystem>
+      <Authority>EPSG</Authority>
+      <Code>23032</Code>
+    </KnownCoordinateReferenceSystem>
+    <KnownCoordinateReferenceSystem>
+      <Authority>EPSG</Authority>
+      <Code>31467</Code>
+    </KnownCoordinateReferenceSystem>
+  </Capability>
+</WCTS_Capabilities>
