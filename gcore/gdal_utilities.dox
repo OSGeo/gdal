@@ -598,8 +598,45 @@ created.</dd>
 </dl>
 
 NOTE: rgb2pct.py is a Python script, and will only work if GDAL was built
-with Python support.  It is also not installed by default. It is found
-at $GDAL_HOME/pymod.
+with Python support.  
+
+<!-- ====================================================================== -->
+
+\if man
+\section iauthor AUTHOR
+Frank Warmerdam <warmerdam@pobox.com>
+
+converts an image into a pseudo-colored image
+\section rsynopsis SYNOPSIS
+\endif
+
+\htmlonly
+<h2><a name="pct2rgb">pct2rgb.py</a></h2>
+Usage: 
+\endhtmlonly
+
+\verbatim
+pct2rgb.py [-of format] [-b band] source_file dest_file
+\endverbatim
+
+\if man
+\section rdescription DESCRIPTION
+\endif
+
+This utility will convert a pseudocolor band on the input file into an output
+RGB file of the desired format. 
+
+<dl>
+<dt> <b>-of</b> <i>format</i>:</dt><dd> Format to generated (defaults to GeoTIFF).</dd>
+<dt> <b>-b</b> <i>band</i>:</dt><dd> 
+Band to convert to RGB, defaults to 1.</dd>
+<dt> <i>source_file</i>:</dt><dd> The input file. </dd>
+<dt> <i>dest_file</i>:</dt><dd> The output RGB file that will be
+created.</dd>
+</dl>
+
+NOTE: rgb2pct.py is a Python script, and will only work if GDAL was built
+with Python support.
 
 <!-- ====================================================================== -->
 
@@ -665,8 +702,7 @@ as the nodata value in the output file.
 </dl>
 
 NOTE: gdal_merge.py is a Python script, and will only work if GDAL was built
-with Python support.  It is also not installed by default. It is found
-at $GDAL_HOME/pymod.
+with Python support.
 
 <!-- ====================================================================== -->
 
