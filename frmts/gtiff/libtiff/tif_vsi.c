@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/07/08 19:49:30  warmerda
+ * avoid warning
+ *
  * Revision 1.4  2001/09/24 15:54:41  warmerda
  * implement SizeProc properly
  *
@@ -66,7 +69,7 @@ static toff_t
 _tiffSeekProc(thandle_t fd, toff_t off, int whence)
 {
     if( VSIFSeekL( (FILE *) fd, off, whence ) == 0 )
-        return VSIFTellL( (FILE *) fd );
+        return (toff_t) VSIFTellL( (FILE *) fd );
     else
         return -1;
 }
@@ -86,7 +89,7 @@ _tiffSizeProc(thandle_t fd)
     old_off = VSIFTellL( (FILE *) fd );
     VSIFSeekL( (FILE *) fd, 0, SEEK_END );
     
-    file_size = VSIFTellL( (FILE *) fd );
+    file_size = (toff_t) VSIFTellL( (FILE *) fd );
     VSIFSeekL( (FILE *) fd, old_off, SEEK_SET );
 
     return file_size;
