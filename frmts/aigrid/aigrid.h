@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/11/09 06:22:40  warmerda
+ * save cover name
+ *
  * Revision 1.7  2000/07/18 13:58:58  warmerda
  * no RTileType for float tiles
  *
@@ -77,6 +80,8 @@ typedef struct {
     int		bHasWarned;
 
     /* public information */
+
+    char	*pszCoverName; /* path of coverage directory */
 
     int		nCellType;
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/11/09 06:22:40  warmerda
+ * save cover name
+ *
  * Revision 1.9  2000/09/13 14:42:38  warmerda
  * Improved casting thanks for Ian Macleod (Geosoft).
  *
@@ -96,6 +99,7 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
 /* -------------------------------------------------------------------- */
     psInfo = (AIGInfo_t *) CPLCalloc(sizeof(AIGInfo_t),1);
     psInfo->bHasWarned = FALSE;
+    psInfo->pszCoverName = pszCoverName;
 
 /* -------------------------------------------------------------------- */
 /*      Read the header file.                                           */
@@ -162,9 +166,6 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
         CPLFree( psInfo );
         return NULL;
     }
-
-    CPLFree( pszCoverName );
-    pszCoverName = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Compute the number of pixels and lines.                         */
@@ -264,5 +265,6 @@ void AIGClose( AIGInfo_t * psInfo )
 
     CPLFree( psInfo->panBlockOffset );
     CPLFree( psInfo->panBlockSize );
+    CPLFree( psInfo->pszCoverName );
     CPLFree( psInfo );
 }
