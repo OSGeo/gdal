@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.20  2000/08/25 14:26:51  warmerda
+ * added GDALHasArbitraryOverviews
+ *
  * Revision 1.19  2000/08/16 15:50:52  warmerda
  * fixed some bugs with floating (datasetless) bands
  *
@@ -1116,6 +1119,8 @@ GDALColorTableH GDALGetRasterColorTable( GDALRasterBandH hBand )
  * overviews, but the RasterIO() method can be used in downsampling mode
  * to get overview data efficiently.
  *
+ * This method is the same as the C function GDALHasArbitraryOverviews(),
+ *
  * @return TRUE if arbitrary overviews available (efficiently), otherwise
  * FALSE. 
  */
@@ -1124,6 +1129,16 @@ int GDALRasterBand::HasArbitraryOverviews()
 
 {
     return FALSE;
+}
+
+/************************************************************************/
+/*                     GDALHasArbitraryOverviews()                      */
+/************************************************************************/
+
+int GDALHasArbitraryOverviews( GDALRasterBandH hBand )
+
+{
+    return ((GDALRasterBand *) hBand)->HasArbitraryOverviews();
 }
 
 /************************************************************************/

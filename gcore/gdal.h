@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2000/08/25 14:26:51  warmerda
+ * added GDALHasArbitraryOverviews
+ *
  * Revision 1.30  2000/08/18 15:24:48  warmerda
  * added GDALTermProgress
  *
@@ -355,6 +358,7 @@ char CPL_DLL  **GDALGetRasterMetadata( GDALRasterBandH );
 
 GDALColorInterp CPL_DLL GDALGetRasterColorInterpretation( GDALRasterBandH );
 GDALColorTableH CPL_DLL GDALGetRasterColorTable( GDALRasterBandH );
+int CPL_DLL     GDALHasArbitraryOverviews( GDALRasterBandH );
 int CPL_DLL             GDALGetOverviewCount( GDALRasterBandH );
 GDALRasterBandH CPL_DLL GDALGetOverview( GDALRasterBandH, int );
 double CPL_DLL GDALGetRasterNoDataValue( GDALRasterBandH, int *pbSuccess );
