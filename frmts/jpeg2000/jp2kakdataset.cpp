@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2002/11/03 01:38:20  warmerda
+ * Implemented YCbCr read support.
+ *
  * Revision 1.5  2002/10/31 18:51:05  warmerda
  * added 16bit and 32bit floating point support
  *
@@ -146,7 +149,7 @@ class JP2KAKRasterBand : public GDALRasterBand
 
     // internal
 
-    void        ProcessTileYCbCr(kdu_tile tile, GByte *pabyBuffer, 
+    void        ProcessYCbCrTile(kdu_tile tile, GByte *pabyBuffer, 
                                  int nTileXOff, int nTileYOff );
     void        ProcessTile(kdu_tile tile, GByte *pabyBuffer, 
                             int nTileXOff, int nTileYOff );
@@ -383,7 +386,10 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 pabyDest = ((GByte *)pImage) 
                     + (offset.x + offset.y*nBlockXSize) * nWordSize;
 
-                ProcessTile( tile, pabyDest, offset.x, offset.y );
+                if( tile.get_ycc() && nBand < 4 )
+                    ProcessYCbCrTile( tile, pabyDest, offset.x, offset.y );
+                else
+                    ProcessTile( tile, pabyDest, offset.x, offset.y );
             
                 tile.close();
             }
@@ -452,85 +458,71 @@ void JP2KAKRasterBand::ProcessTile( kdu_tile tile, GByte *pabyDest,
 }
 
 /************************************************************************/
-/*                          ProcessTileYCbCr()                          */
+/*                          ProcessYCbCrTile()                          */
 /*                                                                      */
-/*      Process a YCbCr tile.                                           */
+/*      Process data from the Y, Cb and Cr components of a tile into    */
+/*      RGB and then copy the desired red, green or blue portion out    */
+/*      into the working buffer.                                        */
 /************************************************************************/
 
-void JP2KAKRasterBand::ProcessTileYCbCr( kdu_tile tile, GByte *pabyDest, 
+void JP2KAKRasterBand::ProcessYCbCrTile( kdu_tile tile, GByte *pabyDest, 
                                          int nTileXOff, int nTileYOff )
 
 {
-#ifdef notdef
-    int c, num_components = tile.get_num_components(); 
-    bool use_ycc = tile.get_ycc();
-    JP2KAKDataset *poGDS = (JP2KAKDataset *) poDS;
-
-    CPLAssert( num_components == poDS->GetRasterCount() );
-
     // Open tile-components and create processing engines and resources
     kdu_dims dims;
     kdu_sample_allocator allocator;
-    kdu_tile_comp comps[3];
-    kdu_line_buf lines[3];
-    kdu_pull_ifc engines[3];
-    bool reversible[3]; // Some components may be reversible and others not.
-    int bit_depths[3]; // Original bit-depth may be quite different from 8.
+    kdu_tile_comp comp[3] = {tile.access_component(0),
+                             tile.access_component(1),
+                             tile.access_component(2)};
+    kdu_line_buf line[3];
+    kdu_pull_ifc engine[3];
+    bool reversible = comp[0].get_reversible();
+    int bit_depth = comp[0].get_bit_depth();
+    kdu_resolution res = comp[0].access_resolution();
+    int  nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
+    int  iComp;
 
-    for (c=0; c < num_components; c++)
+    res.get_dims(dims);
+    
+    bool use_shorts = (comp[0].get_bit_depth(true) <= 16);
+
+    for( iComp = 0; iComp < 3; iComp++ )
     {
-        comps[c] = tile.access_component(c);
-        reversible[c] = comps[c].get_reversible();
-        bit_depths[c] = comps[c].get_bit_depth();
-        kdu_resolution res = comps[c].access_resolution(); // Get top resolution
-        kdu_dims comp_dims; res.get_dims(comp_dims);
-        if (c == 0)
-            dims = comp_dims;
-        else
-            assert(dims == comp_dims); // Safety check; the caller has ensured this
-        bool use_shorts = (comps[c].get_bit_depth(true) <= 16);
-        lines[c].pre_create(&allocator,dims.size.x,reversible[c],use_shorts);
+        line[iComp].pre_create(&allocator,dims.size.x,reversible,use_shorts);
+
         if (res.which() == 0) // No DWT levels used
-            engines[c] =
-                kdu_decoder(res.access_subband(LL_BAND),&allocator,use_shorts);
+            engine[iComp] =
+                kdu_decoder(comp[iComp].access_resolution().access_subband(LL_BAND),
+                            &allocator,use_shorts);
         else
-            engines[c] = kdu_synthesis(res,&allocator,use_shorts);
+            engine[iComp] = 
+                kdu_synthesis(comp[iComp].access_resolution(),&allocator,use_shorts);
     }
 
     allocator.finalize(); // Actually creates buffering resources
-    for (c=0; c < num_components; c++)
-        lines[c].create(); // Grabs resources from the allocator.
+
+    for( iComp = 0; iComp < 3; iComp++ )
+        line[iComp].create(); // Grabs resources from the allocator.
 
     // Now walk through the lines of the buffer, recovering them from the
     // relevant tile-component processing engines.
 
     for( int y = 0; y < dims.size.y; y++ )
     {
-        for (c=0; c < num_components; c++)
-            engines[c].pull(lines[c],true);
+        engine[0].pull(line[0],true);
+        engine[1].pull(line[1],true);
+        engine[2].pull(line[2],true);
 
-        if ((num_components >= 3) && use_ycc)
-            kdu_convert_ycc_to_rgb(lines[0],lines[1],lines[2]);
+        kdu_convert_ycc_to_rgb(line[0], line[1], line[2]);
 
-        
-        for (c=0; c < num_components; c++)
-        {
-            GDALRasterBandH hBand = GDALGetRasterBand( hDS, c+1 );
-
-            transfer_bytes(pabyLine,lines[c],1,bit_depths[c]);
-
-            GDALRasterIO( hBand, GF_Write, 
-                          nTileXOff, nTileYOff + y, lines[c].get_width(), 1, 
-                          pabyLine, lines[c].get_width(), 1, GDT_Byte, 0, 0 );
-        }
+        transfer_bytes(pabyDest + y * nBlockXSize * nWordSize,
+                       line[nBand-1], nWordSize, bit_depth, eDataType );
     }
 
-    // Cleanup
-    for (c=0; c < num_components; c++)
-        engines[c].destroy(); // engines are interfaces; no default destructors
-
-    CPLFree( pabyLine );
-#endif    
+    engine[0].destroy();
+    engine[1].destroy();
+    engine[2].destroy();
 }
 
 /************************************************************************/
@@ -829,13 +821,20 @@ transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
         if (!src.is_absolute() && eOutType != GDT_Byte )
         { // Transferring normalized floating point data.
             float scale16 = (float)(1<<16);
+            int val;
 
             for (; width > 0; width--, sp++, dest+=gap)
             {
                 if( eOutType == GDT_Int16 )
-                    *((GInt16 *) dest) = (GInt16) (sp->fval*scale16);
+                {
+                    val = (int) (sp->fval*scale16);
+                    *((GInt16 *) dest) = MAX(MIN(val,32767),-32768);
+                }
                 else if( eOutType == GDT_UInt16 )
-                    *((GUInt16 *) dest) = (GUInt16) (sp->fval*scale16 + 32768);
+                {
+                    val = (int) (sp->fval*scale16) + 32768;
+                    *((GUInt16 *) dest) = MAX(MIN(val,65535),0);
+                }
                 else if( eOutType == GDT_Float32 )
                     *((float *) dest) = sp->fval;
             }
