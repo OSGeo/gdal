@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/05/08 20:27:48  warmerda
+ * added support for caching OGRDataSources
+ *
  * Revision 1.8  2002/01/13 01:41:21  warmerda
  * included date in startup debug
  *
@@ -78,7 +81,13 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID /*lpReserved*/)
         CPLDebug( "OGR_OLEDB", "DllMain complete." );
     }
     else if (dwReason == DLL_PROCESS_DETACH)
+    {
+        CPLDebug( "OGR_OLEDB", "DllMain() - DLL_PROCESS_DETACH" );
+        
+        SFDSCacheCleanup();
+
         _Module.Term();
+    }
 
     return TRUE;    // ok
 }
@@ -88,6 +97,9 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID /*lpReserved*/)
 
 STDAPI DllCanUnloadNow(void)
 {
+    CPLDebug( "OGR_OLEDB", "DllCanUnloadNow() - lockcount = %d", 
+              _Module.GetLockCount() );
+
     return (_Module.GetLockCount()==0) ? S_OK : S_FALSE;
 }
 
