@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.4  2002/12/12 14:48:12  warmerda
+#  removed broken options arg to gdal.Create()
+#
 #  Revision 1.3  2002/04/03 21:12:05  warmerda
 #  added -separate flag for Gerald Buckmaster
 #
@@ -290,7 +293,7 @@ if __name__ == '__main__':
             bands = 1
 
         t_fh = Driver.Create( out_file, xsize, ysize, bands,
-                              file_infos[0].band_type, '' )
+                              file_infos[0].band_type )
         t_fh.SetGeoTransform( geotransform )
 
     # Copy data from source files into output file.
