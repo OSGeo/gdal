@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/09/22 13:34:51  warmerda
+ * use new SDTSPolygonReader::AssembleRings() method
+ *
  * Revision 1.8  1999/09/03 19:04:13  warmerda
  * made comment blocks doxygen compatible
  *
@@ -560,28 +563,10 @@ static void WritePolygonShapefile( const char * pszShapefile,
     }
 
 /* -------------------------------------------------------------------- */
-/*      To write polygons we need to build them from their related      */
-/*      arcs.  We don't know off hand which arc (line) layers           */
-/*      contribute so we process all line layers, attaching them to     */
-/*      polygons as appropriate.                                        */
+/*      Assemble polygon geometries from all the line layers.           */
 /* -------------------------------------------------------------------- */
-    for( int iLineLayer = 0;
-         iLineLayer < poTransfer->GetLayerCount();
-         iLineLayer++ )
-    {
-        SDTSLineReader	*poLineReader;
-        
-        if( poTransfer->GetLayerType(iLineLayer) != SLTLine )
-            continue;
-
-        poLineReader = (SDTSLineReader *)
-            poTransfer->GetLayerIndexedReader( iLineLayer );
-        if( poLineReader == NULL )
-            continue;
-
-        poLineReader->AttachToPolygons( poTransfer );
-    }
-
+    poPolyReader->AssembleRings( poTransfer );
+    
 /* -------------------------------------------------------------------- */
 /*      Create the Shapefile.                                           */
 /* -------------------------------------------------------------------- */
@@ -628,19 +613,6 @@ static void WritePolygonShapefile( const char * pszShapefile,
            != NULL )
     {
         int		iShape;
-
-        if( poRawPoly->nEdges == 0 )
-        {
-            printf( "Skipping polygon %s with no edges.\n",
-                    poRawPoly->oModId.GetName() );
-            continue;
-        }
-
-        if( !poRawPoly->AssembleRings() )
-        {
-            printf( "Problem assembling rings for %s.  Write anyways.\n",
-                    poRawPoly->oModId.GetName() );
-        }
 
 /* -------------------------------------------------------------------- */
 /*      Write out a shape with the vertices.                            */

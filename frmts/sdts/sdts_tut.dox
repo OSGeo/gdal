@@ -118,37 +118,21 @@ stored in separate line layers, and the lines contain references to the
 right, and left polygons that the lines border.<p>
 
 The SDTS_AL library provides a convenient method for forming the polygon
-geometry; however, the application still has to do some work to accomplish 
-this.  In sdts2shp.cpp we loop over all line layers, asking them to attach
-their line information to the polygons they form borders on using the
-SDTSLineReader::AttachToPolygons() method.  We do this for all line layers, 
-because it is not very easy to establish which line layers relate to the
-polygon layer we are interested in using the SDTS_AL library.<p>
+geometry.  Basically just call the SDTSPolygonReader::AssemblePolygons()
+method.  This method will scan all SLTLine layers in the transfer, indexing
+them and attaching their line work to the polygons.  Then it assembles the
+line work into rings.  It also ensures that the outer ring comes first, that
+the outer ring is counter-clockwise and that the inner ring(s) are
+clockwise. 
 
 <pre>
-    for( int iLineLayer = 0;
-         iLineLayer < poTransfer->GetLayerCount();
-         iLineLayer++ )
-    {
-        SDTSLineReader	*poLineReader;
-        
-        if( poTransfer->GetLayerType(iLineLayer) != SLTLine )
-            continue;
-
-        poLineReader = (SDTSLineReader *)
-            poTransfer->GetLayerIndexedReader( iLineLayer );
-        if( poLineReader == NULL )
-            continue;
-
-        poLineReader->AttachToPolygons( poTransfer );
-    }
+    poPolyReader->AssembleRings( poTransfer );
 </pre>
 
 Upon completion the SDTSPolygonReader will have been "indexed".  That means
 that all the polygon information will have been read from disk, and the
 polygon objects will now have information stored with them indicating the
-list of edges that form their border.  At a later step we will still have
-to form this into rings.<p>
+list of edges that form their border.<p>
 
 <h2>Identifying Attributes</h2>
 
@@ -330,27 +314,13 @@ delete it, if and only if the layer does not have an index cache.<p>
     }
 </pre>
 
-<h2>Assembling Rings</h2>
+<h2>Translate Geometry</h2>
 
-In an earlier step we used the SDTSLineReader::AttachToPolygons() method to
-add references to lines on the polygon features.  However, we have to 
-explicitly call the SDTSRawPolygon::AssembleRings() method on each polygon
-to build the edges into a set of rings.  In theory this method should always
-succeed; however if something goes wrong connecting the edges into a series
-of polygon ring boundaries it will return FALSE.  In this case some of the
-"rings" will not be properly closed; however, all the line geometries collected
-will still be captured in the ring set.<p>
-
-<pre>
-        if( !poRawPoly->AssembleRings() )
-        {
-            printf( "Problem assembling rings for %s.  Write anyways.\n",
-                    poRawPoly->oModId.GetName() );
-        }
-</pre>
+In an earlier step we used the SDTSPolygonReader::AssembleRings() method to
+build ring geometry on the polygons from the linework in the line layers.<p>
 
 Coincidently (well, ok, maybe it isn't a coincidence) it so happens that the 
-ring organization exaxtly matches what is needed for the shapefile api.  
+ring organization exactly matches what is needed for the shapefile api.  
 The following call creates a polygon from the ring information in the
 SDTSRawPolygon.  See the SDTSRawPolygon reference help for a fuller 
 definition of the nRings, panRingStart, nVertices, and vertex fields.<p>
