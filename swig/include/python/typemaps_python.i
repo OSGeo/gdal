@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.7  2005/02/15 19:49:42  kruland
+ * Added typemaps for arbitrary char* buffers with length.
+ *
  * Revision 1.6  2005/02/15 17:05:13  kruland
  * Use CPLParseNameValue instead of strchr() in typemap(out) char **dict.
  *
@@ -99,14 +102,13 @@ ARRAY_TYPEMAP(c_minmax, 2);
 
 /*
  * Typemap for double c_transform[6]
- * Dsed in Dataset::GetGeoTransform(), Dataset::SetGeoTransform().
+ * Used in Dataset::GetGeoTransform(), Dataset::SetGeoTransform().
  */
 ARRAY_TYPEMAP(c_transform, 6);
 
 /*
  *  Typemap for counted arrays of ints <- PySequence
  */
-
 %typemap(in,numargs=1) (int nList, int* pList)
 {
   /* %typemap(in,numargs=1) (int nList, int* pList)*/
@@ -130,6 +132,43 @@ ARRAY_TYPEMAP(c_transform, 6);
   if ($2) {
     free((void*) $2);
   }
+}
+
+/*
+ * Typemap for buffers with length <-> PyStrings
+ * Used in Band::ReadRaster() and Band::WriteRaster()
+ *
+ * This typemap has a typecheck also since the WriteRaster()
+ * methods are overloaded.
+ */
+%typemap(in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen, char *pBuf )
+{
+  /* %typemap(in,numinputs=0) (int *nLen, char **pBuf ) */
+  $1 = &nLen;
+  $2 = &pBuf;
+}
+%typemap(argout) (int *nLen, char **pBuf )
+{
+  /* %typemap(argout) (int *nLen, char **pBuf ) */
+  Py_DECREF($result);
+  $result = PyString_FromStringAndSize( *$2, *$1 );
+}
+%typemap(freearg) (int *nLen, char **pBuf )
+{
+  /* %typemap(freearg) (int *nLen, char **pBuf ) */
+  if( $1 ) {
+    free( *$2 );
+  }
+}
+%typemap(in,numinputs=1) (int nLen, char *pBuf )
+{
+  /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+  PyString_AsStringAndSize($input, &$2, &$1 );
+}
+%typecheck(SWIG_TYPECHECK_POINTER) (int nLen, char *pBuf)
+{
+  /* %typecheck(SWIG_TYPECHECK_POINTER) (int nLen, char *pBuf) */
+  $1 = (PyString_Check($input)) ? 1 : 0;
 }
 
 /*
