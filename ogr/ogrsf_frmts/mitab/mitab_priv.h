@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.23 2001/03/15 03:57:51 daniel Exp $
+ * $Id: mitab_priv.h,v 1.25 2001/05/01 18:28:10 daniel Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 1999-2001, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.25  2001/05/01 18:28:10  daniel
+ * Fixed default BRUSH, should be BRUSH(1,0,16777215).
+ *
+ * Revision 1.24  2001/05/01 03:39:51  daniel
+ * Added SetLastPtr() to TABBinBlockManager.
+ *
  * Revision 1.23  2001/03/15 03:57:51  daniel
  * Added implementation for new OGRLayer::GetExtent(), returning data MBR.
  *
@@ -55,48 +61,7 @@
  * Revision 1.16  2000/02/28 16:53:23  daniel
  * Added support for indexed, unique, and for new V450 object types
  *
- * Revision 1.15  2000/01/16 19:08:49  daniel
- * Added support for reading 'Table Type DBF' tables
- *
- * Revision 1.14  2000/01/15 22:30:44  daniel
- * Switch to MIT/X-Consortium OpenSource license
- *
- * Revision 1.13  1999/12/14 02:07:12  daniel
- * Added TABRelation class
- *
- * Revision 1.12  1999/11/20 15:49:42  daniel
- * Initial definition for TABINDFile and TABINDNode
- *
- * Revision 1.11  1999/11/14 04:43:56  daniel
- * Support dataset with no .MAP/.ID files
- *
- * Revision 1.10  1999/11/11 01:22:05  stephane
- * Remove DebugFeature call, Point Reading error, add IsValidFeature() 
- * to test correctly if we are on a feature
- *
- * Revision 1.9  1999/11/09 07:37:22  daniel
- * Support for deleted records when reading TABDATFiles
- *
- * Revision 1.8  1999/11/08 04:34:54  stephane
- * mid/mif support
- *
- * Revision 1.7  1999/10/18 15:40:27  daniel
- * Added TABMAPObjectBlock::WriteIntMBRCoord()
- *
- * Revision 1.6  1999/10/01 03:45:27  daniel
- * Small modifs for tuning of write mode
- *
- * Revision 1.5  1999/09/28 02:53:09  warmerda
- * Removed nMIDatumID.
- *
- * Revision 1.4  1999/09/26 14:59:37  daniel
- * Implemented write support
- *
- * Revision 1.3  1999/09/23 19:50:12  warmerda
- * added nMIDatumId
- *
- * Revision 1.2  1999/09/16 02:39:17  daniel
- * Completed read support for most feature types
+ * ...
  *
  * Revision 1.1  1999/07/12 04:18:25  daniel
  * Initial checkin
@@ -290,8 +255,8 @@ typedef struct TABBrushDef_t
     GInt32      rgbBGColor;
 } TABBrushDef;
 
-/* MI Default = BRUSH(2,16777215,16777215) */
-#define MITAB_BRUSH_DEFAULT {0, 2, 0, 0xffffff, 0xffffff}
+/* MI Default = BRUSH(1,0,16777215) */
+#define MITAB_BRUSH_DEFAULT {0, 1, 0, 0, 0xffffff}
 
 /*---------------------------------------------------------------------
  * TABFontDef - Font Name information
@@ -399,6 +364,7 @@ class TABBinBlockManager
                                         m_nLastAllocatedBlock+=m_nBlockSize;
                                    return m_nLastAllocatedBlock; };
     void        Reset()  {m_nLastAllocatedBlock=-1; };
+    void        SetLastPtr(int nBlockPtr) {m_nLastAllocatedBlock=nBlockPtr; };
 };
 
 /*---------------------------------------------------------------------

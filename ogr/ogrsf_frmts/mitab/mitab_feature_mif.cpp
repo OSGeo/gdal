@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature_mif.cpp,v 1.18 2001/02/28 07:15:09 daniel Exp $
+ * $Id: mitab_feature_mif.cpp,v 1.19 2001/06/25 01:50:42 daniel Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -9,7 +9,7 @@
  * Author:   Stephane Villeneuve, stephane.v@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Stephane Villeneuve
+ * Copyright (c) 1999-2001, Stephane Villeneuve
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,11 @@
  **********************************************************************
  *
  * $Log: mitab_feature_mif.cpp,v $
+ * Revision 1.19  2001/06/25 01:50:42  daniel
+ * Fixed MIF Text object output: negative text angles were lost.  Also use
+ * TABText::SetTextAngle() when reading MIF instead of setting class members
+ * directly so that negative angles get converted to the [0..360] range.
+ *
  * Revision 1.18  2001/02/28 07:15:09  daniel
  * Added support for text label line end point
  *
@@ -1601,9 +1606,7 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
             {
                 if (CSLCount(papszToken) == 2)
                 {    
-                    m_dAngle = atof(papszToken[1]);
-
-                    //SetTextAngle(atof(papszToken[1]));
+                    SetTextAngle(atof(papszToken[1]));
                 }
                 
             }
@@ -1752,7 +1755,7 @@ int TABText::WriteGeometryToMIFFile(MIDDATAFile *fp)
         break;
     }
 
-    if ((GetTextAngle() - 0.000001) >0.0)
+    if (ABS(GetTextAngle()) >  0.000001)
         fp->WriteLine("    Angle %.16g\n",GetTextAngle());
 
     switch (GetTextLineType())

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_datfile.cpp,v 1.15 2000/04/27 15:42:03 daniel Exp $
+ * $Id: mitab_datfile.cpp,v 1.16 2001/05/01 12:32:03 daniel Exp $
  *
  * Name:     mitab_datfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -9,7 +9,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 1999-2001, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_datfile.cpp,v $
+ * Revision 1.16  2001/05/01 12:32:03  daniel
+ * Get rid of leading spaces in WriteDateField().
+ *
  * Revision 1.15  2000/04/27 15:42:03  daniel
  * Map variable field length (width=0) coming from OGR to acceptable default
  *
@@ -1275,6 +1278,11 @@ int TABDATFile::WriteDateField(const char *pszValue,
             "Can't write field value: GetRecordBlock() has not been called.");
         return -1;
     }
+
+    /*-----------------------------------------------------------------
+     * Get rid of leading spaces.
+     *----------------------------------------------------------------*/
+    while ( *pszValue == ' ' ) { pszValue++; }
 
     /*-----------------------------------------------------------------
      * Try to automagically detect date format, one of:

@@ -5,8 +5,48 @@ MITAB Library - Revision History
 CHANGES - Current Version:
 --------------------------
 
+
+Version 1.1.2 - (2001-06-24)
+----------------------------
+
+- Support reading and writing TEXT objects with strings longer than 512
+  bytes.  MITABMAPCoordBlock's Read/WriteBytes() had to be fixed to 
+  allow reading/writing data split over more than 2 blocks.
+
+- StyleString fixes: include font name in text style string, and placed
+  brush before pen in region style strings.
+
+- C API: added get methods for all pen, brush, font and symbol properties.
+
+- Fixed MIF Text object output: negative text angles were lost.  Also use
+  TABText::SetTextAngle() when reading MIF instead of setting class members
+  directly so that negative angles get converted to the [0..360] range.
+
+
+Version 1.1.1 - (2001-05-01)
+----------------------------
+
 - Added implementation for OGRLayer::GetExtent() that returns extents 
   of the data, which is differents from the bounds of the projection.
+
+- Added code to set TOWGS84 values for mitab_coordsys.cpp and 
+  mitab_spatialref.cpp.  
+
+  See http://bugzilla.remotesensing.org/show_bug.cgi?id=41
+
+- Fixed serious bug in TABFile::SetSpatialRef() (mitab_spatialref.cpp).  A
+  core dump could occur for type 999 and 9999 datums.  Thanks to Stephen
+  Cheesman of Geosoft for finding and pointing this out.  (NFW)
+
+- Modified TABINDFile/TABINDNode to support update (i.e. read/write) access
+  and created 'tabindex' program to test creation of indexes on existing
+  datasets.
+
+- Modified reading of TABRegion to maintain outside/inside ring relationship
+  when it's available in the source file.
+
+- Fixed default for BRUSH when brush index=0 in the source file.  It should
+  be BRUSH(1,0,16777215) and not BRUSH(2,16777215,16777215).
 
 
 Version 1.1.0 - (2001-03-08)
@@ -250,5 +290,5 @@ Version 0.1 - (1999-12-04)
 
 
 ------------
-$Id: HISTORY.TXT,v 1.49 2001/03/15 03:57:51 daniel Exp $
+$Id: HISTORY.TXT,v 1.54 2001/06/25 01:49:05 daniel Exp $
 ------------

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapcoordblock.cpp,v 1.9 2000/10/10 19:05:12 daniel Exp $
+ * $Id: mitab_mapcoordblock.cpp,v 1.10 2001/05/09 17:45:12 daniel Exp $
  *
  * Name:     mitab_mapcoordblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -9,7 +9,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 1999-2001, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapcoordblock.cpp,v $
+ * Revision 1.10  2001/05/09 17:45:12  daniel
+ * Support reading and writing data blocks > 512 bytes (for text objects).
+ *
  * Revision 1.9  2000/10/10 19:05:12  daniel
  * Fixed ReadBytes() to allow strings overlapping on 2 blocks
  *
@@ -592,6 +595,22 @@ int     TABMAPCoordBlock::ReadBytes(int numBytes, GByte *pabyDstBuf)
     int nStatus;
 
     if (m_pabyBuf && 
+        m_nCurPos >= (m_numDataBytes+MAP_COORD_HEADER_SIZE) && 
+        m_nNextCoordBlock > 0)
+    {
+        // We're at end of current block... advance to next block.
+
+        if ( (nStatus=GotoByteInFile(m_nNextCoordBlock)) != 0)
+        {
+            // Failed.... an error has already been reported.
+            return nStatus;
+        }
+
+        GotoByteInBlock(MAP_COORD_HEADER_SIZE); // Move pointer past header
+        m_numBlocksInChain++;
+    }
+
+    if (m_pabyBuf && 
         m_nCurPos < (m_numDataBytes+MAP_COORD_HEADER_SIZE) && 
         m_nCurPos+numBytes > (m_numDataBytes+MAP_COORD_HEADER_SIZE) && 
         m_nNextCoordBlock > 0)
@@ -608,20 +627,6 @@ int     TABMAPCoordBlock::ReadBytes(int numBytes, GByte *pabyDstBuf)
         return nStatus;
     }
 
-
-    if (m_pabyBuf && 
-        m_nCurPos >= (m_numDataBytes+MAP_COORD_HEADER_SIZE) && 
-        m_nNextCoordBlock > 0)
-    {
-        if ( (nStatus=GotoByteInFile(m_nNextCoordBlock)) != 0)
-        {
-            // Failed.... an error has already been reported.
-            return nStatus;
-        }
-
-        GotoByteInBlock(MAP_COORD_HEADER_SIZE); // Move pointer past header
-        m_numBlocksInChain++;
-    }
 
     return TABRawBinBlock::ReadBytes(numBytes, pabyDstBuf);
 }
@@ -649,17 +654,52 @@ int  TABMAPCoordBlock::WriteBytes(int nBytesToWrite, GByte *pabySrcBuf)
     if (m_eAccess == TABWrite && m_poBlockManagerRef &&
         (m_nBlockSize - m_nCurPos) < nBytesToWrite)
     {
-        int nNewBlockOffset = m_poBlockManagerRef->AllocNewBlock();
-        SetNextCoordBlock(nNewBlockOffset);
-
-        if (CommitToFile() != 0 ||
-            InitNewBlock(m_fp, 512, nNewBlockOffset) != 0)
+        if (nBytesToWrite <= (m_nBlockSize-MAP_COORD_HEADER_SIZE))
         {
-            // An error message should have already been reported.
-            return -1;
-        }
+            // Data won't fit in this block but can fit inside a single
+            // block, so we'll allocate a new block for it.  This will 
+            // prevent us from overlapping coordinate values on 2 blocks, but
+            // still allows strings longer than one block (see 'else' below).
+            //
+            int nNewBlockOffset = m_poBlockManagerRef->AllocNewBlock();
+            SetNextCoordBlock(nNewBlockOffset);
 
-        m_numBlocksInChain++;
+            if (CommitToFile() != 0 ||
+                InitNewBlock(m_fp, 512, nNewBlockOffset) != 0)
+            {
+                // An error message should have already been reported.
+                return -1;
+            }
+
+            m_numBlocksInChain++;
+        }
+        else
+        {
+            // Data to write is longer than one block... so we'll have to
+            // split it over multiple block through multiple calls.
+            //
+            int nStatus = 0;
+            while(nStatus == 0 && nBytesToWrite > 0)
+            {
+                int nBytes = m_nBlockSize-MAP_COORD_HEADER_SIZE;
+                if ( (m_nBlockSize - m_nCurPos) > 0 )
+                {
+                    // Use free room in current block
+                    nBytes = (m_nBlockSize - m_nCurPos);
+                }
+
+                nBytes = MIN(nBytes, nBytesToWrite);
+
+                // The following call will result in a new block being 
+                // allocated in the if() block above.
+                nStatus = TABMAPCoordBlock::WriteBytes(nBytes, 
+                                                       pabySrcBuf);
+
+                nBytesToWrite -= nBytes;
+                pabySrcBuf += nBytes;
+            }
+            return nStatus;
+        }
     }
 
     if (m_nCurPos >= MAP_COORD_HEADER_SIZE)

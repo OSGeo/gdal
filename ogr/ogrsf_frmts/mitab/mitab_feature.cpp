@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.35 2001/02/28 07:15:08 daniel Exp $
+ * $Id: mitab_feature.cpp,v 1.37 2001/06/25 01:04:21 daniel Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 1999-2001, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,14 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.37  2001/06/25 01:04:21  daniel
+ * StyleString fixes: include font name in text style string, and placed
+ * brush before pen in region style strings.
+ *
+ * Revision 1.36  2001/05/01 18:34:12  daniel
+ * TABRegion: use outside/inside ring relationship to build geometry if
+ * the information is available in the source file.
+ *
  * Revision 1.35  2001/02/28 07:15:08  daniel
  * Added support for text label line end point
  *
@@ -2421,25 +2429,50 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
         }
 
         /*-------------------------------------------------------------
-         * For 1-ring regions, we return an OGRPolygon with one single
-         * OGRLinearRing geometry. 
+         * Decide if we should return an OGRPolygon or an OGRMultiPolygon
+         * depending on the number of outer rings found in CoordSecHdr blocks.
+         * The CoodSecHdr block for each outer ring in the region has a flag
+         * indicating the number of inner rings that follow.
+         * In older versions of the format, the count of inner rings was 
+         * always zero, so in this case we would always return MultiPolygons.
          *
-         * REGIONs with multiple rings are returned as OGRMultiPolygon
-         * instead of as OGRPolygons since OGRPolygons require that the
-         * first ring be the outer ring, and the other all be inner 
-         * rings, but this is not guaranteed inside MapInfo files.  
+         * Note: The current implementation assumes that there cannot be
+         * holes inside holes (i.e. multiple levels of inner rings)... if
+         * that case was encountered then we would return an OGRMultiPolygon
+         * in which the topological relationship between the rings would
+         * be lost.
          *------------------------------------------------------------*/
-        if (numLineSections > 1)
+        int numOuterRings = 0;
+        for(iSection=0; iSection<numLineSections; iSection++)
+        {
+            // Count this as an outer ring.
+            numOuterRings++;
+            // Skip inner rings... so loop continues on an outer ring.
+            iSection += pasSecHdrs[iSection].numHoles;
+        }
+
+        if (numOuterRings > 1)
             poGeometry = poMultiPolygon = new OGRMultiPolygon;
         else
             poGeometry = NULL;  // Will be set later
 
+        /*-------------------------------------------------------------
+         * OK, build the OGRGeometry object.
+         *------------------------------------------------------------*/
+        int numHolesToRead = 0;
+        poPolygon = NULL;
         for(iSection=0; iSection<numLineSections; iSection++)
         {
             GInt32 *pnXYPtr;
             int     numSectionVertices;
 
-            poPolygon = new OGRPolygon();
+            if (poPolygon == NULL)
+                poPolygon = new OGRPolygon();
+
+            if (numHolesToRead < 1)
+                numHolesToRead = pasSecHdrs[iSection].numHoles;
+            else
+                numHolesToRead--;
 
             numSectionVertices = pasSecHdrs[iSection].numVertices;
             pnXYPtr = panXY + (pasSecHdrs[iSection].nVertexOffset * 2);
@@ -2457,12 +2490,21 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
             poPolygon->addRingDirectly(poRing);
             poRing = NULL;
 
-            if (numLineSections > 1)
-                poMultiPolygon->addGeometryDirectly(poPolygon);
-            else
-                poGeometry = poPolygon;
+            if (numHolesToRead < 1)
+            {
+                if (numOuterRings > 1)
+                {
+                    poMultiPolygon->addGeometryDirectly(poPolygon);
+                }
+                else
+                {
+                    poGeometry = poPolygon;
+                    CPLAssert(iSection == numLineSections-1);
+                }
 
-            poPolygon = NULL;
+                poPolygon = NULL;  // We'll alloc a new polygon next loop.
+            }
+
         }
 
         CPLFree(pasSecHdrs);
@@ -2884,7 +2926,7 @@ const char *TABRegion::GetStyleString()
         char *pszPen = CPLStrdup(GetPenStyleString());
         char *pszBrush = CPLStrdup(GetBrushStyleString());
 
-        m_pszStyleString = CPLStrdup(CPLSPrintf("%s;%s", pszPen, pszBrush));
+        m_pszStyleString = CPLStrdup(CPLSPrintf("%s;%s", pszBrush, pszPen));
 
         CPLFree(pszPen);
         CPLFree(pszBrush);
@@ -3357,7 +3399,7 @@ const char *TABRectangle::GetStyleString()
         char *pszPen = CPLStrdup(GetPenStyleString());
         char *pszBrush = CPLStrdup(GetBrushStyleString());
 
-        m_pszStyleString = CPLStrdup(CPLSPrintf("%s;%s", pszPen, pszBrush));
+        m_pszStyleString = CPLStrdup(CPLSPrintf("%s;%s", pszBrush, pszPen));
 
         CPLFree(pszPen);
         CPLFree(pszBrush);
@@ -3716,7 +3758,7 @@ const char *TABEllipse::GetStyleString()
         char *pszPen = CPLStrdup(GetPenStyleString());
         char *pszBrush = CPLStrdup(GetBrushStyleString());
 
-        m_pszStyleString = CPLStrdup(CPLSPrintf("%s;%s", pszPen, pszBrush));
+        m_pszStyleString = CPLStrdup(CPLSPrintf("%s;%s", pszBrush, pszPen));
 
         CPLFree(pszPen);
         CPLFree(pszBrush);
@@ -5087,13 +5129,15 @@ const char *TABText::GetLabelStyleString()
 
     
     if (IsFontBGColorUsed())
-        pszStyle=CPLSPrintf("LABEL(t:\"%s\",a:%f,s:%f,c:#%6.6x,b:#%6.6x,p:%d)",
+        pszStyle=CPLSPrintf("LABEL(t:\"%s\",a:%f,s:%f,c:#%6.6x,b:#%6.6x,p:%d,f:\"%s\")",
                             GetTextString(),GetTextAngle(), GetTextBoxHeight(),
-                            GetFontFGColor(),GetFontBGColor(),nJustification);
+                            GetFontFGColor(),GetFontBGColor(),nJustification,
+                            GetFontNameRef());
     else
-        pszStyle=CPLSPrintf("LABEL(t:\"%s\",a:%f,s:%f,c:#%6.6x,p:%d)",
+        pszStyle=CPLSPrintf("LABEL(t:\"%s\",a:%f,s:%f,c:#%6.6x,p:%d,f:\"%s\")",
                             GetTextString(),GetTextAngle(), GetTextBoxHeight(),
-                            GetFontFGColor(),nJustification);
+                            GetFontFGColor(),nJustification,
+                            GetFontNameRef());
      
     return pszStyle;
     

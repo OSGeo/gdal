@@ -1,16 +1,15 @@
 /**********************************************************************
- * $Id: mitab_indfile.cpp,v 1.7 2000/11/13 22:17:57 daniel Exp $
+ * $Id: mitab_indfile.cpp,v 1.8 2001/05/01 03:38:23 daniel Exp $
  *
  * Name:     mitab_indfile.cpp
  * Project:  MapInfo TAB Read/Write library
  * Language: C++
  * Purpose:  Implementation of the TABINDFile class used to handle
- *           read-only access to .IND file (table field indexes) 
- *           attached to a .DAT file
+ *           access to .IND file (table field indexes) attached to a .DAT file
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 1999-2001, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_indfile.cpp,v $
+ * Revision 1.8  2001/05/01 03:38:23  daniel
+ * Added update support (allows creating new index in existing IND files).
+ *
  * Revision 1.7  2000/11/13 22:17:57  daniel
  * When a (child) node's first entry is replaced by InsertEntry() then make
  * sure that node's key is updated in its parent node.
@@ -126,7 +128,12 @@ int TABINDFile::Open(const char *pszFname, const char *pszAccess,
      * Note that for write access, we actually need read/write access to
      * the file.
      *----------------------------------------------------------------*/
-    if (EQUALN(pszAccess, "r", 1))
+    if (EQUALN(pszAccess, "r", 1) && strchr(pszAccess, '+') != NULL)
+    {
+        m_eAccessMode = TABReadWrite;
+        pszAccess = "rb+";
+    }
+    else if (EQUALN(pszAccess, "r", 1))
     {
         m_eAccessMode = TABRead;
         pszAccess = "rb";
@@ -182,7 +189,8 @@ int TABINDFile::Open(const char *pszFname, const char *pszAccess,
      * Read access: Read the header block
      * This will also alloc and init the array of index root nodes.
      *----------------------------------------------------------------*/
-    if (m_eAccessMode == TABRead && ReadHeader() != 0)
+    if ((m_eAccessMode == TABRead || m_eAccessMode == TABReadWrite) &&
+        ReadHeader() != 0)
     {
         // Failed reading header... CPLError() has already been called
         Close();
@@ -222,7 +230,7 @@ int TABINDFile::Close()
     /*-----------------------------------------------------------------
      * In Write Mode, commit all indexes to the file
      *----------------------------------------------------------------*/
-    if (m_eAccessMode == TABWrite)
+    if (m_eAccessMode == TABWrite || m_eAccessMode == TABReadWrite)
     {
         WriteHeader();
 
@@ -277,7 +285,16 @@ int TABINDFile::ReadHeader()
 {
 
     CPLAssert(m_fp);
-    CPLAssert(m_eAccessMode == TABRead);
+    CPLAssert(m_eAccessMode == TABRead || m_eAccessMode == TABReadWrite);
+
+    /*-----------------------------------------------------------------
+     * In ReadWrite mode, we need to init BlockManager with file size
+     *----------------------------------------------------------------*/
+    VSIStatBuf  sStatBuf;
+    if (m_eAccessMode == TABReadWrite && VSIStat(m_pszFname, &sStatBuf) != -1)
+    {
+        m_oBlockManager.SetLastPtr(((sStatBuf.st_size-1)/512)*512);
+    }
 
     /*-----------------------------------------------------------------
      * Read the header block
@@ -388,7 +405,7 @@ int TABINDFile::ReadHeader()
 int TABINDFile::WriteHeader()
 {
     CPLAssert(m_fp);
-    CPLAssert(m_eAccessMode == TABWrite);
+    CPLAssert(m_eAccessMode == TABWrite || m_eAccessMode == TABReadWrite);
 
     /*-----------------------------------------------------------------
      * Write the 48 bytes of file header
@@ -691,7 +708,8 @@ int TABINDFile::CreateIndex(TABFieldType eType, int nFieldSize)
 {
     int i, nNewIndexNo = -1;
 
-    if (m_fp == NULL || m_eAccessMode != TABWrite)
+    if (m_fp == NULL || 
+        (m_eAccessMode != TABWrite && m_eAccessMode != TABReadWrite))
         return -1;
 
     /*-----------------------------------------------------------------
@@ -778,7 +796,8 @@ int TABINDFile::CreateIndex(TABFieldType eType, int nFieldSize)
  **********************************************************************/
 int TABINDFile::AddEntry(int nIndexNumber, GByte *pKeyValue, GInt32 nRecordNo)
 {
-    if (m_eAccessMode != TABWrite || ValidateIndexNo(nIndexNumber) != 0)
+    if ((m_eAccessMode != TABWrite && m_eAccessMode != TABReadWrite) || 
+        ValidateIndexNo(nIndexNumber) != 0)
         return -1;
 
     return m_papoIndexRootNodes[nIndexNumber-1]->AddEntry(pKeyValue,nRecordNo);
@@ -928,7 +947,8 @@ int TABINDNode::InitNode(FILE *fp, int nBlockPtr,
     if (m_poDataBlock == NULL)
         m_poDataBlock = new TABRawBinBlock(TABReadWrite, TRUE);
 
-    if (m_eAccessMode == TABWrite && nBlockPtr == 0 && m_poBlockManagerRef)
+    if ((m_eAccessMode == TABWrite || m_eAccessMode == TABReadWrite) && 
+        nBlockPtr == 0 && m_poBlockManagerRef)
     {
         /*-------------------------------------------------------------
          * Write access: Create and init a new block
@@ -975,8 +995,8 @@ int TABINDNode::InitNode(FILE *fp, int nBlockPtr,
 int TABINDNode::GotoNodePtr(GInt32 nNewNodePtr)
 {
     // First flush current changes if any.
-    if (m_eAccessMode == TABWrite && m_poDataBlock &&
-        m_poDataBlock->CommitToFile() != 0)
+    if ((m_eAccessMode == TABWrite || m_eAccessMode == TABReadWrite) && 
+        m_poDataBlock && m_poDataBlock->CommitToFile() != 0)
         return -1;
 
     CPLAssert(nNewNodePtr % 512 == 0);
@@ -1360,7 +1380,8 @@ GInt32 TABINDNode::FindNext(GByte *pKeyValue)
  **********************************************************************/
 int TABINDNode::CommitToFile()
 {
-    if (m_eAccessMode != TABWrite || m_poDataBlock == NULL)
+    if ((m_eAccessMode != TABWrite && m_eAccessMode != TABReadWrite) || 
+        m_poDataBlock == NULL)
         return -1;
 
     if (m_poCurChildNode)
@@ -1404,7 +1425,8 @@ int TABINDNode::AddEntry(GByte *pKeyValue, GInt32 nRecordNo,
                          GBool bInsertAfterCurChild /*=FALSE*/,
                          GBool bMakeNewEntryCurChild /*=FALSE*/)
 {
-    if (m_eAccessMode != TABWrite || m_poDataBlock == NULL)
+    if ((m_eAccessMode != TABWrite && m_eAccessMode != TABReadWrite) || 
+        m_poDataBlock == NULL)
         return -1;
 
     /*-----------------------------------------------------------------
@@ -1957,7 +1979,8 @@ GByte* TABINDNode::GetNodeKey()
  **********************************************************************/
 int TABINDNode::SetPrevNodePtr(GInt32 nPrevNodePtr)
 {
-    if (m_eAccessMode != TABWrite || m_poDataBlock == NULL)
+    if ((m_eAccessMode != TABWrite && m_eAccessMode != TABReadWrite) ||
+        m_poDataBlock == NULL)
         return -1;
 
     if (m_nPrevNodePtr == nPrevNodePtr)
@@ -1976,7 +1999,8 @@ int TABINDNode::SetPrevNodePtr(GInt32 nPrevNodePtr)
  **********************************************************************/
 int TABINDNode::SetNextNodePtr(GInt32 nNextNodePtr)
 {
-    if (m_eAccessMode != TABWrite || m_poDataBlock == NULL)
+    if ((m_eAccessMode != TABWrite && m_eAccessMode != TABReadWrite) ||
+        m_poDataBlock == NULL)
         return -1;
 
     if (m_nNextNodePtr == nNextNodePtr)
