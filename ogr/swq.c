@@ -19,6 +19,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/03/21 03:39:10  warmerda
+ * allow more than one LEFT JOIN per SELECT
+ *
  * Revision 1.19  2003/03/19 20:26:33  warmerda
  * fixed memory leak for join info
  *
@@ -1307,7 +1310,7 @@ const char *swq_select_preparse( const char *select_statement,
 /* -------------------------------------------------------------------- */
 /*      Do we have a LEFT JOIN (or just JOIN) clause?                   */
 /* -------------------------------------------------------------------- */
-    if( token != NULL 
+    while( token != NULL 
         && (strcasecmp(token,"LEFT") == 0 
             || strcasecmp(token,"JOIN") == 0) )
     {
