@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2002/12/15 23:42:59  warmerda
+ * added initial support for normalizing proj params
+ *
  * Revision 1.61  2002/12/14 22:59:14  warmerda
  * added Krovak in ESRI compatible way
  *
@@ -247,6 +250,7 @@ static void OGRPrintDouble( char * pszStrBuf, double dfValue )
 OGRSpatialReference::OGRSpatialReference( const char * pszWKT )
 
 {
+    bNormInfoSet = FALSE;
     nRefCount = 1;
     poRoot = NULL;
 
@@ -286,6 +290,7 @@ OGRSpatialReferenceH OSRNewSpatialReference( const char *pszWKT )
 OGRSpatialReference::OGRSpatialReference(const OGRSpatialReference &oOther)
 
 {
+    bNormInfoSet = FALSE;
     nRefCount = 1;
     poRoot = NULL;
 
@@ -704,6 +709,8 @@ OGRErr OGRSpatialReference::importFromWkt( char ** ppszInput )
     if( poRoot != NULL )
         delete poRoot;
 
+    bNormInfoSet = FALSE;
+
     poRoot = new OGR_SRSNode();
 
     return poRoot->importFromWkt( ppszInput );
@@ -856,6 +863,8 @@ OGRErr OGRSpatialReference::SetAngularUnits( const char * pszUnitsName,
     OGR_SRSNode *poUnits;
     char        szValue[128];
 
+    bNormInfoSet = FALSE;
+
     poCS = GetAttrNode( "GEOGCS" );
 
     if( poCS == NULL )
@@ -983,6 +992,8 @@ OGRErr OGRSpatialReference::SetLinearUnits( const char * pszUnitsName,
     OGR_SRSNode *poCS;
     OGR_SRSNode *poUnits;
     char        szValue[128];
+
+    bNormInfoSet = FALSE;
 
     poCS = GetAttrNode( "PROJCS" );
     if( poCS == NULL )
@@ -1146,6 +1157,7 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
                                 double dfConvertToRadians )
 
 {
+    bNormInfoSet = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Set defaults for various parameters.                            */
@@ -1930,6 +1942,61 @@ double OSRGetProjParm( OGRSpatialReferenceH hSRS, const char *pszName,
     return ((OGRSpatialReference *) hSRS)->
         GetProjParm(pszName, dfDefaultValue, pnErr);
 }
+
+/************************************************************************/
+/*                          GetNormProjParm()                           */
+/************************************************************************/
+
+/**
+ * Fetch a normalized projection parameter value.		       
+ *
+ * This method is the same as GetProjParm() except that the value of
+ * the parameter is "normalized" into degrees or meters depending on 
+ * whether it is linear or angular, and if it is a longitude it is made
+ * relative to Greenwich.
+ *
+ * This method is the same as the C function OSRGetNormProjParm().
+ *
+ * @param pszName the name of the parameter to fetch, from the set of 
+ * SRS_PP codes in ogr_srs_api.h.
+ *
+ * @param dfDefaultValue the value to return if this parameter doesn't exist.
+ *
+ * @param pnErr place to put error code on failure.  Ignored if NULL.
+ *
+ * @return value of parameter.
+ */
+
+double OGRSpatialReference::GetNormProjParm( const char * pszName,
+                                             double dfDefaultValue,
+                                             OGRErr *pnErr ) const
+
+{
+    double dfRawResult;
+    OGRErr nError;
+
+    if( pnErr == NULL )
+        pnErr = &nError;
+
+    GetNormInfo();
+
+    dfRawResult = GetProjParm( pszName, dfDefaultValue, pnErr );
+
+    // If we got the default just return it unadjusted.
+    if( *pnErr != OGRERR_NONE )
+        return dfRawResult;
+
+    if( dfToDegrees != 1.0 && IsAngularParameter(pszName) )
+        dfRawResult *= dfToDegrees;
+
+    if( dfFromGreenwich != 0.0 && IsLongitudeParameter( pszName ) )
+        return dfRawResult + dfFromGreenwich;
+    else if( dfToMeter != 1.0 && IsLinearParameter( pszName ) )
+        return dfRawResult * dfToMeter;
+    else
+        return dfRawResult;
+}
+
 
 /************************************************************************/
 /*                               SetTM()                                */
@@ -3352,4 +3419,74 @@ int OGRSpatialReference::IsAngularParameter( const char *pszParameterName )
         return TRUE;
     else
         return FALSE;
+}
+
+/************************************************************************/
+/*                        IsLongitudeParameter()                        */
+/*                                                                      */
+/*      Is the passed projection parameter an angular longitude         */
+/*      (relative to a prime meridian)?                                 */
+/************************************************************************/
+
+int OGRSpatialReference::IsLongitudeParameter( const char *pszParameterName )
+
+{
+    if( EQUALN(pszParameterName,"long",4)
+        || EQUAL(pszParameterName,SRS_PP_CENTRAL_MERIDIAN) )
+        return TRUE;
+    else
+        return FALSE;
+}
+
+/************************************************************************/
+/*                         IsLinearParameter()                          */
+/*                                                                      */
+/*      Is the passed projection parameter an linear one measured in    */
+/*      meters or some similar linear measure.                          */
+/************************************************************************/
+
+int OGRSpatialReference::IsLinearParameter( const char *pszParameterName )
+
+{
+    if( EQUALN(pszParameterName,"false_",6) )
+        return TRUE;
+    else
+        return FALSE;
+}
+
+/************************************************************************/
+/*                            GetNormInfo()                             */
+/*                                                                      */
+/*      Set the internal information for normalizing linear, and        */
+/*      angular values.                                                 */
+/************************************************************************/
+
+void OGRSpatialReference::GetNormInfo(void) const
+
+{
+    if( bNormInfoSet )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Initialize values.                                              */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference *poThis = (OGRSpatialReference *) this;
+
+    poThis->bNormInfoSet = TRUE;
+    poThis->dfFromGreenwich = 0.0;
+    poThis->dfToMeter = GetLinearUnits(NULL);
+    poThis->dfToDegrees = GetAngularUnits(NULL) / atof(SRS_UA_DEGREE_CONV);
+    if( fabs(poThis->dfToDegrees-1.0) < 0.000000001 )
+        poThis->dfToDegrees = 1.0;
+
+/* -------------------------------------------------------------------- */
+/*      Get the prime meridian.                                         */
+/* -------------------------------------------------------------------- */
+    const OGR_SRSNode *poPRIMEM = GetAttrNode( "PRIMEM" );
+
+    if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2 
+        && atof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
+    {
+        poThis->dfFromGreenwich = atof(poPRIMEM->GetChild(1)->GetValue());
+    }
 }
