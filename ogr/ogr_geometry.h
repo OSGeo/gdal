@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/14 13:30:59  warmerda
+ * added IsEmpty() and IsSimple()
+ *
  * Revision 1.2  1999/03/30 21:21:43  warmerda
  * added linearring/polygon support
  *
@@ -84,6 +87,8 @@ class OGRGeometry
     // standard
     virtual int	getDimension() = 0;
     virtual int	getCoordinateDimension() = 0;
+    virtual OGRBoolean	IsEmpty() { return 0; } 
+    virtual OGRBoolean	IsSimple() { return 1; }
 
     // IWks Interface
     virtual int	WkbSize() = 0;
@@ -94,6 +99,7 @@ class OGRGeometry
     virtual OGRwkbGeometryType getGeometryType() = 0;
     virtual void   dumpReadable( FILE *, const char * = NULL ) = 0;
 
+   
 #ifdef notdef
     
     // I presume all these should be virtual?  How many
@@ -103,8 +109,6 @@ class OGRGeometry
 
     ?		Export(); /* export to well known representation */
 
-    OGRBoolean	IsEmpty();
-    OGRBoolean	IsSimple();
     OGRGeometry *getBoundary();
 
     OGRBoolean	Equal( OGRGeometry * );
