@@ -10,8 +10,8 @@ AC_DEFUN(AC_UNIX_STDIO_64,
 
   if test "$with_unix_stdio_64" = "" ; then
     echo '#include <stdio.h>' > conftest.c
-    echo 'void abc() { long long off=0; fseek64(NULL, SEEK_SET, off); off = ftell(NULL); }' >> conftest.c
-    if test -z "${CC} -c conftest.c" ; then
+    echo 'int main() { long long off=0; fseek64(NULL, SEEK_SET, off); off = ftell64(NULL); return 0; }' >> conftest.c
+    if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
       with_unix_stdio_64=yes
     fi
     rm -f conftest*
