@@ -10,6 +10,7 @@ CPPFLAGS	+=	-I.. -I../..
 
 CPL_DIR	=	$(GDAL_ROOT)/port
 
+WEB_DIR =	$(HOME)/dgnlib-web
 DIST_REV =	1.9
 DIST_DIR =	dgnlib-$(DIST_REV)
 DIST_FILE = 	dgnlib-$(DIST_REV).zip
@@ -49,11 +50,10 @@ dist:
 	zip -r $(DIST_FILE) $(DIST_DIR)
 
 web-docs-update:	docs
-	cp html/* /u/www/projects/dgn/libhtml
+	cp html/* $(WEB_DIR)/libhtml
 
 web-update:	web-docs-update dist
-	cp $(DIST_FILE) /u/www/projects/dgn/
-
+	cp $(DIST_FILE) $(WEB_DIR)/dl
 
 pge_test:	pge_test.cpp dgn_pge.cpp $(OBJ)
 	gcc -Wall -g pge_test.cpp dgn_pge.cpp $(OBJ) $(GDAL_LIB) -lm -o pge_test
