@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.16  2003/04/04 13:45:12  warmerda
+ * Made casting to JSAMPLE explicit.
+ *
  * Revision 1.15  2002/11/23 18:57:06  warmerda
  * added CREATIONOPTIONS metadata on driver
  *
@@ -287,7 +290,7 @@ CPLErr JPGDataset::LoadScanline( int iLine )
     {
         JSAMPLE	*ppSamples;
             
-        ppSamples = pabyScanline;
+        ppSamples = (JSAMPLE *) pabyScanline;
         jpeg_read_scanlines( &sDInfo, &ppSamples, 1 );
         nLoadedScanline++;
     }
@@ -580,7 +583,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                      nBands, nBands * nXSize );
         }
 
-        ppSamples = pabyScanline;
+        ppSamples = (JSAMPLE *) pabyScanline;
         jpeg_write_scanlines( &sCInfo, &ppSamples, 1 );
     }
 
