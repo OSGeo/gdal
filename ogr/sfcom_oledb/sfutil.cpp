@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/08/12 18:38:55  warmerda
+ * removed IDataSourceKey.h
+ *
  * Revision 1.19  2002/08/12 18:05:42  warmerda
  * updated from MEDC build, use IDataSourceGetKey(), error improvements
  *
@@ -91,7 +94,6 @@
 #include "sftraceback.h"
 #include "sfutil.h"
 #include "SF.h"
-#include "IDataSourceKey.h"
 
 
 #include "cpl_error.h"
