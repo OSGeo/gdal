@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/10/29 17:56:57  warmerda
+ * Added PrimaryKeys() support
+ *
  * Revision 1.6  2003/10/06 20:04:08  warmerda
  * added escaping support
  *
@@ -939,6 +942,53 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
     }
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                           GetPrimaryKeys()                           */
+/************************************************************************/
+
+/**
+ * Fetch primary keys for a table.
+ *
+ * The SQLPrimaryKeys() function is used to fetch a list of fields
+ * forming the primary key.  The result is returned as a result set matching
+ * the SQLPrimaryKeys() function result set.  The 4th column in the result
+ * set is the column name of the key, and if the result set contains only
+ * one record then that single field will be the complete primary key.
+ *
+ * @param pszTable the name of the table to query information on.  This
+ * should not be empty.
+ *
+ * @param pszCatalog the catalog to find the table in, use NULL (the
+ * default) if no catalog is available. 
+ *
+ * @param pszSchema the schema to find the table in, use NULL (the
+ * default) if no schema is available. 
+ *
+ * @return TRUE on success or FALSE on failure. 
+ */
+
+int CPLODBCStatement::GetPrimaryKeys( const char *pszTable, 
+                                      const char *pszCatalog,
+                                      const char *pszSchema )
+
+{
+    if( pszCatalog == NULL )
+        pszCatalog = "";
+    if( pszSchema == NULL )
+        pszSchema = "";
+
+/* -------------------------------------------------------------------- */
+/*      Fetch columns resultset for this table.                         */
+/* -------------------------------------------------------------------- */
+    if( Failed( SQLPrimaryKeys( m_hStmt, 
+                                (SQLCHAR *) pszCatalog, SQL_NTS,
+                                (SQLCHAR *) pszSchema, SQL_NTS,
+                                (SQLCHAR *) pszTable, SQL_NTS ) ) )
+        return FALSE;
+    else
+        return CollectResultsInfo();
 }
 
 /************************************************************************/

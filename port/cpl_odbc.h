@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/10/29 17:56:57  warmerda
+ * Added PrimaryKeys() support
+ *
  * Revision 1.6  2003/10/06 20:04:08  warmerda
  * added escaping support
  *
@@ -165,6 +168,9 @@ class CPL_DLL CPLODBCStatement {
     int            GetColumns( const char *pszTable, 
                                const char *pszCatalog = NULL,
                                const char *pszSchema = NULL );
+    int            GetPrimaryKeys( const char *pszTable, 
+                                   const char *pszCatalog = NULL,
+                                   const char *pszSchema = NULL );
 
     int            GetTables( const char *pszCatalog = NULL,
                               const char *pszSchema = NULL );
