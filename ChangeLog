@@ -1,3 +1,9 @@
+2003-05-25  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* frmts/mrsid/ mrsiddataset.cpp: New driver for MrSID file format.
+	Non-free MrSID decoding SDK from LizardTech required to compile this
+	driver. Full support for georeferencing and metadata records.
+
 2003-05-23  Simon Perkins  <s.perkins@lanl.gov>
 
 	* core/gdaldataset.cpp: The default CreateCopy() implementation
