@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/04/02 22:05:21  fwarmerdam
+ * ifdef out some stuff on ECW_FW
+ *
  * Revision 1.15  2005/04/02 21:26:34  fwarmerdam
  * preliminary support for creating GML coverage boxes
  *
@@ -106,7 +109,9 @@ public:
 
     CPLErr  PrepareCoverageBox( const char *pszWKT, double *padfGeoTransform );
 
+#ifdef ECW_FW
     CNCSJP2File::CNCSJPXAssocBox  m_oGMLAssoc;
+#endif
 
     // Data
 
@@ -243,7 +248,9 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox( const char *pszWKT,
                                                double *padfGeoTransform )
 
 {
-
+#ifndef ECW_FW
+    return CE_Failure;
+#else
 /* -------------------------------------------------------------------- */
 /*      Try do determine a PCS or GCS code we can use.                  */
 /* -------------------------------------------------------------------- */
@@ -358,6 +365,7 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox( const char *pszWKT,
     AddBox( &m_oGMLAssoc );
 
     return CE_None;
+#endif /* def ECW_FW */
 }
 
 /************************************************************************/
@@ -761,6 +769,7 @@ CPLErr GDALECWCompressor::Initialize(
             SetParameter( 
                 CNCSJP2FileView::JP2_COMPRESS_PROGRESSION_RPCL );
 
+#ifdef ECW_FW
         pszOption = CSLFetchNameValue(papszOptions, "GEODATA_USAGE");
         if( pszOption == NULL )
             /* do nothing special */;
@@ -776,6 +785,7 @@ CPLErr GDALECWCompressor::Initialize(
             SetGeodataUsage( JP2_GEODATA_USE_GML_PCS );
         else if( EQUAL(pszOption,"ALL") )
             SetGeodataUsage( JP2_GEODATA_USE_GML_PCS_WLD );
+#endif
 
         pszOption = CSLFetchNameValue(papszOptions, "DECOMPRESS_LAYERS");
         if( pszOption != NULL )
