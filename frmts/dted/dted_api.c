@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/01/28 18:17:33  warmerda
+ * fixed setting of nUHLOffset
+ *
  * Revision 1.7  2002/01/26 05:51:40  warmerda
  * added metadata read/write support
  *
@@ -185,7 +188,7 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
     psDInfo->nXSize = atoi(DTEDGetField(achRecord,48,4));
     psDInfo->nYSize = atoi(DTEDGetField(achRecord,52,4));
 
-    psDInfo->nUHLOffset = VSIFTell( fp ) - sizeof(DTED_UHL_SIZE);
+    psDInfo->nUHLOffset = VSIFTell( fp ) - DTED_UHL_SIZE;
     psDInfo->pachUHLRecord = (char *) CPLMalloc(DTED_UHL_SIZE);
     memcpy( psDInfo->pachUHLRecord, achRecord, DTED_UHL_SIZE );
 
