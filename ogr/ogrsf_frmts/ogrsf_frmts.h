@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2002/09/26 18:15:31  warmerda
+ * moved capabilities macros to ogr_core.h for ogr_api.h
+ *
  * Revision 1.26  2002/06/25 14:45:50  warmerda
  * added RegisterOGRFME()
  *
@@ -119,19 +122,6 @@
  *
  * Classes related to registration of format support, and opening datasets.
  */
-
-#define OLCRandomRead          "RandomRead"
-#define OLCSequentialWrite     "SequentialWrite"
-#define OLCRandomWrite         "RandomWrite"
-#define OLCFastSpatialFilter   "FastSpatialFilter"
-#define OLCFastFeatureCount    "FastFeatureCount"
-#define OLCFastGetExtent       "FastGetExtent"
-#define OLCCreateField         "CreateField"
-#define OLCTransactions        "Transactions"
-
-#define ODsCCreateLayer        "CreateLayer"
-
-#define ODrCCreateDataSource   "CreateDataSource"
 
 /************************************************************************/
 /*                               OGRLayer                               */
