@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_bin.c,v 1.20 2002/02/13 20:35:24 warmerda Exp $
+ * $Id: avc_bin.c,v 1.21 2002/02/14 22:54:13 warmerda Exp $
  *
  * Name:     avc_bin.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: avc_bin.c,v $
+ * Revision 1.21  2002/02/14 22:54:13  warmerda
+ * added polygon and table support for random reading
+ *
  * Revision 1.20  2002/02/13 20:35:24  warmerda
  * added AVCBinReadObject
  *
@@ -519,24 +522,40 @@ int AVCBinReadRewind(AVCBinFile *psFile)
  * files we seek directly to the object.  For variable files we try to
  * get the offset from the corresponding index file.  
  *
- * NOTE: Currently only implemented for Arc objects.
+ * NOTE: Currently only implemented for ARC, PAL and TABLE files.
  *
  * Returns the read object on success or NULL on error.
  **********************************************************************/
 void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
 {
-    int	 bIndexed;
-    int  nObjectOffset;
-
-    /* For now only implemented for ARCs */
-
-    if( psFile->eFileType != AVCFileARC )
-        return NULL;
+    int	 bIndexed = FALSE;
+    int  nObjectOffset, nRecordSize=0, nRecordStart = 0;
+    char *pszExt = NULL;
 
     if( iObjIndex < 0 )
         return NULL;
 
-    bIndexed = TRUE;
+    /*-----------------------------------------------------------------
+     * Determine some information from based on the coverage type.    
+     *----------------------------------------------------------------*/
+    if( psFile->eFileType == AVCFileARC )
+    {
+        bIndexed = TRUE;
+        pszExt = strstr(psFile->pszFilename,"arc");
+    }
+    else if( psFile->eFileType == AVCFilePAL )
+    {
+        bIndexed = TRUE;
+        pszExt = strstr(psFile->pszFilename,"pax");
+    }
+    else if( psFile->eFileType == AVCFileTABLE )
+    {
+        bIndexed = FALSE;
+        nRecordSize = psFile->hdr.psTableDef->nRecSize;
+        nRecordStart = 0;
+    }
+    else
+        return NULL;
 
     /*-----------------------------------------------------------------
      * Ensure the index file is opened if an index file is required.
@@ -544,11 +563,7 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
 
     if( bIndexed && psFile->psIndexFile == NULL )
     {
-        char *pszExt = NULL;
         char chOrig;
-
-        if( psFile->eFileType == AVCFileARC )
-            pszExt = strstr(psFile->pszFilename,"arc");
 
         if( pszExt == NULL )
             return NULL;
@@ -578,12 +593,14 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
         nObjectOffset = AVCRawBinReadInt32( psFile->psIndexFile );
         nObjectOffset *= 2;
     }
+    else
+        nObjectOffset = nRecordStart + nRecordSize * (iObjIndex-1);
 
     /*-----------------------------------------------------------------
      * Seek to the start of the object in the data file.
      *----------------------------------------------------------------*/
     AVCRawBinFSeek( psFile->psRawBinFile, nObjectOffset, SEEK_SET );
-    if( AVCRawBinEOF( psFile->psIndexFile ) )
+    if( AVCRawBinEOF( psFile->psRawBinFile ) )
         return NULL;
 
     /*-----------------------------------------------------------------
