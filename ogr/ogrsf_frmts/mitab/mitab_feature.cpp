@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.39 2001/09/05 13:33:33 daniel Exp $
+ * $Id: mitab_feature.cpp,v 1.40 2001/09/17 21:33:44 daniel Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.40  2001/09/17 21:33:44  daniel
+ * TABText: do not produce an error when reading 0-length text strings.
+ *
  * Revision 1.39  2001/09/05 13:33:33  daniel
  * TABPolyline::ValidateMapInfoType(): return TAB_GEOM_NONE if numpoints < 2
  *
@@ -4526,16 +4529,19 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
          * that we have to convert to an escaped form internally.
          *------------------------------------------------------------*/
         char *pszTmpString = (char*)CPLMalloc((nStringLen+1)*sizeof(char));
-        poCoordBlock = poMapFile->GetCoordBlock(nCoordBlockPtr);
 
-        if (nStringLen > 0 && 
-            (poCoordBlock == NULL ||
-             poCoordBlock->ReadBytes(nStringLen, (GByte*)pszTmpString) != 0))
+        if (nStringLen > 0)
         {
-            CPLError(CE_Failure, CPLE_FileIO,
-                     "Failed reading text string at offset %d", 
-                     nCoordBlockPtr);
-            return -1;
+            CPLAssert(nCoordBlockPtr > 0);
+            poCoordBlock = poMapFile->GetCoordBlock(nCoordBlockPtr);
+            if (poCoordBlock == NULL ||
+                poCoordBlock->ReadBytes(nStringLen,(GByte*)pszTmpString) != 0)
+            {
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Failed reading text string at offset %d", 
+                         nCoordBlockPtr);
+                return -1;
+            }
         }
 
         pszTmpString[nStringLen] = '\0';
