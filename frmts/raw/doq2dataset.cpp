@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/09/16 16:17:53  warmerda
+ * XY_ORIGIN is the top left corner of pixel!
+ *
  * Revision 1.14  2002/09/16 14:16:28  warmerda
  * XY_ORIGIN is center of pixel, not top left corner.
  *
@@ -419,14 +422,11 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 	poDS->pszProjection = CPLStrdup("");
     }
 
-    poDS->dfULX = dfULXMap - dfXDim * 0.5;
-    poDS->dfULY = dfULYMap + dfXDim * 0.5;
+    poDS->dfULX = dfULXMap;
+    poDS->dfULY = dfULYMap;
 
     poDS->dfXPixelSize = dfXDim;
     poDS->dfYPixelSize = dfYDim;
-
-    poDS->dfULX -= poDS->dfXPixelSize / 2;
-    poDS->dfULY += poDS->dfYPixelSize / 2;
 
     if ( pszQuadname ) CPLFree( pszQuadname );
     if ( pszQuadquad) CPLFree( pszQuadquad );
