@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.19  2005/02/23 21:38:28  kruland
+ * Added AutoCreateWarpedVRT() global algorithm method.  Commented missing methods.
+ *
  * Revision 1.18  2005/02/22 23:30:14  kruland
  * Increment the reference count in the Dataset factory methods: Open, OpenShared.
  *
@@ -93,6 +96,7 @@ using namespace std;
 #include "gdal.h"
 #include "gdal_priv.h"
 #include "gdal_alg.h"
+#include "gdalwarper.h"
 
 typedef double *double_2;
 typedef double *double_4;
@@ -113,6 +117,7 @@ typedef int GDALColorInterp;
 typedef int GDALAccess;
 typedef int GDALDataType;
 typedef int CPLErr;
+typedef int GDALResampleAlg;
 
 %include "cpl.i"
 
@@ -129,6 +134,17 @@ typedef int CPLErr;
 // Define the global methods
 //
 //************************************************************************
+//
+// Missing
+//
+// GeneralCmdLineProcessor
+// TermProgress
+//
+// Majorobject - GetDescription
+// Majorobject - SetDescription
+//
+// GCP - class?  serialize() method missing.
+
 %rename (AllRegister) GDALAllRegister;
 void GDALAllRegister();
 
@@ -168,11 +184,15 @@ double GDALPackedDMSToDec( double );
 %rename (DecToPackedDMS) GDALDecToPackedDMS;
 double GDALDecToPackedDMS( double );
 
+
 //************************************************************************
 //
 // Define the factory functions for Drivers and Datasets
 //
 //************************************************************************
+
+// Missing
+// GetDriverList
 
 %inline %{
 GDALDriverShadow* GetDriverByName( char const *name ) {
@@ -200,3 +220,35 @@ GDALDatasetShadow* OpenShared( char const* name, GDALAccess eAccess = GA_ReadOnl
 }
 %}
 
+//************************************************************************
+//
+// Define Algorithms
+//
+//************************************************************************
+
+// Missing
+// ComputeMedianCutPCT
+// DitherRGB2PCT
+// RGBFile2PCTFile
+// AutoCreateWarpedVRT
+// ReprojectImage
+// CreateAndReprojectImage
+// GCPsToGeoTransform
+
+%newobject AutoCreateWarpedVRT;
+%inline %{
+GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
+                                        const char *src_wkt = 0,
+                                        const char *dst_wkt = 0,
+                                        GDALResampleAlg eResampleAlg = GRA_NearestNeighbour,
+                                        double maxerror = 0.0 ) {
+  GDALDatasetShadow *ds = GDALAutoCreateWarpedVRT( src_ds, src_wkt,
+                                                   dst_wkt,
+                                                   eResampleAlg,
+                                                   maxerror,
+                                                   0 );
+  if (ds == 0) {
+    throw CPLGetLastErrorMsg();
+  }
+}
+%}
