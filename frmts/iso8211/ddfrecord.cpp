@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/06 14:48:28  warmerda
+ * Fixed EOF handling in files with reused headers
+ *
  * Revision 1.2  1999/05/06 14:24:29  warmerda
  * minor optimization, don't emit an error on EOF
  *
@@ -125,9 +128,18 @@ int DDFRecord::Read()
 /*      the previous records data without disturbing the rest of the    */
 /*      record.                                                         */
 /* -------------------------------------------------------------------- */
-    if( VSIFRead( pachData + nFieldOffset, 1,
-                  nDataSize - nFieldOffset,
-                  poModule->GetFP() ) != (size_t) (nDataSize - nFieldOffset) )
+    size_t	nReadBytes;
+
+    nReadBytes = VSIFRead( pachData + nFieldOffset, 1,
+                           nDataSize - nFieldOffset,
+                           poModule->GetFP() );
+    if( nReadBytes != (size_t) (nDataSize - nFieldOffset)
+        && nReadBytes == 0
+        && VSIFEof( poModule->GetFP() ) )
+    {
+        return FALSE;
+    }
+    else if( nReadBytes != (size_t) (nDataSize - nFieldOffset) )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Data record is short on DDF file.\n" );
