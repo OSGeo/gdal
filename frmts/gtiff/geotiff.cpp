@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2000/01/06 14:55:53  warmerda
+ * Removed testing printf.
+ *
  * Revision 1.14  2000/01/06 14:51:27  warmerda
  * Support reading non eight bit data directly if SEPARATE or 1 band.
  *
@@ -191,7 +194,6 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
     }
     else if( poDS->nBitsPerSample == 32 )
     {
-        printf( "nSampleFormat = %d\n", nSampleFormat );
         if( nSampleFormat == SAMPLEFORMAT_IEEEFP )
             eDataType = GDT_Float32;
         else if( nSampleFormat == SAMPLEFORMAT_INT )
