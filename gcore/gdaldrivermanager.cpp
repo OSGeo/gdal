@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.11  2002/07/09 20:33:12  warmerda
+ * expand tabs
+ *
  * Revision 1.10  2002/06/12 21:13:27  warmerda
  * use metadata based driver info
  *
@@ -71,7 +74,7 @@ static char *pszUpdatableINST_DATA =
 /* ==================================================================== */
 /************************************************************************/
 
-static GDALDriverManager	*poDM = NULL;
+static GDALDriverManager        *poDM = NULL;
 
 /************************************************************************/
 /*                        GetGDALDriverManager()                        */
@@ -153,7 +156,7 @@ GDALDriverManager::~GDALDriverManager()
 /* -------------------------------------------------------------------- */
     while( GetDriverCount() > 0 )
     {
-        GDALDriver	*poDriver = GetDriver(0);
+        GDALDriver      *poDriver = GetDriver(0);
 
         DeregisterDriver(poDriver);
         delete poDriver;
@@ -259,7 +262,7 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
 /* -------------------------------------------------------------------- */
     if( GetDriverByName( poDriver->GetDescription() ) != NULL )
     {
-        int		i;
+        int             i;
 
         for( i = 0; i < nDrivers; i++ )
         {
@@ -316,7 +319,7 @@ int GDALRegisterDriver( GDALDriverH hDriver )
 void GDALDriverManager::DeregisterDriver( GDALDriver * poDriver )
 
 {
-    int		i;
+    int         i;
 
     for( i = 0; i < nDrivers; i++ )
     {
@@ -363,7 +366,7 @@ void GDALDeregisterDriver( GDALDriverH hDriver )
 GDALDriver * GDALDriverManager::GetDriverByName( const char * pszName )
 
 {
-    int		i;
+    int         i;
 
     for( i = 0; i < nDrivers; i++ )
     {

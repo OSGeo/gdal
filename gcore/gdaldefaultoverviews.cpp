@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/07/09 20:33:12  warmerda
+ * expand tabs
+ *
  * Revision 1.8  2001/10/18 14:35:22  warmerda
  * avoid conflicts between parameters and member data
  *
@@ -187,7 +190,7 @@ GDALDefaultOverviews::GetOverview( int nBand, int iOverview )
 static int GDALOvLevelAdjust( int nOvLevel, int nXSize )
 
 {
-    int	nOXSize = (nXSize + nOvLevel - 1) / nOvLevel;
+    int nOXSize = (nXSize + nOvLevel - 1) / nOvLevel;
     
     return (int) (0.5 + nXSize / (double) nOXSize);
 }

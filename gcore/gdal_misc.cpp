@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2002/07/09 20:33:12  warmerda
+ * expand tabs
+ *
  * Revision 1.34  2002/05/06 21:37:29  warmerda
  * added GDALGCPsToGeoTransform
  *
@@ -174,7 +177,7 @@ void __pure_virtual()
 GDALDataType GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
 
 {
-    int		bFloating, bComplex, nBits, bSigned;
+    int         bFloating, bComplex, nBits, bSigned;
 
     bComplex = GDALDataTypeIsComplex(eType1) | GDALDataTypeIsComplex(eType2);
     
@@ -897,7 +900,7 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
     double      dfNoDataValue;
     int         nActualSamples = 0;
     int         nBlockSampleRate;
-    int		nBlockPixels, nBlockCount;
+    int         nBlockPixels, nBlockCount;
 
     dfNoDataValue = poBand->GetNoDataValue( &bGotNoDataValue );
 
@@ -960,7 +963,7 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
         {
             for( iX = iRemainder; iX < iXValid; iX += nBlockSampleRate )
             {
-                int	iOffset;
+                int     iOffset;
 
                 iOffset = iX + iY * nBlockXSize; 
                 switch( poBlock->GetDataType() )
@@ -1062,7 +1065,7 @@ void GDALDeinitGCPs( int nCount, GDAL_GCP * psGCP )
 GDAL_GCP *GDALDuplicateGCPs( int nCount, const GDAL_GCP *pasGCPList )
 
 {
-    GDAL_GCP	*pasReturn;
+    GDAL_GCP    *pasReturn;
 
     pasReturn = (GDAL_GCP *) CPLMalloc(sizeof(GDAL_GCP) * nCount);
     GDALInitGCPs( nCount, pasReturn );
@@ -1096,11 +1099,11 @@ int GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
                        double *padfGeoTransform )
 
 {
-    const char	*pszTFW;
-    char	szExtUpper[32], szExtLower[32];
-    int		i;
-    FILE	*fpTFW;
-    char	**papszLines;
+    const char  *pszTFW;
+    char        szExtUpper[32], szExtLower[32];
+    int         i;
+    FILE        *fpTFW;
+    char        **papszLines;
 
     if( *pszExtension == '.' )
         pszExtension++;
@@ -1113,8 +1116,8 @@ int GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
 
     for( i = 0; szExtUpper[i] != '\0' && i < 32; i++ )
     {
-	szExtUpper[i] = toupper(szExtUpper[i]);
-	szExtLower[i] = tolower(szExtLower[i]);
+        szExtUpper[i] = toupper(szExtUpper[i]);
+        szExtLower[i] = tolower(szExtLower[i]);
     }
 
 /* -------------------------------------------------------------------- */
@@ -1183,30 +1186,30 @@ int GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
                        double *padfGeoTransform )
 
 {
-    const char	*pszTFW;
-	FILE	*fpTFW;
+    const char  *pszTFW;
+        FILE    *fpTFW;
 
-	pszTFW = CPLResetExtension( pszBaseFilename, pszExtension );
-	fpTFW = VSIFOpen( pszTFW, "wt" );
-	if( fpTFW == NULL )
+        pszTFW = CPLResetExtension( pszBaseFilename, pszExtension );
+        fpTFW = VSIFOpen( pszTFW, "wt" );
+        if( fpTFW == NULL )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      We open the file, now fill it with the world data.                        */
 /* -------------------------------------------------------------------- */
-	fprintf( fpTFW, "%.10f\n", padfGeoTransform[1] );
-	fprintf( fpTFW, "%.10f\n", padfGeoTransform[4] );
-	fprintf( fpTFW, "%.10f\n", padfGeoTransform[2] );
-	fprintf( fpTFW, "%.10f\n", padfGeoTransform[5] );
-	fprintf( fpTFW, "%.10f\n", padfGeoTransform[0] 
+        fprintf( fpTFW, "%.10f\n", padfGeoTransform[1] );
+        fprintf( fpTFW, "%.10f\n", padfGeoTransform[4] );
+        fprintf( fpTFW, "%.10f\n", padfGeoTransform[2] );
+        fprintf( fpTFW, "%.10f\n", padfGeoTransform[5] );
+        fprintf( fpTFW, "%.10f\n", padfGeoTransform[0] 
                  + 0.5 * padfGeoTransform[1]
                  + 0.5 * padfGeoTransform[2] );
-	fprintf( fpTFW, "%.10f\n", padfGeoTransform[3]
+        fprintf( fpTFW, "%.10f\n", padfGeoTransform[3]
                  + 0.5 * padfGeoTransform[4]
                  + 0.5 * padfGeoTransform[5] );
 
-	VSIFClose( fpTFW );
-	return TRUE;
+        VSIFClose( fpTFW );
+        return TRUE;
 }
 
 /************************************************************************/
@@ -1264,11 +1267,11 @@ const char *GDALDecToDMS( double dfAngle, const char * pszAxis,
                           int nPrecision )
 
 {
-    int		nDegrees, nMinutes;
-    double	dfSeconds;
-    char	szFormat[30];
+    int         nDegrees, nMinutes;
+    double      dfSeconds;
+    char        szFormat[30];
     static char szBuffer[50];
-    const char	*pszHemisphere;
+    const char  *pszHemisphere;
     
 
     nDegrees = (int) ABS(dfAngle);
@@ -1435,7 +1438,7 @@ int GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
 
         for( i = 0; i < nGCPCount; i++ )
         {
-            double	dfErrorX, dfErrorY;
+            double      dfErrorX, dfErrorY;
 
             dfErrorX = 
                 (pasGCPs[i].dfGCPPixel * padfGeoTransform[1]

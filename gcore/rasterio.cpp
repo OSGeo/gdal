@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/07/09 20:33:12  warmerda
+ * expand tabs
+ *
  * Revision 1.15  2002/05/31 22:18:50  warmerda
  * Ensure that GDALCopyWords() rounds off (nearest) rather than rounding
  * down copying from float to integer outputs, and uses floor() when assigning
@@ -96,10 +99,10 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                   int nPixelSpace, int nLineSpace )
 
 {
-    int		nBandDataSize = GDALGetDataTypeSize( eDataType ) / 8;
-    GByte	*pabySrcBlock = NULL;
+    int         nBandDataSize = GDALGetDataTypeSize( eDataType ) / 8;
+    GByte       *pabySrcBlock = NULL;
     GDALRasterBlock *poBlock;
-    int		nLBlockX=-1, nLBlockY=-1, iBufYOff, iBufXOff, iSrcY;
+    int         nLBlockX=-1, nLBlockY=-1, iBufYOff, iBufXOff, iSrcY;
 
 /* ==================================================================== */
 /*      A common case is the data requested with it's inherent data     */
@@ -115,7 +118,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     {
         for( iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff++ )
         {
-            int		nSrcByteOffset;
+            int         nSrcByteOffset;
             
             iSrcY = iBufYOff + nYOff;
             
@@ -173,8 +176,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Compute stepping increment.                                     */
 /* -------------------------------------------------------------------- */
-    double	dfSrcX, dfSrcY, dfSrcXInc, dfSrcYInc;
-    int		iSrcX;
+    double      dfSrcX, dfSrcY, dfSrcXInc, dfSrcYInc;
+    int         iSrcX;
     
     dfSrcXInc = nXSize / (double) nBufXSize;
     dfSrcYInc = nYSize / (double) nBufYSize;
@@ -184,7 +187,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     for( iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff++ )
     {
-        int	iBufOffset, iSrcOffset;
+        int     iBufOffset, iSrcOffset;
         
         dfSrcY = (iBufYOff+0.5) * dfSrcYInc + nYOff;
         iSrcY = (int) dfSrcY;
@@ -267,8 +270,8 @@ void GDALSwapWords( void *pData, int nWordSize, int nWordCount,
                     int nWordSkip )
 
 {
-    int		i;
-    GByte	*pabyData = (GByte *) pData;
+    int         i;
+    GByte       *pabyData = (GByte *) pData;
 
     switch( nWordSize )
     {
@@ -279,7 +282,7 @@ void GDALSwapWords( void *pData, int nWordSize, int nWordCount,
         CPLAssert( nWordSize >= 2 );
         for( i = 0; i < nWordCount; i++ )
         {
-            GByte	byTemp;
+            GByte       byTemp;
 
             byTemp = pabyData[0];
             pabyData[0] = pabyData[1];
@@ -293,7 +296,7 @@ void GDALSwapWords( void *pData, int nWordSize, int nWordCount,
         CPLAssert( nWordSize >= 4 );
         for( i = 0; i < nWordCount; i++ )
         {
-            GByte	byTemp;
+            GByte       byTemp;
 
             byTemp = pabyData[0];
             pabyData[0] = pabyData[3];
@@ -311,7 +314,7 @@ void GDALSwapWords( void *pData, int nWordSize, int nWordCount,
         CPLAssert( nWordSize >= 8 );
         for( i = 0; i < nWordCount; i++ )
         {
-            GByte	byTemp;
+            GByte       byTemp;
 
             byTemp = pabyData[0];
             pabyData[0] = pabyData[7];
@@ -353,8 +356,8 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
 /* -------------------------------------------------------------------- */
     if( eSrcType == eDstType )
     {
-        int	nWordSize = GDALGetDataTypeSize(eSrcType)/8;
-        int	i;
+        int     nWordSize = GDALGetDataTypeSize(eSrcType)/8;
+        int     i;
 
         // contiguous blocks.
         if( nWordSize == nSrcPixelOffset && nWordSize == nDstPixelOffset )
@@ -379,8 +382,8 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
 /* ==================================================================== */
     for( int iWord = 0; iWord < nWordCount; iWord++ )
     {
-        GByte 	*pabySrcWord, *pabyDstWord;
-        double	dfPixelValue, dfPixelValueI=0.0;
+        GByte   *pabySrcWord, *pabyDstWord;
+        double  dfPixelValue, dfPixelValueI=0.0;
 
         pabySrcWord = ((GByte *) pSrcData) + iWord * nSrcPixelOffset;
 
@@ -395,7 +398,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
 
           case GDT_UInt16:
           {
-              GUInt16	nVal;
+              GUInt16   nVal;
 
               memcpy( &nVal, pabySrcWord, 2 );
               dfPixelValue = nVal;
@@ -404,7 +407,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
           
           case GDT_Int16:
           {
-              GInt16	nVal;
+              GInt16    nVal;
 
               memcpy( &nVal, pabySrcWord, 2 );
               dfPixelValue = nVal;
@@ -413,7 +416,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
           
           case GDT_Int32:
           {
-              GInt32	nVal;
+              GInt32    nVal;
 
               memcpy( &nVal, pabySrcWord, 4 );
               dfPixelValue = nVal;
@@ -422,7 +425,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
           
           case GDT_UInt32:
           {
-              GUInt32	nVal;
+              GUInt32   nVal;
 
               memcpy( &nVal, pabySrcWord, 4 );
               dfPixelValue = nVal;
@@ -431,7 +434,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
           
           case GDT_Float32:
           {
-              float	fVal;
+              float     fVal;
 
               memcpy( &fVal, pabySrcWord, 4 );
               dfPixelValue = fVal;
@@ -446,7 +449,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
 
           case GDT_CInt16:
           {
-              GInt16	nVal;
+              GInt16    nVal;
 
               memcpy( &nVal, pabySrcWord, 2 );
               dfPixelValue = nVal;
@@ -457,7 +460,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
           
           case GDT_CInt32:
           {
-              GInt32	nVal;
+              GInt32    nVal;
 
               memcpy( &nVal, pabySrcWord, 4 );
               dfPixelValue = nVal;
@@ -468,7 +471,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
           
           case GDT_CFloat32:
           {
-              float	fVal;
+              float     fVal;
 
               memcpy( &fVal, pabySrcWord, 4 );
               dfPixelValue = fVal;
@@ -509,7 +512,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
 
           case GDT_UInt16:
           {
-              GUInt16	nVal;
+              GUInt16   nVal;
               
               dfPixelValue += 0.5;
 
@@ -526,7 +529,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
 
           case GDT_Int16:
           {
-              GInt16	nVal;
+              GInt16    nVal;
               
               dfPixelValue += 0.5;
 
@@ -543,7 +546,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
           
           case GDT_UInt32:
           {
-              GUInt32	nVal;
+              GUInt32   nVal;
               
               dfPixelValue += 0.5;
 
@@ -560,7 +563,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
           
           case GDT_Int32:
           {
-              GInt32	nVal;
+              GInt32    nVal;
               
               dfPixelValue += 0.5;
 
@@ -577,7 +580,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
 
           case GDT_Float32:
           {
-              float 	fVal;
+              float     fVal;
 
               fVal = dfPixelValue;
 
@@ -591,7 +594,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
               
           case GDT_CInt16:
           {
-              GInt16	nVal;
+              GInt16    nVal;
               
               dfPixelValue += 0.5;
               dfPixelValueI += 0.5;
@@ -616,7 +619,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
           
           case GDT_CInt32:
           {
-              GInt32	nVal;
+              GInt32    nVal;
               
               dfPixelValue += 0.5;
               dfPixelValueI += 0.5;
@@ -643,7 +646,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
 
           case GDT_CFloat32:
           {
-              float 	fVal;
+              float     fVal;
 
               fVal = dfPixelValue;
               memcpy( pabyDstWord, &fVal, 4 );
@@ -680,9 +683,9 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
 
 
 {
-    GDALRasterBand	*poBestOverview = NULL;
-    int			nOverviewCount = GetOverviewCount();
-    double		dfDesiredResolution, dfBestResolution = 1.0;
+    GDALRasterBand      *poBestOverview = NULL;
+    int                 nOverviewCount = GetOverviewCount();
+    double              dfDesiredResolution, dfBestResolution = 1.0;
 
 /* -------------------------------------------------------------------- */
 /*      Find the Compute the desired resolution.  The resolution is     */
@@ -702,8 +705,8 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     for( int iOverview = 0; iOverview < nOverviewCount; iOverview++ )
     {
-        GDALRasterBand	*poOverview = GetOverview( iOverview );
-        double		dfResolution;
+        GDALRasterBand  *poOverview = GetOverview( iOverview );
+        double          dfResolution;
 
         if( (GetXSize() / (double) poOverview->GetXSize())
             < (GetYSize() / (double) poOverview->GetYSize()) )
@@ -732,8 +735,8 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
 /*      Recompute the source window in terms of the selected            */
 /*      overview.                                                       */
 /* -------------------------------------------------------------------- */
-    int		nOXOff, nOYOff, nOXSize, nOYSize;
-    double	dfXRes, dfYRes;
+    int         nOXOff, nOYOff, nOXSize, nOYSize;
+    double      dfXRes, dfYRes;
     
     dfXRes = GetXSize() / (double) poBestOverview->GetXSize();
     dfYRes = GetYSize() / (double) poBestOverview->GetYSize();

@@ -26,6 +26,9 @@
  *
  * 
  * $Log$
+ * Revision 1.8  2002/07/09 20:33:12  warmerda
+ * expand tabs
+ *
  * Revision 1.7  2001/09/27 16:33:41  warmerda
  * fixed problems with blocks larger than 2GB/8
  *
@@ -278,9 +281,9 @@ void GDALRasterBlock::Touch()
 CPLErr GDALRasterBlock::Internalize()
 
 {
-    void	*pNewData;
-    int		nSizeInBytes;
-    int		nCurCacheMax = GDALGetCacheMax();
+    void        *pNewData;
+    int         nSizeInBytes;
+    int         nCurCacheMax = GDALGetCacheMax();
 
     nSizeInBytes = nXSize * nYSize * (GDALGetDataTypeSize(eType) / 8);
 
