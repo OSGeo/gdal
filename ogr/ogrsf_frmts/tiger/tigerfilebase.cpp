@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/07/19 16:03:11  warmerda
+ * allow VERSION override on write
+ *
  * Revision 1.8  2001/07/19 13:26:32  warmerda
  * enable override of existing modules
  *
@@ -378,7 +381,11 @@ int TigerFileBase::WriteRecord( char *pachRecord, int nRecLen,
 
     /* for some reason type 5 files lack version, otherwise set to Cen2000 */
     if( !EQUAL(pszType, "5") )
-        strncpy( pachRecord + 1, "1000", 4 );
+    {
+        char	szVersion[5];
+        sprintf( szVersion, "%04d", poDS->GetVersionCode() );
+        strncpy( pachRecord + 1, szVersion, 4 );
+    }
 
     VSIFWrite( pachRecord, nRecLen, 1, fp );
     VSIFWrite( (void *) "\r\n", 2, 1, fp );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/07/19 16:03:11  warmerda
+ * allow VERSION override on write
+ *
  * Revision 1.11  2001/07/19 13:26:32  warmerda
  * enable override of existing modules
  *
@@ -578,6 +581,17 @@ int OGRTigerDataSource::Create( const char *pszNameIn, char **papszOptions )
     bWriteMode = TRUE;
 
     SetOptionList( papszOptions );
+
+/* -------------------------------------------------------------------- */
+/*      Work out the version.                                           */
+/* -------------------------------------------------------------------- */
+    nVersionCode = 1000; /* census 2000 */
+    if( GetOption("VERSION") != NULL )
+    {
+        nVersionCode = atoi(GetOption("VERSION"));
+        nVersionCode = MAX(0,MIN(9999,nVersionCode));
+    }
+    nVersion = TigerClassifyVersion(nVersionCode);
 
     return TRUE;
 }
