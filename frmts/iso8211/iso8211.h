@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/08/29 17:47:33  warmerda
+ * added GetInstanceData
+ *
  * Revision 1.13  2001/08/24 19:41:19  warmerda
  * fixed cloning problems
  *
@@ -469,6 +472,8 @@ class DDFField
 
     const char         *GetSubfieldData( DDFSubfieldDefn *,
                                          int * = NULL, int = 0 );
+
+    const char         *GetInstanceData( int nInstance, int *pnSize );
 
     /**
      * Return the pointer to the entire data block for this record. This
