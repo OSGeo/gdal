@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2001/05/01 18:18:28  warmerda
+ * added world file support
+ *
  * Revision 1.3  2001/01/12 21:19:25  warmerda
  * added progressive support
  *
@@ -68,6 +71,9 @@ class JPGDataset : public GDALDataset
     struct jpeg_decompress_struct sDInfo;
     struct jpeg_error_mgr sJErr;
 
+    int	   bGeoTransformValid;
+    double adfGeoTransform[6];
+
     FILE   *fpImage;
     int    nLoadedScanline;
     GByte  *pabyScanline;
@@ -79,6 +85,7 @@ class JPGDataset : public GDALDataset
                  JPGDataset();
                  ~JPGDataset();
 
+    virtual CPLErr GetGeoTransform( double * );
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
@@ -189,6 +196,14 @@ JPGDataset::JPGDataset()
 {
     pabyScanline = NULL;
     nLoadedScanline = -1;
+
+    bGeoTransformValid = FALSE;
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -262,6 +277,23 @@ void JPGDataset::Restart()
         sDInfo.out_color_space = JCS_RGB;
     nLoadedScanline = -1;
     jpeg_start_decompress( &sDInfo );
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr JPGDataset::GetGeoTransform( double * padfTransform )
+
+{
+
+    if( bGeoTransformValid )
+    {
+        memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
+        return CE_None;
+    }
+    else
+        return CE_Failure;
 }
 
 /************************************************************************/
@@ -367,6 +399,13 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Open overviews.                                                 */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Check for world file.                                           */
+/* -------------------------------------------------------------------- */
+    poDS->bGeoTransformValid = 
+        GDALReadWorldFile( poOpenInfo->pszFilename, ".jgw", 
+                           poDS->adfGeoTransform );
 
     return poDS;
 }
