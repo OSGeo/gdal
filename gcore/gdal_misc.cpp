@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2001/11/30 03:41:26  warmerda
+ * Fixed bug with the block sampling rate being too low to satisfy large
+ * sample count values.  Fixed bug with tiled images including some uninitialized
+ * or zero data in the sample set on partial edge tiles.
+ *
  * Revision 1.27  2001/11/26 20:14:01  warmerda
  * added GDALProjDef stubs for old 'bridges'
  *
@@ -873,28 +878,36 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
     double      dfNoDataValue;
     int         nActualSamples = 0;
     int         nBlockSampleRate;
+    int		nBlockPixels, nBlockCount;
 
     dfNoDataValue = poBand->GetNoDataValue( &bGotNoDataValue );
 
     poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
+
     nBlocksPerRow = (poBand->GetXSize() + nBlockXSize - 1) / nBlockXSize;
     nBlocksPerColumn = (poBand->GetYSize() + nBlockYSize - 1) / nBlockYSize;
 
-    nSampleRate = 
-        (int) MAX(1,sqrt((double) nBlocksPerRow * nBlocksPerColumn)-2.0);
+    nBlockPixels = nBlockXSize * nBlockYSize;
+    nBlockCount = nBlocksPerRow * nBlocksPerColumn;
+
+    nSampleRate = (int) MAX(1,sqrt((double) nBlockCount)-2.0);
 
     if( nSampleRate == nBlocksPerRow && nSampleRate > 1 )
         nSampleRate--;
 
-    nBlockSampleRate = MAX(1,(nBlockXSize * nBlockYSize) / 
-        (nSamples / (nBlocksPerRow*nBlocksPerColumn / nSampleRate)));
+    while( nSampleRate > 1 
+           && ((nBlockCount-1) / nSampleRate + 1) * nBlockPixels < nSamples )
+        nSampleRate--;
+
+    nBlockSampleRate = 
+        MAX(1,nBlockPixels / (nSamples / ((nBlockCount-1) / nSampleRate + 1)));
     
     for( int iSampleBlock = 0; 
-         iSampleBlock < nBlocksPerRow * nBlocksPerColumn;
+         iSampleBlock < nBlockCount;
          iSampleBlock += nSampleRate )
     {
         double dfValue = 0.0, dfReal, dfImag;
-        int  iXBlock, iYBlock, iOffset;
+        int  iXBlock, iYBlock, iX, iY, iXValid, iYValid;
         GDALRasterBlock *poBlock;
 
         iYBlock = iSampleBlock / nBlocksPerRow;
@@ -903,63 +916,76 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
         poBlock = poBand->GetBlockRef( iXBlock, iYBlock );
         if( poBlock == NULL )
             continue;
-        
-        /* this isn't the fastest way to do this, but is easier for now */
-        for( iOffset = nBlockXSize*nBlockYSize-1; 
-             iOffset >= 0 && nActualSamples < nSamples; 
-             iOffset -= nBlockSampleRate )
-        {
-            switch( poBlock->GetDataType() )
-            {
-              case GDT_Byte:
-                dfValue = ((GByte *) poBlock->GetDataRef())[iOffset];
-                break;
-              case GDT_UInt16:
-                dfValue = ((GUInt16 *) poBlock->GetDataRef())[iOffset];
-                break;
-              case GDT_Int16:
-                dfValue = ((GInt16 *) poBlock->GetDataRef())[iOffset];
-                break;
-              case GDT_UInt32:
-                dfValue = ((GUInt32 *) poBlock->GetDataRef())[iOffset];
-                break;
-              case GDT_Int32:
-                dfValue = ((GInt32 *) poBlock->GetDataRef())[iOffset];
-                break;
-              case GDT_Float32:
-                dfValue = ((float *) poBlock->GetDataRef())[iOffset];
-                break;
-              case GDT_Float64:
-                dfValue = ((double *) poBlock->GetDataRef())[iOffset];
-                break;
-              case GDT_CInt16:
-                dfReal = ((GInt16 *) poBlock->GetDataRef())[iOffset*2];
-                dfImag = ((GInt16 *) poBlock->GetDataRef())[iOffset*2+1];
-                dfValue = sqrt(dfReal*dfReal + dfImag*dfImag);
-                break;
-              case GDT_CInt32:
-                dfReal = ((GInt32 *) poBlock->GetDataRef())[iOffset*2];
-                dfImag = ((GInt32 *) poBlock->GetDataRef())[iOffset*2+1];
-                dfValue = sqrt(dfReal*dfReal + dfImag*dfImag);
-                break;
-              case GDT_CFloat32:
-                dfReal = ((float *) poBlock->GetDataRef())[iOffset*2];
-                dfImag = ((float *) poBlock->GetDataRef())[iOffset*2+1];
-                dfValue = sqrt(dfReal*dfReal + dfImag*dfImag);
-                break;
-              case GDT_CFloat64:
-                dfReal = ((double *) poBlock->GetDataRef())[iOffset*2];
-                dfImag = ((double *) poBlock->GetDataRef())[iOffset*2+1];
-                dfValue = sqrt(dfReal*dfReal + dfImag*dfImag);
-                break;
-              default:
-                CPLAssert( FALSE );
-            }
-            
-            if( bGotNoDataValue && dfValue == dfNoDataValue )
-                continue;
 
-            pafSampleBuf[nActualSamples++] = dfValue;
+        if( iXBlock * nBlockXSize > poBand->GetXSize() )
+            iXValid = poBand->GetXSize() - iXBlock * nBlockXSize;
+        else
+            iXValid = nBlockXSize;
+
+        if( iYBlock * nBlockYSize > poBand->GetYSize() )
+            iYValid = poBand->GetYSize() - iYBlock * nBlockYSize;
+        else
+            iYValid = nBlockYSize;
+
+        for( iY = 0; iY < iYValid; iY++ )
+        {
+            for( iX = 0; iX < iXValid; iX++ )
+            {
+                int	iOffset;
+
+                iOffset = iX + iY * nBlockXSize; 
+                switch( poBlock->GetDataType() )
+                {
+                  case GDT_Byte:
+                    dfValue = ((GByte *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_UInt16:
+                    dfValue = ((GUInt16 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_Int16:
+                    dfValue = ((GInt16 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_UInt32:
+                    dfValue = ((GUInt32 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_Int32:
+                    dfValue = ((GInt32 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_Float32:
+                    dfValue = ((float *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_Float64:
+                    dfValue = ((double *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_CInt16:
+                    dfReal = ((GInt16 *) poBlock->GetDataRef())[iOffset*2];
+                    dfImag = ((GInt16 *) poBlock->GetDataRef())[iOffset*2+1];
+                    dfValue = sqrt(dfReal*dfReal + dfImag*dfImag);
+                    break;
+                  case GDT_CInt32:
+                    dfReal = ((GInt32 *) poBlock->GetDataRef())[iOffset*2];
+                    dfImag = ((GInt32 *) poBlock->GetDataRef())[iOffset*2+1];
+                    dfValue = sqrt(dfReal*dfReal + dfImag*dfImag);
+                    break;
+                  case GDT_CFloat32:
+                    dfReal = ((float *) poBlock->GetDataRef())[iOffset*2];
+                    dfImag = ((float *) poBlock->GetDataRef())[iOffset*2+1];
+                    dfValue = sqrt(dfReal*dfReal + dfImag*dfImag);
+                    break;
+                  case GDT_CFloat64:
+                    dfReal = ((double *) poBlock->GetDataRef())[iOffset*2];
+                    dfImag = ((double *) poBlock->GetDataRef())[iOffset*2+1];
+                    dfValue = sqrt(dfReal*dfReal + dfImag*dfImag);
+                    break;
+                  default:
+                    CPLAssert( FALSE );
+                }
+            
+                if( bGotNoDataValue && dfValue == dfNoDataValue )
+                    continue;
+
+                pafSampleBuf[nActualSamples++] = dfValue;
+            }
         }
     }
 
