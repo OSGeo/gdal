@@ -28,6 +28,11 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.10  2002/12/04 15:55:27  warmerda
+ * Remap BSB 1 based pixel values to 0 based when reading, and the corresponding
+ * shift up when writing.  Merge duplicate colors in color table when writing.
+ * Merge even more "close" colors on write if needed to get PCT size below 128.
+ *
  * Revision 1.9  2002/11/23 18:54:17  warmerda
  * added CREATIONDATATYPES metadata for drivers
  *
@@ -135,13 +140,15 @@ BSBRasterBand::BSBRasterBand( BSBDataset *poDS )
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
 
-    for( int i = 0; i < poDS->psInfo->nPCTSize; i++ )
+    // Note that the first color table entry is dropped, everything is
+    // shifted down.
+    for( int i = 0; i < poDS->psInfo->nPCTSize-1; i++ )
     {
         GDALColorEntry  oColor;
 
-        oColor.c1 = poDS->psInfo->pabyPCT[i*3+0];
-        oColor.c2 = poDS->psInfo->pabyPCT[i*3+1];
-        oColor.c3 = poDS->psInfo->pabyPCT[i*3+2];
+        oColor.c1 = poDS->psInfo->pabyPCT[i*3+0+3];
+        oColor.c2 = poDS->psInfo->pabyPCT[i*3+1+3];
+        oColor.c3 = poDS->psInfo->pabyPCT[i*3+2+3];
         oColor.c4 = 255;
 
         oCT.SetColorEntry( i, &oColor );
@@ -157,9 +164,15 @@ CPLErr BSBRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     BSBDataset *poGDS = (BSBDataset *) poDS;
+    GByte *pabyScanline = (GByte*) pImage;
 
-    if( BSBReadScanline( poGDS->psInfo, nBlockYOff, (unsigned char *)pImage ) )
+    if( BSBReadScanline( poGDS->psInfo, nBlockYOff, pabyScanline ) )
+    {
+        for( int i = 0; i < nBlockXSize; i++ )
+            pabyScanline[i] -= 1;
+
         return CE_None;
+    }
     else
         return CE_Failure;
 }
@@ -471,22 +484,31 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Prepare colortable.                                             */
+/*      Prepare initial color table.colortable.                         */
 /* -------------------------------------------------------------------- */
     GDALRasterBand	*poBand = poSrcDS->GetRasterBand(1);
     int			iColor;
-    unsigned char       abyPCT[768];
+    unsigned char       abyPCT[771];
     int                 nPCTSize;
+    int                 anRemap[256];
+
+    abyPCT[0] = 0;
+    abyPCT[1] = 0;
+    abyPCT[2] = 0;
 
     if( poBand->GetColorTable() == NULL )
     {
+        /* map greyscale down to 63 grey levels. */
         for( iColor = 0; iColor < 256; iColor++ )
         {
-            abyPCT[iColor*3 + 0] = iColor;
-            abyPCT[iColor*3 + 1] = iColor;
-            abyPCT[iColor*3 + 2] = iColor;
+            int nOutValue = (int) (iColor / 4.1) + 1;
+
+            anRemap[iColor] = nOutValue;
+            abyPCT[nOutValue*3 + 0] = iColor;
+            abyPCT[nOutValue*3 + 1] = iColor;
+            abyPCT[nOutValue*3 + 2] = iColor;
         }
-        nPCTSize = 256;
+        nPCTSize = 64;
     }
     else
     {
@@ -499,13 +521,116 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
             poCT->GetColorEntryAsRGB( iColor, &sEntry );
             
-            abyPCT[iColor*3 + 0] = sEntry.c1;
-            abyPCT[iColor*3 + 1] = sEntry.c2;
-            abyPCT[iColor*3 + 2] = sEntry.c3;
+            anRemap[iColor] = iColor + 1;
+            abyPCT[(iColor+1)*3 + 0] = sEntry.c1;
+            abyPCT[(iColor+1)*3 + 1] = sEntry.c2;
+            abyPCT[(iColor+1)*3 + 2] = sEntry.c3;
+        }
+
+        // Add entries for pixel values which apparently will not occur.
+        for( iColor = nPCTSize; iColor < 256; iColor++ )
+            anRemap[iColor] = 1;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Boil out all duplicate entries.                                 */
+/* -------------------------------------------------------------------- */
+    int  i;
+
+    for( i = 1; i < nPCTSize-1; i++ )
+    {
+        int  j;
+
+        for( j = i+1; j < nPCTSize; j++ )
+        {
+            if( abyPCT[i*3+0] == abyPCT[j*3+0] 
+                && abyPCT[i*3+1] == abyPCT[j*3+1] 
+                && abyPCT[i*3+2] == abyPCT[j*3+2] )
+            {
+                int   k;
+
+                nPCTSize--;
+                abyPCT[j*3+0] = abyPCT[nPCTSize*3+0];
+                abyPCT[j*3+1] = abyPCT[nPCTSize*3+1];
+                abyPCT[j*3+2] = abyPCT[nPCTSize*3+2];
+
+                for( k = 0; k < 256; k++ )
+                {
+                    // merge matching entries.
+                    if( anRemap[k] == j )
+                        anRemap[k] = i;
+
+                    // shift the last PCT entry into the new hole.
+                    if( anRemap[k] == nPCTSize )
+                        anRemap[k] = j;
+                }
+            }
         }
     }
 
-    BSBWritePCT( psBSB, nPCTSize, abyPCT );
+/* -------------------------------------------------------------------- */
+/*      Boil out all duplicate entries.                                 */
+/* -------------------------------------------------------------------- */
+    if( nPCTSize > 128 )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Having to merge color table entries to reduce %d real\n"
+                  "color table entries down to 127 values.", 
+                  nPCTSize );
+    }
+
+    while( nPCTSize > 127 )
+    {
+        int nBestRange = 768;
+        int iBestMatch1=-1, iBestMatch2=-1;
+
+        // Find the closest pair of color table entries.
+
+        for( i = 1; i < nPCTSize-1; i++ )
+        {
+            int  j;
+            
+            for( j = i+1; j < nPCTSize; j++ )
+            {
+                int nRange = ABS(abyPCT[i*3+0] - abyPCT[j*3+0])
+                    + ABS(abyPCT[i*3+1] - abyPCT[j*3+1])
+                    + ABS(abyPCT[i*3+2] - abyPCT[j*3+2]);
+
+                if( nRange < nBestRange )
+                {
+                    iBestMatch1 = i;
+                    iBestMatch2 = j;
+                    nBestRange = nRange;
+                }
+            }
+        }
+
+        // Merge the second entry into the first. 
+        nPCTSize--;
+        abyPCT[iBestMatch2*3+0] = abyPCT[nPCTSize*3+0];
+        abyPCT[iBestMatch2*3+1] = abyPCT[nPCTSize*3+1];
+        abyPCT[iBestMatch2*3+2] = abyPCT[nPCTSize*3+2];
+
+        for( i = 0; i < 256; i++ )
+        {
+            // merge matching entries.
+            if( anRemap[i] == iBestMatch2 )
+                anRemap[i] = iBestMatch1;
+            
+            // shift the last PCT entry into the new hole.
+            if( anRemap[i] == nPCTSize )
+                anRemap[i] = iBestMatch2;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write the PCT.                                                  */
+/* -------------------------------------------------------------------- */
+    if( !BSBWritePCT( psBSB, nPCTSize, abyPCT ) )
+    {
+        BSBClose( psBSB );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
@@ -520,8 +645,14 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                                  pabyScanline, nXSize, 1, GDT_Byte,
                                  nBands, nBands * nXSize );
-        if( eErr == CE_None && !BSBWriteScanline( psBSB, pabyScanline ) )
-            eErr = CE_Failure;
+        if( eErr == CE_None )
+        {
+            for( i = 0; i < nXSize; i++ )
+                pabyScanline[i] = (GByte) anRemap[pabyScanline[i]];
+
+            if( !BSBWriteScanline( psBSB, pabyScanline ) )
+                eErr = CE_Failure;
+        }
     }
 
     CPLFree( pabyScanline );
