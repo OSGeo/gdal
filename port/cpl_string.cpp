@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.38  2004/04/23 22:23:32  warmerda
+ * Fixed key memory leak in seldom used CSLSetNameValueSeperator().
+ *
  * Revision 1.37  2003/12/02 15:56:47  warmerda
  * avoid use of CSLAddString() in tokenize, manage list ourselves
  *
@@ -1174,6 +1177,7 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
         strcat( pszNewLine, pszValue );
         CPLFree( papszList[iLine] );
         papszList[iLine] = pszNewLine;
+        CPLFree( pszKey );
     }
 }
 
