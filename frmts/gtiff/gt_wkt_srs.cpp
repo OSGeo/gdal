@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2002/11/25 16:32:38  warmerda
+ * improved support for using authority PCS/GCS/Datum info when writing
+ *
  * Revision 1.30  2002/11/25 05:34:10  warmerda
  * implemented support for checking and writing linear units
  *
@@ -565,12 +568,28 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 /* -------------------------------------------------------------------- */
 /*      Get the Datum so we can special case a few PCS codes.           */
 /* -------------------------------------------------------------------- */
-    int		nDatum;
+    int		nDatum = KvUserDefined;
 
-    if( poSRS->GetAttrValue("DATUM") != NULL )
+    if( poSRS->GetAuthorityName("PROJCS|GEOGCS|DATUM") != NULL 
+        && EQUAL(poSRS->GetAuthorityName("PROJCS|GEOGCS|DATUM"),"EPSG") )
+        nDatum = atoi(poSRS->GetAuthorityCode("PROJCS|GEOGCS|DATUM"));
+    else if( poSRS->GetAuthorityName("GEOGCS|DATUM") != NULL 
+             && EQUAL(poSRS->GetAuthorityName("GEOGCS|DATUM"),"EPSG") )
+        nDatum = atoi(poSRS->GetAuthorityCode("GEOGCS|DATUM"));
+    else if( poSRS->GetAttrValue("DATUM") != NULL )
         nDatum = OGCDatumName2EPSGDatumCode( poSRS->GetAttrValue("DATUM") );
-    else
-        nDatum = KvUserDefined;
+
+/* -------------------------------------------------------------------- */
+/*      Get the GCS if possible.                                        */
+/* -------------------------------------------------------------------- */
+    int         nGCS = KvUserDefined;
+
+    if( poSRS->GetAuthorityName("PROJCS|GEOGCS") != NULL 
+        && EQUAL(poSRS->GetAuthorityName("PROJCS|GEOGCS"),"EPSG") )
+        nGCS = atoi(poSRS->GetAuthorityCode("PROJCS|GEOGCS"));
+    else if( poSRS->GetAuthorityName("GEOGCS") != NULL 
+             && EQUAL(poSRS->GetAuthorityName("GEOGCS"),"EPSG") )
+        nGCS = atoi(poSRS->GetAuthorityCode("GEOGCS"));
 
 /* -------------------------------------------------------------------- */
 /*      Get the linear units.                                           */
@@ -591,11 +610,24 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
         nUOMLengthCode = KvUserDefined;
 
 /* -------------------------------------------------------------------- */
+/*      Get some authority values.                                      */
+/* -------------------------------------------------------------------- */
+    if( poSRS->GetAuthorityName("PROJCS") != NULL 
+        && EQUAL(poSRS->GetAuthorityName("PROJCS"),"EPSG") )
+        nPCS = atoi(poSRS->GetAuthorityCode("PROJCS"));
+
+/* -------------------------------------------------------------------- */
 /*      Handle the projection transformation.                           */
 /* -------------------------------------------------------------------- */
     const char *pszProjection = poSRS->GetAttrValue( "PROJECTION" );
 
-    if( pszProjection == NULL )
+    if( nPCS != KvUserDefined )
+    {
+	GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
+                   ModelTypeProjected);
+        GTIFKeySet(psGTIF, ProjectedCSTypeGeoKey, TYPE_SHORT, 1, nPCS );
+    }
+    else if( pszProjection == NULL )
     {
 	GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
                    ModelTypeGeographic);
@@ -1314,20 +1346,21 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
     }
     
 /* -------------------------------------------------------------------- */
-/*	Try to identify the datum, scanning the EPSG datum file for	*/
-/*	a match.							*/    
+/*      Try to identify the GCS/datum, scanning the EPSG datum file for */
+/*      a match.                                                        */
 /* -------------------------------------------------------------------- */
     if( nPCS == KvUserDefined )
     {
-        int		nGCS = KvUserDefined;
-
-        if( nDatum == Datum_North_American_Datum_1927 )
-            nGCS = GCS_NAD27;
-        else if( nDatum == Datum_North_American_Datum_1983 )
-            nGCS = GCS_NAD83;
-        else if( nDatum == Datum_WGS84 || nDatum == DatumE_WGS84 )
-            nGCS = GCS_WGS_84;
-
+        if( nGCS == KvUserDefined )
+        {
+            if( nDatum == Datum_North_American_Datum_1927 )
+                nGCS = GCS_NAD27;
+            else if( nDatum == Datum_North_American_Datum_1983 )
+                nGCS = GCS_NAD83;
+            else if( nDatum == Datum_WGS84 || nDatum == DatumE_WGS84 )
+                nGCS = GCS_WGS_84;
+        }
+            
         if( nGCS != KvUserDefined )
         {
             GTIFKeySet( psGTIF, GeographicTypeGeoKey, TYPE_SHORT,
@@ -1346,10 +1379,6 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
                       poSRS->GetAttrValue("DATUM") );
         }
     }
-
-/* -------------------------------------------------------------------- */
-/*      Write the GCS information.                                      */
-/* -------------------------------------------------------------------- */
     
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
