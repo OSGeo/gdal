@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2004/07/28 17:56:00  warmerda
+ * use return instead of exit() to avoid lame warnings on windows
+ *
  * Revision 1.9  2004/07/26 14:15:22  warmerda
  * Avoid return type warning.
  *
@@ -141,5 +144,5 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     delete poDataset;
 
-    exit( nResultStatus );
+    return nResultStatus;
 }

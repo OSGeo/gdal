@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/07/28 17:56:00  warmerda
+ * use return instead of exit() to avoid lame warnings on windows
+ *
  * Revision 1.5  2004/04/02 17:33:22  warmerda
  * added GDALGeneralCmdLineProcessor()
  *
@@ -562,7 +565,7 @@ int main( int argc, char ** argv )
 
     GDALDestroyDriverManager();
     
-    exit( 0 );
+    return 0;
 }
 
 /************************************************************************/
