@@ -4,11 +4,13 @@ include ../GDALmake.opt
 
 OBJ	=	ogrgeometryfactory.o ogrpoint.o ogrcurve.o ogrlinestring.o \
 		ogrlinearring.o ogrpolygon.o ogrutils.o ogrgeometry.o \
-		ogrgeometrycollection.o ogrmultipolygon.o
+		ogrgeometrycollection.o ogrmultipolygon.o ogrsurface.o
 
 LIBS	:=	$(CPL_LIB) $(LIBS)
 
 default:	$(OBJ)
+
+all:	test1 docs
 
 clean:
 	rm -f *.o test1
