@@ -7,6 +7,9 @@ OBJ	=	ogrsfdriverregistrar.o ogrlayer.o ogrdatasource.o \
 		ogrsfdriver.o ogrregisterall.o ogr_gensql.o \
 		ogr_attrind.o ogr_miattrind.o
 
+CFLAGS   :=     $(CFLAGS) -DINST_DATA=\"$(INST_DATA)\"
+CXXFLAGS :=     $(CXXFLAGS) -DINST_DATA=\"$(INST_DATA)\"
+
 ifeq ($(HAVE_OGDI),yes)
 CFLAGS   :=	$(CFLAGS) -DOGDI_ENABLED
 CXXFLAGS :=	$(CXXFLAGS) -DOGDI_ENABLED
@@ -30,6 +33,11 @@ endif
 ifeq ($(ODBC_SETTING),yes)
 CFLAGS   :=	$(CFLAGS) -DODBC_ENABLED
 CXXFLAGS :=	$(CXXFLAGS) -DODBC_ENABLED
+endif
+
+ifeq ($(HAVE_DODS),yes)
+CFLAGS   :=	$(CFLAGS) -DDODS_ENABLED
+CXXFLAGS :=	$(CXXFLAGS) -DDODS_ENABLED
 endif
 
 CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
