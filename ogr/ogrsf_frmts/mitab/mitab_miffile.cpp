@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.32 2002/04/26 14:16:49 julien Exp $
+ * $Id: mitab_miffile.cpp,v 1.33 2002/05/08 15:10:48 julien Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.33  2002/05/08 15:10:48  julien
+ * Implement MIFFile::SetMIFCoordSys in mitab_capi.cpp (Bug 984)
+ *
  * Revision 1.32  2002/04/26 14:16:49  julien
  * Finishing the implementation of Multipoint (support for MIF)
  *
@@ -1750,6 +1753,52 @@ int MIFFile::SetSpatialRef( OGRSpatialReference * poSpatialRef )
     CPLFree( m_pszCoordSys );
 
     m_pszCoordSys = MITABSpatialRef2CoordSys( poSpatialRef );
+
+    return( m_pszCoordSys != NULL );
+}
+
+
+/************************************************************************/
+/*                      MIFFile::SetMIFCoordSys()                       */
+/************************************************************************/
+
+int MIFFile::SetMIFCoordSys(const char * pszMIFCoordSys)
+
+{
+    char        **papszFields, *pszCoordSys;
+    int         iBounds;
+
+    // Extract the word 'COORDSYS' if present
+    if (EQUALN(pszMIFCoordSys,"COORDSYS",8) )
+    {
+        pszCoordSys = CPLStrdup(pszMIFCoordSys + 9);
+    }
+    else
+    {
+        pszCoordSys = CPLStrdup(pszMIFCoordSys);
+    }
+
+    // Extract bounds if present
+    papszFields = CSLTokenizeStringComplex(pszCoordSys, " ,()\t",
+                                           TRUE, FALSE );
+    iBounds = CSLFindString( papszFields, "Bounds" );
+    if (iBounds >= 0 && iBounds + 4 < CSLCount(papszFields))
+    {
+        m_dXMin = atof(papszFields[++iBounds]);
+        m_dYMin = atof(papszFields[++iBounds]);
+        m_dXMax = atof(papszFields[++iBounds]);
+        m_dYMax = atof(papszFields[++iBounds]);
+        m_bBoundsSet = TRUE;
+
+        pszCoordSys[strstr(pszCoordSys, "Bounds") - pszCoordSys] = '\0';
+    }
+    CSLDestroy( papszFields );
+
+    // Assign the CoordSys
+    CPLFree( m_pszCoordSys );
+
+    m_pszCoordSys = CPLStrdup(pszCoordSys);
+    CPLFree(pszCoordSys);
 
     return( m_pszCoordSys != NULL );
 }

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.61 2002/03/26 19:27:43 daniel Exp $
+ * $Id: mitab.h,v 1.67 2002/06/28 18:39:10 julien Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo MIF Read/Write library
@@ -30,6 +30,25 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.67  2002/06/28 18:39:10  julien
+ * Change version number (1.2.2-dev)
+ *
+ * Revision 1.66  2002/06/28 18:32:37  julien
+ * Add SetSpatialFilter() in TABSeamless class (Bug 164, MapServer)
+ * Use double for comparison in Coordsys2Int() in mitab_mapheaderblock.cpp
+ *
+ * Revision 1.65  2002/06/17 15:00:30  julien
+ * Add IsInteriorRing() function in TABRegion to validate if a ring is internal
+ *
+ * Revision 1.64  2002/05/08 20:02:29  daniel
+ * Version 1.2.1
+ *
+ * Revision 1.63  2002/05/08 15:10:48  julien
+ * Implement MIFFile::SetMIFCoordSys in mitab_capi.cpp (Bug 984)
+ *
+ * Revision 1.62  2002/05/03 15:09:41  daniel
+ * Version 1.2.0
+ *
  * Revision 1.61  2002/03/26 19:27:43  daniel
  * Got rid of tabs in source
  *
@@ -140,7 +159,7 @@
 /*---------------------------------------------------------------------
  * Current version of the MITAB library... always useful!
  *--------------------------------------------------------------------*/
-#define MITAB_VERSION "1.2.0-dev (2002-03-25)"
+#define MITAB_VERSION "1.2.2-dev (2002-06-28)"
 
 #ifndef PI
 #  define PI 3.14159265358979323846
@@ -553,6 +572,8 @@ class TABSeamless: public IMapInfoFile
     virtual const char *GetTableName()
            {return m_poFeatureDefnRef?m_poFeatureDefnRef->GetName():"";};
 
+    virtual void        SetSpatialFilter( OGRGeometry * );
+
     virtual void        ResetReading();
     virtual int         TestCapability( const char * pszCap );
     virtual int         GetFeatureCount (int bForce);
@@ -752,7 +773,7 @@ class MIFFile: public IMapInfoFile
     /*  { return m_poMAPFile->GetHeaderBlock()->GetProjInfo( poPI ); }*/
     virtual int  SetProjInfo(TABProjInfo * /*poPI*/){return -1;}
     /*  { return m_poMAPFile->GetHeaderBlock()->SetProjInfo( poPI ); }*/
-    virtual int  SetMIFCoordSys(const char * /*pszMIFCoordSys*/) {return -1;};
+    virtual int  SetMIFCoordSys(const char * pszMIFCoordSys);
 
 #ifdef DEBUG
     virtual void Dump(FILE * /*fpOut*/ = NULL) {};
@@ -1332,6 +1353,7 @@ class TABRegion: public TABFeature,
      */
     int                 GetNumRings();
     OGRLinearRing      *GetRingRef(int nRequestedRingIndex);
+    GBool               IsInteriorRing(int nRequestedRingIndex);
 
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *);
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *);
