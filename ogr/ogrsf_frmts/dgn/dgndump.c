@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/01/10 16:10:57  warmerda
+ * Added extents reporting
+ *
  * Revision 1.2  2000/12/28 21:27:38  warmerda
  * added summary report
  *
@@ -73,6 +76,18 @@ int main( int argc, char ** argv )
         while( (psElement=DGNReadElement(hDGN)) != NULL )
         {
             DGNDumpElement( hDGN, psElement, stdout );
+
+            {
+                DGNInfo	*psDGNInfo = (DGNInfo *) hDGN;
+                int	 nAttIndex;
+
+                nAttIndex = psDGNInfo->abyElem[30]
+                          + psDGNInfo->abyElem[31] * 256;
+
+                if( nAttIndex * 2 + 32 < psDGNInfo->nElemBytes )
+                    printf( "index to attribute linkage: %d\n", 
+                            nAttIndex );
+            }
             DGNFreeElement( hDGN, psElement );
         }
     }
@@ -83,6 +98,15 @@ int main( int argc, char ** argv )
         int			anLevelTypeCount[128*64];
         int			anLevelCount[64];
         int			anTypeCount[128];
+        double			adfExtents[6];
+
+        DGNGetExtents( hDGN, adfExtents );
+        printf( "X Range: %.2f to %.2f\n", 
+                adfExtents[0], adfExtents[3] );
+        printf( "Y Range: %.2f to %.2f\n", 
+                adfExtents[1], adfExtents[4] );
+        printf( "Z Range: %.2f to %.2f\n", 
+                adfExtents[2], adfExtents[5] );
 
         pasEI = DGNGetElementIndex( hDGN, &nCount );
 
