@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/02/22 12:42:18  fwarmerdam
+ * Added OGRLayer SetSpatialFilter(), and GetSpatialFilter() methods as well
+ * as code to help implement fast bounding box spatial tests.
+ *
  * Revision 1.22  2005/02/02 20:00:29  fwarmerdam
  * added SetNextByIndex support
  *
@@ -116,6 +120,9 @@ OGRLayer::OGRLayer()
     m_nRefCount = 0;
 
     m_nFeaturesRead = 0;
+
+    m_poFilterGeom = NULL;
+    m_bFilterIsEnvelope = FALSE;
 }
 
 /************************************************************************/
@@ -135,6 +142,12 @@ OGRLayer::~OGRLayer()
     {
         delete m_poAttrQuery;
         m_poAttrQuery = NULL;
+    }
+
+    if( m_poFilterGeom )
+    {
+        delete m_poFilterGeom;
+        m_poFilterGeom = NULL;
     }
 }
 
@@ -600,6 +613,16 @@ int OGR_L_TestCapability( OGRLayerH hLayer, const char *pszCap )
 }
 
 /************************************************************************/
+/*                          GetSpatialFilter()                          */
+/************************************************************************/
+
+OGRGeometry *OGRLayer::GetSpatialFilter()
+
+{
+    return m_poFilterGeom;
+}
+
+/************************************************************************/
 /*                       OGR_L_GetSpatialFilter()                       */
 /************************************************************************/
 
@@ -607,6 +630,17 @@ OGRGeometryH OGR_L_GetSpatialFilter( OGRLayerH hLayer )
 
 {
     return (OGRGeometryH) ((OGRLayer *) hLayer)->GetSpatialFilter();
+}
+
+/************************************************************************/
+/*                          SetSpatialFilter()                          */
+/************************************************************************/
+
+void OGRLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
+
+{
+    if( InstallFilter( poGeomIn ) )
+        ResetReading();
 }
 
 /************************************************************************/
@@ -639,6 +673,138 @@ void OGRLayer::SetSpatialFilterRect( double dfMinX, double dfMinY,
     oPoly.addRing( &oRing );
 
     SetSpatialFilter( &oPoly );
+}
+
+/************************************************************************/
+/*                           InstallFilter()                            */
+/*                                                                      */
+/*      This method is only intended to be used from within             */
+/*      drivers, normally from the SetSpatialFilter() method.           */
+/*      It installs a filter, and also tests it to see if it is         */
+/*      rectangular.  If so, it this is kept track of alongside the     */
+/*      filter geometry itself so we can do cheaper comparisons in      */
+/*      the FilterGeometry() call.                                      */
+/*                                                                      */
+/*      Returns TRUE if the newly installed filter differs in some      */
+/*      way from the current one.                                       */
+/************************************************************************/
+
+int OGRLayer::InstallFilter( OGRGeometry * poFilter )
+
+{
+    if( m_poFilterGeom == NULL && poFilter == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Replace the existing filter.                                    */
+/* -------------------------------------------------------------------- */
+    if( m_poFilterGeom != NULL )
+    {
+        delete m_poFilterGeom;
+        m_poFilterGeom = NULL;
+    }
+
+    if( poFilter != NULL )
+        m_poFilterGeom = poFilter->clone();
+
+    m_bFilterIsEnvelope = FALSE;
+
+    if( m_poFilterGeom == NULL )
+        return TRUE;
+
+    if( m_poFilterGeom != NULL )
+        m_poFilterGeom->getEnvelope( &m_sFilterEnvelope );
+
+/* -------------------------------------------------------------------- */
+/*      Now try to determine if the filter is really a rectangle.       */
+/* -------------------------------------------------------------------- */
+    if( wkbFlatten(m_poFilterGeom->getGeometryType()) != wkbPolygon )
+        return TRUE;
+
+    OGRPolygon *poPoly = (OGRPolygon *) m_poFilterGeom;
+
+    if( poPoly->getNumInteriorRings() != 0 )
+        return TRUE;
+
+    OGRLinearRing *poRing = poPoly->getExteriorRing();
+
+    if( poRing->getNumPoints() > 5 || poRing->getNumPoints() < 4 )
+        return TRUE;
+
+    // If the ring has 5 points, the last should be the first. 
+    if( poRing->getNumPoints() == 5 
+        && ( poRing->getX(0) != poRing->getX(4)
+             || poRing->getY(0) != poRing->getY(4) ) )
+        return TRUE;
+
+    // Polygon with first segment in "y" direction. 
+    if( poRing->getX(0) == poRing->getX(1)
+        && poRing->getY(1) == poRing->getY(2)
+        && poRing->getX(2) == poRing->getX(3)
+        && poRing->getY(3) == poRing->getY(0) )
+        m_bFilterIsEnvelope = TRUE;
+
+    // Polygon with first segment in "x" direction. 
+    if( poRing->getY(0) == poRing->getY(1)
+        && poRing->getX(1) == poRing->getX(2)
+        && poRing->getY(2) == poRing->getY(3)
+        && poRing->getX(3) == poRing->getX(0) )
+        m_bFilterIsEnvelope = TRUE;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                           FilterGeometry()                           */
+/*                                                                      */
+/*      Compare the passed in geometry to the currently installed       */
+/*      filter.  Optimize for case where filter is just an              */
+/*      envelope.                                                       */
+/************************************************************************/
+
+int OGRLayer::FilterGeometry( OGRGeometry *poGeometry )
+
+{
+/* -------------------------------------------------------------------- */
+/*      In trivial cases of new filter or target geometry, we accept    */
+/*      an intersection.  No geometry is taken to mean "the whole       */
+/*      world".                                                         */
+/* -------------------------------------------------------------------- */
+    if( m_poFilterGeom == NULL )
+        return TRUE;
+
+    if( poGeometry == NULL )
+        return TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Compute the target geometry envelope, and if there is no        */
+/*      intersection between the envelopes we are sure not to have      */
+/*      any intersection.                                               */
+/* -------------------------------------------------------------------- */
+    OGREnvelope sGeomEnv;
+
+    poGeometry->getEnvelope( &sGeomEnv );
+
+    if( sGeomEnv.MaxX < m_sFilterEnvelope.MinX
+        || sGeomEnv.MaxY < m_sFilterEnvelope.MinY
+        || m_sFilterEnvelope.MaxX < sGeomEnv.MinX
+        || m_sFilterEnvelope.MaxY < sGeomEnv.MinY )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Fallback to full intersect test (using GEOS) if we still        */
+/*      don't know for sure.                                            */
+/* -------------------------------------------------------------------- */
+    if( m_bFilterIsEnvelope )
+        return TRUE;
+    else
+    {
+#ifdef HAVE_GEOS 
+        return m_poFilterGeom->Intersects( poGeometry );
+#else
+        return TRUE;
+#endif
+    }
 }
 
 /************************************************************************/
@@ -748,4 +914,5 @@ GIntBig OGR_L_GetFeaturesRead( OGRLayerH hLayer )
 {
     return ((OGRLayer *) hLayer)->GetFeaturesRead();
 }
+
 
