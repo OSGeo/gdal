@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/10/31 03:50:21  warmerda
+ * fixed check in AIGProcessBlock
+ *
  * Revision 1.18  2002/10/31 03:09:35  warmerda
  * added support for FF blocks
  *
@@ -353,14 +356,6 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
 
         nDataSize--;
         
-        if( nMarker + nPixels > nTotPixels )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Run too long in AIGProcessBlock, needed %d values, got %d.", 
-                      nTotPixels - nPixels, nMarker );
-            return CE_Failure;
-        }
-        
 /* -------------------------------------------------------------------- */
 /*      Repeat data - four byte data block (0xE0)                       */
 /* -------------------------------------------------------------------- */
@@ -368,6 +363,14 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
         {
             GUInt32	nValue;
             
+            if( nMarker + nPixels > nTotPixels )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Run too long in AIGProcessBlock, needed %d values, got %d.", 
+                          nTotPixels - nPixels, nMarker );
+                return CE_Failure;
+            }
+        
             nValue = 0;
             memcpy( &nValue, pabyCur, 4 );
             pabyCur += 4;
@@ -387,6 +390,14 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
         {
             GUInt32	nValue;
             
+            if( nMarker + nPixels > nTotPixels )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Run too long in AIGProcessBlock, needed %d values, got %d.", 
+                          nTotPixels - nPixels, nMarker );
+                return CE_Failure;
+            }
+        
             nValue = (pabyCur[0] * 256 + pabyCur[1]) + nMin;
             pabyCur += 2;
 
@@ -401,6 +412,14 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
         {
             GUInt32	nValue;
 
+            if( nMarker + nPixels > nTotPixels )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Run too long in AIGProcessBlock, needed %d values, got %d.", 
+                          nTotPixels - nPixels, nMarker );
+                return CE_Failure;
+            }
+        
             nValue = *(pabyCur++) + nMin;
             nDataSize--;
             
@@ -413,6 +432,14 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
 /* -------------------------------------------------------------------- */
         else if( nMagic == 0xDF && nMarker < 128 )
         {
+            if( nMarker + nPixels > nTotPixels )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Run too long in AIGProcessBlock, needed %d values, got %d.", 
+                          nTotPixels - nPixels, nMarker );
+                return CE_Failure;
+            }
+        
             for( i = 0; i < nMarker; i++ )
                 panData[nPixels++] = nMin;
         }
@@ -422,6 +449,14 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
 /* -------------------------------------------------------------------- */
         else if( nMagic == 0xD7 && nMarker < 128 )
         {
+            if( nMarker + nPixels > nTotPixels )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Run too long in AIGProcessBlock, needed %d values, got %d.", 
+                          nTotPixels - nPixels, nMarker );
+                return CE_Failure;
+            }
+        
             while( nMarker > 0 && nDataSize > 0 )
             {
                 panData[nPixels++] = *(pabyCur++) + nMin;
@@ -437,6 +472,14 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
         {
             GUInt32	nValue;
             
+            if( nMarker + nPixels > nTotPixels )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Run too long in AIGProcessBlock, needed %d values, got %d.", 
+                          nTotPixels - nPixels, nMarker );
+                return CE_Failure;
+            }
+        
             while( nMarker > 0 && nDataSize > 0 )
             {
                 nValue = pabyCur[0] * 256 + pabyCur[1] + nMin;
@@ -455,6 +498,14 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
         {
             nMarker = 256 - nMarker;
 
+            if( nMarker + nPixels > nTotPixels )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Run too long in AIGProcessBlock, needed %d values, got %d.", 
+                          nTotPixels - nPixels, nMarker );
+                return CE_Failure;
+            }
+        
             while( nMarker > 0 )
             {
                 panData[nPixels++] = GRID_NO_DATA;
