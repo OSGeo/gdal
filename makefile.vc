@@ -183,4 +183,6 @@ swig_python: makefile.vc nmake.opt
         cd .\pymod\ng
         "d:\swig\SWIG-1.3.24\swig.exe" -c++ -python -modern -new_repr -o gdal_wrap.cpp gdal.i
         "d:\swig\SWIG-1.3.24\swig.exe" -c++ -python -modern -new_repr -o osr_wrap.cpp osr.i
+        "d:\swig\SWIG-1.3.24\swig.exe" -c++ -python -modern -new_repr -o ogr_wrap.cpp ogr.i
+        $(PYDIR)\python.exe setup.py build
         
