@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/05/31 03:40:22  warmerda
+ * added improved support for parsing attribute linkages
+ *
  * Revision 1.8  2002/05/30 19:24:38  warmerda
  * add partial support for tag type 5
  *
@@ -388,22 +391,24 @@ int DGNLookupColor( DGNHandle hDGN, int color_index,
 int DGNGetShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElem, int *pnColor )
 
 {
-    int	nAttrOffset = 0;
-
-    while( nAttrOffset <= psElem->attr_bytes - 16 )
+    int iLink;
+    
+    for( iLink = 0; TRUE; iLink++ )
     {
-        if( psElem->attr_data[nAttrOffset] >= 7 
-            && psElem->attr_data[nAttrOffset+2] == 0x41
-            && psElem->attr_data[nAttrOffset+3] == 0x00 )
+        int nLinkType, nLinkSize;
+        unsigned char *pabyData;
+
+        pabyData = DGNGetLinkage( hDGN, psElem, iLink, &nLinkType, 
+                                  NULL, NULL, &nLinkSize );
+        if( pabyData == NULL )
+            return FALSE;
+
+        if( nLinkType == DGNLT_SHAPE_FILL && nLinkSize >= 7 )
         {
-            *pnColor = psElem->attr_data[nAttrOffset+8];
+            *pnColor = pabyData[8];
             return TRUE;
         }
-
-        nAttrOffset += psElem->attr_data[nAttrOffset] * 2 + 2;
     }
-
-    return FALSE;
 }
 
 /************************************************************************/
@@ -755,16 +760,32 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 
     if( psElement->attr_bytes > 0 )
     {
-        int       i;
+        int iLink;
 
         fprintf( fp, "Attributes (%d bytes):\n", psElement->attr_bytes );
-        for( i = 0; i < psElement->attr_bytes; i++ )
+        
+        for( iLink = 0; TRUE; iLink++ )
+
         {
-            if( (i%32) == 0 && i != 0 )
-                fprintf( fp, "\n" );
-            fprintf( fp, "%02x", psElement->attr_data[i] );
+            int nLinkType, nEntityNum=0, nMSLink=0, nLinkSize, i;
+            unsigned char *pabyData;
+
+            pabyData = DGNGetLinkage( hDGN, psElement, iLink, &nLinkType, 
+                                      &nEntityNum, &nMSLink, &nLinkSize );
+            if( pabyData == NULL )
+                break;
+
+            fprintf( fp, "Type=0x%04x", nLinkType );
+            if( nMSLink != 0 || nEntityNum != 0 )
+                fprintf( fp, ", EntityNum=%d, MSLink=%d", 
+                         nEntityNum, nMSLink );
+            fprintf( fp, "\n  0x" );
+
+            for( i = 0; i < nLinkSize; i++ )
+                fprintf( fp, "%02x", pabyData[i] );
+            fprintf( fp, "\n" );
+            
         }
-        fprintf( fp, "\n" );
     }
 }
 
@@ -860,3 +881,91 @@ const char *DGNTypeToName( int nType )
     }
 }
 
+/************************************************************************/
+/*                         DGNGetAttrLinkSize()                         */
+/************************************************************************/
+
+int DGNGetAttrLinkSize( DGNHandle hDGN, DGNElemCore *psElement, int nOffset )
+
+{
+    if( psElement->attr_bytes < nOffset + 4 )
+        return 0;
+
+    /* DMRS Linkage */
+    if( (psElement->attr_data[nOffset+0] == 0 
+         && psElement->attr_data[nOffset+1] == 0)
+        || (psElement->attr_data[nOffset+0] == 0 
+            && psElement->attr_data[nOffset+1] == 0x80) )
+        return 8;
+
+    /* If low order bit of second byte is set, first byte is length */
+    if( psElement->attr_data[nOffset+1] & 0x10 )
+        return psElement->attr_data[nOffset+0] * 2 + 2;
+
+    /* unknown */
+    return 0;
+}
+
+/************************************************************************/
+/*                           DGNGetLinkage()                            */
+/************************************************************************/
+
+unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement, 
+                              int iIndex, int *pnLinkageType,
+                              int *pnEntityNum, int *pnMSLink, int *pnLength )
+    
+{
+    int nAttrOffset;
+    int iLinkage, nLinkSize;
+
+    for( iLinkage=0, nAttrOffset=0;
+         (nLinkSize = DGNGetAttrLinkSize( hDGN, psElement, nAttrOffset)) != 0;
+         iLinkage++, nAttrOffset += nLinkSize )
+    {
+        if( iLinkage == iIndex )
+        {
+            int  nLinkageType=0, nEntityNum=0, nMSLink = 0;
+            CPLAssert( nLinkSize > 4 );
+
+            if( psElement->attr_data[nAttrOffset+0] == 0x00
+                && (psElement->attr_data[nAttrOffset+0] == 0x00
+                    || psElement->attr_data[nAttrOffset+0] == 0x80) )
+            {
+                nLinkageType = DGNLT_DMRS;
+                nEntityNum = psElement->attr_data[nAttrOffset+2] 
+                    + psElement->attr_data[nAttrOffset+3] * 256;
+                nMSLink = psElement->attr_data[nAttrOffset+4] 
+                    + psElement->attr_data[nAttrOffset+5] * 256
+                    + psElement->attr_data[nAttrOffset+6] * 65536;
+            }
+            else
+                nLinkageType = psElement->attr_data[nAttrOffset+2] 
+                    + psElement->attr_data[nAttrOffset+3] * 256;
+
+            // Possibly an external database linkage?
+            if( nLinkSize == 16 && nLinkageType != DGNLT_SHAPE_FILL )
+            {
+                nEntityNum = psElement->attr_data[nAttrOffset+6] 
+                    + psElement->attr_data[nAttrOffset+7] * 256;
+                nMSLink = psElement->attr_data[nAttrOffset+8] 
+                    + psElement->attr_data[nAttrOffset+9] * 256
+                    + psElement->attr_data[nAttrOffset+10] * 65536
+                    + psElement->attr_data[nAttrOffset+11] * 65536 * 256;
+                
+            }
+
+            if( pnLinkageType != NULL )
+                *pnLinkageType = nLinkageType;
+            if( pnEntityNum != NULL )
+                *pnEntityNum = nEntityNum;
+            if( pnMSLink != NULL )
+                *pnMSLink = nMSLink;
+            if( pnLength != NULL )
+                *pnLength = nLinkSize;
+
+            return psElement->attr_data + nAttrOffset;
+        }
+    }
+             
+    return NULL;
+}
