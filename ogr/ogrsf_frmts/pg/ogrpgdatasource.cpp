@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2004/04/30 15:17:38  warmerda
+ * Added DELLAYER:layername ExecuteSQL() pseudo-directive.
+ * Clean stale entries in geometry_columns table when creating a layer.
+ *
  * Revision 1.24  2004/04/30 00:45:45  warmerda
  * default to launder being on
  *
@@ -383,7 +387,12 @@ void OGRPGDataSource::DeleteLayer( const char *pszLayerName )
     }
 
     if( iLayer == nLayers )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Attempt to delete layer '%s', but this layer is not known to OGR.", 
+                  pszLayerName );
         return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Blow away our OGR structures related to the layer.  This is     */
@@ -551,6 +560,18 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
     if( bHavePostGIS )
     {
         const char *pszGeometryType;
+
+        /* Sometimes there is an old cruft entry in the geometry_columns
+         * table if things were not properly cleaned up before.  We make
+         * an effort to clean out such cruft.
+         */
+        sprintf( szCommand, 
+                 "DELETE FROM geometry_columns WHERE f_table_name = '%s'", 
+                 pszLayerName );
+                 
+        CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
+        hResult = PQexec(hPGConn, szCommand);
+        PQclear( hResult );
 
         switch( wkbFlatten(eType) )
         {
@@ -985,6 +1006,20 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         CPLDebug( "OGR_PG", 
           "Spatial filter ignored for now in OGRPGDataSource::ExecuteSQL()" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Special case DELLAYER: command.                                 */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    {
+        const char *pszLayerName = pszSQLCommand + 9;
+
+        while( *pszLayerName == ' ' )
+            pszLayerName++;
+
+        DeleteLayer( pszLayerName );
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
