@@ -1,3 +1,8 @@
+2003-02-15  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* /gdal/pymod/samples/val_repl.py: Created directory for storing Python
+	sample scripts along with the first sample.
+
 2003-02-03  Andrey Kiselev  <dron@remotesensing.org>
 	
 	* /gdal/frmts/raw/pnmdataset.cpp: Added support for reading
