@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/11/16 21:38:07  warmerda
+ * try to work even if bModified
+ *
  * Revision 1.1  2001/11/16 21:14:31  warmerda
  * New
  *
@@ -145,18 +148,16 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /*      Now transform this possibly reduced request back into the       */
 /*      destination buffer coordinates in case the output region is     */
 /*      less than the whole buffer.                                     */
+/*                                                                      */
+/*      This is kind of hard, so for now we will assume that no         */
+/*      serious modification took place.                                */
 /* -------------------------------------------------------------------- */
-    if( bModified )
-    {
-        CPLAssert( FALSE );
-    }
-    else
-    {
-        nOutXOff = 0;
-        nOutYOff = 0;
-        nOutXSize = nBufXSize;
-        nOutYSize = nBufYSize;
-    }
+    CPLAssert( !bModified );
+
+    nOutXOff = 0;
+    nOutYOff = 0;
+    nOutXSize = nBufXSize;
+    nOutYSize = nBufYSize;
 
 /* -------------------------------------------------------------------- */
 /*      Actually perform the IO request.                                */
