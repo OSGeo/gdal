@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/07/27 00:48:12  warmerda
+ * Added Equal() support
+ *
  * Revision 1.8  1999/07/06 21:36:47  warmerda
  * tenatively added getEnvelope() and Intersect()
  *
@@ -670,6 +673,38 @@ void OGRPolygon::getEnvelope( OGREnvelope * poEnvelope )
         if( poEnvelope->MaxY < oRingEnv.MaxY )
             poEnvelope->MaxY = oRingEnv.MaxY;
     }
+}
+
+/************************************************************************/
+/*                               Equal()                                */
+/************************************************************************/
+
+OGRBoolean OGRPolygon::Equal( OGRGeometry * poOther )
+
+{
+    OGRPolygon *poOPoly = (OGRPolygon *) poOther;
+
+    if( poOther == this )
+        return TRUE;
+    
+    if( poOther->getGeometryType() != getGeometryType() )
+        return FALSE;
+
+    if( getNumInteriorRings() != poOPoly->getNumInteriorRings() )
+        return FALSE;
+
+    if( !getExteriorRing()->Equal( poOPoly->getExteriorRing() ) )
+        return FALSE;
+    
+    // we should eventually test the SRS.
+
+    for( int iRing = 0; iRing < getNumInteriorRings(); iRing++ )
+    {
+        if( !getInteriorRing(iRing)->Equal(poOPoly->getInteriorRing(iRing)) )
+            return FALSE;
+    }
+
+    return TRUE;
 }
 
 

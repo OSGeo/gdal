@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/07/27 00:48:11  warmerda
+ * Added Equal() support
+ *
  * Revision 1.5  1999/07/06 21:36:47  warmerda
  * tenatively added getEnvelope() and Intersect()
  *
@@ -578,3 +581,33 @@ void OGRGeometryCollection::getEnvelope( OGREnvelope * poEnvelope )
             poEnvelope->MaxY = oGeomEnv.MaxY;
     }
 }
+
+/************************************************************************/
+/*                               Equal()                                */
+/************************************************************************/
+
+OGRBoolean OGRGeometryCollection::Equal( OGRGeometry * poOther )
+
+{
+    OGRGeometryCollection *poOGC = (OGRGeometryCollection *) poOther;
+
+    if( poOther == this )
+        return TRUE;
+    
+    if( poOther->getGeometryType() != getGeometryType() )
+        return FALSE;
+
+    if( getNumGeometries() != poOGC->getNumGeometries() )
+        return FALSE;
+    
+    // we should eventually test the SRS.
+
+    for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
+    {
+        if( !getGeometryRef(iGeom)->Equal(poOGC->getGeometryRef(iGeom)) )
+            return FALSE;
+    }
+
+    return TRUE;
+}
+

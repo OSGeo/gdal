@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/07/27 00:48:11  warmerda
+ * Added Equal() support
+ *
  * Revision 1.9  1999/07/06 21:36:47  warmerda
  * tenatively added getEnvelope() and Intersect()
  *
@@ -386,4 +389,26 @@ void OGRPoint::getEnvelope( OGREnvelope * poEnvelope )
  * There is no corresponding SFCOM method.
  */ 
 
+/************************************************************************/
+/*                               Equal()                                */
+/************************************************************************/
 
+OGRBoolean OGRPoint::Equal( OGRGeometry * poOther )
+
+{
+    OGRPoint	*poOPoint = (OGRPoint *) poOther;
+    
+    if( poOther == this )
+        return TRUE;
+    
+    if( poOther->getGeometryType() != getGeometryType() )
+        return FALSE;
+
+    // we should eventually test the SRS.
+    
+    if( poOPoint->getX() != getX()
+        || poOPoint->getY() != getY() )
+        return FALSE;
+    else
+        return TRUE;
+}

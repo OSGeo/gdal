@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  1999/07/27 00:48:11  warmerda
+ * Added Equal() support
+ *
  * Revision 1.13  1999/07/08 20:26:03  warmerda
  * No longer override getGeometryType() on OGRLinearRing.
  *
@@ -178,7 +181,8 @@ class OGRGeometry
     OGRSpatialReference *getSpatialReference( void ) { return poSRS; }
 
     // ISpatialRelation
-    OGRBoolean	Intersect( OGRGeometry * );
+    virtual OGRBoolean	Intersect( OGRGeometry * );
+    virtual OGRBoolean	Equal( OGRGeometry * ) = 0;
     
 #ifdef notdef
     
@@ -186,7 +190,6 @@ class OGRGeometry
     // should be pure?
     OGRGeometry *getBoundary();
 
-    OGRBoolean	Equal( OGRGeometry * );
     OGRBoolean	Disjoint( OGRGeometry * );
     OGRBoolean	Touch( OGRGeometry * );
     OGRBoolean	Cross( OGRGeometry * );
@@ -247,6 +250,9 @@ class OGRPoint : public OGRGeometry
     void	setX( double xIn ) { x = xIn; }
     void	setY( double yIn ) { y = yIn; }
 
+    // ISpatialRelation
+    virtual OGRBoolean	Equal( OGRGeometry * );
+    
     // Non standard from OGRGeometry
     virtual const char *getGeometryName();
     virtual OGRwkbGeometryType getGeometryType();
@@ -317,6 +323,9 @@ class OGRLineString : public OGRCurve
     double	getX( int i ) { return paoPoints[i].x; }
     double	getY( int i ) { return paoPoints[i].y; }
 
+    // ISpatialRelation
+    virtual OGRBoolean	Equal( OGRGeometry * );
+    
     // non standard.
     void	setNumPoints( int );
     void	setPoint( int, OGRPoint * );
@@ -433,6 +442,9 @@ class OGRPolygon : public OGRSurface
     virtual int	getCoordinateDimension();
     virtual void getEnvelope( OGREnvelope * psEnvelope );
 
+    // ISpatialRelation
+    virtual OGRBoolean	Equal( OGRGeometry * );
+    
     // Non standard
     void    	addRing( OGRLinearRing * );
 
@@ -485,6 +497,9 @@ class OGRGeometryCollection : public OGRGeometry
     int		getNumGeometries();
     OGRGeometry *getGeometryRef( int );
 
+    // ISpatialRelation
+    virtual OGRBoolean	Equal( OGRGeometry * );
+    
     // Non standard
     virtual OGRErr addGeometry( OGRGeometry * );
     

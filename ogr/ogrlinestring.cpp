@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/07/27 00:48:11  warmerda
+ * Added Equal() support
+ *
  * Revision 1.8  1999/07/06 21:36:47  warmerda
  * tenatively added getEnvelope() and Intersect()
  *
@@ -707,3 +710,32 @@ void OGRLineString::getEnvelope( OGREnvelope * poEnvelope )
     poEnvelope->MaxY = dfMaxY;
 }
 
+/************************************************************************/
+/*                               Equal()                                */
+/************************************************************************/
+
+OGRBoolean OGRLineString::Equal( OGRGeometry * poOther )
+
+{
+    OGRLineString	*poOLine = (OGRLineString *) poOther;
+    
+    if( poOther == this )
+        return TRUE;
+    
+    if( poOther->getGeometryType() != getGeometryType() )
+        return FALSE;
+
+    // we should eventually test the SRS.
+
+    if( getNumPoints() != poOLine->getNumPoints() )
+        return FALSE;
+
+    for( int iPoint = 1; iPoint < getNumPoints(); iPoint++ )
+    {
+        if( getX(iPoint) != poOLine->getX(iPoint)
+            || getY(iPoint) != poOLine->getY(iPoint) )
+            return FALSE;
+    }
+
+    return TRUE;
+}
