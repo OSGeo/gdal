@@ -27,7 +27,7 @@ DIST_FILES =	dgnread.cpp dgnopen.cpp dgnlib.h dgnlibp.h dgnfloat.cpp \
 default:	$(O_OBJ) $(foreach file,$(OBJ_OGR),../o/$(file))
 
 clean:
-	rm -rf *.o $(DEST_DIR) dgnlib-$(DIST_REV).zip html man
+	rm -rf *.o $(DEST_DIR) dgnlib-$(DIST_REV).zip html man $(O_OBJ)
 	rm -f dgndump dgnwritetest
 
 dgndump:	dgndump.c $(OBJ)
