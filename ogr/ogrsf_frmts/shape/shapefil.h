@@ -37,8 +37,11 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.13  2005/01/03 22:26:21  fwarmerdam
- * updated to use spatial indexing
+ * Revision 1.14  2005/03/14 15:21:29  fwarmerdam
+ * updated
+ *
+ * Revision 1.30  2005/01/03 22:30:13  fwarmerdam
+ * added support for saved quadtrees
  *
  * Revision 1.29  2004/09/26 20:09:35  fwarmerdam
  * avoid rcsid warnings
