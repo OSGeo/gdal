@@ -29,6 +29,10 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.67  2004/08/17 19:18:47  gwalter
+# Fixed y/z mixup in GCP serialize function
+# for the with_Z=1 case.
+#
 # Revision 1.66  2004/08/11 19:04:35  warmerda
 # added warping related support
 #
@@ -446,7 +450,7 @@ class GCP:
         base.append([CXT_Attribute,'X',[CXT_Text,xval]])
         base.append([CXT_Attribute,'Y',[CXT_Text,yval]])
         if with_Z:
-            base.append([CXT_Attribute,'Z',[CXT_Text,yval]])        
+            base.append([CXT_Attribute,'Z',[CXT_Text,zval]])        
         return base
 
 def GCPsToGeoTransform( gcp_list, approx_ok = 1 ):
