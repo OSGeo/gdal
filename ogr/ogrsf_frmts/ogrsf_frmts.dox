@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/03/27 21:24:55  warmerda
+ * updates notes on GetFeature()
+ *
  * Revision 1.7  2001/10/02 14:24:24  warmerda
  * added SetAttributeFilter docs
  *
@@ -396,13 +399,17 @@
 
  This function will attempt to read the identified feature.  The nFID
  value cannot be OGRNullFID.  Success or failure of this operation is
- unaffected by the spatial filter. 
+ unaffected by the spatial or attribute filters.
 
  If this method returns a non-NULL feature, it is guaranteed that it's 
  feature id (OGRFeature::GetFID()) will be the same as nFID.
 
  Use OGRLayer::TestCapability(OLCRandomRead) to establish if this layer
- supports random access reading via GetFeature().
+ supports efficient random access reading via GetFeature(); however, the
+ call should always work if the feature exists as a fallback implementation
+ just scans all the features in the layer looking for the desired feature.
+ 
+ Sequential reads are generally considered interrupted bya GetFeature() call.
 
  @param nFID the feature id of the feature to read. 
 
