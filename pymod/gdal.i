@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.79  2004/01/22 21:27:38  dron
+ * Added wrapper for GDALDataTypeIsComplex() function.
+ *
  * Revision 1.78  2004/01/18 16:52:39  dron
  * Added wrapper for GDALGetDataTypeByName().
  *
@@ -510,7 +513,8 @@ typedef int GDALRWFlag;
 typedef int GDALColorInterp;
 typedef int GDALPaletteInterp;
 
-int  GDALGetDataTypeSize( GDALDataType );
+int GDALGetDataTypeSize( GDALDataType );
+int GDALDataTypeIsComplex( GDALDataType );
 const char * GDALGetDataTypeName( GDALDataType );
 GDALDataType GDALGetDataTypeByName( const char * );
 
