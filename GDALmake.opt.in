@@ -94,7 +94,8 @@ HAVE_LD_SHARED  =	yes
 endif
 
 GDAL_INCLUDE	=	-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore \
-			-I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/alg
+			-I$(GDAL_ROOT)/alg \
+			-I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogr/ogrsf_frmts
 
 # libtool targets and help variables
 LIBGDAL	:=	$(GDAL_ROOT)/libgdal.la
