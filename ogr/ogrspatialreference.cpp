@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2002/01/24 16:22:18  warmerda
+ * reworked StripCTParms and simplify support for prettywkt
+ *
  * Revision 1.44  2002/01/18 15:30:41  warmerda
  * ensure all AXIS nodes wiped in StripCTParms
  *
@@ -541,7 +544,19 @@ OGRErr OGRSpatialReference::exportToPrettyWkt( char ** ppszResult,
                                                int bSimplify )
 
 {
-    return poRoot->exportToPrettyWkt( ppszResult, bSimplify, 1 );
+    if( bSimplify )
+    {
+        OGRSpatialReference *poSimpleClone = Clone();
+        OGRErr eErr;
+
+        poSimpleClone->GetRoot()->StripNodes( "AXIS" );
+        poSimpleClone->GetRoot()->StripNodes( "AUTHORITY" );
+        eErr = poSimpleClone->GetRoot()->exportToPrettyWkt( ppszResult, 1 );
+        delete poSimpleClone;
+        return eErr;
+    }
+    else
+        return poRoot->exportToPrettyWkt( ppszResult, 1 );
 }
 
 /************************************************************************/
@@ -2522,13 +2537,9 @@ OGRErr OGRSpatialReference::StripCTParms( OGR_SRSNode * poCurrent )
     if( poCurrent == NULL )
         return OGRERR_NONE;
 
-    poCurrent->DestroyChild( poCurrent->FindChild( "AUTHORITY" ) );
-    poCurrent->DestroyChild( poCurrent->FindChild( "TOWGS84" ) );
-    while( poCurrent->FindChild( "AXIS" ) >= 0 )
-        poCurrent->DestroyChild( poCurrent->FindChild( "AXIS" ) );
-    
-    for( int iChild = 0; iChild < poCurrent->GetChildCount(); iChild++ )
-        StripCTParms( poCurrent->GetChild( iChild ) );
+    poCurrent->StripNodes( "AUTHORITY" );
+    poCurrent->StripNodes( "TOWGS84" );
+    poCurrent->StripNodes( "AXIS" );
 
     return OGRERR_NONE;
 }
