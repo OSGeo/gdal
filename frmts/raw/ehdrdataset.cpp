@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2004/05/11 18:07:01  warmerda
+ * Treat NBITS=32 and 64 as floating point cases.
+ *
  * Revision 1.22  2004/02/12 10:15:33  dron
  * Fixed problem when computing band offset for band sequental files.
  *
@@ -321,7 +324,9 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
             if( atoi(papszTokens[1]) == 16 )
                 eDataType = GDT_Int16;
             else if( atoi(papszTokens[1]) == 32 )
-                eDataType = GDT_Int32;
+                eDataType = GDT_Float32;
+            else if( atoi(papszTokens[1]) == 64 )
+                eDataType = GDT_Float64;
         }
         else if( EQUAL(papszTokens[0],"byteorder") )
         {
