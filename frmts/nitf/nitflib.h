@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2004/04/15 20:52:53  warmerda
+ * added metadata support
+ *
  * Revision 1.9  2004/04/02 20:44:37  warmerda
  * preserve APBB (actual bits per pixel) field as metadata
  *
@@ -100,6 +103,8 @@ typedef struct {
 
     int     nLocCount;
     NITFLocation *pasLocations;
+
+    char    **papszMetadata;
     
 } NITFFile;
 
@@ -184,6 +189,9 @@ typedef struct {
     int        nBandOffset;
 
     GUInt32    *panBlockStart;
+
+    char       **papszMetadata;
+    
 } NITFImage;
 
 NITFImage CPL_DLL *NITFImageAccess( NITFFile *, int iSegment );
