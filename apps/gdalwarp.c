@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/12/17 18:23:19  warmerda
+ * copy GCP projection if the main projection isn't set meaningfully
+ *
  * Revision 1.5  2002/12/13 04:57:15  warmerda
  * implementing remaining commandline options
  *
@@ -212,7 +215,18 @@ int main( int argc, char ** argv )
         exit( 2 );
 
     if( pszSourceSRS == NULL )
-        pszSourceSRS = CPLStrdup(GDALGetProjectionRef( hSrcDS ));
+    {
+        if( GDALGetProjectionRef( hSrcDS ) != NULL 
+            && strlen(GDALGetProjectionRef( hSrcDS )) > 0 )
+            pszSourceSRS = CPLStrdup(GDALGetProjectionRef( hSrcDS ));
+
+        else if( GDALGetGCPProjection( hSrcDS ) != NULL
+                 && strlen(GDALGetGCPProjection(hSrcDS)) > 0 
+                 && GDALGetGCPCount( hSrcDS ) > 1 )
+            pszSourceSRS = CPLStrdup(GDALGetGCPProjection( hSrcDS ));
+        else
+            pszSourceSRS = CPLStrdup("");
+    }
 
     if( pszTargetSRS == NULL )
         pszTargetSRS = CPLStrdup(pszSourceSRS);
