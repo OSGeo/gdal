@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/01/25 20:46:26  warmerda
+ * recover if CreateGMLReader() fails
+ *
  * Revision 1.1  2002/01/25 20:37:02  warmerda
  * New
  *
@@ -125,11 +128,21 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
     VSIFClose( fp );
     
-    pszName = CPLStrdup( pszNewName );
-
     poReader = CreateGMLReader();
+    if( poReader == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "File %s appears to be GML but the GML reader can't\n"
+                  "be instantiated, likely because Xerces support wasn't\n"
+                  "configured in.", 
+                  pszNewName );
+        return NULL;
+    }
+
     poReader->SetSourceFile( pszNewName );
     
+    pszName = CPLStrdup( pszNewName );
+
 /* -------------------------------------------------------------------- */
 /*      Force a first pass to establish the schema.  Eventually we      */
 /*      will have mechanisms for remembering the schema and related     */
