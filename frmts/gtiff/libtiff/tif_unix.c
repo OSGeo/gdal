@@ -1,4 +1,4 @@
-/* $Header: /d1/sam/tiff/libtiff/RCS/tif_unix.c,v 1.17 1997/08/29 21:46:02 sam Exp $ */
+/* $Header: /usr/cvsroot/gdal/frmts/gtiff/libtiff/tif_unix.c,v 1.1 1999/01/27 18:35:20 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -29,7 +29,9 @@
  */
 #include "tiffiop.h"
 #include <sys/types.h>
+#ifdef __unix__
 #include <unistd.h>
+#endif
 #include <stdlib.h>
 
 static tsize_t
