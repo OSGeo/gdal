@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.64  2002/12/16 17:08:44  warmerda
+ * added GetPrimeMeridian() method, and fiddled with OGRPrintDouble
+ *
  * Revision 1.63  2002/12/16 14:41:19  warmerda
  * implement normalized Get/Set ProjParm
  *
@@ -224,10 +227,25 @@
 
 CPL_CVSID("$Id$");
 
+/************************************************************************/
+/*                           OGRPrintDouble()                           */
+/************************************************************************/
+
 static void OGRPrintDouble( char * pszStrBuf, double dfValue )
 
 {
     sprintf( pszStrBuf, "%.16g", dfValue );
+
+    int nLen = strlen(pszStrBuf);
+
+    // The following hack is intended to truncate some "precision" in cases
+    // that appear to be roundoff error. 
+    if( nLen > 15 
+        && (strcmp(pszStrBuf+nLen-6,"999999") == 0
+            || strcmp(pszStrBuf+nLen-6,"000001") == 0) )
+    {
+        sprintf( pszStrBuf, "%.15g", dfValue );
+    }
 }
 
 /************************************************************************/
@@ -1102,6 +1120,60 @@ double OSRGetLinearUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
     
 {
     return ((OGRSpatialReference *) hSRS)->GetLinearUnits( ppszName );
+}
+
+/************************************************************************/
+/*                          GetPrimeMeridian()                          */
+/************************************************************************/
+
+/**
+ * Fetch prime meridian info.
+ *
+ * Returns the offset of the prime meridian from greenwich in degrees,
+ * and the prime meridian name (if requested).   If no PRIMEM value exists
+ * in the coordinate system definition a value of "Greenwich" and an
+ * offset of 0.0 is assumed.
+ *
+ * If the prime meridian name is returned, the pointer is to an internal
+ * copy of the name. It should not be freed, altered or depended on after
+ * the next OGR call.
+ *
+ * This method is the same as the C function OSRGetPrimeMeridian().
+ *
+ * @param ppszName return location for prime meridian name.  If NULL, name
+ * is not returned.
+ *
+ * @return the offset to the GEOGCS prime meridian from greenwich in decimal
+ * degrees.
+ */
+
+double OGRSpatialReference::GetPrimeMeridian( char **ppszName ) const 
+
+{
+    const OGR_SRSNode *poPRIMEM = GetAttrNode( "PRIMEM" );
+
+    if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2 
+        && atof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
+    {
+        if( ppszName != NULL )
+            *ppszName = (char *) poPRIMEM->GetChild(0)->GetValue();
+        return atof(poPRIMEM->GetChild(1)->GetValue());
+    }
+    
+    if( ppszName != NULL )
+        *ppszName = SRS_PM_GREENWICH;
+
+    return 0.0;
+}
+
+/************************************************************************/
+/*                        OSRGetPrimeMeridian()                         */
+/************************************************************************/
+
+double OSRGetPrimeMeridian( OGRSpatialReferenceH hSRS, char **ppszName )
+
+{
+    return ((OGRSpatialReference *) hSRS)->GetPrimeMeridian( ppszName );
 }
 
 /************************************************************************/
@@ -2042,10 +2114,12 @@ OGRErr OGRSpatialReference::SetNormProjParm( const char * pszName,
     GetNormInfo();
 
     if( dfToDegrees != 1.0 && IsAngularParameter(pszName) )
-        dfValue /= dfToDegrees;
+    {
+        if( dfFromGreenwich != 0.0 && IsLongitudeParameter( pszName ) )
+            dfValue -= dfFromGreenwich;
 
-    if( dfFromGreenwich != 0.0 && IsLongitudeParameter( pszName ) )
-        dfValue -= dfFromGreenwich;
+        dfValue /= dfToDegrees;
+    }
     else if( dfToMeter != 1.0 && IsLinearParameter( pszName ) )
         dfValue /= dfToMeter;
 
@@ -3540,20 +3614,10 @@ void OGRSpatialReference::GetNormInfo(void) const
     OGRSpatialReference *poThis = (OGRSpatialReference *) this;
 
     poThis->bNormInfoSet = TRUE;
-    poThis->dfFromGreenwich = 0.0;
+
+    poThis->dfFromGreenwich = GetPrimeMeridian(NULL);
     poThis->dfToMeter = GetLinearUnits(NULL);
     poThis->dfToDegrees = GetAngularUnits(NULL) / atof(SRS_UA_DEGREE_CONV);
     if( fabs(poThis->dfToDegrees-1.0) < 0.000000001 )
         poThis->dfToDegrees = 1.0;
-
-/* -------------------------------------------------------------------- */
-/*      Get the prime meridian.                                         */
-/* -------------------------------------------------------------------- */
-    const OGR_SRSNode *poPRIMEM = GetAttrNode( "PRIMEM" );
-
-    if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2 
-        && atof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
-    {
-        poThis->dfFromGreenwich = atof(poPRIMEM->GetChild(1)->GetValue());
-    }
 }
