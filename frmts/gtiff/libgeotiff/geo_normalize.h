@@ -86,6 +86,12 @@ typedef struct {
     /** One UOMLength = UOMLengthInMeters meters. */
     double	UOMLengthInMeters;
 
+    /** The angular units of the GCS. */
+    short       UOMAngle;
+
+    /** One UOMAngle = UOMLengthInDegrees degrees. */
+    double      UOMAngleInDegrees;
+    
     /** Datum from GeogGeodeticDatumGeoKey tag. For example Datum_WGS84 */
     short	Datum;
 
@@ -150,7 +156,7 @@ int CPL_DLL GTIFGetProjTRFInfo( int nProjTRFCode,
                                 short * pnProjMethod,
                                 double * padfProjParms );
 int CPL_DLL GTIFGetGCSInfo( int nGCSCode, char **ppszName,
-                            short *pnDatum, short *pnPM );
+                            short *pnDatum, short *pnPM, short *pnUOMAngle );
 int CPL_DLL GTIFGetDatumInfo( int nDatumCode, char **ppszName,
                               short * pnEllipsoid );
 int CPL_DLL GTIFGetEllipsoidInfo( int nEllipsoid, char ** ppszName,
@@ -163,6 +169,9 @@ double CPL_DLL GTIFAngleStringToDD( const char *pszAngle, int nUOMAngle );
 int CPL_DLL GTIFGetUOMLengthInfo( int nUOMLengthCode,
                                   char **ppszUOMName,
                                   double * pdfInMeters );
+int CPL_DLL GTIFGetUOMAngleInfo( int nUOMAngleCode,
+                                 char **ppszUOMName,
+                                 double * pdfInDegrees );
 
 int CPL_DLL GTIFGetDefn( GTIF *psGTIF, GTIFDefn * psDefn );
 void CPL_DLL GTIFPrintDefn( GTIFDefn *, FILE * );

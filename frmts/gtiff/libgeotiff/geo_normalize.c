@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c,v 1.9 1999/09/15 14:24:17 warmerda Exp $
+ * $Id: geo_normalize.c,v 1.12 1999/09/15 18:51:31 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -28,6 +28,16 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.c,v $
+ * Revision 1.12  1999/09/15 18:51:31  warmerda
+ * Map 9808 to TM South Oriented, not TM Modified Alaska.
+ *
+ * Revision 1.11  1999/09/15 16:44:06  warmerda
+ * Change meter to metre to match EPSG database in GTIFGetUOMLengthInfo()
+ * shortcut.
+ *
+ * Revision 1.10  1999/09/15 16:35:15  warmerda
+ * Fixed the fractions of second handling properly in GTIFAngleStringToDD().
+ *
  * Revision 1.9  1999/09/15 14:24:17  warmerda
  * Fixed serious bug in geo_normalize.c with translation of
  * DD.MMSSsss values.  Return value was seriously off if any
@@ -208,26 +218,12 @@ double GTIFAngleToDD( double dfAngle, int nUOMAngle )
         sprintf( szAngleString, "%12.7f", dfAngle );
         dfAngle = GTIFAngleStringToDD( szAngleString, nUOMAngle );
     }
-    else if( nUOMAngle == 9105 || nUOMAngle == 9106 )	/* grad */
+    else
     {
-        dfAngle = 180 * (dfAngle / 200);
-    }
-    else if( nUOMAngle == 9101 )			/* radians */
-    {
-        dfAngle = 180 * (dfAngle / PI);
-    }
-    else if( nUOMAngle == 9103 )			/* arc-minute */
-    {
-        dfAngle = dfAngle / 60;
-    }
-    else if( nUOMAngle == 9104 )			/* arc-second */
-    {
-        dfAngle = dfAngle / 3600;
-    }
-    else /* decimal degrees ... some cases missing but seeminly never used */
-    {
-        CPLAssert( nUOMAngle == 9102 || nUOMAngle == KvUserDefined
-                   || nUOMAngle == 0 );
+        double		dfInDegrees;
+        
+        GTIFGetUOMAngleInfo( nUOMAngle, NULL, &dfInDegrees );
+        dfAngle = dfAngle * dfInDegrees;
     }
 
     return( dfAngle );
@@ -320,11 +316,11 @@ double GTIFAngleStringToDD( const char * pszAngle, int nUOMAngle )
 /************************************************************************/
 
 int GTIFGetGCSInfo( int nGCSCode, char ** ppszName,
-                    short * pnDatum, short * pnPM )
+                    short * pnDatum, short * pnPM, short *pnUOMAngle )
 
 {
     char	szSearchKey[24];
-    int		nDatum, nPM;
+    int		nDatum, nPM, nUOMAngle;
 
 /* -------------------------------------------------------------------- */
 /*      Search the database for the corresponding datum code.           */
@@ -353,6 +349,19 @@ int GTIFGetGCSInfo( int nGCSCode, char ** ppszName,
 
     if( pnPM != NULL )
         *pnPM = nPM;
+
+/* -------------------------------------------------------------------- */
+/*      Get the angular units.                                          */
+/* -------------------------------------------------------------------- */
+    nUOMAngle = atoi(CSVGetField( CSVFilename("horiz_cs.csv" ),
+                                  "HORIZCS_CODE", szSearchKey, CC_Integer,
+                                  "UOM_ANGLE_CODE" ) );
+
+    if( nUOMAngle < 1 )
+        return FALSE;
+
+    if( pnUOMAngle != NULL )
+        *pnUOMAngle = nUOMAngle;
 
 /* -------------------------------------------------------------------- */
 /*      Get the name, if requested.                                     */
@@ -620,6 +629,73 @@ int GTIFGetUOMLengthInfo( int nUOMLengthCode,
 }
 
 /************************************************************************/
+/*                        GTIFGetUOMAngleInfo()                         */
+/************************************************************************/
+
+int GTIFGetUOMAngleInfo( int nUOMLengthCode,
+                         char **ppszUOMName,
+                         double * pdfInDegrees )
+
+{
+    const char	*pszUOMName = NULL;
+    double	dfInDegrees = 0.0;
+
+    switch( nUOMLengthCode )
+    {
+      case 9101:
+        pszUOMName = "radian";
+        dfInDegrees = 180.0 / 3.14159265358979;
+        break;
+        
+      case 9102:
+      case 9107:
+      case 9108:
+      case 9110:
+        pszUOMName = "degree";
+        dfInDegrees = 1.0;
+        break;
+
+      case 9103:
+        pszUOMName = "arc-minute";
+        dfInDegrees = 1 / 60.0;
+        break;
+
+      case 9104:
+        pszUOMName = "arc-second";
+        dfInDegrees = 1 / 3600.0;
+        break;
+        
+      case 9105:
+        pszUOMName = "grad";
+        dfInDegrees = 180.0 / 200.0;
+        break;
+
+      case 9106:
+        pszUOMName = "gon";
+        dfInDegrees = 180.0 / 200.0;
+        break;
+        
+      case 9109:
+        pszUOMName = "microradian";
+        dfInDegrees = 180.0 / (3.14159265358979 * 1000000.0);
+        break;
+    }
+
+    if( ppszUOMName != NULL )
+    {
+        if( pszUOMName != NULL )
+            *ppszUOMName = CPLStrdup( pszUOMName );
+        else
+            *ppszUOMName = NULL;
+    }
+
+    if( pdfInDegrees != NULL )
+        *pdfInDegrees = dfInDegrees;
+
+    return( TRUE );
+}
+
+/************************************************************************/
 /*                    EPSGProjMethodToCTProjMethod()                    */
 /*                                                                      */
 /*      Convert between the EPSG enumeration for projection methods,    */
@@ -756,8 +832,6 @@ int GTIFGetProjTRFInfo( int nProjTRFCode,
             adfProjParms[i] = atof(pszValue) * dfInMeters;
         else
             adfProjParms[i] = atof( pszValue );
-
-        
     }
 
 /* -------------------------------------------------------------------- */
@@ -1340,7 +1414,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 
 {
     int		i;
-    short	nGeogUOMAngle, nGeogUOMLinear;
+    short	nGeogUOMLinear;
     
 /* -------------------------------------------------------------------- */
 /*      Initially we default all the information we can.                */
@@ -1350,6 +1424,8 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
     psDefn->GCS = KvUserDefined;
     psDefn->UOMLength = KvUserDefined;
     psDefn->UOMLengthInMeters = 1.0;
+    psDefn->UOMAngle = KvUserDefined;
+    psDefn->UOMAngleInDegrees = 1.0;
     psDefn->Datum = KvUserDefined;
     psDefn->Ellipsoid = KvUserDefined;
     psDefn->SemiMajor = 0.0;
@@ -1379,9 +1455,6 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
 /*	Extract the Geog units.  					*/
 /* -------------------------------------------------------------------- */
-    nGeogUOMAngle = 9102; /* Angluar_Degrees */
-    GTIFKeyGet(psGTIF, GeogAngularUnitsGeoKey, &nGeogUOMAngle, 0, 1 );
-
     nGeogUOMLinear = 9001; /* Linear_Meter */
     GTIFKeyGet(psGTIF, GeogLinearUnitsGeoKey, &nGeogUOMLinear, 0, 1 );
 
@@ -1391,13 +1464,11 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
     if( GTIFKeyGet(psGTIF,ProjectedCSTypeGeoKey, &(psDefn->PCS),0,1) == 1
         && psDefn->PCS != KvUserDefined )
     {
-        short		nUOMAngle;
-        
         /*
          * Translate this into useful information.
          */
         GTIFGetPCSInfo( psDefn->PCS, NULL,
-                        &(psDefn->UOMLength), &(nUOMAngle),
+                        &(psDefn->UOMLength), &(psDefn->UOMAngle),
                         &(psDefn->GCS), &(psDefn->ProjCode) );
     }
 
@@ -1457,9 +1528,21 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
     if( psDefn->GCS != KvUserDefined )
     {
-        GTIFGetGCSInfo( psDefn->GCS, NULL, &(psDefn->Datum), &(psDefn->PM) );
+        GTIFGetGCSInfo( psDefn->GCS, NULL, &(psDefn->Datum), &(psDefn->PM),
+                        &(psDefn->UOMAngle) );
     }
     
+/* -------------------------------------------------------------------- */
+/*      Handle the GCS angular units.  GeogAngularUnitsGeoKey           */
+/*      overrides the GCS or PCS setting.                               */
+/* -------------------------------------------------------------------- */
+    GTIFKeyGet(psGTIF, GeogAngularUnitsGeoKey, &(psDefn->UOMAngle), 0, 1 );
+    if( psDefn->UOMAngle != KvUserDefined )
+    {
+        GTIFGetUOMAngleInfo( psDefn->UOMAngle, NULL,
+                             &(psDefn->UOMAngleInDegrees) );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Check for a datum setting, and then use the datum to derive     */
 /*      an ellipsoid.                                                   */
@@ -1498,7 +1581,8 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
                    &(psDefn->PMLongToGreenwich), 0, 1 );
 
         psDefn->PMLongToGreenwich =
-            GTIFAngleToDD( psDefn->PMLongToGreenwich, nGeogUOMAngle );
+            GTIFAngleToDD( psDefn->PMLongToGreenwich,
+                           psDefn->UOMAngle );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1689,7 +1773,7 @@ void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
     {
         char	*pszName = "(unknown)";
 
-        GTIFGetGCSInfo( psDefn->GCS, &pszName, NULL, NULL );
+        GTIFGetGCSInfo( psDefn->GCS, &pszName, NULL, NULL, NULL );
         printf( "GCS: %d/%s\n", psDefn->GCS, pszName );
     }
 
