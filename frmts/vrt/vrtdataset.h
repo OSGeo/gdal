@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/03/13 20:38:30  dron
+ * bNoDataValueSet added to VRTRasterBand class.
+ *
  * Revision 1.6  2002/11/30 16:55:49  warmerda
  * added OpenXML method
  *
@@ -136,6 +139,8 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
 {
     int		   nSources;
     VRTSource    **papoSources;
+
+    int            bEqualAreas;
 
     int            bNoDataValueSet;
     double         dfNoDataValue;
