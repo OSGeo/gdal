@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/03/12 17:07:26  warmerda
+ * added tagset and tag value element support
+ *
  * Revision 1.3  2002/02/22 22:18:10  warmerda
  * ensure that multi-part attributes supported for fill info
  *
@@ -674,6 +677,50 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
       }
       break;
 
+      case DGNST_TAG_SET:
+      {
+          DGNElemTagSet	*psTagSet = (DGNElemTagSet*) psElement;
+          int            iTag;
+
+          fprintf( fp, "  tagSetName=%s, tagSet=%d, tagCount=%d, flags=%d\n", 
+                   psTagSet->tagSetName, psTagSet->tagSet, 
+                   psTagSet->tagCount, psTagSet->flags );
+          for( iTag = 0; iTag < psTagSet->tagCount; iTag++ )
+          {
+              DGNTagDef *psTagDef = psTagSet->tagList + iTag;
+
+              fprintf( fp, "    %d: name=%s, type=%d, prompt=%s", 
+                       psTagDef->id, psTagDef->name, psTagDef->type, 
+                       psTagDef->prompt );
+              if( psTagDef->type == 1 )
+                  fprintf( fp, ", default=%s\n", 
+                           psTagDef->defaultValue.string );
+              else if( psTagDef->type == 3 )
+                  fprintf( fp, ", default=%d\n", 
+                           psTagDef->defaultValue.integer );
+              else if( psTagDef->type == 4 )
+                  fprintf( fp, ", default=%g\n", 
+                           psTagDef->defaultValue.real );
+          }
+      }
+      break;
+
+      case DGNST_TAG_VALUE:
+      {
+          DGNElemTagValue *psTag = (DGNElemTagValue*) psElement;
+
+          fprintf( fp, "  tagType=%d, tagSet=%d, tagIndex=%d, tagLength=%d\n", 
+                   psTag->tagType, psTag->tagSet, psTag->tagIndex, 
+                   psTag->tagLength );
+          if( psTag->tagType == 1 )
+              fprintf( fp, "  value=%s\n", psTag->tagValue.string );
+          else if( psTag->tagType == 3 )
+              fprintf( fp, "  value=%d\n", psTag->tagValue.integer );
+          else if( psTag->tagType == 4 )
+              fprintf( fp, "  value=%g\n", psTag->tagValue.real );
+      }
+      break;
+
       default:
         break;
     }
@@ -775,6 +822,9 @@ const char *DGNTypeToName( int nType )
         
       case DGNT_SHARED_CELL_ELEM:
         return "Shared Cell Element";
+        
+      case DGNT_TAG_VALUE:
+        return "Tag Value";
         
       default:
         sprintf( szNumericResult, "%d", nType );
