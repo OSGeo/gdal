@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/08/25 21:31:34  warmerda
+ * added overview support
+ *
  * Revision 1.6  2000/08/18 16:24:06  warmerda
  * Added color table support
  *
@@ -295,6 +298,11 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     for( i = 0; i < poDS->nBands; i++ )
         poDS->SetBand( i+1, new HFARasterBand( poDS, i+1 ) );
+
+/* -------------------------------------------------------------------- */
+/*      Check for overviews.                                            */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
     return( poDS );
 }
