@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/05/09 16:03:19  warmerda
+ * major upgrade to support SRS better and add ExecuteSQL
+ *
  * Revision 1.2  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -72,8 +75,7 @@ OGRDataSource *OGRPGDriver::Open( const char * pszFilename,
 
     poDS = new OGRPGDataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate, TRUE )
-        || poDS->GetLayerCount() == 0 )
+    if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
     {
         delete poDS;
         return NULL;
