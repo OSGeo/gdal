@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.19  2005/02/20 19:43:33  kruland
+ * Implement another argout typemap for fixed length double arrays.
+ *
  * Revision 1.18  2005/02/18 19:34:08  hobu
  * typo in OGRErrMessages
  *
@@ -179,28 +182,54 @@ OGRErrMessages( int rc ) {
 
 /*
  * SWIG macro to define fixed length array typemaps
+ * defines three different typemaps.
  *
- * defines the following:
+ * 1) For argument in.  The wrapped function's prototype is:
  *
- * typemap(in,numinputs=0) double_size *argout
- * typemap(out) double_size *argout
+ *    FunctionOfDouble3( double *vector );
  *
- * which matches decls like:  Dataset::GetGeoTransform( double_6 *c_transform )
- * where c_transform is a returned argument.
+ *    The function assumes that vector points to three consecutive doubles.
+ *    This can be wrapped using:
+ * 
+ *    %apply (double_3 argin) { (double *vector) };
+ *    FunctionOfDouble3( double *vector );
+ *    %clear (double *vector);
  *
- * typemap(in) double_size argin
+ *    Example:  Dataset.SetGeoTransform().
  *
- * which matches decls like: Dataset::SetGeoTransform( double_6 c_transform )
- * where c_transform is an input variable.
+ * 2) Functions which modify a fixed length array passed as
+ *    an argument or return data in an array allocated by the
+ *    caller.
  *
- * The actual typedef for these new types needs to be in gdal.i in the %{..%} block
- * like this:
+ *    %apply (double_6 argout ) { (double *vector) };
+ *    GetVector6( double *vector );
+ *    %clear ( double *vector );
  *
- * %{
- *   ....
- *   typedef double double_6[6];
- * %}
+ *    Example:  Dataset.GetGeoTransform().
+ *
+ * 3) Functions which take a double **.  Through this argument it
+ *    returns a pointer to a fixed size array allocated with CPLMalloc.
+ *
+ *    %apply (double_17 *argoug) { (double **vector) };
+ *    ReturnVector17( double **vector );
+ *    %clear ( double **vector );
+ *   
+ *    Example:  SpatialReference.ExportToPCI().
+ *
  */
+
+%fragment("CreateTupleFromDoubleArray","header") %{
+static PyObject *
+CreateTupleFromDoubleArray( double *first, unsigned int size ) {
+  PyObject *out = PyTuple_New( size );
+  for( unsigned int i=0; i<size; i++ ) {
+    PyObject *val = PyFloat_FromDouble( *first );
+    ++first;
+    PyTuple_SetItem( out, i, val );
+  }
+  return out;
+}
+%}
 
 %define ARRAY_TYPEMAP(size)
 %typemap(python,in,numinputs=0) ( double_ ## size argout) (double argout[size])
@@ -208,15 +237,27 @@ OGRErrMessages( int rc ) {
   /* %typemap(in,numinputs=0) (double_ ## size argout) */
   $1 = argout;
 }
-%typemap(python,argout,fragment="t_output_helper") ( double_ ## size argout)
+%typemap(python,argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double_ ## size argout)
+{
+  /* %typemap(argout) (double_ ## size argout) */
+  PyObject *out = CreateTupleFromDoubleArray( $1, size );
+  $result = t_output_helper($result,out);
+}
+%typemap(python,in,numinputs=0) ( double_ ## size *argout) (double *argout)
+{
+  /* %typemap(in,numinputs=0) (double_ ## size *argout) */
+  $1 = &argout;
+}
+%typemap(python,argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double_ ## size *argout)
 {
   /* %typemap(argout) (double_ ## size *argout) */
-  PyObject *out = PyTuple_New( size );
-  for( unsigned int i=0; i<size; i++ ) {
-    PyObject *val = PyFloat_FromDouble( $1[i] );
-    PyTuple_SetItem( out, i, val );
-  }
+  PyObject *out = CreateTupleFromDoubleArray( *$1, size );
   $result = t_output_helper($result,out);
+}
+%typemap(python,freearg) (double_ ## size *argout)
+{
+  /* %typemap(python,freearg) (double_ ## size *argout) */
+  CPLFree(*$1);
 }
 %typemap(python,in) (double_ ## size argin) (double argin[size])
 {
