@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.23  2005/02/07 19:22:35  fwarmerdam
+ * Patched problem in parsing negative lat and long values in GCP handling.
+ *
  * Revision 1.22  2005/02/07 17:22:14  fwarmerdam
  * Hacked to emit only 11x20 GCPs.  Eventually we should make this
  * controllable.
@@ -523,7 +526,6 @@ void L1BDataset::FetchNOAA9GCPs( GDAL_GCP *pasGCPList,
                                  GInt16 *piRecordHeader, int iLine )
 {
     int         nGoodGCPs, iGCPPos, j;
-    GInt16      iTemp;
     double      dfPixel;
     
     nGoodGCPs = (*((GByte *)piRecordHeader + iGCPCodeOffset) <= nGCPsPerLine)?
@@ -540,15 +542,16 @@ void L1BDataset::FetchNOAA9GCPs( GDAL_GCP *pasGCPList,
     iGCPPos = iGCPOffset / (int)sizeof(piRecordHeader[0]) + 2 * nGoodGCPs;
     while ( j < iGCPPos )
     {
+        GInt16  nRawY = piRecordHeader[j++];
+        GInt16  nRawX = piRecordHeader[j++];
+
 #ifdef CPL_LSB
-        iTemp = piRecordHeader[j++];
-        pasGCPList[nGCPCount].dfGCPY = CPL_SWAP16(iTemp) / 128.0;
-        iTemp = piRecordHeader[j++];
-        pasGCPList[nGCPCount].dfGCPX = CPL_SWAP16(iTemp) / 128.0;
-#else
-        pasGCPList[nGCPCount].dfGCPY = piRecordHeader[j++] / 128.0;
-        pasGCPList[nGCPCount].dfGCPX = piRecordHeader[j++] / 128.0;
+        CPL_SWAP32PTR( &nRawX );
+        CPL_SWAP32PTR( &nRawY );
 #endif
+        pasGCPList[nGCPCount].dfGCPY = nRawY / 128.0;
+        pasGCPList[nGCPCount].dfGCPX = nRawX / 128.0;
+
         if (pasGCPList[nGCPCount].dfGCPX < -180
             || pasGCPList[nGCPCount].dfGCPX > 180
             || pasGCPList[nGCPCount].dfGCPY < -90
@@ -572,7 +575,6 @@ void L1BDataset::FetchNOAA15GCPs( GDAL_GCP *pasGCPList,
                                   GInt32 *piRecordHeader, int iLine)
 {
     int         j, iGCPPos;
-    GUInt32     lTemp;
     double      dfPixel;
     
     dfPixel = (iLocationIndicator == DESCEND)?
@@ -581,20 +583,23 @@ void L1BDataset::FetchNOAA15GCPs( GDAL_GCP *pasGCPList,
     iGCPPos = iGCPOffset / (int)sizeof(piRecordHeader[0]) + 2 * nGCPsPerLine;
     while ( j < iGCPPos )
     {
+        GInt32  nRawY = piRecordHeader[j++];
+        GInt32  nRawX = piRecordHeader[j++];
+
 #ifdef CPL_LSB
-        lTemp = piRecordHeader[j++];
-        pasGCPList[nGCPCount].dfGCPY = CPL_SWAP32(lTemp) / 10000.0;
-        lTemp = piRecordHeader[j++];
-        pasGCPList[nGCPCount].dfGCPX = CPL_SWAP32(lTemp) / 10000.0;
-#else
-        pasGCPList[nGCPCount].dfGCPY = piRecordHeader[j++] / 10000.0;
-        pasGCPList[nGCPCount].dfGCPX = piRecordHeader[j++] / 10000.0;
+        CPL_SWAP32PTR( &nRawX );
+        CPL_SWAP32PTR( &nRawY );
 #endif
+        pasGCPList[nGCPCount].dfGCPY = nRawY / 10000.0;
+        pasGCPList[nGCPCount].dfGCPX = nRawX / 10000.0;
+
         if ( pasGCPList[nGCPCount].dfGCPX < -180
              || pasGCPList[nGCPCount].dfGCPX > 180
              || pasGCPList[nGCPCount].dfGCPY < -90
              || pasGCPList[nGCPCount].dfGCPY > 90 )
+        {
             continue;
+        }
         pasGCPList[nGCPCount].dfGCPZ = 0.0;
         pasGCPList[nGCPCount].dfGCPPixel = dfPixel;
         dfPixel += (iLocationIndicator == DESCEND)?dfGCPStep:-dfGCPStep;
