@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/08/28 16:38:26  warmerda
+ * dont check m_rgRowData.Add() result as true/false for CAtlArray
+ *
  * Revision 1.1  2002/08/09 21:36:39  warmerda
  * New
  *
@@ -294,10 +297,7 @@ class ATL_NO_VTABLE IColumnsRowsetImpl : public IColumnsRowset
                             lstrcpyW(data.m_pszSpatialRefSystem,L"" );
                         }
 
-                        if (!m_rgRowData.Add(data))
-                        {
-                            return E_OUTOFMEMORY;
-                        }
+                        m_rgRowData.Add(data);
                     }
 
                     return S_OK;
