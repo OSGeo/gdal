@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.13  2004/02/18 20:22:10  dron
+ * Create RawRasterBand objects in "large" mode; more datums and ellipsoids.
+ *
  * Revision 1.12  2004/02/17 08:05:45  dron
  * Do not calculate projection definition if corner coordinates are not set.
  *
@@ -204,7 +207,7 @@ FASTRasterBand::FASTRasterBand( FASTDataset *poDS, int nBand, FILE * fpRaw,
                                 int nLineOffset, GDALDataType eDataType,
 				int bNativeOrder) :
                  RawRasterBand( poDS, nBand, fpRaw, nImgOffset, nPixelOffset,
-                               nLineOffset, eDataType, bNativeOrder, FALSE)
+                               nLineOffset, eDataType, bNativeOrder, TRUE)
 {
 
 }
@@ -373,6 +376,10 @@ FILE *FASTDataset::FOpenChannel( char *pszFilename, int iBand )
     return fpChannels[iBand];
 }
 
+/************************************************************************/
+/*                          GetValue()                                  */
+/************************************************************************/
+
 static char *GetValue( const char *pszString, const char *pszName,
                        int iValueSize, int iNormalize )
 {
@@ -386,6 +393,10 @@ static char *GetValue( const char *pszString, const char *pszName,
 
     return pszTemp;
 }
+
+/************************************************************************/
+/*                        USGSMnemonicToCode()                          */
+/************************************************************************/
 
 static long USGSMnemonicToCode( const char* pszMnemonic )
 {
@@ -407,12 +418,54 @@ static long USGSMnemonicToCode( const char* pszMnemonic )
         return 1L;  // UTM by default
 }
 
+/************************************************************************/
+/*                        USGSEllipsoidToCode()                         */
+/************************************************************************/
+
 static long USGSEllipsoidToCode( const char* pszMnemonic )
 {
-    if ( EQUAL(pszMnemonic, "WGS84") || EQUAL(pszMnemonic, "WGS_84") )
+    if ( EQUAL(pszMnemonic, "CLARKE_1866") )
+        return 0L;
+    else if ( EQUAL(pszMnemonic, "CLARKE_1880") )
+        return 1L;
+    else if ( EQUAL(pszMnemonic, "BESSEL") )
+        return 2L;
+    else if ( EQUAL(pszMnemonic, "INTERNATL_1967") )
+        return 3L;
+    else if ( EQUAL(pszMnemonic, "INTERNATL_1909") )
+        return 4L;
+    else if ( EQUAL(pszMnemonic, "WGS72") || EQUAL(pszMnemonic, "WGS_72") )
+        return 5L;
+    else if ( EQUAL(pszMnemonic, "EVEREST") )
+        return 6L;
+    else if ( EQUAL(pszMnemonic, "WGS66") || EQUAL(pszMnemonic, "WGS_66") )
+        return 7L;
+    else if ( EQUAL(pszMnemonic, "GRS_80") )
+        return 8L;
+    else if ( EQUAL(pszMnemonic, "AIRY") )
+        return 9L;
+    else if ( EQUAL(pszMnemonic, "MODIFIED_EVEREST") )
+        return 10L;
+    else if ( EQUAL(pszMnemonic, "MODIFIED_AIRY") )
+        return 11L;
+    else if ( EQUAL(pszMnemonic, "WGS84") || EQUAL(pszMnemonic, "WGS_84") )
         return 12L;
+    else if ( EQUAL(pszMnemonic, "SOUTHEAST_ASIA") )
+        return 13L;
+    else if ( EQUAL(pszMnemonic, "AUSTRALIAN_NATL") )
+        return 14L;
+    else if ( EQUAL(pszMnemonic, "KRASSOVSKY") )
+        return 15L;
+    else if ( EQUAL(pszMnemonic, "HOUGH") )
+        return 16L;
+    else if ( EQUAL(pszMnemonic, "MERCURY_1960") )
+        return 17L;
+    else if ( EQUAL(pszMnemonic, "MOD_MERC_1968") )
+        return 18L;
+    else if ( EQUAL(pszMnemonic, "6370997_M_SPHERE") )
+        return 19L;
     else
-        return 12L;
+        return 0L;
 }
 
 /************************************************************************/
@@ -591,7 +644,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( pszTemp && !EQUAL( pszTemp, "" ) )
         iProjSys = USGSMnemonicToCode( pszTemp );
     else
-        iProjSys = 1;   // UTM by default
+        iProjSys = 1L;  // UTM by default
     CPLFree( pszTemp );
 
     // Read ellipsoid name
@@ -599,7 +652,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( pszTemp && !EQUAL( pszTemp, "" ) )
         iDatum = USGSEllipsoidToCode( pszTemp );
     else
-        iDatum = 12;    // WGS84 by default
+        iDatum = 0L;   // Clarke, 1866 (NAD1927) by default
     CPLFree( pszTemp );
 
     // Read zone number
@@ -686,6 +739,10 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         pszTemp = GetValue( pszHeader, DATUM_NAME, DATUM_NAME_SIZE, FALSE );
         if ( EQUAL( pszTemp, "WGS84" ) )
             oSRS.SetWellKnownGeogCS( "WGS84" );
+        else if ( EQUAL( pszTemp, "NAD27" ) )
+            oSRS.SetWellKnownGeogCS( "NAD27" );
+        else if ( EQUAL( pszTemp, "NAD83" ) )
+            oSRS.SetWellKnownGeogCS( "NAD83" );
         CPLFree( pszTemp );
 
         if ( poDS->pszProjection )
