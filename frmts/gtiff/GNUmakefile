@@ -32,12 +32,10 @@ gt_write:	gt_write.o gt_gs.o cpl_csv.o
 
 
 lib-tiff:
-	cd libtiff
-	$(MAKE)
+	cd libtiff; $(MAKE)
 
 lib-geotiff:
-	cd libgeotiff
-	$(MAKE)
+	cd libgeotiff; $(MAKE)
 
 install-obj:	$(OBJ) lib-tiff lib-geotiff
 	cp $(OBJ) libgeotiff/libgeotiff.a libtiff/libtiff.a ../o
