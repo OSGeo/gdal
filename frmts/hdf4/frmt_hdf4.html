@@ -23,15 +23,15 @@ multidimensional array filled by data. In one HDF several different SDS may
 be combined. They may differs in size, number of dimensions and may represents
 data for different regions. It is impossible to read data from HDF file
 without external information. This additional information should be known to
-user and user will explore HDF file and select datsets for reading by
+user and user will explore HDF file and select datasets for reading by
 description. So there is two steps for HDF importing:
 <ul>
 <li> read HDF file, global attributes and list of subdatasets;
 <li> select one of subdatasets by description and import data.
 </ul>
 <b>gdalinfo</b> utility lists all multidimensional subdatasets from the input
-HDF file. Name of subdataset assigned to <b>SUBDATASET_%d_NAME</b> metadata
-item, description for this one you could find in <b>SUBDATASET_%d_DESC</b>
+HDF file. Name of subdataset assigned to <b>SUBDATASET_n_NAME</b> metadata
+item, description for this one you could find in <b>SUBDATASET_n_DESC</b>
 item. Names for subdatasets assigned in following manner:<p>
 
 HDF4_SDS:subdataset_type:file_name:subdataset_index<p>
@@ -135,12 +135,27 @@ Band 12 Block=1354x2040 Type=UInt16, ColorInterp=Undefined<br>
 Or you may use <b>gdal_translate</b> for reading image bands from this
 dataset.<p>
 
-Note, that this driver intended only for importing remote sensing and
-geospatial datasets in form of raster images. If you want explore all data
-contained in HDF file you should use another tools (you can find information
-about different HDF tools using links at end of this page).
+Note, that you should not provide actual filename to the driver but exactly
+a line marked as <b>SUBDATASET_n_NAME</b>. Name of the file in your filesystem
+stored in the third field of those line.<p>
 
-<!--h2>Georeference</h2-->
+This driver intended only for importing remote sensing and geospatial datasets
+in form of raster images. If you want explore all data contained in HDF file
+you should use another tools (you can find information about different HDF
+tools using links at end of this page).
+
+<h2>Georeference</h2>
+
+Reading georeference information supported for several datasets.
+
+Currently it is:
+<ul>
+	<li> HDF4 files created by GDAL (<B>GDAL_HDF4</B>)
+	
+	<li> ASTER Level 1B (<B>ASTER_L1B</B>)
+	
+	<li> ASTER DEM (<B>AST14DEM</B>)
+</ul>
 
 
 <!--h2>Data</h2>
@@ -153,12 +168,29 @@ Currently supported:
 
 <h2>Creation Issues</h2>
 
+This driver supports creation of the HDF4 Scientific Datasets. You may create
+set of 2D datasets (one per each input band) or single 3D dataset where the third
+dimension represents band numbers. All metadata and band descriptions from
+input dataset stored as HDF4 attributes. Projection information (if exists)
+and affine transformation coefficients also stored in form of attributes.
+Files, created by GDAL has special attribute:<p>
+
+"Signature=Created with GDAL (http://www.remotesensing.org/gdal/)"<p>
+
+and automatically recognised when read, so projection info and
+transformation matrix restored back.<p>
+
 Creation Options:<p>
 
 <ul>
 	<li> <b>RANK=n</b>: Create <b>n</b>-dimensional SDS. Currently only 2D
 	and 3D datasets supported. By default 3-dimensional dataset will be
 	created.<p>
+
+	<!--li> <b>COMPRESS=[RLE/HUFFMAN/DEFLATE/NONE]</b>: Set the compression
+	to use. <b>RLE</b> is Run-length encoding, <b>HUFFMAN</b> is adaptive
+	Huffman, <b>DEFLATE</b> is GZIP "deflation" (Lempel/Ziv-77 dictionary
+	coder). <b>NONE</b> is the default.<p-->
 	
 </ul>
 
