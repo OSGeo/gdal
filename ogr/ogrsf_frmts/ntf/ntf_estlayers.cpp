@@ -30,6 +30,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/01/10 22:27:35  warmerda
+ * Corrected width of CENSUS_CODE ... should be 7 according to
+ * GREATER_LONDON_AUTHORITY.NTF.
+ *
  * Revision 1.17  2003/01/07 16:46:28  warmerda
  * Added support for forming polygons by caching line geometries
  *
@@ -2170,7 +2174,7 @@ void NTFFileReader::EstablishLayers()
                             "NUM_PARTS", OFTInteger, 4, 0,
                             "POLY_ID", OFTIntegerList, 6, 0,
                             "ADMIN_AREA_ID", OFTInteger, 6, 0, 
-                            "CENSUS_CODE", OFTString, 6, 0,
+                            "CENSUS_CODE", OFTString, 7, 0,
                             "ADMIN_NAME", OFTString, 0, 0,
                             "AREA_TYPE", OFTString, 2, 0,
                             "AREA_CODE", OFTString, 3, 0,
@@ -2188,7 +2192,7 @@ void NTFFileReader::EstablishLayers()
                             "NUM_PARTS", OFTInteger, 4, 0,
                             "POLY_ID", OFTIntegerList, 6, 0,
                             "ADMIN_AREA_ID", OFTInteger, 6, 0, 
-                            "CENSUS_CODE", OFTString, 6, 0,
+                            "CENSUS_CODE", OFTString, 7, 0,
                             "ADMIN_NAME", OFTString, 0, 0,
                             "AREA_TYPE", OFTString, 2, 0,
                             "AREA_CODE", OFTString, 3, 0,
