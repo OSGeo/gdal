@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/03/12 20:52:07  warmerda
+ * implemented support for gml:Box
+ *
  * Revision 1.2  2003/03/07 21:30:15  warmerda
  * expand tabs
  *
@@ -311,6 +314,63 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         return FALSE;
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                   OGR_G_ExportEnvelopeToGMLTree()                    */
+/*                                                                      */
+/*      Export the envelope of a geometry as a gml:Box.                 */
+/************************************************************************/
+
+CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
+
+{
+    CPLXMLNode *psBox, *psCoord;
+    OGREnvelope sEnvelope;
+    char        szCoordinate[256];
+    char       *pszY;
+
+    memset( &sEnvelope, 0, sizeof(sEnvelope) );
+    ((OGRGeometry *) hGeometry)->getEnvelope( &sEnvelope );
+
+    if( sEnvelope.MinX == 0 && sEnvelope.MaxX == 0 
+        && sEnvelope.MaxX == 0 && sEnvelope.MaxY == 0 )
+    {
+        /* there is apparently a special way of representing a null box
+           geometry ... we should use it here eventually. */
+
+        return NULL;
+    }
+
+    psBox = CPLCreateXMLNode( NULL, CXT_Element, "gml:Box" );
+
+/* -------------------------------------------------------------------- */
+/*      Add minxy coordinate.                                           */
+/* -------------------------------------------------------------------- */
+    psCoord = CPLCreateXMLNode( psBox, CXT_Element, "gml:coord" );
+    
+    MakeGMLCoordinate( szCoordinate, sEnvelope.MinX, sEnvelope.MinY, 0.0, 
+                       FALSE );
+    pszY = strstr(szCoordinate,",") + 1;
+    pszY[-1] = '\0';
+
+    CPLCreateXMLElementAndValue( psCoord, "gml:X", szCoordinate );
+    CPLCreateXMLElementAndValue( psCoord, "gml:Y", pszY );
+
+/* -------------------------------------------------------------------- */
+/*      Add maxxy coordinate.                                           */
+/* -------------------------------------------------------------------- */
+    psCoord = CPLCreateXMLNode( psBox, CXT_Element, "gml:coord" );
+    
+    MakeGMLCoordinate( szCoordinate, sEnvelope.MaxX, sEnvelope.MaxY, 0.0, 
+                       FALSE );
+    pszY = strstr(szCoordinate,",") + 1;
+    pszY[-1] = '\0';
+
+    CPLCreateXMLElementAndValue( psCoord, "gml:X", szCoordinate );
+    CPLCreateXMLElementAndValue( psCoord, "gml:Y", pszY );
+
+    return psBox;
 }
 
 /************************************************************************/

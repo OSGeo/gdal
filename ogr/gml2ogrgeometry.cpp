@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/03/12 20:52:07  warmerda
+ * implemented support for gml:Box
+ *
  * Revision 1.3  2003/03/07 21:30:15  warmerda
  * expand tabs
  *
@@ -415,6 +418,39 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( CPLXMLNode *psNode )
         }
 
         return poPoint;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Box                                                             */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszBaseGeometry,"BoxType") || EQUAL(pszBaseGeometry,"Box") )
+    {
+        OGRLineString  oPoints;
+
+        if( !ParseGMLCoordinates( psNode, &oPoints ) )
+            return NULL;
+
+        if( oPoints.getNumPoints() < 2 )
+            return NULL;
+
+        OGRLinearRing *poBoxRing = new OGRLinearRing();
+        OGRPolygon *poBoxPoly = new OGRPolygon();
+
+        poBoxRing->setNumPoints( 5 );
+        poBoxRing->setPoint( 
+            0, oPoints.getX(0), oPoints.getY(0), oPoints.getZ(0) );
+        poBoxRing->setPoint( 
+            1, oPoints.getX(1), oPoints.getY(0), oPoints.getZ(0) );
+        poBoxRing->setPoint( 
+            2, oPoints.getX(1), oPoints.getY(1), oPoints.getZ(1) );
+        poBoxRing->setPoint( 
+            3, oPoints.getX(0), oPoints.getY(1), oPoints.getZ(0) );
+        poBoxRing->setPoint( 
+            4, oPoints.getX(0), oPoints.getY(0), oPoints.getZ(0) );
+
+        poBoxPoly->addRingDirectly( poBoxRing );
+
+        return poBoxPoly;
     }
 
 /* -------------------------------------------------------------------- */
