@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/09/11 20:03:03  warmerda
+ * initialize poSRS ariable in FetchSRS
+ *
  * Revision 1.18  2003/05/21 03:59:42  warmerda
  * expand tabs
  *
@@ -690,7 +693,7 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
 /* -------------------------------------------------------------------- */
     PGresult        *hResult;
     char            szCommand[1024];
-    OGRSpatialReference *poSRS;
+    OGRSpatialReference *poSRS = NULL;
         
     SoftStartTransaction();
 
