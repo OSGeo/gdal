@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/05/28 18:54:05  warmerda
+ * added escaping/unescaping support
+ *
  * Revision 1.11  2002/05/24 04:09:10  warmerda
  * added clone and SetXMLValue functions
  *
@@ -283,6 +286,17 @@ static TokenType ReadToken( ParseContext *psContext )
                   "Parse error on line %d, reached EOF before closing quote.", 
                       psContext->nInputLine );
         }
+
+        /* Do we need to unescape it? */
+        if( strchr(psContext->pszToken,'&') != NULL )
+        {
+            int  nLength;
+            char *pszUnescaped = CPLUnescapeString( psContext->pszToken, 
+                                                    &nLength, CPLES_XML );
+            strcpy( psContext->pszToken, pszUnescaped );
+            CPLFree( pszUnescaped );
+            psContext->nTokenSize = strlen(psContext->pszToken );
+        }
     }
 
     else if( psContext->bInElement && chNext == '\'' )
@@ -315,6 +329,17 @@ static TokenType ReadToken( ParseContext *psContext )
                && chNext != '\0' )
             AddToToken( psContext, chNext );
         UnreadChar( psContext, chNext );
+
+        /* Do we need to unescape it? */
+        if( strchr(psContext->pszToken,'&') != NULL )
+        {
+            int  nLength;
+            char *pszUnescaped = CPLUnescapeString( psContext->pszToken, 
+                                                    &nLength, CPLES_XML );
+            strcpy( psContext->pszToken, pszUnescaped );
+            CPLFree( pszUnescaped );
+            psContext->nTokenSize = strlen(psContext->pszToken );
+        }
     }
     
 /* -------------------------------------------------------------------- */
@@ -676,9 +701,13 @@ CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent,
 /* -------------------------------------------------------------------- */
     if( psNode->eType == CXT_Text )
     {
+        char *pszEscaped = CPLEscapeString( psNode->pszValue, -1, CPLES_XML );
+
         CPLAssert( psNode->psChild == NULL );
 
-        strcat( *ppszText + *pnLength, psNode->pszValue );
+        strcat( *ppszText + *pnLength, pszEscaped );
+
+        CPLFree( pszEscaped );
     }
 
 /* -------------------------------------------------------------------- */
