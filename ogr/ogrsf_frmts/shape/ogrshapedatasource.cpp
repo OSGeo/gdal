@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/12/12 02:51:07  warmerda
+ * avoid memory leaks
+ *
  * Revision 1.8  2001/12/11 21:45:36  warmerda
  * fixed unlikely memory leak of pszWKT
  *
@@ -158,6 +161,7 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
                           "Failed to open shapefile %s.\n"
                           "It may be corrupt.\n",
                           pszFilename );
+                CPLFree( pszFilename );
                 return FALSE;
             }
             
@@ -363,8 +367,10 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to open Shapefile `%s'.\n",
                   pszFilename );
+        CPLFree( pszFilename );
         return NULL;
     }
+    CPLFree( pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Create a DBF file.                                              */
