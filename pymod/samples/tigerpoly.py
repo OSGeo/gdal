@@ -29,6 +29,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.2  2003/07/11 14:31:17  warmerda
+#  Use provided input filename.
+#
 #  Revision 1.1  2003/03/03 05:17:06  warmerda
 #  New
 #
@@ -95,7 +98,7 @@ shp_layer.CreateField( fd )
 #############################################################################
 # Open the datasource to operate on.
 
-ds = ogr.Open( '/u/data/tiger/2002/tst35006.rt1', update = 0 )
+ds = ogr.Open( infile, update = 0 )
 
 #############################################################################
 # Read all features in the line layer, holding just the geometry in a hash
