@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/08/26 17:38:01  warmerda
+ * added support for real and integer lists
+ *
  * Revision 1.4  1999/07/27 01:52:31  warmerda
  * added fid to readable dump of feature
  *
@@ -100,8 +103,13 @@ OGRFeature::~OGRFeature()
                 CPLFree( pauFields[i].String );
             break;
 
+          case OFTIntegerList:
+          case OFTRealList:
+            CPLFree( pauFields[i].IntegerList.paList );
+            break;
+
           default:
-            // should add support for list types and wide string.
+            // should add support for string lists, and wide strings.
             break;
         }
     }
@@ -380,7 +388,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
 
 {
     OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
-    static char		szTempBuffer[64];
+    static char		szTempBuffer[80];
 
     CPLAssert( poFDefn != NULL );
     
@@ -401,8 +409,144 @@ const char *OGRFeature::GetFieldAsString( int iField )
         sprintf( szTempBuffer, "%g", pauFields[iField].Real );
         return szTempBuffer;
     }
+    else if( poFDefn->GetType() == OFTIntegerList )
+    {
+        char	szItem[32];
+        int	i, nCount = pauFields[iField].IntegerList.nCount;
+
+        sprintf( szTempBuffer, "(%d:", nCount );
+        for( i = 0; i < nCount; i++ )
+        {
+            sprintf( szItem, "%d", pauFields[iField].IntegerList.paList[i] );
+            if( strlen(szTempBuffer) + strlen(szItem) + 6
+                > sizeof(szTempBuffer) )
+            {
+                break;
+            }
+            
+            if( i > 0 )
+                strcat( szTempBuffer, "," );
+            
+            strcat( szTempBuffer, szItem );
+        }
+
+        if( i < nCount )
+            strcat( szTempBuffer, ",...)" );
+        else
+            strcat( szTempBuffer, ")" );
+        
+        return szTempBuffer;
+    }
+    else if( poFDefn->GetType() == OFTRealList )
+    {
+        char	szItem[40];
+        int	i, nCount = pauFields[iField].RealList.nCount;
+
+        sprintf( szTempBuffer, "(%d:", nCount );
+        for( i = 0; i < nCount; i++ )
+        {
+            sprintf( szItem, "%g", pauFields[iField].RealList.paList[i] );
+            if( strlen(szTempBuffer) + strlen(szItem) + 6
+                > sizeof(szTempBuffer) )
+            {
+                break;
+            }
+            
+            if( i > 0 )
+                strcat( szTempBuffer, "," );
+            
+            strcat( szTempBuffer, szItem );
+        }
+
+        if( i < nCount )
+            strcat( szTempBuffer, ",...)" );
+        else
+            strcat( szTempBuffer, ")" );
+        
+        return szTempBuffer;
+    }
     else
         return "";
+}
+
+/************************************************************************/
+/*                       GetFieldAsIntegerList()                        */
+/************************************************************************/
+
+/**
+ * Fetch field value as a list of integers.
+ *
+ * Currently this method only works for OFTIntegerList fields.
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ * @param pnCount an integer to put the list count (number of integers) into.
+ *
+ * @return the field value.  This list is internal, and should not be
+ * modified, or freed.  It's lifetime may be very brief.  If *pnCount is zero
+ * on return the returned pointer may be NULL or non-NULL.
+ */
+
+const int *OGRFeature::GetFieldAsIntegerList( int iField, int *pnCount )
+
+{
+    OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
+
+    CPLAssert( poFDefn != NULL );
+    
+    if( poFDefn->GetType() == OFTIntegerList )
+    {
+        if( pnCount != NULL )
+            *pnCount = pauFields[iField].IntegerList.nCount;
+
+        return pauFields[iField].IntegerList.paList;
+    }
+    else
+    {
+        if( pnCount != NULL )
+            *pnCount = 0;
+        
+        return NULL;
+    }
+}
+
+/************************************************************************/
+/*                        GetFieldAsDoubleList()                        */
+/************************************************************************/
+
+/**
+ * Fetch field value as a list of doubles.
+ *
+ * Currently this method only works for OFTRealList fields.
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ * @param pnCount an integer to put the list count (number of doubles) into.
+ *
+ * @return the field value.  This list is internal, and should not be
+ * modified, or freed.  It's lifetime may be very brief.  If *pnCount is zero
+ * on return the returned pointer may be NULL or non-NULL.
+ */
+
+const double *OGRFeature::GetFieldAsDoubleList( int iField, int *pnCount )
+
+{
+    OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
+
+    CPLAssert( poFDefn != NULL );
+    
+    if( poFDefn->GetType() == OFTRealList )
+    {
+        if( pnCount != NULL )
+            *pnCount = pauFields[iField].RealList.nCount;
+
+        return pauFields[iField].RealList.paList;
+    }
+    else
+    {
+        if( pnCount != NULL )
+            *pnCount = 0;
+        
+        return NULL;
+    }
 }
 
 /************************************************************************/
@@ -537,6 +681,66 @@ void OGRFeature::SetField( int iField, const char * pszValue )
 /************************************************************************/
 
 /**
+ * Set field to list of integers value. 
+ *
+ * This method currently on has an effect of OFTIntegerList fields.
+ *
+ * @param iField the field to set, from 0 to GetFieldCount()-1.
+ * @param nCount the number of values in the list being assigned.
+ * @param panValues the values to assign.
+ */
+
+void OGRFeature::SetField( int iField, int nCount, int *panValues )
+
+{
+    OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
+
+    if( poFDefn->GetType() == OFTIntegerList )
+    {
+        OGRField	uField;
+
+        uField.IntegerList.nCount = nCount;
+        uField.IntegerList.paList = panValues;
+
+        SetField( iField, &uField );
+    }
+}
+
+/************************************************************************/
+/*                              SetField()                              */
+/************************************************************************/
+
+/**
+ * Set field to list of doubles value. 
+ *
+ * This method currently on has an effect of OFTRealList fields.
+ *
+ * @param iField the field to set, from 0 to GetFieldCount()-1.
+ * @param nCount the number of values in the list being assigned.
+ * @param padfValues the values to assign.
+ */
+
+void OGRFeature::SetField( int iField, int nCount, double * padfValues )
+
+{
+    OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
+
+    if( poFDefn->GetType() == OFTRealList )
+    {
+        OGRField	uField;
+        
+        uField.RealList.nCount = nCount;
+        uField.RealList.paList = padfValues;
+        
+        SetField( iField, &uField );
+    }
+}
+
+/************************************************************************/
+/*                              SetField()                              */
+/************************************************************************/
+
+/**
  * Set field.
  *
  * The passed value OGRField must be of exactly the same type as the
@@ -567,6 +771,30 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
     {
         CPLFree( pauFields[iField].String );
         pauFields[iField].String = CPLStrdup( puValue->String );
+    }
+    else if( poFDefn->GetType() == OFTIntegerList )
+    {
+        int	nCount = puValue->IntegerList.nCount;
+        
+        CPLFree( pauFields[iField].IntegerList.paList );
+        pauFields[iField].IntegerList.paList =
+            (int *) CPLMalloc(sizeof(int) * nCount);
+        memcpy( pauFields[iField].IntegerList.paList,
+                puValue->IntegerList.paList,
+                sizeof(int) * nCount );
+        pauFields[iField].IntegerList.nCount = nCount;
+    }
+    else if( poFDefn->GetType() == OFTRealList )
+    {
+        int	nCount = puValue->RealList.nCount;
+        
+        CPLFree( pauFields[iField].RealList.paList );
+        pauFields[iField].RealList.paList =
+            (double *) CPLMalloc(sizeof(double) * nCount);
+        memcpy( pauFields[iField].RealList.paList,
+                puValue->RealList.paList,
+                sizeof(double) * nCount );
+        pauFields[iField].RealList.nCount = nCount;
     }
     else
         /* do nothing for other field types */;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/08/26 17:38:00  warmerda
+ * added support for real and integer lists
+ *
  * Revision 1.5  1999/07/27 00:47:37  warmerda
  * Added FID to OGRFeature class
  *
@@ -102,17 +105,17 @@ typedef union {
     char       *String;
     // wchar	*WideString;
     
-    union {
+    struct {
         int	nCount;
         int	*paList;
     } IntegerList;
     
-    union {
+    struct {
         int	nCount;
         double	*paList;
     } RealList;
     
-    union {
+    struct {
         int	nCount;
         char	*paList;
     } StringList;
@@ -263,10 +266,14 @@ class OGRFeature
     int			GetFieldAsInteger( int i );
     double		GetFieldAsDouble( int i );
     const char	       *GetFieldAsString( int i );
+    const int 	       *GetFieldAsIntegerList( int i, int *pnCount );
+    const double       *GetFieldAsDoubleList( int i, int *pnCount );
 
     void		SetField( int i, int nValue );
     void		SetField( int i, double dfValue );
     void		SetField( int i, const char * pszValue );
+    void		SetField( int i, int nCount, int * panValues );
+    void		SetField( int i, int nCount, double * padfValues );
     void		SetField( int i, OGRField * puValue );
 
     long		GetFID() { return nFID; }
