@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/04/10 17:54:08  warmerda
+ * added PinTDO method
+ *
  * Revision 1.7  2003/02/06 21:15:45  warmerda
  * Get hElemInfoTDO, improve initial session error chequing
  *
@@ -173,95 +176,22 @@ int OGROCISession::EstablishSession( const char *pszUserid,
 /* -------------------------------------------------------------------- */
 /*      Try to get the MDSYS.SDO_GEOMETRY type object.                  */
 /* -------------------------------------------------------------------- */
-    OCIParam *hGeomParam = NULL;
-    OCIRef *hGeomTypeRef = NULL;
-
-    if( Failed( 
-        OCIDescribeAny(hSvcCtx, hError, 
-                       (text *) SDO_GEOMETRY, (ub4) strlen(SDO_GEOMETRY),
-                       OCI_OTYPE_NAME, (ub1)1, (ub1)OCI_PTYPE_TYPE, 
-                       hDescribe ), "OCIDescribeAny(MDSYS.SDO_GEOMETRY)" ) )
-        return FALSE;
-
-    if( Failed( 
-        OCIAttrGet((dvoid *)hDescribe, (ub4)OCI_HTYPE_DESCRIBE,
-                   (dvoid *)&hGeomParam, (ub4 *)0, (ub4)OCI_ATTR_PARAM, 
-                   hError), "OCIGetAttr(ATTR_PARAM)") )
-        return FALSE;
-
-    if( Failed( 
-        OCIAttrGet((dvoid *)hGeomParam, (ub4)OCI_DTYPE_PARAM,
-                   (dvoid *)&hGeomTypeRef, (ub4 *)0, (ub4)OCI_ATTR_REF_TDO, 
-                   hError), "OCIAttrGet(ATTR_REF_TDO)" ) )
-        return FALSE;
-
-    if( Failed( 
-        OCIObjectPin(hEnv, hError, hGeomTypeRef, (OCIComplexObject *)0, 
-                     OCI_PIN_ANY, OCI_DURATION_SESSION, 
-                     OCI_LOCK_NONE, (dvoid **)&hGeometryTDO),
-        "OCIObjectPin" ) )
+    hGeometryTDO = PinTDO( SDO_GEOMETRY );
+    if( hGeometryTDO == NULL )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Try to get the MDSYS.SDO_ORDINATE_ARRAY type object.            */
 /* -------------------------------------------------------------------- */
-    if( Failed( 
-        OCIDescribeAny(hSvcCtx, hError, 
-                       (text *) "MDSYS.SDO_ORDINATE_ARRAY", 
-                       (ub4) strlen("MDSYS.SDO_ORDINATE_ARRAY"),
-                       OCI_OTYPE_NAME, (ub1)1, (ub1)OCI_PTYPE_TYPE, 
-                       hDescribe ), 
-        "OCIDescribeAny(MDSYS.SDO_ORDINATE_ARRAY)" ) )
-        return FALSE;
-
-    if( Failed( 
-        OCIAttrGet((dvoid *)hDescribe, (ub4)OCI_HTYPE_DESCRIBE,
-                   (dvoid *)&hGeomParam, (ub4 *)0, (ub4)OCI_ATTR_PARAM, 
-                   hError), "OCIGetAttr(ATTR_PARAM)") )
-        return FALSE;
-
-    if( Failed( 
-        OCIAttrGet((dvoid *)hGeomParam, (ub4)OCI_DTYPE_PARAM,
-                   (dvoid *)&hGeomTypeRef, (ub4 *)0, (ub4)OCI_ATTR_REF_TDO, 
-                   hError), "OCIAttrGet(ATTR_REF_TDO)" ) )
-        return FALSE;
-
-    if( Failed( 
-        OCIObjectPin(hEnv, hError, hGeomTypeRef, (OCIComplexObject *)0, 
-                     OCI_PIN_ANY, OCI_DURATION_SESSION, 
-                     OCI_LOCK_NONE, (dvoid **)&hOrdinatesTDO),
-        "OCIObjectPin" ) )
+    hOrdinatesTDO = PinTDO( "MDSYS.SDO_ORDINATE_ARRAY" );
+    if( hOrdinatesTDO == NULL )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Try to get the MDSYS.SDO_ELEM_INFO_ARRAY type object.           */
 /* -------------------------------------------------------------------- */
-    if( Failed( 
-        OCIDescribeAny(hSvcCtx, hError, 
-                       (text *) "MDSYS.SDO_ELEM_INFO_ARRAY", 
-                       (ub4) strlen("MDSYS.SDO_ELEM_INFO_ARRAY"),
-                       OCI_OTYPE_NAME, (ub1)1, (ub1)OCI_PTYPE_TYPE, 
-                       hDescribe ), 
-        "OCIDescribeAny(MDSYS.SDO_ELEM_INFO_ARRAY)" ) )
-        return FALSE;
-
-    if( Failed( 
-        OCIAttrGet((dvoid *)hDescribe, (ub4)OCI_HTYPE_DESCRIBE,
-                   (dvoid *)&hGeomParam, (ub4 *)0, (ub4)OCI_ATTR_PARAM, 
-                   hError), "OCIGetAttr(ATTR_PARAM)") )
-        return FALSE;
-
-    if( Failed( 
-        OCIAttrGet((dvoid *)hGeomParam, (ub4)OCI_DTYPE_PARAM,
-                   (dvoid *)&hGeomTypeRef, (ub4 *)0, (ub4)OCI_ATTR_REF_TDO, 
-                   hError), "OCIAttrGet(ATTR_REF_TDO)" ) )
-        return FALSE;
-
-    if( Failed( 
-        OCIObjectPin(hEnv, hError, hGeomTypeRef, (OCIComplexObject *)0, 
-                     OCI_PIN_ANY, OCI_DURATION_SESSION, 
-                     OCI_LOCK_NONE, (dvoid **)&hElemInfoTDO),
-        "OCIObjectPin" ) )
+    hElemInfoTDO = PinTDO( "MDSYS.SDO_ELEM_INFO_ARRAY" );
+    if( hElemInfoTDO == NULL )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -482,4 +412,47 @@ void OGROCISession::CleanName( char * pszName )
             && pszName[i] != '_' )
             pszName[i] = '_';
     }
+}
+
+/************************************************************************/
+/*                               PinTDO()                               */
+/*                                                                      */
+/*      Fetch a Type Description Object for the named type.             */
+/************************************************************************/
+
+OCIType *OGROCISession::PinTDO( const char *pszType )
+
+{
+    OCIParam *hGeomParam = NULL;
+    OCIRef *hGeomTypeRef = NULL;
+    OCIType *hPinnedTDO = NULL;
+
+    if( Failed( 
+        OCIDescribeAny(hSvcCtx, hError, 
+                       (text *) pszType, (ub4) strlen(pszType), 
+                       OCI_OTYPE_NAME, (ub1)1, (ub1)OCI_PTYPE_TYPE, 
+                       hDescribe ), 
+        "GetTDO()->OCIDescribeAny()" ) )
+        return NULL;
+
+    if( Failed( 
+        OCIAttrGet((dvoid *)hDescribe, (ub4)OCI_HTYPE_DESCRIBE,
+                   (dvoid *)&hGeomParam, (ub4 *)0, (ub4)OCI_ATTR_PARAM, 
+                   hError), "GetTDO()->OCIGetAttr(ATTR_PARAM)") )
+        return NULL;
+
+    if( Failed( 
+        OCIAttrGet((dvoid *)hGeomParam, (ub4)OCI_DTYPE_PARAM,
+                   (dvoid *)&hGeomTypeRef, (ub4 *)0, (ub4)OCI_ATTR_REF_TDO, 
+                   hError), "GetTDO()->OCIAttrGet(ATTR_REF_TDO)" ) )
+        return NULL;
+
+    if( Failed( 
+        OCIObjectPin(hEnv, hError, hGeomTypeRef, (OCIComplexObject *)0, 
+                     OCI_PIN_ANY, OCI_DURATION_SESSION, 
+                     OCI_LOCK_NONE, (dvoid **)&hPinnedTDO ),
+        "GetTDO()->OCIObjectPin()" ) )
+        return NULL;
+
+    return hPinnedTDO;
 }
