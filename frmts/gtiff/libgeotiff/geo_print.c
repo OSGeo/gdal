@@ -18,6 +18,9 @@
  *    29  Sep,  1995      NDR                  Fixed matrix printing.
  *
  * $Log: geo_print.c,v $
+ * Revision 1.4  2002/05/31 14:27:26  warmerda
+ * added escaping in metadata for string key values
+ *
  * Revision 1.3  1999/05/04 03:14:35  warmerda
  * avoid warnings
  *
@@ -53,7 +56,6 @@ static void PrintTag(int tag, int nrows, double *data, int ncols,
 static void DefaultRead(char *string, void *aux);
 static int  ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux);
 static int  ReadTag(GTIF *gt,GTIFReadMethod scan,void *aux);
-static char message[1024];
 
 /*
  * Print off the directory info, using whatever method is specified
@@ -69,6 +71,7 @@ void GTIFPrint(GTIF *gtif, GTIFPrintMethod print,void *aux)
     int i;
     int numkeys = gtif->gt_num_keys;
     GeoKey *key = gtif->gt_keys;
+    char message[1024];
 	
     if (!print) print = (GTIFPrintMethod) &DefaultPrint;
     if (!aux) aux=stdout;	
@@ -113,6 +116,7 @@ static void PrintTag(int tag, int nrows, double *dptr, int ncols,
 {
 	int i,j;
 	double *data=dptr;
+        char message[1024];
 
 	print("      ",aux);
 	print(GTIFTagName(tag),aux);
@@ -140,7 +144,7 @@ static void PrintKey(GeoKey *key, GTIFPrintMethod print, void *aux)
     int vals_now,i;
     pinfo_t *sptr;
     double *dptr;
-
+    char message[40];
 
     print("      ",aux);
     print(GTIFKeyName(keyid),aux);
@@ -156,12 +160,45 @@ static void PrintKey(GeoKey *key, GTIFPrintMethod print, void *aux)
     switch (key->gk_type)
     {
       case TYPE_ASCII: 
-        print("\"",aux);
-        _GTIFmemcpy(message,data,count);
-        message[count-1]='\0';
-        print(message,aux);
-        print("\"\n",aux);
-        break;
+      {
+          int  in_char, out_char;
+
+          print("\"",aux);
+
+          in_char = 0;
+          out_char = 0;
+          while( in_char < count-1 )
+          {
+              char ch = ((char *) data)[in_char++];
+
+              if( ch == '\n' )
+              {
+                  message[out_char++] = '\\';
+                  message[out_char++] = 'n';
+              }
+              else if( ch == '\\' )
+              {
+                  message[out_char++] = '\\';
+                  message[out_char++] = '\\';
+              }
+              else
+                  message[out_char++] = ch;
+
+              /* flush message if buffer full */
+              if( out_char == sizeof(message)-3 )
+              {
+                  message[out_char] = '\0';
+                  print(message,aux);
+                  out_char = 0;
+              }
+          }
+
+          message[out_char]='\0';
+          print(message,aux);
+
+          print("\"\n",aux);
+      }
+      break;
         
       case TYPE_DOUBLE: 
         for (dptr = (double *)data; count > 0; count-= vals_now)
@@ -226,6 +263,7 @@ static void DefaultPrint(char *string, void *aux)
 int GTIFImport(GTIF *gtif, GTIFReadMethod scan,void *aux)
 {
     int status;
+    char message[1024];
 	
     if (!scan) scan = (GTIFReadMethod) &DefaultRead;
     if (!aux) aux=stdin;	
@@ -252,8 +290,8 @@ int GTIFImport(GTIF *gtif, GTIFReadMethod scan,void *aux)
 
 static int StringError(char *string)
 {
-	fprintf(stderr,"Parsing Error at \'%s\'\n",string);
-	return -1;
+    fprintf(stderr,"Parsing Error at \'%s\'\n",string);
+    return -1;
 }
 
 #define SKIPWHITE(vptr) \
@@ -268,6 +306,7 @@ static int ReadTag(GTIF *gt,GTIFReadMethod scan,void *aux)
     char tagname[100];
     double data[100],*dptr=data;
     int count,nrows,ncols,num;
+    char message[1024];
 
     scan(message,aux);
     if (!strncmp(message,FMT_TAGEND,8)) return 0;
@@ -310,9 +349,9 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
     char type[20];
     double data[100];
     double *dptr;
-    char *cdata = (char *)data;
     char *vptr;
     int num;
+    char message[2048];
 
     scan(message,aux); 
     if (!strncmp(message,FMT_KEYEND,8)) return 0;
@@ -342,12 +381,44 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
     switch (ktype)
     {
       case TYPE_ASCII: 
-        FINDCHAR(vptr,'"');
-        if (!*vptr) return StringError(message);
-        _GTIFmemcpy(cdata,vptr+1,count);
-        cdata[count-1]='\0';
-        GTIFKeySet(gt,key,ktype,count,cdata);
-        break;
+      {
+          char *cdata;
+          int out_char = 0;
+
+          FINDCHAR(vptr,'"');
+          if (!*vptr) return StringError(message);
+
+          cdata = (char *) _GTIFcalloc( count+1 );
+
+          vptr++;
+          while( out_char < count-1 )
+          {
+              if( *vptr == '\0' )
+                  break;
+
+              else if( vptr[0] == '\\' && vptr[1] == 'n' )
+              {
+                  cdata[out_char++] = '\n';
+                  vptr += 2;
+              }
+              else if( vptr[0] == '\\' && vptr[1] == '\\' )
+              {
+                  cdata[out_char++] = '\\';
+                  vptr += 2;
+              }
+              else
+                  cdata[out_char++] = *(vptr++);
+          }
+
+          if( out_char < count-1 ) return StringError(message);
+          if( *vptr != '"' ) return StringError(message);
+
+          cdata[count-1] = '\0';
+          GTIFKeySet(gt,key,ktype,count,cdata);
+
+          _GTIFFree( cdata );
+      }
+      break;
         
       case TYPE_DOUBLE: 
         outcount = count;
