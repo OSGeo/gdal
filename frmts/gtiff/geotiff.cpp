@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2000/06/19 18:48:29  warmerda
+ * added IBuildOverviews() implementation on GTiffDataset
+ *
  * Revision 1.28  2000/06/19 14:18:01  warmerda
  * added help link
  *
@@ -82,6 +85,7 @@
  * Revision 1.11  1999/10/29 17:28:11  warmerda
  * Added projection support, and odd pixel data types
  *
+
  * Revision 1.10  1999/08/12 18:23:15  warmerda
  * Fixed the ability to write non GDT_Byte data.
  *
@@ -121,6 +125,7 @@
 #include "geotiff.h"
 #include "gdal_priv.h"
 #include "geo_normalize.h"
+#include "tif_ovrcache.h"
 #include "cpl_string.h"
 
 static GDALDriver	*poGTiffDriver = NULL;
@@ -154,6 +159,7 @@ class GTiffDataset : public GDALDataset
     uint16	nBitsPerSample;
     uint32	nRowsPerStrip;
     uint16	nPhotometric;
+    uint16      nSampleFormat;
     
     int		nBlocksPerBand;
 
@@ -194,6 +200,9 @@ class GTiffDataset : public GDALDataset
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
 
+    virtual CPLErr IBuildOverviews( const char *, int, int *, int, int *, 
+                                    GDALProgressFunc, void * );
+
     CPLErr	   OpenOffset( TIFF *, uint32 nDirOffset, int, GDALAccess );
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -228,10 +237,6 @@ class GTiffRasterBand : public GDALRasterBand
 
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
-
-    virtual CPLErr BuildOverviews( const char *, int, int *,
-                                   GDALProgressFunc, void * );
-
 };
 
 
@@ -248,11 +253,8 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
 /* -------------------------------------------------------------------- */
 /*      Get the GDAL data type.                                         */
 /* -------------------------------------------------------------------- */
-    uint16		nSampleFormat;
+    uint16		nSampleFormat = poDS->nSampleFormat;
 
-    if( !TIFFGetField(poDS->hTIFF,TIFFTAG_SAMPLEFORMAT,&nSampleFormat) )
-        nSampleFormat = SAMPLEFORMAT_UINT;
-        
     if( poDS->nBitsPerSample <= 8 )
         eDataType = GDT_Byte;
     else if( poDS->nBitsPerSample <= 16 )
@@ -553,19 +555,7 @@ GDALRasterBand *GTiffRasterBand::GetOverview( int i )
         return poGDS->papoOverviewDS[i]->GetRasterBand(nBand);
 }
 
-/************************************************************************/
-/*                           BuildOverviews()                           */
-/************************************************************************/
 
-CPLErr GTiffRasterBand::BuildOverviews( const char * pszResampling, 
-                                        int nOverviews, 
-                                        int *panOverviewList, 
-                                        GDALProgressFunc pfnProgress, 
-                                        void * pProgressData )
-
-{
-    return CE_Failure;
-}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -668,6 +658,141 @@ void GTiffDataset::FlushCache()
     pabyBlockBuf = NULL;
     nLoadedBlock = -1;
 }
+
+/************************************************************************/
+/*                          IBuildOverviews()                           */
+/************************************************************************/
+
+CPLErr GTiffDataset::IBuildOverviews( 
+    const char * pszResampling, 
+    int nOverviews, int * panOverviewList,
+    int nBands, int * panBandList,
+    GDALProgressFunc pfnProgress, void * pProgressData )
+
+{
+    CPLErr       eErr = CE_None;
+    int          i;
+    GTiffDataset *poODS;
+
+/* -------------------------------------------------------------------- */
+/*      Our TIFF overview support currently only works safely if all    */
+/*      bands are handled at the same time.                             */
+/* -------------------------------------------------------------------- */
+    if( nBands != GetRasterCount() )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Generation of overviews in TIFF currently only"
+                  " supported when operating on all bands.\n" 
+                  "Operation failed.\n" );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Establish which of the overview levels we already have, and     */
+/*      which are new.  We assume that band 1 of the file is            */
+/*      representative.                                                 */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nOverviews; i++ )
+    {
+        int   j;
+
+        for( j = 0; j < nOverviewCount; j++ )
+        {
+            int    nOvFactor;
+
+            poODS = papoOverviewDS[j];
+
+            nOvFactor = (int) 
+                (0.5 + GetRasterXSize() / (double) poODS->GetRasterXSize());
+
+            if( nOvFactor == panOverviewList[i] )
+                panOverviewList[i] *= -1;
+        }
+
+        if( panOverviewList[i] > 0 )
+        {
+            uint32	nOverviewOffset;
+            int         nOXSize, nOYSize;
+
+            nOXSize = (GetRasterXSize() + panOverviewList[i] - 1) 
+                / panOverviewList[i];
+            nOYSize = (GetRasterYSize() + panOverviewList[i] - 1)
+                / panOverviewList[i];
+
+            nOverviewOffset = 
+                TIFF_WriteOverview( hTIFF, nOXSize, nOYSize, 
+                                    nBitsPerSample, nSamplesPerPixel, 
+                                    128, 128, TRUE, COMPRESSION_NONE, 
+                                    nPhotometric, nSampleFormat, 
+                                    NULL, NULL, NULL, FALSE );
+
+            poODS = new GTiffDataset();
+            if( poODS->OpenOffset( hTIFF, nOverviewOffset, FALSE, 
+                                   GA_Update ) != CE_None )
+            {
+                delete poODS;
+            }
+            else
+            {
+                nOverviewCount++;
+                papoOverviewDS = (GTiffDataset **)
+                    CPLRealloc(papoOverviewDS, 
+                               nOverviewCount * (sizeof(void*)));
+                papoOverviewDS[nOverviewCount-1] = poODS;
+            }
+        }
+        else
+            panOverviewList[i] *= -1;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Refresh old overviews that were listed.                         */
+/* -------------------------------------------------------------------- */
+    GDALRasterBand **papoOverviewBands;
+
+    papoOverviewBands = (GDALRasterBand **) 
+        CPLCalloc(sizeof(void*),nOverviews);
+
+    for( int iBand = 0; iBand < nBands && eErr == CE_None; iBand++ )
+    {
+        GDALRasterBand *poBand;
+        int            nNewOverviews;
+
+        poBand = GetRasterBand( panBandList[iBand] );
+
+        nNewOverviews = 0;
+        for( i = 0; i < nOverviews && poBand != NULL; i++ )
+        {
+            int   j;
+            
+            for( j = 0; j < poBand->GetOverviewCount(); j++ )
+            {
+                int    nOvFactor;
+                GDALRasterBand * poOverview = poBand->GetOverview( j );
+
+                nOvFactor = (int) 
+                  (0.5 + poBand->GetXSize() / (double) poOverview->GetXSize());
+
+                if( nOvFactor == panOverviewList[i] )
+                {
+                    papoOverviewBands[nNewOverviews++] = poOverview;
+                }
+            }
+        }
+
+        eErr = GDALRegenerateOverviews( poBand,
+                                        nNewOverviews, papoOverviewBands,
+                                        pszResampling, NULL, NULL );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    CPLFree( papoOverviewBands );
+
+    return eErr;
+}
+
 
 /************************************************************************/
 /*                          WriteGeoTIFFInfo()                          */
@@ -804,7 +929,6 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 
 {
     uint32	nXSize, nYSize;
-    uint16	nSamplesPerPixel;
 
     hTIFF = hTIFFIn;
 
@@ -838,6 +962,9 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
     
     if( !TIFFGetField( hTIFF, TIFFTAG_PHOTOMETRIC, &(nPhotometric) ) )
         nPhotometric = PHOTOMETRIC_MINISBLACK;
+    
+    if( !TIFFGetField( hTIFF, TIFFTAG_SAMPLEFORMAT, &(nSampleFormat) ) )
+        nSampleFormat = SAMPLEFORMAT_UINT;
     
 /* -------------------------------------------------------------------- */
 /*      Get strip/tile layout.                                          */
@@ -1015,7 +1142,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
                 }
                 else
                 {
-                    printf( "Opened %dx%d overview.\n", 
+                    CPLDebug( "GTiff", "Opened %dx%d overview.\n", 
                             poODS->GetRasterXSize(), poODS->GetRasterYSize());
                     nOverviewCount++;
                     papoOverviewDS = (GTiffDataset **)
@@ -1161,7 +1288,8 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     else
     {
         if( nBlockYSize == 0 )
-            poDS->nRowsPerStrip = MIN(nYSize,TIFFDefaultStripSize(hTIFF,0));
+            poDS->nRowsPerStrip = MIN(nYSize,
+                                      (int)TIFFDefaultStripSize(hTIFF,0));
         else
             poDS->nRowsPerStrip = nBlockYSize;
 
@@ -1345,4 +1473,3 @@ void GDALRegister_GTiff()
         TIFFSetErrorHandler( GTiffErrorHandler );
     }
 }
-
