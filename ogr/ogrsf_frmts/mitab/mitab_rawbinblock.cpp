@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_rawbinblock.cpp,v 1.6 2004/06/30 20:29:04 dmorissette Exp $
+ * $Id: mitab_rawbinblock.cpp,v 1.7 2004/12/01 18:25:03 dmorissette Exp $
  *
  * Name:     mitab_rawbinblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_rawbinblock.cpp,v $
+ * Revision 1.7  2004/12/01 18:25:03  dmorissette
+ * Fixed potential memory leaks in error conditions (bug 881)
+ *
  * Revision 1.6  2004/06/30 20:29:04  dmorissette
  * Fixed refs to old address danmo@videotron.ca
  *
@@ -130,6 +133,7 @@ int     TABRawBinBlock::ReadFromFile(FILE *fpSrc, int nOffset,
         CPLError(CE_Failure, CPLE_FileIO,
                  "ReadFromFile() failed reading %d bytes at offset %d.",
                  nSize, nOffset);
+        CPLFree(pabyBuf);
         return -1;
     }
 
@@ -884,6 +888,7 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(FILE *fpSrc, int nOffset,
         CPLError(CE_Failure, CPLE_FileIO,
          "TABCreateMAPBlockFromFile() failed reading %d bytes at offset %d.",
                  nSize, nOffset);
+        CPLFree(pabyBuf);
         return NULL;
     }
 

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.53 2004/10/19 14:21:11 jlacroix Exp $
+ * $Id: mitab_feature.cpp,v 1.54 2004/12/01 18:25:03 dmorissette Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.54  2004/12/01 18:25:03  dmorissette
+ * Fixed potential memory leaks in error conditions (bug 881)
+ *
  * Revision 1.53  2004/10/19 14:21:11  jlacroix
  * Support pen width bigger than 7 with GetStyleString. (Bug 683)
  *
@@ -1836,6 +1839,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             CPLError(CE_Failure, CPLE_FileIO,
                      "Failed reading coordinate data at offset %d", 
                      nCoordBlockPtr);
+            CPLFree(pasSecHdrs);
             return -1;
         }
 
@@ -1848,6 +1852,8 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             CPLError(CE_Failure, CPLE_FileIO,
                      "Failed reading coordinate data at offset %d", 
                      nCoordBlockPtr);
+            CPLFree(pasSecHdrs);
+            CPLFree(panXY);
             return -1;
         }
 
@@ -2586,6 +2592,7 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             CPLError(CE_Failure, CPLE_FileIO,
                      "Failed reading coordinate data at offset %d", 
                      nCoordBlockPtr);
+            CPLFree(pasSecHdrs);
             return -1;
         }
 
@@ -2596,6 +2603,8 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             CPLError(CE_Failure, CPLE_FileIO,
                      "Failed reading coordinate data at offset %d", 
                      nCoordBlockPtr);
+            CPLFree(pasSecHdrs);
+            CPLFree(panXY);
             return -1;
         }
 
@@ -4812,6 +4821,7 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Failed reading text string at offset %d", 
                          nCoordBlockPtr);
+                CPLFree(pszTmpString);                
                 return -1;
             }
         }
