@@ -117,7 +117,12 @@ MAKE	=	nmake /nologo
 CC	=	cl
 
 CPLLIB	=    $(GDAL_ROOT)/port/cpl.lib
+
+!IFDEF DLLBUILD
+GDALLIB	=    $(GDAL_ROOT)/gdal_i.lib
+!ELSE
 GDALLIB	=    $(GDAL_ROOT)/gdal.lib
+!ENDIF
 
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c
