@@ -34,9 +34,6 @@ endif
 
 CPPFLAGS	+=	-I.. -I../..
 
-# temporary work-around against topdir/GNUmakefile intrusion!
-.PRECIOUS:	ogrregisterall.o 
-
 default:	$(O_OBJ)
 
 clean:
