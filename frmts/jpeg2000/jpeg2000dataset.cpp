@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.18  2003/05/13 14:00:44  warmerda
+ * added mimetype and extension
+ *
  * Revision 1.17  2003/04/06 10:13:23  dron
  * Support for pseudocoloured images with LUT.
  *
@@ -1153,6 +1156,8 @@ void GDALRegister_JPEG2000()
                                    "frmt_jpeg2000.html" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte Int16 UInt16 Int32 UInt32" );
+        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
 
         poDriver->pfnOpen = JPEG2000Dataset::Open;
         poDriver->pfnCreateCopy = JPEG2000CreateCopy;
