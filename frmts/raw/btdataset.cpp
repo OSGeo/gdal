@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/01/08 20:13:33  warmerda
+ * Fixed bugs with georeferencing (on read), and with imagery access
+ * (was diagonally flipped).  Note, that BT imagery is column organized,
+ * like USGS DEMs, not row oriented as the raw driver is optimized for.
+ *
  * Revision 1.2  2003/12/11 22:44:11  warmerda
  * ensure external .prj flag gets set
  *
@@ -485,10 +490,10 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
         memcpy( &dfRight, poDS->abyHeader + 36, 8 );
         CPL_LSBPTR64( &dfRight );
         
-        memcpy( &dfBottom, poDS->abyHeader + 28, 8 );
+        memcpy( &dfBottom, poDS->abyHeader + 44, 8 );
         CPL_LSBPTR64( &dfBottom );
         
-        memcpy( &dfTop, poDS->abyHeader + 36, 8 );
+        memcpy( &dfTop, poDS->abyHeader + 52, 8 );
         CPL_LSBPTR64( &dfTop );
 
         poDS->adfGeoTransform[0] = dfLeft;
@@ -525,8 +530,9 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->SetBand(
         1, new RawRasterBand( poDS, 1, poDS->fpImage, 
-                              256, nDataSize, nDataSize * poDS->nRasterXSize,
-                              eType, CPL_IS_LSB, TRUE ) );
+                              256 + nDataSize * (poDS->nRasterXSize-1), 
+                              nDataSize * poDS->nRasterXSize, 
+                              -nDataSize, eType, CPL_IS_LSB, TRUE ) );
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
