@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/02/24 13:49:35  gwalter
+ * Recognize another ERS 1/2 ceos variant.
+ *
  * Revision 1.18  2004/11/11 00:16:01  gwalter
  * Polarmetric->Polarimetric.
  *
@@ -122,6 +125,7 @@ CeosStringType_t CeosInterleaveType[] = { { "BSQ", __CEOS_IL_BAND },
 #define IMAGE_JERS_OPT { 50, 192, 18, 18 }    /* Some JERS data uses this instead of IMAGE_OPT */
 #define PROC_DATA_REC { 50, 11, 18, 20 }
 #define PROC_DATA_REC_ALT { 50, 11, 31, 20 }
+#define PROC_DATA_REC_ALT2 { 50, 11, 31, 50 }  /* Some cases of ERS 1, 2 */
 #define DATA_SET_SUMMARY { 18, 10, 18, 20 }
 
 /* NOTE: This seems to be the generic recipe used for most things */
@@ -171,6 +175,10 @@ CeosRecipeType_t RadarSatRecipe[] =
 
     /* Some ERS-1 products use an alternate data record subtype2. */
     { __CEOS_REC_RECORDSIZE, 1, __CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC_ALT,
+      9, 4, __CEOS_REC_TYP_B }, /* The processed image record size */
+
+    /* Yet another ERS-1 and ERS-2 alternate data record subtype2. */
+    { __CEOS_REC_RECORDSIZE, 1, __CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC_ALT2,
       9, 4, __CEOS_REC_TYP_B }, /* The processed image record size */
 
     { __CEOS_REC_SUFFIX_SIZE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
