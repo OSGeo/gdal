@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.15  2000/01/29 22:31:02  warmerda
+ * Define WIN32 if _WINDOWS is defined.
+ *
  * Revision 1.14  1999/09/21 13:39:54  warmerda
  * Added some more swapping macros.
  *
@@ -99,6 +102,10 @@
 #  define WIN32
 #endif
 
+#if defined(_WINDOWS) && !defined(WIN32)
+#  define WIN32
+#endif
+
 /* ==================================================================== */
 /*	Standard include files.						*/
 /* ==================================================================== */
@@ -115,6 +122,11 @@
 #if defined(HAVE_LIBDBMALLOC) && defined(HAVE_DBMALLOC_H) && defined(DEBUG)
 #  define DBMALLOC
 #  include <dbmalloc.h>
+#endif
+
+#if !defined(DBMALLOC) && defined(HAVE_DMALLOC_H)
+#  define USE_DMALLOC
+#  include <dmalloc.h>
 #endif
 
 /* ==================================================================== */
