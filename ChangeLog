@@ -1,5 +1,7 @@
 2002-03-01  Frank Warmerdam  <warmerdam@pobox.com>
 
+	* memdataset: retain nodata values.
+
 	* GDALRasterBand: added the GetBand() method.
 
 2002-02-07  Frank Warmerdam  <warmerdam@pobox.com>
