@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/05/28 18:16:22  warmerda
+ * Added support for hold colortable and interp on RawRasterBand
+ *
  * Revision 1.12  2003/07/27 11:04:40  dron
  * Added RawRasterBand::IsLineLoaded() method.
  *
@@ -117,6 +120,9 @@ class CPL_DLL RawRasterBand : public GDALRasterBand
     void	*pLineBuffer;
     int         bDirty;
 
+    GDALColorTable *poCT;
+    GDALColorInterp eInterp;
+
     int         Seek( vsi_l_offset, int );
     size_t      Read( void *, size_t, size_t );
     size_t      Write( void *, size_t, size_t );
@@ -147,6 +153,11 @@ class CPL_DLL RawRasterBand : public GDALRasterBand
     
     virtual CPLErr  IReadBlock( int, int, void * );
     virtual CPLErr  IWriteBlock( int, int, void * );
+
+    virtual GDALColorTable *GetColorTable();
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr SetColorTable( GDALColorTable * ); 
+    virtual CPLErr SetColorInterpretation( GDALColorInterp );
 
     virtual CPLErr  SetNoDataValue( double );
     virtual double  GetNoDataValue( int *pbSuccess = NULL );

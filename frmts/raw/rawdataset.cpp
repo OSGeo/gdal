@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2004/05/28 18:16:22  warmerda
+ * Added support for hold colortable and interp on RawRasterBand
+ *
  * Revision 1.22  2004/04/06 19:25:31  dron
  * Use GDALRasterBand::IsBlockCached() instead of GDALRasterBlock::IsCached().
  *
@@ -182,6 +185,9 @@ RawRasterBand::RawRasterBand( FILE * fpRaw, vsi_l_offset nImgOffset,
 
     dfNoDataValue = 0.0;
     bNoDataSet = FALSE;
+
+    poCT = NULL;
+    eInterp = GCI_Undefined;
 
 /* -------------------------------------------------------------------- */
 /*      Treat one scanline as the block size.                           */
@@ -933,6 +939,55 @@ double RawRasterBand::GetNoDataValue( int * pbSuccess )
         *pbSuccess = bNoDataSet;
 
     return dfNoDataValue;
+}
+
+/************************************************************************/
+/*                           SetColorTable()                            */
+/************************************************************************/
+
+CPLErr RawRasterBand::SetColorTable( GDALColorTable *poNewCT )
+
+{
+    if( poCT )
+        delete poCT;
+    if( poNewCT == NULL )
+        poCT = NULL;
+    else
+        poCT = poNewCT->Clone();
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable *RawRasterBand::GetColorTable()
+
+{
+    return poCT;
+}
+
+/************************************************************************/
+/*                       SetColorInterpretation()                       */
+/************************************************************************/
+
+CPLErr RawRasterBand::SetColorInterpretation( GDALColorInterp eNewInterp )
+
+{
+    eInterp = eNewInterp;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp RawRasterBand::GetColorInterpretation()
+
+{
+    return eInterp;
 }
 
 /************************************************************************/
