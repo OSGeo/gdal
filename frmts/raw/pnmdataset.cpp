@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/04/16 17:52:35  warmerda
+ * Initialize variables.
+ *
  * Revision 1.3  2001/07/18 19:04:10  warmerda
  * Removed debug printf.
  *
@@ -118,7 +121,7 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     const char  *pszSrc = (const char *) poOpenInfo->pabyHeader;
     char	szToken[512];
-    int		iIn, iOut, iToken = 0, nWidth, nHeight;
+    int		iIn, iOut, iToken = 0, nWidth=-1, nHeight=-1;
 
     iIn = 2;
     while( iIn < poOpenInfo->nHeaderBytes && iToken < 3 )

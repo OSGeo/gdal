@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/04/16 17:53:33  warmerda
+ * Initialize variables.
+ *
  * Revision 1.8  2002/04/08 17:33:25  warmerda
  * now you can get dataset records via metadata api
  *
@@ -202,7 +205,7 @@ void EnvisatDataset::ScanForGCPs()
 /*      Collect the first GCP set from each record.			*/
 /* -------------------------------------------------------------------- */
     GByte	abyRecord[521];
-    int  	nRange, nSample, iGCP;
+    int  	nRange=0, nSample, iGCP;
     GUInt32 	unValue;
 
     nGCPCount = 0;
