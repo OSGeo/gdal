@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/10/18 14:35:22  warmerda
+ * avoid conflicts between parameters and member data
+ *
  * Revision 1.7  2001/07/18 04:04:30  warmerda
  * added CPL_CVSID
  *
@@ -87,7 +90,7 @@ GDALDefaultOverviews::~GDALDefaultOverviews()
 /*                             Initialize()                             */
 /************************************************************************/
 
-void GDALDefaultOverviews::Initialize( GDALDataset *poDS,
+void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
                                        const char * pszBasename,
                                        int bNameIsOVR )
 
@@ -98,7 +101,7 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDS,
 /*      If we were already initialized, destroy the old overview        */
 /*      file handle.                                                    */
 /* -------------------------------------------------------------------- */
-    if( this->poODS != NULL )
+    if( poODS != NULL )
     {
         delete poODS;
     }
@@ -106,7 +109,7 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDS,
 /* -------------------------------------------------------------------- */
 /*      Open overview dataset if it exists.                             */
 /* -------------------------------------------------------------------- */
-    this->poDS = poDS;
+    poDS = poDSIn;
     
     if( pszBasename == NULL )
         pszBasename = poDS->GetDescription();
