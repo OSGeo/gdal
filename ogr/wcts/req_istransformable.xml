@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Transformable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.deegree.org/xml/schemas/wcts/transformableRequest.xsd">
+  <SourceCRS>
+    <CoordinateReferenceSystem>
+      <Identifier>
+        <code>4326</code>
+        <codeSpace>EPSG</codeSpace>
+      </Identifier>
+    </CoordinateReferenceSystem>
+  </SourceCRS>
+  <DestinationCRS>
+    <CoordinateReferenceSystem>
+      <Identifier>
+        <code>23032</code>
+        <codeSpace>EPSG</codeSpace>
+      </Identifier>
+    </CoordinateReferenceSystem>
+  </DestinationCRS>
+</Transformable>
