@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.15  2000/10/31 18:02:47  warmerda
+ * fixed unkonwn and external projections
+ *
  * Revision 1.14  2000/10/20 04:18:15  warmerda
  * added overviews, stateplane, and u4
  *
@@ -1201,11 +1204,16 @@ CPLErr HFADataset::ReadProjection()
 
 
       default:
-        /* we do nothing for unsupported projections for now */
+        oSRS.SetLocalCS( psPro->proName );
         break;
     }
 
-    if( oSRS.IsProjected() && psPro->proNumber != EPRJ_STATE_PLANE )
+    if( psPro->proType == EPRJ_EXTERNAL )
+    {
+        oSRS.SetLocalCS( psPro->proName );
+    }
+
+    else if( oSRS.IsProjected() && psPro->proNumber != EPRJ_STATE_PLANE )
     {
         oSRS.SetProjCS( psPro->proName );
 
@@ -1243,6 +1251,11 @@ CPLErr HFADataset::ReadProjection()
             }
         }
     }
+
+    if( psPro->proSpheroid.a == 0.0 )
+        ((Eprj_ProParameters *) psPro)->proSpheroid.a = 6378137.0;
+    if( psPro->proSpheroid.b == 0.0 )
+        ((Eprj_ProParameters *) psPro)->proSpheroid.b = 6356752.3;
 
     dfInvFlattening = 1.0/(1.0 - psPro->proSpheroid.b/psPro->proSpheroid.a);
 
