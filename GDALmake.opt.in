@@ -146,5 +146,5 @@ else
 CONFIG_LIBS	=	$(GDAL_LIBS) $(LIBS)
 CONFIG_LIBS_INS	=	$(foreach LF,$(GDAL_LIBS),$(INST_LIB)/$(notdir $(LF)))\
 			 $(LIBS)
-EXE_DEP_LIBS	=	$(GDAL_LIBS)
+EXE_DEP_LIBS	=	$(GDALA_DEP)
 endif
