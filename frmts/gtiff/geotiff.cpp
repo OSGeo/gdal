@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.105  2004/01/15 10:18:35  dron
+ * PHOTOMETRIC option flag added. Few improvements in option parsing.
+ *
  * Revision 1.104  2004/01/14 23:09:08  warmerda
  * Removed duplicate line.
  *
@@ -2574,6 +2577,7 @@ TIFF *GTiffCreate( const char * pszFilename,
     int                 nCompression = COMPRESSION_NONE;
     uint16              nSampleFormat;
     int			nPlanar;
+    const char          *pszValue;
 
     GTiffOneTimeInit();
 
@@ -2583,26 +2587,27 @@ TIFF *GTiffCreate( const char * pszFilename,
     if( CSLFetchNameValue(papszParmList,"TILED") != NULL )
         bTiled = TRUE;
 
-    if( CSLFetchNameValue(papszParmList,"BLOCKXSIZE")  != NULL )
-        nBlockXSize = atoi(CSLFetchNameValue(papszParmList,"BLOCKXSIZE"));
+    pszValue = CSLFetchNameValue(papszParmList,"BLOCKXSIZE");
+    if( pszValue != NULL )
+        nBlockXSize = atoi( pszValue );
 
-    if( CSLFetchNameValue(papszParmList,"BLOCKYSIZE")  != NULL )
-        nBlockYSize = atoi(CSLFetchNameValue(papszParmList,"BLOCKYSIZE"));
+    pszValue = CSLFetchNameValue(papszParmList,"BLOCKYSIZE");
+    if( pszValue != NULL )
+        nBlockYSize = atoi( pszValue );
 
-    if( CSLFetchNameValue(papszParmList,"INTERLEAVE")  != NULL )
+    pszValue = CSLFetchNameValue(papszParmList,"INTERLEAVE");
+    if( pszValue != NULL )
     {
-        const char *pszInterleave;
-
-        pszInterleave = CSLFetchNameValue(papszParmList,"INTERLEAVE");
-        if( EQUAL(pszInterleave,"PIXEL") )
+        pszValue = CSLFetchNameValue(papszParmList,"INTERLEAVE");
+        if( EQUAL( pszValue, "PIXEL" ) )
             nPlanar = PLANARCONFIG_CONTIG;
-        else if( EQUAL(pszInterleave,"BAND") )
+        else if( EQUAL( pszValue, "BAND" ) )
             nPlanar = PLANARCONFIG_SEPARATE;
         else
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                      "INTERLEAVE=%s unsupported, value must be PIXEL or BAND.",
-                      pszInterleave );
+                      pszValue );
             return NULL;
         }
     }
@@ -2614,21 +2619,21 @@ TIFF *GTiffCreate( const char * pszFilename,
             nPlanar = PLANARCONFIG_SEPARATE;
     }
 
-    if( CSLFetchNameValue(papszParmList,"COMPRESS")  != NULL )
+    pszValue = CSLFetchNameValue(papszParmList,"COMPRESS");
+    if( pszValue  != NULL )
     {
-        if( EQUAL(CSLFetchNameValue(papszParmList,"COMPRESS"),"JPEG") )
+        if( EQUAL( pszValue, "JPEG" ) )
             nCompression = COMPRESSION_JPEG;
-        else if( EQUAL(CSLFetchNameValue(papszParmList,"COMPRESS"),"LZW") )
+        else if( EQUAL( pszValue, "LZW" ) )
             nCompression = COMPRESSION_LZW;
-        else if( EQUAL(CSLFetchNameValue(papszParmList,"COMPRESS"),"PACKBITS"))
+        else if( EQUAL( pszValue, "PACKBITS" ))
             nCompression = COMPRESSION_PACKBITS;
-        else if( EQUAL(CSLFetchNameValue(papszParmList,"COMPRESS"),"DEFLATE")
-               || EQUAL(CSLFetchNameValue(papszParmList,"COMPRESS"),"ZIP"))
+        else if( EQUAL( pszValue, "DEFLATE" ) || EQUAL( pszValue, "ZIP" ))
             nCompression = COMPRESSION_DEFLATE;
         else
             CPLError( CE_Warning, CPLE_IllegalArg, 
-                      "COMPRESS=%s value not recognised, ignoring.", 
-                      CSLFetchNameValue(papszParmList,"COMPRESS") );
+                      "COMPRESS=%s value not recognised, ignoring.",
+                      pszValue );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2668,19 +2673,61 @@ TIFF *GTiffCreate( const char * pszFilename,
     TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, nBands );
     TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, nPlanar );
 
-    if( nBands == 3 && eType == GDT_Byte )
-        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
-    else if( nBands == 4 && eType == GDT_Byte )
+/* -------------------------------------------------------------------- */
+/*      Setup Photometric Interpretation. Take this value from the user */
+/*      passed option or guess correct value otherwise.                 */
+/* -------------------------------------------------------------------- */
+    pszValue = CSLFetchNameValue(papszParmList,"PHOTOMETRIC");
+    if( pszValue != NULL )
     {
-        uint16 v[1];
-
-        v[0] = EXTRASAMPLE_ASSOCALPHA;
-	TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, 1, v);
-        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
+        if( EQUAL( pszValue, "MINISBLACK" ) )
+            TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
+        else if( EQUAL( pszValue, "MINISWHITE" ) )
+            TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISWHITE );
+        else if( EQUAL( pszValue, "RGB" ))
+            TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
+        else if( EQUAL( pszValue, "CMYK" ))
+            TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_SEPARATED );
+        else if( EQUAL( pszValue, "YCBCR" ))
+            TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_YCBCR );
+        else if( EQUAL( pszValue, "CIELAB" ))
+            TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_CIELAB );
+        else if( EQUAL( pszValue, "ICCLAB" ))
+            TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_ICCLAB );
+        else if( EQUAL( pszValue, "ITULAB" ))
+            TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_ITULAB );
+        else
+        {
+            CPLError( CE_Warning, CPLE_IllegalArg, 
+                      "PHOTOMETRIC=%s value not recognised, ignoring.\n"
+                      "Set the Photometric Interpretation as MINISBLACK.", 
+                      pszValue );
+            TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
+        }
     }
     else
-        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
+    {
+        /* 
+         * If image contains 3 or 4 bands and datatype is Byte then we will
+         * assume it is RGB. In all other cases assume it is MINISBLACK.
+         */
+        if( nBands == 3 && eType == GDT_Byte )
+            TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
+        else if( nBands == 4 && eType == GDT_Byte )
+        {
+            uint16 v[1];
+
+            v[0] = EXTRASAMPLE_ASSOCALPHA;
+            TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, 1, v);
+            TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
+        }
+        else
+            TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
+    }
     
+/* -------------------------------------------------------------------- */
+/*      Setup tiling/stripping flags.                                   */
+/* -------------------------------------------------------------------- */
     if( bTiled )
     {
         if( nBlockXSize == 0 )
@@ -2697,8 +2744,7 @@ TIFF *GTiffCreate( const char * pszFilename,
         uint32 nRowsPerStrip;
 
         if( nBlockYSize == 0 )
-            nRowsPerStrip = MIN(nYSize,
-                                      (int)TIFFDefaultStripSize(hTIFF,0));
+            nRowsPerStrip = MIN(nYSize, (int)TIFFDefaultStripSize(hTIFF,0));
         else
             nRowsPerStrip = nBlockYSize;
         
@@ -3620,6 +3666,16 @@ void GDALRegister_GTiff()
 "   <Option name='TFW' type='boolean' description='Write out world file'/>"
 "   <Option name='BLOCKXSIZE' type='int' description='Tile Width'/>"
 "   <Option name='BLOCKYSIZE' type='int' description='Tile/Strip Height'/>"
+"   <Option name='PHOTOMETRIC' type='string-select'>"
+"       <Value>MINISBLACK</Value>"
+"       <Value>MINISWHITE</value>"
+"       <Value>RGB</Value>"
+"       <Value>CMYK</Value>"
+"       <Value>YCBCR</Value>"
+"       <Value>CIELAB</Value>"
+"       <Value>ICCLAB</Value>"
+"       <Value>ITULAB</Value>"
+"   </Option>"
 "</CreationOptionList>" );
 
 
