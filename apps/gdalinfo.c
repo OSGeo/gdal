@@ -26,6 +26,10 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.28  2003/04/22 16:02:08  dron
+ * New switches: -nogcp and -nomd to suppress printing out GCPs list and metadata
+ * strings respectively.
+ *
  * Revision 1.27  2002/09/20 14:32:15  warmerda
  * don't build gdalinfo statically any more
  *
@@ -124,7 +128,8 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
 void Usage()
 
 {
-    printf( "Usage: gdalinfo [--version] [--formats] [-mm] datasetname\n");
+    printf( "Usage: gdalinfo [--version] [--formats] [-mm] [-nogcp] [-nomd] "
+            "datasetname\n");
     exit( 1 );
 }
 
@@ -142,6 +147,7 @@ int main( int argc, char ** argv )
     GDALDriverH		hDriver;
     char		**papszMetadata;
     int                 bComputeMinMax = FALSE, bSample = FALSE;
+    int                 bShowGCPs = TRUE, bShowMetadata = TRUE ;
     const char          *pszFilename = NULL;
 
     GDALAllRegister();
@@ -151,16 +157,16 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     for( i = 1; i < argc; i++ )
     {
-        if( EQUAL(argv[i],"-mm") )
+        if( EQUAL(argv[i], "-mm") )
         {
             bComputeMinMax = TRUE;
         }
-        else if( EQUAL(argv[i],"--version") )
+        else if( EQUAL(argv[i] ,"--version") )
         {
             printf( "%s\n", GDALVersionInfo( "--version" ) );
             exit( 0 );
         }
-        else if( EQUAL(argv[i],"--formats") )
+        else if( EQUAL(argv[i], "--formats") )
         {
             int iDr;
 
@@ -176,8 +182,12 @@ int main( int argc, char ** argv )
 
             exit( 0 );
         }
-        else if( EQUAL(argv[i],"-sample") )
+        else if( EQUAL(argv[i], "-sample") )
             bSample = TRUE;
+        else if( EQUAL(argv[i], "-nogcp") )
+            bShowGCPs = FALSE;
+        else if( EQUAL(argv[i], "-nomd") )
+            bShowMetadata = FALSE;
         else if( argv[i][0] == '-' )
             Usage();
         else if( pszFilename == NULL )
@@ -255,7 +265,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Report GCPs.                                                    */
 /* -------------------------------------------------------------------- */
-    if( GDALGetGCPCount( hDataset ) > 0 )
+    if( bShowGCPs && GDALGetGCPCount( hDataset ) > 0 )
     {
         printf( "GCP Projection = %s\n", GDALGetGCPProjection(hDataset) );
         for( i = 0; i < GDALGetGCPCount(hDataset); i++ )
@@ -276,7 +286,7 @@ int main( int argc, char ** argv )
 /*      Report metadata.                                                */
 /* -------------------------------------------------------------------- */
     papszMetadata = GDALGetMetadata( hDataset, NULL );
-    if( CSLCount(papszMetadata) > 0 )
+    if( bShowMetadata && CSLCount(papszMetadata) > 0 )
     {
         printf( "Metadata:\n" );
         for( i = 0; papszMetadata[i] != NULL; i++ )
