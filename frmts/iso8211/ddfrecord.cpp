@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/09/03 14:14:39  warmerda
+ * fix cloning
+ *
  * Revision 1.6  1999/09/02 03:10:01  warmerda
  * fixed subtle problem with rewinding modules with reusable headers
  *
@@ -626,7 +629,7 @@ DDFRecord * DDFRecord::Clone()
     
     poNR->nDataSize = nDataSize;
     poNR->pachData = (char *) CPLMalloc(nDataSize);
-    memcpy( pachData, poNR->pachData, nDataSize );
+    memcpy( poNR->pachData, pachData, nDataSize );
     
     poNR->nFieldCount = nFieldCount;
     poNR->paoFields = new DDFField[nFieldCount];

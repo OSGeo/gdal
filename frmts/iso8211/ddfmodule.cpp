@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/09/03 14:14:39  warmerda
+ * fix cloning
+ *
  * Revision 1.8  1999/09/02 03:10:01  warmerda
  * fixed subtle problem with rewinding modules with reusable headers
  *
@@ -507,12 +510,12 @@ void DDFModule::RemoveCloneRecord( DDFRecord * poRecord )
 
 {
     int		i;
-
+ 
     for( i = 0; i < nCloneCount; i++ )
     {
         if( papoClones[i] == poRecord )
         {
-            papoClones[i] = papoClones[nCloneCount];
+            papoClones[i] = papoClones[nCloneCount-1];
             nCloneCount--;
             return;
         }
