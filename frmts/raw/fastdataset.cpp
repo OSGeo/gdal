@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2003/03/14 17:28:10  dron
+ * CPLFormCIFilename() used instead of CPLFormFilename() for FAST-L7 datasets.
+ *
  * Revision 1.5  2003/03/05 15:49:59  dron
  * Fixed typo when reading SENSOR metadata record.
  *
@@ -221,7 +224,8 @@ FILE *FASTDataset::FOpenChannel( char *pszFilename, int iBand )
 	case LANDSAT:
 	if ( pszFilename[0] != ' ' )
 	{
-	    pszChannelFilename = CPLFormFilename( pszDirname, pszFilename, NULL );
+	    pszChannelFilename =
+                CPLFormCIFilename( pszDirname, pszFilename, NULL );
 	    fpChannels[iBand] = VSIFOpen( pszChannelFilename, "rb" );
 	}
 	else
