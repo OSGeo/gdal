@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/07/16 03:47:49  warmerda
+ * added ENID and SNID to line features
+ *
  * Revision 1.6  2001/06/19 15:50:23  warmerda
  * added feature attribute query support
  *
@@ -89,6 +92,12 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
     else if( poTransfer->GetLayerType(iLayer) == SLTLine )
     {
         poFeatureDefn->SetGeomType( wkbLineString );
+
+        oRecId.SetName( "SNID" );
+        poFeatureDefn->AddFieldDefn( &oRecId );
+
+        oRecId.SetName( "ENID" );
+        poFeatureDefn->AddFieldDefn( &oRecId );
     }
     else if( poTransfer->GetLayerType(iLayer) == SLTPoly )
     {
@@ -233,7 +242,7 @@ void OGRSDTSLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                     AssignAttrREcordToFeature()                      */
+/*                     AssignAttrRecordToFeature()                      */
 /************************************************************************/
 
 static void
@@ -354,6 +363,8 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
           poOGRLine->setPoints( poLine->nVertices,
                                 poLine->padfX, poLine->padfY, poLine->padfZ );
           poFeature->SetGeometryDirectly( poOGRLine );
+          poFeature->SetField( "SNID", (int) poLine->oStartNode.nRecord );
+          poFeature->SetField( "ENID", (int) poLine->oEndNode.nRecord );
       }
       break;
 
