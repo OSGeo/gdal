@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/03/20 14:57:27  warmerda
+ * added -t for transform
+ *
  * Revision 1.1  2000/03/16 19:05:07  warmerda
  * New
  *
@@ -35,6 +38,14 @@
 
 #include "ogr_spatialref.h"
 #include "cpl_conv.h"
+
+void Usage()
+
+{
+    printf( "testepsg [-t src_csnum trg_csnum x y]* [csnum]*\n" );
+    printf( "  -t: transform a coordinate from source GCS/PCS to target GCS/PCS\n" );
+    printf( "  csnum's on their own are translated to WKT and printed.\n" );
+}
 
 int main( int nArgc, char ** papszArgv )
 
@@ -44,26 +55,53 @@ int main( int nArgc, char ** papszArgv )
 
     for( i = 1; i < nArgc; i++ )
     {
-        if( oSRS.importFromEPSG( atoi(papszArgv[i]) ) != OGRERR_NONE )
-            printf( "Error occured translating %s.\n", 
-                    papszArgv[i] );
-        else
+        if( EQUAL(papszArgv[i],"-t") && i < nArgc - 4 )
         {
-            char  *pszWKT = NULL;
+            OGRSpatialReference oSourceSRS, oTargetSRS;
+            OGRCoordinateTransformation *poCT;
+            double			x, y;
+            
+            oSourceSRS.importFromEPSG( atoi(papszArgv[i+1]) );
+            oTargetSRS.importFromEPSG( atoi(papszArgv[i+2]) );
+            
+            poCT = OGRCreateCoordinateTransformation( &oSourceSRS,
+                                                      &oTargetSRS );
+            x = atof( papszArgv[i+3] );
+            y = atof( papszArgv[i+4] );
+            
+            if( poCT == NULL || !poCT->Transform( 1, &x, &y ) )
+                printf( "Transformation failed.\n" );
+            else
+                printf( "(%f,%f) -> (%f,%f)\n", 
+                        atof( papszArgv[i+3] ),
+                        atof( papszArgv[i+4] ),
+                        x, y );
+            
+            i += 4;
+        }
+        else 
+        {
+            if( oSRS.importFromEPSG( atoi(papszArgv[i]) ) != OGRERR_NONE )
+                printf( "Error occured translating %s.\n", 
+                        papszArgv[i] );
+            else
+            {
+                char  *pszWKT = NULL;
+                
+                oSRS.exportToWkt( &pszWKT );
+                printf( "WKT[%s] = %s\n", 
+                        papszArgv[i], pszWKT );
+                CPLFree( pszWKT );
 
-            oSRS.exportToWkt( &pszWKT );
-            printf( "WKT[%s] = %s\n", 
-                    papszArgv[i], pszWKT );
-            CPLFree( pszWKT );
+                printf( "\n" );
 
-            printf( "\n" );
-
-            oSRS.StripCTParms();
-            oSRS.exportToWkt( &pszWKT );
-            printf( "Old Style WKT[%s] = %s\n", 
-                    papszArgv[i], pszWKT );
-            CPLFree( pszWKT );
-            printf( "\n------------------------\n\n" );
+                oSRS.StripCTParms();
+                oSRS.exportToWkt( &pszWKT );
+                printf( "Old Style WKT[%s] = %s\n", 
+                        papszArgv[i], pszWKT );
+                CPLFree( pszWKT );
+                printf( "\n------------------------\n\n" );
+            }
         }
     }
 }
