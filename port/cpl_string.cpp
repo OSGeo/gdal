@@ -28,6 +28,11 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
+ * Independent Security Audit 2003/04/04 Andrey Kiselev:
+ *   Completed audit of this module. All functions may be used without buffer
+ *   overflows and stack corruptions with any kind of input data strings with
+ *   except of CPLSPrintf() and CSLAppendPrintf() (see note below).
+ * 
  * Security Audit 2003/03/28 warmerda:
  *   Completed security audit.  I believe that this module may be safely used 
  *   to parse tokenize arbitrary input strings, assemble arbitrary sets of
@@ -39,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.31  2003/04/04 14:16:07  dron
+ * Use _vsnprintf() in Windows environment.
+ *
  * Revision 1.30  2003/03/28 05:29:53  warmerda
  * Fixed buffer overflow risk in escaping code (for XML method).  Avoid
  * use of CPLSPrintf() for name/value list assembly to avoid risk with long
@@ -282,7 +290,7 @@ char    **CSLDuplicate(char **papszStrList)
  *
  * Load a test file into a stringlist.
  *
- * Lines are limited in length by the size fo the CPLReadLine() buffer.
+ * Lines are limited in length by the size of the CPLReadLine() buffer.
  **********************************************************************/
 char **CSLLoad(const char *pszFname)
 {
@@ -310,7 +318,7 @@ char **CSLLoad(const char *pszFname)
     {
         /* Unable to open file */
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "CSLLoad(%s): %.500s", pszFname, strerror(errno));
+                 "CSLLoad(%s): %s", pszFname, strerror(errno));
     }
 
     return papszStrList;
@@ -327,7 +335,7 @@ char **CSLLoad(const char *pszFname)
 int  CSLSave(char **papszStrList, const char *pszFname)
 {
     FILE    *fp;
-    int     nLines=0;
+    int     nLines = 0;
 
     if (papszStrList)
     {
@@ -772,8 +780,13 @@ const char *CPLSPrintf(char *fmt, ...)
 
     va_start(args, fmt);
 #if defined(HAVE_VSNPRINTF)
+#if defined(WIN32)
+    _vsnprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], CPLSPrintf_BUF_SIZE-1,
+               fmt, args);
+#else
     vsnprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], CPLSPrintf_BUF_SIZE-1,
               fmt, args);
+#endif
 #else
     vsprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], fmt, args);
 #endif
@@ -800,8 +813,13 @@ char **CSLAppendPrintf(char **papszStrList, char *fmt, ...)
 
     va_start(args, fmt);
 #if defined(HAVE_VSNPRINTF)
+#if defined(WIN32)
+    _vsnprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], CPLSPrintf_BUF_SIZE-1,
+               fmt, args);
+#else
     vsnprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], CPLSPrintf_BUF_SIZE-1,
               fmt, args);
+#endif
 #else
     vsprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], fmt, args);
 #endif
@@ -1106,14 +1124,14 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
 
     for( iLine = 0; iLine < nLines; iLine++ )
     {
-        char    *pszKey = NULL;
-        const char *pszValue;
-        char    *pszNewLine;
+        char        *pszKey = NULL;
+        const char  *pszValue;
+        char        *pszNewLine;
 
         pszValue = CPLParseNameValue( papszList[iLine], &pszKey );
         
-        pszNewLine = (char *) CPLMalloc(strlen(pszValue)+strlen(pszKey)
-                                        +strlen(pszSeparator)+1);
+        pszNewLine = (char *) CPLMalloc( strlen(pszValue) + strlen(pszKey)
+                                         + strlen(pszSeparator) + 1 );
         strcpy( pszNewLine, pszKey );
         strcat( pszNewLine, pszSeparator );
         strcat( pszNewLine, pszValue );
@@ -1169,7 +1187,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
     if( nLength == -1 )
         nLength = strlen(pszInput);
 
-    pszOutput = (char *) CPLMalloc(nLength * 6 + 1);
+    pszOutput = (char *) CPLMalloc( nLength * 6 + 1 );
     
     if( nScheme == CPLES_BackslashQuotable )
     {

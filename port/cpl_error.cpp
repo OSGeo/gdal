@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.24  2003/04/04 14:16:07  dron
+ * Use _vsnprintf() in Windows environment.
+ *
  * Revision 1.23  2002/10/23 20:19:37  warmerda
  * Modify log file naming convention as per patch from Dale.
  *
@@ -184,7 +187,11 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
     /* Expand the error message 
      */
 #if defined(HAVE_VSNPRINTF)
-    vsnprintf(gszCPLLastErrMsg, sizeof(gszCPLLastErrMsg), fmt, args);
+#if defined(WIN32)
+    _vsnprintf( gszCPLLastErrMsg, sizeof(gszCPLLastErrMsg), fmt, args );
+#else
+    vsnprintf( gszCPLLastErrMsg, sizeof(gszCPLLastErrMsg), fmt, args );
+#endif
 #else
     vsprintf(gszCPLLastErrMsg, fmt, args);
 #endif
@@ -234,8 +241,8 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 
 {
     char        *pszMessage;
-    va_list args;
-    const char      *pszDebug = getenv("CPL_DEBUG");
+    va_list     args;
+    const char  *pszDebug = getenv("CPL_DEBUG");
 
 #define ERROR_MAX 25000
 
@@ -262,7 +269,7 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 /* -------------------------------------------------------------------- */
 /*    Allocate a block for the error.                                   */
 /* -------------------------------------------------------------------- */
-    pszMessage = (char *) VSIMalloc(ERROR_MAX);
+    pszMessage = (char *) VSIMalloc( ERROR_MAX );
     if( pszMessage == NULL )
         return;
         
@@ -303,8 +310,13 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 /* -------------------------------------------------------------------- */
     va_start(args, pszFormat);
 #if defined(HAVE_VSNPRINTF)
+#if defined(WIN32)
+    _vsnprintf(pszMessage+strlen(pszMessage), ERROR_MAX - strlen(pszMessage), 
+               pszFormat, args);
+#else
     vsnprintf(pszMessage+strlen(pszMessage), ERROR_MAX - strlen(pszMessage), 
               pszFormat, args);
+#endif
 #else
     vsprintf(pszMessage+strlen(pszMessage), pszFormat, args);
 #endif
