@@ -116,7 +116,7 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 
 ifeq ($(OGR_ENABLED),yes)
 GDAL_LIBS := $(OGRFRMTS_LIB) $(PG_LIB) $(GDAL_LIBS) 
-GDALA_DEP := $(GDAL_DEP) $(OGRFRMTS_LIB)
+GDALA_DEP := $(GDALA_DEP) $(OGRFRMTS_LIB)
 
 GDAL_OBJ := $(GDAL_OBJ) $(GDAL_ROOT)/ogr/ogrsf_frmts/generic/ogrregisterall.o \
 		$(GDAL_ROOT)/ogr/ogrfeaturestyle.o
@@ -131,3 +131,19 @@ GDAL_FORMATS = 	gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 bsb xpm \
 		sdts raw dted mem jdem envisat elas fit vrt usgsdem l1b \
 		@OPT_GDAL_FORMATS@
 
+#
+# CONFIG_LIBS is what local program should link against, and CONFIG_LIBS_INS
+# is what will be emitted into the gdal-config script that is installed
+# globally.
+#
+
+ifeq ($(HAVE_LD_SHARED),yes)					
+CONFIG_LIBS	=	$(GDAL_SLIB_LINK)
+CONFIG_LIBS_INS	=	-L$(INST_LIB) -lgdal.$(GDAL_VER)
+EXE_DEP_LIBS	=	$(GDAL_SLIB)
+else
+CONFIG_LIBS	=	$(GDAL_LIBS) $(LIBS)
+CONFIG_LIBS_INS	=	$(foreach LF,$(GDAL_LIBS),$(INST_LIB)/$(notdir $(LF)))\
+			 $(LIBS)
+EXE_DEP_LIBS	=	$(GDAL_LIBS)
+endif
