@@ -39,7 +39,7 @@ OBJ	= \
 	tif_overview.o \
 	tif_ovrcache.o 
 
-ALL_C_FLAGS	=	$(CFLAGS) -I../../zlib
+ALL_C_FLAGS	=	$(CFLAGS) -DZIP_SUPPORT -I../../zlib
 
 ifneq ($(JPEG_SETTING),no)
 ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DJPEG_SUPPORT
