@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/02/18 20:56:55  warmerda
+ * register AVCBin
+ *
  * Revision 1.8  2002/01/25 20:40:51  warmerda
  * register gml
  *
@@ -73,6 +76,8 @@ void OGRRegisterAll()
     RegisterOGRTAB();
     RegisterOGRDGN();
     RegisterOGRGML();
+    RegisterOGRAVCBin();
+//    RegisterOGRE00();
 #ifdef OGDI_ENABLED
     RegisterOGROGDI();
 #endif
