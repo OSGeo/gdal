@@ -156,7 +156,11 @@ if test "$with_png" = "no" ; then
 elif test "$with_png" = "yes" -o "$with_png" = "" ; then
 
   AC_CHECK_LIB(png,png_set_IHDR,PNG_SETTING=external,PNG_SETTING=internal,$LIBS)
+  AC_CHECK_HEADERS(png.h)
 
+  if test "$PNG_SETTING" = "external" -a "$ac_cv_header_png_h" = "no" ; then   
+    PNG_SETTING=internal
+  fi
   if test "$PNG_SETTING" = "external" ; then   
     LIBS="-lpng $LIBS"
     echo "using pre-installed libpng."
@@ -411,6 +415,59 @@ else
   OGR_ENABLED=no
 fi
 AC_SUBST(OGR_ENABLED,$OGR_ENABLED)
+
+dnl ---------------------------------------------------------------------------
+dnl Select an PostgreSQL Library to use, or disable driver.
+dnl ---------------------------------------------------------------------------
+
+PG_HOME=
+PG_LIB=
+PG_INC=
+
+AC_ARG_WITH(pg,[  --with-pg[=ARG]         Include PostgreSQL OGR Support (ARG=PG_HOME)],,)
+
+if test "$with_pg" = "yes" -o "$with_pg" = "" ; then
+  if test -d /usr/local/pgsql -a -r /usr/local/pgsql/include/libpq-fe.h ; then
+    with_pg=/usr/local/pgsql
+  fi
+fi
+
+if test "$with_pg" = "no" -o "$OGR_ENABLED" = "no" ; then
+
+  HAVE_PG=no
+  echo "PostgreSQL support disabled."
+
+elif test "$with_pg" = "yes" -o "$with_pg" = "" ; then
+
+  AC_CHECK_HEADERS(libpq-fe.h)
+  AC_CHECK_LIB(pq,PQconnectcb,HAVE_PG=yes,HAVE_PG=no,)
+
+  if test "$HAVE_PG" = "yes" -a "$av_cv_header_libpq_fe_h" = "no" ; then   
+    HAVE_PG=no
+  fi
+
+  if test "$HAVE_PG" = "yes" ; then   
+    PG_LIB=-lpq
+    echo "PostgreSQL support enabled."
+  else
+    echo "PostgreSQL support unavailable."
+  fi
+
+else
+
+  HAVE_PG=yes
+  PG_HOME=$with_pg
+  PG_LIB="-L$with_pg/lib -lpq"
+  PG_INC="-I$with_pg/include"
+
+  echo "using PostgreSQL tree from $with_pg ."
+
+fi
+
+AC_SUBST(HAVE_PG,$HAVE_PG)
+AC_SUBST(PG_HOME,$PG_HOME)
+AC_SUBST(PG_INC,$PG_INC)
+AC_SUBST(PG_LIB,$PG_LIB)
 
 dnl ---------------------------------------------------------------------------
 
