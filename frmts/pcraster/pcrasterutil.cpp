@@ -24,7 +24,6 @@
 /*!
   \param     type PCRaster data type.
   \return    GDAL data type, GDT_Uknown if conversion is not possible.
-  \warning   \a type must be CR_UINT1, CR_INT4 or CR_REAL4.
 */
 GDALDataType PCRasterType2GDALType(CSF_CR type)
 {
@@ -41,6 +40,10 @@ GDALDataType PCRasterType2GDALType(CSF_CR type)
     }
     case CR_REAL4: {
       dataType = GDT_Float32;
+      break;
+    }
+    case CR_REAL8: {
+      dataType = GDT_Float64;
       break;
     }
     default: {
@@ -416,11 +419,13 @@ CSF_CR updateCellRepresentation(CSF_VS valueScale, CSF_CR type)
 {
   CSF_CR result = type;
 
+  /*
   if(valueScale == VS_NOMINAL || valueScale == VS_ORDINAL) {
     if(type == CR_UINT1) {
       result = CR_INT4;
     }
   }
+  */
   /*
   else if(valueScale == VS_SCALAR) {
     if(type == CR_REAL8) {
