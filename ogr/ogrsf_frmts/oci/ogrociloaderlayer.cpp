@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/04/11 18:20:57  warmerda
+ * added external dat file in VARIABLE mode
+ *
  * Revision 1.2  2003/04/04 22:04:28  warmerda
  * added incomplete support for variable mode
  *
@@ -51,7 +54,7 @@ OGROCILoaderLayer::OGROCILoaderLayer( OGROCIDataSource *poDSIn,
                                       const char * pszTableName,
                                       const char * pszGeomColIn,
                                       int nSRIDIn, 
-                                      const char *pszLoaderFile )
+                                      const char *pszLoaderFilenameIn )
 
 {
     poDS = poDSIn;
@@ -77,12 +80,15 @@ OGROCILoaderLayer::OGROCILoaderLayer( OGROCIDataSource *poDSIn,
 /* -------------------------------------------------------------------- */
 /*      Open the loader file.                                           */
 /* -------------------------------------------------------------------- */
-    fpLoader = VSIFOpen( pszLoaderFile, "wt" );
+    pszLoaderFilename = CPLStrdup( pszLoaderFilenameIn );
+
+    fpData = NULL;
+    fpLoader = VSIFOpen( pszLoaderFilename, "wt" );
     if( fpLoader == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Failed to open SQL*Loader control file:%s", 
-                  pszLoaderFile );
+                  pszLoaderFilename );
         return;
     }
 
@@ -95,11 +101,16 @@ OGROCILoaderLayer::OGROCILoaderLayer( OGROCIDataSource *poDSIn,
 OGROCILoaderLayer::~OGROCILoaderLayer()
 
 {
+    if( fpData != NULL )
+        VSIFClose( fpData );
+
     if( fpLoader != NULL )
     {
         VSIFClose( fpLoader );
         FinalizeNewLayer();
     }
+
+    CPLFree( pszLoaderFilename );
 
     if( poSRS != NULL && poSRS->Dereference() == 0 )
         delete poSRS;
@@ -138,7 +149,18 @@ void OGROCILoaderLayer::WriteLoaderHeader()
     }
     else if( nLDRMode == LDRM_VARIABLE )
     {
-        VSIFPrintf( fpLoader, "INFILE * \"var 8\"\n" );
+        const char *pszDataFilename = CPLResetExtension( pszLoaderFilename, 
+                                                         "dat" );
+        fpData = VSIFOpen( pszDataFilename, "wb" );
+        if( fpData == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Unable to open data output file `%s'.", 
+                      pszDataFilename );
+            return;
+        }
+            
+        VSIFPrintf( fpLoader, "INFILE %s \"var 8\"\n", pszDataFilename );
     }
 
     VSIFPrintf( fpLoader, "INTO TABLE \"%s\" REPLACE\n", 
@@ -190,7 +212,9 @@ void OGROCILoaderLayer::WriteLoaderHeader()
     }
 
     VSIFPrintf( fpLoader, ")\n" );
-    VSIFPrintf( fpLoader, "begindata\n" );
+
+    if( nLDRMode == LDRM_STREAM )
+        VSIFPrintf( fpLoader, "begindata\n" );
 
     bHeaderWritten = TRUE;
 }
@@ -361,6 +385,9 @@ OGRErr OGROCILoaderLayer::WriteFeatureVariableMode( OGRFeature *poFeature )
 {
     OGROCIStringBuf oLine;
 
+    if( fpData == NULL )
+        return OGRERR_FAILURE;
+
 /* -------------------------------------------------------------------- */
 /*      Write the FID.                                                  */
 /* -------------------------------------------------------------------- */
@@ -470,7 +497,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureVariableMode( OGRFeature *poFeature )
     sprintf( szLength, "%08d", nStringLen-8 );
     strncpy( oLine.GetString(), szLength, 8 );
 
-    if( VSIFWrite( oLine.GetString(), 1, nStringLen, fpLoader ) != nStringLen )
+    if( VSIFWrite( oLine.GetString(), 1, nStringLen, fpData ) != nStringLen )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
                   "Write to loader file failed, likely out of disk space." );
