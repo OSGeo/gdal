@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/09/27 11:24:11  warmerda
+ * Fixed SLTRaster type spelling.
+ *
  * Revision 1.9  1999/09/03 19:04:38  warmerda
  * added more help
  *
@@ -213,7 +216,7 @@ void SDTSTransfer::Close()
   <li> SLTPoly: A polygon layer.  An SDTSPolygonReader is returned by
   SDTSTransfer::GetLayerIndexedReader().
 
-  <li> SDTSRaster: A raster layer.  SDTSTransfer::GetLayerIndexedReader()
+  <li> SLTRaster: A raster layer.  SDTSTransfer::GetLayerIndexedReader()
   is not implemented.  Use SDTSTransfer::GetLayerRasterReader() instead.
   </ul>
   
