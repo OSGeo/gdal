@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/06/26 05:26:49  warmerda
+ * Separate out GetWKTFromSRSId static method for use of SFCTable
+ *
  * Revision 1.5  1999/06/10 19:18:22  warmerda
  * added support for the spatial ref schema rowset
  *
@@ -340,18 +343,33 @@ char * SFCDataSource::GetWKTFromSRSId( int nSRS_ID )
 
 {
     CSession      oSession;
-    COGISSpatialRefSystemsTable oTable;
-    const char    *pszReturnString = "(Unknown)";
 
     if( FAILED(oSession.Open(*this)) )
-        goto ReturnValue;
+        return NULL;
+
+    return GetWKTFromSRSId( &oSession, nSRS_ID );
+}
+
+/************************************************************************/
+/*                          GetWKTFromSRSId()                           */
+/*                                                                      */
+/*      This undocumented version is implemented statically, so that    */
+/*      code (such as SFCTable) which has a CSession can still call     */
+/*      it without an SFCDataSource instance.                           */
+/************************************************************************/
+
+char * SFCDataSource::GetWKTFromSRSId( CSession * poSession, int nSRS_ID )
+
+{
+    COGISSpatialRefSystemsTable oTable;
+    const char    *pszReturnString = "(Unknown)";
 
 /* -------------------------------------------------------------------- */
 /*      If this provider doesn't support this schema rowset, we         */
 /*      silently return without making a big fuss.  The caller will     */
 /*      try using the regular tables schema rowset instead.             */
 /* -------------------------------------------------------------------- */
-    if( FAILED(oTable.Open(oSession)) )
+    if( FAILED(oTable.Open(*poSession)) )
     {
         goto ReturnValue;
     }

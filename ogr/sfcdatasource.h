@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/06/26 05:27:08  warmerda
+ * Separate out GetWKTFromSRSId static method for use of SFCTable
+ *
  * Revision 1.7  1999/06/10 19:18:22  warmerda
  * added support for the spatial ref schema rowset
  *
@@ -113,6 +116,7 @@ class SFCDataSource : public CDataSource
                                  const char * pszFilterOperator = NULL );
 
     char        *GetWKTFromSRSId( int nSRS_ID );
+    static char *GetWKTFromSRSId( CSession *, int nSRS_ID );
 };
 
 #endif /* ndef SFCDATASOURCE_H_INCLUDED */
