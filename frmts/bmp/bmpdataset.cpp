@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/05/20 08:59:10  dron
+ * BMPDataset::IRasterIO() method added.
+ *
  * Revision 1.19  2003/05/01 17:40:43  dron
  * Report colour interpretation GCI_PaletteIndex for 1-bit images.
  *
@@ -170,6 +173,8 @@ typedef struct
     GUInt16     iReserved2;     // Reserved, set as 0
     GUInt32     iOffBits;       // Offset of the image from file start in bytes
 } BitmapFileHeader;
+
+// File header size in bytes:
 const int       BFH_SIZE = 14;
 
 typedef struct
@@ -216,10 +221,12 @@ typedef struct
     GUInt32     iGammaGreen;    // Toned response curve for green.
     GUInt32     iGammaBlue;     // Toned response curve for blue.
 } BitmapInfoHeader;
-const unsigned int  BIH_WIN4SIZE = 40; // For BMPT_WIN4
-const unsigned int  BIH_WIN5SIZE = 57; // For BMPT_WIN5
-const unsigned int  BIH_OS21SIZE = 12; // For BMPT_OS21
-const unsigned int  BIH_OS22SIZE = 64; // For BMPT_OS22
+
+// Info header size in bytes:
+const unsigned int  BIH_WIN4SIZE = 40; // for BMPT_WIN4
+const unsigned int  BIH_WIN5SIZE = 57; // for BMPT_WIN5
+const unsigned int  BIH_OS21SIZE = 12; // for BMPT_OS21
+const unsigned int  BIH_OS22SIZE = 64; // for BMPT_OS22
 
 // We will use plain byte array instead of this structure, but declaration
 // provided for reference
@@ -254,6 +261,11 @@ class BMPDataset : public GDALDataset
     const char          *pszFilename;
     FILE                *fp;
 
+  protected:
+    virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
+                                   void *, int, int, GDALDataType,
+                                   int, int *, int, int, int );
+
   public:
                 BMPDataset();
                 ~BMPDataset();
@@ -281,7 +293,7 @@ class BMPRasterBand : public GDALRasterBand
 
   protected:
 
-    GUInt32    nScanSize;
+    GUInt32         nScanSize;
     unsigned int    iBytesPerPixel;
     GByte           *pabyScan;
 
@@ -318,7 +330,7 @@ BMPRasterBand::BMPRasterBand( BMPDataset *poDS, int nBand )
     CPLDebug( "BMP", "Band %d: set nBlockXSize=%d, nBlockYSize=%d, nScanSize=%d",
               nBand, nBlockXSize, nBlockYSize, nScanSize );
 
-    pabyScan = (GByte *) CPLMalloc( nScanSize * nBlockYSize );
+    pabyScan = (GByte *) CPLMalloc( nScanSize );
 }
 
 /************************************************************************/
@@ -863,6 +875,36 @@ const char *BMPDataset::GetProjectionRef()
         return pszProjection;
     else
         return "";
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/*                                                                      */
+/*      Multi-band raster io handler.  We will use  block based         */
+/*      loading is used for multiband BMPs.  That is because they       */
+/*      are effectively pixel interleaved, so processing all bands      */
+/*      for a given block together avoid extra seeks.                   */
+/************************************************************************/
+
+CPLErr BMPDataset::IRasterIO( GDALRWFlag eRWFlag, 
+                              int nXOff, int nYOff, int nXSize, int nYSize,
+                              void *pData, int nBufXSize, int nBufYSize, 
+                              GDALDataType eBufType,
+                              int nBandCount, int *panBandMap, 
+                              int nPixelSpace, int nLineSpace, int nBandSpace )
+
+{
+    if( nBandCount > 1 )
+        return GDALDataset::BlockBasedRasterIO( 
+            eRWFlag, nXOff, nYOff, nXSize, nYSize,
+            pData, nBufXSize, nBufYSize, eBufType, 
+            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace );
+    else
+        return 
+            GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                    pData, nBufXSize, nBufYSize, eBufType, 
+                                    nBandCount, panBandMap, 
+                                    nPixelSpace, nLineSpace, nBandSpace );
 }
 
 /************************************************************************/
