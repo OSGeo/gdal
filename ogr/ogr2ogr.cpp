@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/09/21 16:19:50  warmerda
+ * added support for -a_srs and -t_srs options
+ *
  * Revision 1.9  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -69,7 +72,9 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            OGRLayer * poSrcLayer,
                            OGRDataSource *poDstDS,
                            char ** papszLSCO,
-                           const char *pszNewLayerName );
+                           const char *pszNewLayerName,
+                           int bTransform, 
+                           OGRSpatialReference *poOutputSRS );
 
 static int bSkipFailures = FALSE;
 
@@ -85,6 +90,9 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszDestDataSource = NULL;
     char        **papszLayers = NULL;
     char        **papszDSCO = NULL, **papszLCO = NULL;
+    int		bTransform = FALSE;
+    const char  *pszOutputSRSDef = NULL;
+    OGRSpatialReference *poOutputSRS = NULL;
     const char  *pszNewLayerName = NULL;
     
 /* -------------------------------------------------------------------- */
@@ -116,6 +124,15 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-nln") && iArg < nArgc-1 )
         {
             pszNewLayerName = papszArgv[++iArg];
+        }
+        else if( EQUAL(papszArgv[iArg],"-a_srs") && iArg < nArgc-1 )
+        {
+            pszOutputSRSDef = papszArgv[++iArg];
+        }
+        else if( EQUAL(papszArgv[iArg],"-t_srs") && iArg < nArgc-1 )
+        {
+            pszOutputSRSDef = papszArgv[++iArg];
+            bTransform = TRUE;
         }
         else if( papszArgv[iArg][0] == '-' )
         {
@@ -195,6 +212,20 @@ int main( int nArgc, char ** papszArgv )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Parse the output SRS definition if possible.                    */
+/* -------------------------------------------------------------------- */
+    if( pszOutputSRSDef != NULL )
+    {
+        poOutputSRS = new OGRSpatialReference();
+        if( poOutputSRS->SetFromUserInput( pszOutputSRSDef ) != OGRERR_NONE )
+        {
+            printf( "Failed to process SRS definition: %s\n", 
+                    pszOutputSRSDef );
+            exit( 1 );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create the output data source.                                  */
 /* -------------------------------------------------------------------- */
     OGRDataSource       *poODS;
@@ -226,7 +257,7 @@ int main( int nArgc, char ** papszArgv )
                               poLayer->GetLayerDefn()->GetName() ) != -1 )
         {
             if( !TranslateLayer( poDS, poLayer, poODS, papszLCO, 
-                                 pszNewLayerName ) 
+                                 pszNewLayerName, bTransform, poOutputSRS ) 
                 && !bSkipFailures )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -262,6 +293,7 @@ static void Usage()
     OGRSFDriverRegistrar        *poR = OGRSFDriverRegistrar::GetRegistrar();
 
     printf( "Usage: ogr2ogr [-skipfailures] [-f format_name]\n"
+            "               [-t_srs srs_def] [-a_srs srs_def]\n"
             "               [[-dsco NAME=VALUE] ...] dst_datasource_name\n"
             "               src_datasource_name\n"
             "               [-lco NAME=VALUE] [-nln name] layer [layer ...]]\n"
@@ -280,6 +312,13 @@ static void Usage()
             " -lco  NAME=VALUE: Layer creation option (format specific)\n"
             " -nln name: Assign an alternate name to the new layer\n" );
 
+    printf(" -a_srs srs_def: Assign an output SRS\n"
+           " -t_srs srs_def: Reproject/transform to this SRS on output\n"
+           "\n" 
+           " Srs_def can be a full WKT definition (hard to escape properly),\n"
+           " or a well known definition (ie. EPSG:4326) or a file with a WKT\n"
+           " definition.\n" );
+
     exit( 1 );
 }
 
@@ -291,14 +330,51 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            OGRLayer * poSrcLayer,
                            OGRDataSource *poDstDS,
                            char **papszLCO,
-                           const char *pszNewLayerName )
+                           const char *pszNewLayerName,
+                           int bTransform, 
+                           OGRSpatialReference *poOutputSRS )
 
 {
     OGRLayer    *poDstLayer;
     OGRFeatureDefn *poFDefn;
+    OGRErr      eErr;
 
     if( pszNewLayerName == NULL )
         pszNewLayerName = poSrcLayer->GetLayerDefn()->GetName();
+
+/* -------------------------------------------------------------------- */
+/*      Setup coordinate transformation if we need it.                  */
+/* -------------------------------------------------------------------- */
+    OGRCoordinateTransformation *poCT = NULL;
+
+    if( bTransform )
+    {
+        if( poSrcLayer->GetSpatialRef() == NULL )
+        {
+            printf( "Can't transform coordinates, source layer has no\n"
+                    "coordinate system.\n" );
+            exit( 1 );
+        }
+
+        poCT = OGRCreateCoordinateTransformation( poSrcLayer->GetSpatialRef(),
+                                                  poOutputSRS );
+        if( poCT == NULL )
+        {
+            char	*pszWKT = NULL;
+
+            printf("Failed to create coordinate transformation between the\n"
+                   "following coordinate systems.  This may be because they\n"
+                   "are not transformable, or because projection services\n"
+                   "(PROJ.4 DLL/.so) could not be loaded.\n" );
+            
+            poSrcLayer->GetSpatialRef()->exportToPrettyWkt( &pszWKT, FALSE );
+            printf( "Source:\n%s\n", pszWKT );
+            
+            poOutputSRS->exportToPrettyWkt( &pszWKT, FALSE );
+            printf( "Target:\n%s\n", pszWKT );
+            exit( 1 );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create the layer.                                               */
@@ -306,12 +382,13 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     CPLAssert( poDstDS->TestCapability( ODsCCreateLayer ) );
     poFDefn = poSrcLayer->GetLayerDefn();
 
+    if( poOutputSRS == NULL )
+        poOutputSRS = poSrcLayer->GetSpatialRef();
+
     CPLErrorReset();
 
-    poDstLayer = poDstDS->CreateLayer( pszNewLayerName,
-                                       poSrcLayer->GetSpatialRef(),
-                                       poFDefn->GetGeomType(),
-                                       papszLCO );
+    poDstLayer = poDstDS->CreateLayer( pszNewLayerName, poOutputSRS,
+                                       poFDefn->GetGeomType(), papszLCO );
 
     if( poDstLayer == NULL )
         return FALSE;
@@ -350,8 +427,20 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             return FALSE;
         }
         
-        delete poFeature;
+        if( poCT && poDstFeature->GetGeometryRef() != NULL )
+        {
+            eErr = poDstFeature->GetGeometryRef()->transform( poCT );
+            if( eErr != OGRERR_NONE )
+            {
+                printf( "Failed to transform feature %d.\n", 
+                        (int) poFeature->GetFID() );
+                if( !bSkipFailures )
+                    return FALSE;
+            }
+        }
         
+        delete poFeature;
+
         CPLErrorReset();
         if( poDstLayer->CreateFeature( poDstFeature ) != OGRERR_NONE 
             && !bSkipFailures )
