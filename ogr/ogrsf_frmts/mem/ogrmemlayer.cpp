@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/04/08 20:58:16  warmerda
+ * added support for adding fields when existing features exist
+ *
  * Revision 1.1  2003/04/08 19:32:47  warmerda
  * New
  *
@@ -286,7 +289,41 @@ int OGRMemLayer::TestCapability( const char * pszCap )
 OGRErr OGRMemLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
 {
+/* -------------------------------------------------------------------- */
+/*      simple case, no features exist yet.                             */
+/* -------------------------------------------------------------------- */
+    if( nFeatureCount == 0 )
+    {
+        poFeatureDefn->AddFieldDefn( poField );
+        return OGRERR_NONE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add field definition and setup remap definition.                */
+/* -------------------------------------------------------------------- */
+    int  *panRemap;
+    int   i;
+
     poFeatureDefn->AddFieldDefn( poField );
+
+    panRemap = (int *) CPLMalloc(sizeof(int) * poFeatureDefn->GetFieldCount());
+    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    {
+        if( i < poFeatureDefn->GetFieldCount() - 1 )
+            panRemap[i] = i;
+        else
+            panRemap[i] = -1;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Remap all the internal features.  Hopefully there aren't any    */
+/*      external features referring to our OGRFeatureDefn!              */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nMaxFeatureCount; i++ )
+    {
+        if( papoFeatures[i] != NULL )
+            papoFeatures[i]->RemapFields( NULL, panRemap );
+    }
 
     return OGRERR_NONE;
 }
