@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2002/12/15 23:42:59  warmerda
+ * added initial support for normalizing proj params
+ *
  * Revision 1.43  2002/12/14 22:59:14  warmerda
  * added Krovak in ESRI compatible way
  *
@@ -259,8 +262,14 @@ class CPL_DLL OGRSpatialReference
 
     OGR_SRSNode *poRoot;
 
+    int         bNormInfoSet;
+    double      dfFromGreenwich;
+    double      dfToMeter;
+    double      dfToDegrees;
+
     OGRErr      ValidateProjection();
     int         IsAliasFor( const char *, const char * );
+    void        GetNormInfo() const;
 
   public:
                 OGRSpatialReference(const OGRSpatialReference&);
@@ -352,7 +361,12 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetProjParm( const char *, double );
     double      GetProjParm( const char *, double =0.0, OGRErr* = NULL ) const;
 
+    OGRErr      SetNormProjParm( const char *, double );
+    double      GetNormProjParm( const char *, double=0.0, OGRErr* =NULL)const;
+
     static int  IsAngularParameter( const char * );
+    static int  IsLongitudeParameter( const char * );
+    static int  IsLinearParameter( const char * );
 
     /** Albers Conic Equal Area */
     OGRErr      SetACEA( double dfStdP1, double dfStdP2,
