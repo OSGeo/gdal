@@ -1077,7 +1077,7 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         adfMinMax[1] = poBand->GetMaximum( &bGotMax );
         if( ! (bGotMin && bGotMax) )
             GDALComputeRasterMinMax((GDALRasterBandH)poBand, TRUE, adfMinMax);
-				if ((!_isnan(adfMinMax[0])) && _finite(adfMinMax[0]) && (!_isnan(adfMinMax[1])) && _finite(adfMinMax[1]))
+				if ((!CPLIsNan(adfMinMax[0])) && !CPLIsInf(adfMinMax[0]) && (!CPLIsNan(adfMinMax[1])) && !CPLIsInf(adfMinMax[1]))
 				{
 					// only write a range if we got a correct one from the source dataset (otherwise ILWIS can't show the map properly)
 					char strdouble[45];
@@ -1134,14 +1134,14 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     {
                         if (eType == GDT_Float64)
                         {
-                            if (( pbSuccess && ((double * )pData)[iCol] == dNoDataValue ) || (_isnan((( double * )pData)[iCol])))
+                            if (( pbSuccess && ((double * )pData)[iCol] == dNoDataValue ) || (CPLIsNan((( double * )pData)[iCol])))
                                 (( double * )pData)[iCol] = rUNDEF;
                         }
                         else if (eType == GDT_Float32)
                         {
                             float fNoDataValue = (float)dNoDataValue; // needed for comparing for NoDataValue
                             (( double * )pData32)[iCol] = (( float * )pData)[iCol];
-                            if (( pbSuccess && (( float * )pData)[iCol] == (float)fNoDataValue ) || (_isnan((( double * )pData32)[iCol])))
+                            if (( pbSuccess && (( float * )pData)[iCol] == (float)fNoDataValue ) || (CPLIsNan((( double * )pData32)[iCol])))
                                 (( double * )pData32)[iCol] = rUNDEF;
 
                         }
