@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2000/07/20 13:38:26  warmerda
+ * make GetGDALDriverManager public with CPL_DLL
+ *
  * Revision 1.20  2000/04/30 23:22:16  warmerda
  * added CreateCopy support
  *
@@ -545,7 +548,7 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
 };
 
 CPL_C_START
-GDALDriverManager * GetGDALDriverManager( void );
+GDALDriverManager CPL_DLL * GetGDALDriverManager( void );
 CPL_C_END
 
 /* ==================================================================== */
