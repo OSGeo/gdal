@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/01/12 07:51:29  fwarmerdam
+ * Fix some argument types needed for ODBC 3.52. In particular SQLDescribeCol
+ * and SQLGetData require SQLLEN and SQLULEN instead of SQLINTEGER and
+ * SQLUINTEGER.  Patches provided by David Herring.
+ *
  * Revision 1.18  2004/08/18 18:47:12  warmerda
  * Increase size of work buffer a bit so that providers with broken support
  * for multiple SQLGetData() calls will still mostly work.
@@ -353,7 +358,7 @@ int CPLODBCStatement::CollectResultsInfo()
     m_papszColValues = (char **) VSICalloc(sizeof(char *),(m_nColCount+1));
 
     m_panColType = (short *) VSICalloc(sizeof(short),m_nColCount);
-    m_panColSize = (SQLUINTEGER *) VSICalloc(sizeof(SQLUINTEGER),m_nColCount);
+    m_panColSize = (_SQLULEN *) VSICalloc(sizeof(_SQLULEN),m_nColCount);
     m_panColPrecision = (short *) VSICalloc(sizeof(short),m_nColCount);
     m_panColNullable = (short *) VSICalloc(sizeof(short),m_nColCount);
 
@@ -568,7 +573,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
     for( iCol = 0; iCol < m_nColCount; iCol++ )
     {
         char szWrkData[256];
-        SQLINTEGER cbDataLen;
+        _SQLLEN cbDataLen;
         int nRetCode;
 
         szWrkData[0] = '\0';
@@ -1027,7 +1032,7 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
     m_papszColValues = (char **) calloc(sizeof(char *),(m_nColCount+1));
 
     m_panColType = (short *) calloc(sizeof(short),m_nColCount);
-    m_panColSize = (SQLUINTEGER *) calloc(sizeof(SQLUINTEGER),m_nColCount);
+    m_panColSize = (_SQLULEN *) calloc(sizeof(_SQLULEN),m_nColCount);
     m_panColPrecision = (short *) calloc(sizeof(short),m_nColCount);
     m_panColNullable = (short *) calloc(sizeof(short),m_nColCount);
 
@@ -1041,7 +1046,7 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
     for( iCol = 0; iCol < m_nColCount; iCol++ )
     {
         char szWrkData[8193];
-        SQLINTEGER cbDataLen;
+        _SQLLEN cbDataLen;
 
         if( Failed( SQLFetch( m_hStmt ) ) )
         {
