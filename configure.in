@@ -1038,6 +1038,53 @@ AC_SUBST(PG_INC,$PG_INC)
 AC_SUBST(PG_LIB,$PG_LIB)
 
 dnl ---------------------------------------------------------------------------
+dnl Select an MySQL Library to use, or disable driver.
+dnl ---------------------------------------------------------------------------
+
+MYSQL_CONFIG=no
+
+AC_ARG_WITH(pg,[  --with-mysql[=ARG]      Include MySQL (ARG=path to mysql_config)],,)
+
+if test "$with_mysql" = "yes" -o "$with_mysql" = "" ; then
+  AC_PATH_PROG(MYSQL_CONFIG, mysql_config, no)
+else 
+  MYSQL_CONFIG=$with_mysql
+fi
+
+AC_MSG_CHECKING([for MySQL])
+
+if test "$MYSQL_CONFIG" = "no" ; then
+
+  HAVE_MYSQL=no
+  MYSQL_LIB=
+  MYSQL_INC=
+
+  AC_MSG_RESULT([no])
+
+else
+  if test -d $MYSQL_CONFIG ; then
+      AC_MSG_RESULT([no])
+      AC_MSG_ERROR([--with-mysql argument is a directory.  It should be the path to the mysql_config script, often somewhere like /usr/local/bin/mysql_config.])
+  fi
+
+  if test \! -x $MYSQL_CONFIG ; then
+      AC_MSG_RESULT([no])
+      AC_MSG_ERROR([--with-mysql argument is a not an executable file.  It should be the path to the mysql_config script, often somewhere like /usr/local/bin/mysql_config.])
+  fi
+
+  HAVE_MYSQL=yes
+  MYSQL_LIB="`$MYSQL_CONFIG --libs`"
+  MYSQL_INC="`$MYSQL_CONFIG --include`"
+
+  AC_MSG_RESULT([yes])
+
+fi
+
+AC_SUBST(HAVE_MYSQL,$HAVE_MYSQL)
+AC_SUBST(MYSQL_INC,$MYSQL_INC)
+AC_SUBST(MYSQL_LIB,$MYSQL_LIB)
+
+dnl ---------------------------------------------------------------------------
 dnl Check for xerces configuration.
 dnl ---------------------------------------------------------------------------
 
@@ -1498,6 +1545,7 @@ fi
 LOC_MSG([  ECW support:               ${ECW_SETTING}])
 LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
 LOC_MSG([  POSTGRESQL support:        ${HAVE_PG}])
+LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])
 LOC_MSG([  XERCES support:            ${HAVE_XERCES}])
 LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
 LOC_MSG([  OCI support:               ${HAVE_OCI}])

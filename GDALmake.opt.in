@@ -118,6 +118,14 @@ PG_INC	=	@PG_INC@
 LIBS	+=	$(PG_LIB)
 
 #
+# MySQL support.
+#
+HAVE_MYSQL =	@HAVE_MYSQL@
+MYSQL_LIB  =	@MYSQL_LIB@
+MYSQL_INC  =	@MYSQL_INC@
+LIBS	   +=	$(MYSQL_LIB)
+
+#
 # HDF4 Support.
 #
 HDF4_INCLUDE  = @HDF4_INCLUDE@ -I$(GDAL_ROOT)/ogr
