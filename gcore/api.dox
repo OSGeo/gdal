@@ -64,8 +64,9 @@ is returned, the algorithm should terminate the operation and return as
 quickly as possible.
  
 More often that implementing custom progress functions, applications 
-will just use existing progress functions like GDALDummyProgress(), and 
-GDALScaledProgress().  Python scripts also can pass progress functions.
+will just use existing progress functions like GDALDummyProgress(), 
+GDALTermProgress() and GDALScaledProgress().  Python scripts also can pass 
+progress functions.
 
 Application code implementing GDALProgressFunc semantics should remember 
 a few things:
