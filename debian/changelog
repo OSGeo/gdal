@@ -1,0 +1,62 @@
+gdal (1.2+cvs.031016-1) unstable; urgency=low
+
+  * Take maintainership
+  * added man pages
+  * changed last line of pymod/GNUmakefile because otherwise all 
+    files within pymod would be deleted when building package with 
+    fakeroot
+
+ -- Silke Reimer (MoinMoin) <silke@intevation.de>  Fri, 17 Oct 2003 11:14:34 +0200
+
+gdal (1.2.0-0pre1) unstable; urgency=low
+
+  * New upstream cvs snapshot with proper soname versioning.
+    Getting ready for the upcoming 1.2.0.
+  * Add xerces support.
+  * Get the package generally in shape for being sponsored into Debian.
+  * Hand package maintainership over to Silke.
+
+ -- Alessandro Amici (devel) <alexamici@tiscali.it>  Fri, 26 Sep 2003 00:43:14 +0200
+
+gdal (1.1.9-1) unstable; urgency=low
+
+  * New upstream release with a lot of new formats and features.
+  * Fix the --libs option of the installed gdal-config.
+  * Many correctness and style fixes to debian/rules. The aim is to have
+    the source package to build cleanly on woody as well.
+  * Change the build dependencies to present a woody alternative to sid-only
+    packages.
+
+ -- Alessandro Amici (devel) <alexamici@tiscali.it>  Mon, 28 Jul 2003 23:18:55 +0200
+
+gdal (1.1.8+030610-1) unstable; urgency=low
+
+  * New cvs snapshot with improved handling of html documentation.
+  * Split libgdal-doc out of libgdal1-dev.
+  * Add html documentation for ogr.
+  * Add postgresql support.
+  * Set python dependencies to python2.2 (and add python2.2-numeric)
+  * Recommend proj (accessed via dlopen).
+
+ -- Alessandro Amici (devel) <alexamici@tiscali.it>  Tue, 10 Jun 2003 16:18:17 +0200
+
+gdal (1.1.8+030521-1) unstable; urgency=low
+
+  * New cvs snapshot with support for custom shared library soname.
+  * Build the gdal shared library with debian compliant file name and soname.
+    See the README.Debian for reasons and caveats.
+  * Rename the main packages to libgdal1 (OK, I learned the hard way how
+    important package names are!).
+  * Change the upstream version definition to $(version)+$(cvsdate).
+
+ -- Alessandro Amici (devel) <alexamici@tiscali.it>  Thu, 22 May 2003 19:33:54 +0200
+
+gdal (1.1.8-030518+1) unstable; urgency=low
+
+  * Initial release.
+  * libgdal.1.1.so is not a standard shared library.
+  * Man pages are missing.
+  * A few files are missing from the html documentation.
+
+ -- Alessandro Amici (devel) <alexamici@tiscali.it>  Sun, 18 May 2003 18:05:12 +0200
+

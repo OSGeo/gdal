@@ -1,3 +1,7 @@
+2003-10-22	Silke Reimer	<silke@intevation.de>
+
+	* debian/*: Added debian directory for building a gdal debian package
+
 2003-10-21	Silke Reimer	<silke@intevation.de>
 
 	* ogr/ogr_utilites.dox, gcore/gdal_utilities.dox: Changed to fit better
