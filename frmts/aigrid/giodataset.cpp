@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/01/13 17:34:18  warmerda
+ * Fixed transposition of nXSize and nYSize.
+ *
  * Revision 1.2  2000/01/10 17:36:07  warmerda
  * avoid error message on first CPLGetSymbol()
  *
@@ -320,8 +323,6 @@ GDALDataset *GIODataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( nReturn < 1 && anGridSize[0] == -1 )
     {
-        printf( "describe failed: %d (%dx%d)\n", 
-                nReturn, anGridSize[0], anGridSize[1] );
         return NULL;
     }
 
@@ -347,8 +348,8 @@ GDALDataset *GIODataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Establish raster info.                                          */
 /* -------------------------------------------------------------------- */
-    poDS->nRasterXSize = anGridSize[0];
-    poDS->nRasterYSize = anGridSize[1];
+    poDS->nRasterXSize = anGridSize[1];
+    poDS->nRasterYSize = anGridSize[0];
     poDS->nBands = 1;
     poDS->bCreated = FALSE;
 
@@ -367,7 +368,7 @@ GDALDataset *GIODataset::Open( GDALOpenInfo * poOpenInfo )
     double      adfAdjustedBox[4];
 
     pfnAccessWindowSet( adfBox, dfCellSize, adfAdjustedBox ); 
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
@@ -517,7 +518,7 @@ void GDALRegister_AIGrid2()
         poGIODriver = poDriver = new GDALDriver();
         
         poDriver->pszShortName = "AIGrid2";
-        poDriver->pszLongName = "Arc/Info Binary Grid";
+        poDriver->pszLongName = "Arc/Info Binary Grid (avgridio.dll)";
         
         poDriver->pfnOpen = GIODataset::Open;
         poDriver->pfnCreate = GIODataset::Create;
