@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/03/08 18:07:01  warmerda
+ * Corrected computation of padfM*[k] in case where denominator of the
+ * general equations goes to zero.
+ *
  * Revision 1.3  2001/03/07 19:29:46  warmerda
  * added support for stroking curves
  *
@@ -186,19 +190,20 @@ int DGNStrokeCurve( DGNHandle hFile, DGNElemMultiPoint *psCurve,
             padfMx[k] = (pasDGNPoints[k+1].x - pasDGNPoints[k].x) / padfD[k];
             padfMy[k] = (pasDGNPoints[k+1].y - pasDGNPoints[k].y) / padfD[k];
         }
+
         if( k > 1 && k < nDGNPoints - 3 )
             dfTotalD += padfD[k];
     }
 
 /* -------------------------------------------------------------------- */
-/*      Compuete the Tx, and Ty coefficients for each segment.          */
+/*      Compute the Tx, and Ty coefficients for each segment.           */
 /* -------------------------------------------------------------------- */
     for( k = 2; k < nDGNPoints - 2; k++ )
     {
         if( fabs(padfMx[k+1] - padfMx[k]) == 0.0
             && fabs(padfMx[k-1] - padfMx[k-2]) == 0.0 )
         {
-            padfTx[k] = (padfMx[k+1] + padfMx[k]) / 2;
+            padfTx[k] = (padfMx[k] + padfMx[k-1]) / 2;
         }
         else
         {
@@ -210,7 +215,7 @@ int DGNStrokeCurve( DGNHandle hFile, DGNElemMultiPoint *psCurve,
         if( fabs(padfMy[k+1] - padfMy[k]) == 0.0
             && fabs(padfMy[k-1] - padfMy[k-2]) == 0.0 )
         {
-            padfTy[k] = (padfMy[k+1] + padfMy[k]) / 2;
+            padfTy[k] = (padfMy[k] + padfMy[k-1]) / 2;
         }
         else
         {
