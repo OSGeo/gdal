@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.25  2005/03/10 17:13:57  hobu
+ * #ifdefs for csharp
+ *
  * Revision 1.24  2005/02/24 17:20:47  hobu
  * move constants to %constants so they are available to
  * all languages
@@ -112,6 +115,7 @@
 %import gdal_typemaps.i
 %feature("autodoc");
 
+#ifdef SWIGPYTHON
 %init %{
 
   if ( OGRGetDriverCount() == 0 ) {
@@ -119,6 +123,7 @@
   }
   
 %}
+#endif
 
 typedef int OGRErr;
 typedef int OGRwkbByteOrder;
@@ -1289,6 +1294,14 @@ public:
 
 
 %{
+char const *OGRDriverShadow_get_name( OGRDriverShadow *h ) {
+  return OGR_Dr_GetName( h );
+}
+
+char const *OGRDataSourceShadow_get_name( OGRDataSourceShadow *h ) {
+  return OGR_DS_GetName( h );
+}
+
 char const *OGRDriverShadow_name_get( OGRDriverShadow *h ) {
   return OGR_Dr_GetName( h );
 }
@@ -1296,8 +1309,6 @@ char const *OGRDriverShadow_name_get( OGRDriverShadow *h ) {
 char const *OGRDataSourceShadow_name_get( OGRDataSourceShadow *h ) {
   return OGR_DS_GetName( h );
 }
-
-
 %}
 
 %rename (GetDriverCount) OGRGetDriverCount;
@@ -1312,14 +1323,19 @@ OGRErr OGRSetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER);
 %clear (OGRErr);
 
 
+%rename (RegisterAll) OGRRegisterAll();
+void OGRRegisterAll();
+
 
 %inline %{
-OGRDriverShadow* GetDriverByName( char const *name ) {
+OGRDriverShadow* OGR_GetDriverByName( char const *name ) {
   return (OGRDriverShadow*) OGRGetDriverByName( name );
 }
   
-OGRDriverShadow* GetDriver(int driver_number) {
+OGRDriverShadow* OGR_GetDriver(int driver_number) {
   return (OGRDriverShadow*) OGRGetDriver(driver_number);
+  
+
 }
 %}
 
@@ -1333,7 +1349,7 @@ OGRDriverShadow* GetDriver(int driver_number) {
 %}
 
 
-%feature( "kwargs" ) Open;
+%feature( "kwargs" ) OGR_Open;
 %newobject Open;
 %inline %{
   OGRDataSourceShadow *Open( const char * filename, int update=0 ) {
@@ -1343,7 +1359,7 @@ OGRDriverShadow* GetDriver(int driver_number) {
  
 %}
 
-%feature( "kwargs" ) OpenShared;
+%feature( "kwargs" ) OGR_OpenShared;
 %newobject OpenShared;
 %inline %{
   OGRDataSourceShadow *OpenShared( const char * filename, int update=0 ) {

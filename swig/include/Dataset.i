@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.10  2005/03/10 17:18:55  hobu
+ * #ifdefs for csharp
+ *
  * Revision 1.9  2005/02/23 21:37:18  kruland
  * Added GetProjectionRef().  Commented missing methods.
  *
@@ -232,3 +235,17 @@ int GDALDatasetShadow_RasterCount_get( GDALDatasetShadow *h ) {
   return GDALGetRasterCount( h );
 }
 %}
+
+#ifdef SWIGCSHARP
+%{
+int GDALDatasetShadow_get_RasterXSize( GDALDatasetShadow *h ) {
+  return GDALGetRasterXSize( h );
+}
+int GDALDatasetShadow_get_RasterYSize( GDALDatasetShadow *h ) {
+  return GDALGetRasterYSize( h );
+}
+int GDALDatasetShadow_get_RasterCount( GDALDatasetShadow *h ) {
+  return GDALGetRasterCount( h );
+}
+%}
+#endif
