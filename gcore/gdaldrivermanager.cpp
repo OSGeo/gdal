@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.12  2002/09/04 06:52:35  warmerda
+ * added GDALDestroyDriverManager
+ *
  * Revision 1.11  2002/07/09 20:33:12  warmerda
  * expand tabs
  *
@@ -167,6 +170,12 @@ GDALDriverManager::~GDALDriverManager()
 /* -------------------------------------------------------------------- */
     VSIFree( papoDrivers );
     VSIFree( pszHome );
+
+/* -------------------------------------------------------------------- */
+/*      Ensure the global driver manager pointer is NULLed out.         */
+/* -------------------------------------------------------------------- */
+    if( poDM == this )
+        poDM = NULL;
 }
 
 /************************************************************************/
@@ -506,4 +515,21 @@ void GDALDriverManager::AutoLoadDrivers()
     }
 
     CSLDestroy( papszSearchPath );
+}
+
+/************************************************************************/
+/*                      GDALDestroyDriverManager()                      */
+/************************************************************************/
+
+/**
+ * Destroy the driver manager.
+ *
+ * Incidently unloads all managed drivers.
+ */
+
+void GDALDestroyDriverManager( void )
+
+{
+    if( poDM != NULL )
+        delete poDM;
 }
