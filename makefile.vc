@@ -8,7 +8,7 @@ DISTDIR	=	gdal_$(VERSION)
 default:	port_dir ogr_min core_dir frmts_dir lib apps_dir
 
 lib:	
-	del gdal.lib
+	if exist gdal.lib del gdal.lib
 	lib /out:gdal.lib port\*.obj core\*.obj frmts\o\*.obj ogr\ogr*.obj 
 
 clean:	
