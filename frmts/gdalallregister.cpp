@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.21  2000/06/20 17:36:38  warmerda
+ * added eosat fast format support
+ *
  * Revision 1.20  2000/04/28 20:59:03  warmerda
  * added jpeg
  *
@@ -103,6 +106,7 @@ void GDALRegister_SDTS(void);
 void GDALRegister_ELAS(void);
 void GDALRegister_EHdr(void);
 void GDALRegister_PAux(void);
+void GDALRegister_EFF(void);
 void GDALRegister_DOQ1(void);
 void GDALRegister_DTED(void);
 void GDALRegister_MFF(void);
@@ -208,5 +212,6 @@ void GDALAllRegister()
     GDALRegister_PAux();
     GDALRegister_MFF();
     GDALRegister_HKV();
+    GDALRegister_EFF();
 #endif
 }
