@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/05/12 18:48:57  warmerda
+ * added preliminary 3D write support
+ *
  * Revision 1.14  2002/04/22 20:44:41  warmerda
  * added (partial) cell library support
  *
@@ -335,3 +338,20 @@ void DGNClose( DGNHandle hDGN )
     CPLFree( psDGN );
 }
 
+/************************************************************************/
+/*                          DGNGetDimension()                           */
+/************************************************************************/
+
+/**
+ * Return 2D/3D dimension of file.
+ *
+ * Return 2 or 3 depending on the dimension value of the provided file.
+ */
+
+int DGNGetDimension( DGNHandle hDGN )
+
+{
+    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+
+    return psDGN->dimension;
+}

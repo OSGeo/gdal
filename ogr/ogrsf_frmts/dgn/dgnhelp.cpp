@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/05/12 18:48:57  warmerda
+ * added preliminary 3D write support
+ *
  * Revision 1.14  2003/01/20 20:05:01  warmerda
  * added DGNAsciiToRad50()
  *
@@ -617,6 +620,8 @@ int DGNGetLineStyleName(DGNInfo *psDGN, DGNElemMultiPoint *psLine,
 void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 
 {
+    DGNInfo *psInfo = (DGNInfo *) hDGN;
+
     fprintf( fp, "\n" );
     fprintf( fp, "Element:%-12s Level:%2d id:%-6d ",
              DGNTypeToName( psElement->type ),
@@ -731,12 +736,21 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
       {
           DGNElemArc	*psArc = (DGNElemArc *) psElement;
 
-          fprintf( fp, 
-                   "  origin=(%.5f,%.5f), rotation=%f\n"
-                   "  axes=(%.5f,%.5f), start angle=%f, sweep=%f\n", 
-                   psArc->origin.x, 
-                   psArc->origin.y, 
-                   psArc->rotation,
+          if( psInfo->dimension == 2 )
+              fprintf( fp, "  origin=(%.5f,%.5f), rotation=%f\n",
+                       psArc->origin.x, 
+                       psArc->origin.y, 
+                       psArc->rotation );
+          else
+              fprintf( fp, "  origin=(%.5f,%.5f,%.5f), quat=%ld,%ld,%ld,%ld\n",
+                       psArc->origin.x, 
+                       psArc->origin.y, 
+                       psArc->origin.z, 
+                       psArc->quat[0], 
+                       psArc->quat[1], 
+                       psArc->quat[2], 
+                       psArc->quat[3] );
+          fprintf( fp, "  axes=(%.5f,%.5f), start angle=%f, sweep=%f\n", 
                    psArc->primary_axis,
                    psArc->secondary_axis,
                    psArc->startang,
@@ -826,6 +840,17 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
                       "        origin=(%g,%g,%g)\n        delta=(%g,%g,%g)\n", 
                       psView->origin.x, psView->origin.y, psView->origin.z,
                       psView->delta.x, psView->delta.y, psView->delta.z );
+              fprintf(fp, 
+                      "       trans=(%g,%g,%g,%g,%g,%g,%g,%g,%g)\n",
+                      psView->transmatrx[0],
+                      psView->transmatrx[1],
+                      psView->transmatrx[2],
+                      psView->transmatrx[3],
+                      psView->transmatrx[4],
+                      psView->transmatrx[5],
+                      psView->transmatrx[6],
+                      psView->transmatrx[7],
+                      psView->transmatrx[8] );
           }
       }
       break;

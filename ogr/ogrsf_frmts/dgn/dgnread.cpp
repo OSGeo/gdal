@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2003/05/12 18:48:57  warmerda
+ * added preliminary 3D write support
+ *
  * Revision 1.35  2002/11/13 21:26:32  warmerda
  * added more documentation
  *
@@ -614,6 +617,11 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
               
               memcpy( &(psEllipse->origin.z), psDGN->abyElem + 84, 8 );
               DGN2IEEEDouble( &(psEllipse->origin.z) );
+
+              psEllipse->quat[0] = DGN_INT32( psDGN->abyElem + 52 );
+              psEllipse->quat[1] = DGN_INT32( psDGN->abyElem + 56 );
+              psEllipse->quat[2] = DGN_INT32( psDGN->abyElem + 60 );
+              psEllipse->quat[3] = DGN_INT32( psDGN->abyElem + 64 );
           }
 
           DGNTransformPoint( psDGN, &(psEllipse->origin) );
@@ -680,6 +688,11 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
 
               memcpy( &(psEllipse->origin.z), psDGN->abyElem + 92, 8 );
               DGN2IEEEDouble( &(psEllipse->origin.z) );
+
+              psEllipse->quat[0] = DGN_INT32( psDGN->abyElem + 60 );
+              psEllipse->quat[1] = DGN_INT32( psDGN->abyElem + 64 );
+              psEllipse->quat[2] = DGN_INT32( psDGN->abyElem + 68 );
+              psEllipse->quat[3] = DGN_INT32( psDGN->abyElem + 72 );
           }
 
           DGNTransformPoint( psDGN, &(psEllipse->origin) );

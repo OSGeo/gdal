@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/05/12 18:48:57  warmerda
+ * added preliminary 3D write support
+ *
  * Revision 1.24  2003/01/02 21:45:23  warmerda
  * move OGRBuildPolygonsFromEdges into C API
  *
@@ -682,9 +685,6 @@ int OGRDGNLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCFastGetExtent) )
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCCreateField) )
-        return TRUE;
-
     else 
         return FALSE;
 }
@@ -707,6 +707,7 @@ int OGRDGNLayer::GetFeatureCount( int bForce )
 /*      Otherwise scan the index.                                       */
 /* -------------------------------------------------------------------- */
     int nElementCount, i, nFeatureCount = 0;
+    int bInComplexShape = FALSE;
     const DGNElementInfo *pasIndex = DGNGetElementIndex(hDGN,&nElementCount);
 
     for( i = 0; i < nElementCount; i++ )
@@ -719,12 +720,16 @@ int OGRDGNLayer::GetFeatureCount( int bForce )
           case DGNST_MULTIPOINT:
           case DGNST_ARC:
           case DGNST_TEXT:
-            if( !(pasIndex[i].flags & DGNEIF_COMPLEX) )
+            if( !(pasIndex[i].flags & DGNEIF_COMPLEX) || !bInComplexShape )
+            {
                 nFeatureCount++;
+                bInComplexShape = FALSE;
+            }
             break;
 
           case DGNST_COMPLEX_HEADER:
             nFeatureCount++;
+            bInComplexShape = TRUE;
             break;
 
           default:
