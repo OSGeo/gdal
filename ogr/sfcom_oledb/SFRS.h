@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/05/28 19:41:58  warmerda
+ * lots of changes
+ *
  * Revision 1.4  1999/07/23 19:20:27  kshih
  * Modifications for errors etc...
  *
@@ -44,13 +47,21 @@
 #define __CSFRowset_H_
 #include "resource.h"       // main symbols
 #include "sfutil.h"
+#include "IColumnsRowsetImpl.h"
 
+/************************************************************************/
+/*                              SchemaInfo                              */
+/************************************************************************/
 class SchemaInfo
 {
 public:
-	int				nOffset;
-	OGRFieldType	eFieldType;	
+    int			nOffset;
+    OGRFieldType	eFieldType;	
 };
+
+/************************************************************************/
+/*                            CVirtualArray                             */
+/************************************************************************/
 
 class CVirtualArray
 {
@@ -60,17 +71,20 @@ public:
 	void	RemoveAll();
 	void	Initialize(int nArraySize, OGRLayer *pOGRLayer,int);
 	BYTE    &operator[](int iIndex);
-	int		GetSize() const {return m_nArraySize;}
+	int	GetSize() const {return m_nArraySize;}
 private:
-	int				m_nPackedRecordLength;
-	BYTE			*mBuffer;
-	OGRLayer		*m_pOGRLayer;
-	int				m_nArraySize;
-	int				m_nLastRecordAccessed;
-	CSimpleArray<SchemaInfo>	aSchemaInfo;
+	int	m_nPackedRecordLength;
+	BYTE	*mBuffer;
+	OGRLayer *m_pOGRLayer;
+	int	m_nArraySize;
+	int	m_nLastRecordAccessed;
+	CSimpleArray<SchemaInfo> aSchemaInfo;
 	OGRFeatureDefn	*m_pFeatureDefn;
 };
 
+/************************************************************************/
+/*                              CShapeFile                              */
+/************************************************************************/
 
 class CShapeFile
 {
@@ -103,15 +117,9 @@ public:
 	}
 };
 
-
-
-
-
-
-
-
-
-
+/************************************************************************/
+/*                   CSFCommandSupportsErrorInfoImpl                    */
+/************************************************************************/
 class ATL_NO_VTABLE CSFCommandSupportsErrorInfoImpl : public ISupportErrorInfo
 {
 public:
@@ -124,8 +132,9 @@ public:
 	}
 };
 
-
-// CSFCommand
+/************************************************************************/
+/*                              CSFCommand                              */
+/************************************************************************/
 class ATL_NO_VTABLE CSFCommand : 
 	public CComObjectRootEx<CComSingleThreadModel>,
 	public IAccessorImpl<CSFCommand>,
@@ -173,6 +182,7 @@ BEGIN_PROPSET_MAP(CSFCommand)
 	BEGIN_PROPERTY_SET(DBPROPSET_ROWSET)
 		PROPERTY_INFO_ENTRY(IAccessor)
 		PROPERTY_INFO_ENTRY(IColumnsInfo)
+		PROPERTY_INFO_ENTRY_VALUE(IColumnsRowset,VARIANT_TRUE)
 		PROPERTY_INFO_ENTRY(IConvertType)
 		PROPERTY_INFO_ENTRY(IRowset)
 		PROPERTY_INFO_ENTRY(IRowsetIdentity)
@@ -191,11 +201,170 @@ END_PROPSET_MAP()
 		CSimpleArray<ATLCOLUMNINFO>		m_paColInfo;
 };
 
-class CSFRowset : public CRowsetImpl< CSFRowset, CShapeFile, CSFCommand,CVirtualArray>
+/************************************************************************/
+/*                            CSFRowsetImpl                             */
+/*                                                                      */
+/*      Template closely based on CRowsetImpl from ATLDB.H with a       */
+/*      view variations.  It is instanatiated into a real class as      */
+/*      CSFRowset below.                                                */
+/************************************************************************/
+
+template <class T, class Storage, class CreatorClass,
+    class ArrayType = CSimpleArray<Storage>,
+    class RowClass = CSimpleRow,
+    class RowsetInterface = IRowsetImpl < T, IRowset, RowClass> >
+class CSFRowsetImpl :
+	public CComObjectRootEx<CreatorClass::_ThreadModel>,
+	public IAccessorImpl<T>,
+	public IRowsetIdentityImpl<T, RowClass>,
+	public IRowsetCreatorImpl<T>,
+	public IRowsetInfoImpl<T, CreatorClass::_PropClass>,
+	public IColumnsInfoImpl<T>,
+	public IConvertTypeImpl<T>,
+        public IColumnsRowsetImpl<T,CreatorClass>,
+	public RowsetInterface
 {
 public:
-	HRESULT Execute(DBPARAMS * pParams, LONG* pcRowsAffected);
 
-	CSimpleArray<ATLCOLUMNINFO>		m_paColInfo;
+	typedef CreatorClass _RowsetCreatorClass;
+	typedef ArrayType _RowsetArrayType;
+	typedef CSFRowsetImpl< T, Storage, CreatorClass, ArrayType, RowClass, RowsetInterface> _RowsetBaseClass;
+
+BEGIN_COM_MAP(CSFRowsetImpl)
+	COM_INTERFACE_ENTRY(IAccessor)
+	COM_INTERFACE_ENTRY(IObjectWithSite)
+	COM_INTERFACE_ENTRY(IRowsetInfo)
+	COM_INTERFACE_ENTRY(IColumnsInfo)
+	COM_INTERFACE_ENTRY(IColumnsRowset)
+	COM_INTERFACE_ENTRY(IConvertType)
+	COM_INTERFACE_ENTRY(IRowsetIdentity)
+	COM_INTERFACE_ENTRY(IRowset)
+END_COM_MAP()
+
+	HRESULT FinalConstruct()
+	{
+		HRESULT hr = IAccessorImpl<T>::FinalConstruct();
+		if (FAILED(hr))
+			return hr;
+		return CConvertHelper::FinalConstruct();
+	}
+
+	HRESULT NameFromDBID(DBID* pDBID, CComBSTR& bstr, bool bIndex)
+	{
+
+		if (pDBID->uName.pwszName != NULL)
+		{
+			bstr = pDBID->uName.pwszName;
+			if (m_strCommandText == (BSTR)NULL)
+				return E_OUTOFMEMORY;
+			return S_OK;
+		}
+
+		return (bIndex) ? DB_E_NOINDEX : DB_E_NOTABLE;
+	}
+
+	HRESULT GetCommandFromID(DBID* pTableID, DBID* pIndexID)
+	{
+		USES_CONVERSION;
+		HRESULT hr;
+
+		if (pTableID == NULL && pIndexID == NULL)
+			return E_INVALIDARG;
+
+		if (pTableID != NULL && pTableID->eKind == DBKIND_NAME)
+		{
+			hr = NameFromDBID(pTableID, m_strCommandText, true);
+			if (FAILED(hr))
+				return hr;
+			if (pIndexID != NULL)
+			{
+				if (pIndexID->eKind == DBKIND_NAME)
+				{
+					hr = NameFromDBID(pIndexID, m_strIndexText, false);
+					if (FAILED(hr))
+					{
+						m_strCommandText.Empty();
+						return hr;
+					}
+				}
+				else
+				{
+					m_strCommandText.Empty();
+					return DB_E_NOINDEX;
+				}
+			}
+			return S_OK;
+		}
+		if (pIndexID != NULL && pIndexID->eKind == DBKIND_NAME)
+			return NameFromDBID(pIndexID, m_strIndexText, false);
+
+		return S_OK;
+	}
+
+	HRESULT ValidateCommandID(DBID* pTableID, DBID* pIndexID)
+	{
+		HRESULT hr = S_OK;
+
+		if (pTableID != NULL)
+		{
+			hr = CUtlProps<T>::IsValidDBID(pTableID);
+
+			if (hr != S_OK)
+				return hr;
+
+			// Check for a NULL TABLE ID (where its a valid pointer but NULL)
+			if ((pTableID->eKind == DBKIND_GUID_NAME ||
+				pTableID->eKind == DBKIND_NAME ||
+				pTableID->eKind == DBKIND_PGUID_NAME)
+				&& pTableID->uName.pwszName == NULL)
+				return DB_E_NOTABLE;
+		}
+
+		if (pIndexID != NULL)
+			hr = CUtlProps<T>::IsValidDBID(pIndexID);
+
+		return hr;
+	}
+
+	HRESULT SetCommandText(DBID* pTableID, DBID* pIndexID)
+	{
+		T* pT = (T*)this;
+		HRESULT hr = pT->ValidateCommandID(pTableID, pIndexID);
+		if (FAILED(hr))
+			return hr;
+		hr = pT->GetCommandFromID(pTableID, pIndexID);
+		return hr;
+	}
+	void FinalRelease()
+	{
+		m_rgRowData.RemoveAll();
+	}
+
+	static ATLCOLUMNINFO* GetColumnInfo(T* pv, ULONG* pcCols)
+	{
+		return Storage::GetColumnInfo(pv,pcCols);
+	}
+
+
+	CComBSTR m_strCommandText;
+	CComBSTR m_strIndexText;
+	ArrayType m_rgRowData;
 };
+
+/************************************************************************/
+/*                              CSFRowset                               */
+/************************************************************************/
+
+class CSFRowset :
+public CSFRowsetImpl< CSFRowset, CShapeFile, CSFCommand, CVirtualArray>
+
+{
+public:
+    HRESULT Execute(DBPARAMS * pParams, LONG* pcRowsAffected);
+
+    CSimpleArray<ATLCOLUMNINFO>		m_paColInfo;
+    OGRDataSource                      *m_poDS;
+    int                                 m_iLayer;
+};
+
 #endif //__CSFRowset_H_

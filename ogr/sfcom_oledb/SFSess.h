@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/05/28 19:41:58  warmerda
+ * lots of changes
+ *
  * Revision 1.11  2001/04/30 18:57:57  warmerda
  * Added debug statement and cpl_error.h
  *
@@ -112,6 +115,9 @@ BEGIN_PROPSET_MAP(CSFSession)
 	BEGIN_PROPERTY_SET(DBPROPSET_SESSION)
 		PROPERTY_INFO_ENTRY(SESS_AUTOCOMMITISOLEVELS)
 	END_PROPERTY_SET(DBPROPSET_SESSION)
+	BEGIN_PROPERTY_SET(DBPROPSET_ROWSET)
+		PROPERTY_INFO_ENTRY(CANHOLDROWS)
+	END_PROPERTY_SET(DBPROPSET_ROWSET)
 END_PROPSET_MAP()
 BEGIN_COM_MAP(CSFSession)
 	COM_INTERFACE_ENTRY(IGetDataSource)
@@ -180,93 +186,103 @@ public:
 class CSFSessionColSchemaRowset : 
 	public CRowsetImpl< CSFSessionColSchemaRowset, CCOLUMNSRow, CSFSession>
 {
-public:
-	HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
-	{
-		USES_CONVERSION;
-		int				i;
-		int				iLayer;
-		IUnknown		*pIU;
-		OGRDataSource	*poDS;
-		OGRLayer		*pLayer;
-		OGRFeatureDefn	*poDefn;
-		OGRFieldDefn	*poField;
+  public:
+    HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
+    {
+        USES_CONVERSION;
+        int				i;
+        int				iLayer;
+        IUnknown		*pIU;
+        OGRDataSource	*poDS;
+        OGRLayer		*pLayer;
+        OGRFeatureDefn	*poDefn;
+        OGRFieldDefn	*poField;
 
-                CPLDebug( "OGR_OLEDB",
-                          "CSFSessionColSchemaRowset::Execute(%p).",
-                          pcRowsAffected );
+        CPLDebug( "OGR_OLEDB",
+                  "CSFSessionColSchemaRowset::Execute(%p).",
+                  pcRowsAffected );
 
-		QueryInterface(IID_IUnknown,(void **) &pIU);
-		poDS = SFGetOGRDataSource(pIU);
+        *pcRowsAffected = 0;
+        
+        QueryInterface(IID_IUnknown,(void **) &pIU);
+        poDS = SFGetOGRDataSource(pIU);
 
-		if (!poDS)
-		{
-			// Prep errors as well
-			return S_FALSE;
-		}
+        if (!poDS)
+        {
+            // Prep errors as well
+            return S_FALSE;
+        }
 
-		for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
-		{
-			pLayer = poDS->GetLayer(iLayer);
-			poDefn = pLayer->GetLayerDefn();
-			LPOLESTR	pszLayerName = A2OLE(poDefn->GetName());
-			
-			for (i=0; i < poDefn->GetFieldCount(); i++)
-			{
-				CCOLUMNSRow trData;
+        for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
+        {
+            CCOLUMNSRow trData;
+            
+            pLayer = poDS->GetLayer(iLayer);
+            poDefn = pLayer->GetLayerDefn();
+            LPOLESTR	pszLayerName = A2OLE(poDefn->GetName());
 
-				poField = poDefn->GetFieldDefn(i);
+            memset( &trData, 0, sizeof(trData) );
+            trData.m_nDataType = DBTYPE_I4;
+            lstrcpyW(trData.m_szTableName,pszLayerName);
+            lstrcpyW(trData.m_szColumnName,A2OLE("FID"));
+            trData.m_ulOrdinalPosition = 1;
+            
+            if (!m_rgRowData.Add(trData))
+                return E_OUTOFMEMORY;
+            
+            // Add all the regular feature attributes.
+            for (i=0; i < poDefn->GetFieldCount(); i++)
+            {
+                poField = poDefn->GetFieldDefn(i);
 
-				switch(poField->GetType())
-				{
-				case OFTInteger:
-					trData.m_nDataType = DBTYPE_I4;
-					break;
-				case OFTReal:
-					trData.m_nDataType = DBTYPE_R8;
-					trData.m_nNumericPrecision = poField->GetPrecision();
+                memset( &trData, 0, sizeof(trData) );
+                switch(poField->GetType())
+                {
+                    case OFTInteger:
+                        trData.m_nDataType = DBTYPE_I4;
+                        break;
+                    case OFTReal:
+                        trData.m_nDataType = DBTYPE_R8;
+                        trData.m_nNumericPrecision = poField->GetPrecision();
 
-					break;
-				case OFTString:
-					int nLength;
-					nLength = poField->GetWidth();
-					if (nLength == 0 || nLength > 4096)
-					{
-						nLength = 4096;
-					}
-					trData.m_nDataType = DBTYPE_STR;
-					trData.m_ulCharMaxLength = nLength;
-					trData.m_ulCharOctetLength = nLength;
-					break;
-				default:
-					return S_FALSE;
-				}
+                        break;
+                    case OFTString:
+                        int nLength;
+                        nLength = poField->GetWidth();
+                        if (nLength == 0 || nLength > 4096)
+                        {
+                            nLength = 4096;
+                        }
+                        trData.m_nDataType = DBTYPE_STR;
+                        trData.m_ulCharMaxLength = nLength;
+                        trData.m_ulCharOctetLength = nLength;
+                        break;
+                    default:
+                        return S_FALSE;
+                }
 
-				lstrcpyW(trData.m_szTableName,pszLayerName);
-				lstrcpyW(trData.m_szColumnName,A2OLE(poField->GetNameRef()));
-				trData.m_ulOrdinalPosition = i+1;
+                lstrcpyW(trData.m_szTableName,pszLayerName);
+                lstrcpyW(trData.m_szColumnName,A2OLE(poField->GetNameRef()));
+                trData.m_ulOrdinalPosition = i+2;
 				
-				if (!m_rgRowData.Add(trData))
-				{
-					return E_OUTOFMEMORY;
-				}
+                if (!m_rgRowData.Add(trData))
+                    return E_OUTOFMEMORY;
+            }
 
+            // Add the geometry column.
+            memset( &trData, 0, sizeof(trData) );
+            lstrcpyW(trData.m_szTableName,pszLayerName);
+            lstrcpyW(trData.m_szColumnName,A2OLE("OGIS_GEOMETRY"));
+            trData.m_ulOrdinalPosition = i+2;
+            trData.m_nDataType = DBTYPE_IUNKNOWN;
+            if (!m_rgRowData.Add(trData))
+                return E_OUTOFMEMORY;
 
-			}
-			CCOLUMNSRow trData;
-			
-			lstrcpyW(trData.m_szTableName,pszLayerName);
-			lstrcpyW(trData.m_szColumnName,A2OLE("OGIS_GEOMETRY"));
-			trData.m_ulOrdinalPosition = i+1;
-			trData.m_nDataType = DBTYPE_IUNKNOWN;
-			if (!m_rgRowData.Add(trData))
-			{
-				return E_OUTOFMEMORY;
-			}
-		}
-		*pcRowsAffected = poDS->GetLayerCount();
-		return S_OK;
-	}
+            *pcRowsAffected += poDefn->GetFieldCount() + 2;
+        }
+
+        return S_OK;
+    }
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -337,45 +353,45 @@ END_PROVIDER_COLUMN_MAP()
 };
 
 class CSFSessionSchemaOGISTables:
-	public CRowsetImpl <CSFSessionSchemaOGISTables,OGISTables_Row, CSFSession>
+public CRowsetImpl <CSFSessionSchemaOGISTables,OGISTables_Row, CSFSession>
 {
-public:
-	HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
-	{
-		USES_CONVERSION;
+  public:
+    HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
+    {
+        USES_CONVERSION;
 
-		int				iLayer;
-		IUnknown		*pIU;
-		OGRDataSource	*poDS;
-		OGRLayer		*pLayer;
-		OGRFeatureDefn	*poDefn;
+        int				iLayer;
+        IUnknown		*pIU;
+        OGRDataSource	*poDS;
+        OGRLayer		*pLayer;
+        OGRFeatureDefn	*poDefn;
 
-		QueryInterface(IID_IUnknown,(void **) &pIU);
-		poDS = SFGetOGRDataSource(pIU);
+        QueryInterface(IID_IUnknown,(void **) &pIU);
+        poDS = SFGetOGRDataSource(pIU);
 
-		if (!poDS)
-		{
-			// Prep errors as well
-			return S_FALSE;
-		}
+        if (!poDS)
+        {
+            // Prep errors as well
+            return S_FALSE;
+        }
 
-		for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
-		{
-			OGISTables_Row trData;
+        for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
+        {
+            OGISTables_Row trData;
 
-			pLayer = poDS->GetLayer(iLayer);
-			poDefn = pLayer->GetLayerDefn();
+            pLayer = poDS->GetLayer(iLayer);
+            poDefn = pLayer->GetLayerDefn();
 
-			lstrcpyW(trData.m_szTableName,A2OLE(poDefn->GetName()));
-			lstrcpyW(trData.m_szDGName,A2OLE("OGIS_GEOMETRY"));
-			lstrcpyW(trData.m_szColumnName,A2OLE((poDefn->GetFieldDefn(0))->GetNameRef()));
+            lstrcpyW(trData.m_szTableName,A2OLE(poDefn->GetName()));
+            lstrcpyW(trData.m_szDGName,A2OLE("OGIS_GEOMETRY"));
+            lstrcpyW(trData.m_szColumnName,A2OLE("FID"));
 
-			m_rgRowData.Add(trData);
-		}
+            m_rgRowData.Add(trData);
+        }
 
-		*pcRowsAffected = poDS->GetLayerCount();
-		return S_OK;
-	}
+        *pcRowsAffected = poDS->GetLayerCount();
+        return S_OK;
+    }
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -444,7 +460,7 @@ public CRowsetImpl<CSFSessionSchemaOGISGeoColumns,OGISGeometry_Row,CSFSession>
 
                 lstrcpyW(trData.m_szTableName,A2OLE(poDefn->GetName()));
                 lstrcpyW(trData.m_szColumnName,A2OLE("OGIS_GEOMETRY"));
-                trData.m_nGeomType = poDefn->GetGeomType();
+                trData.m_nGeomType = SFWkbGeomTypeToDBGEOM(poDefn->GetGeomType());
                 if( pLayer->GetSpatialRef() != NULL )
                     pLayer->GetSpatialRef()->exportToWkt( &pszWKT );
 
@@ -483,7 +499,7 @@ class OGISSpat_Row
             m_nSpatialRefId = 0;
             m_szAuthorityName[0] = NULL;
             m_nAuthorityId = 0;
-            lstrcpyW(m_pszSpatialRefSystem,L"PROJCS[\"unknown\"]" );
+            lstrcpyW(m_pszSpatialRefSystem,L"" );
 	}
 
     BEGIN_PROVIDER_COLUMN_MAP(OGISSpat_Row)
