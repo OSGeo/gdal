@@ -28,6 +28,12 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.45  2005/02/07 16:52:28  hobu
+# Added a __copy__ method for Geometry.
+# Added capabilities constants for Driver, DataSource,
+# and Layer.  Docstrings on the TestCapability methods
+# for each as well.
+#
 # Revision 1.44  2005/02/05 18:38:42  hobu
 # Added some more docstrings
 #
@@ -253,11 +259,34 @@ wkbXDR = 0
 wkbNDR = 1
 
 ###############################################################################
+# Constants for testing Capabilities
+
+# Layer
+OLCRandomRead          = "RandomRead"
+OLCSequentialWrite     = "SequentialWrite"
+OLCRandomWrite         = "RandomWrite"
+OLCFastSpatialFilter   = "FastSpatialFilter"
+OLCFastFeatureCount    = "FastFeatureCount"
+OLCFastGetExtent       = "FastGetExtent"
+OLCCreateField         = "CreateField"
+OLCTransactions        = "Transactions"
+OLCDeleteFeature       = "DeleteFeature"
+OLCFastSetNextByIndex  = "FastSetNextByIndex"
+
+# DataSource
+ODsCCreateLayer        = "CreateLayer"
+ODsCDeleteLayer        = "DeleteLayer"
+
+# Driver
+ODrCCreateDataSource   = "CreateDataSource"
+ODrCDeleteDataSource   = "DeleteDataSource"
+
+###############################################################################
 #     Do this on module instantiation.
 
 _gdal.OGRRegisterAll()
     
-#############################################################################
+###############################################################################
 # Various free standing functions.
 
 def Open( filename, update = 0 ):
@@ -343,6 +372,8 @@ class Driver:
         return _gdal.OGR_Dr_GetName( self._o )
     
     def TestCapability( self, cap ):
+        """Test the capabilities of the Driver.
+See the constants at the top of ogr.py"""
         return _gdal.OGR_Dr_TestCapability( self._o, cap )
 
     def Open( self, filename, update = 0 ):
@@ -488,6 +519,8 @@ ds[0:4] would return a list of the first four layers."""
             return Layer( obj = obj )
 
     def TestCapability( self, cap ):
+        """Test the capabilities of the DataSource.
+See the constants at the top of ogr.py"""
         return _gdal.OGR_DS_TestCapability( self._o, cap )
 
     def ExecuteSQL( self, statement, region = 'NULL', dialect = "" ):
@@ -644,6 +677,8 @@ ds[0:4] would return a list of the first four features."""
         return ret_extents
     
     def TestCapability( self, cap ):
+        """Test the capabilities of the Layer.
+See the constants at the top of ogr.py"""
         return _gdal.OGR_L_TestCapability( self._o, cap )
 
     def CreateField( self, field_def, approx_ok = 1 ):
@@ -987,7 +1022,10 @@ class Geometry:
             
     def __str__(self):
         return self.ExportToWkt()
-        
+
+    def __copy__(self):
+        return self.Clone()
+    
     def Destroy( self ):
         if not self.thisown:
             print 'Destroy invoked on unowned geometry.' 
