@@ -146,7 +146,12 @@ AC_DEFUN(AC_LD_SHARED,
   SO_EXT="so"
   export SO_EXT
   LD_SHARED="/bin/true"
-  if test -z "`${CXX} -shared conftest2.o -o libconftest.so 2>&1`" ; then
+  if test ! -z "`uname -a | grep IRIX`" ; then
+    IRIX_ALL=-all
+  else
+    IRIX_ALL=
+  fi
+  if test -z "`${CXX} -shared $IRIX_ALL conftest2.o -o libconftest.so 2>&1|grep -v WARNING`" ; then
     if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
       LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
       if test -z "$LD_LIBRARY_PATH" ; then
@@ -157,7 +162,7 @@ AC_DEFUN(AC_LD_SHARED,
       export LD_LIBRARY_PATH
       if test -z "`./conftest1 2>&1`" ; then
         echo "checking for ${CXX} -shared ... yes"
-        LD_SHARED="${CXX} -shared"
+        LD_SHARED="${CXX} -shared $IRIX_ALL"
       else
         echo "checking for ${CXX} -shared ... no(3)"
       fi
