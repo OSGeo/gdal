@@ -30,12 +30,19 @@
  *    instance validation of access strings to fopen().
  * 
  * $Log$
+ * Revision 1.2  1998/12/02 19:34:08  warmerda
+ * Added VSIFGets().
+ *
  * Revision 1.1  1998/10/17 19:24:36  warmerda
  * Initial implementation.
  *
  */
 
 #include "gdal_vsi.h"
+
+// for stat()
+#include <unistd.h>
+#include <sys/stat.h>
 
 /************************************************************************/
 /*                              VSIFOpen()                              */
@@ -108,6 +115,16 @@ size_t VSIFWrite( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
 }
 
 /************************************************************************/
+/*                              VSIFGets()                              */
+/************************************************************************/
+
+char *VSIFGets( char *pszBuffer, int nBufferSize, FILE * fp )
+
+{
+    return( fgets( pszBuffer, nBufferSize, fp ) );
+}
+
+/************************************************************************/
 /*                             VSIFPrintf()                             */
 /*                                                                      */
 /*      This is a little more complicated than just calling             */
@@ -135,7 +152,7 @@ int	VSIFPrintf( FILE * fp, const char * pszFormat, ... )
 void *VSICalloc( size_t nCount, size_t nSize )
 
 {
-    return( VSICalloc( nCount, nSize ) );
+    return( calloc( nCount, nSize ) );
 }
 
 /************************************************************************/
@@ -165,5 +182,26 @@ void * VSIRealloc( void * pData, size_t nNewSize )
 void VSIFree( void * pData )
 
 {
-    free( pData );
+    if( pData != NULL )
+        free( pData );
+}
+
+/************************************************************************/
+/*                             VSIStrdup()                              */
+/************************************************************************/
+
+char *VSIStrdup( const char * pszString )
+
+{
+    return( strdup( pszString ) );
+}
+
+/************************************************************************/
+/*                              VSIStat()                               */
+/************************************************************************/
+
+int VSIStat( const char * pszFilename, VSIStatBuf * pStatBuf )
+
+{
+    return( stat( pszFilename, pStatBuf ) );
 }

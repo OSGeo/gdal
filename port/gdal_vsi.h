@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.2  1998/12/02 19:34:08  warmerda
+ * Added VSIFGets().
+ *
  * Revision 1.1  1998/10/18 06:13:05  warmerda
  * Initial implementation.
  *
@@ -40,7 +43,13 @@
 #ifndef GDAL_VSI_H_INCLUDED
 #define GDAL_VSI_H_INCLUDED
 
-#include "gdal_base.h"
+#include "gdal_port.h"
+
+/* -------------------------------------------------------------------- */
+/*      We need access to ``struct stat''.                              */
+/* -------------------------------------------------------------------- */
+#include <unistd.h>
+#include <sys/stat.h>
 
 GDAL_C_START
 
@@ -56,8 +65,21 @@ void GDAL_DLL   VSIRewind( FILE * );
 
 size_t GDAL_DLL	VSIFRead( void *, size_t, size_t, FILE * );
 size_t GDAL_DLL VSIFWrite( void *, size_t, size_t, FILE * );
-
+char GDAL_DLL  *VSIFGets( char *, int, FILE * );
 int GDAL_DLL    VSIFPrintf( FILE *, const char *, ... );
+
+/* ==================================================================== */
+/*      VSIStat() related.                                              */
+/* ==================================================================== */
+
+typedef struct stat VSIStatBuf;
+int GDAL_DLL	VSIStat( const char *, VSIStatBuf * );
+
+#define VSI_ISLNK(x)	S_ISLNK(x)
+#define VSI_ISREG(x)	S_ISREG(x)
+#define VSI_ISDIR(x)	S_ISDIR(x)
+#define VSI_ISCHR(x)	S_ISCHR(x)
+#define VSI_ISBLK(x)	S_ISBLK(x)
 
 /* ==================================================================== */
 /*      Memory allocation                                               */
@@ -67,8 +89,7 @@ void GDAL_DLL	*VSICalloc( size_t, size_t );
 void GDAL_DLL   *VSIMalloc( size_t );
 void GDAL_DLL	VSIFree( void * );
 void GDAL_DLL   *VSIRealloc( void *, size_t );
-
-
+char GDAL_DLL   *VSIStrdup( const char * );
 
 GDAL_C_END
 
