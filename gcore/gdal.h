@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.74  2004/02/19 15:55:52  warmerda
+ * updated to 1.2.0
+ *
  * Revision 1.73  2004/02/04 21:30:12  warmerda
  * ensure GDALGetDataTypeByName is exported
  *
@@ -139,13 +142,13 @@
 /*      GDAL Version Information.                                       */
 /* -------------------------------------------------------------------- */
 #ifndef GDAL_VERSION_NUM
-#  define GDAL_VERSION_NUM      1190
+#  define GDAL_VERSION_NUM      1200
 #endif
 #ifndef GDAL_RELEASE_DATE
-#  define GDAL_RELEASE_DATE     20030627
+#  define GDAL_RELEASE_DATE     20040219
 #endif
 #ifndef GDAL_RELEASE_NAME
-#  define GDAL_RELEASE_NAME     "1.1.9.0"
+#  define GDAL_RELEASE_NAME     "1.2.0.0"
 #endif
 
 /* -------------------------------------------------------------------- */
