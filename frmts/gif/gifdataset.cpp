@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2001/08/22 17:12:49  warmerda
+ * added world file support
+ *
  * Revision 1.6  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -80,10 +83,14 @@ class GIFDataset : public GDALDataset
 
     GifFileType *hGifFile;
 
+    int	   bGeoTransformValid;
+    double adfGeoTransform[6];
+
   public:
                  GIFDataset();
                  ~GIFDataset();
 
+    virtual CPLErr GetGeoTransform( double * );
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
@@ -238,6 +245,13 @@ GIFDataset::GIFDataset()
 
 {
     hGifFile = NULL;
+    bGeoTransformValid = FALSE;
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -248,6 +262,23 @@ GIFDataset::~GIFDataset()
 
 {
     DGifCloseFile( hGifFile );
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr GIFDataset::GetGeoTransform( double * padfTransform )
+
+{
+
+    if( bGeoTransformValid )
+    {
+        memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
+        return CE_None;
+    }
+    else
+        return CE_Failure;
 }
 
 /************************************************************************/
@@ -332,6 +363,13 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand( poDS->nBands+1, 
                        new GIFRasterBand( poDS, poDS->nBands+1, psImage ));
     }
+
+/* -------------------------------------------------------------------- */
+/*      Check for world file.                                           */
+/* -------------------------------------------------------------------- */
+    poDS->bGeoTransformValid = 
+        GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+                           poDS->adfGeoTransform );
 
     return poDS;
 }
