@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2002/11/25 15:27:00  warmerda
+ * relax testopen restrictions to work with adams.dem - PA NED data
+ *
  * Revision 1.6  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -543,7 +546,8 @@ GDALDataset *USGSDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     0",6)
         && !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     1",6)
-        && !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     2",6) )
+        && !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     2",6) 
+        && !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     3",6) )
         return NULL;
 
     if( !EQUALN((const char *) poOpenInfo->pabyHeader+150, "     1",6) )
