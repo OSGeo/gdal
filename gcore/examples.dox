@@ -8,17 +8,6 @@
 */
 
 /*!
-\page gdal_translate.c
-<center>
-<title>C Read/Write Example: gdal_translate.c</title>
-</center>
-
-This example demonstrates read one file, and writing the data to another.
-
-\include gdal_translate.c
-*/
-
-/*!
 \page gdalallregister.cpp
 <center>
 <title>Standard Driver Registration: gdalallregister.cpp</title>
