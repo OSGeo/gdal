@@ -21,7 +21,7 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
 		ogrfielddefn.obj ogr_srsnode.obj ogrspatialreference.obj \
 		ogr_srs_proj4.obj ogr_fromepsg.obj ogrct.obj swq.obj \
 		ogrfeaturestyle.obj ogr_srs_esri.obj ogrfeaturequery.obj \
-		ogr_srs_validate.obj
+		ogr_srs_validate.obj ogr_srs_xml.obj
 
 OBJ_OLEDB =	oledb_sup.obj \
 		sfcenumerator.obj sfcdatasource.obj sfctable.obj
@@ -59,8 +59,8 @@ ogroledb.lib:	$(OBJ_OLEDB)
 	lib /out:ogroledb.lib $(OBJ_OLEDB)
 
 sfcdump.exe:	geometryidl.h sfcdump.obj ogr.lib ogroledb.lib
-	cl $(LINKFLAGS) sfcdump.obj ogroledb.lib ogr.lib $(ALL_LIBS) \
-		 /link $(LINKER_FLAGS)
+        cl $(LINKFLAGS) sfcdump.obj ogroledb.lib $(LINKARGS) \
+		/link $(LINKER_FLAGS)
 
 test1.exe:	test1.obj $(OBJ_OGR) 
 	cl $(LINKFLAGS) test1.obj $(OBJ_OGR) $(ALL_LIBS) \
