@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/08/29 18:55:35  warmerda
+ * restructured to put SRS and OGRDataSource in CSFSource
+ *
  * Revision 1.20  2002/08/13 13:59:42  warmerda
  * removed MEDC related property page stuff
  *
@@ -92,9 +95,13 @@
 #define __CSFSource_H_
 
 #include "resource.h"       // main symbols
-#include "SFRS.h"
+#include "SFSess.h"
 
+class CSFSource;
+
+/////////////////////////////////////////////////////////////////////////////
 // IDBInitializeImpl
+
 template <class T>
 class ATL_NO_VTABLE MyIDBInitializeImpl : public IDBInitializeImpl<T>
 {
@@ -102,55 +109,30 @@ class ATL_NO_VTABLE MyIDBInitializeImpl : public IDBInitializeImpl<T>
              MyIDBInitializeImpl()
         {
             CPLDebug( "OGR_OLEDB", "MyIDBInitializeImpl() constructor" );
-            m_pDataSource = NULL;
         }
     virtual ~MyIDBInitializeImpl()
 	{
             CPLDebug( "OGR_OLEDB", "~MyIDBInitializeImpl()" );
-            if( m_pDataSource != NULL )
-            {
-                SFDSCacheReleaseDataSource(m_pDataSource);
-                m_pDataSource = NULL;
-            }
-            //SFClearOGRDataSource((void *) this);
 	}
 
     STDMETHOD(Initialize)(void)
 	{
+            T* poCSFSource = static_cast<T*>(this);
             HRESULT hr;
             CPLDebug( "OGR_OLEDB", "MyIDBInitializeImpl::Initialize()" );
             hr =IDBInitializeImpl<T>::Initialize();
 
             if (SUCCEEDED(hr))
-            {
-                char *pszDataSource;
-                IUnknown *pIU;
-                QueryInterface(IID_IUnknown, (void **) &pIU);		
-			
-                pszDataSource = SFGetInitDataSource(pIU);
-
-
-                m_pDataSource = SFDSCacheOpenDataSource( pszDataSource );
-                CPLDebug( "OGR_OLEDB", "Open(%s) = %p",
-                          pszDataSource, m_pDataSource );
-
-                if ( m_pDataSource == NULL )
-                    hr = E_FAIL;
-			
-                free(pszDataSource);
-            }
+                hr = poCSFSource->OpenDataSource();
 	
             return hr;
 	}
 
-	OGRDataSource* GetDataSource()
-	{
-		return m_pDataSource;
-	}
-
   private:
-	OGRDataSource* m_pDataSource;
 };
+
+/////////////////////////////////////////////////////////////////////////////
+// CDataSourceISupportErrorInfoImpl
 
 class ATL_NO_VTABLE CDataSourceISupportErrorInfoImpl : public ISupportErrorInfo
 {
@@ -163,20 +145,26 @@ public:
 		return S_FALSE;
 	}
 };
-template <class T> class ATL_NO_VTABLE IDataSourceKeyImpl : public IDataSourceKey
+
+/////////////////////////////////////////////////////////////////////////////
+// IDataSourceKeyImpl
+
+template <class T>
+class ATL_NO_VTABLE IDataSourceKeyImpl : public IDataSourceKey
 {
 public:
 	
 	STDMETHOD(GetKey)(ULONG* nKey)
 	{
 		T* pT = static_cast<T*>(this);
-		*nKey = (ULONG) pT->GetDataSource();
+		*nKey = (ULONG) pT;
 		return S_OK;
 	}
-
 };
+
 /////////////////////////////////////////////////////////////////////////////
-// CDataSource
+// CSFSource
+
 class ATL_NO_VTABLE CSFSource : 
 	public CComObjectRootEx<CComSingleThreadModel>,
 	public CComCoClass<CSFSource, &CLSID_SF>,
@@ -187,18 +175,35 @@ class ATL_NO_VTABLE CSFSource :
 	public IInternalConnectionImpl<CSFSource>,
 	public CDataSourceISupportErrorInfoImpl,
 	public IDataSourceKeyImpl<CSFSource>
-	{
+{
+
+private:
+    OGRDataSource *m_poDS;
+
+    int m_bSRSListInitialized;
+    int m_nSRSCount;
+    char **m_papszSRSList;
+    
 public:
-                     CSFSource()
-                { CPLDebug( "OGR_OLEDB", "CSFSource(): %p", this ); }
-            virtual ~CSFSource()
-                { CPLDebug( "OGR_OLEDB", "~CSFSource(): %p", this ); }
-	HRESULT FinalConstruct()
+    CSFSource();
+    virtual ~CSFSource();
+
+    HRESULT OpenDataSource();
+    
+    OGRDataSource* GetDataSource( void ) { return m_poDS; }
+
+    int         GetSRSCount();
+    const char *GetSRSWKT( int );
+    int         GetSRSID( const char * );
+
+    void        InitSRSList();
+    
+    HRESULT FinalConstruct()
 	{
             // verify the 
             return FInit();
 	}
-        
+
 DECLARE_REGISTRY_RESOURCEID(IDR_SF)
 BEGIN_PROPSET_MAP(CSFSource)
 	BEGIN_PROPERTY_SET(DBPROPSET_DATASOURCEINFO)
@@ -252,7 +257,5 @@ BEGIN_COM_MAP(CSFSource)
     COM_INTERFACE_ENTRY(IDataSourceKey)
 END_COM_MAP()
 
-public:
- 
 };
 #endif //__CSFSource_H_
