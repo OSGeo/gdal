@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.13  2004/04/02 22:31:26  warmerda
+#  Use -of for format.
+#
 #  Revision 1.12  2004/04/02 17:40:44  warmerda
 #  added GDALGeneralCmdLineProcessor() support
 #
@@ -261,7 +264,7 @@ class file_info:
 
 # =============================================================================
 def Usage():
-    print 'Usage: gdal_merge.py [-o out_filename] [-f out_format] [-co NAME=VALUE]*'
+    print 'Usage: gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*'
     print '                     [-ps pixelsize_x pixelsize_y] [-separate] [-v] [-pct]'
     print '                     [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init value]'
     print '                     input_files'
@@ -318,6 +321,11 @@ if __name__ == '__main__':
             nodata = int(argv[i])
 
         elif arg == '-f':
+            # for backward compatibility.
+            i = i + 1
+            format = argv[i]
+
+        elif arg == '-of':
             i = i + 1
             format = argv[i]
 
