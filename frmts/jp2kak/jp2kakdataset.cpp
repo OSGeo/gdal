@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.19  2004/01/12 19:50:09  warmerda
+ * Disable jpip support on 4.1 till I get around to fixing it up.
+ *
  * Revision 1.18  2003/12/05 21:28:45  warmerda
  * Added Kakadu 4.1 support.
  *
@@ -146,7 +149,7 @@
 #  endif
 #endif									
 
-#if defined(KAKADU4) && defined(WIN32)
+#if defined(KAKADU4) && defined(WIN32) && !defined(KAKADU41)
 #  define USE_JPIP
 #endif
 
