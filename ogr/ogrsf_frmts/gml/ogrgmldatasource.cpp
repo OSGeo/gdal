@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/01/07 22:30:18  warmerda
+ * Added special support for output filename "stdout".
+ *
  * Revision 1.5  2002/08/15 15:26:12  warmerda
  * Properly close file if test open fails.
  *
@@ -79,7 +82,8 @@ OGRGMLDataSource::~OGRGMLDataSource()
         VSIFPrintf( fpOutput, "%s", 
                     "</gml:featureCollection>\n" );
 
-        VSIFClose( fpOutput );
+        if( fpOutput != stdout )
+            VSIFClose( fpOutput );
     }
 
     CPLFree( pszName );
@@ -289,7 +293,10 @@ int OGRGMLDataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
     pszName = CPLStrdup( pszFilename );
 
-    fpOutput = VSIFOpen( pszFilename, "wt" );
+    if( EQUAL(pszFilename,"stdout") )
+        fpOutput = stdout;
+    else
+        fpOutput = VSIFOpen( pszFilename, "wt" );
     if( fpOutput == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
