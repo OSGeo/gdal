@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.91  2003/04/28 20:55:02  warmerda
+ * Use dataset level IO for createcopy stripped contig case
+ *
  * Revision 1.90  2003/03/13 15:49:28  warmerda
  * Fixed CFloat64 support.
  *
@@ -3030,17 +3033,10 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
              eErr == CE_None && iLine < nYSize; 
              iLine++ )
         {
-            for( int iBand = 0; 
-                 eErr == CE_None && iBand < nBands; 
-                 iBand++ )
-            {
-                GDALRasterBand *poBand = poSrcDS->GetRasterBand(iBand+1);
-
-                eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                         pabyLine + iBand * nElemSize, 
-                                         nXSize, 1, eType, 
-                                         nPixelSize, nLineSize );
-            }
+            eErr = 
+                poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
+                                   pabyLine, nXSize, 1, eType, nBands, NULL, 
+                                   nPixelSize, nLineSize, nElemSize );
 
             if( eErr == CE_None 
                 && TIFFWriteScanline( hTIFF, pabyLine, iLine, 0 ) == -1 )
