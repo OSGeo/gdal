@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/02/25 18:03:47  warmerda
+ * added support to auto-define Edsc_Column as the defn is sometimes missing
+ *
  * Revision 1.4  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -66,6 +69,7 @@ HFADictionary::HFADictionary( const char * pszString )
     int		i;
     
     nTypes = 0;
+    nTypesMax = 0;
     papoTypes = NULL;
 
 /* -------------------------------------------------------------------- */
@@ -79,13 +83,20 @@ HFADictionary::HFADictionary( const char * pszString )
         pszString = poNewType->Initialize( pszString );
 
         if( pszString != NULL )
-        {
-            papoTypes = (HFAType **)
-                CPLRealloc(papoTypes, sizeof(HFAType*) * (nTypes+1));
-            papoTypes[nTypes++] = poNewType;
-        }
+            AddType( poNewType );
         else
             delete poNewType;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Did we get a Edsc_Column definition?  For some reason it is     */
+/*      missing from some new files.                                    */
+/* -------------------------------------------------------------------- */
+    if( FindType( "Edsc_Column" ) == NULL )
+    {
+        HFAType *poNewType = new HFAType();
+        poNewType->Initialize( "{1:lnumRows,1:LcolumnDataPtr,1:e4:integer,real,complex,string,dataType,1:lmaxNumChars,}Edsc_Column" );
+        AddType( poNewType );
     }
 
 /* -------------------------------------------------------------------- */
@@ -110,6 +121,23 @@ HFADictionary::~HFADictionary()
         delete papoTypes[i];
     
     CPLFree( papoTypes );
+}
+
+/************************************************************************/
+/*                              AddType()                               */
+/************************************************************************/
+
+void HFADictionary::AddType( HFAType *poType )
+
+{
+    if( nTypes == nTypesMax )
+    {
+        nTypesMax = nTypes * 2 + 10;
+        papoTypes = (HFAType **) CPLRealloc( papoTypes,
+                                             sizeof(void*) * nTypesMax );
+    }
+
+    papoTypes[nTypes++] = poType;
 }
 
 /************************************************************************/
