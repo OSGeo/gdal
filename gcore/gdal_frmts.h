@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/09/09 12:14:25  dron
+ * Added PCIDSK driver.
+ *
  * Revision 1.21  2003/04/23 12:24:26  dron
  * MrSID driver added, EFF removed.
  *
@@ -146,6 +149,7 @@ void CPL_DLL GDALRegister_BMP(void);
 void CPL_DLL GDALRegister_GSC(void);
 void CPL_DLL GDALRegister_NITF(void);
 void CPL_DLL GDALRegister_MrSID(void);
+void CPL_DLL GDALRegister_PCIDSK(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
