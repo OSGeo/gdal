@@ -29,6 +29,15 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/08/11 14:17:22  warmerda
+ * Trim leading spaces from attributes values.  Attributes from OGDI
+ * that were quoted (such as { FA001 } from NOAMER/VRF) were exceeding the
+ * field width.  I kind of wonder if the VRF driver was behaving improperly
+ * in returning the extra quoted spaces, but in any event it seems prudent
+ * to trim them.
+ *
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=372
+ *
  * Revision 1.6  2003/05/21 03:58:49  warmerda
  * expand tabs
  *
@@ -288,6 +297,13 @@ OGRFeature *OGROGDILayer::GetNextFeature()
 
         if( nNameLen > 0 && pszFieldStart[nNameLen-1] == ' ' )
             nNameLen--;
+
+        /* skip leading white space */
+        while( pszFieldStart[0] == ' ' && nNameLen > 0 )
+        {
+            pszFieldStart++;
+            nNameLen--;
+        }
 
         /* zero terminate the single field value, but save the          */
         /* character we overwrote, so we can restore it when done.      */
