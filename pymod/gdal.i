@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.73  2003/08/27 15:40:05  warmerda
+ * added OGRSetGenerate_DB2_V72_BYTE_ORDER()
+ *
  * Revision 1.72  2003/06/23 14:07:30  warmerda
  * fixed typedef int int problem
  *
@@ -2784,4 +2787,4 @@ py_OGRBuildPolygonFromEdges(PyObject *self, PyObject *args) {
 
 %native(OGRBuildPolygonFromEdges) py_OGRBuildPolygonFromEdges;
 
-
+int  OGRSetGenerate_DB2_V72_BYTE_ORDER( int bGenerate_DB2_V72_BYTE_ORDER );

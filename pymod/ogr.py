@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.14  2003/08/27 15:40:06  warmerda
+# added OGRSetGenerate_DB2_V72_BYTE_ORDER()
+#
 # Revision 1.13  2003/06/10 14:43:33  warmerda
 # fixed NULL support in GetGeometryRef()
 #
@@ -166,6 +169,9 @@ def GetOpenDS( i ):
         return None
     else:
         return DataSource( obj = _o )
+
+def SetGenerate_DB2_V72_BYTE_ORDER( flag ):
+    return _gdal.OGRSetGenerate_DB2_V72_BYTE_ORDER( flag )
 
 #############################################################################
 # OGRSFDriver
