@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/11/03 19:07:58  warmerda
+ * open raster file if not open when trying to read
+ *
  * Revision 1.6  1999/10/04 18:19:22  warmerda
  * Avoid type conversion warnings.
  *
@@ -179,6 +182,12 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      If the dataset isn't open, open it now.                         */
+/* -------------------------------------------------------------------- */
+    if( GetFP() == NULL )
+        Open();
+    
 /* -------------------------------------------------------------------- */
 /*      Read requested record.                                          */
 /* -------------------------------------------------------------------- */
