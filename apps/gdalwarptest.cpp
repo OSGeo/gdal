@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/06/05 16:55:42  warmerda
+ * enable INIT_DEST=0 by default when creating new files
+ *
  * Revision 1.10  2003/05/28 18:18:43  warmerda
  * added -q (quiet) flag
  *
@@ -363,7 +366,9 @@ int main( int argc, char ** argv )
                                        pszSourceSRS, pszTargetSRS, nOrder,
                                        papszCreateOptions, eOutputType );
 
-//        papszWarpOptions = CSLSetNameValue( papszWarpOptions, "INIT", "0" );
+        if( CSLFetchNameValue( papszWarpOptions, "INIT_DEST" ) == NULL )
+            papszWarpOptions = CSLSetNameValue(papszWarpOptions,
+                                               "INIT_DEST", "0");
         CSLDestroy( papszCreateOptions );
         papszCreateOptions = NULL;
     }
