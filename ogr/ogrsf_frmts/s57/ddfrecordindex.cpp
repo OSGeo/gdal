@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/08/21 21:25:30  warmerda
+ * Rodney Jensen: Addd FindRecordByObjl()
+ *
  * Revision 1.6  2002/04/16 17:55:33  warmerda
  * Initialize variables.
  *
@@ -67,6 +70,9 @@ DDFRecordIndex::DDFRecordIndex()
     nRecordCount = 0;
     nRecordMax = 0;
     pasRecords = NULL;
+
+    nLastObjlPos = 0;             /* rjensen. added for FindRecordByObjl() */
+    nLastObjl    = 0;             /* rjensen. added for FindRecordByObjl() */
 }
 
 /************************************************************************/
@@ -94,9 +100,12 @@ void DDFRecordIndex::Clear()
 
     CPLFree( pasRecords );
     pasRecords = NULL;
-    
+
     nRecordCount = 0;
     nRecordMax = 0;
+
+    nLastObjlPos = 0;             /* rjensen. added for FindRecordByObjl() */
+    nLastObjl      = 0;             /* rjensen. added for FindRecordByObjl() */
 
     bSorted = FALSE;
 }
@@ -116,7 +125,7 @@ void DDFRecordIndex::AddRecord( int nKey, DDFRecord * poRecord )
     if( nRecordCount == nRecordMax )
     {
         nRecordMax = (int) (nRecordCount * 1.3 + 100);
-        pasRecords = (DDFIndexedRecord *) 
+        pasRecords = (DDFIndexedRecord *)
             CPLRealloc( pasRecords, sizeof(DDFIndexedRecord)*nRecordMax );
     }
 
@@ -163,6 +172,40 @@ DDFRecord * DDFRecordIndex::FindRecord( int nKey )
 }
 
 /************************************************************************/
+/*                       FindRecordByObjl()                             */
+/*      Rodney Jensen                                                   */
+/*      Though the returned pointer is not const, it should be          */
+/*      considered internal to the index and not modified or freed      */
+/*      by application code.                                            */
+/************************************************************************/
+
+DDFRecord * DDFRecordIndex::FindRecordByObjl( int nObjl )
+{
+    if( !bSorted )
+        Sort();
+
+/* -------------------------------------------------------------------- */
+/*      Do a linear search based on the nObjl to find the desired record. */
+/* -------------------------------------------------------------------- */
+    int nMinIndex = 0;
+	if (nLastObjl != nObjl) nLastObjlPos=0;
+
+	 for (nMinIndex = nLastObjlPos; nMinIndex < nRecordCount; nMinIndex++)
+	 {
+		if (nObjl == pasRecords[nMinIndex].poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 ) )
+		{
+			nLastObjlPos=nMinIndex+1;  /* add 1, don't want to look at same again */
+			nLastObjl=nObjl;
+			return pasRecords[nMinIndex].poRecord;
+		}
+	 }
+
+	 nLastObjlPos=0;
+	 nLastObjl=0;
+    return NULL;
+}
+
+/************************************************************************/
 /*                            RemoveRecord()                            */
 /************************************************************************/
 
@@ -202,8 +245,8 @@ int DDFRecordIndex::RemoveRecord( int nKey )
 /*      Move all the list entries back one to fill the hole, and        */
 /*      update the total count.                                         */
 /* -------------------------------------------------------------------- */
-    memmove( pasRecords + nTestIndex, 
-             pasRecords + nTestIndex + 1, 
+    memmove( pasRecords + nTestIndex,
+             pasRecords + nTestIndex + 1,
              (nRecordCount - nTestIndex - 1) * sizeof(DDFIndexedRecord) );
 
     nRecordCount--;
@@ -220,13 +263,13 @@ int DDFRecordIndex::RemoveRecord( int nKey )
 static int DDFCompare( const void *pRec1, const void *pRec2 )
 
 {
-    if( ((const DDFIndexedRecord *) pRec1)->nKey 
+    if( ((const DDFIndexedRecord *) pRec1)->nKey
         == ((const DDFIndexedRecord *) pRec2)->nKey )
         return 0;
-    else if( ((const DDFIndexedRecord *) pRec1)->nKey 
+    else if( ((const DDFIndexedRecord *) pRec1)->nKey
              < ((const DDFIndexedRecord *) pRec2)->nKey )
         return -1;
-    else 
+    else
         return 1;
 }
 
