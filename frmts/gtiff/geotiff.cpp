@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.112  2004/08/14 00:05:33  warmerda
+ * finished changes to support external overviews if file readonly
+ *
  * Revision 1.111  2004/04/29 19:58:43  warmerda
  * export GTIFGetOGISDefn, and GTIFSetFromOGISDefn
  *
@@ -762,7 +765,10 @@ int GTiffRasterBand::GetOverviewCount()
 {
     GTiffDataset	*poGDS = (GTiffDataset *) poDS;
 
-    return poGDS->nOverviewCount;
+    if( poGDS->nOverviewCount > 0 )
+        return poGDS->nOverviewCount;
+    else
+        return GDALRasterBand::GetOverviewCount();
 }
 
 /************************************************************************/
@@ -774,10 +780,15 @@ GDALRasterBand *GTiffRasterBand::GetOverview( int i )
 {
     GTiffDataset	*poGDS = (GTiffDataset *) poDS;
 
-    if( i < 0 || i >= poGDS->nOverviewCount )
-        return NULL;
+    if( poGDS->nOverviewCount > 0 )
+    {
+        if( i < 0 || i >= poGDS->nOverviewCount )
+            return NULL;
+        else
+            return poGDS->papoOverviewDS[i]->GetRasterBand(nBand);
+    }
     else
-        return poGDS->papoOverviewDS[i]->GetRasterBand(nBand);
+        return GDALRasterBand::GetOverview( i );
 }
 
 /************************************************************************/
@@ -2045,10 +2056,10 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return NULL;
     }
-    else
-    {
-        return poDS;
-    }
+
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    
+    return poDS;
 }
 
 /************************************************************************/
