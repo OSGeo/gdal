@@ -26,6 +26,9 @@
  *
  * 
  * $Log$
+ * Revision 1.3  2000/03/31 13:42:49  warmerda
+ * added debugging code
+ *
  * Revision 1.2  2000/03/24 00:09:05  warmerda
  * rewrote cache management
  *
@@ -37,11 +40,12 @@
 #include "gdal_priv.h"
 
 static int nTileAgeTicker = 0; 
-static int nCacheMax = 10 * 1024*1024;
+static int nCacheMax = 5 * 1024*1024;
 static int nCacheUsed = 0;
 
-GDALRasterBlock   *poOldest = NULL;    /* tail */
-GDALRasterBlock   *poNewest = NULL;    /* head */
+static GDALRasterBlock   *poOldest = NULL;    /* tail */
+static GDALRasterBlock   *poNewest = NULL;    /* head */
+
 
 /************************************************************************/
 /*                          GDALSetCacheMax()                           */
@@ -84,7 +88,6 @@ int GDALFlushCacheBlock()
 {
     if( poOldest == NULL )
         return FALSE;
-
     poOldest->GetBand()->FlushBlock( poOldest->GetXOff(), 
                                      poOldest->GetYOff() );
 
@@ -129,19 +132,58 @@ GDALRasterBlock::~GDALRasterBlock()
         nCacheUsed -= nSizeInBytes;
     }
 
-    if( poPrevious != NULL )
-        poPrevious->poNext = poNext;
+    if( poOldest == this )
+        poOldest = poPrevious;
 
     if( poNewest == this )
+    {
         poNewest = poNext;
+    }
+
+    if( poPrevious != NULL )
+        poPrevious->poNext = poNext;
 
     if( poNext != NULL )
         poNext->poPrevious = poPrevious;
 
-    if( poOldest == this )
-        poOldest = poPrevious;
+#ifdef ENABLE_DEBUG
+    Verify();
+#endif
 
     nAge = -1;
+}
+
+/************************************************************************/
+/*                               Verify()                               */
+/************************************************************************/
+
+void GDALRasterBlock::Verify()
+
+{
+    CPLAssert( (poNewest == NULL && poOldest == NULL)
+               || (poNewest != NULL && poOldest != NULL) );
+
+    if( poNewest != NULL )
+    {
+        CPLAssert( poNewest->poPrevious == NULL );
+        CPLAssert( poOldest->poNext == NULL );
+        
+
+        for( GDALRasterBlock *poBlock = poNewest; 
+             poBlock != NULL;
+             poBlock = poBlock->poNext )
+        {
+            if( poBlock->poPrevious )
+            {
+                CPLAssert( poBlock->poPrevious->poNext == poBlock );
+            }
+
+            if( poBlock->poNext )
+            {
+                CPLAssert( poBlock->poNext->poPrevious == poBlock );
+            }
+        }
+    }
 }
 
 /************************************************************************/
@@ -198,6 +240,9 @@ void GDALRasterBlock::Touch()
         CPLAssert( poPrevious == NULL && poNext == NULL );
         poOldest = this;
     }
+#ifdef ENABLE_DEBUG
+    Verify();
+#endif
 }
 
 /************************************************************************/
@@ -226,7 +271,22 @@ CPLErr GDALRasterBlock::Internalize()
 /* -------------------------------------------------------------------- */
     nCacheUsed += nSizeInBytes;
     while( nCacheUsed > nCacheMax )
+    {
+        int nOldCacheUsed = nCacheUsed;
+
         GDALFlushCacheBlock();
+
+        if( nCacheUsed == nOldCacheUsed )
+        {
+            static int bReported = FALSE;
+
+            if( !bReported )
+            {
+                bReported = TRUE;
+            }
+            break;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Add this block to the list.                                     */
