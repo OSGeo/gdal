@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/10/19 22:05:03  dmorissette
+ * Remove trailing spaces in string attribute fields (MapServer bug 184)
+ *
  * Revision 1.5  2002/12/21 19:48:05  warmerda
  * rearrange code a bit to workaround VStudio.NET bug
  *
@@ -587,6 +590,14 @@ int OGRAVCLayer::TranslateTableFields( OGRFeature *poFeature,
         if (nType ==  AVC_FT_DATE || nType == AVC_FT_CHAR ||
             nType == AVC_FT_FIXINT || nType == AVC_FT_FIXNUM)
         {
+            if (nType == AVC_FT_CHAR)
+            {
+                /* Remove trailing spaces in char fields */
+                int nLen = strlen(pasFields[iField].pszStr);
+                while (nLen > 0 && pasFields[iField].pszStr[nLen-1] == ' ')
+                    nLen--;
+                pasFields[iField].pszStr[nLen] = '\0';
+            }
             poFeature->SetField( iOutField++, pasFields[iField].pszStr );
         }
         else if (nType == AVC_FT_BININT && psFInfo->nSize == 4)
