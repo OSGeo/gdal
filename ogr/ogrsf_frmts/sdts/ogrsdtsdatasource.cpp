@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/02/06 03:21:59  warmerda
+ * Added OGRSpatialReference.Fixup() call to set linear units
+ * as per http://bugzilla.remotesensing.org/show_bug.cgi?id=279.
+ *
  * Revision 1.7  2002/04/17 15:17:49  warmerda
  * Initialize poTransfer to NULL.
  *
@@ -200,6 +204,8 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
     else
         poSRS->SetGeogCS("WGS 84", "WGS_1984",
                          "WGS 84", 6378137, 298.257223563 );
+
+    poSRS->Fixup();
 
 /* -------------------------------------------------------------------- */
 /*      Initialize a layer for each source dataset layer.               */
