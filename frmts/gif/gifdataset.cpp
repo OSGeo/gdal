@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2001/01/10 15:37:58  warmerda
+ * Fixed help topic name.
+ *
  * Revision 1.4  2001/01/10 15:36:44  warmerda
  * implement interlacing support
  *
@@ -508,7 +511,7 @@ void GDALRegister_GIF()
         
         poDriver->pszShortName = "GIF";
         poDriver->pszLongName = "Graphics Interchange Format (.gif)";
-        poDriver->pszHelpTopic = "frmt_various.html#GIF";
+        poDriver->pszHelpTopic = "frmt_gif.tml";
         
         poDriver->pfnOpen = GIFDataset::Open;
         poDriver->pfnCreateCopy = GIFCreateCopy;
