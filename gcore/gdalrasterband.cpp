@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.36  2003/02/20 18:34:12  warmerda
+ * added GDALGetRasterAccess()
+ *
  * Revision 1.35  2002/12/18 15:19:26  warmerda
  * added errors in some unimplemented methods
  *
@@ -904,6 +907,8 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
 /**
  * Find out if we have update permission for this band.
  *
+ * This method is the same as the C function GDALGetRasterAccess().
+ *
  * @return Either GA_Update or GA_ReadOnly.
  */
 
@@ -911,6 +916,16 @@ GDALAccess GDALRasterBand::GetAccess()
 
 {
     return eAccess;
+}
+
+/************************************************************************/
+/*                        GDALGetRasterAccess()                         */
+/************************************************************************/
+
+GDALAccess GDALGetRasterAccess( GDALRasterBandH hBand )
+
+{
+    return ((GDALRasterBand *) hBand)->GetAccess();
 }
 
 /************************************************************************/
