@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/11 14:06:20  warmerda
+ * added GetLayerModuleReader()
+ *
  * Revision 1.1  1999/05/11 12:55:31  warmerda
  * New
  *
@@ -254,3 +257,35 @@ SDTSAttrReader *SDTSTransfer::GetLayerAttrReader( int iEntry )
         return poAttrReader;
     }
 }
+
+/************************************************************************/
+/*                        GetLayerModuleReader()                        */
+/************************************************************************/
+
+DDFModule *SDTSTransfer::GetLayerModuleReader( int iEntry )
+
+{
+    DDFModule	*poModuleReader;
+    
+    if( iEntry < 0 || iEntry >= nLayers )
+    {
+        return NULL;
+    }
+
+    
+    poModuleReader = new DDFModule;
+    
+    if( !poModuleReader->Open(
+        		oCATD.GetEntryFilePath( panLayerCATDEntry[iEntry] ) ) )
+    {
+        delete poModuleReader;
+        return NULL;
+    }
+    else
+    {
+        return poModuleReader;
+    }
+}
+
+
+
