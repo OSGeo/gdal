@@ -1,7 +1,6 @@
 /******************************************************************************
  * $Id$
  *
- * Name:     hfa.h
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Public (C callable) interface for the Erdas Imagine reading
  *           code.  This include files, and it's implementing code depends
@@ -31,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/01/22 17:39:09  warmerda
+ * Added projections structures, and various other calls
+ *
  * Revision 1.2  1999/01/04 22:52:47  warmerda
  * field access working
  *
@@ -54,13 +56,106 @@ typedef HFAInfo_t *HFAHandle;
 typedef void *HFAHandle;
 #endif
 
+/* -------------------------------------------------------------------- */
+/*      Structure definitions from eprj.h, with some type               */
+/*      simplifications.                                                */
+/* -------------------------------------------------------------------- */
+typedef struct {
+	double x;			/* coordinate x-value */
+	double y;			/* coordinate y-value */
+} Eprj_Coordinate;
+
+
+typedef struct {
+	double width;			/* pixelsize width */
+	double height;			/* pixelsize height */
+} Eprj_Size;
+
+
+typedef struct {
+	char * proName;		/* projection name */
+	Eprj_Coordinate upperLeftCenter;	/* map coordinates of center of
+						   upper left pixel */
+	Eprj_Coordinate lowerRightCenter;	/* map coordinates of center of
+						   lower right pixel */
+	Eprj_Size pixelSize;			/* pixel size in map units */
+	char * units;			/* units of the map */
+} Eprj_MapInfo;
+
+typedef enum {
+	EPRJ_INTERNAL,		/* Indicates that the projection is built into
+				   the eprj package as function calls */
+	EPRJ_EXTERNAL		/* Indicates that the projection is accessible
+				   as an EXTERNal executable */
+} Eprj_ProType;
+
+typedef enum {
+	EPRJ_NAD27=1,		/* Use the North America Datum 1927 */
+	EPRJ_NAD83=2,		/* Use the North America Datum 1983 */
+	EPRJ_HARN		/* Use the North America Datum High Accuracy
+				   Reference Network */
+} Eprj_NAD;
+
+typedef enum {
+	EPRJ_DATUM_PARAMETRIC,		/* The datum info is 7 doubles */
+	EPRJ_DATUM_GRID,		/* The datum info is a name */
+	EPRJ_DATUM_REGRESSION,
+	EPRJ_DATUM_NONE
+} Eprj_DatumType;
+
+typedef struct {
+	char * datumname;		/* name of the datum */
+	Eprj_DatumType type;			/* The datum type */
+	double  params[7];		/* The parameters for type
+						   EPRJ_DATUM_PARAMETRIC */
+	char * gridname;		/* name of the grid file */
+} Eprj_Datum;
+
+typedef struct {
+	char * sphereName;	/* name of the ellipsoid */
+	double a;			/* semi-major axis of ellipsoid */
+	double b;			/* semi-minor axis of ellipsoid */
+	double eSquared;		/* eccentricity-squared */
+	double radius;			/* radius of the sphere */
+} Eprj_Spheroid;
+
+typedef struct {
+	Eprj_ProType proType;		/* projection type */
+	long proNumber;			/* projection number for internal 
+					   projections */
+	char * proExeName;	/* projection executable name for
+					   EXTERNal projections */
+	char * proName;	/* projection name */
+	long proZone;			/* projection zone (UTM, SP only) */
+	double proParams[15];	/* projection parameters array in the
+					   GCTP form */
+	Eprj_Spheroid proSpheroid;	/* projection spheroid */
+} Eprj_ProParameters;
+
+/* -------------------------------------------------------------------- */
+/*      Prototypes                                                      */
+/* -------------------------------------------------------------------- */
+
 CPL_C_START
 
 HFAHandle HFAOpen( const char * pszFilename, const char * pszMode );
 void	HFAClose( HFAHandle );
 
-void	HFAGetRasterInfo( HFAHandle hHFA, int *pnXSize, int *pnYSize,
-                          int *pnBands, int * pnDataType );
+const Eprj_MapInfo *HFAGetMapInfo( HFAHandle );
+const Eprj_Datum *HFAGetDatum( HFAHandle );
+const Eprj_ProParameters *HFAGetProParameters( HFAHandle );
+
+CPLErr	HFAGetRasterInfo( HFAHandle hHFA, int *pnXSize, int *pnYSize,
+                          int *pnBands );
+CPLErr  HFAGetBandInfo( HFAHandle hHFA, int nBand, int * pnDataType,
+                        int * pnBlockXSize, int * pnBlockYSize );
+CPLErr  HFAGetRasterBlock( HFAHandle hHFA, int nBand, int nXBlock, int nYBlock,
+                           void * pData );
+int     HFAGetDataTypeBits( int );
+CPLErr	HFAGetPCT( HFAHandle, int, int *, double **, double **, double ** );
+void    HFADumpTree( HFAHandle, FILE * );
+void    HFADumpDictionary( HFAHandle, FILE * );
+CPLErr  HFAGetDataRange( HFAHandle, int, double *, double * );
 
 #define EPT_u1	0
 #define EPT_u2	1
@@ -76,12 +171,6 @@ void	HFAGetRasterInfo( HFAHandle hHFA, int *pnXSize, int *pnYSize,
 #define EPT_c64	11
 #define EPT_c128 12
 
-CPLErr HFAReadBlock( HFAHandle, int nBand, int nXTileOff, int nYTileOff,
-                     int nReqDataType, void * pImageData );
-
-GInt32	HFAGetIntField( const char *, CPLErr * peErr );
-double	HFAGetDoubleField( const char *, CPLErr * peErr );
-const char *HFAGetStringField( const char *, CPLErr * peErr );
 CPL_C_END
 
 #endif /* ndef _HFAOPEN_H_INCLUDED */
