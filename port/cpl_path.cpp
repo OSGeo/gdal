@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/07/10 12:22:37  dron
+ * Use locale aware character classification functions in CPLFormCIFilename().
+ *
  * Revision 1.14  2003/05/28 19:22:38  warmerda
  * fixed docs
  *
@@ -510,8 +513,8 @@ const char *CPLFormCIFilename( const char * pszPath,
     {
         for( i = 0; pszFilename[i] != '\0'; i++ )
         {
-            if( pszFilename[i] >= 'a' && pszFilename[i] <= 'z' )
-                pszFilename[i] = pszFilename[i] + 'A' - 'a';
+            if( islower(pszFilename[i]) )
+                pszFilename[i] = toupper(pszFilename[i]);
         }
 
         pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
@@ -522,8 +525,8 @@ const char *CPLFormCIFilename( const char * pszPath,
     {
         for( i = 0; pszFilename[i] != '\0'; i++ )
         {
-            if( pszFilename[i] >= 'A' && pszFilename[i] <= 'Z' )
-                pszFilename[i] = pszFilename[i] + 'a' - 'A';
+            if( isupper(pszFilename[i]) )
+                pszFilename[i] = tolower(pszFilename[i]);
         }
 
         pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
