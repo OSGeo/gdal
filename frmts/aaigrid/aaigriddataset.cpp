@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/03/12 15:35:05  warmerda
+ * Fixed prj file naming.
+ *
  * Revision 1.1  2001/03/12 15:15:30  warmerda
  * New
  *
@@ -370,7 +373,7 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     pszDirname = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
     pszBasename = CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
 
-    pszPrjFilename = CPLFormFilename( pszDirname, pszBasename, "prf" );
+    pszPrjFilename = CPLFormFilename( pszDirname, pszBasename, "prj" );
     if( VSIStat( pszPrjFilename, &sStatBuf ) == 0 )
     {
         OGRSpatialReference	oSRS;
