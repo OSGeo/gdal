@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.26  2003/12/04 15:19:43  warmerda
+ * Added "=" support for "sidesearching" in a document.
+ *
  * Revision 1.25  2003/11/07 19:40:19  warmerda
  * ensure CPLGetXMLValue() works for nodes with attributes
  *
@@ -1082,10 +1085,15 @@ void CPLDestroyXMLNode( CPLXMLNode *psNode )
  *
  * Attribute names may only appear as the last item in the path. 
  *
- * The search is dont from the root nodes children, but all intermediate
+ * The search is done from the root nodes children, but all intermediate
  * nodes in the path must be specified.  Seaching for "name" would only find
  * a name element or attribute if it is a direct child of the root, not at any
  * level in the subdocument. 
+ *
+ * If the pszPath is prefixed by "=" then the search will begin with the
+ * root node, and it's siblings, instead of the root nodes children.  This
+ * is particularly useful when searching within a whole document which is
+ * often prefixed by one or more "junk" nodes like the <?xml> declaration.
  *
  * @param psRoot the subtree in which to search.  This should be a node of 
  * type CXT_Element.  NULL is safe. 
@@ -1100,9 +1108,16 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
 {
     char        **papszTokens;
     int         iToken = 0;
+    int         bSideSearch = FALSE;
 
     if( psRoot == NULL )
         return NULL;
+
+    if( *pszPath == '=' )
+    {
+        bSideSearch = TRUE;
+        pszPath++;
+    }
 
     papszTokens = CSLTokenizeStringComplex( pszPath, ".", FALSE, FALSE );
 
@@ -1110,8 +1125,15 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
     {
         CPLXMLNode *psChild;
 
-        for( psChild = psRoot->psChild; psChild != NULL; 
-             psChild = psChild->psNext ) 
+        if( bSideSearch )
+        {
+            psChild = psRoot;
+            bSideSearch = FALSE;
+        }
+        else
+            psChild = psRoot->psChild;
+
+        for( ; psChild != NULL; psChild = psChild->psNext ) 
         {
             if( psChild->eType != CXT_Text 
                 && EQUAL(papszTokens[iToken],psChild->pszValue) )
