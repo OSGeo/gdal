@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/04/04 14:57:38  dron
+ * _vsnprintf() hack moved to the cpl_config.h.vc.
+ *
  * Revision 1.24  2003/04/04 14:16:07  dron
  * Use _vsnprintf() in Windows environment.
  *
@@ -187,11 +190,7 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
     /* Expand the error message 
      */
 #if defined(HAVE_VSNPRINTF)
-#if defined(WIN32)
-    _vsnprintf( gszCPLLastErrMsg, sizeof(gszCPLLastErrMsg), fmt, args );
-#else
     vsnprintf( gszCPLLastErrMsg, sizeof(gszCPLLastErrMsg), fmt, args );
-#endif
 #else
     vsprintf(gszCPLLastErrMsg, fmt, args);
 #endif
@@ -310,13 +309,8 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 /* -------------------------------------------------------------------- */
     va_start(args, pszFormat);
 #if defined(HAVE_VSNPRINTF)
-#if defined(WIN32)
-    _vsnprintf(pszMessage+strlen(pszMessage), ERROR_MAX - strlen(pszMessage), 
-               pszFormat, args);
-#else
     vsnprintf(pszMessage+strlen(pszMessage), ERROR_MAX - strlen(pszMessage), 
               pszFormat, args);
-#endif
 #else
     vsprintf(pszMessage+strlen(pszMessage), pszFormat, args);
 #endif

@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.32  2003/04/04 14:57:38  dron
+ * _vsnprintf() hack moved to the cpl_config.h.vc.
+ *
  * Revision 1.31  2003/04/04 14:16:07  dron
  * Use _vsnprintf() in Windows environment.
  *
@@ -780,13 +783,8 @@ const char *CPLSPrintf(char *fmt, ...)
 
     va_start(args, fmt);
 #if defined(HAVE_VSNPRINTF)
-#if defined(WIN32)
-    _vsnprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], CPLSPrintf_BUF_SIZE-1,
-               fmt, args);
-#else
     vsnprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], CPLSPrintf_BUF_SIZE-1,
               fmt, args);
-#endif
 #else
     vsprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], fmt, args);
 #endif
@@ -813,13 +811,8 @@ char **CSLAppendPrintf(char **papszStrList, char *fmt, ...)
 
     va_start(args, fmt);
 #if defined(HAVE_VSNPRINTF)
-#if defined(WIN32)
-    _vsnprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], CPLSPrintf_BUF_SIZE-1,
-               fmt, args);
-#else
     vsnprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], CPLSPrintf_BUF_SIZE-1,
               fmt, args);
-#endif
 #else
     vsprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], fmt, args);
 #endif
