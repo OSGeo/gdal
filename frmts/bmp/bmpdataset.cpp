@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2003/10/24 20:31:53  warmerda
+ * Added extension metadata.
+ *
  * Revision 1.25  2003/09/22 17:17:50  warmerda
  * added support for .bpw and .bmpw worldfiles
  *
@@ -1345,6 +1348,7 @@ void GDALRegister_BMP()
                                    "MS Windows Device Independent Bitmap" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "frmt_bmp.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bmp" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
