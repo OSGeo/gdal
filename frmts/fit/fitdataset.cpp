@@ -28,6 +28,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.19  2004/02/25 19:04:19  warmerda
+ * Modified a few calls in the create code to use VSI*L API as well.
+ * Untested as of yet.
+ *
  * Revision 1.18  2004/02/24 23:50:14  aubin
  * replace previous bad checkin due to windows vs. unix cr/lf differences
  *
@@ -1253,7 +1257,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
     head->dataOffset = size;
     swapb(head->dataOffset);
 
-    fwrite(head, size, 1, fpImage);
+    VSIFWriteL(head, size, 1, fpImage);
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
@@ -1344,7 +1348,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
             } // switch
 #endif // swapping
             
-            fwrite(output, pageBytes, 1, fpImage);
+            VSIFWriteL(output, pageBytes, 1, fpImage);
 
             double perc = ((double) (y * maxx + x)) / (maxx * maxy);
 //             printf("progress %f\n", perc);
@@ -1352,7 +1356,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
                 //free(output);
-                VSIFClose( fpImage );
+                VSIFCloseL( fpImage );
                 VSIUnlink( pszFilename );
                 return NULL;
             }
@@ -1360,7 +1364,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 
     //free(output);
 
-    VSIFClose( fpImage );
+    VSIFCloseL( fpImage );
 
     pfnProgress( 1.0, NULL, pProgressData );
 
