@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/07/04 11:50:57  dron
+ * GRA_CubicSpline added to the list of resampling algorithms.
+ *
  * Revision 1.9  2003/06/12 11:21:33  dron
  * Few additional comments.
  *
@@ -77,6 +80,7 @@ typedef enum {
   /*! Nearest neighbour (select on one input pixel) */ GRA_NearestNeighbour=0,
   /*! Bilinear (2x2 kernel) */                         GRA_Bilinear=1,
   /*! Cubic Convolution Approximation (4x4 kernel) */  GRA_Cubic=2,
+  /*! Cubic B-Spline Approximation (4x4 kernel) */     GRA_CubicSpline=3,
 } GDALResampleAlg;
 
 typedef int 
