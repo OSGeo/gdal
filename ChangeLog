@@ -1,3 +1,7 @@
+2001-09-06  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* bridge: upgrade bridge error reporting, add GCP functions.
+
 2001-09-04  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* ogr/ogrsf_frmts/shape: added support for deferred determination
