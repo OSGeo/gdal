@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/12/16 20:24:01  dron
+ * Implemented support for supersampling in IRasterIO().
+ *
  * Revision 1.16  2003/10/27 15:04:36  warmerda
  * fix small new memory leak
  *
@@ -205,16 +208,15 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     ECWDataset	*poODS = (ECWDataset *) poDS;
     NCSError     eNCSErr;
     int          iBand, bDirect;
+    int          nNewXSize = nBufXSize, nNewYSize = nBufYSize;
     GByte        *pabyWorkBuffer = NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Supersampling is not supported by the ECW API, so just turn     */
-/*      over control to the normal API.  We also drop down to the       */
-/*      block oriented API if only a single scanline was requested.     */
-/*      This is based on the assumption that doing lots of single       */
-/*      scanline windows is expensive.                                  */
+/*      We will drop down to the block oriented API if only a single    */
+/*      scanline was requested. This is based on the assumption that    */
+/*      doing lots of single scanline windows is expensive.             */
 /* -------------------------------------------------------------------- */
-    if( nXSize < nBufXSize || nYSize < nBufYSize || nYSize == 1 )
+    if( nYSize == 1 )
     {
 #ifdef notdef
         CPLDebug( "ECWRasterBand", 
@@ -227,9 +229,15 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     }
 #ifdef notdef
     CPLDebug( "ECWRasterBand", 
-              "RasterIO(%d,%d,%d,%d -> %dx%d)", 
+              "RasterIO(nXOff=%d,nYOff=%d,nXSize=%d,nYSize=%d -> %dx%d)", 
               nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
 #endif
+
+    if ( nXSize < nBufXSize )
+            nNewXSize = nXSize;
+
+    if ( nYSize < nBufYSize )
+            nNewYSize = nYSize;
 
 /* -------------------------------------------------------------------- */
 /*      Default line and pixel spacing if needed.                       */
@@ -244,9 +252,10 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      Can we perform direct loads, or must we load into a working     */
 /*      buffer, and transform?                                          */
 /* -------------------------------------------------------------------- */
-    bDirect = nPixelSpace == 1 && eBufType == GDT_Byte;
+    bDirect = nPixelSpace == 1 && eBufType == GDT_Byte
+	    && nNewXSize == nBufXSize && nNewYSize == nBufYSize;
     if( !bDirect )
-        pabyWorkBuffer = (GByte *) CPLMalloc(nBufXSize);
+        pabyWorkBuffer = (GByte *) CPLMalloc(nNewXSize);
 
 /* -------------------------------------------------------------------- */
 /*      Establish access at the desired resolution.                     */
@@ -258,7 +267,7 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  nXOff, nYOff, 
                                  nXOff + nXSize - 1, 
                                  nYOff + nYSize - 1,
-                                 nBufXSize, nBufYSize );
+                                 nNewXSize, nNewYSize );
     if( eNCSErr != NCS_SUCCESS )
     {
         CPLFree( pabyWorkBuffer );
@@ -270,35 +279,69 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
 /* -------------------------------------------------------------------- */
 /*      Read back one scanline at a time, till request is satisfied.    */
+/*      Supersampling is not supported by the ECW API, so we will do    */
+/*      it ourselves.                                                   */
 /* -------------------------------------------------------------------- */
-    int      iScanline;
+    double  	dfSrcYInc = (double)nNewYSize / nBufYSize;
+    double  	dfSrcXInc = (double)nNewXSize / nBufXSize;
+    int      	nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
+    int      	iSrcLine, iDstLine;
 
-    for( iScanline = 0; iScanline < nBufYSize; iScanline++ )
+    for( iSrcLine = 0, iDstLine = 0; iDstLine < nBufYSize; iDstLine++ )
     {
-        NCSEcwReadStatus  eRStatus;
-        unsigned char *pabySrcBuf;
+        NCSEcwReadStatus eRStatus;
+        int     	iDstLineOff = iDstLine * nLineSpace;
+        unsigned char 	*pabySrcBuf;
 
         if( bDirect )
-            pabySrcBuf = ((GByte *)pData)+iScanline*nLineSpace;
+            pabySrcBuf = ((GByte *)pData) + iDstLineOff;
         else
             pabySrcBuf = pabyWorkBuffer;
 
-        eRStatus = NCScbmReadViewLineBIL( poODS->hFileView, &pabySrcBuf );
+	if ( nNewYSize == nBufYSize || iSrcLine == (int)(iDstLine * dfSrcYInc) )
+	{
+            eRStatus = NCScbmReadViewLineBIL( poODS->hFileView, &pabySrcBuf );
 
-        if( eRStatus != NCSECW_READ_OK )
-        {
-            CPLFree( pabyWorkBuffer );
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "NCScbmReadViewLineBIL failed." );
-            return CE_Failure;
-        }
+	    if( eRStatus != NCSECW_READ_OK )
+	    {
+	        CPLFree( pabyWorkBuffer );
+	        CPLError( CE_Failure, CPLE_AppDefined,
+			  "NCScbmReadViewLineBIL failed." );
+		return CE_Failure;
+	    }
 
-        if( !bDirect )
-        {
-            GDALCopyWords( pabyWorkBuffer, GDT_Byte, 1, 
-                           ((GByte *)pData)+iScanline*nLineSpace, 
-                           eBufType, nPixelSpace, nBufXSize );
-        }
+            if( !bDirect )
+            {
+                if ( nNewXSize == nBufXSize )
+                {
+                    GDALCopyWords( pabyWorkBuffer, GDT_Byte, 1, 
+                                   ((GByte *)pData) + iDstLine * nLineSpace, 
+                                   eBufType, nPixelSpace, nBufXSize );
+                }
+		else
+		{
+	            int 	iPixel;
+
+                    for ( iPixel = 0; iPixel < nBufXSize; iPixel++ )
+                    {
+                        GDALCopyWords( pabyWorkBuffer + (int)(iPixel*dfSrcXInc),
+                                       GDT_Byte, 1,
+                                       (GByte *)pData + iDstLineOff
+				       + iPixel * nBufDataSize,
+                                       eBufType, nPixelSpace, 1 );
+                    }
+		}
+            }
+
+            iSrcLine++;
+	}
+	else
+	{
+	    CPLAssert( iDstLine == 0 );
+	    // Just copy the previous line in this case
+	    memcpy( (GByte *)pData + iDstLineOff,
+		    (GByte *)pData + (iDstLineOff - nLineSpace), nLineSpace );
+	}
     }
 
     CPLFree( pabyWorkBuffer );
