@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2002/05/02 19:45:36  warmerda
+ * added flattenTo2D() method
+ *
  * Revision 1.31  2002/02/22 22:23:38  warmerda
  * added tolerances when assembling polygons
  *
@@ -159,7 +162,9 @@ enum OGRwkbGeometryType
     wkbLineString25D = 0x8002,
     wkbPolygon25D = 0x8003,
     wkbMultiPoint25D = 0x8004,
+    wkbMultiLineString25D = 0x8005,
     wkbMultiPolygon25D = 0x8006,
+    wkbGeometryCollection25D = 0x8007,
 };
 
 #define wkb25DBit 0x8000
@@ -240,6 +245,7 @@ class CPL_DLL OGRGeometry
     virtual OGRwkbGeometryType getGeometryType() = 0;
     virtual const char *getGeometryName() = 0;
     virtual void   dumpReadable( FILE *, const char * = NULL );
+    virtual void   flattenTo2D() = 0;
 
     void    assignSpatialReference( OGRSpatialReference * poSR );
     OGRSpatialReference *getSpatialReference( void ) { return poSRS; }
@@ -327,6 +333,7 @@ class CPL_DLL OGRPoint : public OGRGeometry
     virtual const char *getGeometryName();
     virtual OGRwkbGeometryType getGeometryType();
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
+    virtual void flattenTo2D();
 
 };
 
@@ -416,6 +423,7 @@ class CPL_DLL OGRLineString : public OGRCurve
     virtual OGRwkbGeometryType getGeometryType();
     virtual const char *getGeometryName();
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
+    virtual void flattenTo2D();
 
 };
 
@@ -439,9 +447,10 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     friend class OGRPolygon; 
     
     // These are not IWks compatible ... just a convenience for OGRPolygon.
-    virtual int _WkbSize();
-    virtual OGRErr _importFromWkb( OGRwkbByteOrder, unsigned char *, int=-1 );
-    virtual OGRErr _exportToWkb( OGRwkbByteOrder, unsigned char * );
+    virtual int _WkbSize( int b3D );
+    virtual OGRErr _importFromWkb( OGRwkbByteOrder, int b3D,
+                                   unsigned char *, int=-1 );
+    virtual OGRErr _exportToWkb( OGRwkbByteOrder, int b3D, unsigned char * );
     
   public:
                         OGRLinearRing();
@@ -503,6 +512,7 @@ class CPL_DLL OGRPolygon : public OGRSurface
     virtual OGRGeometry *clone();
     virtual void empty();
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
+    virtual void flattenTo2D();
     
     // ISurface Interface
     virtual double      get_Area();
@@ -561,6 +571,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual OGRGeometry *clone();
     virtual void empty();
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
+    virtual void flattenTo2D();
     
     // IWks Interface
     virtual int WkbSize();

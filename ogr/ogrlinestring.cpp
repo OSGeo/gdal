@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2002/05/02 19:45:36  warmerda
+ * added flattenTo2D() method
+ *
  * Revision 1.28  2002/04/17 21:43:09  warmerda
  * Free z array in descructor.
  *
@@ -162,6 +165,16 @@ OGRwkbGeometryType OGRLineString::getGeometryType()
         return wkbLineString25D;
     else
         return wkbLineString;
+}
+
+/************************************************************************/
+/*                            flattenTo2D()                             */
+/************************************************************************/
+
+void OGRLineString::flattenTo2D()
+
+{
+    Make2D();
 }
 
 /************************************************************************/

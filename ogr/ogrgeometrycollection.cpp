@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/05/02 19:45:36  warmerda
+ * added flattenTo2D() method
+ *
  * Revision 1.15  2002/03/05 14:25:14  warmerda
  * expand tabs
  *
@@ -176,7 +179,24 @@ int OGRGeometryCollection::getDimension()
 int OGRGeometryCollection::getCoordinateDimension()
 
 {
-    return 2;
+    int nDimension = 2;
+
+    for( int i = 0; i < nGeomCount; i++ )
+        if( papoGeoms[i]->getCoordinateDimension() == 3 )
+            nDimension = 3;
+
+    return nDimension;
+}
+
+/************************************************************************/
+/*                            flattenTo2D()                             */
+/************************************************************************/
+
+void OGRGeometryCollection::flattenTo2D()
+
+{
+    for( int i = 0; i < nGeomCount; i++ )
+        papoGeoms[i]->flattenTo2D();
 }
 
 /************************************************************************/
