@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/11/05 03:19:08  warmerda
+ * avoid nodata remapping in gridlib, use GInt32 not GUInt for image data
+ *
  * Revision 1.10  2002/10/31 03:09:11  warmerda
  * added new CCITTRLE decompress func
  *
@@ -66,8 +69,6 @@
 #include "cpl_conv.h"
 
 CPL_C_START
-
-#define GRID_NO_DATA 65536
 
 #define ESRI_GRID_NO_DATA -2147483647				       
 /*#define ESRI_GRID_FLOAT_NO_DATA -340282306073709652508363335590014353408.0 */
@@ -125,7 +126,7 @@ typedef struct {
 /* ==================================================================== */
 
 CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
-                     int nBlockXSize, int nBlockYSize, GUInt32 * panData,
+                     int nBlockXSize, int nBlockYSize, GInt32 * panData,
                      int nCellType );
 
 CPLErr AIGReadHeader( const char *, AIGInfo_t * );
@@ -143,7 +144,7 @@ CPLErr DecompressCCITTRLETile( unsigned char *pabySrcData, int nSrcBytes,
 
 AIGInfo_t	*AIGOpen( const char *, const char * );
 
-CPLErr 		AIGReadTile( AIGInfo_t *, int, int, GUInt32 * );
+CPLErr 		AIGReadTile( AIGInfo_t *, int, int, GInt32 * );
 CPLErr 		AIGReadFloatTile( AIGInfo_t *, int, int, float * );
 
 void		AIGClose( AIGInfo_t * );

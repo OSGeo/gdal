@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/11/05 03:19:08  warmerda
+ * avoid nodata remapping in gridlib, use GInt32 not GUInt for image data
+ *
  * Revision 1.13  2002/10/31 03:08:47  warmerda
  * fixed email
  *
@@ -196,7 +199,7 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
 /************************************************************************/
 
 CPLErr AIGReadTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
-                    GUInt32 *panData )
+                    GInt32 *panData )
 
 {
     int		nBlockID;

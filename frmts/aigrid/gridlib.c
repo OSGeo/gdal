@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/11/05 03:19:08  warmerda
+ * avoid nodata remapping in gridlib, use GInt32 not GUInt for image data
+ *
  * Revision 1.19  2002/10/31 03:50:21  warmerda
  * fixed check in AIGProcessBlock
  *
@@ -145,7 +148,7 @@ CPLErr AIGProcessRaw32BitFloatBlock( GByte *pabyCur, int nDataSize, int nMin,
 static 
 CPLErr AIGProcessIntConstBlock( GByte *pabyCur, int nDataSize, int nMin,
                                 int nBlockXSize, int nBlockYSize,
-                                GUInt32 * panData )
+                                GInt32 * panData )
 
 {
     int		i;
@@ -173,7 +176,7 @@ CPLErr AIGProcessIntConstBlock( GByte *pabyCur, int nDataSize, int nMin,
 static 
 CPLErr AIGProcessRaw16BitBlock( GByte *pabyCur, int nDataSize, int nMin,
                                 int nBlockXSize, int nBlockYSize,
-                                GUInt32 * panData )
+                                GInt32 * panData )
 
 {
     int		i;
@@ -203,7 +206,7 @@ CPLErr AIGProcessRaw16BitBlock( GByte *pabyCur, int nDataSize, int nMin,
 static 
 CPLErr AIGProcessRaw4BitBlock( GByte *pabyCur, int nDataSize, int nMin,
                                int nBlockXSize, int nBlockYSize,
-                               GUInt32 * panData )
+                               GInt32 * panData )
 
 {
     int		i;
@@ -234,7 +237,7 @@ CPLErr AIGProcessRaw4BitBlock( GByte *pabyCur, int nDataSize, int nMin,
 static 
 CPLErr AIGProcessRaw1BitBlock( GByte *pabyCur, int nDataSize, int nMin,
                                int nBlockXSize, int nBlockYSize,
-                               GUInt32 * panData )
+                               GInt32 * panData )
 
 {
     int		i;
@@ -264,7 +267,7 @@ CPLErr AIGProcessRaw1BitBlock( GByte *pabyCur, int nDataSize, int nMin,
 
 static 
 CPLErr AIGProcessRawBlock( GByte *pabyCur, int nDataSize, int nMin,
-                        int nBlockXSize, int nBlockYSize, GUInt32 * panData )
+                        int nBlockXSize, int nBlockYSize, GInt32 * panData )
 
 {
     int		i;
@@ -293,7 +296,7 @@ CPLErr AIGProcessRawBlock( GByte *pabyCur, int nDataSize, int nMin,
 static 
 CPLErr AIGProcessFFBlock( GByte *pabyCur, int nDataSize, int nMin,
                           int nBlockXSize, int nBlockYSize,
-                          GUInt32 * panData )
+                          GInt32 * panData )
 
 {
 /* -------------------------------------------------------------------- */
@@ -338,7 +341,7 @@ CPLErr AIGProcessFFBlock( GByte *pabyCur, int nDataSize, int nMin,
 
 static 
 CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic, 
-                        int nBlockXSize, int nBlockYSize, GUInt32 * panData )
+                        int nBlockXSize, int nBlockYSize, GInt32 * panData )
 
 {
     int		nTotPixels, nPixels;
@@ -361,7 +364,7 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
 /* -------------------------------------------------------------------- */
         if( nMagic == 0xE0 )
         {
-            GUInt32	nValue;
+            GInt32	nValue;
             
             if( nMarker + nPixels > nTotPixels )
             {
@@ -388,7 +391,7 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
 /* -------------------------------------------------------------------- */
         else if( nMagic == 0xF0 )
         {
-            GUInt32	nValue;
+            GInt32	nValue;
             
             if( nMarker + nPixels > nTotPixels )
             {
@@ -410,7 +413,7 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
 /* -------------------------------------------------------------------- */
         else if( nMagic == 0xFC || nMagic == 0xF8 )
         {
-            GUInt32	nValue;
+            GInt32	nValue;
 
             if( nMarker + nPixels > nTotPixels )
             {
@@ -470,7 +473,7 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
 /* -------------------------------------------------------------------- */
         else if( nMagic == 0xCF && nMarker < 128 )
         {
-            GUInt32	nValue;
+            GInt32	nValue;
             
             if( nMarker + nPixels > nTotPixels )
             {
@@ -508,7 +511,7 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
         
             while( nMarker > 0 )
             {
-                panData[nPixels++] = GRID_NO_DATA;
+                panData[nPixels++] = ESRI_GRID_NO_DATA;
                 nMarker--;
             }
         }
@@ -539,7 +542,7 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
 
 CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
                      int nBlockXSize, int nBlockYSize,
-                     GUInt32 *panData, int nCellType )
+                     GInt32 *panData, int nCellType )
 
 {
     GByte	*pabyRaw, *pabyCur;
@@ -553,7 +556,7 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
     if( nBlockSize == 0 )
     {
         for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
-            panData[i] = GRID_NO_DATA;
+            panData[i] = ESRI_GRID_NO_DATA;
 
         return( CE_None );
     }
@@ -713,16 +716,6 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
 
     CPLFree( pabyRaw );
 
-/* -------------------------------------------------------------------- */
-/*      Translate any no data values.  We assume any negative values    */
-/*      in an integer block are no data.                                */
-/* -------------------------------------------------------------------- */
-    for( i = nBlockXSize * nBlockYSize - 1; i >= 0; i-- )
-    {
-        if( ((GInt32) panData[i]) == ESRI_GRID_NO_DATA )
-            panData[i] = GRID_NO_DATA;
-    }
-    
     return CE_None;
 }
 
@@ -805,7 +798,7 @@ CPLErr AIGReadBlockIndex( const char * pszCoverName, AIGInfo_t * psInfo )
     char	*pszHDRFilename;
     FILE	*fp;
     int		nLength, i;
-    GUInt32	nValue;
+    GInt32	nValue;
     GUInt32	*panIndex;
 
 /* -------------------------------------------------------------------- */
