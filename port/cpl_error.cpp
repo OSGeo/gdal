@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/10/23 20:19:37  warmerda
+ * Modify log file naming convention as per patch from Dale.
+ *
  * Revision 1.22  2002/08/01 20:02:54  warmerda
  * added CPL_LOG_ERRORS support
  *
@@ -474,7 +477,24 @@ void CPLLoggingErrorHandler( CPLErr eErrClass, int nError,
             {
                 fclose( fpLog );
 
-                sprintf( path, "%s_%d", cpl_log, i++ );
+                /* generate sequenced log file names, inserting # before ext.*/
+                if (strrchr(cpl_log, '.') == NULL)
+                {
+                    sprintf( path, "%s_%d%s", cpl_log, i++,
+                             ".log" );
+                }
+                else
+                {
+                    int pos = 0;
+                    char *cpl_log_base = strdup(cpl_log);
+                    pos = strcspn(cpl_log_base, ".");
+                    if (pos > 0)
+                    {
+                        cpl_log_base[pos] = '\0';
+                    }
+                    sprintf( path, "%s_%d%s", cpl_log_base,
+                             i++, ".log" );
+                }
             }
 
             fpLog = fopen( path, "wt" );
