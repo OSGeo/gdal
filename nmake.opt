@@ -16,8 +16,13 @@ DLLBUILD=1
 # vector formats. 
 INCLUDE_OGR_FRMTS = YES
 
-# Enable the following if VCDIR set properly.
+# Enable the following if VCDIR set properly, and you want the utility
+# programs to be able to expand wildcards. 
 #SETARGV =	$(VCDIR)\lib\setargv.obj
+
+# Uncomment the first for an optimized build or the second for a debug build.
+#OPTFLAGS=	/nologo /Ox 
+OPTFLAGS=	/nologo /Zi /Fd$(GDAL_ROOT)\gdal.pdb
 
 # Uncomment the following and update to enable ECW support.
 #ECWDIR  = 	D:\Software\ECW_SDK
@@ -35,6 +40,9 @@ INCLUDE_OGR_FRMTS = YES
 #XERCES_INCLUDE = -I$(XERCES_DIR)/include -I$(XERCES_DIR)/include/xercesc
 #XERCES_LIB = $(XERCES_DIR)/lib/xerces-c_1.lib
 
+# Uncomment the following and update to enable FME support.
+#FME_DIR =	d:\Software\fme
+
 ########### END OF STUFF THAT NORMALLY NEEDS TO BE UPDATED ##################
 
 # Location of MS Data Access SDK 
@@ -44,9 +52,7 @@ VERSION =	11
 GDAL_DLL =	gdal$(VERSION).dll
 
 INC	=	-I$(GDAL_ROOT)\port -I$(GDAL_ROOT)\ogr -I$(GDAL_ROOT)\core
-#OPTFLAGS=	/nologo /Zi /MD /Fd$(GDAL_ROOT)\gdal.pdb
-OPTFLAGS=	/nologo /Zi /Fd$(GDAL_ROOT)\gdal.pdb
-#OPTFLAGS=	/nologo /Zi /MDd /Fd$(GDAL_ROOT)\gdal.pdb
+
 #LINKER_FLAGS =	/NODEFAULTLIB:LIBC 
 
 CFLAGS	=	$(OPTFLAGS) $(INC) $(EXTRAFLAGS)
