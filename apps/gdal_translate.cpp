@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/08/11 19:06:48  warmerda
+ * use CopyCommonInfoFrom() method on band
+ *
  * Revision 1.23  2004/07/28 17:56:00  warmerda
  * use return instead of exit() to avoid lame warnings on windows
  *
@@ -697,8 +700,6 @@ int main( int argc, char ** argv )
         VRTSourcedRasterBand   *poVRTBand;
         GDALRasterBand  *poSrcBand;
         GDALDataType    eBandType;
-        double          dfNoData;
-        int             bSuccess;
 
         poSrcBand = ((GDALDataset *) 
                      hDataset)->GetRasterBand(panBandList[i]);
@@ -763,15 +764,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      copy over some other information of interest.                   */
 /* -------------------------------------------------------------------- */
-        poVRTBand->SetMetadata( poSrcBand->GetMetadata() );
-        poVRTBand->SetColorTable( poSrcBand->GetColorTable() );
-        poVRTBand->SetColorInterpretation(
-            poSrcBand->GetColorInterpretation());
-        if( strlen(poSrcBand->GetDescription()) > 0 )
-            poVRTBand->SetDescription( poSrcBand->GetDescription() );
-        dfNoData = poSrcBand->GetNoDataValue( &bSuccess );
-        if ( bSuccess )
-            poVRTBand->SetNoDataValue( dfNoData );
+        poVRTBand->CopyCommonInfoFrom( poSrcBand );
     }
 
 /* -------------------------------------------------------------------- */
