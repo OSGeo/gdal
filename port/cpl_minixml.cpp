@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.23  2003/05/21 03:32:43  warmerda
+ * expand tabs
+ *
  * Revision 1.22  2003/04/05 07:12:25  dron
  * Completed security audit.
  *
@@ -1298,7 +1301,7 @@ void CPLStripXMLNamespace( CPLXMLNode *psRoot,
 CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
 
 {
-    FILE 	*fp;
+    FILE        *fp;
     int nLen;
     char *pszDoc;
     CPLXMLNode *psTree;
