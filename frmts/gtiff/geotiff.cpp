@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2000/10/14 04:09:26  warmerda
+ * Set photometric to RGB for RGBA images in CreateCopy().
+ *
  * Revision 1.38  2000/09/25 15:43:21  warmerda
  * Added support for odd TIFF files (such as 1bit, and YCbCr) via the
  * RGBA interface.
@@ -1629,6 +1632,7 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         v[0] = EXTRASAMPLE_ASSOCALPHA;
 	TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, 1, v);
+        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
     }
 
 /* -------------------------------------------------------------------- */
