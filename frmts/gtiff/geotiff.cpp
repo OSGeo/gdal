@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.82  2002/12/24 15:19:14  dron
+ * Handling PHOTOMETRIC_MINISBLACK images now correct.
+ *
  * Revision 1.81  2002/12/19 15:08:29  dron
  * SetGCPs() function added.
  *
@@ -231,7 +234,7 @@ class GTiffDataset : public GDALDataset
 
 /************************************************************************/
 /* ==================================================================== */
-/*                            GTiffRasterBand                             */
+/*                            GTiffRasterBand                           */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -257,7 +260,7 @@ class GTiffRasterBand : public GDALRasterBand
 };
 
 /************************************************************************/
-/*                           GTiffRasterBand()                            */
+/*                           GTiffRasterBand()                          */
 /************************************************************************/
 
 GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
@@ -851,7 +854,7 @@ class GTiffBitmapBand : public GDALRasterBand
 
 
 /************************************************************************/
-/*                           GTiffBitmapBand()                            */
+/*                           GTiffBitmapBand()                          */
 /************************************************************************/
 
 GTiffBitmapBand::GTiffBitmapBand( GTiffDataset *poDS, int nBand )
@@ -1916,7 +1919,27 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
         || TIFFGetField( hTIFF, TIFFTAG_COLORMAP, 
                          &panRed, &panGreen, &panBlue) == 0 )
     {
-        poColorTable = NULL;
+	// Build inverted palette if we have inverted photometric.
+	// Pixel values remains unchanged.
+	if( nPhotometric == PHOTOMETRIC_MINISWHITE )
+	{
+	    GDALColorEntry  oEntry;
+	    int		    iColor, nColorCount;
+	    
+	    poColorTable = new GDALColorTable();
+	    nColorCount = 1 << nBitsPerSample;
+
+	    for ( iColor = 0; iColor < nColorCount; iColor++ )
+	    {
+		oEntry.c1 = oEntry.c2 = oEntry.c3 = nColorCount - 1 - iColor;
+		oEntry.c4 = 255;
+		poColorTable->SetColorEntry( iColor, &oEntry );
+	    }
+
+	    nPhotometric = PHOTOMETRIC_PALETTE;
+	}
+	else
+	    poColorTable = NULL;
     }
     else
     {
