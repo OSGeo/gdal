@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/11/15 21:50:52  warmerda
+ * Added limited creation support
+ *
  * Revision 1.5  2002/01/21 20:36:35  warmerda
  * Don't mention warning about not supporting update if open fails.
  *
@@ -66,7 +69,7 @@ OGRS57Driver::~OGRS57Driver()
 const char *OGRS57Driver::GetName()
 
 {
-    return "IHO S-57 (ENC)";
+    return "S57";
 }
 
 /************************************************************************/
@@ -97,13 +100,35 @@ OGRDataSource *OGRS57Driver::Open( const char * pszFilename, int bUpdate )
 }
 
 /************************************************************************/
+/*                          CreateDataSource()                          */
+/************************************************************************/
+
+OGRDataSource *OGRS57Driver::CreateDataSource( const char *pszName, 
+                                               char **papszOptions )
+
+{
+    OGRS57DataSource *poDS = new OGRS57DataSource();
+
+    if( poDS->Create( pszName, papszOptions ) )
+        return poDS;
+    else
+    {
+        delete poDS;
+        return NULL;
+    }
+}
+
+/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRS57Driver::TestCapability( const char * )
+int OGRS57Driver::TestCapability( const char * pszCap )
 
 {
-    return FALSE;
+    if( EQUAL(pszCap,ODrCCreateDataSource) )
+        return TRUE;
+    else
+        return FALSE;
 }
 
 /************************************************************************/
