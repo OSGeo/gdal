@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2002/12/09 18:53:25  warmerda
+ * GDALDecToDMS() now calls CPLDecToDMS()
+ *
  * Revision 1.37  2002/12/05 17:55:30  warmerda
  * gdalreadtabfile should not be static
  *
@@ -1424,30 +1427,7 @@ const char *GDALDecToDMS( double dfAngle, const char * pszAxis,
                           int nPrecision )
 
 {
-    int         nDegrees, nMinutes;
-    double      dfSeconds;
-    char        szFormat[30];
-    static char szBuffer[50];
-    const char  *pszHemisphere;
-    
-
-    nDegrees = (int) ABS(dfAngle);
-    nMinutes = (int) ((ABS(dfAngle) - nDegrees) * 60);
-    dfSeconds = (ABS(dfAngle) * 3600 - nDegrees*3600 - nMinutes*60);
-
-    if( EQUAL(pszAxis,"Long") && dfAngle < 0.0 )
-        pszHemisphere = "W";
-    else if( EQUAL(pszAxis,"Long") )
-        pszHemisphere = "E";
-    else if( dfAngle < 0.0 )
-        pszHemisphere = "S";
-    else
-        pszHemisphere = "N";
-
-    sprintf( szFormat, "%%3dd%%2d\'%%.%df\"%s", nPrecision, pszHemisphere );
-    sprintf( szBuffer, szFormat, nDegrees, nMinutes, dfSeconds );
-
-    return( szBuffer );
+    return CPLDecToDMS( dfAngle, pszAxis, nPrecision );
 }
 
 /************************************************************************/
