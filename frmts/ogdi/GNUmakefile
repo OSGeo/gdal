@@ -10,10 +10,10 @@ clean:
 	rm -f *.o
 
 %.o:	%.c
-	$(CC) -c $(CFLAGS) $(GDAL_INCLUDE) $(OGDI_INCLUDE) $*.c -o $*.o
+	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $(OGDI_INCLUDE) $*.c -o $*.o
 
 %.o:	%.cpp
-	$(CXX) -c $(CXXFLAGS) $(GDAL_INCLUDE) $(OGDI_INCLUDE) $*.cpp -o $*.o
+	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $(OGDI_INCLUDE) $*.cpp -o $*.o
 
 install-obj:	$(foreach file,$(OBJ),../o/$(file))
 

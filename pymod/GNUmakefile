@@ -11,12 +11,12 @@ clean:
 	rm -f *.o *.so
 
 %.o:	%.c
-	$(CC) -c $(CFLAGS) $(NUMPY_FLAG) \
-		$(GDAL_INCLUDE) $(PYTHON_INCLUDES) $*.c -o $*.o
+	$(CC) -c  $(GDAL_INCLUDE) $(PYTHON_INCLUDES)\
+		$(CFLAGS) $(NUMPY_FLAG) $*.c -o $*.o
 
 %.o:	%.cpp
-	$(CXX) -c $(CXXFLAGS) $(NUMPY_FLAG) \
-		$(GDAL_INCLUDE) $(PYTHON_INCLUDES) $*.cpp -o $*.o
+	$(CXX) -c $(GDAL_INCLUDE) $(PYTHON_INCLUDES) \
+		 $(CXXFLAGS) $(NUMPY_FLAG) $*.cpp -o $*.o
 
 
 gdal_wrap.c:	gdal.i

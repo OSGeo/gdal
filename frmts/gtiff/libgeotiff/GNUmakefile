@@ -33,4 +33,4 @@ install-obj:	$(O_OBJ)
 	cp $*.o ../../o
 
 %.o:	%.c
-	$(CC) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/port $*.c -o $*.o
+	$(CC) -c -I$(GDAL_ROOT)/port $(ALL_C_FLAGS) $*.c -o $*.o

@@ -5,8 +5,8 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	ogrpgdriver.o ogrpgdatasource.o ogrpglayer.o
 
-ALL_C_FLAGS	=	$(PG_INC) -I.. -I../.. -I$(GDAL_ROOT)/port \
-		$(CFLAGS)
+ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port \
+		$(PG_INC) $(CFLAGS)
 
 default:	$(OBJ)
 

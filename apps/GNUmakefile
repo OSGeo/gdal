@@ -57,7 +57,7 @@ $(DEP_LIBS):
 	$(CC) $(INCLUDE) -c $(CFLAGS) $*.c -o $*.o
 
 %.o:	%.cpp
-	$(CXX) $(INCLUDE) -c $(CFLAGS) $*.cpp -o $*.o
+	$(CXX) $(INCLUDE) -c $(CXXFLAGS) $*.cpp -o $*.o
 
 
 gdal-config:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION

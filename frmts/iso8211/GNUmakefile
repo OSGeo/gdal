@@ -23,10 +23,10 @@ dist-clean:	clean
 	rm -rf $(DISTDIR)
 
 %.o:	%.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCLUDE) $*.cpp -o $*.o
+	$(CXX) -c $(INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 
 %.o:	%.c
-	$(CC) -c $(CFLAGS) $(INCLUDE) $*.c -o $*.o
+	$(CC) -c $(INCLUDE) $(CFLAGS) $*.c -o $*.o
 
 $(ISOLIB):	$(OBJ)
 	$(AR) r $(ISOLIB) $?
