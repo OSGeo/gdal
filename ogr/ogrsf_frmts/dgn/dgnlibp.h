@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/01/21 20:52:45  warmerda
+ * added spatial filter support
+ *
  * Revision 1.9  2002/01/15 06:39:08  warmerda
  * added default PI value
  *
@@ -98,6 +101,18 @@ typedef struct {
     GUInt32	max_y;
     GUInt32	max_z;
 
+    int         has_spatial_filter;
+    int         sf_converted_to_uor;
+
+    GUInt32	sf_min_x;
+    GUInt32	sf_min_y;
+    GUInt32	sf_max_x;
+    GUInt32	sf_max_y;
+
+    double      sf_min_x_geo;
+    double      sf_min_y_geo;
+    double      sf_max_x_geo;
+    double      sf_max_y_geo;
 } DGNInfo;
 
 #define DGN_INT32( p )	((p)[2] \
@@ -107,8 +122,10 @@ typedef struct {
 
 int DGNParseCore( DGNInfo *, DGNElemCore * );
 void DGNTransformPoint( DGNInfo *, DGNPoint * );
+void DGNInverseTransformPoint( DGNInfo *, DGNPoint * );
 void DGN2IEEEDouble( void * );
 void DGNBuildIndex( DGNInfo * );
 void DGNRad50ToAscii( unsigned short rad50, char *str );
+void DGNSpatialFilterToUOR( DGNInfo *);
 
 #endif /* ndef _DGNLIBP_H_INCLUDED */
