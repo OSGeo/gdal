@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/06/20 16:09:40  warmerda
+ * utilize capabilities data
+ *
  * Revision 1.7  2001/04/17 21:46:04  warmerda
  * complete Image support, utilize cln_GetLayerCapabilities()
  *
@@ -86,6 +89,7 @@ class CPL_DLL OGDIDataset : public GDALDataset
     char	*pszProjection;
 
     static CPLErr CollectLayers(int, char***,char***);
+    static CPLErr OverrideGlobalInfo(OGDIDataset*,const char *);
 
   public:
     		OGDIDataset();

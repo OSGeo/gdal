@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/06/20 16:09:40  warmerda
+ * utilize capabilities data
+ *
  * Revision 1.8  2001/04/18 17:58:41  warmerda
  * fixed raster size calculation
  *
@@ -574,6 +577,19 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     poDS->sCurrentBounds = poDS->sGlobalBounds;
+
+/* -------------------------------------------------------------------- */
+/*      If we have only one layer try to find the corresponding         */
+/*      capabilities, and override the global bounds and resolution     */
+/*      based on it.                                                    */
+/* -------------------------------------------------------------------- */
+    if( CSLCount(papszMatrices) + CSLCount(papszImages) == 1 )
+    {
+        if( CSLCount(papszMatrices) == 1 )
+            OverrideGlobalInfo( poDS, papszMatrices[0] );
+        else
+            OverrideGlobalInfo( poDS, papszImages[0] );
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Establish raster info.                                          */
@@ -643,6 +659,38 @@ CPLErr OGDIDataset::CollectLayers( int nClientID,
             *ppapszImages = CSLAddString( *ppapszImages, psLayer->name );
         else if( psLayer->families[Matrix] )
             *ppapszMatrices = CSLAddString( *ppapszImages, psLayer->name );
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                         OverrideGlobalInfo()                         */
+/*                                                                      */
+/*      Override the global bounds and resolution based on a layers     */
+/*      capabilities, if possible.                                      */
+/************************************************************************/
+
+CPLErr OGDIDataset::OverrideGlobalInfo( OGDIDataset *poDS,
+                                        const char *pszLayer )
+
+{
+    const ecs_LayerCapabilities	*psLayer;
+    int		iLayer;
+
+    for( iLayer = 0; 
+         (psLayer = cln_GetLayerCapabilities(poDS->nClientID,iLayer)) != NULL;
+         iLayer++ )
+    {
+        if( EQUAL(psLayer->name, pszLayer) )
+        {
+            poDS->sGlobalBounds.north = psLayer->srs_north;
+            poDS->sGlobalBounds.south = psLayer->srs_south;
+            poDS->sGlobalBounds.east = psLayer->srs_east;
+            poDS->sGlobalBounds.west = psLayer->srs_west;
+            poDS->sGlobalBounds.ew_res = psLayer->srs_ewres;
+            poDS->sGlobalBounds.ns_res = psLayer->srs_nsres;
+        }
     }
 
     return CE_None;
