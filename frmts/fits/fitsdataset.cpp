@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/05/06 05:14:11  sperkins
+ * Minor tidying up.
+ *
  * Revision 1.16  2003/05/05 23:31:53  sperkins
  * 	* frmts/fits/fitsdataset.cpp: Removed dodgy "value type guessing"
  * 	code from FITS metadata write routine.
@@ -241,8 +244,9 @@ CPLErr FITSRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
   // Capture special case of non-zero status due to data range
   // overflow Standard GDAL policy is to silently truncate, which is
-  // what CFITSIO does (in addition to returning 412 as the status).
-  if (status == 412)
+  // what CFITSIO does, in addition to returning NUM_OVERFLOW (412) as
+  // the status.
+  if (status == NUM_OVERFLOW)
     status = 0;
 
   // Check for other errors
@@ -266,26 +270,6 @@ CPLErr FITSRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 // Some useful utility functions
-static int guessFITSHeaderDataType(fitsfile* hFITS, const char* key,
-				   const char* value) {
-  // For now we just look at the value and decide its type based on that
-  // in theory we could also look at the FITS file and see what type the
-  // existing key has if present.
-  char* endPtr;
-  // Test for int
-  strtol(value, &endPtr, 10);
-  if (endPtr - value == int(strlen(value)))
-    return TLONG;
-  // Test for double
-  strtod(value, &endPtr);
-  if (endPtr - value == int(strlen(value)))
-    return TDOUBLE;
-  // Test for logical
-  if (!strcmp(value, "T") || !strcmp(value, "F"))
-    return TLOGICAL;
-  // Otherwise assume string
-  return TSTRING;
-}
 
 // Simple static function to determine if FITS header keyword should
 // be saved in meta data.
