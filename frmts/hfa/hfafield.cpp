@@ -1,7 +1,6 @@
 /******************************************************************************
  * $Id$
  *
- * Name:     hfafield.cpp
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Implementation of the HFAField class for managing information
  *           about one field in a HFA dictionary type.  Managed by HFAType.
@@ -30,12 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/01/22 17:37:59  warmerda
+ * Fixed up support for variable sizes, and arrays of variable sized objects
+ *
  * Revision 1.1  1999/01/04 22:52:10  warmerda
  * New
- *
- * Revision 1.1  1999/01/04 05:28:12  warmerda
- * New
- *
  */
 
 #include "hfa_p.h"
@@ -197,18 +195,23 @@ void HFAField::CompleteDefn( HFADictionary * poDict )
     if( pszItemObjectType != NULL )
         poItemObjectType = poDict->FindType( pszItemObjectType );
 
-            
 /* -------------------------------------------------------------------- */
 /*      Figure out the size.                                            */
 /* -------------------------------------------------------------------- */
-    if( chPointer != '\0' )
+    if( chPointer == 'p' )
     {
-        nBytes = 8; /* offset and count */
+        nBytes = -1; /* we can't know the instance size */
     }
     else if( poItemObjectType != NULL )
     {
         poItemObjectType->CompleteDefn( poDict );
-        nBytes = poItemObjectType->nBytes * nItemCount;
+        if( poItemObjectType->nBytes == -1 )
+            nBytes = -1;
+        else
+            nBytes = poItemObjectType->nBytes * nItemCount;
+
+        if( chPointer == '*' && nBytes != -1 )
+            nBytes += 8; /* count, and offset */
     }
     else
     {
@@ -357,9 +360,15 @@ void *HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
     {
         GUInt32		*panInfo = (GUInt32 *) pabyData;
 
-        CPLAssert( panInfo[1] == (GUInt32) (nDataOffset + 8) );
+        if( panInfo[1] != (GUInt32) (nDataOffset + 8) )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "%s.%s points at %d, not %d as expected\n",
+                      pszFieldName, pszField ? pszField : "",
+                      panInfo[1], nDataOffset+8 );
+        }
         
-        pabyData += (panInfo[1] - nDataOffset);
+        pabyData += 8;
 
         nDataOffset += 8;
         nDataSize -= 8;
@@ -460,8 +469,27 @@ void *HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
       case 'o':
         if( poItemObjectType != NULL )
         {
-            pabyRawData = pabyData
-                + nIndexValue * poItemObjectType->nBytes;
+            int		nExtraOffset = 0;
+            int		iIndexCounter;
+
+            for( iIndexCounter = 0;
+                 iIndexCounter < nIndexValue-1;
+                 iIndexCounter++ )
+            {
+                nExtraOffset +=
+                    poItemObjectType->GetInstBytes( pabyData + nExtraOffset );
+            }
+
+            pabyRawData = pabyData + nExtraOffset;
+
+            if( pszField != NULL && strlen(pszField) > 0 )
+            {
+                return( poItemObjectType->
+                            ExtractInstValue( pszField, pabyRawData,
+                                              nDataOffset + nExtraOffset,
+                                              nDataSize - nExtraOffset,
+                                              chReqType ) );
+            }
         }
         break;
 
@@ -510,21 +538,40 @@ void *HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
 int HFAField::GetInstBytes( GByte * pabyData )
 
 {
-    GUInt32	*panInfo = (GUInt32 *) pabyData;
+    int		nCount;
+    int		nInstBytes = 0;
     
-    if( chPointer == '\0' )
+    if( nBytes > -1 )
         return nBytes;
+
+    if( chPointer != '\0' )
+    {
+        nCount = *((GUInt32 *) pabyData);
+        pabyData += 8;
+        nInstBytes += 8;
+    }
+    else
+        nCount = 1;
+
+    if( poItemObjectType == NULL )
+    {
+        nInstBytes += nCount * HFADictionary::GetItemSize(chItemType);
+    }
     else
     {
-        if( poItemObjectType != NULL )
+        int		i;
+
+        for( i = 0; i < nCount; i++ )
         {
-            /* notdef: technically this doesn't account for pointers to arrays
-               of objects with variable sizes, but I think this is rare. */
-            return 8 + panInfo[0] * poItemObjectType->nBytes;
+            int	nThisBytes;
+
+            nThisBytes = poItemObjectType->GetInstBytes( pabyData );
+            nInstBytes += nThisBytes;
+            pabyData += nThisBytes;
         }
-        else
-            return 8 + panInfo[0] * HFADictionary::GetItemSize(chItemType);
     }
+
+    return( nInstBytes );
 }
 
 /************************************************************************/
@@ -664,4 +711,8 @@ void HFAField::DumpInstValue(  FILE *fpOut,
 
     if( nEntries > 8 )
         printf( "%s ... remaining instances omitted ...\n", pszPrefix );
+
+    if( nEntries == 0 )
+        VSIFPrintf( fpOut, "%s%s = (no values)\n", pszPrefix, pszFieldName );
+
 }
