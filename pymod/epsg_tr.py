@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.6  2002/12/13 06:36:18  warmerda
+# added postgis output
+#
 # Revision 1.5  2002/12/03 04:43:11  warmerda
 # remove time checking!
 #
@@ -54,7 +57,7 @@ import string
 # =============================================================================
 def Usage():
 
-    print 'Usage: epsg_tr.py [-wkt] [-pretty_wkt] [-proj4] start_code [end_code]'
+    print 'Usage: epsg_tr.py [-wkt] [-pretty_wkt] [-proj4] [-postgis] start_code [end_code]'
     sys.exit(1)
 
 # =============================================================================
@@ -93,7 +96,20 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
             elif report_error:
                 print '# Unable to translate coordinate system into PROJ.4 format.'
 
-
+        if output_format == '-postgis':
+            name = prj_srs.GetAttrValue('PROJCS')
+            if name is None:
+                name = prj_srs.GetAttrValue('GEOGCS')
+                
+            proj4text = prj_srs.ExportToProj4()
+            wkt = prj_srs.ExportToWkt()
+            
+            print '---'
+            print '--- EPSG : %s' % name
+            print '---'
+            print 'INSERT INTO "spatial_ref_sys" ("srid","auth_name","auth_srid","srtext","proj4text") VALUES (%s,\'EPSG\',%s,\'%s\',\'%s\');' % \
+                  (str(code),str(code),wkt,proj4text)
+            
 # =============================================================================
 
 if __name__ == '__main__':
@@ -109,7 +125,8 @@ if __name__ == '__main__':
     while i < len(sys.argv):
         arg = sys.argv[i]
 
-        if arg == '-wkt' or arg == '-pretty_wkt' or arg == '-proj4':
+        if arg == '-wkt' or arg == '-pretty_wkt' or arg == '-proj4' \
+           or arg == '-postgis':
             output_format = arg
 
         elif arg == '-list' and i < len(sys.argv)-1:
@@ -132,6 +149,10 @@ if __name__ == '__main__':
             Usage()
 
         i = i + 1
+
+    # Output BEGIN transaction for PostGIS
+    if output_format == '-postgis':
+        print 'BEGIN;'
 
     # Do we need to produce a single output definition, or include a
     # dictionary line for each entry?
@@ -171,4 +192,9 @@ if __name__ == '__main__':
     else:
         Usage()
         
+    # Output COMMIT transaction for PostGIS
+    if output_format == '-postgis':
+        print 'COMMIT;'
+        print 'VACUUM ANALYZE;'
+
 
