@@ -396,8 +396,9 @@ print \"-I%s -I%s\" % (includepy, libpl)'`"
 import sys
 print \"%s/lib/python%s/config/Makefile\"%(sys.exec_prefix, sys.version[:3])'`"
     if test ! -f "$py_makefile"; then
-      AC_MSG_ERROR([*** Couldn't find the python config makefile.  Maybe you are
-*** missing the development portion of the python installation])
+      echo Could not find the python config makefile.  Maybe you are;
+      echo missing the development portion of the python installation;
+      exit;
     fi
     eval `sed -n \
 -e "s/^CC=[ 	]*\(.*\)/am_cv_python_CC='\1'/p" \
