@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.39  2005/01/25 20:38:09  fwarmerdam
+ * Added coastwatch convention support.
+ *
  * Revision 1.38  2005/01/24 17:09:45  fwarmerdam
  * added support for "NRL(USGS) mapProjectionSystem" datasets (geotransform)
  *
@@ -153,6 +156,7 @@ class HDF4ImageDataset : public HDF4Dataset
     char**              GetSwatAttrs( int32 hSW, char **papszMetadata );
     char**              GetGridAttrs( int32 hGD, char **papszMetadata );
     void                CaptureNRLGeoTransform(void);
+    void                CaptureCoastwatchGCTPInfo(void);
 
   public:
                 HDF4ImageDataset();
@@ -940,6 +944,119 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
 }
 
 /************************************************************************/
+/*                     CaptureCoastwatchGCTPInfo()                      */
+/************************************************************************/
+
+/* Example Metadata from:
+
+  http://coastwatch.noaa.gov/interface/most_recent.php?sensor=MODIS&product=chlorNASA
+
+Definitions at:
+  http://coastwatch.noaa.gov/cw_form_hdf.html
+
+Metadata:
+  satellite=Aqua
+  sensor=MODIS
+  origin=USDOC/NOAA/NESDIS CoastWatch
+  history=PGE01:4.1.12;PGE02:4.3.1.12;SeaDAS Version ?.?, MSl12 4.0.2, Linux 2.4.21-27.0.1.EL
+cwregister GulfOfMexicoSinusoidal.hdf MODSCW.P2005023.1835.swath09.hdf MODSCW.P2005023.1835.GM16.mapped09.hdf
+cwgraphics MODSCW.P2005023.1835.GM16.closest.hdf
+cwmath --template chlor_a --expr chlor_a=select(and(l2_flags,514)!=0,nan,chlor_a) /data/aps/browse/lvl3/seadas/coastwatch/hdf/MODSCW_P2005023_1835_GM16_closest.hdf /data/aps/browse/lvl3/seadas/coastwatch/maskhdf/MODSCW_P2005023_1835_GM16_closest_chlora.hdf
+cwmath --template latitude --expr latitude=latitude /data/aps/browse/lvl3/seadas/coastwatch/hdf/MODSCW_P2005023_1835_GM16_closest.hdf /data/aps/browse/lvl3/seadas/coastwatch/maskhdf/MODSCW_P2005023_1835_GM16_closest_chlora.hdf
+cwmath --template longitude --expr longitude=longitude /data/aps/browse/lvl3/seadas/coastwatch/hdf/MODSCW_P2005023_1835_GM16_closest.hdf /data/aps/browse/lvl3/seadas/coastwatch/maskhdf/MODSCW_P2005023_1835_GM16_closest_chlora.hdf
+  cwhdf_version=3.2
+  pass_type=day
+  pass_date=12806
+  start_time=66906
+  temporal_extent=298
+  projection_type=mapped
+  projection=Sinusoidal
+  gctp_sys=16
+  gctp_zone=62
+  gctp_parm=6378137, 0, 0, 0, -89000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  gctp_datum=12
+  et_affine=0, -1008.74836097881, 1008.74836097881, 0, -953126.102425113, 3447041.10282512
+  rows=1540
+  cols=2000
+  polygon_latitude=31, 31, 31, 31, 31, 27.5095879249529, 24.0191758499058, 20.5287637748587, 17.0383516998116, 17.0383516998116, 17.0383516998116, 17.0383516998116, 17.0383516998116, 20.5287637748587, 24.0191758499058, 27.5095879249529, 31
+  polygon_longitude=-99, -93.7108573344442, -88.4217146688883, -83.1325720033325, -77.8434293377767, -78.217853417453, -78.5303805448579, -78.7884829057512, -78.9979508907244, -83.7397542896832, -88.481557688642, -93.2233610876007, -97.9651644865595, -98.1529175079091, -98.3842631146439, -98.664391423662, -99
+  orbit_type=ascending
+  raster_type=RasterPixelIsArea
+  swath_sync_lines=1
+
+ */
+
+void HDF4ImageDataset::CaptureCoastwatchGCTPInfo()
+
+{
+    if( CSLFetchNameValue( papszGlobalMetadata, "gctp_sys" ) == NULL 
+        || CSLFetchNameValue( papszGlobalMetadata, "gctp_zone" ) == NULL 
+        || CSLFetchNameValue( papszGlobalMetadata, "gctp_parm" ) == NULL 
+        || CSLFetchNameValue( papszGlobalMetadata, "gctp_datum" ) == NULL 
+        || CSLFetchNameValue( papszGlobalMetadata, "et_affine" ) == NULL )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Grab USGS/GCTP Parameters.                                      */
+/* -------------------------------------------------------------------- */
+    int nSys, nZone, nDatum, iParm;
+    double adfParms[15];
+    char **papszTokens;
+
+    nSys = atoi( CSLFetchNameValue( papszGlobalMetadata, "gctp_sys" ) );
+    nZone = atoi( CSLFetchNameValue( papszGlobalMetadata, "gctp_zone" ) );
+    nDatum = atoi( CSLFetchNameValue( papszGlobalMetadata, "gctp_datum" ) );
+
+    papszTokens = CSLTokenizeStringComplex( 
+        CSLFetchNameValue( papszGlobalMetadata, "gctp_parm" ), ",", 
+        FALSE, FALSE );
+    if( CSLCount(papszTokens) < 15 )
+        return;
+
+    for( iParm = 0; iParm < 15; iParm++ )
+        adfParms[iParm] = atof(papszTokens[iParm]);
+    CSLDestroy( papszTokens );
+
+/* -------------------------------------------------------------------- */
+/*      Convert into an SRS.                                            */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oSRS;
+
+    if( oSRS.importFromUSGS( nSys, nZone, adfParms, nDatum ) != OGRERR_NONE )
+        return;
+
+    CPLFree( pszProjection );
+    oSRS.exportToWkt( &pszProjection );
+
+/* -------------------------------------------------------------------- */
+/*      Capture the affine transform info.                              */
+/* -------------------------------------------------------------------- */
+    
+    papszTokens = CSLTokenizeStringComplex( 
+        CSLFetchNameValue( papszGlobalMetadata, "et_affine" ), ",", 
+        FALSE, FALSE );
+    if( CSLCount(papszTokens) != 6 )
+        return;
+
+    // We don't seem to have proper ef_affine docs so I don't 
+    // know which of these two coefficients goes where. 
+    if( atof(papszTokens[0]) != 0.0 || atof(papszTokens[3]) != 0.0 )
+        return;
+        
+    bHasGeoTransform = TRUE;
+    adfGeoTransform[0] = atof(papszTokens[4]);
+    adfGeoTransform[1] = atof(papszTokens[2]);
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = atof(papszTokens[5]);
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = atof(papszTokens[1]);
+
+    // Middle of pixel adjustment. 
+    adfGeoTransform[0] -= adfGeoTransform[1] * 0.5;
+    adfGeoTransform[3] -= adfGeoTransform[5] * 0.5;
+}
+
+/************************************************************************/
 /*                            GetSwatAttrs()                            */
 /************************************************************************/
 
@@ -1625,6 +1742,11 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             if( pszMapProjectionSystem != NULL 
                 && EQUAL(pszMapProjectionSystem,"NRL(USGS)") )
                 poDS->CaptureNRLGeoTransform();
+
+            // Special cast for coastwatch hdf files. 
+            if( CSLFetchNameValue( poDS->papszGlobalMetadata, 
+                                   "gctp_sys" ) != NULL )
+                poDS->CaptureCoastwatchGCTPInfo();
         }
         break;
 
