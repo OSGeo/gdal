@@ -27,12 +27,19 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
+ * Independent Security Audit 2003/04/05 Andrey Kiselev:
+ *   Completed audit of this module. Any documents may be parsed without
+ *   buffer overflows and stack corruptions.
+ * 
  * Security Audit 2003/03/28 warmerda:
  *   Completed security audit.  I believe that this module may be safely used 
  *   to parse, and serialize arbitrary documents provided by a potentially 
  *   hostile source.
  *
  * $Log$
+ * Revision 1.22  2003/04/05 07:12:25  dron
+ * Completed security audit.
+ *
  * Revision 1.21  2003/03/28 17:38:39  warmerda
  * Added NULL check in CPLParseXMLString().
  *
@@ -258,7 +265,8 @@ static TokenType ReadToken( ParseContext *psContext )
             if( chNext == '\0' )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
-                          "Parse error in DOCTYPE on or before line %d, reached end of file without '>'.", 
+                          "Parse error in DOCTYPE on or before line %d, "
+                          "reached end of file without '>'.", 
                           psContext->nInputLine );
                 
                 break;
