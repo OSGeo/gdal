@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/01/25 20:47:36  warmerda
+ * added simplified WKT output
+ *
  * Revision 1.5  2002/01/18 15:30:57  warmerda
  * add usage reporting
  *
@@ -118,6 +121,13 @@ int main( int nArgc, char ** papszArgv )
                 
                 oSRS.exportToPrettyWkt( &pszWKT, FALSE );
                 printf( "WKT[%s] =\n%s\n", 
+                        papszArgv[i], pszWKT );
+                CPLFree( pszWKT );
+
+                printf( "\n" );
+
+                oSRS.exportToPrettyWkt( &pszWKT, TRUE );
+                printf( "Simplified WKT[%s] =\n%s\n", 
                         papszArgv[i], pszWKT );
                 CPLFree( pszWKT );
 
