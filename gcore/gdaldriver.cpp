@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2001/12/15 15:42:27  warmerda
+ * *** empty log message ***
+ *
  * Revision 1.21  2001/10/05 20:35:26  warmerda
  * CreateCopy() won't try to write default geotransform
  *
@@ -173,7 +176,12 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
                           papszParmList );
 
         if( poDS != NULL )
+        {
             poDS->SetDescription( pszFilename );
+
+            if( poDS->poDriver == NULL )
+                poDS->poDriver = this;
+        }
 
         return poDS;
     }
@@ -258,6 +266,9 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
             if( poDstDS->GetDescription() == NULL 
                 || strlen(poDstDS->GetDescription()) > 0 )
                 poDstDS->SetDescription( pszFilename );
+
+            if( poDstDS->poDriver == NULL )
+                poDstDS->poDriver = this;
         }
 
         return poDstDS;

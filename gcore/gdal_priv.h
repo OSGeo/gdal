@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2001/12/15 15:42:27  warmerda
+ * *** empty log message ***
+ *
  * Revision 1.28  2001/11/18 00:52:15  warmerda
  * removed GDALProjDef
  *
@@ -207,6 +210,7 @@ class CPL_DLL GDALDefaultOverviews
 class CPL_DLL GDALDataset : public GDALMajorObject
 {
     friend GDALDatasetH GDALOpen( const char *, GDALAccess);
+    friend class GDALDriver;
     
   protected:
     GDALDriver	*poDriver;
