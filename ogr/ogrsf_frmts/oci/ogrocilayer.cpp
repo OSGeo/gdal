@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2004/11/22 17:19:14  fwarmerdam
+ * fixed missing case for 3d multipolygons: bug 618
+ *
  * Revision 1.8  2004/11/10 20:17:14  fwarmerdam
  * fixed memory leak of geometry objects
  *
@@ -481,7 +484,7 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
             else if( nEType % 1000 == 3 )
             {
                 /* its one poly ring, create new poly or add to existing */
-                if( nEType > 999 && nEType < 1999 )
+                if( nEType > 999 && nEType < 2999 )
                 {
                     if( poPolygon != NULL 
                         && poPolygon->getExteriorRing() != NULL )
@@ -493,7 +496,12 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
                     poPolygon = new OGRPolygon();
                 }
                 
-                poPolygon->addRingDirectly( (OGRLinearRing *) poGeom );
+				if( poPolygon != NULL )
+                    poPolygon->addRingDirectly( (OGRLinearRing *) poGeom );
+				else
+				{
+					CPLAssert( poPolygon != NULL );
+				}
             }
             else
                 poCollection->addGeometryDirectly( poGeom );
