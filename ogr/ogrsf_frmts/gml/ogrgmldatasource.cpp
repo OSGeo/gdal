@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/08/15 15:26:12  warmerda
+ * Properly close file if test open fails.
+ *
  * Revision 1.4  2002/03/06 20:08:47  warmerda
  * save/use .gfs file by default
  *
@@ -123,8 +126,8 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         if( szHeader[0] != '<' 
             && strstr(szHeader,"opengis.net/gml") == NULL )
         {
-            return FALSE;
             VSIFClose( fp );
+            return FALSE;
         }
     }
     
