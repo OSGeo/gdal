@@ -28,12 +28,14 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/12/05 05:43:28  warmerda
+ * added warp/transformer definition
+ *
  * Revision 1.2  2001/02/02 21:19:25  warmerda
  * added CPL_DLL for functions
  *
  * Revision 1.1  2001/01/22 22:30:59  warmerda
  * New
- *
  */
 
 #ifndef GDAL_ALG_H_INCLUDED
@@ -65,6 +67,67 @@ int CPL_DLL GDALDitherRGB2PCT( GDALRasterBandH hRed,
                        GDALColorTableH hColorTable, 
                        GDALProgressFunc pfnProgress, 
                        void * pProgressArg );
+
+/*
+ * Warp Related.
+ */
+
+typedef int 
+(*GDALTransformerFunc)( void *pTransformerArg, 
+                        int bDstToSrc, int nPointCount, 
+                        double *x, double *y, double *z, int *panSuccess );
+
+/* High level transformer for going from image coordinates on one file
+   to image coordiantes on another, potentially doing reprojection, 
+   utilizing GCPs or using the geotransform. */
+void CPL_DLL *
+GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, 
+                                 GDALDatasetH hDstDS, 
+                                 int bGCPUseOK, double dfGCPErrorThreshold );
+void CPL_DLL GDALDestroyGenImgProjTransformer( void * );
+int CPL_DLL GDALGenImgProjTransform( 
+    void *pTransformArg, int bDstToSrc, int nPointCount,
+    double *x, double *y, double *z, int *panSuccess );
+
+/* Geo to geo reprojection transformer. */
+void CPL_DLL *
+GDALCreateReprojectionTransformer( const char *pszSrcWKT, 
+                                   const char *pszDstWKT );
+void CPL_DLL GDALDestroyReprojectionTransformer( void * );
+int CPL_DLL GDALReprojectionTransform( 
+    void *pTransformArg, int bDstToSrc, int nPointCount,
+    double *x, double *y, double *z, int *panSuccess );
+
+/* GCP based transformer ... forward is to georef coordinates */
+void CPL_DLL *
+GDALCreateGCPTransformer( int nGCPCount, GDAL_GCP *pasGCPList, 
+                          int nReqOrder, int bReversed );
+void CPL_DLL GDALDestroyGCPTransformer( void *pTransformArg );
+int GDALGCPTransform( 
+    void *pTransformArg, int bDstToSrc, int nPointCount,
+    double *x, double *y, double *z, int *panSuccess );
+                      
+
+
+int CPL_DLL GDALSimpleImageWarp( GDALDatasetH hSrcDS, 
+                                 GDALDatasetH hDstDS, 
+                                 int nBandCount, int *panBandList,
+                                 GByte *pabyRedLUT, 
+                                 GByte *pabyGreenLUT,
+                                 GByte *pabyBlueLUT,
+                                 GDALTransformerFunc pfnTransform,
+                                 void *pTransformArg,
+                                 GDALProgressFunc *pfnProgress, 
+                                 void *pProgressArg, 
+                                 const char **papszWarpOptions );
+
+CPLErr CPL_DLL
+GDALSuggestedWarpOutput( GDALDatasetH hSrcDS, 
+                         GDALTransformerFunc pfnTransformer,
+                         void *pTransformArg,
+                         double *padfGeoTransformOut, 
+                         int *pnPixels, int *pnLines );
+
 
 CPL_C_END
 
