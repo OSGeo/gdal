@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/09/11 20:07:36  warmerda
+ * avoid casting warning
+ *
  * Revision 1.1  2003/09/09 08:31:28  dron
  * New.
  *
@@ -575,7 +578,8 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
 
         poBand = new RawRasterBand( poDS, iBand + 1, poDS->fp,
-                                    nImageOffset, nPixelOffset, nLineOffset,
+                                    nImageOffset, (int) nPixelOffset, 
+                                    (int) nLineOffset, 
                                     eType, bNativeOrder, TRUE);
         poDS->SetBand( iBand + 1, poBand );
 
