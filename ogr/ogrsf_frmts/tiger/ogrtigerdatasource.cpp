@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2004/02/12 16:00:41  warmerda
+ * weaken test for candidate files so all Dynamap files found
+ *
  * Revision 1.28  2004/02/12 06:39:16  warmerda
  * added preliminary support for some GDT quirks
  *
@@ -399,11 +402,8 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
             {
                 continue;
             }
-            
-            if( (EQUALN(candidateFileList[i],"TGR",3)
-                 || EQUALN(candidateFileList[i],"TST",3)
-                 || EQUALN(candidateFileList[i],"D",1))
-                && candidateFileList[i][strlen(candidateFileList[i])-4] == '.'
+
+            if( candidateFileList[i][strlen(candidateFileList[i])-4] == '.'
                 && candidateFileList[i][strlen(candidateFileList[i])-1] == '1')
             {
                 char       szModule[128];
