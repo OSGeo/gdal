@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.7  1999/02/02 19:02:36  warmerda
+ * Removed duplicates of base types, and CPL_LSB
+ *
  * Revision 1.6  1999/01/28 18:36:06  warmerda
  * Ensure WIN32 is defined on Windows.
  *
@@ -60,20 +63,6 @@
 
 #ifndef CPL_BASE_H_INCLUDED
 #define CPL_BASE_H_INCLUDED
-
-/* ==================================================================== */
-/*      Base portability stuff ... this stuff may need to be            */
-/*      modified for new platforms.                                     */
-/* ==================================================================== */
-
-#define CPL_LSB
-
-typedef int		GInt32;
-typedef unsigned int 	GUInt32;
-typedef short		GInt16;
-typedef unsigned short	GUInt16;
-typedef unsigned char	GByte;
-typedef int		GBool;
 
 /* ==================================================================== */
 /*      We will use WIN32 as a standard windows define.                 */
