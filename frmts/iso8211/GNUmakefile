@@ -74,8 +74,8 @@ dist:	docs
 
 update-web:	dist docs
 	cp html/* $(WEB_DIR)
-	cp $(DISTDIR).tar.gz $(WEB_DIR)
-	cp $(DISTDIR).tar.gz /u/ftp/pub/outgoing
+	cp $(DISTDIR).tar.gz $(DISTDIR).zip $(WEB_DIR)
+	cp $(DISTDIR).tar.gz $(DISTDIR).zip /u/ftp/pub/outgoing
 
 
 test:	8211dump
