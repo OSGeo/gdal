@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.9  2002/10/07 06:46:55  warmerda
+# removed extra import for python 2.2 compatibility
+#
 # Revision 1.8  2002/09/09 14:40:45  warmerda
 # removed extra import
 #
@@ -183,8 +186,6 @@ def GDALTypeCodeToNumericTypeCode( gdal_code ):
         return None
 
 def NumericTypeCodeToGDALTypeCode( numeric_code ):
-    from Numeric import *
-
     if numeric_code == UnsignedInt8:
         return GDT_Byte
     elif numeric_code == Int16:
