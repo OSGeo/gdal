@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/03/18 21:06:07  dron
+ * Added HFADelete() function.
+ *
  * Revision 1.8  2002/05/21 15:09:12  warmerda
  * read/write support for GDAL_MetaData table now supported
  *
@@ -155,6 +158,7 @@ CPL_C_START
 
 HFAHandle CPL_DLL HFAOpen( const char * pszFilename, const char * pszMode );
 void	CPL_DLL HFAClose( HFAHandle );
+CPLErr HFADelete( const char *pszFilename );
 
 HFAHandle CPL_DLL HFACreateLL( const char *pszFilename );
 HFAHandle CPL_DLL HFACreate( const char *pszFilename, int nXSize, int nYSize, 
