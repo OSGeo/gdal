@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2002/04/17 19:53:17  warmerda
+ * added SELECT COUNT(*) support
+ *
  * Revision 1.35  2002/04/16 21:02:18  warmerda
  * copy columninfo to CSFCommand from rowset after executing a command
  *
@@ -465,8 +468,6 @@ HRESULT CSFCommand::ExtractSpatialQuery( DBPARAMS *pParams )
 CSFRowset::~CSFRowset()
 
 {
-    int            i;
-
     // clear destination.
     CopyColumnInfo( NULL, &m_paColInfo );
 
@@ -512,6 +513,12 @@ int CSFRowset::ParseCommand( const char *pszCommand,
                 iOGRIndex = -2;
                 m_panOGRIndex.Add( iOGRIndex );
             }
+            else if( EQUAL(papszTokens[iToken],"count(*)") )
+            {
+                iOGRIndex = -3;
+                m_panOGRIndex.Add( iOGRIndex );
+                m_nResultCount = 0;
+            }
             else if( iOGRIndex == -1 )
             {
                 CPLDebug( "OGR_OLEDB", "Unrecognised field `%s', skipping.", 
@@ -554,6 +561,8 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     char        *pszLayerName;
     char        *pszWHERE = NULL;
     IUnknown    *pIUnknown;
+
+    m_nResultCount = -1;
 
     QueryInterface(IID_IUnknown,(void **) &pIUnknown);
     poDS = SFGetOGRDataSource(pIUnknown);
@@ -671,13 +680,22 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     else
         pLayer->SetAttributeFilter( NULL );
 	
-    if (pcRowsAffected)
+    if (pcRowsAffected || m_nResultCount != -1 )
     {
         int      nTotalRows;
 
-        nTotalRows = pLayer->GetFeatureCount(FALSE);
+        nTotalRows = pLayer->GetFeatureCount( m_nResultCount != -1 );
         if( nTotalRows != -1 )
-            *pcRowsAffected = nTotalRows;
+        {
+            if( pcRowsAffected != NULL )
+                *pcRowsAffected = nTotalRows;
+            if( m_nResultCount != -1 )
+            {
+                m_nResultCount = nTotalRows;
+                if( pcRowsAffected != NULL )
+                    *pcRowsAffected = nTotalRows;
+            }
+        }
         else
             CPLDebug( "OGR_OLEDB", 
                       "Couldn't get feature count cheaply for %s,\n"
@@ -749,6 +767,23 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
 #endif
         }
         
+        // Add the COUNT column.
+        else if( nOGRIndex == -3 )
+        {
+            colInfo.pwszName = ::SysAllocString(A2OLE("COUNT"));
+            colInfo.iOrdinal = iField+1;
+            colInfo.dwFlags  = 0;
+            colInfo.columnid.uName.pwszName = colInfo.pwszName;
+            colInfo.cbOffset	= nOffset;
+            colInfo.bScale	= ~0;
+            colInfo.bPrecision  = ~0;
+            colInfo.ulColumnSize = 4;
+            colInfo.wType = DBTYPE_I4;
+            
+            nOffset += 8; // keep 8byte aligned.
+            m_paColInfo.Add(colInfo);
+        }
+
         else
         {
             OGRFieldDefn	*poField;

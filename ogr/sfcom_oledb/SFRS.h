@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/04/17 19:53:17  warmerda
+ * added SELECT COUNT(*) support
+ *
  * Revision 1.14  2002/04/16 21:02:18  warmerda
  * copy columninfo to CSFCommand from rowset after executing a command
  *
@@ -449,6 +452,8 @@ public:
     CSimpleArray<int>                   m_panOGRIndex;
     OGRDataSource                      *m_poDS;
     int                                 m_iLayer;
+
+    int                                 m_nResultCount;
 };
 
 #endif //__CSFRowset_H_
