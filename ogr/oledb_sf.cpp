@@ -36,6 +36,9 @@
  * derived from OledbSupRowset to modify the default binding logic.
  * 
  * $Log$
+ * Revision 1.2  1999/05/14 13:31:42  warmerda
+ * add best testing when reading from stream
+ *
  * Revision 1.1  1999/04/01 20:49:09  warmerda
  * New
  *
@@ -246,10 +249,14 @@ BYTE *OledbSFTable::GetWKBGeometry( int * pnSize )
 /* -------------------------------------------------------------------- */
 /*      Allocate the data and read from the stream.                     */
 /* -------------------------------------------------------------------- */
+	ULONG		nBytesActuallyRead = 0;
+
     pabyLastGeometry = (BYTE *) CoTaskMemAlloc( nSize );
-    
-    hr = pIStream->Read( pabyLastGeometry, nSize, NULL );
-    if( FAILED( hr ) )
+    pabyLastGeometry[0] = 0;
+	pabyLastGeometry[1] = 0;
+
+    hr = pIStream->Read( pabyLastGeometry, nSize, &nBytesActuallyRead );
+    if( FAILED( hr ) || nBytesActuallyRead < nSize )
     {
         DumpErrorHResult( hr, "IStream::Read()" ); 
         CoTaskMemFree( pabyLastGeometry );
@@ -257,6 +264,7 @@ BYTE *OledbSFTable::GetWKBGeometry( int * pnSize )
     }
 
     pIStream->Release();
+    pIUnknown->Release();
 
     if( pnSize != NULL && pabyLastGeometry != NULL )
         *pnSize = nSize;
