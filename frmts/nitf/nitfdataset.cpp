@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/08/21 19:25:59  warmerda
+ * added overview support
+ *
  * Revision 1.10  2003/08/21 15:02:38  gwalter
  * Try to find a .nfw file if no other geotransform information is found.
  *
@@ -619,6 +622,11 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
                  sRPCInfo.LAT_OFF + 2 * sRPCInfo.LAT_SCALE );
         poDS->SetMetadataItem( "RPC_MAX_LAT", szValue );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Check for overviews.                                            */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
     return( poDS );
 }
