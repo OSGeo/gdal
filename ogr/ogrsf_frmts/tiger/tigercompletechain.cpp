@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/07/19 16:05:49  warmerda
+ * clear out tabs
+ *
  * Revision 1.9  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -722,7 +725,7 @@ int TigerCompleteChain::SetWriteModule( const char *pszFileCode, int nRecLen,
                                         OGRFeature *poFeature )
 
 {
-    int	bSuccess;
+    int bSuccess;
 
     bSuccess = TigerFileBase::SetWriteModule( pszFileCode, nRecLen, poFeature);
     if( !bSuccess )
@@ -789,7 +792,7 @@ int TigerCompleteChain::SetWriteModule( const char *pszFileCode, int nRecLen,
 OGRErr TigerCompleteChain::CreateFeature( OGRFeature *poFeature )
 
 {
-    char	szRecord[WRITE_REC_LEN+1];
+    char        szRecord[WRITE_REC_LEN+1];
     OGRLineString *poLine = (OGRLineString *) poFeature->GetGeometryRef();
 
     if( poLine == NULL 
@@ -897,13 +900,13 @@ OGRErr TigerCompleteChain::CreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     if( poLine->getNumPoints() > 2 )
     {
-        int	nPoints = poLine->getNumPoints();
-        int	iPoint, nRTSQ = 1;
+        int     nPoints = poLine->getNumPoints();
+        int     iPoint, nRTSQ = 1;
 
         for( iPoint = 1; iPoint < nPoints-1; )
         {
-            int		i;
-            char	szTemp[5];
+            int         i;
+            char        szTemp[5];
 
             memset( szRecord, ' ', WRITE_REC_LEN_RT2 );
 

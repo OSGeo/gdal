@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/07/19 16:05:49  warmerda
+ * clear out tabs
+ *
  * Revision 1.6  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -428,7 +431,7 @@ int TigerPolygon::SetWriteModule( const char *pszFileCode, int nRecLen,
                                   OGRFeature *poFeature )
 
 {
-    int	bSuccess;
+    int bSuccess;
 
     bSuccess = TigerFileBase::SetWriteModule( pszFileCode, nRecLen, poFeature);
     if( !bSuccess )
@@ -473,7 +476,7 @@ int TigerPolygon::SetWriteModule( const char *pszFileCode, int nRecLen,
 OGRErr TigerPolygon::CreateFeature( OGRFeature *poFeature )
 
 {
-    char	szRecord[WRITE_REC_LEN+1];
+    char        szRecord[WRITE_REC_LEN+1];
 
 /* -------------------------------------------------------------------- */
 /*      Write basic data record ("RTA")                                 */
@@ -510,7 +513,7 @@ OGRErr TigerPolygon::CreateFeature( OGRFeature *poFeature )
     WriteRecord( szRecord, WRITE_REC_LEN_RTA, "A" );
 
 /* -------------------------------------------------------------------- */
-/*	Prepare S record.						*/
+/*      Prepare S record.                                               */
 /* -------------------------------------------------------------------- */
 
     memset( szRecord, ' ', WRITE_REC_LEN_RTS );

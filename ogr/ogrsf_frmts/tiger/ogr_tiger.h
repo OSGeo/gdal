@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/07/19 16:05:49  warmerda
+ * clear out tabs
+ *
  * Revision 1.9  2001/07/19 13:26:32  warmerda
  * enable override of existing modules
  *
@@ -115,12 +118,12 @@ protected:
   int                 OpenFile( const char *, const char * );
   void                EstablishFeatureCount();
 
-  static int	      EstablishRecordLength( FILE * );
+  static int          EstablishRecordLength( FILE * );
  
-  void		      SetupVersion();
+  void                SetupVersion();
 
-  int		      nVersionCode;
-  TigerVersion	      nVersion;
+  int                 nVersionCode;
+  TigerVersion        nVersion;
 
 public:
                       TigerFileBase();
@@ -138,7 +141,7 @@ public:
   virtual OGRFeature *GetFeature( int ) = 0;
 
   virtual OGRErr      CreateFeature( OGRFeature *poFeature ) 
-				{ return OGRERR_FAILURE; }
+                                { return OGRERR_FAILURE; }
 
   OGRFeatureDefn     *GetFeatureDefn() { return poFeatureDefn; }
 
@@ -475,16 +478,16 @@ class OGRTigerDataSource : public OGRDataSource
     int                 nModules;
     char                **papszModules;
     
-    int		        nVersionCode;
-    TigerVersion	nVersion;
+    int                 nVersionCode;
+    TigerVersion        nVersion;
 
-    int			bWriteMode;
+    int                 bWriteMode;
 
   public:
                         OGRTigerDataSource();
                         ~OGRTigerDataSource();
 
-    int			GetWriteMode() { return bWriteMode; }
+    int                 GetWriteMode() { return bWriteMode; }
 
     TigerVersion        GetVersion() { return nVersion; }
     int                 GetVersionCode() { return nVersionCode; }
@@ -495,7 +498,7 @@ class OGRTigerDataSource : public OGRDataSource
     int                 Open( const char * pszName, int bTestOpen = FALSE,
                               char ** papszFileList = NULL );
 
-    int			Create( const char *pszName, char **papszOptions );
+    int                 Create( const char *pszName, char **papszOptions );
     
     const char          *GetName() { return pszName; }
     int                 GetLayerCount();
@@ -517,7 +520,7 @@ class OGRTigerDataSource : public OGRDataSource
     int                 CheckModule( const char *pszModule );
     void                AddModule( const char *pszModule );
 
-    void		DeleteModuleFiles( const char *pszModule );
+    void                DeleteModuleFiles( const char *pszModule );
 
     virtual OGRLayer    *CreateLayer( const char *, 
                                       OGRSpatialReference * = NULL,

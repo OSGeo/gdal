@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/07/19 16:05:49  warmerda
+ * clear out tabs
+ *
  * Revision 1.12  2001/07/19 16:03:11  warmerda
  * allow VERSION override on write
  *
@@ -97,7 +100,7 @@ CPL_CVSID("$Id$");
 TigerVersion TigerClassifyVersion( int nVersionCode )
 
 {
-    TigerVersion	nVersion;
+    TigerVersion        nVersion;
     int                 nYear, nMonth;
 
     nVersion = TIGER_Unknown;
@@ -476,7 +479,7 @@ const char *OGRTigerDataSource::GetModule( int iModule )
 int OGRTigerDataSource::CheckModule( const char *pszModule )
 
 {
-    int		i;
+    int         i;
 
     for( i = 0; i < nModules; i++ )
     {
@@ -606,7 +609,7 @@ OGRLayer *OGRTigerDataSource::CreateLayer( const char *pszLayerName,
                                            char **papszOptions )
 
 {
-    OGRTigerLayer	*poLayer = NULL;
+    OGRTigerLayer       *poLayer = NULL;
 
     if( GetLayer( pszLayerName ) != NULL )
         return GetLayer( pszLayerName );
@@ -711,14 +714,14 @@ OGRLayer *OGRTigerDataSource::CreateLayer( const char *pszLayerName,
 void OGRTigerDataSource::DeleteModuleFiles( const char *pszModule )
 
 {
-    char	**papszDirFiles = CPLReadDir( GetDirPath() );
-    int		i, nCount = CSLCount(papszDirFiles);
+    char        **papszDirFiles = CPLReadDir( GetDirPath() );
+    int         i, nCount = CSLCount(papszDirFiles);
     
     for( i = 0; i < nCount; i++ )
     {
         if( EQUALN(pszModule,papszDirFiles[i],strlen(pszModule)) )
         {
-            const char	*pszFilename;
+            const char  *pszFilename;
 
             pszFilename = CPLFormFilename( GetDirPath(), 
                                            papszDirFiles[i], 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/07/19 16:05:49  warmerda
+ * clear out tabs
+ *
  * Revision 1.6  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -183,9 +186,9 @@ OGRFeature *TigerAltName::GetFeature( int nRecordId )
 OGRErr TigerAltName::CreateFeature( OGRFeature *poFeature )
 
 {
-    char	szRecord[WRITE_REC_LEN+1];
-    const int	*panValue;
-    int		nValueCount = 0;
+    char        szRecord[WRITE_REC_LEN+1];
+    const int   *panValue;
+    int         nValueCount = 0;
 
     if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
         return OGRERR_FAILURE;
@@ -198,7 +201,7 @@ OGRErr TigerAltName::CreateFeature( OGRFeature *poFeature )
     panValue = poFeature->GetFieldAsIntegerList( "FEAT", &nValueCount );
     for( int i = 0; i < nValueCount; i++ )
     {
-        char	szWork[9];
+        char    szWork[9];
         
         sprintf( szWork, "%8d", panValue[i] );
         strncpy( szRecord + 18 + 8 * i, szWork, 8 );

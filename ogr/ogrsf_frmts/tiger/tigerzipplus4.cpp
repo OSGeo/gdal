@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/07/19 16:05:49  warmerda
+ * clear out tabs
+ *
  * Revision 1.5  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -50,7 +53,7 @@
 
 CPL_CVSID("$Id$");
 
-#define FILE_CODE	"Z"
+#define FILE_CODE       "Z"
 
 /************************************************************************/
 /*                           TigerZipPlus4()                            */
@@ -170,7 +173,7 @@ OGRFeature *TigerZipPlus4::GetFeature( int nRecordId )
 OGRErr TigerZipPlus4::CreateFeature( OGRFeature *poFeature )
 
 {
-    char	szRecord[WRITE_REC_LEN+1];
+    char        szRecord[WRITE_REC_LEN+1];
 
     if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
         return OGRERR_FAILURE;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/07/19 16:05:49  warmerda
+ * clear out tabs
+ *
  * Revision 1.6  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -190,8 +193,8 @@ OGRFeature *TigerPIP::GetFeature( int nRecordId )
 OGRErr TigerPIP::CreateFeature( OGRFeature *poFeature )
 
 {
-    char	szRecord[WRITE_REC_LEN+1];
-    OGRPoint	*poPoint = (OGRPoint *) poFeature->GetGeometryRef();
+    char        szRecord[WRITE_REC_LEN+1];
+    OGRPoint    *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
 
     if( !SetWriteModule( FILE_CODE, WRITE_REC_LEN+2, poFeature ) )
         return OGRERR_FAILURE;

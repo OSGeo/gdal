@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/07/19 16:05:49  warmerda
+ * clear out tabs
+ *
  * Revision 1.9  2001/07/19 16:03:11  warmerda
  * allow VERSION override on write
  *
@@ -146,7 +149,7 @@ int TigerFileBase::OpenFile( const char * pszModuleToOpen,
 void TigerFileBase::SetupVersion()
 
 {
-    char	aszRecordHead[6];
+    char        aszRecordHead[6];
 
     VSIFSeek( fpPrimary, 0, SEEK_SET );
     VSIFRead( aszRecordHead, 1, 5, fpPrimary );
@@ -165,7 +168,7 @@ int TigerFileBase::EstablishRecordLength( FILE * fp )
 
 {
     char        chCurrent;
-    int	        nRecLen = 0;
+    int         nRecLen = 0;
     
     if( VSIFSeek( fp, 0, SEEK_SET ) != 0 )
         return -1;
@@ -299,8 +302,8 @@ int TigerFileBase::WriteField( OGRFeature *poFeature, const char *pszField,
                                char chFormat, char chType )
 
 {
-    int		iField = poFeature->GetFieldIndex( pszField );
-    char	szValue[512], szFormat[32];
+    int         iField = poFeature->GetFieldIndex( pszField );
+    char        szValue[512], szFormat[32];
 
     CPLAssert( nEnd - nStart + 1 < (int) sizeof(szValue)-1 );
 
@@ -349,7 +352,7 @@ int TigerFileBase::WritePoint( char *pachRecord, int nStart,
                                double dfX, double dfY )
 
 {
-    char	szTemp[20];
+    char        szTemp[20];
 
     if( dfX == 0.0 && dfY == 0.0 )
     {
@@ -382,7 +385,7 @@ int TigerFileBase::WriteRecord( char *pachRecord, int nRecLen,
     /* for some reason type 5 files lack version, otherwise set to Cen2000 */
     if( !EQUAL(pszType, "5") )
     {
-        char	szVersion[5];
+        char    szVersion[5];
         sprintf( szVersion, "%04d", poDS->GetVersionCode() );
         strncpy( pachRecord + 1, szVersion, 4 );
     }
@@ -407,7 +410,7 @@ int TigerFileBase::SetWriteModule( const char *pszExtension, int nRecLen,
 /*      Work out what module we should be writing to.                   */
 /* -------------------------------------------------------------------- */
     const char *pszTargetModule = poFeature->GetFieldAsString( "MODULE" );
-    char	szFullModule[30];
+    char        szFullModule[30];
 
     /* TODO/notdef: eventually more logic based on FILE and STATE/COUNTY can 
        be inserted here. */
