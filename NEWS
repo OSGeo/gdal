@@ -1,3 +1,40 @@
+GDAL 1.2.5 - Overview of Changes
+--------------------------------
+
+gdalwarp Utility:
+ - Added "proper" source and destination alpha support. 
+
+PCRaster Driver: 
+ - added write support, now consider ready for regular use.
+
+MrSID Driver:
+ - Initial support for writing to MrSID with encoding SDK. 
+
+GeoTIFF Driver:
+ - Updated internal copy of libtiff to fix overview building ... really!
+ - Fixed bug when writing south-up images.
+
+
+OGR 1.2.5 - Overview of Changes
+-------------------------------
+
+OGRSpatialReference:
+ - Added Bonne projection. 
+
+Docs:
+ - Added OGR C++ API Tutorial (reading and writing). 
+
+PostGIS Driver:
+ - Implemented SetFeature() and DeleteFeature() methods for in-place updates.
+
+Oracle (OCI) Driver:
+ - Fixed support for writing into Oracle 10g. 
+ - Fixed serious memory leak of geometries. 
+ - Fixed bug with 3D multipolygons. 
+ - Added support for selecting tables in the datasource name.
+
+===============================================================================
+
 GDAL 1.2.4 - Overview of Changes
 --------------------------------
 
