@@ -4,7 +4,7 @@ GDAL_ROOT	=	../../..
 include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	ogrsfdriverregistrar.o ogrlayer.o ogrdatasource.o \
-		ogrsfdriver.o ogrregisterall.o
+		ogrsfdriver.o ogrregisterall.o ogr_gensql.o
 
 ifeq ($(HAVE_OGDI),yes)
 CFLAGS   :=	$(CFLAGS) -DOGDI_ENABLED
