@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/09/11 19:47:48  warmerda
+ * it seems Visual C++ doesnt like having a const int field in PCIDatums
+ *
  * Revision 1.2  2003/09/09 07:49:18  dron
  * Added exportToPCI() method.
  *
@@ -42,11 +45,11 @@
 
 CPL_CVSID("$Id$");
 
-typedef struct PCIDatums
+typedef struct 
 {
     const char  *pszPCIDatum;
-    const int   nEPSGCode;
-};
+    int   nEPSGCode;
+} PCIDatums;
 
 static PCIDatums aoDatums[] =
 {
