@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/17 17:18:14  warmerda
+ * Use CPL_MSBPTR32() instead of CPL_SWAPPTR32().
+ *
  * Revision 1.2  1999/05/17 01:36:42  warmerda
  * Added support for georeferencing values ... added ELASHeader.
  *
@@ -404,8 +407,8 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poDS->sHeader.XOffset != 0 )
     {
-        CPL_SWAP32PTR(&(poDS->sHeader.XPixSize));
-        CPL_SWAP32PTR(&(poDS->sHeader.YPixSize));
+        CPL_MSBPTR32(&(poDS->sHeader.XPixSize));
+        CPL_MSBPTR32(&(poDS->sHeader.YPixSize));
 
         poDS->adfGeoTransform[0] =
             (GInt32) CPL_MSBWORD32(poDS->sHeader.XOffset);
@@ -416,8 +419,8 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = -1.0 * ABS(poDS->sHeader.YPixSize);
 
-        CPL_SWAP32PTR(&(poDS->sHeader.XPixSize));
-        CPL_SWAP32PTR(&(poDS->sHeader.YPixSize));
+        CPL_MSBPTR32(&(poDS->sHeader.XPixSize));
+        CPL_MSBPTR32(&(poDS->sHeader.YPixSize));
 
         poDS->adfGeoTransform[0] -= poDS->adfGeoTransform[1] * 0.5;
         poDS->adfGeoTransform[3] -= poDS->adfGeoTransform[5] * 0.5;
@@ -608,8 +611,8 @@ CPLErr ELASDataset::SetGeoTransform( double * padfTransform )
     sHeader.XPixSize = ABS(adfGeoTransform[1]);
     sHeader.YPixSize = ABS(adfGeoTransform[5]);
 
-    CPL_SWAP32PTR(&(sHeader.XPixSize));
-    CPL_SWAP32PTR(&(sHeader.YPixSize));
+    CPL_MSBPTR32(&(sHeader.XPixSize));
+    CPL_MSBPTR32(&(sHeader.YPixSize));
 
     strncpy( sHeader.YLabel, "NOR ", 4 );
     strncpy( sHeader.XLabel, "EAS ", 4 );
@@ -619,10 +622,10 @@ CPLErr ELASDataset::SetGeoTransform( double * padfTransform )
     sHeader.Matrix[2] = 0.0;
     sHeader.Matrix[3] = -1.0;
     
-    CPL_SWAP32PTR(&(sHeader.Matrix[0]));
-    CPL_SWAP32PTR(&(sHeader.Matrix[1]));
-    CPL_SWAP32PTR(&(sHeader.Matrix[2]));
-    CPL_SWAP32PTR(&(sHeader.Matrix[3]));
+    CPL_MSBPTR32(&(sHeader.Matrix[0]));
+    CPL_MSBPTR32(&(sHeader.Matrix[1]));
+    CPL_MSBPTR32(&(sHeader.Matrix[2]));
+    CPL_MSBPTR32(&(sHeader.Matrix[3]));
     
     return( CE_None );
 }
