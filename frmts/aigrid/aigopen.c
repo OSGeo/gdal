@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/01/29 20:48:10  warmerda
+ * Make sure that if a bare "w001001.adf" is given to AIGOpen() it will
+ * work.  The name is changed to ".".
+ *
  * Revision 1.16  2003/07/08 15:36:10  warmerda
  * avoid warnings
  *
@@ -112,6 +116,9 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
                 break;
             }
         }
+
+        if( i == 0 )
+            strcpy(pszCoverName,".");
     }
 
 /* -------------------------------------------------------------------- */
