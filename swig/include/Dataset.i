@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.2  2005/02/15 16:53:36  kruland
+ * Removed use of vector<double> in the ?etGeoTransform() methods.  Use fixed
+ * length double array type instead.
+ *
  * Revision 1.1  2005/02/15 05:56:49  kruland
  * Created the Dataset shadow class definition.  Does not rely on the C++ api
  * in gdal_priv.h.  Need to remove the vector<>s and replace with fixed
@@ -44,23 +48,18 @@ public:
     return GDALGetProjectionRef( self );
   }
 
-  std::vector<double>
-  GetGeoTransform() {
-    double c_transform[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-    std::vector<double> retval(6);
-    if ( GDALGetGeoTransform( self, c_transform ) != 0 ) {
-      retval[1] = 1.0;
-      retval[5] = 1.0;
+  void GetGeoTransform( double_6 *c_transform ) {
+    if ( GDALGetGeoTransform( self, &(*c_transform)[0] ) != 0 ) {
+      (*c_transform)[0] = 0.0;
+      (*c_transform)[1] = 1.0;
+      (*c_transform)[2] = 0.0;
+      (*c_transform)[3] = 0.0;
+      (*c_transform)[4] = 0.0;
+      (*c_transform)[5] = 1.0;
     }
-    else {
-      std::copy( c_transform, c_transform+6, retval.begin() );
-    }
-    return retval;
   }
 
-  int SetGeoTransform( std::vector<double> trans ) {
-    double c_transform[6];
-    std::copy( trans.begin(), trans.begin()+6, c_transform );
+  CPLErr SetGeoTransform( double_6 c_transform ) {
     return GDALSetGeoTransform( self, c_transform );
   }
 
