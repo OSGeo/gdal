@@ -21,7 +21,7 @@ AC_CHECK_LIB(m,main,,,)
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h unistd.h dbmalloc.h dlfcn.h stdint.h limits.h)
+AC_CHECK_HEADERS(fcntl.h unistd.h dbmalloc.h dlfcn.h stdint.h limits.h locale.h)
 
 dnl Checks for library functions.
 MY_TEST_BIGENDIAN
@@ -29,6 +29,7 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(vsnprintf)
 AC_CHECK_FUNCS(gmtime_r)
 AC_CHECK_FUNCS(localtime_r)
+AC_CHECK_FUNCS(setlocale)
 
 dnl Check for 64 bit file API
 AC_HAVE_LONG_LONG
