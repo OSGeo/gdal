@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/01/30 19:15:55  warmerda
+ * added some docs
+ *
  * Revision 1.12  2002/07/12 22:37:05  warmerda
  * added CSLFetchBoolean
  *
@@ -74,9 +77,24 @@
 #include "cpl_error.h"
 #include "cpl_conv.h"
 
-/*=====================================================================
-                   Stringlist functions (strlist.c)
- =====================================================================*/
+/**
+ * \file cpl_string.h
+ *
+ * Various convenience functions for working with strings and string lists. 
+ *
+ * A StringList is just an array of strings with the last pointer being
+ * NULL.  An empty StringList may be either a NULL pointer, or a pointer to
+ * a pointer memory location with a NULL value.
+ *
+ * A common convention for StringLists is to use them to store name/value
+ * lists.  In this case the contents are treated like a dictionary of
+ * name/value pairs.  The actual data is formatted with each string having
+ * the format "<name>:<value>" (though "=" is also an acceptable separator). 
+ * A number of the functions in the file operate on name/value style
+ * string lists (such as CSLSetNameValue(), and CSLFetchNameValue()). 
+ *
+ */
+
 CPL_C_START
 
 char CPL_DLL **CSLAddString(char **papszStrList, const char *pszNewString);
