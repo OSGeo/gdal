@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/02/24 01:54:52  warmerda
+ * use CPLFormCIFilename so case mixups in CATD filenames will be fixed up
+ *
  * Revision 1.11  2001/01/19 21:20:29  warmerda
  * expanded tabs
  *
@@ -200,15 +203,9 @@ int SDTS_CATD::Read( const char * pszFilename )
         poEntry->pszFullPath = (char *)
             CPLMalloc(strlen(pszPrefixPath)+strlen(poEntry->pszFile)+2);
 
-        sprintf( poEntry->pszFullPath,
-                 "%s%c%s",
-                 pszPrefixPath,
-#ifdef WIN32
-                 '\\',
-#else
-                 '/',
-#endif
-                 poEntry->pszFile );
+        poEntry->pszFullPath = 
+            CPLStrdup(CPLFormCIFilename( pszPrefixPath, poEntry->pszFile,
+                                         NULL ));
         
 /* -------------------------------------------------------------------- */
 /*      Add the entry to the list.                                      */
