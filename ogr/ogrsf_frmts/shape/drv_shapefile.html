@@ -20,7 +20,8 @@ with one layer.<p>
 Currently the shapefile driver always returns polygons, rather than
 multipolygons, even for polygons with multiple outer rings.  This is a
 violation of the OGR (and Simple Features) data model, and will be corrected
-at some point in the future.  The new ESRI measure values are discarded. <p>
+at some point in the future.  The new ESRI measure values are discarded
+if encountered. <p>
 
 Shapefiles have no projection definition, and so the features handled via
 the shapefile driver will have no projection definition. <p>
