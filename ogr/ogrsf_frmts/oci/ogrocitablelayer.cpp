@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/01/15 05:36:14  warmerda
+ * start work on creating feature geometry with SRID
+ *
  * Revision 1.17  2003/01/14 22:15:02  warmerda
  * added logic to order rings properly
  *
@@ -137,6 +140,7 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
     pszGeomName = CPLStrdup( pszGeomColIn );
 
     nSRID = nSRIDIn;
+    CPLDebug( "OCI", "OGROCITableLayer() - SRID = %d", nSRID );
     poSRS = poDSIn->FetchSRS( nSRID );
     if( poSRS != NULL )
         poSRS->Reference();
@@ -817,8 +821,13 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
 /* -------------------------------------------------------------------- */
 /*      Prepare eleminfo section.                                       */
 /* -------------------------------------------------------------------- */
-        oElemInfo.Appendf( 90, "%s(%d,NULL,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(",
-                           SDO_GEOMETRY, nDimension == 2 ? 2003 : 3003 );
+	oElemInfo.Append( SDO_GEOMETRY );
+	oElemInfo.Appendf( 20, "(%d,", nDimension == 2 ? 2003 : 3003 );
+	if( nSRID == -1 )
+	    oElemInfo.Append( "NULL" );
+	else
+	    oElemInfo.Appendf( 20, "%d", nSRID );
+	oElemInfo.Append( ",NULL,MDSYS.SDO_ELEM_INFO_ARRAY(" );
 
 /* -------------------------------------------------------------------- */
 /*      Translate and return.                                           */
