@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/04/15 20:52:31  warmerda
+ * treat geocentic like geographic
+ *
  * Revision 1.23  2004/04/02 20:44:37  warmerda
  * preserve APBB (actual bits per pixel) field as metadata
  *
@@ -227,7 +230,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                 pdfXY[0] = atof(NITFGetField( szTemp, pszCoordPair, 2, 6 ));
                 pdfXY[1] = atof(NITFGetField( szTemp, pszCoordPair, 8, 7 ));
             }
-            else if( psImage->chICORDS == 'G' )
+            else if( psImage->chICORDS == 'G' || psImage->chICORDS == 'C' )
             {
                 pdfXY[1] = 
                     atof(NITFGetField( szTemp, pszCoordPair, 0, 2 )) 
