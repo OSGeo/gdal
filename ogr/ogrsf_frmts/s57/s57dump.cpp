@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/09/05 19:12:05  warmerda
+ * added RETURN_PRIMITIVES support to get low level prims
+ *
  * Revision 1.13  2002/05/14 21:33:30  warmerda
  * use macros for options, pass PRESERVE_EMPTY_NUMBERS opt
  *
@@ -84,10 +87,12 @@ int main( int nArgc, char ** papszArgv )
 {
     char        **papszOptions = NULL;
     int         bUpdate = TRUE;
+    int         bReturnPrimitives = FALSE;
     
     if( nArgc < 2 )
     {
-        printf( "Usage: s57dump [-pen] [-split] [-lnam] [-no-update] filename\n" );
+        printf( "Usage: s57dump [-pen] [-split] [-lnam] [-return-prim] [-no-update]\n"
+                "               filename\n" );
         exit( 1 );
     }
 
@@ -105,6 +110,13 @@ int main( int nArgc, char ** papszArgv )
             papszOptions =
                 CSLSetNameValue( papszOptions, S57O_PRESERVE_EMPTY_NUMBERS,
                                  "ON" );
+        else if( EQUALN(papszArgv[iArg],"-return-prim",12) )
+        {
+            papszOptions =
+                CSLSetNameValue( papszOptions, S57O_RETURN_PRIMITIVES,
+                                 "ON" );
+            bReturnPrimitives = TRUE;
+        }
         else if( EQUALN(papszArgv[iArg],"-lnam",4) )
             papszOptions =
                 CSLSetNameValue( papszOptions, S57O_LNAM_REFS, "ON" );
@@ -193,6 +205,18 @@ int main( int nArgc, char ** papszArgv )
                 oReader.GenerateGeomFeatureDefn( wkbPolygon ) );
             oReader.AddFeatureDefn(
                 oReader.GenerateGeomFeatureDefn( wkbNone ) );
+        }
+
+        if( bReturnPrimitives )
+        {
+            oReader.AddFeatureDefn( 
+                oReader.GenerateVectorPrimitiveFeatureDefn( RCNM_VI ) );
+            oReader.AddFeatureDefn( 
+                oReader.GenerateVectorPrimitiveFeatureDefn( RCNM_VC ) );
+            oReader.AddFeatureDefn( 
+                oReader.GenerateVectorPrimitiveFeatureDefn( RCNM_VE ) );
+            oReader.AddFeatureDefn( 
+                oReader.GenerateVectorPrimitiveFeatureDefn( RCNM_VF ) );
         }
     
         OGRFeature      *poFeature;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2003/09/05 19:12:05  warmerda
+ * added RETURN_PRIMITIVES support to get low level prims
+ *
  * Revision 1.37  2003/01/02 21:45:23  warmerda
  * move OGRBuildPolygonsFromEdges into C API
  *
@@ -172,6 +175,10 @@ S57Reader::S57Reader( const char * pszFilename )
     bAutoReadUpdates = TRUE;
 
     nNextFEIndex = 0;
+    nNextVIIndex = 0;
+    nNextVCIndex = 0;
+    nNextVEIndex = 0;
+    nNextVFIndex = 0;
 
     iPointOffset = 0;
     poMultiPoint = NULL;
@@ -180,6 +187,7 @@ S57Reader::S57Reader( const char * pszFilename )
     bSplitMultiPoint = FALSE;
     bGenerateLNAM = FALSE;
     bAddSOUNDGDepth = FALSE;
+    bReturnPrimitives = FALSE;
 
     bMissingWarningIssued = FALSE;
     bAttrWarningIssued = FALSE;
@@ -243,6 +251,10 @@ int S57Reader::Open( int bTestOpen )
     }
 
     nNextFEIndex = 0;
+    nNextVIIndex = 0;
+    nNextVCIndex = 0;
+    nNextVEIndex = 0;
+    nNextVFIndex = 0;
     
     return TRUE;
 }
@@ -368,6 +380,13 @@ void S57Reader::SetOptions( char ** papszOptionsIn )
         bPreserveEmptyNumbers = TRUE;
     else
         bPreserveEmptyNumbers = FALSE;
+
+    pszOptionValue = CSLFetchNameValue( papszOptions, S57O_RETURN_PRIMITIVES );
+    if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
+        bReturnPrimitives = TRUE;
+    else
+        bReturnPrimitives = FALSE;
+
 }
 
 /************************************************************************/
@@ -389,6 +408,10 @@ void S57Reader::Rewind()
 {
     ClearPendingMultiPoint();
     nNextFEIndex = 0;
+    nNextVIIndex = 0;
+    nNextVCIndex = 0;
+    nNextVEIndex = 0;
+    nNextVFIndex = 0;
 }
 
 /************************************************************************/
@@ -484,13 +507,43 @@ void S57Reader::Ingest()
 /*                           SetNextFEIndex()                           */
 /************************************************************************/
 
-void S57Reader::SetNextFEIndex( int nNewIndex )
+void S57Reader::SetNextFEIndex( int nNewIndex, int nRCNM )
 
 {
-    if( nNextFEIndex != nNewIndex )
-        ClearPendingMultiPoint();
-    
-    nNextFEIndex = nNewIndex;
+    if( nRCNM == RCNM_VI )
+        nNextVIIndex = nNewIndex;
+    else if( nRCNM == RCNM_VC )
+        nNextVCIndex = nNewIndex;
+    else if( nRCNM == RCNM_VE )
+        nNextVEIndex = nNewIndex;
+    else if( nRCNM == RCNM_VF )
+        nNextVFIndex = nNewIndex;
+    else
+    {
+        if( nNextFEIndex != nNewIndex )
+            ClearPendingMultiPoint();
+        
+        nNextFEIndex = nNewIndex;
+    }
+}
+
+/************************************************************************/
+/*                           GetNextFEIndex()                           */
+/************************************************************************/
+
+int S57Reader::GetNextFEIndex( int nRCNM )
+
+{
+    if( nRCNM == RCNM_VI )
+        return nNextVIIndex;
+    else if( nRCNM == RCNM_VC )
+        return nNextVCIndex;
+    else if( nRCNM == RCNM_VE )
+        return nNextVEIndex;
+    else if( nRCNM == RCNM_VF )
+        return nNextVFIndex;
+    else
+        return nNextFEIndex;
 }
 
 /************************************************************************/
@@ -503,6 +556,9 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
     if( !bFileIngested )
         Ingest();
 
+/* -------------------------------------------------------------------- */
+/*      Special case for "in progress" multipoints being split up.      */
+/* -------------------------------------------------------------------- */
     if( poMultiPoint != NULL )
     {
         if( poTarget == NULL || poTarget == poMultiPoint->GetDefnRef() )
@@ -514,7 +570,76 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
             ClearPendingMultiPoint();
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Next vector feature?                                            */
+/* -------------------------------------------------------------------- */
+    if( bReturnPrimitives )
+    {
+        int nRCNM = 0;
+        int *pnCounter = NULL;
+
+        if( poTarget == NULL )
+        {
+            if( nNextVIIndex < oVI_Index.GetCount() )
+            {
+                nRCNM = RCNM_VI;
+                pnCounter = &nNextVIIndex;
+            }
+            else if( nNextVCIndex < oVC_Index.GetCount() )
+            {
+                nRCNM = RCNM_VC;
+                pnCounter = &nNextVCIndex;
+            }
+            else if( nNextVEIndex < oVE_Index.GetCount() )
+            {
+                nRCNM = RCNM_VE;
+                pnCounter = &nNextVEIndex;
+            }
+            else if( nNextVFIndex < oVF_Index.GetCount() )
+            {
+                nRCNM = RCNM_VF;
+                pnCounter = &nNextVFIndex;
+            }
+        }
+        else
+        {
+            if( EQUAL(poTarget->GetName(),OGRN_VI) )
+            {
+                nRCNM = RCNM_VI;
+                pnCounter = &nNextVIIndex;
+            }
+            else if( EQUAL(poTarget->GetName(),OGRN_VC) )
+            {
+                nRCNM = RCNM_VC;
+                pnCounter = &nNextVCIndex;
+            }
+            else if( EQUAL(poTarget->GetName(),OGRN_VE) )
+            {
+                nRCNM = RCNM_VE;
+                pnCounter = &nNextVEIndex;
+            }
+            else if( EQUAL(poTarget->GetName(),OGRN_VF) )
+            {
+                nRCNM = RCNM_VF;
+                pnCounter = &nNextVFIndex;
+            }
+        }
+
+        if( nRCNM != 0 )
+        {
+            OGRFeature *poFeature = ReadVector( *pnCounter, nRCNM );
+            if( poFeature != NULL )
+            {
+                *pnCounter += 1;
+                return poFeature;
+            }
+        }
+    }
         
+/* -------------------------------------------------------------------- */
+/*      Next feature.                                                   */
+/* -------------------------------------------------------------------- */
     while( nNextFEIndex < oFE_Index.GetCount() )
     {
         OGRFeature      *poFeature;
@@ -831,6 +956,163 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
 
     poFeature->SetField( "LNAM_REFS", papszRefs );
     CSLDestroy( papszRefs );
+}
+
+/************************************************************************/
+/*                             ReadVector()                             */
+/*                                                                      */
+/*      Read a vector primitive objects based on the type (RCNM_)       */
+/*      and index within the related index.                             */
+/************************************************************************/
+
+OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
+
+{
+    DDFRecordIndex *poIndex;
+    const char *pszFDName = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      What type of vector are we fetching.                            */
+/* -------------------------------------------------------------------- */
+    switch( nRCNM )
+    {
+      case RCNM_VI:
+        poIndex = &oVI_Index;
+        pszFDName = OGRN_VI;
+        break;
+        
+      case RCNM_VC:
+        poIndex = &oVC_Index;
+        pszFDName = OGRN_VC;
+        break;
+        
+      case RCNM_VE:
+        poIndex = &oVE_Index;
+        pszFDName = OGRN_VE;
+        break;
+
+      case RCNM_VF:
+        poIndex = &oVF_Index;
+        pszFDName = OGRN_VF;
+        break;
+        
+      default:
+        CPLAssert( FALSE );
+        return NULL;
+    }
+
+    if( nFeatureId < 0 || nFeatureId >= poIndex->GetCount() )
+        return NULL;
+
+    DDFRecord *poRecord = poIndex->GetByIndex( nFeatureId );
+
+/* -------------------------------------------------------------------- */
+/*      Find the feature definition to use.                             */
+/* -------------------------------------------------------------------- */
+    OGRFeatureDefn *poFDefn = NULL;
+
+    for( int i = 0; i < nFDefnCount; i++ )
+    {
+        if( EQUAL(papoFDefnList[i]->GetName(),pszFDName) )		
+        {
+            poFDefn = papoFDefnList[i];
+            break;
+        }
+    }
+    
+    if( poFDefn == NULL )
+    {
+        CPLAssert( FALSE );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create feature, and assign standard fields.                     */
+/* -------------------------------------------------------------------- */
+    OGRFeature *poFeature = new OGRFeature( poFDefn );
+    
+    poFeature->SetFID( nFeatureId );
+
+    poFeature->SetField( "RCNM", 
+                         poRecord->GetIntSubfield( "VRID", 0, "RCNM",0) );
+    poFeature->SetField( "RCID", 
+                         poRecord->GetIntSubfield( "VRID", 0, "RCID",0) );
+    poFeature->SetField( "RVER", 
+                         poRecord->GetIntSubfield( "VRID", 0, "RVER",0) );
+    poFeature->SetField( "RUIN", 
+                         poRecord->GetIntSubfield( "VRID", 0, "RUIN",0) );
+
+/* -------------------------------------------------------------------- */
+/*      Collect point geometries.                                       */
+/* -------------------------------------------------------------------- */
+    if( nRCNM == RCNM_VI || nRCNM == RCNM_VC ) 
+    {
+        double dfX=0.0, dfY=0.0, dfZ=0.0;
+
+        if( poRecord->FindField( "SG2D" ) != NULL )
+        {
+            dfX = poRecord->GetIntSubfield("SG2D",0,"XCOO",0) / (double)nCOMF;
+            dfY = poRecord->GetIntSubfield("SG2D",0,"YCOO",0) / (double)nCOMF;
+        }
+        else if( poRecord->FindField( "SG3D" ) != NULL )
+        {
+            dfX = poRecord->GetIntSubfield("SG3D",0,"XCOO",0) / (double)nCOMF;
+            dfY = poRecord->GetIntSubfield("SG3D",0,"YCOO",0) / (double)nCOMF;
+            dfZ = poRecord->GetIntSubfield("SG3D",0,"VE3D",0) / (double)nSOMF;
+        }
+
+        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Collect an edge geometry.                                       */
+/* -------------------------------------------------------------------- */
+    else if( nRCNM == RCNM_VE && poRecord->FindField( "SG2D" ) != NULL )
+    {
+        int i, nVCount = poRecord->FindField("SG2D")->GetRepeatCount();
+        OGRLineString *poLine = new OGRLineString();
+
+        poLine->setNumPoints( nVCount );
+        
+        for( i = 0; i < nVCount; i++ )
+        {
+            poLine->setPoint( 
+                i, 
+                poRecord->GetIntSubfield("SG2D",0,"XCOO",i) / (double)nCOMF,
+                poRecord->GetIntSubfield("SG2D",0,"YCOO",i) / (double)nCOMF );
+        }
+        poFeature->SetGeometryDirectly( poLine );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Special edge fields.                                            */
+/* -------------------------------------------------------------------- */
+        
+    if( nRCNM == RCNM_VE )
+    {
+        poFeature->SetField( "NAME_RCNM_0", RCNM_VC );
+        poFeature->SetField( "NAME_RCID_0", 
+                             ParseName( poRecord->FindField( "VRPT" ), 0 ) );
+        poFeature->SetField( "ORNT_0", 
+                             poRecord->GetIntSubfield("VRPT",0,"ORNT",0) );
+        poFeature->SetField( "USAG_0", 
+                             poRecord->GetIntSubfield("VRPT",0,"USAG",0) );
+        poFeature->SetField( "MASK_0", 
+                             poRecord->GetIntSubfield("VRPT",0,"MASK",0) );
+                             
+        
+        poFeature->SetField( "NAME_RCNM_1", RCNM_VC );
+        poFeature->SetField( "NAME_RCID_1", 
+                             ParseName( poRecord->FindField( "VRPT" ), 1 ) );
+        poFeature->SetField( "ORNT_1", 
+                             poRecord->GetIntSubfield("VRPT",0,"ORNT",1) );
+        poFeature->SetField( "USAG_1", 
+                             poRecord->GetIntSubfield("VRPT",0,"USAG",1) );
+        poFeature->SetField( "MASK_1", 
+                             poRecord->GetIntSubfield("VRPT",0,"MASK",1) );
+    }
+
+    return poFeature;
 }
 
 /************************************************************************/
@@ -1506,6 +1788,95 @@ OGRFeatureDefn *S57Reader::GenerateGeomFeatureDefn( OGRwkbGeometryType eGType )
         return NULL;
 
     GenerateStandardAttributes( poFDefn );
+
+    return poFDefn;
+}
+
+/************************************************************************/
+/*                 GenerateVectorPrimitiveFeatureDefn()                 */
+/************************************************************************/
+
+OGRFeatureDefn *S57Reader::GenerateVectorPrimitiveFeatureDefn( int nRCNM )
+
+{
+    OGRFeatureDefn      *poFDefn = NULL;
+ 
+    if( nRCNM == RCNM_VI )
+    {
+        poFDefn = new OGRFeatureDefn( OGRN_VI );
+        poFDefn->SetGeomType( wkbPoint );
+    }
+    else if( nRCNM == RCNM_VC )
+    {
+        poFDefn = new OGRFeatureDefn( OGRN_VC );
+        poFDefn->SetGeomType( wkbPoint );
+    }
+    else if( nRCNM == RCNM_VE )
+    {
+        poFDefn = new OGRFeatureDefn( OGRN_VE );
+        poFDefn->SetGeomType( wkbLineString );
+    }
+    else if( nRCNM == RCNM_VF )
+    {
+        poFDefn = new OGRFeatureDefn( OGRN_VF );
+        poFDefn->SetGeomType( wkbPolygon );
+    }
+    else
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Core vector primitive attributes                                */
+/* -------------------------------------------------------------------- */
+    OGRFieldDefn oField("",OFTInteger);
+
+    oField.Set( "RCNM", OFTInteger, 3, 0 );
+    poFDefn->AddFieldDefn( &oField );
+
+    oField.Set( "RCID", OFTInteger, 8, 0 );
+    poFDefn->AddFieldDefn( &oField );
+
+    oField.Set( "RVER", OFTInteger, 2, 0 );
+    poFDefn->AddFieldDefn( &oField );
+
+    oField.Set( "RUIN", OFTInteger, 2, 0 );
+    poFDefn->AddFieldDefn( &oField );
+
+/* -------------------------------------------------------------------- */
+/*      For lines we want to capture the point links for the first      */
+/*      and last nodes.                                                 */
+/* -------------------------------------------------------------------- */
+    if( nRCNM == RCNM_VE )
+    {
+        oField.Set( "NAME_RCNM_0", OFTInteger, 3, 0 );
+        poFDefn->AddFieldDefn( &oField );
+
+        oField.Set( "NAME_RCID_0", OFTInteger, 8, 0 );
+        poFDefn->AddFieldDefn( &oField );
+
+        oField.Set( "ORNT_0", OFTInteger, 3, 0 );
+        poFDefn->AddFieldDefn( &oField );
+
+        oField.Set( "USAG_0", OFTInteger, 3, 0 );
+        poFDefn->AddFieldDefn( &oField );
+
+        oField.Set( "MASK_0", OFTInteger, 3, 0 );
+        poFDefn->AddFieldDefn( &oField );
+
+        oField.Set( "NAME_RCNM_1", OFTInteger, 3, 0 );
+        poFDefn->AddFieldDefn( &oField );
+
+        oField.Set( "NAME_RCID_1", OFTInteger, 8, 0 );
+        poFDefn->AddFieldDefn( &oField );
+
+        oField.Set( "ORNT_1", OFTInteger, 3, 0 );
+        poFDefn->AddFieldDefn( &oField );
+
+        oField.Set( "USAG_1", OFTInteger, 3, 0 );
+        poFDefn->AddFieldDefn( &oField );
+
+        oField.Set( "MASK_1", OFTInteger, 3, 0 );
+        poFDefn->AddFieldDefn( &oField );
+    }
 
     return poFDefn;
 }
