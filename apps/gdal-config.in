@@ -5,6 +5,7 @@ Usage: gdal-config [OPTIONS]
 Options:
 	[--prefix[=DIR]]
 	[--libs]
+	[--dep-libs]
 	[--cflags]
 	[--version]
 	[--ogr-enabled]
@@ -20,6 +21,10 @@ fi
 case $1 in 
   --libs)
     echo $CONFIG_LIBS
+    ;;
+
+  --dep-libs)
+    echo $CONFIG_DEP_LIBS
     ;;
 
   --cflags)
