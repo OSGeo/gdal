@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.29  2001/02/06 16:34:30  warmerda
+ * moved format registration entry points to gdal_frmts.h
+ *
  * Revision 1.28  2001/01/15 14:32:30  warmerda
  * added envisat
  *
@@ -112,35 +115,7 @@
  */
 
 #include "gdal_priv.h"
-
-CPL_C_START
-void GDALRegister_GDB(void);
-void GDALRegister_GTiff(void);
-void GDALRegister_GXF(void);
-void GDALRegister_OGDI(void);
-void GDALRegister_HFA(void);
-void GDALRegister_AIGrid(void);
-void GDALRegister_AIGrid2(void);
-void GDALRegister_CEOS(void);
-void GDALRegister_SAR_CEOS(void);
-void GDALRegister_SDTS(void);
-void GDALRegister_ELAS(void);
-void GDALRegister_EHdr(void);
-void GDALRegister_PAux(void);
-void GDALRegister_EFF(void);
-void GDALRegister_DOQ1(void);
-void GDALRegister_DTED(void);
-void GDALRegister_MFF(void);
-void GDALRegister_HKV(void);
-void GDALRegister_PNG(void);
-void GDALRegister_JPEG(void);
-void GDALRegister_MEM(void);
-void GDALRegister_JDEM(void);
-void GDALRegister_GRASS(void);
-void GDALRegister_PNM(void);
-void GDALRegister_GIF(void);
-void GDALRegister_Envisat(void);
-CPL_C_END
+#include "gdal_frmts.h"
 
 #ifdef notdef
 // we may have a use for this some day
