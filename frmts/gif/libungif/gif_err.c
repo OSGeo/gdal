@@ -18,17 +18,20 @@ int _GifError = 0;
 
 #ifdef SYSV
 static char *VersionStr =
-        "Gif library module,\t\tGershon Elber\n\
-	(C) Copyright 1989 Gershon Elber, Non commercial use only.\n";
+        "Gif library module,\t\tEric S. Raymond\n\
+	(C) Copyright 1997 Eric S. Raymond\n";
 #else
 static char *VersionStr =
 	PROGRAM_NAME
 	"	IBMPC "
 	GIF_LIB_VERSION
-	"	Gershon Elber,	"
+	"	Eric S. Raymond,	"
 	__DATE__ ",   " __TIME__ "\n"
-	"(C) Copyright 1989 Gershon Elber, Non commercial use only.\n";
+	"(C) Copyright 1997 Eric S. Raymond\n";
 #endif /* SYSV */
+
+/* this is just here to prevent unused variable warnings. */
+static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : VersionStr ); }
 
 /*****************************************************************************
 * Return the last GIF error (0 if none) and reset the error.		     *

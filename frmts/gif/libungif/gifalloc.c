@@ -196,7 +196,7 @@ void ApplyTranslation(SavedImage *Image, GifPixelType Translation[])
     register int RasterSize = Image->ImageDesc.Height * Image->ImageDesc.Width;
 
     for (i = 0; i < RasterSize; i++)
-	Image->RasterBits[i] = Translation[(int) Image->RasterBits[i]];
+	Image->RasterBits[i] = Translation[(int)Image->RasterBits[i]];
 }
 
 /******************************************************************************
