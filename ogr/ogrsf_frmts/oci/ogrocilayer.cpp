@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/01/06 17:58:50  warmerda
+ * restructure geometry translation, add FID support
+ *
  * Revision 1.3  2002/12/29 19:43:59  warmerda
  * avoid some warnings
  *
@@ -61,6 +64,8 @@ OGROCILayer::OGROCILayer()
     pszQueryStatement = NULL;
     pszGeomName = NULL;
     iGeomColumn = -1;
+    pszFIDName = NULL;
+    iFIDColumn = -1;
 
     hLastGeom = NULL;
     hLastGeomInd = NULL;
@@ -79,6 +84,9 @@ OGROCILayer::~OGROCILayer()
 
     CPLFree( pszGeomName );
     pszGeomName = NULL;
+
+    CPLFree( pszFIDName );
+    pszFIDName = NULL;
 
     CPLFree( pszQueryStatement );
     pszQueryStatement = NULL;
@@ -156,6 +164,8 @@ OGRFeature *OGROCILayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
 /*      Are we in some sort of error condition?                         */
 /* -------------------------------------------------------------------- */
+    hLastGeom = NULL;
+
     char **papszResult = poStatement->SimpleFetchRow();
 
     if( papszResult == NULL )
@@ -175,6 +185,9 @@ OGRFeature *OGROCILayer::GetNextRawFeature()
     poFeature->SetFID( iNextShapeId );
     iNextShapeId++;
 
+    if( iFIDColumn != -1 && papszResult[iFIDColumn] != NULL )
+        poFeature->SetFID( atoi(papszResult[iFIDColumn]) );
+
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
         if( papszResult[iField] != NULL )
@@ -186,14 +199,17 @@ OGRFeature *OGROCILayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
     if( iGeomColumn != -1 )
     {
+        poFeature->SetGeometryDirectly( TranslateGeometry() );
+
+#ifdef notdef
         OGROCISession      *poSession = poDS->GetSession();
 
-        poFeature->SetGeometryDirectly( TranslateGeometry() );
-        if( poFeature->GetGeometryRef() != NULL )
+        if( poFeature->GetGeometryRef() != NULL && hLastGeom != NULL )
             poSession->Failed( 
                 OCIObjectFree(poSession->hEnv, poSession->hError, 
                               (dvoid *) &hLastGeom, 
                               (ub2)OCI_OBJECTFREE_FORCE) );
+#endif
 
         hLastGeom = NULL;
         hLastGeomInd = NULL;
@@ -441,14 +457,45 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
         else 
         {
             CPLAssert( poCollection != NULL );
-            poCollection->addGeometryDirectly( poGeom );
+            if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint )
+            {
+                int  i;
+                OGRMultiPoint *poMP = (OGRMultiPoint *) poGeom;
+
+                for( i = 0; i < poMP->getNumGeometries(); i++ )
+                    poCollection->addGeometry( poMP->getGeometryRef(i) );
+                delete poMP;
+            }
+            else if( nEType % 1000 == 3 )
+            {
+                /* its one poly ring, create new poly or add to existing */
+                if( nEType > 999 && nEType < 1999 )
+                {
+                    if( poPolygon != NULL 
+                        && poPolygon->getExteriorRing() != NULL )
+                    {
+                        poCollection->addGeometryDirectly( poPolygon );
+                        poPolygon = NULL;
+                    }
+
+                    poPolygon = new OGRPolygon();
+                }
+                
+                poPolygon->addRingDirectly( (OGRLinearRing *) poGeom );
+            }
+            else
+                poCollection->addGeometryDirectly( poGeom );
         }
     }
+
+    if( poCollection != NULL 
+        && poPolygon != NULL )
+        poCollection->addGeometryDirectly( poPolygon );
 
 /* -------------------------------------------------------------------- */
 /*      Return resulting collection geometry.                           */
 /* -------------------------------------------------------------------- */
-    if( poPolygon != NULL )
+    if( poCollection == NULL )
         return poPolygon;
     else
         return poCollection;
@@ -550,6 +597,7 @@ OGROCILayer::TranslateGeometryElement( int nGType, int nDimension,
 
         return poLS;
     }
+
 /* -------------------------------------------------------------------- */
 /*      Handle rectangle definitions ... translate into a linear ring.  */
 /* -------------------------------------------------------------------- */
