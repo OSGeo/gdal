@@ -1,6 +1,6 @@
 GDAL_ROOT	=	../..
 
-VERSION =	1.0
+VERSION =	1.1
 
 include $(GDAL_ROOT)/GDALmake.opt
 
