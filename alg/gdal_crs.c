@@ -51,6 +51,9 @@
  ***************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/12/07 17:09:50  warmerda
+ * re-enable 3rd order even though unstable
+ *
  * Revision 1.3  2002/12/06 17:58:00  warmerda
  * fix a few bugs
  *
@@ -140,7 +143,7 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
     if( nReqOrder == 0 )
     {
         if( nGCPCount >= 10 )
-            nReqOrder = 2;
+            nReqOrder = 3;
         else if( nGCPCount >= 6 )
             nReqOrder = 2;
         else
