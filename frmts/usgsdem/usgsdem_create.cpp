@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.17  2004/12/17 19:49:06  fwarmerdam
+ * Applied patch for min/max elevation values per bug 709.
+ *
  * Revision 1.16  2004/12/10 21:59:55  fwarmerdam
  * added ZRESOLUTION support from Hunter Blanks (bug 708)
  *
@@ -109,6 +112,7 @@ typedef struct
 
     double      dfHorizStepSize;
     double      dfVertStepSize;
+    double      dfElevStepSize;
 
     char 	**papszOptions;
     int         bStrict;
@@ -569,6 +573,10 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
             nVoid++;
     }
 
+    /* take into account z resolutions that are not 1.0 */
+    nMin = (int) floor(nMin * psWInfo->dfElevStepSize);
+    nMax = (int) ceil(nMax * psWInfo->dfElevStepSize);
+    
     USGSDEMPrintDouble( achARec + 738, (double) nMin );
     USGSDEMPrintDouble( achARec + 762, (double) nMax );
 
@@ -601,30 +609,7 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
             psWInfo->dfVertStepSize );
     }
 
-/* -------------------------------------------------------------------- */
-/*      Allow override of z resolution, but default to 1.0.             */
-/* -------------------------------------------------------------------- */
-     const char *zResolution = CSLFetchNameValue(
-             psWInfo->papszOptions, "ZRESOLUTION" );
-
-     if( zResolution == NULL || EQUAL(zResolution,"DEFAULT") )
-     {
-         USGSDEMPrintSingle( achARec + 840, 1.0 );
-     }
-     else 
-     {
-         double zRes = CPLScanDouble(
-                 zResolution, strlen(zResolution), NULL);
-         if ( zRes <= 0 )
-         {
-             /* don't allow negative values */
-             USGSDEMPrintSingle( achARec + 840, 1.0);
-         }
-         else
-         {
-             USGSDEMPrintSingle( achARec + 840, zRes );
-         }
-     }
+    USGSDEMPrintSingle( achARec + 840, psWInfo->dfElevStepSize);
 
 /* -------------------------------------------------------------------- */
 /*      Rows and Columns of profiles.                                   */
@@ -846,6 +831,10 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
             }
         }
     }
+    
+    /* take into account z resolutions that are not 1.0 */
+    nMin = (int) floor(nMin * psWInfo->dfElevStepSize);
+    nMax = (int) ceil(nMax * psWInfo->dfElevStepSize);
 
     USGSDEMPrintDouble( achBuffer +  96, (double) nMin );
     USGSDEMPrintDouble( achBuffer +  120, (double) nMax );
@@ -1462,6 +1451,27 @@ USGSDEMCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     sWInfo.dfHorizStepSize = (sWInfo.dfURX - sWInfo.dfULX) / (sWInfo.nXSize-1);
     sWInfo.dfVertStepSize = (sWInfo.dfURY - sWInfo.dfLRY) / (sWInfo.nYSize-1);
 
+/* -------------------------------------------------------------------- */
+/*      Allow override of z resolution, but default to 1.0.             */
+/* -------------------------------------------------------------------- */
+     const char *zResolution = CSLFetchNameValue(
+             sWInfo.papszOptions, "ZRESOLUTION" );
+
+     if( zResolution == NULL || EQUAL(zResolution,"DEFAULT") )
+     {
+         sWInfo.dfElevStepSize = 1.0;
+     }
+     else 
+     {
+         sWInfo.dfElevStepSize = CPLScanDouble(
+                 zResolution, strlen(zResolution), NULL);
+         if ( sWInfo.dfElevStepSize <= 0 )
+         {
+             /* don't allow negative values */
+             sWInfo.dfElevStepSize = 1.0;
+         }
+     }
+ 
 /* -------------------------------------------------------------------- */
 /*      Initialize for special product configurations.                  */
 /* -------------------------------------------------------------------- */
