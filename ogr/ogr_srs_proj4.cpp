@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/12/22 15:39:43  warmerda
+ * fix to differentiate WGS variants
+ *
  * Revision 1.5  1999/12/13 16:29:59  warmerda
  * Added improved units, and ellipse support.
  *
@@ -361,7 +364,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
         pszPROJ4Ellipse = "GRS67";	/* GRS 1967 */
     }
     else if( ABS(dfSemiMajor-6378137) < 0.01
-             && ABS(dfInvFlattening-298.257222101) < 0.0001 )
+             && ABS(dfInvFlattening-298.257222101) < 0.000001 )
     {
         pszPROJ4Ellipse = "GRS80";	/* GRS 1980 */
     }
@@ -411,7 +414,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
         pszPROJ4Ellipse = "WGS72";	
     }
     else if( ABS(dfSemiMajor-6378137.0) < 0.01
-             && ABS(dfInvFlattening-298.257223563) < 0.0001 )
+             && ABS(dfInvFlattening-298.257223563) < 0.000001 )
     {
         pszPROJ4Ellipse = "WGS84";
     }
