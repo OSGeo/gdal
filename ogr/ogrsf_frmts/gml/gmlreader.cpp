@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/11/17 17:17:31  fwarmerdam
+ * added GML_FIELDTYPES config option
+ *
  * Revision 1.18  2004/10/05 20:53:00  fwarmerdam
  * Added try around some setup stuff to try and recover somewhat gracefully.
  *
@@ -579,7 +582,13 @@ void GMLReader::SetFeatureProperty( const char *pszElement,
             return;
         }
 
-        poClass->AddProperty( new GMLPropertyDefn( pszElement, pszElement ) );
+        GMLPropertyDefn *poPDefn = new GMLPropertyDefn(pszElement,pszElement);
+
+        if( EQUAL(CPLGetConfigOption( "GML_FIELDTYPES", ""), "ALWAYS_STRING") )
+            poPDefn->SetType( GMLPT_String );
+
+        poClass->AddProperty( poPDefn );
+
     }
 
 /* -------------------------------------------------------------------- */
