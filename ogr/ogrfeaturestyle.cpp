@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/06/25 14:47:31  warmerda
+ * CPL_DLL export style api
+ *
  * Revision 1.8  2002/04/11 21:02:20  warmerda
  * Fix memory leak in case of parse error reported by Wanshou Jiang.
  *
@@ -61,6 +64,10 @@
 #include "ogr_featurestyle.h"
 
 CPL_CVSID("$Id$");
+
+CPL_C_START
+void OGRFeatureStylePuller() {}
+CPL_C_END
 
 /****************************************************************************/
 /*                Class Parameter (used in the String)                      */

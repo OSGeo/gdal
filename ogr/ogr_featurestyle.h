@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/06/25 14:47:31  warmerda
+ * CPL_DLL export style api
+ *
  * Revision 1.5  2001/03/17 01:43:53  warmerda
  * Don't leave in trailing comma in enum (as submitted by Dale).
  *
@@ -168,7 +171,7 @@ typedef struct ogr_style_value
 //Everytime a pszStyleString gived in parameter is NULL, 
 //    the StyleString defined in the Mgr will be use.
 
-class OGRStyleTable
+class CPL_DLL OGRStyleTable
 {
 public:
     char **m_papszStyleTable;
@@ -191,7 +194,7 @@ public:
 
 class OGRStyleTool;
 
-class OGRStyleMgr
+class CPL_DLL OGRStyleMgr
 {
 public:
     char *m_pszStyleString;
@@ -231,7 +234,7 @@ public:
 
 };
 
-class OGRStyleTool
+class CPL_DLL OGRStyleTool
 {
 public:
     
@@ -308,9 +311,9 @@ for Each style tools.*/
 
 };
 
-extern OGRStyleParamId asStylePen[];
+extern OGRStyleParamId CPL_DLL asStylePen[];
 
-class OGRStylePen : public OGRStyleTool
+class CPL_DLL OGRStylePen : public OGRStyleTool
 {
 public:
 
@@ -379,9 +382,9 @@ public:
     
 };
 
-extern OGRStyleParamId asStyleBrush[];
+extern OGRStyleParamId CPL_DLL asStyleBrush[];
 
-class OGRStyleBrush : public OGRStyleTool
+class CPL_DLL OGRStyleBrush : public OGRStyleTool
 {
 public:
 
@@ -450,9 +453,9 @@ public:
     
 };
 
-extern OGRStyleParamId asStyleSymbol[];
+extern OGRStyleParamId CPL_DLL asStyleSymbol[];
 
-class OGRStyleSymbol : public OGRStyleTool
+class CPL_DLL OGRStyleSymbol : public OGRStyleTool
 {
 public:
 
@@ -528,9 +531,9 @@ public:
     
 };
 
-extern OGRStyleParamId asStyleLabel[];
+extern OGRStyleParamId CPL_DLL asStyleLabel[];
 
-class OGRStyleLabel : public OGRStyleTool
+class CPL_DLL OGRStyleLabel : public OGRStyleTool
 {
 public:
 
