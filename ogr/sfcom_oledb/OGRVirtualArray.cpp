@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/05/08 20:34:24  warmerda
+ * don't increment lastfeature when GetFeature() fails
+ *
  * Revision 1.5  2002/05/02 19:50:52  warmerda
  * added SUPPORT_2D_FLATTEN to ensure 2D geometries
  *
@@ -160,16 +163,24 @@ OGRFeature *OGRVirtualArray::GetFeature( int iIndex )
     // Make sure we are at the correct position to read the next record.
     if (iIndex -1 != m_nLastRecordAccessed)
     {
-        CPLDebug( "OGR_OLEDB", "ResetReading() and skip:[" );
-        m_pOGRLayer->ResetReading();
-        m_nLastRecordAccessed = -1;
+        int  nSkipped = 0;
+
+        CPLDebug( "OGR_OLEDB", 
+                  "%d requested, last was %d, some skipping required.",
+                  iIndex, m_nLastRecordAccessed );
+
+        if( m_nLastRecordAccessed >= iIndex )
+        {
+            m_pOGRLayer->ResetReading();
+            m_nLastRecordAccessed = -1;
+        }
 
         while (m_nLastRecordAccessed != iIndex -1)
         {
             poFeature = m_pOGRLayer->GetNextFeature();
             if( poFeature )
             {
-                CPLDebug( "OGR_OLEDB", "." );
+                nSkipped++;
                 OGRFeature::DestroyFeature( poFeature );
             }
             else
@@ -181,7 +192,7 @@ OGRFeature *OGRVirtualArray::GetFeature( int iIndex )
 
             m_nLastRecordAccessed++;
         }
-        CPLDebug( "OGR_OLEDB", "]\n" );
+        CPLDebug( "OGR_OLEDB", "Skipped %d features.", nSkipped );
     }
 
     if (iIndex -1 != m_nLastRecordAccessed)
@@ -192,8 +203,6 @@ OGRFeature *OGRVirtualArray::GetFeature( int iIndex )
         return NULL;
     }
 
-    m_nLastRecordAccessed = iIndex;
-
     poFeature = m_pOGRLayer->GetNextFeature();
 
     if (!poFeature)
@@ -202,6 +211,8 @@ OGRFeature *OGRVirtualArray::GetFeature( int iIndex )
                   iIndex );
         return NULL;
     }
+
+    m_nLastRecordAccessed = iIndex;
 
     return poFeature;
 }
@@ -379,7 +390,7 @@ int OGRVirtualArray::FillOGRField( OGRFeature *poFeature, int iField,
             int nStringWidth = MIN(strlen(pszStr),pColInfo->ulColumnSize);
 
             strncpy((char *) pabyBuffer + nOffset,pszStr,nStringWidth);
-            if( nStringWidth < pColInfo->ulColumnSize )
+            if( nStringWidth < (int) pColInfo->ulColumnSize )
                 pabyBuffer[nOffset+nStringWidth] = '\0';
         }
         break;
@@ -450,6 +461,9 @@ void OGRVirtualArray::ResetCache( int nStart, int nSize )
 int OGRVirtualArray::CheckRows( int nStart, int nRequestCount )
 
 {
+    CPLDebug( "OGR_OLEDB", "OGRVirtualArray::CheckRows( %d, %d )", 
+              nStart, nRequestCount );
+
     // Reset the m_papoFeatureCache stuff to a clean new cache with
     // nRequestCount entries. 
     ResetCache( nStart, nRequestCount );
