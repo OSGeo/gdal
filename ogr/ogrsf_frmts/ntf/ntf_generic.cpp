@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/04/30 15:10:43  warmerda
+ * added support for 3D geometry
+ *
  * Revision 1.8  2001/02/06 14:30:48  warmerda
  * don't crash if polygons missing point geometry
  *
@@ -303,8 +306,11 @@ static OGRFeature *TranslateGenericNode( NTFFileReader *poReader,
 {
     if( CSLCount((char **) papoGroup) < 2
         || papoGroup[0]->GetType() != NRT_NODEREC
-        || papoGroup[1]->GetType() != NRT_GEOMETRY )
+        || (papoGroup[1]->GetType() != NRT_GEOMETRY
+            && papoGroup[1]->GetType() != NRT_GEOMETRY3D) )
+    {
         return NULL;
+    }
         
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
@@ -541,8 +547,11 @@ static OGRFeature *TranslateGenericPoint( NTFFileReader *poReader,
 {
     if( CSLCount((char **) papoGroup) < 2
         || papoGroup[0]->GetType() != NRT_POINTREC
-        || papoGroup[1]->GetType() != NRT_GEOMETRY )
+        || (papoGroup[1]->GetType() != NRT_GEOMETRY
+            && papoGroup[1]->GetType() != NRT_GEOMETRY3D) )
+    {
         return NULL;
+    }
         
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
@@ -592,7 +601,8 @@ static OGRFeature *TranslateGenericLine( NTFFileReader *poReader,
 {
     if( CSLCount((char **) papoGroup) < 2
         || papoGroup[0]->GetType() != NRT_LINEREC
-        || papoGroup[1]->GetType() != NRT_GEOMETRY )
+        || (papoGroup[1]->GetType() != NRT_GEOMETRY
+            && papoGroup[1]->GetType() != NRT_GEOMETRY3D) )
         return NULL;
         
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
