@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/05/01 18:26:27  warmerda
+ * Fixed reporting of error on table.
+ *
  * Revision 1.6  2002/04/29 19:35:50  warmerda
  * fixes for selecting FID
  *
@@ -133,10 +136,10 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
 
     if( poSrcLayer == NULL )
     {
-        swq_select_free( psSelectInfo );
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "SELECT from table %s failed, no such table/featureclass.",
                   psSelectInfo->from_table );
+        swq_select_free( psSelectInfo );
         return NULL;
     }
     
