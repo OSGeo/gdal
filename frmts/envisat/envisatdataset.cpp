@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/12/04 21:15:19  warmerda
+ * Hacked to support AATSR TOA Level 1 data.
+ *
  * Revision 1.16  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -693,6 +696,12 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
         eDataType = GDT_CInt16;
     else if( EQUAL(pszDataType,"SWORD") )
         eDataType = GDT_Int16;
+    else if( EQUALN(pszProduct,"ATS_TOA_1",8) )
+    {
+        /* all 16bit data, no line length provided */
+        eDataType = GDT_Int16;
+        poDS->nRasterXSize = (dsr_size - 20) / 2;
+    }
     else
     {
         if( dsr_size >= 2 * poDS->nRasterXSize )
