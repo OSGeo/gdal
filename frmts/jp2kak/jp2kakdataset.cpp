@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.26  2004/10/07 16:48:32  fwarmerdam
+ * added simple CopyCreate RGBA output support
+ *
  * Revision 1.25  2004/09/08 15:36:12  warmerda
  * fixed up initialization issues
  *
@@ -1890,8 +1893,24 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         if( bHaveCT || poSrcDS->GetRasterCount() == 3 )
             colour.init( JP2_sRGB_SPACE );
+        else if( poSrcDS->GetRasterCount() == 4 
+                 && poSrcDS->GetRasterBand(4)->GetColorInterpretation() 
+                 == GCI_AlphaBand )
+        {
+            colour.init( JP2_sRGB_SPACE );
+            jp2_out.access_channels().init( 3 );
+            jp2_out.access_channels().set_colour_mapping(0,0);
+            jp2_out.access_channels().set_colour_mapping(1,1);
+            jp2_out.access_channels().set_colour_mapping(2,2);
+            jp2_out.access_channels().set_opacity_mapping(0,3);
+            jp2_out.access_channels().set_opacity_mapping(1,3);
+            jp2_out.access_channels().set_opacity_mapping(2,3);
+        }
         else
             colour.init( JP2_sLUM_SPACE );
+
+        // Are we producing RGBA? 
+        
     }
 
 /* -------------------------------------------------------------------- */
@@ -1930,7 +1949,6 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         oJP2Channels.set_colour_mapping( 0, 0, 0 );
         oJP2Channels.set_colour_mapping( 1, 0, 1 );
         oJP2Channels.set_colour_mapping( 2, 0, 2 );
-
     }
 
 #ifdef KAKADU4
