@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/05/21 03:48:35  warmerda
+ * Expand tabs
+ *
  * Revision 1.6  2002/03/06 20:08:02  warmerda
  * added tracking of extents, feature count and extrainfo
  *
@@ -66,13 +69,13 @@ typedef enum {
 /************************************************************************/
 class CPL_DLL GMLPropertyDefn
 {
-    char	     *m_pszName;
+    char             *m_pszName;
     GMLPropertyType   m_eType;
     char             *m_pszSrcElement;
 
 public:
     
-    	GMLPropertyDefn( const char *pszName, const char *pszSrcElement=NULL );
+        GMLPropertyDefn( const char *pszName, const char *pszSrcElement=NULL );
        ~GMLPropertyDefn();
 
     const char *GetName() { return m_pszName; } const
@@ -91,7 +94,7 @@ class CPL_DLL GMLFeatureClass
 {
     char        *m_pszName;
     char        *m_pszElementName;
-    char	*m_pszGeometryElement;
+    char        *m_pszGeometryElement;
     int         m_nPropertyCount;
     GMLPropertyDefn **m_papoProperty;
 
@@ -101,14 +104,14 @@ class CPL_DLL GMLFeatureClass
 
     char        *m_pszExtraInfo;
 
-    int		m_bHaveExtents;
+    int         m_bHaveExtents;
     double      m_dfXMin;
     double      m_dfXMax;
     double      m_dfYMin;
     double      m_dfYMax;
 
 public:
-	    GMLFeatureClass( const char *pszName = "" );
+            GMLFeatureClass( const char *pszName = "" );
            ~GMLFeatureClass();
 
     const char *GetElementName() const;
@@ -152,18 +155,18 @@ class CPL_DLL GMLFeature
     GMLFeatureClass *m_poClass;
     char            *m_pszFID;
 
-    int		     m_nPropertyCount;
+    int              m_nPropertyCount;
     char           **m_papszProperty;
 
-    char	    *m_pszGeometry;
+    char            *m_pszGeometry;
 
 public:
-		    GMLFeature( GMLFeatureClass * );
-	           ~GMLFeature();
+                    GMLFeature( GMLFeatureClass * );
+                   ~GMLFeature();
 
     GMLFeatureClass*GetClass() const { return m_poClass; }
 
-    void	    SetGeometryDirectly( char * );
+    void            SetGeometryDirectly( char * );
     const char     *GetGeometry() const { return m_pszGeometry; }
 
     void            SetProperty( int i, const char *pszValue );
@@ -177,7 +180,7 @@ public:
     const char      *GetFID() const { return m_pszFID; }
     void             SetFID( const char *pszFID );
 
-    void	     Dump( FILE *fp );
+    void             Dump( FILE *fp );
 };
 
 /************************************************************************/
@@ -186,14 +189,14 @@ public:
 class CPL_DLL IGMLReader
 {
 public:
-    virtual 	~IGMLReader();
+    virtual     ~IGMLReader();
 
     virtual int  IsClassListLocked() const = 0;
     virtual void SetClassListLocked( int bFlag ) = 0;
 
     virtual void SetSourceFile( const char *pszFilename ) = 0;
 
-    virtual int	 GetClassCount() const = 0;
+    virtual int  GetClassCount() const = 0;
     virtual GMLFeatureClass *GetClass( int i ) const = 0;
     virtual GMLFeatureClass *GetClass( const char *pszName ) const = 0;
 

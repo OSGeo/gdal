@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/05/21 03:48:35  warmerda
+ * Expand tabs
+ *
  * Revision 1.15  2003/05/12 16:09:37  warmerda
  * Write classes file in binary mode.
  *
@@ -310,7 +313,7 @@ void GMLReader::PushFeature( const char *pszElement,
                              const Attributes &attrs )
 
 {
-    int	iClass;
+    int iClass;
 
 /* -------------------------------------------------------------------- */
 /*      Find the class of this element.                                 */
@@ -339,7 +342,7 @@ void GMLReader::PushFeature( const char *pszElement,
 /*      if available.                                                   */
 /* -------------------------------------------------------------------- */
     GMLFeature *poFeature = new GMLFeature( GetClass( iClass ) );
-    int	nFIDIndex;
+    int nFIDIndex;
     XMLCh   anFID[100];
 
     tr_strcpy( anFID, "fid" );
@@ -574,7 +577,7 @@ int GMLReader::LoadClasses( const char *pszFile )
 /*      Load the raw XML file.                                          */
 /* -------------------------------------------------------------------- */
     FILE       *fp;
-    int		nLength;
+    int         nLength;
     char        *pszWholeText;
 
     fp = VSIFOpen( pszFile, "rb" );
@@ -706,8 +709,8 @@ int GMLReader::SaveClasses( const char *pszFile )
 /* -------------------------------------------------------------------- */
 /*      Serialize to disk.                                              */
 /* -------------------------------------------------------------------- */
-    FILE	*fp;
-    int	        bSuccess = TRUE;
+    FILE        *fp;
+    int         bSuccess = TRUE;
     char        *pszWholeText = CPLSerializeXMLTree( psRoot );
     
     CPLDestroyXMLNode( psRoot );
@@ -738,7 +741,7 @@ int GMLReader::SaveClasses( const char *pszFile )
 int GMLReader::PrescanForSchema( int bGetExtents )
 
 {
-    GMLFeature	*poFeature;
+    GMLFeature  *poFeature;
 
     if( m_pszFilename == NULL )
         return FALSE;
@@ -772,7 +775,7 @@ int GMLReader::PrescanForSchema( int bGetExtents )
 
             if( poGeometry != NULL )
             {
-                double	dfXMin, dfXMax, dfYMin, dfYMax;
+                double  dfXMin, dfXMax, dfYMin, dfYMax;
                 OGREnvelope sEnvelope;
 
                 poGeometry->getEnvelope( &sEnvelope );

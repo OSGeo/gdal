@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/05/21 03:48:35  warmerda
+ * Expand tabs
+ *
  * Revision 1.1  2002/01/25 20:37:02  warmerda
  * New
  *
@@ -65,7 +68,7 @@ OGRDataSource *OGRGMLDriver::Open( const char * pszFilename,
                                    int bUpdate )
 
 {
-    OGRGMLDataSource	*poDS;
+    OGRGMLDataSource    *poDS;
 
     if( bUpdate )
         return NULL;
@@ -90,7 +93,7 @@ OGRDataSource *OGRGMLDriver::CreateDataSource( const char * pszName,
                                                char **papszOptions )
 
 {
-    OGRGMLDataSource	*poDS = new OGRGMLDataSource();
+    OGRGMLDataSource    *poDS = new OGRGMLDataSource();
 
     if( !poDS->Create( pszName, papszOptions ) )
     {

@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/05/21 03:48:35  warmerda
+ * Expand tabs
+ *
  * Revision 1.4  2002/04/01 17:51:33  warmerda
  * allow geometry tags without gml: qualifier
  *
@@ -83,7 +86,7 @@ void GMLHandler::startElement(const XMLCh* const    uri,
                               const Attributes& attrs )
 
 {
-    char	szElementName[MAX_TOKEN_SIZE];
+    char        szElementName[MAX_TOKEN_SIZE];
     GMLReadState *poState = m_poReader->GetState();
 
     tr_strcpy( szElementName, qname );
@@ -250,7 +253,7 @@ void GMLHandler::characters(const XMLCh* const chars_in,
 
     if( m_pszCurField != NULL )
     {
-        int	nCurFieldLength = strlen(m_pszCurField);
+        int     nCurFieldLength = strlen(m_pszCurField);
 
         while( *chars == ' ' || *chars == 10 || *chars == 13 || *chars == '\t')
             chars++;
@@ -262,7 +265,7 @@ void GMLHandler::characters(const XMLCh* const chars_in,
     }
     else if( m_pszGeometry != NULL )
     {
-        int	nCurLength = strlen(m_pszGeometry);
+        int     nCurLength = strlen(m_pszGeometry);
 
         while( *chars == ' ' || *chars == 10 || *chars == 13 || *chars == '\t')
             chars++;

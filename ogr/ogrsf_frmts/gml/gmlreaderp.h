@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/05/21 03:48:35  warmerda
+ * Expand tabs
+ *
  * Revision 1.5  2003/02/21 14:31:56  warmerda
  * hack for INFINITY conflict problems with math.h
  *
@@ -127,10 +130,10 @@ public:
     const char  *GetPath() const { return m_pszPath; }
     const char  *GetLastComponent() const;
 
-    GMLFeature	*m_poFeature;
+    GMLFeature  *m_poFeature;
     GMLReadState *m_poParentState;
 
-    char	*m_pszPath; // element path ... | as separator.
+    char        *m_pszPath; // element path ... | as separator.
 
     int         m_nPathLength;
     char        **m_papszPathComponents;
@@ -143,36 +146,36 @@ public:
 class GMLReader : public IGMLReader 
 {
 private:
-    int		  m_bClassListLocked;
+    int           m_bClassListLocked;
 
-    int		m_nClassCount;
+    int         m_nClassCount;
     GMLFeatureClass **m_papoClass;
 
     char          *m_pszFilename;
 
     GMLHandler    *m_poGMLHandler;
     SAX2XMLReader *m_poSAXReader;
-    int		  m_bReadStarted;
+    int           m_bReadStarted;
     XMLPScanToken m_oToFill;
 
     GMLReadState *m_poState;
 
     GMLFeature   *m_poCompleteFeature;
 
-    int		  SetupParser();
+    int           SetupParser();
     void          CleanupParser();
 
 public:
-    		GMLReader();
-    virtual 	~GMLReader();
+                GMLReader();
+    virtual     ~GMLReader();
 
     int              IsClassListLocked() const { return m_bClassListLocked; }
     void             SetClassListLocked( int bFlag )
         { m_bClassListLocked = bFlag; }
 
-    void 	     SetSourceFile( const char *pszFilename );
+    void             SetSourceFile( const char *pszFilename );
 
-    int	 	     GetClassCount() const { return m_nClassCount; }
+    int              GetClassCount() const { return m_nClassCount; }
     GMLFeatureClass *GetClass( int i ) const;
     GMLFeatureClass *GetClass( const char *pszName ) const;
 
@@ -184,7 +187,7 @@ public:
     int              LoadClasses( const char *pszFile = NULL );
     int              SaveClasses( const char *pszFile = NULL );
 
-    int 	     PrescanForSchema(int bGetExtents = TRUE );
+    int              PrescanForSchema(int bGetExtents = TRUE );
     void             ResetReading();
 
 // --- 
@@ -196,7 +199,7 @@ public:
     int         IsFeatureElement( const char *pszElement );
     int         IsAttributeElement( const char *pszElement );
 
-    void	PushFeature( const char *pszElement, 
+    void        PushFeature( const char *pszElement, 
                              const Attributes &attrs );
 
     void        SetFeatureProperty( const char *pszElement,

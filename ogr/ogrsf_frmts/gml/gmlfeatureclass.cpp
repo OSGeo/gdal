@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/05/21 03:48:35  warmerda
+ * Expand tabs
+ *
  * Revision 1.3  2002/03/06 20:07:35  warmerda
  * added tracking of extents, feature count and extrainfo
  *
@@ -362,8 +365,8 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
 CPLXMLNode *GMLFeatureClass::SerializeToXML()
 
 {
-    CPLXMLNode	*psRoot, *psName;
-    int		iProperty;
+    CPLXMLNode  *psRoot, *psName;
+    int         iProperty;
 
 /* -------------------------------------------------------------------- */
 /*      Set feature class and core information.                         */

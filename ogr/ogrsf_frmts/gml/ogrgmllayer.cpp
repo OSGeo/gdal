@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/05/21 03:48:35  warmerda
+ * Expand tabs
+ *
  * Revision 1.8  2003/03/07 14:53:21  warmerda
  * implement preliminary BXFS write support
  *
@@ -148,7 +151,7 @@ void OGRGMLLayer::ResetReading()
 OGRFeature *OGRGMLLayer::GetNextFeature()
 
 {
-    GMLFeature	*poGMLFeature;
+    GMLFeature  *poGMLFeature;
 
     if( iNextGMLId == 0 )
         ResetReading();
@@ -171,7 +174,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 /*      Create a corresponding OGR feature.                             */
 /* -------------------------------------------------------------------- */
     OGRFeature *poOGRFeature = new OGRFeature( GetLayerDefn() );
-    int	iField;
+    int iField;
 
     poOGRFeature->SetFID( iNextGMLId++ );
 
@@ -241,7 +244,7 @@ OGRErr OGRGMLLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
 
 {
-    FILE	*fp = poDS->GetOutputFP();
+    FILE        *fp = poDS->GetOutputFP();
 
     if( !bWriter )
         return OGRERR_FAILURE;
@@ -271,7 +274,7 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
     // Write out Geometry - for now it isn't indented properly.
     if( poFeature->GetGeometryRef() != NULL )
     {
-        char	*pszGeometry;
+        char    *pszGeometry;
         OGREnvelope sGeomBounds;
 
         pszGeometry = poFeature->GetGeometryRef()->exportToGML();
@@ -304,7 +307,7 @@ int OGRGMLLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
     {
-        double	dfXMin, dfXMax, dfYMin, dfYMax;
+        double  dfXMin, dfXMax, dfYMin, dfYMax;
 
         if( poFClass == NULL )
             return FALSE;
@@ -331,7 +334,7 @@ int OGRGMLLayer::TestCapability( const char * pszCap )
 OGRErr OGRGMLLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
 {
-    int		iNewField;
+    int         iNewField;
 
     if( !bWriter || iNextGMLId != 0 )
         return OGRERR_FAILURE;

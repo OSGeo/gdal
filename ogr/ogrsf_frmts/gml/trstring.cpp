@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/05/21 03:48:35  warmerda
+ * Expand tabs
+ *
  * Revision 1.2  2002/01/24 17:35:43  warmerda
  * rewrote as a set of simple functions for performance
  *
@@ -48,7 +51,7 @@
 int tr_strcmp( const char *pszCString, const XMLCh *panXMLString )
 
 {
-    int	i = 0;
+    int i = 0;
 
     while( pszCString[i] != 0 && panXMLString[i] != 0 
            && pszCString[i] == panXMLString[i] ) {}
@@ -103,8 +106,8 @@ int tr_strlen( const XMLCh *panXMLString )
 char *tr_strdup( const XMLCh *panXMLString )
 
 {
-    char	*pszBuffer;
-    int		nLength = tr_strlen( panXMLString );
+    char        *pszBuffer;
+    int         nLength = tr_strlen( panXMLString );
 
     pszBuffer = (char *) VSIMalloc(nLength+1);
     tr_strcpy( pszBuffer, panXMLString );

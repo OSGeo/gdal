@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/05/21 03:48:35  warmerda
+ * Expand tabs
+ *
  * Revision 1.8  2003/04/03 16:23:49  warmerda
  * Added support for XSISCHEMA creation option which may be INTERNAL, EXTERNAL
  * or OFF.  EXTERNAL (write an associated .xsd file) is the default.
@@ -73,12 +76,12 @@ class OGRGMLLayer : public OGRLayer
 {
     OGRSpatialReference *poSRS;
     OGRFeatureDefn     *poFeatureDefn;
-    OGRGeometry		*poFilterGeom;
+    OGRGeometry         *poFilterGeom;
 
-    int			iNextGMLId;
-    int			nTotalGMLCount;
+    int                 iNextGMLId;
+    int                 nTotalGMLCount;
 
-    int			bWriter;
+    int                 bWriter;
 
     OGRGMLDataSource    *poDS;
 
@@ -91,20 +94,20 @@ class OGRGMLLayer : public OGRLayer
                                      OGRwkbGeometryType eType,
                                      OGRGMLDataSource *poDS );
 
-    			~OGRGMLLayer();
+                        ~OGRGMLLayer();
 
-    OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
-    void		SetSpatialFilter( OGRGeometry * );
+    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
+    void                SetSpatialFilter( OGRGeometry * );
 
-    void		ResetReading();
-    OGRFeature *	GetNextFeature();
+    void                ResetReading();
+    OGRFeature *        GetNextFeature();
 
     int                 GetFeatureCount( int bForce = TRUE );
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
     OGRErr              CreateFeature( OGRFeature *poFeature );
     
-    OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
@@ -121,36 +124,36 @@ class OGRGMLLayer : public OGRLayer
 class OGRGMLDataSource : public OGRDataSource
 {
     OGRGMLLayer     **papoLayers;
-    int			nLayers;
+    int                 nLayers;
     
-    char		*pszName;
+    char                *pszName;
     
     OGRGMLLayer         *TranslateGMLSchema( GMLFeatureClass * );
 
     char               **papszCreateOptions;
 
     // output related parameters 
-    FILE		*fpOutput;
+    FILE                *fpOutput;
     OGREnvelope         sBoundingRect;
     int                 nBoundedByLocation;
     
     int                 nSchemaInsertLocation;
 
     // input related parameters.
-    IGMLReader		*poReader;
+    IGMLReader          *poReader;
 
     void                InsertHeader();
 
   public:
-    			OGRGMLDataSource();
-    			~OGRGMLDataSource();
+                        OGRGMLDataSource();
+                        ~OGRGMLDataSource();
 
-    int			Open( const char *, int bTestOpen );
+    int                 Open( const char *, int bTestOpen );
     int                 Create( const char *pszFile, char **papszOptions );
 
-    const char	        *GetName() { return pszName; }
-    int			GetLayerCount() { return nLayers; }
-    OGRLayer		*GetLayer( int );
+    const char          *GetName() { return pszName; }
+    int                 GetLayerCount() { return nLayers; }
+    OGRLayer            *GetLayer( int );
 
     virtual OGRLayer    *CreateLayer( const char *, 
                                       OGRSpatialReference * = NULL,
@@ -159,7 +162,7 @@ class OGRGMLDataSource : public OGRDataSource
 
     int                 TestCapability( const char * );
 
-    FILE		*GetOutputFP() { return fpOutput; }
+    FILE                *GetOutputFP() { return fpOutput; }
     IGMLReader          *GetReader() { return poReader; }
 
     void                GrowExtents( OGREnvelope *psGeomBounds );
@@ -172,7 +175,7 @@ class OGRGMLDataSource : public OGRDataSource
 class OGRGMLDriver : public OGRSFDriver
 {
   public:
-    		~OGRGMLDriver();
+                ~OGRGMLDriver();
                 
     const char *GetName();
     OGRDataSource *Open( const char *, int );
