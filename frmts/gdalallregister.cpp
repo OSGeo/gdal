@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.47  2002/10/03 05:41:17  warmerda
+ * added GSC Geogrid format
+ *
  * Revision 1.46  2002/09/19 14:49:41  warmerda
  * added jpeg2000
  *
@@ -308,6 +311,7 @@ void GDALAllRegister()
     GDALRegister_HKV();
     GDALRegister_EFF();
     GDALRegister_FujiBAS();
+    GDALRegister_GSC();
 #endif
 
 #ifdef FRMT_fit
@@ -315,6 +319,7 @@ void GDALAllRegister()
 #endif
 
 #ifdef FRMT_jpeg2000
+    GDALRegister_JP2KAK();
     GDALRegister_JPEG2000();
 #endif
 
