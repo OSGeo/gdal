@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2000/10/06 15:22:49  warmerda
+ * added GDALDataTypeUnion
+ *
  * Revision 1.20  2000/08/18 15:24:48  warmerda
  * added GDALTermProgress
  *
@@ -108,6 +111,148 @@ void __pure_virtual()
 }
 
 #endif
+
+/************************************************************************/
+/*                         GDALDataTypeUnion()                          */
+/************************************************************************/
+
+/**
+ * Return the smallest data type that can fully express both input data
+ * types.
+ *
+ * @param eType1 
+ * @param eType2
+ *
+ * @return a data type able to express eType1 and eType2.
+ */
+
+GDALDataType GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
+
+{
+    int		bFloating, bComplex, nBits, bSigned;
+
+    bComplex = GDALDataTypeIsComplex(eType1) | GDALDataTypeIsComplex(eType2);
+    
+    switch( eType1 )
+    {
+      case GDT_Byte:
+        nBits = 8;
+        bSigned = FALSE;
+        bFloating = FALSE;
+        break;
+        
+      case GDT_Int16:
+      case GDT_CInt16:
+        nBits = 16;
+        bSigned = TRUE;
+        bFloating = FALSE;
+        break;
+        
+      case GDT_UInt16:
+        nBits = 16;
+        bSigned = FALSE;
+        bFloating = FALSE;
+        break;
+        
+      case GDT_Int32:
+      case GDT_CInt32:
+        nBits = 32;
+        bSigned = TRUE;
+        bFloating = FALSE;
+        break;
+        
+      case GDT_UInt32:
+        nBits = 32;
+        bSigned = FALSE;
+        bFloating = FALSE;
+        break;
+
+      case GDT_Float32:
+      case GDT_CFloat32:
+        nBits = 32;
+        bSigned = TRUE;
+        bFloating = TRUE;
+        break;
+
+      case GDT_Float64:
+      case GDT_CFloat64:
+        nBits = 64;
+        bSigned = TRUE;
+        bFloating = TRUE;
+        break;
+
+      default:
+        CPLAssert( FALSE );
+        return GDT_Unknown;
+    }
+
+    switch( eType2 )
+    {
+      case GDT_Byte:
+        break;
+        
+      case GDT_Int16:
+        nBits = MAX(nBits,16);
+        bSigned = TRUE;
+        break;
+        
+      case GDT_UInt16:
+        nBits = MAX(nBits,16);
+        break;
+        
+      case GDT_Int32:
+      case GDT_CInt32:
+        nBits = MAX(nBits,32);
+        bSigned = TRUE;
+        break;
+        
+      case GDT_UInt32:
+        nBits = MAX(nBits,32);
+        break;
+
+      case GDT_Float32:
+      case GDT_CFloat32:
+        nBits = MAX(nBits,32);
+        bSigned = TRUE;
+        bFloating = TRUE;
+        break;
+
+      case GDT_Float64:
+      case GDT_CFloat64:
+        nBits = MAX(nBits,64);
+        bSigned = TRUE;
+        bFloating = TRUE;
+        break;
+
+      default:
+        CPLAssert( FALSE );
+        return GDT_Unknown;
+    }
+
+    if( nBits == 8 )
+        return GDT_Byte;
+    else if( nBits == 16 && bComplex )
+        return GDT_CInt16;
+    else if( nBits == 16 && bSigned )
+        return GDT_Int16;
+    else if( nBits == 16 && !bSigned )
+        return GDT_UInt16;
+    else if( nBits == 32 && bFloating && bComplex )
+        return GDT_CFloat32;
+    else if( nBits == 32 && bFloating )
+        return GDT_Float32;
+    else if( nBits == 32 && bComplex )
+        return GDT_CInt32;
+    else if( nBits == 32 && bSigned )
+        return GDT_Int32;
+    else if( nBits == 32 && !bSigned )
+        return GDT_UInt32;
+    else if( nBits == 64 && bComplex )
+        return GDT_CFloat64;
+    else
+        return GDT_Float64;
+}
+
 
 /************************************************************************/
 /*                        GDALGetDataTypeSize()                         */
