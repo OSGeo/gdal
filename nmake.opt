@@ -36,11 +36,14 @@ VCDIR   = 	D:\Software\VStudio\VC98
 # programs to be able to expand wildcards. 
 #SETARGV =	"$(VCDIR)\lib\setargv.obj"
 
-# Comment out the following to disable JPEG support.
-JPEG_SUPPORTED = 1
-
 # Comment out the following to disable BSB support.
 BSB_SUPPORTED = 1
+
+# Comment out the following to disable ODBC support.
+ODBC_SUPPORTED = 1
+
+# Comment out the following to disable JPEG support.
+JPEG_SUPPORTED = 1
 
 #if using an external jpeg library uncomment the follwing lines
 #JPEG_EXTERNAL_LIB = 1
@@ -128,6 +131,14 @@ GDALLIB	=    $(GDAL_ROOT)/gdal_i.lib
 !ELSE
 GDALLIB	=    $(GDAL_ROOT)/gdal.lib
 !ENDIF
+
+!IFDEF ODBC_SUPPORTED
+ODBCLIB = odbc32.lib
+!ENDIF
+
+EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(OCI_LIB) $(PG_LIB) $(ODBCLIB) \
+		$(ECWLIB) $(HDF4_LIB) $(FME_LIB) $(JASPER_LIB) $(MRSID_LIB) \
+		$(FITS_LIB) $(JPEG_LIB) $(PNG_LIB)
 
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c
