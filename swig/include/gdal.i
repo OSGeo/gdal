@@ -9,6 +9,12 @@
 
  *
  * $Log$
+ * Revision 1.13  2005/02/17 17:27:13  kruland
+ * Changed the handling of fixed size double arrays to make it fit more
+ * naturally with GDAL/OSR usage.  Declare as typedef double * double_17;
+ * If used as return argument use:  function ( ... double_17 argout ... );
+ * If used as value argument use: function (... double_17 argin ... );
+ *
  * Revision 1.12  2005/02/16 18:40:34  kruland
  * Added typedef for GDALColorInterp.
  *
@@ -69,8 +75,8 @@ using namespace std;
 #include "gdal_priv.h"
 #include "gdal_alg.h"
 
-typedef double double_6[6];
-typedef double double_2[2];
+typedef double *double_2;
+typedef double *double_6;
 
 %}
 

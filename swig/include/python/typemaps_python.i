@@ -9,6 +9,12 @@
 
  *
  * $Log$
+ * Revision 1.13  2005/02/17 17:27:13  kruland
+ * Changed the handling of fixed size double arrays to make it fit more
+ * naturally with GDAL/OSR usage.  Declare as typedef double * double_17;
+ * If used as return argument use:  function ( ... double_17 argout ... );
+ * If used as value argument use: function (... double_17 argin ... );
+ *
  * Revision 1.12  2005/02/17 03:42:10  kruland
  * Added macro to define typemaps for optional arguments to functions.
  * The optional argument must be coded as a pointer in the function decl.
@@ -57,13 +63,13 @@
  *
  * defines the following:
  *
- * typemap(in,numinputs=0) double_size *var_name
- * typemap(out) double_size *var_name
+ * typemap(in,numinputs=0) double_size *argout
+ * typemap(out) double_size *argout
  *
  * which matches decls like:  Dataset::GetGeoTransform( double_6 *c_transform )
  * where c_transform is a returned argument.
  *
- * typemap(in) double_size var_name
+ * typemap(in) double_size argin
  *
  * which matches decls like: Dataset::SetGeoTransform( double_6 c_transform )
  * where c_transform is an input variable.
@@ -77,25 +83,26 @@
  * %}
  */
 
-%define ARRAY_TYPEMAP(var_name, size)
-%typemap(python,in,numinputs=0) ( double_ ## size *var_name) (double_ ## size var_name)
+%define ARRAY_TYPEMAP(size)
+%typemap(python,in,numinputs=0) ( double_ ## size argout) (double argout[size])
 {
-  /* %typemap(in,numinputs=0) (double_size *var_name) */
-  $1 = &var_name;
+  /* %typemap(in,numinputs=0) (double_size *argout) */
+  $1 = argout;
 }
-%typemap(python,argout) ( double_ ## size *var_name)
+%typemap(python,argout) ( double_ ## size argout)
 {
-  /* %typemap(argout) (double_size *var_name) */
+  /* %typemap(argout) (double_size *argout) */
   Py_DECREF( $result );
   $result = PyTuple_New( size );
   for( unsigned int i=0; i<size; i++ ) {
-    PyObject *val = PyFloat_FromDouble( (*$1)[i] );
+    PyObject *val = PyFloat_FromDouble( $1[i] );
     PyTuple_SetItem( $result, i, val );
   }
 }
-%typemap(python,in) (double_ ## size var_name)
+%typemap(python,in) (double_ ## size argin) (double argin[size])
 {
-  /* %typemap(python,in) (double_size var_name) */
+  /* %typemap(python,in) (double_size argin) */
+  $1 = argin;
   if (! PySequence_Check($input) ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
     SWIG_fail;
@@ -118,13 +125,17 @@
  * Typemap for double c_minmax[2]. 
  * Used in Band::ComputeMinMax()
  */
-ARRAY_TYPEMAP(c_minmax, 2);
+ARRAY_TYPEMAP(2);
 
 /*
  * Typemap for double c_transform[6]
  * Used in Dataset::GetGeoTransform(), Dataset::SetGeoTransform().
  */
-ARRAY_TYPEMAP(c_transform, 6);
+ARRAY_TYPEMAP(6);
+
+ARRAY_TYPEMAP(7);
+ARRAY_TYPEMAP(15);
+ARRAY_TYPEMAP(17);
 
 /*
  *  Typemap for counted arrays of ints <- PySequence
