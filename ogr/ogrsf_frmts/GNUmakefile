@@ -12,6 +12,7 @@ clean:
 	(cd shape; $(MAKE) clean)
 	(cd ntf; $(MAKE) clean)
 	(cd sdts; $(MAKE) clean)
+	(cd tiger; $(MAKE) clean)
 	(cd s57; $(MAKE) clean)
 
 
