@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/07/27 11:01:01  dron
+ * GDALRasterBlock::IsCached() method added.
+ *
  * Revision 1.11  2003/04/25 19:48:16  warmerda
  * added block locking to ensure in-use blocks arent flushed
  *
@@ -400,4 +403,30 @@ void GDALRasterBlock::MarkClean()
     bDirty = FALSE;
 }
 
+/************************************************************************/
+/*                              IsCached()                              */
+/************************************************************************/
+/**
+ * Check whether specified block is already cached.
+ *
+ * @param nXOff horizontal offset of the requested block.
+ * @param nYOff vertical offset of the requested block.
+ *
+ * @return TRUE if specified block is in cache and FALSE otherwise.
+ */
+
+
+int GDALRasterBlock::IsCached( int nXOff, int nYOff )
+{
+    GDALRasterBlock *poBlock = poOldest;
+    
+    while ( poBlock )
+    {
+        if ( poBlock->nXOff == nXOff && poBlock->nYOff == nYOff )
+            return TRUE;
+        poBlock = poBlock->poPrevious;
+    }
+
+    return FALSE;
+}
 
