@@ -1,0 +1,91 @@
+<html>
+<head>
+<title>ESRI Shapefile</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>ESRI Shapefile</h1>
+
+All varieties of ESRI Shapefiles should be available for reading, and
+simple 3D files can be created.<p>
+
+Normally the OGR Shapefile driver treats a whole directory of shapefiles
+as a dataset, and a single shapefile within that directory as a layer.  In
+this case the directory name should be used as the dataset name.  However,
+it is also possible to use one of the files (.shp, .shx or .dbf) in a
+shapefile set as the dataset name, and then it will be treated as a dataset
+with one layer.<p>
+
+Currently the shapefile driver always returns polygons, rather than
+multipolygons, even for polygons with multiple outer rings.  This is a
+violation of the OGR (and Simple Features) data model, and will be corrected
+at some point in the future.  The new ESRI measure values are discarded. <p>
+
+Shapefiles have no projection definition, and so the features handled via
+the shapefile driver will have no projection definition. <p>
+
+<h2>Creation Issues</h2>
+
+The Shapefile driver treats a directory as a dataset, and each Shapefile
+set (.shp, .shx, and .dbf) as a layer.  The dataset name will be treated
+as a directory name.  If the directory already exists it is used and 
+existing files in the directory are ignored.  If the directory does not
+exist it will be created.<p>
+
+ESRI shapefiles can only store one kind of geometry per layer (shapefile). 
+On creation this is may be set based on the source file (if a uniform geometry
+type is known from the source driver), or it may be set directly by the
+user with the layer creation option SHPT (shown below).  If not set the
+layer creation will fail.  If geometries of incompatible types are written
+to the layer, the output will be terminated with an error.<p>
+
+Note that this can make it very difficult to translate a mixed geometry layer
+from another format into Shapefile format using ogr2ogr, since ogr2ogr has
+not support for separating out geometries from a source layer.<p>
+
+Shapefile feature attributes are stored in an associated .dbf file, and so
+attributes suffer a number of limitations:<P>
+
+<ul>
+<li> Attribute names can only be up to 12 characters long.  Longer names will
+be silently truncated.  This may result in non-unique column names, which 
+will definately cause problems later. <p>
+
+<li> Only Integer, Real and String field types are supported.  The various
+list, and binary field types cannot be created.<p>
+
+<li> The field width and precision are directly used to establish storage 
+size in the .dbf file.  This means that strings longer than the field
+width, or numbers that don't fit into the indicated field format will suffer
+truncation.<p>
+
+<li> Integer fields without an explicit width are treated as width 11.<p>
+
+<li> Real (floating point) fields without an explicit width are treated as
+width 24 with 15 decimal places of precision.<p>
+
+<li> String fields without an assigned width are treated as 80 characters.<p>
+
+</ul>
+
+<h3>Dataset Creation Options</h3>
+
+None<p>
+
+<h3>Layer Creation Options</h3>
+
+
+<b>SHPT=type</b>: Override the type of shapefile created.  Can be one of
+ POINT, ARC, POLYGON or MULTIPOINT for 2D, or 
+POINTZ, ARCZ, POLYGONZ or MULTIPOINTZ for 3D.  Shapefiles with <i>measure</i>
+values are not supported, nor are MULTIPATCH files.<p>
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="http://gdal.velocet.ca/projects/shapelib/">Shapelib Page</a><p>
+</ul>
+
+</body>
+</html>
