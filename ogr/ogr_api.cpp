@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/04/14 17:33:35  warmerda
+ * Fixed GetPoint's y value for points as per bug 319.
+ *
  * Revision 1.4  2003/03/31 15:55:42  danmo
  * Added C API function docs
  *
@@ -198,7 +201,7 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
           if( i == 0 )
           {
               *pdfX = ((OGRPoint *)hGeom)->getX();
-              *pdfY = ((OGRPoint *)hGeom)->getX();
+              *pdfY = ((OGRPoint *)hGeom)->getY();
               if( pdfZ != NULL )
                   *pdfZ = ((OGRPoint *)hGeom)->getZ();
           }
