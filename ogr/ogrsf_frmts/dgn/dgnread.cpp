@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2002/10/29 19:25:18  warmerda
+ * fixed serious bug in applying color table to DGNInfo structure
+ *
  * Revision 1.29  2002/09/24 14:34:19  warmerda
  * fix collection of background color
  *
@@ -911,11 +914,11 @@ static DGNElemCore *DGNParseColorTable( DGNInfo * psDGN )
     psColorTable->screen_flag = 
         psDGN->abyElem[36] + psDGN->abyElem[37] * 256;
 
+    memcpy( psColorTable->color_info[255], psDGN->abyElem+38, 3 );
     memcpy( psColorTable->color_info, psDGN->abyElem+41, 768 );	
     if( !psDGN->got_color_table )
     {
-        memcpy( psColorTable->color_info[255], psDGN->abyElem+38, 3 );
-        memcpy( psColorTable->color_info, psDGN->abyElem+41, 765 );
+        memcpy( psDGN->color_table, psColorTable->color_info, 768 );
         psDGN->got_color_table = 1;
     }
     
