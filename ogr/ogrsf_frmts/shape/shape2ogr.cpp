@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/02/06 14:30:15  warmerda
+ * don't crash on attempt to write geometryless features
+ *
  * Revision 1.9  2000/11/29 14:09:36  warmerda
  * Extended shapefile OGR driver to support MULTIPOLYGON objects.
  *
@@ -226,7 +229,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         double		dfX, dfY, dfZ = 0;
 
         if( poGeom->getGeometryType() != wkbPoint
-            && poGeom->getGeometryType() != wkbPoint25D )
+            && poGeom->getGeometryType() != wkbPoint25D )        
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Attempt to write non-point (%s) geometry to"
@@ -577,6 +580,18 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            OGRFeature * poFeature )
 
 {
+/* -------------------------------------------------------------------- */
+/*      Don't write objects with missing geometry.                      */
+/* -------------------------------------------------------------------- */
+    if( poFeature->GetGeometryRef() == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to write feature without geometry not supported"
+                  " for shapefile driver." );
+        
+        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Write the geometry.                                             */
 /* -------------------------------------------------------------------- */
