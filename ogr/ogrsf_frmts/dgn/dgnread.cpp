@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2002/11/11 20:38:13  warmerda
+ * provide external extents call, add inverse to int function
+ *
  * Revision 1.31  2002/10/29 19:44:08  warmerda
  * fixed complex group handling with spatial queries
  *
@@ -219,7 +222,7 @@ int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
 }
 
 /************************************************************************/
-/*                        DGNGetElementExtents()                        */
+/*                          DGNGetRawExtents()                          */
 /*                                                                      */
 /*      Returns FALSE if the element type does not have reconisable     */
 /*      element extents, other TRUE and the extents will be updated.    */
@@ -229,11 +232,14 @@ int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
 /************************************************************************/
 
 static int 
-DGNGetElementExtents( DGNInfo *psDGN, int nType, 
-                      GUInt32 *pnXMin, GUInt32 *pnYMin, GUInt32 *pnZMin, 
-                      GUInt32 *pnXMax, GUInt32 *pnYMax, GUInt32 *pnZMax )
+DGNGetRawExtents( DGNInfo *psDGN, int nType, unsigned char *pabyRawData,
+                  GUInt32 *pnXMin, GUInt32 *pnYMin, GUInt32 *pnZMin, 
+                  GUInt32 *pnXMax, GUInt32 *pnYMax, GUInt32 *pnZMax )
 
 {
+    if( pabyRawData == NULL )
+        pabyRawData = psDGN->abyElem + 0;
+
     switch( nType )
     {
       case DGNT_LINE:
@@ -246,20 +252,75 @@ DGNGetElementExtents( DGNInfo *psDGN, int nType,
       case DGNT_TEXT:
       case DGNT_COMPLEX_CHAIN_HEADER:
       case DGNT_COMPLEX_SHAPE_HEADER:
-        *pnXMin = DGN_INT32( psDGN->abyElem + 4 );
-        *pnYMin = DGN_INT32( psDGN->abyElem + 8 );
+        *pnXMin = DGN_INT32( pabyRawData + 4 );
+        *pnYMin = DGN_INT32( pabyRawData + 8 );
         if( pnZMin != NULL )
-            *pnZMin = DGN_INT32( psDGN->abyElem + 12 );
+            *pnZMin = DGN_INT32( pabyRawData + 12 );
 
-        *pnXMax = DGN_INT32( psDGN->abyElem + 16 );
-        *pnYMax = DGN_INT32( psDGN->abyElem + 20 );
+        *pnXMax = DGN_INT32( pabyRawData + 16 );
+        *pnYMax = DGN_INT32( pabyRawData + 20 );
         if( pnZMax != NULL )
-            *pnZMax = DGN_INT32( psDGN->abyElem + 24 );
+            *pnZMax = DGN_INT32( pabyRawData + 24 );
         return TRUE;
 
       default:
         return FALSE;
     }
+}
+
+/************************************************************************/
+/*                        DGNGetElementExtents()                        */
+/************************************************************************/
+
+int DGNGetElementExtents( DGNHandle hDGN, DGNElemCore *psElement, 
+                          DGNPoint *psMin, DGNPoint *psMax )
+
+{
+    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+    GUInt32 anMin[3], anMax[3];
+    int bResult;
+
+/* -------------------------------------------------------------------- */
+/*      Get the extents if we have raw data in the element, or          */
+/*      loaded in the file buffer.                                      */
+/* -------------------------------------------------------------------- */
+    if( psElement->raw_data != NULL )
+        bResult = DGNGetRawExtents( psDGN, psElement->type, 
+                                    psElement->raw_data, 
+                                    anMin + 0, anMin + 1, anMin + 2,
+                                    anMax + 0, anMax + 1, anMax + 2 );
+    else if( psElement->element_id == psDGN->next_element_id - 1 )
+        bResult = DGNGetRawExtents( psDGN, psElement->type, 
+                                    psDGN->abyElem + 0, 
+                                    anMin + 0, anMin + 1, anMin + 2,
+                                    anMax + 0, anMax + 1, anMax + 2 );
+    else
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, 
+                 "DGNGetElementExtents() fails because the requested element\n"
+                 " does not have raw data available." );
+        return FALSE;
+    }
+
+    if( !bResult )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Transform to user coordinate system and return.  The offset     */
+/*      is to convert from "binary offset" form to twos complement.     */
+/* -------------------------------------------------------------------- */
+    psMin->x = anMin[0] - 2147483648.0;
+    psMin->y = anMin[1] - 2147483648.0;
+    psMin->z = anMin[2] - 2147483648.0;
+
+    psMax->x = anMax[0] - 2147483648.0;
+    psMax->y = anMax[1] - 2147483648.0;
+    psMax->z = anMax[2] - 2147483648.0;
+
+    DGNTransformPoint( psDGN, psMin );
+    DGNTransformPoint( psDGN, psMax );
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -815,9 +876,9 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
             if( !psDGN->sf_converted_to_uor )
                 DGNSpatialFilterToUOR( psDGN );
 
-            if( !DGNGetElementExtents( psDGN, nType, 
-                                       &nXMin, &nYMin, NULL,
-                                       &nXMax, &nYMax, NULL ) )
+            if( !DGNGetRawExtents( psDGN, nType, NULL,
+                                   &nXMin, &nYMin, NULL,
+                                   &nXMax, &nYMax, NULL ) )
             {
                 /* If we don't have spatial characterists for the element
                    we will pass it through. */
@@ -918,7 +979,7 @@ static DGNElemCore *DGNParseColorTable( DGNInfo * psDGN )
         psDGN->abyElem[36] + psDGN->abyElem[37] * 256;
 
     memcpy( psColorTable->color_info[255], psDGN->abyElem+38, 3 );
-    memcpy( psColorTable->color_info, psDGN->abyElem+41, 768 );	
+    memcpy( psColorTable->color_info, psDGN->abyElem+41, 765 );	
     if( !psDGN->got_color_table )
     {
         memcpy( psDGN->color_table, psColorTable->color_info, 768 );
@@ -1204,6 +1265,42 @@ void DGNInverseTransformPoint( DGNInfo *psDGN, DGNPoint *psPoint )
 }
 
 /************************************************************************/
+/*                   DGNInverseTransformPointToInt()                    */
+/************************************************************************/
+
+void DGNInverseTransformPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
+                                    unsigned char *pabyTarget )
+
+{
+    double     adfCT[3];
+    int        i;
+
+    adfCT[0] = (psPoint->x + psDGN->origin_x) / psDGN->scale;
+    adfCT[1] = (psPoint->y + psDGN->origin_y) / psDGN->scale;
+    adfCT[2] = (psPoint->z + psDGN->origin_z) / psDGN->scale;
+
+    for( i = 0; i < psDGN->dimension; i++ )
+    {
+        GInt32 nCTI;
+        unsigned char *pabyCTI = (unsigned char *) &nCTI;
+
+        nCTI = (GInt32) MAX(-2147483647,MIN(2147483647,adfCT[i]));
+        
+#ifdef WORDS_BIGENDIAN 
+        pabyTarget[i*4+0] = pabyCTI[1];
+        pabyTarget[i*4+1] = pabyCTI[0];
+        pabyTarget[i*4+2] = pabyCTI[3];
+        pabyTarget[i*4+3] = pabyCTI[2];
+#else
+        pabyTarget[i*4+3] = pabyCTI[1];
+        pabyTarget[i*4+2] = pabyCTI[0];
+        pabyTarget[i*4+1] = pabyCTI[3];
+        pabyTarget[i*4+0] = pabyCTI[2];
+#endif        
+    }
+}
+
+/************************************************************************/
 /*                         DGNGetElementIndex()                         */
 /************************************************************************/
 
@@ -1387,9 +1484,9 @@ void DGNBuildIndex( DGNInfo *psDGN )
 
         if( !(psEI->flags & DGNEIF_DELETED)
             && !(psEI->flags & DGNEIF_COMPLEX) 
-            && DGNGetElementExtents( psDGN, nType, 
-                                     anRegion+0, anRegion+1, anRegion+2,
-                                     anRegion+3, anRegion+4, anRegion+5 ) )
+            && DGNGetRawExtents( psDGN, nType, NULL,
+                                 anRegion+0, anRegion+1, anRegion+2,
+                                 anRegion+3, anRegion+4, anRegion+5 ) )
         {
 #ifdef notdef
             printf( "panRegion[%d]=%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n", 
