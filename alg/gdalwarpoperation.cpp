@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/07/04 11:52:22  dron
+ * GRA_CubicSpline added to the list of validated algorithms.
+ *
  * Revision 1.13  2003/06/05 17:10:13  warmerda
  * changed to report approximately correct completion amount in multi case
  *
@@ -235,7 +238,8 @@ int GDALWarpOperation::ValidateOptions()
 
     if( psOptions->eResampleAlg != GRA_NearestNeighbour 
         && psOptions->eResampleAlg != GRA_Bilinear
-        && psOptions->eResampleAlg != GRA_Cubic )
+        && psOptions->eResampleAlg != GRA_Cubic
+        && psOptions->eResampleAlg != GRA_CubicSpline )
     {
         CPLError( CE_Failure, CPLE_IllegalArg, 
                   "GDALWarpOptions.Validate()\n"
