@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/05/30 05:26:56  dron
+ * Fixed problem with scanline numbering.
+ *
  * Revision 1.21  2003/05/29 14:58:01  dron
  * Workaround for files with extra bytes at the end of data stream.
  *
@@ -358,8 +361,8 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int         i, j;
 
     if ( poGDS->sInfoHeader.iHeight > 0 )
-        iScanOffset = nScanSize * poGDS->GetRasterYSize() -
-            (nBlockYOff + 1) * nScanSize;
+        iScanOffset = poGDS->sFileHeader.iOffBits +
+            ( poGDS->GetRasterYSize() - nBlockYOff - 1 ) * nScanSize;
     else
         iScanOffset = poGDS->sFileHeader.iOffBits + nBlockYOff * nScanSize;
 
