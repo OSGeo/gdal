@@ -187,6 +187,51 @@ if test "$JPEG_SETTING" != "no" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Select a GIF Library to use, or disable driver.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(gif,[  --with-gif[=ARG]         Include GIF support (ARG=internal, no or path)],,)
+
+if test "$with_gif" = "no" ; then
+
+  GIF_SETTING=no
+
+  echo "gif support disabled."
+
+elif test "$with_gif" = "yes" -o "$with_gif" = "" ; then
+
+  AC_CHECK_LIB(gif,DGifOpenFileName,GIF_SETTING=external,GIF_SETTING=internal,)
+
+  if test "$GIF_SETTING" = "external" ; then   
+    LIBS="-lgif $LIBS"
+    echo "using pre-installed libgif."
+  else
+    echo "using internal gif code."
+  fi
+
+elif test "$with_gif" = "internal" ; then
+
+  GIF_SETTING=internal
+
+  echo "using internal gif code."
+
+else
+
+  GIF_SETTING=external
+  LIBS="-L$with_gif -L$with_gif/lib -lgif $LIBS"
+  EXTRA_INCLUDES="-I$with_gif -I$with_gif/include $EXTRA_INCLUDES"
+
+  echo "using libgif from $with_gif."
+
+fi
+
+AC_SUBST(GIF_SETTING,$GIF_SETTING)
+
+if test "$GIF_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="gif $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl Select a libtiff library to use.
 dnl ---------------------------------------------------------------------------
 
