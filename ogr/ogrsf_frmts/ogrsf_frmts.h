@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/09/22 03:05:08  warmerda
+ * added SDTS
+ *
  * Revision 1.8  1999/09/09 21:04:55  warmerda
  * added fme support
  *
@@ -193,6 +196,7 @@ CPL_C_START
 void	RegisterOGRShape();
 void	RegisterOGRNTF();
 void	RegisterOGRFME();
+void    RegisterOGRSDTS();
 CPL_C_END
 
 
