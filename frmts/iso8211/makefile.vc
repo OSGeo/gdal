@@ -17,6 +17,10 @@ clean:
 
 all:	default 8211view.exe 8211dump.exe
 
+iso8211.dll:
+	link /dll $(OBJ) $(GDAL_ROOT)\port\cpl.lib \
+		/out:iso8211.dll /implib:iso8211_i.lib
+
 8211view.exe:	8211view.obj $(OBJ)
 	$(CC) $(CFLAGS) 8211view.obj $(OBJ) $(CPLLIB) /link $(LINKER_FLAGS)
 
