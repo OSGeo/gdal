@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/03/28 17:43:04  warmerda
+ * added -wm option to control warp memory
+ *
  * Revision 1.3  2003/03/18 17:37:44  warmerda
  * add color table copying
  *
@@ -69,6 +72,7 @@ static void Usage()
         "    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
         "    [-wo \"NAME=VALUE\"] [-ot Byte/Int16/...] [-wt Byte/Int16]\n"
         "    [-rn] [-rb] [-rc] [-srcnodata value [value...]]\n" 
+        "    [-wm memory_in_mb]\n"
         "    [-of format] [-co \"NAME=VALUE\"]* srcfile dstfile\n" );
     exit( 1 );
 }
@@ -108,6 +112,7 @@ int main( int argc, char ** argv )
     void               *hTransformArg, *hGenImgProjArg=NULL, *hApproxArg=NULL;
     char               **papszWarpOptions = NULL;
     double             dfErrorThreshold = 0.125;
+    double             dfWarpMemoryLimit = 0.0;
     GDALTransformerFunc pfnTransformer = NULL;
     char                **papszCreateOptions = NULL;
     GDALDataType        eOutputType = GDT_Unknown, eWorkingType = GDT_Unknown; 
@@ -171,6 +176,13 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-et") && i < argc-1 )
         {
             dfErrorThreshold = atof(argv[++i]);
+        }
+        else if( EQUAL(argv[i],"-wm") && i < argc-1 )
+        {
+            if( atof(argv[i+1]) < 4000 )
+                dfWarpMemoryLimit = atof(argv[i+1]) * 1024 * 1024;
+            else
+                dfWarpMemoryLimit = atof(argv[i+1]);
         }
         else if( EQUAL(argv[i],"-srcnodata") && i < argc-1 )
         {
@@ -364,6 +376,9 @@ int main( int argc, char ** argv )
     psWO->pTransformerArg = hTransformArg;
 
     psWO->pfnProgress = GDALTermProgress;
+
+    if( dfWarpMemoryLimit != 0.0 )
+        psWO->dfWarpMemoryLimit = dfWarpMemoryLimit;
 
 /* -------------------------------------------------------------------- */
 /*      Setup band mapping.                                             */
