@@ -235,8 +235,8 @@ These are:
 
 	You need modified JasPer library to build this driver with GeoJP2
 	support enabled. Modified version can be downloaded from
-	<a href="ftp://ftp.remotesensing.org/gdal/jasper-1.700.5.uuid.tar.gz">
-	ftp://ftp.remotesensing.org/gdal/jasper-1.700.5.uuid.tar.gz</a>
+	<a href="ftp://ftp.remotesensing.org/gdal/jasper-1.701.0.uuid.tar.gz">
+	ftp://ftp.remotesensing.org/gdal/jasper-1.701.0.uuid.tar.gz</a>
 
 	<li> MrSID driver needs LizardTech decoding software development kit
 	(DSDK). <b>This DSDK is not free software, you should contact
